@@ -19,12 +19,6 @@
   <script src="https://bestill.online/styles.js"></script>
   <link rel="icon" type="image/png" href="https://bestill.online/img/icon-s.png">
 <script>
-
-      const urlParams = new URLSearchParams(window.location.search);
-    const specificKey = urlParams.get("menu");
-  if (specificKey) {
-    MenuStart();
-}
       document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
     }, false);
@@ -499,6 +493,13 @@ function scrollToFordeler(trinn) {
       progress.innerHTML = `${Math.ceil(progres*1.11)}%`;
     };
         
+        
+	const urlParams = new URLSearchParams(window.location.search);
+  const specificKey = urlParams.get("menu");
+  if (specificKey) {
+    MenuStart();
+}
+
    var refreshTimer;
 
 function MenuStart() {
