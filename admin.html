@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Panel</title>
+<style>
+  body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+    border: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px;
+    text-align: center;
+  }
+
+  td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+
+  td span {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background-color: #e0e0e0;
+    border-radius: 50%;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  td input {
+    width: 20px;
+    height: 20px;
+    text-align: center;
+  }
+
+</style>
+<body>
+
+<table id="demo"> </table>
+
+<script type="module">
+var bd = "styles"; 
+let kv = localStorage.getItem("abc123");
+
+if (kv != bd) {
+    let kg = prompt("XYZ789", "");
+
+    if (kg == bd) {
+        localStorage.setItem("abc123", kg);
+    } else {
+        document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
+    }
+}  
+    
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+  const firebaseConfig = {
+    databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
+  };
+
+  initializeApp(firebaseConfig);
+  const database = getDatabase();
+  const commentsReference = ref(database);
+  const demo = document.getElementById("demo");
+
+  onValue(commentsReference, (snapshot) => {
+    demo.innerHTML = "<tbody> <tr><th>TLFNR</th> <th>POENG</th> <th>DEL</th> <th>RES</th> </tr></tbody>";
+    const parsedObject = snapshot.val();
+
+    for (const key in parsedObject) {
+      demo.innerHTML += `<tr>
+        <td>${key}</td>
+        <td>
+          <span id="${key}" data-value="${parsedObject[key]}">➖</span>
+          <input id="${key}" class="input" value="${parsedObject[key]}">
+          <span id="${key}" data-value="${parsedObject[key]}">➕</span>
+        </td>
+        <td id="${key}">🗑️</td>
+        <td id="${key}" class="">🔄</td>
+      </tr>`;
+    }
+  });
+  
+demo.addEventListener("click", (event) => {
+const xx = event.target.innerHTML;
+
+if (xx === "🔄") {
+  set(ref(database, event.target.id), 0);
+}
+
+if (xx === "🗑️") {
+remove(ref(database, event.target.id));
+}
+  
+if (xx === "➕" && event.target.dataset.value == 8 ) {
+  set(ref(database, event.target.id), 0);
+}
+  
+if (xx === "➕" && event.target.dataset.value < 8 ) {
+    const currentValue = parseInt(event.target.dataset.value);
+    set(ref(database, event.target.id), currentValue + 1 );
+}
+
+if (xx === "➖" && event.target.dataset.value > 0 ) {
+    const currentValue = parseInt(event.target.dataset.value);
+    set(ref(database, event.target.id), currentValue - 1 );
+}
+
+});
+</script>
+
+
+</body>
+</html>
