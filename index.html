@@ -144,7 +144,7 @@
     margin-top: 10px;
     margin-bottom: 10px;
     color: #ffffff;
-    background-color: #1c9f21;
+    background-color: rgb(24 200 31);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -328,7 +328,7 @@
             <li><b>Registrer Mobilnummeret:</b> For å delta i lojalitetsprogrammet, vennligst start med å registrere ditt mobilnummer. Nummeret må starte med 4 eller 9.</li>
             <li><b>Generering av QR-Kode:</b> Etter registrering, blir en unik QR-kode generert og knyttet til din profil.</li>
             <li><b>QR-Kode Bruk:</b> Hver gang du kjøper en stor pizza, blir QR-koden din skannet av personalet for å registrere kjøpet og legge til et digitalt stempel på din profil.</li>
-              <li id="trinn2"><b>Registrering:</b> Ved å registrere deg i lojalitetsprogrammet, oppnår du faktisk en effektiv rabatt på omtrent 15 % på hver av dine pizzaer.</li>
+              <li id="trinn2"><b>Registrering:</b> Ved å registrere deg i lojalitetsprogrammet, oppnår du faktisk en effektiv rabatt på omtrent 20 % på hver av dine pizzaer.</li>
         </ol>
     </li>
     <li>
@@ -351,13 +351,13 @@
         <strong>Trinn 4: Hvordan Bruke Din Gratis Pizza</strong>
         <ol>
             <li><b>Bestill på telefon:</b> Du kan benytte din gratis pizzakupong ved å bestille over telefon eller direkte ved siden av vognen.</li>
-            <li id="trinn5"><b>Online Bestilling:</b> Eller bestill fra "Bestill.online"-siden, velg "Kontantbetaling" og merk "9. pizza gratis".</li>
+            <li id="trinn5"><b>Online Bestilling:</b> Eller bestill fra "Bestill.online"-siden, velg "Kontantbetaling" og merk "6. pizza gratis".</li>
         </ol>
     </li>
     <li>
         <strong>Betingelser</strong>
         <ol>
-            <li><b>9. Pizza Gratis:</b> Få hver niende store pizza gratis ved kjøp til full pris i app eller nett, ved henting.</li>
+            <li><b>9. Pizza Gratis:</b> Få hver sjette store pizza gratis ved kjøp til full pris i app eller nett, ved henting.</li>
             <li><b>Begrensninger:</b> Lojalitetsgaven kan ikke brukes på 'lag din egen' pizza.</li>
     </li>
     <li>
@@ -431,10 +431,10 @@
            
     kupon.innerHTML = null;
     if (specificKey.length >= 8) {  
-            
+      //rgb(24 200 31)
     for (let index = 1; index <= 5; index++) {
     let green = index * 10; 
-    kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green}, 160, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;  
+    kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;  
     }
 
     updateFirebase(specificKey);
