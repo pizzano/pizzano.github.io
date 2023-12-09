@@ -110,11 +110,11 @@ if (xx === "🗑️") {
 remove(ref(database, event.target.id));
 }
   
-if (xx === "➕" && event.target.dataset.value == 8 ) {
+if (xx === "➕" && event.target.dataset.value == 5 ) {
   set(ref(database, event.target.id), 0);
 }
   
-if (xx === "➕" && event.target.dataset.value < 8 ) {
+if (xx === "➕" && event.target.dataset.value < 5 ) {
     const currentValue = parseInt(event.target.dataset.value);
     set(ref(database, event.target.id), currentValue + 1 );
 }
