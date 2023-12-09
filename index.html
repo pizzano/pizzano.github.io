@@ -9,7 +9,7 @@
   <script src="https://bestill.online/styles.js"></script>
   <link rel="icon" type="image/png" href="pizzano.github.io/img/s-logo.png">
 <script>
-      document.addEventListener('contextmenu', function(e) {
+      document.addEventListener('contextmen', function(e) {
         e.preventDefault();
     }, false);
   
@@ -125,35 +125,35 @@
     }
 
     #kupon {
-      min-height: 170px;
-      height: auto;
-      font-size: 25px;
-      background-color: white;
-      display: flex;
-      gap: 6%;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      align-content: stretch;
+    min-height: 170px;
+    height: auto;
+    font-size: 25px;
+    background-color: white;
+    display: flex;
+    gap: 3%;
+    align-items: center;
+    justify-content: center;
     }
 
     span.aktiv,
     span.pasif {
-      width: 1.4em;
-      height: 1.4em;
-      padding: 4%;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      border-radius: 50%;
-      color: #ffffff;
-      background-color: #1c9f21;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.3px dashed #555;
+    width: 8%;
+    height: 4em;
+    border-radius: 10%;
+    padding: 4%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #ffffff;
+    background-color: #1c9f21;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.3px dashed #555;
+    flex-wrap: wrap;
     }
 
     span.pasif {
+      filter: grayscale(100%);
       background-color: #9e9e9e82;
       color: #223255;
     }
@@ -257,6 +257,14 @@
         width: 175px;
         height: 50px;
     }
+    .pizza{
+    font-size: 50px;
+    border: 1px dashed green;
+    border-radius: 10%;
+    width: 100px;
+    height: 60px;
+    margin: 10px;
+    }
   </style>
 </head>
 <body>
@@ -275,7 +283,7 @@
       <div class="size baslik" id="kupon"> <!-- Content here --></div>
 
       <div class="size center baslik alt-radius">
-        <span>Vi spanderer hver 9. store pizza.
+        <span>Vi spanderer hver 6. store pizza.
           <span onclick="scrollToFordeler(5);" class="linkBtn trinn">ⓘ</span>
         </span>
       </div>
@@ -418,7 +426,7 @@
     kupon.innerHTML = null;
     if (specificKey.length >= 8) {  
             
-    for (let index = 1; index <= 8; index++) {
+    for (let index = 1; index <= 5; index++) {
     let green = index * 10; 
     kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green}, 160, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;  
     }
@@ -426,8 +434,8 @@
     updateFirebase(specificKey);
       
     }else{
-    for (let index = 1; index <= 8; index++) {
-    kupon.innerHTML += `<span class="pasif"> ${index} </span>`;
+    for (let index = 1; index <= 5; index++) {
+    kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza">🍕</span></span>`;
       }
     }
   }
@@ -439,10 +447,10 @@
       const kupon = document.getElementById('kupon');
       const value = snapshot.val();
       kupon.innerHTML = null;
-      for (let index = 1; index <= 8; index++) {
-        kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +'</span>' : '<span class="pasif">'+ index +'</span>'}`;
+      for (let index = 1; index <= 5; index++) {
+        kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza">🍕</span></span>' : '<span class="pasif">'+ index +' <span class="pizza">🍕</span></span>'}`;
       }
-      if (value == 8) {
+      if (value == 5) {
         kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://bestill.online/img/gratis.gif?raw=true" class="">`;
       }
     });
