@@ -259,12 +259,18 @@
     }
     .pizza{
     font-size: 50px;
-    border: 1px dashed green;
-    border-radius: 10%;
-    width: 100px;
-    height: 60px;
-    margin: 10px;
+    display:flex;
     }
+@keyframes spinAndPulse {
+    0%, 100% { transform: scale(0.9) rotate(0deg); }
+    12.5%, 37.5%, 62.5%, 87.5% { transform: scale(1.1) rotate(-20deg); }
+    25%, 50%, 75% { transform: scale(1) rotate(20deg); }
+}
+
+.pizza img {
+    animation: spinAndPulse 4s linear infinite;
+}
+
   </style>
 </head>
 <body>
@@ -435,7 +441,7 @@
       
     }else{
     for (let index = 1; index <= 5; index++) {
-    kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza">🍕</span></span>`;
+    kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>`;
       }
     }
   }
@@ -448,7 +454,7 @@
       const value = snapshot.val();
       kupon.innerHTML = null;
       for (let index = 1; index <= 5; index++) {
-        kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza">🍕</span></span>' : '<span class="pasif">'+ index +' <span class="pizza">🍕</span></span>'}`;
+        kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
       }
       if (value == 5) {
         kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
