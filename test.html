@@ -1,0 +1,154 @@
+<html lang="tr">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+ body {
+  font-family: 'Arial', sans-serif;
+  background-color: #212c6a;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  zoom:90%;
+}
+.container {
+  min-width: 350px;
+  max-width: 450px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #FFF;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  border-radius: 13px; /* Eklendi */
+}
+.header, .footer {
+  background-color: #3F51B5;
+  height: 40px;
+  color: white;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header {
+  border-radius: 10px 10px 0 0; /* Güncellendi */
+}
+.footer {
+  border-radius: 0 0 10px 10px; /* Güncellendi */
+}
+.main {
+display: flex;
+    width: 100%;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+#kupon {
+  margin:10px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+.status {
+  width: 4.2em;
+  height: 100px;
+  background-color: #3bc13b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  border-radius: 10%;
+}
+.status img {
+  max-width: 50px;
+  animation: spinAndPulse 8s linear infinite;
+}
+  
+  @keyframes spinAndPulse {
+    0%, 100% { transform: scale(0.9) rotate(0deg); }
+    12.5%, 37.5%, 62.5%, 87.5% { transform: scale(1.1) rotate(-20deg); }
+    25%, 50%, 75% { transform: scale(1) rotate(20deg); }
+}
+  .input {
+  margin:10px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+	}
+   .input  input{
+   width:80%;
+	  height: 40px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 8px;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+	border-radius: 6px;
+   }
+   .btn{
+   width:90%;
+	 height: 60px;
+      box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
+      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
+      font-weight: bold;
+      font-size: 25px;
+      color: white;
+      border-radius:11px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+</style>
+</head>
+<body>
+	<div class="container header " style="border-radius:0;background-color:#04ae04"> Pizza Party er åpent nå</div>
+    <br>
+	<div class="container header btn"> Bestill Pizza Her</div>
+    <br>
+<div class="container">
+  <div class="header">
+  ✅ Nummeret ditt er registrert!
+  </div>
+  
+  <div class="main">
+ <div class="input"> <input style=""> </div>
+	<div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
+  <div id="kupon">
+    <!-- Kuponlar JavaScript ile eklenecek --> 
+    </div>
+  </div>
+  <div class="footer">
+    Vi spanderer hver 6. store pizza. ⓘ
+  </div>
+</div>
+<br>
+<div class="container">
+  <div class="header">
+    QR-koden skannes av betjeningen!
+  </div>
+  <div class="main">
+    <img id="QRCODE" style="width:95%;  margin:10px;" src="https://chart.googleapis.com/chart?cht=qr&chl=1234&chs=400x400&chld=L|0"> 
+  </div>
+  <div class="footer">
+   Klikk på QR-koden for å fremvise!
+  </div>
+</div>
+
+<script>
+  const kuponContainer = document.getElementById('kupon');
+  for (let index = 1; index <= 5; index++) {
+    kuponContainer.innerHTML += `<div class="status">${index}<img src="https://pizzano.github.io/img/pizza.png"></div>`;
+  }
+</script>
+
+</body>
+</html>
