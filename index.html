@@ -1,5 +1,4 @@
 <html lang="nb">
-
 <head>
   <meta charset="UTF-8">
   <title>Pizza Party - Hellemyr Kristiansand - Online Bestilling</title>
@@ -53,7 +52,7 @@
     .header {
       overflow: auto;
       box-shadow: 2px 1px 10px 0px black;
-      background: linear-gradient(360deg, #2f7bd38a, #387bc8);
+    background: linear-gradient(360deg, #2b63a4, #387bc8);
       height: 100%;
       max-width: 500px;
       margin: auto;
@@ -66,17 +65,21 @@
     }
 
     .size {
+          box-shadow: -1px 1px 3px 0px rgb(0 0 0 / 66%);
+
       zoom: 90%;
       min-width: 300px;
       max-width: 450px;
       width: 90%;
       cursor: pointer;
     }
-
+    .baslik1{
+      color:#ffffffe0;
+    box-shadow: -1px 1px 3px 0px rgb(0 0 0 / 66%);
+      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
+    }
     .baslik {
-      background-color: #00007791;
       border: 1px solid black;
-      color: white;
       height: 50px;
       font-size: 18px;
     }
@@ -318,17 +321,17 @@
     <div class="size center baslik linkBtn" style="animation: pulse1 1s infinite;width: 90%;" onclick="MenuStart();">» Bestill Pizza Her «</div>
 
     <div class="center" style="width:100%;">
-      <div id="register" class="size center baslik ust-radius"><span>Registrer ditt nummer nedenfor <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span></div>
+      <div id="register" class="size center baslik ust-radius baslik1"><span>Registrer ditt nummer nedenfor <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span></div>
 
       <input type="tel" class="size center baslik" id="mobilnr" oninput="" placeholder="+47 ________" autocomplete="off">
 
-      <div class="size center baslik"><span>Dine digitale kuponger <span onclick="scrollToFordeler(2);" class="linkBtn trinn">ⓘ</span> </span></div>
+      <div class="size center baslik baslik1"><span>Dine digitale kuponger <span onclick="scrollToFordeler(2);" class="linkBtn trinn">ⓘ</span> </span></div>
 
       <div class="size baslik" id="kupon">
         <!-- Content here -->
       </div>
 
-      <div class="size center baslik alt-radius">
+      <div class="size center baslik alt-radius baslik1">
         <span>Vi spanderer hver 6. store pizza.
           <span onclick="scrollToFordeler(5);" class="linkBtn trinn">ⓘ</span>
         </span>
@@ -337,9 +340,9 @@
     </div>
 
     <div class="center" style="width:100%;" id="qrheader" onclick="this.classList.toggle('full'); document.querySelector('div').scrollTop = 0;">
-      <div class="size center baslik ust-radius" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
+      <div class="size center baslik ust-radius baslik1" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
       <img class="size center" id="QRCODE" style="height:450px;border:1px solid black">
-      <div class="size center baslik alt-radius"> Klikk på QR-koden for å fremvise!</div>
+      <div class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
     </div>
 
     <div class="size center baslik linkBtn" style="margin-bottom:10px;font-size:20px;height:45px;" onclick="scrollToFordeler();">» Vilkår for lojalitetsprogram «</div>
