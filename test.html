@@ -1,154 +1,602 @@
-<html lang="tr">
+<html lang="nb">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
+  <meta charset="UTF-8">
+  <title>Pizza Party - Hellemyr Kristiansand - Online Bestilling</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="keywords" content="Pizza, online bestilling, Pizza Party, Hellemyr Kristiansand, takeaway, levering, Italiensk pizza Vågsbygd, Hellemyr, Slettheia, Tinnheia" />
+  <meta name="description" content="Pizza til folket! Bestill pizza fra Pizza Party. Ferske bunner hver dag. Takeaway og levering. Pizza Party Kristiansand, online pizza bestilling nettsted. Ekte pizza med 100% italienske ingredienser, stekt i profesjonell stein-ovn." />
+  <script src="https://bestill.online/styles.js"></script>
+  <link rel="icon" type="image/png" href="pizzano.github.io/img/s-logo.png">
+  <script>
+    document.addEventListener('contextmen', function(e) {
+      e.preventDefault();
+    }, false);
+    document.onkeydown = function(e) {
+      e = e || window.event;
+      var key = e.keyCode || e.which;
+      if (key == 85 && e.ctrlKey ||
+        key == 83 && e.ctrlKey ||
+        key == 73 && e.ctrlKey && e.shiftKey ||
+        key == 67 && e.ctrlKey && e.shiftKey ||
+        key == 74 && e.ctrlKey && e.shiftKey ||
+        key == 123) {
+        e.preventDefault();
+        return false;
+      }
+    };
+  </script>
 
- body {
-  font-family: 'Arial', sans-serif;
-  background-color: #212c6a;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  zoom:90%;
+  <style>
+    * {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    body,
+    html {
+      background: linear-gradient(0deg, #0f40798a, #0f4079);
+      font-family: Arial, sans-serif;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    @media screen and (min-width: 500px) {}
+
+    .header {
+      overflow: auto;
+      box-shadow: 2px 1px 10px 0px black;
+    background: linear-gradient(360deg, #2b63a4, #387bc8);
+      height: 100%;
+      max-width: 500px;
+      margin: auto;
+      gap: 30px;
+    }
+
+    .center {
+      display: grid;
+      place-items: center;
+    }
+
+    .size {
+          box-shadow: -1px 1px 3px 0px rgb(0 0 0 / 66%);
+      zoom: 90%;
+      min-width: 300px;
+      max-width: 450px;
+      width: 90%;
+      cursor: pointer;
+    }
+ .baslik1 {
+    color: #ffffffe0;
+    box-shadow: -1px 1px 3px 0px rgba(0, 0, 0, 0.66);
+    background-image: radial-gradient(circle, #293b9a 0%, #283996 70%, #3749b0 100%);
 }
-.container {
-  min-width: 350px;
-  max-width: 450px;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #FFF;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-  border-radius: 13px; /* Eklendi */
-}
-.header, .footer {
-  background-color: #3F51B5;
-  height: 40px;
-  color: white;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.header {
-  border-radius: 10px 10px 0 0; /* Güncellendi */
-}
-.footer {
-  border-radius: 0 0 10px 10px; /* Güncellendi */
-}
-.main {
-display: flex;
-    width: 100%;
-    align-items: center;
-    flex-direction: column;
-    justify-content: center;
-}
-#kupon {
-  margin:10px;
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-}
-.status {
-  width: 4.2em;
-  height: 100px;
-  background-color: #3bc13b;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
-  border-radius: 10%;
-}
-.status img {
-  max-width: 50px;
-  animation: spinAndPulse 8s linear infinite;
-}
-  
-  @keyframes spinAndPulse {
-    0%, 100% { transform: scale(0.9) rotate(0deg); }
-    12.5%, 37.5%, 62.5%, 87.5% { transform: scale(1.1) rotate(-20deg); }
-    25%, 50%, 75% { transform: scale(1) rotate(20deg); }
-}
-  .input {
-  margin:10px;
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-	}
-   .input  input{
-   width:80%;
-	  height: 40px;
-      font-size: 22px;
-      text-align: center;
-      letter-spacing: 8px;
-      background-color: white;
-      color: black;
-      font-weight: bold;
-	border-radius: 6px;
-   }
-   .btn{
-   width:90%;
-	 height: 60px;
+
+    .baslik {
+      border: 1px solid black;
+      height: 50px;
+      font-size: 18px;
+    }
+
+    .linkBtn {
+      height: 60px;
+      border-radius: 10px;
       box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
       background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
       font-weight: bold;
       font-size: 25px;
       color: white;
-      border-radius:11px;
-  animation: pulse 1.5s infinite;
-}
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-</style>
+    }
+
+    @keyframes pulse1 {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.02);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    #mobilnr {
+      height: 50px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 8px;
+      border: none;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+    }
+
+    #mobilnr:focus {
+      outline: 1px solid red;
+    }
+
+    #mobilnr::placeholder {
+      opacity: 0.6;
+    }
+
+    #kupon {
+      min-height: 170px;
+      height: auto;
+      font-size: 25px;
+      background-color: white;
+      display: flex;
+      gap: 3%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    span.aktiv,
+    span.pasif {
+      width: 8%;
+      height: 4em;
+      border-radius: 10%;
+      padding: 4%;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      color: #ffffff;
+      background-color: rgb(24 200 31);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.3px dashed #555;
+      flex-wrap: wrap;
+    }
+
+    span.pasif {
+      filter: grayscale(100%);
+      background-color: #9e9e9e82;
+      color: #223255;
+    }
+
+    #MenuBtn,
+    .pulse {
+      cursor: pointer;
+      position: fixed;
+      right: 10px;
+      bottom: 40px;
+      height: 50px;
+      width: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .pulse::before,
+    .pulse::after {
+      content: '';
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      border-radius: 50%;
+      box-shadow: 0 0 5px 2px #f00;
+      animation: pulse 2s infinite;
+    }
+
+    .pulse::after {
+      animation-delay: 1s;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    .saat {
+      width: 100%;
+      height: 50px;
+    }
+
+    .full {
+      display: grid;
+      place-items: center;
+      align-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      border: none;
+      background-color: #000000ad;
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .on {
+      visibility: visible;
+    }
+
+    .off {
+      visibility: hidden;
+    }
+
+    .ust-radius {
+      border-radius: 10px 10px 0px 0px;
+    }
+
+    .alt-radius {
+      border-radius: 0px 0px 10px 10px;
+    }
+
+    li {
+      border-radius: 10px;
+      background-color: #ffffffba;
+      border: 1px solid #8080803b;
+      padding: 7px;
+      margin: 5px;
+      list-style-type: none;
+    }
+
+    #kupon img {
+      width: 50px;
+    }
+
+    @keyframes yarimSonme {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      60% {
+        opacity: 0.7;
+      }
+    }
+
+    .trinn {
+      background-image: radial-gradient(circle, #219dff00, #db313100, #3e51c000);
+      box-shadow: 0px 0px 0px 0px rgb(0 0 0 / 66%);
+      font-size: 20px;
+      color: #FFEB3B;
+      animation: yarimSonme 2s infinite ease-in-out;
+      margin-left: 10px;
+    }
+
+    #vilkor strong {
+      color: #FF5722;
+    }
+
+    .market {
+      width: 175px;
+      height: 50px;
+    }
+
+    .pizza {
+      font-size: 50px;
+      display: flex;
+    }
+
+    @keyframes spinAndPulse {
+
+      0%,
+      100% {
+        transform: scale(0.9) rotate(0deg);
+      }
+
+      12.5%,
+      37.5%,
+      62.5%,
+      87.5% {
+        transform: scale(1.1) rotate(-20deg);
+      }
+
+      25%,
+      50%,
+      75% {
+        transform: scale(1) rotate(20deg);
+      }
+    }
+
+    .pizza img {
+      animation: spinAndPulse 8s linear infinite;
+    }
+  </style>
 </head>
+
 <body>
-	<div class="container header " style="border-radius:0;background-color:#04ae04"> Pizza Party er åpent nå</div>
-    <br>
-	<div class="container header btn"> Bestill Pizza Her</div>
-    <br>
-<div class="container">
-  <div class="header">
-  ✅ Nummeret ditt er registrert!
-  </div>
-  
-  <div class="main">
- <div class="input"> <input style=""> </div>
-	<div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
-  <div id="kupon">
-    <!-- Kuponlar JavaScript ile eklenecek --> 
+  <div class="header center">
+    <div class="saat center" id="saat"> <span id="hours"> *** </span> </div>
+
+    <div class="size center baslik linkBtn" style="animation: pulse1 1s infinite;width: 90%;" onclick="MenuStart();">» Bestill Pizza Her «</div>
+
+    <div class="center" style="width:100%;">
+      <div id="register" class="size center baslik ust-radius baslik1"><span>Registrer ditt nummer nedenfor <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span></div>
+
+      <input type="tel" class="size center baslik" id="mobilnr" oninput="" placeholder="+47 ________" autocomplete="off">
+
+      <div class="size center baslik baslik1"><span>Dine digitale kuponger <span onclick="scrollToFordeler(2);" class="linkBtn trinn">ⓘ</span> </span></div>
+
+      <div class="size baslik" id="kupon">
+        <!-- Content here -->
+      </div>
+
+      <div class="size center baslik alt-radius baslik1">
+        <span>Vi spanderer hver 6. store pizza.
+          <span onclick="scrollToFordeler(5);" class="linkBtn trinn">ⓘ</span>
+        </span>
+      </div>
+
     </div>
-  </div>
-  <div class="footer">
-    Vi spanderer hver 6. store pizza. ⓘ
-  </div>
-</div>
-<br>
-<div class="container">
-  <div class="header">
-    QR-koden skannes av betjeningen!
-  </div>
-  <div class="main">
-    <img id="QRCODE" style="width:95%;  margin:10px;" src="https://chart.googleapis.com/chart?cht=qr&chl=1234&chs=400x400&chld=L|0"> 
-  </div>
-  <div class="footer">
-   Klikk på QR-koden for å fremvise!
-  </div>
-</div>
 
-<script>
-  const kuponContainer = document.getElementById('kupon');
-  for (let index = 1; index <= 5; index++) {
-    kuponContainer.innerHTML += `<div class="status">${index}<img src="https://pizzano.github.io/img/pizza.png"></div>`;
-  }
-</script>
+    <div class="center" style="width:100%;" id="qrheader" onclick="this.classList.toggle('full'); document.querySelector('div').scrollTop = 0;">
+      <div class="size center baslik ust-radius baslik1" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
+      <img class="size center" id="QRCODE" style="height:450px;border:1px solid black">
+      <div class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
+    </div>
 
+    <div class="size center baslik linkBtn" style="margin-bottom:10px;font-size:20px;height:45px;" onclick="scrollToFordeler();">» Vilkår for lojalitetsprogram «</div>
+
+    <div onclick="window.open('https://g.page/r/CeiwWtAkMyrLEBI/review', '_blank');" class="size center baslik linkBtn" style="animation: pulse1 1s infinite;font-size: 18px;border-radius: 10px;display: flex;justify-content: center;flex-direction: column;">
+    <div class="center">Vurder oss på Google</div>
+    <div class="center">⭐⭐⭐⭐⭐ 4.9</div>
+</div>
+    
+    <div class="size" style="display: flex;justify-content: space-evenly;box-shadow:none;">
+      <img class="market" src="https://www.helsenorge.no/4ad5c4/globalassets/mobilapp/badges/apple-app-store-badge.png">
+      <img class="market" src="https://www.helsenorge.no/4ad5c2/globalassets/mobilapp/badges/google-play-badge.png">
+    </div>
+    <br>
+    
+    <div onclick="MenuStart();" id="MenuBtn" class="pulse">
+      <img id="MenuBtn1" src="https://bestill.online/img/btn.png" style="width: 100%; height: auto;">
+    </div>
+
+    <iframe id="IFRAME" class="full off" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe>
+
+    <div id="vilkor" class="full off" onclick="vilkor.classList.toggle('off');" style="display: grid; align-content: center;">
+      <div id="progress" class="center"> 0% </div>
+      <ol class="header size" id="Mydiv" style="max-width: 600px;gap: 2px;height:95%;background-color: #f6f6f600; box-shadow: 0px 0px 0px 0px black;">
+        <li class="baslik center ust-radius" style="height:20px;display: flex; justify-content: space-between;"> <span><b>Pizza Party Lojalitetsprogram:</b></span> <span style="float:left;cursor:pointer;">❌</span></li>
+
+        <ol>
+          <li>
+            <strong>Trinn 1: Registrering</strong>
+            <ol>
+              <li><b>Registrer Mobilnummeret:</b> For å delta i lojalitetsprogrammet, vennligst start med å registrere ditt mobilnummer. Nummeret må starte med 4 eller 9.</li>
+              <li><b>Generering av QR-Kode:</b> Etter registrering, blir en unik QR-kode generert og knyttet til din profil.</li>
+              <li><b>QR-Kode Bruk:</b> Hver gang du kjøper en stor pizza, blir QR-koden din skannet av personalet for å registrere kjøpet og legge til et digitalt stempel på din profil.</li>
+              <li id="trinn2"><b>Registrering:</b> Ved å registrere deg i lojalitetsprogrammet, oppnår du faktisk en effektiv rabatt på omtrent 20 % på hver av dine pizzaer.</li>
+            </ol>
+          </li>
+          <li>
+            <strong>Trinn 2: Overvåk Profilen Din</strong>
+            <ol>
+              <li><b>Samle Stempler:</b> For hver stor pizza, legges et digitalt stempel til din profil. Dette programmet er kun gyldig for store pizzaer.</li>
+              <li><b>Fremgang med Stempler:</b> Etter hver skanning endrer et stempel i profilen din farge til grønn, noe som viser din fremgang.</li>
+              <li><b>Spor Antall Kjøp:</b> Profilen viser hvor mange store pizzaer du trenger for en gratis pizza.</li>
+              <li><b>Ansvar for Bruker:</b> Det er ditt ansvar å sørge for at QR-koden din blir skannet av personalet hver gang du kjøper en stor pizza for å sikre at kjøpet registreres.</li>
+            </ol>
+          </li>
+          <li>
+
+            <strong>Trinn 3: Motta Gratis Stor Pizza</strong>
+            <ol>
+              <li><b>Varsel om Gratis Pizza:</b> Når du har kjøpt sjette store pizzaer, vil du motta en 'GRATULERER!'-melding på profilen din, og da vil din neste pizza være gratis.</li>
+            </ol>
+          </li>
+          <li>
+            <strong>Trinn 4: Hvordan Bruke Din Gratis Pizza</strong>
+            <ol>
+              <li><b>Bestill på telefon:</b> Du kan benytte din gratis pizzakupong ved å bestille over telefon eller direkte ved siden av vognen.</li>
+            
+            </ol>
+          </li>
+          <li>
+            <strong>Betingelser</strong>
+            <ol>
+              <li><b>6. Pizza Gratis:</b> Få hver sjette store pizza gratis ved kjøp til full pris i app eller nett, ved henting.</li>
+              <li><b>Begrensninger 1:</b> Lojalitetsgaven kan ikke brukes på 'lag din egen' pizza.</li>
+              <li><b>Begrensninger 2:</b>   lojalitetsprogrammet kan ikke kombineres med andre rabatter og tilbud!</li>
+          </li>
+           <li>
+            <b>Spar Penger:</b> Få hver 6. store pizza gratis.
+          </li>
+          <li>
+            <b>Tilgjengelighet:</b> Det digitale stempelkortet er alltid tilgjengelig på telefonen.
+          </li>
+        </ol>
+        <li>
+          <strong>Vilkår og Betingelser</strong>
+          <ul>
+            <li><b>Rett til Endringer:</b> Pizza Party kan endre betingelser og vilkår med umiddelbar effekt.</li>
+          </ul>
+        </li>
+      </ol>
+      <li class="baslik center alt-radius" style="height:20px;display: flex;justify-content: space-evenly;">
+        <div onclick="event.stopPropagation(); Mydiv.scrollTop = 0;">⤴️ Gå Opp</div>
+        <div>❌ Lukk </div>
+      </li>
+      </ol>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+    // Firebase yapılandırması ve başlatılması
+    const firebaseConfig = {
+      databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
+    };
+    initializeApp(firebaseConfig);
+    const database = getDatabase();
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobilnr = document.getElementById('mobilnr');
+      const kupon = document.getElementById('kupon');
+      // LocalStorage kontrolü ve numara yükleme
+      mobilnr.value = localStorage.getItem('MOBIL') || '';
+      updateUI(mobilnr.value);
+      // Numara girişinde güncelleme
+      mobilnr.oninput = () => {
+        if (mobilnr.value.length >= 8) mobilnr.blur();
+        mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
+        localStorage.setItem('MOBIL', mobilnr.value);
+        updateUI(mobilnr.value);
+      };
+    });
+    // UI ve Firebase güncelleme fonksiyonu
+    function updateUI(specificKey) {
+      var firstDigit = parseInt(specificKey[0]);
+      var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
+      var register = document.getElementById('register');
+      var QRCODE = document.getElementById('QRCODE');
+      if (specificKey.length > 0 && invalidStartDigits.includes(firstDigit)) {
+        register.innerHTML = `❌ Nummer må begynne med 4 og 9.`;
+        QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
+      } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+        register.innerHTML = `✅ Nummeret ditt er registrert!`;
+        QRCODE.src = `https://chart.googleapis.com/chart?cht=qr&chl=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}&chs=400x400&chld=L|0`;
+      } else {
+        QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
+        register.innerHTML = `<span>Registrer ditt nummer nedenfor! <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span>`;
+      }
+      kupon.innerHTML = null;
+      if (specificKey.length >= 8) {
+        //rgb(24 200 31)
+        for (let index = 1; index <= 5; index++) {
+          let green = index * 10;
+          kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;
+        }
+        updateFirebase(specificKey);
+      } else {
+        for (let index = 1; index <= 5; index++) {
+          kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>`;
+        }
+      }
+    }
+    // Firebase güncelleme fonksiyonu
+    function updateFirebase(specificKey) {
+      const specificKeyReference = ref(database, specificKey);
+      onValue(specificKeyReference, (snapshot) => {
+        const kupon = document.getElementById('kupon');
+        const value = snapshot.val();
+        kupon.innerHTML = null;
+        for (let index = 1; index <= 5; index++) {
+          kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
+        }
+        if (value == 5) {
+          kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
+        }
+      });
+    }
+  </script>
+
+  <script>   
+    function scrollToFordeler(trinn) {
+      var myDiv = document.getElementById('Mydiv');
+      vilkor.classList.toggle('off');
+      // Fjern bakgrunnsfarge fra alle relevante elementer først
+      for (let i = 1; i <= 4; i++) {
+        var existingElements = document.querySelectorAll(`li:nth-child(${i})`);
+        existingElements.forEach(function(element) {
+          element.style.backgroundColor = null;
+        });
+      }
+      // Scroll til riktig posisjon basert på valgt trinn
+      if (trinn == 5) myDiv.scrollTop = trinn5.offsetTop;
+      if (trinn == 2) myDiv.scrollTop = trinn2.offsetTop;
+      if (trinn == 1) myDiv.scrollTop = vilkor.offsetTop;
+      if (trinn) {
+        for (let i = 1; i <= 4; i++) {
+          document.querySelector(`li:nth-child(${trinn}) > ol > li:nth-child(${i})`).style = "background-color: #ffc10769;animation: yarimSonme 2s ease-in-out;";
+        }
+      }
+    }
+    Mydiv.onscroll = function() {
+      var scrollPosition = Mydiv.scrollTop;
+      var divHeight = Mydiv.scrollHeight - Mydiv.clientHeight;
+      var progres = (scrollPosition / divHeight) * 90;
+      progress.style.cssText = `border-radius:5px;height: 13px; max-width:540px; font-size:13px;width: ${progres.toFixed(0)}%; background-color: #21b027;`;
+      progress.innerHTML = `${Math.ceil(progres*1.11)}%`;
+    };
+    const urlParams = new URLSearchParams(window.location.search);
+    const specificKey = urlParams.get("menu");
+    if (specificKey) {
+      MenuStart();
+    }
+    var refreshTimer;
+
+    function MenuStart() {
+      // Mevcut zamanlayıcıyı durdur
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+      }
+      saat.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+      IFRAME.classList.toggle('off');
+      qrheader.classList.remove('full');
+      vilkor.classList.add('off');
+      if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
+        MenuBtn1.src = "https://bestill.online/img/btn1.png";
+      } else {
+        // Zamanlayıcıyı her 7 dakika bir refreshIframe'i çağıracak şekilde ayarla
+        refreshTimer = setInterval(refreshIframe, 7 * 60 * 1000); // 7 min delay
+        MenuBtn1.src = "https://bestill.online/img/btn.png";
+      }
+    }
+
+    function refreshIframe() {
+      console.log("7 Dk da bir ama anasayfa'dayken")
+      var iframe = document.getElementById('IFRAME');
+      iframe.src = iframe.src;
+      clearInterval(refreshTimer);
+    }
+
+    function updateStatus() {
+      const currentDate = new Date();
+      const dayOfWeek = currentDate.getDay();
+      const currentHour = currentDate.getHours();
+      let themeColor = document.querySelector('meta[name="theme-color"]');
+      if (!themeColor) {
+        themeColor = document.createElement("meta");
+        themeColor.name = "theme-color";
+        document.head.appendChild(themeColor);
+      }
+      if (dayOfWeek === 1) { // Mandag
+        hours.textContent = `🚫 Pizza Party er stengt på mandager.`;
+        saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
+        themeColor.content = "#ef4e4b";
+      } else if (currentHour >= 15 && currentHour < 21) {
+        hours.innerText = `🟢 Åpent i dag fra kl. 15:00 til 21:00`;
+        saat.style = "background-color: #5ac15e;font-size: 17px;color:white;"
+        themeColor.content = "#5ac15e";
+      } else {
+        hours.innerText = `🔴 Pizza Party er stengt nå.`;
+        saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
+        themeColor.content = "#ef4e4b";
+      }
+    }
+    updateStatus();
+    setInterval(updateStatus, 1000 * 30); //30 saniye de acilis saatini guncelle.
+  </script>
 </body>
 </html>
