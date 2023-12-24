@@ -8,25 +8,6 @@
   <meta name="description" content="Pizza til folket! Bestill pizza fra Pizza Party. Ferske bunner hver dag. Takeaway og levering. Pizza Party Kristiansand, online pizza bestilling nettsted. Ekte pizza med 100% italienske ingredienser, stekt i profesjonell stein-ovn." />
   <script src="https://bestill.online/styles.js"></script>
   <link rel="icon" type="image/png" href="pizzano.github.io/img/s-logo.png">
-  <script>
-    document.addEventListener('contextmen', function(e) {
-      e.preventDefault();
-    }, false);
-    document.onkeydown = function(e) {
-      e = e || window.event;
-      var key = e.keyCode || e.which;
-      if (key == 85 && e.ctrlKey ||
-        key == 83 && e.ctrlKey ||
-        key == 73 && e.ctrlKey && e.shiftKey ||
-        key == 67 && e.ctrlKey && e.shiftKey ||
-        key == 74 && e.ctrlKey && e.shiftKey ||
-        key == 123) {
-        e.preventDefault();
-        return false;
-      }
-    };
-  </script>
-
   <style>
     * {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -362,6 +343,7 @@
       <img id="MenuBtn1" src="https://bestill.online/img/btn.png" style="width: 100%; height: auto;">
     </div>
 
+    <iframe id="IFRAME" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe>
 
     <div id="vilkor" class="full off" onclick="vilkor.classList.toggle('off');" style="display: grid; align-content: center;">
       <div id="progress" class="center"> 0% </div>
