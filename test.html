@@ -487,34 +487,6 @@
       });
     }
   </script>
-
-  <script>
-    function updateStatus() {
-      const currentDate = new Date();
-      const dayOfWeek = currentDate.getDay();
-      const currentHour = currentDate.getHours();
-      let themeColor = document.querySelector('meta[name="theme-color"]');
-      if (!themeColor) {
-        themeColor = document.createElement("meta");
-        themeColor.name = "theme-color";
-        document.head.appendChild(themeColor);
-      }
-      if (dayOfWeek === 1) { // Mandag
-        hours.textContent = `🚫 Pizza Party er stengt på mandager.`;
-        saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
-        themeColor.content = "#ef4e4b";
-      } else if (currentHour >= 15 && currentHour < 21) {
-        hours.innerText = `🟢 Åpent i dag fra kl. 15:00 til 21:00`;
-        saat.style = "background-color: #5ac15e;font-size: 17px;color:white;"
-        themeColor.content = "#5ac15e";
-      } else {
-        hours.innerText = `🔴 Pizza Party er stengt nå.`;
-        saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
-        themeColor.content = "#ef4e4b";
-      }
-    }
-    updateStatus();
-    setInterval(updateStatus, 1000 * 30); //30 saniye de acilis saatini guncelle.
-  </script>
+  lll
 </body>
 </html>
