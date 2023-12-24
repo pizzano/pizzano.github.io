@@ -524,8 +524,7 @@
     }
      
     function MenuStart() {
-      
-      IFRAME.classList.toggle('off');
+  
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
@@ -533,6 +532,7 @@
       } else {
        MenuBtn1.src = "https://bestill.online/img/btn.png";
       }
+           IFRAME.classList.toggle('off');
     }
 
     function updateStatus() {
