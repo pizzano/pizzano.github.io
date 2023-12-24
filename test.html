@@ -516,19 +516,6 @@
       progress.style.cssText = `border-radius:5px;height: 13px; max-width:540px; font-size:13px;width: ${progres.toFixed(0)}%; background-color: #21b027;`;
       progress.innerHTML = `${Math.ceil(progres*1.11)}%`;
     };
-    const urlParams = new URLSearchParams(window.location.search);
-    const specificKey = urlParams.get("menu");
-
-    var refreshTimer;
-
-
-
-    function refreshIframe() {
-      console.log("7 Dk da bir ama anasayfa'dayken")
-      var iframe = document.getElementById('IFRAME');
-      iframe.src = iframe.src;
-      clearInterval(refreshTimer);
-    }
 
     function updateStatus() {
       const currentDate = new Date();
