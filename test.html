@@ -343,7 +343,7 @@
       <img id="MenuBtn1" src="https://bestill.online/img/btn.png" style="width: 100%; height: auto;">
     </div>
 
-    <div id="IFRAMEDIV"> <iframe id="IFRAME" class="full off" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe> </div>
+    <div id="IFRAMEDIV"> </div>
 
     <div id="vilkor" class="full off" onclick="vilkor.classList.toggle('off');" style="display: grid; align-content: center;">
       <div id="progress" class="center"> 0% </div>
@@ -524,16 +524,17 @@
     }
      
     function MenuStart() {
-  
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
+        IFRAMEDIV.innerHTML = `<iframe id="IFRAME" class="full off" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe>`;
+         IFRAME.classList.toggle('off');
       } else {
+         IFRAMEDIV.innerHTML = null;
        MenuBtn1.src = "https://bestill.online/img/btn.png";
       }
-           IFRAME.classList.toggle('off');
-    }
+     }
 
     function updateStatus() {
       const currentDate = new Date();
