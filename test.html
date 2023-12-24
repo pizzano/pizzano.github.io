@@ -488,35 +488,7 @@
     }
   </script>
 
-  <script>   
-    function scrollToFordeler(trinn) {
-      var myDiv = document.getElementById('Mydiv');
-      vilkor.classList.toggle('off');
-      // Fjern bakgrunnsfarge fra alle relevante elementer først
-      for (let i = 1; i <= 4; i++) {
-        var existingElements = document.querySelectorAll(`li:nth-child(${i})`);
-        existingElements.forEach(function(element) {
-          element.style.backgroundColor = null;
-        });
-      }
-      // Scroll til riktig posisjon basert på valgt trinn
-      if (trinn == 5) myDiv.scrollTop = trinn5.offsetTop;
-      if (trinn == 2) myDiv.scrollTop = trinn2.offsetTop;
-      if (trinn == 1) myDiv.scrollTop = vilkor.offsetTop;
-      if (trinn) {
-        for (let i = 1; i <= 4; i++) {
-          document.querySelector(`li:nth-child(${trinn}) > ol > li:nth-child(${i})`).style = "background-color: #ffc10769;animation: yarimSonme 2s ease-in-out;";
-        }
-      }
-    }
-    Mydiv.onscroll = function() {
-      var scrollPosition = Mydiv.scrollTop;
-      var divHeight = Mydiv.scrollHeight - Mydiv.clientHeight;
-      var progres = (scrollPosition / divHeight) * 90;
-      progress.style.cssText = `border-radius:5px;height: 13px; max-width:540px; font-size:13px;width: ${progres.toFixed(0)}%; background-color: #21b027;`;
-      progress.innerHTML = `${Math.ceil(progres*1.11)}%`;
-    };
-
+  <script>
     function updateStatus() {
       const currentDate = new Date();
       const dayOfWeek = currentDate.getDay();
