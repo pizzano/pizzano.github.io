@@ -522,15 +522,15 @@
     if (specificKey) {
       MenuStart();
     }
- 
+     
     function MenuStart() {
+      
       IFRAME.classList.toggle('off');
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
       } else {
-      IFRAMEDIV.hidden = !IFRAMEDIV.hidden;
        MenuBtn1.src = "https://bestill.online/img/btn.png";
       }
     }
