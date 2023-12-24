@@ -8,25 +8,6 @@
   <meta name="description" content="Pizza til folket! Bestill pizza fra Pizza Party. Ferske bunner hver dag. Takeaway og levering. Pizza Party Kristiansand, online pizza bestilling nettsted. Ekte pizza med 100% italienske ingredienser, stekt i profesjonell stein-ovn." />
   <script src="https://bestill.online/styles.js"></script>
   <link rel="icon" type="image/png" href="pizzano.github.io/img/s-logo.png">
-  <script>
-    document.addEventListener('contextmen', function(e) {
-      e.preventDefault();
-    }, false);
-    document.onkeydown = function(e) {
-      e = e || window.event;
-      var key = e.keyCode || e.which;
-      if (key == 85 && e.ctrlKey ||
-        key == 83 && e.ctrlKey ||
-        key == 73 && e.ctrlKey && e.shiftKey ||
-        key == 67 && e.ctrlKey && e.shiftKey ||
-        key == 74 && e.ctrlKey && e.shiftKey ||
-        key == 123) {
-        e.preventDefault();
-        return false;
-      }
-    };
-  </script>
-
   <style>
     * {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -392,7 +373,7 @@
 
             <strong>Trinn 3: Motta Gratis Stor Pizza</strong>
             <ol>
-              <li><b>Varsel om Gratis Pizza:</b> Når du har kjøpt femte store pizzaer, vil du motta en 'GRATULERER!'-melding på profilen din, og da vil din neste pizza være gratis.</li>
+              <li><b>Varsel om Gratis Pizza:</b> Når du har kjøpt sjette store pizzaer, vil du motta en 'GRATULERER!'-melding på profilen din, og da vil din neste pizza være gratis.</li>
             </ol>
           </li>
           <li>
@@ -538,9 +519,7 @@
     };
     const urlParams = new URLSearchParams(window.location.search);
     const specificKey = urlParams.get("menu");
-    if (specificKey) {
-      MenuStart();
-    }
+
     var refreshTimer;
 
     function MenuStart() {
