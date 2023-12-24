@@ -490,8 +490,6 @@
   </script>
 
   <script>   
-    IFRAME.hidden = true;
-    
     function scrollToFordeler(trinn) {
       var myDiv = document.getElementById('Mydiv');
       vilkor.classList.toggle('off');
@@ -527,7 +525,8 @@
     var refreshTimer;
 
     function MenuStart() {
-         IFRAMEDIV.hidden = false;
+document.getElementById("IFRAMEDIV").style.visibility = "visible";
+
 
       // Mevcut zamanlayıcıyı durdur
       if (refreshTimer) {
@@ -543,7 +542,7 @@
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
       } else {
-IFRAMEDIV.hidden = !IFRAMEDIV.hidden;
+document.getElementById("IFRAMEDIV").style.visibility = "hidden";
         // Zamanlayıcıyı her 7 dakika bir refreshIframe'i çağıracak şekilde ayarla
         refreshTimer = setInterval(refreshIframe, 7 * 60 * 1000); // 7 min delay
         MenuBtn1.src = "https://bestill.online/img/btn.png";
