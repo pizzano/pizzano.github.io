@@ -529,19 +529,46 @@
       MenuStart();
     }
      
+      var refreshTimer;
+      let xxx = true;
+      let deger = null;
+    
     function MenuStart() {
+          if (deger) {
+            refreshIframe();
+          }
+    clearInterval(refreshTimer);
+
       IFRAME.classList.toggle('ac');
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
-         IFRAME.style="position: fixed;top: 0px; left:0px;"
+         IFRAME.style="position: fixed;top: 0px; left:0px;" 
+      refreshTimer = setInterval(refreshIframe, 10 * 60 * 1000, xxx); // 7 min delay
       } else {
         IFRAME.style="position: fixed;top: -9000px; left: -9000px;"
-       MenuBtn1.src = "https://bestill.online/img/btn.png";
+       MenuBtn1.src = "https://bestill.online/img/btn.png";     
+      refreshTimer = setInterval(refreshIframe, 10 * 60 * 1000); // 7 min delay
+      deger = false;
       }
-     }
 
+     }
+     
+    function refreshIframe(arg) {
+  if (arg) {
+     deger = true;
+      console.log("siparis sayfasindayim");
+      clearInterval(refreshTimer);
+    } else {
+      console.log("Anasayfa da yenilendi");
+      var iframe = document.getElementById('IFRAME');
+      iframe.src = iframe.src;
+      clearInterval(refreshTimer);
+    }
+
+    }
+    
     function updateStatus() {
       const currentDate = new Date();
       const dayOfWeek = currentDate.getDay();
