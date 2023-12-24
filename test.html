@@ -204,14 +204,13 @@
       overflow-y: auto;
     }
 
-.on {
-  opacity: 1; /* Tamamen opak */
-}
+    .on {
+      visibility: visible;
+    }
 
-.off {
-  opacity: 0; /* Tamamen şeffaf */
-}
-
+    .off {
+      visibility: hidden;
+    }
 
     .ust-radius {
       border-radius: 10px 10px 0px 0px;
@@ -344,7 +343,7 @@
       <img id="MenuBtn1" src="https://bestill.online/img/btn.png" style="width: 100%; height: auto;">
     </div>
 
-    <iframe id="IFRAME" class="full off" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe>
+    <div id="IFRAMEDIV"> </div>
 
     <div id="vilkor" class="full off" onclick="vilkor.classList.toggle('off');" style="display: grid; align-content: center;">
       <div id="progress" class="center"> 0% </div>
@@ -534,12 +533,15 @@
         behavior: "smooth",
         block: "start"
       });
-      IFRAME.classList.toggle('off');
+     
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
+    IFRAMEDIV.innerHTML =`<iframe id="IFRAME" class="full off" src="https://www.foodbooking.com/api/fb/_y55_q_j"></iframe>`;
+         IFRAME.classList.toggle('off');
       } else {
+    IFRAMEDIV.innerHTML =``;
         // Zamanlayıcıyı her 7 dakika bir refreshIframe'i çağıracak şekilde ayarla
         refreshTimer = setInterval(refreshIframe, 7 * 60 * 1000); // 7 min delay
         MenuBtn1.src = "https://bestill.online/img/btn.png";
