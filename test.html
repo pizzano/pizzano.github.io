@@ -525,7 +525,7 @@
     var refreshTimer;
 
     function MenuStart() {
-document.getElementById("IFRAMEDIV").style.visibility = "visible";
+document.getElementById("IFRAME").style.visibility = "visible";
 
 
       // Mevcut zamanlayıcıyı durdur
@@ -542,7 +542,7 @@ document.getElementById("IFRAMEDIV").style.visibility = "visible";
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
       } else {
-document.getElementById("IFRAMEDIV").style.visibility = "hidden";
+document.getElementById("IFRAME").style.visibility = "hidden";
         // Zamanlayıcıyı her 7 dakika bir refreshIframe'i çağıracak şekilde ayarla
         refreshTimer = setInterval(refreshIframe, 7 * 60 * 1000); // 7 min delay
         MenuBtn1.src = "https://bestill.online/img/btn.png";
