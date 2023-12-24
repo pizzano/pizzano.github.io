@@ -522,37 +522,17 @@
     if (specificKey) {
       MenuStart();
     }
-    var refreshTimer;
-
+ 
     function MenuStart() {
-         IFRAMEDIV.hidden = false;
-
-      // Mevcut zamanlayıcıyı durdur
-      if (refreshTimer) {
-        clearInterval(refreshTimer);
-      }
-      saat.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-   IFRAME.classList.toggle('off');
+      IFRAME.classList.toggle('off');
       qrheader.classList.remove('full');
       vilkor.classList.add('off');
       if (MenuBtn1.src === "https://bestill.online/img/btn.png") {
         MenuBtn1.src = "https://bestill.online/img/btn1.png";
       } else {
-IFRAMEDIV.hidden = !IFRAMEDIV.hidden;
-        // Zamanlayıcıyı her 7 dakika bir refreshIframe'i çağıracak şekilde ayarla
-        refreshTimer = setInterval(refreshIframe, 7 * 60 * 1000); // 7 min delay
-        MenuBtn1.src = "https://bestill.online/img/btn.png";
+      IFRAMEDIV.hidden = !IFRAMEDIV.hidden;
+       MenuBtn1.src = "https://bestill.online/img/btn.png";
       }
-    }
-
-    function refreshIframe() {
-      console.log("7 Dk da bir ama anasayfa'dayken")
-      var iframe = document.getElementById('IFRAME');
-      iframe.src = iframe.src;
-      clearInterval(refreshTimer);
     }
 
     function updateStatus() {
