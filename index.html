@@ -1,3 +1,4 @@
+
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
@@ -359,7 +360,7 @@ font-size:19px;
     <div id="vilkor" class="full off" onclick="vilkor.classList.toggle('off');" style="display: grid; align-content: center;">
       <div id="progress" class="center"> 0% </div>
       <ol class="header size" id="Mydiv" style="max-width: 600px;gap: 2px;height:95%;background-color: #f6f6f600; box-shadow: 0px 0px 0px 0px black;">
-        <li class="baslik center ust-radius" style="height:20px;display: flex; justify-content: space-between;"> <span><b>Pizza Party Lojalitetsprogram:</b></span> <span style="float:left;cursor:pointer;">❌</span></li>
+        <li class="baslik center ust-radius" style="height:20px;display: flex; justify-content: space-between;"> <span><b>KØL grill & Pizza Lojalitetsprogram:</b></span> <span style="float:left;cursor:pointer;">❌</span></li>
 
   <li id="trinn1">
     <strong>Trinn 1: Bli Medlem i Pizzaklubben</strong>
@@ -376,26 +377,26 @@ font-size:19px;
   <li>
     <ul> <li>
     <strong id="trinn3">Trinn 3: Følg med på Dine Fremskritt</strong>
-    <p>Etter hvert kjøp vil et digitalt stempel bli lagt til på profilen din. Når du har samlet fem stempler (kjøpt fem store pizzaer), vil du motta en varsel om at din neste store pizza er gratis.</p>
+    <p>Etter hvert kjøp vil et digitalt stempel bli lagt til på profilen din. Når du har samlet 10 stempler (kjøpt 10 store pizzaer), vil du motta en varsel om at din neste store pizza er gratis.</p>
     </li> </ul>
   </li>
   <li>
     <strong>Trinn 4: Løs inn din Gratis Store Pizza</strong>
       <ul> <li>
-    <p>Bestill din sjette pizza over telefon eller ved vognen. Husk å nevne at du skal løse inn din gratis pizza og ha QR-koden klar for skanning ved henting.</p>
+    <p>Kjøp din 10. pizza, og husk å nevne at du vil løse inn din gratis pizza. Ha QR-koden klar for skanning ved henting.</p>
       </li></ul>
   </li>
   <li>
     <strong>Betingelser</strong>
     <ul>
-      <li><b>Lojalitetsfordel:</b> For hver fem store pizzaer kjøpt til full pris, får du den sjette gratis ved henting. </li>
-      <li><b>Begrensninger for kuponger:</b>Vær oppmerksom på at PizzaKlubb-kupongen ikke kan registreres under følgende betingelser: hvis kjøpet kombineres med andre rabatter eller tilbud, hvis det gjelder kjøp av liten pizza, eller hvis pizzaen leveres.<br><br> Kupongen gjelder kun for fullpriskjøp av store pizzaer som hentes personlig uten ekstra rabatter.</li>
+      <li><b>Lojalitetsfordel:</b> For hver 10 store pizzaer kjøpt til full pris, får du den 11. gratis ved henting. </li>
+      <li><b>Begrensninger for kuponger:</b>Vær oppmerksom på at digital-kupongen ikke kan registreres under følgende betingelser: hvis kjøpet kombineres med andre rabatter eller tilbud, hvis det gjelder kjøp av liten pizza, eller hvis pizzaen leveres.<br><br> Kupongen gjelder kun for fullpriskjøp av store pizzaer som hentes personlig uten ekstra rabatter.</li>
     </ul>
   </li>
   <li>
     <strong>Mer Informasjon</strong>
     <ul>
-      <li><b>Spar Penger:</b> Bli med i lojalitetsprogrammet og motta en gratis stor pizza etter dine fem første kjøp til full pris. For hver femte pizza du kjøper, vil den sjette være gratis ved henting. Dette gir deg en samlet besparelse på omtrent 20 % på dine kjøp over tid.</li>
+      <li><b>Spar Penger:</b> Bli med i lojalitetsprogrammet og motta en gratis stor pizza etter dine 10 første kjøp til full pris. For hver femte pizza du kjøper, vil den sjette være gratis ved henting. Dette gir deg en samlet besparelse på omtrent 20 % på dine kjøp over tid.</li>
       <li><b>Tilgjengelighet:</b> Ditt digitale stempelkort og fremgang er alltid tilgjengelig på telefonen din.</li>
       <li><b>Rett til Endringer:</b> Pizzaklubben kan endre betingelser og vilkår når som helst.</li>
     </ul>
@@ -567,16 +568,16 @@ document.getElementById('saat').scrollIntoView({ behavior: 'smooth', block: 'sta
         themeColor.name = "theme-color";
         document.head.appendChild(themeColor);
       }
-      if (dayOfWeek === 1) { // Mandag
-        hours.textContent = `🚫 Pizza Party er stengt på mandager.`;
+      if (dayOfWeek === 2) { // Mandag
+        hours.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
         saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
         themeColor.content = "#ef4e4b";
-      } else if (currentHour >= 15 && currentHour < 21) {
-        hours.innerText = `🟢 Åpent i dag fra kl. 15:00 til 21:00`;
+      } else if (currentHour >= 14 && currentHour < 21) {
+        hours.innerText = `🟢 Åpent i dag fra kl. 14:00 til 21:00`;
         saat.style = "background-color: #5ac15e;font-size: 17px;color:white;"
         themeColor.content = "#5ac15e";
       } else {
-        hours.innerText = `🔴 Pizza Party er stengt nå.`;
+        hours.innerText = `🔴 Restauranten er stengt nå.`;
         saat.style = "background-color: #ef4e4b;font-size: 17px;color:white;"
         themeColor.content = "#ef4e4b";
       }
