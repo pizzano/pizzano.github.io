@@ -109,14 +109,16 @@
     }
 
     #kupon {
-      min-height: 170px;
-      height: auto;
-      font-size: 25px;
-      background-color: white;
-      display: flex;
-      gap: 3%;
-      align-items: center;
-      justify-content: center;
+    min-height: 170px;
+    height: auto;
+    font-size: 25px;
+    background-color: white;
+    display: flex;
+    gap: 3%;
+    align-items: center;
+    align-content: center;
+    flex-wrap: wrap;
+    justify-content: center;
     }
 
     span.aktiv,
@@ -459,13 +461,13 @@ font-size:19px;
       kupon.innerHTML = null;
       if (specificKey.length >= 8) {
         //rgb(24 200 31)
-        for (let index = 1; index <= 5; index++) {
+        for (let index = 1; index <= 10; index++) {
           let green = index * 10;
           kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;
         }
         updateFirebase(specificKey);
       } else {
-        for (let index = 1; index <= 5; index++) {
+        for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>`;
         }
       }
@@ -479,7 +481,7 @@ let lastPizzaCount = 1;
         const kupon = document.getElementById('kupon');
         const value = snapshot.val();
         kupon.innerHTML = null;
-        for (let index = 1; index <= 5; index++) {
+        for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
 	lastPizzaCount = lastPizzaCount + 1;
@@ -488,7 +490,7 @@ document.getElementById('saat').scrollIntoView({ behavior: 'smooth', block: 'sta
     }
 
 
-        if (value == 5) {
+        if (value == 10) {
 //window.location.reload();
           kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
         }
