@@ -467,7 +467,9 @@
       }
     }
     // Firebase güncelleme fonksiyonu
+let lastPizzaCount = 1;
     function updateFirebase(specificKey) {
+    
       const specificKeyReference = ref(database, specificKey);
       onValue(specificKeyReference, (snapshot) => {
         const kupon = document.getElementById('kupon');
@@ -476,11 +478,20 @@
         for (let index = 1; index <= 5; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
+	lastPizzaCount = lastPizzaCount + 1;
+    if (lastPizzaCount > 2) {
+      window.location.reload();
+    }
+
+
         if (value == 5) {
+//window.location.reload();
           kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
         }
       });
     }
+
+
   </script>
 
   <script>   
