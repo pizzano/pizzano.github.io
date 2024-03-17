@@ -298,6 +298,10 @@
     .ac{
       position: fixed;top: 0px; left:0px;
     }
+    .ikaz{
+color:gold;
+font-size:19px;
+}
   </style>
 </head>
 
@@ -306,7 +310,7 @@
     <div class="saat center" id="saat"> <span id="hours"> *** </span> </div>
 
     <div class="size center baslik linkBtn" style="animation: pulse1 1s infinite;width: 90%;" onclick="MenuStart();">» Bestill Pizza Her «</div>
-
+<div class="ikaz center">Digital kupong gjelder kun ved henting.</div>
     <div class="center" style="width:100%;">
       <div id="register" class="size center baslik ust-radius baslik1"><span>Registrer ditt nummer nedenfor <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span></div>
 
@@ -480,7 +484,7 @@ let lastPizzaCount = 1;
         }
 	lastPizzaCount = lastPizzaCount + 1;
     if (lastPizzaCount > 2) {
-      window.location.reload();
+document.getElementById('register').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
 
