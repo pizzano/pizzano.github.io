@@ -2,7 +2,7 @@
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
-  <title>KØL GRILL & PIZZA SKARNES - SØR ODAL - Online Bestilling</title>
+  <title>Pizza Party - Hellemyr Kristiansand - Online Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <meta name="keywords" content="Pizza, online bestilling, KULLGRILL, BURGER -  KEBAB - SKARNES - SØR ODAL, ÅRNES, takeaway, levering, Italiensk pizza SKARNES - SØR ODAL, ÅRNES" />
@@ -463,8 +463,8 @@ font-size:19px;
       if (specificKey.length >= 8) {
         //rgb(24 200 31)
         for (let index = 1; index <= 10; index++) {
-          let green = index * 10;
-          kupon.innerHTML += `<span class="aktiv" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;
+          let green = index * 1;
+          kupon.innerHTML += `<span class="pasif" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;
         }
         updateFirebase(specificKey);
       } else {
@@ -482,19 +482,18 @@ let lastPizzaCount = 1;
         const kupon = document.getElementById('kupon');
         const value = snapshot.val();
         kupon.innerHTML = null;
+
+        if (value == 10) {
+	kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
+        }
+
         for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
 	lastPizzaCount = lastPizzaCount + 1;
     if (lastPizzaCount > 2) {
-document.getElementById('saat').scrollIntoView({ behavior: 'smooth', block: 'start' });
+document.getElementById('register').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-
-
-        if (value == 10) {
-//window.location.reload();
-          kupon.innerHTML = `<img style="width:100%;background-color: black;" src="https://pizzano.github.io/img/gratis.gif" class="">`;
-        }
       });
     }
 
