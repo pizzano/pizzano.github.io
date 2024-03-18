@@ -334,7 +334,8 @@ font-size:19px;
 
     <div class="center" style="width:100%;" id="qrheader" onclick="this.classList.toggle('full'); document.querySelector('div').scrollTop = 0;">
       <div class="size center baslik ust-radius baslik1" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
-      <img class="size center" id="QRCODE" style="height:450px;border:1px solid black">
+      <div class="size center baslik1">
+      <img id="QRCODE" style="height:250px; width:270px;padding:20px;"> </div>
       <div class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
     </div>
 
@@ -453,7 +454,7 @@ font-size:19px;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
-        QRCODE.src = `https://chart.googleapis.com/chart?cht=qr&chl=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}&chs=400x400&chld=L|0`;
+        QRCODE.src = `https://chart.googleapis.com/chart?cht=qr&chl=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}&chs=270x270&chld=L|0`;
       } else {
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
         register.innerHTML = `<span>Registrer ditt nummer nedenfor! <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span>`;
