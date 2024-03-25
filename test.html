@@ -6,23 +6,21 @@
 <body>
 
 <div id="androidContent">
-    <!-- iFrame sadece Android cihazlarda gösterilecek -->
-    <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" width="600" height="400"></iframe>
+    <!-- iFrame sadece Apple ürünleri hariç tüm cihazlarda gösterilecek -->
+    <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" width="600" height="400" style="display:none;"></iframe>
 </div>
 
 <script>
     function checkDeviceAndRedirect() {
         var userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-        // iPhone kullanıcılarını kontrol et ve yönlendir
-        if (/iPhone/i.test(userAgent)) {
+        // Apple ürünlerini kontrol et (iPhone, iPad, iPod)
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            // Apple cihazlar için belirtilen URL'ye yönlendir
             window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
-        } else if (/Android/i.test(userAgent)) {
-            // Android cihazlar için özel içeriği göster
-            document.getElementById('androidContent').style.display = 'block';
         } else {
-            // Android veya iPhone dışındaki cihazlar için
-            document.getElementById('androidContent').style.display = 'none';
+            // Apple ürünleri dışındaki cihazlar için iFrame'i göster
+            document.getElementById('androidContent').children[0].style.display = 'block';
         }
     }
 
