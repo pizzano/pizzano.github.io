@@ -311,7 +311,7 @@ font-size:19px;
   <div class="header center">
     <div class="saat center" id="saat"> <span id="hours"> *** </span> </div>
 
-    <div class="size center baslik linkBtn" style="animation: pulse1 1s infinite;width: 90%;" onclick="MenuStart();">» Bestill Take-Away «</div>
+    <div class="size center baslik linkBtn" style="animation: pulse1 1s infinite;width: 90%;" id="deviceContent"></div>
 
 <div class="ikaz center" id="durburda">Digital kupong gjelder kun ved henting.</div>
     <div class="center" style="width:100%;">
@@ -502,6 +502,20 @@ document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 
   </script>
 
   <script>   
+
+ function detectDevice() {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+
+        // iPhone veya iPad (iOS) kontrolü
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+            return `<div onclick="window.location.href='https://www.restaurantlogin.com/api/fb/_q_y_w_r6';">» Bestill Take-Away «</div>`;
+        } else {
+            return `<div onclick="MenuStart();">» Bestill Take-Away «</div>`;
+        }
+    }
+
+    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+
       function scrollToFordeler() {
       vilkor.classList.toggle('off');
   }
