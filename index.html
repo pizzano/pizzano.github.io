@@ -502,19 +502,21 @@ document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 
   </script>
 
   <script>   
+function detectDevice() {
+    var ua = navigator.userAgent || navigator.vendor || window.opera;
 
- function detectDevice() {
-        var ua = navigator.userAgent || navigator.vendor || window.opera;
-
-        // iPhone veya iPad (iOS) kontrolü
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-            return `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take-Away «</div>`;
-        } else {
-            return `<div onclick="MenuStart();">» Bestill Take-Away «</div>`;
-        }
+    // iPhone veya iPad (iOS) kontrolü
+    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        // iPhone veya iPad ise, MenuBtn elementini bul ve gizle
+        document.getElementById("MenuBtn").style.display = "none";
+        return `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take-Away «</div>`;
+    } else {
+        // iPhone veya iPad değilse, MenuBtn elementini bul ve göster (varsayılan davranış)
+        var menuBtn = document.getElementById("MenuBtn");
+        if (menuBtn) menuBtn.style.display = ""; // Eğer MenuBtn varsa, görünürlüğünü varsayılana ayarla
+        return `<div onclick="MenuStart();">» Bestill Take-Away «</div>`;
     }
-
-    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+}
 
       function scrollToFordeler() {
       vilkor.classList.toggle('off');
