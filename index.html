@@ -1,4 +1,3 @@
-
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
@@ -454,7 +453,7 @@ font-size:19px;
       if (specificKey.length > 0 && invalidStartDigits.includes(firstDigit)) {
         register.innerHTML = `❌ Nummer må begynne med 4 og 9.`;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
-        QRCODE.style = "width:100%; height:auto;";
+  
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
         QRCODE.src = `https://chart.googleapis.com/chart?cht=qr&chl=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}&chs=270x270&chld=L|0`;
