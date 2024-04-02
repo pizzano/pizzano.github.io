@@ -457,7 +457,7 @@ font-size:19px;
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
         QRCODE.style = "width:80%; height:auto;padding:10%;";
-        QRCODE.src = `https://quickchart.io/qr?text=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
+        QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
         		QRCODE.style = "width:100%; height:auto;";
