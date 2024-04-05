@@ -1,3 +1,4 @@
+
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
@@ -438,14 +439,21 @@ font-size:19px;
       updateUI(mobilnr.value);
       // Numara girişinde güncelleme
       mobilnr.oninput = () => {
+ 
         if (mobilnr.value.length >= 8) mobilnr.blur();
+
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
-        updateUI(mobilnr.value);
+        updateUI(mobilnr.value, 1);
       };
     });
     // UI ve Firebase güncelleme fonksiyonu
-    function updateUI(specificKey) {
+    function updateUI(specificKey, test) {
+    
+    if (test == 1 && specificKey.length == 8) {
+document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
       var firstDigit = parseInt(specificKey[0]);
       var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
       var register = document.getElementById('register');
@@ -456,9 +464,6 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
-
-document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
- 
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
