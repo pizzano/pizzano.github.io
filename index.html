@@ -456,6 +456,9 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
+
+document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+ 
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
