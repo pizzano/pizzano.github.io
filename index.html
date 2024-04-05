@@ -436,7 +436,7 @@ font-size:19px;
       const kupon = document.getElementById('kupon');
       // LocalStorage kontrolü ve numara yükleme
       mobilnr.value = localStorage.getItem('MOBIL') || '';
-      updateUI(mobilnr.value);
+      updateUI(mobilnr.value, 2);
       // Numara girişinde güncelleme
       mobilnr.oninput = () => {
  
@@ -444,17 +444,16 @@ font-size:19px;
 
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
+        
         updateUI(mobilnr.value, 1);
       };
     });
     // UI ve Firebase güncelleme fonksiyonu
     function updateUI(specificKey, test) {
-    
-    if (test == 1 && specificKey.length == 8) {
+       if (test == 1 && specificKey.length == 8) {
 	lastPizzaCount = 1;
 document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-
       var firstDigit = parseInt(specificKey[0]);
       var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
       var register = document.getElementById('register');
