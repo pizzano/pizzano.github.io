@@ -444,13 +444,18 @@ font-size:19px;
         if (mobilnr.value.length >= 8) mobilnr.blur();
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
-        updateUI(mobilnr.value, 1);
+        updateUI(mobilnr.value);
+        yani();
       };
     });
     
+    function yani(){
+    document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+    
     let kontrol = 1;
     // UI ve Firebase güncelleme fonksiyonu
-    function updateUI(specificKey, test) {
+    function updateUI(specificKey) {
       var firstDigit = parseInt(specificKey[0]);
       var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
       var register = document.getElementById('register');
