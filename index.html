@@ -444,9 +444,6 @@ font-size:19px;
         if (mobilnr.value.length >= 8) mobilnr.blur();
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
-
-document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
         updateUI(mobilnr.value, 1);
       };
     });
@@ -463,7 +460,9 @@ document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 's
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
-		register.innerHTML = `✅ Nummeret ditt er registrert!`;
+
+        register.innerHTML = `✅ Nummeret ditt er registrert!`;
+        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
