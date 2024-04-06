@@ -441,7 +441,10 @@ font-size:19px;
       
       // Numara girişinde güncelleme
       mobilnr.oninput = () => {
-        if (mobilnr.value.length >= 8) mobilnr.blur();
+        if (mobilnr.value.length >= 8){
+        mobilnr.blur();
+        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
         updateUI(mobilnr.value, 1);
@@ -450,7 +453,7 @@ font-size:19px;
     
     let kontrol = 1;
     // UI ve Firebase güncelleme fonksiyonu
-    function updateUI(specificKey, test) {
+    function updateUI(specificKey, test11) {
       var firstDigit = parseInt(specificKey[0]);
       var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
       var register = document.getElementById('register');
@@ -462,7 +465,7 @@ font-size:19px;
        QRCODE.src = "";
 
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
-        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
@@ -477,7 +480,7 @@ font-size:19px;
           let green = index * 1;
           kupon.innerHTML += `<span class="pasif" style="background-color: rgb(${green},200, ${green});"><img src="https://bestill.online/img/load.gif"></span>`;
         }
-        updateFirebase(specificKey);
+        updateFirebase(specificKey, test11);
       } else {
         for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `<span class="pasif"> ${index} <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>`;
@@ -486,7 +489,7 @@ font-size:19px;
     }
     // Firebase güncelleme fonksiyonu
 let lastPizzaCount = 1;
-    function updateFirebase(specificKey) {
+    function updateFirebase(specificKey, testim) {
     
       const specificKeyReference = ref(database, specificKey);
       onValue(specificKeyReference, (snapshot) => {
@@ -503,6 +506,7 @@ let lastPizzaCount = 1;
         }
 	lastPizzaCount = lastPizzaCount + 1;
     if (lastPizzaCount > 2) {
+  
 document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
       });
