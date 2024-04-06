@@ -460,12 +460,7 @@ font-size:19px;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
-       
-	if (test == 1 && kontrol == 1) {
-	lastPizzaCount = -1;
-document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
+      
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
@@ -505,7 +500,10 @@ let lastPizzaCount = 1;
         for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
-
+	lastPizzaCount = lastPizzaCount + 1;
+    if (lastPizzaCount > 2) {
+document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
       });
     }
 
