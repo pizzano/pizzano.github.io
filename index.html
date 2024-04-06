@@ -505,11 +505,7 @@ let lastPizzaCount = 1;
         for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
-	lastPizzaCount = lastPizzaCount + 1;
-    if (lastPizzaCount > 2) {
-    alert(lastPizzaCount);
-document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+
       });
     }
 
