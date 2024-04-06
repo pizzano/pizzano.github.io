@@ -339,7 +339,7 @@ font-size:19px;
       <div class="size center baslik ust-radius baslik1" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
       <div class="size center baslik1">
       <img id="QRCODE" style="height:250px; width:270px;padding:20px;"> </div>
-      <div class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
+      <div id="burasi" class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
     </div>
 
     <div class="size center baslik linkBtn" style="margin-bottom:10px;font-size:20px;height:45px;" onclick="scrollToFordeler();">» Vilkår for lojalitetsprogram «</div>
@@ -460,10 +460,10 @@ font-size:19px;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
-       	lastPizzaCount = 1;
+       
 	if (test == 1 && kontrol == 1) {
-
-document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+	lastPizzaCount = 1;
+document.getElementById('burasi').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
@@ -506,7 +506,7 @@ let lastPizzaCount = 1;
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
 	lastPizzaCount = lastPizzaCount + 1;
-    if (lastPizzaCount > 2 && value >1) {
+    if (lastPizzaCount > 2) {
 document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
       });
