@@ -339,7 +339,7 @@ font-size:19px;
       <div class="size center baslik ust-radius baslik1" onclick="event.stopPropagation();"> QR-koden skannes av betjeningen!</div>
       <div class="size center baslik1">
       <img id="QRCODE" style="height:250px; width:270px;padding:20px;"> </div>
-      <div id="burasi" class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
+      <div class="size center baslik alt-radius baslik1"> Klikk på QR-koden for å fremvise!</div>
     </div>
 
     <div class="size center baslik linkBtn" style="margin-bottom:10px;font-size:20px;height:45px;" onclick="scrollToFordeler();">» Vilkår for lojalitetsprogram «</div>
@@ -444,6 +444,9 @@ font-size:19px;
         if (mobilnr.value.length >= 8) mobilnr.blur();
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
+
+document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
         updateUI(mobilnr.value, 1);
       };
     });
@@ -460,13 +463,7 @@ font-size:19px;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
-       
-	if (test == 1 && kontrol == 1) {
-	lastPizzaCount = 1;
-document.getElementById('burasi').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-        register.innerHTML = `✅ Nummeret ditt er registrert!`;
+		register.innerHTML = `✅ Nummeret ditt er registrert!`;
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
