@@ -445,13 +445,8 @@ font-size:19px;
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
         updateUI(mobilnr.value);
-        yani();
       };
     });
-    
-    function yani(){
-    document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
     
     let kontrol = 1;
     // UI ve Firebase güncelleme fonksiyonu
