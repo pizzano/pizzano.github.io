@@ -511,7 +511,6 @@ document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 
   </script>
 
   <script>   
-
 function detectDevice() {
     // Öncelikle localStorage'den cihaz bilgisini deneyin
     var storedDevice = localStorage.getItem('deviceType');
@@ -543,8 +542,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
 });
 
-
-    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
 
       function scrollToFordeler() {
       vilkor.classList.toggle('off');
