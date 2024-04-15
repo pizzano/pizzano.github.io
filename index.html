@@ -512,19 +512,37 @@ document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 
 
   <script>   
 
+function detectDevice() {
+    // Öncelikle localStorage'den cihaz bilgisini deneyin
+    var storedDevice = localStorage.getItem('deviceType');
 
- function detectDevice() {
-        var ua = navigator.userAgent || navigator.vendor || window.opera;
-
-        // iPhone veya iPad (iOS) kontrolü
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-        document.getElementById("MenuBtn").style.display = "none";
+    // Eğer cihaz tipi zaten kaydedilmişse, tekrar kontrol yapmadan döndür
+    if (storedDevice) {
+        if (storedDevice === 'iOS') {
             return `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take-Away «</div>`;
         } else {
             return `<div onclick="MenuStart();">» Bestill Take-Away «</div>`;
-           
         }
     }
+
+    // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol et
+    var ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        // iOS cihazı için localStorage'a kaydet
+        localStorage.setItem('deviceType', 'iOS');
+        return `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take-Away «</div>`;
+    } else {
+        // Diğer cihazlar için localStorage'a kaydet
+        localStorage.setItem('deviceType', 'Other');
+        return `<div onclick="MenuStart();">» Bestill Take-Away «</div>`;
+    }
+}
+
+// DOM hazır olduğunda çalışacak şekilde içeriği ayarla
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+});
+
 
     document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
 
