@@ -304,7 +304,7 @@
 color:gold;
 font-size:19px;
 }
-#QRCODE {
+#QRCODE, #hours {
     transition: box-shadow 0.3s ease-in-out;
     outline: none; /* Varsayılan odak çerçevesini kaldır */
 }
@@ -474,13 +474,23 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
+
 if (qr_goster) {
-    QRCODE.tabIndex = -1;
+    var QRCODE = document.getElementById('QRCODE');
+    var hours = document.getElementById('hours');
+    QRCODE.tabIndex = 0;
+    hours.tabIndex = 0;
 
     setTimeout(function() {
-        QRCODE.focus();
+        QRCODE.focus();  // İlk olarak QRCODE'a odaklan
+
+        setTimeout(function() {
+            hours.focus();  // 300ms sonra hours div'ine odaklan
+        }, 2000);
+
     }, 300);
 }
+
 
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
