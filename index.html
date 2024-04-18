@@ -317,7 +317,7 @@ font-size:19px;
     <div class="center" style="width:100%;">
       <div id="register" class="size center baslik ust-radius baslik1"><span>Registrer ditt nummer nedenfor <span onclick="scrollToFordeler(1);" class="linkBtn trinn">ⓘ</span> </span></div>
 
-      <input type="tel" class="size center baslik" id="mobilnr" oninput="" placeholder="+47 ________" autocomplete="off">
+      <input type="tel" class="size center baslik" id="mobilnr" placeholder="+47 ________" autocomplete="off">
 
       <div class="size center baslik baslik1"><span>Dine digitale kuponger <span onclick="scrollToFordeler(2);" class="linkBtn trinn">ⓘ</span> </span></div>
 
@@ -438,8 +438,13 @@ font-size:19px;
       updateUI(mobilnr.value);
       
       // Numara girişinde güncelleme
+
       mobilnr.oninput = () => {
-        if (mobilnr.value.length >= 8) mobilnr.blur();
+        if (mobilnr.value.length >= 8) {
+        mobilnr.blur();
+        lastPizzaCount = 0;
+        qr_goster = true;
+        }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
         updateUI(mobilnr.value);
@@ -447,6 +452,7 @@ font-size:19px;
     });
     
     let kontrol = 1;
+  let qr_goster = false;
     // UI ve Firebase güncelleme fonksiyonu
     function updateUI(specificKey) {
       var firstDigit = parseInt(specificKey[0]);
@@ -458,8 +464,10 @@ font-size:19px;
         QRCODE.src = "https://pizzano.github.io/img/stemp.jpg";
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
-      
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
+        if (qr_goster){
+		document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
@@ -501,7 +509,7 @@ let lastPizzaCount = 1;
 	lastPizzaCount = lastPizzaCount + 1;
     if (lastPizzaCount > 2) {
 document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+}
       });
     }
 
