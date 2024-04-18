@@ -467,7 +467,7 @@ font-size:19px;
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
         if (qr_goster){
-		document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+		document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth' });
 		}
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
@@ -498,7 +498,7 @@ font-size:19px;
       
        const data = snapshot.val();
   if (JSON.stringify(data) >= 1) {
-//document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
+document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
         const kupon = document.getElementById('kupon');
         const value = snapshot.val();
