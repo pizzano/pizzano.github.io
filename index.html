@@ -431,6 +431,7 @@ font-size:19px;
     };
     initializeApp(firebaseConfig);
     const database = getDatabase();
+    
     document.addEventListener('DOMContentLoaded', () => {
       const mobilnr = document.getElementById('mobilnr');
       const kupon = document.getElementById('kupon');
@@ -439,10 +440,11 @@ font-size:19px;
       updateUI(mobilnr.value);
       
       // Numara girişinde güncelleme
+
       mobilnr.oninput = () => {
         if (mobilnr.value.length >= 8) {
         mobilnr.blur();
-        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        qr_goster = true;
         }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
@@ -451,7 +453,7 @@ font-size:19px;
     });
     
     let kontrol = 1;
-
+  let qr_goster = false;
     // UI ve Firebase güncelleme fonksiyonu
     function updateUI(specificKey) {
       var firstDigit = parseInt(specificKey[0]);
@@ -464,7 +466,9 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
-        lastPizzaCount = 0;
+        if (qr_goster){
+		document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
@@ -487,11 +491,15 @@ font-size:19px;
       }
     }
     // Firebase güncelleme fonksiyonu
-let lastPizzaCount = 1;
     function updateFirebase(specificKey) {
     
       const specificKeyReference = ref(database, specificKey);
       onValue(specificKeyReference, (snapshot) => {
+      
+       const data = snapshot.val();
+  if (JSON.stringify(data) >= 1) {
+document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
         const kupon = document.getElementById('kupon');
         const value = snapshot.val();
         kupon.innerHTML = null;
@@ -503,10 +511,6 @@ let lastPizzaCount = 1;
         for (let index = 1; index <= 10; index++) {
           kupon.innerHTML += `${index <= value ? '<span class="aktiv">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>' : '<span class="pasif">'+ index +' <span class="pizza"><img src="https://pizzano.github.io/img/pizza.png"></span></span>'}`;
         }
-	lastPizzaCount = lastPizzaCount + 1;
-    if (lastPizzaCount > 2) {
-document.getElementById('durburda').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
       });
     }
 
