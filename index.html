@@ -442,7 +442,6 @@ font-size:19px;
       mobilnr.oninput = () => {
         if (mobilnr.value.length >= 8) {
         mobilnr.blur();
-        lastPizzaCount = -1;
         document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
@@ -465,6 +464,7 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
+        lastPizzaCount = 0;
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
