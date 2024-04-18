@@ -467,9 +467,17 @@ font-size:19px;
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
 if (qr_goster) {
     var qrCodeElement = document.getElementById('QRCODE');
-    qrCodeElement.tabIndex = -5;
-    qrCodeElement.focus();
+    qrCodeElement.tabIndex = -1;
+
+    // Önce elemente yavaşça kaydır
+    qrCodeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Kaydırma tamamlandıktan sonra elemente odaklan
+    setTimeout(function() {
+        qrCodeElement.focus();
+    }, 500); // 500 ms sonra odakla, bu süre kaydırma süresine bağlı olarak ayarlanabilir
 }
+
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
