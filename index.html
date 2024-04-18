@@ -439,12 +439,11 @@ font-size:19px;
       updateUI(mobilnr.value);
       
       // Numara girişinde güncelleme
-
       mobilnr.oninput = () => {
         if (mobilnr.value.length >= 8) {
         mobilnr.blur();
         lastPizzaCount = false;
-        qr_goster = true;
+        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
@@ -453,7 +452,7 @@ font-size:19px;
     });
     
     let kontrol = 1;
-  let qr_goster = false;
+
     // UI ve Firebase güncelleme fonksiyonu
     function updateUI(specificKey) {
       var firstDigit = parseInt(specificKey[0]);
@@ -466,9 +465,6 @@ font-size:19px;
       } else if (specificKey.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
        QRCODE.src = "";
         register.innerHTML = `✅ Nummeret ditt er registrert!`;
-        if (qr_goster){
-		document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}
         QRCODE.style = "width:80%; height:auto;padding:10%;";
         QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${encodeURIComponent(specificKey)}`;
       } else {
