@@ -442,7 +442,7 @@ font-size:19px;
       mobilnr.oninput = () => {
         if (mobilnr.value.length >= 8) {
         mobilnr.blur();
-        lastPizzaCount = false;
+        lastPizzaCount = -1;
         document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
