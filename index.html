@@ -1,3 +1,4 @@
+
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
@@ -442,7 +443,7 @@ font-size:19px;
       mobilnr.oninput = () => {
         if (mobilnr.value.length >= 8) {
         mobilnr.blur();
-        lastPizzaCount = 0;
+        lastPizzaCount = false;
         qr_goster = true;
         }
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
