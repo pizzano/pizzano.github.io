@@ -147,7 +147,7 @@
       box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
       background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
       font-weight: bold;
-      font-size: 24px;
+      font-size: 28px;
       color: white;
       border-radius: 11px;
     }
@@ -299,8 +299,8 @@
       // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
       if (storedDevice) {
         return storedDevice === 'iOS' ?
-          `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
-          `<div onclick="MenuStart();">» Bestill Takeaway «</div>`;
+          `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
+          `<div class="btn1" onclick="MenuStart();">» Bestill Takeaway «</div>`;
       }
       // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
       var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -310,8 +310,8 @@
       localStorage.setItem('deviceType', deviceType);
       // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
       return isIOS ?
-        `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
-        `<div onclick="MenuStart();">» Bestill Takeaway «</div>`;
+        `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
+        `<div class="btn1" onclick="MenuStart();">» Bestill Takeaway «</div>`;
     }
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
