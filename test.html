@@ -234,15 +234,16 @@
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
         
         if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-          mobilnr.blur();
           QRCODE.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
           });
           
-          setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 1500);
+  setTimeout(() => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => mobilnr.blur(), 500);  // Klavyeyi kapatmak için ekstra zaman tanı
+}, 1500);
+
         }
         
         mobil_status.innerHTML = '✍ Registrer deg nå!';
