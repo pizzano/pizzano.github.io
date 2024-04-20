@@ -252,7 +252,7 @@
         } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
           QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
-          QRCODE.style = "width:90%; padding:20px;";
+          QRCODE.style = "width:80%; padding:30px;";
         }
         
       }
