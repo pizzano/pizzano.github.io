@@ -1,32 +1,328 @@
-<!DOCTYPE html>
-<html>
+<html lang="tr">
+
 <head>
-    <title>Site Başlığı</title>
-</head>
-<body>
-
-<div id="androidContent">
-    <!-- iFrame sadece Apple ürünleri hariç tüm cihazlarda gösterilecek -->
-    <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" width="600" height="400" style="display:none;"></iframe>
-</div>
-
-<script>
-    function checkDeviceAndRedirect() {
-        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-        // Apple ürünlerini kontrol et (iPhone, iPad, iPod)
-        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-            // Apple cihazlar için belirtilen URL'ye yönlendir
-            window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
-        } else {
-            // Apple ürünleri dışındaki cihazlar için iFrame'i göster
-            document.getElementById('androidContent').children[0].style.display = 'block';
-        }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #212c6a;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      zoom: 90%;
+      font-size: 18px;
     }
 
-    // Sayfa yüklendiğinde fonksiyonu çağır
-    checkDeviceAndRedirect();
-</script>
+    .container {
+      min-width: 350px;
+      max-width: 450px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #FFF;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 13px;
+      /* Eklendi */
+    }
+
+    .header,
+    .footer {
+      background-color: #3F51B5;
+      height: 40px;
+      color: white;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header {
+      border-radius: 10px 10px 0 0;
+      /* Güncellendi */
+    }
+
+    .footer {
+      border-radius: 0 0 10px 10px;
+      /* Güncellendi */
+    }
+
+    .main {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    #kupon {
+      margin: 10px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      /* Merkeze alındı */
+    }
+
+    .status {
+      width: 17%;
+      /* Genişlik % olarak ayarlandı */
+      height: 100px;
+      background-color: #3bc13b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      border-radius: 5%;
+      margin: 1%;
+      /* Her bir kutu arasında boşluk bırakıldı */
+    }
+
+    .status img {
+      max-width: 50px;
+      animation: spinAndPulse 8s linear infinite;
+    }
+
+    @keyframes spinAndPulse {
+
+      0%,
+      100% {
+        transform: scale(0.9) rotate(0deg);
+      }
+
+      12.5%,
+      37.5%,
+      62.5%,
+      87.5% {
+        transform: scale(1.1) rotate(-20deg);
+      }
+
+      25%,
+      50%,
+      75% {
+        transform: scale(1) rotate(20deg);
+      }
+    }
+
+    .inputKutusu {
+      display: flex;
+      width: 100%;
+      /* veya başka bir genişlik değeri */
+    }
+
+    input {
+      width: 100%;
+      height: 50px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 8px;
+      border: none;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      outline: 1.5px solid;
+    }
+
+    .btn {
+      width: 90%;
+      height: 60px;
+      box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
+      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
+      font-weight: bold;
+      font-size: 24px;
+      color: white;
+      border-radius: 11px;
+    }
+
+    .btn1 {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    transform: scale(1);
+    /* İkonun orijinal boyutu */
+    opacity: 1;
+    /* Tam opaklık */
+    }
+
+    50% {
+      transform: scale(1.2);
+      /* İkonun %20 büyütülmüş hali */
+      opacity: 0.5;
+      /* Azaltılmış opaklık */
+    }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="statusMessage" class="container header" style="border-radius:0px 0px 10px 10px;"></div>
+
+  <br>
+  <div id="deviceContent" class="container header btn"></div> <br>
+
+  <div class="container">
+    <div id="mobil_status" class="header">
+      ✅ Nummeret ditt er registrert!
+    </div>
+    <div class="inputKutusu">
+      <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
+    </div>
+    <div class="main">
+      <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
+      <div id="kupon">
+        <!-- Kuponlar JavaScript ile eklenecek -->
+      </div>
+    </div>
+    <div class="footer">
+      Vi spanderer hver 11. stor pizza. ⓘ
+    </div>
+  </div>
+  <br>
+  <div class="container">
+    <div class="header">
+      QR-koden skannes av betjeningen!
+    </div>
+    <div class="main">
+      <img id="QRCODE">
+    </div>
+    <div class="footer">
+      Klikk på QR-koden for å fremvise!
+    </div>
+  </div>
+  <br>
+  <div class="container">
+    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBI/review', '_blank');" class="header" style="border-radius:10px 10px 10px; padding:5px 0px 5px 0px;">
+      Vurder oss på Google <br> ⭐⭐⭐⭐⭐ 4.9</div>
+  </div>
+  <br>
+  <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
+    <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 70px;" class="btn1">
+    <iframe id="fullScreenIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+  </div>
+
+  <script>
+    const kuponContainer = document.getElementById('kupon');
+    for (let index = 1; index <= 10; index++) {
+      kuponContainer.innerHTML += `<div class="status">${index}<img src="https://pizzano.github.io/img/pizza.png"></div>`;
+    }
+    // LocalStorage kontrolü ve numara yükleme
+    mobilnr.value = localStorage.getItem('MOBIL') || '';
+    
+document.addEventListener('DOMContentLoaded', function() {
+    function updateMobileAndQRCode() {
+
+      mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
+
+        var firstDigit = parseInt(mobilnr.value[0]);
+        var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
+
+        if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+            mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
+            QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
+            QRCODE.style = "width:90%; padding:20px;";
+            
+            QRCODE.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                mobilnr.blur();
+            }, 1000);
+          
+        } else {
+            mobil_status.innerHTML = '❌ Nummer må begynne med 4 og 9.';
+            QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
+            QRCODE.style = "width:100%; padding:0px;";
+        }
+    }
+    mobilnr.oninput = updateMobileAndQRCode;
+    updateMobileAndQRCode(); // İlk yükleme için de çağır
+});
+
+
+    function MenuStart() {
+      // İframe için URL ayarla
+      document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
+      // İframe'i göster
+      document.getElementById('fullScreenIframeContainer').style.display = 'block';
+    }
+
+    function closeIframe() {
+      // İframe'i gizle
+      document.getElementById('fullScreenIframeContainer').style.display = 'none';
+      // İframe kaynağını temizle
+      document.getElementById('fullScreenIframe').src = '';
+    }
+
+    function detectDevice() {
+      // LocalStorage'dan cihaz bilgisini deneyin
+      var storedDevice = localStorage.getItem('deviceType');
+      // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
+      if (storedDevice) {
+        return storedDevice === 'iOS' ?
+          `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
+          `<div onclick="MenuStart();">» Bestill Takeaway «</div>`;
+      }
+      // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      var deviceType = isIOS ? 'iOS' : 'Other';
+      // Cihaz türünü localStorage'a kaydedin
+      localStorage.setItem('deviceType', deviceType);
+      // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
+      return isIOS ?
+        `<div onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
+        `<div onclick="MenuStart();">» Bestill Takeaway «</div>`;
+    }
+    // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+    });
+
+    function updateStatus() {
+      const currentDate = new Date();
+      const dayOfWeek = currentDate.getDay();
+      const currentHour = currentDate.getHours();
+      let statusMessage = document.getElementById("statusMessage");
+      let themeColor = document.querySelector('meta[name="theme-color"]');
+      if (!themeColor) {
+        themeColor = document.createElement("meta");
+        themeColor.name = "theme-color";
+        document.head.appendChild(themeColor);
+      }
+      if (dayOfWeek === 2) { // Tirsdager
+        statusMessage.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
+        statusMessage.style.backgroundColor = "#ef4e4b";
+        themeColor.content = "#ef4e4b";
+      } else if (currentHour >= 14 && currentHour < 21) {
+        statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 21:00`;
+        statusMessage.style.backgroundColor = "#5ac15e";
+        themeColor.content = "#5ac15e";
+      } else {
+        statusMessage.textContent = `🔴 Restauranten er stengt nå.`;
+        statusMessage.style.backgroundColor = "#ef4e4b";
+        themeColor.content = "#ef4e4b";
+      }
+    }
+    updateStatus();
+  </script>
 
 </body>
+
 </html>
