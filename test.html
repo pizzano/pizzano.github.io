@@ -25,6 +25,7 @@
       background-color: #FFF;
       box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
       border-radius: 13px;
+      margin-bottom: 15px;
       /* Eklendi */
     }
 
@@ -69,7 +70,7 @@
     .status {
       width: 17%;
       /* Genişlik % olarak ayarlandı */
-      height: 100px;
+      height: 150px;
       background-color: #3bc13b;
       display: flex;
       flex-direction: column;
@@ -208,7 +209,7 @@
   </div>
   <br>
   <div class="container">
-    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBI/review', '_blank');" class="header" style="border-radius:10px 10px 10px; padding:5px 0px 5px 0px;">
+    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="header" style="border-radius:10px 10px 10px; padding:5px 0px 5px 0px;">
       Vurder oss på Google <br> ⭐⭐⭐⭐⭐ 4.9</div>
   </div>
   <br>
@@ -224,37 +225,40 @@
     }
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || '';
-    
-document.addEventListener('DOMContentLoaded', function() {
-    function updateMobileAndQRCode() {
+    document.addEventListener('DOMContentLoaded', function() {
+      function updateMobileAndQRCode(event) {
 
-      mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
-
+        mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         var firstDigit = parseInt(mobilnr.value[0]);
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
-
-        if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-            mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
-            QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
-            QRCODE.style = "width:90%; padding:20px;";
-            
-            QRCODE.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                mobilnr.blur();
-            }, 1000);
+        
+        if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+          QRCODE.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
           
-        } else {
-            mobil_status.innerHTML = '❌ Nummer må begynne med 4 og 9.';
-            QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
-            QRCODE.style = "width:100%; padding:0px;";
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            mobilnr.blur();
+          }, 1000);
         }
-    }
-    mobilnr.oninput = updateMobileAndQRCode;
-    updateMobileAndQRCode(); // İlk yükleme için de çağır
-});
-
+        
+        mobil_status.innerHTML = 'Registrer deg nå';
+        if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
+          mobil_status.innerHTML = '❌ Nummer må begynne med 4 og 9.';
+          QRCODE.style = "width:100%; padding:0px;";
+          QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
+        } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+          mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
+          QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
+          QRCODE.style = "width:90%; padding:20px;";
+        }
+        
+      }
+      mobilnr.oninput = updateMobileAndQRCode;
+      updateMobileAndQRCode(); // İlk yükleme için de çağır
+    });
 
     function MenuStart() {
       // İframe için URL ayarla
