@@ -252,53 +252,62 @@
     <iframe id="fullScreenIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
   </div>  
   
-  <script type="module">
+<script type="module">
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-  import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
 
-  const app = initializeApp({
-    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
-  });
-      const db = getDatabase(app);
-    window.updateDatabaseReference = function(mobileNumber) {
-      const dbRef = ref(db, `${mobilnr.value}`);
+const app = initializeApp({
+  databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+});
 
+const db = getDatabase(app);
+
+window.updateDatabaseReference = function(soru) {
+  const dbRef = ref(db, `${mobilnr.value}`);
   const pizzaContainer = document.getElementById('kupon');
   pizzaContainer.innerHTML = "";
+
   for (let i = 1; i <= 10; i++) {
     pizzaContainer.innerHTML += `<div class="pizza-box" id="pizzaBox${i}">
       <span>${i}</span>
       <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="pizza-img">
     </div>`;
   }
-    
+
+  // İlk veri yüklemesi için onValue kullanılır
   onValue(dbRef, snapshot => {
-        if (snapshot.val() == 10) {
+    console.log(soru);
+    if (snapshot.val() == 10) {
       gratis.innerHTML = `<img style="width:100%;" src="https://pizzano.github.io/img/gratis.gif">`;
-      }else{
+    } else {
       gratis.innerHTML = null;
-      }
+    }
     const selectedCount = snapshot.val() || 0;
     document.querySelectorAll('.pizza-box').forEach((box, index) => {
       const isSelected = index < selectedCount;
       box.classList.toggle('selected', isSelected);
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
+      if (soru == null) {  // null veya undefined için doğru olur
+    document.getElementById('statusMessage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   });
-    }
-    window.updateDatabaseReference();
-  window.adjustCount = function(increase) {
-    runTransaction(dbRef, currentValue => {
-      currentValue = currentValue || 0;
-      return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0);
-    });
-  };
+}
+
+window.updateDatabaseReference();  // Fonksiyonu başlangıçta çağırın
+
+window.adjustCount = function(increase) {
+  const dbRef = ref(db, `${mobilnr.value}`);
+  runTransaction(dbRef, currentValue => {
+    currentValue = currentValue || 0;
+    return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0);
+  });
+};
 
 </script>
   
-  <script>
- 
+<script>
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || '';
     document.addEventListener('DOMContentLoaded', function() {
@@ -310,15 +319,9 @@
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
         
         if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-          QRCODE.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-  setTimeout(() => mobilnr.blur(), 600);  // Klavyeyi kapatmak için ekstra zaman tanı
-  setTimeout(() => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}, 2000);
-
+        QRCODE.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => mobilnr.blur(), 600);  // Klavyeyi kapatmak için ekstra zaman tanı
+        setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000);
         }
         
         mobil_status.innerHTML = '✍ Registrer deg nå!';
@@ -331,7 +334,9 @@
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
         } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
-          window.updateDatabaseReference();
+          if (event) {
+            window.updateDatabaseReference(true);
+          }
           QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
           QRCODE.style = "width:80%; padding:30px;";
         }
