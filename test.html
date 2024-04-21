@@ -202,13 +202,11 @@
       /* Azaltılmış opaklık */
     }
     }
-    
   </style>
 </head>
 <body>
 
   <div id="statusMessage" class="container header" style="border-radius:0px 0px 10px 10px;"></div>
-
   <br>
   <div id="deviceContent" class="container header btn"></div> <br>
 
@@ -217,7 +215,8 @@
       ✅ Nummeret ditt er registrert!
     </div>
     <div class="inputKutusu">
-      <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
+<input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off" oninput="if (this.value.length === 8) this.blur()">
+
     </div>
     <div class="main">
       <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
@@ -320,7 +319,6 @@ window.adjustCount = function(increase) {
         
         if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
         QRCODE.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(() => mobilnr.blur(), 600);  // Klavyeyi kapatmak için ekstra zaman tanı
         setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000);
         }
         
@@ -414,5 +412,4 @@ window.adjustCount = function(increase) {
   </script>
 
 </body>
-
 </html>
