@@ -297,7 +297,7 @@
     mobilnr.value = localStorage.getItem('MOBIL') || '';
     document.addEventListener('DOMContentLoaded', function() {
       function updateMobileAndQRCode(event) {
-        window.updateDatabaseReference();
+        
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
         var firstDigit = parseInt(mobilnr.value[0]);
@@ -325,6 +325,7 @@
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
         } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
+          window.updateDatabaseReference();
           QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
           QRCODE.style = "width:80%; padding:30px;";
         }
