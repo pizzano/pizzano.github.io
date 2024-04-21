@@ -332,7 +332,7 @@
         } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
           window.updateDatabaseReference();
-          QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=${mobilnr.value}`;
+          QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
           QRCODE.style = "width:80%; padding:30px;";
         }
         
