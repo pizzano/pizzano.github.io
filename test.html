@@ -328,7 +328,7 @@ window.adjustCount = function(increase) {
         QRCODE.style = "width:100%; padding:0px;";
         QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
         
-        if (event) { window.updateDatabaseReference(true); }
+        window.updateDatabaseReference(); 
         
         if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '❌ Nummer må begynne med 4 og 9.';
