@@ -221,7 +221,8 @@
     </div>
     <div class="main">
       <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
-   <div id="kupon"></div>
+    <div id="gratis"></div>
+    <div id="kupon"></div>
         <!-- Kuponlar JavaScript ile eklenecek -->
     </div>
     <div class="footer">
@@ -273,6 +274,11 @@
   }
     
   onValue(dbRef, snapshot => {
+        if (snapshot.val() == 10) {
+      gratis.innerHTML = `<img style="width:100%;" src="https://pizzano.github.io/img/gratis.gif">`;
+      }else{
+      gratis.innerHTML = null;
+      }
     const selectedCount = snapshot.val() || 0;
     document.querySelectorAll('.pizza-box').forEach((box, index) => {
       const isSelected = index < selectedCount;
