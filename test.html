@@ -18,8 +18,8 @@
 </head>
   <style>
     body {
+      background-color:#0f4079;
       font-family: 'Arial', sans-serif;
-      background-color: #212c6a;
       margin: 0;
       padding: 0;
       display: flex;
@@ -82,24 +82,43 @@
       /* Merkeze alındı */
     }
 
-    .status {
+.pizza-box {
       width: 17%;
       /* Genişlik % olarak ayarlandı */
-      height: 150px;
-      background-color: #3bc13b;
+      height: 120px;
+      background-color: #d1c6c6;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-evenly;
-      border-radius: 5%;
+      border-radius: 10%;
       margin: 1%;
       /* Her bir kutu arasında boşluk bırakıldı */
     }
 
-    .status img {
-      max-width: 50px;
-      animation: spinAndPulse 8s linear infinite;
-    }
+.selected {
+  background: #18c81f;
+  border-color: black;
+  color: white;
+}
+
+.pizza-img {
+  animation: spin 5s linear infinite; /* Animasyon*/
+  filter: grayscale(100%);
+  height: 40px;
+  object-fit: contain;
+  transition: filter .5s, transform 1s; /* geçiş efektleri */
+  width: 40px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
     @keyframes spinAndPulse {
 
@@ -183,9 +202,9 @@
       /* Azaltılmış opaklık */
     }
     }
+    
   </style>
 </head>
-
 <body>
 
   <div id="statusMessage" class="container header" style="border-radius:0px 0px 10px 10px;"></div>
@@ -202,9 +221,8 @@
     </div>
     <div class="main">
       <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
-      <div id="kupon">
+   <div id="kupon"></div>
         <!-- Kuponlar JavaScript ile eklenecek -->
-      </div>
     </div>
     <div class="footer">
       Vi spanderer hver 11. stor pizza. ⓘ
@@ -231,18 +249,55 @@
   <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
     <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 70px;" class="btn1">
     <iframe id="fullScreenIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
-  </div>
+  </div>  
+  
+  <script type="module">
 
-  <script>
-    const kuponContainer = document.getElementById('kupon');
-    for (let index = 1; index <= 10; index++) {
-      kuponContainer.innerHTML += `<div class="status">${index}<img src="https://pizzano.github.io/img/pizza.png"></div>`;
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+
+  const app = initializeApp({
+    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+  });
+      const db = getDatabase(app);
+    window.updateDatabaseReference = function(mobileNumber) {
+      const dbRef = ref(db, `${mobilnr.value}`);
+
+  const pizzaContainer = document.getElementById('kupon');
+  pizzaContainer.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    pizzaContainer.innerHTML += `<div class="pizza-box" id="pizzaBox${i}">
+      <span>${i}</span>
+      <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="pizza-img">
+    </div>`;
+  }
+    
+  onValue(dbRef, snapshot => {
+    const selectedCount = snapshot.val() || 0;
+    document.querySelectorAll('.pizza-box').forEach((box, index) => {
+      const isSelected = index < selectedCount;
+      box.classList.toggle('selected', isSelected);
+      box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
+    });
+  });
     }
+    window.updateDatabaseReference();
+  window.adjustCount = function(increase) {
+    runTransaction(dbRef, currentValue => {
+      currentValue = currentValue || 0;
+      return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0);
+    });
+  };
+
+</script>
+  
+  <script>
+ 
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || '';
     document.addEventListener('DOMContentLoaded', function() {
       function updateMobileAndQRCode(event) {
-
+        window.updateDatabaseReference();
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
         var firstDigit = parseInt(mobilnr.value[0]);
