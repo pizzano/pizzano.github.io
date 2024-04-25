@@ -262,7 +262,7 @@ const app = initializeApp({
 
 const db = getDatabase(app);
 
-window.updateDatabaseReference = function(soru) {
+window.updateDatabaseReference = function(neden) {
   const dbRef = ref(db, `${mobilnr.value}`);
   const pizzaContainer = document.getElementById('kupon');
   pizzaContainer.innerHTML = "";
@@ -276,7 +276,7 @@ window.updateDatabaseReference = function(soru) {
 
   // İlk veri yüklemesi için onValue kullanılır
   onValue(dbRef, snapshot => {
-    console.log(soru);
+
     if (snapshot.val() == 10) {
       gratis.innerHTML = `<img style="width:100%;" src="https://pizzano.github.io/img/gratis.gif">`;
     } else {
@@ -287,14 +287,16 @@ window.updateDatabaseReference = function(soru) {
       const isSelected = index < selectedCount;
       box.classList.toggle('selected', isSelected);
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
-      if (soru == null) {  // null veya undefined için doğru olur
+      
+      if (neden == true) {
     document.getElementById('statusMessage').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+
     });
   });
 }
 
-window.updateDatabaseReference();  // Fonksiyonu başlangıçta çağırın
+window.updateDatabaseReference(true);  // Fonksiyonu başlangıçta çağırın
 
 window.adjustCount = function(increase) {
   const dbRef = ref(db, `${mobilnr.value}`);
@@ -316,11 +318,12 @@ window.adjustCount = function(increase) {
         localStorage.setItem('MOBIL', mobilnr.value);
         var firstDigit = parseInt(mobilnr.value[0]);
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
-        
-        if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-        QRCODE.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000);
-        }
+
+		if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+        mobilnr.blur();
+        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'center'});
+        setTimeout(function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000); 
+		}
         
         mobil_status.innerHTML = '✍ Registrer deg nå!';
         QRCODE.style = "width:100%; padding:0px;";
