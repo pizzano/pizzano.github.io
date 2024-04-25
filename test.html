@@ -28,14 +28,6 @@
       zoom: 90%;
       font-size: 18px;
     }
-    html {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
     .container {
       min-width: 350px;
       max-width: 450px;
@@ -361,22 +353,35 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
       updateMobileAndQRCode(); // İlk yükleme için de çağır
     });
 
-    function MenuStart() {
-  
-      console.log("acildi");
-      // İframe için URL ayarla
-      document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
-      // İframe'i göster
-      document.getElementById('fullScreenIframeContainer').style.display = 'block';
-    }
+ function MenuStart() {
+    console.log("acildi");
+    // HTML'e özel stil uygula
+    document.documentElement.style.height = "100%";
+    document.documentElement.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.position = "fixed";
+    document.documentElement.style.top = "0";
+    document.documentElement.style.left = "0";
+    // İframe için URL ayarla
+    document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
+    // İframe'i göster
+    document.getElementById('fullScreenIframeContainer').style.display = 'block';
+}
 
-    function closeIframe() {
-            console.log("kapandi");
-      // İframe'i gizle
-      document.getElementById('fullScreenIframeContainer').style.display = 'none';
-      // İframe kaynağını temizle
-      document.getElementById('fullScreenIframe').src = '';
-    }
+function closeIframe() {
+    console.log("kapandi");
+    // HTML stilini normale döndür
+    document.documentElement.style.removeProperty('height');
+    document.documentElement.style.removeProperty('width');
+    document.documentElement.style.removeProperty('overflow');
+    document.documentElement.style.removeProperty('position');
+    document.documentElement.style.removeProperty('top');
+    document.documentElement.style.removeProperty('left');
+    // İframe'i gizle
+    document.getElementById('fullScreenIframeContainer').style.display = 'none';
+    // İframe kaynağını temizle
+    document.getElementById('fullScreenIframe').src = '';
+}
 
     function detectDevice() {
       // LocalStorage'dan cihaz bilgisini deneyin
