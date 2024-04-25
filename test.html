@@ -202,7 +202,7 @@
       /* Azaltılmış opaklık */
     }
     }
-    .kapak{
+  iframe{
       height: 100%;
       width: 100%;
       overflow: hidden;
@@ -363,7 +363,7 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
     });
 
     function MenuStart() {
-         document.html.classList.add('kapak');
+  
       console.log("acildi");
       // İframe için URL ayarla
       document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
@@ -372,7 +372,6 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
     }
 
     function closeIframe() {
-      document.html.classList.remove('kapak');
             console.log("kapandi");
       // İframe'i gizle
       document.getElementById('fullScreenIframeContainer').style.display = 'none';
