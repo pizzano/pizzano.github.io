@@ -319,10 +319,20 @@ window.adjustCount = function(increase) {
         var firstDigit = parseInt(mobilnr.value[0]);
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
 
-		if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
+    mobilnr.blur(); // İlk olarak input'tan odağı kaldır
+
+    setTimeout(function() {
+        // Klavye kapanma sürecini beklemek için kısa bir zaman dilimi tanıyın
         document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'center'});
-        setTimeout(function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000); 
-		}
+
+        setTimeout(function() {
+            // İlk kaydırmadan sonra, sayfayı en üste kaydırma işlemi
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 2000); // QR Code görünümünden 2 saniye sonra en üste kaydır
+    }, 500); // Klavyenin kapanmasını beklemek için yeterli süre (örneğin 300 ms)
+}
+
         
         mobil_status.innerHTML = '✍ Registrer deg nå!';
         QRCODE.style = "width:100%; padding:0px;";
