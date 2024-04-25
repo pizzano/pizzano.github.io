@@ -366,10 +366,15 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
       document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
       // İframe'i göster
       document.getElementById('fullScreenIframeContainer').style.display = 'block';
+      // Modal kapanırken kaydırmayı yeniden etkinleştir
+enableScrolling();
     }
 
     function closeIframe() {
     document.body.classList.remove('no-scroll');
+        // Modal açılırken kaydırmayı engelle
+disableScrolling();
+
       // İframe'i gizle
       document.getElementById('fullScreenIframeContainer').style.display = 'none';
       // İframe kaynağını temizle
@@ -387,6 +392,7 @@ function enableScrolling(){
 function preventScroll(e){
     e.preventDefault();
 }
+ 
 
     function detectDevice() {
       // LocalStorage'dan cihaz bilgisini deneyin
