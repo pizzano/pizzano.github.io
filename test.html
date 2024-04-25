@@ -288,7 +288,9 @@ window.updateDatabaseReference = function(neden) {
       box.classList.toggle('selected', isSelected);
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       
-
+      if (neden == true) {
+    document.getElementById('statusMessage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
     });
   });
@@ -318,7 +320,6 @@ window.adjustCount = function(increase) {
         var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
 
 		if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-        mobilnr.blur();
         document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'center'});
         setTimeout(function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 2000); 
 		}
