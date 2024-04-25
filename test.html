@@ -355,6 +355,7 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
     });
 
     function MenuStart() {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
       // İframe için URL ayarla
       document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
       // İframe'i göster
@@ -362,6 +363,7 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
     }
 
     function closeIframe() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       // İframe'i gizle
       document.getElementById('fullScreenIframeContainer').style.display = 'none';
       // İframe kaynağını temizle
