@@ -353,25 +353,20 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
       updateMobileAndQRCode(); // İlk yükleme için de çağır
     });
 
- function MenuStart() {
-    console.log("acildi");
-    // HTML'e özel stil uygula
-  const style = document.documentElement.style;
-  style.cssText = 'height: 100%; width: 100%; overflow: hidden; position: fixed; top: 0; left: 0;';
 
-    // İframe için URL ayarla
+function setDocumentStyle(cssText) {
+    document.documentElement.style.cssText = cssText;
+}
+
+function MenuStart() {
+    setDocumentStyle('height: 100%; width: 100%; overflow: hidden; position: fixed; top: 0; left: 0;');
     document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
-    // İframe'i göster
     document.getElementById('fullScreenIframeContainer').style.display = 'block';
 }
 
 function closeIframe() {
-     // HTML'e özel stil uygula
-    const style = document.documentElement.style;
-    style.cssText = ''; // Stilleri boş bir string ile sıfırla
-    // İframe'i gizle
+    setDocumentStyle('');
     document.getElementById('fullScreenIframeContainer').style.display = 'none';
-    // İframe kaynağını temizle
     document.getElementById('fullScreenIframe').src = '';
 }
 
