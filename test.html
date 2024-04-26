@@ -390,7 +390,8 @@ function closeIframe() {
 
     if (qrkodem.style.position !== 'fixed') {
       document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
-      qrkodem.style = 'position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible;}';
+      qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
+
       qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
     } else {
       document.body.style ='';
