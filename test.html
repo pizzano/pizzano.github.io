@@ -228,14 +228,14 @@
     </div>
   </div>
   <br>
-  <div class="container">
+  <div id="qrkodem" class="container">
     <div class="header">
       QR-koden skannes av betjeningen!
     </div>
     <div class="main">
       <img id="QRCODE">
     </div>
-    <div class="footer">
+    <div id="qrkodelukk" class="footer">
       Klikk på QR-koden for å fremvise!
     </div>
   </div>
@@ -370,6 +370,21 @@ function closeIframe() {
     document.getElementById('fullScreenIframe').src = '';
 }
 
+
+  QRCODE.addEventListener('click', function() {
+
+    if (qrkodem.style.position !== 'fixed') {
+      document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
+      qrkodem.style = 'position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible;}';
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
+    } else {
+      document.body.style ='';
+      qrkodem.style = '';
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
+    }
+    
+  });
+  
     function detectDevice() {
       // LocalStorage'dan cihaz bilgisini deneyin
       var storedDevice = localStorage.getItem('deviceType');
