@@ -222,7 +222,7 @@
   </style>
 </head>
 <body>
-<div class="kapak">
+<div id="kapak" class="kapak">
   <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
   <br>
   <div id="deviceContent" class="container header btn"></div> <br>
@@ -307,7 +307,7 @@ window.updateDatabaseReference = function(neden) {
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       
       if (neden == true) {
-    document.getElementById('statusMessage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('kapak').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
     });
