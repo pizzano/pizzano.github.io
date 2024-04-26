@@ -28,6 +28,13 @@
       zoom: 95%;
       font-size: 18px;
     }
+@media screen and (min-width: 768px) {
+    body {
+    transform: scale(0.8);
+    transform-origin: top left;
+    width: 125%; /* Scale ile küçültme yapıldığında orijinal genişlikten daha büyük bir width değeri vermek gerekebilir */
+    }
+  }
     .kapak {
     background-color: #4577d3;
     display: flex;
@@ -218,7 +225,6 @@
     }
 
     }
-
   </style>
 </head>
 <body>
