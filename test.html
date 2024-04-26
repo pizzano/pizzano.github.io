@@ -1,7 +1,7 @@
 <html lang="nb">
 <head>
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Skarnes - Online Pizza Bestilling</title>
+  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="https://pizzano.github.io/img/s-logo.png" type="image/png">
@@ -411,8 +411,8 @@ function closeIframe() {
       // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
       if (storedDevice) {
         return storedDevice === 'iOS' ?
-          `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take away «</div>` :
-          `<div class="btn1" onclick="MenuStart();">» Bestill Take away «</div>`;
+          `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill TakeAway «</div>` :
+          `<div class="btn1" onclick="MenuStart();">» Bestill TakeAway «</div>`;
       }
       // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
       var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -422,8 +422,8 @@ function closeIframe() {
       localStorage.setItem('deviceType', deviceType);
       // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
       return isIOS ?
-        `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take away «</div>` :
-        `<div class="btn1" onclick="MenuStart();">» Bestill Take away «</div>`;
+        `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill TakeAway «</div>` :
+        `<div class="btn1" onclick="MenuStart();">» Bestill TakeAway «</div>`;
     }
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
