@@ -33,14 +33,18 @@
     display: flex;
     align-items: center;
     flex-direction: column;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     border-style: solid;
     border-color: #3F51B5;
-    border-width: 0px 1px; /* Üst ve alt kenarlar için 0px, sol ve sağ kenarlar için 1px */
+    border-width: 0px 1px;
     min-width: 330px;
     width: 99%;
     max-width: 500px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    height: 105vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+
     }
     .container {
       width: 90%;
