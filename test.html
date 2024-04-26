@@ -121,7 +121,9 @@
   transition: filter .5s, transform 1s; /* geçiş efektleri */
   width: 40px;
 }
-
+  #QRCODE{
+  cursor:pointer;
+    }
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -180,10 +182,12 @@
       font-size: 28px;
       color: white;
       border-radius: 11px;
+     cursor:pointer;
     }
 
     .btn1 {
       animation: pulse 1s infinite;
+           cursor:pointer;
     }
 
     @keyframes pulse {
@@ -255,7 +259,7 @@
   </div>
   <br>
   <div class="container">
-    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="header" style="border-radius: 10px 10px 10px;padding: 15px 0px 15px 0px;text-align: center;display: flex;justify-content: space-around;gap: 5px;flex-direction: column;">
+    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="header" style="border-radius: 10px 10px 10px;padding: 15px 0px 15px 0px;text-align: center;display: flex;justify-content: space-around;gap: 5px;flex-direction: column;cursor:pointer;">
       <div>Vurder oss på Google </div> <div>⭐⭐⭐⭐⭐ 4.9 </div> </div>
   </div>
   <br>
@@ -407,8 +411,8 @@ function closeIframe() {
       // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
       if (storedDevice) {
         return storedDevice === 'iOS' ?
-          `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
-          `<div class="btn1" onclick="MenuStart();">» Bestill Takeaway «</div>`;
+          `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take away «</div>` :
+          `<div class="btn1" onclick="MenuStart();">» Bestill Take away «</div>`;
       }
       // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
       var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -418,8 +422,8 @@ function closeIframe() {
       localStorage.setItem('deviceType', deviceType);
       // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
       return isIOS ?
-        `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Takeaway «</div>` :
-        `<div class="btn1" onclick="MenuStart();">» Bestill Takeaway «</div>`;
+        `<div class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take away «</div>` :
+        `<div class="btn1" onclick="MenuStart();">» Bestill Take away «</div>`;
     }
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
