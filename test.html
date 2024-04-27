@@ -343,7 +343,8 @@ window.updateDatabaseReference = function(neden) {
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-      document.getElementById('tepe').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+     // document.getElementById('tepe').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
     });
