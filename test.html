@@ -239,6 +239,7 @@
 </head>
 <body>
 <div id="kapak" class="kapak">
+  <div id="tepe"></div>
   <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
   <br>
   <div id="deviceContent" class="container header btn"></div> <br>
@@ -292,8 +293,7 @@
         <li><strong>Innløs din Gratis Pizza:</strong> Når du har samlet 10 digitale stempler og kjøper din neste store pizza, nevn at du vil innløse din gratis pizza. Ha QR-koden klar for skanning.</li>
         <li><strong>Betingelser:</strong> For hver 10 store pizzaer kjøpt til full pris, får du den 11. gratis ved henting. Digitale kuponger kan ikke registreres hvis kjøpet kombineres med andre rabatter eller tilbud, eller hvis det gjelder kjøp av liten pizza.</li>
         <li><strong>Fordeler:</strong> Bli med i lojalitetsprogrammet og spar omtrent 10 % på dine kjøp over tid. Dine digitale kuponger og fremgang er alltid tilgjengelig på telefonen din.</li>
-        <li><strong>Endringer:</strong> Vi kan endre betingelser og vilkår når som helst.</li>
-          ❌ Lukk
+        <li><strong>❌ Lukk</li>
     </ul>
 </div>
   
@@ -343,7 +343,7 @@ window.updateDatabaseReference = function(neden) {
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-      document.getElementById('kapak').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('tepe').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
     });
