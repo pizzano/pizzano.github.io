@@ -28,6 +28,7 @@
       zoom: 95%;
       font-size: 18px;
     }
+    
     .kapak {
     background-color: #4577d3;
     display: flex;
@@ -42,6 +43,12 @@
     max-width: 500px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
+    @media screen and (min-width: 768px) {
+     .kapak {
+       display:flex;
+      zoom:80%;
+      }
+}
     .container {
       width: 90%;
       display: flex;
@@ -218,11 +225,21 @@
     }
 
     }
-
+    h1 {
+        color: #444; /* Başlık rengi */
+    }
+    ul {
+        padding-left: 20px; /* Madde işaretlerinden boşluk */
+    }
+    li {  
+      margin-bottom: 10px; /* Madde araları boşluk */
+      padding: 3px;
+    }
   </style>
 </head>
 <body>
 <div id="kapak" class="kapak">
+  <div id="tepe"></div>
   <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
   <br>
   <div id="deviceContent" class="container header btn"></div> <br>
@@ -245,7 +262,7 @@
       Vi spanderer hver 11. stor pizza. ⓘ
     </div>
   </div>
-  <br>
+  <br>  
   <div id="qrkodem" class="container">
     <div class="header">
       QR-koden skannes av betjeningen!
@@ -257,6 +274,8 @@
       Klikk på QR-koden for å fremvise!
     </div>
   </div>
+  <br> 
+  <div id="vilkor" class="container header btn" style="height:40px;font-size:19px;">» Vilkår for lojalitetsprogram «</div> 
   <br>
   <div class="container">
     <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="header" style="border-radius: 10px 10px 10px;padding: 15px 0px 15px 0px;text-align: center;display: flex;justify-content: space-around;gap: 5px;flex-direction: column;cursor:pointer;">
@@ -264,9 +283,23 @@
   </div>
   <br>
      </div>
-  <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
+
+  <div id="regler" class="container" style="display:none;" onclick="this.style.display = 'none'">
+    <h4>KØL Grill & Pizza Lojalitetsprogram</h4>
+    <ul>
+        <li><strong>Medlemskap:</strong> Registrer mobilnummeret ditt for å motta en unik QR-kode som representerer ditt medlemskap og tilgang til digitale kuponger.</li>
+        <li><strong>Kjøpe Pizzaer:</strong> Kjøp store pizzaer til full pris via vår nettside. Sørg for at personalet skanner QR-koden din ved henting slik at kjøpet registreres på din digitale kuponprofil.</li>
+        <li><strong>Følg Fremgangen Din:</strong> For hver store pizza du kjøper, legges et digitalt stempel til din profil. Samle 10 stempler for å motta en gratis stor pizza.</li>
+        <li><strong>Innløs din Gratis Pizza:</strong> Når du har samlet 10 digitale stempler og kjøper din neste store pizza, nevn at du vil innløse din gratis pizza. Ha QR-koden klar for skanning.</li>
+        <li><strong>Betingelser:</strong> For hver 10 store pizzaer kjøpt til full pris, får du den 11. gratis ved henting. Digitale kuponger kan ikke registreres hvis kjøpet kombineres med andre rabatter eller tilbud, eller hvis det gjelder kjøp av liten pizza.</li>
+        <li><strong>Fordeler:</strong> Bli med i lojalitetsprogrammet og spar omtrent 10 % på dine kjøp over tid. Dine digitale kuponger og fremgang er alltid tilgjengelig på telefonen din.</li>
+        <li><strong>❌ Lukk</li>
+    </ul>
+</div>
+  
+ <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
     <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 70px;" class="btn1">
-    <iframe id="fullScreenIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+    <iframe id="fullScreenIframe" class="testim" src="" style="width:100%; height:100%; border:none;"></iframe>
   </div>  
   
 <script type="module">
@@ -310,7 +343,7 @@ window.updateDatabaseReference = function(neden) {
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-      document.getElementById('kapak').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('tepe').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
     });
@@ -375,7 +408,25 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
       updateMobileAndQRCode(); // İlk yükleme için de çağır
     });
 
+    vilkor.addEventListener('click', function() {
+        regler.style = 'display: flex;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);padding: 100%;font-size:16px;';
+  });
+  
+  QRCODE.addEventListener('click', function() {
 
+    if (qrkodem.style.position !== 'fixed') {
+      document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
+      qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
+
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
+    } else {
+      document.body.style ='';
+      qrkodem.style = '';
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
+    }
+    
+  });
+  
 function setDocumentStyle(cssText) {
     document.documentElement.style.cssText = cssText;
 }
@@ -391,22 +442,6 @@ function closeIframe() {
     document.getElementById('fullScreenIframeContainer').style.display = 'none';
     document.getElementById('fullScreenIframe').src = '';
 }
-
-
-  QRCODE.addEventListener('click', function() {
-
-    if (qrkodem.style.position !== 'fixed') {
-      document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
-      qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
-
-      qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
-    } else {
-      document.body.style ='';
-      qrkodem.style = '';
-      qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-    }
-    
-  });
   
     function detectDevice() {
       // LocalStorage'dan cihaz bilgisini deneyin
@@ -430,7 +465,10 @@ function closeIframe() {
     }
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+      
+    var btn1 = document.querySelector('.btn1'); 
+    document.getElementById('deviceContent').onclick = btn1.onclick;
     });
 
     function updateStatus() {
