@@ -343,13 +343,14 @@ window.updateDatabaseReference = function(neden) {
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 500);
       }
 
     });
   });
 }
 
+  
 window.updateDatabaseReference(true);  // Fonksiyonu başlangıçta çağırın
 
 window.adjustCount = function(increase) {
