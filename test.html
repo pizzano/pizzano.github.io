@@ -28,13 +28,7 @@
       zoom: 95%;
       font-size: 18px;
     }
-@media screen and (min-width: 768px) {
-    body {
-    transform: scale(0.8);
-    transform-origin: top left;
-    width: 125%; /* Scale ile küçültme yapıldığında orijinal genişlikten daha büyük bir width değeri vermek gerekebilir */
-    }
-  }
+    
     .kapak {
     background-color: #4577d3;
     display: flex;
@@ -225,6 +219,7 @@
     }
 
     }
+
   </style>
 </head>
 <body>
@@ -270,9 +265,10 @@
   </div>
   <br>
      </div>
-  <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
+
+ <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
     <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 70px;" class="btn1">
-    <iframe id="fullScreenIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+    <iframe id="fullScreenIframe" class="testim" src="" style="width:100%; height:100%; border:none;"></iframe>
   </div>  
   
 <script type="module">
@@ -381,7 +377,21 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
       updateMobileAndQRCode(); // İlk yükleme için de çağır
     });
 
+  QRCODE.addEventListener('click', function() {
 
+    if (qrkodem.style.position !== 'fixed') {
+      document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
+      qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
+
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
+    } else {
+      document.body.style ='';
+      qrkodem.style = '';
+      qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
+    }
+    
+  });
+  
 function setDocumentStyle(cssText) {
     document.documentElement.style.cssText = cssText;
 }
@@ -397,22 +407,6 @@ function closeIframe() {
     document.getElementById('fullScreenIframeContainer').style.display = 'none';
     document.getElementById('fullScreenIframe').src = '';
 }
-
-
-  QRCODE.addEventListener('click', function() {
-
-    if (qrkodem.style.position !== 'fixed') {
-      document.body.style=' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
-      qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
-
-      qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
-    } else {
-      document.body.style ='';
-      qrkodem.style = '';
-      qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-    }
-    
-  });
   
     function detectDevice() {
       // LocalStorage'dan cihaz bilgisini deneyin
