@@ -343,7 +343,7 @@ window.updateDatabaseReference = function(neden) {
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-      setTimeout(function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 500);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
     });
