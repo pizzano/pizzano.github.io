@@ -43,12 +43,7 @@
     max-width: 500px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
-    @media screen and (min-width: 768px) {
-     .kapak {
-       display:flex;
-      zoom:80%;
-      }
-}
+
     .container {
       width: 90%;
       display: flex;
@@ -340,6 +335,8 @@ window.updateDatabaseReference = function(neden) {
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       
       if (neden == true) {
+        console.log(neden);
+        
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
