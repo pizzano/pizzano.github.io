@@ -43,7 +43,11 @@
     max-width: 500px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
-
+@media screen and (min-width: 768px) {
+  .kapak {
+   zoom: 80%;
+  }
+}
     .container {
       width: 90%;
       display: flex;
@@ -233,7 +237,7 @@
   </style>
 </head>
 <body>
-    <div id="tepe">
+
 <div id="kapak" class="kapak">
   <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
   <br>
@@ -291,7 +295,7 @@
         <li><strong>❌ Lukk</li>
     </ul>
 </div>
-  </div>
+
  <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
     <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 60px;" class="btn1">
     <iframe id="fullScreenIframe" class="testim" src="" style="width:100%; height:100%; border:none;"></iframe>
@@ -383,7 +387,6 @@ if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStar
     }, 500); // Klavyenin kapanmasını beklemek için yeterli süre (örneğin 500 ms)
 }
 
-        
         mobil_status.innerHTML = '✍ Registrer deg nå!';
         QRCODE.style = "width:100%; padding:0px;";
         QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
