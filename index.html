@@ -376,15 +376,8 @@ window.adjustCount = function(increase) {
 
 if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
     mobilnr.blur(); // İlk olarak input'tan odağı kaldır
-/*
-    setTimeout(function() {
-        document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'center'});
-        setTimeout(function() {
-            // İlk kaydırmadan sonra, sayfayı en üste kaydırma işlemi
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 2000); // QR Code görünümünden 2 saniye sonra en üste kaydır
-    }, 500); // Klavyenin kapanmasını beklemek için yeterli süre (örneğin 500 ms)
-}*/
+
+}
 
         
         mobil_status.innerHTML = '✍ Registrer deg nå!';
