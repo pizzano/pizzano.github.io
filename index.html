@@ -376,8 +376,8 @@ window.adjustCount = function(increase) {
 
 if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
     mobilnr.blur(); // İlk olarak input'tan odağı kaldır
-
-  /*  setTimeout(function() {
+/*
+    setTimeout(function() {
         document.getElementById('QRCODE').scrollIntoView({ behavior: 'smooth', block: 'center'});
         setTimeout(function() {
             // İlk kaydırmadan sonra, sayfayı en üste kaydırma işlemi
