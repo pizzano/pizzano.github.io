@@ -313,6 +313,7 @@ const app = initializeApp({
 const db = getDatabase(app);
 
 window.updateDatabaseReference = function(neden) {
+  
   const dbRef = ref(db, `${mobilnr.value}`);
   const pizzaContainer = document.getElementById('kupon');
   pizzaContainer.innerHTML = "";
@@ -323,10 +324,8 @@ window.updateDatabaseReference = function(neden) {
       <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="pizza-img">
     </div>`;
   }
-
   // İlk veri yüklemesi için onValue kullanılır
   onValue(dbRef, snapshot => {
-
     if (snapshot.val() == 10) {
       gratis.innerHTML = `<img style="width:100%;" src="https://pizzano.github.io/img/gratis.gif">`;
     } else {
@@ -338,21 +337,16 @@ window.updateDatabaseReference = function(neden) {
       box.classList.toggle('selected', isSelected);
       box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       
-      if (neden == true) {
-        console.log(neden);
-        
       document.body.style ='';
       qrkodem.style = '';
       qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-
     });
   });
 }
-
   
-window.updateDatabaseReference(true);  // Fonksiyonu başlangıçta çağırın
+  
+window.updateDatabaseReference();  // Fonksiyonu başlangıçta çağırın
 
 window.adjustCount = function(increase) {
   const dbRef = ref(db, `${mobilnr.value}`);
@@ -450,8 +444,8 @@ function closeIframe() {
       // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
       if (storedDevice) {
         return storedDevice === 'iOS' ?
-          `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill TakeAway «</div>` :
-          `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill TakeAway «</div>`;
+          `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
+          `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill Take Away «</div>`;
       }
       // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
       var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -461,8 +455,8 @@ function closeIframe() {
       localStorage.setItem('deviceType', deviceType);
       // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
       return isIOS ?
-        `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill TakeAway «</div>` :
-        `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill TakeAway «</div>`;
+        `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
+        `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill Take Away «</div>`;
     }
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
