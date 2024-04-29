@@ -247,22 +247,40 @@
     /* Madde araları boşluk */
     padding: 3px;
   }
+  
+  #loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: pulse .5s infinite;
+    cursor: pointer;
+}
 </style>
 </head>
 
 <body>
-
+<div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 9999;">
+    <img src="https://pizzano.github.io/img/s-logo.png" alt="Loading" style="width: 100px; height: 100px;">
+</div>
+  
   <div id="kapak" class="kapak">
     <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
     <br>
     <div id="deviceContent" class="container header btn"></div> <br>
     <p style="color:gold;font-size:19px;">Digital kupong registreres ved henting.</p>
     <div class="container">
-      <div id="mobil_status" class="header">
-        ✅ Nummeret ditt er registrert!
-      </div>
+      
+      <div id="mobil_status" class="header">      </div>
+      
       <div class="inputKutusu">
-        <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off" oninput="if (this.value.length === 8) this.blur()">
+        <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
 
       </div>
       <div class="main">
@@ -364,6 +382,12 @@
   </script>
 
   <script>
+    window.addEventListener('load', function() {
+    setTimeout(function() {
+        document.getElementById('loadingScreen').style.display = 'none';
+    }, 1500); // 1500 milisaniye = 1.5 saniye
+});
+    
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || ' ';
     document.addEventListener('DOMContentLoaded', function() {
@@ -502,6 +526,5 @@
     }
     updateStatus();
   </script>
-
 </body>
 </html>
