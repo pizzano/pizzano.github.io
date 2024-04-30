@@ -482,7 +482,7 @@ content: '';
           }, 500); // Klavyenin kapanmasını beklemek için yeterli süre (örneğin 500 ms)
           window.updateDatabaseReference();
         }
-        
+
         mobil_status.innerHTML = '✍ Registrer deg nå!';
         QRCODE.style = "width:100%; padding:0px;";
         QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
@@ -491,7 +491,7 @@ content: '';
           mobil_status.innerHTML = '❌ Nummer må begynne med 4 og 9.';
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
-          
+          mobilnr.value = null;
         } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
           mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
           QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
