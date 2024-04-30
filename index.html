@@ -283,8 +283,30 @@
         width: 50vw;
         height: 50vw;
     }
+}  
+.signal-container::before {
+content: '';
+    position: absolute;
+    bottom: 25px;
+    right: -10px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 0, 0, 0.5);
+    border-radius: 50%;
+    animation: pulser 2s infinite cubic-bezier(0, 0, 0.61, 0.21);
 }
-  
+
+@keyframes pulser {
+    0% {
+        transform: scale(0.6);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
 </style>
 </head>
 
@@ -355,7 +377,9 @@
   </div>
 
   <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
-    <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute;bottom: 40px;right: 5px; z-index: 10001;width: 50px;" class="btn1">
+    
+<div class="signal-container"> <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute; bottom: 40px; right: 5px; z-index: 10001; width: 50px;" class="btn1"> </div>
+    
     <iframe id="fullScreenIframe" class="testim" src="" style="width:100%; height:100%; border:none;"></iframe>
   </div>
 
