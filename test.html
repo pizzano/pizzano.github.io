@@ -1,16 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Your Page Title</title>
+    <meta charset="UTF-8">
+    <title>Your Page Title</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var iframeLoaded = false;
+
+            // İframe'in yüklendiğini belirten bir fonksiyon
+            function onIframeLoaded() {
+                iframeLoaded = true;
+            }
+
+            // İframe için bir yükleme süresi kontrolü
+            setTimeout(function() {
+                if (!iframeLoaded) {
+                    window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Yükleme başarısızsa yönlendirme
+                }
+            }, 10000); // 10 saniye sonra kontrol et
+
+            var iframe = document.createElement("iframe");
+            iframe.src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
+            iframe.onload = onIframeLoaded;
+            iframe.style.width = "100%";
+            iframe.style.height = "500px";
+            document.body.appendChild(iframe);
+        });
+    </script>
 </head>
 <body>
-<iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" 
-        style="width:100%; height:500px;"
-        onerror="document.getElementById('error-message').style.display = 'block';">
-</iframe>
-<div id="error-message" style="display:none;">
-    <p>Iframe yüklenemedi. Lütfen <a href="https://www.foodbooking.com/api/fb/_q_y_w_r6">buraya tıklayarak</a> siteyi ziyaret edin.</p>
-</div>
+    <!-- İframe, JavaScript tarafından dinamik olarak oluşturuluyor -->
 </body>
 </html>
