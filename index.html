@@ -459,10 +459,11 @@ content: '';
         document.getElementById('loadingScreen').style.display = 'none';
     }, 1000); // 1000 milisaniye = 1 saniye
 });
-    
+
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || ' ';
     document.addEventListener('DOMContentLoaded', function() {
+      
       function updateMobileAndQRCode(event) {
         mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
         localStorage.setItem('MOBIL', mobilnr.value);
@@ -521,6 +522,9 @@ content: '';
     }
 
     function MenuStart() {
+      var script = document.createElement('script');
+          script.src = 'https://bestill.online/kontrol.js'; 
+
       setDocumentStyle('height: 100%; width: 100%; overflow: hidden; position: fixed; top: 0; left: 0;');
       document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
       document.getElementById('fullScreenIframeContainer').style.display = 'block';
@@ -568,7 +572,6 @@ content: '';
       // 'click' parametresi 'bestill' ise ilgili butonu bul ve tıkla
       if (shouldClick === 'bestill') {
         document.getElementById('dugme').onclick();
-        script.src = 'kontrol.js'; 
       }
     });
 
