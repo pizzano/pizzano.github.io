@@ -450,8 +450,6 @@ content: '';
   </script>
 
   <script>
-// Varsayılan detektör fonksiyonuna ek olarak
-window.parent.postMessage({ isPrivate: result.isPrivate }, '*');
 
     window.addEventListener('message', function(event) {
     if (event.data.isPrivate) {
