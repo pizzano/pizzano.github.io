@@ -1,13 +1,45 @@
-<script>
-// Gizli sekmeden giriş yapıldığını kontrol etmek için
-if (!window.localStorage.getItem('test')) {
-    // localStorage boşsa veya test öğesi yoksa
-    alert("Gizli sekmeden giriş yaptınız veya tarayıcınız yerel depolamayı desteklemiyor. Lütfen tarayıcı ayarlarınızı kontrol edin.");
-} else {
-    // localStorage'de test öğesi varsa
-    alert("Tarayıcı ayarlarınız doğru. Gizli sekmeden giriş yapılmadı.");
+// Local storage desteğini kontrol et
+function isLocalStorageSupported() {
+  try {
+    localStorage.setItem('test', 'test');
+    localStorage.removeItem('test');
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
-// localStorage'e test adında bir öğe ekleyin
-window.localStorage.setItem('test', 'value');
-</script>
+// Gizli sekme kullanımını kontrol et
+function isIncognitoMode() {
+  return new Promise((resolve) => {
+    const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+    if (!fs) {
+      // Tarayıcı gizli modu hakkında bilgi alınamıyor
+      resolve(false);
+    } else {
+      fs(
+        window.TEMPORARY,
+        100,
+        () => resolve(false),
+        () => resolve(true)
+      );
+    }
+  });
+}
+
+// Kontrol fonksiyonlarını kullanarak işlem yap
+async function checkIncognitoMode() {
+  const localStorageSupported = isLocalStorageSupported();
+  const incognitoMode = await isIncognitoMode();
+
+  if (!localStorageSupported || incognitoMode) {
+    // Gizli sekme kullanılıyor veya yerel depolama desteklenmiyor
+    console.log("Gizli sekme kullanılıyor veya yerel depolama desteklenmiyor.");
+  } else {
+    // Normal sekme kullanılıyor
+    console.log("Normal sekme kullanılıyor.");
+  }
+}
+
+// Fonksiyonu çağır
+checkIncognitoMode();
