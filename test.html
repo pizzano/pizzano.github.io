@@ -1,10 +1,13 @@
 <script>
-// Test adında bir anahtar ile bir değer ekleyerek localStorage'i kullanıma hazırla
-window.localStorage.setItem('test', 'value');
-
 // Gizli sekmeden giriş yapıldığını kontrol etmek için
 if (!window.localStorage.getItem('test')) {
-    // Gizli sekmeden giriş yapıldıysa uyarı mesajını göster
-    alert("Gizli sekmeden giriş yaptınız. Lütfen tarayıcı ayarlarınızı kontrol edin.");
+    // localStorage boşsa veya test öğesi yoksa
+    alert("Gizli sekmeden giriş yaptınız veya tarayıcınız yerel depolamayı desteklemiyor. Lütfen tarayıcı ayarlarınızı kontrol edin.");
+} else {
+    // localStorage'de test öğesi varsa
+    alert("Tarayıcı ayarlarınız doğru. Gizli sekmeden giriş yapılmadı.");
 }
+
+// localStorage'e test adında bir öğe ekleyin
+window.localStorage.setItem('test', 'value');
 </script>
