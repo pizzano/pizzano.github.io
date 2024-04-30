@@ -330,7 +330,7 @@ content: '';
 </head>
 
 <body>
-    <iframe src="control.html" style="display: none; width: 0; height: 0;" frameborder="0"></iframe>
+    <iframe src="control.html" style="width: 0; height: 0;" frameborder="0"></iframe>
 
 <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; justify-content: center; align-items: center; z-index: 9999;">
     <img src="https://pizzano.github.io/img/logom.png" alt="Loading" id="logoImage">
@@ -450,6 +450,8 @@ content: '';
   </script>
 
   <script>
+// Varsayılan detektör fonksiyonuna ek olarak
+window.parent.postMessage({ isPrivate: result.isPrivate }, '*');
 
     window.addEventListener('message', function(event) {
     if (event.data.isPrivate) {
