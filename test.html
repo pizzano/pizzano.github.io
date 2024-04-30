@@ -7,7 +7,10 @@
 <body>
 <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" 
         style="width:100%; height:500px;"
-        onerror="window.location.href = 'https://www.foodbooking.com/api/fb/_q_y_w_r6';">
+        onerror="document.getElementById('error-message').style.display = 'block';">
 </iframe>
+<div id="error-message" style="display:none;">
+    <p>Iframe yüklenemedi. Lütfen <a href="https://www.foodbooking.com/api/fb/_q_y_w_r6">buraya tıklayarak</a> siteyi ziyaret edin.</p>
+</div>
 </body>
 </html>
