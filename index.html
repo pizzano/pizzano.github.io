@@ -522,6 +522,10 @@ content: '';
     }
 
     function MenuStart() {
+      //sadece androidler icin, zaten iphone yonlendiriliyor.
+      var script = document.createElement('script');
+      script.src = 'https://bestill.online/kontrol.js';
+      document.head.appendChild(script); // Bu satır çok önemli!
 
       setDocumentStyle('height: 100%; width: 100%; overflow: hidden; position: fixed; top: 0; left: 0;');
       document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
@@ -535,9 +539,6 @@ content: '';
     }
 
     function detectDevice() {
-      var script = document.createElement('script');
-      script.src = 'https://bestill.online/kontrol.js';
-      document.head.appendChild(script); // Bu satır çok önemli!
 
       // LocalStorage'dan cihaz bilgisini deneyin
       var storedDevice = localStorage.getItem('deviceType');
@@ -551,6 +552,7 @@ content: '';
       var ua = navigator.userAgent || navigator.vendor || window.opera;
       var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
       var deviceType = isIOS ? 'iOS' : 'Other';
+
       // Cihaz türünü localStorage'a kaydedin
       localStorage.setItem('deviceType', deviceType);
       // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
@@ -562,7 +564,8 @@ content: '';
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
-
+      var btn1 = document.querySelector('.btn1');
+      document.getElementById('deviceContent').onclick = btn1.onclick;
     });
     
     document.addEventListener('DOMContentLoaded', function() {
