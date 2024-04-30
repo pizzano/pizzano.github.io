@@ -486,7 +486,7 @@ content: '';
         QRCODE.style = "width:100%; padding:0px;";
         QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
         mobil_status.innerHTML = '✍ Registrer deg nå!';
-        
+  
         if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
@@ -509,7 +509,12 @@ content: '';
       if (qrkodem.style.position !== 'fixed') {
         document.body.style = ' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
         qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
-        qrkodelukk.innerHTML = "Klikk på QR-koden for å LUKKE!";
+        qrkodelukk.innerHTML = "Klikk på QR-koden for å Lukke!";
+        
+        if (QRCODE.src.includes("stemp")){
+        qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
+        }
+
       } else {
         document.body.style = '';
         qrkodem.style = '';
@@ -553,8 +558,8 @@ function detectDevice() {
 
   // Eğer cihaz tipi iOS ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
   var buttonHTML = storedDevice === 'iOS' ?
-    `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
-    `<div id="dugme" class="btn1" onclick="MenuStart();">» MENY og Bestilling «</div>`;
+    `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">MENY og Bestilling</div>` :
+    `<div id="dugme" class="btn1" onclick="MenuStart();">MENY og Bestilling</div>`;
 
   return buttonHTML;
 }
