@@ -538,28 +538,26 @@ content: '';
       document.getElementById('fullScreenIframe').src = '';
     }
 
-    function detectDevice() {
+function detectDevice() {
+  // LocalStorage'dan cihaz bilgisini deneyin
+  var storedDevice = localStorage.getItem('deviceType');
+  
+  if (!storedDevice) {
+    // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
+    var ua = navigator.userAgent || navigator.vendor || window.opera;
+    var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    storedDevice = isIOS ? 'iOS' : 'Other';
+    // Cihaz türünü localStorage'a kaydedin
+    localStorage.setItem('deviceType', storedDevice);
+  }
 
-      // LocalStorage'dan cihaz bilgisini deneyin
-      var storedDevice = localStorage.getItem('deviceType');
-      // Eğer cihaz tipi zaten kaydedilmişse, ilgili içeriği hemen döndür
-      if (storedDevice) {
-        return storedDevice === 'iOS' ?
-          `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
-          `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill Take Away «</div>`;
-      }
-      // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
-      var ua = navigator.userAgent || navigator.vendor || window.opera;
-      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-      var deviceType = isIOS ? 'iOS' : 'Other';
+  // Eğer cihaz tipi iOS ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
+  var buttonHTML = storedDevice === 'iOS' ?
+    `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
+    `<div id="dugme" class="btn1" onclick="MenuStart();">» MENY og Bestilling «</div>`;
 
-      // Cihaz türünü localStorage'a kaydedin
-      localStorage.setItem('deviceType', deviceType);
-      // iOS için özel link, diğer cihazlar için genel menü fonksiyonu
-      return isIOS ?
-        `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">» Bestill Take Away «</div>` :
-        `<div id="dugme" class="btn1" onclick="MenuStart();">» Bestill Take Away «</div>`;
-    }
+  return buttonHTML;
+}
     
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
