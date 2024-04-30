@@ -297,30 +297,13 @@
     z-index: 9999;
 }
 
-#logoImage {
-    width: 0;
-    height: 0;
-    animation: scaleLogo 1s forwards;
-}
+
 
 #logoImage {
-    width: 10vw; /* Ekran genişliğinin %10'u */
-    height: 10vw; /* Genişlikle orantılı yükseklik */
-    animation: scaleLogo 1s forwards;
+    width: 40vw; /* Ekran genişliğinin %10'u */
+    height: 40vw; /* Genişlikle orantılı yükseklik */
 }
 
-@keyframes scaleLogo {
-    from {
-        transform: scale(0);
-        width: 20vw;
-        height: 20vw;
-    }
-    to {
-        transform: scale(1);
-        width: 40vw;
-        height: 40vw;
-    }
-}  
 .signal-container::before {
 content: '';
     position: absolute;
