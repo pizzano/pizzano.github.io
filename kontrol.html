@@ -81,14 +81,14 @@
     }
     
     // This function is called when the script is loaded
- function detect() {
+function detect() {
   var a = document.getElementById("answer");
+  // We call the detectIncognito function and handle the promise
   detectIncognito().then(function(result) {
-    if (result.isPrivate) { // If the result is private, we display a message and redirect
-      a.innerHTML = "<b>Yes</b>. You are using " + result.browserName + " in " + getModeName(result.browserName) + ".";
-      window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Redirect to the original site
-    } else { // If the result is not private, we display a message to the user
-      a.innerHTML = "<b>No</b>. You are using " + result.browserName + " in a regular browser window.";
+    if (result.isPrivate) { // If the result is private, redirect to the specified URL
+      window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
+    } else { // If the result is not private, keep the user on the same page without changing anything
+      a.innerHTML = ""; // You can keep this line if you want to clear any preset content or it can be removed if not needed
     }
   }).catch(function(error) { // If there is an error, we display a message to the user & log the error to console
     a.innerHTML = "<b>There was an error.</b> Check console for further information. If the problem persists, please <a href='https://github.com/Joe12387/detectIncognito/issues'>report the issue</a> on GitHub.";
