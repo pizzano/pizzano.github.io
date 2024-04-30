@@ -1,9 +1,10 @@
-
-    <script>
-if (window.localStorage && window.localStorage.getItem('test')) {
+<script>
+// Gizli sekmeden giriş yapıldığını kontrol etmek için
+if (!window.localStorage.getItem('test')) {
+    // Gizli sekmeden giriş yapıldıysa uyarı mesajını göster
     alert("Gizli sekmeden giriş yaptınız. Lütfen tarayıcı ayarlarınızı kontrol edin.");
 }
 
-    </script>
-
-
+// Test adında bir anahtar ile bir değer ekleyerek localStorage'i kullanıma hazırla
+window.localStorage.setItem('test', 'value');
+</script>
