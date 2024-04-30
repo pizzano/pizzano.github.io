@@ -113,7 +113,9 @@ function detect() {
       }
       a.innerHTML += " If the problem persists, please <a href='https://github.com/Joe12387/detectIncognito/issues'>report the issue</a> on GitHub.";
     };
-
+// Varsayılan detektör fonksiyonuna ek olarak
+window.parent.postMessage({ isPrivate: result.isPrivate }, '*');
+    
     script.src = 'https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js';
     document.body.appendChild(script);
   </script>
