@@ -266,17 +266,25 @@
     animation: scaleLogo 1s forwards;
 }
 
-@keyframes scaleLogo {
-    from {
-        transform: scale(0); /* Başlangıçta logo görünmez */
-    }
-    to {
-        transform: scale(1); /* 1 saniye sonunda logo normal boyutunda */
-        width: 50%;
-        height: 50%;
-    }
+#logoImage {
+    width: 10vw; /* Ekran genişliğinin %10'u */
+    height: 10vw; /* Genişlikle orantılı yükseklik */
+    animation: scaleLogo 1s forwards;
 }
 
+@keyframes scaleLogo {
+    from {
+        transform: scale(0);
+        width: 0vw;
+        height: 0vw;
+    }
+    to {
+        transform: scale(1);
+        width: 80vw;
+        height: 80vw;
+    }
+}
+  
 </style>
 </head>
 
