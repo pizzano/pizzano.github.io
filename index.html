@@ -570,8 +570,6 @@ function detectDevice() {
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
-      var btn1 = document.querySelector('.btn1');
-      document.getElementById('deviceContent').onclick = btn1.onclick;
     });
     
     document.addEventListener('DOMContentLoaded', function() {
