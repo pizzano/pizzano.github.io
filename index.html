@@ -570,6 +570,7 @@ function detectDevice() {
     // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+      document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
     });
     
     document.addEventListener('DOMContentLoaded', function() {
