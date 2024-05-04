@@ -326,6 +326,25 @@ content: '';
         opacity: 0;
     }
 }
+  
+  #fullScreenIframeContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden; /* Başlangıçta iframe'i gizler */
+  z-index: 10000;
+  box-sizing: border-box; /* Çerçeve ve dolgu genişliğe dahil edilir */
+}
+
+#fullScreenIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  box-sizing: border-box; /* Çerçeve ve dolgu genişliğe dahil edilir */
+}
+
 </style>
 </head>
 <body>
@@ -400,11 +419,11 @@ content: '';
     </ul>
   </div>
 
-  <div id="fullScreenIframeContainer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:white; z-index:10000;">
+  <div id="fullScreenIframeContainer">
     
 <div class="signal-container"> <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute; bottom: 40px; right: 5px; z-index: 10001; width: 50px;" class="btn1"> </div>
     
-    <iframe id="fullScreenIframe" class="testim" src="" style="width:100%; height:100%; border:none;" onerror="handleError()"></iframe>
+   <iframe id="fullScreenIframe" src="https://www.foodbooking.com/api/fb/_q_y_w_r6" onerror="handleError()"></iframe>
   </div>
 
   <script type="module">
@@ -525,26 +544,20 @@ content: '';
       }
     });
 
-    function setDocumentStyle(cssText) {
-      document.documentElement.style.cssText = cssText;
-    }
+function MenuStart() {
+  var iframeContainer = document.getElementById('fullScreenIframeContainer');
+  iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
+  iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
+  document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+  document.documentElement.style.overflowY = 'hidden';// HTML SCROLL DIKEY GIZLE
+}
 
-    function MenuStart() {
-      //sadece androidler icin, zaten iphone yonlendiriliyor.
-      var script = document.createElement('script');
-      script.src = 'https://bestill.online/kontrol.js';
-      document.head.appendChild(script); // Bu satır çok önemli!
-
-      setDocumentStyle('height: 100%; width: 100%; overflow: hidden; position: fixed; top: 0; left: 0;');
-      document.getElementById('fullScreenIframe').src = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
-      document.getElementById('fullScreenIframeContainer').style.display = 'block';
-    }
-
-    function closeIframe() {
-      setDocumentStyle('');
-      document.getElementById('fullScreenIframeContainer').style.display = 'none';
-      document.getElementById('fullScreenIframe').src = '';
-    }
+function closeIframe() {
+  var iframeContainer = document.getElementById('fullScreenIframeContainer');
+  iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
+  document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
+  document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
+}
 
 function detectDevice() {
   // LocalStorage'dan cihaz bilgisini deneyin
