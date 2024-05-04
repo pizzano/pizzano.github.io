@@ -561,8 +561,8 @@ function detectDevice() {
 
   // Eğer cihaz tipi iOS ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
   var buttonHTML = storedDevice === 'iOS' ?
-    `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">MENY og Bestilling</div>` :
-    `<div id="dugme" class="btn1" onclick="MenuStart();">MENY og Bestilling</div>`;
+    `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>` :
+    `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
 
   return buttonHTML;
 }
