@@ -1,123 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add Pizza</title> 
-    <style>
-        body {
-	        display: flex;
-	        flex-direction: column;
-	        align-items: center;
-	        justify-content: center;
-	        height: 100vh;
-	        margin: 0;
-	        background-color: #f8f8f8;
-	        font-family: Arial, sans-serif;
-        }
-        button, a {
-            border: none;
-            background-color: #007BFF;
-            color: white;
-            padding: 25px 25px;
-            margin: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #demo, #Key, #c{
-            font-weight: bold;
-            margin: 10px;
-			font-size: 36px;
-        }
-
-        .kapat {
-	        position: fixed;
-	        bottom: 0;
- 			margin:auto;
-	        width: 100%;
-	        height: 60px;
-			border-radius: 0px;
-			font-size: 26px;
-            background-color:red;
-            padding:10px;
-        }
-  hr {
-    border: 1px solid black;
-    width:90%;
-}
-
-    </style>
-</head>
-<body> 
-    <div>
-        <button onclick="guncelle(-1); c.innerHTML = Number(c.innerHTML) - 1">➖</button>
-        <span id="c">1</span>
-        <button onclick="guncelle(1); c.innerHTML = Number(c.innerHTML) + 1">➕</button>
-    </div>
-    <hr>
-    Mobil Nummer:
-    <span id="Key">key</span><hr>
-	Totalt Oppsamlet Antall Pizzaer
-    <span id="demo"></span>
-
-    <button onclick="sayfaKapat()" class="kapat">Sayfayı Kapat</button>
-
-<script type="module">
-
-var bd = "styles"; 
-let kv = localStorage.getItem("abc123");
-
-if (kv != bd) {
-    let kg = prompt("XYZ789", "");
-
-    if (kg == bd) {
-        localStorage.setItem("abc123", kg);
-    } else {
-        document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add Pizza</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f8f8f8;
+      font-family: Arial, sans-serif;
     }
-} 
 
+    button,
+    a {
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      padding: 25px 25px;
+      margin: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #demo,
+    #Key,
+    #c {
+      font-weight: bold;
+      margin: 10px;
+    }
+
+    #demo {
+      font-size: 16px;
+    }
+
+    #key {
+      font-size: 26px;
+    }
+
+    #c {
+      font-size: 46px;
+    }
+
+    .kapat {
+      position: fixed;
+      bottom: 0;
+      margin: auto;
+      width: 100%;
+      height: 60px;
+      border-radius: 0px;
+      font-size: 26px;
+      background-color: red;
+      padding: 10px;
+    }
+
+    hr {
+      border: 1px solid black;
+      width: 90%;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <button onclick="guncelle(-1); c.innerHTML = Number(c.innerHTML) - 1">➖</button>
+    <span id="c">1</span>
+    <button onclick="guncelle(1); c.innerHTML = Number(c.innerHTML) + 1">➕</button>
+  </div>
+  <hr>
+  Mobil Nummer:
+  <span id="Key">key</span>
+  <hr>
+  Totalt Oppsamlet Antall Pizzaer
+  <span id="demo"></span>
+
+  <button onclick="sayfaKapat()" class="kapat">Sayfayı Kapat</button>
+
+  <script type="module">
+    var bd = "styles";
+    let kv = localStorage.getItem("abc123");
+    if (kv != bd) {
+      let kg = prompt("XYZ789", "");
+      if (kg == bd) {
+        localStorage.setItem("abc123", kg);
+      } else {
+        document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
+      }
+    }
     let status = true;
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
-    const firebaseConfig = { databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app` };
-       
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+    const firebaseConfig = {
+      databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
+    };
     initializeApp(firebaseConfig);
     const database = getDatabase();
     const urlParams = new URLSearchParams(window.location.search);
     const specificKey = urlParams.get("n");
-
     const specificKeyReference = ref(database, specificKey);
-
     onValue(specificKeyReference, (snapshot) => {
-        demo.innerHTML = snapshot.val();
-        Key.innerHTML = snapshot.key;
-	if (status) { setTimeout(() => { status = false; guncelle(Number(c.innerHTML)); }, 500); }
+      demo.innerHTML = snapshot.val();
+      Key.innerHTML = snapshot.key;
+      if (status) {
+        setTimeout(() => {
+          status = false;
+          guncelle(Number(c.innerHTML));
+        }, 500);
+      }
     });
-
     window.guncelle = function(increment) {
-        let value = Number(demo.innerHTML) + increment;
-        if (value >= 0 && value <= 10) {
-            demo.innerHTML = value;
-            set(specificKeyReference, value);
-        } else {
-            set(specificKeyReference, 0);
-        }
+      let value = Number(demo.innerHTML) + increment;
+      if (value >= 0 && value <= 10) {
+        demo.innerHTML = value;
+        set(specificKeyReference, value);
+      } else {
+        set(specificKeyReference, 0);
+      }
     }
+  </script>
 
-</script>
-	
-<script>
-function sayfaKapat() {
-	window.close();
-	window.history.back();
-}
-</script>
+  <script>
+    function sayfaKapat() {
+      window.close();
+      window.history.back();
+    }
+  </script>
 </body>
+
 </html>
