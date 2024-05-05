@@ -349,11 +349,6 @@ content: '';
 </style>
 </head>
 <body>
-
-<div id="loadingScreen" class="btn1" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; justify-content: center; align-items: center; z-index: 9999;">
-    <img src="https://pizzano.github.io/img/logom.png" alt="Loading" id="logoImage">
-</div>
-  
   <div id="kapak" class="kapak">
     <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
     <br>
@@ -413,7 +408,7 @@ content: '';
       <li><strong>Ha QR-koden klar:</strong> Når du kommer for å hente din pizza, vis frem QR-koden på din mobil. Våre ansatte skanner koden for å sikre at hvert kjøp teller mot dine fordeler.</li>
       <li><strong>Husk:</strong> QR-koden må være klar til skanning ved henting. Uten skanning, går du glipp av sjansen til å samle stempler den dagen.</li>
       <li><strong>Opptjen stempler:</strong> Hver gang du kjøper en stor pizza til full pris, tjener du et stempel. Tjen ti stempler, og din neste store pizza er på oss!</li>
-      <li><strong>Innløs din bonus:</strong> Med ti stempler i lommen, er det bare å si ifra neste gang du bestiller en stor pizza, så er den gratis.</li>
+<li><strong>Innløs din bonus:</strong> Kjøp 10 store pizzaer og få den 11. gratis! Når du kommer for å hente din gratis store pizza, vis QR-koden til betjeningen for å benytte deg av tilbudet.</li>
       <li><strong>Regler:</strong> Tilbudet gjelder kun ved kjøp av store pizzaer til full pris og kan ikke kombineres med andre tilbud eller rabatter.</li>
       <li><strong>Fordele:</strong> Ved å delta i programmet, sparer du omtrent 10 % og holder enkelt oversikt over dine fremskritt rett på mobilen.</li>
       <li style="cursor:pointer;"><strong>❌ Lukk</strong></li>
@@ -476,13 +471,6 @@ content: '';
     function handleError() {
     window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
 }
-    
-    window.addEventListener('load', function() {
-    setTimeout(function() {
-        document.getElementById('loadingScreen').style.display = 'none';
-    }, 1000); // 1000 milisaniye = 1 saniye
-});
-
     // LocalStorage kontrolü ve numara yükleme
     mobilnr.value = localStorage.getItem('MOBIL') || ' ';
     document.addEventListener('DOMContentLoaded', function() {
