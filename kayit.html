@@ -40,18 +40,6 @@
       margin: 10px;
     }
 
-    #demo {
-      font-size: 16px;
-    }
-
-    #key {
-      font-size: 26px;
-    }
-
-    #c {
-      font-size: 46px;
-    }
-
     .kapat {
       position: fixed;
       bottom: 0;
@@ -74,15 +62,15 @@
 <body>
   <div>
     <button onclick="guncelle(-1); c.innerHTML = Number(c.innerHTML) - 1">➖</button>
-    <span id="c">1</span>
+    <span id="c" style="font-size: 46px;">1</span>
     <button onclick="guncelle(1); c.innerHTML = Number(c.innerHTML) + 1">➕</button>
   </div>
   <hr>
   Mobil Nummer:
-  <span id="Key">key</span>
+  <span id="Key" style="font-size: 26px;">key</span>
   <hr>
   Totalt Oppsamlet Antall Pizzaer
-  <span id="demo"></span>
+  <span id="demo" style="font-size: 16px;"></span>
 
   <button onclick="sayfaKapat()" class="kapat">Sayfayı Kapat</button>
 
