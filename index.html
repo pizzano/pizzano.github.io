@@ -17,6 +17,7 @@
   <meta property="og:description" content="Opplev ekte italiensk pizza hos KØL Grill & Pizza. Friske ingredienser og profesjonell steinovn. Takeaway og levering i Skarnes, Sør Odal og Årnes.">
   <meta property="og:url" content="https://bestill.online">
   <meta property="og:type" content="website">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0"></script>
 
   <script type="application/ld+json">
     {
@@ -426,6 +427,12 @@
         <p>Du vil få den 11. pizzaen helt gratis ved din neste bestilling.</p>
         <p>Vis bare QR-koden til betjeningen når du samtidig henter pizzaen.</p>
     </div>`;
+            
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 } // Ekranda biraz daha aşağıdan başlaması için
+    });
           } else {
             gratis.innerHTML = null;
           }
@@ -437,6 +444,7 @@
             document.body.style = '';
             qrkodem.style = '';
             qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
+
             window.scrollTo({
               top: 0,
               behavior: 'smooth'
