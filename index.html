@@ -65,7 +65,6 @@
       zoom: 95%;
       font-size: 18px;
     }
-
     .kapak {
       background-color: #4577d3;
       display: flex;
@@ -80,13 +79,11 @@
       max-width: 500px;
       box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
-
     @media screen and (min-width: 768px) {
       .kapak {
         zoom: 80%;
       }
     }
-
     .container {
       width: 90%;
       display: flex;
@@ -98,7 +95,6 @@
       margin-bottom: 15px;
       /* Eklendi */
     }
-
     .header,
     .footer {
       background-color: #3F51B5;
@@ -110,18 +106,15 @@
       justify-content: center;
       padding: 5px 1px 5px 1px;
     }
-
     .header {
       border-radius: 10px 10px 0 0;
       /* Güncellendi */
     }
-
     .footer {
       border-radius: 0 0 10px 10px;
       box-shadow: 0px 5px 0px 0px #0000004f;
       /* Güncellendi */
     }
-
     .main {
       display: flex;
       width: 100%;
@@ -129,7 +122,6 @@
       flex-direction: column;
       justify-content: center;
     }
-
     #kupon {
       margin: 10px;
       width: 100%;
@@ -138,7 +130,6 @@
       justify-content: center;
       /* Merkeze alındı */
     }
-
     .pizza-box {
       width: 17%;
       /* Genişlik % olarak ayarlandı */
@@ -152,13 +143,11 @@
       margin: 1%;
       /* Her bir kutu arasında boşluk bırakıldı */
     }
-
     .selected {
       background: #18c81f;
       border-color: black;
       color: white;
     }
-
     .pizza-img {
       animation: spin 5s linear infinite;
       /* Animasyon*/
@@ -169,11 +158,9 @@
       /* geçiş efektleri */
       width: 40px;
     }
-
     #QRCODE {
       cursor: pointer;
     }
-
     @keyframes spin {
       from {
         transform: rotate(0deg);
@@ -183,34 +170,28 @@
         transform: rotate(360deg);
       }
     }
-
     @keyframes spinAndPulse {
-
       0%,
       100% {
         transform: scale(0.9) rotate(0deg);
       }
-
       12.5%,
       37.5%,
       62.5%,
       87.5% {
         transform: scale(1.1) rotate(-20deg);
       }
-
       25%,
       50%,
       75% {
         transform: scale(1) rotate(20deg);
       }
     }
-
     .inputKutusu {
       display: flex;
       width: 100%;
       /* veya başka bir genişlik değeri */
     }
-
     input {
       width: 100%;
       height: 50px;
@@ -223,7 +204,6 @@
       font-weight: bold;
       outline: 1.5px solid;
     }
-
     .btn {
       width: 90%;
       height: 60px;
@@ -235,7 +215,6 @@
       border-radius: 11px;
       cursor: pointer;
     }
-
     .btn1 {
       animation: pulse 1s infinite;
       cursor: pointer;
@@ -245,46 +224,31 @@
       0% {
         transform: scale(1);
       }
-
       50% {
         transform: scale(1.05);
       }
-
       100% {
         transform: scale(1);
       }
     }
-
     transform: scale(1);
-    /* İkonun orijinal boyutu */
     opacity: 1;
-    /* Tam opaklık */
     }
-
     50% {
       transform: scale(1.2);
-      /* İkonun %20 büyütülmüş hali */
       opacity: 0.5;
-      /* Azaltılmış opaklık */
     }
     }
-
     h1 {
       color: #444;
-      /* Başlık rengi */
     }
-
     ul {
       padding-left: 20px;
-      /* Madde işaretlerinden boşluk */
     }
-
     li {
       margin-bottom: 10px;
-      /* Madde araları boşluk */
       padding: 3px;
     }
-
     #loadingScreen {
       position: fixed;
       top: 0;
@@ -297,14 +261,10 @@
       align-items: center;
       z-index: 9999;
     }
-
     #logoImage {
       width: 40vw;
-      /* Ekran genişliğinin %10'u */
       height: 40vw;
-      /* Genişlikle orantılı yükseklik */
     }
-
     .signal-container::before {
       content: '';
       position: absolute;
@@ -328,7 +288,6 @@
         opacity: 0;
       }
     }
-
     #fullScreenIframeContainer {
       position: fixed;
       top: 0;
@@ -336,40 +295,34 @@
       width: 100%;
       height: 100%;
       visibility: hidden;
-      /* Başlangıçta iframe'i gizler */
       z-index: 10000;
       box-sizing: border-box;
-      /* Çerçeve ve dolgu genişliğe dahil edilir */
     }
-
     #fullScreenIframe {
       width: 100%;
       height: 100%;
       border: none;
       box-sizing: border-box;
-      /* Çerçeve ve dolgu genişliğe dahil edilir */
     }
-
     #main-container {
       background-color: #FFEB3B;
-      /* Kutu arka plan rengi */
       padding: 20px;
-      /* Kutu iç boşluğu */
       display: inline-block;
-      /* Kutuyu içerik boyutunda tutmak */
       text-align: center;
     }
-
     #main-container h1 {
       font-size: 2em;
-      /* Başlık font boyutu */
     }
-
     #main-container p {
       font-size: 1em;
-      /* Paragraf font boyutu */
       margin-bottom: 10px;
-      /* Alt boşluk */
+    }
+    .btn2 {
+      width:30%;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -386,7 +339,7 @@
 
       <div class="inputKutusu">
         <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
-
+        <button id="btn2" class="btn2" onclick="showqr()">Vis<br>QR-koden</button>
       </div>
       <div class="main">
         <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
@@ -433,8 +386,8 @@
         <li><strong>Ha QR-koden klar:</strong> Når du kommer for å hente din pizza, vis frem QR-koden på din mobil. Våre ansatte skanner koden for å sikre at hvert kjøp teller mot dine fordeler.</li>
         <li><strong>Husk:</strong> QR-koden må være klar til skanning ved henting. Uten skanning, går du glipp av sjansen til å samle stempler den dagen.</li>
         <li><strong>Opptjen stempler:</strong> Hver gang du kjøper en stor pizza til full pris, tjener du et stempel. Tjen ti stempler, og din neste store pizza er på oss!</li>
-<li><strong>Innløs din bonus:</strong> Kjøp 10 store pizzaer og få den 11. gratis! Når du bestiller din gratis store pizza på nettet og kommer for å hente den, vis QR-koden til betjeningen for å benytte deg av tilbudet.</li>
-<li><strong>Regler:</strong> Tilbudet gjelder kun ved kjøp av store pizzaer til full pris og kan ikke kombineres med andre tilbud eller medium pizzaer.</li>
+        <li><strong>Innløs din bonus:</strong> Kjøp 10 store pizzaer og få den 11. gratis! Når du bestiller din gratis store pizza på nettet og kommer for å hente den, vis QR-koden til betjeningen for å benytte deg av tilbudet.</li>
+        <li><strong>Regler:</strong> Tilbudet gjelder kun ved kjøp av store pizzaer til full pris og kan ikke kombineres med andre tilbud eller medium pizzaer.</li>
 
         <li><strong>Fordele:</strong> Ved å delta i programmet, sparer du omtrent 10 % og holder enkelt oversikt over dine fremskritt rett på mobilen.</li>
         <li style="cursor:pointer;"><strong>❌ Lukk</strong></li>
@@ -509,6 +462,13 @@
       function handleError() {
         window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
       }
+
+      function showqr() {
+        document.getElementById('QRCODE').scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
       // LocalStorage kontrolü ve numara yükleme
       mobilnr.value = localStorage.getItem('MOBIL') || ' ';
       document.addEventListener('DOMContentLoaded', function() {
@@ -537,6 +497,7 @@
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
           mobil_status.innerHTML = '✍ Registrer deg nå!';
+          btn2.style = ' visibility: hidden;';
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
             QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
@@ -545,6 +506,7 @@
             mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
             QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
             QRCODE.style = "width:80%; padding:30px;";
+            btn2.style = ' visibility: visible;';
           }
         }
         mobilnr.oninput = updateMobileAndQRCode;
