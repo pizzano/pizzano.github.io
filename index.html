@@ -305,10 +305,12 @@
       box-sizing: border-box;
     }
     #main-container {
-      background-color: #FFEB3B;
-      padding: 20px;
-      display: inline-block;
-      text-align: center;
+    background-color: #FFEB3B;
+    display: inline-block;
+    text-align: center;
+    border: 3px dotted;
+    border-left: none;
+    border-right: none;
     }
     #main-container h1 {
       font-size: 2em;
@@ -483,7 +485,7 @@
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
           mobil_status.innerHTML = '✍ Registrer deg nå!';
-          btn2.style = ' visibility: hidden;';
+
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
             QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
@@ -492,7 +494,7 @@
             mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
             QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
             QRCODE.style = "width:80%; padding:30px;";
-            btn2.style = ' visibility: visible;';
+
           }
         }
         mobilnr.oninput = updateMobileAndQRCode;
