@@ -33,6 +33,7 @@
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 const orders = await response.json();
+                console.log('Orders:', orders); // API yanıtını konsola yazdır
                 const todayOrders = filterTodayOrders(orders);
                 displayOrders(todayOrders);
             } catch (error) {
@@ -51,6 +52,10 @@
         function displayOrders(orders) {
             const ordersDiv = document.getElementById('orders');
             ordersDiv.innerHTML = '';
+            if (orders.length === 0) {
+                ordersDiv.innerHTML = '<p>No orders found for today.</p>';
+                return;
+            }
             orders.forEach(order => {
                 const orderDiv = document.createElement('div');
                 orderDiv.className = 'order';
