@@ -29,6 +29,9 @@
                         'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Buraya kendi API anahtarınızı ekleyin
                     }
                 });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
                 const orders = await response.json();
                 displayOrders(orders);
             } catch (error) {
