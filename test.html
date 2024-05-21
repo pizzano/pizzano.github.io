@@ -22,10 +22,11 @@
     <script>
         async function fetchOrders() {
             try {
-                const response = await fetch('http://localhost:3000/get-orders', {
+                const response = await fetch('https://cors-anywhere.herokuapp.com/https://pos.globalfoodsoft.com/pos/order/pop', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Buraya kendi API anahtarınızı ekleyin
                     }
                 });
                 if (!response.ok) {
