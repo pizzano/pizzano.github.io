@@ -2,48 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sipariş Bilgilerini Çekme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GloriaFood Orders Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .order {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Sipariş Bilgileri</h1>
-    <button id="fetchOrders">Siparişleri Getir</button>
-    <div id="orderResults"></div>
+    <h1>GloriaFood Orders</h1>
+    <div id="orders"></div>
 
     <script>
-        document.getElementById('fetchOrders').addEventListener('click', function() {
-            fetch('https://pos.globalfoodsoft.com/pos/order/pop', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer lA3OatvK6FneBxEiZd0ctLLEGogaPOCql',
-                    'Accept': 'application/json',
-                    'Glf-Api-Version': '1'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);  // Konsolda gelen veriyi göster
-                displayOrders(data);  // Ekranda siparişleri göster
-            })
-            .catch(error => console.error('Error fetching orders:', error));
-        });
-
-        function displayOrders(data) {
-            const orderResults = document.getElementById('orderResults');
-            orderResults.innerHTML = '';  // Önceki sonuçları temizle
-
-            if (!data.orders || data.orders.length === 0) {
-                orderResults.innerHTML = '<p>Hiç sipariş yok.</p>';
-                return;
+        async function fetchOrders() {
+            try {
+                const response = await fetch('https://pos.globalfoodsoft.com/pos/order/pop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Buraya kendi API anahtarınızı ekleyin
+                    }
+                });
+                const orders = await response.json();
+                displayOrders(orders);
+            } catch (error) {
+                console.error('Error fetching orders:', error);
             }
-
-            const ul = document.createElement('ul');
-            data.orders.forEach(order => {
-                const li = document.createElement('li');
-                li.textContent = `Sipariş ID: ${order.id}, Teslim Zamanı: ${order.fulfill_time}, Toplam Tutar: ${order.total_price}`;
-                ul.appendChild(li);
-            });
-            orderResults.appendChild(ul);
         }
+
+        function displayOrders(orders) {
+            const ordersDiv = document.getElementById('orders');
+            ordersDiv.innerHTML = '';
+            orders.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'order';
+                orderDiv.innerHTML = `
+                    <h2>Order ID: ${order.id}</h2>
+                    <p>Customer: ${order.client.first_name} ${order.client.last_name}</p>
+                    <p>Total: ${order.order.total_price}</p>
+                `;
+                ordersDiv.appendChild(orderDiv);
+            });
+        }
+
+        fetchOrders();
     </script>
 </body>
 </html>
