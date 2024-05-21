@@ -22,11 +22,11 @@
     <script>
         async function fetchMenu() {
             try {
-                const response = await fetch('https://cors-anywhere.herokuapp.com/https://pos.globalfoodsoft.com/pos/menu', {
+                const response = await fetch('https://pos.globalfoodsoft.com/pos/menu', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Master Key'i kullanıyoruz
+                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // API anahtarınızı buraya ekleyin
                     }
                 });
                 if (!response.ok) {
