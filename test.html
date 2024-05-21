@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GloriaFood Orders Test</title>
+    <title>GloriaFood Menu Fetch Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
         }
-        .order {
+        .menu {
             border: 1px solid #ccc;
             padding: 10px;
             margin: 10px 0;
@@ -16,65 +16,47 @@
     </style>
 </head>
 <body>
-    <h1>Today's GloriaFood Orders</h1>
-    <div id="orders"></div>
+    <h1>GloriaFood Menu</h1>
+    <div id="menu"></div>
 
     <script>
-        async function fetchOrders() {
+        async function fetchMenu() {
             try {
-                const response = await fetch('https://cors-anywhere.herokuapp.com/https://pos.globalfoodsoft.com/pos/order/pop', {
-                    method: 'POST',
+                const response = await fetch('https://cors-anywhere.herokuapp.com/https://pos.globalfoodsoft.com/pos/menu', {
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Buraya kendi API anahtarınızı ekleyin
+                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // Master Key'i kullanıyoruz
                     }
                 });
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                const orders = await response.json();
-                console.log('Orders:', orders); // API yanıtını konsola yazdır
-                const todayOrders = filterTodayOrders(orders);
-                displayOrders(todayOrders);
+                const menu = await response.json();
+                console.log('Menu:', menu); // API yanıtını konsola yazdır
+                displayMenu(menu);
             } catch (error) {
-                console.error('Error fetching orders:', error);
+                console.error('Error fetching menu:', error);
             }
         }
 
-        function filterTodayOrders(orders) {
-            const today = new Date().toISOString().split('T')[0];
-            return orders.filter(order => {
-                const orderDate = new Date(order.date).toISOString().split('T')[0];
-                return orderDate === today;
-            });
-        }
-
-        function displayOrders(orders) {
-            const ordersDiv = document.getElementById('orders');
-            ordersDiv.innerHTML = '';
-            if (orders.length === 0) {
-                ordersDiv.innerHTML = '<p>No orders found for today.</p>';
-                return;
-            }
-            orders.forEach(order => {
-                const orderDiv = document.createElement('div');
-                orderDiv.className = 'order';
-                const items = order.order.items.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('');
-                orderDiv.innerHTML = `
-                    <h2>Order ID: ${order.id}</h2>
-                    <p>Customer: ${order.client.first_name} ${order.client.last_name}</p>
-                    <p>Email: ${order.client.email}</p>
-                    <p>Mobile: ${order.client.phone}</p>
-                    <p>Total: ${order.order.total_price}</p>
-                    <h3>Items:</h3>
-                    <ul>${items}</ul>
+        function displayMenu(menu) {
+            const menuDiv = document.getElementById('menu');
+            menuDiv.innerHTML = '';
+            menu.categories.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'menu';
+                categoryDiv.innerHTML = `
+                    <h2>${category.name}</h2>
+                    <ul>
+                        ${category.products.map(product => `<li>${product.name} - ${product.price}</li>`).join('')}
+                    </ul>
                 `;
-                ordersDiv.appendChild(orderDiv);
+                menuDiv.appendChild(categoryDiv);
             });
         }
 
-        fetchOrders();
+        fetchMenu();
     </script>
 </body>
 </html>
-
