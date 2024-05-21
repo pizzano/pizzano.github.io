@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <h1>GloriaFood Orders</h1>
+    <h1>Today's GloriaFood Orders</h1>
     <div id="orders"></div>
 
     <script>
@@ -33,10 +33,19 @@
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 const orders = await response.json();
-                displayOrders(orders);
+                const todayOrders = filterTodayOrders(orders);
+                displayOrders(todayOrders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
             }
+        }
+
+        function filterTodayOrders(orders) {
+            const today = new Date().toISOString().split('T')[0];
+            return orders.filter(order => {
+                const orderDate = new Date(order.date).toISOString().split('T')[0];
+                return orderDate === today;
+            });
         }
 
         function displayOrders(orders) {
@@ -45,10 +54,15 @@
             orders.forEach(order => {
                 const orderDiv = document.createElement('div');
                 orderDiv.className = 'order';
+                const items = order.order.items.map(item => `<li>${item.name} (x${item.quantity})</li>`).join('');
                 orderDiv.innerHTML = `
                     <h2>Order ID: ${order.id}</h2>
                     <p>Customer: ${order.client.first_name} ${order.client.last_name}</p>
+                    <p>Email: ${order.client.email}</p>
+                    <p>Mobile: ${order.client.phone}</p>
                     <p>Total: ${order.order.total_price}</p>
+                    <h3>Items:</h3>
+                    <ul>${items}</ul>
                 `;
                 ordersDiv.appendChild(orderDiv);
             });
