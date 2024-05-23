@@ -9,35 +9,55 @@
     <h1>API Endpoint</h1>
     <div id="response"></div>
     <script>
-        // API'yi dinlemek için bir fonksiyon oluşturuyoruz
-        async function fetchOrders() {
-            try {
-                const response = await fetch('https://api.globalfood.com/accepted_orders/version_1', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer 6PhisEQjG4vjZKOzjX5eEAJM4A3BFFC6s'
-                    },
-                    body: JSON.stringify({
-                        restaurant_key: "E63Ygudbxi0vaWPoZm",
-                        master_key: "irEiNRXyIXf1LI2rFrLkxjiHb89BtPtmc"
-                    })
-                });
+        // Gelen POST isteğini dinleyen bir fonksiyon oluşturuyoruz
+        async function handleIncomingOrder(event) {
+            event.preventDefault();
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
+            // API endpoint ve kimlik doğrulama bilgileri
+            const url = 'https://api.globalfood.com/accepted_orders/version_1';
+            const referenceId = "6PhisEQjG4vjZKOzjX5eEAJM4A3BFFC6s";
+            const restaurantKey = "E63Ygudbxi0vaWPoZm";
+            const masterKey = "irEiNRXyIXf1LI2rFrLkxjiHb89BtPtmc";
+
+            // POST isteği simüle ediyoruz (bu normalde sunucudan gelir)
+            const requestData = {
+                reference_id: referenceId,
+                restaurant_key: restaurantKey,
+                master_key: masterKey,
+                order_data: {
+                    order_id: "12345",
+                    items: [
+                        { name: "Pizza", quantity: 2 },
+                        { name: "Coke", quantity: 1 }
+                    ]
                 }
+            };
 
-                const data = await response.json();
-                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
-            } catch (error) {
-                console.error('Fetch error:', error);
-                document.getElementById('response').innerText = 'Fetch error: ' + error.message;
+            // Gelen veriyi işle
+            const isAuthenticated = requestData.reference_id === referenceId &&
+                                    requestData.restaurant_key === restaurantKey &&
+                                    requestData.master_key === masterKey;
+
+            if (!isAuthenticated) {
+                document.getElementById('response').innerText = "Unauthorized request.";
+                return;
             }
+
+            // Sipariş verilerini işleyin
+            const orderData = requestData.order_data;
+            if (!orderData) {
+                document.getElementById('response').innerText = "No order data found.";
+                return;
+            }
+
+            // Burada sipariş verilerini işleyebilirsiniz (örneğin, ekranda gösterme)
+            document.getElementById('response').innerText = `Order received: ${JSON.stringify(orderData, null, 2)}`;
+
+            // Gerekirse burada başka işlemler yapabilirsiniz (örneğin, veritabanına kaydetme)
         }
 
-        // Sayfa yüklendiğinde API'den veri çek
-        document.addEventListener('DOMContentLoaded', fetchOrders);
+        // Sayfa yüklendiğinde işlemi başlat
+        document.addEventListener('DOMContentLoaded', handleIncomingOrder);
     </script>
 </body>
 </html>
