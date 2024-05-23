@@ -3,60 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GloriaFood Menu Fetch Test</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .menu {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin: 10px 0;
-        }
-    </style>
+    <title>API Endpoint</title>
 </head>
 <body>
-    <h1>GloriaFood Menu</h1>
-    <div id="menu"></div>
-
+    <h1>API Endpoint</h1>
+    <div id="response"></div>
     <script>
-        async function fetchMenu() {
+        // API'yi dinlemek için bir fonksiyon oluşturuyoruz
+        async function fetchOrders() {
             try {
-                const response = await fetch('https://pos.globalfoodsoft.com/pos/menu', {
-                    method: 'GET',
+                const response = await fetch('https://api.globalfood.com/accepted_orders/version_1', {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer Sk5sE4xPLmycylfJl5QL9NrQjm2TPIEq' // API anahtarınızı buraya ekleyin
-                    }
+                        'Authorization': 'Bearer 6PhisEQjG4vjZKOzjX5eEAJM4A3BFFC6s'
+                    },
+                    body: JSON.stringify({
+                        restaurant_key: "E63Ygudbxi0vaWPoZm",
+                        master_key: "irEiNRXyIXf1LI2rFrLkxjiHb89BtPtmc"
+                    })
                 });
+
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                const menu = await response.json();
-                console.log('Menu:', menu); // API yanıtını konsola yazdır
-                displayMenu(menu);
+
+                const data = await response.json();
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
             } catch (error) {
-                console.error('Error fetching menu:', error);
+                console.error('Fetch error:', error);
+                document.getElementById('response').innerText = 'Fetch error: ' + error.message;
             }
         }
 
-        function displayMenu(menu) {
-            const menuDiv = document.getElementById('menu');
-            menuDiv.innerHTML = '';
-            menu.categories.forEach(category => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'menu';
-                categoryDiv.innerHTML = `
-                    <h2>${category.name}</h2>
-                    <ul>
-                        ${category.products.map(product => `<li>${product.name} - ${product.price}</li>`).join('')}
-                    </ul>
-                `;
-                menuDiv.appendChild(categoryDiv);
-            });
-        }
-
-        fetchMenu();
+        // Sayfa yüklendiğinde API'den veri çek
+        document.addEventListener('DOMContentLoaded', fetchOrders);
     </script>
 </body>
 </html>
