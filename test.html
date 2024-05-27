@@ -3,110 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High-Resolution OCR with Camera</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
-        #output {
-            margin-top: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        video, canvas {
-            display: block;
-            margin: 20px auto;
-        }
-        canvas {
-            display: none;
-        }
-    </style>
+    <title>OCR with Camera</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
+    <h1>OCR with Camera</h1>
+    <input type="file" id="fileInput">
+    <button id="captureButton">Capture from Camera</button>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <div>
+        <p>Phone Number: <span id="phoneNumber">N/A</span></p>
+        <p>Occurrences of "Ja, Takk!": <span id="jaTakkCount">0</span></p>
+    </div>
 
-
-    <button id="captureButton">Capture and Read Text</button>
-    <canvas id="canvas"></canvas>
-    <div id="output">Text will appear here...</div>
-    <div id="result"></div>
-    <video id="video" width="640" height="480" autoplay></video>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
     <script>
-        const API_KEY = 'YOUR_OCR_SPACE_API_KEY'; // OCR.space API anahtarınızı buraya ekleyin
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
         const captureButton = document.getElementById('captureButton');
-        const output = document.getElementById('output');
-        const result = document.getElementById('result');
-        const ctx = canvas.getContext('2d');
 
-        // Kamerayı başlat
-        navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+        // Get access to the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
-                video.play();
             })
             .catch(err => {
-                console.error("Error accessing the camera: " + err);
+                console.error("Error accessing the camera: ", err);
             });
 
-        document.getElementById('imageInput').addEventListener('change', function(event) {
+        captureButton.addEventListener('click', () => {
+            // Draw the video frame to the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            processImage(canvas.toDataURL('image/png'));
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    processImage(event.target.result);
+                reader.onload = function() {
+                    processImage(reader.result);
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        captureButton.addEventListener('click', () => {
-            // Canvas üzerine yüksek çözünürlüklü görüntüyü çiz
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
-            processImage(imageData);
-        });
+        function processImage(image) {
+            Tesseract.recognize(
+                image,
+                'eng',
+                {
+                    logger: m => console.log(m)
+                }
+            ).then(({ data: { text } }) => {
+                // Telefon numarasını bul ve formatla
+                const phoneRegex = /\+47\s(\d{3})\s(\d{2})\s(\d{3})/;
+                const phoneNumberMatch = text.match(phoneRegex);
+                let formattedPhoneNumber = 'Not found';
+                if (phoneNumberMatch) {
+                    formattedPhoneNumber = phoneNumberMatch.slice(1).join('');
+                }
+                document.getElementById('phoneNumber').textContent = formattedPhoneNumber;
 
-        function processImage(imageData) {
-            const img = new Image();
-            img.onload = function() {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-
-                // Tesseract.js ile OCR işlemi yap
-                Tesseract.recognize(
-                    canvas.toDataURL('image/png'),
-                    'eng',
-                    {
-                        logger: m => console.log(m)
-                    }
-                ).then(({ data: { text } }) => {
-                    output.innerText = text;
-                    const phoneNumberRegex = /\+?\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{3}/g;
-                    const phoneNumbers = (text.match(phoneNumberRegex) || []).map(number => number.replace(/\D/g, ''));
-                    const jaTakkCount = (text.match(/Ja, Takk!/g) || []).length;
-                    
-                    let resultText = `<p>Found ${jaTakkCount} occurrences of "Ja, Takk!"</p>`;
-                    if (phoneNumbers.length > 0) {
-                        resultText += `<p>Phone Numbers:</p><ul>`;
-                        phoneNumbers.forEach(number => {
-                            resultText += `<li>${number}</li>`;
-                        });
-                        resultText += `</ul>`;
-                    } else {
-                        resultText += `<p>No phone numbers found.</p>`;
-                    }
-
-                    result.innerHTML = resultText;
-                });
-            };
-            img.src = imageData;
+                // "Ja, Takk!" ifadesinin sayısını bul
+                const jaTakkCount = (text.match(/Ja, Takk!/g) || []).length;
+                document.getElementById('jaTakkCount').textContent = jaTakkCount;
+            });
         }
     </script>
 </body>
