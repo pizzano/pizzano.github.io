@@ -3,82 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt Analysis with Camera</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.1/dist/tesseract.min.js"></script>
+    <title>OCR with Camera</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
-    <h1>Receipt Analysis with Camera</h1>
+    <h1>OCR with Camera</h1>
+    <input type="file" id="fileInput">
+    <button id="captureButton">Capture from Camera</button>
     <video id="video" width="320" height="240" autoplay></video>
-    <button id="snap">Snap Photo</button>
-    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
-    <button id="processButton">Process Receipt</button>
-    <pre id="output"></pre>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <div>
+        <p>Phone Number: <span id="phoneNumber">N/A</span></p>
+        <p>Occurrences of "Ja, Takk!": <span id="jaTakkCount">0</span></p>
+    </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
-        const outputElement = document.getElementById('output');
+        const captureButton = document.getElementById('captureButton');
 
-        // Kamera erişimini sağlama
+        // Get access to the camera
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
-                video.play();
             })
             .catch(err => {
                 console.error("Error accessing the camera: ", err);
             });
 
-        // Fotoğraf çekme
-        document.getElementById('snap').addEventListener('click', () => {
+        captureButton.addEventListener('click', () => {
+            // Draw the video frame to the canvas
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            processImage(canvas.toDataURL('image/png'));
         });
 
-        // Çekilen fotoğrafı işleme
-        document.getElementById('processButton').addEventListener('click', () => {
-            preprocessImage();
-            const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    processImage(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function processImage(image) {
             Tesseract.recognize(
-                dataUrl,
+                image,
                 'eng',
                 {
                     logger: m => console.log(m)
                 }
             ).then(({ data: { text } }) => {
-                analyzeText(text);
+                // Telefon numarasını bul ve formatla
+                const phoneRegex = /\+47\s(\d{3})\s(\d{2})\s(\d{3})/;
+                const phoneNumberMatch = text.match(phoneRegex);
+                let formattedPhoneNumber = 'Not found';
+                if (phoneNumberMatch) {
+                    formattedPhoneNumber = phoneNumberMatch.slice(1).join('');
+                }
+                document.getElementById('phoneNumber').textContent = formattedPhoneNumber;
+
+                // "Ja, Takk!" ifadesinin sayısını bul
+                const jaTakkCount = (text.match(/Ja, Takk!/g) || []).length;
+                document.getElementById('jaTakkCount').textContent = jaTakkCount;
             });
-        });
-
-        function preprocessImage() {
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-
-            // Görüntüyü gri tonlamaya çevirme ve kontrast artırma
-            for (let i = 0; i < data.length; i += 4) {
-                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                const contrast = 2; // Kontrast oranı
-                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
-                data[i] = factor * (avg - 128) + 128;     // Kırmızı
-                data[i + 1] = factor * (avg - 128) + 128; // Yeşil
-                data[i + 2] = factor * (avg - 128) + 128; // Mavi
-            }
-
-            context.putImageData(imageData, 0, 0);
-        }
-
-        function analyzeText(text) {
-            const phoneNumberPattern = /\+47\s\d{3}\s\d{2}\s\d{3}/;
-            const pizzaPattern = /Stor Pizza Gratis\?:\sJa, Takk!/g;
-
-            const phoneNumberMatch = text.match(phoneNumberPattern);
-            const pizzaMatches = text.match(pizzaPattern);
-
-            const phoneNumber = phoneNumberMatch ? phoneNumberMatch[0] : 'Not found';
-            const pizzaCount = pizzaMatches ? pizzaMatches.length : 0;
-
-            outputElement.textContent = `Phone Number: ${phoneNumber}\nNumber of Large Pizzas: ${pizzaCount}`;
         }
     </script>
 </body>
