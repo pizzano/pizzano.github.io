@@ -3,61 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Endpoint</title>
+    <title>Receipt Analysis with Camera</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
-    <h1>API Endpoint</h1>
-    <div id="response"></div>
+    <h1>Receipt Analysis with Camera</h1>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="snap">Snap Photo</button>
+    <canvas id="canvas" width="320" height="240"></canvas>
+    <button id="processButton">Process Receipt</button>
+    <pre id="output"></pre>
+
     <script>
-        // Gelen POST isteğini dinleyen bir fonksiyon oluşturuyoruz
-        async function handleIncomingOrder(event) {
-            event.preventDefault();
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const outputElement = document.getElementById('output');
 
-            // API endpoint ve kimlik doğrulama bilgileri
-            const url = 'https://api.globalfood.com/accepted_orders/version_1';
-            const referenceId = "6PhisEQjG4vjZKOzjX5eEAJM4A3BFFC6s";
-            const restaurantKey = "E63Ygudbxi0vaWPoZm";
-            const masterKey = "irEiNRXyIXf1LI2rFrLkxjiHb89BtPtmc";
+        // Request access to the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: ", err);
+            });
 
-            // POST isteği simüle ediyoruz (bu normalde sunucudan gelir)
-            const requestData = {
-                reference_id: referenceId,
-                restaurant_key: restaurantKey,
-                master_key: masterKey,
-                order_data: {
-                    order_id: "12345",
-                    items: [
-                        { name: "Pizza", quantity: 2 },
-                        { name: "Coke", quantity: 1 }
-                    ]
+        // Capture a photo
+        document.getElementById('snap').addEventListener('click', () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        });
+
+        // Process the captured photo
+        document.getElementById('processButton').addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            Tesseract.recognize(
+                dataUrl,
+                'eng',
+                {
+                    logger: m => console.log(m)
                 }
-            };
+            ).then(({ data: { text } }) => {
+                analyzeText(text);
+            });
+        });
 
-            // Gelen veriyi işle
-            const isAuthenticated = requestData.reference_id === referenceId &&
-                                    requestData.restaurant_key === restaurantKey &&
-                                    requestData.master_key === masterKey;
+        function analyzeText(text) {
+            const phoneNumberPattern = /\+47\s\d{3}\s\d{2}\s\d{3}/;
+            const pizzaPattern = /Stor Pizza Gratis\?:\sJa, Takk!/g;
 
-            if (!isAuthenticated) {
-                document.getElementById('response').innerText = "Unauthorized request.";
-                return;
-            }
+            const phoneNumberMatch = text.match(phoneNumberPattern);
+            const pizzaMatches = text.match(pizzaPattern);
 
-            // Sipariş verilerini işleyin
-            const orderData = requestData.order_data;
-            if (!orderData) {
-                document.getElementById('response').innerText = "No order data found.";
-                return;
-            }
+            const phoneNumber = phoneNumberMatch ? phoneNumberMatch[0] : 'Not found';
+            const pizzaCount = pizzaMatches ? pizzaMatches.length : 0;
 
-            // Burada sipariş verilerini işleyebilirsiniz (örneğin, ekranda gösterme)
-            document.getElementById('response').innerText = `Order received: ${JSON.stringify(orderData, null, 2)}`;
-
-            // Gerekirse burada başka işlemler yapabilirsiniz (örneğin, veritabanına kaydetme)
+            outputElement.textContent = `Phone Number: ${phoneNumber}\nNumber of Large Pizzas: ${pizzaCount}`;
         }
-
-        // Sayfa yüklendiğinde işlemi başlat
-        document.addEventListener('DOMContentLoaded', handleIncomingOrder);
     </script>
 </body>
 </html>
