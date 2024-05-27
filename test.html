@@ -10,7 +10,7 @@
     <h1>Receipt Analysis with Camera</h1>
     <video id="video" width="320" height="240" autoplay></video>
     <button id="snap">Snap Photo</button>
-    <canvas id="canvas" width="320" height="240"></canvas>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
     <button id="processButton">Process Receipt</button>
     <pre id="output"></pre>
 
@@ -20,7 +20,7 @@
         const context = canvas.getContext('2d');
         const outputElement = document.getElementById('output');
 
-        // Request access to the camera
+        // Kamera erişimini sağlama
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
@@ -30,13 +30,14 @@
                 console.error("Error accessing the camera: ", err);
             });
 
-        // Capture a photo
+        // Fotoğraf çekme
         document.getElementById('snap').addEventListener('click', () => {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
         });
 
-        // Process the captured photo
+        // Çekilen fotoğrafı işleme
         document.getElementById('processButton').addEventListener('click', () => {
+            preprocessImage();
             const dataUrl = canvas.toDataURL('image/png');
             Tesseract.recognize(
                 dataUrl,
@@ -48,6 +49,24 @@
                 analyzeText(text);
             });
         });
+
+        function preprocessImage() {
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Görüntüyü gri tonlamaya çevirme ve kontrast artırma
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                const contrast = 2; // Kontrast oranı
+                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+                data[i] = factor * (avg - 128) + 128;     // Kırmızı
+                data[i + 1] = factor * (avg - 128) + 128; // Yeşil
+                data[i + 2] = factor * (avg - 128) + 128; // Mavi
+            }
+
+            context.putImageData(imageData, 0, 0);
+        }
 
         function analyzeText(text) {
             const phoneNumberPattern = /\+47\s\d{3}\s\d{2}\s\d{3}/;
