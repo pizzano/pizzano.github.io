@@ -11,7 +11,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            fetch('https://pos.globalfoodsoft.com/pos/menu', {
+            fetch('https://corsproxy.io/?https://pos.globalfoodsoft.com/pos/menu', {
                 method: 'GET',
                 headers: {
                     'Authorization': 'pQYkgtBnqI9WpPNmd',
@@ -19,12 +19,21 @@
                     'Glf-Api-Version': '2'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
                 const menuDiv = document.getElementById('menu');
                 menuDiv.innerHTML = JSON.stringify(data, null, 2);
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                const menuDiv = document.getElementById('menu');
+                menuDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            });
         });
     </script>
 </body>
