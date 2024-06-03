@@ -3,74 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR with Camera</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <title>Fetch Menu</title>
 </head>
 <body>
-    <h1>OCR with Camera</h1>
-    <input type="file" id="fileInput">
-    <button id="captureButton">Capture from Camera</button>
-    <video id="video" width="320" height="240" autoplay></video>
-    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <div>
-        <p>Phone Number: <span id="phoneNumber">N/A</span></p>
-        <p>Occurrences of "Ja, Takk!": <span id="jaTakkCount">0</span></p>
-    </div>
+    <h1>Restoran Menüsü</h1>
+    <div id="menu"></div>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const captureButton = document.getElementById('captureButton');
-
-        // Get access to the camera
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('https://pos.globalfoodsoft.com/pos/menu', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'pQYkgtBnqI9WpPNmd',
+                    'Accept': 'application/json',
+                    'Glf-Api-Version': '2'
+                }
             })
-            .catch(err => {
-                console.error("Error accessing the camera: ", err);
-            });
-
-        captureButton.addEventListener('click', () => {
-            // Draw the video frame to the canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            processImage(canvas.toDataURL('image/png'));
+            .then(response => response.json())
+            .then(data => {
+                const menuDiv = document.getElementById('menu');
+                menuDiv.innerHTML = JSON.stringify(data, null, 2);
+            })
+            .catch(error => console.error('Error:', error));
         });
-
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    processImage(reader.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        function processImage(image) {
-            Tesseract.recognize(
-                image,
-                'eng',
-                {
-                    logger: m => console.log(m)
-                }
-            ).then(({ data: { text } }) => {
-                // Telefon numarasını bul ve formatla
-                const phoneRegex = /\+47\s(\d{3})\s(\d{2})\s(\d{3})/;
-                const phoneNumberMatch = text.match(phoneRegex);
-                let formattedPhoneNumber = 'Not found';
-                if (phoneNumberMatch) {
-                    formattedPhoneNumber = phoneNumberMatch.slice(1).join('');
-                }
-                document.getElementById('phoneNumber').textContent = formattedPhoneNumber;
-
-                // "Ja, Takk!" ifadesinin sayısını bul
-                const jaTakkCount = (text.match(/Ja, Takk!/g) || []).length;
-                document.getElementById('jaTakkCount').textContent = jaTakkCount;
-            });
-        }
     </script>
 </body>
 </html>
