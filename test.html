@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Form</title>
+    <!-- EmailJS Kütüphanesini Dahil Edin -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@2.6.4/dist/email.min.js"></script>
 </head>
 <body>
     <form id="contactForm">
@@ -19,12 +21,13 @@
         <button type="submit">Send</button>
     </form>
 
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@2.6.4/dist/email.min.js"></script>
     <script>
+        // EmailJS Başlatma
         (function() {
             emailjs.init('68rGrIza2uSTLqAoN'); // Replace with your actual EmailJS public key
         })();
 
+        // Form Gönderim Olayını Dinleme
         document.getElementById('contactForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
