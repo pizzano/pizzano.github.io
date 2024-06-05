@@ -4,51 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Form</title>
-    <!-- EmailJS Kütüphanesini Dahil Edin -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@2.6.4/dist/email.min.js"></script>
-</head>
-<body>
-    <form id="contactForm">
-        <label for="from_name">From Name:</label>
-        <input type="text" id="from_name" name="from_name" required>
-        <br>
-        <label for="to_name">To Name:</label>
-        <input type="text" id="to_name" name="to_name" required>
-        <br>
-        <label for="message">Message:</label>
-        <textarea id="message" name="message" required></textarea>
-        <br>
-        <button type="submit">Send</button>
-    </form>
-
-    <script>
-        // EmailJS Başlatma
-        (function() {
-            emailjs.init('68rGrIza2uSTLqAoN'); // Replace with your actual EmailJS public key
+    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // EmailJS'yi başlatıyoruz
+        (function(){
+            emailjs.init("68rGrIza2uSTLqAoN");
         })();
-
-        // Form Gönderim Olayını Dinleme
-        document.getElementById('contactForm').addEventListener('submit', function(event) {
+        
+        // Formun gönderilmesini dinleyen fonksiyon
+        function sendEmail(event) {
             event.preventDefault();
 
-            const serviceID = 'service_53yki8r';
-            const templateID = 'template_nx497kd';
-
-            const templateParams = {
-                from_name: document.getElementById('from_name').value,
-                to_name: document.getElementById('to_name').value,
-                message: document.getElementById('message').value
-            };
-
-            emailjs.send(serviceID, templateID, templateParams)
+            // Service ID, Template ID ve form verileri
+            emailjs.sendForm('service_53yki8r', 'template_nx497kd', event.target)
                 .then(function(response) {
                     console.log('SUCCESS!', response.status, response.text);
-                    alert('Email sent successfully!');
+                    alert('Mesajınız başarıyla gönderildi!');
                 }, function(error) {
                     console.log('FAILED...', error);
-                    alert('Failed to send email.');
+                    alert('Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin.');
                 });
+        }
+
+        // Sayfa yüklendiğinde form gönderme olayını dinliyoruz
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('contact-form').addEventListener('submit', sendEmail);
         });
     </script>
+</head>
+<body>
+    <h2>Bize Ulaşın</h2>
+    <form id="contact-form">
+        <label for="name">İsim:</label>
+        <input type="text" id="name" name="name" required><br><br>
+        <label for="email">E-posta:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        <label for="message">Mesaj:</label>
+        <textarea id="message" name="message" required></textarea><br><br>
+        <button type="submit">Gönder</button>
+    </form>
 </body>
 </html>
