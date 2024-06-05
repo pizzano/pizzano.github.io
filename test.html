@@ -3,66 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restoran Menüsü</title>
-    <style>
-        .menu-category {
-            border: 1px solid #ccc;
-            margin: 10px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .menu-item {
-            margin: 5px 0;
-        }
-        .menu-item h3 {
-            margin: 0;
-            padding: 0;
-        }
-        .menu-item p {
-            margin: 2px 0;
-            padding: 0;
-        }
-    </style>
+    <title>Contact Form</title>
 </head>
 <body>
-    <h1>Restoran Menüsü</h1>
-    <div id="menu"></div>
+    <form id="contactForm">
+        <label for="from_name">From Name:</label>
+        <input type="text" id="from_name" name="from_name" required>
+        <br>
+        <label for="to_name">To Name:</label>
+        <input type="text" id="to_name" name="to_name" required>
+        <br>
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" required></textarea>
+        <br>
+        <button type="submit">Send</button>
+    </form>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@2.6.4/dist/email.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch('https://3000-idx-deneme-1717276843533.cluster-p6qcyjpiljdwusmrjxdspyb5m2.cloudworkstations.dev/menu')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(menuData => {
-                const menuDiv = document.getElementById('menu');
-                menuData.categories.forEach(category => {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'menu-category';
-                    categoryDiv.innerHTML = `<h2>${category.name}</h2><p>${category.description}</p>`;
-                    
-                    category.items.forEach(item => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'menu-item';
-                        itemDiv.innerHTML = `
-                            <h3>${item.name}</h3>
-                            <p>${item.description}</p>
-                            <p>Price: ${item.price} ${menuData.currency}</p>
-                        `;
-                        categoryDiv.appendChild(itemDiv);
-                    });
+        (function() {
+            emailjs.init('68rGrIza2uSTLqAoN'); // Replace with your actual EmailJS public key
+        })();
 
-                    menuDiv.appendChild(categoryDiv);
+        document.getElementById('contactForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const serviceID = 'service_53yki8r';
+            const templateID = 'template_nx497kd';
+
+            const templateParams = {
+                from_name: document.getElementById('from_name').value,
+                to_name: document.getElementById('to_name').value,
+                message: document.getElementById('message').value
+            };
+
+            emailjs.send(serviceID, templateID, templateParams)
+                .then(function(response) {
+                    console.log('SUCCESS!', response.status, response.text);
+                    alert('Email sent successfully!');
+                }, function(error) {
+                    console.log('FAILED...', error);
+                    alert('Failed to send email.');
                 });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                const menuDiv = document.getElementById('menu');
-                menuDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-            });
         });
     </script>
 </body>
