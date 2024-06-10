@@ -561,36 +561,30 @@ function detectDevice() {
         var ua = navigator.userAgent || navigator.vendor || window.opera;
         var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
         var isHuawei = /Huawei|HONOR/.test(ua);
-        var isAndroid = /Android/.test(ua);
-        var isWindows = /Windows/.test(ua);
-        var isMac = /Macintosh/.test(ua);
 
         if (isIOS) {
             storedDevice = 'iOS';
         } else if (isHuawei) {
             storedDevice = 'Huawei';
-        } else if (isAndroid || isWindows || isMac) {
-            storedDevice = 'AndroidOrPC';
         } else {
             storedDevice = 'Other';
         }
+
         // Cihaz türünü localStorage'a kaydedin
         localStorage.setItem('deviceType', storedDevice);
     }
 
-    // Cihaz türüne göre uygun link veya fonksiyon ayarlayın
-    var buttonHTML;
-    if (storedDevice === 'iOS' || storedDevice === 'Huawei' || storedDevice === 'Other') {
-        buttonHTML = `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>`;
-    } else if (storedDevice === 'AndroidOrPC') {
-        buttonHTML = `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
-    }
+    // Eğer cihaz tipi iOS veya Huawei ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
+    var buttonHTML = (storedDevice === 'iOS' || storedDevice === 'Huawei') ?
+        `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>` :
+        `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
     return buttonHTML;
 }
 
 // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('deviceContent').innerHTML = detectDevice();
+    document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
 });
 
       document.addEventListener('DOMContentLoaded', function() {
