@@ -553,28 +553,46 @@
         document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
       }
 
-      function detectDevice() {
-        // LocalStorage'dan cihaz bilgisini deneyin
-        var storedDevice = localStorage.getItem('deviceType');
-        if (!storedDevice) {
-          // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
-          var ua = navigator.userAgent || navigator.vendor || window.opera;
-          var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-          storedDevice = isIOS ? 'iOS' : 'Other';
-          // Cihaz türünü localStorage'a kaydedin
-          localStorage.setItem('deviceType', storedDevice);
+  function detectDevice() {
+    // LocalStorage'dan cihaz bilgisini deneyin
+    var storedDevice = localStorage.getItem('deviceType');
+    if (!storedDevice) {
+        // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        var isHuawei = /Huawei|HONOR/.test(ua);
+        var isAndroid = /Android/.test(ua);
+        var isWindows = /Windows/.test(ua);
+        var isMac = /Macintosh/.test(ua);
+        
+        if (isIOS) {
+            storedDevice = 'iOS';
+        } else if (isHuawei) {
+            storedDevice = 'Huawei';
+        } else if (isAndroid || isWindows || isMac) {
+            storedDevice = 'AndroidOrPC';
+        } else {
+            storedDevice = 'Other';
         }
-        // Eğer cihaz tipi iOS ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
-        var buttonHTML = storedDevice === 'iOS' ?
-          `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>` :
-          `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
-        return buttonHTML;
-      }
-      // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
-      document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
-        document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
-      });
+        // Cihaz türünü localStorage'a kaydedin
+        localStorage.setItem('deviceType', storedDevice);
+    }
+    // Cihaz türüne göre uygun link veya fonksiyon ayarlayın
+    var buttonHTML;
+    if (storedDevice === 'iOS' || storedDevice === 'Huawei' || storedDevice === 'Other') {
+        buttonHTML = `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>`;
+    } else if (storedDevice === 'AndroidOrPC') {
+        buttonHTML = `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
+    }
+    return buttonHTML;
+}
+
+// DOM hazır olduğunda çalışacak şekilde içeriği ayarla
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
+    document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
+});
+
       document.addEventListener('DOMContentLoaded', function() {
         // URL'deki sorgu parametrelerini analiz et
         const queryParams = new URLSearchParams(window.location.search);
