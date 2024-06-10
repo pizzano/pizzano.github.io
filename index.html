@@ -553,7 +553,7 @@
         document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
       }
 
-  function detectDevice() {
+function detectDevice() {
     // LocalStorage'dan cihaz bilgisini deneyin
     var storedDevice = localStorage.getItem('deviceType');
     if (!storedDevice) {
@@ -564,7 +564,7 @@
         var isAndroid = /Android/.test(ua);
         var isWindows = /Windows/.test(ua);
         var isMac = /Macintosh/.test(ua);
-        
+
         if (isIOS) {
             storedDevice = 'iOS';
         } else if (isHuawei) {
@@ -577,6 +577,7 @@
         // Cihaz türünü localStorage'a kaydedin
         localStorage.setItem('deviceType', storedDevice);
     }
+
     // Cihaz türüne göre uygun link veya fonksiyon ayarlayın
     var buttonHTML;
     if (storedDevice === 'iOS' || storedDevice === 'Huawei' || storedDevice === 'Other') {
@@ -589,8 +590,7 @@
 
 // DOM hazır olduğunda çalışacak şekilde içeriği ayarla
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('deviceContent').innerHTML = `<p>${detectDevice()}</p>`;
-    document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
+    document.getElementById('deviceContent').innerHTML = detectDevice();
 });
 
       document.addEventListener('DOMContentLoaded', function() {
