@@ -598,31 +598,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
 
-      function updateStatus() {
-        const currentDate = new Date();
-        const dayOfWeek = currentDate.getDay();
-        const currentHour = currentDate.getHours();
-        let statusMessage = document.getElementById("statusMessage");
-        let themeColor = document.querySelector('meta[name="theme-color"]');
-        if (!themeColor) {
-          themeColor = document.createElement("meta");
-          themeColor.name = "theme-color";
-          document.head.appendChild(themeColor);
-        }
-        if (dayOfWeek === 2) { // Tirsdager
-          statusMessage.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
-          statusMessage.style.backgroundColor = "#ef4e4b";
-          themeColor.content = "#ef4e4b";
-        } else if (currentHour >= 14 && currentHour < 22) {
-          statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 21:00`;
-          statusMessage.style.backgroundColor = "#5ac15e";
-          themeColor.content = "#5ac15e";
-        } else {
-          statusMessage.textContent = `🔴 Restauranten er stengt nå.`;
-          statusMessage.style.backgroundColor = "#ef4e4b";
-          themeColor.content = "#ef4e4b";
-        }
-      }
+function updateStatus() {
+  const currentDate = new Date();
+  const dayOfWeek = currentDate.getDay();
+  const currentHour = currentDate.getHours();
+  let statusMessage = document.getElementById("statusMessage");
+  let themeColor = document.querySelector('meta[name="theme-color"]');
+  if (!themeColor) {
+    themeColor = document.createElement("meta");
+    themeColor.name = "theme-color";
+    document.head.appendChild(themeColor);
+  }
+  if (currentHour >= 14 && currentHour < 22) {
+    statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 21:00`;
+    statusMessage.style.backgroundColor = "#5ac15e";
+    themeColor.content = "#5ac15e";
+  } else {
+    statusMessage.textContent = `🔴 Restauranten er stengt nå.`;
+    statusMessage.style.backgroundColor = "#ef4e4b";
+    themeColor.content = "#ef4e4b";
+  }
+}
+
       updateStatus();
     </script>
 </body>
