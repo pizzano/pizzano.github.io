@@ -426,22 +426,23 @@
         }
         // İlk veri yüklemesi için onValue kullanılır
         onValue(dbRef, snapshot => {
-          if (snapshot.val() == 10) {
-            gratis.innerHTML = `    <div id="main-container">
+  if (snapshot.val() > 10) {
+    gratis.innerHTML = `
+      <div id="main-container">
         <h1>GRATULERER</h1>
         <p>Takk for at du kjøpte 10 store pizzaer!</p>
         <p>Du vil få den 11. pizzaen helt gratis ved din neste bestilling.</p>
         <p>Vis bare QR-koden til betjeningen når du samtidig henter pizzaen.</p>
-    </div>`;
-            
+      </div>`;
+    
     confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 } // Ekranda biraz daha aşağıdan başlaması için
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 } // Ekranda biraz daha aşağıdan başlaması için
     });
-          } else {
-            gratis.innerHTML = null;
-          }
+  } else {
+    gratis.innerHTML = null;
+  }
           const selectedCount = snapshot.val() || 0;
           document.querySelectorAll('.pizza-box').forEach((box, index) => {
             const isSelected = index < selectedCount;
