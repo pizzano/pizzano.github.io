@@ -114,13 +114,18 @@
       }
     });
     window.guncelle = function(increment) {
-      let value = Number(demo.innerHTML) + increment;
-      if (value >= 0 && value <= 10) {
-        demo.innerHTML = value;
-        set(specificKeyReference, value);
+      let currentValue = Number(demo.innerHTML);
+      if (currentValue >= 10) {
+        currentValue -= 10;
       } else {
-        set(specificKeyReference, 0);
+        let newValue = currentValue + increment;
+        if (newValue < 0) {
+          newValue = 0; // Değer 0'ın altına düşerse 0 olarak ayarla
+        }
+        currentValue = newValue;
       }
+      demo.innerHTML = currentValue;
+      set(specificKeyReference, currentValue);
     }
   </script>
 
