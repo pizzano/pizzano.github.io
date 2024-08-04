@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Followers</title>
+</head>
+<body>
+    <div id="facebook">
+        <div class="fb-like" data-href="https://www.facebook.com/kolgrill.skarnes/" data-width="" data-layout="standard" data-action="like" data-size="small" data-share="true"></div>
+    </div>
+    <div id="followers-count">Takipçi sayısı: </div>
+
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0&appId=YOUR_APP_ID&autoLogAppEvents=1" nonce="YOUR_NONCE"></script>
+
+    <script>
+        // 2 saniye sonra çalışacak fonksiyon
+        setTimeout(function() {
+            // XPath ile elementi bul
+            var xpath = '//*[@id="u_0_4_FO"]';
+            var result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            var element = result.singleNodeValue;
+
+            // Eğer element bulunursa, içeriğini al ve yazdır
+            if (element) {
+                var followersCount = element.textContent || element.innerText;
+                document.getElementById('followers-count').innerText = 'Takipçi sayısı: ' + followersCount;
+            } else {
+                 document.getElementById('followers-count').innerText = 'Element bulunamadı.';
+            }
+        }, 2000); // 2 saniye bekleme süresi
+    </script>
+</body>
+</html>
