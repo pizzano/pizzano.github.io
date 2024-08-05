@@ -39,6 +39,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            background: inherit;
         }
 
         .digit .number {
@@ -123,24 +124,15 @@
         <div class="digit" id="kebab-digit5"><div class="number current">0</div></div>
     </div>
 
-    <script>
-        let pizzaCount = 0;
-        let burgerCount = 0;
-        let kebabCount = 0;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
 
-        function animateToNumber(counterId, target) {
-            let current = 0;
-            const increment = Math.ceil(target / 10);
-            const interval = setInterval(() => {
-                if (current >= target) {
-                    clearInterval(interval);
-                } else {
-                    current += increment;
-                    if (current > target) current = target;
-                    updateCounter(counterId, current);
-                }
-            }, 50);
-        }
+        const firebaseConfig = {
+            databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
+        };
+        initializeApp(firebaseConfig);
+        const database = getDatabase();
 
         function updateCounter(counterId, count) {
             const digits = count.toString().padStart(5, '0').split('');
@@ -154,7 +146,6 @@
                     newNumber.className = 'number next';
                     newNumber.textContent = digit;
                     newNumber.style.background = digitElement.style.background;
-                    newNumber.style.zIndex = parseInt(currentNumber.style.zIndex || 0) + 1;
                     digitElement.appendChild(newNumber);
 
                     setTimeout(() => {
@@ -171,26 +162,24 @@
             });
         }
 
+        function initializeCounter(specificKey, counterId) {
+            const specificKeyReference = ref(database, specificKey);
+            let currentCount = 0;
+
+            onValue(specificKeyReference, (snapshot) => {
+                const newCount = snapshot.val();
+                if (newCount !== currentCount) {
+                    updateCounter(counterId, newCount);
+                    currentCount = newCount;
+                }
+            });
+        }
+
         window.addEventListener('load', () => {
-            animateToNumber('pizza', pizzaCount);
-            animateToNumber('burger', burgerCount);
-            animateToNumber('kebab', kebabCount);
+            initializeCounter('pizza', 'pizza');
+            initializeCounter('burger', 'burger');
+            initializeCounter('kebab', 'kebab');
         });
-
-        setInterval(() => {
-            pizzaCount++;
-            updateCounter('pizza', pizzaCount);
-        }, 1000);
-
-        setInterval(() => {
-            burgerCount++;
-            updateCounter('burger', burgerCount);
-        }, 1500);
-
-        setInterval(() => {
-            kebabCount++;
-            updateCounter('kebab', kebabCount);
-        }, 2000);
     </script>
 </body>
 </html>
