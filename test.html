@@ -1,3 +1,196 @@
-<div class="fb-like" data-href="https://www.facebook.com/kolgrill.skarnes/"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analog-like Counter</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
 
-<script src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v12.0"></script>
+        .counter-container {
+            display: flex;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .digit {
+            position: relative;
+            width: 60px;
+            height: 100px;
+            margin: 0 5px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .digit .number {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.5s ease;
+            backface-visibility: hidden;
+        }
+
+        .digit .number.next {
+            transform: translateY(100%);
+        }
+
+        .digit .number.previous {
+            transform: translateY(-100%);
+        }
+
+        .digit .number.current {
+            transform: translateY(0);
+        }
+
+        #pizza-counter .digit {
+            background: linear-gradient(to bottom, #1877f2, #3b5998);
+        }
+
+        #burger-counter .digit {
+            background: linear-gradient(to bottom, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+        }
+
+        #kebab-counter .digit {
+            background: linear-gradient(to bottom, #25d366, #128c7e);
+        }
+
+        .title {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        #pizza-title {
+            color: #1877f2;
+        }
+
+        #burger-title {
+            color: #d62976;
+        }
+
+        #kebab-title {
+            color: #25d366;
+        }
+    </style>
+</head>
+<body>
+    <p id="pizza-title" class="title">🍕 Analog-Pizza Counter</p>
+    <div class="counter-container" id="pizza-counter">
+        <div class="digit" id="pizza-digit1"><div class="number current">0</div></div>
+        <div class="digit" id="pizza-digit2"><div class="number current">0</div></div>
+        <div class="digit" id="pizza-digit3"><div class="number current">0</div></div>
+        <div class="digit" id="pizza-digit4"><div class="number current">0</div></div>
+        <div class="digit" id="pizza-digit5"><div class="number current">0</div></div>
+    </div>
+
+    <p id="burger-title" class="title">🍔 Analog-Burger Counter</p>
+    <div class="counter-container" id="burger-counter">
+        <div class="digit" id="burger-digit1"><div class="number current">0</div></div>
+        <div class="digit" id="burger-digit2"><div class="number current">0</div></div>
+        <div class="digit" id="burger-digit3"><div class="number current">0</div></div>
+        <div class="digit" id="burger-digit4"><div class="number current">0</div></div>
+        <div class="digit" id="burger-digit5"><div class="number current">0</div></div>
+    </div>
+
+    <p id="kebab-title" class="title">🥙 Analog-Kebab Counter</p>
+    <div class="counter-container" id="kebab-counter">
+        <div class="digit" id="kebab-digit1"><div class="number current">0</div></div>
+        <div class="digit" id="kebab-digit2"><div class="number current">0</div></div>
+        <div class="digit" id="kebab-digit3"><div class="number current">0</div></div>
+        <div class="digit" id="kebab-digit4"><div class="number current">0</div></div>
+        <div class="digit" id="kebab-digit5"><div class="number current">0</div></div>
+    </div>
+
+    <script>
+        let pizzaCount = 0;
+        let burgerCount = 0;
+        let kebabCount = 0;
+
+        function animateToNumber(counterId, target) {
+            let current = 0;
+            const increment = Math.ceil(target / 10);
+            const interval = setInterval(() => {
+                if (current >= target) {
+                    clearInterval(interval);
+                } else {
+                    current += increment;
+                    if (current > target) current = target;
+                    updateCounter(counterId, current);
+                }
+            }, 50);
+        }
+
+        function updateCounter(counterId, count) {
+            const digits = count.toString().padStart(5, '0').split('');
+
+            digits.forEach((digit, index) => {
+                const digitElement = document.getElementById(`${counterId}-digit${index + 1}`);
+                const currentNumber = digitElement.querySelector('.number.current');
+
+                if (currentNumber.textContent !== digit) {
+                    const newNumber = document.createElement('div');
+                    newNumber.className = 'number next';
+                    newNumber.textContent = digit;
+                    newNumber.style.background = digitElement.style.background;
+                    newNumber.style.zIndex = parseInt(currentNumber.style.zIndex || 0) + 1;
+                    digitElement.appendChild(newNumber);
+
+                    setTimeout(() => {
+                        currentNumber.classList.remove('current');
+                        currentNumber.classList.add('previous');
+                        newNumber.classList.remove('next');
+                        newNumber.classList.add('current');
+                    }, 50);
+
+                    setTimeout(() => {
+                        digitElement.removeChild(currentNumber);
+                    }, 500);
+                }
+            });
+        }
+
+        window.addEventListener('load', () => {
+            animateToNumber('pizza', pizzaCount);
+            animateToNumber('burger', burgerCount);
+            animateToNumber('kebab', kebabCount);
+        });
+
+        setInterval(() => {
+            pizzaCount++;
+            updateCounter('pizza', pizzaCount);
+        }, 1000);
+
+        setInterval(() => {
+            burgerCount++;
+            updateCounter('burger', burgerCount);
+        }, 1500);
+
+        setInterval(() => {
+            kebabCount++;
+            updateCounter('kebab', kebabCount);
+        }, 2000);
+    </script>
+</body>
+</html>
