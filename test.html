@@ -134,32 +134,67 @@
         initializeApp(firebaseConfig);
         const database = getDatabase();
 
+        function updateDigit(digitElement, digit) {
+            const currentNumber = digitElement.querySelector('.number.current');
+            if (currentNumber.textContent !== digit) {
+                const newNumber = document.createElement('div');
+                newNumber.className = 'number next';
+                newNumber.textContent = digit;
+                newNumber.style.background = digitElement.style.background;
+                digitElement.appendChild(newNumber);
+
+                setTimeout(() => {
+                    currentNumber.classList.remove('current');
+                    currentNumber.classList.add('previous');
+                    newNumber.classList.remove('next');
+                    newNumber.classList.add('current');
+                }, 50);
+
+                setTimeout(() => {
+                    digitElement.removeChild(currentNumber);
+                }, 500);
+            }
+        }
+
         function updateCounter(counterId, count) {
             const digits = count.toString().padStart(5, '0').split('');
-
             digits.forEach((digit, index) => {
                 const digitElement = document.getElementById(`${counterId}-digit${index + 1}`);
-                const currentNumber = digitElement.querySelector('.number.current');
-
-                if (currentNumber.textContent !== digit) {
-                    const newNumber = document.createElement('div');
-                    newNumber.className = 'number next';
-                    newNumber.textContent = digit;
-                    newNumber.style.background = digitElement.style.background;
-                    digitElement.appendChild(newNumber);
-
-                    setTimeout(() => {
-                        currentNumber.classList.remove('current');
-                        currentNumber.classList.add('previous');
-                        newNumber.classList.remove('next');
-                        newNumber.classList.add('current');
-                    }, 50);
-
-                    setTimeout(() => {
-                        digitElement.removeChild(currentNumber);
-                    }, 500);
-                }
+                updateDigit(digitElement, digit);
             });
+        }
+
+        function animateCounter(counterId, start, end) {
+            let current = start;
+            const step = end > start ? 1 : -1;
+
+            function animateStep() {
+                if (current !== end) {
+                    current += step;
+                    updateCounter(counterId, current);
+                    setTimeout(animateStep, 1000);
+                }
+            }
+
+            animateStep();
+        }
+
+        function updateCounterStepByStep(counterId, oldDigits, newDigits) {
+            const totalDigits = oldDigits.length;
+            let index = 0;
+
+            function updateNextDigit() {
+                if (index < totalDigits) {
+                    const digitElement = document.getElementById(`${counterId}-digit${index + 1}`);
+                    if (oldDigits[index] !== newDigits[index]) {
+                        updateDigit(digitElement, newDigits[index]);
+                    }
+                    index++;
+                    setTimeout(updateNextDigit, 1000);
+                }
+            }
+
+            updateNextDigit();
         }
 
         function initializeCounter(specificKey, counterId) {
@@ -168,8 +203,10 @@
 
             onValue(specificKeyReference, (snapshot) => {
                 const newCount = snapshot.val();
+                const oldDigits = currentCount.toString().padStart(5, '0').split('');
+                const newDigits = newCount.toString().padStart(5, '0').split('');
                 if (newCount !== currentCount) {
-                    updateCounter(counterId, newCount);
+                    updateCounterStepByStep(counterId, oldDigits, newDigits);
                     currentCount = newCount;
                 }
             });
