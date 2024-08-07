@@ -87,6 +87,7 @@
             color: #25d366;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <div class="counter-section">
@@ -183,6 +184,16 @@
             updateNextDigit();
         }
 
+        function triggerConfetti() {
+            confetti({
+                particleCount: 1000,
+                spread: 200,
+                origin: { y: 0.5 }
+            });
+        }
+
+        let test = 0;
+
         function initializeCounter(specificKey, counterId) {
             const specificKeyReference = ref(database, specificKey);
             let currentCount = 0;
@@ -194,6 +205,10 @@
                 if (newCount !== currentCount) {
                     incrementCounter(currentDigits, targetDigits, counterId);
                     currentCount = newCount;
+                    test++;
+                    if (test > 2) {
+                        triggerConfetti();
+                    }
                 }
             });
         }
@@ -202,10 +217,17 @@
             initializeCounter('pizza', 'pizza');
             initializeCounter('kebab', 'kebab');
 
+            // Sayfa yenilendiğinde bayrağı ayarla
+            if (sessionStorage.getItem('pageReloaded')) {
+                sessionStorage.removeItem('pageReloaded');
+            } else {
+                sessionStorage.setItem('pageReloaded', 'true');
+            }
+
             // 3 dakikada bir sayfayı yenile
             setInterval(() => {
                 window.location.reload();
-            }, 240000); //  4 dakika
+            }, 240000); // 4 dakika
         });
     </script>
 </body>
