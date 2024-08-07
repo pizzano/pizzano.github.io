@@ -7,9 +7,9 @@
     <style>
         body {
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
             height: 100vh;
             background-color: #f0f0f0;
             margin: 0;
@@ -23,15 +23,15 @@
             padding: 10px 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            margin: 20px;
         }
 
         .digit {
             position: relative;
-            width: 60px;
-            height: 100px;
-            margin: 0 5px;
-            font-size: 3rem;
+            width: 80px;
+            height: 120px;
+            margin: 0 10px;
+            font-size: 4rem;
             font-weight: bold;
             color: white;
             border-radius: 5px;
@@ -69,10 +69,6 @@
             background: linear-gradient(to bottom, #1877f2, #3b5998);
         }
 
-        #burger-counter .digit {
-            background: linear-gradient(to bottom, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
-        }
-
         #kebab-counter .digit {
             background: linear-gradient(to bottom, #25d366, #128c7e);
         }
@@ -87,41 +83,32 @@
             color: #1877f2;
         }
 
-        #burger-title {
-            color: #d62976;
-        }
-
         #kebab-title {
             color: #25d366;
         }
     </style>
 </head>
 <body>
-    <p id="pizza-title" class="title">🍕 Analog-Pizza Counter</p>
-    <div class="counter-container" id="pizza-counter">
-        <div class="digit" id="pizza-digit1"><div class="number current">0</div></div>
-        <div class="digit" id="pizza-digit2"><div class="number current">0</div></div>
-        <div class="digit" id="pizza-digit3"><div class="number current">0</div></div>
-        <div class="digit" id="pizza-digit4"><div class="number current">0</div></div>
-        <div class="digit" id="pizza-digit5"><div class="number current">0</div></div>
+    <div class="counter-section">
+        <p id="pizza-title" class="title">🍕 Analog-Pizza Sayacı</p>
+        <div class="counter-container" id="pizza-counter">
+            <div class="digit" id="pizza-digit1"><div class="number current">0</div></div>
+            <div class="digit" id="pizza-digit2"><div class="number current">0</div></div>
+            <div class="digit" id="pizza-digit3"><div class="number current">0</div></div>
+            <div class="digit" id="pizza-digit4"><div class="number current">0</div></div>
+            <div class="digit" id="pizza-digit5"><div class="number current">0</div></div>
+        </div>
     </div>
 
-    <p id="burger-title" class="title">🍔 Analog-Burger Counter</p>
-    <div class="counter-container" id="burger-counter">
-        <div class="digit" id="burger-digit1"><div class="number current">0</div></div>
-        <div class="digit" id="burger-digit2"><div class="number current">0</div></div>
-        <div class="digit" id="burger-digit3"><div class="number current">0</div></div>
-        <div class="digit" id="burger-digit4"><div class="number current">0</div></div>
-        <div class="digit" id="burger-digit5"><div class="number current">0</div></div>
-    </div>
-
-    <p id="kebab-title" class="title">🥙 Analog-Kebab Counter</p>
-    <div class="counter-container" id="kebab-counter">
-        <div class="digit" id="kebab-digit1"><div class="number current">0</div></div>
-        <div class="digit" id="kebab-digit2"><div class="number current">0</div></div>
-        <div class="digit" id="kebab-digit3"><div class="number current">0</div></div>
-        <div class="digit" id="kebab-digit4"><div class="number current">0</div></div>
-        <div class="digit" id="kebab-digit5"><div class="number current">0</div></div>
+    <div class="counter-section">
+        <p id="kebab-title" class="title">🥙 Analog-Kebab Sayacı</p>
+        <div class="counter-container" id="kebab-counter">
+            <div class="digit" id="kebab-digit1"><div class="number current">0</div></div>
+            <div class="digit" id="kebab-digit2"><div class="number current">0</div></div>
+            <div class="digit" id="kebab-digit3"><div class="number current">0</div></div>
+            <div class="digit" id="kebab-digit4"><div class="number current">0</div></div>
+            <div class="digit" id="kebab-digit5"><div class="number current">0</div></div>
+        </div>
     </div>
 
     <script type="module">
@@ -164,33 +151,32 @@
             });
         }
 
-        function animateCounter(counterId, start, end) {
-            let current = start;
-            const step = end > start ? 1 : -1;
+        function incrementDigit(digitElement, targetDigit, callback) {
+            let currentDigit = 0;
 
-            function animateStep() {
-                if (current !== end) {
-                    current += step;
-                    updateCounter(counterId, current);
-                    setTimeout(animateStep, 1000);
+            function step() {
+                updateDigit(digitElement, currentDigit.toString());
+                if (currentDigit < targetDigit) {
+                    currentDigit++;
+                    setTimeout(step, 100); // Her adım arasında 100ms bekle
+                } else {
+                    callback();
                 }
             }
 
-            animateStep();
+            step();
         }
 
-        function updateCounterStepByStep(counterId, oldDigits, newDigits) {
-            const totalDigits = oldDigits.length;
+        function incrementCounter(currentDigits, targetDigits, counterId) {
             let index = 0;
 
             function updateNextDigit() {
-                if (index < totalDigits) {
+                if (index < targetDigits.length) {
                     const digitElement = document.getElementById(`${counterId}-digit${index + 1}`);
-                    if (oldDigits[index] !== newDigits[index]) {
-                        updateDigit(digitElement, newDigits[index]);
-                    }
-                    index++;
-                    setTimeout(updateNextDigit, 1000);
+                    incrementDigit(digitElement, parseInt(targetDigits[index]), () => {
+                        index++;
+                        updateNextDigit();
+                    });
                 }
             }
 
@@ -203,10 +189,10 @@
 
             onValue(specificKeyReference, (snapshot) => {
                 const newCount = snapshot.val();
-                const oldDigits = currentCount.toString().padStart(5, '0').split('');
-                const newDigits = newCount.toString().padStart(5, '0').split('');
+                const currentDigits = currentCount.toString().padStart(5, '0').split('');
+                const targetDigits = newCount.toString().padStart(5, '0').split('');
                 if (newCount !== currentCount) {
-                    updateCounterStepByStep(counterId, oldDigits, newDigits);
+                    incrementCounter(currentDigits, targetDigits, counterId);
                     currentCount = newCount;
                 }
             });
@@ -214,7 +200,6 @@
 
         window.addEventListener('load', () => {
             initializeCounter('pizza', 'pizza');
-            initializeCounter('burger', 'burger');
             initializeCounter('kebab', 'kebab');
         });
     </script>
