@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analog-like Counter</title>
+    <title>Analog-lignende Telleverk</title>
     <style>
         body {
             display: flex;
@@ -20,18 +20,18 @@
             display: flex;
             align-items: center;
             background-color: #ffffff;
-            padding: 10px 20px;
+            padding: 20px 40px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin: 20px;
+            margin: 40px;
         }
 
         .digit {
             position: relative;
-            width: 80px;
-            height: 120px;
-            margin: 0 10px;
-            font-size: 4rem;
+            width: 100px;
+            height: 150px;
+            margin: 0 20px;
+            font-size: 5rem;
             font-weight: bold;
             color: white;
             border-radius: 5px;
@@ -49,7 +49,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.5s ease;
+            transition: transform 1s ease;
             backface-visibility: hidden;
         }
 
@@ -74,8 +74,8 @@
         }
 
         .title {
-            margin-bottom: 20px;
-            font-size: 2rem;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
             font-weight: bold;
         }
 
@@ -90,7 +90,7 @@
 </head>
 <body>
     <div class="counter-section">
-        <p id="pizza-title" class="title">🍕 Analog-Pizza Sayacı</p>
+        <p id="pizza-title" class="title">🍕 Analog-Pizza Teller</p>
         <div class="counter-container" id="pizza-counter">
             <div class="digit" id="pizza-digit1"><div class="number current">0</div></div>
             <div class="digit" id="pizza-digit2"><div class="number current">0</div></div>
@@ -101,7 +101,7 @@
     </div>
 
     <div class="counter-section">
-        <p id="kebab-title" class="title">🥙 Analog-Kebab Sayacı</p>
+        <p id="kebab-title" class="title">🥙 Analog-Kebab Teller</p>
         <div class="counter-container" id="kebab-counter">
             <div class="digit" id="kebab-digit1"><div class="number current">0</div></div>
             <div class="digit" id="kebab-digit2"><div class="number current">0</div></div>
@@ -158,7 +158,7 @@
                 updateDigit(digitElement, currentDigit.toString());
                 if (currentDigit < targetDigit) {
                     currentDigit++;
-                    setTimeout(step, 100); // Her adım arasında 100ms bekle
+                    setTimeout(step, 500); // Her adım arasında 500ms bekle
                 } else {
                     callback();
                 }
