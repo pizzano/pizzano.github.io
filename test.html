@@ -86,6 +86,36 @@
         #kebab-title {
             color: #25d366;
         }
+
+        .fullscreen-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #1877f2;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .exit-fullscreen-button {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #f44336;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -110,6 +140,9 @@
             <div class="digit" id="kebab-digit5"><div class="number current">0</div></div>
         </div>
     </div>
+
+    <button class="fullscreen-button" onclick="openFullscreen()">Fullskjerm</button>
+    <button class="exit-fullscreen-button" onclick="closeFullscreen()">Avslutt Fullskjerm</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
@@ -202,6 +235,31 @@
             initializeCounter('pizza', 'pizza');
             initializeCounter('kebab', 'kebab');
         });
+
+        // Fullscreen functions
+        function openFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                document.documentElement.msRequestFullscreen();
+            }
+        }
+
+        function closeFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { // Firefox
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { // Chrome, Safari, and Opera
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { // IE/Edge
+                document.msExitFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
