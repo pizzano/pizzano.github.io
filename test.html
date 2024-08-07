@@ -201,6 +201,11 @@
         window.addEventListener('load', () => {
             initializeCounter('pizza', 'pizza');
             initializeCounter('kebab', 'kebab');
+
+            // 3 dakikada bir sayfayı yenile
+            setInterval(() => {
+                window.location.reload();
+            }, 180000); // 180000 ms = 3 dakika
         });
     </script>
 </body>
