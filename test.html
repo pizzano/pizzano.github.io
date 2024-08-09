@@ -213,22 +213,23 @@
             });
         }
 
-        window.addEventListener('load', () => {
-            initializeCounter('pizza', 'pizza');
-            initializeCounter('kebab', 'kebab');
+  window.addEventListener('load', () => {
+    initializeCounter('pizza', 'pizza');
+    initializeCounter('kebab', 'kebab');
 
-            // Sayfa yenilendiğinde bayrağı ayarla
-            if (sessionStorage.getItem('pageReloaded')) {
-                sessionStorage.removeItem('pageReloaded');
-            } else {
-                sessionStorage.setItem('pageReloaded', 'true');
-            }
+    // Sayfa yenilendiğinde bayrağı ayarla
+    if (sessionStorage.getItem('pageReloaded')) {
+        sessionStorage.removeItem('pageReloaded');
+    } else {
+        sessionStorage.setItem('pageReloaded', 'true');
+    }
 
-            // 3 dakikada bir sayfayı yenile
-            setInterval(() => {
-                window.location.reload();
-            }, 240000); // 4 dakika
-        });
+    // 10 saatte bir sayfayı yenile
+    setInterval(() => {
+        window.location.reload();
+    }, 36000000); // 10 saat
+});
+
     </script>
 </body>
 </html>
