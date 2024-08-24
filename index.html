@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "489ad3a4-115d-49fb-9ceb-d075a468e8dd",
+    });
+  });
+</script>
   <meta charset="UTF-8">
   <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
