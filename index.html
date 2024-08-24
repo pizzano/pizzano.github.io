@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+  <meta charset="UTF-8">
+  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" href="https://pizzano.github.io/img/s-logo.png" type="image/png">
+
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -10,13 +16,7 @@
     });
   });
 </script>
-  
-  <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="icon" href="https://pizzano.github.io/img/s-logo.png" type="image/png">
-
+		
   <!-- SEO Meta Tags -->
   <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
   <meta name="keywords" content="KØL Grill & Pizza, Skarnes pizza, online pizza bestilling, takeaway, burger, kebab, Italiensk pizza, Sør Odal, Årnes, Ahlen Pizza, Mona Lisa Skarnes">
@@ -374,8 +374,6 @@ QR-koden skannes kun ved telefonbestilling! </div>
         Klikk på QR-koden for å fremvise!
       </div>
     </div>
-    <div id="push" class='onesignal-customlink-container'>Få oppdateringer!
-</div>
     <br>
     <div id="vilkor"> </div>
     <div class="container">
@@ -535,7 +533,6 @@ QR-koden skannes kun ved telefonbestilling! </div>
         script.src = 'https://bestill.online/kontrol.js';
         document.head.appendChild(script); // Bu satır çok önemli!
         var iframeContainer = document.getElementById('fullScreenIframeContainer');
-
         iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
         iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
         document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
@@ -544,8 +541,6 @@ QR-koden skannes kun ved telefonbestilling! </div>
 
       function closeIframe() {
         var iframeContainer = document.getElementById('fullScreenIframeContainer');
-		var push = document.getElementById('onesignal-bell-container');
-		push.style.visibility = 'visible'; // push'i gosterir
         iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
         document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
         document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
