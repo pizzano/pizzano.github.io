@@ -533,8 +533,6 @@ QR-koden skannes kun ved telefonbestilling! </div>
         script.src = 'https://bestill.online/kontrol.js';
         document.head.appendChild(script); // Bu satır çok önemli!
         var iframeContainer = document.getElementById('fullScreenIframeContainer');
-	var push = document.getElementById('onesignal-bell-launcher');
-	push.style.display = 'none';
         iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
         iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
         document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
@@ -543,8 +541,6 @@ QR-koden skannes kun ved telefonbestilling! </div>
 
       function closeIframe() {
         var iframeContainer = document.getElementById('fullScreenIframeContainer');
-	var push = document.getElementById('onesignal-bell-launcher');
-	push.style.display = 'block';
         iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
         document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
         document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
