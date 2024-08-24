@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -374,7 +375,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
         Klikk på QR-koden for å fremvise!
       </div>
     </div>
-    <div class='onesignal-customlink-container'></div>
+    <div id="push" class='onesignal-customlink-container'>test</div>
     <br>
     <div id="vilkor"> </div>
     <div class="container">
@@ -528,39 +529,28 @@ QR-koden skannes kun ved telefonbestilling! </div>
         }
       });
 
-function MenuStart() {
-    // onesignal-customlink-container'ı gizle
-    var oneSignalLinkContainer = document.querySelector('.onesignal-customlink-container');
-    if (oneSignalLinkContainer) {
-        console.log('OneSignal link container bulundu');
-        oneSignalLinkContainer.style.display = 'none';
-    } else {
-        console.log('OneSignal link container bulunamadı');
-    }
+      function MenuStart() {
+        //sadece androidler icin, zaten iphone yonlendiriliyor.
+        var script = document.createElement('script');
+        script.src = 'https://bestill.online/kontrol.js';
+        document.head.appendChild(script); // Bu satır çok önemli!
+        var iframeContainer = document.getElementById('fullScreenIframeContainer');
+        var push = document.getElementById('push');
+		push.style.visibility = 'hidden'; // push'i gizler
+        iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
+        iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
+        document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+        document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+      }
 
-    //sadece androidler icin, zaten iphone yonlendiriliyor.
-    var script = document.createElement('script');
-    script.src = 'https://bestill.online/kontrol.js';
-    document.head.appendChild(script); // Bu satır çok önemli!
-    var iframeContainer = document.getElementById('fullScreenIframeContainer');
-    iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
-    iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
-    document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
-    document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
-}
-
-function closeIframe() {
-    var iframeContainer = document.getElementById('fullScreenIframeContainer');
-    iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
-    document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
-    document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
-    
-    // onesignal-customlink-container'ı tekrar görünür yap
-    var oneSignalLinkContainer = document.querySelector('.onesignal-customlink-container');
-    if (oneSignalLinkContainer) {
-        oneSignalLinkContainer.style.display = 'block';
-    }
-}
+      function closeIframe() {
+        var iframeContainer = document.getElementById('fullScreenIframeContainer');
+		var push = document.getElementById('push');
+		push.style.visibility = 'visible'; // push'i gosterir
+        iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
+        document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
+        document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
+      }
 
 function detectDevice() {
     // LocalStorage'dan cihaz bilgisini deneyin
