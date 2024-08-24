@@ -532,7 +532,10 @@ function MenuStart() {
     // onesignal-customlink-container'ı gizle
     var oneSignalLinkContainer = document.querySelector('.onesignal-customlink-container');
     if (oneSignalLinkContainer) {
+        console.log('OneSignal link container bulundu');
         oneSignalLinkContainer.style.display = 'none';
+    } else {
+        console.log('OneSignal link container bulunamadı');
     }
 
     //sadece androidler icin, zaten iphone yonlendiriliyor.
@@ -544,6 +547,19 @@ function MenuStart() {
     iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
     document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
     document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+}
+if (oneSignalLinkContainer) {
+    oneSignalLinkContainer.style.display = 'none';
+    oneSignalLinkContainer.style.visibility = 'hidden';
+    oneSignalLinkContainer.style.opacity = '0';
+    oneSignalLinkContainer.style.position = 'absolute';
+    oneSignalLinkContainer.style.zIndex = '-1';
+    oneSignalLinkContainer.style.display = 'none !important';
+}
+      if (oneSignalLinkContainer) {
+    oneSignalLinkContainer.style.display = 'none';
+    oneSignalLinkContainer.style.visibility = 'hidden';
+    oneSignalLinkContainer.style.opacity = '0';
 }
 
 function closeIframe() {
