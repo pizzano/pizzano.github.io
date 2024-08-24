@@ -528,24 +528,36 @@ QR-koden skannes kun ved telefonbestilling! </div>
         }
       });
 
-      function MenuStart() {
-        //sadece androidler icin, zaten iphone yonlendiriliyor.
-        var script = document.createElement('script');
-        script.src = 'https://bestill.online/kontrol.js';
-        document.head.appendChild(script); // Bu satır çok önemli!
-        var iframeContainer = document.getElementById('fullScreenIframeContainer');
-        iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
-        iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
-        document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
-        document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
-      }
+function MenuStart() {
+    // onesignal-customlink-container'ı gizle
+    var oneSignalLinkContainer = document.querySelector('.onesignal-customlink-container');
+    if (oneSignalLinkContainer) {
+        oneSignalLinkContainer.style.display = 'none';
+    }
 
-      function closeIframe() {
-        var iframeContainer = document.getElementById('fullScreenIframeContainer');
-        iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
-        document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
-        document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
-      }
+    //sadece androidler icin, zaten iphone yonlendiriliyor.
+    var script = document.createElement('script');
+    script.src = 'https://bestill.online/kontrol.js';
+    document.head.appendChild(script); // Bu satır çok önemli!
+    var iframeContainer = document.getElementById('fullScreenIframeContainer');
+    iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
+    iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
+    document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+    document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+}
+
+function closeIframe() {
+    var iframeContainer = document.getElementById('fullScreenIframeContainer');
+    iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
+    document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
+    document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
+    
+    // onesignal-customlink-container'ı tekrar görünür yap
+    var oneSignalLinkContainer = document.querySelector('.onesignal-customlink-container');
+    if (oneSignalLinkContainer) {
+        oneSignalLinkContainer.style.display = 'block';
+    }
+}
 
 function detectDevice() {
     // LocalStorage'dan cihaz bilgisini deneyin
