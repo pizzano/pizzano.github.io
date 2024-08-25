@@ -13,28 +13,9 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "489ad3a4-115d-49fb-9ceb-d075a468e8dd",
-      promptOptions: {
-        customlink: {
-          enabled: true, // Custom link butonunu etkinleştirir
-          style: {
-            size: 'medium', // Buton boyutu: small, medium, large
-            color: {
-              button: '#ffffff', // Buton rengi
-              text: '#000000', // Buton üzerindeki yazı rengi
-            },
-            text: {
-              subscribe: 'Abonner på varsler', // Abone olma metni
-              unsubscribe: 'Meld deg av varsler', // Abonelikten çıkma metni
-            },
-            unsubscribeEnabled: true // Abonelikten çıkma seçeneğini etkinleştirir
-          },
-          position: 'bottom-right', // Butonun sayfadaki konumu
-        },
-      },
     });
   });
 </script>
-
 	
   <!-- SEO Meta Tags -->
   <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
@@ -100,6 +81,10 @@
   -ms-user-select: none;
   user-select: none;
     }
+.onesignal-customlink-container {
+    min-height: 5em;
+    text-align: center;
+}
     .kapak {
       background-color: #4577d3;
       display: flex;
