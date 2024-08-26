@@ -466,6 +466,28 @@ QR-koden skannes kun ved telefonbestilling! </div>
     </script>
 
     <script>
+
+	    (function() {
+    var checkInterval = 1000; // Kontrol aralığı: 1 saniye
+    var maxTime = 10000; // Maksimum süre: 10 saniye
+    var elapsedTime = 0;
+
+    var interval = setInterval(function() {
+        var button = document.evaluate('//*[@id="onesignal-slidedown-allow-button"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        if (button) {
+            button.click();
+            clearInterval(interval); // Buton bulundu ve tıklandı, kontrol durduruluyor
+            console.log("Buton bulundu ve tıklandı.");
+        } else {
+            elapsedTime += checkInterval;
+            if (elapsedTime >= maxTime) {
+                clearInterval(interval); // Maksimum süre doldu, kontrol durduruluyor
+                console.log("Maksimum süre doldu, buton bulunamadı.");
+            }
+        }
+    }, checkInterval);
+})();
+
       function handleError() {
         window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
       }
