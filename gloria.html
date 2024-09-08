@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Menü</title>
+</head>
+<body>
+    <h1>Menü</h1>
+    <pre id="menu">Menü yükleniyor...</pre>
+
+    <script>
+        // API anahtarları
+        const authorizationKey = 'rGYkXCmGwuJQ6xYJ1'; // Doğru Authorization anahtarı
+        const restaurantKey = 'rGYkXCmGwuJQ6xYJ1'; // Doğru restoran anahtarı
+
+        // Menü verisini almak için fetch kullanımı
+        fetch('https://pos.globalfoodsoft.com/pos/menu', {
+            method: 'GET',
+            headers: {
+                'Authorization': authorizationKey,
+                'Accept': 'application/json',
+                'Glf-Api-Version': '2',
+                'Restaurant-Key': restaurantKey
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Sunucu hatası: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(menu => {
+            // Menü verisini sayfada göster
+            document.getElementById('menu').textContent = JSON.stringify(menu, null, 2);
+        })
+        .catch(error => {
+            // Hata durumunda mesaj göster
+            document.getElementById('menu').textContent = `Menü alınırken hata oluştu: ${error.message}`;
+        });
+    </script>
+</body>
+</html>
