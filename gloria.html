@@ -21,9 +21,11 @@
                         'Restaurant-Key': 'rGYkXCmGwuJQ6xYJ1'
                     }
                 });
+
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
+
                 const menu = await response.json();
                 document.getElementById('menu').textContent = JSON.stringify(menu, null, 2);
             } catch (error) {
