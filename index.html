@@ -398,6 +398,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
       </div>
     </div>
     <br>
+        <div id="message"></div><br>
     <div style="cursor:pointer;color:#522e21" onclick="window.location.href='mailto:xhitaf@gmail.com';">
       © Bestill.Online Systems 2023 - <span id="year"></span>
     </div>
@@ -482,6 +483,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
       fetch('https://ipapi.co/json/')
         .then(res => res.json())
         .then(data => {
+        document.getElementById("message").innerHTML = "DIN IP: " + data.ip;
           // 2 saniyelik gecikme ekleyelim
           setTimeout(() => {
             // Eğer kullanıcı Norveç dışında ise body'yi temizle ve sadece uyarıyı göster
@@ -682,5 +684,4 @@ document.addEventListener('DOMContentLoaded', function() {
       updateStatus();
     </script>
 </body>
-
 </html>
