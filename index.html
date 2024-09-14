@@ -341,10 +341,21 @@
       font-size: 1em;
       margin-bottom: 10px;
     }
+#alert {
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        color: red;
+        padding: 20px;
+        text-align: center;
+        background-color: lightyellow;
+        border-radius: 10px;
+        display: none;
+      }
   </style>
 </head>
 
 <body>
+
   <div id="kapak" class="kapak">
     <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
     <br>
@@ -399,7 +410,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
 
       <iframe id="fullScreenIframe" src="https://www.foodbooking.com/api/fb/_q_y_w_r6" onerror="handleError()"></iframe>
     </div>
-
+<div id="alert"></div>
     <script type="module">
       import {
         initializeApp
@@ -466,6 +477,28 @@ QR-koden skannes kun ved telefonbestilling! </div>
     </script>
 
     <script>
+
+ // Şehir ve ülke bilgilerini almak için basit fetch
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          // 2 saniyelik gecikme ekleyelim
+          setTimeout(() => {
+            // Eğer kullanıcı Norveç dışında ise body'yi temizle ve sadece uyarıyı göster
+            if (data.country_name !== "Norway") {
+              let alertDiv = document.getElementById('alert');
+              alertDiv.style.display = 'block';
+              alertDiv.innerHTML = `
+                Vi beklager, men vi tar ikke imot bestillinger utenfor Norge.
+                Hvis du tror dette er en feil, kan du ringe oss på 
+                <strong>4115 5353</strong> for å rette opp.
+              `;
+              document.body.innerHTML = ''; // Tüm body içeriğini temizle
+              document.body.appendChild(alertDiv); // Alert mesajını body'ye ekle
+            }
+          }, 1000); // 2 saniyelik gecikme
+        })
+        .catch(error => console.log('Error fetching location data:', error));
 
 	    (function() {
     var checkInterval = 1000; // Kontrol aralığı: 1 saniye
