@@ -483,7 +483,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
     fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
       .then(data => {
-        document.getElementById("message").innerHTML = "DIN IP: " + data.ip;
+        document.getElementById("message").innerHTML = "Din IP-adresse: " + data.ip;
 
         // Konum ve ülke bilgilerini almak için ipapi.co API'si
         fetch('https://ipapi.co/json/')
