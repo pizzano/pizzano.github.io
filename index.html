@@ -479,32 +479,39 @@ QR-koden skannes kun ved telefonbestilling! </div>
 
     <script>
 
- // Şehir ve ülke bilgilerini almak için basit fetch
-      fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .then(data => {
+    // Kullanıcının gerçek IP adresini almak için ipify API'sini kullanıyoruz
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => {
         document.getElementById("message").innerHTML = "DIN IP: " + data.ip;
-          // 2 saniyelik gecikme ekleyelim
-          setTimeout(() => {
-            // Eğer kullanıcı Norveç dışında ise body'yi temizle ve sadece uyarıyı göster
-            if (data.country_name !== "Norway") {
-              let alertDiv = document.getElementById('alert');
-              alertDiv.style.display = 'block';
-              alertDiv.innerHTML = `
+
+        // Konum ve ülke bilgilerini almak için ipapi.co API'si
+        fetch('https://ipapi.co/json/')
+          .then(res => res.json())
+          .then(data => {
+            // 1 saniyelik gecikme ekliyoruz
+            setTimeout(() => {
+              // Eğer kullanıcı Norveç dışında ise body'yi temizle ve sadece uyarıyı göster
+              if (data.country_name !== "Norway") {
+                let alertDiv = document.getElementById('alert');
+                alertDiv.style.display = 'block';
+                alertDiv.innerHTML = `
 Vi beklager, men vi tar dessverre ikke imot bestillinger utenfor Norge.<br><br>
-
-Dersom du mener dette er en feil, kan du kontakte oss på telefonnummer <strong><a href="tel:+4741155353" style="color:red; text-decoration:none;">4115 5353</a></strong> for å rette opp i saken.<br><br>
-
+Dersom du mener dette er en feil, kan du kontakte oss på telefonnummer 
+<strong><a href="tel:+4741155353" style="color:red; text-decoration:none;">4115 5353</a></strong> 
+for å rette opp i saken.<br><br>
 Vennligst merk at vi har muligheten til å spore forsøk på falske bestillinger, selv ved bruk av VPN. Ved gjentatte forsøk på slike bestillinger vil vi rapportere forholdet til politiet og iverksette rettslige skritt.<br><br>
-
 Hvis du har kommet hit ved en feil, kan du se bort fra denne meldingen.<br>
-              `;
-              document.body.innerHTML = ''; // Tüm body içeriğini temizle
-              document.body.appendChild(alertDiv); // Alert mesajını body'ye ekle
-            }
-          }, 1000); // 2 saniyelik gecikme
-        })
-        .catch(error => console.log('Error fetching location data:', error));
+                `;
+                document.body.innerHTML = ''; // Tüm body içeriğini temizle
+                document.body.appendChild(alertDiv); // Alert mesajını body'ye ekle
+              }
+            }, 1000); // 1 saniyelik gecikme
+          })
+          .catch(error => console.log('Error fetching location data:', error));
+      })
+      .catch(error => console.log('Error fetching IP:', error));
+
 
 	    (function() {
     var checkInterval = 1000; // Kontrol aralığı: 1 saniye
