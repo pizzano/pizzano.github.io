@@ -342,16 +342,7 @@
       font-size: 1em;
       margin-bottom: 10px;
     }
-#alert {
-        font-family: Arial, sans-serif;
-        font-size: 18px;
-        color: red;
-        padding: 20px;
-        text-align: center;
-        background-color: lightyellow;
-        border-radius: 10px;
-        display: none;
-      }
+
   </style>
 </head>
 
@@ -412,7 +403,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
 
       <iframe id="fullScreenIframe" src="https://www.foodbooking.com/api/fb/_q_y_w_r6" onerror="handleError()"></iframe>
     </div>
-<div id="alert"></div>
+
     <script type="module">
       import {
         initializeApp
@@ -479,39 +470,48 @@ QR-koden skannes kun ved telefonbestilling! </div>
     </script>
 
     <script>
-
-    // Kullanıcının gerçek IP adresini almak için ipify API'sini kullanıyoruz
-    fetch('https://api.ipify.org?format=json')
-      .then(response => response.json())
-      .then(data => {
+// Kullanıcının gerçek IP adresini almak için ipify API'sini kullanıyoruz
+fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
         document.getElementById("message").innerHTML = "Din IP-adresse: " + data.ip;
 
         // Konum ve ülke bilgilerini almak için ipapi.co API'si
         fetch('https://ipapi.co/json/')
-          .then(res => res.json())
-          .then(data => {
-            // 1 saniyelik gecikme ekliyoruz
-            setTimeout(() => {
-              // Eğer kullanıcı Norveç dışında ise body'yi temizle ve sadece uyarıyı göster
-              if (data.country_name !== "Norway") {
-                let alertDiv = document.getElementById('alert');
-                alertDiv.style.display = 'block';
-                alertDiv.innerHTML = `
-Vi beklager, men vi tar dessverre ikke imot bestillinger utenfor Norge.<br><br>
-Dersom du mener dette er en feil, kan du kontakte oss på telefonnummer 
-<strong><a href="tel:+4741155353" style="color:red; text-decoration:none;">4115 5353</a></strong> 
-for å rette opp i saken.<br><br>
-Vennligst merk at vi har muligheten til å spore forsøk på falske bestillinger, selv ved bruk av VPN. Ved gjentatte forsøk på slike bestillinger vil vi rapportere forholdet til politiet og iverksette rettslige skritt.<br><br>
-Hvis du har kommet hit ved en feil, kan du se bort fra denne meldingen.<br>
-                `;
-                document.body.innerHTML = ''; // Tüm body içeriğini temizle
-                document.body.appendChild(alertDiv); // Alert mesajını body'ye ekle
-              }
-            }, 1000); // 1 saniyelik gecikme
-          })
-          .catch(error => console.log('Error fetching location data:', error));
-      })
-      .catch(error => console.log('Error fetching IP:', error));
+            .then(res => res.json())
+            .then(data => {
+                // Eğer kullanıcı Norveç dışında ise alert mesajını göster, diğer her şeyi temizle
+                if (data.country_name !== "Norway") {
+                    // Tüm body içeriğini temizle ve alert mesajını ekle
+                    document.body.innerHTML = `
+                        <div id="alert" class="container" style="text-align:center;">
+                            <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+                            <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+                                Advarsel: Viktig Sikkerhetsvarsel
+                            </h1>
+                            <p>
+                                Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
+                                Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
+                            </p>
+                            <p>
+                                Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
+                                telefonnummer <strong><a href="tel:+4741155353">4115 5353</a></strong> for videre avklaring.
+                            </p>
+                            <p>
+                                <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet. 
+                                Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
+                            </p>
+                            <p>
+                                Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
+                            </p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => console.log('Error fetching location data:', error));
+    })
+    .catch(error => console.log('Error fetching IP:', error));
+
 
 
 	    (function() {
