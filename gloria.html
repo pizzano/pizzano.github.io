@@ -3,37 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu</title>
+    <title>Fetch API with CORS Anywhere</title>
 </head>
 <body>
-    <h1>Menu</h1>
-    <pre id="menu"></pre>
+
+    <h1>Menu Data</h1>
+    <div id="menu-data">
+        <!-- Gelen veriler burada görüntülenecek -->
+    </div>
+
+    <div id="error-message" style="color: red;">
+        <!-- Hatalar burada görüntülenecek -->
+    </div>
 
     <script>
-        async function fetchMenu() {
-            try {
-                const response = await fetch('https://cors-anywhere.herokuapp.com/https://pos.globalfoodsoft.com/pos/menu', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'rGYkXCmGwuJQ6xYJ1',
-                        'Accept': 'application/json',
-                        'Glf-Api-Version': '2',
-                        'Restaurant-Key': 'rGYkXCmGwuJQ6xYJ1'
-                    }
-                });
+        // CORS Anywhere kullanarak API'ye istek yapıyoruz
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const apiUrl = 'https://pos.globalfoodsoft.com/pos/menu';
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const menu = await response.json();
-                document.getElementById('menu').textContent = JSON.stringify(menu, null, 2);
-            } catch (error) {
-                document.getElementById('menu').textContent = `Error fetching menu: ${error.message}`;
+        fetch(proxyUrl + apiUrl, { 
+            method: 'GET',
+            headers: {
+                'Authorization': 'rGYkXCmGwuJQ6xYJ1',
+                'Accept': 'application/json',
+                'Glf-Api-Version': '2',
+                'Restaurant-Key': 'rGYkXCmGwuJQ6xYJ1'
             }
-        }
-
-        fetchMenu();
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Gelen veriyi HTML içinde göster
+            const menuDiv = document.getElementById('menu-data');
+            menuDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        })
+        .catch(error => {
+            // Hata mesajını sayfadaki error-message div'ine yazdır
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerHTML = `Error: ${error.message}`;
+        });
     </script>
+
 </body>
 </html>
