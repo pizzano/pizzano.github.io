@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail API Demo</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script type="text/javascript">
+        var CLIENT_ID = '955021367023-sukp37islu2nskfdfk7cs5pfadcueg50.apps.googleusercontent.com';  // Google API Console'dan aldığınız Client ID
+        var API_KEY = 'AIzaSyCFhtVGlbWYJGDboGueropyZ2NNEmTOfbA';      // Google API Console'dan aldığınız API Key
+        var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"];
+        var SCOPES = "https://www.googleapis.com/auth/gmail.readonly";  // Sadece okuma yetkisi
+
+        // Google API'yi başlat ve OAuth istemcisini ayarla
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        // Google API'yi başlat ve kimlik doğrulama işlemlerini ayarla
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(function () {
+                // Kimlik doğrulama başarılı olduktan sonra e-postaları çekmeye başlayın
+                gapi.auth2.getAuthInstance().signIn().then(listMessages);
+            });
+        }
+
+        // Gmail'deki e-posta listesini al
+        function listMessages() {
+            gapi.client.gmail.users.messages.list({
+                'userId': 'me',
+                'maxResults': 10  // Son 10 e-postayı çek
+            }).then(function(response) {
+                var messages = response.result.messages;
+                console.log("Son 10 e-posta:", messages);
+
+                // Her e-postanın detaylarını çek
+                messages.forEach(function(message) {
+                    getMessageDetails(message.id);
+                });
+            });
+        }
+
+        // E-posta detaylarını al
+        function getMessageDetails(messageId) {
+            gapi.client.gmail.users.messages.get({
+                'userId': 'me',
+                'id': messageId
+            }).then(function(response) {
+                var emailData = response.result;
+                console.log("E-posta İçeriği:", emailData.snippet);  // E-posta snippet'ini göster
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Gmail API ile E-postalarınızı Çekin</h1>
+    <button onclick="handleClientLoad()">Gmail E-postalarını Çek</button>
+</body>
+</html>
