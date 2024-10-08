@@ -5,7 +5,7 @@
   <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="icon" href="https://pizzano.github.io/img/s-logo.png" type="image/png">
+  <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
 
   <!-- SEO Meta Tags -->
   <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
@@ -527,7 +527,7 @@ fetch('https://api.ipify.org?format=json')
             window.updateDatabaseReference();
           }
           QRCODE.style = "width:100%; padding:0px;";
-          QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
+          QRCODE.src = 'https://bestill.online/img/stemp.jpg';
           mobil_status.innerHTML = '✍ Vennligst skriv inn et gyldig nummer';
 
  // Sayfa yenilendiğinde telefon numarası eksikse localStorage'dan kaldır
@@ -537,11 +537,11 @@ fetch('https://api.ipify.org?format=json')
     
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
-            QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
+            QRCODE.src = 'https://bestill.online/img/stemp.jpg';
             mobilnr.value = null;
           } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
             mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
-            QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
+            QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${mobilnr.value}`;
             QRCODE.style = "width:80%; padding:30px;";
 
           }
