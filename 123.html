@@ -503,8 +503,15 @@
   const closeIframeBtn = document.getElementById('closeIframeBtn');
 
   openIframeBtn.addEventListener('click', () => {
-    iframeOverlay.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isDesktop = /Win32|Win64|MacIntel|Linux/i.test(navigator.platform);
+
+    if (isAndroid || isDesktop) {
+      iframeOverlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    } else {
+      window.location.href = 'https://www.foodbooking.com/api/fb/_q_y_w_r6';
+    }
   });
 
   closeIframeBtn.addEventListener('click', () => {
@@ -524,7 +531,7 @@
       document.head.appendChild(themeColor);
     }
     if (dayOfWeek === 2) { // Tirsdag
-      statusMessageTop.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
+      statusMessageTop.textContent = `🛜 Restauranten er stengt på Tirsdager.`;
       statusMessageTop.style.backgroundColor = "#ef4e4b";
       themeColor.content = "#ef4e4b";
     } else if (currentHour >= 14 && currentHour < 22) {
