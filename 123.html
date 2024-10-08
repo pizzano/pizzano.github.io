@@ -3,619 +3,549 @@
 <head>
   <meta charset="UTF-8">
   <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="icon" href="https://pizzano.github.io/img/s-logo.png" type="image/png">
-
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
-  <meta name="keywords" content="KØL Grill & Pizza, Skarnes pizza, online pizza bestilling, takeaway, burger, kebab, Italiensk pizza, Sør Odal, Årnes, Ahlen Pizza, Mona Lisa Skarnes">
-
-  <!-- Social Media Meta Tags -->
-  <meta property="og:title" content="KØL Grill & Pizza | Skarnes - Online Pizza Bestilling">
-  <meta property="og:description" content="Opplev ekte italiensk pizza hos KØL Grill & Pizza. Friske ingredienser og profesjonell steinovn. Takeaway og levering i Skarnes, Sør Odal og Årnes.">
-  <meta property="og:url" content="https://bestill.online">
-  <meta property="og:type" content="website">
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0"></script>
-
-  <script type="application/ld+json">
-    {
-      "@context": "http://schema.org",
-      "@type": "Restaurant",
-      "name": "KØL Grill & Pizza",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Øgardsvegen 44",
-        "addressLocality": "Skarnes",
-        "addressRegion": "Sør Odal",
-        "postalCode": "2100",
-        "addressCountry": "NO"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "60.2521748",
-        "longitude": "11.6806137"
-      },
-      "openingHoursSpecification": [{
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday"
-        ],
-        "opens": "14:00",
-        "closes": "21:00"
-      }],
-      "hasMenu": "https://bestill.online/meny"
-    }
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tema rengini dinamik olarak değiştirmek için meta etiketi -->
+  <meta name="theme-color" content="#4577d3">
   <style>
+    /* Renk değişkenleri */
+    :root {
+      --primary-color: #4577d3;
+      --secondary-color: #00468b;
+      --text-color: #000000;
+      --success-color: #28a745;
+      --error-color: #ef4e4b;
+      --light-gray: #f8f9fa;
+      --gray: #6c757d;
+      --soft-green: #18c81f; /* Updated color */
+    }
+
+    /* Genel stil */
     body {
-      background-color: #2655ad;
-      font-family: 'Arial', sans-serif;
+      background-color: var(--primary-color);
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      zoom: 95%;
-      font-size: 18px;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+      color: var(--text-color);
     }
-    .kapak {
-      background-color: #4577d3;
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      flex-wrap: nowrap;
-      border-style: solid;
-      border-color: #3F51B5;
-      border-width: 0px 1px;
-      min-width: 330px;
-      width: 99%;
-      max-width: 500px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    }
-    @media screen and (min-width: 768px) {
-      .kapak {
-        zoom: 80%;
-      }
-    }
-    .container {
-      width: 90%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #FFF;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      border-radius: 13px;
-      margin-bottom: 15px;
-      /* Eklendi */
-    }
-    .header,
-    .footer {
-      background-color: #3F51B5;
-      height: 40px;
-      color: white;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 5px 1px 5px 1px;
-    }
-    .header {
-      border-radius: 10px 10px 0 0;
-      /* Güncellendi */
-    }
-    .footer {
-      border-radius: 0 0 10px 10px;
-      box-shadow: 0px 5px 0px 0px #0000004f;
-      /* Güncellendi */
-    }
-    .main {
-      display: flex;
-      width: 100%;
-      align-items: center;
-      flex-direction: column;
-      justify-content: center;
-    }
-    #kupon {
-      margin: 10px;
-      width: 100%;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      /* Merkeze alındı */
-    }
-    .pizza-box {
-      width: 17%;
-      /* Genişlik % olarak ayarlandı */
-      height: 120px;
-      background-color: #d1c6c6;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-evenly;
-      border-radius: 10%;
-      margin: 1%;
-      /* Her bir kutu arasında boşluk bırakıldı */
-    }
-    .selected {
-      background: #18c81f;
-      border-color: black;
-      color: white;
-      box-shadow: 0px 2px 1px 0px #563c33;
-    }
-    
-    .pizza-img {
-      animation: spin 5s linear infinite;
-      /* Animasyon*/
-      filter: grayscale(100%);
-      height: 45px;
-      object-fit: contain;
-      transition: filter .5s, transform 1s;
-      /* geçiş efektleri */
-      width: 45px;
-    }
-    #QRCODE {
-      cursor: pointer;
-    }
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
 
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    @keyframes spinAndPulse {
-      0%,
-      100% {
-        transform: scale(0.9) rotate(0deg);
-      }
-      12.5%,
-      37.5%,
-      62.5%,
-      87.5% {
-        transform: scale(1.1) rotate(-20deg);
-      }
-      25%,
-      50%,
-      75% {
-        transform: scale(1) rotate(20deg);
-      }
-    }
-    .inputKutusu {
-      display: flex;
-      width: 100%;
-      /* veya başka bir genişlik değeri */
-    }
-    input {
-      width: 100%;
-      height: 50px;
-      font-size: 22px;
+    /* Açılış saatleri bildirimi */
+    #statusMessageTop {
+      background-color: var(--error-color);
+      color: #fff;
+      padding: 10px;
       text-align: center;
-      letter-spacing: 8px;
-      border: none;
-      background-color: white;
-      color: black;
-      font-weight: bold;
-      outline: 1.5px solid;
+      font-size: 18px;
+      width: 100%;
+      max-width: 500px;
+            border-radius: 0 0 10px 10px;
+      margin: 0 auto 20px auto;
+      box-sizing: border-box;
     }
-    .btn {
-      width: 90%;
-      height: 60px;
-      box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
-      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
-      font-weight: bold;
+
+    /* Wrapper */
+    .wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+      box-sizing: border-box;
+      background: var(--primary-color);
+    }
+
+    /* Başlık */
+    h1 {
       font-size: 28px;
-      color: white;
+      margin-bottom: 20px;
+      color: var(--text-color);
+      text-align: center;
+      font-weight: bold;
+    }
+
+    /* Buton stili */
+    button {
+      padding: 15px;
+      font-size: 28px;
+      background-color: var(--secondary-color);
+      color: #fff;
+      border: none;
       border-radius: 11px;
       cursor: pointer;
-    }
-    .btn1 {
-      animation: pulse 1s infinite;
-      cursor: pointer;
+      width: 100%;
+      margin-bottom: 20px;
+      font-weight: bold;
+      box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
+      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
     }
 
-    @keyframes pulse {
-      0% {
+    /* Buton metni animasyonu */
+    @keyframes textPulse {
+      0%, 100% {
         transform: scale(1);
       }
       50% {
-        transform: scale(1.05);
+        transform: scale(1.1);
       }
-      100% {
-        transform: scale(1);
-      }
-    }
-    transform: scale(1);
-    opacity: 1;
-    }
-    50% {
-      transform: scale(1.2);
-      opacity: 0.5;
-    }
-    }
-    h1 {
-      color: #444;
-    }
-    ul {
-      padding-left: 20px;
-    }
-    li {
-      margin-bottom: 10px;
-      padding: 3px;
-    }
-    #loadingScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    #logoImage {
-      width: 40vw;
-      height: 40vw;
-    }
-    .signal-container::before {
-      content: '';
-      position: absolute;
-      bottom: 25px;
-      right: -10px;
-      width: 80px;
-      height: 80px;
-      background: rgba(255, 0, 0, 0.5);
-      border-radius: 50%;
-      animation: pulser 2s infinite cubic-bezier(0, 0, 0.61, 0.21);
     }
 
-    @keyframes pulser {
-      0% {
-        transform: scale(0.6);
-        opacity: 1;
-      }
-
-      100% {
-        transform: scale(1.4);
-        opacity: 0;
-      }
+    #buttonText {
+      display: inline-block;
+      animation: textPulse 2s infinite;
     }
-    #fullScreenIframeContainer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      visibility: hidden;
-      z-index: 10000;
+
+    /* Ana konteyner */
+    .container {
+      background-color: var(--light-gray);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
       box-sizing: border-box;
     }
-    #fullScreenIframe {
+
+    /* Girdi stili */
+    input[type="text"] {
+      font-size: 20px;
+      padding: 10px;
+      width: 100%;
+      border: 1px solid var(--gray);
+      border-radius: 5px;
+      text-align: center;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    /* Bölümler */
+    .section {
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #fff;
+    }
+
+    /* Kupon bölümü */
+    .coupon-section {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .coupon-box {
+      width: 100%;
+      height: 150px;
+      background-color: #eaeaea;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .coupon-box.selected {
+      background-color: var(--soft-green);
+    }
+
+    .coupon-box-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .coupon-box-content img {
+      width: 70%;
+      object-fit: cover;
+      animation: rotate 4s linear infinite; /* Apply rotation to all images */
+    }
+
+    /* Seçili olmayan kuponlar */
+    .coupon-box.unselected img {
+      filter: grayscale(100%);
+    }
+
+    /* Seçili kuponlar */
+    @keyframes rotate {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Kupon numarası */
+    .coupon-number {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
+    /* Tebrik mesajı */
+    .congrats-message {
+      background-color: var(--secondary-color);
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .congrats-message h2 {
+      margin-top: 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* QR kodu */
+    #qr-code {
+      width: 100%;
+      height: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mesajlar */
+    .message {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .success {
+      color: var(--success-color);
+    }
+
+    .error {
+      color: var(--error-color);
+    }
+
+    /* Footer */
+    #footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #fff;
+    }
+
+    /* Iframe overlay */
+    #iframeOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--background-color);
+      display: none;
+      z-index: 9999;
+    }
+
+    #iframeContainer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #iframeContent {
       width: 100%;
       height: 100%;
       border: none;
-      box-sizing: border-box;
     }
-    #main-container {
-    background-color: #FFEB3B;
-    display: inline-block;
-    text-align: center;
-    border: 3px dotted;
-    border-left: none;
-    border-right: none;
-    }
-    #main-container h1 {
-      font-size: 2em;
-    }
-    #main-container p {
-      font-size: 1em;
-      margin-bottom: 10px;
+
+    /* Kapatma butonu */
+    #closeIframeBtn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      width: 60px;
+      height: 60px;
+      background-color: var(--error-color);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   </style>
 </head>
-
 <body>
-  <div id="kapak" class="kapak">
-    <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
-    <br>
-    <div id="deviceContent" class="container header btn"></div> <br>
-    <p style="color:gold;font-size:19px;;text-align: center;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</p>
-    <div class="container">
 
-      <div id="mobil_status" class="header"> </div>
+<div class="wrapper">
 
-      <div class="inputKutusu">
-        <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
-      </div>
-      <div class="main">
-        <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
-        <div id="gratis"></div>
-        <div id="kupon"></div>
-        <!-- Kuponlar JavaScript ile eklenecek -->
-      </div>
-      <div class="footer">
-        Vi spanderer hver 11. stor pizza. ⓘ
+  <!-- Açılış saatleri bildirimi -->
+  <div id="statusMessageTop"></div>
+
+  <!-- 'Se meny og bestill' butonu -->
+  <button id="openIframeBtn"><span id="buttonText">Se meny og bestill</span></button>
+
+  <div class="container">
+    <h1>Din Digitale Kupong</h1>
+
+    <!-- Telefon girişi bölümü -->
+    <div class="section">
+      <div id="statusMessage" class="message"></div>
+      <div class="input-section">
+        <input type="text" id="phone" maxlength="8" placeholder="Skriv inn nummeret ditt">
       </div>
     </div>
-    <br>
-    <div id="qrkodem" class="container">
-      <div class="header">
-QR-koden skannes kun ved telefonbestilling! </div>
-      <div class="main">
-        <img id="QRCODE">
-      </div>
-      <div id="qrkodelukk" class="footer">
-        Klikk på QR-koden for å fremvise!
-      </div>
-    </div>
-    <br>
-    <div id="vilkor"> </div>
-    <div class="container">
-      <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="header" style="border-radius: 10px 10px 10px;padding: 15px 0px 15px 0px;text-align: center;display: flex;justify-content: space-around;gap: 5px;flex-direction: column;cursor:pointer;box-shadow: 0px 5px 0px 0px #0000004f;">
-        <div>Vurder oss på Google </div>
-        <div>⭐⭐⭐⭐⭐ 4.9 </div>
-      </div>
-    </div>
-    <br>
-    <div style="cursor:pointer;color:#522e21" onclick="window.location.href='mailto:xhitaf@gmail.com';">
-      © Bestill.Online Systems 2023 - <span id="year"></span>
-    </div>
-     <br>
-  <div id="message"></div><br>
-    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="display:none;" onload="document.getElementById('year').innerHTML = new Date().getFullYear();">
 
-    <div id="fullScreenIframeContainer">
-
-      <div class="signal-container"> <img onclick="closeIframe()" src="https://bestill.online/img/btn1.png" style="position: absolute; bottom: 40px; right: 5px; z-index: 10001; width: 50px;" class="btn1"> </div>
-
-      <iframe id="fullScreenIframe" src="https://www.foodbooking.com/api/fb/_q_y_w_r6" onerror="handleError()"></iframe>
-    </div>
-
-    <script type="module">
-   
-      import {
-        initializeApp
-      } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-      import {
-        getDatabase,
-        ref,
-        onValue
-      } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
-      const app = initializeApp({
-        databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
-      });
-      const db = getDatabase(app);
-      window.updateDatabaseReference = function() {
-        const dbRef = ref(db, `${mobilnr.value}`);
-        const pizzaContainer = document.getElementById('kupon');
-        pizzaContainer.innerHTML = "";
-        for (let i = 1; i <= 10; i++) {
-          pizzaContainer.innerHTML += `<div class="pizza-box" id="pizzaBox${i}"> <span>${i}</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="pizza-img"> </div>`;
-        }
-        // İlk veri yüklemesi için onValue kullanılır
-        onValue(dbRef, snapshot => {
-  if (snapshot.val() > 9) {
-    gratis.innerHTML = `
-      <div id="main-container">
-        <h1>GRATULERER</h1>
+    <!-- Tebrik mesajı bölümü -->
+    <div class="section" id="congratsSection" style="display: none;">
+      <div class="congrats-message">
+        <h2>🎉 GRATULERER</h2>
         <p>Takk for at du kjøpte 10 store pizzaer!</p>
         <p>Du vil få den 11. pizzaen helt gratis ved din neste bestilling.</p>
         <p>Vis bare QR-koden til betjeningen når du samtidig henter pizzaen.</p>
-      </div>`;
-    
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 } // Ekranda biraz daha aşağıdan başlaması için
+      </div>
+    </div>
+
+    <!-- Kupon bölümü -->
+    <div class="section">
+      <div class="coupon-section" id="couponSection">
+        <!-- Kuponlar burada gösterilecek -->
+      </div>
+    </div>
+
+    <!-- QR kodu bölümü -->
+    <div class="section">
+      <img id="qr-code" src="https://bestill.online/img/stemp.jpg" alt="QR Kode">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div id="footer">
+    Bestill.Online Systems 2023 - <span id="currentYear"></span><br>
+    Din IP-adresse: <span id="ipAddress"></span>
+  </div>
+</div>
+
+<!-- Iframe Overlay -->
+<div id="iframeOverlay">
+  <div id="iframeContainer">
+    <iframe id="iframeContent" src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
+    <button id="closeIframeBtn">✖</button>
+  </div>
+</div>
+
+<!-- Konfeti efekti için kütüphane -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+
+  // Firebase'i başlat
+  const app = initializeApp({
+    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+  });
+  const db = getDatabase(app);
+
+  // Değişkenleri seç
+  const phoneInput = document.getElementById('phone');
+  const statusMessage = document.getElementById('statusMessage');
+  const couponSection = document.getElementById('couponSection');
+  const qrCode = document.getElementById('qr-code');
+  const statusMessageTop = document.getElementById('statusMessageTop');
+  const currentYearSpan = document.getElementById('currentYear');
+  const ipAddressSpan = document.getElementById('ipAddress');
+  const congratsSection = document.getElementById('congratsSection');
+
+  let phoneNumber = '';
+
+  // Yılı güncelle
+  currentYearSpan.textContent = new Date().getFullYear();
+
+  // IP adresini al ve göster
+  fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+      ipAddressSpan.textContent = data.ip;
+      checkCountry(data.ip);
+    })
+    .catch(error => {
+      ipAddressSpan.textContent = 'IP-adresse kunne ikke hentes';
+      console.error('IP-adresse kunne ikke hentes:', error);
     });
-  } else {
-    gratis.innerHTML = null;
+
+  // IP adresi ülke kontrolü
+  function checkCountry(ip) {
+    fetch(`https://ipapi.co/${ip}/country/`)
+      .then(response => response.text())
+      .then(country => {
+        if (country !== 'NO') {
+          document.body.innerHTML = `
+            <div id="alert" class="container" style="text-align: center; margin: 0; padding: 10%;">
+              <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+              <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+                Advarsel: Viktig Sikkerhetsvarsel
+              </h1>
+              <p>
+                Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
+                Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
+              </p>
+              <p>
+                Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
+                telefonnummer <strong><a href="tel:+4741145353">4114 5353</a></strong> for videre avklaring.
+              </p>
+              <p>
+                <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet.
+                Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
+              </p>
+              <p>
+                Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
+              </p>
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Ülke bilgisi alınamadı:', error);
+      });
   }
-          const selectedCount = snapshot.val() || 0;
-          document.querySelectorAll('.pizza-box').forEach((box, index) => {
-            const isSelected = index < selectedCount;
-            box.classList.toggle('selected', isSelected);
-            box.querySelector('.pizza-img').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
-            document.body.style = '';
-            qrkodem.style = '';
-            qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
 
-            window.scrollTo({
-              top: 0,
-              behavior: 'smooth'
-            });
-          });
-        });
-      }
-      window.updateDatabaseReference(); // Fonksiyonu başlangıçta çağırın
-      window.adjustCount = function(increase) {
-        const dbRef = ref(db, `${mobilnr.value}`);
-        runTransaction(dbRef, currentValue => {
-          currentValue = currentValue || 0;
-          return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0);
-        });
-      };
-    </script>
+  // Telefon numarasını yükle
+  if (localStorage.getItem('MOBIL')) {
+    phoneNumber = localStorage.getItem('MOBIL');
+    phoneInput.value = phoneNumber;
+    if (isValidPhoneNumber(phoneNumber)) {
+      updateData();
+    } else {
+      localStorage.removeItem('MOBIL');
+      displayDefault();
+    }
+  } else {
+    displayDefault();
+  }
 
-    <script>
-    
-      function handleError() {
-        window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
-      }
-
-      // LocalStorage kontrolü ve numara yükleme
-      mobilnr.value = localStorage.getItem('MOBIL') || ' ';
-      document.addEventListener('DOMContentLoaded', function() {
-        function updateMobileAndQRCode(event) {
-          mobilnr.value = mobilnr.value.replace(/[^\d]/g, '').slice(0, 8);
-          localStorage.setItem('MOBIL', mobilnr.value);
-          var firstDigit = parseInt(mobilnr.value[0]);
-          var invalidStartDigits = [0, 1, 2, 3, 5, 6, 7, 8];
-          if (event && event.type === 'input' && mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-            mobilnr.blur(); // İlk olarak input'tan odağı kaldır
-            setTimeout(function() {
-              document.getElementById('QRCODE').scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-              setTimeout(function() {
-                // İlk kaydırmadan sonra, sayfayı en üste kaydırma işlemi
-                window.scrollTo({
-                  top: 0,
-                  behavior: 'smooth'
-                });
-              }, 2000); // QR Code görünümünden 2 saniye sonra en üste kaydır
-            }, 500); // Klavyenin kapanmasını beklemek için yeterli süre (örneğin 500 ms)
-            window.updateDatabaseReference();
-          }
-          QRCODE.style = "width:100%; padding:0px;";
-          QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
-          mobil_status.innerHTML = '✍ Vennligst skriv inn et gyldig nummer';
-
- // Sayfa yenilendiğinde telefon numarası eksikse localStorage'dan kaldır
- if (mobilnr.value.length < 8) {
+  // Telefon numarası girişi
+  phoneInput.addEventListener('input', () => {
+    phoneNumber = phoneInput.value.trim();
+    if (isValidPhoneNumber(phoneNumber)) {
+      phoneInput.blur();
+      localStorage.setItem('MOBIL', phoneNumber);
+      updateData();
+    } else {
+      statusMessage.textContent = '✍ Vennligst skriv inn et gyldig nummer!';
+      statusMessage.classList.remove('success');
+      statusMessage.classList.add('error');
+      qrCode.src = 'https://bestill.online/img/stemp.jpg';
+      renderCoupons(0);
+      congratsSection.style.display = 'none';
       localStorage.removeItem('MOBIL');
     }
-    
-          if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
-            QRCODE.style = "width:100%; padding:0px;";
-            QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
-            mobilnr.value = null;
-          } else if (mobilnr.value.length >= 8 && !invalidStartDigits.includes(firstDigit)) {
-            mobil_status.innerHTML = '✅ Nummeret ditt er registrert!';
-            QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${mobilnr.value}`;
-            QRCODE.style = "width:80%; padding:30px;";
+  });
 
-          }
-        }
-        mobilnr.oninput = updateMobileAndQRCode;
-        updateMobileAndQRCode(); // İlk yükleme için de çağır
-      });
-      vilkor.addEventListener('click', function() {
-        regler.style = 'display: flex;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);padding: 100%;font-size:16px;';
-      });
-      QRCODE.addEventListener('click', function() {
-        if (qrkodem.style.position !== 'fixed') {
-          document.body.style = ' visibility: hidden;'; // Tüm sayfanın arka planını bulanıklaştır
-          qrkodem.style = 'display: flex; justify-content: space-between; position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 9999;visibility: visible; height: 90%;width: 90%;max-height:600px;max-width:600px;';
-          qrkodelukk.innerHTML = "Klikk på QR-koden for å Lukke!";
-          if (QRCODE.src.includes("stemp")) {
-            qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-          }
-        } else {
-          document.body.style = '';
-          qrkodem.style = '';
-          qrkodelukk.innerHTML = "Klikk på QR-koden for å fremvise!";
-        }
-      });
+  // Telefon numarası doğrulama
+  function isValidPhoneNumber(number) {
+    return (
+      number.length === 8 &&
+      /^\d+$/.test(number) &&
+      (number.startsWith('4') || number.startsWith('9'))
+    );
+  }
 
-      function MenuStart() {
-        //sadece androidler icin, zaten iphone yonlendiriliyor.
-        var script = document.createElement('script');
-        script.src = 'https://bestill.online/kontrol.js';
-        document.head.appendChild(script); // Bu satır çok önemli!
-        var iframeContainer = document.getElementById('fullScreenIframeContainer');
-        iframeContainer.style.visibility = 'visible'; // iframe'i görünür yap
-        iframeContainer.style.position = 'fixed'; // Sayfanın en üstünde sabitler
-        document.body.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
-        document.documentElement.style.overflowY = 'hidden'; // HTML SCROLL DIKEY GIZLE
+  // Verileri güncelle
+  function updateData() {
+    statusMessage.textContent = '✅ Nummeret ditt er registrert!';
+    statusMessage.classList.remove('error');
+    statusMessage.classList.add('success');
+    qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=pizzano.github.io/kayit.html?n=${phoneNumber}&size=200x200`;
+
+    const dbRef = ref(db, `${phoneNumber}`);
+    onValue(dbRef, (snapshot) => {
+      const count = snapshot.val() || 0;
+      renderCoupons(count);
+      if (count >= 10) {
+        congratsSection.style.display = 'block';
+        triggerConfetti();
+      } else {
+        congratsSection.style.display = 'none';
       }
+    });
+  }
 
-      function closeIframe() {
-        var iframeContainer = document.getElementById('fullScreenIframeContainer');
-        iframeContainer.style.visibility = 'hidden'; // iframe'i gizler
-        document.body.style.overflowY = 'visible'; // Body SCROL DIKEY GOSTER
-        document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
-      }
+  // Kuponları oluştur
+  function renderCoupons(count) {
+    couponSection.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+      const box = document.createElement('div');
+      box.classList.add('coupon-box', i <= count ? 'selected' : 'unselected');
 
-function detectDevice() {
-    // LocalStorage'dan cihaz bilgisini deneyin
-    var storedDevice = localStorage.getItem('deviceType');
-    if (!storedDevice) {
-        // Cihaz bilgisi localStorage'da yoksa, userAgent ile kontrol edin
-        var ua = navigator.userAgent || navigator.vendor || window.opera;
-        var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-        var isHuawei = /Huawei|HONOR/.test(ua);
-
-        if (isIOS) {
-            storedDevice = 'iOS';
-        } else if (isHuawei) {
-            storedDevice = 'Huawei';
-        } else {
-            storedDevice = 'Other';
-        }
-
-        // Cihaz türünü localStorage'a kaydedin
-        localStorage.setItem('deviceType', storedDevice);
+      box.innerHTML = `
+        <div class="coupon-box-content">
+          <div class="coupon-number">${i}</div>
+          <div>
+            <img src="https://bestill.online/img/pizza.png" alt="Pizza">
+          </div>
+        </div>
+      `;
+      couponSection.appendChild(box);
     }
+  }
 
-    // Eğer cihaz tipi iOS veya Huawei ise iOS'a özel link, diğer cihazlar için genel menü fonksiyonu
-    var buttonHTML = (storedDevice === 'iOS' || storedDevice === 'Huawei') ?
-        `<div id="dugme" class="btn1" onclick="window.location.href='https://www.foodbooking.com/api/fb/_q_y_w_r6';">Se MENY og Bestill</div>` :
-        `<div id="dugme" class="btn1" onclick="MenuStart();">Se MENY og Bestill</div>`;
-    return buttonHTML;
-}
+  // Varsayılan görünüm
+  function displayDefault() {
+    qrCode.src = 'https://bestill.online/img/stemp.jpg';
+    renderCoupons(0);
+    congratsSection.style.display = 'none';
+    statusMessage.textContent = '';
+  }
 
-// DOM hazır olduğunda çalışacak şekilde içeriği ayarla
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('deviceContent').innerHTML = detectDevice();
-    document.getElementById('deviceContent').onclick = document.getElementById('dugme').onclick;
-});
+  // Konfeti efekti
+  function triggerConfetti() {
+    confetti({
+      particleCount: 200,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+  }
 
-      document.addEventListener('DOMContentLoaded', function() {
-        // URL'deki sorgu parametrelerini analiz et
-        const queryParams = new URLSearchParams(window.location.search);
-        // 'click' parametresini kontrol et
-        const shouldClick = queryParams.get('click');
-        // 'click' parametresi 'bestill' ise ilgili butonu bul ve tıkla
-        if (shouldClick === 'bestill') {
-          document.getElementById('dugme').onclick();
-        }
-      });
+  // 'Se meny og bestill' butonu ve iframe işlemleri
+  const openIframeBtn = document.getElementById('openIframeBtn');
+  const iframeOverlay = document.getElementById('iframeOverlay');
+  const closeIframeBtn = document.getElementById('closeIframeBtn');
 
-      function updateStatus() {
-        const currentDate = new Date();
-        const dayOfWeek = currentDate.getDay();
-        const currentHour = currentDate.getHours();
-        let statusMessage = document.getElementById("statusMessage");
-        let themeColor = document.querySelector('meta[name="theme-color"]');
-        if (!themeColor) {
-          themeColor = document.createElement("meta");
-          themeColor.name = "theme-color";
-          document.head.appendChild(themeColor);
-        }
-        if (dayOfWeek === 2) { // Tirsdager
-          statusMessage.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
-          statusMessage.style.backgroundColor = "#ef4e4b";
-          themeColor.content = "#ef4e4b";
-        } else if (currentHour >= 14 && currentHour < 22) {
-          statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 22:00`;
-          statusMessage.style.backgroundColor = "#5ac15e";
-          themeColor.content = "#5ac15e";
-        } else {
-          statusMessage.textContent = `🔴 Restauranten er stengt nå.`;
-          statusMessage.style.backgroundColor = "#ef4e4b";
-          themeColor.content = "#ef4e4b";
-        }
-      }
-      updateStatus();
-    </script>
+  openIframeBtn.addEventListener('click', () => {
+    iframeOverlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  });
+
+  closeIframeBtn.addEventListener('click', () => {
+    iframeOverlay.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  });
+
+  // Açılış saatleri bildirimi
+  function updateStatus() {
+    const currentDate = new Date();
+    const dayOfWeek = currentDate.getDay();
+    const currentHour = currentDate.getHours();
+    let themeColor = document.querySelector('meta[name="theme-color"]');
+    if (!themeColor) {
+      themeColor = document.createElement("meta");
+      themeColor.name = "theme-color";
+      document.head.appendChild(themeColor);
+    }
+    if (dayOfWeek === 2) { // Tirsdag
+      statusMessageTop.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
+      statusMessageTop.style.backgroundColor = "#ef4e4b";
+      themeColor.content = "#ef4e4b";
+    } else if (currentHour >= 14 && currentHour < 22) {
+      statusMessageTop.textContent = `🟢 Åpent i dag fra kl. 14:00 til 22:00`;
+      statusMessageTop.style.backgroundColor = "#5ac15e";
+      themeColor.content = "#5ac15e";
+    } else {
+      statusMessageTop.textContent = `🔴 Restauranten er stengt nå.`;
+      statusMessageTop.style.backgroundColor = "#ef4e4b";
+      themeColor.content = "#ef4e4b";
+    }
+  }
+  updateStatus();
+
+  // Sayfa yenilendiğinde telefon numarası geçersizse localStorage'dan kaldır
+  window.addEventListener('beforeunload', () => {
+    if (!isValidPhoneNumber(phoneNumber)) {
+      localStorage.removeItem('MOBIL');
+    }
+  });
+</script>
+
 </body>
-
 </html>
