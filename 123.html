@@ -357,7 +357,7 @@
     .then(response => response.json())
     .then(data => {
       ipAddressSpan.textContent = data.ip;
- 
+      checkCountry(data.ip);
     })
     .catch(error => {
       ipAddressSpan.textContent = 'IP-adresse kunne ikke hentes';
@@ -503,15 +503,26 @@
   const closeIframeBtn = document.getElementById('closeIframeBtn');
 
   openIframeBtn.addEventListener('click', () => {
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isDesktop = /Win32|Win64|MacIntel|Linux/i.test(navigator.platform);
+    const isAndroidOrPC = /Android|Windows NT|Macintosh/i.test(navigator.userAgent);
+    const isPrivateMode = (() => {
+      const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+      if (!fs) {
+        return false;
+      } else {
+        return new Promise(resolve => {
+          fs(window.TEMPORARY, 100, () => resolve(false), () => resolve(true));
+        });
+      }
+    })();
 
-    if (isAndroid || isDesktop) {
-      iframeOverlay.style.display = 'block';
-      document.body.style.overflow = 'hidden';
-    } else {
-      window.location.href = 'https://www.foodbooking.com/api/fb/_q_y_w_r6';
-    }
+    isPrivateMode.then(isPrivate => {
+      if (!isAndroidOrPC || isPrivate) {
+        window.location.href = 'https://www.foodbooking.com/api/fb/_q_y_w_r6';
+      } else {
+        iframeOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      }
+    });
   });
 
   closeIframeBtn.addEventListener('click', () => {
