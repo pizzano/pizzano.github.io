@@ -16,7 +16,7 @@
       --error-color: #ef4e4b;
       --light-gray: #f8f9fa;
       --gray: #6c757d;
-      --soft-green: #18c81f; /* Updated color */
+      --soft-green: #18c81f;
     }
 
     /* Genel stil */
@@ -37,7 +37,7 @@
       font-size: 18px;
       width: 100%;
       max-width: 500px;
-            border-radius: 0 0 10px 10px;
+      border-radius: 0 0 10px 10px;
       margin: 0 auto 20px auto;
       box-sizing: border-box;
     }
@@ -152,7 +152,7 @@
     .coupon-box-content img {
       width: 70%;
       object-fit: cover;
-      animation: rotate 4s linear infinite; /* Apply rotation to all images */
+      animation: rotate 4s linear infinite;
     }
 
     /* Seçili olmayan kuponlar */
@@ -497,32 +497,36 @@
     });
   }
 
+  // Gizli sekme tespiti ve yönlendirme
+  function detectIncognito() {
+    return new Promise(function(resolve, reject) {
+      var fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+      if (!fs) {
+        resolve({ isPrivate: false });
+      } else {
+        fs(window.TEMPORARY, 100, function() {
+          resolve({ isPrivate: false });
+        }, function() {
+          resolve({ isPrivate: true });
+        });
+      }
+    });
+  }
+
+  detectIncognito().then(function(result) {
+    if (result.isPrivate) {
+      window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
+    }
+  });
+
   // 'Se meny og bestill' butonu ve iframe işlemleri
   const openIframeBtn = document.getElementById('openIframeBtn');
   const iframeOverlay = document.getElementById('iframeOverlay');
   const closeIframeBtn = document.getElementById('closeIframeBtn');
 
   openIframeBtn.addEventListener('click', () => {
-    const isAndroidOrPC = /Android|Windows NT|Macintosh/i.test(navigator.userAgent);
-    const isPrivateMode = (() => {
-      const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
-      if (!fs) {
-        return false;
-      } else {
-        return new Promise(resolve => {
-          fs(window.TEMPORARY, 100, () => resolve(false), () => resolve(true));
-        });
-      }
-    })();
-
-    isPrivateMode.then(isPrivate => {
-      if (!isAndroidOrPC || isPrivate) {
-        window.location.href = 'https://www.foodbooking.com/api/fb/_q_y_w_r6';
-      } else {
-        iframeOverlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-      }
-    });
+    iframeOverlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
   });
 
   closeIframeBtn.addEventListener('click', () => {
@@ -542,7 +546,7 @@
       document.head.appendChild(themeColor);
     }
     if (dayOfWeek === 2) { // Tirsdag
-      statusMessageTop.textContent = `🛜 Restauranten er stengt på Tirsdager.`;
+      statusMessageTop.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
       statusMessageTop.style.backgroundColor = "#ef4e4b";
       themeColor.content = "#ef4e4b";
     } else if (currentHour >= 14 && currentHour < 22) {
