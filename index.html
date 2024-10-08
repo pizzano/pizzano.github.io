@@ -335,7 +335,7 @@
     <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
     <br>
     <div id="deviceContent" class="container header btn"></div> <br>
-    <p style="color:gold;font-size:19px;;text-align: center;">Digital kupongen din blir nå automatisk registrert på telefonnummeret ditt!.</p>
+    <p style="color:gold;font-size:19px;;text-align: center;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</p>
     <div class="container">
 
       <div id="mobil_status" class="header"> </div>
@@ -376,7 +376,8 @@ QR-koden skannes kun ved telefonbestilling! </div>
     <div style="cursor:pointer;color:#522e21" onclick="window.location.href='mailto:xhitaf@gmail.com';">
       © Bestill.Online Systems 2023 - <span id="year"></span>
     </div>
-    <br>
+     <br>
+  <div id="message"></div><br>
     <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="display:none;" onload="document.getElementById('year').innerHTML = new Date().getFullYear();">
 
     <div id="fullScreenIframeContainer">
@@ -387,6 +388,7 @@ QR-koden skannes kun ved telefonbestilling! </div>
     </div>
 
     <script type="module">
+   
       import {
         initializeApp
       } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
@@ -452,6 +454,49 @@ QR-koden skannes kun ved telefonbestilling! </div>
     </script>
 
     <script>
+    
+        // Kullanıcının gerçek IP adresini almak için ipify API'sini kullanıyoruz
+fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("message").innerHTML = "Din IP-adresse: " + data.ip;
+
+        // Konum ve ülke bilgilerini almak için ipapi.co API'si
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                // Eğer kullanıcı Norveç dışında ise alert mesajını göster, diğer her şeyi temizle
+                if (data.country_name !== "Norway") {
+                    // Tüm body içeriğini temizle ve alert mesajını ekle
+                    document.body.innerHTML = `
+                        <div id="alert" class="container" style="text-align: center;margin: 0%;padding: 10%;">
+                            <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+                            <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+                                Advarsel: Viktig Sikkerhetsvarsel
+                            </h1>
+                            <p>
+                                Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
+                                Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
+                            </p>
+                            <p>
+                                Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
+                                telefonnummer <strong><a href="tel:+4741155353">4115 5353</a></strong> for videre avklaring.
+                            </p>
+                            <p>
+                                <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet. 
+                                Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
+                            </p>
+                            <p>
+                                Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
+                            </p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => console.log('Error fetching location data:', error));
+    })
+    .catch(error => console.log('Error fetching IP:', error));
+
       function handleError() {
         window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
       }
@@ -483,8 +528,13 @@ QR-koden skannes kun ved telefonbestilling! </div>
           }
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
-          mobil_status.innerHTML = '✍ Registrer deg nå!';
+          mobil_status.innerHTML = '✍ Vennligst skriv inn et gyldig nummer';
 
+ // Sayfa yenilendiğinde telefon numarası eksikse localStorage'dan kaldır
+ if (mobilnr.value.length < 8) {
+      localStorage.removeItem('MOBIL');
+    }
+    
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
             QRCODE.src = 'https://pizzano.github.io/img/stemp.jpg';
@@ -597,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
           statusMessage.style.backgroundColor = "#ef4e4b";
           themeColor.content = "#ef4e4b";
         } else if (currentHour >= 14 && currentHour < 22) {
-          statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 21:00`;
+          statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 22:00`;
           statusMessage.style.backgroundColor = "#5ac15e";
           themeColor.content = "#5ac15e";
         } else {
