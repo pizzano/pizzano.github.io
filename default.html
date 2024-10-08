@@ -276,42 +276,43 @@ h1 {
   border: none;
   box-sizing: border-box;
 }
-
+.sigdirma{width: 100%;box-sizing: border-box;height:50px;}
+ 
   </style>
 </head>
 
 <body>
 
   <div id="kapak" class="kapak">
-    <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
+    <div id="statusMessage" class="header sigdirma" style="border-radius:0px 0px"></div>
     <br>
     <div id="deviceContent" class="container header btn"></div> <br>
     <p style="color:gold;font-size:19px;;text-align: center;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</p>
     <div class="container">
 
-      <div id="mobil_status" class="header"> </div>
+      <div id="mobil_status" class="header sigdirma"> </div>
 
       <div class="inputKutusu">
-        <input type="tel" id="mobilnr" placeholder="Skriv inn nummeret ditt" autocomplete="off">
+        <input type="tel" id="mobilnr" class="sigdirma" placeholder="+47 ________" autocomplete="off">
       </div>
       <div class="main">
-        <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
+        <div class="header sigdirma" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
         <div id="gratis"></div>
         <div id="kupon"></div>
         <!-- Kuponlar JavaScript ile eklenecek -->
       </div>
-      <div class="footer">
+      <div class="footer sigdirma">
         Vi spanderer hver 11. stor pizza. ⓘ
       </div>
     </div>
     <br>
     <div id="qrkodem" class="container">
-      <div class="header">
+      <div class="header sigdirma">
 QR-koden skannes kun ved telefonbestilling! </div>
       <div class="main">
         <img id="QRCODE">
       </div>
-      <div id="qrkodelukk" class="footer">
+      <div id="qrkodelukk" class="footer sigdirma">
         Klikk på QR-koden for å fremvise!
       </div>
     </div>
@@ -479,7 +480,7 @@ fetch('https://api.ipify.org?format=json')
           }
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://bestill.online/img/stemp.jpg';
-          mobil_status.innerHTML = '✍ Registrer deg nå!';
+          mobil_status.innerHTML = '✍ Vennligst skriv inn et gyldig nummer';
 
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
