@@ -357,7 +357,7 @@
     .then(response => response.json())
     .then(data => {
       ipAddressSpan.textContent = data.ip;
-      checkCountry(data.ip);
+ 
     })
     .catch(error => {
       ipAddressSpan.textContent = 'IP-adresse kunne ikke hentes';
@@ -369,7 +369,7 @@
     fetch(`https://ipapi.co/${ip}/country/`)
       .then(response => response.text())
       .then(country => {
-        if (country !== '') {
+        if (country !== 'NO') {
           document.body.innerHTML = `
             <div id="alert" class="container" style="text-align: center; margin: 0; padding: 10%;">
               <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
