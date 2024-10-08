@@ -55,264 +55,319 @@
     }
   </script>
   <style>
-body {
-  background-color: #2655ad;
-  font-family: 'Arial', sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 18px;
+    body {
+      background-color: #2655ad;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      zoom: 95%;
+      font-size: 18px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+    }
+.onesignal-customlink-container {
+    min-height: 5em;
+    text-align: center;
 }
+    .kapak {
+      background-color: #4577d3;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      border-style: solid;
+      border-color: #3F51B5;
+      border-width: 0px 1px;
+      min-width: 330px;
+      width: 99%;
+      max-width: 500px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    @media screen and (min-width: 768px) {
+      .kapak {
+        zoom: 80%;
+      }
+    }
+    .container {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #FFF;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 13px;
+      margin-bottom: 15px;
+      /* Eklendi */
+    }
+    .header,
+    .footer {
+      background-color: #3F51B5;
+      height: 40px;
+      color: white;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 1px 5px 1px;
+    }
+    .header {
+      border-radius: 10px 10px 0 0;
+      /* Güncellendi */
+    }
+    .footer {
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0px 5px 0px 0px #0000004f;
+      /* Güncellendi */
+    }
+    .main {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+    }
+    #kupon {
+      margin: 10px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      /* Merkeze alındı */
+    }
+    .pizza-box {
+      width: 17%;
+      /* Genişlik % olarak ayarlandı */
+      height: 120px;
+      background-color: #d1c6c6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      border-radius: 10%;
+      margin: 1%;
+      /* Her bir kutu arasında boşluk bırakıldı */
+    }
+    .selected {
+      background: #18c81f;
+      border-color: black;
+      color: white;
+      box-shadow: 0px 2px 1px 0px #563c33;
+    }
+    
+    .pizza-img {
+      animation: spin 5s linear infinite;
+      /* Animasyon*/
+      filter: grayscale(100%);
+      height: 45px;
+      object-fit: contain;
+      transition: filter .5s, transform 1s;
+      /* geçiş efektleri */
+      width: 45px;
+    }
+    #QRCODE {
+      cursor: pointer;
+    }
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
 
-.kapak {
-  background-color: #4577d3;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  min-width: 330px;
-  width: 99%;
-  max-width: 500px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-}
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes spinAndPulse {
+      0%,
+      100% {
+        transform: scale(0.9) rotate(0deg);
+      }
+      12.5%,
+      37.5%,
+      62.5%,
+      87.5% {
+        transform: scale(1.1) rotate(-20deg);
+      }
+      25%,
+      50%,
+      75% {
+        transform: scale(1) rotate(20deg);
+      }
+    }
+    .inputKutusu {
+      display: flex;
+      width: 100%;
+      /* veya başka bir genişlik değeri */
+    }
+    input {
+      width: 100%;
+      height: 50px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 8px;
+      border: none;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      outline: 1.5px solid;
+    }
+    .btn {
+      width: 90%;
+      height: 60px;
+      box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
+      background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
+      font-weight: bold;
+      font-size: 28px;
+      color: white;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+    .btn1 {
+      animation: pulse 1s infinite;
+      cursor: pointer;
+    }
 
-@media screen and (min-width: 768px) {
-  .kapak {
-    zoom: 80%;
-  }
-}
-
-.container {
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #FFF;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 13px;
-  margin-bottom: 15px;
-}
-
-.header, .footer {
-  background-color: #3F51B5;
-  height: 40px;
-  color: white;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px;
-}
-
-.header {
-  border-radius: 10px 10px 0 0;
-}
-
-.footer {
-  border-radius: 0 0 10px 10px;
-  box-shadow: 0px 5px 0px 0px #0000004f;
-}
-
-.main {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-}
-
-#kupon {
-  margin: 10px;
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.pizza-box {
-  width: 17%;
-  height: 120px;
-  background-color: #d1c6c6;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
-  border-radius: 10%;
-  margin: 1%;
-}
-
-.selected {
-  background: #18c81f;
-  border-color: black;
-  color: white;
-  box-shadow: 0px 2px 1px 0px #563c33;
-}
-
-.pizza-img {
-  animation: spin 5s linear infinite;
-  filter: grayscale(100%);
-  height: 45px;
-  object-fit: contain;
-  transition: filter 0.5s, transform 1s;
-  width: 45px;
-}
-
-#QRCODE {
-  cursor: pointer;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.inputKutusu {
-  display: flex;
-  width: 100%;
-}
-
-input {
-  width: 100%;
-  height: 50px;
-  font-size: 22px;
-  text-align: center;
-  letter-spacing: 8px;
-  border: none;
-  background-color: white;
-  color: black;
-  font-weight: bold;
-  outline: 1.5px solid;
-}
-
-.btn {
-  width: 90%;
-  height: 60px;
-  box-shadow: 0px 7px 20px 3px rgb(0 0 0 / 66%);
-  background-image: radial-gradient(circle, #219dffcc, #219dffbd, #3e51c057);
-  font-weight: bold;
-  font-size: 28px;
-  color: white;
-  border-radius: 11px;
-  cursor: pointer;
-}
-
-.btn1 {
-  animation: pulse 1s infinite;
-  cursor: pointer;
-}
-
-@keyframes pulse {
-  0% {
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
     transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+    opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.5;
+    }
+    }
+    h1 {
+      color: #444;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+      padding: 3px;
+    }
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #logoImage {
+      width: 40vw;
+      height: 40vw;
+    }
+    .signal-container::before {
+      content: '';
+      position: absolute;
+      bottom: 25px;
+      right: -10px;
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 0, 0, 0.5);
+      border-radius: 50%;
+      animation: pulser 2s infinite cubic-bezier(0, 0, 0.61, 0.21);
+    }
 
-h1 {
-  color: #444;
-}
+    @keyframes pulser {
+      0% {
+        transform: scale(0.6);
+        opacity: 1;
+      }
 
-#main-container {
-  background-color: #FFEB3B;
-  display: inline-block;
-  text-align: center;
-  border: 3px dotted;
-  border-left: none;
-  border-right: none;
-}
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+    }
+    #fullScreenIframeContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      visibility: hidden;
+      z-index: 10000;
+      box-sizing: border-box;
+    }
+    #fullScreenIframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      box-sizing: border-box;
+    }
+    #main-container {
+    background-color: #FFEB3B;
+    display: inline-block;
+    text-align: center;
+    border: 3px dotted;
+    border-left: none;
+    border-right: none;
+    }
+    #main-container h1 {
+      font-size: 2em;
+    }
+    #main-container p {
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
 
-#main-container h1 {
-  font-size: 2em;
-}
-
-#main-container p {
-  font-size: 1em;
-  margin-bottom: 10px;
-}
-
-#loadingScreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-#logoImage {
-  width: 40vw;
-  height: 40vw;
-}
-
-#fullScreenIframeContainer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  visibility: hidden;
-  z-index: 10000;
-  box-sizing: border-box;
-}
-
-#fullScreenIframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  box-sizing: border-box;
-}
-.sigdirma{width: 100%;box-sizing: border-box;height:50px;}
- 
   </style>
 </head>
 
 <body>
 
   <div id="kapak" class="kapak">
-    <div id="statusMessage" class="header sigdirma" style="border-radius:0px 0px"></div>
+    <div id="statusMessage" class="container header" style="border-radius:0px 0px"></div>
     <br>
     <div id="deviceContent" class="container header btn"></div> <br>
     <p style="color:gold;font-size:19px;;text-align: center;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</p>
     <div class="container">
 
-      <div id="mobil_status" class="header sigdirma"> </div>
+      <div id="mobil_status" class="header"> </div>
 
       <div class="inputKutusu">
-        <input type="tel" id="mobilnr" class="sigdirma" placeholder="+47 ________" autocomplete="off">
+        <input type="tel" id="mobilnr" placeholder="+47 ________" autocomplete="off">
       </div>
       <div class="main">
-        <div class="header sigdirma" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
+        <div class="header" style="border-radius:0;"> Dine digitale kuponger ⓘ</div>
         <div id="gratis"></div>
         <div id="kupon"></div>
         <!-- Kuponlar JavaScript ile eklenecek -->
       </div>
-      <div class="footer sigdirma">
+      <div class="footer">
         Vi spanderer hver 11. stor pizza. ⓘ
       </div>
     </div>
     <br>
     <div id="qrkodem" class="container">
-      <div class="header sigdirma">
+      <div class="header">
 QR-koden skannes kun ved telefonbestilling! </div>
       <div class="main">
         <img id="QRCODE">
       </div>
-      <div id="qrkodelukk" class="footer sigdirma">
+      <div id="qrkodelukk" class="footer">
         Klikk på QR-koden for å fremvise!
       </div>
     </div>
@@ -325,13 +380,15 @@ QR-koden skannes kun ved telefonbestilling! </div>
       </div>
     </div>
     <br>
+
     <div style="cursor:pointer;color:#522e21" onclick="window.location.href='mailto:xhitaf@gmail.com';">
       © Bestill.Online Systems 2023 - <span id="year"></span>
     </div>
-<br>
-<div id="message"></div>
     <br>
+<div id="message"></div>
     <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="display:none;" onload="document.getElementById('year').innerHTML = new Date().getFullYear();">
+    
+<div class='onesignal-customlink-container'></div>
 
     <div id="fullScreenIframeContainer">
 
@@ -448,11 +505,10 @@ fetch('https://api.ipify.org?format=json')
     })
     .catch(error => console.log('Error fetching IP:', error));
 
-
       function handleError() {
         window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6"; // Orijinal siteye yönlendir
       }
-
+      
       // LocalStorage kontrolü ve numara yükleme
       mobilnr.value = localStorage.getItem('MOBIL') || ' ';
       document.addEventListener('DOMContentLoaded', function() {
@@ -481,7 +537,11 @@ fetch('https://api.ipify.org?format=json')
           QRCODE.style = "width:100%; padding:0px;";
           QRCODE.src = 'https://bestill.online/img/stemp.jpg';
           mobil_status.innerHTML = '✍ Vennligst skriv inn et gyldig nummer';
-
+          
+            // Sayfa yenilendiğinde telefon numarası eksikse localStorage'dan kaldır
+       if (mobilnr.value.length < 8) {
+      localStorage.removeItem('MOBIL');
+    }
           if (mobilnr.value.length > 0 && invalidStartDigits.includes(firstDigit)) {
             QRCODE.style = "width:100%; padding:0px;";
             QRCODE.src = 'bestill.online/img/stemp.jpg';
@@ -533,7 +593,9 @@ fetch('https://api.ipify.org?format=json')
         document.documentElement.style.overflowY = 'visible'; // HTML SCROLL DIKEY GOSTER
       }
 
+
 function detectDevice() {
+
     // LocalStorage'dan cihaz bilgisini deneyin
     var storedDevice = localStorage.getItem('deviceType');
     if (!storedDevice) {
