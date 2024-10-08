@@ -369,7 +369,7 @@
     fetch(`https://ipapi.co/${ip}/country/`)
       .then(response => response.text())
       .then(country => {
-        if (country !== 'NO') {
+        if (country !== '') {
           document.body.innerHTML = `
             <div id="alert" class="container" style="text-align: center; margin: 0; padding: 10%;">
               <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
