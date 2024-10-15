@@ -133,6 +133,56 @@
     #telefon-girdisi::placeholder {
       letter-spacing: 2px;
     }
+    .counter-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.counter-container {
+    display: flex;
+    justify-content: center;
+}
+
+.digit {
+    background-color: #3F51B5;
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 5px;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.digit .number {
+    font-size: 20px;
+}
+
+#pizza-title, #kebab-title {
+    color: green;
+}
+
+.current {
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
   </style>
 </head>
 
@@ -164,9 +214,29 @@
     
     <div class="qr-alani">
       <img id="qr-kod" src="https://i.hizliresim.com/hpz13bl.png" style="width:30%;">
-      <div id="qr-metin"><h4>Ved telefonbestillinger </h4><h4> skannes QR-koden av ansatte</h4> </div>
+      <div id="qr-metin" style="text-align: center;"><h4>Ved telefonbestillinger <br> skannes QR-koden av ansatte</h4> </div>
     </div>
     
+        <div class="qr-alani counter-section">
+        <p id="pizza-title" class="title">🍕 Pizza Teller</p>
+        <div class="counter-container" id="pizza-counter">
+            <div class="digit" id="pizza-digit1"><div class="number current">5</div></div>
+            <div class="digit" id="pizza-digit2"><div class="number current">2</div></div>
+            <div class="digit" id="pizza-digit3"><div class="number current">3</div></div>
+            <div class="digit" id="pizza-digit4"><div class="number current">4</div></div>
+            <div class="digit" id="pizza-digit5"><div class="number current">5</div></div>
+        </div>
+
+        <p id="kebab-title" class="title">🥙 Kebab Teller</p>
+        <div class="counter-container" id="kebab-counter">
+            <div class="digit" id="kebab-digit1"><div class="number current">3</div></div>
+            <div class="digit" id="kebab-digit2"><div class="number current">6</div></div>
+            <div class="digit" id="kebab-digit3"><div class="number current">7</div></div>
+            <div class="digit" id="kebab-digit4"><div class="number current">8</div></div>
+            <div class="digit" id="kebab-digit5"><div class="number current">9</div></div>
+        </div>
+    </div>
+
     <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="kapsayici" style="color: white;height: 60px;margin-top: 10px;display: flex;background-color: #3F51B5;justify-content: center;box-shadow: 0 5px 0 0 #0000004f;">
       <div>Vurder oss på Google </div>
       <div>⭐⭐⭐⭐⭐ 4.9 </div>
