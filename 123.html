@@ -320,7 +320,7 @@
       document.querySelectorAll('.coupon').forEach((box, index) => {
         const isSelected = index < selectedCount;
         // Eğer kupon seçiliyse arka planı yeşil yap
-        box.style.backgroundColor = isSelected ? '#00FF00' : '#d1c6c6'; 
+        box.style.backgroundColor = isSelected ? '#18c81f' : '#d1c6c6'; 
         box.querySelector('.coupon-image').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       });
 
@@ -375,6 +375,34 @@
       return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0); // Kupon sayısını artır veya azalt
     });
   };
+
+    const phoneInput = document.getElementById('phone-input');
+    const phoneHeader = document.getElementById('phone-header');
+    const qrCode = document.getElementById('qr-code');
+
+    if (localStorage.phoneNumber) updatePhoneNumber(localStorage.phoneNumber);
+
+    phoneInput.addEventListener('input', () => {
+      const value = phoneInput.value.replace(/\D/g, '').slice(0, 8);
+      phoneInput.value = value;
+
+      if (value.length === 8 && /^[49]/.test(value)) {
+        updatePhoneNumber(value);
+        localStorage.phoneNumber = value;
+		window.updateDatabaseReference();
+      } else {
+        phoneHeader.textContent = 'Skriv inn ditt telefonnummer!';
+        localStorage.removeItem('phoneNumber');
+      }
+    });
+
+    function updatePhoneNumber(number) {
+      phoneInput.value = number;
+      phoneInput.blur();
+      phoneHeader.textContent = '✅ Nummeret ditt er registrert!';
+      qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${number}`;
+    }
+
 
   // Sayfa yüklendiğinde Firebase'den pizza ve kebab sayacını günceller
   window.updateDatabaseReference();
@@ -457,31 +485,6 @@
         })
         .catch(error => console.log('Error fetching IP:', error));
 
-    const phoneInput = document.getElementById('phone-input');
-    const phoneHeader = document.getElementById('phone-header');
-    const qrCode = document.getElementById('qr-code');
-
-    if (localStorage.phoneNumber) updatePhoneNumber(localStorage.phoneNumber);
-
-    phoneInput.addEventListener('input', () => {
-      const value = phoneInput.value.replace(/\D/g, '').slice(0, 8);
-      phoneInput.value = value;
-
-      if (value.length === 8 && /^[49]/.test(value)) {
-        updatePhoneNumber(value);
-        localStorage.phoneNumber = value;
-      } else {
-        phoneHeader.textContent = 'Skriv inn ditt telefonnummer!';
-        localStorage.removeItem('phoneNumber');
-      }
-    });
-
-    function updatePhoneNumber(number) {
-      phoneInput.value = number;
-      phoneInput.blur();
-      phoneHeader.textContent = '✅ Nummeret ditt er registrert!';
-      qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${number}`;
-    }
 
     function updateStatus() {
       const currentDate = new Date();
