@@ -90,21 +90,13 @@
       border: none;
       box-sizing: border-box;
     }
-    .close-button {
-    position: fixed;
-    bottom: 50px;
-    right: 10px;
+    .close-button img{
+	position: absolute;
+    bottom: 45px;
+    right: 5px;
+    z-index: 10001;
     width: 60px;
-    height: 60px;
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
-    cursor: pointer;
-    z-index: 1100;
+	animation: pulse 1s infinite;
     }
     #phone-input {
       font-weight: bold;
@@ -242,7 +234,7 @@
     <div id="view-menu" class="button" onclick="openMenu();"><h2>Se MENY og Bestill</h2></div>
     
       <div class="iframe-container" id="iframe-container">
-    <div class="close-button" onclick="closeIframe()">×</div>
+    <div class="close-button" onclick="closeIframe()"><img src="https://bestill.online/img/btn1.png"></div>
     <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
   </div>
 
