@@ -202,7 +202,7 @@ detectIncognito().then((result) => {
         } else {
             // Diğer cihazlar (iOS, Huawei vb.) URL'ye yönlendirilir
             document.getElementById("menyu-goruntule").onclick = function() {
-                window.open("https://www.foodbooking.com/api/fb/_q_y_w_r6", '_blank');
+                window.location.href = "https://www.foodbooking.com/api/fb/_q_y_w_r6";
             };
         }
     }
