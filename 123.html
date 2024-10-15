@@ -304,10 +304,13 @@
 
     function openMenu() {
       document.getElementById('iframe-container').style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
+
     }
 
     function closeIframe() {
       document.getElementById('iframe-container').style.display = 'none';
+        document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
     }
 
     // Update year dynamically
