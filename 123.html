@@ -220,7 +220,7 @@ fetch('https://api.ipify.org?format=json')
     
     document.getElementById("message").innerHTML = "Din IP-adresse: " + data.ip;
     
-        fetch(`https://ipapi.co/46.15.57.250/json/`)
+        fetch(`https://ipapi.co/${data.ip}/json/`)
             .then(res => res.json())
             .then(data => {
                 // Eğer kullanıcı Norveç dışında ise alert mesajını göster, diğer her şeyi temizle
