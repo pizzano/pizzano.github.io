@@ -7,6 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
   <script src="https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0"></script>
   <style>
     body {
       background-color: #2655ad;
@@ -203,7 +204,7 @@
       justify-content: space-evenly;
       font-size: 16px;
     }
-    .counter-title {
+    .counter-title, #gratis {
 	  display: flex;
       font-size: 16px;
       flex-direction: column;
@@ -243,17 +244,9 @@
       <div id="phone-header" class="header">Skriv inn ditt telefonnummer!</div>
       <input id="phone-input" type="tel" placeholder="+47 _ _ _ _ _ _ _ _">
       <div id="coupon-box" class="coupon-box">
-        <div class="coupon"> <span>1</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>2</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>3</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>4</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>5</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>6</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>7</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>8</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>9</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
-        <div class="coupon"> <span>10</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>
+
       </div>
+          <div id="gratis" style=""></div>
       <div class="footer">Kjøp 10 pizzaer, få den 11. gratis! 🎉</div>
     </div>
     <div class="qr-area">
@@ -265,22 +258,12 @@
     <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizzaer solgt</span></div>
       <div class="counter" id="pizza-counter">
-        <span class="digit">0</span>
-        <span class="digit">5</span>
-        <span class="digit">7</span>
-        <span class="digit">6</span>
-        <span class="digit">7</span>
       </div>
     </div>
     
     <div class="counter-container">
       <div class="counter-title"><span>🥙</span><span>Kebaber solgt</span></div>
       <div class="counter" id="kebab-counter">
-        <span class="digit">0</span>
-        <span class="digit">3</span>
-        <span class="digit">7</span>
-        <span class="digit">6</span>
-        <span class="digit">7</span>
       </div>
     </div>
 <br>
@@ -290,6 +273,114 @@
     <div id="ip-message"></div>
     <br>
   </div>
+  
+ <script type="module">
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    onValue,
+    runTransaction
+  } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+
+  // Firebase yapılandırma
+  const app = initializeApp({
+    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+  });
+
+  const db = getDatabase(app);
+
+  // Pizza ve Kebab verilerini almak için Firebase'den yolları ayarlıyoruz
+  const pizzaRef = ref(db, 'pizza');  // pizza verisi için doğru yol
+  const kebabRef = ref(db, 'kebab');  // kebab verisi için doğru yol
+
+  // localStorage'dan telefon numarasını almak için bir fonksiyon
+  function getStoredPhoneNumber() {
+    return localStorage.getItem('phoneNumber');
+  }
+
+  // Kupon verilerini Firebase'den almak ve güncellemek için
+  window.updateDatabaseReference = function () {
+    const phoneNumber = getStoredPhoneNumber(); // localStorage'dan telefon numarasını al
+
+    const dbRef = ref(db, `${phoneNumber}`); // Telefon numarasını veritabanı referansı olarak kullan
+    const pizzaContainer = document.getElementById('coupon-box');
+    pizzaContainer.innerHTML = "";
+
+    // Kupon kutucuklarını oluştur
+    for (let i = 1; i <= 10; i++) {
+      pizzaContainer.innerHTML += `<div class="coupon" id="coupon${i}"> <span>${i}</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-image"> </div>`;
+    }
+
+    // Kupon veritabanındaki veriyi dinle ve UI'yi güncelle
+    onValue(dbRef, snapshot => {
+      const selectedCount = snapshot.val() || 0; // Kaç kupon biriktirildiğini al
+      document.querySelectorAll('.coupon').forEach((box, index) => {
+        const isSelected = index < selectedCount;
+        // Eğer kupon seçiliyse arka planı yeşil yap
+        box.style.backgroundColor = isSelected ? '#00FF00' : '#d1c6c6'; 
+        box.querySelector('.coupon-image').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
+      });
+
+      // 10 kupon biriktirildiyse kullanıcıya bildirim göster
+      if (selectedCount >= 10) {
+        document.getElementById('gratis').innerHTML = `
+          <div style="margin-bottom: 20px;border: dashed;text-align: center;border-radius: 13px;">
+            <h1>GRATULERER!</h1>
+            <p>Takk for at du kjøpte 10 store pizzaer!</p>
+            <p>Du vil få den 11. pizzaen helt gratis ved din neste bestilling.</p>
+            <p>Vis bare QR-koden til betjeningen når du samtidig henter pizzaen.</p>
+          </div>`;
+        
+        // Konfeti animasyonu
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } else {
+        document.getElementById('gratis').innerHTML = null;
+      }
+    });
+  };
+
+  // Pizza verisini almak için Firebase'den onValue kullanıyoruz
+  onValue(pizzaRef, snapshot => {
+    const pizzaCount = snapshot.val() || 0; // Firebase'den pizza sayısını al
+    console.log("Pizza sayısı:", pizzaCount);
+    document.getElementById('pizza-counter').innerHTML = formatCounter(pizzaCount); // Pizza sayacını güncelle
+  });
+
+  // Kebab verisini almak için Firebase'den onValue kullanıyoruz
+  onValue(kebabRef, snapshot => {
+    const kebabCount = snapshot.val() || 0; // Firebase'den kebab sayısını al
+    console.log("Kebab sayısı:", kebabCount);
+    document.getElementById('kebab-counter').innerHTML = formatCounter(kebabCount); // Kebab sayacını güncelle
+  });
+
+  // Sayıları 5 haneli formata çeviren fonksiyon
+  function formatCounter(value) {
+    return value.toString().padStart(5, '0').split('').map(digit => `<span class="digit">${digit}</span>`).join('');
+  }
+
+  // Firebase veritabanına kupon sayısını artırmak için fonksiyon
+  window.adjustCount = function (increase) {
+    const phoneNumber = getStoredPhoneNumber(); // localStorage'dan telefon numarasını al
+
+    const dbRef = ref(db, `kuponlar/${phoneNumber}`);
+    runTransaction(dbRef, currentValue => {
+      currentValue = currentValue || 0;
+      return increase ? Math.min(currentValue + 1, 10) : Math.max(currentValue - 1, 0); // Kupon sayısını artır veya azalt
+    });
+  };
+
+  // Sayfa yüklendiğinde Firebase'den pizza ve kebab sayacını günceller
+  window.updateDatabaseReference();
+</script>
+
+
 <script>
 
     function openMenu() {
