@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
+  <title>KØL Grill & Pizza | Skarnes - Bestill Take Away</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
@@ -19,7 +19,7 @@
       zoom: 95%;
       font-size: 18px;
     }
-    .wrapper {
+    .genel-kapsayici {
       background-color: #4577d3;
       display: flex;
       align-items: center;
@@ -32,7 +32,7 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       gap: 15px;
     }
-    .container {
+    .kapsayici {
       width: 90%;
       display: flex;
       flex-direction: column;
@@ -42,8 +42,8 @@
       border-radius: 13px;
       margin-bottom: 15px;
     }
-    .header,
-    .footer {
+    .baslik,
+    .alt-bolum {
       background-color: #3F51B5;
       height: 40px;
       color: white;
@@ -52,30 +52,30 @@
       align-items: center;
       justify-content: center;
     }
-    .header {
+    .baslik {
       border-radius: 10px 10px 0 0;
     }
-    .footer {
+    .alt-bolum {
       border-radius: 0 0 10px 10px;
       box-shadow: 0 5px 0 0 #0000004f;
     }
-    .content {
+    .icerik {
       display: flex;
       width: 100%;
       align-items: center;
       flex-direction: column;
       justify-content: center;
     }
-    #coupon-box {
+    #kupon-kutusu {
       margin: 10px;
       width: 100%;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
     }
-    .coupon {
+    .kupon {
       width: 17%;
-      height: 120px;
+      height: 100px;
       background-color: #d1c6c6;
       display: flex;
       flex-direction: column;
@@ -84,12 +84,12 @@
       border-radius: 10%;
       margin: 1%;
     }
-    .coupon-img {
+    .kupon-resim {
       height: 45px;
       object-fit: contain;
       width: 45px;
     }
-    .btn {
+    .buton {
       width: 90%;
       height: 60px;
       box-shadow: 0 7px 20px 3px rgba(0, 0, 0, 0.66);
@@ -101,14 +101,14 @@
       line-height: 60px;
       margin-bottom: 20px;
     }
-    #view-menu > h2 {
-	animation: pulse 1.2s infinite;
+    #menyu-goruntule > h2 {
+	  animation: pulse 1.2s infinite;
 	}
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
-    .qr-section {
+    .qr-alani {
       background: white;
       display: flex;
       align-items: center;
@@ -118,101 +118,164 @@
       border-radius: 13px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-#phone-input{
-    font-weight: bold;
-    letter-spacing: 10px;
-    height: 45px;
-    width: 98%;
-    text-align: center;
-    font-size: 23px;
-	border: none;
-	outline: 0;
-	border-bottom: 1px solid;
+    #telefon-girdisi {
+      font-weight: bold;
+      letter-spacing: 10px;
+      height: 45px;
+      width: 98%;
+      text-align: center;
+      font-size: 23px;
+      border: none;
+      outline: 0;
+      border-bottom: 1px solid;
+      box-shadow: 0px 3px 0px 0px #4577d3;
     }
-#phone-input::placeholder {
+    #telefon-girdisi::placeholder {
       letter-spacing: 2px;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrapper">
-    <div id="status-msg" class="container header" style="border-radius:0;height: 60px;">🟢 Åpent i dag fra kl. 14:00 til 22:00</div>
+  <div class="genel-kapsayici">
+    <div id="durum-mesaji" class="kapsayici baslik" style="border-radius:0;height: 60px;">🟢 Åpent i dag: 14:00 - 22:00</div>
     <br>
-    <div id="view-menu" class="container header btn"><h2>Se MENY og Bestill</h2></div> 
+    <div id="menyu-goruntule" class="kapsayici baslik buton"><h2>Se MENY og Bestill</h2></div> 
 
-    <h4 style="font-weight: 400;text-align: center;color: gold;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</h4>
-    <div class="container">
-      <div id="phone-header" class="header">Vennligst skriv inn nummeret ditt!</div>
-      <input id="phone-input" type="tel" placeholder="+47 _ _ _ _ _ _ _ _">
-<hr>
-      <div id="coupon-box">
-        <div class="coupon"> <span>1</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>2</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>3</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>4</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>5</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>6</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>7</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>8</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>9</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
-        <div class="coupon"> <span>10</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="coupon-img"> </div>
+    <h4 style="font-weight: 400;text-align: center;color: #FFEB3B;">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</h4>
+    <div class="kapsayici">
+      <div id="telefon-baslik" class="baslik">Skriv inn ditt telefonnummer!</div>
+      <input id="telefon-girdisi" type="tel" placeholder="+47 _ _ _ _ _ _ _ _">
+      
+      <div id="kupon-kutusu">
+        <div class="kupon"> <span>1</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>2</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>3</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>4</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>5</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>6</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>7</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>8</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>9</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
+        <div class="kupon"> <span>10</span> <img src="https://bestill.online/img/pizza.png" alt="Pizza" class="kupon-resim"> </div>
       </div>
-      <div class="footer">Gratis stor pizza ved hver 10. bestilling på nett.</div>
+      <div class="alt-bolum">Kjøp 10 pizzaer, få den 11. gratis!🎉</div>
     </div>
     
-    <div class="qr-section">
-      <img id="QRCODE" src="https://i.hizliresim.com/9c3f6et.png" style="width:30%;">
-      <div> QR-koden skannes av ansatte<br> hvis det er telefonbestilling.</div>
+    <div class="qr-alani">
+      <img id="qr-kod" src="https://i.hizliresim.com/hpz13bl.png" style="width:30%;">
+      <div id="qr-metin"><h4>Ved telefonbestillinger </h4><h4> skannes QR-koden av ansatte</h4> </div>
     </div>
     
-    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="container" style="color: white;height: 60px;display: flex;background-color: #3F51B5;justify-content: center;box-shadow: 0 5px 0 0 #0000004f;">
+    <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="kapsayici" style="color: white;height: 60px;margin-top: 10px;display: flex;background-color: #3F51B5;justify-content: center;box-shadow: 0 5px 0 0 #0000004f;">
       <div>Vurder oss på Google </div>
       <div>⭐⭐⭐⭐⭐ 4.9 </div>
     </div>
     <div onclick="window.location.href='mailto:xhitaf@gmail.com';">
-      © Bestill.Online Systems 2023 - <span id="year"></span>
+      © Bestill.Online Systems 2023 - <span id="yil"></span>
     </div>
-    <div> Din IP-adresse: 46.15.57.250 </div>
+    <div id="message"></div>
     <br>
   </div>
   <script>
-    // Update year dynamically
-    document.getElementById('year').innerHTML = new Date().getFullYear();
+      // Oppdater år dynamisk
+    document.getElementById('yil').textContent = new Date().getFullYear();
 
-    const phoneInput = document.getElementById('phone-input');
-    const phoneHeader = document.getElementById('phone-header');
+// Kullanıcının IP adresini basit bir sekilde almak
+fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+    
+    document.getElementById("message").innerHTML = "Din IP-adresse: " + data.ip;
+    
+        fetch(`https://ipapi.co/${data.ip}/json/`)
+            .then(res => res.json())
+            .then(data => {
+                // Eğer kullanıcı Norveç dışında ise alert mesajını göster, diğer her şeyi temizle
+                if (data.country_name !== "Norway") { // IP adresi Norveç'e ait olmalı
+                    document.body.innerHTML = `
+                    <div id="uyari" class="kapsayici" style="text-align: center;margin: 0%;padding: 10%;">
+                      <div class="uyari-ikon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+                      <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+                        Advarsel: Viktig Sikkerhetsvarsel
+                      </h1>
+                      <p>
+                        Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
+                        Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
+                      </p>
+                      <p>
+                        Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
+                        telefonnummer <strong><a href="tel:+4741145353">4114 5353</a></strong> for videre avklaring.
+                      </p>
+                      <p>
+                        <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet. 
+                        Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
+                      </p>
+                      <p>
+                        Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
+                      </p>
+                    </div>
+                  `;
+                }
+            })
+            .catch(error => console.log('Error fetching location data:', error));
+    })
+    .catch(error => console.log('Error fetching IP:', error));
 
-    phoneInput.addEventListener('input', function() {
-      let value = phoneInput.value.replace(/\D/g, '');
 
-      // Set maximum length to 8 digits
-      if (value.length > 8) {
-        value = value.slice(0, 8);
+
+    const telefonGirdisi = document.getElementById('telefon-girdisi');
+    const telefonBaslik = document.getElementById('telefon-baslik');
+    const qrKod = document.getElementById('qr-kod');
+
+    // Fyll inn telefonnummeret hvis det finnes i localStorage
+    if (localStorage.telefonNumarasi) guncelleTelefonNumarasi(localStorage.telefonNumarasi);
+
+    telefonGirdisi.addEventListener('input', () => {
+      const value = telefonGirdisi.value.replace(/\D/g, '').slice(0, 8);
+      telefonGirdisi.value = value;
+
+      if (value.length === 8 && /^[49]/.test(value)) {
+        guncelleTelefonNumarasi(value);
+        localStorage.telefonNumarasi = value;
+      } else {
+        telefonBaslik.textContent = 'Skriv inn ditt telefonnummer!';
+        localStorage.removeItem('telefonNumarasi');
       }
-
-      // Replace the input with formatted value
-      let formattedValue = value.split('').map(() => '_').join('');
-      formattedValue = formattedValue.slice(value.length);
-      phoneInput.value = value + formattedValue;
-
-      // Only allow numbers starting with 4 or 9
-      if (value.length > 0 && !/^([49])/.test(value)) {
-        phoneInput.value = '';
-      }
-
-      // If 8 valid digits are entered, blur the input and show registration message
-      if (value.length === 8) {
-        phoneInput.blur();
-        phoneHeader.textContent = '✅ Nummeret ditt er registrert!';
-		QRCODE.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${phoneInput.value}`;
-
-      }else{
-        phoneHeader.textContent = 'Vennligst skriv inn nummeret ditt!';
-        QRCODE.src = 'https://i.hizliresim.com/9c3f6et.png';
-		}
     });
+
+    function guncelleTelefonNumarasi(numara) {
+      telefonGirdisi.value = numara;
+      telefonBaslik.textContent = '✅ Nummeret ditt er registrert!';
+      qrKod.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${numara}`;
+    }
+
+    function oppdaterStatus() {
+      const currentDate = new Date();
+      const dayOfWeek = currentDate.getDay();
+      const currentHour = currentDate.getHours();
+      let statusMessage = document.getElementById("durum-mesaji");
+      let themeColor = document.querySelector('meta[name="theme-color"]');
+      if (!themeColor) {
+        themeColor = document.createElement("meta");
+        themeColor.name = "theme-color";
+        document.head.appendChild(themeColor);
+      }
+      if (dayOfWeek === 2) { // Tirsdager
+        statusMessage.textContent = `🚫 Restauranten er stengt på Tirsdager.`;
+        statusMessage.style.backgroundColor = "#ef4e4b";
+        themeColor.content = "#ef4e4b";
+      } else if (currentHour >= 14 && currentHour < 22) {
+        statusMessage.textContent = `🟢 Åpent i dag fra kl. 14:00 til 22:00`;
+        statusMessage.style.backgroundColor = "#5ac15e";
+        themeColor.content = "#5ac15e";
+      } else {
+        statusMessage.textContent = `🔴 Restauranten er stengt nå.`;
+        statusMessage.style.backgroundColor = "#ef4e4b";
+        themeColor.content = "#ef4e4b";
+      }
+    }
+    oppdaterStatus();
   </script>
 </body>
-
 </html>
