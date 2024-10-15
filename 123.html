@@ -10,14 +10,21 @@
   <style>
     body {
       background-color: #2655ad;
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-size: 16px;
-      zoom:80%;
+      zoom: 90%;
+      font-size: 18px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+      
     }
     .container {
       background-color: #4577d3;
@@ -65,6 +72,39 @@
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
+    }
+	.iframe-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      display: none;
+	  box-sizing: border-box;
+    }
+    .iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      box-sizing: border-box;
+    }
+    .close-button {
+    position: fixed;
+    bottom: 50px;
+    right: 10px;
+    width: 60px;
+    height: 60px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 1100;
     }
     #phone-input {
       font-weight: bold;
@@ -200,6 +240,12 @@
     <div id="status-message" class="header"  style="border-radius:0;height: 50px;">🟢 Åpent i dag: 14:00 - 22:00</div>
     <br>
     <div id="view-menu" class="button" onclick="openMenu();"><h2>Se MENY og Bestill</h2></div>
+    
+      <div class="iframe-container" id="iframe-container">
+    <div class="close-button" onclick="closeIframe()">×</div>
+    <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
+  </div>
+
     <h4 class="coupon-info">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</h4>
     <div class="coupon-container">
       <div id="phone-header" class="header">Skriv inn ditt telefonnummer!</div>
@@ -225,7 +271,7 @@
     <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="review-button">
       Vurder oss på Google ⭐⭐⭐⭐⭐ 4.9
     </div>
-
+    <br>
     <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
       <div class="counter" id="pizza-counter">
@@ -247,7 +293,7 @@
         <span class="digit">7</span>
       </div>
     </div>
-
+<br>
     <div class="footer-contact" onclick="window.location.href='mailto:xhitaf@gmail.com';">
     © Bestill.Online Systems 2023 - <span id="year"></span> </div>
     
@@ -255,6 +301,15 @@
     <br>
   </div>
 <script>
+
+    function openMenu() {
+      document.getElementById('iframe-container').style.display = 'flex';
+    }
+
+    function closeIframe() {
+      document.getElementById('iframe-container').style.display = 'none';
+    }
+
     // Update year dynamically
     document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -279,10 +334,6 @@
             }
         }
     });
-
-    function openMenu() {
-        alert("menu iframe");
-    }
 
     fetch('https://api.ipify.org?format=json')
         .then(response => response.json())
