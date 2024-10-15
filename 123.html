@@ -278,6 +278,7 @@ fetch('https://api.ipify.org?format=json')
 
     function guncelleTelefonNumarasi(numara) {
       telefonGirdisi.value = numara;
+      telefonGirdisi.blur();
       telefonBaslik.textContent = '✅ Nummeret ditt er registrert!';
       qrKod.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${numara}`;
     }
