@@ -515,6 +515,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.country_name !== "Norway") {
+                      document.body.style ="zoom: 100%;";
                         document.body.innerHTML = `
                         <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
                           <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
