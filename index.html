@@ -517,31 +517,19 @@
                     if (data.country_name !== "Norway") {
                       document.body.style ="zoom: 100%;";
                         document.body.innerHTML = `
-                        <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
-                          <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
-                          <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
-                            Advarsel: Viktig Sikkerhetsvarsel
-                          </h1>
-                          <p>
-                            Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
-                            Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
-                          </p>
-                          <p>
-                            Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
-                            telefonnummer <strong><a href="tel:+4741145353">4114 5353</a></strong> for videre avklaring.
-                          </p>
-                          <p>
-                            <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet. 
-                            Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
-                          </p>
-                          <p>
-                            Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
-                          </p>
-                          <h4>Din Ip-adresse: ${data.ip} </h4>
-						  <h4>Landets navn: ${data.country_name} </h4>
-                        </div>
-                           
-                      `;
+  <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
+    <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+    <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+      Advarsel: Bestillingsfeil
+    </h1>
+    <p>Vi har oppdaget at du prøver å bestille fra en lokasjon utenfor Norge.</p>
+    <p>Hvis du bruker VPN, vennligst slå den av og prøv igjen. Ved fortsatt feil, kontakt oss på telefon <strong><a href="tel:+4741145353">4114 5353</a></strong> eller send oss en SMS med skjermbilde av feilen for videre hjelp.</p>
+    <p><strong>Advarsel:</strong> Forsøk på falske bestillinger vil bli sporet. Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.</p>
+    <h4>Din IP-adresse: ${data.ip}</h4>
+    <h4>Landets navn: ${data.country_name}</h4>
+  </div>
+`;
+
                     }
                 })
                 .catch(error => console.log('Error fetching location data:', error));
