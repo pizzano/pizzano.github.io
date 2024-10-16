@@ -516,7 +516,7 @@
                 .then(data => {
                     if (data.country_name !== "Norway") {
                       document.body.style ="zoom: 100%;";
-                        document.body.innerHTML = `
+document.body.innerHTML = `
   <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
     <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
     <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
@@ -524,11 +524,12 @@
     </h1>
     <p>Vi har oppdaget at du prøver å bestille fra en lokasjon utenfor Norge.</p>
     <p>Hvis du bruker VPN, vennligst slå den av og prøv igjen. Ved fortsatt feil, kontakt oss på telefon <strong><a href="tel:+4741145353">4114 5353</a></strong> eller send oss en SMS med skjermbilde av feilen for videre hjelp.</p>
-    <p><strong>Advarsel:</strong> Forsøk på falske bestillinger vil bli sporet. Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.</p>
+    <p><strong>Advarsel:</strong> Denne siden er utstyrt med avanserte sikkerhetssystemer. Alle forsøk på å bruke falske IP-adresser eller bestillinger fra uautoriserte lokasjoner blir sporet nøye. Gjentatte forsøk vil bli rapportert til myndighetene, og rettslige skritt vil bli tatt.</p>
     <h4>Din IP-adresse: ${data.ip}</h4>
     <h4>Landets navn: ${data.country_name}</h4>
   </div>
 `;
+
 
                     }
                 })
