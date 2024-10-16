@@ -2,10 +2,55 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Skarnes - Bestill Take Away</title>
+  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
+  <meta name="keywords" content="KØL Grill & Pizza, Skarnes pizza, online pizza bestilling, takeaway, burger, kebab, Italiensk pizza, Sør Odal, Årnes, Ahlen Pizza, Mona Lisa Skarnes">
+
+  <!-- Social Media Meta Tags -->
+  <meta property="og:title" content="KØL Grill & Pizza | Skarnes - Online Pizza Bestilling">
+  <meta property="og:description" content="Opplev ekte italiensk pizza hos KØL Grill & Pizza. Friske ingredienser og profesjonell steinovn. Takeaway og levering i Skarnes, Sør Odal og Årnes.">
+  <meta property="og:url" content="https://bestill.online">
+  <meta property="og:type" content="website">
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Restaurant",
+      "name": "KØL Grill & Pizza",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Øgardsvegen 44",
+        "addressLocality": "Skarnes",
+        "addressRegion": "Sør Odal",
+        "postalCode": "2100",
+        "addressCountry": "NO"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "60.2521748",
+        "longitude": "11.6806137"
+      },
+      "openingHoursSpecification": [{
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "14:00",
+        "closes": "22:00"
+      }],
+      "hasMenu": "https://bestill.online/meny"
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0"></script>
   <style>
@@ -74,7 +119,12 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
-	.iframe-container {
+    iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+   .iframe-container {
       position: fixed;
       top: 0;
       left: 0;
@@ -82,15 +132,15 @@
       height: 100%;
       background-color: rgba(0, 0, 0, 0.8);
       z-index: 1000;
-      display: none;
-	  box-sizing: border-box;
+      visibility: hidden;  /* Değiştirildi: display:none yerine visibility:hidden */
+      opacity: 0;
+      transition: visibility 0s, opacity 0.5s;  /* Görünürlük ve opaklık geçişleri */
     }
-    .iframe-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      box-sizing: border-box;
+    .iframe-container.visible {
+      visibility: visible;  /* Görünür yapar */
+      opacity: 1;  /* Opaklığı arttır */
     }
+
     .close-button img{
 	position: absolute;
     bottom: 40px;
@@ -419,16 +469,16 @@
 
 
 <script>
-
     function openMenu() {
-      document.getElementById('iframe-container').style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
-
+      const iframeContainer = document.getElementById('iframe-container');
+      iframeContainer.classList.add('visible');  // Görünür yap
+      document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
     }
 
     function closeIframe() {
-      document.getElementById('iframe-container').style.display = 'none';
-        document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
+      const iframeContainer = document.getElementById('iframe-container');
+      iframeContainer.classList.remove('visible');  // Gizli yap
+      document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
     }
 
     // Update year dynamically
