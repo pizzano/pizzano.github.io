@@ -3,49 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch API with CORS Anywhere</title>
+    <title>Menu Data Fetch</title>
 </head>
 <body>
 
     <h1>Menu Data</h1>
     <div id="menu-data">
-        <!-- Gelen veriler burada görüntülenecek -->
+        <!-- API'den gelen veriler burada görüntülenecek -->
     </div>
 
     <div id="error-message" style="color: red;">
-        <!-- Hatalar burada görüntülenecek -->
+        <!-- Hata mesajları burada görüntülenecek -->
     </div>
 
     <script>
-        // CORS Anywhere kullanarak API'ye istek yapıyoruz
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const apiUrl = 'https://pos.globalfoodsoft.com/pos/menu';
+       const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+const apiUrl = 'https://pos.globalfoodsoft.com/pos/menu';
 
-        fetch(proxyUrl + apiUrl, { 
-            method: 'GET',
-            headers: {
-                'Authorization': 'rGYkXCmGwuJQ6xYJ1',
-                'Accept': 'application/json',
-                'Glf-Api-Version': '2',
-                'Restaurant-Key': 'rGYkXCmGwuJQ6xYJ1'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Gelen veriyi HTML içinde göster
-            const menuDiv = document.getElementById('menu-data');
-            menuDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-        })
-        .catch(error => {
-            // Hata mesajını sayfadaki error-message div'ine yazdır
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.innerHTML = `Error: ${error.message}`;
-        });
+const xhr = new XMLHttpRequest();
+xhr.open('GET', proxyUrl + apiUrl);
+xhr.setRequestHeader('Authorization', 'rGYkXCmGwuJQ6xYJ1');
+xhr.setRequestHeader('Accept', 'application/json');
+xhr.setRequestHeader('Glf-Api-Version', '2');
+xhr.setRequestHeader('Restaurant-Key', 'rGYkXCmGwuJQ6xYJ1');
+
+xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+        document.getElementById('menu-data').innerHTML = `<pre>${JSON.stringify(JSON.parse(xhr.responseText), null, 2)}</pre>`;
+    } else {
+        document.getElementById('error-message').innerHTML = `Error: ${xhr.statusText}`;
+    }
+};
+
+xhr.onerror = function() {
+    document.getElementById('error-message').innerHTML = 'Request failed';
+};
+
+xhr.send();
+
     </script>
 
 </body>
