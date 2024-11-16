@@ -23,7 +23,7 @@
             width: 100%;
         }
         header h1 {
-            font-size: 28px;
+            font-size: 24px;
             margin: 0;
         }
         header p {
@@ -36,10 +36,10 @@
         }
         .intro h2 {
             color: #0073e6;
-            font-size: 24px;
+            font-size: 20px;
         }
         .intro p {
-            font-size: 16px;
+            font-size: 14px;
             color: #555;
         }
         .grid {
@@ -48,41 +48,39 @@
             justify-content: center;
             gap: 20px;
             padding: 20px;
-            max-width: 1200px;
-            width: 100%;
         }
         .container {
-            width: 240px;
-            height: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-evenly;
-            background: url(https://i.hizliresim.com/e38jbb6.png) no-repeat center center;
-            background-size: cover;
-            border-radius: 10px;
-            padding-left: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+	 width: 120px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: url(https://i.hizliresim.com/e38jbb6.png) no-repeat center center;
+    background-size: cover;
+    border-radius: 10px;
+    padding-left: 18px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
         .text, .price, .category {
             color: white;
             font-weight: bold;
             padding: 5px 10px;
-            margin: 5px 0;
+            margin: 5px 0; /* Her metin arasında boşluk */
             border-radius: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            max-width: 200px;
+            background: rgba(0, 0, 0, 0.3); /* Yazının okunabilirliği için arka plan */
+            max-width: 100px;
             text-align: left;
         }
         .text {
-            font-size: 24px;
+            font-size: 16px;
         }
         .price {
-            font-size: 20px;
+            font-size: 12px;
             font-weight: normal;
         }
         .category {
-            font-size: 18px;
+            font-size: 10px;
             font-weight: normal;
         }
         footer {
@@ -93,53 +91,6 @@
             margin-top: 20px;
             font-size: 14px;
             width: 100%;
-        }
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                width: 180px;
-                height: 240px;
-            }
-            .text {
-                font-size: 20px;
-            }
-            .price {
-                font-size: 18px;
-            }
-            .category {
-                font-size: 16px;
-            }
-        }
-        @media (max-width: 480px) {
-            header h1 {
-                font-size: 24px;
-            }
-            header p {
-                font-size: 14px;
-            }
-            .intro h2 {
-                font-size: 20px;
-            }
-            .intro p {
-                font-size: 14px;
-            }
-            .container {
-                width: 160px;
-                height: 220px;
-                padding-left: 10px;
-            }
-            .text {
-                font-size: 18px;
-            }
-            .price {
-                font-size: 16px;
-            }
-            .category {
-                font-size: 14px;
-            }
-            footer {
-                font-size: 12px;
-            }
         }
     </style>
 </head>
@@ -157,12 +108,12 @@
 
 <div class="grid">
     <div class="container">
-        <div class="text">40 33 43 43</div>
+        <div class="text">45 33 43 43</div>
         <div class="price">2000 NOK</div>
         <div class="category">Kategori A</div>
     </div>
     <div class="container">
-        <div class="text">40 33 23 23</div>
+        <div class="text">45 33 23 23</div>
         <div class="price">1500 NOK</div>
         <div class="category">Kategori A</div>
     </div>
@@ -172,12 +123,12 @@
         <div class="category">Kategori B</div>
     </div>
     <div class="container">
-        <div class="text">40 33 83 83</div>
+        <div class="text">45 33 83 83</div>
         <div class="price">700 NOK</div>
         <div class="category">Kategori C</div>
     </div>
     <div class="container">
-        <div class="text">40 33 93 93</div>
+        <div class="text">45 33 93 93</div>
         <div class="price">500 NOK</div>
         <div class="category">Kategori D</div>
     </div>
