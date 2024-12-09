@@ -4,58 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS İçerik Göster</title>
+    <style>
+        #rss-container {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .rss-item {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
     <h1>RSS İçerik</h1>
-    <div id="rss-container">
-        RSS içerikleri yükleniyor...
-    </div>
+    <div id="rss-container">RSS içerikleri yükleniyor...</div>
 
     <script>
-      const rssUrl = "https://newsletterss.com/rss/siparisler";
-const proxyUrl = `https://cors-anywhere.herokuapp.com/${rssUrl}`; // Alternatif proxy
+        const rssUrl = "https://newsletterss.com/rss/siparisler";
+        // const proxyUrl = `https://cors-anywhere.herokuapp.com/${rssUrl}`; // Alternatif proxy için bunu kullanabilirsiniz
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`; // Alternatif proxy
 
-async function fetchRSS() {
-    try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        async function fetchRSS() {
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.text(); // Proxy'den gelen XML verisi
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data, "application/xml");
+
+                // RSS verisini işle
+                const entries = xmlDoc.querySelectorAll("entry");
+                const container = document.getElementById("rss-container");
+                container.innerHTML = ""; // Mevcut içeriği temizle
+
+                if (entries.length === 0) {
+                    container.innerText = "RSS verisi bulunamadı.";
+                    return;
+                }
+
+                entries.forEach(entry => {
+                    const title = entry.querySelector("title").textContent;
+                    const content = entry.querySelector("content").textContent;
+                    const link = entry.querySelector("link").getAttribute("href");
+
+                    const article = document.createElement("div");
+                    article.className = "rss-item";
+
+                    article.innerHTML = `
+                        <h3>${title}</h3>
+                        <p>${content}</p>
+                        <a href="${link}" target="_blank">Detayları Gör</a>
+                    `;
+                    container.appendChild(article);
+                });
+            } catch (error) {
+                console.error("RSS yüklenirken hata oluştu:", error);
+                document.getElementById("rss-container").innerText = "RSS yüklenirken bir hata oluştu.";
+            }
         }
-        const rssText = await response.text();
 
-        // XML Parse
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(rssText, "application/xml");
-
-        const entries = xmlDoc.querySelectorAll("entry");
-        const container = document.getElementById("rss-container");
-        container.innerHTML = "";
-
-        entries.forEach(entry => {
-            const title = entry.querySelector("title").textContent;
-            const content = entry.querySelector("content").textContent;
-            const link = entry.querySelector("link").getAttribute("href");
-
-            const article = document.createElement("div");
-            article.style.border = "1px solid #ccc";
-            article.style.margin = "10px";
-            article.style.padding = "10px";
-
-            article.innerHTML = `
-                <h3>${title}</h3>
-                <p>${content}</p>
-                <a href="${link}" target="_blank">Detayları Gör</a>
-            `;
-            container.appendChild(article);
-        });
-    } catch (error) {
-        console.error("Hata:", error);
-        document.getElementById("rss-container").innerText = "RSS yüklenirken bir hata oluştu.";
-    }
-}
-
-fetchRSS();
-
+        fetchRSS();
     </script>
 </body>
 </html>
