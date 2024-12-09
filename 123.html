@@ -1,26 +1,79 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Facebook Title Fetcher</title>
-  <style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entry ID İçerik Ayıklayıcı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #output {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
     </style>
-
 </head>
 <body>
-  <div id="result"></div>
-  <script>
-    
-    const corsProxy = 'https://corsproxy.io/?'; 
-    const file = corsProxy + 'https://newsletterss.com/rss/siparisler';
-    fetch(file)
-      .then((response) => response.text())
-      .then((html) => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const title = doc.querySelector('*').innerHTML; // Sadece başlığı alıyoruz.
-        document.getElementById('result').innerHTML = title;
-      })
-      .catch((error) => document.getElementById('result').innerHTML = error.message);
-  </script>
+    <h1>Entry ID İçerik Ayıklayıcı</h1>
+    <p>Aşağıda <code>&lt;entry&gt;</code> elemanlarının <code>&lt;id&gt;</code> URL içerikleri işlenmiştir:</p>
+    <div id="output">Veriler yükleniyor...</div>
+    <script>
+        const corsProxy = 'https://api.allorigins.win/get?url=';
+        const feedUrl = corsProxy + encodeURIComponent('https://newsletterss.com/rss/siparisler');
+        const delay = (ms) => new Promise(res => setTimeout(res, ms)); // Gecikme fonksiyonu
+
+        async function processFeed() {
+            try {
+                const response = await fetch(feedUrl);
+                if (!response.ok) throw new Error(`HTTP Hatası! Kod: ${response.status}`);
+                const { contents: xmlText } = await response.json(); // JSON içeriğini al
+
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+                const entries = xmlDoc.querySelectorAll('entry > id'); // <entry> içindeki <id> elemanlarını seç
+                const urls = Array.from(entries).map(entry => entry.textContent);
+
+                if (urls.length === 0) {
+                    document.getElementById('output').textContent = 'Hiçbir <id> bulunamadı.';
+                    return;
+                }
+
+                const outputDiv = document.getElementById('output');
+                outputDiv.innerHTML = ''; // Mevcut içeriği temizle
+
+                for (const [index, url] of urls.entries()) {
+                    try {
+                        const response = await fetch(corsProxy + encodeURIComponent(url));
+                        if (!response.ok) throw new Error(`HTTP Hatası! Kod: ${response.status}`);
+                        const { contents: data } = await response.json();
+
+                        const contentDiv = document.createElement('div');
+                        contentDiv.innerHTML = `<h3>URL ${index + 1}:</h3><pre>${data}</pre>`;
+                        outputDiv.appendChild(contentDiv);
+                    } catch (error) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.innerHTML = `<h3>URL ${index + 1}:</h3><p>Hata: ${error.message}</p>`;
+                        outputDiv.appendChild(errorDiv);
+                    }
+
+                    await delay(10000); // Her fetch işlemi arasında 10 saniye bekle
+                }
+
+                console.log('Tüm işlemler tamamlandı. Tekrar başlatılıyor...');
+                await delay(15000); // Tekrar başlamadan önce 15 saniye bekle
+                processFeed(); // Aynı fonksiyonu tekrar çağır
+            } catch (error) {
+                document.getElementById('output').textContent = `Hata oluştu: ${error.message}`;
+                console.error('Hata:', error);
+            }
+        }
+
+        // İlk işlemi başlat
+        processFeed();
+    </script>
 </body>
 </html>
