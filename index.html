@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -317,6 +316,8 @@ font-weight: bold;
       margin: 10px auto;
       max-width: 120px;
       border-radius: 5px;
+      padding: 10px;
+    background: white;
     }
   </style>
 </head>
@@ -420,6 +421,10 @@ font-weight: bold;
     resetMessages();
     checkMessage.style.display = "block";
     checkMessage.innerHTML = `Telefonnummer: <b>${phone}</b><br>Ingen saldo funnet.`;
+    qrCode.style.display = "block";
+	qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/gavekayit.html?n=${phone}`;
+        extraMessage.style.display = "block";
+    extraMessage.innerHTML = "For å bruke gavekortet, vennligst vis QR-koden til ansatt.";
   }
 
   function startRealtimeListener(phone) {
