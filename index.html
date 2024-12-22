@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -265,7 +266,22 @@ font-weight: bold;
       max-width: 120px;
       border-radius: 5px;
       padding: 10px;
-    bac
+          background: white;
+}
+    .google-review {
+    cursor:pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #555;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+          color: #007bff; /* Hoş bir mavi ton */
+    }
+
+    .google-review i {
+      color: #f4b400;
   </style>
 </head>
 <body>
@@ -345,7 +361,7 @@ font-weight: bold;
 <footer class="footer1">
   <div class="footer-content">
     <a href="tel:+4741145353" class="footer-icon" aria-label="Telefon">
-      <i class="fas fa-phone"></i> Telefon
+      <i class="fas fa-phone"></i> Mobil
     </a>
     <a href="https://www.facebook.com/kolgrill.skarnes" target="_blank" class="footer-icon" aria-label="Facebook">
       <i class="fab fa-facebook-f"></i> Facebook
@@ -353,6 +369,10 @@ font-weight: bold;
     <a href="mailto:skarnes.restaurant@gmail.com" class="footer-icon" aria-label="E-posta">
       <i class="fas fa-envelope"></i> E-post
     </a>
+          <!-- Google Stjernemerk -->
+      <a onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" target="_blank" class="google-review" aria-label="Gi en anmeldelse på Google">
+        <i class="fas fa-star puls"></i> Gi stjerner
+      </a>
   </div>
 </footer>
   </div>
