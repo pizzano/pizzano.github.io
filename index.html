@@ -320,15 +320,7 @@ font-weight: bold;
     <img id="gift-qr-code" class="gift-qr" alt="QR Code">
   </div>
 </div>
-<script>
-  const header1 = document.getElementById("gift-header");
-  const hiddenContent = document.getElementById("gift-hidden-content");
 
-  header1.addEventListener("click", function () {
-    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
-    header1.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
-  });
-</script>
          <br>
  <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
@@ -625,6 +617,13 @@ font-weight: bold;
 
 
 <script>
+  const header1 = document.getElementById("gift-header");
+  const hiddenContent = document.getElementById("gift-hidden-content");
+
+  header1.addEventListener("click", function () {
+    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
+    header1.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
+  });
 
     function openMenu() {
       document.getElementById('iframe-container').style.display = 'flex';
