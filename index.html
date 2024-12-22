@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -278,9 +279,8 @@
     align-items: center;
     }
         .gift-container {
-        width: 82%;
+	  width: 90%;
       background-color: #3F51B5;
-      padding: 20px;
       border-radius: 10px;
       text-align: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -346,13 +346,45 @@ font-weight: bold;
       <div id="qr-text" style="text-align: center;"><h4>Manuell kupong registrering</h4><span>Ved telefonbestillinger <br> skannes QR-koden av ansatte</span></div>
     </div>
  <br>
-  <div class="gift-container">
-    <h3>🎁 Sjekk gavekortsaldo 🔍</h3>
+<style>
+  #gift-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  #gift-header:after {
+    content: "▼"; /* Aşağı ok işareti */
+    font-size: 12px;
+    transition: transform 0.3s;
+  }
+
+  .expanded:after {
+    transform: rotate(180deg); /* Açıldığında yukarı dönen ok */
+  }
+</style>
+
+<div class="gift-container">
+  <h3 id="gift-header">🎁 Sjekk gavekortsaldo 🔍</h3>
+  <div id="gift-hidden-content" style="display: none;">
     <input id="gift-phone-input" class="gift-input" type="text" placeholder="Skriv inn mobilnummer" maxlength="8">
     <div id="gift-check-message" class="gift-message" style="display: none;"></div>
     <div id="gift-extra-message" class="gift-sub-message" style="display: none;"></div>
     <img id="gift-qr-code" class="gift-qr" alt="QR Code">
   </div>
+</div>
+
+<script>
+  const header = document.getElementById("gift-header");
+  const hiddenContent = document.getElementById("gift-hidden-content");
+
+  header.addEventListener("click", function () {
+    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
+    header.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
+  });
+</script>
  <br>
       <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
@@ -596,11 +628,6 @@ font-weight: bold;
 
 
 <script>
-    function openMenu() {
-      const iframeContainer = document.getElementById('iframe-container');
-      iframeContainer.classList.add('visible');  // Görünür yap
-      document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
-    }
 
     function closeIframe() {
       const iframeContainer = document.getElementById('iframe-container');
