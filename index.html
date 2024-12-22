@@ -2,14 +2,71 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+	<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FE0LXTLLR6">
+</script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FE0LXTLLR6');
+</script>
+
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Skarnes - Bestill Take Away</title>
+  <title>KØL Grill & Pizza | Skarnes - Online Take Away Bestilling</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Nyt autentiske italienske pizzaer stekt i steinovn fra KØL Grill & Pizza i Skarnes. Vi tilbyr daglig fersk pizza, kebab, burgere og mer. Takeaway. Bestill online nå!">
+  <meta name="keywords" content="KØL Grill & Pizza, Skarnes pizza, online pizza bestilling, takeaway, burger, kebab, Italiensk pizza, Sør Odal, Årnes, Ahlen Pizza, Mona Lisa Skarnes">
+
+  <!-- Social Media Meta Tags -->
+  <meta property="og:title" content="KØL Grill & Pizza | Skarnes - Online Pizza Bestilling">
+  <meta property="og:description" content="Opplev ekte italiensk pizza hos KØL Grill & Pizza. Friske ingredienser og profesjonell steinovn. Takeaway og levering i Skarnes, Sør Odal og Årnes.">
+  <meta property="og:url" content="https://bestill.online">
+  <meta property="og:type" content="website">
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Restaurant",
+      "name": "KØL Grill & Pizza",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Øgardsvegen 44",
+        "addressLocality": "Skarnes",
+        "addressRegion": "Sør Odal",
+        "postalCode": "2100",
+        "addressCountry": "NO"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "60.2521748",
+        "longitude": "11.6806137"
+      },
+      "openingHoursSpecification": [{
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "14:00",
+        "closes": "22:00"
+      }],
+      "hasMenu": "https://bestill.online/meny"
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/gh/Joe12387/detectIncognito@main/dist/es5/detectIncognito.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0"></script>
   <style>
+
     body {
       background-color: #2655ad;
       font-family: 'Arial', sans-serif;
@@ -19,7 +76,8 @@
       flex-direction: column;
       align-items: center;
       zoom: 90%;
-      font-size: 16px;
+      font-size: 18px;
+      
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -75,7 +133,12 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
-	.iframe-container {
+    iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+   .iframe-container {
       position: fixed;
       top: 0;
       left: 0;
@@ -83,15 +146,15 @@
       height: 100%;
       background-color: rgba(0, 0, 0, 0.8);
       z-index: 1000;
-      display: none;
-	  box-sizing: border-box;
+      visibility: hidden;  /* Değiştirildi: display:none yerine visibility:hidden */
+      opacity: 0;
+      transition: visibility 0s, opacity 0.5s;  /* Görünürlük ve opaklık geçişleri */
     }
-    .iframe-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      box-sizing: border-box;
+    .iframe-container.visible {
+      visibility: visible;  /* Görünür yapar */
+      opacity: 1;  /* Opaklığı arttır */
     }
+
     .close-button img{
 	position: absolute;
     bottom: 40px;
@@ -215,81 +278,24 @@
       display: flex;
     }
     .digit {
-      background-color: #3b5998;
-      color: white;
-      font-size: 20px;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      justify-content: center;
-      border-radius: 4px;
-      margin: 4px;
-      align-items: center;
+    background-color: #2655ad;
+    color: #fffffff5;
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    border-radius: 4px;
+    margin: 2px;
+    align-items: center;
     }
-            .gift-container {
-cursor: pointer;
-	  width: 90%;
-      background-color: #3F51B5;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      color: white
-    }
-    .gift-input {
-width: 95%;
-      padding: 10px;
-
-      border: none;
-      border-radius: 5px;
-font-size: 20px;
-font-weight: bold;
-      text-align: center;
-    }
-    .gift-message, .gift-sub-message {
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-    .gift-message {
-      background-color: #FFEB3B;
-      color: black;
-      line-height: 1.8;
-    }
-    .gift-sub-message {
-      background-color: white;
-      color: black;
-    }
-    .gift-qr {
-      display: none;
-      margin: 10px auto;
-      max-width: 120px;
-      border-radius: 5px;
-      padding: 10px;
-          background: white;
-}
-    .google-review {
-    cursor:pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #555;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.3s ease;
-          color: #007bff; /* Hoş bir mavi ton */
-    }
-
-    .google-review i {
-      color: #f4b400;
   </style>
 </head>
 <body>
   <div class="container">
     <div id="status-message" class="header"  style="border-radius:0;height: 50px;">🟢 Åpent i dag: 14:00 - 22:00</div>
     <br>
-    <div id="view-menu" class="button" onclick="openMenu();"><h2>Se MENY og Bestill</h2></div>
-    
+<div id="view-menu" class="button" onclick="openMenu();"><h2>Se MENY og Bestill</h2></div>
       <div class="iframe-container" id="iframe-container">
     <div class="close-button" onclick="closeIframe()"><img src="https://bestill.online/img/btn1.png"></div>
     <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
@@ -311,26 +317,7 @@ font-weight: bold;
     </div>
     <br>
 
-<div class="gift-container">
-  <h3 id="gift-header">🎁 Sjekk gavekortsaldo 🔍</h3>
-  <div id="gift-hidden-content" style="display: none;">
-    <input id="gift-phone-input" class="gift-input" type="text" placeholder="Skriv inn mobilnummer" maxlength="8">
-    <div id="gift-check-message" class="gift-message" style="display: none;"></div>
-    <div id="gift-extra-message" class="gift-sub-message" style="display: none;"></div>
-    <img id="gift-qr-code" class="gift-qr" alt="QR Code">
-  </div>
-</div>
-<script>
-  const header = document.getElementById("gift-header");
-  const hiddenContent = document.getElementById("gift-hidden-content");
-
-  header.addEventListener("click", function () {
-    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
-    header.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
-  });
-</script>
-         <br>
- <div class="counter-container">
+      <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
       <div class="counter" id="pizza-counter">
         <span class="digit">0</span>
@@ -351,144 +338,17 @@ font-weight: bold;
         <span class="digit">0</span>
       </div>
     </div>
-<br>
-    <div class="footer-contact" onclick="window.location.href='mailto:xhitaf@gmail.com';">
+ <div onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" class="button counter-container" style="height: 50px;background: #2b4ead;">
+        <div style="animation: pulse 1.2s infinite;">👉 Vurder oss på Google </div>
+        <div>⭐⭐⭐⭐⭐ 4.9 </div>
+</div>
+    <div class="footer-contact" onclick="window.location.href='mailto:xhitaf@gmail.com';" style="color: white;">
     © Bestill.Online Systems 2023 - <span id="year"></span> </div>
     
     <div id="ip-message"></div>
+    <br>
+  </div>
   
-<!-- Footer HTML -->
-<footer class="footer1">
-  <div class="footer-content">
-    <a href="tel:+4741145353" class="footer-icon" aria-label="Telefon">
-      <i class="fas fa-phone"></i> Ring
-    </a>
-    <a href="https://www.facebook.com/kolgrill.skarnes" target="_blank" class="footer-icon" aria-label="Facebook">
-      <i class="fab fa-facebook-f"></i> FB
-    </a>
-    <a href="mailto:skarnes.restaurant@gmail.com" class="footer-icon" aria-label="E-posta">
-      <i class="fas fa-envelope"></i> Mail
-    </a>
-          <!-- Google Stjernemerk -->
-      <a onclick="window.open('https://g.page/r/CaBYA1-Od59LEBM/review', '_blank');" target="_blank" class="google-review" aria-label="Gi en anmeldelse på Google">
-        <i class="fas fa-star puls"></i> Gi stjerner
-      </a>
-  </div>
-</footer>
-  </div>
-
-<!-- Footer CSS -->
-<style>
-  .footer1 {
-    background-color: #f9f9f9;
-    border-top: 1px solid #ddd;
-    padding: 10px 0;
-    text-align: center;
-    margin-top: auto; /* Footer'ı doğal akışta sayfanın sonunda tutar */
-    width:100%;
-	height: 20px;
-  }
-
-  .footer-content {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    font-size: 0.9rem;
-    color: #007bff; /* Hoş bir mavi ton */
-  }
-
-  .footer-icon {
-    text-decoration: none;
-    color: inherit; /* Varsayılan metin rengini kullanır */
-    transition: color 0.3s ease;
-  }
-
-  .footer-icon i {
-    margin-right: 5px; /* İkon ile metin arasında boşluk */
-  }
-</style>
-
-<!-- Font Awesome Script -->
-<!-- Font Awesome CDN -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
-
-
-    <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
-
-  const firebaseConfig = {
-    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  const phoneInput = document.getElementById("gift-phone-input"); // Input alanı ID
-  const qrCode = document.getElementById("gift-qr-code"); // QR kod alanı ID
-  const checkMessage = document.getElementById("gift-check-message"); // Bakiye mesajı ID
-  const extraMessage = document.getElementById("gift-extra-message"); // Ek bilgi mesajı ID
-
-  function resetMessages() {
-    qrCode.style.display = "none";
-    checkMessage.style.display = "none";
-    extraMessage.style.display = "none";
-  }
-
-  function updateMessages(phone, balance) {
-    checkMessage.style.display = "block";
-    checkMessage.innerHTML = `Telefonnummer: <b>${phone}</b><br>Nåværende saldo: <b>${balance} NOK</b>`;
-    qrCode.style.display = "block";
-    qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/gavekayit.html?n=${phone}`;
-    extraMessage.style.display = "block";
-    extraMessage.innerHTML = "For å bruke gavekortet, vennligst vis QR-koden til ansatt.";
-  }
-
-  function noBalanceMessage(phone) {
-    resetMessages();
-    checkMessage.style.display = "block";
-    checkMessage.innerHTML = `Telefonnummer: <b>${phone}</b><br>Ingen saldo funnet.`;
-    qrCode.style.display = "block";
-	qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/gavekayit.html?n=${phone}`;
-        extraMessage.style.display = "block";
-    extraMessage.innerHTML = "For å bruke gavekortet, vennligst vis QR-koden til ansatt.";
-  }
-
-  function startRealtimeListener(phone) {
-    const giftCardRef = ref(db, `giftcards/${phone}`);
-
-    onValue(giftCardRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data && data.balance !== undefined) {
-        updateMessages(phone, data.balance);
-      } else {
-        noBalanceMessage(phone);
-      }
-    });
-  }
-
-  phoneInput.addEventListener("input", () => {
-    const phone = phoneInput.value.trim();
-
-    if (/^[49]\d{7}$/.test(phone)) {
-      localStorage.setItem("giftLastPhoneNumber", phone);
-      startRealtimeListener(phone);
-    } else {
-          localStorage.setItem("giftLastPhoneNumber", "");
-      resetMessages();
-    }
-  });
-
-  window.addEventListener("load", () => {
-    const lastPhoneNumber = localStorage.getItem("giftLastPhoneNumber");
-    if (lastPhoneNumber) {
-      phoneInput.value = lastPhoneNumber;
-      startRealtimeListener(lastPhoneNumber);
-    }
-  });
-  </script>
-
  <script type="module">
   import {
     initializeApp
@@ -625,16 +485,16 @@ font-weight: bold;
 
 
 <script>
-
     function openMenu() {
-      document.getElementById('iframe-container').style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
-
+      const iframeContainer = document.getElementById('iframe-container');
+      iframeContainer.classList.add('visible');  // Görünür yap
+      document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
     }
 
     function closeIframe() {
-      document.getElementById('iframe-container').style.display = 'none';
-        document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
+      const iframeContainer = document.getElementById('iframe-container');
+      iframeContainer.classList.remove('visible');  // Gizli yap
+      document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
     }
 
     // Update year dynamically
@@ -671,29 +531,22 @@ font-weight: bold;
                 .then(res => res.json())
                 .then(data => {
                     if (data.country_name !== "Norway") {
-                        document.body.innerHTML = `
-                        <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
-                          <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
-                          <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
-                            Advarsel: Viktig Sikkerhetsvarsel
-                          </h1>
-                          <p>
-                            Vi har oppdaget at du forsøker å bestille fra en lokasjon utenfor Norge.
-                            Vi aksepterer ikke bestillinger utenfor vårt dekningsområde.
-                          </p>
-                          <p>
-                            Hvis du mener dette er en feil, vennligst kontakt oss umiddelbart på
-                            telefonnummer <strong><a href="tel:+4741145353">4114 5353</a></strong> for videre avklaring.
-                          </p>
-                          <p>
-                            <strong>Advarsel:</strong> Forsøk på falske bestillinger, selv ved bruk av VPN, blir sporet. 
-                            Gjentatte forsøk vil bli rapportert til myndighetene, og vi vil iverksette rettslige skritt.
-                          </p>
-                          <p>
-                            Hvis du har mottatt denne meldingen ved en feil, vennligst kontakt oss umiddelbart.
-                          </p>
-                        </div>
-                      `;
+                      document.body.style ="zoom: 100%;";
+document.body.innerHTML = `
+  <div id="warning" class="coupon-container" style="text-align: center;margin: 0%;padding: 10%;">
+    <div class="warning-icon" style="font-size: 50px; color: #cc0000;">⚠️</div>
+    <h1 style="color: #cc0000; font-size: 28px; margin-bottom: 20px; text-transform: uppercase;">
+      Advarsel: Bestillingsfeil
+    </h1>
+    <p>Vi har oppdaget at du prøver å bestille fra en lokasjon utenfor Norge.</p>
+    <p>Hvis du bruker VPN, vennligst slå den av og prøv igjen. Ved fortsatt feil, kontakt oss på telefon <strong><a href="tel:+4741145353">4114 5353</a></strong> eller send oss en SMS med skjermbilde av feilen for videre hjelp.</p>
+    <p><strong>Advarsel:</strong> Denne siden er utstyrt med avanserte sikkerhetssystemer. Alle forsøk på å bruke falske IP-adresser eller bestillinger fra uautoriserte lokasjoner blir sporet nøye. Gjentatte forsøk vil bli rapportert til myndighetene, og rettslige skritt vil bli tatt.</p>
+    <h4>Din IP-adresse: ${data.ip}</h4>
+    <h4>Landets navn: ${data.country_name}</h4>
+  </div>
+`;
+
+
                     }
                 })
                 .catch(error => console.log('Error fetching location data:', error));
