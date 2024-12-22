@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -479,6 +478,7 @@ font-weight: bold;
       localStorage.setItem("giftLastPhoneNumber", phone);
       startRealtimeListener(phone);
     } else {
+          localStorage.setItem("giftLastPhoneNumber", "");
       resetMessages();
     }
   });
