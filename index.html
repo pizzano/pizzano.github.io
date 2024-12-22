@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -341,9 +340,58 @@ font-weight: bold;
     © Bestill.Online Systems 2023 - <span id="year"></span> </div>
     
     <div id="ip-message"></div>
-    <br>
-  </div>
   
+<!-- Footer HTML -->
+<footer class="footer1">
+  <div class="footer-content">
+    <a href="tel:+4741145353" class="footer-icon" aria-label="Telefon">
+      <i class="fas fa-phone"></i> Telefon
+    </a>
+    <a href="https://www.facebook.com/kolgrill.skarnes" target="_blank" class="footer-icon" aria-label="Facebook">
+      <i class="fab fa-facebook-f"></i> Facebook
+    </a>
+    <a href="mailto:skarnes.restaurant@gmail.com" class="footer-icon" aria-label="E-posta">
+      <i class="fas fa-envelope"></i> E-post
+    </a>
+  </div>
+</footer>
+  </div>
+
+<!-- Footer CSS -->
+<style>
+  .footer1 {
+    background-color: #f9f9f9;
+    border-top: 1px solid #ddd;
+    padding: 10px 0;
+    text-align: center;
+    margin-top: auto; /* Footer'ı doğal akışta sayfanın sonunda tutar */
+    width:100%;
+	height: 20px;
+  }
+
+  .footer-content {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #007bff; /* Hoş bir mavi ton */
+  }
+
+  .footer-icon {
+    text-decoration: none;
+    color: inherit; /* Varsayılan metin rengini kullanır */
+    transition: color 0.3s ease;
+  }
+
+  .footer-icon i {
+    margin-right: 5px; /* İkon ile metin arasında boşluk */
+  }
+</style>
+
+<!-- Font Awesome Script -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
