@@ -310,6 +310,26 @@ font-weight: bold;
       <div id="qr-text" style="text-align: center;"><h4>Manuell kupong registrering</h4><span>Ved telefonbestillinger <br> skannes QR-koden av ansatte</span></div>
     </div>
     <br>
+
+<div class="gift-container">
+  <h3 id="gift-header">🎁 Sjekk gavekortsaldo 🔍</h3>
+  <div id="gift-hidden-content" style="display: none;">
+    <input id="gift-phone-input" class="gift-input" type="text" placeholder="Skriv inn mobilnummer" maxlength="8">
+    <div id="gift-check-message" class="gift-message" style="display: none;"></div>
+    <div id="gift-extra-message" class="gift-sub-message" style="display: none;"></div>
+    <img id="gift-qr-code" class="gift-qr" alt="QR Code">
+  </div>
+</div>
+<script>
+  const header1 = document.getElementById("gift-header");
+  const hiddenContent = document.getElementById("gift-hidden-content");
+
+  header1.addEventListener("click", function () {
+    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
+    header1.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
+  });
+</script>
+         <br>
  <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
       <div class="counter" id="pizza-counter">
