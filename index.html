@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -225,6 +226,47 @@
       margin: 4px;
       align-items: center;
     }
+            .gift-container {
+cursor: pointer;
+	  width: 90%;
+      background-color: #3F51B5;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      color: white
+    }
+    .gift-input {
+width: 95%;
+      padding: 10px;
+
+      border: none;
+      border-radius: 5px;
+font-size: 20px;
+font-weight: bold;
+      text-align: center;
+    }
+    .gift-message, .gift-sub-message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .gift-message {
+      background-color: #FFEB3B;
+      color: black;
+      line-height: 1.8;
+    }
+    .gift-sub-message {
+      background-color: white;
+      color: black;
+    }
+    .gift-qr {
+      display: none;
+      margin: 10px auto;
+      max-width: 120px;
+      border-radius: 5px;
+      padding: 10px;
+    bac
   </style>
 </head>
 <body>
@@ -254,7 +296,26 @@
     </div>
     <br>
 
-      <div class="counter-container">
+<div class="gift-container">
+  <h3 id="gift-header">🎁 Sjekk gavekortsaldo 🔍</h3>
+  <div id="gift-hidden-content" style="display: none;">
+    <input id="gift-phone-input" class="gift-input" type="text" placeholder="Skriv inn mobilnummer" maxlength="8">
+    <div id="gift-check-message" class="gift-message" style="display: none;"></div>
+    <div id="gift-extra-message" class="gift-sub-message" style="display: none;"></div>
+    <img id="gift-qr-code" class="gift-qr" alt="QR Code">
+  </div>
+</div>
+<script>
+  const header = document.getElementById("gift-header");
+  const hiddenContent = document.getElementById("gift-hidden-content");
+
+  header.addEventListener("click", function () {
+    hiddenContent.style.display = hiddenContent.style.display === "none" ? "block" : "none";
+    header.classList.toggle("expanded"); // Ok işaretini ters çevirmek için
+  });
+</script>
+         <br>
+ <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
       <div class="counter" id="pizza-counter">
         <span class="digit">0</span>
@@ -283,6 +344,81 @@
     <br>
   </div>
   
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+
+  const firebaseConfig = {
+    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const phoneInput = document.getElementById("gift-phone-input"); // Input alanı ID
+  const qrCode = document.getElementById("gift-qr-code"); // QR kod alanı ID
+  const checkMessage = document.getElementById("gift-check-message"); // Bakiye mesajı ID
+  const extraMessage = document.getElementById("gift-extra-message"); // Ek bilgi mesajı ID
+
+  function resetMessages() {
+    qrCode.style.display = "none";
+    checkMessage.style.display = "none";
+    extraMessage.style.display = "none";
+  }
+
+  function updateMessages(phone, balance) {
+    checkMessage.style.display = "block";
+    checkMessage.innerHTML = `Telefonnummer: <b>${phone}</b><br>Nåværende saldo: <b>${balance} NOK</b>`;
+    qrCode.style.display = "block";
+    qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/gavekayit.html?n=${phone}`;
+    extraMessage.style.display = "block";
+    extraMessage.innerHTML = "For å bruke gavekortet, vennligst vis QR-koden til ansatt.";
+  }
+
+  function noBalanceMessage(phone) {
+    resetMessages();
+    checkMessage.style.display = "block";
+    checkMessage.innerHTML = `Telefonnummer: <b>${phone}</b><br>Ingen saldo funnet.`;
+    qrCode.style.display = "block";
+	qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/gavekayit.html?n=${phone}`;
+        extraMessage.style.display = "block";
+    extraMessage.innerHTML = "For å bruke gavekortet, vennligst vis QR-koden til ansatt.";
+  }
+
+  function startRealtimeListener(phone) {
+    const giftCardRef = ref(db, `giftcards/${phone}`);
+
+    onValue(giftCardRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.balance !== undefined) {
+        updateMessages(phone, data.balance);
+      } else {
+        noBalanceMessage(phone);
+      }
+    });
+  }
+
+  phoneInput.addEventListener("input", () => {
+    const phone = phoneInput.value.trim();
+
+    if (/^[49]\d{7}$/.test(phone)) {
+      localStorage.setItem("giftLastPhoneNumber", phone);
+      startRealtimeListener(phone);
+    } else {
+          localStorage.setItem("giftLastPhoneNumber", "");
+      resetMessages();
+    }
+  });
+
+  window.addEventListener("load", () => {
+    const lastPhoneNumber = localStorage.getItem("giftLastPhoneNumber");
+    if (lastPhoneNumber) {
+      phoneInput.value = lastPhoneNumber;
+      startRealtimeListener(lastPhoneNumber);
+    }
+  });
+  </script>
+
  <script type="module">
   import {
     initializeApp
