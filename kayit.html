@@ -51,17 +51,7 @@
       background-color: red;
       padding: 10px;
     }
-    .gavekort {
-      position: fixed;
-      top: 0;
-      margin: auto;
-      width: 100%;
-      height: 40px;
-      border-radius: 0px;
-      font-size: 20px;
-      background-color: blue;
-      padding: 10px;
-    }
+
     hr {
       border: 1px solid black;
       width: 90%;
@@ -70,7 +60,6 @@
 </head>
 
 <body>
- <button id="gavekort" class="gavekort">GÅ TIL GAVEKORT</button>
   <div>
     <button onclick="guncelle(-1); c.innerHTML = Number(c.innerHTML) - 1">➖</button>
     <span id="c" style="font-size: 46px;">1</span>
@@ -96,7 +85,6 @@
         document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
       }
     }
-    
     let status = true;
     import {
       initializeApp
@@ -115,12 +103,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const specificKey = urlParams.get("n");
     const specificKeyReference = ref(database, specificKey);
-      const gavekort = document.getElementById("gavekort");
-
-gavekort.onclick = () => {
-  window.location.href = `https://bestill.online/gavekayit.html?n=${specificKey}`;
-};
-    
     onValue(specificKeyReference, (snapshot) => {
       demo.innerHTML = snapshot.val();
       Key.innerHTML = snapshot.key;
