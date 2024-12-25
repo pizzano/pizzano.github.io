@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -325,7 +324,7 @@
     <div class="qr-area">
       <img id="qr-code" src="https://i.hizliresim.com/hpz13bl.png">
       <div id="qr-text" style="text-align: center;"><h4>Manuell kupong registrering</h4><span>Ved telefonbestillinger <br> skannes QR-koden av ansatte</span>
-       <br> <br><span> <button style="height: 2.5vh;width: 70%;border: none;border-radius: 5px;" onclick="aktivergavekort();">Bytt til Gavekort</button> </span></div>
+       <br> <br> <button id="gave-kupon" style="height: 2.5vh;width: 70%;border: none;border-radius: 5px;background:#2196f35c" onclick="aktivergavekort();">Bytt til Gavekort</button> </div>
     </div>
     
       <div class="coupon-container">
@@ -532,12 +531,27 @@ onValue(giftCardRef, (snapshot) => {
 
 <script>
 
+let isGaveKaydet = false; // Durumu izlemek için bir değişken
+
 function aktivergavekort() {
     const qrCode = document.getElementById('qr-code');
-    const currentSrc = qrCode.src; // Mevcut src'yi al
-    const updatedSrc = currentSrc.replace('kayit.html', 'gavekaydet.html'); // 'kayit.html' yerine 'gavekayit.html' yaz
-    qrCode.src = `${updatedSrc}&color=FF5733&bgcolor=gold`; // src'yi güncelle ve renkleri ekle
+	const bytt = document.getElementById('gave-kupon');
+    
+    const baseSrc = "https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/";
+    
+    if (isGaveKaydet) {
+        // İlk durum: 'gavekaydet.html' yerine 'kayit.html' geri dön
+        qrCode.src = `${baseSrc}kayit.html?n=41234563`;
+        isGaveKaydet = false;
+		bytt.innerText ="Bytt til gavekort"
+    } else {
+        // İkinci durum: 'kayit.html' yerine 'gavekaydet.html' ve renkleri değiştir
+        qrCode.src = `${baseSrc}gavekaydet.html?n=41234563&color=FF5733&bgcolor=gold`;
+        isGaveKaydet = true;
+        bytt.innerText ="Bytt til kupong"
+    }
 }
+
 
 
     function openMenu() {
