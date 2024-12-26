@@ -330,7 +330,7 @@ background: white;
 
 <div style="display: flex;flex-direction: column;align-items: center;">
      
-	<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>
+<div id="qr-text" style="text-align: center;"> <h4>Manuell kupong registrering </h4> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>
             <div id="saldo" style=";display: none;height: 6vh;justify-content: center;align-items: center;"> </div><br>
 		<button id="gave-kupon" style="height: 35px;;width: 70%;border: none;border-radius: 5px;background:#2196f35c" onclick="aktivergavekort();">Bytt til Gavekort</button> 
 
@@ -529,7 +529,7 @@ onValue(giftCardRef, (snapshot) => {
       phoneInput.blur();
       phoneHeader.textContent = '✅ Nummeret ditt er registrert!';
       qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${number}`;
-        document.getElementById('qr-text').innerHTML =`<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
+        document.getElementById('qr-text').innerHTML =`<div id="qr-text" style="text-align: center;"> <h4>Manuell kupong registrering </h4> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
         saldo.style ="display:none;"
 		document.getElementById('gave-kupon').innerText ="Bytt til gavekort"
     }
@@ -561,7 +561,7 @@ function aktivergavekort() {
         qrCode.src = `${baseSrc}kayit.html?n=${localStorage.getItem('phoneNumber')}`;
         isGaveKaydet = false;
 		bytt.innerText ="Bytt til gavekort"
-        QrText.innerHTML = `<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
+        QrText.innerHTML = `<div id="qr-text" style="text-align: center;"> <h4>Manuell kupong registrering </h4> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
         saldo.style ="display:none;"
     } else {
 
