@@ -219,17 +219,18 @@
       font-size: 18px;
     }
     .qr-area {
-	background: white;
+background: white;
     display: flex;
-    justify-content: space-evenly;
     width: 90%;
     padding: 15px 0;
     border-radius: 13px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     font-size: 16px;
+    justify-content: space-evenly;
+    align-items: center;
     }
     #qr-code {
-      width: 30%;
+      width: 35%;
     }
     .review-button {
     color: white;
@@ -321,11 +322,21 @@
           <div id="gratis" style=""></div>
       <div class="footer">Kjøp 10 pizzaer, få den 11. gratis! 🎉</div>
     </div>
-    <div class="qr-area">
-      <img id="qr-code" src="https://i.hizliresim.com/hpz13bl.png">
-      <div id="qr-text" style="text-align: center;"><h4>Manuell kupong registrering</h4><span>Ved telefonbestillinger <br> skannes QR-koden av ansatte</span>
-       <br> <br> <button id="gave-kupon" style="height: 2.5vh;width: 70%;border: none;border-radius: 5px;background:#2196f35c" onclick="aktivergavekort();">Bytt til Gavekort</button> </div>
+
+<div class="qr-area">
+    
+<img id="qr-code" src="https://i.hizliresim.com/hpz13bl.png">
+
+<div  style="display: flex;flex-direction: column;align-items: center;">
+     
+	<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div> <br>
+    
+		<button id="gave-kupon" style="height: 35px;;width: 70%;border: none;border-radius: 5px;background:#2196f35c" onclick="aktivergavekort();">Bytt til Gavekort</button> 
+
+</div>
+
     </div>
+    
        <br>
       <div class="coupon-container">
 	<div class="header">🎁 Ditt digitale gavekort er her ✨</div>
@@ -547,6 +558,7 @@ function aktivergavekort() {
         qrCode.src = `${baseSrc}kayit.html?n=41234563`;
         isGaveKaydet = false;
 		bytt.innerText ="Bytt til gavekort"
+
     } else {
         // İkinci durum: 'kayit.html' yerine 'gavekaydet.html' ve renkleri değiştir
         qrCode.src = `${baseSrc}gavekaydet.html?n=41234563&color=FF5733&bgcolor=gold`;
