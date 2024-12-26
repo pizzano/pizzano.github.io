@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -528,6 +529,9 @@ onValue(giftCardRef, (snapshot) => {
       phoneInput.blur();
       phoneHeader.textContent = '✅ Nummeret ditt er registrert!';
       qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${number}`;
+        document.getElementById('qr-text').innerHTML =`<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
+        saldo.style ="display:none;"
+		document.getElementById('gave-kupon').innerText ="Bytt til gavekort"
     }
 
 
@@ -542,18 +546,19 @@ onValue(giftCardRef, (snapshot) => {
 let isGaveKaydet = false; // Durumu izlemek için bir değişken
 
 function aktivergavekort() {
+
     const qrCode = document.getElementById('qr-code');
 	const bytt = document.getElementById('gave-kupon');
     const QrText = document.getElementById('qr-text')
    const saldo = document.getElementById('saldo')
 
     const baseSrc = "https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/";
-    
+
 	if (localStorage.getItem('phoneNumber')) {
        
       if (isGaveKaydet) {
         // İlk durum: 'gavekaydet.html' yerine 'kayit.html' geri dön
-        qrCode.src = `${baseSrc}kayit.html?n=41234563`;
+        qrCode.src = `${baseSrc}kayit.html?n=${localStorage.getItem('phoneNumber')}`;
         isGaveKaydet = false;
 		bytt.innerText ="Bytt til gavekort"
         QrText.innerHTML = `<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
@@ -561,7 +566,7 @@ function aktivergavekort() {
     } else {
 
         // İkinci durum: 'kayit.html' yerine 'gavekaydet.html' ve renkleri değiştir
-        qrCode.src = `${baseSrc}gavekaydet.html?n=41234563&color=FF5733&bgcolor=gold`;
+        qrCode.src = `${baseSrc}gavekaydet.html?n=${localStorage.getItem('phoneNumber')}&color=FF5733&bgcolor=gold`;
         isGaveKaydet = true;
         bytt.innerText ="Bytt til kupong"
         QrText.outerHTML = `<div id="qr-text" style="text-align: center;">Ditt digitale gavekort <br> 
