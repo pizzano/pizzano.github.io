@@ -327,10 +327,10 @@ background: white;
     
 <img id="qr-code" src="https://i.hizliresim.com/hpz13bl.png">
 
-<div  style="display: flex;flex-direction: column;align-items: center;">
+<div style="display: flex;flex-direction: column;align-items: center;">
      
-	<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div> <br>
-    
+	<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>
+            <div id="saldo" style=";display: none;height: 6vh;justify-content: center;align-items: center;"> </div><br>
 		<button id="gave-kupon" style="height: 35px;;width: 70%;border: none;border-radius: 5px;background:#2196f35c" onclick="aktivergavekort();">Bytt til Gavekort</button> 
 
 </div>
@@ -338,12 +338,7 @@ background: white;
     </div>
     
        <br>
-      <div class="coupon-container">
-	<div class="header">🎁 Ditt digitale gavekort er her ✨</div>
-      <div id="saldo" style="display: flex;height: 6vh;justify-content: center;align-items: center;">     </div>
-	<div class="footer">Vis QR-koden til ansatte for bruk</div>
-    </div>
-   <br>
+
       <div class="counter-container">
       <div class="counter-title"><span>🍕</span><span>Pizza Teller</span></div>
       <div class="counter" id="pizza-counter">
@@ -440,9 +435,9 @@ onValue(giftCardRef, (snapshot) => {
 
   saldo.innerHTML = data && data.balance !== undefined 
     ? data.balance < 30 
-      ? `<strong>Saldo: ${data.balance} kr</strong> 💳 (Lav saldo)` 
-      : `<strong>Saldo: ${data.balance} kr</strong> 💳`
-    : `<strong>Ingen aktiv gavekort</strong> ❌`;
+      ? `<br><strong>Saldo: ${data.balance} kr</strong> 💳 (Lav saldo)` 
+      : `<br><strong>Saldo: ${data.balance} kr</strong> 💳`
+    : `<br><strong>Ingen aktiv gavekort</strong> ❌`;
 });
 
     // Kupon veritabanındaki veriyi dinle ve UI'yi güncelle
@@ -538,6 +533,7 @@ onValue(giftCardRef, (snapshot) => {
 
   // Sayfa yüklendiğinde Firebase'den pizza ve kebab sayacını günceller
   window.updateDatabaseReference();
+  
 </script>
 
 
@@ -548,7 +544,9 @@ let isGaveKaydet = false; // Durumu izlemek için bir değişken
 function aktivergavekort() {
     const qrCode = document.getElementById('qr-code');
 	const bytt = document.getElementById('gave-kupon');
-    
+    const QrText = document.getElementById('qr-text')
+   const saldo = document.getElementById('saldo')
+
     const baseSrc = "https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/";
     
 	if (localStorage.getItem('phoneNumber')) {
@@ -558,12 +556,17 @@ function aktivergavekort() {
         qrCode.src = `${baseSrc}kayit.html?n=41234563`;
         isGaveKaydet = false;
 		bytt.innerText ="Bytt til gavekort"
-
+        QrText.innerHTML = `<div id="qr-text" style="text-align: center;"> Manuell kupong registrering <br ><br> Ved telefonbestillinger <br ><br> skannes QR-koden av ansatte</div>`;
+        saldo.style ="display:none;"
     } else {
+
         // İkinci durum: 'kayit.html' yerine 'gavekaydet.html' ve renkleri değiştir
         qrCode.src = `${baseSrc}gavekaydet.html?n=41234563&color=FF5733&bgcolor=gold`;
         isGaveKaydet = true;
         bytt.innerText ="Bytt til kupong"
+        QrText.outerHTML = `<div id="qr-text" style="text-align: center;">Ditt digitale gavekort <br> 
+		<br> Vis QR-koden for bruk</div>`;
+        saldo.style ="display:block;"
     }
 	}
 }
