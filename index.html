@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -540,7 +541,9 @@ function aktivergavekort() {
     
     const baseSrc = "https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/";
     
-    if (isGaveKaydet) {
+	if (localStorage.getItem('phoneNumber')) {
+       
+      if (isGaveKaydet) {
         // İlk durum: 'gavekaydet.html' yerine 'kayit.html' geri dön
         qrCode.src = `${baseSrc}kayit.html?n=41234563`;
         isGaveKaydet = false;
@@ -551,6 +554,7 @@ function aktivergavekort() {
         isGaveKaydet = true;
         bytt.innerText ="Bytt til kupong"
     }
+	}
 }
 
 
