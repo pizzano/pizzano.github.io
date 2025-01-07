@@ -1,5 +1,10 @@
-// DOM'un tamamen yüklendiğinden emin olun
-document.addEventListener("DOMContentLoaded", function() {
+window.addEventListener("load", function () {
+    // DOM tamamen yüklendiğinde çalıştır
     let text = "HELLO ust.js çalıştı!";
-    document.getElementById("ust").innerHTML = text;
+    var element = document.getElementById("ust");
+    if (element) {
+        element.innerHTML = text;
+    } else {
+        console.error('Element id="ust" bulunamadı.');
+    }
 });
