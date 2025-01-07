@@ -1,33 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dinamik JS Yükleme</title>
-</head>
-<body>
-    <h1>Dinamik Script Testi</h1>
-    <!-- Hedef HTML Elementi -->
-    <p id="ust">Script yükleniyor...</p>
-
-    <!-- Script Yükleme -->
+<!-- index.html -->
+<template id="ust-template">
+    <p id="ust"></p>
     <script>
-        // Script elementi oluştur ve kaynağını belirle
-        var script = document.createElement('script');
-        script.src = 'https://bestill.online/test/ust.js';
-
-        // Script yüklendiğinde çalıştır
-        script.onload = function() {
-            console.log('ust.js yüklendi ve çalıştırıldı.');
-        };
-
-        // Script yüklenmezse hata mesajı göster
-        script.onerror = function() {
-            console.error('ust.js yüklenirken bir hata oluştu.');
-        };
-
-        // Script'i head içerisine ekle
-        document.head.appendChild(script);
+        let text = "HELLO ust.html";
+        document.getElementById("ust").innerHTML = text;
     </script>
-</body>
-</html>
+</template>
+
+<script>
+    const template = document.getElementById('ust-template').content.cloneNode(true);
+    document.body.appendChild(template);
+</script>
