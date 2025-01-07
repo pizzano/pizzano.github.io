@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test JS Scripts</title>
+    <title>Dinamik JS Yükleme</title>
 </head>
 <body>
-    <h1>JS Test Scripts</h1>
-    <p>Bu sayfa test amaçlı JS dosyalarını yükler.</p>
+    <h1>Dinamik Script Testi</h1>
+    <!-- Hedef HTML Elementi -->
+    <p id="ust">Script yükleniyor...</p>
 
-    <!-- Hedef HTML Elementleri -->
-    <p id="alt"></p>
-    <p id="orta"></p>
-    <p id="ust"></p>
-
-    <!-- JS Dosyaları -->
-    <script src="https://bestill.online/test/alt.js"></script>
-    <script src="https://bestill.online/test/orta.js"></script>
-    <script src="https://bestill.online/test/ust.js"></script>
+    <!-- Script Yükleme Kodu -->
+    <script>
+        // ust.js dosyasını dinamik olarak yükle
+        var script = document.createElement('script');
+        script.src = 'https://bestill.online/test/ust.js';
+        script.onload = function() {
+            console.log('ust.js yüklendi ve çalıştırıldı.');
+        };
+        script.onerror = function() {
+            console.error('ust.js yüklenirken bir hata oluştu.');
+        };
+        document.head.appendChild(script);
+    </script>
 </body>
 </html>
