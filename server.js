@@ -10,5 +10,5 @@ app.get('/orders', (req, res) => {
   const orders = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
   const last10 = orders.slice(-10); // son 10 tanesini al
 
-  res.send(`<h2>Son 10 Sipariş</h2><pre>${JSON.stringify(last10, null, 2)}</pre>`);
+  res.send(<h2>Son 10 Sipariş</h2><pre>${JSON.stringify(last10, null, 2)}</pre>);
 });  
