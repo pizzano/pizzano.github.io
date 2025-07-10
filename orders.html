@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Son Siparişler</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Son Siparişler</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Ad Soyad</th>
+        <th>Telefon</th>
+        <th>Email</th>
+        <th>Ürün</th>
+        <th>Toplam (NOK)</th>
+        <th>Ödeme</th>
+        <th>Durum</th>
+        <th>Tarih</th>
+      </tr>
+    </thead>
+    <tbody id="ordersTable">
+      <!-- Siparişler buraya eklenecek -->
+    </tbody>
+  </table>
+
+  <script>
+    fetch('/orders.json')
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById('ordersTable');
+        const orders = data.orders || [];
+
+        orders.slice(-10).reverse().forEach(order => {
+          const item = order.items?.[0];
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${order.client_first_name} ${order.client_last_name}</td>
+            <td>${order.client_phone}</td>
+            <td>${order.client_email}</td>
+            <td>${item ? item.name + " (" + item.options.map(opt => opt.name).join(", ") + ")" : "-"}</td>
+            <td>${order.total_price} ${order.currency}</td>
+            <td>${order.payment || "-"}</td>
+            <td>${order.status}</td>
+            <td>${new Date(order.updated_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        document.getElementById('ordersTable').innerHTML = `<tr><td colspan="8">Veri alınamadı</td></tr>`;
+        console.error(err);
+      });
+  </script>
+
+</body>
+</html>
