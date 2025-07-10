@@ -1,0 +1,28 @@
+<script>
+  fetch('https://pizzano-github-io.onrender.com/orders')
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById('ordersTable');
+      const orders = Array.isArray(data) ? data : [];
+
+      orders.forEach(order => {
+        const item = order.items?.[0];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${order.client_first_name || ''} ${order.client_last_name || ''}</td>
+          <td>${order.client_phone || '-'}</td>
+          <td>${order.client_email || '-'}</td>
+          <td>${item ? item.name + (item.options ? " (" + item.options.map(opt => opt.name).join(", ") + ")" : "") : '-'}</td>
+          <td>${order.total_price || '-'} ${order.currency || ''}</td>
+          <td>${order.payment || '-'}</td>
+          <td>${order.status || '-'}</td>
+          <td>${order.updated_at ? new Date(order.updated_at).toLocaleString() : '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    })
+    .catch(err => {
+      document.getElementById('ordersTable').innerHTML = `<tr><td colspan="8">Veri alınamadı</td></tr>`;
+      console.error(err);
+    });
+</script>
