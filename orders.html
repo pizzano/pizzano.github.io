@@ -4,55 +4,79 @@
   <meta charset="UTF-8">
   <title>Bestillinger</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .receipt {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-bottom: 25px;
-      max-width: 550px;
-      background: #f9f9f9;
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #fff;
     }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #orderContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .receipt {
+      background: #f9f9f9;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
     .title {
       font-weight: bold;
-      font-size: 1.2em;
+      font-size: 1.1em;
       margin-bottom: 10px;
     }
+
     .section {
-      margin: 10px 0;
+      margin: 8px 0;
     }
+
     .product {
-      margin: 5px 0;
+      margin: 4px 0;
     }
+
     .option {
-      margin-left: 20px;
+      margin-left: 15px;
       font-style: italic;
       color: #555;
+      font-size: 0.9em;
     }
+
     .note {
       color: red;
       font-weight: bold;
-      margin-left: 20px;
+      margin-left: 15px;
     }
+
     .ready {
       background: green;
       color: white;
-      display: inline-block;
-      padding: 3px 8px;
+      padding: 3px 6px;
       border-radius: 4px;
-      font-size: 0.9em;
+      font-size: 0.85em;
     }
+
     .status-pending {
       background: orange;
       color: white;
-      padding: 3px 8px;
+      padding: 3px 6px;
       border-radius: 4px;
-      font-size: 0.9em;
+      font-size: 0.85em;
     }
   </style>
 </head>
 <body>
 
-  <h2>🧾 Siste Bestillinger</h2>
+  <h2>📺 Aktive Bestillinger</h2>
   <div id="orderContainer"></div>
 
   <script>
@@ -80,15 +104,15 @@
             const status = order.status === "accepted" ? "✅ Godkjent" : "🕓 Venter";
             const betaling = order.payment;
             const total = order.total_price + ' ' + order.currency;
-            const klar = order.ready ? '<span class="ready">🍽 Klar – Hentes nå!</span>' : '<span class="status-pending">Ikke klar</span>';
+            const klar = order.ready ? '<span class="ready">🍽 Klar</span>' : '<span class="status-pending">Ikke klar</span>';
 
             let html = `<div class="receipt">
-              <div class="title">📦 ${status} — ${dato}</div>
-              <div class="section">👤 <strong>${navn}</strong><br>📞 ${telefon}</div>
-              <div class="section">💳 Betaling: ${betaling}<br>💰 Total: <strong>${total}</strong></div>
-              <div class="section">⏱️ Status: ${klar}</div>
+              <div class="title">${status} — ${dato}</div>
+              <div class="section">👤 ${navn}<br>📞 ${telefon}</div>
+              <div class="section">💳 ${betaling} — 💰 <strong>${total}</strong></div>
+              <div class="section">${klar}</div>
               <hr>
-              <div class="section">🍕 <strong>Produkter:</strong><br>`;
+              <div class="section"><strong>🧾 Produkter:</strong><br>`;
 
             order.items.forEach(item => {
               html += `<div class="product">🔹 ${item.quantity} x ${item.name} – ${item.total_item_price} NOK</div>`;
