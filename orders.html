@@ -84,84 +84,90 @@
   const sheetName = 'Sayfa1';
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
 
-  fetch(url)
-    .then(res => res.text())
-    .then(text => {
-      const json = JSON.parse(text.match(/(?<=\().*(?=\);)/)[0]);
-      const rows = json.table.rows;
-      const container = document.getElementById('orderContainer');
+  function hentBestillinger() {
+    fetch(url)
+      .then(res => res.text())
+      .then(text => {
+        const json = JSON.parse(text.match(/(?<=\().*(?=\);)/)[0]);
+        const rows = json.table.rows;
+        const container = document.getElementById('orderContainer');
 
-      const orderMap = new Map();
+        const orderMap = new Map();
+        const reversedRows = [...rows].reverse();
 
-      // 1️⃣ Ters sırada gezmek için önce reverse
-      const reversedRows = [...rows].reverse();
+        reversedRows.forEach(row => {
+          const raw = row.c[0]?.v;
+          if (!raw) return;
 
-      reversedRows.forEach(row => {
-        const raw = row.c[0]?.v;
-        if (!raw) return;
+          try {
+            const order = JSON.parse(raw).orders[0];
+            const id = order.id;
+            const isReady = order.ready;
 
-        try {
-          const order = JSON.parse(raw).orders[0];
-          const id = order.id;
-          const isReady = order.ready;
-
-          if (orderMap.has(id)) {
-            const existing = orderMap.get(id);
-            if (!existing.ready && isReady) {
-              orderMap.set(id, order); // "klar" varsa güncelle
-            }
-          } else {
-            orderMap.set(id, order);
-          }
-        } catch (err) {
-          console.warn('Parsing error:', err);
-        }
-      });
-
-      // 2️⃣ Ekrana bastır (yine reverse yaparak son güncellenen üste)
-      const sortedOrders = Array.from(orderMap.values()).sort((a, b) => {
-        return new Date(b.updated_at) - new Date(a.updated_at);
-      });
-
-      container.innerHTML = ''; // eskiyi temizle
-
-      sortedOrders.forEach(order => {
-        const dato = new Date(order.fulfill_at).toLocaleString("no-NO");
-        const navn = `${order.client_first_name} ${order.client_last_name}`;
-        const telefon = order.client_phone;
-        const status = order.status === "accepted" ? "✅ Godkjent" : "🕓 Venter";
-        const betaling = order.payment;
-        const total = order.total_price + ' ' + order.currency;
-        const klar = order.ready ? '<span class="ready">🍽 Klar</span>' : '<span class="status-pending">Ikke klar</span>';
-
-        let html = `<div class="receipt">
-          <div class="title">${status} — ${dato}</div>
-          <div class="section">👤 ${navn}<br>📞 ${telefon}</div>
-          <div class="section">💳 ${betaling} — 💰 <strong>${total}</strong></div>
-          <div class="section">${klar}</div>
-          <hr>
-          <div class="section"><strong>🧾 Produkter:</strong><br>`;
-
-        order.items.forEach(item => {
-          html += `<div class="product">🔹 ${item.quantity} x ${item.name} – ${item.total_item_price} NOK</div>`;
-          if (item.options && item.options.length > 0) {
-            item.options.forEach(opt => {
-              if (opt.name) {
-                html += `<div class="option">• ${opt.name}</div>`;
+            if (orderMap.has(id)) {
+              const existing = orderMap.get(id);
+              if (!existing.ready && isReady) {
+                orderMap.set(id, order);
               }
-            });
-          }
-          if (item.instructions) {
-            html += `<div class="note">❗ ${item.instructions}</div>`;
+            } else {
+              orderMap.set(id, order);
+            }
+          } catch (err) {
+            console.warn('Parsing error:', err);
           }
         });
 
-        html += `</div></div>`;
-        container.innerHTML += html;
-      });
-    })
-    .catch(err => console.error('Feil under lasting:', err));
+        const sortedOrders = Array.from(orderMap.values()).sort((a, b) => {
+          return new Date(b.updated_at) - new Date(a.updated_at);
+        });
+
+        container.innerHTML = '';
+
+        sortedOrders.forEach(order => {
+          const dato = new Date(order.fulfill_at).toLocaleString("no-NO");
+          const navn = `${order.client_first_name} ${order.client_last_name}`;
+          const telefon = order.client_phone;
+          const status = order.status === "accepted" ? "✅ Godkjent" : "🕓 Venter";
+          const betaling = order.payment;
+          const total = order.total_price + ' ' + order.currency;
+          const klar = order.ready ? '<span class="ready">🍽 Klar</span>' : '<span class="status-pending">Ikke klar</span>';
+
+          let html = `<div class="receipt">
+            <div class="title">${status} — ${dato}</div>
+            <div class="section">👤 ${navn}<br>📞 ${telefon}</div>
+            <div class="section">💳 ${betaling} — 💰 <strong>${total}</strong></div>
+            <div class="section">${klar}</div>
+            <hr>
+            <div class="section"><strong>🧾 Produkter:</strong><br>`;
+
+          order.items.forEach(item => {
+            html += `<div class="product">🔹 ${item.quantity} x ${item.name} – ${item.total_item_price} NOK</div>`;
+            if (item.options && item.options.length > 0) {
+              item.options.forEach(opt => {
+                if (opt.name) {
+                  html += `<div class="option">• ${opt.name}</div>`;
+                }
+              });
+            }
+            if (item.instructions) {
+              html += `<div class="note">❗ ${item.instructions}</div>`;
+            }
+          });
+
+          html += `</div></div>`;
+          container.innerHTML += html;
+        });
+      })
+      .catch(err => console.error('Feil under lasting:', err));
+  }
+
+  // ⏱️ İlk çalıştır
+  hentBestillinger();
+
+  // 🔁 Her 5 saniyede bir otomatik yenile
+  setInterval(hentBestillinger, 5000);
 </script>
+
 
 
 </body>
