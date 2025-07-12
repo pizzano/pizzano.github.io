@@ -2,76 +2,82 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Bonusliste</title>
-  <style>
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    button { padding: 4px 10px; }
-  </style>
+  <title>Satır Bul ve C Güncelle</title>
 </head>
 <body>
+  <h3>Toplam Güncelle (Telefon: 41234567)</h3>
 
-<h2>Bonusliste</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Telefon</th>
-      <th>Navn</th>
-      <th>Total</th>
-      <th>Sil</th>
-    </tr>
-  </thead>
-  <tbody id="liste">
-    <tr><td colspan="4">Laster...</td></tr>
-  </tbody>
-</table>
+  <div id="sonuc" style="display:none;">
+    <p><strong>Telefon:</strong> <span id="a"></span></p>
+    <p><strong>Navn:</strong> <span id="b"></span></p>
+    <p>
+      <strong>Total:</strong>
+      <input type="number" id="total">
+      <button onclick="guncelle()">Güncelle</button>
+    </p>
+  </div>
 
-<script>
-  const sheetURL = "https://docs.google.com/spreadsheets/d/1l2mhvtjSGTh4u8amSBnK_oSUI665TqHz_CNWduzEwEA/gviz/tq?tqx=out:json&sheet=Sayfa1";
-  const scriptURL = "https://script.google.com/macros/s/AKfycbzg9LS6wKFbqcWZXbqcmryaOoKpIiGHd7UUtK5_kWY_r5lKVNSDHaZC-oi89TYSzP7m/exec";
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/1l2mhvtjSGTh4u8amSBnK_oSUI665TqHz_CNWduzEwEA/gviz/tq?tqx=out:json&sheet=Sayfa1";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbx1PgWOKAaBjxZecEUFN9Y7mWzwBU3IY3oV9Ya8uRskk5JXrgO20KAaP7q9FxXKqwg8/exec";
+    const telefonGirilen = "41234567";
+    let rowIndex = null;
 
-  function loadData() {
-    fetch(sheetURL)
+    // Sayfa açılır açılmaz A sütununda telefon numarasını ara
+    window.onload = () => {
+      alert("Sayfa yüklendi. Satır aranıyor...");
+      fetch(sheetURL)
+        .then(res => res.text())
+        .then(txt => {
+          const json = JSON.parse(txt.match(/(?<=\().*(?=\);)/)[0]);
+          const rows = json.table.rows;
+          alert("Veri çekildi. " + rows.length + " satır var.");
+
+          let bulundu = false;
+          rows.forEach((r, i) => {
+            const tel = r.c[0]?.v?.toString();
+            if (tel === telefonGirilen) {
+              alert(`Eşleşme bulundu: Satır ${i + 1}`);
+              document.getElementById("a").textContent = r.c[0]?.v || "";
+              document.getElementById("b").textContent = r.c[1]?.v || "";
+              document.getElementById("total").value = r.c[2]?.v || "";
+              rowIndex = i + 1;
+              document.getElementById("sonuc").style.display = "block";
+              bulundu = true;
+            }
+          });
+
+          if (!bulundu) {
+            alert("⛔ Telefon bulunamadı!");
+            document.getElementById("sonuc").style.display = "none";
+          }
+        })
+        .catch(err => alert("❌ Veri alınamadı: " + err));
+    };
+
+    // Güncelle butonuna basılınca sadece C sütununu gönder
+    function guncelle() {
+      const total = document.getElementById("total").value;
+      if (!rowIndex) {
+        alert("⛔ Satır bulunmadan güncelleme yapılamaz!");
+        return;
+      }
+
+      alert(`🟢 Güncelle başlatılıyor\nSatır: ${rowIndex}\nYeni Total: ${total}`);
+
+      fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `editC=${rowIndex}&total=${encodeURIComponent(total)}`
+      })
       .then(res => res.text())
-      .then(txt => {
-        const json = JSON.parse(txt.match(/(?<=\().*(?=\);)/)[0]);
-        const rows = json.table.rows;
-
-        const html = rows.map((r, i) => `
-          <tr>
-            <td>${r.c[0]?.v || ""}</td>
-            <td>${r.c[1]?.v || ""}</td>
-            <td>${r.c[2]?.v || ""}</td>
-            <td><button onclick="deleteRow(${i + 1})">Sil</button></td>
-          </tr>
-        `).join('');
-
-        document.getElementById("liste").innerHTML = html;
+      .then(msg => {
+        alert("✅ Sunucudan gelen yanıt:\n" + msg);
       })
       .catch(err => {
-        document.getElementById("liste").innerHTML = `<tr><td colspan="4">HATA: ${err}</td></tr>`;
+        alert("❌ Güncelleme hatası:\n" + err);
       });
-  }
-
-  function deleteRow(rad) {
-    if (!confirm(`Satır ${rad} silinsin mi?`)) return;
-    
-    fetch(scriptURL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `delete=${rad}`
-    })
-    .then(res => res.text())
-    .then(msg => {
-      alert(msg);
-      loadData(); // tekrar listele
-    })
-    .catch(err => alert("Hata: " + err));
-  }
-
-  loadData(); // sayfa yüklenince çalıştır
-</script>
-
+    }
+  </script>
 </body>
 </html>
