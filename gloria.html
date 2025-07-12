@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bonusliste</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    button { padding: 4px 10px; }
+  </style>
+</head>
+<body>
+
+<h2>Bonusliste</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Telefon</th>
+      <th>Navn</th>
+      <th>Total</th>
+      <th>Sil</th>
+    </tr>
+  </thead>
+  <tbody id="liste">
+    <tr><td colspan="4">Laster...</td></tr>
+  </tbody>
+</table>
+
+<script>
+  const sheetURL = "https://docs.google.com/spreadsheets/d/1l2mhvtjSGTh4u8amSBnK_oSUI665TqHz_CNWduzEwEA/gviz/tq?tqx=out:json&sheet=Sayfa1";
+  const scriptURL = "https://script.google.com/macros/s/AKfycbzg9LS6wKFbqcWZXbqcmryaOoKpIiGHd7UUtK5_kWY_r5lKVNSDHaZC-oi89TYSzP7m/exec";
+
+  function loadData() {
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(txt => {
+        const json = JSON.parse(txt.match(/(?<=\().*(?=\);)/)[0]);
+        const rows = json.table.rows;
+
+        const html = rows.map((r, i) => `
+          <tr>
+            <td>${r.c[0]?.v || ""}</td>
+            <td>${r.c[1]?.v || ""}</td>
+            <td>${r.c[2]?.v || ""}</td>
+            <td><button onclick="deleteRow(${i + 1})">Sil</button></td>
+          </tr>
+        `).join('');
+
+        document.getElementById("liste").innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById("liste").innerHTML = `<tr><td colspan="4">HATA: ${err}</td></tr>`;
+      });
+  }
+
+  function deleteRow(rad) {
+    if (!confirm(`Satır ${rad} silinsin mi?`)) return;
+    
+    fetch(scriptURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `delete=${rad}`
+    })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      loadData(); // tekrar listele
+    })
+    .catch(err => alert("Hata: " + err));
+  }
+
+  loadData(); // sayfa yüklenince çalıştır
+</script>
+
+</body>
+</html>
