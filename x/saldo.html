@@ -40,45 +40,52 @@
   <div id="hosgeldin"></div>
   <div id="bakiyem"></div>
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzINzVbUaClfh3R3QDXP2lyaSc18AiR2V-gQojOHMH3qNGXzJQGp9_gkMIqndR1DYOt/exec";
+<script>
+  const scriptURL = "https://script.google.com/macros/s/AKfycbzINzVbUaClfh3R3QDXP2lyaSc18AiR2V-gQojOHMH3qNGXzJQGp9_gkMIqndR1DYOt/exec";
 
-    window.onload = () => {
-      const saved = localStorage.getItem("telefon");
-      if (saved) {
-        document.getElementById("telefon").value = saved;
-        sorgula(saved);
-      }
-    };
-
-    function checkTelefon() {
-      const phoneInput = document.getElementById("telefon");
-      const raw = phoneInput.value.replace(/\D/g, '').slice(0, 8);
-      phoneInput.value = raw;
-
-      if (raw.length === 8) {
-        phoneInput.blur();
-        localStorage.setItem("telefon", raw);
-        sorgula(raw);
-      }
+  window.onload = () => {
+    const saved = localStorage.getItem("telefon");
+    if (saved) {
+      document.getElementById("telefon").value = saved;
+      sorgula(saved);
     }
 
-    function sorgula(telOverride = null) {
-      const telefon = telOverride || document.getElementById("telefon").value.trim();
-      if (!telefon || telefon.length !== 8) return;
+    // 🔁 3 saniyede bir bakiye güncelle
+    setInterval(() => {
+      const tel = localStorage.getItem("telefon");
+      if (tel && tel.length === 8) sorgula(tel);
+    }, 3000);
+  };
 
-      fetch(`${scriptURL}?telefon=${telefon}`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("hosgeldin").textContent = `👋 Hoş geldin, ${data.navn}`;
-          document.getElementById("bakiyem").textContent = `💰 Toplam Bakiyen: ${Math.round(data.total*0.05)} kr`;
-        })
-        .catch(() => {
-          document.getElementById("hosgeldin").textContent = "";
-          document.getElementById("bakiyem").textContent = "❌ Numara bulunamadı.";
-        });
+  function checkTelefon() {
+    const phoneInput = document.getElementById("telefon");
+    const raw = phoneInput.value.replace(/\D/g, '').slice(0, 8);
+    phoneInput.value = raw;
+
+    if (raw.length === 8) {
+      phoneInput.blur();
+      localStorage.setItem("telefon", raw);
+      sorgula(raw);
     }
-  </script>
+  }
+
+  function sorgula(telOverride = null) {
+    const telefon = telOverride || document.getElementById("telefon").value.trim();
+    if (!telefon || telefon.length !== 8) return;
+
+    fetch(`${scriptURL}?telefon=${telefon}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("hosgeldin").textContent = `👋 Hoş geldin, ${data.navn}`;
+        document.getElementById("bakiyem").textContent = `💰 Toplam Bakiyen: ${Math.round(data.total * 0.05)} kr`;
+      })
+      .catch(() => {
+        document.getElementById("hosgeldin").textContent = "";
+        document.getElementById("bakiyem").textContent = "❌ Numara bulunamadı.";
+      });
+  }
+</script>
+
 
 </body>
 </html>
