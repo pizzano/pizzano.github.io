@@ -71,7 +71,7 @@
         .then(res => res.json())
         .then(data => {
           document.getElementById("hosgeldin").textContent = `👋 Hoş geldin, ${data.navn}`;
-          document.getElementById("bakiyem").textContent = `💰 Toplam Bakiyen: ${data.total*0.05} kr`;
+          document.getElementById("bakiyem").textContent = `💰 Toplam Bakiyen: ${Math.round(data.total*0.05)} kr`;
         })
         .catch(() => {
           document.getElementById("hosgeldin").textContent = "";
