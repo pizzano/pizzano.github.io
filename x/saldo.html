@@ -10,6 +10,7 @@
       --green: #27ae60;
       --bg: #f0f2f5;
       --dark: #2c5364;
+      --red: #c0392b;
     }
     * { box-sizing: border-box; }
     body {
@@ -105,7 +106,7 @@
     }
     #message {
       font-size: 1em;
-      color: var(--green);
+      font-weight: 500;
       margin-bottom: 10px;
     }
     .qr-area {
@@ -168,13 +169,14 @@
     const phoneInput = document.getElementById("phoneInput");
     const message = document.getElementById("message");
     const flipCard = document.getElementById("flipCard");
+    let currentPhone = "";
 
     window.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem("cashbackPhone");
       if (saved) {
         phoneInput.value = saved;
+        currentPhone = saved;
         fetchData(saved);
-        message.textContent = "✅ Nummeret ditt er registrert!";
       }
     });
 
@@ -183,8 +185,8 @@
       if (num.length === 8) {
         phoneInput.blur();
         localStorage.setItem("cashbackPhone", num);
+        currentPhone = num;
         fetchData(num);
-        message.textContent = "✅ Nummeret ditt er registrert!";
       }
     });
 
@@ -193,6 +195,11 @@
       fetch(url)
         .then(r => r.json())
         .then(d => {
+          if (!d || !d.raw) {
+            resetCard("❌ Kortet er ikke gyldig");
+            return;
+          }
+
           const cashback = Math.round((d.total || 0) * 0.05);
           const fullName = `${d.raw.client_first_name} ${d.raw.client_last_name}`;
           const updated = new Date(d.raw.updated_at).toLocaleDateString("no-NO", {
@@ -206,12 +213,31 @@
           document.getElementById("clientOrderCount").textContent = `#${d.raw.client_order_count || 1}`;
           document.getElementById("info").textContent = `siste: ${updated}`;
           document.getElementById("qr-code").src = `https://api.qrserver.com/v1/create-qr-code/?data=bestill.online/kayit.html?n=${phone}`;
-        });
+          message.textContent = "✅ Nummeret ditt er registrert!";
+          message.style.color = "var(--green)";
+        })
+        .catch(() => resetCard("❌ Feil ved lasting"));
+    }
+
+    function resetCard(msg) {
+      document.getElementById("total").textContent = "0";
+      document.getElementById("back-total").textContent = "0 kr";
+      document.getElementById("name").textContent = "...";
+      document.getElementById("back-name").textContent = "Navn";
+      document.getElementById("clientOrderCount").textContent = "#";
+      document.getElementById("info").textContent = "...";
+      document.getElementById("qr-code").src = "";
+      message.textContent = msg;
+      message.style.color = "var(--red)";
     }
 
     function toggleFlip() {
       flipCard.classList.toggle("flipped");
     }
+
+    setInterval(() => {
+      if (currentPhone.length === 8) fetchData(currentPhone);
+    }, 5000);
   </script>
 
 </body>
