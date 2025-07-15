@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -445,7 +446,7 @@ onValue(giftCardRef, (snapshot) => {
 
     // Kupon veritabanındaki veriyi dinle ve UI'yi güncelle
     onValue(dbRef, snapshot => {
-      const selectedCount = snapshot.val() || 0; // Kaç kupon biriktirildiğini al
+      const selectedCount = snapshot.val().total || 0; // Kaç kupon biriktirildiğini al
       document.querySelectorAll('.coupon').forEach((box, index) => {
         const isSelected = index < selectedCount;
         // Eğer kupon seçiliyse arka planı yeşil yap
