@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -74,62 +75,72 @@
 
   <button onclick="sayfaKapat()" class="kapat">Sayfayı Kapat</button>
 
-  <script type="module">
-    var bd = "styles";
-    let kv = localStorage.getItem("abc123");
-    if (kv != bd) {
-      let kg = prompt("XYZ789", "");
-      if (kg == bd) {
-        localStorage.setItem("abc123", kg);
-      } else {
-        document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
-      }
+ <script type="module">
+  var bd = "styles";
+  let kv = localStorage.getItem("abc123");
+  if (kv != bd) {
+    let kg = prompt("XYZ789", "");
+    if (kg == bd) {
+      localStorage.setItem("abc123", kg);
+    } else {
+      document.querySelector("body").innerHTML = `<a href="${window.location.href}">LMN456</a>`;
     }
-    let status = true;
-    import {
-      initializeApp
-    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      set,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
-    const firebaseConfig = {
-      databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
-    };
-    initializeApp(firebaseConfig);
-    const database = getDatabase();
-    const urlParams = new URLSearchParams(window.location.search);
-    const specificKey = urlParams.get("n");
-    const specificKeyReference = ref(database, specificKey);
-    onValue(specificKeyReference, (snapshot) => {
-      demo.innerHTML = snapshot.val();
-      Key.innerHTML = snapshot.key;
-      if (status) {
-        setTimeout(() => {
-          status = false;
-          guncelle(Number(c.innerHTML));
-        }, 500);
-      }
-    });
-    window.guncelle = function(increment) {
-      let value = Number(demo.innerHTML) + increment;
-      if (value >= 0 && value <= 10) {
-        demo.innerHTML = value;
-        set(specificKeyReference, value);
-      } else {
-        set(specificKeyReference, 0);
-      }
-    }
-  </script>
+  }
 
-  <script>
-    function sayfaKapat() {
-      window.close();
-      window.history.back();
+  let status = true;
+
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+  } from "https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js";
+
+  const firebaseConfig = {
+    databaseURL: `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app`
+  };
+
+  initializeApp(firebaseConfig);
+  const database = getDatabase();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const specificKey = urlParams.get("n");
+  const specificKeyReference = ref(database, specificKey);
+
+  onValue(specificKeyReference, (snapshot) => {
+    const data = snapshot.val();
+    const currentTotal = data?.total || 0;
+    demo.innerHTML = currentTotal;
+    Key.innerHTML = specificKey;
+
+    if (status) {
+      setTimeout(() => {
+        status = false;
+        guncelle(Number(c.innerHTML));
+      }, 500);
     }
-  </script>
+  });
+
+  window.guncelle = function(increment) {
+    let currentTotal = Number(demo.innerHTML);
+    let newTotal = currentTotal + increment;
+    if (newTotal >= 0 && newTotal <= 10) {
+      demo.innerHTML = newTotal;
+      set(specificKeyReference, {
+        total: newTotal
+      });
+    } else {
+      demo.innerHTML = 0;
+      set(specificKeyReference, {
+        total: 0
+      });
+    }
+  }
+</script>
+
 </body>
 
 </html>
