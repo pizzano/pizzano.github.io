@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -447,6 +445,7 @@ onValue(giftCardRef, (snapshot) => {
     // Kupon veritabanındaki veriyi dinle ve UI'yi güncelle
     onValue(dbRef, snapshot => {
       const selectedCount = snapshot.val().total || 0; // Kaç kupon biriktirildiğini al
+         
       document.querySelectorAll('.coupon').forEach((box, index) => {
         const isSelected = index < selectedCount;
         // Eğer kupon seçiliyse arka planı yeşil yap
@@ -456,14 +455,14 @@ onValue(giftCardRef, (snapshot) => {
 
       // 10 kupon biriktirildiyse kullanıcıya bildirim göster
       if (selectedCount >= 10) {
-        document.getElementById('gratis').innerHTML = `
-          <div style="margin-bottom: 20px;border: dashed;text-align: center;border-radius: 13px;">
-            <h1>GRATULERER!</h1>
-            <p>Takk for at du kjøpte 10 store pizzaer!</p>
-            <p>Du vil få den 11. pizzaen helt gratis ved din neste bestilling.</p>
-            <p>Vis bare QR-koden til betjeningen når du samtidig henter pizzaen.</p>
-          </div>`;
-        
+document.getElementById('gratis').innerHTML = `
+  <div style="margin-bottom: 20px; border: dashed 2px; padding: 20px; text-align: center; border-radius: 13px;">
+    <h2>🎉 Gratulerer, ${snapshot.val().raw.client_first_name}!</h2>
+    <p>Takk for at du har samlet 10 pizzaer.</p>
+    <p>Neste gang får du den 11. helt gratis!</p>
+    <p>📱 Vis denne QR-koden til betjeningen ved henting.</p>
+  </div>
+`;    
         // Konfeti animasyonu
         confetti({
           particleCount: 100,
