@@ -94,6 +94,14 @@
       color: #6b7280;
       padding-left: 10px;
     }
+    .instruction-text {
+      font-size: 0.85rem;
+      color: #000000;
+      padding: 6px 12px;
+      background: #e2111140;
+      margin-top: 6px;
+      border-radius: 8px;
+    }
     .total {
       font-size: 1.1rem;
       font-weight: 600;
@@ -174,6 +182,7 @@ ${data.items.map(item => `
       <span class="info-text">${item.total_item_price} kr.</span>
     </div>
     ${extractDetails(item.options)}
+    ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ''}
   </div>
 `).join('')}
 </div>
