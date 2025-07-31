@@ -64,7 +64,6 @@
       align-items: flex-end;
       gap: 6px;
     }
-
     .info-text {
       margin: 2px 0;
       color: var(--gray-dark);
@@ -80,9 +79,9 @@
       text-decoration: underline;
     }
     .product-box {
-    background: var(--gray-light);
-    padding: 10px 10px;
-    margin: 6px 0;
+      background: var(--gray-light);
+      padding: 10px;
+      margin: 6px 0;
     }
     .product-box strong {
       font-size: 1rem;
@@ -98,7 +97,7 @@
       font-size: 0.85rem;
       color: #000000;
       padding: 6px 12px;
-      background: #e2111140;
+      background: #fef08a;
       margin-top: 6px;
       border-radius: 8px;
     }
@@ -120,6 +119,11 @@
       font-size: 0.9rem;
       font-weight: bold;
     }
+    .countdown {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #ef4444;
+    }
     .emoji-label {
       font-size: 1.1rem;
       margin-right: 6px;
@@ -131,18 +135,19 @@
 </head>
 <body>
   <div class="receipt-grid" id="receipts"></div>
-
   <script>
     const MAX_ORDERS = 49;
-    const BATCH_SIZE = 10;
-    let loadedCount = 0;
-    let isLoading = false;
+    const ordersMap = new Map();
     const receiptsContainer = document.getElementById('receipts');
 
-    function timeDiff(accepted, fulfill) {
-      const diffMs = new Date(fulfill) - new Date(accepted);
-      const mins = Math.round(diffMs / 60000);
-      return mins + ' min';
+    function countdownString(futureTime) {
+      const now = new Date();
+      const target = new Date(futureTime);
+      const diffMs = target - now;
+      if (diffMs <= 0) return '⏳ Klar!';
+      const mins = Math.floor(diffMs / 60000);
+      const secs = Math.floor((diffMs % 60000) / 1000);
+      return `⏳ ${mins}m ${secs}s igjen`;
     }
 
     function extractDetails(options) {
@@ -153,47 +158,62 @@
       }).join('');
     }
 
-    function createReceiptHtml(data, pizzaTotal = null) {
-      const hentetid = new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const timer = timeDiff(data.accepted_at, data.fulfill_at);
-      const phoneLink = `tel:${data.client_phone}`;
-      const smsLink = `sms:${data.client_phone}`;
-      const totalText = pizzaTotal !== null ? `<p class="info-text">🍕 Total stor pizza: <strong>${pizzaTotal}</strong></p>` : '';
-
-      return `
+    function buildReceiptDOM(data, pizzaTotal = null) {
+      const div = document.createElement('div');
+      div.className = 'receipt';
+      div.setAttribute('data-id', data.id);
+      div.innerHTML = `
         <div class="customer-info">
           <div class="left-info">
             <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
-            <p class="info-text">📞 <a href="${phoneLink}">${data.client_phone}</a></p>
-            <p class="info-text">💬 <a href="${smsLink}">Send SMS</a></p><br>
+            <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
+            <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p><br>
           </div>
           <div class="right-info">
-            <div class="time-badge">${timer}</div>
-            <p class="info-text">🕒 Hentes kl. ${hentetid}</p>
-            <p class="info-text">🛍 Tidligere ordre: ${data.client_order_count}</p>
-            ${totalText}
+            <div class="time-badge" id="badge-${data.id}">0 min</div>
+            <p class="countdown" id="countdown-${data.id}"></p>
+            <p class="info-text" id="pickup-${data.id}"></p>
+            <p class="info-text" id="orders-${data.id}"></p>
+            <p class="info-text" id="pizza-${data.id}"></p>
           </div>
         </div>
-        <div style="background-color:#d3d4da;">
-${data.items.map(item => `
-  <div class="product-box">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <strong>${item.quantity}x ${item.name}</strong>
-      <span class="info-text">${item.total_item_price} kr.</span>
-    </div>
-    ${extractDetails(item.options)}
-    ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ''}
-  </div>
-`).join('')}
-</div>
-        <div class="total"><span class="emoji-label">💳</span> Total: ${data.total_price} NOK</div>
+        <div class="products" id="products-${data.id}"></div>
+        <div class="total" id="total-${data.id}"><span class="emoji-label">💳</span> Total: ${data.total_price} NOK</div>
       `;
+      return div;
     }
 
-    async function fetchOrder(url) {
+    function updateReceiptContent(el, data, pizzaTotal = null) {
+      document.getElementById(`badge-${data.id}`).textContent = `${Math.round((new Date(data.fulfill_at) - new Date(data.accepted_at)) / 60000)} min`;
+      document.getElementById(`pickup-${data.id}`).textContent = `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      document.getElementById(`orders-${data.id}`).textContent = `🛍 Tidligere ordre: ${data.client_order_count}`;
+      document.getElementById(`pizza-${data.id}`).innerHTML = pizzaTotal !== null ? `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>` : '';
+      document.getElementById(`total-${data.id}`).innerHTML = `<span class="emoji-label">💳</span> Total: ${data.total_price} NOK`;
+      const prodContainer = document.getElementById(`products-${data.id}`);
+      prodContainer.innerHTML = data.items.map(item => `
+        <div class="product-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>${item.quantity}x ${item.name}</strong>
+            <span class="info-text">${item.total_item_price} kr.</span>
+          </div>
+          ${extractDetails(item.options)}
+          ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ''}
+        </div>`).join('');
+    }
+
+    function updateCountdowns() {
+      ordersMap.forEach((data, id) => {
+        const el = document.getElementById(`countdown-${id}`);
+        if (el) el.textContent = countdownString(data.fulfill_at);
+      });
+    }
+
+    async function fetchOrder(index) {
       try {
+        const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${index}.json`;
         const res = await fetch(url);
-        return await res.json();
+        const data = await res.json();
+        return data && data.status === 'accepted' ? data : null;
       } catch {
         return null;
       }
@@ -211,42 +231,30 @@ ${data.items.map(item => `
       }
     }
 
-    async function loadBatch() {
-      if (isLoading || loadedCount >= MAX_ORDERS) return;
-      isLoading = true;
-
-      const urls = Array.from({length: BATCH_SIZE}, (_, i) => loadedCount + i)
-        .filter(i => i < MAX_ORDERS)
-        .map(i => `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`);
-
-      for (const url of urls) {
-        const data = await fetchOrder(url);
-        if (!data) continue;
-
-        const id = data.id?.toString();
-        const pizzaTotal = await fetchPizzaTotal(data.client_phone);
-
-        const div = document.createElement('div');
-        div.className = 'receipt';
-        div.setAttribute('data-id', id);
-        div.innerHTML = createReceiptHtml(data, pizzaTotal);
-        receiptsContainer.appendChild(div);
-      }
-
-      loadedCount += BATCH_SIZE;
-      isLoading = false;
-    }
-
-    function handleScroll() {
-      const scrollPosition = window.innerHeight + window.scrollY;
-      const threshold = document.body.offsetHeight - 300;
-      if (scrollPosition >= threshold) {
-        loadBatch();
+    async function renderOrUpdateReceipt(index) {
+      const data = await fetchOrder(index);
+      if (!data) return;
+      const pizzaTotal = await fetchPizzaTotal(data.client_phone);
+      ordersMap.set(data.id.toString(), data);
+      const existing = document.querySelector(`[data-id='${data.id}']`);
+      if (existing) {
+        updateReceiptContent(existing, data, pizzaTotal);
+      } else {
+        const dom = buildReceiptDOM(data, pizzaTotal);
+        receiptsContainer.appendChild(dom);
+        updateReceiptContent(dom, data, pizzaTotal);
       }
     }
 
-    window.addEventListener('scroll', handleScroll);
-    loadBatch();
+    async function periodicUpdate() {
+      for (let i = 0; i < MAX_ORDERS; i++) {
+        await renderOrUpdateReceipt(i);
+      }
+    }
+
+    periodicUpdate();
+    setInterval(periodicUpdate, 5000);
+    setInterval(updateCountdowns, 1000);
   </script>
 </body>
 </html>
