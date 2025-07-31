@@ -12,7 +12,6 @@
       --yellow: #fbbf24;
       --border: #e5e7eb;
     }
-
     * {
       box-sizing: border-box;
     }
@@ -52,31 +51,38 @@
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: flex-start;
     }
-    .section-title {
-      font-weight: 600;
-      font-size: 1rem;
-      color: #111827;
-      margin-bottom: -6px;
+    .left-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
+    .right-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
     .info-text {
       margin: 2px 0;
       color: var(--gray-dark);
-      font-size: 0.92rem;
+      font-size: 1rem;
     }
     .info-text a {
       color: var(--gray-dark);
       text-decoration: none;
+      display: inline-block;
+      padding: 6px 0;
     }
     .info-text a:hover {
       text-decoration: underline;
     }
     .product-box {
-      background: var(--gray-light);
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin: 6px 0;
+    background: var(--gray-light);
+    padding: 10px 10px;
+    margin: 6px 0;
     }
     .product-box strong {
       font-size: 1rem;
@@ -120,7 +126,11 @@
   <div class="receipt-grid" id="receipts"></div>
 
   <script>
-    const urls = Array.from({length: 10}, (_, i) => `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`);
+    const MAX_ORDERS = 49;
+    const BATCH_SIZE = 10;
+    let loadedCount = 0;
+    let isLoading = false;
+    const receiptsContainer = document.getElementById('receipts');
 
     function timeDiff(accepted, fulfill) {
       const diffMs = new Date(fulfill) - new Date(accepted);
@@ -139,30 +149,35 @@
     function createReceiptHtml(data, pizzaTotal = null) {
       const hentetid = new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       const timer = timeDiff(data.accepted_at, data.fulfill_at);
-      const digits = data.client_phone.replace('+47', '');
       const phoneLink = `tel:${data.client_phone}`;
       const smsLink = `sms:${data.client_phone}`;
       const totalText = pizzaTotal !== null ? `<p class="info-text">🍕 Total stor pizza: <strong>${pizzaTotal}</strong></p>` : '';
+
       return `
         <div class="customer-info">
-          <div>
+          <div class="left-info">
             <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
             <p class="info-text">📞 <a href="${phoneLink}">${data.client_phone}</a></p>
-            <p class="info-text">💬 <a href="${smsLink}">Send SMS</a></p>
+            <p class="info-text">💬 <a href="${smsLink}">Send SMS</a></p><br>
+          </div>
+          <div class="right-info">
+            <div class="time-badge">${timer}</div>
+            <p class="info-text">🕒 Hentes kl. ${hentetid}</p>
             <p class="info-text">🛍 Tidligere ordre: ${data.client_order_count}</p>
             ${totalText}
           </div>
-          <div class="time-badge">${timer}</div>
         </div>
-        <p class="info-text">🕒 Hentes kl. ${hentetid}</p>
-        <div class="section-title">🧾 Produkter:</div>
-        ${data.items.map(item => `
-          <div class="product-box">
-            <strong>${item.quantity}x ${item.name}</strong>
-            ${extractDetails(item.options)}
-            <div class="info-text">${item.total_item_price} kr</div>
-          </div>
-        `).join('')}
+        <div style="background-color:#d3d4da;">
+${data.items.map(item => `
+  <div class="product-box">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <strong>${item.quantity}x ${item.name}</strong>
+      <span class="info-text">${item.total_item_price} kr.</span>
+    </div>
+    ${extractDetails(item.options)}
+  </div>
+`).join('')}
+</div>
         <div class="total"><span class="emoji-label">💳</span> Total: ${data.total_price} NOK</div>
       `;
     }
@@ -188,44 +203,42 @@
       }
     }
 
-    async function renderReceipts() {
-      const container = document.getElementById('receipts');
-      const existing = new Map();
-      container.querySelectorAll('.receipt[data-id]').forEach(el => {
-        existing.set(el.getAttribute('data-id'), el);
-      });
+    async function loadBatch() {
+      if (isLoading || loadedCount >= MAX_ORDERS) return;
+      isLoading = true;
 
-      const usedIds = new Set();
+      const urls = Array.from({length: BATCH_SIZE}, (_, i) => loadedCount + i)
+        .filter(i => i < MAX_ORDERS)
+        .map(i => `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`);
 
       for (const url of urls) {
         const data = await fetchOrder(url);
         if (!data) continue;
 
         const id = data.id?.toString();
-        usedIds.add(id);
-
         const pizzaTotal = await fetchPizzaTotal(data.client_phone);
-        const html = createReceiptHtml(data, pizzaTotal);
 
-        if (existing.has(id)) {
-          const el = existing.get(id);
-          el.innerHTML = html;
-        } else {
-          const div = document.createElement('div');
-          div.className = 'receipt';
-          div.setAttribute('data-id', id);
-          div.innerHTML = html;
-          container.appendChild(div);
-        }
+        const div = document.createElement('div');
+        div.className = 'receipt';
+        div.setAttribute('data-id', id);
+        div.innerHTML = createReceiptHtml(data, pizzaTotal);
+        receiptsContainer.appendChild(div);
       }
 
-      existing.forEach((el, id) => {
-        if (!usedIds.has(id)) el.remove();
-      });
+      loadedCount += BATCH_SIZE;
+      isLoading = false;
     }
 
-    renderReceipts();
-    setInterval(renderReceipts, 5000);
+    function handleScroll() {
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 300;
+      if (scrollPosition >= threshold) {
+        loadBatch();
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll);
+    loadBatch();
   </script>
 </body>
 </html>
