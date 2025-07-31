@@ -50,7 +50,6 @@
     .customer-info {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
       align-items: flex-start;
     }
     .left-info {
@@ -167,7 +166,7 @@
           <div class="left-info">
             <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
             <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
-            <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p><br>
+            <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p> <p class="info-text">Total ordre: <strong>${data.client_order_count}</strong></p><br>
           </div>
           <div class="right-info">
             <div class="time-badge" id="badge-${data.id}">0 min</div>
@@ -186,7 +185,7 @@
     function updateReceiptContent(el, data, pizzaTotal = null) {
       document.getElementById(`badge-${data.id}`).textContent = `${Math.round((new Date(data.fulfill_at) - new Date(data.accepted_at)) / 60000)} min`;
       document.getElementById(`pickup-${data.id}`).textContent = `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-      document.getElementById(`orders-${data.id}`).textContent = `🛍 Tidligere ordre: ${data.client_order_count}`;
+
       document.getElementById(`pizza-${data.id}`).innerHTML = pizzaTotal !== null ? `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>` : '';
       document.getElementById(`total-${data.id}`).innerHTML = `<span class="emoji-label">💳</span> Total: ${data.total_price} NOK`;
       const prodContainer = document.getElementById(`products-${data.id}`);
