@@ -12,9 +12,7 @@
       --yellow: #fbbf24;
       --border: #e5e7eb;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #326096b0;
@@ -42,51 +40,36 @@
       margin-top: 20px;
     }
     .receipt {
-	background: white;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    border: 1px solid var(--border);
-    justify-content: space-around;
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      border: 1px solid var(--border);
+      justify-content: space-around;
     }
-    .receipt:hover {
-      transform: translateY(-4px);
-    }
+    .receipt:hover { transform: translateY(-4px); }
     .customer-info {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
-    .left-info {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .left-info { display: flex; flex-direction: column; gap: 6px; }
     .right-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 6px;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
     }
-    .info-text {
-      margin: 2px 0;
-      color: var(--gray-dark);
-      font-size: .9rem;
-    }
+    .info-text { margin: 2px 0; color: var(--gray-dark); font-size: .9rem; }
     .info-text a {
       color: var(--gray-dark);
       text-decoration: none;
       display: inline-block;
       padding: 6px 0;
     }
-    .info-text a:hover {
-      text-decoration: underline;
-    }
+    .info-text a:hover { text-decoration: underline; }
     .product-box {
       background: var(--gray-light);
       padding: 10px;
@@ -97,60 +80,105 @@
       display: block;
       margin-bottom: 2px;
     }
-    .product-detail {
-      font-size: 0.85rem;
-      color: #6b7280;
-      padding-left: 10px;
-    }
+    .product-detail { font-size: 0.85rem; color: #6b7280; padding-left: 10px; }
     .instruction-text {
-      font-size: 0.85rem;
-      color: #000000;
-      padding: 6px 12px;
-      background: #fef08a;
-      margin-top: 6px;
-      border-radius: 8px;
+      font-size: 0.85rem; color: #000000;
+      padding: 6px 12px; background: #fef08a; margin-top: 6px; border-radius: 8px;
     }
     .total {
-      font-size: 1.1rem;
-      font-weight: 600;
-      text-align: right;
-      color: #111827;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 6px;
+      font-size: 1.1rem; font-weight: 600; text-align: right; color: #111827;
+      display: flex; justify-content: flex-end; align-items: center; gap: 6px;
     }
     .time-badge {
-      background: var(--green);
-      color: white;
-      padding: 5px 12px;
-      border-radius: 999px;
+      background: var(--green); color: white; padding: 5px 12px; border-radius: 999px;
+      font-size: 0.9rem; font-weight: bold;
+    }
+    .countdown { font-size: 0.85rem; font-weight: bold; color: #ef4444; }
+    .emoji-label { font-size: 1.1rem; margin-right: 6px; }
+    .total .emoji-label { font-size: 1.2rem; }
+
+    /* --- SMS araçları (YENİ) --- */
+    .sms-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .sms-tools select,
+    .sms-tools a.sms-send {
       font-size: 0.9rem;
-      font-weight: bold;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-decoration: none;
     }
-    .countdown {
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #ef4444;
-    }
-    .emoji-label {
-      font-size: 1.1rem;
-      margin-right: 6px;
-    }
-    .total .emoji-label {
-      font-size: 1.2rem;
+    .sms-tools a.sms-send {
+      background: var(--green);
+      color: #fff;
+      border: none;
     }
   </style>
 </head>
 <body>
   <input type="text" id="searchInput" placeholder="Søk navn...">
   <div class="receipt-grid" id="receipts"></div>
+
   <script>
     const MAX_ORDERS = 49;
     const ordersMap = new Map();
     const receiptsContainer = document.getElementById('receipts');
     const searchInput = document.getElementById('searchInput');
 
+    /* ===========================
+       SMS ŞABLONLARI + YARDIMCILAR (YENİ)
+       =========================== */
+    const SMS_TEMPLATES = [
+      { id: "ready",     label: "Klar – hent nå",   text: "Bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
+      { id: "10min",     label: "Klar om 10 min",   text: "Bestillingen din er klar om ca. 10 minutter. Velkommen! – KØL Grill & Pizza" },
+      { id: "5min",      label: "Klar om 5 min",    text: "Bestillingen din er klar om ca. 5 minutter. – KØL Grill & Pizza" },
+      { id: "delay10",   label: "Forsinket +10",    text: "Beklager forsinkelsen. Bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
+      { id: "remind",    label: "Hente-påminnelse", text: "Vi har maten din klar. Gi oss et hint om du er på vei. – KØL Grill & Pizza" },
+      { id: "thanks",    label: "Takk + hentetid",  text: "Takk for bestillingen! Estimert hentetid {time}. – KØL Grill & Pizza" },
+    ];
+
+    function smsHref(phone, body) {
+      if (!phone) return "#";
+      const digits = phone.replace(/\D/g, "");
+      const target = digits.startsWith("47") ? `+${digits}` : `+47${digits}`;
+      return `sms:${target}?&body=${encodeURIComponent(body)}`;
+    }
+
+    function formatTemplateText(t, data) {
+      const timeText = new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      return t.replace("{time}", timeText);
+    }
+
+    function setupSmsTools(data) {
+      const sel = document.getElementById(`sms-template-${data.id}`);
+      const btn = document.getElementById(`sms-send-${data.id}`);
+      if (!sel || !btn) return;
+
+      // kalan süreye göre makul varsayılan
+      try {
+        const diffMs = new Date(data.fulfill_at) - new Date();
+        const defaultId = diffMs <= 0 ? "ready" : (diffMs <= 5*60*1000 ? "5min" : "10min");
+        sel.value = defaultId;
+      } catch {}
+
+      const updateHref = () => {
+        const tpl = SMS_TEMPLATES.find(x => x.id === sel.value) || SMS_TEMPLATES[0];
+        const text = formatTemplateText(tpl.text, data);
+        btn.setAttribute("href", smsHref(data.client_phone, text));
+      };
+
+      sel.addEventListener("change", updateHref);
+      updateHref();
+    }
+
+    /* ===========================
+       MEVCUT KOD
+       =========================== */
     function countdownString(futureTime) {
       const now = new Date();
       const target = new Date(futureTime);
@@ -190,16 +218,30 @@
           </div>
         </div>
         <div class="products" id="products-${data.id}"></div>
+
+        <!-- SMS Araçları (YENİ): ürünlerin altı, toplamın üstü -->
+        <div class="sms-tools">
+          <select id="sms-template-${data.id}" aria-label="SMS-mal">
+            ${SMS_TEMPLATES.map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+          </select>
+          <a id="sms-send-${data.id}" class="sms-send" href="#">📩 Send SMS</a>
+        </div>
+
         <div class="total" id="total-${data.id}"><span class="emoji-label">💳</span> Total: ${data.total_price} NOK</div>
       `;
       return div;
     }
 
     function updateReceiptContent(el, data, pizzaTotal = null) {
-      document.getElementById(`badge-${data.id}`).textContent = `${Math.round((new Date(data.fulfill_at) - new Date(data.accepted_at)) / 60000)} min`;
-      document.getElementById(`pickup-${data.id}`).textContent = `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-      document.getElementById(`pizza-${data.id}`).innerHTML = pizzaTotal !== null ? `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>` : '';
-      document.getElementById(`total-${data.id}`).innerHTML = `<span class="emoji-label">💳</span> Total: ${data.total_price} NOK`;
+      document.getElementById(`badge-${data.id}`).textContent =
+        `${Math.round((new Date(data.fulfill_at) - new Date(data.accepted_at)) / 60000)} min`;
+      document.getElementById(`pickup-${data.id}`).textContent =
+        `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      document.getElementById(`pizza-${data.id}`).innerHTML =
+        pizzaTotal !== null ? `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>` : '';
+      document.getElementById(`total-${data.id}`).innerHTML =
+        `<span class="emoji-label">💳</span> Total: ${data.total_price} NOK`;
+
       const prodContainer = document.getElementById(`products-${data.id}`);
       prodContainer.innerHTML = data.items.map(item => `
         <div class="product-box">
@@ -245,15 +287,19 @@
     async function renderOrUpdateReceipt(index) {
       const data = await fetchOrder(index);
       if (!data) return;
+
       const pizzaTotal = await fetchPizzaTotal(data.client_phone);
       ordersMap.set(data.id.toString(), data);
+
       const existing = document.querySelector(`[data-id='${data.id}']`);
       if (existing) {
         updateReceiptContent(existing, data, pizzaTotal);
+        setupSmsTools(data); // YENİ: güncellenen kartta da SMS href’ini yenile
       } else {
         const dom = buildReceiptDOM(data, pizzaTotal);
         receiptsContainer.appendChild(dom);
         updateReceiptContent(dom, data, pizzaTotal);
+        setupSmsTools(data); // YENİ: ilk kurulum
       }
     }
 
