@@ -82,15 +82,13 @@
     const searchInput = document.getElementById('searchInput');
 
     /* ===========================
-       SMS ŞABLONLARI + YARDIMCILAR
+       SMS ŞABLONLARI + YARDIMCILAR (yalnızca isim)
        =========================== */
     const SMS_TEMPLATES = [
-      { id: "ready",     label: "Klar – hent nå",   text: "Bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
-      { id: "10min",     label: "Klar om 10 min",   text: "Bestillingen din er klar om ca. 10 minutter. Velkommen! – KØL Grill & Pizza" },
-      { id: "5min",      label: "Klar om 5 min",    text: "Bestillingen din er klar om ca. 5 minutter. – KØL Grill & Pizza" },
-      { id: "delay10",   label: "Forsinket +10",    text: "Beklager forsinkelsen. Bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
-      { id: "remind",    label: "Hente-påminnelse", text: "Vi har maten din klar. Gi oss et hint om du er på vei. – KØL Grill & Pizza" },
-      { id: "thanks",    label: "Takk + hentetid",  text: "Takk for bestillingen! Estimert hentetid {time}. – KØL Grill & Pizza" },
+      { id: "ready",   label: "Klar – hent nå",   text: "Hei {first}, bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
+      { id: "10min",   label: "Klar om 10 min",   text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. Velkommen! – KØL Grill & Pizza" },
+      { id: "5min",    label: "Klar om 15 min",    text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
+      { id: "remind",  label: "Hente-påminnelse", text: "Hei {first}, vi har maten din klar. Gi oss et hint om du er på vei. – KØL Grill & Pizza" },
     ];
 
     function smsHref(phone, body) {
@@ -100,13 +98,30 @@
       return `sms:${target}?&body=${encodeURIComponent(body)}`;
     }
 
-    // Mesajı "Hei <isim>, ..." ile başlatır; {time} varsa doldurur.
+    // {first} ve {time} yer tutucularını doldurur. İsim yoksa "Hei," yapar.
     function formatTemplateText(t, data) {
-      const timeText = new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const firstNameRaw = (data.client_first_name || "").trim();
-      const firstName = firstNameRaw.split(/\s+/)[0]; // ilk kelime
-      const greeting = firstName ? `Hei ${firstName}, ` : `Hei, `;
-      return (greeting + t.replace("{time}", timeText)).trim();
+      const timeText = new Date(data.fulfill_at)
+        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const first = ((data.client_first_name || "").trim().split(/\s+/)[0]) || "";
+
+      // İlk olarak, isim yoksa "Hei {first}," kalıbını "Hei," yap
+      let text = t;
+      if (!first) {
+        text = text.replace("Hei {first},", "Hei,");
+      }
+
+      let msg = text
+        .replaceAll("{time}", timeText)
+        .replaceAll("{first}", first);
+
+      // Temizlik: "Hei ,", çift boşluk vb.
+      msg = msg
+        .replace(/Hei\s*,/g, "Hei,")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
+      return msg;
     }
 
     function setupSmsTools(data) {
@@ -114,7 +129,7 @@
       const btn = document.getElementById(`sms-send-${data.id}`);
       if (!sel || !btn) return;
 
-      // kalan süreye göre varsayılan
+      // kalan süreye göre makul varsayılan
       try {
         const diffMs = new Date(data.fulfill_at) - new Date();
         const defaultId = diffMs <= 0 ? "ready" : (diffMs <= 5*60*1000 ? "5min" : "10min");
