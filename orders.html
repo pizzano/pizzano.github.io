@@ -19,71 +19,34 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
-      text-align: center;
-      color: #1f2937;
-      font-size: 1.8rem;
-    }
+    h1 { text-align: center; color: #1f2937; font-size: 1.8rem; }
     #searchInput {
-      display: block;
-      margin: 0 auto 20px auto;
-      padding: 10px 15px;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      width: 300px;
+      display: block; margin: 0 auto 20px auto; padding: 10px 15px;
+      font-size: 1rem; border-radius: 8px; border: 1px solid var(--border); width: 300px;
     }
     .receipt-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 35px;
-      margin-top: 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 35px; margin-top: 20px;
     }
     .receipt {
-      background: white;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-      border: 1px solid var(--border);
-      justify-content: space-around;
+      background: white; border-radius: 18px; padding: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06); transition: all 0.3s ease;
+      display: flex; flex-direction: column; gap: 12px; position: relative;
+      border: 1px solid var(--border); justify-content: space-around;
     }
     .receipt:hover { transform: translateY(-4px); }
-    .customer-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+    .customer-info { display: flex; justify-content: space-between; align-items: flex-start; }
     .left-info { display: flex; flex-direction: column; gap: 6px; }
-    .right-info {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
-    }
+    .right-info { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
     .info-text { margin: 2px 0; color: var(--gray-dark); font-size: .9rem; }
-    .info-text a {
-      color: var(--gray-dark);
-      text-decoration: none;
-      display: inline-block;
-      padding: 6px 0;
-    }
+    .info-text a { color: var(--gray-dark); text-decoration: none; display: inline-block; padding: 6px 0; }
     .info-text a:hover { text-decoration: underline; }
-    .product-box {
-      background: var(--gray-light);
-      padding: 10px;
-      margin: 6px 0;
-    }
-    .product-box strong {
-      font-size: 1rem;
-      display: block;
-      margin-bottom: 2px;
-    }
+    .product-box { background: var(--gray-light); padding: 10px; margin: 6px 0; }
+    .product-box strong { font-size: 1rem; display: block; margin-bottom: 2px; }
     .product-detail { font-size: 0.85rem; color: #6b7280; padding-left: 10px; }
     .instruction-text {
-      font-size: 0.85rem; color: #000000;
-      padding: 6px 12px; background: #fef08a; margin-top: 6px; border-radius: 8px;
+      font-size: 0.85rem; color: #000000; padding: 6px 12px; background: #fef08a;
+      margin-top: 6px; border-radius: 8px;
     }
     .total {
       font-size: 1.1rem; font-weight: 600; text-align: right; color: #111827;
@@ -97,27 +60,15 @@
     .emoji-label { font-size: 1.1rem; margin-right: 6px; }
     .total .emoji-label { font-size: 1.2rem; }
 
-    /* --- SMS araçları (YENİ) --- */
+    /* SMS araçları */
     .sms-tools {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 6px;
-      flex-wrap: wrap;
+      display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap;
     }
-    .sms-tools select,
-    .sms-tools a.sms-send {
-      font-size: 0.9rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      text-decoration: none;
+    .sms-tools select, .sms-tools a.sms-send {
+      font-size: 0.9rem; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; text-decoration: none;
     }
-    .sms-tools a.sms-send {
-      background: var(--green);
-      color: #fff;
-      border: none;
-    }
+    .sms-tools a.sms-send { background: var(--green); color: #fff; border: none; }
   </style>
 </head>
 <body>
@@ -131,12 +82,13 @@
     const searchInput = document.getElementById('searchInput');
 
     /* ===========================
-       SMS ŞABLONLARI + YARDIMCILAR (YENİ)
+       SMS ŞABLONLARI + YARDIMCILAR
        =========================== */
     const SMS_TEMPLATES = [
       { id: "ready",     label: "Klar – hent nå",   text: "Bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
       { id: "10min",     label: "Klar om 10 min",   text: "Bestillingen din er klar om ca. 10 minutter. Velkommen! – KØL Grill & Pizza" },
-      { id: "5min",      label: "Klar om 15 min",    text: "Bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
+      { id: "5min",      label: "Klar om 5 min",    text: "Bestillingen din er klar om ca. 5 minutter. – KØL Grill & Pizza" },
+      { id: "delay10",   label: "Forsinket +10",    text: "Beklager forsinkelsen. Bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
       { id: "remind",    label: "Hente-påminnelse", text: "Vi har maten din klar. Gi oss et hint om du er på vei. – KØL Grill & Pizza" },
       { id: "thanks",    label: "Takk + hentetid",  text: "Takk for bestillingen! Estimert hentetid {time}. – KØL Grill & Pizza" },
     ];
@@ -148,9 +100,13 @@
       return `sms:${target}?&body=${encodeURIComponent(body)}`;
     }
 
+    // Mesajı "Hei <isim>, ..." ile başlatır; {time} varsa doldurur.
     function formatTemplateText(t, data) {
       const timeText = new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      return t.replace("{time}", timeText);
+      const firstNameRaw = (data.client_first_name || "").trim();
+      const firstName = firstNameRaw.split(/\s+/)[0]; // ilk kelime
+      const greeting = firstName ? `Hei ${firstName}, ` : `Hei, `;
+      return (greeting + t.replace("{time}", timeText)).trim();
     }
 
     function setupSmsTools(data) {
@@ -158,7 +114,7 @@
       const btn = document.getElementById(`sms-send-${data.id}`);
       if (!sel || !btn) return;
 
-      // kalan süreye göre makul varsayılan
+      // kalan süreye göre varsayılan
       try {
         const diffMs = new Date(data.fulfill_at) - new Date();
         const defaultId = diffMs <= 0 ? "ready" : (diffMs <= 5*60*1000 ? "5min" : "10min");
@@ -218,7 +174,7 @@
         </div>
         <div class="products" id="products-${data.id}"></div>
 
-        <!-- SMS Araçları (YENİ): ürünlerin altı, toplamın üstü -->
+        <!-- SMS Araçları: ürünlerin altı, toplamın üstü -->
         <div class="sms-tools">
           <select id="sms-template-${data.id}" aria-label="SMS-mal">
             ${SMS_TEMPLATES.map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
@@ -293,12 +249,12 @@
       const existing = document.querySelector(`[data-id='${data.id}']`);
       if (existing) {
         updateReceiptContent(existing, data, pizzaTotal);
-        setupSmsTools(data); // YENİ: güncellenen kartta da SMS href’ini yenile
+        setupSmsTools(data); // SMS href’ini güncelle
       } else {
         const dom = buildReceiptDOM(data, pizzaTotal);
         receiptsContainer.appendChild(dom);
         updateReceiptContent(dom, data, pizzaTotal);
-        setupSmsTools(data); // YENİ: ilk kurulum
+        setupSmsTools(data); // ilk kurulum
       }
     }
 
