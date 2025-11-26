@@ -1,5 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    /* IFRAME TAM EKRAN */
+    #fbframe {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        border: none;
+        z-index: 1;
+    }
+</style>
+
+</head>
+
+<body>
+
+<!-- FOODBOOKING iframe -->
 <iframe 
   id="fbframe"
   src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
-  sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock"
-></iframe>
+  sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock">
+</iframe>
+
+<script>
+// iframe içi DOM hazır olana kadar bekleyip MAYMUN yazdırma
+function changeTitle() {
+    const iframe = document.getElementById("fbframe");
+    const doc = iframe.contentDocument;
+
+    if (!doc) return setTimeout(changeTitle, 200);
+
+    const h1 = doc.querySelector(".fb-header-name-container");
+
+    if (!h1) {
+        return setTimeout(changeTitle, 200);
+    }
+
+    // BAŞLIĞI DEĞİŞTİR
+    h1.textContent = "MAYMUN";
+}
+
+changeTitle();
+</script>
+
+</body>
+</html>
