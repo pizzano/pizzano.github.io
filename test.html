@@ -19,11 +19,18 @@
 </head>
 <body>
 
-<iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" allow="fullscreen"></iframe>
+<iframe 
+    src="https://www.foodbooking.com/api/fb/_q_y_w_r6" 
+    allow="fullscreen"
+    sandbox="allow-same-origin allow-scripts allow-forms"
+    id="fbframe">
+</iframe>
 
+<script>
 (function() {
     'use strict';
 
+    // BAŞLIK DEĞİŞTİRME
     function replaceTitle() {
         const el = document.querySelector("h1.fb-header-name-container");
 
@@ -31,13 +38,41 @@
             console.log("✔ Başlık bulundu, değiştiriliyor…");
             el.textContent = "MAYMUN";
         } else {
-            // Başlık henüz yüklenmemişse tekrar dene
             setTimeout(replaceTitle, 300);
         }
     }
 
     replaceTitle(); 
 
+    // IFRAME DOM ERİŞİMİ (SANDBOX İLE MÜMKÜN)
+    function inspectIframe() {
+        const iframe = document.getElementById("fbframe");
+        if (!iframe) return console.log("Iframe bulunamadı");
+
+        const doc = iframe.contentDocument;
+        if (!doc) {
+            console.log("iframe henüz yüklenmedi...");
+            return setTimeout(inspectIframe, 300);
+        }
+
+        console.log("✔ IFRAME DOM:", doc);
+        console.log("✔ BODY HTML:", doc.body.innerHTML);
+
+        // ÖRNEK: Menü fotoğrafını sil
+        const pic = doc.querySelector(".menu-picture");
+        if (pic) {
+            pic.remove();
+            console.log("✔ Fotoğraf silindi");
+        } else {
+            console.log("Fotoğraf henüz yüklenmedi, tekrar deniyorum...");
+            setTimeout(inspectIframe, 300);
+        }
+    }
+
+    inspectIframe();
+
+})();
+</script>
 
 </body>
 </html>
