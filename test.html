@@ -1,78 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>FoodBooking Iframe</title>
+<title>Bestill</title>
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        overflow: hidden;
-    }
-    iframe {
-        width: 100vw;
-        height: 100vh;
-        border: none;
-    }
+body { margin:0; padding:0; }
+iframe {
+    width:100vw;
+    height:100vh;
+    border:none;
+}
 </style>
 </head>
+
 <body>
 
 <iframe 
-    src="https://www.foodbooking.com/api/fb/_q_y_w_r6" 
-    allow="fullscreen"
+    id="fbframe"
+    src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
     sandbox="allow-same-origin allow-scripts allow-forms"
-    id="fbframe">
-</iframe>
+></iframe>
 
-<script>
-(function() {
-    'use strict';
-
-    // BAŞLIK DEĞİŞTİRME
-    function replaceTitle() {
-        const el = document.querySelector("h1.fb-header-name-container");
-
-        if (el) {
-            console.log("✔ Başlık bulundu, değiştiriliyor…");
-            el.textContent = "MAYMUN";
-        } else {
-            setTimeout(replaceTitle, 300);
-        }
-    }
-
-    replaceTitle(); 
-
-    // IFRAME DOM ERİŞİMİ (SANDBOX İLE MÜMKÜN)
-    function inspectIframe() {
-        const iframe = document.getElementById("fbframe");
-        if (!iframe) return console.log("Iframe bulunamadı");
-
-        const doc = iframe.contentDocument;
-        if (!doc) {
-            console.log("iframe henüz yüklenmedi...");
-            return setTimeout(inspectIframe, 300);
-        }
-
-        console.log("✔ IFRAME DOM:", doc);
-        console.log("✔ BODY HTML:", doc.body.innerHTML);
-
-        // ÖRNEK: Menü fotoğrafını sil
-        const pic = doc.querySelector(".menu-picture");
-        if (pic) {
-            pic.remove();
-            console.log("✔ Fotoğraf silindi");
-        } else {
-            console.log("Fotoğraf henüz yüklenmedi, tekrar deniyorum...");
-            setTimeout(inspectIframe, 300);
-        }
-    }
-
-    inspectIframe();
-
-})();
-</script>
+<script src="main.js"></script>
 
 </body>
 </html>
