@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -36,29 +37,8 @@
 <script>
 function changeH1() {
     const iframe = document.getElementById("fbframe");
-    const doc = iframe?.contentDocument;
-
-    if (!doc) return setTimeout(changeH1, 150);
-
-    // XPath ile h1 bulma
-    const h1 = doc.evaluate(
-        '//*[@id="foodbooking-focus-wrapper"]/app-header/div/div[1]/div/h1',
-        doc,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-    ).singleNodeValue;
-
-    if (!h1) return setTimeout(changeH1, 150);
-
-    // Yeni H1 oluştur (Angular kontrolünü kırıyoruz)
-    const newH1 = h1.cloneNode(true);
-    newH1.textContent = "MAYMUN";
-
-    // Angular'ın kontrol ettiği node'u yok ediyoruz
-    h1.parentNode.replaceChild(newH1, h1);
-
-    console.log("⭐ H1 değiştirildi & Angular bağlantısı kesildi");
+    console.log(iframe)
+    console.log(this)
 }
 
 changeH1();
