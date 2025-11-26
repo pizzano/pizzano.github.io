@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FoodBooking Iframe</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+    }
+    iframe {
+        width: 100vw;
+        height: 100vh;
+        border: none;
+    }
+</style>
+</head>
+<body>
+
+<iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" allow="fullscreen"></iframe>
+
+(function() {
+    'use strict';
+
+    function replaceTitle() {
+        const el = document.querySelector("h1.fb-header-name-container");
+
+        if (el) {
+            console.log("✔ Başlık bulundu, değiştiriliyor…");
+            el.textContent = "MAYMUN";
+        } else {
+            // Başlık henüz yüklenmemişse tekrar dene
+            setTimeout(replaceTitle, 300);
+        }
+    }
+
+    replaceTitle(); 
+
+
+</body>
+</html>
