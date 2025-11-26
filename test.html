@@ -1,22 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <script>
-        let basePath = 'https://www.foodbooking.com';
-        let restaurantUID = 'e51ac751-170e-403c-821f-d8d16c3695a8';
-        let companyUID = 'f3087e8a-78d8-4e12-9a48-4f5666848f05';
-        let reservationParam = '';
-
-        window.location.href = `${basePath}/ordering/?${reservationParam}facebook=true&restaurant_uid=${restaurantUID}&company_uid=${companyUID}`;
-    </script>
-
-   
-</head>
-
-<body>
-    Sharing endpoint.
-</body>
-
-</html>
+<iframe 
+  id="fbframe"
+  src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
+  sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock"
+></iframe>
