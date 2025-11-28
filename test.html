@@ -2,13 +2,36 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    #fbframe {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        border: none;
+        z-index: 1;
+    }
+</style>
 </head>
+
 <body>
 
-<iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
+<iframe 
+    id="fbframe"
+    src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
+    sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock">
+</iframe>
 
 <script>
-const interval = setInterval(() => {
+// 2 saniye sonra çalışacak
+setTimeout(() => {
 
     // 1) Başlığı MAYMUN yap
     document.querySelectorAll(".fb-header-name, .fb-header-name-container, h1")
@@ -18,11 +41,6 @@ const interval = setInterval(() => {
     [...document.querySelectorAll("*")]
         .filter(el => (el.innerText || "").trim().match(/^\d+\-\s*/))
         .forEach(el => el.innerText = "xxx");
-
-    // FoodBooking DOM geldiğinde durdur
-    if (document.querySelector(".fb-header-name")) {
-        clearInterval(interval);
-    }
 
 }, 2000);
 </script>
