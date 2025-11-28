@@ -21,53 +21,108 @@
     }
 
     #searchInput {
-      display: block; margin: 0 auto 20px auto;
-      padding: 10px 15px; width: 300px;
-      font-size: 1rem; border-radius: 8px;
+      display: block;
+      margin: 0 auto 20px auto;
+      padding: 10px 15px;
+      width: 300px;
+      font-size: 1rem;
+      border-radius: 8px;
       border: 1px solid var(--border);
     }
 
     .receipt-grid {
-      display: grid; gap: 35px;
+      display: grid;
+      gap: 35px;
       grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     }
 
     .receipt {
-      background: white; padding: 20px;
-      border-radius: 18px; border: 1px solid var(--border);
+      background: white;
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
       box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-      display: flex; flex-direction: column; gap: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .info-text { color: var(--gray-dark); font-size: .9rem; }
     .product-box { background: var(--gray-light); padding: 10px; margin: 6px 0; }
 
     .time-badge {
-      background: var(--green); color:white;
-      padding: 5px 12px; border-radius:999px;
-      font-weight:bold; font-size: .9rem;
+      background: var(--green);
+      color:white;
+      padding: 5px 12px;
+      border-radius:999px;
+      font-weight:bold;
+      font-size: .9rem;
     }
 
     .countdown { color:#ef4444; font-size:.85rem; font-weight:bold; }
 
-    .sms-tools {
-      display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;
+    .delay-warning {
+      margin-top: 4px;
+      background: #fef08a;
+      padding: 6px 10px;
+      border-radius: 8px;
+      color:#854d0e;
+      font-weight:600;
+      font-size:.85rem;
+      display:none;
     }
+
+    .reset-container {
+      cursor:pointer;
+      font-size:.85rem;
+      color:#1d4ed8;
+      margin-top:5px;
+      text-decoration:underline;
+    }
+
+    .reset-panel {
+      background:#fef08a;
+      margin-top:4px;
+      padding:8px 10px;
+      border-radius:10px;
+      display:none;
+    }
+
+    .reset-btn {
+      background:#fbbf24;
+      padding:6px 12px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .sms-tools {
+      display:flex;
+      gap:8px;
+      margin-top:6px;
+      flex-wrap:wrap;
+    }
+
     .sms-tools a {
-      background: var(--green); color:white;
-      padding:8px 12px; border-radius:8px;
-      text-decoration:none; font-size:.9rem;
+      background: var(--green);
+      color:white;
+      padding:8px 12px;
+      border-radius:8px;
+      text-decoration:none;
+      font-size:.9rem;
     }
   </style>
 </head>
+
 <body>
 
 <input type="text" id="searchInput" placeholder="Søk navn...">
 <div class="receipt-grid" id="receipts"></div>
 
-<!-- ============================= -->
-<!-- 🔥 FIREBASE MODULE IMPORT     -->
-<!-- ============================= -->
+<!-- ========================= -->
+<!-- 🔥 FIREBASE IMPORT        -->
+<!-- ========================= -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -78,41 +133,56 @@
 
   window.fbApp = initializeApp(firebaseConfig);
   window.fbDb = getDatabase(window.fbApp);
-  window.fbSet = set;
   window.fbRef = ref;
+  window.fbSet = set;
 </script>
 
 <script>
-/* ============================================================
-   KONST – HARİTA
-============================================================ */
+/* ================================
+   KONST
+================================ */
 const MAX_ORDERS = 49;
+const receiptsContainer = document.getElementById("receipts");
 const ordersMap = new Map();
-const receiptsContainer = document.getElementById('receipts');
 
-/* ============================================================
+/* ===============================
    SMS ŞABLONLARI
-============================================================ */
+=============================== */
 const SMS_TEMPLATES = [
-  { id: "ready", label: "Klar – hent nå", text: "Hei {first}, bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
+  { id: "ready", label: "Klar – hent nå", text: "Hei {first}, bestillingen din er klar for henting. Velkommen! – KØL Grill & Pizza" },
   { id: "10min", label: "Klar om 10 min", text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
   { id: "5min", label: "Klar om 15 min", text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
-  { id: "remind", label: "Hente–påminnelse", text: "Hei {first}, vi har maten din klar. Gi oss beskjed om du er på vei. – KØL Grill & Pizza" }
+  { id: "remind", label: "Hente–påminnelse", text: "Hei {first}, vi har maten klar. Gi beskjed om du er på vei. – KØL Grill & Pizza" }
 ];
 
-/* ============================================================
-   HELPER FONKSİYONLAR
-============================================================ */
+/* ===============================
+   HELPER
+=============================== */
 function smsHref(phone, body) {
   const digits = phone.replace(/\D/g,"");
   return `sms:+47${digits}?&body=${encodeURIComponent(body)}`;
 }
 
+
 function countdownString(futureTime) {
   const now = new Date();
   const diff = new Date(futureTime) - now;
+
   if (diff <= 0) return "⏳ Klar!";
-  return `⏳ ${Math.floor(diff/60000)}m ${(Math.floor(diff/1000)%60)}s igjen`;
+  return `⏳ ${Math.floor(diff/60000)}m ${Math.floor((diff/1000)%60)}s igjen`;
+}
+
+function getDelayString(futureTime) {
+  const now = new Date();
+  let diff = now - new Date(futureTime);
+  if (diff <= 0) return "";
+
+  let m = Math.floor(diff / 60000);
+  let s = Math.floor((diff / 1000) % 60);
+
+  if (m > 60) return "";
+
+  return `⚠️ Forsinket: +${m}m ${s}s`;
 }
 
 function extractDetails(options) {
@@ -122,50 +192,48 @@ function extractDetails(options) {
   ).join("");
 }
 
-/* ============================================================
-   FIREBASE'E YAZMA
-============================================================ */
-function savePizzaTotalToFirebase(phone, value) {
-  if (!phone || !window.fbDb) return;
-
+/* ===============================
+   FIREBASE WRITE
+=============================== */
+function savePizzaTotalToFirebase(phone, total) {
   const digits = phone.replace("+47","").replace(/\D/g,"");
   const path = `${digits}/total`;
 
-  window.fbSet(window.fbRef(window.fbDb, path), value)
-    .then(()=> console.log("🔥 Firebase yazıldı:", value))
+  window.fbSet(window.fbRef(window.fbDb, path), total)
+    .then(() => console.log("🔥 RESET Firebase kaydedildi:", total))
     .catch(err => console.error("❌ Firebase hata:", err));
 }
 
-/* ============================================================
-   RECEIPT HTML OLUŞTURMA
-============================================================ */
-function buildReceiptDOM(data, pizzaTotal = 0) {
+/* ===============================
+   RECEIPT DOM
+=============================== */
+function buildReceiptDOM(data, pizzaTotal) {
   const div = document.createElement("div");
   div.className = "receipt";
   div.setAttribute("data-id", data.id);
 
   div.innerHTML = `
     <div class="customer-info" style="display:flex; justify-content:space-between;">
-      <div class="left-info">
+      <div>
         <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
         <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
         <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p>
         <p class="info-text">Total ordre: <strong>${data.client_order_count}</strong></p>
       </div>
 
-      <div class="right-info" style="text-align:right;">
+      <div style="text-align:right;">
         <div class="time-badge" id="badge-${data.id}"></div>
         <p class="countdown" id="countdown-${data.id}"></p>
-        <p class="info-text" id="pickup-${data.id}"></p>
+        <div class="delay-warning" id="delay-${data.id}"></div>
 
         <p class="info-text" id="pizza-${data.id}">
           🍕 Total stor pizza: <strong>${pizzaTotal}</strong>
         </p>
 
-        <div style="display:flex; gap:6px; justify-content:flex-end;">
-          <button data-action="minus" data-pid="${data.id}">➖</button>
-          <button data-action="plus" data-pid="${data.id}">➕</button>
-          <button data-action="reset" data-pid="${data.id}">🔄</button>
+        <div class="reset-container" data-id="${data.id}">RESET</div>
+
+        <div class="reset-panel" id="reset-panel-${data.id}">
+          🟨 <button class="reset-btn" data-reset="${data.id}">🔄 SIFIRLA</button>
         </div>
       </div>
     </div>
@@ -181,23 +249,29 @@ function buildReceiptDOM(data, pizzaTotal = 0) {
 
     <div class="total">💳 Total: ${data.total_price} NOK</div>
   `;
-
   return div;
 }
 
-/* ============================================================
-   RECEIPT İÇERİK GÜNCELLEME
-============================================================ */
+/* ===============================
+   RECEIPT UPDATE
+=============================== */
 function updateReceiptContent(el, data, pizzaTotal) {
+
   document.getElementById(`badge-${data.id}`).textContent =
     `${Math.round((new Date(data.fulfill_at)-new Date(data.accepted_at))/60000)} min`;
 
-  document.getElementById(`pickup-${data.id}`).textContent =
-    `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
+  document.getElementById(`countdown-${data.id}`).textContent =
+    countdownString(data.fulfill_at);
+
+  let delay = getDelayString(data.fulfill_at);
+  const delayEl = document.getElementById(`delay-${data.id}`);
+  delayEl.style.display = delay ? "block" : "none";
+  delayEl.textContent = delay;
 
   document.getElementById(`pizza-${data.id}`).innerHTML =
     `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>`;
 
+  /* Ürünler */
   document.getElementById(`products-${data.id}`).innerHTML =
     data.items.map(item => `
       <div class="product-box">
@@ -208,50 +282,56 @@ function updateReceiptContent(el, data, pizzaTotal) {
       </div>
     `).join("");
 
-  /* SMS Update */
+  /* SMS */
   const sel = document.getElementById(`sms-template-${data.id}`);
   const btn = document.getElementById(`sms-send-${data.id}`);
 
   function updateSMS() {
     const tpl = SMS_TEMPLATES.find(x => x.id === sel.value);
-    const first = data.client_first_name.trim().split(" ")[0];
-    const msg = tpl.text.replace("{first}", first);
-    btn.href = smsHref(data.client_phone, msg);
+    const first = data.client_first_name.split(" ")[0];
+    btn.href = smsHref(data.client_phone, tpl.text.replace("{first}", first));
   }
 
   sel.onchange = updateSMS;
   updateSMS();
 }
 
-/* ============================================================
-   PIZZA BUTONLARI ( + / – / RESET ) + FIREBASE YAZ
-============================================================ */
+/* ===============================
+   RESET PANEL AÇ/KAPAT ve SIFIRLA
+=============================== */
 document.addEventListener("click", (e) => {
-  if (!e.target.dataset?.action) return;
+  
+  /* RESET yazısına tıklayınca panel açılıyor */
+  if (e.target.classList.contains("reset-container")) {
+    const id = e.target.dataset.id;
+    const panel = document.getElementById(`reset-panel-${id}`);
 
-  const action = e.target.dataset.action;
-  const id = e.target.dataset.pid;
+    panel.style.display = panel.style.display === "block" ? "none" : "block";
+  }
 
-  const data = ordersMap.get(id);
-  if (!data) return;
+  /* SIFIRLA butonu */
+  if (e.target.dataset.reset) {
+    const id = e.target.dataset.reset;
+    const data = ordersMap.get(id);
+    if (!data) return;
 
-  const phone = data.client_phone;
-  const el = document.getElementById(`pizza-${id}`);
+    const phone = data.client_phone;
 
-  let current = parseInt(el.textContent.match(/\d+/)?.[0] || "0");
+    /* ekrandaki değeri sıfırla */
+    const pizzaEl = document.getElementById(`pizza-${id}`);
+    pizzaEl.innerHTML = `🍕 Total stor pizza: <strong>0</strong>`;
 
-  if (action === "plus") current++;
-  if (action === "minus") current = Math.max(0, current - 1);
-  if (action === "reset") current = 0;
+    /* Firebase’e yaz */
+    savePizzaTotalToFirebase(phone, 0);
 
-  el.innerHTML = `🍕 Total stor pizza: <strong>${current}</strong>`;
-
-  savePizzaTotalToFirebase(phone, current);
+    /* paneli gizle */
+    document.getElementById(`reset-panel-${id}`).style.display = "none";
+  }
 });
 
-/* ============================================================
-   FIREBASE FETCH
-============================================================ */
+/* ===============================
+   FETCH
+=============================== */
 async function fetchOrder(i) {
   const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`;
   try {
@@ -270,15 +350,14 @@ async function fetchPizzaTotal(phone) {
   } catch { return 0; }
 }
 
-/* ============================================================
-   RENDER+UPDATE LOOP
-============================================================ */
+/* ===============================
+   RENDER
+=============================== */
 async function renderOrUpdateReceipt(i) {
   const data = await fetchOrder(i);
   if (!data) return;
 
   const pizzaTotal = await fetchPizzaTotal(data.client_phone);
-
   ordersMap.set(data.id.toString(), data);
 
   const old = document.querySelector(`[data-id="${data.id}"]`);
@@ -291,21 +370,34 @@ async function renderOrUpdateReceipt(i) {
   }
 }
 
+/* ===============================
+   LOOPS
+=============================== */
 async function periodicUpdate() {
   for (let i = 0; i < MAX_ORDERS; i++) {
     await renderOrUpdateReceipt(i);
   }
 }
-setInterval(periodicUpdate, 5000);
 periodicUpdate();
+setInterval(periodicUpdate, 5000);
 
+/* countdown + gecikme */
 setInterval(() => {
-  ordersMap.forEach((data,id) => {
-    const el = document.getElementById(`countdown-${id}`);
-    if (el) el.textContent = countdownString(data.fulfill_at);
+  ordersMap.forEach((data, id) => {
+    const c = document.getElementById(`countdown-${id}`);
+    const d = document.getElementById(`delay-${id}`);
+
+    if (c) c.textContent = countdownString(data.fulfill_at);
+
+    let delay = getDelayString(data.fulfill_at);
+    if (d) {
+      d.style.display = delay ? "block" : "none";
+      d.textContent = delay;
+    }
   });
 }, 1000);
 
+/* SEARCH */
 document.getElementById("searchInput").addEventListener("input", (e) => {
   const q = e.target.value.toLowerCase();
   document.querySelectorAll(".receipt").forEach(el => {
@@ -315,6 +407,7 @@ document.getElementById("searchInput").addEventListener("input", (e) => {
     el.style.order = fullname.includes(q) ? "0" : "999";
   });
 });
+
 </script>
 
 </body>
