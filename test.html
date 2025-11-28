@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -34,11 +35,15 @@
   sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock">
 </iframe>
 
-<p id="test"></p>
-
 <script>
-test.innerText = [...document.all][30];
-    console.log([...document.all]);
+function changeH1() {
+    const iframe = document.getElementById("fbframe");
+    console.log(iframe)
+    console.log(this)
+}
+
+changeH1();
+
 </script>
 
 </body>
