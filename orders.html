@@ -12,289 +12,310 @@
       --yellow: #fbbf24;
       --border: #e5e7eb;
     }
-    * { box-sizing: border-box; }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #326096b0;
       margin: 0;
       padding: 20px;
     }
-    h1 { text-align: center; color: #1f2937; font-size: 1.8rem; }
-    #searchInput {
-      display: block; margin: 0 auto 20px auto; padding: 10px 15px;
-      font-size: 1rem; border-radius: 8px; border: 1px solid var(--border); width: 300px;
-    }
-    .receipt-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 35px; margin-top: 20px;
-    }
-    .receipt {
-      background: white; border-radius: 18px; padding: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06); transition: all 0.3s ease;
-      display: flex; flex-direction: column; gap: 12px; position: relative;
-      border: 1px solid var(--border); justify-content: space-around;
-    }
-    .receipt:hover { transform: translateY(-4px); }
-    .customer-info { display: flex; justify-content: space-between; align-items: flex-start; }
-    .left-info { display: flex; flex-direction: column; gap: 6px; }
-    .right-info { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-    .info-text { margin: 2px 0; color: var(--gray-dark); font-size: .9rem; }
-    .info-text a { color: var(--gray-dark); text-decoration: none; display: inline-block; padding: 6px 0; }
-    .info-text a:hover { text-decoration: underline; }
-    .product-box { background: var(--gray-light); padding: 10px; margin: 6px 0; }
-    .product-box strong { font-size: 1rem; display: block; margin-bottom: 2px; }
-    .product-detail { font-size: 0.85rem; color: #6b7280; padding-left: 10px; }
-    .instruction-text {
-      font-size: 0.85rem; color: #000000; padding: 6px 12px; background: #fef08a;
-      margin-top: 6px; border-radius: 8px;
-    }
-    .total {
-      font-size: 1.1rem; font-weight: 600; text-align: right; color: #111827;
-      display: flex; justify-content: flex-end; align-items: center; gap: 6px;
-    }
-    .time-badge {
-      background: var(--green); color: white; padding: 5px 12px; border-radius: 999px;
-      font-size: 0.9rem; font-weight: bold;
-    }
-    .countdown { font-size: 0.85rem; font-weight: bold; color: #ef4444; }
-    .emoji-label { font-size: 1.1rem; margin-right: 6px; }
-    .total .emoji-label { font-size: 1.2rem; }
 
-    /* SMS araçları */
+    #searchInput {
+      display: block; margin: 0 auto 20px auto;
+      padding: 10px 15px; width: 300px;
+      font-size: 1rem; border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .receipt-grid {
+      display: grid; gap: 35px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+
+    .receipt {
+      background: white; padding: 20px;
+      border-radius: 18px; border: 1px solid var(--border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .info-text { color: var(--gray-dark); font-size: .9rem; }
+    .product-box { background: var(--gray-light); padding: 10px; margin: 6px 0; }
+
+    .time-badge {
+      background: var(--green); color:white;
+      padding: 5px 12px; border-radius:999px;
+      font-weight:bold; font-size: .9rem;
+    }
+
+    .countdown { color:#ef4444; font-size:.85rem; font-weight:bold; }
+
     .sms-tools {
-      display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap;
+      display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;
     }
-    .sms-tools select, .sms-tools a.sms-send {
-      font-size: 0.9rem; border: 1px solid var(--border); border-radius: 8px;
-      padding: 8px 10px; text-decoration: none;
+    .sms-tools a {
+      background: var(--green); color:white;
+      padding:8px 12px; border-radius:8px;
+      text-decoration:none; font-size:.9rem;
     }
-    .sms-tools a.sms-send { background: var(--green); color: #fff; border: none; }
   </style>
 </head>
 <body>
-  <input type="text" id="searchInput" placeholder="Søk navn...">
-  <div class="receipt-grid" id="receipts"></div>
 
-  <script>
-    const MAX_ORDERS = 49;
-    const ordersMap = new Map();
-    const receiptsContainer = document.getElementById('receipts');
-    const searchInput = document.getElementById('searchInput');
+<input type="text" id="searchInput" placeholder="Søk navn...">
+<div class="receipt-grid" id="receipts"></div>
 
-    /* ===========================
-       SMS ŞABLONLARI + YARDIMCILAR (yalnızca isim)
-       =========================== */
-    const SMS_TEMPLATES = [
-      { id: "ready",   label: "Klar – hent nå",   text: "Hei {first}, bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
-      { id: "10min",   label: "Klar om 10 min",   text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. Velkommen! – KØL Grill & Pizza" },
-      { id: "5min",    label: "Klar om 15 min",    text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
-      { id: "remind",  label: "Hente-påminnelse", text: "Hei {first}, vi har maten din klar. Gi oss et hint om du er på vei. – KØL Grill & Pizza" },
-    ];
+<!-- ============================= -->
+<!-- 🔥 FIREBASE MODULE IMPORT     -->
+<!-- ============================= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
-    function smsHref(phone, body) {
-      if (!phone) return "#";
-      const digits = phone.replace(/\D/g, "");
-      const target = digits.startsWith("47") ? `+${digits}` : `+47${digits}`;
-      return `sms:${target}?&body=${encodeURIComponent(body)}`;
-    }
+  const firebaseConfig = {
+    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+  };
 
-    // {first} ve {time} yer tutucularını doldurur. İsim yoksa "Hei," yapar.
-    function formatTemplateText(t, data) {
-      const timeText = new Date(data.fulfill_at)
-        .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  window.fbApp = initializeApp(firebaseConfig);
+  window.fbDb = getDatabase(window.fbApp);
+  window.fbSet = set;
+  window.fbRef = ref;
+</script>
 
-      const first = ((data.client_first_name || "").trim().split(/\s+/)[0]) || "";
+<script>
+/* ============================================================
+   KONST – HARİTA
+============================================================ */
+const MAX_ORDERS = 49;
+const ordersMap = new Map();
+const receiptsContainer = document.getElementById('receipts');
 
-      // İlk olarak, isim yoksa "Hei {first}," kalıbını "Hei," yap
-      let text = t;
-      if (!first) {
-        text = text.replace("Hei {first},", "Hei,");
-      }
+/* ============================================================
+   SMS ŞABLONLARI
+============================================================ */
+const SMS_TEMPLATES = [
+  { id: "ready", label: "Klar – hent nå", text: "Hei {first}, bestillingen din er klar for henting. Velkommen inn! – KØL Grill & Pizza" },
+  { id: "10min", label: "Klar om 10 min", text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
+  { id: "5min", label: "Klar om 15 min", text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
+  { id: "remind", label: "Hente–påminnelse", text: "Hei {first}, vi har maten din klar. Gi oss beskjed om du er på vei. – KØL Grill & Pizza" }
+];
 
-      let msg = text
-        .replaceAll("{time}", timeText)
-        .replaceAll("{first}", first);
+/* ============================================================
+   HELPER FONKSİYONLAR
+============================================================ */
+function smsHref(phone, body) {
+  const digits = phone.replace(/\D/g,"");
+  return `sms:+47${digits}?&body=${encodeURIComponent(body)}`;
+}
 
-      // Temizlik: "Hei ,", çift boşluk vb.
-      msg = msg
-        .replace(/Hei\s*,/g, "Hei,")
-        .replace(/\s{2,}/g, " ")
-        .trim();
+function countdownString(futureTime) {
+  const now = new Date();
+  const diff = new Date(futureTime) - now;
+  if (diff <= 0) return "⏳ Klar!";
+  return `⏳ ${Math.floor(diff/60000)}m ${(Math.floor(diff/1000)%60)}s igjen`;
+}
 
-      return msg;
-    }
+function extractDetails(options) {
+  if (!options) return "";
+  return options.map(o =>
+    `<div class="product-detail">• ${o.group_name.split(/[:;]/)[0]}: ${o.name}</div>`
+  ).join("");
+}
 
-    function setupSmsTools(data) {
-      const sel = document.getElementById(`sms-template-${data.id}`);
-      const btn = document.getElementById(`sms-send-${data.id}`);
-      if (!sel || !btn) return;
+/* ============================================================
+   FIREBASE'E YAZMA
+============================================================ */
+function savePizzaTotalToFirebase(phone, value) {
+  if (!phone || !window.fbDb) return;
 
-      // kalan süreye göre makul varsayılan
-      try {
-        const diffMs = new Date(data.fulfill_at) - new Date();
-        const defaultId = diffMs <= 0 ? "ready" : (diffMs <= 5*60*1000 ? "5min" : "10min");
-        sel.value = defaultId;
-      } catch {}
+  const digits = phone.replace("+47","").replace(/\D/g,"");
+  const path = `${digits}/total`;
 
-      const updateHref = () => {
-        const tpl = SMS_TEMPLATES.find(x => x.id === sel.value) || SMS_TEMPLATES[0];
-        const text = formatTemplateText(tpl.text, data);
-        btn.setAttribute("href", smsHref(data.client_phone, text));
-      };
+  window.fbSet(window.fbRef(window.fbDb, path), value)
+    .then(()=> console.log("🔥 Firebase yazıldı:", value))
+    .catch(err => console.error("❌ Firebase hata:", err));
+}
 
-      sel.addEventListener("change", updateHref);
-      updateHref();
-    }
+/* ============================================================
+   RECEIPT HTML OLUŞTURMA
+============================================================ */
+function buildReceiptDOM(data, pizzaTotal = 0) {
+  const div = document.createElement("div");
+  div.className = "receipt";
+  div.setAttribute("data-id", data.id);
 
-    /* ===========================
-       MEVCUT KOD
-       =========================== */
-    function countdownString(futureTime) {
-      const now = new Date();
-      const target = new Date(futureTime);
-      const diffMs = target - now;
-      if (diffMs <= 0) return '⏳ Klar!';
-      const mins = Math.floor(diffMs / 60000);
-      const secs = Math.floor((diffMs % 60000) / 1000);
-      return `⏳ ${mins}m ${secs}s igjen`;
-    }
+  div.innerHTML = `
+    <div class="customer-info" style="display:flex; justify-content:space-between;">
+      <div class="left-info">
+        <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
+        <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
+        <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p>
+        <p class="info-text">Total ordre: <strong>${data.client_order_count}</strong></p>
+      </div>
 
-    function extractDetails(options) {
-      if (!options) return '';
-      return options.map(opt => {
-        const label = opt.group_name.split(/[:;]/)[0];
-        return `<div class='product-detail'>• ${label}: ${opt.name}</div>`;
-      }).join('');
-    }
+      <div class="right-info" style="text-align:right;">
+        <div class="time-badge" id="badge-${data.id}"></div>
+        <p class="countdown" id="countdown-${data.id}"></p>
+        <p class="info-text" id="pickup-${data.id}"></p>
 
-    function buildReceiptDOM(data, pizzaTotal = null) {
-      const div = document.createElement('div');
-      div.className = 'receipt';
-      div.setAttribute('data-id', data.id);
-      div.setAttribute('data-name', `${data.client_first_name.toLowerCase()} ${data.client_last_name.toLowerCase()}`);
-      div.innerHTML = `
-        <div class="customer-info">
-          <div class="left-info">
-            <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
-            <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
-            <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p> <p class="info-text">Total ordre: <strong>${data.client_order_count}</strong></p><br>
-          </div>
-          <div class="right-info">
-            <div class="time-badge" id="badge-${data.id}">0 min</div>
-            <p class="countdown" id="countdown-${data.id}"></p>
-            <p class="info-text" id="pickup-${data.id}"></p>
-            <p class="info-text" id="orders-${data.id}"></p>
-            <p class="info-text" id="pizza-${data.id}"></p>
-          </div>
+        <p class="info-text" id="pizza-${data.id}">
+          🍕 Total stor pizza: <strong>${pizzaTotal}</strong>
+        </p>
+
+        <div style="display:flex; gap:6px; justify-content:flex-end;">
+          <button data-action="minus" data-pid="${data.id}">➖</button>
+          <button data-action="plus" data-pid="${data.id}">➕</button>
+          <button data-action="reset" data-pid="${data.id}">🔄</button>
         </div>
-        <div class="products" id="products-${data.id}"></div>
+      </div>
+    </div>
 
-        <!-- SMS Araçları: ürünlerin altı, toplamın üstü -->
-        <div class="sms-tools">
-          <select id="sms-template-${data.id}" aria-label="SMS-mal">
-            ${SMS_TEMPLATES.map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
-          </select>
-          <a id="sms-send-${data.id}" class="sms-send" href="#">📩 Send SMS</a>
-        </div>
+    <div id="products-${data.id}"></div>
 
-        <div class="total" id="total-${data.id}"><span class="emoji-label">💳</span> Total: ${data.total_price} NOK</div>
-      `;
-      return div;
-    }
+    <div class="sms-tools">
+      <select id="sms-template-${data.id}">
+        ${SMS_TEMPLATES.map(t => `<option value="${t.id}">${t.label}</option>`).join("")}
+      </select>
+      <a id="sms-send-${data.id}">📩 Send SMS</a>
+    </div>
 
-    function updateReceiptContent(el, data, pizzaTotal = null) {
-      document.getElementById(`badge-${data.id}`).textContent =
-        `${Math.round((new Date(data.fulfill_at) - new Date(data.accepted_at)) / 60000)} min`;
-      document.getElementById(`pickup-${data.id}`).textContent =
-        `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-      document.getElementById(`pizza-${data.id}`).innerHTML =
-        pizzaTotal !== null ? `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>` : '';
-      document.getElementById(`total-${data.id}`).innerHTML =
-        `<span class="emoji-label">💳</span> Total: ${data.total_price} NOK`;
+    <div class="total">💳 Total: ${data.total_price} NOK</div>
+  `;
 
-      const prodContainer = document.getElementById(`products-${data.id}`);
-      prodContainer.innerHTML = data.items.map(item => `
-        <div class="product-box">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong>${item.quantity}x ${item.name}</strong>
-            <span class="info-text">${item.total_item_price} kr.</span>
-          </div>
-          ${extractDetails(item.options)}
-          ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ''}
-        </div>`).join('');
-    }
+  return div;
+}
 
-    function updateCountdowns() {
-      ordersMap.forEach((data, id) => {
-        const el = document.getElementById(`countdown-${id}`);
-        if (el) el.textContent = countdownString(data.fulfill_at);
-      });
-    }
+/* ============================================================
+   RECEIPT İÇERİK GÜNCELLEME
+============================================================ */
+function updateReceiptContent(el, data, pizzaTotal) {
+  document.getElementById(`badge-${data.id}`).textContent =
+    `${Math.round((new Date(data.fulfill_at)-new Date(data.accepted_at))/60000)} min`;
 
-    async function fetchOrder(index) {
-      try {
-        const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${index}.json`;
-        const res = await fetch(url);
-        const data = await res.json();
-        return data && data.status === 'accepted' ? data : null;
-      } catch {
-        return null;
-      }
-    }
+  document.getElementById(`pickup-${data.id}`).textContent =
+    `🕒 Hentes kl. ${new Date(data.fulfill_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`;
 
-    async function fetchPizzaTotal(phone) {
-      if (!phone) return null;
-      const digits = phone.replace('+47', '').replace(/\D/g, '');
-      const totalUrl = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/${digits}/total.json`;
-      try {
-        const res = await fetch(totalUrl);
-        return await res.json();
-      } catch {
-        return null;
-      }
-    }
+  document.getElementById(`pizza-${data.id}`).innerHTML =
+    `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>`;
 
-    async function renderOrUpdateReceipt(index) {
-      const data = await fetchOrder(index);
-      if (!data) return;
+  document.getElementById(`products-${data.id}`).innerHTML =
+    data.items.map(item => `
+      <div class="product-box">
+        <strong>${item.quantity}x ${item.name}</strong>
+        <span class="info-text">${item.total_item_price} kr.</span>
+        ${extractDetails(item.options)}
+        ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ""}
+      </div>
+    `).join("");
 
-      const pizzaTotal = await fetchPizzaTotal(data.client_phone);
-      ordersMap.set(data.id.toString(), data);
+  /* SMS Update */
+  const sel = document.getElementById(`sms-template-${data.id}`);
+  const btn = document.getElementById(`sms-send-${data.id}`);
 
-      const existing = document.querySelector(`[data-id='${data.id}']`);
-      if (existing) {
-        updateReceiptContent(existing, data, pizzaTotal);
-        setupSmsTools(data); // SMS href’ini güncelle
-      } else {
-        const dom = buildReceiptDOM(data, pizzaTotal);
-        receiptsContainer.appendChild(dom);
-        updateReceiptContent(dom, data, pizzaTotal);
-        setupSmsTools(data); // ilk kurulum
-      }
-    }
+  function updateSMS() {
+    const tpl = SMS_TEMPLATES.find(x => x.id === sel.value);
+    const first = data.client_first_name.trim().split(" ")[0];
+    const msg = tpl.text.replace("{first}", first);
+    btn.href = smsHref(data.client_phone, msg);
+  }
 
-    async function periodicUpdate() {
-      for (let i = 0; i < MAX_ORDERS; i++) {
-        await renderOrUpdateReceipt(i);
-      }
-    }
+  sel.onchange = updateSMS;
+  updateSMS();
+}
 
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.trim().toLowerCase();
-      const all = Array.from(document.querySelectorAll('.receipt'));
-      all.forEach(el => el.style.order = '999');
-      if (query === '') return;
-      all.forEach(el => {
-        const name = el.getAttribute('data-name');
-        if (name.includes(query)) {
-          el.style.order = '0';
-        }
-      });
-    });
+/* ============================================================
+   PIZZA BUTONLARI ( + / – / RESET ) + FIREBASE YAZ
+============================================================ */
+document.addEventListener("click", (e) => {
+  if (!e.target.dataset?.action) return;
 
-    periodicUpdate();
-    setInterval(periodicUpdate, 5000);
-    setInterval(updateCountdowns, 1000);
-  </script>
+  const action = e.target.dataset.action;
+  const id = e.target.dataset.pid;
+
+  const data = ordersMap.get(id);
+  if (!data) return;
+
+  const phone = data.client_phone;
+  const el = document.getElementById(`pizza-${id}`);
+
+  let current = parseInt(el.textContent.match(/\d+/)?.[0] || "0");
+
+  if (action === "plus") current++;
+  if (action === "minus") current = Math.max(0, current - 1);
+  if (action === "reset") current = 0;
+
+  el.innerHTML = `🍕 Total stor pizza: <strong>${current}</strong>`;
+
+  savePizzaTotalToFirebase(phone, current);
+});
+
+/* ============================================================
+   FIREBASE FETCH
+============================================================ */
+async function fetchOrder(i) {
+  const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    return d && d.status === "accepted" ? d : null;
+  } catch { return null; }
+}
+
+async function fetchPizzaTotal(phone) {
+  const digits = phone.replace("+47","").replace(/\D/g,"");
+  const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/${digits}/total.json`;
+  try {
+    const r = await fetch(url);
+    return await r.json() ?? 0;
+  } catch { return 0; }
+}
+
+/* ============================================================
+   RENDER+UPDATE LOOP
+============================================================ */
+async function renderOrUpdateReceipt(i) {
+  const data = await fetchOrder(i);
+  if (!data) return;
+
+  const pizzaTotal = await fetchPizzaTotal(data.client_phone);
+
+  ordersMap.set(data.id.toString(), data);
+
+  const old = document.querySelector(`[data-id="${data.id}"]`);
+  if (old) {
+    updateReceiptContent(old, data, pizzaTotal);
+  } else {
+    const dom = buildReceiptDOM(data, pizzaTotal);
+    receiptsContainer.appendChild(dom);
+    updateReceiptContent(dom, data, pizzaTotal);
+  }
+}
+
+async function periodicUpdate() {
+  for (let i = 0; i < MAX_ORDERS; i++) {
+    await renderOrUpdateReceipt(i);
+  }
+}
+setInterval(periodicUpdate, 5000);
+periodicUpdate();
+
+setInterval(() => {
+  ordersMap.forEach((data,id) => {
+    const el = document.getElementById(`countdown-${id}`);
+    if (el) el.textContent = countdownString(data.fulfill_at);
+  });
+}, 1000);
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll(".receipt").forEach(el => {
+    const id = el.getAttribute("data-id");
+    const d = ordersMap.get(id);
+    const fullname = `${d.client_first_name} ${d.client_last_name}`.toLowerCase();
+    el.style.order = fullname.includes(q) ? "0" : "999";
+  });
+});
+</script>
+
 </body>
 </html>
