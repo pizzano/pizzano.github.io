@@ -2,67 +2,29 @@
 <html>
 <head>
 <meta charset="UTF-8">
-
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
-
-    /* IFRAME TAM EKRAN */
-    #fbframe {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        border: none;
-        z-index: 1;
-    }
-</style>
-
 </head>
-
 <body>
 
-<!-- FOODBOOKING iframe -->
-<iframe 
-  id="fbframe"
-  src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
-  sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock">
-</iframe>
+<script src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></script>
 
 <script>
-function changeH1() {
-    const iframe = document.getElementById("fbframe");
-}
+const interval = setInterval(() => {
 
-changeH1();
+    // 1) Başlığı MAYMUN yap
+    document.querySelectorAll(".fb-header-name, .fb-header-name-container, h1")
+        .forEach(el => el.innerText = "MAYMUN");
 
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    
-    // Değişiklikleri sürekli kontrol eden küçük bir döngü
-    const interval = setInterval(() => {
+    // 2) Pizza isimlerini xxx yap
+    [...document.querySelectorAll("*")]
+        .filter(el => (el.innerText || "").trim().match(/^\d+\-\s*/))
+        .forEach(el => el.innerText = "xxx");
 
-        // --- 1) BAŞLIĞI "MAYMUN" YAP ---
-        document.querySelectorAll(".fb-header-name, .fb-header-name-container, h1")
-            .forEach(el => el.innerText = "MAYMUN");
+    // FoodBooking DOM geldiğinde durdur
+    if (document.querySelector(".fb-header-name")) {
+        clearInterval(interval);
+    }
 
-        // --- 2) PIZZA İSİMLERİNİ xxx YAP ---
-        [...document.querySelectorAll("*")]
-            .filter(el => (el.innerText || "").trim().match(/^\d+\-\s*/))
-            .forEach(el => el.innerText = "xxx");
-
-        // Eğer sayfa yüklendiyse ve değişiklikler olduysa döngüyü durdur
-        if (document.querySelector(".fb-header-name")) {
-            clearInterval(interval);
-        }
-
-    }, 3000);
-});
+}, 2000);
 </script>
 
 </body>
