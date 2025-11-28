@@ -3,12 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
-
     #fbframe {
         position: fixed;
         top: 0;
@@ -16,33 +10,61 @@
         width: 100vw;
         height: 100vh;
         border: none;
-        z-index: 1;
     }
 </style>
 </head>
 
 <body>
 
-<iframe 
-    id="fbframe"
-    src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
-    sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation allow-pointer-lock">
+<iframe id="fbframe"
+        src="https://www.foodbooking.com/ordering/restaurant/menu?company_uid=f3087e8a-78d8-4e12-9a48-4f5666848f05&restaurant_uid=e51ac751-170e-403c-821f-d8d16c3695a8">
 </iframe>
 
 <script>
-// 2 saniye sonra çalışacak
-setTimeout(() => {
+function injectScript() {
+    const iframe = document.getElementById("fbframe");
 
-    // 1) Başlığı MAYMUN yap
-    document.querySelectorAll(".fb-header-name, .fb-header-name-container, h1")
-        .forEach(el => el.innerText = "MAYMUN");
+    if (!iframe.contentWindow) return;
 
-    // 2) Pizza isimlerini xxx yap
-    [...document.querySelectorAll("*")]
-        .filter(el => (el.innerText || "").trim().match(/^\d+\-\s*/))
-        .forEach(el => el.innerText = "xxx");
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-}, 2000);
+        // Eğer body yoksa tekrar dene
+        if (!doc.querySelector("body")) {
+            setTimeout(injectScript, 500);
+            return;
+        }
+
+        // Enjekte edilecek script
+        const s = doc.createElement("script");
+        s.innerHTML = `
+            console.log("=== FOODBOOKING DOM LOADED ===");
+
+            // Her 500ms'de değişiklik yap + DOM'u logla
+            setInterval(() => {
+
+                // Console: tüm elementleri göster
+                console.log([...document.querySelectorAll("*")]);
+
+                // Başlığı MAYMUN yap
+                document.querySelectorAll(".fb-header-name, .fb-header-name-container, h1")
+                    .forEach(el => el.innerText = "MAYMUN");
+
+                // Pizza isimlerini xxx yap
+                [...document.querySelectorAll("*")]
+                    .filter(el => (el.innerText || "").trim().match(/^\\d+\\-\\s*/))
+                    .forEach(el => el.innerText = "xxx");
+
+            }, 500);
+        `;
+        doc.body.appendChild(s);
+
+    } catch (e) {
+        setTimeout(injectScript, 500);
+    }
+}
+
+injectScript();
 </script>
 
 </body>
