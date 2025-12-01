@@ -1,4 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bestill Online Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000; /* sayfa dışı arka plan */
+    }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+</head>
+<body>
+
+<!-- ÇALIŞAN KISALTILMIŞ FOODBOOKING -->
 <iframe 
-  src="https://summer-butterfly-86c7.fatihsemb.workers.dev/ordering/restaurant/menu?company_uid=f3087e8a-78d8-4e12-9a48-4f5666848f05&restaurant_uid=e51ac751-170e-403c-821f-d8d16c3695a8"
-  style="width:100%; height:100vh; border:0;"
+  id="fbframe"
+  src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
 ></iframe>
+
+<script>
+// iframe içine CSS enjekte eden test kodu
+document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.getElementById("fbframe");
+
+    iframe.onload = () => {
+        try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+            // Test için arka planı siyaha çeviriyoruz
+            const style = doc.createElement("style");
+            style.innerHTML = `
+                body {
+                    background: #111 !important;
+                }
+            `;
+            doc.head.appendChild(style);
+
+            console.log("CSS başarıyla inject edildi.");
+        } catch (e) {
+            console.error("Inject hatası:", e);
+        }
+    };
+});
+</script>
+
+</body>
+</html>
