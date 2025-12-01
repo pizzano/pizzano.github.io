@@ -27,6 +27,21 @@
   id="fbframe"
   src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
 ></iframe>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.getElementById("fbframe");
+
+    iframe.onload = () => {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+        // Başlığı bul ve değiştir
+        const header = doc.querySelector("h1.fb-header-name-container");
+        if (header) {
+            header.textContent = "TEST GRILL";
+        }
+    };
+});
+</script>
 
 <script>
 // iframe içine CSS enjekte eden test kodu
