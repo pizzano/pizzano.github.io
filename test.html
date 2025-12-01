@@ -1,17 +1,61 @@
-<iframe 
-  id="fbframe"
-  src="https://www.foodbooking.com/api/fb/_q_y_w_r6"
-  style="width:100%; height:100vh; border:0;"
-></iframe>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bestill Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    #fbframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    /* Bu bizim kendi üst header’ımız */
+    #customHeader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #000;
+        color: #fff;
+        padding: 15px;
+        font-size: 22px;
+        font-family: Arial;
+        font-weight: bold;
+        z-index: 9999;
+        text-align: center;
+    }
+
+    /* iframe’i aşağı kaydırıyoruz */
+    body.loaded #fbframe {
+        margin-top: 60px;
+    }
+</style>
+
+</head>
+<body>
+
+<!-- Kendi üst yazımız -->
+<div id="customHeader">TEST GRILL</div>
+
+<!-- Worker’dan gelen FoodBooking -->
+<iframe id="fbframe" src="https://summer-butterfly-86c7.fatihsemb.workers.dev/"></iframe>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const iframe = document.getElementById("fbframe");
-
-    iframe.onload = () => {
-        const doc = iframe.contentDocument || iframe.contentWindow.document;
-        const header = doc.querySelector("h1.fb-header-name-container");
-        if (header) header.textContent = "TEST GRILL";
-    };
-});
+// iframe yüklenince body'ye loaded class ekleyelim
+document.getElementById("fbframe").onload = () => {
+    document.body.classList.add("loaded");
+};
 </script>
+
+</body>
+</html>
