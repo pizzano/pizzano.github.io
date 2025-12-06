@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KØL Grill & Pizza - Iframe Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Test için sadece temel stiller */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Tam ekran kaplaması için kaydırmayı engelle */
+        }
+
+        .iframe-test-container {
+            display: flex; /* İçeriği yatay olarak hizala */
+            width: 100vw; /* Görünüm genişliğinin %100'ü */
+            height: 100vh; /* Görünüm yüksekliğinin %100'ü */
+        }
+
+        .iframe-test-container iframe {
+            width: 50%; /* Her bir iframe ekranın yarısını kaplasın */
+            height: 100%;
+            border: 1px solid red; /* Test kolaylığı için çerçeve eklendi */
+            box-sizing: border-box; /* Çerçeveyi genişliğin içine dahil et */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="iframe-test-container">
+        <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
+        
+        <iframe src="https://www.foodbooking.com/ordering/restaurant/menu?company_uid=f3087e8a-78d8-4e12-9a48-4f5666848f05&restaurant_uid=e51ac751-170e-403c-821f-d8d16c3695a8&facebook=true"></iframe>
+    </div>
+
+</body>
+</html>
