@@ -1,31 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>KØL Grill & Pizza - Tek Iframe Testi</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KØL Grill & Pizza - Tek Iframe Standart Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+    
     <style>
-        /* Temel Stil Sıfırlamaları */
+        /* === BODY VE HTML SIFIRLAMA (STANDART MOBİL YAKLAŞIMI) === */
+        /* Bu, tarayıcının kenarlarındaki varsayılan boşlukları kaldırır ve tam ekranı garanti eder. */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Sayfanın kaydırmasını engelle */
+            overflow: hidden; /* Dış kaydırma çubuklarını engeller */
+            box-sizing: border-box;
         }
 
-        /* Iframe'i tutan kapsayıcı (Tam ekran olmalı) */
+        /* === IFRAME KONTEYNERI === */
         .test-container {
             width: 100%;
             height: 100%;
+            display: block;
         }
 
-        /* Iframe stilini tam ekran kaplayacak şekilde ayarlama */
+        /* === IFRAME STİLİ === */
+        /* Iframe'in kapsayıcının tamamını kaplamasını sağlar. */
         .test-container iframe {
-            width: 100%; /* Kapsayıcının tam genişliği */
-            height: 100%; /* Kapsayıcının tam yüksekliği */
-            border: none; /* Çerçeveyi kaldır */
-            display: block; /* Gereksiz boşlukları engelle */
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
         }
     </style>
 </head>
