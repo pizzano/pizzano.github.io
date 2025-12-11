@@ -160,7 +160,7 @@ const SMS_TEMPLATES = [
 =============================== */
 function smsHref(phone, body) {
   const digits = phone.replace(/\D/g,"");
-  return `sms:+47${digits}?&body=${encodeURIComponent(body)}`;
+  return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
 
 
