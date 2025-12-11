@@ -159,9 +159,19 @@ const SMS_TEMPLATES = [
    HELPER
 =============================== */
 function smsHref(phone, body) {
-  const digits = phone.replace(/\D/g,"");
+  // önce tüm boşluk ve tireleri temizle
+  let digits = phone.replace(/\s+/g,"").replace(/-/g,"");
+
+  // eğer +47 veya 47 ile başlıyorsa kaldır
+  digits = digits.replace(/^\+47/,"").replace(/^47/, "");
+
+  // geri kalan sadece rakamlar olsun
+  digits = digits.replace(/\D/g,"");
+
+  // final format: sms:+47XXXXXXXX?body=...
   return `sms:${digits}?&body=${encodeURIComponent(body)}`;
 }
+
 
 
 function countdownString(futureTime) {
