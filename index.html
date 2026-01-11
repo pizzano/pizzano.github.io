@@ -117,26 +117,43 @@
       color: white;
       border-radius: 11px;
       cursor: pointer;
-      text-align: center;
-      line-height: 60px;
       margin-bottom: 20px;
       font-weight: bold;
       font-size: 20px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .button:focus-visible {
+      outline: 3px solid #ffeb3b;
+      outline-offset: 4px;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px 5px rgba(0, 0, 0, 0.66);
     }
     #view-menu > h2 {
     animation: pulse 1.2s infinite;
     margin: 0;
+    padding: 0;
     }
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
     iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-   .iframe-container {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .iframe-container {
       position: fixed;
       top: 0;
       left: 0;
@@ -144,22 +161,55 @@
       height: 100%;
       background-color: rgba(0, 0, 0, 0.8);
       z-index: 1000;
-      visibility: hidden;  /* Değiştirildi: display:none yerine visibility:hidden */
+      visibility: hidden;
       opacity: 0;
-      transition: visibility 0s, opacity 0.5s;  /* Görünürlük ve opaklık geçişleri */
-    }
-    .iframe-container.visible {
-      visibility: visible;  /* Görünür yapar */
-      opacity: 1;  /* Opaklığı arttır */
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: visibility 0s, opacity 0.5s;
     }
 
-    .close-button img{
-	position: absolute;
-    bottom: 40px;
-    right: 5px;
-    z-index: 10001;
-    width: 45px;
-	animation: pulse 1s infinite;
+    .iframe-container.visible {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .iframe-content {
+      position: relative;
+      width: min(900px, 100%);
+      height: 90vh;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b1b45;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1001;
+    }
+
+    .close-button button {
+      background: rgba(0, 0, 0, 0.75);
+      border: 2px solid #ffffff;
+      color: white;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      animation: pulse 1s infinite;
+    }
+
+    .close-button button:focus-visible {
+      outline: 3px solid #ffeb3b;
+      outline-offset: 2px;
     }
     #phone-input {
       font-weight: bold;
@@ -316,10 +366,14 @@ background: white;
   <div class="container">
     <div id="status-message" class="header"  style="border-radius:0;height: 50px;">🟢 Åpent i dag: 14:00 - 22:00</div>
     <br>
-<div id="view-menu" class="button" onclick="openMenu();"><h2>Se MENY og Bestill</h2></div>
-      <div class="iframe-container" id="iframe-container">
-    <div class="close-button" onclick="closeIframe()"><img src="https://bestill.online/img/btn1.png"></div>
-    <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6"></iframe>
+<button id="view-menu" class="button" type="button" onclick="openMenu();"><h2 id="menu-title">Se MENY og Bestill</h2></button>
+      <div class="iframe-container" id="iframe-container" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <div class="iframe-content" id="iframe-content">
+      <div class="close-button">
+        <button id="close-iframe" type="button" aria-label="Lukk menyen" onclick="closeIframe()">✕</button>
+      </div>
+      <iframe src="https://www.foodbooking.com/api/fb/_q_y_w_r6" title="KØL Grill &amp; Pizza meny"></iframe>
+    </div>
   </div>
 
     <h4 class="coupon-info">Den digitale kupongen gjelder for store pizzaer og er automatisk registrert på telefonnummeret ditt.</h4>
@@ -590,17 +644,33 @@ function aktivergavekort() {
 
 
 
+    const iframeContainer = document.getElementById('iframe-container');
+    const closeIframeButton = document.getElementById('close-iframe');
+    const viewMenuButton = document.getElementById('view-menu');
+
     function openMenu() {
-      const iframeContainer = document.getElementById('iframe-container');
       iframeContainer.classList.add('visible');  // Görünür yap
       document.body.style.overflow = 'hidden'; // Sayfanın kaydırılmasını engelle
+      closeIframeButton.focus();
     }
 
     function closeIframe() {
-      const iframeContainer = document.getElementById('iframe-container');
       iframeContainer.classList.remove('visible');  // Gizli yap
       document.body.style.overflow = 'auto'; // Kaydırmayı geri aktif et
+      viewMenuButton.focus();
     }
+
+    iframeContainer.addEventListener('click', (event) => {
+      if (event.target === iframeContainer) {
+        closeIframe();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && iframeContainer.classList.contains('visible')) {
+        closeIframe();
+      }
+    });
 
     // Update year dynamically
     document.getElementById('year').textContent = new Date().getFullYear();
