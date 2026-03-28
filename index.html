@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -463,27 +464,38 @@ onValue(giftCardRef, (snapshot) => {
         box.querySelector('.coupon-image').style.filter = isSelected ? 'grayscale(0%)' : 'grayscale(100%)';
       });
 
-      // 10 kupon biriktirildiyse kullanıcıya bildirim göster
-      if (selectedCount >= 10) {
-document.getElementById('gratis').innerHTML = `
-  <div style="margin-bottom: 20px; border: dashed 2px; padding: 20px; text-align: center; border-radius: 13px;">
-    <h2>🎉 Gratulerer !</h2>
-    <p>Takk for at du har samlet 10 pizzaer.</p>
-    <p>Neste gang får du den 11. helt gratis!</p>
-    <p>📱 Vis denne QR-koden til betjeningen ved henting.</p>
-  </div>
-`;    
-        // Konfeti animasyonu
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } else {
-        document.getElementById('gratis').innerHTML = null;
-      }
+ if (selectedCount >= 11) {
+  document.getElementById('gratis').innerHTML = `
+    <div style="margin-bottom: 20px; border: dashed 2px; padding: 20px; text-align: center; border-radius: 13px;">
+      <h2>🎉 Gratulerer!</h2>
+      <p>Takk for at du har samlet 10 pizzaer.</p>
+      <p><strong>Du har nå rett til 1 gratis stor pizza 🍕</strong></p>
+      <p>📱 Vis QR-koden nedenfor til betjeningen for å få din gratis pizza.</p>
+    </div>
+  `;
+
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+
+} else if (selectedCount === 10) {
+  document.getElementById('gratis').innerHTML = `
+    <div style="margin-bottom:20px;border:2px dashed red;padding:20px;text-align:center;border-radius:13px;background:#fff3f3;">
+      <h2>🎉 10/10 Fullført!</h2>
+      <p>Gratis pizza får du ved neste kjøp (nr. 11)</p>
+      <p style="color:red;font-weight:bold;">❗ Ikke gyldig ennå</p>
+    </div>
+  `;
+}else{
+  document.getElementById('gratis').innerHTML = null;
+}
+
     });
+    
   };
+
 
 
   // Pizza verisini almak için Firebase'den onValue kullanıyoruz
