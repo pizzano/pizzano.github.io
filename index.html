@@ -469,7 +469,7 @@ onValue(giftCardRef, (snapshot) => {
     <div style="margin-bottom: 20px; border: dashed 2px; padding: 20px; text-align: center; border-radius: 13px;">
       <h2>🎉 Gratulerer!</h2>
       <p><strong>Du har nå rett til 1 gratis stor pizza 🍕</strong></p>
-      <p>📱 Vis QR-koden nedenfor til betjeningen for å få din gratis pizza.</p>
+      <p>📱 Vis QR-koden nedenfor til betjeningen for å få <br><strong> din gratis pizza.</strong></p>
     </div>
   `;
 
@@ -483,8 +483,8 @@ onValue(giftCardRef, (snapshot) => {
   document.getElementById('gratis').innerHTML = `
     <div style="margin-bottom:20px;border:2px dashed red;padding:20px;text-align:center;border-radius:13px;background:#fff3f3;">
       <h2>🎉 10/10 Fullført!</h2>
-      <p>Gratis pizza får du ved neste kjøp (nr. 11)</p>
-      <p style="color:red;font-weight:bold;">❗ Ikke gyldig ennå</p>
+      <p>Gratis pizza får du ved neste kjøp (11. pizza)</p>
+      <p style="color:red;font-weight:bold;">❗Ikke gyldig ennå</p>
     </div>
   `;
 }else{
