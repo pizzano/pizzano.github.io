@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -29,82 +30,75 @@ button {
 <script>
 async function printReceipt() {
 
+    const ESC = "\x1B";
+    const GS  = "\x1D";
+
+    let text = "";
+
+    text += ESC + "@";
+    text += ESC + "a" + "\x01";
+
+    function header(line) {
+        return GS+"!"+"\x11" + GS+"B"+"\x01" + line + "\n" + GS+"B"+"\x00" + GS+"!"+"\x00";
+    }
+
+    text += header(" HENTING ");
+    text += header(" SNAREST 60 MIN ");
+    text += header(" 24. APRIL 20:36 ");
+
+    text += ESC + "a" + "\x00";
+
+    text += "\n";
+    text += "(!) No plastic cutlery\n\n";
+
+    text += ESC+"E"+ "\x01";
+    text += "Enheter\n";
+    text += ESC+"E"+ "\x00";
+
+    function item(name) {
+        let space = 42 - name.length - 3;
+        if (space < 1) space = 1;
+        return name + " ".repeat(space) + "[ ]\n";
+    }
+
+    text += item("2x Pizza Prosciutto");
+    text += "   Size: Small\n";
+    text += "   Crust: Fluffy\n\n";
+
+    text += item("1x Pizza Pepperoni");
+    text += "   Size: Medium\n\n";
+
+    text += "-".repeat(42) + "\n";
+
+    text += ESC+"E"+ "\x01";
+    text += "Bestillingsdetaljer\n";
+    text += ESC+"E"+ "\x00";
+
+    function line(l, r) {
+        let space = 42 - l.length - r.length;
+        return l + " ".repeat(space) + r + "\n";
+    }
+
+    text += line("Nummer:", "1");
+    text += line("Fornavn:", "FATIH");
+    text += line("Etternavn:", "ALEMDAR");
+
+    text += "\n\n";
+
+    text += GS + "V" + "A" + "\x00";
+
+    // 🔥 EN ÖNEMLİ KISIM
     try {
-
-        const ESC = "\x1B";
-        const GS  = "\x1D";
-
-        let text = "";
-
-        // INIT
-        text += ESC + "@";
-
-        // CENTER
-        text += ESC + "a" + "\x01";
-
-        // HEADER (BÜYÜK + SİYAH)
-        function header(line) {
-            return GS+"!"+"\x11" + GS+"B"+"\x01" + line + "\n" + GS+"B"+"\x00" + GS+"!"+"\x00";
-        }
-
-        text += header(" HENTING ");
-        text += header(" SNAREST 60 MIN ");
-        text += header(" 24. APRIL 20:36 ");
-
-        // NORMAL
-        text += ESC + "a" + "\x00";
-
-        text += "\n";
-        text += "(!) No plastic cutlery\n\n";
-
-        text += ESC+"E"+ "\x01";
-        text += "Enheter\n";
-        text += ESC+"E"+ "\x00";
-
-        function item(name) {
-            let space = 42 - name.length - 3;
-            if (space < 1) space = 1;
-            return name + " ".repeat(space) + "[ ]\n";
-        }
-
-        text += item("2x Pizza Prosciutto");
-        text += "   Size: Small\n";
-        text += "   Crust: Fluffy\n\n";
-
-        text += item("1x Pizza Pepperoni");
-        text += "   Size: Medium\n\n";
-
-        text += "-".repeat(42) + "\n";
-
-        text += ESC+"E"+ "\x01";
-        text += "Bestillingsdetaljer\n";
-        text += ESC+"E"+ "\x00";
-
-        function line(l, r) {
-            let space = 42 - l.length - r.length;
-            return l + " ".repeat(space) + r + "\n";
-        }
-
-        text += line("Nummer:", "1");
-        text += line("Fornavn:", "FATIH");
-        text += line("Etternavn:", "ALEMDAR");
-
-        text += "\n\n";
-
-        // CUT
-        text += GS + "V" + "A" + "\x00";
-
-        // SEND
-        const res = await fetch("http://localhost:5000/print", {
+        await fetch("http://127.0.0.1:5000/", {
             method: "POST",
+            mode: "no-cors",   // 🔥 CORS FIX
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ text })
         });
 
-        const msg = await res.text();
-        alert(msg);
+        alert("Gönderildi (yazdırması lazım)");
 
     } catch (err) {
         alert("HATA: " + err.message);
