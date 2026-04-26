@@ -55,16 +55,17 @@
           <div class="quantity-row">
             <span>Mengde</span>
             <div class="quantity-stepper">
-              <button type="button" id="decreaseProduct">&minus;</button>
               <strong id="productQuantity">1</strong>
+              <button type="button" id="decreaseProduct">&minus;</button>
               <button type="button" id="increaseProduct">+</button>
             </div>
           </div>
+          <p class="allergen-note" id="productAllergens"></p>
         </div>
 
         <div class="product-footer">
-          <strong id="productTotal">0,00 kr</strong>
-          <button id="addConfiguredProduct" type="button">Legg til i handlekurv</button>
+          <strong><span id="productTotal">0,00 kr</span></strong>
+          <button id="addConfiguredProduct" type="button">Legg til i handlevogn</button>
         </div>
       </div>
     </div>
@@ -132,7 +133,7 @@
         <div class="cart-header">
           <h2 id="cartTitle">Handlekurv</h2>
           <div class="cart-header-actions">
-            <button class="ghost-button" id="backToMenu" type="button">Meny</button>
+            <button class="ghost-button" id="backToMenu" type="button">Tilbake til meny</button>
             <button class="ghost-button" id="clearCart" type="button">T&oslash;m</button>
             <button class="close-button" id="closeCart" type="button" aria-label="Lukk handlekurv">&times;</button>
           </div>
@@ -147,7 +148,7 @@
             <strong id="subtotal">0,00 kr</strong>
           </div>
           <div>
-            <span>Mva inkludert</span>
+            <span>Mva (15% inkludert)</span>
             <strong id="tax">0,00 kr</strong>
           </div>
           <div class="total-row">
