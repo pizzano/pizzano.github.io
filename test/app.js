@@ -19,11 +19,11 @@ const menuSections = [
       { id: "ciao-ciao", number: 12, name: "Ciao Ciao", ingredients: "Biff, sopp, l\u00f8k, b\u00e9arnaisesaus", mediumPrice: 195, largePrice: 295, displayPrice: 199, thumb: "mushroom" },
       { id: "pollo-marina", number: 13, name: "Pollo Marina", ingredients: "Hvit pizzasaus, marinert kylling, bl\u00e5muggost, l\u00f8k og rukkola", mediumPrice: 210, largePrice: 310, displayPrice: 199, thumb: "green" },
       { id: "bianca", number: 14, name: "Bianca", ingredients: "Hvit pizzasaus, parmaskinke, pesto olje, rukkola og parmesanost", mediumPrice: 210, largePrice: 310, displayPrice: 199, thumb: "green" },
-      { id: "fantasia", number: 15, name: "Fantasia", ingredients: "Skinke, mais, l\u00f8k", price: 189, thumb: "mixed" },
-      { id: "diavola", number: 16, name: "Diavola", ingredients: "Pepperoni, solt\u00f8rket tomater, sopp og gorgonzola ost.", price: 199, thumb: "spicy" },
-      { id: "lag-din-egen", number: 17, name: "Lag din egen", ingredients: "Legg til de ingrediensene du \u00f8nsker! Ost og pizzasaus er inkludert.", price: 159, thumb: "pepperoni" },
-      { id: "hvitloksdressing", name: "Hvitl\u00f8ksdressing", ingredients: "", price: 25, thumb: "sauce" },
-      { id: "bearnaisesaus-product", name: "B\u00e9arnaisesaus", ingredients: "", price: 25, thumb: "sauce" }
+      { id: "fantasia", number: 15, name: "Fantasia", ingredients: "Skinke, mais, l\u00f8k", mediumPrice: 189, largePrice: 289, thumb: "mixed" },
+      { id: "diavola", number: 16, name: "Diavola", ingredients: "Pepperoni, solt\u00f8rket tomater, sopp og gorgonzola ost.", mediumPrice: 199, largePrice: 299, thumb: "spicy" },
+      { id: "lag-din-egen", number: 17, name: "Lag din egen", ingredients: "Legg til de ingrediensene du \u00f8nsker! Ost og pizzasaus er inkludert.", mediumPrice: 159, largePrice: 249, thumb: "pepperoni" },
+      { id: "hvitloksdressing", name: "Hvitl\u00f8ksdressing", ingredients: "", price: 25, thumb: "sauce", type: "sauce" },
+      { id: "bearnaisesaus-product", name: "B\u00e9arnaisesaus", ingredients: "", price: 25, thumb: "sauce", type: "sauce" }
     ]
   },
   {
@@ -32,12 +32,12 @@ const menuSections = [
     note: "",
     imageClass: "kebab-strip",
     items: [
-      { id: "kebab-pita", name: "Kebab i pita", ingredients: "Med hjemmebakt pitabr\u00f8d, ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 179, thumb: "kebab" },
-      { id: "kylling-pita", name: "Kylling kebab i pita", ingredients: "Med hjemmebakt pitabr\u00f8d, kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 179, thumb: "kebab" },
-      { id: "kebab-rull", name: "Kebab Rull", ingredients: "Hjemmebakt lefsebr\u00f8d med ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 195, thumb: "wrap" },
-      { id: "kylling-rull", name: "Kylling Kebab Rull", ingredients: "Hjemmebakt lefsebr\u00f8d med kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 195, thumb: "wrap" },
-      { id: "kebabtallerken", name: "Kebabtallerken", ingredients: "Med ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus, pommes", price: 229, thumb: "plate" },
-      { id: "kylling-kebabtallerken", name: "Kylling Kebabtallerken", ingredients: "Med kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hjemmelaget hvitl\u00f8ksaus, pommes", price: 229, thumb: "plate" }
+      { id: "kebab-pita", name: "Kebab i pita", ingredients: "Med hjemmebakt pitabr\u00f8d, ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 179, thumb: "kebab", type: "kebab-pita" },
+      { id: "kylling-pita", name: "Kylling kebab i pita", ingredients: "Med hjemmebakt pitabr\u00f8d, kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 179, thumb: "kebab", type: "kebab-pita" },
+      { id: "kebab-rull", name: "Kebab Rull", ingredients: "Hjemmebakt lefsebr\u00f8d med ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 195, thumb: "wrap", type: "kebab-wrap" },
+      { id: "kylling-rull", name: "Kylling Kebab Rull", ingredients: "Hjemmebakt lefsebr\u00f8d med kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus", price: 195, thumb: "wrap", type: "kebab-wrap" },
+      { id: "kebabtallerken", name: "Kebabtallerken", ingredients: "Med ekte d\u00f6ner kebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hvitl\u00f8ksaus, pommes", price: 229, thumb: "plate", type: "kebab-plate" },
+      { id: "kylling-kebabtallerken", name: "Kylling Kebabtallerken", ingredients: "Med kyllingkebabkj\u00f8tt, salat, r\u00f8dl\u00f8k, agurk, hjemmelaget hvitl\u00f8ksaus, pommes", price: 229, thumb: "plate", type: "kebab-plate" }
     ]
   },
   {
@@ -121,10 +121,35 @@ const menuSections = [
 ];
 
 const extraOptions = [
-  { id: "fries", label: "Pommes frites p\u00e5 pizzaen?", price: 39, pizzaOnly: true },
-  { id: "extra-base", label: "Extra bunn - 300g deig?", price: 49, pizzaOnly: true },
-  { id: "garlic", label: "Hvitl\u00f8ksaus", price: 25 },
-  { id: "bearnaise", label: "B\u00e9arnaisesaus", price: 25 }
+  { id: "fries", group: "Pommes frites p\u00e5 pizzaen?", label: "Ja, takk!", priceBySize: { medium: 29, large: 39 }, pizzaOnly: true },
+  { id: "extra-base", group: "Extra bunn - 300g deig?", label: "Ja, Takk!", price: 49, pizzaOnly: true, sizes: ["large"] },
+  { id: "garlic", group: "Velg saus", label: "Hvitl\u00f8ksaus", price: 25 },
+  { id: "bearnaise", group: "Velg saus", label: "B\u00e9arnaisesaus", price: 25 }
+];
+
+const customPizzaToppings = [
+  { id: "topping-beef", group: "Tillegg", label: "Biffkj\u00f8tt", price: 30 },
+  { id: "topping-chicken", group: "Tillegg", label: "Kyllingkj\u00f8tt", price: 30 },
+  { id: "topping-kebab", group: "Tillegg", label: "Kebabkj\u00f8tt", price: 30 },
+  { id: "topping-bacon", group: "Tillegg", label: "Bacon", price: 30 },
+  { id: "topping-ham", group: "Tillegg", label: "Skinke", price: 25 },
+  { id: "topping-pepperoni", group: "Tillegg", label: "Pepperoni", price: 30 },
+  { id: "topping-parma", group: "Tillegg", label: "Parmaskinke", price: 40 },
+  { id: "topping-jalapeno", group: "Tillegg", label: "Jalapeno", price: 20 },
+  { id: "topping-paprika", group: "Tillegg", label: "paprika", price: 20 },
+  { id: "topping-mushroom", group: "Tillegg", label: "sopp", price: 20 },
+  { id: "topping-onion", group: "Tillegg", label: "l\u00f8k", price: 20 },
+  { id: "topping-corn", group: "Tillegg", label: "mais", price: 20 },
+  { id: "topping-extra-cheese", group: "Tillegg", label: "Extra Ost", price: 25 },
+  { id: "topping-chips", group: "Tillegg", label: "Chips p\u00e5 toppen", price: 35 }
+];
+
+const kebabPitaOptions = [
+  { id: "strength-mild", group: "Velg styrke", label: "Mild \u{1F33F}", price: 0, choiceGroup: "strength", default: true },
+  { id: "strength-medium", group: "Velg styrke", label: "Medium \u{1F336}\u{FE0F}", price: 0, choiceGroup: "strength" },
+  { id: "strength-hot", group: "Velg styrke", label: "Sterk \u{1F525}", price: 0, choiceGroup: "strength" },
+  { id: "extra-meat", group: "Ekstra kj\u00f8tt", label: "Ekstra Kebabkj\u00f8tt", price: 30 },
+  { id: "fries-kebab", group: "Litt pommes frites i kebaben?", label: "Ja, takk!", price: 15 }
 ];
 
 const storageKey = "kol-grill-cart";
@@ -154,6 +179,7 @@ const optionGroups = document.querySelector("#optionGroups");
 const specialInstructions = document.querySelector("#specialInstructions");
 const productQuantity = document.querySelector("#productQuantity");
 const productTotal = document.querySelector("#productTotal");
+const productAllergens = document.querySelector("#productAllergens");
 const closeProduct = document.querySelector("#closeProduct");
 const decreaseProduct = document.querySelector("#decreaseProduct");
 const increaseProduct = document.querySelector("#increaseProduct");
@@ -193,19 +219,51 @@ function hasSizes(item) {
   return item.mediumPrice !== undefined && item.largePrice !== undefined;
 }
 
+function isPizzaItem(item) {
+  return selectedSection?.id === "pizza" && item.type !== "sauce";
+}
+
+function isKebabPitaItem(item) {
+  return item?.type === "kebab-pita";
+}
+
+function isKebabCustomItem(item) {
+  return item?.type === "kebab-pita" || item?.type === "kebab-wrap" || item?.type === "kebab-plate";
+}
+
 function getBasePrice(item, size) {
   if (!hasSizes(item)) return item.price;
   return size === "large" ? item.largePrice : item.mediumPrice;
 }
 
+function isOptionVisible(option) {
+  if (!isPizzaItem(selectedProduct)) return false;
+  if (selectedProduct.type === "sauce") return false;
+  if (option.pizzaOnly && selectedSection.id !== "pizza") return false;
+  if (!option.pizzaOnly && selectedSection.id === "pizza") return true;
+  if (option.sizes && !option.sizes.includes(selectedSize)) return false;
+  return true;
+}
+
+function getOptionPrice(option) {
+  if (option.priceBySize) return option.priceBySize[selectedSize] || 0;
+  return option.price;
+}
+
 function getVisibleExtras() {
-  return extraOptions.filter((option) => selectedSection.id === "pizza" || !option.pizzaOnly);
+  if (isKebabCustomItem(selectedProduct)) {
+    return kebabPitaOptions;
+  }
+  if (selectedProduct?.id === "lag-din-egen") {
+    return [...customPizzaToppings, ...extraOptions.filter((option) => option.id !== "fries").filter(isOptionVisible)];
+  }
+  return extraOptions.filter(isOptionVisible);
 }
 
 function getCurrentUnitPrice() {
   const extrasTotal = getVisibleExtras()
     .filter((option) => selectedExtras.has(option.id))
-    .reduce((sum, option) => sum + option.price, 0);
+    .reduce((sum, option) => sum + getOptionPrice(option), 0);
   return getBasePrice(selectedProduct, selectedSize) + extrasTotal;
 }
 
@@ -265,6 +323,51 @@ function renderMenu() {
 }
 
 function renderProductOptions() {
+  if (isKebabCustomItem(selectedProduct)) {
+    const selectedStrength = [...selectedExtras].find((id) => id.startsWith("strength-")) || "strength-mild";
+    const renderKebabLine = (option) => `
+      <label class="option-line ${selectedExtras.has(option.id) ? "selected" : ""}">
+        <input type="${option.choiceGroup ? "radio" : "checkbox"}" name="${option.choiceGroup || option.id}" value="${option.id}" ${selectedExtras.has(option.id) ? "checked" : ""}>
+        <span>${option.label}</span>
+        ${option.price ? `<strong>+${option.price},00</strong>` : ""}
+      </label>
+    `;
+    optionGroups.innerHTML = `
+      <section class="option-group">
+        <h3>Velg styrke <span>Obligatorisk</span></h3>
+        ${kebabPitaOptions
+          .filter((option) => option.choiceGroup === "strength")
+          .map((option) => renderKebabLine({ ...option, checked: option.id === selectedStrength }))
+          .join("")}
+      </section>
+      <section class="option-group">
+        <h3>Ekstra kj\u00f8tt</h3>
+        ${renderKebabLine(kebabPitaOptions.find((option) => option.id === "extra-meat"))}
+      </section>
+      ${
+        selectedProduct.type === "kebab-plate"
+          ? ""
+          : `
+            <section class="option-group">
+              <h3>Litt pommes frites i kebaben?</h3>
+              ${renderKebabLine(kebabPitaOptions.find((option) => option.id === "fries-kebab"))}
+            </section>
+          `
+      }
+    `;
+    return;
+  }
+
+  if (!isPizzaItem(selectedProduct)) {
+    optionGroups.innerHTML = "";
+    return;
+  }
+
+  const visibleExtras = getVisibleExtras();
+  const customToppings = visibleExtras.filter((option) => option.group === "Tillegg");
+  const pizzaFries = visibleExtras.find((option) => option.id === "fries");
+  const extraBase = visibleExtras.find((option) => option.id === "extra-base");
+  const sauces = visibleExtras.filter((option) => option.group === "Velg saus");
   const sizeOptions = hasSizes(selectedProduct)
     ? `
       <section class="option-group">
@@ -279,43 +382,74 @@ function renderProductOptions() {
           <strong>+${selectedProduct.largePrice - selectedProduct.mediumPrice},00</strong>
         </label>
       </section>
-      <section class="option-group">
-        <h3>Lojalitetsprogram!</h3>
-        <label class="option-line muted-option">
-          <input type="checkbox" checked disabled>
-          <span>Hver 11. pizza gratis! Legges til automatisk.</span>
-        </label>
-      </section>
     `
     : "";
 
-  optionGroups.innerHTML = `
-    ${sizeOptions}
-    <section class="option-group">
-      <h3>Ekstra valg</h3>
-      ${getVisibleExtras()
-        .map(
-          (option) => `
-            <label class="option-line ${selectedExtras.has(option.id) ? "selected" : ""}">
-              <input type="checkbox" value="${option.id}" ${selectedExtras.has(option.id) ? "checked" : ""}>
-              <span>${option.label}</span>
-              <strong>+${option.price},00</strong>
-            </label>
-          `
-        )
-        .join("")}
-    </section>
+  const renderOptionLine = (option) => `
+    <label class="option-line ${selectedExtras.has(option.id) ? "selected" : ""}">
+      <input type="checkbox" value="${option.id}" ${selectedExtras.has(option.id) ? "checked" : ""}>
+      <span>${option.label}</span>
+      <strong>+${getOptionPrice(option)},00</strong>
+    </label>
   `;
+
+  const pizzaOptions = selectedProduct.id === "lag-din-egen"
+    ? `
+      <section class="option-group"><h3>Tillegg (${selectedSize === "large" ? "ST" : "M"})</h3>${customToppings.map(renderOptionLine).join("")}</section>
+      ${
+        selectedSize === "large"
+          ? `
+            <section class="option-group">
+              <h3>Lojalitetsprogram!</h3>
+              <label class="option-line muted-option">
+                <input type="checkbox" disabled>
+                <span>Hver 11. pizza gratis! Legges til automatisk.</span>
+              </label>
+            </section>
+          `
+          : ""
+      }
+      ${extraBase ? `<section class="option-group"><h3>${extraBase.group}</h3>${renderOptionLine(extraBase)}</section>` : ""}
+      <section class="option-group"><h3>Velg saus</h3>${sauces.map(renderOptionLine).join("")}</section>
+    `
+    : isPizzaItem(selectedProduct)
+    ? `
+      ${
+        selectedSize === "large"
+          ? `
+            <section class="option-group">
+              <h3>Lojalitetsprogram!</h3>
+              <label class="option-line muted-option">
+                <input type="checkbox" disabled>
+                <span>Hver 11. pizza gratis! Legges til automatisk.</span>
+              </label>
+            </section>
+          `
+          : ""
+      }
+      ${pizzaFries ? `<section class="option-group"><h3>${pizzaFries.group} (${selectedSize === "large" ? "S" : "M"})</h3>${renderOptionLine(pizzaFries)}</section>` : ""}
+      ${extraBase ? `<section class="option-group"><h3>${extraBase.group}</h3>${renderOptionLine(extraBase)}</section>` : ""}
+      <section class="option-group"><h3>Velg saus</h3>${sauces.map(renderOptionLine).join("")}</section>
+    `
+    : "";
+
+  optionGroups.innerHTML = `${sizeOptions}${pizzaOptions}`;
 }
 
 function renderProductModal() {
   const titlePrefix = selectedProduct.number ? `${selectedProduct.number}- ` : "";
+  productModal.classList.toggle("simple-product", selectedProduct.type === "sauce");
+  productModal.classList.toggle("kebab-product", isKebabCustomItem(selectedProduct));
   productTitle.textContent = `${titlePrefix}${selectedProduct.name.toUpperCase()}`;
   productSummary.innerHTML = hasSizes(selectedProduct)
     ? `<b>Medium</b> ${selectedProduct.mediumPrice}kr | <b>Stor</b> ${selectedProduct.largePrice}kr \u2192 ${selectedProduct.ingredients}`
     : selectedProduct.ingredients;
   productQuantity.textContent = quantity;
   productTotal.textContent = formatPrice(getCurrentTotal()).toUpperCase();
+  productAllergens.textContent = selectedProduct.type === "sauce"
+    ? "Allergener: Melk, Egg, sennep"
+    : isKebabCustomItem(selectedProduct) ? "Allergener: Melk, Egg, Hvete, sennep, Selleri, Soya"
+    : isPizzaItem(selectedProduct) ? "Allergener: Melk, Hvete" : "";
   renderProductOptions();
 }
 
@@ -325,6 +459,7 @@ function openProduct(id) {
   selectedSection = result.section;
   selectedSize = hasSizes(selectedProduct) ? "large" : "regular";
   selectedExtras = new Set();
+  if (isKebabCustomItem(selectedProduct)) selectedExtras.add("strength-mild");
   quantity = 1;
   specialInstructions.value = "";
   renderProductModal();
@@ -334,13 +469,15 @@ function openProduct(id) {
 
 function closeProductModal() {
   productModal.hidden = true;
+  productModal.classList.remove("simple-product");
+  productModal.classList.remove("kebab-product");
   document.body.classList.remove("modal-open");
 }
 
 function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
-  const taxValue = Math.round(cartSubtotal * 0.15 * 100) / 100;
+  const taxValue = Math.round((cartSubtotal * 15 / 115) * 100) / 100;
 
   cartCount.textContent = itemCount;
   subtotal.textContent = formatPrice(cartSubtotal);
@@ -380,7 +517,11 @@ function addConfiguredToCart() {
     sizeLabel: hasSizes(selectedProduct)
       ? selectedSize === "large" ? "St\u00f8rrelse: STOR PIZZA" : "St\u00f8rrelse: Medium Pizza"
       : "St\u00f8rrelse: Standard",
-    extras: selectedExtraLines.map((option) => option.label),
+    extras: selectedExtraLines.map((option) =>
+      option.choiceGroup || option.group === "Velg saus" || option.group === "Tillegg" || selectedProduct.type === "kebab-pita"
+        ? option.label
+        : option.group
+    ),
     quantity,
     unitPrice: getCurrentUnitPrice(),
     total: getCurrentTotal(),
@@ -423,10 +564,15 @@ menuSectionsEl.addEventListener("click", (event) => {
 
 optionGroups.addEventListener("change", (event) => {
   if (event.target.name === "size") selectedSize = event.target.value;
+  if (event.target.name === "strength") {
+    selectedExtras = new Set([...selectedExtras].filter((id) => !id.startsWith("strength-")));
+    selectedExtras.add(event.target.value);
+  }
   if (event.target.type === "checkbox" && event.target.value) {
     if (event.target.checked) selectedExtras.add(event.target.value);
     else selectedExtras.delete(event.target.value);
   }
+  selectedExtras = new Set([...selectedExtras].filter((id) => getVisibleExtras().some((option) => option.id === id)));
   renderProductModal();
 });
 
