@@ -380,6 +380,71 @@ button {
   padding: 14px;
 }
 
+.simple-product .product-photo {
+  min-height: 44px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.simple-product .product-photo::after {
+  display: none;
+}
+
+.simple-product .back-button {
+  width: 50px;
+  height: 44px;
+  border-right: 1px solid var(--line);
+  background: #fff;
+  font-size: 34px;
+}
+
+.simple-product #productTitle {
+  padding: 15px 10px;
+  font-size: 12px;
+}
+
+.simple-product .product-body {
+  display: flex;
+  min-height: 232px;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px;
+}
+
+.simple-product .product-summary,
+.simple-product #optionGroups,
+.simple-product .note-label,
+.simple-product #specialInstructions {
+  display: none;
+}
+
+.kebab-product .product-photo {
+  min-height: 44px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.kebab-product .product-photo::after {
+  display: none;
+}
+
+.kebab-product .back-button {
+  width: 50px;
+  height: 44px;
+  border-right: 1px solid var(--line);
+  background: #fff;
+  font-size: 34px;
+}
+
+.kebab-product #productTitle {
+  padding: 15px 10px;
+  font-size: 12px;
+}
+
+.kebab-product .product-body {
+  padding-top: 104px;
+}
+
 .product-summary {
   margin: 0 0 10px;
   color: #626a70;
@@ -443,6 +508,13 @@ button {
   font-size: 13px;
 }
 
+.allergen-note {
+  min-height: 16px;
+  margin: 18px 0 0;
+  color: #6d747b;
+  font-size: 10px;
+}
+
 textarea {
   width: 100%;
   padding: 10px;
@@ -458,25 +530,28 @@ textarea {
 
 .quantity-stepper {
   display: grid;
-  grid-template-columns: 1fr 54px 54px;
-  min-height: 50px;
-  border: 1px solid var(--line);
+  grid-template-columns: 1fr 40px 40px;
+  height: 38px;
   background: #fff;
 }
 
 .quantity-stepper strong {
   display: flex;
   align-items: center;
+  border: 1px solid var(--line);
+  border-right: 0;
   padding-left: 12px;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 400;
 }
 
 .quantity-stepper button {
-  border: 3px solid #fff;
+  width: 40px;
+  height: 38px;
+  border: 1px solid #fff;
   background: #626262;
   color: #fff;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -690,7 +765,7 @@ textarea {
 
 .ghost-button,
 .close-button {
-  min-height: 32px;
+  min-height: 40px;
   border: 1px solid var(--line);
   background: #fff;
   color: #555;
@@ -699,11 +774,25 @@ textarea {
 }
 
 .ghost-button {
-  padding: 0 10px;
+  padding: 0 14px;
+}
+
+#backToMenu {
+  padding: 0 16px;
+  border-color: var(--orange);
+  border-radius: 4px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 2px 0 var(--orange-dark);
+}
+
+#backToMenu:hover {
+  background: var(--orange-dark);
 }
 
 .close-button {
-  width: 32px;
+  width: 40px;
   font-size: 20px;
 }
 
@@ -716,9 +805,10 @@ textarea {
 
 .cart-item {
   display: grid;
-  grid-template-columns: 1fr 42px;
-  gap: 8px;
-  padding: 12px;
+  grid-template-columns: minmax(0, 1fr) 108px 46px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -727,9 +817,7 @@ textarea {
 }
 
 .cart-item-main {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: contents;
 }
 
 .cart-item h3 {
@@ -744,10 +832,17 @@ textarea {
   font-size: 11px;
 }
 
+.cart-item-main > strong {
+  justify-self: end;
+  color: #4a4f55;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 .remove-button {
-  align-self: center;
-  width: 36px;
-  height: 36px;
+  justify-self: end;
+  width: 46px;
+  height: 46px;
   border: 1px solid #d8392e;
   border-radius: 4px;
   background: #d8392e;
@@ -847,6 +942,35 @@ textarea {
   .cart-panel {
     width: 100%;
     max-height: 88vh;
+  }
+
+  .cart-header {
+    align-items: start;
+    gap: 10px;
+  }
+
+  .cart-header-actions {
+    gap: 6px;
+  }
+
+  #backToMenu {
+    min-width: 132px;
+    padding: 0 10px;
+  }
+
+  .cart-item {
+    grid-template-columns: minmax(0, 1fr) 88px 44px;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .cart-item-main > strong {
+    font-size: 13px;
+  }
+
+  .remove-button {
+    width: 44px;
+    height: 44px;
   }
 
   .info-panel {
