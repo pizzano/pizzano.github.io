@@ -1973,8 +1973,8 @@ function animateProductIntoCart() {
 }
 
 function getCartStatusOrder() {
-  const orders = getRecentOrders();
-  return orders.find((order) => (order.status || "pending") === "pending") || orders[0] || null;
+  // Eski siparişler artık sepet içinde gösterilmez; profil alanında tutulur.
+  return null;
 }
 
 // Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
@@ -1982,19 +1982,18 @@ function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
   const taxValue = Math.round((cartSubtotal * 15 / 115) * 100) / 100;
-  const statusOrder = getCartStatusOrder();
-  const showOnlyOrderStatus = cart.length === 0 && Boolean(statusOrder);
+  const showOnlyOrderStatus = false;
 
-  if (cartPanel) cartPanel.classList.toggle("cart-order-only", showOnlyOrderStatus);
-  if (cartTitle) cartTitle.textContent = showOnlyOrderStatus ? "Bestillingsstatus" : "Handlekurv";
+  if (cartPanel) cartPanel.classList.remove("cart-order-only");
+  if (cartTitle) cartTitle.textContent = "Handlekurv";
 
   cartCount.textContent = itemCount;
   subtotal.textContent = formatPrice(cartSubtotal);
   tax.textContent = formatPrice(taxValue);
   total.textContent = formatPrice(cartSubtotal);
-  cartEmpty.hidden = cart.length > 0 || showOnlyOrderStatus;
+  cartEmpty.hidden = cart.length > 0;
   cartItems.hidden = cart.length === 0;
-  cartSummary.hidden = cart.length === 0 && !showOnlyOrderStatus;
+  cartSummary.hidden = cart.length === 0;
   clearCart.hidden = cart.length === 0;
   checkoutButton.disabled = cart.length === 0;
 
@@ -2019,12 +2018,9 @@ function renderCart() {
     )
     .join("");
 
-  if (showOnlyOrderStatus && orderStatusBox) {
-    orderStatusBox.hidden = false;
-    orderStatusBox.className = `order-status-box ${statusOrder.status || "pending"}`;
-    orderStatusBox.innerHTML = orderStatusHtml(statusOrder, { includeReceipt: true });
-  } else if (orderStatusBox) {
+  if (orderStatusBox) {
     orderStatusBox.hidden = true;
+    orderStatusBox.innerHTML = "";
   }
 
   updatePickupControls();

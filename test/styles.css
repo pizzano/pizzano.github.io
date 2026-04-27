@@ -2144,3 +2144,136 @@ body.menu-loading #menuSections::before {
 .profile-order-details-clean .customer-receipt-lines {
   margin-top: 0;
 }
+
+/* ===== Sepet/profil sade tam ekran düzeltmesi =====
+   Sepet boşsa eski sipariş gösterilmez; eski siparişler sadece profil içindedir.
+   Mobilde yarım pencere hissini kaldırmak için sepet ve profil tam ekran yapılır.
+*/
+.cart-panel.cart-order-only {
+  /* Eski sınıf kalırsa bile sepeti gizli status moduna sokmasın. */
+  display: flex !important;
+}
+
+.profile-modal,
+.cart-modal {
+  place-items: stretch !important;
+  padding: 0 !important;
+}
+
+.profile-panel,
+.cart-panel {
+  width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.profile-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #f7f8f9 !important;
+}
+
+.profile-header {
+  flex: 0 0 auto !important;
+  min-height: 66px !important;
+}
+
+.profile-body {
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  padding: clamp(14px, 3vw, 26px) !important;
+}
+
+.cart-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: clamp(12px, 2vw, 22px) !important;
+  background: #f7f8f9 !important;
+}
+
+.cart-header {
+  flex: 0 0 auto !important;
+  border-radius: 14px !important;
+}
+
+.cart-items {
+  flex: 0 0 auto !important;
+  max-height: min(34dvh, 320px) !important;
+  overflow-y: auto !important;
+}
+
+.cart-empty {
+  flex: 1 1 auto !important;
+  display: grid !important;
+  place-items: center !important;
+  min-height: 220px !important;
+  border-radius: 14px !important;
+}
+.cart-empty[hidden] { display: none !important; }
+
+.cart-summary {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  border-radius: 14px !important;
+  padding-bottom: 92px !important;
+  -webkit-overflow-scrolling: touch;
+}
+.cart-summary[hidden] { display: none !important; }
+
+body.cart-open .checkout-button {
+  position: fixed !important;
+  left: clamp(14px, 3vw, 38px) !important;
+  right: clamp(14px, 3vw, 38px) !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  z-index: 120 !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.24) !important;
+}
+
+@media (min-width: 900px) {
+  .profile-modal,
+  .cart-modal {
+    place-items: center !important;
+    padding: 22px !important;
+  }
+
+  .profile-panel,
+  .cart-panel {
+    width: min(980px, calc(100% - 44px)) !important;
+    height: min(92dvh, 860px) !important;
+    max-height: 92dvh !important;
+    border-radius: 18px !important;
+    box-shadow: 0 22px 70px rgba(0,0,0,.22) !important;
+  }
+
+  body.cart-open .checkout-button {
+    left: calc(50% - min(490px, 46vw)) !important;
+    right: calc(50% - min(490px, 46vw)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .cart-panel {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: 10px !important;
+  }
+
+  .cart-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .profile-panel {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+}
