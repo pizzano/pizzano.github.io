@@ -1,176 +1,20 @@
-<!doctype html>
-<html lang="no">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="admin.css?v=20260427-23">
-  </head>
-  <body>
-    <header class="admin-topbar">
-      <div class="admin-brand">
-        <strong id="adminRestaurantTitle">K&Oslash;L Grill &amp; Pizza</strong>
-        <span>meny admin</span>
-      </div>
+// ============================================================
+// YENİ MODÜL ŞABLONU
+// ------------------------------------------------------------
+// Yeni bir özellik eklemek istersen bu dosyayı kopyala.
+// Örnek: modules/kupon-sistemi.js
+// Sonra index.html veya admin.html içine script olarak ekleyebilirsin.
+// Eğer dosyayı silersen ana sistem çalışmaya devam etmelidir.
+// ============================================================
+(function () {
+  "use strict";
 
-      <div class="admin-topbar-settings" aria-label="Admin deler">
-        <button class="top-settings-button active" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
-        <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
-        <button class="top-settings-button" type="button" data-top-nav="hours">🎯 Åpning</button>
-        <button class="top-settings-button" type="button" data-top-nav="delivery">📈 Levering</button>
-        <button class="top-settings-button" type="button" data-top-nav="advanced">••• Mer</button>
-      </div>
+  window.KOLModules = window.KOLModules || {};
 
-      <nav>
-        <a href="index.html">Se meny</a>
-        <button id="reloadData" type="button">Synkroniser</button>
-        <button id="saveData" type="button">Lagre n&aring;</button>
-      </nav>
-    </header>
+  // Buraya kendi özelliğinin fonksiyonlarını yaz.
+  function start() {
+    // Örnek: sayfa yüklendiğinde çalışacak kodlar.
+  }
 
-    <main class="admin-shell">
-
-      <section class="admin-status" id="adminStatus">Klar.</section>
-
-      <section class="admin-page active" data-admin-page="menu">
-      <section class="admin-grid">
-        <aside class="category-list menu-builder-panel">
-          <div class="section-heading category-builder-heading">
-            <div>
-              <h1>Kategorier</h1>
-              <span>Klikk på kategori, åpne produkter og rediger direkte under produktet.</span>
-            </div>
-            <button id="addCategory" type="button">Legg til kategori</button>
-          </div>
-          <div id="categoryButtons" class="category-card-list"></div>
-          <button id="addCategoryBottom" class="add-category-bottom" type="button">Legg til kategori</button>
-        </aside>
-
-        <section class="editor-panel product-form-stash" aria-hidden="true">
-          <div class="section-heading product-heading">
-            <h2>Produkter</h2>
-            <button id="addProduct" type="button">Nytt produkt</button>
-          </div>
-
-          <div class="product-admin-grid">
-            <form class="product-form product-editor-card" id="productForm">
-              <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
-              <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
-              <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
-              <label class="technical-field">Id <input id="productId" type="text"></label>
-              <section class="product-prices wide" aria-label="Produktpriser">
-                <div class="mini-heading">
-                  <h3>Priser</h3>
-                  <span>Start med én pris, legg til Stor / XXL ved behov.</span>
-                </div>
-                <div id="productPriceRows" class="product-price-rows"></div>
-                <button id="addProductPrice" class="price-add-button" type="button">+ Legg til pris</button>
-              </section>
-              <label class="technical-field">Pris <input id="productPrice" type="number" min="0"></label>
-              <label class="technical-field">Medium pris <input id="productMediumPrice" type="number" min="0"></label>
-              <label class="technical-field">Stor pris <input id="productLargePrice" type="number" min="0"></label>
-              <label class="technical-field">Listepris <input id="productDisplayPrice" type="number" min="0"></label>
-              <section class="assigned-groups wide" aria-label="Valggrupper p&aring; produktet">
-                <div class="mini-heading">
-                  <h3>Valggrupper p&aring; dette produktet</h3>
-                  <span>Dra en gruppe hit, eller bruk knappen under.</span>
-                </div>
-                <div id="assignedGroups" class="assigned-group-list"></div>
-              </section>
-              <div class="form-actions wide">
-                <button id="saveProduct" type="submit">Oppdater produkt</button>
-                <button class="danger-light" id="deleteProduct" type="button">Slett produkt</button>
-              </div>
-            </form>
-          </div>
-        </section>
-        <aside class="group-panel">
-          <div class="section-heading">
-            <div>
-              <h2>Valggrupper</h2>
-              <span>Dra grupper inn p&aring; valgt produkt.</span>
-            </div>
-            <button id="addOptionGroup" type="button">Ny gruppe</button>
-          </div>
-          <div id="optionGroupsAdmin" class="admin-option-groups"></div>
-        </aside>
-      </section>
-      </section>
-
-      <section class="admin-page admin-settings-workspace" data-admin-page="settings">
-        <section class="inline-settings-card">
-          <header class="inline-settings-header">
-            <div>
-              <h1 id="inlineSettingsTitle">Grunninfo</h1>
-              <span id="inlineSettingsSubtitle">Endringer lagres i Firebase sammen med menyen.</span>
-            </div>
-          </header>
-
-          <div class="settings-page active" data-settings-page="basic">
-            <div class="settings-form-grid">
-              <label>Navnet på restauranten *
-                <input id="settingRestaurantName" data-setting-field="restaurantName" type="text" placeholder="KØL Grill & Pizza">
-              </label>
-              <label>Telefonnummer til restauranten *
-                <input id="settingPhone" data-setting-field="phone" type="text" placeholder="+47 41 14 53 53">
-              </label>
-              <label>E-post
-                <input id="settingEmail" data-setting-field="email" type="email" placeholder="post@restaurant.no">
-              </label>
-              <label>Land
-                <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
-              </label>
-              <label>Tidssone
-                <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
-              </label>
-              <label>Sted *
-                <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
-              </label>
-              <label>Postnr
-                <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
-              </label>
-              <label class="wide">Gatenavn og nummer *
-                <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
-              </label>
-              <label>Åpningstider tekst
-                <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag, Onsdag - Søndag">
-              </label>
-              <label>Tid
-                <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="14:00 - 22:00">
-              </label>
-              <label>Henting
-                <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
-              </label>
-              <label>Betaling
-                <input id="settingPaymentInfo" data-setting-field="paymentInfo" type="text" placeholder="Kort ved henting (henting)">
-              </label>
-            </div>
-          </div>
-
-          <div class="settings-page empty-settings-page" data-settings-page="hours">
-            <h3>Åpning / bestilling</h3>
-            <p>Her kan vi senere legge inn åpningstid per dag, ferie, forhåndsbestilling og stengt/åpent-bryter.</p>
-          </div>
-
-          <div class="settings-page empty-settings-page" data-settings-page="delivery">
-            <h3>Levering / soner</h3>
-            <p>Her kan vi senere legge inn levering, minimumsbeløp, gebyr, soner og hentetid.</p>
-          </div>
-
-          <div class="settings-page empty-settings-page" data-settings-page="advanced">
-            <h3>Andre innstillinger</h3>
-            <p>Her kan vi senere legge inn språk, betalingsmåter, avgifter, kvitteringstekst og integrasjoner.</p>
-          </div>
-        </section>
-      </section>
-
-    </main>
-
-    <div class="admin-toast" id="adminToast" hidden>Lagret</div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
-    <script src="menu-data.js?v=20260427-7"></script>
-    <script src="admin.js?v=20260427-23"></script>
-  </body>
-</html>
+  window.KOLModules.featureTemplate = { start };
+})();

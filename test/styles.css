@@ -1243,3 +1243,41 @@ textarea {
     animation: none;
   }
 }
+
+
+/* ===== Utsolgt / skjult menyvisning ===== */
+.menu-row.sold-out {
+  opacity: 0.68;
+  cursor: not-allowed;
+  background: #f4f4f4;
+}
+
+.menu-row.sold-out:hover {
+  background: #f4f4f4;
+}
+
+.menu-row.sold-out .food-thumb {
+  filter: grayscale(1);
+}
+
+.menu-row.sold-out .row-price {
+  padding: 4px 8px;
+  border: 1px solid #d83b32;
+  border-radius: 999px;
+  background: #fff0ef;
+  color: #c8261d;
+  font-weight: 900;
+}
+
+.soldout-small {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border: 1px solid #d83b32;
+  border-radius: 999px;
+  background: #fff0ef;
+  color: #c8261d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}

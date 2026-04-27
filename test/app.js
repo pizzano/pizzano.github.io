@@ -262,6 +262,27 @@ function asArray(value) {
 }
 
 
+// Türkçe not: Admin panelde ürün/kategori gizleme ve utsolgt burada kontrol edilir.
+// hidden=true: müşteri tarafında hiç gösterilmez.
+// soldOut=true veya soldOutUntil gelecekteyse: müşteri UTSOLGT görür ama sepete ekleyemez.
+function isDateInFuture(value = "") {
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time > Date.now();
+}
+
+function isHiddenItem(item = {}) {
+  return item.hidden === true;
+}
+
+function isSoldOutItem(item = {}, parentSoldOut = false) {
+  return parentSoldOut || item.soldOut === true || isDateInFuture(item.soldOutUntil || "");
+}
+
+function visibleMenuItems(section = {}) {
+  return asArray(section.items).filter((item) => !isHiddenItem(item));
+}
+
+
 function defaultSiteSettings() {
   return {
     restaurantName: "KØL Grill & Pizza",
@@ -415,10 +436,10 @@ function defaultLabelForSize(id = "standard") {
 function getProductSizes(item) {
   const savedSizes = asArray(item?.sizes)
     .map((size) => ({
-      id: normalizeSizeId(size.label || size.name || size.id, size.id),
+      id: size.id ? makeSlug(size.id) : normalizeSizeId(size.label || size.name, size.id),
       label: size.label || size.name || defaultLabelForSize(size.id),
       price: Number(size.price),
-      default: size.default === true || size.isDefault === true || item?.defaultSizeId === normalizeSizeId(size.label || size.name || size.id, size.id)
+      default: size.default === true || size.isDefault === true || item?.defaultSizeId === (size.id ? makeSlug(size.id) : normalizeSizeId(size.label || size.name, size.id))
     }))
     .filter((size) => size.label && Number.isFinite(size.price));
 
@@ -529,8 +550,11 @@ function isOptionAllowedForSize(option) {
 }
 
 function getProductOptionGroups() {
+  // Türkçe not: optionGroupIds = bütün boylarda ortak gruplar.
+  // optionGroupIdsBySize[selectedSize] = sadece seçilen boy için özel gruplar.
+  const commonIds = asArray(selectedProduct?.optionGroupIds);
   const sizeSpecificIds = asArray(selectedProduct?.optionGroupIdsBySize?.[selectedSize]);
-  const ids = sizeSpecificIds.length ? sizeSpecificIds : asArray(selectedProduct?.optionGroupIds);
+  const ids = [...new Set([...commonIds, ...sizeSpecificIds])];
   if (!ids.length) return [];
   return ids
     .map((id) => menuOptionGroups.find((group) => group.id === id))
@@ -627,46 +651,54 @@ function updateOpeningNotice() {
 }
 
 function renderMenu() {
-  if (!menuSections.length) {
+  const visibleSections = menuSections
+    .filter((section) => !isHiddenItem(section))
+    .map((section) => ({ ...section, items: visibleMenuItems(section) }))
+    .filter((section) => section.items.length);
+
+  if (!visibleSections.length) {
     menuSectionsEl.innerHTML = `
       <section class="category-panel">
-        <p class="category-note">Menyen er ikke lagt inn i databasen enn&aring;.</p>
+        <p class="category-note">Menyen er ikke tilgjengelig akkurat n&aring;.</p>
       </section>
     `;
     return;
   }
-  menuSectionsEl.innerHTML = menuSections
-    .map(
-      (section) => `
-        <section class="category-panel" data-section="${section.id}">
+
+  menuSectionsEl.innerHTML = visibleSections
+    .map((section) => {
+      const sectionSoldOut = isSoldOutItem(section);
+      return `
+        <section class="category-panel ${sectionSoldOut ? "category-sold-out" : ""}" data-section="${section.id}">
           <button class="category-title" type="button" data-toggle-section="${section.id}">
-            <span>${section.title}</span>
+            <span>${section.title}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</span>
             <span>&#9662;</span>
           </button>
           ${section.note ? `<p class="category-note">${section.note}</p>` : ""}
           ${renderCategoryPhoto(section)}
           <div class="menu-list">
-            ${asArray(section.items)
+            ${section.items
               .map((item) => {
+                const rowSoldOut = isSoldOutItem(item, sectionSoldOut);
                 const price = item.displayPrice ?? getBasePrice(item, getDefaultProductSizeId(item));
                 const prefix = item.number ? `${item.number}- ` : "";
                 const details = item.ingredients || "";
                 return `
-                  <button class="menu-row" type="button" data-product="${item.id}">
+                  <button class="menu-row ${rowSoldOut ? "sold-out" : ""}" type="button" data-product="${item.id}" ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
                     ${renderThumb(item)}
                     <span class="menu-row-main">
                       <strong>${prefix}${item.name.toUpperCase()}</strong>
                       <span>${details}</span>
                     </span>
-                    <strong class="row-price">${formatPrice(price)}</strong>
+                    <strong class="row-price">${rowSoldOut ? "UTSOLGT" : formatPrice(price)}</strong>
                   </button>
                 `;
               })
               .join("")}
           </div>
         </section>
-      `
-    )
+      `;
+    })
     .join("");
 }
 
@@ -835,6 +867,7 @@ function renderProductModal() {
 
 function openProduct(id) {
   const result = findProduct(id);
+  if (!result.item || isHiddenItem(result.section) || isHiddenItem(result.item) || isSoldOutItem(result.section) || isSoldOutItem(result.item, isSoldOutItem(result.section))) return;
   selectedProduct = result.item;
   selectedSection = result.section;
   editingCartIndex = null;
@@ -879,63 +912,50 @@ function closeProductModal() {
 }
 
 
+
+// ============================================================
+// SEPET ANİMASYON MODÜLÜ BAĞLANTISI
+// ------------------------------------------------------------
+// Bu bölüm küçük bir köprü gibi çalışır.
+// modules/cart-animation.js dosyası varsa animasyon çalışır.
+// Dosyayı silersen sistem bozulmaz; sadece animasyon kapanır.
+// ============================================================
+function getCartAnimationModule() {
+  return window.KOLModules && window.KOLModules.cartAnimation;
+}
+
 function wiggleCart(duration = 2000) {
-  if (!cartToggle) return;
-  cartToggle.classList.remove("cart-wiggle");
-  void cartToggle.offsetWidth;
-  cartToggle.classList.add("cart-wiggle");
-  window.clearTimeout(cartWiggleTimer);
-  cartWiggleTimer = window.setTimeout(() => {
-    cartToggle.classList.remove("cart-wiggle");
-  }, duration);
+  const module = getCartAnimationModule();
+  if (module && typeof module.wiggleCart === "function") {
+    module.wiggleCart({ cartToggle, duration });
+  }
 }
 
 function scheduleCartReminder() {
-  window.clearInterval(cartReminderTimer);
-  if (!cart.length) return;
-  cartReminderTimer = window.setInterval(() => {
-    if (cartModal && cartModal.hidden) wiggleCart(2000);
-  }, 20000);
+  const module = getCartAnimationModule();
+  if (module && typeof module.scheduleReminder === "function") {
+    module.scheduleReminder({
+      hasItems: cart.length > 0,
+      cartModal,
+      cartToggle,
+      intervalMs: 20000,
+      duration: 2000
+    });
+  }
 }
 
 function animateProductIntoCart() {
-  return new Promise((resolve) => {
-    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const panel = document.querySelector(".product-panel");
-    if (reduceMotion || !panel || !cartToggle || productModal.hidden) {
-      wiggleCart(2000);
-      resolve();
-      return;
-    }
+  const module = getCartAnimationModule();
+  if (module && typeof module.animateProductIntoCart === "function") {
+    return module.animateProductIntoCart({ productModal, cartToggle });
+  }
 
-    const from = panel.getBoundingClientRect();
-    const to = cartToggle.getBoundingClientRect();
-    const flyer = panel.cloneNode(true);
-    flyer.classList.add("cart-flyer");
-    flyer.setAttribute("aria-hidden", "true");
-    flyer.style.width = `${from.width}px`;
-    flyer.style.height = `${from.height}px`;
-    flyer.style.left = `${from.left}px`;
-    flyer.style.top = `${from.top}px`;
-    flyer.style.setProperty("--fly-x", `${to.left + to.width / 2 - (from.left + from.width / 2)}px`);
-    flyer.style.setProperty("--fly-y", `${to.top + to.height / 2 - (from.top + from.height / 2)}px`);
-
-    document.body.appendChild(flyer);
-    productModal.classList.add("adding-to-cart");
-
-    requestAnimationFrame(() => {
-      flyer.classList.add("run");
-    });
-
-    window.setTimeout(() => {
-      flyer.remove();
-      productModal.classList.remove("adding-to-cart");
-      wiggleCart(2000);
-      resolve();
-    }, 920);
-  });
+  // Modül yoksa: animasyon yapmadan normal devam et.
+  wiggleCart(2000);
+  return Promise.resolve();
 }
 
+// Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
 function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
@@ -973,6 +993,7 @@ function renderCart() {
     .join("");  scheduleCartReminder();
 }
 
+// Ürün sepete eklendiğinde çalışan ana fonksiyon.
 async function addConfiguredToCart() {
   if (addingToCart) return;
   addingToCart = true;
@@ -993,6 +1014,7 @@ async function addConfiguredToCart() {
   }
 }
 
+// Sepete müşteri tıklayınca sepet panelini açar.
 function openCart() {
   cartModal.hidden = false;
   cartToggle.setAttribute("aria-expanded", "true");

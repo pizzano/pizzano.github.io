@@ -17,6 +17,13 @@ const fields = {
   productIngredients: document.querySelector("#productIngredients")
 };
 
+const productStatusFields = {
+  // Türkçe not: Ürün gizleme / utsolgt kontrolleri. Boş bırakılırsa ürün normal görünür.
+  hidden: document.querySelector("#productHidden"),
+  soldOut: document.querySelector("#productSoldOut"),
+  soldOutUntil: document.querySelector("#productSoldOutUntil")
+};
+
 const productPriceRows = document.querySelector("#productPriceRows");
 const addProductPriceButton = document.querySelector("#addProductPrice");
 const siteSettingFields = document.querySelectorAll("[data-setting-field]");
@@ -252,6 +259,7 @@ async function writeLiveConfig(message = "Lagret automatisk til Firebase.") {
   }
 }
 
+// Otomatik kaydetme gereken yerlerde kullanılır. Ürün formunda artık manuel kayıt tercih edilir.
 function scheduleSave() {
   if (!firebaseReady || !config) return;
   window.clearTimeout(saveTimer);
@@ -317,6 +325,36 @@ function productPriceSummary(product = {}) {
   return prices.map((size) => `${escapeHtml(size.label)} ${size.price},-`).join(" · ");
 }
 
+
+// Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
+// hidden=true olursa müşteri tarafında görünmez. soldOut=true veya ileri tarihli soldOutUntil varsa müşteri UTSOLGT görür.
+function toDateTimeLocalValue(value = "") {
+  if (!value) return "";
+  return String(value).slice(0, 16);
+}
+
+function isDateInFuture(value = "") {
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time > Date.now();
+}
+
+function isHiddenItem(item = {}) {
+  return item.hidden === true;
+}
+
+function isSoldOutItem(item = {}) {
+  return item.soldOut === true || isDateInFuture(item.soldOutUntil || "");
+}
+
+function statusBadges(item = {}) {
+  const badges = [];
+  if (isHiddenItem(item)) badges.push(`<span class="status-badge hidden-badge">Skjult</span>`);
+  if (isSoldOutItem(item)) badges.push(`<span class="status-badge soldout-badge">Utsolgt</span>`);
+  if (item.soldOutUntil) badges.push(`<span class="status-badge until-badge">til ${escapeHtml(toDateTimeLocalValue(item.soldOutUntil).replace("T", " "))}</span>`);
+  return badges.length ? `<span class="status-badge-row">${badges.join("")}</span>` : "";
+}
+
+// Kategori kartlarını ve kategori içindeki ürün listesini çizer.
 function renderCategories() {
   categoryButtons.innerHTML = config.sections
     .map((section, index) => {
@@ -331,6 +369,7 @@ function renderCategories() {
                 ${productImageMarkup(product)}
                 <span class="product-card-copy">
                   <strong>${escapeHtml(product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt")}</strong>
+                  ${statusBadges(product)}
                   <span>${escapeHtml(product.ingredients || "Klikk for å redigere")}</span>
                 </span>
                 <span class="product-card-price">${productPriceSummary(product)}</span>
@@ -347,6 +386,7 @@ function renderCategories() {
               ${categoryImageMarkup(section)}
               <span class="category-card-copy">
                 <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
+                ${statusBadges(section)}
                 <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
               </span>
               <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
@@ -363,6 +403,12 @@ function renderCategories() {
                   <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
                   <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
                   <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
+                  <section class="availability-controls">
+                    <strong>Status</strong>
+                    <label><input type="checkbox" data-category-field="hidden" ${section.hidden ? "checked" : ""}> Skjul kategori fra kundesiden</label>
+                    <label><input type="checkbox" data-category-field="soldOut" ${section.soldOut ? "checked" : ""}> Vis hele kategorien som utsolgt</label>
+                    <label>Utsolgt til <input type="datetime-local" data-category-field="soldOutUntil" value="${escapeHtml(toDateTimeLocalValue(section.soldOutUntil || ""))}"></label>
+                  </section>
                   <div class="inline-actions">
                     <button type="button" data-category-action="close-edit" data-category-index="${index}">Ferdig</button>
                   </div>
@@ -424,7 +470,7 @@ function ensureDefaultPrice(prices) {
 function getProductPriceList(product) {
   const savedSizes = asArray(product?.sizes)
     .map((size) => ({
-      id: normalizeSizeId(size.label || size.name || size.id, size.id),
+      id: size.id ? makeId(size.id) : normalizeSizeId(size.label || size.name, size.id),
       label: size.label || size.name || defaultLabelForSize(size.id),
       price: getNumber(size.price ?? ""),
       default: size.default === true || size.isDefault === true
@@ -446,7 +492,7 @@ function readProductPriceListFromEditor() {
   const prices = rows
     .map((row, index) => {
       const label = row.querySelector("[data-price-label]")?.value.trim() || "Pris";
-      const id = normalizeSizeId(label, row.dataset.priceId || "");
+      const id = row.dataset.priceId || normalizeSizeId(label, "");
       const price = getNumber(row.querySelector("[data-price-value]")?.value ?? "");
       const isDefault = Boolean(row.querySelector("[data-price-default]")?.checked);
       return { id, label, price, default: isDefault };
@@ -503,8 +549,15 @@ function renderProductEditor() {
     if (!field) return;
     field.disabled = disabled;
   });
+  Object.values(productStatusFields).forEach((field) => {
+    if (!field) return;
+    field.disabled = disabled;
+  });
   if (!product) {
     productForm.reset();
+    if (productStatusFields.hidden) productStatusFields.hidden.checked = false;
+    if (productStatusFields.soldOut) productStatusFields.soldOut.checked = false;
+    if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = "";
     if (productPriceRows) productPriceRows.innerHTML = "";
     renderAssignedGroups();
     return;
@@ -519,13 +572,65 @@ function renderProductEditor() {
   fields.productLargePrice.value = product.largePrice ?? "";
   fields.productDisplayPrice.value = product.displayPrice ?? "";
   fields.productImageUrl.value = product.imageUrl || "";
-  fields.productIngredients.value = product.ingredients || ""; 
+  fields.productIngredients.value = product.ingredients || "";
+  if (productStatusFields.hidden) productStatusFields.hidden.checked = product.hidden === true;
+  if (productStatusFields.soldOut) productStatusFields.soldOut.checked = product.soldOut === true;
+  if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = toDateTimeLocalValue(product.soldOutUntil || "");
   renderProductPrices(product);
   renderAssignedGroups();
 }
 
 function getOptionGroup(groupId) {
   return (config.optionGroups || []).find((group) => group.id === groupId);
+}
+
+function uniqueIds(ids) {
+  return [...new Set(asArray(ids).filter(Boolean))];
+}
+
+function getProductSizeAreas(product = selectedProduct()) {
+  const sizes = getProductPriceList(product).filter((size) => size.id && size.price !== undefined);
+  return sizes.length > 1 ? sizes : [];
+}
+
+function areaLabel(area, sizes = getProductSizeAreas()) {
+  if (area === "common") return "Alle størrelser";
+  const found = sizes.find((size) => size.id === area);
+  return found?.label || defaultLabelForSize(area);
+}
+
+function getAssignedGroupIds(product, area = "common") {
+  if (!product) return [];
+  if (area === "common") return uniqueIds(product.optionGroupIds);
+  return uniqueIds(product.optionGroupIdsBySize?.[area]);
+}
+
+function removeGroupFromAllAssignedAreas(product, groupId) {
+  if (!product || !groupId) return;
+  product.optionGroupIds = uniqueIds(product.optionGroupIds).filter((id) => id !== groupId);
+  if (product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object") {
+    Object.keys(product.optionGroupIdsBySize).forEach((area) => {
+      product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]).filter((id) => id !== groupId);
+      if (!product.optionGroupIdsBySize[area].length) delete product.optionGroupIdsBySize[area];
+    });
+  }
+}
+
+function getAssignedGroupEntries(product = selectedProduct()) {
+  if (!product) return [];
+  const entries = [];
+  uniqueIds(product.optionGroupIds).forEach((groupId) => entries.push({ groupId, area: "common" }));
+  Object.entries(product.optionGroupIdsBySize || {}).forEach(([area, ids]) => {
+    uniqueIds(ids).forEach((groupId) => entries.push({ groupId, area }));
+  });
+  return entries;
+}
+
+function assignedAreaOptions(selectedArea, sizes = getProductSizeAreas()) {
+  const options = [{ id: "common", label: "Alle" }, ...sizes.map((size) => ({ id: size.id, label: size.label }))];
+  return options
+    .map((option) => `<option value="${escapeHtml(option.id)}" ${option.id === selectedArea ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
 }
 
 function renderAssignedGroups() {
@@ -535,20 +640,40 @@ function renderAssignedGroups() {
     assignedGroups.innerHTML = "<p>Velg et produkt først.</p>";
     return;
   }
-  const groupIds = asArray(product.optionGroupIds);
-  assignedGroups.innerHTML = groupIds.length
-    ? groupIds
-        .map((groupId) => {
+
+  const sizes = getProductSizeAreas(product);
+  const entries = getAssignedGroupEntries(product);
+  const dropButtons = [{ id: "common", label: "Alle" }, ...sizes.map((size) => ({ id: size.id, label: size.label }))]
+    .map((area) => `<button class="assigned-filter-drop" type="button" data-assigned-zone="${escapeHtml(area.id)}">+ ${escapeHtml(area.label)}</button>`)
+    .join("");
+
+  const rows = entries.length
+    ? entries
+        .map(({ groupId, area }) => {
           const group = getOptionGroup(groupId);
           return `
-            <div class="assigned-group-chip">
-              <span>${escapeHtml(group?.title || groupId)}</span>
-              <button class="remove-assigned-group" type="button" data-unassign-group="${escapeHtml(groupId)}">Fjern</button>
+            <div class="assigned-group-row" data-assigned-row="${escapeHtml(groupId)}:${escapeHtml(area)}">
+              <strong>${escapeHtml(group?.title || groupId)}</strong>
+              <label>
+                <span>Vises</span>
+                <select data-assigned-visibility data-assigned-group="${escapeHtml(groupId)}" data-assigned-area="${escapeHtml(area)}">
+                  ${assignedAreaOptions(area, sizes)}
+                </select>
+              </label>
+              <button class="remove-assigned-group" type="button" data-unassign-group="${escapeHtml(groupId)}" data-unassign-area="${escapeHtml(area)}">Fjern</button>
             </div>
           `;
         })
         .join("")
-    : "<p>Ingen valggrupper på dette produktet.</p>";
+    : `<p class="assigned-zone-empty">Ingen grupper. Dra en gruppe fra høyre, eller bruk + knappene.</p>`;
+
+  assignedGroups.innerHTML = `
+    <div class="assigned-filter-toolbar">
+      <span>Dra gruppe hit:</span>
+      ${dropButtons}
+    </div>
+    <div class="assigned-compact-list" data-assigned-zone="common">${rows}</div>
+  `;
 }
 
 function closeGroupMenus() {
@@ -612,6 +737,7 @@ function renderGroupEditor(group, groupIndex) {
   `;
 }
 
+// Sağdaki Valggrupper / tilleggler listesini çizer.
 function renderGroupManager() {
   if (!optionGroupsAdmin) return;
   optionGroupsAdmin.innerHTML = (config.optionGroups || [])
@@ -732,11 +858,18 @@ function renderAll() {
 function updateCategoryFromFields() {
 }
 
+// Oppdater produkt veya Enter basılınca ürünü Firebase’e kaydeder.
 function updateProductFromFields() {
   const category = selectedCategory();
   const currentProduct = selectedProduct();
   if (!category || !currentProduct) return;
   const prices = readProductPriceListFromEditor();
+  const sizeIds = prices.map((size) => size.id);
+  const cleanedBySize = {};
+  Object.entries(currentProduct.optionGroupIdsBySize || {}).forEach(([sizeId, ids]) => {
+    if (sizeIds.includes(sizeId)) cleanedBySize[sizeId] = uniqueIds(ids);
+  });
+
   const productData = applyPriceCompatibility({
     id: fields.productId.value.trim() || makeId(fields.productName.value),
     number: currentProduct.number,
@@ -745,8 +878,11 @@ function updateProductFromFields() {
     thumb: currentProduct.thumb,
     imageUrl: fields.productImageUrl.value.trim(),
     ingredients: fields.productIngredients.value.trim(),
-    optionGroupIds: asArray(currentProduct.optionGroupIds),
-    optionGroupIdsBySize: currentProduct.optionGroupIdsBySize
+    hidden: productStatusFields.hidden?.checked === true,
+    soldOut: productStatusFields.soldOut?.checked === true,
+    soldOutUntil: productStatusFields.soldOutUntil?.value || undefined,
+    optionGroupIds: uniqueIds(currentProduct.optionGroupIds),
+    optionGroupIdsBySize: Object.keys(cleanedBySize).length ? cleanedBySize : undefined
   }, prices);
   category.items[selectedProductIndex] = cleanObject(productData);
   renderProducts();
@@ -823,21 +959,46 @@ function moveItem(list, fromIndex, toIndex) {
   list.splice(toIndex, 0, item);
 }
 
-function assignGroupToSelectedProduct(groupId) {
+function assignGroupToSelectedProduct(groupId, area = "common") {
   const product = selectedProduct();
   if (!product || !groupId) return;
-  product.optionGroupIds = asArray(product.optionGroupIds);
-  if (!product.optionGroupIds.includes(groupId)) product.optionGroupIds.push(groupId);
+
+  // Türkçe not: Bir grup aynı üründe sadece tek yere bağlanır.
+  // area = "common" ise bütün boylarda, area = size.id ise sadece o boyda görünür.
+  removeGroupFromAllAssignedAreas(product, groupId);
+
+  if (area === "common") {
+    product.optionGroupIds = uniqueIds(product.optionGroupIds);
+    product.optionGroupIds.push(groupId);
+  } else {
+    product.optionGroupIdsBySize = product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object" ? product.optionGroupIdsBySize : {};
+    product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]);
+    product.optionGroupIdsBySize[area].push(groupId);
+  }
+
   renderAssignedGroups();
-  scheduleSave();
+  setStatus(`Valggruppe lagt til (${areaLabel(area)}). Klikk Oppdater produkt for å lagre.`);
 }
 
-function unassignGroupFromSelectedProduct(groupId) {
+function moveAssignedGroupToArea(groupId, fromArea, toArea) {
+  const product = selectedProduct();
+  if (!product || !groupId || !toArea) return;
+  assignGroupToSelectedProduct(groupId, toArea);
+}
+
+function unassignGroupFromSelectedProduct(groupId, area = "common") {
   const product = selectedProduct();
   if (!product || !groupId) return;
-  product.optionGroupIds = asArray(product.optionGroupIds).filter((id) => id !== groupId);
+
+  if (area === "common") {
+    product.optionGroupIds = uniqueIds(product.optionGroupIds).filter((id) => id !== groupId);
+  } else if (product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object") {
+    product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]).filter((id) => id !== groupId);
+    if (!product.optionGroupIdsBySize[area].length) delete product.optionGroupIdsBySize[area];
+  }
+
   renderAssignedGroups();
-  scheduleSave();
+  setStatus("Valggruppe fjernet. Klikk Oppdater produkt for å lagre.");
 }
 
 function removeGroupIdFromAllProducts(groupId) {
@@ -949,16 +1110,20 @@ categoryButtons.addEventListener("click", (event) => {
   renderAll();
 });
 
-categoryButtons.addEventListener("input", (event) => {
+function updateInlineCategoryField(event) {
   const field = event.target.dataset.categoryField;
   const editor = event.target.closest("[data-inline-category]");
   if (!field || !editor) return;
   const category = config.sections[Number(editor.dataset.inlineCategory)];
   if (!category) return;
-  category[field] = event.target.value.trim();
+  const value = event.target.type === "checkbox" ? event.target.checked : event.target.value.trim();
+  category[field] = value;
   if (field === "title" && !category.id) category.id = makeId(event.target.value);
   scheduleSave();
-});
+}
+
+categoryButtons.addEventListener("input", updateInlineCategoryField);
+categoryButtons.addEventListener("change", updateInlineCategoryField);
 
 categoryButtons.addEventListener("dragstart", (event) => {
   const product = event.target.closest("[data-product-drag]");
@@ -1022,28 +1187,36 @@ if (assignedGroups) {
   assignedGroups.addEventListener("click", (event) => {
     const groupId = event.target.dataset.unassignGroup;
     if (!groupId) return;
-    unassignGroupFromSelectedProduct(groupId);
-    writeLiveConfig("Valggruppe fjernet fra produktet.");
+    unassignGroupFromSelectedProduct(groupId, event.target.dataset.unassignArea || "common");
+  });
+
+  assignedGroups.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-assigned-visibility]");
+    if (!select) return;
+    moveAssignedGroupToArea(select.dataset.assignedGroup, select.dataset.assignedArea || "common", select.value || "common");
   });
 
   assignedGroups.addEventListener("dragover", (event) => {
     if (!draggedGroupId) return;
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (!zone) return;
     event.preventDefault();
-    assignedGroups.classList.add("drag-over");
+    zone.classList.add("drag-over");
   });
 
-  assignedGroups.addEventListener("dragleave", () => {
-    assignedGroups.classList.remove("drag-over");
+  assignedGroups.addEventListener("dragleave", (event) => {
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (zone) zone.classList.remove("drag-over");
   });
 
   assignedGroups.addEventListener("drop", (event) => {
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (!zone || !draggedGroupId) return;
     event.preventDefault();
-    assignedGroups.classList.remove("drag-over");
-    if (!draggedGroupId) return;
-    assignGroupToSelectedProduct(draggedGroupId);
+    zone.classList.remove("drag-over");
+    assignGroupToSelectedProduct(draggedGroupId, zone.dataset.assignedZone || "common");
     draggedGroupId = null;
     renderGroupManager();
-    writeLiveConfig("Valggruppe lagt til på produktet.");
   });
 }
 
@@ -1254,6 +1427,7 @@ if (productPriceRows) {
     if (prices.length <= 1) return;
     prices.splice(Number(removeIndex), 1);
     renderProductPrices({ sizes: prices });
+    renderAssignedGroups();
     setStatus("Pris fjernet. Klikk Oppdater produkt for å lagre.");
   });
 }
@@ -1264,9 +1438,20 @@ if (addProductPriceButton) {
     const nextLabel = prices.some((size) => size.id === "large") ? "XXL" : "Stor";
     prices.push({ id: normalizeSizeId(nextLabel), label: nextLabel, price: 0 });
     renderProductPrices({ sizes: prices });
+    renderAssignedGroups();
     setStatus("Ny pris lagt til. Klikk Oppdater produkt for å lagre.");
   });
 }
+
+
+// Türkçe not: Input'a tıklayınca içindeki yazı seçilir. Böylece silmeden direkt yeni değer yazabilirsin.
+document.addEventListener("focusin", (event) => {
+  const field = event.target;
+  if (!field.matches("input[type='text'], input[type='number'], input[type='url'], input[type='email'], input:not([type]), textarea")) return;
+  window.setTimeout(() => {
+    try { field.select(); } catch (error) {}
+  }, 0);
+});
 
 productForm.addEventListener("submit", (event) => {
   event.preventDefault();
