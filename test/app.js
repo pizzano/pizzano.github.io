@@ -274,8 +274,18 @@ let currentOrderCountdownTimer = null;
 let recentOrdersPollTimer = null;
 let expandedProfileOrderId = "";
 
+function safeNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function safeText(value, fallback = "") {
+  const text = value === null || value === undefined ? "" : String(value);
+  return text.trim() || fallback;
+}
+
 function formatPrice(value) {
-  return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(safeNumber(value));
 }
 
 function loadCart() {
@@ -385,10 +395,77 @@ function getActiveOrderId() {
   return localStorage.getItem(activeOrderKey) || "";
 }
 
+function normalizeCustomerOrderLine(line = {}) {
+  if (!line || typeof line !== "object") return null;
+  const quantity = Math.max(1, safeNumber(line.quantity, 1));
+  const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeText(item)).filter(Boolean) : [];
+  return {
+    ...line,
+    name: safeText(line.name, "Produkt"),
+    quantity,
+    size: safeText(line.size),
+    sizeLabel: safeText(line.sizeLabel || line.size),
+    extras,
+    note: safeText(line.note),
+    total: safeNumber(line.total)
+  };
+}
+
+function aggregateCustomerOrderLines(lines = []) {
+  // TÜRKÇE: Profil/status ekranında aynı ürün tekrarlanmasın; miktar tek satırda toplanır.
+  const map = new Map();
+  asArray(lines).forEach((line) => {
+    const normalized = normalizeCustomerOrderLine(line);
+    if (!normalized) return;
+    const key = JSON.stringify({
+      name: normalized.name,
+      size: normalized.size,
+      sizeLabel: normalized.sizeLabel,
+      extras: normalized.extras,
+      note: normalized.note
+    });
+    const existing = map.get(key);
+    if (existing) {
+      existing.quantity += normalized.quantity;
+      existing.total += safeNumber(normalized.total);
+    } else {
+      map.set(key, { ...normalized });
+    }
+  });
+  return Array.from(map.values());
+}
+
+function normalizeCustomerOrder(order = {}) {
+  if (!order || typeof order !== "object") return null;
+  const items = Array.isArray(order.items)
+    ? aggregateCustomerOrderLines(order.items)
+    : [];
+  const computedTotal = items.reduce((sum, line) => sum + safeNumber(line.total), 0);
+  const status = ["pending", "accepted", "cancelled"].includes(order.status) ? order.status : "pending";
+  return {
+    ...order,
+    id: safeText(order.id),
+    status,
+    customer: {
+      firstName: safeText(order.customer?.firstName),
+      lastName: safeText(order.customer?.lastName),
+      phone: safeText(order.customer?.phone)
+    },
+    pickup: order.pickup && typeof order.pickup === "object" ? order.pickup : { mode: "asap", time: "" },
+    items,
+    total: safeNumber(order.total, computedTotal),
+    subtotal: safeNumber(order.subtotal, computedTotal),
+    readyMinutes: Math.max(1, safeNumber(order.readyMinutes, 10)),
+    createdAt: safeText(order.createdAt, new Date().toISOString()),
+    updatedAt: safeText(order.updatedAt || order.createdAt, new Date().toISOString())
+  };
+}
+
 function getRecentOrders() {
   try {
     const parsed = JSON.parse(localStorage.getItem(recentOrdersKey) || "[]");
-    return Array.isArray(parsed) ? parsed.map(normalizeCustomerOrder).filter(Boolean) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeCustomerOrder).filter((order) => order && order.id);
   } catch {
     return [];
   }
@@ -401,7 +478,7 @@ function orderSortTime(order = {}) {
 function saveRecentOrders(orders) {
   const sorted = asArray(orders)
     .map(normalizeCustomerOrder)
-    .filter(Boolean)
+    .filter((order) => order && order.id)
     .slice()
     .sort((a, b) => orderSortTime(b) - orderSortTime(a));
   localStorage.setItem(recentOrdersKey, JSON.stringify(sorted.slice(0, 2)));
@@ -440,17 +517,16 @@ function markOrderAsRead(orderId) {
 }
 
 function rememberRecentOrder(order) {
-  const normalizedOrder = normalizeCustomerOrder(order);
-  if (!normalizedOrder) return;
+  order = normalizeCustomerOrder(order);
+  if (!order || !order.id) return;
   const previousList = getRecentOrders();
-  const previousOrder = previousList.find((item) => item.id === normalizedOrder.id);
+  const previousOrder = previousList.find((item) => item.id === order.id);
   const previousStatus = previousOrder?.status || "pending";
-  const nextStatus = normalizedOrder.status || "pending";
+  const nextStatus = order.status || "pending";
   const statusChanged = previousOrder && previousStatus !== nextStatus;
-  const list = previousList.filter((item) => item.id !== normalizedOrder.id);
-  list.unshift(normalizedOrder);
+  const list = previousList.filter((item) => item.id !== order.id);
+  list.unshift(order);
   saveRecentOrders(list);
-  order = normalizedOrder;
 
   if (nextStatus === "pending") setActiveOrderId(order.id);
   if (["accepted", "cancelled"].includes(nextStatus)) clearActiveOrderId(order.id);
@@ -481,23 +557,32 @@ function orderStatusTitle(status = "pending") {
 
 function getCustomerReadyAt(order = {}) {
   const base = new Date(order.acceptedAt || order.updatedAt || order.createdAt || Date.now()).getTime();
-  const minutes = Math.max(1, Number(order.readyMinutes || 30) || 30);
+  const minutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
   return new Date(base + minutes * 60000);
 }
 
 function orderReadyMinutesText(order = {}) {
-  const minutes = Math.max(1, Number(order.readyMinutes || 30) || 30);
-  return `${minutes} min`;
+  const status = order.status || "pending";
+  const configuredMinutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
+  if (status !== "accepted" || order.pickup?.mode === "later") return `${configuredMinutes} min`;
+  const remainingMs = getCustomerReadyAt(order).getTime() - Date.now();
+  if (remainingMs <= 0) return "nå";
+  return `${Math.max(1, Math.ceil(remainingMs / 60000))} min`;
+}
+
+function orderReadySummaryText(order = {}) {
+  if ((order.status || "pending") !== "accepted") return orderPickupText(order);
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting kl. ${formatClock(order.pickup.time)}`;
+  }
+  const readyText = orderReadyMinutesText(order);
+  if (readyText === "nå") return "Klar nå";
+  return `Klar om ${readyText} · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
 }
 
 function orderShortMessage(order = {}) {
   const status = order.status || "pending";
-  if (status === "accepted") {
-    if (order.pickup?.mode === "later" && order.pickup?.time) {
-      return `Bestillingen er godkjent. Henting kl. ${formatClock(order.pickup.time)}.`;
-    }
-    return `Bestillingen er godkjent. Klar om ${orderReadyMinutesText(order)} · ca. kl. ${formatClock(getCustomerReadyAt(order))}.`;
-  }
+  if (status === "accepted") return orderReadySummaryText(order);
   if (status === "cancelled") return "Restauranten har kansellert bestillingen.";
   if (isOrderWaitingForOpening(order)) {
     return `Restauranten er stengt nå. Bestillingen behandles når vi åpner kl. ${formatClock(order.processableAfter)}.`;
@@ -660,28 +745,34 @@ function buildOrderPayload() {
       mode,
       time: mode === "later" ? new Date(pickupTimeInput.value).toISOString() : ""
     },
-    items: cart.map((line, index) => ({
-      productId: safeText(line.productId, `produkt-${index + 1}`),
-      name: safeText(line.name, `Produkt ${index + 1}`),
-      quantity: Math.max(1, safeNumber(line.quantity, 1)),
-      size: safeText(line.size, ""),
-      sizeLabel: safeText(line.sizeLabel, ""),
-      extras: asArray(line.extras),
-      extraIds: asArray(line.extraIds),
-      note: safeText(line.note, ""),
-      total: safeNumber(line.total, 0)
+    items: cart.map((line) => ({
+      productId: line.productId,
+      name: line.name,
+      quantity: line.quantity,
+      size: line.size,
+      sizeLabel: line.sizeLabel,
+      extras: line.extras || [],
+      extraIds: line.extraIds || [],
+      note: line.note || "",
+      total: line.total
     })),
-    subtotal: safeNumber(currentCartTotal(), 0),
-    total: safeNumber(currentCartTotal(), 0),
+    subtotal: currentCartTotal(),
+    total: currentCartTotal(),
     source: "web"
   };
 }
 
 
 function orderLinesHtml(order = {}) {
-  order = normalizeCustomerOrder(order) || { items: [], total: 0 };
-  const lines = Array.isArray(order.items) ? order.items : [];
-  if (!lines.length) return "";
+  const normalized = normalizeCustomerOrder(order) || { items: [], total: 0 };
+  const lines = normalized.items || [];
+  if (!lines.length) {
+    return `
+      <div class="customer-receipt-lines">
+        <div class="customer-receipt-total"><span>Sluttsum</span><strong>${formatPrice(normalized.total || 0)}</strong></div>
+      </div>
+    `;
+  }
   return `
     <div class="customer-receipt-lines">
       ${lines.map((line) => {
@@ -697,7 +788,7 @@ function orderLinesHtml(order = {}) {
           </div>
         `;
       }).join("")}
-      <div class="customer-receipt-total"><span>Sluttsum</span><strong>${formatPrice(order.total || 0)}</strong></div>
+      <div class="customer-receipt-total"><span>Sluttsum</span><strong>${formatPrice(normalized.total || 0)}</strong></div>
     </div>
   `;
 }
@@ -706,16 +797,14 @@ function orderPickupText(order = {}) {
   if (order.pickup?.mode === "later" && order.pickup?.time) {
     return `Henting: ${new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`;
   }
-  if ((order.status || "pending") === "accepted") {
-    return `Klar om ${orderReadyMinutesText(order)} · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
-  }
+  if ((order.status || "pending") === "accepted") return orderReadySummaryText(order);
   return "Henting: Snarest mulig";
 }
 
 function orderStatusHtml(order = {}, options = {}) {
-  order = normalizeCustomerOrder(order) || { status: "pending", items: [], total: 0 };
   const status = order.status || "pending";
   const orderId = String(order.id || "").slice(-7).toUpperCase();
+  const total = formatPrice(order.total || 0);
   const waitingOpen = status === "pending" && isOrderWaitingForOpening(order);
   const deadline = getOrderAcceptDeadline(order);
   const countdownText = waitingOpen
@@ -725,17 +814,19 @@ function orderStatusHtml(order = {}, options = {}) {
       : "";
   const countdownLabel = waitingOpen ? "Venter til åpning" : "Svarfrist";
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
-  const message = orderShortMessage(order);
 
+  const message = status === "pending" ? orderShortMessage(order) : "";
+  const readySummary = status === "accepted" ? orderReadySummaryText(order) : orderPickupText(order);
   return `
     <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
       <div class="order-status-head">
         <span class="order-status-pill ${status}">${waitingOpen ? "Venter til åpning" : orderStatusText(status)}</span>
-        <small>Ordre ${escapeAttribute(orderId)}</small>
+        <small>Ordre ${orderId}</small>
       </div>
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
-      <p>${escapeAttribute(message)}</p>
+      ${message ? `<p>${message}</p>` : ""}
       ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>` : ""}
+      ${status !== "pending" ? `<div class="order-mini-info single"><span data-customer-ready="${escapeAttribute(order.id || "")}">${readySummary}</span></div>` : ""}
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
     ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>` : ""}
@@ -768,12 +859,20 @@ function refreshOrderCountdowns(order = null) {
     target.textContent = remaining <= 0 ? "Tar litt ekstra tid" : formatCountdown(remaining);
     target.closest(".order-countdown-box")?.classList.toggle("expired", remaining <= 0);
   });
+
+  document.querySelectorAll("[data-customer-ready], [data-profile-ready]").forEach((target) => {
+    const orderId = target.dataset.customerReady || target.dataset.profileReady;
+    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
+    if (!current || (current.status || "pending") !== "accepted") return;
+    target.textContent = orderReadySummaryText(current);
+  });
 }
 
 function startOrderCountdownUi(order = null) {
   window.clearInterval(currentOrderCountdownTimer);
   refreshOrderCountdowns(order);
-  if (order && (order.status || "pending") !== "pending") return;
+  const status = order?.status || "pending";
+  if (order && !["pending", "accepted"].includes(status)) return;
   currentOrderCountdownTimer = window.setInterval(() => refreshOrderCountdowns(order), 1000);
 }
 
@@ -807,30 +906,24 @@ function renderRecentOrders() {
 }
 
 function profileOrderCardHtml(order = {}) {
-  order = normalizeCustomerOrder(order) || { status: "pending", items: [], total: 0 };
+  order = normalizeCustomerOrder(order) || {};
   const status = order.status || "pending";
   const isExpanded = expandedProfileOrderId === order.id;
   const unread = isOrderUnread(order);
   const title = orderStatusTitle(status);
-  const summaryText = isExpanded
-    ? orderPickupText(order)
-    : `${orderPickupText(order)} · ${formatPrice(order.total || 0)}`;
-
   return `
     <article class="profile-order-card ${status} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
         <span>
-          <strong>${escapeAttribute(title)}</strong>
-          <small>${escapeAttribute(summaryText)}</small>
+          <strong>${title}</strong>
+          <small><span data-profile-ready="${escapeAttribute(order.id || "")}">${orderPickupText(order)}</span> · ${formatPrice(order.total || 0)}</small>
         </span>
         <span class="profile-order-side">
           <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
           <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
         </span>
       </button>
-      ${isExpanded ? `<div class="profile-order-details profile-order-details-clean">
-        ${orderLinesHtml(order)}
-      </div>` : ""}
+      ${isExpanded ? `<div class="profile-order-details">${orderLinesHtml(order)}</div>` : ""}
     </article>
   `;
 }
@@ -893,6 +986,12 @@ function startRecentOrdersSync() {
 }
 
 
+
+// TÜRKÇE: Profil açıkken onaylanan siparişin kalan dakikasını canlı günceller.
+window.setInterval(() => {
+  refreshOrderCountdowns();
+}, 30000);
+
 function resumeActiveOrderPolling() {
   const activeId = getActiveOrderId();
   const recentPending = getRecentOrders().find((order) => (order.status || "pending") === "pending");
@@ -904,7 +1003,7 @@ async function fetchOrder(orderId) {
   const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
   if (!response.ok) throw new Error("Kunne ikke lese ordre");
   const data = await response.json();
-  return data ? { id: orderId, ...data } : null;
+  return data ? normalizeCustomerOrder({ id: orderId, ...data }) : null;
 }
 
 function startOrderPolling(orderId) {
@@ -1015,54 +1114,6 @@ function asArray(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   if (value && typeof value === "object") return Object.values(value).filter(Boolean);
   return [];
-}
-
-
-function safeText(value, fallback = "") {
-  if (value === null || value === undefined) return fallback;
-  const text = String(value).trim();
-  return text || fallback;
-}
-
-function safeNumber(value, fallback = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-function normalizeCustomerOrder(order = {}) {
-  // TÜRKÇE: localStorage veya Firebase’den eksik/bozuk sipariş gelirse müşteri ekranı kırılmasın.
-  if (!order || typeof order !== "object") return null;
-  const customer = order.customer && typeof order.customer === "object" ? order.customer : {};
-  const pickup = order.pickup && typeof order.pickup === "object" ? order.pickup : {};
-  const items = asArray(order.items).map((line, index) => {
-    const safeLine = line && typeof line === "object" ? line : { name: String(line || `Produkt ${index + 1}`) };
-    const quantity = Math.max(1, safeNumber(safeLine.quantity, 1));
-    return {
-      ...safeLine,
-      quantity,
-      name: safeText(safeLine.name, `Produkt ${index + 1}`),
-      extras: asArray(safeLine.extras),
-      total: safeNumber(safeLine.total, 0)
-    };
-  });
-  const calculatedTotal = items.reduce((sum, line) => sum + safeNumber(line.total, 0), 0);
-  return {
-    ...order,
-    id: safeText(order.id, `order-${Date.now()}`),
-    status: ["pending", "accepted", "cancelled"].includes(order.status) ? order.status : "pending",
-    createdAt: order.createdAt || new Date().toISOString(),
-    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
-    readyMinutes: Math.max(1, Math.min(99, Math.round(safeNumber(order.readyMinutes, 30)))),
-    customer,
-    pickup: {
-      ...pickup,
-      mode: pickup.mode === "later" ? "later" : "asap",
-      time: pickup.time || ""
-    },
-    items,
-    subtotal: safeNumber(order.subtotal, calculatedTotal),
-    total: safeNumber(order.total, calculatedTotal)
-  };
 }
 
 
@@ -1973,8 +2024,8 @@ function animateProductIntoCart() {
 }
 
 function getCartStatusOrder() {
-  // Eski siparişler artık sepet içinde gösterilmez; profil alanında tutulur.
-  return null;
+  const orders = getRecentOrders();
+  return orders.find((order) => (order.status || "pending") === "pending") || orders[0] || null;
 }
 
 // Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
@@ -1982,18 +2033,19 @@ function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
   const taxValue = Math.round((cartSubtotal * 15 / 115) * 100) / 100;
+  const statusOrder = null;
   const showOnlyOrderStatus = false;
 
-  if (cartPanel) cartPanel.classList.remove("cart-order-only");
+  if (cartPanel) cartPanel.classList.toggle("cart-order-only", false);
   if (cartTitle) cartTitle.textContent = "Handlekurv";
 
   cartCount.textContent = itemCount;
   subtotal.textContent = formatPrice(cartSubtotal);
   tax.textContent = formatPrice(taxValue);
   total.textContent = formatPrice(cartSubtotal);
-  cartEmpty.hidden = cart.length > 0;
+  cartEmpty.hidden = cart.length > 0 || showOnlyOrderStatus;
   cartItems.hidden = cart.length === 0;
-  cartSummary.hidden = cart.length === 0;
+  cartSummary.hidden = cart.length === 0 && !showOnlyOrderStatus;
   clearCart.hidden = cart.length === 0;
   checkoutButton.disabled = cart.length === 0;
 
@@ -2018,9 +2070,12 @@ function renderCart() {
     )
     .join("");
 
-  if (orderStatusBox) {
+  if (showOnlyOrderStatus && orderStatusBox) {
+    orderStatusBox.hidden = false;
+    orderStatusBox.className = `order-status-box ${statusOrder.status || "pending"}`;
+    orderStatusBox.innerHTML = orderStatusHtml(statusOrder, { includeReceipt: true });
+  } else if (orderStatusBox) {
     orderStatusBox.hidden = true;
-    orderStatusBox.innerHTML = "";
   }
 
   updatePickupControls();
