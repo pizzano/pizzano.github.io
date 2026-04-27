@@ -99,6 +99,7 @@
               <span>Dra grupper inn p&aring; valgt produkt.</span>
             </div>
             <div class="group-heading-actions">
+              <button id="addStrengthGroup" type="button">Ny styrkegruppe</button>
               <button id="addOptionGroup" type="button">Ny gruppe</button>
             </div>
           </div>
@@ -112,13 +113,13 @@
           <header class="orders-admin-header">
             <div>
               <h1>Bestillinger</h1>
-              <span>Nye bestillinger godkjennes eller avvises her. Kundesiden oppdateres automatisk.</span>
+              <span>Nye bestillinger ligger øverst. Trykk på en bestilling for detaljer.</span>
             </div>
             <button id="refreshOrders" type="button">Oppdater</button>
           </header>
           <div class="orders-admin-toolbar">
             <span id="ordersCount">0 bestillinger</span>
-            <span class="orders-help">Minuttfeltet er 1–99. Når du godkjenner, ser kunden når bestillingen er klar.</span>
+            <span class="orders-help" aria-hidden="true"></span>
           </div>
           <div id="ordersAdminList" class="orders-admin-list">
             <p class="empty-orders">Ingen bestillinger ennå.</p>
