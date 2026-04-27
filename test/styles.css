@@ -76,7 +76,7 @@ button {
   border-left: 1px solid #c9c9c9;
   background: transparent;
   color: #676767;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
 }
 
@@ -85,6 +85,12 @@ button {
   display: grid;
   place-items: center;
   gap: 0;
+}
+
+#infoToggle {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .cart-icon {
@@ -332,15 +338,20 @@ button {
 .info-panel {
   position: relative;
   width: min(390px, 100%);
-  max-height: 100vh;
-  overflow: auto;
+  max-height: 100dvh;
+  overflow: hidden;
   background: #f2f2f2;
   box-shadow: var(--shadow);
 }
 
+.product-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: min(100dvh, 760px);
+}
+
 .product-photo {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 1;
   min-height: 146px;
   display: flex;
@@ -377,6 +388,9 @@ button {
 }
 
 .product-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px;
 }
 
@@ -556,8 +570,8 @@ textarea {
 }
 
 .product-footer {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  z-index: 5;
   display: grid;
   grid-template-columns: 110px 1fr;
   min-height: 56px;
@@ -582,6 +596,8 @@ textarea {
 .product-footer button {
   background: var(--orange);
   font-size: 14px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .cart-backdrop {
@@ -751,6 +767,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .cart-header {
@@ -760,7 +778,9 @@ textarea {
 
 .cart-header h2 {
   margin: 0;
+  color: #4a4f55;
   font-size: 17px;
+  font-weight: 700;
 }
 
 .ghost-button,
@@ -770,7 +790,7 @@ textarea {
   background: #fff;
   color: #555;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .ghost-button {
@@ -784,7 +804,12 @@ textarea {
   background: var(--orange);
   color: #fff;
   font-size: 13px;
+  font-weight: 700;
   box-shadow: 0 2px 0 var(--orange-dark);
+}
+
+#clearCart {
+  min-width: 154px;
 }
 
 #backToMenu:hover {
@@ -805,7 +830,7 @@ textarea {
 
 .cart-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 108px 46px;
+  grid-template-columns: minmax(0, 1fr) 104px 38px;
   align-items: center;
   gap: 10px;
   padding: 14px;
@@ -824,31 +849,35 @@ textarea {
   margin: 0 0 4px;
   color: #4a4f55;
   font-size: 13px;
+  font-weight: 700;
 }
 
 .cart-item p {
   margin: 0;
   color: #737a80;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .cart-item-main > strong {
   justify-self: end;
   color: #4a4f55;
   font-size: 14px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .remove-button {
   justify-self: end;
-  width: 46px;
-  height: 46px;
-  border: 1px solid #d8392e;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #df6158;
   border-radius: 4px;
-  background: #d8392e;
+  background: #df453b;
   color: #fff;
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -863,6 +892,8 @@ textarea {
   background: #fff;
   text-align: center;
   color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .cart-summary {
@@ -933,6 +964,8 @@ textarea {
 
   .product-panel {
     width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
   }
 
   .cart-modal {
@@ -954,12 +987,17 @@ textarea {
   }
 
   #backToMenu {
-    min-width: 132px;
+    min-width: 146px;
+    padding: 0 10px;
+  }
+
+  #clearCart {
+    min-width: 154px;
     padding: 0 10px;
   }
 
   .cart-item {
-    grid-template-columns: minmax(0, 1fr) 88px 44px;
+    grid-template-columns: minmax(0, 1fr) 84px 36px;
     gap: 8px;
     padding: 12px;
   }
@@ -969,8 +1007,8 @@ textarea {
   }
 
   .remove-button {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
 
   .info-panel {

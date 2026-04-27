@@ -145,9 +145,9 @@ const customPizzaToppings = [
 ];
 
 const kebabPitaOptions = [
-  { id: "strength-mild", group: "Velg styrke", label: "Mild \u{1F33F}", price: 0, choiceGroup: "strength", default: true },
-  { id: "strength-medium", group: "Velg styrke", label: "Medium \u{1F336}\u{FE0F}", price: 0, choiceGroup: "strength" },
-  { id: "strength-hot", group: "Velg styrke", label: "Sterk \u{1F525}", price: 0, choiceGroup: "strength" },
+  { id: "strength-mild", group: "Velg styrke", label: "Mild", price: 0, choiceGroup: "strength", default: true },
+  { id: "strength-medium", group: "Velg styrke", label: "Medium", price: 0, choiceGroup: "strength" },
+  { id: "strength-hot", group: "Velg styrke", label: "Sterk", price: 0, choiceGroup: "strength" },
   { id: "extra-meat", group: "Ekstra kj\u00f8tt", label: "Ekstra Kebabkj\u00f8tt", price: 30 },
   { id: "fries-kebab", group: "Litt pommes frites i kebaben?", label: "Ja, takk!", price: 15 }
 ];
@@ -591,7 +591,7 @@ addConfiguredProduct.addEventListener("click", addConfiguredToCart);
 cartToggle.addEventListener("click", openCart);
 infoToggle.addEventListener("click", openInfo);
 closeInfo.addEventListener("click", closeInfoModal);
-closeCart.addEventListener("click", closeCartModal);
+if (closeCart) closeCart.addEventListener("click", closeCartModal);
 backToMenu.addEventListener("click", closeCartModal);
 
 cartModal.addEventListener("click", (event) => {
