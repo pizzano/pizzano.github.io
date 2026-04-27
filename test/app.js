@@ -212,6 +212,9 @@ let selectedSize = "large";
 let selectedExtras = new Set();
 let quantity = 1;
 let editingCartIndex = null;
+let addingToCart = false;
+let cartWiggleTimer = null;
+let cartReminderTimer = null;
 
 function formatPrice(value) {
   return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(value);
@@ -875,6 +878,64 @@ function closeProductModal() {
   document.body.classList.remove("modal-open");
 }
 
+
+function wiggleCart(duration = 2000) {
+  if (!cartToggle) return;
+  cartToggle.classList.remove("cart-wiggle");
+  void cartToggle.offsetWidth;
+  cartToggle.classList.add("cart-wiggle");
+  window.clearTimeout(cartWiggleTimer);
+  cartWiggleTimer = window.setTimeout(() => {
+    cartToggle.classList.remove("cart-wiggle");
+  }, duration);
+}
+
+function scheduleCartReminder() {
+  window.clearInterval(cartReminderTimer);
+  if (!cart.length) return;
+  cartReminderTimer = window.setInterval(() => {
+    if (cartModal && cartModal.hidden) wiggleCart(2000);
+  }, 20000);
+}
+
+function animateProductIntoCart() {
+  return new Promise((resolve) => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const panel = document.querySelector(".product-panel");
+    if (reduceMotion || !panel || !cartToggle || productModal.hidden) {
+      wiggleCart(2000);
+      resolve();
+      return;
+    }
+
+    const from = panel.getBoundingClientRect();
+    const to = cartToggle.getBoundingClientRect();
+    const flyer = panel.cloneNode(true);
+    flyer.classList.add("cart-flyer");
+    flyer.setAttribute("aria-hidden", "true");
+    flyer.style.width = `${from.width}px`;
+    flyer.style.height = `${from.height}px`;
+    flyer.style.left = `${from.left}px`;
+    flyer.style.top = `${from.top}px`;
+    flyer.style.setProperty("--fly-x", `${to.left + to.width / 2 - (from.left + from.width / 2)}px`);
+    flyer.style.setProperty("--fly-y", `${to.top + to.height / 2 - (from.top + from.height / 2)}px`);
+
+    document.body.appendChild(flyer);
+    productModal.classList.add("adding-to-cart");
+
+    requestAnimationFrame(() => {
+      flyer.classList.add("run");
+    });
+
+    window.setTimeout(() => {
+      flyer.remove();
+      productModal.classList.remove("adding-to-cart");
+      wiggleCart(2000);
+      resolve();
+    }, 920);
+  });
+}
+
 function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
@@ -909,17 +970,27 @@ function renderCart() {
         </article>
       `
     )
-    .join("");
+    .join("");  scheduleCartReminder();
 }
 
-function addConfiguredToCart() {
-  const line = buildCartLine();
-  if (editingCartIndex === null) cart.push(line);
-  else cart[editingCartIndex] = line;
-  saveCart();
-  renderCart();
-  closeProductModal();
-  openCart();
+async function addConfiguredToCart() {
+  if (addingToCart) return;
+  addingToCart = true;
+  if (addConfiguredProduct) addConfiguredProduct.disabled = true;
+
+  try {
+    const line = buildCartLine();
+    if (editingCartIndex === null) cart.push(line);
+    else cart[editingCartIndex] = line;
+    saveCart();
+    renderCart();
+
+    await animateProductIntoCart();
+    closeProductModal();
+  } finally {
+    addingToCart = false;
+    if (addConfiguredProduct) addConfiguredProduct.disabled = false;
+  }
 }
 
 function openCart() {
