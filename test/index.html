@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="styles.css?v=20260427-21">
+    <link rel="stylesheet" href="styles.css?v=20260427-40">
   </head>
-  <body>
+  <body class="menu-loading">
     <header class="appbar">
       <strong id="siteNameText">K&Oslash;L GRILL &amp; PIZZA</strong>
       <div class="appbar-actions">
@@ -25,11 +25,8 @@
 
     <main class="menu-shell">
       <section class="brand-hero" id="brandHero" aria-label="KOL Grill Pizza">
-        <div class="brand-mark">K<span></span>L</div>
-        <div class="brand-text">
-          <strong>Grill</strong>
-          <strong>Pizza</strong>
-        </div>
+        <img class="brand-logo-image" id="brandLogoImage" alt="Restaurant logo" hidden>
+        <div class="brand-default-logo" id="brandDefaultLogo" aria-hidden="true"></div>
       </section>
       <div class="status-notice">
         Vi har for &oslash;yeblikket stengt, men du kan forh&aring;ndsbestille for senere.
@@ -154,7 +151,29 @@
             <span>Sluttsum</span>
             <strong id="total">0,00 kr</strong>
           </div>
-          <button class="checkout-button" type="button" disabled>Legg inn bestilling for henting n&aring;</button>
+          <section class="checkout-form" id="checkoutForm">
+            <h3>Kundeinformasjon</h3>
+            <div class="checkout-grid">
+              <label>Navn
+                <input id="customerFirstName" type="text" autocomplete="given-name" placeholder="Navn">
+              </label>
+              <label>Etternavn
+                <input id="customerLastName" type="text" autocomplete="family-name" placeholder="Etternavn">
+              </label>
+              <label class="wide">Telefonnummer
+                <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8 siffer">
+              </label>
+            </div>
+            <div class="pickup-choice">
+              <label><input type="radio" name="pickupMode" value="asap" checked> Snarest mulig</label>
+              <label><input type="radio" name="pickupMode" value="later"> Velg hentetid</label>
+              <input id="pickupTime" type="datetime-local" hidden>
+              <p id="pickupHelp" class="checkout-help"></p>
+            </div>
+          </section>
+          <button class="checkout-button" type="button" disabled>Send bestilling</button>
+          <div id="orderStatusBox" class="order-status-box" hidden></div>
+          <section class="recent-orders" id="recentOrders"></section>
         </div>
       </aside>
     </div>
@@ -172,7 +191,7 @@
     </div>
 
     <!-- Opsiyonel modül: bu dosya silinse bile site çalışır, sadece sepet animasyonu kapanır. -->
-    <script src="modules/cart-animation.js?v=20260427-26" onerror="console.warn('cart-animation.js bulunamadı; sistem animasyonsuz çalışır.')"></script>
-    <script src="app.js?v=20260427-26"></script>
+    <script src="modules/cart-animation.js?v=20260427-40" onerror="console.warn('cart-animation.js bulunamadı; sistem animasyonsuz çalışır.')"></script>
+    <script src="app.js?v=20260427-40"></script>
   </body>
 </html>

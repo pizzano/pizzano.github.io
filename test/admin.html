@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="admin.css?v=20260427-25">
+    <link rel="stylesheet" href="admin.css?v=20260427-40">
   </head>
   <body>
     <header class="admin-topbar">
@@ -15,10 +15,9 @@
 
       <div class="admin-topbar-settings" aria-label="Admin deler">
         <button class="top-settings-button active" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
+        <button class="top-settings-button" type="button" data-top-nav="orders">🧾 Bestillinger</button>
         <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
-        <button class="top-settings-button" type="button" data-top-nav="hours">🎯 Åpning</button>
-        <button class="top-settings-button" type="button" data-top-nav="delivery">📈 Levering</button>
-        <button class="top-settings-button" type="button" data-top-nav="advanced">••• Mer</button>
+        <button class="top-settings-button" type="button" data-top-nav="backup">💾 Yedek</button>
       </div>
 
       <nav>
@@ -108,6 +107,25 @@
       </section>
       </section>
 
+      <section class="admin-page orders-workspace" data-admin-page="orders">
+        <section class="orders-admin-card">
+          <header class="orders-admin-header">
+            <div>
+              <h1>Bestillinger</h1>
+              <span>Gelen siparişleri buradan onayla veya iptal et. Müşteri ekranı otomatik güncellenir.</span>
+            </div>
+            <button id="refreshOrders" type="button">Oppdater</button>
+          </header>
+          <div class="orders-admin-toolbar">
+            <span id="ordersCount">0 bestillinger</span>
+            <span class="orders-help">Dakika alanı 1–99 arasıdır. Onaylayınca müşteriye “siparişiniz alındı” görünür.</span>
+          </div>
+          <div id="ordersAdminList" class="orders-admin-list">
+            <p class="empty-orders">Ingen bestillinger ennå.</p>
+          </div>
+        </section>
+      </section>
+
       <section class="admin-page admin-settings-workspace" data-admin-page="settings">
         <section class="inline-settings-card">
           <header class="inline-settings-header">
@@ -121,6 +139,14 @@
             <div class="settings-form-grid">
               <label>Navnet på restauranten *
                 <input id="settingRestaurantName" data-setting-field="restaurantName" type="text" placeholder="KØL Grill & Pizza">
+              </label>
+              <label class="wide">Logo URL
+                <input id="settingLogoUrl" data-setting-field="logoUrl" type="url" placeholder="https://.../logo.png">
+                <span class="field-hint">Bu URL ana sayfadaki büyük logoda kullanılır. Boş bırakılırsa sistem hazır default logo gösterir.</span>
+              </label>
+              <label class="wide">Standard bilde URL
+                <input id="settingDefaultImageUrl" data-setting-field="defaultImageUrl" type="url" placeholder="https://.../standard-matbilde.jpg">
+                <span class="field-hint">Ürün veya kategori resmi boşsa bu resim kullanılır. Boş kalırsa sistem kendi sade default görselini gösterir.</span>
               </label>
               <label>Telefonnummer til restauranten *
                 <input id="settingPhone" data-setting-field="phone" type="text" placeholder="+47 41 14 53 53">
@@ -149,6 +175,15 @@
               <label>Tid
                 <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="14:00 - 22:00">
               </label>
+              <label>Bestilling åpner
+                <input id="settingOrderOpenTime" data-setting-field="orderOpenTime" type="time" placeholder="14:00">
+              </label>
+              <label>Bestilling stenger
+                <input id="settingOrderCloseTime" data-setting-field="orderCloseTime" type="time" placeholder="22:00">
+              </label>
+              <label>Minimum forhåndsbestilling (min)
+                <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
+              </label>
               <label>Henting
                 <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
               </label>
@@ -158,19 +193,29 @@
             </div>
           </div>
 
-          <div class="settings-page empty-settings-page" data-settings-page="hours">
-            <h3>Åpning / bestilling</h3>
-            <p>Her kan vi senere legge inn åpningstid per dag, ferie, forhåndsbestilling og stengt/åpent-bryter.</p>
-          </div>
+          <div class="settings-page backup-settings-page" data-settings-page="backup">
+            <div class="backup-grid">
+              <section class="backup-box">
+                <h3>Manuell yedek</h3>
+                <p>Hele Firebase-dataen lastes ned som JSON-fil. PC’ye indirmek için bu knappen brukes manuelt.</p>
+                <button id="downloadBackup" type="button">Last ned full yedek (.json)</button>
+              </section>
 
-          <div class="settings-page empty-settings-page" data-settings-page="delivery">
-            <h3>Levering / soner</h3>
-            <p>Her kan vi senere legge inn levering, minimumsbeløp, gebyr, soner og hentetid.</p>
-          </div>
+              <section class="backup-box">
+                <h3>Lokal sikkerhetskopi</h3>
+                <p>Admin paneli açıldığında bu nettleser günde sadece 1 gang lokal yedek alır. 10 dakikada bir yedek alma kapalıdır.</p>
+                <button id="saveLocalBackup" type="button">Lagre lokal yedek nå</button>
+                <div id="localBackupList" class="local-backup-list"></div>
+              </section>
 
-          <div class="settings-page empty-settings-page" data-settings-page="advanced">
-            <h3>Andre innstillinger</h3>
-            <p>Her kan vi senere legge inn språk, betalingsmåter, avgifter, kvitteringstekst og integrasjoner.</p>
+              <section class="backup-box wide">
+                <h3>Gjenopprett fra JSON-fil</h3>
+                <p>Velg en tidligere nedlastet yedekfil. Systemet viser en kort kontroll før du overskriver Firebase.</p>
+                <input id="restoreBackupFile" type="file" accept="application/json,.json">
+                <div id="restoreBackupPreview" class="restore-preview">Ingen fil valgt.</div>
+                <button id="restoreBackupNow" class="danger-light" type="button" disabled>Gjenopprett til Firebase</button>
+              </section>
+            </div>
           </div>
         </section>
       </section>
@@ -181,8 +226,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
-    <script src="menu-data.js?v=20260427-7"></script>
     <!-- Admin ana dosyası: kategori, ürün, valggrupper ve ayarlar burada çalışır. -->
-    <script src="admin.js?v=20260427-25"></script>
+    <script src="admin.js?v=20260427-40"></script>
   </body>
 </html>

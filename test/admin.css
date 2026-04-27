@@ -2285,3 +2285,312 @@ body.settings-open {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Backup / Yedek page ===== */
+.backup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.backup-box {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 16px;
+}
+
+.backup-box.wide {
+  grid-column: 1 / -1;
+}
+
+.backup-box h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.backup-box p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+#downloadBackup,
+#saveLocalBackup {
+  min-height: 42px;
+  padding: 0 16px;
+  border-color: var(--orange);
+  background: var(--orange);
+  color: #fff;
+}
+
+#restoreBackupFile {
+  margin: 6px 0 12px;
+}
+
+.restore-preview {
+  min-height: 48px;
+  margin: 10px 0 12px;
+  padding: 12px;
+  border: 1px dashed #cfcfcf;
+  background: #fafafa;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.local-backup-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.local-backup-list p {
+  margin: 0;
+}
+
+.local-backup-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: #fafafa;
+}
+
+.local-backup-row strong,
+.local-backup-row span {
+  display: block;
+}
+
+.local-backup-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.local-backup-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.local-backup-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .backup-grid,
+  .local-backup-row {
+    grid-template-columns: 1fr;
+  }
+
+  .local-backup-actions {
+    justify-content: flex-start;
+  }
+}
+
+.field-hint {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+
+/* ===== Admin default görselleri =====
+   Resim URL yoksa boş kutu yerine sade hazır görsel gösterilir.
+   Böylece sistem başka restorana verilse bile görsel alanları boş/bozuk durmaz. */
+.category-thumb.default-thumb,
+.product-mini-thumb.default-thumb,
+.category-thumb:not(.custom-category-thumb),
+.product-mini-thumb:not(.custom-product-thumb) {
+  background:
+    radial-gradient(circle at 25% 32%, rgba(255,255,255,0.86) 0 10%, transparent 11%),
+    radial-gradient(circle at 67% 42%, rgba(255,255,255,0.56) 0 8%, transparent 9%),
+    radial-gradient(circle at 52% 70%, rgba(255, 126, 33, 0.85) 0 14%, transparent 15%),
+    linear-gradient(135deg, #ffe1a8 0%, #ef7a25 48%, #8b2b17 100%) !important;
+}
+
+.category-thumb.default-thumb::after,
+.product-mini-thumb.default-thumb::after,
+.category-thumb:not(.custom-category-thumb)::after,
+.product-mini-thumb:not(.custom-product-thumb)::after {
+  content: "🍽";
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 22px;
+}
+
+.product-mini-thumb.default-thumb::after,
+.product-mini-thumb:not(.custom-product-thumb)::after {
+  font-size: 17px;
+}
+
+.custom-category-thumb img,
+.custom-product-thumb img {
+  background: #f1f1f1;
+}
+
+/* ===== Bestillinger / sipariş alma paneli ===== */
+.orders-workspace {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.orders-admin-card {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 18px;
+}
+
+.orders-admin-header,
+.orders-admin-toolbar,
+.order-card-top,
+.order-card-actions,
+.order-meta-grid,
+.order-line-row,
+.order-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orders-admin-header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.orders-admin-header span,
+.orders-help,
+.order-card small,
+.order-muted {
+  color: var(--muted);
+}
+
+.orders-admin-toolbar {
+  margin: 14px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: #f8f8f8;
+}
+
+.orders-admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-card {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.order-card.pending { border-left: 5px solid #f18a00; }
+.order-card.accepted { border-left: 5px solid #39a852; }
+.order-card.cancelled { border-left: 5px solid #d83b32; opacity: .82; }
+
+.order-card-top h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.order-badge {
+  display: inline-grid;
+  place-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #efefef;
+  font-weight: 800;
+}
+.order-badge.pending { background: #fff0d9; color: #a85c00; }
+.order-badge.accepted { background: #e4f7e9; color: #247a39; }
+.order-badge.cancelled { background: #fde7e5; color: #ad2d26; }
+
+.order-meta-grid {
+  align-items: stretch;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.order-meta-box {
+  min-width: 180px;
+  flex: 1;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  padding: 10px;
+}
+.order-meta-box strong { display: block; margin-bottom: 4px; }
+
+.order-receipt {
+  border: 1px dashed #d5d5d5;
+  background: #fcfcfc;
+  padding: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.order-line-row {
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #ededed;
+}
+.order-line-row:last-child { border-bottom: 0; }
+.order-line-row p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+.order-total-row {
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 2px solid #ddd;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.order-card-actions {
+  margin-top: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.order-minutes-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+}
+.order-minutes-control input {
+  width: 74px;
+  min-height: 38px;
+  text-align: center;
+}
+.accept-order-button {
+  border-color: #39a852;
+  background: #39a852;
+  color: #fff;
+  padding: 0 14px;
+}
+.cancel-order-button {
+  border-color: #d83b32;
+  color: #d83b32;
+  padding: 0 14px;
+}
+.empty-orders {
+  padding: 18px;
+  border: 1px dashed #d6d6d6;
+  color: var(--muted);
+  background: #fafafa;
+}
+
+@media (max-width: 800px) {
+  .orders-admin-header,
+  .orders-admin-toolbar,
+  .order-card-top,
+  .order-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

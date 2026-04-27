@@ -1,4 +1,5 @@
 const firebaseMenuUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/.json";
+const firebaseOrdersUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/orders.json";
 
 let menuSections = [];
 const localMenuSections = [
@@ -160,9 +161,25 @@ let menuUsesExplicitOptionGroups = false;
 let siteSettings = defaultSiteSettings();
 
 const storageKey = "kol-grill-cart";
+const recentOrdersKey = "kol-grill-recent-orders-v1";
+
+// TÜRKÇE: Menü verisini tarayıcıda saklıyoruz.
+// Böylece sayfa yenilenince Firebase beklenirken boş/yanıp sönen ekran olmaz.
+// Firebase sonra arka planda yenilenir ve veri değişmişse sayfa sessizce güncellenir.
+const menuCacheKey = "kol-menu-cache-v1";
+const firstMenuBatchSize = 4;
+const nextMenuBatchSize = 3;
+let visibleSectionLimit = firstMenuBatchSize;
+let lazyMenuObserver = null;
+let lazyScrollHandler = null;
+
 const openHour = 14;
 const closeHour = 22;
 const menuSectionsEl = document.querySelector("#menuSections");
+const brandHero = document.querySelector("#brandHero");
+const brandLogoImage = document.querySelector("#brandLogoImage");
+const brandDefaultInitials = document.querySelector("#brandDefaultInitials");
+const brandDefaultTitle = document.querySelector("#brandDefaultTitle");
 const siteNameText = document.querySelector("#siteNameText");
 const infoTitle = document.querySelector("#infoTitle");
 const mapLabel = document.querySelector("#mapLabel");
@@ -173,6 +190,17 @@ const paymentInfoText = document.querySelector("#paymentInfoText");
 const addressText = document.querySelector("#addressText");
 const phoneText = document.querySelector("#phoneText");
 const statusNotice = document.querySelector(".status-notice");
+
+// LOGO FEILSIKRING: Hvis logo-URL er feil eller bildet ikke kan lastes,
+// går toppen tilbake til det samme sade default-bildet som kategoriene bruker.
+if (brandLogoImage) {
+  brandLogoImage.addEventListener("error", () => {
+    brandLogoImage.hidden = true;
+    brandLogoImage.removeAttribute("src");
+    applyHeroDefaultVisual(siteSettings);
+  });
+}
+
 const cartCount = document.querySelector("#cartCount");
 const cartModal = document.querySelector("#cartModal");
 const cartToggle = document.querySelector(".cart-toggle");
@@ -204,6 +232,13 @@ const closeProduct = document.querySelector("#closeProduct");
 const decreaseProduct = document.querySelector("#decreaseProduct");
 const increaseProduct = document.querySelector("#increaseProduct");
 const addConfiguredProduct = document.querySelector("#addConfiguredProduct");
+const customerFirstName = document.querySelector("#customerFirstName");
+const customerLastName = document.querySelector("#customerLastName");
+const customerPhone = document.querySelector("#customerPhone");
+const pickupTimeInput = document.querySelector("#pickupTime");
+const pickupHelp = document.querySelector("#pickupHelp");
+const orderStatusBox = document.querySelector("#orderStatusBox");
+const recentOrdersEl = document.querySelector("#recentOrders");
 
 let cart = loadCart();
 let selectedProduct = null;
@@ -215,6 +250,7 @@ let editingCartIndex = null;
 let addingToCart = false;
 let cartWiggleTimer = null;
 let cartReminderTimer = null;
+let currentOrderPollTimer = null;
 
 function formatPrice(value) {
   return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(value);
@@ -231,6 +267,256 @@ function saveCart() {
   localStorage.setItem(storageKey, JSON.stringify(cart));
 }
 
+
+// ============================================================
+// SİPARİŞ MODÜLÜ (MÜŞTERİ TARAFI)
+// ------------------------------------------------------------
+// Sepetteki ürünler Firebase /orders altına gönderilir.
+// Müşteri sipariş durumunu aynı ekranda bekler ve son 2 siparişini görür.
+// ============================================================
+function getRecentOrders() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(recentOrdersKey) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveRecentOrders(orders) {
+  localStorage.setItem(recentOrdersKey, JSON.stringify(orders.slice(0, 2)));
+}
+
+function rememberRecentOrder(order) {
+  const list = getRecentOrders().filter((item) => item.id !== order.id);
+  list.unshift(order);
+  saveRecentOrders(list);
+  renderRecentOrders();
+}
+
+function orderStatusText(status = "pending") {
+  if (status === "accepted") return "Siparişiniz alındı";
+  if (status === "cancelled") return "Sipariş iptal edildi";
+  return "Onay bekleniyor";
+}
+
+function parseTimeParts(value = "") {
+  const match = String(value).match(/(\d{1,2})[:.](\d{2})/);
+  if (!match) return null;
+  return { hour: Number(match[1]), minute: Number(match[2]) };
+}
+
+function getOrderingTimes() {
+  const settings = normalizeSiteSettings(siteSettings);
+  let open = parseTimeParts(settings.orderOpenTime);
+  let close = parseTimeParts(settings.orderCloseTime);
+  if (!open || !close) {
+    const matches = String(settings.openingTime || "14:00 - 22:00").match(/\d{1,2}[:.]\d{2}/g) || [];
+    open = open || parseTimeParts(matches[0] || "14:00");
+    close = close || parseTimeParts(matches[1] || "22:00");
+  }
+  return {
+    open: open || { hour: 14, minute: 0 },
+    close: close || { hour: 22, minute: 0 },
+    minPreorderMinutes: Math.max(0, Number(settings.minPreorderMinutes || 30) || 30)
+  };
+}
+
+function dateWithTime(parts, base = new Date()) {
+  const date = new Date(base);
+  date.setHours(parts.hour, parts.minute, 0, 0);
+  return date;
+}
+
+function isOrderingOpenNow() {
+  const now = new Date();
+  const times = getOrderingTimes();
+  const openAt = dateWithTime(times.open, now);
+  const closeAt = dateWithTime(times.close, now);
+  return now >= openAt && now <= closeAt;
+}
+
+function toDatetimeLocalValue(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function updatePickupControls() {
+  if (!pickupTimeInput || !pickupHelp) return;
+  const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  const now = new Date();
+  const times = getOrderingTimes();
+  const minTime = new Date(now.getTime() + times.minPreorderMinutes * 60000);
+  const closeAt = dateWithTime(times.close, now);
+  pickupTimeInput.hidden = mode !== "later";
+  pickupTimeInput.min = toDatetimeLocalValue(minTime);
+  pickupTimeInput.max = toDatetimeLocalValue(closeAt);
+  if (mode === "later" && (!pickupTimeInput.value || new Date(pickupTimeInput.value) < minTime)) {
+    pickupTimeInput.value = toDatetimeLocalValue(minTime <= closeAt ? minTime : closeAt);
+  }
+  const openLabel = `${String(times.open.hour).padStart(2, "0")}:${String(times.open.minute).padStart(2, "0")}`;
+  const closeLabel = `${String(times.close.hour).padStart(2, "0")}:${String(times.close.minute).padStart(2, "0")}`;
+  pickupHelp.textContent = isOrderingOpenNow()
+    ? `Bestilling er åpen ${openLabel}–${closeLabel}. Senere henting kan velges minst ${times.minPreorderMinutes} min frem i tid.`
+    : `Bestilling er stengt nå. Bestilling kan sendes mellom ${openLabel}–${closeLabel}.`;
+}
+
+function getCustomerInfo() {
+  return {
+    firstName: customerFirstName?.value.trim() || "",
+    lastName: customerLastName?.value.trim() || "",
+    phone: customerPhone?.value.trim() || ""
+  };
+}
+
+function validateCheckout() {
+  const customer = getCustomerInfo();
+  if (!cart.length) return "Handlekurven er tom.";
+  if (!customer.firstName || !customer.lastName) return "Skriv inn navn og etternavn.";
+  if (!/^\+?[0-9 ]{8,15}$/.test(customer.phone)) return "Skriv inn riktig telefonnummer.";
+  if (!isOrderingOpenNow()) return "Bestilling er stengt akkurat nå.";
+  const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  if (mode === "later") {
+    const chosen = new Date(pickupTimeInput.value);
+    const times = getOrderingTimes();
+    const now = new Date();
+    const minTime = new Date(now.getTime() + times.minPreorderMinutes * 60000);
+    const closeAt = dateWithTime(times.close, now);
+    if (Number.isNaN(chosen.getTime()) || chosen < minTime || chosen > closeAt) {
+      return `Velg hentetid mellom minst ${times.minPreorderMinutes} min fra nå og stengetid.`;
+    }
+  }
+  return "";
+}
+
+function currentCartTotal() {
+  return cart.reduce((sum, line) => sum + Number(line.total || 0), 0);
+}
+
+function buildOrderPayload() {
+  const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  return {
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    customer: getCustomerInfo(),
+    pickup: {
+      mode,
+      time: mode === "later" ? new Date(pickupTimeInput.value).toISOString() : ""
+    },
+    items: cart.map((line) => ({
+      productId: line.productId,
+      name: line.name,
+      quantity: line.quantity,
+      size: line.size,
+      sizeLabel: line.sizeLabel,
+      extras: line.extras || [],
+      extraIds: line.extraIds || [],
+      note: line.note || "",
+      total: line.total
+    })),
+    subtotal: currentCartTotal(),
+    total: currentCartTotal(),
+    source: "web"
+  };
+}
+
+function renderOrderStatus(order) {
+  if (!orderStatusBox) return;
+  if (!order) {
+    orderStatusBox.hidden = true;
+    return;
+  }
+  const status = order.status || "pending";
+  orderStatusBox.hidden = false;
+  orderStatusBox.className = `order-status-box ${status}`;
+  const ready = status === "accepted" ? `<p><strong>Klar om cirka ${order.readyMinutes || 30} minutter.</strong></p>` : "";
+  const cancelled = status === "cancelled" ? `<p>Restauranten kunne dessverre ikke ta imot bestillingen.</p>` : "";
+  orderStatusBox.innerHTML = `
+    <h3>${orderStatusText(status)}</h3>
+    ${status === "pending" ? "<p>Venter på at restauranten skal godkjenne bestillingen.</p>" : ""}
+    ${ready}${cancelled}
+    <small>Ordrenr: ${String(order.id || "").slice(-7).toUpperCase()}</small>
+  `;
+}
+
+function renderRecentOrders() {
+  if (!recentOrdersEl) return;
+  const orders = getRecentOrders().slice(0, 2);
+  if (!orders.length) {
+    recentOrdersEl.innerHTML = "";
+    return;
+  }
+  recentOrdersEl.innerHTML = `<h3>Siste bestillinger</h3>` + orders.map((order) => `
+    <article class="customer-order-card ${order.status || "pending"}">
+      <strong><span>${orderStatusText(order.status)}</span><span>${formatPrice(order.total || 0)}</span></strong>
+      <p>${(order.items || []).map((line) => `${line.quantity}x ${line.name}`).join(", ")}</p>
+      <p>${order.status === "accepted" ? `Klar om ${order.readyMinutes || 30} min` : order.status === "pending" ? "Venter på bekreftelse" : "Kansellert"}</p>
+    </article>
+  `).join("");
+}
+
+async function fetchOrder(orderId) {
+  const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
+  if (!response.ok) throw new Error("Kunne ikke lese ordre");
+  const data = await response.json();
+  return data ? { id: orderId, ...data } : null;
+}
+
+function startOrderPolling(orderId) {
+  window.clearInterval(currentOrderPollTimer);
+  currentOrderPollTimer = window.setInterval(async () => {
+    try {
+      const order = await fetchOrder(orderId);
+      if (!order) return;
+      rememberRecentOrder(order);
+      renderOrderStatus(order);
+      if (order.status === "accepted" || order.status === "cancelled") {
+        window.clearInterval(currentOrderPollTimer);
+      }
+    } catch (error) {
+      console.warn(error);
+    }
+  }, 5000);
+}
+
+async function submitOrder() {
+  const error = validateCheckout();
+  if (error) {
+    renderOrderStatus({ status: "cancelled", id: "", total: currentCartTotal(), items: [], readyMinutes: 0 });
+    if (orderStatusBox) orderStatusBox.innerHTML = `<h3>Kan ikke sende bestilling</h3><p>${error}</p>`;
+    return;
+  }
+  checkoutButton.disabled = true;
+  checkoutButton.textContent = "Sender...";
+  try {
+    const payload = buildOrderPayload();
+    const response = await fetch(firebaseOrdersUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error("Firebase svarte ikke");
+    const result = await response.json();
+    const order = { id: result.name, ...payload };
+    rememberRecentOrder(order);
+    renderOrderStatus(order);
+    startOrderPolling(result.name);
+    cart = [];
+    saveCart();
+    renderCart();
+  } catch (error) {
+    console.error(error);
+    if (orderStatusBox) {
+      orderStatusBox.hidden = false;
+      orderStatusBox.className = "order-status-box cancelled";
+      orderStatusBox.innerHTML = "<h3>Bestillingen kunne ikke sendes</h3><p>Prøv igjen, eller ring restauranten.</p>";
+    }
+  } finally {
+    checkoutButton.textContent = "Send bestilling";
+    checkoutButton.disabled = cart.length === 0 || !isOrderingOpenNow();
+  }
+}
+
 function findProduct(id) {
   for (const section of menuSections) {
     const item = asArray(section.items).find((product) => product.id === id);
@@ -243,16 +529,30 @@ function escapeAttribute(value = "") {
   return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
+// DEFAULT GÖRSEL NOTU:
+// Ürün/kategori resmi yoksa sistem önce siteSettings.defaultImageUrl kullanır.
+// O da yoksa CSS ile çizilmiş sade, hazır bir default görsel gösterir.
+function getDefaultImageUrl() {
+  return (siteSettings?.defaultImageUrl || "").trim();
+}
+
+function thumbClassForItem(item = {}) {
+  return escapeAttribute(item.thumb || item.type || "default-food");
+}
+
 function renderThumb(item) {
-  if (item.imageUrl) {
-    return `<span class="food-thumb custom-thumb" aria-hidden="true"><img src="${escapeAttribute(item.imageUrl)}" alt=""></span>`;
+  const imageUrl = item.imageUrl || getDefaultImageUrl();
+  if (imageUrl) {
+    return `<span class="food-thumb custom-thumb default-ready" aria-hidden="true"><img src="${escapeAttribute(imageUrl)}" alt="" onerror="this.closest('.food-thumb')?.classList.remove('custom-thumb'); this.remove();"></span>`;
   }
-  return `<span class="food-thumb ${item.thumb}" aria-hidden="true"></span>`;
+  return `<span class="food-thumb default-thumb ${thumbClassForItem(item)}" aria-hidden="true"></span>`;
 }
 
 function renderCategoryPhoto(section) {
-  const style = section.imageUrl ? ` style="background-image: url('${escapeAttribute(section.imageUrl)}')"` : "";
-  return `<div class="category-photo ${section.imageClass}" aria-hidden="true"${style}></div>`;
+  const imageUrl = section.imageUrl || getDefaultImageUrl();
+  const style = imageUrl ? ` style="background-image: url('${escapeAttribute(imageUrl)}')"` : "";
+  const classes = imageUrl ? "category-photo custom-category-photo" : `category-photo default-category-photo ${escapeAttribute(section.imageClass || "")}`;
+  return `<div class="${classes}" aria-hidden="true"${style}></div>`;
 }
 
 function asArray(value) {
@@ -286,6 +586,8 @@ function visibleMenuItems(section = {}) {
 function defaultSiteSettings() {
   return {
     restaurantName: "KØL Grill & Pizza",
+    logoUrl: "",
+    defaultImageUrl: "",
     phone: "+47 41 14 53 53",
     email: "",
     country: "Norway",
@@ -295,6 +597,9 @@ function defaultSiteSettings() {
     streetAddress: "ØGARDSVEGEN 44",
     openingDays: "Mandag, Onsdag - Søndag",
     openingTime: "14:00 - 22:00",
+    orderOpenTime: "14:00",
+    orderCloseTime: "22:00",
+    minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)"
   };
@@ -378,11 +683,60 @@ function formatAddress(settings = siteSettings) {
   return [settings.streetAddress, [settings.postalCode, settings.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 }
 
+function getRestaurantInitials(name = "Restaurant") {
+  const words = String(name).replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "R";
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+// TÜRKÇE: Logo URL boşsa KØL yazısı gibi özel bir logo basmıyoruz.
+// Bunun yerine kategori kartlarında kullandığımız sade default görsel mantığı kullanılır.
+function applyHeroDefaultVisual(settings = siteSettings) {
+  if (!brandHero) return;
+  const defaultVisualUrl = (settings?.defaultImageUrl || "").trim();
+  brandHero.classList.remove("has-logo-url");
+  brandHero.classList.add("default-hero-visual");
+  if (defaultVisualUrl) {
+    brandHero.classList.add("has-default-image-url");
+    brandHero.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url("${defaultVisualUrl.replace(/"/g, '\"')}")`;
+    brandHero.style.backgroundSize = "cover";
+    brandHero.style.backgroundPosition = "center";
+  } else {
+    brandHero.classList.remove("has-default-image-url");
+    brandHero.style.removeProperty("background-image");
+    brandHero.style.removeProperty("background-size");
+    brandHero.style.removeProperty("background-position");
+  }
+}
+
 function applySiteSettings() {
   const settings = normalizeSiteSettings(siteSettings);
   const name = settings.restaurantName || "Restaurant";
+  const logoUrl = (settings.logoUrl || "").trim();
+
   document.title = name;
   if (siteNameText) siteNameText.textContent = name.toUpperCase();
+  if (brandDefaultTitle) brandDefaultTitle.textContent = name;
+  if (brandDefaultInitials) brandDefaultInitials.textContent = getRestaurantInitials(name);
+
+  // LOGO: Admin panelinden verilen URL varsa ana sayfadaki büyük logoyu bu resimle değiştirir.
+  // URL boşsa yazı/logo basılmaz; kategori default görseli gibi sade bir alan gösterilir.
+  if (brandHero && brandLogoImage) {
+    if (logoUrl) {
+      brandHero.style.removeProperty("background-image");
+      brandHero.style.removeProperty("background-size");
+      brandHero.style.removeProperty("background-position");
+      brandHero.classList.remove("default-hero-visual", "has-default-image-url");
+      brandLogoImage.src = logoUrl;
+      brandLogoImage.hidden = false;
+      brandHero.classList.add("has-logo-url");
+    } else {
+      brandLogoImage.removeAttribute("src");
+      brandLogoImage.hidden = true;
+      applyHeroDefaultVisual(settings);
+    }
+  }
+
   if (infoTitle) infoTitle.textContent = name;
   if (mapLabel) mapLabel.innerHTML = `${escapeAttribute(name)}${settings.city ? ` | ${escapeAttribute(settings.city)}` : ""}`;
   if (openingDaysText) openingDaysText.textContent = settings.openingDays || "";
@@ -393,15 +747,82 @@ function applySiteSettings() {
   if (phoneText) phoneText.textContent = settings.phone || "";
 }
 
+function readCachedMenuConfig() {
+  try {
+    const cached = localStorage.getItem(menuCacheKey);
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    return parsed?.config || null;
+  } catch (error) {
+    console.warn("Lokal meny-cache kunne ikke leses.", error);
+    return null;
+  }
+}
+
+function saveCachedMenuConfig(config) {
+  try {
+    localStorage.setItem(menuCacheKey, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      config
+    }));
+  } catch (error) {
+    // TÜRKÇE: LocalStorage dolu/kapalı olabilir. Bu kritik değil; site Firebase ile çalışmaya devam eder.
+    console.warn("Lokal meny-cache kunne ikke lagres.", error);
+  }
+}
+
+function menuConfigSignature(config) {
+  try {
+    return JSON.stringify(config || {});
+  } catch {
+    return String(Date.now());
+  }
+}
+
+function finishMenuLoading() {
+  document.body.classList.remove("menu-loading");
+  menuSectionsEl?.classList.add("menu-ready");
+}
+
 async function loadMenuConfig() {
+  const cachedConfig = readCachedMenuConfig();
+  let cachedSignature = "";
+  let renderedFromCache = false;
+
+  // TÜRKÇE: Önce son başarılı menüyü hemen gösteriyoruz.
+  // Bu, yenilemede oluşan göz kırpmasını engeller.
+  if (cachedConfig && applyMenuConfig(cachedConfig)) {
+    cachedSignature = menuConfigSignature(cachedConfig);
+    visibleSectionLimit = firstMenuBatchSize;
+    renderMenu();
+    finishMenuLoading();
+    renderedFromCache = true;
+  }
+
   try {
     const response = await fetch(`${firebaseMenuUrl}?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Kunne ikke hente meny");
     const config = await response.json();
-    if (!applyMenuConfig(config)) menuSections = [];
+    const freshSignature = menuConfigSignature(config);
+
+    if (applyMenuConfig(config)) {
+      saveCachedMenuConfig(config);
+      if (!renderedFromCache || freshSignature !== cachedSignature) {
+        visibleSectionLimit = firstMenuBatchSize;
+        renderMenu();
+      }
+    } else if (!renderedFromCache) {
+      menuSections = [];
+      renderMenu();
+    }
   } catch (error) {
-    menuSections = [];
+    if (!renderedFromCache) {
+      menuSections = [];
+      renderMenu();
+    }
     console.warn("Menyen kunne ikke lastes fra Firebase.", error);
+  } finally {
+    finishMenuLoading();
   }
 }
 
@@ -638,16 +1059,55 @@ function buildCartLine() {
 }
 
 function updateOpeningNotice() {
-  const now = new Date();
-  const osloHour = Number(
-    new Intl.DateTimeFormat("nb-NO", {
-      hour: "2-digit",
-      hour12: false,
-      timeZone: "Europe/Oslo"
-    }).format(now)
-  );
-  const isOpen = osloHour >= openHour && osloHour < closeHour;
+  if (!statusNotice) return;
+  const times = getOrderingTimes();
+  const openLabel = `${String(times.open.hour).padStart(2, "0")}:${String(times.open.minute).padStart(2, "0")}`;
+  const closeLabel = `${String(times.close.hour).padStart(2, "0")}:${String(times.close.minute).padStart(2, "0")}`;
+  const isOpen = isOrderingOpenNow();
   statusNotice.hidden = isOpen;
+  statusNotice.textContent = isOpen
+    ? ""
+    : `Vi har for øyeblikket stengt for bestilling. Bestilling kan sendes mellom ${openLabel} - ${closeLabel}.`;
+}
+
+function disconnectMenuLazyLoader() {
+  if (lazyMenuObserver) {
+    lazyMenuObserver.disconnect();
+    lazyMenuObserver = null;
+  }
+  if (lazyScrollHandler) {
+    window.removeEventListener("scroll", lazyScrollHandler);
+    lazyScrollHandler = null;
+  }
+}
+
+function showMoreMenuSections(totalSections) {
+  if (visibleSectionLimit >= totalSections) return;
+  visibleSectionLimit = Math.min(visibleSectionLimit + nextMenuBatchSize, totalSections);
+  renderMenu();
+}
+
+function setupMenuLazyLoader(totalSections) {
+  disconnectMenuLazyLoader();
+  const trigger = document.querySelector("[data-menu-lazy-trigger]");
+  if (!trigger || visibleSectionLimit >= totalSections) return;
+
+  // TÜRKÇE: Kategoriler hepsi birden basılmasın diye aşağı indikçe yeni bölüm açılır.
+  if ("IntersectionObserver" in window) {
+    lazyMenuObserver = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        showMoreMenuSections(totalSections);
+      }
+    }, { rootMargin: "520px 0px" });
+    lazyMenuObserver.observe(trigger);
+    return;
+  }
+
+  lazyScrollHandler = () => {
+    const rect = trigger.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 520) showMoreMenuSections(totalSections);
+  };
+  window.addEventListener("scroll", lazyScrollHandler, { passive: true });
 }
 
 function renderMenu() {
@@ -657,6 +1117,7 @@ function renderMenu() {
     .filter((section) => section.items.length);
 
   if (!visibleSections.length) {
+    disconnectMenuLazyLoader();
     menuSectionsEl.innerHTML = `
       <section class="category-panel">
         <p class="category-note">Menyen er ikke tilgjengelig akkurat n&aring;.</p>
@@ -665,7 +1126,10 @@ function renderMenu() {
     return;
   }
 
-  menuSectionsEl.innerHTML = visibleSections
+  const sectionsToRender = visibleSections.slice(0, visibleSectionLimit);
+  const hasMoreSections = visibleSectionLimit < visibleSections.length;
+
+  menuSectionsEl.innerHTML = sectionsToRender
     .map((section) => {
       const sectionSoldOut = isSoldOutItem(section);
       return `
@@ -699,7 +1163,12 @@ function renderMenu() {
         </section>
       `;
     })
-    .join("");
+    .join("") +
+    (hasMoreSections
+      ? `<div class="menu-lazy-trigger" data-menu-lazy-trigger>Flere kategorier lastes når du blar ned...</div>`
+      : "");
+
+  setupMenuLazyLoader(visibleSections.length);
 }
 
 function renderProductOptions() {
@@ -852,7 +1321,12 @@ function renderProductModal() {
   const titlePrefix = selectedProduct.number ? `${selectedProduct.number}- ` : "";
   productModal.classList.toggle("simple-product", selectedProduct.type === "sauce");
   productModal.classList.toggle("kebab-product", isKebabCustomItem(selectedProduct));
-  document.querySelector(".product-photo").style.backgroundImage = selectedProduct.imageUrl ? `url("${selectedProduct.imageUrl}")` : "";
+  const productPhoto = document.querySelector(".product-photo");
+  const modalImageUrl = selectedProduct.imageUrl || getDefaultImageUrl();
+  if (productPhoto) {
+    productPhoto.style.backgroundImage = modalImageUrl ? `url("${modalImageUrl}")` : "";
+    productPhoto.classList.toggle("default-product-photo", !modalImageUrl);
+  }
   productTitle.textContent = `${titlePrefix}${selectedProduct.name.toUpperCase()}`;
   productSummary.textContent = selectedProduct.ingredients || "";
   productQuantity.textContent = quantity;
@@ -965,11 +1439,12 @@ function renderCart() {
   subtotal.textContent = formatPrice(cartSubtotal);
   tax.textContent = formatPrice(taxValue);
   total.textContent = formatPrice(cartSubtotal);
-  cartEmpty.hidden = cart.length > 0;
+  const hasOrderInfo = Boolean((orderStatusBox && !orderStatusBox.hidden) || getRecentOrders().length);
+  cartEmpty.hidden = cart.length > 0 || hasOrderInfo;
   cartItems.hidden = cart.length === 0;
-  cartSummary.hidden = cart.length === 0;
+  cartSummary.hidden = cart.length === 0 && !hasOrderInfo;
   clearCart.hidden = cart.length === 0;
-  checkoutButton.disabled = cart.length === 0;
+  checkoutButton.disabled = cart.length === 0 || !isOrderingOpenNow();
 
   cartItems.innerHTML = cart
     .map(
@@ -990,7 +1465,10 @@ function renderCart() {
         </article>
       `
     )
-    .join("");  scheduleCartReminder();
+    .join("");
+  updatePickupControls();
+  renderRecentOrders();
+  scheduleCartReminder();
 }
 
 // Ürün sepete eklendiğinde çalışan ana fonksiyon.
@@ -1103,7 +1581,10 @@ increaseProduct.addEventListener("click", () => {
 
 closeProduct.addEventListener("click", closeProductModal);
 addConfiguredProduct.addEventListener("click", addConfiguredToCart);
-cartToggle.addEventListener("click", openCart);
+cartToggle.addEventListener("click", () => { updatePickupControls(); renderRecentOrders(); openCart(); });
+checkoutButton.addEventListener("click", submitOrder);
+document.querySelectorAll('input[name="pickupMode"]').forEach((input) => input.addEventListener("change", updatePickupControls));
+if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupControls);
 infoToggle.addEventListener("click", openInfo);
 closeInfo.addEventListener("click", closeInfoModal);
 if (closeCart) closeCart.addEventListener("click", closeCartModal);
@@ -1156,7 +1637,8 @@ document.addEventListener("keydown", (event) => {
 async function init() {
   applySiteSettings();
   await loadMenuConfig();
-  renderMenu();
+  updatePickupControls();
+  renderRecentOrders();
   renderCart();
   updateOpeningNotice();
 }

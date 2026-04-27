@@ -2,6 +2,7 @@ const firebaseDatabaseUrl = "https://bestill-19-default-rtdb.europe-west1.fireba
 const firebaseMenuUrl = `${firebaseDatabaseUrl}.json`;
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
 const menuRef = firebase.database().ref("/");
+const ordersRef = firebase.database().ref("/orders");
 
 const fields = {
   productId: document.querySelector("#productId"),
@@ -36,6 +37,15 @@ const adminPages = document.querySelectorAll("[data-admin-page]");
 const topNavButtons = document.querySelectorAll("[data-top-nav]");
 const inlineSettingsTitle = document.querySelector("#inlineSettingsTitle");
 const inlineSettingsSubtitle = document.querySelector("#inlineSettingsSubtitle");
+const ordersAdminList = document.querySelector("#ordersAdminList");
+const ordersCount = document.querySelector("#ordersCount");
+const refreshOrdersButton = document.querySelector("#refreshOrders");
+const downloadBackupButton = document.querySelector("#downloadBackup");
+const saveLocalBackupButton = document.querySelector("#saveLocalBackup");
+const localBackupList = document.querySelector("#localBackupList");
+const restoreBackupFile = document.querySelector("#restoreBackupFile");
+const restoreBackupPreview = document.querySelector("#restoreBackupPreview");
+const restoreBackupNowButton = document.querySelector("#restoreBackupNow");
 const adminRestaurantTitle = document.querySelector("#adminRestaurantTitle");
 
 const adminStatus = document.querySelector("#adminStatus");
@@ -65,6 +75,11 @@ let pendingScrollToProduct = false;
 let saveTimer = null;
 let firebaseReady = false;
 let toastTimer = null;
+let adminOrders = [];
+let ordersReady = false;
+let pendingRestoreData = null;
+const LOCAL_BACKUP_KEY = "kol_menu_local_backups_v1";
+const DAILY_LOCAL_BACKUP_DATE_KEY = "kol_menu_daily_backup_date_v1";
 
 function setStatus(message) {
   adminStatus.textContent = message;
@@ -103,6 +118,174 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+
+// TÜRKÇE NOT: Yedek sistemi bütün Firebase verisini JSON olarak indirir veya geri yükler.
+// Modül gibi çalışacak şekilde yazıldı: butonlar HTML'de yoksa sistem sessizce devam eder.
+function backupDateStamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
+
+function downloadTextFile(filename, content, mimeType = "application/json") {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function countBackupData(data) {
+  const sections = asArray(data?.sections);
+  const products = sections.reduce((sum, section) => sum + asArray(section.items).length, 0);
+  const groups = asArray(data?.optionGroups).length;
+  return { sections: sections.length, products, groups };
+}
+
+function createBackupPayload(data, reason = "manual") {
+  const safeData = normalizeConfig(data || config || {});
+  return {
+    backupMeta: {
+      app: "KOL_MENU_ADMIN",
+      version: 1,
+      reason,
+      exportedAt: new Date().toISOString(),
+      restaurantName: safeData.siteSettings?.restaurantName || "",
+      firebaseDatabaseUrl
+    },
+    data: safeData
+  };
+}
+
+function extractBackupData(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (payload.data && typeof payload.data === "object") return normalizeConfig(payload.data);
+  if (payload.sections || payload.optionGroups || payload.siteSettings) return normalizeConfig(payload);
+  return null;
+}
+
+function getLocalBackups() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LOCAL_BACKUP_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function setLocalBackups(backups) {
+  localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(backups.slice(0, 12)));
+}
+
+function addLocalBackup(payload) {
+  const backups = getLocalBackups();
+  backups.unshift(payload);
+  setLocalBackups(backups);
+  renderLocalBackups();
+}
+
+function renderLocalBackups() {
+  if (!localBackupList) return;
+  const backups = getLocalBackups();
+  if (!backups.length) {
+    localBackupList.innerHTML = "<p>Ingen lokal yedek ennå.</p>";
+    return;
+  }
+  localBackupList.innerHTML = backups
+    .map((backup, index) => {
+      const data = extractBackupData(backup);
+      const counts = countBackupData(data || {});
+      const exportedAt = backup.backupMeta?.exportedAt ? new Date(backup.backupMeta.exportedAt).toLocaleString("no-NO") : "Ukjent dato";
+      const reason = backup.backupMeta?.reason || "backup";
+      return `
+        <div class="local-backup-row">
+          <div>
+            <strong>${escapeHtml(exportedAt)}</strong>
+            <span>${escapeHtml(reason)} · ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper</span>
+          </div>
+          <div class="local-backup-actions">
+            <button type="button" data-download-local-backup="${index}">Last ned</button>
+            <button type="button" data-restore-local-backup="${index}">Gjenopprett</button>
+            <button class="danger-light" type="button" data-delete-local-backup="${index}">Slett</button>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+async function downloadFullBackup() {
+  try {
+    setStatus("Lager yedekfil...");
+    const snapshot = await menuRef.once("value");
+    const payload = createBackupPayload(snapshot.val() || config, "manual-download");
+    const restaurant = makeId(payload.backupMeta.restaurantName || "kol-menu");
+    downloadTextFile(`${restaurant}-firebase-yedek-${backupDateStamp()}.json`, JSON.stringify(payload, null, 2));
+    addLocalBackup(createBackupPayload(payload.data, "manual-download-copy"));
+    setStatus("Yedek lastet ned og lokal kopi lagret.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Kunne ikke lage yedek. Sjekk konsollen.");
+  }
+}
+
+function saveCurrentLocalBackup(reason = "manual-local") {
+  if (!config) return;
+  addLocalBackup(createBackupPayload(config, reason));
+  setStatus("Lokal yedek lagret i denne nettleseren.");
+}
+
+function localDayStamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function maybeDailyLocalBackupOnAdminOpen() {
+  if (!config) return false;
+
+  // TÜRKÇE NOT: Artık her 10 dakikada bir yedek almıyoruz.
+  // Admin paneli açıldığında aynı tarayıcıda günde sadece 1 defa lokal yedek alınır.
+  const today = localDayStamp();
+  if (localStorage.getItem(DAILY_LOCAL_BACKUP_DATE_KEY) === today) return false;
+
+  addLocalBackup(createBackupPayload(config, "daily-admin-open"));
+  localStorage.setItem(DAILY_LOCAL_BACKUP_DATE_KEY, today);
+  return true;
+}
+
+function previewRestoreData(data, label = "Valgt fil") {
+  if (!restoreBackupPreview) return;
+  const counts = countBackupData(data || {});
+  restoreBackupPreview.innerHTML = `
+    <strong>${escapeHtml(label)}</strong><br>
+    ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper<br>
+    Klikk "Gjenopprett til Firebase" hvis dette ser riktig ut.
+  `;
+}
+
+async function restoreDataToFirebase(data, reason = "restore") {
+  if (!data) return;
+  if (!confirm("Dette overskriver Firebase-dataen. Har du tatt yedek først?")) return;
+  try {
+    saveCurrentLocalBackup("before-restore");
+    setStatus("Gjenoppretter Firebase...");
+    const cleanData = normalizeConfig(data);
+    await menuRef.set(cleanData);
+    config = cleanData;
+    pendingRestoreData = null;
+    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
+    renderAll();
+    setAdminView("menu");
+    setStatus("Firebase er gjenopprettet fra yedek.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Kunne ikke gjenopprette yedek.");
+  }
+}
+
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -125,6 +308,8 @@ function asArray(value) {
 function defaultSiteSettings() {
   return {
     restaurantName: "KØL Grill & Pizza",
+    logoUrl: "",
+    defaultImageUrl: "",
     phone: "+47 41 14 53 53",
     email: "",
     country: "Norway",
@@ -134,6 +319,9 @@ function defaultSiteSettings() {
     streetAddress: "ØGARDSVEGEN 44",
     openingDays: "Mandag, Onsdag - Søndag",
     openingTime: "14:00 - 22:00",
+    orderOpenTime: "14:00",
+    orderCloseTime: "22:00",
+    minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)"
   };
@@ -215,32 +403,43 @@ function extractArrayFromScript(source, variableName) {
   throw new Error(`${variableName} kunne ikke leses`);
 }
 
-async function loadDefaultConfig() {
-  if (window.DEFAULT_MENU_CONFIG) return clone(window.DEFAULT_MENU_CONFIG);
-  const response = await fetch(`app.js?ts=${Date.now()}`, { cache: "no-store" });
-  const source = await response.text();
-  return {
-    sections: Function(`return ${extractArrayFromScript(source, "menuSections")}`)(),
-    extraOptions: Function(`return ${extractArrayFromScript(source, "extraOptions")}`)(),
-    customPizzaToppings: Function(`return ${extractArrayFromScript(source, "customPizzaToppings")}`)(),
-    kebabPitaOptions: Function(`return ${extractArrayFromScript(source, "kebabPitaOptions")}`)(),
-    optionGroups: defaultOptionGroups(),
+function createEmptyConfig() {
+  // TÜRKÇE: menu-data.js artık zorunlu değil. Firebase boşsa buradan tertemiz boş admin başlatılır.
+  // Böylece önce kategori ekleyip sonra ürünleri sıfırdan oluşturabilirsin.
+  return normalizeConfig({
+    sections: [],
+    extraOptions: [],
+    customPizzaToppings: [],
+    kebabPitaOptions: [],
+    optionGroups: [],
     siteSettings: defaultSiteSettings()
-  };
+  });
+}
+
+async function loadDefaultConfig() {
+  // TÜRKÇE: Eski sistem menu-data.js / DEFAULT_MENU_CONFIG arıyordu.
+  // Şimdi aramıyoruz; dosya silinse bile admin paneli çalışır.
+  return createEmptyConfig();
 }
 
 async function loadData() {
   setStatus("Synkroniserer med Firebase...");
   const snapshot = await menuRef.once("value");
   const value = snapshot.val();
-  if (hasValidConfig(value)) {
-    config = normalizeConfig(value);
-    if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
-    if (!selectedCategory()) selectedProductIndex = null;
-    else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
-    renderAll();
-    setStatus("Synkronisert med Firebase.");
-  }
+
+  // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
+  // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
+  config = hasValidConfig(value) ? normalizeConfig(value) : createEmptyConfig();
+  if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+  if (!selectedCategory()) selectedProductIndex = null;
+  else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
+  renderAll();
+  const dailyBackupCreated = hasValidConfig(value) ? maybeDailyLocalBackupOnAdminOpen() : false;
+  setStatus(
+    hasValidConfig(value)
+      ? (dailyBackupCreated ? "Synkronisert. Daglig lokal yedek lagret i denne nettleseren." : "Synkronisert med Firebase.")
+      : "Firebase er tom. Du kan starte fra null og legge til kategori."
+  );
 }
 
 async function saveData() {
@@ -251,7 +450,8 @@ async function writeLiveConfig(message = "Lagret automatisk til Firebase.") {
   if (!config) return;
   try {
     setStatus("Lagrer til Firebase...");
-    await menuRef.set(normalizeConfig(config));
+    // TÜRKÇE: Root'a set() yaparsak /orders silinir. update() siparişleri korur.
+    await menuRef.update(normalizeConfig(config));
     setStatus(message);
   } catch (error) {
     setStatus("Kunne ikke lagre. Sjekk Firebase-regler.");
@@ -302,20 +502,24 @@ function mountProductFormInline() {
   productForm.classList.remove("inline-product-edit-form");
 }
 
+function adminDefaultImageUrl() {
+  return (config?.siteSettings?.defaultImageUrl || "").trim();
+}
+
 function categoryImageMarkup(section = {}) {
-  const imageUrl = section.imageUrl || "";
+  const imageUrl = section.imageUrl || adminDefaultImageUrl();
   if (imageUrl) {
-    return `<span class="category-thumb custom-category-thumb"><img src="${escapeHtml(imageUrl)}" alt=""></span>`;
+    return `<span class="category-thumb custom-category-thumb"><img src="${escapeHtml(imageUrl)}" alt="" onerror="this.closest('.category-thumb')?.classList.remove('custom-category-thumb'); this.remove();"></span>`;
   }
-  return `<span class="category-thumb ${escapeHtml(section.imageClass || "pizza-strip")}"></span>`;
+  return `<span class="category-thumb default-thumb ${escapeHtml(section.imageClass || "pizza-strip")}"></span>`;
 }
 
 function productImageMarkup(product = {}) {
-  const imageUrl = product.imageUrl || "";
+  const imageUrl = product.imageUrl || adminDefaultImageUrl();
   if (imageUrl) {
-    return `<span class="product-mini-thumb custom-product-thumb"><img src="${escapeHtml(imageUrl)}" alt=""></span>`;
+    return `<span class="product-mini-thumb custom-product-thumb"><img src="${escapeHtml(imageUrl)}" alt="" onerror="this.closest('.product-mini-thumb')?.classList.remove('custom-product-thumb'); this.remove();"></span>`;
   }
-  return `<span class="product-mini-thumb ${escapeHtml(product.thumb || "plate")}"></span>`;
+  return `<span class="product-mini-thumb default-thumb ${escapeHtml(product.thumb || "plate")}"></span>`;
 }
 
 function productPriceSummary(product = {}) {
@@ -800,9 +1004,7 @@ function updateSiteSettingFromField(field) {
 function settingsTitleFor(tabKey = "basic") {
   const labels = {
     basic: ["Grunninfo", "Restaurantens navn, telefon, adresse og enkel informasjon."],
-    hours: ["Åpning", "Åpningstider og bestilling legges her senere."],
-    delivery: ["Levering", "Leveringssoner, gebyr og hentetid legges her senere."],
-    advanced: ["Mer", "Ekstra innstillinger, betaling, kvittering og integrasjoner legges her senere."]
+    backup: ["Yedek / gjenoppretting", "Ta full kopi av Firebase-dataen eller gjenopprett fra en tidligere JSON-yedek."]
   };
   return labels[tabKey] || labels.basic;
 }
@@ -826,14 +1028,15 @@ function setSettingsTab(tabKey = "basic") {
 }
 
 function setAdminView(tabKey = "menu") {
-  const isMenu = tabKey === "menu";
+  const targetPage = tabKey === "menu" ? "menu" : tabKey === "orders" ? "orders" : "settings";
   adminPages.forEach((page) => {
-    page.classList.toggle("active", page.dataset.adminPage === (isMenu ? "menu" : "settings"));
+    page.classList.toggle("active", page.dataset.adminPage === targetPage);
   });
   topNavButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.topNav === tabKey);
   });
-  if (!isMenu) setSettingsTab(tabKey);
+  if (targetPage === "settings") setSettingsTab(tabKey);
+  if (targetPage === "orders") renderOrdersAdmin();
 }
 
 function openSettingsModal(tabKey = "basic") {
@@ -844,6 +1047,130 @@ function closeSettingsModal() {
   setAdminView("menu");
 }
 
+
+// ============================================================
+// SİPARİŞ MODÜLÜ (ADMIN)
+// ------------------------------------------------------------
+// Müşterinin gönderdiği siparişler Firebase /orders altında tutulur.
+// Buradan onaylayınca müşteri ekranı otomatik olarak güncellenir.
+// ============================================================
+function orderStatusLabel(status = "pending") {
+  if (status === "accepted") return "Godkjent";
+  if (status === "cancelled") return "Kansellert";
+  return "Venter";
+}
+
+function formatOrderDate(value) {
+  if (!value) return "Ukjent tid";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" });
+}
+
+function sanitizeReadyMinutes(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 30;
+  return Math.min(99, Math.max(1, Math.round(number)));
+}
+
+function orderLineHtml(line = {}) {
+  const options = [line.sizeLabel, ...(asArray(line.extras))].filter(Boolean).join(" · ");
+  return `
+    <div class="order-line-row">
+      <div>
+        <strong>${Number(line.quantity || 1)}x ${escapeHtml(line.name || "Produkt")}</strong>
+        ${options ? `<p>${escapeHtml(options)}</p>` : ""}
+        ${line.note ? `<p>${escapeHtml(line.note)}</p>` : ""}
+      </div>
+      <strong>${Number(line.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong>
+    </div>
+  `;
+}
+
+function renderOrdersAdmin() {
+  if (!ordersAdminList) return;
+  const visibleOrders = adminOrders.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  if (ordersCount) ordersCount.textContent = `${visibleOrders.length} bestillinger`;
+  if (!visibleOrders.length) {
+    ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
+    return;
+  }
+
+  ordersAdminList.innerHTML = visibleOrders.map((order) => {
+    const status = order.status || "pending";
+    const customerName = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+    const readyMinutes = sanitizeReadyMinutes(order.readyMinutes || 30);
+    const lines = asArray(order.items);
+    return `
+      <article class="order-card ${escapeHtml(status)}" data-order-id="${escapeHtml(order.id)}">
+        <div class="order-card-top">
+          <div>
+            <h2>${escapeHtml(customerName)}</h2>
+            <small>${escapeHtml(order.customer?.phone || "Telefon mangler")} · ${formatOrderDate(order.createdAt)}</small>
+          </div>
+          <span class="order-badge ${escapeHtml(status)}">${orderStatusLabel(status)}</span>
+        </div>
+
+        <div class="order-meta-grid">
+          <div class="order-meta-box"><strong>Henting</strong><span>${order.pickup?.mode === "later" ? formatOrderDate(order.pickup?.time) : "Snarest mulig"}</span></div>
+          <div class="order-meta-box"><strong>Total</strong><span>${Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</span></div>
+          <div class="order-meta-box"><strong>Ordrenr.</strong><span>${escapeHtml(order.id.slice(-7).toUpperCase())}</span></div>
+        </div>
+
+        <div class="order-receipt">
+          ${lines.map(orderLineHtml).join("")}
+          <div class="order-total-row"><span>Sluttsum</span><strong>${Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong></div>
+        </div>
+
+        ${status === "pending" ? `
+          <div class="order-card-actions">
+            <label class="order-minutes-control">Klar om
+              <input type="number" min="1" max="99" value="${readyMinutes}" data-ready-minutes="${escapeHtml(order.id)}" inputmode="numeric">
+              min
+            </label>
+            <button class="accept-order-button" type="button" data-accept-order="${escapeHtml(order.id)}">Godkjenn</button>
+            <button class="cancel-order-button" type="button" data-cancel-order="${escapeHtml(order.id)}">Avvis / kanseller</button>
+          </div>
+        ` : `
+          <p class="order-muted">${status === "accepted" ? `Godkjent ${formatOrderDate(order.acceptedAt)} · Klar om ${readyMinutes} min` : `Kansellert ${formatOrderDate(order.cancelledAt)}`}</p>
+        `}
+      </article>
+    `;
+  }).join("");
+}
+
+function listenForOrders() {
+  if (!ordersRef) return;
+  ordersRef.on("value", (snapshot) => {
+    const value = snapshot.val() || {};
+    adminOrders = Object.entries(value).map(([id, order]) => ({ id, ...(order || {}) }));
+    ordersReady = true;
+    renderOrdersAdmin();
+  }, (error) => {
+    console.error(error);
+    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Kunne ikke lese bestillinger.</p>`;
+  });
+}
+
+async function acceptOrder(orderId, minutes) {
+  const readyMinutes = sanitizeReadyMinutes(minutes);
+  await ordersRef.child(orderId).update({
+    status: "accepted",
+    readyMinutes,
+    acceptedAt: new Date().toISOString()
+  });
+  setStatus(`Bestilling godkjent. Klar om ${readyMinutes} min.`);
+}
+
+async function cancelOrder(orderId) {
+  if (!confirm("Kansellere denne bestillingen?")) return;
+  await ordersRef.child(orderId).update({
+    status: "cancelled",
+    cancelledAt: new Date().toISOString()
+  });
+  setStatus("Bestilling kansellert.");
+}
+
 function renderAll() {
   renderSiteSettings();
   renderCategories();
@@ -852,6 +1179,7 @@ function renderAll() {
   renderProductEditor();
   renderOptions();
   renderGroupManager();
+  renderLocalBackups();
   scrollSelectedProductToTop();
 }
 
@@ -890,6 +1218,8 @@ function updateProductFromFields() {
 }
 
 function addCategory() {
+  if (!config) config = createEmptyConfig();
+  config.sections = asArray(config.sections);
   config.sections.push({
     id: `kategori-${Date.now()}`,
     title: "NY KATEGORI",
@@ -1043,6 +1373,7 @@ function deleteOptionGroup(groupIndex) {
 }
 
 function addOptionGroup() {
+  if (!config) config = createEmptyConfig();
   config.optionGroups = asArray(config.optionGroups);
   config.optionGroups.push({
     id: `gruppe-${Date.now()}`,
@@ -1390,6 +1721,92 @@ closeSettingsButtons.forEach((button) => {
   button.addEventListener("click", closeSettingsModal);
 });
 
+if (refreshOrdersButton) refreshOrdersButton.addEventListener("click", renderOrdersAdmin);
+if (ordersAdminList) {
+  ordersAdminList.addEventListener("click", async (event) => {
+    const acceptId = event.target.dataset.acceptOrder;
+    if (acceptId) {
+      const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(acceptId)}"]`);
+      await acceptOrder(acceptId, input?.value || 30);
+      return;
+    }
+    const cancelId = event.target.dataset.cancelOrder;
+    if (cancelId) await cancelOrder(cancelId);
+  });
+
+  ordersAdminList.addEventListener("input", (event) => {
+    if (!event.target.dataset.readyMinutes) return;
+    event.target.value = String(sanitizeReadyMinutes(event.target.value || 1)).padStart(1, "0");
+  });
+}
+
+
+if (downloadBackupButton) {
+  downloadBackupButton.addEventListener("click", downloadFullBackup);
+}
+
+if (saveLocalBackupButton) {
+  saveLocalBackupButton.addEventListener("click", () => saveCurrentLocalBackup("manual-local"));
+}
+
+if (restoreBackupFile) {
+  restoreBackupFile.addEventListener("change", async () => {
+    const file = restoreBackupFile.files?.[0];
+    pendingRestoreData = null;
+    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
+    if (!file) {
+      if (restoreBackupPreview) restoreBackupPreview.textContent = "Ingen fil valgt.";
+      return;
+    }
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = extractBackupData(parsed);
+      if (!data) throw new Error("Ugyldig yedekfil");
+      pendingRestoreData = data;
+      previewRestoreData(data, file.name);
+      if (restoreBackupNowButton) restoreBackupNowButton.disabled = false;
+    } catch (error) {
+      console.error(error);
+      if (restoreBackupPreview) restoreBackupPreview.textContent = "Kunne ikke lese filen. Velg en gyldig JSON-yedek.";
+    }
+  });
+}
+
+if (restoreBackupNowButton) {
+  restoreBackupNowButton.addEventListener("click", () => restoreDataToFirebase(pendingRestoreData, "file-restore"));
+}
+
+if (localBackupList) {
+  localBackupList.addEventListener("click", (event) => {
+    const backups = getLocalBackups();
+    const downloadIndex = event.target.dataset.downloadLocalBackup;
+    const restoreIndex = event.target.dataset.restoreLocalBackup;
+    const deleteIndex = event.target.dataset.deleteLocalBackup;
+
+    if (downloadIndex !== undefined) {
+      const backup = backups[Number(downloadIndex)];
+      if (!backup) return;
+      downloadTextFile(`kol-menu-lokal-yedek-${backupDateStamp()}.json`, JSON.stringify(backup, null, 2));
+      return;
+    }
+
+    if (restoreIndex !== undefined) {
+      const backup = backups[Number(restoreIndex)];
+      const data = extractBackupData(backup);
+      restoreDataToFirebase(data, "local-restore");
+      return;
+    }
+
+    if (deleteIndex !== undefined) {
+      if (!confirm("Slette denne lokale yedeken?")) return;
+      backups.splice(Number(deleteIndex), 1);
+      setLocalBackups(backups);
+      renderLocalBackups();
+    }
+  });
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && settingsModal && !settingsModal.hidden) closeSettingsModal();
 });
@@ -1504,13 +1921,16 @@ function startRealtimeSync() {
     "value",
     async (snapshot) => {
       const value = snapshot.val();
+
       if (!hasValidConfig(value)) {
-        config = await loadDefaultConfig();
+        // TÜRKÇE: Firebase boşsa otomatik test menüsü basmıyoruz.
+        // Sadece boş panel açıyoruz; sen kategori ekleyince ilk kayıt Firebase'e yazılır.
+        config = createEmptyConfig();
         selectedCategoryIndex = null;
         selectedProductIndex = null;
         firebaseReady = true;
-        renderAll();
-        await writeLiveConfig("Firebase var tom. Lokal testmeny er lagt inn.");
+        if (!isEditingField()) renderAll();
+        setStatus("Firebase er tom. Klar til å lage ny meny uten menu-data.js.");
         return;
       }
 
@@ -1530,3 +1950,4 @@ function startRealtimeSync() {
 }
 
 startRealtimeSync();
+listenForOrders();

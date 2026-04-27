@@ -1281,3 +1281,360 @@ textarea {
   font-style: normal;
   font-weight: 900;
 }
+
+
+/* Logo URL fra adminpanelet
+   - Når siteSettings.logoUrl finnes, vises dette bildet i toppen.
+   - Hvis URL mangler eller feiler, brukes den gamle KØL-logoen automatisk. */
+.brand-logo-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 148px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.brand-hero.has-logo-url {
+  justify-content: center;
+  padding: 10px 16px;
+  background: #050505;
+}
+
+.brand-hero.has-logo-url .brand-mark,
+.brand-hero.has-logo-url .brand-text {
+  display: none;
+}
+
+.brand-hero.has-logo-url .brand-logo-image[hidden] {
+  display: none;
+}
+
+@media (min-width: 781px) {
+  .brand-hero.has-logo-url {
+    height: 160px;
+  }
+
+  .brand-hero.has-logo-url .brand-logo-image {
+    max-height: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-hero.has-logo-url {
+    height: 118px;
+    padding: 8px 12px;
+  }
+
+  .brand-hero.has-logo-url .brand-logo-image {
+    max-height: 118px;
+  }
+}
+
+
+/* ===== Genel default görsel sistemi =====
+   Türkçe not:
+   - Logo URL yoksa markaya özel olmayan genel bir restoran logosu görünür.
+   - Ürün/kategori resmi yoksa önce Standard bilde URL kullanılır.
+   - O da yoksa aşağıdaki CSS default görselleri devreye girer.
+*/
+.brand-default-logo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.brand-default-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(78px, 20vw, 126px);
+  height: clamp(78px, 20vw, 126px);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.92) 0 11%, transparent 12%),
+    linear-gradient(155deg, #fff47a 0 20%, #ff8c18 35%, #e51431 62%, #8a1147 100%);
+  color: #fff;
+  font-size: clamp(38px, 10vw, 68px);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.35);
+}
+
+.brand-default-copy {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  min-width: 0;
+  text-align: right;
+}
+
+.brand-default-copy strong {
+  max-width: 390px;
+  color: #fff;
+  font-size: clamp(30px, 8vw, 54px);
+  font-weight: 900;
+  line-height: 0.98;
+  overflow-wrap: anywhere;
+}
+
+.brand-default-copy em {
+  display: inline-block;
+  padding-top: 7px;
+  border-top: 3px solid #fff;
+  color: #fff;
+  font-size: clamp(15px, 3.5vw, 24px);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.brand-hero.has-logo-url .brand-default-logo {
+  display: none;
+}
+
+.food-thumb.default-thumb,
+.food-thumb.default-ready:not(.custom-thumb),
+.category-photo.default-category-photo,
+.product-photo.default-product-photo {
+  background:
+    radial-gradient(circle at 25% 32%, rgba(255,255,255,0.86) 0 10%, transparent 11%),
+    radial-gradient(circle at 67% 42%, rgba(255,255,255,0.56) 0 8%, transparent 9%),
+    radial-gradient(circle at 52% 70%, rgba(255, 126, 33, 0.85) 0 14%, transparent 15%),
+    linear-gradient(135deg, #ffe1a8 0%, #ef7a25 48%, #8b2b17 100%);
+  background-size: cover;
+}
+
+.food-thumb.default-thumb::after,
+.food-thumb.default-ready:not(.custom-thumb)::after {
+  content: "🍽";
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 17px;
+  filter: grayscale(0.1);
+}
+
+.food-thumb.custom-thumb img,
+.category-photo.custom-category-photo,
+.product-photo:not(.default-product-photo) {
+  background-size: cover;
+  background-position: center;
+}
+
+.product-photo.default-product-photo::before {
+  content: "🍽";
+  position: absolute;
+  z-index: 0;
+  right: 28px;
+  bottom: 18px;
+  font-size: 62px;
+  opacity: 0.22;
+}
+
+@media (max-width: 480px) {
+  .brand-default-logo {
+    gap: 12px;
+  }
+
+  .brand-default-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    font-size: 36px;
+  }
+
+  .brand-default-copy strong {
+    font-size: clamp(24px, 7.5vw, 34px);
+  }
+}
+
+
+/* ===== Logo boşken yazısız default görsel =====
+   TÜRKÇE: Logo URL boşsa üst alanda KG/KØL yazısı veya çizgi gösterilmez.
+   Kategorilerde kullandığımız sade yemek görseli mantığı kullanılır. */
+.brand-hero.default-hero-visual:not(.has-logo-url) {
+  justify-content: center;
+  padding: 0;
+  background:
+    radial-gradient(circle at 18% 42%, rgba(255,255,255,0.80) 0 8%, transparent 9%),
+    radial-gradient(circle at 43% 35%, rgba(255,255,255,0.42) 0 7%, transparent 8%),
+    radial-gradient(circle at 72% 55%, rgba(255, 145, 36, 0.82) 0 16%, transparent 17%),
+    linear-gradient(135deg, #ffe1a8 0%, #ef7a25 48%, #8b2b17 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.brand-hero.default-hero-visual.has-default-image-url:not(.has-logo-url) {
+  background-size: cover;
+  background-position: center;
+}
+
+.brand-hero.default-hero-visual:not(.has-logo-url) .brand-default-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brand-hero.default-hero-visual:not(.has-logo-url) .brand-default-logo::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.brand-default-icon,
+.brand-default-copy {
+  display: none !important;
+}
+
+@media (min-width: 781px) {
+  .brand-hero.default-hero-visual:not(.has-logo-url) {
+    height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-hero.default-hero-visual:not(.has-logo-url) {
+    height: 112px;
+  }
+}
+
+
+/* ===== Firebase cache + lazy menu loading ===== */
+#menuSections {
+  transition: opacity 180ms ease;
+}
+
+body.menu-loading #menuSections {
+  min-height: 360px;
+  opacity: 1;
+}
+
+body.menu-loading #menuSections::before {
+  content: "Menyen lastes...";
+  display: grid;
+  place-items: center;
+  min-height: 210px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.62), rgba(255,255,255,0)),
+    linear-gradient(180deg, #f7f7f7, #eeeeee);
+  background-size: 220px 100%, 100% 100%;
+  background-position: -220px 0, 0 0;
+  background-repeat: no-repeat;
+  color: var(--muted);
+  font-weight: 700;
+  animation: menuLoadingSweep 1.25s ease-in-out infinite;
+}
+
+@keyframes menuLoadingSweep {
+  to { background-position: calc(100% + 220px) 0, 0 0; }
+}
+
+.category-panel {
+  content-visibility: auto;
+  contain-intrinsic-size: 440px;
+}
+
+.menu-lazy-trigger {
+  display: grid;
+  place-items: center;
+  min-height: 82px;
+  padding: 18px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f7f7;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ===== Checkout / sipariş verme alanı ===== */
+.checkout-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.checkout-form h3,
+.recent-orders h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.checkout-grid label,
+.pickup-choice label {
+  font-weight: 800;
+  color: var(--text);
+}
+.checkout-grid label.wide { grid-column: 1 / -1; }
+.checkout-grid input,
+.pickup-choice input[type="datetime-local"] {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 5px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 8px;
+  font: inherit;
+}
+.pickup-choice {
+  display: grid;
+  gap: 8px;
+}
+.pickup-choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+.checkout-help {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.checkout-button:not(:disabled) {
+  background: var(--orange);
+}
+.order-status-box,
+.recent-orders {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.order-status-box.pending { border-left: 5px solid #f18a00; }
+.order-status-box.accepted { border-left: 5px solid #39a852; }
+.order-status-box.cancelled { border-left: 5px solid #d83b32; }
+.order-status-box h3,
+.order-status-box p { margin: 0 0 6px; }
+.order-status-box small { color: var(--muted); }
+.recent-orders {
+  display: grid;
+  gap: 8px;
+}
+.customer-order-card {
+  border: 1px dashed #d8d8d8;
+  padding: 10px;
+  background: #fcfcfc;
+}
+.customer-order-card strong { display: flex; justify-content: space-between; gap: 8px; }
+.customer-order-card p { margin: 5px 0 0; color: var(--muted); }
+.customer-order-card.accepted { border-left: 4px solid #39a852; }
+.customer-order-card.cancelled { border-left: 4px solid #d83b32; }
+.customer-order-card.pending { border-left: 4px solid #f18a00; }
+
+@media (max-width: 520px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+}
