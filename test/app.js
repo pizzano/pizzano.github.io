@@ -263,6 +263,8 @@ let addingToCart = false;
 let cartWiggleTimer = null;
 let cartReminderTimer = null;
 let currentOrderPollTimer = null;
+let recentOrdersPollTimer = null;
+let expandedProfileOrderId = "";
 
 function formatPrice(value) {
   return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(value);
@@ -325,7 +327,7 @@ function getRecentOrders() {
   try {
     const parsed = JSON.parse(localStorage.getItem(recentOrdersKey) || "[]");
     return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -334,22 +336,81 @@ function saveRecentOrders(orders) {
   localStorage.setItem(recentOrdersKey, JSON.stringify(orders.slice(0, 2)));
 }
 
+function getOrderReadState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(orderReadStateKey) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveOrderReadState(state) {
+  localStorage.setItem(orderReadStateKey, JSON.stringify(state || {}));
+}
+
+function isOrderUnread(order = {}) {
+  if (!order.id) return false;
+  const status = order.status || "pending";
+  const readState = getOrderReadState()[order.id];
+  return !readState || readState.status !== status;
+}
+
+function markOrderAsRead(orderId) {
+  const order = getRecentOrders().find((item) => item.id === orderId);
+  if (!order) return;
+  const state = getOrderReadState();
+  state[orderId] = {
+    status: order.status || "pending",
+    readAt: new Date().toISOString()
+  };
+  saveOrderReadState(state);
+  updateProfileDot();
+}
+
 function rememberRecentOrder(order) {
-  const list = getRecentOrders().filter((item) => item.id !== order.id);
+  const previousList = getRecentOrders();
+  const previousOrder = previousList.find((item) => item.id === order.id);
+  const previousStatus = previousOrder?.status || "pending";
+  const nextStatus = order.status || "pending";
+  const statusChanged = previousOrder && previousStatus !== nextStatus;
+  const list = previousList.filter((item) => item.id !== order.id);
   list.unshift(order);
   saveRecentOrders(list);
-  if ((order.status || "pending") === "pending") setActiveOrderId(order.id);
-  if (["accepted", "cancelled"].includes(order.status || "")) clearActiveOrderId(order.id);
+
+  if (nextStatus === "pending") setActiveOrderId(order.id);
+  if (["accepted", "cancelled"].includes(nextStatus)) clearActiveOrderId(order.id);
+
+  // Status endret etter at kunden allerede har sett bestillingen.
+  // Da åpner vi et rent status-vindu og markerer profilen som ulest.
+  if (statusChanged && ["accepted", "cancelled"].includes(nextStatus)) {
+    renderOrderLiveModal(order, true);
+  }
+
   renderRecentOrders();
   renderProfileOrders();
   updateProfileDot();
 }
 
 function orderStatusText(status = "pending") {
+  if (status === "accepted") return "Godkjent";
+  if (status === "cancelled") return "Kansellert";
+  return "Venter";
+}
+
+function orderStatusTitle(status = "pending") {
   if (status === "accepted") return "Bestillingen er godkjent";
   if (status === "cancelled") return "Bestillingen er kansellert";
   return "Venter på godkjenning";
 }
+
+function orderShortMessage(order = {}) {
+  const status = order.status || "pending";
+  if (status === "accepted") return `Klar om cirka ${order.readyMinutes || 30} min.`;
+  if (status === "cancelled") return "Restauranten har kansellert bestillingen.";
+  return "Bestillingen er sendt. Vent på bekreftelse.";
+}
+
 
 function parseTimeParts(value = "") {
   const match = String(value).match(/(\d{1,2})[:.](\d{2})/);
@@ -503,15 +564,20 @@ function orderPickupText(order = {}) {
 
 function orderStatusHtml(order = {}, options = {}) {
   const status = order.status || "pending";
-  const ready = status === "accepted" ? `<p class="order-live-ok"><strong>Bestillingen er mottatt. Klar om cirka ${order.readyMinutes || 30} minutter.</strong></p>` : "";
-  const waiting = status === "pending" ? `<p>Bestillingen er sendt. Vennligst vent på bekreftelse fra restauranten.</p>` : "";
-  const cancelled = status === "cancelled" ? `<p class="order-live-cancelled">Bestillingen er kansellert. Kontakt restauranten hvis du har spørsmål.</p>` : "";
+  const orderId = String(order.id || "").slice(-7).toUpperCase();
+  const total = formatPrice(order.total || 0);
   return `
     <div class="order-live-status ${status}">
-      <h3>${orderStatusText(status)}</h3>
-      ${waiting}${ready}${cancelled}
-      <p>${orderPickupText(order)}</p>
-      <small>Ordrenr: ${String(order.id || "").slice(-7).toUpperCase()}</small>
+      <div class="order-status-head">
+        <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
+        <small>Ordre ${orderId}</small>
+      </div>
+      <h3>${orderStatusTitle(status)}</h3>
+      <p>${orderShortMessage(order)}</p>
+      <div class="order-mini-info">
+        <span>${orderPickupText(order)}</span>
+        <strong>${total}</strong>
+      </div>
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
   `;
@@ -525,7 +591,7 @@ function renderOrderStatus(order) {
   }
   orderStatusBox.hidden = false;
   orderStatusBox.className = `order-status-box ${order.status || "pending"}`;
-  orderStatusBox.innerHTML = orderStatusHtml(order, { includeReceipt: false });
+  orderStatusBox.innerHTML = orderStatusHtml(order, { includeReceipt: true });
 }
 
 function renderOrderLiveModal(order, forceOpen = false) {
@@ -545,18 +611,34 @@ function closeOrderLiveModal() {
 
 function renderRecentOrders() {
   if (!recentOrdersEl) return;
-  const orders = getRecentOrders().slice(0, 2);
-  if (!orders.length) {
-    recentOrdersEl.innerHTML = "";
-    return;
-  }
-  recentOrdersEl.innerHTML = `<h3>Siste bestillinger</h3>` + orders.map((order) => `
-    <article class="customer-order-card ${order.status || "pending"}">
-      <strong><span>${orderStatusText(order.status)}</span><span>${formatPrice(order.total || 0)}</span></strong>
-      <p>${(order.items || []).map((line) => `${line.quantity}x ${line.name}`).join(", ")}</p>
-      <p>${order.status === "accepted" ? `Klar om ${order.readyMinutes || 30} min` : order.status === "pending" ? "Venter på bekreftelse" : "Kansellert"}</p>
+  recentOrdersEl.innerHTML = "";
+}
+
+function profileOrderCardHtml(order = {}) {
+  const status = order.status || "pending";
+  const isExpanded = expandedProfileOrderId === order.id;
+  const unread = isOrderUnread(order);
+  const title = orderStatusTitle(status);
+  const itemsText = (order.items || []).map((line) => `${line.quantity}x ${line.name}`).join(", ") || "Ingen varer";
+  return `
+    <article class="profile-order-card ${status} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
+      <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
+        <span>
+          <strong>${title}</strong>
+          <small>${orderPickupText(order)} · ${formatPrice(order.total || 0)}</small>
+        </span>
+        <span class="profile-order-side">
+          <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
+          <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
+        </span>
+      </button>
+      ${isExpanded ? `<div class="profile-order-details">
+        <p class="profile-order-message">${orderShortMessage(order)}</p>
+        <p class="profile-order-items">${escapeAttribute(itemsText)}</p>
+        ${orderLinesHtml(order)}
+      </div>` : ""}
     </article>
-  `).join("");
+  `;
 }
 
 function renderProfileOrders() {
@@ -566,19 +648,19 @@ function renderProfileOrders() {
     profileOrdersEl.innerHTML = `<p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>`;
     return;
   }
-  profileOrdersEl.innerHTML = orders.map((order) => `
-    <article class="profile-order-card ${order.status || "pending"}">
-      ${orderStatusHtml(order, { includeReceipt: true })}
-    </article>
-  `).join("");
+  profileOrdersEl.innerHTML = `
+    <div class="profile-order-list-note">Trykk på en bestilling for å se detaljer.</div>
+    ${orders.map(profileOrderCardHtml).join("")}
+  `;
 }
 
 function updateProfileDot() {
   if (!profileOrderDot) return;
-  profileOrderDot.hidden = !getRecentOrders().some((order) => (order.status || "pending") === "pending");
+  profileOrderDot.hidden = !getRecentOrders().some((order) => (order.status || "pending") === "pending" || isOrderUnread(order));
 }
 
 function openProfileModal() {
+  syncRecentOrdersFromFirebase();
   renderProfileOrders();
   updateProfileDot();
   if (!profileModal) return;
@@ -593,6 +675,29 @@ function closeProfileModal() {
   profileToggle?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("profile-open");
 }
+
+async function syncRecentOrdersFromFirebase() {
+  const orders = getRecentOrders();
+  if (!orders.length) return;
+  const updated = [];
+  for (const order of orders.slice(0, 2)) {
+    if (!order.id) continue;
+    try {
+      const fresh = await fetchOrder(order.id);
+      updated.push(fresh || order);
+    } catch {
+      updated.push(order);
+    }
+  }
+  updated.forEach((order) => rememberRecentOrder(order));
+}
+
+function startRecentOrdersSync() {
+  window.clearInterval(recentOrdersPollTimer);
+  if (!getRecentOrders().length) return;
+  recentOrdersPollTimer = window.setInterval(syncRecentOrdersFromFirebase, 12000);
+}
+
 
 function resumeActiveOrderPolling() {
   const activeId = getActiveOrderId();
@@ -620,6 +725,7 @@ function startOrderPolling(orderId) {
       renderCart();
       if (order.status === "accepted" || order.status === "cancelled") {
         window.clearInterval(currentOrderPollTimer);
+        startRecentOrdersSync();
       }
     } catch (error) {
       console.warn(error);
@@ -653,6 +759,7 @@ async function submitOrder() {
     const result = await response.json();
     const order = { id: result.name, ...payload };
     rememberRecentOrder(order);
+    startRecentOrdersSync();
     renderOrderStatus(order);
     renderOrderLiveModal(order, true);
     startOrderPolling(result.name);
@@ -1765,6 +1872,18 @@ if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupCont
 });
 
 if (profileToggle) profileToggle.addEventListener("click", openProfileModal);
+
+if (profileOrdersEl) {
+  profileOrdersEl.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-profile-order-toggle]");
+    if (!button) return;
+    const orderId = button.dataset.profileOrderToggle;
+    expandedProfileOrderId = expandedProfileOrderId === orderId ? "" : orderId;
+    if (expandedProfileOrderId) markOrderAsRead(orderId);
+    renderProfileOrders();
+  });
+}
+
 if (closeProfile) closeProfile.addEventListener("click", closeProfileModal);
 if (profileModal) {
   profileModal.addEventListener("click", (event) => {
@@ -1838,6 +1957,7 @@ async function init() {
   renderProfileOrders();
   updateProfileDot();
   resumeActiveOrderPolling();
+startRecentOrdersSync();
   renderCart();
   updateOpeningNotice();
 }
