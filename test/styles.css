@@ -324,6 +324,7 @@ button {
 
 .product-modal,
 .cart-modal,
+.confirm-modal,
 .info-modal {
   position: fixed;
   inset: 0;
@@ -607,6 +608,7 @@ textarea {
   background: transparent;
 }
 
+.confirm-backdrop,
 .info-backdrop {
   position: absolute;
   inset: 0;
@@ -756,6 +758,8 @@ textarea {
 }
 
 .cart-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(760px, calc(100% - 32px));
   max-height: calc(100vh - 38px);
   padding: 14px;
@@ -822,8 +826,12 @@ textarea {
 }
 
 .cart-items {
+  grid-row: 2;
   display: grid;
+  align-content: start;
   gap: 0;
+  min-height: 0;
+  overflow-y: auto;
   border: 1px solid var(--line);
   background: #fff;
 }
@@ -887,6 +895,8 @@ textarea {
 }
 
 .cart-empty {
+  grid-row: 2;
+  align-self: start;
   padding: 20px;
   border: 1px solid var(--line);
   background: #fff;
@@ -897,6 +907,7 @@ textarea {
 }
 
 .cart-summary {
+  grid-row: 3;
   display: grid;
   gap: 8px;
   margin-top: 12px;
@@ -927,6 +938,61 @@ textarea {
   color: #fff;
   font-size: 14px;
   font-weight: 800;
+}
+
+.confirm-modal {
+  z-index: 70;
+  place-items: center;
+  padding: 18px;
+}
+
+.confirm-panel {
+  position: relative;
+  z-index: 1;
+  width: min(360px, 100%);
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.confirm-panel h2 {
+  margin: 0 0 8px;
+  color: #3f454b;
+  font-size: 18px;
+}
+
+.confirm-panel p {
+  margin: 0;
+  color: #60666c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.confirm-cancel,
+.confirm-danger {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.confirm-cancel {
+  background: #fff;
+  color: #555;
+}
+
+.confirm-danger {
+  border-color: #d83b32;
+  background: #d83b32;
+  color: #fff;
 }
 
 @media (max-width: 520px) {
@@ -974,7 +1040,8 @@ textarea {
 
   .cart-panel {
     width: 100%;
-    max-height: 88vh;
+    height: min(88dvh, 100dvh);
+    max-height: 88dvh;
   }
 
   .cart-header {

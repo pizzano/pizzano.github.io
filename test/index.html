@@ -159,6 +159,18 @@
       </aside>
     </div>
 
+    <div class="confirm-modal" id="clearCartConfirm" role="dialog" aria-modal="true" aria-labelledby="clearCartTitle" hidden>
+      <button class="confirm-backdrop" type="button" data-close-confirm aria-label="Avbryt"></button>
+      <section class="confirm-panel">
+        <h2 id="clearCartTitle">T&oslash;m kurven?</h2>
+        <p>Er du sikker p&aring; at du vil fjerne alle varer fra handlekurven?</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel" id="cancelClearCart" type="button">Avbryt</button>
+          <button class="confirm-danger" id="confirmClearCart" type="button">Ja, t&oslash;m kurven</button>
+        </div>
+      </section>
+    </div>
+
     <script src="app.js"></script>
   </body>
 </html>

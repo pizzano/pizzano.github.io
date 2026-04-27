@@ -145,9 +145,9 @@ const customPizzaToppings = [
 ];
 
 const kebabPitaOptions = [
-  { id: "strength-mild", group: "Velg styrke", label: "Mild", price: 0, choiceGroup: "strength", default: true },
-  { id: "strength-medium", group: "Velg styrke", label: "Medium", price: 0, choiceGroup: "strength" },
-  { id: "strength-hot", group: "Velg styrke", label: "Sterk", price: 0, choiceGroup: "strength" },
+  { id: "strength-mild", group: "Velg styrke", label: "Mild \u{1F33F}", price: 0, choiceGroup: "strength", default: true },
+  { id: "strength-medium", group: "Velg styrke", label: "Medium \u{1F336}\u{FE0F}", price: 0, choiceGroup: "strength" },
+  { id: "strength-hot", group: "Velg styrke", label: "Sterk \u{1F525}", price: 0, choiceGroup: "strength" },
   { id: "extra-meat", group: "Ekstra kj\u00f8tt", label: "Ekstra Kebabkj\u00f8tt", price: 30 },
   { id: "fries-kebab", group: "Litt pommes frites i kebaben?", label: "Ja, takk!", price: 15 }
 ];
@@ -172,6 +172,10 @@ const cartSummary = document.querySelector("#cartSummary");
 const subtotal = document.querySelector("#subtotal");
 const tax = document.querySelector("#tax");
 const total = document.querySelector("#total");
+const checkoutButton = document.querySelector(".checkout-button");
+const clearCartConfirm = document.querySelector("#clearCartConfirm");
+const cancelClearCart = document.querySelector("#cancelClearCart");
+const confirmClearCart = document.querySelector("#confirmClearCart");
 const productModal = document.querySelector("#productModal");
 const productTitle = document.querySelector("#productTitle");
 const productSummary = document.querySelector("#productSummary");
@@ -484,8 +488,10 @@ function renderCart() {
   tax.textContent = formatPrice(taxValue);
   total.textContent = formatPrice(cartSubtotal);
   cartEmpty.hidden = cart.length > 0;
+  cartItems.hidden = cart.length === 0;
   cartSummary.hidden = cart.length === 0;
-  clearCart.disabled = cart.length === 0;
+  clearCart.hidden = cart.length === 0;
+  checkoutButton.disabled = cart.length === 0;
 
   cartItems.innerHTML = cart
     .map(
@@ -543,6 +549,21 @@ function closeCartModal() {
   cartModal.hidden = true;
   cartToggle.setAttribute("aria-expanded", "false");
   document.body.classList.remove("cart-open");
+}
+
+function openClearCartConfirm() {
+  clearCartConfirm.hidden = false;
+}
+
+function closeClearCartConfirm() {
+  clearCartConfirm.hidden = true;
+}
+
+function emptyCart() {
+  cart = [];
+  saveCart();
+  renderCart();
+  closeClearCartConfirm();
 }
 
 function openInfo() {
@@ -611,13 +632,23 @@ cartItems.addEventListener("click", (event) => {
 });
 
 clearCart.addEventListener("click", () => {
-  cart = [];
-  saveCart();
-  renderCart();
+  if (cart.length === 0) return;
+  openClearCartConfirm();
+});
+
+cancelClearCart.addEventListener("click", closeClearCartConfirm);
+confirmClearCart.addEventListener("click", emptyCart);
+
+clearCartConfirm.addEventListener("click", (event) => {
+  if (event.target.dataset.closeConfirm !== undefined) closeClearCartConfirm();
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
+  if (!clearCartConfirm.hidden) {
+    closeClearCartConfirm();
+    return;
+  }
   if (!productModal.hidden) closeProductModal();
   if (!infoModal.hidden) closeInfoModal();
   if (!cartModal.hidden) closeCartModal();
