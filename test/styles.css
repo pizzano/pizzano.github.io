@@ -269,6 +269,18 @@ button {
   border: 1px solid #ddd;
 }
 
+.food-thumb.custom-thumb {
+  background: #eee;
+  overflow: hidden;
+}
+
+.food-thumb.custom-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .food-thumb.green {
   background:
     radial-gradient(circle at 26% 28%, #2b8e51 0 11%, transparent 12%),
@@ -570,6 +582,16 @@ textarea {
   font-weight: 800;
 }
 
+.category-panel.collapsed .category-title span:last-child {
+  transform: rotate(-90deg);
+}
+
+.category-panel.collapsed .category-note,
+.category-panel.collapsed .category-photo,
+.category-panel.collapsed .menu-list {
+  display: none;
+}
+
 .product-footer {
   position: relative;
   z-index: 5;
@@ -838,7 +860,7 @@ textarea {
 
 .cart-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px 38px;
+  grid-template-columns: minmax(0, 1fr) 104px auto;
   align-items: center;
   gap: 10px;
   padding: 14px;
@@ -876,8 +898,30 @@ textarea {
   white-space: nowrap;
 }
 
-.remove-button {
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   justify-self: end;
+}
+
+.edit-line-button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: #555;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.edit-line-button:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.remove-button {
   width: 36px;
   height: 36px;
   border: 1px solid #df6158;
@@ -1064,7 +1108,7 @@ textarea {
   }
 
   .cart-item {
-    grid-template-columns: minmax(0, 1fr) 84px 36px;
+    grid-template-columns: minmax(0, 1fr) 80px auto;
     gap: 8px;
     padding: 12px;
   }
@@ -1076,6 +1120,29 @@ textarea {
   .remove-button {
     width: 36px;
     height: 36px;
+  }
+
+  .edit-line-button {
+    min-height: 36px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 390px) {
+    .cart-item {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .cart-item-main > strong {
+      grid-column: 1;
+      justify-self: start;
+      margin-top: 6px;
+    }
+
+    .cart-item-actions {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
   }
 
   .info-panel {

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
+    <link rel="stylesheet" href="admin.css?v=20260427-7">
+  </head>
+  <body>
+    <header class="admin-topbar">
+      <div>
+        <strong>K&Oslash;L Grill &amp; Pizza</strong>
+        <span>meny admin</span>
+      </div>
+      <nav>
+        <a href="index.html">Se meny</a>
+        <button id="reloadData" type="button">Synkroniser</button>
+        <button id="saveData" type="button">Lagre n&aring;</button>
+      </nav>
+    </header>
+
+    <main class="admin-shell">
+      <section class="admin-status" id="adminStatus">Klar.</section>
+
+      <section class="admin-grid">
+        <aside class="category-list">
+          <div class="section-heading">
+            <h1>Kategorier</h1>
+            <button id="addCategory" type="button">Ny kategori</button>
+          </div>
+          <div id="categoryButtons"></div>
+        </aside>
+
+        <section class="editor-panel">
+          <div class="section-heading product-heading">
+            <h2>Produkter</h2>
+            <button id="addProduct" type="button">Nytt produkt</button>
+          </div>
+
+          <div class="product-admin-grid">
+            <form class="product-form product-editor-card" id="productForm">
+              <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
+              <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
+              <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
+              <label class="technical-field">Id <input id="productId" type="text"></label>
+              <label class="technical-field">Nummer <input id="productNumber" type="number" min="0"></label>
+              <label class="technical-field">Type
+                <select id="productType">
+                  <option value="">Standard</option>
+                  <option value="sauce">Saus</option>
+                  <option value="kebab-pita">Kebab pita</option>
+                  <option value="kebab-wrap">Kebab rull</option>
+                  <option value="kebab-plate">Kebab tallerken</option>
+                </select>
+              </label>
+              <label class="technical-field">Miniatyr
+                <select id="productThumb">
+                  <option value="pepperoni">Pizza pepperoni</option>
+                  <option value="mushroom">Pizza sopp</option>
+                  <option value="spicy">Pizza sterk</option>
+                  <option value="green">Gr&oslash;nn</option>
+                  <option value="mixed">Blandet</option>
+                  <option value="sauce">Saus/drikke</option>
+                  <option value="kebab">Kebab</option>
+                  <option value="wrap">Rull</option>
+                  <option value="plate">Tallerken</option>
+                  <option value="burger">Burger</option>
+                </select>
+              </label>
+              <label>Pris <input id="productPrice" type="number" min="0"></label>
+              <label>Medium pris <input id="productMediumPrice" type="number" min="0"></label>
+              <label>Stor pris <input id="productLargePrice" type="number" min="0"></label>
+              <label class="technical-field">Listepris <input id="productDisplayPrice" type="number" min="0"></label>
+              <section class="assigned-groups wide" aria-label="Valggrupper p&aring; produktet">
+                <div class="mini-heading">
+                  <h3>Valggrupper p&aring; dette produktet</h3>
+                  <span>Dra en gruppe hit, eller bruk knappen under.</span>
+                </div>
+                <div id="assignedGroups" class="assigned-group-list"></div>
+              </section>
+              <div class="form-actions wide">
+                <button id="saveProduct" type="submit">Oppdater produkt</button>
+                <button class="danger-light" id="deleteProduct" type="button">Slett produkt</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </section>
+
+      <section class="group-panel">
+        <div class="section-heading">
+          <div>
+            <h2>Valggrupper</h2>
+            <span>Lag ekstra valg her, og koble dem til riktige produkter.</span>
+          </div>
+          <button id="addOptionGroup" type="button">Ny gruppe</button>
+        </div>
+        <div id="optionGroupsAdmin" class="admin-option-groups"></div>
+      </section>
+
+    </main>
+
+    <div class="admin-toast" id="adminToast" hidden>Lagret</div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
+    <script src="menu-data.js?v=20260427-7"></script>
+    <script src="admin.js?v=20260427-7"></script>
+  </body>
+</html>
