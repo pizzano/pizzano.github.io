@@ -1,0 +1,165 @@
+          "name": "Mineralvann 1.5L",
+          "ingredients": "Du velger drikke når du henter maten på restauranten.",
+          "price": 59,
+          "thumb": "sauce"
+        }
+      ]
+    }
+  ],
+  "extraOptions": [
+    {
+      "id": "fries",
+      "group": "Pommes frites på pizzaen?",
+      "label": "Ja, takk!",
+      "priceBySize": {
+        "medium": 29,
+        "large": 39
+      },
+      "pizzaOnly": true
+    },
+    {
+      "id": "extra-base",
+      "group": "Extra bunn - 300g deig?",
+      "label": "Ja, Takk!",
+      "price": 49,
+      "pizzaOnly": true,
+      "sizes": [
+        "large"
+      ]
+    },
+    {
+      "id": "garlic",
+      "group": "Velg saus",
+      "label": "Hvitløksaus",
+      "price": 25
+    },
+    {
+      "id": "bearnaise",
+      "group": "Velg saus",
+      "label": "Béarnaisesaus",
+      "price": 25
+    }
+  ],
+  "customPizzaToppings": [
+    {
+      "id": "topping-beef",
+      "group": "Tillegg",
+      "label": "Biffkjøtt",
+      "price": 30
+    },
+    {
+      "id": "topping-chicken",
+      "group": "Tillegg",
+      "label": "Kyllingkjøtt",
+      "price": 30
+    },
+    {
+      "id": "topping-kebab",
+      "group": "Tillegg",
+      "label": "Kebabkjøtt",
+      "price": 30
+    },
+    {
+      "id": "topping-bacon",
+      "group": "Tillegg",
+      "label": "Bacon",
+      "price": 30
+    },
+    {
+      "id": "topping-ham",
+      "group": "Tillegg",
+      "label": "Skinke",
+      "price": 25
+    },
+    {
+      "id": "topping-pepperoni",
+      "group": "Tillegg",
+      "label": "Pepperoni",
+      "price": 30
+    },
+    {
+      "id": "topping-parma",
+      "group": "Tillegg",
+      "label": "Parmaskinke",
+      "price": 40
+    },
+    {
+      "id": "topping-jalapeno",
+      "group": "Tillegg",
+      "label": "Jalapeno",
+      "price": 20
+    },
+    {
+      "id": "topping-paprika",
+      "group": "Tillegg",
+      "label": "paprika",
+      "price": 20
+    },
+    {
+      "id": "topping-mushroom",
+      "group": "Tillegg",
+      "label": "sopp",
+      "price": 20
+    },
+    {
+      "id": "topping-onion",
+      "group": "Tillegg",
+      "label": "løk",
+      "price": 20
+    },
+    {
+      "id": "topping-corn",
+      "group": "Tillegg",
+      "label": "mais",
+      "price": 20
+    },
+    {
+      "id": "topping-extra-cheese",
+      "group": "Tillegg",
+      "label": "Extra Ost",
+      "price": 25
+    },
+    {
+      "id": "topping-chips",
+      "group": "Tillegg",
+      "label": "Chips på toppen",
+      "price": 35
+    }
+  ],
+  "kebabPitaOptions": [
+    {
+      "id": "strength-mild",
+      "group": "Velg styrke",
+      "label": "Mild 🌿",
+      "price": 0,
+      "choiceGroup": "strength",
+      "default": true
+    },
+    {
+      "id": "strength-medium",
+      "group": "Velg styrke",
+      "label": "Medium 🌶️",
+      "price": 0,
+      "choiceGroup": "strength"
+    },
+    {
+      "id": "strength-hot",
+      "group": "Velg styrke",
+      "label": "Sterk 🔥",
+      "price": 0,
+      "choiceGroup": "strength"
+    },
+    {
+      "id": "extra-meat",
+      "group": "Ekstra kjøtt",
+      "label": "Ekstra Kebabkjøtt",
+      "price": 30
+    },
+    {
+      "id": "fries-kebab",
+      "group": "Litt pommes frites i kebaben?",
+      "label": "Ja, takk!",
+      "price": 15
+    }
+  ]
+}
