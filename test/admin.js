@@ -56,6 +56,7 @@ const productForm = document.querySelector("#productForm");
 const assignedGroups = document.querySelector("#assignedGroups");
 const optionGroupsAdmin = document.querySelector("#optionGroupsAdmin");
 const addOptionGroupButton = document.querySelector("#addOptionGroup");
+const addStrengthGroupButton = document.querySelector("#addStrengthGroup");
 const optionContainers = {
   extraOptions: document.querySelector("#pizzaExtras"),
   customPizzaToppings: document.querySelector("#customPizzaExtras"),
@@ -77,9 +78,15 @@ let firebaseReady = false;
 let toastTimer = null;
 let adminOrders = [];
 let ordersReady = false;
+let knownOrderIdsForSound = new Set();
+let adminOrderAudioContext = null;
+let adminSoundUnlocked = false;
+let adminAlarmLoopTimer = null;
 let pendingRestoreData = null;
+let expandedAdminOrderId = null;
 const LOCAL_BACKUP_KEY = "kol_menu_local_backups_v1";
 const DAILY_LOCAL_BACKUP_DATE_KEY = "kol_menu_daily_backup_date_v1";
+const ADMIN_MENU_CACHE_KEY = "kol_admin_last_good_menu_v1";
 
 function setStatus(message) {
   adminStatus.textContent = message;
@@ -92,8 +99,124 @@ function showToast(message) {
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => {
     adminToast.hidden = true;
-  }, 2200);
+  }, 1350);
 }
+
+
+function getAdminOrderAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!adminOrderAudioContext) adminOrderAudioContext = new AudioContextClass();
+  return adminOrderAudioContext;
+}
+
+function unlockAdminOrderSound() {
+  const context = getAdminOrderAudioContext();
+  if (!context) return;
+  context.resume?.().then(() => {
+    adminSoundUnlocked = true;
+  }).catch(() => {});
+}
+
+function playAdminAlarmTone(context, start, frequency, duration, volume = 1) {
+  // TÜRKÇE: Sipariş alarmını bilerek güçlü yaptık. Tarayıcı 1.0 üstüne izin vermez.
+  // Daha yüksek hissettirmek için aynı anda 3 farklı ton çalıyoruz.
+  const masterGain = context.createGain();
+  const filter = context.createBiquadFilter();
+
+  filter.type = "highpass";
+  filter.frequency.setValueAtTime(360, start);
+  masterGain.gain.setValueAtTime(0.0001, start);
+  masterGain.gain.exponentialRampToValueAtTime(Math.min(1, volume), start + 0.012);
+  masterGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+  filter.connect(masterGain);
+  masterGain.connect(context.destination);
+
+  [
+    ["square", frequency],
+    ["sawtooth", frequency * 1.34],
+    ["triangle", frequency * 0.52]
+  ].forEach(([type, freq]) => {
+    const oscillator = context.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(freq, start);
+    oscillator.connect(filter);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.06);
+  });
+}
+
+function playAdminAlarmBurst() {
+  const context = getAdminOrderAudioContext();
+  if (!context) return;
+  context.resume?.().then(() => {
+    const now = context.currentTime + 0.02;
+    // TÜRKÇE: Sipariş alınana/kansel edilene kadar daha sert ve yüksek alarm çalar.
+    const pattern = [
+      [0.00, 1480], [0.12, 740], [0.24, 1480], [0.36, 740],
+      [0.58, 1680], [0.70, 840], [0.82, 1680], [0.94, 840],
+      [1.18, 1480], [1.30, 740], [1.42, 1480], [1.54, 740]
+    ];
+    pattern.forEach(([offset, frequency]) => {
+      playAdminAlarmTone(context, now + offset, frequency, 0.20, 1);
+    });
+    if (navigator.vibrate) navigator.vibrate([260, 80, 260, 80, 420]);
+  }).catch(() => {
+    setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
+  });
+}
+
+function playNewOrderAlarm() {
+  playAdminAlarmBurst();
+}
+
+function parseAdminTimeParts(value = "") {
+  const match = String(value).match(/(\d{1,2})[:.](\d{2})/);
+  if (!match) return null;
+  return { hour: Number(match[1]), minute: Number(match[2]) };
+}
+
+function adminDateWithTime(parts, base = new Date()) {
+  const date = new Date(base);
+  date.setHours(parts.hour, parts.minute, 0, 0);
+  return date;
+}
+
+function isAdminOrderProcessable(order = {}) {
+  if (!order.processableAfter) return true;
+  const processableAt = new Date(order.processableAfter).getTime();
+  return !Number.isFinite(processableAt) || Date.now() >= processableAt;
+}
+
+function hasActionablePendingOrders() {
+  return adminOrders.some((order) => (order.status || "pending") === "pending" && isAdminOrderProcessable(order));
+}
+
+function updateAdminOrderAlarmLoop() {
+  const shouldRing = hasActionablePendingOrders();
+  if (!shouldRing) {
+    window.clearInterval(adminAlarmLoopTimer);
+    adminAlarmLoopTimer = null;
+    return;
+  }
+  if (adminAlarmLoopTimer) return;
+  playAdminAlarmBurst();
+  adminAlarmLoopTimer = window.setInterval(() => {
+    if (!hasActionablePendingOrders()) {
+      updateAdminOrderAlarmLoop();
+      return;
+    }
+    playAdminAlarmBurst();
+  }, 1800);
+}
+
+function orderWaitingOpeningText(order = {}) {
+  if (!order.processableAfter || isAdminOrderProcessable(order)) return "";
+  const date = new Date(order.processableAfter);
+  return `Venter til åpning ${date.toLocaleString("nb-NO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}`;
+}
+
 
 function makeId(value) {
   return value
@@ -353,12 +476,41 @@ function normalizeOptionGroups(value) {
   const hasSavedOptionGroups = value && Object.prototype.hasOwnProperty.call(value, "optionGroups");
   const source = hasSavedOptionGroups ? asArray(value.optionGroups) : defaultOptionGroups();
 
-  return source.map((group) => ({
-    ...group,
-    type: group.type === "single" ? "single" : "multiple",
-    required: Boolean(group.required),
-    options: asArray(group.options)
-  }));
+  const safeId = (value, fallback) => String(value || fallback || "valg")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || fallback;
+
+  return source.map((group) => {
+    const seen = new Set();
+    const labels = asArray(group.options).map((option) => String(option.label || "").toLowerCase()).join(" ");
+    const title = String(group.title || "").toLowerCase();
+    const looksLikeStrength = title.includes("styrke") || title.includes("sterk") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
+    const type = group.type === "single" || looksLikeStrength ? "single" : "multiple";
+    const options = asArray(group.options).map((option, index) => {
+      const base = safeId(option.id || option.label, `${group.id || "gruppe"}-${index + 1}`);
+      let id = base;
+      let counter = 2;
+      while (seen.has(id)) {
+        id = `${base}-${counter}`;
+        counter += 1;
+      }
+      seen.add(id);
+      return { ...option, id };
+    });
+    if (type === "single" && options.length) {
+      const defaultIndex = Math.max(0, options.findIndex((option) => option.default));
+      options.forEach((option, index) => { option.default = index === defaultIndex; });
+    }
+    return {
+      ...group,
+      type,
+      required: Boolean(group.required),
+      options
+    };
+  });
 }
 
 
@@ -416,6 +568,41 @@ function createEmptyConfig() {
   });
 }
 
+function saveAdminMenuCache(value) {
+  // TÜRKÇE: Firebase anlık koparsa admin panel tamamen boş kalmasın diye son sağlam menüyü tarayıcıda tutuyoruz.
+  try {
+    if (hasValidConfig(value)) localStorage.setItem(ADMIN_MENU_CACHE_KEY, JSON.stringify(normalizeConfig(value)));
+  } catch (error) {
+    console.warn("Lokal meny cache lagres ikke.", error);
+  }
+}
+
+function loadAdminMenuCache() {
+  try {
+    const raw = localStorage.getItem(ADMIN_MENU_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return hasValidConfig(parsed) ? normalizeConfig(parsed) : null;
+  } catch (error) {
+    console.warn("Lokal meny cache kunne ikke leses.", error);
+    return null;
+  }
+}
+
+function renderCachedMenuIfAvailable(message = "Viser siste lokale meny mens Firebase kobler til.") {
+  if (config) return false;
+  const cached = loadAdminMenuCache();
+  if (!cached) return false;
+  config = cached;
+  if (!selectedCategory()) {
+    selectedCategoryIndex = config.sections.length ? 0 : null;
+    selectedProductIndex = null;
+  }
+  renderAll();
+  setStatus(message);
+  return true;
+}
+
 async function loadDefaultConfig() {
   // TÜRKÇE: Eski sistem menu-data.js / DEFAULT_MENU_CONFIG arıyordu.
   // Şimdi aramıyoruz; dosya silinse bile admin paneli çalışır.
@@ -430,6 +617,7 @@ async function loadData() {
   // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
   // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
   config = hasValidConfig(value) ? normalizeConfig(value) : createEmptyConfig();
+  if (hasValidConfig(value)) saveAdminMenuCache(value);
   if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
   if (!selectedCategory()) selectedProductIndex = null;
   else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
@@ -590,7 +778,6 @@ function renderCategories() {
               ${categoryImageMarkup(section)}
               <span class="category-card-copy">
                 <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
-                ${statusBadges(section)}
                 <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
               </span>
               <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
@@ -607,12 +794,6 @@ function renderCategories() {
                   <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
                   <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
                   <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
-                  <section class="availability-controls">
-                    <strong>Status</strong>
-                    <label><input type="checkbox" data-category-field="hidden" ${section.hidden ? "checked" : ""}> Skjul kategori fra kundesiden</label>
-                    <label><input type="checkbox" data-category-field="soldOut" ${section.soldOut ? "checked" : ""}> Vis hele kategorien som utsolgt</label>
-                    <label>Utsolgt til <input type="datetime-local" data-category-field="soldOutUntil" value="${escapeHtml(toDateTimeLocalValue(section.soldOutUntil || ""))}"></label>
-                  </section>
                   <div class="inline-actions">
                     <button type="button" data-category-action="close-edit" data-category-index="${index}">Ferdig</button>
                   </div>
@@ -984,7 +1165,10 @@ function renderOptions() {
 function renderSiteSettings() {
   if (!config) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
-  siteSettingFields.forEach((field) => {
+  document.addEventListener("pointerdown", unlockAdminOrderSound, { once: true });
+document.addEventListener("keydown", unlockAdminOrderSound, { once: true });
+
+siteSettingFields.forEach((field) => {
     const key = field.dataset.settingField;
     if (!key) return;
     field.value = config.siteSettings[key] ?? "";
@@ -1067,10 +1251,155 @@ function formatOrderDate(value) {
   return date.toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" });
 }
 
+
+function formatCountdown(ms) {
+  // TÜRKÇE: Admin sipariş panelinde geri sayım için güvenli format.
+  const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function safeText(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  return text || fallback;
+}
+
+function safeMoney(value) {
+  const number = Number(value);
+  return (Number.isFinite(number) ? number : 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
+}
+
+function safeDateIso(value) {
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
+function normalizeAdminOrderRecord(id, value) {
+  // TÜRKÇE: Firebase içinde boş/null/text gibi bozuk sipariş kaydı varsa paneli kırmasın.
+  if (!value || typeof value !== "object") return null;
+  const customer = value.customer && typeof value.customer === "object" ? value.customer : {};
+  const pickup = value.pickup && typeof value.pickup === "object" ? value.pickup : {};
+  const items = asArray(value.items).map((line, index) => {
+    const safeLine = line && typeof line === "object" ? line : { name: String(line || `Produkt ${index + 1}`) };
+    const quantity = Math.max(1, Number(safeLine.quantity || 1) || 1);
+    const total = Number(safeLine.total);
+    return {
+      ...safeLine,
+      quantity,
+      name: safeText(safeLine.name, `Produkt ${index + 1}`),
+      extras: asArray(safeLine.extras),
+      total: Number.isFinite(total) ? total : 0
+    };
+  });
+  const calculatedTotal = items.reduce((sum, line) => sum + Number(line.total || 0), 0);
+  const total = Number(value.total);
+  return {
+    ...value,
+    id: String(id || value.id || `order-${Date.now()}`),
+    status: ["pending", "accepted", "cancelled"].includes(value.status) ? value.status : "pending",
+    createdAt: safeDateIso(value.createdAt),
+    updatedAt: value.updatedAt || value.createdAt || new Date().toISOString(),
+    acceptedAt: value.acceptedAt || "",
+    cancelledAt: value.cancelledAt || "",
+    readyMinutes: sanitizeReadyMinutes(value.readyMinutes || 30),
+    customer: {
+      ...customer,
+      firstName: safeText(customer.firstName, "Ukjent"),
+      lastName: safeText(customer.lastName, "kunde"),
+      phone: safeText(customer.phone, "Telefon mangler")
+    },
+    pickup: {
+      ...pickup,
+      mode: pickup.mode === "later" ? "later" : "asap",
+      time: pickup.time || ""
+    },
+    items,
+    subtotal: Number.isFinite(Number(value.subtotal)) ? Number(value.subtotal) : calculatedTotal,
+    total: Number.isFinite(total) ? total : calculatedTotal
+  };
+}
+
 function sanitizeReadyMinutes(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 30;
   return Math.min(99, Math.max(1, Math.round(number)));
+}
+
+function formatAdminClock(value) {
+  if (!value) return "--:--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:--";
+  return date.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatAdminShortDateTime(value) {
+  if (!value) return "Ukjent tid";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function getAdminAcceptDeadline(order = {}) {
+  const base = new Date(order.processableAfter || order.createdAt || Date.now()).getTime();
+  return new Date(base + 3 * 60 * 1000);
+}
+
+function getAdminReadyAt(order = {}, readyMinutes = order.readyMinutes || 30) {
+  const base = new Date(order.acceptedAt || order.updatedAt || order.createdAt || Date.now()).getTime();
+  return new Date(base + sanitizeReadyMinutes(readyMinutes) * 60000);
+}
+
+function getOrderPickupSummary(order = {}) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting ${formatAdminShortDateTime(order.pickup.time)}`;
+  }
+  return "Snarest mulig";
+}
+
+function getOrderHeaderTime(order = {}) {
+  const status = order.status || "pending";
+  if (status === "pending") {
+    if (!isAdminOrderProcessable(order)) return `Åpner ${formatAdminClock(order.processableAfter)}`;
+    const remaining = getAdminAcceptDeadline(order).getTime() - Date.now();
+    return remaining > 0 ? `${formatCountdown(remaining)} igjen` : "Svar nå";
+  }
+  if (status === "accepted") {
+    if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
+    const readyAt = getAdminReadyAt(order);
+    const remaining = readyAt.getTime() - Date.now();
+    return remaining > 0 ? `${Math.max(1, Math.ceil(remaining / 60000))} min` : "Klar";
+  }
+  return "Avsluttet";
+}
+
+function getOrderHeaderCaption(order = {}) {
+  const status = order.status || "pending";
+  if (status === "pending") {
+    return !isAdminOrderProcessable(order)
+      ? `Venter til åpning · ${formatAdminShortDateTime(order.processableAfter)}`
+      : getOrderPickupSummary(order);
+  }
+  if (status === "accepted") {
+    if (order.pickup?.mode === "later" && order.pickup?.time) return `Hentes kl. ${formatAdminClock(order.pickup.time)}`;
+    return `Klar ca. kl. ${formatAdminClock(getAdminReadyAt(order))}`;
+  }
+  return `Kansellert ${formatAdminShortDateTime(order.cancelledAt || order.updatedAt || order.createdAt)}`;
+}
+
+function getOrderItemsPreview(order = {}) {
+  const lines = asArray(order.items);
+  if (!lines.length) return "Ingen varer";
+  const preview = lines.slice(0, 2).map((line) => `${Number(line.quantity || 1)}× ${line.name || "Produkt"}`).join(" · ");
+  return lines.length > 2 ? `${preview} +${lines.length - 2} til` : preview;
+}
+
+function getOrderDetailTimeText(order = {}, readyMinutes = order.readyMinutes || 30) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting kl. ${formatAdminClock(order.pickup.time)} (${formatAdminShortDateTime(order.pickup.time)})`;
+  }
+  return `Klar kl. ${formatAdminClock(getAdminReadyAt(order, readyMinutes))}`;
 }
 
 function orderLineHtml(line = {}) {
@@ -1087,61 +1416,395 @@ function orderLineHtml(line = {}) {
   `;
 }
 
-function renderOrdersAdmin() {
-  if (!ordersAdminList) return;
-  const visibleOrders = adminOrders.slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  if (ordersCount) ordersCount.textContent = `${visibleOrders.length} bestillinger`;
-  if (!visibleOrders.length) {
-    ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
+
+function normalizeReceiptText(value = "") {
+  // TÜRKÇE: Termal yazıcılar her zaman norsk karakterleri doğru basmayabilir. Bu yüzden güvenli harflere çeviriyoruz.
+  return String(value)
+    .replace(/Æ/g, "AE").replace(/Ø/g, "O").replace(/Å/g, "A")
+    .replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
+    .replace(/É/g, "E").replace(/é/g, "e")
+    .replace(/Ü/g, "U").replace(/ü/g, "u")
+    .replace(/Ö/g, "O").replace(/ö/g, "o")
+    .replace(/İ/g, "I").replace(/ı/g, "i")
+    .replace(/Ş/g, "S").replace(/ş/g, "s")
+    .replace(/Ğ/g, "G").replace(/ğ/g, "g")
+    .replace(/Ç/g, "C").replace(/ç/g, "c");
+}
+
+function receiptLine(left = "", right = "", width = 42) {
+  const l = normalizeReceiptText(left).slice(0, width);
+  const r = normalizeReceiptText(right).slice(0, width);
+  const space = Math.max(1, width - l.length - r.length);
+  return l + " ".repeat(space) + r + "\n";
+}
+
+function receiptWrap(text = "", prefix = "", width = 42) {
+  const value = normalizeReceiptText(text).trim();
+  if (!value) return "";
+  const max = Math.max(10, width - prefix.length);
+  const words = value.split(/\s+/);
+  let out = "";
+  let line = "";
+  words.forEach((word) => {
+    if ((line + " " + word).trim().length > max) {
+      out += prefix + line.trim() + "\n";
+      line = word;
+    } else {
+      line = `${line} ${word}`.trim();
+    }
+  });
+  if (line) out += prefix + line.trim() + "\n";
+  return out;
+}
+
+function buildEscposReceipt(order = {}) {
+  const ESC = "\x1B";
+  const GS = "\x1D";
+  const width = 42;
+  const customer = order.customer || {};
+  const lines = asArray(order.items);
+  const pickupText = order.pickup?.mode === "later" && order.pickup?.time
+    ? new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : `Snarest ${sanitizeReadyMinutes(order.readyMinutes || 30)} min`;
+  const createdText = order.createdAt
+    ? new Date(order.createdAt).toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase()
+    : new Date().toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase();
+
+  let text = "";
+  text += ESC + "@";
+  text += ESC + "a" + "\x01";
+
+  const header = (line) => GS + "!" + "\x11" + GS + "B" + "\x01" + normalizeReceiptText(line) + "\n" + GS + "B" + "\x00" + GS + "!" + "\x00";
+  text += header(" HENTING ");
+  text += header(` ${pickupText.toUpperCase()} `);
+  text += header(` ${createdText} `);
+
+  text += ESC + "a" + "\x00";
+  text += "\n";
+
+  text += ESC + "E" + "\x01";
+  text += "Enheter\n";
+  text += ESC + "E" + "\x00";
+
+  lines.forEach((line) => {
+    const quantity = Number(line.quantity || 1);
+    text += receiptLine(`${quantity}x ${line.name || "Produkt"}`, "[ ]", width);
+    if (line.sizeLabel) text += receiptWrap(`Storrelse: ${line.sizeLabel}`, "   ", width);
+    asArray(line.extras).forEach((extra) => {
+      text += receiptWrap(`+ ${extra}`, "   ", width);
+    });
+    if (line.note) text += receiptWrap(`Notat: ${line.note}`, "   ", width);
+    text += "\n";
+  });
+
+  text += "-".repeat(width) + "\n";
+  text += ESC + "E" + "\x01";
+  text += "Bestillingsdetaljer\n";
+  text += ESC + "E" + "\x00";
+  text += receiptLine("Ordrenr:", String(order.id || "").slice(-7).toUpperCase(), width);
+  text += receiptLine("Fornavn:", customer.firstName || "", width);
+  text += receiptLine("Etternavn:", customer.lastName || "", width);
+  text += receiptLine("Telefon:", customer.phone || "", width);
+  text += receiptLine("Henting:", pickupText, width);
+  text += receiptLine("Status:", orderStatusLabel(order.status || "pending"), width);
+  text += "-".repeat(width) + "\n";
+  text += receiptLine("Sluttsum:", Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" }), width);
+  text += "\n\n";
+  text += GS + "V" + "A" + "\x00";
+  return text;
+}
+
+
+function receiptImageDate(value, withSeconds = false) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("nb-NO", {
+    day: "2-digit",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined
+  }).replace(",", "");
+}
+
+function receiptPickupParts(order = {}) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return {
+      left: "Hentetid",
+      right: new Date(order.pickup.time).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
+    };
+  }
+  return {
+    left: "Snarest",
+    right: `${sanitizeReadyMinutes(order.readyMinutes || 30)} minutt`
+  };
+}
+
+function receiptOptionHtml(text = "") {
+  const clean = String(text || "").trim();
+  if (!clean) return "";
+  const parts = clean.split(":");
+  if (parts.length > 1) {
+    const left = parts.shift().trim();
+    const right = parts.join(":").trim();
+    return `<div class="receipt-sub receipt-choice"><span><b><i>${escapeHtml(left)}:</i></b></span><span>${escapeHtml(right)}</span></div>`;
+  }
+  return `<div class="receipt-sub"><i>${escapeHtml(clean)}</i></div>`;
+}
+
+function buildReceiptImageHtml(order = {}) {
+  // TÜRKÇE: Bu HTML sadece yazıcıya gidecek PNG fiş için oluşturulur.
+  // Normal admin ekranında görünmez.
+  const customer = order.customer || {};
+  const lines = asArray(order.items);
+  const pickup = receiptPickupParts(order);
+  const confirmedAt = order.acceptedAt || order.updatedAt || new Date().toISOString();
+  const totalText = Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
+  const orderNumber = String(order.id || "").slice(-10).toUpperCase();
+  const noteText = order.note || order.customerNote || "";
+
+  const itemRows = lines.map((line) => {
+    const extras = asArray(line.extras);
+    return `
+      <div class="receipt-item">
+        <div class="receipt-item-line">
+          <b>${Number(line.quantity || 1)}x ${escapeHtml(line.name || "Produkt")}</b>
+          <span class="receipt-check">□</span>
+        </div>
+        ${line.sizeLabel ? `<div class="receipt-sub"><i>Størrelse: <b>${escapeHtml(line.sizeLabel)}</b></i></div>` : ""}
+        ${extras.map(receiptOptionHtml).join("")}
+        ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="receipt-image">
+      <div class="receipt-block receipt-big">Henting</div>
+      <div class="receipt-gap"></div>
+
+      <div class="receipt-block receipt-medium receipt-flex">
+        <span>${escapeHtml(pickup.left)}</span>
+        <span>${escapeHtml(pickup.right)}</span>
+      </div>
+
+      <div class="receipt-gap"></div>
+
+      <div class="receipt-block receipt-medium">${escapeHtml(receiptImageDate(confirmedAt))}</div>
+
+      <div class="receipt-content">
+        <b>Enheter</b>
+        ${itemRows || `<p>Ingen produkter.</p>`}
+
+        ${noteText ? `<div class="receipt-note">❗ ${escapeHtml(noteText)}</div>` : ""}
+
+        <div class="receipt-details-title">Bestillingsdetaljer:</div>
+        <div class="receipt-detail-row"><span>Nummer:</span><b>${escapeHtml(orderNumber)}</b></div>
+        <div class="receipt-detail-row"><span>Bekreftet kl.:</span><b>${escapeHtml(receiptImageDate(confirmedAt))}</b></div>
+        <div class="receipt-detail-row"><span>Fornavn:</span><b>${escapeHtml(customer.firstName || "")}</b></div>
+        <div class="receipt-detail-row"><span>Etternavn:</span><b>${escapeHtml(customer.lastName || "")}</b></div>
+        <div class="receipt-detail-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
+        <div class="receipt-detail-row receipt-total"><span>Sluttsum:</span><b>${escapeHtml(totalText)}</b></div>
+      </div>
+    </div>
+  `;
+}
+
+async function printOrderReceipt(orderId, overrides = {}) {
+  const original = adminOrders.find((item) => item.id === orderId);
+  if (!original) {
+    alert("Fant ikke bestillingen.");
     return;
   }
 
-  ordersAdminList.innerHTML = visibleOrders.map((order) => {
+  const order = { ...original, ...overrides };
+  const html2canvasFn = window.html2canvas;
+  if (!html2canvasFn) {
+    alert("html2canvas er ikke lastet. Sjekk internett/CDN eller prøv å laste siden på nytt.");
+    return;
+  }
+
+  const holder = document.createElement("div");
+  holder.className = "receipt-render-holder";
+  holder.innerHTML = buildReceiptImageHtml(order);
+  document.body.appendChild(holder);
+
+  try {
+    const receipt = holder.querySelector(".receipt-image");
+    const canvas = await html2canvasFn(receipt, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true
+    });
+    const imageBase64 = canvas.toDataURL("image/png");
+
+    await fetch("http://127.0.0.1:5050/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageBase64 })
+    });
+
+    setStatus("Kvittering sendt til skriver.");
+    showToast("Kvittering sendt til skriver.");
+  } catch (error) {
+    console.error(error);
+    alert("Kunne ikke sende bildekvittering til skriver. Sjekk at printer-serveren kjører på http://127.0.0.1:5050/.");
+  } finally {
+    holder.remove();
+  }
+}
+
+function renderAdminOrderCard(order = {}) {
+  try {
     const status = order.status || "pending";
     const customerName = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
     const readyMinutes = sanitizeReadyMinutes(order.readyMinutes || 30);
     const lines = asArray(order.items);
     const canCancel = status !== "cancelled";
+    const waitingOpening = orderWaitingOpeningText(order);
+    const isExpanded = expandedAdminOrderId === order.id;
+    const totalText = safeMoney(order.total);
+    const itemCount = lines.reduce((sum, line) => sum + Number(line.quantity || 1), 0);
+    const readyPreview = getOrderDetailTimeText(order, readyMinutes);
+    const headerTime = getOrderHeaderTime(order);
+    const headerCaption = waitingOpening || getOrderHeaderCaption(order);
+    const safeId = escapeHtml(String(order.id || ""));
     return `
-      <article class="order-card ${escapeHtml(status)}" data-order-id="${escapeHtml(order.id)}">
-        <div class="order-card-top">
-          <div>
-            <h2>${escapeHtml(customerName)}</h2>
-            <small>${escapeHtml(order.customer?.phone || "Telefon mangler")} · ${formatOrderDate(order.createdAt)}</small>
+      <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "open" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${safeId}">
+        <button class="order-stack-summary" type="button" data-toggle-order="${safeId}" aria-expanded="${isExpanded ? "true" : "false"}">
+          <div class="order-stack-main">
+            <div class="order-stack-headline">
+              <h2>${escapeHtml(customerName)}</h2>
+              <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+            </div>
+            <div class="order-stack-meta-line">
+              <span>${escapeHtml(order.customer?.phone || "Telefon mangler")}</span>
+              <span>•</span>
+              <span>${formatOrderDate(order.createdAt)}</span>
+            </div>
+            <div class="order-stack-preview">
+              <span>${escapeHtml(getOrderItemsPreview(order))}</span>
+              <span>•</span>
+              <strong>${itemCount} vare${itemCount === 1 ? "" : "r"}</strong>
+              <span>•</span>
+              <strong>${totalText}</strong>
+            </div>
           </div>
-          <span class="order-badge ${escapeHtml(status)}">${orderStatusLabel(status)}</span>
-        </div>
+          <div class="order-stack-side">
+            <strong class="order-stack-time">${escapeHtml(headerTime)}</strong>
+            <small>${escapeHtml(headerCaption)}</small>
+          </div>
+          <span class="order-stack-chevron" aria-hidden="true">⌄</span>
+        </button>
 
-        <div class="order-meta-grid">
-          <div class="order-meta-box"><strong>Henting</strong><span>${order.pickup?.mode === "later" ? formatOrderDate(order.pickup?.time) : "Snarest mulig"}</span></div>
-          <div class="order-meta-box"><strong>Total</strong><span>${Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</span></div>
-          <div class="order-meta-box"><strong>Ordrenr.</strong><span>${escapeHtml(order.id.slice(-7).toUpperCase())}</span></div>
-        </div>
+        ${isExpanded ? `
+          <div class="order-stack-details">
+            <div class="order-detail-grid modern">
+              <div class="order-detail-card">
+                <span>Kunde</span>
+                <strong>${escapeHtml(customerName)}</strong>
+                <small>${escapeHtml(order.customer?.phone || "Telefon mangler")}</small>
+              </div>
+              <div class="order-detail-card">
+                <span>Henting</span>
+                <strong>${escapeHtml(order.pickup?.mode === "later" ? "Senere henting" : "Snarest mulig")}</strong>
+                <small>${escapeHtml(getOrderPickupSummary(order))}</small>
+              </div>
+              <div class="order-detail-card">
+                <span>Ordre</span>
+                <strong>${escapeHtml(String(order.id || "").slice(-7).toUpperCase())}</strong>
+                <small>${totalText}</small>
+              </div>
+            </div>
 
-        <div class="order-receipt">
-          ${lines.map(orderLineHtml).join("")}
-          <div class="order-total-row"><span>Sluttsum</span><strong>${Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong></div>
-        </div>
+            <div class="order-receipt modern">
+              ${lines.length ? lines.map(orderLineHtml).join("") : `<p class="order-muted">Ingen varer registrert på denne bestillingen.</p>`}
+              <div class="order-total-row"><span>Sluttsum</span><strong>${totalText}</strong></div>
+            </div>
 
-        <div class="order-card-actions">
-          <label class="order-minutes-control">Klar om
-            <input type="number" min="1" max="99" value="${readyMinutes}" data-ready-minutes="${escapeHtml(order.id)}" inputmode="numeric">
-            min
-          </label>
-          ${status !== "accepted" ? `<button class="accept-order-button" type="button" data-accept-order="${escapeHtml(order.id)}">${status === "cancelled" ? "Godkjenn på nytt" : "Godkjenn"}</button>` : `<span class="order-muted-inline">Godkjent ${formatOrderDate(order.acceptedAt)} · Klar om ${readyMinutes} min</span>`}
-          ${canCancel ? `<button class="cancel-order-button" type="button" data-cancel-order="${escapeHtml(order.id)}">Avvis / kanseller</button>` : `<span class="order-muted-inline">Kansellert ${formatOrderDate(order.cancelledAt)}</span>`}
-        </div>
+            <div class="order-actions-panel">
+              <div class="order-minutes-modern-wrap">
+                <label class="order-soft-label" for="ready-${safeId}">Tilberedningstid</label>
+                <div class="order-minutes-modern">
+                  <button class="order-adjust-button" type="button" data-adjust-ready="${safeId}" data-delta="-5">−</button>
+                  <input class="order-soft-input" id="ready-${safeId}" type="number" min="1" max="99" value="${readyMinutes}" data-ready-minutes="${safeId}" inputmode="numeric">
+                  <span class="order-input-suffix">min</span>
+                  <button class="order-adjust-button" type="button" data-adjust-ready="${safeId}" data-delta="5">+</button>
+                </div>
+                <small class="order-ready-preview" data-ready-preview="${safeId}">${escapeHtml(readyPreview)}</small>
+              </div>
+
+              <div class="order-action-row">
+                ${status !== "accepted"
+                  ? `<button class="accept-order-button modern" type="button" data-accept-order="${safeId}">Godkjenn bestilling</button>`
+                  : `<div class="order-inline-note success">Godkjent ${formatOrderDate(order.acceptedAt)} · ${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</div>`}
+                ${canCancel
+                  ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${safeId}">Avvis / kanseller</button>`
+                  : `<div class="order-inline-note danger">Kansellert ${formatOrderDate(order.cancelledAt)}</div>`}
+                <button class="print-order-button modern" type="button" data-print-order="${safeId}">Skriv ut kvittering</button>
+              </div>
+            </div>
+          </div>
+        ` : ""}
       </article>
     `;
-  }).join("");
+  } catch (error) {
+    console.error("Kunne ikke vise bestilling:", order, error);
+    return `<article class="order-stack-card cancelled"><div class="order-stack-summary"><div><h2>Bestilling med feil format</h2><p class="order-muted">Ordre ${escapeHtml(String(order?.id || "ukjent"))}. Slett eller korriger denne testbestillingen i Firebase.</p></div></div></article>`;
+  }
 }
+
+function renderOrdersAdmin() {
+  if (!ordersAdminList) return;
+  const visibleOrders = adminOrders
+    .map((order) => normalizeAdminOrderRecord(order?.id, order))
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  adminOrders = visibleOrders;
+  if (ordersCount) ordersCount.textContent = `${visibleOrders.length} bestillinger`;
+  if (!visibleOrders.length) {
+    expandedAdminOrderId = null;
+    ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
+    return;
+  }
+
+  if (!visibleOrders.some((order) => order.id === expandedAdminOrderId)) {
+    expandedAdminOrderId = null;
+  }
+
+  ordersAdminList.innerHTML = visibleOrders.map(renderAdminOrderCard).join("");
+}
+
 function listenForOrders() {
   if (!ordersRef) return;
   ordersRef.on("value", (snapshot) => {
-    const value = snapshot.val() || {};
-    adminOrders = Object.entries(value).map(([id, order]) => ({ id, ...(order || {}) }));
+    const raw = snapshot.val();
+    const entries = raw && typeof raw === "object" ? Object.entries(raw) : [];
+    const nextOrders = entries
+      .map(([id, order]) => normalizeAdminOrderRecord(String(id), order))
+      .filter(Boolean);
+    const nextIds = new Set(nextOrders.map((order) => order.id));
+    const hasNewPendingOrder = ordersReady && nextOrders.some((order) => {
+      return !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
+    });
+
+    adminOrders = nextOrders;
+    knownOrderIdsForSound = nextIds;
     ordersReady = true;
-    renderOrdersAdmin();
+    try {
+      renderOrdersAdmin();
+    } catch (error) {
+      console.error("Bestillinger kunne ikke vises:", error);
+      if (ordersAdminList) {
+        ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene finnes i Firebase, men én testbestilling har feil format. Panelet stopper ikke lenger; sjekk Console for detaljer.</p>`;
+      }
+    }
+    updateAdminOrderAlarmLoop();
+
+    if (hasNewPendingOrder) {
+      setStatus("Ny bestilling mottatt.");
+      showToast("Ny bestilling mottatt.");
+    }
   }, (error) => {
     console.error(error);
     if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Kunne ikke lese bestillinger.</p>`;
@@ -1150,23 +1813,40 @@ function listenForOrders() {
 
 async function acceptOrder(orderId, minutes) {
   const readyMinutes = sanitizeReadyMinutes(minutes);
+  const acceptedAt = new Date().toISOString();
+  expandedAdminOrderId = null; // Onaydan sonra kart kapanır; tekrar tıklayınca detay açılır.
   await ordersRef.child(orderId).update({
     status: "accepted",
     readyMinutes,
-    acceptedAt: new Date().toISOString()
+    acceptedAt,
+    updatedAt: acceptedAt
   });
   setStatus(`Bestilling godkjent. Klar om ${readyMinutes} min.`);
+  window.setTimeout(updateAdminOrderAlarmLoop, 250);
+
+  // TÜRKÇE: Siparişi onaylayınca otomatik fiş basar.
+  // İstersen sipariş kartındaki "Skriv ut kvittering" butonuyla tekrar manuel basabilirsin.
+  await printOrderReceipt(orderId, {
+    status: "accepted",
+    readyMinutes,
+    acceptedAt,
+    updatedAt: acceptedAt
+  });
 }
+
 
 async function cancelOrder(orderId) {
   if (!confirm("Avvise / kansellere denne bestillingen?")) return;
   await ordersRef.child(orderId).update({
     status: "cancelled",
     cancelledAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     acceptedAt: null
   });
   setStatus("Bestilling avvist / kansellert.");
+  window.setTimeout(updateAdminOrderAlarmLoop, 250);
 }
+
 
 function renderAll() {
   renderSiteSettings();
@@ -1304,7 +1984,8 @@ function assignGroupToSelectedProduct(groupId, area = "common") {
   }
 
   renderAssignedGroups();
-  setStatus(`Valggruppe lagt til (${areaLabel(area)}). Klikk Oppdater produkt for å lagre.`);
+  scheduleSave();
+  setStatus(`Valggruppe lagt til (${areaLabel(area)}). Lagres automatisk.`);
 }
 
 function moveAssignedGroupToArea(groupId, fromArea, toArea) {
@@ -1382,6 +2063,43 @@ function addOptionGroup() {
   editingGroupIndex = config.optionGroups.length - 1;
   renderGroupManager();
   writeLiveConfig("Valggruppe lagt til i Firebase.");
+}
+
+function normalizeSingleGroupDefaults(group) {
+  if (!group || group.type !== "single") return;
+  group.options = asArray(group.options);
+  if (!group.options.length) return;
+  const defaultIndex = group.options.findIndex((option) => option.default);
+  const chosenIndex = defaultIndex >= 0 ? defaultIndex : 0;
+  group.options.forEach((option, index) => {
+    option.default = index === chosenIndex;
+  });
+}
+
+function addStrengthGroup() {
+  if (!config) config = createEmptyConfig();
+  config.optionGroups = asArray(config.optionGroups);
+  const baseId = "velg-styrke";
+  let id = baseId;
+  let counter = 2;
+  while (config.optionGroups.some((group) => group.id === id)) {
+    id = `${baseId}-${counter}`;
+    counter += 1;
+  }
+  config.optionGroups.push({
+    id,
+    title: "Velg styrke",
+    type: "single",
+    required: true,
+    options: [
+      { id: `${id}-mild`, label: "MILD", price: 0, default: true },
+      { id: `${id}-medium`, label: "MEDIUM", price: 0, default: false },
+      { id: `${id}-sterk`, label: "STERK", price: 0, default: false }
+    ]
+  });
+  editingGroupIndex = config.optionGroups.length - 1;
+  renderGroupManager();
+  writeLiveConfig("Styrkegruppe lagt til. Bruk + Legg til for å koble den til kebabproduktet.");
 }
 
 categoryButtons.addEventListener("click", (event) => {
@@ -1558,6 +2276,8 @@ if (optionGroupsAdmin) {
         group.title = event.target.value;
       } else if (groupField === "type") {
         group.type = event.target.value;
+        normalizeSingleGroupDefaults(group);
+        renderGroupManager();
       } else if (groupField === "required") {
         group.required = event.target.value === "true";
       }
@@ -1572,7 +2292,16 @@ if (optionGroupsAdmin) {
     const option = config.optionGroups[groupIndex]?.options?.[optionIndex];
     if (!option) return;
     if (optionField === "price") option.price = getNumber(event.target.value) || 0;
-    else if (optionField === "default") option.default = event.target.value === "true";
+    else if (optionField === "default") {
+      const group = config.optionGroups[groupIndex];
+      const checked = event.target.value === "true";
+      if (group?.type === "single" && checked) {
+        group.options.forEach((item, index) => { item.default = index === optionIndex; });
+        renderGroupManager();
+      } else {
+        option.default = checked;
+      }
+    }
     else {
       option[optionField] = event.target.value;
       if (!option.id || option.id.startsWith("valg-")) option.id = `${config.optionGroups[groupIndex].id}-${makeId(event.target.value)}`;
@@ -1631,7 +2360,8 @@ if (optionGroupsAdmin) {
       const group = config.optionGroups[Number(addOptionIndex)];
       if (!group) return;
       group.options = asArray(group.options);
-      group.options.push({ id: `valg-${Date.now()}`, label: "Nytt valg", price: 0 });
+      group.options.push({ id: `valg-${Date.now()}`, label: "Nytt valg", price: 0, default: group.type === "single" && group.options.length === 0 });
+      normalizeSingleGroupDefaults(group);
       editingGroupIndex = Number(addOptionIndex);
       renderGroupManager();
       writeLiveConfig("Valg lagt til i gruppen.");
@@ -1642,6 +2372,7 @@ if (optionGroupsAdmin) {
     if (removeOption) {
       const [groupIndex, optionIndex] = removeOption.split(":").map(Number);
       config.optionGroups[groupIndex].options.splice(optionIndex, 1);
+      normalizeSingleGroupDefaults(config.optionGroups[groupIndex]);
       editingGroupIndex = groupIndex;
       renderGroupManager();
       writeLiveConfig("Valg slettet fra gruppen.");
@@ -1697,6 +2428,9 @@ if (productButtons) {
   });
 }
 
+document.addEventListener("pointerdown", unlockAdminOrderSound, { once: true });
+document.addEventListener("keydown", unlockAdminOrderSound, { once: true });
+
 siteSettingFields.forEach((field) => {
   field.addEventListener("input", () => updateSiteSettingFromField(field));
   field.addEventListener("change", () => updateSiteSettingFromField(field));
@@ -1721,6 +2455,33 @@ closeSettingsButtons.forEach((button) => {
 if (refreshOrdersButton) refreshOrdersButton.addEventListener("click", renderOrdersAdmin);
 if (ordersAdminList) {
   ordersAdminList.addEventListener("click", async (event) => {
+    const toggleButton = event.target.closest("[data-toggle-order]");
+    if (toggleButton) {
+      const orderId = toggleButton.dataset.toggleOrder;
+      expandedAdminOrderId = expandedAdminOrderId === orderId ? null : orderId;
+      renderOrdersAdmin();
+      return;
+    }
+
+    const adjustButton = event.target.closest("[data-adjust-ready]");
+    if (adjustButton) {
+      const orderId = adjustButton.dataset.adjustReady;
+      const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(orderId)}"]`);
+      if (input) {
+        const delta = Number(adjustButton.dataset.delta || 0);
+        input.value = sanitizeReadyMinutes(Number(input.value || 0) + delta);
+        const order = adminOrders.find((item) => item.id === orderId) || {};
+        const preview = ordersAdminList.querySelector(`[data-ready-preview="${CSS.escape(orderId)}"]`);
+        if (preview) preview.textContent = getOrderDetailTimeText(order, input.value || 30);
+      }
+      return;
+    }
+
+    const printId = event.target.dataset.printOrder;
+    if (printId) {
+      await printOrderReceipt(printId);
+      return;
+    }
     const acceptId = event.target.dataset.acceptOrder;
     if (acceptId) {
       const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(acceptId)}"]`);
@@ -1733,7 +2494,11 @@ if (ordersAdminList) {
 
   ordersAdminList.addEventListener("input", (event) => {
     if (!event.target.dataset.readyMinutes) return;
-    event.target.value = String(sanitizeReadyMinutes(event.target.value || 1)).padStart(1, "0");
+    event.target.value = String(sanitizeReadyMinutes(event.target.value || 1));
+    const orderId = event.target.dataset.readyMinutes;
+    const order = adminOrders.find((item) => item.id === orderId) || {};
+    const preview = ordersAdminList.querySelector(`[data-ready-preview="${CSS.escape(orderId)}"]`);
+    if (preview) preview.textContent = getOrderDetailTimeText(order, event.target.value || 30);
   });
 }
 
@@ -1873,16 +2638,21 @@ productForm.addEventListener("submit", (event) => {
   writeLiveConfig("Produkt lagret i Firebase.");
 });
 
-document.querySelector("#addCategory").addEventListener("click", addCategory);
-const addCategoryBottomButton = document.querySelector("#addCategoryBottom");
-if (addCategoryBottomButton) addCategoryBottomButton.addEventListener("click", addCategory);
-const deleteCategoryButton = document.querySelector("#deleteCategory");
-if (deleteCategoryButton) deleteCategoryButton.addEventListener("click", deleteCategory);
-document.querySelector("#addProduct").addEventListener("click", addProduct);
+// TÜRKÇE: Bazı butonları tasarımdan kaldırırsak JS burada patlamasın diye güvenli bağlama kullanıyoruz.
+function bindClick(selector, handler) {
+  const element = document.querySelector(selector);
+  if (element) element.addEventListener("click", handler);
+}
+
+bindClick("#addCategory", addCategory);
+bindClick("#addCategoryBottom", addCategory);
+bindClick("#deleteCategory", deleteCategory);
+bindClick("#addProduct", addProduct);
 if (addOptionGroupButton) addOptionGroupButton.addEventListener("click", addOptionGroup);
-document.querySelector("#deleteProduct").addEventListener("click", deleteProduct);
-document.querySelector("#reloadData").addEventListener("click", loadData);
-document.querySelector("#saveData").addEventListener("click", saveData);
+if (addStrengthGroupButton) addStrengthGroupButton.addEventListener("click", addStrengthGroup);
+bindClick("#deleteProduct", deleteProduct);
+bindClick("#reloadData", loadData);
+bindClick("#saveData", saveData);
 
 const extrasPanel = document.querySelector(".extras-panel");
 if (extrasPanel) {
@@ -1914,6 +2684,7 @@ if (extrasPanel) {
 
 function startRealtimeSync() {
   setStatus("Kobler til Firebase...");
+  renderCachedMenuIfAvailable();
   menuRef.on(
     "value",
     async (snapshot) => {
@@ -1931,6 +2702,7 @@ function startRealtimeSync() {
         return;
       }
 
+      saveAdminMenuCache(value);
       config = normalizeConfig(value);
       if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
       if (!selectedCategory()) selectedProductIndex = null;
@@ -1940,8 +2712,9 @@ function startRealtimeSync() {
       setStatus("Koblet til Firebase. Endringer lagres automatisk.");
     },
     (error) => {
-      setStatus("Kunne ikke koble til Firebase.");
       console.error(error);
+      const hadCache = renderCachedMenuIfAvailable("Kunne ikke koble til Firebase. Viser siste lokale meny.");
+      if (!hadCache) setStatus("Kunne ikke koble til Firebase. Sjekk nett/Firebase-regler.");
     }
   );
 }

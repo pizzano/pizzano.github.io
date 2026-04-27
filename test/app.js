@@ -164,6 +164,13 @@ const storageKey = "kol-grill-cart";
 const recentOrdersKey = "kol-grill-recent-orders-v1";
 const customerStorageKey = "kol-grill-customer-v1";
 const activeOrderKey = "kol-grill-active-order-v1";
+const orderReadStateKey = "kol-grill-order-read-state-v1";
+const orderAcceptWindowMs = 3 * 60 * 1000; // TÜRKÇE: Müşteri için sipariş kabul geri sayımı: 3 dakika.
+
+// TÜRKÇE: Müşteri sipariş onayı/kansel durumunu site açıkken sesle duysun diye basit WebAudio kullanıyoruz.
+// Telefon kapalıysa veya tarayıcı tamamen kapalıysa normal web sayfası ses gönderemez; bunun için ayrıca Push Notification gerekir.
+let customerAudioContext = null;
+let customerSoundUnlocked = false;
 
 // TÜRKÇE: Menü verisini tarayıcıda saklıyoruz.
 // Böylece sayfa yenilenince Firebase beklenirken boş/yanıp sönen ekran olmaz.
@@ -263,6 +270,7 @@ let addingToCart = false;
 let cartWiggleTimer = null;
 let cartReminderTimer = null;
 let currentOrderPollTimer = null;
+let currentOrderCountdownTimer = null;
 let recentOrdersPollTimer = null;
 let expandedProfileOrderId = "";
 
@@ -280,6 +288,60 @@ function loadCart() {
 function saveCart() {
   localStorage.setItem(storageKey, JSON.stringify(cart));
 }
+
+
+function getCustomerAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!customerAudioContext) customerAudioContext = new AudioContextClass();
+  return customerAudioContext;
+}
+
+function unlockCustomerSound() {
+  const context = getCustomerAudioContext();
+  if (!context) return;
+  context.resume?.().then(() => {
+    customerSoundUnlocked = true;
+  }).catch(() => {});
+}
+
+function playTone(context, start, frequency, duration, volume = 0.08) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function playCustomerStatusSound(status = "pending") {
+  const context = getCustomerAudioContext();
+  if (!context) return;
+  context.resume?.().catch(() => {});
+  const now = context.currentTime + 0.04;
+
+  // TÜRKÇE: Müşteri için duyulabilir ama kısa bildirim sesi.
+  // Godkjent olduğunda yaklaşık 2 saniyelik pozitif mesaj sesi verir.
+  if (status === "accepted") {
+    [0, 0.22, 0.44, 0.86, 1.08, 1.30, 1.62, 1.84].forEach((offset, index) => {
+      playTone(context, now + offset, index % 2 ? 980 : 740, 0.16, 0.13);
+    });
+    return;
+  }
+
+  if (status === "cancelled") {
+    [0, 0.32, 0.64].forEach((offset) => playTone(context, now + offset, 280, 0.24, 0.12));
+    return;
+  }
+
+  playTone(context, now, 520, 0.14, 0.07);
+}
+
 
 
 // ============================================================
@@ -326,14 +388,23 @@ function getActiveOrderId() {
 function getRecentOrders() {
   try {
     const parsed = JSON.parse(localStorage.getItem(recentOrdersKey) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeCustomerOrder).filter(Boolean) : [];
   } catch {
     return [];
   }
 }
 
+function orderSortTime(order = {}) {
+  return new Date(order.updatedAt || order.acceptedAt || order.cancelledAt || order.createdAt || 0).getTime() || 0;
+}
+
 function saveRecentOrders(orders) {
-  localStorage.setItem(recentOrdersKey, JSON.stringify(orders.slice(0, 2)));
+  const sorted = asArray(orders)
+    .map(normalizeCustomerOrder)
+    .filter(Boolean)
+    .slice()
+    .sort((a, b) => orderSortTime(b) - orderSortTime(a));
+  localStorage.setItem(recentOrdersKey, JSON.stringify(sorted.slice(0, 2)));
 }
 
 function getOrderReadState() {
@@ -369,14 +440,17 @@ function markOrderAsRead(orderId) {
 }
 
 function rememberRecentOrder(order) {
+  const normalizedOrder = normalizeCustomerOrder(order);
+  if (!normalizedOrder) return;
   const previousList = getRecentOrders();
-  const previousOrder = previousList.find((item) => item.id === order.id);
+  const previousOrder = previousList.find((item) => item.id === normalizedOrder.id);
   const previousStatus = previousOrder?.status || "pending";
-  const nextStatus = order.status || "pending";
+  const nextStatus = normalizedOrder.status || "pending";
   const statusChanged = previousOrder && previousStatus !== nextStatus;
-  const list = previousList.filter((item) => item.id !== order.id);
-  list.unshift(order);
+  const list = previousList.filter((item) => item.id !== normalizedOrder.id);
+  list.unshift(normalizedOrder);
   saveRecentOrders(list);
+  order = normalizedOrder;
 
   if (nextStatus === "pending") setActiveOrderId(order.id);
   if (["accepted", "cancelled"].includes(nextStatus)) clearActiveOrderId(order.id);
@@ -384,6 +458,7 @@ function rememberRecentOrder(order) {
   // Status endret etter at kunden allerede har sett bestillingen.
   // Da åpner vi et rent status-vindu og markerer profilen som ulest.
   if (statusChanged && ["accepted", "cancelled"].includes(nextStatus)) {
+    playCustomerStatusSound(nextStatus);
     renderOrderLiveModal(order, true);
   }
 
@@ -404,12 +479,32 @@ function orderStatusTitle(status = "pending") {
   return "Venter på godkjenning";
 }
 
+function getCustomerReadyAt(order = {}) {
+  const base = new Date(order.acceptedAt || order.updatedAt || order.createdAt || Date.now()).getTime();
+  const minutes = Math.max(1, Number(order.readyMinutes || 30) || 30);
+  return new Date(base + minutes * 60000);
+}
+
+function orderReadyMinutesText(order = {}) {
+  const minutes = Math.max(1, Number(order.readyMinutes || 30) || 30);
+  return `${minutes} min`;
+}
+
 function orderShortMessage(order = {}) {
   const status = order.status || "pending";
-  if (status === "accepted") return `Klar om cirka ${order.readyMinutes || 30} min.`;
+  if (status === "accepted") {
+    if (order.pickup?.mode === "later" && order.pickup?.time) {
+      return `Bestillingen er godkjent. Henting kl. ${formatClock(order.pickup.time)}.`;
+    }
+    return `Bestillingen er godkjent. Klar om ${orderReadyMinutesText(order)} · ca. kl. ${formatClock(getCustomerReadyAt(order))}.`;
+  }
   if (status === "cancelled") return "Restauranten har kansellert bestillingen.";
-  return "Bestillingen er sendt. Vent på bekreftelse.";
+  if (isOrderWaitingForOpening(order)) {
+    return `Restauranten er stengt nå. Bestillingen behandles når vi åpner kl. ${formatClock(order.processableAfter)}.`;
+  }
+  return "Bestillingen er sendt. Vent på bekreftelse fra restauranten.";
 }
+
 
 
 function parseTimeParts(value = "") {
@@ -440,12 +535,57 @@ function dateWithTime(parts, base = new Date()) {
   return date;
 }
 
+function getOrderingWindow(base = new Date()) {
+  // TÜRKÇE: Açılış/kapanış geceyi geçebilir. Örn: 23:00–10:00.
+  // Böyle olunca kapanış ertesi güne alınır; sabah 02:00 hâlâ açık sayılır.
+  const times = getOrderingTimes();
+  const openToday = dateWithTime(times.open, base);
+  const closeToday = dateWithTime(times.close, base);
+  const crossesMidnight = closeToday <= openToday;
+
+  if (!crossesMidnight) return { openAt: openToday, closeAt: closeToday, crossesMidnight };
+
+  const closeTomorrow = new Date(closeToday.getTime() + 24 * 60 * 60 * 1000);
+  if (base >= openToday) return { openAt: openToday, closeAt: closeTomorrow, crossesMidnight };
+
+  const openYesterday = new Date(openToday.getTime() - 24 * 60 * 60 * 1000);
+  if (base <= closeToday) return { openAt: openYesterday, closeAt: closeToday, crossesMidnight };
+
+  return { openAt: openToday, closeAt: closeTomorrow, crossesMidnight };
+}
+
 function isOrderingOpenNow() {
   const now = new Date();
-  const times = getOrderingTimes();
-  const openAt = dateWithTime(times.open, now);
-  const closeAt = dateWithTime(times.close, now);
+  const { openAt, closeAt } = getOrderingWindow(now);
   return now >= openAt && now <= closeAt;
+}
+
+function nextOrderingOpenDate(base = new Date()) {
+  const { openAt, closeAt } = getOrderingWindow(base);
+  if (base >= openAt && base <= closeAt) return base;
+  return openAt;
+}
+
+function formatClock(date) {
+  return new Date(date).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+}
+
+function isOrderWaitingForOpening(order = {}) {
+  if (!order.processableAfter) return false;
+  const processableAt = new Date(order.processableAfter).getTime();
+  return Number.isFinite(processableAt) && Date.now() < processableAt;
+}
+
+function getOrderAcceptDeadline(order = {}) {
+  const base = new Date(order.processableAfter || order.createdAt || Date.now()).getTime();
+  return new Date(base + orderAcceptWindowMs);
+}
+
+function formatCountdown(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function toDatetimeLocalValue(date) {
@@ -459,7 +599,7 @@ function updatePickupControls() {
   const now = new Date();
   const times = getOrderingTimes();
   const minTime = new Date(now.getTime() + times.minPreorderMinutes * 60000);
-  const closeAt = dateWithTime(times.close, now);
+  const closeAt = getOrderingWindow(now).closeAt;
   pickupTimeInput.hidden = mode !== "later";
   pickupTimeInput.min = toDatetimeLocalValue(minTime);
   pickupTimeInput.max = toDatetimeLocalValue(closeAt);
@@ -470,7 +610,7 @@ function updatePickupControls() {
   const closeLabel = `${String(times.close.hour).padStart(2, "0")}:${String(times.close.minute).padStart(2, "0")}`;
   pickupHelp.textContent = isOrderingOpenNow()
     ? `Bestilling er åpen ${openLabel}–${closeLabel}. Senere henting kan velges minst ${times.minPreorderMinutes} min frem i tid.`
-    : `Bestilling er stengt nå. Bestilling kan sendes mellom ${openLabel}–${closeLabel}.`;
+    : `Restauranten er stengt nå. Du kan sende bestillingen; den behandles når vi åpner kl. ${openLabel}.`;
 }
 
 function getCustomerInfo() {
@@ -486,14 +626,13 @@ function validateCheckout() {
   if (!cart.length) return "Handlekurven er tom.";
   if (!customer.firstName || !customer.lastName) return "Skriv inn navn og etternavn.";
   if (!/^\+?[0-9 ]{8,15}$/.test(customer.phone)) return "Skriv inn riktig telefonnummer.";
-  if (!isOrderingOpenNow()) return "Bestilling er stengt akkurat nå.";
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
   if (mode === "later") {
     const chosen = new Date(pickupTimeInput.value);
     const times = getOrderingTimes();
     const now = new Date();
     const minTime = new Date(now.getTime() + times.minPreorderMinutes * 60000);
-    const closeAt = dateWithTime(times.close, now);
+    const closeAt = getOrderingWindow(now).closeAt;
     if (Number.isNaN(chosen.getTime()) || chosen < minTime || chosen > closeAt) {
       return `Velg hentetid mellom minst ${times.minPreorderMinutes} min fra nå og stengetid.`;
     }
@@ -507,32 +646,40 @@ function currentCartTotal() {
 
 function buildOrderPayload() {
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  const now = new Date();
+  const openNow = isOrderingOpenNow();
+  const processableAfter = openNow ? "" : nextOrderingOpenDate(now).toISOString();
   return {
     status: "pending",
-    createdAt: new Date().toISOString(),
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    processableAfter,
+    outsideOpeningHours: !openNow,
     customer: getCustomerInfo(),
     pickup: {
       mode,
       time: mode === "later" ? new Date(pickupTimeInput.value).toISOString() : ""
     },
-    items: cart.map((line) => ({
-      productId: line.productId,
-      name: line.name,
-      quantity: line.quantity,
-      size: line.size,
-      sizeLabel: line.sizeLabel,
-      extras: line.extras || [],
-      extraIds: line.extraIds || [],
-      note: line.note || "",
-      total: line.total
+    items: cart.map((line, index) => ({
+      productId: safeText(line.productId, `produkt-${index + 1}`),
+      name: safeText(line.name, `Produkt ${index + 1}`),
+      quantity: Math.max(1, safeNumber(line.quantity, 1)),
+      size: safeText(line.size, ""),
+      sizeLabel: safeText(line.sizeLabel, ""),
+      extras: asArray(line.extras),
+      extraIds: asArray(line.extraIds),
+      note: safeText(line.note, ""),
+      total: safeNumber(line.total, 0)
     })),
-    subtotal: currentCartTotal(),
-    total: currentCartTotal(),
+    subtotal: safeNumber(currentCartTotal(), 0),
+    total: safeNumber(currentCartTotal(), 0),
     source: "web"
   };
 }
 
+
 function orderLinesHtml(order = {}) {
+  order = normalizeCustomerOrder(order) || { items: [], total: 0 };
   const lines = Array.isArray(order.items) ? order.items : [];
   if (!lines.length) return "";
   return `
@@ -559,29 +706,42 @@ function orderPickupText(order = {}) {
   if (order.pickup?.mode === "later" && order.pickup?.time) {
     return `Henting: ${new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`;
   }
+  if ((order.status || "pending") === "accepted") {
+    return `Klar om ${orderReadyMinutesText(order)} · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
+  }
   return "Henting: Snarest mulig";
 }
 
 function orderStatusHtml(order = {}, options = {}) {
+  order = normalizeCustomerOrder(order) || { status: "pending", items: [], total: 0 };
   const status = order.status || "pending";
   const orderId = String(order.id || "").slice(-7).toUpperCase();
-  const total = formatPrice(order.total || 0);
+  const waitingOpen = status === "pending" && isOrderWaitingForOpening(order);
+  const deadline = getOrderAcceptDeadline(order);
+  const countdownText = waitingOpen
+    ? `Åpner kl. ${formatClock(order.processableAfter)}`
+    : status === "pending"
+      ? formatCountdown(deadline.getTime() - Date.now())
+      : "";
+  const countdownLabel = waitingOpen ? "Venter til åpning" : "Svarfrist";
+  const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
+  const message = orderShortMessage(order);
+
   return `
-    <div class="order-live-status ${status}">
+    <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
       <div class="order-status-head">
-        <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
-        <small>Ordre ${orderId}</small>
+        <span class="order-status-pill ${status}">${waitingOpen ? "Venter til åpning" : orderStatusText(status)}</span>
+        <small>Ordre ${escapeAttribute(orderId)}</small>
       </div>
-      <h3>${orderStatusTitle(status)}</h3>
-      <p>${orderShortMessage(order)}</p>
-      <div class="order-mini-info">
-        <span>${orderPickupText(order)}</span>
-        <strong>${total}</strong>
-      </div>
+      <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
+      <p>${escapeAttribute(message)}</p>
+      ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>` : ""}
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
+    ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>` : ""}
   `;
 }
+
 
 function renderOrderStatus(order) {
   if (!orderStatusBox) return;
@@ -594,12 +754,44 @@ function renderOrderStatus(order) {
   orderStatusBox.innerHTML = orderStatusHtml(order, { includeReceipt: true });
 }
 
+function refreshOrderCountdowns(order = null) {
+  const targets = document.querySelectorAll("[data-order-countdown]");
+  targets.forEach((target) => {
+    const orderId = target.dataset.orderCountdown;
+    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
+    if (!current || (current.status || "pending") !== "pending") return;
+    if (isOrderWaitingForOpening(current)) {
+      target.textContent = `Åpner kl. ${formatClock(current.processableAfter)}`;
+      return;
+    }
+    const remaining = getOrderAcceptDeadline(current).getTime() - Date.now();
+    target.textContent = remaining <= 0 ? "Tar litt ekstra tid" : formatCountdown(remaining);
+    target.closest(".order-countdown-box")?.classList.toggle("expired", remaining <= 0);
+  });
+}
+
+function startOrderCountdownUi(order = null) {
+  window.clearInterval(currentOrderCountdownTimer);
+  refreshOrderCountdowns(order);
+  if (order && (order.status || "pending") !== "pending") return;
+  currentOrderCountdownTimer = window.setInterval(() => refreshOrderCountdowns(order), 1000);
+}
+
 function renderOrderLiveModal(order, forceOpen = false) {
   if (!orderLiveModal || !orderLiveContent || !order) return;
-  orderLiveContent.innerHTML = orderStatusHtml(order, { includeReceipt: true });
+
+  // TÜRKÇE: Sipariş onay/kansel ekranı açılırken sepet modalını kapatıyoruz.
+  // Böylece müşteride aynı onay ekranı iki defa görünmez.
+  if (typeof closeCartModal === "function" && cartModal && !cartModal.hidden) {
+    closeCartModal();
+  }
+  if (orderStatusBox) orderStatusBox.hidden = true;
+
+  orderLiveContent.innerHTML = orderStatusHtml(order, { includeReceipt: true, showCloseButton: true });
   if (forceOpen || !orderLiveModal.hidden) {
     orderLiveModal.hidden = false;
     document.body.classList.add("order-live-open");
+    startOrderCountdownUi(order);
   }
 }
 
@@ -615,26 +807,28 @@ function renderRecentOrders() {
 }
 
 function profileOrderCardHtml(order = {}) {
+  order = normalizeCustomerOrder(order) || { status: "pending", items: [], total: 0 };
   const status = order.status || "pending";
   const isExpanded = expandedProfileOrderId === order.id;
   const unread = isOrderUnread(order);
   const title = orderStatusTitle(status);
-  const itemsText = (order.items || []).map((line) => `${line.quantity}x ${line.name}`).join(", ") || "Ingen varer";
+  const summaryText = isExpanded
+    ? orderPickupText(order)
+    : `${orderPickupText(order)} · ${formatPrice(order.total || 0)}`;
+
   return `
     <article class="profile-order-card ${status} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
         <span>
-          <strong>${title}</strong>
-          <small>${orderPickupText(order)} · ${formatPrice(order.total || 0)}</small>
+          <strong>${escapeAttribute(title)}</strong>
+          <small>${escapeAttribute(summaryText)}</small>
         </span>
         <span class="profile-order-side">
           <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
           <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
         </span>
       </button>
-      ${isExpanded ? `<div class="profile-order-details">
-        <p class="profile-order-message">${orderShortMessage(order)}</p>
-        <p class="profile-order-items">${escapeAttribute(itemsText)}</p>
+      ${isExpanded ? `<div class="profile-order-details profile-order-details-clean">
         ${orderLinesHtml(order)}
       </div>` : ""}
     </article>
@@ -643,7 +837,7 @@ function profileOrderCardHtml(order = {}) {
 
 function renderProfileOrders() {
   if (!profileOrdersEl) return;
-  const orders = getRecentOrders().slice(0, 2);
+  const orders = getRecentOrders().slice().sort((a, b) => orderSortTime(b) - orderSortTime(a)).slice(0, 2);
   if (!orders.length) {
     profileOrdersEl.innerHTML = `<p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>`;
     return;
@@ -739,7 +933,7 @@ async function submitOrder() {
     renderOrderStatus({ status: "cancelled", id: "", total: currentCartTotal(), items: [], readyMinutes: 0 });
     if (orderStatusBox) orderStatusBox.innerHTML = `<h3>Kan ikke sende bestilling</h3><p>${error}</p>`;
     if (orderLiveContent && orderLiveModal) {
-      orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Kan ikke sende bestilling</h3><p>${error}</p></div>`;
+      orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Kan ikke sende bestilling</h3><p>${error}</p></div><button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>`;
       orderLiveModal.hidden = false;
       document.body.classList.add("order-live-open");
     }
@@ -775,7 +969,7 @@ async function submitOrder() {
     }
   } finally {
     checkoutButton.textContent = "Send bestilling";
-    checkoutButton.disabled = cart.length === 0 || !isOrderingOpenNow();
+    checkoutButton.disabled = cart.length === 0;
   }
 }
 
@@ -821,6 +1015,54 @@ function asArray(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   if (value && typeof value === "object") return Object.values(value).filter(Boolean);
   return [];
+}
+
+
+function safeText(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  return text || fallback;
+}
+
+function safeNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function normalizeCustomerOrder(order = {}) {
+  // TÜRKÇE: localStorage veya Firebase’den eksik/bozuk sipariş gelirse müşteri ekranı kırılmasın.
+  if (!order || typeof order !== "object") return null;
+  const customer = order.customer && typeof order.customer === "object" ? order.customer : {};
+  const pickup = order.pickup && typeof order.pickup === "object" ? order.pickup : {};
+  const items = asArray(order.items).map((line, index) => {
+    const safeLine = line && typeof line === "object" ? line : { name: String(line || `Produkt ${index + 1}`) };
+    const quantity = Math.max(1, safeNumber(safeLine.quantity, 1));
+    return {
+      ...safeLine,
+      quantity,
+      name: safeText(safeLine.name, `Produkt ${index + 1}`),
+      extras: asArray(safeLine.extras),
+      total: safeNumber(safeLine.total, 0)
+    };
+  });
+  const calculatedTotal = items.reduce((sum, line) => sum + safeNumber(line.total, 0), 0);
+  return {
+    ...order,
+    id: safeText(order.id, `order-${Date.now()}`),
+    status: ["pending", "accepted", "cancelled"].includes(order.status) ? order.status : "pending",
+    createdAt: order.createdAt || new Date().toISOString(),
+    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
+    readyMinutes: Math.max(1, Math.min(99, Math.round(safeNumber(order.readyMinutes, 30)))),
+    customer,
+    pickup: {
+      ...pickup,
+      mode: pickup.mode === "later" ? "later" : "asap",
+      time: pickup.time || ""
+    },
+    items,
+    subtotal: safeNumber(order.subtotal, calculatedTotal),
+    total: safeNumber(order.total, calculatedTotal)
+  };
 }
 
 
@@ -893,12 +1135,41 @@ function normalizeOptionGroups(value) {
   const hasSavedOptionGroups = value && Object.prototype.hasOwnProperty.call(value, "optionGroups");
   const source = hasSavedOptionGroups ? asArray(value.optionGroups) : defaultOptionGroups();
 
-  return source.map((group) => ({
-    ...group,
-    type: group.type === "single" ? "single" : "multiple",
-    required: Boolean(group.required),
-    options: asArray(group.options)
-  }));
+  const safeId = (value, fallback) => String(value || fallback || "valg")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || fallback;
+
+  return source.map((group) => {
+    const seen = new Set();
+    const labels = asArray(group.options).map((option) => String(option.label || "").toLowerCase()).join(" ");
+    const title = String(group.title || "").toLowerCase();
+    const looksLikeStrength = title.includes("styrke") || title.includes("sterk") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
+    const type = group.type === "single" || looksLikeStrength ? "single" : "multiple";
+    const options = asArray(group.options).map((option, index) => {
+      const base = safeId(option.id || option.label, `${group.id || "gruppe"}-${index + 1}`);
+      let id = base;
+      let counter = 2;
+      while (seen.has(id)) {
+        id = `${base}-${counter}`;
+        counter += 1;
+      }
+      seen.add(id);
+      return { ...option, id };
+    });
+    if (type === "single" && options.length) {
+      const defaultIndex = Math.max(0, options.findIndex((option) => option.default));
+      options.forEach((option, index) => { option.default = index === defaultIndex; });
+    }
+    return {
+      ...group,
+      type,
+      required: Boolean(group.required),
+      options
+    };
+  });
 }
 
 
@@ -1246,6 +1517,16 @@ function getProductOptionGroups() {
     .filter((group) => group.options.length);
 }
 
+
+function getEffectiveGroupType(group = {}) {
+  // TÜRKÇE: Eğer grup yanlışlıkla "Flere valg" olarak kayıt edildiyse ama aslında
+  // Mild / Medium / Sterk gibi güç seçimi ise, müşteri tarafında tek seçim yaparız.
+  const labels = asArray(group.options).map((option) => String(option.label || "").toLowerCase()).join(" ");
+  const title = String(group.title || "").toLowerCase();
+  const looksLikeStrength = title.includes("styrke") || title.includes("sterk") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
+  return group.type === "single" || looksLikeStrength ? "single" : "multiple";
+}
+
 function getVisibleExtras() {
   const productGroups = getProductOptionGroups();
   if (productGroups.length) {
@@ -1253,7 +1534,7 @@ function getVisibleExtras() {
       group.options.map((option) => ({
         ...option,
         group: group.title,
-        choiceGroup: group.type === "single" ? group.id : option.choiceGroup,
+        choiceGroup: getEffectiveGroupType(group) === "single" ? group.id : option.choiceGroup,
         required: group.required
       }))
     );
@@ -1284,7 +1565,7 @@ function getCurrentUnitPrice() {
 
 function applyDefaultOptionSelections() {
   getProductOptionGroups()
-    .filter((group) => group.type === "single")
+    .filter((group) => getEffectiveGroupType(group) === "single")
     .forEach((group) => {
       if (group.options.some((option) => selectedExtras.has(option.id))) return;
       const defaultOption = group.options.find((option) => option.default) || group.options[0];
@@ -1329,7 +1610,7 @@ function updateOpeningNotice() {
   statusNotice.hidden = isOpen;
   statusNotice.textContent = isOpen
     ? ""
-    : `Vi har for øyeblikket stengt for bestilling. Bestilling kan sendes mellom ${openLabel} - ${closeLabel}.`;
+    : `Restauranten er stengt nå. Du kan sende bestilling, den behandles når vi åpner kl. ${openLabel}.`;
 }
 
 function disconnectMenuLazyLoader() {
@@ -1446,10 +1727,10 @@ function renderProductOptions() {
             .map((option) => `
               <label class="option-line ${selectedExtras.has(option.id) ? "selected" : ""}">
                 <input
-                  type="${group.type === "single" ? "radio" : "checkbox"}"
-                  name="${group.type === "single" ? group.id : option.id}"
+                  type="${getEffectiveGroupType(group) === "single" ? "radio" : "checkbox"}"
+                  name="${getEffectiveGroupType(group) === "single" ? group.id : option.id}"
                   value="${option.id}"
-                  data-choice-group="${group.type === "single" ? group.id : ""}"
+                  data-choice-group="${getEffectiveGroupType(group) === "single" ? group.id : ""}"
                   ${selectedExtras.has(option.id) ? "checked" : ""}
                 >
                 <span>${option.label}</span>
@@ -1715,7 +1996,7 @@ function renderCart() {
   cartItems.hidden = cart.length === 0;
   cartSummary.hidden = cart.length === 0 && !showOnlyOrderStatus;
   clearCart.hidden = cart.length === 0;
-  checkoutButton.disabled = cart.length === 0 || !isOrderingOpenNow();
+  checkoutButton.disabled = cart.length === 0;
 
   cartItems.innerHTML = cart
     .map(
@@ -1836,6 +2117,14 @@ optionGroups.addEventListener("change", (event) => {
       .map((option) => option.id) || [];
     selectedExtras = new Set([...selectedExtras].filter((id) => !groupOptionIds.includes(id)));
     selectedExtras.add(event.target.value);
+  } else if (event.target.type === "radio" && event.target.name && event.target.value) {
+    // TÜRKÇE: Tek seçimli gruplarda yanlışlıkla birden fazla seçenek seçili kalmasın.
+    const radioGroup = getProductOptionGroups().find((group) => group.options.some((option) => option.id === event.target.value));
+    if (radioGroup) {
+      const ids = radioGroup.options.map((option) => option.id);
+      selectedExtras = new Set([...selectedExtras].filter((id) => !ids.includes(id)));
+      selectedExtras.add(event.target.value);
+    }
   }
   if (event.target.name === "strength") {
     selectedExtras = new Set([...selectedExtras].filter((id) => !id.startsWith("strength-")));
@@ -1883,6 +2172,9 @@ if (profileOrdersEl) {
     renderProfileOrders();
   });
 }
+
+document.addEventListener("pointerdown", unlockCustomerSound, { once: true });
+document.addEventListener("keydown", unlockCustomerSound, { once: true });
 
 if (closeProfile) closeProfile.addEventListener("click", closeProfileModal);
 if (profileModal) {
