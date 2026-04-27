@@ -4,14 +4,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="admin.css?v=20260427-15">
+    <link rel="stylesheet" href="admin.css?v=20260427-23">
   </head>
   <body>
     <header class="admin-topbar">
-      <div>
-        <strong>K&Oslash;L Grill &amp; Pizza</strong>
+      <div class="admin-brand">
+        <strong id="adminRestaurantTitle">K&Oslash;L Grill &amp; Pizza</strong>
         <span>meny admin</span>
       </div>
+
+      <div class="admin-topbar-settings" aria-label="Admin deler">
+        <button class="top-settings-button active" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
+        <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
+        <button class="top-settings-button" type="button" data-top-nav="hours">🎯 Åpning</button>
+        <button class="top-settings-button" type="button" data-top-nav="delivery">📈 Levering</button>
+        <button class="top-settings-button" type="button" data-top-nav="advanced">••• Mer</button>
+      </div>
+
       <nav>
         <a href="index.html">Se meny</a>
         <button id="reloadData" type="button">Synkroniser</button>
@@ -20,18 +29,24 @@
     </header>
 
     <main class="admin-shell">
+
       <section class="admin-status" id="adminStatus">Klar.</section>
 
+      <section class="admin-page active" data-admin-page="menu">
       <section class="admin-grid">
-        <aside class="category-list">
-          <div class="section-heading">
-            <h1>Kategorier</h1>
-            <button id="addCategory" type="button">Ny kategori</button>
+        <aside class="category-list menu-builder-panel">
+          <div class="section-heading category-builder-heading">
+            <div>
+              <h1>Kategorier</h1>
+              <span>Klikk på kategori, åpne produkter og rediger direkte under produktet.</span>
+            </div>
+            <button id="addCategory" type="button">Legg til kategori</button>
           </div>
-          <div id="categoryButtons"></div>
+          <div id="categoryButtons" class="category-card-list"></div>
+          <button id="addCategoryBottom" class="add-category-bottom" type="button">Legg til kategori</button>
         </aside>
 
-        <section class="editor-panel">
+        <section class="editor-panel product-form-stash" aria-hidden="true">
           <div class="section-heading product-heading">
             <h2>Produkter</h2>
             <button id="addProduct" type="button">Nytt produkt</button>
@@ -43,30 +58,6 @@
               <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
               <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
               <label class="technical-field">Id <input id="productId" type="text"></label>
-              <label class="technical-field">Nummer <input id="productNumber" type="number" min="0"></label>
-              <label class="technical-field">Type
-                <select id="productType">
-                  <option value="">Standard</option>
-                  <option value="sauce">Saus</option>
-                  <option value="kebab-pita">Kebab pita</option>
-                  <option value="kebab-wrap">Kebab rull</option>
-                  <option value="kebab-plate">Kebab tallerken</option>
-                </select>
-              </label>
-              <label class="technical-field">Miniatyr
-                <select id="productThumb">
-                  <option value="pepperoni">Pizza pepperoni</option>
-                  <option value="mushroom">Pizza sopp</option>
-                  <option value="spicy">Pizza sterk</option>
-                  <option value="green">Gr&oslash;nn</option>
-                  <option value="mixed">Blandet</option>
-                  <option value="sauce">Saus/drikke</option>
-                  <option value="kebab">Kebab</option>
-                  <option value="wrap">Rull</option>
-                  <option value="plate">Tallerken</option>
-                  <option value="burger">Burger</option>
-                </select>
-              </label>
               <section class="product-prices wide" aria-label="Produktpriser">
                 <div class="mini-heading">
                   <h3>Priser</h3>
@@ -104,6 +95,74 @@
           <div id="optionGroupsAdmin" class="admin-option-groups"></div>
         </aside>
       </section>
+      </section>
+
+      <section class="admin-page admin-settings-workspace" data-admin-page="settings">
+        <section class="inline-settings-card">
+          <header class="inline-settings-header">
+            <div>
+              <h1 id="inlineSettingsTitle">Grunninfo</h1>
+              <span id="inlineSettingsSubtitle">Endringer lagres i Firebase sammen med menyen.</span>
+            </div>
+          </header>
+
+          <div class="settings-page active" data-settings-page="basic">
+            <div class="settings-form-grid">
+              <label>Navnet på restauranten *
+                <input id="settingRestaurantName" data-setting-field="restaurantName" type="text" placeholder="KØL Grill & Pizza">
+              </label>
+              <label>Telefonnummer til restauranten *
+                <input id="settingPhone" data-setting-field="phone" type="text" placeholder="+47 41 14 53 53">
+              </label>
+              <label>E-post
+                <input id="settingEmail" data-setting-field="email" type="email" placeholder="post@restaurant.no">
+              </label>
+              <label>Land
+                <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
+              </label>
+              <label>Tidssone
+                <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
+              </label>
+              <label>Sted *
+                <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
+              </label>
+              <label>Postnr
+                <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
+              </label>
+              <label class="wide">Gatenavn og nummer *
+                <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
+              </label>
+              <label>Åpningstider tekst
+                <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag, Onsdag - Søndag">
+              </label>
+              <label>Tid
+                <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="14:00 - 22:00">
+              </label>
+              <label>Henting
+                <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
+              </label>
+              <label>Betaling
+                <input id="settingPaymentInfo" data-setting-field="paymentInfo" type="text" placeholder="Kort ved henting (henting)">
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-page empty-settings-page" data-settings-page="hours">
+            <h3>Åpning / bestilling</h3>
+            <p>Her kan vi senere legge inn åpningstid per dag, ferie, forhåndsbestilling og stengt/åpent-bryter.</p>
+          </div>
+
+          <div class="settings-page empty-settings-page" data-settings-page="delivery">
+            <h3>Levering / soner</h3>
+            <p>Her kan vi senere legge inn levering, minimumsbeløp, gebyr, soner og hentetid.</p>
+          </div>
+
+          <div class="settings-page empty-settings-page" data-settings-page="advanced">
+            <h3>Andre innstillinger</h3>
+            <p>Her kan vi senere legge inn språk, betalingsmåter, avgifter, kvitteringstekst og integrasjoner.</p>
+          </div>
+        </section>
+      </section>
 
     </main>
 
@@ -112,6 +171,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
     <script src="menu-data.js?v=20260427-7"></script>
-    <script src="admin.js?v=20260427-15"></script>
+    <script src="admin.js?v=20260427-23"></script>
   </body>
 </html>

@@ -19,6 +19,17 @@ const fields = {
 
 const productPriceRows = document.querySelector("#productPriceRows");
 const addProductPriceButton = document.querySelector("#addProductPrice");
+const siteSettingFields = document.querySelectorAll("[data-setting-field]");
+const settingsTabs = document.querySelectorAll("[data-settings-tab]");
+const settingsPages = document.querySelectorAll("[data-settings-page]");
+const settingsModal = document.querySelector("#settingsModal");
+const openSettingsButtons = document.querySelectorAll("[data-open-settings]");
+const closeSettingsButtons = document.querySelectorAll("[data-close-settings]");
+const adminPages = document.querySelectorAll("[data-admin-page]");
+const topNavButtons = document.querySelectorAll("[data-top-nav]");
+const inlineSettingsTitle = document.querySelector("#inlineSettingsTitle");
+const inlineSettingsSubtitle = document.querySelector("#inlineSettingsSubtitle");
+const adminRestaurantTitle = document.querySelector("#adminRestaurantTitle");
 
 const adminStatus = document.querySelector("#adminStatus");
 const adminToast = document.querySelector("#adminToast");
@@ -35,14 +46,15 @@ const optionContainers = {
 };
 
 let config = null;
-let selectedCategoryIndex = 0;
-let selectedProductIndex = 0;
+let selectedCategoryIndex = null;
+let selectedProductIndex = null;
 let editingCategoryIndex = null;
 let editingGroupIndex = null;
 let draggedCategoryIndex = null;
 let draggedProductIndex = null;
 let draggedGroupId = null;
 let draggedGroupIndex = null;
+let pendingScrollToProduct = false;
 let saveTimer = null;
 let firebaseReady = false;
 let toastTimer = null;
@@ -102,6 +114,28 @@ function asArray(value) {
   return [];
 }
 
+
+function defaultSiteSettings() {
+  return {
+    restaurantName: "KØL Grill & Pizza",
+    phone: "+47 41 14 53 53",
+    email: "",
+    country: "Norway",
+    timezone: "Europe/Oslo",
+    city: "SKARNES",
+    postalCode: "2100",
+    streetAddress: "ØGARDSVEGEN 44",
+    openingDays: "Mandag, Onsdag - Søndag",
+    openingTime: "14:00 - 22:00",
+    pickupInfo: "Samme som åpningstider",
+    paymentInfo: "Kort ved henting (henting)"
+  };
+}
+
+function normalizeSiteSettings(value) {
+  return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+}
+
 function defaultOptionGroups() {
   return [
     {
@@ -149,7 +183,8 @@ function normalizeConfig(value) {
     extraOptions: asArray(value?.extraOptions),
     customPizzaToppings: asArray(value?.customPizzaToppings),
     kebabPitaOptions: asArray(value?.kebabPitaOptions),
-    optionGroups: normalizeOptionGroups(value)
+    optionGroups: normalizeOptionGroups(value),
+    siteSettings: normalizeSiteSettings(value?.siteSettings)
   };
 }
 
@@ -182,7 +217,8 @@ async function loadDefaultConfig() {
     extraOptions: Function(`return ${extractArrayFromScript(source, "extraOptions")}`)(),
     customPizzaToppings: Function(`return ${extractArrayFromScript(source, "customPizzaToppings")}`)(),
     kebabPitaOptions: Function(`return ${extractArrayFromScript(source, "kebabPitaOptions")}`)(),
-    optionGroups: defaultOptionGroups()
+    optionGroups: defaultOptionGroups(),
+    siteSettings: defaultSiteSettings()
   };
 }
 
@@ -192,8 +228,9 @@ async function loadData() {
   const value = snapshot.val();
   if (hasValidConfig(value)) {
     config = normalizeConfig(value);
-    selectedCategoryIndex = Math.min(selectedCategoryIndex, Math.max(0, config.sections.length - 1));
-    selectedProductIndex = Math.min(selectedProductIndex, Math.max(0, (selectedCategory()?.items || []).length - 1));
+    if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+    if (!selectedCategory()) selectedProductIndex = null;
+    else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
     renderAll();
     setStatus("Synkronisert med Firebase.");
   }
@@ -222,11 +259,62 @@ function scheduleSave() {
 }
 
 function selectedCategory() {
-  return config.sections[selectedCategoryIndex];
+  if (!config || selectedCategoryIndex === null || selectedCategoryIndex === undefined) return null;
+  return config.sections[selectedCategoryIndex] || null;
 }
 
 function selectedProduct() {
-  return selectedCategory()?.items[selectedProductIndex];
+  const category = selectedCategory();
+  if (!category || selectedProductIndex === null || selectedProductIndex === undefined) return null;
+  return category.items?.[selectedProductIndex] || null;
+}
+
+function scrollSelectedProductToTop() {
+  if (!pendingScrollToProduct || selectedCategoryIndex === null || selectedProductIndex === null) return;
+  pendingScrollToProduct = false;
+  window.requestAnimationFrame(() => {
+    const block = document.querySelector(`[data-product-block="${selectedCategoryIndex}:${selectedProductIndex}"]`);
+    if (!block) return;
+    block.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function mountProductFormInline() {
+  if (!productForm) return;
+  const mount = document.querySelector("#inlineProductEditorMount");
+  if (mount) {
+    mount.appendChild(productForm);
+    productForm.classList.add("inline-product-edit-form");
+    productForm.removeAttribute("aria-hidden");
+    return;
+  }
+
+  const stash = document.querySelector(".product-form-stash .product-admin-grid") || document.querySelector(".product-form-stash");
+  if (stash && productForm.parentElement !== stash) stash.appendChild(productForm);
+  productForm.classList.remove("inline-product-edit-form");
+}
+
+function categoryImageMarkup(section = {}) {
+  const imageUrl = section.imageUrl || "";
+  if (imageUrl) {
+    return `<span class="category-thumb custom-category-thumb"><img src="${escapeHtml(imageUrl)}" alt=""></span>`;
+  }
+  return `<span class="category-thumb ${escapeHtml(section.imageClass || "pizza-strip")}"></span>`;
+}
+
+function productImageMarkup(product = {}) {
+  const imageUrl = product.imageUrl || "";
+  if (imageUrl) {
+    return `<span class="product-mini-thumb custom-product-thumb"><img src="${escapeHtml(imageUrl)}" alt=""></span>`;
+  }
+  return `<span class="product-mini-thumb ${escapeHtml(product.thumb || "plate")}"></span>`;
+}
+
+function productPriceSummary(product = {}) {
+  const prices = getProductPriceList(product).filter((size) => size.price !== undefined);
+  if (!prices.length) return "Ingen pris";
+  if (prices.length === 1) return `${prices[0].price},-`;
+  return prices.map((size) => `${escapeHtml(size.label)} ${size.price},-`).join(" · ");
 }
 
 function renderCategories() {
@@ -234,29 +322,40 @@ function renderCategories() {
     .map((section, index) => {
       const isActive = index === selectedCategoryIndex;
       const isEditing = index === editingCategoryIndex;
-      const products = (section.items || [])
-        .map((product, productIndex) => `
-          <button class="nested-product-choice ${isActive && productIndex === selectedProductIndex ? "active" : ""}" type="button" draggable="true" data-category-product="${index}:${productIndex}" data-product-drag="${productIndex}">
-            ${product.number ? `${product.number}- ` : ""}${product.name || product.id}
-          </button>
-        `)
+      const products = asArray(section.items)
+        .map((product, productIndex) => {
+          const isSelectedProduct = isActive && productIndex === selectedProductIndex;
+          return `
+            <div class="product-inline-block ${isSelectedProduct ? "active" : ""}" data-product-block="${index}:${productIndex}">
+              <button class="nested-product-choice product-card-row ${isSelectedProduct ? "active" : ""}" type="button" draggable="true" data-category-product="${index}:${productIndex}" data-product-drag="${productIndex}">
+                ${productImageMarkup(product)}
+                <span class="product-card-copy">
+                  <strong>${escapeHtml(product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt")}</strong>
+                  <span>${escapeHtml(product.ingredients || "Klikk for å redigere")}</span>
+                </span>
+                <span class="product-card-price">${productPriceSummary(product)}</span>
+              </button>
+              ${isSelectedProduct ? `<div id="inlineProductEditorMount" class="inline-product-editor-mount"></div>` : ""}
+            </div>
+          `;
+        })
         .join("");
       return `
-        <article class="category-card ${isActive ? "active" : ""}" draggable="true" data-category-drag="${index}">
-          <div class="category-choice-row">
-            <button class="category-choice" type="button" data-category="${index}">
-              <span>${section.title || section.id}</span>
-              <span>${isActive ? "⌃" : "⌄"}</span>
+        <article class="category-card menu-category-card ${isActive ? "active" : ""}" draggable="true" data-category-drag="${index}">
+          <div class="category-choice-row menu-category-row">
+            <button class="category-choice menu-category-choice" type="button" data-category="${index}">
+              ${categoryImageMarkup(section)}
+              <span class="category-card-copy">
+                <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
+                <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
+              </span>
+              <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
             <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori valg">⋮</button>
-            ${
-              isActive
-                ? `<div class="category-menu" data-category-menu-panel="${index}" hidden>
-                    <button type="button" data-category-action="edit" data-category-index="${index}">Rediger kategori</button>
-                    <button type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
-                  </div>`
-                : ""
-            }
+            <div class="category-menu" data-category-menu-panel="${index}" hidden>
+              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "Lukk redigering" : "Rediger kategori"}</button>
+              <button type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
+            </div>
           </div>
           ${
             isEditing
@@ -270,12 +369,21 @@ function renderCategories() {
                 </div>`
               : ""
           }
-          ${isActive ? `<div class="nested-products" data-products-for="${index}">${products || "<p>Ingen produkter ennå.</p>"}</div>` : ""}
+          ${
+            isActive
+              ? `<div class="nested-products product-card-list" data-products-for="${index}">
+                  ${products || "<p>Ingen produkter ennå.</p>"}
+                  <button class="inline-add-product" type="button" data-add-product-to-category="${index}">Legg til produkt</button>
+                </div>`
+              : ""
+          }
         </article>
       `;
     })
     .join("");
+  mountProductFormInline();
 }
+
 
 function renderCategoryEditor() {
 }
@@ -388,6 +496,7 @@ function applyPriceCompatibility(productData, prices) {
 
 
 function renderProductEditor() {
+  mountProductFormInline();
   const product = selectedProduct();
   const disabled = !product;
   Object.values(fields).forEach((field) => {
@@ -401,16 +510,16 @@ function renderProductEditor() {
     return;
   }
   fields.productId.value = product.id || "";
-  fields.productNumber.value = product.number || "";
   fields.productName.value = product.name || "";
-  fields.productType.value = product.type || "";
-  fields.productThumb.value = product.thumb || "plate";
+  if (fields.productNumber) fields.productNumber.value = product.number || "";
+  if (fields.productType) fields.productType.value = product.type || "";
+  if (fields.productThumb) fields.productThumb.value = product.thumb || "plate";
   fields.productPrice.value = product.price ?? "";
   fields.productMediumPrice.value = product.mediumPrice ?? "";
   fields.productLargePrice.value = product.largePrice ?? "";
   fields.productDisplayPrice.value = product.displayPrice ?? "";
   fields.productImageUrl.value = product.imageUrl || "";
-  fields.productIngredients.value = product.ingredients || "";
+  fields.productIngredients.value = product.ingredients || ""; 
   renderProductPrices(product);
   renderAssignedGroups();
 }
@@ -541,13 +650,83 @@ function renderOptions() {
   });
 }
 
+
+function renderSiteSettings() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  siteSettingFields.forEach((field) => {
+    const key = field.dataset.settingField;
+    if (!key) return;
+    field.value = config.siteSettings[key] ?? "";
+  });
+  if (adminRestaurantTitle) {
+    adminRestaurantTitle.textContent = config.siteSettings.restaurantName || "Meny admin";
+  }
+}
+
+function updateSiteSettingFromField(field) {
+  if (!config || !field?.dataset?.settingField) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  config.siteSettings[field.dataset.settingField] = field.value.trim();
+  scheduleSave();
+}
+
+function settingsTitleFor(tabKey = "basic") {
+  const labels = {
+    basic: ["Grunninfo", "Restaurantens navn, telefon, adresse og enkel informasjon."],
+    hours: ["Åpning", "Åpningstider og bestilling legges her senere."],
+    delivery: ["Levering", "Leveringssoner, gebyr og hentetid legges her senere."],
+    advanced: ["Mer", "Ekstra innstillinger, betaling, kvittering og integrasjoner legges her senere."]
+  };
+  return labels[tabKey] || labels.basic;
+}
+
+function setSettingsTab(tabKey = "basic") {
+  const [title, subtitle] = settingsTitleFor(tabKey);
+  if (inlineSettingsTitle) inlineSettingsTitle.textContent = title;
+  if (inlineSettingsSubtitle) inlineSettingsSubtitle.textContent = subtitle;
+  settingsTabs.forEach((button) => {
+    button.classList.toggle("active", button.dataset.settingsTab === tabKey);
+  });
+  settingsPages.forEach((page) => {
+    page.classList.toggle("active", page.dataset.settingsPage === tabKey);
+  });
+  openSettingsButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.openSettings === tabKey);
+  });
+  topNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.topNav === tabKey);
+  });
+}
+
+function setAdminView(tabKey = "menu") {
+  const isMenu = tabKey === "menu";
+  adminPages.forEach((page) => {
+    page.classList.toggle("active", page.dataset.adminPage === (isMenu ? "menu" : "settings"));
+  });
+  topNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.topNav === tabKey);
+  });
+  if (!isMenu) setSettingsTab(tabKey);
+}
+
+function openSettingsModal(tabKey = "basic") {
+  setAdminView(tabKey);
+}
+
+function closeSettingsModal() {
+  setAdminView("menu");
+}
+
 function renderAll() {
+  renderSiteSettings();
   renderCategories();
   renderCategoryEditor();
   renderProducts();
   renderProductEditor();
   renderOptions();
   renderGroupManager();
+  scrollSelectedProductToTop();
 }
 
 function updateCategoryFromFields() {
@@ -560,10 +739,10 @@ function updateProductFromFields() {
   const prices = readProductPriceListFromEditor();
   const productData = applyPriceCompatibility({
     id: fields.productId.value.trim() || makeId(fields.productName.value),
-    number: getNumber(fields.productNumber.value),
+    number: currentProduct.number,
     name: fields.productName.value.trim(),
-    type: fields.productType.value,
-    thumb: fields.productThumb.value,
+    type: currentProduct.type,
+    thumb: currentProduct.thumb,
     imageUrl: fields.productImageUrl.value.trim(),
     ingredients: fields.productIngredients.value.trim(),
     optionGroupIds: asArray(currentProduct.optionGroupIds),
@@ -572,7 +751,6 @@ function updateProductFromFields() {
   category.items[selectedProductIndex] = cleanObject(productData);
   renderProducts();
   renderAssignedGroups();
-  scheduleSave();
 }
 
 function addCategory() {
@@ -604,6 +782,11 @@ function deleteCategory() {
 
 function addProduct() {
   const category = selectedCategory();
+  if (!category) {
+    setStatus("Velg en kategori først.");
+    return;
+  }
+  category.items = asArray(category.items);
   category.items.push({
     id: `produkt-${Date.now()}`,
     name: "",
@@ -713,6 +896,14 @@ function addOptionGroup() {
 }
 
 categoryButtons.addEventListener("click", (event) => {
+  const addProductInline = event.target.closest("[data-add-product-to-category]");
+  if (addProductInline) {
+    selectedCategoryIndex = Number(addProductInline.dataset.addProductToCategory);
+    selectedProductIndex = Math.max(0, (selectedCategory()?.items || []).length - 1);
+    addProduct();
+    return;
+  }
+
   const menuToggle = event.target.closest("[data-category-menu]");
   if (menuToggle) {
     const panel = categoryButtons.querySelector(`[data-category-menu-panel="${menuToggle.dataset.categoryMenu}"]`);
@@ -726,7 +917,7 @@ categoryButtons.addEventListener("click", (event) => {
   const menuAction = event.target.closest("[data-category-action]");
   if (menuAction) {
     selectedCategoryIndex = Number(menuAction.dataset.categoryIndex);
-    selectedProductIndex = 0;
+    selectedProductIndex = null;
     if (menuAction.dataset.categoryAction === "delete") deleteCategory();
     else if (menuAction.dataset.categoryAction === "edit") {
       editingCategoryIndex = selectedCategoryIndex;
@@ -741,16 +932,20 @@ categoryButtons.addEventListener("click", (event) => {
   const productPick = event.target.closest("[data-category-product]");
   if (productPick) {
     const [categoryIndex, productIndex] = productPick.dataset.categoryProduct.split(":").map(Number);
+    const wasOpen = selectedCategoryIndex === categoryIndex && selectedProductIndex === productIndex;
     selectedCategoryIndex = categoryIndex;
-    selectedProductIndex = productIndex;
+    selectedProductIndex = wasOpen ? null : productIndex;
+    pendingScrollToProduct = !wasOpen;
     renderAll();
     return;
   }
-  const index = event.target.dataset.category;
-  if (index === undefined) return;
+  const categoryPick = event.target.closest("[data-category]");
+  if (!categoryPick) return;
   closeCategoryMenus();
-  selectedCategoryIndex = Number(index);
-  selectedProductIndex = 0;
+  const categoryIndex = Number(categoryPick.dataset.category);
+  const wasOpen = selectedCategoryIndex === categoryIndex;
+  selectedCategoryIndex = wasOpen ? null : categoryIndex;
+  selectedProductIndex = null;
   renderAll();
 });
 
@@ -1001,6 +1196,31 @@ if (productButtons) {
   });
 }
 
+siteSettingFields.forEach((field) => {
+  field.addEventListener("input", () => updateSiteSettingFromField(field));
+  field.addEventListener("change", () => updateSiteSettingFromField(field));
+});
+
+settingsTabs.forEach((button) => {
+  button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab || "basic"));
+});
+
+topNavButtons.forEach((button) => {
+  button.addEventListener("click", () => setAdminView(button.dataset.topNav || "menu"));
+});
+
+openSettingsButtons.forEach((button) => {
+  button.addEventListener("click", () => setAdminView(button.dataset.openSettings || "basic"));
+});
+
+closeSettingsButtons.forEach((button) => {
+  button.addEventListener("click", closeSettingsModal);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && settingsModal && !settingsModal.hidden) closeSettingsModal();
+});
+
 [
   fields.productId,
   fields.productNumber,
@@ -1014,39 +1234,37 @@ if (productButtons) {
   fields.productImageUrl,
   fields.productIngredients
 ].filter(Boolean).forEach((field) => {
-  field.addEventListener("input", updateProductFromFields);
-  field.addEventListener("change", updateProductFromFields);
+  field.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.target.tagName === "TEXTAREA") return;
+    event.preventDefault();
+    productForm.requestSubmit();
+  });
 });
 
 if (productPriceRows) {
-  productPriceRows.addEventListener("input", updateProductFromFields);
-  productPriceRows.addEventListener("change", updateProductFromFields);
+  productPriceRows.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    productForm.requestSubmit();
+  });
   productPriceRows.addEventListener("click", (event) => {
     const removeIndex = event.target.dataset.removeProductPrice;
     if (removeIndex === undefined) return;
-    const product = selectedProduct();
-    if (!product) return;
     const prices = readProductPriceListFromEditor();
     if (prices.length <= 1) return;
     prices.splice(Number(removeIndex), 1);
-    product.sizes = prices;
-    renderProductPrices(product);
-    updateProductFromFields();
-    writeLiveConfig("Pris fjernet fra produktet.");
+    renderProductPrices({ sizes: prices });
+    setStatus("Pris fjernet. Klikk Oppdater produkt for å lagre.");
   });
 }
 
 if (addProductPriceButton) {
   addProductPriceButton.addEventListener("click", () => {
-    const product = selectedProduct();
-    if (!product) return;
     const prices = readProductPriceListFromEditor();
     const nextLabel = prices.some((size) => size.id === "large") ? "XXL" : "Stor";
     prices.push({ id: normalizeSizeId(nextLabel), label: nextLabel, price: 0 });
-    product.sizes = prices;
-    renderProductPrices(product);
-    updateProductFromFields();
-    writeLiveConfig("Ny pris lagt til produktet.");
+    renderProductPrices({ sizes: prices });
+    setStatus("Ny pris lagt til. Klikk Oppdater produkt for å lagre.");
   });
 }
 
@@ -1057,6 +1275,8 @@ productForm.addEventListener("submit", (event) => {
 });
 
 document.querySelector("#addCategory").addEventListener("click", addCategory);
+const addCategoryBottomButton = document.querySelector("#addCategoryBottom");
+if (addCategoryBottomButton) addCategoryBottomButton.addEventListener("click", addCategory);
 const deleteCategoryButton = document.querySelector("#deleteCategory");
 if (deleteCategoryButton) deleteCategoryButton.addEventListener("click", deleteCategory);
 document.querySelector("#addProduct").addEventListener("click", addProduct);
@@ -1101,8 +1321,8 @@ function startRealtimeSync() {
       const value = snapshot.val();
       if (!hasValidConfig(value)) {
         config = await loadDefaultConfig();
-        selectedCategoryIndex = 0;
-        selectedProductIndex = 0;
+        selectedCategoryIndex = null;
+        selectedProductIndex = null;
         firebaseReady = true;
         renderAll();
         await writeLiveConfig("Firebase var tom. Lokal testmeny er lagt inn.");
@@ -1110,8 +1330,9 @@ function startRealtimeSync() {
       }
 
       config = normalizeConfig(value);
-      selectedCategoryIndex = Math.min(selectedCategoryIndex, Math.max(0, config.sections.length - 1));
-      selectedProductIndex = Math.min(selectedProductIndex, Math.max(0, (selectedCategory()?.items || []).length - 1));
+      if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+      if (!selectedCategory()) selectedProductIndex = null;
+      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
       firebaseReady = true;
       if (!isEditingField()) renderAll();
       setStatus("Koblet til Firebase. Endringer lagres automatisk.");

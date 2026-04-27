@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="styles.css?v=20260427-8">
+    <link rel="stylesheet" href="styles.css?v=20260427-16">
   </head>
   <body>
     <header class="appbar">
-      <strong>K&Oslash;L GRILL &amp; PIZZA</strong>
+      <strong id="siteNameText">K&Oslash;L GRILL &amp; PIZZA</strong>
       <div class="appbar-actions">
         <button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
         <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv">
@@ -24,7 +24,7 @@
     </header>
 
     <main class="menu-shell">
-      <section class="brand-hero" aria-label="KOL Grill Pizza">
+      <section class="brand-hero" id="brandHero" aria-label="KOL Grill Pizza">
         <div class="brand-mark">K<span></span>L</div>
         <div class="brand-text">
           <strong>Grill</strong>
@@ -81,7 +81,7 @@
           <div class="map-road road-main"></div>
           <div class="map-road road-side"></div>
           <div class="map-pin"></div>
-          <span class="map-label">K&Oslash;L Grill &amp;<br>Pizza | Skarnes</span>
+          <span class="map-label" id="mapLabel">K&Oslash;L Grill &amp;<br>Pizza | Skarnes</span>
           <span class="map-brand">Google</span>
         </div>
         <p class="privacy-note">
@@ -91,14 +91,14 @@
           <section class="info-block">
             <h3>&Aring;pningstider</h3>
             <div class="info-line">
-              <span>Mandag, Onsdag - S&oslash;ndag</span>
-              <strong>14:00 - 22:00</strong>
+              <span id="openingDaysText">Mandag, Onsdag - S&oslash;ndag</span>
+              <strong id="openingTimeText">14:00 - 22:00</strong>
             </div>
           </section>
           <section class="info-block">
             <h3>Henting</h3>
             <div class="info-line">
-              <span>Samme som &aring;pningstider</span>
+              <span id="pickupInfoText">Samme som &aring;pningstider</span>
             </div>
           </section>
           <section class="info-block">
@@ -108,19 +108,19 @@
           <section class="info-block">
             <h3>Betalingsmetode</h3>
             <div class="info-line">
-              <span>Kort ved henting (henting)</span>
+              <span id="paymentInfoText">Kort ved henting (henting)</span>
             </div>
           </section>
           <section class="info-block">
             <h3>Adresse</h3>
             <div class="info-line">
-              <span>&Oslash;GARDSVEGEN 44, 2100 SKARNES</span>
+              <span id="addressText">&Oslash;GARDSVEGEN 44, 2100 SKARNES</span>
             </div>
           </section>
           <section class="info-block">
             <h3>Telefonnummer</h3>
             <div class="info-line">
-              <span>+47 41 14 53 53</span>
+              <span id="phoneText">+47 41 14 53 53</span>
             </div>
           </section>
         </div>
@@ -171,6 +171,6 @@
       </section>
     </div>
 
-    <script src="app.js?v=20260427-15"></script>
+    <script src="app.js?v=20260427-16"></script>
   </body>
 </html>

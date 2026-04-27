@@ -157,11 +157,21 @@ let kebabPitaOptions = [
 
 let menuOptionGroups = [];
 let menuUsesExplicitOptionGroups = false;
+let siteSettings = defaultSiteSettings();
 
 const storageKey = "kol-grill-cart";
 const openHour = 14;
 const closeHour = 22;
 const menuSectionsEl = document.querySelector("#menuSections");
+const siteNameText = document.querySelector("#siteNameText");
+const infoTitle = document.querySelector("#infoTitle");
+const mapLabel = document.querySelector("#mapLabel");
+const openingDaysText = document.querySelector("#openingDaysText");
+const openingTimeText = document.querySelector("#openingTimeText");
+const pickupInfoText = document.querySelector("#pickupInfoText");
+const paymentInfoText = document.querySelector("#paymentInfoText");
+const addressText = document.querySelector("#addressText");
+const phoneText = document.querySelector("#phoneText");
 const statusNotice = document.querySelector(".status-notice");
 const cartCount = document.querySelector("#cartCount");
 const cartModal = document.querySelector("#cartModal");
@@ -248,6 +258,28 @@ function asArray(value) {
   return [];
 }
 
+
+function defaultSiteSettings() {
+  return {
+    restaurantName: "KØL Grill & Pizza",
+    phone: "+47 41 14 53 53",
+    email: "",
+    country: "Norway",
+    timezone: "Europe/Oslo",
+    city: "SKARNES",
+    postalCode: "2100",
+    streetAddress: "ØGARDSVEGEN 44",
+    openingDays: "Mandag, Onsdag - Søndag",
+    openingTime: "14:00 - 22:00",
+    pickupInfo: "Samme som åpningstider",
+    paymentInfo: "Kort ved henting (henting)"
+  };
+}
+
+function normalizeSiteSettings(value) {
+  return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+}
+
 function defaultOptionGroups() {
   return [
     {
@@ -297,7 +329,8 @@ function normalizeMenuConfig(config) {
     customPizzaToppings: asArray(config?.customPizzaToppings),
     kebabPitaOptions: asArray(config?.kebabPitaOptions),
     optionGroups: normalizeOptionGroups(config),
-    hasExplicitOptionGroups
+    hasExplicitOptionGroups,
+    siteSettings: normalizeSiteSettings(config?.siteSettings)
   };
 }
 
@@ -311,9 +344,30 @@ function applyMenuConfig(config) {
   kebabPitaOptions = normalized.kebabPitaOptions;
   menuOptionGroups = normalized.optionGroups;
   menuUsesExplicitOptionGroups = normalized.hasExplicitOptionGroups;
+  siteSettings = normalized.siteSettings;
+  applySiteSettings();
   return true;
 }
 
+
+function formatAddress(settings = siteSettings) {
+  return [settings.streetAddress, [settings.postalCode, settings.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+}
+
+function applySiteSettings() {
+  const settings = normalizeSiteSettings(siteSettings);
+  const name = settings.restaurantName || "Restaurant";
+  document.title = name;
+  if (siteNameText) siteNameText.textContent = name.toUpperCase();
+  if (infoTitle) infoTitle.textContent = name;
+  if (mapLabel) mapLabel.innerHTML = `${escapeAttribute(name)}${settings.city ? ` | ${escapeAttribute(settings.city)}` : ""}`;
+  if (openingDaysText) openingDaysText.textContent = settings.openingDays || "";
+  if (openingTimeText) openingTimeText.textContent = settings.openingTime || "";
+  if (pickupInfoText) pickupInfoText.textContent = settings.pickupInfo || "";
+  if (paymentInfoText) paymentInfoText.textContent = settings.paymentInfo || "";
+  if (addressText) addressText.textContent = formatAddress(settings);
+  if (phoneText) phoneText.textContent = settings.phone || "";
+}
 
 async function loadMenuConfig() {
   try {
@@ -1007,6 +1061,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function init() {
+  applySiteSettings();
   await loadMenuConfig();
   renderMenu();
   renderCart();
