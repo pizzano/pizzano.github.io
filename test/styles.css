@@ -2134,3 +2134,151 @@ body.menu-loading #menuSections::before {
 .order-mini-info.single strong {
   display: none !important;
 }
+
+
+/* ===== Profile order tracking: today vs old ===== */
+.profile-order-section {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-order-section + .profile-order-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e4e8;
+}
+
+.profile-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #47515d;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.profile-section-title span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef1f4;
+  color: #58616c;
+  font-size: 12px;
+}
+
+.profile-order-card.today-order {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+}
+
+.profile-order-card.old-order {
+  opacity: .68;
+  background: #fafafa;
+  border-left-color: #b8bec6 !important;
+  box-shadow: none;
+}
+
+.profile-order-card.old-order.unread {
+  opacity: .82;
+}
+
+.profile-order-card.old-order .profile-order-summary {
+  background: #fafafa;
+}
+
+.profile-order-card.old-order .order-status-pill,
+.profile-order-card.old-order .read-pill {
+  filter: grayscale(.35);
+}
+
+.profile-order-main {
+  min-width: 0;
+}
+
+.profile-order-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-age-pill {
+  font-style: normal;
+  display: inline-grid;
+  place-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f0f2f4;
+  color: #68717c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.today-order .profile-age-pill {
+  background: #e9f8ec;
+  color: #247a39;
+}
+
+.profile-dot-separator {
+  color: #a1a8b0;
+}
+
+.profile-order-card.old-order .profile-order-details {
+  background: #f7f7f7;
+}
+
+@media (max-width: 640px) {
+  .profile-order-section + .profile-order-section {
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+
+  .profile-order-summary {
+    align-items: flex-start;
+  }
+
+  .profile-order-side {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+/* ===== Mobil profil ve sipariş ekranı tam ekran ===== */
+@media (max-width: 760px) {
+  .profile-modal,
+  .cart-modal,
+  .order-live-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .profile-modal > *,
+  .cart-modal > *,
+  .order-live-modal > * {
+    max-width: none !important;
+  }
+
+  .profile-modal .modal-content,
+  .cart-modal .modal-content,
+  .order-live-modal .modal-content,
+  .profile-panel,
+  .cart-panel,
+  .order-live-panel {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    overflow: auto !important;
+  }
+}

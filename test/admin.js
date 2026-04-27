@@ -1,3466 +1,2926 @@
-:root {
-  --page: #ececec;
-  --surface: #fff;
-  --line: #d6d6d6;
-  --text: #40464c;
-  --muted: #747b82;
-  --orange: #cf6600;
-  --danger: #d83b32;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--page);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 14px;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  min-height: 38px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--text);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-input,
-select,
-textarea {
-  width: 100%;
-  min-height: 38px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--text);
-  padding: 8px;
-}
-
-textarea {
-  resize: vertical;
-}
-
-.admin-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--line);
-  background: #f7f7f7;
-}
-
-.admin-topbar strong {
-  display: block;
-  font-size: 18px;
-}
-
-.admin-topbar span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.admin-brand {
-  min-width: 0;
-}
-
-.admin-topbar-settings {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow-x: auto;
-  padding: 2px 0;
-}
-
-.top-settings-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 0 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.top-settings-button:hover,
-.top-settings-button.active {
-  border-color: var(--orange);
-  background: #fff8f0;
-  color: #222;
-}
-
-.admin-topbar nav {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.admin-topbar a,
-#saveData,
-#addCategory,
-#addProduct,
-#addOptionGroup,
-.form-actions button:first-child {
-  display: inline-grid;
-  place-items: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid var(--orange);
-  background: var(--orange);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-}
-
-.admin-shell {
-  width: min(1560px, calc(100% - 24px));
-  margin: 12px auto 32px;
-}
-
-.admin-status {
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--muted);
-}
-
-.admin-toast {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 20;
-  padding: 12px 16px;
-  border: 1px solid #2f8f46;
-  background: #3fb857;
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: 330px minmax(0, 1fr) 360px;
-  gap: 16px;
-  align-items: start;
-}
-
-.category-list,
-.editor-panel,
-.extras-panel,
-.group-panel {
-  border: 1px solid var(--line);
-  background: var(--surface);
-  padding: 14px;
-}
-
-.category-list,
-.group-panel {
-  position: sticky;
-  top: 82px;
-  max-height: calc(100vh - 98px);
-  overflow: auto;
-}
-
-.category-editor-area {
-  display: none;
-}
-
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.section-heading h1,
-.section-heading h2,
-.section-heading h3 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.section-heading span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-#categoryButtons,
-.product-list {
-  display: grid;
-  gap: 6px;
-}
-
-.category-card {
-  border: 1px solid var(--line);
-  background: #fff;
-}
-
-.category-card,
-.nested-product-choice {
-  cursor: grab;
-}
-
-.category-card.dragging,
-.nested-product-choice.dragging {
-  opacity: 0.45;
-}
-
-.category-card.active {
-  border-color: var(--orange);
-  background: #fff8f0;
-}
-
-.category-choice-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
-  align-items: stretch;
-}
-
-.category-choice,
-.product-choice {
-  width: 100%;
-  border: 0;
-  text-align: left;
-  padding: 0 10px;
-}
-
-.category-choice,
-.category-menu-button,
-.nested-product-choice {
-  cursor: pointer;
-}
-
-.category-choice {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 46px;
-  background: transparent;
-}
-
-.category-menu-button {
-  min-width: 38px;
-  border: 0;
-  border-left: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: 20px;
-}
-
-.category-menu {
-  position: absolute;
-  top: 42px;
-  right: 6px;
-  z-index: 4;
-  display: grid;
-  min-width: 160px;
-  border: 1px solid var(--line);
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
-}
-
-.category-menu[hidden],
-[hidden] {
-  display: none !important;
-}
-
-.category-menu button {
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-  padding: 0 12px;
-  background: #fff;
-}
-
-.category-menu button:last-child {
-  border-bottom: 0;
-  color: var(--danger);
-}
-
-.product-choice.active {
-  border-color: var(--orange);
-  background: #fff4e8;
-  color: #222;
-}
-
-.nested-products {
-  display: grid;
-  gap: 4px;
-  padding: 0 8px 8px;
-}
-
-.inline-category-editor {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid #ead8c8;
-  background: #fff;
-}
-
-.inline-category-editor label {
-  font-size: 11px;
-}
-
-.inline-category-editor input,
-.inline-category-editor textarea {
-  min-height: 36px;
-  padding: 7px;
-  font-size: 13px;
-}
-
-.inline-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.inline-actions button {
-  min-height: 34px;
-  padding: 0 12px;
-  border-color: var(--orange);
-  background: var(--orange);
-  color: #fff;
-}
-
-.nested-products p {
-  margin: 0;
-  padding: 8px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.nested-product-choice {
-  min-height: 42px;
-  border: 1px solid #ead8c8;
-  background: #fff;
-  color: var(--text);
-  padding: 0 10px;
-  text-align: left;
-  font-weight: 600;
-}
-
-.nested-product-choice.active {
-  border-color: var(--orange);
-  background: #fff1e3;
-  color: #222;
-}
-
-.form-grid,
-.product-form {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.product-editor-card {
-  max-width: none;
-  padding: 18px;
-  border: 1px solid var(--line);
-  background: #fff;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
-}
-
-.main-field input {
-  min-height: 48px;
-  border-color: #54bf63;
-  font-size: 18px;
-}
-
-
-.product-prices {
-  border: 1px solid var(--line);
-  background: #fafafa;
-  padding: 12px;
-}
-
-.product-price-rows {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.product-price-row {
-  display: grid;
-  grid-template-columns: minmax(150px, 1fr) 120px 160px 42px;
-  gap: 8px;
-  align-items: end;
-}
-
-
-
-.price-default-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.price-default-label input {
-  width: 18px;
-  min-height: 18px;
-  accent-color: #3fb857;
-}
-
-.price-default-label span {
-  white-space: nowrap;
-}
-
-.product-price-row button {
-  border-color: #e4bbb8;
-  background: #fff;
-  color: var(--danger);
-  font-size: 18px;
-}
-
-.product-price-row button[disabled] {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.price-add-button {
-  margin-top: 10px;
-  border-color: var(--orange);
-  background: #fff8f0;
-  color: var(--orange);
-}
-
-.price-help {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.product-editor-card textarea {
-  min-height: 96px;
-  font-size: 15px;
-}
-
-.technical-field {
-  display: none;
-}
-
-label {
-  display: grid;
-  gap: 5px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.wide {
-  grid-column: 1 / -1;
-}
-
-.product-heading {
-  margin-top: 22px;
-}
-
-.product-admin-grid {
-  display: block;
-}
-
-.product-list {
-  display: none;
-  max-height: 520px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  padding: 8px;
-  background: #fafafa;
-}
-
-.form-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.assigned-groups {
-  display: grid;
-  gap: 10px;
-  margin-top: 4px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  background: #fafafa;
-}
-
-.mini-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: baseline;
-}
-
-.mini-heading h3 {
-  margin: 0;
-  font-size: 15px;
-}
-
-.mini-heading span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.assigned-group-list,
-.admin-option-groups,
-.group-options {
-  display: grid;
-  gap: 8px;
-}
-
-.assigned-group-list {
-  min-height: 48px;
-  padding: 8px;
-  border: 1px dashed #cfcfcf;
-  background: #fff;
-}
-
-.assigned-group-list.drag-over {
-  border-color: var(--orange);
-  background: #fff3e5;
-}
-
-.assigned-group-chip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 10px;
-  border: 1px solid #dedede;
-  background: #fff;
-  font-weight: 700;
-}
-
-.assigned-group-chip button {
-  min-height: 30px;
-  padding: 0 10px;
-  color: var(--danger);
-}
-
-.option-group-card {
-  position: relative;
-  padding: 0;
-  overflow: visible;
-}
-
-.option-group-card.editing {
-  border-color: var(--orange);
-}
-
-.option-group-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
-  align-items: stretch;
-}
-
-.option-group-title {
-  min-height: 52px;
-  border: 0;
-  background: #fff;
-  text-align: left;
-  padding: 8px 10px;
-  display: grid;
-  gap: 2px;
-  cursor: grab;
-}
-
-.option-group-title strong {
-  overflow: hidden;
-  color: var(--text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.option-group-title span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.group-menu-button {
-  min-width: 38px;
-  border: 0;
-  border-left: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: 20px;
-}
-
-.group-menu {
-  position: absolute;
-  top: 44px;
-  right: 6px;
-  z-index: 8;
-  display: grid;
-  min-width: 170px;
-  border: 1px solid var(--line);
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
-}
-
-.group-menu button {
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-  padding: 0 12px;
-  background: #fff;
-}
-
-.group-menu button:last-child {
-  border-bottom: 0;
-}
-
-.group-menu button[data-group-action="delete"] {
-  color: var(--danger);
-}
-
-.option-group-editor {
-  display: grid;
-  gap: 10px;
-  padding: 10px;
-  border-top: 1px solid #ead8c8;
-  background: #fffaf5;
-}
-
-.option-group-editor .option-group-top {
-  grid-template-columns: 1fr 110px 110px;
-}
-
-.option-group-editor .group-option-row {
-  grid-template-columns: minmax(0, 1fr) 80px 105px 34px;
-}
-
-.group-help {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.group-panel {
-  margin-top: 0;
-}
-
-.option-group-card {
-  border: 1px solid var(--line);
-  background: #fff;
-}
-
-.option-group-card.dragging {
-  opacity: 0.45;
-}
-
-.option-group-top {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) 150px 120px auto;
-  gap: 8px;
-  align-items: end;
-}
-
-.option-group-card h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
-}
-
-.group-options {
-  margin-top: 10px;
-}
-
-.group-option-row {
-  display: grid;
-  grid-template-columns: minmax(160px, 1fr) 100px 110px 38px;
-  gap: 8px;
-  align-items: end;
-}
-
-.group-option-row button,
-.remove-assigned-group {
-  border-color: #e4bbb8;
-  background: #fff;
-  color: var(--danger);
-}
-
-.group-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.group-card-actions button[data-assign-group] {
-  border-color: var(--orange);
-  background: #fff8f0;
-  color: var(--orange);
-}
-
-.danger-light {
-  border-color: #e4bbb8;
-  background: #fff;
-  color: var(--danger);
-}
-
-.extras-panel {
-  display: none;
-  margin-top: 12px;
-}
-
-.extras-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.extras-grid section {
-  border: 1px solid var(--line);
-  background: #fafafa;
-  padding: 12px;
-}
-
-.extras-grid h3 {
-  margin: 0 0 10px;
-}
-
-.option-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 78px 34px;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.option-row button {
-  min-height: 38px;
-  color: var(--danger);
-}
-
-@media (max-width: 1100px) {
-  .admin-grid {
-    grid-template-columns: 300px minmax(0, 1fr);
+const firebaseDatabaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/";
+const firebaseMenuUrl = `${firebaseDatabaseUrl}.json`;
+firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
+const menuRef = firebase.database().ref("/");
+const ordersRef = firebase.database().ref("/orders");
+
+const fields = {
+  productId: document.querySelector("#productId"),
+  productNumber: document.querySelector("#productNumber"),
+  productName: document.querySelector("#productName"),
+  productType: document.querySelector("#productType"),
+  productThumb: document.querySelector("#productThumb"),
+  productPrice: document.querySelector("#productPrice"),
+  productMediumPrice: document.querySelector("#productMediumPrice"),
+  productLargePrice: document.querySelector("#productLargePrice"),
+  productDisplayPrice: document.querySelector("#productDisplayPrice"),
+  productImageUrl: document.querySelector("#productImageUrl"),
+  productIngredients: document.querySelector("#productIngredients")
+};
+
+const productStatusFields = {
+  // Türkçe not: Ürün gizleme / utsolgt kontrolleri. Boş bırakılırsa ürün normal görünür.
+  hidden: document.querySelector("#productHidden"),
+  soldOut: document.querySelector("#productSoldOut"),
+  soldOutUntil: document.querySelector("#productSoldOutUntil")
+};
+
+const productPriceRows = document.querySelector("#productPriceRows");
+const addProductPriceButton = document.querySelector("#addProductPrice");
+const siteSettingFields = document.querySelectorAll("[data-setting-field]");
+const settingsTabs = document.querySelectorAll("[data-settings-tab]");
+const settingsPages = document.querySelectorAll("[data-settings-page]");
+const settingsModal = document.querySelector("#settingsModal");
+const openSettingsButtons = document.querySelectorAll("[data-open-settings]");
+const closeSettingsButtons = document.querySelectorAll("[data-close-settings]");
+const adminPages = document.querySelectorAll("[data-admin-page]");
+const topNavButtons = document.querySelectorAll("[data-top-nav]");
+const inlineSettingsTitle = document.querySelector("#inlineSettingsTitle");
+const inlineSettingsSubtitle = document.querySelector("#inlineSettingsSubtitle");
+const ordersAdminList = document.querySelector("#ordersAdminList");
+const ordersCount = document.querySelector("#ordersCount");
+const refreshOrdersButton = document.querySelector("#refreshOrders");
+const refreshAnalyticsButton = document.querySelector("#refreshAnalytics");
+const analyticsSummary = document.querySelector("#analyticsSummary");
+const dailyRevenueChart = document.querySelector("#dailyRevenueChart");
+const monthlyRevenueChart = document.querySelector("#monthlyRevenueChart");
+const yearlyRevenueChart = document.querySelector("#yearlyRevenueChart");
+const downloadBackupButton = document.querySelector("#downloadBackup");
+const saveLocalBackupButton = document.querySelector("#saveLocalBackup");
+const localBackupList = document.querySelector("#localBackupList");
+const restoreBackupFile = document.querySelector("#restoreBackupFile");
+const restoreBackupPreview = document.querySelector("#restoreBackupPreview");
+const restoreBackupNowButton = document.querySelector("#restoreBackupNow");
+const adminRestaurantTitle = document.querySelector("#adminRestaurantTitle");
+
+const adminStatus = document.querySelector("#adminStatus");
+const adminToast = document.querySelector("#adminToast");
+const categoryButtons = document.querySelector("#categoryButtons");
+const productButtons = document.querySelector("#productButtons");
+const productForm = document.querySelector("#productForm");
+const assignedGroups = document.querySelector("#assignedGroups");
+const optionGroupsAdmin = document.querySelector("#optionGroupsAdmin");
+const addOptionGroupButton = document.querySelector("#addOptionGroup");
+const addStrengthGroupButton = document.querySelector("#addStrengthGroup");
+const optionContainers = {
+  extraOptions: document.querySelector("#pizzaExtras"),
+  customPizzaToppings: document.querySelector("#customPizzaExtras"),
+  kebabPitaOptions: document.querySelector("#kebabExtras")
+};
+
+let config = null;
+let selectedCategoryIndex = null;
+let selectedProductIndex = null;
+let editingCategoryIndex = null;
+let editingGroupIndex = null;
+let draggedCategoryIndex = null;
+let draggedProductIndex = null;
+let draggedGroupId = null;
+let draggedGroupIndex = null;
+let pendingScrollToProduct = false;
+let saveTimer = null;
+let firebaseReady = false;
+let toastTimer = null;
+let adminOrders = [];
+let ordersReady = false;
+let knownOrderIdsForSound = new Set();
+let adminOrderAudioContext = null;
+let adminSoundUnlocked = false;
+let adminAlarmLoopTimer = null;
+let pendingRestoreData = null;
+let adminOrdersUiRefreshTimer = null;
+const DEFAULT_READY_MINUTES = 10;
+const READY_STEP_MINUTES = 2;
+let expandedAdminOrderId = null;
+const pendingReadyMinutesByOrder = {};
+const LOCAL_BACKUP_KEY = "kol_menu_local_backups_v1";
+const DAILY_LOCAL_BACKUP_DATE_KEY = "kol_menu_daily_backup_date_v1";
+const ADMIN_MENU_CACHE_KEY = "kol_admin_last_good_menu_v1";
+
+function setStatus(message) {
+  adminStatus.textContent = message;
+  if (message.toLowerCase().includes("lagret")) showToast(message);
+}
+
+function showToast(message) {
+  adminToast.textContent = message;
+  adminToast.hidden = false;
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    adminToast.hidden = true;
+  }, 1350);
+}
+
+
+function getAdminOrderAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!adminOrderAudioContext) adminOrderAudioContext = new AudioContextClass();
+  return adminOrderAudioContext;
+}
+
+function unlockAdminOrderSound() {
+  const context = getAdminOrderAudioContext();
+  if (!context) return;
+  context.resume?.().then(() => {
+    adminSoundUnlocked = true;
+  }).catch(() => {});
+}
+
+function playAdminAlarmTone(context, start, frequency, duration, volume = 1) {
+  // TÜRKÇE: Sipariş alarmını bilerek güçlü yaptık. Tarayıcı 1.0 üstüne izin vermez.
+  // Daha yüksek hissettirmek için aynı anda 3 farklı ton çalıyoruz.
+  const masterGain = context.createGain();
+  const filter = context.createBiquadFilter();
+
+  filter.type = "highpass";
+  filter.frequency.setValueAtTime(360, start);
+  masterGain.gain.setValueAtTime(0.0001, start);
+  masterGain.gain.exponentialRampToValueAtTime(Math.min(1, volume), start + 0.012);
+  masterGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+  filter.connect(masterGain);
+  masterGain.connect(context.destination);
+
+  [
+    ["square", frequency],
+    ["sawtooth", frequency * 1.34],
+    ["triangle", frequency * 0.52]
+  ].forEach(([type, freq]) => {
+    const oscillator = context.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(freq, start);
+    oscillator.connect(filter);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.06);
+  });
+}
+
+function playAdminAlarmBurst() {
+  const context = getAdminOrderAudioContext();
+  if (!context) return;
+  context.resume?.().then(() => {
+    const now = context.currentTime + 0.02;
+    // TÜRKÇE: Sipariş alınana/kansel edilene kadar daha sert ve yüksek alarm çalar.
+    const pattern = [
+      [0.00, 1480], [0.12, 740], [0.24, 1480], [0.36, 740],
+      [0.58, 1680], [0.70, 840], [0.82, 1680], [0.94, 840],
+      [1.18, 1480], [1.30, 740], [1.42, 1480], [1.54, 740]
+    ];
+    pattern.forEach(([offset, frequency]) => {
+      playAdminAlarmTone(context, now + offset, frequency, 0.20, 1);
+    });
+    if (navigator.vibrate) navigator.vibrate([260, 80, 260, 80, 420]);
+  }).catch(() => {
+    setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
+  });
+}
+
+function playNewOrderAlarm() {
+  playAdminAlarmBurst();
+}
+
+function parseAdminTimeParts(value = "") {
+  const match = String(value).match(/(\d{1,2})[:.](\d{2})/);
+  if (!match) return null;
+  return { hour: Number(match[1]), minute: Number(match[2]) };
+}
+
+function adminDateWithTime(parts, base = new Date()) {
+  const date = new Date(base);
+  date.setHours(parts.hour, parts.minute, 0, 0);
+  return date;
+}
+
+function isAdminOrderProcessable(order = {}) {
+  if (!order.processableAfter) return true;
+  const processableAt = new Date(order.processableAfter).getTime();
+  return !Number.isFinite(processableAt) || Date.now() >= processableAt;
+}
+
+function hasActionablePendingOrders() {
+  return adminOrders.some((order) => (order.status || "pending") === "pending" && isAdminOrderProcessable(order));
+}
+
+function updateAdminOrderAlarmLoop() {
+  const shouldRing = hasActionablePendingOrders();
+  if (!shouldRing) {
+    window.clearInterval(adminAlarmLoopTimer);
+    adminAlarmLoopTimer = null;
+    return;
   }
+  if (adminAlarmLoopTimer) return;
+  playAdminAlarmBurst();
+  adminAlarmLoopTimer = window.setInterval(() => {
+    if (!hasActionablePendingOrders()) {
+      updateAdminOrderAlarmLoop();
+      return;
+    }
+    playAdminAlarmBurst();
+  }, 1800);
+}
 
-  .group-panel {
-    grid-column: 1 / -1;
-    position: static;
-    max-height: none;
+function orderWaitingOpeningText(order = {}) {
+  if (!order.processableAfter || isAdminOrderProcessable(order)) return "";
+  const date = new Date(order.processableAfter);
+  return `Venter til åpning ${date.toLocaleString("nb-NO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}`;
+}
+
+
+function makeId(value) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || `item-${Date.now()}`;
+}
+
+function getNumber(value) {
+  if (value === "") return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function cleanObject(object) {
+  return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== "" && value !== undefined));
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+
+// TÜRKÇE NOT: Yedek sistemi bütün Firebase verisini JSON olarak indirir veya geri yükler.
+// Modül gibi çalışacak şekilde yazıldı: butonlar HTML'de yoksa sistem sessizce devam eder.
+function backupDateStamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
+
+function downloadTextFile(filename, content, mimeType = "application/json") {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function countBackupData(data) {
+  const sections = asArray(data?.sections);
+  const products = sections.reduce((sum, section) => sum + asArray(section.items).length, 0);
+  const groups = asArray(data?.optionGroups).length;
+  return { sections: sections.length, products, groups };
+}
+
+function createBackupPayload(data, reason = "manual") {
+  const safeData = normalizeConfig(data || config || {});
+  return {
+    backupMeta: {
+      app: "KOL_MENU_ADMIN",
+      version: 1,
+      reason,
+      exportedAt: new Date().toISOString(),
+      restaurantName: safeData.siteSettings?.restaurantName || "",
+      firebaseDatabaseUrl
+    },
+    data: safeData
+  };
+}
+
+function extractBackupData(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (payload.data && typeof payload.data === "object") return normalizeConfig(payload.data);
+  if (payload.sections || payload.optionGroups || payload.siteSettings) return normalizeConfig(payload);
+  return null;
+}
+
+function getLocalBackups() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LOCAL_BACKUP_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
   }
 }
 
-@media (max-width: 860px) {
-  .admin-topbar,
-  .admin-topbar nav,
-  .section-heading,
-  .form-actions {
-    align-items: stretch;
-    flex-direction: column;
+function setLocalBackups(backups) {
+  localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(backups.slice(0, 12)));
+}
+
+function addLocalBackup(payload) {
+  const backups = getLocalBackups();
+  backups.unshift(payload);
+  setLocalBackups(backups);
+  renderLocalBackups();
+}
+
+function renderLocalBackups() {
+  if (!localBackupList) return;
+  const backups = getLocalBackups();
+  if (!backups.length) {
+    localBackupList.innerHTML = "<p>Ingen lokal yedek ennå.</p>";
+    return;
   }
-
-  .admin-grid,
-  .extras-grid,
-  .form-grid,
-  .product-form,
-  .product-price-row,
-  .option-group-top,
-  .group-option-row {
-    grid-template-columns: 1fr;
-  }
+  localBackupList.innerHTML = backups
+    .map((backup, index) => {
+      const data = extractBackupData(backup);
+      const counts = countBackupData(data || {});
+      const exportedAt = backup.backupMeta?.exportedAt ? new Date(backup.backupMeta.exportedAt).toLocaleString("no-NO") : "Ukjent dato";
+      const reason = backup.backupMeta?.reason || "backup";
+      return `
+        <div class="local-backup-row">
+          <div>
+            <strong>${escapeHtml(exportedAt)}</strong>
+            <span>${escapeHtml(reason)} · ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper</span>
+          </div>
+          <div class="local-backup-actions">
+            <button type="button" data-download-local-backup="${index}">Last ned</button>
+            <button type="button" data-restore-local-backup="${index}">Gjenopprett</button>
+            <button class="danger-light" type="button" data-delete-local-backup="${index}">Slett</button>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
 }
 
-
-
-.settings-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  padding: 22px;
-}
-
-.settings-modal[hidden] {
-  display: none !important;
-}
-
-.settings-backdrop {
-  position: absolute;
-  inset: 0;
-  min-height: 0;
-  border: 0;
-  background: rgba(0, 0, 0, 0.42);
-}
-
-.settings-dialog {
-  position: relative;
-  z-index: 1;
-  width: min(1180px, 100%);
-  max-height: calc(100vh - 44px);
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  background: #fff;
-  border: 1px solid var(--line);
-  box-shadow: 0 16px 55px rgba(0, 0, 0, 0.28);
-  overflow: hidden;
-}
-
-.settings-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
-  background: #f7f7f7;
-}
-
-.settings-dialog-header h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.settings-dialog-header span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.settings-close-button {
-  min-width: 42px;
-  min-height: 42px;
-  border: 0;
-  background: #fff;
-  color: #555;
-  font-size: 28px;
-  line-height: 1;
-}
-
-.settings-dialog .settings-panel {
-  margin: 0;
-  border: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-body.settings-open {
-  overflow: hidden;
-}
-
-.settings-panel {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 0;
-  margin-bottom: 12px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.settings-side {
-  display: grid;
-  align-content: start;
-  gap: 0;
-  border-right: 1px solid var(--line);
-  background: #f6f6f6;
-}
-
-.settings-side strong {
-  padding: 14px 14px 10px;
-  font-size: 16px;
-}
-
-.settings-tab {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-height: 52px;
-  border: 0;
-  border-top: 1px solid var(--line);
-  background: #f7f7f7;
-  color: var(--text);
-  padding: 0 14px;
-  text-align: left;
-}
-
-.settings-tab.active {
-  border-left: 4px solid var(--orange);
-  background: #fff;
-  color: #20262d;
-}
-
-.settings-content {
-  padding: 14px 16px 18px;
-}
-
-.settings-heading {
-  margin-bottom: 10px;
-}
-
-.settings-page {
-  display: none;
-}
-
-.settings-page.active {
-  display: block;
-}
-
-.settings-form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.empty-settings-page {
-  min-height: 120px;
-  padding: 18px;
-  border: 1px dashed var(--line);
-  background: #fbfbfb;
-  color: var(--muted);
-}
-
-.empty-settings-page h3 {
-  margin: 0 0 8px;
-  color: var(--text);
-}
-
-.empty-settings-page p {
-  margin: 0;
-  line-height: 1.45;
-}
-
-@media (max-width: 1100px) {
-  .settings-panel {
-    grid-template-columns: 1fr;
-  }
-  .settings-side {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .settings-side strong {
-    grid-column: 1 / -1;
-  }
-  .settings-form-grid {
-    grid-template-columns: 1fr;
+async function downloadFullBackup() {
+  try {
+    setStatus("Lager yedekfil...");
+    const snapshot = await menuRef.once("value");
+    const payload = createBackupPayload(snapshot.val() || config, "manual-download");
+    const restaurant = makeId(payload.backupMeta.restaurantName || "kol-menu");
+    downloadTextFile(`${restaurant}-firebase-yedek-${backupDateStamp()}.json`, JSON.stringify(payload, null, 2));
+    addLocalBackup(createBackupPayload(payload.data, "manual-download-copy"));
+    setStatus("Yedek lastet ned og lokal kopi lagret.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Kunne ikke lage yedek. Sjekk konsollen.");
   }
 }
 
-
-@media (max-width: 980px) {
-  .admin-topbar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-  .admin-topbar nav,
-  .admin-topbar-settings {
-    justify-content: flex-start;
-  }
+function saveCurrentLocalBackup(reason = "manual-local") {
+  if (!config) return;
+  addLocalBackup(createBackupPayload(config, reason));
+  setStatus("Lokal yedek lagret i denne nettleseren.");
 }
 
-/* === Kategori-kort design: ryddigere PC-visning === */
-.admin-grid {
-  grid-template-columns: minmax(620px, 1fr) 420px;
-  grid-template-areas:
-    "categories groups"
-    "editor groups";
-  gap: 18px;
-  align-items: start;
+function localDayStamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-.menu-builder-panel {
-  grid-area: categories;
+function maybeDailyLocalBackupOnAdminOpen() {
+  if (!config) return false;
+
+  // TÜRKÇE NOT: Artık her 10 dakikada bir yedek almıyoruz.
+  // Admin paneli açıldığında aynı tarayıcıda günde sadece 1 defa lokal yedek alınır.
+  const today = localDayStamp();
+  if (localStorage.getItem(DAILY_LOCAL_BACKUP_DATE_KEY) === today) return false;
+
+  addLocalBackup(createBackupPayload(config, "daily-admin-open"));
+  localStorage.setItem(DAILY_LOCAL_BACKUP_DATE_KEY, today);
+  return true;
 }
 
-.editor-panel {
-  grid-area: editor;
+function previewRestoreData(data, label = "Valgt fil") {
+  if (!restoreBackupPreview) return;
+  const counts = countBackupData(data || {});
+  restoreBackupPreview.innerHTML = `
+    <strong>${escapeHtml(label)}</strong><br>
+    ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper<br>
+    Klikk "Gjenopprett til Firebase" hvis dette ser riktig ut.
+  `;
 }
 
-.group-panel {
-  grid-area: groups;
-  position: sticky;
-  top: 82px;
-  max-height: calc(100vh - 98px);
-  overflow: auto;
-}
-
-.category-list {
-  position: static;
-  max-height: none;
-  overflow: visible;
-  padding: 18px;
-  background: #f6f6f6;
-}
-
-.category-builder-heading {
-  margin-bottom: 14px;
-}
-
-.category-builder-heading h1 {
-  font-size: 21px;
-}
-
-.category-builder-heading span {
-  display: block;
-  margin-top: 3px;
-  font-size: 13px;
-}
-
-#addCategory,
-.add-category-bottom,
-.inline-add-product {
-  border: 1px solid #cfcfcf;
-  background: #fff;
-  color: var(--text);
-  font-weight: 800;
-}
-
-#addCategory {
-  min-width: 142px;
-}
-
-.add-category-bottom {
-  width: max-content;
-  margin-top: 12px;
-  padding: 0 18px;
-}
-
-.category-card-list {
-  display: grid;
-  gap: 14px;
-}
-
-.menu-category-card {
-  border: 1px solid #e2e2e2;
-  background: #fff;
-  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.08);
-}
-
-.menu-category-card.active {
-  border-color: #dedede;
-  background: #fff;
-}
-
-.menu-category-row {
-  grid-template-columns: minmax(0, 1fr) 48px;
-}
-
-.menu-category-choice {
-  display: grid;
-  grid-template-columns: 80px minmax(0, 1fr) 28px;
-  gap: 16px;
-  align-items: center;
-  min-height: 102px;
-  padding: 14px 18px;
-  background: #fff;
-}
-
-.category-thumb {
-  display: block;
-  width: 80px;
-  height: 80px;
-  border: 1px solid #ddd;
-  background:
-    radial-gradient(circle at 25% 30%, #d02922 0 10%, transparent 11%),
-    radial-gradient(circle at 60% 42%, #f3dfb7 0 9%, transparent 10%),
-    radial-gradient(circle at 45% 68%, #b91d19 0 10%, transparent 11%),
-    linear-gradient(135deg, #f5ba42, #dc6e24);
-  background-size: cover;
-  overflow: hidden;
-}
-
-.category-thumb img,
-.product-mini-thumb img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.category-thumb.kebab-strip {
-  background:
-    radial-gradient(ellipse at 20% 62%, #e7d3ad 0 18%, transparent 19%),
-    radial-gradient(ellipse at 44% 52%, #b85629 0 17%, transparent 18%),
-    radial-gradient(circle at 55% 44%, #46a44f 0 5%, transparent 6%),
-    radial-gradient(circle at 68% 56%, #e6e04d 0 4%, transparent 5%),
-    linear-gradient(135deg, #e8eefb, #ffffff 55%, #cfd9ee);
-}
-
-.category-thumb.burger-strip {
-  background:
-    radial-gradient(ellipse at 35% 38%, #e5a63f 0 15%, transparent 16%),
-    radial-gradient(ellipse at 38% 55%, #7b3f20 0 15%, transparent 16%),
-    radial-gradient(ellipse at 58% 54%, #3c9d4b 0 8%, transparent 9%),
-    radial-gradient(ellipse at 64% 42%, #f3ca45 0 10%, transparent 11%),
-    linear-gradient(135deg, #f2f2f2, #ffffff 60%, #e2e2e2);
-}
-
-.category-card-copy {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-  text-align: left;
-}
-
-.category-card-copy strong {
-  color: #25303a;
-  font-size: 17px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.category-card-copy span {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.category-chevron {
-  color: #77818a;
-  font-size: 30px;
-  line-height: 1;
-}
-
-.category-menu-button {
-  min-width: 48px;
-  border-left: 1px solid #e5e5e5;
-  font-size: 25px;
-}
-
-.category-menu {
-  top: 54px;
-  right: 8px;
-  min-width: 190px;
-}
-
-.product-card-list {
-  display: grid;
-  gap: 8px;
-  padding: 0 18px 16px 114px;
-  background: #fff;
-}
-
-.product-card-row {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  min-height: 74px;
-  padding: 10px 12px;
-  border: 1px solid #e6e6e6;
-  background: #fff;
-  text-align: left;
-}
-
-.product-card-row.active {
-  border-color: var(--orange);
-  background: #fff8f0;
-}
-
-.product-mini-thumb {
-  display: block;
-  width: 52px;
-  height: 52px;
-  border: 1px solid #ddd;
-  background:
-    radial-gradient(circle at 26% 28%, #d02b21 0 13%, transparent 14%),
-    radial-gradient(circle at 68% 40%, #f4e0bd 0 10%, transparent 11%),
-    radial-gradient(circle at 46% 70%, #b61f19 0 12%, transparent 13%),
-    linear-gradient(135deg, #f7be4b, #e37424);
-  overflow: hidden;
-}
-
-.product-mini-thumb.burger,
-.product-mini-thumb.chicken {
-  background:
-    radial-gradient(ellipse at 50% 35%, #e5a63f 0 22%, transparent 23%),
-    radial-gradient(ellipse at 50% 57%, #7b3f20 0 20%, transparent 21%),
-    linear-gradient(135deg, #fff0ba, #e2a943);
-}
-
-.product-mini-thumb.kebab,
-.product-mini-thumb.wrap,
-.product-mini-thumb.plate {
-  background:
-    radial-gradient(circle at 30% 28%, #48a650 0 10%, transparent 11%),
-    radial-gradient(circle at 65% 45%, #b85629 0 14%, transparent 15%),
-    linear-gradient(135deg, #ead7aa, #f8f0df);
-}
-
-.product-card-copy {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.product-card-copy strong {
-  color: #25303a;
-  font-size: 14px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.product-card-copy span {
-  color: var(--muted);
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-card-price {
-  color: #26313c;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.inline-add-product {
-  width: max-content;
-  min-height: 38px;
-  padding: 0 14px;
-}
-
-.inline-category-editor {
-  margin: 0 18px 16px 114px;
-  border: 1px dashed #d8d8d8;
-  background: #fffaf5;
-}
-
-.editor-panel {
-  padding: 18px;
-}
-
-.product-heading {
-  margin-top: 0;
-}
-
-.product-editor-card {
-  box-shadow: none;
-}
-
-@media (max-width: 1250px) {
-  .admin-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "categories"
-      "editor"
-      "groups";
-  }
-
-  .group-panel {
-    position: static;
-    max-height: none;
+async function restoreDataToFirebase(data, reason = "restore") {
+  if (!data) return;
+  if (!confirm("Dette overskriver Firebase-dataen. Har du tatt yedek først?")) return;
+  try {
+    saveCurrentLocalBackup("before-restore");
+    setStatus("Gjenoppretter Firebase...");
+    const cleanData = normalizeConfig(data);
+    await menuRef.set(cleanData);
+    config = cleanData;
+    pendingRestoreData = null;
+    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
+    renderAll();
+    setAdminView("menu");
+    setStatus("Firebase er gjenopprettet fra yedek.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Kunne ikke gjenopprette yedek.");
   }
 }
 
-@media (max-width: 720px) {
-  .menu-category-choice {
-    grid-template-columns: 64px minmax(0, 1fr) 24px;
-    gap: 12px;
-    padding: 12px;
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function safeAdminText(value, fallback = "") {
+  const text = value === null || value === undefined ? "" : String(value);
+  return text.trim() || fallback;
+}
+
+function safeAdminNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function formatCountdown(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(safeAdminNumber(ms) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function normalizeAdminOrderLine(line = {}) {
+  if (!line || typeof line !== "object") return null;
+  const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
+  const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeAdminText(item)).filter(Boolean) : [];
+  return {
+    ...line,
+    name: safeAdminText(line.name, "Produkt"),
+    quantity,
+    size: safeAdminText(line.size),
+    sizeLabel: safeAdminText(line.sizeLabel || line.size),
+    extras,
+    note: safeAdminText(line.note),
+    total: safeAdminNumber(line.total)
+  };
+}
+
+function aggregateAdminOrderLines(lines = []) {
+  // TÜRKÇE: Aynı ürün aynı størrelse/tillegg/not ile iki kez gelirse ekranda tek satır gösterilir.
+  const map = new Map();
+  asArray(lines).forEach((line) => {
+    const normalized = normalizeAdminOrderLine(line);
+    if (!normalized) return;
+    const key = JSON.stringify({
+      name: normalized.name,
+      size: normalized.size,
+      sizeLabel: normalized.sizeLabel,
+      extras: normalized.extras,
+      note: normalized.note
+    });
+    const existing = map.get(key);
+    if (existing) {
+      existing.quantity += normalized.quantity;
+      existing.total += safeAdminNumber(normalized.total);
+    } else {
+      map.set(key, { ...normalized });
+    }
+  });
+  return Array.from(map.values());
+}
+
+function normalizeAdminOrderRecord(order = {}, id = "") {
+  if (!order || typeof order !== "object") return null;
+  const items = Array.isArray(order.items) ? aggregateAdminOrderLines(order.items) : [];
+  const computedTotal = items.reduce((sum, line) => sum + safeAdminNumber(line.total), 0);
+  const status = ["pending", "accepted", "cancelled"].includes(order.status) ? order.status : "pending";
+  return {
+    ...order,
+    id: safeAdminText(id || order.id, `order-${Date.now()}`),
+    status,
+    customer: {
+      firstName: safeAdminText(order.customer?.firstName),
+      lastName: safeAdminText(order.customer?.lastName),
+      phone: safeAdminText(order.customer?.phone, "Telefon mangler")
+    },
+    pickup: order.pickup && typeof order.pickup === "object" ? order.pickup : { mode: "asap", time: "" },
+    items,
+    total: safeAdminNumber(order.total, computedTotal),
+    subtotal: safeAdminNumber(order.subtotal, computedTotal),
+    readyMinutes: Math.max(1, safeAdminNumber(order.readyMinutes, DEFAULT_READY_MINUTES || 10)),
+    createdAt: safeAdminText(order.createdAt, new Date().toISOString()),
+    updatedAt: safeAdminText(order.updatedAt || order.createdAt, new Date().toISOString())
+  };
+}
+
+function hasValidConfig(value) {
+  return value && asArray(value.sections).length > 0;
+}
+
+function asArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (value && typeof value === "object") return Object.values(value).filter(Boolean);
+  return [];
+}
+
+
+function defaultSiteSettings() {
+  return {
+    restaurantName: "KØL Grill & Pizza",
+    logoUrl: "",
+    defaultImageUrl: "",
+    phone: "+47 41 14 53 53",
+    email: "",
+    country: "Norway",
+    timezone: "Europe/Oslo",
+    city: "SKARNES",
+    postalCode: "2100",
+    streetAddress: "ØGARDSVEGEN 44",
+    openingDays: "Mandag, Onsdag - Søndag",
+    openingTime: "14:00 - 22:00",
+    orderOpenTime: "14:00",
+    orderCloseTime: "22:00",
+    minPreorderMinutes: "30",
+    pickupInfo: "Samme som åpningstider",
+    paymentInfo: "Kort ved henting (henting)"
+  };
+}
+
+function normalizeSiteSettings(value) {
+  return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+}
+
+function defaultOptionGroups() {
+  return [
+    {
+      id: "eksempel-tillegg",
+      title: "Eksempel tillegg",
+      type: "multiple",
+      required: false,
+      options: [{ id: "eksempel-valg", label: "Eksempel valg", price: 0 }]
+    }
+  ];
+}
+
+
+function defaultGroupIdsForProduct(product, section) {
+  return [];
+}
+
+
+function normalizeOptionGroups(value) {
+  const hasSavedOptionGroups = value && Object.prototype.hasOwnProperty.call(value, "optionGroups");
+  const source = hasSavedOptionGroups ? asArray(value.optionGroups) : defaultOptionGroups();
+
+  const safeId = (value, fallback) => String(value || fallback || "valg")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || fallback;
+
+  return source.map((group) => {
+    const seen = new Set();
+    const labels = asArray(group.options).map((option) => String(option.label || "").toLowerCase()).join(" ");
+    const title = String(group.title || "").toLowerCase();
+    const looksLikeStrength = title.includes("styrke") || title.includes("sterk") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
+    const type = group.type === "single" || looksLikeStrength ? "single" : "multiple";
+    const options = asArray(group.options).map((option, index) => {
+      const base = safeId(option.id || option.label, `${group.id || "gruppe"}-${index + 1}`);
+      let id = base;
+      let counter = 2;
+      while (seen.has(id)) {
+        id = `${base}-${counter}`;
+        counter += 1;
+      }
+      seen.add(id);
+      return { ...option, id };
+    });
+    if (type === "single" && options.length) {
+      const defaultIndex = Math.max(0, options.findIndex((option) => option.default));
+      options.forEach((option, index) => { option.default = index === defaultIndex; });
+    }
+    return {
+      ...group,
+      type,
+      required: Boolean(group.required),
+      options
+    };
+  });
+}
+
+
+function normalizeConfig(value) {
+  const sections = asArray(value?.sections).map((section) => ({
+    ...section,
+    items: asArray(section.items).map((product) => {
+      const hasGroupIds = Object.prototype.hasOwnProperty.call(product, "optionGroupIds");
+      return {
+        ...product,
+        optionGroupIds: hasGroupIds ? asArray(product.optionGroupIds) : defaultGroupIdsForProduct(product, section)
+      };
+    })
+  }));
+  return {
+    sections,
+    extraOptions: asArray(value?.extraOptions),
+    customPizzaToppings: asArray(value?.customPizzaToppings),
+    kebabPitaOptions: asArray(value?.kebabPitaOptions),
+    optionGroups: normalizeOptionGroups(value),
+    siteSettings: normalizeSiteSettings(value?.siteSettings)
+  };
+}
+
+function isEditingField() {
+  const active = document.activeElement;
+  return active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
+}
+
+function extractArrayFromScript(source, variableName) {
+  const marker = `let ${variableName} = `;
+  const start = source.indexOf(marker);
+  if (start === -1) throw new Error(`${variableName} finnes ikke i app.js`);
+  const arrayStart = source.indexOf("[", start);
+  let depth = 0;
+  for (let index = arrayStart; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === "[") depth += 1;
+    if (char === "]") depth -= 1;
+    if (depth === 0) return source.slice(arrayStart, index + 1);
   }
-
-  .category-thumb {
-    width: 64px;
-    height: 64px;
-  }
-
-  .product-card-list,
-  .inline-category-editor {
-    padding-left: 12px;
-    margin-left: 12px;
-  }
-
-  .product-card-row {
-    grid-template-columns: 42px minmax(0, 1fr);
-  }
-
-  .product-mini-thumb {
-    width: 42px;
-    height: 42px;
-  }
-
-  .product-card-price {
-    grid-column: 2;
-  }
-}
-
-
-/* === Simple GloriaFood-style inline editor update === */
-.admin-grid {
-  grid-template-columns: minmax(0, 1fr) 380px;
-  grid-template-areas: "categories groups";
-  gap: 18px;
-  align-items: start;
-}
-
-.menu-builder-panel {
-  grid-area: categories;
-}
-
-.product-form-stash {
-  display: none !important;
-}
-
-.group-panel {
-  grid-area: groups;
-}
-
-.category-list {
-  background: #f3f2ef;
-  padding: 22px;
-}
-
-.category-builder-heading {
-  align-items: center;
-}
-
-.category-builder-heading h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.category-builder-heading span {
-  color: #707780;
-  font-size: 13px;
-}
-
-#addCategory,
-.add-category-bottom,
-.inline-add-product {
-  border: 1px solid #d0d0d0;
-  border-radius: 3px;
-  background: #fff;
-  color: #4b535b;
-  font-weight: 800;
-}
-
-.category-card-list {
-  gap: 16px;
-}
-
-.menu-category-card {
-  border: 1px solid #dedede;
-  border-radius: 5px;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,.07);
-  overflow: hidden;
-}
-
-.menu-category-card.active {
-  border-color: #d7d7d7;
-}
-
-.menu-category-choice {
-  min-height: 96px;
-  padding: 14px 18px;
-}
-
-.product-card-list {
-  padding: 0 18px 18px 112px;
-  gap: 10px;
-}
-
-.product-inline-block {
-  display: grid;
-  gap: 0;
-}
-
-.product-card-row {
-  border-radius: 4px;
-  border: 1px solid #e4e4e4;
-  background: #fff;
-  min-height: 74px;
-}
-
-.product-card-row.active {
-  border-color: #cfcfcf;
-  background: #fff;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.inline-product-editor-mount {
-  border: 1px solid #e2e2e2;
-  border-top: 0;
-  border-radius: 0 0 5px 5px;
-  background: #fff;
-  padding: 16px 18px 18px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.06);
-}
-
-.inline-product-edit-form.product-editor-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px;
-  gap: 12px 14px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.inline-product-edit-form label {
-  font-size: 12px;
-  color: #69717a;
-  font-weight: 700;
-}
-
-.inline-product-edit-form input,
-.inline-product-edit-form textarea,
-.inline-product-edit-form select {
-  border-radius: 5px;
-  min-height: 42px;
-  font-size: 15px;
-}
-
-.inline-product-edit-form .main-field {
-  grid-column: 1 / 2;
-}
-
-.inline-product-edit-form .main-field input {
-  min-height: 50px;
-  font-size: 17px;
-  border-color: #57bd65;
-}
-
-.inline-product-edit-form > label.wide:not(.main-field) {
-  grid-column: 1 / -1;
-}
-
-.inline-product-edit-form textarea {
-  min-height: 72px;
-}
-
-.inline-product-edit-form .technical-field {
-  display: none;
-}
-
-.inline-product-edit-form .product-prices {
-  grid-column: 1 / -1;
-  border: 1px solid #e4e4e4;
-  border-radius: 5px;
-  padding: 12px;
-  background: #fafafa;
-}
-
-.inline-product-edit-form .product-price-row {
-  grid-template-columns: minmax(0, 1fr) 150px 160px 42px;
-  align-items: end;
-}
-
-.inline-product-edit-form .assigned-groups {
-  grid-column: 1 / -1;
-  border-radius: 5px;
-  background: #fff;
-}
-
-.inline-product-edit-form .form-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.inline-product-edit-form .form-actions button:first-child {
-  background: #54bf63;
-  border-color: #54bf63;
-}
-
-.inline-product-edit-form .mini-heading h3 {
-  font-size: 16px;
-}
-
-@media (max-width: 1180px) {
-  .admin-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "categories"
-      "groups";
-  }
-  .group-panel {
-    position: static;
-    max-height: none;
-  }
-}
-
-@media (max-width: 760px) {
-  .product-card-list {
-    padding: 0 12px 14px;
-  }
-  .inline-product-edit-form.product-editor-card {
-    grid-template-columns: 1fr;
-  }
-  .inline-product-edit-form .product-price-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-.inline-product-edit-form .inline-detail-field {
-  display: block;
-}
-
-
-/* === Compact inline admin refinement === */
-.admin-shell {
-  width: min(1500px, calc(100% - 18px));
-  margin-top: 8px;
-}
-
-.admin-status {
-  padding: 7px 10px;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.category-list {
-  padding: 14px;
-}
-
-.category-builder-heading {
-  margin-bottom: 10px;
-}
-
-.category-builder-heading h1 {
-  font-size: 19px;
-}
-
-.category-builder-heading span {
-  font-size: 12px;
-}
-
-#categoryButtons,
-.category-card-list {
-  gap: 10px;
-}
-
-.menu-category-card {
-  border-radius: 4px;
-  box-shadow: 0 1px 6px rgba(0,0,0,.06);
-}
-
-.menu-category-choice {
-  grid-template-columns: 62px minmax(0, 1fr) 22px;
-  gap: 12px;
-  min-height: 78px;
-  padding: 10px 14px;
-}
-
-.category-thumb {
-  width: 62px;
-  height: 62px;
-  border-radius: 3px;
-}
-
-.category-card-copy {
-  gap: 3px;
-}
-
-.category-card-copy strong {
-  font-size: 15px;
-}
-
-.category-card-copy span {
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.category-chevron {
-  font-size: 24px;
-}
-
-.category-menu-button {
-  min-width: 42px;
-  font-size: 21px;
-}
-
-.product-card-list {
-  padding: 0 14px 12px 88px;
-  gap: 7px;
-}
-
-.product-card-row {
-  grid-template-columns: 42px minmax(0, 1fr) auto;
-  gap: 10px;
-  min-height: 56px;
-  padding: 7px 10px;
-}
-
-.product-mini-thumb {
-  width: 42px;
-  height: 42px;
-  border-radius: 3px;
-}
-
-.product-card-copy {
-  gap: 2px;
-}
-
-.product-card-copy strong {
-  font-size: 13px;
-}
-
-.product-card-copy span {
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.product-card-price {
-  font-size: 12px;
-}
-
-.inline-add-product,
-.add-category-bottom,
-#addCategory {
-  min-height: 34px;
-  padding: 0 12px;
-  font-size: 13px;
-}
-
-.inline-product-editor-mount {
-  padding: 10px 12px 12px;
-  box-shadow: 0 2px 9px rgba(0,0,0,.05);
-}
-
-.inline-product-edit-form.product-editor-card {
-  grid-template-columns: minmax(0, 1.5fr) 105px 105px;
-  gap: 8px 10px;
-}
-
-.inline-product-edit-form label {
-  font-size: 11px;
-  line-height: 1.15;
-}
-
-.inline-product-edit-form input,
-.inline-product-edit-form textarea,
-.inline-product-edit-form select {
-  min-height: 34px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.inline-product-edit-form .main-field {
-  grid-column: 1 / 3;
-}
-
-.inline-product-edit-form .main-field input {
-  min-height: 38px;
-  font-size: 14px;
-}
-
-.inline-product-edit-form > label.wide:not(.main-field) {
-  grid-column: 1 / -1;
-}
-
-.inline-product-edit-form textarea {
-  min-height: 50px;
-}
-
-.inline-product-edit-form .product-prices {
-  padding: 9px 10px;
-  border-radius: 4px;
-}
-
-.inline-product-edit-form .product-prices .mini-heading {
-  margin-bottom: 6px;
-}
-
-.inline-product-edit-form .mini-heading h3 {
-  font-size: 14px;
-}
-
-.inline-product-edit-form .mini-heading span {
-  font-size: 11px;
-}
-
-.inline-product-edit-form .product-price-row {
-  grid-template-columns: minmax(0, 1fr) 105px 118px 34px;
-  gap: 7px;
-  align-items: end;
-  margin-bottom: 6px;
-}
-
-.inline-product-edit-form .product-price-row button,
-.inline-product-edit-form .group-option-row button {
-  min-height: 34px;
-}
-
-.price-help {
-  margin: 3px 0 0;
-  font-size: 11px;
-}
-
-.price-add-button {
-  min-height: 34px;
-  padding: 0 10px;
-  font-size: 13px;
-}
-
-.inline-product-edit-form .assigned-groups {
-  padding: 9px 10px;
-}
-
-.assigned-group-list {
-  min-height: 42px;
-  padding: 8px;
-}
-
-.assigned-group-chip {
-  min-height: 32px;
-}
-
-.assigned-group-chip span,
-.assigned-group-chip button {
-  font-size: 12px;
-}
-
-.inline-product-edit-form .form-actions {
-  padding-top: 0;
-}
-
-.inline-product-edit-form .form-actions button {
-  min-height: 36px;
-  padding: 0 13px;
-  font-size: 13px;
-}
-
-.inline-product-edit-form .technical-field.inline-detail-field {
-  display: block;
-}
-
-/* show useful small fields without making the form tall */
-.inline-product-edit-form label.inline-detail-field,
-.inline-product-edit-form label.technical-field.inline-detail-field {
-  grid-column: auto;
-}
-
-.inline-product-edit-form label.technical-field:not(.inline-detail-field) {
-  display: none;
-}
-
-/* make the whole visible cards feel clickable */
-.menu-category-card,
-.menu-category-choice,
-.product-inline-block,
-.product-card-row {
-  cursor: pointer;
-}
-
-@media (max-width: 900px) {
-  .product-card-list {
-    padding-left: 14px;
-  }
-
-  .inline-product-edit-form.product-editor-card {
-    grid-template-columns: 1fr;
-  }
-
-  .inline-product-edit-form .main-field {
-    grid-column: 1;
-  }
-
-  .inline-product-edit-form .product-price-row {
-    grid-template-columns: 1fr;
+  throw new Error(`${variableName} kunne ikke leses`);
+}
+
+function createEmptyConfig() {
+  // TÜRKÇE: menu-data.js artık zorunlu değil. Firebase boşsa buradan tertemiz boş admin başlatılır.
+  // Böylece önce kategori ekleyip sonra ürünleri sıfırdan oluşturabilirsin.
+  return normalizeConfig({
+    sections: [],
+    extraOptions: [],
+    customPizzaToppings: [],
+    kebabPitaOptions: [],
+    optionGroups: [],
+    siteSettings: defaultSiteSettings()
+  });
+}
+
+function saveAdminMenuCache(value) {
+  // TÜRKÇE: Firebase anlık koparsa admin panel tamamen boş kalmasın diye son sağlam menüyü tarayıcıda tutuyoruz.
+  try {
+    if (hasValidConfig(value)) localStorage.setItem(ADMIN_MENU_CACHE_KEY, JSON.stringify(normalizeConfig(value)));
+  } catch (error) {
+    console.warn("Lokal meny cache lagres ikke.", error);
   }
 }
 
-
-/* Hide advanced product details from the simple editor */
-.inline-detail-field {
-  display: none !important;
-}
-
-.inline-product-editor-mount .product-form {
-  gap: 8px;
-}
-
-.inline-product-editor-mount .product-prices,
-.inline-product-editor-mount .assigned-groups {
-  margin-top: 2px;
-}
-
-
-/* === Active selection + collapsed-by-default refinement === */
-/* The green line now marks the actual product being edited, not every name input. */
-.inline-product-edit-form .main-field input,
-.main-field input {
-  border-color: var(--line) !important;
-}
-
-.menu-category-card.active {
-  border-color: var(--orange) !important;
-  box-shadow: inset 4px 0 0 var(--orange), 0 2px 8px rgba(0,0,0,.06) !important;
-}
-
-.menu-category-card.active .category-card-copy strong {
-  color: #b75800;
-}
-
-.product-inline-block.active .product-card-row,
-.product-card-row.active {
-  border-color: #42b85a !important;
-  background: #f7fff8 !important;
-  box-shadow: inset 4px 0 0 #42b85a;
-}
-
-.product-inline-block.active .inline-product-editor-mount {
-  border-color: #42b85a !important;
-  box-shadow: inset 4px 0 0 #42b85a, 0 2px 8px rgba(0,0,0,.05) !important;
-}
-
-/* slightly smaller, calmer layout so the editor does not push the page too far down */
-.menu-category-choice {
-  min-height: 68px !important;
-  padding: 8px 12px !important;
-}
-
-.category-thumb {
-  width: 54px !important;
-  height: 54px !important;
-}
-
-.product-card-list {
-  padding-left: 76px !important;
-  gap: 6px !important;
-}
-
-.product-card-row {
-  min-height: 50px !important;
-  padding: 6px 9px !important;
-}
-
-.product-mini-thumb {
-  width: 38px !important;
-  height: 38px !important;
-}
-
-.inline-product-editor-mount {
-  padding: 8px 10px 10px !important;
-}
-
-.inline-product-edit-form.product-editor-card {
-  gap: 7px 9px !important;
-}
-
-.inline-product-edit-form input,
-.inline-product-edit-form textarea,
-.inline-product-edit-form select {
-  min-height: 32px !important;
-  font-size: 13px !important;
-}
-
-.inline-product-edit-form .main-field input {
-  min-height: 34px !important;
-}
-
-.inline-product-edit-form textarea {
-  min-height: 44px !important;
-}
-
-.inline-product-edit-form .product-prices,
-.inline-product-edit-form .assigned-groups {
-  padding: 7px 8px !important;
-}
-
-.assigned-group-list {
-  min-height: 34px !important;
-  padding: 6px !important;
-}
-
-@media (max-width: 900px) {
-  .product-card-list {
-    padding-left: 10px !important;
+function loadAdminMenuCache() {
+  try {
+    const raw = localStorage.getItem(ADMIN_MENU_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return hasValidConfig(parsed) ? normalizeConfig(parsed) : null;
+  } catch (error) {
+    console.warn("Lokal meny cache kunne ikke leses.", error);
+    return null;
   }
 }
 
-
-/* Do not let the browser hide the selected product under the sticky topbar when auto-scrolling. */
-.product-inline-block {
-  scroll-margin-top: 94px;
-}
-
-.inline-product-edit-form.product-editor-card {
-  border-left: 5px solid #42b957;
-}
-
-
-/* ===== Top navigation tabs: Meny oppsett / Innstillinger ===== */
-.admin-page {
-  display: none;
-}
-
-.admin-page.active {
-  display: block;
-}
-
-.admin-topbar-settings {
-  flex: 1;
-  justify-content: center;
-}
-
-.top-settings-button {
-  min-height: 40px;
-  border: 1px solid transparent;
-  background: transparent;
-  padding: 0 14px;
-}
-
-.top-settings-button.active {
-  border-color: var(--orange);
-  background: #fff8f0;
-  color: #222;
-}
-
-.admin-settings-workspace {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.inline-settings-card {
-  border: 1px solid var(--line);
-  background: #fff;
-  padding: 22px;
-}
-
-.inline-settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.inline-settings-header h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.inline-settings-header span {
-  display: block;
-  margin-top: 4px;
-  color: var(--muted);
-}
-
-.admin-settings-workspace .settings-page {
-  display: none;
-}
-
-.admin-settings-workspace .settings-page.active {
-  display: block;
-}
-
-.admin-settings-workspace .settings-form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.admin-settings-workspace .settings-form-grid .wide {
-  grid-column: 1 / -1;
-}
-
-.admin-settings-workspace label {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.admin-settings-workspace input {
-  margin-top: 6px;
-  min-height: 42px;
-  font-weight: 700;
-}
-
-.admin-settings-workspace .empty-settings-page {
-  min-height: 260px;
-  padding: 24px;
-  border: 1px dashed var(--line);
-  background: #fafafa;
-}
-
-.admin-settings-workspace .empty-settings-page h3 {
-  margin-top: 0;
-  font-size: 20px;
-}
-
-.admin-settings-workspace .empty-settings-page p {
-  max-width: 640px;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-@media (max-width: 900px) {
-  .admin-settings-workspace .settings-form-grid {
-    grid-template-columns: 1fr;
+function renderCachedMenuIfAvailable(message = "Viser siste lokale meny mens Firebase kobler til.") {
+  if (config) return false;
+  const cached = loadAdminMenuCache();
+  if (!cached) return false;
+  config = cached;
+  if (!selectedCategory()) {
+    selectedCategoryIndex = config.sections.length ? 0 : null;
+    selectedProductIndex = null;
   }
+  renderAll();
+  setStatus(message);
+  return true;
+}
 
-  .admin-topbar-settings {
-    justify-content: flex-start;
-    overflow-x: auto;
+async function loadDefaultConfig() {
+  // TÜRKÇE: Eski sistem menu-data.js / DEFAULT_MENU_CONFIG arıyordu.
+  // Şimdi aramıyoruz; dosya silinse bile admin paneli çalışır.
+  return createEmptyConfig();
+}
+
+async function loadData() {
+  setStatus("Synkroniserer med Firebase...");
+  const snapshot = await menuRef.once("value");
+  const value = snapshot.val();
+
+  // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
+  // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
+  config = hasValidConfig(value) ? normalizeConfig(value) : createEmptyConfig();
+  if (hasValidConfig(value)) saveAdminMenuCache(value);
+  if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+  if (!selectedCategory()) selectedProductIndex = null;
+  else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
+  renderAll();
+  const dailyBackupCreated = hasValidConfig(value) ? maybeDailyLocalBackupOnAdminOpen() : false;
+  setStatus(
+    hasValidConfig(value)
+      ? (dailyBackupCreated ? "Synkronisert. Daglig lokal yedek lagret i denne nettleseren." : "Synkronisert med Firebase.")
+      : "Firebase er tom. Du kan starte fra null og legge til kategori."
+  );
+}
+
+async function saveData() {
+  await writeLiveConfig("Lagret til Firebase.");
+}
+
+async function writeLiveConfig(message = "Lagret automatisk til Firebase.") {
+  if (!config) return;
+  try {
+    setStatus("Lagrer til Firebase...");
+    // TÜRKÇE: Root'a set() yaparsak /orders silinir. update() siparişleri korur.
+    await menuRef.update(normalizeConfig(config));
+    setStatus(message);
+  } catch (error) {
+    setStatus("Kunne ikke lagre. Sjekk Firebase-regler.");
+    console.error(error);
   }
 }
 
-
-/* ===== Boyuta göre valggrupper alanları ===== */
-.assigned-size-layout {
-  display: grid;
-  gap: 8px;
+// Otomatik kaydetme gereken yerlerde kullanılır. Ürün formunda artık manuel kayıt tercih edilir.
+function scheduleSave() {
+  if (!firebaseReady || !config) return;
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(() => writeLiveConfig(), 550);
 }
 
-.assigned-size-layout.has-size-zones {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+function selectedCategory() {
+  if (!config || selectedCategoryIndex === null || selectedCategoryIndex === undefined) return null;
+  return config.sections[selectedCategoryIndex] || null;
 }
 
-.assigned-size-section {
-  min-width: 0;
-  border: 1px solid #e1e1e1;
-  background: #fbfbfb;
+function selectedProduct() {
+  const category = selectedCategory();
+  if (!category || selectedProductIndex === null || selectedProductIndex === undefined) return null;
+  return category.items?.[selectedProductIndex] || null;
 }
 
-.assigned-size-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 8px;
-  border-bottom: 1px solid #e8e8e8;
-  background: #f7f7f7;
+function scrollSelectedProductToTop() {
+  if (!pendingScrollToProduct || selectedCategoryIndex === null || selectedProductIndex === null) return;
+  pendingScrollToProduct = false;
+  window.requestAnimationFrame(() => {
+    const block = document.querySelector(`[data-product-block="${selectedCategoryIndex}:${selectedProductIndex}"]`);
+    if (!block) return;
+    block.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
-.assigned-size-heading strong {
-  color: #22313f;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.assigned-size-heading span {
-  color: var(--muted);
-  font-size: 11px;
-  text-align: right;
-}
-
-.assigned-size-section .assigned-group-list {
-  min-height: 42px;
-  border: 0;
-  background: #fff;
-  padding: 6px;
-}
-
-.assigned-size-section .assigned-group-list.drag-over {
-  outline: 2px solid var(--orange);
-  outline-offset: -2px;
-  background: #fff5eb;
-}
-
-.assigned-zone-empty {
-  margin: 0;
-  padding: 7px 6px;
-  color: var(--muted);
-  font-size: 12px;
-  border: 1px dashed #d4d4d4;
-  background: #fff;
-}
-
-.assigned-size-section .assigned-group-chip {
-  min-height: 31px;
-  padding: 0 8px;
-  font-size: 12px;
-}
-
-.assigned-size-section .assigned-group-chip button {
-  min-height: 25px;
-  padding: 0 8px;
-}
-
-/* ===== Kompakt størrelse-filter for valggrupper på produkt ===== */
-.assigned-filter-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 7px;
-  padding: 6px;
-  border: 1px dashed #d7d7d7;
-  background: #fbfbfb;
-}
-
-.assigned-filter-toolbar span {
-  color: var(--muted);
-  font-size: 12px;
-  margin-right: 2px;
-}
-
-.assigned-filter-drop {
-  min-height: 28px;
-  padding: 0 9px;
-  border: 1px solid #d4d4d4;
-  background: #fff;
-  color: #33404c;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.assigned-filter-drop.drag-over,
-.assigned-compact-list.drag-over {
-  outline: 2px solid var(--orange);
-  outline-offset: -2px;
-  background: #fff4e8;
-}
-
-.assigned-compact-list {
-  display: grid;
-  gap: 6px;
-  min-height: 38px;
-  padding: 6px;
-  border: 1px solid #e1e1e1;
-  background: #fff;
-}
-
-.assigned-group-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px 70px;
-  gap: 8px;
-  align-items: center;
-  min-height: 34px;
-  padding: 5px 6px;
-  border: 1px solid #e4e4e4;
-  background: #fff;
-}
-
-.assigned-group-row strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-}
-
-.assigned-group-row label {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 5px;
-  align-items: center;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.assigned-group-row select {
-  min-height: 28px !important;
-  padding: 3px 6px;
-  font-size: 12px !important;
-}
-
-.assigned-group-row .remove-assigned-group {
-  min-height: 28px;
-  padding: 0 8px;
-  font-size: 12px;
-}
-
-@media (max-width: 760px) {
-  .assigned-group-row {
-    grid-template-columns: 1fr;
+function mountProductFormInline() {
+  if (!productForm) return;
+  const mount = document.querySelector("#inlineProductEditorMount");
+  if (mount) {
+    mount.appendChild(productForm);
+    productForm.classList.add("inline-product-edit-form");
+    productForm.removeAttribute("aria-hidden");
+    return;
   }
 
-  .assigned-group-row label {
-    grid-template-columns: 1fr;
+  const stash = document.querySelector(".product-form-stash .product-admin-grid") || document.querySelector(".product-form-stash");
+  if (stash && productForm.parentElement !== stash) stash.appendChild(productForm);
+  productForm.classList.remove("inline-product-edit-form");
+}
+
+function adminDefaultImageUrl() {
+  return (config?.siteSettings?.defaultImageUrl || "").trim();
+}
+
+function categoryImageMarkup(section = {}) {
+  const imageUrl = section.imageUrl || adminDefaultImageUrl();
+  if (imageUrl) {
+    return `<span class="category-thumb custom-category-thumb"><img src="${escapeHtml(imageUrl)}" alt="" onerror="this.closest('.category-thumb')?.classList.remove('custom-category-thumb'); this.remove();"></span>`;
   }
+  return `<span class="category-thumb default-thumb ${escapeHtml(section.imageClass || "pizza-strip")}"></span>`;
 }
 
-
-/* ===== Synlig / utsolgt status ===== */
-.status-badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin: 4px 0 1px;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 20px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.hidden-badge {
-  border: 1px solid #a0a6ad;
-  background: #eef0f2;
-  color: #505861;
-}
-
-.soldout-badge {
-  border: 1px solid #d83b32;
-  background: #fff0ef;
-  color: #c8261d;
-}
-
-.until-badge {
-  border: 1px solid #d7a55c;
-  background: #fff7e9;
-  color: #9a5e00;
-}
-
-.product-availability,
-.availability-controls {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px 12px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  background: #fbfbfb;
-}
-
-.availability-title {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  color: var(--muted);
-}
-
-.availability-title strong,
-.availability-controls > strong {
-  color: var(--text);
-  font-size: 14px;
-}
-
-.availability-check,
-.availability-controls label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 8px;
-  border: 1px solid #e1e1e1;
-  background: #fff;
-  font-weight: 700;
-}
-
-.availability-check input,
-.availability-controls input[type="checkbox"] {
-  width: auto;
-  min-height: auto;
-}
-
-.availability-until {
-  display: grid;
-  gap: 4px;
-  font-weight: 700;
-}
-
-.inline-category-editor .availability-controls {
-  grid-template-columns: 1fr 1fr 1fr;
-}
-
-@media (max-width: 900px) {
-  .product-availability,
-  .inline-category-editor .availability-controls {
-    grid-template-columns: 1fr;
+function productImageMarkup(product = {}) {
+  const imageUrl = product.imageUrl || adminDefaultImageUrl();
+  if (imageUrl) {
+    return `<span class="product-mini-thumb custom-product-thumb"><img src="${escapeHtml(imageUrl)}" alt="" onerror="this.closest('.product-mini-thumb')?.classList.remove('custom-product-thumb'); this.remove();"></span>`;
   }
+  return `<span class="product-mini-thumb default-thumb ${escapeHtml(product.thumb || "plate")}"></span>`;
 }
 
-/* ===== Backup / Yedek page ===== */
-.backup-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+function productPriceSummary(product = {}) {
+  const prices = getProductPriceList(product).filter((size) => size.price !== undefined);
+  if (!prices.length) return "Ingen pris";
+  if (prices.length === 1) return `${prices[0].price},-`;
+  return prices.map((size) => `${escapeHtml(size.label)} ${size.price},-`).join(" · ");
 }
 
-.backup-box {
-  border: 1px solid var(--line);
-  background: #fff;
-  padding: 16px;
+
+// Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
+// hidden=true olursa müşteri tarafında görünmez. soldOut=true veya ileri tarihli soldOutUntil varsa müşteri UTSOLGT görür.
+function toDateTimeLocalValue(value = "") {
+  if (!value) return "";
+  return String(value).slice(0, 16);
 }
 
-.backup-box.wide {
-  grid-column: 1 / -1;
+function isDateInFuture(value = "") {
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time > Date.now();
 }
 
-.backup-box h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
+function isHiddenItem(item = {}) {
+  return item.hidden === true;
 }
 
-.backup-box p {
-  margin: 0 0 14px;
-  color: var(--muted);
-  line-height: 1.45;
+function isSoldOutItem(item = {}) {
+  return item.soldOut === true || isDateInFuture(item.soldOutUntil || "");
 }
 
-#downloadBackup,
-#saveLocalBackup {
-  min-height: 42px;
-  padding: 0 16px;
-  border-color: var(--orange);
-  background: var(--orange);
-  color: #fff;
+function statusBadges(item = {}) {
+  const badges = [];
+  if (isHiddenItem(item)) badges.push(`<span class="status-badge hidden-badge">Skjult</span>`);
+  if (isSoldOutItem(item)) badges.push(`<span class="status-badge soldout-badge">Utsolgt</span>`);
+  if (item.soldOutUntil) badges.push(`<span class="status-badge until-badge">til ${escapeHtml(toDateTimeLocalValue(item.soldOutUntil).replace("T", " "))}</span>`);
+  return badges.length ? `<span class="status-badge-row">${badges.join("")}</span>` : "";
 }
 
-#restoreBackupFile {
-  margin: 6px 0 12px;
+// Kategori kartlarını ve kategori içindeki ürün listesini çizer.
+function renderCategories() {
+  categoryButtons.innerHTML = config.sections
+    .map((section, index) => {
+      const isActive = index === selectedCategoryIndex;
+      const isEditing = index === editingCategoryIndex;
+      const products = asArray(section.items)
+        .map((product, productIndex) => {
+          const isSelectedProduct = isActive && productIndex === selectedProductIndex;
+          return `
+            <div class="product-inline-block ${isSelectedProduct ? "active" : ""}" data-product-block="${index}:${productIndex}">
+              <button class="nested-product-choice product-card-row ${isSelectedProduct ? "active" : ""}" type="button" draggable="true" data-category-product="${index}:${productIndex}" data-product-drag="${productIndex}">
+                ${productImageMarkup(product)}
+                <span class="product-card-copy">
+                  <strong>${escapeHtml(product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt")}</strong>
+                  ${statusBadges(product)}
+                  <span>${escapeHtml(product.ingredients || "Klikk for å redigere")}</span>
+                </span>
+                <span class="product-card-price">${productPriceSummary(product)}</span>
+              </button>
+              ${isSelectedProduct ? `<div id="inlineProductEditorMount" class="inline-product-editor-mount"></div>` : ""}
+            </div>
+          `;
+        })
+        .join("");
+      return `
+        <article class="category-card menu-category-card ${isActive ? "active" : ""}" draggable="true" data-category-drag="${index}">
+          <div class="category-choice-row menu-category-row">
+            <button class="category-choice menu-category-choice" type="button" data-category="${index}">
+              ${categoryImageMarkup(section)}
+              <span class="category-card-copy">
+                <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
+                ${statusBadges(section)}
+                <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
+              </span>
+              <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
+            </button>
+            <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori valg">⋮</button>
+            <div class="category-menu" data-category-menu-panel="${index}" hidden>
+              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "Lukk redigering" : "Rediger kategori"}</button>
+              <button type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
+            </div>
+          </div>
+          ${
+            isEditing
+              ? `<div class="inline-category-editor" data-inline-category="${index}">
+                  <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
+                  <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
+                  <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
+                  <section class="availability-controls">
+                    <strong>Status</strong>
+                    <label><input type="checkbox" data-category-field="hidden" ${section.hidden ? "checked" : ""}> Skjul kategori fra kundesiden</label>
+                    <label><input type="checkbox" data-category-field="soldOut" ${section.soldOut ? "checked" : ""}> Vis hele kategorien som utsolgt</label>
+                    <label>Utsolgt til <input type="datetime-local" data-category-field="soldOutUntil" value="${escapeHtml(toDateTimeLocalValue(section.soldOutUntil || ""))}"></label>
+                  </section>
+                  <div class="inline-actions">
+                    <button type="button" data-category-action="close-edit" data-category-index="${index}">Ferdig</button>
+                  </div>
+                </div>`
+              : ""
+          }
+          ${
+            isActive
+              ? `<div class="nested-products product-card-list" data-products-for="${index}">
+                  ${products || "<p>Ingen produkter ennå.</p>"}
+                  <button class="inline-add-product" type="button" data-add-product-to-category="${index}">Legg til produkt</button>
+                </div>`
+              : ""
+          }
+        </article>
+      `;
+    })
+    .join("");
+  mountProductFormInline();
 }
 
-.restore-preview {
-  min-height: 48px;
-  margin: 10px 0 12px;
-  padding: 12px;
-  border: 1px dashed #cfcfcf;
-  background: #fafafa;
-  color: var(--muted);
-  line-height: 1.5;
+
+function renderCategoryEditor() {
 }
 
-.local-backup-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
+function renderProducts() {
+  renderCategories();
 }
 
-.local-backup-list p {
-  margin: 0;
+
+function normalizeSizeId(label = "", fallback = "") {
+  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (value.includes("medium") || value === "m") return "medium";
+  if (value.includes("stor") || value.includes("large") || value === "st") return "large";
+  if (value.includes("xxl")) return "xxl";
+  if (value.includes("xl")) return "xl";
+  if (value.includes("standard") || value.includes("pris")) return "standard";
+  return makeId(label || fallback || `size-${Date.now()}`);
 }
 
-.local-backup-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
-  border: 1px solid var(--line);
-  background: #fafafa;
+function defaultLabelForSize(id = "standard") {
+  if (id === "medium") return "Medium";
+  if (id === "large") return "Stor";
+  if (id === "xxl") return "XXL";
+  if (id === "xl") return "XL";
+  if (id === "standard") return "Pris";
+  return id.toUpperCase();
 }
 
-.local-backup-row strong,
-.local-backup-row span {
-  display: block;
+function ensureDefaultPrice(prices) {
+  if (!prices.length) return prices;
+  const defaultIndex = prices.findIndex((size) => size.default === true);
+  return prices.map((size, index) => ({
+    ...size,
+    default: defaultIndex >= 0 ? index === defaultIndex : index === 0
+  }));
 }
 
-.local-backup-row span {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 12px;
+function getProductPriceList(product) {
+  const savedSizes = asArray(product?.sizes)
+    .map((size) => ({
+      id: size.id ? makeId(size.id) : normalizeSizeId(size.label || size.name, size.id),
+      label: size.label || size.name || defaultLabelForSize(size.id),
+      price: getNumber(size.price ?? ""),
+      default: size.default === true || size.isDefault === true
+    }))
+    .filter((size) => size.label && size.price !== undefined);
+  if (savedSizes.length) return ensureDefaultPrice(savedSizes);
+
+  const prices = [];
+  if (product?.mediumPrice !== undefined) prices.push({ id: "medium", label: "Medium", price: product.mediumPrice, default: false });
+  if (product?.largePrice !== undefined) prices.push({ id: "large", label: "Stor", price: product.largePrice, default: false });
+  if (!prices.length && product?.price !== undefined) prices.push({ id: "standard", label: "Pris", price: product.price, default: true });
+  if (!prices.length) prices.push({ id: "standard", label: "Pris", price: undefined, default: true });
+  return ensureDefaultPrice(prices);
 }
 
-.local-backup-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+
+function readProductPriceListFromEditor() {
+  const rows = productPriceRows ? [...productPriceRows.querySelectorAll("[data-product-price-row]")] : [];
+  const prices = rows
+    .map((row, index) => {
+      const label = row.querySelector("[data-price-label]")?.value.trim() || "Pris";
+      const id = row.dataset.priceId || normalizeSizeId(label, "");
+      const price = getNumber(row.querySelector("[data-price-value]")?.value ?? "");
+      const isDefault = Boolean(row.querySelector("[data-price-default]")?.checked);
+      return { id, label, price, default: isDefault };
+    })
+    .filter((size) => size.label && size.price !== undefined);
+
+  return ensureDefaultPrice(prices.length ? prices : [{ id: "standard", label: "Pris", price: undefined, default: true }]);
 }
 
-.local-backup-actions button {
-  min-height: 32px;
-  padding: 0 10px;
-  font-size: 12px;
+
+function renderProductPrices(product = selectedProduct()) {
+  if (!productPriceRows) return;
+  const prices = getProductPriceList(product);
+  productPriceRows.innerHTML = prices
+    .map((size, index) => `
+      <div class="product-price-row" data-product-price-row="${index}" data-price-id="${escapeHtml(size.id)}">
+        <label>Navn <input data-price-label type="text" value="${escapeHtml(size.label)}" placeholder="Medium / Stor / XXL"></label>
+        <label>Pris <input data-price-value type="number" min="0" value="${size.price ?? ""}" placeholder="0"></label>
+        <label class="price-default-label">
+          <input data-price-default type="radio" name="defaultProductPrice" value="${index}" ${size.default ? "checked" : ""}>
+          <span>Forhåndsvalgt</span>
+        </label>
+        <button type="button" data-remove-product-price="${index}" ${prices.length <= 1 ? "disabled" : ""}>&times;</button>
+      </div>
+    `)
+    .join("");
+  productPriceRows.insertAdjacentHTML("beforeend", `<p class="price-help">Velg Forhåndsvalgt for den størrelsen som skal være valgt når kunden åpner produktet.</p>`);
 }
 
-@media (max-width: 860px) {
-  .backup-grid,
-  .local-backup-row {
-    grid-template-columns: 1fr;
+
+function applyPriceCompatibility(productData, prices) {
+  const cleanPrices = ensureDefaultPrice(prices.filter((size) => size.price !== undefined));
+  const firstPrice = cleanPrices[0]?.price;
+  const defaultSize = cleanPrices.find((size) => size.default) || cleanPrices[0];
+  const findPrice = (...ids) => cleanPrices.find((size) => ids.includes(size.id))?.price;
+  const mediumPrice = findPrice("medium");
+  const largePrice = findPrice("large");
+
+  productData.sizes = cleanPrices.length ? cleanPrices : undefined;
+  productData.defaultSizeId = defaultSize?.id;
+  productData.price = cleanPrices.length === 1 ? firstPrice : undefined;
+  productData.mediumPrice = mediumPrice;
+  productData.largePrice = largePrice;
+  productData.displayPrice = firstPrice;
+  return productData;
+}
+
+
+function renderProductEditor() {
+  mountProductFormInline();
+  const product = selectedProduct();
+  const disabled = !product;
+  Object.values(fields).forEach((field) => {
+    if (!field) return;
+    field.disabled = disabled;
+  });
+  Object.values(productStatusFields).forEach((field) => {
+    if (!field) return;
+    field.disabled = disabled;
+  });
+  if (!product) {
+    productForm.reset();
+    if (productStatusFields.hidden) productStatusFields.hidden.checked = false;
+    if (productStatusFields.soldOut) productStatusFields.soldOut.checked = false;
+    if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = "";
+    if (productPriceRows) productPriceRows.innerHTML = "";
+    renderAssignedGroups();
+    return;
   }
+  fields.productId.value = product.id || "";
+  fields.productName.value = product.name || "";
+  if (fields.productNumber) fields.productNumber.value = product.number || "";
+  if (fields.productType) fields.productType.value = product.type || "";
+  if (fields.productThumb) fields.productThumb.value = product.thumb || "plate";
+  fields.productPrice.value = product.price ?? "";
+  fields.productMediumPrice.value = product.mediumPrice ?? "";
+  fields.productLargePrice.value = product.largePrice ?? "";
+  fields.productDisplayPrice.value = product.displayPrice ?? "";
+  fields.productImageUrl.value = product.imageUrl || "";
+  fields.productIngredients.value = product.ingredients || "";
+  if (productStatusFields.hidden) productStatusFields.hidden.checked = product.hidden === true;
+  if (productStatusFields.soldOut) productStatusFields.soldOut.checked = product.soldOut === true;
+  if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = toDateTimeLocalValue(product.soldOutUntil || "");
+  renderProductPrices(product);
+  renderAssignedGroups();
+}
 
-  .local-backup-actions {
-    justify-content: flex-start;
+function getOptionGroup(groupId) {
+  return (config.optionGroups || []).find((group) => group.id === groupId);
+}
+
+function uniqueIds(ids) {
+  return [...new Set(asArray(ids).filter(Boolean))];
+}
+
+function getProductSizeAreas(product = selectedProduct()) {
+  const sizes = getProductPriceList(product).filter((size) => size.id && size.price !== undefined);
+  return sizes.length > 1 ? sizes : [];
+}
+
+function areaLabel(area, sizes = getProductSizeAreas()) {
+  if (area === "common") return "Alle størrelser";
+  const found = sizes.find((size) => size.id === area);
+  return found?.label || defaultLabelForSize(area);
+}
+
+function getAssignedGroupIds(product, area = "common") {
+  if (!product) return [];
+  if (area === "common") return uniqueIds(product.optionGroupIds);
+  return uniqueIds(product.optionGroupIdsBySize?.[area]);
+}
+
+function removeGroupFromAllAssignedAreas(product, groupId) {
+  if (!product || !groupId) return;
+  product.optionGroupIds = uniqueIds(product.optionGroupIds).filter((id) => id !== groupId);
+  if (product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object") {
+    Object.keys(product.optionGroupIdsBySize).forEach((area) => {
+      product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]).filter((id) => id !== groupId);
+      if (!product.optionGroupIdsBySize[area].length) delete product.optionGroupIdsBySize[area];
+    });
   }
 }
 
-.field-hint {
-  display: block;
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
+function getAssignedGroupEntries(product = selectedProduct()) {
+  if (!product) return [];
+  const entries = [];
+  uniqueIds(product.optionGroupIds).forEach((groupId) => entries.push({ groupId, area: "common" }));
+  Object.entries(product.optionGroupIdsBySize || {}).forEach(([area, ids]) => {
+    uniqueIds(ids).forEach((groupId) => entries.push({ groupId, area }));
+  });
+  return entries;
+}
+
+function assignedAreaOptions(selectedArea, sizes = getProductSizeAreas()) {
+  const options = [{ id: "common", label: "Alle" }, ...sizes.map((size) => ({ id: size.id, label: size.label }))];
+  return options
+    .map((option) => `<option value="${escapeHtml(option.id)}" ${option.id === selectedArea ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
+function renderAssignedGroups() {
+  if (!assignedGroups) return;
+  const product = selectedProduct();
+  if (!product) {
+    assignedGroups.innerHTML = "<p>Velg et produkt først.</p>";
+    return;
+  }
+
+  const sizes = getProductSizeAreas(product);
+  const entries = getAssignedGroupEntries(product);
+  const dropButtons = [{ id: "common", label: "Alle" }, ...sizes.map((size) => ({ id: size.id, label: size.label }))]
+    .map((area) => `<button class="assigned-filter-drop" type="button" data-assigned-zone="${escapeHtml(area.id)}">+ ${escapeHtml(area.label)}</button>`)
+    .join("");
+
+  const rows = entries.length
+    ? entries
+        .map(({ groupId, area }) => {
+          const group = getOptionGroup(groupId);
+          return `
+            <div class="assigned-group-row" data-assigned-row="${escapeHtml(groupId)}:${escapeHtml(area)}">
+              <strong>${escapeHtml(group?.title || groupId)}</strong>
+              <label>
+                <span>Vises</span>
+                <select data-assigned-visibility data-assigned-group="${escapeHtml(groupId)}" data-assigned-area="${escapeHtml(area)}">
+                  ${assignedAreaOptions(area, sizes)}
+                </select>
+              </label>
+              <button class="remove-assigned-group" type="button" data-unassign-group="${escapeHtml(groupId)}" data-unassign-area="${escapeHtml(area)}">Fjern</button>
+            </div>
+          `;
+        })
+        .join("")
+    : `<p class="assigned-zone-empty">Ingen grupper. Dra en gruppe fra høyre, eller bruk + knappene.</p>`;
+
+  assignedGroups.innerHTML = `
+    <div class="assigned-filter-toolbar">
+      <span>Dra gruppe hit:</span>
+      ${dropButtons}
+    </div>
+    <div class="assigned-compact-list" data-assigned-zone="common">${rows}</div>
+  `;
+}
+
+function closeGroupMenus() {
+  optionGroupsAdmin?.querySelectorAll("[data-group-menu-panel]").forEach((panel) => {
+    panel.hidden = true;
+  });
+}
+
+function groupMenuButton(groupIndex, isEditing) {
+  return `
+    <button class="group-menu-button" type="button" data-group-menu="${groupIndex}" aria-label="Gruppevalg">⋮</button>
+    <div class="group-menu" data-group-menu-panel="${groupIndex}" hidden>
+      <button type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">${isEditing ? "Lukk redigering" : "Rediger"}</button>
+      <button type="button" data-group-action="assign" data-group-index="${groupIndex}">Legg til på valgt produkt</button>
+      <button type="button" data-group-action="copy" data-group-index="${groupIndex}">Kopier gruppe</button>
+      <button type="button" data-group-action="delete" data-group-index="${groupIndex}">Slett gruppe</button>
+    </div>
+  `;
+}
+
+function renderGroupEditor(group, groupIndex) {
+  return `
+    <div class="option-group-editor">
+      <div class="option-group-top">
+        <label>Gruppenavn <input data-group-field="title" data-group-index="${groupIndex}" value="${escapeHtml(group.title || "")}"></label>
+        <label>Type
+          <select data-group-field="type" data-group-index="${groupIndex}">
+            <option value="multiple" ${group.type !== "single" ? "selected" : ""}>Flere valg</option>
+            <option value="single" ${group.type === "single" ? "selected" : ""}>Ett valg</option>
+          </select>
+        </label>
+        <label>Obligatorisk
+          <select data-group-field="required" data-group-index="${groupIndex}">
+            <option value="false" ${!group.required ? "selected" : ""}>Nei</option>
+            <option value="true" ${group.required ? "selected" : ""}>Ja</option>
+          </select>
+        </label>
+      </div>
+      <div class="group-options">
+        ${asArray(group.options)
+          .map((option, optionIndex) => `
+            <div class="group-option-row" data-group-option="${groupIndex}:${optionIndex}">
+              <label>Navn <input data-group-option-field="label" value="${escapeHtml(option.label || "")}"></label>
+              <label>Pris <input data-group-option-field="price" type="number" value="${option.price ?? ""}"></label>
+              <label>Valgt
+                <select data-group-option-field="default">
+                  <option value="false" ${!option.default ? "selected" : ""}>Nei</option>
+                  <option value="true" ${option.default ? "selected" : ""}>Ja</option>
+                </select>
+              </label>
+              <button type="button" data-remove-group-option="${groupIndex}:${optionIndex}">&times;</button>
+            </div>
+          `)
+          .join("") || "<p class=\"group-help\">Ingen valg ennå.</p>"}
+      </div>
+      <div class="group-card-actions">
+        <button type="button" data-add-group-option="${groupIndex}">Nytt valg</button>
+        <button type="button" data-assign-group="${escapeHtml(group.id)}">Legg til på valgt produkt</button>
+      </div>
+    </div>
+  `;
+}
+
+// Sağdaki Valggrupper / tilleggler listesini çizer.
+function renderGroupManager() {
+  if (!optionGroupsAdmin) return;
+  optionGroupsAdmin.innerHTML = (config.optionGroups || [])
+    .map((group, groupIndex) => {
+      const isEditing = groupIndex === editingGroupIndex;
+      const optionCount = asArray(group.options).length;
+      return `
+        <article class="option-group-card ${isEditing ? "editing" : ""}" draggable="true" data-group-card="${escapeHtml(group.id)}" data-group-index="${groupIndex}">
+          <div class="option-group-row">
+            <button class="option-group-title" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">
+              <strong>${escapeHtml(group.title || "Ny valggruppe")}</strong>
+              <span>${optionCount} valg · ${group.type === "single" ? "ett valg" : "flere valg"}${group.required ? " · obligatorisk" : ""}</span>
+            </button>
+            ${groupMenuButton(groupIndex, isEditing)}
+          </div>
+          ${isEditing ? renderGroupEditor(group, groupIndex) : ""}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderOptions() {
+  Object.entries(optionContainers).forEach(([key, container]) => {
+    if (!container) return;
+    container.innerHTML = (config[key] || [])
+      .map((option, index) => `
+        <div class="option-row" data-option-key="${key}" data-option-index="${index}">
+          <input data-option-field="group" value="${option.group || ""}" aria-label="Gruppe">
+          <input data-option-field="label" value="${option.label || ""}" aria-label="Navn">
+          <input data-option-field="price" type="number" value="${option.price ?? ""}" aria-label="Pris">
+          <button type="button" data-remove-option="${key}:${index}">&times;</button>
+        </div>
+      `)
+      .join("");
+  });
 }
 
 
-/* ===== Admin default görselleri =====
-   Resim URL yoksa boş kutu yerine sade hazır görsel gösterilir.
-   Böylece sistem başka restorana verilse bile görsel alanları boş/bozuk durmaz. */
-.category-thumb.default-thumb,
-.product-mini-thumb.default-thumb,
-.category-thumb:not(.custom-category-thumb),
-.product-mini-thumb:not(.custom-product-thumb) {
-  background:
-    radial-gradient(circle at 25% 32%, rgba(255,255,255,0.86) 0 10%, transparent 11%),
-    radial-gradient(circle at 67% 42%, rgba(255,255,255,0.56) 0 8%, transparent 9%),
-    radial-gradient(circle at 52% 70%, rgba(255, 126, 33, 0.85) 0 14%, transparent 15%),
-    linear-gradient(135deg, #ffe1a8 0%, #ef7a25 48%, #8b2b17 100%) !important;
-}
+function renderSiteSettings() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  document.addEventListener("pointerdown", unlockAdminOrderSound, { once: true });
+document.addEventListener("keydown", unlockAdminOrderSound, { once: true });
 
-.category-thumb.default-thumb::after,
-.product-mini-thumb.default-thumb::after,
-.category-thumb:not(.custom-category-thumb)::after,
-.product-mini-thumb:not(.custom-product-thumb)::after {
-  content: "🍽";
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  font-size: 22px;
-}
-
-.product-mini-thumb.default-thumb::after,
-.product-mini-thumb:not(.custom-product-thumb)::after {
-  font-size: 17px;
-}
-
-.custom-category-thumb img,
-.custom-product-thumb img {
-  background: #f1f1f1;
-}
-
-/* ===== Bestillinger / sipariş alma paneli ===== */
-.orders-workspace {
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-.orders-admin-card {
-  border: 1px solid var(--line);
-  background: #fff;
-  padding: 18px;
-}
-
-.orders-admin-header,
-.orders-admin-toolbar,
-.order-card-top,
-.order-card-actions,
-.order-meta-grid,
-.order-line-row,
-.order-total-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.orders-admin-header h1 {
-  margin: 0 0 4px;
-  font-size: 22px;
-}
-
-.orders-admin-header span,
-.orders-help,
-.order-card small,
-.order-muted {
-  color: var(--muted);
-}
-
-.orders-admin-toolbar {
-  margin: 14px 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  background: #f8f8f8;
-}
-
-.orders-admin-list {
-  display: grid;
-  gap: 12px;
-}
-
-.order-card {
-  border: 1px solid var(--line);
-  background: #fff;
-  padding: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.05);
-}
-
-.order-card.pending { border-left: 5px solid #f18a00; }
-.order-card.accepted { border-left: 5px solid #39a852; }
-.order-card.cancelled { border-left: 5px solid #d83b32; opacity: .82; }
-
-.order-card-top h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.order-badge {
-  display: inline-grid;
-  place-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #efefef;
-  font-weight: 800;
-}
-.order-badge.pending { background: #fff0d9; color: #a85c00; }
-.order-badge.accepted { background: #e4f7e9; color: #247a39; }
-.order-badge.cancelled { background: #fde7e5; color: #ad2d26; }
-
-.order-meta-grid {
-  align-items: stretch;
-  flex-wrap: wrap;
-  margin: 12px 0;
-}
-.order-meta-box {
-  min-width: 180px;
-  flex: 1;
-  border: 1px solid #e5e5e5;
-  background: #fafafa;
-  padding: 10px;
-}
-.order-meta-box strong { display: block; margin-bottom: 4px; }
-
-.order-receipt {
-  border: 1px dashed #d5d5d5;
-  background: #fcfcfc;
-  padding: 10px;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.order-line-row {
-  align-items: flex-start;
-  padding: 8px 0;
-  border-bottom: 1px solid #ededed;
-}
-.order-line-row:last-child { border-bottom: 0; }
-.order-line-row p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
-.order-total-row {
-  padding-top: 10px;
-  margin-top: 8px;
-  border-top: 2px solid #ddd;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.order-card-actions {
-  margin-top: 12px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-.order-minutes-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 800;
-}
-.order-minutes-control input {
-  width: 74px;
-  min-height: 38px;
-  text-align: center;
-}
-.accept-order-button {
-  border-color: #39a852;
-  background: #39a852;
-  color: #fff;
-  padding: 0 14px;
-}
-.cancel-order-button {
-  border-color: #d83b32;
-  color: #d83b32;
-  padding: 0 14px;
-}
-.empty-orders {
-  padding: 18px;
-  border: 1px dashed #d6d6d6;
-  color: var(--muted);
-  background: #fafafa;
-}
-
-@media (max-width: 800px) {
-  .orders-admin-header,
-  .orders-admin-toolbar,
-  .order-card-top,
-  .order-card-actions {
-    align-items: stretch;
-    flex-direction: column;
+siteSettingFields.forEach((field) => {
+    const key = field.dataset.settingField;
+    if (!key) return;
+    field.value = config.siteSettings[key] ?? "";
+  });
+  if (adminRestaurantTitle) {
+    adminRestaurantTitle.textContent = config.siteSettings.restaurantName || "Meny admin";
   }
 }
 
-.order-muted-inline{color:#747b82;font-size:12px;font-weight:700;align-self:center;}
-
-
-/* Sipariş açılış saatini bekliyorsa admin kartında sakin göster */
-.order-card.waiting-opening { opacity: 0.92; }
-.order-card.waiting-opening .order-badge { background: #eef4ff; color: #315b8a; }
-
-
-/* ===== Printer + stronger order alarm UI ===== */
-.print-order-button {
-  border-color: #1d6f42 !important;
-  background: #1f8f51 !important;
-  color: #fff !important;
+function updateSiteSettingFromField(field) {
+  if (!config || !field?.dataset?.settingField) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  config.siteSettings[field.dataset.settingField] = field.value.trim();
+  scheduleSave();
 }
 
-.order-card.pending {
-  box-shadow: 0 0 0 2px rgba(216, 96, 0, 0.16), 0 8px 20px rgba(0,0,0,0.08);
+function settingsTitleFor(tabKey = "basic") {
+  const labels = {
+    basic: ["Grunninfo", "Restaurantens navn, telefon, adresse og enkel informasjon."],
+    backup: ["Yedek / gjenoppretting", "Ta full kopi av Firebase-dataen eller gjenopprett fra en tidligere JSON-yedek."]
+  };
+  return labels[tabKey] || labels.basic;
 }
 
-.order-card-actions .print-order-button {
-  min-width: 150px;
+function setSettingsTab(tabKey = "basic") {
+  const [title, subtitle] = settingsTitleFor(tabKey);
+  if (inlineSettingsTitle) inlineSettingsTitle.textContent = title;
+  if (inlineSettingsSubtitle) inlineSettingsSubtitle.textContent = subtitle;
+  settingsTabs.forEach((button) => {
+    button.classList.toggle("active", button.dataset.settingsTab === tabKey);
+  });
+  settingsPages.forEach((page) => {
+    page.classList.toggle("active", page.dataset.settingsPage === tabKey);
+  });
+  openSettingsButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.openSettings === tabKey);
+  });
+  topNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.topNav === tabKey);
+  });
+}
+
+function setAdminView(tabKey = "menu") {
+  const targetPage = tabKey === "menu" ? "menu" : tabKey === "orders" ? "orders" : tabKey === "analytics" ? "analytics" : "settings";
+  adminPages.forEach((page) => {
+    page.classList.toggle("active", page.dataset.adminPage === targetPage);
+  });
+  topNavButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.topNav === tabKey);
+  });
+  if (targetPage === "settings") setSettingsTab(tabKey);
+  if (targetPage === "orders") renderOrdersAdmin();
+  if (targetPage === "analytics") renderAnalyticsAdmin();
+}
+
+function openSettingsModal(tabKey = "basic") {
+  setAdminView(tabKey);
+}
+
+function closeSettingsModal() {
+  setAdminView("menu");
 }
 
 
-/* ===== PNG kvittering til termisk skriver ===== */
-.receipt-render-holder {
-  position: fixed;
-  left: -99999px;
-  top: 0;
-  width: 576px;
-  z-index: -1;
-  pointer-events: none;
+// ============================================================
+// SİPARİŞ MODÜLÜ (ADMIN)
+// ------------------------------------------------------------
+// Bestillinger fra kunden lagres under Firebase /orders.
+// Når du godkjenner her, oppdateres kundesiden automatisk.
+// ============================================================
+function orderStatusLabel(status = "pending") {
+  if (status === "accepted") return "Godkjent";
+  if (status === "cancelled") return "Kansellert";
+  return "Venter";
 }
 
-.receipt-image {
-  width: 576px;
-  background: #fff;
-  color: #000;
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.18;
+function formatOrderDate(value) {
+  if (!value) return "Ukjent tid";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" });
 }
 
-.receipt-block {
-  background: #000;
-  color: #fff;
-  font-weight: 900;
-  padding: 18px 20px;
+function sanitizeReadyMinutes(value, fallback = DEFAULT_READY_MINUTES) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(99, Math.max(1, Math.round(number)));
 }
 
-.receipt-big {
-  font-size: 40px;
+function getEditableReadyMinutes(order = {}) {
+  const id = String(order.id || "");
+  if (id && pendingReadyMinutesByOrder[id] !== undefined) {
+    return sanitizeReadyMinutes(pendingReadyMinutesByOrder[id]);
+  }
+  return sanitizeReadyMinutes(order.readyMinutes || DEFAULT_READY_MINUTES);
 }
 
-.receipt-medium {
-  font-size: 34px;
+function formatAdminClock(value) {
+  if (!value) return "--:--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:--";
+  return date.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
 }
 
-.receipt-flex {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
+function formatAdminShortDateTime(value) {
+  if (!value) return "Ukjent tid";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-.receipt-gap {
-  height: 30px;
-  background: #fff;
+function getAdminAcceptDeadline(order = {}) {
+  const base = new Date(order.processableAfter || order.createdAt || Date.now()).getTime();
+  return new Date(base + 3 * 60 * 1000);
 }
 
-.receipt-content {
-  padding: 20px 0 24px;
-  font-size: 28px;
+function getAdminReadyAt(order = {}, readyMinutes = order.readyMinutes || DEFAULT_READY_MINUTES) {
+  const base = new Date(order.acceptedAt || order.updatedAt || order.createdAt || Date.now()).getTime();
+  return new Date(base + sanitizeReadyMinutes(readyMinutes) * 60000);
 }
 
-.receipt-content > b,
-.receipt-details-title,
-.receipt-detail-row {
-  padding-left: 0;
-  padding-right: 0;
+function getOrderPickupSummary(order = {}) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting ${formatAdminShortDateTime(order.pickup.time)}`;
+  }
+  return "Snarest mulig";
 }
 
-.receipt-item {
-  margin-top: 12px;
-  margin-bottom: 18px;
+function getOrderHeaderTime(order = {}) {
+  const status = order.status || "pending";
+  if (status === "pending") {
+    if (!isAdminOrderProcessable(order)) return `Åpner ${formatAdminClock(order.processableAfter)}`;
+    const remaining = getAdminAcceptDeadline(order).getTime() - Date.now();
+    return remaining > 0 ? `${formatCountdown(remaining)} igjen` : "Svar nå";
+  }
+  if (status === "accepted") {
+    if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
+    const readyAt = getAdminReadyAt(order);
+    const remaining = readyAt.getTime() - Date.now();
+    return remaining > 0 ? `${Math.max(1, Math.ceil(remaining / 60000))} min` : "Klar";
+  }
+  return "Avsluttet";
 }
 
-.receipt-item-line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
-  gap: 8px;
-  align-items: start;
-  font-size: 38px;
+function getOrderHeaderCaption(order = {}) {
+  const status = order.status || "pending";
+  if (status === "pending") {
+    return !isAdminOrderProcessable(order)
+      ? `Venter til åpning · ${formatAdminShortDateTime(order.processableAfter)}`
+      : getOrderPickupSummary(order);
+  }
+  if (status === "accepted") {
+    if (order.pickup?.mode === "later" && order.pickup?.time) return `Hentes kl. ${formatAdminClock(order.pickup.time)}`;
+    return `Klar ca. kl. ${formatAdminClock(getAdminReadyAt(order))}`;
+  }
+  return `Kansellert ${formatAdminShortDateTime(order.cancelledAt || order.updatedAt || order.createdAt)}`;
 }
 
-.receipt-check {
-  text-align: right;
-  font-size: 28px;
-  line-height: 1;
+function getOrderItemsPreview(order = {}) {
+  const lines = asArray(order.items);
+  if (!lines.length) return "Ingen varer";
+  const preview = lines.slice(0, 2).map((line) => `${Math.max(1, safeAdminNumber(line.quantity, 1))}× ${line.name || "Produkt"}`).join(" · ");
+  return lines.length > 2 ? `${preview} +${lines.length - 2} til` : preview;
 }
 
-.receipt-sub {
-  padding-left: 42px;
-  padding-right: 10px;
-  font-size: 31px;
-  font-style: italic;
+function getOrderDetailTimeText(order = {}, readyMinutes = order.readyMinutes || DEFAULT_READY_MINUTES) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting kl. ${formatAdminClock(order.pickup.time)} (${formatAdminShortDateTime(order.pickup.time)})`;
+  }
+  return `Klar kl. ${formatAdminClock(getAdminReadyAt(order, readyMinutes))}`;
 }
 
-.receipt-choice {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+function orderLineHtml(line = {}) {
+  const options = [line.sizeLabel, ...(asArray(line.extras))].filter(Boolean).join(" · ");
+  return `
+    <div class="order-line-row">
+      <div>
+        <strong>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</strong>
+        ${options ? `<p>${escapeHtml(options)}</p>` : ""}
+        ${line.note ? `<p>${escapeHtml(line.note)}</p>` : ""}
+      </div>
+      <strong>${safeAdminNumber(line.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong>
+    </div>
+  `;
 }
 
-.receipt-note {
-  margin-top: 10px;
-  font-size: 31px;
-  font-weight: 900;
+
+function normalizeReceiptText(value = "") {
+  // TÜRKÇE: Termal yazıcılar her zaman norsk karakterleri doğru basmayabilir. Bu yüzden güvenli harflere çeviriyoruz.
+  return String(value)
+    .replace(/Æ/g, "AE").replace(/Ø/g, "O").replace(/Å/g, "A")
+    .replace(/æ/g, "ae").replace(/ø/g, "o").replace(/å/g, "a")
+    .replace(/É/g, "E").replace(/é/g, "e")
+    .replace(/Ü/g, "U").replace(/ü/g, "u")
+    .replace(/Ö/g, "O").replace(/ö/g, "o")
+    .replace(/İ/g, "I").replace(/ı/g, "i")
+    .replace(/Ş/g, "S").replace(/ş/g, "s")
+    .replace(/Ğ/g, "G").replace(/ğ/g, "g")
+    .replace(/Ç/g, "C").replace(/ç/g, "c");
 }
 
-.receipt-details-title {
-  margin-top: 30px;
-  font-size: 33px;
-  font-weight: 900;
+function receiptLine(left = "", right = "", width = 42) {
+  const l = normalizeReceiptText(left).slice(0, width);
+  const r = normalizeReceiptText(right).slice(0, width);
+  const space = Math.max(1, width - l.length - r.length);
+  return l + " ".repeat(space) + r + "\n";
 }
 
-.receipt-detail-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  font-size: 27px;
-  margin-top: 6px;
+function receiptWrap(text = "", prefix = "", width = 42) {
+  const value = normalizeReceiptText(text).trim();
+  if (!value) return "";
+  const max = Math.max(10, width - prefix.length);
+  const words = value.split(/\s+/);
+  let out = "";
+  let line = "";
+  words.forEach((word) => {
+    if ((line + " " + word).trim().length > max) {
+      out += prefix + line.trim() + "\n";
+      line = word;
+    } else {
+      line = `${line} ${word}`.trim();
+    }
+  });
+  if (line) out += prefix + line.trim() + "\n";
+  return out;
 }
 
-.receipt-detail-row b {
-  font-weight: 500;
-  text-align: right;
+function buildEscposReceipt(order = {}) {
+  const ESC = "\x1B";
+  const GS = "\x1D";
+  const width = 42;
+  const customer = order.customer || {};
+  const lines = asArray(order.items);
+  const pickupText = order.pickup?.mode === "later" && order.pickup?.time
+    ? new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : `Snarest ${sanitizeReadyMinutes(order.readyMinutes || DEFAULT_READY_MINUTES)} min`;
+  const createdText = order.createdAt
+    ? new Date(order.createdAt).toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase()
+    : new Date().toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase();
+
+  let text = "";
+  text += ESC + "@";
+  text += ESC + "a" + "\x01";
+
+  const header = (line) => GS + "!" + "\x11" + GS + "B" + "\x01" + normalizeReceiptText(line) + "\n" + GS + "B" + "\x00" + GS + "!" + "\x00";
+  text += header(" HENTING ");
+  text += header(` ${pickupText.toUpperCase()} `);
+  text += header(` ${createdText} `);
+
+  text += ESC + "a" + "\x00";
+  text += "\n";
+
+  text += ESC + "E" + "\x01";
+  text += "Enheter\n";
+  text += ESC + "E" + "\x00";
+
+  lines.forEach((line) => {
+    const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
+    text += receiptLine(`${quantity}x ${line.name || "Produkt"}`, "[ ]", width);
+    if (line.sizeLabel) text += receiptWrap(`Storrelse: ${line.sizeLabel}`, "   ", width);
+    asArray(line.extras).forEach((extra) => {
+      text += receiptWrap(`+ ${extra}`, "   ", width);
+    });
+    if (line.note) text += receiptWrap(`Notat: ${line.note}`, "   ", width);
+    text += "\n";
+  });
+
+  text += "-".repeat(width) + "\n";
+  text += ESC + "E" + "\x01";
+  text += "Bestillingsdetaljer\n";
+  text += ESC + "E" + "\x00";
+  text += receiptLine("Ordrenr:", String(order.id || "").slice(-7).toUpperCase(), width);
+  text += receiptLine("Fornavn:", customer.firstName || "", width);
+  text += receiptLine("Etternavn:", customer.lastName || "", width);
+  text += receiptLine("Telefon:", customer.phone || "", width);
+  text += receiptLine("Henting:", pickupText, width);
+  text += receiptLine("Status:", orderStatusLabel(order.status || "pending"), width);
+  text += "-".repeat(width) + "\n";
+  text += receiptLine("Sluttsum:", safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" }), width);
+  text += "\n\n";
+  text += GS + "V" + "A" + "\x00";
+  return text;
 }
 
-.receipt-total {
-  border-top: 3px solid #000;
-  margin-top: 16px;
-  padding-top: 10px;
-  font-weight: 900;
+
+function receiptImageDate(value, withSeconds = false) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("nb-NO", {
+    day: "2-digit",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined
+  }).replace(",", "");
 }
 
-/* ===== Modern ordre-accordion ===== */
-.orders-admin-card {
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+function receiptPickupParts(order = {}) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return {
+      left: "Hentetid",
+      right: new Date(order.pickup.time).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })
+    };
+  }
+  return {
+    left: "Snarest",
+    right: `${sanitizeReadyMinutes(order.readyMinutes || DEFAULT_READY_MINUTES)} minutt`
+  };
 }
 
-.orders-admin-toolbar {
-  border-radius: 16px;
-  background: #fbfbfb;
+function receiptOptionHtml(text = "") {
+  const clean = String(text || "").trim();
+  if (!clean) return "";
+  const parts = clean.split(":");
+  if (parts.length > 1) {
+    const left = parts.shift().trim();
+    const right = parts.join(":").trim();
+    return `<div class="receipt-sub receipt-choice"><span><b><i>${escapeHtml(left)}:</i></b></span><span>${escapeHtml(right)}</span></div>`;
+  }
+  return `<div class="receipt-sub"><i>${escapeHtml(clean)}</i></div>`;
 }
 
-.orders-admin-list {
-  display: grid;
-  gap: 14px;
+function buildReceiptImageHtml(order = {}) {
+  // TÜRKÇE: Bu HTML sadece yazıcıya gidecek PNG fiş için oluşturulur.
+  // Normal admin ekranında görünmez.
+  const customer = order.customer || {};
+  const lines = asArray(order.items);
+  const pickup = receiptPickupParts(order);
+  const confirmedAt = order.acceptedAt || order.updatedAt || new Date().toISOString();
+  const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
+  const orderNumber = String(order.id || "").slice(-10).toUpperCase();
+  const noteText = order.note || order.customerNote || "";
+
+  const itemRows = lines.map((line) => {
+    const extras = asArray(line.extras);
+    return `
+      <div class="receipt-item">
+        <div class="receipt-item-line">
+          <b>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</b>
+          <span class="receipt-check">□</span>
+        </div>
+        ${line.sizeLabel ? `<div class="receipt-sub"><i>Størrelse: <b>${escapeHtml(line.sizeLabel)}</b></i></div>` : ""}
+        ${extras.map(receiptOptionHtml).join("")}
+        ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="receipt-image">
+      <div class="receipt-block receipt-big">Henting</div>
+      <div class="receipt-gap"></div>
+
+      <div class="receipt-block receipt-medium receipt-flex">
+        <span>${escapeHtml(pickup.left)}</span>
+        <span>${escapeHtml(pickup.right)}</span>
+      </div>
+
+      <div class="receipt-gap"></div>
+
+      <div class="receipt-block receipt-medium">${escapeHtml(receiptImageDate(confirmedAt))}</div>
+
+      <div class="receipt-content">
+        <b>Enheter</b>
+        ${itemRows || `<p>Ingen produkter.</p>`}
+
+        ${noteText ? `<div class="receipt-note">❗ ${escapeHtml(noteText)}</div>` : ""}
+
+        <div class="receipt-details-title">Bestillingsdetaljer:</div>
+        <div class="receipt-detail-row"><span>Nummer:</span><b>${escapeHtml(orderNumber)}</b></div>
+        <div class="receipt-detail-row"><span>Bekreftet kl.:</span><b>${escapeHtml(receiptImageDate(confirmedAt))}</b></div>
+        <div class="receipt-detail-row"><span>Fornavn:</span><b>${escapeHtml(customer.firstName || "")}</b></div>
+        <div class="receipt-detail-row"><span>Etternavn:</span><b>${escapeHtml(customer.lastName || "")}</b></div>
+        <div class="receipt-detail-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
+        <div class="receipt-detail-row receipt-total"><span>Sluttsum:</span><b>${escapeHtml(totalText)}</b></div>
+      </div>
+    </div>
+  `;
 }
 
-.order-stack-card {
-  border: 1px solid #e8e8e8;
-  border-left: 5px solid #d6d6d6;
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-  overflow: hidden;
-}
-
-.order-stack-card.pending {
-  border-left-color: #f18a00;
-  box-shadow: 0 0 0 2px rgba(241, 138, 0, .08), 0 14px 28px rgba(15, 23, 42, .06);
-}
-.order-stack-card.accepted { border-left-color: #39a852; }
-.order-stack-card.cancelled { border-left-color: #d83b32; opacity: .94; }
-.order-stack-card.waiting-opening { border-left-color: #4d82c3; }
-
-.order-stack-summary {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 16px;
-  align-items: center;
-  padding: 18px 20px;
-  text-align: left;
-}
-
-.order-stack-main {
-  min-width: 0;
-}
-
-.order-stack-headline {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
-}
-
-.order-stack-headline h2 {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.15;
-}
-
-.order-stack-meta-line,
-.order-stack-preview {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.order-stack-preview {
-  margin-top: 8px;
-  color: #394049;
-}
-
-.order-stack-side {
-  min-width: 120px;
-  display: grid;
-  gap: 4px;
-  text-align: right;
-}
-
-.order-stack-time {
-  font-size: 24px;
-  line-height: 1;
-  color: #242a31;
-}
-
-.order-stack-side small {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.order-stack-chevron {
-  font-size: 28px;
-  line-height: 1;
-  color: #7d8590;
-  transform: rotate(0deg);
-  transition: transform .18s ease;
-}
-
-.order-stack-card.open .order-stack-chevron {
-  transform: rotate(180deg);
-}
-
-.order-stack-details {
-  border-top: 1px solid #efefef;
-  padding: 0 20px 20px;
-}
-
-.order-detail-grid.modern {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 18px 0 14px;
-}
-
-.order-detail-card {
-  border: 1px solid #ececec;
-  background: #fafafa;
-  border-radius: 16px;
-  padding: 14px;
-  display: grid;
-  gap: 6px;
-}
-
-.order-detail-card span {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .04em;
-  color: #8a919a;
-  text-transform: uppercase;
-}
-
-.order-detail-card strong {
-  font-size: 17px;
-  color: #1d2430;
-}
-
-.order-detail-card small {
-  color: var(--muted);
-}
-
-.order-receipt.modern {
-  border-radius: 18px;
-  border-style: solid;
-  border-color: #ececec;
-  background: #fff;
-  padding: 14px 16px;
-}
-
-.order-actions-panel {
-  display: grid;
-  grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
-  gap: 16px;
-  margin-top: 16px;
-  align-items: end;
-}
-
-.order-minutes-modern-wrap {
-  display: grid;
-  gap: 8px;
-}
-
-.order-soft-label {
-  color: #606873;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.order-minutes-modern {
-  display: grid;
-  grid-template-columns: 48px minmax(90px, 1fr) auto 48px;
-  align-items: center;
-  gap: 8px;
-  background: #f7f8fa;
-  border: 1px solid #e7e8eb;
-  border-radius: 18px;
-  padding: 8px;
-}
-
-.order-adjust-button {
-  min-height: 48px;
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid #e2e4e8;
-  color: #35404d;
-  font-size: 22px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.order-soft-input {
-  min-height: 48px;
-  border-radius: 14px;
-  border: 0;
-  background: transparent;
-  text-align: center;
-  font-size: 28px;
-  font-weight: 800;
-  color: #232a32;
-  outline: none;
-  width: 100%;
-}
-
-.order-input-suffix {
-  color: #66707d;
-  font-weight: 800;
-  padding-right: 6px;
-}
-
-.order-ready-preview {
-  color: #67707a;
-  font-size: 13px;
-}
-
-.order-action-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.accept-order-button.modern,
-.cancel-order-button.modern,
-.print-order-button.modern {
-  min-height: 50px;
-  border-radius: 16px;
-  padding: 0 18px;
-  font-weight: 800;
-  box-shadow: none !important;
-}
-
-.accept-order-button.modern {
-  background: #58c35f;
-  border-color: #58c35f;
-  color: #fff;
-}
-
-.cancel-order-button.modern {
-  background: #fff;
-  border-color: #ef5a4f;
-  color: #ef5a4f;
-}
-
-.print-order-button.modern {
-  background: #1f8f51 !important;
-  border-color: #1f8f51 !important;
-  color: #fff !important;
-}
-
-.order-inline-note {
-  min-height: 50px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 14px;
-  border-radius: 16px;
-  font-weight: 700;
-  background: #f5f5f5;
-}
-
-.order-inline-note.success {
-  background: #e9f8ec;
-  color: #247a39;
-}
-
-.order-inline-note.danger {
-  background: #fdeceb;
-  color: #b13129;
-}
-
-@media (max-width: 980px) {
-  .order-actions-panel {
-    grid-template-columns: 1fr;
+async function printOrderReceipt(orderId, overrides = {}) {
+  const original = adminOrders.find((item) => item.id === orderId);
+  if (!original) {
+    alert("Fant ikke bestillingen.");
+    return;
   }
 
-  .order-action-row {
-    justify-content: flex-start;
+  const order = { ...original, ...overrides };
+  const html2canvasFn = window.html2canvas;
+  if (!html2canvasFn) {
+    alert("html2canvas er ikke lastet. Sjekk internett/CDN eller prøv å laste siden på nytt.");
+    return;
+  }
+
+  const holder = document.createElement("div");
+  holder.className = "receipt-render-holder";
+  holder.innerHTML = buildReceiptImageHtml(order);
+  document.body.appendChild(holder);
+
+  try {
+    const receipt = holder.querySelector(".receipt-image");
+    const canvas = await html2canvasFn(receipt, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true
+    });
+    const imageBase64 = canvas.toDataURL("image/png");
+
+    await fetch("http://127.0.0.1:5050/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageBase64 })
+    });
+
+    setStatus("Kvittering sendt til skriver.");
+    showToast("Kvittering sendt til skriver.");
+  } catch (error) {
+    console.error(error);
+    alert("Kunne ikke sende bildekvittering til skriver. Sjekk at printer-serveren kjører på http://127.0.0.1:5050/.");
+  } finally {
+    holder.remove();
   }
 }
 
-@media (max-width: 760px) {
-  .orders-admin-card {
-    padding: 16px;
-    border-radius: 16px;
+function renderAdminOrderCard(order) {
+  order = normalizeAdminOrderRecord(order, order?.id) || {};
+  const status = order.status || "pending";
+  const customerName = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+  const readyMinutes = getEditableReadyMinutes(order);
+  const lines = asArray(order.items);
+  const canCancel = status !== "cancelled";
+  const waitingOpening = orderWaitingOpeningText(order);
+  const isExpanded = expandedAdminOrderId === order.id;
+  const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
+  const itemCount = lines.reduce((sum, line) => sum + Math.max(1, safeAdminNumber(line.quantity, 1)), 0);
+  const readyPreview = getOrderDetailTimeText(order, readyMinutes);
+  const headerTime = getOrderHeaderTime(order);
+  const headerCaption = waitingOpening || getOrderHeaderCaption(order);
+
+  return `
+    <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "open" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(String(order.id || ""))}">
+      <button class="order-stack-summary" type="button" data-toggle-order="${escapeHtml(String(order.id || ""))}" aria-expanded="${isExpanded ? "true" : "false"}">
+        <div class="order-stack-main">
+          <div class="order-stack-headline">
+            <h2>${escapeHtml(customerName)}</h2>
+            <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+          </div>
+          <div class="order-stack-meta-line">
+            <span>${escapeHtml(order.customer?.phone || "Telefon mangler")}</span>
+            <span>•</span>
+            <span>${formatOrderDate(order.createdAt)}</span>
+          </div>
+          ${!isExpanded ? `<div class="order-stack-preview">
+            <span>${escapeHtml(getOrderItemsPreview(order))}</span>
+            <span>•</span>
+            <strong>${itemCount} vare${itemCount === 1 ? "" : "r"}</strong>
+            <span>•</span>
+            <strong>${totalText}</strong>
+          </div>` : ""}
+        </div>
+        <div class="order-stack-side">
+          <strong class="order-stack-time">${escapeHtml(headerTime)}</strong>
+          <small>${escapeHtml(headerCaption)}</small>
+        </div>
+        <span class="order-stack-chevron" aria-hidden="true">⌄</span>
+      </button>
+
+      ${isExpanded ? `
+        <div class="order-stack-details">
+          <div class="order-detail-grid modern compact-two">
+            <div class="order-detail-card">
+              <span>Henting</span>
+              <strong>${escapeHtml(order.pickup?.mode === "later" ? "Senere henting" : "Snarest mulig")}</strong>
+              <small>${escapeHtml(getOrderPickupSummary(order))}</small>
+            </div>
+            <div class="order-detail-card">
+              <span>Ordre</span>
+              <strong>${escapeHtml(String(order.id || "").slice(-7).toUpperCase())}</strong>
+              <small>${escapeHtml(orderStatusLabel(status))}</small>
+            </div>
+          </div>
+
+          <div class="order-receipt modern">
+            ${lines.map(orderLineHtml).join("")}
+            <div class="order-total-row"><span>Sluttsum</span><strong>${totalText}</strong></div>
+          </div>
+
+          <div class="order-actions-panel">
+            <div class="order-minutes-modern-wrap">
+              <label class="order-soft-label" for="ready-${escapeHtml(String(order.id || ""))}">Tilberedningstid</label>
+              <div class="order-minutes-modern">
+                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(String(order.id || ""))}" data-delta="-2">−</button>
+                <input class="order-soft-input" id="ready-${escapeHtml(String(order.id || ""))}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(String(order.id || ""))}" inputmode="numeric">
+                <span class="order-input-suffix">min</span>
+                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(String(order.id || ""))}" data-delta="2">+</button>
+              </div>
+              <small class="order-ready-preview" data-ready-preview="${escapeHtml(String(order.id || ""))}">${escapeHtml(readyPreview)}</small>
+            </div>
+
+            <div class="order-action-row">
+              ${status !== "accepted"
+                ? `<button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(String(order.id || ""))}">Godkjenn bestilling</button>`
+                : `<div class="order-inline-note success">Godkjent · ${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</div>`}
+              ${canCancel
+                ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${escapeHtml(String(order.id || ""))}">Avvis / kanseller</button>`
+                : `<div class="order-inline-note danger">Kansellert ${formatOrderDate(order.cancelledAt)}</div>`}
+              <button class="print-order-button modern" type="button" data-print-order="${escapeHtml(String(order.id || ""))}">Skriv ut kvittering</button>
+            </div>
+          </div>
+        </div>
+      ` : ""}
+    </article>
+  `;
+}
+
+function renderOrderSection(title, orders, variant = "") {
+  if (!orders.length) return "";
+  return `
+    <section class="orders-group ${escapeHtml(variant)}">
+      <div class="orders-group-title">
+        <span>${escapeHtml(title)}</span>
+        <strong>${orders.length}</strong>
+      </div>
+      <div class="orders-group-list">
+        ${orders.map(renderAdminOrderCard).join("")}
+      </div>
+    </section>
+  `;
+}
+
+
+function analyticsOrderDate(order = {}) {
+  const raw = order.acceptedAt || order.updatedAt || order.createdAt;
+  const date = raw ? new Date(raw) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function analyticsDateKey(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function analyticsMonthKey(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+}
+
+function getAcceptedAnalyticsOrders() {
+  return adminOrders
+    .map((order) => normalizeAdminOrderRecord(order, order?.id))
+    .filter((order) => order && (order.status || "pending") === "accepted");
+}
+
+function uniqueCustomerCount(orders) {
+  const customers = new Set();
+  orders.forEach((order) => {
+    const phone = String(order.customer?.phone || "").replace(/\s+/g, "");
+    const name = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ").trim().toLowerCase();
+    customers.add(phone || name || String(order.id || Math.random()));
+  });
+  return customers.size;
+}
+
+function sumRevenue(orders) {
+  return orders.reduce((sum, order) => sum + safeAdminNumber(order.total), 0);
+}
+
+function moneyCompact(value) {
+  return safeAdminNumber(value).toLocaleString("nb-NO", { maximumFractionDigits: 0 }) + " kr";
+}
+
+function analyticsSummaryCard(label, orders) {
+  return `
+    <div class="analytics-summary-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${moneyCompact(sumRevenue(orders))}</strong>
+      <small>${orders.length} ordre · ${uniqueCustomerCount(orders)} kunder</small>
+    </div>
+  `;
+}
+
+function makeSeries(daysOrMonths, type = "day") {
+  const orders = getAcceptedAnalyticsOrders();
+  const now = new Date();
+  const series = [];
+  for (let i = daysOrMonths - 1; i >= 0; i--) {
+    const date = new Date(now);
+    if (type === "day") date.setDate(now.getDate() - i);
+    if (type === "month") date.setMonth(now.getMonth() - i, 1);
+    const key = type === "day" ? analyticsDateKey(date) : analyticsMonthKey(date);
+    const matched = orders.filter((order) => {
+      const orderDate = analyticsOrderDate(order);
+      return (type === "day" ? analyticsDateKey(orderDate) : analyticsMonthKey(orderDate)) === key;
+    });
+    series.push({
+      key,
+      label: type === "day"
+        ? date.toLocaleDateString("nb-NO", { weekday: "short" })
+        : date.toLocaleDateString("nb-NO", { month: "short" }),
+      revenue: sumRevenue(matched),
+      customers: uniqueCustomerCount(matched),
+      count: matched.length
+    });
+  }
+  return series;
+}
+
+function makeYearSeries() {
+  const orders = getAcceptedAnalyticsOrders();
+  const years = new Map();
+  orders.forEach((order) => {
+    const date = analyticsOrderDate(order);
+    const year = String(date.getFullYear());
+    if (!years.has(year)) years.set(year, []);
+    years.get(year).push(order);
+  });
+  return Array.from(years.entries()).sort(([a], [b]) => Number(a) - Number(b)).map(([year, list]) => ({
+    key: year,
+    label: year,
+    revenue: sumRevenue(list),
+    customers: uniqueCustomerCount(list),
+    count: list.length
+  })).slice(-6);
+}
+
+function renderSimpleBarChart(container, series) {
+  if (!container) return;
+  if (!series.length) {
+    container.innerHTML = `<p class="analytics-empty">Ingen godkjente bestillinger ennå.</p>`;
+    return;
+  }
+  const max = Math.max(...series.map((item) => item.revenue), 1);
+  container.innerHTML = series.map((item) => {
+    const width = Math.max(4, Math.round((item.revenue / max) * 100));
+    return `
+      <div class="analytics-bar-row">
+        <span class="analytics-bar-label">${escapeHtml(item.label)}</span>
+        <div class="analytics-bar-track"><span style="width:${width}%"></span></div>
+        <strong>${moneyCompact(item.revenue)}</strong>
+        <small>${item.customers} kunder</small>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderAnalyticsAdmin() {
+  const orders = getAcceptedAnalyticsOrders();
+  const now = new Date();
+  const todayKey = analyticsDateKey(now);
+  const monthKey = analyticsMonthKey(now);
+  const yearKey = String(now.getFullYear());
+  const todayOrders = orders.filter((order) => analyticsDateKey(analyticsOrderDate(order)) === todayKey);
+  const monthOrders = orders.filter((order) => analyticsMonthKey(analyticsOrderDate(order)) === monthKey);
+  const yearOrders = orders.filter((order) => String(analyticsOrderDate(order).getFullYear()) === yearKey);
+
+  if (analyticsSummary) {
+    analyticsSummary.innerHTML = [
+      analyticsSummaryCard("I dag", todayOrders),
+      analyticsSummaryCard("Denne måneden", monthOrders),
+      analyticsSummaryCard("Dette året", yearOrders)
+    ].join("");
+  }
+  renderSimpleBarChart(dailyRevenueChart, makeSeries(7, "day"));
+  renderSimpleBarChart(monthlyRevenueChart, makeSeries(12, "month"));
+  renderSimpleBarChart(yearlyRevenueChart, makeYearSeries());
+}
+
+function renderOrdersAdmin() {
+  if (!ordersAdminList) return;
+  const visibleOrders = adminOrders
+    .map((order) => normalizeAdminOrderRecord(order, order?.id))
+    .filter((order) => order && order.id)
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  if (ordersCount) ordersCount.textContent = `${visibleOrders.length} bestillinger`;
+
+  if (!visibleOrders.length) {
+    expandedAdminOrderId = null;
+    ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
+    return;
   }
 
-  .order-stack-summary {
-    grid-template-columns: 1fr;
+  if (!visibleOrders.some((order) => order.id === expandedAdminOrderId)) {
+    expandedAdminOrderId = null;
   }
 
-  .order-stack-side {
-    text-align: left;
+  const pendingOrders = visibleOrders
+    .filter((order) => (order.status || "pending") === "pending")
+    .sort((a, b) => new Date(a.processableAfter || a.createdAt || 0) - new Date(b.processableAfter || b.createdAt || 0));
+
+  const finishedOrders = visibleOrders
+    .filter((order) => (order.status || "pending") !== "pending")
+    .sort((a, b) => new Date(b.updatedAt || b.acceptedAt || b.cancelledAt || b.createdAt || 0) - new Date(a.updatedAt || a.acceptedAt || a.cancelledAt || a.createdAt || 0));
+
+  ordersAdminList.innerHTML = [
+    renderOrderSection("Nye / venter på svar", pendingOrders, "pending-group"),
+    renderOrderSection("Behandlede bestillinger", finishedOrders, "finished-group")
+  ].filter(Boolean).join("");
+}
+
+function listenForOrders() {
+  if (!ordersRef) return;
+  ordersRef.on("value", (snapshot) => {
+    const value = snapshot.val() || {};
+    const nextOrders = Object.entries(value)
+      .map(([id, order]) => normalizeAdminOrderRecord(order, String(id)))
+      .filter(Boolean);
+    const nextIds = new Set(nextOrders.map((order) => order.id));
+    const hasNewPendingOrder = ordersReady && nextOrders.some((order) => {
+      return !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
+    });
+
+    adminOrders = nextOrders;
+    knownOrderIdsForSound = nextIds;
+    ordersReady = true;
+    try {
+      renderOrdersAdmin();
+    } catch (error) {
+      console.error("Bestillinger kunne ikke vises:", error);
+      if (ordersAdminList) {
+        ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene finnes i Firebase, men en testbestilling har feil format. De nye bestillingene beskyttes mot dette nå.</p>`;
+      }
+    }
+    updateAdminOrderAlarmLoop();
+
+    if (hasNewPendingOrder) {
+      setStatus("Ny bestilling mottatt.");
+      showToast("Ny bestilling mottatt.");
+    }
+  }, (error) => {
+    console.error(error);
+    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Kunne ikke lese bestillinger.</p>`;
+  });
+}
+
+async function acceptOrder(orderId, minutes) {
+  const readyMinutes = sanitizeReadyMinutes(minutes);
+  const acceptedAt = new Date().toISOString();
+  expandedAdminOrderId = null; // Onaydan sonra kart kapanır; tekrar tıklayınca detay açılır.
+  await ordersRef.child(orderId).update({
+    status: "accepted",
+    readyMinutes,
+    acceptedAt,
+    updatedAt: acceptedAt
+  });
+  setStatus("Klar.");
+  showToast(`Godkjent · ${readyMinutes} min`);
+  window.setTimeout(updateAdminOrderAlarmLoop, 250);
+
+  // TÜRKÇE: Siparişi onaylayınca otomatik fiş basar.
+  // İstersen sipariş kartındaki "Skriv ut kvittering" butonuyla tekrar manuel basabilirsin.
+  await printOrderReceipt(orderId, {
+    status: "accepted",
+    readyMinutes,
+    acceptedAt,
+    updatedAt: acceptedAt
+  });
+}
+
+
+async function cancelOrder(orderId) {
+  if (!confirm("Avvise / kansellere denne bestillingen?")) return;
+  await ordersRef.child(orderId).update({
+    status: "cancelled",
+    cancelledAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    acceptedAt: null
+  });
+  setStatus("Bestilling avvist / kansellert.");
+  window.setTimeout(updateAdminOrderAlarmLoop, 250);
+}
+
+
+function renderAll() {
+  renderSiteSettings();
+  renderCategories();
+  renderCategoryEditor();
+  renderProducts();
+  renderProductEditor();
+  renderOptions();
+  renderGroupManager();
+  renderLocalBackups();
+  scrollSelectedProductToTop();
+}
+
+function updateCategoryFromFields() {
+}
+
+// Oppdater produkt veya Enter basılınca ürünü Firebase’e kaydeder.
+function updateProductFromFields() {
+  const category = selectedCategory();
+  const currentProduct = selectedProduct();
+  if (!category || !currentProduct) return;
+  const prices = readProductPriceListFromEditor();
+  const sizeIds = prices.map((size) => size.id);
+  const cleanedBySize = {};
+  Object.entries(currentProduct.optionGroupIdsBySize || {}).forEach(([sizeId, ids]) => {
+    if (sizeIds.includes(sizeId)) cleanedBySize[sizeId] = uniqueIds(ids);
+  });
+
+  const productData = applyPriceCompatibility({
+    id: fields.productId.value.trim() || makeId(fields.productName.value),
+    number: currentProduct.number,
+    name: fields.productName.value.trim(),
+    type: currentProduct.type,
+    thumb: currentProduct.thumb,
+    imageUrl: fields.productImageUrl.value.trim(),
+    ingredients: fields.productIngredients.value.trim(),
+    hidden: productStatusFields.hidden?.checked === true,
+    soldOut: productStatusFields.soldOut?.checked === true,
+    soldOutUntil: productStatusFields.soldOutUntil?.value || undefined,
+    optionGroupIds: uniqueIds(currentProduct.optionGroupIds),
+    optionGroupIdsBySize: Object.keys(cleanedBySize).length ? cleanedBySize : undefined
+  }, prices);
+  category.items[selectedProductIndex] = cleanObject(productData);
+  renderProducts();
+  renderAssignedGroups();
+}
+
+function addCategory() {
+  if (!config) config = createEmptyConfig();
+  config.sections = asArray(config.sections);
+  config.sections.push({
+    id: `kategori-${Date.now()}`,
+    title: "NY KATEGORI",
+    note: "",
+    imageClass: "pizza-strip",
+    items: []
+  });
+  selectedCategoryIndex = config.sections.length - 1;
+  selectedProductIndex = 0;
+  renderAll();
+  writeLiveConfig("Kategori lagt til i Firebase.");
+}
+
+function deleteCategory() {
+  if (config.sections.length <= 1) {
+    setStatus("Du må ha minst én kategori.");
+    return;
+  }
+  if (!confirm("Slette hele kategorien?")) return;
+  config.sections.splice(selectedCategoryIndex, 1);
+  selectedCategoryIndex = Math.max(0, selectedCategoryIndex - 1);
+  selectedProductIndex = 0;
+  renderAll();
+  writeLiveConfig("Kategori slettet fra Firebase.");
+}
+
+function addProduct() {
+  const category = selectedCategory();
+  if (!category) {
+    setStatus("Velg en kategori først.");
+    return;
+  }
+  category.items = asArray(category.items);
+  category.items.push({
+    id: `produkt-${Date.now()}`,
+    name: "",
+    ingredients: "",
+    thumb: "plate",
+    sizes: [{ id: "standard", label: "Pris", price: 0 }],
+    price: 0,
+    displayPrice: 0
+  });
+  selectedProductIndex = category.items.length - 1;
+  renderAll();
+  writeLiveConfig("Produkt lagt til i Firebase.");
+}
+
+function deleteProduct() {
+  const category = selectedCategory();
+  if (!selectedProduct()) return;
+  if (!confirm("Slette produktet?")) return;
+  category.items.splice(selectedProductIndex, 1);
+  selectedProductIndex = Math.max(0, selectedProductIndex - 1);
+  renderAll();
+  writeLiveConfig("Produkt slettet fra Firebase.");
+}
+
+function closeCategoryMenus() {
+  categoryButtons.querySelectorAll("[data-category-menu-panel]").forEach((panel) => {
+    panel.hidden = true;
+  });
+}
+
+function moveItem(list, fromIndex, toIndex) {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+  const [item] = list.splice(fromIndex, 1);
+  list.splice(toIndex, 0, item);
+}
+
+function assignGroupToSelectedProduct(groupId, area = "common") {
+  const product = selectedProduct();
+  if (!product || !groupId) return;
+
+  // Türkçe not: Bir grup aynı üründe sadece tek yere bağlanır.
+  // area = "common" ise bütün boylarda, area = size.id ise sadece o boyda görünür.
+  removeGroupFromAllAssignedAreas(product, groupId);
+
+  if (area === "common") {
+    product.optionGroupIds = uniqueIds(product.optionGroupIds);
+    product.optionGroupIds.push(groupId);
+  } else {
+    product.optionGroupIdsBySize = product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object" ? product.optionGroupIdsBySize : {};
+    product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]);
+    product.optionGroupIdsBySize[area].push(groupId);
   }
 
-  .order-stack-chevron {
-    display: none;
+  renderAssignedGroups();
+  scheduleSave();
+  setStatus(`Valggruppe lagt til (${areaLabel(area)}). Lagres automatisk.`);
+}
+
+function moveAssignedGroupToArea(groupId, fromArea, toArea) {
+  const product = selectedProduct();
+  if (!product || !groupId || !toArea) return;
+  assignGroupToSelectedProduct(groupId, toArea);
+}
+
+function unassignGroupFromSelectedProduct(groupId, area = "common") {
+  const product = selectedProduct();
+  if (!product || !groupId) return;
+
+  if (area === "common") {
+    product.optionGroupIds = uniqueIds(product.optionGroupIds).filter((id) => id !== groupId);
+  } else if (product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object") {
+    product.optionGroupIdsBySize[area] = uniqueIds(product.optionGroupIdsBySize[area]).filter((id) => id !== groupId);
+    if (!product.optionGroupIdsBySize[area].length) delete product.optionGroupIdsBySize[area];
   }
 
-  .order-detail-grid.modern {
-    grid-template-columns: 1fr;
+  renderAssignedGroups();
+  setStatus("Valggruppe fjernet. Klikk Oppdater produkt for å lagre.");
+}
+
+function removeGroupIdFromAllProducts(groupId) {
+  config.sections.forEach((section) => {
+    section.items.forEach((product) => {
+      product.optionGroupIds = asArray(product.optionGroupIds).filter((id) => id !== groupId);
+      if (product.optionGroupIdsBySize && typeof product.optionGroupIdsBySize === "object") {
+        Object.keys(product.optionGroupIdsBySize).forEach((sizeKey) => {
+          product.optionGroupIdsBySize[sizeKey] = asArray(product.optionGroupIdsBySize[sizeKey]).filter((id) => id !== groupId);
+        });
+      }
+    });
+  });
+}
+
+
+function duplicateOptionGroup(groupIndex) {
+  const source = config.optionGroups[groupIndex];
+  if (!source) return;
+  const copied = clone(source);
+  copied.id = `${source.id || "gruppe"}-copy-${Date.now()}`;
+  copied.title = `${source.title || "Valggruppe"} kopi`;
+  copied.options = asArray(copied.options).map((option) => ({
+    ...option,
+    id: `${option.id || "valg"}-copy-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  }));
+  config.optionGroups.splice(groupIndex + 1, 0, copied);
+  editingGroupIndex = groupIndex + 1;
+  renderGroupManager();
+  writeLiveConfig("Valggruppe kopiert.");
+}
+
+function deleteOptionGroup(groupIndex) {
+  const group = config.optionGroups[groupIndex];
+  if (!group || !confirm("Slette valggruppen?")) return;
+  config.optionGroups.splice(groupIndex, 1);
+  removeGroupIdFromAllProducts(group.id);
+  if (editingGroupIndex === groupIndex) editingGroupIndex = null;
+  else if (editingGroupIndex > groupIndex) editingGroupIndex -= 1;
+  renderAll();
+  writeLiveConfig("Valggruppe slettet fra Firebase.");
+}
+
+function addOptionGroup() {
+  if (!config) config = createEmptyConfig();
+  config.optionGroups = asArray(config.optionGroups);
+  config.optionGroups.push({
+    id: `gruppe-${Date.now()}`,
+    title: "Ny valggruppe",
+    type: "multiple",
+    required: false,
+    options: []
+  });
+  editingGroupIndex = config.optionGroups.length - 1;
+  renderGroupManager();
+  writeLiveConfig("Valggruppe lagt til i Firebase.");
+}
+
+function normalizeSingleGroupDefaults(group) {
+  if (!group || group.type !== "single") return;
+  group.options = asArray(group.options);
+  if (!group.options.length) return;
+  const defaultIndex = group.options.findIndex((option) => option.default);
+  const chosenIndex = defaultIndex >= 0 ? defaultIndex : 0;
+  group.options.forEach((option, index) => {
+    option.default = index === chosenIndex;
+  });
+}
+
+function addStrengthGroup() {
+  if (!config) config = createEmptyConfig();
+  config.optionGroups = asArray(config.optionGroups);
+  const baseId = "velg-styrke";
+  let id = baseId;
+  let counter = 2;
+  while (config.optionGroups.some((group) => group.id === id)) {
+    id = `${baseId}-${counter}`;
+    counter += 1;
+  }
+  config.optionGroups.push({
+    id,
+    title: "Velg styrke",
+    type: "single",
+    required: true,
+    options: [
+      { id: `${id}-mild`, label: "MILD", price: 0, default: true },
+      { id: `${id}-medium`, label: "MEDIUM", price: 0, default: false },
+      { id: `${id}-sterk`, label: "STERK", price: 0, default: false }
+    ]
+  });
+  editingGroupIndex = config.optionGroups.length - 1;
+  renderGroupManager();
+  writeLiveConfig("Styrkegruppe lagt til. Bruk + Legg til for å koble den til kebabproduktet.");
+}
+
+categoryButtons.addEventListener("click", (event) => {
+  const addProductInline = event.target.closest("[data-add-product-to-category]");
+  if (addProductInline) {
+    selectedCategoryIndex = Number(addProductInline.dataset.addProductToCategory);
+    selectedProductIndex = Math.max(0, (selectedCategory()?.items || []).length - 1);
+    addProduct();
+    return;
   }
 
-  .order-minutes-modern {
-    grid-template-columns: 44px minmax(70px, 1fr) auto 44px;
+  const menuToggle = event.target.closest("[data-category-menu]");
+  if (menuToggle) {
+    const panel = categoryButtons.querySelector(`[data-category-menu-panel="${menuToggle.dataset.categoryMenu}"]`);
+    if (panel) {
+      const shouldOpen = panel.hidden;
+      closeCategoryMenus();
+      panel.hidden = !shouldOpen;
+    }
+    return;
+  }
+  const menuAction = event.target.closest("[data-category-action]");
+  if (menuAction) {
+    selectedCategoryIndex = Number(menuAction.dataset.categoryIndex);
+    selectedProductIndex = null;
+    if (menuAction.dataset.categoryAction === "delete") deleteCategory();
+    else if (menuAction.dataset.categoryAction === "edit") {
+      editingCategoryIndex = selectedCategoryIndex;
+      renderAll();
+    } else if (menuAction.dataset.categoryAction === "close-edit") {
+      editingCategoryIndex = null;
+      renderAll();
+    }
+    else renderAll();
+    return;
+  }
+  const productPick = event.target.closest("[data-category-product]");
+  if (productPick) {
+    const [categoryIndex, productIndex] = productPick.dataset.categoryProduct.split(":").map(Number);
+    const wasOpen = selectedCategoryIndex === categoryIndex && selectedProductIndex === productIndex;
+    selectedCategoryIndex = categoryIndex;
+    selectedProductIndex = wasOpen ? null : productIndex;
+    pendingScrollToProduct = !wasOpen;
+    renderAll();
+    return;
+  }
+  const categoryPick = event.target.closest("[data-category]");
+  if (!categoryPick) return;
+  closeCategoryMenus();
+  const categoryIndex = Number(categoryPick.dataset.category);
+  const wasOpen = selectedCategoryIndex === categoryIndex;
+  selectedCategoryIndex = wasOpen ? null : categoryIndex;
+  selectedProductIndex = null;
+  renderAll();
+});
+
+function updateInlineCategoryField(event) {
+  const field = event.target.dataset.categoryField;
+  const editor = event.target.closest("[data-inline-category]");
+  if (!field || !editor) return;
+  const category = config.sections[Number(editor.dataset.inlineCategory)];
+  if (!category) return;
+  const value = event.target.type === "checkbox" ? event.target.checked : event.target.value.trim();
+  category[field] = value;
+  if (field === "title" && !category.id) category.id = makeId(event.target.value);
+  scheduleSave();
+}
+
+categoryButtons.addEventListener("input", updateInlineCategoryField);
+categoryButtons.addEventListener("change", updateInlineCategoryField);
+
+categoryButtons.addEventListener("dragstart", (event) => {
+  const product = event.target.closest("[data-product-drag]");
+  if (product) {
+    draggedProductIndex = Number(product.dataset.productDrag);
+    event.dataTransfer.effectAllowed = "move";
+    product.classList.add("dragging");
+    return;
   }
 
-  .order-soft-input {
-    font-size: 24px;
+  const category = event.target.closest("[data-category-drag]");
+  if (category) {
+    draggedCategoryIndex = Number(category.dataset.categoryDrag);
+    event.dataTransfer.effectAllowed = "move";
+    category.classList.add("dragging");
   }
-}
+});
 
+categoryButtons.addEventListener("dragover", (event) => {
+  if (event.target.closest("[data-category-drag], [data-product-drag]")) event.preventDefault();
+});
 
-/* ===== Fatih compact order list v2 ===== */
-.orders-workspace {
-  max-width: 1120px;
-}
-.orders-admin-card {
-  padding: 16px !important;
-  border-radius: 16px !important;
-}
-.orders-admin-header h1 {
-  font-size: 20px !important;
-}
-.orders-admin-header span,
-.orders-help {
-  font-size: 13px !important;
-}
-.orders-admin-toolbar {
-  margin: 10px 0 12px !important;
-  padding: 8px 12px !important;
-  border-radius: 12px !important;
-}
-.orders-admin-list {
-  gap: 9px !important;
-}
-.order-stack-card {
-  border-radius: 14px !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .045) !important;
-}
-.order-stack-summary {
-  padding: 12px 14px !important;
-  gap: 10px !important;
-}
-.order-stack-headline {
-  margin-bottom: 3px !important;
-}
-.order-stack-headline h2 {
-  font-size: 18px !important;
-}
-.order-stack-meta-line,
-.order-stack-preview {
-  font-size: 12px !important;
-  margin-top: 3px !important;
-}
-.order-stack-side {
-  min-width: 92px !important;
-}
-.order-stack-time {
-  font-size: 19px !important;
-}
-.order-stack-side small {
-  font-size: 11px !important;
-}
-.order-stack-chevron {
-  font-size: 20px !important;
-}
-.order-badge {
-  min-height: 24px !important;
-  padding: 0 9px !important;
-  font-size: 12px !important;
-}
-.order-stack-details {
-  padding: 0 14px 14px !important;
-}
-.order-detail-grid.modern {
-  margin: 12px 0 10px !important;
-  gap: 9px !important;
-}
-.order-detail-card {
-  border-radius: 12px !important;
-  padding: 10px !important;
-}
-.order-detail-card strong {
-  font-size: 14px !important;
-}
-.order-detail-card small {
-  font-size: 12px !important;
-}
-.order-receipt.modern {
-  border-radius: 12px !important;
-  padding: 10px 12px !important;
-}
-.order-line-row {
-  padding: 6px 0 !important;
-}
-.order-line-row p {
-  font-size: 11px !important;
-}
-.order-total-row {
-  font-size: 14px !important;
-  padding-top: 8px !important;
-  margin-top: 6px !important;
-}
-.order-actions-panel {
-  margin-top: 10px !important;
-  gap: 10px !important;
-}
-.order-minutes-modern {
-  border-radius: 14px !important;
-  padding: 6px !important;
-  grid-template-columns: 40px minmax(72px, 1fr) auto 40px !important;
-}
-.order-adjust-button {
-  min-height: 40px !important;
-  border-radius: 10px !important;
-}
-.order-soft-input {
-  min-height: 40px !important;
-  font-size: 22px !important;
-}
-.accept-order-button.modern,
-.cancel-order-button.modern,
-.print-order-button.modern,
-.order-inline-note {
-  min-height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 14px !important;
-}
-@media (max-width: 760px) {
-  .orders-workspace { max-width: none; }
-  .orders-admin-card { padding: 12px !important; }
-  .order-stack-summary { padding: 11px !important; }
-}
-
-
-/* ===== Fix: valggruppeyi ürüne eklemeyi kolaylaştır ===== */
-.option-group-row {
-  grid-template-columns: minmax(0, 1fr) auto 48px;
-}
-.quick-assign-group {
-  min-height: 38px;
-  padding: 0 12px;
-  border: 1px solid #e3e3e3;
-  background: #fff;
-  color: #2e6c3f;
-  border-radius: 10px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.quick-assign-group:hover {
-  border-color: #39a852;
-  background: #edf8ef;
-}
-@media (max-width: 760px) {
-  .option-group-row {
-    grid-template-columns: minmax(0, 1fr) 42px;
+categoryButtons.addEventListener("drop", (event) => {
+  event.preventDefault();
+  const productTarget = event.target.closest("[data-product-drag]");
+  if (draggedProductIndex !== null && productTarget) {
+    const toIndex = Number(productTarget.dataset.productDrag);
+    const items = selectedCategory()?.items || [];
+    moveItem(items, draggedProductIndex, toIndex);
+    selectedProductIndex = toIndex;
+    draggedProductIndex = null;
+    renderAll();
+    writeLiveConfig("Produktrekkefølge lagret.");
+    return;
   }
-  .quick-assign-group {
-    grid-column: 1 / -1;
-    width: 100%;
+
+  const categoryTarget = event.target.closest("[data-category-drag]");
+  if (draggedCategoryIndex !== null && categoryTarget) {
+    const toIndex = Number(categoryTarget.dataset.categoryDrag);
+    moveItem(config.sections, draggedCategoryIndex, toIndex);
+    selectedCategoryIndex = toIndex;
+    selectedProductIndex = 0;
+    draggedCategoryIndex = null;
+    renderAll();
+    writeLiveConfig("Kategorirekkefølge lagret.");
   }
+});
+
+categoryButtons.addEventListener("dragend", () => {
+  draggedCategoryIndex = null;
+  draggedProductIndex = null;
+  categoryButtons.querySelectorAll(".dragging").forEach((element) => element.classList.remove("dragging"));
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-category-menu], [data-category-menu-panel]")) closeCategoryMenus();
+  if (!event.target.closest("[data-group-menu], [data-group-menu-panel]")) closeGroupMenus();
+});
+
+if (assignedGroups) {
+  assignedGroups.addEventListener("click", (event) => {
+    const groupId = event.target.dataset.unassignGroup;
+    if (!groupId) return;
+    unassignGroupFromSelectedProduct(groupId, event.target.dataset.unassignArea || "common");
+  });
+
+  assignedGroups.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-assigned-visibility]");
+    if (!select) return;
+    moveAssignedGroupToArea(select.dataset.assignedGroup, select.dataset.assignedArea || "common", select.value || "common");
+  });
+
+  assignedGroups.addEventListener("dragover", (event) => {
+    if (!draggedGroupId) return;
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (!zone) return;
+    event.preventDefault();
+    zone.classList.add("drag-over");
+  });
+
+  assignedGroups.addEventListener("dragleave", (event) => {
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (zone) zone.classList.remove("drag-over");
+  });
+
+  assignedGroups.addEventListener("drop", (event) => {
+    const zone = event.target.closest("[data-assigned-zone]");
+    if (!zone || !draggedGroupId) return;
+    event.preventDefault();
+    zone.classList.remove("drag-over");
+    assignGroupToSelectedProduct(draggedGroupId, zone.dataset.assignedZone || "common");
+    draggedGroupId = null;
+    renderGroupManager();
+  });
 }
 
-/* Valggruppe actions: normal gruppe + rask styrkegruppe */
-.group-heading-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+if (optionGroupsAdmin) {
+  optionGroupsAdmin.addEventListener("input", (event) => {
+    const groupField = event.target.dataset.groupField;
+    if (groupField) {
+      const group = config.optionGroups[Number(event.target.dataset.groupIndex)];
+      if (!group) return;
+      if (groupField === "title") {
+        group.title = event.target.value;
+      } else if (groupField === "type") {
+        group.type = event.target.value;
+        normalizeSingleGroupDefaults(group);
+        renderGroupManager();
+      } else if (groupField === "required") {
+        group.required = event.target.value === "true";
+      }
+      scheduleSave();
+      return;
+    }
+
+    const optionRow = event.target.closest("[data-group-option]");
+    const optionField = event.target.dataset.groupOptionField;
+    if (!optionRow || !optionField) return;
+    const [groupIndex, optionIndex] = optionRow.dataset.groupOption.split(":").map(Number);
+    const option = config.optionGroups[groupIndex]?.options?.[optionIndex];
+    if (!option) return;
+    if (optionField === "price") option.price = getNumber(event.target.value) || 0;
+    else if (optionField === "default") {
+      const group = config.optionGroups[groupIndex];
+      const checked = event.target.value === "true";
+      if (group?.type === "single" && checked) {
+        group.options.forEach((item, index) => { item.default = index === optionIndex; });
+        renderGroupManager();
+      } else {
+        option.default = checked;
+      }
+    }
+    else {
+      option[optionField] = event.target.value;
+      if (!option.id || option.id.startsWith("valg-")) option.id = `${config.optionGroups[groupIndex].id}-${makeId(event.target.value)}`;
+    }
+    scheduleSave();
+  });
+
+  optionGroupsAdmin.addEventListener("change", (event) => {
+    event.target.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
+  optionGroupsAdmin.addEventListener("click", (event) => {
+    const menuToggle = event.target.closest("[data-group-menu]");
+    if (menuToggle) {
+      const panel = optionGroupsAdmin.querySelector(`[data-group-menu-panel="${menuToggle.dataset.groupMenu}"]`);
+      if (panel) {
+        const shouldOpen = panel.hidden;
+        closeGroupMenus();
+        panel.hidden = !shouldOpen;
+      }
+      return;
+    }
+
+    const groupAction = event.target.closest("[data-group-action]");
+    if (groupAction) {
+      const groupIndex = Number(groupAction.dataset.groupIndex);
+      const group = config.optionGroups[groupIndex];
+      if (!group) return;
+      closeGroupMenus();
+      if (groupAction.dataset.groupAction === "edit") {
+        editingGroupIndex = groupIndex;
+        renderGroupManager();
+      } else if (groupAction.dataset.groupAction === "close-edit") {
+        editingGroupIndex = null;
+        renderGroupManager();
+      } else if (groupAction.dataset.groupAction === "assign") {
+        assignGroupToSelectedProduct(group.id);
+        writeLiveConfig("Valggruppe lagt til på produktet.");
+      } else if (groupAction.dataset.groupAction === "copy") {
+        duplicateOptionGroup(groupIndex);
+      } else if (groupAction.dataset.groupAction === "delete") {
+        deleteOptionGroup(groupIndex);
+      }
+      return;
+    }
+
+    const assignGroupId = event.target.dataset.assignGroup;
+    if (assignGroupId) {
+      assignGroupToSelectedProduct(assignGroupId);
+      writeLiveConfig("Valggruppe lagt til på produktet.");
+      return;
+    }
+
+    const addOptionIndex = event.target.dataset.addGroupOption;
+    if (addOptionIndex !== undefined) {
+      const group = config.optionGroups[Number(addOptionIndex)];
+      if (!group) return;
+      group.options = asArray(group.options);
+      group.options.push({ id: `valg-${Date.now()}`, label: "Nytt valg", price: 0, default: group.type === "single" && group.options.length === 0 });
+      normalizeSingleGroupDefaults(group);
+      editingGroupIndex = Number(addOptionIndex);
+      renderGroupManager();
+      writeLiveConfig("Valg lagt til i gruppen.");
+      return;
+    }
+
+    const removeOption = event.target.dataset.removeGroupOption;
+    if (removeOption) {
+      const [groupIndex, optionIndex] = removeOption.split(":").map(Number);
+      config.optionGroups[groupIndex].options.splice(optionIndex, 1);
+      normalizeSingleGroupDefaults(config.optionGroups[groupIndex]);
+      editingGroupIndex = groupIndex;
+      renderGroupManager();
+      writeLiveConfig("Valg slettet fra gruppen.");
+    }
+  });
+
+  optionGroupsAdmin.addEventListener("dragstart", (event) => {
+    if (event.target.closest("input, select, textarea, [data-group-menu], [data-group-menu-panel]")) return;
+    const groupCard = event.target.closest("[data-group-card]");
+    if (!groupCard) return;
+    draggedGroupId = groupCard.dataset.groupCard;
+    draggedGroupIndex = Number(groupCard.dataset.groupIndex);
+    event.dataTransfer.effectAllowed = "copyMove";
+    groupCard.classList.add("dragging");
+  });
+
+  optionGroupsAdmin.addEventListener("dragover", (event) => {
+    if (!draggedGroupId) return;
+    const target = event.target.closest("[data-group-card]");
+    if (target) event.preventDefault();
+  });
+
+  optionGroupsAdmin.addEventListener("drop", (event) => {
+    const target = event.target.closest("[data-group-card]");
+    if (!target || draggedGroupIndex === null) return;
+    event.preventDefault();
+    const toIndex = Number(target.dataset.groupIndex);
+    if (Number.isFinite(toIndex) && toIndex !== draggedGroupIndex) {
+      moveItem(config.optionGroups, draggedGroupIndex, toIndex);
+      editingGroupIndex = toIndex;
+      renderGroupManager();
+      writeLiveConfig("Valggrupperekkefølge lagret.");
+    }
+    draggedGroupId = null;
+    draggedGroupIndex = null;
+  });
+
+  optionGroupsAdmin.addEventListener("dragend", () => {
+    draggedGroupId = null;
+    draggedGroupIndex = null;
+    optionGroupsAdmin.querySelectorAll(".dragging").forEach((element) => element.classList.remove("dragging"));
+    assignedGroups?.classList.remove("drag-over");
+  });
 }
 
-#addStrengthGroup {
-  border-color: #39a852;
-  background: #39a852;
-  color: #fff;
-  padding: 0 12px;
+if (productButtons) {
+  productButtons.addEventListener("click", (event) => {
+    const index = event.target.dataset.product;
+    if (index === undefined) return;
+    selectedProductIndex = Number(index);
+    renderProducts();
+    renderProductEditor();
+  });
 }
 
-.option-group-card.editing .group-option-row select[data-group-option-field="default"] {
-  min-width: 88px;
+document.addEventListener("pointerdown", unlockAdminOrderSound, { once: true });
+document.addEventListener("keydown", unlockAdminOrderSound, { once: true });
+
+siteSettingFields.forEach((field) => {
+  field.addEventListener("input", () => updateSiteSettingFromField(field));
+  field.addEventListener("change", () => updateSiteSettingFromField(field));
+});
+
+settingsTabs.forEach((button) => {
+  button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab || "basic"));
+});
+
+topNavButtons.forEach((button) => {
+  button.addEventListener("click", () => setAdminView(button.dataset.topNav || "menu"));
+});
+
+openSettingsButtons.forEach((button) => {
+  button.addEventListener("click", () => setAdminView(button.dataset.openSettings || "basic"));
+});
+
+closeSettingsButtons.forEach((button) => {
+  button.addEventListener("click", closeSettingsModal);
+});
+
+if (refreshOrdersButton) refreshOrdersButton.addEventListener("click", renderOrdersAdmin);
+if (refreshAnalyticsButton) refreshAnalyticsButton.addEventListener("click", renderAnalyticsAdmin);
+if (ordersAdminList) {
+  ordersAdminList.addEventListener("click", async (event) => {
+    const toggleButton = event.target.closest("[data-toggle-order]");
+    if (toggleButton) {
+      const orderId = toggleButton.dataset.toggleOrder;
+      expandedAdminOrderId = expandedAdminOrderId === orderId ? null : orderId;
+      renderOrdersAdmin();
+      return;
+    }
+
+    const adjustButton = event.target.closest("[data-adjust-ready]");
+    if (adjustButton) {
+      const orderId = adjustButton.dataset.adjustReady;
+      const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(orderId)}"]`);
+      if (input) {
+        const delta = Number(adjustButton.dataset.delta || 0);
+        input.value = sanitizeReadyMinutes(Number(input.value || 0) + delta);
+        const order = adminOrders.find((item) => item.id === orderId) || {};
+        const preview = ordersAdminList.querySelector(`[data-ready-preview="${CSS.escape(orderId)}"]`);
+        if (preview) preview.textContent = getOrderDetailTimeText(order, input.value || DEFAULT_READY_MINUTES);
+      }
+      return;
+    }
+
+    const printId = event.target.dataset.printOrder;
+    if (printId) {
+      await printOrderReceipt(printId);
+      return;
+    }
+    const acceptId = event.target.dataset.acceptOrder;
+    if (acceptId) {
+      const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(acceptId)}"]`);
+      await acceptOrder(acceptId, input?.value || DEFAULT_READY_MINUTES);
+      return;
+    }
+    const cancelId = event.target.dataset.cancelOrder;
+    if (cancelId) await cancelOrder(cancelId);
+  });
+
+  ordersAdminList.addEventListener("input", (event) => {
+    if (!event.target.dataset.readyMinutes) return;
+    event.target.value = String(sanitizeReadyMinutes(event.target.value || 1));
+    const orderId = event.target.dataset.readyMinutes;
+    pendingReadyMinutesByOrder[orderId] = event.target.value;
+    const order = adminOrders.find((item) => item.id === orderId) || {};
+    const preview = ordersAdminList.querySelector(`[data-ready-preview="${CSS.escape(orderId)}"]`);
+    if (preview) preview.textContent = getOrderDetailTimeText(order, event.target.value || DEFAULT_READY_MINUTES);
+  });
 }
 
 
-/* ===== Fatih fix: daha temiz admin ===== */
-/* Sağdaki + Legg til hızlı butonları kaldırıldı; ekleme için kartı açıp "Legg til på valgt produkt" kullanılır. */
-.quick-assign-group {
-  display: none !important;
+
+// TÜRKÇE: Sipariş kartlarında kalan dakika geri saysın diye panel açıkken sessizce yeniliyoruz.
+if (ordersAdminList && !adminOrdersUiRefreshTimer) {
+  adminOrdersUiRefreshTimer = window.setInterval(() => {
+    const ordersPage = document.querySelector('[data-admin-page="orders"]');
+    if (ordersPage?.classList.contains("active")) renderOrdersAdmin();
+  }, 30000);
 }
 
-/* Sayfa otomatik kaydettiği için köşedeki manuel kaydet/senkroniser butonları görünmez. */
-#reloadData,
-#saveData {
-  display: none !important;
+if (downloadBackupButton) {
+  downloadBackupButton.addEventListener("click", downloadFullBackup);
 }
 
-/* Sipariş listesinde hata olmasın, kartlar daha özet kalsın. */
-.order-stack-card:not(.open) .order-stack-details {
-  display: none !important;
+if (saveLocalBackupButton) {
+  saveLocalBackupButton.addEventListener("click", () => saveCurrentLocalBackup("manual-local"));
 }
 
-/* ===== Sipariş paneli: daha kompakt + 10 dk varsayılan akış ===== */
-.orders-workspace {
-  max-width: 1180px !important;
+if (restoreBackupFile) {
+  restoreBackupFile.addEventListener("change", async () => {
+    const file = restoreBackupFile.files?.[0];
+    pendingRestoreData = null;
+    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
+    if (!file) {
+      if (restoreBackupPreview) restoreBackupPreview.textContent = "Ingen fil valgt.";
+      return;
+    }
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = extractBackupData(parsed);
+      if (!data) throw new Error("Ugyldig yedekfil");
+      pendingRestoreData = data;
+      previewRestoreData(data, file.name);
+      if (restoreBackupNowButton) restoreBackupNowButton.disabled = false;
+    } catch (error) {
+      console.error(error);
+      if (restoreBackupPreview) restoreBackupPreview.textContent = "Kunne ikke lese filen. Velg en gyldig JSON-yedek.";
+    }
+  });
 }
 
-.orders-admin-card {
-  padding: 16px !important;
-  border-radius: 18px !important;
+if (restoreBackupNowButton) {
+  restoreBackupNowButton.addEventListener("click", () => restoreDataToFirebase(pendingRestoreData, "file-restore"));
 }
 
-.orders-admin-header h1 {
-  font-size: 20px !important;
+if (localBackupList) {
+  localBackupList.addEventListener("click", (event) => {
+    const backups = getLocalBackups();
+    const downloadIndex = event.target.dataset.downloadLocalBackup;
+    const restoreIndex = event.target.dataset.restoreLocalBackup;
+    const deleteIndex = event.target.dataset.deleteLocalBackup;
+
+    if (downloadIndex !== undefined) {
+      const backup = backups[Number(downloadIndex)];
+      if (!backup) return;
+      downloadTextFile(`kol-menu-lokal-yedek-${backupDateStamp()}.json`, JSON.stringify(backup, null, 2));
+      return;
+    }
+
+    if (restoreIndex !== undefined) {
+      const backup = backups[Number(restoreIndex)];
+      const data = extractBackupData(backup);
+      restoreDataToFirebase(data, "local-restore");
+      return;
+    }
+
+    if (deleteIndex !== undefined) {
+      if (!confirm("Slette denne lokale yedeken?")) return;
+      backups.splice(Number(deleteIndex), 1);
+      setLocalBackups(backups);
+      renderLocalBackups();
+    }
+  });
 }
 
-.orders-admin-header span,
-.orders-help {
-  font-size: 13px !important;
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && settingsModal && !settingsModal.hidden) closeSettingsModal();
+});
+
+[
+  fields.productId,
+  fields.productNumber,
+  fields.productName,
+  fields.productType,
+  fields.productThumb,
+  fields.productPrice,
+  fields.productMediumPrice,
+  fields.productLargePrice,
+  fields.productDisplayPrice,
+  fields.productImageUrl,
+  fields.productIngredients
+].filter(Boolean).forEach((field) => {
+  field.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.target.tagName === "TEXTAREA") return;
+    event.preventDefault();
+    productForm.requestSubmit();
+  });
+});
+
+if (productPriceRows) {
+  productPriceRows.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    productForm.requestSubmit();
+  });
+  productPriceRows.addEventListener("click", (event) => {
+    const removeIndex = event.target.dataset.removeProductPrice;
+    if (removeIndex === undefined) return;
+    const prices = readProductPriceListFromEditor();
+    if (prices.length <= 1) return;
+    prices.splice(Number(removeIndex), 1);
+    renderProductPrices({ sizes: prices });
+    renderAssignedGroups();
+    setStatus("Pris fjernet. Klikk Oppdater produkt for å lagre.");
+  });
 }
 
-.orders-admin-toolbar {
-  padding: 8px 12px !important;
-  margin: 10px 0 14px !important;
+if (addProductPriceButton) {
+  addProductPriceButton.addEventListener("click", () => {
+    const prices = readProductPriceListFromEditor();
+    const nextLabel = prices.some((size) => size.id === "large") ? "XXL" : "Stor";
+    prices.push({ id: normalizeSizeId(nextLabel), label: nextLabel, price: 0 });
+    renderProductPrices({ sizes: prices });
+    renderAssignedGroups();
+    setStatus("Ny pris lagt til. Klikk Oppdater produkt for å lagre.");
+  });
 }
 
-.orders-admin-list {
-  gap: 9px !important;
+
+// Türkçe not: Input'a tıklayınca içindeki yazı seçilir. Böylece silmeden direkt yeni değer yazabilirsin.
+document.addEventListener("focusin", (event) => {
+  const field = event.target;
+  if (!field.matches("input[type='text'], input[type='number'], input[type='url'], input[type='email'], input:not([type]), textarea")) return;
+  window.setTimeout(() => {
+    try { field.select(); } catch (error) {}
+  }, 0);
+});
+
+productForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  updateProductFromFields();
+  writeLiveConfig("Produkt lagret i Firebase.");
+});
+
+// TÜRKÇE: Bazı butonları tasarımdan kaldırırsak JS burada patlamasın diye güvenli bağlama kullanıyoruz.
+function bindClick(selector, handler) {
+  const element = document.querySelector(selector);
+  if (element) element.addEventListener("click", handler);
 }
 
-.order-stack-card {
-  border-radius: 14px !important;
-  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.045) !important;
+bindClick("#addCategory", addCategory);
+bindClick("#addCategoryBottom", addCategory);
+bindClick("#deleteCategory", deleteCategory);
+bindClick("#addProduct", addProduct);
+if (addOptionGroupButton) addOptionGroupButton.addEventListener("click", addOptionGroup);
+if (addStrengthGroupButton) addStrengthGroupButton.addEventListener("click", addStrengthGroup);
+bindClick("#deleteProduct", deleteProduct);
+bindClick("#reloadData", loadData);
+bindClick("#saveData", saveData);
+
+const extrasPanel = document.querySelector(".extras-panel");
+if (extrasPanel) {
+  extrasPanel.addEventListener("input", (event) => {
+    const row = event.target.closest(".option-row");
+    if (!row) return;
+    const option = config[row.dataset.optionKey][Number(row.dataset.optionIndex)];
+    const field = event.target.dataset.optionField;
+    option[field] = field === "price" ? getNumber(event.target.value) || 0 : event.target.value;
+    scheduleSave();
+  });
+
+  extrasPanel.addEventListener("click", (event) => {
+    const addKey = event.target.dataset.addOption;
+    if (addKey) {
+      config[addKey].push({ id: `${addKey}-${Date.now()}`, group: "Tillegg", label: "Nytt valg", price: 0 });
+      renderOptions();
+      writeLiveConfig("Valg lagt til i Firebase.");
+      return;
+    }
+    const remove = event.target.dataset.removeOption;
+    if (!remove) return;
+    const [key, index] = remove.split(":");
+    config[key].splice(Number(index), 1);
+    renderOptions();
+    writeLiveConfig("Valg slettet fra Firebase.");
+  });
 }
 
-.order-stack-summary {
-  padding: 12px 14px !important;
-  gap: 10px !important;
-  grid-template-columns: minmax(0, 1fr) 118px 24px !important;
+function startRealtimeSync() {
+  setStatus("Kobler til Firebase...");
+  renderCachedMenuIfAvailable();
+  menuRef.on(
+    "value",
+    async (snapshot) => {
+      const value = snapshot.val();
+
+      if (!hasValidConfig(value)) {
+        // TÜRKÇE: Firebase boşsa otomatik test menüsü basmıyoruz.
+        // Sadece boş panel açıyoruz; sen kategori ekleyince ilk kayıt Firebase'e yazılır.
+        config = createEmptyConfig();
+        selectedCategoryIndex = null;
+        selectedProductIndex = null;
+        firebaseReady = true;
+        if (!isEditingField()) renderAll();
+        setStatus("Firebase er tom. Klar til å lage ny meny uten menu-data.js.");
+        return;
+      }
+
+      saveAdminMenuCache(value);
+      config = normalizeConfig(value);
+      if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+      if (!selectedCategory()) selectedProductIndex = null;
+      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
+      firebaseReady = true;
+      if (!isEditingField()) renderAll();
+      setStatus("Koblet til Firebase. Endringer lagres automatisk.");
+    },
+    (error) => {
+      console.error(error);
+      const hadCache = renderCachedMenuIfAvailable("Kunne ikke koble til Firebase. Viser siste lokale meny.");
+      if (!hadCache) setStatus("Kunne ikke koble til Firebase. Sjekk nett/Firebase-regler.");
+    }
+  );
 }
 
-.order-stack-headline {
-  gap: 8px !important;
-  margin-bottom: 4px !important;
-}
-
-.order-stack-headline h2 {
-  font-size: 18px !important;
-}
-
-.order-stack-meta-line,
-.order-stack-preview {
-  font-size: 12px !important;
-  gap: 6px !important;
-}
-
-.order-stack-preview {
-  margin-top: 5px !important;
-}
-
-.order-stack-time {
-  font-size: 22px !important;
-}
-
-.order-stack-side small {
-  font-size: 11px !important;
-}
-
-.order-stack-details {
-  padding: 0 14px 14px !important;
-}
-
-.order-detail-grid.modern {
-  margin: 12px 0 10px !important;
-  gap: 8px !important;
-}
-
-.order-detail-card {
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
-}
-
-.order-detail-card strong {
-  font-size: 14px !important;
-}
-
-.order-receipt.modern {
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
-}
-
-.order-line-row {
-  padding: 6px 0 !important;
-}
-
-.order-total-row {
-  padding-top: 8px !important;
-  margin-top: 6px !important;
-  font-size: 15px !important;
-}
-
-.order-actions-panel {
-  grid-template-columns: minmax(210px, 300px) minmax(0, 1fr) !important;
-  gap: 10px !important;
-  margin-top: 12px !important;
-}
-
-.order-minutes-modern {
-  grid-template-columns: 38px minmax(66px, 1fr) auto 38px !important;
-  border-radius: 14px !important;
-  padding: 6px !important;
-}
-
-.order-adjust-button {
-  min-height: 38px !important;
-  border-radius: 10px !important;
-  font-size: 18px !important;
-}
-
-.order-soft-input {
-  min-height: 38px !important;
-  font-size: 22px !important;
-}
-
-.order-soft-label,
-.order-ready-preview {
-  font-size: 12px !important;
-}
-
-.accept-order-button.modern,
-.cancel-order-button.modern,
-.print-order-button.modern,
-.order-inline-note {
-  min-height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 14px !important;
-  font-size: 14px !important;
-}
-
-@media (max-width: 760px) {
-  .order-stack-summary {
-    grid-template-columns: 1fr !important;
-  }
-  .order-stack-side {
-    text-align: left !important;
-  }
-  .order-actions-panel {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ===== Sipariş ayırma ve tekrar azaltma düzeltmesi ===== */
-.orders-help[aria-hidden="true"] {
-  display: none !important;
-}
-
-.orders-group {
-  display: grid;
-  gap: 12px;
-}
-
-.orders-group + .orders-group {
-  margin-top: 26px;
-  padding-top: 22px;
-  border-top: 2px solid #e7e7e7;
-}
-
-.orders-group-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #68727d;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.orders-group-title strong {
-  min-width: 26px;
-  height: 26px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #f0f2f4;
-  color: #34404c;
-  font-size: 13px;
-  letter-spacing: 0;
-}
-
-.orders-group.pending-group .orders-group-title span {
-  color: #bf6900;
-}
-
-.orders-group.finished-group .orders-group-title span {
-  color: #4a5968;
-}
-
-.orders-group-list {
-  display: grid;
-  gap: 12px;
-}
-
-.order-stack-card.accepted,
-.order-stack-card.cancelled {
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
-}
-
-/* ===== Duplicate cleanup: detail area should not repeat customer name ===== */
-.order-detail-grid.modern.compact-two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 760px) {
-  .order-detail-grid.modern.compact-two {
-    grid-template-columns: 1fr;
-  }
-}
+startRealtimeSync();
+listenForOrders();

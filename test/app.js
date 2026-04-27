@@ -475,13 +475,61 @@ function orderSortTime(order = {}) {
   return new Date(order.updatedAt || order.acceptedAt || order.cancelledAt || order.createdAt || 0).getTime() || 0;
 }
 
+function orderCreatedDate(order = {}) {
+  const date = new Date(order.createdAt || order.updatedAt || order.acceptedAt || order.cancelledAt || Date.now());
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function isSameLocalDay(a, b = new Date()) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function isTodayOrder(order = {}) {
+  return isSameLocalDay(orderCreatedDate(order), new Date());
+}
+
+function orderAgeLabel(order = {}) {
+  const created = orderCreatedDate(order);
+  if (isSameLocalDay(created, new Date())) return "I dag";
+  const startToday = new Date();
+  startToday.setHours(0, 0, 0, 0);
+  const startOrder = new Date(created);
+  startOrder.setHours(0, 0, 0, 0);
+  const days = Math.max(1, Math.round((startToday - startOrder) / 86400000));
+  if (days === 1) return "I går";
+  return `${days} dager siden`;
+}
+
+function formatOrderProfileDate(order = {}) {
+  return orderCreatedDate(order).toLocaleString("nb-NO", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function profileSecondaryText(order = {}) {
+  const status = order.status || "pending";
+  if (isTodayOrder(order)) {
+    if (status === "accepted") return orderReadySummaryText(order);
+    if (status === "pending") return isOrderWaitingForOpening(order)
+      ? `Behandles når vi åpner kl. ${formatClock(order.processableAfter)}`
+      : "Venter på svar fra restauranten";
+    if (status === "cancelled") return "Kansellert av restauranten";
+  }
+  return `${orderAgeLabel(order)} · ${formatOrderProfileDate(order)}`;
+}
+
 function saveRecentOrders(orders) {
   const sorted = asArray(orders)
     .map(normalizeCustomerOrder)
     .filter((order) => order && order.id)
     .slice()
     .sort((a, b) => orderSortTime(b) - orderSortTime(a));
-  localStorage.setItem(recentOrdersKey, JSON.stringify(sorted.slice(0, 2)));
+  localStorage.setItem(recentOrdersKey, JSON.stringify(sorted.slice(0, 20)));
 }
 
 function getOrderReadState() {
@@ -863,7 +911,12 @@ function refreshOrderCountdowns(order = null) {
   document.querySelectorAll("[data-customer-ready], [data-profile-ready]").forEach((target) => {
     const orderId = target.dataset.customerReady || target.dataset.profileReady;
     const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
-    if (!current || (current.status || "pending") !== "accepted") return;
+    if (!current) return;
+    if (target.dataset.profileReady !== undefined) {
+      target.textContent = profileSecondaryText(current);
+      return;
+    }
+    if ((current.status || "pending") !== "accepted") return;
     target.textContent = orderReadySummaryText(current);
   });
 }
@@ -911,33 +964,65 @@ function profileOrderCardHtml(order = {}) {
   const isExpanded = expandedProfileOrderId === order.id;
   const unread = isOrderUnread(order);
   const title = orderStatusTitle(status);
+  const isToday = isTodayOrder(order);
+  const ageLabel = orderAgeLabel(order);
+  const secondary = profileSecondaryText(order);
+  const details = isExpanded ? orderLinesHtml(order) : "";
   return `
-    <article class="profile-order-card ${status} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
+    <article class="profile-order-card ${status} ${isToday ? "today-order" : "old-order"} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
-        <span>
-          <strong>${title}</strong>
-          <small><span data-profile-ready="${escapeAttribute(order.id || "")}">${orderPickupText(order)}</span> · ${formatPrice(order.total || 0)}</small>
+        <span class="profile-order-main">
+          <span class="profile-order-title-row">
+            <strong>${title}</strong>
+            <em class="profile-age-pill">${escapeAttribute(ageLabel)}</em>
+          </span>
+          <small>
+            <span data-profile-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(secondary)}</span>
+            <span class="profile-dot-separator">·</span>
+            <span>${formatPrice(order.total || 0)}</span>
+          </small>
         </span>
         <span class="profile-order-side">
           <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
           <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
         </span>
       </button>
-      ${isExpanded ? `<div class="profile-order-details">${orderLinesHtml(order)}</div>` : ""}
+      ${isExpanded ? `<div class="profile-order-details">${details}</div>` : ""}
     </article>
   `;
 }
 
 function renderProfileOrders() {
   if (!profileOrdersEl) return;
-  const orders = getRecentOrders().slice().sort((a, b) => orderSortTime(b) - orderSortTime(a)).slice(0, 2);
+  const orders = getRecentOrders().slice().sort((a, b) => orderSortTime(b) - orderSortTime(a)).slice(0, 20);
   if (!orders.length) {
     profileOrdersEl.innerHTML = `<p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>`;
     return;
   }
+
+  const todayOrders = orders.filter(isTodayOrder);
+  const oldOrders = orders.filter((order) => !isTodayOrder(order));
+
   profileOrdersEl.innerHTML = `
     <div class="profile-order-list-note">Trykk på en bestilling for å se detaljer.</div>
-    ${orders.map(profileOrderCardHtml).join("")}
+    ${todayOrders.length ? `
+      <section class="profile-order-section profile-today-section">
+        <div class="profile-section-title">
+          <strong>Dagens bestillinger</strong>
+          <span>${todayOrders.length}</span>
+        </div>
+        ${todayOrders.map(profileOrderCardHtml).join("")}
+      </section>
+    ` : ""}
+    ${oldOrders.length ? `
+      <section class="profile-order-section profile-old-section">
+        <div class="profile-section-title">
+          <strong>Tidligere bestillinger</strong>
+          <span>${oldOrders.length}</span>
+        </div>
+        ${oldOrders.map(profileOrderCardHtml).join("")}
+      </section>
+    ` : ""}
   `;
 }
 
@@ -967,7 +1052,7 @@ async function syncRecentOrdersFromFirebase() {
   const orders = getRecentOrders();
   if (!orders.length) return;
   const updated = [];
-  for (const order of orders.slice(0, 2)) {
+  for (const order of orders.slice(0, 20)) {
     if (!order.id) continue;
     try {
       const fresh = await fetchOrder(order.id);
