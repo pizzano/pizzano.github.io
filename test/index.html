@@ -4,13 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="styles.css?v=20260427-40">
+    <link rel="stylesheet" href="styles.css?v=20260427-42">
   </head>
   <body class="menu-loading">
     <header class="appbar">
       <strong id="siteNameText">K&Oslash;L GRILL &amp; PIZZA</strong>
       <div class="appbar-actions">
         <button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
+        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger">&#128100;<span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
         <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv">
           <svg class="cart-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
             <path d="M6 6h15l-1.5 8.5h-12L6 6Z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
@@ -124,6 +125,34 @@
       </section>
     </div>
 
+
+    <div class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle" hidden>
+      <button class="profile-backdrop" type="button" data-close-profile aria-label="Lukk profil"></button>
+      <section class="profile-panel">
+        <div class="profile-header">
+          <div>
+            <h2 id="profileTitle">Min profil</h2>
+            <p>Her ser du ventende og siste bestillinger på denne telefonen.</p>
+          </div>
+          <button class="close-button" id="closeProfile" type="button" aria-label="Lukk profil">&times;</button>
+        </div>
+        <div class="profile-body" id="profileOrders">
+          <p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="order-live-modal" id="orderLiveModal" role="dialog" aria-modal="true" aria-labelledby="orderLiveTitle" hidden>
+      <button class="order-live-backdrop" type="button" data-close-order-live aria-label="Lukk status"></button>
+      <section class="order-live-panel">
+        <div class="order-live-header">
+          <h2 id="orderLiveTitle">Bestillingsstatus</h2>
+          <button class="close-button" id="closeOrderLive" type="button" aria-label="Lukk status">&times;</button>
+        </div>
+        <div id="orderLiveContent" class="order-live-content"></div>
+      </section>
+    </div>
+
     <div class="cart-modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
       <button class="cart-backdrop" type="button" data-close-cart aria-label="Lukk handlekurv"></button>
       <aside class="cart-panel" id="cartPanel">
@@ -191,7 +220,7 @@
     </div>
 
     <!-- Opsiyonel modül: bu dosya silinse bile site çalışır, sadece sepet animasyonu kapanır. -->
-    <script src="modules/cart-animation.js?v=20260427-40" onerror="console.warn('cart-animation.js bulunamadı; sistem animasyonsuz çalışır.')"></script>
-    <script src="app.js?v=20260427-40"></script>
+    <script src="modules/cart-animation.js?v=20260427-42" onerror="console.warn('cart-animation.js mangler; siden fungerer uten animasjon.')"></script>
+    <script src="app.js?v=20260427-42"></script>
   </body>
 </html>

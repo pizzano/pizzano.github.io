@@ -162,6 +162,8 @@ let siteSettings = defaultSiteSettings();
 
 const storageKey = "kol-grill-cart";
 const recentOrdersKey = "kol-grill-recent-orders-v1";
+const customerStorageKey = "kol-grill-customer-v1";
+const activeOrderKey = "kol-grill-active-order-v1";
 
 // TÜRKÇE: Menü verisini tarayıcıda saklıyoruz.
 // Böylece sayfa yenilenince Firebase beklenirken boş/yanıp sönen ekran olmaz.
@@ -203,6 +205,8 @@ if (brandLogoImage) {
 
 const cartCount = document.querySelector("#cartCount");
 const cartModal = document.querySelector("#cartModal");
+const cartPanel = document.querySelector("#cartPanel");
+const cartTitle = document.querySelector("#cartTitle");
 const cartToggle = document.querySelector(".cart-toggle");
 const infoToggle = document.querySelector("#infoToggle");
 const infoModal = document.querySelector("#infoModal");
@@ -239,6 +243,14 @@ const pickupTimeInput = document.querySelector("#pickupTime");
 const pickupHelp = document.querySelector("#pickupHelp");
 const orderStatusBox = document.querySelector("#orderStatusBox");
 const recentOrdersEl = document.querySelector("#recentOrders");
+const profileToggle = document.querySelector("#profileToggle");
+const profileModal = document.querySelector("#profileModal");
+const closeProfile = document.querySelector("#closeProfile");
+const profileOrdersEl = document.querySelector("#profileOrders");
+const profileOrderDot = document.querySelector("#profileOrderDot");
+const orderLiveModal = document.querySelector("#orderLiveModal");
+const orderLiveContent = document.querySelector("#orderLiveContent");
+const closeOrderLive = document.querySelector("#closeOrderLive");
 
 let cart = loadCart();
 let selectedProduct = null;
@@ -269,11 +281,46 @@ function saveCart() {
 
 
 // ============================================================
-// SİPARİŞ MODÜLÜ (MÜŞTERİ TARAFI)
+// BESTILLINGSMODUL (KUNDE)
 // ------------------------------------------------------------
 // Sepetteki ürünler Firebase /orders altına gönderilir.
-// Müşteri sipariş durumunu aynı ekranda bekler ve son 2 siparişini görür.
+// Kunden kan se bestillingsstatus og de siste 2 bestillingene.
 // ============================================================
+
+function loadSavedCustomerInfo() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(customerStorageKey) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveCustomerInfo() {
+  const customer = getCustomerInfo();
+  localStorage.setItem(customerStorageKey, JSON.stringify(customer));
+}
+
+function prefillCustomerInfo() {
+  const saved = loadSavedCustomerInfo();
+  if (customerFirstName && !customerFirstName.value) customerFirstName.value = saved.firstName || "";
+  if (customerLastName && !customerLastName.value) customerLastName.value = saved.lastName || "";
+  if (customerPhone && !customerPhone.value) customerPhone.value = saved.phone || "";
+}
+
+function setActiveOrderId(orderId) {
+  if (orderId) localStorage.setItem(activeOrderKey, orderId);
+}
+
+function clearActiveOrderId(orderId) {
+  const current = localStorage.getItem(activeOrderKey);
+  if (!orderId || current === orderId) localStorage.removeItem(activeOrderKey);
+}
+
+function getActiveOrderId() {
+  return localStorage.getItem(activeOrderKey) || "";
+}
+
 function getRecentOrders() {
   try {
     const parsed = JSON.parse(localStorage.getItem(recentOrdersKey) || "[]");
@@ -291,13 +338,17 @@ function rememberRecentOrder(order) {
   const list = getRecentOrders().filter((item) => item.id !== order.id);
   list.unshift(order);
   saveRecentOrders(list);
+  if ((order.status || "pending") === "pending") setActiveOrderId(order.id);
+  if (["accepted", "cancelled"].includes(order.status || "")) clearActiveOrderId(order.id);
   renderRecentOrders();
+  renderProfileOrders();
+  updateProfileDot();
 }
 
 function orderStatusText(status = "pending") {
-  if (status === "accepted") return "Siparişiniz alındı";
-  if (status === "cancelled") return "Sipariş iptal edildi";
-  return "Onay bekleniyor";
+  if (status === "accepted") return "Bestillingen er godkjent";
+  if (status === "cancelled") return "Bestillingen er kansellert";
+  return "Venter på godkjenning";
 }
 
 function parseTimeParts(value = "") {
@@ -420,23 +471,76 @@ function buildOrderPayload() {
   };
 }
 
+function orderLinesHtml(order = {}) {
+  const lines = Array.isArray(order.items) ? order.items : [];
+  if (!lines.length) return "";
+  return `
+    <div class="customer-receipt-lines">
+      ${lines.map((line) => {
+        const details = [line.sizeLabel || line.size, ...(line.extras || [])].filter(Boolean).join(" · ");
+        return `
+          <div class="customer-receipt-line">
+            <div>
+              <strong>${Number(line.quantity || 1)}x ${escapeAttribute(line.name || "Produkt")}</strong>
+              ${details ? `<p>${escapeAttribute(details)}</p>` : ""}
+              ${line.note ? `<p>${escapeAttribute(line.note)}</p>` : ""}
+            </div>
+            <strong>${formatPrice(line.total || 0)}</strong>
+          </div>
+        `;
+      }).join("")}
+      <div class="customer-receipt-total"><span>Sluttsum</span><strong>${formatPrice(order.total || 0)}</strong></div>
+    </div>
+  `;
+}
+
+function orderPickupText(order = {}) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Henting: ${new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`;
+  }
+  return "Henting: Snarest mulig";
+}
+
+function orderStatusHtml(order = {}, options = {}) {
+  const status = order.status || "pending";
+  const ready = status === "accepted" ? `<p class="order-live-ok"><strong>Bestillingen er mottatt. Klar om cirka ${order.readyMinutes || 30} minutter.</strong></p>` : "";
+  const waiting = status === "pending" ? `<p>Bestillingen er sendt. Vennligst vent på bekreftelse fra restauranten.</p>` : "";
+  const cancelled = status === "cancelled" ? `<p class="order-live-cancelled">Bestillingen er kansellert. Kontakt restauranten hvis du har spørsmål.</p>` : "";
+  return `
+    <div class="order-live-status ${status}">
+      <h3>${orderStatusText(status)}</h3>
+      ${waiting}${ready}${cancelled}
+      <p>${orderPickupText(order)}</p>
+      <small>Ordrenr: ${String(order.id || "").slice(-7).toUpperCase()}</small>
+    </div>
+    ${options.includeReceipt ? orderLinesHtml(order) : ""}
+  `;
+}
+
 function renderOrderStatus(order) {
   if (!orderStatusBox) return;
   if (!order) {
     orderStatusBox.hidden = true;
     return;
   }
-  const status = order.status || "pending";
   orderStatusBox.hidden = false;
-  orderStatusBox.className = `order-status-box ${status}`;
-  const ready = status === "accepted" ? `<p><strong>Klar om cirka ${order.readyMinutes || 30} minutter.</strong></p>` : "";
-  const cancelled = status === "cancelled" ? `<p>Restauranten kunne dessverre ikke ta imot bestillingen.</p>` : "";
-  orderStatusBox.innerHTML = `
-    <h3>${orderStatusText(status)}</h3>
-    ${status === "pending" ? "<p>Venter på at restauranten skal godkjenne bestillingen.</p>" : ""}
-    ${ready}${cancelled}
-    <small>Ordrenr: ${String(order.id || "").slice(-7).toUpperCase()}</small>
-  `;
+  orderStatusBox.className = `order-status-box ${order.status || "pending"}`;
+  orderStatusBox.innerHTML = orderStatusHtml(order, { includeReceipt: false });
+}
+
+function renderOrderLiveModal(order, forceOpen = false) {
+  if (!orderLiveModal || !orderLiveContent || !order) return;
+  orderLiveContent.innerHTML = orderStatusHtml(order, { includeReceipt: true });
+  if (forceOpen || !orderLiveModal.hidden) {
+    orderLiveModal.hidden = false;
+    document.body.classList.add("order-live-open");
+  }
+}
+
+function closeOrderLiveModal() {
+  if (!orderLiveModal) return;
+  orderLiveModal.hidden = true;
+  document.body.classList.remove("order-live-open");
 }
 
 function renderRecentOrders() {
@@ -455,6 +559,48 @@ function renderRecentOrders() {
   `).join("");
 }
 
+function renderProfileOrders() {
+  if (!profileOrdersEl) return;
+  const orders = getRecentOrders().slice(0, 2);
+  if (!orders.length) {
+    profileOrdersEl.innerHTML = `<p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>`;
+    return;
+  }
+  profileOrdersEl.innerHTML = orders.map((order) => `
+    <article class="profile-order-card ${order.status || "pending"}">
+      ${orderStatusHtml(order, { includeReceipt: true })}
+    </article>
+  `).join("");
+}
+
+function updateProfileDot() {
+  if (!profileOrderDot) return;
+  profileOrderDot.hidden = !getRecentOrders().some((order) => (order.status || "pending") === "pending");
+}
+
+function openProfileModal() {
+  renderProfileOrders();
+  updateProfileDot();
+  if (!profileModal) return;
+  profileModal.hidden = false;
+  profileToggle?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("profile-open");
+}
+
+function closeProfileModal() {
+  if (!profileModal) return;
+  profileModal.hidden = true;
+  profileToggle?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("profile-open");
+}
+
+function resumeActiveOrderPolling() {
+  const activeId = getActiveOrderId();
+  const recentPending = getRecentOrders().find((order) => (order.status || "pending") === "pending");
+  const orderId = activeId || recentPending?.id;
+  if (orderId) startOrderPolling(orderId);
+}
+
 async function fetchOrder(orderId) {
   const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
   if (!response.ok) throw new Error("Kunne ikke lese ordre");
@@ -470,6 +616,8 @@ function startOrderPolling(orderId) {
       if (!order) return;
       rememberRecentOrder(order);
       renderOrderStatus(order);
+      renderOrderLiveModal(order);
+      renderCart();
       if (order.status === "accepted" || order.status === "cancelled") {
         window.clearInterval(currentOrderPollTimer);
       }
@@ -484,11 +632,17 @@ async function submitOrder() {
   if (error) {
     renderOrderStatus({ status: "cancelled", id: "", total: currentCartTotal(), items: [], readyMinutes: 0 });
     if (orderStatusBox) orderStatusBox.innerHTML = `<h3>Kan ikke sende bestilling</h3><p>${error}</p>`;
+    if (orderLiveContent && orderLiveModal) {
+      orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Kan ikke sende bestilling</h3><p>${error}</p></div>`;
+      orderLiveModal.hidden = false;
+      document.body.classList.add("order-live-open");
+    }
     return;
   }
   checkoutButton.disabled = true;
   checkoutButton.textContent = "Sender...";
   try {
+    saveCustomerInfo();
     const payload = buildOrderPayload();
     const response = await fetch(firebaseOrdersUrl, {
       method: "POST",
@@ -500,6 +654,7 @@ async function submitOrder() {
     const order = { id: result.name, ...payload };
     rememberRecentOrder(order);
     renderOrderStatus(order);
+    renderOrderLiveModal(order, true);
     startOrderPolling(result.name);
     cart = [];
     saveCart();
@@ -1429,20 +1584,29 @@ function animateProductIntoCart() {
   return Promise.resolve();
 }
 
+function getCartStatusOrder() {
+  const orders = getRecentOrders();
+  return orders.find((order) => (order.status || "pending") === "pending") || orders[0] || null;
+}
+
 // Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
 function renderCart() {
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
   const taxValue = Math.round((cartSubtotal * 15 / 115) * 100) / 100;
+  const statusOrder = getCartStatusOrder();
+  const showOnlyOrderStatus = cart.length === 0 && Boolean(statusOrder);
+
+  if (cartPanel) cartPanel.classList.toggle("cart-order-only", showOnlyOrderStatus);
+  if (cartTitle) cartTitle.textContent = showOnlyOrderStatus ? "Bestillingsstatus" : "Handlekurv";
 
   cartCount.textContent = itemCount;
   subtotal.textContent = formatPrice(cartSubtotal);
   tax.textContent = formatPrice(taxValue);
   total.textContent = formatPrice(cartSubtotal);
-  const hasOrderInfo = Boolean((orderStatusBox && !orderStatusBox.hidden) || getRecentOrders().length);
-  cartEmpty.hidden = cart.length > 0 || hasOrderInfo;
+  cartEmpty.hidden = cart.length > 0 || showOnlyOrderStatus;
   cartItems.hidden = cart.length === 0;
-  cartSummary.hidden = cart.length === 0 && !hasOrderInfo;
+  cartSummary.hidden = cart.length === 0 && !showOnlyOrderStatus;
   clearCart.hidden = cart.length === 0;
   checkoutButton.disabled = cart.length === 0 || !isOrderingOpenNow();
 
@@ -1466,6 +1630,15 @@ function renderCart() {
       `
     )
     .join("");
+
+  if (showOnlyOrderStatus && orderStatusBox) {
+    orderStatusBox.hidden = false;
+    orderStatusBox.className = `order-status-box ${statusOrder.status || "pending"}`;
+    orderStatusBox.innerHTML = orderStatusHtml(statusOrder, { includeReceipt: true });
+  } else if (orderStatusBox) {
+    orderStatusBox.hidden = true;
+  }
+
   updatePickupControls();
   renderRecentOrders();
   scheduleCartReminder();
@@ -1585,6 +1758,26 @@ cartToggle.addEventListener("click", () => { updatePickupControls(); renderRecen
 checkoutButton.addEventListener("click", submitOrder);
 document.querySelectorAll('input[name="pickupMode"]').forEach((input) => input.addEventListener("change", updatePickupControls));
 if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupControls);
+[customerFirstName, customerLastName, customerPhone].forEach((field) => {
+  if (!field) return;
+  field.addEventListener("change", saveCustomerInfo);
+  field.addEventListener("blur", saveCustomerInfo);
+});
+
+if (profileToggle) profileToggle.addEventListener("click", openProfileModal);
+if (closeProfile) closeProfile.addEventListener("click", closeProfileModal);
+if (profileModal) {
+  profileModal.addEventListener("click", (event) => {
+    if (event.target.dataset.closeProfile !== undefined) closeProfileModal();
+  });
+}
+if (closeOrderLive) closeOrderLive.addEventListener("click", closeOrderLiveModal);
+if (orderLiveModal) {
+  orderLiveModal.addEventListener("click", (event) => {
+    if (event.target.dataset.closeOrderLive !== undefined) closeOrderLiveModal();
+  });
+}
+
 infoToggle.addEventListener("click", openInfo);
 closeInfo.addEventListener("click", closeInfoModal);
 if (closeCart) closeCart.addEventListener("click", closeCartModal);
@@ -1629,6 +1822,8 @@ document.addEventListener("keydown", (event) => {
     closeClearCartConfirm();
     return;
   }
+  if (orderLiveModal && !orderLiveModal.hidden) closeOrderLiveModal();
+  if (profileModal && !profileModal.hidden) closeProfileModal();
   if (!productModal.hidden) closeProductModal();
   if (!infoModal.hidden) closeInfoModal();
   if (!cartModal.hidden) closeCartModal();
@@ -1637,8 +1832,12 @@ document.addEventListener("keydown", (event) => {
 async function init() {
   applySiteSettings();
   await loadMenuConfig();
+  prefillCustomerInfo();
   updatePickupControls();
   renderRecentOrders();
+  renderProfileOrders();
+  updateProfileDot();
+  resumeActiveOrderPolling();
   renderCart();
   updateOpeningNotice();
 }

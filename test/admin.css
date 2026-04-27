@@ -2594,3 +2594,5 @@ body.settings-open {
     flex-direction: column;
   }
 }
+
+.order-muted-inline{color:#747b82;font-size:12px;font-weight:700;align-self:center;}

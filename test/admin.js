@@ -1051,8 +1051,8 @@ function closeSettingsModal() {
 // ============================================================
 // SİPARİŞ MODÜLÜ (ADMIN)
 // ------------------------------------------------------------
-// Müşterinin gönderdiği siparişler Firebase /orders altında tutulur.
-// Buradan onaylayınca müşteri ekranı otomatik olarak güncellenir.
+// Bestillinger fra kunden lagres under Firebase /orders.
+// Når du godkjenner her, oppdateres kundesiden automatisk.
 // ============================================================
 function orderStatusLabel(status = "pending") {
   if (status === "accepted") return "Godkjent";
@@ -1101,6 +1101,7 @@ function renderOrdersAdmin() {
     const customerName = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
     const readyMinutes = sanitizeReadyMinutes(order.readyMinutes || 30);
     const lines = asArray(order.items);
+    const canCancel = status !== "cancelled";
     return `
       <article class="order-card ${escapeHtml(status)}" data-order-id="${escapeHtml(order.id)}">
         <div class="order-card-top">
@@ -1122,23 +1123,18 @@ function renderOrdersAdmin() {
           <div class="order-total-row"><span>Sluttsum</span><strong>${Number(order.total || 0).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong></div>
         </div>
 
-        ${status === "pending" ? `
-          <div class="order-card-actions">
-            <label class="order-minutes-control">Klar om
-              <input type="number" min="1" max="99" value="${readyMinutes}" data-ready-minutes="${escapeHtml(order.id)}" inputmode="numeric">
-              min
-            </label>
-            <button class="accept-order-button" type="button" data-accept-order="${escapeHtml(order.id)}">Godkjenn</button>
-            <button class="cancel-order-button" type="button" data-cancel-order="${escapeHtml(order.id)}">Avvis / kanseller</button>
-          </div>
-        ` : `
-          <p class="order-muted">${status === "accepted" ? `Godkjent ${formatOrderDate(order.acceptedAt)} · Klar om ${readyMinutes} min` : `Kansellert ${formatOrderDate(order.cancelledAt)}`}</p>
-        `}
+        <div class="order-card-actions">
+          <label class="order-minutes-control">Klar om
+            <input type="number" min="1" max="99" value="${readyMinutes}" data-ready-minutes="${escapeHtml(order.id)}" inputmode="numeric">
+            min
+          </label>
+          ${status !== "accepted" ? `<button class="accept-order-button" type="button" data-accept-order="${escapeHtml(order.id)}">${status === "cancelled" ? "Godkjenn på nytt" : "Godkjenn"}</button>` : `<span class="order-muted-inline">Godkjent ${formatOrderDate(order.acceptedAt)} · Klar om ${readyMinutes} min</span>`}
+          ${canCancel ? `<button class="cancel-order-button" type="button" data-cancel-order="${escapeHtml(order.id)}">Avvis / kanseller</button>` : `<span class="order-muted-inline">Kansellert ${formatOrderDate(order.cancelledAt)}</span>`}
+        </div>
       </article>
     `;
   }).join("");
 }
-
 function listenForOrders() {
   if (!ordersRef) return;
   ordersRef.on("value", (snapshot) => {
@@ -1163,12 +1159,13 @@ async function acceptOrder(orderId, minutes) {
 }
 
 async function cancelOrder(orderId) {
-  if (!confirm("Kansellere denne bestillingen?")) return;
+  if (!confirm("Avvise / kansellere denne bestillingen?")) return;
   await ordersRef.child(orderId).update({
     status: "cancelled",
-    cancelledAt: new Date().toISOString()
+    cancelledAt: new Date().toISOString(),
+    acceptedAt: null
   });
-  setStatus("Bestilling kansellert.");
+  setStatus("Bestilling avvist / kansellert.");
 }
 
 function renderAll() {

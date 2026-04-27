@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="admin.css?v=20260427-40">
+    <link rel="stylesheet" href="admin.css?v=20260427-42">
   </head>
   <body>
     <header class="admin-topbar">
@@ -112,13 +112,13 @@
           <header class="orders-admin-header">
             <div>
               <h1>Bestillinger</h1>
-              <span>Gelen siparişleri buradan onayla veya iptal et. Müşteri ekranı otomatik güncellenir.</span>
+              <span>Nye bestillinger godkjennes eller avvises her. Kundesiden oppdateres automatisk.</span>
             </div>
             <button id="refreshOrders" type="button">Oppdater</button>
           </header>
           <div class="orders-admin-toolbar">
             <span id="ordersCount">0 bestillinger</span>
-            <span class="orders-help">Dakika alanı 1–99 arasıdır. Onaylayınca müşteriye “siparişiniz alındı” görünür.</span>
+            <span class="orders-help">Minuttfeltet er 1–99. Når du godkjenner, ser kunden når bestillingen er klar.</span>
           </div>
           <div id="ordersAdminList" class="orders-admin-list">
             <p class="empty-orders">Ingen bestillinger ennå.</p>
@@ -203,7 +203,7 @@
 
               <section class="backup-box">
                 <h3>Lokal sikkerhetskopi</h3>
-                <p>Admin paneli açıldığında bu nettleser günde sadece 1 gang lokal yedek alır. 10 dakikada bir yedek alma kapalıdır.</p>
+                <p>Når adminpanelet åpnes, lagrer denne nettleseren én lokal sikkerhetskopi per dag. Automatisk sikkerhetskopi hvert 10. minutt er slått av.</p>
                 <button id="saveLocalBackup" type="button">Lagre lokal yedek nå</button>
                 <div id="localBackupList" class="local-backup-list"></div>
               </section>
@@ -227,6 +227,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
     <!-- Admin ana dosyası: kategori, ürün, valggrupper ve ayarlar burada çalışır. -->
-    <script src="admin.js?v=20260427-40"></script>
+    <script src="admin.js?v=20260427-42"></script>
   </body>
 </html>
