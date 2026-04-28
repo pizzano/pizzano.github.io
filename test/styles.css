@@ -3829,3 +3829,381 @@ body.order-live-open {
     font-size: 38px !important;
   }
 }
+
+
+/* ===== 20260428: status-vindu — tydelig "Kom og hent om" med nedtelling ===== */
+.order-mini-info.single.ready-info.ready-countdown-card {
+  display: grid !important;
+  grid-template-columns: auto auto auto !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  gap: 8px 12px !important;
+  padding: 22px 26px !important;
+  min-height: 96px !important;
+}
+
+.ready-countdown-card span[data-customer-ready-label] {
+  grid-column: 1 / 2 !important;
+  font-size: clamp(18px, 2.1vw, 24px) !important;
+  font-weight: 900 !important;
+  color: #4c5967 !important;
+  white-space: nowrap !important;
+}
+
+.ready-countdown-card strong[data-customer-ready] {
+  grid-column: 2 / 3 !important;
+  display: inline-block !important;
+  min-width: 90px !important;
+  color: #0b7a31 !important;
+  font-size: clamp(34px, 5vw, 54px) !important;
+  font-weight: 1000 !important;
+  line-height: .95 !important;
+  letter-spacing: -.035em !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+}
+
+.ready-countdown-card em[data-customer-ready-unit] {
+  grid-column: 3 / 4 !important;
+  color: #0b7a31 !important;
+  font-size: clamp(18px, 2vw, 24px) !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.ready-countdown-card small[data-customer-ready-clock] {
+  grid-column: 1 / -1 !important;
+  justify-self: end !important;
+  margin-top: 6px !important;
+  color: #637082 !important;
+  font-size: clamp(14px, 1.5vw, 18px) !important;
+  font-weight: 850 !important;
+  text-align: right !important;
+}
+
+@media (max-width: 760px) {
+  .order-mini-info.single.ready-info.ready-countdown-card {
+    grid-template-columns: auto auto auto !important;
+    justify-content: start !important;
+    gap: 6px 8px !important;
+    padding: 18px !important;
+  }
+  .ready-countdown-card span[data-customer-ready-label] {
+    font-size: 17px !important;
+  }
+  .ready-countdown-card strong[data-customer-ready] {
+    min-width: 0 !important;
+    font-size: 38px !important;
+    text-align: left !important;
+  }
+  .ready-countdown-card em[data-customer-ready-unit] {
+    font-size: 17px !important;
+  }
+  .ready-countdown-card small[data-customer-ready-clock] {
+    justify-self: start !important;
+    text-align: left !important;
+  }
+}
+
+/* ===== 20260428 FINAL: sticky header, stabile modaler, kurv-scroll og tydelig nedtelling ===== */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.appbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900 !important;
+  width: 100% !important;
+  background: rgba(255,255,255,.98) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Produktvalg: hele popupen er én stabil skjerm, bare innholdet scroller */
+.product-modal:not([hidden]) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  background: #f2f3f5 !important;
+  z-index: 4000 !important;
+}
+
+.product-panel {
+  width: min(100vw, var(--kol-site-width, 980px)) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+  background: #f3f4f6 !important;
+}
+
+.product-photo {
+  min-height: clamp(104px, 22svh, 180px) !important;
+  max-height: 180px !important;
+  flex: 0 0 auto !important;
+}
+
+.product-body {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 18px clamp(16px, 4vw, 32px) 24px !important;
+  overscroll-behavior: contain !important;
+}
+
+.product-footer {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 30 !important;
+  min-height: 74px !important;
+  padding: 14px clamp(16px, 4vw, 28px) calc(14px + env(safe-area-inset-bottom)) !important;
+  display: grid !important;
+  grid-template-columns: minmax(110px, .55fr) minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: #d96b00 !important;
+  box-shadow: 0 -10px 24px rgba(0,0,0,.16) !important;
+}
+
+.product-footer strong,
+.product-footer button {
+  min-height: 52px !important;
+}
+
+.option-line,
+.option-item,
+.option-card {
+  min-height: 58px;
+}
+
+textarea#specialInstructions {
+  resize: vertical !important;
+  min-height: 82px !important;
+}
+
+/* Handlevogn: tittel/header står alltid øverst, alt annet scroller inni én container */
+.cart-modal:not([hidden]) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  background: #f2f3f5 !important;
+  z-index: 4200 !important;
+}
+
+.cart-backdrop { display: none !important; }
+
+.cart-panel {
+  width: min(100vw, var(--kol-site-width, 980px)) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  background: #f3f4f6 !important;
+}
+
+.cart-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 25 !important;
+  background: rgba(255,255,255,.98) !important;
+  border-bottom: 1px solid #e3e7ec !important;
+  padding: 16px clamp(16px, 4vw, 32px) !important;
+  box-shadow: 0 6px 18px rgba(15,23,42,.04) !important;
+}
+
+.cart-content-scroll {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding: 18px clamp(14px, 4vw, 28px) calc(26px + env(safe-area-inset-bottom)) !important;
+  display: grid !important;
+  gap: 14px !important;
+  align-content: start !important;
+}
+
+.cart-items,
+.cart-empty,
+.cart-summary,
+#recentOrders {
+  width: min(100%, 900px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.cart-summary {
+  border: 1px solid #e1e5ea !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  padding: clamp(16px, 4vw, 28px) !important;
+  display: grid !important;
+  gap: 14px !important;
+  box-shadow: 0 10px 28px rgba(15,23,42,.06) !important;
+}
+
+.checkout-form {
+  border-top: 1px solid #eef1f4 !important;
+  padding-top: 16px !important;
+}
+
+.checkout-grid input,
+#customerFullName,
+#customerPhone {
+  font-size: 18px !important;
+  min-height: 54px !important;
+  border-radius: 10px !important;
+}
+
+.checkout-button,
+body.cart-open .checkout-button {
+  position: sticky !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  z-index: 35 !important;
+  width: 100% !important;
+  min-height: 62px !important;
+  border-radius: 18px !important;
+  margin-top: 10px !important;
+  box-shadow: 0 12px 30px rgba(217,107,0,.26) !important;
+}
+
+/* Bestillingsstatus: verdi og tekst skal alltid vises tydelig */
+.order-mini-info.single.ready-info.ready-countdown-card {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  padding: clamp(18px, 4vw, 26px) !important;
+  border-radius: 22px !important;
+  background: #eaf8ee !important;
+  border: 1px solid #d4efdd !important;
+}
+
+.ready-countdown-card .ready-main-line {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+}
+
+.ready-countdown-card span[data-customer-ready-label] {
+  color: #4c5967 !important;
+  font-size: clamp(18px, 2.4vw, 26px) !important;
+  font-weight: 900 !important;
+  white-space: normal !important;
+}
+
+.ready-countdown-card strong[data-customer-ready] {
+  display: inline-block !important;
+  color: #087a32 !important;
+  font-size: clamp(38px, 6vw, 64px) !important;
+  font-weight: 1000 !important;
+  line-height: .92 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -.04em !important;
+  white-space: nowrap !important;
+  min-width: max-content !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.ready-countdown-card em[data-customer-ready-unit] {
+  color: #087a32 !important;
+  font-size: clamp(18px, 2.3vw, 26px) !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+}
+
+.ready-countdown-card small[data-customer-ready-clock] {
+  justify-self: end !important;
+  color: #637082 !important;
+  font-size: clamp(14px, 1.6vw, 18px) !important;
+  font-weight: 850 !important;
+  text-align: right !important;
+}
+
+.order-timeout-help {
+  margin-top: 10px !important;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+  background: #fff7ed !important;
+  color: #7c2d12 !important;
+  font-weight: 750 !important;
+}
+
+.order-timeout-help a {
+  color: #9a3412 !important;
+  font-weight: 950 !important;
+  text-decoration: underline !important;
+}
+
+@media (max-width: 760px) {
+  .appbar { min-height: 54px !important; }
+  .product-photo { min-height: 112px !important; }
+  .product-body { padding: 16px 18px 22px !important; }
+  .product-footer {
+    min-height: 72px !important;
+    grid-template-columns: 110px 1fr !important;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .product-footer strong { font-size: 18px !important; }
+  .product-footer button { font-size: 17px !important; }
+
+  .cart-header {
+    padding: 14px 16px !important;
+  }
+  .cart-header h2 {
+    font-size: 24px !important;
+  }
+  .cart-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .cart-header-actions .ghost-button {
+    min-height: 48px !important;
+    font-size: 15px !important;
+  }
+  .cart-content-scroll {
+    padding: 14px 14px calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+  .cart-summary {
+    padding: 18px !important;
+    border-radius: 20px !important;
+  }
+  .checkout-button,
+  body.cart-open .checkout-button {
+    min-height: 64px !important;
+    border-radius: 18px !important;
+    font-size: 19px !important;
+  }
+  .ready-countdown-card .ready-main-line {
+    justify-content: flex-start !important;
+  }
+  .ready-countdown-card strong[data-customer-ready] {
+    font-size: 42px !important;
+  }
+  .ready-countdown-card small[data-customer-ready-clock] {
+    justify-self: start !important;
+    text-align: left !important;
+  }
+}

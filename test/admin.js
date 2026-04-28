@@ -1405,7 +1405,7 @@ function getOrderHeaderTime(order = {}) {
     if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
     const readyAt = getAdminReadyAt(order);
     const remaining = readyAt.getTime() - Date.now();
-    return remaining > 0 ? `${Math.max(1, Math.ceil(remaining / 60000))} min` : "Klar";
+    return remaining > 0 ? formatCountdown(remaining) : "Klar";
   }
   return "Avsluttet";
 }
@@ -1717,78 +1717,105 @@ function renderAdminOrderCard(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
   const status = order.status || "pending";
   const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+  const waitingOpening = orderWaitingOpeningText(order);
+  const isExpanded = expandedAdminOrderId === order.id;
+  const headerTime = getOrderHeaderTime(order);
+  const phoneText = order.customer?.phone || "Telefon mangler";
+  const compactMeta = adminOrderCompactMeta(order);
+  const orderId = String(order.id || "");
+
+  return `
+    <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "selected" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(orderId)}">
+      <button class="order-stack-summary order-compact-v3 admin-clean-row" type="button" data-toggle-order="${escapeHtml(orderId)}" aria-expanded="${isExpanded ? "true" : "false"}">
+        <div class="admin-clean-customer">
+          <strong class="order-customer-name-v3">${escapeHtml(customerName)}</strong>
+          <span class="order-phone-v3">${escapeHtml(phoneText)}</span>
+        </div>
+        <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+        <strong class="admin-clean-meta">${escapeHtml(compactMeta)}</strong>
+        <strong class="order-stack-time admin-clean-time" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+      </button>
+    </article>
+  `;
+}
+
+function renderAdminOrderModal(order) {
+  order = normalizeAdminOrderRecord(order, order?.id) || {};
+  const status = order.status || "pending";
+  const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+  const phoneText = order.customer?.phone || "Telefon mangler";
   const readyMinutes = getEditableReadyMinutes(order);
   const lines = asArray(order.items);
   const canCancel = status !== "cancelled";
   const waitingOpening = orderWaitingOpeningText(order);
-  const isExpanded = expandedAdminOrderId === order.id;
+  const isLaterPickup = isLaterPickupOrder(order);
   const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
   const readyPreview = getOrderDetailTimeText(order, readyMinutes);
-  const headerTime = getOrderHeaderTime(order);
-  const headerCaption = waitingOpening || getOrderHeaderCaption(order);
-  const isLaterPickup = isLaterPickupOrder(order);
-  const phoneText = order.customer?.phone || "Telefon mangler";
+  const orderId = String(order.id || "");
   const compactMeta = adminOrderCompactMeta(order);
+  const headerTime = getOrderHeaderTime(order);
 
   return `
-    <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "open" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(String(order.id || ""))}">
-      <button class="order-stack-summary order-compact-v2" type="button" data-toggle-order="${escapeHtml(String(order.id || ""))}" aria-expanded="${isExpanded ? "true" : "false"}">
-        <div class="order-stack-main">
-          <div class="order-stack-headline order-stack-headline-v2">
+    <div class="admin-order-modal-backdrop" data-order-modal="${escapeHtml(orderId)}">
+      <section class="admin-order-modal" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer">
+        <header class="admin-order-modal-header" data-close-order-modal title="Tilbake til bestillinger">
+          <button class="admin-order-back-button" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
+          <div class="admin-order-modal-title">
             <h2>${escapeHtml(customerName)}</h2>
-            <span class="order-phone-v2">${escapeHtml(phoneText)}</span>
-            <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+            <span>${escapeHtml(phoneText)} · ${escapeHtml(compactMeta)}</span>
           </div>
-        </div>
-        <div class="order-stack-preview order-stack-preview-v2">
-          <strong>${escapeHtml(compactMeta)}</strong>
-        </div>
-        <div class="order-stack-side order-stack-side-v2">
-          <strong class="order-stack-time">${escapeHtml(headerTime)}</strong>
-          ${status === "accepted" && headerTime !== "Klar" && !String(headerTime).startsWith("Kl.") ? `<small>igjen</small>` : ""}
-        </div>
-        <span class="order-stack-chevron" aria-hidden="true">⌄</span>
-      </button>
+          <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+        </header>
 
-      ${isExpanded ? `
-        <div class="order-stack-details">
-          <div class="order-receipt modern">
+        <div class="admin-order-modal-body">
+          <div class="admin-order-modal-quick">
+            <span>Status</span>
+            <strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+            <small>${escapeHtml(waitingOpening || getOrderHeaderCaption(order))}</small>
+          </div>
+
+          <div class="order-receipt modern admin-order-modal-receipt">
             ${lines.map(orderLineHtml).join("")}
             <div class="order-total-row"><span>Sluttsum</span><strong>${totalText}</strong></div>
           </div>
-
-          <div class="order-actions-panel ${isLaterPickup ? "later-pickup" : ""}">
-            ${isLaterPickup ? `
-              <div class="order-later-note">
-                <strong>Forhåndsbestilling</strong>
-                <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
-              </div>
-            ` : `
-              <div class="order-minutes-modern-wrap">
-                <label class="order-soft-label" for="ready-${escapeHtml(String(order.id || ""))}">Tilberedningstid</label>
-                <div class="order-minutes-modern">
-                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(String(order.id || ""))}" data-delta="-2">−</button>
-                  <input class="order-soft-input" id="ready-${escapeHtml(String(order.id || ""))}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(String(order.id || ""))}" inputmode="numeric">
-                  <span class="order-input-suffix">min</span>
-                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(String(order.id || ""))}" data-delta="2">+</button>
-                </div>
-                <small class="order-ready-preview" data-ready-preview="${escapeHtml(String(order.id || ""))}">${escapeHtml(readyPreview)}</small>
-              </div>
-            `}
-
-            <div class="order-action-row">
-              ${status !== "accepted"
-                ? `<button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(String(order.id || ""))}">Godkjenn bestilling</button>`
-                : `<div class="order-inline-note success">Godkjent · ${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</div>`}
-              ${canCancel
-                ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${escapeHtml(String(order.id || ""))}">Avvis / kanseller</button>`
-                : `<div class="order-inline-note danger">Kansellert ${formatOrderDate(order.cancelledAt)}</div>`}
-              <button class="print-order-button modern" type="button" data-print-order="${escapeHtml(String(order.id || ""))}">Skriv ut kvittering</button>
-            </div>
-          </div>
         </div>
-      ` : ""}
-    </article>
+
+        <footer class="admin-order-modal-footer">
+          ${status === "pending" ? (isLaterPickup ? `
+            <div class="order-later-note">
+              <strong>Forhåndsbestilling</strong>
+              <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
+            </div>
+          ` : `
+            <div class="order-minutes-modern-wrap modal-minutes">
+              <label class="order-soft-label" for="ready-${escapeHtml(orderId)}">Tilberedningstid</label>
+              <div class="order-minutes-modern">
+                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="-2">−</button>
+                <input class="order-soft-input" id="ready-${escapeHtml(orderId)}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(orderId)}" inputmode="numeric">
+                <span class="order-input-suffix">min</span>
+                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="2">+</button>
+              </div>
+              <small class="order-ready-preview" data-ready-preview="${escapeHtml(orderId)}">${escapeHtml(readyPreview)}</small>
+            </div>
+          `) : `
+            <div class="order-inline-note ${status === "accepted" ? "success" : "danger"}">
+              ${status === "accepted" ? `${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}` : `Kansellert ${formatOrderDate(order.cancelledAt || order.updatedAt)}`}
+            </div>
+          `}
+
+          <div class="order-action-row modal-actions">
+            ${status === "pending"
+              ? `<button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn bestilling</button>`
+              : ""}
+            ${canCancel
+              ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>`
+              : ""}
+            <button class="order-back-bottom-button modern" type="button" data-close-order-modal>← Tilbake</button>
+            <button class="print-order-button modern" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
+          </div>
+        </footer>
+      </section>
+    </div>
   `;
 }
 
@@ -1972,10 +1999,14 @@ function renderOrdersAdmin() {
     .filter((order) => (order.status || "pending") !== "pending")
     .sort((a, b) => new Date(b.updatedAt || b.acceptedAt || b.cancelledAt || b.createdAt || 0) - new Date(a.updatedAt || a.acceptedAt || a.cancelledAt || a.createdAt || 0));
 
-  ordersAdminList.innerHTML = [
+  const sectionsHtml = [
     renderOrderSection("Nye / venter på svar", pendingOrders, "pending-group"),
     renderOrderSection("Behandlede bestillinger", finishedOrders, "finished-group")
   ].filter(Boolean).join("");
+
+  const modalOrder = expandedAdminOrderId ? visibleOrders.find((order) => order.id === expandedAdminOrderId) : null;
+  ordersAdminList.innerHTML = sectionsHtml + (modalOrder ? renderAdminOrderModal(modalOrder) : "");
+  refreshAdminLiveTimes();
 }
 
 function listenForOrders() {
@@ -2023,6 +2054,7 @@ async function acceptOrder(orderId, minutes) {
     acceptedAt,
     updatedAt: acceptedAt
   });
+  renderOrdersAdmin();
   setStatus("Klar.");
   showToast(`Godkjent · ${readyMinutes} min`);
   window.setTimeout(updateAdminOrderAlarmLoop, 250);
@@ -2050,6 +2082,17 @@ async function cancelOrder(orderId) {
   window.setTimeout(updateAdminOrderAlarmLoop, 250);
 }
 
+
+function refreshAdminLiveTimes() {
+  if (!ordersAdminList) return;
+  ordersAdminList.querySelectorAll("[data-admin-live-time]").forEach((target) => {
+    const orderId = target.dataset.adminLiveTime;
+    const order = adminOrders.find((item) => item.id === orderId);
+    if (!order) return;
+    target.textContent = getOrderHeaderTime(order);
+    target.classList.toggle("is-ready", getOrderHeaderTime(order) === "Klar");
+  });
+}
 
 function renderAll() {
   renderSiteSettings();
@@ -2659,6 +2702,13 @@ if (refreshOrdersButton) refreshOrdersButton.addEventListener("click", renderOrd
 if (refreshAnalyticsButton) refreshAnalyticsButton.addEventListener("click", renderAnalyticsAdmin);
 if (ordersAdminList) {
   ordersAdminList.addEventListener("click", async (event) => {
+    const closeModalButton = event.target.closest("[data-close-order-modal]");
+    if (closeModalButton) {
+      expandedAdminOrderId = null;
+      renderOrdersAdmin();
+      return;
+    }
+
     const toggleButton = event.target.closest("[data-toggle-order]");
     if (toggleButton) {
       const orderId = toggleButton.dataset.toggleOrder;
@@ -2710,13 +2760,13 @@ if (ordersAdminList) {
 
 
 
-// TÜRKÇE: Sipariş kartlarındaki kalan süre düzenli yenilenir.
-// Kart detayları açıkken inputlara dokunmamak için sadece kapalı liste stabil şekilde güncellenir.
+// TÜRKÇE: Sipariş kartlarındaki kalan süre her saniye yenilenir.
+// Detay popupı açıkken inputlara dokunmadan sadece canlı süre yazıları güncellenir.
 if (ordersAdminList && !adminOrdersUiRefreshTimer) {
   adminOrdersUiRefreshTimer = window.setInterval(() => {
     const ordersPage = document.querySelector('[data-admin-page="orders"]');
-    if (ordersPage?.classList.contains("active") && !expandedAdminOrderId) renderOrdersAdmin();
-  }, 15000);
+    if (ordersPage?.classList.contains("active")) refreshAdminLiveTimes();
+  }, 1000);
 }
 
 if (downloadBackupButton) {
