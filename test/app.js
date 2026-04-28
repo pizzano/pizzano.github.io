@@ -1,5 +1,6 @@
 const firebaseMenuUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/.json";
 const firebaseOrdersUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/orders.json";
+const firebaseCustomerOrdersBaseUrl = firebaseOrdersUrl.replace("/orders.json", "/customerOrders");
 
 let menuSections = [];
 const localMenuSections = [
@@ -243,8 +244,9 @@ const closeProduct = document.querySelector("#closeProduct");
 const decreaseProduct = document.querySelector("#decreaseProduct");
 const increaseProduct = document.querySelector("#increaseProduct");
 const addConfiguredProduct = document.querySelector("#addConfiguredProduct");
-const customerFirstName = document.querySelector("#customerFirstName");
-const customerLastName = document.querySelector("#customerLastName");
+const customerFullName = document.querySelector("#customerFullName");
+const customerFirstName = document.querySelector("#customerFirstName"); // gammel kompatibilitet
+const customerLastName = document.querySelector("#customerLastName"); // gammel kompatibilitet
 const customerPhone = document.querySelector("#customerPhone");
 const pickupTimeInput = document.querySelector("#pickupTime");
 const pickupHelp = document.querySelector("#pickupHelp");
@@ -298,6 +300,20 @@ function safeNumber(value, fallback = 0) {
 function safeText(value, fallback = "") {
   const text = value === null || value === undefined ? "" : String(value);
   return text.trim() || fallback;
+}
+
+function normalizePhoneDigits(value = "") {
+  return String(value || "").replace(/\D/g, "").slice(0, 8);
+}
+
+function splitFullName(fullName = "") {
+  const cleaned = safeText(fullName).replace(/\s+/g, " ");
+  const parts = cleaned.split(" ").filter(Boolean);
+  return {
+    fullName: cleaned,
+    firstName: parts[0] || cleaned,
+    lastName: parts.slice(1).join(" ")
+  };
 }
 
 function formatPrice(value) {
@@ -393,9 +409,12 @@ function saveCustomerInfo() {
 
 function prefillCustomerInfo() {
   const saved = loadSavedCustomerInfo();
+  const savedName = safeText(saved.fullName || [saved.firstName, saved.lastName].filter(Boolean).join(" "));
+  const savedPhone = normalizePhoneDigits(saved.phone);
+  if (customerFullName && !customerFullName.value) customerFullName.value = savedName;
   if (customerFirstName && !customerFirstName.value) customerFirstName.value = saved.firstName || "";
   if (customerLastName && !customerLastName.value) customerLastName.value = saved.lastName || "";
-  if (customerPhone && !customerPhone.value) customerPhone.value = saved.phone || "";
+  if (customerPhone && !customerPhone.value) customerPhone.value = savedPhone;
 }
 
 function setActiveOrderId(orderId) {
@@ -463,9 +482,10 @@ function normalizeCustomerOrder(order = {}) {
     id: safeText(order.id),
     status,
     customer: {
+      fullName: safeText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ")),
       firstName: safeText(order.customer?.firstName),
       lastName: safeText(order.customer?.lastName),
-      phone: safeText(order.customer?.phone)
+      phone: normalizePhoneDigits(order.customer?.phone)
     },
     pickup: order.pickup && typeof order.pickup === "object" ? order.pickup : { mode: "asap", time: "" },
     items,
@@ -625,23 +645,76 @@ function getCustomerReadyAt(order = {}) {
   return new Date(base + minutes * 60000);
 }
 
+function formatReadyDuration(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 function orderReadyMinutesText(order = {}) {
   const status = order.status || "pending";
   const configuredMinutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
-  if (status !== "accepted" || order.pickup?.mode === "later") return `${configuredMinutes} min`;
+  if (status !== "accepted") return `${configuredMinutes} min`;
+
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    const pickupMs = new Date(order.pickup.time).getTime() - Date.now();
+    return pickupMs <= 0 ? "Maten er klar" : `Henting kl. ${formatClock(order.pickup.time)}`;
+  }
+
   const remainingMs = getCustomerReadyAt(order).getTime() - Date.now();
-  if (remainingMs <= 0) return "nå";
-  return `${Math.max(1, Math.ceil(remainingMs / 60000))} min`;
+  if (remainingMs <= 0) return "Maten er klar";
+  return formatReadyDuration(remainingMs);
 }
 
 function orderReadySummaryText(order = {}) {
   if ((order.status || "pending") !== "accepted") return orderPickupText(order);
-  if (order.pickup?.mode === "later" && order.pickup?.time) {
-    return `Henting kl. ${formatClock(order.pickup.time)}`;
-  }
   const readyText = orderReadyMinutesText(order);
-  if (readyText === "nå") return "Klar nå";
-  return `Klar om ${readyText} · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
+  if (readyText === "Maten er klar") return readyText;
+  if (readyText.startsWith("Henting kl.")) return readyText;
+  return `Klar om ${readyText}`;
+}
+
+function orderReadyClockText(order = {}) {
+  if ((order.status || "pending") !== "accepted") return "";
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Hentetid kl. ${formatClock(order.pickup.time)}`;
+  }
+  const readyAt = getCustomerReadyAt(order);
+  return readyAt.getTime() <= Date.now() ? "Maten er klar nå" : `Ca. klar kl. ${formatClock(readyAt)}`;
+}
+
+function orderReadyDisplayParts(order = {}) {
+  const status = order.status || "pending";
+  if (status !== "accepted") {
+    return { label: "Henting", value: orderPickupText(order), unit: "", clock: "" };
+  }
+
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return {
+      label: "Kom og hent kl.",
+      value: formatClock(order.pickup.time),
+      unit: "",
+      clock: orderReadyClockText(order)
+    };
+  }
+
+  const readyText = orderReadyMinutesText(order);
+  if (readyText === "Maten er klar") {
+    return {
+      label: "Status",
+      value: "Maten er klar",
+      unit: "",
+      clock: "Kom og hent når du kan."
+    };
+  }
+
+  return {
+    label: "Kom og hent om",
+    value: readyText,
+    unit: "minutter",
+    clock: orderReadyClockText(order)
+  };
 }
 
 function orderShortMessage(order = {}) {
@@ -763,18 +836,22 @@ function updatePickupControls() {
 }
 
 function getCustomerInfo() {
+  const typedFullName = customerFullName?.value || [customerFirstName?.value, customerLastName?.value].filter(Boolean).join(" ");
+  const nameParts = splitFullName(typedFullName);
+  const phone = normalizePhoneDigits(customerPhone?.value || "");
   return {
-    firstName: customerFirstName?.value.trim() || "",
-    lastName: customerLastName?.value.trim() || "",
-    phone: customerPhone?.value.trim() || ""
+    fullName: nameParts.fullName,
+    firstName: nameParts.firstName,
+    lastName: nameParts.lastName,
+    phone
   };
 }
 
 function validateCheckout() {
   const customer = getCustomerInfo();
   if (!cart.length) return "Handlekurven er tom.";
-  if (!customer.firstName || !customer.lastName) return "Skriv inn navn og etternavn.";
-  if (!/^\+?[0-9 ]{8,15}$/.test(customer.phone)) return "Skriv inn riktig telefonnummer.";
+  if (!customer.fullName) return "Skriv inn hele navnet ditt.";
+  if (!/^\d{8}$/.test(customer.phone)) return "Skriv inn telefonnummer med 8 siffer.";
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
   if (mode === "later") {
     const chosen = new Date(pickupTimeInput.value);
@@ -824,6 +901,82 @@ function buildOrderPayload() {
     total: currentCartTotal(),
     source: "web"
   };
+}
+
+function customerOrderIndexUrl(phone, orderId = "") {
+  const cleanPhone = normalizePhoneDigits(phone);
+  if (!cleanPhone) return "";
+  const suffix = orderId ? `/${encodeURIComponent(orderId)}.json` : `.json`;
+  return `${firebaseCustomerOrdersBaseUrl}/${cleanPhone}${suffix}`;
+}
+
+async function writeCustomerOrderIndex(orderId, order = {}) {
+  const phone = normalizePhoneDigits(order.customer?.phone || getCustomerInfo().phone);
+  const url = customerOrderIndexUrl(phone, orderId);
+  if (!url || !orderId) return;
+  const payload = {
+    id: orderId,
+    status: order.status || "pending",
+    total: safeNumber(order.total),
+    createdAt: safeText(order.createdAt, new Date().toISOString()),
+    updatedAt: safeText(order.updatedAt || order.createdAt, new Date().toISOString())
+  };
+  try {
+    await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.warn("Kunne ikke lagre kundeindeks for ordre", error);
+  }
+}
+
+function getSavedProfilePhone() {
+  const saved = loadSavedCustomerInfo();
+  return normalizePhoneDigits(customerPhone?.value || saved.phone || "");
+}
+
+function saveProfilePhone(phone) {
+  const cleanPhone = normalizePhoneDigits(phone);
+  if (!cleanPhone) return;
+  const saved = loadSavedCustomerInfo();
+  localStorage.setItem(customerStorageKey, JSON.stringify({ ...saved, phone: cleanPhone }));
+  if (customerPhone) customerPhone.value = cleanPhone;
+}
+
+async function syncOrdersByCustomerPhone(phone = getSavedProfilePhone()) {
+  const cleanPhone = normalizePhoneDigits(phone);
+  if (!cleanPhone) return [];
+  saveProfilePhone(cleanPhone);
+  const url = `${customerOrderIndexUrl(cleanPhone)}?ts=${Date.now()}`;
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) return [];
+    const index = await response.json();
+    if (!index || typeof index !== "object") return [];
+    const rows = Object.entries(index)
+      .map(([id, value]) => ({
+        id,
+        updatedAt: value?.updatedAt || value?.createdAt || ""
+      }))
+      .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
+      .slice(0, 20);
+    const freshOrders = [];
+    for (const row of rows) {
+      try {
+        const fresh = await fetchOrder(row.id);
+        if (fresh) freshOrders.push(fresh);
+      } catch (error) {
+        console.warn("Kunne ikke lese ordre", row.id, error);
+      }
+    }
+    freshOrders.forEach((order) => rememberRecentOrder(order));
+    return freshOrders;
+  } catch (error) {
+    console.warn("Kunne ikke hente ordre etter telefonnummer", error);
+    return [];
+  }
 }
 
 
@@ -881,6 +1034,7 @@ function orderStatusHtml(order = {}, options = {}) {
 
   const message = status === "pending" ? orderShortMessage(order) : "";
   const readySummary = status === "accepted" ? orderReadySummaryText(order) : orderPickupText(order);
+  const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
   return `
     <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
       <div class="order-status-head">
@@ -890,7 +1044,8 @@ function orderStatusHtml(order = {}, options = {}) {
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
       ${message ? `<p>${message}</p>` : ""}
       ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>` : ""}
-      ${status !== "pending" ? `<div class="order-mini-info single"><span data-customer-ready="${escapeAttribute(order.id || "")}">${readySummary}</span></div>` : ""}
+      ${status === "accepted" ? `<div class="order-mini-info single ready-info ready-countdown-card"><span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em><small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock)}</small></div>` : ""}
+      ${status === "cancelled" ? `<div class="order-mini-info single"><span>Status</span><strong>${escapeAttribute(readySummary)}</strong></div>` : ""}
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
     ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>` : ""}
@@ -933,7 +1088,28 @@ function refreshOrderCountdowns(order = null) {
       return;
     }
     if ((current.status || "pending") !== "accepted") return;
-    target.textContent = orderReadySummaryText(current);
+    target.textContent = orderReadyDisplayParts(current).value;
+  });
+
+  document.querySelectorAll("[data-customer-ready-label]").forEach((target) => {
+    const orderId = target.dataset.customerReadyLabel;
+    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
+    if (!current || (current.status || "pending") !== "accepted") return;
+    target.textContent = orderReadyDisplayParts(current).label;
+  });
+
+  document.querySelectorAll("[data-customer-ready-unit]").forEach((target) => {
+    const orderId = target.dataset.customerReadyUnit;
+    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
+    if (!current || (current.status || "pending") !== "accepted") return;
+    target.textContent = orderReadyDisplayParts(current).unit;
+  });
+
+  document.querySelectorAll("[data-customer-ready-clock]").forEach((target) => {
+    const orderId = target.dataset.customerReadyClock;
+    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
+    if (!current || (current.status || "pending") !== "accepted") return;
+    target.textContent = orderReadyDisplayParts(current).clock;
   });
 }
 
@@ -986,46 +1162,81 @@ function profileOrderCardHtml(order = {}) {
   const ageLabel = orderAgeLabel(order);
   const secondary = profileSecondaryText(order);
   const details = isExpanded ? orderLinesHtml(order) : "";
+  const orderId = String(order.id || "").slice(-6).toUpperCase();
   return `
     <article class="profile-order-card ${status} ${isToday ? "today-order" : "old-order"} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
         <span class="profile-order-main">
           <span class="profile-order-title-row">
             <strong>${title}</strong>
-            <em class="profile-age-pill">${escapeAttribute(ageLabel)}</em>
+            <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
           </span>
-          <small>
-            <span data-profile-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(secondary)}</span>
-            ${isExpanded ? "" : `<span class="profile-dot-separator">·</span><span>${formatPrice(order.total || 0)}</span>`}
-          </small>
+          <span class="profile-ready-text" data-profile-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(secondary)}</span>
+          <span class="profile-order-meta">
+            <span>${escapeAttribute(ageLabel)}</span>
+            ${orderId ? `<span>Ordre ${escapeAttribute(orderId)}</span>` : ""}
+            <span>${formatPrice(order.total || 0)}</span>
+          </span>
         </span>
-        <span class="profile-order-side">
-          <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
-          <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
-        </span>
+        <span class="profile-expand-icon" aria-hidden="true">${isExpanded ? "−" : "+"}</span>
       </button>
       ${isExpanded ? `<div class="profile-order-details">${details}</div>` : ""}
     </article>
   `;
 }
 
-function renderProfileOrders() {
+function profilePhoneToolbarHtml(phone = getSavedProfilePhone(), loading = false) {
+  const cleanPhone = normalizePhoneDigits(phone);
+  return `
+    <div class="profile-phone-card">
+      <div>
+        <strong>Finn bestillinger</strong>
+        <small>Vi henter ordre fra databasen med telefonnummeret ditt.</small>
+      </div>
+      <div class="profile-phone-search">
+        <input id="profilePhoneInput" type="tel" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" placeholder="8 siffer" value="${escapeAttribute(cleanPhone)}">
+        <button type="button" data-profile-phone-search>${loading ? "Henter..." : "Hent"}</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderProfileOrders(options = {}) {
   if (!profileOrdersEl) return;
-  const orders = getRecentOrders().slice().sort((a, b) => orderSortTime(b) - orderSortTime(a)).slice(0, 20);
-  if (!orders.length) {
-    profileOrdersEl.innerHTML = `<p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>`;
+  const phone = normalizePhoneDigits(options.phone || getSavedProfilePhone());
+  const toolbar = profilePhoneToolbarHtml(phone, !!options.loading);
+  if (options.loading) {
+    profileOrdersEl.innerHTML = `${toolbar}<p class="profile-empty">Henter bestillinger...</p>`;
     return;
   }
 
-  const todayOrders = orders.filter(isTodayOrder);
-  const oldOrders = orders.filter((order) => !isTodayOrder(order));
+  const allOrders = getRecentOrders()
+    .filter((order) => {
+      if (!phone) return true;
+      return !order.customer?.phone || normalizePhoneDigits(order.customer.phone) === phone;
+    })
+    .slice()
+    .sort((a, b) => orderSortTime(b) - orderSortTime(a))
+    .slice(0, 20);
+
+  if (!allOrders.length) {
+    profileOrdersEl.innerHTML = `${toolbar}<p class="profile-empty">Ingen bestillinger funnet${phone ? ` for ${phone}` : ""}. Skriv telefonnummer og trykk Hent.</p>`;
+    return;
+  }
+
+  const todayOrders = allOrders.filter(isTodayOrder);
+  const oldOrders = allOrders.filter((order) => !isTodayOrder(order));
 
   profileOrdersEl.innerHTML = `
-    <div class="profile-order-list-note">Trykk på en bestilling for å se detaljer.</div>
+    ${toolbar}
+    <div class="profile-simple-top">
+      <strong>Siste bestillinger</strong>
+      <span>${allOrders.length}</span>
+    </div>
     ${todayOrders.length ? `
       <section class="profile-order-section profile-today-section">
         <div class="profile-section-title">
-          <strong>Dagens bestillinger</strong>
+          <strong>I dag</strong>
           <span>${todayOrders.length}</span>
         </div>
         ${todayOrders.map(profileOrderCardHtml).join("")}
@@ -1034,7 +1245,7 @@ function renderProfileOrders() {
     ${oldOrders.length ? `
       <section class="profile-order-section profile-old-section">
         <div class="profile-section-title">
-          <strong>Tidligere bestillinger</strong>
+          <strong>Tidligere</strong>
           <span>${oldOrders.length}</span>
         </div>
         ${oldOrders.map(profileOrderCardHtml).join("")}
@@ -1048,15 +1259,19 @@ function updateProfileDot() {
   profileOrderDot.hidden = !getRecentOrders().some((order) => (order.status || "pending") === "pending" || isOrderUnread(order));
 }
 
-function openProfileModal() {
-  syncRecentOrdersFromFirebase();
-  renderProfileOrders();
-  updateProfileDot();
+async function openProfileModal() {
   if (!profileModal) return;
   profileModal.hidden = false;
   profileToggle?.setAttribute("aria-expanded", "true");
   document.body.classList.add("profile-open");
   syncBodyScrollLocks();
+
+  const phone = getSavedProfilePhone();
+  renderProfileOrders({ phone, loading: !!phone });
+  if (phone) await syncOrdersByCustomerPhone(phone);
+  await syncRecentOrdersFromFirebase();
+  renderProfileOrders({ phone });
+  updateProfileDot();
 }
 
 function closeProfileModal() {
@@ -1094,7 +1309,7 @@ function startRecentOrdersSync() {
 // TÜRKÇE: Profil açıkken onaylanan siparişin kalan dakikasını canlı günceller.
 window.setInterval(() => {
   refreshOrderCountdowns();
-}, 30000);
+}, 1000);
 
 function resumeActiveOrderPolling() {
   const activeId = getActiveOrderId();
@@ -1156,6 +1371,7 @@ async function submitOrder() {
     if (!response.ok) throw new Error("Firebase svarte ikke");
     const result = await response.json();
     const order = { id: result.name, ...payload };
+    await writeCustomerOrderIndex(result.name, order);
     rememberRecentOrder(order);
     startRecentOrdersSync();
     renderOrderStatus(order);
@@ -2319,22 +2535,63 @@ cartToggle.addEventListener("click", () => { updatePickupControls(); renderRecen
 checkoutButton.addEventListener("click", submitOrder);
 document.querySelectorAll('input[name="pickupMode"]').forEach((input) => input.addEventListener("change", updatePickupControls));
 if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupControls);
-[customerFirstName, customerLastName, customerPhone].forEach((field) => {
+[customerFullName, customerFirstName, customerLastName, customerPhone].forEach((field) => {
   if (!field) return;
   field.addEventListener("change", saveCustomerInfo);
   field.addEventListener("blur", saveCustomerInfo);
 });
 
+if (customerPhone) {
+  customerPhone.addEventListener("input", () => {
+    const clean = normalizePhoneDigits(customerPhone.value);
+    if (customerPhone.value !== clean) customerPhone.value = clean;
+    saveCustomerInfo();
+  });
+}
+
+if (customerFullName) {
+  customerFullName.addEventListener("input", saveCustomerInfo);
+}
+
 if (profileToggle) profileToggle.addEventListener("click", openProfileModal);
 
 if (profileOrdersEl) {
-  profileOrdersEl.addEventListener("click", (event) => {
+  profileOrdersEl.addEventListener("click", async (event) => {
+    const searchButton = event.target.closest("[data-profile-phone-search]");
+    if (searchButton) {
+      const input = profileOrdersEl.querySelector("#profilePhoneInput");
+      const phone = normalizePhoneDigits(input?.value || "");
+      if (input) input.value = phone;
+      if (phone.length !== 8) {
+        profileOrdersEl.insertAdjacentHTML("afterbegin", `<p class="profile-empty">Skriv 8 siffer.</p>`);
+        return;
+      }
+      renderProfileOrders({ phone, loading: true });
+      await syncOrdersByCustomerPhone(phone);
+      await syncRecentOrdersFromFirebase();
+      renderProfileOrders({ phone });
+      return;
+    }
+
     const button = event.target.closest("[data-profile-order-toggle]");
     if (!button) return;
     const orderId = button.dataset.profileOrderToggle;
     expandedProfileOrderId = expandedProfileOrderId === orderId ? "" : orderId;
     if (expandedProfileOrderId) markOrderAsRead(orderId);
     renderProfileOrders();
+  });
+
+  profileOrdersEl.addEventListener("input", (event) => {
+    if (event.target?.id !== "profilePhoneInput") return;
+    const clean = normalizePhoneDigits(event.target.value);
+    if (event.target.value !== clean) event.target.value = clean;
+  });
+
+  profileOrdersEl.addEventListener("keydown", (event) => {
+    if (event.target?.id === "profilePhoneInput" && event.key === "Enter") {
+      event.preventDefault();
+      profileOrdersEl.querySelector("[data-profile-phone-search]")?.click();
+    }
   });
 }
 

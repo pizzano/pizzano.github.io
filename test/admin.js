@@ -1399,7 +1399,7 @@ function getOrderHeaderTime(order = {}) {
   if (status === "pending") {
     if (!isAdminOrderProcessable(order)) return `Åpner ${formatAdminClock(order.processableAfter)}`;
     const remaining = getAdminAcceptDeadline(order).getTime() - Date.now();
-    return remaining > 0 ? `${formatCountdown(remaining)} igjen` : "Svar nå";
+    return remaining > 0 ? `${formatCountdown(remaining)}` : "Svar nå";
   }
   if (status === "accepted") {
     if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
@@ -1448,10 +1448,17 @@ function orderLineCountText(order = {}) {
   return `${count} vare${count === 1 ? "" : "r"}`;
 }
 
+function formatAdminCompactPrice(value = 0) {
+  const number = safeAdminNumber(value);
+  const whole = Math.round(number) === number;
+  return number.toLocaleString("nb-NO", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2
+  }) + " kr";
+}
+
 function adminOrderCompactMeta(order = {}) {
-  const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
-  const parts = [orderLineCountText(order), totalText];
-  return parts.filter(Boolean).join(" · ");
+  return `${orderLineCountText(order)} / ${formatAdminCompactPrice(order.total)}`;
 }
 
 function orderLineHtml(line = {}) {
@@ -1709,7 +1716,7 @@ async function printOrderReceipt(orderId, overrides = {}) {
 function renderAdminOrderCard(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
   const status = order.status || "pending";
-  const customerName = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+  const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
   const readyMinutes = getEditableReadyMinutes(order);
   const lines = asArray(order.items);
   const canCancel = status !== "cancelled";
@@ -1720,27 +1727,25 @@ function renderAdminOrderCard(order) {
   const headerTime = getOrderHeaderTime(order);
   const headerCaption = waitingOpening || getOrderHeaderCaption(order);
   const isLaterPickup = isLaterPickupOrder(order);
+  const phoneText = order.customer?.phone || "Telefon mangler";
+  const compactMeta = adminOrderCompactMeta(order);
 
   return `
     <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "open" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(String(order.id || ""))}">
-      <button class="order-stack-summary" type="button" data-toggle-order="${escapeHtml(String(order.id || ""))}" aria-expanded="${isExpanded ? "true" : "false"}">
+      <button class="order-stack-summary order-compact-v2" type="button" data-toggle-order="${escapeHtml(String(order.id || ""))}" aria-expanded="${isExpanded ? "true" : "false"}">
         <div class="order-stack-main">
-          <div class="order-stack-headline">
+          <div class="order-stack-headline order-stack-headline-v2">
             <h2>${escapeHtml(customerName)}</h2>
+            <span class="order-phone-v2">${escapeHtml(phoneText)}</span>
             <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
           </div>
-          <div class="order-stack-meta-line">
-            <span>${escapeHtml(order.customer?.phone || "Telefon mangler")}</span>
-            <span>•</span>
-            <span>${formatOrderDate(order.createdAt)}</span>
-          </div>
-          <div class="order-stack-preview">
-            <span>${escapeHtml(adminOrderCompactMeta(order))}</span>
-          </div>
         </div>
-        <div class="order-stack-side">
+        <div class="order-stack-preview order-stack-preview-v2">
+          <strong>${escapeHtml(compactMeta)}</strong>
+        </div>
+        <div class="order-stack-side order-stack-side-v2">
           <strong class="order-stack-time">${escapeHtml(headerTime)}</strong>
-          <small>${escapeHtml(headerCaption)}</small>
+          ${status === "accepted" && headerTime !== "Klar" && !String(headerTime).startsWith("Kl.") ? `<small>igjen</small>` : ""}
         </div>
         <span class="order-stack-chevron" aria-hidden="true">⌄</span>
       </button>
@@ -2705,12 +2710,13 @@ if (ordersAdminList) {
 
 
 
-// TÜRKÇE: Sipariş kartlarında kalan dakika geri saysın diye panel açıkken sessizce yeniliyoruz.
+// TÜRKÇE: Sipariş kartlarındaki kalan süre düzenli yenilenir.
+// Kart detayları açıkken inputlara dokunmamak için sadece kapalı liste stabil şekilde güncellenir.
 if (ordersAdminList && !adminOrdersUiRefreshTimer) {
   adminOrdersUiRefreshTimer = window.setInterval(() => {
     const ordersPage = document.querySelector('[data-admin-page="orders"]');
-    if (ordersPage?.classList.contains("active")) renderOrdersAdmin();
-  }, 30000);
+    if (ordersPage?.classList.contains("active") && !expandedAdminOrderId) renderOrdersAdmin();
+  }, 15000);
 }
 
 if (downloadBackupButton) {

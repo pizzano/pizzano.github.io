@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="styles.css?v=20260428-mobile-scroll-logo2">
+    <link rel="stylesheet" href="styles.css?v=20260428-kom-og-hent-v2">
   </head>
   <body class="menu-loading">
     <header class="appbar">
@@ -128,7 +128,7 @@
         <div class="profile-header">
           <div>
             <h2 id="profileTitle">Min profil</h2>
-            <p>Her ser du ventende og siste bestillinger på denne telefonen.</p>
+            <p>Siste bestillinger og hentestatus på denne telefonen.</p>
           </div>
           <button class="close-button" id="closeProfile" type="button" aria-label="Lukk profil">&times;</button>
         </div>
@@ -179,14 +179,11 @@
           <section class="checkout-form" id="checkoutForm">
             <h3>Kundeinformasjon</h3>
             <div class="checkout-grid">
-              <label>Navn
-                <input id="customerFirstName" type="text" autocomplete="given-name" placeholder="Navn">
-              </label>
-              <label>Etternavn
-                <input id="customerLastName" type="text" autocomplete="family-name" placeholder="Etternavn">
+              <label class="wide">Hele navn
+                <input id="customerFullName" type="text" autocomplete="name" placeholder="Fornavn og etternavn">
               </label>
               <label class="wide">Telefonnummer
-                <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="8 siffer">
+                <input id="customerPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="8 siffer" maxlength="8" pattern="[0-9]{8}">
               </label>
             </div>
             <div class="pickup-choice">
@@ -217,6 +214,6 @@
 
     <!-- Opsiyonel modül: bu dosya silinse bile site çalışır, sadece sepet animasyonu kapanır. -->
     <script src="modules/cart-animation.js?v=20260427-43" onerror="console.warn('cart-animation.js mangler; siden fungerer uten animasjon.')"></script>
-    <script src="app.js?v=20260428-mobile-scroll-logo2"></script>
+    <script src="app.js?v=20260428-kom-og-hent-v2"></script>
   </body>
 </html>
