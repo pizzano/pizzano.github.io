@@ -612,10 +612,10 @@ function getCustomerReadyAt(order = {}) {
 function orderReadyMinutesText(order = {}) {
   const status = order.status || "pending";
   const configuredMinutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
-  if (status !== "accepted" || order.pickup?.mode === "later") return `${configuredMinutes}:00`;
+  if (status !== "accepted" || order.pickup?.mode === "later") return `${configuredMinutes} min`;
   const remainingMs = getCustomerReadyAt(order).getTime() - Date.now();
-  if (remainingMs <= 0) return "0:00";
-  return formatCountdown(remainingMs);
+  if (remainingMs <= 0) return "nå";
+  return `${Math.max(1, Math.ceil(remainingMs / 60000))} min`;
 }
 
 function orderReadySummaryText(order = {}) {
@@ -624,7 +624,7 @@ function orderReadySummaryText(order = {}) {
     return `Henting kl. ${formatClock(order.pickup.time)}`;
   }
   const readyText = orderReadyMinutesText(order);
-  if (readyText === "0:00") return `Klar nå · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
+  if (readyText === "nå") return "Klar nå";
   return `Klar om ${readyText} · ca. kl. ${formatClock(getCustomerReadyAt(order))}`;
 }
 
@@ -865,9 +865,6 @@ function orderStatusHtml(order = {}, options = {}) {
 
   const message = status === "pending" ? orderShortMessage(order) : "";
   const readySummary = status === "accepted" ? orderReadySummaryText(order) : orderPickupText(order);
-  const readyCountdown = status === "accepted" && !(order.pickup?.mode === "later" && order.pickup?.time)
-    ? orderReadyMinutesText(order)
-    : "";
   return `
     <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
       <div class="order-status-head">
@@ -877,8 +874,7 @@ function orderStatusHtml(order = {}, options = {}) {
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
       ${message ? `<p>${message}</p>` : ""}
       ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>` : ""}
-      ${status === "accepted" && readyCountdown ? `<div class="order-countdown-box ready"><span>Klar om</span><strong data-customer-ready-countdown="${escapeAttribute(order.id || "")}">${readyCountdown}</strong><small>ca. kl. ${formatClock(getCustomerReadyAt(order))}</small></div>` : ""}
-      ${status === "cancelled" ? `<div class="order-mini-info single"><span data-customer-ready="${escapeAttribute(order.id || "")}">${readySummary}</span></div>` : ""}
+      ${status !== "pending" ? `<div class="order-mini-info single"><span data-customer-ready="${escapeAttribute(order.id || "")}">${readySummary}</span></div>` : ""}
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
     ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>` : ""}
@@ -922,13 +918,6 @@ function refreshOrderCountdowns(order = null) {
     }
     if ((current.status || "pending") !== "accepted") return;
     target.textContent = orderReadySummaryText(current);
-  });
-
-  document.querySelectorAll("[data-customer-ready-countdown], [data-profile-ready-countdown]").forEach((target) => {
-    const orderId = target.dataset.customerReadyCountdown || target.dataset.profileReadyCountdown;
-    const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
-    if (!current || (current.status || "pending") !== "accepted") return;
-    target.textContent = orderReadyMinutesText(current);
   });
 }
 
@@ -979,9 +968,6 @@ function profileOrderCardHtml(order = {}) {
   const ageLabel = orderAgeLabel(order);
   const secondary = profileSecondaryText(order);
   const details = isExpanded ? orderLinesHtml(order) : "";
-  const liveCountdown = status === "accepted" && isToday && !(order.pickup?.mode === "later" && order.pickup?.time)
-    ? `<span class="profile-ready-timer" data-profile-ready-countdown="${escapeAttribute(order.id || "")}">${escapeAttribute(orderReadyMinutesText(order))}</span>`
-    : "";
   return `
     <article class="profile-order-card ${status} ${isToday ? "today-order" : "old-order"} ${unread ? "unread" : "read"}" data-profile-order-card="${escapeAttribute(order.id || "")}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}">
@@ -996,7 +982,6 @@ function profileOrderCardHtml(order = {}) {
           </small>
         </span>
         <span class="profile-order-side">
-          ${liveCountdown}
           <span class="read-pill ${unread ? "unread" : "read"}">${unread ? "Ulest" : "Lest"}</span>
           <span class="order-status-pill ${status}">${orderStatusText(status)}</span>
         </span>
