@@ -176,8 +176,8 @@ let customerSoundUnlocked = false;
 // Böylece sayfa yenilenince Firebase beklenirken boş/yanıp sönen ekran olmaz.
 // Firebase sonra arka planda yenilenir ve veri değişmişse sayfa sessizce güncellenir.
 const menuCacheKey = "kol-menu-cache-v1";
-const firstMenuBatchSize = 4;
-const nextMenuBatchSize = 3;
+const firstMenuBatchSize = 999;
+const nextMenuBatchSize = 999;
 let visibleSectionLimit = firstMenuBatchSize;
 let lazyMenuObserver = null;
 let lazyScrollHandler = null;
@@ -1812,24 +1812,26 @@ function renderMenu() {
       const sectionSoldOut = isSoldOutItem(section);
       return `
         <section class="category-panel ${sectionSoldOut ? "category-sold-out" : ""}" data-section="${section.id}">
-          <button class="category-title" type="button" data-toggle-section="${section.id}">
-            <span>${section.title}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</span>
-            <span>&#9662;</span>
-          </button>
+          <div class="category-cover">
+            ${renderCategoryPhoto(section)}
+            <button class="category-title" type="button" data-toggle-section="${section.id}">
+              <span>${section.title}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</span>
+              <span class="category-chevron">&#9662;</span>
+            </button>
+          </div>
           ${section.note ? `<p class="category-note">${section.note}</p>` : ""}
-          ${renderCategoryPhoto(section)}
           <div class="menu-list">
             ${section.items
               .map((item) => {
                 const rowSoldOut = isSoldOutItem(item, sectionSoldOut);
                 const price = item.displayPrice ?? getBasePrice(item, getDefaultProductSizeId(item));
-                const prefix = item.number ? `${item.number}- ` : "";
+                const prefix = item.number ? `${item.number}. ` : "";
                 const details = item.ingredients || "";
                 return `
                   <button class="menu-row ${rowSoldOut ? "sold-out" : ""}" type="button" data-product="${item.id}" ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
                     ${renderThumb(item)}
                     <span class="menu-row-main">
-                      <strong>${prefix}${item.name.toUpperCase()}</strong>
+                      <strong>${prefix}${item.name}</strong>
                       <span>${details}</span>
                     </span>
                     <strong class="row-price">${rowSoldOut ? "UTSOLGT" : formatPrice(price)}</strong>
@@ -1843,7 +1845,7 @@ function renderMenu() {
     })
     .join("") +
     (hasMoreSections
-      ? `<div class="menu-lazy-trigger" data-menu-lazy-trigger>Flere kategorier lastes når du blar ned...</div>`
+      ? `<div class="menu-lazy-trigger" data-menu-lazy-trigger>Flere kategorier lastes...</div>`
       : "");
 
   setupMenuLazyLoader(visibleSections.length);
