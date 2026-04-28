@@ -1435,7 +1435,7 @@ function getOrderDetailTimeText(order = {}, readyMinutes = order.readyMinutes ||
   if (order.pickup?.mode === "later" && order.pickup?.time) {
     return `Henting kl. ${formatAdminClock(order.pickup.time)} (${formatAdminShortDateTime(order.pickup.time)})`;
   }
-  return `<header class="admin-order-modal-header" data-close-order-modal title="Tilbake til bestillinger">`;
+  return `Klar kl. ${formatAdminClock(getAdminReadyAt(order, readyMinutes))}`;
 }
 
 function isLaterPickupOrder(order = {}) {
@@ -1769,9 +1769,8 @@ function renderAdminOrderModal(order) {
 
         <div class="admin-order-modal-body">
           <div class="admin-order-modal-quick">
-            <span>Status</span>
+            <button class="admin-modal-inline-back" type="button" data-close-order-modal>← Tilbake til bestillinger</button>
             <strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
-            <small>${escapeHtml(waitingOpening || getOrderHeaderCaption(order))}</small>
           </div>
 
           <div class="order-receipt modern admin-order-modal-receipt">

@@ -260,6 +260,7 @@ const profileOrderDot = document.querySelector("#profileOrderDot");
 const orderLiveModal = document.querySelector("#orderLiveModal");
 const orderLiveContent = document.querySelector("#orderLiveContent");
 const closeOrderLive = document.querySelector("#closeOrderLive");
+let checkoutFocusError = null;
 
 // TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
 // gerçek açık/kapalı modal durumuna göre eşitler.
@@ -712,8 +713,8 @@ function orderReadyDisplayParts(order = {}) {
   const readyText = orderReadyMinutesText(order) || `${Math.max(1, Number(order.readyMinutes || 10) || 10)}:00`;
   if (readyText === "Maten er klar") {
     return {
-      label: "Status",
-      value: "Maten er klar",
+      label: "Maten er klar",
+      value: "",
       unit: "",
       clock: "Kom og hent når du kan."
     };
@@ -857,11 +858,41 @@ function getCustomerInfo() {
   };
 }
 
+
+function clearCheckoutValidationState() {
+  checkoutFocusError = null;
+  [customerFullName, customerPhone].forEach((field) => {
+    if (!field) return;
+    field.classList.remove("input-error");
+    try { field.setCustomValidity(""); } catch (error) {}
+  });
+}
+
+function focusCheckoutInput(field, message) {
+  checkoutFocusError = { field, message };
+  if (!field) return;
+  openCart();
+  field.classList.add("input-error");
+  try { field.setCustomValidity(message); } catch (error) {}
+  window.setTimeout(() => {
+    field.scrollIntoView({ behavior: "smooth", block: "center" });
+    field.focus({ preventScroll: true });
+    try { field.reportValidity(); } catch (error) {}
+  }, 80);
+}
+
 function validateCheckout() {
+  clearCheckoutValidationState();
   const customer = getCustomerInfo();
   if (!cart.length) return "Handlekurven er tom.";
-  if (!customer.fullName || customer.fullName.length < 2) return "Skriv inn hele navnet ditt.";
-  if (!/^\d{8}$/.test(customer.phone)) return "Skriv inn telefonnummer med 8 siffer.";
+  if (!customer.fullName || customer.fullName.length < 2) {
+    focusCheckoutInput(customerFullName, "Skriv inn hele navnet ditt.");
+    return "Skriv inn hele navnet ditt.";
+  }
+  if (!/^\d{8}$/.test(customer.phone)) {
+    focusCheckoutInput(customerPhone, "Skriv inn telefonnummer med 8 siffer.");
+    return "Skriv inn telefonnummer med 8 siffer.";
+  }
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
   if (mode === "later") {
     const chosen = new Date(pickupTimeInput.value);
@@ -1060,7 +1091,7 @@ function orderStatusHtml(order = {}, options = {}) {
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
       ${message ? `<p>${message}</p>` : ""}
       ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>${expiredHelp}` : ""}
-      ${status === "accepted" ? `<div class="order-mini-info single ready-info ready-countdown-card"><div class="ready-main-line"><span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em></div><small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock)}</small></div>` : ""}
+      ${status === "accepted" ? `<div class="order-ready-clean-card ${readyParts.label === "Maten er klar" ? "is-ready" : "is-counting"}"><div class="order-ready-clean-main"><span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span>${readyParts.value ? `<strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong>` : `<strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>`}${readyParts.unit ? `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em>` : `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>`}</div><small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock)}</small></div>` : ""}
       ${status === "cancelled" ? `<div class="order-mini-info single"><span>Status</span><strong>${escapeAttribute(readySummary)}</strong></div>` : ""}
     </div>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
@@ -1104,7 +1135,9 @@ function refreshOrderCountdowns(order = null) {
       return;
     }
     if ((current.status || "pending") !== "accepted") return;
-    target.textContent = orderReadyDisplayParts(current).value;
+    const parts = orderReadyDisplayParts(current);
+    target.textContent = parts.value;
+    target.hidden = !parts.value;
   });
 
   document.querySelectorAll("[data-customer-ready-label]").forEach((target) => {
@@ -1118,7 +1151,9 @@ function refreshOrderCountdowns(order = null) {
     const orderId = target.dataset.customerReadyUnit;
     const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
     if (!current || (current.status || "pending") !== "accepted") return;
-    target.textContent = orderReadyDisplayParts(current).unit;
+    const parts = orderReadyDisplayParts(current);
+    target.textContent = parts.unit;
+    target.hidden = !parts.unit;
   });
 
   document.querySelectorAll("[data-customer-ready-clock]").forEach((target) => {
@@ -1364,6 +1399,7 @@ function startOrderPolling(orderId) {
 async function submitOrder() {
   const error = validateCheckout();
   if (error) {
+    if (checkoutFocusError) return;
     renderOrderStatus({ status: "cancelled", id: "", total: currentCartTotal(), items: [], readyMinutes: 0 });
     if (orderStatusBox) orderStatusBox.innerHTML = `<h3>Kan ikke sende bestilling</h3><p>${error}</p>`;
     if (orderLiveContent && orderLiveModal) {
@@ -2559,8 +2595,10 @@ if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupCont
 
 if (customerPhone) {
   customerPhone.addEventListener("input", () => {
-    const clean = normalizePhoneDigits(customerPhone.value);
+    const clean = normalizePhoneDigits(customerPhone.value).slice(0, 8);
     if (customerPhone.value !== clean) customerPhone.value = clean;
+    customerPhone.classList.remove("input-error");
+    try { customerPhone.setCustomValidity(""); } catch (error) {}
     saveCustomerInfo();
   });
 }
@@ -2569,6 +2607,8 @@ if (customerFullName) {
   customerFullName.addEventListener("input", () => {
     const clean = normalizeFullName(customerFullName.value);
     if (customerFullName.value !== clean) customerFullName.value = clean;
+    customerFullName.classList.remove("input-error");
+    try { customerFullName.setCustomValidity(""); } catch (error) {}
     saveCustomerInfo();
   });
 }

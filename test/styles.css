@@ -4207,3 +4207,245 @@ body.cart-open .checkout-button {
     text-align: left !important;
   }
 }
+
+
+/* ===== 20260428 V2: fast toppmeny, ryddig statuskort, stabil produkt/footer og én scroll i kurv ===== */
+:root {
+  --kol-header-h: 56px;
+  --kol-modal-footer-h: 86px;
+}
+
+.appbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(100vw, var(--kol-site-width, 980px)) !important;
+  max-width: var(--kol-site-width, 980px) !important;
+  height: var(--kol-header-h) !important;
+  min-height: var(--kol-header-h) !important;
+  z-index: 1600 !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, .08) !important;
+}
+
+.menu-shell {
+  padding-top: var(--kol-header-h) !important;
+  min-height: 100svh !important;
+}
+
+.status-notice {
+  margin-top: 0 !important;
+}
+
+/* Tam ekran modaler toppmenyenin altında değil, tüm ekranı kaplar */
+.product-modal:not([hidden]),
+.cart-modal:not([hidden]),
+.profile-modal:not([hidden]),
+.order-live-modal:not([hidden]),
+.info-modal:not([hidden]) {
+  z-index: 5000 !important;
+}
+
+/* Ürün popup: alttaki 'Legg til' barı her telefonda sabit kalır */
+.product-modal:not([hidden]) {
+  height: 100svh !important;
+  max-height: 100svh !important;
+}
+
+@supports (height: 100dvh) {
+  .product-modal:not([hidden]) {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+}
+
+.product-panel {
+  position: relative !important;
+  height: 100svh !important;
+  max-height: 100svh !important;
+  padding-bottom: var(--kol-modal-footer-h) !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
+@supports (height: 100dvh) {
+  .product-panel {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+}
+
+.product-body {
+  padding-bottom: calc(var(--kol-modal-footer-h) + 22px) !important;
+}
+
+.product-footer {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 0 !important;
+  transform: translateX(-50%) !important;
+  width: min(100vw, var(--kol-site-width, 980px)) !important;
+  min-height: var(--kol-modal-footer-h) !important;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+}
+
+.product-footer button {
+  white-space: normal !important;
+  line-height: 1.1 !important;
+}
+
+/* Kurv: ürünler ve kundeinformasjon aynı kartta, içerisi tek alan olarak scroll olur */
+.cart-content-scroll {
+  display: block !important;
+}
+
+.cart-order-card {
+  width: min(100%, 900px) !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  gap: 14px !important;
+}
+
+.cart-order-card .cart-items,
+.cart-order-card .cart-empty,
+.cart-order-card .cart-summary,
+.cart-order-card #recentOrders {
+  width: 100% !important;
+}
+
+.cart-order-card .cart-summary {
+  margin-top: 0 !important;
+}
+
+.checkout-grid input.input-error,
+#customerFullName.input-error,
+#customerPhone.input-error {
+  border-color: #dc2626 !important;
+  outline: 3px solid rgba(220, 38, 38, .16) !important;
+  background: #fffafa !important;
+}
+
+/* Bestillingsstatus: klar/ventetid skal være rolig, samlet og lett å lese */
+.order-live-status.accepted {
+  display: grid !important;
+  gap: 18px !important;
+}
+
+.order-live-status.accepted .order-status-head {
+  align-items: center !important;
+}
+
+.order-live-status.accepted h3 {
+  margin-bottom: 0 !important;
+  font-size: clamp(28px, 4.2vw, 44px) !important;
+  line-height: 1.05 !important;
+}
+
+.order-ready-clean-card {
+  display: grid !important;
+  gap: 10px !important;
+  padding: clamp(18px, 3.4vw, 28px) !important;
+  border-radius: 24px !important;
+  background: #eaf8ee !important;
+  border: 1px solid #cfeeda !important;
+}
+
+.order-ready-clean-main {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: clamp(10px, 2vw, 18px) !important;
+  flex-wrap: wrap !important;
+  text-align: center !important;
+}
+
+.order-ready-clean-main span {
+  color: #4b5968 !important;
+  font-weight: 950 !important;
+  font-size: clamp(18px, 2.4vw, 28px) !important;
+}
+
+.order-ready-clean-card.is-ready .order-ready-clean-main span {
+  color: #087a32 !important;
+  font-size: clamp(34px, 6vw, 58px) !important;
+  line-height: 1 !important;
+}
+
+.order-ready-clean-main strong {
+  color: #087a32 !important;
+  font-size: clamp(42px, 7vw, 72px) !important;
+  font-weight: 1000 !important;
+  line-height: .9 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -.045em !important;
+  white-space: nowrap !important;
+}
+
+.order-ready-clean-main em {
+  color: #087a32 !important;
+  font-style: normal !important;
+  font-size: clamp(18px, 2.6vw, 30px) !important;
+  font-weight: 950 !important;
+}
+
+.order-ready-clean-card small {
+  justify-self: center !important;
+  color: #64748b !important;
+  font-size: clamp(14px, 1.8vw, 18px) !important;
+  font-weight: 850 !important;
+  text-align: center !important;
+}
+
+.order-ready-clean-card.is-ready small {
+  font-size: clamp(16px, 2vw, 22px) !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --kol-header-h: 54px;
+    --kol-modal-footer-h: 84px;
+  }
+
+  .appbar > strong {
+    font-size: 14px !important;
+    padding-left: 12px !important;
+  }
+
+  .icon-button,
+  .cart-toggle {
+    min-width: 50px !important;
+  }
+
+  .product-footer {
+    grid-template-columns: 106px 1fr !important;
+    gap: 10px !important;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .product-footer button {
+    font-size: 16px !important;
+  }
+
+  .order-live-status.accepted h3 {
+    font-size: 30px !important;
+  }
+
+  .order-ready-clean-main {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .order-ready-clean-main strong {
+    font-size: 48px !important;
+  }
+
+  .order-ready-clean-card.is-ready .order-ready-clean-main span {
+    font-size: 36px !important;
+  }
+
+  .order-ready-clean-card small {
+    justify-self: start !important;
+    text-align: left !important;
+  }
+}

@@ -4246,3 +4246,180 @@ body.settings-open {
     font-size: 22px !important;
   }
 }
+
+
+/* ===== 20260428 V2: kompakt og ryddig ordrevisning ===== */
+.order-stack-card {
+  margin-bottom: 10px !important;
+}
+
+.order-stack-summary.order-compact-v3.admin-clean-row {
+  min-height: 66px !important;
+  padding: 12px 18px !important;
+  grid-template-columns: minmax(210px, 1.25fr) auto minmax(150px, .75fr) minmax(92px, .42fr) !important;
+  gap: 14px !important;
+  border-radius: 18px !important;
+}
+
+.admin-clean-customer .order-customer-name-v3 {
+  font-size: clamp(17px, 1.35vw, 22px) !important;
+  letter-spacing: -.02em !important;
+}
+
+.admin-clean-customer .order-phone-v3 {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.admin-clean-row > .order-badge {
+  font-size: 12px !important;
+  padding: 7px 11px !important;
+}
+
+.admin-clean-meta {
+  font-size: clamp(15px, 1.2vw, 20px) !important;
+  font-weight: 950 !important;
+}
+
+.admin-clean-time {
+  font-size: clamp(17px, 1.5vw, 24px) !important;
+  font-weight: 1000 !important;
+}
+
+.admin-order-modal-header {
+  min-height: 66px !important;
+  padding: 10px clamp(12px, 2.4vw, 26px) !important;
+  grid-template-columns: 46px minmax(0, 1fr) auto !important;
+}
+
+.admin-order-back-button {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 32px !important;
+}
+
+.admin-order-modal-title h2 {
+  font-size: clamp(19px, 1.7vw, 26px) !important;
+}
+
+.admin-order-modal-title span {
+  font-size: 13px !important;
+}
+
+.admin-order-modal-header > .order-badge {
+  font-size: 12px !important;
+  padding: 7px 11px !important;
+}
+
+.admin-order-modal-body {
+  padding: clamp(12px, 2vw, 24px) !important;
+  gap: 12px !important;
+}
+
+.admin-order-modal-quick {
+  padding: 14px 16px !important;
+  min-height: 62px !important;
+  border-radius: 18px !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+}
+
+.admin-modal-inline-back {
+  justify-self: start !important;
+  border: 1px solid #d7dee8 !important;
+  background: #fff !important;
+  color: #263241 !important;
+  border-radius: 14px !important;
+  min-height: 42px !important;
+  padding: 0 16px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+.admin-modal-inline-back:hover {
+  background: #f1f5f9 !important;
+}
+
+.admin-order-modal-quick strong {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  font-size: clamp(25px, 3vw, 44px) !important;
+  color: #0f172a !important;
+}
+
+.admin-order-modal-footer {
+  grid-template-columns: minmax(210px, 320px) minmax(0, 1fr) !important;
+  padding: 10px clamp(12px, 2.4vw, 26px) calc(10px + env(safe-area-inset-bottom)) !important;
+  gap: 12px !important;
+}
+
+.admin-order-modal-footer .order-inline-note,
+.admin-order-modal-footer .order-later-note {
+  min-height: 50px !important;
+  font-size: 14px !important;
+}
+
+.admin-order-modal-footer .modal-actions button {
+  min-height: 46px !important;
+  font-size: 14px !important;
+  border-radius: 12px !important;
+}
+
+.order-receipt.modern.admin-order-modal-receipt {
+  border-radius: 18px !important;
+}
+
+@media (max-width: 860px) {
+  .order-stack-summary.order-compact-v3.admin-clean-row {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: 0 !important;
+    padding: 12px !important;
+  }
+
+  .admin-clean-meta {
+    font-size: 15px !important;
+  }
+
+  .admin-clean-time {
+    font-size: 20px !important;
+  }
+
+  .admin-order-modal-header {
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+  }
+
+  .admin-order-modal-quick {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .admin-order-modal-quick strong {
+    justify-self: start !important;
+    font-size: 34px !important;
+  }
+
+  .admin-order-modal-footer {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-clean-customer .order-customer-name-v3 {
+    font-size: 18px !important;
+  }
+
+  .admin-clean-row > .order-badge,
+  .admin-clean-meta,
+  .admin-clean-time {
+    justify-self: start !important;
+  }
+
+  .admin-order-modal-title h2 {
+    font-size: 20px !important;
+  }
+
+  .admin-order-modal-footer .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+}
