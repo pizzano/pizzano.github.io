@@ -1769,8 +1769,7 @@ function renderAdminOrderModal(order) {
 
         <div class="admin-order-modal-body">
           <div class="admin-order-modal-quick">
-            <button class="admin-modal-inline-back" type="button" data-close-order-modal>← Tilbake til bestillinger</button>
-            <strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+            ${status === "pending" ? `<strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>` : `<button class="admin-modal-inline-back" type="button" data-close-order-modal>← Tilbake til bestillinger</button>`}
           </div>
 
           <div class="order-receipt modern admin-order-modal-receipt">
@@ -1798,7 +1797,7 @@ function renderAdminOrderModal(order) {
             </div>
           `) : `
             <div class="order-inline-note ${status === "accepted" ? "success" : "danger"}">
-              ${status === "accepted" ? `${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}` : `Kansellert ${formatOrderDate(order.cancelledAt || order.updatedAt)}`}
+              ${status === "accepted" ? `Ordren er behandlet` : `Kansellert ${formatOrderDate(order.cancelledAt || order.updatedAt)}`}
             </div>
           `}
 

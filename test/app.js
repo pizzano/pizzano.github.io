@@ -875,10 +875,20 @@ function focusCheckoutInput(field, message) {
   field.classList.add("input-error");
   try { field.setCustomValidity(message); } catch (error) {}
   window.setTimeout(() => {
-    field.scrollIntoView({ behavior: "smooth", block: "center" });
-    field.focus({ preventScroll: true });
-    try { field.reportValidity(); } catch (error) {}
-  }, 80);
+    const scroller = document.querySelector(".cart-content-scroll");
+    if (scroller) {
+      const fieldBox = field.getBoundingClientRect();
+      const scrollBox = scroller.getBoundingClientRect();
+      const top = scroller.scrollTop + (fieldBox.top - scrollBox.top) - (scrollBox.height * 0.35);
+      scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    } else {
+      field.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    window.setTimeout(() => {
+      field.focus({ preventScroll: true });
+      try { field.reportValidity(); } catch (error) {}
+    }, 180);
+  }, 120);
 }
 
 function validateCheckout() {
@@ -1085,7 +1095,7 @@ function orderStatusHtml(order = {}, options = {}) {
   return `
     <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
       <div class="order-status-head">
-        <span class="order-status-pill ${status}">${waitingOpen ? "Venter til åpning" : orderStatusText(status)}</span>
+        ${status === "accepted" ? "" : `<span class="order-status-pill ${status}">${waitingOpen ? "Venter til åpning" : orderStatusText(status)}</span>`}
         <small>Ordre ${orderId}</small>
       </div>
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
