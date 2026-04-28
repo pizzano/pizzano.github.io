@@ -259,6 +259,22 @@ const orderLiveModal = document.querySelector("#orderLiveModal");
 const orderLiveContent = document.querySelector("#orderLiveContent");
 const closeOrderLive = document.querySelector("#closeOrderLive");
 
+// TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
+// gerçek açık/kapalı modal durumuna göre eşitler.
+function syncBodyScrollLocks() {
+  const productOpen = !!(productModal && !productModal.hidden);
+  const infoOpen = !!(infoModal && !infoModal.hidden);
+  const cartOpen = !!(cartModal && !cartModal.hidden);
+  const profileOpen = !!(profileModal && !profileModal.hidden);
+  const liveOpen = !!(orderLiveModal && !orderLiveModal.hidden);
+
+  document.body.classList.toggle("modal-open", productOpen || infoOpen);
+  document.body.classList.toggle("cart-open", cartOpen);
+  document.body.classList.toggle("profile-open", profileOpen);
+  document.body.classList.toggle("order-live-open", liveOpen);
+}
+
+
 let cart = loadCart();
 let selectedProduct = null;
 let selectedSection = null;
@@ -945,12 +961,14 @@ function renderOrderLiveModal(order, forceOpen = false) {
     document.body.classList.add("order-live-open");
     startOrderCountdownUi(order);
   }
+  syncBodyScrollLocks();
 }
 
 function closeOrderLiveModal() {
   if (!orderLiveModal) return;
   orderLiveModal.hidden = true;
   document.body.classList.remove("order-live-open");
+  syncBodyScrollLocks();
 }
 
 function renderRecentOrders() {
@@ -1038,6 +1056,7 @@ function openProfileModal() {
   profileModal.hidden = false;
   profileToggle?.setAttribute("aria-expanded", "true");
   document.body.classList.add("profile-open");
+  syncBodyScrollLocks();
 }
 
 function closeProfileModal() {
@@ -1045,6 +1064,7 @@ function closeProfileModal() {
   profileModal.hidden = true;
   profileToggle?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("profile-open");
+  syncBodyScrollLocks();
 }
 
 async function syncRecentOrdersFromFirebase() {
@@ -1119,6 +1139,7 @@ async function submitOrder() {
       orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Kan ikke sende bestilling</h3><p>${error}</p></div><button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>`;
       orderLiveModal.hidden = false;
       document.body.classList.add("order-live-open");
+      syncBodyScrollLocks();
     }
     return;
   }
@@ -2034,6 +2055,7 @@ function openProduct(id) {
   renderProductModal();
   productModal.hidden = false;
   document.body.classList.add("modal-open");
+  syncBodyScrollLocks();
 }
 
 function openCartLineEditor(index) {
@@ -2055,6 +2077,7 @@ function openCartLineEditor(index) {
   renderProductModal();
   productModal.hidden = false;
   document.body.classList.add("modal-open");
+  syncBodyScrollLocks();
 }
 
 function closeProductModal() {
@@ -2063,6 +2086,7 @@ function closeProductModal() {
   productModal.classList.remove("kebab-product");
   editingCartIndex = null;
   document.body.classList.remove("modal-open");
+  syncBodyScrollLocks();
 }
 
 
@@ -2195,12 +2219,14 @@ function openCart() {
   cartModal.hidden = false;
   cartToggle.setAttribute("aria-expanded", "true");
   document.body.classList.add("cart-open");
+  syncBodyScrollLocks();
 }
 
 function closeCartModal() {
   cartModal.hidden = true;
   cartToggle.setAttribute("aria-expanded", "false");
   document.body.classList.remove("cart-open");
+  syncBodyScrollLocks();
 }
 
 function openClearCartConfirm() {
@@ -2222,12 +2248,14 @@ function openInfo() {
   infoModal.hidden = false;
   infoToggle.setAttribute("aria-expanded", "true");
   document.body.classList.add("modal-open");
+  syncBodyScrollLocks();
 }
 
 function closeInfoModal() {
   infoModal.hidden = true;
   infoToggle.setAttribute("aria-expanded", "false");
   document.body.classList.remove("modal-open");
+  syncBodyScrollLocks();
 }
 
 menuSectionsEl.addEventListener("click", (event) => {
@@ -2386,9 +2414,10 @@ async function init() {
   renderProfileOrders();
   updateProfileDot();
   resumeActiveOrderPolling();
-startRecentOrdersSync();
+  startRecentOrdersSync();
   renderCart();
   updateOpeningNotice();
+  syncBodyScrollLocks();
 }
 
 init();

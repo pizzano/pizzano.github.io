@@ -2789,3 +2789,87 @@ button,
     font-size: 12px;
   }
 }
+
+/* ===== MOBILE SCROLL + LOGO REMOVE FIX 2026-04-28 =====
+   TÜRKÇE: Ana sayfada logo/hero alanı kaldırıldı. Mobilde sayfanın dokunarak
+   aşağı-yukarı kaymasını engelleyen kilitlenme ihtimaline karşı ana sayfa
+   scroll davranışı güçlendirildi.
+*/
+.brand-hero,
+.brand-hero.has-logo-url,
+.brand-hero.default-hero-visual,
+.brand-hero.default-hero-visual:not(.has-logo-url),
+.brand-logo-image,
+.brand-default-logo {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+html,
+body {
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: auto !important;
+}
+
+body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) {
+  position: static !important;
+  overflow-y: auto !important;
+  touch-action: pan-y !important;
+}
+
+.menu-shell,
+#menuSections,
+.category-panel,
+.category-cover,
+.menu-list,
+.menu-row,
+.status-notice {
+  touch-action: pan-y !important;
+}
+
+button.menu-row,
+.category-title {
+  touch-action: pan-y !important;
+}
+
+@media (max-width: 760px) {
+  .menu-shell {
+    min-height: calc(100svh - 54px) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #menuSections {
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .appbar {
+    position: sticky !important;
+    top: 0 !important;
+  }
+
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .product-modal,
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .cart-modal,
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .profile-modal,
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .order-live-modal,
+  body:not(.cart-open):not(.modal-open):not(.profile-open):not(.order-live-open) .info-modal {
+    pointer-events: none;
+  }
+
+  .product-modal:not([hidden]),
+  .cart-modal:not([hidden]),
+  .profile-modal:not([hidden]),
+  .order-live-modal:not([hidden]),
+  .info-modal:not([hidden]) {
+    pointer-events: auto;
+  }
+}
