@@ -1435,7 +1435,7 @@ function getOrderDetailTimeText(order = {}, readyMinutes = order.readyMinutes ||
   if (order.pickup?.mode === "later" && order.pickup?.time) {
     return `Henting kl. ${formatAdminClock(order.pickup.time)} (${formatAdminShortDateTime(order.pickup.time)})`;
   }
-  return `Klar kl. ${formatAdminClock(getAdminReadyAt(order, readyMinutes))}`;
+  return `<header class="admin-order-modal-header" data-close-order-modal title="Tilbake til bestillinger">`;
 }
 
 function isLaterPickupOrder(order = {}) {
@@ -1810,7 +1810,6 @@ function renderAdminOrderModal(order) {
             ${canCancel
               ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>`
               : ""}
-            <button class="order-back-bottom-button modern" type="button" data-close-order-modal>← Tilbake</button>
             <button class="print-order-button modern" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
           </div>
         </footer>
