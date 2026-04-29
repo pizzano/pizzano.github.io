@@ -86,3 +86,13 @@ V28:
 - V56: Kayan kategori barı sadece ana menüde görünür; profil, sepet, info ve ürün içinde gizlenir. PC tıklama sorunu için sürükleme/tıklama ayrımı düzeltildi ve kategoriye inme hesabı basitleştirildi.
 
 - V57: PC’de kategori tıklamasını engelleyen pointer/drag kodu kaldırıldı. Kategori tıklaması document capture ile yakalanır. Kategori barı sadece ana menüde görünür; profil/sepet/info/ürün içinde gizlenir. CSS sadeleştirildi.
+
+- V58: Kayan kategori barındaki sağ/sol oklar kaldırıldı. Kategoriler yine yatay scroll ile kaydırılır.
+
+- V59: Sepetteki düzenle ikonunun bazen çalışmaması düzeltildi. Tıklama alanı büyütüldü, ikon içindeki SVG click'i yutmasın diye pointer-events kapatıldı ve pointerup/touchend üzerinden güvenilir edit açma eklendi.
+
+- V60: Sepetteki düzenle butonundaki SVG tamamen kaldırıldı. Yerine sade Unicode kalem ikonu kullanıldı; hiçbir SVG yok.
+
+- V61: Tüm inline SVG ikonları kaldırıldı; header ve sepet ikonları sade text/emoji ikonlarla değiştirildi. Sepette düzenle/sil için çakışan eski event handlerlar temizlendi, data-action + onclick yedekli güvenilir düzenleme sistemi eklendi.
+
+- V62: Sepet düzenle butonundaki SVG/::before sorunu tamamen kaldırıldı. Düzenle butonu artık silme butonu gibi düz buton; ortasına basınca da çalışır. Çakışan eventler temizlendi, sağlam handler eklendi. Ürün detay ekranında kategori barı görünür ve kategoriye basınca ürün ekranını kapatıp ilgili kategoriye gider.

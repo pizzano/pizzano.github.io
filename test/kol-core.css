@@ -4547,3 +4547,242 @@ body.category-tabs-hidden .menu-shell {
     font-size: 21px !important;
   }
 }
+
+
+/* ===== V58: remove left/right arrows from category tabs ===== */
+.category-tabs-wrap {
+  grid-template-columns: minmax(0,1fr) !important;
+}
+
+.category-tab-arrow,
+.category-tab-arrow-left,
+.category-tab-arrow-right,
+#categoryTabsPrev,
+#categoryTabsNext {
+  display: none !important;
+}
+
+.category-tabs-scroll {
+  grid-column: 1 / -1 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+
+/* ===== V59: cart edit button reliable tap/click area ===== */
+.edit-line-button.icon-only,
+.cart-item .edit-line-button.icon-only {
+  position: relative !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  z-index: 3 !important;
+}
+
+.edit-line-button.icon-only::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 16px;
+}
+
+.edit-line-button.icon-only svg,
+.edit-line-button.icon-only path {
+  pointer-events: none !important;
+}
+
+.cart-item-top-actions {
+  position: relative !important;
+  z-index: 4 !important;
+  gap: 10px !important;
+}
+
+.cart-item-actions {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.cart-item .remove-button {
+  position: relative !important;
+  z-index: 3 !important;
+  touch-action: manipulation !important;
+}
+
+
+/* ===== V60: no SVG buttons, simple reliable text icon ===== */
+.edit-line-button.icon-only svg,
+.edit-line-button.icon-only path {
+  display: none !important;
+}
+
+.edit-line-button.icon-only {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.cart-edit-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  color: #111827 !important;
+  pointer-events: none !important;
+  transform: translateY(-1px) !important;
+}
+
+
+/* ===== V61: remove SVG usage, plain icon styling, reliable cart edit area ===== */
+svg,
+.menu-icon,
+.cart-icon {
+  display: none !important;
+}
+
+.plain-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+}
+
+.cart-plain-icon {
+  font-size: 27px !important;
+}
+
+.edit-line-button.icon-only,
+.cart-item .edit-line-button.icon-only {
+  position: relative !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+
+.edit-line-button.icon-only::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 18px;
+}
+
+.cart-edit-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  color: #111827 !important;
+  pointer-events: none !important;
+}
+
+.cart-item-top-actions,
+.cart-item-actions {
+  position: relative !important;
+  z-index: 12 !important;
+  pointer-events: auto !important;
+}
+
+.remove-button {
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+
+
+/* ===== V62: cart edit button like remove button, no SVG center-click problem ===== */
+.edit-line-button.icon-only,
+.cart-item .edit-line-button.icon-only {
+  position: relative !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  z-index: 20 !important;
+  box-shadow: none !important;
+}
+
+.edit-line-button.icon-only::before {
+  display: none !important;
+  content: none !important;
+}
+
+.cart-edit-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 25px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+  transform: none !important;
+  color: #111827 !important;
+}
+
+.edit-line-button.icon-only svg,
+.edit-line-button.icon-only path,
+button.edit-line-button svg,
+button.edit-line-button path {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.cart-item-top-actions {
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.cart-item .remove-button {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+
+/* Product editor içinde kategori bar görünsün; cart/profile/info/order içinde gizlensin */
+body.modal-open:not(.cart-open):not(.profile-open):not(.order-live-open):not(.settings-open) .category-tabs-wrap {
+  display: grid !important;
+}
+
+body.modal-open:has(.cart-modal:not([hidden])) .category-tabs-wrap,
+body.modal-open:has(.info-modal:not([hidden])) .category-tabs-wrap,
+body.cart-open .category-tabs-wrap,
+body.profile-open .category-tabs-wrap,
+body.order-live-open .category-tabs-wrap {
+  display: none !important;
+}

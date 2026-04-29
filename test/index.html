@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=57">
+    <link rel="stylesheet" href="kol-core.css?v=62">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -13,23 +13,10 @@
         <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
       </button>
       <div class="appbar-actions">
-        <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Meny">
-          <svg class="menu-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
-            <path d="M5 3v7M8 3v7M11 3v7M5 10c0 2 1.35 3.2 3 3.2s3-1.2 3-3.2M8 13.2V21" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M17 3c2.4 2.7 2.8 6.5.6 9.4V21M20 3v18" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Meny"><span class="plain-icon" aria-hidden="true">🍴</span></button>
         <button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
         <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger">&#128100;<span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
-        <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv">
-          <svg class="cart-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
-            <path d="M6 6h15l-1.5 8.5h-12L6 6Z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
-            <path d="M6 6 5.2 3H2.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="9" cy="20" r="1.7" fill="currentColor"/>
-            <circle cx="18" cy="20" r="1.7" fill="currentColor"/>
-          </svg>
-          <span id="cartCount">0</span>
-        </button>
+        <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
       </div>
     </header>
 
@@ -39,9 +26,7 @@
       </div>
 
       <div class="category-tabs-wrap" id="categoryTabsWrap" hidden>
-        <button class="category-tab-arrow category-tab-arrow-left" id="categoryTabsPrev" type="button" aria-label="Forrige kategori">‹</button>
         <div class="category-tabs-scroll" id="categoryTabs" aria-label="Kategorinavigasjon"></div>
-        <button class="category-tab-arrow category-tab-arrow-right" id="categoryTabsNext" type="button" aria-label="Neste kategori">›</button>
       </div>
 
       <section id="menuSections" aria-label="Meny"></section>
@@ -791,8 +776,6 @@ const closeHour = 22;
 const menuSectionsEl = document.querySelector("#menuSections");
 const categoryTabsWrap = document.querySelector("#categoryTabsWrap");
 const categoryTabs = document.querySelector("#categoryTabs");
-const categoryTabsPrev = document.querySelector("#categoryTabsPrev");
-const categoryTabsNext = document.querySelector("#categoryTabsNext");
 let activeCategoryTabId = "";
 let categoryScrollRaf = 0;
 const brandHero = document.querySelector("#brandHero");
@@ -934,19 +917,15 @@ function updateTopMenuReturnButton() {
 // gerçek açık/kapalı modal durumuna göre eşitler.
 
 function syncCategoryTabsVisibility() {
-  const isOverlayOpen =
-    document.body.classList.contains("cart-open") ||
-    document.body.classList.contains("modal-open") ||
-    document.body.classList.contains("profile-open") ||
-    document.body.classList.contains("order-live-open") ||
-    document.body.classList.contains("settings-open") ||
-    (productModal && !productModal.hidden) ||
-    (cartModal && !cartModal.hidden) ||
-    (infoModal && !infoModal.hidden) ||
-    (profileModal && !profileModal.hidden) ||
-    (orderLiveModal && !orderLiveModal.hidden);
+  const isCartOpen = !!(cartModal && !cartModal.hidden) || document.body.classList.contains("cart-open");
+  const isInfoOpen = !!(infoModal && !infoModal.hidden);
+  const isProfileOpen = !!(profileModal && !profileModal.hidden) || document.body.classList.contains("profile-open");
+  const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) || document.body.classList.contains("order-live-open");
+  const isSettingsOpen = document.body.classList.contains("settings-open");
 
-  document.body.classList.toggle("category-tabs-hidden", Boolean(isOverlayOpen));
+  // Product modal is allowed to show category bar.
+  const shouldHide = isCartOpen || isInfoOpen || isProfileOpen || isLiveOpen || isSettingsOpen;
+  document.body.classList.toggle("category-tabs-hidden", Boolean(shouldHide));
 }
 
 function syncBodyScrollLocks() {
@@ -2993,13 +2972,24 @@ function scrollToMenuSection(sectionId) {
   const panel = getSectionPanelById(sectionId);
   if (!panel) return;
 
+  // If product editor is open, close it first so the main menu can scroll.
+  if (productModal && !productModal.hidden) {
+    productModal.hidden = true;
+    productModal.classList.remove("simple-product", "kebab-product");
+    editingCartIndex = null;
+    document.body.classList.remove("modal-open");
+    syncBodyScrollLocks();
+  }
+
   panel.classList.remove("collapsed");
   setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "smooth" });
 
-  const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
-  window.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth"
+  window.requestAnimationFrame(() => {
+    const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth"
+    });
   });
 }
 
@@ -3430,13 +3420,8 @@ function renderCart() {
           </div>
           <div class="cart-item-actions">
             <div class="cart-item-top-actions">
-              <button class="edit-line-button icon-only" type="button" data-edit="${index}" aria-label="Rediger vare" title="Rediger vare">
-                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
-                  <path d="M4 20h4l10-10a2 2 0 0 0 0-2.83l-1.17-1.17a2 2 0 0 0-2.83 0L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                  <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
-              </button>
-              <button class="remove-button" type="button" data-remove="${index}" aria-label="Slett vare" title="Slett vare">&times;</button>
+              <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
+              <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
             </div>
             <strong class="cart-line-total">${formatPrice(line.total)}</strong>
           </div>
@@ -3739,19 +3724,6 @@ infoModal.addEventListener("click", (event) => {
   if (event.target.dataset.closeInfo !== undefined) closeInfoModal();
 });
 
-cartItems.addEventListener("click", (event) => {
-  const editIndex = event.target.dataset.edit;
-  if (editIndex !== undefined) {
-    openCartLineEditor(Number(editIndex));
-    return;
-  }
-  const index = event.target.dataset.remove;
-  if (index === undefined) return;
-  cart.splice(Number(index), 1);
-  saveCart();
-  renderCart();
-});
-
 clearCart.addEventListener("click", () => {
   if (cart.length === 0) return;
   emptyCart();
@@ -3833,14 +3805,6 @@ document.querySelector(".appbar")?.addEventListener("pointerdown", (event) => {
   if (button) flashHeaderButton(button);
 }, { passive: true });
 
-function scrollCategoryTabsBy(delta) {
-  if (!categoryTabs) return;
-  categoryTabs.scrollBy({ left: delta, behavior: "smooth" });
-}
-
-categoryTabsPrev?.addEventListener("click", () => scrollCategoryTabsBy(-Math.max(180, categoryTabs.clientWidth * 0.7)));
-categoryTabsNext?.addEventListener("click", () => scrollCategoryTabsBy(Math.max(180, categoryTabs.clientWidth * 0.7)));
-
 categoryTabs?.addEventListener("wheel", (event) => {
   if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
   event.preventDefault();
@@ -3873,6 +3837,76 @@ if (menuToggle) {
     closeAllCustomerPopupsAndShowMenu();
   });
 }
+
+
+/* ===== V62: FINAL reliable cart edit/remove, no SVG ===== */
+function kolOpenCartLineForEdit(index) {
+  index = Number(index);
+  if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
+
+  const line = cart[index];
+  const productId = line?.productId;
+  if (!productId) return false;
+
+  editingCartIndex = index;
+
+  // Open the original product editor
+  if (typeof openProduct === "function") {
+    openProduct(productId);
+  } else if (typeof openProductModal === "function") {
+    openProductModal(productId);
+  }
+
+  // Restore choices after product modal rendered
+  window.setTimeout(() => {
+    try {
+      if (line.size) selectedSize = line.size;
+      quantity = Math.max(1, Number(line.quantity) || 1);
+      selectedExtras = new Set(Array.isArray(line.extraIds) ? line.extraIds : []);
+      if (specialInstructions) specialInstructions.value = line.note || "";
+      if (typeof renderProductModal === "function") renderProductModal();
+    } catch (error) {
+      console.warn("Kunne ikke forhåndsutfylle redigering:", error);
+    }
+  }, 0);
+
+  return false;
+}
+
+function kolRemoveCartLine(index) {
+  index = Number(index);
+  if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
+  cart.splice(index, 1);
+  saveCart();
+  renderCart();
+  updateCartCount?.();
+  return false;
+}
+
+window.__kolEditCartLine = kolOpenCartLineForEdit;
+window.__kolRemoveCartLine = kolRemoveCartLine;
+
+function handleCartActionReliable(event) {
+  const button = event.target.closest?.("[data-cart-action], [data-edit], [data-remove]");
+  if (!button || !cartItems?.contains(button)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (button.dataset.cartAction === "edit" || button.dataset.edit !== undefined) {
+    kolOpenCartLineForEdit(button.dataset.edit);
+    return;
+  }
+
+  if (button.dataset.cartAction === "remove" || button.dataset.remove !== undefined) {
+    kolRemoveCartLine(button.dataset.remove);
+  }
+}
+
+// Capture phase: works even when inner icon is clicked.
+cartItems?.addEventListener("click", handleCartActionReliable, true);
+cartItems?.addEventListener("pointerup", handleCartActionReliable, true);
+cartItems?.addEventListener("touchend", handleCartActionReliable, true);
 
 init();
 
@@ -3909,3 +3943,5 @@ init();
     </script>
   </body>
 </html>
+
+
