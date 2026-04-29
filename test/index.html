@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=56">
+    <link rel="stylesheet" href="kol-core.css?v=57">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -795,10 +795,6 @@ const categoryTabsPrev = document.querySelector("#categoryTabsPrev");
 const categoryTabsNext = document.querySelector("#categoryTabsNext");
 let activeCategoryTabId = "";
 let categoryScrollRaf = 0;
-let categoryTabDragActive = false;
-let categoryTabDragStartX = 0;
-let categoryTabDragStartScrollLeft = 0;
-let categoryTabPointerMoved = false;
 const brandHero = document.querySelector("#brandHero");
 const brandLogoImage = document.querySelector("#brandLogoImage");
 const brandDefaultInitials = document.querySelector("#brandDefaultInitials");
@@ -2932,7 +2928,7 @@ function setupMenuLazyLoader(totalSections) {
 }
 
 function syncCategoryTabsHeight() {
-  const visible = categoryTabsWrap && !categoryTabsWrap.hidden;
+  const visible = categoryTabsWrap && !categoryTabsWrap.hidden && !document.body.classList.contains("category-tabs-hidden");
   const height = visible ? categoryTabsWrap.offsetHeight : 0;
   document.documentElement.style.setProperty("--kol-category-tabs-h", `${height}px`);
   document.body.classList.toggle("has-category-tabs", Boolean(visible && height));
@@ -2941,21 +2937,22 @@ function syncCategoryTabsHeight() {
 function getMenuStickyOffset() {
   const headerHeight = document.querySelector(".appbar")?.offsetHeight || 0;
   const tabsHeight = categoryTabsWrap && !categoryTabsWrap.hidden ? categoryTabsWrap.offsetHeight : 0;
-  return headerHeight + tabsHeight + 2;
+  return headerHeight + tabsHeight + 4;
 }
 
 function getSectionPanelById(sectionId) {
-  return [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")].find((panel) => panel.dataset.section === sectionId) || null;
+  return menuSectionsEl?.querySelector(`.category-panel[data-section="${CSS.escape(sectionId)}"]`) || null;
 }
 
 function getCategoryTabButton(sectionId) {
-  return [...categoryTabs.querySelectorAll("[data-category-tab]")].find((button) => button.dataset.categoryTab === sectionId) || null;
+  return categoryTabs?.querySelector(`[data-category-tab="${CSS.escape(sectionId)}"]`) || null;
 }
 
 function centerCategoryTab(sectionId, behavior = "smooth") {
   if (!categoryTabs || !sectionId) return;
   const activeButton = getCategoryTabButton(sectionId);
   if (!activeButton) return;
+
   const nextLeft = activeButton.offsetLeft - (categoryTabs.clientWidth - activeButton.offsetWidth) / 2;
   categoryTabs.scrollTo({ left: Math.max(0, nextLeft), behavior });
 }
@@ -2964,17 +2961,20 @@ function setActiveCategoryTab(sectionId, options = {}) {
   if (!categoryTabs) return;
   const { centerIntoView = true, behavior = "smooth" } = options;
   activeCategoryTabId = sectionId || "";
+
   categoryTabs.querySelectorAll("[data-category-tab]").forEach((button) => {
     const isActive = !!sectionId && button.dataset.categoryTab === sectionId;
     button.classList.toggle("active", isActive);
     if (isActive) button.setAttribute("aria-current", "true");
     else button.removeAttribute("aria-current");
   });
+
   if (centerIntoView && sectionId) centerCategoryTab(sectionId, behavior);
 }
 
 function renderCategoryTabs(sections) {
   if (!categoryTabsWrap || !categoryTabs) return;
+
   categoryTabs.innerHTML = sections
     .map((section, index) => `
       <button class="category-tab ${index === 0 ? "active" : ""}" type="button" data-category-tab="${section.id}" ${index === 0 ? 'aria-current="true"' : ""}>
@@ -2984,6 +2984,7 @@ function renderCategoryTabs(sections) {
     .join("");
 
   categoryTabsWrap.hidden = sections.length <= 1;
+  syncCategoryTabsVisibility();
   syncCategoryTabsHeight();
   setActiveCategoryTab(sections[0]?.id || "", { centerIntoView: false, behavior: "auto" });
 }
@@ -2995,19 +2996,19 @@ function scrollToMenuSection(sectionId) {
   panel.classList.remove("collapsed");
   setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "smooth" });
 
-  // Fixed header + fixed category bar yüksekliğini düşerek tam kategori başlangıcına iner.
-  const offset = getMenuStickyOffset();
-  const targetTop = panel.getBoundingClientRect().top + window.pageYOffset - offset;
-  window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+  const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth"
+  });
 }
 
 function updateActiveCategoryFromScroll() {
-  categoryScrollRaf = 0;
-  if (!categoryTabsWrap || categoryTabsWrap.hidden) return;
+  if (!categoryTabsWrap || categoryTabsWrap.hidden || document.body.classList.contains("category-tabs-hidden")) return;
   const panels = [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")];
   if (!panels.length) return;
 
-  const probeLine = getMenuStickyOffset() + 4;
+  const probeLine = getMenuStickyOffset() + 8;
   let activePanel = panels[0];
 
   for (const panel of panels) {
@@ -3023,8 +3024,7 @@ function updateActiveCategoryFromScroll() {
 }
 
 function requestCategoryScrollSync() {
-  if (categoryScrollRaf) return;
-  categoryScrollRaf = window.requestAnimationFrame(updateActiveCategoryFromScroll);
+  window.requestAnimationFrame(updateActiveCategoryFromScroll);
 }
 
 function renderMenu() {
@@ -3546,20 +3546,18 @@ function closeInfoModal() {
   syncBodyScrollLocks();
 }
 
-categoryTabs?.addEventListener("click", (event) => {
-  const tab = event.target.closest("[data-category-tab]");
+
+
+
+document.addEventListener("click", (event) => {
+  const tab = event.target.closest?.("[data-category-tab]");
   if (!tab) return;
 
-  // PC'de tıklama çalışsın: sadece gerçekten sürükleme olduysa tıklamayı iptal et.
-  if (categoryTabs.classList.contains("dragging") || categoryTabPointerMoved) {
-    event.preventDefault();
-    categoryTabPointerMoved = false;
-    return;
-  }
-
   event.preventDefault();
+  event.stopPropagation();
+
   scrollToMenuSection(tab.dataset.categoryTab);
-});
+}, true);
 
 menuSectionsEl.addEventListener("click", (event) => {
   const toggle = event.target.closest("[data-toggle-section]");
@@ -3849,47 +3847,12 @@ categoryTabs?.addEventListener("wheel", (event) => {
   categoryTabs.scrollLeft += event.deltaY;
 }, { passive: false });
 
-categoryTabs?.addEventListener("pointerdown", (event) => {
-  if (event.button !== undefined && event.button !== 0) return;
-  categoryTabDragActive = true;
-  categoryTabPointerMoved = false;
-  categoryTabDragStartX = event.clientX;
-  categoryTabDragStartScrollLeft = categoryTabs.scrollLeft;
-  categoryTabs.classList.add("dragging");
-  categoryTabs.setPointerCapture?.(event.pointerId);
-});
 
-categoryTabs?.addEventListener("pointermove", (event) => {
-  if (!categoryTabDragActive) return;
-  const dx = event.clientX - categoryTabDragStartX;
 
-  // Küçük hareketleri tıklama kabul et. Gerçek sürükleme 12px üstü.
-  if (Math.abs(dx) > 12) {
-    categoryTabPointerMoved = true;
-    categoryTabs.classList.add("dragging");
-    categoryTabs.scrollLeft = categoryTabDragStartScrollLeft - dx;
-  }
-});
 
-function endCategoryTabDrag(event) {
-  if (!categoryTabDragActive) return;
-  categoryTabDragActive = false;
 
-  // Eğer sürükleme olmadıysa hemen click'e izin ver.
-  if (!categoryTabPointerMoved) {
-    categoryTabs?.classList.remove("dragging");
-    return;
-  }
 
-  window.setTimeout(() => {
-    categoryTabs?.classList.remove("dragging");
-    categoryTabPointerMoved = false;
-  }, 120);
-}
 
-categoryTabs?.addEventListener("pointerup", endCategoryTabDrag);
-categoryTabs?.addEventListener("pointercancel", endCategoryTabDrag);
-categoryTabs?.addEventListener("pointerleave", endCategoryTabDrag);
 
 window.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
 window.addEventListener("resize", () => {

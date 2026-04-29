@@ -84,3 +84,5 @@ V28:
 - V55: Kategori barı sticky yerine fixed yapıldı. Tasarım sistemle uyumlu küçük pill butonlara çevrildi. PC tıklama sorunu düzeltildi; tıklama kategoriye iner ve orada kalır. İçerik fixed barın altında boşluk bırakır, PC’de mouse wheel/sürükleme/oklarla yatay kayar.
 
 - V56: Kayan kategori barı sadece ana menüde görünür; profil, sepet, info ve ürün içinde gizlenir. PC tıklama sorunu için sürükleme/tıklama ayrımı düzeltildi ve kategoriye inme hesabı basitleştirildi.
+
+- V57: PC’de kategori tıklamasını engelleyen pointer/drag kodu kaldırıldı. Kategori tıklaması document capture ile yakalanır. Kategori barı sadece ana menüde görünür; profil/sepet/info/ürün içinde gizlenir. CSS sadeleştirildi.

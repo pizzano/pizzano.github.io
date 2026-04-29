@@ -4384,3 +4384,166 @@ body.category-tabs-hidden .category-tabs-wrap {
 body.category-tabs-hidden .menu-shell {
   padding-top: 0 !important;
 }
+
+
+/* ===== V57 FINAL: kategori bar sadece menüde, PC tıklama çalışır, CSS sade ===== */
+.kol-customer.has-category-tabs:not(.category-tabs-hidden) .menu-shell {
+  padding-top: var(--kol-category-tabs-h) !important;
+}
+
+body.category-tabs-hidden .category-tabs-wrap,
+body.cart-open .category-tabs-wrap,
+body.modal-open .category-tabs-wrap,
+body.profile-open .category-tabs-wrap,
+body.order-live-open .category-tabs-wrap,
+body.settings-open .category-tabs-wrap {
+  display: none !important;
+}
+
+body.category-tabs-hidden .menu-shell {
+  padding-top: 0 !important;
+}
+
+.category-tabs-wrap {
+  position: fixed !important;
+  top: var(--kol-header-h) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 100000 !important;
+  width: min(100vw, var(--kol-page-max)) !important;
+  max-width: var(--kol-page-max) !important;
+  display: grid !important;
+  grid-template-columns: 34px minmax(0,1fr) 34px !important;
+  background: #fff !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid var(--kol-line) !important;
+  box-shadow: 0 4px 12px rgba(15,23,42,.08) !important;
+  pointer-events: auto !important;
+}
+
+.category-tabs-wrap[hidden] {
+  display: none !important;
+}
+
+.category-tabs-scroll {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 46px !important;
+  padding: 6px 8px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #c3cad3 #f4f6f8 !important;
+  pointer-events: auto !important;
+}
+
+.category-tabs-scroll::-webkit-scrollbar {
+  display: block !important;
+  height: 7px !important;
+}
+
+.category-tabs-scroll::-webkit-scrollbar-track {
+  background: #f4f6f8 !important;
+}
+
+.category-tabs-scroll::-webkit-scrollbar-thumb {
+  background: #b9c1cc !important;
+  border-radius: 999px !important;
+}
+
+.category-tab {
+  flex: 0 0 auto !important;
+  min-height: 32px !important;
+  padding: 0 13px !important;
+  border: 1px solid #dce1e7 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: var(--kol-text) !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.category-tab:hover,
+.category-tab:focus-visible {
+  outline: none !important;
+  background: #fff8f0 !important;
+  border-color: #f0c99d !important;
+  color: var(--kol-brand-dark) !important;
+}
+
+.category-tab.active {
+  background: var(--kol-brand) !important;
+  border-color: var(--kol-brand) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(217,107,0,.20) !important;
+}
+
+.category-tab-arrow {
+  min-height: 46px !important;
+  width: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  background: #fff !important;
+  color: #59616b !important;
+  font-size: 22px !important;
+  font-weight: 950 !important;
+  pointer-events: auto !important;
+}
+
+.category-tab-arrow-left {
+  border-right: 1px solid var(--kol-line) !important;
+}
+
+.category-tab-arrow-right {
+  border-left: 1px solid var(--kol-line) !important;
+}
+
+.category-tab-arrow:hover,
+.category-tab-arrow:active {
+  background: #f5f6f8 !important;
+  color: var(--kol-brand) !important;
+}
+
+.category-panel {
+  scroll-margin-top: calc(var(--kol-header-h) + var(--kol-category-tabs-h) + 4px) !important;
+}
+
+@media (max-width:760px) {
+  .category-tabs-wrap {
+    left: 0 !important;
+    transform: none !important;
+    width: 100vw !important;
+    grid-template-columns: 30px minmax(0,1fr) 30px !important;
+  }
+
+  .category-tabs-scroll {
+    min-height: 44px !important;
+    padding: 6px 7px !important;
+    gap: 6px !important;
+    scrollbar-width: none !important;
+  }
+
+  .category-tabs-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .category-tab {
+    min-height: 31px !important;
+    padding: 0 11px !important;
+    font-size: 13px !important;
+  }
+
+  .category-tab-arrow {
+    min-height: 44px !important;
+    width: 30px !important;
+    font-size: 21px !important;
+  }
+}
