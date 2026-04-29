@@ -3227,3 +3227,67 @@ body.cart-open .checkout-button {
 .kol-customer.kol-top-back-active .brand-back-label {
   display: inline-flex !important;
 }
+
+
+/* ===== V40: mobile product image scrolls together with product options =====
+   Ürün popup'ında resim artık sabit kalmaz. Başlık + resim + seçenekler
+   aynı scroll alanında birlikte yukarı/aşağı hareket eder. Alt sepete ekle
+   barı müşterinin işlem yapabilmesi için altta sabit kalır. */
+.kol-customer .product-modal:not([hidden]) {
+  touch-action: pan-y !important;
+}
+
+.kol-customer .product-panel {
+  position: relative !important;
+  display: block !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding-bottom: calc(var(--kol-action-h) + env(safe-area-inset-bottom)) !important;
+}
+
+.kol-customer .product-panel .product-titlebar,
+.kol-customer .product-panel .product-photo {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  flex: none !important;
+}
+
+.kol-customer .product-body {
+  display: block !important;
+  flex: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding-bottom: 22px !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: auto !important;
+}
+
+.kol-customer .product-footer {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 0 !important;
+  width: min(100vw, var(--kol-page-max)) !important;
+  transform: translateX(-50%) !important;
+  z-index: 9100 !important;
+  flex: none !important;
+}
+
+@media (max-width: 760px) {
+  .kol-customer .product-panel {
+    padding-bottom: calc(var(--kol-action-h) + env(safe-area-inset-bottom) + 8px) !important;
+  }
+
+  .kol-customer .product-body {
+    padding-bottom: 24px !important;
+  }
+}

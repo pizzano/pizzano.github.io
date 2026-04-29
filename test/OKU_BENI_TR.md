@@ -57,3 +57,5 @@ V28:
 - V38: Müşteri tarafında ayrı kapat/geri tuşları gizlendi. Menü dışındaki ürün, sepet, profil, bilgi ve sipariş durumu ekranlarında sol üstteki KØL GRILL & PIZZA alanı belirgin `← Tilbake til meny` butonuna dönüşür.
 
 - V39: Üst soldaki alan düzeltildi. Menüde restoran adı görünür, ürün/sepet/profil/info/sipariş durumunda aynı yer belirgin `← Tilbake til meny` butonuna dönüşür.
+
+- V40: Mobil ürün popup'ında ürün resmi artık sabit kalmaz; resim, seçenekler ve ürün bilgileri aynı scroll içinde birlikte hareket eder. Alt 'Legg til i handlevogn' barı sabit kalır.
