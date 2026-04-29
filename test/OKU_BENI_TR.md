@@ -96,3 +96,7 @@ V28:
 - V61: Tüm inline SVG ikonları kaldırıldı; header ve sepet ikonları sade text/emoji ikonlarla değiştirildi. Sepette düzenle/sil için çakışan eski event handlerlar temizlendi, data-action + onclick yedekli güvenilir düzenleme sistemi eklendi.
 
 - V62: Sepet düzenle butonundaki SVG/::before sorunu tamamen kaldırıldı. Düzenle butonu artık silme butonu gibi düz buton; ortasına basınca da çalışır. Çakışan eventler temizlendi, sağlam handler eklendi. Ürün detay ekranında kategori barı görünür ve kategoriye basınca ürün ekranını kapatıp ilgili kategoriye gider.
+
+- V63: Sepet düzenle butonu tamamen farklı yaklaşımla çözüldü. Artık eski çalışan openCartLineEditor(index) doğrudan çağrılır. Event document capture üzerinden yakalanır; ikon/orta/kenar fark etmez. SVG ve pseudo elementler kapalıdır. Ürün detayında kategori barı görünür ve kategoriye basınca ürün ekranını kapatıp kategoriye gider.
+
+- V64: Ürün detay ekranı açıkken kategori barının yatay kaymama sorunu düzeltildi. Popup scroll kilidi artık kategori barı touch/scroll hareketini engellemez.

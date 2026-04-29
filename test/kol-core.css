@@ -4786,3 +4786,116 @@ body.profile-open .category-tabs-wrap,
 body.order-live-open .category-tabs-wrap {
   display: none !important;
 }
+
+
+/* ===== V63 final edit button fix ===== */
+.edit-line-button.icon-only,
+.cart-item .edit-line-button.icon-only {
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #111827 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  z-index: 50 !important;
+  box-shadow: none !important;
+}
+
+.edit-line-button.icon-only::before,
+.edit-line-button.icon-only::after {
+  display: none !important;
+  content: none !important;
+}
+
+.cart-edit-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 25px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  color: #111827 !important;
+  pointer-events: none !important;
+  transform: none !important;
+}
+
+.edit-line-button svg,
+.edit-line-button path,
+svg {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.cart-item-actions,
+.cart-item-top-actions {
+  position: relative !important;
+  z-index: 60 !important;
+  pointer-events: auto !important;
+}
+
+.cart-item .remove-button {
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  z-index: 50 !important;
+  pointer-events: auto !important;
+}
+
+/* Product detail ekranında kategori barı görünür; sepet/profil/info içinde gizlenir. */
+body.modal-open:not(.category-tabs-hidden) .category-tabs-wrap {
+  display: grid !important;
+}
+body.category-tabs-hidden .category-tabs-wrap,
+body.cart-open .category-tabs-wrap,
+body.profile-open .category-tabs-wrap,
+body.order-live-open .category-tabs-wrap {
+  display: none !important;
+}
+
+
+/* ===== V64: allow horizontal category scroll while product modal is open ===== */
+.category-tabs-wrap,
+.category-tabs-scroll,
+.category-tab {
+  pointer-events: auto !important;
+}
+
+.category-tabs-scroll {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  touch-action: pan-x !important;
+  overscroll-behavior-x: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  user-select: none !important;
+}
+
+/* Ürün ekranında da bar swipe/drag ile kayabilsin */
+body.modal-open .category-tabs-wrap {
+  pointer-events: auto !important;
+  z-index: 100001 !important;
+}
+
+body.modal-open .category-tabs-scroll {
+  touch-action: pan-x !important;
+}
+
+/* Horizontal scroll gesture'ı seçenek listesine takılmasın */
+.product-modal:not([hidden]) ~ .category-tabs-wrap,
+.category-tabs-wrap {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}

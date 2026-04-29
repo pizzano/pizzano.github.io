@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=62">
+    <link rel="stylesheet" href="kol-core.css?v=64">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -923,7 +923,7 @@ function syncCategoryTabsVisibility() {
   const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) || document.body.classList.contains("order-live-open");
   const isSettingsOpen = document.body.classList.contains("settings-open");
 
-  // Product modal is allowed to show category bar.
+  // Product modal açıkken kategori barı görünür; sadece cart/info/profile/live içinde gizlenir.
   const shouldHide = isCartOpen || isInfoOpen || isProfileOpen || isLiveOpen || isSettingsOpen;
   document.body.classList.toggle("category-tabs-hidden", Boolean(shouldHide));
 }
@@ -959,7 +959,7 @@ function syncBodyScrollLocks() {
     (orderLiveModal && !orderLiveModal.hidden)
   );
   const getScrollBox = (target) => target?.closest?.(
-    ".product-scroll-content, .product-panel, .cart-content-scroll, .profile-body, .order-live-content, .info-panel"
+    ".category-tabs-scroll, .category-tabs-wrap, .product-scroll-content, .product-panel, .cart-content-scroll, .profile-body, .order-live-content, .info-panel"
   );
 
   document.addEventListener("touchstart", (event) => {
@@ -2972,8 +2972,8 @@ function scrollToMenuSection(sectionId) {
   const panel = getSectionPanelById(sectionId);
   if (!panel) return;
 
-  // If product editor is open, close it first so the main menu can scroll.
-  if (productModal && !productModal.hidden) {
+  const productWasOpen = productModal && !productModal.hidden;
+  if (productWasOpen) {
     productModal.hidden = true;
     productModal.classList.remove("simple-product", "kebab-product");
     editingCartIndex = null;
@@ -2986,10 +2986,7 @@ function scrollToMenuSection(sectionId) {
 
   window.requestAnimationFrame(() => {
     const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
-    window.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
   });
 }
 
@@ -3839,74 +3836,90 @@ if (menuToggle) {
 }
 
 
-/* ===== V62: FINAL reliable cart edit/remove, no SVG ===== */
-function kolOpenCartLineForEdit(index) {
+
+
+/* ===== V63: DIRECT cart edit fix =====
+   This does NOT depend on SVG, ::before, onclick, or the icon element.
+   It calls the original working openCartLineEditor(index) directly. */
+let kolLastCartEditAt = 0;
+
+function kolEditCartLineDirect(index) {
   index = Number(index);
   if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
 
-  const line = cart[index];
-  const productId = line?.productId;
-  if (!productId) return false;
-
-  editingCartIndex = index;
-
-  // Open the original product editor
-  if (typeof openProduct === "function") {
-    openProduct(productId);
-  } else if (typeof openProductModal === "function") {
-    openProductModal(productId);
+  if (typeof openCartLineEditor === "function") {
+    openCartLineEditor(index);
+    return false;
   }
 
-  // Restore choices after product modal rendered
-  window.setTimeout(() => {
-    try {
-      if (line.size) selectedSize = line.size;
-      quantity = Math.max(1, Number(line.quantity) || 1);
-      selectedExtras = new Set(Array.isArray(line.extraIds) ? line.extraIds : []);
-      if (specialInstructions) specialInstructions.value = line.note || "";
-      if (typeof renderProductModal === "function") renderProductModal();
-    } catch (error) {
-      console.warn("Kunne ikke forhåndsutfylle redigering:", error);
-    }
-  }, 0);
+  // Fallback only if old function is missing.
+  const line = cart[index];
+  const result = findProduct(line?.productId);
+  if (!result?.item) return false;
 
+  selectedProduct = result.item;
+  selectedSection = result.section;
+  editingCartIndex = index;
+  selectedSize = line.size || getDefaultProductSizeId(selectedProduct);
+  selectedExtras = new Set(line.extraIds || []);
+  applyDefaultOptionSelections();
+  quantity = line.quantity || 1;
+  if (specialInstructions) specialInstructions.value = line.note || "";
+  closeCartModal();
+  renderProductModal();
+  productModal.hidden = false;
+  document.body.classList.add("modal-open");
+  syncBodyScrollLocks();
   return false;
 }
 
-function kolRemoveCartLine(index) {
+function kolRemoveCartLineDirect(index) {
   index = Number(index);
   if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
   cart.splice(index, 1);
   saveCart();
   renderCart();
-  updateCartCount?.();
   return false;
 }
 
-window.__kolEditCartLine = kolOpenCartLineForEdit;
-window.__kolRemoveCartLine = kolRemoveCartLine;
+window.__kolEditCartLine = kolEditCartLineDirect;
+window.__kolRemoveCartLine = kolRemoveCartLineDirect;
 
-function handleCartActionReliable(event) {
-  const button = event.target.closest?.("[data-cart-action], [data-edit], [data-remove]");
+function kolCartActionFromEvent(event) {
+  const editButton = event.target.closest?.(".edit-line-button[data-edit], [data-cart-action='edit']");
+  const removeButton = event.target.closest?.(".remove-button[data-remove], [data-cart-action='remove']");
+  const button = editButton || removeButton;
   if (!button || !cartItems?.contains(button)) return;
 
   event.preventDefault();
   event.stopPropagation();
+  event.stopImmediatePropagation?.();
 
-  if (button.dataset.cartAction === "edit" || button.dataset.edit !== undefined) {
-    kolOpenCartLineForEdit(button.dataset.edit);
+  if (editButton) {
+    const now = Date.now();
+    if (now - kolLastCartEditAt < 350) return;
+    kolLastCartEditAt = now;
+    kolEditCartLineDirect(editButton.dataset.edit);
     return;
   }
 
-  if (button.dataset.cartAction === "remove" || button.dataset.remove !== undefined) {
-    kolRemoveCartLine(button.dataset.remove);
+  if (removeButton) {
+    kolRemoveCartLineDirect(removeButton.dataset.remove);
   }
 }
 
-// Capture phase: works even when inner icon is clicked.
-cartItems?.addEventListener("click", handleCartActionReliable, true);
-cartItems?.addEventListener("pointerup", handleCartActionReliable, true);
-cartItems?.addEventListener("touchend", handleCartActionReliable, true);
+// Use document capture so the center of the icon can never swallow the event.
+document.addEventListener("pointerdown", kolCartActionFromEvent, true);
+document.addEventListener("click", kolCartActionFromEvent, true);
+document.addEventListener("touchstart", kolCartActionFromEvent, { capture: true, passive: false });
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const editButton = event.target.closest?.(".edit-line-button[data-edit], [data-cart-action='edit']");
+  if (!editButton || !cartItems?.contains(editButton)) return;
+  event.preventDefault();
+  kolEditCartLineDirect(editButton.dataset.edit);
+}, true);
 
 init();
 
