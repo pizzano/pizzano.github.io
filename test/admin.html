@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=48">
+    <link rel="stylesheet" href="kol-core.css?v=49">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -1786,15 +1786,25 @@ function adminOrderCompactMeta(order = {}) {
 }
 
 function orderLineHtml(line = {}) {
-  const options = [line.sizeLabel, ...(asArray(line.extras))].filter(Boolean).join(" · ");
+  const details = receiptExtraDetailRows(line);
+  const totalText = safeAdminNumber(line.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
   return `
-    <div class="order-line-row">
-      <div>
+    <div class="order-line-row order-line-row-detailed">
+      <div class="order-line-main">
         <strong>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</strong>
-        ${options ? `<p>${escapeHtml(options)}</p>` : ""}
-        ${line.note ? `<p>${escapeHtml(line.note)}</p>` : ""}
+        ${details.length ? `
+          <div class="order-line-options">
+            ${details.map((detail) => `
+              <div class="order-line-option-row">
+                <span>${escapeHtml(detail.label || "")}</span>
+                ${detail.priceText ? `<b>${escapeHtml(detail.priceText)}</b>` : "<b></b>"}
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
+        ${line.note ? `<p class="order-line-note">${escapeHtml(line.note)}</p>` : ""}
       </div>
-      <strong>${safeAdminNumber(line.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" })}</strong>
+      <strong class="order-line-total">${totalText}</strong>
     </div>
   `;
 }
@@ -1873,11 +1883,15 @@ function buildEscposReceipt(order = {}) {
 
   lines.forEach((line) => {
     const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
-    text += receiptLine(`${quantity}x ${line.name || "Produkt"}`, "[ ]", width);
+    const priceRows = receiptItemPriceRows(line);
+    text += ESC + "E" + "\x01";
+    text += receiptLine(`${quantity}x ${line.name || "Produkt"}`, priceRows.totalText, width);
+    text += ESC + "E" + "\x00";
     receiptExtraDetailRows(line).forEach((detail) => {
-      const right = detail.priceText ? ` ${detail.priceText}` : "";
-      text += receiptWrap(`${detail.label}${right}`, "   ", width);
+      text += receiptLine(`   ${detail.label}`, detail.priceText || "", width);
     });
+    text += receiptLine("   Pris pr stk:", priceRows.unitText, width);
+    text += receiptLine("   Linjetotal:", priceRows.totalText, width);
     if (line.note) text += receiptWrap(`Notat: ${line.note}`, "   ", width);
     text += "\n";
   });
@@ -1957,10 +1971,25 @@ function receiptExtraDetailRows(line = {}) {
     }))
     .filter((detail) => detail.label);
   if (detailed.length) return detailed;
+
   const rows = [];
-  if (line.sizeLabel) rows.push({ label: `Størrelse: ${line.sizeLabel}`, priceText: "" });
-  asArray(line.extras).forEach((extra) => rows.push({ label: safeAdminText(extra), priceText: "" }));
+  const sizeText = safeAdminText(line.sizeLabel || line.size);
+  if (sizeText) rows.push({ label: /^størrelse\s*:/i.test(sizeText) ? sizeText : `Størrelse: ${sizeText}`, priceText: "" });
+  asArray(line.extras).forEach((extra) => {
+    const extraText = safeAdminText(extra);
+    if (extraText) rows.push({ label: extraText, priceText: "" });
+  });
   return rows.filter((row) => row.label);
+}
+
+function receiptItemPriceRows(line = {}) {
+  const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
+  const total = safeAdminNumber(line.total);
+  const unit = safeAdminNumber(line.unitPrice, quantity ? total / quantity : total);
+  return {
+    unitText: `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(unit)} kr`,
+    totalText: `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total)} kr`
+  };
 }
 
 function receiptOptionDetailHtml(detail = {}) {
@@ -2002,13 +2031,16 @@ function buildReceiptImageHtml(order = {}) {
 
   const itemRows = lines.map((line) => {
     const details = receiptExtraDetailRows(line);
+    const prices = receiptItemPriceRows(line);
     return `
       <div class="receipt-item">
-        <div class="receipt-item-line">
+        <div class="receipt-item-line receipt-item-line-priced">
           <b>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</b>
-          <span class="receipt-check">□</span>
+          <b>${escapeHtml(prices.totalText)}</b>
         </div>
         ${details.map(receiptOptionDetailHtml).join("")}
+        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Pris pr stk:</span><b>${escapeHtml(prices.unitText)}</b></div>
+        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Linjetotal:</span><b>${escapeHtml(prices.totalText)}</b></div>
         ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
       </div>
     `;

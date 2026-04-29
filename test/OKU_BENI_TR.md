@@ -74,3 +74,11 @@ V28:
 - V48: Yazıcı fişinde ürün ekstraları artık alt alta ve varsa fiyatıyla birlikte çıkar.
 - V48: Admin Meny oppsett kısmında Valggrupper paneli sağda sabit/fixed kaldı, kendi içinde scroll olur.
 - V48: Kategori ve ürün ayarları daha ikonlu/kompakt hale getirildi; kategori ayarları ⚙ menüsünden, ürün ayarları ürün içindeki ⚙ detayından açılır.
+
+- V49: Admin Bestillinger içinde ürün detayları alt alta ve fiyatlarıyla gösterildi. Fiş çıktısında ürün toplamı, ürün birim fiyatı ve linjetotal eklendi; fiş yazıları büyütüldü. Müşteri geri sayımındaki gereksiz 'min' kaldırıldı.
+
+- V53: Index sayfasına sabit yatay kategori menüsü eklendi. Pizza / Kebab / Burger / Drikke gibi başlıklar yatay scroll ile görünür, tıklanınca ilgili kategoriye iner ve sayfa scroll oldukça aktif kategori otomatik seçilir.
+
+- V54: Kategori barındaki tıklama sonrası geri zıplama düzeltildi. Aktif sekme artık sadece yatayda ortalanır. Kategori barı header gibi sabit görünür, boşluk azaltıldı, PC’de fareyle sürükleme, mouse wheel yatay kaydırma ve sağ/sol oklar eklendi.
+
+- V55: Kategori barı sticky yerine fixed yapıldı. Tasarım sistemle uyumlu küçük pill butonlara çevrildi. PC tıklama sorunu düzeltildi; tıklama kategoriye iner ve orada kalır. İçerik fixed barın altında boşluk bırakır, PC’de mouse wheel/sürükleme/oklarla yatay kayar.

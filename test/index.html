@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=48">
+    <link rel="stylesheet" href="kol-core.css?v=55">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -36,6 +36,12 @@
     <main class="menu-shell">
       <div class="status-notice">
         Vi har for &oslash;yeblikket stengt, men du kan forh&aring;ndsbestille for senere.
+      </div>
+
+      <div class="category-tabs-wrap" id="categoryTabsWrap" hidden>
+        <button class="category-tab-arrow category-tab-arrow-left" id="categoryTabsPrev" type="button" aria-label="Forrige kategori">‹</button>
+        <div class="category-tabs-scroll" id="categoryTabs" aria-label="Kategorinavigasjon"></div>
+        <button class="category-tab-arrow category-tab-arrow-right" id="categoryTabsNext" type="button" aria-label="Neste kategori">›</button>
       </div>
 
       <section id="menuSections" aria-label="Meny"></section>
@@ -783,6 +789,16 @@ let lazyScrollHandler = null;
 const openHour = 14;
 const closeHour = 22;
 const menuSectionsEl = document.querySelector("#menuSections");
+const categoryTabsWrap = document.querySelector("#categoryTabsWrap");
+const categoryTabs = document.querySelector("#categoryTabs");
+const categoryTabsPrev = document.querySelector("#categoryTabsPrev");
+const categoryTabsNext = document.querySelector("#categoryTabsNext");
+let activeCategoryTabId = "";
+let categoryScrollRaf = 0;
+let categoryTabDragActive = false;
+let categoryTabDragStartX = 0;
+let categoryTabDragStartScrollLeft = 0;
+let categoryTabPointerMoved = false;
 const brandHero = document.querySelector("#brandHero");
 const brandLogoImage = document.querySelector("#brandLogoImage");
 const brandDefaultInitials = document.querySelector("#brandDefaultInitials");
@@ -2897,6 +2913,101 @@ function setupMenuLazyLoader(totalSections) {
   window.addEventListener("scroll", lazyScrollHandler, { passive: true });
 }
 
+function syncCategoryTabsHeight() {
+  const visible = categoryTabsWrap && !categoryTabsWrap.hidden;
+  const height = visible ? categoryTabsWrap.offsetHeight : 0;
+  document.documentElement.style.setProperty("--kol-category-tabs-h", `${height}px`);
+  document.body.classList.toggle("has-category-tabs", Boolean(visible && height));
+}
+
+function getMenuStickyOffset() {
+  const headerHeight = document.querySelector(".appbar")?.offsetHeight || 0;
+  const tabsHeight = categoryTabsWrap && !categoryTabsWrap.hidden ? categoryTabsWrap.offsetHeight : 0;
+  return headerHeight + tabsHeight + 2;
+}
+
+function getSectionPanelById(sectionId) {
+  return [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")].find((panel) => panel.dataset.section === sectionId) || null;
+}
+
+function getCategoryTabButton(sectionId) {
+  return [...categoryTabs.querySelectorAll("[data-category-tab]")].find((button) => button.dataset.categoryTab === sectionId) || null;
+}
+
+function centerCategoryTab(sectionId, behavior = "smooth") {
+  if (!categoryTabs || !sectionId) return;
+  const activeButton = getCategoryTabButton(sectionId);
+  if (!activeButton) return;
+  const nextLeft = activeButton.offsetLeft - (categoryTabs.clientWidth - activeButton.offsetWidth) / 2;
+  categoryTabs.scrollTo({ left: Math.max(0, nextLeft), behavior });
+}
+
+function setActiveCategoryTab(sectionId, options = {}) {
+  if (!categoryTabs) return;
+  const { centerIntoView = true, behavior = "smooth" } = options;
+  activeCategoryTabId = sectionId || "";
+  categoryTabs.querySelectorAll("[data-category-tab]").forEach((button) => {
+    const isActive = !!sectionId && button.dataset.categoryTab === sectionId;
+    button.classList.toggle("active", isActive);
+    if (isActive) button.setAttribute("aria-current", "true");
+    else button.removeAttribute("aria-current");
+  });
+  if (centerIntoView && sectionId) centerCategoryTab(sectionId, behavior);
+}
+
+function renderCategoryTabs(sections) {
+  if (!categoryTabsWrap || !categoryTabs) return;
+  categoryTabs.innerHTML = sections
+    .map((section, index) => `
+      <button class="category-tab ${index === 0 ? "active" : ""}" type="button" data-category-tab="${section.id}" ${index === 0 ? 'aria-current="true"' : ""}>
+        ${section.title}
+      </button>
+    `)
+    .join("");
+
+  categoryTabsWrap.hidden = sections.length <= 1;
+  syncCategoryTabsHeight();
+  setActiveCategoryTab(sections[0]?.id || "", { centerIntoView: false, behavior: "auto" });
+}
+
+function scrollToMenuSection(sectionId) {
+  const panel = getSectionPanelById(sectionId);
+  if (!panel) return;
+  panel.classList.remove("collapsed");
+
+  // fixed kategori-bar olduğu için hedefi elle hesaplıyoruz.
+  // scrollIntoView kullanmıyoruz; PC'de geri yukarı zıplama bunun yüzünden oluyordu.
+  const y = window.scrollY + panel.getBoundingClientRect().top - getMenuStickyOffset();
+  setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "smooth" });
+  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+}
+
+function updateActiveCategoryFromScroll() {
+  categoryScrollRaf = 0;
+  if (!categoryTabsWrap || categoryTabsWrap.hidden) return;
+  const panels = [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")];
+  if (!panels.length) return;
+
+  const probeLine = getMenuStickyOffset() + 4;
+  let activePanel = panels[0];
+
+  for (const panel of panels) {
+    const rect = panel.getBoundingClientRect();
+    if (rect.top <= probeLine) activePanel = panel;
+    if (rect.top > probeLine) break;
+  }
+
+  const nextId = activePanel?.dataset.section || "";
+  if (nextId && nextId !== activeCategoryTabId) {
+    setActiveCategoryTab(nextId, { centerIntoView: true, behavior: "smooth" });
+  }
+}
+
+function requestCategoryScrollSync() {
+  if (categoryScrollRaf) return;
+  categoryScrollRaf = window.requestAnimationFrame(updateActiveCategoryFromScroll);
+}
+
 function renderMenu() {
   const visibleSections = menuSections
     .filter((section) => !isHiddenItem(section))
@@ -2905,6 +3016,12 @@ function renderMenu() {
 
   if (!visibleSections.length) {
     disconnectMenuLazyLoader();
+    if (categoryTabsWrap) {
+      categoryTabsWrap.hidden = true;
+      categoryTabs.innerHTML = "";
+      document.body.classList.remove("has-category-tabs");
+      syncCategoryTabsHeight();
+    }
     menuSectionsEl.innerHTML = `
       <section class="category-panel">
         <p class="category-note">Menyen er ikke tilgjengelig akkurat n&aring;.</p>
@@ -2915,6 +3032,8 @@ function renderMenu() {
 
   const sectionsToRender = visibleSections.slice(0, visibleSectionLimit);
   const hasMoreSections = visibleSectionLimit < visibleSections.length;
+
+  renderCategoryTabs(sectionsToRender);
 
   menuSectionsEl.innerHTML = sectionsToRender
     .map((section) => {
@@ -2958,6 +3077,7 @@ function renderMenu() {
       : "");
 
   setupMenuLazyLoader(visibleSections.length);
+  requestCategoryScrollSync();
 }
 
 function renderProductOptions() {
@@ -3407,6 +3527,18 @@ function closeInfoModal() {
   syncBodyScrollLocks();
 }
 
+categoryTabs?.addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-category-tab]");
+  if (!tab) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (categoryTabs.classList.contains("dragging") || categoryTabPointerMoved) {
+    categoryTabPointerMoved = false;
+    return;
+  }
+  scrollToMenuSection(tab.dataset.categoryTab);
+});
+
 menuSectionsEl.addEventListener("click", (event) => {
   const toggle = event.target.closest("[data-toggle-section]");
   if (toggle) {
@@ -3680,6 +3812,62 @@ document.querySelector(".appbar")?.addEventListener("pointerdown", (event) => {
   const button = event.target.closest("button");
   if (button) flashHeaderButton(button);
 }, { passive: true });
+
+function scrollCategoryTabsBy(delta) {
+  if (!categoryTabs) return;
+  categoryTabs.scrollBy({ left: delta, behavior: "smooth" });
+}
+
+categoryTabsPrev?.addEventListener("click", () => scrollCategoryTabsBy(-Math.max(180, categoryTabs.clientWidth * 0.7)));
+categoryTabsNext?.addEventListener("click", () => scrollCategoryTabsBy(Math.max(180, categoryTabs.clientWidth * 0.7)));
+
+categoryTabs?.addEventListener("wheel", (event) => {
+  if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+  event.preventDefault();
+  categoryTabs.scrollLeft += event.deltaY;
+}, { passive: false });
+
+categoryTabs?.addEventListener("pointerdown", (event) => {
+  if (event.button !== undefined && event.button !== 0) return;
+  categoryTabDragActive = true;
+  categoryTabPointerMoved = false;
+  categoryTabDragStartX = event.clientX;
+  categoryTabDragStartScrollLeft = categoryTabs.scrollLeft;
+  categoryTabs.classList.add("dragging");
+  categoryTabs.setPointerCapture?.(event.pointerId);
+});
+
+categoryTabs?.addEventListener("pointermove", (event) => {
+  if (!categoryTabDragActive) return;
+  const dx = event.clientX - categoryTabDragStartX;
+  if (Math.abs(dx) > 4) categoryTabPointerMoved = true;
+  categoryTabs.scrollLeft = categoryTabDragStartScrollLeft - dx;
+});
+
+function endCategoryTabDrag(event) {
+  if (!categoryTabDragActive) return;
+  categoryTabDragActive = false;
+  categoryTabs.classList.remove("dragging");
+  try { categoryTabs.releasePointerCapture?.(event.pointerId); } catch (error) {}
+  window.setTimeout(() => { categoryTabPointerMoved = false; }, 80);
+}
+
+categoryTabs?.addEventListener("pointerup", endCategoryTabDrag);
+categoryTabs?.addEventListener("pointercancel", endCategoryTabDrag);
+categoryTabs?.addEventListener("pointerleave", endCategoryTabDrag);
+
+window.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
+window.addEventListener("resize", () => {
+  syncCategoryTabsHeight();
+  requestCategoryScrollSync();
+}, { passive: true });
+
+if (document.fonts?.ready) {
+  document.fonts.ready.then(() => {
+    syncCategoryTabsHeight();
+    requestCategoryScrollSync();
+  }).catch(() => {});
+}
 
 if (menuToggle) {
   menuToggle.addEventListener("click", () => {
