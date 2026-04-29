@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=28">
+    <link rel="stylesheet" href="kol-core.css?v=35">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -44,19 +44,27 @@
           <div class="product-admin-grid">
             <form class="product-form product-editor-card" id="productForm">
               <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
-              <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
               <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
-              <section class="product-availability wide" aria-label="Synlighet og utsolgt">
-                <div class="availability-title">
-                  <strong>Status</strong>
-                  <span>Skjul eller marker produktet som utsolgt.</span>
+              <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
+              <details class="product-more wide" id="productMoreSettings">
+                <summary aria-label="Produktinnstillinger"><span>⋮</span><strong>Produktinnstillinger</strong></summary>
+                <div class="product-more-panel">
+                  <section class="product-availability" aria-label="Synlighet og utsolgt">
+                    <div class="availability-title">
+                      <strong>Status</strong>
+                      <span>Skjul, marker utsolgt eller sett sluttid.</span>
+                    </div>
+                    <label class="availability-check"><input id="productHidden" type="checkbox"> Skjul fra kundesiden</label>
+                    <label class="availability-check"><input id="productSoldOut" type="checkbox"> Vis som utsolgt</label>
+                    <label class="availability-until">Utsolgt til
+                      <input id="productSoldOutUntil" type="datetime-local">
+                    </label>
+                  </section>
+                  <label class="product-allergens-field">Allergener
+                    <textarea id="productAllergensAdmin" rows="2" maxlength="220" placeholder="F.eks. Melk, Hvete, Egg"></textarea>
+                  </label>
                 </div>
-                <label class="availability-check"><input id="productHidden" type="checkbox"> Skjul fra kundesiden</label>
-                <label class="availability-check"><input id="productSoldOut" type="checkbox"> Vis som utsolgt</label>
-                <label class="availability-until">Utsolgt til
-                  <input id="productSoldOutUntil" type="datetime-local">
-                </label>
-              </section>
+              </details>
               <label class="technical-field">Id <input id="productId" type="text"></label>
               <section class="product-prices wide" aria-label="Produktpriser">
                 <div class="mini-heading">
@@ -266,7 +274,8 @@ const fields = {
   productLargePrice: document.querySelector("#productLargePrice"),
   productDisplayPrice: document.querySelector("#productDisplayPrice"),
   productImageUrl: document.querySelector("#productImageUrl"),
-  productIngredients: document.querySelector("#productIngredients")
+  productIngredients: document.querySelector("#productIngredients"),
+  productAllergens: document.querySelector("#productAllergensAdmin")
 };
 
 const productStatusFields = {
@@ -1125,6 +1134,7 @@ function renderCategories() {
               </span>
               <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
+            <button class="category-delete-button" type="button" data-category-delete="${index}" aria-label="Slett kategori" title="Slett kategori">×</button>
             <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori valg">⋮</button>
             <div class="category-menu" data-category-menu-panel="${index}" hidden>
               <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "Lukk redigering" : "Rediger kategori"}</button>
@@ -1307,6 +1317,7 @@ function renderProductEditor() {
   fields.productDisplayPrice.value = product.displayPrice ?? "";
   fields.productImageUrl.value = product.imageUrl || "";
   fields.productIngredients.value = product.ingredients || "";
+  if (fields.productAllergens) fields.productAllergens.value = product.allergens || "";
   if (productStatusFields.hidden) productStatusFields.hidden.checked = product.hidden === true;
   if (productStatusFields.soldOut) productStatusFields.soldOut.checked = product.soldOut === true;
   if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = toDateTimeLocalValue(product.soldOutUntil || "");
@@ -2498,6 +2509,7 @@ function updateProductFromFields() {
     thumb: currentProduct.thumb,
     imageUrl: fields.productImageUrl.value.trim(),
     ingredients: fields.productIngredients.value.trim(),
+    allergens: fields.productAllergens?.value.trim() || undefined,
     hidden: productStatusFields.hidden?.checked === true,
     soldOut: productStatusFields.soldOut?.checked === true,
     soldOutUntil: productStatusFields.soldOutUntil?.value || undefined,
@@ -2525,15 +2537,36 @@ function addCategory() {
   writeLiveConfig("Kategori lagt til i Firebase.");
 }
 
-function deleteCategory() {
+function deleteCategory(categoryIndex = selectedCategoryIndex) {
+  if (!config || !Array.isArray(config.sections)) return;
+  const index = Number(categoryIndex);
+  if (!Number.isFinite(index) || !config.sections[index]) return;
   if (config.sections.length <= 1) {
     setStatus("Du må ha minst én kategori.");
     return;
   }
-  if (!confirm("Slette hele kategorien?")) return;
-  config.sections.splice(selectedCategoryIndex, 1);
-  selectedCategoryIndex = Math.max(0, selectedCategoryIndex - 1);
-  selectedProductIndex = 0;
+
+  const category = config.sections[index] || {};
+  const title = category.title || category.id || "denne kategorien";
+  const productCount = asArray(category.items).length;
+  const message = `Er du sikker på at du vil slette kategorien "${title}"?${productCount ? `
+
+Denne kategorien har ${productCount} produkter. Produktene blir også slettet.` : ""}`;
+  if (!confirm(message)) {
+    setStatus("Sletting av kategori ble avbrutt.");
+    return;
+  }
+
+  config.sections.splice(index, 1);
+  if (selectedCategoryIndex === index) {
+    selectedCategoryIndex = Math.min(index, config.sections.length - 1);
+    selectedProductIndex = null;
+  } else if (selectedCategoryIndex > index) {
+    selectedCategoryIndex -= 1;
+  }
+  if (editingCategoryIndex === index) editingCategoryIndex = null;
+  else if (editingCategoryIndex > index) editingCategoryIndex -= 1;
+  if (selectedCategoryIndex < 0) selectedCategoryIndex = null;
   renderAll();
   writeLiveConfig("Kategori slettet fra Firebase.");
 }
@@ -2723,6 +2756,13 @@ categoryButtons.addEventListener("click", (event) => {
     selectedCategoryIndex = Number(addProductInline.dataset.addProductToCategory);
     selectedProductIndex = Math.max(0, (selectedCategory()?.items || []).length - 1);
     addProduct();
+    return;
+  }
+
+  const categoryDelete = event.target.closest("[data-category-delete]");
+  if (categoryDelete) {
+    closeCategoryMenus();
+    deleteCategory(Number(categoryDelete.dataset.categoryDelete));
     return;
   }
 
@@ -3242,7 +3282,8 @@ document.addEventListener("keydown", (event) => {
   fields.productLargePrice,
   fields.productDisplayPrice,
   fields.productImageUrl,
-  fields.productIngredients
+  fields.productIngredients,
+  fields.productAllergens
 ].filter(Boolean).forEach((field) => {
   field.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.target.tagName === "TEXTAREA") return;

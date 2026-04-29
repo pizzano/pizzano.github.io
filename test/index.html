@@ -4,11 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=31">
+    <link rel="stylesheet" href="kol-core.css?v=39">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
-      <strong id="siteNameText">K&Oslash;L GRILL &amp; PIZZA</strong>
+      <button class="appbar-brand" id="siteNameText" type="button" aria-label="K&Oslash;L Grill &amp; Pizza">
+        <span class="brand-label">K&Oslash;L GRILL &amp; PIZZA</span>
+        <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
+      </button>
       <div class="appbar-actions">
         <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Meny">
           <svg class="menu-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
@@ -40,10 +43,12 @@
 
     <div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productTitle" hidden>
       <div class="product-panel">
-        <div class="product-photo">
-          <button class="back-button" id="closeProduct" type="button" aria-label="Tilbake">&lsaquo;</button>
+        <div class="product-titlebar" id="productTitlebar">
+          <button class="back-button" id="closeProduct" type="button" aria-label="Tilbake til meny">&lsaquo;</button>
           <h2 id="productTitle"></h2>
+          <button class="product-titlebar-back-text" id="closeProductText" type="button" aria-label="Tilbake til meny">Tilbake til meny</button>
         </div>
+        <div class="product-photo" aria-hidden="true"></div>
 
         <div class="product-body">
           <p class="product-summary" id="productSummary"></p>
@@ -781,6 +786,7 @@ const brandLogoImage = document.querySelector("#brandLogoImage");
 const brandDefaultInitials = document.querySelector("#brandDefaultInitials");
 const brandDefaultTitle = document.querySelector("#brandDefaultTitle");
 const siteNameText = document.querySelector("#siteNameText");
+const brandBackLabel = siteNameText?.querySelector?.(".brand-back-label");
 const infoTitle = document.querySelector("#infoTitle");
 const mapLabel = document.querySelector("#mapLabel");
 const openingDaysText = document.querySelector("#openingDaysText");
@@ -832,6 +838,8 @@ const productQuantity = document.querySelector("#productQuantity");
 const productTotal = document.querySelector("#productTotal");
 const productAllergens = document.querySelector("#productAllergens");
 const closeProduct = document.querySelector("#closeProduct");
+const closeProductText = document.querySelector("#closeProductText");
+const productTitlebar = document.querySelector("#productTitlebar");
 const decreaseProduct = document.querySelector("#decreaseProduct");
 const increaseProduct = document.querySelector("#increaseProduct");
 const addConfiguredProduct = document.querySelector("#addConfiguredProduct");
@@ -887,6 +895,27 @@ function setPageScrollLocked(locked) {
   }
 }
 
+function isCustomerOverlayOpen() {
+  return Boolean(
+    (productModal && !productModal.hidden) ||
+    (infoModal && !infoModal.hidden) ||
+    (cartModal && !cartModal.hidden) ||
+    (profileModal && !profileModal.hidden) ||
+    (orderLiveModal && !orderLiveModal.hidden)
+  );
+}
+
+function updateTopMenuReturnButton() {
+  const popupOpen = isCustomerOverlayOpen();
+  document.body.classList.toggle("kol-top-back-active", popupOpen);
+  if (siteNameText) {
+    const currentName = siteNameText.querySelector(".brand-label")?.textContent?.trim() || "KØL GRILL & PIZZA";
+    siteNameText.setAttribute("aria-label", popupOpen ? "Tilbake til meny" : currentName);
+    siteNameText.setAttribute("aria-pressed", popupOpen ? "true" : "false");
+  }
+  if (brandBackLabel) brandBackLabel.setAttribute("aria-hidden", popupOpen ? "false" : "true");
+}
+
 // TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
 // gerçek açık/kapalı modal durumuna göre eşitler.
 function syncBodyScrollLocks() {
@@ -901,6 +930,7 @@ function syncBodyScrollLocks() {
   document.body.classList.toggle("profile-open", profileOpen);
   document.body.classList.toggle("order-live-open", liveOpen);
   setPageScrollLocked(productOpen || infoOpen || cartOpen || profileOpen || liveOpen);
+  updateTopMenuReturnButton();
 }
 
 
@@ -2413,7 +2443,21 @@ function applySiteSettings() {
   const logoUrl = (settings.logoUrl || "").trim();
 
   document.title = name;
-  if (siteNameText) siteNameText.textContent = name.toUpperCase();
+  if (siteNameText) {
+    let topBrandLabel = siteNameText.querySelector(".brand-label");
+    let topBackLabel = siteNameText.querySelector(".brand-back-label");
+    if (!topBrandLabel || !topBackLabel) {
+      siteNameText.innerHTML = '<span class="brand-label"></span><span class="brand-back-label" aria-hidden="true">← Tilbake til meny</span>';
+      topBrandLabel = siteNameText.querySelector(".brand-label");
+      topBackLabel = siteNameText.querySelector(".brand-back-label");
+    }
+    if (topBrandLabel) topBrandLabel.textContent = name.toUpperCase();
+    if (topBackLabel) {
+      topBackLabel.textContent = "← Tilbake til meny";
+      topBackLabel.setAttribute("aria-hidden", isCustomerOverlayOpen() ? "false" : "true");
+    }
+    siteNameText.setAttribute("aria-label", isCustomerOverlayOpen() ? "Tilbake til meny" : name.toUpperCase());
+  }
   if (brandDefaultTitle) brandDefaultTitle.textContent = name;
   if (brandDefaultInitials) brandDefaultInitials.textContent = getRestaurantInitials(name);
 
@@ -3042,10 +3086,12 @@ function renderProductModal() {
   productQuantity.textContent = quantity;
   productTotal.textContent = formatPrice(getCurrentTotal()).toUpperCase();
   addConfiguredProduct.textContent = editingCartIndex === null ? "Legg til i handlevogn" : "Oppdater handlekurv";
-  productAllergens.textContent = selectedProduct.type === "sauce"
-    ? "Allergener: Melk, Egg, sennep"
-    : isKebabCustomItem(selectedProduct) ? "Allergener: Melk, Egg, Hvete, sennep, Selleri, Soya"
-    : isPizzaItem(selectedProduct) ? "Allergener: Melk, Hvete" : "";
+  productAllergens.textContent = selectedProduct.allergens
+    ? `Allergener: ${selectedProduct.allergens}`
+    : selectedProduct.type === "sauce"
+      ? "Allergener: Melk, Egg, sennep"
+      : isKebabCustomItem(selectedProduct) ? "Allergener: Melk, Egg, Hvete, sennep, Selleri, Soya"
+      : isPizzaItem(selectedProduct) ? "Allergener: Melk, Hvete" : "";
   renderProductOptions();
 }
 
@@ -3351,7 +3397,29 @@ increaseProduct.addEventListener("click", () => {
   renderProductModal();
 });
 
-closeProduct.addEventListener("click", closeProductModal);
+closeProduct.addEventListener("click", (event) => {
+  event.stopPropagation();
+  closeProductModal();
+});
+if (closeProductText) {
+  closeProductText.addEventListener("click", (event) => {
+    event.stopPropagation();
+    closeProductModal();
+  });
+}
+if (false && productTitlebar) {
+  productTitlebar.addEventListener("click", (event) => {
+    const isButton = event.target.closest("button");
+    if (isButton) return;
+    closeProductModal();
+  });
+  productTitlebar.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      closeProductModal();
+    }
+  });
+}
 addConfiguredProduct.addEventListener("click", addConfiguredToCart);
 cartToggle.addEventListener("click", () => { updatePickupControls(); renderRecentOrders(); openCart(); });
 checkoutButton.addEventListener("click", submitOrder);
@@ -3509,6 +3577,12 @@ async function init() {
 
 
 // 20260429 V11: GloriaFood tarzı üst menü butonu ve ikon basılma efekti.
+if (siteNameText) {
+  siteNameText.addEventListener("click", () => {
+    if (isCustomerOverlayOpen()) closeAllCustomerPopupsAndShowMenu();
+  });
+}
+
 function flashHeaderButton(button) {
   if (!button) return;
   button.classList.add("kol-pressed");

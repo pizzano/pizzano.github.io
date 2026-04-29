@@ -36,3 +36,24 @@ V28:
 - V30: `Kundeinformasjon` bölümünde `Snarest mulig / Velg hentetid` satırı üstte, ad ve telefon alanları altta olacak şekilde düzenlendi.
 
 - V31: Info popup masaüstü ayarsızlığı düzeltildi; `info-panel` tekrar header/menu genişliğine sabitlendi ve sorun çıkaran tam genişlik/flex override kaldırıldı.
+
+- V32: Admin `Meny oppsett` görünümü daha sade/temiz hale getirildi.
+- V32: Ürün içindeki `Skjul / Utsolgt / Utsolgt til / Allergener` alanları sağ üstteki `⋮` ürün ayarları menüsünün içine alındı.
+- V32: Sağdaki `Valggrupper` paneli iframe gibi sabit yükseklikte ve kendi içinde scroll olacak şekilde düzenlendi.
+- V32: Ürünlere özel allergen metni admin panelinden girilebilir; müşteri ürün popup'ında önce bu özel metin gösterilir.
+
+- V33: `Valggrupper` paneli artık sayfaya yapışmaz; sayfayla beraber hareket eder, sadece kendi içeriği scroll olur.
+- V33: Sağdaki valggruppe kartları küçültüldü.
+- V33: Altta görünen gereksiz `Produkter / Nytt produkt` stok formu gizlendi; form sadece kategori içinden ürün seçilince açılır.
+
+- V34: Sağdaki `Valggrupper` paneli üst menü gibi sticky yapıldı; scroll yapınca sağ tarafta görünür kalır, grup listesi kendi içinde scroll olur.
+
+- V35: Kategori kartlarına kırmızı × silme butonu eklendi. Tıklayınca onay sorar; onay verilirse kategori ve içindeki ürünler silinir, iptal edilirse hiçbir şey değişmez.
+
+- V36: Ürün popup'ında başlık ve geri butonu artık ürün resminin üstüne binmiyor. Resim ayrı alanda tam görünür; tüm ürün popup'larında aynı düzeltme geçerlidir.
+
+- V37: Ürün popup üst başlık alanına tıklayınca menüye geri dönme eklendi; sağ tarafa modern `Tilbake til meny` butonu koyuldu.
+
+- V38: Müşteri tarafında ayrı kapat/geri tuşları gizlendi. Menü dışındaki ürün, sepet, profil, bilgi ve sipariş durumu ekranlarında sol üstteki KØL GRILL & PIZZA alanı belirgin `← Tilbake til meny` butonuna dönüşür.
+
+- V39: Üst soldaki alan düzeltildi. Menüde restoran adı görünür, ürün/sepet/profil/info/sipariş durumunda aynı yer belirgin `← Tilbake til meny` butonuna dönüşür.
