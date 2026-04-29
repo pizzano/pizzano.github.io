@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=44">
+    <link rel="stylesheet" href="kol-core.css?v=46">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -1029,6 +1029,12 @@ function formatPrice(value) {
   return new Intl.NumberFormat("nb-NO", { style: "currency", currency: "NOK", maximumFractionDigits: 2 }).format(safeNumber(value));
 }
 
+function formatCartAddonPrice(value) {
+  const amount = safeNumber(value);
+  if (amount <= 0) return "";
+  return `+${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}`;
+}
+
 function loadCart() {
   const savedCart = localStorage.getItem(storageKey);
   if (!savedCart) return [];
@@ -1143,6 +1149,13 @@ function normalizeCustomerOrderLine(line = {}) {
   if (!line || typeof line !== "object") return null;
   const quantity = Math.max(1, safeNumber(line.quantity, 1));
   const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeText(item)).filter(Boolean) : [];
+  const extraDetails = Array.isArray(line.extraDetails)
+    ? line.extraDetails.map((item) => ({
+        label: safeText(item?.label),
+        price: safeNumber(item?.price),
+        priceText: safeText(item?.priceText)
+      })).filter((item) => item.label)
+    : [];
   return {
     ...line,
     name: safeText(line.name, "Produkt"),
@@ -1150,6 +1163,7 @@ function normalizeCustomerOrderLine(line = {}) {
     size: safeText(line.size),
     sizeLabel: safeText(line.sizeLabel || line.size),
     extras,
+    extraDetails,
     note: safeText(line.note),
     total: safeNumber(line.total)
   };
@@ -1702,6 +1716,7 @@ function buildOrderPayload() {
       size: line.size,
       sizeLabel: line.sizeLabel,
       extras: line.extras || [],
+      extraDetails: line.extraDetails || [],
       extraIds: line.extraIds || [],
       note: line.note || "",
       total: line.total
@@ -2792,19 +2807,36 @@ function getCurrentTotal() {
 function buildCartLine() {
   const selectedExtraLines = getVisibleExtras().filter((option) => selectedExtras.has(option.id));
   const titlePrefix = selectedProduct.number ? `${selectedProduct.number}- ` : "";
+  const sizeOptions = getProductSizes(selectedProduct);
+  const sizeLabel = sizeOptions.length
+    ? `Størrelse: ${getSelectedSizeLabel(selectedProduct, selectedSize)}`
+    : "Størrelse: Standard";
+  const extraDetails = [];
+  if (sizeOptions.length && sizeLabel !== "Størrelse: Standard") {
+    extraDetails.push({ label: sizeLabel, price: 0, priceText: "" });
+  }
+  selectedExtraLines.forEach((option) => {
+    const groupLabel = safeText(option.group || option.choiceGroup || "Tilvalg");
+    const optionLabel = safeText(option.label || option.name || "Valg");
+    const price = getOptionPrice(option);
+    extraDetails.push({
+      label: `${groupLabel}: ${optionLabel}`,
+      price,
+      priceText: formatCartAddonPrice(price)
+    });
+  });
   return {
     id: editingCartIndex === null ? `${selectedProduct.id}-${Date.now()}` : cart[editingCartIndex].id,
     productId: selectedProduct.id,
     name: `${titlePrefix}${selectedProduct.name.toUpperCase()}`,
     size: selectedSize,
-    sizeLabel: getProductSizes(selectedProduct).length
-      ? `Størrelse: ${getSelectedSizeLabel(selectedProduct, selectedSize)}`
-      : "Størrelse: Standard",
+    sizeLabel,
     extras: selectedExtraLines.map((option) =>
       option.choiceGroup || option.group === "Velg saus" || option.group === "Tillegg" || selectedProduct.type === "kebab-pita"
         ? option.label
         : option.group
     ),
+    extraDetails,
     extraIds: selectedExtraLines.map((option) => option.id),
     quantity,
     unitPrice: getCurrentUnitPrice(),
@@ -3224,24 +3256,45 @@ function renderCart() {
   if (cartSummary) cartSummary.style.display = hasCartItems || showOnlyOrderStatus ? "" : "none";
 
   cartItems.innerHTML = cart
-    .map(
-      (line, index) => `
+    .map((line, index) => {
+      const detailRows = Array.isArray(line.extraDetails) && line.extraDetails.length
+        ? line.extraDetails
+        : [line.sizeLabel, ...(line.extras || [])].filter(Boolean).map((label) => ({ label, priceText: "" }));
+      return `
         <article class="cart-item">
-          <div class="cart-item-main">
-            <div>
+          <div class="cart-item-main cart-item-main-stacked">
+            <div class="cart-item-head">
               <h3>${line.quantity}x ${line.name}</h3>
-              <p>${line.sizeLabel}${line.extras.length ? " &middot; " + line.extras.join(", ") : ""}</p>
-              ${line.note ? `<p>${line.note}</p>` : ""}
             </div>
-            <strong>${formatPrice(line.total)}</strong>
+            ${detailRows.length ? `
+              <div class="cart-item-details">
+                ${detailRows
+                  .map((detail) => `
+                    <div class="cart-detail-row">
+                      <span>${detail.label || ""}</span>
+                      <strong>${detail.priceText || ""}</strong>
+                    </div>
+                  `)
+                  .join("")}
+              </div>
+            ` : ""}
+            ${line.note ? `<p class="cart-item-note">Notat: ${line.note}</p>` : ""}
           </div>
           <div class="cart-item-actions">
-            <button class="edit-line-button" type="button" data-edit="${index}">Rediger</button>
-            <button class="remove-button" type="button" data-remove="${index}">&times;</button>
+            <div class="cart-item-top-actions">
+              <button class="edit-line-button icon-only" type="button" data-edit="${index}" aria-label="Rediger vare" title="Rediger vare">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                  <path d="M4 20h4l10-10a2 2 0 0 0 0-2.83l-1.17-1.17a2 2 0 0 0-2.83 0L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </button>
+              <button class="remove-button" type="button" data-remove="${index}" aria-label="Slett vare" title="Slett vare">&times;</button>
+            </div>
+            <strong class="cart-line-total">${formatPrice(line.total)}</strong>
           </div>
         </article>
-      `
-    )
+      `;
+    })
     .join("");
 
   if (showOnlyOrderStatus && orderStatusBox) {

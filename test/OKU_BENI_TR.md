@@ -59,3 +59,13 @@ V28:
 - V39: Üst soldaki alan düzeltildi. Menüde restoran adı görünür, ürün/sepet/profil/info/sipariş durumunda aynı yer belirgin `← Tilbake til meny` butonuna dönüşür.
 
 - V40: Mobil ürün popup'ında ürün resmi artık sabit kalmaz; resim, seçenekler ve ürün bilgileri aynı scroll içinde birlikte hareket eder. Alt 'Legg til i handlevogn' barı sabit kalır.
+
+- V42: Ürün detay ekranı tek bütün scroll alanına çevrildi. Başlık, ürün resmi, seçenekler, not ve miktar beraber kayar; sadece sepete ekle barı altta kalır.
+
+- V43: Alt "Legg til i handlevogn" barı tam dibe monte edildi ve ilk boyut seçim satırlarındaki yazılar biraz küçültüldü.
+
+- V44: Ürün seçim alanları (küçük/orta/büyük ve diğer seçenekler) örnek görseldeki gibi daha dengeli, daha küçük yazılı ve krem-beyaz arka planlı hale getirildi.
+
+- V45: Sepette ürün ekstraları alt alta listelenir; varsa her ekstranın fiyatı karşısında görünür.
+
+- V46: Sepette Rediger yazısı kaldırıldı, yerine ikonlu düzenle butonu eklendi. Ürün satır toplamı sağ alt köşeye taşındı; sil ve düzenle butonları sağ üstte durur.
