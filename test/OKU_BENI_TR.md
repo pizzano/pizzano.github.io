@@ -69,3 +69,8 @@ V28:
 - V45: Sepette ürün ekstraları alt alta listelenir; varsa her ekstranın fiyatı karşısında görünür.
 
 - V46: Sepette Rediger yazısı kaldırıldı, yerine ikonlu düzenle butonu eklendi. Ürün satır toplamı sağ alt köşeye taşındı; sil ve düzenle butonları sağ üstte durur.
+
+- V47: Sepette ekstra satırlarında sol taraftaki başlık kısmı kalınlaştırıldı; seçilen değer (ör. Medium / Nytt valg) daha ince yapıldı.
+- V48: Yazıcı fişinde ürün ekstraları artık alt alta ve varsa fiyatıyla birlikte çıkar.
+- V48: Admin Meny oppsett kısmında Valggrupper paneli sağda sabit/fixed kaldı, kendi içinde scroll olur.
+- V48: Kategori ve ürün ayarları daha ikonlu/kompakt hale getirildi; kategori ayarları ⚙ menüsünden, ürün ayarları ürün içindeki ⚙ detayından açılır.

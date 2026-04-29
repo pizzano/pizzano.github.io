@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=46">
+    <link rel="stylesheet" href="kol-core.css?v=48">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -3271,7 +3271,16 @@ function renderCart() {
                 ${detailRows
                   .map((detail) => `
                     <div class="cart-detail-row">
-                      <span>${detail.label || ""}</span>
+                      ${(() => {
+                        const rawLabel = safeText(detail.label || "");
+                        const splitIndex = rawLabel.indexOf(":");
+                        if (splitIndex === -1) {
+                          return `<span class="cart-detail-text cart-detail-text-plain">${rawLabel}</span>`;
+                        }
+                        const labelPart = rawLabel.slice(0, splitIndex + 1).trim();
+                        const valuePart = rawLabel.slice(splitIndex + 1).trim();
+                        return `<span class="cart-detail-text"><strong class="cart-detail-label">${labelPart}</strong>${valuePart ? ` <span class="cart-detail-value">${valuePart}</span>` : ""}</span>`;
+                      })()}
                       <strong>${detail.priceText || ""}</strong>
                     </div>
                   `)

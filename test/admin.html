@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=35">
+    <link rel="stylesheet" href="kol-core.css?v=48">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -47,7 +47,7 @@
               <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
               <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
               <details class="product-more wide" id="productMoreSettings">
-                <summary aria-label="Produktinnstillinger"><span>⋮</span><strong>Produktinnstillinger</strong></summary>
+                <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Flere produktinnstillinger</strong></summary>
                 <div class="product-more-panel">
                   <section class="product-availability" aria-label="Synlighet og utsolgt">
                     <div class="availability-title">
@@ -707,6 +707,13 @@ function normalizeAdminOrderLine(line = {}) {
   if (!line || typeof line !== "object") return null;
   const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
   const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeAdminText(item)).filter(Boolean) : [];
+  const extraDetails = Array.isArray(line.extraDetails)
+    ? line.extraDetails.map((item) => ({
+        label: safeAdminText(item?.label),
+        price: safeAdminNumber(item?.price),
+        priceText: safeAdminText(item?.priceText)
+      })).filter((item) => item.label)
+    : [];
   return {
     ...line,
     name: safeAdminText(line.name, "Produkt"),
@@ -714,6 +721,7 @@ function normalizeAdminOrderLine(line = {}) {
     size: safeAdminText(line.size),
     sizeLabel: safeAdminText(line.sizeLabel || line.size),
     extras,
+    extraDetails,
     note: safeAdminText(line.note),
     total: safeAdminNumber(line.total)
   };
@@ -1113,7 +1121,7 @@ function renderCategories() {
                 <span class="product-card-copy">
                   <strong>${escapeHtml(product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt")}</strong>
                   ${statusBadges(product)}
-                  <span>${escapeHtml(product.ingredients || "Klikk for å redigere")}</span>
+                  <span>${escapeHtml(product.ingredients || "⚙ Trykk for produktinnstillinger")}</span>
                 </span>
                 <span class="product-card-price">${productPriceSummary(product)}</span>
               </button>
@@ -1135,10 +1143,10 @@ function renderCategories() {
               <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
             <button class="category-delete-button" type="button" data-category-delete="${index}" aria-label="Slett kategori" title="Slett kategori">×</button>
-            <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori valg">⋮</button>
+            <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori innstillinger">⚙</button>
             <div class="category-menu" data-category-menu-panel="${index}" hidden>
-              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "Lukk redigering" : "Rediger kategori"}</button>
-              <button type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
+              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "✓ Ferdig" : "⚙ Rediger kategori"}</button>
+              <button type="button" data-category-action="delete" data-category-index="${index}">🗑 Slett kategori</button>
             </div>
           </div>
           ${
@@ -1866,9 +1874,9 @@ function buildEscposReceipt(order = {}) {
   lines.forEach((line) => {
     const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
     text += receiptLine(`${quantity}x ${line.name || "Produkt"}`, "[ ]", width);
-    if (line.sizeLabel) text += receiptWrap(`Storrelse: ${line.sizeLabel}`, "   ", width);
-    asArray(line.extras).forEach((extra) => {
-      text += receiptWrap(`+ ${extra}`, "   ", width);
+    receiptExtraDetailRows(line).forEach((detail) => {
+      const right = detail.priceText ? ` ${detail.priceText}` : "";
+      text += receiptWrap(`${detail.label}${right}`, "   ", width);
     });
     if (line.note) text += receiptWrap(`Notat: ${line.note}`, "   ", width);
     text += "\n";
@@ -1933,6 +1941,42 @@ function receiptCustomerFullName(customer = {}) {
   ).trim();
 }
 
+function receiptExtraPriceText(detail = {}) {
+  const direct = safeAdminText(detail?.priceText || "");
+  if (direct) return direct;
+  const price = safeAdminNumber(detail?.price);
+  if (price <= 0) return "";
+  return `+${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)}`;
+}
+
+function receiptExtraDetailRows(line = {}) {
+  const detailed = asArray(line.extraDetails)
+    .map((detail) => ({
+      label: safeAdminText(detail?.label),
+      priceText: receiptExtraPriceText(detail)
+    }))
+    .filter((detail) => detail.label);
+  if (detailed.length) return detailed;
+  const rows = [];
+  if (line.sizeLabel) rows.push({ label: `Størrelse: ${line.sizeLabel}`, priceText: "" });
+  asArray(line.extras).forEach((extra) => rows.push({ label: safeAdminText(extra), priceText: "" }));
+  return rows.filter((row) => row.label);
+}
+
+function receiptOptionDetailHtml(detail = {}) {
+  const clean = safeAdminText(detail.label || "").trim();
+  if (!clean) return "";
+  const priceText = safeAdminText(detail.priceText || "");
+  const parts = clean.split(":");
+  let leftHtml = `<i>${escapeHtml(clean)}</i>`;
+  if (parts.length > 1) {
+    const left = parts.shift().trim();
+    const right = parts.join(":").trim();
+    leftHtml = `<span><b><i>${escapeHtml(left)}:</i></b></span><span>${escapeHtml(right)}</span>`;
+  }
+  return `<div class="receipt-sub receipt-choice receipt-choice-priced"><span class="receipt-choice-text">${leftHtml}</span>${priceText ? `<b class="receipt-choice-price">${escapeHtml(priceText)}</b>` : ""}</div>`;
+}
+
 function receiptOptionHtml(text = "") {
   const clean = String(text || "").trim();
   if (!clean) return "";
@@ -1957,15 +2001,14 @@ function buildReceiptImageHtml(order = {}) {
   const noteText = order.note || order.customerNote || "";
 
   const itemRows = lines.map((line) => {
-    const extras = asArray(line.extras);
+    const details = receiptExtraDetailRows(line);
     return `
       <div class="receipt-item">
         <div class="receipt-item-line">
           <b>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</b>
           <span class="receipt-check">□</span>
         </div>
-        ${line.sizeLabel ? `<div class="receipt-sub"><i>Størrelse: <b>${escapeHtml(line.sizeLabel)}</b></i></div>` : ""}
-        ${extras.map(receiptOptionHtml).join("")}
+        ${details.map(receiptOptionDetailHtml).join("")}
         ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
       </div>
     `;
