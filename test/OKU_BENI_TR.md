@@ -1,27 +1,22 @@
-# KØL Grill & Pizza - sadeleştirilmiş dosya yapısı
+# KØL Grill & Pizza - v15
 
-Bu paket son gönderdiğin dosyalar üzerinden düzeltildi.
+Bu sürümde admin panelindeki Bestillinger sayfasında üstteki gereksiz bilgi alanları kaldırıldı.
 
-## Dosyalar
+Kaldırılan/gizlenen alanlar:
+- Firebase bağlantı durum yazısı
+- Bestillinger başlığı ve açıklaması
+- Oppdater butonu
+- Toplam sipariş sayısı kutusu
+- Nye / Behandlede başlık satırları
 
-1. `index.html`  
-   Müşteri tarafı. HTML + CSS + JavaScript tek dosya içinde.
+Sipariş kartları ve sipariş alma popup sistemi korunmuştur.
 
-2. `admin.html`  
-   Admin paneli. Senin gönderdiğin haliyle bırakıldı.
-
-## Bu sürümde yapılan düzeltmeler
-
-- `Send bestilling` butonundaki `position:absolute!important;` kaldırıldı.
-- Sepet butonuna profil veya info açıkken basılırsa, artık sepetten geri çıkınca profil/infoya dönmez; direkt menüye döner.
-- Fixed header altında kalan popup/sayfa içerikleri aşağı alındı.
-- `Tilbake til meny` menüye dönme davranışı güçlendirildi.
+## V16 notları
+- Admin üst çubuktaki restoran adı / “meny admin” yazısı ve “Se meny” butonu kaldırıldı.
+- Sepette müşteri daha önce “Velg hentetid” seçmiş olsa bile yeni sepet açılışında varsayılan her zaman “Snarest mulig” olur.
 
 
-## v11 düzeltme
-
-- Üst header GloriaFood tarzı sabit kaldı.
-- Menü butonu eklendi.
-- Menü / info / profil / sepet ikonlarına basınca aktif gibi gri görünür.
-- Sepetten “Tilbake til meny” artık her zaman direkt ana menüye döner.
-- Popup ve sepet ekranları headerın altında başlar; içerikler headerın altında kalmaz.
+## V17 düzeltme
+- Sepette toplam kartı ile Kundeinformasjon ayrı kartlara ayrıldı.
+- Snarest mulig seçiliyken boş görünen hentetid alanı tamamen gizlendi.
+- Velg hentetid seçilince saat listesi görünmeye devam eder.
