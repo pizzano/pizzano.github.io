@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=40">
+    <link rel="stylesheet" href="kol-core.css?v=42">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -43,29 +43,31 @@
 
     <div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productTitle" hidden>
       <div class="product-panel">
-        <div class="product-titlebar" id="productTitlebar">
-          <button class="back-button" id="closeProduct" type="button" aria-label="Tilbake til meny">&lsaquo;</button>
-          <h2 id="productTitle"></h2>
-          <button class="product-titlebar-back-text" id="closeProductText" type="button" aria-label="Tilbake til meny">Tilbake til meny</button>
-        </div>
-        <div class="product-photo" aria-hidden="true"></div>
-
-        <div class="product-body">
-          <p class="product-summary" id="productSummary"></p>
-          <div id="optionGroups"></div>
-
-          <label class="note-label" for="specialInstructions">Spesielle instrukser</label>
-          <textarea id="specialInstructions" rows="2" placeholder="Eksempel: Ingen paprika/sukker/salt."></textarea>
-
-          <div class="quantity-row">
-            <span>Mengde</span>
-            <div class="quantity-stepper">
-              <strong id="productQuantity">1</strong>
-              <button type="button" id="decreaseProduct">&minus;</button>
-              <button type="button" id="increaseProduct">+</button>
-            </div>
+        <div class="product-scroll-content">
+          <div class="product-titlebar" id="productTitlebar">
+            <button class="back-button" id="closeProduct" type="button" aria-label="Tilbake til meny">&lsaquo;</button>
+            <h2 id="productTitle"></h2>
+            <button class="product-titlebar-back-text" id="closeProductText" type="button" aria-label="Tilbake til meny">Tilbake til meny</button>
           </div>
-          <p class="allergen-note" id="productAllergens"></p>
+          <div class="product-photo" aria-hidden="true"></div>
+
+          <div class="product-body">
+            <p class="product-summary" id="productSummary"></p>
+            <div id="optionGroups"></div>
+
+            <label class="note-label" for="specialInstructions">Spesielle instrukser</label>
+            <textarea id="specialInstructions" rows="2" placeholder="Eksempel: Ingen paprika/sukker/salt."></textarea>
+
+            <div class="quantity-row">
+              <span>Mengde</span>
+              <div class="quantity-stepper">
+                <strong id="productQuantity">1</strong>
+                <button type="button" id="decreaseProduct">&minus;</button>
+                <button type="button" id="increaseProduct">+</button>
+              </div>
+            </div>
+            <p class="allergen-note" id="productAllergens"></p>
+          </div>
         </div>
 
         <div class="product-footer">
@@ -937,6 +939,7 @@ function syncBodyScrollLocks() {
 
 // 20260429 V22: Popup açıkken arka sayfanın touch/overscroll ile kaymasını engeller.
 // Sadece açık popup içindeki gerçek scroll alanlarına izin verir.
+// V41: Ürün resmi / başlık alanına dokununca da .product-panel scroll etsin.
 (function preventBackgroundScrollWhilePopupOpen() {
   let startY = 0;
   const isCustomerPopupOpen = () => Boolean(
@@ -947,7 +950,7 @@ function syncBodyScrollLocks() {
     (orderLiveModal && !orderLiveModal.hidden)
   );
   const getScrollBox = (target) => target?.closest?.(
-    ".product-body, .cart-content-scroll, .profile-body, .order-live-content, .info-panel"
+    ".product-scroll-content, .product-panel, .cart-content-scroll, .profile-body, .order-live-content, .info-panel"
   );
 
   document.addEventListener("touchstart", (event) => {

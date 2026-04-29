@@ -3291,3 +3291,71 @@ body.cart-open .checkout-button {
     padding-bottom: 24px !important;
   }
 }
+
+
+/* ===== V42: product detail as one complete scroll area =====
+   Ürün içine girince başlık + resim + açıklama + seçenekler + not + miktar
+   tek bir bütün scroll alanı içinde hareket eder. Sadece alt sepete ekle barı sabit kalır. */
+.kol-customer .product-modal:not([hidden]) {
+  overflow: hidden !important;
+}
+
+.kol-customer .product-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+
+.kol-customer .product-scroll-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  background: #f2f3f5 !important;
+}
+
+.kol-customer .product-scroll-content .product-titlebar,
+.kol-customer .product-scroll-content .product-photo,
+.kol-customer .product-scroll-content .product-body {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  flex: none !important;
+}
+
+.kol-customer .product-scroll-content .product-body {
+  display: block !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 24px !important;
+}
+
+.kol-customer .product-footer {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  z-index: 20 !important;
+}
+
+@media (max-width: 760px) {
+  .kol-customer .product-scroll-content {
+    max-height: calc(100svh - var(--kol-header-h) - var(--kol-action-h)) !important;
+  }
+}
