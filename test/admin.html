@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=22">
+    <link rel="stylesheet" href="kol-core.css?v=28">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -2043,6 +2043,7 @@ function renderAdminOrderCard(order) {
   `;
 }
 
+
 function renderAdminOrderModal(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
   const status = order.status || "pending";
@@ -2056,70 +2057,109 @@ function renderAdminOrderModal(order) {
   const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
   const readyPreview = getOrderDetailTimeText(order, readyMinutes);
   const orderId = String(order.id || "");
-  const compactMeta = adminOrderCompactMeta(order);
   const headerTime = getOrderHeaderTime(order);
+  const createdAtText = formatAdminShortDateTime(order.createdAt || order.updatedAt || new Date().toISOString());
+
+  let headerTimerLabel = "STATUS";
+  if (status === "accepted") headerTimerLabel = "GJENSTÅR";
+  else if (status === "pending") headerTimerLabel = isAdminOrderProcessable(order) ? "SVARFRIST" : "ÅPNER";
 
   return `
     <div class="admin-order-modal-backdrop" data-order-modal="${escapeHtml(orderId)}">
       <section class="admin-order-modal" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer">
-        <header class="admin-order-modal-header" data-close-order-modal title="Tilbake til bestillinger">
+        <header class="admin-order-modal-header admin-order-modal-header-v28" data-close-order-modal title="Tilbake til bestillinger">
           <button class="admin-order-back-button" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
-          <div class="admin-order-modal-title">
-            <h2>${escapeHtml(customerName)}</h2>
+
+          <div class="admin-order-modal-title admin-order-modal-title-v28">
+            <div class="admin-order-title-stack-v28">
+              <h2>${escapeHtml(customerName)}</h2>
+              <div class="admin-order-phone-under-name-v28">${escapeHtml(phoneText)}</div>
+            </div>
           </div>
-          <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
+
+          <div class="admin-order-header-timer">
+            <span>${escapeHtml(headerTimerLabel)}</span>
+            <strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+          </div>
         </header>
 
-        <div class="admin-order-modal-body">
-          <div class="admin-order-meta-panel">
-            <div><span>Telefon</span><strong>${escapeHtml(phoneText)}</strong></div>
-            <div><span>Bestilt</span><strong>${escapeHtml(formatAdminShortDateTime(order.createdAt))}</strong></div>
-            <div><span>${isLaterPickup ? "Hentetid" : "Klar tid"}</span><strong>${escapeHtml(isLaterPickup && order.pickup?.time ? formatAdminShortDateTime(order.pickup.time) : formatAdminShortDateTime(getAdminReadyAt(order, readyMinutes)))}</strong></div>
-            <div><span>Gjenstår</span><strong data-admin-detail-remaining="${escapeHtml(orderId)}">${escapeHtml(getAdminRemainingDetailText(order))}</strong></div>
-          </div>
-
-          <div class="order-receipt modern admin-order-modal-receipt">
+        <div class="admin-order-modal-body admin-order-modal-body-v28">
+          <div class="order-receipt modern admin-order-modal-receipt admin-order-modal-receipt-v28">
             ${lines.map(orderLineHtml).join("")}
             <div class="order-total-row"><span>Sluttsum</span><strong>${totalText}</strong></div>
           </div>
         </div>
 
-        <footer class="admin-order-modal-footer">
+        <footer class="admin-order-modal-footer admin-order-modal-footer-v28">
           ${status === "pending" ? (isLaterPickup ? `
-            <div class="order-later-note">
-              <strong>Forhåndsbestilling</strong>
-              <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
+            <div class="order-footer-top-v28">
+              <div class="order-later-note">
+                <strong>Forhåndsbestilling</strong>
+                <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
+              </div>
+              <button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
             </div>
           ` : `
-            <div class="order-minutes-modern-wrap modal-minutes">
-              <label class="order-soft-label" for="ready-${escapeHtml(orderId)}">Tilberedningstid</label>
-              <div class="order-minutes-modern">
-                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="-2">−</button>
-                <input class="order-soft-input" id="ready-${escapeHtml(orderId)}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(orderId)}" inputmode="numeric">
-                <span class="order-input-suffix">min</span>
-                <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="2">+</button>
+            <div class="order-footer-top-v28">
+              <div class="order-minutes-modern-wrap modal-minutes">
+                <label class="order-soft-label" for="ready-${escapeHtml(orderId)}">Tilberedningstid</label>
+                <div class="order-minutes-modern">
+                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="-2">−</button>
+                  <input class="order-soft-input" id="ready-${escapeHtml(orderId)}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(orderId)}" inputmode="numeric">
+                  <span class="order-input-suffix">min</span>
+                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="2">+</button>
+                </div>
+                <small class="order-ready-preview" data-ready-preview="${escapeHtml(orderId)}">${escapeHtml(readyPreview)}</small>
               </div>
-              <small class="order-ready-preview" data-ready-preview="${escapeHtml(orderId)}">${escapeHtml(readyPreview)}</small>
+              <button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
             </div>
-          `) : `
-            <div class="order-inline-note ${status === "accepted" ? "success" : "danger"}">
-              ${status === "accepted" ? `Ordren er behandlet` : `Kansellert ${formatOrderDate(order.cancelledAt || order.updatedAt)}`}
-            </div>
-          `}
+          `) : ""}
 
-          <div class="order-action-row modal-actions">
-            ${status === "pending"
-              ? `<button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn bestilling</button>`
-              : ""}
-            ${canCancel
-              ? `<button class="cancel-order-button modern" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>`
-              : ""}
-            <button class="print-order-button modern" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
+          <div class="order-footer-bottom-v28">
+            <div class="order-footer-created-v28">
+              <span>BESTILT</span>
+              <strong>${escapeHtml(createdAtText)}</strong>
+            </div>
+
+            <div class="order-more-actions order-more-actions-v28" data-order-actions-menu="${escapeHtml(orderId)}">
+              <button class="order-more-button modern order-more-button-v28" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
+              <div class="order-more-dropdown order-more-dropdown-v28" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
+                <button class="order-more-item" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
+                ${canCancel
+                  ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>`
+                  : ""}
+              </div>
+            </div>
           </div>
         </footer>
       </section>
     </div>
   `;
+}
+
+function closeAllOrderActionMenus(scope = document) {
+  scope.querySelectorAll("[data-order-actions-menu]").forEach((menuRoot) => {
+    menuRoot.classList.remove("open");
+    const button = menuRoot.querySelector("[data-toggle-order-actions]");
+    const dropdown = menuRoot.querySelector("[data-order-actions-dropdown]");
+    if (button) button.setAttribute("aria-expanded", "false");
+    if (dropdown) dropdown.hidden = true;
+  });
+}
+
+function toggleOrderActionMenu(orderId) {
+  const menuRoot = ordersAdminList?.querySelector(`[data-order-actions-menu="${CSS.escape(orderId)}"]`);
+  if (!menuRoot) return;
+  const button = menuRoot.querySelector("[data-toggle-order-actions]");
+  const dropdown = menuRoot.querySelector("[data-order-actions-dropdown]");
+  if (!button || !dropdown) return;
+  const isOpen = menuRoot.classList.contains("open");
+  closeAllOrderActionMenus(ordersAdminList);
+  if (!isOpen) {
+    menuRoot.classList.add("open");
+    button.setAttribute("aria-expanded", "true");
+    dropdown.hidden = false;
+  }
 }
 
 function renderOrderSection(title, orders, variant = "") {
@@ -3022,6 +3062,17 @@ if (ordersAdminList) {
       return;
     }
 
+    const actionToggleButton = event.target.closest("[data-toggle-order-actions]");
+    if (actionToggleButton) {
+      const orderId = actionToggleButton.dataset.toggleOrderActions;
+      toggleOrderActionMenu(orderId);
+      return;
+    }
+
+    if (!event.target.closest(".order-more-actions")) {
+      closeAllOrderActionMenus(ordersAdminList);
+    }
+
     const toggleButton = event.target.closest("[data-toggle-order]");
     if (toggleButton) {
       const orderId = toggleButton.dataset.toggleOrder;
@@ -3047,6 +3098,7 @@ if (ordersAdminList) {
 
     const printId = event.target.dataset.printOrder;
     if (printId) {
+      closeAllOrderActionMenus(ordersAdminList);
       await printOrderReceipt(printId);
       return;
     }
@@ -3057,7 +3109,10 @@ if (ordersAdminList) {
       return;
     }
     const cancelId = event.target.dataset.cancelOrder;
-    if (cancelId) await cancelOrder(cancelId);
+    if (cancelId) {
+      closeAllOrderActionMenus(ordersAdminList);
+      await cancelOrder(cancelId);
+    }
   });
 
   ordersAdminList.addEventListener("input", (event) => {
@@ -3072,6 +3127,14 @@ if (ordersAdminList) {
 }
 
 
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".order-more-actions")) closeAllOrderActionMenus(document);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeAllOrderActionMenus(document);
+});
 
 // TÜRKÇE: Sipariş kartlarındaki kalan süre her saniye yenilenir.
 // Detay popupı açıkken inputlara dokunmadan sadece canlı süre yazıları güncellenir.
