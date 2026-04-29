@@ -856,3 +856,243 @@ body:not(.cart-has-items) .cart-sales-card .cart-summary {
     min-height: 20px !important;
   }
 }
+
+/* ===== V22: mobil scroll-lock + mindre skrift + stabil bunnknapp ===== */
+:root {
+  --kol-font-small: 11px;
+  --kol-font-base: 13px;
+  --kol-font-mid: 15px;
+  --kol-font-big: 18px;
+}
+
+html.kol-scroll-locked,
+body.kol-scroll-locked-body {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body {
+  font-size: var(--kol-font-base) !important;
+}
+
+/* Popupene dekker hele området under toppheaderen. Arka menü görünmez ve scroll olmaz. */
+.product-modal:not([hidden]),
+.cart-modal:not([hidden]),
+.info-modal:not([hidden]),
+.profile-modal:not([hidden]),
+.order-live-modal:not([hidden]) {
+  position: fixed !important;
+  top: var(--kol-header-h) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  background: #f2f3f5 !important;
+  overscroll-behavior: none !important;
+}
+
+.product-panel,
+.cart-panel,
+.info-panel,
+.profile-panel,
+.order-live-panel {
+  width: min(100vw, var(--kol-page-max)) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  margin: 0 auto !important;
+}
+
+.cart-panel,
+.product-panel {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.product-body,
+.cart-content-scroll,
+.profile-body,
+.order-live-content,
+.info-panel {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
+
+.product-photo,
+.product-footer,
+.checkout-button,
+.info-header,
+.profile-header,
+.order-live-header {
+  flex: 0 0 auto !important;
+}
+
+/* Send bestilling ve Legg til barları panelin içinde kalır, arka menüyle kaymaz. */
+.checkout-button,
+.cart-panel > .checkout-button,
+.cart-modal:not([hidden]) .checkout-button,
+body.cart-open .checkout-button {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: calc(100% - 36px) !important;
+  max-width: 900px !important;
+  min-height: 60px !important;
+  margin: 8px auto calc(10px + env(safe-area-inset-bottom)) !important;
+  border-radius: 0 !important;
+  font-size: var(--kol-font-big) !important;
+  line-height: 1 !important;
+  z-index: 20 !important;
+}
+
+.product-footer {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  min-height: 64px !important;
+  display: grid !important;
+  grid-template-columns: 105px minmax(0, 1fr) !important;
+  z-index: 20 !important;
+}
+.product-footer strong,
+.product-footer button,
+#addConfiguredProduct {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: var(--kol-font-mid) !important;
+}
+
+/* Lukk butonu tam merkez */
+.order-live-close-inline {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Yazıları biraz küçült: küçük / orta / büyük 3 kademe */
+.appbar > strong::before,
+#siteNameText::before {
+  font-size: var(--kol-font-mid) !important;
+}
+.menu-row-main strong,
+.cart-item h3,
+.profile-order-title-row strong,
+.order-stack-headline-v2 h2,
+.order-stack-title-v3 {
+  font-size: var(--kol-font-mid) !important;
+}
+.menu-row-main span,
+.cart-item p,
+.checkout-help,
+.customer-receipt-line p,
+.order-stack-meta-line,
+.order-stack-preview,
+.profile-order-meta {
+  font-size: var(--kol-font-small) !important;
+}
+.row-price,
+.cart-item-main > strong,
+.checkout-grid input,
+.pickup-choice select#pickupTime,
+.profile-ready-text {
+  font-size: var(--kol-font-base) !important;
+}
+.cart-summary,
+.checkout-form,
+.pickup-option,
+.checkout-grid label,
+.pickup-choice label {
+  font-size: var(--kol-font-small) !important;
+}
+.total-row {
+  font-size: var(--kol-font-big) !important;
+}
+.cart-item {
+  padding: 12px 14px !important;
+}
+.edit-line-button {
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  font-size: var(--kol-font-base) !important;
+}
+.remove-button {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 24px !important;
+}
+.checkout-form {
+  padding: 12px !important;
+}
+.checkout-form h3 {
+  font-size: var(--kol-font-mid) !important;
+  margin-bottom: 8px !important;
+}
+.checkout-grid input {
+  min-height: 38px !important;
+  padding: 7px 11px !important;
+}
+.pickup-option {
+  min-height: 38px !important;
+  padding: 7px 9px !important;
+}
+.pickup-option input[type="radio"] {
+  width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
+@media (max-width: 760px) {
+  .product-modal:not([hidden]),
+  .cart-modal:not([hidden]),
+  .info-modal:not([hidden]),
+  .profile-modal:not([hidden]),
+  .order-live-modal:not([hidden]) {
+    top: var(--kol-header-h) !important;
+    bottom: 0 !important;
+  }
+
+  .cart-content-scroll {
+    padding: 12px 16px 10px !important;
+  }
+
+  .cart-summary {
+    padding: 13px 14px !important;
+  }
+
+  .checkout-button,
+  .cart-panel > .checkout-button,
+  .cart-modal:not([hidden]) .checkout-button,
+  body.cart-open .checkout-button {
+    width: calc(100% - 32px) !important;
+    min-height: 58px !important;
+    font-size: 20px !important;
+    margin-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .cart-item h3,
+  .menu-row-main strong {
+    font-size: 14px !important;
+  }
+
+  .cart-item-main > strong,
+  .row-price {
+    font-size: 12px !important;
+  }
+}
