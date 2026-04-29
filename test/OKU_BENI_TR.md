@@ -31,3 +31,8 @@ V28:
 - Telefon numarası müşteri adının altına alındı.
 - Footer içinde BESTILT ve 3 nokta yan yana ortalandı.
 - 3 nokta menüsünde Skriv ut kvittering ve Avvis/kanseller kaldı.
+
+- V30: Bilgi popup'ı masaüstünde tam genişlik olacak şekilde düzeltildi; harita ve bilgi kartları başlıkla hizalandı.
+- V30: `Kundeinformasjon` bölümünde `Snarest mulig / Velg hentetid` satırı üstte, ad ve telefon alanları altta olacak şekilde düzenlendi.
+
+- V31: Info popup masaüstü ayarsızlığı düzeltildi; `info-panel` tekrar header/menu genişliğine sabitlendi ve sorun çıkaran tam genişlik/flex override kaldırıldı.

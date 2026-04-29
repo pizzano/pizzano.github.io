@@ -26,7 +26,7 @@ body:has(.admin-topbar){padding-top:var(--kol-header-h);background:var(--kol-bg)
 /* analytics/settings/backup */
 .analytics-summary-grid,.backup-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.backup-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-summary-card,.analytics-chart-card{border:1px solid var(--kol-line);border-radius:16px;background:#fff;padding:16px}.analytics-summary-card span{color:var(--kol-muted);font-weight:900;text-transform:uppercase;font-size:12px}.analytics-summary-card strong{font-size:28px}.analytics-bar-row{display:grid;grid-template-columns:70px minmax(100px,1fr) 100px 80px;gap:10px;align-items:center}.analytics-bar-track{height:16px;border-radius:999px;background:#edf1f4;overflow:hidden}.analytics-bar-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--kol-brand),#42b85a)}.settings-page{display:none}.settings-page.active{display:block}.inline-settings-header{padding-bottom:12px;border-bottom:1px solid var(--kol-line)}.backup-box.wide{grid-column:1/-1}.restore-preview{padding:14px;border:1px dashed var(--kol-line);border-radius:14px;background:#fbfbfb;color:var(--kol-muted)}
 /* print receipt holder */
-.receipt-render-holder{position:fixed;left:-99999px;top:0;width:576px;z-index:-1;pointer-events:none}.receipt-image{width:576px;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}.receipt-block{background:#000;color:#fff;font-weight:900;padding:18px 20px}.receipt-big{font-size:40px}.receipt-medium{font-size:34px}.receipt-flex{display:flex;justify-content:space-between}.receipt-gap{height:30px}.receipt-content{padding:20px 0 24px;font-size:28px}.receipt-item-line{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:8px;font-size:38px}.receipt-sub{padding-left:42px;font-size:31px;font-style:italic}.receipt-choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px}.receipt-note,.receipt-details-title{margin-top:10px;font-size:31px;font-weight:900}.receipt-detail-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font-size:27px;margin-top:6px}.receipt-total{border-top:3px solid #000;margin-top:16px;padding-top:10px;font-weight:900}
+.receipt-render-holder{position:fixed;left:-99999px;top:0;width:576px;z-index:-1;pointer-events:none}.receipt-image{width:576px;padding:26px 0 28px;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}.receipt-block{margin:0 28px;background:#000;color:#fff;font-weight:900;padding:14px 16px}.receipt-big{font-size:34px}.receipt-medium{font-size:30px}.receipt-flex{display:flex;justify-content:space-between;gap:16px}.receipt-gap{height:18px}.receipt-content{padding:18px 28px 0;font-size:25px}.receipt-main-note{margin:0 0 16px!important}.receipt-item{margin-top:8px}.receipt-item-line{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:8px;font-size:29px;line-height:1.15}.receipt-check{font-size:24px;line-height:1;text-align:right}.receipt-sub{padding-left:40px;font-size:24px;font-style:italic;line-height:1.22}.receipt-choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px}.receipt-note,.receipt-details-title{margin-top:12px;font-size:25px;font-weight:900}.receipt-detail-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;font-size:23px;line-height:1.3;margin-top:8px}.receipt-detail-row b{text-align:right}.receipt-total{border-top:3px solid #000;margin-top:16px;padding-top:10px;font-weight:900}
 /* responsive */
 @media (max-width:760px){:root{--kol-header-h:56px;--kol-action-h:76px;--kol-page-max:100vw;--kol-admin-max:100vw}.appbar,.admin-topbar{left:0;transform:none;width:100vw}.appbar>strong::before,#siteNameText::before{font-size:15px}.icon-button,.cart-toggle{flex-basis:52px;width:52px}.menu-shell{width:100vw}.status-notice{margin:10px}.category-cover{height:116px}.category-title{font-size:17px}.menu-row{grid-template-columns:52px minmax(0,1fr) auto;min-height:72px;padding:10px 12px}.food-thumb{width:46px;height:46px}.menu-row-main strong{font-size:14px}.menu-row-main span{font-size:12px}.row-price{font-size:13px}.product-photo{flex-basis:112px}.product-body{padding:16px}.product-footer{grid-template-columns:118px minmax(0,1fr)}.cart-header{padding:12px 16px}.cart-content-scroll{padding:12px 16px calc(14px + env(safe-area-inset-bottom))}.cart-item{grid-template-columns:minmax(0,1fr) auto;padding:14px}.cart-item-main{grid-template-columns:1fr}.cart-item-main>strong{justify-self:start}.edit-line-button{min-height:38px;padding:0 12px}.remove-button{width:42px;height:42px}.cart-summary{padding:16px}.checkout-button{width:calc(100% - 32px);font-size:26px}.info-grid{grid-template-columns:1fr}.profile-phone-card{grid-template-columns:1fr}.profile-phone-search input{flex:1;width:auto}.order-live-content,.profile-body{padding:12px}.order-ready-clean-card{min-height:158px}.order-ready-clean-main strong{font-size:clamp(38px,14vw,58px)}.admin-topbar{display:flex;height:auto;min-height:var(--kol-header-h);padding:6px 8px;align-items:center}.admin-brand{flex:0 0 150px}.admin-brand strong{font-size:15px}.admin-topbar-settings{gap:4px}.top-settings-button{padding:0 10px;font-size:13px}.admin-shell{width:calc(100% - 16px)}.admin-grid{grid-template-columns:1fr;grid-template-areas:"categories" "groups"}.group-panel{position:static;max-height:none}.menu-category-choice{grid-template-columns:48px minmax(0,1fr) 22px}.category-thumb{width:48px;height:48px}.product-card-list,.inline-product-editor-mount,.inline-category-editor{padding-left:10px;margin-left:10px}.product-card-row{grid-template-columns:40px minmax(0,1fr);align-items:start}.product-card-price{grid-column:2}.inline-product-edit-form.product-editor-card,.product-form,.form-grid,.settings-form-grid,.product-price-row,.group-option-row,.option-row,.order-actions-panel,.admin-order-modal-quick,.analytics-summary-grid,.backup-grid{grid-template-columns:1fr}.order-stack-summary{grid-template-columns:1fr;gap:8px}.order-stack-preview-v2,.order-stack-side-v2{justify-self:start;text-align:left;justify-items:start}.order-detail-grid.modern{grid-template-columns:1fr}.analytics-bar-row{grid-template-columns:58px minmax(80px,1fr) 82px}.analytics-bar-row small{display:none}}
 @media (max-width:380px){.icon-button,.cart-toggle{flex-basis:48px;width:48px}.appbar>strong,#siteNameText{padding-left:10px}.appbar>strong::before,#siteNameText::before{font-size:13px}.menu-row{grid-template-columns:48px minmax(0,1fr) auto;gap:8px}.food-thumb{width:42px;height:42px}.product-footer{grid-template-columns:104px minmax(0,1fr)}.product-footer button{font-size:18px}}
@@ -2071,5 +2071,92 @@ body.cart-open .checkout-button {
 
   .kol-admin .order-more-dropdown-v28 {
     min-width: 200px !important;
+  }
+}
+
+
+/* ===== V30: desktop info modal full width + checkout pickup row above fields ===== */
+@media (min-width: 761px) {
+  .info-modal:not([hidden]) {
+    /* justify-content: stretch !important; */
+  }
+
+  .info-panel {
+    /* width: 100vw !important; */
+    /* max-width: 100vw !important; */
+    /* margin: 0 !important; */
+  }
+
+  .info-header {
+    padding: 16px 18px !important;
+  }
+
+  .map-preview {
+    width: auto !important;
+    max-width: none !important;
+    margin: 14px 18px 12px !important;
+  }
+
+  .privacy-note {
+    margin: 0 18px 14px !important;
+  }
+
+  .info-grid {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 18px 24px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+.checkout-form {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.checkout-form h3 {
+  margin: 0 !important;
+}
+
+.checkout-form .pickup-choice {
+  order: 1 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+  gap: 8px !important;
+}
+
+.checkout-form .checkout-grid {
+  order: 2 !important;
+  gap: 8px !important;
+}
+
+.checkout-form .checkout-help {
+  margin: 0 !important;
+}
+
+.checkout-form .pickup-choice.pickup-later-active #pickupTime.is-visible,
+.checkout-form .pickup-choice.pickup-later-active #pickupTime:not([hidden]) {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .checkout-form {
+    gap: 10px !important;
+  }
+}
+
+
+/* ===== V31: info-panel ayarsızlık düzeltmesi =====
+   Fatih'in test ettiği gibi masaüstünde info-panel kendi doğal/header genişliğinde kalır. */
+@media (min-width: 761px) {
+  .info-modal:not([hidden]) {
+    justify-content: center !important;
+  }
+
+  .info-panel {
+    width: min(100vw, var(--kol-page-max)) !important;
+    max-width: var(--kol-page-max) !important;
+    margin: 0 auto !important;
   }
 }

@@ -744,6 +744,7 @@ function normalizeAdminOrderRecord(order = {}, id = "") {
     id: safeAdminText(id || order.id, `order-${Date.now()}`),
     status,
     customer: {
+      fullName: safeAdminText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ")),
       firstName: safeAdminText(order.customer?.firstName),
       lastName: safeAdminText(order.customer?.lastName),
       phone: safeAdminText(order.customer?.phone, "Telefon mangler")
@@ -1829,9 +1830,11 @@ function buildEscposReceipt(order = {}) {
   const pickupText = order.pickup?.mode === "later" && order.pickup?.time
     ? new Date(order.pickup.time).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
     : `Snarest ${sanitizeReadyMinutes(order.readyMinutes || DEFAULT_READY_MINUTES)} min`;
-  const createdText = order.createdAt
-    ? new Date(order.createdAt).toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase()
-    : new Date().toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase();
+  const confirmedAt = order.acceptedAt || order.updatedAt || new Date().toISOString();
+  const readyAt = receiptReadyAt(order, confirmedAt);
+  const customerName = receiptCustomerFullName(customer);
+  const confirmedText = new Date(confirmedAt).toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase();
+  const readyText = new Date(readyAt).toLocaleString("nb-NO", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).toUpperCase();
 
   let text = "";
   text += ESC + "@";
@@ -1840,7 +1843,7 @@ function buildEscposReceipt(order = {}) {
   const header = (line) => GS + "!" + "\x11" + GS + "B" + "\x01" + normalizeReceiptText(line) + "\n" + GS + "B" + "\x00" + GS + "!" + "\x00";
   text += header(" HENTING ");
   text += header(` ${pickupText.toUpperCase()} `);
-  text += header(` ${createdText} `);
+  text += header(` ${readyText} `);
 
   text += ESC + "a" + "\x00";
   text += "\n";
@@ -1864,14 +1867,9 @@ function buildEscposReceipt(order = {}) {
   text += ESC + "E" + "\x01";
   text += "Bestillingsdetaljer\n";
   text += ESC + "E" + "\x00";
-  text += receiptLine("Ordrenr:", String(order.id || "").slice(-7).toUpperCase(), width);
-  text += receiptLine("Fornavn:", customer.firstName || "", width);
-  text += receiptLine("Etternavn:", customer.lastName || "", width);
+  text += receiptLine("Bekreftet kl.:", confirmedText, width);
+  text += receiptLine("Hele Navn:", customerName, width);
   text += receiptLine("Telefon:", customer.phone || "", width);
-  text += receiptLine("Henting:", pickupText, width);
-  text += receiptLine("Status:", orderStatusLabel(order.status || "pending"), width);
-  text += "-".repeat(width) + "\n";
-  text += receiptLine("Sluttsum:", safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" }), width);
   text += "\n\n";
   text += GS + "V" + "A" + "\x00";
   return text;
@@ -1903,6 +1901,27 @@ function receiptPickupParts(order = {}) {
   };
 }
 
+function receiptReadyAt(order = {}, confirmedAt = null) {
+  // TÜRKÇE: Üstteki siyah tarih alanı artık onay zamanı değil, siparişin bitiş/hazır olma zamanıdır.
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return order.pickup.time;
+  }
+
+  const base = confirmedAt || order.acceptedAt || order.updatedAt || order.createdAt || new Date().toISOString();
+  const date = new Date(base);
+  if (Number.isNaN(date.getTime())) return new Date().toISOString();
+  date.setMinutes(date.getMinutes() + sanitizeReadyMinutes(order.readyMinutes || DEFAULT_READY_MINUTES));
+  return date.toISOString();
+}
+
+function receiptCustomerFullName(customer = {}) {
+  return String(
+    customer.fullName ||
+    [customer.firstName, customer.lastName].filter(Boolean).join(" ") ||
+    ""
+  ).trim();
+}
+
 function receiptOptionHtml(text = "") {
   const clean = String(text || "").trim();
   if (!clean) return "";
@@ -1922,8 +1941,8 @@ function buildReceiptImageHtml(order = {}) {
   const lines = asArray(order.items);
   const pickup = receiptPickupParts(order);
   const confirmedAt = order.acceptedAt || order.updatedAt || new Date().toISOString();
-  const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
-  const orderNumber = String(order.id || "").slice(-10).toUpperCase();
+  const readyAt = receiptReadyAt(order, confirmedAt);
+  const customerName = receiptCustomerFullName(customer);
   const noteText = order.note || order.customerNote || "";
 
   const itemRows = lines.map((line) => {
@@ -1953,21 +1972,18 @@ function buildReceiptImageHtml(order = {}) {
 
       <div class="receipt-gap"></div>
 
-      <div class="receipt-block receipt-medium">${escapeHtml(receiptImageDate(confirmedAt))}</div>
+      <div class="receipt-block receipt-medium">${escapeHtml(receiptImageDate(readyAt))}</div>
 
       <div class="receipt-content">
+        ${noteText ? `<div class="receipt-note receipt-main-note">❗ ${escapeHtml(noteText)}</div>` : ""}
+
         <b>Enheter</b>
         ${itemRows || `<p>Ingen produkter.</p>`}
 
-        ${noteText ? `<div class="receipt-note">❗ ${escapeHtml(noteText)}</div>` : ""}
-
         <div class="receipt-details-title">Bestillingsdetaljer:</div>
-        <div class="receipt-detail-row"><span>Nummer:</span><b>${escapeHtml(orderNumber)}</b></div>
         <div class="receipt-detail-row"><span>Bekreftet kl.:</span><b>${escapeHtml(receiptImageDate(confirmedAt))}</b></div>
-        <div class="receipt-detail-row"><span>Fornavn:</span><b>${escapeHtml(customer.firstName || "")}</b></div>
-        <div class="receipt-detail-row"><span>Etternavn:</span><b>${escapeHtml(customer.lastName || "")}</b></div>
+        <div class="receipt-detail-row"><span>Hele Navn:</span><b>${escapeHtml(customerName)}</b></div>
         <div class="receipt-detail-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
-        <div class="receipt-detail-row receipt-total"><span>Sluttsum:</span><b>${escapeHtml(totalText)}</b></div>
       </div>
     </div>
   `;
