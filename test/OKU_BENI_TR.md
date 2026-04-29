@@ -100,3 +100,7 @@ V28:
 - V63: Sepet düzenle butonu tamamen farklı yaklaşımla çözüldü. Artık eski çalışan openCartLineEditor(index) doğrudan çağrılır. Event document capture üzerinden yakalanır; ikon/orta/kenar fark etmez. SVG ve pseudo elementler kapalıdır. Ürün detayında kategori barı görünür ve kategoriye basınca ürün ekranını kapatıp kategoriye gider.
 
 - V64: Ürün detay ekranı açıkken kategori barının yatay kaymama sorunu düzeltildi. Popup scroll kilidi artık kategori barı touch/scroll hareketini engellemez.
+
+- V65: Ürün detayında isim artık ürün görselinin üzerinde puslu/blur arka planlı bir etiket içinde de gösterilir. Böylece kayan kategori barı üst kısmı kapatsa bile ürün adı görünür kalır.
+
+- V66: Sepetteki düzenle ve sil butonları küçültüldü. Düzenle kalemi siyah kenarlıklı oval-kare beyaz kutu içine alındı; silme butonu da daha kompakt hale getirildi.

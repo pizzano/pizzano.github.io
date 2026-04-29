@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=64">
+    <link rel="stylesheet" href="kol-core.css?v=66">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -40,7 +40,13 @@
             <h2 id="productTitle"></h2>
             <button class="product-titlebar-back-text" id="closeProductText" type="button" aria-label="Tilbake til meny">Tilbake til meny</button>
           </div>
-          <div class="product-photo" aria-hidden="true"></div>
+          <div class="product-photo" aria-hidden="true">
+            <div class="product-photo-title-wrap">
+              <div class="product-photo-title-chip">
+                <span id="productPhotoTitle"></span>
+              </div>
+            </div>
+          </div>
 
           <div class="product-body">
             <p class="product-summary" id="productSummary"></p>
@@ -3242,7 +3248,10 @@ function renderProductModal() {
     productPhoto.style.backgroundImage = modalImageUrl ? `url("${modalImageUrl}")` : "";
     productPhoto.classList.toggle("default-product-photo", !modalImageUrl);
   }
-  productTitle.textContent = `${titlePrefix}${selectedProduct.name.toUpperCase()}`;
+  const finalProductTitle = `${titlePrefix}${selectedProduct.name.toUpperCase()}`;
+  productTitle.textContent = finalProductTitle;
+  const productPhotoTitle = document.querySelector("#productPhotoTitle");
+  if (productPhotoTitle) productPhotoTitle.textContent = finalProductTitle;
   productSummary.textContent = selectedProduct.ingredients || "";
   productQuantity.textContent = quantity;
   productTotal.textContent = formatPrice(getCurrentTotal()).toUpperCase();
