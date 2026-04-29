@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=16">
+    <link rel="stylesheet" href="kol-core.css?v=21">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -165,10 +165,11 @@
 
         <div class="cart-content-scroll">
           <div class="cart-order-card">
-          <div class="cart-items" id="cartItems"></div>
-          <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
+          <div class="cart-sales-card">
+            <div class="cart-items" id="cartItems"></div>
+            <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
 
-          <div class="cart-summary" id="cartSummary">
+            <div class="cart-summary" id="cartSummary">
             <div>
               <span>Delsum</span>
               <strong id="subtotal">0,00 kr</strong>
@@ -183,6 +184,8 @@
             </div>
           </div>
 
+                    </div>
+
           <section class="checkout-form" id="checkoutForm">
             <h3>Kundeinformasjon</h3>
             <div class="checkout-grid">
@@ -194,7 +197,10 @@
               </label>
             </div>
             <div class="pickup-choice">
-              <label><input type="radio" name="pickupMode" value="asap" checked> Snarest mulig <input type="radio" name="pickupMode" value="later"> Velg hentetid</label>
+              <div class="pickup-options" role="radiogroup" aria-label="Hentetid">
+                <label class="pickup-option"><input type="radio" name="pickupMode" value="asap" checked><span>Snarest mulig</span></label>
+                <label class="pickup-option"><input type="radio" name="pickupMode" value="later"><span>Velg hentetid</span></label>
+              </div>
               <select id="pickupTime" hidden aria-label="Velg hentetid"></select>
               <p id="pickupHelp" class="checkout-help"></p>
             </div>
@@ -847,6 +853,38 @@ const orderLiveContent = document.querySelector("#orderLiveContent");
 const closeOrderLive = document.querySelector("#closeOrderLive");
 let checkoutFocusError = null;
 
+// 20260429: Mobilde popup açıkken arka sayfanın kaymasını tamamen durdurur.
+// Böylece Send bestilling / Legg til-knapper ekran yüksekliği değişince bozulmaz.
+let kolLockedScrollY = 0;
+let kolPageIsLocked = false;
+
+function setPageScrollLocked(locked) {
+  const anyOpen = Boolean(locked);
+  if (anyOpen && !kolPageIsLocked) {
+    kolLockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.documentElement.classList.add("kol-scroll-locked");
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${kolLockedScrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+    kolPageIsLocked = true;
+    return;
+  }
+  if (!anyOpen && kolPageIsLocked) {
+    document.documentElement.classList.remove("kol-scroll-locked");
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, kolLockedScrollY || 0);
+    kolPageIsLocked = false;
+  }
+}
+
 // TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
 // gerçek açık/kapalı modal durumuna göre eşitler.
 function syncBodyScrollLocks() {
@@ -860,6 +898,7 @@ function syncBodyScrollLocks() {
   document.body.classList.toggle("cart-open", cartOpen);
   document.body.classList.toggle("profile-open", profileOpen);
   document.body.classList.toggle("order-live-open", liveOpen);
+  setPageScrollLocked(productOpen || infoOpen || cartOpen || profileOpen || liveOpen);
 }
 
 
@@ -1455,6 +1494,8 @@ function resetPickupToAsap() {
   });
   if (pickupTimeInput) {
     pickupTimeInput.hidden = true;
+    pickupTimeInput.classList.remove("is-visible");
+    pickupTimeInput.style.display = "none";
     pickupTimeInput.value = "";
     pickupTimeInput.selectedIndex = -1;
   }
@@ -1464,6 +1505,8 @@ function resetPickupToAsap() {
 function updatePickupControls() {
   if (!pickupTimeInput || !pickupHelp) return;
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  const pickupChoiceBox = pickupTimeInput.closest(".pickup-choice");
+  if (pickupChoiceBox) pickupChoiceBox.classList.toggle("pickup-later-active", mode === "later");
   const now = new Date();
   const times = getOrderingTimes();
   const openNow = isOrderingOpenNow();
@@ -1471,7 +1514,14 @@ function updatePickupControls() {
   const minTime = new Date(baseTime.getTime() + times.minPreorderMinutes * 60000);
   const closeAt = getOrderingWindow(baseTime).closeAt;
   pickupTimeInput.hidden = mode !== "later";
-  if (mode === "later") buildPickupOptions(minTime, closeAt);
+  pickupTimeInput.classList.toggle("is-visible", mode === "later");
+  pickupTimeInput.style.display = mode === "later" ? "block" : "none";
+  if (mode === "later") {
+    buildPickupOptions(minTime, closeAt);
+  } else {
+    pickupTimeInput.value = "";
+    pickupTimeInput.selectedIndex = -1;
+  }
   const openLabel = `${String(times.open.hour).padStart(2, "0")}:${String(times.open.minute).padStart(2, "0")}`;
   const closeLabel = `${String(times.close.hour).padStart(2, "0")}:${String(times.close.minute).padStart(2, "0")}`;
   const firstChoice = roundUpToNextQuarter(minTime);

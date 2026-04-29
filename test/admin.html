@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=16">
+    <link rel="stylesheet" href="kol-core.css?v=19">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -1600,6 +1600,59 @@ function formatOrderDate(value) {
   return date.toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" });
 }
 
+let adminLockedScrollY = 0;
+let adminPageIsLocked = false;
+
+function setAdminPageScrollLocked(locked) {
+  if (locked && !adminPageIsLocked) {
+    adminLockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.documentElement.classList.add("admin-scroll-locked");
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${adminLockedScrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+    adminPageIsLocked = true;
+    return;
+  }
+  if (!locked && adminPageIsLocked) {
+    document.documentElement.classList.remove("admin-scroll-locked");
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, adminLockedScrollY || 0);
+    adminPageIsLocked = false;
+  }
+}
+
+function getAdminRemainingDetailText(order = {}) {
+  const status = order.status || "pending";
+  let target = null;
+  if (status === "pending") {
+    target = isAdminOrderProcessable(order) ? getAdminAcceptDeadline(order) : new Date(order.processableAfter || order.createdAt || Date.now());
+  } else if (status === "accepted") {
+    target = (order.pickup?.mode === "later" && order.pickup?.time) ? new Date(order.pickup.time) : getAdminReadyAt(order);
+  }
+  if (!target || Number.isNaN(target.getTime())) return "—";
+  const remaining = target.getTime() - Date.now();
+  if (remaining <= 0) return status === "accepted" ? "Klar" : "Nå";
+  return formatCountdown(remaining);
+}
+
+function getAdminReadyDetailLabel(order = {}, readyMinutes = order.readyMinutes || DEFAULT_READY_MINUTES) {
+  if (order.pickup?.mode === "later" && order.pickup?.time) {
+    return `Hentetid ${formatAdminShortDateTime(order.pickup.time)}`;
+  }
+  if ((order.status || "pending") === "accepted") {
+    return `Klar ca. ${formatAdminShortDateTime(getAdminReadyAt(order, readyMinutes))}`;
+  }
+  return `Klar ca. ${formatAdminShortDateTime(getAdminReadyAt(order, readyMinutes))}`;
+}
+
 function sanitizeReadyMinutes(value, fallback = DEFAULT_READY_MINUTES) {
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
@@ -2013,14 +2066,16 @@ function renderAdminOrderModal(order) {
           <button class="admin-order-back-button" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
           <div class="admin-order-modal-title">
             <h2>${escapeHtml(customerName)}</h2>
-            <span>${escapeHtml(phoneText)} · ${escapeHtml(compactMeta)}</span>
           </div>
           <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
         </header>
 
         <div class="admin-order-modal-body">
-          <div class="admin-order-modal-quick">
-            ${status === "pending" ? `<strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>` : `<button class="admin-modal-inline-back" type="button" data-close-order-modal>← Tilbake til bestillinger</button>`}
+          <div class="admin-order-meta-panel">
+            <div><span>Telefon</span><strong>${escapeHtml(phoneText)}</strong></div>
+            <div><span>Bestilt</span><strong>${escapeHtml(formatAdminShortDateTime(order.createdAt))}</strong></div>
+            <div><span>${isLaterPickup ? "Hentetid" : "Klar tid"}</span><strong>${escapeHtml(isLaterPickup && order.pickup?.time ? formatAdminShortDateTime(order.pickup.time) : formatAdminShortDateTime(getAdminReadyAt(order, readyMinutes)))}</strong></div>
+            <div><span>Gjenstår</span><strong data-admin-detail-remaining="${escapeHtml(orderId)}">${escapeHtml(getAdminRemainingDetailText(order))}</strong></div>
           </div>
 
           <div class="order-receipt modern admin-order-modal-receipt">
@@ -2231,6 +2286,7 @@ function renderOrdersAdmin() {
 
   if (!visibleOrders.length) {
     expandedAdminOrderId = null;
+    setAdminPageScrollLocked(false);
     ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
     return;
   }
@@ -2254,6 +2310,7 @@ function renderOrdersAdmin() {
 
   const modalOrder = expandedAdminOrderId ? visibleOrders.find((order) => order.id === expandedAdminOrderId) : null;
   ordersAdminList.innerHTML = sectionsHtml + (modalOrder ? renderAdminOrderModal(modalOrder) : "");
+  setAdminPageScrollLocked(Boolean(modalOrder));
   refreshAdminLiveTimes();
 }
 
@@ -2337,8 +2394,16 @@ function refreshAdminLiveTimes() {
     const orderId = target.dataset.adminLiveTime;
     const order = adminOrders.find((item) => item.id === orderId);
     if (!order) return;
-    target.textContent = getOrderHeaderTime(order);
-    target.classList.toggle("is-ready", getOrderHeaderTime(order) === "Klar");
+    const text = getOrderHeaderTime(order);
+    target.textContent = text;
+    target.classList.toggle("is-ready", text === "Klar");
+  });
+  ordersAdminList.querySelectorAll("[data-admin-detail-remaining]").forEach((target) => {
+    const orderId = target.dataset.adminDetailRemaining;
+    const order = adminOrders.find((item) => item.id === orderId);
+    if (!order) return;
+    target.textContent = getAdminRemainingDetailText(order);
+    target.classList.toggle("is-ready", getAdminRemainingDetailText(order) === "Klar");
   });
 }
 

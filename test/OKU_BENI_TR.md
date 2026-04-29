@@ -1,22 +1,11 @@
-# KØL Grill & Pizza - v15
+# KØL Grill & Pizza - v21
 
-Bu sürümde admin panelindeki Bestillinger sayfasında üstteki gereksiz bilgi alanları kaldırıldı.
+Bu sürümde müşteri sepetindeki hentetid alanı düzeltildi.
 
-Kaldırılan/gizlenen alanlar:
-- Firebase bağlantı durum yazısı
-- Bestillinger başlığı ve açıklaması
-- Oppdater butonu
-- Toplam sipariş sayısı kutusu
-- Nye / Behandlede başlık satırları
+## Değişiklikler
 
-Sipariş kartları ve sipariş alma popup sistemi korunmuştur.
-
-## V16 notları
-- Admin üst çubuktaki restoran adı / “meny admin” yazısı ve “Se meny” butonu kaldırıldı.
-- Sepette müşteri daha önce “Velg hentetid” seçmiş olsa bile yeni sepet açılışında varsayılan her zaman “Snarest mulig” olur.
-
-
-## V17 düzeltme
-- Sepette toplam kartı ile Kundeinformasjon ayrı kartlara ayrıldı.
-- Snarest mulig seçiliyken boş görünen hentetid alanı tamamen gizlendi.
-- Velg hentetid seçilince saat listesi görünmeye devam eder.
+- `Snarest mulig` ve `Velg hentetid` yan yana, daha kompakt görünecek şekilde düzenlendi.
+- `Velg hentetid` seçilmedikçe saat seçme alanı tamamen gizlenir.
+- Sepette kırmızı işaretlenen boş beyaz alan kaldırıldı.
+- `index.html` ve `kol-core.css` güncellendi.
+- `admin.html` önceki sürümden korunmuştur.

@@ -541,3 +541,318 @@ select[hidden] {
     padding: 16px !important;
   }
 }
+
+
+/* ===== V19: mobil scroll-lock, zarif kundeinfo og admin detaljmeta ===== */
+html.kol-scroll-locked,
+html.admin-scroll-locked {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+.product-modal:not([hidden]),
+.cart-modal:not([hidden]),
+.profile-modal:not([hidden]),
+.info-modal:not([hidden]),
+.order-live-modal:not([hidden]),
+.admin-order-modal-backdrop {
+  overscroll-behavior: contain !important;
+  touch-action: none !important;
+}
+
+.product-panel,
+.cart-panel,
+.profile-panel,
+.info-panel,
+.order-live-panel,
+.admin-order-modal,
+.product-body,
+.cart-content-scroll,
+.profile-body,
+.info-panel,
+.order-live-content,
+.admin-order-modal-body {
+  touch-action: pan-y !important;
+}
+
+/* Kundeinformasjon: mindre, roligere og mer elegant */
+.checkout-form {
+  padding: 14px !important;
+  border-radius: 18px !important;
+}
+.checkout-form h3 {
+  margin: 0 0 10px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+.checkout-grid {
+  gap: 8px !important;
+}
+.checkout-grid label,
+.pickup-choice label {
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  color: #2f3a45 !important;
+}
+.checkout-grid input {
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  border-radius: 11px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+.pickup-choice {
+  margin-top: 8px !important;
+  padding-top: 10px !important;
+}
+.pickup-choice > label {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  width: 100% !important;
+}
+.pickup-choice input[type="radio"] {
+  width: 24px !important;
+  min-height: 24px !important;
+  margin: 0 7px 0 0 !important;
+  vertical-align: middle !important;
+  accent-color: #30363d !important;
+}
+.checkout-help {
+  margin: 6px 0 0 !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  color: #747f8b !important;
+}
+#pickupTime[hidden],
+#pickupTime:not(.is-visible),
+.pickup-choice:has(input[name="pickupMode"][value="asap"]:checked) #pickupTime {
+  display: none !important;
+  visibility: hidden !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+#pickupTime.is-visible {
+  display: block !important;
+  min-height: 40px !important;
+  margin-top: 8px !important;
+  border-radius: 11px !important;
+  font-size: 14px !important;
+}
+
+/* Kırmızı işaretli boş beyaz alan kalmasın */
+.checkout-form::after,
+.pickup-choice::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .checkout-form { padding: 12px !important; }
+  .checkout-grid input { min-height: 38px !important; font-size: 14px !important; }
+  .pickup-choice input[type="radio"] { width: 22px !important; min-height: 22px !important; }
+  .checkout-help { font-size: 10.5px !important; }
+}
+
+/* Admin sipariş detayında tek telefon + bestilt/klar/gjenstår meta alanı */
+.admin-order-modal-header .admin-order-modal-title span {
+  display: none !important;
+}
+.admin-order-meta-panel {
+  width: min(920px, 100%) !important;
+  margin: 0 auto 14px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+.admin-order-meta-panel > div {
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+  border: 1px solid #e2e7ed !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 5px 14px rgba(15,23,42,.035) !important;
+}
+.admin-order-meta-panel span {
+  display: block !important;
+  margin-bottom: 3px !important;
+  color: #7a8490 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase !important;
+}
+.admin-order-meta-panel strong {
+  display: block !important;
+  min-width: 0 !important;
+  color: #1f2933 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.admin-order-meta-panel [data-admin-detail-remaining] {
+  color: #0b6f2a !important;
+  font-size: 17px !important;
+  letter-spacing: -.02em !important;
+}
+
+@media (max-width: 860px) {
+  .admin-order-meta-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .admin-order-meta-panel > div { padding: 9px 10px !important; }
+}
+
+@media (max-width: 480px) {
+  .admin-order-meta-panel { grid-template-columns: 1fr 1fr !important; }
+  .admin-order-meta-panel span { font-size: 10px !important; }
+  .admin-order-meta-panel strong { font-size: 12px !important; }
+}
+
+/* V19b: ürün kartı + toplam kartı birleşik; boş saat alanı kesin gizli */
+.cart-sales-card {
+  display: grid !important;
+  gap: 0 !important;
+  width: min(100%, 900px) !important;
+  margin: 0 auto !important;
+}
+.cart-sales-card .cart-items:not(:empty) {
+  border-radius: 18px 18px 0 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: 0 5px 18px rgba(15,23,42,.035) !important;
+}
+.cart-sales-card .cart-items:not(:empty) + .cart-empty + .cart-summary,
+.cart-sales-card .cart-items:not(:empty) ~ .cart-summary {
+  margin-top: 0 !important;
+  border-top: 1px solid #eef1f4 !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: 0 8px 20px rgba(15,23,42,.04) !important;
+}
+body:not(.cart-has-items) .cart-sales-card .cart-summary {
+  border-radius: 18px !important;
+}
+#pickupTime[style*="display: none"] {
+  display: none !important;
+}
+
+/* ===== V21: Kundeinformasjon hentetid kompakt + tom pickup-select fjernet ===== */
+.pickup-choice {
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid #eef1f4 !important;
+}
+
+.pickup-options {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.pickup-option {
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid #e2e7ee !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  color: #27313d !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  line-height: 1.12 !important;
+}
+
+.pickup-option input[type="radio"] {
+  flex: 0 0 auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  margin: 0 !important;
+  accent-color: #30363d !important;
+}
+
+.pickup-option span {
+  display: block !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
+
+.pickup-option:has(input:checked) {
+  border-color: #cfd6df !important;
+  background: #f7f9fb !important;
+  box-shadow: inset 0 0 0 1px #d9e0e8 !important;
+}
+
+/* Kırmızı alandaki boş beyaz select/div: later seçilmedikçe kesinlikle yok */
+.pickup-choice:not(.pickup-later-active) #pickupTime,
+.pickup-choice:not(.pickup-later-active) select#pickupTime,
+#pickupTime[hidden],
+#pickupTime:not(.is-visible) {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.pickup-choice.pickup-later-active #pickupTime.is-visible,
+.pickup-choice.pickup-later-active #pickupTime:not([hidden]) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  margin-top: 2px !important;
+  border: 1px solid #cfd6df !important;
+  border-radius: 11px !important;
+  padding: 0 12px !important;
+  background: #fff !important;
+  color: var(--kol-text) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+.checkout-form::after,
+.pickup-choice::after,
+.pickup-options::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 380px) {
+  .pickup-options {
+    gap: 8px !important;
+  }
+  .pickup-option {
+    padding: 7px 8px !important;
+    font-size: 11px !important;
+  }
+  .pickup-option input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+  }
+}
