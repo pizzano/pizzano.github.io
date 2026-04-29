@@ -3400,3 +3400,115 @@ body.cart-open .checkout-button {
     box-shadow: 0 -6px 16px rgba(15,23,42,.14) !important;
   }
 }
+
+
+/* ===== V44: unified option styling like the provided reference ===== */
+.kol-customer .product-scroll-content .product-summary,
+.kol-customer .product-scroll-content .allergen-note,
+.kol-customer .product-scroll-content .note-label,
+.kol-customer .product-scroll-content .quantity-row > span {
+  color: #5f6975 !important;
+}
+
+.kol-customer .product-scroll-content .option-group {
+  margin: 0 0 18px !important;
+}
+
+.kol-customer .product-scroll-content .option-group h3 {
+  margin: 0 0 10px !important;
+  color: #5f6975 !important;
+  font-size: clamp(14px, 3.7vw, 16px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+}
+
+.kol-customer .product-scroll-content .option-group h3 span {
+  color: #6f7884 !important;
+  font-size: .92em !important;
+  font-weight: 700 !important;
+}
+
+.kol-customer .product-scroll-content .option-line {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 54px !important;
+  padding: 10px 14px !important;
+  border: 1px solid #bcc5cf !important;
+  border-bottom: 0 !important;
+  background: #fbfaf7 !important;
+  color: #596270 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.kol-customer .product-scroll-content .option-line:last-child {
+  border-bottom: 1px solid #bcc5cf !important;
+}
+
+.kol-customer .product-scroll-content .option-line.selected {
+  background: #f5f2ea !important;
+  border-color: #9ca7b2 !important;
+  box-shadow: inset 0 0 0 1px #9ca7b2 !important;
+  outline: none !important;
+}
+
+.kol-customer .product-scroll-content .option-line span,
+.kol-customer .product-scroll-content .option-line strong {
+  color: #5d6673 !important;
+  line-height: 1.2 !important;
+}
+
+.kol-customer .product-scroll-content .option-line span {
+  font-size: clamp(13px, 3.6vw, 15px) !important;
+  font-weight: 700 !important;
+}
+
+.kol-customer .product-scroll-content .option-line strong {
+  font-size: clamp(13px, 3.6vw, 15px) !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.kol-customer .product-scroll-content .option-line input[type="radio"],
+.kol-customer .product-scroll-content .option-line input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  accent-color: #727a85 !important;
+}
+
+.kol-customer .product-scroll-content textarea {
+  background: #fbfaf7 !important;
+  border: 1px solid #c9d0d8 !important;
+  color: #53606c !important;
+}
+
+.kol-customer .product-scroll-content textarea::placeholder {
+  color: #8b939d !important;
+}
+
+.kol-customer .product-scroll-content .quantity-stepper strong {
+  background: #fbfaf7 !important;
+  border-color: #c9d0d8 !important;
+  color: #4d5763 !important;
+}
+
+@media (max-width: 760px) {
+  .kol-customer .product-scroll-content .option-line {
+    min-height: 52px !important;
+    padding: 9px 12px !important;
+  }
+
+  .kol-customer .product-scroll-content .option-group h3 {
+    font-size: 13px !important;
+  }
+
+  .kol-customer .product-scroll-content .option-line span,
+  .kol-customer .product-scroll-content .option-line strong {
+    font-size: 13px !important;
+  }
+}
