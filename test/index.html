@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=55">
+    <link rel="stylesheet" href="kol-core.css?v=56">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -936,7 +936,25 @@ function updateTopMenuReturnButton() {
 
 // TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
 // gerçek açık/kapalı modal durumuna göre eşitler.
+
+function syncCategoryTabsVisibility() {
+  const isOverlayOpen =
+    document.body.classList.contains("cart-open") ||
+    document.body.classList.contains("modal-open") ||
+    document.body.classList.contains("profile-open") ||
+    document.body.classList.contains("order-live-open") ||
+    document.body.classList.contains("settings-open") ||
+    (productModal && !productModal.hidden) ||
+    (cartModal && !cartModal.hidden) ||
+    (infoModal && !infoModal.hidden) ||
+    (profileModal && !profileModal.hidden) ||
+    (orderLiveModal && !orderLiveModal.hidden);
+
+  document.body.classList.toggle("category-tabs-hidden", Boolean(isOverlayOpen));
+}
+
 function syncBodyScrollLocks() {
+  syncCategoryTabsVisibility?.();
   const productOpen = !!(productModal && !productModal.hidden);
   const infoOpen = !!(infoModal && !infoModal.hidden);
   const cartOpen = !!(cartModal && !cartModal.hidden);
@@ -2973,13 +2991,14 @@ function renderCategoryTabs(sections) {
 function scrollToMenuSection(sectionId) {
   const panel = getSectionPanelById(sectionId);
   if (!panel) return;
-  panel.classList.remove("collapsed");
 
-  // fixed kategori-bar olduğu için hedefi elle hesaplıyoruz.
-  // scrollIntoView kullanmıyoruz; PC'de geri yukarı zıplama bunun yüzünden oluyordu.
-  const y = window.scrollY + panel.getBoundingClientRect().top - getMenuStickyOffset();
+  panel.classList.remove("collapsed");
   setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "smooth" });
-  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+
+  // Fixed header + fixed category bar yüksekliğini düşerek tam kategori başlangıcına iner.
+  const offset = getMenuStickyOffset();
+  const targetTop = panel.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
 }
 
 function updateActiveCategoryFromScroll() {
@@ -3530,12 +3549,15 @@ function closeInfoModal() {
 categoryTabs?.addEventListener("click", (event) => {
   const tab = event.target.closest("[data-category-tab]");
   if (!tab) return;
-  event.preventDefault();
-  event.stopPropagation();
+
+  // PC'de tıklama çalışsın: sadece gerçekten sürükleme olduysa tıklamayı iptal et.
   if (categoryTabs.classList.contains("dragging") || categoryTabPointerMoved) {
+    event.preventDefault();
     categoryTabPointerMoved = false;
     return;
   }
+
+  event.preventDefault();
   scrollToMenuSection(tab.dataset.categoryTab);
 });
 
@@ -3840,16 +3862,29 @@ categoryTabs?.addEventListener("pointerdown", (event) => {
 categoryTabs?.addEventListener("pointermove", (event) => {
   if (!categoryTabDragActive) return;
   const dx = event.clientX - categoryTabDragStartX;
-  if (Math.abs(dx) > 4) categoryTabPointerMoved = true;
-  categoryTabs.scrollLeft = categoryTabDragStartScrollLeft - dx;
+
+  // Küçük hareketleri tıklama kabul et. Gerçek sürükleme 12px üstü.
+  if (Math.abs(dx) > 12) {
+    categoryTabPointerMoved = true;
+    categoryTabs.classList.add("dragging");
+    categoryTabs.scrollLeft = categoryTabDragStartScrollLeft - dx;
+  }
 });
 
 function endCategoryTabDrag(event) {
   if (!categoryTabDragActive) return;
   categoryTabDragActive = false;
-  categoryTabs.classList.remove("dragging");
-  try { categoryTabs.releasePointerCapture?.(event.pointerId); } catch (error) {}
-  window.setTimeout(() => { categoryTabPointerMoved = false; }, 80);
+
+  // Eğer sürükleme olmadıysa hemen click'e izin ver.
+  if (!categoryTabPointerMoved) {
+    categoryTabs?.classList.remove("dragging");
+    return;
+  }
+
+  window.setTimeout(() => {
+    categoryTabs?.classList.remove("dragging");
+    categoryTabPointerMoved = false;
+  }, 120);
 }
 
 categoryTabs?.addEventListener("pointerup", endCategoryTabDrag);

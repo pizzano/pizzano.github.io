@@ -82,3 +82,5 @@ V28:
 - V54: Kategori barındaki tıklama sonrası geri zıplama düzeltildi. Aktif sekme artık sadece yatayda ortalanır. Kategori barı header gibi sabit görünür, boşluk azaltıldı, PC’de fareyle sürükleme, mouse wheel yatay kaydırma ve sağ/sol oklar eklendi.
 
 - V55: Kategori barı sticky yerine fixed yapıldı. Tasarım sistemle uyumlu küçük pill butonlara çevrildi. PC tıklama sorunu düzeltildi; tıklama kategoriye iner ve orada kalır. İçerik fixed barın altında boşluk bırakır, PC’de mouse wheel/sürükleme/oklarla yatay kayar.
+
+- V56: Kayan kategori barı sadece ana menüde görünür; profil, sepet, info ve ürün içinde gizlenir. PC tıklama sorunu için sürükleme/tıklama ayrımı düzeltildi ve kategoriye inme hesabı basitleştirildi.

@@ -4323,3 +4323,64 @@ body.cart-open .checkout-button {
     font-size: 14px !important;
   }
 }
+
+
+/* ===== V56: category tabs only on menu, not profile/cart/info/product ===== */
+body.cart-open .category-tabs-wrap,
+body.modal-open .category-tabs-wrap,
+body.profile-open .category-tabs-wrap,
+body.order-live-open .category-tabs-wrap,
+body.settings-open .category-tabs-wrap,
+body:has(.product-modal:not([hidden])) .category-tabs-wrap,
+body:has(.cart-modal:not([hidden])) .category-tabs-wrap,
+body:has(.info-modal:not([hidden])) .category-tabs-wrap,
+body:has(.profile-modal:not([hidden])) .category-tabs-wrap,
+body:has(.order-live-modal:not([hidden])) .category-tabs-wrap {
+  display: none !important;
+}
+
+.kol-customer.has-category-tabs.cart-open .menu-shell,
+.kol-customer.has-category-tabs.modal-open .menu-shell,
+.kol-customer.has-category-tabs.profile-open .menu-shell,
+.kol-customer.has-category-tabs.order-live-open .menu-shell {
+  padding-top: 0 !important;
+}
+
+/* PC tıklama ve kategori seçimi için barın üstte tıklanabilir kalması */
+.category-tabs-wrap {
+  pointer-events: auto !important;
+}
+
+.category-tabs-scroll,
+.category-tab,
+.category-tab-arrow {
+  pointer-events: auto !important;
+}
+
+/* Tasarımı biraz daha sade: sistemdeki beyaz/turuncu stile yakın */
+.category-tabs-wrap {
+  min-height: 48px !important;
+}
+
+.category-tabs-scroll {
+  min-height: 48px !important;
+  padding: 6px 8px !important;
+}
+
+.category-tab {
+  min-height: 34px !important;
+  font-size: 14px !important;
+  border-radius: 999px !important;
+  letter-spacing: 0 !important;
+}
+
+.category-tab-arrow {
+  min-height: 48px !important;
+}
+
+body.category-tabs-hidden .category-tabs-wrap {
+  display: none !important;
+}
+body.category-tabs-hidden .menu-shell {
+  padding-top: 0 !important;
+}
