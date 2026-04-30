@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=66">
+    <link rel="stylesheet" href="kol-core.css?v=67">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -943,6 +943,7 @@ function syncBodyScrollLocks() {
   const liveOpen = !!(orderLiveModal && !orderLiveModal.hidden);
 
   document.body.classList.toggle("modal-open", productOpen || infoOpen);
+  document.body.classList.toggle("info-open", infoOpen);
   document.body.classList.toggle("cart-open", cartOpen);
   document.body.classList.toggle("profile-open", profileOpen);
   document.body.classList.toggle("order-live-open", liveOpen);
@@ -3527,6 +3528,7 @@ function openInfo() {
   infoModal.hidden = false;
   infoToggle.setAttribute("aria-expanded", "true");
   document.body.classList.add("modal-open");
+  document.body.classList.add("info-open");
   syncBodyScrollLocks();
 }
 
@@ -3534,6 +3536,7 @@ function closeInfoModal() {
   infoModal.hidden = true;
   infoToggle.setAttribute("aria-expanded", "false");
   document.body.classList.remove("modal-open");
+  document.body.classList.remove("info-open");
   syncBodyScrollLocks();
 }
 

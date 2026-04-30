@@ -5043,3 +5043,66 @@ body.modal-open .category-tabs-scroll {
     font-size: 21px !important;
   }
 }
+
+
+/* ===== V67: even smaller cart action buttons ===== */
+.cart-item-top-actions,
+.cart-item-actions {
+  gap: 6px !important;
+}
+
+.edit-line-button.icon-only,
+.cart-item .edit-line-button.icon-only {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  border: 2px solid #111827 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  padding: 0 !important;
+}
+
+.cart-edit-icon {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+.cart-item .remove-button,
+.remove-button {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  border-radius: 8px !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  padding: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .edit-line-button.icon-only,
+  .cart-item .edit-line-button.icon-only,
+  .cart-item .remove-button,
+  .remove-button {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+
+  .cart-edit-icon {
+    font-size: 13px !important;
+  }
+
+  .cart-item .remove-button,
+  .remove-button {
+    font-size: 17px !important;
+  }
+}
+
+/* ===== V67: category tabs hidden in info, visible only in menu + product ===== */
+body.info-open .category-tabs-wrap {
+  display: none !important;
+}

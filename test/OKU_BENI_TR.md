@@ -104,3 +104,5 @@ V28:
 - V65: Ürün detayında isim artık ürün görselinin üzerinde puslu/blur arka planlı bir etiket içinde de gösterilir. Böylece kayan kategori barı üst kısmı kapatsa bile ürün adı görünür kalır.
 
 - V66: Sepetteki düzenle ve sil butonları küçültüldü. Düzenle kalemi siyah kenarlıklı oval-kare beyaz kutu içine alındı; silme butonu da daha kompakt hale getirildi.
+
+- V67: Sepetteki düzenle ve sil butonları bir kez daha küçültüldü. Ayrıca kayan kategori çubuğu info ekranında gizlendi; artık sadece menüde ve ürün detayında görünür.
