@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=79">
+    <link rel="stylesheet" href="kol-core.css?v=84">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -1758,7 +1758,7 @@ function getOrderHeaderTime(order = {}) {
   if (status === "pending") {
     if (!isAdminOrderProcessable(order)) return `Åpner ${formatAdminClock(order.processableAfter)}`;
     const remaining = getAdminAcceptDeadline(order).getTime() - Date.now();
-    return remaining > 0 ? `${formatCountdown(remaining)}` : "Svar nå";
+    return formatCountdown(Math.max(0, remaining));
   }
   if (status === "accepted") {
     if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
@@ -2196,6 +2196,10 @@ function renderAdminOrderModal(order) {
   const orderId = String(order.id || "");
   const headerTime = getOrderHeaderTime(order);
   const createdAtText = formatAdminShortDateTime(order.createdAt || order.updatedAt || new Date().toISOString());
+  const createdAtDate = new Date(order.createdAt || order.updatedAt || Date.now());
+  const createdAtBarText = Number.isNaN(createdAtDate.getTime())
+    ? createdAtText
+    : `${createdAtDate.toLocaleDateString("nb-NO", { day: "numeric", month: "numeric" })} | ${createdAtDate.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" })}`;
 
   let headerTimerLabel = "STATUS";
   if (status === "accepted") headerTimerLabel = "GJENSTÅR";
@@ -2203,70 +2207,76 @@ function renderAdminOrderModal(order) {
 
   return `
     <div class="admin-order-modal-backdrop" data-order-modal="${escapeHtml(orderId)}">
-      <section class="admin-order-modal" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer">
-        <header class="admin-order-modal-header admin-order-modal-header-v28" data-close-order-modal title="Tilbake til bestillinger">
-          <button class="admin-order-back-button" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
+      <section class="admin-order-modal admin-order-modal-v29" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer">
+        <header class="admin-order-modal-header admin-order-modal-header-v29" title="Bestillingsdetaljer" data-close-order-modal aria-label="Tilbake til bestillinger">
+          <button class="admin-order-back-button admin-order-back-button-v29" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
 
-          <div class="admin-order-modal-title admin-order-modal-title-v28">
-            <div class="admin-order-title-stack-v28">
+          <div class="admin-order-modal-title admin-order-modal-title-v29">
+            <div class="admin-order-title-stack-v29">
               <h2>${escapeHtml(customerName)}</h2>
-              <div class="admin-order-phone-under-name-v28">${escapeHtml(phoneText)}</div>
+              <div class="admin-order-phone-under-name-v29">${escapeHtml(phoneText)}</div>
             </div>
           </div>
 
-          <div class="admin-order-header-timer">
+          <div class="admin-order-header-timer admin-order-header-timer-v29">
             <span>${escapeHtml(headerTimerLabel)}</span>
-            <strong data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+            <strong class="admin-order-header-timer-value-v29" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
           </div>
         </header>
 
-        <div class="admin-order-modal-body admin-order-modal-body-v28">
-          <div class="order-receipt modern admin-order-modal-receipt admin-order-modal-receipt-v28">
+        <div class="admin-order-modal-body admin-order-modal-body-v29">
+          <div class="order-receipt modern admin-order-modal-receipt admin-order-modal-receipt-v29">
             ${lines.map(orderLineHtml).join("")}
             <div class="order-total-row"><span>Sluttsum</span><strong>${totalText}</strong></div>
           </div>
         </div>
 
-        <footer class="admin-order-modal-footer admin-order-modal-footer-v28">
-          ${status === "pending" ? (isLaterPickup ? `
-            <div class="order-footer-top-v28">
-              <div class="order-later-note">
-                <strong>Forhåndsbestilling</strong>
-                <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
-              </div>
-              <button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
-            </div>
-          ` : `
-            <div class="order-footer-top-v28">
-              <div class="order-minutes-modern-wrap modal-minutes">
-                <label class="order-soft-label" for="ready-${escapeHtml(orderId)}">Tilberedningstid</label>
-                <div class="order-minutes-modern">
-                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="-2">−</button>
-                  <input class="order-soft-input" id="ready-${escapeHtml(orderId)}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(orderId)}" inputmode="numeric">
-                  <span class="order-input-suffix">min</span>
-                  <button class="order-adjust-button" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="2">+</button>
-                </div>
-                <small class="order-ready-preview" data-ready-preview="${escapeHtml(orderId)}">${escapeHtml(readyPreview)}</small>
-              </div>
-              <button class="accept-order-button modern" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
-            </div>
-          `) : ""}
-
-          <div class="order-footer-bottom-v28">
-            <div class="order-footer-created-v28">
-              <span>BESTILT</span>
-              <strong>${escapeHtml(createdAtText)}</strong>
-            </div>
-
-            <div class="order-more-actions order-more-actions-v28" data-order-actions-menu="${escapeHtml(orderId)}">
-              <button class="order-more-button modern order-more-button-v28" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
-              <div class="order-more-dropdown order-more-dropdown-v28" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
+        <footer class="admin-order-modal-footer admin-order-modal-footer-v29">
+          <div class="admin-order-bottom-bar-v29 ${status === "pending" ? "is-pending" : "is-readonly"}">
+            <div class="order-more-actions order-more-actions-v29" data-order-actions-menu="${escapeHtml(orderId)}">
+              <button class="order-more-button modern order-more-button-v29" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
+              <div class="order-more-dropdown order-more-dropdown-v29" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
                 <button class="order-more-item" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
-                ${canCancel
-                  ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>`
-                  : ""}
+                ${canCancel ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>` : ""}
               </div>
             </div>
+
+            <div class="order-footer-created-v29">
+              <span>BESTILT</span>
+              <strong>${escapeHtml(createdAtBarText)}</strong>
+            </div>
+
+            ${status === "pending"
+              ? (isLaterPickup
+                ? `
+                  <div class="order-footer-ready-panel-v29 order-footer-later-panel-v29">
+                    <label class="order-soft-label">Forhåndsbestilling</label>
+                    <div class="order-later-note order-later-note-v29">
+                      <strong>Velg hentetid</strong>
+                      <span>${escapeHtml(getOrderDetailTimeText(order, readyMinutes))}</span>
+                    </div>
+                  </div>
+                  <button class="accept-order-button modern accept-order-button-v29" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
+                `
+                : `
+                  <div class="order-footer-ready-panel-v29">
+                    <label class="order-soft-label order-soft-label-v29" for="ready-${escapeHtml(orderId)}">Tilberedningstid</label>
+                    <div class="order-minutes-modern order-minutes-modern-v29">
+                      <button class="order-adjust-button order-adjust-button-v29" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="-2">−</button>
+                      <input class="order-soft-input order-soft-input-v29" id="ready-${escapeHtml(orderId)}" type="number" min="1" max="99" step="2" value="${readyMinutes}" data-ready-minutes="${escapeHtml(orderId)}" inputmode="numeric">
+                      <span class="order-input-suffix order-input-suffix-v29">min</span>
+                      <button class="order-adjust-button order-adjust-button-v29" type="button" data-adjust-ready="${escapeHtml(orderId)}" data-delta="2">+</button>
+                    </div>
+                    <small class="order-ready-preview order-ready-preview-v29" data-ready-preview="${escapeHtml(orderId)}">${escapeHtml(readyPreview)}</small>
+                  </div>
+                  <button class="accept-order-button modern accept-order-button-v29" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
+                `)
+              : `
+                <div class="order-footer-status-note-v29">
+                  <span>Status</span>
+                  <strong>${escapeHtml(waitingOpening || orderStatusLabel(status))}</strong>
+                </div>
+              `}
           </div>
         </footer>
       </section>
@@ -2285,7 +2295,7 @@ function closeAllOrderActionMenus(scope = document) {
 }
 
 function toggleOrderActionMenu(orderId) {
-  const menuRoot = ordersAdminList?.querySelector(`[data-order-actions-menu="${CSS.escape(orderId)}"]`);
+  const menuRoot = document.querySelector(`[data-order-actions-menu="${CSS.escape(orderId)}"]`);
   if (!menuRoot) return;
   const button = menuRoot.querySelector("[data-toggle-order-actions]");
   const dropdown = menuRoot.querySelector("[data-order-actions-dropdown]");

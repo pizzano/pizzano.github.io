@@ -5729,3 +5729,547 @@ body:has(.info-modal:not([hidden])) #categoryTabsWrap {
   -webkit-tap-highlight-color: transparent !important;
   user-select: none !important;
 }
+
+
+/* ===== V83: admin sipariş detay ekranı referans görsel gibi ===== */
+.kol-admin .admin-order-modal.admin-order-modal-v29 {
+  width: min(100%, 980px) !important;
+  height: calc(100vh - 78px) !important;
+  max-height: calc(100vh - 78px) !important;
+  margin: 0 auto !important;
+  border-radius: 0 !important;
+  background: #eef0f2 !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 {
+  display: grid !important;
+  grid-template-columns: 56px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 14px 10px 12px !important;
+  background: #eef0f2 !important;
+  border-bottom: 0 !important;
+  cursor: default !important;
+}
+
+.kol-admin .admin-order-back-button-v29 {
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border: 1px solid #d8dee6 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  color: #1f2937 !important;
+  font-size: 28px !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.03) !important;
+}
+
+.kol-admin .admin-order-title-stack-v29 {
+  display: grid !important;
+  gap: 2px !important;
+}
+.kol-admin .admin-order-title-stack-v29 h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  line-height: 1.08 !important;
+  color: #172333 !important;
+}
+.kol-admin .admin-order-phone-under-name-v29 {
+  font-size: 18px !important;
+  line-height: 1.05 !important;
+  font-weight: 950 !important;
+  color: #1c2c3f !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.kol-admin .admin-order-header-timer-v29 {
+  display: grid !important;
+  justify-items: end !important;
+  gap: 4px !important;
+}
+.kol-admin .admin-order-header-timer-v29 span {
+  color: #5f6977 !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+.kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29 {
+  display: inline-grid !important;
+  place-items: center !important;
+  min-width: 122px !important;
+  min-height: 28px !important;
+  padding: 0 12px !important;
+  border-radius: 0 !important;
+  background: #000 !important;
+  color: #ff172b !important;
+  font-size: 19px !important;
+  font-weight: 1000 !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29.is-ready {
+  color: #2dd160 !important;
+}
+
+.kol-admin .admin-order-modal-body.admin-order-modal-body-v29 {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 8px 18px 128px !important;
+  background: #eef0f2 !important;
+}
+
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 {
+  width: min(100%, 760px) !important;
+  margin: 0 auto !important;
+  padding: 14px 18px !important;
+  border: 1px solid #dce3ea !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-row {
+  padding: 12px 0 !important;
+}
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-row > strong,
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-main > strong {
+  font-size: 17px !important;
+  font-weight: 950 !important;
+}
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-options,
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-row p {
+  margin-top: 4px !important;
+}
+.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-total-row {
+  padding-top: 14px !important;
+  margin-top: 8px !important;
+  font-size: 18px !important;
+}
+
+.kol-admin .admin-order-modal-footer.admin-order-modal-footer-v29 {
+  position: sticky !important;
+  bottom: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border-top: 0 !important;
+  z-index: 5 !important;
+}
+
+.kol-admin .admin-order-bottom-bar-v29 {
+  display: grid !important;
+  grid-template-columns: 72px minmax(145px, 190px) minmax(220px, 1fr) minmax(190px, 220px) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  padding: 14px 18px calc(14px + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid #dbe2e8 !important;
+  background: #fff !important;
+}
+.kol-admin .admin-order-bottom-bar-v29.is-readonly {
+  grid-template-columns: 72px minmax(145px, 220px) minmax(180px, 1fr) !important;
+}
+
+.kol-admin .order-more-actions-v29 {
+  position: relative !important;
+  justify-self: start !important;
+}
+.kol-admin .order-more-button-v29 {
+  width: 56px !important;
+  min-width: 56px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 14px !important;
+  border: 1px solid #d8dfe7 !important;
+  background: #f8fafc !important;
+  color: #1b2636 !important;
+  font-size: 30px !important;
+}
+.kol-admin .order-more-dropdown-v29 {
+  left: 0 !important;
+  right: auto !important;
+  bottom: calc(100% + 8px) !important;
+  transform: none !important;
+}
+
+.kol-admin .order-footer-created-v29 {
+  display: grid !important;
+  gap: 2px !important;
+  justify-items: center !important;
+  align-content: center !important;
+}
+.kol-admin .order-footer-created-v29 span {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+.kol-admin .order-footer-created-v29 strong {
+  color: #182536 !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+}
+
+.kol-admin .order-footer-ready-panel-v29 {
+  display: grid !important;
+  gap: 6px !important;
+  align-items: center !important;
+  justify-items: center !important;
+  min-width: 0 !important;
+}
+.kol-admin .order-soft-label-v29,
+.kol-admin .order-footer-later-panel-v29 .order-soft-label {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+.kol-admin .order-minutes-modern-v29 {
+  grid-template-columns: 42px 72px auto 42px !important;
+  gap: 0 !important;
+  padding: 4px !important;
+  border: 1px solid #dce2e8 !important;
+  border-radius: 18px !important;
+  background: #f5f7fa !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.03) !important;
+}
+.kol-admin .order-adjust-button-v29 {
+  width: 42px !important;
+  min-height: 42px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: #1f2937 !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+}
+.kol-admin .order-soft-input-v29 {
+  min-height: 42px !important;
+  font-size: 18px !important;
+  font-weight: 1000 !important;
+  color: #1f2937 !important;
+}
+.kol-admin .order-input-suffix-v29 {
+  padding-right: 8px !important;
+  color: #4b5563 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+.kol-admin .order-ready-preview-v29 {
+  color: #4b5563 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  text-align: center !important;
+}
+.kol-admin .order-later-note-v29 {
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 10px 12px !important;
+  border: 1px solid #dce2e8 !important;
+  border-radius: 14px !important;
+  background: #f8fafc !important;
+  text-align: center !important;
+}
+.kol-admin .order-later-note-v29 strong,
+.kol-admin .order-later-note-v29 span {
+  display: block !important;
+}
+.kol-admin .order-later-note-v29 strong {
+  font-size: 14px !important;
+}
+.kol-admin .order-later-note-v29 span {
+  margin-top: 2px !important;
+  font-size: 13px !important;
+}
+
+.kol-admin .accept-order-button-v29 {
+  width: 100% !important;
+  min-width: 180px !important;
+  min-height: 46px !important;
+  border-radius: 14px !important;
+  background: #47b95b !important;
+  border-color: #47b95b !important;
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 1000 !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .order-footer-status-note-v29 {
+  display: grid !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 3px !important;
+  min-height: 52px !important;
+  padding: 0 14px !important;
+  border: 1px solid #dce2e8 !important;
+  border-radius: 14px !important;
+  background: #f8fafc !important;
+}
+.kol-admin .order-footer-status-note-v29 span {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+.kol-admin .order-footer-status-note-v29 strong {
+  color: #182536 !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+}
+
+@media (max-width: 900px) {
+  .kol-admin .admin-order-modal.admin-order-modal-v29 {
+    width: 100% !important;
+    height: calc(100vh - 72px) !important;
+    max-height: calc(100vh - 72px) !important;
+  }
+  .kol-admin .admin-order-bottom-bar-v29 {
+    grid-template-columns: 64px minmax(125px, 1fr) minmax(190px, 1fr) 170px !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .kol-admin .admin-order-modal-header.admin-order-modal-header-v29 {
+    grid-template-columns: 44px minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    padding: 12px 10px 10px !important;
+  }
+  .kol-admin .admin-order-back-button-v29 {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 24px !important;
+  }
+  .kol-admin .admin-order-title-stack-v29 h2 {
+    font-size: 16px !important;
+  }
+  .kol-admin .admin-order-phone-under-name-v29 {
+    font-size: 14px !important;
+  }
+  .kol-admin .admin-order-header-timer-v29 span {
+    font-size: 10px !important;
+  }
+  .kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29 {
+    min-width: 86px !important;
+    min-height: 22px !important;
+    padding: 0 8px !important;
+    font-size: 14px !important;
+  }
+  .kol-admin .admin-order-modal-body.admin-order-modal-body-v29 {
+    padding: 8px 10px 110px !important;
+  }
+  .kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 {
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+  }
+  .kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-row > strong,
+  .kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 .order-line-main > strong {
+    font-size: 14px !important;
+  }
+  .kol-admin .admin-order-bottom-bar-v29,
+  .kol-admin .admin-order-bottom-bar-v29.is-readonly {
+    grid-template-columns: 56px 1fr !important;
+    gap: 10px !important;
+    align-items: start !important;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .kol-admin .order-more-actions-v29 {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    align-self: center !important;
+  }
+  .kol-admin .order-more-button-v29 {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+  }
+  .kol-admin .order-footer-created-v29 {
+    grid-column: 2 !important;
+    justify-items: start !important;
+  }
+  .kol-admin .order-footer-created-v29 strong {
+    font-size: 16px !important;
+  }
+  .kol-admin .order-footer-ready-panel-v29,
+  .kol-admin .order-footer-status-note-v29 {
+    grid-column: 1 / -1 !important;
+  }
+  .kol-admin .accept-order-button-v29 {
+    grid-column: 1 / -1 !important;
+    min-width: 0 !important;
+  }
+}
+
+
+/* ===== V85: admin sipariş detay üst alanı beyaz + tüm üst alandan geri dön ===== */
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 {
+  background: #ffffff !important;
+  border-bottom: 1px solid #dde4eb !important;
+  box-shadow: 0 1px 0 rgba(15,23,42,.04) !important;
+  cursor: pointer !important;
+}
+
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29:hover {
+  background: #ffffff !important;
+}
+
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 .admin-order-back-button-v29 {
+  cursor: pointer !important;
+}
+
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 .admin-order-title-stack-v29,
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 .admin-order-modal-title-v29,
+.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 .admin-order-header-timer-v29 {
+  align-self: center !important;
+}
+
+.kol-admin .admin-order-modal.admin-order-modal-v29 {
+  background: #eef0f2 !important;
+}
+
+@media (max-width: 760px) {
+  .kol-admin .admin-order-modal-header.admin-order-modal-header-v29 {
+    padding: 10px 10px 10px !important;
+  }
+}
+
+
+/* ===== V86: Admin sipariş detay üst zaman + alt kontrol bar hizalama ===== */
+.kol-admin .admin-order-header-timer-v29 {
+  display: grid !important;
+  justify-items: end !important;
+  align-content: center !important;
+  gap: 2px !important;
+  min-width: 120px !important;
+}
+
+.kol-admin .admin-order-header-timer-v29 span {
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+
+.kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29 {
+  display: block !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  color: #111827 !important;
+  font-size: 20px !important;
+  font-weight: 1000 !important;
+  line-height: 1.05 !important;
+  font-variant-numeric: tabular-nums !important;
+  text-align: right !important;
+}
+
+.kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29.is-ready {
+  color: #111827 !important;
+}
+
+.kol-admin .admin-order-modal-footer.admin-order-modal-footer-v29 {
+  position: sticky !important;
+  bottom: 0 !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  border-top: 1px solid #dbe2e8 !important;
+  z-index: 10 !important;
+}
+
+.kol-admin .admin-order-bottom-bar-v29 {
+  display: grid !important;
+  grid-template-columns: 72px 180px minmax(220px,1fr) 210px !important;
+  align-items: center !important;
+  gap: 16px !important;
+  width: 100% !important;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom)) !important;
+  background: #ffffff !important;
+}
+
+.kol-admin .order-more-actions-v29 { justify-self: start !important; }
+.kol-admin .order-footer-created-v29 {
+  justify-self: start !important;
+  justify-items: center !important;
+  text-align: center !important;
+}
+.kol-admin .order-footer-ready-panel-v29 {
+  justify-self: center !important;
+  width: 100% !important;
+  max-width: 280px !important;
+}
+.kol-admin .accept-order-button-v29 {
+  justify-self: end !important;
+  width: 100% !important;
+  max-width: 210px !important;
+  min-width: 160px !important;
+}
+
+@media (max-width: 900px) {
+  .kol-admin .admin-order-bottom-bar-v29 {
+    grid-template-columns: 64px 150px minmax(190px,1fr) 180px !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .kol-admin .admin-order-header-timer-v29 {
+    min-width: 84px !important;
+    gap: 1px !important;
+  }
+  .kol-admin .admin-order-header-timer-v29 span {
+    font-size: 10px !important;
+  }
+  .kol-admin .admin-order-header-timer-v29 .admin-order-header-timer-value-v29 {
+    font-size: 16px !important;
+  }
+  .kol-admin .admin-order-bottom-bar-v29 {
+    grid-template-columns: 56px 132px minmax(170px,1fr) 150px !important;
+    gap: 8px !important;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .kol-admin .order-more-button-v29 {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+  .kol-admin .order-footer-created-v29 strong {
+    font-size: 14px !important;
+  }
+  .kol-admin .order-minutes-modern-v29 {
+    grid-template-columns: 38px 54px auto 38px !important;
+  }
+  .kol-admin .order-adjust-button-v29 {
+    width: 38px !important;
+    min-height: 38px !important;
+    font-size: 24px !important;
+  }
+  .kol-admin .order-soft-input-v29 {
+    min-height: 38px !important;
+    font-size: 16px !important;
+  }
+  .kol-admin .order-input-suffix-v29 {
+    font-size: 13px !important;
+  }
+  .kol-admin .accept-order-button-v29 {
+    min-width: 0 !important;
+    max-width: 150px !important;
+    min-height: 44px !important;
+    font-size: 15px !important;
+  }
+}

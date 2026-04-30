@@ -124,3 +124,7 @@ V28:
 - V79: Profil/status ekranında `Standart · Mild` gibi karışık detay görünümü temizlendi. Detaylar artık `Størrelse: Standart` ve `Velg styrke: Mild` olarak alt alta gösterilir. Sepet fallback detayları da aynı temiz formatı kullanır.
 
 - V81: Mobilde sepette kırmızı silme butonuna basınca birden fazla ürün silinmesi düzeltildi. Silme artık sadece `click` olayında çalışır; touchstart/pointerdown silme yapmaz ve 650 ms koruma kilidi vardır.
+
+- V84: V83 admin.html içinde kalan kırık `function closeAllOrderActionMenus  \`;` satırı temizlendi. Bu hata JavaScript'i tamamen durduruyordu; admin menü ve siparişler tekrar çalışır.
+
+- V85: Admin sipariş detay ekranında üst geri dönüş alanı beyaz yapıldı. Başlık / müşteri adı / zamanlayıcı bulunan üst şeridin tamamına tıklayınca tekrar Bestillinger listesine döner.
