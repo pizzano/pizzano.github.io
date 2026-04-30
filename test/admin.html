@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=63">
+    <link rel="stylesheet" href="kol-core.css?v=79">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -99,7 +99,6 @@
               <span>Dra grupper inn p&aring; valgt produkt.</span>
             </div>
             <div class="group-heading-actions">
-              <button id="addStrengthGroup" type="button">Ny styrkegruppe</button>
               <button id="addOptionGroup" type="button">Ny gruppe</button>
             </div>
           </div>
@@ -607,6 +606,7 @@ function renderLocalBackups() {
       `;
     })
     .join("");
+  ensureEditingGroupVisible();
 }
 
 async function downloadFullBackup() {
@@ -709,7 +709,7 @@ function normalizeAdminOrderLine(line = {}) {
   const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeAdminText(item)).filter(Boolean) : [];
   const extraDetails = Array.isArray(line.extraDetails)
     ? line.extraDetails.map((item) => ({
-        label: safeAdminText(item?.label),
+        label: normalizeSizeDetailLabel(safeAdminText(item?.label)),
         price: safeAdminNumber(item?.price),
         priceText: safeAdminText(item?.priceText)
       })).filter((item) => item.label)
@@ -719,7 +719,7 @@ function normalizeAdminOrderLine(line = {}) {
     name: safeAdminText(line.name, "Produkt"),
     quantity,
     size: safeAdminText(line.size),
-    sizeLabel: safeAdminText(line.sizeLabel || line.size),
+    sizeLabel: formatSizeDisplayLabel(safeAdminText(line.sizeLabel || line.size)),
     extras,
     extraDetails,
     note: safeAdminText(line.note),
@@ -874,16 +874,19 @@ function normalizeOptionGroups(value) {
 
 
 function normalizeConfig(value) {
-  const sections = asArray(value?.sections).map((section) => ({
-    ...section,
-    items: asArray(section.items).map((product) => {
-      const hasGroupIds = Object.prototype.hasOwnProperty.call(product, "optionGroupIds");
-      return {
-        ...product,
-        optionGroupIds: hasGroupIds ? asArray(product.optionGroupIds) : defaultGroupIdsForProduct(product, section)
-      };
-    })
-  }));
+  const sections = asArray(value?.sections).map((section) => {
+    const { hidden, soldOut, soldOutUntil, ...cleanSection } = section || {};
+    return {
+      ...cleanSection,
+      items: asArray(section?.items).map((product) => {
+        const hasGroupIds = Object.prototype.hasOwnProperty.call(product, "optionGroupIds");
+        return {
+          ...product,
+          optionGroupIds: hasGroupIds ? asArray(product.optionGroupIds) : defaultGroupIdsForProduct(product, section)
+        };
+      })
+    };
+  });
   return {
     sections,
     extraOptions: asArray(value?.extraOptions),
@@ -1078,7 +1081,6 @@ function productPriceSummary(product = {}) {
 
 
 // Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
-// hidden=true olursa müşteri tarafında görünmez. soldOut=true veya ileri tarihli soldOutUntil varsa müşteri UTSOLGT görür.
 function toDateTimeLocalValue(value = "") {
   if (!value) return "";
   return String(value).slice(0, 16);
@@ -1137,16 +1139,14 @@ function renderCategories() {
               ${categoryImageMarkup(section)}
               <span class="category-card-copy">
                 <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
-                ${statusBadges(section)}
-                <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
+                                <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
               </span>
               <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
-            <button class="category-delete-button" type="button" data-category-delete="${index}" aria-label="Slett kategori" title="Slett kategori">×</button>
             <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori innstillinger">⚙</button>
             <div class="category-menu" data-category-menu-panel="${index}" hidden>
               <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "✓ Ferdig" : "⚙ Rediger kategori"}</button>
-              <button type="button" data-category-action="delete" data-category-index="${index}">🗑 Slett kategori</button>
+              <button class="danger-action" type="button" data-category-action="delete" data-category-index="${index}">🗑 Slett kategori</button>
             </div>
           </div>
           ${
@@ -1155,12 +1155,6 @@ function renderCategories() {
                   <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
                   <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
                   <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
-                  <section class="availability-controls">
-                    <strong>Status</strong>
-                    <label><input type="checkbox" data-category-field="hidden" ${section.hidden ? "checked" : ""}> Skjul kategori fra kundesiden</label>
-                    <label><input type="checkbox" data-category-field="soldOut" ${section.soldOut ? "checked" : ""}> Vis hele kategorien som utsolgt</label>
-                    <label>Utsolgt til <input type="datetime-local" data-category-field="soldOutUntil" value="${escapeHtml(toDateTimeLocalValue(section.soldOutUntil || ""))}"></label>
-                  </section>
                   <div class="inline-actions">
                     <button type="button" data-category-action="close-edit" data-category-index="${index}">Ferdig</button>
                   </div>
@@ -1192,13 +1186,34 @@ function renderProducts() {
 
 
 function normalizeSizeId(label = "", fallback = "") {
-  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   if (value.includes("medium") || value === "m") return "medium";
   if (value.includes("stor") || value.includes("large") || value === "st") return "large";
   if (value.includes("xxl")) return "xxl";
   if (value.includes("xl")) return "xl";
-  if (value.includes("standard") || value.includes("pris")) return "standard";
+  if (value.includes("standard") || value.includes("standart") || value.includes("pris") || value.includes("vanlig") || value.includes("regular")) return "standard";
   return makeId(label || fallback || `size-${Date.now()}`);
+}
+
+function isStandardLikeSizeLabel(value = "") {
+  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  return !normalized || normalized.includes("standard") || normalized.includes("standart") || normalized.includes("pris") || normalized.includes("vanlig") || normalized.includes("regular");
+}
+
+function formatSizeDisplayLabel(label = "", forceStandard = false) {
+  const raw = String(label || "").trim();
+  if (forceStandard || isStandardLikeSizeLabel(raw)) return "Standart";
+  return raw;
+}
+
+function normalizeSizeDetailLabel(label = "") {
+  const raw = String(label || "").trim();
+  if (!raw) return "";
+  if (/^størrelse\s*:/i.test(raw)) {
+    const value = raw.split(":").slice(1).join(":").trim();
+    return `Størrelse: ${formatSizeDisplayLabel(value)}`;
+  }
+  return raw;
 }
 
 function defaultLabelForSize(id = "standard") {
@@ -1206,7 +1221,7 @@ function defaultLabelForSize(id = "standard") {
   if (id === "large") return "Stor";
   if (id === "xxl") return "XXL";
   if (id === "xl") return "XL";
-  if (id === "standard") return "Pris";
+  if (id === "standard") return "Standart";
   return id.toUpperCase();
 }
 
@@ -1223,19 +1238,19 @@ function getProductPriceList(product) {
   const savedSizes = asArray(product?.sizes)
     .map((size) => ({
       id: size.id ? makeId(size.id) : normalizeSizeId(size.label || size.name, size.id),
-      label: size.label || size.name || defaultLabelForSize(size.id),
+      label: formatSizeDisplayLabel(size.label || size.name || defaultLabelForSize(size.id)),
       price: getNumber(size.price ?? ""),
       default: size.default === true || size.isDefault === true
     }))
     .filter((size) => size.label && size.price !== undefined);
-  if (savedSizes.length) return ensureDefaultPrice(savedSizes);
+  if (savedSizes.length) return ensureDefaultPrice(savedSizes).map((size, index, list) => ({ ...size, label: formatSizeDisplayLabel(size.label, list.length === 1) }));
 
   const prices = [];
   if (product?.mediumPrice !== undefined) prices.push({ id: "medium", label: "Medium", price: product.mediumPrice, default: false });
   if (product?.largePrice !== undefined) prices.push({ id: "large", label: "Stor", price: product.largePrice, default: false });
-  if (!prices.length && product?.price !== undefined) prices.push({ id: "standard", label: "Pris", price: product.price, default: true });
-  if (!prices.length) prices.push({ id: "standard", label: "Pris", price: undefined, default: true });
-  return ensureDefaultPrice(prices);
+  if (!prices.length && product?.price !== undefined) prices.push({ id: "standard", label: "Standart", price: product.price, default: true });
+  if (!prices.length) prices.push({ id: "standard", label: "Standart", price: undefined, default: true });
+  return ensureDefaultPrice(prices).map((size, index, list) => ({ ...size, label: formatSizeDisplayLabel(size.label, list.length === 1) }));
 }
 
 
@@ -1243,15 +1258,15 @@ function readProductPriceListFromEditor() {
   const rows = productPriceRows ? [...productPriceRows.querySelectorAll("[data-product-price-row]")] : [];
   const prices = rows
     .map((row, index) => {
-      const label = row.querySelector("[data-price-label]")?.value.trim() || "Pris";
-      const id = row.dataset.priceId || normalizeSizeId(label, "");
+      const rawLabel = row.querySelector("[data-price-label]")?.value.trim() || "Standart";
+      const id = row.dataset.priceId || normalizeSizeId(rawLabel, "");
       const price = getNumber(row.querySelector("[data-price-value]")?.value ?? "");
       const isDefault = Boolean(row.querySelector("[data-price-default]")?.checked);
-      return { id, label, price, default: isDefault };
+      return { id, label: formatSizeDisplayLabel(rawLabel, rows.length === 1), price, default: isDefault };
     })
     .filter((size) => size.label && size.price !== undefined);
 
-  return ensureDefaultPrice(prices.length ? prices : [{ id: "standard", label: "Pris", price: undefined, default: true }]);
+  return ensureDefaultPrice(prices.length ? prices : [{ id: "standard", label: "Standart", price: undefined, default: true }]).map((size, index, list) => ({ ...size, label: formatSizeDisplayLabel(size.label, list.length === 1) }));
 }
 
 
@@ -1488,6 +1503,26 @@ function renderGroupEditor(group, groupIndex) {
       </div>
     </div>
   `;
+}
+
+function ensureEditingGroupVisible() {
+  if (!optionGroupsAdmin) return;
+  requestAnimationFrame(() => {
+    const editingCard = optionGroupsAdmin.querySelector('.option-group-card.editing');
+    if (!editingCard) return;
+    const cardTop = editingCard.offsetTop;
+    const cardBottom = cardTop + editingCard.offsetHeight;
+    const visibleTop = optionGroupsAdmin.scrollTop;
+    const visibleBottom = visibleTop + optionGroupsAdmin.clientHeight;
+    const padding = 10;
+    if (cardTop < visibleTop + padding) {
+      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardTop - padding), behavior: 'smooth' });
+      return;
+    }
+    if (cardBottom > visibleBottom - padding) {
+      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardBottom - optionGroupsAdmin.clientHeight + padding), behavior: 'smooth' });
+    }
+  });
 }
 
 // Sağdaki Valggrupper / tilleggler listesini çizer.
@@ -1974,7 +2009,7 @@ function receiptExtraDetailRows(line = {}) {
 
   const rows = [];
   const sizeText = safeAdminText(line.sizeLabel || line.size);
-  if (sizeText) rows.push({ label: /^størrelse\s*:/i.test(sizeText) ? sizeText : `Størrelse: ${sizeText}`, priceText: "" });
+  if (sizeText) rows.push({ label: /^størrelse\s*:/i.test(sizeText) ? normalizeSizeDetailLabel(sizeText) : `Størrelse: ${formatSizeDisplayLabel(sizeText)}`, priceText: "" });
   asArray(line.extras).forEach((extra) => {
     const extraText = safeAdminText(extra);
     if (extraText) rows.push({ label: extraText, priceText: "" });
@@ -2658,7 +2693,7 @@ function addProduct() {
     name: "",
     ingredients: "",
     thumb: "plate",
-    sizes: [{ id: "standard", label: "Pris", price: 0 }],
+    sizes: [{ id: "standard", label: "Standart", price: 0 }],
     price: 0,
     displayPrice: 0
   });
@@ -2759,6 +2794,7 @@ function duplicateOptionGroup(groupIndex) {
   config.optionGroups.splice(groupIndex + 1, 0, copied);
   editingGroupIndex = groupIndex + 1;
   renderGroupManager();
+  setTimeout(ensureEditingGroupVisible, 60);
   writeLiveConfig("Valggruppe kopiert.");
 }
 
@@ -2785,6 +2821,7 @@ function addOptionGroup() {
   });
   editingGroupIndex = config.optionGroups.length - 1;
   renderGroupManager();
+  setTimeout(ensureEditingGroupVisible, 60);
   writeLiveConfig("Valggruppe lagt til i Firebase.");
 }
 
@@ -2831,13 +2868,6 @@ categoryButtons.addEventListener("click", (event) => {
     selectedCategoryIndex = Number(addProductInline.dataset.addProductToCategory);
     selectedProductIndex = Math.max(0, (selectedCategory()?.items || []).length - 1);
     addProduct();
-    return;
-  }
-
-  const categoryDelete = event.target.closest("[data-category-delete]");
-  if (categoryDelete) {
-    closeCategoryMenus();
-    deleteCategory(Number(categoryDelete.dataset.categoryDelete));
     return;
   }
 
@@ -2977,21 +3007,33 @@ if (assignedGroups) {
     const zone = event.target.closest("[data-assigned-zone]");
     if (!zone) return;
     event.preventDefault();
+    assignedGroups.classList.add("drag-over");
+    assignedGroups.closest(".assigned-groups")?.classList.add("drag-over");
     zone.classList.add("drag-over");
   });
 
   assignedGroups.addEventListener("dragleave", (event) => {
     const zone = event.target.closest("[data-assigned-zone]");
     if (zone) zone.classList.remove("drag-over");
+    if (!assignedGroups.contains(event.relatedTarget)) {
+      assignedGroups.classList.remove("drag-over");
+      assignedGroups.closest(".assigned-groups")?.classList.remove("drag-over");
+    }
   });
 
   assignedGroups.addEventListener("drop", (event) => {
     const zone = event.target.closest("[data-assigned-zone]");
     if (!zone || !draggedGroupId) return;
     event.preventDefault();
+    const targetArea = zone.dataset.assignedZone || "common";
     zone.classList.remove("drag-over");
-    assignGroupToSelectedProduct(draggedGroupId, zone.dataset.assignedZone || "common");
+    assignedGroups.classList.remove("drag-over");
+    const box = assignedGroups.closest(".assigned-groups");
+    box?.classList.remove("drag-over");
+    box?.classList.add("drop-success");
+    assignGroupToSelectedProduct(draggedGroupId, targetArea);
     draggedGroupId = null;
+    window.setTimeout(() => box?.classList.remove("drop-success"), 900);
     renderGroupManager();
   });
 }
@@ -3455,6 +3497,60 @@ if (extrasPanel) {
     writeLiveConfig("Valg slettet fra Firebase.");
   });
 }
+
+
+/* ===== V68: admin menu-scroll + drag/drop helper ===== */
+(function enhanceAdminMenuDragFeedback() {
+  const menuPage = document.querySelector('[data-admin-page="menu"]');
+  const categoriesScroller = document.querySelector('.category-list');
+  const groupsPanel = document.querySelector('.group-panel');
+  if (!menuPage || !categoriesScroller || !groupsPanel) return;
+
+  // When dragging from Valggrupper, left menu column can still scroll with mouse wheel.
+  groupsPanel.addEventListener('wheel', (event) => {
+    if (!event.shiftKey) return;
+    event.preventDefault();
+    categoriesScroller.scrollTop += event.deltaY;
+  }, { passive: false });
+
+  document.addEventListener('dragover', (event) => {
+    if (!window.draggedGroupId && typeof draggedGroupId !== 'undefined' && !draggedGroupId) return;
+    const scroller = document.querySelector('.category-list');
+    if (!scroller) return;
+    const rect = scroller.getBoundingClientRect();
+    const edge = 90;
+    if (event.clientY > rect.bottom - edge) scroller.scrollTop += 18;
+    else if (event.clientY < rect.top + edge) scroller.scrollTop -= 18;
+  });
+})();
+
+
+/* ===== V74: force Valggrupper inner scroll ===== */
+(function forceValggrupperInnerScroll() {
+  const panel = document.querySelector(".group-panel");
+  const list = document.querySelector("#optionGroupsAdmin");
+  if (!panel || !list) return;
+
+  function wheelScroll(event) {
+    if (!document.querySelector('.admin-page[data-admin-page="menu"]')?.classList.contains("active")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    list.scrollTop += event.deltaY;
+  }
+
+  panel.addEventListener("wheel", wheelScroll, { passive: false });
+  list.addEventListener("wheel", wheelScroll, { passive: false });
+
+  // After render/update, keep the editing card visible inside the list box
+  const observer = new MutationObserver(() => {
+    const editing = list.querySelector(".option-group-card.editing");
+    if (!editing) return;
+    requestAnimationFrame(() => {
+      editing.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+  });
+  observer.observe(list, { childList: true, subtree: true });
+})();
 
 function startRealtimeSync() {
   setStatus("Kobler til Firebase...");

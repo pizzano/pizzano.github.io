@@ -106,3 +106,19 @@ V28:
 - V66: Sepetteki düzenle ve sil butonları küçültüldü. Düzenle kalemi siyah kenarlıklı oval-kare beyaz kutu içine alındı; silme butonu da daha kompakt hale getirildi.
 
 - V67: Sepetteki düzenle ve sil butonları bir kez daha küçültüldü. Ayrıca kayan kategori çubuğu info ekranında gizlendi; artık sadece menüde ve ürün detayında görünür.
+
+- V68: Admin Meny oppsett ekranında sol kategori/ürün alanı kendi içinde scroll yapar. Sağdaki Valggrupper paneli ekranda kalır ve kendi içinde scroll olur. Valggruppe ürüne sürüklenirken bırakma alanı yeşil olarak işaretlenir; bırakınca 'Lagt til' animasyonu gösterilir.
+
+- V69: Meny oppsett sol üstteki kategori bilgilendirme kutusu kaldırıldı. Valggrupper paneli masaüstünde ekranın en sağ tarafına taşındı ve sabit kaldı.
+
+- V70: Meny oppsett bölümündeki puslu/boş üst şerit kaldırıldı. Valggrupper paneli masaüstünde daha sağa ve daha dar taşındı. Valggrupper içindeki Pris ve Ja/Nei alanları küçültüldü.
+
+- V71: Valggrupper paneli daha sağa taşındı, kendi iç scroll alanı eklendi, Ny styrkegruppe kaldırıldı, Pris ve Ja/Nei alanları daha da küçültüldü.
+
+- V72: Valggrupper listesinin kendisi kutu içinde bağımsız scroll olacak şekilde düzenlendi.
+
+- V73: Ny gruppe açılınca Valggrupper listesinin kendi içinde otomatik scroll yapması ve aktif kartı görünür tutması düzeltildi.
+
+- V74: Valggrupper içindeki liste scroll'u zorunlu hale getirildi. Mouse tekerleği doğrudan #optionGroupsAdmin kutusunu kaydırır; liste ekran dışına taşmaz.
+
+- V79: Profil/status ekranında `Standart · Mild` gibi karışık detay görünümü temizlendi. Detaylar artık `Størrelse: Standart` ve `Velg styrke: Mild` olarak alt alta gösterilir. Sepet fallback detayları da aynı temiz formatı kullanır.

@@ -5106,3 +5106,617 @@ body.modal-open .category-tabs-scroll {
 body.info-open .category-tabs-wrap {
   display: none !important;
 }
+
+
+/* ===== V68: Admin Meny oppsett scroll + Valggrupper follow panel ===== */
+.kol-admin {
+  overflow: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active {
+  height: calc(100dvh - var(--kol-header-h, 56px) - 18px) !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  align-items: stretch !important;
+}
+
+/* Sol taraf: kategori + ürünler kendi içinde scroll yapar */
+.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: 140px !important;
+  scroll-behavior: smooth !important;
+}
+
+/* Sağ taraf: Valggrupper ekranda kalsın, ürünlere sürüklerken kaybolmasın */
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+  position: sticky !important;
+  top: calc(var(--kol-header-h, 56px) + 14px) !important;
+  align-self: start !important;
+  max-height: calc(100dvh - var(--kol-header-h, 56px) - 32px) !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  z-index: 50 !important;
+}
+
+/* Ürün içine valggruppe bırakılan alanı daha belli yap */
+.kol-admin .assigned-groups {
+  position: relative !important;
+  border: 2px dashed #d8e0e9 !important;
+  background: #fbfdff !important;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
+}
+
+.kol-admin .assigned-groups.drag-over,
+.kol-admin .assigned-group-list.drag-over,
+.kol-admin .assigned-compact-list.drag-over {
+  border-color: #22c55e !important;
+  background: #ecfdf3 !important;
+  box-shadow: 0 0 0 4px rgba(34,197,94,.14), inset 0 0 0 2px rgba(34,197,94,.18) !important;
+}
+
+.kol-admin .assigned-groups.drag-over::after {
+  content: "Slipp her – gruppen legges på produktet" !important;
+  position: absolute !important;
+  inset: 10px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 2px dashed #22c55e !important;
+  border-radius: 14px !important;
+  background: rgba(236,253,243,.86) !important;
+  color: #13783d !important;
+  font-weight: 950 !important;
+  font-size: 15px !important;
+  pointer-events: none !important;
+  z-index: 8 !important;
+}
+
+.kol-admin .assigned-groups.drop-success {
+  border-color: #16a34a !important;
+  background: #dcfce7 !important;
+  animation: kol-admin-drop-ok .85s ease;
+}
+
+.kol-admin .assigned-groups.drop-success::after {
+  content: "✓ Lagt til" !important;
+  position: absolute !important;
+  right: 14px !important;
+  top: 14px !important;
+  z-index: 9 !important;
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  background: #16a34a !important;
+  color: white !important;
+  font-weight: 950 !important;
+  font-size: 13px !important;
+  box-shadow: 0 8px 18px rgba(22,163,74,.25) !important;
+}
+
+@keyframes kol-admin-drop-ok {
+  0% { transform: scale(1); }
+  38% { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+
+/* Drag edilen kart ve aktif hedef daha net görünsün */
+.kol-admin .option-group-card.dragging {
+  opacity: .55 !important;
+  outline: 2px solid var(--kol-brand) !important;
+  outline-offset: 2px !important;
+}
+
+.kol-admin [data-assigned-zone].drag-over {
+  border-radius: 14px !important;
+}
+
+/* Mobil/tablet: iki kolon yerine normal sayfa scroll */
+@media (max-width: 1100px) {
+  .kol-admin {
+    overflow: auto !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    position: relative !important;
+    top: auto !important;
+    max-height: min(560px, calc(100dvh - 90px)) !important;
+  }
+}
+
+
+/* ===== V69: remove category info box + move Valggrupper to far right ===== */
+@media (min-width: 1101px) {
+  /* Menu page layout: left content scrolls, right group panel fixed in viewport gutter */
+  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+    display: block !important;
+    position: relative !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+  .kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+    width: auto !important;
+    margin-right: 420px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    position: fixed !important;
+    right: 14px !important;
+    top: calc(var(--kol-header-h, 56px) + 24px) !important;
+    width: 380px !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 38px) !important;
+    z-index: 70 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Remove ugly info/header block on the left */
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 0 !important;
+    margin: 0 0 10px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    min-height: 0 !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading > div {
+    display: none !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading #addCategory {
+    margin-left: auto !important;
+  }
+
+  /* Keep internal left list scroll usable */
+  .kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+    padding-top: 10px !important;
+  }
+}
+
+/* Tablet/mobile: no fixed side panel */
+@media (max-width: 1100px) {
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading > div {
+    display: none !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading {
+    justify-content: flex-end !important;
+    margin-bottom: 10px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+}
+
+
+/* ===== V70: admin menu cleanup, right-side Valggrupper spacing, compact inputs ===== */
+@media (min-width: 1101px) {
+  /* Remove the blurred/empty category header strip completely */
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 0 12px !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Put the right panel closer to the browser edge and make it slimmer */
+  .kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+  .kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+    margin-right: 350px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    right: 8px !important;
+    width: 318px !important;
+    min-width: 318px !important;
+    max-width: 318px !important;
+    top: calc(var(--kol-header-h, 56px) + 18px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 26px) !important;
+    border-radius: 16px !important;
+  }
+
+  /* Compact inner editor in Valggrupper */
+  .kol-admin .group-panel .option-group-editor {
+    padding: 8px 8px 10px !important;
+  }
+
+  .kol-admin .group-panel .option-group-top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 96px 88px !important;
+    gap: 6px !important;
+    align-items: end !important;
+  }
+
+  .kol-admin .group-panel .group-options {
+    gap: 6px !important;
+  }
+
+  .kol-admin .group-panel .group-option-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 74px 86px 28px !important;
+    gap: 5px !important;
+    align-items: end !important;
+  }
+
+  .kol-admin .group-panel .group-option-row label,
+  .kol-admin .group-panel .option-group-top label {
+    font-size: 11px !important;
+    gap: 3px !important;
+  }
+
+  .kol-admin .group-panel .option-group-editor input,
+  .kol-admin .group-panel .option-group-editor select {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    border-radius: 7px !important;
+  }
+
+  .kol-admin .group-panel .group-option-row button[data-remove-group-option] {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    align-self: end !important;
+  }
+
+  .kol-admin .group-panel .group-card-actions {
+    gap: 6px !important;
+  }
+
+  .kol-admin .group-panel .group-card-actions button {
+    min-height: 30px !important;
+    padding: 0 9px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading {
+    position: static !important;
+    top: auto !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+
+/* ===== V71: compact Valggrupper, own scroll, remove strength button, move panel further right ===== */
+@media (min-width: 1101px) {
+  /* keep right panel out of the category area */
+  .kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+  .kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+    margin-right: 390px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    position: fixed !important;
+    right: 4px !important;
+    top: calc(var(--kol-header-h, 56px) + 14px) !important;
+    width: 286px !important;
+    min-width: 286px !important;
+    max-width: 286px !important;
+    height: calc(100dvh - var(--kol-header-h, 56px) - 20px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 20px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    z-index: 80 !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+    flex: 0 0 auto !important;
+    margin-bottom: 8px !important;
+    align-items: flex-start !important;
+  }
+
+  /* remove Ny styrkegruppe */
+  .kol-admin .admin-page[data-admin-page="menu"].active #addStrengthGroup {
+    display: none !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-heading-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    align-items: flex-end !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active #addOptionGroup {
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* inner scroll so panel never runs off-screen */
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 2px !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* tighter list cards */
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card {
+    border-radius: 12px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-row {
+    grid-template-columns: minmax(0, 1fr) 34px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title {
+    padding: 10px 8px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor {
+    padding: 7px 7px 9px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-top {
+    grid-template-columns: minmax(0, 1fr) 72px 64px !important;
+    gap: 5px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-options {
+    gap: 5px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-option-row {
+    grid-template-columns: minmax(0, 1fr) 54px 60px 24px !important;
+    gap: 4px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-option-row label,
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-top label {
+    font-size: 10px !important;
+    gap: 2px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor input,
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor select {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: 2px 5px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-option-row button[data-remove-group-option] {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 0 !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-card-actions {
+    gap: 5px !important;
+    margin-top: 6px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-card-actions button {
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 10px !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .kol-admin .admin-page[data-admin-page="menu"] #addStrengthGroup {
+    display: none !important;
+  }
+}
+
+
+/* ===== V72: make Valggrupper list itself a boxed scroller ===== */
+@media (min-width: 1101px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    gap: 10px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin {
+    display: grid !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border: 1px solid var(--kol-line) !important;
+    border-radius: 16px !important;
+    background: #f8fafc !important;
+    padding: 10px !important;
+    scrollbar-width: thin;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin::-webkit-scrollbar-thumb {
+    background: #c8d1dc;
+    border-radius: 999px;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+
+/* ===== V73: keep Valggrupper scroll active while creating/editing groups ===== */
+@media (min-width: 1101px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin {
+    min-height: 260px !important;
+    height: calc(100dvh - var(--kol-header-h, 56px) - 150px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 150px) !important;
+    align-content: start !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card.editing {
+    scroll-margin-top: 10px;
+    scroll-margin-bottom: 10px;
+  }
+}
+
+
+/* ===== V74: force Valggrupper cards to stay inside a real scroll box ===== */
+@media (min-width: 1101px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    box-sizing: border-box !important;
+    height: calc(100dvh - var(--kol-header-h, 56px) - 18px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 18px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+    flex: 0 0 auto !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
+    display: block !important;
+    flex: 0 1 auto !important;
+    height: calc(100dvh - var(--kol-header-h, 56px) - 172px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 172px) !important;
+    min-height: 220px !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+    overscroll-behavior: contain !important;
+    padding: 10px !important;
+    border: 1px solid var(--kol-line) !important;
+    border-radius: 16px !important;
+    background: #f8fafc !important;
+    scrollbar-gutter: stable !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin > .option-group-card {
+    margin-bottom: 8px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin > .option-group-card:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+
+/* V75: kategori silme ayarlar menüsüne taşındı */
+.kol-admin .category-delete-button { display:none !important; }
+.kol-admin [data-admin-page="menu"] .category-menu button.danger-action {
+  color: #d93025 !important;
+  font-weight: 900 !important;
+  background: #fff5f5 !important;
+}
+.kol-admin [data-admin-page="menu"] .category-menu button.danger-action:hover {
+  background: #fee2e2 !important;
+}
+
+/* V76: kategori ayar menüsünde silme seçeneğini görünür yap */
+.kol-admin .menu-category-card,
+.kol-admin .menu-category-row,
+.kol-admin .category-choice-row {
+  overflow: visible !important;
+}
+.kol-admin [data-admin-page="menu"] .category-menu {
+  position: absolute !important;
+  top: calc(100% - 1px) !important;
+  right: 8px !important;
+  z-index: 99999 !important;
+  display: grid !important;
+  grid-auto-rows: minmax(42px, auto) !important;
+  min-width: 220px !important;
+  overflow: visible !important;
+}
+.kol-admin [data-admin-page="menu"] .category-menu[hidden] {
+  display: none !important;
+}
+.kol-admin [data-admin-page="menu"] .category-menu button {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 44px !important;
+}
+.kol-admin [data-admin-page="menu"] .category-menu button.danger-action {
+  color: #d93025 !important;
+  background: #fff5f5 !important;
+}
+
+
+/* V79: profil/status detaljer skal stå rent under hverandre, ikke "Standart · Mild" */
+.customer-receipt-detail-rows {
+  display: grid !important;
+  gap: 2px !important;
+  margin-top: 3px !important;
+}
+
+.customer-receipt-detail-rows p {
+  margin: 0 !important;
+}
+
+
+/* ===== V80: kategoribar info bölümünde kesinlikle görünmesin ===== */
+body.info-open .category-tabs-wrap,
+body.info-open #categoryTabsWrap,
+body:has(.info-modal:not([hidden])) .category-tabs-wrap,
+body:has(.info-modal:not([hidden])) #categoryTabsWrap {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

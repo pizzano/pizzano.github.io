@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=67">
+    <link rel="stylesheet" href="kol-core.css?v=80">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -924,14 +924,22 @@ function updateTopMenuReturnButton() {
 
 function syncCategoryTabsVisibility() {
   const isCartOpen = !!(cartModal && !cartModal.hidden) || document.body.classList.contains("cart-open");
-  const isInfoOpen = !!(infoModal && !infoModal.hidden);
+  const isInfoOpen = !!(infoModal && !infoModal.hidden) || document.body.classList.contains("info-open");
   const isProfileOpen = !!(profileModal && !profileModal.hidden) || document.body.classList.contains("profile-open");
   const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) || document.body.classList.contains("order-live-open");
   const isSettingsOpen = document.body.classList.contains("settings-open");
 
-  // Product modal açıkken kategori barı görünür; sadece cart/info/profile/live içinde gizlenir.
+  // Product modal açıkken kategori barı görünebilir; info/profil/sepet/canlı siparişte gizli kalmalı.
   const shouldHide = isCartOpen || isInfoOpen || isProfileOpen || isLiveOpen || isSettingsOpen;
   document.body.classList.toggle("category-tabs-hidden", Boolean(shouldHide));
+  if (categoryTabsWrap) {
+    categoryTabsWrap.hidden = Boolean(shouldHide);
+    categoryTabsWrap.setAttribute("aria-hidden", shouldHide ? "true" : "false");
+    categoryTabsWrap.style.display = shouldHide ? "none" : "";
+  }
+  window.requestAnimationFrame(() => {
+    updateCategoryTabsOffset?.();
+  });
 }
 
 function syncBodyScrollLocks() {
@@ -1167,7 +1175,7 @@ function normalizeCustomerOrderLine(line = {}) {
   const extras = Array.isArray(line.extras) ? line.extras.map((item) => safeText(item)).filter(Boolean) : [];
   const extraDetails = Array.isArray(line.extraDetails)
     ? line.extraDetails.map((item) => ({
-        label: safeText(item?.label),
+        label: normalizeSizeDetailLabel(safeText(item?.label)),
         price: safeNumber(item?.price),
         priceText: safeText(item?.priceText)
       })).filter((item) => item.label)
@@ -1177,7 +1185,7 @@ function normalizeCustomerOrderLine(line = {}) {
     name: safeText(line.name, "Produkt"),
     quantity,
     size: safeText(line.size),
-    sizeLabel: safeText(line.sizeLabel || line.size),
+    sizeLabel: formatSizeDisplayLabel(safeText(line.sizeLabel || line.size)),
     extras,
     extraDetails,
     note: safeText(line.note),
@@ -1820,6 +1828,50 @@ async function syncOrdersByCustomerPhone(phone = getSavedProfilePhone()) {
 }
 
 
+
+function formatProfileOrderDetailRows(line = {}) {
+  const rows = [];
+
+  const push = (label) => {
+    const clean = safeText(label);
+    if (!clean) return;
+    if (!rows.includes(clean)) rows.push(clean);
+  };
+
+  const rawSize = safeText(line.sizeLabel || line.size);
+  if (rawSize) {
+    push(/^størrelse\s*:/i.test(rawSize)
+      ? normalizeSizeDetailLabel(rawSize)
+      : `Størrelse: ${formatSizeDisplayLabel(rawSize)}`);
+  }
+
+  const detailedExtras = asArray(line.extraDetails)
+    .map((detail) => safeText(detail?.label))
+    .filter(Boolean)
+    .filter((label) => !/^størrelse\s*:/i.test(label));
+
+  if (detailedExtras.length) {
+    detailedExtras.forEach(push);
+  } else {
+    asArray(line.extras).forEach((extra) => {
+      const clean = safeText(extra);
+      if (!clean) return;
+      if (/^velg\s+styrke\s*:/i.test(clean) || /^ekstra/i.test(clean) || clean.includes(":")) {
+        push(clean);
+        return;
+      }
+      const lowered = clean.toLowerCase();
+      if (lowered.includes("mild") || lowered.includes("medium") || lowered.includes("sterk")) {
+        push(`Velg styrke: ${clean}`);
+        return;
+      }
+      push(clean);
+    });
+  }
+
+  return rows;
+}
+
 function orderLinesHtml(order = {}) {
   const normalized = normalizeCustomerOrder(order) || { items: [], total: 0 };
   const lines = normalized.items || [];
@@ -1833,12 +1885,12 @@ function orderLinesHtml(order = {}) {
   return `
     <div class="customer-receipt-lines">
       ${lines.map((line) => {
-        const details = [line.sizeLabel || line.size, ...(line.extras || [])].filter(Boolean).join(" · ");
+        const detailRows = formatProfileOrderDetailRows(line);
         return `
           <div class="customer-receipt-line">
             <div>
               <strong>${Number(line.quantity || 1)}x ${escapeAttribute(line.name || "Produkt")}</strong>
-              ${details ? `<p>${escapeAttribute(details)}</p>` : ""}
+              ${detailRows.length ? `<div class="customer-receipt-detail-rows">${detailRows.map((detail) => `<p>${escapeAttribute(detail)}</p>`).join("")}</div>` : ""}
               ${line.note ? `<p>${escapeAttribute(line.note)}</p>` : ""}
             </div>
             <strong>${formatPrice(line.total || 0)}</strong>
@@ -2603,13 +2655,34 @@ async function loadMenuConfig() {
 }
 
 function normalizeSizeId(label = "", fallback = "") {
-  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   if (value.includes("medium") || value === "m") return "medium";
   if (value.includes("stor") || value.includes("large") || value === "st") return "large";
   if (value.includes("xxl")) return "xxl";
   if (value.includes("xl")) return "xl";
-  if (value.includes("standard") || value.includes("pris")) return "standard";
+  if (value.includes("standard") || value.includes("standart") || value.includes("pris") || value.includes("vanlig") || value.includes("regular")) return "standard";
   return makeSlug(label || fallback || "size");
+}
+
+function isStandardLikeSizeLabel(value = "") {
+  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  return !normalized || normalized.includes("standard") || normalized.includes("standart") || normalized.includes("pris") || normalized.includes("vanlig") || normalized.includes("regular");
+}
+
+function formatSizeDisplayLabel(label = "", forceStandard = false) {
+  const raw = String(label || "").trim();
+  if (forceStandard || isStandardLikeSizeLabel(raw)) return "Standart";
+  return raw;
+}
+
+function normalizeSizeDetailLabel(label = "") {
+  const raw = String(label || "").trim();
+  if (!raw) return "";
+  if (/^størrelse\s*:/i.test(raw)) {
+    const value = raw.split(":").slice(1).join(":").trim();
+    return `Størrelse: ${formatSizeDisplayLabel(value)}`;
+  }
+  return raw;
 }
 
 function makeSlug(value) {
@@ -2626,7 +2699,7 @@ function defaultLabelForSize(id = "standard") {
   if (id === "large") return "STOR PIZZA";
   if (id === "xxl") return "XXL";
   if (id === "xl") return "XL";
-  if (id === "standard") return "Standard";
+  if (id === "standard") return "Standart";
   return id.toUpperCase();
 }
 
@@ -2634,7 +2707,7 @@ function getProductSizes(item) {
   const savedSizes = asArray(item?.sizes)
     .map((size) => ({
       id: size.id ? makeSlug(size.id) : normalizeSizeId(size.label || size.name, size.id),
-      label: size.label || size.name || defaultLabelForSize(size.id),
+      label: formatSizeDisplayLabel(size.label || size.name || defaultLabelForSize(size.id)),
       price: Number(size.price),
       default: size.default === true || size.isDefault === true || item?.defaultSizeId === (size.id ? makeSlug(size.id) : normalizeSizeId(size.label || size.name, size.id))
     }))
@@ -2642,8 +2715,9 @@ function getProductSizes(item) {
 
   if (savedSizes.length) {
     const defaultIndex = savedSizes.findIndex((size) => size.default);
-    return savedSizes.map((size, index) => ({
+    return savedSizes.map((size, index, list) => ({
       ...size,
+      label: formatSizeDisplayLabel(size.label, list.length === 1),
       default: defaultIndex >= 0 ? index === defaultIndex : index === 0
     }));
   }
@@ -2651,12 +2725,13 @@ function getProductSizes(item) {
   const prices = [];
   if (item?.mediumPrice !== undefined) prices.push({ id: "medium", label: "Medium Pizza", price: Number(item.mediumPrice), default: item?.defaultSizeId === "medium" });
   if (item?.largePrice !== undefined) prices.push({ id: "large", label: "STOR PIZZA", price: Number(item.largePrice), default: item?.defaultSizeId === "large" });
-  if (!prices.length && item?.price !== undefined) prices.push({ id: "standard", label: "Standard", price: Number(item.price), default: true });
+  if (!prices.length && item?.price !== undefined) prices.push({ id: "standard", label: "Standart", price: Number(item.price), default: true });
 
   const validPrices = prices.filter((size) => Number.isFinite(size.price));
   const defaultIndex = validPrices.findIndex((size) => size.default);
-  return validPrices.map((size, index) => ({
+  return validPrices.map((size, index, list) => ({
     ...size,
+    label: formatSizeDisplayLabel(size.label, list.length === 1),
     default: defaultIndex >= 0 ? index === defaultIndex : index === 0
   }));
 }
@@ -2673,7 +2748,8 @@ function getDefaultProductSizeId(item) {
 
 
 function getSelectedSizeLabel(item, size) {
-  return getProductSizes(item).find((entry) => entry.id === size)?.label || "Standard";
+  const sizes = getProductSizes(item);
+  return formatSizeDisplayLabel(sizes.find((entry) => entry.id === size)?.label || "Standart", sizes.length === 1);
 }
 
 function isLargeLikeSize(size) {
@@ -2826,9 +2902,9 @@ function buildCartLine() {
   const sizeOptions = getProductSizes(selectedProduct);
   const sizeLabel = sizeOptions.length
     ? `Størrelse: ${getSelectedSizeLabel(selectedProduct, selectedSize)}`
-    : "Størrelse: Standard";
+    : "Størrelse: Standart";
   const extraDetails = [];
-  if (sizeOptions.length && sizeLabel !== "Størrelse: Standard") {
+  if (sizeOptions.length && sizeLabel !== "Størrelse: Standart") {
     extraDetails.push({ label: sizeLabel, price: 0, priceText: "" });
   }
   selectedExtraLines.forEach((option) => {
@@ -3395,7 +3471,7 @@ function renderCart() {
     .map((line, index) => {
       const detailRows = Array.isArray(line.extraDetails) && line.extraDetails.length
         ? line.extraDetails
-        : [line.sizeLabel, ...(line.extras || [])].filter(Boolean).map((label) => ({ label, priceText: "" }));
+        : formatProfileOrderDetailRows(line).map((label) => ({ label, priceText: "" }));
       return `
         <article class="cart-item">
           <div class="cart-item-main cart-item-main-stacked">
