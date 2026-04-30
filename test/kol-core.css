@@ -5720,3 +5720,12 @@ body:has(.info-modal:not([hidden])) #categoryTabsWrap {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+
+/* V81: mobilde silme butonu tek dokunuş = tek ürün */
+.remove-button,
+.cart-item .remove-button {
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+}

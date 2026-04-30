@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=80">
+    <link rel="stylesheet" href="kol-core.css?v=81">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -3930,6 +3930,7 @@ if (menuToggle) {
    This does NOT depend on SVG, ::before, onclick, or the icon element.
    It calls the original working openCartLineEditor(index) directly. */
 let kolLastCartEditAt = 0;
+let kolLastCartRemoveAt = 0;
 
 function kolEditCartLineDirect(index) {
   index = Number(index);
@@ -3963,6 +3964,13 @@ function kolEditCartLineDirect(index) {
 
 function kolRemoveCartLineDirect(index) {
   index = Number(index);
+  const now = Date.now();
+
+  // Mobilde touchstart + pointerdown + click aynı basışta arka arkaya gelebiliyor.
+  // Bu kilit bir basışın sadece tek ürün silmesini garanti eder.
+  if (now - kolLastCartRemoveAt < 650) return false;
+  kolLastCartRemoveAt = now;
+
   if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
   cart.splice(index, 1);
   saveCart();
@@ -3978,6 +3986,10 @@ function kolCartActionFromEvent(event) {
   const removeButton = event.target.closest?.(".remove-button[data-remove], [data-cart-action='remove']");
   const button = editButton || removeButton;
   if (!button || !cartItems?.contains(button)) return;
+
+  // Slett skal KUN skje på click. Ikke på touchstart/pointerdown.
+  // Ellers mobil kan slette flere varer med én berøring.
+  if (removeButton && event.type !== "click") return;
 
   event.preventDefault();
   event.stopPropagation();
@@ -3996,7 +4008,7 @@ function kolCartActionFromEvent(event) {
   }
 }
 
-// Use document capture so the center of the icon can never swallow the event.
+// Edit needs early capture. Remove is guarded to click only inside the handler.
 document.addEventListener("pointerdown", kolCartActionFromEvent, true);
 document.addEventListener("click", kolCartActionFromEvent, true);
 document.addEventListener("touchstart", kolCartActionFromEvent, { capture: true, passive: false });

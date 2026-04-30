@@ -122,3 +122,5 @@ V28:
 - V74: Valggrupper içindeki liste scroll'u zorunlu hale getirildi. Mouse tekerleği doğrudan #optionGroupsAdmin kutusunu kaydırır; liste ekran dışına taşmaz.
 
 - V79: Profil/status ekranında `Standart · Mild` gibi karışık detay görünümü temizlendi. Detaylar artık `Størrelse: Standart` ve `Velg styrke: Mild` olarak alt alta gösterilir. Sepet fallback detayları da aynı temiz formatı kullanır.
+
+- V81: Mobilde sepette kırmızı silme butonuna basınca birden fazla ürün silinmesi düzeltildi. Silme artık sadece `click` olayında çalışır; touchstart/pointerdown silme yapmaz ve 650 ms koruma kilidi vardır.
