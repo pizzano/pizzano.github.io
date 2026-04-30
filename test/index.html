@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=81">
+    <link rel="stylesheet" href="kol-core.css?v=82">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -937,6 +937,11 @@ function syncCategoryTabsVisibility() {
     categoryTabsWrap.setAttribute("aria-hidden", shouldHide ? "true" : "false");
     categoryTabsWrap.style.display = shouldHide ? "none" : "";
   }
+
+  if (!shouldHide && categoryTabs && categoryTabs.childElementCount === 0 && menuSectionsEl?.children?.length) {
+    window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: true }));
+  }
+
   window.requestAnimationFrame(() => {
     updateCategoryTabsOffset?.();
   });
@@ -3034,6 +3039,43 @@ function setActiveCategoryTab(sectionId, options = {}) {
   if (centerIntoView && sectionId) centerCategoryTab(sectionId, behavior);
 }
 
+function getRenderableMenuSections() {
+  return menuSections
+    .filter((section) => !isHiddenItem(section))
+    .map((section) => ({ ...section, items: visibleMenuItems(section) }))
+    .filter((section) => section.items.length);
+}
+
+function refreshCategoryTabsFromCurrentMenu(options = {}) {
+  if (!categoryTabsWrap || !categoryTabs) return;
+  const { preserveActive = true } = options;
+  const visibleSections = getRenderableMenuSections();
+  const sectionsToRender = visibleSections.slice(0, visibleSectionLimit);
+  const previousActive = preserveActive ? activeCategoryTabId : "";
+
+  if (!sectionsToRender.length) {
+    categoryTabsWrap.hidden = true;
+    categoryTabs.innerHTML = "";
+    document.body.classList.remove("has-category-tabs");
+    syncCategoryTabsHeight();
+    return;
+  }
+
+  renderCategoryTabs(sectionsToRender);
+
+  const nextActive = sectionsToRender.some((section) => section.id === previousActive)
+    ? previousActive
+    : (sectionsToRender[0]?.id || "");
+
+  if (nextActive) {
+    setActiveCategoryTab(nextActive, { centerIntoView: false, behavior: "auto" });
+  }
+
+  syncCategoryTabsVisibility();
+  syncCategoryTabsHeight();
+  requestCategoryScrollSync();
+}
+
 function renderCategoryTabs(sections) {
   if (!categoryTabsWrap || !categoryTabs) return;
 
@@ -3614,6 +3656,7 @@ function closeInfoModal() {
   document.body.classList.remove("modal-open");
   document.body.classList.remove("info-open");
   syncBodyScrollLocks();
+  window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: true }));
 }
 
 
@@ -3847,6 +3890,7 @@ async function init() {
   renderCart();
   updateOpeningNotice();
   syncBodyScrollLocks();
+  window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: false }));
 }
 
 
@@ -3875,10 +3919,11 @@ function closeAllCustomerPopupsAndShowMenu() {
   if (infoToggle) infoToggle.setAttribute("aria-expanded", "false");
   if (profileToggle) profileToggle.setAttribute("aria-expanded", "false");
 
-  document.body.classList.remove("cart-open", "modal-open", "profile-open", "order-live-open");
+  document.body.classList.remove("cart-open", "modal-open", "profile-open", "order-live-open", "info-open");
   syncBodyScrollLocks();
 
   window.requestAnimationFrame(() => {
+    refreshCategoryTabsFromCurrentMenu({ preserveActive: true });
     const top = document.querySelector(".menu-shell") || document.body;
     if (top && top.scrollIntoView) top.scrollIntoView({ block: "start" });
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
