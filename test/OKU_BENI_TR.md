@@ -132,3 +132,5 @@ V28:
 - V90: CSS cache version v90 yapıldı. Valgt rozeti görünür/yeşil hale getirildi. Sepette bulunan tüm ürünler menüde yeşil ve Valgt olarak kalır. Çoklu fiyatlar sade `175 kr | 275 kr` formatında kalır.
 
 - V92: Sepetten silinen ürünlerin menüde yeşil `Valgt` olarak takılı kalması düzeltildi. `Valgt` artık yalnızca gerçekten handlekurv içinde bulunan ürünlerde görünür.
+
+- V103: Ürün içinde toplam satırı `Sum:` olarak kaldı. Sepetin en alt genel toplam etiketi `Sluttsum` yapıldı ve altında küçük `(inkl. mva ...)` kaldı.

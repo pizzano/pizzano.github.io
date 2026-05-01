@@ -7379,3 +7379,13 @@ body:not(.cart-has-items) .cart-sales-card .cart-summary {
     font-size: 11px !important;
   }
 }
+
+
+/* ===== V103: ürün içinde Sum, sepet sonunda Sluttsum ===== */
+.cart-detail-row.total-line-row .cart-detail-label {
+  font-weight: 900 !important;
+}
+
+.cart-summary .compact-total-row span {
+  font-weight: 900 !important;
+}
