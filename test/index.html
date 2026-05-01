@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=101">
+    <link rel="stylesheet" href="kol-core.css?v=102">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -174,17 +174,14 @@
             <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
 
             <div class="cart-summary" id="cartSummary">
-            <div>
-              <span>Delsum</span>
-              <strong id="subtotal">0,00 kr</strong>
-            </div>
-            <div>
-              <span>Mva inkl. 15%</span>
-              <strong id="tax">0,00 kr</strong>
-            </div>
-            <div class="total-row">
-              <span>Sluttsum</span>
+            <div class="total-row compact-total-row">
+              <span>Totalt</span>
               <strong id="total">0,00 kr</strong>
+            </div>
+            <div class="tax-note-row">
+              <small id="taxNote">(inkl. mva 0,00 kr)</small>
+              <strong id="subtotal" hidden>0,00 kr</strong>
+              <strong id="tax" hidden>0,00 kr</strong>
             </div>
           </div>
 
@@ -827,6 +824,7 @@ const cartEmpty = document.querySelector("#cartEmpty");
 const cartSummary = document.querySelector("#cartSummary");
 const subtotal = document.querySelector("#subtotal");
 const tax = document.querySelector("#tax");
+const taxNote = document.querySelector("#taxNote");
 const total = document.querySelector("#total");
 const checkoutButton = document.querySelector(".checkout-button");
 const clearCartConfirm = document.querySelector("#clearCartConfirm");
@@ -3574,6 +3572,7 @@ function renderCart() {
   cartCount.textContent = itemCount;
   subtotal.textContent = formatPrice(cartSubtotal);
   tax.textContent = formatPrice(taxValue);
+  if (taxNote) taxNote.textContent = `(inkl. mva ${formatPrice(taxValue)})`;
   total.textContent = formatPrice(cartSubtotal);
   const hasCartItems = cart.length > 0;
   cartEmpty.hidden = hasCartItems || showOnlyOrderStatus;

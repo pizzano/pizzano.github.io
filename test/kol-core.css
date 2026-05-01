@@ -7328,3 +7328,54 @@ body:not(.cart-has-items) .cart-sales-card .cart-summary {
     padding: 10px 0 !important;
   }
 }
+
+
+/* ===== V102: cleaner cart summary - only Totalt + small VAT note ===== */
+.cart-summary {
+  display: grid !important;
+  gap: 4px !important;
+  padding: 14px 2px 2px !important;
+}
+
+.cart-summary .compact-total-row,
+.cart-summary .total-row.compact-total-row {
+  margin-top: 0 !important;
+  padding-top: 12px !important;
+  border-top: 1px dashed #d2d9e3 !important;
+}
+
+.cart-summary .compact-total-row span,
+.cart-summary .compact-total-row strong {
+  color: #111827 !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em !important;
+}
+
+.cart-summary .tax-note-row {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 0 2px !important;
+  text-align: right !important;
+}
+
+.cart-summary .tax-note-row small,
+#taxNote {
+  display: inline-block !important;
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-summary .compact-total-row span,
+  .cart-summary .compact-total-row strong {
+    font-size: 17px !important;
+  }
+
+  .cart-summary .tax-note-row small,
+  #taxNote {
+    font-size: 11px !important;
+  }
+}
