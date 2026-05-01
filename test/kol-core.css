@@ -6741,3 +6741,529 @@ body:not(.cart-has-items) .cart-sales-card .cart-summary {
     min-height: 34px !important;
   }
 }
+
+
+/* ===== V94: kvittering yazıları 1 kademe küçük + ekstra fiyatları leader/sağ hizalı ===== */
+.cart-item-head h3,
+.cart-item h3 {
+  font-size: 17px !important;
+  letter-spacing: .005em !important;
+}
+
+.cart-detail-row span,
+.cart-detail-row .cart-detail-text,
+.cart-detail-row strong,
+.cart-item-note,
+.cart-summary > div span,
+.cart-summary > div strong {
+  font-size: 14px !important;
+  line-height: 1.32 !important;
+}
+
+.cart-line-total {
+  font-size: 16px !important;
+}
+
+.cart-summary .total-row span,
+.cart-summary .total-row strong,
+.total-row span,
+.total-row strong {
+  font-size: 17px !important;
+}
+
+.cart-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  gap: 8px !important;
+  align-items: baseline !important;
+}
+
+.cart-detail-row .cart-detail-text,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain,
+.cart-detail-row > span {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.cart-detail-row .cart-detail-text::after,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+.cart-detail-row > span::after {
+  content: "" !important;
+  flex: 1 1 auto !important;
+  min-width: 14px !important;
+  margin-left: 10px !important;
+  border-bottom: 1px dashed #cfd6df !important;
+  transform: translateY(-1px) !important;
+  opacity: .95 !important;
+}
+
+.cart-detail-row strong {
+  min-width: 78px !important;
+  text-align: right !important;
+  justify-self: end !important;
+  white-space: nowrap !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.cart-detail-label {
+  font-weight: 700 !important;
+}
+
+.cart-detail-value {
+  font-weight: 500 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head h3,
+  .cart-item h3 {
+    font-size: 15px !important;
+  }
+
+  .cart-detail-row span,
+  .cart-detail-row .cart-detail-text,
+  .cart-detail-row strong,
+  .cart-item-note,
+  .cart-summary > div span,
+  .cart-summary > div strong {
+    font-size: 13px !important;
+  }
+
+  .cart-line-total {
+    font-size: 15px !important;
+  }
+
+  .cart-summary .total-row span,
+  .cart-summary .total-row strong,
+  .total-row span,
+  .total-row strong {
+    font-size: 16px !important;
+  }
+
+  .cart-detail-row {
+    gap: 6px !important;
+  }
+
+  .cart-detail-row .cart-detail-text::after,
+  .cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+  .cart-detail-row > span::after {
+    min-width: 10px !important;
+    margin-left: 8px !important;
+  }
+
+  .cart-detail-row strong {
+    min-width: 70px !important;
+    font-size: 13px !important;
+  }
+}
+
+
+/* ===== V95: kvittering satırında gerçek ürün fiyatı + toplam sağ alt ===== */
+.cart-item {
+  align-items: stretch !important;
+}
+
+.cart-item-actions {
+  display: grid !important;
+  grid-template-rows: auto 1fr auto !important;
+  align-items: start !important;
+  justify-items: end !important;
+  min-width: 96px !important;
+  gap: 8px !important;
+}
+
+.cart-item-top-actions {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.cart-line-total {
+  margin-top: auto !important;
+  align-self: end !important;
+  justify-self: end !important;
+  text-align: right !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  color: #111827 !important;
+  white-space: nowrap !important;
+}
+
+.cart-item-details {
+  gap: 5px !important;
+}
+
+.cart-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  gap: 10px !important;
+  align-items: baseline !important;
+}
+
+.cart-detail-row .cart-detail-text,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain,
+.cart-detail-row > span {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.cart-detail-row .cart-detail-text::after,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+.cart-detail-row > span::after {
+  content: "" !important;
+  flex: 1 1 auto !important;
+  min-width: 18px !important;
+  margin-left: 12px !important;
+  border-bottom: 1px dashed #cbd5e1 !important;
+  transform: translateY(-1px) !important;
+}
+
+.cart-detail-row strong {
+  min-width: 86px !important;
+  justify-self: end !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  color: #111827 !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+}
+
+.cart-detail-row:first-child strong {
+  color: #111827 !important;
+  font-weight: 800 !important;
+}
+
+.cart-detail-label {
+  color: #374151 !important;
+  font-weight: 800 !important;
+}
+
+.cart-detail-value {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-actions {
+    min-width: 88px !important;
+    gap: 6px !important;
+  }
+
+  .cart-line-total {
+    font-size: 15px !important;
+  }
+
+  .cart-detail-row {
+    gap: 8px !important;
+  }
+
+  .cart-detail-row .cart-detail-text::after,
+  .cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+  .cart-detail-row > span::after {
+    min-width: 12px !important;
+    margin-left: 8px !important;
+  }
+
+  .cart-detail-row strong {
+    min-width: 74px !important;
+    font-size: 13px !important;
+  }
+}
+
+
+/* ===== V96: kvitteringde boy fiyatı gerçek temel fiyat + Sum satırı ===== */
+.cart-detail-row.total-line-row {
+  margin-top: 2px !important;
+  padding-top: 2px !important;
+}
+.cart-detail-row.total-line-row .cart-detail-text::after,
+.cart-detail-row.total-line-row .cart-detail-text.cart-detail-text-plain::after,
+.cart-detail-row.total-line-row > span::after {
+  border-bottom-style: solid !important;
+  border-bottom-color: #cbd5e1 !important;
+}
+.cart-detail-row.total-line-row .cart-detail-label,
+.cart-detail-row.total-line-row .cart-detail-value,
+.cart-detail-row.total-line-row strong {
+  color: #111827 !important;
+  font-weight: 800 !important;
+}
+
+
+/* V97: cart line total removed, short VAT label */
+.cart-item-actions > .cart-line-total{display:none !important;}
+
+
+/* ===== V98: kvittering düzeni - butonlar başlık yanında, fiyatlar en sağda ===== */
+.cart-item {
+  display: block !important;
+  position: relative !important;
+  padding: 12px 0 !important;
+  background: transparent !important;
+}
+
+.cart-item-main,
+.cart-item-main.cart-item-main-stacked {
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.cart-item-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 8px !important;
+}
+
+.cart-item-head h3,
+.cart-item h3 {
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  padding-top: 2px !important;
+}
+
+.cart-item-top-actions {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+.cart-item-actions,
+.cart-item .cart-item-actions {
+  display: none !important;
+}
+
+.cart-item-details {
+  display: grid !important;
+  gap: 5px !important;
+  width: 100% !important;
+}
+
+.cart-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  align-items: end !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.cart-detail-row .cart-detail-text,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain,
+.cart-detail-row > span {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+}
+
+.cart-detail-row .cart-detail-text::after,
+.cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+.cart-detail-row > span::after {
+  content: "" !important;
+  flex: 1 1 auto !important;
+  min-width: 18px !important;
+  margin-left: 10px !important;
+  border-bottom: 1px dashed #cfd6df !important;
+  transform: translateY(-2px) !important;
+}
+
+.cart-detail-row strong {
+  justify-self: end !important;
+  text-align: right !important;
+  min-width: 82px !important;
+  white-space: nowrap !important;
+}
+
+.cart-detail-row.total-line-row {
+  margin-top: 2px !important;
+  padding-top: 2px !important;
+}
+
+.cart-detail-row.total-line-row .cart-detail-text::after,
+.cart-detail-row.total-line-row .cart-detail-text.cart-detail-text-plain::after,
+.cart-detail-row.total-line-row > span::after {
+  border-bottom-style: solid !important;
+  border-bottom-color: #d4dbe3 !important;
+}
+
+.cart-detail-row.total-line-row .cart-detail-label,
+.cart-detail-row.total-line-row .cart-detail-value,
+.cart-detail-row.total-line-row strong {
+  color: #111827 !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head {
+    gap: 10px !important;
+    margin-bottom: 7px !important;
+  }
+
+  .cart-item-top-actions {
+    gap: 6px !important;
+  }
+
+  .cart-detail-row {
+    gap: 10px !important;
+  }
+
+  .cart-detail-row .cart-detail-text::after,
+  .cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+  .cart-detail-row > span::after {
+    min-width: 10px !important;
+    margin-left: 8px !important;
+  }
+
+  .cart-detail-row strong {
+    min-width: 74px !important;
+  }
+}
+
+
+/* ===== V99: cart action buttons corner-aligned, no reserved title width ===== */
+.cart-item-head {
+  position: relative !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+  min-height: 0 !important;
+}
+
+.cart-item-head h3,
+.cart-item h3 {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.cart-item-top-actions {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  flex: initial !important;
+  z-index: 4 !important;
+}
+
+.cart-item .edit-line-button.icon-only,
+.cart-item .remove-button {
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head {
+    margin-bottom: 7px !important;
+  }
+
+  .cart-item-top-actions {
+    gap: 6px !important;
+  }
+}
+
+
+/* ===== V100: cart action buttons smaller + no overlap with receipt text ===== */
+.cart-item-head {
+  position: relative !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+  min-height: 42px !important; /* reserve vertical room so buttons don't sit on detail rows */
+  padding-right: 76px !important; /* only a small corner reserve for buttons */
+}
+
+.cart-item-head h3,
+.cart-item h3 {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 2px 0 0 0 !important;
+  line-height: 1.2 !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.cart-item-top-actions {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  z-index: 4 !important;
+}
+
+.cart-item .edit-line-button.icon-only,
+.cart-item .remove-button {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  border-radius: 8px !important;
+  flex: 0 0 auto !important;
+}
+
+.cart-item .edit-line-button.icon-only::before {
+  font-size: 13px !important;
+}
+
+.cart-item .remove-button {
+  font-size: 21px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head {
+    min-height: 38px !important;
+    padding-right: 68px !important;
+    margin-bottom: 7px !important;
+  }
+
+  .cart-item-top-actions {
+    gap: 5px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only,
+  .cart-item .remove-button {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    border-radius: 7px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only::before {
+    font-size: 12px !important;
+  }
+
+  .cart-item .remove-button {
+    font-size: 19px !important;
+  }
+}

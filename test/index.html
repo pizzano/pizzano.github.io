@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=93">
+    <link rel="stylesheet" href="kol-core.css?v=100">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -179,7 +179,7 @@
               <strong id="subtotal">0,00 kr</strong>
             </div>
             <div>
-              <span>Mva (15% inkludert)</span>
+              <span>Mva inkl. 15%</span>
               <strong id="tax">0,00 kr</strong>
             </div>
             <div class="total-row">
@@ -2933,9 +2933,12 @@ function buildCartLine() {
     ? `Størrelse: ${getSelectedSizeLabel(selectedProduct, selectedSize)}`
     : "Størrelse: Standart";
   const extraDetails = [];
-  if (sizeOptions.length && sizeLabel !== "Størrelse: Standart") {
-    extraDetails.push({ label: sizeLabel, price: 0, priceText: "" });
-  }
+  const baseUnitPrice = getBasePrice(selectedProduct, selectedSize);
+  extraDetails.push({
+    label: sizeLabel,
+    price: baseUnitPrice,
+    priceText: formatPrice(baseUnitPrice)
+  });
   selectedExtraLines.forEach((option) => {
     const groupLabel = safeText(option.group || option.choiceGroup || "Tilvalg");
     const optionLabel = safeText(option.label || option.name || "Valg");
@@ -3587,19 +3590,26 @@ function renderCart() {
   cartItems.innerHTML = cart
     .map((line, index) => {
       const detailRows = Array.isArray(line.extraDetails) && line.extraDetails.length
-        ? line.extraDetails
+        ? [...line.extraDetails]
         : formatProfileOrderDetailRows(line).map((label) => ({ label, priceText: "" }));
+      if (!detailRows.some((detail) => /^sum\s*:/i.test(String(detail?.label || "")))) {
+        detailRows.push({ label: "Sum:", priceText: formatPrice(line.total), isLineTotal: true });
+      }
       return `
         <article class="cart-item">
           <div class="cart-item-main cart-item-main-stacked">
             <div class="cart-item-head">
               <h3>${line.quantity}x ${line.name}</h3>
+              <div class="cart-item-top-actions">
+                <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
+                <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
+              </div>
             </div>
             ${detailRows.length ? `
               <div class="cart-item-details">
                 ${detailRows
                   .map((detail) => `
-                    <div class="cart-detail-row">
+                    <div class="cart-detail-row ${detail.isLineTotal ? 'total-line-row' : ''}">
                       ${(() => {
                         const rawLabel = safeText(detail.label || "");
                         const splitIndex = rawLabel.indexOf(":");
@@ -3617,13 +3627,6 @@ function renderCart() {
               </div>
             ` : ""}
             ${line.note ? `<p class="cart-item-note">Notat: ${line.note}</p>` : ""}
-          </div>
-          <div class="cart-item-actions">
-            <div class="cart-item-top-actions">
-              <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
-              <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
-            </div>
-            <strong class="cart-line-total">${formatPrice(line.total)}</strong>
           </div>
         </article>
       `;
