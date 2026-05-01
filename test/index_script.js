@@ -1,236 +1,4 @@
-<!doctype html>
-<html lang="no">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-    <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=93">
-  </head>
-  <body class="menu-loading kol-customer">
-    <header class="appbar">
-      <button class="appbar-brand" id="siteNameText" type="button" aria-label="K&Oslash;L Grill &amp; Pizza">
-        <span class="brand-label">K&Oslash;L GRILL &amp; PIZZA</span>
-        <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
-      </button>
-      <div class="appbar-actions">
-        <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Meny"><span class="plain-icon" aria-hidden="true">🍴</span></button>
-        <button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
-        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger">&#128100;<span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
-        <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
-      </div>
-    </header>
 
-    <main class="menu-shell">
-      <div class="status-notice">
-        Vi har for &oslash;yeblikket stengt, men du kan forh&aring;ndsbestille for senere.
-      </div>
-
-      <div class="category-tabs-wrap" id="categoryTabsWrap" hidden>
-        <div class="category-tabs-scroll" id="categoryTabs" aria-label="Kategorinavigasjon"></div>
-      </div>
-
-      <section id="menuSections" aria-label="Meny"></section>
-    </main>
-
-    <div class="product-modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productTitle" hidden>
-      <div class="product-panel">
-        <div class="product-scroll-content">
-          <div class="product-titlebar" id="productTitlebar">
-            <button class="back-button" id="closeProduct" type="button" aria-label="Tilbake til meny">&lsaquo;</button>
-            <h2 id="productTitle"></h2>
-            <button class="product-titlebar-back-text" id="closeProductText" type="button" aria-label="Tilbake til meny">Tilbake til meny</button>
-          </div>
-          <div class="product-photo" aria-hidden="true">
-            <div class="product-photo-title-wrap">
-              <div class="product-photo-title-chip">
-                <span id="productPhotoTitle"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="product-body">
-            <p class="product-summary" id="productSummary"></p>
-            <div id="optionGroups"></div>
-
-            <label class="note-label" for="specialInstructions">Spesielle instrukser</label>
-            <textarea id="specialInstructions" rows="2" placeholder="Eksempel: Ingen paprika/sukker/salt."></textarea>
-
-            <div class="quantity-row">
-              <span>Mengde</span>
-              <div class="quantity-stepper">
-                <strong id="productQuantity">1</strong>
-                <button type="button" id="decreaseProduct">&minus;</button>
-                <button type="button" id="increaseProduct">+</button>
-              </div>
-            </div>
-            <p class="allergen-note" id="productAllergens"></p>
-          </div>
-        </div>
-
-        <div class="product-footer">
-          <strong><span id="productTotal">0,00 kr</span></strong>
-          <button id="addConfiguredProduct" type="button">Legg til i handlevogn</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="info-modal" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle" hidden>
-      <button class="info-backdrop" type="button" data-close-info aria-label="Lukk informasjon"></button>
-      <section class="info-panel">
-        <div class="info-header">
-          <h2 id="infoTitle">K&Oslash;L Grill &amp; Pizza</h2>
-          <button class="close-button" id="closeInfo" type="button" aria-label="Lukk informasjon">&times;</button>
-        </div>
-        <div class="map-preview" aria-label="Kart over KOL Grill og Pizza">
-          <div class="map-road road-main"></div>
-          <div class="map-road road-side"></div>
-          <div class="map-pin"></div>
-          <span class="map-label" id="mapLabel">K&Oslash;L Grill &amp;<br>Pizza | Skarnes</span>
-          <span class="map-brand">Google</span>
-        </div>
-        <p class="privacy-note">
-          For en p&aring;litelig gjennomgang p&aring; skjerm av din ordrestatus, i sanntid, kan dine data bli lagret p&aring; denne enheten ved bruk av informasjonskapsler.
-        </p>
-        <div class="info-grid">
-          <section class="info-block">
-            <h3>&Aring;pningstider</h3>
-            <div class="info-line">
-              <span id="openingDaysText">Mandag, Onsdag - S&oslash;ndag</span>
-              <strong id="openingTimeText">14:00 - 22:00</strong>
-            </div>
-          </section>
-          <section class="info-block">
-            <h3>Henting</h3>
-            <div class="info-line">
-              <span id="pickupInfoText">Samme som &aring;pningstider</span>
-            </div>
-          </section>
-          <section class="info-block">
-            <h3>Spr&aring;k</h3>
-            <div class="select-look">Norwegian Bokm&aring;l <span>&#9662;</span></div>
-          </section>
-          <section class="info-block">
-            <h3>Betalingsmetode</h3>
-            <div class="info-line">
-              <span id="paymentInfoText">Kort ved henting (henting)</span>
-            </div>
-          </section>
-          <section class="info-block">
-            <h3>Adresse</h3>
-            <div class="info-line">
-              <span id="addressText">&Oslash;GARDSVEGEN 44, 2100 SKARNES</span>
-            </div>
-          </section>
-          <section class="info-block">
-            <h3>Telefonnummer</h3>
-            <div class="info-line">
-              <span id="phoneText">+47 41 14 53 53</span>
-            </div>
-          </section>
-        </div>
-      </section>
-    </div>
-
-
-    <div class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle" hidden>
-      <button class="profile-backdrop" type="button" data-close-profile aria-label="Lukk profil"></button>
-      <section class="profile-panel">
-        <div class="profile-header">
-          <div>
-            <h2 id="profileTitle">Min profil</h2>
-            <p>Siste bestillinger og hentestatus på denne telefonen.</p>
-          </div>
-          <button class="close-button" id="closeProfile" type="button" aria-label="Lukk profil">&times;</button>
-        </div>
-        <div class="profile-body" id="profileOrders">
-          <p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>
-        </div>
-      </section>
-    </div>
-
-    <div class="order-live-modal" id="orderLiveModal" role="dialog" aria-modal="true" aria-labelledby="orderLiveTitle" hidden>
-      <button class="order-live-backdrop" type="button" data-close-order-live aria-label="Lukk status"></button>
-      <section class="order-live-panel">
-        <div class="order-live-header">
-          <h2 id="orderLiveTitle">Bestillingsstatus</h2>
-          <button class="close-button" id="closeOrderLive" type="button" aria-label="Lukk status">&times;</button>
-        </div>
-        <div id="orderLiveContent" class="order-live-content"></div>
-      </section>
-    </div>
-
-    <div class="cart-modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
-      <button class="cart-backdrop" type="button" data-close-cart aria-label="Lukk handlekurv"></button>
-      <aside class="cart-panel" id="cartPanel">
-        <div class="cart-header">
-          <h2 id="cartTitle">Handlekurv</h2>
-          <div class="cart-header-actions" hidden></div>
-        </div>
-
-        <div class="cart-content-scroll">
-          <div class="cart-order-card">
-          <div class="cart-sales-card">
-            <div class="cart-items" id="cartItems"></div>
-            <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
-
-            <div class="cart-summary" id="cartSummary">
-            <div>
-              <span>Delsum</span>
-              <strong id="subtotal">0,00 kr</strong>
-            </div>
-            <div>
-              <span>Mva (15% inkludert)</span>
-              <strong id="tax">0,00 kr</strong>
-            </div>
-            <div class="total-row">
-              <span>Sluttsum</span>
-              <strong id="total">0,00 kr</strong>
-            </div>
-          </div>
-
-                    </div>
-
-          <section class="checkout-form" id="checkoutForm">
-            <h3>Kundeinformasjon</h3>
-            <div class="pickup-choice">
-              <div class="pickup-options" role="radiogroup" aria-label="Hentetid">
-                <label class="pickup-option"><input type="radio" name="pickupMode" value="asap" checked><span>Snarest mulig</span></label>
-                <label class="pickup-option"><input type="radio" name="pickupMode" value="later"><span>Velg hentetid</span></label>
-              </div>
-              <p id="pickupHelp" class="checkout-help"></p>
-              <select id="pickupTime" hidden aria-label="Velg hentetid"></select>
-            </div>
-            <div class="checkout-grid">
-              <label class="wide">Hele navn
-                <input id="customerFullName" type="text" autocomplete="name" placeholder="Hele navn" maxlength="60" minlength="2" required autocapitalize="words" spellcheck="false">
-              </label>
-              <label class="wide">Telefonnummer
-                <input id="customerPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="8 siffer" maxlength="8" minlength="8" pattern="[0-9]{8}" required>
-              </label>
-            </div>
-          </section>
-
-          <div id="orderStatusBox" class="order-status-box" hidden></div>
-          <section class="recent-orders" id="recentOrders"></section>
-          </div>
-        </div>
-        <button class="checkout-button" type="button" disabled>Send bestilling</button>
-      </aside>
-    </div>
-
-    <div class="confirm-modal" id="clearCartConfirm" role="dialog" aria-modal="true" aria-labelledby="clearCartTitle" hidden>
-      <button class="confirm-backdrop" type="button" data-close-confirm aria-label="Avbryt"></button>
-      <section class="confirm-panel">
-        <h2 id="clearCartTitle">T&oslash;m kurven?</h2>
-        <p>Er du sikker p&aring; at du vil fjerne alle varer fra handlekurven?</p>
-        <div class="confirm-actions">
-          <button class="confirm-cancel" id="cancelClearCart" type="button">Avbryt</button>
-          <button class="confirm-danger" id="confirmClearCart" type="button">Ja, t&oslash;m kurven</button>
-        </div>
-      </section>
-    </div>
-
-    <script>
 /* ===== modules/cart-animation.js INLINED ===== */
 // ============================================================
 // KØL MODÜL: Modern sepete ekleme animasyonu
@@ -1065,6 +833,15 @@ function formatMenuCompactPrice(value) {
   return `${new Intl.NumberFormat("nb-NO", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount)} kr`;
 }
 
+function getMenuPriceLabel(size = {}) {
+  const sizeId = String(size?.id || "").toLowerCase();
+  const label = String(size?.label || "").replace(/^Størrelse\s*:\s*/i, "").trim();
+  const raw = `${sizeId} ${label}`.toLowerCase();
+  if (/medium/.test(raw)) return "Medium";
+  if (/stor|large/.test(raw)) return "Stor";
+  if (/standard|standart|vanlig|pris/.test(raw)) return "Standart";
+  return label || (sizeId ? sizeId.charAt(0).toUpperCase() + sizeId.slice(1) : "Pris");
+}
 
 function renderMenuRowPrice(item, rowSoldOut = false) {
   if (rowSoldOut) return '<strong class="row-price">UTSOLGT</strong>';
@@ -3165,43 +2942,36 @@ function requestCategoryScrollSync() {
 
 function getMarkedMenuProductIds() {
   const ids = new Set();
-
-  // Valgt skal bety: produktet finnes faktisk i handlekurven.
-  // Tidligere ble activeMenuProductId også tatt med, og da kunne et slettet produkt
-  // bli hengende grønt helt til siden ble oppdatert.
   cart.forEach((line) => {
     const id = String(line?.productId || "");
     if (id) ids.add(id);
   });
-
+  const activeId = String(activeMenuProductId || "");
+  if (activeId) ids.add(activeId);
   return ids;
 }
 
 function markSelectedMenuProduct(productId = "") {
   activeMenuProductId = String(productId || activeMenuProductId || "");
   if (!menuSectionsEl) return;
-
   const markedIds = getMarkedMenuProductIds();
-
   menuSectionsEl.querySelectorAll(".menu-row[data-product]").forEach((row) => {
     const id = String(row.dataset.product || "");
     const isMarked = !!id && markedIds.has(id);
-
     row.classList.toggle("selected-product", isMarked);
     if (isMarked) row.setAttribute("aria-current", "true");
     else row.removeAttribute("aria-current");
 
-    let chip = row.querySelector(".selected-chip");
-    const headline = row.querySelector(".menu-row-headline") || row.querySelector(".menu-row-main");
-
+    let chip = row.querySelector('.selected-chip');
     if (isMarked) {
-      if (!chip && headline) {
-        chip = document.createElement("span");
-        chip.className = "selected-chip";
-        chip.textContent = "Valgt";
-        headline.appendChild(chip);
-      } else if (chip) {
-        chip.textContent = "Valgt";
+      if (!chip) {
+        const headline = row.querySelector('.menu-row-headline');
+        if (headline) {
+          chip = document.createElement('span');
+          chip.className = 'selected-chip';
+          chip.textContent = 'Valgt';
+          headline.appendChild(chip);
+        }
       }
     } else if (chip) {
       chip.remove();
@@ -3658,7 +3428,6 @@ async function addConfiguredToCart() {
     else cart[editingCartIndex] = line;
     saveCart();
     renderCart();
-    markSelectedMenuProduct();
 
     await animateProductIntoCart();
     closeProductModal();
@@ -3718,10 +3487,8 @@ function closeClearCartConfirm() {
 
 function emptyCart() {
   cart = [];
-  activeMenuProductId = "";
   saveCart();
   renderCart();
-  markSelectedMenuProduct();
   closeClearCartConfirm();
 }
 
@@ -4106,19 +3873,9 @@ function kolRemoveCartLineDirect(index) {
   kolLastCartRemoveAt = now;
 
   if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
-  const removedLine = cart[index];
   cart.splice(index, 1);
-
-  const removedProductId = String(removedLine?.productId || "");
-  const stillInCart = removedProductId && cart.some((line) => String(line?.productId || "") === removedProductId);
-  if (removedProductId && !stillInCart && activeMenuProductId === removedProductId) {
-    activeMenuProductId = "";
-  }
-  if (!cart.length) activeMenuProductId = "";
-
   saveCart();
   renderCart();
-  markSelectedMenuProduct();
   return false;
 }
 
@@ -4197,8 +3954,4 @@ init();
   window.visualViewport?.addEventListener("scroll", apply, { passive: true });
 })();
 
-    </script>
-  </body>
-</html>
-
-
+    

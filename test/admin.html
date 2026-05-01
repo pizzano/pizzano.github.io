@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=84">
+    <link rel="stylesheet" href="kol-core.css?v=93">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -1758,7 +1758,7 @@ function getOrderHeaderTime(order = {}) {
   if (status === "pending") {
     if (!isAdminOrderProcessable(order)) return `Åpner ${formatAdminClock(order.processableAfter)}`;
     const remaining = getAdminAcceptDeadline(order).getTime() - Date.now();
-    return formatCountdown(Math.max(0, remaining));
+    return remaining > 0 ? `${formatCountdown(remaining)}` : "Svar nå";
   }
   if (status === "accepted") {
     if (order.pickup?.mode === "later" && order.pickup?.time) return `Kl. ${formatAdminClock(order.pickup.time)}`;
@@ -2208,7 +2208,7 @@ function renderAdminOrderModal(order) {
   return `
     <div class="admin-order-modal-backdrop" data-order-modal="${escapeHtml(orderId)}">
       <section class="admin-order-modal admin-order-modal-v29" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer">
-        <header class="admin-order-modal-header admin-order-modal-header-v29" title="Bestillingsdetaljer" data-close-order-modal aria-label="Tilbake til bestillinger">
+        <header class="admin-order-modal-header admin-order-modal-header-v29" title="Bestillingsdetaljer">
           <button class="admin-order-back-button admin-order-back-button-v29" type="button" data-close-order-modal aria-label="Tilbake til bestillinger">‹</button>
 
           <div class="admin-order-modal-title admin-order-modal-title-v29">

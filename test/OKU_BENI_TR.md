@@ -127,4 +127,8 @@ V28:
 
 - V84: V83 admin.html içinde kalan kırık `function closeAllOrderActionMenus  \`;` satırı temizlendi. Bu hata JavaScript'i tamamen durduruyordu; admin menü ve siparişler tekrar çalışır.
 
-- V85: Admin sipariş detay ekranında üst geri dönüş alanı beyaz yapıldı. Başlık / müşteri adı / zamanlayıcı bulunan üst şeridin tamamına tıklayınca tekrar Bestillinger listesine döner.
+- V87: Menüde seçilen ürün yeşil tonla işaretlenir. Sepetten ürün düzenlenip “Oppdater handlekurv” tıklanınca ürün modalı kapanır ve kullanıcı direkt sepete geri döner.
+
+- V90: CSS cache version v90 yapıldı. Valgt rozeti görünür/yeşil hale getirildi. Sepette bulunan tüm ürünler menüde yeşil ve Valgt olarak kalır. Çoklu fiyatlar sade `175 kr | 275 kr` formatında kalır.
+
+- V92: Sepetten silinen ürünlerin menüde yeşil `Valgt` olarak takılı kalması düzeltildi. `Valgt` artık yalnızca gerçekten handlekurv içinde bulunan ürünlerde görünür.
