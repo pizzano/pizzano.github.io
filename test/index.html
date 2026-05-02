@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=109">
+    <link rel="stylesheet" href="kol-core.css?v=113">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -3589,7 +3589,11 @@ function renderCart() {
       const detailRows = Array.isArray(line.extraDetails) && line.extraDetails.length
         ? [...line.extraDetails]
         : formatProfileOrderDetailRows(line).map((label) => ({ label, priceText: "" }));
-      if (!detailRows.some((detail) => /^sum\s*:/i.test(String(detail?.label || "")))) {
+      const hasMeaningfulExtras = detailRows.filter((detail) => {
+        const label = safeText(detail?.label || "");
+        return label && !/^størrelse\s*:/i.test(label) && !/^sum\s*:/i.test(label);
+      }).length > 0;
+      if (hasMeaningfulExtras && !detailRows.some((detail) => /^sum\s*:/i.test(String(detail?.label || "")))) {
         detailRows.push({ label: "Sum:", priceText: formatPrice(line.total), isLineTotal: true });
       }
       return `

@@ -7733,3 +7733,180 @@ body.cart-open .checkout-button {
     border-radius: 5px !important;
   }
 }
+
+
+/* ===== V111: calmer orange palette + selected item white card ===== */
+:root {
+  --kol-brand: #d96b00;
+  --kol-brand-dark: #b95a00;
+}
+
+/* keep the site calmer: orange as main accent, green only for selected state */
+.menu-row.selected-product {
+  background: #ffffff !important;
+  border-left: 5px solid #22a34a !important;
+  box-shadow: inset 0 0 0 1px rgba(34,163,74,.18), 0 4px 14px rgba(15,23,42,.04) !important;
+}
+
+.menu-row.selected-product .menu-row-main strong,
+.menu-row.selected-product .menu-row-main > span,
+.menu-row.selected-product .row-price-inline,
+.menu-row.selected-product .row-price-separator,
+.menu-row.selected-product .row-price,
+.menu-row.selected-product .row-size-price strong,
+.menu-row.selected-product .row-size-price small {
+  color: #176d33 !important;
+}
+
+.selected-chip,
+.menu-row.selected-product .selected-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 24px !important;
+  padding: 4px 11px !important;
+  border-radius: 999px !important;
+  background: #1f9d47 !important;
+  color: #ffffff !important;
+  border: 1px solid #157536 !important;
+  box-shadow: 0 1px 4px rgba(31,157,71,.18) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+/* unify CTA / accent color so the UI is not too colorful */
+.product-footer,
+.product-footer strong,
+.product-footer button,
+.checkout-button,
+.send-order-button,
+.back-to-menu-button,
+.kol-back-button,
+.category-tab.active,
+.category-tab[aria-current="true"] {
+  background: var(--kol-brand) !important;
+  color: #fff !important;
+  border-color: var(--kol-brand-dark) !important;
+}
+
+.category-tab {
+  border-radius: 6px !important;
+}
+
+@media (max-width: 760px) {
+  .menu-row.selected-product {
+    border-left-width: 4px !important;
+  }
+  .selected-chip,
+  .menu-row.selected-product .selected-chip {
+    min-height: 22px !important;
+    padding: 3px 9px !important;
+    font-size: 11px !important;
+  }
+}
+
+
+/* ===== V112: selected text white + equal CTA heights ===== */
+/* Selected menu product: use white text inside selected state */
+.menu-row.selected-product {
+  background: #22a34a !important;
+  border-left: 5px solid #15803d !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 4px 14px rgba(15,23,42,.06) !important;
+}
+
+.menu-row.selected-product .menu-row-main strong,
+.menu-row.selected-product .menu-row-main span,
+.menu-row.selected-product .row-price,
+.menu-row.selected-product .row-size-price strong,
+.menu-row.selected-product .row-size-price small,
+.menu-row.selected-product .selected-chip,
+.menu-row.selected-product .row-price-inline,
+.menu-row.selected-product .row-price-separator {
+  color: #fff !important;
+}
+
+.menu-row.selected-product .selected-chip {
+  background: rgba(255,255,255,.18) !important;
+  border-color: rgba(255,255,255,.45) !important;
+  color: #fff !important;
+}
+
+/* Tilbake til meny, Send bestilling and Legg til/Oppdater handlekurv should feel identical */
+.kol-customer.kol-top-back-active .appbar-brand,
+.kol-customer.kol-top-back-active .brand-back-label,
+.checkout-button,
+.cart-panel > .checkout-button,
+.cart-modal:not([hidden]) .checkout-button,
+body.cart-open .checkout-button,
+.product-footer button,
+#addConfiguredProduct {
+  min-height: 60px !important;
+  height: 60px !important;
+  border-radius: 0 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+
+.kol-customer.kol-top-back-active .brand-back-label,
+.checkout-button,
+.cart-panel > .checkout-button,
+.cart-modal:not([hidden]) .checkout-button,
+body.cart-open .checkout-button,
+.product-footer button,
+#addConfiguredProduct {
+  line-height: 1 !important;
+  letter-spacing: .1px !important;
+}
+
+@media (max-width: 760px) {
+  .menu-row.selected-product {
+    border-left-width: 4px !important;
+  }
+
+  .kol-customer.kol-top-back-active .appbar-brand,
+  .kol-customer.kol-top-back-active .brand-back-label,
+  .checkout-button,
+  .cart-panel > .checkout-button,
+  .cart-modal:not([hidden]) .checkout-button,
+  body.cart-open .checkout-button,
+  .product-footer button,
+  #addConfiguredProduct {
+    min-height: 58px !important;
+    height: 58px !important;
+    font-size: 18px !important;
+  }
+}
+
+
+/* ===== V113: selected product = light green, only Valgt chip white ===== */
+.menu-row.selected-product {
+  background: #e8f6ea !important;
+  border-left: 5px solid #28a745 !important;
+  box-shadow: inset 0 0 0 1px rgba(40,167,69,.18), 0 4px 12px rgba(15,23,42,.04) !important;
+}
+
+.menu-row.selected-product .menu-row-main strong,
+.menu-row.selected-product .menu-row-main span,
+.menu-row.selected-product .row-price,
+.menu-row.selected-product .row-size-price strong,
+.menu-row.selected-product .row-size-price small,
+.menu-row.selected-product .row-price-inline,
+.menu-row.selected-product .row-price-separator {
+  color: #14213d !important;
+}
+
+.menu-row.selected-product .selected-chip,
+.selected-chip {
+  background: #25b04b !important;
+  border: 1px solid #1f9440 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(37,176,75,.18) !important;
+}
+
+@media (max-width: 760px) {
+  .menu-row.selected-product {
+    background: #ebf7ee !important;
+    border-left-width: 4px !important;
+  }
+}
