@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=103">
+    <link rel="stylesheet" href="kol-core.css?v=107">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -13,8 +13,7 @@
         <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
       </button>
       <div class="appbar-actions">
-        <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="Meny"><span class="plain-icon" aria-hidden="true">🍴</span></button>
-        <button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
+<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
         <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger">&#128100;<span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
         <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
       </div>
@@ -812,7 +811,6 @@ const cartModal = document.querySelector("#cartModal");
 const cartPanel = document.querySelector("#cartPanel");
 const cartTitle = document.querySelector("#cartTitle");
 const cartToggle = document.querySelector(".cart-toggle");
-const menuToggle = document.querySelector("#menuToggle");
 const infoToggle = document.querySelector("#infoToggle");
 const infoModal = document.querySelector("#infoModal");
 const closeInfo = document.querySelector("#closeInfo");
@@ -4051,12 +4049,6 @@ if (document.fonts?.ready) {
   }).catch(() => {});
 }
 
-if (menuToggle) {
-  menuToggle.addEventListener("click", () => {
-    flashHeaderButton(menuToggle);
-    closeAllCustomerPopupsAndShowMenu();
-  });
-}
 
 
 

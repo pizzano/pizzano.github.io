@@ -7389,3 +7389,237 @@ body:not(.cart-has-items) .cart-sales-card .cart-summary {
 .cart-summary .compact-total-row span {
   font-weight: 900 !important;
 }
+
+
+/* ===== V104: Sepette ürün başlığı altındaki gereksiz boşluğu kaldır ===== */
+.cart-item-head {
+  min-height: 30px !important;
+  margin-bottom: 2px !important;
+  padding-right: 74px !important;
+}
+
+.cart-item-head h3,
+.cart-item h3 {
+  padding-top: 0 !important;
+  line-height: 1.15 !important;
+}
+
+.cart-item-top-actions {
+  top: 0 !important;
+  right: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head {
+    min-height: 28px !important;
+    margin-bottom: 2px !important;
+    padding-right: 66px !important;
+  }
+
+  .cart-item-head h3,
+  .cart-item h3 {
+    line-height: 1.1 !important;
+  }
+}
+
+
+/* ===== V105: remove fixed menu icon; top back button flat ===== */
+.kol-customer .menu-toggle,
+#menuToggle {
+  display: none !important;
+}
+
+.kol-customer.kol-top-back-active .brand-back-label {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: 100% !important;
+  height: 100% !important;
+  padding: 0 18px !important;
+}
+
+.kol-customer.kol-top-back-active .appbar-brand {
+  padding: 0 !important;
+}
+
+/* ===== V105: cart top buttons smaller + no empty gap under item title ===== */
+.cart-item-head {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  column-gap: 8px !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  padding-right: 0 !important;
+}
+
+.cart-item-head h3,
+.cart-item h3 {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.08 !important;
+}
+
+.cart-item-top-actions {
+  position: static !important;
+  justify-self: end !important;
+  align-self: start !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 1 !important;
+}
+
+.cart-item .edit-line-button.icon-only,
+.cart-item .remove-button {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  border-radius: 7px !important;
+}
+
+.cart-item .edit-line-button.icon-only::before {
+  font-size: 11px !important;
+}
+
+.cart-item .remove-button {
+  font-size: 17px !important;
+  line-height: 1 !important;
+}
+
+.cart-item-details,
+.cart-receipt-item-lines,
+.cart-receipt-details,
+.cart-receipt-meta,
+.cart-receipt-row-list,
+.cart-item-main-stacked {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .kol-customer.kol-top-back-active .brand-back-label {
+    padding: 0 14px !important;
+  }
+
+  .cart-item-head {
+    column-gap: 6px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .cart-item .edit-line-button.icon-only,
+  .cart-item .remove-button {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    border-radius: 6px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only::before {
+    font-size: 10px !important;
+  }
+
+  .cart-item .remove-button {
+    font-size: 15px !important;
+  }
+}
+
+
+/* ===== V106: cart action buttons balanced, with spacing from prices ===== */
+.cart-item-head {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  column-gap: 10px !important;
+  align-items: start !important;
+}
+
+.cart-item-top-actions {
+  gap: 5px !important;
+  margin-left: 10px !important;
+  flex: 0 0 auto !important;
+}
+
+.cart-item .edit-line-button.icon-only,
+.cart-item .remove-button {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  border-radius: 6px !important;
+}
+
+.cart-item .edit-line-button.icon-only::before {
+  font-size: 10px !important;
+}
+
+.cart-item .remove-button {
+  font-size: 14px !important;
+}
+
+.cart-item-details,
+.cart-receipt-item-lines,
+.cart-receipt-details,
+.cart-receipt-row-list {
+  margin-top: 4px !important;
+}
+
+@media (max-width: 760px) {
+  .cart-item-head {
+    column-gap: 8px !important;
+  }
+
+  .cart-item-top-actions {
+    gap: 4px !important;
+    margin-left: 8px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only,
+  .cart-item .remove-button {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 5px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only::before {
+    font-size: 9px !important;
+  }
+
+  .cart-item .remove-button {
+    font-size: 13px !important;
+  }
+
+  .cart-item-details,
+  .cart-receipt-item-lines,
+  .cart-receipt-details,
+  .cart-receipt-row-list {
+    margin-top: 3px !important;
+  }
+}
+
+
+/* ===== V107: mobil sepet düzenle/sil butonu final boyut ===== */
+@media (max-width: 760px) {
+  .cart-item .edit-line-button.icon-only,
+  .cart-item .remove-button {
+    width: 25px !important;
+    min-width: 25px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 3px !important;
+  }
+
+  .cart-item .edit-line-button.icon-only::before {
+    font-size: 10px !important;
+  }
+
+  .cart-item .remove-button {
+    font-size: 14px !important;
+    line-height: 1 !important;
+  }
+}

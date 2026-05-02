@@ -583,7 +583,6 @@ const cartModal = document.querySelector("#cartModal");
 const cartPanel = document.querySelector("#cartPanel");
 const cartTitle = document.querySelector("#cartTitle");
 const cartToggle = document.querySelector(".cart-toggle");
-const menuToggle = document.querySelector("#menuToggle");
 const infoToggle = document.querySelector("#infoToggle");
 const infoModal = document.querySelector("#infoModal");
 const closeInfo = document.querySelector("#closeInfo");
@@ -3816,12 +3815,6 @@ if (document.fonts?.ready) {
   }).catch(() => {});
 }
 
-if (menuToggle) {
-  menuToggle.addEventListener("click", () => {
-    flashHeaderButton(menuToggle);
-    closeAllCustomerPopupsAndShowMenu();
-  });
-}
 
 
 
