@@ -2,9 +2,9 @@
 <html lang="no">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=128">
+    <link rel="stylesheet" href="kol-core.css?v=129">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -1982,27 +1982,6 @@ function receiptReadyAt(order = {}, confirmedAt = null) {
   return date.toISOString();
 }
 
-function receiptCustomerFirstName(customer = {}) {
-  const direct = safeAdminText(customer.firstName || "").trim();
-  if (direct) return direct;
-  const full = receiptCustomerFullName(customer);
-  if (!full) return "";
-  return full.split(/\s+/)[0] || "";
-}
-
-function receiptCustomerLastName(customer = {}) {
-  const direct = safeAdminText(customer.lastName || "").trim();
-  if (direct) return direct;
-  const full = receiptCustomerFullName(customer);
-  if (!full) return "";
-  const parts = full.split(/\s+/).filter(Boolean);
-  return parts.length > 1 ? parts.slice(1).join(" ") : "";
-}
-
-function receiptPlainDetailText(detail = {}) {
-  return safeAdminText(detail?.label || detail || "").trim();
-}
-
 function receiptCustomerFullName(customer = {}) {
   return String(
     customer.fullName ||
@@ -2074,10 +2053,6 @@ function receiptOptionHtml(text = "") {
   return `<div class="receipt-sub"><i>${escapeHtml(clean)}</i></div>`;
 }
 
-function shouldShowReceiptSum(line = {}) {
-  return safeAdminNumber(line?.extrasTotal) > 0;
-}
-
 function buildReceiptImageHtml(order = {}) {
   // TÜRKÇE: Bu HTML sadece yazıcıya gidecek PNG fiş için oluşturulur.
   // Normal admin ekranında görünmez.
@@ -2086,22 +2061,22 @@ function buildReceiptImageHtml(order = {}) {
   const pickup = receiptPickupParts(order);
   const confirmedAt = order.acceptedAt || order.updatedAt || new Date().toISOString();
   const readyAt = receiptReadyAt(order, confirmedAt);
+  const customerName = receiptCustomerFullName(customer);
   const noteText = order.note || order.customerNote || "";
-  const orderNumber = safeAdminText(order.displayOrderNo || order.id || "");
-  const firstName = receiptCustomerFirstName(customer);
-  const lastName = receiptCustomerLastName(customer);
 
   const itemRows = lines.map((line) => {
-    const details = receiptExtraDetailRows(line)
-      .map(receiptPlainDetailText)
-      .filter(Boolean);
+    const details = receiptExtraDetailRows(line);
     const prices = receiptItemPriceRows(line);
     return `
       <div class="receipt-item">
-        <div class="receipt-item-head">${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</div>
-        ${details.map((text) => `<div class="receipt-item-detail">${escapeHtml(text)}</div>`).join("")}
+        <div class="receipt-item-line receipt-item-line-priced">
+          <b>${Math.max(1, safeAdminNumber(line.quantity, 1))}x ${escapeHtml(line.name || "Produkt")}</b>
+          <b>${escapeHtml(prices.totalText)}</b>
+        </div>
+        ${details.map(receiptOptionDetailHtml).join("")}
+        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Pris pr stk:</span><b>${escapeHtml(prices.unitText)}</b></div>
+        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Linjetotal:</span><b>${escapeHtml(prices.totalText)}</b></div>
         ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
-        <div class="receipt-item-price">${escapeHtml(prices.totalText)}</div>
       </div>
     `;
   }).join("");
@@ -2123,14 +2098,13 @@ function buildReceiptImageHtml(order = {}) {
       <div class="receipt-content">
         ${noteText ? `<div class="receipt-note receipt-main-note">❗ ${escapeHtml(noteText)}</div>` : ""}
 
-        <div class="receipt-section-title">Enheter</div>
+        <b>Enheter</b>
         ${itemRows || `<p>Ingen produkter.</p>`}
 
         <div class="receipt-details-title">Bestillingsdetaljer:</div>
-        ${orderNumber ? `<div class="receipt-detail-row"><span>Nummer:</span><b>${escapeHtml(orderNumber)}</b></div>` : ""}
         <div class="receipt-detail-row"><span>Bekreftet kl.:</span><b>${escapeHtml(receiptImageDate(confirmedAt))}</b></div>
-        ${firstName ? `<div class="receipt-detail-row"><span>Fornavn:</span><b>${escapeHtml(firstName)}</b></div>` : ""}
-        ${lastName ? `<div class="receipt-detail-row"><span>Etternavn:</span><b>${escapeHtml(lastName)}</b></div>` : ""}
+        <div class="receipt-detail-row"><span>Hele Navn:</span><b>${escapeHtml(customerName)}</b></div>
+        <div class="receipt-detail-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
       </div>
     </div>
   `;

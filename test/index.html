@@ -2,9 +2,9 @@
 <html lang="no">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=128">
+    <link rel="stylesheet" href="kol-core.css?v=129">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -3531,6 +3531,27 @@ function renderProductModal() {
   renderProductOptions();
 }
 
+function resetProductModalScrollToTop() {
+  const targets = [
+    document.querySelector(".product-body"),
+    document.querySelector(".product-panel"),
+    document.querySelector(".product-modal"),
+    document.scrollingElement,
+    document.documentElement,
+    document.body
+  ].filter(Boolean);
+
+  targets.forEach((target) => {
+    try { target.scrollTop = 0; } catch (error) {}
+  });
+
+  requestAnimationFrame(() => {
+    targets.forEach((target) => {
+      try { target.scrollTop = 0; } catch (error) {}
+    });
+  });
+}
+
 function openProduct(id) {
   const result = findProduct(id);
   if (!result.item || isHiddenItem(result.section) || isHiddenItem(result.item) || isSoldOutItem(result.section) || isSoldOutItem(result.item, isSoldOutItem(result.section))) return;
@@ -3546,6 +3567,7 @@ function openProduct(id) {
   specialInstructions.value = "";
   renderProductModal();
   productModal.hidden = false;
+  resetProductModalScrollToTop();
   document.body.classList.add("modal-open");
   syncBodyScrollLocks();
 }
@@ -3569,6 +3591,7 @@ function openCartLineEditor(index) {
   closeCartModal();
   renderProductModal();
   productModal.hidden = false;
+  resetProductModalScrollToTop();
   document.body.classList.add("modal-open");
   syncBodyScrollLocks();
 }
