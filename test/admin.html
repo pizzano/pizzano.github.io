@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=131">
+    <link rel="stylesheet" href="kol-core.css?v=138">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
       <div class="admin-topbar-settings" aria-label="Admin deler">
-        <button class="top-settings-button active" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
-        <button class="top-settings-button" type="button" data-top-nav="orders">🧾 Bestillinger</button>
+        <button class="top-settings-button" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
+        <button class="top-settings-button active" type="button" data-top-nav="orders">🧾 Bestillinger</button>
         <button class="top-settings-button" type="button" data-top-nav="analytics">📊 Statistikk</button>
         <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
         <button class="top-settings-button" type="button" data-top-nav="backup">💾 Yedek</button>
@@ -21,7 +21,7 @@
 
       <section class="admin-status" id="adminStatus">Klar.</section>
 
-      <section class="admin-page active" data-admin-page="menu">
+      <section class="admin-page" data-admin-page="menu">
       <section class="admin-grid">
         <aside class="category-list menu-builder-panel">
           <div class="section-heading category-builder-heading">
@@ -107,21 +107,37 @@
       </section>
       </section>
 
-      <section class="admin-page orders-workspace" data-admin-page="orders">
-        <section class="orders-admin-card">
-          <header class="orders-admin-header">
-            <div>
-              <h1>Bestillinger</h1>
-              <span>Nye bestillinger ligger øverst. Trykk på en bestilling for detaljer.</span>
+      <section class="admin-page orders-workspace active" data-admin-page="orders">
+        <section class="orders-admin-card orders-app-card">
+          <header class="orders-app-header">
+            <div class="orders-app-title">
+              <h1>Orders</h1>
+              <span id="ordersConnectionText"><i class="orders-status-dot"></i> Online · Klar for bestillinger</span>
             </div>
-            <button id="refreshOrders" type="button">Oppdater</button>
+            <div class="orders-app-actions">
+              <button id="refreshOrders" class="orders-refresh-button" type="button" title="Oppdater">↻</button>
+              <button class="orders-more-button" type="button" data-admin-orders-more title="Flere valg">⋮</button>
+              <div class="orders-more-panel" data-admin-orders-more-panel hidden>
+                <button type="button" data-admin-test-order>Lag testbestilling</button>
+                <button type="button" data-admin-clear-view>Nullstill visning</button>
+                <button type="button" data-top-nav="menu">Meny oppsett</button>
+              </div>
+            </div>
           </header>
-          <div class="orders-admin-toolbar">
+
+          <nav class="orders-app-tabs" aria-label="Bestillingsstatus">
+            <button class="active" type="button" data-order-filter="all">Alle <span data-order-count-tab="all">0</span></button>
+            <button type="button" data-order-filter="progress">Pågår <span data-order-count-tab="progress">0</span></button>
+            <button type="button" data-order-filter="ready">Klar <span data-order-count-tab="ready">0</span></button>
+          </nav>
+
+          <div class="orders-admin-toolbar orders-app-toolbar">
             <span id="ordersCount">0 bestillinger</span>
-            <span class="orders-help" aria-hidden="true"></span>
+            <span class="orders-help">Trykk på en bestilling for detaljer</span>
           </div>
-          <div id="ordersAdminList" class="orders-admin-list">
-            <p class="empty-orders">Ingen bestillinger ennå.</p>
+
+          <div id="ordersAdminList" class="orders-admin-list orders-app-list">
+            <p class="empty-orders">Det er ingen bestillinger ennå.</p>
           </div>
         </section>
       </section>
@@ -351,6 +367,8 @@ let adminOrdersUiRefreshTimer = null;
 const DEFAULT_READY_MINUTES = 10;
 const READY_STEP_MINUTES = 2;
 let expandedAdminOrderId = null;
+let activeOrderFilter = "all";
+let hiddenAdminOrderIds = new Set();
 const pendingReadyMinutesByOrder = {};
 const LOCAL_BACKUP_KEY = "kol_menu_local_backups_v1";
 const DAILY_LOCAL_BACKUP_DATE_KEY = "kol_menu_daily_backup_date_v1";
@@ -420,16 +438,22 @@ function playAdminAlarmBurst() {
   if (!context) return;
   context.resume?.().then(() => {
     const now = context.currentTime + 0.02;
-    // TÜRKÇE: Sipariş alınana/kansel edilene kadar daha sert ve yüksek alarm çalar.
-    const pattern = [
-      [0.00, 1480], [0.12, 740], [0.24, 1480], [0.36, 740],
-      [0.58, 1680], [0.70, 840], [0.82, 1680], [0.94, 840],
-      [1.18, 1480], [1.30, 740], [1.42, 1480], [1.54, 740]
+
+    // TÜRKÇE: Telefon zil sesi hissi: klasik iki tonlu "ring-ring".
+    const ringPattern = [
+      [0.00, 440], [0.00, 480],
+      [0.18, 440], [0.18, 480],
+      [0.36, 440], [0.36, 480],
+      [0.92, 440], [0.92, 480],
+      [1.10, 440], [1.10, 480],
+      [1.28, 440], [1.28, 480]
     ];
-    pattern.forEach(([offset, frequency]) => {
-      playAdminAlarmTone(context, now + offset, frequency, 0.20, 1);
+
+    ringPattern.forEach(([offset, frequency]) => {
+      playAdminAlarmTone(context, now + offset, frequency, 0.14, 0.82);
     });
-    if (navigator.vibrate) navigator.vibrate([260, 80, 260, 80, 420]);
+
+    if (navigator.vibrate) navigator.vibrate([180, 90, 180, 320, 180, 90, 180]);
   }).catch(() => {
     setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
   });
@@ -476,7 +500,7 @@ function updateAdminOrderAlarmLoop() {
       return;
     }
     playAdminAlarmBurst();
-  }, 1800);
+  }, 4200);
 }
 
 function orderWaitingOpeningText(order = {}) {
@@ -1614,7 +1638,13 @@ function setSettingsTab(tabKey = "basic") {
   });
 }
 
-function setAdminView(tabKey = "menu") {
+
+function updateAdminLayoutMode(tabKey = "orders") {
+  document.body.classList.toggle("admin-orders-mode", tabKey === "orders");
+  document.body.classList.toggle("admin-pc-mode", tabKey !== "orders");
+}
+
+function setAdminView(tabKey = "orders") {
   const targetPage = tabKey === "menu" ? "menu" : tabKey === "orders" ? "orders" : tabKey === "analytics" ? "analytics" : "settings";
   adminPages.forEach((page) => {
     page.classList.toggle("active", page.dataset.adminPage === targetPage);
@@ -1632,7 +1662,7 @@ function openSettingsModal(tabKey = "basic") {
 }
 
 function closeSettingsModal() {
-  setAdminView("menu");
+  setAdminView("orders");
 }
 
 
@@ -1642,8 +1672,9 @@ function closeSettingsModal() {
 // Bestillinger fra kunden lagres under Firebase /orders.
 // Når du godkjenner her, oppdateres kundesiden automatisk.
 // ============================================================
-function orderStatusLabel(status = "pending") {
-  if (status === "accepted") return "Godkjent";
+function orderStatusLabel(status = "pending", order = {}) {
+  if (order?.ready === true) return "Klar";
+  if (status === "accepted") return "Pågår";
   if (status === "cancelled") return "Kansellert";
   return "Venter";
 }
@@ -2162,32 +2193,93 @@ async function printOrderReceipt(orderId, overrides = {}) {
   }
 }
 
+
+function isOrderReadyForAdmin(order = {}) {
+  return (order.status || "pending") === "accepted" && order.ready === true;
+}
+
+function isOrderInProgressForAdmin(order = {}) {
+  const status = order.status || "pending";
+  if (status === "cancelled") return false;
+  if (isOrderReadyForAdmin(order)) return false;
+  return status === "pending" || status === "accepted";
+}
+
+function getOrdersByFilterForAdmin(orders = [], filter = activeOrderFilter) {
+  if (filter === "ready") return orders.filter(isOrderReadyForAdmin);
+  if (filter === "progress") return orders.filter(isOrderInProgressForAdmin);
+  return orders;
+}
+
+function adminOrderFilterCounts(orders = []) {
+  return {
+    all: orders.length,
+    progress: orders.filter(isOrderInProgressForAdmin).length,
+    ready: orders.filter(isOrderReadyForAdmin).length
+  };
+}
+
+function updateOrderFilterTabs(counts = { all: 0, progress: 0, ready: 0 }) {
+  document.querySelectorAll("[data-order-filter]").forEach((button) => {
+    const key = button.dataset.orderFilter || "all";
+    button.classList.toggle("active", key === activeOrderFilter);
+    button.setAttribute("aria-selected", key === activeOrderFilter ? "true" : "false");
+  });
+  Object.entries(counts).forEach(([key, value]) => {
+    document.querySelectorAll(`[data-order-count-tab="${CSS.escape(key)}"]`).forEach((target) => {
+      target.textContent = String(value);
+    });
+  });
+}
+
+function adminOrderIcon(order = {}) {
+  const status = order.status || "pending";
+  if (order.ready === true) return "✓";
+  if (status === "cancelled") return "×";
+  if (status === "accepted") return "⏱";
+  return "🧾";
+}
+
 function renderAdminOrderCard(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
   const status = order.status || "pending";
   const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
+  const phoneText = order.customer?.phone || "Telefon mangler";
   const waitingOpening = orderWaitingOpeningText(order);
   const isExpanded = expandedAdminOrderId === order.id;
   const headerTime = getOrderHeaderTime(order);
-  const phoneText = order.customer?.phone || "Telefon mangler";
-  const compactMeta = adminOrderCompactMeta(order);
+  const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
   const orderId = String(order.id || "");
+  const itemCount = asArray(order.items).reduce((sum, item) => sum + Math.max(1, safeAdminNumber(item.quantity, 1)), 0);
+  const statusLabel = waitingOpening || orderStatusLabel(status, order);
+  const statusClass = order.ready === true ? "ready" : status;
 
   return `
-    <article class="order-stack-card ${escapeHtml(status)} ${isExpanded ? "selected" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(orderId)}">
-      <button class="order-stack-summary order-compact-v3 admin-clean-row" type="button" data-toggle-order="${escapeHtml(orderId)}" aria-expanded="${isExpanded ? "true" : "false"}">
-        <div class="admin-clean-customer">
-          <strong class="order-customer-name-v3">${escapeHtml(customerName)}</strong>
-          <span class="order-phone-v3">${escapeHtml(phoneText)}</span>
-        </div>
-        <span class="order-badge ${escapeHtml(status)}">${waitingOpening || orderStatusLabel(status)}</span>
-        <strong class="admin-clean-meta">${escapeHtml(compactMeta)}</strong>
-        <strong class="order-stack-time admin-clean-time" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+    <article class="orders-app-item ${escapeHtml(statusClass)} ${isExpanded ? "selected" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(orderId)}">
+      <button class="orders-app-row" type="button" data-toggle-order="${escapeHtml(orderId)}" aria-expanded="${isExpanded ? "true" : "false"}">
+        <span class="orders-app-icon ${escapeHtml(statusClass)}">${escapeHtml(adminOrderIcon(order))}</span>
+        <span class="orders-app-main">
+          <strong>${escapeHtml(customerName)}</strong>
+          <small>${itemCount} vare${itemCount === 1 ? "" : "r"}</small>
+          <em class="orders-app-status ${escapeHtml(statusClass)}">${escapeHtml(statusLabel)}</em>
+        </span>
+        <span class="orders-app-side">
+          <strong>${escapeHtml(totalText)}</strong>
+          <small data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</small>
+        </span>
       </button>
+
+      <div class="orders-app-card-menu order-more-actions" data-order-actions-menu="${escapeHtml(orderId)}">
+        <button class="order-more-button modern order-more-button-v29" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
+        <div class="order-more-dropdown order-more-dropdown-v29" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
+          <button class="order-more-item" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
+          ${status === "accepted" && order.ready !== true ? `<button class="order-more-item" type="button" data-ready-order="${escapeHtml(orderId)}">Marker som klar</button>` : ""}
+          ${status !== "cancelled" ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>` : ""}
+        </div>
+      </div>
     </article>
   `;
 }
-
 
 function renderAdminOrderModal(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
@@ -2222,13 +2314,23 @@ function renderAdminOrderModal(order) {
           <div class="admin-order-modal-title admin-order-modal-title-v29">
             <div class="admin-order-title-stack-v29">
               <h2>${escapeHtml(customerName)}</h2>
-              <div class="admin-order-phone-under-name-v29">${escapeHtml(phoneText)}</div>
+              <small>Bestilt ${escapeHtml(createdAtBarText)}</small>
             </div>
           </div>
 
-          <div class="admin-order-header-timer admin-order-header-timer-v29">
-            <span>${escapeHtml(headerTimerLabel)}</span>
-            <strong class="admin-order-header-timer-value-v29" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+          <div class="admin-order-header-right-v35">
+            <div class="admin-order-header-timer admin-order-header-timer-v29">
+              <span>${escapeHtml(headerTimerLabel)}</span>
+              <strong class="admin-order-header-timer-value-v29" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</strong>
+            </div>
+            <div class="order-more-actions order-more-actions-v29 header-order-actions-v35" data-order-actions-menu="${escapeHtml(orderId)}">
+              <button class="order-more-button modern order-more-button-v29" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
+              <div class="order-more-dropdown order-more-dropdown-v29" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
+                <button class="order-more-item" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
+                ${status === "accepted" && order.ready !== true ? `<button class="order-more-item" type="button" data-ready-order="${escapeHtml(orderId)}">Marker som klar</button>` : ""}
+                ${canCancel ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>` : ""}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -2241,19 +2343,6 @@ function renderAdminOrderModal(order) {
 
         <footer class="admin-order-modal-footer admin-order-modal-footer-v29">
           <div class="admin-order-bottom-bar-v29 ${status === "pending" ? "is-pending" : "is-readonly"}">
-            <div class="order-more-actions order-more-actions-v29" data-order-actions-menu="${escapeHtml(orderId)}">
-              <button class="order-more-button modern order-more-button-v29" type="button" data-toggle-order-actions="${escapeHtml(orderId)}" aria-expanded="false" aria-haspopup="menu" title="Flere handlinger">⋮</button>
-              <div class="order-more-dropdown order-more-dropdown-v29" data-order-actions-dropdown="${escapeHtml(orderId)}" hidden>
-                <button class="order-more-item" type="button" data-print-order="${escapeHtml(orderId)}">Skriv ut kvittering</button>
-                ${canCancel ? `<button class="order-more-item danger" type="button" data-cancel-order="${escapeHtml(orderId)}">Avvis / kanseller</button>` : ""}
-              </div>
-            </div>
-
-            <div class="order-footer-created-v29">
-              <span>BESTILT</span>
-              <strong>${escapeHtml(createdAtBarText)}</strong>
-            </div>
-
             ${status === "pending"
               ? (isLaterPickup
                 ? `
@@ -2279,12 +2368,16 @@ function renderAdminOrderModal(order) {
                   </div>
                   <button class="accept-order-button modern accept-order-button-v29" type="button" data-accept-order="${escapeHtml(orderId)}">Godkjenn</button>
                 `)
-              : `
-                <div class="order-footer-status-note-v29">
-                  <span>Status</span>
-                  <strong>${escapeHtml(waitingOpening || orderStatusLabel(status))}</strong>
-                </div>
-              `}
+              : (status === "accepted" && order.ready !== true
+                ? `
+                  <button class="accept-order-button modern accept-order-button-v29 ready-order-inline clean-ready-button-v36" type="button" data-ready-order="${escapeHtml(orderId)}">Klar</button>
+                `
+                : `
+                  <div class="order-footer-status-note-v29 clean-status-note-v36">
+                    <span>Status</span>
+                    <strong>${escapeHtml(waitingOpening || orderStatusLabel(status, order))}</strong>
+                  </div>
+                `)}
           </div>
         </footer>
       </section>
@@ -2302,14 +2395,16 @@ function closeAllOrderActionMenus(scope = document) {
   });
 }
 
-function toggleOrderActionMenu(orderId) {
-  const menuRoot = document.querySelector(`[data-order-actions-menu="${CSS.escape(orderId)}"]`);
+function toggleOrderActionMenu(target) {
+  const menuRoot = target?.closest
+    ? target.closest("[data-order-actions-menu]")
+    : document.querySelector(`[data-order-actions-menu="${CSS.escape(String(target || ""))}"]`);
   if (!menuRoot) return;
   const button = menuRoot.querySelector("[data-toggle-order-actions]");
   const dropdown = menuRoot.querySelector("[data-order-actions-dropdown]");
   if (!button || !dropdown) return;
   const isOpen = menuRoot.classList.contains("open");
-  closeAllOrderActionMenus(ordersAdminList);
+  closeAllOrderActionMenus(document);
   if (!isOpen) {
     menuRoot.classList.add("open");
     button.setAttribute("aria-expanded", "true");
@@ -2473,38 +2568,58 @@ function renderOrdersAdmin() {
   if (!ordersAdminList) return;
   const visibleOrders = adminOrders
     .map((order) => normalizeAdminOrderRecord(order, order?.id))
-    .filter((order) => order && order.id)
+    .filter((order) => order && order.id && !hiddenAdminOrderIds.has(String(order.id)))
     .slice()
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-  if (ordersCount) ordersCount.textContent = `${visibleOrders.length} bestillinger`;
+  const counts = adminOrderFilterCounts(visibleOrders);
+  updateOrderFilterTabs(counts);
+
+  const filteredOrders = getOrdersByFilterForAdmin(visibleOrders, activeOrderFilter);
+
+  if (ordersCount) {
+    const label = activeOrderFilter === "ready" ? "klare" : activeOrderFilter === "progress" ? "pågår" : "totalt";
+    ordersCount.textContent = `${filteredOrders.length} ${label}`;
+  }
 
   if (!visibleOrders.length) {
     expandedAdminOrderId = null;
     setAdminPageScrollLocked(false);
-    ordersAdminList.innerHTML = `<p class="empty-orders">Ingen bestillinger ennå.</p>`;
+    ordersAdminList.innerHTML = `
+      <div class="orders-app-empty">
+        <div class="orders-app-empty-icon">🧾</div>
+        <strong>Det er ingen bestillinger ennå</strong>
+        <span>Du trenger ikke å lage mat nå, men følg med.</span>
+      </div>
+    `;
     return;
   }
 
-  if (!visibleOrders.some((order) => order.id === expandedAdminOrderId)) {
+  if (!filteredOrders.length) {
+    expandedAdminOrderId = null;
+    setAdminPageScrollLocked(false);
+    const text = activeOrderFilter === "ready"
+      ? "Ingen bestillinger er klare ennå."
+      : activeOrderFilter === "progress"
+        ? "Ingen bestillinger pågår nå."
+        : "Ingen bestillinger i denne visningen.";
+    ordersAdminList.innerHTML = `
+      <div class="orders-app-empty">
+        <div class="orders-app-empty-icon">🧾</div>
+        <strong>${escapeHtml(text)}</strong>
+        <span>Bytt fanen Alle / Pågår / Klar for å se andre bestillinger.</span>
+      </div>
+    `;
+    return;
+  }
+
+  if (!filteredOrders.some((order) => order.id === expandedAdminOrderId)) {
     expandedAdminOrderId = null;
   }
 
-  const pendingOrders = visibleOrders
-    .filter((order) => (order.status || "pending") === "pending")
-    .sort((a, b) => new Date(a.processableAfter || a.createdAt || 0) - new Date(b.processableAfter || b.createdAt || 0));
-
-  const finishedOrders = visibleOrders
-    .filter((order) => (order.status || "pending") !== "pending")
-    .sort((a, b) => new Date(b.updatedAt || b.acceptedAt || b.cancelledAt || b.createdAt || 0) - new Date(a.updatedAt || a.acceptedAt || a.cancelledAt || a.createdAt || 0));
-
-  const sectionsHtml = [
-    renderOrderSection("Nye / venter på svar", pendingOrders, "pending-group"),
-    renderOrderSection("Behandlede bestillinger", finishedOrders, "finished-group")
-  ].filter(Boolean).join("");
-
+  const listHtml = `<div class="orders-app-list-inner">${filteredOrders.map(renderAdminOrderCard).join("")}</div>`;
   const modalOrder = expandedAdminOrderId ? visibleOrders.find((order) => order.id === expandedAdminOrderId) : null;
-  ordersAdminList.innerHTML = sectionsHtml + (modalOrder ? renderAdminOrderModal(modalOrder) : "");
+  ordersAdminList.innerHTML = listHtml + (modalOrder ? renderAdminOrderModal(modalOrder) : "");
   setAdminPageScrollLocked(Boolean(modalOrder));
   refreshAdminLiveTimes();
 }
@@ -2579,6 +2694,21 @@ async function acceptOrder(orderId, minutes) {
     updatedAt: acceptedAt
   });
 }
+
+
+async function markOrderReady(orderId) {
+  const readyAt = new Date().toISOString();
+  expandedAdminOrderId = null;
+  await ordersRef.child(orderId).update({
+    ready: true,
+    readyAt,
+    updatedAt: readyAt
+  });
+  renderOrdersAdmin();
+  setStatus("Bestilling markert som klar.");
+  showToast("Klar for henting.");
+}
+
 
 
 async function cancelOrder(orderId) {
@@ -3241,8 +3371,135 @@ settingsTabs.forEach((button) => {
   button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab || "basic"));
 });
 
+
+function closeAdminOrdersMorePanel() {
+  const panel = document.querySelector("[data-admin-orders-more-panel]");
+  if (panel) panel.hidden = true;
+}
+
+function makeAdminTestOrderPayload() {
+  const now = new Date();
+  const id = `TEST-${now.getTime().toString(36).toUpperCase()}`;
+  return {
+    status: "pending",
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    source: "admin-test",
+    order_type: "pickup",
+    payment: "pickup",
+    printed: false,
+    ready: false,
+    customer: {
+      fullName: "Testkunde",
+      firstName: "Testkunde",
+      phone: "00000000"
+    },
+    items: [
+      {
+        name: "1- CLASSICO",
+        quantity: 1,
+        basePrice: 175,
+        sizePrice: 100,
+        extrasTotal: 50,
+        unitPrice: 325,
+        lineTotal: 325,
+        total: 325,
+        extraDetails: [
+          { label: "Størrelse: Stor", price: 275, priceText: "275,00 kr" },
+          { label: "Dresinger: Hvitløksdressing", price: 25, priceText: "+25,00" },
+          { label: "Dresinger: Béarnaisesaus", price: 25, priceText: "+25,00" }
+        ]
+      }
+    ],
+    subtotal: 325,
+    total: 325,
+    mva: 42.39,
+    totals: {
+      subtotal: 325,
+      mva: 42.39,
+      total: 325
+    },
+    displayOrderNo: id
+  };
+}
+
+async function createAdminTestOrder() {
+  try {
+    const payload = makeAdminTestOrderPayload();
+    if (ordersRef) {
+      const ref = ordersRef.push();
+      await ref.set(payload);
+    } else {
+      adminOrders.unshift({ ...payload, id: payload.displayOrderNo });
+      renderOrdersAdmin();
+    }
+    activeOrderFilter = "all";
+    closeAdminOrdersMorePanel();
+    setAdminView("orders");
+    setStatus("Testbestilling opprettet.");
+    showToast("Testbestilling opprettet.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Kunne ikke lage testbestilling.");
+  }
+}
+
+function resetAdminOrdersView() {
+  // TÜRKÇE: Sadece ekrandan temizler; Firebase/veritabanından silmez.
+  adminOrders.forEach((order) => {
+    const id = String(order?.id || "");
+    if (id) hiddenAdminOrderIds.add(id);
+  });
+  activeOrderFilter = "all";
+  expandedAdminOrderId = null;
+  closeAllOrderActionMenus(document);
+  closeAdminOrdersMorePanel();
+  setAdminView("orders");
+  renderOrdersAdmin();
+  setStatus("Visning nullstilt på skjermen. Databasen er ikke endret.");
+  showToast("Visning nullstilt.");
+}
+
 topNavButtons.forEach((button) => {
-  button.addEventListener("click", () => setAdminView(button.dataset.topNav || "menu"));
+  button.addEventListener("click", () => setAdminView(button.dataset.topNav || "orders"));
+});
+
+document.querySelectorAll("[data-order-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeOrderFilter = button.dataset.orderFilter || "all";
+    expandedAdminOrderId = null;
+    renderOrdersAdmin();
+  });
+});
+
+document.querySelectorAll("[data-admin-orders-more]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const panel = document.querySelector("[data-admin-orders-more-panel]");
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+  });
+});
+
+document.querySelectorAll("[data-admin-test-order]").forEach((button) => {
+  button.addEventListener("click", createAdminTestOrder);
+});
+
+document.querySelectorAll("[data-admin-clear-view]").forEach((button) => {
+  button.addEventListener("click", resetAdminOrdersView);
+});
+
+document.querySelectorAll("[data-admin-orders-more-panel] [data-top-nav]").forEach((button) => {
+  button.addEventListener("click", () => {
+    closeAdminOrdersMorePanel();
+    setAdminView(button.dataset.topNav || "orders");
+  });
+});
+
+document.addEventListener("click", (event) => {
+  const panel = document.querySelector("[data-admin-orders-more-panel]");
+  if (panel && !event.target.closest("[data-admin-orders-more]") && !event.target.closest("[data-admin-orders-more-panel]")) {
+    panel.hidden = true;
+  }
 });
 
 openSettingsButtons.forEach((button) => {
@@ -3266,8 +3523,7 @@ if (ordersAdminList) {
 
     const actionToggleButton = event.target.closest("[data-toggle-order-actions]");
     if (actionToggleButton) {
-      const orderId = actionToggleButton.dataset.toggleOrderActions;
-      toggleOrderActionMenu(orderId);
+      toggleOrderActionMenu(actionToggleButton);
       return;
     }
 
@@ -3310,6 +3566,13 @@ if (ordersAdminList) {
       await acceptOrder(acceptId, input?.value || DEFAULT_READY_MINUTES);
       return;
     }
+    const readyId = event.target.dataset.readyOrder;
+    if (readyId) {
+      closeAllOrderActionMenus(ordersAdminList);
+      await markOrderReady(readyId);
+      return;
+    }
+
     const cancelId = event.target.dataset.cancelOrder;
     if (cancelId) {
       closeAllOrderActionMenus(ordersAdminList);
@@ -3619,8 +3882,10 @@ function startRealtimeSync() {
 }
 
 startRealtimeSync();
+setAdminView("orders");
 listenForOrders();
 
     </script>
-  </body>
+  
+</body>
 </html>
