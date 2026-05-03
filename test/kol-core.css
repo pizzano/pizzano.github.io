@@ -6988,3 +6988,252 @@ body {
     text-align: center !important;
   }
 }
+
+
+/* ===== V130: hele systemet med kun 3 tekststørrelser =====
+   Küçük / Orta / Büyük sistemi:
+   - küçük: yardımcı açıklamalar, küçük notlar, MVA, içerik açıklaması
+   - orta: normal metinler, inputlar, seçenekler, ürün açıklamaları
+   - büyük: başlıklar, ürün adları, butonlar, toplamlar
+*/
+:root {
+  --kol-text-small: 11px;
+  --kol-text-medium: 13px;
+  --kol-text-large: 15px;
+
+  --kol-weight-normal: 500;
+  --kol-weight-medium: 650;
+  --kol-weight-bold: 800;
+}
+
+/* Genel font karakteri: daha sade, emulator/mobil uyumlu */
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: Arial, Helvetica, sans-serif !important;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+
+/* ORTA: sistemin normal yazısı */
+body,
+button,
+input,
+select,
+textarea,
+label,
+.menu-row,
+.option-line,
+.cart-item,
+.checkout-card,
+.customer-info-card,
+.profile-card,
+.info-card,
+.order-card,
+.admin-shell,
+.admin-shell button,
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  font-size: var(--kol-text-medium) !important;
+  line-height: 1.35 !important;
+}
+
+/* KÜÇÜK: açıklama, not, detay, MVA */
+small,
+.category-note,
+.menu-row-main span,
+.product-summary,
+.product-description,
+.helper-text,
+.status-notice,
+.option-help,
+.note-label,
+.quantity-row > span,
+.allergen-note,
+.cart-summary small,
+.tax-note-row,
+#taxNote,
+.profile-help,
+.info-panel p,
+.profile-panel p,
+.order-live-panel p,
+.admin-muted,
+.admin-help,
+.order-line-row p,
+.order-line-row small,
+.receipt-detail-small,
+.customer-receipt-detail-rows,
+.customer-receipt-detail-rows p {
+  font-size: var(--kol-text-small) !important;
+  line-height: 1.35 !important;
+  font-weight: var(--kol-weight-normal) !important;
+}
+
+/* BÜYÜK: başlıklar, ürün adı, buton, toplam */
+h1,
+h2,
+h3,
+.category-title,
+.category-tab,
+.menu-row-main strong,
+.row-price,
+.product-photo h2,
+#productTitle,
+.card-title,
+.panel-title,
+.section-title,
+.cart-item h3,
+.cart-item-title,
+.cart-line-title,
+.sluttsum-row,
+.cart-total-row,
+.compact-total-row,
+.cart-summary-total,
+.checkout-button,
+.send-order-button,
+.product-footer strong,
+.product-footer button,
+#addConfiguredProduct,
+.kol-customer.kol-top-back-active .brand-back-label,
+.info-header h2,
+.profile-header h2,
+.order-live-header h2,
+.admin-topbar strong,
+.admin-tab,
+.admin-section-title,
+.admin-card-title,
+.order-total-row,
+.order-total-row strong {
+  font-size: var(--kol-text-large) !important;
+  line-height: 1.25 !important;
+  font-weight: var(--kol-weight-bold) !important;
+}
+
+/* Ürün seçenekleri: orta boy, daha nazik */
+.option-line span,
+.option-line strong,
+.kol-customer .product-scroll-content .option-line span,
+.kol-customer .product-scroll-content .option-line strong,
+.kol-customer .product-scroll-content .option-group h3 {
+  font-size: var(--kol-text-medium) !important;
+  line-height: 1.32 !important;
+  font-weight: var(--kol-weight-medium) !important;
+}
+
+/* Sepet fiş bölümü: okunaklı ama sadece 3 boy */
+.cart-item-head h3,
+.cart-item h3,
+.cart-line-title,
+.cart-item-title {
+  font-size: var(--kol-text-medium) !important;
+  line-height: 1.22 !important;
+  font-weight: var(--kol-weight-bold) !important;
+}
+
+.cart-detail-row,
+.cart-receipt-row,
+.cart-item-detail-row,
+.cart-line-row,
+.receipt-line-row,
+.cart-receipt-detail-row,
+.cart-receipt-details,
+.cart-item-details,
+.cart-receipt-row-list {
+  font-size: var(--kol-text-small) !important;
+  line-height: 1.28 !important;
+}
+
+.cart-detail-row > span,
+.cart-detail-row > b,
+.cart-detail-row > strong,
+.cart-receipt-row > span,
+.cart-receipt-row > b,
+.cart-receipt-row > strong,
+.cart-detail-label,
+.cart-detail-value,
+.cart-detail-price,
+.detail-label,
+.detail-value,
+.detail-price {
+  font-size: var(--kol-text-small) !important;
+  line-height: 1.28 !important;
+}
+
+.sluttsum-row,
+.cart-total-row,
+.compact-total-row,
+.cart-summary-total {
+  font-size: var(--kol-text-large) !important;
+  line-height: 1.25 !important;
+  font-weight: var(--kol-weight-bold) !important;
+}
+
+/* Formlar */
+input,
+select,
+textarea {
+  font-size: var(--kol-text-medium) !important;
+  font-weight: var(--kol-weight-normal) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-size: var(--kol-text-medium) !important;
+  font-weight: var(--kol-weight-normal) !important;
+}
+
+/* Admin tarafı da aynı 3 boy sistemi */
+.kol-admin,
+.kol-admin button,
+.kol-admin input,
+.kol-admin select,
+.kol-admin textarea {
+  font-size: var(--kol-text-medium) !important;
+  line-height: 1.35 !important;
+}
+
+.kol-admin small,
+.kol-admin .muted,
+.kol-admin .admin-help,
+.kol-admin .admin-muted,
+.kol-admin .product-card-desc,
+.kol-admin .group-subtitle,
+.kol-admin .order-meta,
+.kol-admin .order-line-row p {
+  font-size: var(--kol-text-small) !important;
+}
+
+.kol-admin h1,
+.kol-admin h2,
+.kol-admin h3,
+.kol-admin .admin-tab,
+.kol-admin .admin-section-title,
+.kol-admin .admin-card-title,
+.kol-admin .product-card-title,
+.kol-admin .category-card-title,
+.kol-admin .order-card-title {
+  font-size: var(--kol-text-large) !important;
+  font-weight: var(--kol-weight-bold) !important;
+}
+
+/* Gerçek mobilde de aynı kalsın; sadece çok dar ekranlarda 1px küçült */
+@media (max-width: 380px) {
+  :root {
+    --kol-text-small: 10px;
+    --kol-text-medium: 12px;
+    --kol-text-large: 14px;
+  }
+}
+
+/* Tablet/PC emulator için de sistem aynı kalsın, sadece biraz nefes */
+@media (min-width: 761px) {
+  :root {
+    --kol-text-small: 11px;
+    --kol-text-medium: 13px;
+    --kol-text-large: 15px;
+  }
+}
