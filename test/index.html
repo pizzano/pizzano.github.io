@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=113">
+    <link rel="stylesheet" href="kol-core.css?v=119">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -1743,6 +1743,8 @@ function currentCartTotal() {
 }
 
 function buildOrderPayload() {
+  sortCartInPlaceForKitchen();
+  saveCart();
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
   const now = new Date();
   const openNow = isOrderingOpenNow();
@@ -3556,8 +3558,69 @@ function getCartStatusOrder() {
   return orders.find((order) => (order.status || "pending") === "pending") || orders[0] || null;
 }
 
+
+function findProductContextById(productId = "") {
+  const targetId = String(productId || "");
+  for (let sectionIndex = 0; sectionIndex < menuSections.length; sectionIndex += 1) {
+    const section = menuSections[sectionIndex];
+    const itemIndex = asArray(section?.items).findIndex((item) => String(item?.id || "") === targetId);
+    if (itemIndex !== -1) return { section, sectionIndex, item: section.items[itemIndex], itemIndex };
+  }
+  return { section: null, sectionIndex: 9999, item: null, itemIndex: 9999 };
+}
+
+function isPaidCartDetail(detail = {}) {
+  const label = safeText(detail?.label || "");
+  if (!label || /^størrelse\s*:/i.test(label) || /^sum\s*:/i.test(label)) return false;
+
+  const numericPrice = Number(detail?.price || 0) || 0;
+  if (numericPrice > 0) return true;
+
+  const priceText = safeText(detail?.priceText || "");
+  return /^\+\s*(?!0+(?:[,.]0+)?\b)/.test(priceText);
+}
+
+function getPaidCartDetailCount(line = {}) {
+  return asArray(line.extraDetails).filter(isPaidCartDetail).length;
+}
+
+function sortCartLinesForKitchen(lines = []) {
+  return [...lines]
+    .map((line, originalIndex) => {
+      const context = findProductContextById(line?.productId);
+      const paidCount = getPaidCartDetailCount(line);
+      return {
+        line,
+        originalIndex,
+        sectionIndex: context.sectionIndex,
+        itemIndex: context.itemIndex,
+        itemNumber: Number(context.item?.number || 9999) || 9999,
+        paidCount
+      };
+    })
+    .sort((a, b) => (
+      a.sectionIndex - b.sectionIndex ||
+      // Ücretli ekstra/ek seçim olanlar aynı kategori içinde önce gelsin.
+      (b.paidCount > 0) - (a.paidCount > 0) ||
+      b.paidCount - a.paidCount ||
+      a.itemNumber - b.itemNumber ||
+      a.itemIndex - b.itemIndex ||
+      a.originalIndex - b.originalIndex
+    ))
+    .map((entry) => entry.line);
+}
+
+function sortCartInPlaceForKitchen() {
+  if (!Array.isArray(cart) || cart.length < 2) return;
+  const sorted = sortCartLinesForKitchen(cart);
+  const changed = sorted.some((line, index) => line !== cart[index]);
+  if (!changed) return;
+  cart.splice(0, cart.length, ...sorted);
+}
+
 // Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
 function renderCart() {
+  sortCartInPlaceForKitchen();
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
   const taxValue = Math.round((cartSubtotal * 15 / 115) * 100) / 100;
@@ -3589,11 +3652,20 @@ function renderCart() {
       const detailRows = Array.isArray(line.extraDetails) && line.extraDetails.length
         ? [...line.extraDetails]
         : formatProfileOrderDetailRows(line).map((label) => ({ label, priceText: "" }));
-      const hasMeaningfulExtras = detailRows.filter((detail) => {
+      const hasPaidExtras = detailRows.some((detail) => {
         const label = safeText(detail?.label || "");
-        return label && !/^størrelse\s*:/i.test(label) && !/^sum\s*:/i.test(label);
-      }).length > 0;
-      if (hasMeaningfulExtras && !detailRows.some((detail) => /^sum\s*:/i.test(String(detail?.label || "")))) {
+        if (!label || /^størrelse\s*:/i.test(label) || /^sum\s*:/i.test(label)) return false;
+
+        const rawPriceText = safeText(detail?.priceText || "");
+        const numericPrice = Number(detail?.price || 0) || 0;
+
+        // Sum skal bare vises når det finnes et reelt betalt tillegg.
+        // Gratis valg som "Velg styrke: Sterk 🔥" skal ikke gi Sum-rad.
+        if (numericPrice > 0) return true;
+        return /^\+\s*(?!0+(?:[,.]0+)?\b)/.test(rawPriceText);
+      });
+
+      if (hasPaidExtras && !detailRows.some((detail) => /^sum\s*:/i.test(String(detail?.label || "")))) {
         detailRows.push({ label: "Sum:", priceText: formatPrice(line.total), isLineTotal: true });
       }
       return `
