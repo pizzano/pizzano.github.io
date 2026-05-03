@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=125">
+    <link rel="stylesheet" href="kol-core.css?v=128">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -1749,13 +1749,37 @@ function buildOrderPayload() {
   const now = new Date();
   const openNow = isOrderingOpenNow();
   const processableAfter = openNow ? "" : nextOrderingOpenDate(now).toISOString();
+  const createdAt = now.toISOString();
+  const payment = "pickup"; // Betaling ved henting foreløpig. Kan endres til CARD/CASH senere.
+  const orderType = "pickup";
+  const customer = getCustomerInfo();
+  const clientOrderCount = getCustomerOrderCountForPayload();
+
   return {
     status: "pending",
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
+    createdAt,
+    updatedAt: createdAt,
+
+    // GloriaFood-lignende metadata vi vil ha i systemet fra start.
+    source: "website",
+    client_order_count: clientOrderCount,
+    confirmed_at: null,
+    fulfill_time: null,
+    printed: false,
+    ready: false,
+    payment,
+    order_type: orderType,
+
+    // camelCase kopier for enklere intern bruk i eget system.
+    sourceName: "website",
+    clientOrderCount,
+    confirmedAt: null,
+    fulfillTime: null,
+    orderType,
+
     processableAfter,
     outsideOpeningHours: !openNow,
-    customer: getCustomerInfo(),
+    customer,
     pickup: {
       mode,
       time: mode === "later" ? new Date(pickupTimeInput.value).toISOString() : ""
@@ -1769,12 +1793,20 @@ function buildOrderPayload() {
       extras: line.extras || [],
       extraDetails: line.extraDetails || [],
       extraIds: line.extraIds || [],
+
+      // Pris-deling per varelinje.
+      basePrice: safeNumber(line.basePrice),
+      defaultBasePrice: safeNumber(line.defaultBasePrice),
+      sizePrice: safeNumber(line.sizePrice),
+      extrasTotal: safeNumber(line.extrasTotal),
+      unitPrice: safeNumber(line.unitPrice),
+      lineTotal: safeNumber(line.lineTotal || line.total),
+
       note: line.note || "",
-      total: line.total
+      total: safeNumber(line.lineTotal || line.total)
     })),
     subtotal: currentCartTotal(),
-    total: currentCartTotal(),
-    source: "web"
+    total: currentCartTotal()
   };
 }
 
@@ -2923,6 +2955,39 @@ function getCurrentTotal() {
   return getCurrentUnitPrice() * quantity;
 }
 
+
+function getCartLinePriceParts(selectedExtraLines = []) {
+  const basePrice = getBasePrice(selectedProduct, selectedSize);
+  const defaultSizeId = getDefaultProductSizeId(selectedProduct);
+  const defaultBasePrice = getBasePrice(selectedProduct, defaultSizeId);
+  const sizePrice = Math.max(0, basePrice - defaultBasePrice);
+  const extrasTotal = selectedExtraLines.reduce((sum, option) => sum + getOptionPrice(option), 0);
+  const unitPrice = basePrice + extrasTotal;
+  const lineTotal = unitPrice * quantity;
+
+  return {
+    basePrice,
+    defaultBasePrice,
+    sizePrice,
+    extrasTotal,
+    unitPrice,
+    lineTotal
+  };
+}
+
+function getCustomerOrderCountForPayload() {
+  const phone = normalizePhoneDigits(getCustomerInfo().phone);
+  const recentOrders = getRecentOrders();
+  if (!phone) return recentOrders.length + 1;
+
+  const previousCount = recentOrders.filter((order) => {
+    const orderPhone = normalizePhoneDigits(order?.customer?.phone || "");
+    return orderPhone && orderPhone === phone;
+  }).length;
+
+  return previousCount + 1;
+}
+
 function buildCartLine() {
   const selectedExtraLines = getVisibleExtras().filter((option) => selectedExtras.has(option.id));
   const titlePrefix = selectedProduct.number ? `${selectedProduct.number}- ` : "";
@@ -2930,12 +2995,12 @@ function buildCartLine() {
   const sizeLabel = sizeOptions.length
     ? `Størrelse: ${getSelectedSizeLabel(selectedProduct, selectedSize)}`
     : "Størrelse: Standart";
+  const priceParts = getCartLinePriceParts(selectedExtraLines);
   const extraDetails = [];
-  const baseUnitPrice = getBasePrice(selectedProduct, selectedSize);
   extraDetails.push({
     label: sizeLabel,
-    price: baseUnitPrice,
-    priceText: formatPrice(baseUnitPrice)
+    price: priceParts.basePrice,
+    priceText: formatPrice(priceParts.basePrice)
   });
   selectedExtraLines.forEach((option) => {
     const groupLabel = safeText(option.group || option.choiceGroup || "Tilvalg");
@@ -2961,8 +3026,16 @@ function buildCartLine() {
     extraDetails,
     extraIds: selectedExtraLines.map((option) => option.id),
     quantity,
-    unitPrice: getCurrentUnitPrice(),
-    total: getCurrentTotal(),
+
+    // Pris-deling lagres for kvittering, admin, statistikk og fremtidig analyse.
+    basePrice: priceParts.basePrice,
+    defaultBasePrice: priceParts.defaultBasePrice,
+    sizePrice: priceParts.sizePrice,
+    extrasTotal: priceParts.extrasTotal,
+    unitPrice: priceParts.unitPrice,
+    lineTotal: priceParts.lineTotal,
+    total: priceParts.lineTotal,
+
     note: specialInstructions.value.trim()
   };
 }
