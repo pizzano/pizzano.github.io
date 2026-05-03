@@ -7578,3 +7578,513 @@ textarea::placeholder {
     height: 13px !important;
   }
 }
+
+
+/* ===== V122: refined mobile typography with consistent 2px scale ===== */
+:root {
+  --kol-type-xs: 12px !important;
+  --kol-type-sm: 14px !important;
+  --kol-type-md: 16px !important;
+  --kol-type-lg: 18px !important;
+}
+
+/* Global softer text rhythm */
+body,
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0 !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Small text */
+small,
+.category-note,
+.menu-row-main span,
+.kol-customer .product-scroll-content .product-summary,
+.kol-customer .product-scroll-content .quantity-row > span,
+.kol-customer .product-scroll-content .note-label,
+.kol-customer .product-scroll-content textarea,
+.kol-customer .product-scroll-content textarea::placeholder,
+.cart-item .cart-line-meta,
+.cart-summary small,
+.profile-help,
+.info-panel p,
+.profile-panel p,
+.order-live-panel p,
+.option-help,
+.helper-text,
+.product-description,
+.muted {
+  font-size: var(--kol-type-xs) !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+}
+
+/* Medium text */
+body,
+label,
+input,
+select,
+textarea,
+.category-tab,
+.menu-row-main strong,
+.row-price,
+.kol-customer .product-scroll-content .option-group h3,
+.kol-customer .product-scroll-content .option-line span,
+.kol-customer .product-scroll-content .option-line strong,
+.kol-customer .product-scroll-content .quantity-stepper strong,
+.cart-item,
+.cart-item .cart-line-label,
+.cart-item .cart-line-value,
+.checkout-panel,
+.profile-card,
+.info-card,
+.topbar-title,
+.section-card,
+.panel-card {
+  font-size: var(--kol-type-sm) !important;
+  line-height: 1.4 !important;
+}
+
+.menu-row-main strong,
+.row-price,
+.category-tab,
+.kol-customer .product-scroll-content .option-line strong,
+.cart-item .cart-line-label,
+.cart-item .cart-line-value,
+.topbar-title {
+  font-weight: 600 !important;
+}
+
+/* Large text */
+.category-title,
+.product-photo h2,
+#productTitle,
+.card-title,
+.panel-title,
+.section-title,
+.cart-item-title,
+.profile-panel h1,
+.profile-panel h2,
+.info-panel h1,
+.info-panel h2,
+.order-live-panel h1,
+.order-live-panel h2,
+.checkout-heading,
+.kol-customer .product-footer strong,
+.kol-customer .product-footer button,
+#addConfiguredProduct,
+#checkoutButton,
+#sendOrderButton,
+.back-to-menu,
+.checkout-button,
+.send-order-button {
+  font-size: var(--kol-type-md) !important;
+  line-height: 1.25 !important;
+}
+
+.category-title,
+.product-photo h2,
+#productTitle,
+.card-title,
+.panel-title,
+.section-title,
+.cart-item-title,
+.profile-panel h1,
+.profile-panel h2,
+.info-panel h1,
+.info-panel h2,
+.order-live-panel h1,
+.order-live-panel h2,
+.checkout-heading,
+.kol-customer .product-footer strong,
+.kol-customer .product-footer button,
+#addConfiguredProduct,
+#checkoutButton,
+#sendOrderButton,
+.back-to-menu,
+.checkout-button,
+.send-order-button {
+  font-weight: 700 !important;
+}
+
+/* Extra emphasis only where truly needed */
+.sluttsum-row strong,
+.total-row strong,
+.order-total strong,
+.cart-total strong,
+.checkout-total strong,
+.grand-total,
+.final-total,
+.category-hero-title {
+  font-size: var(--kol-type-lg) !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
+
+/* Soften heavy product screen text */
+.kol-customer .product-scroll-content .option-group h3 {
+  font-weight: 600 !important;
+  color: #6b7682 !important;
+}
+
+.kol-customer .product-scroll-content .option-line span {
+  font-weight: 500 !important;
+  color: #66717d !important;
+}
+
+.kol-customer .product-scroll-content .option-line strong,
+.row-price {
+  font-weight: 600 !important;
+  color: #55616e !important;
+}
+
+.menu-row-main strong {
+  font-weight: 700 !important;
+}
+
+/* Slightly roomier tablet typography with same 2px rhythm */
+@media (min-width: 761px) and (max-width: 980px) {
+  :root {
+    --kol-type-xs: 13px !important;
+    --kol-type-sm: 15px !important;
+    --kol-type-md: 17px !important;
+    --kol-type-lg: 19px !important;
+  }
+}
+
+/* Phone-first final pass */
+@media (max-width: 760px) {
+  :root {
+    --kol-type-xs: 12px !important;
+    --kol-type-sm: 14px !important;
+    --kol-type-md: 16px !important;
+    --kol-type-lg: 18px !important;
+  }
+
+  .category-tab {
+    font-size: var(--kol-type-sm) !important;
+    font-weight: 600 !important;
+  }
+
+  .menu-row-main strong,
+  .row-price,
+  .kol-customer .product-scroll-content .option-line span,
+  .kol-customer .product-scroll-content .option-line strong,
+  .kol-customer .product-scroll-content .quantity-stepper strong {
+    font-size: var(--kol-type-sm) !important;
+  }
+
+  .category-title,
+  .product-photo h2,
+  #productTitle,
+  .kol-customer .product-footer strong,
+  .kol-customer .product-footer button,
+  #addConfiguredProduct,
+  #checkoutButton,
+  #sendOrderButton,
+  .back-to-menu {
+    font-size: var(--kol-type-md) !important;
+  }
+
+  .sluttsum-row strong,
+  .total-row strong,
+  .order-total strong,
+  .cart-total strong,
+  .checkout-total strong,
+  .grand-total,
+  .final-total,
+  .category-hero-title {
+    font-size: var(--kol-type-lg) !important;
+  }
+}
+
+
+/* ===== V123: reference-inspired mobile typography cleanup ===== */
+:root {
+  --kol-ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  --kol-ref-xs: 12px !important;
+  --kol-ref-sm: 14px !important;
+  --kol-ref-md: 16px !important;
+  --kol-ref-lg: 18px !important;
+}
+
+html, body,
+button, input, select, textarea {
+  font-family: var(--kol-ui-font) !important;
+}
+
+body {
+  font-size: var(--kol-ref-sm) !important;
+  font-weight: 400 !important;
+  line-height: 1.42 !important;
+  color: #55606d !important;
+}
+
+/* Small text */
+.category-note,
+.menu-row-main span,
+.product-description,
+.kol-customer .product-scroll-content .product-summary,
+.kol-customer .product-scroll-content .note-label,
+.kol-customer .product-scroll-content textarea,
+.kol-customer .product-scroll-content textarea::placeholder,
+.info-panel p,
+.profile-panel p,
+.order-live-panel p,
+.cart-item .cart-line-meta,
+.helper-text,
+.option-help,
+small,
+.muted {
+  font-size: var(--kol-ref-xs) !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  color: #66717d !important;
+}
+
+/* Medium text */
+body,
+label,
+input,
+select,
+textarea,
+.category-tab,
+.kol-customer .product-scroll-content .option-line span,
+.kol-customer .product-scroll-content .option-line strong,
+.kol-customer .product-scroll-content .quantity-stepper strong,
+.cart-item,
+.cart-item .cart-line-label,
+.cart-item .cart-line-value,
+.profile-card,
+.info-card,
+.section-card,
+.panel-card,
+.topbar-title,
+.row-price {
+  font-size: var(--kol-ref-sm) !important;
+  line-height: 1.42 !important;
+}
+
+/* Large text */
+.menu-row-main strong,
+.category-title,
+.product-photo h2,
+#productTitle,
+.card-title,
+.panel-title,
+.section-title,
+.cart-item-title,
+.profile-panel h1,
+.profile-panel h2,
+.info-panel h1,
+.info-panel h2,
+.order-live-panel h1,
+.order-live-panel h2,
+.checkout-heading,
+.kol-customer .product-footer strong,
+.kol-customer .product-footer button,
+#addConfiguredProduct,
+#checkoutButton,
+#sendOrderButton,
+.back-to-menu,
+.checkout-button,
+.send-order-button {
+  font-size: var(--kol-ref-md) !important;
+  line-height: 1.28 !important;
+}
+
+/* Strongest emphasis */
+.sluttsum-row strong,
+.total-row strong,
+.order-total strong,
+.cart-total strong,
+.checkout-total strong,
+.grand-total,
+.final-total,
+.category-hero-title {
+  font-size: var(--kol-ref-lg) !important;
+  line-height: 1.2 !important;
+}
+
+/* Weight tuning to avoid kaba/bold look */
+.category-tab,
+.kol-customer .product-scroll-content .option-group h3,
+.kol-customer .product-scroll-content .option-line strong,
+.row-price,
+.menu-row-main strong,
+.card-title,
+.panel-title,
+.section-title,
+.cart-item-title,
+.profile-panel h1,
+.profile-panel h2,
+.info-panel h1,
+.info-panel h2,
+.order-live-panel h1,
+.order-live-panel h2,
+.checkout-heading,
+.kol-customer .product-footer strong,
+.kol-customer .product-footer button,
+#addConfiguredProduct,
+#checkoutButton,
+#sendOrderButton,
+.back-to-menu,
+.checkout-button,
+.send-order-button,
+.sluttsum-row strong,
+.total-row strong,
+.order-total strong,
+.cart-total strong,
+.checkout-total strong,
+.grand-total,
+.final-total,
+.category-hero-title {
+  font-weight: 600 !important;
+}
+
+.menu-row-main strong,
+.category-title,
+.product-photo h2,
+#productTitle,
+.cart-item-title,
+.profile-panel h1,
+.info-panel h1,
+.order-live-panel h1,
+.sluttsum-row strong,
+.cart-total strong,
+.checkout-total strong,
+.final-total,
+.category-hero-title {
+  font-weight: 700 !important;
+  color: #3b4652 !important;
+}
+
+.category-tab {
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.kol-customer .product-scroll-content .option-group h3 {
+  font-size: var(--kol-ref-md) !important;
+  font-weight: 600 !important;
+  color: #5e6976 !important;
+}
+
+.kol-customer .product-scroll-content .option-line {
+  min-height: 48px !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+}
+
+.kol-customer .product-scroll-content .option-line span {
+  font-size: var(--kol-ref-md) !important;
+  font-weight: 500 !important;
+  color: #55616d !important;
+}
+
+.kol-customer .product-scroll-content .option-line strong,
+.row-price {
+  font-size: var(--kol-ref-sm) !important;
+  font-weight: 600 !important;
+  color: #5b6570 !important;
+}
+
+.kol-customer .product-scroll-content .option-line input[type="radio"],
+.kol-customer .product-scroll-content .option-line input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+.menu-row-main strong {
+  font-size: var(--kol-ref-md) !important;
+}
+
+.topbar-title {
+  font-size: var(--kol-ref-md) !important;
+  font-weight: 700 !important;
+  color: #3a4651 !important;
+}
+
+@media (max-width: 980px) {
+  body {
+    font-size: var(--kol-ref-sm) !important;
+  }
+
+  .category-title,
+  .product-photo h2,
+  #productTitle,
+  .menu-row-main strong,
+  .cart-item-title,
+  .topbar-title,
+  .kol-customer .product-footer strong,
+  .kol-customer .product-footer button,
+  #addConfiguredProduct,
+  #checkoutButton,
+  #sendOrderButton,
+  .back-to-menu {
+    font-size: var(--kol-ref-md) !important;
+  }
+
+  .sluttsum-row strong,
+  .total-row strong,
+  .order-total strong,
+  .cart-total strong,
+  .checkout-total strong,
+  .grand-total,
+  .final-total,
+  .category-hero-title {
+    font-size: var(--kol-ref-lg) !important;
+  }
+}
+
+
+/* ===== V124: center product footer + reset-friendly modal spacing ===== */
+.product-footer {
+  grid-template-columns: 132px minmax(0, 1fr) !important;
+  align-items: stretch !important;
+}
+
+.product-footer > strong {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 !important;
+}
+
+.product-footer > strong > #productTotal,
+.product-footer > strong > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+.product-footer > button,
+#addConfiguredProduct {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 12px !important;
+}
+
+@media (max-width: 760px) {
+  .product-footer {
+    grid-template-columns: 136px minmax(0, 1fr) !important;
+  }
+
+  .product-footer > strong,
+  .product-footer > button,
+  #addConfiguredProduct {
+    min-height: var(--kol-action-h) !important;
+  }
+}
