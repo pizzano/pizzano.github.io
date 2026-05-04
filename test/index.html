@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=157">
+    <link rel="stylesheet" href="kol-core.css?v=161">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -13,8 +13,8 @@
         <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
       </button>
       <div class="appbar-actions">
-<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon">&#9432;</button>
-        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger">&#128100;<span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
+<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon"><span class="plain-icon info-plain-icon" aria-hidden="true">ⓘ</span></button>
+        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger"><span class="plain-icon profile-plain-icon" aria-hidden="true">👤</span><span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
         <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
       </div>
     </header>
@@ -212,6 +212,25 @@
         </div>
         <button class="checkout-button" type="button" disabled>Send bestilling</button>
       </aside>
+    </div>
+
+    <div class="confirm-modal quick-checkout-modal" id="quickCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="quickCheckoutTitle" hidden>
+      <button class="confirm-backdrop quick-checkout-backdrop" type="button" data-close-quick-checkout aria-label="Lukk utfylling"></button>
+      <section class="confirm-panel quick-checkout-panel">
+        <h2 id="quickCheckoutTitle">Fyll inn kundeinformasjon</h2>
+        <p class="quick-checkout-help" id="quickCheckoutHelp">Skriv inn navn og telefonnummer og lagre informasjonen.</p>
+        <div class="quick-checkout-grid">
+          <label>Hele navn
+            <input id="quickCustomerFullName" type="text" autocomplete="name" placeholder="Hele navn" maxlength="60" minlength="2" autocapitalize="words" spellcheck="false">
+          </label>
+          <label>Telefonnummer
+            <input id="quickCustomerPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="8 siffer" maxlength="8" minlength="8" pattern="[0-9]{8}">
+          </label>
+        </div>
+        <div class="quick-checkout-actions">
+          <button class="confirm-danger quick-checkout-submit" type="button" id="quickCheckoutSubmit">Lagre</button>
+        </div>
+      </section>
     </div>
 
     <div class="confirm-modal" id="clearCartConfirm" role="dialog" aria-modal="true" aria-labelledby="clearCartTitle" hidden>
@@ -846,6 +865,12 @@ const customerFullName = document.querySelector("#customerFullName");
 const customerFirstName = document.querySelector("#customerFirstName"); // gammel kompatibilitet
 const customerLastName = document.querySelector("#customerLastName"); // gammel kompatibilitet
 const customerPhone = document.querySelector("#customerPhone");
+const quickCheckoutModal = document.querySelector("#quickCheckoutModal");
+const quickCustomerFullName = document.querySelector("#quickCustomerFullName");
+const quickCustomerPhone = document.querySelector("#quickCustomerPhone");
+const quickCheckoutHelp = document.querySelector("#quickCheckoutHelp");
+const quickCheckoutSubmit = document.querySelector("#quickCheckoutSubmit");
+const closeQuickCheckout = document.querySelector("#closeQuickCheckout");
 const pickupTimeInput = document.querySelector("#pickupTime");
 const pickupHelp = document.querySelector("#pickupHelp");
 const orderStatusBox = document.querySelector("#orderStatusBox");
@@ -900,7 +925,8 @@ function isCustomerOverlayOpen() {
     (infoModal && !infoModal.hidden) ||
     (cartModal && !cartModal.hidden) ||
     (profileModal && !profileModal.hidden) ||
-    (orderLiveModal && !orderLiveModal.hidden)
+    (orderLiveModal && !orderLiveModal.hidden) ||
+    (quickCheckoutModal && !quickCheckoutModal.hidden)
   );
 }
 
@@ -922,7 +948,8 @@ function syncCategoryTabsVisibility() {
   const isCartOpen = !!(cartModal && !cartModal.hidden) || document.body.classList.contains("cart-open");
   const isInfoOpen = !!(infoModal && !infoModal.hidden) || document.body.classList.contains("info-open");
   const isProfileOpen = !!(profileModal && !profileModal.hidden) || document.body.classList.contains("profile-open");
-  const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) || document.body.classList.contains("order-live-open");
+  const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) ||
+    (quickCheckoutModal && !quickCheckoutModal.hidden) || document.body.classList.contains("order-live-open");
   const isSettingsOpen = document.body.classList.contains("settings-open");
 
   // Product modal açıkken kategori barı görünebilir; info/profil/sepet/canlı siparişte gizli kalmalı.
@@ -949,7 +976,8 @@ function syncBodyScrollLocks() {
   const infoOpen = !!(infoModal && !infoModal.hidden);
   const cartOpen = !!(cartModal && !cartModal.hidden);
   const profileOpen = !!(profileModal && !profileModal.hidden);
-  const liveOpen = !!(orderLiveModal && !orderLiveModal.hidden);
+  const liveOpen = !!(orderLiveModal && !orderLiveModal.hidden) ||
+    (quickCheckoutModal && !quickCheckoutModal.hidden);
 
   document.body.classList.toggle("modal-open", productOpen || infoOpen);
   document.body.classList.toggle("info-open", infoOpen);
@@ -972,7 +1000,8 @@ function syncBodyScrollLocks() {
     (cartModal && !cartModal.hidden) ||
     (profileModal && !profileModal.hidden) ||
     (infoModal && !infoModal.hidden) ||
-    (orderLiveModal && !orderLiveModal.hidden)
+    (orderLiveModal && !orderLiveModal.hidden) ||
+    (quickCheckoutModal && !quickCheckoutModal.hidden)
   );
   const getScrollBox = (target) => target?.closest?.(
     ".category-tabs-scroll, .category-tabs-wrap, .product-scroll-content, .product-panel, .cart-content-scroll, .profile-body, .order-live-content, .info-panel"
@@ -1680,9 +1709,76 @@ function getCustomerInfo() {
 }
 
 
+function syncQuickCheckoutFromMain() {
+  if (quickCustomerFullName && customerFullName) quickCustomerFullName.value = customerFullName.value || "";
+  if (quickCustomerPhone && customerPhone) quickCustomerPhone.value = normalizePhoneDigits(customerPhone.value || "");
+}
+
+function syncQuickCheckoutToMain() {
+  if (customerFullName && quickCustomerFullName) customerFullName.value = normalizeFullName(quickCustomerFullName.value || "");
+  if (customerPhone && quickCustomerPhone) customerPhone.value = normalizePhoneDigits(quickCustomerPhone.value || "").slice(0, 8);
+  saveCustomerInfo();
+}
+
+function closeQuickCheckoutPrompt() {
+  if (!quickCheckoutModal) return;
+  quickCheckoutModal.hidden = true;
+  document.body.classList.remove("quick-checkout-open");
+  [quickCustomerFullName, quickCustomerPhone].forEach((field) => {
+    if (!field) return;
+    field.classList.remove("input-error");
+    try { field.setCustomValidity(""); } catch (error) {}
+  });
+  syncBodyScrollLocks();
+  updateTopMenuReturnButton();
+}
+
+function openQuickCheckoutPrompt(target = "name", message = "") {
+  if (!quickCheckoutModal) return;
+  openCart();
+  syncQuickCheckoutFromMain();
+  quickCheckoutModal.hidden = false;
+  document.body.classList.add("quick-checkout-open");
+  if (quickCheckoutHelp) quickCheckoutHelp.textContent = message || "Skriv inn navn og telefonnummer og lagre informasjonen.";
+  checkoutFocusError = { field: target === "phone" ? quickCustomerPhone : quickCustomerFullName, message };
+  syncBodyScrollLocks();
+  updateTopMenuReturnButton();
+  window.setTimeout(() => {
+    const field = target === "phone" ? quickCustomerPhone : quickCustomerFullName;
+    field?.focus();
+  }, 60);
+}
+
+function validateQuickCheckoutPopup() {
+  if (!quickCustomerFullName || !quickCustomerPhone) return false;
+  const fullName = normalizeFullName(quickCustomerFullName.value || "").trim();
+  const phone = normalizePhoneDigits(quickCustomerPhone.value || "").slice(0, 8);
+  quickCustomerFullName.value = fullName;
+  quickCustomerPhone.value = phone;
+  [quickCustomerFullName, quickCustomerPhone].forEach((field) => {
+    field.classList.remove("input-error");
+    try { field.setCustomValidity(""); } catch (error) {}
+  });
+  if (!fullName || fullName.length < 2) {
+    quickCustomerFullName.classList.add("input-error");
+    try { quickCustomerFullName.setCustomValidity("Skriv inn hele navnet ditt."); quickCustomerFullName.reportValidity(); } catch (error) {}
+    quickCustomerFullName.focus();
+    return false;
+  }
+  if (!/^\d{8}$/.test(phone)) {
+    quickCustomerPhone.classList.add("input-error");
+    try { quickCustomerPhone.setCustomValidity("Skriv inn telefonnummer med 8 siffer."); quickCustomerPhone.reportValidity(); } catch (error) {}
+    quickCustomerPhone.focus();
+    return false;
+  }
+  syncQuickCheckoutToMain();
+  closeQuickCheckoutPrompt();
+  return true;
+}
+
 function clearCheckoutValidationState() {
   checkoutFocusError = null;
-  [customerFullName, customerPhone].forEach((field) => {
+  [customerFullName, customerPhone, quickCustomerFullName, quickCustomerPhone].forEach((field) => {
     if (!field) return;
     field.classList.remove("input-error");
     try { field.setCustomValidity(""); } catch (error) {}
@@ -1717,11 +1813,11 @@ function validateCheckout() {
   const customer = getCustomerInfo();
   if (!cart.length) return "Handlekurven er tom.";
   if (!customer.fullName || customer.fullName.length < 2) {
-    focusCheckoutInput(customerFullName, "Skriv inn hele navnet ditt.");
+    openQuickCheckoutPrompt("name", "Skriv inn hele navnet ditt.");
     return "Skriv inn hele navnet ditt.";
   }
   if (!/^\d{8}$/.test(customer.phone)) {
-    focusCheckoutInput(customerPhone, "Skriv inn telefonnummer med 8 siffer.");
+    openQuickCheckoutPrompt("phone", "Skriv inn telefonnummer med 8 siffer.");
     return "Skriv inn telefonnummer med 8 siffer.";
   }
   const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
@@ -4041,6 +4137,33 @@ if (customerFullName) {
   });
 }
 
+if (quickCustomerPhone) {
+  quickCustomerPhone.addEventListener("input", () => {
+    const clean = normalizePhoneDigits(quickCustomerPhone.value).slice(0, 8);
+    if (quickCustomerPhone.value !== clean) quickCustomerPhone.value = clean;
+    quickCustomerPhone.classList.remove("input-error");
+    try { quickCustomerPhone.setCustomValidity(""); } catch (error) {}
+  });
+}
+
+if (quickCustomerFullName) {
+  quickCustomerFullName.addEventListener("input", () => {
+    const clean = normalizeFullName(quickCustomerFullName.value);
+    if (quickCustomerFullName.value !== clean) quickCustomerFullName.value = clean;
+    quickCustomerFullName.classList.remove("input-error");
+    try { quickCustomerFullName.setCustomValidity(""); } catch (error) {}
+  });
+}
+
+quickCheckoutSubmit?.addEventListener("click", () => {
+  validateQuickCheckoutPopup();
+});
+closeQuickCheckout?.addEventListener("click", closeQuickCheckoutPrompt);
+quickCheckoutModal?.querySelector("[data-close-quick-checkout]")?.addEventListener("click", closeQuickCheckoutPrompt);
+quickCheckoutModal?.addEventListener("click", (event) => {
+  if (event.target === quickCheckoutModal) closeQuickCheckoutPrompt();
+});
+
 if (profileToggle) profileToggle.addEventListener("click", openProfileModal);
 
 if (profileOrdersEl) {
@@ -4130,7 +4253,14 @@ document.addEventListener("keydown", (event) => {
     closeClearCartConfirm();
     return;
   }
-  if (orderLiveModal && !orderLiveModal.hidden) closeOrderLiveModal();
+  if (quickCheckoutModal && !quickCheckoutModal.hidden) {
+    closeQuickCheckoutPrompt();
+    return;
+  }
+  if (orderLiveModal && !orderLiveModal.hidden) {
+    closeOrderLiveModal();
+    return;
+  }
   if (profileModal && !profileModal.hidden) closeProfileModal();
   if (!productModal.hidden) closeProductModal();
   if (!infoModal.hidden) closeInfoModal();
