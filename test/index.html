@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=162">
+    <link rel="stylesheet" href="kol-core.css?v=163">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -3628,13 +3628,13 @@ function renderProductModal() {
 }
 
 function resetProductModalScrollToTop() {
+  // TÜRKÇE: Ürün detayında sadece ürün panelinin kendi scroll'unu sıfırla.
+  // Ana menü scroll'unu sıfırlama; ürün sepete eklenince aynı kategoride kalmalı.
   const targets = [
+    document.querySelector(".product-scroll-content"),
     document.querySelector(".product-body"),
     document.querySelector(".product-panel"),
-    document.querySelector(".product-modal"),
-    document.scrollingElement,
-    document.documentElement,
-    document.body
+    document.querySelector(".product-modal")
   ].filter(Boolean);
 
   targets.forEach((target) => {

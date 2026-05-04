@@ -21126,3 +21126,167 @@ body.kol-customer .cart-sales-card .tax-note-row {
     min-width: 50px !important;
   }
 }
+
+
+/* ===== V163: tablet-friendly admin orders + compact product options + slightly larger cart text ===== */
+
+/* Admin Bestillinger: tablet üzerinde küçük kalmasın */
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  gap: 8px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  min-height: 92px !important;
+  border-radius: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  min-height: 92px !important;
+  grid-template-columns: 44px minmax(0, 1fr) clamp(72px, 10vw, 94px) minmax(96px, auto) !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 17px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-main strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main strong {
+  font-size: 18px !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-main small,
+body.kol-admin.admin-orders-mode .orders-app-status,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main small,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status {
+  font-size: 14px !important;
+  line-height: 1.12 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-phone-inline,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-phone-inline {
+  font-size: 12px !important;
+  padding: 3px 8px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+  width: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  height: 36px !important;
+  font-size: 18px !important;
+  border-radius: 11px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-side strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side strong {
+  font-size: 16px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-side small,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side small {
+  font-size: 13px !important;
+}
+
+body.kol-admin.admin-orders-mode .order-more-button-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .order-more-button-v29 {
+  width: 42px !important;
+  height: 42px !important;
+  font-size: 24px !important;
+}
+
+@media (max-width: 520px) {
+  body.kol-admin.admin-orders-mode .orders-app-row,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+    min-height: 84px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 62px minmax(78px, auto) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-main strong,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main strong {
+    font-size: 16px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-main small,
+  body.kol-admin.admin-orders-mode .orders-app-status,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main small,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status {
+    font-size: 13px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Index ürün detay: seçenek kutuları daha ince/kompakt */
+body.kol-customer .product-scroll-content .option-line {
+  min-height: 44px !important;
+  padding: 6px 10px !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 760 !important;
+}
+
+body.kol-customer .product-scroll-content .option-line span,
+body.kol-customer .product-scroll-content .option-line strong {
+  font-size: 13px !important;
+  line-height: 1.15 !important;
+}
+
+body.kol-customer .product-scroll-content .option-line input[type="radio"],
+body.kol-customer .product-scroll-content .option-line input[type="checkbox"] {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+/* Sepet ürün listesi: yazılar bir kademe daha büyük, ama sıkı yapı korunur */
+body.kol-customer .cart-item-head h3,
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-title {
+  font-size: 12.8px !important;
+  line-height: 1.1 !important;
+  font-weight: 850 !important;
+}
+
+body.kol-customer .cart-detail-row span,
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-detail-row b,
+body.kol-customer .cart-detail-label,
+body.kol-customer .cart-detail-value,
+body.kol-customer .cart-detail-text,
+body.kol-customer .cart-detail-text-plain,
+body.kol-customer .cart-detail-price,
+body.kol-customer .cart-item-details span,
+body.kol-customer .cart-receipt-details span,
+body.kol-customer .cart-receipt-row-list span {
+  font-size: 11.4px !important;
+  line-height: 1.08 !important;
+}
+
+body.kol-customer .cart-detail-row strong {
+  font-size: 11.4px !important;
+  min-width: 58px !important;
+}
+
+body.kol-customer .cart-line-total {
+  font-size: 12px !important;
+}
+
