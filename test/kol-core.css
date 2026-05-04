@@ -21385,3 +21385,149 @@ body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-receipt
     max-width: 100vw !important;
   }
 }
+
+
+/* ===== V165: Bestillinger no bottom dead space + Meny Choices panel wider/flexible ===== */
+/* Bestillinger: kırmızı işaretli boş alanı kaldır, liste sadece içerik kadar uzasın. */
+body.kol-admin.admin-orders-mode .admin-page[data-admin-page="orders"].active,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-page[data-admin-page="orders"].active,
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active,
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  min-height: 0 !important;
+  height: auto !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
+  height: auto !important;
+  min-height: calc(100svh - var(--kol-header-h)) !important;
+  align-content: start !important;
+  padding-bottom: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list,
+body.kol-admin.admin-orders-mode #ordersAdminList,
+body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  background: #fff !important;
+  align-content: start !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+/* Tablet üzerinde 4-5 sipariş görünmesi için kart yüksekliği okunur ama daha kontrollü. */
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  min-height: 86px !important;
+  height: 86px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  min-height: 86px !important;
+  height: 86px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  align-items: center !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-main strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main strong {
+  font-size: 18px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-main small,
+body.kol-admin.admin-orders-mode .orders-app-status,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main small,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status {
+  font-size: 13px !important;
+}
+
+/* Meny oppsett: Choices & Addons paneli sıkışmasın, sağ panel daha geniş ve uzun kalsın. */
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+  width: min(1600px, calc(100vw - 34px)) !important;
+  min-width: 1160px !important;
+  grid-template-columns: minmax(760px, 1fr) minmax(360px, 430px) !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+  min-width: 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+  width: 100% !important;
+  min-width: 360px !important;
+  max-width: 430px !important;
+  height: calc(100svh - 142px) !important;
+  max-height: calc(100svh - 142px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: sticky !important;
+  top: 16px !important;
+  padding: 18px 18px 20px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h2,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h3 {
+  font-size: 22px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  margin-bottom: 6px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel p,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel small {
+  font-size: 13px !important;
+  line-height: 1.38 !important;
+  max-width: none !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-option-groups,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-options {
+  gap: 9px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .option-group-card,
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-option-groups > * {
+  min-height: 62px !important;
+  padding: 12px 14px !important;
+}
+
+/* Dar tablet/PC görünümünde Meny oppsett PC canvas kalsın, yatay scroll ile sıkışma olmasın. */
+@media (max-width: 1250px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active {
+    overflow-x: auto !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+    width: 1200px !important;
+    min-width: 1200px !important;
+    grid-template-columns: minmax(780px, 1fr) 380px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    min-width: 380px !important;
+    max-width: 380px !important;
+  }
+}
+
