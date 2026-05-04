@@ -21532,26 +21532,481 @@ body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status {
 }
 
 
-/* ===== V166: orders full-width scroll + wider flexible Choices & Addons ===== */
-/* Orders: kartlar boydan boya olsun ve liste kendi içinde scroll edebilsin. */
-body.kol-admin.admin-orders-mode .admin-page[data-admin-page="orders"].active,
-body.kol-admin:has([data-admin-page="orders"].active) .admin-page[data-admin-page="orders"].active,
-body.kol-admin.admin-orders-mode .orders-workspace.active,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active {
-  width: 100% !important;
+/* ===== V167: cart text slightly larger + buttons slightly smaller ===== */
+body.kol-customer .cart-item {
+  padding: 10px 12px !important;
+}
+
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-main > strong {
+  font-size: 16px !important;
+  line-height: 1.18 !important;
+  font-weight: 500 !important;
+}
+
+body.kol-customer .cart-item-details,
+body.kol-customer .cart-detail-row span,
+body.kol-customer .cart-detail-row .cart-detail-text,
+body.kol-customer .cart-detail-row .cart-detail-text-plain,
+body.kol-customer .cart-detail-row .cart-detail-label,
+body.kol-customer .cart-detail-row .cart-detail-value,
+body.kol-customer .cart-item-note {
+  font-size: 14px !important;
+  line-height: 1.28 !important;
+}
+
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-line-total {
+  font-size: 14px !important;
+  line-height: 1.28 !important;
+}
+
+body.kol-customer .cart-item-top-actions {
+  gap: 6px !important;
+}
+
+body.kol-customer .edit-line-button.icon-only,
+body.kol-customer .cart-item .edit-line-button.icon-only {
+  width: 35px !important;
+  min-width: 35px !important;
+  height: 35px !important;
+  min-height: 35px !important;
+  border-radius: 8px !important;
+}
+
+body.kol-customer .edit-line-button.icon-only::before,
+body.kol-customer .cart-edit-icon {
+  font-size: 14px !important;
+}
+
+body.kol-customer .remove-button,
+body.kol-customer .cart-item .remove-button {
+  width: 35px !important;
+  min-width: 35px !important;
+  height: 35px !important;
+  min-height: 35px !important;
+  font-size: 21px !important;
+  border-radius: 8px !important;
+}
+
+/* ===== V167: customer order status popup more modern and cleaner ===== */
+body.kol-customer .order-live-content {
+  padding: 14px 14px 18px !important;
+}
+
+body.kol-customer .order-live-status {
+  width: min(100%, 900px) !important;
+  padding: 18px !important;
+  border-radius: 24px !important;
+  border: 1px solid #e5eaf1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%) !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .07) !important;
+}
+
+body.kol-customer .order-status-head {
+  margin-bottom: 12px !important;
+  align-items: center !important;
+}
+
+body.kol-customer .order-status-head small {
+  color: #7c8795 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+body.kol-customer .order-live-status h3 {
+  margin: 0 0 8px !important;
+  color: #1f2937 !important;
+  font-size: clamp(24px, 6.4vw, 30px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.02em !important;
+}
+
+body.kol-customer .order-live-status p {
+  margin: 0 !important;
+  color: #5f6b78 !important;
+  font-size: clamp(14px, 3.8vw, 16px) !important;
+  line-height: 1.42 !important;
+}
+
+body.kol-customer .order-countdown-box {
+  display: grid !important;
+  justify-items: center !important;
+  gap: 6px !important;
+  width: min(100%, 260px) !important;
+  margin: 14px auto 0 !important;
+  padding: 14px 16px !important;
+  border: 1px solid #e3e8ef !important;
+  border-radius: 20px !important;
+  background: #f8fafc !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+
+body.kol-customer .order-countdown-box span {
+  color: #778393 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+body.kol-customer .order-countdown-box strong {
+  color: #111827 !important;
+  font-size: clamp(22px, 8vw, 30px) !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+body.kol-customer .order-countdown-box.expired {
+  background: #fff8f1 !important;
+  border-color: #f5d7b0 !important;
+}
+
+body.kol-customer .order-ready-clean-card {
+  min-height: 112px !important;
+  padding: 18px 16px !important;
+  border-radius: 22px !important;
+  border: 1px solid #d9ebdf !important;
+  background: linear-gradient(180deg, #f6fff8 0%, #eef8f1 100%) !important;
+  box-shadow: none !important;
+}
+
+body.kol-customer .order-ready-clean-main {
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+body.kol-customer .order-ready-clean-main span {
+  color: #4b5563 !important;
+  font-size: clamp(15px, 4.6vw, 20px) !important;
+  font-weight: 850 !important;
+  font-style: normal !important;
+}
+
+body.kol-customer .order-ready-clean-main strong {
+  color: #0f172a !important;
+  font-size: clamp(24px, 9vw, 36px) !important;
+  font-weight: 950 !important;
+  line-height: .95 !important;
+  letter-spacing: -0.03em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+body.kol-customer .order-ready-clean-main em {
+  display: none !important;
+}
+
+body.kol-customer .order-ready-clean-card small {
+  display: block !important;
+  margin-top: 8px !important;
+  color: #728090 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+}
+
+body.kol-customer .order-ready-clean-card.is-ready .order-ready-clean-main {
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+
+body.kol-customer .order-ready-clean-card.is-ready .order-ready-clean-main span {
+  color: #166534 !important;
+  font-size: clamp(24px, 7vw, 30px) !important;
+}
+
+body.kol-customer .order-timeout-help {
+  margin-top: 12px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+  line-height: 1.38 !important;
+}
+
+body.kol-customer .customer-receipt-lines {
+  border-radius: 22px !important;
+  padding: 14px 16px !important;
+}
+
+body.kol-customer .customer-receipt-line,
+body.kol-customer .customer-receipt-total {
+  padding-bottom: 10px !important;
+}
+
+body.kol-customer .order-live-close-inline {
+  width: min(100%, 900px) !important;
+  min-height: 48px !important;
+  margin-top: 6px !important;
+  border-radius: 16px !important;
+  font-size: 15px !important;
+}
+
+
+/* ===== V168: larger printed receipt product text + 2s print toast polish ===== */
+.kol-admin .admin-toast {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 22px !important;
+  transform: translateX(-50%) !important;
+  z-index: 1000000 !important;
+  min-width: 240px !important;
+  max-width: calc(100vw - 32px) !important;
+  padding: 13px 18px !important;
+  border-radius: 999px !important;
+  background: #111827 !important;
+  color: #fff !important;
+  text-align: center !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+  box-shadow: 0 14px 40px rgba(15,23,42,.25) !important;
+}
+
+.receipt-image {
+  width: 576px !important;
+  padding: 22px 0 24px !important;
+  font-size: 20px !important;
+  line-height: 1.18 !important;
+}
+
+.receipt-image .receipt-block {
+  margin-left: 22px !important;
+  margin-right: 22px !important;
+  padding: 14px 14px !important;
+}
+
+.receipt-image .receipt-big {
+  font-size: 36px !important;
+  line-height: 1.05 !important;
+}
+
+.receipt-image .receipt-medium {
+  font-size: 32px !important;
+  line-height: 1.08 !important;
+}
+
+.receipt-image .receipt-gap {
+  height: 12px !important;
+}
+
+.receipt-image .receipt-content {
+  padding: 18px 22px 0 !important;
+  font-size: 21px !important;
+  line-height: 1.22 !important;
+}
+
+.receipt-image .receipt-content > b:first-of-type {
+  display: block !important;
+  margin-bottom: 10px !important;
+  font-size: 22px !important;
+}
+
+.receipt-image .receipt-item {
+  margin: 10px 0 18px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px dashed #000 !important;
+}
+
+.receipt-image .receipt-item:last-of-type {
+  border-bottom: 0 !important;
+}
+
+.receipt-image .receipt-item-line {
+  font-size: 26px !important;
+  line-height: 1.12 !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-item-line-priced {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.receipt-image .receipt-sub,
+.receipt-image .receipt-choice,
+.receipt-image .receipt-choice-priced {
+  padding-left: 22px !important;
+  font-size: 22px !important;
+  line-height: 1.18 !important;
+  font-weight: 850 !important;
+}
+
+.receipt-image .receipt-choice-priced {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 10px !important;
+}
+
+.receipt-image .receipt-choice-text,
+.receipt-image .receipt-choice span,
+.receipt-image .receipt-price-row span {
   min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-price-row b,
+.receipt-image .receipt-item-line-priced > b:last-child {
+  white-space: nowrap !important;
+  text-align: right !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-price-row {
+  margin-top: 5px !important;
+}
+
+.receipt-image .receipt-details-title {
+  margin-top: 18px !important;
+  margin-bottom: 12px !important;
+  font-size: 30px !important;
+  font-weight: 1000 !important;
+  line-height: 1.05 !important;
+}
+
+.receipt-image .receipt-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 14px !important;
+  margin-top: 9px !important;
+  font-size: 24px !important;
+  line-height: 1.15 !important;
+}
+
+.receipt-image .receipt-detail-row b {
+  text-align: right !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-note {
+  font-size: 23px !important;
+  line-height: 1.2 !important;
+}
+
+
+/* ===== V169: bigger printed receipt, no Pris pr stk/Linjetotal, fixed admin list width, wider cart ===== */
+/* PRINT: Ürünler fişte daha büyük ve okunur; gereksiz satırlar HTML'den kaldırıldı. */
+.receipt-image {
+  width: 576px !important;
+  padding: 22px 0 24px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 22px !important;
+  line-height: 1.18 !important;
+}
+
+.receipt-image .receipt-content {
+  padding: 16px 24px 0 !important;
+  font-size: 22px !important;
+}
+
+.receipt-image .receipt-content > b {
+  display: block !important;
+  margin: 0 0 10px !important;
+  font-size: 21px !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-item {
+  margin: 12px 0 18px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px dashed #000 !important;
+}
+
+.receipt-image .receipt-item-line,
+.receipt-image .receipt-item-line-priced {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: start !important;
+  font-size: 24px !important;
+  line-height: 1.12 !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-item-line b,
+.receipt-image .receipt-item-line-priced b {
+  font-size: 24px !important;
+  line-height: 1.12 !important;
+  font-weight: 950 !important;
+}
+
+.receipt-image .receipt-sub,
+.receipt-image .receipt-choice,
+.receipt-image .receipt-choice-priced {
+  padding-left: 28px !important;
+  font-size: 21px !important;
+  line-height: 1.18 !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-choice-priced {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+}
+
+.receipt-image .receipt-choice-text,
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-choice-priced b {
+  font-size: 21px !important;
+  line-height: 1.18 !important;
+  font-weight: 850 !important;
+}
+
+.receipt-image .receipt-details-title {
+  margin-top: 14px !important;
+  font-size: 29px !important;
+  line-height: 1.12 !important;
+  font-weight: 1000 !important;
+}
+
+.receipt-image .receipt-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  margin-top: 10px !important;
+  font-size: 25px !important;
+  line-height: 1.15 !important;
+}
+
+.receipt-image .receipt-detail-row span,
+.receipt-image .receipt-detail-row b {
+  font-size: 25px !important;
+  line-height: 1.15 !important;
+}
+
+.receipt-image .receipt-note {
+  font-size: 22px !important;
+  line-height: 1.2 !important;
+}
+
+/* ADMIN ORDERS: liste/kutular boydan boya, scroll her zaman çalışsın. */
+body.kol-admin.admin-orders-mode,
+body.kol-admin:has([data-admin-page="orders"].active) {
+  --kol-admin-max: 1200px !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell,
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active,
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  width: min(100vw, 1200px) !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 body.kol-admin.admin-orders-mode .orders-app-card,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
   display: flex !important;
   flex-direction: column !important;
-  width: min(100%, 1200px) !important;
-  max-width: 1200px !important;
-  min-width: 0 !important;
-  min-height: calc(100svh - var(--kol-header-h) - 14px) !important;
-  height: calc(100svh - var(--kol-header-h) - 14px) !important;
-  max-height: calc(100svh - var(--kol-header-h) - 14px) !important;
+  min-height: calc(100svh - var(--kol-header-h, 56px) - 8px) !important;
+  height: calc(100svh - var(--kol-header-h, 56px) - 8px) !important;
+  max-height: calc(100svh - var(--kol-header-h, 56px) - 8px) !important;
   overflow: hidden !important;
 }
 
@@ -21568,26 +22023,24 @@ body.kol-admin.admin-orders-mode .orders-app-list,
 body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-admin-list,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list {
-  display: block !important;
   width: 100% !important;
-  min-width: 0 !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: auto !important;
-  max-height: none !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 0 0 10px !important;
-  margin: 0 !important;
+  padding: 0 10px 10px !important;
   scrollbar-gutter: stable !important;
+  background: #fff !important;
 }
 
 body.kol-admin.admin-orders-mode .orders-app-list-inner,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
   display: grid !important;
+  grid-template-columns: minmax(0,1fr) !important;
   width: 100% !important;
   min-width: 0 !important;
-  grid-template-columns: minmax(0, 1fr) !important;
+  max-width: none !important;
   justify-items: stretch !important;
   align-content: start !important;
   gap: 8px !important;
@@ -21596,294 +22049,283 @@ body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
 body.kol-admin.admin-orders-mode .orders-app-item,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
   width: 100% !important;
+  max-width: none !important;
   min-width: 0 !important;
-  max-width: 100% !important;
-  grid-template-columns: minmax(0, 1fr) 56px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 58px !important;
+  min-height: 96px !important;
+  height: 96px !important;
 }
 
 body.kol-admin.admin-orders-mode .orders-app-row,
 body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
   width: 100% !important;
-  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 96px !important;
+  height: 96px !important;
+  grid-template-columns: 40px minmax(0,1fr) 110px 130px !important;
+  gap: 12px !important;
 }
 
-/* Menu editor: sağ panel daha geniş ve esnek olsun, metin sıkışmasın. */
-.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
-.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
-  width: min(1720px, calc(100vw - 30px)) !important;
-  min-width: 1280px !important;
-  grid-template-columns: minmax(760px, 1fr) minmax(430px, 500px) !important;
-  gap: 24px !important;
-  align-items: start !important;
+body.kol-admin.admin-orders-mode .orders-app-main strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-main strong {
+  font-size: 19px !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+body.kol-admin.admin-orders-mode .orders-app-side strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side strong {
+  font-size: 17px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+  min-width: 70px !important;
+  width: auto !important;
+  max-width: 110px !important;
+  height: 38px !important;
+  font-size: 18px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* CUSTOMER CART: kenar boşlukları azalsın, ürün yazısı biraz büyüsün. */
+body.kol-customer .cart-panel,
+body.kol-customer .cart-content-scroll {
   width: 100% !important;
-  min-width: 430px !important;
-  max-width: 500px !important;
-  padding: 16px !important;
+  max-width: 1200px !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+body.kol-customer .cart-content-scroll {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+body.kol-customer .cart-order-card,
+body.kol-customer .cart-items,
+body.kol-customer .cart-summary,
+body.kol-customer .checkout-form {
+  width: 100% !important;
+  max-width: 1200px !important;
+}
+
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-main > strong {
+  font-size: 17px !important;
+  line-height: 1.18 !important;
+}
+
+body.kol-customer .cart-detail-row span,
+body.kol-customer .cart-detail-row .cart-detail-text,
+body.kol-customer .cart-detail-row .cart-detail-text-plain,
+body.kol-customer .cart-detail-row .cart-detail-label,
+body.kol-customer .cart-detail-row .cart-detail-value {
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+}
+
+body.kol-customer .cart-detail-row strong {
+  font-size: 15px !important;
+}
+
+
+/* ===== V170: cart fills empty side space + larger cart/printed receipt item text ===== */
+/* Customer cart: remove the remaining side gap in desktop/tablet cart view. */
+body.kol-customer .cart-panel {
+  width: min(100vw, 1200px) !important;
+  max-width: 1200px !important;
+}
+
+body.kol-customer .cart-content-scroll {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  gap: 10px !important;
+}
+
+body.kol-customer .cart-order-card,
+body.kol-customer .cart-sales-card,
+body.kol-customer .cart-items,
+body.kol-customer .cart-summary,
+body.kol-customer .checkout-form,
+body.kol-customer .cart-empty {
+  width: calc(100% - 20px) !important;
+  max-width: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.kol-customer .cart-items {
+  border-radius: 18px 18px 0 0 !important;
+}
+
+body.kol-customer .cart-summary {
+  border-radius: 0 0 18px 18px !important;
+}
+
+/* Cart line text: one more readable step up, without destroying compact receipt style. */
+body.kol-customer .cart-item {
+  padding: 11px 12px !important;
+}
+
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-head h3,
+body.kol-customer .cart-item-title,
+body.kol-customer .cart-item-main > strong {
+  font-size: 18px !important;
+  line-height: 1.18 !important;
+  font-weight: 650 !important;
+}
+
+body.kol-customer .cart-detail-row,
+body.kol-customer .cart-item-detail-row,
+body.kol-customer .cart-line-row,
+body.kol-customer .receipt-line-row,
+body.kol-customer .cart-receipt-detail-row {
+  min-height: 18px !important;
+}
+
+body.kol-customer .cart-item-details,
+body.kol-customer .cart-detail-row span,
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-detail-row b,
+body.kol-customer .cart-detail-text,
+body.kol-customer .cart-detail-text-plain,
+body.kol-customer .cart-detail-label,
+body.kol-customer .cart-detail-value,
+body.kol-customer .cart-item-note {
+  font-size: 16px !important;
+  line-height: 1.28 !important;
+}
+
+body.kol-customer .cart-detail-label {
+  font-weight: 760 !important;
+}
+
+body.kol-customer .cart-detail-value,
+body.kol-customer .cart-detail-text,
+body.kol-customer .cart-detail-text-plain {
+  font-weight: 500 !important;
+}
+
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-line-total {
+  font-size: 16px !important;
+  font-weight: 750 !important;
+}
+
+@media (max-width: 600px) {
+  body.kol-customer .cart-order-card,
+  body.kol-customer .cart-sales-card,
+  body.kol-customer .cart-items,
+  body.kol-customer .cart-summary,
+  body.kol-customer .checkout-form,
+  body.kol-customer .cart-empty {
+    width: calc(100% - 10px) !important;
+  }
+
+  body.kol-customer .cart-item h3,
+  body.kol-customer .cart-item-head h3,
+  body.kol-customer .cart-item-title,
+  body.kol-customer .cart-item-main > strong {
+    font-size: 15px !important;
+  }
+
+  body.kol-customer .cart-item-details,
+  body.kol-customer .cart-detail-row span,
+  body.kol-customer .cart-detail-row strong,
+  body.kol-customer .cart-detail-row b,
+  body.kol-customer .cart-detail-text,
+  body.kol-customer .cart-detail-text-plain,
+  body.kol-customer .cart-detail-label,
+  body.kol-customer .cart-detail-value,
+  body.kol-customer .cart-item-note {
+    font-size: 13px !important;
+  }
+}
+
+/* Printed PNG receipt: product and extra text much larger for Epson print readability. */
+.receipt-image {
+  width: 576px !important;
+  padding: 20px 0 22px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 27px !important;
+  line-height: 1.16 !important;
+}
+
+.receipt-image .receipt-content {
+  padding: 14px 20px 0 !important;
+  font-size: 27px !important;
+}
+
+.receipt-image .receipt-content > b {
+  font-size: 26px !important;
+  line-height: 1.1 !important;
+  margin-bottom: 12px !important;
+}
+
+.receipt-image .receipt-item {
+  margin: 14px 0 20px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 2px dashed #000 !important;
+}
+
+.receipt-image .receipt-item-line,
+.receipt-image .receipt-item-line-priced {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   gap: 12px !important;
-  align-items: start !important;
+  font-size: 31px !important;
+  line-height: 1.08 !important;
+  font-weight: 1000 !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading > div,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading .group-heading-copy {
-  min-width: 0 !important;
+.receipt-image .receipt-item-line b,
+.receipt-image .receipt-item-line-priced b {
+  font-size: 31px !important;
+  line-height: 1.08 !important;
+  font-weight: 1000 !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading h2,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h2,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h3 {
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
+.receipt-image .receipt-sub,
+.receipt-image .receipt-choice,
+.receipt-image .receipt-choice-priced {
+  padding-left: 34px !important;
+  margin-top: 4px !important;
+  font-size: 27px !important;
   line-height: 1.12 !important;
+  font-weight: 900 !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading span,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel p,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel small {
-  display: block !important;
-  max-width: none !important;
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-  line-height: 1.38 !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
-  width: 100% !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups > * {
-  width: 100% !important;
-  min-width: 0 !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title strong,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title span {
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-}
-
-@media (max-width: 1380px) {
-  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
-  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
-    width: 1320px !important;
-    min-width: 1320px !important;
-    grid-template-columns: minmax(780px, 1fr) 460px !important;
-  }
-
-  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
-    min-width: 460px !important;
-    max-width: 460px !important;
-  }
-}
-
-
-/* ===== V167: Meny oppsett fits screen + Bestillinger fills height with scroll ===== */
-/* MENY OPPSETT: iki panel ekrana sığsın; genel yatay taşma yapmasın. */
-.kol-admin .admin-page[data-admin-page="menu"].active,
-.kol-admin .menu-editor-page.active {
-  overflow-x: hidden !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-editor-header {
-  width: min(100%, 1280px) !important;
-  min-width: 0 !important;
-  max-width: 1280px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
-.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
-  width: min(100%, 1280px) !important;
-  max-width: 1280px !important;
-  min-width: 0 !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) clamp(330px, 29vw, 390px) !important;
-  gap: 16px !important;
-  align-items: start !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
-.kol-admin .admin-page[data-admin-page="menu"].active .category-list,
-.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 390px !important;
-  justify-self: stretch !important;
-  box-sizing: border-box !important;
-  height: calc(100svh - var(--kol-header-h, 56px) - 82px) !important;
-  max-height: calc(100svh - var(--kol-header-h, 56px) - 82px) !important;
-  overflow: hidden !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+.receipt-image .receipt-choice-priced {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
-  gap: 8px !important;
-  align-items: start !important;
+  gap: 10px !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading h2 {
-  font-size: 18px !important;
-  line-height: 1.1 !important;
-  white-space: normal !important;
-  overflow-wrap: normal !important;
+.receipt-image .receipt-choice-text,
+.receipt-image .receipt-choice-text span,
+.receipt-image .receipt-choice-text b,
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-choice-priced b {
+  font-size: 27px !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading span,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel p,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel small {
-  font-size: 11px !important;
-  line-height: 1.25 !important;
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
+.receipt-image .receipt-note {
+  font-size: 27px !important;
+  line-height: 1.14 !important;
+  font-weight: 950 !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  width: 100% !important;
+.receipt-image .receipt-details-title {
+  font-size: 32px !important;
 }
 
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups > * {
-  width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-}
-
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title strong,
-.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title span {
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-}
-
-@media (max-width: 1180px) {
-  .kol-admin .admin-page[data-admin-page="menu"].active {
-    overflow-x: auto !important;
-  }
-
-  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-editor-header,
-  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
-  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
-    width: 1120px !important;
-    min-width: 1120px !important;
-    max-width: none !important;
-  }
-
-  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
-  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
-    grid-template-columns: minmax(0, 1fr) 340px !important;
-  }
-}
-
-/* BESTILLINGER: liste beyaz alanı aşağı kadar doldursun ve çok siparişte kendi içinde scroll etsin. */
-body.kol-admin.admin-orders-mode,
-body.kol-admin:has([data-admin-page="orders"].active) {
-  overflow: hidden !important;
-}
-
-body.kol-admin.admin-orders-mode .admin-shell,
-body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
-  display: flex !important;
-  flex-direction: column !important;
-  width: min(100vw, 1200px) !important;
-  max-width: 1200px !important;
-  min-height: calc(100svh - var(--kol-header-h, 56px)) !important;
-  height: calc(100svh - var(--kol-header-h, 56px)) !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  background: #fff !important;
-}
-
-body.kol-admin.admin-orders-mode .admin-page[data-admin-page="orders"].active,
-body.kol-admin.admin-orders-mode .orders-workspace.active,
-body.kol-admin:has([data-admin-page="orders"].active) .admin-page[data-admin-page="orders"].active,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  overflow: hidden !important;
-  background: #fff !important;
-}
-
-body.kol-admin.admin-orders-mode .orders-app-card,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-  max-width: 1200px !important;
-  min-height: 100% !important;
-  height: 100% !important;
-  max-height: 100% !important;
-  margin: 0 auto !important;
-  overflow: hidden !important;
-  background: #fff !important;
-}
-
-body.kol-admin.admin-orders-mode .orders-app-header,
-body.kol-admin.admin-orders-mode .orders-app-toolbar,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-toolbar {
-  flex: 0 0 auto !important;
-}
-
-body.kol-admin.admin-orders-mode #ordersAdminList,
-body.kol-admin.admin-orders-mode .orders-admin-list,
-body.kol-admin.admin-orders-mode .orders-app-list,
-body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-admin-list,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  background: #fff !important;
-  padding: 0 0 12px !important;
-  scrollbar-gutter: stable !important;
-}
-
-body.kol-admin.admin-orders-mode .orders-app-list-inner,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
-  width: 100% !important;
-  min-width: 0 !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  justify-items: stretch !important;
-  align-content: start !important;
-  gap: 8px !important;
-  background: #fff !important;
-}
-
-body.kol-admin.admin-orders-mode .orders-app-item,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item,
-body.kol-admin.admin-orders-mode .orders-app-row,
-body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+.receipt-image .receipt-detail-row,
+.receipt-image .receipt-detail-row span,
+.receipt-image .receipt-detail-row b {
+  font-size: 27px !important;
+  line-height: 1.15 !important;
 }

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=167">
+    <link rel="stylesheet" href="kol-core.css?v=170">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -389,13 +389,13 @@ function setStatus(message) {
   if (message.toLowerCase().includes("lagret")) showToast(message);
 }
 
-function showToast(message) {
+function showToast(message, duration = 2000) {
   adminToast.textContent = message;
   adminToast.hidden = false;
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => {
     adminToast.hidden = true;
-  }, 1350);
+  }, duration);
 }
 
 
@@ -2060,8 +2060,6 @@ function buildEscposReceipt(order = {}) {
     receiptExtraDetailRows(line).forEach((detail) => {
       text += receiptLine(`   ${detail.label}`, detail.priceText || "", width);
     });
-    text += receiptLine("   Pris pr stk:", priceRows.unitText, width);
-    text += receiptLine("   Linjetotal:", priceRows.totalText, width);
     if (line.note) text += receiptWrap(`Notat: ${line.note}`, "   ", width);
     text += "\n";
   });
@@ -2209,8 +2207,6 @@ function buildReceiptImageHtml(order = {}) {
           <b>${escapeHtml(prices.totalText)}</b>
         </div>
         ${details.map(receiptOptionDetailHtml).join("")}
-        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Pris pr stk:</span><b>${escapeHtml(prices.unitText)}</b></div>
-        <div class="receipt-sub receipt-choice receipt-choice-priced receipt-price-row"><span>Linjetotal:</span><b>${escapeHtml(prices.totalText)}</b></div>
         ${line.note ? `<div class="receipt-note">❗ ${escapeHtml(line.note)}</div>` : ""}
       </div>
     `;
@@ -2273,14 +2269,15 @@ async function printOrderReceipt(orderId, overrides = {}) {
     });
     const imageBase64 = canvas.toDataURL("image/png");
 
-    await fetch("http://127.0.0.1:5050/", {
+    const printResponse = await fetch("http://127.0.0.1:5050/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image: imageBase64 })
     });
+    if (!printResponse.ok) throw new Error(`Printer-server svarte ${printResponse.status}`);
 
-    setStatus("Kvittering sendt til skriver.");
-    showToast("Kvittering sendt til skriver.");
+    setStatus("Kvittering skrevet ut.");
+    showToast("Kvittering skrevet ut", 2000);
   try {
     await ordersRef.child(orderId).update({
       printed: true,
@@ -2291,7 +2288,8 @@ async function printOrderReceipt(orderId, overrides = {}) {
   }
   } catch (error) {
     console.error(error);
-    alert("Kunne ikke sende bildekvittering til skriver. Sjekk at printer-serveren kjører på http://127.0.0.1:5050/.");
+    setStatus("Kvittering kunne ikke skrives ut.");
+    showToast("Kvittering kunne ikke skrives ut", 2000);
   } finally {
     holder.remove();
   }

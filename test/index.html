@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=167">
+    <link rel="stylesheet" href="kol-core.css?v=170">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -1435,9 +1435,9 @@ function orderStatusText(status = "pending") {
 }
 
 function orderStatusTitle(status = "pending") {
-  if (status === "accepted") return "Bestillingen er godkjent";
-  if (status === "cancelled") return "Bestillingen er kansellert";
-  return "Venter på godkjenning";
+  if (status === "accepted") return "Bestillingen er bekreftet";
+  if (status === "cancelled") return "Bestillingen ble kansellert";
+  return "Bestillingen er sendt";
 }
 
 function getCustomerReadyAt(order = {}) {
@@ -1479,10 +1479,10 @@ function orderReadySummaryText(order = {}) {
 function orderReadyClockText(order = {}) {
   if ((order.status || "pending") !== "accepted") return "";
   if (order.pickup?.mode === "later" && order.pickup?.time) {
-    return `Hentetid kl. ${formatClock(order.pickup.time)}`;
+    return `Hentetid ${formatClock(order.pickup.time)}`;
   }
   const readyAt = getCustomerReadyAt(order);
-  return readyAt.getTime() <= Date.now() ? "Maten er klar nå" : `Ca. klar kl. ${formatClock(readyAt)}`;
+  return readyAt.getTime() <= Date.now() ? "Klar nå" : `Ca. ${formatClock(readyAt)}`;
 }
 
 function orderReadyDisplayParts(order = {}) {
@@ -1493,7 +1493,7 @@ function orderReadyDisplayParts(order = {}) {
 
   if (order.pickup?.mode === "later" && order.pickup?.time) {
     return {
-      label: "Kom og hent kl.",
+      label: "Hent kl.",
       value: formatClock(order.pickup.time),
       unit: "",
       clock: orderReadyClockText(order)
@@ -1503,17 +1503,17 @@ function orderReadyDisplayParts(order = {}) {
   const readyText = orderReadyMinutesText(order) || `${Math.max(1, Number(order.readyMinutes || 10) || 10)}:00`;
   if (readyText === "Maten er klar") {
     return {
-      label: "Maten er klar",
+      label: "Klar for henting",
       value: "",
       unit: "",
-      clock: "Kom og hent når du kan."
+      clock: "Kom og hent når det passer."
     };
   }
 
   return {
-    label: "Kom og hent om",
+    label: "Klar om",
     value: readyText,
-    unit: "min",
+    unit: "",
     clock: orderReadyClockText(order)
   };
 }
@@ -1521,11 +1521,11 @@ function orderReadyDisplayParts(order = {}) {
 function orderShortMessage(order = {}) {
   const status = order.status || "pending";
   if (status === "accepted") return orderReadySummaryText(order);
-  if (status === "cancelled") return "Restauranten har kansellert bestillingen.";
+  if (status === "cancelled") return "Ta kontakt med restauranten hvis du trenger hjelp.";
   if (isOrderWaitingForOpening(order)) {
-    return `Restauranten er stengt nå. Bestillingen behandles når vi åpner kl. ${formatClock(order.processableAfter)}.`;
+    return `Vi åpner kl. ${formatClock(order.processableAfter)}. Bestillingen behandles da.`;
   }
-  return "Bestillingen er sendt. Vent på bekreftelse fra restauranten.";
+  return "Vi venter på bekreftelse fra restauranten.";
 }
 
 
@@ -2076,7 +2076,7 @@ function orderStatusHtml(order = {}, options = {}) {
     : status === "pending"
       ? formatCountdown(deadline.getTime() - Date.now())
       : "";
-  const countdownLabel = waitingOpen ? "Venter til åpning" : "Svarfrist:";
+  const countdownLabel = waitingOpen ? "Åpner" : "Svar innen";
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
 
   const message = status === "pending" ? orderShortMessage(order) : "";
@@ -2096,7 +2096,7 @@ function orderStatusHtml(order = {}, options = {}) {
       </div>
       <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status)}</h3>
       ${message ? `<p>${message}</p>` : ""}
-      ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Tar litt ekstra tid" : countdownText}</strong></div>${expiredHelp}` : ""}
+      ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Litt forsinket" : countdownText}</strong></div>${expiredHelp}` : ""}
       ${status === "accepted" ? `<div class="order-ready-clean-card ${readyParts.label === "Maten er klar" ? "is-ready" : "is-counting"}"><div class="order-ready-clean-main"><span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span>${readyParts.value ? `<strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong>` : `<strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>`}${readyParts.unit ? `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em>` : `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>`}</div><small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock)}</small></div>` : ""}
       ${status === "cancelled" ? `<div class="order-mini-info single"><span>Status</span><strong>${escapeAttribute(readySummary)}</strong></div>` : ""}
     </div>
