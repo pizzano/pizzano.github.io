@@ -16825,3 +16825,2231 @@ body.kol-admin {
     max-width: 240px !important;
   }
 }
+
+/* ===== V139: GloriaFood-like Meny oppsett editor ===== */
+.kol-admin .menu-editor-page.active {
+  background: #f2f0ec !important;
+  border-radius: 18px !important;
+  padding: 12px !important;
+}
+
+.kol-admin .gf-menu-editor-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  min-width: 1080px !important;
+  margin: 0 0 12px !important;
+  padding: 12px 14px !important;
+  border: 1px solid #dfe3e8 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .045) !important;
+}
+
+.kol-admin .gf-menu-editor-header h1 {
+  margin: 0 !important;
+  color: #27313f !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  letter-spacing: -.02em !important;
+}
+
+.kol-admin .gf-menu-editor-header span {
+  display: block !important;
+  margin-top: 2px !important;
+  color: #7a8491 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.kol-admin .gf-menu-editor-back {
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  border: 1px solid #f0c99d !important;
+  border-radius: 10px !important;
+  background: #fff7ed !important;
+  color: #b45309 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid {
+  display: grid !important;
+  grid-template-columns: minmax(730px, 1fr) 330px !important;
+  gap: 16px !important;
+  align-items: start !important;
+  min-width: 1080px !important;
+  height: calc(100% - 66px) !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list {
+  margin-right: 0 !important;
+  width: auto !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 2px 120px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading > div {
+  display: block !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading h1 {
+  margin: 0 !important;
+  color: #3a4350 !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] .category-builder-heading span {
+  display: block !important;
+  margin-top: 2px !important;
+  color: #7d8794 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] #addCategory,
+.kol-admin .admin-page[data-admin-page="menu"] #addCategoryBottom,
+.kol-admin .admin-page[data-admin-page="menu"] .gf-add-product {
+  min-height: 33px !important;
+  border: 1px solid #cfd8df !important;
+  border-radius: 3px !important;
+  background: #fff !important;
+  color: #4f5965 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] #addCategory:hover,
+.kol-admin .admin-page[data-admin-page="menu"] #addCategoryBottom:hover,
+.kol-admin .admin-page[data-admin-page="menu"] .gf-add-product:hover {
+  border-color: #22b455 !important;
+  color: #15803d !important;
+  background: #f3fff6 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"] #categoryButtons {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.kol-admin .gf-category-card {
+  border: 1px solid #dfe4e8 !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .035) !important;
+  overflow: visible !important;
+}
+
+.kol-admin .gf-category-card.active {
+  border-color: #35b65a !important;
+  box-shadow: 0 0 0 1px rgba(53, 182, 90, .28), 0 3px 10px rgba(15, 23, 42, .045) !important;
+}
+
+.kol-admin .gf-category-row {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 42px !important;
+  background: #fff !important;
+  overflow: visible !important;
+}
+
+.kol-admin .gf-category-choice {
+  display: grid !important;
+  grid-template-columns: 20px 64px minmax(0, 1fr) 42px 24px !important;
+  gap: 10px !important;
+  align-items: center !important;
+  min-height: 80px !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  text-align: left !important;
+}
+
+.kol-admin .gf-category-handle,
+.kol-admin .gf-product-drag {
+  display: grid !important;
+  place-items: center !important;
+  color: #a0a7b0 !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+}
+
+.kol-admin .gf-category-choice .category-thumb {
+  width: 62px !important;
+  height: 50px !important;
+  border-radius: 2px !important;
+  border: 1px solid #d9dee4 !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .category-thumb img,
+.kol-admin .product-mini-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.kol-admin .gf-category-copy {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+.kol-admin .gf-category-copy strong {
+  color: #2d3642 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.kol-admin .gf-category-copy span {
+  color: #7a8491 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.kol-admin .gf-category-count {
+  justify-self: end !important;
+  min-width: 28px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  background: #f0f3f5 !important;
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+.kol-admin .gf-category-chevron {
+  color: #858f9b !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+.kol-admin .gf-category-menu-button {
+  min-height: 100% !important;
+  border: 0 !important;
+  border-left: 1px solid #e4e8ec !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #8c96a3 !important;
+  font-size: 23px !important;
+  line-height: 1 !important;
+}
+
+.kol-admin [data-admin-page="menu"] .gf-category-menu {
+  right: 4px !important;
+  top: calc(100% + 2px) !important;
+  min-width: 190px !important;
+  border-radius: 4px !important;
+  border: 1px solid #d7dde3 !important;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, .14) !important;
+}
+
+.kol-admin .gf-inline-category-editor,
+.kol-admin .gf-product-editor-mount {
+  margin: 0 42px 10px 94px !important;
+  padding: 10px !important;
+  border: 1px solid #78d08e !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, .045) !important;
+}
+
+.kol-admin .gf-inline-category-editor input,
+.kol-admin .gf-inline-category-editor textarea,
+.kol-admin .inline-product-edit-form input,
+.kol-admin .inline-product-edit-form textarea,
+.kol-admin .inline-product-edit-form select {
+  border-radius: 2px !important;
+  border: 1px solid #9ee6af !important;
+  background: #fff !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.kol-admin .gf-product-list {
+  display: grid !important;
+  gap: 7px !important;
+  padding: 0 42px 10px 94px !important;
+  background: #f7f5f1 !important;
+}
+
+.kol-admin .gf-empty-products {
+  margin: 4px 0 !important;
+  padding: 12px !important;
+  border: 1px dashed #cbd5df !important;
+  border-radius: 3px !important;
+  background: #fff !important;
+  color: #7a8491 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.kol-admin .gf-product-row {
+  display: grid !important;
+  grid-template-columns: 18px 46px minmax(0, 1fr) auto 22px !important;
+  gap: 10px !important;
+  align-items: center !important;
+  min-height: 58px !important;
+  padding: 7px 9px !important;
+  border: 1px solid #dfe4e8 !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.kol-admin .gf-product-row.active,
+.kol-admin .gf-product-block.active .gf-product-row {
+  border-color: #39b95c !important;
+  background: #fbfffc !important;
+  box-shadow: inset 3px 0 0 #39b95c !important;
+}
+
+.kol-admin .gf-product-row .product-mini-thumb {
+  width: 44px !important;
+  height: 40px !important;
+  border-radius: 2px !important;
+  border: 1px solid #d9dee4 !important;
+}
+
+.kol-admin .gf-product-copy {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+.kol-admin .gf-product-copy strong {
+  color: #303a46 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.kol-admin .gf-product-copy > span:not(.status-badge-row) {
+  color: #7c8794 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.kol-admin .gf-product-price {
+  color: #4f5965 !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.kol-admin .gf-product-open {
+  color: #8c96a3 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+.kol-admin .gf-add-product {
+  justify-self: start !important;
+  margin-top: 1px !important;
+  padding: 0 12px !important;
+}
+
+.kol-admin .inline-product-edit-form.product-editor-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 150px 150px !important;
+  gap: 8px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.kol-admin .inline-product-edit-form .product-prices,
+.kol-admin .inline-product-edit-form .assigned-groups,
+.kol-admin .inline-product-edit-form .product-availability {
+  border-radius: 2px !important;
+  border: 1px solid #e1e6eb !important;
+  background: #fbfcfd !important;
+}
+
+.kol-admin .inline-product-edit-form .mini-heading h3 {
+  color: #3c4652 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .inline-product-edit-form .mini-heading span {
+  color: #7c8794 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.kol-admin .inline-product-edit-form .form-actions button:first-child {
+  border-color: #28b64f !important;
+  background: #35bf5e !important;
+  color: #fff !important;
+  border-radius: 3px !important;
+  min-height: 34px !important;
+}
+
+.kol-admin .inline-product-edit-form .danger-light,
+.kol-admin .inline-product-edit-form #deleteProduct {
+  border-radius: 3px !important;
+  min-height: 34px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+  position: sticky !important;
+  top: calc(var(--kol-header-h, 56px) + 12px) !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: calc(100dvh - var(--kol-header-h, 56px) - 42px) !important;
+  max-height: calc(100dvh - var(--kol-header-h, 56px) - 42px) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 12px !important;
+  border: 1px solid #dfe4e8 !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .045) !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 0 8px !important;
+  border-bottom: 1px solid #edf0f3 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading h2 {
+  color: #414b58 !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading span {
+  color: #7c8794 !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #addOptionGroup {
+  min-height: 30px !important;
+  padding: 0 9px !important;
+  border-radius: 3px !important;
+  border: 1px solid #cfd8df !important;
+  background: #fff !important;
+  color: #4f5965 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
+  display: block !important;
+  flex: 1 1 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  scrollbar-gutter: stable !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card {
+  margin: 0 0 8px !important;
+  border: 1px solid #dfe4e8 !important;
+  border-radius: 2px !important;
+  background: #f4f1ed !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 34px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title {
+  position: relative !important;
+  padding: 11px 8px 11px 34px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title::before {
+  content: "+" !important;
+  position: absolute !important;
+  left: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 2px !important;
+  background: #9aa0a6 !important;
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card.editing .option-group-title::before {
+  content: "−" !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title strong {
+  color: #4a5562 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title span {
+  color: #818b97 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-menu-button {
+  border-left: 1px solid #dfe4e8 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #8c96a3 !important;
+  font-size: 20px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor {
+  margin: 0 !important;
+  padding: 8px !important;
+  border-top: 1px solid #dfe4e8 !important;
+  background: #fff !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-option-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 58px 58px 24px !important;
+  gap: 5px !important;
+  align-items: end !important;
+  padding: 5px 0 !important;
+  border-bottom: 1px solid #eef1f4 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor input,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-editor select {
+  min-height: 26px !important;
+  height: 26px !important;
+  border-radius: 2px !important;
+  border: 1px solid #d4dbe2 !important;
+  padding: 3px 5px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .group-card-actions button {
+  border-radius: 3px !important;
+}
+
+@media (max-width: 1100px) {
+  .kol-admin .menu-editor-page.active {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid {
+    min-width: 1080px !important;
+    grid-template-columns: minmax(730px, 1fr) 330px !important;
+    height: auto !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    position: sticky !important;
+    top: calc(var(--kol-header-h, 56px) + 12px) !important;
+    height: calc(100dvh - var(--kol-header-h, 56px) - 42px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 56px) - 42px) !important;
+  }
+}
+
+
+/* ===== V140: Meny oppsett kategori listesi icinde kesin scroll =====
+   Sorun: PC modunda body/page overflow kapali oldugu icin uzun kategori listesinde alta inilemiyordu.
+   Cozum: Meny oppsett sayfasi sabit yukseklikte flex olur; kategori listesi (#categoryButtons)
+   kendi icinde scroll yapar. Header ve Add category butonlari yerinde kalir. */
+.kol-admin .admin-page[data-admin-page="menu"].active.menu-editor-page,
+.kol-admin .admin-page[data-admin-page="menu"].active {
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100dvh - var(--kol-header-h, 64px) - 26px) !important;
+  max-height: calc(100dvh - var(--kol-header-h, 64px) - 26px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-editor-header {
+  flex: 0 0 auto !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  align-items: stretch !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list.menu-builder-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel.category-list {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .category-builder-heading,
+.kol-admin .admin-page[data-admin-page="menu"].active #addCategoryBottom {
+  flex: 0 0 auto !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons.category-card-list,
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 8px 120px 0 !important;
+  margin: 0 !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-gutter: stable !important;
+  scroll-behavior: smooth !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons::-webkit-scrollbar {
+  width: 9px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons::-webkit-scrollbar-thumb {
+  background: #c9d1db !important;
+  border-radius: 999px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, .04) !important;
+  border-radius: 999px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active #addCategoryBottom {
+  margin-top: 8px !important;
+  align-self: flex-start !important;
+}
+
+/* Dar ekranda da PC canvas korunur ama dikey scroll kategori kutusunun icinde calisir. */
+@media (max-width: 1100px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active.menu-editor-page,
+  .kol-admin .admin-page[data-admin-page="menu"].active {
+    height: calc(100dvh - var(--kol-header-h, 64px) - 22px) !important;
+    max-height: calc(100dvh - var(--kol-header-h, 64px) - 22px) !important;
+    overflow: hidden !important;
+  }
+
+  .kol-admin .menu-editor-page.active {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+}
+
+/* ===== V141: Bestillinger inner scroll + fjernet Pågår/Klar-filter ===== */
+.kol-admin:has([data-admin-page="orders"].active) {
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.kol-admin:has([data-admin-page="orders"].active) .admin-shell,
+.kol-admin.admin-orders-mode .admin-shell {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .orders-app-card {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .orders-app-header {
+  flex: 0 0 auto !important;
+}
+
+.kol-admin .orders-app-tabs {
+  display: none !important;
+}
+
+.kol-admin .orders-app-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+  scrollbar-width: thin !important;
+}
+
+.kol-admin .orders-app-list-inner {
+  min-height: 100% !important;
+}
+
+.kol-admin #ordersConnectionText.is-online .orders-status-dot {
+  background: #22c55e !important;
+  box-shadow: 0 0 0 4px #e8f7ee !important;
+}
+
+.kol-admin #ordersConnectionText.is-offline {
+  color: #b42318 !important;
+}
+
+.kol-admin #ordersConnectionText.is-offline .orders-status-dot {
+  background: #ef4444 !important;
+  box-shadow: 0 0 0 4px #fee2e2 !important;
+}
+
+/* ===== V143: Bestillinger - robust scroll i alle visninger + kun dagens ordre ===== */
+body.kol-admin.admin-orders-mode,
+body.kol-admin:has([data-admin-page="orders"].active) {
+  padding-top: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-header,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header {
+  flex: 0 0 auto !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list,
+body.kol-admin.admin-orders-mode #ordersAdminList,
+body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  display: grid !important;
+  gap: 0 !important;
+  min-height: max-content !important;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+}
+
+@media (orientation: landscape) {
+  body.kol-admin.admin-orders-mode .orders-app-header,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+}
+
+/* V143 ekstra: sipariş detayında da uzun fişler her ekranda içten kayabilsin. */
+body.kol-admin .admin-order-modal,
+body.kol-admin .admin-order-modal-backdrop {
+  min-height: 0 !important;
+}
+
+body.kol-admin .admin-order-modal-body,
+body.kol-admin .admin-order-modal-body-v28,
+body.kol-admin .admin-order-modal-body-v36 {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+}
+
+/* ===== V144: tablet width + compact Meny oppsett editor ===== */
+/* Bestillinger: telefon/tablet ekranı 900px'e kadar tam doldursun, büyük ekranda 900px'te dursun. */
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
+  width: min(100vw, 900px) !important;
+  max-width: 900px !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active,
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Meny oppsett: ürün satırı artık sadece seçer; gerçek düzenleme ⋮ menüsünden açılır. */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-block {
+  position: relative !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-row {
+  padding-right: 44px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-open {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu-button {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 38px !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  z-index: 4 !important;
+  border: 0 !important;
+  border-left: 1px solid #e4e8ec !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #6f7a87 !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu-button:hover {
+  background: #f8fafc !important;
+  color: #111827 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu {
+  position: absolute !important;
+  top: 42px !important;
+  right: 2px !important;
+  z-index: 50 !important;
+  display: grid !important;
+  min-width: 178px !important;
+  border: 1px solid #d7dde3 !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, .16) !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu[hidden] {
+  display: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu button {
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #edf0f3 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #374151 !important;
+  text-align: left !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu button:hover {
+  background: #f3f4f6 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu .danger-action,
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-category-menu .danger-action {
+  color: #b42318 !important;
+}
+
+/* Inline ürün editörü daha kısa ve ince: büyük sayfa kaplamasın. */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-editor-mount {
+  margin: 4px 42px 8px 94px !important;
+  padding: 8px !important;
+  max-width: 620px !important;
+  border-color: #75cd8d !important;
+  background: #ffffff !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form.product-editor-card {
+  grid-template-columns: minmax(0, 1fr) 128px !important;
+  gap: 6px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .main-field,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .wide,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .compact-product-media,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-more,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-prices,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .assigned-groups,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .form-actions {
+  grid-column: 1 / -1 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form label {
+  gap: 3px !important;
+  color: #667085 !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form input,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form select,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form textarea {
+  min-height: 28px !important;
+  height: 28px !important;
+  border-radius: 3px !important;
+  border: 1px solid #d7dde3 !important;
+  padding: 3px 6px !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form textarea {
+  height: 48px !important;
+  min-height: 48px !important;
+  resize: vertical !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .main-field input {
+  height: 30px !important;
+  min-height: 30px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form details.product-more {
+  border: 1px solid #e1e6eb !important;
+  border-radius: 3px !important;
+  background: #fbfcfd !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form details.product-more > summary {
+  min-height: 30px !important;
+  padding: 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  color: #475467 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  background: #f8fafc !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form details.product-more > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-more-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .compact-product-media-panel {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+  padding: 8px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-prices,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .assigned-groups,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-availability {
+  padding: 8px !important;
+  border-radius: 3px !important;
+  background: #fbfcfd !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-price-row {
+  grid-template-columns: minmax(0, 1fr) 82px 96px 26px !important;
+  gap: 5px !important;
+  align-items: end !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .product-price-row button {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border-radius: 3px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .price-default-label {
+  min-height: 28px !important;
+  gap: 4px !important;
+  font-size: 10px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .price-default-label input {
+  width: 14px !important;
+  min-height: 14px !important;
+  height: 14px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .mini-heading {
+  margin-bottom: 5px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .mini-heading h3 {
+  font-size: 12px !important;
+  margin: 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .mini-heading span,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .price-help {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  margin: 3px 0 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .form-actions {
+  justify-content: flex-end !important;
+  gap: 6px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .form-actions button,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form #addProductPrice {
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 0 10px !important;
+  border-radius: 3px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 1100px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-product-editor-mount {
+    max-width: 620px !important;
+  }
+}
+
+/* ===== V145: Bestillinger/tablet detail fixed footer + 900px modal ===== */
+body.kol-admin.admin-orders-mode .admin-order-modal-backdrop,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-backdrop {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+  background: #eef2f5 !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-backdrop .admin-order-modal.admin-order-modal-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-backdrop .admin-order-modal.admin-order-modal-v29 {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(100vw, 900px) !important;
+  max-width: 900px !important;
+  min-width: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-rows: 78px minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+  background: #eef2f5 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-header.admin-order-modal-header-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-header.admin-order-modal-header-v29 {
+  grid-row: 1 !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-body.admin-order-modal-body-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-body.admin-order-modal-body-v29 {
+  grid-row: 2 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding: 12px 16px 14px !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-receipt.admin-order-modal-receipt-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-receipt.admin-order-modal-receipt-v29 {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-footer.admin-order-modal-footer-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-footer.admin-order-modal-footer-v29 {
+  grid-row: 3 !important;
+  align-self: end !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  background: #eef2f5 !important;
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid rgba(203, 213, 225, .75) !important;
+  box-shadow: 0 -8px 22px rgba(15, 23, 42, .04) !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-bottom-bar-v29,
+body.kol-admin.admin-orders-mode .admin-order-bottom-bar-v29.is-pending,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-bottom-bar-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-bottom-bar-v29.is-pending {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  background: transparent !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-bottom-bar-v29.is-pending .order-footer-ready-panel-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-bottom-bar-v29.is-pending .order-footer-ready-panel-v29 {
+  max-width: 260px !important;
+  margin: 0 auto !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-bottom-bar-v29.is-pending .accept-order-button-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-bottom-bar-v29.is-pending .accept-order-button-v29 {
+  width: 100% !important;
+  max-width: none !important;
+  justify-self: stretch !important;
+  align-self: end !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+}
+
+body.kol-admin.admin-orders-mode .order-ready-preview-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .order-ready-preview-v29 {
+  margin-top: 5px !important;
+  font-size: 15px !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  color: #172235 !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-title-stack-v29 h2,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-title-stack-v29 h2 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-title-stack-v29 h2 > span,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-title-stack-v29 h2 > span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-title-phone-v145,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-title-phone-v145 {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 21px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  border: 1px solid #dbe3ec !important;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 520px) {
+  body.kol-admin.admin-orders-mode .admin-order-modal-body.admin-order-modal-body-v29,
+  body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-body.admin-order-modal-body-v29,
+  body.kol-admin.admin-orders-mode .admin-order-modal-footer.admin-order-modal-footer-v29,
+  body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-footer.admin-order-modal-footer-v29 {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .admin-order-title-phone-v145,
+  body.kol-admin:has([data-admin-page="orders"].active) .admin-order-title-phone-v145 {
+    font-size: 10px !important;
+    min-height: 20px !important;
+    padding: 0 7px !important;
+  }
+}
+
+/* ===== V146: order detail centered footer + navn/telefon + product click rediger ===== */
+body.kol-admin .admin-order-modal-backdrop {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+  background: #eef2f5 !important;
+}
+
+body.kol-admin .admin-order-modal-backdrop .admin-order-modal.admin-order-modal-v29 {
+  position: relative !important;
+  inset: auto !important;
+  width: min(100vw, 900px) !important;
+  max-width: 900px !important;
+  min-width: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-rows: 78px minmax(0, 1fr) auto !important;
+  overflow: hidden !important;
+  background: #eef2f5 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.kol-admin .admin-order-modal-header.admin-order-modal-header-v29 {
+  grid-row: 1 !important;
+  width: 100% !important;
+}
+
+body.kol-admin .admin-order-title-stack-v29 h2 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  flex-wrap: wrap !important;
+}
+
+body.kol-admin .admin-order-modal-title .admin-order-title-stack-v29 h2 > span,
+body.kol-admin .admin-order-title-stack-v29 h2 > span {
+  display: inline-block !important;
+  color: #0f172a !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  line-height: 1.12 !important;
+  max-width: 260px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.kol-admin .admin-order-title-stack-v29 small {
+  display: block !important;
+  margin-top: 2px !important;
+  color: #667085 !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+body.kol-admin .admin-order-title-phone-v145 {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 21px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  border: 1px solid #dbe3ec !important;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body.kol-admin .admin-order-modal-body.admin-order-modal-body-v29 {
+  grid-row: 2 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding: 12px 16px 14px !important;
+  background: #eef2f5 !important;
+}
+
+body.kol-admin .admin-order-modal-receipt.admin-order-modal-receipt-v29 {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+}
+
+body.kol-admin .admin-order-modal-footer.admin-order-modal-footer-v29 {
+  grid-row: 3 !important;
+  align-self: end !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  margin: 0 auto !important;
+  background: #eef2f5 !important;
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid rgba(203, 213, 225, .75) !important;
+  box-shadow: 0 -8px 22px rgba(15, 23, 42, .04) !important;
+}
+
+body.kol-admin .admin-order-bottom-bar-v29,
+body.kol-admin .admin-order-bottom-bar-v29.is-pending,
+body.kol-admin .admin-order-bottom-bar-v29.is-readonly,
+body.kol-admin .admin-order-bottom-bar-v29:has(.clean-ready-button-v36) {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+body.kol-admin .admin-order-bottom-bar-v29.is-pending .order-footer-ready-panel-v29 {
+  width: min(280px, 100%) !important;
+  max-width: 280px !important;
+  margin: 0 auto !important;
+  justify-self: center !important;
+  text-align: center !important;
+}
+
+body.kol-admin .admin-order-bottom-bar-v29 .accept-order-button-v29,
+body.kol-admin .admin-order-bottom-bar-v29.is-pending .accept-order-button-v29,
+body.kol-admin .admin-order-bottom-bar-v29 .clean-ready-button-v36 {
+  width: 100% !important;
+  max-width: none !important;
+  justify-self: stretch !important;
+  align-self: end !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  border-radius: 13px !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+}
+
+body.kol-admin .order-ready-preview-v29,
+body.kol-admin .order-ready-preview.order-ready-preview-v29 {
+  display: block !important;
+  margin-top: 6px !important;
+  font-size: 18px !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  color: #172235 !important;
+}
+
+@media (max-width: 520px) {
+  body.kol-admin .admin-order-modal-body.admin-order-modal-body-v29,
+  body.kol-admin .admin-order-modal-footer.admin-order-modal-footer-v29 {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  body.kol-admin .admin-order-modal-title .admin-order-title-stack-v29 h2 > span,
+  body.kol-admin .admin-order-title-stack-v29 h2 > span {
+    max-width: 180px !important;
+    font-size: 15px !important;
+  }
+  body.kol-admin .admin-order-title-phone-v145 {
+    font-size: 10px !important;
+    min-height: 20px !important;
+    padding: 0 7px !important;
+  }
+}
+
+/* Meny oppsett: produkt satırı artık doğrudan Rediger açar, URL alanı görünür ve kompakt kalır */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-open {
+  min-width: 58px !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #eef2f7 !important;
+  color: #344054 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .compact-image-url-field {
+  display: grid !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  color: #475467 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .compact-image-url-field input {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 9px !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .main-field,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form .compact-image-url-field {
+  background: #fbfcfd !important;
+  border: 1px solid #edf1f5 !important;
+  border-radius: 4px !important;
+  padding: 7px !important;
+}
+
+/* ===== V147: Bestillinger boş bekleme kartı + yeni/kabul edilen sipariş ayrımı ===== */
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  background: #f8fafc !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty.orders-app-empty-top,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty.orders-app-empty-top {
+  min-height: auto !important;
+  display: block !important;
+  place-items: unset !important;
+  align-content: unset !important;
+  padding: 12px 14px 0 !important;
+  background: #f8fafc !important;
+  text-align: left !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty-wait-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty-wait-card {
+  width: 100% !important;
+  min-height: 72px !important;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  border: 1px solid #dfe7ef !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .05) !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty-wait-card .orders-app-empty-icon,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty-wait-card .orders-app-empty-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  background: #fff7ed !important;
+  color: #e37000 !important;
+  font-size: 18px !important;
+  opacity: 1 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty-copy,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty-copy {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty-copy strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty-copy strong {
+  color: #172235 !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-empty-copy small,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-empty-copy small {
+  color: #667085 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  border-bottom-color: #e7edf3 !important;
+  transition: background-color .25s ease, box-shadow .25s ease, border-color .25s ease !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+  background: #fff7ed !important;
+  border-left: 4px solid #f59e0b !important;
+  animation: kolNewOrderSoftPulse 2.4s ease-in-out infinite !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending .orders-app-row {
+  padding-left: 10px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted {
+  background: #eefaf3 !important;
+  border-left: 4px solid #22c55e !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted .orders-app-row {
+  padding-left: 10px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready {
+  background: #f8fffb !important;
+  border-left: 4px solid #86efac !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.ready .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready .orders-app-row {
+  padding-left: 10px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.cancelled,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.cancelled {
+  background: #fff8f7 !important;
+  opacity: .76 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.pending:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending:hover {
+  background: #ffedd5 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.accepted:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted:hover {
+  background: #dcfce7 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.pending {
+  background: #fed7aa !important;
+  color: #9a3412 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.accepted {
+  background: #bbf7d0 !important;
+  color: #166534 !important;
+}
+
+@keyframes kolNewOrderSoftPulse {
+  0%, 100% { background-color: #fff7ed; box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { background-color: #ffedd5; box-shadow: inset 0 0 0 999px rgba(255, 237, 213, .18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.kol-admin.admin-orders-mode .orders-app-item.pending,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+    animation: none !important;
+  }
+}
+
+/* ===== V148: Bestillinger kompakt sabit satırlar + yeni sipariş yeşil pulse ===== */
+/* Grid yüzünden 1-2 sipariş ekranda dev kutulara dönüşüyordu. Liste artık her zaman üstten başlar. */
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  background: #f8fafc !important;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  flex: 0 0 76px !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+  border-bottom: 1px solid #e7edf3 !important;
+  border-left: 4px solid transparent !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  align-items: center !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu {
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  align-items: center !important;
+}
+
+/* Yeni / bekleyen sipariş: açık yeşil ve hafif yanıp sönsün. */
+body.kol-admin.admin-orders-mode .orders-app-item.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+  background: #ecfdf3 !important;
+  border-left-color: #22c55e !important;
+  animation: kolNewOrderGreenPulse 2.2s ease-in-out infinite !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending .orders-app-row {
+  padding-left: 10px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.pending:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending:hover {
+  background: #dcfce7 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.pending {
+  background: #bbf7d0 !important;
+  color: #166534 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-status.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status.pending {
+  color: #15803d !important;
+}
+
+/* Kabul edilmiş / eski akıştaki siparişler: sakin krem renk. */
+body.kol-admin.admin-orders-mode .orders-app-item.accepted,
+body.kol-admin.admin-orders-mode .orders-app-item.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready {
+  background: #fff8ed !important;
+  border-left-color: #f2d3a2 !important;
+  animation: none !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted .orders-app-row,
+body.kol-admin.admin-orders-mode .orders-app-item.ready .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready .orders-app-row {
+  padding-left: 10px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.accepted:hover,
+body.kol-admin.admin-orders-mode .orders-app-item.ready.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.ready:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready:hover {
+  background: #fff3df !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.accepted,
+body.kol-admin.admin-orders-mode .orders-app-icon.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.ready {
+  background: #ffedd5 !important;
+  color: #9a3412 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-status.accepted,
+body.kol-admin.admin-orders-mode .orders-app-status.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status.ready {
+  color: #8a4b00 !important;
+}
+
+@keyframes kolNewOrderGreenPulse {
+  0%, 100% {
+    background-color: #ecfdf3;
+    box-shadow: inset 0 0 0 0 rgba(34, 197, 94, 0), 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+  50% {
+    background-color: #dcfce7;
+    box-shadow: inset 0 0 0 999px rgba(220, 252, 231, .18), 0 0 0 1px rgba(34, 197, 94, .12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.kol-admin.admin-orders-mode .orders-app-item.pending,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+    animation: none !important;
+  }
+}
+
+/* ===== V149: Bestillinger timer badge + visible downward card menu ===== */
+/* Kalan süre fiyatın altında küçük kalmasın; ortada kutu içinde büyük ve net görünsün. */
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  grid-template-columns: 34px minmax(0, 1fr) clamp(62px, 10vw, 84px) minmax(74px, auto) !important;
+  gap: 8px !important;
+  padding-right: 4px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+  justify-self: center !important;
+  align-self: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 62px !important;
+  max-width: 84px !important;
+  height: 34px !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, .88) !important;
+  border: 1px solid rgba(15, 23, 42, .08) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .06) !important;
+  color: #0f172a !important;
+  font-size: clamp(14px, 2.1vw, 18px) !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-side,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side {
+  justify-items: end !important;
+  align-content: center !important;
+  min-width: 74px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-side strong,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side strong {
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  line-height: 1.05 !important;
+}
+
+/* Kart sabit yükseklikte kalır, ama ⋮ menüsü görünmek için kart dışına taşabilir. */
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item,
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  overflow: visible !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu {
+  position: relative !important;
+  z-index: 6 !important;
+  overflow: visible !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu.open,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu.open {
+  z-index: 999 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu .order-more-dropdown-v29,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu .order-more-dropdown-v29 {
+  position: absolute !important;
+  top: 58px !important;
+  right: 6px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: min(220px, calc(100vw - 34px)) !important;
+  padding: 7px !important;
+  border-radius: 14px !important;
+  border: 1px solid #dfe6ee !important;
+  background: #ffffff !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, .22) !important;
+  z-index: 1000 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu .order-more-dropdown-v29 .order-more-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu .order-more-dropdown-v29 .order-more-item {
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #172235 !important;
+  text-align: left !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu .order-more-dropdown-v29 .order-more-item:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu .order-more-dropdown-v29 .order-more-item:hover {
+  background: #f3f6fa !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu .order-more-dropdown-v29 .order-more-item.danger,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu .order-more-dropdown-v29 .order-more-item.danger {
+  color: #b42318 !important;
+}
+
+@media (max-width: 430px) {
+  body.kol-admin.admin-orders-mode .orders-app-row,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+    grid-template-columns: 30px minmax(0, 1fr) 58px 68px !important;
+    gap: 6px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+    min-width: 56px !important;
+    height: 31px !important;
+    padding: 0 5px !important;
+    font-size: 14px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-side,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side {
+    min-width: 68px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-side strong,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side strong {
+    font-size: 12px !important;
+  }
+}
+
+/* ===== V150: Bestillinger timer compact + softer colors + faster new-order pulse ===== */
+/* Kalan süre kendi sütununda ortalı, biraz daha küçük ve net. */
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  grid-template-columns: 34px minmax(0, 1fr) 70px minmax(82px, auto) !important;
+  column-gap: 8px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+  justify-self: center !important;
+  align-self: center !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 5px !important;
+  border-radius: 9px !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.02em !important;
+  background: rgba(255, 255, 255, .94) !important;
+  border: 1px solid rgba(15, 23, 42, .07) !important;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, .045) !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-side,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side {
+  min-width: 82px !important;
+}
+
+/* Yeni sipariş: çok açık yeşilden beyaza doğru hızlı ve yumuşak pulse. */
+body.kol-admin.admin-orders-mode .orders-app-item.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+  background: #f5fff8 !important;
+  border-left-color: #22c55e !important;
+  animation: kolNewOrderGreenWhitePulse 1.18s ease-in-out infinite !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.pending:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending:hover {
+  background: #effff4 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.pending {
+  background: #d9fbe6 !important;
+  color: #16803a !important;
+}
+
+/* Eski/kabul edilmiş/hazır sipariş: sarı değil, beyaza yakın hafif krem. */
+body.kol-admin.admin-orders-mode .orders-app-item.accepted,
+body.kol-admin.admin-orders-mode .orders-app-item.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready {
+  background: #fffdf8 !important;
+  border-left-color: #f4dfbc !important;
+  animation: none !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.accepted:hover,
+body.kol-admin.admin-orders-mode .orders-app-item.ready.selected,
+body.kol-admin.admin-orders-mode .orders-app-item.ready:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted:hover,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready.selected,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready:hover {
+  background: #fffaf0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-icon.accepted,
+body.kol-admin.admin-orders-mode .orders-app-icon.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-icon.ready {
+  background: #fff2d8 !important;
+  color: #8a4b00 !important;
+}
+
+@keyframes kolNewOrderGreenWhitePulse {
+  0%, 100% {
+    background-color: #f5fff8;
+    box-shadow: inset 0 0 0 0 rgba(34, 197, 94, 0), 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+  48% {
+    background-color: #ffffff;
+    box-shadow: inset 0 0 0 999px rgba(255, 255, 255, .22), 0 0 0 1px rgba(34, 197, 94, .08);
+  }
+}
+
+@media (max-width: 430px) {
+  body.kol-admin.admin-orders-mode .orders-app-row,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+    grid-template-columns: 30px minmax(0, 1fr) 58px 68px !important;
+    column-gap: 6px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-timer-badge,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-timer-badge {
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+  }
+
+  body.kol-admin.admin-orders-mode .orders-app-side,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-side {
+    min-width: 68px !important;
+  }
+}
+
+/* ===== V151: Meny oppsett product toggle + compact wide rows + clear order pulse groups ===== */
+/* Meny oppsett: ürün satırının kendisi Rediger/Lukk redigering yapar. Kullanışsız ürün ⋮/ayar ikonunu gizle. */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu-button,
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-menu {
+  display: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-open {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  justify-self: end !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 72px !important;
+  height: 26px !important;
+  padding: 0 8px !important;
+  border: 1px solid #d8dee6 !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-row.active .gf-product-open,
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-block.active .gf-product-open {
+  background: #eafaf0 !important;
+  border-color: #9be6ad !important;
+  color: #147034 !important;
+}
+
+/* Ürün listesi daha geniş, daha ince ve GloriaFood benzeri kompakt dursun. */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-list {
+  padding: 0 10px 10px 22px !important;
+  gap: 6px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-block {
+  overflow: visible !important;
+  border-radius: 9px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-row {
+  grid-template-columns: 28px 36px minmax(0, 1fr) minmax(78px, auto) 82px !important;
+  min-height: 46px !important;
+  padding: 5px 8px !important;
+  padding-right: 8px !important;
+  gap: 8px !important;
+  border-radius: 9px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-drag {
+  width: 22px !important;
+  color: #9aa4b2 !important;
+  font-size: 13px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-row .product-mini-thumb {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 7px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-copy {
+  gap: 1px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-copy strong {
+  font-size: 13px !important;
+  line-height: 1.12 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-copy span {
+  font-size: 11px !important;
+  line-height: 1.12 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-price {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-product-editor-mount {
+  width: calc(100% - 32px) !important;
+  max-width: none !important;
+  margin: 6px 10px 10px 22px !important;
+  padding: 7px !important;
+  border-radius: 10px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form.product-editor-card {
+  grid-template-columns: minmax(0, 1fr) 118px !important;
+  gap: 6px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form input,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form select,
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form textarea {
+  min-height: 32px !important;
+  padding: 5px 7px !important;
+  border-radius: 7px !important;
+  font-size: 12px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .inline-product-edit-form textarea {
+  min-height: 48px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .product-more summary span {
+  display: none !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .product-more summary {
+  min-height: 32px !important;
+  padding: 0 9px !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 760px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-product-list,
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-product-editor-mount {
+    margin-left: 10px !important;
+    padding-left: 10px !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-product-row {
+    grid-template-columns: 24px 34px minmax(0, 1fr) 68px !important;
+  }
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-product-price {
+    display: none !important;
+  }
+}
+
+/* Bestillinger: yeni sipariş gerçekten görünsün diye animasyonu satırın kendisine de uygula. */
+body.kol-admin.admin-orders-mode .orders-app-item.pending .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending .orders-app-row {
+  background: transparent !important;
+  animation: kolNewOrderRowPulseV151 .82s ease-in-out infinite !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.pending,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending {
+  background: #f1fff6 !important;
+  border-left-color: #22c55e !important;
+  animation: kolNewOrderItemPulseV151 .82s ease-in-out infinite !important;
+}
+
+@keyframes kolNewOrderItemPulseV151 {
+  0%, 100% { background-color: #f1fff6; box-shadow: inset 0 0 0 0 rgba(34,197,94,0); }
+  50% { background-color: #ffffff; box-shadow: inset 0 0 0 999px rgba(255,255,255,.20); }
+}
+
+@keyframes kolNewOrderRowPulseV151 {
+  0%, 100% { background-color: rgba(220, 252, 231, .48); }
+  50% { background-color: rgba(255, 255, 255, .92); }
+}
+
+/* Yeni siparişler ve eski/kabul edilmiş siparişler arasında net boşluk bırak. */
+body.kol-admin.admin-orders-mode .orders-app-item.pending + .orders-app-item:not(.pending),
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending + .orders-app-item:not(.pending) {
+  margin-top: 12px !important;
+  border-top: 1px solid #e8edf3 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item.accepted,
+body.kol-admin.admin-orders-mode .orders-app-item.ready,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.accepted,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.ready {
+  background: #fffefb !important;
+  border-left-color: #f2e3c7 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.kol-admin.admin-orders-mode .orders-app-item.pending,
+  body.kol-admin.admin-orders-mode .orders-app-item.pending .orders-app-row,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item.pending .orders-app-row {
+    animation: none !important;
+  }
+}

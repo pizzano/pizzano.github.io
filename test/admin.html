@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=138">
+    <link rel="stylesheet" href="kol-core.css?v=151">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -21,13 +21,20 @@
 
       <section class="admin-status" id="adminStatus">Klar.</section>
 
-      <section class="admin-page" data-admin-page="menu">
-      <section class="admin-grid">
+      <section class="admin-page menu-editor-page" data-admin-page="menu">
+        <header class="gf-menu-editor-header" aria-label="Meny editor oversikt">
+          <div>
+            <h1>Meny oppsett</h1>
+            <span>GloriaFood-inspirert editor: kategorier og produkter til venstre, valggrupper til høyre.</span>
+          </div>
+          <button class="gf-menu-editor-back" type="button" data-top-nav="orders">Til bestillinger</button>
+        </header>
+      <section class="admin-grid gf-menu-grid">
         <aside class="category-list menu-builder-panel">
           <div class="section-heading category-builder-heading">
             <div>
-              <h1>Kategorier</h1>
-              <span>Klikk på kategori, åpne produkter og rediger direkte under produktet.</span>
+              <h1>Meny</h1>
+              <span>Klikk på kategori for å åpne produkter. Dra produkter/kategorier for å sortere.</span>
             </div>
             <button id="addCategory" type="button">Legg til kategori</button>
           </div>
@@ -44,8 +51,13 @@
           <div class="product-admin-grid">
             <form class="product-form product-editor-card" id="productForm">
               <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
-              <label class="wide">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
-              <label class="wide">Beskrivelse <textarea id="productIngredients" rows="4" maxlength="300"></textarea></label>
+              <label class="wide compact-image-url-field">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
+              <details class="product-more wide compact-product-media" id="productMediaSettings">
+                <summary aria-label="Produkttekst og bilde"><span>⋮</span><strong>Beskrivelse</strong></summary>
+                <div class="product-more-panel compact-product-media-panel">
+                  <label>Beskrivelse <textarea id="productIngredients" rows="3" maxlength="300"></textarea></label>
+                </div>
+              </details>
               <details class="product-more wide" id="productMoreSettings">
                 <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Flere produktinnstillinger</strong></summary>
                 <div class="product-more-panel">
@@ -95,8 +107,8 @@
         <aside class="group-panel">
           <div class="section-heading">
             <div>
-              <h2>Valggrupper</h2>
-              <span>Dra grupper inn p&aring; valgt produkt.</span>
+              <h2>Choices &amp; Addons</h2>
+              <span>Valggrupper. Dra grupper inn p&aring; valgt produkt eller kategori.</span>
             </div>
             <div class="group-heading-actions">
               <button id="addOptionGroup" type="button">Ny gruppe</button>
@@ -125,11 +137,7 @@
             </div>
           </header>
 
-          <nav class="orders-app-tabs" aria-label="Bestillingsstatus">
-            <button class="active" type="button" data-order-filter="all">Alle <span data-order-count-tab="all">0</span></button>
-            <button type="button" data-order-filter="progress">Pågår <span data-order-count-tab="progress">0</span></button>
-            <button type="button" data-order-filter="ready">Klar <span data-order-count-tab="ready">0</span></button>
-          </nav>
+          <!-- V141: Pågår/Klar filterfaner er fjernet. Bestillinger viser nå én ren, scrollbar liste. -->
 
           <div class="orders-admin-toolbar orders-app-toolbar">
             <span id="ordersCount">0 bestillinger</span>
@@ -277,6 +285,7 @@ const firebaseMenuUrl = `${firebaseDatabaseUrl}.json`;
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
 const menuRef = firebase.database().ref("/");
 const ordersRef = firebase.database().ref("/orders");
+const firebaseConnectionRef = firebase.database().ref(".info/connected");
 
 const fields = {
   productId: document.querySelector("#productId"),
@@ -346,6 +355,7 @@ const optionContainers = {
 let config = null;
 let selectedCategoryIndex = null;
 let selectedProductIndex = null;
+let productEditorOpen = false;
 let editingCategoryIndex = null;
 let editingGroupIndex = null;
 let draggedCategoryIndex = null;
@@ -715,6 +725,68 @@ function safeAdminText(value, fallback = "") {
   return text.trim() || fallback;
 }
 
+const ADMIN_SMS_TEMPLATES = {
+  ready: {
+    label: "Klar – hent nå",
+    text: "Hei {first}, bestillingen din er klar for henting. Velkommen! – KØL Grill & Pizza"
+  }
+};
+
+function getAdminCustomerFirstName(customer = {}) {
+  const directFirst = safeAdminText(customer.firstName);
+  if (directFirst) return directFirst;
+  const fullName = safeAdminText(customer.fullName || [customer.firstName, customer.lastName].filter(Boolean).join(" "));
+  return fullName.split(/\s+/).filter(Boolean)[0] || "";
+}
+
+function renderAdminSmsTemplate(order = {}, templateKey = "ready") {
+  const template = ADMIN_SMS_TEMPLATES[templateKey] || ADMIN_SMS_TEMPLATES.ready;
+  const first = getAdminCustomerFirstName(order.customer || {});
+  let text = template.text.replace(/\{first\}/g, first);
+  if (!first) text = text.replace("Hei ,", "Hei,");
+  return {
+    key: templateKey,
+    label: template.label,
+    text
+  };
+}
+
+function normalizeAdminSmsPhone(phone = "") {
+  const raw = safeAdminText(phone);
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length === 8) return `+47${digits}`;
+  if (digits.length === 10 && digits.startsWith("47")) return `+${digits}`;
+  if (raw.trim().startsWith("+")) return `+${digits}`;
+  return digits;
+}
+
+function buildSmsUrl(phone, text) {
+  const to = normalizeAdminSmsPhone(phone);
+  if (!to) return "";
+  const separator = /iPad|iPhone|iPod/i.test(navigator.userAgent) ? "&" : "?";
+  return `sms:${encodeURIComponent(to)}${separator}body=${encodeURIComponent(text)}`;
+}
+
+function openAdminSmsComposer(order = {}, templateKey = "ready") {
+  const phone = normalizeAdminSmsPhone(order.customer?.phone || "");
+  if (!phone) {
+    showToast("Telefonnummer mangler. SMS kunne ikke åpnes.");
+    return null;
+  }
+  const smsTemplate = renderAdminSmsTemplate(order, templateKey);
+  const smsUrl = buildSmsUrl(phone, smsTemplate.text);
+  if (!smsUrl) {
+    showToast("Telefonnummer mangler. SMS kunne ikke åpnes.");
+    return null;
+  }
+  window.location.href = smsUrl;
+  return {
+    ...smsTemplate,
+    phone
+  };
+}
+
 function safeAdminNumber(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
@@ -981,8 +1053,9 @@ function renderCachedMenuIfAvailable(message = "Viser siste lokale meny mens Fir
   if (!cached) return false;
   config = cached;
   if (!selectedCategory()) {
-    selectedCategoryIndex = config.sections.length ? 0 : null;
+    selectedCategoryIndex = null;
     selectedProductIndex = null;
+    productEditorOpen = false;
   }
   renderAll();
   setStatus(message);
@@ -1005,8 +1078,13 @@ async function loadData() {
   config = hasValidConfig(value) ? normalizeConfig(value) : createEmptyConfig();
   if (hasValidConfig(value)) saveAdminMenuCache(value);
   if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
-  if (!selectedCategory()) selectedProductIndex = null;
-  else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
+  if (!selectedCategory()) {
+    selectedProductIndex = null;
+    productEditorOpen = false;
+  } else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) {
+    selectedProductIndex = null;
+    productEditorOpen = false;
+  }
   renderAll();
   const dailyBackupCreated = hasValidConfig(value) ? maybeDailyLocalBackupOnAdminOpen() : false;
   setStatus(
@@ -1137,59 +1215,66 @@ function renderCategories() {
     .map((section, index) => {
       const isActive = index === selectedCategoryIndex;
       const isEditing = index === editingCategoryIndex;
+      const productCount = asArray(section.items).length;
       const products = asArray(section.items)
         .map((product, productIndex) => {
           const isSelectedProduct = isActive && productIndex === selectedProductIndex;
+          const isEditingProduct = isSelectedProduct && productEditorOpen;
+          const productTitle = product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt";
           return `
-            <div class="product-inline-block ${isSelectedProduct ? "active" : ""}" data-product-block="${index}:${productIndex}">
-              <button class="nested-product-choice product-card-row ${isSelectedProduct ? "active" : ""}" type="button" draggable="true" data-category-product="${index}:${productIndex}" data-product-drag="${productIndex}">
+            <div class="product-inline-block gf-product-block ${isSelectedProduct ? "active" : ""}" data-product-block="${index}:${productIndex}">
+              <button class="nested-product-choice product-card-row gf-product-row ${isSelectedProduct ? "active" : ""}" type="button" draggable="true" data-category-product="${index}:${productIndex}" data-product-drag="${productIndex}">
+                <span class="gf-product-drag" aria-hidden="true">☰</span>
                 ${productImageMarkup(product)}
-                <span class="product-card-copy">
-                  <strong>${escapeHtml(product.number ? `${product.number}- ${product.name || product.id}` : product.name || product.id || "Nytt produkt")}</strong>
+                <span class="product-card-copy gf-product-copy">
+                  <strong>${escapeHtml(productTitle)}</strong>
                   ${statusBadges(product)}
-                  <span>${escapeHtml(product.ingredients || "⚙ Trykk for produktinnstillinger")}</span>
+                  <span>${escapeHtml(product.ingredients || "Klikk for å redigere. Bruk ⋮ for flere valg.")}</span>
                 </span>
-                <span class="product-card-price">${productPriceSummary(product)}</span>
+                <span class="product-card-price gf-product-price">${productPriceSummary(product)}</span>
+                <span class="gf-product-open">${isEditingProduct ? "Lukk" : "Rediger"}</span>
               </button>
-              ${isSelectedProduct ? `<div id="inlineProductEditorMount" class="inline-product-editor-mount"></div>` : ""}
+              ${isEditingProduct ? `<div id="inlineProductEditorMount" class="inline-product-editor-mount gf-product-editor-mount"></div>` : ""}
             </div>
           `;
         })
         .join("");
       return `
-        <article class="category-card menu-category-card ${isActive ? "active" : ""}" draggable="true" data-category-drag="${index}">
-          <div class="category-choice-row menu-category-row">
-            <button class="category-choice menu-category-choice" type="button" data-category="${index}">
+        <article class="category-card menu-category-card gf-category-card ${isActive ? "active" : ""}" draggable="true" data-category-drag="${index}">
+          <div class="category-choice-row menu-category-row gf-category-row">
+            <button class="category-choice menu-category-choice gf-category-choice" type="button" data-category="${index}">
+              <span class="gf-category-handle" aria-hidden="true">☰</span>
               ${categoryImageMarkup(section)}
-              <span class="category-card-copy">
+              <span class="category-card-copy gf-category-copy">
                 <strong>${escapeHtml(section.title || section.id || "Ny kategori")}</strong>
-                                <span>${escapeHtml(section.note || (asArray(section.items).length ? `${asArray(section.items).length} produkter` : "Ingen produkter ennå"))}</span>
+                <span>${escapeHtml(section.note || (productCount ? `${productCount} produkter` : "Ingen produkter ennå"))}</span>
               </span>
-              <span class="category-chevron">${isActive ? "⌃" : "⌄"}</span>
+              <span class="gf-category-count">${productCount}</span>
+              <span class="category-chevron gf-category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
-            <button class="category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori innstillinger">⚙</button>
-            <div class="category-menu" data-category-menu-panel="${index}" hidden>
-              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "✓ Ferdig" : "⚙ Rediger kategori"}</button>
-              <button class="danger-action" type="button" data-category-action="delete" data-category-index="${index}">🗑 Slett kategori</button>
+            <button class="category-menu-button gf-category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori innstillinger">⋮</button>
+            <div class="category-menu gf-category-menu" data-category-menu-panel="${index}" hidden>
+              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "✓ Ferdig" : "Rediger kategori"}</button>
+              <button class="danger-action" type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
             </div>
           </div>
           ${
             isEditing
-              ? `<div class="inline-category-editor" data-inline-category="${index}">
-                  <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
-                  <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
-                  <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
+              ? `<div class="inline-category-editor gf-inline-category-editor" data-inline-category="${index}">
+                  <label>Category name <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
+                  <label>Description <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
+                  <label>Cover photo URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
                   <div class="inline-actions">
-                    <button type="button" data-category-action="close-edit" data-category-index="${index}">Ferdig</button>
+                    <button type="button" data-category-action="close-edit" data-category-index="${index}">Save / Ferdig</button>
                   </div>
                 </div>`
               : ""
           }
           ${
             isActive
-              ? `<div class="nested-products product-card-list" data-products-for="${index}">
-                  ${products || "<p>Ingen produkter ennå.</p>"}
-                  <button class="inline-add-product" type="button" data-add-product-to-category="${index}">Legg til produkt</button>
+              ? `<div class="nested-products product-card-list gf-product-list" data-products-for="${index}">
+                  ${products || "<p class=\"gf-empty-products\">Ingen produkter ennå.</p>"}
+                  <button class="inline-add-product gf-add-product" type="button" data-add-product-to-category="${index}">Add item to ${escapeHtml(section.title || "category")}</button>
                 </div>`
               : ""
           }
@@ -1645,7 +1730,16 @@ function updateAdminLayoutMode(tabKey = "orders") {
 }
 
 function setAdminView(tabKey = "orders") {
+  const wasMenuActive = document.querySelector('[data-admin-page="menu"]')?.classList.contains("active");
+  updateAdminLayoutMode(tabKey);
   const targetPage = tabKey === "menu" ? "menu" : tabKey === "orders" ? "orders" : tabKey === "analytics" ? "analytics" : "settings";
+  if (targetPage === "menu" && !wasMenuActive) {
+    // TÜRKÇE: Meny oppsett açılınca hiçbir kategori kendiliğinden açılmasın. Kullanıcı tıklayınca açılır.
+    selectedCategoryIndex = null;
+    selectedProductIndex = null;
+    productEditorOpen = false;
+    editingCategoryIndex = null;
+  }
   adminPages.forEach((page) => {
     page.classList.toggle("active", page.dataset.adminPage === targetPage);
   });
@@ -1653,6 +1747,7 @@ function setAdminView(tabKey = "orders") {
     button.classList.toggle("active", button.dataset.topNav === tabKey);
   });
   if (targetPage === "settings") setSettingsTab(tabKey);
+  if (targetPage === "menu" && config) renderAll();
   if (targetPage === "orders") renderOrdersAdmin();
   if (targetPage === "analytics") renderAnalyticsAdmin();
 }
@@ -2206,16 +2301,13 @@ function isOrderInProgressForAdmin(order = {}) {
 }
 
 function getOrdersByFilterForAdmin(orders = [], filter = activeOrderFilter) {
-  if (filter === "ready") return orders.filter(isOrderReadyForAdmin);
-  if (filter === "progress") return orders.filter(isOrderInProgressForAdmin);
+  // V141: Bestillinger har ikke lenger Pågår/Klar-filter. Alltid vis hele listen.
   return orders;
 }
 
 function adminOrderFilterCounts(orders = []) {
   return {
-    all: orders.length,
-    progress: orders.filter(isOrderInProgressForAdmin).length,
-    ready: orders.filter(isOrderReadyForAdmin).length
+    all: orders.length
   };
 }
 
@@ -2263,9 +2355,9 @@ function renderAdminOrderCard(order) {
           <small>${itemCount} vare${itemCount === 1 ? "" : "r"}</small>
           <em class="orders-app-status ${escapeHtml(statusClass)}">${escapeHtml(statusLabel)}</em>
         </span>
+        <span class="orders-app-timer-badge" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</span>
         <span class="orders-app-side">
           <strong>${escapeHtml(totalText)}</strong>
-          <small data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</small>
         </span>
       </button>
 
@@ -2286,6 +2378,8 @@ function renderAdminOrderModal(order) {
   const status = order.status || "pending";
   const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
   const phoneText = order.customer?.phone || "Telefon mangler";
+  const phoneHref = String(phoneText || "").replace(/[^\d+]/g, "");
+  const phoneInlineHtml = phoneHref ? `<a class="admin-order-title-phone-v145" href="tel:${escapeHtml(phoneHref)}">${escapeHtml(phoneText)}</a>` : "";
   const readyMinutes = getEditableReadyMinutes(order);
   const lines = asArray(order.items);
   const canCancel = status !== "cancelled";
@@ -2313,7 +2407,7 @@ function renderAdminOrderModal(order) {
 
           <div class="admin-order-modal-title admin-order-modal-title-v29">
             <div class="admin-order-title-stack-v29">
-              <h2>${escapeHtml(customerName)}</h2>
+              <h2><span>${escapeHtml(customerName)}</span>${phoneInlineHtml}</h2>
               <small>Bestilt ${escapeHtml(createdAtBarText)}</small>
             </div>
           </div>
@@ -2437,6 +2531,32 @@ function analyticsOrderDate(order = {}) {
 function analyticsDateKey(date) {
   const pad = (value) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function adminOrderCreatedDate(order = {}) {
+  // TÜRKÇE: Bestillinger ekranı her gün 00:00'da temiz görünür; sadece bugünün siparişleri listelenir.
+  const raw = order.createdAt || order.created_at || order.updatedAt || order.updated_at || Date.now();
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function adminTodayKey() {
+  return analyticsDateKey(new Date());
+}
+
+function isAdminOrderFromToday(order = {}) {
+  return analyticsDateKey(adminOrderCreatedDate(order)) === adminTodayKey();
+}
+
+function scheduleAdminDailyOrderRefresh() {
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2, 0);
+  window.setTimeout(() => {
+    expandedAdminOrderId = null;
+    renderOrdersAdmin();
+    updateAdminOrderAlarmLoop();
+    scheduleAdminDailyOrderRefresh();
+  }, Math.max(1000, nextMidnight.getTime() - now.getTime()));
 }
 
 function analyticsMonthKey(date) {
@@ -2564,32 +2684,52 @@ function renderAnalyticsAdmin() {
   renderSimpleBarChart(yearlyRevenueChart, makeYearSeries());
 }
 
+
+function getAdminOrderDisplayPriority(order = {}) {
+  const status = order.status || "pending";
+  if (status === "pending") return 0;
+  if (status === "accepted" && order.ready !== true) return 1;
+  if (order.ready === true) return 2;
+  if (status === "cancelled") return 3;
+  return 4;
+}
+
+function sortAdminOrdersForDisplay(a = {}, b = {}) {
+  const priorityDiff = getAdminOrderDisplayPriority(a) - getAdminOrderDisplayPriority(b);
+  if (priorityDiff !== 0) return priorityDiff;
+  return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+}
+
 function renderOrdersAdmin() {
   if (!ordersAdminList) return;
   const visibleOrders = adminOrders
     .map((order) => normalizeAdminOrderRecord(order, order?.id))
-    .filter((order) => order && order.id && !hiddenAdminOrderIds.has(String(order.id)))
+    .filter((order) => order && order.id && isAdminOrderFromToday(order) && !hiddenAdminOrderIds.has(String(order.id)))
     .slice()
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    .sort(sortAdminOrdersForDisplay);
 
   const counts = adminOrderFilterCounts(visibleOrders);
   updateOrderFilterTabs(counts);
 
+  activeOrderFilter = "all";
   const filteredOrders = getOrdersByFilterForAdmin(visibleOrders, activeOrderFilter);
 
   if (ordersCount) {
-    const label = activeOrderFilter === "ready" ? "klare" : activeOrderFilter === "progress" ? "pågår" : "totalt";
-    ordersCount.textContent = `${filteredOrders.length} ${label}`;
+    ordersCount.textContent = `${filteredOrders.length} bestillinger`;
   }
 
   if (!visibleOrders.length) {
     expandedAdminOrderId = null;
     setAdminPageScrollLocked(false);
     ordersAdminList.innerHTML = `
-      <div class="orders-app-empty">
-        <div class="orders-app-empty-icon">🧾</div>
-        <strong>Det er ingen bestillinger ennå</strong>
-        <span>Du trenger ikke å lage mat nå, men følg med.</span>
+      <div class="orders-app-empty orders-app-empty-top">
+        <div class="orders-app-empty-wait-card">
+          <span class="orders-app-empty-icon">🧾</span>
+          <span class="orders-app-empty-copy">
+            <strong>Venter på nye bestillinger</strong>
+            <small>Gamle bestillinger skjules automatisk etter kl. 00:00.</small>
+          </span>
+        </div>
       </div>
     `;
     return;
@@ -2598,16 +2738,15 @@ function renderOrdersAdmin() {
   if (!filteredOrders.length) {
     expandedAdminOrderId = null;
     setAdminPageScrollLocked(false);
-    const text = activeOrderFilter === "ready"
-      ? "Ingen bestillinger er klare ennå."
-      : activeOrderFilter === "progress"
-        ? "Ingen bestillinger pågår nå."
-        : "Ingen bestillinger i denne visningen.";
     ordersAdminList.innerHTML = `
-      <div class="orders-app-empty">
-        <div class="orders-app-empty-icon">🧾</div>
-        <strong>${escapeHtml(text)}</strong>
-        <span>Bytt fanen Alle / Pågår / Klar for å se andre bestillinger.</span>
+      <div class="orders-app-empty orders-app-empty-top">
+        <div class="orders-app-empty-wait-card">
+          <span class="orders-app-empty-icon">🧾</span>
+          <span class="orders-app-empty-copy">
+            <strong>Ingen bestillinger i denne visningen</strong>
+            <small>Nye bestillinger vises automatisk her.</small>
+          </span>
+        </div>
       </div>
     `;
     return;
@@ -2633,7 +2772,7 @@ function listenForOrders() {
       .filter(Boolean);
     const nextIds = new Set(nextOrders.map((order) => order.id));
     const hasNewPendingOrder = ordersReady && nextOrders.some((order) => {
-      return !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
+      return isAdminOrderFromToday(order) && !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
     });
 
     adminOrders = nextOrders;
@@ -2698,15 +2837,24 @@ async function acceptOrder(orderId, minutes) {
 
 async function markOrderReady(orderId) {
   const readyAt = new Date().toISOString();
+  const order = adminOrders.find((item) => String(item.id || "") === String(orderId || "")) || {};
+  const smsTemplate = renderAdminSmsTemplate(order, "ready");
+
   expandedAdminOrderId = null;
   await ordersRef.child(orderId).update({
     ready: true,
     readyAt,
-    updatedAt: readyAt
+    updatedAt: readyAt,
+    smsReady: {
+      label: smsTemplate.label,
+      text: smsTemplate.text,
+      createdAt: readyAt
+    }
   });
   renderOrdersAdmin();
-  setStatus("Bestilling markert som klar.");
-  showToast("Klar for henting.");
+  setStatus("Bestilling markert som klar. SMS-mal åpnes.");
+  showToast("Klar for henting · SMS åpnes.");
+  openAdminSmsComposer(order, "ready");
 }
 
 
@@ -2801,7 +2949,8 @@ function addCategory() {
     items: []
   });
   selectedCategoryIndex = config.sections.length - 1;
-  selectedProductIndex = 0;
+  selectedProductIndex = null;
+  productEditorOpen = false;
   renderAll();
   writeLiveConfig("Kategori lagt til i Firebase.");
 }
@@ -2830,6 +2979,7 @@ Denne kategorien har ${productCount} produkter. Produktene blir også slettet.` 
   if (selectedCategoryIndex === index) {
     selectedCategoryIndex = Math.min(index, config.sections.length - 1);
     selectedProductIndex = null;
+    productEditorOpen = false;
   } else if (selectedCategoryIndex > index) {
     selectedCategoryIndex -= 1;
   }
@@ -2857,6 +3007,7 @@ function addProduct() {
     displayPrice: 0
   });
   selectedProductIndex = category.items.length - 1;
+  productEditorOpen = true;
   renderAll();
   writeLiveConfig("Produkt lagt til i Firebase.");
 }
@@ -2866,13 +3017,20 @@ function deleteProduct() {
   if (!selectedProduct()) return;
   if (!confirm("Slette produktet?")) return;
   category.items.splice(selectedProductIndex, 1);
-  selectedProductIndex = Math.max(0, selectedProductIndex - 1);
+  selectedProductIndex = null;
+  productEditorOpen = false;
   renderAll();
   writeLiveConfig("Produkt slettet fra Firebase.");
 }
 
 function closeCategoryMenus() {
   categoryButtons.querySelectorAll("[data-category-menu-panel]").forEach((panel) => {
+    panel.hidden = true;
+  });
+}
+
+function closeProductMenus() {
+  categoryButtons.querySelectorAll("[data-product-menu-panel]").forEach((panel) => {
     panel.hidden = true;
   });
 }
@@ -3022,6 +3180,40 @@ function addStrengthGroup() {
 }
 
 categoryButtons.addEventListener("click", (event) => {
+  const productMenuToggle = event.target.closest("[data-product-menu]");
+  if (productMenuToggle) {
+    const panel = categoryButtons.querySelector(`[data-product-menu-panel="${productMenuToggle.dataset.productMenu}"]`);
+    if (panel) {
+      const shouldOpen = panel.hidden;
+      closeProductMenus();
+      closeCategoryMenus();
+      panel.hidden = !shouldOpen;
+    }
+    return;
+  }
+
+  const productAction = event.target.closest("[data-product-action]");
+  if (productAction) {
+    const [categoryIndex, productIndex] = productAction.dataset.productIndex.split(":").map(Number);
+    const wasSameEditing = selectedCategoryIndex === categoryIndex && selectedProductIndex === productIndex && productEditorOpen;
+    selectedCategoryIndex = categoryIndex;
+    selectedProductIndex = productIndex;
+    closeProductMenus();
+    const action = productAction.dataset.productAction;
+    if (action === "edit") {
+      productEditorOpen = !wasSameEditing;
+      pendingScrollToProduct = productEditorOpen;
+      renderAll();
+    } else if (action === "select") {
+      productEditorOpen = false;
+      renderAll();
+      setStatus("Produkt valgt. Du kan dra valggrupper til dette produktet.");
+    } else if (action === "delete") {
+      deleteProduct();
+    }
+    return;
+  }
+
   const addProductInline = event.target.closest("[data-add-product-to-category]");
   if (addProductInline) {
     selectedCategoryIndex = Number(addProductInline.dataset.addProductToCategory);
@@ -3044,6 +3236,7 @@ categoryButtons.addEventListener("click", (event) => {
   if (menuAction) {
     selectedCategoryIndex = Number(menuAction.dataset.categoryIndex);
     selectedProductIndex = null;
+    productEditorOpen = false;
     if (menuAction.dataset.categoryAction === "delete") deleteCategory();
     else if (menuAction.dataset.categoryAction === "edit") {
       editingCategoryIndex = selectedCategoryIndex;
@@ -3058,11 +3251,14 @@ categoryButtons.addEventListener("click", (event) => {
   const productPick = event.target.closest("[data-category-product]");
   if (productPick) {
     const [categoryIndex, productIndex] = productPick.dataset.categoryProduct.split(":").map(Number);
-    const wasOpen = selectedCategoryIndex === categoryIndex && selectedProductIndex === productIndex;
+    const wasSameEditing = selectedCategoryIndex === categoryIndex && selectedProductIndex === productIndex && productEditorOpen;
     selectedCategoryIndex = categoryIndex;
-    selectedProductIndex = wasOpen ? null : productIndex;
-    pendingScrollToProduct = !wasOpen;
+    selectedProductIndex = productIndex;
+    productEditorOpen = !wasSameEditing;
+    pendingScrollToProduct = productEditorOpen;
+    closeProductMenus();
     renderAll();
+    setStatus(productEditorOpen ? "Rediger produkt. Trykk samme produkt igjen for å lukke redigering." : "Lukk redigering.");
     return;
   }
   const categoryPick = event.target.closest("[data-category]");
@@ -3072,6 +3268,8 @@ categoryButtons.addEventListener("click", (event) => {
   const wasOpen = selectedCategoryIndex === categoryIndex;
   selectedCategoryIndex = wasOpen ? null : categoryIndex;
   selectedProductIndex = null;
+  productEditorOpen = false;
+  closeProductMenus();
   renderAll();
 });
 
@@ -3145,6 +3343,7 @@ categoryButtons.addEventListener("dragend", () => {
 
 document.addEventListener("click", (event) => {
   if (!event.target.closest("[data-category-menu], [data-category-menu-panel]")) closeCategoryMenus();
+  if (!event.target.closest("[data-product-menu], [data-product-menu-panel]")) closeProductMenus();
   if (!event.target.closest("[data-group-menu], [data-group-menu-panel]")) closeGroupMenus();
 });
 
@@ -3445,11 +3644,14 @@ async function createAdminTestOrder() {
 }
 
 function resetAdminOrdersView() {
-  // TÜRKÇE: Sadece ekrandan temizler; Firebase/veritabanından silmez.
-  adminOrders.forEach((order) => {
-    const id = String(order?.id || "");
-    if (id) hiddenAdminOrderIds.add(id);
-  });
+  // TÜRKÇE: Sadece bugünün ekrandaki siparişlerini gizler; Firebase/veritabanından silmez.
+  adminOrders
+    .map((order) => normalizeAdminOrderRecord(order, order?.id))
+    .filter((order) => order && isAdminOrderFromToday(order))
+    .forEach((order) => {
+      const id = String(order?.id || "");
+      if (id) hiddenAdminOrderIds.add(id);
+    });
   activeOrderFilter = "all";
   expandedAdminOrderId = null;
   closeAllOrderActionMenus(document);
@@ -3844,6 +4046,61 @@ if (extrasPanel) {
   observer.observe(list, { childList: true, subtree: true });
 })();
 
+
+/* ===== V141: Online/Offline-indikator for Bestillinger ===== */
+let adminBrowserOnline = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+let adminFirebaseConnected = false;
+let adminFirebaseConnectionKnown = false;
+
+function setOrdersConnectionIndicator({ browserOnline = adminBrowserOnline, firebaseConnected = adminFirebaseConnected, firebaseKnown = adminFirebaseConnectionKnown } = {}) {
+  adminBrowserOnline = browserOnline;
+  adminFirebaseConnected = firebaseConnected;
+  adminFirebaseConnectionKnown = firebaseKnown;
+
+  const target = document.querySelector("#ordersConnectionText");
+  if (!target) return;
+
+  let text = "Online · Klar for bestillinger";
+  let isHealthy = browserOnline;
+
+  if (!browserOnline) {
+    text = "Offline · Ingen internett";
+    isHealthy = false;
+  } else if (firebaseKnown && !firebaseConnected) {
+    text = "Online · Kobler til Firebase";
+    isHealthy = true;
+  }
+
+  target.classList.toggle("is-online", isHealthy);
+  target.classList.toggle("is-offline", !isHealthy);
+  target.innerHTML = `<i class="orders-status-dot"></i>${text}`;
+}
+
+function updateBrowserConnectionIndicator() {
+  setOrdersConnectionIndicator({
+    browserOnline: typeof navigator === "undefined" ? true : navigator.onLine !== false,
+    firebaseConnected: adminFirebaseConnected,
+    firebaseKnown: adminFirebaseConnectionKnown
+  });
+}
+
+function startOrdersConnectionIndicator() {
+  updateBrowserConnectionIndicator();
+  window.addEventListener("online", updateBrowserConnectionIndicator);
+  window.addEventListener("offline", updateBrowserConnectionIndicator);
+  window.setInterval(updateBrowserConnectionIndicator, 10000);
+
+  if (firebaseConnectionRef) {
+    firebaseConnectionRef.on("value", (snapshot) => {
+      setOrdersConnectionIndicator({
+        browserOnline: typeof navigator === "undefined" ? true : navigator.onLine !== false,
+        firebaseConnected: snapshot.val() === true,
+        firebaseKnown: true
+      });
+    });
+  }
+}
+
 function startRealtimeSync() {
   setStatus("Kobler til Firebase...");
   renderCachedMenuIfAvailable();
@@ -3858,6 +4115,7 @@ function startRealtimeSync() {
         config = createEmptyConfig();
         selectedCategoryIndex = null;
         selectedProductIndex = null;
+        productEditorOpen = false;
         firebaseReady = true;
         if (!isEditingField()) renderAll();
         setStatus("Firebase er tom. Klar til å lage ny meny uten menu-data.js.");
@@ -3867,8 +4125,8 @@ function startRealtimeSync() {
       saveAdminMenuCache(value);
       config = normalizeConfig(value);
       if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
-      if (!selectedCategory()) selectedProductIndex = null;
-      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) selectedProductIndex = null;
+      if (!selectedCategory()) { selectedProductIndex = null; productEditorOpen = false; }
+      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) { selectedProductIndex = null; productEditorOpen = false; }
       firebaseReady = true;
       if (!isEditingField()) renderAll();
       setStatus("Koblet til Firebase. Endringer lagres automatisk.");
@@ -3881,9 +4139,11 @@ function startRealtimeSync() {
   );
 }
 
+startOrdersConnectionIndicator();
 startRealtimeSync();
 setAdminView("orders");
 listenForOrders();
+scheduleAdminDailyOrderRefresh();
 
     </script>
   
