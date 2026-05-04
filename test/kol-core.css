@@ -20917,3 +20917,212 @@ body.kol-customer .cart-summary {
     font-size: 10px !important;
   }
 }
+
+
+/* ===== V162: one rounded white receipt card, no inner radius/padding blocks ===== */
+body.kol-customer .cart-sales-card {
+  width: min(100%, 900px) !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  border: 1px solid #e4eaf1 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055) !important;
+  overflow: hidden !important;
+}
+
+body.kol-customer .cart-sales-card .cart-items,
+body.kol-customer .cart-sales-card .cart-summary {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.kol-customer .cart-sales-card .cart-items {
+  display: grid !important;
+  gap: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item {
+  padding: 8px 10px 7px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px dashed #d8dfe8 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  align-items: start !important;
+  gap: 5px !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item:last-child {
+  border-bottom: 1px dashed #d8dfe8 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item-main.cart-item-main-stacked {
+  display: grid !important;
+  gap: 2px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item-head h3,
+body.kol-customer .cart-sales-card .cart-item h3,
+body.kol-customer .cart-sales-card .cart-item-title {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 11.5px !important;
+  line-height: 1.05 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item-top-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+  align-self: start !important;
+  justify-self: end !important;
+  gap: 6px !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item .edit-line-button.icon-only,
+body.kol-customer .cart-sales-card .cart-item .remove-button {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  border-radius: 5px !important;
+}
+
+body.kol-customer .cart-sales-card .cart-item-details {
+  display: grid !important;
+  gap: 0 !important;
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row,
+body.kol-customer .cart-sales-card .cart-item-detail-row,
+body.kol-customer .cart-sales-card .cart-line-row,
+body.kol-customer .cart-sales-card .receipt-line-row,
+body.kol-customer .cart-sales-card .cart-receipt-detail-row {
+  min-height: 14px !important;
+  line-height: 1.05 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 5px !important;
+  align-items: end !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row .cart-detail-text,
+body.kol-customer .cart-sales-card .cart-detail-row .cart-detail-text.cart-detail-text-plain,
+body.kol-customer .cart-sales-card .cart-detail-row > span {
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row .cart-detail-text::after,
+body.kol-customer .cart-sales-card .cart-detail-row .cart-detail-text.cart-detail-text-plain::after,
+body.kol-customer .cart-sales-card .cart-detail-row > span::after {
+  min-width: 8px !important;
+  margin-left: 5px !important;
+  transform: translateY(-1px) !important;
+  border-bottom: 1px dashed #d6dde6 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row span,
+body.kol-customer .cart-sales-card .cart-detail-row strong,
+body.kol-customer .cart-sales-card .cart-detail-row b,
+body.kol-customer .cart-sales-card .cart-detail-label,
+body.kol-customer .cart-sales-card .cart-detail-value,
+body.kol-customer .cart-sales-card .cart-detail-text,
+body.kol-customer .cart-sales-card .cart-detail-text-plain {
+  font-size: 10.5px !important;
+  line-height: 1.05 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-label {
+  font-weight: 700 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-value,
+body.kol-customer .cart-sales-card .cart-detail-text,
+body.kol-customer .cart-sales-card .cart-detail-text-plain {
+  font-weight: 450 !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row strong {
+  min-width: 54px !important;
+  text-align: right !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+body.kol-customer .cart-sales-card .cart-detail-row.total-line-row {
+  margin-top: 1px !important;
+  padding-top: 1px !important;
+}
+
+body.kol-customer .cart-sales-card .cart-summary {
+  padding: 14px 12px 11px !important;
+  border-top: 1px dashed #d8dfe8 !important;
+}
+
+body.kol-customer .cart-sales-card .compact-total-row {
+  padding: 0 !important;
+}
+
+body.kol-customer .cart-sales-card .tax-note-row {
+  margin-top: 3px !important;
+}
+
+@media (max-width: 900px) {
+  body.kol-customer .cart-sales-card .cart-item {
+    padding: 7px 8px 6px !important;
+  }
+
+  body.kol-customer .cart-sales-card .cart-item-head h3,
+  body.kol-customer .cart-sales-card .cart-item h3,
+  body.kol-customer .cart-sales-card .cart-item-title {
+    font-size: 11px !important;
+  }
+
+  body.kol-customer .cart-sales-card .cart-item .edit-line-button.icon-only,
+  body.kol-customer .cart-sales-card .cart-item .remove-button {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+  }
+
+  body.kol-customer .cart-sales-card .cart-detail-row span,
+  body.kol-customer .cart-sales-card .cart-detail-row strong,
+  body.kol-customer .cart-sales-card .cart-detail-row b,
+  body.kol-customer .cart-sales-card .cart-detail-label,
+  body.kol-customer .cart-sales-card .cart-detail-value,
+  body.kol-customer .cart-sales-card .cart-detail-text,
+  body.kol-customer .cart-sales-card .cart-detail-text-plain {
+    font-size: 10px !important;
+  }
+
+  body.kol-customer .cart-sales-card .cart-detail-row strong {
+    min-width: 50px !important;
+  }
+}
