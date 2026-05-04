@@ -417,6 +417,7 @@ let adminOrderAudioContext = null;
 let adminOrderCustomAudio = null;
 let adminSoundUnlocked = false;
 let adminAlarmLoopTimer = null;
+let adminAlarmSoundBusy = false;
 let pendingRestoreData = null;
 let adminOrdersUiRefreshTimer = null;
 const DEFAULT_READY_MINUTES = 10;
@@ -570,16 +571,21 @@ function playCustomAdminAlarmAudio() {
 }
 
 function playAdminAlarmSynthFallback() {
+  if (adminAlarmSoundBusy) return;
+  adminAlarmSoundBusy = true;
   const context = getAdminOrderAudioContext();
-  if (!context) return;
+  if (!context) {
+    adminAlarmSoundBusy = false;
+    return;
+  }
   context.resume?.().then(() => {
-    const now = context.currentTime + 0.03;
-    // TÜRKÇE: Şiddetli eski ev telefonu zili: tiz, metalik, uzun çalacak şekilde.
-    playOldTelephoneRing(context, now, 1.85);
-    playOldTelephoneRing(context, now + 2.18, 1.85);
-    playOldTelephoneRing(context, now + 4.36, 1.9);
-    if (navigator.vibrate) navigator.vibrate([950, 180, 950, 180, 950]);
+    const now = context.currentTime + 0.02;
+    // TÜRKÇE: Tek kısa ev telefonu zili. Yeni siparişler çok olsa bile üst üste binmez.
+    playOldTelephoneRing(context, now, 1.05);
+    if (navigator.vibrate) navigator.vibrate([650, 100, 650]);
+    window.setTimeout(() => { adminAlarmSoundBusy = false; }, 1250);
   }).catch(() => {
+    adminAlarmSoundBusy = false;
     setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
   });
 }
@@ -615,22 +621,34 @@ function hasActionablePendingOrders() {
   return adminOrders.some((order) => (order.status || "pending") === "pending" && isAdminOrderProcessable(order));
 }
 
+function stopAdminOrderAlarmLoop() {
+  window.clearInterval(adminAlarmLoopTimer);
+  adminAlarmLoopTimer = null;
+  adminAlarmSoundBusy = false;
+  if (adminOrderCustomAudio) {
+    try {
+      adminOrderCustomAudio.pause();
+      adminOrderCustomAudio.currentTime = 0;
+      adminOrderCustomAudio.loop = false;
+    } catch (error) {}
+  }
+}
+
 function updateAdminOrderAlarmLoop() {
   const shouldRing = hasActionablePendingOrders();
   if (!shouldRing) {
-    window.clearInterval(adminAlarmLoopTimer);
-    adminAlarmLoopTimer = null;
+    stopAdminOrderAlarmLoop();
     return;
   }
   if (adminAlarmLoopTimer) return;
   playAdminAlarmBurst();
   adminAlarmLoopTimer = window.setInterval(() => {
     if (!hasActionablePendingOrders()) {
-      updateAdminOrderAlarmLoop();
+      stopAdminOrderAlarmLoop();
       return;
     }
     playAdminAlarmBurst();
-  }, 7000);
+  }, 1800);
 }
 
 function orderWaitingOpeningText(order = {}) {
@@ -3948,12 +3966,14 @@ if (ordersAdminList) {
     if (acceptId) {
       const input = ordersAdminList.querySelector(`[data-ready-minutes="${CSS.escape(acceptId)}"]`);
       await acceptOrder(acceptId, input?.value || DEFAULT_READY_MINUTES);
+      updateAdminOrderAlarmLoop();
       return;
     }
     const readyId = event.target.dataset.readyOrder;
     if (readyId) {
       closeAllOrderActionMenus(ordersAdminList);
       await markOrderReady(readyId);
+      updateAdminOrderAlarmLoop();
       return;
     }
 
@@ -3961,6 +3981,7 @@ if (ordersAdminList) {
     if (cancelId) {
       closeAllOrderActionMenus(ordersAdminList);
       await cancelOrder(cancelId);
+      updateAdminOrderAlarmLoop();
     }
   });
 

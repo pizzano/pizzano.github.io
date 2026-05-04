@@ -23158,3 +23158,165 @@ body.kol-customer .cart-sales-card .cart-edit-icon {
     font-size: 15px !important;
   }
 }
+
+/* ===== V177: stable orders click/list + balanced cart text ===== */
+/* Sepet yazıları: v176 kadar büyük değil, ama okunur. */
+body.kol-customer .cart-item,
+body.kol-customer .cart-sales-card .cart-item {
+  padding: 10px 12px 9px !important;
+}
+
+body.kol-customer .cart-item-head h3,
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-title,
+body.kol-customer .cart-item-main > strong,
+body.kol-customer .cart-sales-card .cart-item-head h3,
+body.kol-customer .cart-sales-card .cart-item h3,
+body.kol-customer .cart-sales-card .cart-item-title,
+body.kol-customer .cart-sales-card .cart-item-main > strong {
+  font-size: clamp(16px, 1.7vw, 18px) !important;
+  line-height: 1.16 !important;
+  font-weight: 800 !important;
+}
+
+body.kol-customer .cart-item-details,
+body.kol-customer .cart-detail-row,
+body.kol-customer .cart-detail-row span,
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-detail-row b,
+body.kol-customer .cart-detail-label,
+body.kol-customer .cart-detail-value,
+body.kol-customer .cart-detail-text,
+body.kol-customer .cart-detail-text-plain,
+body.kol-customer .cart-item-note,
+body.kol-customer .cart-sales-card .cart-item-details,
+body.kol-customer .cart-sales-card .cart-detail-row,
+body.kol-customer .cart-sales-card .cart-detail-row span,
+body.kol-customer .cart-sales-card .cart-detail-row strong,
+body.kol-customer .cart-sales-card .cart-detail-row b,
+body.kol-customer .cart-sales-card .cart-detail-label,
+body.kol-customer .cart-sales-card .cart-detail-value,
+body.kol-customer .cart-sales-card .cart-detail-text,
+body.kol-customer .cart-sales-card .cart-detail-text-plain,
+body.kol-customer .cart-sales-card .cart-item-note {
+  font-size: clamp(14px, 1.35vw, 15.5px) !important;
+  line-height: 1.2 !important;
+}
+
+body.kol-customer .cart-detail-row strong,
+body.kol-customer .cart-line-total,
+body.kol-customer .cart-sales-card .cart-detail-row strong,
+body.kol-customer .cart-sales-card .cart-line-total {
+  font-size: clamp(14px, 1.35vw, 15.5px) !important;
+  min-width: 72px !important;
+}
+
+body.kol-customer .edit-line-button.icon-only,
+body.kol-customer .cart-item .edit-line-button.icon-only,
+body.kol-customer .remove-button,
+body.kol-customer .cart-item .remove-button {
+  width: 27px !important;
+  min-width: 27px !important;
+  height: 27px !important;
+  min-height: 27px !important;
+  border-radius: 7px !important;
+}
+
+body.kol-customer .remove-button,
+body.kol-customer .cart-item .remove-button { font-size: 17px !important; }
+
+/* Bestillinger: tam genişlik, tıklanabilir, scroll aktif. */
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(100%, 1200px) !important;
+  max-width: 1200px !important;
+  min-height: calc(100svh - var(--kol-header-h, 56px) - 8px) !important;
+  height: calc(100svh - var(--kol-header-h, 56px) - 8px) !important;
+  overflow: hidden !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-header,
+body.kol-admin.admin-orders-mode .orders-app-toolbar,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-toolbar {
+  flex: 0 0 auto !important;
+}
+
+body.kol-admin.admin-orders-mode #ordersAdminList,
+body.kol-admin.admin-orders-mode .orders-app-list,
+body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 10px 10px !important;
+  background: #fff !important;
+  pointer-events: auto !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  align-content: start !important;
+  pointer-events: auto !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 96px !important;
+  min-height: 96px !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  flex: 1 1 auto !important;
+  display: grid !important;
+  grid-template-columns: 40px minmax(0,1fr) 100px 128px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 96px !important;
+  min-height: 96px !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  z-index: 2 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu {
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: auto !important;
+  z-index: 3 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card-menu .order-more-button,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card-menu .order-more-button {
+  pointer-events: auto !important;
+}
+
+/* Sipariş bekleme/confirmation kartı yamuk durmasın. */
+body.kol-customer .order-live-status.accepted,
+body.kol-customer .order-live-status.pending,
+body.kol-customer .order-live-status.cancelled {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 900px !important;
+  width: min(100%, 900px) !important;
+}
