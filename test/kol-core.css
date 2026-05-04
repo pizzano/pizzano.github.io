@@ -21290,3 +21290,98 @@ body.kol-customer .cart-line-total {
   font-size: 12px !important;
 }
 
+
+
+/* ===== V164: 1200px order-system container + louder order bell ===== */
+:root {
+  --kol-page-max: 1200px;
+  --kol-admin-max: 1200px;
+}
+
+body.kol-customer {
+  --kol-page-max: 1200px !important;
+}
+
+body.kol-customer .appbar,
+body.kol-customer .menu-shell,
+body.kol-customer .product-panel,
+body.kol-customer .cart-panel,
+body.kol-customer .info-panel,
+body.kol-customer .profile-panel,
+body.kol-customer .order-live-panel,
+body.kol-customer .category-tabs-wrap {
+  width: min(100vw, 1200px) !important;
+  max-width: 1200px !important;
+}
+
+body.kol-customer .cart-order-card,
+body.kol-customer .cart-items,
+body.kol-customer .cart-summary,
+body.kol-customer .cart-empty,
+body.kol-customer .checkout-form,
+body.kol-customer .profile-phone-card,
+body.kol-customer .profile-simple-top,
+body.kol-customer .profile-order-card,
+body.kol-customer .order-live-status,
+body.kol-customer .customer-receipt-lines,
+body.kol-customer .order-status-box,
+body.kol-customer .recent-orders,
+body.kol-customer .order-live-close-inline {
+  width: min(100%, 1200px) !important;
+  max-width: 1200px !important;
+}
+
+body.kol-admin.admin-orders-mode,
+body.kol-admin:has([data-admin-page="orders"].active) {
+  --kol-admin-max: 1200px !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-topbar,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-topbar,
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell,
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active,
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  width: min(100vw, 1200px) !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
+  height: calc(100svh - var(--kol-header-h)) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-order-modal-panel,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-panel,
+body.kol-admin.admin-orders-mode .admin-order-modal-receipt,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-order-modal-receipt {
+  max-width: 1200px !important;
+}
+
+@media (max-width: 1200px) {
+  body.kol-customer .appbar,
+  body.kol-customer .menu-shell,
+  body.kol-customer .product-panel,
+  body.kol-customer .cart-panel,
+  body.kol-customer .info-panel,
+  body.kol-customer .profile-panel,
+  body.kol-customer .order-live-panel,
+  body.kol-customer .category-tabs-wrap,
+  body.kol-admin.admin-orders-mode .admin-topbar,
+  body.kol-admin:has([data-admin-page="orders"].active) .admin-topbar,
+  body.kol-admin.admin-orders-mode .admin-shell,
+  body.kol-admin:has([data-admin-page="orders"].active) .admin-shell,
+  body.kol-admin.admin-orders-mode .orders-workspace.active,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active,
+  body.kol-admin.admin-orders-mode .orders-app-card,
+  body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+}
