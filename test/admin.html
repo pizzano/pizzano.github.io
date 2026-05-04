@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=170">
+    <link rel="stylesheet" href="kol-core.css?v=173">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -241,6 +241,49 @@
               <label>Betaling
                 <input id="settingPaymentInfo" data-setting-field="paymentInfo" type="text" placeholder="Kort ved henting (henting)">
               </label>
+
+              <div class="wide receipt-print-settings-box">
+                <h3>Kvittering / skriver</h3>
+                <span class="field-hint">Disse verdiene lagres i Firebase og brukes når kvittering skrives ut.</span>
+                <div class="receipt-print-grid">
+                  <label>Papirbredde / bildebredde (px)
+                    <input id="settingReceiptPaperWidth" data-setting-field="receiptPaperWidth" type="number" min="380" max="900" step="1" placeholder="576">
+                  </label>
+                  <label>Toppfelt tekst (px)
+                    <input id="settingReceiptHeaderFontSize" data-setting-field="receiptHeaderFontSize" type="number" min="18" max="52" step="1" placeholder="34">
+                  </label>
+                  <label>Produktnavn (px)
+                    <input id="settingReceiptItemFontSize" data-setting-field="receiptItemFontSize" type="number" min="16" max="48" step="1" placeholder="30">
+                  </label>
+                  <label>Størrelse tekst (px)
+                    <input id="settingReceiptSizeFontSize" data-setting-field="receiptSizeFontSize" type="number" min="14" max="52" step="1" placeholder="28">
+                  </label>
+                  <label>Valggruppe navn (px)
+                    <input id="settingReceiptChoiceLabelFontSize" data-setting-field="receiptChoiceLabelFontSize" type="number" min="14" max="52" step="1" placeholder="28">
+                  </label>
+                  <label>Ekstra / valgt verdi (px)
+                    <input id="settingReceiptOptionFontSize" data-setting-field="receiptOptionFontSize" type="number" min="14" max="52" step="1" placeholder="28">
+                  </label>
+                  <label>Pris tekst (px)
+                    <input id="settingReceiptPriceFontSize" data-setting-field="receiptPriceFontSize" type="number" min="14" max="52" step="1" placeholder="28">
+                  </label>
+                  <label>Detaljer nederst (px)
+                    <input id="settingReceiptDetailsFontSize" data-setting-field="receiptDetailsFontSize" type="number" min="14" max="52" step="1" placeholder="26">
+                  </label>
+                  <label>Kundenavn (px)
+                    <input id="settingReceiptCustomerNameFontSize" data-setting-field="receiptCustomerNameFontSize" type="number" min="14" max="56" step="1" placeholder="30">
+                  </label>
+                  <label>Telefon (px)
+                    <input id="settingReceiptCustomerPhoneFontSize" data-setting-field="receiptCustomerPhoneFontSize" type="number" min="14" max="56" step="1" placeholder="30">
+                  </label>
+                  <label>Venstre/høyre marg (px)
+                    <input id="settingReceiptSideMargin" data-setting-field="receiptSideMargin" type="number" min="0" max="80" step="1" placeholder="22">
+                  </label>
+                  <label>Linjeavstand
+                    <input id="settingReceiptLineHeight" data-setting-field="receiptLineHeight" type="number" min="1" max="1.8" step="0.05" placeholder="1.18">
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -414,65 +457,95 @@ function unlockAdminOrderSound() {
   }).catch(() => {});
 }
 
-function playAdminAlarmTone(context, start, frequency, duration, volume = 1) {
-  // TÜRKÇE: Daha orijinal sipariş zili gibi güçlü, parlak ve yüksek sesli çalsın.
-  const masterGain = context.createGain();
+function playAdminAlarmTone(context, start, frequency, duration, volume = 0.9, type = "sine") {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(Math.min(1, volume), start + 0.02);
+  gain.gain.setValueAtTime(Math.min(1, volume), start + Math.max(0.03, duration - 0.04));
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function playOldTelephoneRing(context, start, onDuration = 1.65) {
+  // TÜRKÇE: Şiddetli eski ev telefonu zili: metalik çift bobin + hızlı tremolo.
+  const master = context.createGain();
+  const tremolo = context.createGain();
+  const lfo = context.createOscillator();
+  const lfoGain = context.createGain();
   const compressor = context.createDynamicsCompressor();
-  const filter = context.createBiquadFilter();
+  const highpass = context.createBiquadFilter();
 
-  compressor.threshold.setValueAtTime(-24, start);
-  compressor.knee.setValueAtTime(18, start);
-  compressor.ratio.setValueAtTime(6, start);
-  compressor.attack.setValueAtTime(0.003, start);
-  compressor.release.setValueAtTime(0.18, start);
+  compressor.threshold.setValueAtTime(-26, start);
+  compressor.knee.setValueAtTime(8, start);
+  compressor.ratio.setValueAtTime(9, start);
+  compressor.attack.setValueAtTime(0.001, start);
+  compressor.release.setValueAtTime(0.11, start);
 
-  filter.type = "bandpass";
-  filter.frequency.setValueAtTime(1450, start);
-  filter.Q.setValueAtTime(1.15, start);
+  highpass.type = "highpass";
+  highpass.frequency.setValueAtTime(260, start);
 
-  masterGain.gain.setValueAtTime(0.0001, start);
-  masterGain.gain.exponentialRampToValueAtTime(Math.min(1, volume), start + 0.018);
-  masterGain.gain.setValueAtTime(Math.min(1, volume), start + Math.max(0.03, duration - 0.05));
-  masterGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  master.gain.setValueAtTime(0.0001, start);
+  master.gain.exponentialRampToValueAtTime(1.35, start + 0.018);
+  master.gain.setValueAtTime(1.35, start + Math.max(0.05, onDuration - 0.06));
+  master.gain.exponentialRampToValueAtTime(0.0001, start + onDuration);
 
-  filter.connect(compressor);
-  compressor.connect(masterGain);
-  masterGain.connect(context.destination);
+  tremolo.gain.setValueAtTime(0.68, start);
+  lfo.type = "square";
+  lfo.frequency.setValueAtTime(24, start);
+  lfoGain.gain.setValueAtTime(0.54, start);
+  lfo.connect(lfoGain);
+  lfoGain.connect(tremolo.gain);
 
-  [
-    ["square", frequency],
-    ["square", frequency * 1.5],
-    ["triangle", frequency * 2.0]
-  ].forEach(([type, freq]) => {
+  master.connect(tremolo);
+  tremolo.connect(highpass);
+  highpass.connect(compressor);
+  compressor.connect(context.destination);
+
+  const tones = [
+    { f: 425, v: 1.0, type: "square" },
+    { f: 475, v: 0.95, type: "square" },
+    { f: 850, v: 0.34, type: "sawtooth" },
+    { f: 950, v: 0.28, type: "triangle" }
+  ];
+
+  tones.forEach(({ f, v, type }, index) => {
     const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const filter = context.createBiquadFilter();
     oscillator.type = type;
-    oscillator.frequency.setValueAtTime(freq, start);
+    oscillator.frequency.setValueAtTime(f, start);
+    oscillator.frequency.linearRampToValueAtTime(f + (index % 2 ? 7 : -7), start + onDuration);
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(f * 1.02, start);
+    filter.Q.setValueAtTime(10.5, start);
+    gain.gain.setValueAtTime(v, start);
     oscillator.connect(filter);
+    filter.connect(gain);
+    gain.connect(master);
     oscillator.start(start);
-    oscillator.stop(start + duration + 0.04);
+    oscillator.stop(start + onDuration + 0.05);
   });
+
+  lfo.start(start);
+  lfo.stop(start + onDuration + 0.05);
 }
 
 function playAdminAlarmBurst() {
   const context = getAdminOrderAudioContext();
   if (!context) return;
   context.resume?.().then(() => {
-    const now = context.currentTime + 0.02;
-
-    // TÜRKÇE: Orijinal sipariş geldiğinde duyulan yüksek "ring-ring" hissi.
-    // 2 blok çalar: RING-RING ... RING-RING
-    const rings = [0.00, 0.22, 0.72, 0.94, 1.44, 1.66];
-    rings.forEach((offset) => {
-      playAdminAlarmTone(context, now + offset, 880, 0.18, 1.0);
-      playAdminAlarmTone(context, now + offset + 0.055, 1046, 0.16, 0.95);
-    });
-
-    // Ek kısa dikkat sesi: küçük hoparlörde de duyulsun.
-    [2.18, 2.36].forEach((offset) => {
-      playAdminAlarmTone(context, now + offset, 1320, 0.12, 1.0);
-    });
-
-    if (navigator.vibrate) navigator.vibrate([260, 100, 260, 380, 260, 100, 260]);
+    const now = context.currentTime + 0.03;
+    // TÜRKÇE: Eski ev telefonu gibi şiddetli uzun zil: BRRING ... BRRING ... BRRING.
+    playOldTelephoneRing(context, now, 1.65);
+    playOldTelephoneRing(context, now + 2.05, 1.65);
+    playOldTelephoneRing(context, now + 4.10, 1.75);
+    if (navigator.vibrate) navigator.vibrate([850, 220, 850, 220, 900]);
   }).catch(() => {
     setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
   });
@@ -519,7 +592,7 @@ function updateAdminOrderAlarmLoop() {
       return;
     }
     playAdminAlarmBurst();
-  }, 3600);
+  }, 7000);
 }
 
 function orderWaitingOpeningText(order = {}) {
@@ -910,7 +983,19 @@ function defaultSiteSettings() {
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
-    paymentInfo: "Kort ved henting (henting)"
+    paymentInfo: "Kort ved henting (henting)",
+    receiptPaperWidth: "576",
+    receiptHeaderFontSize: "34",
+    receiptItemFontSize: "32",
+    receiptSizeFontSize: "28",
+    receiptChoiceLabelFontSize: "28",
+    receiptOptionFontSize: "28",
+    receiptPriceFontSize: "28",
+    receiptDetailsFontSize: "26",
+    receiptCustomerNameFontSize: "30",
+    receiptCustomerPhoneFontSize: "30",
+    receiptSideMargin: "22",
+    receiptLineHeight: "1.18"
   };
 }
 
@@ -2165,13 +2250,14 @@ function receiptOptionDetailHtml(detail = {}) {
   if (!clean) return "";
   const priceText = safeAdminText(detail.priceText || "");
   const parts = clean.split(":");
-  let leftHtml = `<i>${escapeHtml(clean)}</i>`;
+  const isSize = /^størrelse\s*:/i.test(clean);
+  let leftHtml = `<i class="receipt-option-value ${isSize ? "receipt-size-value" : ""}">${escapeHtml(clean)}</i>`;
   if (parts.length > 1) {
     const left = parts.shift().trim();
     const right = parts.join(":").trim();
-    leftHtml = `<span><b><i>${escapeHtml(left)}:</i></b></span><span>${escapeHtml(right)}</span>`;
+    leftHtml = `<span><b><i class="receipt-choice-label ${isSize ? "receipt-size-label" : ""}">${escapeHtml(left)}:</i></b></span><span class="receipt-option-value ${isSize ? "receipt-size-value" : ""}">${escapeHtml(right)}</span>`;
   }
-  return `<div class="receipt-sub receipt-choice receipt-choice-priced"><span class="receipt-choice-text">${leftHtml}</span>${priceText ? `<b class="receipt-choice-price">${escapeHtml(priceText)}</b>` : ""}</div>`;
+  return `<div class="receipt-sub receipt-choice receipt-choice-priced ${isSize ? "receipt-size-row" : ""}"><span class="receipt-choice-text">${leftHtml}</span>${priceText ? `<b class="receipt-choice-price">${escapeHtml(priceText)}</b>` : ""}</div>`;
 }
 
 function receiptOptionHtml(text = "") {
@@ -2184,6 +2270,49 @@ function receiptOptionHtml(text = "") {
     return `<div class="receipt-sub receipt-choice"><span><b><i>${escapeHtml(left)}:</i></b></span><span>${escapeHtml(right)}</span></div>`;
   }
   return `<div class="receipt-sub"><i>${escapeHtml(clean)}</i></div>`;
+}
+
+function clampReceiptNumber(value, fallback, min, max) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, number));
+}
+
+function getReceiptPrintSettings() {
+  const settings = normalizeSiteSettings(config?.siteSettings || {});
+  return {
+    paperWidth: clampReceiptNumber(settings.receiptPaperWidth, 576, 380, 900),
+    headerFontSize: clampReceiptNumber(settings.receiptHeaderFontSize, 34, 18, 52),
+    itemFontSize: clampReceiptNumber(settings.receiptItemFontSize, 32, 16, 56),
+    sizeFontSize: clampReceiptNumber(settings.receiptSizeFontSize, 28, 14, 56),
+    choiceLabelFontSize: clampReceiptNumber(settings.receiptChoiceLabelFontSize, 28, 14, 56),
+    optionFontSize: clampReceiptNumber(settings.receiptOptionFontSize, 28, 14, 56),
+    priceFontSize: clampReceiptNumber(settings.receiptPriceFontSize, 28, 14, 56),
+    detailsFontSize: clampReceiptNumber(settings.receiptDetailsFontSize, 26, 14, 56),
+    customerNameFontSize: clampReceiptNumber(settings.receiptCustomerNameFontSize, 30, 14, 60),
+    customerPhoneFontSize: clampReceiptNumber(settings.receiptCustomerPhoneFontSize, 30, 14, 60),
+    sideMargin: clampReceiptNumber(settings.receiptSideMargin, 22, 0, 80),
+    lineHeight: clampReceiptNumber(settings.receiptLineHeight, 1.18, 1, 1.8)
+  };
+}
+
+function receiptPrintStyleAttribute() {
+  const s = getReceiptPrintSettings();
+  return [
+    `width:${s.paperWidth}px`,
+    `--receipt-paper-width:${s.paperWidth}px`,
+    `--receipt-header-font:${s.headerFontSize}px`,
+    `--receipt-item-font:${s.itemFontSize}px`,
+    `--receipt-size-font:${s.sizeFontSize}px`,
+    `--receipt-choice-label-font:${s.choiceLabelFontSize}px`,
+    `--receipt-option-font:${s.optionFontSize}px`,
+    `--receipt-price-font:${s.priceFontSize}px`,
+    `--receipt-details-font:${s.detailsFontSize}px`,
+    `--receipt-customer-name-font:${s.customerNameFontSize}px`,
+    `--receipt-customer-phone-font:${s.customerPhoneFontSize}px`,
+    `--receipt-side-margin:${s.sideMargin}px`,
+    `--receipt-line-height:${s.lineHeight}`
+  ].join(';');
 }
 
 function buildReceiptImageHtml(order = {}) {
@@ -2213,7 +2342,7 @@ function buildReceiptImageHtml(order = {}) {
   }).join("");
 
   return `
-    <div class="receipt-image">
+    <div class="receipt-image" style="${receiptPrintStyleAttribute()}">
       <div class="receipt-block receipt-big">Henting</div>
       <div class="receipt-gap"></div>
 
@@ -2234,8 +2363,8 @@ function buildReceiptImageHtml(order = {}) {
 
         <div class="receipt-details-title">Bestillingsdetaljer:</div>
         <div class="receipt-detail-row"><span>Bekreftet kl.:</span><b>${escapeHtml(receiptImageDate(confirmedAt))}</b></div>
-        <div class="receipt-detail-row"><span>Hele Navn:</span><b>${escapeHtml(customerName)}</b></div>
-        <div class="receipt-detail-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
+        <div class="receipt-detail-row receipt-customer-name-row"><span>Hele Navn:</span><b>${escapeHtml(customerName)}</b></div>
+        <div class="receipt-detail-row receipt-customer-phone-row"><span>Telefon:</span><b>${escapeHtml(customer.phone || "")}</b></div>
       </div>
     </div>
   `;

@@ -22329,3 +22329,369 @@ body.kol-customer .cart-line-total {
   font-size: 27px !important;
   line-height: 1.15 !important;
 }
+
+
+/* ===== V171: GloriaFood-like printed kvittering, larger but thinner + smoother long order bell ===== */
+.receipt-image {
+  width: 576px !important;
+  padding: 20px 0 24px !important;
+  background: #fff !important;
+  color: #000 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 22px !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.receipt-image .receipt-block {
+  margin: 0 20px !important;
+  padding: 8px 10px !important;
+  background: #000 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+}
+
+.receipt-image .receipt-big {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-medium {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-flex {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.receipt-image .receipt-gap {
+  height: 10px !important;
+}
+
+.receipt-image .receipt-content {
+  padding: 16px 20px 0 !important;
+  font-size: 20px !important;
+  line-height: 1.18 !important;
+}
+
+.receipt-image .receipt-content > b:first-of-type,
+.receipt-image .receipt-content > b {
+  display: block !important;
+  margin: 0 0 10px !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+.receipt-image .receipt-item {
+  margin: 8px 0 12px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 0 !important;
+}
+
+.receipt-image .receipt-item-line,
+.receipt-image .receipt-item-line-priced {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 112px !important;
+  gap: 10px !important;
+  align-items: start !important;
+  font-size: 25px !important;
+  line-height: 1.08 !important;
+  font-weight: 700 !important;
+}
+
+.receipt-image .receipt-item-line b,
+.receipt-image .receipt-item-line-priced b {
+  font-size: 25px !important;
+  line-height: 1.08 !important;
+  font-weight: 700 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.receipt-image .receipt-item-line-priced > b:last-child {
+  text-align: right !important;
+  white-space: nowrap !important;
+  font-size: 22px !important;
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-sub,
+.receipt-image .receipt-choice,
+.receipt-image .receipt-choice-priced {
+  padding-left: 28px !important;
+  margin-top: 2px !important;
+  font-size: 21px !important;
+  line-height: 1.12 !important;
+  font-weight: 400 !important;
+  font-style: italic !important;
+}
+
+.receipt-image .receipt-choice-priced {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 98px !important;
+  gap: 8px !important;
+  align-items: start !important;
+}
+
+.receipt-image .receipt-choice-text,
+.receipt-image .receipt-choice-text span,
+.receipt-image .receipt-choice-text b,
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-choice-priced b {
+  font-size: 21px !important;
+  line-height: 1.12 !important;
+  font-weight: 400 !important;
+  font-style: italic !important;
+  overflow-wrap: anywhere !important;
+}
+
+.receipt-image .receipt-choice-text b,
+.receipt-image .receipt-choice b {
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-choice-priced b:last-child {
+  text-align: right !important;
+  white-space: nowrap !important;
+  font-size: 19px !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+}
+
+.receipt-image .receipt-note,
+.receipt-image .receipt-main-note {
+  margin: 8px 0 10px !important;
+  padding-left: 0 !important;
+  font-size: 21px !important;
+  line-height: 1.15 !important;
+  font-weight: 650 !important;
+  font-style: normal !important;
+}
+
+.receipt-image .receipt-details-title {
+  margin: 14px 0 12px !important;
+  font-size: 31px !important;
+  line-height: 1.08 !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-detail-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 260px !important;
+  gap: 12px !important;
+  margin-top: 8px !important;
+  font-size: 24px !important;
+  line-height: 1.12 !important;
+}
+
+.receipt-image .receipt-detail-row span {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-detail-row b {
+  font-size: 24px !important;
+  font-weight: 650 !important;
+  text-align: right !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* ===== V172: adjustable receipt print settings + old telephone alarm ===== */
+.kol-admin .receipt-print-settings-box {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 14px !important;
+  border: 1px solid #dfe6ef !important;
+  border-radius: 14px !important;
+  background: #fbfcfe !important;
+}
+
+.kol-admin .receipt-print-settings-box h3 {
+  margin: 0 !important;
+  color: #1f2937 !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+}
+
+.kol-admin .receipt-print-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+}
+
+.kol-admin .receipt-print-grid input {
+  min-height: 38px !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+@media (max-width: 1100px) {
+  .kol-admin .receipt-print-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.receipt-render-holder {
+  width: auto !important;
+}
+
+.receipt-image {
+  width: var(--receipt-paper-width, 576px) !important;
+  padding: 18px 0 22px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-block {
+  margin-left: var(--receipt-side-margin, 22px) !important;
+  margin-right: var(--receipt-side-margin, 22px) !important;
+  padding: 8px 12px !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-big,
+.receipt-image .receipt-medium {
+  font-size: var(--receipt-header-font, 34px) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.receipt-image .receipt-gap {
+  height: 10px !important;
+}
+
+.receipt-image .receipt-content {
+  padding-left: var(--receipt-side-margin, 22px) !important;
+  padding-right: var(--receipt-side-margin, 22px) !important;
+  padding-top: 14px !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-main-note,
+.receipt-image .receipt-note {
+  font-size: var(--receipt-option-font, 26px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-details-title {
+  margin-top: 18px !important;
+  font-size: calc(var(--receipt-details-font, 24px) + 4px) !important;
+  line-height: 1.08 !important;
+  font-weight: 800 !important;
+}
+
+.receipt-image .receipt-item {
+  margin: 12px 0 14px !important;
+}
+
+.receipt-image .receipt-item-line,
+.receipt-image .receipt-item-line-priced {
+  font-size: var(--receipt-item-font, 30px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.receipt-image .receipt-item-line strong,
+.receipt-image .receipt-item-line b,
+.receipt-image .receipt-item-line-priced strong,
+.receipt-image .receipt-item-line-priced b {
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-sub,
+.receipt-image .receipt-choice,
+.receipt-image .receipt-choice-text,
+.receipt-image .receipt-choice span {
+  font-size: var(--receipt-option-font, 26px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-choice b,
+.receipt-image .receipt-sub b {
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-choice-price,
+.receipt-image .receipt-item-line-priced > b,
+.receipt-image .receipt-price-row b {
+  font-size: var(--receipt-price-font, 26px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+}
+
+.receipt-image .receipt-detail-row {
+  font-size: var(--receipt-details-font, 24px) !important;
+  line-height: 1.22 !important;
+  margin-top: 7px !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-detail-row b {
+  font-weight: 650 !important;
+}
+
+/* ===== V173: extra receipt controls for size/choice/customer + loud landline bell ===== */
+.kol-admin .receipt-print-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1280px) {
+  .kol-admin .receipt-print-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .kol-admin .receipt-print-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.receipt-image .receipt-size-row,
+.receipt-image .receipt-size-row .receipt-choice-text,
+.receipt-image .receipt-size-label,
+.receipt-image .receipt-size-value {
+  font-size: var(--receipt-size-font, 28px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+}
+
+.receipt-image .receipt-choice-label {
+  font-size: var(--receipt-choice-label-font, 28px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 650 !important;
+}
+
+.receipt-image .receipt-option-value {
+  font-size: var(--receipt-option-font, 28px) !important;
+  line-height: var(--receipt-line-height, 1.18) !important;
+  font-weight: 400 !important;
+}
+
+.receipt-image .receipt-customer-name-row,
+.receipt-image .receipt-customer-name-row span,
+.receipt-image .receipt-customer-name-row b {
+  font-size: var(--receipt-customer-name-font, 30px) !important;
+  line-height: 1.16 !important;
+}
+
+.receipt-image .receipt-customer-phone-row,
+.receipt-image .receipt-customer-phone-row span,
+.receipt-image .receipt-customer-phone-row b {
+  font-size: var(--receipt-customer-phone-font, 30px) !important;
+  line-height: 1.16 !important;
+}
+
+.receipt-image .receipt-customer-name-row b,
+.receipt-image .receipt-customer-phone-row b {
+  font-weight: 750 !important;
+}
