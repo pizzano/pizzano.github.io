@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=151">
+    <link rel="stylesheet" href="kol-core.css?v=156">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -2336,28 +2336,35 @@ function renderAdminOrderCard(order) {
   order = normalizeAdminOrderRecord(order, order?.id) || {};
   const status = order.status || "pending";
   const customerName = order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ") || "Ukjent kunde";
-  const phoneText = order.customer?.phone || "Telefon mangler";
+  const phoneText = (order.customer?.phone || "").trim();
   const waitingOpening = orderWaitingOpeningText(order);
   const isExpanded = expandedAdminOrderId === order.id;
   const headerTime = getOrderHeaderTime(order);
   const totalText = safeAdminNumber(order.total).toLocaleString("nb-NO", { style: "currency", currency: "NOK" });
   const orderId = String(order.id || "");
   const itemCount = asArray(order.items).reduce((sum, item) => sum + Math.max(1, safeAdminNumber(item.quantity, 1)), 0);
+  const itemCountText = `${itemCount} vare${itemCount === 1 ? "" : "r"}`;
   const statusLabel = waitingOpening || orderStatusLabel(status, order);
   const statusClass = order.ready === true ? "ready" : status;
+  const phoneInlineHtml = phoneText ? `<span class="orders-app-phone-inline">${escapeHtml(phoneText)}</span>` : "";
 
   return `
     <article class="orders-app-item ${escapeHtml(statusClass)} ${isExpanded ? "selected" : ""} ${waitingOpening ? "waiting-opening" : ""}" data-order-id="${escapeHtml(orderId)}">
       <button class="orders-app-row" type="button" data-toggle-order="${escapeHtml(orderId)}" aria-expanded="${isExpanded ? "true" : "false"}">
         <span class="orders-app-icon ${escapeHtml(statusClass)}">${escapeHtml(adminOrderIcon(order))}</span>
         <span class="orders-app-main">
-          <strong>${escapeHtml(customerName)}</strong>
-          <small>${itemCount} vare${itemCount === 1 ? "" : "r"}</small>
+          <span class="orders-app-name-line">
+            <strong>${escapeHtml(customerName)}</strong>
+            ${phoneInlineHtml}
+          </span>
           <em class="orders-app-status ${escapeHtml(statusClass)}">${escapeHtml(statusLabel)}</em>
         </span>
-        <span class="orders-app-timer-badge" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</span>
+        <span class="orders-app-timer-wrap">
+          <span class="orders-app-timer-badge" data-admin-live-time="${escapeHtml(orderId)}">${escapeHtml(headerTime)}</span>
+        </span>
         <span class="orders-app-side">
           <strong>${escapeHtml(totalText)}</strong>
+          <small>${escapeHtml(itemCountText)}</small>
         </span>
       </button>
 
