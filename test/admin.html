@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=173">
+    <link rel="stylesheet" href="kol-core.css?v=176">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -238,8 +238,9 @@
               <label>Henting
                 <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
               </label>
-              <label>Betaling
-                <input id="settingPaymentInfo" data-setting-field="paymentInfo" type="text" placeholder="Kort ved henting (henting)">
+              <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
+                <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
+                <span class="field-hint">Boş bırakılırsa sistemdeki şiddetli eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
               </label>
 
               <div class="wide receipt-print-settings-box">
@@ -413,6 +414,7 @@ let adminOrders = [];
 let ordersReady = false;
 let knownOrderIdsForSound = new Set();
 let adminOrderAudioContext = null;
+let adminOrderCustomAudio = null;
 let adminSoundUnlocked = false;
 let adminAlarmLoopTimer = null;
 let pendingRestoreData = null;
@@ -536,19 +538,55 @@ function playOldTelephoneRing(context, start, onDuration = 1.65) {
   lfo.stop(start + onDuration + 0.05);
 }
 
-function playAdminAlarmBurst() {
+function getAdminAlarmSoundUrl() {
+  return String(config?.siteSettings?.orderAlarmSoundUrl || "").trim();
+}
+
+function playCustomAdminAlarmAudio() {
+  const url = getAdminAlarmSoundUrl();
+  if (!url) return false;
+  try {
+    if (!adminOrderCustomAudio || adminOrderCustomAudio.dataset.url !== url) {
+      adminOrderCustomAudio = new Audio(url);
+      adminOrderCustomAudio.dataset.url = url;
+      adminOrderCustomAudio.preload = "auto";
+      adminOrderCustomAudio.crossOrigin = "anonymous";
+    }
+    adminOrderCustomAudio.pause();
+    adminOrderCustomAudio.currentTime = 0;
+    adminOrderCustomAudio.volume = 1;
+    adminOrderCustomAudio.loop = false;
+    const playPromise = adminOrderCustomAudio.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {
+        playAdminAlarmSynthFallback();
+      });
+    }
+    if (navigator.vibrate) navigator.vibrate([900, 180, 900, 180, 900]);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function playAdminAlarmSynthFallback() {
   const context = getAdminOrderAudioContext();
   if (!context) return;
   context.resume?.().then(() => {
     const now = context.currentTime + 0.03;
-    // TÜRKÇE: Eski ev telefonu gibi şiddetli uzun zil: BRRING ... BRRING ... BRRING.
-    playOldTelephoneRing(context, now, 1.65);
-    playOldTelephoneRing(context, now + 2.05, 1.65);
-    playOldTelephoneRing(context, now + 4.10, 1.75);
-    if (navigator.vibrate) navigator.vibrate([850, 220, 850, 220, 900]);
+    // TÜRKÇE: Şiddetli eski ev telefonu zili: tiz, metalik, uzun çalacak şekilde.
+    playOldTelephoneRing(context, now, 1.85);
+    playOldTelephoneRing(context, now + 2.18, 1.85);
+    playOldTelephoneRing(context, now + 4.36, 1.9);
+    if (navigator.vibrate) navigator.vibrate([950, 180, 950, 180, 950]);
   }).catch(() => {
     setStatus("Ny bestilling mottatt. Klikk én gang på adminpanelet for å aktivere alarmlyd.");
   });
+}
+
+function playAdminAlarmBurst() {
+  if (playCustomAdminAlarmAudio()) return;
+  playAdminAlarmSynthFallback();
 }
 
 function playNewOrderAlarm() {
@@ -984,6 +1022,7 @@ function defaultSiteSettings() {
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)",
+    orderAlarmSoundUrl: "",
     receiptPaperWidth: "576",
     receiptHeaderFontSize: "34",
     receiptItemFontSize: "32",
