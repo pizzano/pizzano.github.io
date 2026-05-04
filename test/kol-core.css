@@ -21531,3 +21531,359 @@ body.kol-admin:has([data-admin-page="orders"].active) .orders-app-status {
   }
 }
 
+
+/* ===== V166: orders full-width scroll + wider flexible Choices & Addons ===== */
+/* Orders: kartlar boydan boya olsun ve liste kendi içinde scroll edebilsin. */
+body.kol-admin.admin-orders-mode .admin-page[data-admin-page="orders"].active,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-page[data-admin-page="orders"].active,
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(100%, 1200px) !important;
+  max-width: 1200px !important;
+  min-width: 0 !important;
+  min-height: calc(100svh - var(--kol-header-h) - 14px) !important;
+  height: calc(100svh - var(--kol-header-h) - 14px) !important;
+  max-height: calc(100svh - var(--kol-header-h) - 14px) !important;
+  overflow: hidden !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-header,
+body.kol-admin.admin-orders-mode .orders-app-toolbar,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-toolbar {
+  flex: 0 0 auto !important;
+}
+
+body.kol-admin.admin-orders-mode #ordersAdminList,
+body.kol-admin.admin-orders-mode .orders-admin-list,
+body.kol-admin.admin-orders-mode .orders-app-list,
+body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-admin-list,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 0 10px !important;
+  margin: 0 !important;
+  scrollbar-gutter: stable !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  align-content: start !important;
+  gap: 8px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: minmax(0, 1fr) 56px !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Menu editor: sağ panel daha geniş ve esnek olsun, metin sıkışmasın. */
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+  width: min(1720px, calc(100vw - 30px)) !important;
+  min-width: 1280px !important;
+  grid-template-columns: minmax(760px, 1fr) minmax(430px, 500px) !important;
+  gap: 24px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+  width: 100% !important;
+  min-width: 430px !important;
+  max-width: 500px !important;
+  padding: 16px !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading > div,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading .group-heading-copy {
+  min-width: 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading h2,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h2,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel h3 {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.12 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading span,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel p,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel small {
+  display: block !important;
+  max-width: none !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.38 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
+  width: 100% !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups > * {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title strong,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title span {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+@media (max-width: 1380px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
+  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+    width: 1320px !important;
+    min-width: 1320px !important;
+    grid-template-columns: minmax(780px, 1fr) 460px !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+    min-width: 460px !important;
+    max-width: 460px !important;
+  }
+}
+
+
+/* ===== V167: Meny oppsett fits screen + Bestillinger fills height with scroll ===== */
+/* MENY OPPSETT: iki panel ekrana sığsın; genel yatay taşma yapmasın. */
+.kol-admin .admin-page[data-admin-page="menu"].active,
+.kol-admin .menu-editor-page.active {
+  overflow-x: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-editor-header {
+  width: min(100%, 1280px) !important;
+  min-width: 0 !important;
+  max-width: 1280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
+.kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+  width: min(100%, 1280px) !important;
+  max-width: 1280px !important;
+  min-width: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) clamp(330px, 29vw, 390px) !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .menu-builder-panel,
+.kol-admin .admin-page[data-admin-page="menu"].active .category-list,
+.kol-admin .admin-page[data-admin-page="menu"].active #categoryButtons {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 390px !important;
+  justify-self: stretch !important;
+  box-sizing: border-box !important;
+  height: calc(100svh - var(--kol-header-h, 56px) - 82px) !important;
+  max-height: calc(100svh - var(--kol-header-h, 56px) - 82px) !important;
+  overflow: hidden !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: start !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading h2 {
+  font-size: 18px !important;
+  line-height: 1.1 !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .section-heading span,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel p,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel small {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel #optionGroupsAdmin,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-card,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .admin-option-groups > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title strong,
+.kol-admin .admin-page[data-admin-page="menu"].active .group-panel .option-group-title span {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+@media (max-width: 1180px) {
+  .kol-admin .admin-page[data-admin-page="menu"].active {
+    overflow-x: auto !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-editor-header,
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
+  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+    width: 1120px !important;
+    min-width: 1120px !important;
+    max-width: none !important;
+  }
+
+  .kol-admin .admin-page[data-admin-page="menu"].active .gf-menu-grid,
+  .kol-admin .admin-page[data-admin-page="menu"].active .admin-grid {
+    grid-template-columns: minmax(0, 1fr) 340px !important;
+  }
+}
+
+/* BESTILLINGER: liste beyaz alanı aşağı kadar doldursun ve çok siparişte kendi içinde scroll etsin. */
+body.kol-admin.admin-orders-mode,
+body.kol-admin:has([data-admin-page="orders"].active) {
+  overflow: hidden !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-shell,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(100vw, 1200px) !important;
+  max-width: 1200px !important;
+  min-height: calc(100svh - var(--kol-header-h, 56px)) !important;
+  height: calc(100svh - var(--kol-header-h, 56px)) !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+body.kol-admin.admin-orders-mode .admin-page[data-admin-page="orders"].active,
+body.kol-admin.admin-orders-mode .orders-workspace.active,
+body.kol-admin:has([data-admin-page="orders"].active) .admin-page[data-admin-page="orders"].active,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-workspace.active {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-card,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-card {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  min-height: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  background: #fff !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-header,
+body.kol-admin.admin-orders-mode .orders-app-toolbar,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-header,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-toolbar {
+  flex: 0 0 auto !important;
+}
+
+body.kol-admin.admin-orders-mode #ordersAdminList,
+body.kol-admin.admin-orders-mode .orders-admin-list,
+body.kol-admin.admin-orders-mode .orders-app-list,
+body.kol-admin:has([data-admin-page="orders"].active) #ordersAdminList,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-admin-list,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #fff !important;
+  padding: 0 0 12px !important;
+  scrollbar-gutter: stable !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-list-inner,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-list-inner {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  align-content: start !important;
+  gap: 8px !important;
+  background: #fff !important;
+}
+
+body.kol-admin.admin-orders-mode .orders-app-item,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-item,
+body.kol-admin.admin-orders-mode .orders-app-row,
+body.kol-admin:has([data-admin-page="orders"].active) .orders-app-row {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
