@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=176">
+    <link rel="stylesheet" href="kol-core.css?v=181">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -238,6 +238,28 @@
               <label>Henting
                 <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
               </label>
+              <div class="wide global-text-settings-box">
+                <h3>Yazı sistemi / 3 boy</h3>
+                <span class="field-hint">Bu değerler tüm index.html ve admin.html tarafındaki yazıları kontrol eder. Sistem sadece küçük / orta / büyük boy kullanır.</span>
+                <div class="receipt-print-grid">
+                  <label>Küçük yazı (px)
+                    <input id="settingTextSmallSize" data-setting-field="textSmallSize" type="number" min="10" max="24" step="1" placeholder="13">
+                  </label>
+                  <label>Orta yazı (px)
+                    <input id="settingTextMediumSize" data-setting-field="textMediumSize" type="number" min="12" max="30" step="1" placeholder="16">
+                  </label>
+                  <label>Büyük yazı (px)
+                    <input id="settingTextLargeSize" data-setting-field="textLargeSize" type="number" min="16" max="42" step="1" placeholder="22">
+                  </label>
+                  <label>Yazı kalınlığı
+                    <input id="settingTextWeight" data-setting-field="textWeight" type="number" min="400" max="900" step="50" placeholder="650">
+                  </label>
+                  <label>Satır yüksekliği
+                    <input id="settingTextLineHeight" data-setting-field="textLineHeight" type="number" min="1" max="1.7" step="0.05" placeholder="1.25">
+                  </label>
+                </div>
+              </div>
+
               <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
                 <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
                 <span class="field-hint">Boş bırakılırsa sistemdeki şiddetli eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
@@ -1040,6 +1062,11 @@ function defaultSiteSettings() {
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)",
+    textSmallSize: "13",
+    textMediumSize: "16",
+    textLargeSize: "22",
+    textWeight: "650",
+    textLineHeight: "1.25",
     orderAlarmSoundUrl: "",
     receiptPaperWidth: "576",
     receiptHeaderFontSize: "34",
@@ -1054,6 +1081,32 @@ function defaultSiteSettings() {
     receiptSideMargin: "22",
     receiptLineHeight: "1.18"
   };
+}
+
+
+function applyGlobalTypographySettings(settings = {}) {
+  const root = document.documentElement;
+  const safePx = (value, fallback, min, max) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return fallback;
+    return Math.min(max, Math.max(min, num));
+  };
+  const small = safePx(settings.textSmallSize, 13, 10, 24);
+  const medium = safePx(settings.textMediumSize, 16, 12, 30);
+  const large = safePx(settings.textLargeSize, 22, 16, 42);
+  const weight = safePx(settings.textWeight, 650, 400, 900);
+  const line = safePx(settings.textLineHeight, 1.25, 1, 1.7);
+  root.style.setProperty("--kol-text-small", `${small}px`);
+  root.style.setProperty("--kol-text-medium", `${medium}px`);
+  root.style.setProperty("--kol-text-large", `${large}px`);
+  root.style.setProperty("--kol-font-small", `${small}px`);
+  root.style.setProperty("--kol-font-mid", `${medium}px`);
+  root.style.setProperty("--kol-font-base", `${medium}px`);
+  root.style.setProperty("--kol-font-big", `${large}px`);
+  root.style.setProperty("--kol-text-weight", String(weight));
+  root.style.setProperty("--kol-global-font-weight", String(weight));
+  root.style.setProperty("--kol-text-line", String(line));
+  root.style.setProperty("--kol-line-height-global", String(line));
 }
 
 function normalizeSiteSettings(value) {
@@ -1828,6 +1881,7 @@ function renderOptions() {
 function renderSiteSettings() {
   if (!config) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  applyGlobalTypographySettings(config.siteSettings);
   document.addEventListener("pointerdown", unlockAdminOrderSound, { once: true });
 document.addEventListener("keydown", unlockAdminOrderSound, { once: true });
 
@@ -1845,6 +1899,7 @@ function updateSiteSettingFromField(field) {
   if (!config || !field?.dataset?.settingField) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
   config.siteSettings[field.dataset.settingField] = field.value.trim();
+  applyGlobalTypographySettings(config.siteSettings);
   scheduleSave();
 }
 

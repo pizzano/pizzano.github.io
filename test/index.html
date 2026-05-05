@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=176">
+    <link rel="stylesheet" href="kol-core.css?v=181">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -2541,8 +2541,39 @@ function defaultSiteSettings() {
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
-    paymentInfo: "Kort ved henting (henting)"
+    paymentInfo: "Kort ved henting (henting)",
+    textSmallSize: "13",
+    textMediumSize: "16",
+    textLargeSize: "22",
+    textWeight: "650",
+    textLineHeight: "1.25"
   };
+}
+
+
+function applyGlobalTypographySettings(settings = {}) {
+  const root = document.documentElement;
+  const safePx = (value, fallback, min, max) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return fallback;
+    return Math.min(max, Math.max(min, num));
+  };
+  const small = safePx(settings.textSmallSize, 13, 10, 24);
+  const medium = safePx(settings.textMediumSize, 16, 12, 30);
+  const large = safePx(settings.textLargeSize, 22, 16, 42);
+  const weight = safePx(settings.textWeight, 650, 400, 900);
+  const line = safePx(settings.textLineHeight, 1.25, 1, 1.7);
+  root.style.setProperty("--kol-text-small", `${small}px`);
+  root.style.setProperty("--kol-text-medium", `${medium}px`);
+  root.style.setProperty("--kol-text-large", `${large}px`);
+  root.style.setProperty("--kol-font-small", `${small}px`);
+  root.style.setProperty("--kol-font-mid", `${medium}px`);
+  root.style.setProperty("--kol-font-base", `${medium}px`);
+  root.style.setProperty("--kol-font-big", `${large}px`);
+  root.style.setProperty("--kol-text-weight", String(weight));
+  root.style.setProperty("--kol-global-font-weight", String(weight));
+  root.style.setProperty("--kol-text-line", String(line));
+  root.style.setProperty("--kol-line-height-global", String(line));
 }
 
 function normalizeSiteSettings(value) {
@@ -2680,6 +2711,7 @@ function applyHeroDefaultVisual(settings = siteSettings) {
 
 function applySiteSettings() {
   const settings = normalizeSiteSettings(siteSettings);
+  applyGlobalTypographySettings(settings);
   const name = settings.restaurantName || "Restaurant";
   const logoUrl = (settings.logoUrl || "").trim();
 
