@@ -4,18 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KØL Grill & Pizza - Bestillinger</title>
+
   <style>
     :root {
       --green: #10b981;
+      --green-dark: #059669;
       --gray-light: #f3f4f6;
+      --gray-mid: #6b7280;
       --gray-dark: #374151;
       --yellow: #fbbf24;
       --border: #e5e7eb;
+      --red: #ef4444;
+      --blue-bg: #326096b0;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #326096b0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--blue-bg);
       margin: 0;
       padding: 20px;
     }
@@ -25,15 +34,22 @@
       margin: 0 auto 20px auto;
       padding: 10px 15px;
       width: 300px;
+      max-width: calc(100% - 30px);
       font-size: 1rem;
       border-radius: 8px;
       border: 1px solid var(--border);
+      outline: none;
+    }
+
+    #searchInput:focus {
+      border-color: var(--green);
     }
 
     .receipt-grid {
       display: grid;
       gap: 35px;
       grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      align-items: start;
     }
 
     .receipt {
@@ -45,72 +61,218 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      min-height: 270px;
     }
 
-    .info-text { color: var(--gray-dark); font-size: .9rem; }
-    .product-box { background: var(--gray-light); padding: 10px; margin: 6px 0; }
+    .customer-info {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
 
-    .time-badge {
-      background: var(--green);
-      color:white;
-      padding: 5px 12px;
-      border-radius:999px;
-      font-weight:bold;
+    .customer-left {
+      min-width: 0;
+    }
+
+    .customer-right {
+      text-align: right;
+      min-width: 145px;
+    }
+
+    .info-text {
+      color: var(--gray-dark);
+      font-size: .9rem;
+      margin: 4px 0;
+      line-height: 1.25;
+    }
+
+    .info-text strong {
+      color: #111827;
+    }
+
+    .info-text a {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+
+    .product-box {
+      background: var(--gray-light);
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
       font-size: .9rem;
     }
 
-    .countdown { color:#ef4444; font-size:.85rem; font-weight:bold; }
+    .product-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+      color: #111827;
+    }
+
+    .product-price {
+      color: var(--gray-dark);
+      white-space: nowrap;
+      font-size: .85rem;
+    }
+
+    .product-detail {
+      font-size: .85rem;
+      color: #374151;
+      margin-top: 3px;
+      line-height: 1.25;
+    }
+
+    .instruction-text {
+      margin-top: 6px;
+      font-size: .85rem;
+      font-weight: 700;
+      color: #92400e;
+      background: #fff7ed;
+      padding: 6px;
+      border-radius: 6px;
+    }
+
+    .time-badge {
+      background: var(--green);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: .9rem;
+      display: inline-block;
+      min-width: 115px;
+      text-align: center;
+    }
+
+    .countdown {
+      color: var(--red);
+      font-size: .85rem;
+      font-weight: 700;
+      margin: 5px 0;
+    }
+
+    .ready-time {
+      color: var(--gray-dark);
+      font-size: .82rem;
+      margin: 4px 0;
+      line-height: 1.25;
+    }
 
     .delay-warning {
       margin-top: 4px;
       background: #fef08a;
       padding: 6px 10px;
       border-radius: 8px;
-      color:#854d0e;
-      font-weight:600;
-      font-size:.85rem;
-      display:none;
+      color: #854d0e;
+      font-weight: 700;
+      font-size: .85rem;
+      display: none;
     }
 
     .reset-container {
-      cursor:pointer;
-      font-size:.85rem;
-      color:#1d4ed8;
-      margin-top:5px;
-      text-decoration:underline;
+      cursor: pointer;
+      font-size: .85rem;
+      color: #1d4ed8;
+      margin-top: 5px;
+      text-decoration: underline;
+      display: inline-block;
     }
 
     .reset-panel {
-      background:#fef08a;
-      margin-top:4px;
-      padding:8px 10px;
-      border-radius:10px;
-      display:none;
+      background: #fef08a;
+      margin-top: 4px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      display: none;
     }
 
     .reset-btn {
-      background:#fbbf24;
-      padding:6px 12px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
+      background: #fbbf24;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
     }
 
     .sms-tools {
-      display:flex;
-      gap:8px;
-      margin-top:6px;
-      flex-wrap:wrap;
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sms-tools select {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: .85rem;
+      max-width: 170px;
     }
 
     .sms-tools a {
       background: var(--green);
-      color:white;
-      padding:8px 12px;
-      border-radius:8px;
-      text-decoration:none;
-      font-size:.9rem;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .sms-tools a:hover {
+      background: var(--green-dark);
+    }
+
+    .total {
+      font-weight: 700;
+      font-size: .95rem;
+      color: #111827;
+      margin-top: auto;
+    }
+
+    .empty-message {
+      color: white;
+      text-align: center;
+      font-weight: 600;
+      margin-top: 30px;
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .receipt-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .receipt {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      .customer-info {
+        flex-direction: column;
+      }
+
+      .customer-right {
+        text-align: left;
+      }
+
+      .time-badge {
+        min-width: auto;
+      }
+
+      .sms-tools select {
+        max-width: 100%;
+        flex: 1;
+      }
     }
   </style>
 </head>
@@ -120,9 +282,6 @@
 <input type="text" id="searchInput" placeholder="Søk navn...">
 <div class="receipt-grid" id="receipts"></div>
 
-<!-- ========================= -->
-<!-- 🔥 FIREBASE IMPORT        -->
-<!-- ========================= -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
@@ -139,7 +298,7 @@
 
 <script>
 /* ================================
-   KONST
+   AYARLAR
 ================================ */
 const MAX_ORDERS = 49;
 const receiptsContainer = document.getElementById("receipts");
@@ -149,69 +308,281 @@ const ordersMap = new Map();
    SMS ŞABLONLARI
 =============================== */
 const SMS_TEMPLATES = [
-  { id: "ready", label: "Klar – hent nå", text: "Hei {first}, bestillingen din er klar for henting. Velkommen! – KØL Grill & Pizza" },
-  { id: "10min", label: "Klar om 10 min", text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza" },
-  { id: "5min", label: "Klar om 15 min", text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza" },
-  { id: "remind", label: "Hente–påminnelse", text: "Hei {first}, vi har maten klar. Gi beskjed om du er på vei. – KØL Grill & Pizza" }
+  {
+    id: "ready",
+    label: "Klar – hent nå",
+    text: "Hei {first}, bestillingen din er klar for henting. Velkommen! – KØL Grill & Pizza"
+  },
+  {
+    id: "10min",
+    label: "Klar om 10 min",
+    text: "Hei {first}, bestillingen din er klar om ca. 10 minutter. – KØL Grill & Pizza"
+  },
+  {
+    id: "15min",
+    label: "Klar om 15 min",
+    text: "Hei {first}, bestillingen din er klar om ca. 15 minutter. – KØL Grill & Pizza"
+  },
+  {
+    id: "remind",
+    label: "Hente–påminnelse",
+    text: "Hei {first}, vi har maten klar. Gi beskjed om du er på vei. – KØL Grill & Pizza"
+  }
 ];
 
 /* ===============================
-   HELPER
+   GÜVENLİ HTML
 =============================== */
-function smsHref(phone, body) {
-  // önce tüm boşluk ve tireleri temizle
-  let digits = phone.replace(/\s+/g,"").replace(/-/g,"");
-
-  // eğer +47 veya 47 ile başlıyorsa kaldır
-  digits = digits.replace(/^\+47/,"").replace(/^47/, "");
-
-  // geri kalan sadece rakamlar olsun
-  digits = digits.replace(/\D/g,"");
-
-  // final format: sms:+47XXXXXXXX?body=...
-  return `sms:${digits}?&body=${encodeURIComponent(body)}`;
+function esc(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
+/* ===============================
+   FIREBASE VERİSİNİ DÜZELT
+   Bazı siparişler direkt gelir,
+   bazıları { raw: {...}, total: 13 } şeklinde gelir.
+=============================== */
+function normalizeOrder(firebaseData) {
+  if (!firebaseData) return null;
 
+  const data = firebaseData.raw ? firebaseData.raw : firebaseData;
 
-function countdownString(futureTime) {
-  const now = new Date();
-  const diff = new Date(futureTime) - now;
+  if (!data || typeof data !== "object") return null;
 
-  if (diff <= 0) return "⏳ Klar!";
-  return `⏳ ${Math.floor(diff/60000)}m ${Math.floor((diff/1000)%60)}s igjen`;
+  return data;
 }
 
-function getDelayString(futureTime) {
-  const now = new Date();
-  let diff = now - new Date(futureTime);
+/* ===============================
+   TARIH / SAAT HELPER
+=============================== */
+function getAcceptedTime(data) {
+  return (
+    data.confirmed_at ||
+    data.accepted_at ||
+    data.placed_at ||
+    data.created_at ||
+    data.createdAt ||
+    null
+  );
+}
+
+function getFulfillTime(data) {
+  return (
+    data.fulfill_time ||
+    data.fulfill_at ||
+    data.ready_at ||
+    data.timeout_time ||
+    null
+  );
+}
+
+function parseOrderDate(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "number") {
+    const d = new Date(value < 10000000000 ? value * 1000 : value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  let s = String(value).trim();
+  if (!s) return null;
+
+  if (/^\d+$/.test(s)) {
+    const n = Number(s);
+    const d = new Date(n < 10000000000 ? n * 1000 : n);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+
+  if (/[zZ]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    return new Date(
+      Number(m[1]),
+      Number(m[2]) - 1,
+      Number(m[3]),
+      Number(m[4]),
+      Number(m[5]),
+      Number(m[6] || 0)
+    );
+  }
+
+  m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    return new Date(
+      Number(m[3]),
+      Number(m[2]) - 1,
+      Number(m[1]),
+      Number(m[4]),
+      Number(m[5]),
+      Number(m[6] || 0)
+    );
+  }
+
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatClock(value) {
+  const d = parseOrderDate(value);
+  if (!d) return "--:--";
+
+  return d.toLocaleTimeString("no-NO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Oslo"
+  });
+}
+
+function formatDateTime(value) {
+  const d = parseOrderDate(value);
+  if (!d) return "Tid mangler";
+
+  return d.toLocaleString("no-NO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Oslo"
+  });
+}
+
+function countdownString(data) {
+  const fulfillTime = getFulfillTime(data);
+  const future = parseOrderDate(fulfillTime);
+
+  if (!future) return "⏳ Tid mangler";
+
+  const diff = future.getTime() - Date.now();
+
+  if (diff <= 0) {
+    const lateMin = Math.floor(Math.abs(diff) / 60000);
+
+    if (lateMin < 60) {
+      return `✅ Klar nå · ${lateMin} min siden`;
+    }
+
+    return "✅ Klar";
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return `⏳ ${minutes}m ${seconds}s igjen`;
+}
+
+function getDelayString(data) {
+  const fulfillTime = getFulfillTime(data);
+  const future = parseOrderDate(fulfillTime);
+
+  if (!future) return "";
+
+  const diff = Date.now() - future.getTime();
+
   if (diff <= 0) return "";
 
-  let m = Math.floor(diff / 60000);
-  let s = Math.floor((diff / 1000) % 60);
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff / 1000) % 60);
 
-  if (m > 60) return "";
+  if (minutes > 60) return "";
 
-  return `⚠️ Forsinket: +${m}m ${s}s`;
+  return `⚠️ Forsinket: +${minutes}m ${seconds}s`;
 }
 
+function getPrepMinutes(data) {
+  if (typeof data.delivery_time === "number" && data.delivery_time > 0) {
+    return data.delivery_time;
+  }
+
+  const accepted = parseOrderDate(getAcceptedTime(data));
+  const fulfill = parseOrderDate(getFulfillTime(data));
+
+  if (!accepted || !fulfill) return null;
+
+  const diff = Math.round((fulfill.getTime() - accepted.getTime()) / 60000);
+
+  if (!Number.isFinite(diff) || diff < 0) return null;
+
+  return diff;
+}
+
+function isTodayOrFutureOrder(data) {
+  const orderTime =
+    parseOrderDate(getFulfillTime(data)) ||
+    parseOrderDate(getAcceptedTime(data));
+
+  if (!orderTime) return true;
+
+  const startToday = new Date();
+  startToday.setHours(0, 0, 0, 0);
+
+  const tomorrowEnd = new Date();
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+  tomorrowEnd.setHours(23, 59, 59, 999);
+
+  return orderTime >= startToday && orderTime <= tomorrowEnd;
+}
+
+/* ===============================
+   TELEFON / SMS
+=============================== */
+function cleanPhoneDigits(phone) {
+  let digits = String(phone || "").replace(/\s+/g, "").replace(/-/g, "");
+  digits = digits.replace(/^\+47/, "").replace(/^47/, "");
+  digits = digits.replace(/\D/g, "");
+  return digits;
+}
+
+function smsHref(phone, body) {
+  const digits = cleanPhoneDigits(phone);
+  return `sms:+47${digits}?&body=${encodeURIComponent(body)}`;
+}
+
+/* ===============================
+   ÜRÜN DETAYLARI
+=============================== */
 function extractDetails(options) {
-  if (!options) return "";
-  return options.map(o =>
-    `<div class="product-detail">• ${o.group_name.split(/[:;]/)[0]}: ${o.name}</div>`
-  ).join("");
+  if (!Array.isArray(options)) return "";
+
+  return options.map(o => {
+    const group = o.group_name ? String(o.group_name).split(/[:;]/)[0] : "Tilbehør";
+    const name = o.name || "";
+    const price = Number(o.total_option_price || o.price || 0);
+
+    let priceText = "";
+    if (price > 0 && o.type !== "size") {
+      priceText = ` +${price} kr`;
+    }
+
+    return `<div class="product-detail">• ${esc(group)}: ${esc(name)}${esc(priceText)}</div>`;
+  }).join("");
 }
 
 /* ===============================
    FIREBASE WRITE
 =============================== */
 function savePizzaTotalToFirebase(phone, total) {
-  const digits = phone.replace("+47","").replace(/\D/g,"");
+  const digits = cleanPhoneDigits(phone);
   const path = `${digits}/total`;
 
   window.fbSet(window.fbRef(window.fbDb, path), total)
-    .then(() => console.log("🔥 RESET Firebase kaydedildi:", total))
-    .catch(err => console.error("❌ Firebase hata:", err));
+    .then(() => console.log("RESET Firebase kaydedildi:", total))
+    .catch(err => console.error("Firebase hata:", err));
 }
 
 /* ===============================
@@ -222,22 +593,26 @@ function buildReceiptDOM(data, pizzaTotal) {
   div.className = "receipt";
   div.setAttribute("data-id", data.id);
 
+  const fullName = `${data.client_first_name || ""} ${data.client_last_name || ""}`.trim();
+  const phone = data.client_phone_international || data.client_phone || data.client_phone_national || "";
+
   div.innerHTML = `
-    <div class="customer-info" style="display:flex; justify-content:space-between;">
-      <div>
-        <p class="info-text"><strong>${data.client_first_name} ${data.client_last_name}</strong></p>
-        <p class="info-text">📞 <a href="tel:${data.client_phone}">${data.client_phone}</a></p>
-        <p class="info-text">💬 <a href="sms:${data.client_phone}">Send SMS</a></p>
-        <p class="info-text">Total ordre: <strong>${data.client_order_count}</strong></p>
+    <div class="customer-info">
+      <div class="customer-left">
+        <p class="info-text"><strong>${esc(fullName)}</strong></p>
+        <p class="info-text">📞 <a href="tel:${esc(phone)}">${esc(phone)}</a></p>
+        <p class="info-text">💬 <a href="sms:${esc(phone)}">Send SMS</a></p>
+        <p class="info-text">Total ordre: <strong>${esc(data.client_order_count || 0)}</strong></p>
       </div>
 
-      <div style="text-align:right;">
+      <div class="customer-right">
         <div class="time-badge" id="badge-${data.id}"></div>
         <p class="countdown" id="countdown-${data.id}"></p>
+        <p class="ready-time" id="ready-time-${data.id}"></p>
         <div class="delay-warning" id="delay-${data.id}"></div>
 
         <p class="info-text" id="pizza-${data.id}">
-          🍕 Total stor pizza: <strong>${pizzaTotal}</strong>
+          🍕 Total stor pizza: <strong>${esc(pizzaTotal)}</strong>
         </p>
 
         <div class="reset-container" data-id="${data.id}">RESET</div>
@@ -252,13 +627,14 @@ function buildReceiptDOM(data, pizzaTotal) {
 
     <div class="sms-tools">
       <select id="sms-template-${data.id}">
-        ${SMS_TEMPLATES.map(t => `<option value="${t.id}">${t.label}</option>`).join("")}
+        ${SMS_TEMPLATES.map(t => `<option value="${esc(t.id)}">${esc(t.label)}</option>`).join("")}
       </select>
       <a id="sms-send-${data.id}">📩 Send SMS</a>
     </div>
 
-    <div class="total">💳 Total: ${data.total_price} NOK</div>
+    <div class="total">💳 Total: ${esc(data.total_price || 0)} NOK</div>
   `;
+
   return div;
 }
 
@@ -266,111 +642,161 @@ function buildReceiptDOM(data, pizzaTotal) {
    RECEIPT UPDATE
 =============================== */
 function updateReceiptContent(el, data, pizzaTotal) {
+  const fulfillTime = getFulfillTime(data);
+  const prepMinutes = getPrepMinutes(data);
 
-  document.getElementById(`badge-${data.id}`).textContent =
-    `${Math.round((new Date(data.fulfill_at)-new Date(data.accepted_at))/60000)} min`;
-
-  document.getElementById(`countdown-${data.id}`).textContent =
-    countdownString(data.fulfill_at);
-
-  let delay = getDelayString(data.fulfill_at);
+  const badgeEl = document.getElementById(`badge-${data.id}`);
+  const countdownEl = document.getElementById(`countdown-${data.id}`);
+  const readyTimeEl = document.getElementById(`ready-time-${data.id}`);
   const delayEl = document.getElementById(`delay-${data.id}`);
-  delayEl.style.display = delay ? "block" : "none";
-  delayEl.textContent = delay;
+  const pizzaEl = document.getElementById(`pizza-${data.id}`);
+  const productsEl = document.getElementById(`products-${data.id}`);
 
-  document.getElementById(`pizza-${data.id}`).innerHTML =
-    `🍕 Total stor pizza: <strong>${pizzaTotal}</strong>`;
+  if (badgeEl) {
+    badgeEl.textContent = `Klar kl. ${formatClock(fulfillTime)}`;
+  }
 
-  /* Ürünler */
-  document.getElementById(`products-${data.id}`).innerHTML =
-    data.items.map(item => `
-      <div class="product-box">
-        <strong>${item.quantity}x ${item.name}</strong>
-        <span class="info-text">${item.total_item_price} kr.</span>
-        ${extractDetails(item.options)}
-        ${item.instructions ? `<div class="instruction-text">📝 ${item.instructions}</div>` : ""}
-      </div>
-    `).join("");
+  if (countdownEl) {
+    countdownEl.textContent = countdownString(data);
+  }
 
-  /* SMS */
+  if (readyTimeEl) {
+    readyTimeEl.textContent =
+      `📅 ${formatDateTime(fulfillTime)}${prepMinutes !== null ? ` · ${prepMinutes} min` : ""}`;
+  }
+
+  const delay = getDelayString(data);
+  if (delayEl) {
+    delayEl.style.display = delay ? "block" : "none";
+    delayEl.textContent = delay;
+  }
+
+  if (pizzaEl) {
+    pizzaEl.innerHTML = `🍕 Total stor pizza: <strong>${esc(pizzaTotal)}</strong>`;
+  }
+
+  if (productsEl) {
+    productsEl.innerHTML = (data.items || []).map(item => {
+      const quantity = item.quantity || 1;
+      const name = item.name || "";
+      const price = item.total_item_price || 0;
+      const instructions = item.instructions || "";
+
+      return `
+        <div class="product-box">
+          <div class="product-title">
+            <strong>${esc(quantity)}x ${esc(name)}</strong>
+            <span class="product-price">${esc(price)} kr.</span>
+          </div>
+          ${extractDetails(item.options)}
+          ${instructions ? `<div class="instruction-text">📝 ${esc(instructions)}</div>` : ""}
+        </div>
+      `;
+    }).join("");
+  }
+
   const sel = document.getElementById(`sms-template-${data.id}`);
   const btn = document.getElementById(`sms-send-${data.id}`);
 
   function updateSMS() {
+    if (!sel || !btn) return;
+
     const tpl = SMS_TEMPLATES.find(x => x.id === sel.value);
-    const first = data.client_first_name.split(" ")[0];
-    btn.href = smsHref(data.client_phone, tpl.text.replace("{first}", first));
+    const first = String(data.client_first_name || "").split(" ")[0] || "du";
+    const phone = data.client_phone || data.client_phone_international || data.client_phone_national || "";
+
+    btn.href = smsHref(phone, tpl.text.replace("{first}", first));
   }
 
-  sel.onchange = updateSMS;
+  if (sel) sel.onchange = updateSMS;
   updateSMS();
 }
 
 /* ===============================
-   RESET PANEL AÇ/KAPAT ve SIFIRLA
+   RESET PANEL AÇ/KAPAT VE SIFIRLA
 =============================== */
 document.addEventListener("click", (e) => {
-  
-  /* RESET yazısına tıklayınca panel açılıyor */
   if (e.target.classList.contains("reset-container")) {
     const id = e.target.dataset.id;
     const panel = document.getElementById(`reset-panel-${id}`);
 
-    panel.style.display = panel.style.display === "block" ? "none" : "block";
+    if (panel) {
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    }
   }
 
-  /* SIFIRLA butonu */
   if (e.target.dataset.reset) {
     const id = e.target.dataset.reset;
     const data = ordersMap.get(id);
+
     if (!data) return;
 
-    const phone = data.client_phone;
+    const phone = data.client_phone || data.client_phone_international || data.client_phone_national || "";
 
-    /* ekrandaki değeri sıfırla */
     const pizzaEl = document.getElementById(`pizza-${id}`);
-    pizzaEl.innerHTML = `🍕 Total stor pizza: <strong>0</strong>`;
+    if (pizzaEl) {
+      pizzaEl.innerHTML = `🍕 Total stor pizza: <strong>0</strong>`;
+    }
 
-    /* Firebase’e yaz */
     savePizzaTotalToFirebase(phone, 0);
 
-    /* paneli gizle */
-    document.getElementById(`reset-panel-${id}`).style.display = "none";
+    const panel = document.getElementById(`reset-panel-${id}`);
+    if (panel) panel.style.display = "none";
   }
 });
 
 /* ===============================
-   FETCH
+   FIREBASE FETCH
 =============================== */
 async function fetchOrder(i) {
   const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`;
+
   try {
     const r = await fetch(url);
-    const d = await r.json();
-    return d && d.status === "accepted" ? d : null;
-  } catch { return null; }
+    const firebaseData = await r.json();
+    const data = normalizeOrder(firebaseData);
+
+    if (!data || data.status !== "accepted") return null;
+
+    if (!isTodayOrFutureOrder(data)) return null;
+
+    return data;
+  } catch (err) {
+    console.error("Sipariş okunamadı:", i, err);
+    return null;
+  }
 }
 
 async function fetchPizzaTotal(phone) {
-  const digits = phone.replace("+47","").replace(/\D/g,"");
+  const digits = cleanPhoneDigits(phone);
   const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/${digits}/total.json`;
+
   try {
     const r = await fetch(url);
     return await r.json() ?? 0;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 /* ===============================
    RENDER
 =============================== */
-async function renderOrUpdateReceipt(i) {
+async function renderOrUpdateReceipt(i, activeIds) {
   const data = await fetchOrder(i);
-  if (!data) return;
 
-  const pizzaTotal = await fetchPizzaTotal(data.client_phone);
-  ordersMap.set(data.id.toString(), data);
+  if (!data || !data.id) return;
+
+  const id = data.id.toString();
+  activeIds.add(id);
+
+  const phone = data.client_phone || data.client_phone_international || data.client_phone_national || "";
+  const pizzaTotal = await fetchPizzaTotal(phone);
+
+  ordersMap.set(id, data);
 
   const old = document.querySelector(`[data-id="${data.id}"]`);
+
   if (old) {
     updateReceiptContent(old, data, pizzaTotal);
   } else {
@@ -380,44 +806,98 @@ async function renderOrUpdateReceipt(i) {
   }
 }
 
-/* ===============================
-   LOOPS
-=============================== */
-async function periodicUpdate() {
-  for (let i = 0; i < MAX_ORDERS; i++) {
-    await renderOrUpdateReceipt(i);
+function showEmptyIfNeeded() {
+  const existing = document.querySelector(".empty-message");
+  const count = document.querySelectorAll(".receipt").length;
+
+  if (count === 0) {
+    if (!existing) {
+      const div = document.createElement("div");
+      div.className = "empty-message";
+      div.textContent = "Ingen aktive bestillinger.";
+      receiptsContainer.appendChild(div);
+    }
+  } else {
+    if (existing) existing.remove();
   }
 }
+
+async function periodicUpdate() {
+  const activeIds = new Set();
+
+  for (let i = 0; i < MAX_ORDERS; i++) {
+    await renderOrUpdateReceipt(i, activeIds);
+  }
+
+  document.querySelectorAll(".receipt").forEach(el => {
+    const id = el.getAttribute("data-id");
+
+    if (!activeIds.has(id)) {
+      el.remove();
+      ordersMap.delete(id);
+    }
+  });
+
+  showEmptyIfNeeded();
+}
+
 periodicUpdate();
 setInterval(periodicUpdate, 5000);
 
-/* countdown + gecikme */
+/* ===============================
+   CANLI COUNTDOWN
+=============================== */
 setInterval(() => {
   ordersMap.forEach((data, id) => {
-    const c = document.getElementById(`countdown-${id}`);
-    const d = document.getElementById(`delay-${id}`);
+    const fulfillTime = getFulfillTime(data);
+    const prepMinutes = getPrepMinutes(data);
 
-    if (c) c.textContent = countdownString(data.fulfill_at);
+    const badgeEl = document.getElementById(`badge-${id}`);
+    const countdownEl = document.getElementById(`countdown-${id}`);
+    const readyTimeEl = document.getElementById(`ready-time-${id}`);
+    const delayEl = document.getElementById(`delay-${id}`);
 
-    let delay = getDelayString(data.fulfill_at);
-    if (d) {
-      d.style.display = delay ? "block" : "none";
-      d.textContent = delay;
+    if (badgeEl) {
+      badgeEl.textContent = `Klar kl. ${formatClock(fulfillTime)}`;
+    }
+
+    if (countdownEl) {
+      countdownEl.textContent = countdownString(data);
+    }
+
+    if (readyTimeEl) {
+      readyTimeEl.textContent =
+        `📅 ${formatDateTime(fulfillTime)}${prepMinutes !== null ? ` · ${prepMinutes} min` : ""}`;
+    }
+
+    const delay = getDelayString(data);
+    if (delayEl) {
+      delayEl.style.display = delay ? "block" : "none";
+      delayEl.textContent = delay;
     }
   });
 }, 1000);
 
-/* SEARCH */
+/* ===============================
+   SEARCH
+=============================== */
 document.getElementById("searchInput").addEventListener("input", (e) => {
-  const q = e.target.value.toLowerCase();
+  const q = e.target.value.toLowerCase().trim();
+
   document.querySelectorAll(".receipt").forEach(el => {
     const id = el.getAttribute("data-id");
     const d = ordersMap.get(id);
-    const fullname = `${d.client_first_name} ${d.client_last_name}`.toLowerCase();
-    el.style.order = fullname.includes(q) ? "0" : "999";
+
+    if (!d) return;
+
+    const fullname = `${d.client_first_name || ""} ${d.client_last_name || ""}`.toLowerCase();
+    const phone = `${d.client_phone || ""} ${d.client_phone_national || ""}`.toLowerCase();
+
+    const match = fullname.includes(q) || phone.includes(q);
+
+    el.style.display = match ? "flex" : "none";
   });
 });
-
 </script>
 
 </body>
