@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=181">
+    <link rel="stylesheet" href="kol-core.css?v=195">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -252,7 +252,19 @@
                     <input id="settingTextLargeSize" data-setting-field="textLargeSize" type="number" min="16" max="42" step="1" placeholder="22">
                   </label>
                   <label>Yazı kalınlığı
-                    <input id="settingTextWeight" data-setting-field="textWeight" type="number" min="400" max="900" step="50" placeholder="650">
+                    <input id="settingTextWeight" data-setting-field="textWeight" type="number" min="300" max="900" step="50" placeholder="400">
+                  </label>
+                  <label>Normal yazı boyu (px)
+                    <input id="settingTextNormalSize" data-setting-field="textNormalSize" type="number" min="11" max="26" step="1" placeholder="15">
+                  </label>
+                  <label>Vurgu / başlık boyu (px)
+                    <input id="settingTextEmphasisSize" data-setting-field="textEmphasisSize" type="number" min="12" max="32" step="1" placeholder="15">
+                  </label>
+                  <label>Normal kalınlık
+                    <input id="settingTextNormalWeight" data-setting-field="textNormalWeight" type="number" min="300" max="700" step="50" placeholder="400">
+                  </label>
+                  <label>Vurgu kalınlığı
+                    <input id="settingTextEmphasisWeight" data-setting-field="textEmphasisWeight" type="number" min="400" max="900" step="50" placeholder="700">
                   </label>
                   <label>Satır yüksekliği
                     <input id="settingTextLineHeight" data-setting-field="textLineHeight" type="number" min="1" max="1.7" step="0.05" placeholder="1.25">
@@ -1065,7 +1077,11 @@ function defaultSiteSettings() {
     textSmallSize: "13",
     textMediumSize: "16",
     textLargeSize: "22",
-    textWeight: "650",
+    textWeight: "400",
+    textNormalSize: "15",
+    textEmphasisSize: "15",
+    textNormalWeight: "400",
+    textEmphasisWeight: "700",
     textLineHeight: "1.25",
     orderAlarmSoundUrl: "",
     receiptPaperWidth: "576",
@@ -1091,20 +1107,28 @@ function applyGlobalTypographySettings(settings = {}) {
     if (!Number.isFinite(num)) return fallback;
     return Math.min(max, Math.max(min, num));
   };
-  const small = safePx(settings.textSmallSize, 13, 10, 24);
-  const medium = safePx(settings.textMediumSize, 16, 12, 30);
-  const large = safePx(settings.textLargeSize, 22, 16, 42);
-  const weight = safePx(settings.textWeight, 650, 400, 900);
+  const normal = safePx(settings.textNormalSize ?? settings.textMediumSize, 15, 11, 26);
+  const emphasis = safePx(settings.textEmphasisSize ?? settings.textLargeSize, 15, 12, 32);
+  const small = safePx(settings.textSmallSize, Math.max(11, normal - 2), 10, 24);
+  const medium = safePx(settings.textMediumSize, normal, 11, 30);
+  const large = safePx(settings.textLargeSize, emphasis, 12, 42);
+  const normalWeight = safePx(settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
+  const emphasisWeight = safePx(settings.textEmphasisWeight, 700, 400, 900);
+  const weight = normalWeight;
   const line = safePx(settings.textLineHeight, 1.25, 1, 1.7);
   root.style.setProperty("--kol-text-small", `${small}px`);
-  root.style.setProperty("--kol-text-medium", `${medium}px`);
-  root.style.setProperty("--kol-text-large", `${large}px`);
+  root.style.setProperty("--kol-text-medium", `${normal}px`);
+  root.style.setProperty("--kol-text-large", `${emphasis}px`);
   root.style.setProperty("--kol-font-small", `${small}px`);
-  root.style.setProperty("--kol-font-mid", `${medium}px`);
-  root.style.setProperty("--kol-font-base", `${medium}px`);
-  root.style.setProperty("--kol-font-big", `${large}px`);
+  root.style.setProperty("--kol-font-mid", `${normal}px`);
+  root.style.setProperty("--kol-font-base", `${normal}px`);
+  root.style.setProperty("--kol-font-big", `${emphasis}px`);
+  root.style.setProperty("--kol-text-normal-size", `${normal}px`);
+  root.style.setProperty("--kol-text-emphasis-size", `${emphasis}px`);
   root.style.setProperty("--kol-text-weight", String(weight));
   root.style.setProperty("--kol-global-font-weight", String(weight));
+  root.style.setProperty("--kol-text-normal-weight", String(normalWeight));
+  root.style.setProperty("--kol-text-emphasis-weight", String(emphasisWeight));
   root.style.setProperty("--kol-text-line", String(line));
   root.style.setProperty("--kol-line-height-global", String(line));
 }

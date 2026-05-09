@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=181">
+    <link rel="stylesheet" href="kol-core.css?v=195">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -326,12 +326,12 @@
       }
 
       .kol-cart-flyer-text strong {
-        font-size: 14px;
+        
         line-height: 1.15;
       }
 
       .kol-cart-flyer-text span {
-        font-size: 12px;
+        
         color: #68737d;
       }
 
@@ -386,7 +386,7 @@
         inset: 0;
         display: grid;
         place-items: center;
-        font-size: 22px;
+        
       }
 
       @keyframes kolCartTargetFlash {
@@ -791,6 +791,9 @@ const nextMenuBatchSize = 999;
 let visibleSectionLimit = firstMenuBatchSize;
 let lazyMenuObserver = null;
 let lazyScrollHandler = null;
+let mostOrderedMenuItems = [];
+let mostOrderedLoading = false;
+const mostOrderedCacheKey = "kol-most-ordered-products-v1";
 
 const openHour = 14;
 const closeHour = 22;
@@ -839,6 +842,7 @@ const clearCart = document.querySelector("#clearCart") || { hidden: true, addEve
 const cartItems = document.querySelector("#cartItems");
 const cartEmpty = document.querySelector("#cartEmpty");
 const cartSummary = document.querySelector("#cartSummary");
+let expandedCartQtyIndex = null;
 const subtotal = document.querySelector("#subtotal");
 const tax = document.querySelector("#tax");
 const taxNote = document.querySelector("#taxNote");
@@ -2545,7 +2549,11 @@ function defaultSiteSettings() {
     textSmallSize: "13",
     textMediumSize: "16",
     textLargeSize: "22",
-    textWeight: "650",
+    textWeight: "400",
+    textNormalSize: "15",
+    textEmphasisSize: "15",
+    textNormalWeight: "400",
+    textEmphasisWeight: "700",
     textLineHeight: "1.25"
   };
 }
@@ -2558,20 +2566,28 @@ function applyGlobalTypographySettings(settings = {}) {
     if (!Number.isFinite(num)) return fallback;
     return Math.min(max, Math.max(min, num));
   };
-  const small = safePx(settings.textSmallSize, 13, 10, 24);
-  const medium = safePx(settings.textMediumSize, 16, 12, 30);
-  const large = safePx(settings.textLargeSize, 22, 16, 42);
-  const weight = safePx(settings.textWeight, 650, 400, 900);
+  const normal = safePx(settings.textNormalSize ?? settings.textMediumSize, 15, 11, 26);
+  const emphasis = safePx(settings.textEmphasisSize ?? settings.textLargeSize, 15, 12, 32);
+  const small = safePx(settings.textSmallSize, Math.max(11, normal - 2), 10, 24);
+  const medium = safePx(settings.textMediumSize, normal, 11, 30);
+  const large = safePx(settings.textLargeSize, emphasis, 12, 42);
+  const normalWeight = safePx(settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
+  const emphasisWeight = safePx(settings.textEmphasisWeight, 700, 400, 900);
+  const weight = normalWeight;
   const line = safePx(settings.textLineHeight, 1.25, 1, 1.7);
   root.style.setProperty("--kol-text-small", `${small}px`);
-  root.style.setProperty("--kol-text-medium", `${medium}px`);
-  root.style.setProperty("--kol-text-large", `${large}px`);
+  root.style.setProperty("--kol-text-medium", `${normal}px`);
+  root.style.setProperty("--kol-text-large", `${emphasis}px`);
   root.style.setProperty("--kol-font-small", `${small}px`);
-  root.style.setProperty("--kol-font-mid", `${medium}px`);
-  root.style.setProperty("--kol-font-base", `${medium}px`);
-  root.style.setProperty("--kol-font-big", `${large}px`);
+  root.style.setProperty("--kol-font-mid", `${normal}px`);
+  root.style.setProperty("--kol-font-base", `${normal}px`);
+  root.style.setProperty("--kol-font-big", `${emphasis}px`);
+  root.style.setProperty("--kol-text-normal-size", `${normal}px`);
+  root.style.setProperty("--kol-text-emphasis-size", `${emphasis}px`);
   root.style.setProperty("--kol-text-weight", String(weight));
   root.style.setProperty("--kol-global-font-weight", String(weight));
+  root.style.setProperty("--kol-text-normal-weight", String(normalWeight));
+  root.style.setProperty("--kol-text-emphasis-weight", String(emphasisWeight));
   root.style.setProperty("--kol-text-line", String(line));
   root.style.setProperty("--kol-line-height-global", String(line));
 }
@@ -2794,6 +2810,131 @@ function menuConfigSignature(config) {
   }
 }
 
+
+function normalizePopularProductName(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^\s*\d+\s*[-.)]?\s*/, "")
+    .replace(/[^a-z0-9æøå]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getAllVisibleMenuProducts() {
+  const list = [];
+  menuSections
+    .filter((section) => !isHiddenItem(section))
+    .forEach((section) => {
+      visibleMenuItems(section).forEach((item) => {
+        list.push({ section, item });
+      });
+    });
+  return list;
+}
+
+function readCachedMostOrderedItems() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(mostOrderedCacheKey) || "null");
+    if (!cached || !Array.isArray(cached.productIds)) return [];
+    const ids = new Set(cached.productIds.map(String));
+    return getAllVisibleMenuProducts()
+      .filter(({ item }) => ids.has(String(item?.id || "")))
+      .sort((a, b) => cached.productIds.indexOf(String(a.item.id)) - cached.productIds.indexOf(String(b.item.id)))
+      .map(({ item }) => item)
+      .slice(0, 5);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveMostOrderedCache(items = []) {
+  try {
+    localStorage.setItem(mostOrderedCacheKey, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      productIds: items.map((item) => String(item?.id || "")).filter(Boolean)
+    }));
+  } catch (error) {}
+}
+
+function buildMostOrderedFromOrders(ordersData = {}) {
+  const products = getAllVisibleMenuProducts();
+  if (!products.length || !ordersData || typeof ordersData !== "object") return [];
+
+  const byId = new Map(products.map(({ item }) => [String(item.id || ""), item]));
+  const byName = new Map();
+  products.forEach(({ item }) => {
+    const candidates = [item.name, item.title, `${item.number || ""} ${item.name || ""}`]
+      .map(normalizePopularProductName)
+      .filter(Boolean);
+    candidates.forEach((name) => {
+      if (!byName.has(name)) byName.set(name, item);
+    });
+  });
+
+  const scores = new Map();
+  const addScore = (item, qty = 1) => {
+    if (!item?.id) return;
+    const key = String(item.id);
+    scores.set(key, (scores.get(key) || 0) + Math.max(1, Number(qty) || 1));
+  };
+
+  Object.values(ordersData).forEach((order) => {
+    asArray(order?.items).forEach((line) => {
+      const qty = Math.max(1, Number(line?.quantity || line?.qty || 1) || 1);
+      let item = byId.get(String(line?.productId || line?.id || ""));
+      if (!item) {
+        const lineName = normalizePopularProductName(line?.name || line?.title || "");
+        item = byName.get(lineName);
+      }
+      addScore(item, qty);
+    });
+  });
+
+  return [...scores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => byId.get(id))
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function getMostOrderedSection() {
+  if (!mostOrderedMenuItems.length) return null;
+  const firstImage = mostOrderedMenuItems.find((item) => item?.imageUrl)?.imageUrl || "";
+  return {
+    id: "mest-bestilt",
+    title: "Mest bestilt",
+    note: "De 5 mest populære produktene akkurat nå.",
+    imageUrl: firstImage,
+    items: mostOrderedMenuItems,
+    isSyntheticMostOrdered: true
+  };
+}
+
+async function refreshMostOrderedFromDatabase(options = {}) {
+  if (mostOrderedLoading) return;
+  if (!menuSections.length) return;
+  mostOrderedLoading = true;
+  try {
+    const response = await fetch(`${firebaseOrdersUrl}?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Kunne ikke hente bestillingsstatistikk");
+    const ordersData = await response.json();
+    const nextItems = buildMostOrderedFromOrders(ordersData || {});
+    const nextSignature = nextItems.map((item) => item.id).join("|");
+    const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
+    mostOrderedMenuItems = nextItems;
+    saveMostOrderedCache(nextItems);
+    if (options.render !== false && nextSignature !== oldSignature) {
+      renderMenu();
+    }
+  } catch (error) {
+    console.warn("Mest bestilt kunne ikke hentes fra database.", error);
+  } finally {
+    mostOrderedLoading = false;
+  }
+}
+
 function finishMenuLoading() {
   document.body.classList.remove("menu-loading");
   menuSectionsEl?.classList.add("menu-ready");
@@ -2807,6 +2948,7 @@ async function loadMenuConfig() {
   // TÜRKÇE: Önce son başarılı menüyü hemen gösteriyoruz.
   // Bu, yenilemede oluşan göz kırpmasını engeller.
   if (cachedConfig && applyMenuConfig(cachedConfig)) {
+    mostOrderedMenuItems = readCachedMostOrderedItems();
     cachedSignature = menuConfigSignature(cachedConfig);
     visibleSectionLimit = firstMenuBatchSize;
     renderMenu();
@@ -2821,11 +2963,13 @@ async function loadMenuConfig() {
     const freshSignature = menuConfigSignature(config);
 
     if (applyMenuConfig(config)) {
+      if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
       saveCachedMenuConfig(config);
       if (!renderedFromCache || freshSignature !== cachedSignature) {
         visibleSectionLimit = firstMenuBatchSize;
         renderMenu();
       }
+      refreshMostOrderedFromDatabase({ render: true });
     } else if (!renderedFromCache) {
       menuSections = [];
       renderMenu();
@@ -3146,6 +3290,8 @@ function buildCartLine() {
     name: `${titlePrefix}${selectedProduct.name.toUpperCase()}`,
     size: selectedSize,
     sizeLabel,
+    imageUrl: selectedProduct.imageUrl || "",
+    thumb: selectedProduct.thumb || selectedProduct.type || "default-food",
     extras: selectedExtraLines.map((option) =>
       option.choiceGroup || option.group === "Velg saus" || option.group === "Tillegg" || selectedProduct.type === "kebab-pita"
         ? option.label
@@ -3266,10 +3412,12 @@ function setActiveCategoryTab(sectionId, options = {}) {
 }
 
 function getRenderableMenuSections() {
-  return menuSections
+  const sections = menuSections
     .filter((section) => !isHiddenItem(section))
     .map((section) => ({ ...section, items: visibleMenuItems(section) }))
     .filter((section) => section.items.length);
+  const mostOrderedSection = getMostOrderedSection();
+  return mostOrderedSection ? [mostOrderedSection, ...sections] : sections;
 }
 
 function refreshCategoryTabsFromCurrentMenu(options = {}) {
@@ -3412,10 +3560,7 @@ function markSelectedMenuProduct(productId = "") {
 }
 
 function renderMenu() {
-  const visibleSections = menuSections
-    .filter((section) => !isHiddenItem(section))
-    .map((section) => ({ ...section, items: visibleMenuItems(section) }))
-    .filter((section) => section.items.length);
+  const visibleSections = getRenderableMenuSections();
 
   if (!visibleSections.length) {
     disconnectMenuLazyLoader();
@@ -3843,7 +3988,32 @@ function sortCartInPlaceForKitchen() {
 }
 
 // Sepetin ekrandaki adet, toplam ve ürün listesini yeniler.
+function cartLineThumbHtml(line = {}) {
+  // V193: Sepette ürün resmi istenmiyor. Bu yardımcı fonksiyon boş döner,
+  // böylece eski/farklı render yolları tekrar resim basamaz.
+  return "";
+}
+
+function updateCartLineQuantity(index, delta) {
+  const lineIndex = Number(index);
+  if (!Number.isInteger(lineIndex) || !cart[lineIndex]) return;
+  const nextQuantity = Math.max(0, Number(cart[lineIndex].quantity || 1) + Number(delta || 0));
+  if (nextQuantity <= 0) {
+    expandedCartQtyIndex = null;
+    kolRemoveCartLineDirect(lineIndex);
+    return;
+  }
+  const unitPrice = safeNumber(cart[lineIndex].unitPrice, safeNumber(cart[lineIndex].total, 0) / Math.max(1, safeNumber(cart[lineIndex].quantity, 1)));
+  cart[lineIndex].quantity = nextQuantity;
+  cart[lineIndex].lineTotal = unitPrice * nextQuantity;
+  cart[lineIndex].total = unitPrice * nextQuantity;
+  saveCart();
+  renderCart();
+  markSelectedMenuProduct();
+}
+
 function renderCart() {
+  if (typeof expandedCartQtyIndex === "undefined") window.expandedCartQtyIndex = null;
   sortCartInPlaceForKitchen();
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const cartSubtotal = cart.reduce((sum, line) => sum + line.total, 0);
@@ -3893,14 +4063,10 @@ function renderCart() {
         detailRows.push({ label: "Sum:", priceText: formatPrice(line.total), isLineTotal: true });
       }
       return `
-        <article class="cart-item">
+        <article class="cart-item cart-item-modern cart-item-no-image" data-cart-line="${index}" role="button" tabindex="0" aria-label="Rediger ${escapeAttribute(line.name)}">
           <div class="cart-item-main cart-item-main-stacked">
             <div class="cart-item-head">
-              <h3>${line.quantity}x ${line.name}</h3>
-              <div class="cart-item-top-actions">
-                <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
-                <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
-              </div>
+              <h3>${safeText(line.name)}</h3>
             </div>
             ${detailRows.length ? `
               <div class="cart-item-details">
@@ -3923,12 +4089,31 @@ function renderCart() {
                   .join("")}
               </div>
             ` : ""}
-            ${line.note ? `<p class="cart-item-note">Notat: ${line.note}</p>` : ""}
+            ${line.note ? `<p class="cart-item-note">Notat: ${safeText(line.note)}</p>` : ""}
+          </div>
+          <div class="cart-item-actions" aria-label="Rediger eller slett">
+            <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
+            <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
           </div>
         </article>
       `;
     })
     .join("");
+
+  // V186: Sepette ürünler toplamın üstünde her zaman görünür kalsın.
+  // Önceki CSS/hidden çakışmaları bazı cihazlarda ürün listesini gizliyordu.
+  if (cartItems) {
+    if (hasCartItems) {
+      cartItems.hidden = false;
+      cartItems.removeAttribute("hidden");
+      cartItems.style.display = "grid";
+      cartItems.style.visibility = "visible";
+      cartItems.style.opacity = "1";
+    } else {
+      cartItems.hidden = true;
+      cartItems.style.display = "none";
+    }
+  }
 
   if (showOnlyOrderStatus && orderStatusBox) {
     orderStatusBox.hidden = false;
@@ -4454,29 +4639,46 @@ window.__kolEditCartLine = kolEditCartLineDirect;
 window.__kolRemoveCartLine = kolRemoveCartLineDirect;
 
 function kolCartActionFromEvent(event) {
+  const actionButton = event.target.closest?.("[data-cart-action]");
+  const removeButton = event.target.closest?.(".remove-button[data-remove], .cart-trash-btn[data-remove], [data-cart-action='remove']");
   const editButton = event.target.closest?.(".edit-line-button[data-edit], [data-cart-action='edit']");
-  const removeButton = event.target.closest?.(".remove-button[data-remove], [data-cart-action='remove']");
-  const button = editButton || removeButton;
-  if (!button || !cartItems?.contains(button)) return;
+  const qtyToggleButton = event.target.closest?.("[data-cart-action='qty-toggle']");
+  const qtyIncButton = event.target.closest?.("[data-cart-action='qty-inc']");
+  const row = event.target.closest?.(".cart-item[data-cart-line]");
+  if ((!actionButton && !row) || !cartItems?.contains(actionButton || row)) return;
 
-  // Slett skal KUN skje på click. Ikke på touchstart/pointerdown.
-  // Ellers mobil kan slette flere varer med én berøring.
-  if (removeButton && event.type !== "click") return;
+  // Slett/antall skal KUN skje på click. Ikke på touchstart/pointerdown.
+  if ((removeButton || qtyToggleButton || qtyIncButton) && event.type !== "click") return;
+  if (!actionButton && event.type !== "click") return;
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation?.();
 
-  if (editButton) {
-    const now = Date.now();
-    if (now - kolLastCartEditAt < 350) return;
-    kolLastCartEditAt = now;
-    kolEditCartLineDirect(editButton.dataset.edit);
+  if (qtyToggleButton) {
+    const idx = Number(qtyToggleButton.dataset.index);
+    expandedCartQtyIndex = expandedCartQtyIndex === idx ? null : idx;
+    renderCart();
+    return;
+  }
+  if (qtyIncButton) {
+    const idx = Number(qtyIncButton.dataset.index);
+    expandedCartQtyIndex = idx;
+    updateCartLineQuantity(idx, 1);
+    return;
+  }
+  if (removeButton) {
+    expandedCartQtyIndex = null;
+    kolRemoveCartLineDirect(removeButton.dataset.remove);
     return;
   }
 
-  if (removeButton) {
-    kolRemoveCartLineDirect(removeButton.dataset.remove);
+  const editIndex = editButton?.dataset.edit ?? row?.dataset.cartLine;
+  if (editIndex !== undefined) {
+    const now = Date.now();
+    if (now - kolLastCartEditAt < 350) return;
+    kolLastCartEditAt = now;
+    kolEditCartLineDirect(editIndex);
   }
 }
 
@@ -4488,9 +4690,11 @@ document.addEventListener("touchstart", kolCartActionFromEvent, { capture: true,
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Enter" && event.key !== " ") return;
   const editButton = event.target.closest?.(".edit-line-button[data-edit], [data-cart-action='edit']");
-  if (!editButton || !cartItems?.contains(editButton)) return;
+  const row = event.target.closest?.(".cart-item[data-cart-line]");
+  const target = editButton || row;
+  if (!target || !cartItems?.contains(target)) return;
   event.preventDefault();
-  kolEditCartLineDirect(editButton.dataset.edit);
+  kolEditCartLineDirect(editButton?.dataset.edit ?? row?.dataset.cartLine);
 }, true);
 
 init();
