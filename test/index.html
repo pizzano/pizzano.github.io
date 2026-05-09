@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=195">
+    <link rel="stylesheet" href="kol-core.css?v=197">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -2545,6 +2545,19 @@ function defaultSiteSettings() {
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
+    uiBodySize: "12",
+    uiMetaSize: "11",
+    uiTitleSize: "13",
+    uiButtonSize: "13",
+    uiPriceSize: "13",
+    uiInputSize: "12",
+    uiHeaderSize: "13",
+    uiCartSize: "12",
+    uiAdminSize: "12",
+    uiNormalWeight: "400",
+    uiTitleWeight: "700",
+    uiButtonWeight: "700",
+    uiLineHeight: "1.25",
     paymentInfo: "Kort ved henting (henting)",
     textSmallSize: "13",
     textMediumSize: "16",
@@ -2561,33 +2574,50 @@ function defaultSiteSettings() {
 
 function applyGlobalTypographySettings(settings = {}) {
   const root = document.documentElement;
-  const safePx = (value, fallback, min, max) => {
+  const safeNum = (value, fallback, min, max) => {
     const num = Number(value);
     if (!Number.isFinite(num)) return fallback;
     return Math.min(max, Math.max(min, num));
   };
-  const normal = safePx(settings.textNormalSize ?? settings.textMediumSize, 15, 11, 26);
-  const emphasis = safePx(settings.textEmphasisSize ?? settings.textLargeSize, 15, 12, 32);
-  const small = safePx(settings.textSmallSize, Math.max(11, normal - 2), 10, 24);
-  const medium = safePx(settings.textMediumSize, normal, 11, 30);
-  const large = safePx(settings.textLargeSize, emphasis, 12, 42);
-  const normalWeight = safePx(settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
-  const emphasisWeight = safePx(settings.textEmphasisWeight, 700, 400, 900);
-  const weight = normalWeight;
-  const line = safePx(settings.textLineHeight, 1.25, 1, 1.7);
-  root.style.setProperty("--kol-text-small", `${small}px`);
-  root.style.setProperty("--kol-text-medium", `${normal}px`);
-  root.style.setProperty("--kol-text-large", `${emphasis}px`);
-  root.style.setProperty("--kol-font-small", `${small}px`);
-  root.style.setProperty("--kol-font-mid", `${normal}px`);
-  root.style.setProperty("--kol-font-base", `${normal}px`);
-  root.style.setProperty("--kol-font-big", `${emphasis}px`);
-  root.style.setProperty("--kol-text-normal-size", `${normal}px`);
-  root.style.setProperty("--kol-text-emphasis-size", `${emphasis}px`);
-  root.style.setProperty("--kol-text-weight", String(weight));
-  root.style.setProperty("--kol-global-font-weight", String(weight));
+  const body = safeNum(settings.uiBodySize ?? settings.textNormalSize ?? settings.textMediumSize, 12, 10, 24);
+  const meta = safeNum(settings.uiMetaSize ?? settings.textSmallSize, Math.max(9, body - 1), 9, 22);
+  const title = safeNum(settings.uiTitleSize ?? settings.textEmphasisSize ?? settings.textLargeSize, 13, 11, 30);
+  const button = safeNum(settings.uiButtonSize ?? title, title, 10, 26);
+  const price = safeNum(settings.uiPriceSize ?? title, title, 10, 28);
+  const input = safeNum(settings.uiInputSize ?? body, body, 10, 26);
+  const header = safeNum(settings.uiHeaderSize ?? title, title, 10, 28);
+  const cart = safeNum(settings.uiCartSize ?? body, body, 10, 26);
+  const admin = safeNum(settings.uiAdminSize ?? body, body, 10, 26);
+  const normalWeight = safeNum(settings.uiNormalWeight ?? settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
+  const titleWeight = safeNum(settings.uiTitleWeight ?? settings.textEmphasisWeight, 700, 400, 900);
+  const buttonWeight = safeNum(settings.uiButtonWeight ?? titleWeight, titleWeight, 400, 900);
+  const line = safeNum(settings.uiLineHeight ?? settings.textLineHeight, 1.25, 1, 1.7);
+  root.style.setProperty("--kol-ui-body-size", `${body}px`);
+  root.style.setProperty("--kol-ui-meta-size", `${meta}px`);
+  root.style.setProperty("--kol-ui-title-size", `${title}px`);
+  root.style.setProperty("--kol-ui-button-size", `${button}px`);
+  root.style.setProperty("--kol-ui-price-size", `${price}px`);
+  root.style.setProperty("--kol-ui-input-size", `${input}px`);
+  root.style.setProperty("--kol-ui-header-size", `${header}px`);
+  root.style.setProperty("--kol-ui-cart-size", `${cart}px`);
+  root.style.setProperty("--kol-ui-admin-size", `${admin}px`);
+  root.style.setProperty("--kol-ui-normal-weight", String(normalWeight));
+  root.style.setProperty("--kol-ui-title-weight", String(titleWeight));
+  root.style.setProperty("--kol-ui-button-weight", String(buttonWeight));
+  root.style.setProperty("--kol-ui-line-height", String(line));
+  root.style.setProperty("--kol-text-small", `${meta}px`);
+  root.style.setProperty("--kol-text-medium", `${body}px`);
+  root.style.setProperty("--kol-text-large", `${title}px`);
+  root.style.setProperty("--kol-font-small", `${meta}px`);
+  root.style.setProperty("--kol-font-mid", `${body}px`);
+  root.style.setProperty("--kol-font-base", `${body}px`);
+  root.style.setProperty("--kol-font-big", `${title}px`);
+  root.style.setProperty("--kol-text-normal-size", `${body}px`);
+  root.style.setProperty("--kol-text-emphasis-size", `${title}px`);
+  root.style.setProperty("--kol-text-weight", String(normalWeight));
+  root.style.setProperty("--kol-global-font-weight", String(normalWeight));
   root.style.setProperty("--kol-text-normal-weight", String(normalWeight));
-  root.style.setProperty("--kol-text-emphasis-weight", String(emphasisWeight));
+  root.style.setProperty("--kol-text-emphasis-weight", String(titleWeight));
   root.style.setProperty("--kol-text-line", String(line));
   root.style.setProperty("--kol-line-height-global", String(line));
 }

@@ -24174,3 +24174,315 @@ body.kol-customer #cartItems .cart-detail-text,
 body.kol-customer #cartItems .cart-detail-text-plain {
   min-width: 0 !important;
 }
+
+
+/* ===== V196: global 12px text system + 13px emphasis/headings, clean admin/customer ===== */
+:root {
+  --kol-text-normal-size: 12px;
+  --kol-text-emphasis-size: 13px;
+  --kol-text-normal-weight: 400;
+  --kol-text-emphasis-weight: 700;
+  --kol-font-small: var(--kol-text-normal-size);
+  --kol-font-base: var(--kol-text-normal-size);
+  --kol-font-mid: var(--kol-text-normal-size);
+  --kol-font-big: var(--kol-text-emphasis-size);
+}
+
+body.kol-customer,
+body.kol-admin {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-text-normal-size) !important;
+  font-weight: var(--kol-text-normal-weight) !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+}
+
+body.kol-customer :where(
+  p,span,small,em,b,strong,label,input,textarea,select,option,button,a,
+  h1,h2,h3,h4,h5,h6,div,li,td,th,
+  .menu-row-main,.row-price,.category-tab,.category-title,.category-note,
+  .product-summary,.option-group,.option-line,.cart-item,.cart-detail-row,
+  .cart-summary,.checkout-form,.pickup-option,.checkout-help,.info-block,
+  .profile-body,.order-live-content,.order-live-status,.customer-receipt-lines
+),
+body.kol-admin :where(
+  p,span,small,em,b,strong,label,input,textarea,select,option,button,a,
+  h1,h2,h3,h4,h5,h6,div,li,td,th,
+  .admin-page,.admin-shell,.admin-card,.admin-grid,.section-heading,
+  .orders-app-card,.orders-app-row,.orders-app-main,.orders-app-side,
+  .orders-app-status,.admin-order-modal,.admin-order-modal-receipt,
+  .gf-category-copy,.gf-product-copy,.group-panel,.option-group-card,
+  .form-control,.settings-form-grid,.inline-product-edit-form
+) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-text-normal-size) !important;
+  font-weight: var(--kol-text-normal-weight) !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Important text/headings: only 13px, bold where useful */
+body.kol-customer :where(
+  .appbar > strong,.appbar > strong::before,#siteNameText,#siteNameText::before,
+  .menu-row-main strong,.row-price,.category-title,.category-tab.active,
+  .product-photo h2,#productTitle,.option-group h3,.option-line span,
+  .cart-item h3,.cart-detail-label,.cart-detail-row.total-line-row *,
+  .total-row,.cart-summary strong,.checkout-form h3,.info-header h2,.profile-header h2,
+  .order-live-header h2,.order-live-status h3,.profile-order-title-row strong,
+  .checkout-button,.product-footer strong,.product-footer button,#addConfiguredProduct
+),
+body.kol-admin :where(
+  .admin-brand strong,.top-settings-button,.orders-app-title h1,.orders-app-main strong,
+  .orders-app-status,.orders-app-side strong,.orders-app-timer-badge,
+  .admin-section-title,.section-heading h1,.section-heading h2,.section-heading h3,
+  .inline-settings-header h1,.category-builder-heading h1,.gf-category-copy strong,
+  .gf-product-copy strong,.group-panel h2,.group-panel h3,
+  .admin-order-modal-title h2,.order-line-title,.order-line-total,
+  .form-actions button,.accept-order-button-v29,.clean-ready-button-v36
+) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-text-emphasis-size) !important;
+  font-weight: var(--kol-text-emphasis-weight) !important;
+  line-height: 1.22 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Keep icon glyphs visual, not forced into the text system */
+body.kol-customer :where(svg,path,img,.plain-icon,.cart-plain-icon,.profile-plain-icon,.info-plain-icon,.category-chevron,.cart-edit-icon),
+body.kol-admin :where(svg,path,img,.plain-icon,.orders-app-icon,.category-thumb,.product-mini-thumb,.food-thumb,.gf-drag-handle,.menu-dots,.admin-icon-button) {
+  font-size: initial !important;
+  font-weight: initial !important;
+  line-height: initial !important;
+}
+
+/* Header / action bars must stay bold and readable */
+body.kol-customer .appbar > strong,
+body.kol-customer #siteNameText,
+body.kol-customer .checkout-button,
+body.kol-customer .product-footer strong,
+body.kol-customer .product-footer button,
+body.kol-customer #addConfiguredProduct {
+  font-weight: var(--kol-text-emphasis-weight) !important;
+}
+
+/* Product detail options: thinner, compact, same text rhythm */
+body.kol-customer .option-line,
+body.kol-customer .product-scroll-content .option-line {
+  min-height: 42px !important;
+  padding: 8px 10px !important;
+}
+
+body.kol-customer .option-line span,
+body.kol-customer .option-line strong,
+body.kol-customer .product-scroll-content .option-line span,
+body.kol-customer .product-scroll-content .option-line strong {
+  font-size: var(--kol-text-emphasis-size) !important;
+  font-weight: var(--kol-text-emphasis-weight) !important;
+}
+
+/* Cart: vertical edit/delete centered inside the product row */
+body.kol-customer #cartItems .cart-item,
+body.kol-customer #cartItems .cart-item-modern,
+body.kol-customer #cartItems .cart-item-no-image,
+body.kol-customer .cart-item {
+  grid-template-columns: minmax(0, 1fr) 32px !important;
+  column-gap: 8px !important;
+  align-items: center !important;
+  padding: 8px 9px !important;
+}
+
+body.kol-customer #cartItems .cart-item-actions,
+body.kol-customer .cart-item-actions,
+body.kol-customer #cartItems .cart-item-top-actions,
+body.kol-customer .cart-item-top-actions {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.kol-customer #cartItems .remove-button,
+body.kol-customer #cartItems .edit-line-button.icon-only,
+body.kol-customer .cart-item .remove-button,
+body.kol-customer .cart-item .edit-line-button.icon-only {
+  width: 27px !important;
+  min-width: 27px !important;
+  max-width: 27px !important;
+  height: 27px !important;
+  min-height: 27px !important;
+  max-height: 27px !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.kol-customer #cartItems .remove-button,
+body.kol-customer .cart-item .remove-button {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+body.kol-customer #cartItems .edit-line-button.icon-only,
+body.kol-customer .cart-item .edit-line-button.icon-only,
+body.kol-customer #cartItems .cart-edit-icon,
+body.kol-customer .cart-item .cart-edit-icon {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+body.kol-customer #cartItems .cart-item h3,
+body.kol-customer #cartItems .cart-detail-row,
+body.kol-customer #cartItems .cart-detail-row span,
+body.kol-customer #cartItems .cart-detail-row strong,
+body.kol-customer #cartItems .cart-detail-label,
+body.kol-customer #cartItems .cart-detail-value {
+  font-size: var(--kol-text-normal-size) !important;
+  line-height: 1.25 !important;
+}
+
+body.kol-customer #cartItems .cart-item h3,
+body.kol-customer #cartItems .cart-detail-label,
+body.kol-customer #cartItems .cart-detail-row.total-line-row * {
+  font-weight: var(--kol-text-emphasis-weight) !important;
+}
+
+/* Admin: prevent oversized order rows/text after global reset */
+body.kol-admin .orders-app-row {
+  min-height: 74px !important;
+}
+body.kol-admin .orders-app-side,
+body.kol-admin .orders-app-main {
+  min-width: 0 !important;
+}
+body.kol-admin .orders-app-phone-inline,
+body.kol-admin .badge,
+body.kol-admin .status-badge {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+
+/* ===== V197: detaylı çalışan yazı ayarları ===== */
+:root {
+  --kol-ui-body-size: 12px;
+  --kol-ui-meta-size: 11px;
+  --kol-ui-title-size: 13px;
+  --kol-ui-button-size: 13px;
+  --kol-ui-price-size: 13px;
+  --kol-ui-input-size: 12px;
+  --kol-ui-header-size: 13px;
+  --kol-ui-cart-size: 12px;
+  --kol-ui-admin-size: 12px;
+  --kol-ui-normal-weight: 400;
+  --kol-ui-title-weight: 700;
+  --kol-ui-button-weight: 700;
+  --kol-ui-line-height: 1.25;
+}
+
+body.kol-customer,
+body.kol-admin {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-ui-body-size) !important;
+  font-weight: var(--kol-ui-normal-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(p, span, label, small, em, b, strong, li, td, th, div),
+body.kol-admin :where(p, span, label, small, em, b, strong, li, td, th, div) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: inherit;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(p, span, label, small, em, li, div),
+body.kol-admin :where(p, span, label, small, em, li, div) {
+  font-weight: var(--kol-ui-normal-weight) !important;
+}
+
+body.kol-customer :where(h1,h2,h3,h4,h5,h6,.section-title,.category-title,.product-title,.menu-row-main strong,.cart-summary-title,.total-row,.cart-total,.order-live-status h3),
+body.kol-admin :where(h1,h2,h3,h4,h5,h6,.section-heading h2,.admin-page h2,.admin-page h3,.orders-app-main strong,.admin-order-modal h2,.inline-settings-header h2) {
+  font-size: var(--kol-ui-title-size) !important;
+  font-weight: var(--kol-ui-title-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(.appbar > strong,.back-menu-button,#siteNameText,.product-footer button,.checkout-button,#addConfiguredProduct),
+body.kol-admin :where(.admin-topbar,.admin-brand strong,.top-settings-button,.orders-app-header h1,.admin-order-modal-primary,.admin-order-modal-ready-button) {
+  font-size: var(--kol-ui-header-size) !important;
+  font-weight: var(--kol-ui-button-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(button,.category-tab,.pickup-option,.edit-line-button,.remove-button,.profile-phone-search button,.order-live-close-inline),
+body.kol-admin :where(button,.admin-btn,.primary-button,.danger-button,.confirm-cancel,.confirm-danger,.top-settings-button) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-ui-button-size) !important;
+  font-weight: var(--kol-ui-button-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(input,select,textarea),
+body.kol-admin :where(input,select,textarea) {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--kol-ui-input-size) !important;
+  font-weight: var(--kol-ui-normal-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(.row-price,.cart-line-total,.cart-detail-row strong,.cart-summary strong,.total-row strong,.product-footer strong,.price,.amount),
+body.kol-admin :where(.orders-app-side strong,.admin-order-modal-total,.order-line-total,.price,.amount) {
+  font-size: var(--kol-ui-price-size) !important;
+  font-weight: var(--kol-ui-title-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(.menu-row-main span,.category-note,.checkout-help,.field-hint,.profile-order-meta,.customer-receipt-line p,.cart-detail-value,.cart-detail-label,.cart-detail-text,.cart-detail-text-plain),
+body.kol-admin :where(.field-hint,.muted,.admin-muted,.orders-app-main small,.orders-app-side small,.section-heading span,.group-panel small,.admin-order-modal-meta) {
+  font-size: var(--kol-ui-meta-size) !important;
+  font-weight: var(--kol-ui-normal-weight) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer :where(.cart-item,.cart-item *:not(svg):not(path):not(img):not(.icon-button):not(.cart-toggle)),
+body.kol-customer :where(.cart-items,.cart-summary) {
+  font-size: var(--kol-ui-cart-size) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-customer .cart-item h3,
+body.kol-customer .cart-item-title,
+body.kol-customer .cart-summary .total-row,
+body.kol-customer .cart-summary strong {
+  font-size: var(--kol-ui-title-size) !important;
+  font-weight: var(--kol-ui-title-weight) !important;
+}
+
+body.kol-admin :where(.admin-shell,.admin-shell *:not(svg):not(path):not(img)) {
+  font-size: var(--kol-ui-admin-size) !important;
+  line-height: var(--kol-ui-line-height) !important;
+}
+
+body.kol-admin :where(.admin-page h2,.admin-page h3,.section-heading h2,.orders-app-main strong,.orders-app-header h1,.inline-settings-header h2) {
+  font-size: var(--kol-ui-title-size) !important;
+  font-weight: var(--kol-ui-title-weight) !important;
+}
+
+body.kol-customer :where(svg,path,img,.icon-button,.cart-toggle,.plain-icon),
+body.kol-admin :where(svg,path,img,.orders-app-icon,.admin-icon) {
+  font-size: revert;
+}
+
+.detailed-text-settings-grid input {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
