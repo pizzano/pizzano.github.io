@@ -1,19 +1,19 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="no">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=197">
+    <link rel="stylesheet" href="kol-core.css?v=301">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
       <button class="appbar-brand" id="siteNameText" type="button" aria-label="K&Oslash;L Grill &amp; Pizza">
         <span class="brand-label">K&Oslash;L GRILL &amp; PIZZA</span>
-        <span class="brand-back-label" aria-hidden="true">&larr; Tilbake til meny</span>
+        <span class="brand-back-label" aria-hidden="true">Tilbake</span>
       </button>
       <div class="appbar-actions">
-<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon"><span class="plain-icon info-plain-icon" aria-hidden="true">ⓘ</span></button>
+<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon"><span class="plain-icon info-plain-icon" aria-hidden="true">i</span></button>
         <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger"><span class="plain-icon profile-plain-icon" aria-hidden="true">👤</span><span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
         <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
       </div>
@@ -1069,7 +1069,7 @@ function normalizeFullName(value = "") {
   try {
     text = text.replace(/[^\p{L}\p{M}\s.'’\-]/gu, "");
   } catch (error) {
-    text = text.replace(/[^A-Za-zÀ-ÖØ-öø-ÿÆØÅæøåÇĞİÖŞÜçğıöşü\s.'’\-]/g, "");
+    text = text.replace(/[^\p{L}\p{M}\s.'’\-]/g, "");
   }
   return text.replace(/\s+/g, " ").slice(0, 60).trimStart();
 }
@@ -2461,9 +2461,16 @@ async function submitOrder() {
   }
 }
 
-function findProduct(id) {
+function findProduct(id, sectionId = "") {
+  const targetId = String(id || "");
+  const targetSectionId = String(sectionId || "");
+  if (targetSectionId && targetSectionId !== "mest-bestilt") {
+    const section = menuSections.find((entry) => String(entry?.id || "") === targetSectionId);
+    const item = asArray(section?.items).find((product) => String(product?.id || "") === targetId);
+    if (item) return { item, section };
+  }
   for (const section of menuSections) {
-    const item = asArray(section.items).find((product) => product.id === id);
+    const item = asArray(section.items).find((product) => String(product.id) === targetId);
     if (item) return { item, section };
   }
   return {};
@@ -2545,83 +2552,29 @@ function defaultSiteSettings() {
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
-    uiBodySize: "12",
-    uiMetaSize: "11",
-    uiTitleSize: "13",
-    uiButtonSize: "13",
-    uiPriceSize: "13",
-    uiInputSize: "12",
-    uiHeaderSize: "13",
-    uiCartSize: "12",
-    uiAdminSize: "12",
-    uiNormalWeight: "400",
-    uiTitleWeight: "700",
-    uiButtonWeight: "700",
-    uiLineHeight: "1.25",
     paymentInfo: "Kort ved henting (henting)",
-    textSmallSize: "13",
-    textMediumSize: "16",
-    textLargeSize: "22",
-    textWeight: "400",
-    textNormalSize: "15",
-    textEmphasisSize: "15",
-    textNormalWeight: "400",
-    textEmphasisWeight: "700",
-    textLineHeight: "1.25"
   };
 }
 
 
-function applyGlobalTypographySettings(settings = {}) {
+function applyGlobalTypographySettings() {
   const root = document.documentElement;
-  const safeNum = (value, fallback, min, max) => {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return fallback;
-    return Math.min(max, Math.max(min, num));
-  };
-  const body = safeNum(settings.uiBodySize ?? settings.textNormalSize ?? settings.textMediumSize, 12, 10, 24);
-  const meta = safeNum(settings.uiMetaSize ?? settings.textSmallSize, Math.max(9, body - 1), 9, 22);
-  const title = safeNum(settings.uiTitleSize ?? settings.textEmphasisSize ?? settings.textLargeSize, 13, 11, 30);
-  const button = safeNum(settings.uiButtonSize ?? title, title, 10, 26);
-  const price = safeNum(settings.uiPriceSize ?? title, title, 10, 28);
-  const input = safeNum(settings.uiInputSize ?? body, body, 10, 26);
-  const header = safeNum(settings.uiHeaderSize ?? title, title, 10, 28);
-  const cart = safeNum(settings.uiCartSize ?? body, body, 10, 26);
-  const admin = safeNum(settings.uiAdminSize ?? body, body, 10, 26);
-  const normalWeight = safeNum(settings.uiNormalWeight ?? settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
-  const titleWeight = safeNum(settings.uiTitleWeight ?? settings.textEmphasisWeight, 700, 400, 900);
-  const buttonWeight = safeNum(settings.uiButtonWeight ?? titleWeight, titleWeight, 400, 900);
-  const line = safeNum(settings.uiLineHeight ?? settings.textLineHeight, 1.25, 1, 1.7);
-  root.style.setProperty("--kol-ui-body-size", `${body}px`);
-  root.style.setProperty("--kol-ui-meta-size", `${meta}px`);
-  root.style.setProperty("--kol-ui-title-size", `${title}px`);
-  root.style.setProperty("--kol-ui-button-size", `${button}px`);
-  root.style.setProperty("--kol-ui-price-size", `${price}px`);
-  root.style.setProperty("--kol-ui-input-size", `${input}px`);
-  root.style.setProperty("--kol-ui-header-size", `${header}px`);
-  root.style.setProperty("--kol-ui-cart-size", `${cart}px`);
-  root.style.setProperty("--kol-ui-admin-size", `${admin}px`);
-  root.style.setProperty("--kol-ui-normal-weight", String(normalWeight));
-  root.style.setProperty("--kol-ui-title-weight", String(titleWeight));
-  root.style.setProperty("--kol-ui-button-weight", String(buttonWeight));
-  root.style.setProperty("--kol-ui-line-height", String(line));
-  root.style.setProperty("--kol-text-small", `${meta}px`);
-  root.style.setProperty("--kol-text-medium", `${body}px`);
-  root.style.setProperty("--kol-text-large", `${title}px`);
-  root.style.setProperty("--kol-font-small", `${meta}px`);
-  root.style.setProperty("--kol-font-mid", `${body}px`);
-  root.style.setProperty("--kol-font-base", `${body}px`);
-  root.style.setProperty("--kol-font-big", `${title}px`);
-  root.style.setProperty("--kol-text-normal-size", `${body}px`);
-  root.style.setProperty("--kol-text-emphasis-size", `${title}px`);
-  root.style.setProperty("--kol-text-weight", String(normalWeight));
-  root.style.setProperty("--kol-global-font-weight", String(normalWeight));
-  root.style.setProperty("--kol-text-normal-weight", String(normalWeight));
-  root.style.setProperty("--kol-text-emphasis-weight", String(titleWeight));
-  root.style.setProperty("--kol-text-line", String(line));
-  root.style.setProperty("--kol-line-height-global", String(line));
+  root.style.setProperty("--kol-text-small", "12px");
+  root.style.setProperty("--kol-text-medium", "12px");
+  root.style.setProperty("--kol-text-large", "12px");
+  root.style.setProperty("--kol-font-small", "12px");
+  root.style.setProperty("--kol-font-mid", "12px");
+  root.style.setProperty("--kol-font-base", "12px");
+  root.style.setProperty("--kol-font-big", "12px");
+  root.style.setProperty("--kol-text-normal-size", "12px");
+  root.style.setProperty("--kol-text-emphasis-size", "12px");
+  root.style.setProperty("--kol-text-weight", "400");
+  root.style.setProperty("--kol-global-font-weight", "400");
+  root.style.setProperty("--kol-text-normal-weight", "400");
+  root.style.setProperty("--kol-text-emphasis-weight", "700");
+  root.style.setProperty("--kol-text-line", "1.35");
+  root.style.setProperty("--kol-line-height-global", "1.35");
 }
-
 function normalizeSiteSettings(value) {
   return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
 }
@@ -2766,13 +2719,13 @@ function applySiteSettings() {
     let topBrandLabel = siteNameText.querySelector(".brand-label");
     let topBackLabel = siteNameText.querySelector(".brand-back-label");
     if (!topBrandLabel || !topBackLabel) {
-      siteNameText.innerHTML = '<span class="brand-label"></span><span class="brand-back-label" aria-hidden="true">← Tilbake til meny</span>';
+      siteNameText.innerHTML = '<span class="brand-label"></span><span class="brand-back-label" aria-hidden="true">Tilbake</span>';
       topBrandLabel = siteNameText.querySelector(".brand-label");
       topBackLabel = siteNameText.querySelector(".brand-back-label");
     }
     if (topBrandLabel) topBrandLabel.textContent = name.toUpperCase();
     if (topBackLabel) {
-      topBackLabel.textContent = "← Tilbake til meny";
+      topBackLabel.textContent = "Tilbake";
       topBackLabel.setAttribute("aria-hidden", isCustomerOverlayOpen() ? "false" : "true");
     }
     siteNameText.setAttribute("aria-label", isCustomerOverlayOpen() ? "Tilbake til meny" : name.toUpperCase());
@@ -2858,7 +2811,7 @@ function getAllVisibleMenuProducts() {
     .filter((section) => !isHiddenItem(section))
     .forEach((section) => {
       visibleMenuItems(section).forEach((item) => {
-        list.push({ section, item });
+        list.push({ section, item: { ...item, _sourceSectionId: section.id } });
       });
     });
   return list;
@@ -2926,6 +2879,7 @@ function buildMostOrderedFromOrders(ordersData = {}) {
     .sort((a, b) => b[1] - a[1])
     .map(([id]) => byId.get(id))
     .filter(Boolean)
+    .map((item) => ({ ...item, _syntheticMostOrdered: true }))
     .slice(0, 5);
 }
 
@@ -3016,7 +2970,7 @@ async function loadMenuConfig() {
 }
 
 function normalizeSizeId(label = "", fallback = "") {
-  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (value.includes("medium") || value === "m") return "medium";
   if (value.includes("stor") || value.includes("large") || value === "st") return "large";
   if (value.includes("xxl")) return "xxl";
@@ -3026,7 +2980,7 @@ function normalizeSizeId(label = "", fallback = "") {
 }
 
 function isStandardLikeSizeLabel(value = "") {
-  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   return !normalized || normalized.includes("standard") || normalized.includes("standart") || normalized.includes("pris") || normalized.includes("vanlig") || normalized.includes("regular");
 }
 
@@ -3565,7 +3519,7 @@ function markSelectedMenuProduct(productId = "") {
 
   menuSectionsEl.querySelectorAll(".menu-row[data-product]").forEach((row) => {
     const id = String(row.dataset.product || "");
-    const isMarked = !!id && markedIds.has(id);
+    const isMarked = !!id && markedIds.has(id) && row.dataset.synthetic !== "true";
 
     row.classList.toggle("selected-product", isMarked);
     if (isMarked) row.setAttribute("aria-current", "true");
@@ -3632,9 +3586,9 @@ function renderMenu() {
                 const rowSoldOut = isSoldOutItem(item, sectionSoldOut);
                 const prefix = item.number ? `${item.number}. ` : "";
                 const details = item.ingredients || "";
-                const isSelected = getMarkedMenuProductIds().has(String(item.id));
+                const isSelected = !section.isSyntheticMostOrdered && getMarkedMenuProductIds().has(String(item.id));
                 return `
-                  <button class="menu-row ${rowSoldOut ? "sold-out" : ""} ${isSelected ? "selected-product" : ""}" type="button" data-product="${item.id}" ${isSelected ? 'aria-current="true"' : ""} ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
+                  <button class="menu-row ${rowSoldOut ? "sold-out" : ""} ${isSelected ? "selected-product" : ""}" type="button" data-product="${item.id}" data-product-section="${section.id}" data-source-section="${item._sourceSectionId || section.id}" data-synthetic="${section.isSyntheticMostOrdered ? "true" : "false"}" ${isSelected ? 'aria-current="true"' : ""} ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
                     ${renderThumb(item)}
                     <span class="menu-row-main">
                       <span class="menu-row-headline">
@@ -3855,8 +3809,8 @@ function resetProductModalScrollToTop() {
   });
 }
 
-function openProduct(id) {
-  const result = findProduct(id);
+function openProduct(id, sectionId = "") {
+  const result = findProduct(id, sectionId);
   if (!result.item || isHiddenItem(result.section) || isHiddenItem(result.item) || isSoldOutItem(result.section) || isSoldOutItem(result.item, isSoldOutItem(result.section))) return;
   selectedProduct = result.item;
   selectedSection = result.section;
@@ -4283,7 +4237,7 @@ menuSectionsEl.addEventListener("click", (event) => {
     return;
   }
   const row = event.target.closest("[data-product]");
-  if (row) openProduct(row.dataset.product);
+  if (row) openProduct(row.dataset.product, row.dataset.sourceSection || row.dataset.productSection);
 });
 
 optionGroups.addEventListener("change", (event) => {
@@ -4762,5 +4716,9 @@ init();
     </script>
   </body>
 </html>
+
+
+
+
 
 

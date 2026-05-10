@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="no">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=197">
+    <link rel="stylesheet" href="kol-core.css?v=301">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -238,52 +238,6 @@
               <label>Henting
                 <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
               </label>
-              <div class="wide global-text-settings-box">
-                <h3>Yazı ayarları / Detaylı</h3>
-                <span class="field-hint">Bu alanlar Firebase’e kaydedilir ve index.html + admin.html tarafında kullanılır. Değerleri değiştirince görünüm hemen güncellenir.</span>
-                <div class="receipt-print-grid detailed-text-settings-grid">
-                  <label>Genel yazı boyu (px)
-                    <input id="settingUiBodySize" data-setting-field="uiBodySize" type="number" min="10" max="24" step="1" placeholder="12">
-                  </label>
-                  <label>Küçük/açıklama yazı (px)
-                    <input id="settingUiMetaSize" data-setting-field="uiMetaSize" type="number" min="9" max="22" step="1" placeholder="11">
-                  </label>
-                  <label>Başlık yazısı (px)
-                    <input id="settingUiTitleSize" data-setting-field="uiTitleSize" type="number" min="11" max="30" step="1" placeholder="13">
-                  </label>
-                  <label>Buton yazısı (px)
-                    <input id="settingUiButtonSize" data-setting-field="uiButtonSize" type="number" min="10" max="26" step="1" placeholder="13">
-                  </label>
-                  <label>Fiyat yazısı (px)
-                    <input id="settingUiPriceSize" data-setting-field="uiPriceSize" type="number" min="10" max="28" step="1" placeholder="13">
-                  </label>
-                  <label>Input yazısı (px)
-                    <input id="settingUiInputSize" data-setting-field="uiInputSize" type="number" min="10" max="26" step="1" placeholder="12">
-                  </label>
-                  <label>Header yazısı (px)
-                    <input id="settingUiHeaderSize" data-setting-field="uiHeaderSize" type="number" min="10" max="28" step="1" placeholder="13">
-                  </label>
-                  <label>Sepet yazısı (px)
-                    <input id="settingUiCartSize" data-setting-field="uiCartSize" type="number" min="10" max="26" step="1" placeholder="12">
-                  </label>
-                  <label>Admin yazısı (px)
-                    <input id="settingUiAdminSize" data-setting-field="uiAdminSize" type="number" min="10" max="26" step="1" placeholder="12">
-                  </label>
-                  <label>Normal kalınlık
-                    <input id="settingUiNormalWeight" data-setting-field="uiNormalWeight" type="number" min="300" max="700" step="50" placeholder="400">
-                  </label>
-                  <label>Başlık/vurgu kalınlığı
-                    <input id="settingUiTitleWeight" data-setting-field="uiTitleWeight" type="number" min="400" max="900" step="50" placeholder="700">
-                  </label>
-                  <label>Buton kalınlığı
-                    <input id="settingUiButtonWeight" data-setting-field="uiButtonWeight" type="number" min="400" max="900" step="50" placeholder="700">
-                  </label>
-                  <label>Satır yüksekliği
-                    <input id="settingUiLineHeight" data-setting-field="uiLineHeight" type="number" min="1" max="1.7" step="0.05" placeholder="1.25">
-                  </label>
-                </div>
-              </div>
-
               <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
                 <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
                 <span class="field-hint">Boş bırakılırsa sistemdeki şiddetli eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
@@ -1085,29 +1039,7 @@ function defaultSiteSettings() {
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
-    uiBodySize: "12",
-    uiMetaSize: "11",
-    uiTitleSize: "13",
-    uiButtonSize: "13",
-    uiPriceSize: "13",
-    uiInputSize: "12",
-    uiHeaderSize: "13",
-    uiCartSize: "12",
-    uiAdminSize: "12",
-    uiNormalWeight: "400",
-    uiTitleWeight: "700",
-    uiButtonWeight: "700",
-    uiLineHeight: "1.25",
     paymentInfo: "Kort ved henting (henting)",
-    textSmallSize: "13",
-    textMediumSize: "16",
-    textLargeSize: "22",
-    textWeight: "400",
-    textNormalSize: "15",
-    textEmphasisSize: "15",
-    textNormalWeight: "400",
-    textEmphasisWeight: "700",
-    textLineHeight: "1.25",
     orderAlarmSoundUrl: "",
     receiptPaperWidth: "576",
     receiptHeaderFontSize: "34",
@@ -1125,56 +1057,24 @@ function defaultSiteSettings() {
 }
 
 
-function applyGlobalTypographySettings(settings = {}) {
+function applyGlobalTypographySettings() {
   const root = document.documentElement;
-  const safeNum = (value, fallback, min, max) => {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return fallback;
-    return Math.min(max, Math.max(min, num));
-  };
-  const body = safeNum(settings.uiBodySize ?? settings.textNormalSize ?? settings.textMediumSize, 12, 10, 24);
-  const meta = safeNum(settings.uiMetaSize ?? settings.textSmallSize, Math.max(9, body - 1), 9, 22);
-  const title = safeNum(settings.uiTitleSize ?? settings.textEmphasisSize ?? settings.textLargeSize, 13, 11, 30);
-  const button = safeNum(settings.uiButtonSize ?? title, title, 10, 26);
-  const price = safeNum(settings.uiPriceSize ?? title, title, 10, 28);
-  const input = safeNum(settings.uiInputSize ?? body, body, 10, 26);
-  const header = safeNum(settings.uiHeaderSize ?? title, title, 10, 28);
-  const cart = safeNum(settings.uiCartSize ?? body, body, 10, 26);
-  const admin = safeNum(settings.uiAdminSize ?? body, body, 10, 26);
-  const normalWeight = safeNum(settings.uiNormalWeight ?? settings.textNormalWeight ?? settings.textWeight, 400, 300, 700);
-  const titleWeight = safeNum(settings.uiTitleWeight ?? settings.textEmphasisWeight, 700, 400, 900);
-  const buttonWeight = safeNum(settings.uiButtonWeight ?? titleWeight, titleWeight, 400, 900);
-  const line = safeNum(settings.uiLineHeight ?? settings.textLineHeight, 1.25, 1, 1.7);
-  root.style.setProperty("--kol-ui-body-size", `${body}px`);
-  root.style.setProperty("--kol-ui-meta-size", `${meta}px`);
-  root.style.setProperty("--kol-ui-title-size", `${title}px`);
-  root.style.setProperty("--kol-ui-button-size", `${button}px`);
-  root.style.setProperty("--kol-ui-price-size", `${price}px`);
-  root.style.setProperty("--kol-ui-input-size", `${input}px`);
-  root.style.setProperty("--kol-ui-header-size", `${header}px`);
-  root.style.setProperty("--kol-ui-cart-size", `${cart}px`);
-  root.style.setProperty("--kol-ui-admin-size", `${admin}px`);
-  root.style.setProperty("--kol-ui-normal-weight", String(normalWeight));
-  root.style.setProperty("--kol-ui-title-weight", String(titleWeight));
-  root.style.setProperty("--kol-ui-button-weight", String(buttonWeight));
-  root.style.setProperty("--kol-ui-line-height", String(line));
-  root.style.setProperty("--kol-text-small", `${meta}px`);
-  root.style.setProperty("--kol-text-medium", `${body}px`);
-  root.style.setProperty("--kol-text-large", `${title}px`);
-  root.style.setProperty("--kol-font-small", `${meta}px`);
-  root.style.setProperty("--kol-font-mid", `${body}px`);
-  root.style.setProperty("--kol-font-base", `${body}px`);
-  root.style.setProperty("--kol-font-big", `${title}px`);
-  root.style.setProperty("--kol-text-normal-size", `${body}px`);
-  root.style.setProperty("--kol-text-emphasis-size", `${title}px`);
-  root.style.setProperty("--kol-text-weight", String(normalWeight));
-  root.style.setProperty("--kol-global-font-weight", String(normalWeight));
-  root.style.setProperty("--kol-text-normal-weight", String(normalWeight));
-  root.style.setProperty("--kol-text-emphasis-weight", String(titleWeight));
-  root.style.setProperty("--kol-text-line", String(line));
-  root.style.setProperty("--kol-line-height-global", String(line));
+  root.style.setProperty("--kol-text-small", "12px");
+  root.style.setProperty("--kol-text-medium", "12px");
+  root.style.setProperty("--kol-text-large", "12px");
+  root.style.setProperty("--kol-font-small", "12px");
+  root.style.setProperty("--kol-font-mid", "12px");
+  root.style.setProperty("--kol-font-base", "12px");
+  root.style.setProperty("--kol-font-big", "12px");
+  root.style.setProperty("--kol-text-normal-size", "12px");
+  root.style.setProperty("--kol-text-emphasis-size", "12px");
+  root.style.setProperty("--kol-text-weight", "400");
+  root.style.setProperty("--kol-global-font-weight", "400");
+  root.style.setProperty("--kol-text-normal-weight", "400");
+  root.style.setProperty("--kol-text-emphasis-weight", "700");
+  root.style.setProperty("--kol-text-line", "1.35");
+  root.style.setProperty("--kol-line-height-global", "1.35");
 }
-
 function normalizeSiteSettings(value) {
   return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
 }
@@ -1565,7 +1465,7 @@ function renderProducts() {
 
 
 function normalizeSizeId(label = "", fallback = "") {
-  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (value.includes("medium") || value === "m") return "medium";
   if (value.includes("stor") || value.includes("large") || value === "st") return "large";
   if (value.includes("xxl")) return "xxl";
@@ -1575,7 +1475,7 @@ function normalizeSizeId(label = "", fallback = "") {
 }
 
 function isStandardLikeSizeLabel(value = "") {
-  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const normalized = String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   return !normalized || normalized.includes("standard") || normalized.includes("standart") || normalized.includes("pris") || normalized.includes("vanlig") || normalized.includes("regular");
 }
 
@@ -4473,3 +4373,8 @@ scheduleAdminDailyOrderRefresh();
   
 </body>
 </html>
+
+
+
+
+
