@@ -39,15 +39,15 @@
           <div class="product-admin-grid">
             <form class="product-form product-editor-card" id="productForm">
               <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
-              <label class="wide compact-image-url-field">Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
               <details class="product-more wide compact-product-media" id="productMediaSettings">
-                <summary aria-label="Produkttekst og bilde"><span>⋮</span><strong>Beskrivelse</strong></summary>
+                <summary aria-label="Produkttekst og bilde"><span>🖼</span><strong>Bilde / beskrivelse</strong></summary>
                 <div class="product-more-panel compact-product-media-panel">
+                  <label>Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
                   <label>Beskrivelse <textarea id="productIngredients" rows="3" maxlength="300"></textarea></label>
                 </div>
               </details>
               <details class="product-more wide" id="productMoreSettings">
-                <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Flere produktinnstillinger</strong></summary>
+                <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Flere innstillinger</strong></summary>
                 <div class="product-more-panel">
                   <section class="product-availability" aria-label="Synlighet og utsolgt">
                     <div class="availability-title">
