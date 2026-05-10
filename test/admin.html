@@ -1,10 +1,10 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="no">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=301">
+    <link rel="stylesheet" href="kol-core.css?v=302">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -22,24 +22,12 @@
       <section class="admin-status" id="adminStatus">Klar.</section>
 
       <section class="admin-page menu-editor-page" data-admin-page="menu">
-        <header class="gf-menu-editor-header" aria-label="Meny editor oversikt">
-          <div>
-            <h1>Meny oppsett</h1>
-            <span>GloriaFood-inspirert editor: kategorier og produkter til venstre, valggrupper til høyre.</span>
-          </div>
-          <button class="gf-menu-editor-back" type="button" data-top-nav="orders">Til bestillinger</button>
-        </header>
       <section class="admin-grid gf-menu-grid">
         <aside class="category-list menu-builder-panel">
           <div class="section-heading category-builder-heading">
-            <div>
-              <h1>Meny</h1>
-              <span>Klikk på kategori for å åpne produkter. Dra produkter/kategorier for å sortere.</span>
-            </div>
             <button id="addCategory" type="button">Legg til kategori</button>
           </div>
           <div id="categoryButtons" class="category-card-list"></div>
-          <button id="addCategoryBottom" class="add-category-bottom" type="button">Legg til kategori</button>
         </aside>
 
         <section class="editor-panel product-form-stash" aria-hidden="true">
@@ -4179,7 +4167,6 @@ function bindClick(selector, handler) {
 }
 
 bindClick("#addCategory", addCategory);
-bindClick("#addCategoryBottom", addCategory);
 bindClick("#deleteCategory", deleteCategory);
 bindClick("#addProduct", addProduct);
 if (addOptionGroupButton) addOptionGroupButton.addEventListener("click", addOptionGroup);

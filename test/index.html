@@ -1,10 +1,10 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="no">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=301">
+    <link rel="stylesheet" href="kol-core.css?v=302">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -207,7 +207,7 @@
           </section>
 
           <div id="orderStatusBox" class="order-status-box" hidden></div>
-          <section class="recent-orders" id="recentOrders"></section>
+          <section class="recent-orders" id="recentOrders" hidden></section>
           </div>
         </div>
         <button class="checkout-button" type="button" disabled>Send bestilling</button>
@@ -2211,6 +2211,7 @@ function closeOrderLiveModal() {
 function renderRecentOrders() {
   if (!recentOrdersEl) return;
   recentOrdersEl.innerHTML = "";
+  recentOrdersEl.hidden = true;
 }
 
 function profileOrderCardHtml(order = {}) {
@@ -4076,8 +4077,8 @@ function renderCart() {
             ${line.note ? `<p class="cart-item-note">Notat: ${safeText(line.note)}</p>` : ""}
           </div>
           <div class="cart-item-actions" aria-label="Rediger eller slett">
-            <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
             <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
+            <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
           </div>
         </article>
       `;
