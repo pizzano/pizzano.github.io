@@ -4,16 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=302">
+    <link rel="stylesheet" href="kol-core.css?v=307">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
       <div class="admin-topbar-settings" aria-label="Admin deler">
-        <button class="top-settings-button" type="button" data-top-nav="menu">🧾 Meny oppsett</button>
-        <button class="top-settings-button active" type="button" data-top-nav="orders">🧾 Bestillinger</button>
-        <button class="top-settings-button" type="button" data-top-nav="analytics">📊 Statistikk</button>
-        <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
-        <button class="top-settings-button" type="button" data-top-nav="backup">💾 Yedek</button>
+        <button class="top-settings-button" type="button" data-top-nav="menu">Meny oppsett</button>
+        <button class="top-settings-button active" type="button" data-top-nav="orders">Bestillinger</button>
+        <button class="top-settings-button" type="button" data-top-nav="analytics">Statistikk</button>
+        <button class="top-settings-button" type="button" data-top-nav="basic">Grunninfo</button>
+        <button class="top-settings-button" type="button" data-top-nav="backup">Yedek</button>
       </div>
     </header>
 
@@ -143,23 +143,66 @@
           <header class="analytics-admin-header">
             <div>
               <h1>Statistikk</h1>
-              <span>Daglig, månedlig og årlig oversikt over omsetning og kunder.</span>
+              <span>Daglig, ukentlig, månedlig og årlig oversikt over omsetning, kunder og produkter.</span>
             </div>
             <button id="refreshAnalytics" type="button">Oppdater</button>
           </header>
+          <div class="analytics-mode-tabs" role="tablist" aria-label="Statistikk kategorier">
+            <button class="analytics-mode-tab active" type="button" data-analytics-tab="daily">Daglig</button>
+            <button class="analytics-mode-tab" type="button" data-analytics-tab="weekly">Ukentlig</button>
+            <button class="analytics-mode-tab" type="button" data-analytics-tab="monthly">Månedlig</button>
+            <button class="analytics-mode-tab" type="button" data-analytics-tab="yearly">Årlig</button>
+            <button class="analytics-mode-tab" type="button" data-analytics-tab="customers">Kunder</button>
+          </div>
           <div id="analyticsSummary" class="analytics-summary-grid"></div>
-          <div class="analytics-chart-grid">
-            <section class="analytics-chart-card">
-              <h2>Siste 7 dager</h2>
-              <div id="dailyRevenueChart" class="simple-bar-chart"></div>
+          <div class="analytics-tab-panels">
+            <section class="analytics-tab-panel active" data-analytics-panel="daily">
+              <div class="analytics-chart-grid">
+                <section class="analytics-chart-card">
+                  <h2>Siste 7 dager</h2>
+                  <div id="dailyRevenueChart" class="simple-bar-chart"></div>
+                </section>
+                <section class="analytics-chart-card analytics-side-card">
+                  <h2>Dagens nøkkeltall</h2>
+                  <div id="dailyAnalyticsDetails" class="analytics-mini-grid"></div>
+                </section>
+              </div>
             </section>
-            <section class="analytics-chart-card">
-              <h2>Siste 12 måneder</h2>
-              <div id="monthlyRevenueChart" class="simple-bar-chart"></div>
+            <section class="analytics-tab-panel" data-analytics-panel="weekly">
+              <div class="analytics-chart-grid">
+                <section class="analytics-chart-card">
+                  <h2>Siste 8 uker</h2>
+                  <div id="weeklyRevenueChart" class="simple-bar-chart"></div>
+                </section>
+              </div>
             </section>
-            <section class="analytics-chart-card">
-              <h2>Årlig oversikt</h2>
-              <div id="yearlyRevenueChart" class="simple-bar-chart"></div>
+            <section class="analytics-tab-panel" data-analytics-panel="monthly">
+              <div class="analytics-chart-grid">
+                <section class="analytics-chart-card">
+                  <h2>Siste 12 måneder</h2>
+                  <div id="monthlyRevenueChart" class="simple-bar-chart"></div>
+                </section>
+              </div>
+            </section>
+            <section class="analytics-tab-panel" data-analytics-panel="yearly">
+              <div class="analytics-chart-grid">
+                <section class="analytics-chart-card">
+                  <h2>Årlig oversikt</h2>
+                  <div id="yearlyRevenueChart" class="simple-bar-chart"></div>
+                </section>
+                <section class="analytics-chart-card analytics-side-card">
+                  <h2>Bestselgere</h2>
+                  <div id="productAnalyticsPanel" class="analytics-list"></div>
+                </section>
+              </div>
+            </section>
+            <section class="analytics-tab-panel" data-analytics-panel="customers">
+              <div class="analytics-chart-grid">
+                <section class="analytics-chart-card">
+                  <h2>Kundeliste</h2>
+                  <div id="customerAnalyticsPanel" class="analytics-customer-table"></div>
+                </section>
+              </div>
             </section>
           </div>
         </section>
@@ -175,104 +218,165 @@
           </header>
 
           <div class="settings-page active" data-settings-page="basic">
-            <div class="settings-form-grid">
-              <label>Navnet på restauranten *
-                <input id="settingRestaurantName" data-setting-field="restaurantName" type="text" placeholder="KØL Grill & Pizza">
-              </label>
-              <label class="wide">Logo URL
-                <input id="settingLogoUrl" data-setting-field="logoUrl" type="url" placeholder="https://.../logo.png">
-                <span class="field-hint">Bu URL ana sayfadaki büyük logoda kullanılır. Boş bırakılırsa sistem hazır default logo gösterir.</span>
-              </label>
-              <label class="wide">Standard bilde URL
-                <input id="settingDefaultImageUrl" data-setting-field="defaultImageUrl" type="url" placeholder="https://.../standard-matbilde.jpg">
-                <span class="field-hint">Ürün veya kategori resmi boşsa bu resim kullanılır. Boş kalırsa sistem kendi sade default görselini gösterir.</span>
-              </label>
-              <label>Telefonnummer til restauranten *
-                <input id="settingPhone" data-setting-field="phone" type="text" placeholder="+47 41 14 53 53">
-              </label>
-              <label>E-post
-                <input id="settingEmail" data-setting-field="email" type="email" placeholder="post@restaurant.no">
-              </label>
-              <label>Land
-                <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
-              </label>
-              <label>Tidssone
-                <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
-              </label>
-              <label>Sted *
-                <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
-              </label>
-              <label>Postnr
-                <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
-              </label>
-              <label class="wide">Gatenavn og nummer *
-                <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
-              </label>
-              <label>Åpningstider tekst
-                <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag, Onsdag - Søndag">
-              </label>
-              <label>Tid
-                <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="14:00 - 22:00">
-              </label>
-              <label>Bestilling åpner
-                <input id="settingOrderOpenTime" data-setting-field="orderOpenTime" type="time" placeholder="14:00">
-              </label>
-              <label>Bestilling stenger
-                <input id="settingOrderCloseTime" data-setting-field="orderCloseTime" type="time" placeholder="22:00">
-              </label>
-              <label>Minimum forhåndsbestilling (min)
-                <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
-              </label>
-              <label>Henting
-                <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Samme som åpningstider">
-              </label>
-              <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
-                <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
-                <span class="field-hint">Boş bırakılırsa sistemdeki şiddetli eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
-              </label>
-
-              <div class="wide receipt-print-settings-box">
-                <h3>Kvittering / skriver</h3>
-                <span class="field-hint">Disse verdiene lagres i Firebase og brukes når kvittering skrives ut.</span>
-                <div class="receipt-print-grid">
-                  <label>Papirbredde / bildebredde (px)
-                    <input id="settingReceiptPaperWidth" data-setting-field="receiptPaperWidth" type="number" min="380" max="900" step="1" placeholder="576">
+            <div class="basic-settings-tabs" role="tablist" aria-label="Grunninfo kategorier">
+              <button class="basic-settings-tab active" type="button" data-basic-settings-tab="restaurant">Restaurant</button>
+              <button class="basic-settings-tab" type="button" data-basic-settings-tab="opening">Adresse / åpningstid</button>
+              <button class="basic-settings-tab" type="button" data-basic-settings-tab="sound">Bestillingslyd</button>
+              <button class="basic-settings-tab" type="button" data-basic-settings-tab="receipt">Kvittering</button>
+            </div>
+            <div class="settings-category-shell is-tabbed">
+              <details class="settings-category-card settings-tab-panel active" data-basic-settings-panel="restaurant" open>
+                <summary><span>🏪</span><strong>Restaurantinfo</strong><small>Navn, logo, standard bilde og kontakt</small></summary>
+                <div class="settings-form-grid">
+                  <label>Navnet på restauranten *
+                    <input id="settingRestaurantName" data-setting-field="restaurantName" type="text" placeholder="KØL Grill & Pizza">
                   </label>
-                  <label>Toppfelt tekst (px)
-                    <input id="settingReceiptHeaderFontSize" data-setting-field="receiptHeaderFontSize" type="number" min="18" max="52" step="1" placeholder="34">
+                  <label>Telefonnummer til restauranten *
+                    <input id="settingPhone" data-setting-field="phone" type="text" placeholder="+47 41 14 53 53">
                   </label>
-                  <label>Produktnavn (px)
-                    <input id="settingReceiptItemFontSize" data-setting-field="receiptItemFontSize" type="number" min="16" max="48" step="1" placeholder="30">
+                  <label>E-post
+                    <input id="settingEmail" data-setting-field="email" type="email" placeholder="post@restaurant.no">
                   </label>
-                  <label>Størrelse tekst (px)
-                    <input id="settingReceiptSizeFontSize" data-setting-field="receiptSizeFontSize" type="number" min="14" max="52" step="1" placeholder="28">
+                  <label class="wide">Logo URL
+                    <input id="settingLogoUrl" data-setting-field="logoUrl" type="url" placeholder="https://.../logo.png">
+                    <span class="field-hint">Ana sayfadaki logoda kullanılır. Boşsa sistem hazır görünümü kullanır.</span>
                   </label>
-                  <label>Valggruppe navn (px)
-                    <input id="settingReceiptChoiceLabelFontSize" data-setting-field="receiptChoiceLabelFontSize" type="number" min="14" max="52" step="1" placeholder="28">
-                  </label>
-                  <label>Ekstra / valgt verdi (px)
-                    <input id="settingReceiptOptionFontSize" data-setting-field="receiptOptionFontSize" type="number" min="14" max="52" step="1" placeholder="28">
-                  </label>
-                  <label>Pris tekst (px)
-                    <input id="settingReceiptPriceFontSize" data-setting-field="receiptPriceFontSize" type="number" min="14" max="52" step="1" placeholder="28">
-                  </label>
-                  <label>Detaljer nederst (px)
-                    <input id="settingReceiptDetailsFontSize" data-setting-field="receiptDetailsFontSize" type="number" min="14" max="52" step="1" placeholder="26">
-                  </label>
-                  <label>Kundenavn (px)
-                    <input id="settingReceiptCustomerNameFontSize" data-setting-field="receiptCustomerNameFontSize" type="number" min="14" max="56" step="1" placeholder="30">
-                  </label>
-                  <label>Telefon (px)
-                    <input id="settingReceiptCustomerPhoneFontSize" data-setting-field="receiptCustomerPhoneFontSize" type="number" min="14" max="56" step="1" placeholder="30">
-                  </label>
-                  <label>Venstre/høyre marg (px)
-                    <input id="settingReceiptSideMargin" data-setting-field="receiptSideMargin" type="number" min="0" max="80" step="1" placeholder="22">
-                  </label>
-                  <label>Linjeavstand
-                    <input id="settingReceiptLineHeight" data-setting-field="receiptLineHeight" type="number" min="1" max="1.8" step="0.05" placeholder="1.18">
+                  <label class="wide">Standard bilde URL
+                    <input id="settingDefaultImageUrl" data-setting-field="defaultImageUrl" type="url" placeholder="https://.../standard-matbilde.jpg">
+                    <span class="field-hint">Ürün/kategori resmi boşsa bu resim kullanılır.</span>
                   </label>
                 </div>
-              </div>
+              </details>
+
+              <details class="settings-category-card settings-tab-panel" data-basic-settings-panel="opening" open>
+                <summary><span>📍</span><strong>Adresse og åpningstid</strong><small>Land, sted, åpning og henting</small></summary>
+                <div class="settings-form-grid">
+                  <label>Land
+                    <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
+                  </label>
+                  <label>Tidssone
+                    <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
+                  </label>
+                  <label>Sted *
+                    <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
+                  </label>
+                  <label>Postnr
+                    <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
+                  </label>
+                  <label class="wide">Gatenavn og nummer *
+                    <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
+                  </label>
+                  <label>Åpningstider tekst
+                    <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag - Søndag">
+                  </label>
+                  <label>Tid
+                    <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="13:00 - 22:00">
+                  </label>
+                  <label>Bestilling åpner
+                    <input id="settingOrderOpenTime" data-setting-field="orderOpenTime" type="time" placeholder="13:00">
+                  </label>
+                  <label>Bestilling stenger
+                    <input id="settingOrderCloseTime" data-setting-field="orderCloseTime" type="time" placeholder="22:00">
+                  </label>
+                  <label>Minimum forhåndsbestilling (min)
+                    <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
+                  </label>
+                  <label>Henting
+                    <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Henting på restauranten">
+                  </label>
+                </div>
+              </details>
+
+              <details class="settings-category-card settings-tab-panel" data-basic-settings-panel="sound" open>
+                <summary><span>🔔</span><strong>Bestillingslyd</strong><small>Alarmlyd når ny bestilling kommer</small></summary>
+                <div class="settings-form-grid">
+                  <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
+                    <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
+                    <span class="field-hint">Boş bırakılırsa sistemdeki eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
+                  </label>
+                </div>
+              </details>
+
+              <details class="settings-category-card settings-tab-panel receipt-settings-category" data-basic-settings-panel="receipt" open>
+                <summary><span>🧾</span><strong>Kvittering / skriver</strong><small>Fiş yazı boyutu, marj ve örnek görünüm</small></summary>
+                <div class="receipt-settings-layout">
+                  <div class="receipt-print-settings-box">
+                    <div class="receipt-settings-headline">
+                      <div>
+                        <h3>Kvittering / skriver</h3>
+                        <span class="field-hint">80mm Epson için güvenli papirbredde 576 px. Çok uzun fiş çıkmasın diye yazı ve satır aralıkları güvenli aralıkta sınırlandırılır.</span>
+                      </div>
+                      <button class="receipt-preset-button" type="button" data-receipt-preset="large">Kompakt fiş</button>
+                    </div>
+                    <div class="receipt-print-grid">
+                      <label>Papirbredde / bildebredde (px)
+                        <input id="settingReceiptPaperWidth" data-setting-field="receiptPaperWidth" type="number" min="380" max="576" step="1" placeholder="576">
+                      </label>
+                      <label>Toppfelt tekst (px)
+                        <input id="settingReceiptHeaderFontSize" data-setting-field="receiptHeaderFontSize" type="number" min="18" max="30" step="1" placeholder="28">
+                      </label>
+                      <label>Produktnavn (px)
+                        <input id="settingReceiptItemFontSize" data-setting-field="receiptItemFontSize" type="number" min="16" max="24" step="1" placeholder="20">
+                      </label>
+                      <label>Størrelse tekst (px)
+                        <input id="settingReceiptSizeFontSize" data-setting-field="receiptSizeFontSize" type="number" min="14" max="20" step="1" placeholder="17">
+                      </label>
+                      <label>Valggruppe navn (px)
+                        <input id="settingReceiptChoiceLabelFontSize" data-setting-field="receiptChoiceLabelFontSize" type="number" min="14" max="18" step="1" placeholder="16">
+                      </label>
+                      <label>Ekstra / valgt verdi (px)
+                        <input id="settingReceiptOptionFontSize" data-setting-field="receiptOptionFontSize" type="number" min="14" max="22" step="1" placeholder="18">
+                      </label>
+                      <label>Pris tekst (px)
+                        <input id="settingReceiptPriceFontSize" data-setting-field="receiptPriceFontSize" type="number" min="14" max="24" step="1" placeholder="20">
+                      </label>
+                      <label>Detaljer nederst (px)
+                        <input id="settingReceiptDetailsFontSize" data-setting-field="receiptDetailsFontSize" type="number" min="14" max="20" step="1" placeholder="16">
+                      </label>
+                      <label>Kundenavn (px)
+                        <input id="settingReceiptCustomerNameFontSize" data-setting-field="receiptCustomerNameFontSize" type="number" min="14" max="28" step="1" placeholder="24">
+                      </label>
+                      <label>Telefon (px)
+                        <input id="settingReceiptCustomerPhoneFontSize" data-setting-field="receiptCustomerPhoneFontSize" type="number" min="14" max="24" step="1" placeholder="20">
+                      </label>
+                      <label>Venstre/høyre marg (px)
+                        <input id="settingReceiptSideMargin" data-setting-field="receiptSideMargin" type="number" min="0" max="20" step="1" placeholder="4">
+                      </label>
+                      <label>Linjeavstand
+                        <input id="settingReceiptLineHeight" data-setting-field="receiptLineHeight" type="number" min="1" max="1.12" step="0.05" placeholder="1.05">
+                      </label>
+                    </div>
+                  </div>
+
+                  <aside class="receipt-preview-card">
+                    <div class="receipt-preview-title">
+                      <strong>Örnek fiş rehberi</strong>
+                      <span>Çizgiler hangi ayarın nereye etki ettiğini gösterir.</span>
+                    </div>
+                    <div class="receipt-preview-scale">
+                      <div id="receiptPreviewSample" class="receipt-preview-paper">
+                        <div class="receipt-preview-line callout-header"><span>Toppfelt tekst</span></div>
+                        <div class="receipt-preview-block receipt-preview-top">HENTING</div>
+                        <div class="receipt-preview-block receipt-preview-medium">SNAREST · 12:45</div>
+                        <div class="receipt-preview-content">
+                          <div class="receipt-preview-line callout-item"><span>Produktnavn</span></div>
+                          <div class="receipt-preview-item"><b>1x 2- CAPRI</b><b>373,00 kr</b></div>
+                          <div class="receipt-preview-line callout-price"><span>Pris tekst</span></div>
+                          <div class="receipt-preview-choice receipt-preview-size"><span><b>Størrelse:</b> Stor</span><b></b></div>
+                          <div class="receipt-preview-line callout-size"><span>Størrelse tekst</span></div>
+                          <div class="receipt-preview-choice"><span><b>Tilbehør:</b> Extra bunn 300 g</span><b>+39,00</b></div>
+                          <div class="receipt-preview-line callout-extra"><span>Valggruppe + ekstra verdi</span></div>
+                          <div class="receipt-preview-details-title">Bestillingsdetaljer:</div>
+                          <div class="receipt-preview-detail"><span>Hele Navn:</span><b>Fatih Alemdar</b></div>
+                          <div class="receipt-preview-line callout-customer"><span>Kundenavn</span></div>
+                          <div class="receipt-preview-detail"><span>Telefon:</span><b>95557474</b></div>
+                          <div class="receipt-preview-line callout-phone"><span>Telefon / Detaljer nederst</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -358,9 +462,16 @@ const ordersCount = document.querySelector("#ordersCount");
 const refreshOrdersButton = document.querySelector("#refreshOrders");
 const refreshAnalyticsButton = document.querySelector("#refreshAnalytics");
 const analyticsSummary = document.querySelector("#analyticsSummary");
+const analyticsTabButtons = document.querySelectorAll("[data-analytics-tab]");
+const analyticsTabPanels = document.querySelectorAll("[data-analytics-panel]");
 const dailyRevenueChart = document.querySelector("#dailyRevenueChart");
+const weeklyRevenueChart = document.querySelector("#weeklyRevenueChart");
 const monthlyRevenueChart = document.querySelector("#monthlyRevenueChart");
 const yearlyRevenueChart = document.querySelector("#yearlyRevenueChart");
+const dailyAnalyticsDetails = document.querySelector("#dailyAnalyticsDetails");
+const productAnalyticsPanel = document.querySelector("#productAnalyticsPanel");
+const customerAnalyticsPanel = document.querySelector("#customerAnalyticsPanel");
+let activeAnalyticsTab = "daily";
 const downloadBackupButton = document.querySelector("#downloadBackup");
 const saveLocalBackupButton = document.querySelector("#saveLocalBackup");
 const localBackupList = document.querySelector("#localBackupList");
@@ -1031,16 +1142,16 @@ function defaultSiteSettings() {
     orderAlarmSoundUrl: "",
     receiptPaperWidth: "576",
     receiptHeaderFontSize: "34",
-    receiptItemFontSize: "32",
-    receiptSizeFontSize: "28",
-    receiptChoiceLabelFontSize: "28",
-    receiptOptionFontSize: "28",
+    receiptItemFontSize: "26",
+    receiptSizeFontSize: "21",
+    receiptChoiceLabelFontSize: "20",
+    receiptOptionFontSize: "23",
     receiptPriceFontSize: "28",
-    receiptDetailsFontSize: "26",
-    receiptCustomerNameFontSize: "30",
-    receiptCustomerPhoneFontSize: "30",
-    receiptSideMargin: "22",
-    receiptLineHeight: "1.18"
+    receiptDetailsFontSize: "22",
+    receiptCustomerNameFontSize: "32",
+    receiptCustomerPhoneFontSize: "26",
+    receiptSideMargin: "8",
+    receiptLineHeight: "1.12"
   };
 }
 
@@ -1847,6 +1958,7 @@ siteSettingFields.forEach((field) => {
   if (adminRestaurantTitle) {
     adminRestaurantTitle.textContent = config.siteSettings.restaurantName || "Meny admin";
   }
+  updateReceiptPreviewFromFields();
 }
 
 function updateSiteSettingFromField(field) {
@@ -1854,13 +1966,77 @@ function updateSiteSettingFromField(field) {
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
   config.siteSettings[field.dataset.settingField] = field.value.trim();
   applyGlobalTypographySettings(config.siteSettings);
+  updateReceiptPreviewFromFields();
   scheduleSave();
+}
+
+function receiptPreviewNumber(id, fallback, min, max) {
+  const element = document.getElementById(id);
+  const number = Number(String(element?.value || "").replace(",", "."));
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, number));
+}
+
+function updateReceiptPreviewFromFields() {
+  const preview = document.getElementById("receiptPreviewSample");
+  if (!preview) return;
+  const values = {
+    paper: receiptPreviewNumber("settingReceiptPaperWidth", 576, 380, 576),
+    header: receiptPreviewNumber("settingReceiptHeaderFontSize", 28, 18, 30),
+    item: receiptPreviewNumber("settingReceiptItemFontSize", 20, 16, 24),
+    size: receiptPreviewNumber("settingReceiptSizeFontSize", 17, 14, 20),
+    choiceLabel: receiptPreviewNumber("settingReceiptChoiceLabelFontSize", 16, 14, 18),
+    option: receiptPreviewNumber("settingReceiptOptionFontSize", 18, 14, 22),
+    price: receiptPreviewNumber("settingReceiptPriceFontSize", 20, 14, 24),
+    details: receiptPreviewNumber("settingReceiptDetailsFontSize", 16, 14, 20),
+    customer: receiptPreviewNumber("settingReceiptCustomerNameFontSize", 24, 14, 28),
+    phone: receiptPreviewNumber("settingReceiptCustomerPhoneFontSize", 20, 14, 24),
+    margin: receiptPreviewNumber("settingReceiptSideMargin", 4, 0, 20),
+    line: receiptPreviewNumber("settingReceiptLineHeight", 1.05, 1, 1.12)
+  };
+  preview.style.setProperty("--preview-paper", `${values.paper}px`);
+  preview.style.setProperty("--preview-header", `${values.header}px`);
+  preview.style.setProperty("--preview-item", `${values.item}px`);
+  preview.style.setProperty("--preview-size", `${values.size}px`);
+  preview.style.setProperty("--preview-choice-label", `${values.choiceLabel}px`);
+  preview.style.setProperty("--preview-option", `${values.option}px`);
+  preview.style.setProperty("--preview-price", `${values.price}px`);
+  preview.style.setProperty("--preview-details", `${values.details}px`);
+  preview.style.setProperty("--preview-customer", `${values.customer}px`);
+  preview.style.setProperty("--preview-phone", `${values.phone}px`);
+  preview.style.setProperty("--preview-margin", `${values.margin}px`);
+  preview.style.setProperty("--preview-line", values.line);
+}
+
+function applyReceiptPresetLarge() {
+  const preset = {
+    settingReceiptPaperWidth: "576",
+    settingReceiptHeaderFontSize: "28",
+    settingReceiptItemFontSize: "20",
+    settingReceiptSizeFontSize: "17",
+    settingReceiptChoiceLabelFontSize: "16",
+    settingReceiptOptionFontSize: "18",
+    settingReceiptPriceFontSize: "20",
+    settingReceiptDetailsFontSize: "16",
+    settingReceiptCustomerNameFontSize: "24",
+    settingReceiptCustomerPhoneFontSize: "20",
+    settingReceiptSideMargin: "4",
+    settingReceiptLineHeight: "1.05"
+  };
+  Object.entries(preset).forEach(([id, value]) => {
+    const field = document.getElementById(id);
+    if (!field) return;
+    field.value = value;
+    updateSiteSettingFromField(field);
+  });
+  updateReceiptPreviewFromFields();
+  showToast("Kompakt kvittering er satt", 1800);
 }
 
 function settingsTitleFor(tabKey = "basic") {
   const labels = {
     basic: ["Grunninfo", "Restaurantens navn, telefon, adresse og enkel informasjon."],
-    backup: ["Yedek / gjenoppretting", "Ta full kopi av Firebase-dataen eller gjenopprett fra en tidligere JSON-yedek."]
+    backup: ["Yedek", "Ta full kopi av Firebase-dataen eller gjenopprett fra tidligere JSON-fil."]
   };
   return labels[tabKey] || labels.basic;
 }
@@ -2347,18 +2523,18 @@ function clampReceiptNumber(value, fallback, min, max) {
 function getReceiptPrintSettings() {
   const settings = normalizeSiteSettings(config?.siteSettings || {});
   return {
-    paperWidth: clampReceiptNumber(settings.receiptPaperWidth, 576, 380, 900),
-    headerFontSize: clampReceiptNumber(settings.receiptHeaderFontSize, 34, 18, 52),
-    itemFontSize: clampReceiptNumber(settings.receiptItemFontSize, 32, 16, 56),
-    sizeFontSize: clampReceiptNumber(settings.receiptSizeFontSize, 28, 14, 56),
-    choiceLabelFontSize: clampReceiptNumber(settings.receiptChoiceLabelFontSize, 28, 14, 56),
-    optionFontSize: clampReceiptNumber(settings.receiptOptionFontSize, 28, 14, 56),
-    priceFontSize: clampReceiptNumber(settings.receiptPriceFontSize, 28, 14, 56),
-    detailsFontSize: clampReceiptNumber(settings.receiptDetailsFontSize, 26, 14, 56),
-    customerNameFontSize: clampReceiptNumber(settings.receiptCustomerNameFontSize, 30, 14, 60),
-    customerPhoneFontSize: clampReceiptNumber(settings.receiptCustomerPhoneFontSize, 30, 14, 60),
-    sideMargin: clampReceiptNumber(settings.receiptSideMargin, 22, 0, 80),
-    lineHeight: clampReceiptNumber(settings.receiptLineHeight, 1.18, 1, 1.8)
+    paperWidth: clampReceiptNumber(settings.receiptPaperWidth, 576, 380, 576),
+    headerFontSize: clampReceiptNumber(settings.receiptHeaderFontSize, 28, 18, 30),
+    itemFontSize: clampReceiptNumber(settings.receiptItemFontSize, 20, 16, 24),
+    sizeFontSize: clampReceiptNumber(settings.receiptSizeFontSize, 17, 14, 20),
+    choiceLabelFontSize: clampReceiptNumber(settings.receiptChoiceLabelFontSize, 16, 14, 18),
+    optionFontSize: clampReceiptNumber(settings.receiptOptionFontSize, 18, 14, 22),
+    priceFontSize: clampReceiptNumber(settings.receiptPriceFontSize, 20, 14, 24),
+    detailsFontSize: clampReceiptNumber(settings.receiptDetailsFontSize, 16, 14, 20),
+    customerNameFontSize: clampReceiptNumber(settings.receiptCustomerNameFontSize, 24, 14, 28),
+    customerPhoneFontSize: clampReceiptNumber(settings.receiptCustomerPhoneFontSize, 20, 14, 24),
+    sideMargin: clampReceiptNumber(settings.receiptSideMargin, 4, 0, 20),
+    lineHeight: clampReceiptNumber(settings.receiptLineHeight, 1.05, 1, 1.12)
   };
 }
 
@@ -2776,16 +2952,24 @@ function analyticsMonthKey(date) {
 function getAcceptedAnalyticsOrders() {
   return adminOrders
     .map((order) => normalizeAdminOrderRecord(order, order?.id))
-    .filter((order) => order && (order.status || "pending") === "accepted");
+    .filter((order) => order && ["accepted", "ready"].includes(order.status || "pending"));
+}
+
+function getAllAnalyticsOrders() {
+  return adminOrders
+    .map((order) => normalizeAdminOrderRecord(order, order?.id))
+    .filter(Boolean);
+}
+
+function analyticsCustomerKey(order = {}) {
+  const phone = String(order.customer?.phone || "").replace(/\D/g, "");
+  const name = safeAdminText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ")).toLowerCase();
+  return phone || name || String(order.id || "ukjent");
 }
 
 function uniqueCustomerCount(orders) {
   const customers = new Set();
-  orders.forEach((order) => {
-    const phone = String(order.customer?.phone || "").replace(/\s+/g, "");
-    const name = [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ").trim().toLowerCase();
-    customers.add(phone || name || String(order.id || Math.random()));
-  });
+  orders.forEach((order) => customers.add(analyticsCustomerKey(order)));
   return customers.size;
 }
 
@@ -2797,14 +2981,22 @@ function moneyCompact(value) {
   return safeAdminNumber(value).toLocaleString("nb-NO", { maximumFractionDigits: 0 }) + " kr";
 }
 
-function analyticsSummaryCard(label, orders) {
+function averageOrderValue(orders) {
+  return orders.length ? sumRevenue(orders) / orders.length : 0;
+}
+
+function analyticsSummaryCard(label, value, meta = "") {
   return `
     <div class="analytics-summary-card">
       <span>${escapeHtml(label)}</span>
-      <strong>${moneyCompact(sumRevenue(orders))}</strong>
-      <small>${orders.length} ordre · ${uniqueCustomerCount(orders)} kunder</small>
+      <strong>${escapeHtml(value)}</strong>
+      ${meta ? `<small>${escapeHtml(meta)}</small>` : ""}
     </div>
   `;
+}
+
+function analyticsPeriodSummary(label, orders) {
+  return analyticsSummaryCard(label, moneyCompact(sumRevenue(orders)), `${orders.length} ordre · ${uniqueCustomerCount(orders)} kunder`);
 }
 
 function makeSeries(daysOrMonths, type = "day") {
@@ -2825,6 +3017,40 @@ function makeSeries(daysOrMonths, type = "day") {
       label: type === "day"
         ? date.toLocaleDateString("nb-NO", { weekday: "short" })
         : date.toLocaleDateString("nb-NO", { month: "short" }),
+      revenue: sumRevenue(matched),
+      customers: uniqueCustomerCount(matched),
+      count: matched.length
+    });
+  }
+  return series;
+}
+
+function startOfAnalyticsWeek(date = new Date()) {
+  const copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = (copy.getDay() + 6) % 7;
+  copy.setDate(copy.getDate() - day);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function weekKey(date = new Date()) {
+  return analyticsDateKey(startOfAnalyticsWeek(date));
+}
+
+function makeWeekSeries(weeks = 8) {
+  const orders = getAcceptedAnalyticsOrders();
+  const now = startOfAnalyticsWeek(new Date());
+  const series = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - (i * 7));
+    const end = new Date(date);
+    end.setDate(date.getDate() + 6);
+    const key = weekKey(date);
+    const matched = orders.filter((order) => weekKey(analyticsOrderDate(order)) === key);
+    series.push({
+      key,
+      label: `${date.toLocaleDateString("nb-NO", { day: "2-digit", month: "2-digit" })}–${end.toLocaleDateString("nb-NO", { day: "2-digit", month: "2-digit" })}`,
       revenue: sumRevenue(matched),
       customers: uniqueCustomerCount(matched),
       count: matched.length
@@ -2859,38 +3085,157 @@ function renderSimpleBarChart(container, series) {
   }
   const max = Math.max(...series.map((item) => item.revenue), 1);
   container.innerHTML = series.map((item) => {
-    const width = Math.max(4, Math.round((item.revenue / max) * 100));
+    const width = Math.max(item.revenue > 0 ? 4 : 2, Math.round((item.revenue / max) * 100));
     return `
       <div class="analytics-bar-row">
         <span class="analytics-bar-label">${escapeHtml(item.label)}</span>
         <div class="analytics-bar-track"><span style="width:${width}%"></span></div>
         <strong>${moneyCompact(item.revenue)}</strong>
-        <small>${item.customers} kunder</small>
+        <small>${item.count} ordre · ${item.customers} kunder</small>
       </div>
     `;
   }).join("");
 }
 
+function orderStatusStats(orders = getAllAnalyticsOrders()) {
+  return orders.reduce((acc, order) => {
+    const key = order.ready === true ? "ready" : (order.status || "pending");
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, { pending: 0, accepted: 0, ready: 0, cancelled: 0 });
+}
+
+function buildProductStats(orders = getAcceptedAnalyticsOrders()) {
+  const products = new Map();
+  orders.forEach((order) => {
+    asArray(order.items).forEach((line) => {
+      const name = safeAdminText(line.name, "Produkt");
+      const current = products.get(name) || { name, qty: 0, revenue: 0 };
+      current.qty += Math.max(1, safeAdminNumber(line.quantity, 1));
+      current.revenue += safeAdminNumber(line.total);
+      products.set(name, current);
+    });
+  });
+  return Array.from(products.values()).sort((a, b) => b.qty - a.qty || b.revenue - a.revenue);
+}
+
+function buildCustomerStats(orders = getAcceptedAnalyticsOrders()) {
+  const customers = new Map();
+  orders.forEach((order) => {
+    const key = analyticsCustomerKey(order);
+    const current = customers.get(key) || {
+      name: safeAdminText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" "), "Ukjent kunde"),
+      phone: safeAdminText(order.customer?.phone, ""),
+      orders: 0,
+      revenue: 0,
+      lastDate: null,
+      lastOrderId: ""
+    };
+    const date = analyticsOrderDate(order);
+    current.orders += 1;
+    current.revenue += safeAdminNumber(order.total);
+    if (!current.lastDate || date > current.lastDate) {
+      current.lastDate = date;
+      current.lastOrderId = order.id || "";
+      current.name = safeAdminText(order.customer?.fullName || current.name, current.name);
+      current.phone = safeAdminText(order.customer?.phone, current.phone);
+    }
+    customers.set(key, current);
+  });
+  return Array.from(customers.values()).sort((a, b) => b.revenue - a.revenue || b.orders - a.orders);
+}
+
+function renderMiniStats(container, rows = []) {
+  if (!container) return;
+  container.innerHTML = rows.map((row) => `
+    <div class="analytics-mini-card">
+      <span>${escapeHtml(row.label)}</span>
+      <strong>${escapeHtml(row.value)}</strong>
+      ${row.meta ? `<small>${escapeHtml(row.meta)}</small>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderProductAnalytics(container, products = buildProductStats()) {
+  if (!container) return;
+  const rows = products.slice(0, 10);
+  container.innerHTML = rows.length ? rows.map((item, index) => `
+    <div class="analytics-list-row">
+      <span>${index + 1}</span>
+      <strong>${escapeHtml(item.name)}</strong>
+      <em>${item.qty} stk</em>
+      <b>${moneyCompact(item.revenue)}</b>
+    </div>
+  `).join("") : `<p class="analytics-empty">Ingen produktdata ennå.</p>`;
+}
+
+function renderCustomerAnalytics(container, customers = buildCustomerStats()) {
+  if (!container) return;
+  if (!customers.length) {
+    container.innerHTML = `<p class="analytics-empty">Ingen kundedata ennå.</p>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="analytics-customer-head">
+      <span>Kunde</span><span>Telefon</span><span>Ordre</span><span>Sum</span><span>Sist</span>
+    </div>
+    ${customers.slice(0, 40).map((customer) => `
+      <div class="analytics-customer-row">
+        <strong>${escapeHtml(customer.name)}</strong>
+        <span>${escapeHtml(customer.phone || "-")}</span>
+        <span>${customer.orders}</span>
+        <b>${moneyCompact(customer.revenue)}</b>
+        <small>${customer.lastDate ? customer.lastDate.toLocaleDateString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-"}</small>
+      </div>
+    `).join("")}
+  `;
+}
+
+function setAnalyticsTab(tab = "daily") {
+  activeAnalyticsTab = tab;
+  analyticsTabButtons.forEach((button) => button.classList.toggle("active", button.dataset.analyticsTab === tab));
+  analyticsTabPanels.forEach((panel) => panel.classList.toggle("active", panel.dataset.analyticsPanel === tab));
+  renderAnalyticsAdmin();
+}
+
 function renderAnalyticsAdmin() {
   const orders = getAcceptedAnalyticsOrders();
+  const allOrders = getAllAnalyticsOrders();
   const now = new Date();
   const todayKey = analyticsDateKey(now);
   const monthKey = analyticsMonthKey(now);
   const yearKey = String(now.getFullYear());
   const todayOrders = orders.filter((order) => analyticsDateKey(analyticsOrderDate(order)) === todayKey);
+  const weekOrders = orders.filter((order) => weekKey(analyticsOrderDate(order)) === weekKey(now));
   const monthOrders = orders.filter((order) => analyticsMonthKey(analyticsOrderDate(order)) === monthKey);
   const yearOrders = orders.filter((order) => String(analyticsOrderDate(order).getFullYear()) === yearKey);
+  const customers = buildCustomerStats(orders);
+  const products = buildProductStats(orders);
+  const statusStats = orderStatusStats(allOrders);
 
   if (analyticsSummary) {
     analyticsSummary.innerHTML = [
-      analyticsSummaryCard("I dag", todayOrders),
-      analyticsSummaryCard("Denne måneden", monthOrders),
-      analyticsSummaryCard("Dette året", yearOrders)
+      analyticsPeriodSummary("I dag", todayOrders),
+      analyticsPeriodSummary("Denne uken", weekOrders),
+      analyticsPeriodSummary("Denne måneden", monthOrders),
+      analyticsSummaryCard("Snittordre", moneyCompact(averageOrderValue(orders)), `${orders.length} godkjente ordre`),
+      analyticsSummaryCard("Kunder totalt", String(customers.length), `${customers.filter((c) => c.orders > 1).length} tilbakevendende`),
+      analyticsSummaryCard("Status nå", `${statusStats.pending || 0} venter`, `${statusStats.accepted || 0} pågår · ${statusStats.ready || 0} klar · ${statusStats.cancelled || 0} kansellert`)
     ].join("");
   }
+
   renderSimpleBarChart(dailyRevenueChart, makeSeries(7, "day"));
+  renderSimpleBarChart(weeklyRevenueChart, makeWeekSeries(8));
   renderSimpleBarChart(monthlyRevenueChart, makeSeries(12, "month"));
   renderSimpleBarChart(yearlyRevenueChart, makeYearSeries());
+  renderProductAnalytics(productAnalyticsPanel, products);
+  renderCustomerAnalytics(customerAnalyticsPanel, customers);
+  renderMiniStats(dailyAnalyticsDetails, [
+    { label: "Ordre i dag", value: String(todayOrders.length), meta: `${uniqueCustomerCount(todayOrders)} kunder` },
+    { label: "Dagens omsetning", value: moneyCompact(sumRevenue(todayOrders)), meta: `Snitt ${moneyCompact(averageOrderValue(todayOrders))}` },
+    { label: "Bestselger", value: products[0]?.name || "-", meta: products[0] ? `${products[0].qty} stk` : "Ingen salg ennå" },
+    { label: "Tilbakevendende kunder", value: String(customers.filter((customer) => customer.orders > 1).length), meta: "2+ godkjente ordre" }
+  ]);
 }
 
 
@@ -3775,6 +4120,10 @@ siteSettingFields.forEach((field) => {
   field.addEventListener("change", () => updateSiteSettingFromField(field));
 });
 
+document.querySelectorAll("[data-receipt-preset='large']").forEach((button) => {
+  button.addEventListener("click", applyReceiptPresetLarge);
+});
+
 settingsTabs.forEach((button) => {
   button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab || "basic"));
 });
@@ -3923,6 +4272,9 @@ closeSettingsButtons.forEach((button) => {
 
 if (refreshOrdersButton) refreshOrdersButton.addEventListener("click", renderOrdersAdmin);
 if (refreshAnalyticsButton) refreshAnalyticsButton.addEventListener("click", renderAnalyticsAdmin);
+analyticsTabButtons.forEach((button) => {
+  button.addEventListener("click", () => setAnalyticsTab(button.dataset.analyticsTab || "daily"));
+});
 if (ordersAdminList) {
   ordersAdminList.addEventListener("click", async (event) => {
     const closeModalButton = event.target.closest("[data-close-order-modal]");
@@ -4349,6 +4701,24 @@ function startRealtimeSync() {
     }
   );
 }
+
+function initBasicSettingsTabs() {
+  const buttons = Array.from(document.querySelectorAll("[data-basic-settings-tab]"));
+  const panels = Array.from(document.querySelectorAll("[data-basic-settings-panel]"));
+  if (!buttons.length || !panels.length) return;
+  function activate(key) {
+    buttons.forEach((button) => button.classList.toggle("active", button.dataset.basicSettingsTab === key));
+    panels.forEach((panel) => {
+      const active = panel.dataset.basicSettingsPanel === key;
+      panel.classList.toggle("active", active);
+      panel.open = true;
+    });
+  }
+  buttons.forEach((button) => button.addEventListener("click", () => activate(button.dataset.basicSettingsTab)));
+  activate("restaurant");
+}
+
+initBasicSettingsTabs();
 
 startOrdersConnectionIndicator();
 startRealtimeSync();
