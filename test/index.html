@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=324">
+    <link rel="stylesheet" href="kol-core.css?v=325">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -2869,7 +2869,6 @@ function applySiteSettings() {
   if (paymentInfoText) paymentInfoText.textContent = settings.paymentInfo || "";
   if (addressText) addressText.textContent = formatAddress(settings);
   if (phoneText) phoneText.textContent = settings.phone || "";
-  renderInfoHero();
 }
 
 function readCachedMenuConfig() {
@@ -3678,22 +3677,27 @@ function renderMenuHero() {
 function renderInfoHero() {
   const mount = document.getElementById("infoHeroMount");
   if (!mount) return;
-  const settings = normalizeSiteSettings(siteSettings);
-  const heroImage = getMenuHeroImage();
-  const style = heroImage ? ` style="background-image:url('${escapeAttribute(heroImage)}')"` : "";
-  const city = safeText(settings.city || settings.streetAddress || "Skarnes");
-  mount.innerHTML = `
-    <section class="menu-app-hero info-hero-card">
-      <div class="menu-app-hero-photo"${style}></div>
-      <div class="menu-app-hero-shade"></div>
-      <div class="menu-app-hero-copy">
-        <span class="menu-app-pill">${canAcceptOrdersNow() ? openStatusShortText() : closedStatusShortText()}</span>
-        <h1>${escapeAttribute(settings.restaurantName || "KØL Grill & Pizza")}</h1>
-        <p>Pizza, kebab og burgere · ${escapeAttribute(city)}</p>
-      </div>
-    </section>
-  `;
-  refreshHeroStatusPill();
+  try {
+    const settings = normalizeSiteSettings(siteSettings);
+    const heroImage = getMenuHeroImage();
+    const style = heroImage ? ` style="background-image:url('${escapeAttribute(heroImage)}')"` : "";
+    const city = safeText(settings.city || settings.streetAddress || "Skarnes");
+    mount.innerHTML = `
+      <section class="menu-app-hero info-hero-card">
+        <div class="menu-app-hero-photo"${style}></div>
+        <div class="menu-app-hero-shade"></div>
+        <div class="menu-app-hero-copy">
+          <span class="menu-app-pill">${canAcceptOrdersNow() ? openStatusShortText() : closedStatusShortText()}</span>
+          <h1>${escapeAttribute(settings.restaurantName || "KØL Grill & Pizza")}</h1>
+          <p>Pizza, kebab og burgere · ${escapeAttribute(city)}</p>
+        </div>
+      </section>
+    `;
+    refreshHeroStatusPill();
+  } catch (error) {
+    console.warn("Info hero could not be rendered.", error);
+    mount.innerHTML = "";
+  }
 }
 
 
@@ -4464,6 +4468,7 @@ function openInfo() {
   if (orderLiveModal) orderLiveModal.hidden = true;
   cartToggle?.setAttribute("aria-expanded", "false");
   profileToggle?.setAttribute("aria-expanded", "false");
+  renderInfoHero();
   infoModal.hidden = false;
   infoToggle.setAttribute("aria-expanded", "true");
   document.body.classList.add("modal-open");

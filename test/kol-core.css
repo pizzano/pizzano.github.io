@@ -1658,3 +1658,47 @@ body.restaurant-closed .checkout-button{
 .settings-category-card[data-basic-settings-panel="sound"] input{
   min-height:42px!important;
 }
+
+
+/* V325 fixes: index safe info hero + admin extras menu visibility */
+.option-group-card,
+.option-group-card.editing,
+.option-group-row,
+.option-group-editor,
+.group-options,
+.group-options-wrap {
+  overflow: visible !important;
+}
+.option-group-card,
+.option-group-row,
+.group-option-row {
+  position: relative;
+}
+.group-menu,
+.category-menu,
+.product-menu {
+  z-index: 240 !important;
+}
+.group-menu-button {
+  position: relative;
+  z-index: 241;
+}
+.group-option-row {
+  grid-template-columns: minmax(0,1fr) 92px 100px 44px !important;
+}
+.group-option-row > button[data-remove-group-option] {
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid #2f3640;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  font-size: 22px;
+  line-height: 1;
+  align-self: end;
+}
+.group-option-row > button[data-remove-group-option]:hover {
+  background: #fff5f5;
+  border-color: #ef4444;
+  color: #ef4444;
+}
