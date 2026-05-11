@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=307">
+    <link rel="stylesheet" href="kol-core.css?v=309">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -801,6 +801,7 @@ const menuSectionsEl = document.querySelector("#menuSections");
 const categoryTabsWrap = document.querySelector("#categoryTabsWrap");
 const categoryTabs = document.querySelector("#categoryTabs");
 let activeCategoryTabId = "";
+let menuSearchQuery = "";
 let categoryScrollRaf = 0;
 const brandHero = document.querySelector("#brandHero");
 const brandLogoImage = document.querySelector("#brandLogoImage");
@@ -1098,17 +1099,10 @@ function formatMenuCompactPrice(value) {
 function renderMenuRowPrice(item, rowSoldOut = false) {
   if (rowSoldOut) return '<strong class="row-price">UTSOLGT</strong>';
   const sizes = getProductSizes(item).filter((size) => Number.isFinite(size.price));
-  if (sizes.length > 1) {
-    return `
-      <span class="row-price-group multi" aria-label="Priser">
-        ${sizes
-          .map((size) => `<strong class="row-price-inline" data-size="${size.id}">${formatMenuCompactPrice(size.price)}</strong>`)
-          .join('<span class="row-price-separator" aria-hidden="true">|</span>')}
-      </span>
-    `;
-  }
-  const price = item.displayPrice ?? getBasePrice(item, getDefaultProductSizeId(item));
-  return `<strong class="row-price">${formatPrice(price)}</strong>`;
+  const prices = sizes.map((size) => Number(size.price)).filter(Number.isFinite);
+  const basePrice = prices.length ? Math.min(...prices) : safeNumber(item.displayPrice ?? getBasePrice(item, getDefaultProductSizeId(item)));
+  const hasManyPrices = prices.length > 1 && Math.max(...prices) !== Math.min(...prices);
+  return `<strong class="row-price">${hasManyPrices ? "Fra " : ""}${formatPrice(basePrice)}</strong>`;
 }
 
 function formatCartAddonPrice(value) {
@@ -3544,6 +3538,62 @@ function markSelectedMenuProduct(productId = "") {
   });
 }
 
+function getMenuSectionLeadText(section = {}) {
+  const note = safeText(section.note);
+  if (note) return note;
+  const count = asArray(section.items).length;
+  return count ? `${count} varer` : "";
+}
+
+function getMenuHeroImage() {
+  const defaultImage = getDefaultImageUrl();
+  if (defaultImage) return defaultImage;
+  const firstWithImage = getRenderableMenuSections()
+    .flatMap((section) => [section, ...asArray(section.items)])
+    .find((entry) => safeText(entry.imageUrl));
+  return safeText(firstWithImage?.imageUrl);
+}
+
+function renderMenuHero() {
+  const settings = normalizeSiteSettings(siteSettings);
+  const heroImage = getMenuHeroImage();
+  const style = heroImage ? ` style="background-image:url('${escapeAttribute(heroImage)}')"` : "";
+  const city = safeText(settings.city || settings.streetAddress || "Skarnes");
+  const pickup = safeText(settings.pickupInfo || "Henting");
+  const hours = safeText(settings.openingTime || `${settings.orderOpenTime || ""} - ${settings.orderCloseTime || ""}`);
+  return `
+    <section class="menu-app-hero">
+      <div class="menu-app-hero-photo"${style}></div>
+      <div class="menu-app-hero-shade"></div>
+      <div class="menu-app-hero-copy">
+        <span class="menu-app-pill">⏱ ${escapeAttribute(pickup)}${hours ? ` · ${escapeAttribute(hours)}` : ""}</span>
+        <h1>${escapeAttribute(settings.restaurantName || "KØL Grill & Pizza")}</h1>
+        <p>Pizza, kebab og burgere · ${escapeAttribute(city)}</p>
+      </div>
+    </section>
+    <section class="menu-search-card">
+      <span aria-hidden="true">⌕</span>
+      <input id="menuSearchInput" type="search" autocomplete="off" inputmode="search" placeholder="Søk i menyen" value="${escapeAttribute(menuSearchQuery)}">
+    </section>
+  `;
+}
+
+function filterMenuRows(query = "") {
+  const normalized = String(query || "").trim().toLowerCase();
+  if (!menuSectionsEl) return;
+  menuSectionsEl.querySelectorAll(".category-panel[data-section]").forEach((panel) => {
+    let visibleCount = 0;
+    panel.querySelectorAll(".menu-row[data-product]").forEach((row) => {
+      const haystack = (row.dataset.search || row.textContent || "").toLowerCase();
+      const visible = !normalized || haystack.includes(normalized);
+      row.hidden = !visible;
+      if (visible) visibleCount += 1;
+    });
+    const isHero = panel.classList.contains("menu-app-static");
+    panel.hidden = !isHero && normalized && visibleCount === 0;
+  });
+}
+
 function renderMenu() {
   const visibleSections = getRenderableMenuSections();
 
@@ -3556,7 +3606,7 @@ function renderMenu() {
       syncCategoryTabsHeight();
     }
     menuSectionsEl.innerHTML = `
-      <section class="category-panel">
+      <section class="category-panel menu-empty-panel">
         <p class="category-note">Menyen er ikke tilgjengelig akkurat n&aring;.</p>
       </section>
     `;
@@ -3568,37 +3618,42 @@ function renderMenu() {
 
   renderCategoryTabs(sectionsToRender);
 
-  menuSectionsEl.innerHTML = sectionsToRender
-    .map((section) => {
+  menuSectionsEl.innerHTML = renderMenuHero() + sectionsToRender
+    .map((section, index) => {
       const sectionSoldOut = isSoldOutItem(section);
+      const leadText = getMenuSectionLeadText(section);
       return `
-        <section class="category-panel ${sectionSoldOut ? "category-sold-out" : ""}" data-section="${section.id}">
-          <div class="category-cover">
-            ${renderCategoryPhoto(section)}
-            <button class="category-title" type="button" data-toggle-section="${section.id}">
-              <span>${section.title}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</span>
-              <span class="category-chevron">&#9662;</span>
-            </button>
+        <section class="category-panel menu-app-section ${sectionSoldOut ? "category-sold-out" : ""}" data-section="${section.id}">
+          <div class="menu-app-section-head">
+            <div>
+              <h2>${escapeAttribute(section.title)}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</h2>
+              ${leadText ? `<p>${escapeAttribute(leadText)}</p>` : ""}
+            </div>
+            <span>${asArray(section.items).length} varer</span>
           </div>
-          ${section.note ? `<p class="category-note">${section.note}</p>` : ""}
           <div class="menu-list">
             ${section.items
               .map((item) => {
                 const rowSoldOut = isSoldOutItem(item, sectionSoldOut);
                 const prefix = item.number ? `${item.number}. ` : "";
-                const details = item.ingredients || "";
+                const details = safeText(item.ingredients || item.description || "");
                 const isSelected = !section.isSyntheticMostOrdered && getMarkedMenuProductIds().has(String(item.id));
+                const searchText = `${section.title} ${prefix}${item.name} ${details}`.toLowerCase();
                 return `
-                  <button class="menu-row ${rowSoldOut ? "sold-out" : ""} ${isSelected ? "selected-product" : ""}" type="button" data-product="${item.id}" data-product-section="${section.id}" data-source-section="${item._sourceSectionId || section.id}" data-synthetic="${section.isSyntheticMostOrdered ? "true" : "false"}" ${isSelected ? 'aria-current="true"' : ""} ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
+                  <button class="menu-row menu-app-product ${rowSoldOut ? "sold-out" : ""} ${isSelected ? "selected-product" : ""}" type="button" data-product="${item.id}" data-product-section="${section.id}" data-source-section="${item._sourceSectionId || section.id}" data-synthetic="${section.isSyntheticMostOrdered ? "true" : "false"}" data-search="${escapeAttribute(searchText)}" ${isSelected ? 'aria-current="true"' : ""} ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
                     ${renderThumb(item)}
                     <span class="menu-row-main">
                       <span class="menu-row-headline">
-                        <strong>${prefix}${item.name}</strong>
+                        <strong>${escapeAttribute(prefix + item.name)}</strong>
                         ${isSelected ? '<span class="selected-chip">Valgt</span>' : ''}
                       </span>
-                      <span>${details}</span>
+                      ${details ? `<span>${escapeAttribute(details)}</span>` : '<span>Trykk for valg og tilbehør</span>'}
+                      <span class="menu-row-meta">★ ${rowSoldOut ? "Utsolgt" : "Velg størrelse og tilbehør"}</span>
                     </span>
-                    ${renderMenuRowPrice(item, rowSoldOut)}
+                    <span class="menu-app-product-side">
+                      ${renderMenuRowPrice(item, rowSoldOut)}
+                      <span class="menu-app-plus" aria-hidden="true">+</span>
+                    </span>
                   </button>
                 `;
               })
@@ -3612,10 +3667,10 @@ function renderMenu() {
       ? `<div class="menu-lazy-trigger" data-menu-lazy-trigger>Flere kategorier lastes...</div>`
       : "");
 
+  filterMenuRows(menuSearchQuery);
   setupMenuLazyLoader(visibleSections.length);
   requestCategoryScrollSync();
 }
-
 function renderProductOptions() {
   const sizeOptions = renderSizeOptions();
   const assignedGroups = getProductOptionGroups();
@@ -4229,6 +4284,12 @@ document.addEventListener("click", (event) => {
 
   scrollToMenuSection(tab.dataset.categoryTab);
 }, true);
+
+menuSectionsEl.addEventListener("input", (event) => {
+  if (event.target?.id !== "menuSearchInput") return;
+  menuSearchQuery = event.target.value || "";
+  filterMenuRows(menuSearchQuery);
+});
 
 menuSectionsEl.addEventListener("click", (event) => {
   const toggle = event.target.closest("[data-toggle-section]");
