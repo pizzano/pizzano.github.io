@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=307">
+    <link rel="stylesheet" href="kol-core.css?v=324">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -39,7 +39,7 @@
           <div class="product-admin-grid">
             <form class="product-form product-editor-card" id="productForm">
               <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
-              <details class="product-more wide compact-product-media" id="productMediaSettings">
+              <details class="product-more wide compact-product-media" id="productMediaSettings" open>
                 <summary aria-label="Produkttekst og bilde"><span>🖼</span><strong>Bilde / beskrivelse</strong></summary>
                 <div class="product-more-panel compact-product-media-panel">
                   <label>Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
@@ -293,9 +293,17 @@
               <details class="settings-category-card settings-tab-panel" data-basic-settings-panel="sound" open>
                 <summary><span>🔔</span><strong>Bestillingslyd</strong><small>Alarmlyd når ny bestilling kommer</small></summary>
                 <div class="settings-form-grid">
-                  <label class="wide">Sipariş sesi URL (MP3/WAV/OGG)
-                    <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../alarm.mp3">
-                    <span class="field-hint">Boş bırakılırsa sistemdeki eski ev telefonu zili çalar. URL girersen sipariş geldiğinde bu ses çalar.</span>
+                  <label class="wide">Admin ny bestilling lyd URL (MP3/WAV/OGG)
+                    <input id="settingOrderAlarmSoundUrl" data-setting-field="orderAlarmSoundUrl" type="url" placeholder="https://.../admin-alarm.mp3">
+                    <span class="field-hint">Boş bırakılırsa hiç ses çalmaz. URL girersen yeni sipariş geldiğinde sadece bu ses çalar.</span>
+                  </label>
+                  <label class="wide">Kunde lyd når bestilling godkjennes
+                    <input id="settingCustomerAcceptedSoundUrl" data-setting-field="customerAcceptedSoundUrl" type="url" placeholder="https://.../godkjent.mp3">
+                    <span class="field-hint">Müşteri siparişi kabul edilince bu URL'deki sesi duyar. Boşsa müşteri tarafında ses çalmaz.</span>
+                  </label>
+                  <label class="wide">Kunde lyd når bestilling kanselleres
+                    <input id="settingCustomerCancelledSoundUrl" data-setting-field="customerCancelledSoundUrl" type="url" placeholder="https://.../kansellert.mp3">
+                    <span class="field-hint">İstersen iptal için ayrı ses girebilirsin. Boşsa ses çalmaz.</span>
                   </label>
                 </div>
               </details>
@@ -507,6 +515,7 @@ let selectedProductIndex = null;
 let productEditorOpen = false;
 let editingCategoryIndex = null;
 let editingGroupIndex = null;
+let selectedGroupIndex = null;
 let draggedCategoryIndex = null;
 let draggedProductIndex = null;
 let draggedGroupId = null;
@@ -665,12 +674,13 @@ function playCustomAdminAlarmAudio() {
     const playPromise = adminOrderCustomAudio.play();
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(() => {
-        playAdminAlarmSynthFallback();
+        setStatus("Alarm URL kunne ikke spilles av. Kontroller lydlenken.");
       });
     }
     if (navigator.vibrate) navigator.vibrate([900, 180, 900, 180, 900]);
     return true;
   } catch (error) {
+    setStatus("Alarm URL kunne ikke spilles av. Kontroller lydlenken.");
     return false;
   }
 }
@@ -696,8 +706,8 @@ function playAdminAlarmSynthFallback() {
 }
 
 function playAdminAlarmBurst() {
-  if (playCustomAdminAlarmAudio()) return;
-  playAdminAlarmSynthFallback();
+  // TÜRKÇE: Admin alarmı sadece URL girilirse çalar. Boşsa tamamen sessiz kalır.
+  playCustomAdminAlarmAudio();
 }
 
 function playNewOrderAlarm() {
@@ -1146,6 +1156,8 @@ function defaultSiteSettings() {
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)",
     orderAlarmSoundUrl: "",
+    customerAcceptedSoundUrl: "",
+    customerCancelledSoundUrl: "",
     receiptPaperWidth: "576",
     receiptHeaderFontSize: "34",
     receiptItemFontSize: "26",
@@ -1726,6 +1738,8 @@ function applyPriceCompatibility(productData, prices) {
 
 function renderProductEditor() {
   mountProductFormInline();
+  const mediaDetails = document.querySelector("#productMediaSettings");
+  if (mediaDetails) mediaDetails.open = true;
   const product = selectedProduct();
   const disabled = !product;
   Object.values(fields).forEach((field) => {
@@ -1949,7 +1963,7 @@ function renderGroupManager() {
       const isEditing = groupIndex === editingGroupIndex;
       const optionCount = asArray(group.options).length;
       return `
-        <article class="option-group-card ${isEditing ? "editing" : ""}" draggable="true" data-group-card="${escapeHtml(group.id)}" data-group-index="${groupIndex}">
+        <article class="option-group-card ${isEditing ? "editing" : ""} ${selectedGroupIndex === groupIndex ? "active" : ""}" draggable="true" data-group-card="${escapeHtml(group.id)}" data-group-index="${groupIndex}">
           <div class="option-group-row">
             <button class="option-group-title" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">
               <strong>${escapeHtml(group.title || "Ny valggruppe")}</strong>
@@ -4093,12 +4107,14 @@ if (optionGroupsAdmin) {
   optionGroupsAdmin.addEventListener("click", (event) => {
     const menuToggle = event.target.closest("[data-group-menu]");
     if (menuToggle) {
+      selectedGroupIndex = Number(menuToggle.dataset.groupMenu);
       const panel = optionGroupsAdmin.querySelector(`[data-group-menu-panel="${menuToggle.dataset.groupMenu}"]`);
       if (panel) {
         const shouldOpen = panel.hidden;
         closeGroupMenus();
         panel.hidden = !shouldOpen;
       }
+      renderGroupManager();
       return;
     }
 
@@ -4107,6 +4123,7 @@ if (optionGroupsAdmin) {
       const groupIndex = Number(groupAction.dataset.groupIndex);
       const group = config.optionGroups[groupIndex];
       if (!group) return;
+      selectedGroupIndex = groupIndex;
       closeGroupMenus();
       if (groupAction.dataset.groupAction === "edit") {
         editingGroupIndex = groupIndex;

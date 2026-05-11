@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=318">
+    <link rel="stylesheet" href="kol-core.css?v=324">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -78,6 +78,7 @@
           <h2 id="infoTitle">K&Oslash;L Grill &amp; Pizza</h2>
           <button class="close-button" id="closeInfo" type="button" aria-label="Lukk informasjon">&times;</button>
         </div>
+        <div id="infoHeroMount" class="info-hero-mount"></div>
         <div class="map-preview" aria-label="Kart over KOL Grill og Pizza">
           <div class="map-road road-main"></div>
           <div class="map-road road-side"></div>
@@ -778,6 +779,7 @@ const orderAcceptWindowMs = 3 * 60 * 1000; // TÜRKÇE: Müşteri için sipariş
 // TÜRKÇE: Müşteri sipariş onayı/kansel durumunu site açıkken sesle duysun diye basit WebAudio kullanıyoruz.
 // Telefon kapalıysa veya tarayıcı tamamen kapalıysa normal web sayfası ses gönderemez; bunun için ayrıca Push Notification gerekir.
 let customerAudioContext = null;
+let customerCustomStatusAudio = null;
 let customerSoundUnlocked = false;
 
 // TÜRKÇE: Menü verisini tarayıcıda saklıyoruz.
@@ -1150,27 +1152,38 @@ function playTone(context, start, frequency, duration, volume = 0.08) {
   oscillator.stop(start + duration + 0.03);
 }
 
+function getCustomerStatusSoundUrl(status = "pending") {
+  const settings = normalizeSiteSettings(siteSettings);
+  if (status === "accepted") return String(settings.customerAcceptedSoundUrl || "").trim();
+  if (status === "cancelled") return String(settings.customerCancelledSoundUrl || "").trim();
+  return "";
+}
+
+function playCustomerCustomStatusAudio(status = "pending") {
+  const url = getCustomerStatusSoundUrl(status);
+  if (!url) return false;
+  try {
+    if (!customerCustomStatusAudio || customerCustomStatusAudio.dataset.url !== url) {
+      customerCustomStatusAudio = new Audio(url);
+      customerCustomStatusAudio.dataset.url = url;
+      customerCustomStatusAudio.preload = "auto";
+      customerCustomStatusAudio.crossOrigin = "anonymous";
+    }
+    customerCustomStatusAudio.pause();
+    customerCustomStatusAudio.currentTime = 0;
+    customerCustomStatusAudio.volume = 1;
+    const playPromise = customerCustomStatusAudio.play();
+    if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function playCustomerStatusSound(status = "pending") {
-  const context = getCustomerAudioContext();
-  if (!context) return;
-  context.resume?.().catch(() => {});
-  const now = context.currentTime + 0.04;
-
-  // TÜRKÇE: Müşteri için duyulabilir ama kısa bildirim sesi.
-  // Godkjent olduğunda yaklaşık 2 saniyelik pozitif mesaj sesi verir.
-  if (status === "accepted") {
-    [0, 0.22, 0.44, 0.86, 1.08, 1.30, 1.62, 1.84].forEach((offset, index) => {
-      playTone(context, now + offset, index % 2 ? 980 : 740, 0.16, 0.13);
-    });
-    return;
-  }
-
-  if (status === "cancelled") {
-    [0, 0.32, 0.64].forEach((offset) => playTone(context, now + offset, 280, 0.24, 0.12));
-    return;
-  }
-
-  playTone(context, now, 520, 0.14, 0.07);
+  // TÜRKÇE: Müşteriye kabul/iptal sesi yalnızca Grunninfo > Bestillingslyd alanına URL girilirse çalar.
+  // Boşsa tarayıcı kendi kendine ses çıkarmaz.
+  playCustomerCustomStatusAudio(status);
 }
 
 
@@ -1686,7 +1699,7 @@ function refreshHeroStatusPill() {
 function showClosedOrderingMessage() {
   const message = closedStatusShortText();
   refreshHeroStatusPill();
-  const heroCard = document.querySelector('.menu-app-hero-card');
+  const heroCard = document.querySelector('.info-hero-card, .menu-app-hero');
   if (heroCard && typeof heroCard.scrollIntoView === 'function') {
     heroCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
   } else {
@@ -2616,6 +2629,8 @@ function defaultSiteSettings() {
     minPreorderMinutes: "30",
     pickupInfo: "Samme som åpningstider",
     paymentInfo: "Kort ved henting (henting)",
+    customerAcceptedSoundUrl: "",
+    customerCancelledSoundUrl: "",
   };
 }
 
@@ -2854,6 +2869,7 @@ function applySiteSettings() {
   if (paymentInfoText) paymentInfoText.textContent = settings.paymentInfo || "";
   if (addressText) addressText.textContent = formatAddress(settings);
   if (phoneText) phoneText.textContent = settings.phone || "";
+  renderInfoHero();
 }
 
 function readCachedMenuConfig() {
@@ -3623,10 +3639,10 @@ function markSelectedMenuProduct(productId = "") {
       if (!chip && headline) {
         chip = document.createElement("span");
         chip.className = "selected-chip";
-        chip.textContent = "(Valgt nå)";
+        chip.textContent = "Valgt";
         headline.appendChild(chip);
       } else if (chip) {
-        chip.textContent = "(Valgt nå)";
+        chip.textContent = "Valgt";
       }
     } else if (chip) {
       chip.remove();
@@ -3651,28 +3667,35 @@ function getMenuHeroImage() {
 }
 
 function renderMenuHero() {
-  const settings = normalizeSiteSettings(siteSettings);
-  const heroImage = getMenuHeroImage();
-  const style = heroImage ? ` style="background-image:url('${escapeAttribute(heroImage)}')"` : "";
-  const city = safeText(settings.city || settings.streetAddress || "Skarnes");
-  const pickup = safeText(settings.pickupInfo || "Henting");
-  const hours = safeText(settings.openingTime || `${settings.orderOpenTime || ""} - ${settings.orderCloseTime || ""}`);
   return `
-    <section class="menu-app-hero">
-      <div class="menu-app-hero-photo"${style}></div>
-      <div class="menu-app-hero-shade"></div>
-      <div class="menu-app-hero-copy">
-        <span class="menu-app-pill">⏱ ${escapeAttribute(pickup)}${hours ? ` · ${escapeAttribute(hours)}` : ""}</span>
-        <h1>${escapeAttribute(settings.restaurantName || "KØL Grill & Pizza")}</h1>
-        <p>Pizza, kebab og burgere · ${escapeAttribute(city)}</p>
-      </div>
-    </section>
     <section class="menu-search-card">
       <span aria-hidden="true">⌕</span>
       <input id="menuSearchInput" type="search" autocomplete="off" inputmode="search" placeholder="Søk i menyen" value="${escapeAttribute(menuSearchQuery)}">
     </section>
   `;
 }
+
+function renderInfoHero() {
+  const mount = document.getElementById("infoHeroMount");
+  if (!mount) return;
+  const settings = normalizeSiteSettings(siteSettings);
+  const heroImage = getMenuHeroImage();
+  const style = heroImage ? ` style="background-image:url('${escapeAttribute(heroImage)}')"` : "";
+  const city = safeText(settings.city || settings.streetAddress || "Skarnes");
+  mount.innerHTML = `
+    <section class="menu-app-hero info-hero-card">
+      <div class="menu-app-hero-photo"${style}></div>
+      <div class="menu-app-hero-shade"></div>
+      <div class="menu-app-hero-copy">
+        <span class="menu-app-pill">${canAcceptOrdersNow() ? openStatusShortText() : closedStatusShortText()}</span>
+        <h1>${escapeAttribute(settings.restaurantName || "KØL Grill & Pizza")}</h1>
+        <p>Pizza, kebab og burgere · ${escapeAttribute(city)}</p>
+      </div>
+    </section>
+  `;
+  refreshHeroStatusPill();
+}
+
 
 function filterMenuRows(query = "") {
   const normalized = String(query || "").trim().toLowerCase();
@@ -3830,7 +3853,7 @@ function renderMenu() {
                     <span class="menu-row-main">
                       <span class="menu-row-headline">
                         <strong>${escapeAttribute(prefix + item.name)}</strong>
-                        ${isSelected ? '<span class="selected-chip">(Valgt nå)</span>' : ''}
+                        ${isSelected ? '<span class="selected-chip">Valgt</span>' : ''}
                       </span>
                       ${details ? `<span>${escapeAttribute(details)}</span>` : '<span>Trykk for valg og tilbehør</span>'}
                       <span class="menu-row-meta">★ ${rowSoldOut ? "Utsolgt" : "Velg størrelse og tilbehør"}</span>
