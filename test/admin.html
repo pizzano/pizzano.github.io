@@ -269,15 +269,18 @@
                   <label>Åpningstider tekst
                     <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag - Søndag">
                   </label>
-                  <label>Tid
-                    <input id="settingOpeningTime" data-setting-field="openingTime" type="text" placeholder="13:00 - 22:00">
+                  <label class="wide opening-time-field">Tid
+                    <div class="opening-time-range" aria-label="Åpningstid">
+                      <input id="settingOpeningTimeOpen" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="13:00">
+                      <span aria-hidden="true">–</span>
+                      <input id="settingOpeningTimeClose" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="22:00">
+                    </div>
+                    <input id="settingOpeningTime" data-setting-field="openingTime" type="hidden" value="">
+                    <span class="field-hint">Bare klokkeslett er tillatt. Skriv fra–til, for eksempel 13:00 – 22:00.</span>
                   </label>
-                  <label>Bestilling åpner
-                    <input id="settingOrderOpenTime" data-setting-field="orderOpenTime" type="time" placeholder="13:00">
-                  </label>
-                  <label>Bestilling stenger
-                    <input id="settingOrderCloseTime" data-setting-field="orderCloseTime" type="time" placeholder="22:00">
-                  </label>
+                  <div class="settings-info-note opening-order-note">
+                    Sipariş gönderme saati açılış saatiyle aynıdır. Müşteriler bu saatler arasında sipariş gönderebilir; kapalıyken sepete ekleyebilir ama gönderemez.
+                  </div>
                   <label>Minimum forhåndsbestilling (min)
                     <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
                   </label>
@@ -448,6 +451,9 @@ const productStatusFields = {
 const productPriceRows = document.querySelector("#productPriceRows");
 const addProductPriceButton = document.querySelector("#addProductPrice");
 const siteSettingFields = document.querySelectorAll("[data-setting-field]");
+const settingOpeningTimeHidden = document.getElementById("settingOpeningTime");
+const settingOpeningTimeOpen = document.getElementById("settingOpeningTimeOpen");
+const settingOpeningTimeClose = document.getElementById("settingOpeningTimeClose");
 const settingsTabs = document.querySelectorAll("[data-settings-tab]");
 const settingsPages = document.querySelectorAll("[data-settings-page]");
 const settingsModal = document.querySelector("#settingsModal");
@@ -1174,8 +1180,40 @@ function applyGlobalTypographySettings() {
   root.style.setProperty("--kol-text-line", "1.35");
   root.style.setProperty("--kol-line-height-global", "1.35");
 }
+function padTimeNumber(value) {
+  return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
+}
+
+function sanitizeClockValue(value, fallback = "") {
+  const source = String(value || "").trim();
+  let digits = source.replace(/\D/g, "").slice(0, 4);
+  if (!digits) return fallback;
+  if (digits.length < 4) return fallback;
+  const hour = Math.max(0, Math.min(23, Number(digits.slice(0, 2)) || 0));
+  const minute = Math.max(0, Math.min(59, Number(digits.slice(2, 4)) || 0));
+  return `${padTimeNumber(hour)}:${padTimeNumber(minute)}`;
+}
+
+function splitOpeningTimeRange(value = "") {
+  const matches = String(value || "").match(/\d{1,2}[:.]?\d{2}/g) || [];
+  const open = sanitizeClockValue(matches[0], "14:00");
+  const close = sanitizeClockValue(matches[1], "22:00");
+  return { open, close };
+}
+
+function composeOpeningTimeRange(openValue = "", closeValue = "") {
+  const open = sanitizeClockValue(openValue, "14:00");
+  const close = sanitizeClockValue(closeValue, "22:00");
+  return `${open} - ${close}`;
+}
+
 function normalizeSiteSettings(value) {
-  return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  const merged = { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  const parts = splitOpeningTimeRange(merged.openingTime || `${merged.orderOpenTime || "14:00"} - ${merged.orderCloseTime || "22:00"}`);
+  merged.openingTime = composeOpeningTimeRange(parts.open, parts.close);
+  merged.orderOpenTime = parts.open;
+  merged.orderCloseTime = parts.close;
+  return merged;
 }
 
 function defaultOptionGroups() {
@@ -1943,6 +1981,47 @@ function renderOptions() {
 }
 
 
+function syncOpeningTimeHiddenField(saveNow = false) {
+  if (!settingOpeningTimeHidden || !settingOpeningTimeOpen || !settingOpeningTimeClose || !config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  const open = sanitizeClockValue(settingOpeningTimeOpen.value, config.siteSettings.orderOpenTime || "14:00");
+  const close = sanitizeClockValue(settingOpeningTimeClose.value, config.siteSettings.orderCloseTime || "22:00");
+  settingOpeningTimeOpen.value = open;
+  settingOpeningTimeClose.value = close;
+  const combined = composeOpeningTimeRange(open, close);
+  settingOpeningTimeHidden.value = combined;
+  config.siteSettings.openingTime = combined;
+  config.siteSettings.orderOpenTime = open;
+  config.siteSettings.orderCloseTime = close;
+  if (saveNow) {
+    scheduleSave();
+  }
+}
+
+function bindStrictTimeInput(input) {
+  if (!input || input.dataset.strictTimeBound === "true") return;
+  input.dataset.strictTimeBound = "true";
+  input.setAttribute("maxlength", "5");
+  input.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const allowedKeys = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "Enter"];
+    if (allowedKeys.includes(event.key)) return;
+    if (/^\d$/.test(event.key)) return;
+    if (event.key === ":") return;
+    event.preventDefault();
+  });
+  input.addEventListener("input", () => {
+    let digits = String(input.value || "").replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 3) {
+      input.value = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+    } else {
+      input.value = digits;
+    }
+  });
+  input.addEventListener("blur", () => syncOpeningTimeHiddenField(true));
+  input.addEventListener("change", () => syncOpeningTimeHiddenField(true));
+}
+
 function renderSiteSettings() {
   if (!config) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
@@ -1955,6 +2034,14 @@ siteSettingFields.forEach((field) => {
     if (!key) return;
     field.value = config.siteSettings[key] ?? "";
   });
+  if (settingOpeningTimeOpen && settingOpeningTimeClose) {
+    const parts = splitOpeningTimeRange(config.siteSettings.openingTime);
+    settingOpeningTimeOpen.value = parts.open;
+    settingOpeningTimeClose.value = parts.close;
+    if (settingOpeningTimeHidden) settingOpeningTimeHidden.value = config.siteSettings.openingTime;
+    bindStrictTimeInput(settingOpeningTimeOpen);
+    bindStrictTimeInput(settingOpeningTimeClose);
+  }
   if (adminRestaurantTitle) {
     adminRestaurantTitle.textContent = config.siteSettings.restaurantName || "Meny admin";
   }
@@ -1964,6 +2051,12 @@ siteSettingFields.forEach((field) => {
 function updateSiteSettingFromField(field) {
   if (!config || !field?.dataset?.settingField) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  if (field.dataset.settingField === "openingTime") {
+    syncOpeningTimeHiddenField(true);
+    applyGlobalTypographySettings(config.siteSettings);
+    updateReceiptPreviewFromFields();
+    return;
+  }
   config.siteSettings[field.dataset.settingField] = field.value.trim();
   applyGlobalTypographySettings(config.siteSettings);
   updateReceiptPreviewFromFields();

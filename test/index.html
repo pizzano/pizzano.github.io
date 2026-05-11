@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=309">
+    <link rel="stylesheet" href="kol-core.css?v=318">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -20,9 +20,7 @@
     </header>
 
     <main class="menu-shell">
-      <div class="status-notice">
-        Vi har for &oslash;yeblikket stengt, men du kan forh&aring;ndsbestille for senere.
-      </div>
+      <div class="status-notice" hidden></div>
 
       <div class="category-tabs-wrap" id="categoryTabsWrap" hidden>
         <div class="category-tabs-scroll" id="categoryTabs" aria-label="Kategorinavigasjon"></div>
@@ -1536,13 +1534,17 @@ function parseTimeParts(value = "") {
 
 function getOrderingTimes() {
   const settings = normalizeSiteSettings(siteSettings);
-  let open = parseTimeParts(settings.orderOpenTime);
-  let close = parseTimeParts(settings.orderCloseTime);
+  const matches = String(settings.openingTime || "14:00 - 22:00").match(/\d{1,2}[:.]\d{2}/g) || [];
+  let open = parseTimeParts(matches[0] || "14:00");
+  let close = parseTimeParts(matches[1] || "22:00");
+
+  // TÜRKÇE: Sipariş saati artık ayrı değil; dükkan açık olduğu saatlerde sipariş gönderilebilir.
+  // Eski Firebase kayıtlarında orderOpenTime/orderCloseTime kalsa bile müşteri tarafı openingTime değerini esas alır.
   if (!open || !close) {
-    const matches = String(settings.openingTime || "14:00 - 22:00").match(/\d{1,2}[:.]\d{2}/g) || [];
-    open = open || parseTimeParts(matches[0] || "14:00");
-    close = close || parseTimeParts(matches[1] || "22:00");
+    open = parseTimeParts(settings.orderOpenTime || "14:00");
+    close = parseTimeParts(settings.orderCloseTime || "22:00");
   }
+
   return {
     open: open || { hour: 14, minute: 0 },
     close: close || { hour: 22, minute: 0 },
@@ -1651,6 +1653,67 @@ function buildPickupOptions(minTime, closeAt) {
     pickupTimeInput.selectedIndex = 0;
   }
 }
+
+
+function canAcceptOrdersNow() {
+  return isOrderingOpenNow();
+}
+
+function closedOrderingMessageText() {
+  const nextOpen = nextOrderingOpenDate(new Date());
+  return `Restauranten er stengt nå. Bestilling kan ikke sendes før vi åpner kl. ${formatClock(nextOpen)}.`;
+}
+
+function closedStatusShortText() {
+  return `⛔ STENGT · Åpner kl. ${formatClock(nextOrderingOpenDate(new Date()))}`;
+}
+
+function openStatusShortText() {
+  const settings = getStoreSettings();
+  const hours = String(settings.openingTime || "14:00 - 22:00").trim();
+  return `🟢 Åpent ${hours}`;
+}
+
+function refreshHeroStatusPill() {
+  const heroPill = document.querySelector(".menu-app-pill");
+  if (!heroPill) return;
+  const closed = !canAcceptOrdersNow();
+  heroPill.classList.toggle("closed-status-badge", closed);
+  heroPill.classList.toggle("open-status-badge", !closed);
+  heroPill.textContent = closed ? closedStatusShortText() : openStatusShortText();
+}
+
+function showClosedOrderingMessage() {
+  const message = closedStatusShortText();
+  refreshHeroStatusPill();
+  const heroCard = document.querySelector('.menu-app-hero-card');
+  if (heroCard && typeof heroCard.scrollIntoView === 'function') {
+    heroCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  } else {
+    alert(message);
+  }
+}
+
+function syncOrderingClosedState() {
+  const closed = !canAcceptOrdersNow();
+  document.body.classList.toggle("restaurant-closed", closed);
+
+  const notice = document.querySelector(".status-notice");
+  if (notice) {
+    notice.hidden = true;
+    notice.textContent = "";
+    notice.classList.remove("closed-blocking-notice", "closed-flash");
+  }
+
+  refreshHeroStatusPill();
+
+  if (addConfiguredProduct) addConfiguredProduct.disabled = false;
+  document.querySelectorAll(".checkout-button, #submitOrder, #sendOrder, #placeOrderButton, #sendBestilling").forEach((button) => {
+    button.disabled = closed;
+    button.setAttribute("aria-disabled", closed ? "true" : "false");
+  });
+}
+
 
 function resetPickupToAsap() {
   document.querySelectorAll('input[name="pickupMode"]').forEach((input) => {
@@ -2407,6 +2470,11 @@ function startOrderPolling(orderId) {
 }
 
 async function submitOrder() {
+  if (!canAcceptOrdersNow()) {
+    showClosedOrderingMessage();
+    return;
+  }
+
   const error = validateCheckout();
   if (error) {
     if (checkoutFocusError) return;
@@ -2570,8 +2638,40 @@ function applyGlobalTypographySettings() {
   root.style.setProperty("--kol-text-line", "1.35");
   root.style.setProperty("--kol-line-height-global", "1.35");
 }
+function padTimeNumber(value) {
+  return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
+}
+
+function sanitizeClockValue(value, fallback = "") {
+  const source = String(value || "").trim();
+  let digits = source.replace(/\D/g, "").slice(0, 4);
+  if (!digits) return fallback;
+  if (digits.length < 4) return fallback;
+  const hour = Math.max(0, Math.min(23, Number(digits.slice(0, 2)) || 0));
+  const minute = Math.max(0, Math.min(59, Number(digits.slice(2, 4)) || 0));
+  return `${padTimeNumber(hour)}:${padTimeNumber(minute)}`;
+}
+
+function splitOpeningTimeRange(value = "") {
+  const matches = String(value || "").match(/\d{1,2}[:.]?\d{2}/g) || [];
+  const open = sanitizeClockValue(matches[0], "14:00");
+  const close = sanitizeClockValue(matches[1], "22:00");
+  return { open, close };
+}
+
+function composeOpeningTimeRange(openValue = "", closeValue = "") {
+  const open = sanitizeClockValue(openValue, "14:00");
+  const close = sanitizeClockValue(closeValue, "22:00");
+  return `${open} - ${close}`;
+}
+
 function normalizeSiteSettings(value) {
-  return { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  const merged = { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  const parts = splitOpeningTimeRange(merged.openingTime || `${merged.orderOpenTime || "14:00"} - ${merged.orderCloseTime || "22:00"}`);
+  merged.openingTime = composeOpeningTimeRange(parts.open, parts.close);
+  merged.orderOpenTime = parts.open;
+  merged.orderCloseTime = parts.close;
+  return merged;
 }
 
 function defaultOptionGroups() {
@@ -3295,14 +3395,9 @@ function buildCartLine() {
 
 function updateOpeningNotice() {
   if (!statusNotice) return;
-  const times = getOrderingTimes();
-  const openLabel = `${String(times.open.hour).padStart(2, "0")}:${String(times.open.minute).padStart(2, "0")}`;
-  const closeLabel = `${String(times.close.hour).padStart(2, "0")}:${String(times.close.minute).padStart(2, "0")}`;
-  const isOpen = isOrderingOpenNow();
-  statusNotice.hidden = isOpen;
-  statusNotice.textContent = isOpen
-    ? ""
-    : `Restauranten er stengt nå. Du kan sende bestilling, den behandles når vi åpner kl. ${openLabel}.`;
+  statusNotice.hidden = true;
+  statusNotice.textContent = "";
+  refreshHeroStatusPill();
 }
 
 function disconnectMenuLazyLoader() {
@@ -3427,6 +3522,7 @@ function refreshCategoryTabsFromCurrentMenu(options = {}) {
   syncCategoryTabsVisibility();
   syncCategoryTabsHeight();
   requestCategoryScrollSync();
+  syncOrderingClosedState();
 }
 
 function renderCategoryTabs(sections) {
@@ -3527,10 +3623,10 @@ function markSelectedMenuProduct(productId = "") {
       if (!chip && headline) {
         chip = document.createElement("span");
         chip.className = "selected-chip";
-        chip.textContent = "Valgt";
+        chip.textContent = "(Valgt nå)";
         headline.appendChild(chip);
       } else if (chip) {
-        chip.textContent = "Valgt";
+        chip.textContent = "(Valgt nå)";
       }
     } else if (chip) {
       chip.remove();
@@ -3581,19 +3677,108 @@ function renderMenuHero() {
 function filterMenuRows(query = "") {
   const normalized = String(query || "").trim().toLowerCase();
   if (!menuSectionsEl) return;
-  menuSectionsEl.querySelectorAll(".category-panel[data-section]").forEach((panel) => {
-    let visibleCount = 0;
-    panel.querySelectorAll(".menu-row[data-product]").forEach((row) => {
-      const haystack = (row.dataset.search || row.textContent || "").toLowerCase();
-      const visible = !normalized || haystack.includes(normalized);
-      row.hidden = !visible;
-      if (visible) visibleCount += 1;
-    });
-    const isHero = panel.classList.contains("menu-app-static");
-    panel.hidden = !isHero && normalized && visibleCount === 0;
-  });
-}
 
+  const heroEl = menuSectionsEl.querySelector(".menu-app-hero");
+  const resultSectionId = "menuSearchResults";
+  let resultSection = menuSectionsEl.querySelector(`#${resultSectionId}`);
+  const normalPanels = menuSectionsEl.querySelectorAll(".category-panel[data-section]");
+
+  // Arama yoksa sadece sonuç alanını kaldır, normal menüyü aynen göster.
+  if (!normalized) {
+    document.body.classList.remove("menu-search-active");
+    if (heroEl) heroEl.hidden = false;
+    if (resultSection) resultSection.remove();
+    normalPanels.forEach((panel) => {
+      panel.hidden = false;
+      panel.querySelectorAll(".menu-row[data-product]").forEach((row) => {
+        row.hidden = false;
+      });
+    });
+    requestCategoryScrollSync();
+    return;
+  }
+
+  document.body.classList.add("menu-search-active");
+  if (heroEl) heroEl.hidden = true;
+
+  // Arama sonuçları üstte gösterilir; normal kategoriler aşağıda kalır ve kategori çubuğu çalışmaya devam eder.
+  normalPanels.forEach((panel) => {
+    panel.hidden = false;
+    panel.querySelectorAll(".menu-row[data-product]").forEach((row) => {
+      row.hidden = false;
+    });
+  });
+
+  const rows = [...menuSectionsEl.querySelectorAll(".category-panel[data-section] .menu-row[data-product]")];
+  const matches = new Map();
+
+  rows.forEach((row) => {
+    const haystack = (row.dataset.search || row.textContent || "").toLowerCase();
+    if (!haystack.includes(normalized)) return;
+
+    const productId = String(row.dataset.product || "");
+    if (!productId) return;
+
+    const existing = matches.get(productId);
+    const rowIsSynthetic = row.dataset.synthetic === "true";
+
+    // Aynı ürün hem "Mest bestilt" hem kendi kategorisinde varsa gerçek kategorideki satırı tercih et.
+    if (!existing || (existing.dataset.synthetic === "true" && !rowIsSynthetic)) {
+      matches.set(productId, row);
+    }
+  });
+
+  const searchCard = menuSectionsEl.querySelector(".menu-search-card");
+  if (!resultSection) {
+    resultSection = document.createElement("section");
+    resultSection.id = resultSectionId;
+    resultSection.className = "category-panel menu-app-section menu-search-results-section";
+    resultSection.setAttribute("data-search-results", "true");
+    if (searchCard?.nextSibling) menuSectionsEl.insertBefore(resultSection, searchCard.nextSibling);
+    else menuSectionsEl.appendChild(resultSection);
+  }
+
+  const matchRows = [...matches.values()];
+  const titleText = "Søkeresultater";
+  const countText = `${matchRows.length} varer`;
+  const queryText = normalized.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  if (!matchRows.length) {
+    resultSection.innerHTML = `
+      <div class="menu-app-section-head search-results-head">
+        <div>
+          <h2>${titleText}</h2>
+          <p>Ingen produkter matcher “${queryText}”.</p>
+        </div>
+        <span>0 varer</span>
+      </div>
+      <div class="menu-search-empty">Ingen produkter funnet.</div>
+    `;
+    requestCategoryScrollSync();
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "menu-list";
+  matchRows.forEach((sourceRow) => {
+    const clone = sourceRow.cloneNode(true);
+    clone.hidden = false;
+    clone.removeAttribute("hidden");
+    list.appendChild(clone);
+  });
+
+  resultSection.innerHTML = `
+    <div class="menu-app-section-head search-results-head">
+      <div>
+        <h2>${titleText}</h2>
+        <p>Produkter som matcher “${queryText}”.</p>
+      </div>
+      <span>${countText}</span>
+    </div>
+  `;
+  resultSection.appendChild(list);
+  requestCategoryScrollSync();
+}
 function renderMenu() {
   const visibleSections = getRenderableMenuSections();
 
@@ -3645,7 +3830,7 @@ function renderMenu() {
                     <span class="menu-row-main">
                       <span class="menu-row-headline">
                         <strong>${escapeAttribute(prefix + item.name)}</strong>
-                        ${isSelected ? '<span class="selected-chip">Valgt</span>' : ''}
+                        ${isSelected ? '<span class="selected-chip">(Valgt nå)</span>' : ''}
                       </span>
                       ${details ? `<span>${escapeAttribute(details)}</span>` : '<span>Trykk for valg og tilbehør</span>'}
                       <span class="menu-row-meta">★ ${rowSoldOut ? "Utsolgt" : "Velg størrelse og tilbehør"}</span>
@@ -4301,6 +4486,16 @@ menuSectionsEl.addEventListener("click", (event) => {
   const row = event.target.closest("[data-product]");
   if (row) openProduct(row.dataset.product, row.dataset.sourceSection || row.dataset.productSection);
 });
+
+
+document.addEventListener("click", (event) => {
+  const blockedButton = event.target.closest?.(".checkout-button, #submitOrder, #sendOrder, #placeOrderButton, #sendBestilling");
+  if (!blockedButton) return;
+  if (canAcceptOrdersNow()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  showClosedOrderingMessage();
+}, true);
 
 optionGroups.addEventListener("change", (event) => {
   if (event.target.name === "size") {

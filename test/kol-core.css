@@ -672,3 +672,545 @@ body.kol-top-back-active .appbar-brand:active .brand-back-label::before{backgrou
 .info-panel .privacy-note{
   margin-top:12px!important;
 }
+
+
+/* ===== V310 mobile menu overflow + modern plus + uniform typography ===== */
+html,body,.menu-shell,#menuSections{overflow-x:hidden!important}
+
+/* Genel tipografi biraz daha dengeli */
+.menu-shell,
+.product-panel,
+.cart-panel,
+.info-panel,
+.profile-panel,
+.order-live-panel{
+  font-size:14px!important;
+}
+
+/* Müşteri menü kartları */
+.menu-row.menu-app-product{
+  min-height:92px!important;
+  grid-template-columns:72px minmax(0,1fr) 86px!important;
+  gap:10px!important;
+  padding:10px 14px 10px 10px!important;
+  border-radius:22px!important;
+}
+.menu-row.menu-app-product .food-thumb{
+  width:72px!important;
+  height:72px!important;
+  border-radius:16px!important;
+  overflow:visible!important;
+}
+.menu-row.menu-app-product .menu-row-main{
+  min-width:0!important;
+  padding-right:2px!important;
+}
+.menu-row.menu-app-product .menu-row-main strong{
+  font-size:15px!important;
+  line-height:1.14!important;
+}
+.menu-row.menu-app-product .menu-row-main>span:not(.menu-row-headline),
+.menu-row.menu-app-product .menu-row-main .menu-row-headline+span{
+  font-size:12px!important;
+  line-height:1.22!important;
+  color:#697588!important;
+}
+.menu-row.menu-app-product .menu-row-headline{
+  margin-bottom:2px!important;
+}
+.menu-row.menu-app-product .menu-row-meta,
+.selected-chip{
+  display:none!important;
+}
+.menu-app-product-side{
+  min-width:86px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  justify-content:flex-start!important;
+  gap:0!important;
+  padding-top:2px!important;
+}
+.menu-app-product-side .row-price,
+.menu-app-product-side .row-price-group,
+.menu-app-product-side .row-price-inline{
+  white-space:nowrap!important;
+  font-size:12px!important;
+  line-height:1.1!important;
+  text-align:right!important;
+  color:#556171!important;
+}
+/* artı butonu resim kenarına al */
+.menu-app-plus{
+  position:absolute!important;
+  left:50px!important;
+  bottom:10px!important;
+  width:40px!important;
+  height:40px!important;
+  border:4px solid #fff!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#ff9a1f,#f47c00)!important;
+  color:#fff!important;
+  font-size:24px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  box-shadow:0 10px 18px rgba(244,124,0,.22)!important;
+  z-index:3!important;
+}
+.menu-row.menu-app-product.sold-out .menu-app-plus{background:#c9d2de!important;border-color:#fff!important}
+
+/* Başlık ve tablar da biraz daha derli toplu */
+.appbar-brand{font-size:16px!important}
+.brand-label,.brand-back-label{font-size:15px!important;line-height:1.1!important}
+.category-tab{font-size:13px!important}
+.menu-app-section-head h2{font-size:22px!important}
+.menu-app-section-head p{font-size:12px!important}
+
+/* Ürün popup'ında aynı boy düzeni */
+.product-photo{height:200px!important;flex-basis:200px!important}
+.product-photo-title-chip{
+  font-size:22px!important;
+  line-height:1.04!important;
+  letter-spacing:-.03em!important;
+}
+.product-body{padding:16px 16px 22px!important}
+.product-summary{
+  margin:0 0 14px!important;
+  font-size:14px!important;
+  line-height:1.3!important;
+  color:#667085!important;
+}
+.option-group{margin:0 0 14px!important}
+.option-group h3{
+  margin:0 0 8px!important;
+  font-size:16px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  color:#344054!important;
+}
+.option-group h3 span{
+  font-size:12px!important;
+  font-weight:900!important;
+}
+.option-line{
+  min-height:58px!important;
+  padding:12px 14px!important;
+  gap:12px!important;
+}
+.option-line span{
+  font-size:14px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+.option-line strong,
+.option-line .option-price,
+.option-line [data-option-price]{
+  font-size:14px!important;
+  font-weight:800!important;
+}
+.product-footer{
+  min-height:68px!important;
+  grid-template-columns:120px minmax(0,1fr)!important;
+}
+.product-footer strong{
+  font-size:16px!important;
+}
+.product-footer button{
+  font-size:16px!important;
+}
+
+@media (max-width:760px){
+  .menu-row.menu-app-product{
+    min-height:88px!important;
+    grid-template-columns:68px minmax(0,1fr) 82px!important;
+    gap:10px!important;
+    padding:10px 12px 10px 10px!important;
+  }
+  .menu-row.menu-app-product .food-thumb{
+    width:68px!important;
+    height:68px!important;
+    border-radius:15px!important;
+  }
+  .menu-row.menu-app-product .menu-row-main strong{font-size:14px!important}
+  .menu-row.menu-app-product .menu-row-main>span:not(.menu-row-headline),
+  .menu-row.menu-app-product .menu-row-main .menu-row-headline+span{font-size:11px!important}
+  .menu-app-product-side{min-width:82px!important}
+  .menu-app-plus{
+    left:46px!important;
+    bottom:10px!important;
+    width:38px!important;
+    height:38px!important;
+    font-size:23px!important;
+  }
+  .product-photo{height:188px!important;flex-basis:188px!important}
+  .product-photo-title-chip{font-size:20px!important}
+  .option-group h3{font-size:15px!important}
+  .option-line span,
+  .option-line strong,
+  .option-line .option-price,
+  .option-line [data-option-price]{font-size:14px!important}
+  .product-footer strong,.product-footer button{font-size:15px!important}
+}
+
+@media (max-width:420px){
+  .menu-row.menu-app-product{
+    grid-template-columns:64px minmax(0,1fr) 78px!important;
+    padding:9px 12px 9px 9px!important;
+    border-radius:20px!important;
+  }
+  .menu-row.menu-app-product .food-thumb{width:64px!important;height:64px!important;border-radius:14px!important}
+  .menu-app-product-side{min-width:78px!important}
+  .menu-app-plus{left:42px!important;bottom:8px!important;width:36px!important;height:36px!important;font-size:22px!important}
+  .menu-app-product-side .row-price,
+  .menu-app-product-side .row-price-group,
+  .menu-app-product-side .row-price-inline{font-size:11px!important}
+}
+
+
+/* ===== V311 cart/search/menu polishing ===== */
+.menu-list,
+.menu-row.menu-app-product,
+.menu-row.menu-app-product .menu-row-main,
+.category-panel.menu-app-section{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+.menu-row.menu-app-product{
+  overflow:hidden!important;
+}
+.menu-search-card{position:sticky;top:0;z-index:4;background:#fff}
+.menu-search-card span{pointer-events:none}
+.menu-search-card input{position:relative;z-index:2}
+
+/* Search boş durum */
+[data-search-empty].menu-empty-panel{margin-top:8px!important}
+
+/* Cart icons/text smaller */
+.cart-item-actions{gap:5px!important;width:30px!important}
+.edit-line-button,.remove-button{width:28px!important;height:28px!important;border-radius:8px!important}
+.cart-edit-icon{font-size:12px!important}
+.remove-button{font-size:16px!important}
+.cart-detail-row{font-size:11px!important}
+.total-line-row{font-size:11px!important;padding-top:3px!important}
+.cart-item .total-line-row strong,
+.cart-detail-row strong:last-child{font-size:11px!important}
+.cart-detail-label{font-size:11px!important}
+
+/* plus butonu daha düzgün ve içeride */
+.menu-app-plus{
+  left:40px!important;
+  bottom:8px!important;
+  width:34px!important;
+  height:34px!important;
+  border-width:3px!important;
+  font-size:20px!important;
+}
+@media (max-width:760px){
+  .menu-app-plus{left:40px!important;bottom:8px!important;width:34px!important;height:34px!important;font-size:20px!important}
+}
+@media (max-width:420px){
+  .menu-app-plus{left:38px!important;bottom:7px!important;width:32px!important;height:32px!important;font-size:19px!important}
+}
+
+
+/* ===== V312 search results + closed restaurant ordering lock ===== */
+body.menu-search-active .category-tabs-wrap{
+  opacity:.72;
+}
+.menu-search-results-section{
+  margin-top:14px!important;
+}
+.menu-search-results-section .search-results-head h2{
+  color:#111827!important;
+}
+.menu-search-empty{
+  display:grid;
+  place-items:center;
+  min-height:86px;
+  border:1px dashed #d5dee9;
+  border-radius:20px;
+  background:#fff;
+  color:#667085;
+  font-size:14px;
+  font-weight:900;
+}
+.status-notice.closed-blocking-notice{
+  display:grid!important;
+  gap:3px!important;
+  margin:0!important;
+  padding:12px 16px!important;
+  border-bottom:1px solid #fecaca!important;
+  background:#fff1f2!important;
+  color:#991b1b!important;
+  font-size:13px!important;
+  line-height:1.25!important;
+}
+.status-notice.closed-blocking-notice strong{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-size:15px!important;
+  font-weight:950!important;
+  color:#dc2626!important;
+}
+.status-notice.closed-flash{
+  animation:kolClosedFlash .85s ease;
+}
+@keyframes kolClosedFlash{
+  0%,100%{box-shadow:none}
+  35%{box-shadow:0 0 0 4px rgba(220,38,38,.18) inset}
+}
+.closed-status-badge{
+  background:rgba(220,38,38,.95)!important;
+  color:#fff!important;
+}
+body.restaurant-closed .menu-app-plus,
+body.restaurant-closed #addConfiguredProduct,
+body.restaurant-closed .checkout-button{
+  opacity:.48!important;
+  filter:grayscale(.25)!important;
+}
+body.restaurant-closed .menu-row.menu-app-product{
+  cursor:not-allowed!important;
+}
+body.restaurant-closed .product-footer button,
+body.restaurant-closed .checkout-button{
+  pointer-events:auto!important;
+}
+body.restaurant-closed #addConfiguredProduct:disabled{
+  cursor:not-allowed!important;
+}
+
+
+/* ===== V313 compact closed notice + search keeps categories ===== */
+body.menu-search-active .category-tabs-wrap{
+  opacity:1!important;
+}
+.status-notice.closed-blocking-notice{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:12px 16px!important;
+  border-bottom:1px solid #fecaca!important;
+  background:#fff1f2!important;
+  color:#dc2626!important;
+  font-size:15px!important;
+  line-height:1.2!important;
+  font-weight:950!important;
+  letter-spacing:.01em!important;
+}
+.menu-search-results-section + .category-panel[data-section]{
+  margin-top:18px!important;
+}
+
+
+/* ===== V314 plus button redesign: compact square pinned top-left ===== */
+.menu-row.menu-app-product{
+  position:relative!important;
+}
+.menu-row.menu-app-product .food-thumb{
+  position:relative!important;
+}
+.menu-app-product-side{
+  min-width:82px!important;
+  padding-top:0!important;
+}
+.menu-app-plus{
+  position:absolute!important;
+  left:56px!important;
+  top:12px!important;
+  bottom:auto!important;
+  width:30px!important;
+  height:30px!important;
+  border:2px solid #fff!important;
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#ff9d23,#f47c00)!important;
+  color:#fff!important;
+  font-size:20px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  display:grid!important;
+  place-items:center!important;
+  box-shadow:0 8px 16px rgba(244,124,0,.20)!important;
+  z-index:4!important;
+}
+.menu-row.menu-app-product.sold-out .menu-app-plus{
+  background:#cbd5e1!important;
+  color:#fff!important;
+}
+@media (max-width:760px){
+  .menu-app-plus{
+    left:52px!important;
+    top:10px!important;
+    width:28px!important;
+    height:28px!important;
+    border-radius:9px!important;
+    font-size:18px!important;
+  }
+}
+@media (max-width:420px){
+  .menu-app-plus{
+    left:49px!important;
+    top:9px!important;
+    width:27px!important;
+    height:27px!important;
+    border-radius:8px!important;
+    font-size:17px!important;
+  }
+}
+
+
+/* ===== V315 requested: plus button in top-right corner, compact and non-intrusive ===== */
+.menu-row.menu-app-product{
+  position:relative!important;
+  padding-right:52px!important;
+}
+.menu-app-product-side{
+  min-width:72px!important;
+  padding-top:0!important;
+  padding-right:0!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+}
+.menu-app-plus{
+  position:absolute!important;
+  right:8px!important;
+  top:8px!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:30px!important;
+  height:30px!important;
+  border:2px solid #fff!important;
+  border-radius:9px!important;
+  background:linear-gradient(180deg,#ffc27a,#f49a37)!important;
+  color:#fff!important;
+  font-size:20px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  display:grid!important;
+  place-items:center!important;
+  box-shadow:0 6px 13px rgba(244,124,0,.20)!important;
+  z-index:5!important;
+}
+.menu-row.menu-app-product.sold-out .menu-app-plus{
+  background:#cbd5e1!important;
+}
+@media (max-width:760px){
+  .menu-row.menu-app-product{padding-right:50px!important}
+  .menu-app-product-side{min-width:66px!important}
+  .menu-app-plus{right:7px!important;top:7px!important;width:28px!important;height:28px!important;border-radius:8px!important;font-size:18px!important}
+}
+@media (max-width:420px){
+  .menu-row.menu-app-product{padding-right:48px!important}
+  .menu-app-product-side{min-width:62px!important}
+  .menu-app-plus{right:6px!important;top:6px!important;width:27px!important;height:27px!important;border-radius:8px!important;font-size:17px!important}
+}
+
+/* Closed state: customer may add to cart, only sending is blocked */
+body.restaurant-closed .menu-app-plus,
+body.restaurant-closed #addConfiguredProduct{
+  opacity:1!important;
+  filter:none!important;
+  cursor:pointer!important;
+}
+body.restaurant-closed .menu-row.menu-app-product{
+  cursor:pointer!important;
+}
+body.restaurant-closed .checkout-button{
+  opacity:.55!important;
+  filter:grayscale(.2)!important;
+}
+.opening-order-note{
+  grid-column:1/-1;
+  padding:12px 14px;
+  border:1px solid #d9e3ed;
+  border-radius:14px;
+  background:#f8fafc;
+  color:#596579;
+  font-weight:700;
+}
+
+
+/* ===== V317 safer opening time inputs ===== */
+.opening-time-field{display:grid;gap:8px}
+.opening-time-range{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}.opening-time-range span{display:grid;place-items:center;min-width:18px;color:#475569;font-weight:900}.opening-time-range input{min-width:0}.opening-order-note{grid-column:1 / -1}.opening-time-field .field-hint{display:block;color:#64748b;font-size:12px;line-height:1.3}.opening-time-field input[type="time"]::-webkit-calendar-picker-indicator{cursor:pointer}@media (max-width:760px){.opening-time-range{grid-template-columns:1fr;gap:8px}.opening-time-range span{display:none}}
+
+
+/* ===== V318: thumbnail fills box + visible selected note ===== */
+.menu-row.menu-app-product{
+  grid-template-columns:84px minmax(0,1fr) auto!important;
+  min-height:106px!important;
+}
+.menu-row.menu-app-product .food-thumb{
+  width:84px!important;
+  height:84px!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+  border:0!important;
+  background:#e5e7eb!important;
+  box-shadow:0 4px 12px rgba(15,23,42,.08)!important;
+  align-self:center!important;
+}
+.menu-row.menu-app-product .food-thumb img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+  display:block!important;
+}
+.menu-row.menu-app-product .menu-row-headline{
+  align-items:flex-start!important;
+  flex-wrap:wrap!important;
+  row-gap:4px!important;
+}
+.menu-row.menu-app-product .menu-row-main strong{
+  max-width:100%!important;
+}
+.selected-chip{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:22px!important;
+  padding:0 9px!important;
+  border-radius:999px!important;
+  background:#ebf9ef!important;
+  color:#1f9d45!important;
+  border:1px solid #bde7c8!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:-.01em!important;
+}
+.menu-row.menu-app-product.selected-product .selected-chip{
+  background:#e7f8ec!important;
+  color:#15a34a!important;
+  border-color:#a7e0b8!important;
+}
+@media (max-width:760px){
+  .menu-row.menu-app-product{
+    grid-template-columns:78px minmax(0,1fr) auto!important;
+    min-height:100px!important;
+  }
+  .menu-row.menu-app-product .food-thumb{
+    width:78px!important;
+    height:78px!important;
+    border-radius:17px!important;
+  }
+  .selected-chip{
+    display:inline-flex!important;
+    font-size:10px!important;
+    min-height:20px!important;
+    padding:0 8px!important;
+  }
+}
+@media (max-width:420px){
+  .menu-row.menu-app-product{
+    grid-template-columns:72px minmax(0,1fr) auto!important;
+    min-height:96px!important;
+  }
+  .menu-row.menu-app-product .food-thumb{
+    width:72px!important;
+    height:72px!important;
+    border-radius:16px!important;
+  }
+}
