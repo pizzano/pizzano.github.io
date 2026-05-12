@@ -1,0 +1,64 @@
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+export function dayKeyForDate(date = new Date()) {
+  return DAY_KEYS[date.getDay()] || "mon";
+}
+
+export function parseTimeRange(value = "") {
+  const times = String(value || "").match(/\d{1,2}[:.]\d{2}/g) || [];
+  const [open = "14:00", close = "22:00"] = times.map((t) => t.replace(".", ":"));
+  return { open, close };
+}
+
+export function minutesFromTime(value = "00:00") {
+  const [h = 0, m = 0] = String(value).split(":").map((n) => Number(n) || 0);
+  return h * 60 + m;
+}
+
+export function normalizeOpenDays(settings = {}) {
+  const raw = settings.openDays || settings.openingDays || [];
+  if (Array.isArray(raw) && raw.length) return raw;
+  return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+}
+
+export function activePause(settings = {}) {
+  const raw = settings.servicePauseUntil || "";
+  if (!raw) return null;
+  const until = new Date(raw);
+  if (!Number.isFinite(until.getTime()) || until.getTime() <= Date.now()) return null;
+  return { until, message: settings.servicePauseMessage || "Bestilling er midlertidig pauset." };
+}
+
+export function storeStatus(settings = {}) {
+  const pause = activePause(settings);
+  if (pause) {
+    return { open: false, label: "⛔ PAUSE", detail: pause.message, pause };
+  }
+
+  const { open, close } = parseTimeRange(settings.openingTime || `${settings.orderOpenTime || "14:00"} - ${settings.orderCloseTime || "22:00"}`);
+  const now = new Date();
+  const days = normalizeOpenDays(settings);
+  const today = dayKeyForDate(now);
+  const isOpenDay = days.includes(today);
+  const current = now.getHours() * 60 + now.getMinutes();
+  const openMin = minutesFromTime(settings.orderOpenTime || open);
+  const closeMin = minutesFromTime(settings.orderCloseTime || close);
+  const isOpen = isOpenDay && current >= openMin && current <= closeMin;
+
+  return {
+    open: isOpen,
+    label: isOpen ? `Åpent ${open} - ${close}` : `⛔ STENGT · Åpner kl. ${open}`,
+    detail: isOpen ? "Du kan sende bestilling nå." : `Du kan legge varer i handlekurven, men bestilling kan ikke sendes før vi åpner kl. ${open}.`,
+    openTime: open,
+    closeTime: close
+  };
+}
+
+export function defaultReadyMinutes(settings = {}) {
+  return Math.max(10, Number(settings.defaultReadyMinutes || settings.minPreorderMinutes || 30) || 30);
+}
+
+export function readyAt(minutes = 30) {
+  const date = new Date(Date.now() + Number(minutes || 0) * 60000);
+  return date.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+}

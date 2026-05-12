@@ -1,0 +1,70 @@
+const DEFAULT_DB = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
+export const FIREBASE_DB = (import.meta.env.VITE_FIREBASE_DB || DEFAULT_DB).replace(/\/$/, "");
+export const PUBLIC_ORDER_BASE_URL = (import.meta.env.VITE_PUBLIC_ORDER_BASE_URL || `${window.location.origin}${window.location.pathname}`).replace(/\/$/, "");
+
+function url(path) {
+  const clean = String(path || "").replace(/^\/+/, "");
+  return `${FIREBASE_DB}/${clean}.json`;
+}
+
+export async function firebaseGet(path, { cacheBust = true } = {}) {
+  const suffix = cacheBust ? `?ts=${Date.now()}` : "";
+  const response = await fetch(`${url(path)}${suffix}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Firebase GET ${path} failed: ${response.status}`);
+  return response.json();
+}
+
+export async function firebasePost(path, data) {
+  const response = await fetch(url(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error(`Firebase POST ${path} failed: ${response.status}`);
+  return response.json();
+}
+
+export async function firebasePut(path, data) {
+  const response = await fetch(url(path), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error(`Firebase PUT ${path} failed: ${response.status}`);
+  return response.json();
+}
+
+export async function fetchStoreConfig() {
+  return firebaseGet("");
+}
+
+export async function submitOrder(payload) {
+  const result = await firebasePost("orders", payload);
+  const id = result?.name;
+  if (!id) throw new Error("Firebase returnerte ikke ordre-ID");
+  return { id, ...payload };
+}
+
+export async function writeCustomerOrderIndex(order) {
+  const phone = String(order?.customer?.phone || "").replace(/\D/g, "");
+  if (!phone || !order?.id) return;
+  await firebasePut(`customerOrders/${phone}/${order.id}`, {
+    id: order.id,
+    status: order.status || "pending",
+    total: Number(order.total || 0),
+    createdAt: order.createdAt || new Date().toISOString(),
+    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString()
+  });
+}
+
+export async function fetchOrder(orderId) {
+  if (!orderId) return null;
+  const data = await firebaseGet(`orders/${orderId}`);
+  return data ? { id: orderId, ...data } : null;
+}
+
+export function trackingUrl(orderId) {
+  const u = new URL(PUBLIC_ORDER_BASE_URL, window.location.origin);
+  u.searchParams.set("order", orderId);
+  return u.toString();
+}

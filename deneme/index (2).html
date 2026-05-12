@@ -1,0 +1,179 @@
+import { asArray, makeId } from "./format.js";
+
+const fallbackImage = "https://images.unsplash.com/photo-1548369937-47519962c11a?w=900&auto=format&fit=crop&q=80";
+
+const fallbackSections = [
+  {
+    id: "pizza",
+    title: "Pizzaretter",
+    note: "Pizza, kebab og burgere · Skarnes",
+    imageUrl: fallbackImage,
+    items: [
+      { id: "capri", name: "2. Capri", ingredients: "Skinke, bacon og sopp", price: 185, sizes: [{ id: "medium", label: "Medium", price: 185, default: true }, { id: "stor", label: "Stor", price: 285 }] },
+      { id: "alcapone", name: "3. Al Capone", ingredients: "Pepperoni, biff, paprika og løk", price: 195, sizes: [{ id: "medium", label: "Medium", price: 195, default: true }, { id: "stor", label: "Stor", price: 295 }] }
+    ]
+  },
+  {
+    id: "kebab",
+    title: "Kebabretter",
+    note: "Kebabretter med hjemmebakt brød og hvitløksaus.",
+    imageUrl: fallbackImage,
+    items: [
+      { id: "kebabpita", name: "Kebab i pita", ingredients: "Ekte döner kebabkjøtt, salat, rødløk, agurk og hvitløksaus", price: 179 },
+      { id: "kyllingkebab", name: "Kyllingkebab i pita", ingredients: "Kyllingkebabkjøtt, salat, rødløk og hvitløksaus", price: 179 }
+    ]
+  }
+];
+
+export function normalizeSettings(raw = {}) {
+  const s = raw || {};
+  return {
+    restaurantName: s.restaurantName || "KØL Grill & Pizza",
+    phone: s.phone || "",
+    city: s.city || "Skarnes",
+    streetAddress: s.streetAddress || "",
+    postalCode: s.postalCode || "",
+    openingDays: s.openingDays || "Mandag - Søndag",
+    openingTime: s.openingTime || "13:00 - 22:00",
+    orderOpenTime: s.orderOpenTime || "",
+    orderCloseTime: s.orderCloseTime || "",
+    openDays: Array.isArray(s.openDays) ? s.openDays : [],
+    pickupInfo: s.pickupInfo || "Henting på restauranten",
+    paymentInfo: s.paymentInfo || "Betaling ved henting",
+    defaultImageUrl: s.defaultImageUrl || fallbackImage,
+    servicePauseUntil: s.servicePauseUntil || "",
+    servicePauseMessage: s.servicePauseMessage || "",
+    minPreorderMinutes: Number(s.minPreorderMinutes || 30) || 30,
+    defaultReadyMinutes: Number(s.defaultReadyMinutes || s.minPreorderMinutes || 30) || 30
+  };
+}
+
+function normalizePrice(value) {
+  const n = Number(String(value ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatSizeLabel(label, onlyOne = false) {
+  const raw = String(label || "").trim();
+  if (!raw || raw.toLowerCase() === "standard" || raw.toLowerCase() === "standart") return onlyOne ? "Standart" : "Standart";
+  return raw;
+}
+
+export function normalizeSizes(product = {}) {
+  const saved = asArray(product.sizes)
+    .map((s) => ({
+      id: makeId(s.id || s.label || s.name || "standard"),
+      label: s.label || s.name || "Standart",
+      price: normalizePrice(s.price ?? product.price),
+      default: s.default === true || s.isDefault === true
+    }))
+    .filter((s) => s.price >= 0);
+
+  let list = saved;
+  if (!list.length && product.mediumPrice !== undefined) list.push({ id: "medium", label: "Medium", price: normalizePrice(product.mediumPrice), default: true });
+  if (product.largePrice !== undefined) list.push({ id: "stor", label: "Stor", price: normalizePrice(product.largePrice), default: !list.length });
+  if (!list.length) list.push({ id: "standard", label: "Standart", price: normalizePrice(product.price), default: true });
+
+  const hasDefault = list.some((s) => s.default);
+  list = list.map((s, index) => ({ ...s, default: hasDefault ? s.default : index === 0 }));
+  return list.map((s) => ({ ...s, label: formatSizeLabel(s.label, list.length === 1) }));
+}
+
+function timeIsPast(value) {
+  if (!value) return true;
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return false;
+  return d.getTime() <= Date.now();
+}
+
+export function productState(product = {}) {
+  const hidden = product.hidden === true || product.isHidden === true || product.hideFromCustomer === true;
+  const timedSoldOut = product.soldOutUntil && !timeIsPast(product.soldOutUntil);
+  const normalSoldOut = product.soldOut === true || product.isSoldOut === true;
+  return {
+    hidden,
+    soldOut: !hidden && (timedSoldOut || (normalSoldOut && !product.soldOutUntil)),
+    soldOutUntil: product.soldOutUntil || ""
+  };
+}
+
+export function normalizeGroups(root = {}) {
+  return asArray(root.optionGroups).map((group, index) => {
+    const labels = asArray(group.options).map((o) => String(o.label || o.name || "").toLowerCase()).join(" ");
+    const title = group.title || group.name || `Valggruppe ${index + 1}`;
+    const looksStrength = String(title).toLowerCase().includes("styrke") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
+    return {
+      id: String(group.id || makeId(title)),
+      title,
+      type: group.type === "single" || looksStrength ? "single" : "multiple",
+      required: group.required === true,
+      options: asArray(group.options).map((opt, optIndex) => ({
+        id: String(opt.id || makeId(`${title}-${opt.label || opt.name || optIndex}`)),
+        label: opt.label || opt.name || `Valg ${optIndex + 1}`,
+        price: normalizePrice(opt.price),
+        default: opt.default === true || opt.selected === true,
+        sizes: Array.isArray(opt.sizes) ? opt.sizes : null
+      }))
+    };
+  });
+}
+
+function normalizeProduct(product = {}, section = {}) {
+  const sizes = normalizeSizes(product);
+  const state = productState(product);
+  return {
+    ...product,
+    id: String(product.id || makeId(product.name || product.title)),
+    name: product.name || product.title || "Produkt",
+    ingredients: product.ingredients || product.description || product.desc || "",
+    imageUrl: product.imageUrl || product.img || product.image || section.imageUrl || "",
+    categoryId: section.id,
+    categoryTitle: section.title,
+    sizes,
+    basePrice: sizes.find((s) => s.default)?.price ?? sizes[0]?.price ?? normalizePrice(product.price),
+    optionGroupIds: asArray(product.optionGroupIds).map(String),
+    optionGroupIdsBySize: product.optionGroupIdsBySize || {},
+    hidden: state.hidden,
+    soldOut: state.soldOut,
+    soldOutUntil: state.soldOutUntil
+  };
+}
+
+export function normalizeStoreConfig(root = {}) {
+  const settings = normalizeSettings(root.siteSettings || root.settings || {});
+  const sourceSections = asArray(root.sections).length ? asArray(root.sections) : fallbackSections;
+  const sections = sourceSections.map((section) => ({
+    ...section,
+    id: String(section.id || makeId(section.title || section.name)),
+    title: section.title || section.name || "Meny",
+    note: section.note || section.description || "",
+    imageUrl: section.imageUrl || section.img || settings.defaultImageUrl,
+    items: asArray(section.items || section.products).map((p) => normalizeProduct(p, section)).filter((p) => !p.hidden)
+  })).filter((section) => section.items.length);
+
+  const optionGroups = normalizeGroups(root);
+  return { settings, sections, optionGroups };
+}
+
+export function allProducts(sections = []) {
+  return sections.flatMap((section) => section.items.map((item) => ({ ...item, categoryTitle: section.title, categoryId: section.id })));
+}
+
+export function mostOrderedProducts(sections = [], limit = 5) {
+  // Første React-versjon: viser første 5 synlige produkter. Senere kan den kobles til order-statistikk.
+  return allProducts(sections).filter((item) => !item.soldOut).slice(0, limit);
+}
+
+export function groupsForProduct(product = {}, optionGroups = [], selectedSizeId = "") {
+  const common = asArray(product.optionGroupIds).map(String);
+  const sizeSpecific = asArray(product.optionGroupIdsBySize?.[selectedSizeId]).map(String);
+  const ids = [...new Set([...common, ...sizeSpecific])];
+  return ids
+    .map((id) => optionGroups.find((g) => String(g.id) === String(id)))
+    .filter(Boolean)
+    .map((group) => ({
+      ...group,
+      options: group.options.filter((opt) => !opt.sizes || opt.sizes.includes(selectedSizeId))
+    }))
+    .filter((group) => group.options.length);
+}
