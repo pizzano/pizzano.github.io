@@ -1,0 +1,251 @@
+
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>ICE SMS Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .box {
+      max-width: 460px;
+      margin: 0 auto;
+      background: white;
+      padding: 22px;
+      border-radius: 18px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.12);
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 24px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin: 14px 0 6px;
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      padding: 13px;
+      font-family: Arial, sans-serif;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(17,24,39,.12);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .row button {
+      flex: 1;
+    }
+
+    button {
+      border: 0;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #ffcd00;
+      color: #000;
+    }
+
+    .dark {
+      background: #111827;
+      color: #fff;
+    }
+
+    .light {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .check input {
+      width: auto;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    #log {
+      margin-top: 15px;
+      background: #111827;
+      color: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      min-height: 44px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>ICE SMS gönder</h2>
+
+  <label for="phone">Telefonnummer</label>
+  <input id="phone" type="text" inputmode="numeric" placeholder="95557474">
+
+  <label for="message">Melding</label>
+  <textarea id="message" maxlength="1000" placeholder="Skriv melding..."></textarea>
+
+  <label class="check">
+    <input id="autoSend" type="checkbox" checked>
+    Otomatik Send SMS bas
+  </label>
+
+  <div class="small">
+    Bu panel sadece Firebase’e iş gönderir. ICE sayfasında açık duran Tampermonkey scripti işi alıp SMS’i gönderir.
+  </div>
+
+  <div class="row">
+    <button class="primary" onclick="sendJob()">Gönder</button>
+    <button class="light" onclick="clearBoxes()">Temizle</button>
+  </div>
+
+  <div class="row">
+    <button class="dark" onclick="clearFirebaseJob()">Firebase işi temizle</button>
+  </div>
+
+  <div id="log">Hazır.</div>
+</div>
+
+<script>
+const FIREBASE_DB = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
+
+// İstersen bunu daha gizli bir path yapabilirsin.
+const QUEUE_PATH = "iceSmsQueue/current";
+
+function log(msg) {
+  document.getElementById("log").textContent =
+    "[" + new Date().toLocaleTimeString() + "] " + msg;
+}
+
+function clearBoxes() {
+  document.getElementById("phone").value = "";
+  document.getElementById("message").value = "";
+  log("Kutular temizlendi.");
+}
+
+async function sendJob() {
+  const phoneEl = document.getElementById("phone");
+  const messageEl = document.getElementById("message");
+  const autoSendEl = document.getElementById("autoSend");
+
+  const phone = phoneEl.value.replace(/\D/g, "");
+  const message = messageEl.value.trim();
+  const autoSend = autoSendEl.checked;
+
+  if (phone.length !== 8) {
+    log("Telefonnummer 8 haneli olmalı.");
+    return;
+  }
+
+  if (!message) {
+    log("Mesaj boş olamaz.");
+    return;
+  }
+
+  const job = {
+    id: Date.now().toString(),
+    phone: phone,
+    message: message,
+    autoSend: autoSend,
+    status: "pending",
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    const url = `${FIREBASE_DB}/${QUEUE_PATH}.json`;
+
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(job)
+    });
+
+    if (!res.ok) {
+      log("Firebase yazma hatası: " + res.status);
+      return;
+    }
+
+    // Gönderildikten sonra kutular boşalır
+    phoneEl.value = "";
+    messageEl.value = "";
+
+    log("Firebase’e gönderildi: " + phone + "\nKutular temizlendi.");
+
+  } catch (err) {
+    log("Hata: " + err.message);
+  }
+}
+
+async function clearFirebaseJob() {
+  try {
+    const url = `${FIREBASE_DB}/${QUEUE_PATH}.json`;
+
+    await fetch(url, {
+      method: "DELETE"
+    });
+
+    log("Firebase işi temizlendi.");
+
+  } catch (err) {
+    log("Firebase temizleme hatası: " + err.message);
+  }
+}
+</script>
+
+</body>
+</html>
