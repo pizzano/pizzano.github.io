@@ -1702,3 +1702,29 @@ body.restaurant-closed .checkout-button{
   border-color: #ef4444;
   color: #ef4444;
 }
+
+
+/* ===== V326: black app background + fixed group menu ===== */
+html,
+body {
+  background: #000 !important;
+}
+
+body {
+  background: #000 !important;
+}
+
+.option-group-card,
+.option-group-row,
+.option-group-card.editing {
+  overflow: visible !important;
+}
+
+.group-menu {
+  z-index: 99999 !important;
+}
+
+.group-menu-button {
+  position: relative !important;
+  z-index: 100000 !important;
+}

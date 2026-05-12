@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=325">
+    <link rel="stylesheet" href="kol-core.css?v=330">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -2462,6 +2462,51 @@ async function fetchOrder(orderId) {
   return data ? normalizeCustomerOrder({ id: orderId, ...data }) : null;
 }
 
+
+function getTrackingOrderIdFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    return safeText(params.get("order") || params.get("ordre") || params.get("o") || "");
+  } catch (error) {
+    return "";
+  }
+}
+
+async function openOrderFromTrackingLink() {
+  const orderId = getTrackingOrderIdFromUrl();
+  if (!orderId) return false;
+  try {
+    const order = await fetchOrder(orderId);
+    if (!order) {
+      if (orderLiveContent && orderLiveModal) {
+        orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Fant ikke bestillingen</h3><p>Kontroller lenken, eller ring restauranten.</p></div><button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>`;
+        orderLiveModal.hidden = false;
+        document.body.classList.add("order-live-open");
+        syncBodyScrollLocks();
+      }
+      return false;
+    }
+    rememberRecentOrder(order);
+    renderOrderStatus(order);
+    renderOrderLiveModal(order, true);
+    if ((order.status || "pending") === "pending") {
+      startOrderPolling(orderId);
+    } else {
+      startRecentOrdersSync();
+    }
+    return true;
+  } catch (error) {
+    console.warn("Kunne ikke åpne ordre fra SMS-lenke", error);
+    if (orderLiveContent && orderLiveModal) {
+      orderLiveContent.innerHTML = `<div class="order-live-status cancelled"><h3>Kunne ikke åpne bestillingen</h3><p>Prøv igjen, eller ring restauranten.</p></div><button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>`;
+      orderLiveModal.hidden = false;
+      document.body.classList.add("order-live-open");
+      syncBodyScrollLocks();
+    }
+    return false;
+  }
+}
+
 function startOrderPolling(orderId) {
   window.clearInterval(currentOrderPollTimer);
   currentOrderPollTimer = window.setInterval(async () => {
@@ -4764,6 +4809,7 @@ async function init() {
   resumeActiveOrderPolling();
   startRecentOrdersSync();
   renderCart();
+  await openOrderFromTrackingLink();
   updateOpeningNotice();
   syncBodyScrollLocks();
   window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: false }));
@@ -5001,9 +5047,3 @@ init();
     </script>
   </body>
 </html>
-
-
-
-
-
-

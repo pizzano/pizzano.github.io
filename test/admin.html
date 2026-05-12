@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=325">
+    <link rel="stylesheet" href="kol-core.css?v=330">
   </head>
   <body class="kol-admin">
     <header class="admin-topbar admin-topbar-clean">
@@ -432,6 +432,9 @@ const firebaseMenuUrl = `${firebaseDatabaseUrl}.json`;
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
 const menuRef = firebase.database().ref("/");
 const ordersRef = firebase.database().ref("/orders");
+// TÜRKÇE: ICE Min Side Tampermonkey scripti bu path'i dinliyor.
+// Admin siparişi onaylayınca buraya SMS işi yazıyoruz.
+const iceSmsCurrentRef = firebase.database().ref("/iceSmsQueue/current");
 const firebaseConnectionRef = firebase.database().ref(".info/connected");
 
 const fields = {
@@ -1012,6 +1015,152 @@ function normalizeAdminSmsPhone(phone = "") {
   if (digits.length === 10 && digits.startsWith("47")) return `+${digits}`;
   if (raw.trim().startsWith("+")) return `+${digits}`;
   return digits;
+}
+
+
+function normalizeIceSmsQueuePhone(phone = "") {
+  let digits = safeAdminText(phone).replace(/\D/g, "");
+  if (digits.length === 10 && digits.startsWith("47")) digits = digits.slice(2);
+  if (digits.length === 11 && digits.startsWith("047")) digits = digits.slice(3);
+  return digits;
+}
+
+function formatAdminSmsReadyTime(value) {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+}
+
+function limitIceSmsText(text = "", maxLength = 930) {
+  const clean = safeAdminText(text).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  if (clean.length <= maxLength) return clean;
+  return `${clean.slice(0, Math.max(0, maxLength - 12)).trim()}\n...`;
+}
+
+function formatSmsOrderOptionTexts(line = {}) {
+  const values = [];
+  asArray(line.extraDetails).forEach((detail) => {
+    const label = normalizeSizeDetailLabel(safeAdminText(detail?.label));
+    if (label) values.push(label);
+  });
+  asArray(line.extras).forEach((extra) => {
+    const label = normalizeSizeDetailLabel(safeAdminText(extra));
+    if (label) values.push(label);
+  });
+  return Array.from(new Set(values)).slice(0, 5);
+}
+
+function buildSmsOrderItemsText(order = {}, maxLength = 620) {
+  // TÜRKÇE: SMS içinde müşterinin ne sipariş verdiğini kısa ve okunur liste olarak ekler.
+  const lines = asArray(order.items).map((line) => normalizeAdminOrderLine(line)).filter(Boolean);
+  if (!lines.length) return "";
+
+  const rows = [];
+  lines.slice(0, 8).forEach((line) => {
+    const quantity = Math.max(1, safeAdminNumber(line.quantity, 1));
+    const size = safeAdminText(line.sizeLabel || line.size);
+    const sizeText = size && !/^standard$/i.test(size) && !/^standart$/i.test(size) ? ` (${size})` : "";
+    const options = formatSmsOrderOptionTexts(line);
+    const optionText = options.length ? ` + ${options.join(", ")}` : "";
+    rows.push(`${quantity}x ${safeAdminText(line.name, "Produkt")}${sizeText}${optionText}`);
+  });
+
+  if (lines.length > 8) rows.push(`+ ${lines.length - 8} flere varer`);
+
+  const total = safeAdminNumber(order.total || order.subtotal, 0);
+  const totalText = total > 0 ? `\nSum: ${Math.round(total).toLocaleString("nb-NO")} kr` : "";
+  return limitIceSmsText(`Din bestilling:\n${rows.join("\n")}${totalText}`, maxLength);
+}
+
+function buildOrderTrackingUrl(order = {}) {
+  const orderId = safeAdminText(order.id || order.sourceOrderId || "");
+  if (!orderId) return "";
+  let origin = "";
+  try {
+    origin = window.location.origin && window.location.origin !== "null" ? window.location.origin : "";
+  } catch (error) {
+    origin = "";
+  }
+  if (!origin || /^file:/i.test(origin)) origin = "https://bestill.online";
+  try {
+    const url = new URL("/", origin);
+    url.searchParams.set("order", orderId);
+    return url.toString();
+  } catch (error) {
+    return `https://bestill.online/?order=${encodeURIComponent(orderId)}`;
+  }
+}
+
+function buildAcceptedOrderSmsMessage(order = {}, readyMinutes = DEFAULT_READY_MINUTES, fulfillAt = null) {
+  const first = getAdminCustomerFirstName(order.customer || {});
+  const greeting = first ? `Hei ${first}!` : "Hei!";
+  const minutes = sanitizeReadyMinutes(readyMinutes);
+  const readyClock = formatAdminSmsReadyTime(fulfillAt);
+  const readyText = readyClock
+    ? `Klar om ca. ${minutes} min (ca. kl. ${readyClock}).`
+    : `Klar om ca. ${minutes} min.`;
+  const trackingUrl = buildOrderTrackingUrl(order);
+  const linkText = trackingUrl ? `\n\nFølg bestillingen her:\n${trackingUrl}` : "";
+  return limitIceSmsText(`${greeting} Bestillingen din hos KØL Grill & Pizza er godkjent ✅\n${readyText}${linkText}`, 420);
+}
+
+function buildReadyOrderSmsMessage(order = {}) {
+  const first = getAdminCustomerFirstName(order.customer || {});
+  const greeting = first ? `Hei ${first}!` : "Hei!";
+  const trackingUrl = buildOrderTrackingUrl(order);
+  const linkText = trackingUrl ? `\n\nSe status her:\n${trackingUrl}` : "";
+  return limitIceSmsText(`${greeting} Bestillingen din hos KØL Grill & Pizza er klar for henting ✅ Velkommen!${linkText}`, 360);
+}
+
+async function enqueueIceSmsJob(order = {}, readyMinutes = DEFAULT_READY_MINUTES, fulfillAt = null, options = {}) {
+  const phone = normalizeIceSmsQueuePhone(order.customer?.phone || "");
+  if (!phone || phone.length < 8) {
+    showToast("SMS ikke sendt: telefonnummer mangler.");
+    setStatus("SMS ikke sendt: telefonnummer mangler.");
+    return null;
+  }
+
+  const createdAt = new Date().toISOString();
+  const smsType = safeAdminText(options.type, "accepted");
+  const message = limitIceSmsText(options.message || buildAcceptedOrderSmsMessage(order, readyMinutes, fulfillAt));
+  const trackingUrl = buildOrderTrackingUrl(order);
+  const job = {
+    id: `${Date.now()}-${smsType}-${String(order.id || "order")}`,
+    type: smsType,
+    source: "kol-order-admin",
+    sourceOrderId: String(order.id || ""),
+    phone,
+    customerName: safeAdminText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ")),
+    message,
+    trackingUrl,
+    autoSend: options.autoSend !== false,
+    status: "pending",
+    createdAt
+  };
+
+  try {
+    await iceSmsCurrentRef.set(job);
+    const smsLog = {
+      queued: true,
+      queuePath: "iceSmsQueue/current",
+      jobId: job.id,
+      type: smsType,
+      phone: job.phone,
+      message: job.message,
+      trackingUrl: job.trackingUrl,
+      status: "pending",
+      createdAt
+    };
+    await ordersRef.child(order.id).child("iceSms").child(smsType).set(smsLog);
+    await ordersRef.child(order.id).child("iceSmsLast").set(smsLog);
+    setStatus("SMS-jobb sendt til Tampermonkey.");
+    return job;
+  } catch (error) {
+    console.error("Kunne ikke skrive ICE SMS-jobb:", error);
+    showToast("SMS-jobb kunne ikke sendes til Firebase.");
+    setStatus("SMS-jobb kunne ikke sendes til Firebase.");
+    return null;
+  }
 }
 
 function buildSmsUrl(phone, text) {
@@ -3475,14 +3624,7 @@ async function acceptOrder(orderId, minutes) {
     ready: false,
     updatedAt: acceptedAt
   });
-  renderOrdersAdmin();
-  setStatus("Klar.");
-  showToast(`Godkjent · ${readyMinutes} min`);
-  window.setTimeout(updateAdminOrderAlarmLoop, 250);
-
-  // TÜRKÇE: Siparişi onaylayınca otomatik fiş basar.
-  // İstersen sipariş kartındaki "Skriv ut kvittering" butonuyla tekrar manuel basabilirsin.
-  await printOrderReceipt(orderId, {
+  const acceptedOverrides = {
     status: "accepted",
     readyMinutes,
     acceptedAt,
@@ -3492,14 +3634,35 @@ async function acceptOrder(orderId, minutes) {
     fulfillTime: fulfillAt,
     ready: false,
     updatedAt: acceptedAt
-  });
+  };
+  const orderForSms = normalizeAdminOrderRecord({ ...(adminOrders.find((item) => item.id === orderId) || {}), ...acceptedOverrides }, orderId);
+
+  renderOrdersAdmin();
+  setStatus("Klar.");
+  showToast(`Godkjent · ${readyMinutes} min`);
+  window.setTimeout(updateAdminOrderAlarmLoop, 250);
+
+  // TÜRKÇE: Siparişi onaylayınca iki iş aynı anda başlar:
+  // 1) fiş yazdırma, 2) Firebase üzerinden ICE Tampermonkey'e SMS işi bırakma.
+  const [printResult, smsResult] = await Promise.allSettled([
+    printOrderReceipt(orderId, acceptedOverrides),
+    enqueueIceSmsJob(orderForSms, readyMinutes, fulfillAt)
+  ]);
+
+  if (printResult.status === "rejected") {
+    console.error("Fiş yazdırma hatası:", printResult.reason);
+    showToast("Sipariş onaylandı, ama fiş yazdırılamadı.");
+  }
+  if (smsResult.status === "fulfilled" && smsResult.value) {
+    showToast("SMS işi Tampermonkey'e gönderildi.");
+  }
 }
 
 
 async function markOrderReady(orderId) {
   const readyAt = new Date().toISOString();
-  const order = adminOrders.find((item) => String(item.id || "") === String(orderId || "")) || {};
-  const smsTemplate = renderAdminSmsTemplate(order, "ready");
+  const order = normalizeAdminOrderRecord(adminOrders.find((item) => String(item.id || "") === String(orderId || "")) || {}, orderId) || {};
+  const readySmsText = buildReadyOrderSmsMessage(order);
 
   expandedAdminOrderId = null;
   await ordersRef.child(orderId).update({
@@ -3507,15 +3670,35 @@ async function markOrderReady(orderId) {
     readyAt,
     updatedAt: readyAt,
     smsReady: {
-      label: smsTemplate.label,
-      text: smsTemplate.text,
-      createdAt: readyAt
+      label: "Klar – hent nå",
+      text: readySmsText,
+      createdAt: readyAt,
+      status: "pending"
     }
   });
+
+  const smsResult = await enqueueIceSmsJob(
+    { ...order, ready: true, readyAt, updatedAt: readyAt },
+    order.readyMinutes || DEFAULT_READY_MINUTES,
+    readyAt,
+    {
+      type: "ready",
+      message: readySmsText,
+      autoSend: true
+    }
+  );
+
+  if (smsResult) {
+    await ordersRef.child(orderId).child("smsReady").update({
+      jobId: smsResult.id,
+      queued: true,
+      queuePath: "iceSmsQueue/current"
+    });
+  }
+
   renderOrdersAdmin();
-  setStatus("Bestilling markert som klar. SMS-mal åpnes.");
-  showToast("Klar for henting · SMS åpnes.");
-  openAdminSmsComposer(order, "ready");
+  setStatus("Bestilling markert som klar. Klar-SMS sendt til Tampermonkey.");
+  showToast("Klar for henting · SMS-jobb sendt.");
 }
 
 
@@ -4109,12 +4292,14 @@ if (optionGroupsAdmin) {
     if (menuToggle) {
       selectedGroupIndex = Number(menuToggle.dataset.groupMenu);
       const panel = optionGroupsAdmin.querySelector(`[data-group-menu-panel="${menuToggle.dataset.groupMenu}"]`);
-      if (panel) {
-        const shouldOpen = panel.hidden;
-        closeGroupMenus();
-        panel.hidden = !shouldOpen;
-      }
-      renderGroupManager();
+      const shouldOpen = panel ? panel.hidden : false;
+      closeGroupMenus();
+
+      optionGroupsAdmin.querySelectorAll(".option-group-card.active").forEach((card) => card.classList.remove("active"));
+      const card = menuToggle.closest(".option-group-card");
+      if (card) card.classList.add("active");
+
+      if (panel) panel.hidden = !shouldOpen;
       return;
     }
 
@@ -4840,8 +5025,3 @@ scheduleAdminDailyOrderRefresh();
   
 </body>
 </html>
-
-
-
-
-
