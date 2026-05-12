@@ -1,0 +1,736 @@
+// ==UserScript==
+// @name         ICE SMS Firebase Auto Sender + Live Status
+// @namespace    http://tampermonkey.net/
+// @version      4.0
+// @description  Firebase SMS queue -> ICE Send SMS. Fyller skjema, sender SMS, skriver live status/heartbeat til Firebase.
+// @match        https://minside.ice.no/abonnement/*/sendsms*
+// @run-at       document-idle
+// @grant        GM_xmlhttpRequest
+// @connect      bestill-19-default-rtdb.europe-west1.firebasedatabase.app
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  /************************************************************
+   * AYARLAR
+   ************************************************************/
+  const FIREBASE_DB = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
+
+  // Sipariş sisteminin yazdığı SMS işi
+  const QUEUE_PATH = "iceSmsQueue/current";
+
+  // Admin panelde "ICE SMS / Tampermonkey online mı?" göstermek için
+  const STATUS_PATH = "iceSmsQueue/deviceStatus";
+
+  // ICE SMS sayfan
+  const SENDSMS_URL = "https://minside.ice.no/abonnement/60820984/sendsms";
+
+  const CHECK_JOB_MS = 3000;
+  const HEARTBEAT_MS = 10000;
+
+  /************************************************************
+   * DURUM
+   ************************************************************/
+  let busy = false;
+  let activeJob = null;
+  let lastProcessedId = localStorage.getItem("iceSmsLastProcessedId") || "";
+
+  const TAB_ID = (() => {
+    let id = sessionStorage.getItem("iceSmsTabId");
+    if (!id) {
+      id = "ice-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      sessionStorage.setItem("iceSmsTabId", id);
+    }
+    return id;
+  })();
+
+  /************************************************************
+   * BAŞLAT
+   ************************************************************/
+  createPanel();
+  loadOldLogs();
+
+  addLog("Tampermonkey aktiv.");
+  setStatus("Firebase bekleniyor...");
+
+  startDeviceHeartbeat();
+  writeDeviceStatus("ready", "ICE SMS sayfası açık ve Tampermonkey çalışıyor.");
+
+  setInterval(async () => {
+    markSendButton();
+    await handleOkButtonIfVisible();
+    await handleSuccessPageReturn();
+    await checkFirebaseJob();
+  }, CHECK_JOB_MS);
+
+  /************************************************************
+   * ANA İŞ AKIŞI
+   ************************************************************/
+  async function checkFirebaseJob() {
+    if (busy) return;
+
+    try {
+      const job = await firebaseGet(QUEUE_PATH);
+
+      if (!job || typeof job !== "object") {
+        setStatus("Firebase bekleniyor...");
+        return;
+      }
+
+      const jobId = String(job.id || "");
+      const status = String(job.status || "").toLowerCase();
+
+      if (!jobId) {
+        setStatus("SMS işi var ama ID yok.");
+        return;
+      }
+
+      if (status !== "pending") {
+        setStatus(`Son iş status: ${status || "ukjent"}`);
+        return;
+      }
+
+      if (jobId === lastProcessedId) {
+        setStatus("Aynı iş tekrar gelmiş, bekliyorum.");
+        return;
+      }
+
+      busy = true;
+      activeJob = job;
+
+      addLog(`Yeni iş alındı: ${cleanPhone(job.phone)}`);
+      setStatus("SMS işi işleniyor...");
+      await writeDeviceStatus("processing", "Yeni SMS işi alındı.", { job });
+
+      await firebasePatch(QUEUE_PATH, {
+        status: "processing",
+        processingAt: new Date().toISOString(),
+        tabId: TAB_ID
+      });
+
+      await fillSmsForm(job);
+
+      await firebasePatch(QUEUE_PATH, {
+        status: job.autoSend === false ? "filled" : "sending",
+        filledAt: new Date().toISOString()
+      });
+
+      if (job.autoSend === false) {
+        addLog("Alanlar dolduruldu, manuel gönderim bekleniyor.");
+        setStatus("Alanlar dolduruldu, manuel gönderim bekleniyor.");
+        await writeDeviceStatus("filled", "Alanlar dolduruldu, manuel gönderim bekleniyor.", { job });
+        busy = false;
+        return;
+      }
+
+      await writeDeviceStatus("sending", "Send SMS butonuna basılıyor.", { job });
+
+      const clicked = await clickSendButton();
+
+      if (!clicked) {
+        throw new Error("Send SMS butonu bulunamadı veya tıklanamadı.");
+      }
+
+      addLog("Send SMS butonuna basıldı.");
+      setStatus("SMS gönderiliyor...");
+
+      localStorage.setItem("iceSmsActiveJob", JSON.stringify(job));
+      localStorage.setItem("iceSmsLastProcessedId", jobId);
+      lastProcessedId = jobId;
+
+      // Bundan sonra genelde ICE başarı sayfasına geçiyor.
+      // handleSuccessPageReturn() başarıyı yakalayacak.
+      setTimeout(() => {
+        busy = false;
+      }, 8000);
+
+    } catch (error) {
+      console.error(error);
+      addLog("Hata: " + (error.message || error));
+      setStatus("Hata oluştu.");
+      await writeDeviceStatus("error", error.message || "SMS işleminde hata oluştu.", {
+        job: activeJob || undefined
+      });
+
+      try {
+        await firebasePatch(QUEUE_PATH, {
+          status: "error",
+          error: error.message || String(error),
+          errorAt: new Date().toISOString()
+        });
+      } catch (_) {}
+
+      busy = false;
+    }
+  }
+
+  async function fillSmsForm(job) {
+    const phone = cleanPhone(job.phone);
+    const message = String(job.message || "").trim();
+
+    if (!phone || phone.length < 8) {
+      throw new Error("Telefonnummer mangler eller er ugyldig: " + phone);
+    }
+
+    if (!message) {
+      throw new Error("SMS mesajı boş.");
+    }
+
+    addLog("Form alanları aranıyor...");
+
+    const recipientInput = await waitForElement([
+      "#recipient",
+      "input#recipient",
+      "input[formcontrolname='recipient']",
+      "input[placeholder*='Til']",
+      "input[aria-label*='Til']",
+      "input[type='tel']",
+      "input"
+    ], 15000);
+
+    const messageInput = await waitForElement([
+      "textarea[formcontrolname='message']",
+      "textarea[placeholder*='melding']",
+      "textarea[aria-label*='melding']",
+      "textarea"
+    ], 15000);
+
+    setNativeValue(recipientInput, phone);
+    fireInputEvents(recipientInput);
+
+    // ICE alıcıyı chip'e çevirmek için Enter isteyebilir.
+    recipientInput.focus();
+    await sleep(250);
+    dispatchKeyboard(recipientInput, "Enter");
+    await sleep(650);
+
+    setNativeValue(messageInput, message);
+    fireInputEvents(messageInput);
+    messageInput.focus();
+
+    addLog(`Alanlar dolduruldu: ${phone}`);
+    setStatus("Alanlar dolduruldu.");
+    await writeDeviceStatus("filled", "Telefon ve mesaj alanları dolduruldu.", { job });
+  }
+
+  async function clickSendButton() {
+    await sleep(500);
+
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const sendButton = buttons.find((btn) => {
+      const text = normalizeText(btn.innerText || btn.textContent || "");
+      return (
+        text.includes("send sms") ||
+        text.includes("send melding") ||
+        text.includes("send")
+      );
+    });
+
+    if (!sendButton) return false;
+
+    sendButton.scrollIntoView({ behavior: "smooth", block: "center" });
+    await sleep(300);
+
+    sendButton.click();
+    return true;
+  }
+
+  async function handleSuccessPageReturn() {
+    const pageText = normalizeText(document.body.innerText || "");
+
+    const success =
+      pageText.includes("sms sent") ||
+      pageText.includes("sms sendt") ||
+      pageText.includes("melding sendt") ||
+      pageText.includes("meldingen er sendt") ||
+      pageText.includes("sendt!");
+
+    if (!success) return;
+
+    let job = activeJob;
+
+    if (!job) {
+      try {
+        job = JSON.parse(localStorage.getItem("iceSmsActiveJob") || "null");
+      } catch (_) {
+        job = null;
+      }
+    }
+
+    addLog("SMS sendt / başarı sayfası algılandı.");
+    setStatus("SMS gönderildi.");
+    await writeDeviceStatus("sent", "SMS gönderildi.", { job: job || undefined });
+
+    try {
+      await firebasePut(QUEUE_PATH, {
+        id: job?.id || Date.now().toString(),
+        phone: job?.phone || "",
+        message: job?.message || "",
+        autoSend: job?.autoSend !== false,
+        status: "sent",
+        sentAt: new Date().toISOString(),
+        tabId: TAB_ID
+      });
+    } catch (error) {
+      addLog("Firebase sent status yazılamadı: " + error.message);
+    }
+
+    try {
+      await sleep(1200);
+      await firebaseDelete(QUEUE_PATH);
+      addLog("Firebase current temizlendi.");
+    } catch (error) {
+      addLog("Firebase current temizlenemedi: " + error.message);
+    }
+
+    localStorage.removeItem("iceSmsActiveJob");
+    activeJob = null;
+    busy = false;
+
+    setTimeout(() => {
+      if (location.href !== SENDSMS_URL) {
+        location.href = SENDSMS_URL;
+      } else {
+        location.reload();
+      }
+    }, 2000);
+  }
+
+  async function handleOkButtonIfVisible() {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const okButton = buttons.find((btn) => {
+      const text = normalizeText(btn.innerText || btn.textContent || "");
+      return text === "ok";
+    });
+
+    if (okButton) {
+      addLog("OK butonu bulundu, tıklanıyor.");
+      okButton.click();
+      await sleep(1000);
+      if (location.href !== SENDSMS_URL) {
+        location.href = SENDSMS_URL;
+      }
+    }
+  }
+
+  /************************************************************
+   * DEVICE STATUS / HEARTBEAT
+   ************************************************************/
+  function startDeviceHeartbeat() {
+    writeDeviceStatus("ready", "ICE SMS sayfası açık.");
+
+    setInterval(() => {
+      writeDeviceStatus("ready", "Heartbeat aktiv.");
+    }, HEARTBEAT_MS);
+
+    window.addEventListener("beforeunload", () => {
+      writeDeviceStatus("closed", "ICE SMS sayfası kapatılıyor.", {
+        online: false
+      });
+    });
+  }
+
+  function writeDeviceStatus(status = "ready", note = "", extra = {}) {
+    const payload = {
+      online: extra.online !== false,
+      status,
+      note,
+      pageUrl: location.href,
+      lastSeen: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      tabId: TAB_ID,
+      userAgent: navigator.userAgent
+    };
+
+    if (extra.job) {
+      payload.lastJobId = extra.job.id || "";
+      payload.lastPhone = cleanPhone(extra.job.phone || "");
+      payload.lastMessagePreview = String(extra.job.message || "").slice(0, 100);
+    }
+
+    return firebasePut(STATUS_PATH, payload).catch((error) => {
+      console.warn("Device status yazılamadı:", error);
+    });
+  }
+
+  /************************************************************
+   * FIREBASE REST - GM_xmlhttpRequest
+   ************************************************************/
+  function firebaseGet(path) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "GET",
+        url: `${FIREBASE_DB}/${path}.json?t=${Date.now()}`,
+        headers: {
+          "Accept": "application/json"
+        },
+        onload: (res) => {
+          try {
+            if (res.status >= 200 && res.status < 300) {
+              resolve(res.responseText ? JSON.parse(res.responseText) : null);
+            } else {
+              reject(new Error("Firebase GET error: " + res.status));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        },
+        onerror: () => reject(new Error("Firebase GET network error")),
+        ontimeout: () => reject(new Error("Firebase GET timeout")),
+        timeout: 10000
+      });
+    });
+  }
+
+  function firebasePut(path, data) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "PUT",
+        url: `${FIREBASE_DB}/${path}.json`,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify(data),
+        onload: (res) => {
+          try {
+            if (res.status >= 200 && res.status < 300) {
+              resolve(res.responseText ? JSON.parse(res.responseText) : null);
+            } else {
+              reject(new Error("Firebase PUT error: " + res.status));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        },
+        onerror: () => reject(new Error("Firebase PUT network error")),
+        ontimeout: () => reject(new Error("Firebase PUT timeout")),
+        timeout: 10000
+      });
+    });
+  }
+
+  function firebasePatch(path, data) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "PATCH",
+        url: `${FIREBASE_DB}/${path}.json`,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify(data),
+        onload: (res) => {
+          try {
+            if (res.status >= 200 && res.status < 300) {
+              resolve(res.responseText ? JSON.parse(res.responseText) : null);
+            } else {
+              reject(new Error("Firebase PATCH error: " + res.status));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        },
+        onerror: () => reject(new Error("Firebase PATCH network error")),
+        ontimeout: () => reject(new Error("Firebase PATCH timeout")),
+        timeout: 10000
+      });
+    });
+  }
+
+  function firebaseDelete(path) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "DELETE",
+        url: `${FIREBASE_DB}/${path}.json`,
+        onload: (res) => {
+          if (res.status >= 200 && res.status < 300) {
+            resolve(true);
+          } else {
+            reject(new Error("Firebase DELETE error: " + res.status));
+          }
+        },
+        onerror: () => reject(new Error("Firebase DELETE network error")),
+        ontimeout: () => reject(new Error("Firebase DELETE timeout")),
+        timeout: 10000
+      });
+    });
+  }
+
+  /************************************************************
+   * DOM YARDIMCILAR
+   ************************************************************/
+  function waitForElement(selectors, timeout = 15000) {
+    const selectorList = Array.isArray(selectors) ? selectors : [selectors];
+    const start = Date.now();
+
+    return new Promise((resolve, reject) => {
+      const timer = setInterval(() => {
+        for (const selector of selectorList) {
+          const el = document.querySelector(selector);
+          if (el) {
+            clearInterval(timer);
+            resolve(el);
+            return;
+          }
+        }
+
+        if (Date.now() - start > timeout) {
+          clearInterval(timer);
+          reject(new Error("Element bulunamadı: " + selectorList.join(", ")));
+        }
+      }, 250);
+    });
+  }
+
+  function setNativeValue(element, value) {
+    const prototype =
+      element.tagName === "TEXTAREA"
+        ? window.HTMLTextAreaElement.prototype
+        : window.HTMLInputElement.prototype;
+
+    const valueSetter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+    valueSetter.call(element, value);
+  }
+
+  function fireInputEvents(element) {
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+    element.dispatchEvent(new Event("blur", { bubbles: true }));
+  }
+
+  function dispatchKeyboard(element, key) {
+    ["keydown", "keypress", "keyup"].forEach((type) => {
+      element.dispatchEvent(
+        new KeyboardEvent(type, {
+          key,
+          code: key,
+          keyCode: key === "Enter" ? 13 : 0,
+          which: key === "Enter" ? 13 : 0,
+          bubbles: true,
+          cancelable: true
+        })
+      );
+    });
+  }
+
+  function cleanPhone(value) {
+    return String(value || "").replace(/\D/g, "");
+  }
+
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /************************************************************
+   * PANEL / LOG
+   ************************************************************/
+  function createPanel() {
+    if (document.getElementById("iceSmsPanel")) return;
+
+    const panel = document.createElement("div");
+    panel.id = "iceSmsPanel";
+    panel.innerHTML = `
+      <div id="iceSmsHeader">
+        <strong>ICE Firebase SMS</strong>
+        <button id="iceSmsMinimize" type="button">−</button>
+      </div>
+
+      <div id="iceSmsBody">
+        <label>Telefonnummer</label>
+        <input id="iceSmsPhonePreview" type="text" readonly>
+
+        <label>Melding</label>
+        <textarea id="iceSmsMessagePreview" rows="4" readonly></textarea>
+
+        <div id="iceSmsStatus">Starter...</div>
+
+        <strong class="log-title">LOG</strong>
+        <pre id="iceSmsLog"></pre>
+
+        <button id="iceSmsClearLog" type="button">Log temizle</button>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #iceSmsPanel {
+        position: fixed;
+        top: 150px;
+        right: 24px;
+        width: 390px;
+        max-width: calc(100vw - 30px);
+        background: #ffffff;
+        color: #111827;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.25);
+        z-index: 999999;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        border: 1px solid #e5e7eb;
+      }
+
+      #iceSmsHeader {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #111827;
+        color: white;
+        padding: 0 16px;
+        font-size: 18px;
+      }
+
+      #iceSmsMinimize {
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 10px;
+        background: #ffcc00;
+        color: #111827;
+        font-size: 24px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      #iceSmsBody {
+        padding: 14px;
+      }
+
+      #iceSmsBody label {
+        display: block;
+        margin: 10px 0 6px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      #iceSmsBody input,
+      #iceSmsBody textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 14px;
+        background: white;
+      }
+
+      #iceSmsStatus {
+        margin: 12px 0;
+        padding: 11px;
+        border-radius: 10px;
+        background: #f3f4f6;
+        font-size: 13px;
+      }
+
+      .log-title {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      #iceSmsLog {
+        height: 150px;
+        overflow: auto;
+        background: #111827;
+        color: #e5e7eb;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+
+      #iceSmsClearLog {
+        width: 100%;
+        margin-top: 10px;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px;
+        background: #e5e7eb;
+        color: #111827;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      #iceSmsPanel.minimized #iceSmsBody {
+        display: none;
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    document.getElementById("iceSmsMinimize").addEventListener("click", () => {
+      panel.classList.toggle("minimized");
+    });
+
+    document.getElementById("iceSmsClearLog").addEventListener("click", () => {
+      localStorage.removeItem("iceSmsLogs");
+      document.getElementById("iceSmsLog").textContent = "Log temizlendi.";
+    });
+  }
+
+  function setStatus(text) {
+    const el = document.getElementById("iceSmsStatus");
+    if (el) el.textContent = "Son iş status: " + text;
+  }
+
+  function addLog(text) {
+    const line = `[${new Date().toLocaleTimeString("nb-NO")}] ${text}`;
+    const old = getLogs();
+    old.push(line);
+
+    const sliced = old.slice(-120);
+    localStorage.setItem("iceSmsLogs", JSON.stringify(sliced));
+
+    const logEl = document.getElementById("iceSmsLog");
+    if (logEl) {
+      logEl.textContent = sliced.join("\n");
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+  }
+
+  function getLogs() {
+    try {
+      return JSON.parse(localStorage.getItem("iceSmsLogs") || "[]");
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function loadOldLogs() {
+    const logEl = document.getElementById("iceSmsLog");
+    if (logEl) {
+      logEl.textContent = getLogs().join("\n");
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+  }
+
+  function markSendButton() {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const sendButton = buttons.find((btn) => {
+      const text = normalizeText(btn.innerText || btn.textContent || "");
+      return text.includes("send sms");
+    });
+
+    if (sendButton) {
+      sendButton.style.outline = "3px solid #22c55e";
+      sendButton.style.outlineOffset = "3px";
+    }
+
+    if (activeJob) {
+      const phonePreview = document.getElementById("iceSmsPhonePreview");
+      const messagePreview = document.getElementById("iceSmsMessagePreview");
+
+      if (phonePreview) phonePreview.value = cleanPhone(activeJob.phone);
+      if (messagePreview) messagePreview.value = String(activeJob.message || "");
+    }
+  }
+})();

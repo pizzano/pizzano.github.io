@@ -1,0 +1,33 @@
+// Tampermonkey status patch for KØL ICE SMS
+// Bunu mevcut ICE SMS Tampermonkey scriptine ekle.
+// Amaç: admin.html içindeki "Enhet / status" ekranı ICE SMS sayfasının online olup olmadığını canlı görebilsin.
+
+// Eğer mevcut scriptte zaten firebase.database() kullanıyorsan sadece bu bloğu ekle:
+const ICE_SMS_DEVICE_STATUS_REF = firebase.database().ref("/iceSmsQueue/deviceStatus");
+
+function writeIceSmsDeviceHeartbeat(extra = {}) {
+  ICE_SMS_DEVICE_STATUS_REF.set({
+    online: true,
+    status: extra.status || "ready",
+    pageUrl: location.href,
+    lastSeen: new Date().toISOString(),
+    userAgent: navigator.userAgent
+  }).catch((error) => console.warn("ICE SMS heartbeat yazılamadı:", error));
+}
+
+// Sayfa açıkken her 10 saniyede bir "ben buradayım" bilgisini yaz.
+writeIceSmsDeviceHeartbeat({ status: "ready" });
+setInterval(() => writeIceSmsDeviceHeartbeat({ status: "ready" }), 10000);
+
+// SMS gönderirken/gönderdikten sonra istersen mevcut scriptindeki uygun yerlere şunları ekleyebilirsin:
+// writeIceSmsDeviceHeartbeat({ status: "processing" });
+// writeIceSmsDeviceHeartbeat({ status: "sent" });
+
+// Sayfa kapanırken offline yazmaya çalışır. Tarayıcı garanti etmez ama çoğu zaman çalışır.
+window.addEventListener("beforeunload", () => {
+  ICE_SMS_DEVICE_STATUS_REF.update({
+    online: false,
+    status: "closed",
+    lastSeen: new Date().toISOString()
+  });
+});

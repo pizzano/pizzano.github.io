@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=330">
+    <link rel="stylesheet" href="kol-core.css?v=342">
   </head>
   <body class="kol-admin">
-    <header class="admin-topbar admin-topbar-clean">
+        <header class="admin-topbar admin-topbar-clean">
       <div class="admin-topbar-settings" aria-label="Admin deler">
         <button class="top-settings-button" type="button" data-top-nav="menu">Meny oppsett</button>
         <button class="top-settings-button active" type="button" data-top-nav="orders">Bestillinger</button>
@@ -40,14 +40,14 @@
             <form class="product-form product-editor-card" id="productForm">
               <label class="wide main-field">Navn <input id="productName" type="text" maxlength="100" placeholder="Nytt produkt"></label>
               <details class="product-more wide compact-product-media" id="productMediaSettings" open>
-                <summary aria-label="Produkttekst og bilde"><span>🖼</span><strong>Bilde / beskrivelse</strong></summary>
+                <summary aria-label="Produkttekst og bilde"><span>🖼</span><strong>Bilde URL / beskrivelse</strong></summary>
                 <div class="product-more-panel compact-product-media-panel">
                   <label>Bilde URL <input id="productImageUrl" type="url" placeholder="https://..."></label>
                   <label>Beskrivelse <textarea id="productIngredients" rows="3" maxlength="300"></textarea></label>
                 </div>
               </details>
               <details class="product-more wide" id="productMoreSettings">
-                <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Flere innstillinger</strong></summary>
+                <summary aria-label="Produktinnstillinger"><span>⚙</span><strong>Utsolgt / allergener</strong></summary>
                 <div class="product-more-panel">
                   <section class="product-availability" aria-label="Synlighet og utsolgt">
                     <div class="availability-title">
@@ -221,6 +221,7 @@
             <div class="basic-settings-tabs" role="tablist" aria-label="Grunninfo kategorier">
               <button class="basic-settings-tab active" type="button" data-basic-settings-tab="restaurant">Restaurant</button>
               <button class="basic-settings-tab" type="button" data-basic-settings-tab="opening">Adresse / åpningstid</button>
+              <button class="basic-settings-tab" type="button" data-basic-settings-tab="device">Enhet / status</button>
               <button class="basic-settings-tab" type="button" data-basic-settings-tab="sound">Bestillingslyd</button>
               <button class="basic-settings-tab" type="button" data-basic-settings-tab="receipt">Kvittering</button>
             </div>
@@ -248,45 +249,208 @@
                 </div>
               </details>
 
-              <details class="settings-category-card settings-tab-panel" data-basic-settings-panel="opening" open>
-                <summary><span>📍</span><strong>Adresse og åpningstid</strong><small>Land, sted, åpning og henting</small></summary>
-                <div class="settings-form-grid">
-                  <label>Land
-                    <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
-                  </label>
-                  <label>Tidssone
-                    <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
-                  </label>
-                  <label>Sted *
-                    <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
-                  </label>
-                  <label>Postnr
-                    <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
-                  </label>
-                  <label class="wide">Gatenavn og nummer *
-                    <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
-                  </label>
-                  <label>Åpningstider tekst
-                    <input id="settingOpeningDays" data-setting-field="openingDays" type="text" placeholder="Mandag - Søndag">
-                  </label>
-                  <label class="wide opening-time-field">Tid
-                    <div class="opening-time-range" aria-label="Åpningstid">
-                      <input id="settingOpeningTimeOpen" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="13:00">
-                      <span aria-hidden="true">–</span>
-                      <input id="settingOpeningTimeClose" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="22:00">
+              <details class="settings-category-card settings-tab-panel opening-settings-category" data-basic-settings-panel="opening" open>
+                <summary><span>🕒</span><strong>Åpningstider</strong><small>Günler, saatler ve pause tjenester</small></summary>
+
+                <div class="gf-opening-shell" id="openingMainPanel">
+                  <section class="gf-opening-card">
+                    <header class="gf-opening-header">
+                      <h2>Når har dere åpent?</h2>
+                      <button class="gf-next-button" type="button" data-opening-next>Neste</button>
+                    </header>
+
+                    <div class="gf-opening-body">
+                      <h3>Åpningstider</h3>
+
+                      <div class="gf-opening-summary-row">
+                        <div>
+                          <span id="openingDaysSummary">Mandag - Søndag:</span>
+                        </div>
+                        <strong id="openingTimeSummary">14:00 - 22:00</strong>
+                        <button class="gf-pencil-button" type="button" data-opening-edit aria-label="Rediger åpningstider">✎</button>
+                      </div>
+
+                      <button class="gf-text-link green" type="button" data-opening-add>Legg til tider</button>
+
+                      <section class="gf-opening-editor" id="openingEditPanel" hidden>
+                        <div class="gf-day-grid" aria-label="Velg åpningsdager">
+                          <label><input type="checkbox" data-opening-day="mon"> <span>Man</span></label>
+                          <label><input type="checkbox" data-opening-day="tue"> <span>Tir</span></label>
+                          <label><input type="checkbox" data-opening-day="wed"> <span>Ons</span></label>
+                          <label><input type="checkbox" data-opening-day="thu"> <span>Tors</span></label>
+                          <label><input type="checkbox" data-opening-day="fri"> <span>Fre</span></label>
+                          <label><input type="checkbox" data-opening-day="sat"> <span>Lør</span></label>
+                          <label><input type="checkbox" data-opening-day="sun"> <span>Søn</span></label>
+                        </div>
+
+                        <div class="gf-time-editor">
+                          <input id="settingOpeningTimeOpen" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="14:00">
+                          <span>-</span>
+                          <input id="settingOpeningTimeClose" type="time" inputmode="numeric" step="60" min="00:00" max="23:59" placeholder="22:00">
+                        </div>
+                        <input id="settingOpeningTime" data-setting-field="openingTime" type="hidden" value="">
+
+                        <div class="gf-opening-actions">
+                          <button class="gf-save-button" type="button" data-opening-save>Lagre</button>
+                          <button class="gf-cancel-link" type="button" data-opening-cancel>Avbryt</button>
+                        </div>
+                      </section>
+
+                      <label class="gf-check-line">
+                        <input id="settingPickupDifferentHours" type="checkbox">
+                        <span>Angi forskjellige åpningstider for henting</span>
+                      </label>
+
+                      <hr>
+
+                      <h3 class="gf-exception-title">Unntak <span title="Spesielle dager og pauser">ⓘ</span></h3>
+                      <div class="gf-opening-links">
+                        <button type="button" class="gf-text-link" data-opening-special>Legg til spesiell dag/ferietid</button>
+                        <span></span>
+                        <button type="button" class="gf-text-link" data-opening-pause>Pause tjenester</button>
+                      </div>
+
+                      <details class="gf-address-collapse">
+                        <summary>Adresse / sted</summary>
+                        <div class="settings-form-grid compact-address-grid">
+                          <label>Land
+                            <input id="settingCountry" data-setting-field="country" type="text" placeholder="Norway">
+                          </label>
+                          <label>Tidssone
+                            <input id="settingTimezone" data-setting-field="timezone" type="text" placeholder="Europe/Oslo">
+                          </label>
+                          <label>Sted *
+                            <input id="settingCity" data-setting-field="city" type="text" placeholder="SKARNES">
+                          </label>
+                          <label>Postnr
+                            <input id="settingPostalCode" data-setting-field="postalCode" type="text" placeholder="2100">
+                          </label>
+                          <label class="wide">Gatenavn og nummer *
+                            <input id="settingStreetAddress" data-setting-field="streetAddress" type="text" placeholder="ØGARDSVEGEN 44">
+                          </label>
+                          <label>Minimum forhåndsbestilling (min)
+                            <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
+                          </label>
+                          <label>Henting
+                            <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Henting på restauranten">
+                          </label>
+                        </div>
+                      </details>
                     </div>
-                    <input id="settingOpeningTime" data-setting-field="openingTime" type="hidden" value="">
-                    <span class="field-hint">Bare klokkeslett er tillatt. Skriv fra–til, for eksempel 13:00 – 22:00.</span>
-                  </label>
-                  <div class="settings-info-note opening-order-note">
-                    Sipariş gönderme saati açılış saatiyle aynıdır. Müşteriler bu saatler arasında sipariş gönderebilir; kapalıyken sepete ekleyebilir ama gönderemez.
-                  </div>
-                  <label>Minimum forhåndsbestilling (min)
-                    <input id="settingMinPreorderMinutes" data-setting-field="minPreorderMinutes" type="number" min="0" max="180" placeholder="30">
-                  </label>
-                  <label>Henting
-                    <input id="settingPickupInfo" data-setting-field="pickupInfo" type="text" placeholder="Henting på restauranten">
-                  </label>
+                  </section>
+                </div>
+
+                <div class="gf-opening-shell" id="openingPausePanel" hidden>
+                  <section class="gf-opening-card pause-card">
+                    <header class="gf-opening-header">
+                      <button type="button" class="gf-back-square" data-opening-pause-back aria-label="Tilbake">‹</button>
+                      <h2>Pause tjenester</h2>
+                      <button class="gf-next-button" type="button" data-opening-pause-save>Lagre</button>
+                    </header>
+
+                    <div class="gf-opening-body pause-body">
+                      <label class="gf-radio-line active">
+                        <input type="radio" name="pauseServiceScope" value="all" checked>
+                        <span>Alle tjenester</span>
+                      </label>
+                      <label class="gf-radio-line">
+                        <input type="radio" name="pauseServiceScope" value="specific">
+                        <span>Spesifikke tjenester</span>
+                      </label>
+
+                      <h3>Pause for</h3>
+                      <div class="gf-pause-time-row">
+                        <label class="gf-number-select">
+                          <input id="settingPauseHours" type="number" min="0" max="24" step="1" value="0">
+                          <span>timer</span>
+                        </label>
+                        <label class="gf-number-select">
+                          <input id="settingPauseMinutes" type="number" min="0" max="59" step="5" value="0">
+                          <span>minutt</span>
+                        </label>
+                        <label class="gf-check-line rest-day">
+                          <input id="settingPauseRestOfDay" type="checkbox">
+                          <span>Resten av dagen</span>
+                        </label>
+                      </div>
+
+                      <label class="gf-message-field">
+                        <strong>Meldingsvarsel <span>(valgfritt)</span></strong>
+                        <textarea id="settingPauseMessage" rows="4" maxlength="200" placeholder="F.eks. Vi tar en kort pause. Prøv igjen senere."></textarea>
+                        <small><span id="pauseMessageCount">0</span>/200</small>
+                      </label>
+
+                      <div class="gf-pause-current" id="pauseCurrentInfo" hidden></div>
+                      <button class="gf-text-link danger" type="button" data-opening-pause-clear>Opphev pause</button>
+                    </div>
+                  </section>
+                </div>
+              </details>
+
+              <details class="settings-category-card settings-tab-panel device-status-settings-category" data-basic-settings-panel="device" open>
+                <summary><span>📡</span><strong>Enhet / live status</strong><small>SMS, Firebase og kvitteringsskriver</small></summary>
+
+                <div class="gf-device-shell">
+                  <section class="gf-device-card">
+                    <header class="gf-device-header">
+                      <div>
+                        <h2>App installasjon / tilkoblinger</h2>
+                        <p>Her ser du om systemet faktisk har kontakt med Firebase, ICE SMS-siden og lokal skriver-server.</p>
+                      </div>
+                      <button class="gf-next-button" type="button" data-device-refresh>Oppdater</button>
+                    </header>
+
+                    <div class="gf-device-body">
+                      <div class="device-main-status" id="deviceOverallStatus">
+                        <span class="device-big-dot waiting">?</span>
+                        <div>
+                          <strong>Sjekker tilkoblinger...</strong>
+                          <small>Live status oppdateres automatisk.</small>
+                        </div>
+                      </div>
+
+                      <div class="device-status-grid">
+                        <article class="device-status-row" id="deviceFirebaseRow">
+                          <span class="device-status-dot waiting"></span>
+                          <div>
+                            <strong>Firebase / database</strong>
+                            <small id="deviceFirebaseText">Sjekker...</small>
+                          </div>
+                        </article>
+
+                        <article class="device-status-row" id="deviceSmsRow">
+                          <span class="device-status-dot waiting"></span>
+                          <div>
+                            <strong>ICE SMS-side / Tampermonkey</strong>
+                            <small id="deviceSmsText">Ingen heartbeat ennå.</small>
+                            <small class="muted" id="deviceSmsSubText">Tampermonkey må skrive status til Firebase.</small>
+                          </div>
+                        </article>
+
+                        <article class="device-status-row" id="devicePrinterRow">
+                          <span class="device-status-dot waiting"></span>
+                          <div>
+                            <strong>Kvitteringsskriver</strong>
+                            <small id="devicePrinterText">Sjekker lokal print-server...</small>
+                            <small class="muted" id="devicePrinterSubText">http://127.0.0.1:5050/</small>
+                          </div>
+                        </article>
+                      </div>
+
+                      <div class="device-info-table">
+                        <div><span>Enhet:</span><b id="deviceBrowserText">Denne nettleseren</b></div>
+                        <div><span>SMS siste kontakt:</span><b id="deviceSmsLastSeenText">-</b></div>
+                        <div><span>Siste SMS-jobb:</span><b id="deviceSmsLastJobText">-</b></div>
+                        <div><span>Skriver siste sjekk:</span><b id="devicePrinterLastCheckText">-</b></div>
+                      </div>
+
+                      <details class="device-help-box">
+                        <summary>Må Tampermonkey endres?</summary>
+                        <p>Ja, for å vise om ICE SMS-siden er online må Tampermonkey skrive en liten “heartbeat” til Firebase. Patch-koden ligger også i ZIP-filen som <b>tampermonkey_status_patch.txt</b>.</p>
+                        <pre id="tampermonkeyStatusPatchPreview">// Se tampermonkey_status_patch.txt</pre>
+                      </details>
+                    </div>
+                  </section>
                 </div>
               </details>
 
@@ -310,84 +474,165 @@
 
               <details class="settings-category-card settings-tab-panel receipt-settings-category" data-basic-settings-panel="receipt" open>
                 <summary><span>🧾</span><strong>Kvittering / skriver</strong><small>Fiş yazı boyutu, marj ve örnek görünüm</small></summary>
-                <div class="receipt-settings-layout">
-                  <div class="receipt-print-settings-box">
-                    <div class="receipt-settings-headline">
+
+                <div class="receipt-designer-v337">
+                  <section class="receipt-preview-workspace-v337" aria-label="Kvittering forhåndsvisning">
+                    <div class="receipt-preview-topbar-v337">
+                      <button type="button" class="receipt-back-mini-v337" aria-label="Tilbake">‹</button>
                       <div>
-                        <h3>Kvittering / skriver</h3>
-                        <span class="field-hint">80mm Epson için güvenli papirbredde 576 px. Çok uzun fiş çıkmasın diye yazı ve satır aralıkları güvenli aralıkta sınırlandırılır.</span>
+                        <strong>Eksempel kvittering</strong>
+                        <span>Soldaki fişte çizgiler hangi ayarın nereye etki ettiğini gösterir.</span>
                       </div>
-                      <button class="receipt-preset-button" type="button" data-receipt-preset="large">Kompakt fiş</button>
                     </div>
-                    <div class="receipt-print-grid">
-                      <label>Papirbredde / bildebredde (px)
+
+                    <div class="receipt-preview-stage-v337">
+                      <div id="receiptPreviewSample" class="receipt-preview-paper receipt-ticket-v337">
+                        <div class="receipt-cut-v337" aria-hidden="true"></div>
+
+                        <div class="receipt-callout-v337 callout-header">
+                          <span>Toppfelt tekst</span>
+                        </div>
+                        <div class="receipt-preview-block receipt-preview-top">HENTING</div>
+                        <div class="receipt-preview-block receipt-preview-medium">
+                          <span>SNAREST</span><b>30 MIN</b>
+                        </div>
+                        <div class="receipt-preview-block receipt-preview-date">12. mai kl. 23:23</div>
+
+                        <div class="receipt-preview-content">
+                          <div class="receipt-comment-v337">☝ Kunden ønsker ekstra hvitløksdressing.</div>
+
+                          <div class="receipt-callout-v337 callout-item">
+                            <span>Produktnavn</span>
+                          </div>
+                          <div class="receipt-preview-item">
+                            <b>2x Pizza Prosciutto</b>
+                            <b>398,00</b>
+                          </div>
+
+                          <div class="receipt-callout-v337 callout-price">
+                            <span>Pris tekst</span>
+                          </div>
+                          <div class="receipt-preview-choice receipt-preview-size">
+                            <span><b>Size:</b> Small</span>
+                          </div>
+
+                          <div class="receipt-callout-v337 callout-size">
+                            <span>Størrelse tekst</span>
+                          </div>
+                          <div class="receipt-preview-choice">
+                            <span><b>Crust:</b> Fluffy</span>
+                          </div>
+
+                          <div class="receipt-callout-v337 callout-extra">
+                            <span>Valggruppe navn + ekstra/verdi</span>
+                          </div>
+                          <div class="receipt-preview-choice">
+                            <span><b>Toppings:</b> Extra mozzarella</span>
+                            <b>+25,00</b>
+                          </div>
+
+                          <div class="receipt-preview-item single">
+                            <b>1x Pizza Pepperoni</b>
+                            <b>199,00</b>
+                          </div>
+
+                          <div class="receipt-callout-v337 callout-details">
+                            <span>Detaljer nederst</span>
+                          </div>
+                          <div class="receipt-preview-details-title">Bestillingsdetaljer:</div>
+                          <div class="receipt-preview-detail"><span>Nummer:</span><b>1024</b></div>
+                          <div class="receipt-preview-detail"><span>Bekreftet kl.:</span><b>12. mai kl. 23:23</b></div>
+
+                          <div class="receipt-callout-v337 callout-customer">
+                            <span>Kundenavn</span>
+                          </div>
+                          <div class="receipt-preview-detail customer"><span>Fornavn:</span><b>FATIH</b></div>
+
+                          <div class="receipt-callout-v337 callout-phone">
+                            <span>Telefon</span>
+                          </div>
+                          <div class="receipt-preview-detail phone"><span>Telefon:</span><b>95557474</b></div>
+
+                          <div class="receipt-margin-guide-v337"><span>Venstre/høyre marg</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <aside class="receipt-controls-v337" aria-label="Kvittering innstillinger">
+                    <div class="receipt-controls-header-v337">
+                      <button type="button" class="receipt-mini-back-v337" aria-label="Tilbake">‹</button>
+                      <div>
+                        <strong>Rediger: Kvittering</strong>
+                        <span>Değişiklikler Firebase’e kaydedilir ve örnek fişte canlı görünür.</span>
+                      </div>
+                      <button class="receipt-preset-button" type="button" data-receipt-preset="large">Kompakt</button>
+                    </div>
+
+                    <div class="receipt-control-block-v337 compact">
+                      <label>Papirbredde
                         <input id="settingReceiptPaperWidth" data-setting-field="receiptPaperWidth" type="number" min="380" max="576" step="1" placeholder="576">
                       </label>
-                      <label>Toppfelt tekst (px)
-                        <input id="settingReceiptHeaderFontSize" data-setting-field="receiptHeaderFontSize" type="number" min="18" max="30" step="1" placeholder="28">
-                      </label>
-                      <label>Produktnavn (px)
-                        <input id="settingReceiptItemFontSize" data-setting-field="receiptItemFontSize" type="number" min="16" max="24" step="1" placeholder="20">
-                      </label>
-                      <label>Størrelse tekst (px)
-                        <input id="settingReceiptSizeFontSize" data-setting-field="receiptSizeFontSize" type="number" min="14" max="20" step="1" placeholder="17">
-                      </label>
-                      <label>Valggruppe navn (px)
-                        <input id="settingReceiptChoiceLabelFontSize" data-setting-field="receiptChoiceLabelFontSize" type="number" min="14" max="18" step="1" placeholder="16">
-                      </label>
-                      <label>Ekstra / valgt verdi (px)
-                        <input id="settingReceiptOptionFontSize" data-setting-field="receiptOptionFontSize" type="number" min="14" max="22" step="1" placeholder="18">
-                      </label>
-                      <label>Pris tekst (px)
-                        <input id="settingReceiptPriceFontSize" data-setting-field="receiptPriceFontSize" type="number" min="14" max="24" step="1" placeholder="20">
-                      </label>
-                      <label>Detaljer nederst (px)
-                        <input id="settingReceiptDetailsFontSize" data-setting-field="receiptDetailsFontSize" type="number" min="14" max="20" step="1" placeholder="16">
-                      </label>
-                      <label>Kundenavn (px)
-                        <input id="settingReceiptCustomerNameFontSize" data-setting-field="receiptCustomerNameFontSize" type="number" min="14" max="28" step="1" placeholder="24">
-                      </label>
-                      <label>Telefon (px)
-                        <input id="settingReceiptCustomerPhoneFontSize" data-setting-field="receiptCustomerPhoneFontSize" type="number" min="14" max="24" step="1" placeholder="20">
-                      </label>
-                      <label>Venstre/høyre marg (px)
+                      <label>Venstre/høyre marg
                         <input id="settingReceiptSideMargin" data-setting-field="receiptSideMargin" type="number" min="0" max="20" step="1" placeholder="4">
                       </label>
                       <label>Linjeavstand
                         <input id="settingReceiptLineHeight" data-setting-field="receiptLineHeight" type="number" min="1" max="1.12" step="0.05" placeholder="1.05">
                       </label>
                     </div>
-                  </div>
 
-                  <aside class="receipt-preview-card">
-                    <div class="receipt-preview-title">
-                      <strong>Örnek fiş rehberi</strong>
-                      <span>Çizgiler hangi ayarın nereye etki ettiğini gösterir.</span>
-                    </div>
-                    <div class="receipt-preview-scale">
-                      <div id="receiptPreviewSample" class="receipt-preview-paper">
-                        <div class="receipt-preview-line callout-header"><span>Toppfelt tekst</span></div>
-                        <div class="receipt-preview-block receipt-preview-top">HENTING</div>
-                        <div class="receipt-preview-block receipt-preview-medium">SNAREST · 12:45</div>
-                        <div class="receipt-preview-content">
-                          <div class="receipt-preview-line callout-item"><span>Produktnavn</span></div>
-                          <div class="receipt-preview-item"><b>1x 2- CAPRI</b><b>373,00 kr</b></div>
-                          <div class="receipt-preview-line callout-price"><span>Pris tekst</span></div>
-                          <div class="receipt-preview-choice receipt-preview-size"><span><b>Størrelse:</b> Stor</span><b></b></div>
-                          <div class="receipt-preview-line callout-size"><span>Størrelse tekst</span></div>
-                          <div class="receipt-preview-choice"><span><b>Tilbehør:</b> Extra bunn 300 g</span><b>+39,00</b></div>
-                          <div class="receipt-preview-line callout-extra"><span>Valggruppe + ekstra verdi</span></div>
-                          <div class="receipt-preview-details-title">Bestillingsdetaljer:</div>
-                          <div class="receipt-preview-detail"><span>Hele Navn:</span><b>Fatih Alemdar</b></div>
-                          <div class="receipt-preview-line callout-customer"><span>Kundenavn</span></div>
-                          <div class="receipt-preview-detail"><span>Telefon:</span><b>95557474</b></div>
-                          <div class="receipt-preview-line callout-phone"><span>Telefon / Detaljer nederst</span></div>
-                        </div>
+                    <details class="receipt-accordion-v337" open>
+                      <summary><span>Overskrift</span><b>▾</b></summary>
+                      <div class="receipt-control-block-v337">
+                        <label>Toppfelt tekst
+                          <input id="settingReceiptHeaderFontSize" data-setting-field="receiptHeaderFontSize" type="number" min="10" max="80" step="1" placeholder="28">
+                        </label>
                       </div>
-                    </div>
+                    </details>
+
+                    <details class="receipt-accordion-v337" open>
+                      <summary><span>Elementer</span><b>▾</b></summary>
+                      <div class="receipt-display-options-v337">
+                        <strong>Display options:</strong>
+                        <label><input type="radio" checked disabled> Show only item name</label>
+                        <label><input type="checkbox" checked disabled> Vis navn på tillegg/størrelser</label>
+                      </div>
+                      <div class="receipt-control-block-v337">
+                        <label>Produktnavn
+                          <input id="settingReceiptItemFontSize" data-setting-field="receiptItemFontSize" type="number" min="10" max="80" step="1" placeholder="20">
+                        </label>
+                        <label>Pris tekst
+                          <input id="settingReceiptPriceFontSize" data-setting-field="receiptPriceFontSize" type="number" min="10" max="80" step="1" placeholder="20">
+                        </label>
+                        <label>Størrelse tekst
+                          <input id="settingReceiptSizeFontSize" data-setting-field="receiptSizeFontSize" type="number" min="8" max="60" step="1" placeholder="17">
+                        </label>
+                        <label>Valggruppe navn
+                          <input id="settingReceiptChoiceLabelFontSize" data-setting-field="receiptChoiceLabelFontSize" type="number" min="8" max="60" step="1" placeholder="16">
+                        </label>
+                        <label>Ekstra / valgt verdi
+                          <input id="settingReceiptOptionFontSize" data-setting-field="receiptOptionFontSize" type="number" min="8" max="60" step="1" placeholder="18">
+                        </label>
+                      </div>
+                    </details>
+
+                    <details class="receipt-accordion-v337" open>
+                      <summary><span>Bestillingsdetaljer</span><b>▾</b></summary>
+                      <div class="receipt-control-block-v337">
+                        <label>Detaljer nederst
+                          <input id="settingReceiptDetailsFontSize" data-setting-field="receiptDetailsFontSize" type="number" min="8" max="60" step="1" placeholder="16">
+                        </label>
+                        <label>Kundenavn
+                          <input id="settingReceiptCustomerNameFontSize" data-setting-field="receiptCustomerNameFontSize" type="number" min="8" max="90" step="1" placeholder="24">
+                        </label>
+                        <label>Telefon
+                          <input id="settingReceiptCustomerPhoneFontSize" data-setting-field="receiptCustomerPhoneFontSize" type="number" min="8" max="90" step="1" placeholder="20">
+                        </label>
+                      </div>
+                    </details>
                   </aside>
                 </div>
-              </details>
+              </details>              </details>
             </div>
           </div>
 
@@ -417,7 +662,6 @@
           </div>
         </section>
       </section>
-
     </main>
 
     <div class="admin-toast" id="adminToast" hidden>Lagret</div>
@@ -435,6 +679,7 @@ const ordersRef = firebase.database().ref("/orders");
 // TÜRKÇE: ICE Min Side Tampermonkey scripti bu path'i dinliyor.
 // Admin siparişi onaylayınca buraya SMS işi yazıyoruz.
 const iceSmsCurrentRef = firebase.database().ref("/iceSmsQueue/current");
+const iceSmsDeviceStatusRef = firebase.database().ref("/iceSmsQueue/deviceStatus");
 const firebaseConnectionRef = firebase.database().ref(".info/connected");
 
 const fields = {
@@ -465,6 +710,18 @@ const siteSettingFields = document.querySelectorAll("[data-setting-field]");
 const settingOpeningTimeHidden = document.getElementById("settingOpeningTime");
 const settingOpeningTimeOpen = document.getElementById("settingOpeningTimeOpen");
 const settingOpeningTimeClose = document.getElementById("settingOpeningTimeClose");
+const openingMainPanel = document.getElementById("openingMainPanel");
+const openingPausePanel = document.getElementById("openingPausePanel");
+const openingEditPanel = document.getElementById("openingEditPanel");
+const openingDayInputs = document.querySelectorAll("[data-opening-day]");
+const openingDaysSummary = document.getElementById("openingDaysSummary");
+const openingTimeSummary = document.getElementById("openingTimeSummary");
+const pauseHoursInput = document.getElementById("settingPauseHours");
+const pauseMinutesInput = document.getElementById("settingPauseMinutes");
+const pauseRestOfDayInput = document.getElementById("settingPauseRestOfDay");
+const pauseMessageInput = document.getElementById("settingPauseMessage");
+const pauseMessageCount = document.getElementById("pauseMessageCount");
+const pauseCurrentInfo = document.getElementById("pauseCurrentInfo");
 const settingsTabs = document.querySelectorAll("[data-settings-tab]");
 const settingsPages = document.querySelectorAll("[data-settings-page]");
 const settingsModal = document.querySelector("#settingsModal");
@@ -1298,7 +1555,10 @@ function defaultSiteSettings() {
     postalCode: "2100",
     streetAddress: "ØGARDSVEGEN 44",
     openingDays: "Mandag, Onsdag - Søndag",
+    openDays: ["mon", "wed", "thu", "fri", "sat", "sun"],
     openingTime: "14:00 - 22:00",
+    servicePauseUntil: "",
+    servicePauseMessage: "",
     orderOpenTime: "14:00",
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
@@ -1368,12 +1628,90 @@ function composeOpeningTimeRange(openValue = "", closeValue = "") {
   return `${open} - ${close}`;
 }
 
+
+const KOL_OPENING_DAYS = [
+  { key: "mon", short: "Man", full: "Mandag" },
+  { key: "tue", short: "Tir", full: "Tirsdag" },
+  { key: "wed", short: "Ons", full: "Onsdag" },
+  { key: "thu", short: "Tors", full: "Torsdag" },
+  { key: "fri", short: "Fre", full: "Fredag" },
+  { key: "sat", short: "Lør", full: "Lørdag" },
+  { key: "sun", short: "Søn", full: "Søndag" }
+];
+
+function normalizeOpenDays(value, text = "") {
+  const valid = new Set(KOL_OPENING_DAYS.map((day) => day.key));
+  if (Array.isArray(value)) {
+    const days = value.filter((day) => valid.has(day));
+    if (days.length) return days;
+  }
+
+  const source = String(text || "").toLowerCase();
+  if (source.includes("mandag") && source.includes("søndag") && source.includes("-")) {
+    if (source.includes("onsdag") && !source.includes("tirsdag")) return ["mon", "wed", "thu", "fri", "sat", "sun"];
+    return KOL_OPENING_DAYS.map((day) => day.key);
+  }
+
+  const found = [];
+  const names = [
+    ["mon", "man", "mandag"],
+    ["tue", "tir", "tirsdag"],
+    ["wed", "ons", "onsdag"],
+    ["thu", "tor", "tors", "torsdag"],
+    ["fri", "fredag"],
+    ["sat", "lør", "lordag", "lørdag"],
+    ["sun", "søn", "sondag", "søndag"]
+  ];
+  names.forEach(([key, ...needles]) => {
+    if (needles.some((needle) => source.includes(needle))) found.push(key);
+  });
+  return found.length ? found : KOL_OPENING_DAYS.map((day) => day.key);
+}
+
+function formatOpeningDaysText(days = []) {
+  const keys = normalizeOpenDays(days);
+  if (keys.length === 7) return "Mandag - Søndag";
+
+  const indexOf = (key) => KOL_OPENING_DAYS.findIndex((day) => day.key === key);
+  const sorted = keys.slice().sort((a, b) => indexOf(a) - indexOf(b));
+  const parts = [];
+  let start = 0;
+
+  while (start < sorted.length) {
+    let end = start;
+    while (end + 1 < sorted.length && indexOf(sorted[end + 1]) === indexOf(sorted[end]) + 1) end += 1;
+    const first = KOL_OPENING_DAYS[indexOf(sorted[start])]?.full || sorted[start];
+    const last = KOL_OPENING_DAYS[indexOf(sorted[end])]?.full || sorted[end];
+    parts.push(start === end ? first : `${first} - ${last}`);
+    start = end + 1;
+  }
+
+  return parts.join(", ");
+}
+
+function pauseUntilTimestamp(settings = {}) {
+  const raw = String(settings.servicePauseUntil || "").trim();
+  if (!raw) return null;
+  const time = new Date(raw).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function isServicePauseActive(settings = {}) {
+  const until = pauseUntilTimestamp(settings);
+  return Boolean(until && until > Date.now());
+}
+
 function normalizeSiteSettings(value) {
   const merged = { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  merged.openDays = normalizeOpenDays(merged.openDays, merged.openingDays);
+  merged.openingDays = formatOpeningDaysText(merged.openDays);
   const parts = splitOpeningTimeRange(merged.openingTime || `${merged.orderOpenTime || "14:00"} - ${merged.orderCloseTime || "22:00"}`);
   merged.openingTime = composeOpeningTimeRange(parts.open, parts.close);
   merged.orderOpenTime = parts.open;
   merged.orderCloseTime = parts.close;
+  if (!isServicePauseActive(merged)) {
+    merged.servicePauseUntil = "";
+  }
   return merged;
 }
 
@@ -1444,10 +1782,10 @@ function normalizeConfig(value) {
       ...cleanSection,
       items: asArray(section?.items).map((product) => {
         const hasGroupIds = Object.prototype.hasOwnProperty.call(product, "optionGroupIds");
-        return {
+        return normalizeTimedSoldOutItem({
           ...product,
           optionGroupIds: hasGroupIds ? asArray(product.optionGroupIds) : defaultGroupIdsForProduct(product, section)
-        };
+        });
       })
     };
   });
@@ -1650,30 +1988,109 @@ function productPriceSummary(product = {}) {
 }
 
 
+
 // Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
+// "datetime-local" ISO değeri (2026-05-12T22:57) ve Norveç görünümü
+// (12.05.2026 22:57) ikisi de desteklenir.
+function parseKolDateTime(value = "") {
+  const raw = String(value || "").replace(/\u00A0/g, " ").trim();
+  if (!raw) return null;
+
+  let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (match) {
+    const [, year, month, day, hour = "0", minute = "0", second = "0"] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+    return Number.isFinite(date.getTime()) ? date.getTime() : null;
+  }
+
+  match = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:,?\s*(\d{1,2})[:.](\d{2}))?$/);
+  if (match) {
+    let [, day, month, year, hour = "0", minute = "0"] = match;
+    year = Number(year);
+    if (year < 100) year += 2000;
+    const date = new Date(year, Number(month) - 1, Number(day), Number(hour), Number(minute), 0);
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === Number(month) - 1 &&
+      date.getDate() === Number(day)
+    ) {
+      return date.getTime();
+    }
+    return null;
+  }
+
+  const fallback = Date.parse(raw);
+  return Number.isFinite(fallback) ? fallback : null;
+}
+
 function toDateTimeLocalValue(value = "") {
-  if (!value) return "";
-  return String(value).slice(0, 16);
+  const time = parseKolDateTime(value);
+  if (!Number.isFinite(time)) return "";
+  const date = new Date(time);
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function isDateInFuture(value = "") {
-  const time = Date.parse(value);
+  const time = parseKolDateTime(value);
   return Number.isFinite(time) && time > Date.now();
 }
 
-function isHiddenItem(item = {}) {
-  return item.hidden === true;
+// Türkçe not:
+// Üründe/kategoride süreli gizleme veya süreli UTSOLGT varsa süre dolana kadar aktif kalır.
+// Süre dolunca hidden/soldOut eski işaretli kalsa bile müşteri tarafında otomatik online olur.
+function isTimedStatusActive(item = {}) {
+  const until = String(item?.soldOutUntil || "").trim();
+  if (!until) return false;
+  const time = parseKolDateTime(until);
+  if (!Number.isFinite(time)) {
+    // Tarih yazılmış ama tarayıcı okuyamıyorsa ürünü yanlışlıkla online yapma.
+    return item.hidden === true || item.soldOut === true;
+  }
+  return time > Date.now();
 }
 
-function isSoldOutItem(item = {}) {
-  return item.soldOut === true || isDateInFuture(item.soldOutUntil || "");
+function isTimedStatusExpired(item = {}) {
+  const until = String(item?.soldOutUntil || "").trim();
+  if (!until) return false;
+  const time = parseKolDateTime(until);
+  return Number.isFinite(time) && time <= Date.now();
 }
+
+function normalizeTimedSoldOutItem(item = {}) {
+  const next = { ...item };
+  if (isTimedStatusExpired(next)) {
+    next.hidden = false;
+    next.soldOut = false;
+    next.soldOutUntil = "";
+  }
+  return next;
+}
+
+function isTimedSoldOutActive(item = {}) {
+  return isTimedStatusActive(item);
+}
+
+function isHiddenItem(item = {}) {
+  if (item.hidden !== true) return false;
+  const until = String(item?.soldOutUntil || "").trim();
+  return until ? isTimedStatusActive(item) : true;
+}
+
+function isSoldOutItem(item = {}, parentSoldOut = false) {
+  if (parentSoldOut) return true;
+  if (isHiddenItem(item)) return false;
+  const until = String(item?.soldOutUntil || "").trim();
+  if (until) return isTimedStatusActive(item);
+  return item.soldOut === true;
+}
+
 
 function statusBadges(item = {}) {
   const badges = [];
   if (isHiddenItem(item)) badges.push(`<span class="status-badge hidden-badge">Skjult</span>`);
   if (isSoldOutItem(item)) badges.push(`<span class="status-badge soldout-badge">Utsolgt</span>`);
-  if (item.soldOutUntil) badges.push(`<span class="status-badge until-badge">til ${escapeHtml(toDateTimeLocalValue(item.soldOutUntil).replace("T", " "))}</span>`);
+  if (isTimedSoldOutActive(item)) badges.push(`<span class="status-badge until-badge">til ${escapeHtml(toDateTimeLocalValue(item.soldOutUntil).replace("T", " "))}</span>`);
   return badges.length ? `<span class="status-badge-row">${badges.join("")}</span>` : "";
 }
 
@@ -1718,22 +2135,23 @@ function renderCategories() {
                 <span>${escapeHtml(section.note || (productCount ? `${productCount} produkter` : "Ingen produkter ennå"))}</span>
               </span>
               <span class="gf-category-count">${productCount}</span>
-              <span class="category-chevron gf-category-chevron">${isActive ? "⌃" : "⌄"}</span>
             </button>
-            <button class="category-menu-button gf-category-menu-button" type="button" data-category-menu="${index}" aria-label="Kategori innstillinger">⋮</button>
-            <div class="category-menu gf-category-menu" data-category-menu-panel="${index}" hidden>
-              <button type="button" data-category-action="edit" data-category-index="${index}">${isEditing ? "✓ Ferdig" : "Rediger kategori"}</button>
-              <button class="danger-action" type="button" data-category-action="delete" data-category-index="${index}">Slett kategori</button>
+            <button class="gf-icon-action gf-category-more" type="button" data-category-menu="${index}" aria-label="Mer">⋮</button>
+            <button class="gf-icon-action gf-category-edit" type="button" data-category-action="edit" data-category-index="${index}" aria-label="Rediger kategori">✎</button>
+            <button class="gf-icon-action gf-category-collapse" type="button" data-category="${index}" aria-label="Åpne/lukk kategori">${isActive ? "⌃" : "⌄"}</button>
+            <div class="category-menu gf-category-menu gf-pop-menu" data-category-menu-panel="${index}" hidden>
+              <button type="button" data-category-action="copy" data-category-index="${index}"><span aria-hidden="true">▣</span> Kopier</button>
+              <button class="danger-action" type="button" data-category-action="delete" data-category-index="${index}"><span aria-hidden="true">🗑</span> Fjern</button>
             </div>
           </div>
           ${
             isEditing
               ? `<div class="inline-category-editor gf-inline-category-editor" data-inline-category="${index}">
-                  <label>Category name <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
-                  <label>Description <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
-                  <label>Cover photo URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
+                  <label>Navn <input data-category-field="title" value="${escapeHtml(section.title || "")}"></label>
+                  <label>Beskrivelse <textarea data-category-field="note" rows="2">${escapeHtml(section.note || "")}</textarea></label>
+                  <label>Bilde URL <input data-category-field="imageUrl" value="${escapeHtml(section.imageUrl || "")}" placeholder="https://..."></label>
                   <div class="inline-actions">
-                    <button type="button" data-category-action="close-edit" data-category-index="${index}">Save / Ferdig</button>
+                    <button type="button" data-category-action="close-edit" data-category-index="${index}">Lagre</button>
                   </div>
                 </div>`
               : ""
@@ -1742,7 +2160,7 @@ function renderCategories() {
             isActive
               ? `<div class="nested-products product-card-list gf-product-list" data-products-for="${index}">
                   ${products || "<p class=\"gf-empty-products\">Ingen produkter ennå.</p>"}
-                  <button class="inline-add-product gf-add-product" type="button" data-add-product-to-category="${index}">Add item to ${escapeHtml(section.title || "category")}</button>
+                  <button class="inline-add-product gf-add-product" type="button" data-add-product-to-category="${index}">Legg til produkt i ${escapeHtml(section.title || "kategori")}</button>
                 </div>`
               : ""
           }
@@ -1852,18 +2270,17 @@ function renderProductPrices(product = selectedProduct()) {
   const prices = getProductPriceList(product);
   productPriceRows.innerHTML = prices
     .map((size, index) => `
-      <div class="product-price-row" data-product-price-row="${index}" data-price-id="${escapeHtml(size.id)}">
-        <label>Navn <input data-price-label type="text" value="${escapeHtml(size.label)}" placeholder="Medium / Stor / XXL"></label>
+      <div class="product-price-row gf-price-row" data-product-price-row="${index}" data-price-id="${escapeHtml(size.id)}">
+        <label>${index === 0 ? "Minste størrelse" : "Størrelse"} <input data-price-label type="text" value="${escapeHtml(size.label)}" placeholder="Medium / Stor / XXL"></label>
         <label>Pris <input data-price-value type="number" min="0" value="${size.price ?? ""}" placeholder="0"></label>
         <label class="price-default-label">
           <input data-price-default type="radio" name="defaultProductPrice" value="${index}" ${size.default ? "checked" : ""}>
           <span>Forhåndsvalgt</span>
         </label>
-        <button type="button" data-remove-product-price="${index}" ${prices.length <= 1 ? "disabled" : ""}>&times;</button>
+        <button type="button" data-remove-product-price="${index}" ${prices.length <= 1 ? "disabled" : ""} aria-label="Fjern størrelse">🗑</button>
       </div>
     `)
     .join("");
-  productPriceRows.insertAdjacentHTML("beforeend", `<p class="price-help">Velg Forhåndsvalgt for den størrelsen som skal være valgt når kunden åpner produktet.</p>`);
 }
 
 
@@ -2031,53 +2448,61 @@ function closeGroupMenus() {
 
 function groupMenuButton(groupIndex, isEditing) {
   return `
-    <button class="group-menu-button" type="button" data-group-menu="${groupIndex}" aria-label="Gruppevalg">⋮</button>
-    <div class="group-menu" data-group-menu-panel="${groupIndex}" hidden>
-      <button type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">${isEditing ? "Lukk redigering" : "Rediger"}</button>
-      <button type="button" data-group-action="assign" data-group-index="${groupIndex}">Legg til på valgt produkt</button>
-      <button type="button" data-group-action="copy" data-group-index="${groupIndex}">Kopier gruppe</button>
-      <button type="button" data-group-action="delete" data-group-index="${groupIndex}">Slett gruppe</button>
+    <button class="group-menu-button gf-group-more" type="button" data-group-menu="${groupIndex}" aria-label="Mer">⋮</button>
+    <button class="gf-group-edit" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}" aria-label="Rediger">✎</button>
+    <button class="gf-group-chevron" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}" aria-label="Åpne/lukk">${isEditing ? "⌃" : "⌄"}</button>
+    <div class="group-menu gf-pop-menu" data-group-menu-panel="${groupIndex}" hidden>
+      <button type="button" data-group-action="copy" data-group-index="${groupIndex}"><span aria-hidden="true">▣</span> Kopier</button>
+      <button class="danger-action" type="button" data-group-action="delete" data-group-index="${groupIndex}"><span aria-hidden="true">🗑</span> Fjern</button>
+      <button type="button" data-group-action="assign" data-group-index="${groupIndex}"><span aria-hidden="true">＋</span> Legg til på valgt produkt</button>
     </div>
   `;
 }
 
 function renderGroupEditor(group, groupIndex) {
+  const isRequired = group.required === true;
   return `
-    <div class="option-group-editor">
-      <div class="option-group-top">
-        <label>Gruppenavn <input data-group-field="title" data-group-index="${groupIndex}" value="${escapeHtml(group.title || "")}"></label>
-        <label>Type
+    <div class="option-group-editor gf-group-editor">
+      <div class="gf-group-settings-card">
+        <label class="gf-floating-field gf-group-title-field">
+          <span>F.eks. ekstra topping, Velg type</span>
+          <input data-group-field="title" data-group-index="${groupIndex}" value="${escapeHtml(group.title || "")}">
+        </label>
+
+        <div class="gf-required-toggle" role="group" aria-label="Obligatorisk">
+          <button type="button" class="${!isRequired ? "active" : ""}" data-set-group-required="false" data-group-index="${groupIndex}">Valgfritt</button>
+          <button type="button" class="${isRequired ? "active" : ""}" data-set-group-required="true" data-group-index="${groupIndex}">Obligatorisk</button>
+        </div>
+
+        <label class="gf-group-type-select">Type
           <select data-group-field="type" data-group-index="${groupIndex}">
             <option value="multiple" ${group.type !== "single" ? "selected" : ""}>Flere valg</option>
             <option value="single" ${group.type === "single" ? "selected" : ""}>Ett valg</option>
           </select>
         </label>
-        <label>Obligatorisk
-          <select data-group-field="required" data-group-index="${groupIndex}">
-            <option value="false" ${!group.required ? "selected" : ""}>Nei</option>
-            <option value="true" ${group.required ? "selected" : ""}>Ja</option>
-          </select>
-        </label>
       </div>
-      <div class="group-options">
+
+      <div class="group-options gf-group-options-list">
         ${asArray(group.options)
           .map((option, optionIndex) => `
-            <div class="group-option-row" data-group-option="${groupIndex}:${optionIndex}">
-              <label>Navn <input data-group-option-field="label" value="${escapeHtml(option.label || "")}"></label>
-              <label>Pris <input data-group-option-field="price" type="number" value="${option.price ?? ""}"></label>
-              <label>Valgt
+            <div class="group-option-row gf-addon-option-row" data-group-option="${groupIndex}:${optionIndex}">
+              <span class="gf-addon-handle" aria-hidden="true">=</span>
+              <label class="gf-addon-name">Navn <input data-group-option-field="label" value="${escapeHtml(option.label || "")}"></label>
+              <label class="gf-addon-price">Pris <input data-group-option-field="price" type="number" value="${option.price ?? ""}"></label>
+              <label class="gf-addon-default">Forhåndsvalgt
                 <select data-group-option-field="default">
                   <option value="false" ${!option.default ? "selected" : ""}>Nei</option>
                   <option value="true" ${option.default ? "selected" : ""}>Ja</option>
                 </select>
               </label>
-              <button type="button" data-remove-group-option="${groupIndex}:${optionIndex}">&times;</button>
+              <button class="gf-addon-delete" type="button" data-remove-group-option="${groupIndex}:${optionIndex}" aria-label="Fjern valg">×</button>
             </div>
           `)
           .join("") || "<p class=\"group-help\">Ingen valg ennå.</p>"}
       </div>
-      <div class="group-card-actions">
-        <button type="button" data-add-group-option="${groupIndex}">Nytt valg</button>
+
+      <div class="group-card-actions gf-addon-actions">
+        <button type="button" data-add-group-option="${groupIndex}">Legg til valg</button>
         <button type="button" data-assign-group="${escapeHtml(group.id)}">Legg til på valgt produkt</button>
       </div>
     </div>
@@ -2112,9 +2537,10 @@ function renderGroupManager() {
       const isEditing = groupIndex === editingGroupIndex;
       const optionCount = asArray(group.options).length;
       return `
-        <article class="option-group-card ${isEditing ? "editing" : ""} ${selectedGroupIndex === groupIndex ? "active" : ""}" draggable="true" data-group-card="${escapeHtml(group.id)}" data-group-index="${groupIndex}">
-          <div class="option-group-row">
-            <button class="option-group-title" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">
+        <article class="option-group-card gf-addon-card ${isEditing ? "editing" : ""} ${selectedGroupIndex === groupIndex ? "active" : ""}" draggable="true" data-group-card="${escapeHtml(group.id)}" data-group-index="${groupIndex}">
+          <div class="option-group-row gf-addon-row">
+            <span class="gf-addon-drag" aria-hidden="true">=</span>
+            <button class="option-group-title gf-addon-title" type="button" data-group-action="${isEditing ? "close-edit" : "edit"}" data-group-index="${groupIndex}">
               <strong>${escapeHtml(group.title || "Ny valggruppe")}</strong>
               <span>${optionCount} valg · ${group.type === "single" ? "ett valg" : "flere valg"}${group.required ? " · obligatorisk" : ""}</span>
             </button>
@@ -2185,6 +2611,196 @@ function bindStrictTimeInput(input) {
   input.addEventListener("change", () => syncOpeningTimeHiddenField(true));
 }
 
+
+function refreshOpeningHoursPanel() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  const settings = config.siteSettings;
+  const days = normalizeOpenDays(settings.openDays, settings.openingDays);
+
+  if (openingDaysSummary) openingDaysSummary.textContent = `${formatOpeningDaysText(days)}:`;
+  if (openingTimeSummary) openingTimeSummary.textContent = settings.openingTime || "14:00 - 22:00";
+
+  openingDayInputs.forEach((input) => {
+    input.checked = days.includes(input.dataset.openingDay);
+  });
+
+  if (settingOpeningTimeOpen && settingOpeningTimeClose) {
+    const parts = splitOpeningTimeRange(settings.openingTime);
+    settingOpeningTimeOpen.value = parts.open;
+    settingOpeningTimeClose.value = parts.close;
+    if (settingOpeningTimeHidden) settingOpeningTimeHidden.value = settings.openingTime;
+  }
+
+  if (pauseMessageInput) {
+    pauseMessageInput.value = settings.servicePauseMessage || "";
+    if (pauseMessageCount) pauseMessageCount.textContent = String(pauseMessageInput.value.length);
+  }
+
+  const activePause = isServicePauseActive(settings);
+  if (pauseCurrentInfo) {
+    pauseCurrentInfo.hidden = !activePause;
+    pauseCurrentInfo.textContent = activePause
+      ? `Pause aktiv til ${new Date(settings.servicePauseUntil).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+      : "";
+  }
+}
+
+function showOpeningEditor(show = true) {
+  if (!openingEditPanel) return;
+  openingEditPanel.hidden = !show;
+  if (show) refreshOpeningHoursPanel();
+}
+
+function saveOpeningHoursFromPanel() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  const selectedDays = Array.from(openingDayInputs)
+    .filter((input) => input.checked)
+    .map((input) => input.dataset.openingDay);
+
+  if (!selectedDays.length) {
+    setStatus("Velg minst én åpningsdag.");
+    return;
+  }
+
+  syncOpeningTimeHiddenField(false);
+  config.siteSettings.openDays = selectedDays;
+  config.siteSettings.openingDays = formatOpeningDaysText(selectedDays);
+  config.siteSettings.openingTime = settingOpeningTimeHidden?.value || config.siteSettings.openingTime;
+  const parts = splitOpeningTimeRange(config.siteSettings.openingTime);
+  config.siteSettings.orderOpenTime = parts.open;
+  config.siteSettings.orderCloseTime = parts.close;
+
+  showOpeningEditor(false);
+  refreshOpeningHoursPanel();
+  scheduleSave();
+  setStatus("Åpningstider lagret.");
+}
+
+function showOpeningPausePanel(show = true) {
+  if (openingMainPanel) openingMainPanel.hidden = show;
+  if (openingPausePanel) openingPausePanel.hidden = !show;
+  refreshOpeningHoursPanel();
+}
+
+function clampPauseNumber(input, min, max) {
+  if (!input) return 0;
+  const value = Math.max(min, Math.min(max, Number(String(input.value || "0").replace(/\D/g, "")) || 0));
+  input.value = String(value);
+  return value;
+}
+
+function saveServicePauseFromPanel() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+
+  const now = new Date();
+  const restOfDay = Boolean(pauseRestOfDayInput?.checked);
+  const hours = clampPauseNumber(pauseHoursInput, 0, 24);
+  const minutes = clampPauseNumber(pauseMinutesInput, 0, 59);
+  let until = "";
+
+  if (restOfDay) {
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    until = end.toISOString();
+  } else if (hours || minutes) {
+    until = new Date(now.getTime() + ((hours * 60) + minutes) * 60000).toISOString();
+  }
+
+  config.siteSettings.servicePauseUntil = until;
+  config.siteSettings.servicePauseMessage = String(pauseMessageInput?.value || "").trim();
+
+  scheduleSave();
+  refreshOpeningHoursPanel();
+  showOpeningPausePanel(false);
+  setStatus(until ? "Pause tjenester er aktivert." : "Pause er ikke aktivert fordi varighet er 0.");
+}
+
+function clearServicePause() {
+  if (!config) return;
+  config.siteSettings = normalizeSiteSettings(config.siteSettings);
+  config.siteSettings.servicePauseUntil = "";
+  config.siteSettings.servicePauseMessage = "";
+  if (pauseHoursInput) pauseHoursInput.value = "0";
+  if (pauseMinutesInput) pauseMinutesInput.value = "0";
+  if (pauseRestOfDayInput) pauseRestOfDayInput.checked = false;
+  if (pauseMessageInput) pauseMessageInput.value = "";
+  scheduleSave();
+  refreshOpeningHoursPanel();
+  setStatus("Pause er opphevet.");
+}
+
+function bindOpeningHoursPanelEvents() {
+  document.querySelectorAll("[data-opening-edit], [data-opening-add]").forEach((button) => {
+    if (button.dataset.boundOpening === "true") return;
+    button.dataset.boundOpening = "true";
+    button.addEventListener("click", () => showOpeningEditor(true));
+  });
+
+  document.querySelectorAll("[data-opening-save], [data-opening-next]").forEach((button) => {
+    if (button.dataset.boundOpeningSave === "true") return;
+    button.dataset.boundOpeningSave = "true";
+    button.addEventListener("click", saveOpeningHoursFromPanel);
+  });
+
+  document.querySelectorAll("[data-opening-cancel]").forEach((button) => {
+    if (button.dataset.boundOpeningCancel === "true") return;
+    button.dataset.boundOpeningCancel = "true";
+    button.addEventListener("click", () => {
+      showOpeningEditor(false);
+      refreshOpeningHoursPanel();
+    });
+  });
+
+  document.querySelectorAll("[data-opening-pause]").forEach((button) => {
+    if (button.dataset.boundOpeningPause === "true") return;
+    button.dataset.boundOpeningPause = "true";
+    button.addEventListener("click", () => showOpeningPausePanel(true));
+  });
+
+  document.querySelectorAll("[data-opening-pause-back]").forEach((button) => {
+    if (button.dataset.boundOpeningPauseBack === "true") return;
+    button.dataset.boundOpeningPauseBack = "true";
+    button.addEventListener("click", () => showOpeningPausePanel(false));
+  });
+
+  document.querySelectorAll("[data-opening-pause-save]").forEach((button) => {
+    if (button.dataset.boundOpeningPauseSave === "true") return;
+    button.dataset.boundOpeningPauseSave = "true";
+    button.addEventListener("click", saveServicePauseFromPanel);
+  });
+
+  document.querySelectorAll("[data-opening-pause-clear]").forEach((button) => {
+    if (button.dataset.boundOpeningPauseClear === "true") return;
+    button.dataset.boundOpeningPauseClear = "true";
+    button.addEventListener("click", clearServicePause);
+  });
+
+  document.querySelectorAll("[data-opening-special]").forEach((button) => {
+    if (button.dataset.boundOpeningSpecial === "true") return;
+    button.dataset.boundOpeningSpecial = "true";
+    button.addEventListener("click", () => setStatus("Spesiell dag/ferietid kan legges til senere. Bruk pause tjenester for midlertidig stenging nå."));
+  });
+
+  [pauseHoursInput, pauseMinutesInput].forEach((input) => {
+    if (!input || input.dataset.pauseBound === "true") return;
+    input.dataset.pauseBound = "true";
+    input.addEventListener("input", () => {
+      input.value = String(input.value || "").replace(/\D/g, "").slice(0, 2);
+    });
+  });
+
+  if (pauseMessageInput && pauseMessageInput.dataset.pauseMessageBound !== "true") {
+    pauseMessageInput.dataset.pauseMessageBound = "true";
+    pauseMessageInput.addEventListener("input", () => {
+      if (pauseMessageCount) pauseMessageCount.textContent = String(pauseMessageInput.value.length);
+    });
+  }
+}
+
+
 function renderSiteSettings() {
   if (!config) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
@@ -2205,6 +2821,7 @@ siteSettingFields.forEach((field) => {
     bindStrictTimeInput(settingOpeningTimeOpen);
     bindStrictTimeInput(settingOpeningTimeClose);
   }
+  refreshOpeningHoursPanel();
   if (adminRestaurantTitle) {
     adminRestaurantTitle.textContent = config.siteSettings.restaurantName || "Meny admin";
   }
@@ -2237,18 +2854,18 @@ function updateReceiptPreviewFromFields() {
   const preview = document.getElementById("receiptPreviewSample");
   if (!preview) return;
   const values = {
-    paper: receiptPreviewNumber("settingReceiptPaperWidth", 576, 380, 576),
-    header: receiptPreviewNumber("settingReceiptHeaderFontSize", 28, 18, 30),
-    item: receiptPreviewNumber("settingReceiptItemFontSize", 20, 16, 24),
-    size: receiptPreviewNumber("settingReceiptSizeFontSize", 17, 14, 20),
-    choiceLabel: receiptPreviewNumber("settingReceiptChoiceLabelFontSize", 16, 14, 18),
-    option: receiptPreviewNumber("settingReceiptOptionFontSize", 18, 14, 22),
-    price: receiptPreviewNumber("settingReceiptPriceFontSize", 20, 14, 24),
-    details: receiptPreviewNumber("settingReceiptDetailsFontSize", 16, 14, 20),
-    customer: receiptPreviewNumber("settingReceiptCustomerNameFontSize", 24, 14, 28),
-    phone: receiptPreviewNumber("settingReceiptCustomerPhoneFontSize", 20, 14, 24),
-    margin: receiptPreviewNumber("settingReceiptSideMargin", 4, 0, 20),
-    line: receiptPreviewNumber("settingReceiptLineHeight", 1.05, 1, 1.12)
+    paper: receiptPreviewNumber("settingReceiptPaperWidth", 576, 320, 700),
+    header: receiptPreviewNumber("settingReceiptHeaderFontSize", 28, 8, 80),
+    item: receiptPreviewNumber("settingReceiptItemFontSize", 20, 8, 80),
+    size: receiptPreviewNumber("settingReceiptSizeFontSize", 17, 8, 60),
+    choiceLabel: receiptPreviewNumber("settingReceiptChoiceLabelFontSize", 16, 8, 60),
+    option: receiptPreviewNumber("settingReceiptOptionFontSize", 18, 8, 60),
+    price: receiptPreviewNumber("settingReceiptPriceFontSize", 20, 8, 80),
+    details: receiptPreviewNumber("settingReceiptDetailsFontSize", 16, 8, 60),
+    customer: receiptPreviewNumber("settingReceiptCustomerNameFontSize", 24, 8, 90),
+    phone: receiptPreviewNumber("settingReceiptCustomerPhoneFontSize", 20, 8, 90),
+    margin: receiptPreviewNumber("settingReceiptSideMargin", 4, 0, 40),
+    line: receiptPreviewNumber("settingReceiptLineHeight", 1.05, 0.8, 1.8)
   };
   preview.style.setProperty("--preview-paper", `${values.paper}px`);
   preview.style.setProperty("--preview-header", `${values.header}px`);
@@ -2321,7 +2938,21 @@ function updateAdminLayoutMode(tabKey = "orders") {
   document.body.classList.toggle("admin-pc-mode", tabKey !== "orders");
 }
 
+
+function updateGloriaAdminTitle(tabKey = "orders") {
+  const titleNode = document.querySelector(".gf-current-title");
+  const labelMap = {
+    menu: "Meny oppsett",
+    orders: "Bestillinger",
+    analytics: "Dashboard",
+    basic: "Grunninfo",
+    backup: "Yedek"
+  };
+  if (titleNode) titleNode.textContent = labelMap[tabKey] || "Bestillinger";
+}
+
 function setAdminView(tabKey = "orders") {
+  updateGloriaAdminTitle(tabKey);
   const wasMenuActive = document.querySelector('[data-admin-page="menu"]')?.classList.contains("active");
   updateAdminLayoutMode(tabKey);
   const targetPage = tabKey === "menu" ? "menu" : tabKey === "orders" ? "orders" : tabKey === "analytics" ? "analytics" : "settings";
@@ -2903,6 +3534,7 @@ async function printOrderReceipt(orderId, overrides = {}) {
     });
     if (!printResponse.ok) throw new Error(`Printer-server svarte ${printResponse.status}`);
 
+    recordPrinterStatus(true);
     setStatus("Kvittering skrevet ut.");
     showToast("Kvittering skrevet ut", 2000);
   try {
@@ -2915,6 +3547,7 @@ async function printOrderReceipt(orderId, overrides = {}) {
   }
   } catch (error) {
     console.error(error);
+    recordPrinterStatus(false, error?.message || "Kvittering kunne ikke skrives ut.");
     setStatus("Kvittering kunne ikke skrives ut.");
     showToast("Kvittering kunne ikke skrives ut", 2000);
   } finally {
@@ -3777,7 +4410,7 @@ function updateProductFromFields() {
     optionGroupIds: uniqueIds(currentProduct.optionGroupIds),
     optionGroupIdsBySize: Object.keys(cleanedBySize).length ? cleanedBySize : undefined
   }, prices);
-  category.items[selectedProductIndex] = cleanObject(productData);
+  category.items[selectedProductIndex] = cleanObject(normalizeTimedSoldOutItem(productData));
   renderProducts();
   renderAssignedGroups();
 }
@@ -3832,6 +4465,27 @@ Denne kategorien har ${productCount} produkter. Produktene blir også slettet.` 
   if (selectedCategoryIndex < 0) selectedCategoryIndex = null;
   renderAll();
   writeLiveConfig("Kategori slettet fra Firebase.");
+}
+
+function duplicateCategory(categoryIndex = selectedCategoryIndex) {
+  if (!config || !Array.isArray(config.sections)) return;
+  const index = Number(categoryIndex);
+  const source = config.sections[index];
+  if (!source) return;
+  const clone = JSON.parse(JSON.stringify(source));
+  clone.id = `${source.id || "kategori"}-kopi-${Date.now()}`;
+  clone.title = `${source.title || "Kategori"} kopi`;
+  clone.items = asArray(clone.items).map((item) => ({
+    ...item,
+    id: `${item.id || makeId(item.name || "produkt")}-kopi-${Date.now()}-${Math.floor(Math.random() * 999)}`
+  }));
+  config.sections.splice(index + 1, 0, clone);
+  selectedCategoryIndex = index + 1;
+  selectedProductIndex = null;
+  productEditorOpen = false;
+  editingCategoryIndex = null;
+  renderAll();
+  writeLiveConfig("Kategori kopiert.");
 }
 
 function addProduct() {
@@ -4082,6 +4736,7 @@ categoryButtons.addEventListener("click", (event) => {
     selectedProductIndex = null;
     productEditorOpen = false;
     if (menuAction.dataset.categoryAction === "delete") deleteCategory();
+    else if (menuAction.dataset.categoryAction === "copy") duplicateCategory(selectedCategoryIndex);
     else if (menuAction.dataset.categoryAction === "edit") {
       editingCategoryIndex = selectedCategoryIndex;
       renderAll();
@@ -4149,11 +4804,97 @@ categoryButtons.addEventListener("dragstart", (event) => {
   }
 });
 
+
+function clearAdminGroupDropTargets() {
+  categoryButtons?.querySelectorAll(".group-drop-target, .group-drop-success").forEach((element) => {
+    element.classList.remove("group-drop-target", "group-drop-success");
+  });
+  assignedGroups?.querySelectorAll(".drag-over").forEach((element) => element.classList.remove("drag-over"));
+  assignedGroups?.classList.remove("drag-over");
+  assignedGroups?.closest(".assigned-groups")?.classList.remove("drag-over");
+}
+
+function productTargetFromDragEvent(event) {
+  if (!draggedGroupId) return null;
+  const productButton = event.target.closest("[data-category-product]");
+  if (productButton) {
+    const [categoryIndex, productIndex] = productButton.dataset.categoryProduct.split(":").map(Number);
+    if (Number.isFinite(categoryIndex) && Number.isFinite(productIndex)) {
+      return { element: productButton, categoryIndex, productIndex };
+    }
+  }
+
+  const editor = event.target.closest("#inlineProductEditorMount, .inline-product-editor-mount, .product-form, .product-editor-card");
+  if (editor && selectedCategoryIndex !== null && selectedProductIndex !== null) {
+    return { element: editor, categoryIndex: selectedCategoryIndex, productIndex: selectedProductIndex };
+  }
+
+  return null;
+}
+
+function assignGroupToProductByIndex(groupId, categoryIndex, productIndex, area = "common") {
+  const category = config?.sections?.[categoryIndex];
+  const product = category?.items?.[productIndex];
+  if (!product || !groupId) return false;
+
+  if (area === "common") {
+    product.optionGroupIds = uniqueIds([...(product.optionGroupIds || []), groupId]);
+  } else {
+    product.optionGroupIdsBySize = product.optionGroupIdsBySize || {};
+    product.optionGroupIdsBySize[area] = uniqueIds([...(product.optionGroupIdsBySize[area] || []), groupId]);
+  }
+
+  selectedCategoryIndex = categoryIndex;
+  selectedProductIndex = productIndex;
+  productEditorOpen = true;
+  renderProducts();
+  renderProductEditor();
+  writeLiveConfig("Valggruppe lagt til på produktet.");
+  return true;
+}
+
+
 categoryButtons.addEventListener("dragover", (event) => {
+  if (draggedGroupId) {
+    const target = productTargetFromDragEvent(event);
+    if (!target) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    categoryButtons.querySelectorAll(".group-drop-target").forEach((element) => {
+      if (element !== target.element) element.classList.remove("group-drop-target");
+    });
+    target.element.classList.add("group-drop-target");
+    return;
+  }
+
   if (event.target.closest("[data-category-drag], [data-product-drag]")) event.preventDefault();
 });
 
+categoryButtons.addEventListener("dragleave", (event) => {
+  if (!draggedGroupId) return;
+  const target = productTargetFromDragEvent(event);
+  if (!target) return;
+  const next = event.relatedTarget;
+  if (next && target.element.contains(next)) return;
+  target.element.classList.remove("group-drop-target");
+});
+
 categoryButtons.addEventListener("drop", (event) => {
+  const groupTarget = productTargetFromDragEvent(event);
+  if (draggedGroupId && groupTarget) {
+    event.preventDefault();
+    groupTarget.element.classList.remove("group-drop-target");
+    groupTarget.element.classList.add("group-drop-success");
+    const groupId = draggedGroupId;
+    draggedGroupId = null;
+    draggedGroupIndex = null;
+    assignGroupToProductByIndex(groupId, groupTarget.categoryIndex, groupTarget.productIndex, "common");
+    window.setTimeout(() => {
+      categoryButtons.querySelectorAll(".group-drop-success").forEach((element) => element.classList.remove("group-drop-success"));
+    }, 1000);
+    return;
+  }
+
   event.preventDefault();
   const productTarget = event.target.closest("[data-product-drag]");
   if (draggedProductIndex !== null && productTarget) {
@@ -4182,7 +4923,10 @@ categoryButtons.addEventListener("drop", (event) => {
 categoryButtons.addEventListener("dragend", () => {
   draggedCategoryIndex = null;
   draggedProductIndex = null;
+  draggedGroupId = null;
+  draggedGroupIndex = null;
   categoryButtons.querySelectorAll(".dragging").forEach((element) => element.classList.remove("dragging"));
+  clearAdminGroupDropTargets();
 });
 
 document.addEventListener("click", (event) => {
@@ -4237,6 +4981,7 @@ if (assignedGroups) {
     draggedGroupId = null;
     window.setTimeout(() => box?.classList.remove("drop-success"), 900);
     renderGroupManager();
+    renderAssignedGroups();
   });
 }
 
@@ -4300,6 +5045,19 @@ if (optionGroupsAdmin) {
       if (card) card.classList.add("active");
 
       if (panel) panel.hidden = !shouldOpen;
+      return;
+    }
+
+    const requiredToggle = event.target.closest("[data-set-group-required]");
+    if (requiredToggle) {
+      const groupIndex = Number(requiredToggle.dataset.groupIndex);
+      const group = config.optionGroups[groupIndex];
+      if (!group) return;
+      group.required = requiredToggle.dataset.setGroupRequired === "true";
+      editingGroupIndex = groupIndex;
+      selectedGroupIndex = groupIndex;
+      renderGroupManager();
+      scheduleSave();
       return;
     }
 
@@ -4394,6 +5152,7 @@ if (optionGroupsAdmin) {
     draggedGroupIndex = null;
     optionGroupsAdmin.querySelectorAll(".dragging").forEach((element) => element.classList.remove("dragging"));
     assignedGroups?.classList.remove("drag-over");
+    clearAdminGroupDropTargets();
   });
 }
 
@@ -4414,6 +5173,8 @@ siteSettingFields.forEach((field) => {
   field.addEventListener("input", () => updateSiteSettingFromField(field));
   field.addEventListener("change", () => updateSiteSettingFromField(field));
 });
+
+bindOpeningHoursPanelEvents();
 
 document.querySelectorAll("[data-receipt-preset='large']").forEach((button) => {
   button.addEventListener("click", applyReceiptPresetLarge);
@@ -4905,6 +5666,208 @@ if (extrasPanel) {
 })();
 
 
+
+/* ===== V341: Canlı cihaz/SMS/yazıcı status paneli ===== */
+const LOCAL_PRINTER_STATUS_URL = "http://127.0.0.1:5050/";
+let deviceSmsStatusSnapshot = null;
+let deviceSmsCurrentJobSnapshot = null;
+let devicePrinterState = {
+  online: false,
+  known: false,
+  lastCheck: null,
+  lastOk: null,
+  lastError: ""
+};
+
+function getElement(id) {
+  return document.getElementById(id);
+}
+
+function formatStatusAgo(value) {
+  if (!value) return "-";
+  const date = value instanceof Date ? value : new Date(value);
+  const time = date.getTime();
+  if (!Number.isFinite(time)) return "-";
+  const seconds = Math.max(0, Math.round((Date.now() - time) / 1000));
+  if (seconds < 8) return "akkurat nå";
+  if (seconds < 60) return `${seconds} sekunder siden`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} minutter siden`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} timer siden`;
+  return date.toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function setDeviceRow(rowId, state, textId, text, subTextId = "", subText = "") {
+  const row = getElement(rowId);
+  const dot = row?.querySelector(".device-status-dot");
+  if (row) {
+    row.classList.toggle("is-online", state === "online");
+    row.classList.toggle("is-offline", state === "offline");
+    row.classList.toggle("is-waiting", state === "waiting");
+  }
+  if (dot) {
+    dot.classList.toggle("online", state === "online");
+    dot.classList.toggle("offline", state === "offline");
+    dot.classList.toggle("waiting", state === "waiting");
+  }
+  const textEl = getElement(textId);
+  if (textEl) textEl.textContent = text;
+  if (subTextId) {
+    const subEl = getElement(subTextId);
+    if (subEl) subEl.textContent = subText;
+  }
+}
+
+function smsHeartbeatIsFresh(status = {}) {
+  const lastSeen = new Date(status.lastSeen || status.updatedAt || 0).getTime();
+  return Number.isFinite(lastSeen) && Date.now() - lastSeen < 30000;
+}
+
+function renderDeviceStatusPanel() {
+  const browserOnline = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+  const firebaseOnline = adminFirebaseConnectionKnown ? adminFirebaseConnected : false;
+
+  setDeviceRow(
+    "deviceFirebaseRow",
+    browserOnline && firebaseOnline ? "online" : browserOnline ? "waiting" : "offline",
+    "deviceFirebaseText",
+    !browserOnline ? "Offline · Ingen internett" : firebaseOnline ? "Tilkoblet Firebase" : "Kobler til Firebase..."
+  );
+
+  const sms = deviceSmsStatusSnapshot || {};
+  const smsFresh = smsHeartbeatIsFresh(sms);
+  setDeviceRow(
+    "deviceSmsRow",
+    smsFresh ? "online" : "offline",
+    "deviceSmsText",
+    smsFresh ? "Tilkoblet ICE SMS-side" : "Offline / ingen aktiv heartbeat",
+    "deviceSmsSubText",
+    smsFresh
+      ? `${sms.status || "aktiv"} · ${sms.pageUrl || "ICE Min Side"}`
+      : "Åpne ICE Send SMS-siden og sjekk at Tampermonkey er aktiv."
+  );
+
+  setDeviceRow(
+    "devicePrinterRow",
+    devicePrinterState.known ? (devicePrinterState.online ? "online" : "offline") : "waiting",
+    "devicePrinterText",
+    !devicePrinterState.known
+      ? "Sjekker lokal print-server..."
+      : devicePrinterState.online
+        ? "Tilkoblet lokal print-server"
+        : "Offline · print-server svarer ikke",
+    "devicePrinterSubText",
+    devicePrinterState.online
+      ? "Klar for kvittering via 127.0.0.1:5050"
+      : (devicePrinterState.lastError || "Start PowerShell print-serveren før utskrift.")
+  );
+
+  const smsLastSeen = getElement("deviceSmsLastSeenText");
+  if (smsLastSeen) smsLastSeen.textContent = sms.lastSeen ? formatStatusAgo(sms.lastSeen) : "-";
+
+  const lastJob = deviceSmsCurrentJobSnapshot || {};
+  const smsLastJob = getElement("deviceSmsLastJobText");
+  if (smsLastJob) {
+    smsLastJob.textContent = lastJob.id
+      ? `${lastJob.status || "pending"} · ${lastJob.phone || ""}`
+      : "-";
+  }
+
+  const printerLastCheck = getElement("devicePrinterLastCheckText");
+  if (printerLastCheck) printerLastCheck.textContent = devicePrinterState.lastCheck ? formatStatusAgo(devicePrinterState.lastCheck) : "-";
+
+  const browserText = getElement("deviceBrowserText");
+  if (browserText) {
+    const platform = navigator.userAgentData?.platform || navigator.platform || "nettleser";
+    browserText.textContent = platform;
+  }
+
+  const overall = getElement("deviceOverallStatus");
+  const bigDot = overall?.querySelector(".device-big-dot");
+  const overallStrong = overall?.querySelector("strong");
+  const overallSmall = overall?.querySelector("small");
+  const allReady = browserOnline && firebaseOnline && smsFresh && devicePrinterState.online;
+  const partlyReady = browserOnline && firebaseOnline && (smsFresh || devicePrinterState.online);
+
+  if (bigDot) {
+    bigDot.classList.toggle("online", allReady);
+    bigDot.classList.toggle("waiting", !allReady && partlyReady);
+    bigDot.classList.toggle("offline", !partlyReady);
+    bigDot.textContent = allReady ? "✓" : partlyReady ? "!" : "×";
+  }
+  if (overallStrong) {
+    overallStrong.textContent = allReady ? "Alt er koblet til" : partlyReady ? "Delvis tilkoblet" : "Mangler tilkobling";
+  }
+  if (overallSmall) {
+    overallSmall.textContent = allReady
+      ? "SMS, Firebase og skriver ser klare ut."
+      : "Se linjene under for hva som mangler.";
+  }
+}
+
+function recordPrinterStatus(online, message = "") {
+  devicePrinterState = {
+    ...devicePrinterState,
+    online: Boolean(online),
+    known: true,
+    lastCheck: new Date().toISOString(),
+    lastOk: online ? new Date().toISOString() : devicePrinterState.lastOk,
+    lastError: online ? "" : message
+  };
+  renderDeviceStatusPanel();
+}
+
+async function checkLocalPrinterStatus() {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 2500);
+  try {
+    // no-cors gjør at vi kan se om lokal server svarer uten å kreve CORS-header.
+    await fetch(LOCAL_PRINTER_STATUS_URL, {
+      method: "GET",
+      mode: "no-cors",
+      cache: "no-store",
+      signal: controller.signal
+    });
+    recordPrinterStatus(true);
+  } catch (error) {
+    recordPrinterStatus(false, error?.name === "AbortError" ? "Timeout mot 127.0.0.1:5050" : "Kunne ikke nå 127.0.0.1:5050");
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function startDeviceStatusMonitor() {
+  renderDeviceStatusPanel();
+  checkLocalPrinterStatus();
+  window.setInterval(checkLocalPrinterStatus, 15000);
+  document.querySelectorAll("[data-device-refresh]").forEach((button) => {
+    if (button.dataset.deviceRefreshBound === "true") return;
+    button.dataset.deviceRefreshBound = "true";
+    button.addEventListener("click", () => {
+      checkLocalPrinterStatus();
+      renderDeviceStatusPanel();
+    });
+  });
+
+  if (iceSmsDeviceStatusRef) {
+    iceSmsDeviceStatusRef.on("value", (snapshot) => {
+      deviceSmsStatusSnapshot = snapshot.val() || null;
+      renderDeviceStatusPanel();
+    });
+  }
+
+  if (iceSmsCurrentRef) {
+    iceSmsCurrentRef.on("value", (snapshot) => {
+      deviceSmsCurrentJobSnapshot = snapshot.val() || null;
+      renderDeviceStatusPanel();
+    });
+  }
+
+  window.setInterval(renderDeviceStatusPanel, 5000);
+}
+
+
 /* ===== V141: Online/Offline-indikator for Bestillinger ===== */
 let adminBrowserOnline = typeof navigator === "undefined" ? true : navigator.onLine !== false;
 let adminFirebaseConnected = false;
@@ -4932,6 +5895,7 @@ function setOrdersConnectionIndicator({ browserOnline = adminBrowserOnline, fire
   target.classList.toggle("is-online", isHealthy);
   target.classList.toggle("is-offline", !isHealthy);
   target.innerHTML = `<i class="orders-status-dot"></i>${text}`;
+  renderDeviceStatusPanel();
 }
 
 function updateBrowserConnectionIndicator() {
@@ -5016,6 +5980,7 @@ function initBasicSettingsTabs() {
 initBasicSettingsTabs();
 
 startOrdersConnectionIndicator();
+startDeviceStatusMonitor();
 startRealtimeSync();
 setAdminView("orders");
 listenForOrders();

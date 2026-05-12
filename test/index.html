@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=330">
+    <link rel="stylesheet" href="kol-core.css?v=342">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -803,6 +803,7 @@ const categoryTabs = document.querySelector("#categoryTabs");
 let activeCategoryTabId = "";
 let menuSearchQuery = "";
 let categoryScrollRaf = 0;
+let soldOutExpiryRefreshTimer = null;
 const brandHero = document.querySelector("#brandHero");
 const brandLogoImage = document.querySelector("#brandLogoImage");
 const brandDefaultInitials = document.querySelector("#brandDefaultInitials");
@@ -1545,6 +1546,22 @@ function parseTimeParts(value = "") {
   return { hour: Number(match[1]), minute: Number(match[2]) };
 }
 
+
+function dayKeyForDate(date = new Date()) {
+  return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(date).getDay()];
+}
+
+function isConfiguredOpenDay(date = new Date()) {
+  const settings = normalizeSiteSettings(siteSettings);
+  return normalizeOpenDays(settings.openDays, settings.openingDays).includes(dayKeyForDate(date));
+}
+
+function activeServicePause(settings = normalizeSiteSettings(siteSettings)) {
+  const until = pauseUntilTimestamp(settings);
+  if (!until || until <= Date.now()) return null;
+  return { until: new Date(until), message: String(settings.servicePauseMessage || "").trim() };
+}
+
 function getOrderingTimes() {
   const settings = normalizeSiteSettings(siteSettings);
   const matches = String(settings.openingTime || "14:00 - 22:00").match(/\d{1,2}[:.]\d{2}/g) || [];
@@ -1591,15 +1608,34 @@ function getOrderingWindow(base = new Date()) {
 }
 
 function isOrderingOpenNow() {
+  const settings = normalizeSiteSettings(siteSettings);
+  if (activeServicePause(settings)) return false;
   const now = new Date();
   const { openAt, closeAt } = getOrderingWindow(now);
-  return now >= openAt && now <= closeAt;
+  return now >= openAt && now <= closeAt && isConfiguredOpenDay(openAt);
 }
 
 function nextOrderingOpenDate(base = new Date()) {
-  const { openAt, closeAt } = getOrderingWindow(base);
-  if (base >= openAt && base <= closeAt) return base;
-  return openAt;
+  const settings = normalizeSiteSettings(siteSettings);
+  const pause = activeServicePause(settings);
+  if (pause) return pause.until;
+
+  if (isOrderingOpenNow()) return base;
+
+  const times = getOrderingTimes();
+  for (let offset = 0; offset < 14; offset += 1) {
+    const day = new Date(base);
+    day.setDate(base.getDate() + offset);
+    const openAt = dateWithTime(times.open, day);
+    let closeAt = dateWithTime(times.close, day);
+    if (closeAt <= openAt) closeAt = new Date(closeAt.getTime() + 24 * 60 * 60 * 1000);
+
+    if (!isConfiguredOpenDay(openAt)) continue;
+    if (base <= openAt) return openAt;
+    if (base > openAt && base <= closeAt) return base;
+  }
+
+  return dateWithTime(times.open, base);
 }
 
 function formatClock(date) {
@@ -1673,11 +1709,15 @@ function canAcceptOrdersNow() {
 }
 
 function closedOrderingMessageText() {
+  const pause = activeServicePause();
+  if (pause) return pause.message || `Restauranten er midlertidig pauset. Bestilling kan sendes igjen kl. ${formatClock(pause.until)}.`;
   const nextOpen = nextOrderingOpenDate(new Date());
   return `Restauranten er stengt nå. Bestilling kan ikke sendes før vi åpner kl. ${formatClock(nextOpen)}.`;
 }
 
 function closedStatusShortText() {
+  const pause = activeServicePause();
+  if (pause) return `⛔ PAUSE · Åpner kl. ${formatClock(pause.until)}`;
   return `⛔ STENGT · Åpner kl. ${formatClock(nextOrderingOpenDate(new Date()))}`;
 }
 
@@ -2634,24 +2674,136 @@ function asArray(value) {
 }
 
 
-// Türkçe not: Admin panelde ürün/kategori gizleme ve utsolgt burada kontrol edilir.
-// hidden=true: müşteri tarafında hiç gösterilmez.
-// soldOut=true veya soldOutUntil gelecekteyse: müşteri UTSOLGT görür ama sepete ekleyemez.
+
+// Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
+// "datetime-local" ISO değeri (2026-05-12T22:57) ve Norveç görünümü
+// (12.05.2026 22:57) ikisi de desteklenir.
+function parseKolDateTime(value = "") {
+  const raw = String(value || "").replace(/\u00A0/g, " ").trim();
+  if (!raw) return null;
+
+  let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (match) {
+    const [, year, month, day, hour = "0", minute = "0", second = "0"] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+    return Number.isFinite(date.getTime()) ? date.getTime() : null;
+  }
+
+  match = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:,?\s*(\d{1,2})[:.](\d{2}))?$/);
+  if (match) {
+    let [, day, month, year, hour = "0", minute = "0"] = match;
+    year = Number(year);
+    if (year < 100) year += 2000;
+    const date = new Date(year, Number(month) - 1, Number(day), Number(hour), Number(minute), 0);
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === Number(month) - 1 &&
+      date.getDate() === Number(day)
+    ) {
+      return date.getTime();
+    }
+    return null;
+  }
+
+  const fallback = Date.parse(raw);
+  return Number.isFinite(fallback) ? fallback : null;
+}
+
+function toDateTimeLocalValue(value = "") {
+  const time = parseKolDateTime(value);
+  if (!Number.isFinite(time)) return "";
+  const date = new Date(time);
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function isDateInFuture(value = "") {
-  const time = Date.parse(value);
+  const time = parseKolDateTime(value);
   return Number.isFinite(time) && time > Date.now();
 }
 
+// Türkçe not:
+// Üründe/kategoride süreli gizleme veya süreli UTSOLGT varsa süre dolana kadar aktif kalır.
+// Süre dolunca hidden/soldOut eski işaretli kalsa bile müşteri tarafında otomatik online olur.
+function isTimedStatusActive(item = {}) {
+  const until = String(item?.soldOutUntil || "").trim();
+  if (!until) return false;
+  const time = parseKolDateTime(until);
+  if (!Number.isFinite(time)) {
+    // Tarih yazılmış ama tarayıcı okuyamıyorsa ürünü yanlışlıkla online yapma.
+    return item.hidden === true || item.soldOut === true;
+  }
+  return time > Date.now();
+}
+
+function isTimedStatusExpired(item = {}) {
+  const until = String(item?.soldOutUntil || "").trim();
+  if (!until) return false;
+  const time = parseKolDateTime(until);
+  return Number.isFinite(time) && time <= Date.now();
+}
+
+function normalizeTimedSoldOutItem(item = {}) {
+  const next = { ...item };
+  if (isTimedStatusExpired(next)) {
+    next.hidden = false;
+    next.soldOut = false;
+    next.soldOutUntil = "";
+  }
+  return next;
+}
+
+function isTimedSoldOutActive(item = {}) {
+  return isTimedStatusActive(item);
+}
+
 function isHiddenItem(item = {}) {
-  return item.hidden === true;
+  if (item.hidden !== true) return false;
+  const until = String(item?.soldOutUntil || "").trim();
+  return until ? isTimedStatusActive(item) : true;
 }
 
 function isSoldOutItem(item = {}, parentSoldOut = false) {
-  return parentSoldOut || item.soldOut === true || isDateInFuture(item.soldOutUntil || "");
+  if (parentSoldOut) return true;
+  if (isHiddenItem(item)) return false;
+  const until = String(item?.soldOutUntil || "").trim();
+  if (until) return isTimedStatusActive(item);
+  return item.soldOut === true;
 }
 
+
 function visibleMenuItems(section = {}) {
-  return asArray(section.items).filter((item) => !isHiddenItem(item));
+  return asArray(section.items)
+    .map(normalizeTimedSoldOutItem)
+    .filter((item) => !isHiddenItem(item));
+}
+
+function findNextSoldOutExpiryTime() {
+  const expiryTimes = [];
+  asArray(menuSections).forEach((section) => {
+    asArray(section.items).forEach((item) => {
+      const time = parseKolDateTime(item?.soldOutUntil || "");
+      if (Number.isFinite(time) && time > Date.now()) expiryTimes.push(time);
+    });
+  });
+  return expiryTimes.length ? Math.min(...expiryTimes) : null;
+}
+
+function scheduleSoldOutExpiryRefresh() {
+  window.clearTimeout(soldOutExpiryRefreshTimer);
+  const nextTime = findNextSoldOutExpiryTime();
+  if (!nextTime) return;
+  const delay = Math.max(1000, Math.min(nextTime - Date.now() + 1200, 2147483000));
+  soldOutExpiryRefreshTimer = window.setTimeout(() => {
+    menuSections = asArray(menuSections).map((section) => {
+      const normalizedSection = normalizeTimedSoldOutItem(section);
+      return {
+        ...normalizedSection,
+        items: asArray(normalizedSection.items).map(normalizeTimedSoldOutItem)
+      };
+    });
+    renderMenu();
+  }, delay);
 }
 
 
@@ -2668,7 +2820,10 @@ function defaultSiteSettings() {
     postalCode: "2100",
     streetAddress: "ØGARDSVEGEN 44",
     openingDays: "Mandag, Onsdag - Søndag",
+    openDays: ["mon", "wed", "thu", "fri", "sat", "sun"],
     openingTime: "14:00 - 22:00",
+    servicePauseUntil: "",
+    servicePauseMessage: "",
     orderOpenTime: "14:00",
     orderCloseTime: "22:00",
     minPreorderMinutes: "30",
@@ -2725,12 +2880,90 @@ function composeOpeningTimeRange(openValue = "", closeValue = "") {
   return `${open} - ${close}`;
 }
 
+
+const KOL_OPENING_DAYS = [
+  { key: "mon", short: "Man", full: "Mandag" },
+  { key: "tue", short: "Tir", full: "Tirsdag" },
+  { key: "wed", short: "Ons", full: "Onsdag" },
+  { key: "thu", short: "Tors", full: "Torsdag" },
+  { key: "fri", short: "Fre", full: "Fredag" },
+  { key: "sat", short: "Lør", full: "Lørdag" },
+  { key: "sun", short: "Søn", full: "Søndag" }
+];
+
+function normalizeOpenDays(value, text = "") {
+  const valid = new Set(KOL_OPENING_DAYS.map((day) => day.key));
+  if (Array.isArray(value)) {
+    const days = value.filter((day) => valid.has(day));
+    if (days.length) return days;
+  }
+
+  const source = String(text || "").toLowerCase();
+  if (source.includes("mandag") && source.includes("søndag") && source.includes("-")) {
+    if (source.includes("onsdag") && !source.includes("tirsdag")) return ["mon", "wed", "thu", "fri", "sat", "sun"];
+    return KOL_OPENING_DAYS.map((day) => day.key);
+  }
+
+  const found = [];
+  const names = [
+    ["mon", "man", "mandag"],
+    ["tue", "tir", "tirsdag"],
+    ["wed", "ons", "onsdag"],
+    ["thu", "tor", "tors", "torsdag"],
+    ["fri", "fredag"],
+    ["sat", "lør", "lordag", "lørdag"],
+    ["sun", "søn", "sondag", "søndag"]
+  ];
+  names.forEach(([key, ...needles]) => {
+    if (needles.some((needle) => source.includes(needle))) found.push(key);
+  });
+  return found.length ? found : KOL_OPENING_DAYS.map((day) => day.key);
+}
+
+function formatOpeningDaysText(days = []) {
+  const keys = normalizeOpenDays(days);
+  if (keys.length === 7) return "Mandag - Søndag";
+
+  const indexOf = (key) => KOL_OPENING_DAYS.findIndex((day) => day.key === key);
+  const sorted = keys.slice().sort((a, b) => indexOf(a) - indexOf(b));
+  const parts = [];
+  let start = 0;
+
+  while (start < sorted.length) {
+    let end = start;
+    while (end + 1 < sorted.length && indexOf(sorted[end + 1]) === indexOf(sorted[end]) + 1) end += 1;
+    const first = KOL_OPENING_DAYS[indexOf(sorted[start])]?.full || sorted[start];
+    const last = KOL_OPENING_DAYS[indexOf(sorted[end])]?.full || sorted[end];
+    parts.push(start === end ? first : `${first} - ${last}`);
+    start = end + 1;
+  }
+
+  return parts.join(", ");
+}
+
+function pauseUntilTimestamp(settings = {}) {
+  const raw = String(settings.servicePauseUntil || "").trim();
+  if (!raw) return null;
+  const time = new Date(raw).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function isServicePauseActive(settings = {}) {
+  const until = pauseUntilTimestamp(settings);
+  return Boolean(until && until > Date.now());
+}
+
 function normalizeSiteSettings(value) {
   const merged = { ...defaultSiteSettings(), ...(value && typeof value === "object" ? value : {}) };
+  merged.openDays = normalizeOpenDays(merged.openDays, merged.openingDays);
+  merged.openingDays = formatOpeningDaysText(merged.openDays);
   const parts = splitOpeningTimeRange(merged.openingTime || `${merged.orderOpenTime || "14:00"} - ${merged.orderCloseTime || "22:00"}`);
   merged.openingTime = composeOpeningTimeRange(parts.open, parts.close);
   merged.orderOpenTime = parts.open;
   merged.orderCloseTime = parts.close;
+  if (!isServicePauseActive(merged)) {
+    merged.servicePauseUntil = "";
+  }
   return merged;
 }
 
@@ -2800,10 +3033,10 @@ function normalizeMenuConfig(config) {
     ...section,
     items: asArray(section.items).map((product) => {
       const hasGroupIds = Object.prototype.hasOwnProperty.call(product, "optionGroupIds");
-      return {
+      return normalizeTimedSoldOutItem({
         ...product,
         optionGroupIds: hasGroupIds ? asArray(product.optionGroupIds) : defaultGroupIdsForProduct(product, section)
-      };
+      });
     })
   }));
   return {
@@ -3927,6 +4160,7 @@ function renderMenu() {
   filterMenuRows(menuSearchQuery);
   setupMenuLazyLoader(visibleSections.length);
   requestCategoryScrollSync();
+  scheduleSoldOutExpiryRefresh();
 }
 function renderProductOptions() {
   const sizeOptions = renderSizeOptions();
