@@ -215,6 +215,25 @@
       text-align:center;
     }
 
+    .live{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      margin:10px 0 0;
+      color:#14532d;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .dot{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:#16a34a;
+      box-shadow:0 0 0 4px rgba(22,163,74,.13);
+    }
+
     .qr{
       margin:15px auto 0;
       width:100%;
@@ -250,6 +269,55 @@
       text-align:center;
       font-size:12px;
       line-height:1.35;
+    }
+
+    .history-wrap{
+      margin-top:15px;
+      padding-top:15px;
+      border-top:1px solid var(--line);
+    }
+
+    .history-title{
+      margin:0 0 10px;
+      text-align:center;
+      font-size:18px;
+      font-weight:800;
+    }
+
+    .history{
+      display:grid;
+      gap:8px;
+      max-height:300px;
+      overflow:auto;
+      padding-right:2px;
+    }
+
+    .event{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 11px;
+      background:#fff;
+    }
+
+    .event strong{
+      display:block;
+      font-size:14px;
+      line-height:1.25;
+    }
+
+    .event small{
+      display:block;
+      color:var(--muted);
+      margin-top:3px;
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .empty-hist{
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+      padding:10px 0 2px;
     }
 
     .hidden{display:none!important}
@@ -301,6 +369,10 @@
     const db = window.fbDb;
     const PUBLIC_BASE_URL = "https://bestill.online";
 
+    let liveUnsubs = [];
+    let liveCards = {};
+    let liveLogs = {};
+
     function cleanPhone(value){
       return String(value || "").replace(/\D/g,"").slice(-8);
     }
@@ -328,7 +400,9 @@
         return new Intl.DateTimeFormat("no-NO", {
           day:"2-digit",
           month:"2-digit",
-          year:"numeric"
+          year:"numeric",
+          hour:"2-digit",
+          minute:"2-digit"
         }).format(new Date(iso));
       }catch{
         return iso;
@@ -344,8 +418,52 @@
       el.innerHTML = `<div class="msg ${type}">${escapeHtml(text)}</div>`;
     }
 
-    function customerUrl(cardId){
-      return `${PUBLIC_BASE_URL}/gavekort.html?id=${encodeURIComponent(cardId)}`;
+    function clearLiveListeners(){
+      liveUnsubs.forEach(unsub => {
+        try{ unsub(); }catch{}
+      });
+      liveUnsubs = [];
+      liveCards = {};
+      liveLogs = {};
+    }
+
+    function sortCards(cards){
+      return cards.sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    }
+
+    function startLiveCards(cards){
+      clearLiveListeners();
+
+      cards.forEach(card => {
+        liveCards[card.id] = card;
+        liveLogs[card.id] = [];
+
+        const unsubCard = onValue(ref(db, `gavekort/${card.id}`), snap => {
+          if(snap.exists()){
+            const updated = { id:card.id, ...snap.val() };
+            if(updated.status === "deleted"){
+              delete liveCards[card.id];
+              delete liveLogs[card.id];
+            }else{
+              liveCards[card.id] = updated;
+            }
+            renderCards(sortCards(Object.values(liveCards)));
+          }
+        });
+
+        const unsubLog = onValue(ref(db, `gavekort_logg/${card.id}`), snap => {
+          const data = snap.exists() ? snap.val() : {};
+          liveLogs[card.id] = Object.entries(data || {})
+            .map(([id, item]) => ({ id, ...item }))
+            .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+            .slice(0, 30);
+          renderCards(sortCards(Object.values(liveCards)));
+        });
+
+        liveUnsubs.push(unsubCard, unsubLog);
+      });
+
+      renderCards(sortCards(cards));
     }
 
     function staffScanUrl(cardId){
@@ -354,6 +472,34 @@
 
     function qrImageUrl(cardId){
       return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(staffScanUrl(cardId))}`;
+    }
+
+    function eventLabel(type){
+      return type === "create" ? "Opprettet" :
+             type === "redeem" ? "Trekk" :
+             type === "topup" ? "Påfyll" :
+             type === "void" ? "Stengt" :
+             type === "activate" ? "Aktivert" :
+             type || "Hendelse";
+    }
+
+    function historyHtml(cardId){
+      const logs = liveLogs[cardId] || [];
+      if(!logs.length){
+        return `<div class="empty-hist">Ingen historikk ennå.</div>`;
+      }
+
+      return `
+        <div class="history">
+          ${logs.map(ev => `
+            <div class="event">
+              <strong>${escapeHtml(eventLabel(ev.type))} · ${money(ev.amount || 0)}</strong>
+              <small>${formatDate(ev.createdAt)} · Før: ${money(ev.before)} · Etter: ${money(ev.after)}</small>
+              ${ev.note ? `<small>${escapeHtml(ev.note)}</small>` : ""}
+            </div>
+          `).join("")}
+        </div>
+      `;
     }
 
     async function getCardById(cardId){
@@ -375,6 +521,7 @@
       const phone = cleanPhone(document.getElementById("phoneInput").value);
       const list = document.getElementById("giftList");
       list.innerHTML = "";
+      clearLiveListeners();
 
       if(phone.length !== 8){
         setMessage("Skriv et gyldig telefonnummer med 8 siffer.","bad");
@@ -393,7 +540,7 @@
         }
 
         setMessage("");
-        renderCards(cards);
+        startLiveCards(cards);
       }catch(err){
         console.error(err);
         setMessage("Kunne ikke hente gavekort akkurat nå.","bad");
@@ -402,6 +549,12 @@
 
     function renderCards(cards){
       const list = document.getElementById("giftList");
+
+      if(!cards.length){
+        list.innerHTML = `<div class="box"><p class="desc">Ingen aktiv gavekort.</p></div>`;
+        return;
+      }
+
       list.innerHTML = cards.map(card => {
         const active = card.status === "active";
         const statusText =
@@ -429,12 +582,19 @@
                 Opprettet: ${formatDate(card.createdAt)}
               </div>
 
+              <div class="live"><span class="dot"></span> Saldo oppdateres automatisk</div>
+
               <div class="qr">
                 <img src="${qrImageUrl(card.id)}" alt="QR-kode for gavekort">
                 <div>
                   <strong>Vis QR-koden i kassen</strong>
                   <span>Ansatte skanner denne når gavekortet brukes.</span>
                 </div>
+              </div>
+
+              <div class="history-wrap">
+                <h3 class="history-title">Historikk</h3>
+                ${historyHtml(card.id)}
               </div>
             </div>
           </article>
@@ -463,11 +623,7 @@
             return;
           }
 
-          renderCards([card]);
-
-          onValue(ref(db, `gavekort/${cardId}`), snap => {
-            if(snap.exists()) renderCards([{ id:cardId, ...snap.val() }]);
-          });
+          startLiveCards([card]);
         }catch(err){
           console.error(err);
           document.getElementById("giftList").innerHTML = `<div class="box"><p class="desc">Kunne ikke åpne gavekortet.</p></div>`;
