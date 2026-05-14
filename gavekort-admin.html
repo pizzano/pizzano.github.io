@@ -2,487 +2,412 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Gavekort Admin</title>
+  <title>KØL Gavekort Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
 
   <style>
-    :root {
-      --blue:#3F51B5;
-      --blue2:#4577d3;
-      --darkblue:#2655ad;
-      --orange:#ff7a1a;
+    :root{
+      --bg:#f5f6fa;
+      --card:#ffffff;
       --text:#111827;
       --muted:#6b7280;
       --line:#e5e7eb;
+      --blue:#3F51B5;
       --green:#16a34a;
       --red:#dc2626;
-      --bg:#eef3ff;
-      --card:#ffffff;
+      --shadow:0 10px 26px rgba(17,24,39,.10);
     }
 
-    * { box-sizing:border-box; }
-
-    body {
-      background-color: var(--darkblue);
-      font-family: Arial, sans-serif;
+    *{box-sizing:border-box}
+    body{
       margin:0;
-      padding:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      font-size:17px;
-      color:var(--text);
-    }
-
-    button, input, textarea { font:inherit; }
-
-    .container {
-      background-color:var(--blue2);
-      display:flex;
-      align-items:center;
-      flex-direction:column;
-      border:solid var(--blue);
-      border-width:0 1px;
-      min-width:330px;
-      width:99%;
-      max-width:760px;
       min-height:100vh;
-      box-shadow:0 0 10px rgba(0,0,0,.1);
-      gap:14px;
-      padding-bottom:28px;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Arial,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-size:16px;
     }
 
-    .header {
-      background-color:var(--blue);
-      min-height:50px;
-      color:white;
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:bold;
-      font-size:18px;
+    button,input,textarea{font:inherit}
+
+    .wrap{
+      width:min(680px,100%);
+      margin:0 auto;
+      min-height:100vh;
+      padding:14px 12px 34px;
+    }
+
+    .top{
+      background:#111827;
+      color:#fff;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:var(--shadow);
       text-align:center;
-      padding:8px 10px;
+      margin-bottom:12px;
       position:sticky;
-      top:0;
+      top:8px;
       z-index:10;
     }
 
-    .panel {
-      width:92%;
-      background:#fff;
-      border-radius:15px;
-      box-shadow:0 7px 20px rgba(0,0,0,.22);
-      padding:15px;
+    .top h1{
+      margin:0;
+      font-size:21px;
+      line-height:1.1;
     }
 
-    .panel-title {
-      margin:0 0 8px;
-      font-size:20px;
-      color:var(--blue);
-      text-align:center;
-    }
-
-    .help {
-      color:var(--muted);
-      font-size:14px;
-      text-align:center;
-      line-height:1.35;
-      margin:0 0 12px;
-    }
-
-    label {
-      display:block;
+    .top p{
+      margin:7px 0 0;
+      opacity:.82;
       font-size:13px;
-      color:var(--muted);
-      font-weight:bold;
-      margin:12px 0 6px;
     }
 
-    input, textarea {
-      width:100%;
-      min-height:46px;
+    .box{
+      background:var(--card);
       border:1px solid var(--line);
-      border-radius:10px;
-      padding:0 12px;
-      font-size:16px;
-      outline:none;
-      background:#fff;
+      border-radius:18px;
+      padding:15px;
+      box-shadow:var(--shadow);
+      margin-bottom:12px;
     }
 
-    textarea {
-      min-height:74px;
+    .title{
+      margin:0 0 6px;
+      font-size:18px;
+      text-align:center;
+    }
+
+    .desc{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      text-align:center;
+    }
+
+    label{
+      display:block;
+      margin:12px 0 6px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
+
+    input,textarea{
+      width:100%;
+      min-height:48px;
+      border:1px solid var(--line);
+      border-radius:13px;
+      padding:0 12px;
+      background:#fff;
+      outline:none;
+      font-size:16px;
+    }
+
+    textarea{
+      min-height:76px;
       padding-top:10px;
       resize:vertical;
     }
 
-    input:focus, textarea:focus {
+    input:focus,textarea:focus{
       border-color:var(--blue);
-      box-shadow:0 0 0 3px rgba(63,81,181,.15);
+      box-shadow:0 0 0 4px rgba(63,81,181,.12);
     }
 
-    .row {
+    .row{
       display:flex;
       gap:8px;
       align-items:center;
     }
 
-    .grow { flex:1; min-width:0; }
+    .grow{flex:1;min-width:0}
 
-    .button {
+    .btn{
       min-height:48px;
       border:0;
-      box-shadow:0 5px 0 rgba(0,0,0,.25);
-      background-image:radial-gradient(circle,#219dffcc,#219dffbd,#3e51c057);
-      color:white;
-      border-radius:11px;
+      border-radius:13px;
+      padding:0 13px;
+      background:var(--blue);
+      color:#fff;
+      font-size:15px;
+      font-weight:800;
       cursor:pointer;
-      text-align:center;
-      font-weight:bold;
-      font-size:16px;
-      padding:0 14px;
       white-space:nowrap;
     }
 
-    .button.dark {
-      background:#111827;
-      box-shadow:0 5px 0 rgba(0,0,0,.28);
-    }
-
-    .button.light {
+    .btn.dark{background:#111827}
+    .btn.green{background:var(--green)}
+    .btn.red{background:var(--red)}
+    .btn.light{
       background:#fff;
       color:#111827;
       border:1px solid var(--line);
-      box-shadow:none;
     }
 
-    .button.green {
-      background:#16a34a;
-      box-shadow:0 5px 0 rgba(0,0,0,.25);
-    }
-
-    .button.red {
-      background:#dc2626;
-      box-shadow:0 5px 0 rgba(0,0,0,.25);
-    }
-
-    .button:disabled {
+    .btn:disabled{
       opacity:.45;
       cursor:not-allowed;
-      box-shadow:none;
     }
 
-    .button:active {
-      transform:translateY(2px);
-      box-shadow:0 3px 0 rgba(0,0,0,.25);
-    }
+    .btn:active{transform:translateY(1px)}
 
-    .toolbar {
-      width:92%;
+    .toolbar{
       display:grid;
-      grid-template-columns:1fr 1fr 1fr;
+      grid-template-columns:1fr 1fr;
       gap:8px;
+      margin-bottom:12px;
     }
 
-    .toolbar .button {
-      width:100%;
-      padding:0 8px;
-    }
+    .toolbar .btn{width:100%}
+    .active{background:#111827!important;color:#fff!important;border-color:#111827!important}
 
-    .active-tab {
-      background:#111827 !important;
-      color:#fff !important;
-      border-color:#111827 !important;
-    }
+    .hidden{display:none!important}
 
-    .hidden { display:none !important; }
-
-    .message {
-      margin-top:12px;
+    .msg{
+      margin-top:10px;
       padding:11px;
-      border-radius:10px;
+      border-radius:12px;
       font-size:14px;
-      text-align:center;
       line-height:1.35;
+      text-align:center;
       background:#f3f4f6;
-      color:#111827;
     }
+    .msg.ok{background:#dcfce7;color:#14532d}
+    .msg.bad{background:#fee2e2;color:#7f1d1d}
+    .msg.warn{background:#fef3c7;color:#78350f}
 
-    .message.ok { background:#dcfce7; color:#14532d; }
-    .message.bad { background:#fee2e2; color:#7f1d1d; }
-    .message.warn { background:#fef3c7; color:#78350f; }
-
-    .gift-list {
-      width:92%;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .gift-card {
+    .gift{
       background:#fff;
-      border-radius:16px;
-      box-shadow:0 7px 20px rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
       overflow:hidden;
-      border:1px solid rgba(255,255,255,.55);
+      margin-bottom:12px;
     }
 
-    .gift-top {
-      background:var(--blue);
-      color:#fff;
-      padding:13px 14px;
+    .gift-head{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:10px;
+      padding:14px 15px;
+      background:var(--blue);
+      color:#fff;
     }
 
-    .gift-name {
+    .name{
       margin:0;
-      font-size:19px;
+      font-size:18px;
       line-height:1.15;
     }
 
-    .gift-phone {
-      font-size:13px;
+    .phone{
       margin-top:4px;
-      opacity:.9;
+      font-size:13px;
+      opacity:.82;
     }
 
-    .badge {
+    .badge{
+      flex:0 0 auto;
       display:inline-flex;
       align-items:center;
-      padding:6px 9px;
       border-radius:999px;
-      background:#d1fae5;
-      color:#065f46;
+      padding:6px 9px;
+      background:#dcfce7;
+      color:#14532d;
       font-size:12px;
-      font-weight:bold;
-      white-space:nowrap;
+      font-weight:800;
     }
 
-    .badge.closed { background:#fee2e2; color:#991b1b; }
+    .badge.closed{background:#fee2e2;color:#991b1b}
 
-    .gift-body { padding:16px; }
+    .gift-body{padding:16px 15px}
 
-    .saldo {
+    .saldo{
       text-align:center;
-      margin:4px 0 10px;
+      margin:0 0 8px;
       font-size:44px;
       line-height:1;
-      color:var(--blue);
-      font-weight:900;
+      font-weight:950;
       letter-spacing:-2px;
+      color:var(--blue);
     }
 
-    .small {
-      font-size:13px;
+    .small{
       color:var(--muted);
-      text-align:center;
+      font-size:13px;
       line-height:1.4;
+      text-align:center;
     }
 
-    .meta {
-      display:flex;
-      flex-wrap:wrap;
-      gap:7px;
-      margin-top:12px;
-      justify-content:center;
-    }
-
-    .pill {
-      background:#eef2ff;
-      color:#3730a3;
-      border-radius:999px;
-      padding:7px 9px;
-      font-size:12px;
-      font-weight:bold;
-      max-width:100%;
-      word-break:break-all;
-    }
-
-    .divider {
+    .divider{
       height:1px;
       background:var(--line);
       margin:15px 0;
     }
 
-    .url-box {
-      background:#f8fafc;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:11px;
-      margin-top:10px;
+    .mini-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
     }
 
-    .url-box input {
+    .link-line{
+      display:flex;
+      gap:8px;
+      margin-top:8px;
+    }
+
+    .link-line input{
+      min-height:42px;
       font-size:12px;
-      min-height:40px;
       color:#3730a3;
       background:#eef2ff;
-      border-color:#c7d2fe;
-      text-align:left;
     }
 
-    .small-actions {
+    .actions{
       display:flex;
       flex-wrap:wrap;
       gap:8px;
-      margin-top:10px;
+      margin-top:9px;
     }
 
-    .small-actions .button {
+    .actions .btn{
       min-height:40px;
-      border-radius:10px;
       font-size:13px;
       padding:0 10px;
     }
 
-    .qr-preview {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-top:12px;
-      padding:12px;
-      background:#f8fafc;
-      border:1px dashed #cbd5e1;
-      border-radius:12px;
-    }
-
-    .qr-preview img {
-      width:120px;
-      height:120px;
-      background:#fff;
-      padding:4px;
-      border-radius:8px;
-    }
-
-    .history {
+    .history{
       display:grid;
-      gap:8px;
-      max-height:260px;
+      gap:7px;
+      max-height:230px;
       overflow:auto;
       padding-right:4px;
-      margin-top:8px;
     }
 
-    .event {
+    .event{
       border:1px solid var(--line);
       border-radius:12px;
       padding:9px 10px;
       background:#fff;
     }
 
-    .event strong {
+    .event strong{
       display:block;
       font-size:14px;
     }
 
-    .event small {
+    .event small{
       display:block;
       color:var(--muted);
       margin-top:2px;
       font-size:12px;
     }
 
-    .empty {
-      background:#fff;
-      border-radius:14px;
-      padding:18px;
-      text-align:center;
+    .remember{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      margin-top:10px;
       color:var(--muted);
-      box-shadow:0 7px 20px rgba(0,0,0,.22);
+      font-size:13px;
     }
 
-    @media (max-width:560px) {
-      .toolbar { grid-template-columns:1fr; }
-      .row { flex-direction:column; align-items:stretch; }
-      .button { width:100%; }
-      .saldo { font-size:40px; }
+    .remember input{
+      width:auto;
+      min-height:auto;
+    }
+
+    .footer{
+      color:#6b7280;
+      font-size:12px;
+      text-align:center;
+      padding:8px;
+    }
+
+    @media(max-width:560px){
+      .row,.link-line{flex-direction:column;align-items:stretch}
+      .btn{width:100%}
+      .saldo{font-size:39px}
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">🔐 KØL Gavekort Admin</div>
 
-    <section id="loginBox" class="panel" style="margin-top:12px;">
-      <h2 class="panel-title">Admin innlogging</h2>
-      <p class="help" id="loginHelp">Skriv PIN for å administrere gavekort.</p>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Gavekort Admin</h1>
+      <p>Opprett, fyll på og trekk saldo</p>
+    </header>
+
+    <section id="loginBox" class="box">
+      <h2 class="title">Logg inn</h2>
+      <p id="loginText" class="desc">Skriv PIN én gang. Den lagres på denne enheten.</p>
 
       <label for="pinInput">PIN</label>
       <div class="row">
-        <input id="pinInput" class="grow" type="password" inputmode="numeric" placeholder="Admin PIN">
-        <button class="button dark" onclick="window.login()">Logg inn</button>
+        <input id="pinInput" class="grow" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN">
+        <button class="btn dark" onclick="window.login()">Logg inn</button>
       </div>
 
-      <div class="message warn">Ikke del denne admin-siden offentlig. PIN i HTML er enkel beskyttelse.</div>
+      <label class="remember">
+        <input id="rememberPin" type="checkbox" checked>
+        Husk innlogging på denne enheten
+      </label>
     </section>
 
-    <section id="adminApp" class="hidden" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:14px;">
+    <section id="adminApp" class="hidden">
       <div class="toolbar">
-        <button id="tabCreate" class="button active-tab" onclick="window.showPanel('createPanel')">+ Nytt</button>
-        <button id="tabSearch" class="button light" onclick="window.showPanel('searchPanel')">Søk / trekk</button>
-        <button id="tabHelp" class="button light" onclick="window.showPanel('helpPanel')">Info</button>
+        <button id="tabCreate" class="btn active" onclick="window.showPanel('createPanel')">Nytt gavekort</button>
+        <button id="tabSearch" class="btn light" onclick="window.showPanel('searchPanel')">Søk / trekk</button>
       </div>
 
-      <section id="createPanel" class="panel">
-        <h2 class="panel-title">Opprett gavekort</h2>
-        <p class="help">Gavekort lagres under <b>gavekort</b> i Firebase.</p>
+      <section id="createPanel" class="box">
+        <h2 class="title">Nytt gavekort</h2>
+        <p class="desc">Fyll inn kunde og beløp.</p>
 
         <label for="newPhone">Telefonnummer</label>
-        <input id="newPhone" inputmode="numeric" placeholder="f.eks. 97470949" maxlength="16">
+        <input id="newPhone" inputmode="numeric" placeholder="97470949" maxlength="16">
 
         <label for="newName">Navn</label>
         <input id="newName" placeholder="Kundens navn">
 
-        <label for="newEmail">E-post / valgfritt</label>
-        <input id="newEmail" placeholder="valgfritt">
-
         <label for="newAmount">Beløp</label>
-        <input id="newAmount" inputmode="decimal" placeholder="f.eks. 1000">
+        <input id="newAmount" inputmode="decimal" placeholder="1000">
 
-        <label for="newNote">Intern kommentar</label>
-        <textarea id="newNote" placeholder="f.eks. Betalt med kort / kontant"></textarea>
+        <label for="newNote">Notat</label>
+        <textarea id="newNote" placeholder="Betalt / gavekort"></textarea>
 
-        <button class="button green" style="width:100%; margin-top:12px;" onclick="window.createGiftCard()">Opprett gavekort</button>
+        <button class="btn green" style="width:100%;margin-top:12px" onclick="window.createGiftCard()">Opprett</button>
         <div id="createMsg"></div>
       </section>
 
-      <section id="searchPanel" class="panel hidden">
-        <h2 class="panel-title">Søk gavekort</h2>
-        <p class="help">Søk med telefonnummer, gavekort-ID eller QR/admin-lenke.</p>
+      <section id="searchPanel" class="box hidden">
+        <h2 class="title">Finn gavekort</h2>
+        <p class="desc">Søk med telefonnummer, ID eller skannet lenke.</p>
 
-        <label for="searchInput">Telefonnummer / ID / lenke</label>
+        <label for="searchInput">Søk</label>
         <div class="row">
-          <input id="searchInput" class="grow" placeholder="Telefon / ID / QR-lenke">
-          <button class="button" onclick="window.searchGiftCards()">Søk</button>
+          <input id="searchInput" class="grow" placeholder="Telefon / ID / lenke">
+          <button class="btn" onclick="window.searchGiftCards()">Søk</button>
         </div>
 
         <div id="searchMsg"></div>
       </section>
 
-      <section id="helpPanel" class="panel hidden">
-        <h2 class="panel-title">Lenker og QR</h2>
-        <p class="help">
-          Admin-kortet viser en kundelink du kan kopiere og sende på SMS.
-          Kunden ser saldo og QR-kode på gavekort-siden.
-          QR-koden åpner denne admin-siden direkte på riktig gavekort, slik at du kan trekke saldo.
-        </p>
-        <div class="message">
-          Firebase node: <b>gavekort</b><br>
-          Logg node: <b>gavekort_logg</b><br>
-          Database: https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app
-        </div>
-      </section>
+      <section id="resultList"></section>
 
-      <div id="resultList" class="gift-list"></div>
+      <div class="actions" style="justify-content:center">
+        <button class="btn light" onclick="window.logout()">Logg ut / glem PIN</button>
+      </div>
     </section>
-  </div>
+
+    <div class="footer">Database: gavekort</div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
@@ -505,186 +430,191 @@
     let pendingCardId = null;
     const cardCache = {};
 
-    function cleanPhone(value) {
-      return String(value || "").replace(/\D/g, "").slice(-8);
+    function cleanPhone(value){
+      return String(value || "").replace(/\D/g,"").slice(-8);
     }
 
-    function cleanAmount(value) {
-      const n = Number(String(value || "").replace(",", ".").replace(/[^\d.]/g, ""));
+    function cleanAmount(value){
+      const n = Number(String(value || "").replace(",",".").replace(/[^\d.]/g,""));
       return Number.isFinite(n) ? Math.round(n) : 0;
     }
 
-    function nowIso() {
+    function nowIso(){
       return new Date().toISOString();
     }
 
-    function money(value) {
+    function money(value){
       return new Intl.NumberFormat("no-NO", {
-        style: "currency",
-        currency: "NOK",
-        maximumFractionDigits: 0
+        style:"currency",
+        currency:"NOK",
+        maximumFractionDigits:0
       }).format(Number(value || 0));
     }
 
-    function escapeHtml(str) {
+    function escapeHtml(str){
       return String(str || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
-    function jsArg(str) {
+    function jsArg(str){
       return String(str || "")
-        .replaceAll("\\", "\\\\")
-        .replaceAll("'", "\\'")
-        .replaceAll("\n", "\\n")
-        .replaceAll("\r", "");
+        .replaceAll("\\","\\\\")
+        .replaceAll("'","\\'")
+        .replaceAll("\n","\\n")
+        .replaceAll("\r","");
     }
 
-    function formatDate(iso) {
-      if (!iso) return "-";
-      try {
+    function formatDate(iso){
+      if(!iso) return "-";
+      try{
         return new Intl.DateTimeFormat("no-NO", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
+          day:"2-digit",
+          month:"2-digit",
+          year:"numeric",
+          hour:"2-digit",
+          minute:"2-digit"
         }).format(new Date(iso));
-      } catch {
+      }catch{
         return iso;
       }
     }
 
-    function setMsg(id, text, type = "") {
+    function setMsg(id,text,type=""){
       const el = document.getElementById(id);
-      if (!el) return;
-      if (!text) {
+      if(!el) return;
+      if(!text){
         el.innerHTML = "";
         return;
       }
-      el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+      el.innerHTML = `<div class="msg ${type}">${escapeHtml(text)}</div>`;
     }
 
-    function getCustomerUrl(cardId) {
+    function customerUrl(cardId){
       return `${PUBLIC_BASE_URL}/gavekort.html?id=${encodeURIComponent(cardId)}`;
     }
 
-    function getAdminUrl(cardId) {
+    function adminUrl(cardId){
       return `${PUBLIC_BASE_URL}/gavekort-admin.html?id=${encodeURIComponent(cardId)}`;
     }
 
-    function qrImageUrl(cardId) {
-      const adminUrl = getAdminUrl(cardId);
-      return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(adminUrl)}`;
-    }
-
-    function extractCardId(text) {
+    function extractCardId(text){
       const raw = String(text || "").trim();
+      if(!raw) return "";
 
-      if (!raw) return "";
-
-      try {
-        if (raw.includes("http://") || raw.includes("https://")) {
+      try{
+        if(raw.includes("http://") || raw.includes("https://")){
           const url = new URL(raw);
           return url.searchParams.get("id") || url.searchParams.get("gavekort") || "";
         }
-      } catch {}
+      }catch{}
 
-      if (raw.startsWith("KOL-GAVEKORT:")) return raw.replace("KOL-GAVEKORT:", "").trim();
+      if(raw.startsWith("KOL-GAVEKORT:")) return raw.replace("KOL-GAVEKORT:","").trim();
       return raw;
     }
 
-    async function addLog(cardId, event) {
+    async function addLog(cardId,event){
       const logRef = push(ref(db, `gavekort_logg/${cardId}`));
       await set(logRef, {
         ...event,
-        createdAt: nowIso()
+        createdAt:nowIso()
       });
     }
 
-    async function getCard(cardId) {
+    async function getCard(cardId){
       const snap = await get(ref(db, `gavekort/${cardId}`));
-      if (!snap.exists()) return null;
-      return { id: cardId, ...snap.val() };
+      if(!snap.exists()) return null;
+      return { id:cardId, ...snap.val() };
     }
 
-    async function getLogs(cardId) {
+    async function getLogs(cardId){
       const snap = await get(ref(db, `gavekort_logg/${cardId}`));
       const data = snap.exists() ? snap.val() : {};
       return Object.entries(data || {})
-        .map(([id, item]) => ({ id, ...item }))
-        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
-        .slice(0, 30);
+        .map(([id,item]) => ({ id, ...item }))
+        .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+        .slice(0,20);
     }
 
-    async function getAllCards() {
+    async function getAllCards(){
       const snap = await get(ref(db, "gavekort"));
       const data = snap.exists() ? snap.val() : {};
       return Object.entries(data || {})
-        .map(([id, card]) => ({ id, ...card }))
+        .map(([id,card]) => ({ id, ...card }))
         .filter(card => card.status !== "deleted")
-        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
-    async function findCardsByPhone(phone) {
+    async function findCardsByPhone(phone){
       const all = await getAllCards();
       return all.filter(card => String(card.phone || "") === phone);
     }
 
-    window.login = async function () {
+    window.login = async function(){
       const pin = document.getElementById("pinInput").value.trim();
 
-      if (pin !== ADMIN_PIN) {
+      if(pin !== ADMIN_PIN){
         alert("Feil PIN");
         return;
       }
 
+      if(document.getElementById("rememberPin").checked){
+        localStorage.setItem("kol_gavekort_admin_ok","yes");
+        localStorage.setItem("kol_gavekort_admin_pin",pin);
+      }
+
+      await enterAdmin();
+    };
+
+    async function enterAdmin(){
       loggedIn = true;
       document.getElementById("loginBox").classList.add("hidden");
       document.getElementById("adminApp").classList.remove("hidden");
 
-      if (pendingCardId) {
+      if(pendingCardId){
         window.showPanel("searchPanel");
         await openCardById(pendingCardId);
-      } else {
+      }else{
         window.showPanel("createPanel");
       }
+    }
+
+    window.logout = function(){
+      localStorage.removeItem("kol_gavekort_admin_ok");
+      localStorage.removeItem("kol_gavekort_admin_pin");
+      location.href = location.pathname;
     };
 
-    window.showPanel = function (panelId) {
-      ["createPanel", "searchPanel", "helpPanel"].forEach(id => {
-        document.getElementById(id).classList.toggle("hidden", id !== panelId);
-      });
-
-      document.getElementById("tabCreate").classList.toggle("active-tab", panelId === "createPanel");
-      document.getElementById("tabSearch").classList.toggle("active-tab", panelId === "searchPanel");
-      document.getElementById("tabHelp").classList.toggle("active-tab", panelId === "helpPanel");
+    window.showPanel = function(panelId){
+      document.getElementById("createPanel").classList.toggle("hidden", panelId !== "createPanel");
+      document.getElementById("searchPanel").classList.toggle("hidden", panelId !== "searchPanel");
+      document.getElementById("tabCreate").classList.toggle("active", panelId === "createPanel");
+      document.getElementById("tabSearch").classList.toggle("active", panelId === "searchPanel");
     };
 
-    window.createGiftCard = async function () {
-      if (!loggedIn) return;
+    window.createGiftCard = async function(){
+      if(!loggedIn) return;
 
       const phone = cleanPhone(document.getElementById("newPhone").value);
       const name = document.getElementById("newName").value.trim();
-      const email = document.getElementById("newEmail").value.trim();
       const amount = cleanAmount(document.getElementById("newAmount").value);
       const note = document.getElementById("newNote").value.trim();
 
-      if (phone.length !== 8) {
-        setMsg("createMsg", "Telefonnummer må ha 8 siffer.", "bad");
+      if(phone.length !== 8){
+        setMsg("createMsg","Telefonnummer må ha 8 siffer.","bad");
         return;
       }
 
-      if (!name) {
-        setMsg("createMsg", "Skriv kundens navn.", "bad");
+      if(!name){
+        setMsg("createMsg","Skriv kundens navn.","bad");
         return;
       }
 
-      if (amount <= 0) {
-        setMsg("createMsg", "Beløp må være over 0 kr.", "bad");
+      if(amount <= 0){
+        setMsg("createMsg","Beløp må være over 0 kr.","bad");
         return;
       }
 
@@ -694,129 +624,126 @@
       const card = {
         phone,
         name,
-        email,
-        startAmount: amount,
-        balance: amount,
-        status: "active",
+        startAmount:amount,
+        balance:amount,
+        status:"active",
         note,
-        createdAt: nowIso(),
-        updatedAt: nowIso()
+        createdAt:nowIso(),
+        updatedAt:nowIso()
       };
 
-      try {
+      try{
         await set(cardRef, card);
         await addLog(cardId, {
-          type: "create",
+          type:"create",
           amount,
-          before: 0,
-          after: amount,
-          note: note || "Gavekort opprettet",
-          by: "admin"
+          before:0,
+          after:amount,
+          note:note || "Gavekort opprettet",
+          by:"admin"
         });
 
-        setMsg("createMsg", `Gavekort opprettet: ${money(amount)} til ${name}.`, "ok");
+        setMsg("createMsg",`Gavekort opprettet: ${money(amount)} til ${name}.`,"ok");
 
         document.getElementById("newPhone").value = "";
         document.getElementById("newName").value = "";
-        document.getElementById("newEmail").value = "";
         document.getElementById("newAmount").value = "";
         document.getElementById("newNote").value = "";
 
         window.showPanel("searchPanel");
-        renderCards([{ id: cardId, ...card }]);
-      } catch (err) {
+        renderCards([ { id:cardId, ...card } ]);
+      }catch(err){
         console.error(err);
-        setMsg("createMsg", "Kunne ikke opprette gavekort. Sjekk Firebase Rules.", "bad");
+        setMsg("createMsg","Kunne ikke opprette gavekort. Sjekk Firebase Rules.","bad");
       }
     };
 
-    window.searchGiftCards = async function () {
-      if (!loggedIn) return;
+    window.searchGiftCards = async function(){
+      if(!loggedIn) return;
 
       const input = document.getElementById("searchInput").value.trim();
       const phone = cleanPhone(input);
       document.getElementById("resultList").innerHTML = "";
 
-      if (!input) {
-        setMsg("searchMsg", "Skriv telefonnummer, gavekort-ID eller lenke.", "bad");
+      if(!input){
+        setMsg("searchMsg","Skriv telefonnummer, ID eller lenke.","bad");
         return;
       }
 
-      setMsg("searchMsg", "Søker...", "");
+      setMsg("searchMsg","Søker...","");
 
-      try {
+      try{
         let cards = [];
 
-        if (phone.length === 8 && !input.startsWith("-")) {
+        if(phone.length === 8 && !input.startsWith("-")){
           cards = await findCardsByPhone(phone);
         }
 
-        if (!cards.length) {
+        if(!cards.length){
           const cardId = extractCardId(input);
           const card = await getCard(cardId);
-          if (card) cards = [card];
+          if(card) cards = [card];
         }
 
-        if (!cards.length) {
-          setMsg("searchMsg", "Ingen gavekort funnet.", "warn");
-          document.getElementById("resultList").innerHTML = `<div class="empty">Ingen resultat.</div>`;
+        if(!cards.length){
+          setMsg("searchMsg","Ingen gavekort funnet.","warn");
           return;
         }
 
-        setMsg("searchMsg", `${cards.length} gavekort funnet.`, "ok");
+        setMsg("searchMsg","");
         renderCards(cards);
-      } catch (err) {
+      }catch(err){
         console.error(err);
-        setMsg("searchMsg", "Kunne ikke søke. Sjekk Firebase Rules.", "bad");
+        setMsg("searchMsg","Kunne ikke søke.","bad");
       }
     };
 
-    async function openCardById(cardId) {
-      setMsg("searchMsg", "Åpner gavekort...", "");
+    async function openCardById(cardId){
+      setMsg("searchMsg","Åpner gavekort...","");
       document.getElementById("resultList").innerHTML = "";
 
-      try {
+      try{
         const card = await getCard(cardId);
-        if (!card) {
-          setMsg("searchMsg", "Gavekort ikke funnet.", "bad");
+        if(!card){
+          setMsg("searchMsg","Gavekort ikke funnet.","bad");
           return;
         }
 
-        setMsg("searchMsg", "Gavekort åpnet fra QR/lenke.", "ok");
+        setMsg("searchMsg","");
         renderCards([card]);
-      } catch (err) {
+      }catch(err){
         console.error(err);
-        setMsg("searchMsg", "Kunne ikke åpne gavekort.", "bad");
+        setMsg("searchMsg","Kunne ikke åpne gavekort.","bad");
       }
     }
 
-    window.redeem = async function (cardId) {
-      if (!loggedIn) return;
+    window.redeem = async function(cardId){
+      if(!loggedIn) return;
 
       const amount = cleanAmount(document.getElementById(`redeem-${cardId}`).value);
       const note = document.getElementById(`redeemNote-${cardId}`).value.trim();
 
-      if (amount <= 0) {
+      if(amount <= 0){
         alert("Skriv beløp over 0 kr.");
         return;
       }
 
-      try {
+      try{
         const card = await getCard(cardId);
 
-        if (!card) {
+        if(!card){
           alert("Gavekort ikke funnet.");
           return;
         }
 
-        if (card.status !== "active") {
+        if(card.status !== "active"){
           alert("Gavekortet er ikke aktivt.");
           return;
         }
 
         const before = Number(card.balance || 0);
 
-        if (amount > before) {
+        if(amount > before){
           alert(`Beløpet er høyere enn saldo. Saldo er ${money(before)}.`);
           return;
         }
@@ -824,42 +751,42 @@
         const after = before - amount;
 
         await update(ref(db, `gavekort/${cardId}`), {
-          balance: after,
-          status: after <= 0 ? "empty" : "active",
-          updatedAt: nowIso()
+          balance:after,
+          status:after <= 0 ? "empty" : "active",
+          updatedAt:nowIso()
         });
 
         await addLog(cardId, {
-          type: "redeem",
+          type:"redeem",
           amount,
           before,
           after,
-          note: note || "Brukt i kassen",
-          by: "admin"
+          note:note || "Brukt i kassen",
+          by:"admin"
         });
 
         alert(`Trukket ${money(amount)}. Ny saldo: ${money(after)}.`);
         await refreshCard(cardId);
-      } catch (err) {
+      }catch(err){
         console.error(err);
         alert("Kunne ikke trekke fra saldo.");
       }
     };
 
-    window.topup = async function (cardId) {
-      if (!loggedIn) return;
+    window.topup = async function(cardId){
+      if(!loggedIn) return;
 
       const amount = cleanAmount(document.getElementById(`topup-${cardId}`).value);
 
-      if (amount <= 0) {
+      if(amount <= 0){
         alert("Skriv beløp over 0 kr.");
         return;
       }
 
-      try {
+      try{
         const card = await getCard(cardId);
 
-        if (!card) {
+        if(!card){
           alert("Gavekort ikke funnet.");
           return;
         }
@@ -868,137 +795,130 @@
         const after = before + amount;
 
         await update(ref(db, `gavekort/${cardId}`), {
-          balance: after,
-          status: "active",
-          updatedAt: nowIso()
+          balance:after,
+          status:"active",
+          updatedAt:nowIso()
         });
 
         await addLog(cardId, {
-          type: "topup",
+          type:"topup",
           amount,
           before,
           after,
-          note: "Påfyll",
-          by: "admin"
+          note:"Påfyll",
+          by:"admin"
         });
 
         alert(`Fylt på ${money(amount)}. Ny saldo: ${money(after)}.`);
         await refreshCard(cardId);
-      } catch (err) {
+      }catch(err){
         console.error(err);
         alert("Kunne ikke fylle på gavekort.");
       }
     };
 
-    window.voidCard = async function (cardId) {
-      if (!loggedIn) return;
-      if (!confirm("Vil du stenge dette gavekortet?")) return;
+    window.voidCard = async function(cardId){
+      if(!loggedIn) return;
+      if(!confirm("Vil du stenge dette gavekortet?")) return;
 
-      try {
+      try{
         const card = await getCard(cardId);
-        if (!card) return;
+        if(!card) return;
 
         await update(ref(db, `gavekort/${cardId}`), {
-          status: "void",
-          updatedAt: nowIso()
+          status:"void",
+          updatedAt:nowIso()
         });
 
         await addLog(cardId, {
-          type: "void",
-          amount: 0,
-          before: Number(card.balance || 0),
-          after: Number(card.balance || 0),
-          note: "Gavekort stengt",
-          by: "admin"
+          type:"void",
+          amount:0,
+          before:Number(card.balance || 0),
+          after:Number(card.balance || 0),
+          note:"Gavekort stengt",
+          by:"admin"
         });
 
         alert("Gavekortet er stengt.");
         await refreshCard(cardId);
-      } catch (err) {
+      }catch(err){
         console.error(err);
         alert("Kunne ikke stenge gavekort.");
       }
     };
 
-    window.activateCard = async function (cardId) {
-      if (!loggedIn) return;
+    window.activateCard = async function(cardId){
+      if(!loggedIn) return;
 
-      try {
+      try{
         const card = await getCard(cardId);
-        if (!card) return;
+        if(!card) return;
 
         await update(ref(db, `gavekort/${cardId}`), {
-          status: "active",
-          updatedAt: nowIso()
+          status:"active",
+          updatedAt:nowIso()
         });
 
         await addLog(cardId, {
-          type: "activate",
-          amount: 0,
-          before: Number(card.balance || 0),
-          after: Number(card.balance || 0),
-          note: "Gavekort aktivert",
-          by: "admin"
+          type:"activate",
+          amount:0,
+          before:Number(card.balance || 0),
+          after:Number(card.balance || 0),
+          note:"Gavekort aktivert",
+          by:"admin"
         });
 
         alert("Gavekortet er aktivert.");
         await refreshCard(cardId);
-      } catch (err) {
+      }catch(err){
         console.error(err);
         alert("Kunne ikke aktivere gavekort.");
       }
     };
 
-    window.copyCustomerLink = async function (cardId) {
-      await copyText(getCustomerUrl(cardId));
-      setMsg("searchMsg", "Kundelink kopiert. Send den på SMS.", "ok");
+    window.copyCustomerLink = async function(cardId){
+      await copyText(customerUrl(cardId));
+      setMsg("searchMsg","Kundelink kopiert.","ok");
     };
 
-    window.copyAdminLink = async function (cardId) {
-      await copyText(getAdminUrl(cardId));
-      setMsg("searchMsg", "Admin trekk-lenke kopiert.", "ok");
-    };
-
-    window.copySmsText = async function (cardId) {
+    window.copySmsText = async function(cardId){
       const card = cardCache[cardId] || {};
-      const name = card.name ? ` ${card.name}` : "";
-      const text = `Hei${name}! Her kan du se gavekortet ditt hos KØL Grill & Pizza: ${getCustomerUrl(cardId)}\\n\\nMvh KØL Grill & Pizza`;
+      const namePart = card.name ? ` ${card.name}` : "";
+      const text = `Hei${namePart}! Her kan du se gavekortet ditt hos KØL Grill & Pizza: ${customerUrl(cardId)}\n\nMvh KØL Grill & Pizza`;
       await copyText(text);
-      setMsg("searchMsg", "SMS-tekst kopiert.", "ok");
+      setMsg("searchMsg","SMS-tekst kopiert.","ok");
     };
 
-    async function copyText(text) {
-      try {
+    async function copyText(text){
+      try{
         await navigator.clipboard.writeText(text);
-      } catch {
+      }catch{
         prompt("Kopier denne teksten:", text);
       }
     }
 
-    async function refreshCard(cardId) {
+    async function refreshCard(cardId){
       const card = await getCard(cardId);
-      const oldNode = document.querySelector(`[data-card-id="${CSS.escape(cardId)}"]`);
-
-      if (!oldNode || !card) return;
+      const old = document.querySelector(`[data-card-id="${CSS.escape(cardId)}"]`);
+      if(!old || !card) return;
 
       const wrapper = document.createElement("div");
       wrapper.innerHTML = buildCard(card);
       const fresh = wrapper.firstElementChild;
-      oldNode.replaceWith(fresh);
+      old.replaceWith(fresh);
       await hydrateCard(fresh, card);
     }
 
-    function renderCards(cards) {
-      const list = document.getElementById("resultList");
-      list.innerHTML = cards.map(card => buildCard(card)).join("");
+    function renderCards(cards){
+      document.getElementById("resultList").innerHTML = cards.map(card => buildCard(card)).join("");
 
       cards.forEach(card => {
-        const node = list.querySelector(`[data-card-id="${CSS.escape(card.id)}"]`);
-        if (node) hydrateCard(node, card);
+        const node = document.querySelector(`[data-card-id="${CSS.escape(card.id)}"]`);
+        if(node) hydrateCard(node, card);
       });
     }
 
-    function buildCard(card) {
+    function buildCard(card){
       cardCache[card.id] = card;
 
       const active = card.status === "active";
@@ -1008,105 +928,84 @@
         card.status === "void" ? "Stengt" :
         card.status || "Ukjent";
 
-      const customerUrl = getCustomerUrl(card.id);
-      const adminUrl = getAdminUrl(card.id);
+      const cUrl = customerUrl(card.id);
 
       return `
-        <article class="gift-card" data-card-id="${escapeHtml(card.id)}">
-          <div class="gift-top">
+        <article class="gift" data-card-id="${escapeHtml(card.id)}">
+          <div class="gift-head">
             <div>
-              <h3 class="gift-name">${escapeHtml(card.name || "Gavekort")}</h3>
-              <div class="gift-phone">Telefon: ${escapeHtml(card.phone || "")}</div>
+              <h3 class="name">${escapeHtml(card.name || "Gavekort")}</h3>
+              <div class="phone">Telefon: ${escapeHtml(card.phone || "")}</div>
             </div>
             <span class="badge ${active ? "" : "closed"}">${escapeHtml(statusText)}</span>
           </div>
 
           <div class="gift-body">
             <div class="saldo">${money(card.balance)}</div>
-
             <div class="small">
-              Startbeløp: <strong>${money(card.startAmount)}</strong><br>
-              Opprettet: ${formatDate(card.createdAt)}
-            </div>
-
-            <div class="meta">
-              <span class="pill">ID: ${escapeHtml(card.id)}</span>
-              ${card.note ? `<span class="pill">${escapeHtml(card.note)}</span>` : ""}
-              ${card.email ? `<span class="pill">${escapeHtml(card.email)}</span>` : ""}
+              Start: <strong>${money(card.startAmount)}</strong> · ID: ${escapeHtml(card.id)}
+              ${card.note ? `<br>Notat: ${escapeHtml(card.note)}` : ""}
             </div>
 
             <div class="divider"></div>
 
-            <div class="url-box">
-              <label>Kundelink til SMS</label>
-              <input readonly value="${escapeHtml(customerUrl)}" onclick="this.select()">
-              <div class="small-actions">
-                <button class="button green" onclick="window.copyCustomerLink('${jsArg(card.id)}')">Kopier kundelink</button>
-                <button class="button" onclick="window.copySmsText('${jsArg(card.id)}')">Kopier SMS tekst</button>
-                <a class="button light" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;" href="${escapeHtml(customerUrl)}" target="_blank">Åpne</a>
+            <label>Kundelink / SMS</label>
+            <div class="link-line">
+              <input readonly value="${escapeHtml(cUrl)}" onclick="this.select()">
+              <button class="btn green" onclick="window.copyCustomerLink('${jsArg(card.id)}')">Kopier link</button>
+              <button class="btn" onclick="window.copySmsText('${jsArg(card.id)}')">SMS tekst</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="mini-grid">
+              <div>
+                <label for="redeem-${escapeHtml(card.id)}">Trekk fra saldo</label>
+                <div class="row">
+                  <input id="redeem-${escapeHtml(card.id)}" class="grow" inputmode="decimal" placeholder="Beløp" ${!active ? "disabled" : ""}>
+                  <button class="btn green" onclick="window.redeem('${jsArg(card.id)}')" ${!active ? "disabled" : ""}>Trekk</button>
+                </div>
+              </div>
+
+              <div>
+                <label for="redeemNote-${escapeHtml(card.id)}">Notat</label>
+                <input id="redeemNote-${escapeHtml(card.id)}" placeholder="f.eks. ordre / pizza" ${!active ? "disabled" : ""}>
+              </div>
+
+              <div>
+                <label for="topup-${escapeHtml(card.id)}">Fyll på</label>
+                <div class="row">
+                  <input id="topup-${escapeHtml(card.id)}" class="grow" inputmode="decimal" placeholder="Beløp">
+                  <button class="btn light" onclick="window.topup('${jsArg(card.id)}')">Fyll på</button>
+                </div>
               </div>
             </div>
 
-            <div class="url-box">
-              <label>Admin trekk-lenke / QR åpner denne</label>
-              <input readonly value="${escapeHtml(adminUrl)}" onclick="this.select()">
-              <div class="small-actions">
-                <button class="button light" onclick="window.copyAdminLink('${jsArg(card.id)}')">Kopier admin-lenke</button>
-              </div>
-            </div>
-
-            <div class="qr-preview">
-              <img src="${qrImageUrl(card.id)}" alt="QR admin gavekort">
-              <div class="small" style="max-width:260px;">
-                Denne QR-koden er samme som kunden ser. Når du skanner den med telefon, åpnes admin-siden direkte på dette gavekortet.
-              </div>
+            <div class="actions">
+              <button class="btn light" onclick="window.activateCard('${jsArg(card.id)}')">Aktiver</button>
+              <button class="btn red" onclick="window.voidCard('${jsArg(card.id)}')">Steng</button>
             </div>
 
             <div class="divider"></div>
 
-            <label for="redeem-${escapeHtml(card.id)}">Trekk fra saldo</label>
-            <div class="row">
-              <input id="redeem-${escapeHtml(card.id)}" class="grow" inputmode="decimal" placeholder="Beløp, f.eks. 250" ${!active ? "disabled" : ""}>
-              <button class="button green" onclick="window.redeem('${jsArg(card.id)}')" ${!active ? "disabled" : ""}>Trekk</button>
-            </div>
-
-            <label for="redeemNote-${escapeHtml(card.id)}">Notat for trekk</label>
-            <input id="redeemNote-${escapeHtml(card.id)}" placeholder="f.eks. ordre #123 / pizza" ${!active ? "disabled" : ""}>
-
-            <div class="divider"></div>
-
-            <label for="topup-${escapeHtml(card.id)}">Fyll på saldo</label>
-            <div class="row">
-              <input id="topup-${escapeHtml(card.id)}" class="grow" inputmode="decimal" placeholder="Beløp">
-              <button class="button light" onclick="window.topup('${jsArg(card.id)}')">Fyll på</button>
-            </div>
-
-            <div class="small-actions">
-              <button class="button light" onclick="window.activateCard('${jsArg(card.id)}')">Aktiver</button>
-              <button class="button red" onclick="window.voidCard('${jsArg(card.id)}')">Steng</button>
-            </div>
-
-            <div class="divider"></div>
-
-            <h3 class="panel-title" style="font-size:16px;">Historikk</h3>
+            <h3 class="title" style="font-size:15px">Historikk</h3>
             <div class="history" data-history-for="${escapeHtml(card.id)}">
-              <div class="small">Laster historikk...</div>
+              <div class="small">Laster...</div>
             </div>
           </div>
         </article>
       `;
     }
 
-    async function hydrateCard(node, card) {
+    async function hydrateCard(node, card){
       const history = node.querySelector(`[data-history-for="${CSS.escape(card.id)}"]`);
+      if(!history) return;
 
-      if (!history) return;
-
-      try {
+      try{
         const logs = await getLogs(card.id);
 
-        if (!logs.length) {
-          history.innerHTML = `<div class="empty" style="box-shadow:none;">Ingen historikk.</div>`;
+        if(!logs.length){
+          history.innerHTML = `<div class="small">Ingen historikk.</div>`;
           return;
         }
 
@@ -1127,27 +1026,41 @@
             </div>
           `;
         }).join("");
-      } catch {
-        history.innerHTML = `<div class="message bad">Historikk kunne ikke lastes.</div>`;
+      }catch{
+        history.innerHTML = `<div class="msg bad">Historikk kunne ikke lastes.</div>`;
       }
     }
 
-    function initFromUrl() {
+    async function init(){
       const params = new URLSearchParams(location.search);
       pendingCardId = params.get("id") || params.get("gavekort");
 
-      if (pendingCardId) {
-        document.getElementById("loginHelp").textContent = "QR/lenke er lest. Skriv PIN for å åpne dette gavekortet.";
+      if(pendingCardId){
+        document.getElementById("loginText").textContent = "QR-kode lest. Logg inn for å trekke saldo.";
+      }
+
+      const savedOk = localStorage.getItem("kol_gavekort_admin_ok") === "yes";
+      const savedPin = localStorage.getItem("kol_gavekort_admin_pin");
+
+      if(savedOk && savedPin === ADMIN_PIN){
+        document.getElementById("pinInput").value = savedPin;
+        await enterAdmin();
       }
     }
 
-    document.addEventListener("keydown", e => {
-      if (e.key !== "Enter") return;
-      if (e.target.id === "pinInput") window.login();
-      if (e.target.id === "searchInput") window.searchGiftCards();
+    document.addEventListener("input", e => {
+      if(e.target.id === "newPhone"){
+        e.target.value = cleanPhone(e.target.value);
+      }
     });
 
-    initFromUrl();
+    document.addEventListener("keydown", e => {
+      if(e.key !== "Enter") return;
+      if(e.target.id === "pinInput") window.login();
+      if(e.target.id === "searchInput") window.searchGiftCards();
+    });
+
+    init();
   </script>
 </body>
 </html>

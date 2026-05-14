@@ -2,370 +2,289 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>KØL Grill & Pizza | Gavekort</title>
+  <title>KØL Gavekort</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
 
-  <meta name="description" content="Sjekk saldo på gavekort hos KØL Grill & Pizza i Skarnes.">
-
   <style>
-    :root {
-      --blue:#3F51B5;
-      --blue2:#4577d3;
-      --darkblue:#2655ad;
-      --orange:#ff7a1a;
+    :root{
+      --bg:#f5f6fa;
+      --card:#ffffff;
       --text:#111827;
       --muted:#6b7280;
       --line:#e5e7eb;
+      --blue:#3F51B5;
       --green:#16a34a;
       --red:#dc2626;
-      --bg:#eef3ff;
-      --card:#ffffff;
+      --shadow:0 10px 26px rgba(17,24,39,.10);
     }
 
-    * { box-sizing:border-box; }
-
-    body {
-      background-color: var(--darkblue);
-      font-family: Arial, sans-serif;
+    *{box-sizing:border-box}
+    body{
       margin:0;
-      padding:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      font-size:18px;
-      color:var(--text);
-      -webkit-user-select:none;
-      user-select:none;
-    }
-
-    .container {
-      background-color:var(--blue2);
-      display:flex;
-      align-items:center;
-      flex-direction:column;
-      border:solid var(--blue);
-      border-width:0 1px;
-      min-width:330px;
-      width:99%;
-      max-width:500px;
       min-height:100vh;
-      box-shadow:0 0 10px rgba(0,0,0,.1);
-      gap:14px;
-      padding-bottom:28px;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Arial,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-size:16px;
     }
 
-    .header {
-      background-color:var(--blue);
-      min-height:50px;
-      color:white;
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:bold;
+    .wrap{
+      width:min(460px,100%);
+      margin:0 auto;
+      min-height:100vh;
+      padding:14px 12px 34px;
+    }
+
+    .top{
+      background:var(--blue);
+      color:#fff;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:var(--shadow);
+      text-align:center;
+      margin-bottom:12px;
+    }
+
+    .top h1{
+      margin:0;
+      font-size:22px;
+      line-height:1.1;
+    }
+
+    .top p{
+      margin:7px 0 0;
+      opacity:.9;
+      font-size:13px;
+    }
+
+    .box{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:15px;
+      box-shadow:var(--shadow);
+      margin-bottom:12px;
+    }
+
+    .title{
+      margin:0 0 6px;
       font-size:18px;
       text-align:center;
-      padding:8px 10px;
     }
 
-    .brand-box {
-      width:90%;
-      background:#fff;
-      border-radius:15px;
-      box-shadow:0 7px 20px rgba(0,0,0,.22);
-      padding:18px 14px;
-      text-align:center;
-      margin-top:10px;
-    }
-
-    .brand-title {
-      margin:0;
-      color:var(--blue);
-      font-size:25px;
-      letter-spacing:-.5px;
-    }
-
-    .brand-sub {
-      margin:8px 0 0;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.35;
-    }
-
-    .panel {
-      width:90%;
-      background:#fff;
-      border-radius:15px;
-      box-shadow:0 7px 20px rgba(0,0,0,.22);
-      padding:15px;
-    }
-
-    .panel-title {
-      margin:0 0 8px;
-      font-size:20px;
-      color:var(--blue);
-      text-align:center;
-    }
-
-    .help {
-      color:var(--muted);
-      font-size:14px;
-      text-align:center;
-      line-height:1.35;
+    .desc{
       margin:0 0 12px;
-    }
-
-    label {
-      display:block;
-      font-size:13px;
       color:var(--muted);
-      font-weight:bold;
-      margin:12px 0 6px;
+      font-size:13px;
+      line-height:1.35;
+      text-align:center;
     }
 
-    input {
+    label{
+      display:block;
+      margin:12px 0 6px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
+
+    input{
       width:100%;
-      height:48px;
+      height:50px;
       border:1px solid var(--line);
-      border-radius:10px;
+      border-radius:13px;
       padding:0 12px;
-      font-size:20px;
-      text-align:center;
-      font-weight:bold;
+      background:#fff;
       outline:none;
+      font-size:20px;
+      font-weight:800;
+      text-align:center;
       letter-spacing:4px;
     }
 
-    input:focus {
+    input:focus{
       border-color:var(--blue);
-      box-shadow:0 0 0 3px rgba(63,81,181,.15);
+      box-shadow:0 0 0 4px rgba(63,81,181,.12);
     }
 
-    .button {
+    .btn{
       width:100%;
-      min-height:52px;
+      min-height:50px;
+      margin-top:10px;
       border:0;
-      box-shadow:0 5px 0 rgba(0,0,0,.25);
-      background-image:radial-gradient(circle,#219dffcc,#219dffbd,#3e51c057);
-      color:white;
-      border-radius:11px;
-      cursor:pointer;
-      text-align:center;
-      font-weight:bold;
-      font-size:18px;
-      margin-top:12px;
-    }
-
-    .button:active {
-      transform:translateY(2px);
-      box-shadow:0 3px 0 rgba(0,0,0,.25);
-    }
-
-    .message {
-      margin-top:12px;
-      padding:11px;
-      border-radius:10px;
-      font-size:14px;
-      text-align:center;
-      line-height:1.35;
-      background:#f3f4f6;
-      color:#111827;
-    }
-
-    .message.ok { background:#dcfce7; color:#14532d; }
-    .message.bad { background:#fee2e2; color:#7f1d1d; }
-    .message.warn { background:#fef3c7; color:#78350f; }
-
-    .gift-list {
-      width:90%;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .gift-card {
-      background:#fff;
-      border-radius:16px;
-      box-shadow:0 7px 20px rgba(0,0,0,.25);
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.55);
-    }
-
-    .gift-top {
+      border-radius:13px;
       background:var(--blue);
       color:#fff;
-      padding:13px 14px;
+      font-size:16px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn:active{transform:translateY(1px)}
+
+    .msg{
+      margin-top:10px;
+      padding:11px;
+      border-radius:12px;
+      font-size:14px;
+      line-height:1.35;
+      text-align:center;
+      background:#f3f4f6;
+    }
+    .msg.ok{background:#dcfce7;color:#14532d}
+    .msg.bad{background:#fee2e2;color:#7f1d1d}
+    .msg.warn{background:#fef3c7;color:#78350f}
+
+    .gift{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .gift-head{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:10px;
+      padding:14px 15px;
+      background:#111827;
+      color:#fff;
     }
 
-    .gift-name {
+    .name{
       margin:0;
-      font-size:19px;
+      font-size:18px;
       line-height:1.15;
     }
 
-    .gift-phone {
-      font-size:13px;
+    .phone{
       margin-top:4px;
-      opacity:.9;
+      font-size:13px;
+      opacity:.82;
     }
 
-    .badge {
+    .badge{
+      flex:0 0 auto;
       display:inline-flex;
       align-items:center;
-      padding:6px 9px;
       border-radius:999px;
-      background:#d1fae5;
-      color:#065f46;
+      padding:6px 9px;
+      background:#dcfce7;
+      color:#14532d;
       font-size:12px;
-      font-weight:bold;
-      white-space:nowrap;
+      font-weight:800;
     }
 
-    .badge.closed { background:#fee2e2; color:#991b1b; }
+    .badge.closed{
+      background:#fee2e2;
+      color:#991b1b;
+    }
 
-    .gift-body { padding:16px; }
+    .gift-body{
+      padding:18px 15px;
+    }
 
-    .saldo-title {
+    .saldo-label{
       text-align:center;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:bold;
-      text-transform:uppercase;
-      letter-spacing:.08em;
       margin:0;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
     }
 
-    .saldo {
+    .saldo{
       text-align:center;
-      margin:6px 0 10px;
+      margin:6px 0 8px;
       font-size:46px;
       line-height:1;
-      color:var(--blue);
-      font-weight:900;
+      font-weight:950;
       letter-spacing:-2px;
+      color:var(--blue);
     }
 
-    .small {
-      font-size:13px;
+    .small{
       color:var(--muted);
-      text-align:center;
+      font-size:13px;
       line-height:1.4;
+      text-align:center;
     }
 
-    .qr-area {
-      background:#f8fafc;
-      border:2px dashed #cbd5e1;
-      margin-top:14px;
-      padding:14px;
-      border-radius:14px;
+    .qr{
+      margin:15px auto 0;
+      width:100%;
       display:flex;
+      flex-direction:column;
       align-items:center;
-      justify-content:space-evenly;
-      gap:12px;
+      justify-content:center;
+      gap:8px;
+      background:#f9fafb;
+      border:1px dashed #cbd5e1;
+      border-radius:16px;
+      padding:14px;
     }
 
-    .qr-area img {
-      width:142px;
-      height:142px;
+    .qr img{
+      width:172px;
+      height:172px;
       background:#fff;
-      padding:4px;
-      border-radius:8px;
+      padding:5px;
+      border-radius:10px;
+      border:1px solid #edf0f4;
     }
 
-    .qr-text {
-      flex:1;
+    .qr strong{
+      display:block;
       text-align:center;
       font-size:14px;
-      color:#111827;
+    }
+
+    .qr span{
+      display:block;
+      color:var(--muted);
+      text-align:center;
+      font-size:12px;
       line-height:1.35;
     }
 
-    .qr-text strong {
-      display:block;
-      margin-bottom:5px;
-      color:var(--blue);
-      font-size:15px;
-    }
+    .hidden{display:none!important}
 
-    .link-box {
-      margin-top:12px;
-      background:#eef2ff;
-      border-radius:10px;
-      padding:10px;
+    .footer{
+      color:#6b7280;
       font-size:12px;
-      color:#3730a3;
-      word-break:break-all;
       text-align:center;
-    }
-
-    .footer {
-      background-color:var(--blue);
-      min-height:40px;
-      color:white;
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow:0 5px 0 0 #0000004f;
-      font-weight:bold;
-      font-size:15px;
-      padding:10px;
-      text-align:center;
-      margin-top:auto;
-    }
-
-    .empty {
-      background:#fff;
-      border-radius:14px;
-      padding:18px;
-      text-align:center;
-      color:var(--muted);
-      box-shadow:0 7px 20px rgba(0,0,0,.22);
-    }
-
-    @media (max-width:420px) {
-      .qr-area {
-        flex-direction:column;
-      }
-      .qr-area img {
-        width:165px;
-        height:165px;
-      }
-      .saldo {
-        font-size:41px;
-      }
+      padding:8px;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="header">🎁 KØL Grill & Pizza Gavekort</div>
+  <main class="wrap">
+    <header class="top">
+      <h1>KØL Gavekort</h1>
+      <p>Sjekk saldo enkelt med telefonnummer</p>
+    </header>
 
-    <div class="brand-box">
-      <h1 class="brand-title">Ditt gavekort</h1>
-      <p class="brand-sub">Sjekk saldo med telefonnummer, eller åpne gavekortet direkte fra lenken du fikk på SMS.</p>
-    </div>
-
-    <div class="panel" id="searchPanel">
-      <h2 class="panel-title">Sjekk saldo</h2>
-      <p class="help">Skriv inn telefonnummeret gavekortet er registrert på.</p>
+    <section id="searchBox" class="box">
+      <h2 class="title">Ditt gavekort</h2>
+      <p class="desc">Skriv inn telefonnummeret gavekortet er registrert på.</p>
 
       <label for="phoneInput">Telefonnummer</label>
-      <input id="phoneInput" type="tel" inputmode="numeric" placeholder="+47 _ _ _ _ _ _ _ _" maxlength="16">
+      <input id="phoneInput" type="tel" inputmode="numeric" autocomplete="tel" placeholder="8 siffer" maxlength="16">
 
-      <button class="button" onclick="window.lookupGiftCards()">Søk gavekort</button>
+      <button class="btn" onclick="window.lookupGiftCards()">Sjekk saldo</button>
       <div id="message"></div>
-    </div>
+    </section>
 
-    <div id="giftList" class="gift-list"></div>
+    <section id="giftList"></section>
 
-    <div class="footer">Vis QR-koden i kassen når du bruker gavekortet.</div>
-  </div>
+    <div class="footer">KØL Grill & Pizza · Skarnes</div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
@@ -382,150 +301,107 @@
     const db = window.fbDb;
     const PUBLIC_BASE_URL = "https://bestill.online";
 
-    function cleanPhone(value) {
-      return String(value || "").replace(/\D/g, "").slice(-8);
+    function cleanPhone(value){
+      return String(value || "").replace(/\D/g,"").slice(-8);
     }
 
-    function money(value) {
+    function money(value){
       return new Intl.NumberFormat("no-NO", {
-        style: "currency",
-        currency: "NOK",
-        maximumFractionDigits: 0
+        style:"currency",
+        currency:"NOK",
+        maximumFractionDigits:0
       }).format(Number(value || 0));
     }
 
-    function escapeHtml(str) {
+    function escapeHtml(str){
       return String(str || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
-    function formatDate(iso) {
-      if (!iso) return "-";
-      try {
+    function formatDate(iso){
+      if(!iso) return "-";
+      try{
         return new Intl.DateTimeFormat("no-NO", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
+          day:"2-digit",
+          month:"2-digit",
+          year:"numeric"
         }).format(new Date(iso));
-      } catch {
+      }catch{
         return iso;
       }
     }
 
-    function setMessage(text, type = "") {
+    function setMessage(text,type=""){
       const el = document.getElementById("message");
-      if (!text) {
+      if(!text){
         el.innerHTML = "";
         return;
       }
-      el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+      el.innerHTML = `<div class="msg ${type}">${escapeHtml(text)}</div>`;
     }
 
-    function getCustomerUrl(cardId) {
+    function customerUrl(cardId){
       return `${PUBLIC_BASE_URL}/gavekort.html?id=${encodeURIComponent(cardId)}`;
     }
 
-    function getAdminUrl(cardId) {
+    function staffScanUrl(cardId){
       return `${PUBLIC_BASE_URL}/gavekort-admin.html?id=${encodeURIComponent(cardId)}`;
     }
 
-    function qrImageUrl(cardId) {
-      const adminUrl = getAdminUrl(cardId);
-      return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(adminUrl)}`;
+    function qrImageUrl(cardId){
+      return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(staffScanUrl(cardId))}`;
     }
 
-    async function getCardById(cardId) {
+    async function getCardById(cardId){
       const snap = await get(ref(db, `gavekort/${cardId}`));
-      if (!snap.exists()) return null;
-      return { id: cardId, ...snap.val() };
+      if(!snap.exists()) return null;
+      return { id:cardId, ...snap.val() };
     }
 
-    async function getCardsByPhone(phone) {
+    async function getCardsByPhone(phone){
       const snap = await get(ref(db, "gavekort"));
       const data = snap.exists() ? snap.val() : {};
       return Object.entries(data || {})
         .map(([id, card]) => ({ id, ...card }))
         .filter(card => String(card.phone || "") === phone && card.status !== "deleted")
-        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     }
 
-    window.lookupGiftCards = async function () {
+    window.lookupGiftCards = async function(){
       const phone = cleanPhone(document.getElementById("phoneInput").value);
       const list = document.getElementById("giftList");
       list.innerHTML = "";
 
-      if (phone.length !== 8) {
-        setMessage("Skriv et gyldig telefonnummer med 8 siffer.", "bad");
+      if(phone.length !== 8){
+        setMessage("Skriv et gyldig telefonnummer med 8 siffer.","bad");
         return;
       }
 
       localStorage.setItem("kol_gavekort_phone", phone);
-      setMessage("Søker gavekort...", "");
+      setMessage("Søker...","");
 
-      try {
+      try{
         const cards = await getCardsByPhone(phone);
 
-        if (!cards.length) {
-          setMessage("Ingen gavekort ble funnet på dette telefonnummeret.", "warn");
-          list.innerHTML = `<div class="empty">Ingen gavekort funnet.</div>`;
+        if(!cards.length){
+          setMessage("Ingen gavekort funnet på dette nummeret.","warn");
           return;
         }
 
-        setMessage(`${cards.length} gavekort funnet.`, "ok");
+        setMessage("");
         renderCards(cards);
-      } catch (err) {
+      }catch(err){
         console.error(err);
-        setMessage("Kunne ikke hente gavekort. Sjekk internett eller Firebase-regler.", "bad");
+        setMessage("Kunne ikke hente gavekort akkurat nå.","bad");
       }
     };
 
-    async function openCardFromUrl() {
-      const params = new URLSearchParams(location.search);
-      const cardId = params.get("id") || params.get("gavekort");
-      const phone = cleanPhone(params.get("phone") || "");
-
-      if (phone.length === 8) {
-        document.getElementById("phoneInput").value = phone;
-        window.lookupGiftCards();
-        return;
-      }
-
-      const savedPhone = localStorage.getItem("kol_gavekort_phone");
-      if (savedPhone) document.getElementById("phoneInput").value = savedPhone;
-
-      if (!cardId) return;
-
-      document.getElementById("giftList").innerHTML = "";
-      setMessage("Åpner gavekort...", "");
-
-      try {
-        const card = await getCardById(cardId);
-        if (!card || card.status === "deleted") {
-          setMessage("Gavekortet ble ikke funnet.", "bad");
-          return;
-        }
-        document.getElementById("searchPanel").style.display = "none";
-        setMessage("");
-        renderCards([card]);
-
-        onValue(ref(db, `gavekort/${cardId}`), snap => {
-          if (snap.exists()) {
-            renderCards([{ id: cardId, ...snap.val() }]);
-          }
-        });
-      } catch (err) {
-        console.error(err);
-        setMessage("Kunne ikke åpne gavekort.", "bad");
-      }
-    }
-
-    function renderCards(cards) {
+    function renderCards(cards){
       const list = document.getElementById("giftList");
-
       list.innerHTML = cards.map(card => {
         const active = card.status === "active";
         const statusText =
@@ -535,17 +411,17 @@
           card.status || "Ukjent";
 
         return `
-          <article class="gift-card">
-            <div class="gift-top">
+          <article class="gift">
+            <div class="gift-head">
               <div>
-                <h3 class="gift-name">${escapeHtml(card.name || "Gavekort")}</h3>
-                <div class="gift-phone">Telefon: ${escapeHtml(card.phone || "")}</div>
+                <h3 class="name">${escapeHtml(card.name || "Gavekort")}</h3>
+                <div class="phone">Telefon: ${escapeHtml(card.phone || "")}</div>
               </div>
               <span class="badge ${active ? "" : "closed"}">${escapeHtml(statusText)}</span>
             </div>
 
             <div class="gift-body">
-              <p class="saldo-title">Saldo</p>
+              <p class="saldo-label">Saldo</p>
               <div class="saldo">${money(card.balance)}</div>
 
               <div class="small">
@@ -553,28 +429,72 @@
                 Opprettet: ${formatDate(card.createdAt)}
               </div>
 
-              <div class="qr-area">
+              <div class="qr">
                 <img src="${qrImageUrl(card.id)}" alt="QR-kode for gavekort">
-                <div class="qr-text">
-                  <strong>QR-kode til kassen</strong>
-                  Ansatte skanner denne QR-koden når du bruker gavekortet.
+                <div>
+                  <strong>Vis QR-koden i kassen</strong>
+                  <span>Ansatte skanner denne når gavekortet brukes.</span>
                 </div>
               </div>
-
-              <div class="link-box">${escapeHtml(getCustomerUrl(card.id))}</div>
             </div>
           </article>
         `;
       }).join("");
     }
 
+    async function openFromUrl(){
+      const params = new URLSearchParams(location.search);
+      const cardId = params.get("id") || params.get("gavekort");
+      const phoneParam = cleanPhone(params.get("phone") || "");
+
+      if(phoneParam.length === 8){
+        document.getElementById("phoneInput").value = phoneParam;
+        window.lookupGiftCards();
+        return;
+      }
+
+      if(cardId){
+        document.getElementById("searchBox").classList.add("hidden");
+        setMessage("");
+        try{
+          const card = await getCardById(cardId);
+          if(!card || card.status === "deleted"){
+            document.getElementById("giftList").innerHTML = `<div class="box"><p class="desc">Gavekortet ble ikke funnet.</p></div>`;
+            return;
+          }
+
+          renderCards([card]);
+
+          onValue(ref(db, `gavekort/${cardId}`), snap => {
+            if(snap.exists()) renderCards([{ id:cardId, ...snap.val() }]);
+          });
+        }catch(err){
+          console.error(err);
+          document.getElementById("giftList").innerHTML = `<div class="box"><p class="desc">Kunne ikke åpne gavekortet.</p></div>`;
+        }
+        return;
+      }
+
+      const savedPhone = localStorage.getItem("kol_gavekort_phone");
+      if(savedPhone){
+        document.getElementById("phoneInput").value = savedPhone;
+        window.lookupGiftCards();
+      }
+    }
+
+    document.addEventListener("input", e => {
+      if(e.target.id === "phoneInput"){
+        e.target.value = cleanPhone(e.target.value);
+      }
+    });
+
     document.addEventListener("keydown", e => {
-      if (e.key === "Enter" && e.target.id === "phoneInput") {
+      if(e.key === "Enter" && e.target.id === "phoneInput"){
         window.lookupGiftCards();
       }
     });
 
-    openCardFromUrl();
+    openFromUrl();
   </script>
 </body>
 </html>
