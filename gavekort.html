@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <title>KØL Grill & Pizza | Gavekort</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <link rel="icon" href="https://bestill.online/img/s-logo.png" type="image/png">
+
+  <meta name="description" content="Sjekk saldo på gavekort hos KØL Grill & Pizza i Skarnes.">
+
+  <style>
+    :root {
+      --blue:#3F51B5;
+      --blue2:#4577d3;
+      --darkblue:#2655ad;
+      --orange:#ff7a1a;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --green:#16a34a;
+      --red:#dc2626;
+      --bg:#eef3ff;
+      --card:#ffffff;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      background-color: var(--darkblue);
+      font-family: Arial, sans-serif;
+      margin:0;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      font-size:18px;
+      color:var(--text);
+      -webkit-user-select:none;
+      user-select:none;
+    }
+
+    .container {
+      background-color:var(--blue2);
+      display:flex;
+      align-items:center;
+      flex-direction:column;
+      border:solid var(--blue);
+      border-width:0 1px;
+      min-width:330px;
+      width:99%;
+      max-width:500px;
+      min-height:100vh;
+      box-shadow:0 0 10px rgba(0,0,0,.1);
+      gap:14px;
+      padding-bottom:28px;
+    }
+
+    .header {
+      background-color:var(--blue);
+      min-height:50px;
+      color:white;
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+      font-size:18px;
+      text-align:center;
+      padding:8px 10px;
+    }
+
+    .brand-box {
+      width:90%;
+      background:#fff;
+      border-radius:15px;
+      box-shadow:0 7px 20px rgba(0,0,0,.22);
+      padding:18px 14px;
+      text-align:center;
+      margin-top:10px;
+    }
+
+    .brand-title {
+      margin:0;
+      color:var(--blue);
+      font-size:25px;
+      letter-spacing:-.5px;
+    }
+
+    .brand-sub {
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .panel {
+      width:90%;
+      background:#fff;
+      border-radius:15px;
+      box-shadow:0 7px 20px rgba(0,0,0,.22);
+      padding:15px;
+    }
+
+    .panel-title {
+      margin:0 0 8px;
+      font-size:20px;
+      color:var(--blue);
+      text-align:center;
+    }
+
+    .help {
+      color:var(--muted);
+      font-size:14px;
+      text-align:center;
+      line-height:1.35;
+      margin:0 0 12px;
+    }
+
+    label {
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:bold;
+      margin:12px 0 6px;
+    }
+
+    input {
+      width:100%;
+      height:48px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:0 12px;
+      font-size:20px;
+      text-align:center;
+      font-weight:bold;
+      outline:none;
+      letter-spacing:4px;
+    }
+
+    input:focus {
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(63,81,181,.15);
+    }
+
+    .button {
+      width:100%;
+      min-height:52px;
+      border:0;
+      box-shadow:0 5px 0 rgba(0,0,0,.25);
+      background-image:radial-gradient(circle,#219dffcc,#219dffbd,#3e51c057);
+      color:white;
+      border-radius:11px;
+      cursor:pointer;
+      text-align:center;
+      font-weight:bold;
+      font-size:18px;
+      margin-top:12px;
+    }
+
+    .button:active {
+      transform:translateY(2px);
+      box-shadow:0 3px 0 rgba(0,0,0,.25);
+    }
+
+    .message {
+      margin-top:12px;
+      padding:11px;
+      border-radius:10px;
+      font-size:14px;
+      text-align:center;
+      line-height:1.35;
+      background:#f3f4f6;
+      color:#111827;
+    }
+
+    .message.ok { background:#dcfce7; color:#14532d; }
+    .message.bad { background:#fee2e2; color:#7f1d1d; }
+    .message.warn { background:#fef3c7; color:#78350f; }
+
+    .gift-list {
+      width:90%;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .gift-card {
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 7px 20px rgba(0,0,0,.25);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.55);
+    }
+
+    .gift-top {
+      background:var(--blue);
+      color:#fff;
+      padding:13px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .gift-name {
+      margin:0;
+      font-size:19px;
+      line-height:1.15;
+    }
+
+    .gift-phone {
+      font-size:13px;
+      margin-top:4px;
+      opacity:.9;
+    }
+
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      padding:6px 9px;
+      border-radius:999px;
+      background:#d1fae5;
+      color:#065f46;
+      font-size:12px;
+      font-weight:bold;
+      white-space:nowrap;
+    }
+
+    .badge.closed { background:#fee2e2; color:#991b1b; }
+
+    .gift-body { padding:16px; }
+
+    .saldo-title {
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:bold;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin:0;
+    }
+
+    .saldo {
+      text-align:center;
+      margin:6px 0 10px;
+      font-size:46px;
+      line-height:1;
+      color:var(--blue);
+      font-weight:900;
+      letter-spacing:-2px;
+    }
+
+    .small {
+      font-size:13px;
+      color:var(--muted);
+      text-align:center;
+      line-height:1.4;
+    }
+
+    .qr-area {
+      background:#f8fafc;
+      border:2px dashed #cbd5e1;
+      margin-top:14px;
+      padding:14px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-evenly;
+      gap:12px;
+    }
+
+    .qr-area img {
+      width:142px;
+      height:142px;
+      background:#fff;
+      padding:4px;
+      border-radius:8px;
+    }
+
+    .qr-text {
+      flex:1;
+      text-align:center;
+      font-size:14px;
+      color:#111827;
+      line-height:1.35;
+    }
+
+    .qr-text strong {
+      display:block;
+      margin-bottom:5px;
+      color:var(--blue);
+      font-size:15px;
+    }
+
+    .link-box {
+      margin-top:12px;
+      background:#eef2ff;
+      border-radius:10px;
+      padding:10px;
+      font-size:12px;
+      color:#3730a3;
+      word-break:break-all;
+      text-align:center;
+    }
+
+    .footer {
+      background-color:var(--blue);
+      min-height:40px;
+      color:white;
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 5px 0 0 #0000004f;
+      font-weight:bold;
+      font-size:15px;
+      padding:10px;
+      text-align:center;
+      margin-top:auto;
+    }
+
+    .empty {
+      background:#fff;
+      border-radius:14px;
+      padding:18px;
+      text-align:center;
+      color:var(--muted);
+      box-shadow:0 7px 20px rgba(0,0,0,.22);
+    }
+
+    @media (max-width:420px) {
+      .qr-area {
+        flex-direction:column;
+      }
+      .qr-area img {
+        width:165px;
+        height:165px;
+      }
+      .saldo {
+        font-size:41px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">🎁 KØL Grill & Pizza Gavekort</div>
+
+    <div class="brand-box">
+      <h1 class="brand-title">Ditt gavekort</h1>
+      <p class="brand-sub">Sjekk saldo med telefonnummer, eller åpne gavekortet direkte fra lenken du fikk på SMS.</p>
+    </div>
+
+    <div class="panel" id="searchPanel">
+      <h2 class="panel-title">Sjekk saldo</h2>
+      <p class="help">Skriv inn telefonnummeret gavekortet er registrert på.</p>
+
+      <label for="phoneInput">Telefonnummer</label>
+      <input id="phoneInput" type="tel" inputmode="numeric" placeholder="+47 _ _ _ _ _ _ _ _" maxlength="16">
+
+      <button class="button" onclick="window.lookupGiftCards()">Søk gavekort</button>
+      <div id="message"></div>
+    </div>
+
+    <div id="giftList" class="gift-list"></div>
+
+    <div class="footer">Vis QR-koden i kassen når du bruker gavekortet.</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+    const firebaseConfig = {
+      databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+
+    window.fbApp = initializeApp(firebaseConfig);
+    window.fbDb = getDatabase(window.fbApp);
+    window.fbRef = ref;
+
+    const db = window.fbDb;
+    const PUBLIC_BASE_URL = "https://bestill.online";
+
+    function cleanPhone(value) {
+      return String(value || "").replace(/\D/g, "").slice(-8);
+    }
+
+    function money(value) {
+      return new Intl.NumberFormat("no-NO", {
+        style: "currency",
+        currency: "NOK",
+        maximumFractionDigits: 0
+      }).format(Number(value || 0));
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "-";
+      try {
+        return new Intl.DateTimeFormat("no-NO", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }).format(new Date(iso));
+      } catch {
+        return iso;
+      }
+    }
+
+    function setMessage(text, type = "") {
+      const el = document.getElementById("message");
+      if (!text) {
+        el.innerHTML = "";
+        return;
+      }
+      el.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+    }
+
+    function getCustomerUrl(cardId) {
+      return `${PUBLIC_BASE_URL}/gavekort.html?id=${encodeURIComponent(cardId)}`;
+    }
+
+    function getAdminUrl(cardId) {
+      return `${PUBLIC_BASE_URL}/gavekort-admin.html?id=${encodeURIComponent(cardId)}`;
+    }
+
+    function qrImageUrl(cardId) {
+      const adminUrl = getAdminUrl(cardId);
+      return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(adminUrl)}`;
+    }
+
+    async function getCardById(cardId) {
+      const snap = await get(ref(db, `gavekort/${cardId}`));
+      if (!snap.exists()) return null;
+      return { id: cardId, ...snap.val() };
+    }
+
+    async function getCardsByPhone(phone) {
+      const snap = await get(ref(db, "gavekort"));
+      const data = snap.exists() ? snap.val() : {};
+      return Object.entries(data || {})
+        .map(([id, card]) => ({ id, ...card }))
+        .filter(card => String(card.phone || "") === phone && card.status !== "deleted")
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    }
+
+    window.lookupGiftCards = async function () {
+      const phone = cleanPhone(document.getElementById("phoneInput").value);
+      const list = document.getElementById("giftList");
+      list.innerHTML = "";
+
+      if (phone.length !== 8) {
+        setMessage("Skriv et gyldig telefonnummer med 8 siffer.", "bad");
+        return;
+      }
+
+      localStorage.setItem("kol_gavekort_phone", phone);
+      setMessage("Søker gavekort...", "");
+
+      try {
+        const cards = await getCardsByPhone(phone);
+
+        if (!cards.length) {
+          setMessage("Ingen gavekort ble funnet på dette telefonnummeret.", "warn");
+          list.innerHTML = `<div class="empty">Ingen gavekort funnet.</div>`;
+          return;
+        }
+
+        setMessage(`${cards.length} gavekort funnet.`, "ok");
+        renderCards(cards);
+      } catch (err) {
+        console.error(err);
+        setMessage("Kunne ikke hente gavekort. Sjekk internett eller Firebase-regler.", "bad");
+      }
+    };
+
+    async function openCardFromUrl() {
+      const params = new URLSearchParams(location.search);
+      const cardId = params.get("id") || params.get("gavekort");
+      const phone = cleanPhone(params.get("phone") || "");
+
+      if (phone.length === 8) {
+        document.getElementById("phoneInput").value = phone;
+        window.lookupGiftCards();
+        return;
+      }
+
+      const savedPhone = localStorage.getItem("kol_gavekort_phone");
+      if (savedPhone) document.getElementById("phoneInput").value = savedPhone;
+
+      if (!cardId) return;
+
+      document.getElementById("giftList").innerHTML = "";
+      setMessage("Åpner gavekort...", "");
+
+      try {
+        const card = await getCardById(cardId);
+        if (!card || card.status === "deleted") {
+          setMessage("Gavekortet ble ikke funnet.", "bad");
+          return;
+        }
+        document.getElementById("searchPanel").style.display = "none";
+        setMessage("");
+        renderCards([card]);
+
+        onValue(ref(db, `gavekort/${cardId}`), snap => {
+          if (snap.exists()) {
+            renderCards([{ id: cardId, ...snap.val() }]);
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        setMessage("Kunne ikke åpne gavekort.", "bad");
+      }
+    }
+
+    function renderCards(cards) {
+      const list = document.getElementById("giftList");
+
+      list.innerHTML = cards.map(card => {
+        const active = card.status === "active";
+        const statusText =
+          card.status === "active" ? "Aktiv" :
+          card.status === "empty" ? "Tom" :
+          card.status === "void" ? "Stengt" :
+          card.status || "Ukjent";
+
+        return `
+          <article class="gift-card">
+            <div class="gift-top">
+              <div>
+                <h3 class="gift-name">${escapeHtml(card.name || "Gavekort")}</h3>
+                <div class="gift-phone">Telefon: ${escapeHtml(card.phone || "")}</div>
+              </div>
+              <span class="badge ${active ? "" : "closed"}">${escapeHtml(statusText)}</span>
+            </div>
+
+            <div class="gift-body">
+              <p class="saldo-title">Saldo</p>
+              <div class="saldo">${money(card.balance)}</div>
+
+              <div class="small">
+                Opprinnelig beløp: <strong>${money(card.startAmount)}</strong><br>
+                Opprettet: ${formatDate(card.createdAt)}
+              </div>
+
+              <div class="qr-area">
+                <img src="${qrImageUrl(card.id)}" alt="QR-kode for gavekort">
+                <div class="qr-text">
+                  <strong>QR-kode til kassen</strong>
+                  Ansatte skanner denne QR-koden når du bruker gavekortet.
+                </div>
+              </div>
+
+              <div class="link-box">${escapeHtml(getCustomerUrl(card.id))}</div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter" && e.target.id === "phoneInput") {
+        window.lookupGiftCards();
+      }
+    });
+
+    openCardFromUrl();
+  </script>
+</body>
+</html>
