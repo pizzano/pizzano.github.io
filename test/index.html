@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="no">
+<html lang="nb">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=342">
+    <link rel="stylesheet" href="kol-core.css?v=343">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
@@ -146,6 +146,16 @@
           </div>
           <button class="close-button" id="closeProfile" type="button" aria-label="Lukk profil">&times;</button>
         </div>
+        <div class="profile-language-card">
+          <div>
+            <strong>Språk / Language</strong>
+            <small>Velg språk for meny og bestilling</small>
+          </div>
+          <div class="profile-language-options" role="group" aria-label="Language">
+            <button type="button" data-language="nb" class="active">Norsk</button>
+            <button type="button" data-language="en">English</button>
+          </div>
+        </div>
         <div class="profile-body" id="profileOrders">
           <p class="profile-empty">Ingen bestillinger på denne enheten ennå.</p>
         </div>
@@ -192,6 +202,7 @@
                     </div>
 
           <section class="checkout-form" id="checkoutForm">
+            <div class="pickup-only-badge"><span aria-hidden="true">✓</span> Kun henting i restauranten</div>
             <h3>Kundeinformasjon</h3>
             <div class="pickup-choice">
               <div class="pickup-options" role="radiogroup" aria-label="Hentetid">
@@ -778,6 +789,8 @@ let siteSettings = defaultSiteSettings();
 const storageKey = "kol-grill-cart";
 const recentOrdersKey = "kol-grill-recent-orders-v1";
 const customerStorageKey = "kol-grill-customer-v1";
+const favoritesStorageKey = "kol-grill-favorites-v1";
+const languageStorageKey = "kol-grill-language-v1";
 const activeOrderKey = "kol-grill-active-order-v1";
 const orderReadStateKey = "kol-grill-order-read-state-v1";
 const orderAcceptWindowMs = 3 * 60 * 1000; // TÜRKÇE: Müşteri için sipariş kabul geri sayımı: 3 dakika.
@@ -1079,6 +1092,31 @@ let currentOrderPollTimer = null;
 let currentOrderCountdownTimer = null;
 let recentOrdersPollTimer = null;
 let expandedProfileOrderId = "";
+let favoriteProductIds = new Set(loadFavoriteProductIds());
+
+function loadFavoriteProductIds() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(favoritesStorageKey) || "[]");
+    return Array.isArray(saved) ? saved.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavoriteProductIds() {
+  localStorage.setItem(favoritesStorageKey, JSON.stringify(Array.from(favoriteProductIds)));
+}
+
+function toggleFavoriteProduct(productId = "") {
+  const id = String(productId);
+  if (!id) return;
+  if (favoriteProductIds.has(id)) favoriteProductIds.delete(id);
+  else favoriteProductIds.add(id);
+  saveFavoriteProductIds();
+  renderMenu();
+  renderProfileOrders();
+  applyCustomerLanguage(document.body);
+}
 
 function safeNumber(value, fallback = 0) {
   const number = Number(value);
@@ -2405,8 +2443,26 @@ function renderProfileOrders(options = {}) {
   if (!profileOrdersEl) return;
   const phone = normalizePhoneDigits(options.phone || getSavedProfilePhone());
   const toolbar = profilePhoneToolbarHtml(phone, !!options.loading);
+  const favoriteProducts = Array.from(favoriteProductIds)
+    .map((id) => ({ id, result: findProduct(id) }))
+    .filter((entry) => entry.result?.item)
+    .map((entry) => entry.result.item);
+  const favorites = `
+    <section class="profile-favorites">
+      <div class="profile-simple-top">
+        <strong>Favoritter</strong>
+        <span>${favoriteProducts.length}</span>
+      </div>
+      ${favoriteProducts.length ? `<div class="profile-favorite-list">${favoriteProducts.map((item) => `
+        <button type="button" class="profile-favorite-item" data-open-favorite="${escapeAttribute(item.id)}">
+          <span><strong>${escapeAttribute(item.name)}</strong><small>${escapeAttribute(safeText(item.ingredients || item.description, "Trykk for å bestille"))}</small></span>
+          <b>${formatMenuCompactPrice(getBasePrice(item, getDefaultProductSizeId(item)))}</b>
+        </button>
+      `).join("")}</div>` : `<p class="profile-empty compact">Trykk på hjertet ved et produkt for å lagre det her.</p>`}
+    </section>
+  `;
   if (options.loading) {
-    profileOrdersEl.innerHTML = `${toolbar}<p class="profile-empty">Henter bestillinger...</p>`;
+    profileOrdersEl.innerHTML = `${favorites}${toolbar}<p class="profile-empty">Henter bestillinger...</p>`;
     return;
   }
 
@@ -2420,7 +2476,7 @@ function renderProfileOrders(options = {}) {
     .slice(0, 20);
 
   if (!allOrders.length) {
-    profileOrdersEl.innerHTML = `${toolbar}<p class="profile-empty">Ingen bestillinger funnet${phone ? ` for ${phone}` : ""}. Skriv telefonnummer og trykk Hent.</p>`;
+    profileOrdersEl.innerHTML = `${favorites}${toolbar}<p class="profile-empty">Ingen bestillinger funnet${phone ? ` for ${phone}` : ""}. Skriv telefonnummer og trykk Hent.</p>`;
     return;
   }
 
@@ -2428,6 +2484,7 @@ function renderProfileOrders(options = {}) {
   const oldOrders = allOrders.filter((order) => !isTodayOrder(order));
 
   profileOrdersEl.innerHTML = `
+    ${favorites}
     ${toolbar}
     <div class="profile-simple-top">
       <strong>Siste bestillinger</strong>
@@ -4158,6 +4215,7 @@ function renderMenu() {
                 const prefix = item.number ? `${item.number}. ` : "";
                 const details = safeText(item.ingredients || item.description || "");
                 const isSelected = !section.isSyntheticMostOrdered && getMarkedMenuProductIds().has(String(item.id));
+                const isFavorite = favoriteProductIds.has(String(item.id));
                 const searchText = `${section.title} ${prefix}${item.name} ${details}`.toLowerCase();
                 return `
                   <button class="menu-row menu-app-product ${rowSoldOut ? "sold-out" : ""} ${isSelected ? "selected-product" : ""}" type="button" data-product="${item.id}" data-product-section="${section.id}" data-source-section="${item._sourceSectionId || section.id}" data-synthetic="${section.isSyntheticMostOrdered ? "true" : "false"}" data-search="${escapeAttribute(searchText)}" ${isSelected ? 'aria-current="true"' : ""} ${rowSoldOut ? 'disabled aria-disabled="true"' : ""}>
@@ -4170,6 +4228,7 @@ function renderMenu() {
                       <span class="menu-row-meta">★ ${rowSoldOut ? "Utsolgt" : "Velg størrelse og tilbehør"}</span>
                     </span>
                     <span class="menu-app-product-side">
+                      <span class="menu-favorite ${isFavorite ? "active" : ""}" role="button" tabindex="0" data-favorite-product="${escapeAttribute(item.id)}" aria-label="${isFavorite ? "Fjern fra favoritter" : "Legg til i favoritter"}" aria-pressed="${isFavorite ? "true" : "false"}">${isFavorite ? "♥" : "♡"}</span>
                       <span class="menu-app-plus" aria-hidden="true">+</span>
                       ${isSelected ? '<span class="selected-chip">Valgt</span>' : ''}
                       <span class="menu-row-inline-price">${renderMenuRowPrice(item, rowSoldOut)}</span>
@@ -4973,6 +5032,15 @@ if (profileToggle) profileToggle.addEventListener("click", openProfileModal);
 
 if (profileOrdersEl) {
   profileOrdersEl.addEventListener("click", async (event) => {
+    const favoriteButton = event.target.closest("[data-open-favorite]");
+    if (favoriteButton) {
+      const productId = favoriteButton.dataset.openFavorite;
+      closeProfileModal();
+      const menuButton = document.querySelector(`[data-product="${CSS.escape(productId)}"]`);
+      menuButton?.click();
+      return;
+    }
+
     const searchButton = event.target.closest("[data-profile-phone-search]");
     if (searchButton) {
       const input = profileOrdersEl.querySelector("#profilePhoneInput");
@@ -5010,6 +5078,22 @@ if (profileOrdersEl) {
     }
   });
 }
+
+document.addEventListener("click", (event) => {
+  const favorite = event.target.closest?.("[data-favorite-product]");
+  if (!favorite) return;
+  event.preventDefault();
+  event.stopPropagation();
+  toggleFavoriteProduct(favorite.dataset.favoriteProduct);
+}, true);
+
+document.addEventListener("keydown", (event) => {
+  const favorite = event.target.closest?.("[data-favorite-product]");
+  if (!favorite || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  event.stopPropagation();
+  toggleFavoriteProduct(favorite.dataset.favoriteProduct);
+}, true);
 
 document.addEventListener("pointerdown", unlockCustomerSound, { once: true });
 document.addEventListener("keydown", unlockCustomerSound, { once: true });
@@ -5072,6 +5156,149 @@ document.addEventListener("keydown", (event) => {
   if (!cartModal.hidden) closeCartModal();
 });
 
+const customerTranslations = {
+  "Meny": "Menu",
+  "Tilbake": "Back",
+  "Tilbake til meny": "Back to menu",
+  "Informasjon": "Information",
+  "Min profil": "My profile",
+  "Siste bestillinger og hentestatus på denne telefonen.": "Recent orders and pickup status on this phone.",
+  "Velg språk for meny og bestilling": "Choose the language for menu and ordering",
+  "Favoritter": "Favorites",
+  "Trykk på hjertet ved et produkt for å lagre det her.": "Tap the heart next to a product to save it here.",
+  "Finn bestillinger": "Find orders",
+  "Vi henter ordre fra databasen med telefonnummeret ditt.": "We find your orders using your phone number.",
+  "Hent": "Find",
+  "Henter...": "Loading...",
+  "Henter bestillinger...": "Loading orders...",
+  "Siste bestillinger": "Recent orders",
+  "I dag": "Today",
+  "Tidligere": "Previous",
+  "Bestillingsstatus": "Order status",
+  "Handlekurv": "Cart",
+  "Handlekurven er tom. Legg til en vare fra menyen.": "Your cart is empty. Add an item from the menu.",
+  "Sluttsum": "Total",
+  "Kundeinformasjon": "Customer information",
+  "Kun henting i restauranten": "Pickup at the restaurant only",
+  "Snarest mulig": "As soon as possible",
+  "Velg hentetid": "Choose pickup time",
+  "Hele navn": "Full name",
+  "Telefonnummer": "Phone number",
+  "Send bestilling": "Place order",
+  "Sender...": "Sending...",
+  "Fyll inn kundeinformasjon": "Enter customer information",
+  "Skriv inn navn og telefonnummer og lagre informasjonen.": "Enter your name and phone number and save.",
+  "Lagre": "Save",
+  "Spesielle instrukser": "Special instructions",
+  "Mengde": "Quantity",
+  "Legg til i handlevogn": "Add to cart",
+  "Se handlekurv": "View cart",
+  "Åpningstider": "Opening hours",
+  "Henting": "Pickup",
+  "Språk": "Language",
+  "Betalingsmetode": "Payment method",
+  "Adresse": "Address",
+  "Samme som åpningstider": "Same as opening hours",
+  "Kort ved henting (henting)": "Card payment at pickup",
+  "Produkter": "Products",
+  "Trykk for valg og tilbehør": "Tap to choose options",
+  "Velg størrelse og tilbehør": "Choose size and extras",
+  "Valgt": "Selected",
+  "Utsolgt": "Sold out",
+  "UTSOLGT": "SOLD OUT",
+  "Flere kategorier lastes...": "Loading more categories...",
+  "Menyen er ikke tilgjengelig akkurat nå.": "The menu is currently unavailable.",
+  "Tøm kurven?": "Empty the cart?",
+  "Er du sikker på at du vil fjerne alle varer fra handlekurven?": "Are you sure you want to remove all items from the cart?",
+  "Avbryt": "Cancel",
+  "Ja, tøm kurven": "Yes, empty cart",
+  "Bestillingen din er mottatt": "Your order has been received",
+  "Bestillingen din er godkjent": "Your order has been accepted",
+  "Bestillingen din er klar": "Your order is ready",
+  "Bestillingen er kansellert": "The order was cancelled",
+  "Lukk": "Close"
+};
+
+const originalCustomerText = new WeakMap();
+const originalCustomerAttributes = new WeakMap();
+let activeCustomerLanguage = localStorage.getItem(languageStorageKey) === "en" ? "en" : "nb";
+let languageObserverBusy = false;
+
+function translateCustomerText(text = "") {
+  const trimmed = String(text).trim();
+  if (!trimmed) return text;
+  const direct = customerTranslations[trimmed];
+  if (direct) return String(text).replace(trimmed, direct);
+  const variableRules = [
+    [/^(\d+) varer$/, "$1 items"],
+    [/^(\d+) vare$/, "$1 item"],
+    [/^Fra (.+)$/, "From $1"],
+    [/^Ordre (.+)$/, "Order $1"],
+    [/^Henting kl\. (.+)$/, "Pickup at $1"],
+    [/^Hentetid (.+)$/, "Pickup time $1"],
+    [/^Klar ca\. (.+)$/, "Ready approx. $1"],
+    [/^Ingen bestillinger funnet(.*)$/, "No orders found$1"],
+    [/^Produkter som matcher (.+)$/, "Products matching $1"]
+  ];
+  for (const [pattern, replacement] of variableRules) {
+    if (pattern.test(trimmed)) return String(text).replace(trimmed, trimmed.replace(pattern, replacement));
+  }
+  return text;
+}
+
+function applyCustomerLanguage(root = document.body) {
+  if (!root || languageObserverBusy) return;
+  languageObserverBusy = true;
+  const nodes = [];
+  if (root.nodeType === Node.TEXT_NODE) nodes.push(root);
+  else {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+  }
+  nodes.forEach((node) => {
+    if (node.parentElement?.closest("script, style, textarea")) return;
+    if (!originalCustomerText.has(node)) originalCustomerText.set(node, node.nodeValue);
+    const original = originalCustomerText.get(node);
+    node.nodeValue = activeCustomerLanguage === "en" ? translateCustomerText(original) : original;
+  });
+  const elements = root.nodeType === Node.ELEMENT_NODE ? [root, ...root.querySelectorAll("*")] : [];
+  elements.forEach((element) => {
+    ["placeholder", "aria-label", "title"].forEach((name) => {
+      if (!element.hasAttribute(name)) return;
+      let originals = originalCustomerAttributes.get(element);
+      if (!originals) {
+        originals = {};
+        originalCustomerAttributes.set(element, originals);
+      }
+      if (!(name in originals)) originals[name] = element.getAttribute(name);
+      const original = originals[name];
+      element.setAttribute(name, activeCustomerLanguage === "en" ? translateCustomerText(original) : original);
+    });
+  });
+  document.documentElement.lang = activeCustomerLanguage;
+  document.querySelectorAll("[data-language]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.language === activeCustomerLanguage);
+    button.setAttribute("aria-pressed", button.dataset.language === activeCustomerLanguage ? "true" : "false");
+  });
+  languageObserverBusy = false;
+}
+
+document.querySelectorAll("[data-language]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeCustomerLanguage = button.dataset.language === "en" ? "en" : "nb";
+    localStorage.setItem(languageStorageKey, activeCustomerLanguage);
+    applyCustomerLanguage(document.body);
+  });
+});
+
+const customerLanguageObserver = new MutationObserver((mutations) => {
+  if (languageObserverBusy || activeCustomerLanguage !== "en") return;
+  mutations.forEach((mutation) => {
+    mutation.addedNodes.forEach((node) => applyCustomerLanguage(node));
+  });
+});
+customerLanguageObserver.observe(document.body, { childList: true, subtree: true });
+
 async function init() {
   applySiteSettings();
   await loadMenuConfig();
@@ -5086,6 +5313,7 @@ async function init() {
   await openOrderFromTrackingLink();
   updateOpeningNotice();
   syncBodyScrollLocks();
+  applyCustomerLanguage(document.body);
   window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: false }));
 }
 
