@@ -716,3 +716,245 @@ input:focus, select:focus, textarea:focus { border-color: var(--kol-gold); box-s
   .cart-bottom-bar { grid-template-columns: auto 1fr auto; font-size: 12px; }
   .pickup-options { grid-template-columns: 1fr; }
 }
+
+/* Reference-faithful customer layout: KØL visual plan 02 */
+.kol-customer {
+  background: #f7f7f5;
+}
+.kol-customer .appbar {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  padding: 6px 12px;
+  background: #0b2133;
+  box-shadow: 0 2px 7px rgba(11,33,51,.22);
+}
+.kol-customer .appbar-brand {
+  justify-self: center;
+  min-height: 48px;
+}
+.kol-customer .brand-label {
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.kol-customer .brand-label b {
+  font-family: Georgia, serif;
+  font-size: 29px;
+  letter-spacing: .08em;
+}
+.kol-customer .brand-label small {
+  margin-top: 2px;
+  font-family: Inter, ui-sans-serif, sans-serif;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+.kol-customer .appbar-actions {
+  width: 44px;
+  justify-self: end;
+}
+.kol-customer .icon-button {
+  border: 0;
+  background: transparent;
+}
+.kol-customer .menu-toggle {
+  justify-self: start;
+}
+.hamburger-icon,
+.hamburger-icon::before,
+.hamburger-icon::after {
+  width: 18px;
+  height: 1.5px;
+  display: block;
+  content: "";
+  background: #fff;
+}
+.hamburger-icon { position: relative; }
+.hamburger-icon::before { position: absolute; top: -6px; }
+.hamburger-icon::after { position: absolute; top: 6px; }
+.header-heart {
+  font-family: Arial, sans-serif;
+  font-size: 29px;
+  font-weight: 300;
+  line-height: 1;
+}
+.kol-customer .top-cart-toggle { display: none; }
+.kol-customer .menu-shell {
+  width: min(520px, 100%);
+  padding: 12px 12px 88px;
+  background: #fff;
+}
+.menu-page-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.kol-customer .menu-search-card {
+  position: relative;
+  height: 40px;
+  margin: 0 0 10px;
+  border: 1px solid #dfe3e7;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: none;
+}
+.kol-customer .menu-search-card input {
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 42px 0 12px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 12px;
+  box-shadow: none;
+}
+.kol-customer .menu-search-card > span {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  color: #647180;
+  font-size: 22px;
+  transform: translateY(-55%);
+}
+.kol-customer .category-tabs-wrap {
+  position: static;
+  margin: 0 0 10px;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+.kol-customer .category-tabs-scroll {
+  gap: 7px;
+}
+.kol-customer .category-tabs-scroll button,
+.kol-customer .category-tab {
+  min-height: 34px;
+  padding: 0 17px;
+  border-color: #e1e4e7;
+  font-size: 11px;
+}
+.kol-customer .category-tabs-scroll .active,
+.kol-customer .category-tab.active {
+  border-color: #f3ad00;
+  background: #f3ad00;
+}
+.kol-customer .menu-app-section {
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.kol-customer .menu-app-section + .menu-app-section {
+  margin-top: 14px;
+}
+.kol-customer .menu-app-section-head {
+  padding: 7px 0 5px;
+}
+.kol-customer .menu-app-section-head h2 {
+  font-size: 16px;
+}
+.kol-customer .menu-app-section-head p,
+.kol-customer .menu-app-section-head > span {
+  display: none;
+}
+.kol-customer .menu-list {
+  border: 1px solid #e2e5e8;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.kol-customer .menu-row {
+  min-height: 92px;
+  grid-template-columns: 82px minmax(0,1fr) 62px;
+  gap: 10px;
+  padding: 8px;
+  border-top: 1px solid #e7eaec;
+}
+.kol-customer .menu-row:first-child { border-top: 0; }
+.kol-customer .menu-row .menu-thumb,
+.kol-customer .menu-row [class*="thumb"] {
+  width: 82px;
+  height: 74px;
+  border-radius: 7px;
+}
+.kol-customer .menu-row-main { gap: 4px; }
+.kol-customer .menu-row-headline strong { font-size: 12px; }
+.kol-customer .menu-row-description {
+  font-size: 10px;
+  line-height: 1.35;
+}
+.kol-customer .menu-row-meta { display: none; }
+.kol-customer .menu-app-product-side {
+  min-width: 62px;
+  align-self: stretch;
+  align-content: end;
+  gap: 6px;
+}
+.kol-customer .menu-favorite {
+  top: 8px;
+  right: 9px;
+  width: 28px;
+  height: 28px;
+  color: #62707e;
+  background: transparent;
+  font-size: 23px;
+}
+.kol-customer .menu-app-plus {
+  width: 31px;
+  height: 27px;
+  border-radius: 7px;
+  font-size: 17px;
+}
+.kol-customer .menu-row-inline-price {
+  position: absolute;
+  left: 100px;
+  bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.kol-customer .cart-bottom-bar {
+  right: 12px;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 12px;
+  width: min(496px, calc(100% - 24px));
+  min-height: 52px;
+  padding: 7px 14px;
+  border: 1px solid #e9a400;
+  border-radius: 9px;
+  background: #f5ad00;
+  box-shadow: 0 5px 14px rgba(11,33,51,.2);
+  font-size: 12px;
+}
+.kol-customer .product-panel,
+.kol-customer .cart-panel,
+.kol-customer .profile-panel,
+.kol-customer .order-live-panel,
+.kol-customer .info-panel {
+  width: min(520px, 100%);
+  border-radius: 12px;
+}
+.kol-customer .product-titlebar,
+.kol-customer .info-header,
+.kol-customer .profile-header,
+.kol-customer .order-live-header,
+.kol-customer .cart-header {
+  min-height: 64px;
+  background: #0b2133;
+}
+.kol-customer #addConfiguredProduct,
+.kol-customer .checkout-button,
+.kol-customer .quick-checkout-submit {
+  border-radius: 8px;
+  background: #f5ad00;
+}
+@media (max-width: 560px) {
+  .kol-customer .product-panel,
+  .kol-customer .cart-panel,
+  .kol-customer .profile-panel,
+  .kol-customer .order-live-panel,
+  .kol-customer .info-panel {
+    border-radius: 0;
+  }
+}

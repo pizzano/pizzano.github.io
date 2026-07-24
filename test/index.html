@@ -4,23 +4,29 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>K&Oslash;L Grill &amp; Pizza</title>
-    <link rel="stylesheet" href="kol-core.css?v=343">
+    <link rel="stylesheet" href="kol-core.css?v=345">
   </head>
   <body class="menu-loading kol-customer">
     <header class="appbar">
+      <button class="icon-button menu-toggle" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Meny og informasjon"><span class="hamburger-icon" aria-hidden="true"></span></button>
       <button class="appbar-brand" id="siteNameText" type="button" aria-label="K&Oslash;L Grill &amp; Pizza">
-        <span class="brand-label">K&Oslash;L GRILL &amp; PIZZA</span>
+        <span class="brand-label"><b>K&Oslash;L</b><small>GRILL &amp; PIZZA</small></span>
         <span class="brand-back-label" aria-hidden="true">Tilbake</span>
       </button>
       <div class="appbar-actions">
-<button class="icon-button" id="infoToggle" type="button" aria-controls="infoModal" aria-expanded="false" aria-label="Informasjon"><span class="plain-icon info-plain-icon" aria-hidden="true">i</span></button>
-        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Min profil og bestillinger"><span class="plain-icon profile-plain-icon" aria-hidden="true">👤</span><span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
-        <button class="cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span class="plain-icon cart-plain-icon" aria-hidden="true">🛒</span><span id="cartCount">0</span></button>
+        <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-controls="profileModal" aria-expanded="false" aria-label="Favoritter og profil"><span class="header-heart" aria-hidden="true">♡</span><span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
+        <button class="cart-toggle top-cart-toggle" type="button" aria-controls="cartModal" aria-expanded="false" aria-label="Handlekurv"><span id="cartCount">0</span></button>
       </div>
     </header>
 
     <main class="menu-shell">
       <div class="status-notice" hidden></div>
+
+      <h1 class="menu-page-title">Meny</h1>
+      <section class="menu-search-card">
+        <input id="menuSearchInput" type="search" autocomplete="off" inputmode="search" placeholder="Søk etter produkt, kategori eller ingrediens" value="">
+        <span aria-hidden="true">⌕</span>
+      </section>
 
       <div class="category-tabs-wrap" id="categoryTabsWrap" hidden>
         <div class="category-tabs-scroll" id="categoryTabs" aria-label="Kategorinavigasjon"></div>
@@ -4031,12 +4037,9 @@ function getMenuHeroImage() {
 }
 
 function renderMenuHero() {
-  return `
-    <section class="menu-search-card">
-      <span aria-hidden="true">⌕</span>
-      <input id="menuSearchInput" type="search" autocomplete="off" inputmode="search" placeholder="Søk i menyen" value="${escapeAttribute(menuSearchQuery)}">
-    </section>
-  `;
+  const input = document.querySelector("#menuSearchInput");
+  if (input && input.value !== menuSearchQuery) input.value = menuSearchQuery;
+  return "";
 }
 
 function renderInfoHero() {
