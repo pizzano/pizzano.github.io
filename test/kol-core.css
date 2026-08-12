@@ -2768,3 +2768,61 @@ body.kol-customer .rescue-variant-label{width:max-content;max-width:100%;display
 body.kol-customer .rescue-stock-label{transition:color .15s ease,background .15s ease;}
 @media (max-width:900px){body.kol-admin .rescue-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr));}body.kol-admin .rescue-price-preview{min-height:64px;}}
 @media (max-width:560px){body.kol-admin .rescue-editor-grid{grid-template-columns:1fr;}}
+
+/* REDDE MATEN CARD LAYOUT FIX */
+.rescue-menu-row{
+  min-height:132px !important;
+  height:auto !important;
+  overflow:visible !important;
+  align-items:center !important;
+  padding-top:10px !important;
+  padding-bottom:10px !important;
+}
+.rescue-menu-row .menu-row-main{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-content:center !important;
+  align-items:center !important;
+  gap:5px 8px !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+.rescue-menu-row .menu-row-headline,
+.rescue-menu-row .menu-row-description{
+  flex:0 0 100% !important;
+  min-width:0 !important;
+}
+.rescue-menu-row .menu-row-description{
+  margin:0 !important;
+  line-height:1.25 !important;
+}
+.rescue-variant-badge,
+.rescue-stock-label{
+  display:inline-flex !important;
+  align-items:center !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
+}
+.rescue-menu-row .rescue-product-side{
+  align-self:stretch !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:space-between !important;
+  min-height:108px !important;
+  padding:0 !important;
+}
+.rescue-menu-row .rescue-price-stack{
+  margin-top:auto !important;
+  padding-top:8px !important;
+  line-height:1.05 !important;
+  white-space:nowrap !important;
+}
+@media (max-width:760px){
+  .rescue-menu-row{min-height:122px !important;}
+  .rescue-menu-row .rescue-product-side{min-height:100px !important;}
+  .rescue-variant-badge,.rescue-stock-label{font-size:11px !important;}
+}
