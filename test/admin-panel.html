@@ -68,6 +68,31 @@
 <div class="product-price-rows" id="productPriceRows"></div>
 <button class="price-add-button" id="addProductPrice" type="button">Legg til størrelse</button>
 </section>
+<section class="rescue-editor wide" id="rescueEditor">
+<div class="rescue-editor-head">
+<div>
+<strong>🔥 Redde maten</strong>
+<small>Selg en ferdiglaget eller feilbestilt rett til redusert pris. Gjelder bare i dag.</small>
+</div>
+<label class="rescue-enable"><input id="rescueEnabled" type="checkbox"/> Legg ut</label>
+</div>
+<div class="rescue-editor-grid">
+<label>Antall igjen
+<input id="rescueQuantity" min="1" max="99" step="1" type="number" value="1"/>
+</label>
+<label>Ordinær pris
+<input id="rescueOriginalPrice" min="0" step="0.5" type="number"/>
+</label>
+<label>Rabatt %
+<input id="rescueDiscount" min="1" max="95" step="1" type="number" value="50"/>
+</label>
+<div class="rescue-price-preview">
+<span>Ny pris</span>
+<strong id="rescueSalePrice">0 kr</strong>
+</div>
+</div>
+<p class="rescue-editor-help" id="rescueEditorHelp">Når siste vare blir bestilt, forsvinner den automatisk fra kundesiden. Kansellert bestilling legger varen tilbake.</p>
+</section>
 <details class="assigned-groups product-more wide" id="productOptionSettings">
 <summary><strong>Valg og tillegg</strong></summary>
 <div class="product-more-panel assigned-groups-panel">
@@ -998,6 +1023,7 @@ const firebaseDatabaseUrl = "https://bestill-19-default-rtdb.europe-west1.fireba
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
 const menuRef = firebase.database().ref("/");
 const ordersRef = firebase.database().ref("/orders");
+const rescueDealsRef = firebase.database().ref("/rescueDeals");
 // TÜRKÇE: ICE Min Side Tampermonkey scripti bu path'i dinliyor.
 // Admin siparişi onaylayınca buraya SMS işi yazıyoruz.
 const iceSmsCurrentRef = firebase.database().ref("/iceSmsQueue/current");
@@ -1024,6 +1050,15 @@ const productStatusFields = {
   hidden: document.querySelector("#productHidden"),
   soldOut: document.querySelector("#productSoldOut"),
   soldOutUntil: document.querySelector("#productSoldOutUntil")
+};
+
+const rescueFields = {
+  enabled: document.querySelector("#rescueEnabled"),
+  quantity: document.querySelector("#rescueQuantity"),
+  originalPrice: document.querySelector("#rescueOriginalPrice"),
+  discount: document.querySelector("#rescueDiscount"),
+  salePrice: document.querySelector("#rescueSalePrice"),
+  editor: document.querySelector("#rescueEditor")
 };
 
 const productPriceRows = document.querySelector("#productPriceRows");
@@ -1102,6 +1137,7 @@ const optionContainers = {
 };
 
 let config = null;
+let rescueDeals = {};
 let selectedCategoryIndex = null;
 let selectedProductIndex = null;
 let productEditorOpen = false;
@@ -1635,7 +1671,8 @@ function aggregateAdminOrderLines(lines = []) {
       sizeLabel: normalized.sizeLabel,
       extras: normalized.extras,
       removedIngredients: normalized.removedIngredients,
-      note: normalized.note
+      note: normalized.note,
+      rescueDealId: safeAdminText(normalized.rescueDealId)
     });
     const existing = map.get(key);
     if (existing) {
@@ -2029,6 +2066,7 @@ async function loadData() {
   setStatus("Synkroniserer med Firebase...");
   const snapshot = await menuRef.once("value");
   const value = snapshot.val();
+  rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
 
   // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
   // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
@@ -2290,7 +2328,7 @@ function renderCategories() {
                 ${productImageMarkup(product)}
                 <span class="product-card-copy gf-product-copy">
                   <strong>${escapeHtml(productTitle)}</strong>
-                  ${statusBadges(product)}
+                  ${statusBadges(product)}${rescueDealBadge(section, product)}
                   <span>${escapeHtml(product.ingredients || "Klikk for å redigere. Bruk ⋮ for flere valg.")}</span>
                 </span>
                 <span class="product-card-price gf-product-price">${productPriceSummary(product)}</span>
@@ -2542,6 +2580,158 @@ function renderProductIngredientTags() {
 }
 
 
+
+function adminRescueDateKey(date = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Oslo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date).reduce((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  } catch (error) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+}
+
+function firebaseSafeRescueKey(value = "") {
+  return String(value || "")
+    .replace(/[.#$\[\]\/]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || `deal-${Date.now()}`;
+}
+
+function makeRescueDealId(sectionId = "", productId = "") {
+  return firebaseSafeRescueKey(`${sectionId || "menu"}--${productId || "product"}`);
+}
+
+function getRescueDealForProduct(product = selectedProduct(), section = selectedCategory()) {
+  if (!product || !section) return null;
+  const dealId = makeRescueDealId(section.id, product.id);
+  return rescueDeals?.[dealId] ? { ...rescueDeals[dealId], id: dealId } : null;
+}
+
+function getDefaultRescueOriginalPrice(product = selectedProduct()) {
+  const prices = getProductPriceList(product)
+    .map((size) => Number(size?.price))
+    .filter((price) => Number.isFinite(price) && price >= 0);
+  if (prices.length) return Math.min(...prices);
+  return Math.max(0, safeAdminNumber(product?.displayPrice ?? product?.price, 0));
+}
+
+function calculateRescueSalePrice(originalPrice, discountPercent) {
+  const original = Math.max(0, safeAdminNumber(originalPrice, 0));
+  const discount = Math.max(0, Math.min(95, safeAdminNumber(discountPercent, 50)));
+  return Math.round(original * (100 - discount)) / 100;
+}
+
+function formatRescuePrice(value) {
+  const amount = safeAdminNumber(value, 0);
+  return `${new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 2 }).format(amount)} kr`;
+}
+
+function updateRescuePricePreview() {
+  const original = safeAdminNumber(rescueFields.originalPrice?.value, 0);
+  const discount = safeAdminNumber(rescueFields.discount?.value, 50);
+  const sale = calculateRescueSalePrice(original, discount);
+  if (rescueFields.salePrice) rescueFields.salePrice.textContent = formatRescuePrice(sale);
+  rescueFields.editor?.classList.toggle("rescue-enabled", rescueFields.enabled?.checked === true);
+}
+
+function renderRescueEditor(product = selectedProduct(), section = selectedCategory()) {
+  if (!rescueFields.editor) return;
+  const disabled = !product || !section;
+  Object.values(rescueFields).forEach((field) => {
+    if (!field || field === rescueFields.salePrice || field === rescueFields.editor) return;
+    field.disabled = disabled;
+  });
+  if (disabled) {
+    if (rescueFields.enabled) rescueFields.enabled.checked = false;
+    if (rescueFields.quantity) rescueFields.quantity.value = "1";
+    if (rescueFields.originalPrice) rescueFields.originalPrice.value = "";
+    if (rescueFields.discount) rescueFields.discount.value = "50";
+    updateRescuePricePreview();
+    return;
+  }
+
+  const deal = getRescueDealForProduct(product, section);
+  const today = adminRescueDateKey();
+  const activeToday = Boolean(deal && deal.active === true && deal.manualDisabled !== true && deal.saleDate === today && safeAdminNumber(deal.quantity, 0) > 0);
+  if (rescueFields.enabled) rescueFields.enabled.checked = activeToday;
+  if (rescueFields.quantity) rescueFields.quantity.value = String(Math.max(1, Math.floor(safeAdminNumber(deal?.quantity, 1))));
+  if (rescueFields.originalPrice) rescueFields.originalPrice.value = String(safeAdminNumber(deal?.originalPrice, getDefaultRescueOriginalPrice(product)));
+  if (rescueFields.discount) rescueFields.discount.value = String(Math.max(1, Math.min(95, safeAdminNumber(deal?.discountPercent, 50))));
+  updateRescuePricePreview();
+}
+
+function rescueDealBadge(section = {}, product = {}) {
+  const deal = getRescueDealForProduct(product, section);
+  if (!deal || deal.active !== true || deal.manualDisabled === true || deal.saleDate !== adminRescueDateKey() || safeAdminNumber(deal.quantity, 0) <= 0) return "";
+  return `<span class="status-badge-row rescue-admin-badge-row"><span class="status-badge rescue-admin-badge">🔥 Redde maten · ${Math.floor(safeAdminNumber(deal.quantity, 0))} igjen · -${Math.round(safeAdminNumber(deal.discountPercent, 0))}%</span></span>`;
+}
+
+function captureRescueContext() {
+  const section = selectedCategory();
+  const product = selectedProduct();
+  return {
+    oldDealId: section && product ? makeRescueDealId(section.id, product.id) : ""
+  };
+}
+
+async function saveSelectedRescueDeal(context = {}) {
+  const section = selectedCategory();
+  const product = selectedProduct();
+  if (!section || !product) return true;
+
+  const dealId = makeRescueDealId(section.id, product.id);
+  const previous = rescueDeals?.[dealId] || rescueDeals?.[context.oldDealId] || {};
+  const enabled = rescueFields.enabled?.checked === true;
+  const quantity = Math.max(1, Math.min(99, Math.floor(safeAdminNumber(rescueFields.quantity?.value, 1))));
+  const originalPrice = Math.max(0, safeAdminNumber(rescueFields.originalPrice?.value, getDefaultRescueOriginalPrice(product)));
+  const discountPercent = Math.max(1, Math.min(95, safeAdminNumber(rescueFields.discount?.value, 50)));
+  const salePrice = calculateRescueSalePrice(originalPrice, discountPercent);
+  const now = new Date().toISOString();
+  const next = {
+    ...previous,
+    id: dealId,
+    productId: product.id,
+    sourceSectionId: section.id,
+    name: product.name || "Redningsmat",
+    description: product.ingredients || "",
+    imageUrl: product.imageUrl || "",
+    thumb: product.thumb || "plate",
+    quantity,
+    originalPrice,
+    discountPercent,
+    salePrice,
+    saleDate: adminRescueDateKey(),
+    active: enabled && quantity > 0,
+    manualDisabled: !enabled,
+    createdAt: previous.createdAt || now,
+    updatedAt: now
+  };
+
+  try {
+    await rescueDealsRef.child(dealId).set(next);
+    rescueDeals[dealId] = next;
+    if (context.oldDealId && context.oldDealId !== dealId) {
+      await rescueDealsRef.child(context.oldDealId).remove();
+      delete rescueDeals[context.oldDealId];
+    }
+    return true;
+  } catch (error) {
+    console.error("Redningsmat kunne ikke lagres.", error);
+    setStatus("Produktet ble lagret, men Redde maten kunne ikke oppdateres.");
+    return false;
+  }
+}
+
 function renderProductEditor() {
   mountProductFormInline();
   const mediaDetails = document.querySelector("#productMediaSettings");
@@ -2556,6 +2746,7 @@ function renderProductEditor() {
     if (!field) return;
     field.disabled = disabled;
   });
+  renderRescueEditor(product, selectedCategory());
   if (!product) {
     productForm.reset();
     productIngredientDraft = [];
@@ -4412,6 +4603,42 @@ async function markOrderReady(orderId) {
 
 
 
+
+async function restoreRescueStockForOrder(orderId) {
+  const order = adminOrders.find((item) => String(item.id || "") === String(orderId || ""));
+  if (!order || order.rescueStockRestored === true) return true;
+  const reservations = new Map();
+  asArray(order.items).forEach((line) => {
+    if (line?.rescueDeal !== true || !line.rescueDealId) return;
+    const id = String(line.rescueDealId);
+    reservations.set(id, (reservations.get(id) || 0) + Math.max(1, Math.floor(safeAdminNumber(line.quantity, 1))));
+  });
+  if (!reservations.size) return true;
+
+  try {
+    for (const [dealId, quantity] of reservations) {
+      await rescueDealsRef.child(dealId).transaction((current) => {
+        if (!current || typeof current !== "object") return current;
+        const nextQuantity = Math.max(0, safeAdminNumber(current.quantity, 0)) + quantity;
+        const sameDay = !current.saleDate || current.saleDate === adminRescueDateKey();
+        return {
+          ...current,
+          quantity: nextQuantity,
+          active: current.manualDisabled !== true && sameDay && nextQuantity > 0,
+          soldOutAt: null,
+          updatedAt: new Date().toISOString()
+        };
+      });
+    }
+    const restoredAt = new Date().toISOString();
+    await ordersRef.child(orderId).update({ rescueStockRestored: true, rescueStockRestoredAt: restoredAt });
+    return true;
+  } catch (error) {
+    console.error("Kunne ikke legge redningsmat tilbake på lager.", error);
+    return false;
+  }
+}
+
 async function cancelOrder(orderId) {
   if (!confirm("Avvise / kansellere denne bestillingen?")) return;
   await ordersRef.child(orderId).update({
@@ -4420,7 +4647,8 @@ async function cancelOrder(orderId) {
     updatedAt: new Date().toISOString(),
     acceptedAt: null
   });
-  setStatus("Bestilling avvist / kansellert.");
+  const restored = await restoreRescueStockForOrder(orderId);
+  setStatus(restored ? "Bestilling avvist / kansellert. Redningsmat lagt tilbake på lager." : "Bestilling kansellert, men lageret kunne ikke tilbakeføres automatisk.");
   window.setTimeout(updateAdminOrderAlarmLoop, 250);
 }
 
@@ -5825,6 +6053,12 @@ document.addEventListener("focusin", (event) => {
   }, 0);
 });
 
+
+[rescueFields.quantity, rescueFields.originalPrice, rescueFields.discount].filter(Boolean).forEach((field) => {
+  field.addEventListener("input", updateRescuePricePreview);
+});
+rescueFields.enabled?.addEventListener("change", updateRescuePricePreview);
+
 productForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const saveButton = document.querySelector("#saveProduct");
@@ -5834,16 +6068,18 @@ productForm.addEventListener("submit", async (event) => {
     saveButton.textContent = "Lagrer…";
   }
 
+  const rescueContext = captureRescueContext();
   updateProductFromFields();
   config = normalizeConfig(config);
   saveAdminMenuCache(config);
   const saved = await writeLiveConfig("Produkt lagret.");
+  const rescueSaved = saved ? await saveSelectedRescueDeal(rescueContext) : false;
 
   if (saveButton) {
     saveButton.disabled = false;
     saveButton.textContent = "Lagre";
   }
-  if (!saved) return;
+  if (!saved || !rescueSaved) return;
 
   selectedProductIndex = null;
   productEditorOpen = false;
@@ -6230,6 +6466,7 @@ function startRealtimeSync() {
     "value",
     async (snapshot) => {
       const value = snapshot.val();
+      rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
 
       if (!hasValidConfig(value)) {
         // TÜRKÇE: Firebase boşsa otomatik test menüsü basmıyoruz.

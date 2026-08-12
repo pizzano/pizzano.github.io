@@ -245,7 +245,7 @@
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
 const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
-const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
+const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings", "rescueDeals"];
 
 async function fetchFirebaseMenuConfig() {
   const entries = await Promise.all(firebaseMenuFields.map(async (key) => {
@@ -263,6 +263,8 @@ let kebabPitaOptions = [];
 
 let menuOptionGroups = [];
 let menuUsesExplicitOptionGroups = false;
+let rescueDeals = {};
+let rescueRefreshTimer = null;
 let siteSettings = defaultSiteSettings();
 
 const storageKey = "kol-grill-cart";
@@ -1528,6 +1530,201 @@ function currentCartTotal() {
   return cart.reduce((sum, line) => sum + Number(line.total || 0), 0);
 }
 
+
+function rescueCartEntries() {
+  const map = new Map();
+  cart.forEach((line) => {
+    if (line?.rescueDeal !== true || !line.rescueDealId) return;
+    const id = String(line.rescueDealId);
+    map.set(id, (map.get(id) || 0) + Math.max(1, Math.floor(safeNumber(line.quantity, 1))));
+  });
+  return [...map.entries()].map(([dealId, quantity]) => ({ dealId, quantity }));
+}
+
+async function atomicRescueDealUpdate(dealId, updater, maxAttempts = 6) {
+  const encodedId = encodeURIComponent(String(dealId || ""));
+  const url = `${firebaseBaseUrl}/rescueDeals/${encodedId}.json`;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const read = await fetch(`${url}?ts=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "X-Firebase-ETag": "true" }
+    });
+    if (!read.ok) throw new Error("Kunne ikke lese lagerstatus");
+    const etag = read.headers.get("ETag") || read.headers.get("etag");
+    if (!etag) throw new Error("Firebase returnerte ikke lagerlås");
+    const current = normalizeRescueDeal(await read.json(), dealId);
+    const decision = updater(current);
+    if (decision?.abort) return { ok: false, reason: decision.reason || "Utsolgt", current };
+    const next = decision?.value;
+    const write = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "if-match": etag
+      },
+      body: JSON.stringify(next)
+    });
+    if (write.status === 412) continue;
+    if (!write.ok) throw new Error("Kunne ikke oppdatere lagerstatus");
+    return { ok: true, value: normalizeRescueDeal(next, dealId) };
+  }
+  throw new Error("Lagerstatus endret seg samtidig. Prøv igjen.");
+}
+
+async function rollbackRescueReservations(reservations = []) {
+  for (const reservation of reservations) {
+    try {
+      const result = await atomicRescueDealUpdate(reservation.dealId, (current) => {
+        if (!current) return { abort: true, reason: "Mangler" };
+        const nextQuantity = Math.max(0, safeNumber(current.quantity, 0)) + reservation.quantity;
+        return {
+          value: {
+            ...current,
+            quantity: nextQuantity,
+            active: current.manualDisabled !== true && (!current.saleDate || current.saleDate === rescueDateKey()) && nextQuantity > 0,
+            updatedAt: new Date().toISOString()
+          }
+        };
+      });
+      if (result.ok) rescueDeals[reservation.dealId] = result.value;
+    } catch (error) {
+      console.warn("Kunne ikke tilbakeføre redningsmat-lager.", error);
+    }
+  }
+}
+
+async function reserveRescueStock() {
+  const requested = rescueCartEntries();
+  if (!requested.length) return [];
+  const completed = [];
+  try {
+    for (const entry of requested) {
+      const result = await atomicRescueDealUpdate(entry.dealId, (current) => {
+        if (!current || !isRescueDealActiveToday(current)) {
+          return { abort: true, reason: "Denne varen er ikke lenger tilgjengelig." };
+        }
+        if (current.quantity < entry.quantity) {
+          return { abort: true, reason: current.quantity > 0 ? `Bare ${current.quantity} igjen.` : "Varen er utsolgt." };
+        }
+        const remaining = current.quantity - entry.quantity;
+        return {
+          value: {
+            ...current,
+            quantity: remaining,
+            active: remaining > 0,
+            soldOutAt: remaining === 0 ? new Date().toISOString() : (current.soldOutAt || null),
+            updatedAt: new Date().toISOString()
+          }
+        };
+      });
+      if (!result.ok) {
+        const error = new Error(result.reason || "Redningsmaten ble akkurat utsolgt.");
+        error.code = "RESCUE_STOCK";
+        error.userMessage = result.reason || "Redningsmaten ble akkurat utsolgt.";
+        throw error;
+      }
+      rescueDeals[entry.dealId] = result.value;
+      completed.push(entry);
+    }
+    renderMenu();
+    return completed;
+  } catch (error) {
+    await rollbackRescueReservations(completed);
+    throw error;
+  }
+}
+
+function syncRescueCartWithAvailableStock(options = {}) {
+  const { render = true } = options;
+  let changed = false;
+  cart = cart.filter((line) => {
+    if (line?.rescueDeal !== true || !line.rescueDealId) return true;
+    const deal = getRescueDealById(line.rescueDealId);
+    if (!deal || !isRescueDealActiveToday(deal)) {
+      changed = true;
+      return false;
+    }
+    const available = Math.max(0, Math.floor(safeNumber(deal.quantity, 0)));
+    if (available <= 0) {
+      changed = true;
+      return false;
+    }
+    const nextQty = Math.min(Math.max(1, Math.floor(safeNumber(line.quantity, 1))), available);
+    if (nextQty !== line.quantity) {
+      line.quantity = nextQty;
+      line.lineTotal = safeNumber(line.unitPrice) * nextQty;
+      line.total = line.lineTotal;
+      changed = true;
+    }
+    return true;
+  });
+  if (changed) {
+    saveCart();
+    if (render) renderCart();
+  }
+  return changed;
+}
+
+function addRescueDealToCart(dealId = "") {
+  const deal = getRescueDealById(dealId);
+  if (!deal || !isRescueDealActiveToday(deal)) {
+    showCustomerFavoriteNotice("Denne varen er nettopp utsolgt");
+    refreshRescueDealsFromDatabase({ render: true });
+    return;
+  }
+  const available = Math.max(0, Math.floor(safeNumber(deal.quantity, 0)));
+  const existingIndex = cart.findIndex((line) => line?.rescueDeal === true && String(line.rescueDealId || "") === String(dealId));
+  const existingQty = existingIndex >= 0 ? Math.max(1, Math.floor(safeNumber(cart[existingIndex].quantity, 1))) : 0;
+  if (existingQty >= available) {
+    showCustomerFavoriteNotice(available === 1 ? "Kun 1 igjen – den ligger allerede i handlekurven" : `Kun ${available} igjen`);
+    return;
+  }
+
+  const sourceSection = menuSections.find((section) => String(section?.id || "") === String(deal.sourceSectionId || ""));
+  const product = asArray(sourceSection?.items).find((item) => String(item?.id || "") === String(deal.productId || "")) || {};
+  const unitPrice = Math.max(0, safeNumber(deal.salePrice, 0));
+  const discount = Math.max(0, Math.round(safeNumber(deal.discountPercent, 0)));
+
+  if (existingIndex >= 0) {
+    const nextQty = existingQty + 1;
+    cart[existingIndex].quantity = nextQty;
+    cart[existingIndex].lineTotal = unitPrice * nextQty;
+    cart[existingIndex].total = unitPrice * nextQty;
+  } else {
+    cart.push({
+      id: `rescue-${deal.id}-${Date.now()}`,
+      productId: deal.productId,
+      sectionId: deal.sourceSectionId,
+      name: deal.name || product.name || "Redningsmat",
+      quantity: 1,
+      size: "",
+      sizeLabel: "",
+      extras: [],
+      extraDetails: [{ label: `Redde maten: -${discount}%`, priceText: "" }],
+      extraIds: [],
+      removedIngredients: [],
+      basePrice: unitPrice,
+      defaultBasePrice: safeNumber(deal.originalPrice, unitPrice),
+      sizePrice: 0,
+      extrasTotal: 0,
+      unitPrice,
+      lineTotal: unitPrice,
+      total: unitPrice,
+      note: "",
+      imageUrl: product.imageUrl || deal.imageUrl || "",
+      thumb: product.thumb || deal.thumb || "plate",
+      rescueDeal: true,
+      rescueDealId: deal.id,
+      rescueOriginalPrice: safeNumber(deal.originalPrice),
+      rescueDiscountPercent: discount,
+      rescueSaleDate: deal.saleDate || rescueDateKey()
+    });
+  }
+  saveCart();
+  renderCart();
+  showCustomerFavoriteNotice("Redningsmat lagt i handlekurven");
+}
+
 function buildOrderPayload() {
   sortCartInPlaceForKitchen();
   saveCart();
@@ -1598,7 +1795,12 @@ function buildOrderPayload() {
       lineTotal: safeNumber(line.lineTotal || line.total),
 
       note: line.note || "",
-      total: safeNumber(line.lineTotal || line.total)
+      total: safeNumber(line.lineTotal || line.total),
+      rescueDeal: line.rescueDeal === true,
+      rescueDealId: line.rescueDealId || "",
+      rescueOriginalPrice: safeNumber(line.rescueOriginalPrice),
+      rescueDiscountPercent: safeNumber(line.rescueDiscountPercent),
+      rescueSaleDate: line.rescueSaleDate || ""
     })),
     subtotal: currentCartTotal(),
     total: currentCartTotal()
@@ -2135,11 +2337,18 @@ async function submitOrder() {
     }
     return;
   }
+
   checkoutButton.disabled = true;
   checkoutButton.textContent = "Sender...";
+  let rescueReservations = [];
+  let orderCreated = false;
+
   try {
     saveCustomerInfo();
+    rescueReservations = await reserveRescueStock();
     const payload = buildOrderPayload();
+    payload.rescueStockReserved = rescueReservations.length > 0;
+
     const response = await fetch(firebaseOrdersUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2147,8 +2356,15 @@ async function submitOrder() {
     });
     if (!response.ok) throw new Error("Firebase svarte ikke");
     const result = await response.json();
+    orderCreated = true;
     const order = { id: result.name, ...payload };
-    await writeCustomerOrderIndex(result.name, order);
+
+    try {
+      await writeCustomerOrderIndex(result.name, order);
+    } catch (indexError) {
+      console.warn("Bestillingen ble opprettet, men kundeindeksen kunne ikke oppdateres.", indexError);
+    }
+
     rememberRecentOrder(order);
     startRecentOrdersSync();
     renderOrderStatus(order);
@@ -2158,13 +2374,21 @@ async function submitOrder() {
     saveCart();
     resetPickupToAsap();
     renderCart();
+    renderMenu();
   } catch (error) {
     console.error(error);
+    if (!orderCreated && rescueReservations.length) await rollbackRescueReservations(rescueReservations);
+    if (error?.code === "RESCUE_STOCK") {
+      await refreshRescueDealsFromDatabase({ render: true });
+      syncRescueCartWithAvailableStock({ render: true });
+    }
+    const message = error?.userMessage || "Prøv igjen, eller ring restauranten.";
     if (orderStatusBox) {
       orderStatusBox.hidden = false;
       orderStatusBox.className = "order-status-box cancelled";
-      orderStatusBox.innerHTML = "<h3>Bestillingen kunne ikke sendes</h3><p>Prøv igjen, eller ring restauranten.</p>";
+      orderStatusBox.innerHTML = `<h3>Bestillingen kunne ikke sendes</h3><p>${escapeAttribute(message)}</p>`;
     }
+    if (error?.code === "RESCUE_STOCK") showCustomerFavoriteNotice(message);
   } finally {
     checkoutStep = 1;
     updateCheckoutButtonState();
@@ -2540,7 +2764,8 @@ function normalizeMenuConfig(config) {
     kebabPitaOptions: asArray(source.kebabPitaOptions),
     optionGroups: normalizeOptionGroups(source),
     hasExplicitOptionGroups,
-    siteSettings: normalizeSiteSettings(source.siteSettings)
+    siteSettings: normalizeSiteSettings(source.siteSettings),
+    rescueDeals: normalizeRescueDeals(source.rescueDeals)
   };
 }
 
@@ -2553,6 +2778,7 @@ function applyMenuConfig(config) {
   kebabPitaOptions = normalized.kebabPitaOptions;
   menuOptionGroups = normalized.optionGroups;
   menuUsesExplicitOptionGroups = normalized.hasExplicitOptionGroups;
+  rescueDeals = normalized.rescueDeals;
   siteSettings = normalized.siteSettings;
   applySiteSettings();
   return true;
@@ -2627,6 +2853,133 @@ function menuConfigSignature(config) {
   } catch {
     return String(Date.now());
   }
+}
+
+
+function rescueDateKey(date = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Oslo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date).reduce((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  } catch (error) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+}
+
+function normalizeRescueDeal(raw = {}, id = "") {
+  if (!raw || typeof raw !== "object") return null;
+  const quantity = Math.max(0, Math.floor(safeNumber(raw.quantity, 0)));
+  const originalPrice = Math.max(0, safeNumber(raw.originalPrice, 0));
+  const discountPercent = Math.max(0, Math.min(95, safeNumber(raw.discountPercent, 50)));
+  const computedSalePrice = Math.round(originalPrice * (100 - discountPercent)) / 100;
+  const salePrice = Math.max(0, safeNumber(raw.salePrice, computedSalePrice));
+  return {
+    ...raw,
+    id: String(raw.id || id || ""),
+    productId: String(raw.productId || ""),
+    sourceSectionId: String(raw.sourceSectionId || ""),
+    name: safeText(raw.name || "Redningsmat"),
+    quantity,
+    originalPrice,
+    discountPercent,
+    salePrice,
+    saleDate: String(raw.saleDate || ""),
+    active: raw.active === true,
+    manualDisabled: raw.manualDisabled === true
+  };
+}
+
+function normalizeRescueDeals(value = {}) {
+  if (!value || typeof value !== "object") return {};
+  return Object.entries(value).reduce((acc, [id, raw]) => {
+    const deal = normalizeRescueDeal(raw, id);
+    if (deal?.id) acc[deal.id] = deal;
+    return acc;
+  }, {});
+}
+
+function isRescueDealActiveToday(deal = {}) {
+  return Boolean(
+    deal &&
+    deal.active === true &&
+    deal.manualDisabled !== true &&
+    safeNumber(deal.quantity, 0) > 0 &&
+    (!deal.saleDate || deal.saleDate === rescueDateKey())
+  );
+}
+
+function getRescueDealById(dealId = "") {
+  return rescueDeals[String(dealId || "")] || null;
+}
+
+function getRescueSection() {
+  const items = Object.values(rescueDeals)
+    .map((deal) => normalizeRescueDeal(deal, deal?.id))
+    .filter(isRescueDealActiveToday)
+    .map((deal) => {
+      const section = menuSections.find((entry) => String(entry?.id || "") === deal.sourceSectionId);
+      const product = asArray(section?.items).find((entry) => String(entry?.id || "") === deal.productId) || {};
+      return {
+        ...product,
+        id: `rescue-${deal.id}`,
+        name: deal.name || product.name || "Redningsmat",
+        ingredients: product.ingredients || deal.description || "",
+        imageUrl: product.imageUrl || deal.imageUrl || "",
+        thumb: product.thumb || deal.thumb || "plate",
+        _isRescueDeal: true,
+        _rescueDealId: deal.id,
+        _sourceSectionId: deal.sourceSectionId,
+        _originalProductId: deal.productId,
+        rescueQuantity: deal.quantity,
+        rescueOriginalPrice: deal.originalPrice,
+        rescueSalePrice: deal.salePrice,
+        rescueDiscountPercent: deal.discountPercent,
+        rescueSaleDate: deal.saleDate
+      };
+    })
+    .sort((a, b) => String(b.rescueCreatedAt || "").localeCompare(String(a.rescueCreatedAt || "")) || a.name.localeCompare(b.name, "nb"));
+
+  if (!items.length) return null;
+  return {
+    id: "redde-maten",
+    title: "Redde maten 🔥",
+    note: "God mat til redusert pris. Begrenset antall – førstemann til mølla.",
+    items,
+    isRescueSection: true
+  };
+}
+
+async function refreshRescueDealsFromDatabase(options = {}) {
+  const { render = true } = options;
+  try {
+    const response = await fetch(`${firebaseBaseUrl}/rescueDeals.json?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Kunne ikke hente redningsmat");
+    const next = normalizeRescueDeals(await response.json());
+    const before = JSON.stringify(rescueDeals || {});
+    const after = JSON.stringify(next || {});
+    rescueDeals = next;
+    syncRescueCartWithAvailableStock({ render: false });
+    if (render && before !== after) renderMenu();
+    return true;
+  } catch (error) {
+    console.warn("Redningsmat kunne ikke synkroniseres.", error);
+    return false;
+  }
+}
+
+function startRescueDealsSync() {
+  window.clearInterval(rescueRefreshTimer);
+  rescueRefreshTimer = window.setInterval(() => {
+    if (document.visibilityState !== "hidden") refreshRescueDealsFromDatabase({ render: true });
+  }, 15000);
 }
 
 function normalizePopularProductName(value = "") {
@@ -3216,6 +3569,7 @@ function getCartLineConfigurationKey(line = {}) {
 
   return JSON.stringify({
     productId: String(line.productId || ""),
+    rescueDealId: String(line.rescueDealId || ""),
     size: String(line.size || ""),
     extraIds,
     removedIngredients: Array.isArray(line.removedIngredients)
@@ -3332,7 +3686,8 @@ function getRenderableMenuSections() {
         isSyntheticFavorites: true
       }]
     : [];
-  return [...favoritesSections, ...(mostOrderedSection ? [mostOrderedSection] : []), ...sections];
+  const rescueSection = getRescueSection();
+  return [...(rescueSection ? [rescueSection] : []), ...favoritesSections, ...(mostOrderedSection ? [mostOrderedSection] : []), ...sections];
 }
 
 function refreshCategoryTabsFromCurrentMenu(options = {}) {
@@ -3454,6 +3809,7 @@ function getMarkedMenuProductIds() {
   // Tidligere ble activeMenuProductId også tatt med, og da kunne et slettet produkt
   // bli hengende grønt helt til siden ble oppdatert.
   cart.forEach((line) => {
+    if (line?.rescueDeal === true) return;
     const id = String(line?.productId || "");
     if (id) ids.add(id);
   });
@@ -3643,7 +3999,7 @@ function renderMenu() {
       const hasMoreFeaturedItems = isFeaturedSection && allSectionItems.length > featuredProductPreviewLimit;
       const productListId = `${section.id}-products`;
       return `
-        <section class="category-panel menu-app-section ${sectionSoldOut ? "category-sold-out" : ""} ${section.isSyntheticMostOrdered ? "most-ordered-menu-section" : ""} ${section.isSyntheticFavorites ? "favorites-menu-section" : ""}" data-section="${section.id}">
+        <section class="category-panel menu-app-section ${sectionSoldOut ? "category-sold-out" : ""} ${section.isSyntheticMostOrdered ? "most-ordered-menu-section" : ""} ${section.isSyntheticFavorites ? "favorites-menu-section" : ""} ${section.isRescueSection ? "rescue-menu-section" : ""}" data-section="${section.id}">
           <div class="menu-app-section-head">
             <div>
               <h2>${escapeAttribute(section.title)}${sectionSoldOut ? ' <em class="soldout-small">UTSOLGT</em>' : ""}</h2>
@@ -3654,6 +4010,31 @@ function renderMenu() {
           <div class="menu-list" id="${escapeAttribute(productListId)}">
             ${displayedSectionItems
               .map((item) => {
+                if (section.isRescueSection && item._isRescueDeal) {
+                  const stock = Math.max(0, Number(item.rescueQuantity || 0));
+                  const discount = Math.max(0, Math.round(Number(item.rescueDiscountPercent || 0)));
+                  const details = safeText(item.ingredients || item.description || "");
+                  return `
+                    <button class="menu-row menu-app-product rescue-menu-row ${stock === 1 ? "last-rescue-item" : ""}" type="button" data-rescue-deal="${escapeAttribute(item._rescueDealId)}" aria-label="Legg ${escapeAttribute(item.name)} til i handlekurven">
+                      <span class="menu-thumb-wrap rescue-thumb-wrap">
+                        ${renderThumb(item)}
+                        <span class="rescue-discount-badge">-${discount}%</span>
+                      </span>
+                      <span class="menu-row-main">
+                        <span class="menu-row-headline"><strong>${escapeAttribute(item.name)}</strong></span>
+                        <span class="menu-row-description">${details ? escapeAttribute(details) : "Ferdiglaget mat til redusert pris"}</span>
+                        <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock === 1 ? "Kun 1 igjen" : `${stock} igjen`}</span>
+                      </span>
+                      <span class="menu-app-product-side rescue-product-side">
+                        <span class="menu-app-plus rescue-add-plus" aria-hidden="true">+</span>
+                        <span class="rescue-price-stack">
+                          <del>${formatMenuCompactPrice(item.rescueOriginalPrice)}</del>
+                          <strong>${formatMenuCompactPrice(item.rescueSalePrice)}</strong>
+                        </span>
+                      </span>
+                    </button>
+                  `;
+                }
                 const rowSoldOut = isSoldOutItem(item, sectionSoldOut);
                 const prefix = item.number ? `${item.number}. ` : "";
                 const details = safeText(item.ingredients || item.description || "");
@@ -4110,8 +4491,8 @@ function renderCart() {
             ` : ""}
             ${line.note ? `<p class="cart-item-note">Notat: ${safeText(line.note)}</p>` : ""}
           </div>
-          <div class="cart-item-actions" aria-label="Rediger eller slett">
-            <button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>
+          <div class="cart-item-actions" aria-label="${line.rescueDeal === true ? "Slett" : "Rediger eller slett"}">
+            ${line.rescueDeal === true ? '<span class="rescue-cart-chip">🔥 Redde maten</span>' : `<button class="edit-line-button icon-only" type="button" data-edit="${index}" data-cart-action="edit" aria-label="Rediger vare" title="Rediger vare"><span class="cart-edit-icon" aria-hidden="true">✎</span></button>`}
             <button class="remove-button" type="button" data-remove="${index}" data-cart-action="remove" aria-label="Slett vare" title="Slett vare">×</button>
           </div>
         </article>
@@ -4291,6 +4672,12 @@ menuSectionsEl.addEventListener("click", (event) => {
   if (toggle) {
     const panel = toggle.closest(".category-panel");
     panel.classList.toggle("collapsed");
+    return;
+  }
+  const rescueRow = event.target.closest("[data-rescue-deal]");
+  if (rescueRow) {
+    event.preventDefault();
+    addRescueDealToCart(rescueRow.dataset.rescueDeal);
     return;
   }
   const row = event.target.closest("[data-product]");
@@ -4508,6 +4895,7 @@ async function init() {
   closeAllCustomerPopupsAndShowMenu();
   applySiteSettings();
   await loadMenuConfig();
+  startRescueDealsSync();
   prefillCustomerInfo();
   updatePickupControls();
   renderRecentOrders();
@@ -4590,6 +4978,7 @@ let kolLastCartRemoveAt = 0;
 function kolEditCartLineDirect(index) {
   index = Number(index);
   if (!Number.isInteger(index) || index < 0 || index >= cart.length) return false;
+  if (cart[index]?.rescueDeal === true) return false;
   openCartLineEditor(index);
   return false;
 }
