@@ -80,6 +80,9 @@
 <label>Antall igjen
 <input id="rescueQuantity" min="1" max="99" step="1" type="number" value="1"/>
 </label>
+<label>Størrelse / variant
+<input id="rescueVariant" maxlength="40" placeholder="F.eks. Stor, Liten, 40 cm" type="text"/>
+</label>
 <label>Ordinær pris
 <input id="rescueOriginalPrice" min="0" step="0.5" type="number"/>
 </label>
@@ -1055,6 +1058,7 @@ const productStatusFields = {
 const rescueFields = {
   enabled: document.querySelector("#rescueEnabled"),
   quantity: document.querySelector("#rescueQuantity"),
+  variant: document.querySelector("#rescueVariant"),
   originalPrice: document.querySelector("#rescueOriginalPrice"),
   discount: document.querySelector("#rescueDiscount"),
   salePrice: document.querySelector("#rescueSalePrice"),
@@ -2654,6 +2658,7 @@ function renderRescueEditor(product = selectedProduct(), section = selectedCateg
   if (disabled) {
     if (rescueFields.enabled) rescueFields.enabled.checked = false;
     if (rescueFields.quantity) rescueFields.quantity.value = "1";
+    if (rescueFields.variant) rescueFields.variant.value = "";
     if (rescueFields.originalPrice) rescueFields.originalPrice.value = "";
     if (rescueFields.discount) rescueFields.discount.value = "50";
     updateRescuePricePreview();
@@ -2665,6 +2670,7 @@ function renderRescueEditor(product = selectedProduct(), section = selectedCateg
   const activeToday = Boolean(deal && deal.active === true && deal.manualDisabled !== true && deal.saleDate === today && safeAdminNumber(deal.quantity, 0) > 0);
   if (rescueFields.enabled) rescueFields.enabled.checked = activeToday;
   if (rescueFields.quantity) rescueFields.quantity.value = String(Math.max(1, Math.floor(safeAdminNumber(deal?.quantity, 1))));
+  if (rescueFields.variant) rescueFields.variant.value = String(deal?.variantLabel || "");
   if (rescueFields.originalPrice) rescueFields.originalPrice.value = String(safeAdminNumber(deal?.originalPrice, getDefaultRescueOriginalPrice(product)));
   if (rescueFields.discount) rescueFields.discount.value = String(Math.max(1, Math.min(95, safeAdminNumber(deal?.discountPercent, 50))));
   updateRescuePricePreview();
@@ -2693,6 +2699,7 @@ async function saveSelectedRescueDeal(context = {}) {
   const previous = rescueDeals?.[dealId] || rescueDeals?.[context.oldDealId] || {};
   const enabled = rescueFields.enabled?.checked === true;
   const quantity = Math.max(1, Math.min(99, Math.floor(safeAdminNumber(rescueFields.quantity?.value, 1))));
+  const variantLabel = String(rescueFields.variant?.value || "").trim().slice(0, 40);
   const originalPrice = Math.max(0, safeAdminNumber(rescueFields.originalPrice?.value, getDefaultRescueOriginalPrice(product)));
   const discountPercent = Math.max(1, Math.min(95, safeAdminNumber(rescueFields.discount?.value, 50)));
   const salePrice = calculateRescueSalePrice(originalPrice, discountPercent);
@@ -2707,6 +2714,7 @@ async function saveSelectedRescueDeal(context = {}) {
     imageUrl: product.imageUrl || "",
     thumb: product.thumb || "plate",
     quantity,
+    variantLabel,
     originalPrice,
     discountPercent,
     salePrice,

@@ -630,6 +630,11 @@ function loadCart() {
 
 function saveCart() {
   localStorage.setItem(storageKey, JSON.stringify(cart));
+  if (typeof renderMenu === "function" && rescueDeals && Object.keys(rescueDeals).length) {
+    queueMicrotask(() => {
+      try { renderMenu(); } catch (error) { console.warn("Redde maten-visning kunne ikke oppdateres.", error); }
+    });
+  }
 }
 
 function getCustomerAudioContext() {
@@ -1676,7 +1681,7 @@ function addRescueDealToCart(dealId = "") {
   const existingIndex = cart.findIndex((line) => line?.rescueDeal === true && String(line.rescueDealId || "") === String(dealId));
   const existingQty = existingIndex >= 0 ? Math.max(1, Math.floor(safeNumber(cart[existingIndex].quantity, 1))) : 0;
   if (existingQty >= available) {
-    showCustomerFavoriteNotice(available === 1 ? "Kun 1 igjen – den ligger allerede i handlekurven" : `Kun ${available} igjen`);
+    showCustomerFavoriteNotice(available === 1 ? "Den siste ligger allerede i handlekurven" : "Alle tilgjengelige ligger allerede i handlekurven");
     return;
   }
 
@@ -1697,8 +1702,8 @@ function addRescueDealToCart(dealId = "") {
       sectionId: deal.sourceSectionId,
       name: deal.name || product.name || "Redningsmat",
       quantity: 1,
-      size: "",
-      sizeLabel: "",
+      size: String(deal.variantLabel || ""),
+      sizeLabel: String(deal.variantLabel || ""),
       extras: [],
       extraDetails: [{ label: `Redde maten: -${discount}%`, priceText: "" }],
       extraIds: [],
@@ -2916,6 +2921,14 @@ function isRescueDealActiveToday(deal = {}) {
   );
 }
 
+function getRescueCartQuantity(dealId = "") {
+  const target = String(dealId || "");
+  return cart.reduce((sum, line) => {
+    if (line?.rescueDeal !== true || String(line.rescueDealId || "") !== target) return sum;
+    return sum + Math.max(1, Math.floor(safeNumber(line.quantity, 1)));
+  }, 0);
+}
+
 function getRescueDealById(dealId = "") {
   return rescueDeals[String(dealId || "")] || null;
 }
@@ -2939,6 +2952,7 @@ function getRescueSection() {
         _sourceSectionId: deal.sourceSectionId,
         _originalProductId: deal.productId,
         rescueQuantity: deal.quantity,
+        rescueVariantLabel: String(deal.variantLabel || ""),
         rescueOriginalPrice: deal.originalPrice,
         rescueSalePrice: deal.salePrice,
         rescueDiscountPercent: deal.discountPercent,
@@ -4011,7 +4025,8 @@ function renderMenu() {
             ${displayedSectionItems
               .map((item) => {
                 if (section.isRescueSection && item._isRescueDeal) {
-                  const stock = Math.max(0, Number(item.rescueQuantity || 0));
+                  const rawStock = Math.max(0, Math.floor(Number(item.rescueQuantity || 0)));
+                  const stock = Math.max(0, rawStock - getRescueCartQuantity(item._rescueDealId));
                   const discount = Math.max(0, Math.round(Number(item.rescueDiscountPercent || 0)));
                   const details = safeText(item.ingredients || item.description || "");
                   return `
@@ -4023,7 +4038,8 @@ function renderMenu() {
                       <span class="menu-row-main">
                         <span class="menu-row-headline"><strong>${escapeAttribute(item.name)}</strong></span>
                         <span class="menu-row-description">${details ? escapeAttribute(details) : "Ferdiglaget mat til redusert pris"}</span>
-                        <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock === 1 ? "Kun 1 igjen" : `${stock} igjen`}</span>
+                        ${item.rescueVariantLabel ? `<span class="rescue-variant-label">${escapeAttribute(item.rescueVariantLabel)}</span>` : ""}
+                        <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock <= 0 ? "0 igjen · ligger i handlekurven" : (stock === 1 ? "Kun 1 igjen" : `${stock} igjen`)}</span>
                       </span>
                       <span class="menu-app-product-side rescue-product-side">
                         <span class="menu-app-plus rescue-add-plus" aria-hidden="true">+</span>

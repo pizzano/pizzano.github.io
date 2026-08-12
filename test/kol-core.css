@@ -2759,3 +2759,12 @@ body.kol-admin .theme-choice-card.selected{border-color: #ee682f !important;
   .rescue-editor-grid { grid-template-columns: 1fr 1fr; }
   .rescue-editor-head { align-items: center; }
 }
+
+
+/* ===== REDDE MATEN VARIANT + LIVE STOCK ===== */
+body.kol-admin .rescue-editor-grid{grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;}
+body.kol-admin #rescueVariant{min-width:0;}
+body.kol-customer .rescue-variant-label{width:max-content;max-width:100%;display:inline-flex;align-items:center;min-height:24px;padding:3px 9px;border:1px solid #f2b16c;border-radius:999px;color:#9a4a12;background:#fff4e8;font-size:11px;font-weight:850;line-height:1.2;}
+body.kol-customer .rescue-stock-label{transition:color .15s ease,background .15s ease;}
+@media (max-width:900px){body.kol-admin .rescue-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr));}body.kol-admin .rescue-price-preview{min-height:64px;}}
+@media (max-width:560px){body.kol-admin .rescue-editor-grid{grid-template-columns:1fr;}}
