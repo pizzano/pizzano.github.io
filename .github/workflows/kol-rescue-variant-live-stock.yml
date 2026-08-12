@@ -1,0 +1,23 @@
+name: KOL rescue variant live stock deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/kol-rescue-variant-live-stock.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply variant and live stock fix
+        shell: bash
+        run: |
+          echo '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
