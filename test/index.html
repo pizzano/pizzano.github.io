@@ -4038,8 +4038,10 @@ function renderMenu() {
                       <span class="menu-row-main">
                         <span class="menu-row-headline"><strong>${escapeAttribute(item.name)}</strong></span>
                         <span class="menu-row-description">${details ? escapeAttribute(details) : "Ferdiglaget mat til redusert pris"}</span>
-                        ${item.rescueVariantLabel ? `<span class="rescue-variant-label">${escapeAttribute(item.rescueVariantLabel)}</span>` : ""}
-                        <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock <= 0 ? "0 igjen · ligger i handlekurven" : (stock === 1 ? "Kun 1 igjen" : `${stock} igjen`)}</span>
+                        <span class="rescue-meta-row">
+                          ${item.rescueVariantLabel ? `<span class="rescue-variant-label">${escapeAttribute(item.rescueVariantLabel)}</span>` : ""}
+                          <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock <= 0 ? "0 igjen · ligger i handlekurven" : (stock === 1 ? "Kun 1 igjen" : `${stock} igjen`)}</span>
+                        </span>
                       </span>
                       <span class="menu-app-product-side rescue-product-side">
                         <span class="menu-app-plus rescue-add-plus" aria-hidden="true">+</span>
