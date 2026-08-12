@@ -1,0 +1,148 @@
+name: KOL rescue card layout v2
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/kol-rescue-card-layout-v2.yml
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch rescue card markup and CSS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index = Path('test/index.html')
+          text = index.read_text(encoding='utf-8')
+          old = '''                        ${item.rescueVariantLabel ? `<span class="rescue-variant-label">${escapeAttribute(item.rescueVariantLabel)}</span>` : ""}
+                        <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock <= 0 ? "0 igjen · ligger i handlekurven" : (stock === 1 ? "Kun 1 igjen" : `${stock} igjen`)}</span>'''
+          new = '''                        <span class="rescue-meta-row">
+                          ${item.rescueVariantLabel ? `<span class="rescue-variant-label">${escapeAttribute(item.rescueVariantLabel)}</span>` : ""}
+                          <span class="rescue-stock-label ${stock === 1 ? "last-one" : ""}">${stock <= 0 ? "0 igjen · ligger i handlekurven" : (stock === 1 ? "Kun 1 igjen" : `${stock} igjen`)}</span>
+                        </span>'''
+          if old not in text:
+              raise SystemExit('rescue markup not found')
+          index.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          css_path = Path('test/kol-core.css')
+          css = css_path.read_text(encoding='utf-8')
+          for marker in ['/* REDDE MATEN CARD LAYOUT FIX */', '/* REDDE MATEN CARD LAYOUT FIX V2 */']:
+              if marker in css:
+                  css = css.split(marker, 1)[0].rstrip()
+          css += r'''
+
+/* REDDE MATEN CARD LAYOUT FIX V2 */
+body.kol-customer .rescue-menu-row{
+  min-height:116px !important;
+  height:auto !important;
+  overflow:visible !important;
+  grid-template-columns:92px minmax(0,1fr) 92px !important;
+  gap:12px !important;
+  align-items:center !important;
+  padding:10px 12px !important;
+}
+body.kol-customer .rescue-menu-row .menu-row-main{
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  gap:4px !important;
+  overflow:visible !important;
+}
+body.kol-customer .rescue-menu-row .menu-row-headline,
+body.kol-customer .rescue-menu-row .menu-row-description{
+  width:100% !important;
+  min-width:0 !important;
+}
+body.kol-customer .rescue-menu-row .menu-row-description{
+  margin:0 !important;
+  line-height:1.25 !important;
+  -webkit-line-clamp:1 !important;
+}
+body.kol-customer .rescue-meta-row{
+  display:flex !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:5px 7px !important;
+  width:100% !important;
+  margin-top:2px !important;
+}
+body.kol-customer .rescue-variant-label,
+body.kol-customer .rescue-stock-label{
+  display:inline-flex !important;
+  align-items:center !important;
+  width:auto !important;
+  max-width:100% !important;
+  min-height:24px !important;
+  margin:0 !important;
+  white-space:nowrap !important;
+  line-height:1 !important;
+}
+body.kol-customer .rescue-variant-label{
+  padding:4px 10px !important;
+  font-size:11px !important;
+}
+body.kol-customer .rescue-stock-label{
+  padding:4px 10px !important;
+  font-size:11px !important;
+}
+body.kol-customer .rescue-menu-row .rescue-product-side{
+  align-self:stretch !important;
+  min-width:92px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:space-between !important;
+  padding:0 !important;
+}
+body.kol-customer .rescue-menu-row .rescue-price-stack{
+  margin-top:auto !important;
+  padding-top:6px !important;
+  line-height:1.05 !important;
+  white-space:nowrap !important;
+}
+body.kol-customer .rescue-menu-row .menu-app-plus{
+  flex:0 0 auto !important;
+}
+@media (max-width:760px){
+  body.kol-customer .rescue-menu-row{
+    min-height:112px !important;
+    grid-template-columns:82px minmax(0,1fr) 82px !important;
+    gap:9px !important;
+    padding:8px 10px !important;
+  }
+  body.kol-customer .rescue-menu-row .menu-thumb,
+  body.kol-customer .rescue-menu-row [class*="thumb"]{
+    width:82px !important;
+    height:82px !important;
+  }
+  body.kol-customer .rescue-menu-row .rescue-product-side{
+    min-width:82px !important;
+  }
+  body.kol-customer .rescue-variant-label,
+  body.kol-customer .rescue-stock-label{
+    min-height:22px !important;
+    padding:3px 8px !important;
+    font-size:10px !important;
+  }
+}
+'''
+          css_path.write_text(css, encoding='utf-8')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f .github/workflows/kol-rescue-card-layout-v2.yml
+          git add test/index.html test/kol-core.css .github/workflows/kol-rescue-card-layout-v2.yml
+          git commit -m 'Fix Redde maten card layout correctly'
+          git push origin HEAD:main
