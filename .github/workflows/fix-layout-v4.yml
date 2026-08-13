@@ -1,0 +1,76 @@
+name: Fix customer layout v4
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-layout-v4.yml
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index structure
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('test/index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('kol-core.css?v=mobile-reset-1','kol-core.css?v=layout-v4')
+          if 'class="appbar-inner"' not in s:
+              s=s.replace('<header class="appbar">\n','<header class="appbar">\n<div class="appbar-inner">\n',1)
+              s=s.replace('</div>\n</header>\n<main class="menu-shell">','</div>\n</div>\n</header>\n<main class="menu-shell">',1)
+          old='<div class="category-tabs-wrap" hidden="" id="categoryTabsWrap">\n<div aria-label="Kategorinavigasjon" class="category-tabs-scroll" id="categoryTabs"></div>\n</div>'
+          new='<div class="category-tabs-wrap" hidden="" id="categoryTabsWrap">\n<div class="category-tabs-inner">\n<div aria-label="Kategorinavigasjon" class="category-tabs-scroll" id="categoryTabs"></div>\n</div>\n</div>'
+          s=s.replace(old,new,1)
+          if 'class="cart-stage"' not in s:
+              s=s.replace('<button aria-label="Lukk handlekurv" class="cart-backdrop" data-close-cart="" type="button"></button>\n<aside class="cart-panel" id="cartPanel">','<button aria-label="Lukk handlekurv" class="cart-backdrop" data-close-cart="" type="button"></button>\n<div class="cart-stage">\n<aside class="cart-panel" id="cartPanel">',1)
+              s=s.replace('</aside>\n</div>\n<div aria-labelledby="quickCheckoutTitle"','</aside>\n</div>\n</div>\n<div aria-labelledby="quickCheckoutTitle"',1)
+          if 'class="profile-stage"' not in s:
+              s=s.replace('<button aria-label="Lukk profil" class="profile-backdrop" data-close-profile="" type="button"></button>\n<section class="profile-panel">','<button aria-label="Lukk profil" class="profile-backdrop" data-close-profile="" type="button"></button>\n<div class="profile-stage">\n<section class="profile-panel">',1)
+              s=s.replace('</section>\n</div>\n<div aria-labelledby="orderLiveTitle"','</section>\n</div>\n</div>\n<div aria-labelledby="orderLiveTitle"',1)
+          p.write_text(s,encoding='utf-8')
+          assert 'appbar-inner' in s and 'category-tabs-inner' in s and 'cart-stage' in s and 'profile-stage' in s
+          PY
+      - name: Add final structural CSS
+        shell: bash
+        run: |
+          cat >> test/kol-core.css <<'CSS'
+
+/* === KOL STRUCTURAL CENTER FIX V4 === */
+body.kol-customer{--v4bar:88px;--v4tabs:60px;--v4app:760px!important;width:100%!important;max-width:none!important;margin:0!important;background:#eeeae4!important}
+body.kol-customer .appbar,body.kol-customer.cart-open .appbar,body.kol-customer.profile-open .appbar,body.kol-customer.info-open .appbar,body.kol-customer.order-live-open .appbar,body.kol-customer.kol-product-detail-open .appbar{position:fixed!important;left:0!important;right:0!important;top:0!important;width:100%!important;max-width:none!important;height:var(--v4bar)!important;min-height:var(--v4bar)!important;margin:0!important;padding:0!important;display:block!important;background:#f36a2d!important;transform:none!important}
+body.kol-customer .appbar-inner{position:relative!important;width:min(100%,var(--v4app))!important;height:100%!important;margin:0 auto!important;padding:0 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+body.kol-customer .appbar-context-title{position:absolute!important;left:110px!important;right:110px!important;top:0!important;bottom:0!important;display:flex!important;align-items:center!important;justify-content:center!important;max-width:none!important;transform:none!important;text-align:center!important}
+body.kol-customer .appbar-context-title[hidden]{display:none!important}
+body.kol-customer .category-tabs-wrap:not([hidden]){position:fixed!important;left:0!important;right:0!important;top:var(--v4bar)!important;width:100%!important;max-width:none!important;height:var(--v4tabs)!important;margin:0!important;padding:0!important;background:#fffdf9!important;border-bottom:1px solid #e7e0d7!important;transform:none!important}
+body.kol-customer .category-tabs-inner{width:min(100%,var(--v4app))!important;height:100%!important;margin:0 auto!important;padding:8px 14px!important;overflow:hidden!important}
+body.kol-customer .category-tabs-scroll{width:100%!important;height:44px!important;display:flex!important;align-items:center!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important}
+body.kol-customer .menu-shell{width:min(100%,var(--v4app))!important;max-width:var(--v4app)!important;margin:0 auto!important;padding-top:calc(var(--v4bar) + var(--v4tabs) + 26px)!important;background:#fffdf9!important}
+body.kol-customer .menu-row,body.kol-customer .menu-app-product,body.kol-customer .menu-row:hover,body.kol-customer .menu-app-product:hover{transform:none!important;box-shadow:none!important}
+body.kol-customer .menu-row:hover,body.kol-customer .menu-app-product:hover{background:#fff!important}
+body.kol-customer .menu-row *,body.kol-customer .menu-app-product *,body.kol-customer .category-tab,body.kol-customer .menu-favorite,body.kol-customer .menu-app-plus{animation:none!important;transition:none!important}
+body.kol-customer .cart-modal,body.kol-customer .profile-modal{position:fixed!important;inset:var(--v4bar) 0 0!important;width:100%!important;height:calc(100dvh - var(--v4bar))!important;padding:0!important;display:block!important;overflow:hidden!important;background:rgba(35,31,28,.48)!important;transform:none!important}
+body.kol-customer .cart-modal[hidden],body.kol-customer .profile-modal[hidden]{display:none!important}
+body.kol-customer .cart-backdrop,body.kol-customer .profile-backdrop{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;background:transparent!important}
+body.kol-customer .cart-stage,body.kol-customer .profile-stage{position:relative!important;z-index:2!important;width:100%!important;height:100%!important;margin:0!important;padding:0 14px!important;display:flex!important;align-items:stretch!important;justify-content:center!important;pointer-events:none!important}
+body.kol-customer .cart-panel,body.kol-customer .profile-panel{pointer-events:auto!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:min(100%,720px)!important;max-width:720px!important;height:100%!important;max-height:100%!important;margin:0 auto!important;border-radius:0!important;transform:none!important;box-shadow:0 0 30px rgba(30,24,20,.18)!important}
+body.kol-customer .cart-panel,body.kol-customer .profile-panel{display:flex!important;flex-direction:column!important}
+body.kol-customer .cart-content-scroll,body.kol-customer .profile-body{width:100%!important;max-width:100%!important;min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important;overflow-x:hidden!important}
+body.kol-customer .cart-order-card,body.kol-customer .cart-sales-card,body.kol-customer .checkout-step-card,body.kol-customer .checkout-form,body.kol-customer .profile-order-card{width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+@media(max-width:600px){body.kol-customer{--v4app:100vw!important;--v4tabs:58px!important}body.kol-customer .appbar-inner{padding:0 14px!important}body.kol-customer .appbar-context-title{left:88px!important;right:88px!important}body.kol-customer .category-tabs-inner{padding:7px 10px!important}body.kol-customer .menu-shell{width:100%!important;max-width:none!important;padding-left:10px!important;padding-right:10px!important;box-shadow:none!important}body.kol-customer .cart-stage,body.kol-customer .profile-stage{padding:0!important}body.kol-customer .cart-panel,body.kol-customer .profile-panel{width:100%!important;max-width:none!important;box-shadow:none!important}}
+CSS
+      - name: Validate and commit
+        shell: bash
+        run: |
+          grep -q 'class="appbar-inner"' test/index.html
+          grep -q 'class="category-tabs-inner"' test/index.html
+          grep -q 'class="cart-stage"' test/index.html
+          grep -q 'KOL STRUCTURAL CENTER FIX V4' test/kol-core.css
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git commit -m 'Center categories and cart with structural wrappers'
+          git push origin HEAD:main
