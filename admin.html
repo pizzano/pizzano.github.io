@@ -13,8 +13,7 @@
         <button class="top-settings-button active" type="button" data-top-nav="orders">🧾 Bestillinger</button>
         <button class="top-settings-button" type="button" data-top-nav="analytics">📊 Statistikk</button>
         <button class="top-settings-button" type="button" data-top-nav="basic">⚙️ Grunninfo</button>
-        <button class="top-settings-button" type="button" data-top-nav="backup">💾 Yedek</button>
-      </div>
+</div>
     </header>
 
     <main class="admin-shell">
@@ -244,31 +243,7 @@
             </div>
           </div>
 
-          <div class="settings-page backup-settings-page" data-settings-page="backup">
-            <div class="backup-grid">
-              <section class="backup-box">
-                <h3>Manuell yedek</h3>
-                <p>Hele Firebase-dataen lastes ned som JSON-fil. PC’ye indirmek için bu knappen brukes manuelt.</p>
-                <button id="downloadBackup" type="button">Last ned full yedek (.json)</button>
-              </section>
-
-              <section class="backup-box">
-                <h3>Lokal sikkerhetskopi</h3>
-                <p>Når adminpanelet åpnes, lagrer denne nettleseren én lokal sikkerhetskopi per dag. Automatisk sikkerhetskopi hvert 10. minutt er slått av.</p>
-                <button id="saveLocalBackup" type="button">Lagre lokal yedek nå</button>
-                <div id="localBackupList" class="local-backup-list"></div>
-              </section>
-
-              <section class="backup-box wide">
-                <h3>Gjenopprett fra JSON-fil</h3>
-                <p>Velg en tidligere nedlastet yedekfil. Systemet viser en kort kontroll før du overskriver Firebase.</p>
-                <input id="restoreBackupFile" type="file" accept="application/json,.json">
-                <div id="restoreBackupPreview" class="restore-preview">Ingen fil valgt.</div>
-                <button id="restoreBackupNow" class="danger-light" type="button" disabled>Gjenopprett til Firebase</button>
-              </section>
-            </div>
-          </div>
-        </section>
+          </section>
       </section>
 
     </main>
@@ -329,12 +304,6 @@ const analyticsSummary = document.querySelector("#analyticsSummary");
 const dailyRevenueChart = document.querySelector("#dailyRevenueChart");
 const monthlyRevenueChart = document.querySelector("#monthlyRevenueChart");
 const yearlyRevenueChart = document.querySelector("#yearlyRevenueChart");
-const downloadBackupButton = document.querySelector("#downloadBackup");
-const saveLocalBackupButton = document.querySelector("#saveLocalBackup");
-const localBackupList = document.querySelector("#localBackupList");
-const restoreBackupFile = document.querySelector("#restoreBackupFile");
-const restoreBackupPreview = document.querySelector("#restoreBackupPreview");
-const restoreBackupNowButton = document.querySelector("#restoreBackupNow");
 const adminRestaurantTitle = document.querySelector("#adminRestaurantTitle");
 
 const adminStatus = document.querySelector("#adminStatus");
@@ -372,7 +341,6 @@ let knownOrderIdsForSound = new Set();
 let adminOrderAudioContext = null;
 let adminSoundUnlocked = false;
 let adminAlarmLoopTimer = null;
-let pendingRestoreData = null;
 let adminOrdersUiRefreshTimer = null;
 const DEFAULT_READY_MINUTES = 10;
 const READY_STEP_MINUTES = 2;
@@ -380,8 +348,6 @@ let expandedAdminOrderId = null;
 let activeOrderFilter = "all";
 let hiddenAdminOrderIds = new Set();
 const pendingReadyMinutesByOrder = {};
-const LOCAL_BACKUP_KEY = "kol_menu_local_backups_v1";
-const DAILY_LOCAL_BACKUP_DATE_KEY = "kol_menu_daily_backup_date_v1";
 const ADMIN_MENU_CACHE_KEY = "kol_admin_last_good_menu_v1";
 
 function setStatus(message) {
@@ -397,7 +363,6 @@ function showToast(message) {
     adminToast.hidden = true;
   }, 1350);
 }
-
 
 function getAdminOrderAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -519,7 +484,6 @@ function orderWaitingOpeningText(order = {}) {
   return `Venter til åpning ${date.toLocaleString("nb-NO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}`;
 }
 
-
 function makeId(value) {
   return value
     .toLowerCase()
@@ -542,176 +506,7 @@ function cleanObject(object) {
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
-
-
-// TÜRKÇE NOT: Yedek sistemi bütün Firebase verisini JSON olarak indirir veya geri yükler.
 // Modül gibi çalışacak şekilde yazıldı: butonlar HTML'de yoksa sistem sessizce devam eder.
-function backupDateStamp(date = new Date()) {
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
-}
-
-function downloadTextFile(filename, content, mimeType = "application/json") {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-function countBackupData(data) {
-  const sections = asArray(data?.sections);
-  const products = sections.reduce((sum, section) => sum + asArray(section.items).length, 0);
-  const groups = asArray(data?.optionGroups).length;
-  return { sections: sections.length, products, groups };
-}
-
-function createBackupPayload(data, reason = "manual") {
-  const safeData = normalizeConfig(data || config || {});
-  return {
-    backupMeta: {
-      app: "KOL_MENU_ADMIN",
-      version: 1,
-      reason,
-      exportedAt: new Date().toISOString(),
-      restaurantName: safeData.siteSettings?.restaurantName || "",
-      firebaseDatabaseUrl
-    },
-    data: safeData
-  };
-}
-
-function extractBackupData(payload) {
-  if (!payload || typeof payload !== "object") return null;
-  if (payload.data && typeof payload.data === "object") return normalizeConfig(payload.data);
-  if (payload.sections || payload.optionGroups || payload.siteSettings) return normalizeConfig(payload);
-  return null;
-}
-
-function getLocalBackups() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(LOCAL_BACKUP_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
-  }
-}
-
-function setLocalBackups(backups) {
-  localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(backups.slice(0, 12)));
-}
-
-function addLocalBackup(payload) {
-  const backups = getLocalBackups();
-  backups.unshift(payload);
-  setLocalBackups(backups);
-  renderLocalBackups();
-}
-
-function renderLocalBackups() {
-  if (!localBackupList) return;
-  const backups = getLocalBackups();
-  if (!backups.length) {
-    localBackupList.innerHTML = "<p>Ingen lokal yedek ennå.</p>";
-    return;
-  }
-  localBackupList.innerHTML = backups
-    .map((backup, index) => {
-      const data = extractBackupData(backup);
-      const counts = countBackupData(data || {});
-      const exportedAt = backup.backupMeta?.exportedAt ? new Date(backup.backupMeta.exportedAt).toLocaleString("no-NO") : "Ukjent dato";
-      const reason = backup.backupMeta?.reason || "backup";
-      return `
-        <div class="local-backup-row">
-          <div>
-            <strong>${escapeHtml(exportedAt)}</strong>
-            <span>${escapeHtml(reason)} · ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper</span>
-          </div>
-          <div class="local-backup-actions">
-            <button type="button" data-download-local-backup="${index}">Last ned</button>
-            <button type="button" data-restore-local-backup="${index}">Gjenopprett</button>
-            <button class="danger-light" type="button" data-delete-local-backup="${index}">Slett</button>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-  ensureEditingGroupVisible();
-}
-
-async function downloadFullBackup() {
-  try {
-    setStatus("Lager yedekfil...");
-    const snapshot = await menuRef.once("value");
-    const payload = createBackupPayload(snapshot.val() || config, "manual-download");
-    const restaurant = makeId(payload.backupMeta.restaurantName || "kol-menu");
-    downloadTextFile(`${restaurant}-firebase-yedek-${backupDateStamp()}.json`, JSON.stringify(payload, null, 2));
-    addLocalBackup(createBackupPayload(payload.data, "manual-download-copy"));
-    setStatus("Yedek lastet ned og lokal kopi lagret.");
-  } catch (error) {
-    console.error(error);
-    setStatus("Kunne ikke lage yedek. Sjekk konsollen.");
-  }
-}
-
-function saveCurrentLocalBackup(reason = "manual-local") {
-  if (!config) return;
-  addLocalBackup(createBackupPayload(config, reason));
-  setStatus("Lokal yedek lagret i denne nettleseren.");
-}
-
-function localDayStamp(date = new Date()) {
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function maybeDailyLocalBackupOnAdminOpen() {
-  if (!config) return false;
-
-  // TÜRKÇE NOT: Artık her 10 dakikada bir yedek almıyoruz.
-  // Admin paneli açıldığında aynı tarayıcıda günde sadece 1 defa lokal yedek alınır.
-  const today = localDayStamp();
-  if (localStorage.getItem(DAILY_LOCAL_BACKUP_DATE_KEY) === today) return false;
-
-  addLocalBackup(createBackupPayload(config, "daily-admin-open"));
-  localStorage.setItem(DAILY_LOCAL_BACKUP_DATE_KEY, today);
-  return true;
-}
-
-function previewRestoreData(data, label = "Valgt fil") {
-  if (!restoreBackupPreview) return;
-  const counts = countBackupData(data || {});
-  restoreBackupPreview.innerHTML = `
-    <strong>${escapeHtml(label)}</strong><br>
-    ${counts.sections} kategorier · ${counts.products} produkter · ${counts.groups} valggrupper<br>
-    Klikk "Gjenopprett til Firebase" hvis dette ser riktig ut.
-  `;
-}
-
-async function restoreDataToFirebase(data, reason = "restore") {
-  if (!data) return;
-  if (!confirm("Dette overskriver Firebase-dataen. Har du tatt yedek først?")) return;
-  try {
-    saveCurrentLocalBackup("before-restore");
-    setStatus("Gjenoppretter Firebase...");
-    const cleanData = normalizeConfig(data);
-    await menuRef.set(cleanData);
-    config = cleanData;
-    pendingRestoreData = null;
-    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
-    renderAll();
-    setAdminView("menu");
-    setStatus("Firebase er gjenopprettet fra yedek.");
-  } catch (error) {
-    console.error(error);
-    setStatus("Kunne ikke gjenopprette yedek.");
-  }
-}
-
 function escapeHtml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -882,7 +677,6 @@ function asArray(value) {
   return [];
 }
 
-
 function defaultSiteSettings() {
   return {
     restaurantName: "KØL Grill & Pizza",
@@ -921,11 +715,9 @@ function defaultOptionGroups() {
   ];
 }
 
-
 function defaultGroupIdsForProduct(product, section) {
   return [];
 }
-
 
 function normalizeOptionGroups(value) {
   const hasSavedOptionGroups = value && Object.prototype.hasOwnProperty.call(value, "optionGroups");
@@ -967,7 +759,6 @@ function normalizeOptionGroups(value) {
     };
   });
 }
-
 
 function normalizeConfig(value) {
   const sections = asArray(value?.sections).map((section) => {
@@ -1086,12 +877,8 @@ async function loadData() {
     productEditorOpen = false;
   }
   renderAll();
-  const dailyBackupCreated = hasValidConfig(value) ? maybeDailyLocalBackupOnAdminOpen() : false;
-  setStatus(
-    hasValidConfig(value)
-      ? (dailyBackupCreated ? "Synkronisert. Daglig lokal yedek lagret i denne nettleseren." : "Synkronisert med Firebase.")
-      : "Firebase er tom. Du kan starte fra null og legge til kategori."
-  );
+
+  setStatus(hasValidConfig(value) ? "Synkronisert med Firebase." : "Firebase er tom. Du kan starte fra null og legge til kategori.");
 }
 
 async function saveData() {
@@ -1180,7 +967,6 @@ function productPriceSummary(product = {}) {
   if (prices.length === 1) return `${prices[0].price},-`;
   return prices.map((size) => `${escapeHtml(size.label)} ${size.price},-`).join(" · ");
 }
-
 
 // Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
 function toDateTimeLocalValue(value = "") {
@@ -1285,14 +1071,12 @@ function renderCategories() {
   mountProductFormInline();
 }
 
-
 function renderCategoryEditor() {
 }
 
 function renderProducts() {
   renderCategories();
 }
-
 
 function normalizeSizeId(label = "", fallback = "") {
   const value = String(label || fallback || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -1362,7 +1146,6 @@ function getProductPriceList(product) {
   return ensureDefaultPrice(prices).map((size, index, list) => ({ ...size, label: formatSizeDisplayLabel(size.label, list.length === 1) }));
 }
 
-
 function readProductPriceListFromEditor() {
   const rows = productPriceRows ? [...productPriceRows.querySelectorAll("[data-product-price-row]")] : [];
   const prices = rows
@@ -1377,7 +1160,6 @@ function readProductPriceListFromEditor() {
 
   return ensureDefaultPrice(prices.length ? prices : [{ id: "standard", label: "Standart", price: undefined, default: true }]).map((size, index, list) => ({ ...size, label: formatSizeDisplayLabel(size.label, list.length === 1) }));
 }
-
 
 function renderProductPrices(product = selectedProduct()) {
   if (!productPriceRows) return;
@@ -1398,7 +1180,6 @@ function renderProductPrices(product = selectedProduct()) {
   productPriceRows.insertAdjacentHTML("beforeend", `<p class="price-help">Velg Forhåndsvalgt for den størrelsen som skal være valgt når kunden åpner produktet.</p>`);
 }
 
-
 function applyPriceCompatibility(productData, prices) {
   const cleanPrices = ensureDefaultPrice(prices.filter((size) => size.price !== undefined));
   const firstPrice = cleanPrices[0]?.price;
@@ -1415,7 +1196,6 @@ function applyPriceCompatibility(productData, prices) {
   productData.displayPrice = firstPrice;
   return productData;
 }
-
 
 function renderProductEditor() {
   mountProductFormInline();
@@ -1673,7 +1453,6 @@ function renderOptions() {
   });
 }
 
-
 function renderSiteSettings() {
   if (!config) return;
   config.siteSettings = normalizeSiteSettings(config.siteSettings);
@@ -1700,8 +1479,7 @@ function updateSiteSettingFromField(field) {
 function settingsTitleFor(tabKey = "basic") {
   const labels = {
     basic: ["Grunninfo", "Restaurantens navn, telefon, adresse og enkel informasjon."],
-    backup: ["Yedek / gjenoppretting", "Ta full kopi av Firebase-dataen eller gjenopprett fra en tidligere JSON-yedek."]
-  };
+};
   return labels[tabKey] || labels.basic;
 }
 
@@ -1722,7 +1500,6 @@ function setSettingsTab(tabKey = "basic") {
     button.classList.toggle("active", button.dataset.topNav === tabKey);
   });
 }
-
 
 function updateAdminLayoutMode(tabKey = "orders") {
   document.body.classList.toggle("admin-orders-mode", tabKey === "orders");
@@ -1759,7 +1536,6 @@ function openSettingsModal(tabKey = "basic") {
 function closeSettingsModal() {
   setAdminView("orders");
 }
-
 
 // ============================================================
 // SİPARİŞ MODÜLÜ (ADMIN)
@@ -1970,7 +1746,6 @@ function orderLineHtml(line = {}) {
   `;
 }
 
-
 function normalizeReceiptText(value = "") {
   // TÜRKÇE: Termal yazıcılar her zaman norsk karakterleri doğru basmayabilir. Bu yüzden güvenli harflere çeviriyoruz.
   return String(value)
@@ -2068,7 +1843,6 @@ function buildEscposReceipt(order = {}) {
   text += GS + "V" + "A" + "\x00";
   return text;
 }
-
 
 function receiptImageDate(value, withSeconds = false) {
   const date = value ? new Date(value) : new Date();
@@ -2287,7 +2061,6 @@ async function printOrderReceipt(orderId, overrides = {}) {
     holder.remove();
   }
 }
-
 
 function isOrderReadyForAdmin(order = {}) {
   return (order.status || "pending") === "accepted" && order.ready === true;
@@ -2528,7 +2301,6 @@ function renderOrderSection(title, orders, variant = "") {
   `;
 }
 
-
 function analyticsOrderDate(order = {}) {
   const raw = order.acceptedAt || order.updatedAt || order.createdAt;
   const date = raw ? new Date(raw) : new Date();
@@ -2691,7 +2463,6 @@ function renderAnalyticsAdmin() {
   renderSimpleBarChart(yearlyRevenueChart, makeYearSeries());
 }
 
-
 function getAdminOrderDisplayPriority(order = {}) {
   const status = order.status || "pending";
   if (status === "pending") return 0;
@@ -2841,7 +2612,6 @@ async function acceptOrder(orderId, minutes) {
   });
 }
 
-
 async function markOrderReady(orderId) {
   const readyAt = new Date().toISOString();
   const order = adminOrders.find((item) => String(item.id || "") === String(orderId || "")) || {};
@@ -2864,8 +2634,6 @@ async function markOrderReady(orderId) {
   openAdminSmsComposer(order, "ready");
 }
 
-
-
 async function cancelOrder(orderId) {
   if (!confirm("Avvise / kansellere denne bestillingen?")) return;
   await ordersRef.child(orderId).update({
@@ -2877,7 +2645,6 @@ async function cancelOrder(orderId) {
   setStatus("Bestilling avvist / kansellert.");
   window.setTimeout(updateAdminOrderAlarmLoop, 250);
 }
-
 
 function refreshAdminLiveTimes() {
   if (!ordersAdminList) return;
@@ -2906,8 +2673,7 @@ function renderAll() {
   renderProductEditor();
   renderOptions();
   renderGroupManager();
-  renderLocalBackups();
-  scrollSelectedProductToTop();
+scrollSelectedProductToTop();
 }
 
 function updateCategoryFromFields() {
@@ -3103,7 +2869,6 @@ function removeGroupIdFromAllProducts(groupId) {
     });
   });
 }
-
 
 function duplicateOptionGroup(groupIndex) {
   const source = config.optionGroups[groupIndex];
@@ -3577,7 +3342,6 @@ settingsTabs.forEach((button) => {
   button.addEventListener("click", () => setSettingsTab(button.dataset.settingsTab || "basic"));
 });
 
-
 function closeAdminOrdersMorePanel() {
   const panel = document.querySelector("[data-admin-orders-more-panel]");
   if (panel) panel.hidden = true;
@@ -3800,8 +3564,6 @@ if (ordersAdminList) {
   });
 }
 
-
-
 document.addEventListener("click", (event) => {
   if (!event.target.closest(".order-more-actions")) closeAllOrderActionMenus(document);
 });
@@ -3817,72 +3579,6 @@ if (ordersAdminList && !adminOrdersUiRefreshTimer) {
     const ordersPage = document.querySelector('[data-admin-page="orders"]');
     if (ordersPage?.classList.contains("active")) refreshAdminLiveTimes();
   }, 1000);
-}
-
-if (downloadBackupButton) {
-  downloadBackupButton.addEventListener("click", downloadFullBackup);
-}
-
-if (saveLocalBackupButton) {
-  saveLocalBackupButton.addEventListener("click", () => saveCurrentLocalBackup("manual-local"));
-}
-
-if (restoreBackupFile) {
-  restoreBackupFile.addEventListener("change", async () => {
-    const file = restoreBackupFile.files?.[0];
-    pendingRestoreData = null;
-    if (restoreBackupNowButton) restoreBackupNowButton.disabled = true;
-    if (!file) {
-      if (restoreBackupPreview) restoreBackupPreview.textContent = "Ingen fil valgt.";
-      return;
-    }
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      const data = extractBackupData(parsed);
-      if (!data) throw new Error("Ugyldig yedekfil");
-      pendingRestoreData = data;
-      previewRestoreData(data, file.name);
-      if (restoreBackupNowButton) restoreBackupNowButton.disabled = false;
-    } catch (error) {
-      console.error(error);
-      if (restoreBackupPreview) restoreBackupPreview.textContent = "Kunne ikke lese filen. Velg en gyldig JSON-yedek.";
-    }
-  });
-}
-
-if (restoreBackupNowButton) {
-  restoreBackupNowButton.addEventListener("click", () => restoreDataToFirebase(pendingRestoreData, "file-restore"));
-}
-
-if (localBackupList) {
-  localBackupList.addEventListener("click", (event) => {
-    const backups = getLocalBackups();
-    const downloadIndex = event.target.dataset.downloadLocalBackup;
-    const restoreIndex = event.target.dataset.restoreLocalBackup;
-    const deleteIndex = event.target.dataset.deleteLocalBackup;
-
-    if (downloadIndex !== undefined) {
-      const backup = backups[Number(downloadIndex)];
-      if (!backup) return;
-      downloadTextFile(`kol-menu-lokal-yedek-${backupDateStamp()}.json`, JSON.stringify(backup, null, 2));
-      return;
-    }
-
-    if (restoreIndex !== undefined) {
-      const backup = backups[Number(restoreIndex)];
-      const data = extractBackupData(backup);
-      restoreDataToFirebase(data, "local-restore");
-      return;
-    }
-
-    if (deleteIndex !== undefined) {
-      if (!confirm("Slette denne lokale yedeken?")) return;
-      backups.splice(Number(deleteIndex), 1);
-      setLocalBackups(backups);
-      renderLocalBackups();
-    }
-  });
 }
 
 document.addEventListener("keydown", (event) => {
@@ -3938,7 +3634,6 @@ if (addProductPriceButton) {
     setStatus("Ny pris lagt til. Klikk Oppdater produkt for å lagre.");
   });
 }
-
 
 // Türkçe not: Input'a tıklayınca içindeki yazı seçilir. Böylece silmeden direkt yeni değer yazabilirsin.
 document.addEventListener("focusin", (event) => {
@@ -3999,7 +3694,6 @@ if (extrasPanel) {
   });
 }
 
-
 /* ===== V68: admin menu-scroll + drag/drop helper ===== */
 (function enhanceAdminMenuDragFeedback() {
   const menuPage = document.querySelector('[data-admin-page="menu"]');
@@ -4024,7 +3718,6 @@ if (extrasPanel) {
     else if (event.clientY < rect.top + edge) scroller.scrollTop -= 18;
   });
 })();
-
 
 /* ===== V74: force Valggrupper inner scroll ===== */
 (function forceValggrupperInnerScroll() {
@@ -4052,7 +3745,6 @@ if (extrasPanel) {
   });
   observer.observe(list, { childList: true, subtree: true });
 })();
-
 
 /* ===== V141: Online/Offline-indikator for Bestillinger ===== */
 let adminBrowserOnline = typeof navigator === "undefined" ? true : navigator.onLine !== false;

@@ -1535,7 +1535,6 @@ function currentCartTotal() {
   return cart.reduce((sum, line) => sum + Number(line.total || 0), 0);
 }
 
-
 function rescueCartEntries() {
   const map = new Map();
   cart.forEach((line) => {
@@ -2711,7 +2710,6 @@ function applyCustomerTheme(settings = siteSettings) {
   document.body.dataset.kolTheme = normalizeCustomerTheme(settings?.customerTheme);
 }
 
-
 function normalizeOptionGroups(value) {
   const source = asArray(value?.optionGroups);
 
@@ -2793,7 +2791,6 @@ function formatAddress(settings = siteSettings) {
   return [settings.streetAddress, [settings.postalCode, settings.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 }
 
-
 function applySiteSettings() {
   const settings = normalizeSiteSettings(siteSettings);
   applyCustomerTheme(settings);
@@ -2859,7 +2856,6 @@ function menuConfigSignature(config) {
     return String(Date.now());
   }
 }
-
 
 function rescueDateKey(date = new Date()) {
   try {
@@ -4330,35 +4326,6 @@ function closeProductModal() {
   syncBodyScrollLocks();
 }
 
-function removeSelectedProductFromCart() {
-  if (!selectedProduct) return;
-  const selectedId = String(selectedProduct.id || "");
-  let removedCount = 0;
-
-  if (editingCartIndex !== null && cart[editingCartIndex]) {
-    cart.splice(editingCartIndex, 1);
-    removedCount = 1;
-  } else {
-    const remainingLines = cart.filter((line) => {
-      const matches = String(line?.productId || "") === selectedId;
-      if (matches) removedCount += 1;
-      return !matches;
-    });
-    cart.splice(0, cart.length, ...remainingLines);
-  }
-
-  if (!removedCount) return;
-  if (!cart.some((line) => String(line?.productId || "") === selectedId) && activeMenuProductId === selectedId) {
-    activeMenuProductId = "";
-  }
-  saveCart();
-  renderCart();
-  renderMenu();
-  closeProductModal();
-  showCustomerFavoriteNotice(removedCount > 1 ? `${removedCount} varer fjernet fra handlekurven` : "Fjernet fra handlekurven");
-}
-
-
 function findProductContextById(productId = "") {
   const targetId = String(productId || "");
   for (let sectionIndex = 0; sectionIndex < menuSections.length; sectionIndex += 1) {
@@ -4888,7 +4855,6 @@ cartModal.addEventListener("click", (event) => {
 infoModal.addEventListener("click", (event) => {
   if (event.target.dataset.closeInfo !== undefined) closeInfoModal();
 });
-
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
