@@ -2139,7 +2139,7 @@ function scrollSelectedProductToTop() {
   window.requestAnimationFrame(() => {
     const block = document.querySelector(`[data-product-block="${selectedCategoryIndex}:${selectedProductIndex}"]`);
     if (!block) return;
-    block.scrollIntoView({ behavior: "smooth", block: "start" });
+    block.scrollIntoView({ behavior: "auto", block: "start" });
   });
 }
 
@@ -2984,11 +2984,11 @@ function ensureEditingGroupVisible() {
     const visibleBottom = visibleTop + optionGroupsAdmin.clientHeight;
     const padding = 10;
     if (cardTop < visibleTop + padding) {
-      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardTop - padding), behavior: 'smooth' });
+      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardTop - padding), behavior: 'auto' });
       return;
     }
     if (cardBottom > visibleBottom - padding) {
-      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardBottom - optionGroupsAdmin.clientHeight + padding), behavior: 'smooth' });
+      optionGroupsAdmin.scrollTo({ top: Math.max(0, cardBottom - optionGroupsAdmin.clientHeight + padding), behavior: 'auto' });
     }
   });
 }
@@ -5110,7 +5110,7 @@ categoryButtons.addEventListener("click", (event) => {
     window.requestAnimationFrame(() => {
       const card = categoryButtons.querySelector(`[data-category-drag="${categoryIndex}"]`);
       if (!card) return;
-      categoryButtons.scrollTo({ top: Math.max(0, card.offsetTop - 8), behavior: "smooth" });
+      categoryButtons.scrollTo({ top: Math.max(0, card.offsetTop - 8), behavior: "auto" });
       card.querySelector("[data-category-product]")?.focus({ preventScroll: true });
     });
   }

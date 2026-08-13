@@ -1284,7 +1284,7 @@ function showClosedOrderingMessage() {
   refreshHeroStatusPill();
   const heroCard = document.querySelector('.info-hero-card, .menu-app-hero');
   if (heroCard && typeof heroCard.scrollIntoView === 'function') {
-    heroCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    heroCard.scrollIntoView({ block: 'start', behavior: 'auto' });
   } else {
     alert(message);
   }
@@ -1384,9 +1384,9 @@ function highlightCheckoutSection(section, focusField = null) {
       const sectionBox = section.getBoundingClientRect();
       const scrollBox = scroller.getBoundingClientRect();
       const top = scroller.scrollTop + sectionBox.top - scrollBox.top - 16;
-      scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      scroller.scrollTo({ top: Math.max(0, top), behavior: "auto" });
     } else {
-      section.scrollIntoView({ behavior: "smooth", block: "center" });
+      section.scrollIntoView({ behavior: "auto", block: "center" });
     }
     if (focusField) {
       window.setTimeout(() => focusField.focus({ preventScroll: true }), 420);
@@ -3648,7 +3648,7 @@ function getCategoryTabButton(sectionId) {
   return categoryTabs?.querySelector(`[data-category-tab="${CSS.escape(sectionId)}"]`) || null;
 }
 
-function centerCategoryTab(sectionId, behavior = "smooth") {
+function centerCategoryTab(sectionId, behavior = "auto") {
   if (!categoryTabs || !sectionId) return;
   const activeButton = getCategoryTabButton(sectionId);
   if (!activeButton) return;
@@ -3659,7 +3659,7 @@ function centerCategoryTab(sectionId, behavior = "smooth") {
 
 function setActiveCategoryTab(sectionId, options = {}) {
   if (!categoryTabs) return;
-  const { centerIntoView = true, behavior = "smooth" } = options;
+  const { centerIntoView = true, behavior = "auto" } = options;
   activeCategoryTabId = sectionId || "";
 
   categoryTabs.querySelectorAll("[data-category-tab]").forEach((button) => {
@@ -3765,11 +3765,11 @@ function scrollToMenuSection(sectionId) {
   }
 
   panel.classList.remove("collapsed");
-  setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "smooth" });
+  setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "auto" });
 
   window.requestAnimationFrame(() => {
     const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
-    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "auto" });
   });
 }
 
@@ -3808,7 +3808,7 @@ function updateActiveCategoryFromScroll() {
 
   const nextId = activePanel?.dataset.section || "";
   if (nextId && nextId !== activeCategoryTabId) {
-    setActiveCategoryTab(nextId, { centerIntoView: true, behavior: "smooth" });
+    setActiveCategoryTab(nextId, { centerIntoView: true, behavior: "auto" });
   }
 }
 
@@ -4858,7 +4858,7 @@ if (profileOrdersEl) {
       if (!expandedProfileOrderId) return;
       const expandedCard = Array.from(profileOrdersEl.querySelectorAll("[data-profile-order-card]"))
         .find((card) => card.dataset.profileOrderCard === expandedProfileOrderId);
-      expandedCard?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+      expandedCard?.scrollIntoView?.({ block: "nearest", behavior: "auto" });
     });
   });
 
