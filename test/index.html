@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link href="kol-core.css?v=mobile-only-3" rel="stylesheet"/>
+<link href="kol-core.css?v=mobile-reset-1" rel="stylesheet"/>
 
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
@@ -4324,6 +4324,34 @@ function closeProductModal() {
   editingCartIndex = null;
   document.body.classList.remove("modal-open");
   syncBodyScrollLocks();
+}
+
+function removeSelectedProductFromCart() {
+  if (!selectedProduct) return;
+  const selectedId = String(selectedProduct.id || "");
+  let removedCount = 0;
+
+  if (editingCartIndex !== null && cart[editingCartIndex]) {
+    cart.splice(editingCartIndex, 1);
+    removedCount = 1;
+  } else {
+    const remainingLines = cart.filter((line) => {
+      const matches = String(line?.productId || "") === selectedId;
+      if (matches) removedCount += 1;
+      return !matches;
+    });
+    cart.splice(0, cart.length, ...remainingLines);
+  }
+
+  if (!removedCount) return;
+  if (!cart.some((line) => String(line?.productId || "") === selectedId) && activeMenuProductId === selectedId) {
+    activeMenuProductId = "";
+  }
+  saveCart();
+  renderCart();
+  renderMenu();
+  closeProductModal();
+  showCustomerFavoriteNotice(removedCount > 1 ? `${removedCount} varer fjernet fra handlekurven` : "Fjernet fra handlekurven");
 }
 
 function findProductContextById(productId = "") {
