@@ -1,0 +1,23 @@
+name: Apply mobile-only customer
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-mobile-only.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge mobile-only CSS
+        run: cat .github/mobile-only.css >> test/kol-core.css
+      - name: Commit
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f .github/mobile-only.css .github/workflows/apply-mobile-only.yml
+          git add -A
+          git commit -m 'Use mobile customer UI on all screens'
+          git push origin HEAD:main
