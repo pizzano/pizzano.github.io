@@ -1,0 +1,20 @@
+name: build mobile fix artifact
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/build-mobile-fix-artifact.yml
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 fix_mobile_layout_v2.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-fix-output
+          path: |
+            test/index.html
+            test/kol-core.css
