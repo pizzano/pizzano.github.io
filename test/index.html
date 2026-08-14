@@ -5052,7 +5052,7 @@ init();
 })();
 
     
-// When a menu category is chosen from inside product view, close the product first.
+// When a category is chosen while a product is open, close the product and continue to that category.
 document.getElementById("categoryTabs")?.addEventListener("click", (event) => {
   const tab = event.target.closest("button");
   if (!tab || !document.body.classList.contains("kol-product-detail-open")) return;
