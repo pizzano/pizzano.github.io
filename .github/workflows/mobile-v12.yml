@@ -1,0 +1,20 @@
+name: Mobile v12
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/mobile-v12.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 mobile_v12_compact.py
+      - run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git commit -m 'Compact mobile UI and reorder checkout details' || exit 0
+          git push origin HEAD:main
