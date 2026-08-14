@@ -319,3 +319,50 @@ body.kol-customer #checkoutContactSection .checkout-section-title{
   border-top:1px solid var(--line)!important;
 }
 }
+
+
+/* ===== MOBILE V11: cleaner Meny back control ===== */
+@layer mobile{
+body.kol-customer .brand-back-label{
+  display:none!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  height:46px!important;
+  padding:0 2px!important;
+  color:#fff!important;
+  font-size:0!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+body.kol-customer.kol-top-back-active .brand-back-label{
+  display:flex!important;
+}
+body.kol-customer .brand-back-label::before{
+  content:"‹";
+  display:block!important;
+  flex:0 0 auto!important;
+  margin-top:-2px!important;
+  color:#fff!important;
+  font-family:Arial,sans-serif!important;
+  font-size:32px!important;
+  font-weight:500!important;
+  line-height:.8!important;
+}
+body.kol-customer .brand-back-label::after{
+  content:"Meny";
+  display:block!important;
+  color:#fff!important;
+  font-size:18px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  letter-spacing:-.15px!important;
+}
+body.kol-customer.kol-top-back-active .appbar-brand{
+  min-width:104px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+}
