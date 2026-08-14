@@ -1,0 +1,20 @@
+name: Mobile v13
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/mobile-v13.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 mobile_v13_readability.py
+      - run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git commit -m 'Improve readability and simplify mobile UI' || exit 0
+          git push origin HEAD:main
