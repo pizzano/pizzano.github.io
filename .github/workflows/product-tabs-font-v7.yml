@@ -11,11 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Restore clean mobile base and apply measured changes
         shell: bash
         run: |
-          git show 7fb9366ffbcd53282a428af68fa01ae41e0d1efe:test/kol-core.css > test/kol-core.css
-          git show 7fb9366ffbcd53282a428af68fa01ae41e0d1efe:test/index.html > test/index.html
+          git show c9241d4fc0aa6899d52a8f03a0a3b323365747a9:test/kol-core.css > test/kol-core.css
+          git show c9241d4fc0aa6899d52a8f03a0a3b323365747a9:test/index.html > test/index.html
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -25,12 +27,13 @@ jobs:
 
           hidden_old = 'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap,body.kol-customer.kol-product-detail-open .category-tabs-wrap{display:none!important}'
           hidden_new = 'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap{display:none!important}'
-          css = css.replace(hidden_old, hidden_new)
+          if hidden_old not in css:
+              raise SystemExit('product category hide selector not found')
+          css = css.replace(hidden_old, hidden_new, 1)
 
           product_tabs_rule = '''\n/* product screen keeps category navigation visible */\nbody.kol-customer.kol-product-detail-open .category-tabs-wrap{display:block!important}\nbody.kol-customer .product-modal.mobile-screen{top:calc(var(--head) + var(--tabs))!important;height:calc(100dvh - var(--head) - var(--tabs))!important}\n'''
           css = css.replace('/* product */', product_tabs_rule + '\n/* product */', 1)
 
-          # One-pass font scaling: small +1 to +1.5 px, medium +1 px.
           size_map = {
               '8':'9', '8.5':'9.5', '9':'10', '9.5':'10.5',
               '10':'11', '10.5':'11.5', '11':'12', '12':'13',
@@ -55,7 +58,7 @@ jobs:
 
           assert 'mobile-v7' in html
           assert 'product screen keeps category navigation visible' in css
-          assert 'font-size:16px!important' in css
+          assert 'readable product choices' in css
           PY
       - name: Commit repaired changes
         shell: bash
