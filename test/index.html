@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v18"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v19"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -3747,16 +3747,19 @@ function scrollToMenuSection(sectionId) {
   setActiveCategoryTab(sectionId, { centerIntoView: true, behavior: "auto" });
 
   window.requestAnimationFrame(() => {
-    const targetTop = window.pageYOffset + panel.getBoundingClientRect().top - getMenuStickyOffset();
-    window.scrollTo({ top: Math.max(0, targetTop), behavior: "auto" });
+    const shell = document.querySelector(".menu-shell");
+    if (!shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const targetTop = shell.scrollTop + panelRect.top - shellRect.top;
+    shell.scrollTo({ top: Math.max(0, targetTop), behavior: "auto" });
+    window.requestAnimationFrame(updateActiveCategoryFromScroll);
   });
 }
 
 function updateActiveCategoryFromScroll() {
   if (!categoryTabsWrap || categoryTabsWrap.hidden || document.body.classList.contains("category-tabs-hidden")) return;
 
-  // Ürün detayındayken alttaki menünün scroll konumu kategoriyi değiştirmesin.
-  // Açık ürün hangi gerçek kategorideyse sekmede de daima o kategori aktif kalsın.
   if (productModal && !productModal.hidden && selectedSection?.id) {
     if (activeCategoryTabId !== selectedSection.id) {
       setActiveCategoryTab(selectedSection.id, { centerIntoView: true, behavior: "auto" });
@@ -3764,18 +3767,16 @@ function updateActiveCategoryFromScroll() {
     return;
   }
 
-  const panels = [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")];
-  if (!panels.length) return;
+  const shell = document.querySelector(".menu-shell");
+  const panels = [...menuSectionsEl.querySelectorAll(".category-panel[data-section]")].filter((panel) => !panel.hidden);
+  if (!shell || !panels.length) return;
 
-  const probeLine = getMenuStickyOffset() + 8;
+  const shellRect = shell.getBoundingClientRect();
+  const probeLine = shellRect.top + 8;
+  const atBottom = shell.scrollTop + shell.clientHeight >= shell.scrollHeight - 4;
   let activePanel = panels[0];
 
-  // The last menu section cannot always reach the sticky probe line on short
-  // screens. At the bottom of the page the final visible section must own the
-  // active category, otherwise Drikke incorrectly remains on Barnemeny.
-  const pageBottom = window.scrollY + window.innerHeight;
-  const documentBottom = document.documentElement.scrollHeight;
-  if (pageBottom >= documentBottom - 4) {
+  if (atBottom) {
     activePanel = panels[panels.length - 1];
   } else {
     for (const panel of panels) {
@@ -5064,10 +5065,6 @@ init();
 
 // 20260429 V8: header kesin olarak body'nin ilk elementi olsun ve sepet durum sınıfları senkron kalsın.
 (function forceKolHeaderAndCartState() {
-  const header = document.querySelector(".appbar");
-  if (header && document.body.firstElementChild !== header) {
-    document.body.insertBefore(header, document.body.firstElementChild);
-  }
   const sync = () => {
     const hasItems = Array.isArray(cart) && cart.length > 0;
     document.body.classList.toggle("cart-has-items", hasItems);

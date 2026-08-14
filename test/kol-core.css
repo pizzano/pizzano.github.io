@@ -275,4 +275,71 @@ body.kol-customer .profile-order-card.is-expanded .profile-order-details{
   background:#fff!important;
 }
 
+
+/* MOBILE V19: one real menu scroller below header + category rail */
+body.kol-customer{
+  overflow:hidden!important;
+}
+body.kol-customer .customer-app{
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+  width:100%!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+}
+body.kol-customer .appbar{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  z-index:20!important;
+  flex:none!important;
+}
+body.kol-customer .category-tabs-wrap{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  z-index:19!important;
+  flex:none!important;
+  overflow:hidden!important;
+}
+body.kol-customer .category-tabs-scroll{
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+body.kol-customer .category-tabs-scroll::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
+body.kol-customer .menu-shell{
+  grid-row:3!important;
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-gutter:auto!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar{
+  width:7px!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar-track{
+  background:transparent!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar-thumb{
+  background:#cfc8c2!important;
+  border-radius:999px!important;
+}
+
 }
