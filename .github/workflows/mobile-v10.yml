@@ -1,0 +1,22 @@
+name: Mobile v10
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/mobile-v10.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mobile v10 patch
+        run: python3 mobile_v10_fix.py
+      - name: Commit changes
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git commit -m 'Restore product categories and stabilize checkout layout' || exit 0
+          git push origin HEAD:main
