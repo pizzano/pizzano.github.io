@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v23"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v24"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -34,7 +34,7 @@
       </button>
     </div>
   </div>
-  <nav class="category-tabs-wrap" hidden id="categoryTabsWrap" aria-label="Kategorier">
+  <nav class="category-tabs-wrap" id="categoryTabsWrap" aria-label="Kategorier">
     <div aria-label="Kategorinavigasjon" class="category-tabs-scroll" id="categoryTabs"></div>
   </nav>
 </header>
@@ -390,26 +390,22 @@ function updateTopMenuReturnButton() {
 // gerçek açık/kapalı modal durumuna göre eşitler.
 
 function syncCategoryTabsVisibility() {
-  const isCartOpen = !!(cartModal && !cartModal.hidden) || document.body.classList.contains("cart-open");
-  const isInfoOpen = !!(infoModal && !infoModal.hidden) || document.body.classList.contains("info-open");
-  const isProfileOpen = !!(profileModal && !profileModal.hidden) || document.body.classList.contains("profile-open");
-  const isLiveOpen = !!(orderLiveModal && !orderLiveModal.hidden) ||
-    (quickCheckoutModal && !quickCheckoutModal.hidden) || document.body.classList.contains("order-live-open");
-  const isSettingsOpen = document.body.classList.contains("settings-open");
+  const hideTabs = document.body.classList.contains("cart-open") ||
+    document.body.classList.contains("profile-open") ||
+    document.body.classList.contains("info-open") ||
+    document.body.classList.contains("order-live-open") ||
+    document.body.classList.contains("settings-open");
 
-  // Product modal açıkken kategori barı görünebilir; info/profil/sepet/canlı siparişte gizli kalmalı.
-  const shouldHide = isCartOpen || isInfoOpen || isProfileOpen || isLiveOpen || isSettingsOpen;
-  document.body.classList.toggle("category-tabs-hidden", Boolean(shouldHide));
+  document.body.classList.toggle("category-tabs-hidden", hideTabs);
   if (categoryTabsWrap) {
-    categoryTabsWrap.hidden = Boolean(shouldHide);
-    categoryTabsWrap.setAttribute("aria-hidden", shouldHide ? "true" : "false");
-    categoryTabsWrap.style.display = shouldHide ? "none" : "";
+    categoryTabsWrap.removeAttribute("hidden");
+    categoryTabsWrap.setAttribute("aria-hidden", hideTabs ? "true" : "false");
+    categoryTabsWrap.style.removeProperty("display");
   }
 
-  if (!shouldHide && categoryTabs && categoryTabs.childElementCount === 0 && menuSectionsEl?.children?.length) {
+  if (!hideTabs && categoryTabs && categoryTabs.childElementCount === 0 && menuSectionsEl?.children?.length) {
     window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: true }));
   }
-
 }
 
 function syncBodyScrollLocks() {
@@ -3684,7 +3680,6 @@ function refreshCategoryTabsFromCurrentMenu(options = {}) {
   const previousActive = preserveActive ? activeCategoryTabId : "";
 
   if (!visibleSections.length) {
-    categoryTabsWrap.hidden = true;
     categoryTabs.innerHTML = "";
     document.body.classList.remove("has-category-tabs");
     syncCategoryTabsHeight();
@@ -3717,8 +3712,6 @@ function renderCategoryTabs(sections) {
       </button>
     `)
     .join("");
-
-  categoryTabsWrap.hidden = sections.length <= 1;
   syncCategoryTabsVisibility();
   syncCategoryTabsHeight();
   setActiveCategoryTab(sections[0]?.id || "", { centerIntoView: false, behavior: "auto" });
@@ -3959,7 +3952,6 @@ function renderMenu() {
 
   if (!visibleSections.length) {
     if (categoryTabsWrap) {
-      categoryTabsWrap.hidden = true;
       categoryTabs.innerHTML = "";
       document.body.classList.remove("has-category-tabs");
       syncCategoryTabsHeight();
