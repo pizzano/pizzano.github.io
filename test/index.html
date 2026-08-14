@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v6"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v7"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -5051,6 +5051,13 @@ init();
   window.visualViewport?.addEventListener("resize", apply, { passive: true });
 })();
 
-    </script>
+    
+// When a menu category is chosen from inside product view, close the product first.
+document.getElementById("categoryTabs")?.addEventListener("click", (event) => {
+  const tab = event.target.closest("button");
+  if (!tab || !document.body.classList.contains("kol-product-detail-open")) return;
+  document.getElementById("closeProduct")?.click();
+}, true);
+</script>
 </body>
 </html>
