@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v20"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v21"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -4957,7 +4957,6 @@ categoryTabs?.addEventListener("wheel", (event) => {
 
 const kolMenuScroll = document.querySelector(".menu-shell");
 kolMenuScroll?.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
-window.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
 window.addEventListener("resize", () => {
   syncCategoryTabsHeight();
   requestCategoryScrollSync();
