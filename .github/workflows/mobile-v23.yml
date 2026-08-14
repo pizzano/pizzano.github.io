@@ -1,0 +1,39 @@
+name: Mobile v23
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fix_header_categories_v23.py'
+      - '.github/workflows/mobile-v23.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply structural fix
+        run: python fix_header_categories_v23.py
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('test/index.html').read_text(encoding='utf-8')
+          start=s.index('<script>')+len('<script>')
+          end=s.rindex('</script>')
+          Path('/tmp/customer-v23.js').write_text(s[start:end],encoding='utf-8')
+          PY
+          node --check /tmp/customer-v23.js
+      - name: Commit result
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git diff --cached --quiet || git commit -m 'Mobile v23 lock categories inside header'
+          git push
