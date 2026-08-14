@@ -1,0 +1,34 @@
+name: Mobile v17
+on:
+  push:
+    branches: [main]
+    paths:
+      - mobile_v17_patch.py
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python mobile_v17_patch.py
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('test/index.html').read_text(encoding='utf-8')
+          a=s.rfind('<script>')
+          b=s.rfind('</script>')
+          Path('/tmp/index-inline.js').write_text(s[a+8:b], encoding='utf-8')
+          PY
+          node --check /tmp/index-inline.js
+      - name: Commit changes
+        run: |
+          git config user.name "KOL Deploy Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add test/index.html test/kol-core.css
+          git diff --cached --quiet || git commit -m "Polish product selections and checkout guidance"
+          git push
