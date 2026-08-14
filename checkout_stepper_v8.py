@@ -1,0 +1,240 @@
+from pathlib import Path
+
+index_path = Path('test/index.html')
+html = index_path.read_text(encoding='utf-8')
+
+html = html.replace(
+    '<div class="cart-sales-card">\n          <div class="checkout-section-title"><span>1</span>',
+    '<div class="cart-sales-card checkout-step-panel is-active" id="checkoutOrderSection" data-checkout-step="1">\n          <div class="checkout-section-title"><span>1</span>',
+    1,
+)
+html = html.replace(
+    '<section class="checkout-form checkout-step-card" id="checkoutPickupSection">',
+    '<section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="2" hidden>',
+    1,
+)
+html = html.replace(
+    '<section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card" id="checkoutContactSection">',
+    '<section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="3" hidden>',
+    1,
+)
+
+old_footer = '''    <div class="checkout-footer">
+      <span aria-live="polite" class="checkout-next-hint" id="checkoutNextHint">Neste: Kontroller hentetid</span>
+      <button class="checkout-button" disabled type="button">Fortsett · velg hentetid</button>
+    </div>'''
+new_footer = '''    <div class="checkout-footer">
+      <div class="checkout-progress" aria-live="polite">
+        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1 av 3</strong>
+        <span class="checkout-next-hint" id="checkoutNextHint">Kontroller varene dine</span>
+      </div>
+      <div class="checkout-footer-actions">
+        <button class="checkout-back-button" id="checkoutBackButton" type="button" hidden>Tilbake</button>
+        <button class="checkout-button" disabled type="button">Neste</button>
+      </div>
+    </div>'''
+if old_footer not in html:
+    raise SystemExit('checkout footer block not found')
+html = html.replace(old_footer, new_footer, 1)
+
+old_refs = '''const checkoutButton = document.querySelector(".checkout-button");
+const checkoutNextHint = document.querySelector("#checkoutNextHint");
+const checkoutPickupSection = document.querySelector("#checkoutPickupSection");
+const checkoutContactSection = document.querySelector("#checkoutContactSection");'''
+new_refs = '''const checkoutButton = document.querySelector(".checkout-button");
+const checkoutBackButton = document.querySelector("#checkoutBackButton");
+const checkoutStepCounter = document.querySelector("#checkoutStepCounter");
+const checkoutNextHint = document.querySelector("#checkoutNextHint");
+const checkoutOrderSection = document.querySelector("#checkoutOrderSection");
+const checkoutPickupSection = document.querySelector("#checkoutPickupSection");
+const checkoutContactSection = document.querySelector("#checkoutContactSection");'''
+if old_refs not in html:
+    raise SystemExit('checkout refs block not found')
+html = html.replace(old_refs, new_refs, 1)
+
+start = html.find('function updateCheckoutButtonState() {')
+end = html.find('\nfunction getCustomerInfo()', start)
+if start == -1 or end == -1:
+    raise SystemExit('checkout state functions not found')
+
+replacement = r'''function syncCheckoutStepVisibility() {
+  const safeStep = Math.max(1, Math.min(3, Number(checkoutStep || 1)));
+  checkoutStep = safeStep;
+  const sections = [
+    [1, checkoutOrderSection],
+    [2, checkoutPickupSection],
+    [3, checkoutContactSection]
+  ];
+  sections.forEach(([step, section]) => {
+    if (!section) return;
+    const active = step === safeStep;
+    section.hidden = !active;
+    section.classList.toggle("is-active", active);
+    section.setAttribute("aria-hidden", active ? "false" : "true");
+  });
+  if (checkoutBackButton) checkoutBackButton.hidden = safeStep === 1;
+  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 3`;
+  document.body.dataset.checkoutStep = String(safeStep);
+}
+
+function setCheckoutStep(step, options = {}) {
+  checkoutStep = Math.max(1, Math.min(3, Number(step || 1)));
+  updateCheckoutButtonState();
+  const scroller = document.querySelector(".cart-content-scroll");
+  if (scroller) scroller.scrollTop = 0;
+  if (options.focus) {
+    window.requestAnimationFrame(() => options.focus?.focus({ preventScroll: true }));
+  }
+}
+
+function updateCheckoutButtonState() {
+  if (!checkoutButton) return;
+  syncCheckoutStepVisibility();
+  const steps = {
+    1: { label: "Neste · velg hentetid", hint: "Kontroller varene og sluttsummen" },
+    2: { label: "Neste · navn og telefon", hint: "Velg når maten skal være klar" },
+    3: { label: "Send bestilling", hint: "Kontroller navn og telefon før du sender" }
+  };
+  const current = steps[checkoutStep] || steps[1];
+  checkoutButton.textContent = current.label;
+  checkoutButton.disabled = cart.length === 0 || !canAcceptOrdersNow();
+  checkoutButton.dataset.step = String(checkoutStep);
+  if (checkoutNextHint) checkoutNextHint.textContent = current.hint;
+}
+
+function validatePickupStep() {
+  const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  if (mode !== "later") return true;
+  const chosen = new Date(pickupTimeInput?.value || "");
+  const times = getOrderingTimes();
+  const now = new Date();
+  const baseTime = isOrderingOpenNow() ? now : nextOrderingOpenDate(now);
+  const minTime = new Date(baseTime.getTime() + times.minPreorderMinutes * 60000);
+  const closeAt = getOrderingWindow(baseTime).closeAt;
+  const invalid = !pickupTimeInput || pickupTimeInput.disabled || !pickupTimeInput.value || Number.isNaN(chosen.getTime()) || chosen < minTime || chosen > closeAt;
+  if (!invalid) {
+    pickupTimeInput.classList.remove("input-error");
+    return true;
+  }
+  pickupTimeInput?.classList.add("input-error");
+  if (pickupHelp) pickupHelp.textContent = "Velg en hentetid før du fortsetter.";
+  pickupTimeInput?.focus();
+  return false;
+}
+
+function validateContactStep() {
+  clearCheckoutValidationState();
+  const customer = getCustomerInfo();
+  if (!customer.fullName || customer.fullName.length < 2) {
+    customerFullName?.classList.add("input-error");
+    try {
+      customerFullName?.setCustomValidity("Skriv inn hele navnet ditt.");
+      customerFullName?.reportValidity();
+    } catch (error) {}
+    customerFullName?.focus();
+    return false;
+  }
+  if (!/^\d{8}$/.test(customer.phone)) {
+    customerPhone?.classList.add("input-error");
+    try {
+      customerPhone?.setCustomValidity("Skriv inn telefonnummer med 8 siffer.");
+      customerPhone?.reportValidity();
+    } catch (error) {}
+    customerPhone?.focus();
+    return false;
+  }
+  saveCustomerInfo();
+  return true;
+}
+
+function handleCheckoutButtonClick() {
+  if (!cart.length) return;
+  if (checkoutStep === 1) {
+    setCheckoutStep(2);
+    return;
+  }
+  if (checkoutStep === 2) {
+    if (!validatePickupStep()) return;
+    const customer = getCustomerInfo();
+    const focusField = !customer.fullName || customer.fullName.length < 2
+      ? customerFullName
+      : (!/^\d{8}$/.test(customer.phone) ? customerPhone : null);
+    setCheckoutStep(3, { focus: focusField });
+    return;
+  }
+  if (!validateContactStep()) return;
+  submitOrder();
+}
+'''
+html = html[:start] + replacement + html[end:]
+
+html = html.replace(
+    '  checkoutStep = 1;\n  updateCheckoutButtonState();\n  cartModal.hidden = false;',
+    '  setCheckoutStep(1);\n  cartModal.hidden = false;',
+    1,
+)
+
+old_binding = 'checkoutButton.addEventListener("click", handleCheckoutButtonClick);'
+new_binding = '''checkoutButton.addEventListener("click", handleCheckoutButtonClick);
+checkoutBackButton?.addEventListener("click", () => {
+  if (checkoutStep > 1) setCheckoutStep(checkoutStep - 1);
+});'''
+if old_binding not in html:
+    raise SystemExit('checkout button binding not found')
+html = html.replace(old_binding, new_binding, 1)
+html = html.replace('kol-core.css?v=mobile-v7', 'kol-core.css?v=mobile-v8')
+index_path.write_text(html, encoding='utf-8')
+
+css_path = Path('test/kol-core.css')
+css = css_path.read_text(encoding='utf-8')
+css_add = r'''
+
+/* ===== THREE-STEP CHECKOUT V8 ===== */
+@layer mobile{
+body.kol-customer .checkout-step-panel[hidden]{display:none!important}
+body.kol-customer .checkout-step-panel.is-active{display:block!important}
+body.kol-customer .cart-content-scroll{padding:10px!important;background:#f7f3ed!important}
+body.kol-customer .cart-order-card{width:100%!important;max-width:100%!important;margin:0!important;padding:0!important}
+body.kol-customer .cart-sales-card,body.kol-customer .checkout-step-card{margin:0!important;padding:14px!important;border:1px solid var(--line)!important;border-radius:16px!important;background:#fff!important;box-shadow:none!important}
+body.kol-customer .checkout-section-title{margin:0 0 14px!important;align-items:center!important}
+body.kol-customer .checkout-section-title>span{width:38px!important;height:38px!important;border-radius:12px!important;font-size:14px!important}
+body.kol-customer .checkout-section-title strong{font-size:17px!important;line-height:1.2!important}
+body.kol-customer .checkout-section-title small{font-size:12px!important;line-height:1.35!important}
+body.kol-customer .checkout-footer{min-height:112px!important;padding:10px 12px max(12px,env(safe-area-inset-bottom))!important;display:block!important;border-top:1px solid var(--line)!important;background:#fff!important}
+body.kol-customer .checkout-progress{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 2px 9px!important}
+body.kol-customer .checkout-step-counter{color:#241b16!important;font-size:12px!important;font-weight:900!important;white-space:nowrap!important}
+body.kol-customer .checkout-next-hint{min-height:0!important;margin:0!important;color:var(--muted)!important;font-size:11px!important;font-weight:700!important;text-align:right!important}
+body.kol-customer .checkout-footer-actions{display:grid!important;grid-template-columns:110px minmax(0,1fr)!important;gap:9px!important;width:100%!important}
+body.kol-customer[data-checkout-step="1"] .checkout-footer-actions{grid-template-columns:1fr!important}
+body.kol-customer .checkout-back-button{width:100%!important;min-height:52px!important;margin:0!important;border:1px solid #ddcfc3!important;border-radius:13px!important;color:#3b3029!important;background:#fffaf5!important;font-size:14px!important;font-weight:900!important;box-shadow:none!important;transform:none!important}
+body.kol-customer .checkout-back-button[hidden]{display:none!important}
+body.kol-customer .checkout-button{width:100%!important;min-height:52px!important;margin:0!important;border:0!important;border-radius:13px!important;color:#fff!important;background:#f56627!important;font-size:15px!important;font-weight:950!important;box-shadow:none!important;transform:none!important}
+body.kol-customer .pickup-choice{width:100%!important;margin:0!important;padding:0!important}
+body.kol-customer .pickup-options{width:100%!important;display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin:0!important;padding:0!important}
+body.kol-customer .pickup-option{position:relative!important;width:100%!important;display:block!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important}
+body.kol-customer .pickup-option::before,body.kol-customer .pickup-option::after{content:none!important;display:none!important}
+body.kol-customer .pickup-option input{position:absolute!important;opacity:0!important;pointer-events:none!important}
+body.kol-customer .pickup-option span{position:relative!important;width:100%!important;min-height:62px!important;margin:0!important;padding:0 52px 0 16px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;border:1.5px solid #ddd2c7!important;border-radius:14px!important;color:#2c241f!important;background:#fffaf5!important;font-size:14px!important;font-weight:900!important;box-shadow:none!important;transform:none!important}
+body.kol-customer .pickup-option span::before{content:none!important;display:none!important}
+body.kol-customer .pickup-option span::after{content:""!important;position:absolute!important;right:14px!important;top:50%!important;width:27px!important;height:27px!important;display:grid!important;place-items:center!important;border:1.5px solid #d8cec4!important;border-radius:50%!important;color:#fff!important;background:#fff!important;font-size:16px!important;font-weight:900!important;transform:translateY(-50%)!important}
+body.kol-customer .pickup-option input:checked+span{border-color:#ff8c5d!important;color:#d94d16!important;background:#fff1e9!important}
+body.kol-customer .pickup-option input:checked+span::after{content:"✓"!important;border-color:#f56627!important;background:#f56627!important}
+body.kol-customer #pickupTime{min-height:54px!important;margin:10px 0 0!important;font-size:14px!important;font-weight:800!important}
+body.kol-customer #pickupHelp{margin:10px 2px 0!important;font-size:12px!important;line-height:1.45!important}
+body.kol-customer .checkout-contact-card .checkout-grid{gap:12px!important}
+body.kol-customer .checkout-contact-card label{font-size:13px!important}
+body.kol-customer .checkout-contact-card input{min-height:56px!important;font-size:16px!important}
+body.kol-customer .contact-privacy-note{font-size:11px!important;line-height:1.45!important}
+body.kol-customer .input-error{border-color:#d64236!important;outline:2px solid rgba(214,66,54,.12)!important}
+}
+'''
+if 'THREE-STEP CHECKOUT V8' not in css:
+    css += css_add
+css_path.write_text(css, encoding='utf-8')
+
+assert 'id="checkoutOrderSection"' in html
+assert 'id="checkoutBackButton"' in html
+assert 'function syncCheckoutStepVisibility()' in html
+assert 'mobile-v8' in html
+assert 'THREE-STEP CHECKOUT V8' in css
+print('checkout v8 patch ready')
