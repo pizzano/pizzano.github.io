@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v7"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v8"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -115,7 +115,7 @@
     <div class="cart-header"><h2 id="cartTitle">Handlekurv</h2><button aria-label="Lukk handlekurv" class="cart-close-button" data-close-cart type="button">×</button></div>
     <div aria-label="Handlekurv og kundeinformasjon" class="cart-content-scroll mobile-screen-scroll" tabindex="0">
       <div class="cart-order-card">
-        <div class="cart-sales-card">
+        <div class="cart-sales-card checkout-step-panel is-active" id="checkoutOrderSection" data-checkout-step="1">
           <div class="checkout-section-title"><span>1</span><div><strong>Din bestilling</strong><small>Kontroller varer og antall</small></div></div>
           <div class="cart-items" id="cartItems"></div>
           <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
@@ -124,7 +124,7 @@
             <div class="tax-note-row"><small id="taxNote">(inkl. mva 0,00 kr)</small><strong hidden id="subtotal">0,00 kr</strong><strong hidden id="tax">0,00 kr</strong></div>
           </div>
         </div>
-        <section class="checkout-form checkout-step-card" id="checkoutPickupSection">
+        <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="2" hidden>
           <div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong><small>Når ønsker du at maten skal være klar?</small></div></div>
           <div class="pickup-choice">
             <div aria-label="Hentetid" class="pickup-options" role="radiogroup">
@@ -135,7 +135,7 @@
             <select aria-label="Velg hentetid" hidden id="pickupTime"></select>
           </div>
         </section>
-        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card" id="checkoutContactSection">
+        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="3" hidden>
           <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Så vi vet hvem bestillingen tilhører</small></div></div>
           <div class="checkout-grid">
             <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
@@ -148,8 +148,14 @@
       </div>
     </div>
     <div class="checkout-footer">
-      <span aria-live="polite" class="checkout-next-hint" id="checkoutNextHint">Neste: Kontroller hentetid</span>
-      <button class="checkout-button" disabled type="button">Fortsett · velg hentetid</button>
+      <div class="checkout-progress" aria-live="polite">
+        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1 av 3</strong>
+        <span class="checkout-next-hint" id="checkoutNextHint">Kontroller varene dine</span>
+      </div>
+      <div class="checkout-footer-actions">
+        <button class="checkout-back-button" id="checkoutBackButton" type="button" hidden>Tilbake</button>
+        <button class="checkout-button" disabled type="button">Neste</button>
+      </div>
     </div>
   </aside>
 </div>
@@ -251,7 +257,10 @@ const tax = document.querySelector("#tax");
 const taxNote = document.querySelector("#taxNote");
 const total = document.querySelector("#total");
 const checkoutButton = document.querySelector(".checkout-button");
+const checkoutBackButton = document.querySelector("#checkoutBackButton");
+const checkoutStepCounter = document.querySelector("#checkoutStepCounter");
 const checkoutNextHint = document.querySelector("#checkoutNextHint");
+const checkoutOrderSection = document.querySelector("#checkoutOrderSection");
 const checkoutPickupSection = document.querySelector("#checkoutPickupSection");
 const checkoutContactSection = document.querySelector("#checkoutContactSection");
 const productModal = document.querySelector("#productModal");
@@ -1287,12 +1296,43 @@ function updatePickupControls() {
   updateCheckoutButtonState();
 }
 
+function syncCheckoutStepVisibility() {
+  const safeStep = Math.max(1, Math.min(3, Number(checkoutStep || 1)));
+  checkoutStep = safeStep;
+  const sections = [
+    [1, checkoutOrderSection],
+    [2, checkoutPickupSection],
+    [3, checkoutContactSection]
+  ];
+  sections.forEach(([step, section]) => {
+    if (!section) return;
+    const active = step === safeStep;
+    section.hidden = !active;
+    section.classList.toggle("is-active", active);
+    section.setAttribute("aria-hidden", active ? "false" : "true");
+  });
+  if (checkoutBackButton) checkoutBackButton.hidden = safeStep === 1;
+  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 3`;
+  document.body.dataset.checkoutStep = String(safeStep);
+}
+
+function setCheckoutStep(step, options = {}) {
+  checkoutStep = Math.max(1, Math.min(3, Number(step || 1)));
+  updateCheckoutButtonState();
+  const scroller = document.querySelector(".cart-content-scroll");
+  if (scroller) scroller.scrollTop = 0;
+  if (options.focus) {
+    window.requestAnimationFrame(() => options.focus?.focus({ preventScroll: true }));
+  }
+}
+
 function updateCheckoutButtonState() {
   if (!checkoutButton) return;
+  syncCheckoutStepVisibility();
   const steps = {
-    1: { label: "Fortsett · hentetid", hint: "Neste: Kontroller hentetid" },
-    2: { label: "Fortsett · navn og telefon", hint: "Neste: Fyll inn kontaktinformasjon" },
-    3: { label: "Send bestilling · betal ved henting", hint: "Klar til å sende bestillingen" }
+    1: { label: "Neste · velg hentetid", hint: "Kontroller varene og sluttsummen" },
+    2: { label: "Neste · navn og telefon", hint: "Velg når maten skal være klar" },
+    3: { label: "Send bestilling", hint: "Kontroller navn og telefon før du sender" }
   };
   const current = steps[checkoutStep] || steps[1];
   checkoutButton.textContent = current.label;
@@ -1301,45 +1341,67 @@ function updateCheckoutButtonState() {
   if (checkoutNextHint) checkoutNextHint.textContent = current.hint;
 }
 
-function highlightCheckoutSection(section, focusField = null) {
-  if (!section) return;
-  document.querySelectorAll(".checkout-step-card.is-guided").forEach((card) => card.classList.remove("is-guided"));
-  section.classList.add("is-guided");
-  const scroller = document.querySelector(".cart-content-scroll");
-  window.requestAnimationFrame(() => {
-    if (scroller) {
-      const sectionBox = section.getBoundingClientRect();
-      const scrollBox = scroller.getBoundingClientRect();
-      const top = scroller.scrollTop + sectionBox.top - scrollBox.top - 16;
-      scroller.scrollTo({ top: Math.max(0, top), behavior: "auto" });
-    } else {
-      section.scrollIntoView({ behavior: "auto", block: "center" });
-    }
-    if (focusField) {
-      window.setTimeout(() => focusField.focus({ preventScroll: true }), 420);
-    }
-  });
-  window.setTimeout(() => section.classList.remove("is-guided"), 1500);
+function validatePickupStep() {
+  const mode = document.querySelector('input[name="pickupMode"]:checked')?.value || "asap";
+  if (mode !== "later") return true;
+  const chosen = new Date(pickupTimeInput?.value || "");
+  const times = getOrderingTimes();
+  const now = new Date();
+  const baseTime = isOrderingOpenNow() ? now : nextOrderingOpenDate(now);
+  const minTime = new Date(baseTime.getTime() + times.minPreorderMinutes * 60000);
+  const closeAt = getOrderingWindow(baseTime).closeAt;
+  const invalid = !pickupTimeInput || pickupTimeInput.disabled || !pickupTimeInput.value || Number.isNaN(chosen.getTime()) || chosen < minTime || chosen > closeAt;
+  if (!invalid) {
+    pickupTimeInput.classList.remove("input-error");
+    return true;
+  }
+  pickupTimeInput?.classList.add("input-error");
+  if (pickupHelp) pickupHelp.textContent = "Velg en hentetid før du fortsetter.";
+  pickupTimeInput?.focus();
+  return false;
+}
+
+function validateContactStep() {
+  clearCheckoutValidationState();
+  const customer = getCustomerInfo();
+  if (!customer.fullName || customer.fullName.length < 2) {
+    customerFullName?.classList.add("input-error");
+    try {
+      customerFullName?.setCustomValidity("Skriv inn hele navnet ditt.");
+      customerFullName?.reportValidity();
+    } catch (error) {}
+    customerFullName?.focus();
+    return false;
+  }
+  if (!/^\d{8}$/.test(customer.phone)) {
+    customerPhone?.classList.add("input-error");
+    try {
+      customerPhone?.setCustomValidity("Skriv inn telefonnummer med 8 siffer.");
+      customerPhone?.reportValidity();
+    } catch (error) {}
+    customerPhone?.focus();
+    return false;
+  }
+  saveCustomerInfo();
+  return true;
 }
 
 function handleCheckoutButtonClick() {
   if (!cart.length) return;
   if (checkoutStep === 1) {
-    checkoutStep = 2;
-    updateCheckoutButtonState();
-    highlightCheckoutSection(checkoutPickupSection);
+    setCheckoutStep(2);
     return;
   }
   if (checkoutStep === 2) {
-    checkoutStep = 3;
-    updateCheckoutButtonState();
+    if (!validatePickupStep()) return;
     const customer = getCustomerInfo();
     const focusField = !customer.fullName || customer.fullName.length < 2
       ? customerFullName
       : (!/^\d{8}$/.test(customer.phone) ? customerPhone : null);
-    highlightCheckoutSection(checkoutContactSection, focusField);
+    setCheckoutStep(3, { focus: focusField });
     return;
   }
+  if (!validateContactStep()) return;
   submitOrder();
 }
 
@@ -4524,8 +4586,7 @@ function forceCloseNonCartOverlays() {
 function openCart() {
   forceCloseNonCartOverlays();
   resetPickupToAsap();
-  checkoutStep = 1;
-  updateCheckoutButtonState();
+  setCheckoutStep(1);
   cartModal.hidden = false;
   cartToggle.setAttribute("aria-expanded", "true");
   document.body.classList.add("cart-open");
@@ -4708,6 +4769,9 @@ if (closeProductText) {
 addConfiguredProduct.addEventListener("click", addConfiguredToCart);
 cartToggle.addEventListener("click", () => { updatePickupControls(); renderRecentOrders(); openCart(); });
 checkoutButton.addEventListener("click", handleCheckoutButtonClick);
+checkoutBackButton?.addEventListener("click", () => {
+  if (checkoutStep > 1) setCheckoutStep(checkoutStep - 1);
+});
 document.querySelectorAll('input[name="pickupMode"]').forEach((input) => input.addEventListener("change", updatePickupControls));
 if (pickupTimeInput) pickupTimeInput.addEventListener("change", updatePickupControls);
 [customerFullName, customerPhone].forEach((field) => {
