@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v17"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v18"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -2113,6 +2113,7 @@ function profileOrderCardHtml(order = {}) {
     <article class="profile-order-card ${status} ${statusVisual} ${isToday ? "today-order" : "old-order"} ${unread ? "unread" : "read"} ${isExpanded ? "is-expanded" : ""}" data-profile-order-card="${escapeAttribute(order.id || "")}" data-expanded="${isExpanded ? "true" : "false"}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}" aria-expanded="${isExpanded ? "true" : "false"}">
         <span class="profile-order-main">
+          ${isExpanded ? `<span class="profile-selected-marker">Valgt</span>` : ""}
           <span class="profile-order-title-row">
             <strong>${title}</strong>
             <span class="order-status-pill ${status} ${order.ready === true ? "ready" : ""}">${orderStatusText(status, order)}</span>
@@ -4953,6 +4954,8 @@ categoryTabs?.addEventListener("wheel", (event) => {
   categoryTabs.scrollLeft += event.deltaY;
 }, { passive: false });
 
+const kolMenuScroll = document.querySelector(".menu-shell");
+kolMenuScroll?.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
 window.addEventListener("scroll", requestCategoryScrollSync, { passive: true });
 window.addEventListener("resize", () => {
   syncCategoryTabsHeight();

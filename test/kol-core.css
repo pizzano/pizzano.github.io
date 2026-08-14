@@ -209,4 +209,70 @@ body.kol-customer .checkout-section-title small{
   line-height:1.35!important;
 }
 
+
+/* MOBILE V18: hidden category scrollbar + reliable menu scroll + selected order */
+body.kol-customer .category-tabs-wrap,
+body.kol-customer .category-tabs-scroll{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+body.kol-customer .category-tabs-wrap::-webkit-scrollbar,
+body.kol-customer .category-tabs-scroll::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+  background:transparent!important;
+}
+body.kol-customer .customer-app{
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+}
+body.kol-customer .menu-shell{
+  height:100dvh!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-gutter:auto!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar{
+  width:7px!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar-thumb{
+  background:#d7d0ca!important;
+  border-radius:999px!important;
+}
+body.kol-customer .menu-shell::-webkit-scrollbar-track{
+  background:transparent!important;
+}
+body.kol-customer .profile-order-card.is-expanded{
+  position:relative!important;
+  background:#fff8f3!important;
+  box-shadow:inset 4px 0 0 var(--o)!important;
+}
+body.kol-customer .profile-order-card.is-expanded .profile-order-summary{
+  background:#fff8f3!important;
+}
+body.kol-customer .profile-selected-marker{
+  display:inline-flex!important;
+  align-items:center!important;
+  align-self:flex-start!important;
+  min-height:23px!important;
+  margin:0 0 6px!important;
+  padding:0 8px!important;
+  border:1px solid #f6a47e!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:var(--o)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  line-height:1!important;
+}
+body.kol-customer .profile-order-card.is-expanded .profile-order-details{
+  border-top:1px solid #f0d8cc!important;
+  background:#fff!important;
+}
+
 }
