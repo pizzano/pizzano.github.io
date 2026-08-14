@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v9"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v10"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -136,7 +136,7 @@
           </div>
         </section>
         <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
+          <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
           <div class="checkout-grid">
             <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
             <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
@@ -149,7 +149,7 @@
     </div>
     <div class="checkout-footer">
       <div class="checkout-progress" aria-live="polite">
-        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1 av 2</strong>
+        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1</strong>
         <span class="checkout-next-hint" id="checkoutNextHint">Kontroller varene dine</span>
       </div>
       <div class="checkout-footer-actions">
@@ -1312,7 +1312,7 @@ function syncCheckoutStepVisibility() {
     section.setAttribute("aria-hidden", active ? "false" : "true");
   });
   if (checkoutBackButton) checkoutBackButton.hidden = safeStep === 1;
-  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 2`;
+  if (checkoutStepCounter) checkoutStepCounter.textContent = safeStep === 1 ? "Steg 1" : "Steg 2–3";
   document.body.dataset.checkoutStep = String(safeStep);
 }
 

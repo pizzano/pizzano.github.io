@@ -209,3 +209,113 @@ body.kol-customer .input-error{border-color:#d64236!important;outline:2px solid 
   body.kol-customer .checkout-back-button{min-width:84px!important;min-height:52px!important;margin:0!important;border:1px solid var(--line)!important;border-radius:12px!important;background:#fff!important;color:var(--ink)!important;font-weight:850!important}
   body.kol-customer .checkout-button{min-height:52px!important;margin:0!important;border-radius:12px!important;font-size:15px!important}
 }
+
+
+/* ===== MOBILE V10: stable product + checkout alignment ===== */
+@layer mobile{
+/* Product: restore horizontal category navigation while product is open. */
+body.kol-customer.kol-product-detail-open .category-tabs-wrap{
+  display:block!important;
+  visibility:visible!important;
+}
+body.kol-customer.kol-product-detail-open .product-modal.mobile-screen{
+  top:calc(var(--head) + var(--tabs))!important;
+  height:calc(100dvh - var(--head) - var(--tabs))!important;
+}
+body.kol-customer.kol-product-detail-open .category-tabs-scroll{
+  display:flex!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  white-space:nowrap!important;
+  scrollbar-width:none!important;
+}
+body.kol-customer.kol-product-detail-open .category-tabs-scroll::-webkit-scrollbar{display:none!important}
+
+/* Restore the product ingredient/description line and make it easier to read. */
+body.kol-customer.kol-product-detail-open .product-summary{
+  display:block!important;
+  margin:0!important;
+  padding:0 18px 16px!important;
+  color:var(--muted)!important;
+  font-size:15.5px!important;
+  line-height:1.5!important;
+  font-weight:500!important;
+}
+body.kol-customer.kol-product-detail-open .product-photo-title-wrap{
+  padding:16px 18px 8px!important;
+}
+body.kol-customer.kol-product-detail-open .product-photo-title-chip h2{
+  font-size:27px!important;
+}
+body.kol-customer.kol-product-detail-open .ingredient-removal-heading h3,
+body.kol-customer.kol-product-detail-open .option-group>h3{
+  font-size:16px!important;
+}
+body.kol-customer.kol-product-detail-open .ingredient-chip{
+  font-size:15px!important;
+}
+
+/* Checkout: never let the bottom CTA escape the mobile viewport. */
+body.kol-customer .checkout-footer{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:10px 12px max(10px,env(safe-area-inset-bottom))!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+body.kol-customer .checkout-progress{
+  width:100%!important;
+  min-width:0!important;
+  margin:0 0 8px!important;
+  padding:0 2px!important;
+  box-sizing:border-box!important;
+}
+body.kol-customer .checkout-footer-actions{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  display:grid!important;
+  grid-template-columns:104px minmax(0,1fr)!important;
+  gap:8px!important;
+  align-items:stretch!important;
+  box-sizing:border-box!important;
+}
+body.kol-customer .checkout-back-button{
+  width:104px!important;
+  max-width:104px!important;
+  min-width:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+body.kol-customer .checkout-back-button[hidden]{display:none!important}
+body.kol-customer .checkout-back-button[hidden] + .checkout-button{
+  grid-column:1 / -1!important;
+}
+body.kol-customer .checkout-button{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding-left:12px!important;
+  padding-right:12px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+/* Pickup + contact are one compact screen, but visibly numbered 2 and 3. */
+body.kol-customer #checkoutPickupSection,
+body.kol-customer #checkoutContactSection{
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+body.kol-customer #checkoutContactSection .checkout-section-title{
+  border-top:1px solid var(--line)!important;
+}
+}
