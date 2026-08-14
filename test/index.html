@@ -1291,10 +1291,6 @@ function updatePickupControls() {
     pickupHelp.textContent = mode === "asap"
       ? `Første henting ca. kl. ${formatClock(firstChoice)}`
       : `Velg ønsket hentetid.`;
-  } else {
-    pickupHelp.textContent = mode === "asap"
-      ? `Restauranten er stengt nå. Snarest mulig betyr henting kl. ${formatClock(firstChoice)}, etter at vi åpner kl. ${openLabel}.`
-      : `Restauranten er stengt nå. Velg hentetid fra ${formatClock(firstChoice)}; bestillingen kan sendes nå.`;
   }
   updateCheckoutButtonState();
 }
