@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v16"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v17"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -125,14 +125,14 @@
           </div>
         </div>
         <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="3" hidden>
-          <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong></div></div>
+          <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Kontroller at navn og telefonnummer stemmer.</small></div></div>
           <div class="checkout-grid">
             <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
             <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
           </div>
         </section>
         <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong></div></div>
+          <div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong><small>Velg når du ønsker at maten skal være klar.</small></div></div>
           <div class="pickup-choice">
             <div aria-label="Hentetid" class="pickup-options" role="radiogroup">
               <label class="pickup-option"><input checked name="pickupMode" type="radio" value="asap"/><span>Snarest mulig</span></label>
@@ -1391,7 +1391,7 @@ function handleCheckoutButtonClick() {
   }
   if (checkoutStep === 2) {
     if (!validatePickupStep()) return;
-    setCheckoutStep(3, { focus: customerFullName });
+    setCheckoutStep(3);
     return;
   }
   if (!validateContactStep()) return;

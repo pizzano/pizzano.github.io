@@ -147,4 +147,66 @@ body.kol-customer .quick-checkout-actions{padding:10px 12px!important}
 body.kol-customer .input-error{border-color:#cc443d!important;outline:1px solid #cc443d!important}
 body.kol-customer .status-notice,body.kol-customer .order-status-box{margin:0!important;border-radius:0!important}
 @media(max-width:390px){:root{--head:72px;--tabs:46px}body.kol-customer{font-size:14px!important}body.kol-customer .appbar{padding:0 9px!important}body.kol-customer .appbar-brand{min-width:110px!important}body.kol-customer .brand-back-label{font-size:17px!important}body.kol-customer .appbar-context-title{left:110px!important;right:102px!important;font-size:15px!important}body.kol-customer .icon-button,body.kol-customer .cart-toggle{width:40px!important;min-width:40px!important;height:40px!important}body.kol-customer .category-tab,body.kol-customer [data-category-tab]{padding:0 11px!important;font-size:13.5px!important}body.kol-customer .menu-row,body.kol-customer .menu-app-product{grid-template-columns:76px minmax(0,1fr) 72px!important;gap:8px!important;padding:9px 10px!important}body.kol-customer .menu-row>.food-thumb,body.kol-customer .menu-row>[class*="thumb"],body.kol-customer .menu-thumb-wrap,body.kol-customer .menu-thumb-wrap>.food-thumb,body.kol-customer .menu-thumb-wrap>[class*="thumb"]{width:76px!important;min-width:76px!important;height:80px!important;min-height:80px!important;max-height:80px!important}body.kol-customer .menu-app-product-side,body.kol-customer .rescue-product-side{width:72px!important}body.kol-customer .menu-favorite,body.kol-customer .menu-app-plus{width:35px!important;min-width:35px!important;height:35px!important;min-height:35px!important}body.kol-customer .cart-item{grid-template-columns:minmax(0,1fr) 78px!important;padding:10px!important}body.kol-customer .cart-item-actions{width:78px!important;min-width:78px!important;grid-template-columns:37px 37px!important}body.kol-customer .edit-line-button,body.kol-customer .remove-button{width:37px!important;min-width:37px!important;height:39px!important;min-height:39px!important}body.kol-customer .pickup-options{grid-template-columns:1fr!important}}
+
+/* PRODUCT OPTION CHECKS V17 */
+body.kol-customer #optionGroups input[type="radio"],
+body.kol-customer #optionGroups input[type="checkbox"]{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  position:static!important;
+  display:inline-grid!important;
+  place-content:center!important;
+  flex:0 0 24px!important;
+  width:24px!important;
+  min-width:24px!important;
+  height:24px!important;
+  min-height:24px!important;
+  margin:0 12px 0 0!important;
+  padding:0!important;
+  opacity:1!important;
+  visibility:visible!important;
+  border:1.5px solid #a6a19d!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+body.kol-customer #optionGroups input[type="radio"]::after,
+body.kol-customer #optionGroups input[type="checkbox"]::after{
+  content:"✓";
+  display:block!important;
+  color:#168653!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  opacity:0!important;
+}
+body.kol-customer #optionGroups input[type="radio"]:checked,
+body.kol-customer #optionGroups input[type="checkbox"]:checked{
+  border-color:#58b985!important;
+  background:#eef9f2!important;
+}
+body.kol-customer #optionGroups input[type="radio"]:checked::after,
+body.kol-customer #optionGroups input[type="checkbox"]:checked::after{
+  opacity:1!important;
+}
+body.kol-customer #optionGroups label:has(input[type="radio"]:checked),
+body.kol-customer #optionGroups label:has(input[type="checkbox"]:checked){
+  background:#f4fbf7!important;
+  color:#185f3e!important;
+}
+body.kol-customer .checkout-section-title>div{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:2px!important;
+}
+body.kol-customer .checkout-section-title small{
+  display:block!important;
+  margin:0!important;
+  color:var(--muted)!important;
+  font-size:12.5px!important;
+  font-weight:400!important;
+  line-height:1.35!important;
+}
+
 }
