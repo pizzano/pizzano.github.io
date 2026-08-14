@@ -9,14 +9,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v8"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v9"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
 <header class="appbar">
   <button aria-label="KØL Grill &amp; Pizza" class="appbar-brand" id="siteNameText" type="button">
     <span class="brand-label"><b>KØL</b><small>GRILL &amp; PIZZA</small></span>
-    <span aria-hidden="true" class="brand-back-label">‹ Tilbake</span>
+    <span aria-hidden="true" class="brand-back-label">‹ Meny</span>
   </button>
   <div aria-live="polite" class="appbar-context-title" hidden id="appbarContextTitle"></div>
   <div class="appbar-actions">
@@ -49,7 +49,7 @@
       <div class="product-titlebar" id="productTitlebar">
         <button aria-label="Tilbake til meny" class="back-button" id="closeProduct" type="button">‹</button>
         <h2 id="productTitle"></h2>
-        <button aria-label="Tilbake til meny" class="product-titlebar-back-text" id="closeProductText" type="button">Tilbake til meny</button>
+        <button aria-label="Tilbake til meny" class="product-titlebar-back-text" id="closeProductText" type="button">Meny</button>
       </div>
       <div aria-hidden="true" class="product-photo"></div>
       <div class="product-photo-title-wrap"><div class="product-photo-title-chip"><h2 id="productPhotoTitle"></h2></div></div>
@@ -135,8 +135,8 @@
             <select aria-label="Velg hentetid" hidden id="pickupTime"></select>
           </div>
         </section>
-        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="3" hidden>
-          <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Så vi vet hvem bestillingen tilhører</small></div></div>
+        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="2" hidden>
+          <div class="checkout-section-title"><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
           <div class="checkout-grid">
             <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
             <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
@@ -149,7 +149,7 @@
     </div>
     <div class="checkout-footer">
       <div class="checkout-progress" aria-live="polite">
-        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1 av 3</strong>
+        <strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1 av 2</strong>
         <span class="checkout-next-hint" id="checkoutNextHint">Kontroller varene dine</span>
       </div>
       <div class="checkout-footer-actions">
@@ -365,7 +365,7 @@ function updateTopMenuReturnButton() {
     siteNameText.tabIndex = 0;
   }
   if (brandBackLabel) {
-    brandBackLabel.textContent = "Tilbake";
+    brandBackLabel.textContent = "Meny";
     brandBackLabel.setAttribute("aria-hidden", topBackOpen ? "false" : "true");
   }
   if (appbarContextTitle) {
@@ -1297,12 +1297,12 @@ function updatePickupControls() {
 }
 
 function syncCheckoutStepVisibility() {
-  const safeStep = Math.max(1, Math.min(3, Number(checkoutStep || 1)));
+  const safeStep = Math.max(1, Math.min(2, Number(checkoutStep || 1)));
   checkoutStep = safeStep;
   const sections = [
     [1, checkoutOrderSection],
     [2, checkoutPickupSection],
-    [3, checkoutContactSection]
+    [2, checkoutContactSection]
   ];
   sections.forEach(([step, section]) => {
     if (!section) return;
@@ -1312,12 +1312,12 @@ function syncCheckoutStepVisibility() {
     section.setAttribute("aria-hidden", active ? "false" : "true");
   });
   if (checkoutBackButton) checkoutBackButton.hidden = safeStep === 1;
-  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 3`;
+  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 2`;
   document.body.dataset.checkoutStep = String(safeStep);
 }
 
 function setCheckoutStep(step, options = {}) {
-  checkoutStep = Math.max(1, Math.min(3, Number(step || 1)));
+  checkoutStep = Math.max(1, Math.min(2, Number(step || 1)));
   updateCheckoutButtonState();
   const scroller = document.querySelector(".cart-content-scroll");
   if (scroller) scroller.scrollTop = 0;
@@ -1330,9 +1330,8 @@ function updateCheckoutButtonState() {
   if (!checkoutButton) return;
   syncCheckoutStepVisibility();
   const steps = {
-    1: { label: "Neste · velg hentetid", hint: "Kontroller varene og sluttsummen" },
-    2: { label: "Neste · navn og telefon", hint: "Velg når maten skal være klar" },
-    3: { label: "Send bestilling", hint: "Kontroller navn og telefon før du sender" }
+    1: { label: "Neste", hint: "Kontroller varene og sluttsummen" },
+    2: { label: "Send bestilling", hint: "Velg hentetid og kontroller kontaktinformasjonen" }
   };
   const current = steps[checkoutStep] || steps[1];
   checkoutButton.textContent = current.label;
@@ -1392,15 +1391,7 @@ function handleCheckoutButtonClick() {
     setCheckoutStep(2);
     return;
   }
-  if (checkoutStep === 2) {
-    if (!validatePickupStep()) return;
-    const customer = getCustomerInfo();
-    const focusField = !customer.fullName || customer.fullName.length < 2
-      ? customerFullName
-      : (!/^\d{8}$/.test(customer.phone) ? customerPhone : null);
-    setCheckoutStep(3, { focus: focusField });
-    return;
-  }
+  if (!validatePickupStep()) return;
   if (!validateContactStep()) return;
   submitOrder();
 }
@@ -4213,6 +4204,7 @@ function renderProductModal() {
   if (productPhotoTitle) productPhotoTitle.textContent = finalProductTitle;
   productSummary.textContent = selectedProduct.ingredients || "";
   renderIngredientRemoval();
+  productModal.classList.toggle("has-ingredient-removal", Boolean(ingredientRemoval && !ingredientRemoval.hidden));
   productQuantity.textContent = quantity;
   // Nye produkter starter på 1. En vare som redigeres kan settes til 0,
   // men endringen utføres først når kunden trykker Oppdater.
