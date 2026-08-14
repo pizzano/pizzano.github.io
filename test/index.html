@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v13"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v14"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -116,7 +116,7 @@
     <div aria-label="Handlekurv og kundeinformasjon" class="cart-content-scroll mobile-screen-scroll" tabindex="0">
       <div class="cart-order-card">
         <div class="cart-sales-card checkout-step-panel is-active" id="checkoutOrderSection" data-checkout-step="1">
-          <div class="checkout-section-title"><span>1</span><div><strong>Din bestilling</strong><small>Kontroller varer og antall</small></div></div>
+          <div class="checkout-section-title"><span>1</span><div><strong>Din bestilling</strong></div></div>
           <div class="cart-items" id="cartItems"></div>
           <div class="cart-empty" id="cartEmpty">Handlekurven er tom. Legg til en vare fra menyen.</div>
           <div class="cart-summary" id="cartSummary">
@@ -125,15 +125,14 @@
           </div>
         </div>
         <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><span>2</span><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
+          <div class="checkout-section-title"><span>2</span><div><strong>Navn og telefon</strong></div></div>
           <div class="checkout-grid">
             <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
             <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
           </div>
-          <p class="contact-privacy-note">Telefonnummeret brukes bare hvis vi må kontakte deg om denne bestillingen.</p>
         </section>
-        <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><span>3</span><div><strong>Velg hentetid</strong><small>Når ønsker du at maten skal være klar?</small></div></div>
+        <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="3" hidden>
+          <div class="checkout-section-title"><span>3</span><div><strong>Velg hentetid</strong></div></div>
           <div class="pickup-choice">
             <div aria-label="Hentetid" class="pickup-options" role="radiogroup">
               <label class="pickup-option"><input checked name="pickupMode" type="radio" value="asap"/><span>Snarest mulig</span></label>
@@ -1286,8 +1285,12 @@ function updatePickupControls() {
   const firstChoice = roundUpToNextQuarter(minTime);
   if (openNow) {
     pickupHelp.textContent = mode === "asap"
-      ? `Snarest mulig betyr ca. kl. ${formatClock(firstChoice)}. Du kan også velge et annet hentetidspunkt.`
-      : `Velg hentetid fra ${formatClock(firstChoice)}, deretter hvert 15. minutt. Restauranten er åpen til ${closeLabel}.`;
+      ? `Klar ca. kl. ${formatClock(firstChoice)}`
+      : `Velg ønsket hentetid.`;
+  } else {
+    pickupHelp.textContent = mode === "asap"
+      ? `Første henting ca. kl. ${formatClock(firstChoice)}`
+      : `Velg ønsket hentetid.`;
   } else {
     pickupHelp.textContent = mode === "asap"
       ? `Restauranten er stengt nå. Snarest mulig betyr henting kl. ${formatClock(firstChoice)}, etter at vi åpner kl. ${openLabel}.`
@@ -1297,12 +1300,12 @@ function updatePickupControls() {
 }
 
 function syncCheckoutStepVisibility() {
-  const safeStep = Math.max(1, Math.min(2, Number(checkoutStep || 1)));
+  const safeStep = Math.max(1, Math.min(3, Number(checkoutStep || 1)));
   checkoutStep = safeStep;
   const sections = [
     [1, checkoutOrderSection],
-    [2, checkoutPickupSection],
-    [2, checkoutContactSection]
+    [2, checkoutContactSection],
+    [3, checkoutPickupSection]
   ];
   sections.forEach(([step, section]) => {
     if (!section) return;
@@ -1312,32 +1315,31 @@ function syncCheckoutStepVisibility() {
     section.setAttribute("aria-hidden", active ? "false" : "true");
   });
   if (checkoutBackButton) checkoutBackButton.hidden = safeStep === 1;
-  if (checkoutStepCounter) checkoutStepCounter.textContent = safeStep === 1 ? "Steg 1" : "Steg 2–3";
+  if (checkoutStepCounter) checkoutStepCounter.textContent = `Steg ${safeStep} av 3`;
   document.body.dataset.checkoutStep = String(safeStep);
 }
 
 function setCheckoutStep(step, options = {}) {
-  checkoutStep = Math.max(1, Math.min(2, Number(step || 1)));
+  checkoutStep = Math.max(1, Math.min(3, Number(step || 1)));
   updateCheckoutButtonState();
   const scroller = document.querySelector(".cart-content-scroll");
   if (scroller) scroller.scrollTop = 0;
-  if (options.focus) {
-    window.requestAnimationFrame(() => options.focus?.focus({ preventScroll: true }));
-  }
+  if (options.focus) window.requestAnimationFrame(() => options.focus?.focus({ preventScroll: true }));
 }
 
 function updateCheckoutButtonState() {
   if (!checkoutButton) return;
   syncCheckoutStepVisibility();
   const steps = {
-    1: { label: "Neste", hint: "Kontroller varene og sluttsummen" },
-    2: { label: "Send bestilling", hint: "Kontroller navn og telefon, velg deretter hentetid" }
+    1: { label: "Neste" },
+    2: { label: "Neste" },
+    3: { label: "Send bestilling" }
   };
   const current = steps[checkoutStep] || steps[1];
   checkoutButton.textContent = current.label;
   checkoutButton.disabled = cart.length === 0 || !canAcceptOrdersNow();
   checkoutButton.dataset.step = String(checkoutStep);
-  if (checkoutNextHint) checkoutNextHint.textContent = current.hint;
+  if (checkoutNextHint) checkoutNextHint.textContent = "";
 }
 
 function validatePickupStep() {
@@ -1388,11 +1390,15 @@ function validateContactStep() {
 function handleCheckoutButtonClick() {
   if (!cart.length) return;
   if (checkoutStep === 1) {
-    setCheckoutStep(2);
+    setCheckoutStep(2, { focus: customerFullName });
+    return;
+  }
+  if (checkoutStep === 2) {
+    if (!validateContactStep()) return;
+    setCheckoutStep(3);
     return;
   }
   if (!validatePickupStep()) return;
-  if (!validateContactStep()) return;
   submitOrder();
 }
 
