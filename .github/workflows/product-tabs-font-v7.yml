@@ -1,4 +1,4 @@
-name: Product tabs and font v7
+name: Product tabs and font v7 repair
 on:
   push:
     branches: [main]
@@ -11,69 +11,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update customer product navigation and typography
+      - name: Restore clean mobile base and apply measured changes
         shell: bash
         run: |
+          git show 7fb9366ffbcd53282a428af68fa01ae41e0d1efe:test/kol-core.css > test/kol-core.css
+          git show 7fb9366ffbcd53282a428af68fa01ae41e0d1efe:test/index.html > test/index.html
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           css_path = Path('test/kol-core.css')
           css = css_path.read_text(encoding='utf-8')
 
-          # Keep menu categories visible while a product is open.
-          css = css.replace(
-              'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap,body.kol-customer.kol-product-detail-open .category-tabs-wrap{display:none!important}',
-              'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap{display:none!important}'
-          )
+          hidden_old = 'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap,body.kol-customer.kol-product-detail-open .category-tabs-wrap{display:none!important}'
+          hidden_new = 'body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap{display:none!important}'
+          css = css.replace(hidden_old, hidden_new)
 
           product_tabs_rule = '''\n/* product screen keeps category navigation visible */\nbody.kol-customer.kol-product-detail-open .category-tabs-wrap{display:block!important}\nbody.kol-customer .product-modal.mobile-screen{top:calc(var(--head) + var(--tabs))!important;height:calc(100dvh - var(--head) - var(--tabs))!important}\n'''
-          if 'product screen keeps category navigation visible' not in css:
-              css = css.replace('/* product */', product_tabs_rule + '\n/* product */', 1)
+          css = css.replace('/* product */', product_tabs_rule + '\n/* product */', 1)
 
-          # Slight readability increase for small and medium text only.
-          replacements = {
-              'font-size:8px!important':'font-size:9px!important',
-              'font-size:8.5px!important':'font-size:10px!important',
-              'font-size:9px!important':'font-size:10.5px!important',
-              'font-size:9.5px!important':'font-size:11px!important',
-              'font-size:10px!important':'font-size:11.5px!important',
-              'font-size:10.5px!important':'font-size:12px!important',
-              'font-size:11px!important':'font-size:12px!important',
-              'font-size:12px!important':'font-size:13px!important',
-              'font-size:13px!important':'font-size:14px!important',
-              'font-size:15px!important':'font-size:16px!important'
+          # One-pass font scaling: small +1 to +1.5 px, medium +1 px.
+          size_map = {
+              '8':'9', '8.5':'9.5', '9':'10', '9.5':'10.5',
+              '10':'11', '10.5':'11.5', '11':'12', '12':'13',
+              '13':'14', '15':'16'
           }
-          for old, new in replacements.items():
-              css = css.replace(old, new)
+          pattern = re.compile(r'font-size:(8(?:\.5)?|9(?:\.5)?|10(?:\.5)?|11|12|13|15)px!important')
+          css = pattern.sub(lambda m: f'font-size:{size_map[m.group(1)]}px!important', css)
 
-          # Explicit option/chip readability, without enlarging large headings.
-          readable = '''\n/* readable product choices */\nbody.kol-customer .ingredient-chip,body.kol-customer .option-line,body.kol-customer .option-chip,body.kol-customer .option-group label{font-size:13px!important;line-height:1.35!important}\nbody.kol-customer .option-group>h3,body.kol-customer .ingredient-removal-heading{font-size:14px!important;font-weight:900!important}\nbody.kol-customer .quantity-row,body.kol-customer .quantity-stepper{font-size:14px!important}\n'''
-          if 'readable product choices' not in css:
-              css = css.replace('/* cart */', readable + '\n/* cart */', 1)
-
+          readable = '''\n/* readable product choices */\nbody.kol-customer .ingredient-chip,body.kol-customer .option-line,body.kol-customer .option-chip,body.kol-customer .option-group label{font-size:13px!important;line-height:1.4!important}\nbody.kol-customer .option-group>h3,body.kol-customer .ingredient-removal-heading{font-size:14px!important;font-weight:900!important}\nbody.kol-customer .quantity-row,body.kol-customer .quantity-stepper{font-size:14px!important}\n'''
+          css = css.replace('/* cart */', readable + '\n/* cart */', 1)
           css_path.write_text(css, encoding='utf-8')
 
           index_path = Path('test/index.html')
           html = index_path.read_text(encoding='utf-8')
           html = html.replace('kol-core.css?v=mobile-v6', 'kol-core.css?v=mobile-v7')
-
-          nav_js = '''\n// When a menu category is chosen from inside product view, close the product first.\ndocument.getElementById("categoryTabs")?.addEventListener("click", (event) => {\n  const tab = event.target.closest("button");\n  if (!tab || !document.body.classList.contains("kol-product-detail-open")) return;\n  document.getElementById("closeProduct")?.click();\n}, true);\n'''
-          if 'When a menu category is chosen from inside product view' not in html:
-              pos = html.rfind('</script>')
-              if pos == -1:
-                  raise SystemExit('script closing tag not found')
-              html = html[:pos] + nav_js + html[pos:]
+          nav_js = '''\n// When a category is chosen while a product is open, close the product and continue to that category.\ndocument.getElementById("categoryTabs")?.addEventListener("click", (event) => {\n  const tab = event.target.closest("button");\n  if (!tab || !document.body.classList.contains("kol-product-detail-open")) return;\n  document.getElementById("closeProduct")?.click();\n}, true);\n'''
+          pos = html.rfind('</script>')
+          if pos == -1:
+              raise SystemExit('script closing tag not found')
+          html = html[:pos] + nav_js + html[pos:]
           index_path.write_text(html, encoding='utf-8')
 
           assert 'mobile-v7' in html
           assert 'product screen keeps category navigation visible' in css
-          assert 'readable product choices' in css
+          assert 'font-size:16px!important' in css
           PY
-      - name: Commit changes
+      - name: Commit repaired changes
         shell: bash
         run: |
           git config user.name 'KOL Deploy Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add test/index.html test/kol-core.css
-          git commit -m 'Restore categories in product view and enlarge small text'
+          git commit -m 'Repair product categories and measured text sizing'
           git push origin HEAD:main
