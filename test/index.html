@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v11"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v12"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -124,8 +124,16 @@
             <div class="tax-note-row"><small id="taxNote">(inkl. mva 0,00 kr)</small><strong hidden id="subtotal">0,00 kr</strong><strong hidden id="tax">0,00 kr</strong></div>
           </div>
         </div>
+        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="2" hidden>
+          <div class="checkout-section-title"><span>2</span><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
+          <div class="checkout-grid">
+            <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
+            <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
+          </div>
+          <p class="contact-privacy-note">Telefonnummeret brukes bare hvis vi må kontakte deg om denne bestillingen.</p>
+        </section>
         <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong><small>Når ønsker du at maten skal være klar?</small></div></div>
+          <div class="checkout-section-title"><span>3</span><div><strong>Velg hentetid</strong><small>Når ønsker du at maten skal være klar?</small></div></div>
           <div class="pickup-choice">
             <div aria-label="Hentetid" class="pickup-options" role="radiogroup">
               <label class="pickup-option"><input checked name="pickupMode" type="radio" value="asap"/><span>Snarest mulig</span></label>
@@ -134,14 +142,6 @@
             <p class="checkout-help" id="pickupHelp"></p>
             <select aria-label="Velg hentetid" hidden id="pickupTime"></select>
           </div>
-        </section>
-        <section aria-label="Kontaktinformasjon" class="checkout-form checkout-contact-card checkout-step-card checkout-step-panel" id="checkoutContactSection" data-checkout-step="2" hidden>
-          <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Kontroller at opplysningene stemmer</small></div></div>
-          <div class="checkout-grid">
-            <label class="wide">Hele navn<input autocapitalize="words" autocomplete="name" id="customerFullName" maxlength="60" minlength="2" placeholder="For- og etternavn" required spellcheck="false" type="text"/></label>
-            <label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>
-          </div>
-          <p class="contact-privacy-note">Telefonnummeret brukes bare hvis vi må kontakte deg om denne bestillingen.</p>
         </section>
         <div class="order-status-box" hidden id="orderStatusBox"></div>
         <section class="recent-orders" hidden id="recentOrders"></section>
@@ -1331,7 +1331,7 @@ function updateCheckoutButtonState() {
   syncCheckoutStepVisibility();
   const steps = {
     1: { label: "Neste", hint: "Kontroller varene og sluttsummen" },
-    2: { label: "Send bestilling", hint: "Velg hentetid og kontroller kontaktinformasjonen" }
+    2: { label: "Send bestilling", hint: "Kontroller navn og telefon, velg deretter hentetid" }
   };
   const current = steps[checkoutStep] || steps[1];
   checkoutButton.textContent = current.label;
