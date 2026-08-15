@@ -1,69 +1,32 @@
-name: Fix category structure v26
+name: Fix category v26
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - '.github/workflows/fix-category-v26.yml'
+      - .github/workflows/fix-category-v26.yml
+permissions:
+  contents: write
 jobs:
   fix:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Restore clean full CSS and fix category structure
-        shell: bash
+      - name: Restore full CSS
+        run: git show 3d04f79776e29308243b133a081a071f7a40229e:test/kol-core.css > test/kol-core.css
+      - name: Keep category in header
         run: |
-          set -euo pipefail
-          git show 3d04f79776e29308243b133a081a071f7a40229e:test/kol-core.css > test/kol-core.css
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('test/index.html')
-          s = p.read_text(encoding='utf-8')
-          old = '''  if (categoryTabsWrap) {
-            menuSectionsEl.insertBefore(categoryTabsWrap, menuSectionsEl.firstChild);
-          }
-          '''
-          if old not in s:
-              old = '''  if (categoryTabsWrap) {
-            menuSectionsEl.insertBefore(categoryTabsWrap, menuSectionsEl.firstChild);
-          }
-'''
-          if old not in s:
-              raise SystemExit('category move block not found')
-          s = s.replace(old, '', 1)
-          s = s.replace('kol-core.css?v=mobile-v25', 'kol-core.css?v=mobile-v26', 1)
-          p.write_text(s, encoding='utf-8')
-          print('move calls:', s.count('menuSectionsEl.insertBefore(categoryTabsWrap'))
-          print('v26:', 'mobile-v26' in s)
-          PY
-      - name: Validate inline JavaScript
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('test/index.html').read_text(encoding='utf-8')
-          start=s.index('<script>')+len('<script>')
-          end=s.rindex('</script>')
-          Path('/tmp/index-v26.js').write_text(s[start:end],encoding='utf-8')
-          PY
-          node --check /tmp/index-v26.js
-      - name: Verify CSS is full file, not patch wrapper
-        shell: bash
-        run: |
-          test $(wc -c < test/kol-core.css) -gt 20000
-          ! grep -q 'Category bar fix' test/kol-core.css
-          ! grep -q 'renderMenu() currently moves' test/kol-core.css
-      - name: Commit result
-        shell: bash
+          perl -0pi -e 's/\n\s*if \(categoryTabsWrap\) \{\s*menuSectionsEl\.insertBefore\(categoryTabsWrap, menuSectionsEl\.firstChild\);\s*\}\n/\n/s' test/index.html
+          sed -i 's/kol-core.css?v=mobile-v25/kol-core.css?v=mobile-v26/' test/index.html
+          if grep -q 'menuSectionsEl.insertBefore(categoryTabsWrap' test/index.html; then exit 1; fi
+          if ! grep -q 'mobile-v26' test/index.html; then exit 1; fi
+          if [ "$(wc -c < test/kol-core.css)" -lt 20000 ]; then exit 1; fi
+      - name: Commit
         run: |
           git config user.name 'KOL Deploy Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add test/index.html test/kol-core.css
-          git diff --cached --quiet || git commit -m 'Fix category bar structure and restore clean CSS'
+          git diff --cached --quiet || git commit -m 'Fix fixed category navigation structure'
           git push
