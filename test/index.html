@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v28"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v29"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -1935,39 +1935,120 @@ function orderPickupText(order = {}) {
 function orderStatusHtml(order = {}, options = {}) {
   const status = order.status || "pending";
   const orderId = String(order.id || "").slice(-7).toUpperCase();
-  const total = formatPrice(order.total || 0);
   const waitingOpen = status === "pending" && isOrderWaitingForOpening(order);
   const deadline = getOrderAcceptDeadline(order);
+  const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
   const countdownText = waitingOpen
     ? `Åpner kl. ${formatClock(order.processableAfter)}`
-    : status === "pending"
-      ? formatCountdown(deadline.getTime() - Date.now())
-      : "";
-  const countdownLabel = waitingOpen ? "Åpner" : "Svar innen";
-  const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
-
-  const message = status === "pending" ? orderShortMessage(order) : "";
+    : expired
+      ? "Litt forsinket"
+      : formatCountdown(deadline.getTime() - Date.now());
   const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
+  const isReady = status === "accepted" && (order.ready === true || readyParts?.label === "Maten er klar");
+  const stage = status === "cancelled" ? "cancelled" : isReady ? "ready" : status === "accepted" ? "accepted" : "pending";
+
+  const statusLabel = waitingOpen
+    ? "Venter til åpning"
+    : stage === "cancelled"
+      ? "Kansellert"
+      : stage === "ready"
+        ? "Klar"
+        : stage === "accepted"
+          ? "Bekreftet"
+          : "Venter";
+
+  const title = waitingOpen
+    ? "Bestillingen er mottatt"
+    : stage === "cancelled"
+      ? "Bestillingen ble kansellert"
+      : stage === "ready"
+        ? "Maten er klar"
+        : stage === "accepted"
+          ? "Bestillingen er bekreftet"
+          : "Venter på bekreftelse";
+
+  const subtitle = waitingOpen
+    ? `Vi åpner kl. ${formatClock(order.processableAfter)}. Bestillingen behandles når restauranten åpner.`
+    : stage === "cancelled"
+      ? "Bestillingen skal ikke hentes."
+      : stage === "ready"
+        ? "Bestillingen er ferdig og kan hentes nå."
+        : stage === "accepted"
+          ? "Kjøkkenet har mottatt bestillingen og har startet tilberedningen."
+          : "Restauranten har mottatt bestillingen. Vi venter på bekreftelse.";
+
+  const progressHtml = stage === "cancelled" ? "" : `
+    <div class="premium-order-progress stage-${stage}" aria-label="Bestillingsforløp">
+      <div class="premium-progress-step received"><i></i><span>Mottatt</span></div>
+      <div class="premium-progress-step confirmed"><i></i><span>Bekreftet</span></div>
+      <div class="premium-progress-step ready"><i></i><span>Klar</span></div>
+    </div>`;
+
+  let infoHtml = "";
+  if (stage === "pending") {
+    infoHtml = `
+      <div class="premium-status-detail waiting ${expired ? "expired" : ""}">
+        <span>${waitingOpen ? "Åpner" : "Svar innen"}</span>
+        <strong data-order-countdown="${escapeAttribute(order.id || "")}">${countdownText}</strong>
+        <small>${waitingOpen ? "Bestillingen behandles automatisk når vi åpner." : "Du trenger ikke gjøre noe. Status oppdateres automatisk."}</small>
+      </div>`;
+  } else if (stage === "accepted") {
+    infoHtml = `
+      <div class="order-ready-clean-card is-counting premium-status-detail accepted">
+        <div class="order-ready-clean-main">
+          <span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span>
+          ${readyParts.value ? `<strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong>` : `<strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>`}
+          ${readyParts.unit ? `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em>` : `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>`}
+        </div>
+        <small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock || "Vi oppdaterer når maten er klar.")}</small>
+      </div>`;
+  } else if (stage === "ready") {
+    infoHtml = `
+      <div class="order-ready-clean-card is-ready premium-status-detail ready">
+        <div class="order-ready-clean-main">
+          <span data-customer-ready-label="${escapeAttribute(order.id || "")}">Maten er klar</span>
+          <strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>
+          <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>
+        </div>
+        <small data-customer-ready-clock="${escapeAttribute(order.id || "")}">Kom og hent bestillingen nå.</small>
+      </div>`;
+  } else {
+    infoHtml = `
+      <div class="order-mini-info single cancelled-message premium-status-detail cancelled">
+        <span>Status</span>
+        <strong>Kansellert av restauranten</strong>
+        <small>Bestillingen skal ikke hentes.</small>
+      </div>`;
+  }
+
   const supportPhone = normalizeSiteSettings(siteSettings).phone || "+47 41 14 53 53";
   const supportPhoneDigits = String(supportPhone).replace(/\D/g, "");
   const supportPhoneHref = supportPhoneDigits ? `tel:${supportPhoneDigits.startsWith("47") ? "+" : "+47"}${supportPhoneDigits}` : `tel:${supportPhone.replace(/\s+/g, "")}`;
   const expiredHelp = expired
-    ? `<p class="order-timeout-help">Det tar litt ekstra tid. Vent litt til, eller ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a>.</p>`
+    ? `<p class="premium-status-support">Det tar litt ekstra tid. Vent litt til, eller ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a>.</p>`
     : "";
+
+  const icon = stage === "cancelled" ? "×" : stage === "pending" ? "•" : "✓";
+
   return `
-    <div class="order-live-status ${status} ${waitingOpen ? "waiting-open" : ""}">
-      <div class="order-status-head">
-        ${status === "accepted" ? "" : `<span class="order-status-pill ${status}">${waitingOpen ? "Venter til åpning" : orderStatusText(status, order)}</span>`}
+    <section class="order-live-status premium-order-status ${status} stage-${stage} ${waitingOpen ? "waiting-open" : ""}">
+      <div class="premium-status-meta">
+        <span class="premium-status-label">${statusLabel}</span>
         <small>Ordre ${orderId}</small>
       </div>
-      <h3>${waitingOpen ? "Bestillingen er mottatt" : orderStatusTitle(status, order)}</h3>
-      ${message ? `<p>${message}</p>` : ""}
-      ${status === "pending" ? `<div class="order-countdown-box ${expired ? "expired" : ""}"><span>${countdownLabel}</span><strong data-order-countdown="${escapeAttribute(order.id || "")}">${expired ? "Litt forsinket" : countdownText}</strong></div>${expiredHelp}` : ""}
-      ${status === "accepted" ? `<div class="order-ready-clean-card ${order.ready === true || readyParts.label === "Maten er klar" ? "is-ready" : "is-counting"}"><div class="order-ready-clean-main"><span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span>${readyParts.value ? `<strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong>` : `<strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>`}${readyParts.unit ? `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em>` : `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>`}</div><small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock)}</small></div>` : ""}
-      ${status === "cancelled" ? `<div class="order-mini-info single cancelled-message"><span>Status</span><strong>Kansellert av restauranten</strong><small>Bestillingen skal ikke hentes.</small></div>` : ""}
-    </div>
+      ${progressHtml}
+      <div class="premium-status-hero">
+        <span class="premium-status-symbol" aria-hidden="true">${icon}</span>
+        <div>
+          <h3>${title}</h3>
+          <p>${subtitle}</p>
+        </div>
+      </div>
+      ${infoHtml}
+      ${expiredHelp}
+    </section>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
-    ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk ×</button>` : ""}
+    ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk</button>` : ""}
   `;
 }
 
