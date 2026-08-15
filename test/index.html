@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v29"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v30"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -1957,98 +1957,96 @@ function orderStatusHtml(order = {}, options = {}) {
           ? "Bekreftet"
           : "Venter";
 
-  const title = waitingOpen
-    ? "Bestillingen er mottatt"
-    : stage === "cancelled"
-      ? "Bestillingen ble kansellert"
-      : stage === "ready"
-        ? "Maten er klar"
-        : stage === "accepted"
-          ? "Bestillingen er bekreftet"
-          : "Venter på bekreftelse";
-
-  const subtitle = waitingOpen
-    ? `Vi åpner kl. ${formatClock(order.processableAfter)}. Bestillingen behandles når restauranten åpner.`
-    : stage === "cancelled"
-      ? "Bestillingen skal ikke hentes."
-      : stage === "ready"
-        ? "Bestillingen er ferdig og kan hentes nå."
-        : stage === "accepted"
-          ? "Kjøkkenet har mottatt bestillingen og har startet tilberedningen."
-          : "Restauranten har mottatt bestillingen. Vi venter på bekreftelse.";
-
-  const progressHtml = stage === "cancelled" ? "" : `
-    <div class="premium-order-progress stage-${stage}" aria-label="Bestillingsforløp">
-      <div class="premium-progress-step received"><i></i><span>Mottatt</span></div>
-      <div class="premium-progress-step confirmed"><i></i><span>Bekreftet</span></div>
-      <div class="premium-progress-step ready"><i></i><span>Klar</span></div>
+  const progress = stage === "cancelled" ? "" : `
+    <div class="status-v30-progress" aria-label="Bestillingsforløp">
+      <div class="status-v30-progress-step is-done"><i>1</i><span>Mottatt</span></div>
+      <div class="status-v30-progress-line ${stage === "accepted" || stage === "ready" ? "is-done" : ""}"></div>
+      <div class="status-v30-progress-step ${stage === "accepted" || stage === "ready" ? "is-done" : ""}"><i>2</i><span>Bekreftet</span></div>
+      <div class="status-v30-progress-line ${stage === "ready" ? "is-done" : ""}"></div>
+      <div class="status-v30-progress-step ${stage === "ready" ? "is-done" : ""}"><i>3</i><span>Klar</span></div>
     </div>`;
 
-  let infoHtml = "";
+  let body = "";
   if (stage === "pending") {
-    infoHtml = `
-      <div class="premium-status-detail waiting ${expired ? "expired" : ""}">
-        <span>${waitingOpen ? "Åpner" : "Svar innen"}</span>
-        <strong data-order-countdown="${escapeAttribute(order.id || "")}">${countdownText}</strong>
-        <small>${waitingOpen ? "Bestillingen behandles automatisk når vi åpner." : "Du trenger ikke gjøre noe. Status oppdateres automatisk."}</small>
+    body = `
+      <div class="status-v30-main pending">
+        <span class="status-v30-eyebrow">BESTILLINGEN ER MOTTATT</span>
+        <h3>${waitingOpen ? "Vi behandler bestillingen når vi åpner" : "Venter på bekreftelse"}</h3>
+        <p>${waitingOpen ? "Du trenger ikke gjøre noe. Bestillingen sendes videre automatisk når restauranten åpner." : "Restauranten har mottatt bestillingen. Du trenger ikke gjøre noe mens vi bekrefter den."}</p>
+        <div class="status-v30-timer pending">
+          <span>${waitingOpen ? "ÅPNER" : "SVAR INNEN"}</span>
+          <strong data-order-countdown="${escapeAttribute(order.id || "")}">${countdownText}</strong>
+          <small>${waitingOpen ? "Bestillingen behandles ved åpning." : "Status oppdateres automatisk på denne siden."}</small>
+        </div>
       </div>`;
   } else if (stage === "accepted") {
-    infoHtml = `
-      <div class="order-ready-clean-card is-counting premium-status-detail accepted">
-        <div class="order-ready-clean-main">
-          <span data-customer-ready-label="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.label)}</span>
-          ${readyParts.value ? `<strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.value)}</strong>` : `<strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>`}
-          ${readyParts.unit ? `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.unit)}</em>` : `<em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>`}
+    const value = readyParts?.value || "";
+    const unit = readyParts?.unit || "";
+    const clock = readyParts?.clock || "";
+    body = `
+      <div class="status-v30-main accepted">
+        <span class="status-v30-eyebrow">BESTILLINGEN TILBEREDES</span>
+        <h3>Kjøkkenet har startet på maten din</h3>
+        <p>Restauranten har satt en forventet hentetid. Gjenstående tid teller ned automatisk.</p>
+        <div class="status-v30-countdown-hero">
+          <span class="status-v30-countdown-label" data-customer-ready-label="${escapeAttribute(order.id || "")}">GJENSTÅR</span>
+          <div class="status-v30-countdown-value">
+            <strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong>
+            <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em>
+          </div>
+          <small>til forventet hentetid</small>
         </div>
-        <small data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(readyParts.clock || "Vi oppdaterer når maten er klar.")}</small>
+        <div class="status-v30-pickup-time">
+          <span>FORVENTET HENTETID</span>
+          <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(clock)}</strong>
+          <small>Tiden er satt av restauranten og kan justeres dersom det blir ekstra travelt.</small>
+        </div>
       </div>`;
   } else if (stage === "ready") {
-    infoHtml = `
-      <div class="order-ready-clean-card is-ready premium-status-detail ready">
-        <div class="order-ready-clean-main">
-          <span data-customer-ready-label="${escapeAttribute(order.id || "")}">Maten er klar</span>
-          <strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>
-          <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>
+    body = `
+      <div class="status-v30-main ready">
+        <span class="status-v30-eyebrow">KLAR FOR HENTING</span>
+        <h3>Maten din er klar</h3>
+        <p>Bestillingen er ferdig. Du kan komme og hente den nå.</p>
+        <div class="status-v30-ready-banner">
+          <strong>Kom og hent nå</strong>
+          <small>Vis gjerne ordrenummeret ved henting.</small>
         </div>
-        <small data-customer-ready-clock="${escapeAttribute(order.id || "")}">Kom og hent bestillingen nå.</small>
+        <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>Maten er klar</span>
+        <strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>
+        <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>
+        <small data-customer-ready-clock="${escapeAttribute(order.id || "")}" hidden></small>
       </div>`;
   } else {
-    infoHtml = `
-      <div class="order-mini-info single cancelled-message premium-status-detail cancelled">
-        <span>Status</span>
-        <strong>Kansellert av restauranten</strong>
-        <small>Bestillingen skal ikke hentes.</small>
+    body = `
+      <div class="status-v30-main cancelled">
+        <span class="status-v30-eyebrow">BESTILLINGEN ER AVSLUTTET</span>
+        <h3>Bestillingen ble kansellert</h3>
+        <p>Restauranten har kansellert bestillingen.</p>
+        <div class="status-v30-cancel-banner">
+          <strong>Ikke hent bestillingen</strong>
+          <small>Ta kontakt med restauranten dersom du har spørsmål.</small>
+        </div>
       </div>`;
   }
 
   const supportPhone = normalizeSiteSettings(siteSettings).phone || "+47 41 14 53 53";
   const supportPhoneDigits = String(supportPhone).replace(/\D/g, "");
   const supportPhoneHref = supportPhoneDigits ? `tel:${supportPhoneDigits.startsWith("47") ? "+" : "+47"}${supportPhoneDigits}` : `tel:${supportPhone.replace(/\s+/g, "")}`;
-  const expiredHelp = expired
-    ? `<p class="premium-status-support">Det tar litt ekstra tid. Vent litt til, eller ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a>.</p>`
-    : "";
-
-  const icon = stage === "cancelled" ? "×" : stage === "pending" ? "•" : "✓";
+  const expiredHelp = expired ? `<p class="status-v30-support">Det tar litt ekstra tid. Vent litt til, eller ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a>.</p>` : "";
 
   return `
-    <section class="order-live-status premium-order-status ${status} stage-${stage} ${waitingOpen ? "waiting-open" : ""}">
-      <div class="premium-status-meta">
-        <span class="premium-status-label">${statusLabel}</span>
-        <small>Ordre ${orderId}</small>
+    <section class="order-live-status status-v30 stage-${stage} ${waitingOpen ? "waiting-open" : ""}">
+      <div class="status-v30-meta">
+        <span class="status-v30-badge">${statusLabel}</span>
+        <small>Ordre <b>${orderId}</b></small>
       </div>
-      ${progressHtml}
-      <div class="premium-status-hero">
-        <span class="premium-status-symbol" aria-hidden="true">${icon}</span>
-        <div>
-          <h3>${title}</h3>
-          <p>${subtitle}</p>
-        </div>
-      </div>
-      ${infoHtml}
+      ${progress}
+      ${body}
       ${expiredHelp}
     </section>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
-    ${options.showCloseButton ? `<button class="order-live-close-inline" type="button" data-close-order-live>Lukk</button>` : ""}
+    ${options.showCloseButton ? `<button class="order-live-close-inline status-v30-close" type="button" data-close-order-live>Lukk</button>` : ""}
   `;
 }
 
