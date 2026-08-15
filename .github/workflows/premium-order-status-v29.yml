@@ -18,7 +18,19 @@ jobs:
         with:
           node-version: '22'
       - name: Apply premium status redesign
-        run: python .github/scripts/premium_status_v29.py
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/premium_status_v29.py')
+          s = p.read_text(encoding='utf-8')
+          old = "index, count = re.subn(pattern, new_func + '\\n\\nfunction renderOrderStatus(order) {', index, count=1, flags=re.S)"
+          new = "index, count = re.subn(pattern, lambda _m: new_func + '\\n\\nfunction renderOrderStatus(order) {', index, count=1, flags=re.S)"
+          if old not in s:
+              raise SystemExit('regex replacement line not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+          python .github/scripts/premium_status_v29.py
       - name: Validate JavaScript and premium markup
         shell: bash
         run: |
