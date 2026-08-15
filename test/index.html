@@ -672,7 +672,7 @@ function prefillCustomerInfo() {
   if (customerFullName && !customerFullName.value) customerFullName.value = savedName;
   if (customerPhone && !customerPhone.value) customerPhone.value = savedPhone;
   customerFullName?.classList.toggle("input-valid", normalizeFullName(customerFullName?.value || "").trim().length >= 2);
-  customerPhone?.classList.toggle("input-valid", /^\\d{8}$/.test(normalizePhoneDigits(customerPhone?.value || "")));
+  customerPhone?.classList.toggle("input-valid", /^\d{8}$/.test(normalizePhoneDigits(customerPhone?.value || "")));
   syncProfileAvailability();
 }
 
@@ -4648,7 +4648,7 @@ if (customerPhone) {
   customerPhone.addEventListener("input", () => {
     const clean = normalizePhoneDigits(customerPhone.value).slice(0, 8);
     if (customerPhone.value !== clean) customerPhone.value = clean;
-    const valid = /^\\d{8}$/.test(clean);
+    const valid = /^\d{8}$/.test(clean);
     customerPhone.classList.remove("input-error");
     customerPhone.classList.toggle("input-valid", valid);
     try { customerPhone.setCustomValidity(""); } catch (error) {}
