@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v26"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v27"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -56,11 +56,6 @@
       <div class="product-photo-title-wrap"><div class="product-photo-title-chip"><h2 id="productPhotoTitle"></h2></div></div>
       <div class="product-body">
         <p class="product-summary" id="productSummary"></p>
-        <section aria-labelledby="ingredientRemovalTitle" class="ingredient-removal" hidden id="ingredientRemoval">
-          <div class="ingredient-removal-heading"><h3 id="ingredientRemovalTitle">Ingredienser</h3><span>Trykk for å fjerne</span></div>
-          <div class="ingredient-chips" id="ingredientChips"></div>
-          <p class="ingredient-removal-help" hidden id="ingredientRemovalHelp">Trykk på en fjernet ingrediens for å legge den tilbake.</p>
-        </section>
         <div id="optionGroups"></div>
         <label class="note-label" for="specialInstructions">Spesielle instrukser</label>
         <textarea id="specialInstructions" placeholder="Eksempel: Ingen paprika/sukker/salt." rows="2"></textarea>
@@ -266,9 +261,6 @@ const checkoutContactSection = document.querySelector("#checkoutContactSection")
 const productModal = document.querySelector("#productModal");
 const productTitle = document.querySelector("#productTitle");
 const productSummary = document.querySelector("#productSummary");
-const ingredientRemoval = document.querySelector("#ingredientRemoval");
-const ingredientChips = document.querySelector("#ingredientChips");
-const ingredientRemovalHelp = document.querySelector("#ingredientRemovalHelp");
 const optionGroups = document.querySelector("#optionGroups");
 const specialInstructions = document.querySelector("#specialInstructions");
 const productQuantity = document.querySelector("#productQuantity");
@@ -478,7 +470,6 @@ let selectedProduct = null;
 let selectedSection = null;
 let selectedSize = "large";
 let selectedExtras = new Set();
-let selectedRemovedIngredients = new Set();
 let quantity = 1;
 let editingCartIndex = null;
 let addingToCart = false;
@@ -1678,7 +1669,6 @@ function addRescueDealToCart(dealId = "") {
       extras: [],
       extraDetails: [{ label: `Redde maten: -${discount}%`, priceText: "" }],
       extraIds: [],
-      removedIngredients: [],
       basePrice: unitPrice,
       defaultBasePrice: safeNumber(deal.originalPrice, unitPrice),
       sizePrice: 0,
@@ -1757,10 +1747,9 @@ function buildOrderPayload() {
       quantity: line.quantity,
       size: line.size,
       sizeLabel: line.sizeLabel,
-      extras: line.extras || [],
-      extraDetails: line.extraDetails || [],
+      extras: (line.extras || []).filter((item) => !String(item || "").startsWith("Uten:")),
+      extraDetails: (line.extraDetails || []).filter((item) => !String(item?.label || "").startsWith("Uten:")),
       extraIds: line.extraIds || [],
-      removedIngredients: line.removedIngredients || [],
 
       // Pris-deling per varelinje.
       basePrice: safeNumber(line.basePrice),
@@ -3367,88 +3356,6 @@ function getCurrentTotal() {
   return getCurrentUnitPrice() * quantity;
 }
 
-function parseIngredientNames(product = selectedProduct) {
-  const raw = safeText(product?.ingredients || "")
-    .replace(/\s*Allergener\s*:.*$/i, "")
-    .replace(/\.\s*Serveres med\s+/gi, ", ")
-    .replace(/\s+og\s+/gi, ", ")
-    .trim();
-  if (!raw || /du velger|legg til de ingrediensene|calzone er/i.test(raw)) return [];
-
-  const parts = raw
-    .split(",")
-    .flatMap((part) => {
-      const clean = part.trim().replace(/[.!]+$/g, "");
-      if (!clean) return [];
-      const medParts = clean.split(/\s+med\s+/i);
-      return medParts.length === 2 ? medParts : [clean];
-    })
-    .map((part) => part
-      .replace(/^(?:serveres\s+med|med)\s+/i, "")
-      .replace(/^crispy\s+salat$/i, "Salat")
-      .replace(/^frisk\s+salat(?:mix)?$/i, "Salat")
-      .replace(/^pommes(?:\s+frites)?$/i, "Pommes frites")
-      .trim())
-    .filter((part) => part.length > 1 && part.length <= 42 && !/^(?:allergener|vegetar|halal)$/i.test(part));
-
-  const unique = Array.from(new Map(parts.map((part) => [part.toLocaleLowerCase("nb-NO"), part])).values());
-  return unique.length >= 2 && unique.length <= 12 ? unique : [];
-}
-
-function defaultIngredientIsRemovable(name, product = selectedProduct) {
-  const isKebabDish = String(product?.type || "").startsWith("kebab-") || String(product?.id || "").includes("kebabtallerken");
-  if (isKebabDish && /(?:döner|doner|kebab|kylling).*kjøtt|kjøtt/i.test(name)) return false;
-  return true;
-}
-
-function getProductIngredientTags(product = selectedProduct) {
-  const hasSavedIngredientSetup = product?.ingredientTagsConfigured === true
-    || Array.isArray(product?.ingredientTags);
-  const source = hasSavedIngredientSetup
-    ? (Array.isArray(product?.ingredientTags) ? product.ingredientTags : [])
-    : parseIngredientNames(product).map((name) => ({ name, removable: defaultIngredientIsRemovable(name, product) }));
-  const unique = new Map();
-  source.forEach((tag) => {
-    const name = safeText(typeof tag === "string" ? tag : tag?.name).trim();
-    if (!name) return;
-    unique.set(name.toLocaleLowerCase("nb-NO"), {
-      name,
-      removable: typeof tag === "object" && tag !== null && Object.prototype.hasOwnProperty.call(tag, "removable")
-        ? tag.removable !== false
-        : defaultIngredientIsRemovable(name, product)
-    });
-  });
-  return [...unique.values()];
-}
-
-function renderIngredientRemoval() {
-  const ingredientTags = getProductIngredientTags();
-  const ingredients = ingredientTags.map((tag) => tag.name);
-  const removableIngredients = ingredientTags.filter((tag) => tag.removable).map((tag) => tag.name);
-  if (!ingredientRemoval || !ingredientChips) return;
-  ingredientRemoval.hidden = ingredients.length === 0;
-  if (!ingredients.length) {
-    ingredientChips.innerHTML = "";
-    return;
-  }
-
-  selectedRemovedIngredients = new Set(
-    [...selectedRemovedIngredients].filter((name) => removableIngredients.includes(name))
-  );
-  ingredientChips.innerHTML = ingredientTags.map(({ name, removable }) => {
-    const removed = selectedRemovedIngredients.has(name);
-    const actionLabel = removable ? (removed ? `Legg tilbake ${name}` : `Fjern ${name}`) : `${name} kan ikke fjernes`;
-    return `
-      <button class="ingredient-chip ${removable ? (removed ? "removed" : "included") : "locked"}" type="button"
-        data-ingredient="${escapeAttribute(name)}" aria-pressed="${removed ? "true" : "false"}"
-        data-removable="${removable ? "true" : "false"}" aria-label="${escapeAttribute(actionLabel)}" ${removable ? "" : "disabled"}>
-        <span aria-hidden="true">${removable ? (removed ? "+" : "✓") : "−"}</span>${escapeAttribute(name)}
-      </button>
-    `;
-  }).join("");
-  if (ingredientRemovalHelp) ingredientRemovalHelp.hidden = selectedRemovedIngredients.size === 0;
-}
-
 function getCartLinePriceParts(selectedExtraLines = []) {
   const basePrice = getBasePrice(selectedProduct, selectedSize);
   const defaultSizeId = getDefaultProductSizeId(selectedProduct);
@@ -3505,14 +3412,6 @@ function buildCartLine() {
       priceText: formatCartAddonPrice(price)
     });
   });
-  const removedIngredients = [...selectedRemovedIngredients];
-  if (removedIngredients.length) {
-    extraDetails.push({
-      label: `Uten: ${removedIngredients.join(", ")}`,
-      price: 0,
-      priceText: ""
-    });
-  }
   return {
     id: editingCartIndex === null ? `${selectedProduct.id}-${Date.now()}` : cart[editingCartIndex].id,
     productId: selectedProduct.id,
@@ -3526,10 +3425,9 @@ function buildCartLine() {
       option.choiceGroup || option.group === "Velg saus" || option.group === "Tillegg" || selectedProduct.type === "kebab-pita"
         ? option.label
         : option.group
-    ).concat(removedIngredients.length ? [`Uten: ${removedIngredients.join(", ")}`] : []),
+    ),
     extraDetails,
     extraIds: selectedExtraLines.map((option) => option.id),
-    removedIngredients,
     quantity,
 
     // Pris-deling lagres for kvittering, admin, statistikk og fremtidig analyse.
@@ -3555,9 +3453,6 @@ function getCartLineConfigurationKey(line = {}) {
     rescueDealId: String(line.rescueDealId || ""),
     size: String(line.size || ""),
     extraIds,
-    removedIngredients: Array.isArray(line.removedIngredients)
-      ? line.removedIngredients.map((name) => String(name || "")).filter(Boolean).sort()
-      : [],
     note: String(line.note || "").trim()
   });
 }
@@ -4189,8 +4084,6 @@ function renderProductModal() {
   const productPhotoTitle = document.querySelector("#productPhotoTitle");
   if (productPhotoTitle) productPhotoTitle.textContent = finalProductTitle;
   productSummary.textContent = selectedProduct.ingredients || "";
-  renderIngredientRemoval();
-  productModal.classList.toggle("has-ingredient-removal", Boolean(ingredientRemoval && !ingredientRemoval.hidden));
   productQuantity.textContent = quantity;
   // Nye produkter starter på 1. En vare som redigeres kan settes til 0,
   // men endringen utføres først når kunden trykker Oppdater.
@@ -4240,7 +4133,6 @@ function openProduct(id, sectionId = "") {
   editingCartIndex = null;
   selectedSize = getDefaultProductSizeId(selectedProduct);
   selectedExtras = new Set();
-  selectedRemovedIngredients = new Set();
   applyDefaultOptionSelections();
   if (!getProductOptionGroups().length && isKebabCustomItem(selectedProduct)) selectedExtras.add("strength-mild");
   quantity = 1;
@@ -4269,7 +4161,6 @@ function openCartLineEditor(index) {
   editingCartIndex = index;
   selectedSize = line.size || getDefaultProductSizeId(selectedProduct);
   selectedExtras = new Set(line.extraIds || []);
-  selectedRemovedIngredients = new Set(line.removedIngredients || []);
   applyDefaultOptionSelections();
   if (!getProductOptionGroups().length && isKebabCustomItem(selectedProduct) && ![...selectedExtras].some((id) => id.startsWith("strength-"))) {
     selectedExtras.add("strength-mild");
@@ -4680,15 +4571,6 @@ document.addEventListener("click", (event) => {
   showClosedOrderingMessage();
 }, true);
 
-ingredientChips?.addEventListener("click", (event) => {
-  const chip = event.target.closest?.("[data-ingredient]");
-  if (!chip || chip.dataset.removable === "false" || chip.disabled) return;
-  const ingredient = chip.dataset.ingredient || "";
-  if (!ingredient) return;
-  if (selectedRemovedIngredients.has(ingredient)) selectedRemovedIngredients.delete(ingredient);
-  else selectedRemovedIngredients.add(ingredient);
-  renderIngredientRemoval();
-});
 
 optionGroups.addEventListener("change", (event) => {
   if (event.target.name === "size") {

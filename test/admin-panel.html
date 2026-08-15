@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>Admin - KØL Grill &amp; Pizza</title>
-<link href="kol-core.css" rel="stylesheet"/>
+<link href="kol-core.css?v=mobile-v27" rel="stylesheet"/>
 
 </head>
 <body class="kol-admin">
@@ -49,17 +49,6 @@
 <label class="wide product-description-field">Beskrivelse / ingredienser
                 <textarea id="productIngredients" maxlength="300" placeholder="F.eks. skinke, ost, paprika og løk" rows="3"></textarea>
 </label>
-<details class="product-more wide" id="productIngredientSettings">
-<summary><strong>Ingredienser kunden kan fjerne</strong></summary>
-<div class="product-more-panel product-ingredient-admin-panel">
-<p>Velg hvilke ingredienser kunden får lov til å fjerne. Hovedingrediensen kan låses.</p>
-<div class="product-ingredient-tag-list" id="productIngredientTagList"></div>
-<div class="product-ingredient-actions">
-<button id="syncProductIngredients" type="button">Hent fra beskrivelsen</button>
-<button id="addProductIngredient" type="button">Legg til ingrediens</button>
-</div>
-</div>
-</details>
 <section aria-label="Størrelser og priser" class="product-prices wide">
 <div class="mini-heading">
 <h3>Størrelser og priser</h3>
@@ -929,12 +918,6 @@
     if (typeof previous.imageUrl === "string" && previous.imageUrl.trim()) {
       merged.imageUrl = previous.imageUrl.trim();
     }
-    if (Array.isArray(previous.ingredientTags)) {
-      merged.ingredientTags = clone(previous.ingredientTags);
-    }
-    if (previous.ingredientTagsConfigured === true || Array.isArray(previous.ingredientTags)) {
-      merged.ingredientTagsConfigured = true;
-    }
     if (newItem.id !== "cheese-burger-tallerken" && newItem.id !== "vegetarburger" && newItem.id !== "vegetar-pizza" && previous.allergens) {
       merged.allergens = previous.allergens;
     }
@@ -1044,9 +1027,6 @@ const rescueFields = {
 
 const productPriceRows = document.querySelector("#productPriceRows");
 const addProductPriceButton = document.querySelector("#addProductPrice");
-const productIngredientTagList = document.querySelector("#productIngredientTagList");
-const syncProductIngredientsButton = document.querySelector("#syncProductIngredients");
-const addProductIngredientButton = document.querySelector("#addProductIngredient");
 const siteSettingFields = document.querySelectorAll("[data-setting-field]");
 const customerThemeChoices = document.querySelectorAll("[data-customer-theme]");
 const activeThemeName = document.querySelector("#activeThemeName");
@@ -1124,7 +1104,6 @@ let draggedProductIndex = null;
 let draggedGroupId = null;
 let draggedGroupIndex = null;
 let pendingScrollToProduct = false;
-let productIngredientDraft = [];
 let saveTimer = null;
 
 // Keep the compact product editor as a true accordion: opening one section
@@ -2316,72 +2295,9 @@ function applyPriceCompatibility(productData, prices) {
   return productData;
 }
 
-function parseIngredientNamesForAdmin(description = "") {
-  const raw = safeAdminText(description)
-    .replace(/\s*Allergener\s*:.*$/i, "")
-    .replace(/\.\s*Serveres med\s+/gi, ", ")
-    .replace(/\s+og\s+/gi, ", ")
-    .trim();
-  if (!raw || /du velger|legg til de ingrediensene|calzone er/i.test(raw)) return [];
 
-  const names = raw
-    .split(",")
-    .flatMap((part) => {
-      const clean = part.trim().replace(/[.!]+$/g, "");
-      if (!clean) return [];
-      const medParts = clean.split(/\s+med\s+/i);
-      return medParts.length === 2 ? medParts : [clean];
-    })
-    .map((part) => part
-      .replace(/^(?:serveres\s+med|med)\s+/i, "")
-      .replace(/^crispy\s+salat$/i, "Salat")
-      .replace(/^frisk\s+salat(?:mix)?$/i, "Salat")
-      .replace(/^pommes(?:\s+frites)?$/i, "Pommes frites")
-      .trim())
-    .filter((part) => part.length > 1 && part.length <= 42 && !/^(?:allergener|vegetar|halal)$/i.test(part));
 
-  return Array.from(new Map(names.map((name) => [name.toLocaleLowerCase("nb-NO"), name])).values());
-}
 
-function defaultIngredientCanBeRemoved(name, product = selectedProduct()) {
-  const isKebabDish = String(product?.type || "").startsWith("kebab-") || String(product?.id || "").includes("kebabtallerken");
-  if (isKebabDish && /(?:döner|doner|kebab|kylling).*kjøtt|kjøtt/i.test(name)) return false;
-  return true;
-}
-
-function normalizeProductIngredientTags(tags, product = selectedProduct()) {
-  const unique = new Map();
-  (Array.isArray(tags) ? tags : []).forEach((tag) => {
-    const name = safeAdminText(typeof tag === "string" ? tag : tag?.name).trim();
-    if (!name) return;
-    unique.set(name.toLocaleLowerCase("nb-NO"), {
-      name,
-      removable: typeof tag === "object" && tag !== null && Object.prototype.hasOwnProperty.call(tag, "removable")
-        ? tag.removable !== false
-        : defaultIngredientCanBeRemoved(name, product)
-    });
-  });
-  return [...unique.values()];
-}
-
-function ingredientTagsFromDescription(product = selectedProduct()) {
-  return normalizeProductIngredientTags(parseIngredientNamesForAdmin(fields.productIngredients?.value || product?.ingredients || ""), product);
-}
-
-function renderProductIngredientTags() {
-  if (!productIngredientTagList) return;
-  if (!productIngredientDraft.length) {
-    productIngredientTagList.innerHTML = '<p class="product-ingredient-empty">Ingen ingredienser. Hent dem fra beskrivelsen eller legg til manuelt.</p>';
-    return;
-  }
-  productIngredientTagList.innerHTML = productIngredientDraft.map((tag, index) => `
-    <div class="product-ingredient-admin-row" data-product-ingredient-row="${index}">
-      <input type="text" value="${escapeHtml(tag.name)}" maxlength="42" data-product-ingredient-name="${index}" aria-label="Ingrediensnavn">
-      <label><input type="checkbox" data-product-ingredient-removable="${index}" ${tag.removable !== false ? "checked" : ""}> Kan fjernes</label>
-      <button type="button" data-remove-product-ingredient="${index}" aria-label="Fjern ingrediens">×</button>
-    </div>
-  `).join("");
-}
 
 
 function adminRescueDateKey(date = new Date()) {
@@ -2556,8 +2472,6 @@ function renderProductEditor() {
   renderRescueEditor(product, selectedCategory());
   if (!product) {
     productForm.reset();
-    productIngredientDraft = [];
-    renderProductIngredientTags();
     if (productStatusFields.hidden) productStatusFields.hidden.checked = false;
     if (productStatusFields.soldOut) productStatusFields.soldOut.checked = false;
     if (productStatusFields.soldOutUntil) productStatusFields.soldOutUntil.value = "";
@@ -2576,15 +2490,6 @@ function renderProductEditor() {
   fields.productDisplayPrice.value = product.displayPrice ?? "";
   fields.productImageUrl.value = product.imageUrl || "";
   fields.productIngredients.value = product.ingredients || "";
-  const hasSavedIngredientSetup = product.ingredientTagsConfigured === true
-    || Array.isArray(product.ingredientTags);
-  productIngredientDraft = normalizeProductIngredientTags(
-    hasSavedIngredientSetup
-      ? asArray(product.ingredientTags)
-      : parseIngredientNamesForAdmin(product.ingredients || ""),
-    product
-  );
-  renderProductIngredientTags();
   if (fields.productAllergens) fields.productAllergens.value = product.allergens || "";
   if (productStatusFields.hidden) productStatusFields.hidden.checked = product.hidden === true;
   if (productStatusFields.soldOut) productStatusFields.soldOut.checked = product.soldOut === true;
@@ -4503,10 +4408,6 @@ function updateProductFromFields() {
     thumb: currentProduct.thumb,
     imageUrl: fields.productImageUrl.value.trim(),
     ingredients: fields.productIngredients.value.trim(),
-    ingredientTags: normalizeProductIngredientTags(productIngredientDraft, currentProduct),
-    // Firebase kan fjerne en tom array ved lagring. Dette flagget skiller
-    // "bevisst ingen ingredienser" fra eldre produkter uten oppsett.
-    ingredientTagsConfigured: true,
     allergens: fields.productAllergens?.value.trim() || undefined,
     hidden: productStatusFields.hidden?.checked === true,
     soldOut: productStatusFields.soldOut?.checked === true,
@@ -5736,47 +5637,6 @@ if (addProductPriceButton) {
     setStatus("Ny pris lagt til. Klikk Oppdater produkt for å lagre.");
   });
 }
-
-if (syncProductIngredientsButton) {
-  syncProductIngredientsButton.addEventListener("click", () => {
-    const previous = new Map(productIngredientDraft.map((tag) => [tag.name.toLocaleLowerCase("nb-NO"), tag]));
-    productIngredientDraft = ingredientTagsFromDescription().map((tag) => {
-      const old = previous.get(tag.name.toLocaleLowerCase("nb-NO"));
-      return old ? { ...tag, removable: old.removable !== false } : tag;
-    });
-    renderProductIngredientTags();
-    setStatus("Ingrediensene er hentet fra beskrivelsen. Klikk Lagre.");
-  });
-}
-
-if (addProductIngredientButton) {
-  addProductIngredientButton.addEventListener("click", () => {
-    productIngredientDraft.push({ name: "Ny ingrediens", removable: true });
-    renderProductIngredientTags();
-    productIngredientTagList?.querySelector(`[data-product-ingredient-name="${productIngredientDraft.length - 1}"]`)?.focus();
-  });
-}
-
-productIngredientTagList?.addEventListener("input", (event) => {
-  const nameIndex = event.target.dataset.productIngredientName;
-  if (nameIndex !== undefined && productIngredientDraft[Number(nameIndex)]) {
-    productIngredientDraft[Number(nameIndex)].name = event.target.value;
-  }
-});
-
-productIngredientTagList?.addEventListener("change", (event) => {
-  const index = event.target.dataset.productIngredientRemovable;
-  if (index === undefined || !productIngredientDraft[Number(index)]) return;
-  productIngredientDraft[Number(index)].removable = event.target.checked;
-});
-
-productIngredientTagList?.addEventListener("click", (event) => {
-  const index = event.target.dataset.removeProductIngredient;
-  if (index === undefined) return;
-  productIngredientDraft.splice(Number(index), 1);
-  renderProductIngredientTags();
-});
-
 
 // Türkçe not: Input'a tıklayınca içindeki yazı seçilir. Böylece silmeden direkt yeni değer yazabilirsin.
 document.addEventListener("focusin", (event) => {
