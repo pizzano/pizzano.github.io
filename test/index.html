@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v25"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v26"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -4061,10 +4061,6 @@ function renderMenu() {
       `;
     })
     .join("");
-
-  if (categoryTabsWrap) {
-    menuSectionsEl.insertBefore(categoryTabsWrap, menuSectionsEl.firstChild);
-  }
 
   applyFavoritesView();
   requestCategoryScrollSync();
