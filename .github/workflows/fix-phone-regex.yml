@@ -1,0 +1,42 @@
+name: Fix phone regex
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-phone-regex.yml
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fix regex
+        shell: bash
+        run: |
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnAgPSBQYXRoKCJ0ZXN0L2luZGV4Lmh0bWwiKQpzID0gcC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKb2xkID0gcicvXlxcZHs4fSQvJwpuZXcgPSByJy9eXGR7OH0kLycKY291bnQgPSBzLmNvdW50KG9sZCkKaWYgY291bnQgIT0gMjoKICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJFeHBlY3RlZCAyIGRvdWJsZS1lc2NhcGVkIHBob25lIHJlZ2V4ZXMsIGZvdW5kIHtjb3VudH0iKQpzID0gcy5yZXBsYWNlKG9sZCwgbmV3KQpwLndyaXRlX3RleHQocywgZW5jb2Rpbmc9InV0Zi04IikK' | base64 -d > /tmp/fix.py
+          python /tmp/fix.py
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('test/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', s, flags=re.S|re.I)
+          Path('/tmp/index.js').write_text('\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/index.js
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html
+          git diff --cached --quiet || git commit -m 'Fix phone completion detection'
+          git push
