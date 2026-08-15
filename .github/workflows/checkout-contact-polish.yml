@@ -1,0 +1,162 @@
+name: Checkout contact polish
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/checkout-contact-polish.yml
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update checkout text and contact inputs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('test/index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Cache bust.
+          if 'kol-core.css?v=mobile-v27' not in s:
+              raise SystemExit('Expected CSS version not found')
+          s = s.replace('kol-core.css?v=mobile-v27', 'kol-core.css?v=mobile-v28', 1)
+
+          # Add a short professional note below the phone field.
+          old_phone_html = '<label class="wide">Telefonnummer<input autocomplete="tel" id="customerPhone" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="For eksempel 955 57 474" required type="tel"/></label>'
+          new_phone_html = old_phone_html + '\n            <p class="contact-field-help">Telefonnummeret brukes kun for å kontakte deg om bestillingen og hentetiden.</p>'
+          if old_phone_html not in s:
+              raise SystemExit('Customer phone HTML not found')
+          s = s.replace(old_phone_html, new_phone_html, 1)
+
+          # Replace the misleading exact ASAP clock with a realistic preparation-time message.
+          old_pickup = '''  if (openNow) {
+    pickupHelp.textContent = mode === "asap"
+      ? `Klar ca. kl. ${formatClock(firstChoice)}`
+      : `Velg ønsket hentetid.`;
+  } else {
+    pickupHelp.textContent = mode === "asap"
+      ? `Første henting ca. kl. ${formatClock(firstChoice)}`
+      : `Velg ønsket hentetid.`;
+  }'''
+          new_pickup = '''  if (openNow) {
+    pickupHelp.textContent = mode === "asap"
+      ? "Vanligvis klar om ca. 10–15 min. Ved stor pågang kan det ta lenger tid. Vi gir beskjed om forventet hentetid når bestillingen er bekreftet."
+      : "Velg ønsket hentetid. Vi bekrefter tidspunktet sammen med bestillingen.";
+  } else {
+    pickupHelp.textContent = mode === "asap"
+      ? `Første mulige henting er ca. kl. ${formatClock(firstChoice)}. Vi gir beskjed om forventet hentetid når bestillingen er bekreftet.`
+      : "Velg ønsket hentetid. Vi bekrefter tidspunktet sammen med bestillingen.";
+  }'''
+          if old_pickup not in s:
+              raise SystemExit('Pickup text block not found')
+          s = s.replace(old_pickup, new_pickup, 1)
+
+          # Green success state + auto blur when exactly 8 phone digits are entered.
+          old_phone_js = '''if (customerPhone) {
+  customerPhone.addEventListener("input", () => {
+    const clean = normalizePhoneDigits(customerPhone.value).slice(0, 8);
+    if (customerPhone.value !== clean) customerPhone.value = clean;
+    customerPhone.classList.remove("input-error");
+    try { customerPhone.setCustomValidity(""); } catch (error) {}
+    saveCustomerInfo();
+  });
+}'''
+          new_phone_js = '''if (customerPhone) {
+  customerPhone.addEventListener("input", () => {
+    const clean = normalizePhoneDigits(customerPhone.value).slice(0, 8);
+    if (customerPhone.value !== clean) customerPhone.value = clean;
+    const valid = /^\\d{8}$/.test(clean);
+    customerPhone.classList.remove("input-error");
+    customerPhone.classList.toggle("input-valid", valid);
+    try { customerPhone.setCustomValidity(""); } catch (error) {}
+    saveCustomerInfo();
+    if (valid && document.activeElement === customerPhone) customerPhone.blur();
+  });
+}'''
+          if old_phone_js not in s:
+              raise SystemExit('Customer phone JS block not found')
+          s = s.replace(old_phone_js, new_phone_js, 1)
+
+          old_name_js = '''if (customerFullName) {
+  customerFullName.addEventListener("input", () => {
+    const clean = normalizeFullName(customerFullName.value);
+    if (customerFullName.value !== clean) customerFullName.value = clean;
+    customerFullName.classList.remove("input-error");
+    try { customerFullName.setCustomValidity(""); } catch (error) {}
+    saveCustomerInfo();
+  });
+}'''
+          new_name_js = '''if (customerFullName) {
+  customerFullName.addEventListener("input", () => {
+    const clean = normalizeFullName(customerFullName.value);
+    if (customerFullName.value !== clean) customerFullName.value = clean;
+    customerFullName.classList.remove("input-error");
+    customerFullName.classList.toggle("input-valid", clean.trim().length >= 2);
+    try { customerFullName.setCustomValidity(""); } catch (error) {}
+    saveCustomerInfo();
+  });
+}'''
+          if old_name_js not in s:
+              raise SystemExit('Customer name JS block not found')
+          s = s.replace(old_name_js, new_name_js, 1)
+
+          # Make prefilled/saved information green immediately as well.
+          old_prefill = '''  if (customerFullName && !customerFullName.value) customerFullName.value = savedName;
+  if (customerPhone && !customerPhone.value) customerPhone.value = savedPhone;
+  syncProfileAvailability();'''
+          new_prefill = '''  if (customerFullName && !customerFullName.value) customerFullName.value = savedName;
+  if (customerPhone && !customerPhone.value) customerPhone.value = savedPhone;
+  customerFullName?.classList.toggle("input-valid", normalizeFullName(customerFullName?.value || "").trim().length >= 2);
+  customerPhone?.classList.toggle("input-valid", /^\\d{8}$/.test(normalizePhoneDigits(customerPhone?.value || "")));
+  syncProfileAvailability();'''
+          if old_prefill not in s:
+              raise SystemExit('Customer prefill block not found')
+          s = s.replace(old_prefill, new_prefill, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+          # Shared CSS.
+          p = Path('test/kol-core.css')
+          c = p.read_text(encoding='utf-8')
+          anchor = 'body.kol-customer .checkout-grid input,body.kol-customer .checkout-grid select{width:100%!important;min-height:50px!important;margin:0!important;padding:10px 12px!important;border:1px solid #dcd4cf!important;border-radius:5px!important;background:#fff!important;color:var(--text)!important;font-size:15px!important;font-weight:400!important;box-shadow:none!important;outline:none!important}'
+          if anchor not in c:
+              raise SystemExit('Checkout input CSS anchor not found')
+          addition = anchor + '\nbody.kol-customer .checkout-grid input.input-valid{border-color:#61b985!important;background:#fbfffc!important;outline:none!important}\nbody.kol-customer .contact-field-help{margin:-2px 0 0!important;padding:0!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1.4!important}'
+          c = c.replace(anchor, addition, 1)
+          p.write_text(c, encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('test/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', s, flags=re.S|re.I)
+          Path('/tmp/index.js').write_text('\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/index.js
+          grep -q 'Vanligvis klar om ca. 10–15 min' test/index.html
+          grep -q 'class="contact-field-help"' test/index.html
+          grep -q 'classList.toggle("input-valid"' test/index.html
+          grep -q 'customerPhone.blur()' test/index.html
+          grep -q 'input.input-valid' test/kol-core.css
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/kol-core.css
+          git diff --cached --quiet || git commit -m 'Polish pickup and contact checkout'
+          git push
