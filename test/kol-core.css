@@ -1,221 +1,42 @@
-@layer mobile,legacy;
-@import url("https://cdn.jsdelivr.net/gh/pizzano/pizzano.github.io@002212ee5ec86ae0ade29426cdadc846750d2d13/test/kol-core.css") layer(legacy);
+@import url("https://cdn.jsdelivr.net/gh/pizzano/pizzano.github.io@3d04f79776e29308243b133a081a071f7a40229e/test/kol-core.css");
 
-@layer mobile {
-:root{--o:#f36a2d;--bg:#efede9;--surface:#fff;--text:#292522;--muted:#746d68;--line:#e6dfda;--soft:#faf8f6;--green:#188653;--red:#c9433c;--app:480px;--head:76px;--tabs:48px}
-html{min-height:100%;overflow-x:hidden!important;overflow-y:auto!important;background:var(--bg)!important;scroll-behavior:auto!important}
-body.kol-customer{width:min(100%,var(--app))!important;max-width:var(--app)!important;min-width:0!important;height:100dvh!important;min-height:100dvh!important;margin:0 auto!important;overflow:hidden!important;background:var(--surface)!important;color:var(--text)!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important;font-size:14.5px!important;font-weight:400!important;line-height:1.42!important;-webkit-font-smoothing:antialiased!important;text-rendering:optimizeLegibility!important;box-shadow:0 0 20px rgba(25,20,17,.06)!important}
-body.kol-customer *,body.kol-customer *::before,body.kol-customer *::after{box-sizing:border-box!important;animation:none!important;transition:none!important;scroll-behavior:auto!important}
-body.kol-customer [hidden]{display:none!important}
-body.kol-customer button,body.kol-customer input,body.kol-customer select,body.kol-customer textarea{font:inherit!important}
-body.kol-customer strong,body.kol-customer b{font-weight:600!important}
-body.kol-customer h1,body.kol-customer h2,body.kol-customer h3,body.kol-customer p{font-family:inherit!important}
-body.kol-customer button{cursor:pointer!important}
-body.kol-customer .customer-app{width:100%!important;height:100dvh!important;min-height:100dvh!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important}
-body.kol-customer .appbar{position:fixed!important;z-index:5000!important;top:0!important;left:50%!important;right:auto!important;width:min(100vw,480px)!important;max-width:480px!important;height:76px!important;min-height:76px!important;margin:0!important;padding:0!important;display:block!important;overflow:visible!important;border:0!important;background:var(--o)!important;box-shadow:none!important;transform:translateX(-50%)!important}
-body.kol-customer .appbar-main{position:relative!important;width:100%!important;height:76px!important;min-height:76px!important;margin:0!important;padding:0 12px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;background:var(--o)!important}
-body.kol-customer .appbar-brand{z-index:3!important;width:auto!important;min-width:118px!important;height:48px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#fff!important;text-align:left!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .brand-label{display:flex!important;flex-direction:column!important;line-height:1!important}
-body.kol-customer .brand-label b{font-size:28px!important;font-weight:650!important;letter-spacing:-1.1px!important}
-body.kol-customer .brand-label small{margin-top:3px!important;font-size:8px!important;font-weight:500!important;letter-spacing:1.2px!important}
-body.kol-customer .brand-back-label{display:none!important;color:#fff!important;font-size:18px!important;font-weight:600!important;line-height:1!important;white-space:nowrap!important}
-body.kol-customer.kol-top-back-active .brand-label{display:none!important}
-body.kol-customer.kol-top-back-active .brand-back-label{display:inline-flex!important;align-items:center!important;min-height:44px!important}
-body.kol-customer .appbar-context-title{position:absolute!important;left:120px!important;right:112px!important;top:0!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;color:#fff!important;font-size:16px!important;font-weight:550!important;text-align:center!important;text-overflow:ellipsis!important;white-space:nowrap!important;transform:none!important}
-body.kol-customer .appbar-actions{z-index:3!important;display:flex!important;align-items:center!important;gap:6px!important;margin:0!important}
-body.kol-customer .icon-button,body.kol-customer .cart-toggle{position:relative!important;width:43px!important;min-width:43px!important;height:43px!important;margin:0!important;padding:0!important;display:grid!important;place-items:center!important;border:1px solid rgba(255,255,255,.42)!important;border-radius:9px!important;background:transparent!important;color:#fff!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .plain-icon{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.7!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-body.kol-customer #cartCount{position:absolute!important;right:-5px!important;top:-7px!important;min-width:23px!important;height:23px!important;padding:0 5px!important;display:grid!important;place-items:center!important;border:2px solid #fff!important;border-radius:999px!important;background:#17433d!important;color:#fff!important;font-size:11px!important;font-weight:600!important}
-body.kol-customer .profile-order-dot{position:absolute!important;right:6px!important;top:6px!important;width:9px!important;height:9px!important;border:2px solid #fff!important;border-radius:50%!important;background:#17433d!important}
-body.kol-customer.profile-open #profileToggle,body.kol-customer.cart-open .cart-toggle{display:none!important}
-body.kol-customer .category-tabs-wrap{position:fixed!important;z-index:5100!important;top:76px!important;left:50%!important;right:auto!important;width:min(100vw,480px)!important;max-width:480px!important;height:48px!important;min-height:48px!important;margin:0!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;overflow:hidden!important;border:0!important;border-bottom:1px solid var(--line)!important;background:#fff!important;transform:translateX(-50%)!important}
-body.kol-customer .category-tabs-scroll{width:100%!important;height:48px!important;display:flex!important;align-items:stretch!important;gap:0!important;overflow-x:auto!important;overflow-y:hidden!important;padding:0!important;white-space:nowrap!important;scrollbar-width:none!important;-ms-overflow-style:none!important;-webkit-overflow-scrolling:touch!important}
-
-body.kol-customer .category-tabs-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
-body.kol-customer .category-tab,body.kol-customer [data-category-tab]{flex:0 0 auto!important;min-width:max-content!important;height:100%!important;margin:0!important;padding:0 13px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:#fff!important;color:#665f5a!important;font-size:14px!important;font-weight:450!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .category-tab:hover,body.kol-customer [data-category-tab]:hover{background:#fff!important;transform:none!important;box-shadow:none!important}
-body.kol-customer .category-tab.active,body.kol-customer [data-category-tab].active{color:var(--o)!important;border-bottom-color:var(--o)!important;background:#fff!important}
-body.kol-customer:not(.cart-open):not(.profile-open):not(.info-open):not(.order-live-open):not(.settings-open) .category-tabs-wrap[hidden]{display:block!important;visibility:visible!important;opacity:1!important}
-body.kol-customer.cart-open .category-tabs-wrap,body.kol-customer.profile-open .category-tabs-wrap,body.kol-customer.info-open .category-tabs-wrap,body.kol-customer.order-live-open .category-tabs-wrap{display:none!important;visibility:hidden!important}
-body.kol-customer.kol-product-detail-open .category-tabs-wrap{display:block!important}
-
-body.kol-customer .menu-shell{position:fixed!important;z-index:1!important;top:124px!important;bottom:0!important;left:50%!important;right:auto!important;width:min(100vw,480px)!important;max-width:480px!important;min-height:0!important;height:auto!important;margin:0!important;padding:0 0 28px!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;background:#fff!important;transform:translateX(-50%)!important}
-body.kol-customer #menuSections{width:100%!important;max-width:100%!important;margin:0!important;padding:0!important}
-body.kol-customer .menu-app-section{width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;overflow:visible!important}
-body.kol-customer .menu-app-section-head{margin:0!important;padding:16px 12px 9px!important}
-body.kol-customer .menu-app-section-head h2{margin:0!important;font-size:22px!important;line-height:1.18!important;font-weight:550!important;letter-spacing:-.02em!important}
-body.kol-customer .menu-app-section-head p{margin:4px 0 0!important;color:var(--muted)!important;font-size:13.5px!important;font-weight:400!important;line-height:1.4!important}
-body.kol-customer .menu-list{width:100%!important;margin:0!important;padding:0!important;display:grid!important;grid-template-columns:1fr!important;gap:0!important}
-body.kol-customer .menu-row,body.kol-customer .menu-app-product{position:relative!important;width:100%!important;min-width:0!important;min-height:104px!important;height:auto!important;margin:0!important;padding:10px 12px!important;display:grid!important;grid-template-columns:82px minmax(0,1fr) 78px!important;gap:10px!important;align-items:center!important;overflow:hidden!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;color:var(--text)!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .menu-row:hover,body.kol-customer .menu-app-product:hover{background:#fff!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .menu-row>.food-thumb,body.kol-customer .menu-row>[class*="thumb"],body.kol-customer .menu-thumb-wrap,body.kol-customer .menu-thumb-wrap>.food-thumb,body.kol-customer .menu-thumb-wrap>[class*="thumb"]{grid-column:1!important;position:relative!important;width:82px!important;min-width:82px!important;height:84px!important;min-height:84px!important;max-height:84px!important;margin:0!important;overflow:hidden!important;border:0!important;border-radius:7px!important;background-size:cover!important;background-position:center!important;object-fit:cover!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .menu-row-main{grid-column:2!important;position:static!important;min-width:0!important;width:100%!important;margin:0!important;padding:0!important;display:grid!important;gap:4px!important;overflow:hidden!important}
-body.kol-customer .menu-row-headline strong{display:block!important;max-width:100%!important;overflow:hidden!important;font-size:15.5px!important;font-weight:550!important;line-height:1.24!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-body.kol-customer .menu-row-description{display:-webkit-box!important;max-width:100%!important;overflow:hidden!important;color:var(--muted)!important;font-size:13.5px!important;font-weight:400!important;line-height:1.42!important;-webkit-line-clamp:3!important;-webkit-box-orient:vertical!important}
-body.kol-customer .menu-app-product-side,body.kol-customer .rescue-product-side{grid-column:3!important;position:static!important;width:78px!important;min-width:0!important;height:100%!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:space-between!important;gap:6px!important}
-body.kol-customer .menu-card-actions{position:static!important;display:flex!important;gap:5px!important}
-body.kol-customer .menu-favorite,body.kol-customer .menu-app-plus{position:static!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;margin:0!important;padding:0!important;border-radius:8px!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .menu-row-inline-price{position:static!important;max-width:78px!important;margin:auto 0 0!important;font-size:14px!important;font-weight:550!important;line-height:1.2!important;text-align:right!important;white-space:normal!important}
-body.kol-customer .mobile-screen{position:fixed!important;z-index:4200!important;left:50%!important;top:var(--head)!important;bottom:0!important;width:min(100vw,var(--app))!important;max-width:var(--app)!important;height:calc(100dvh - var(--head))!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important;transform:translateX(-50%)!important}
-body.kol-customer .mobile-screen[hidden]{display:none!important}
-body.kol-customer .screen-backdrop{display:none!important}
-body.kol-customer .mobile-screen-panel{position:relative!important;inset:auto!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .product-panel,body.kol-customer .profile-panel,body.kol-customer .order-live-panel,body.kol-customer .cart-panel{display:flex!important;flex-direction:column!important}
-body.kol-customer .mobile-screen-scroll{min-height:0!important;flex:1 1 auto!important;width:100%!important;max-width:100%!important;overflow-y:scroll!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:thin!important;scrollbar-color:#d7cec8 transparent!important}
-body.kol-customer .mobile-screen-scroll::-webkit-scrollbar{width:5px!important}
-body.kol-customer .mobile-screen-scroll::-webkit-scrollbar-thumb{background:#d7cec8!important;border-radius:5px!important}
-body.kol-customer .product-titlebar,body.kol-customer .cart-header,body.kol-customer .profile-header,body.kol-customer .order-live-header{display:none!important}
-body.kol-customer .product-modal.mobile-screen{top:124px!important;height:calc(100dvh - 124px)!important}
-body.kol-customer .product-scroll-content{margin:0!important;padding:0!important;background:#fff!important}
-body.kol-customer .product-photo{width:100%!important;height:200px!important;min-height:200px!important;max-height:200px!important;margin:0!important;border:0!important;border-radius:0!important;background-size:cover!important;background-position:center!important}
-body.kol-customer .product-photo-title-wrap{display:block!important;margin:0!important;padding:14px 12px 10px!important;border-bottom:1px solid var(--line)!important;background:#fff!important}
-body.kol-customer .product-photo-title-chip{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important}
-body.kol-customer .product-photo-title-chip h2{margin:0!important;font-size:22px!important;line-height:1.18!important;font-weight:550!important}
-body.kol-customer .product-body{width:100%!important;margin:0!important;padding:0 0 18px!important;background:#fff!important}
-body.kol-customer .product-summary{display:none!important}
-body.kol-customer .ingredient-removal,body.kol-customer .option-group{width:100%!important;margin:0!important;padding:0!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
-body.kol-customer .ingredient-removal-heading,body.kol-customer .option-group>h3{min-height:46px!important;margin:0!important;padding:0 12px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border-bottom:1px solid var(--line)!important;font-size:15px!important;font-weight:550!important}
-body.kol-customer .ingredient-removal-heading>span{display:none!important}
-body.kol-customer .ingredient-chips{display:flex!important;flex-wrap:wrap!important;gap:7px!important;margin:0!important;padding:10px 12px!important;border:0!important}
-body.kol-customer .ingredient-chip{min-height:36px!important;margin:0!important;padding:0 11px!important;border:1px solid #70d99b!important;border-radius:18px!important;color:var(--green)!important;background:#f6fff8!important;font-size:14px!important;font-weight:400!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .ingredient-chip.removed{border-color:#efaaa6!important;color:var(--red)!important;background:#fff7f6!important;text-decoration:line-through!important}
-body.kol-customer .ingredient-chip:disabled,body.kol-customer .ingredient-chip[disabled],body.kol-customer .ingredient-chip.is-fixed,body.kol-customer .ingredient-chip.non-removable{border-color:#d8d4d1!important;color:#9a9591!important;background:#f3f2f1!important;opacity:1!important;text-decoration:none!important;cursor:default!important}
-body.kol-customer .option-group label,body.kol-customer .option-row{min-height:50px!important;margin:0!important;padding:10px 12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;font-size:14px!important;font-weight:400!important;box-shadow:none!important}
-body.kol-customer .note-label{display:block!important;margin:0!important;padding:12px 12px 6px!important;font-size:14px!important;font-weight:550!important}
-body.kol-customer .product-body textarea,body.kol-customer .product-body input,body.kol-customer .product-body select{width:calc(100% - 24px)!important;min-height:46px!important;margin:0 12px 12px!important;padding:10px 12px!important;border:1px solid #dcd4cf!important;border-radius:5px!important;outline:none!important;background:#fff!important;color:var(--text)!important;box-shadow:none!important}
-body.kol-customer .quantity-row{width:100%!important;min-height:62px!important;margin:0!important;padding:8px 12px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border-top:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;background:#fff!important}
-body.kol-customer .quantity-stepper{width:156px!important;min-width:156px!important;height:46px!important;display:grid!important;grid-template-columns:46px 1fr 46px!important;align-items:center!important;gap:0!important;border:1px solid #dcd4cf!important;border-radius:4px!important;overflow:hidden!important;background:#fff!important}
-body.kol-customer .quantity-stepper button{width:46px!important;height:46px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:var(--text)!important;font-size:19px!important;font-weight:400!important;box-shadow:none!important}
-body.kol-customer .quantity-stepper strong{display:grid!important;place-items:center!important;height:46px!important;font-size:16px!important;font-weight:500!important}
-body.kol-customer .allergen-note{margin:0!important;padding:10px 12px!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1.4!important}
-body.kol-customer .product-footer{z-index:6!important;flex:0 0 auto!important;width:100%!important;min-height:70px!important;margin:0!important;padding:8px 10px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:center!important;gap:10px!important;border-top:1px solid var(--line)!important;background:#fff!important}
-body.kol-customer .product-footer strong{font-size:17px!important;font-weight:550!important;white-space:nowrap!important}
-body.kol-customer #addConfiguredProduct{width:100%!important;min-height:52px!important;margin:0!important;border:0!important;border-radius:6px!important;background:var(--o)!important;color:#fff!important;font-size:15.5px!important;font-weight:600!important;box-shadow:none!important}
-body.kol-customer .cart-content-scroll{margin:0!important;padding:0!important;background:#fff!important}
-body.kol-customer .cart-order-card,body.kol-customer .cart-sales-card,body.kol-customer .checkout-step-card,body.kol-customer .checkout-form{width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
-body.kol-customer .checkout-section-title{min-height:62px!important;margin:0!important;padding:10px 12px!important;display:flex!important;align-items:center!important;gap:10px!important;border-bottom:1px solid var(--line)!important;background:#fff!important}
-body.kol-customer .checkout-section-title>span{width:38px!important;min-width:38px!important;height:38px!important;display:grid!important;place-items:center!important;border:0!important;border-radius:8px!important;background:#231f1c!important;color:#fff!important;font-size:15px!important;font-weight:600!important}
-body.kol-customer .checkout-section-title strong{font-size:18px!important;font-weight:550!important}
-body.kol-customer .cart-items{width:100%!important;margin:0!important;padding:0!important}
-body.kol-customer .cart-item{position:relative!important;width:100%!important;min-width:0!important;margin:0!important;padding:11px 12px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 86px!important;gap:8px!important;align-items:start!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .cart-item:hover{background:#fff!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .cart-item-main,body.kol-customer .cart-item-main-stacked{min-width:0!important;width:100%!important;margin:0!important;padding:0!important}
-body.kol-customer .cart-item-head{min-width:0!important;margin:0 0 5px!important;padding:0!important}
-body.kol-customer .cart-item-head h3{margin:0!important;display:flex!important;align-items:center!important;gap:7px!important;min-width:0!important;font-size:14.5px!important;font-weight:550!important;line-height:1.3!important;white-space:normal!important}
-body.kol-customer .cart-title-quantity{flex:0 0 auto!important;display:inline-grid!important;place-items:center!important;min-width:34px!important;height:28px!important;padding:0 7px!important;border-radius:14px!important;background:#d6453d!important;color:#fff!important;font-size:12.5px!important;font-weight:550!important}
-body.kol-customer .cart-item-details{width:100%!important;margin:0!important;padding:0!important;display:grid!important;gap:3px!important}
-body.kol-customer .cart-detail-row{width:100%!important;min-width:0!important;margin:0!important;padding:0!important;display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:8px!important;color:var(--text)!important;font-size:13.5px!important;font-weight:400!important;line-height:1.35!important}
-body.kol-customer .cart-detail-row>*{min-width:0!important}
-body.kol-customer .cart-detail-row .cart-detail-price,body.kol-customer .cart-detail-row>strong,body.kol-customer .cart-detail-row>span:last-child{flex:0 0 auto!important;white-space:nowrap!important;font-weight:500!important}
-body.kol-customer .total-line-row{margin-top:3px!important;padding-top:4px!important;border-top:1px solid var(--line)!important;font-size:14px!important}
-body.kol-customer .cart-item-note{margin:5px 0 0!important;color:var(--muted)!important;font-size:12.5px!important}
-body.kol-customer .cart-item-actions{width:86px!important;min-width:86px!important;margin:0!important;padding:0!important;display:grid!important;grid-template-columns:41px 41px!important;gap:4px!important;align-items:start!important;justify-content:end!important}
-body.kol-customer .edit-line-button,body.kol-customer .remove-button{position:static!important;width:41px!important;min-width:41px!important;height:41px!important;min-height:41px!important;margin:0!important;padding:0!important;display:grid!important;place-items:center!important;border-radius:5px!important;box-shadow:none!important;transform:none!important}
-body.kol-customer .edit-line-button{border:1px solid #cbd9d2!important;background:#eaf4ef!important;color:#175f4b!important}
-body.kol-customer .remove-button{border:1px solid #ebd0ce!important;background:#fff5f4!important;color:#af302b!important}
-body.kol-customer .cart-edit-icon{display:block!important;font-size:17px!important;line-height:1!important}
-body.kol-customer .cart-summary{width:100%!important;margin:0!important;padding:13px 12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
-body.kol-customer .total-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin:0!important}
-body.kol-customer .total-row span{font-size:15px!important;font-weight:400!important}
-body.kol-customer #total{font-size:22px!important;font-weight:550!important;letter-spacing:-.02em!important;white-space:nowrap!important}
-body.kol-customer .tax-note-row{margin-top:4px!important;color:var(--muted)!important;font-size:12.5px!important}
-body.kol-customer .checkout-grid{width:100%!important;margin:0!important;padding:12px!important;display:grid!important;grid-template-columns:1fr!important;gap:11px!important}
-body.kol-customer .checkout-grid label{display:grid!important;gap:6px!important;margin:0!important;color:var(--text)!important;font-size:13.5px!important;font-weight:500!important}
-body.kol-customer .checkout-grid input,body.kol-customer .checkout-grid select{width:100%!important;min-height:50px!important;margin:0!important;padding:10px 12px!important;border:1px solid #dcd4cf!important;border-radius:5px!important;background:#fff!important;color:var(--text)!important;font-size:15px!important;font-weight:400!important;box-shadow:none!important;outline:none!important}
-body.kol-customer .pickup-choice{width:100%!important;margin:0!important;padding:12px!important}
-body.kol-customer .pickup-options{width:100%!important;margin:0!important;padding:0!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
-body.kol-customer .pickup-option{position:relative!important;min-width:0!important;min-height:54px!important;margin:0!important;padding:0 12px!important;display:flex!important;align-items:center!important;justify-content:center!important;border:1px solid #ddd4ce!important;border-radius:5px!important;background:#fff!important;color:var(--text)!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important}
-body.kol-customer .pickup-option input{position:absolute!important;right:10px!important;width:22px!important;height:22px!important;margin:0!important;accent-color:var(--o)!important}
-body.kol-customer .pickup-option:has(input:checked){border-color:var(--o)!important;background:#fff8f4!important;color:#c84f1b!important}
-body.kol-customer .checkout-help{margin:9px 0 0!important;padding:0!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1.4!important}
-body.kol-customer #pickupTime{width:100%!important;min-height:48px!important;margin:10px 0 0!important;padding:9px 10px!important;border:1px solid #dcd4cf!important;border-radius:5px!important;background:#fff!important;color:var(--text)!important}
-body.kol-customer .checkout-footer{z-index:8!important;flex:0 0 auto!important;width:100%!important;margin:0!important;padding:8px 10px max(8px,env(safe-area-inset-bottom))!important;border-top:1px solid var(--line)!important;background:#fff!important}
-body.kol-customer .checkout-progress{display:none!important}
-body.kol-customer .checkout-footer-actions{width:100%!important;margin:0!important;padding:0!important;display:flex!important;align-items:stretch!important;gap:8px!important}
-body.kol-customer .checkout-back-button{flex:0 0 94px!important;width:94px!important;min-height:52px!important;margin:0!important;padding:0 12px!important;border:1px solid #dcd4cf!important;border-radius:6px!important;background:#fff!important;color:var(--text)!important;font-size:14.5px!important;font-weight:500!important;box-shadow:none!important}
-body.kol-customer .checkout-button{flex:1 1 auto!important;width:100%!important;min-width:0!important;min-height:52px!important;margin:0!important;padding:0 16px!important;border:0!important;border-radius:6px!important;background:var(--o)!important;color:#fff!important;font-size:16px!important;font-weight:600!important;box-shadow:none!important}
-body.kol-customer .checkout-button:disabled{opacity:.5!important}
-body.kol-customer .checkout-back-button[hidden]{display:none!important}
-body.kol-customer .cart-empty{padding:28px 12px!important;color:var(--muted)!important;text-align:center!important;font-size:14px!important}
-body.kol-customer .profile-body,body.kol-customer .order-live-content{width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
-body.kol-customer .profile-order-card,body.kol-customer [class*="profile-order-card"],body.kol-customer .recent-order-card{width:100%!important;margin:0!important;padding:12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
-body.kol-customer .profile-order-card h3,body.kol-customer .profile-order-card strong{font-size:15px!important;font-weight:550!important}
-body.kol-customer .profile-order-card p,body.kol-customer .profile-order-card small{color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important}
-body.kol-customer .profile-empty{margin:0!important;padding:28px 12px!important;color:var(--muted)!important;text-align:center!important}
-body.kol-customer .info-panel,body.kol-customer .quick-checkout-panel,body.kol-customer .confirm-panel{width:100%!important;max-width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow-y:auto!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
-body.kol-customer .info-header{padding:15px 12px!important;border-bottom:1px solid var(--line)!important}
-body.kol-customer .info-grid{margin:0!important;padding:0!important}
-body.kol-customer .info-block{margin:0!important;padding:12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;box-shadow:none!important}
-body.kol-customer .quick-checkout-grid{display:grid!important;gap:10px!important;padding:12px!important}
-body.kol-customer .quick-checkout-grid input{width:100%!important;min-height:50px!important;border:1px solid #dcd4cf!important;border-radius:5px!important;padding:10px 12px!important}
-body.kol-customer .quick-checkout-actions{padding:10px 12px!important}
-body.kol-customer .input-error{border-color:#cc443d!important;outline:1px solid #cc443d!important}
-body.kol-customer .status-notice,body.kol-customer .order-status-box{margin:0!important;border-radius:0!important}
-@media(max-width:390px){:root{--head:72px;--tabs:46px}body.kol-customer{font-size:14px!important}body.kol-customer .appbar{padding:0 9px!important}body.kol-customer .appbar-brand{min-width:110px!important}body.kol-customer .brand-back-label{font-size:17px!important}body.kol-customer .appbar-context-title{left:110px!important;right:102px!important;font-size:15px!important}body.kol-customer .icon-button,body.kol-customer .cart-toggle{width:40px!important;min-width:40px!important;height:40px!important}body.kol-customer .category-tab,body.kol-customer [data-category-tab]{padding:0 11px!important;font-size:13.5px!important}body.kol-customer .menu-row,body.kol-customer .menu-app-product{grid-template-columns:76px minmax(0,1fr) 72px!important;gap:8px!important;padding:9px 10px!important}body.kol-customer .menu-row>.food-thumb,body.kol-customer .menu-row>[class*="thumb"],body.kol-customer .menu-thumb-wrap,body.kol-customer .menu-thumb-wrap>.food-thumb,body.kol-customer .menu-thumb-wrap>[class*="thumb"]{width:76px!important;min-width:76px!important;height:80px!important;min-height:80px!important;max-height:80px!important}body.kol-customer .menu-app-product-side,body.kol-customer .rescue-product-side{width:72px!important}body.kol-customer .menu-favorite,body.kol-customer .menu-app-plus{width:35px!important;min-width:35px!important;height:35px!important;min-height:35px!important}body.kol-customer .cart-item{grid-template-columns:minmax(0,1fr) 78px!important;padding:10px!important}body.kol-customer .cart-item-actions{width:78px!important;min-width:78px!important;grid-template-columns:37px 37px!important}body.kol-customer .edit-line-button,body.kol-customer .remove-button{width:37px!important;min-width:37px!important;height:39px!important;min-height:39px!important}body.kol-customer .pickup-options{grid-template-columns:1fr!important}}
-
-/* PRODUCT OPTION CHECKS V17 */
-body.kol-customer #optionGroups input[type="radio"],
-body.kol-customer #optionGroups input[type="checkbox"]{
-  -webkit-appearance:none!important;
-  appearance:none!important;
-  position:static!important;
-  display:inline-grid!important;
-  place-content:center!important;
-  flex:0 0 24px!important;
-  width:24px!important;
-  min-width:24px!important;
-  height:24px!important;
-  min-height:24px!important;
-  margin:0 12px 0 0!important;
-  padding:0!important;
-  opacity:1!important;
-  visibility:visible!important;
-  border:1.5px solid #a6a19d!important;
-  border-radius:50%!important;
-  background:#fff!important;
-  box-shadow:none!important;
-}
-body.kol-customer #optionGroups input[type="radio"]::after,
-body.kol-customer #optionGroups input[type="checkbox"]::after{
-  content:"✓";
-  display:block!important;
-  color:#168653!important;
-  font-size:15px!important;
-  font-weight:700!important;
-  line-height:1!important;
-  opacity:0!important;
-}
-body.kol-customer #optionGroups input[type="radio"]:checked,
-body.kol-customer #optionGroups input[type="checkbox"]:checked{
-  border-color:#58b985!important;
-  background:#eef9f2!important;
-}
-body.kol-customer #optionGroups input[type="radio"]:checked::after,
-body.kol-customer #optionGroups input[type="checkbox"]:checked::after{
-  opacity:1!important;
-}
-body.kol-customer #optionGroups label:has(input[type="radio"]:checked),
-body.kol-customer #optionGroups label:has(input[type="checkbox"]:checked){
-  background:#f4fbf7!important;
-  color:#185f3e!important;
-}
-body.kol-customer .checkout-section-title>div{
-  min-width:0!important;
-  display:flex!important;
-  flex-direction:column!important;
-  gap:2px!important;
-}
-body.kol-customer .checkout-section-title small{
-  display:block!important;
-  margin:0!important;
-  color:var(--muted)!important;
-  font-size:12.5px!important;
-  font-weight:400!important;
-  line-height:1.35!important;
+/* Category bar fix: keep the menu tabs attached directly under the orange app bar.
+   renderMenu() currently moves #categoryTabsWrap into #menuSections. A transformed
+   .menu-shell makes position:fixed behave like a scrolling child, so remove that
+   transform and center the shell without transforms. */
+body.kol-customer .menu-shell {
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important;
 }
 
+/* Before JS moves the tabs, they are still a direct child of .appbar. */
+body.kol-customer .appbar > .category-tabs-wrap {
+  position: absolute !important;
+  top: 76px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 5100 !important;
+}
 
-
-
-
+/* After renderMenu() moves the tabs into #menuSections, pin them to the viewport. */
+body.kol-customer #menuSections > .category-tabs-wrap,
+body.kol-customer .menu-shell .category-tabs-wrap {
+  position: fixed !important;
+  top: 76px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: min(100vw, 480px) !important;
+  max-width: 480px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  margin: 0 auto !important;
+  transform: none !important;
+  z-index: 5100 !important;
 }
