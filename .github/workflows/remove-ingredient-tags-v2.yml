@@ -1,0 +1,160 @@
+name: Remove ingredient tag feature v2
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/remove-ingredient-tags-v2.yml
+permissions:
+  contents: write
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Clean customer, admin and CSS
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def remove_function_braces(src, name):
+              m = re.search(r'\nfunction\s+' + re.escape(name) + r'\s*\(', src)
+              if not m: return src
+              start=m.start(); brace=src.find('{',m.end())
+              i=brace; depth=0; quote=None; esc=False; line=False; block=False; template=False
+              while i < len(src):
+                  c=src[i]; n=src[i+1] if i+1<len(src) else ''
+                  if line:
+                      if c=='\n': line=False
+                  elif block:
+                      if c=='*' and n=='/': block=False; i+=1
+                  elif quote:
+                      if esc: esc=False
+                      elif c=='\\': esc=True
+                      elif c==quote: quote=None
+                  elif template:
+                      if esc: esc=False
+                      elif c=='\\': esc=True
+                      elif c=='`': template=False
+                  else:
+                      if c=='/' and n=='/': line=True; i+=1
+                      elif c=='/' and n=='*': block=True; i+=1
+                      elif c in ('"',"'"): quote=c
+                      elif c=='`': template=True
+                      elif c=='{': depth+=1
+                      elif c=='}':
+                          depth-=1
+                          if depth==0:
+                              end=i+1
+                              while end<len(src) and src[end] in ' \t\r\n': end+=1
+                              return src[:start]+'\n'+src[end:]
+                  i+=1
+              raise SystemExit('Could not remove function '+name)
+
+          # CUSTOMER
+          p=Path('test/index.html'); s=p.read_text(encoding='utf-8')
+          s,n=re.subn(r'\n\s*<section aria-labelledby="ingredientRemovalTitle" class="ingredient-removal" hidden id="ingredientRemoval">.*?</section>','',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('customer ingredient HTML not found')
+          for pat in [r'^const ingredientRemoval = .*?;\n',r'^const ingredientChips = .*?;\n',r'^const ingredientRemovalHelp = .*?;\n',r'^let selectedRemovedIngredients = new Set\(\);\n']:
+              s=re.sub(pat,'',s,flags=re.M)
+          for fn in ['parseIngredientNames','defaultIngredientIsRemovable','getProductIngredientTags','renderIngredientRemoval']:
+              s=remove_function_braces(s,fn)
+          s=re.sub(r'^\s*renderIngredientRemoval\(\);\n','',s,flags=re.M)
+          s=re.sub(r'^\s*productModal\.classList\.toggle\("has-ingredient-removal".*?\);\n','',s,flags=re.M)
+          s=re.sub(r'^\s*selectedRemovedIngredients = new Set\([^\n]*\);\n','',s,flags=re.M)
+          s=re.sub(r'\ningredientChips\?\.addEventListener\("click", \(event\) => \{.*?\n\}\);\n','\n',s,count=1,flags=re.S)
+          s=re.sub(r'^\s*removedIngredients:\s*\[\],\n','',s,flags=re.M)
+          s=re.sub(r'^\s*removedIngredients:\s*line\.removedIngredients\s*\|\|\s*\[\],\n','',s,flags=re.M)
+          s=re.sub(r'\n\s*const removedIngredients = \[\.\.\.selectedRemovedIngredients\];\n\s*if \(removedIngredients\.length\) \{.*?\n\s*\}\n(?=\s*return \{)','\n',s,count=1,flags=re.S)
+          s=re.sub(r'\)\.concat\(removedIngredients\.length \?.*?\[\]\)',')',s)
+          s=re.sub(r'^\s*removedIngredients,\n','',s,flags=re.M)
+          s=re.sub(r'^\s*removedIngredients:\s*Array\.isArray\(line\.removedIngredients\).*?\n\s*:\s*\[\],\n','',s,flags=re.M|re.S)
+          s=s.replace('extras: line.extras || [],','extras: (line.extras || []).filter((item) => !String(item || "").startsWith("Uten:")),')
+          s=s.replace('extraDetails: line.extraDetails || [],','extraDetails: (line.extraDetails || []).filter((item) => !String(item?.label || "").startsWith("Uten:")),')
+          s=s.replace('kol-core.css?v=mobile-v26','kol-core.css?v=mobile-v27',1)
+          banned=['ingredientRemoval','ingredientChips','ingredientRemovalHelp','selectedRemovedIngredients','getProductIngredientTags','ingredientTagsConfigured','ingredientTags','removedIngredients','data-ingredient','has-ingredient-removal']
+          left=[x for x in banned if x in s]
+          if left: raise SystemExit('customer leftovers: '+', '.join(left))
+          p.write_text(s,encoding='utf-8')
+
+          # ADMIN
+          p=Path('test/admin-panel.html'); a=p.read_text(encoding='utf-8')
+          a,n=re.subn(r'\n<details class="product-more wide" id="productIngredientSettings">.*?</details>','',a,count=1,flags=re.S)
+          if n!=1: raise SystemExit('admin ingredient HTML not found')
+          for pat in [r'^const productIngredientTagList = .*?;\n',r'^const syncProductIngredientsButton = .*?;\n',r'^const addProductIngredientButton = .*?;\n',r'^let productIngredientDraft = \[\];\n']:
+              a=re.sub(pat,'',a,flags=re.M)
+          # Remove field-load/save logic before deleting helper functions.
+          a=re.sub(r'^\s*productIngredientDraft = \[\];\n','',a,flags=re.M)
+          a=re.sub(r'^\s*renderProductIngredientTags\(\);\n','',a,flags=re.M)
+          a,nload=re.subn(r'\n\s*const hasSavedIngredientSetup = product\.ingredientTagsConfigured.*?(?=\n\s*if \(fields\.productAllergens\))','',a,count=1,flags=re.S)
+          if nload!=1: raise SystemExit('admin ingredient load block not found')
+          a,nsave=re.subn(r'\n\s*ingredientTags:\s*normalizeProductIngredientTags\(.*?\n\s*ingredientTagsConfigured:\s*true,','',a,count=1,flags=re.S)
+          if nsave!=1: raise SystemExit('admin ingredient save block not found')
+          start=a.find('if (syncProductIngredientsButton) {')
+          if start==-1: raise SystemExit('admin ingredient event start not found')
+          end=a.find('// Türkçe not:',start)
+          if end==-1: raise SystemExit('admin ingredient event end not found')
+          a=a[:start]+a[end:]
+          # Functions are consecutive named declarations; remove each up to the next named function.
+          for fn in ['parseIngredientNamesForAdmin','defaultIngredientCanBeRemoved','normalizeProductIngredientTags','ingredientTagsFromDescription','renderProductIngredientTags']:
+              pat=r'\nfunction\s+'+re.escape(fn)+r'\s*\(.*?(?=\nfunction\s+[A-Za-z_$][\w$]*\s*\()'
+              a,nf=re.subn(pat,'\n',a,count=1,flags=re.S)
+              if nf!=1: raise SystemExit('admin function not removed: '+fn)
+          a=a.replace('<link href="kol-core.css" rel="stylesheet"/>','<link href="kol-core.css?v=mobile-v27" rel="stylesheet"/>',1)
+          banned=['productIngredientSettings','productIngredientTagList','productIngredientDraft','syncProductIngredients','addProductIngredient','ingredientTagsConfigured','ingredientTags:','normalizeProductIngredientTags','parseIngredientNamesForAdmin','defaultIngredientCanBeRemoved','data-product-ingredient','Kan fjernes']
+          left=[x for x in banned if x in a]
+          if left: raise SystemExit('admin leftovers: '+', '.join(left))
+          p.write_text(a,encoding='utf-8')
+
+          # CSS
+          p=Path('test/kol-core.css'); c=p.read_text(encoding='utf-8')
+          old='body.kol-customer .product-summary{display:none!important}'
+          new='body.kol-customer .product-summary{display:block!important;margin:0!important;padding:10px 12px 12px!important;border-bottom:1px solid var(--line)!important;color:var(--muted)!important;font-size:14px!important;font-weight:400!important;line-height:1.45!important}'
+          if old not in c: raise SystemExit('product summary rule not found')
+          c=c.replace(old,new,1)
+          out=[]
+          for line in c.splitlines():
+              if 'body.kol-customer .ingredient-removal,body.kol-customer .option-group{' in line:
+                  line=line.replace('body.kol-customer .ingredient-removal,','')
+              elif 'body.kol-customer .ingredient-removal-heading,body.kol-customer .option-group>h3{' in line:
+                  line=line.replace('body.kol-customer .ingredient-removal-heading,','')
+              elif any(x in line for x in ['body.kol-customer .ingredient-removal','body.kol-customer .ingredient-chips','body.kol-customer .ingredient-chip']):
+                  continue
+              out.append(line)
+          c='\n'.join(out)+'\n'
+          left=[x for x in ['.ingredient-removal','.ingredient-chips','.ingredient-chip','.product-ingredient-admin','.product-ingredient-tag'] if x in c]
+          if left: raise SystemExit('css leftovers: '+', '.join(left))
+          p.write_text(c,encoding='utf-8')
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          for file in ['test/index.html','test/admin-panel.html']:
+              s=Path(file).read_text(encoding='utf-8')
+              scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,flags=re.S|re.I)
+              Path('/tmp/'+Path(file).stem+'.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/index.js
+          node --check /tmp/admin-panel.js
+          grep -q 'product-summary{display:block' test/kol-core.css
+          ! grep -q 'ingredient-removal' test/kol-core.css
+          ! grep -q 'ingredient-chip' test/kol-core.css
+          ! grep -q 'Ingredienser kunden kan fjerne' test/admin-panel.html
+          ! grep -q 'ingredientRemoval' test/index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html test/admin-panel.html test/kol-core.css
+          git diff --cached --quiet || git commit -m 'Remove ingredient tag and removal feature'
+          git push
