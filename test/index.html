@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v31"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v32"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -2158,7 +2158,7 @@ function profileOrderCardHtml(order = {}) {
     <article class="profile-order-card ${status} ${statusVisual} ${isToday ? "today-order" : "old-order"} ${unread ? "unread" : "read"} ${isExpanded ? "is-expanded" : ""}" data-profile-order-card="${escapeAttribute(order.id || "")}" data-expanded="${isExpanded ? "true" : "false"}">
       <button class="profile-order-summary" type="button" data-profile-order-toggle="${escapeAttribute(order.id || "")}" aria-expanded="${isExpanded ? "true" : "false"}">
         <span class="profile-order-main">
-          ${isExpanded ? `<span class="profile-selected-marker">Valgt</span>` : ""}
+          ${isExpanded ? `<span class="profile-selected-marker">Valgt bestilling</span>` : ""}
           <span class="profile-order-title-row">
             <strong>${title}</strong>
             <span class="order-status-pill ${status} ${order.ready === true ? "ready" : ""}">${orderStatusText(status, order)}</span>
@@ -4903,10 +4903,7 @@ if (document.fonts?.ready) {
   }).catch(() => {});
 }
 
-/* ===== V64: deterministic cart actions =====
-   A cart action is handled once, on click. The earlier pointerdown + touchstart
-   + click combination could open and immediately disturb the editor on mobile,
-   especially when the cart only contained one line. */
+// Prevent duplicate remove events from one touch/click action.
 let kolLastCartRemoveAt = 0;
 
 function kolEditCartLineDirect(index) {

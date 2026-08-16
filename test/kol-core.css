@@ -135,7 +135,7 @@ body.kol-customer .checkout-button:disabled{opacity:.5!important}
 body.kol-customer .checkout-back-button[hidden]{display:none!important}
 body.kol-customer .cart-empty{padding:28px 12px!important;color:var(--muted)!important;text-align:center!important;font-size:14px!important}
 body.kol-customer .profile-body,body.kol-customer .order-live-content{width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
-body.kol-customer .profile-order-card,body.kol-customer [class*="profile-order-card"],body.kol-customer .recent-order-card{width:100%!important;margin:0!important;padding:12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
+body.kol-customer .profile-order-card,body.kol-customer .recent-order-card{width:100%!important;margin:0!important;padding:12px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#fff!important;box-shadow:none!important}
 body.kol-customer .profile-order-card h3,body.kol-customer .profile-order-card strong{font-size:15px!important;font-weight:550!important}
 body.kol-customer .profile-order-card p,body.kol-customer .profile-order-card small{color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important}
 body.kol-customer .profile-empty{margin:0!important;padding:28px 12px!important;color:var(--muted)!important;text-align:center!important}
@@ -211,14 +211,6 @@ body.kol-customer .checkout-section-title small{
   line-height:1.35!important;
 }
 
-
-
-
-
-}
-
-/* ===== PREMIUM ORDER STATUS V31 ===== */
-@layer mobile {
 body.kol-customer .order-live-content{padding:0!important;background:#f3f0eb!important;}
 body.kol-customer .status-v31{--accent:#c98922;--soft:#fff8e9;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;color:#25211e!important;}
 body.kol-customer .status-v31.stage-accepted{--accent:#176746;--soft:#eef7f2;}
@@ -261,5 +253,72 @@ body.kol-customer .customer-receipt-total{padding:14px 0!important;border-top:1p
 body.kol-customer .status-v31-close{width:100%!important;min-height:54px!important;margin:0!important;border:0!important;border-top:1px solid #d8d0ca!important;border-radius:0!important;background:#25211f!important;color:#fff!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important;}
 body.kol-customer .status-v31-close:hover,body.kol-customer .status-v31-close:active{background:#25211f!important;transform:none!important;box-shadow:none!important;}
 @media(max-width:380px){body.kol-customer .status-v31-main{padding:19px 14px!important;}body.kol-customer .status-v31-time.accepted strong{font-size:45px!important;}body.kol-customer .status-v31-top,body.kol-customer .status-v31-flow{padding-left:14px!important;padding-right:14px!important;}}
+
+body.kol-customer .allergen-note{
+  width:100%!important;
+  margin:0!important;
+  padding:10px 12px!important;
+  border:0!important;
+  border-top:1px solid var(--line)!important;
+  border-bottom:1px solid var(--line)!important;
+  border-radius:0!important;
+  background:#faf8f5!important;
+  box-shadow:none!important;
+  color:var(--muted)!important;
 }
-/* ===== END PREMIUM ORDER STATUS V31 ===== */
+body.kol-customer .profile-order-card.is-expanded{
+  padding:0!important;
+  border:0!important;
+  border-left:4px solid var(--o)!important;
+  border-top:1px solid #efc9b3!important;
+  border-bottom:1px solid #efc9b3!important;
+  border-radius:0!important;
+  background:#fff8f3!important;
+  box-shadow:none!important;
+}
+body.kol-customer .profile-order-card.is-expanded .profile-order-summary{
+  width:100%!important;
+  margin:0!important;
+  padding:14px 12px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#fff8f3!important;
+  box-shadow:none!important;
+}
+body.kol-customer .profile-order-card.is-expanded .profile-order-details{
+  margin:0!important;
+  padding:14px 16px 16px!important;
+  border:0!important;
+  border-top:1px solid #efd9cb!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+body.kol-customer .profile-selected-marker{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:22px!important;
+  margin:0 0 8px!important;
+  padding:0 7px!important;
+  border:1px solid #efb894!important;
+  border-radius:0!important;
+  background:#fff!important;
+  color:#d95c1d!important;
+  font-size:10.5px!important;
+  font-weight:700!important;
+  letter-spacing:.08em!important;
+  line-height:1!important;
+  text-transform:uppercase!important;
+}
+body.kol-customer .profile-body:has(.profile-order-card.is-expanded) .profile-order-card:not(.is-expanded) .profile-order-summary{
+  opacity:.68!important;
+}
+body.kol-customer .profile-body:has(.profile-order-card.is-expanded) .profile-order-card:not(.is-expanded){
+  background:#fbfaf8!important;
+}
+body.kol-customer .profile-order-card.is-expanded .profile-expand-icon{
+  border-color:var(--o)!important;
+  background:var(--o)!important;
+  color:#fff!important;
+}
+}
