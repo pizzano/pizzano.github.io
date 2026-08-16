@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v33"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v34"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -987,7 +987,7 @@ function orderReadyDisplayParts(order = {}) {
       label: "Klar for henting",
       value: "",
       unit: "",
-      clock: "Kom og hent når det passer."
+      clock: "Vent på «Klar»-status"
     };
   }
 
@@ -1973,19 +1973,25 @@ function orderStatusHtml(order = {}, options = {}) {
     const value = readyParts?.value || "";
     const unit = readyParts?.unit || "";
     const clock = readyParts?.clock || "";
+    const kitchenMinutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
     main = `
       <div class="live-status-main accepted">
         <span class="live-status-kicker">BESTILLINGEN TILBEREDES</span>
-        <h3>Bekreftet</h3>
+        <h3>Kjøkkenet lager maten din</h3>
+        <div class="live-status-prep-note">
+          <span>Tilberedningstid satt av kjøkkenet</span>
+          <strong>${kitchenMinutes} min</strong>
+        </div>
         <div class="live-status-time accepted">
-          <small>CA. TID IGJEN</small>
+          <small>TID IGJEN</small>
           <div><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em></div>
-          <span>til maten forventes klar</span>
+          <span>Gjenstående tid til forventet klar-tid.</span>
         </div>
         <div class="live-status-pickup">
-          <small>HENT CA.</small>
+          <small>FORVENTET KLAR</small>
           <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(clock)}</strong>
         </div>
+        <p class="live-status-wait-note">Vent på status <b>«Klar»</b> før du henter bestillingen.</p>
         <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>${escapeAttribute(readyParts?.label || "")}</span>
       </div>`;
   } else if (stage === "ready") {
@@ -1995,8 +2001,9 @@ function orderStatusHtml(order = {}, options = {}) {
         <h3>Maten din er klar</h3>
         <div class="live-status-ready">
           <strong>Kom og hent nå</strong>
-          <small>Si navnet ditt og hva du bestilte.</small>
+          <small>Maten er ferdig og bør hentes så snart som mulig mens den er varm.</small>
         </div>
+        <p class="live-status-ready-help">Si navnet ditt og hva du bestilte når du henter.</p>
         <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>Maten er klar</span>
         <strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>
         <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" hidden></em>
