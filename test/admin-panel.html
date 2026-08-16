@@ -984,13 +984,9 @@
 /* ===== admin.js INLINED ===== */
 const firebaseDatabaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/";
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
-const rootMenuRef = firebase.database().ref("/");
-const menuRef = firebase.database().ref("/publicMenu");
-const menuVersionRef = firebase.database().ref("/menuVersion");
+const menuRef = firebase.database().ref("/");
 const ordersRef = firebase.database().ref("/orders");
 const rescueDealsRef = firebase.database().ref("/rescueDeals");
-const publicMostOrderedRef = firebase.database().ref("/publicStats/mostOrdered");
-const legacyMenuKeys = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
 // TÜRKÇE: ICE Min Side Tampermonkey scripti bu path'i dinliyor.
 // Admin siparişi onaylayınca buraya SMS işi yazıyoruz.
 const iceSmsCurrentRef = firebase.database().ref("/iceSmsQueue/current");
@@ -1850,33 +1846,19 @@ function renderCachedMenuIfAvailable(message = "Viser siste lokale meny mens Fir
   return true;
 }
 
-async function readLegacyMenuConfigOnce() {
-  const entries = await Promise.all(legacyMenuKeys.map(async (key) => {
-    const snapshot = await firebase.database().ref(`/${key}`).once("value");
-    return [key, snapshot.val()];
-  }));
-  return Object.fromEntries(entries);
-}
-
-async function seedPublicMenuFromLegacy() {
-  const legacy = await readLegacyMenuConfigOnce();
-  if (!hasValidConfig(legacy)) return null;
-  const normalized = normalizeConfig(legacy);
-  const version = Date.now();
-  await rootMenuRef.update({ publicMenu: normalized, menuVersion: version });
-  return normalized;
-}
-
 async function loadData() {
   setStatus("Synkroniserer med Firebase...");
-  const [menuSnapshot, rescueSnapshot] = await Promise.all([menuRef.once("value"), rescueDealsRef.once("value")]);
-  let value = menuSnapshot.val();
-  rescueDeals = rescueSnapshot.val() && typeof rescueSnapshot.val() === "object" ? rescueSnapshot.val() : {};
-  if (!hasValidConfig(value)) value = await seedPublicMenuFromLegacy();
+  const snapshot = await menuRef.once("value");
+  const value = snapshot.val();
+  rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
+
+  // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
+  // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
   const catalogUpgrade = hasValidConfig(value) ? window.KOLMenuCatalog?.upgrade(value || {}) : null;
   const effectiveValue = catalogUpgrade?.config || value;
-  config = hasValidConfig(effectiveValue) ? normalizeConfig(effectiveValue) : createEmptyConfig();
-  if (hasValidConfig(effectiveValue)) saveAdminMenuCache(effectiveValue);
+  config = hasValidConfig(value) ? normalizeConfig(effectiveValue) : createEmptyConfig();
+  if (hasValidConfig(value)) saveAdminMenuCache(effectiveValue);
+  if (catalogUpgrade?.changed) await menuRef.update(window.KOLMenuCatalog.menuPatch(effectiveValue));
   if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
   if (!selectedCategory()) {
     selectedProductIndex = null;
@@ -1885,9 +1867,13 @@ async function loadData() {
     selectedProductIndex = null;
     productEditorOpen = false;
   }
-  firebaseReady = true;
-  if (!isEditingField()) renderAll();
-  setStatus(hasValidConfig(effectiveValue) ? "Synkronisert med Firebase." : "Firebase er tom. Du kan starte fra null og legge til kategori.");
+  renderAll();
+
+  setStatus(
+    hasValidConfig(value)
+      ? "Synkronisert med Firebase."
+      : "Firebase er tom. Du kan starte fra null og legge til kategori."
+  );
 }
 
 async function saveData() {
@@ -1898,12 +1884,8 @@ async function writeLiveConfig(message = "Lagret automatisk til Firebase.") {
   if (!config) return false;
   try {
     setStatus("Lagrer til Firebase...");
-    const normalized = normalizeConfig(config);
-    const version = Date.now();
-    config = normalized;
-    // Én sjelden meny-skriving holder både gammel struktur og kompakt publicMenu oppdatert.
-    await rootMenuRef.update({ ...normalized, publicMenu: normalized, menuVersion: version });
-    saveAdminMenuCache(normalized);
+    // TÜRKÇE: Root'a set() yaparsak /orders silinir. update() siparişleri korur.
+    await menuRef.update(normalizeConfig(config));
     setStatus(message);
     return true;
   } catch (error) {
@@ -4198,114 +4180,39 @@ function renderOrdersAdmin() {
   refreshAdminLiveTimes();
 }
 
-let adminOrdersById = new Map();
-let adminOrdersRenderTimer = null;
-let adminInitialOrdersTimer = null;
-let publicMostOrderedTimer = null;
-let lastPublicMostOrderedSignature = "";
-
-function buildPublicMostOrderedRows() {
-  const counts = new Map();
-  adminOrders.forEach((order) => {
-    if (!order || (order.status || "pending") === "cancelled") return;
-    asArray(order.items).forEach((item) => {
-      const id = safeAdminText(item?.id || item?.productId);
-      const name = safeAdminText(item?.name);
-      if (!id && !name) return;
-      const key = id || `name:${name.toLocaleLowerCase("nb-NO")}`;
-      const current = counts.get(key) || { id, name, count: 0 };
-      current.count += Math.max(1, safeAdminNumber(item?.quantity || 1));
-      counts.set(key, current);
-    });
-  });
-  return Array.from(counts.values()).sort((a, b) => b.count - a.count).slice(0, 5);
-}
-
-function schedulePublicMostOrderedSync() {
-  window.clearTimeout(publicMostOrderedTimer);
-  publicMostOrderedTimer = window.setTimeout(async () => {
-    const rows = buildPublicMostOrderedRows();
-    const signature = JSON.stringify(rows);
-    if (signature === lastPublicMostOrderedSignature) return;
-    lastPublicMostOrderedSignature = signature;
-    try {
-      await publicMostOrderedRef.set(rows);
-    } catch (error) {
-      console.warn("Bestselgeroversikt kunne ikke lagres.", error);
-    }
-  }, 900);
-}
-
-function flushAdminOrdersFromMap() {
-  adminOrders = Array.from(adminOrdersById.values());
-  try {
-    renderOrdersAdmin();
-  } catch (error) {
-    console.error("Bestillinger kunne ikke vises:", error);
-    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene kunne ikke vises akkurat nå.</p>`;
-  }
-  updateAdminOrderAlarmLoop();
-  schedulePublicMostOrderedSync();
-}
-
-function scheduleAdminOrdersRender() {
-  window.clearTimeout(adminOrdersRenderTimer);
-  adminOrdersRenderTimer = window.setTimeout(flushAdminOrdersFromMap, 80);
-}
-
 function listenForOrders() {
   if (!ordersRef) return;
-  ordersRef.off("value");
-  ordersRef.off("child_added");
-  ordersRef.off("child_changed");
-  ordersRef.off("child_removed");
-  adminOrdersById = new Map();
-  knownOrderIdsForSound = new Set();
-  ordersReady = false;
+  ordersRef.on("value", (snapshot) => {
+    const value = snapshot.val() || {};
+    const nextOrders = Object.entries(value)
+      .map(([id, order]) => normalizeAdminOrderRecord(order, String(id)))
+      .filter(Boolean);
+    const nextIds = new Set(nextOrders.map((order) => order.id));
+    const hasNewPendingOrder = ordersReady && nextOrders.some((order) => {
+      return isAdminOrderFromToday(order) && !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
+    });
 
-  const markInitialLoadSoon = () => {
-    window.clearTimeout(adminInitialOrdersTimer);
-    adminInitialOrdersTimer = window.setTimeout(() => {
-      ordersReady = true;
-      knownOrderIdsForSound = new Set(adminOrdersById.keys());
-      flushAdminOrdersFromMap();
-    }, 700);
-  };
+    adminOrders = nextOrders;
+    knownOrderIdsForSound = nextIds;
+    ordersReady = true;
+    try {
+      renderOrdersAdmin();
+    } catch (error) {
+      console.error("Bestillinger kunne ikke vises:", error);
+      if (ordersAdminList) {
+        ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene finnes i Firebase, men en testbestilling har feil format. De nye bestillingene beskyttes mot dette nå.</p>`;
+      }
+    }
+    updateAdminOrderAlarmLoop();
 
-  const onError = (error) => {
-    console.error(error);
-    setStatus("Kunne ikke synkronisere bestillinger.");
-  };
-
-  ordersRef.on("child_added", (snapshot) => {
-    const id = String(snapshot.key || "");
-    const order = normalizeAdminOrderRecord(snapshot.val(), id);
-    if (!order) return;
-    const isNewPending = ordersReady && !knownOrderIdsForSound.has(id) && isAdminOrderFromToday(order) && (order.status || "pending") === "pending";
-    adminOrdersById.set(id, order);
-    knownOrderIdsForSound.add(id);
-    scheduleAdminOrdersRender();
-    markInitialLoadSoon();
-    if (isNewPending) {
+    if (hasNewPendingOrder) {
       setStatus("Ny bestilling mottatt.");
       showToast("Ny bestilling mottatt.");
     }
-  }, onError);
-
-  ordersRef.on("child_changed", (snapshot) => {
-    const id = String(snapshot.key || "");
-    const order = normalizeAdminOrderRecord(snapshot.val(), id);
-    if (!order) return;
-    adminOrdersById.set(id, order);
-    scheduleAdminOrdersRender();
-  }, onError);
-
-  ordersRef.on("child_removed", (snapshot) => {
-    const id = String(snapshot.key || "");
-    adminOrdersById.delete(id);
-    knownOrderIdsForSound.delete(id);
-    scheduleAdminOrdersRender();
-  }, onError);
+  }, (error) => {
+    console.error(error);
+    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Kunne ikke lese bestillinger.</p>`;
+  });
 }
 
 async function acceptOrder(orderId, minutes) {
@@ -6148,58 +6055,47 @@ function startOrdersConnectionIndicator() {
 function startRealtimeSync() {
   setStatus("Kobler til Firebase...");
   renderCachedMenuIfAvailable();
+  menuRef.on(
+    "value",
+    async (snapshot) => {
+      const value = snapshot.val();
+      rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
 
-  let seedingPublicMenu = false;
-  menuRef.on("value", async (snapshot) => {
-    let value = snapshot.val();
-    if (!hasValidConfig(value)) {
-      if (seedingPublicMenu) return;
-      seedingPublicMenu = true;
-      try {
-        value = await seedPublicMenuFromLegacy();
-        if (!value) {
-          config = createEmptyConfig();
-          selectedCategoryIndex = null;
-          selectedProductIndex = null;
-          productEditorOpen = false;
-          firebaseReady = true;
-          if (!isEditingField()) renderAll();
-          setStatus("Firebase er tom. Klar til å lage ny meny.");
-        }
-      } catch (error) {
-        console.error(error);
-        setStatus("Kunne ikke hente meny fra Firebase.");
-      } finally {
-        seedingPublicMenu = false;
+      if (!hasValidConfig(value)) {
+        // TÜRKÇE: Firebase boşsa otomatik test menüsü basmıyoruz.
+        // Sadece boş panel açıyoruz; sen kategori ekleyince ilk kayıt Firebase'e yazılır.
+        config = createEmptyConfig();
+        selectedCategoryIndex = null;
+        selectedProductIndex = null;
+        productEditorOpen = false;
+        firebaseReady = true;
+        if (!isEditingField()) renderAll();
+        setStatus("Firebase er tom. Klar til å lage ny meny uten menu-data.js.");
+        return;
       }
-      return;
-    }
 
-    const catalogUpgrade = window.KOLMenuCatalog?.upgrade(value || {});
-    const effectiveValue = catalogUpgrade?.config || value;
-    config = normalizeConfig(effectiveValue);
-    saveAdminMenuCache(effectiveValue);
-    if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
-    if (!selectedCategory()) {
-      selectedProductIndex = null;
-      productEditorOpen = false;
-    } else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) {
-      selectedProductIndex = null;
-      productEditorOpen = false;
+      const catalogUpgrade = window.KOLMenuCatalog?.upgrade(value || {});
+      const effectiveValue = catalogUpgrade?.config || value;
+      saveAdminMenuCache(effectiveValue);
+      config = normalizeConfig(effectiveValue);
+      if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
+      if (!selectedCategory()) { selectedProductIndex = null; productEditorOpen = false; }
+      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) { selectedProductIndex = null; productEditorOpen = false; }
+      firebaseReady = true;
+      if (!isEditingField()) renderAll();
+      setStatus("Koblet til Firebase. Endringer lagres automatisk.");
+      if (catalogUpgrade?.changed) {
+        menuRef.update(window.KOLMenuCatalog.menuPatch(effectiveValue)).catch((error) => {
+          console.warn("Menyoppdateringen kunne ikke lagres permanent ennå.", error);
+        });
+      }
+    },
+    (error) => {
+      console.error(error);
+      const hadCache = renderCachedMenuIfAvailable("Kunne ikke koble til Firebase. Viser siste lokale meny.");
+      if (!hadCache) setStatus("Kunne ikke koble til Firebase. Sjekk nett/Firebase-regler.");
     }
-    firebaseReady = true;
-    if (!isEditingField()) renderAll();
-    setStatus("Koblet til Firebase. Endringer lagres automatisk.");
-    if (catalogUpgrade?.changed) writeLiveConfig("Menyformat oppdatert.").catch(console.warn);
-  }, (error) => {
-    console.error(error);
-    setStatus("Firebase-tilkobling feilet. Viser lokal meny hvis tilgjengelig.");
-  });
-
-  rescueDealsRef.on("value", (snapshot) => {
-    rescueDeals = snapshot.val() && typeof snapshot.val() === "object" ? snapshot.val() : {};
-    if (firebaseReady && !isEditingField()) renderAll();
-  }, (error) => console.warn("Redde maten kunne ikke synkroniseres.", error));
+  );
 }
 
 function initBasicSettingsTabs() {
