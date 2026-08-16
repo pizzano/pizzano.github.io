@@ -8,14 +8,12 @@ css = css_path.read_text(encoding='utf-8')
 
 index = index.replace('kol-core.css?v=mobile-v34', 'kol-core.css?v=mobile-v35', 1)
 
-# A customer order becomes ready automatically when the kitchen countdown reaches zero.
 index = index.replace(
     'const isReady = status === "accepted" && (order.ready === true || readyParts?.label === "Maten er klar");',
     'const isReady = status === "accepted" && (order.ready === true || getCustomerReadyAt(order).getTime() <= Date.now());',
     1,
 )
 
-# Remove the extra three-stage progress strip. The badge and main message are enough.
 index = re.sub(
     r'\n\s*const flow = stage === "cancelled" \? "" : `.*?</div>`;',
     '\n  const flow = "";',
@@ -24,7 +22,6 @@ index = re.sub(
     flags=re.S,
 )
 
-# Replace the accepted state with a compact, clear kitchen countdown.
 accepted_pattern = re.compile(
     r'\} else if \(stage === "accepted"\) \{.*?\n\s*\} else if \(stage === "ready"\) \{',
     re.S,
@@ -57,14 +54,12 @@ index, count = accepted_pattern.subn(accepted_replacement, index, count=1)
 if count != 1:
     raise SystemExit('accepted block not replaced')
 
-# Make the ready message direct and food-quality focused.
 index = index.replace(
     '<strong>Kom og hent nå</strong>\n          <small>Maten er ferdig og bør hentes så snart som mulig mens den er varm.</small>',
     '<strong>Kom og hent nå</strong>\n          <small>Maten er ferdig. Hent den så snart som mulig mens den er varm.</small>',
     1,
 )
 
-# When the timer reaches zero, redraw the open status view as ready automatically.
 marker = 'function startOrderCountdownUi(order = null) {'
 insert = '''\nfunction promoteOrderToAutomaticReady(order = null) {
   if (!order || (order.status || "pending") !== "accepted") return false;
@@ -82,7 +77,6 @@ insert = '''\nfunction promoteOrderToAutomaticReady(order = null) {
 if 'function promoteOrderToAutomaticReady' not in index:
     index = index.replace(marker, insert + marker, 1)
 
-# Call automatic-ready promotion after each countdown refresh.
 refresh_end = '''  document.querySelectorAll("[data-customer-ready-clock]").forEach((target) => {
     const orderId = target.dataset.customerReadyClock;
     const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
@@ -94,8 +88,7 @@ refresh_new = '''  document.querySelectorAll("[data-customer-ready-clock]").forE
     const orderId = target.dataset.customerReadyClock;
     const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
     if (!current || (current.status || "pending") !== "accepted") return;
-    const readyAt = getCustomerReadyAt(current);
-    target.textContent = `ca. kl. ${formatClock(readyAt)}`;
+    target.textContent = `ca. kl. ${formatClock(getCustomerReadyAt(current))}`;
   });
 
   promoteOrderToAutomaticReady(order);
@@ -104,18 +97,10 @@ if refresh_end not in index:
     raise SystemExit('refresh countdown end not found')
 index = index.replace(refresh_end, refresh_new, 1)
 
-# Remove obsolete customer wording that asks for a manual Klar status.
 index = index.replace('Vent på status <b>«Klar»</b> før du henter bestillingen.', '', 1)
 index = index.replace('Kom og hent når det passer.', 'Kom og hent nå', 1)
 
-# CSS: remove the now-unused progress strip and simplify accepted status blocks.
-css = re.sub(r'body\.kol-customer \.live-status-flow\{.*?\}\n', '', css, flags=re.S)
-css = re.sub(r'body\.kol-customer \.live-status-flow span\{.*?\}\n', '', css, flags=re.S)
-css = re.sub(r'body\.kol-customer \.live-status-flow span\.done\{.*?\}\n', '', css, flags=re.S)
-css = re.sub(r'body\.kol-customer \.live-status-flow i\{.*?\}\n', '', css, flags=re.S)
-css = re.sub(r'body\.kol-customer \.live-status-flow\.stage-accepted i:first-of-type\{.*?\}\n', '', css, flags=re.S)
-css = re.sub(r'body\.kol-customer \.live-status-flow\.stage-ready i\{.*?\}\n', '', css, flags=re.S)
-
+# Keep existing unused progress CSS untouched for safety; the progress HTML itself is removed.
 css = css.replace(
     'body.kol-customer .live-status-main{padding:22px 16px 20px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}',
     'body.kol-customer .live-status-main{padding:20px 16px 18px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}',
