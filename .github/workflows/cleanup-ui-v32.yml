@@ -1,4 +1,4 @@
-name: UI cleanup V32
+name: UI cleanup V33
 on:
   push:
     branches: [main]
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply cleanup
+      - name: Apply final cleanup
         run: python .github/scripts/cleanup_ui_v32.py
       - name: Validate customer files
         shell: bash
@@ -34,12 +34,14 @@ jobs:
               raise SystemExit(f'Duplicate IDs: {dup_ids}')
           if css.count('{') != css.count('}'):
               raise SystemExit(f'CSS brace mismatch: {css.count("{")} vs {css.count("}")}')
-          assert 'mobile-v32' in html
+          assert 'mobile-v33' in html
           assert 'Valgt bestilling' in html
           assert 'V64:' not in html
-          assert 'PREMIUM ORDER STATUS V31' not in css
+          assert 'PREMIUM ORDER STATUS' not in css
+          assert 'status-v31' not in html and 'status-v31' not in css
           assert '.profile-order-card.is-expanded' in css
-          assert '.allergen-note{' in css and 'border-radius:0!important' in css
+          assert css.count('body.kol-customer .allergen-note{') == 1
+          assert 'border-radius:0!important' in css
           PY
           node --check /tmp/index.js
       - name: Commit cleaned files
@@ -48,5 +50,5 @@ jobs:
           git config user.name "KOL Deploy Bot"
           git config user.email "actions@users.noreply.github.com"
           git add test/index.html test/kol-core.css
-          git commit -m "Clean profile selection and allergen styling"
+          git commit -m "Finalize clean profile and allergen UI"
           git push
