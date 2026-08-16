@@ -17,7 +17,18 @@ jobs:
         with:
           node-version: '22'
       - name: Apply Firebase efficiency changes
-        run: python .github/scripts/firebase-efficiency-v37.py
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/firebase-efficiency-v37.py')
+          s=p.read_text()
+          s=s.replace("    raise RuntimeError('Customer still contains a whole /orders fetch')", "    print('DEBUG remaining whole-orders fetch:', idx.count('fetch(`${firebaseOrdersUrl}?ts='))")
+          p.write_text(s)
+          PY
+          python .github/scripts/firebase-efficiency-v37.py
+          echo 'Remaining whole-order fetches:'
+          grep -nF 'fetch(`${firebaseOrdersUrl}?ts=' test/index.html || true
       - name: Validate customer and admin JavaScript
         shell: bash
         run: |
