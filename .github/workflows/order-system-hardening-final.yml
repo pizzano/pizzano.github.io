@@ -1,4 +1,5 @@
 name: Final order system hardening
+# rerun after fixing object-default function parsing
 on:
   push:
     branches:
@@ -94,6 +95,7 @@ jobs:
             .github/workflows/order-system-hardening-retry.yml \
             .github/workflows/order-system-hardening-retry2.yml \
             .github/workflows/order-system-hardening-diagnose.yml \
+            .github/workflows/order-system-hardening-syntax.yml \
             .github/workflows/order-system-hardening-final.yml
           git diff --cached --check
           git commit -m "Harden ordering data flow and remove legacy layers"
