@@ -1,5 +1,5 @@
 name: Final order system hardening
-# rerun after fixing object-default function parsing
+# final cleanup uses forced removal because migration helpers self-patch locally
 on:
   push:
     branches:
@@ -87,7 +87,7 @@ jobs:
           git config user.name "KOL Hardening Bot"
           git config user.email "actions@users.noreply.github.com"
           git add -- test/index.html test/admin-panel.html test/kol-core.css test/FIREBASE_SECURITY.md test/database.rules.hardened.example.json
-          git rm -- \
+          git rm -f -- \
             .github/scripts/order-system-hardening-20260817.py \
             .github/scripts/fix-hardening-normalizer.py \
             .github/scripts/fix-hardening-final.py \
