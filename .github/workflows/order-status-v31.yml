@@ -1,0 +1,45 @@
+name: Premium order status V31
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/order-status-v31.yml
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply V31
+        run: python .github/scripts/order_status_v31.py
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text=Path('test/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script>(.*?)</script>', text, re.S)
+          Path('/tmp/index.js').write_text('\n'.join(scripts), encoding='utf-8')
+          assert 'status-v31-time accepted' in text
+          assert 'Si navnet ditt og hva du bestilte.' in text
+          assert 'mobile-v31' in text
+          css=Path('test/kol-core.css').read_text(encoding='utf-8')
+          assert 'PREMIUM ORDER STATUS V31' in css
+          assert 'PREMIUM ORDER STATUS V30' not in css
+          PY
+          node --check /tmp/index.js
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "KOL Deploy Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add test/index.html test/kol-core.css
+          git commit -m "Simplify order status and highlight pickup time"
+          git push
