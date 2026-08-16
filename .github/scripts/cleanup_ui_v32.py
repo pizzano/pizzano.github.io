@@ -6,13 +6,10 @@ css_path = Path('test/kol-core.css')
 index = index_path.read_text(encoding='utf-8')
 css = css_path.read_text(encoding='utf-8')
 
-# Cache busting.
 index = index.replace('kol-core.css?v=mobile-v31', 'kol-core.css?v=mobile-v32', 1)
-
-# Make the selected-order label explicit.
 index = index.replace('<span class="profile-selected-marker">Valgt</span>', '<span class="profile-selected-marker">Valgt bestilling</span>')
 
-# Remove the old versioned patch heading while keeping the working cart logic.
+# Keep the stable cart code, remove only the old versioned patch heading/comment.
 index = re.sub(
     r'/\* ===== V64: deterministic cart actions =====.*?\*/\s*',
     '// Prevent duplicate remove events from one touch/click action.\n',
@@ -21,13 +18,13 @@ index = re.sub(
     flags=re.S,
 )
 
-# Remove redundant broad profile selector.
+# Remove a redundant selector that matched the same profile cards twice.
 css = css.replace(
     'body.kol-customer .profile-order-card,body.kol-customer [class*="profile-order-card"],body.kol-customer .recent-order-card',
     'body.kol-customer .profile-order-card,body.kol-customer .recent-order-card'
 )
 
-# Merge the separate V31 status layer into the main mobile layer instead of keeping a patch layer.
+# Merge the separate V31 status layer into the primary @layer mobile block.
 start_marker = '/* ===== PREMIUM ORDER STATUS V31 ===== */'
 end_marker = '/* ===== END PREMIUM ORDER STATUS V31 ===== */'
 if start_marker in css:
@@ -40,14 +37,15 @@ if start_marker in css:
         raise SystemExit('Could not parse V31 mobile layer')
     status_rules = wrapped[layer_start:inner_end].strip()
     before = css[:marker_start].rstrip()
-    after = css[marker_end:].lstrip()
+    after = css[marker_end:].strip()
+    if after:
+        raise SystemExit('Unexpected CSS exists after V31 patch block')
     if not before.endswith('}'):
         raise SystemExit('Main mobile layer closing brace not found before V31')
-    # The last brace immediately before V31 closes the main @layer mobile block.
+    # Remove only the primary layer's closing brace, append V31 rules inside it.
     before = before[:-1].rstrip()
-    css = before + '\n\n' + status_rules + '\n\n' + after
+    css = before + '\n\n' + status_rules
 
-# Main-layer refinements. These are regular rules, not another versioned patch block.
 refinements = r'''
 body.kol-customer .allergen-note{
   width:100%!important;
@@ -118,14 +116,8 @@ body.kol-customer .profile-order-card.is-expanded .profile-expand-icon{
 }
 '''.strip()
 
-# Ensure the primary mobile layer is closed once at EOF after the merged status rules and refinements.
-css = css.rstrip()
-if css.endswith('}'):
-    # After the merge above, the existing final brace belongs to the main mobile layer only if no suffix existed.
-    # Insert refinements directly before it.
-    css = css[:-1].rstrip() + '\n\n' + refinements + '\n}\n'
-else:
-    css += '\n\n' + refinements + '\n}\n'
+# The main mobile layer is currently intentionally open after the merge.
+css = css.rstrip() + '\n\n' + refinements + '\n}\n'
 
 index_path.write_text(index, encoding='utf-8')
 css_path.write_text(css, encoding='utf-8')
