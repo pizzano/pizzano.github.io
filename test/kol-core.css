@@ -225,14 +225,14 @@ body.kol-customer .live-status-flow span{color:#a19a94!important;font-size:11px!
 body.kol-customer .live-status-flow span.done{color:var(--accent)!important;font-weight:750!important;}
 body.kol-customer .live-status-flow i{height:1px!important;margin:0 8px!important;background:#d7d0ca!important;}
 body.kol-customer .live-status-flow.stage-accepted i:first-of-type,body.kol-customer .live-status-flow.stage-ready i{background:var(--accent)!important;}
-body.kol-customer .live-status-main{padding:22px 16px 20px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
+body.kol-customer .live-status-main{padding:20px 16px 18px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
 body.kol-customer .live-status-kicker{display:block!important;margin:0 0 6px!important;color:var(--accent)!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.12em!important;line-height:1.2!important;}
 body.kol-customer .live-status-main h3{margin:0!important;color:#211d1a!important;font-size:23px!important;font-weight:680!important;line-height:1.15!important;letter-spacing:-.025em!important;}
 body.kol-customer .live-status-main>p{margin:12px 0 0!important;color:#70675f!important;font-size:13px!important;font-weight:400!important;line-height:1.45!important;}
 body.kol-customer .live-status-prep-note{margin-top:18px!important;padding:12px 14px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;border-top:1px solid #d8e4dc!important;border-bottom:1px solid #d8e4dc!important;background:#f7faf8!important;}
 body.kol-customer .live-status-prep-note span{color:#68736c!important;font-size:12px!important;font-weight:500!important;line-height:1.35!important;}
 body.kol-customer .live-status-prep-note strong{flex:0 0 auto!important;color:#165f43!important;font-size:17px!important;font-weight:700!important;white-space:nowrap!important;}
-body.kol-customer .live-status-time{margin-top:18px!important;padding:15px 16px!important;border:1px solid #dfd7d0!important;border-left:4px solid var(--accent)!important;border-radius:0!important;background:var(--soft)!important;}
+body.kol-customer .live-status-time{margin-top:14px!important;padding:15px 16px!important;border:1px solid #dfd7d0!important;border-left:4px solid var(--accent)!important;border-radius:0!important;background:var(--soft)!important;}
 body.kol-customer .live-status-time>small{display:block!important;margin-bottom:5px!important;color:var(--accent)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;}
 body.kol-customer .live-status-time.pending>strong{display:block!important;color:#744a13!important;font-size:35px!important;font-weight:560!important;line-height:1!important;letter-spacing:-.04em!important;font-variant-numeric:tabular-nums!important;}
 body.kol-customer .live-status-time.accepted>div{display:flex!important;align-items:flex-end!important;gap:7px!important;}
@@ -241,7 +241,7 @@ body.kol-customer .live-status-time.accepted em{padding-bottom:5px!important;col
 body.kol-customer .live-status-time.accepted>span{display:block!important;margin-top:7px!important;color:#65736b!important;font-size:12.5px!important;line-height:1.35!important;}
 body.kol-customer .live-status-pickup{padding:13px 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;border:1px solid #d9d2cb!important;border-top:0!important;background:#fff!important;}
 body.kol-customer .live-status-pickup small{color:#746b64!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1em!important;}
-body.kol-customer .live-status-pickup strong{color:#1c342a!important;font-size:19px!important;font-weight:700!important;text-align:right!important;}
+body.kol-customer .live-status-pickup strong{color:#1c342a!important;font-size:18px!important;font-weight:700!important;text-align:right!important;white-space:nowrap!important;}
 body.kol-customer .live-status-wait-note{margin:0!important;padding:11px 16px!important;border:1px solid #d9d2cb!important;border-top:0!important;background:#faf8f5!important;color:#675f58!important;font-size:12.5px!important;font-weight:400!important;line-height:1.45!important;}
 body.kol-customer .live-status-wait-note b{color:#176746!important;font-weight:700!important;}
 body.kol-customer .live-status-ready{margin-top:18px!important;padding:18px 16px!important;border-left:5px solid #0a442e!important;background:#0f5c3d!important;color:#fff!important;}

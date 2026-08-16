@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v34"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v35"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -1939,7 +1939,7 @@ function orderStatusHtml(order = {}, options = {}) {
   const deadline = getOrderAcceptDeadline(order);
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
   const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
-  const isReady = status === "accepted" && (order.ready === true || readyParts?.label === "Maten er klar");
+  const isReady = status === "accepted" && (order.ready === true || getCustomerReadyAt(order).getTime() <= Date.now());
   const stage = status === "cancelled" ? "cancelled" : isReady ? "ready" : status === "accepted" ? "accepted" : "pending";
 
   const pendingCountdown = waitingOpen
@@ -1949,13 +1949,7 @@ function orderStatusHtml(order = {}, options = {}) {
       : formatCountdown(deadline.getTime() - Date.now());
 
   const badge = waitingOpen ? "Venter" : stage === "cancelled" ? "Kansellert" : stage === "ready" ? "Klar" : stage === "accepted" ? "Bekreftet" : "Venter";
-
-  const flow = stage === "cancelled" ? "" : `
-    <div class="live-status-flow stage-${stage}" aria-label="Bestillingsstatus">
-      <span class="done">Mottatt</span><i></i>
-      <span class="${stage === "accepted" || stage === "ready" ? "done" : ""}">Bekreftet</span><i></i>
-      <span class="${stage === "ready" ? "done" : ""}">Klar</span>
-    </div>`;
+  const flow = "";
 
   let main = "";
   if (stage === "pending") {
@@ -1970,28 +1964,26 @@ function orderStatusHtml(order = {}, options = {}) {
         <p>${waitingOpen ? "Bestillingen behandles automatisk når vi åpner." : "Du trenger ikke gjøre noe. Status oppdateres automatisk."}</p>
       </div>`;
   } else if (stage === "accepted") {
-    const value = readyParts?.value || "";
-    const unit = readyParts?.unit || "";
-    const clock = readyParts?.clock || "";
     const kitchenMinutes = Math.max(1, Number(order.readyMinutes || 10) || 10);
+    const value = readyParts?.value || formatReadyDuration(Math.max(0, getCustomerReadyAt(order).getTime() - Date.now()));
+    const unit = readyParts?.unit || "";
+    const clock = formatClock(getCustomerReadyAt(order));
     main = `
       <div class="live-status-main accepted">
         <span class="live-status-kicker">BESTILLINGEN TILBEREDES</span>
         <h3>Kjøkkenet lager maten din</h3>
         <div class="live-status-prep-note">
-          <span>Tilberedningstid satt av kjøkkenet</span>
+          <span>Kjøkkenet har satt</span>
           <strong>${kitchenMinutes} min</strong>
         </div>
         <div class="live-status-time accepted">
           <small>TID IGJEN</small>
           <div><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em></div>
-          <span>Gjenstående tid til forventet klar-tid.</span>
         </div>
         <div class="live-status-pickup">
           <small>FORVENTET KLAR</small>
-          <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(clock)}</strong>
+          <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">ca. kl. ${escapeAttribute(clock)}</strong>
         </div>
-        <p class="live-status-wait-note">Vent på status <b>«Klar»</b> før du henter bestillingen.</p>
         <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>${escapeAttribute(readyParts?.label || "")}</span>
       </div>`;
   } else if (stage === "ready") {
@@ -2001,7 +1993,7 @@ function orderStatusHtml(order = {}, options = {}) {
         <h3>Maten din er klar</h3>
         <div class="live-status-ready">
           <strong>Kom og hent nå</strong>
-          <small>Maten er ferdig og bør hentes så snart som mulig mens den er varm.</small>
+          <small>Maten er ferdig. Hent den så snart som mulig mens den er varm.</small>
         </div>
         <p class="live-status-ready-help">Si navnet ditt og hva du bestilte når du henter.</p>
         <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>Maten er klar</span>
@@ -2101,8 +2093,23 @@ function refreshOrderCountdowns(order = null) {
     const orderId = target.dataset.customerReadyClock;
     const current = order && (!orderId || order.id === orderId) ? order : getRecentOrders().find((item) => item.id === orderId);
     if (!current || (current.status || "pending") !== "accepted") return;
-    target.textContent = orderReadyDisplayParts(current).clock;
+    target.textContent = `ca. kl. ${formatClock(getCustomerReadyAt(current))}`;
   });
+
+  promoteOrderToAutomaticReady(order);
+}
+
+
+function promoteOrderToAutomaticReady(order = null) {
+  if (!order || (order.status || "pending") !== "accepted") return false;
+  if (getCustomerReadyAt(order).getTime() > Date.now() && order.ready !== true) return false;
+  const readyOrder = { ...order, ready: true };
+  const alreadyReady = orderLiveContent?.querySelector?.(".live-status.stage-ready");
+  if (orderLiveContent && orderLiveModal && !orderLiveModal.hidden && !alreadyReady) {
+    orderLiveContent.innerHTML = orderStatusHtml(readyOrder, { includeReceipt: true, showCloseButton: true });
+  }
+  if (orderStatusBox && !orderStatusBox.hidden) renderOrderStatus(readyOrder);
+  return true;
 }
 
 function startOrderCountdownUi(order = null) {
