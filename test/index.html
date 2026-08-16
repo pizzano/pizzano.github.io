@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v30"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v31"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -1938,79 +1938,64 @@ function orderStatusHtml(order = {}, options = {}) {
   const waitingOpen = status === "pending" && isOrderWaitingForOpening(order);
   const deadline = getOrderAcceptDeadline(order);
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
-  const countdownText = waitingOpen
-    ? `Åpner kl. ${formatClock(order.processableAfter)}`
-    : expired
-      ? "Litt forsinket"
-      : formatCountdown(deadline.getTime() - Date.now());
   const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
   const isReady = status === "accepted" && (order.ready === true || readyParts?.label === "Maten er klar");
   const stage = status === "cancelled" ? "cancelled" : isReady ? "ready" : status === "accepted" ? "accepted" : "pending";
 
-  const statusLabel = waitingOpen
-    ? "Venter til åpning"
-    : stage === "cancelled"
-      ? "Kansellert"
-      : stage === "ready"
-        ? "Klar"
-        : stage === "accepted"
-          ? "Bekreftet"
-          : "Venter";
+  const pendingCountdown = waitingOpen
+    ? `Åpner kl. ${formatClock(order.processableAfter)}`
+    : expired
+      ? "Litt forsinket"
+      : formatCountdown(deadline.getTime() - Date.now());
 
-  const progress = stage === "cancelled" ? "" : `
-    <div class="status-v30-progress" aria-label="Bestillingsforløp">
-      <div class="status-v30-progress-step is-done"><i>1</i><span>Mottatt</span></div>
-      <div class="status-v30-progress-line ${stage === "accepted" || stage === "ready" ? "is-done" : ""}"></div>
-      <div class="status-v30-progress-step ${stage === "accepted" || stage === "ready" ? "is-done" : ""}"><i>2</i><span>Bekreftet</span></div>
-      <div class="status-v30-progress-line ${stage === "ready" ? "is-done" : ""}"></div>
-      <div class="status-v30-progress-step ${stage === "ready" ? "is-done" : ""}"><i>3</i><span>Klar</span></div>
+  const badge = waitingOpen ? "Venter" : stage === "cancelled" ? "Kansellert" : stage === "ready" ? "Klar" : stage === "accepted" ? "Bekreftet" : "Venter";
+
+  const flow = stage === "cancelled" ? "" : `
+    <div class="status-v31-flow stage-${stage}" aria-label="Bestillingsstatus">
+      <span class="done">Mottatt</span><i></i>
+      <span class="${stage === "accepted" || stage === "ready" ? "done" : ""}">Bekreftet</span><i></i>
+      <span class="${stage === "ready" ? "done" : ""}">Klar</span>
     </div>`;
 
-  let body = "";
+  let main = "";
   if (stage === "pending") {
-    body = `
-      <div class="status-v30-main pending">
-        <span class="status-v30-eyebrow">BESTILLINGEN ER MOTTATT</span>
-        <h3>${waitingOpen ? "Vi behandler bestillingen når vi åpner" : "Venter på bekreftelse"}</h3>
-        <p>${waitingOpen ? "Du trenger ikke gjøre noe. Bestillingen sendes videre automatisk når restauranten åpner." : "Restauranten har mottatt bestillingen. Du trenger ikke gjøre noe mens vi bekrefter den."}</p>
-        <div class="status-v30-timer pending">
-          <span>${waitingOpen ? "ÅPNER" : "SVAR INNEN"}</span>
-          <strong data-order-countdown="${escapeAttribute(order.id || "")}">${countdownText}</strong>
-          <small>${waitingOpen ? "Bestillingen behandles ved åpning." : "Status oppdateres automatisk på denne siden."}</small>
+    main = `
+      <div class="status-v31-main pending">
+        <span class="status-v31-kicker">BESTILLING MOTTATT</span>
+        <h3>${waitingOpen ? "Venter til vi åpner" : "Venter på bekreftelse"}</h3>
+        <div class="status-v31-time pending">
+          <small>${waitingOpen ? "ÅPNER" : "SVAR INNEN"}</small>
+          <strong data-order-countdown="${escapeAttribute(order.id || "")}">${pendingCountdown}</strong>
         </div>
+        <p>${waitingOpen ? "Bestillingen behandles automatisk når vi åpner." : "Du trenger ikke gjøre noe. Status oppdateres automatisk."}</p>
       </div>`;
   } else if (stage === "accepted") {
     const value = readyParts?.value || "";
     const unit = readyParts?.unit || "";
     const clock = readyParts?.clock || "";
-    body = `
-      <div class="status-v30-main accepted">
-        <span class="status-v30-eyebrow">BESTILLINGEN TILBEREDES</span>
-        <h3>Kjøkkenet har startet på maten din</h3>
-        <p>Restauranten har satt en forventet hentetid. Gjenstående tid teller ned automatisk.</p>
-        <div class="status-v30-countdown-hero">
-          <span class="status-v30-countdown-label" data-customer-ready-label="${escapeAttribute(order.id || "")}">GJENSTÅR</span>
-          <div class="status-v30-countdown-value">
-            <strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong>
-            <em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em>
-          </div>
-          <small>til forventet hentetid</small>
+    main = `
+      <div class="status-v31-main accepted">
+        <span class="status-v31-kicker">BESTILLINGEN TILBEREDES</span>
+        <h3>Bekreftet</h3>
+        <div class="status-v31-time accepted">
+          <small>CA. TID IGJEN</small>
+          <div><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em></div>
+          <span>til maten forventes klar</span>
         </div>
-        <div class="status-v30-pickup-time">
-          <span>FORVENTET HENTETID</span>
+        <div class="status-v31-pickup">
+          <small>HENT CA.</small>
           <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(clock)}</strong>
-          <small>Tiden er satt av restauranten og kan justeres dersom det blir ekstra travelt.</small>
         </div>
+        <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>${escapeAttribute(readyParts?.label || "")}</span>
       </div>`;
   } else if (stage === "ready") {
-    body = `
-      <div class="status-v30-main ready">
-        <span class="status-v30-eyebrow">KLAR FOR HENTING</span>
+    main = `
+      <div class="status-v31-main ready">
+        <span class="status-v31-kicker">KLAR FOR HENTING</span>
         <h3>Maten din er klar</h3>
-        <p>Bestillingen er ferdig. Du kan komme og hente den nå.</p>
-        <div class="status-v30-ready-banner">
+        <div class="status-v31-ready">
           <strong>Kom og hent nå</strong>
-          <small>Oppgi navnet ditt og hva du har bestilt ved henting.</small>
+          <small>Si navnet ditt og hva du bestilte.</small>
         </div>
         <span data-customer-ready-label="${escapeAttribute(order.id || "")}" hidden>Maten er klar</span>
         <strong data-customer-ready="${escapeAttribute(order.id || "")}" hidden></strong>
@@ -2018,14 +2003,13 @@ function orderStatusHtml(order = {}, options = {}) {
         <small data-customer-ready-clock="${escapeAttribute(order.id || "")}" hidden></small>
       </div>`;
   } else {
-    body = `
-      <div class="status-v30-main cancelled">
-        <span class="status-v30-eyebrow">BESTILLINGEN ER AVSLUTTET</span>
-        <h3>Bestillingen ble kansellert</h3>
-        <p>Restauranten har kansellert bestillingen.</p>
-        <div class="status-v30-cancel-banner">
+    main = `
+      <div class="status-v31-main cancelled">
+        <span class="status-v31-kicker">BESTILLINGEN ER AVSLUTTET</span>
+        <h3>Kansellert</h3>
+        <div class="status-v31-cancel">
           <strong>Ikke hent bestillingen</strong>
-          <small>Ta kontakt med restauranten dersom du har spørsmål.</small>
+          <small>Bestillingen ble kansellert av restauranten.</small>
         </div>
       </div>`;
   }
@@ -2033,20 +2017,20 @@ function orderStatusHtml(order = {}, options = {}) {
   const supportPhone = normalizeSiteSettings(siteSettings).phone || "+47 41 14 53 53";
   const supportPhoneDigits = String(supportPhone).replace(/\D/g, "");
   const supportPhoneHref = supportPhoneDigits ? `tel:${supportPhoneDigits.startsWith("47") ? "+" : "+47"}${supportPhoneDigits}` : `tel:${supportPhone.replace(/\s+/g, "")}`;
-  const expiredHelp = expired ? `<p class="status-v30-support">Det tar litt ekstra tid. Vent litt til, eller ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a>.</p>` : "";
+  const expiredHelp = expired ? `<p class="status-v31-help">Det tar litt ekstra tid. Ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a> hvis du trenger hjelp.</p>` : "";
 
   return `
-    <section class="order-live-status status-v30 stage-${stage} ${waitingOpen ? "waiting-open" : ""}">
-      <div class="status-v30-meta">
-        <span class="status-v30-badge">${statusLabel}</span>
+    <section class="order-live-status status-v31 stage-${stage}">
+      <div class="status-v31-top">
+        <span class="status-v31-badge">${badge}</span>
         <small>Ordre <b>${orderId}</b></small>
       </div>
-      ${progress}
-      ${body}
+      ${flow}
+      ${main}
       ${expiredHelp}
     </section>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
-    ${options.showCloseButton ? `<button class="order-live-close-inline status-v30-close" type="button" data-close-order-live>Lukk</button>` : ""}
+    ${options.showCloseButton ? `<button class="order-live-close-inline status-v31-close" type="button" data-close-order-live>Lukk</button>` : ""}
   `;
 }
 
