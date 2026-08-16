@@ -1,0 +1,100 @@
+name: Final order system hardening
+on:
+  push:
+    branches:
+      - fix/order-system-hardening-20260817
+    paths:
+      - .github/workflows/order-system-hardening-final.yml
+permissions:
+  contents: write
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch migration helpers
+        run: |
+          python .github/scripts/fix-hardening-normalizer.py
+          python .github/scripts/fix-hardening-final.py
+      - name: Apply migration
+        run: python .github/scripts/order-system-hardening-20260817.py
+      - name: Validate JavaScript and invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+          index = Path('test/index.html').read_text(encoding='utf-8')
+          admin = Path('test/admin-panel.html').read_text(encoding='utf-8')
+          css = Path('test/kol-core.css').read_text(encoding='utf-8')
+          checks = {
+            'customer uses public best-seller stats': '/publicStats/mostOrdered.json' in index,
+            'customer never GETs all orders': 'fetch(`${firebaseOrdersUrl}?ts=' not in index,
+            'customer aggregation removed': 'buildMostOrderedFromOrders' not in index,
+            '4-second 20-order polling removed': 'syncRecentOrdersFromFirebase, 4000' not in index,
+            '10-second active polling present': '}, 10000);' in index,
+            'pickup rounding handles partial minutes': 'result.getSeconds() > 0 || result.getMilliseconds() > 0' in index,
+            'canonical customer metadata': all(k not in index for k in ('client_order_count:', 'confirmed_at:', 'fulfill_time:', 'order_type:')),
+            'admin menu listeners split': 'const MENU_CONFIG_KEYS' in admin and 'menuFieldRefs[key].on("value"' in admin,
+            'admin no root value listener': 'const menuRef = firebase.database().ref("/")' not in admin,
+            'admin orders use child listeners': 'ordersRef.on("child_added"' in admin and 'ordersRef.on("child_changed"' in admin,
+            'admin publishes compact best-seller stats': 'publicMostOrderedRef' in admin,
+            'sms pending queue': 'iceSmsPendingRef.child(job.id).set(job)' in admin,
+            'sms queue promotion': 'promoteNextIceSmsJob' in admin,
+            'no direct current overwrite': 'iceSmsCurrentRef.set(job)' not in admin,
+            'canonical admin metadata': all(k not in admin for k in ('confirmed_at:', 'fulfill_time:', 'order_type:')),
+            'embedded catalog removed': 'id="kol-embedded-menu-catalog"' not in admin and 'KOLMenuCatalog' not in admin,
+            'css CDN import removed': '@import url(' not in css and 'cdn.jsdelivr.net/gh/pizzano/pizzano.github.io@' not in css,
+            'css layer removed': '@layer mobile' not in css,
+            'css consolidated marker': 'Customer/mobile overrides from the former layered stylesheet' in css,
+            'security review included': Path('test/FIREBASE_SECURITY.md').exists() and Path('test/database.rules.hardened.example.json').exists(),
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          for name, ok in checks.items(): print(('PASS' if ok else 'FAIL'), name)
+          if failed: raise SystemExit('Failed checks: ' + ', '.join(failed))
+          rules = json.loads(Path('test/database.rules.hardened.example.json').read_text(encoding='utf-8'))
+          assert rules['rules']['.read'] is False
+          scripts=[]
+          for prefix, html in [('index', index), ('admin', admin)]:
+              for i, script in enumerate(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S | re.I), 1):
+                  p=Path('/tmp')/f'{prefix}-{i}.js'
+                  p.write_text(script, encoding='utf-8')
+                  scripts.append(str(p))
+          Path('/tmp/kol-js-files.txt').write_text('\n'.join(scripts), encoding='utf-8')
+          print(f'Prepared {len(scripts)} inline scripts for node --check')
+          PY
+          while IFS= read -r file; do node --check "$file"; done < /tmp/kol-js-files.txt
+          git diff --check
+      - name: Verify scoped changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git diff --stat -- test/index.html test/admin-panel.html test/kol-core.css test/FIREBASE_SECURITY.md test/database.rules.hardened.example.json
+          git diff --numstat -- test/index.html test/admin-panel.html test/kol-core.css test/FIREBASE_SECURITY.md test/database.rules.hardened.example.json
+      - name: Commit hardened ordering system
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KOL Hardening Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -- test/index.html test/admin-panel.html test/kol-core.css test/FIREBASE_SECURITY.md test/database.rules.hardened.example.json
+          git rm -- \
+            .github/scripts/order-system-hardening-20260817.py \
+            .github/scripts/fix-hardening-normalizer.py \
+            .github/scripts/fix-hardening-final.py \
+            .github/workflows/order-system-hardening-20260817.yml \
+            .github/workflows/order-system-hardening-retry.yml \
+            .github/workflows/order-system-hardening-retry2.yml \
+            .github/workflows/order-system-hardening-diagnose.yml \
+            .github/workflows/order-system-hardening-final.yml
+          git diff --cached --check
+          git commit -m "Harden ordering data flow and remove legacy layers"
+          git push origin HEAD:fix/order-system-hardening-20260817
