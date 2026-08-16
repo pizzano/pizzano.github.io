@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>Admin - KØL Grill &amp; Pizza</title>
-<link href="kol-core.css?v=mobile-v27" rel="stylesheet"/>
+<link href="kol-core.css?v=hardening-20260817" rel="stylesheet"/>
 
 </head>
 <body class="kol-admin">
@@ -710,273 +710,6 @@
 </footer>
 </form>
 </div>
-<script id="kol-embedded-menu-catalog">
-(function installKolMenuCatalog(global) {
-  "use strict";
-
-  const VERSION = 2026080502;
-  const STRENGTH_GROUP_ID = "kol-kebab-styrke-v1";
-
-  const FOOD_IMAGES = {
-    pizza: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=82",
-    pizzaAlt: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=900&q=82",
-    kebab: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=900&q=82",
-    wrap: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=82",
-    burger: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=82",
-    fries: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=900&q=82",
-    grill: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=900&q=82",
-    fish: "https://images.unsplash.com/photo-1579208030886-b937da0925dc?auto=format&fit=crop&w=900&q=82",
-    salad: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=82",
-    drink: "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=900&q=82",
-    sauce: "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=900&q=82"
-  };
-
-  const imageForItem = (id, thumb = "plate") => {
-    const key = String(id || "").toLowerCase();
-    if (key.includes("pizza") || key === "classico" || key === "capri" || key === "al-capone" || key === "parma" || key === "sjefens" || key === "torino" || key === "mexican-style" || key === "alfredo" || key === "calzone" || key === "ciao-ciao" || key === "pollo-marina" || key === "bianca" || key === "fantasia" || key === "diavola" || key === "lag-din-egen") return FOOD_IMAGES.pizza;
-    if (key.includes("rull")) return FOOD_IMAGES.wrap;
-    if (key.includes("kebab") || key.includes("pita")) return FOOD_IMAGES.kebab;
-    if (key.includes("burger")) return FOOD_IMAGES.burger;
-    if (key.includes("fish")) return FOOD_IMAGES.fish;
-    if (key.includes("salat")) return FOOD_IMAGES.salad;
-    if (key.includes("mineralvann")) return FOOD_IMAGES.drink;
-    if (key.includes("dressing") || key.includes("saus")) return FOOD_IMAGES.sauce;
-    if (key.includes("pommes") || key.includes("fries") || key.includes("mozzarella") || key.includes("lokringer") || key.includes("nugget")) return FOOD_IMAGES.fries;
-    if (thumb === "green") return FOOD_IMAGES.salad;
-    return FOOD_IMAGES.grill;
-  };
-
-  const pizza = (id, number, name, ingredients, medium, large, thumb = "mixed") => ({
-    id,
-    number,
-    name,
-    ingredients,
-    thumb,
-    imageUrl: number % 2 === 0 ? FOOD_IMAGES.pizzaAlt : FOOD_IMAGES.pizza,
-    sizes: [
-      { id: "medium", label: "Medium", price: medium, default: true },
-      { id: "large", label: "Stor", price: large, default: false }
-    ],
-    defaultSizeId: "medium",
-    mediumPrice: medium,
-    largePrice: large,
-    displayPrice: medium
-  });
-
-  const item = (id, name, ingredients, price, thumb = "plate", extra = {}) => ({
-    id,
-    name,
-    ingredients,
-    price,
-    thumb,
-    imageUrl: imageForItem(id, thumb),
-    ...extra
-  });
-
-  const sections = [
-    {
-      id: "pizza",
-      title: "PIZZA",
-      note: "Alle pizzaer kommer med ost og tomatsaus: Stor for 2–3 personer, medium for 1 person.",
-      imageClass: "pizza-strip",
-      items: [
-        pizza("classico", 1, "CLASICCO", "Skinke eller pepperoni", 175, 275, "pepperoni"),
-        pizza("capri", 2, "CAPRI", "Skinke, bacon og sopp", 185, 285, "mushroom"),
-        pizza("al-capone", 3, "AL CAPONE", "Pepperoni, biff, paprika og løk", 195, 295, "spicy"),
-        pizza("parma", 4, "PARMA", "Parmaskinke, pesto-olje, rukkola og parmesanost", 215, 315, "green"),
-        pizza("sjefens", 5, "SJEFENS FAVORITT", "Biff, skinke, pepperoni og paprika", 215, 315, "mixed"),
-        pizza("torino", 6, "TORINO", "Pepperoni, skinke, bacon og løk", 195, 295, "red"),
-        pizza("mexican-style", 7, "MEXICAN STYLE", "Biff, paprika, tacosaus, løk, jalapeño og nachos", 195, 295, "spicy"),
-        pizza("kebabpizza", 8, "KEBABPIZZA", "Ekte döner kebabkjøtt, sopp, løk, salat og hvitløksaus", 230, 330, "mixed"),
-        pizza("kyllingpizza", 9, "KYLLINGPIZZA", "Kyllingkjøtt, bacon, mais og paprika", 195, 295, "mixed"),
-        pizza("alfredo", 10, "ALFREDO", "Kyllingkjøtt, jalapeño, nachos, paprika og løk", 195, 295, "green"),
-        pizza("calzone", 11, "CALZONE (innbakt)", "Innbakt italiensk pizza med ost og skinke", 175, 275, "red"),
-        pizza("ciao-ciao", 12, "CIAO CIAO", "Biff, sopp, løk og béarnaisesaus", 195, 295, "mushroom"),
-        pizza("pollo-marina", 13, "POLLO MARINA", "Hvit pizzasaus, marinert kylling, blåmuggost, løk og rukkola", 210, 310, "green"),
-        pizza("bianca", 14, "BIANCA", "Hvit pizzasaus, parmaskinke, pesto-olje, rukkola og parmesanost", 210, 310, "green"),
-        pizza("fantasia", 15, "FANTASIA", "Skinke, mais og løk", 199, 299, "mixed"),
-        pizza("diavola", 16, "DIAVOLA", "Pepperoni, soltørkede tomater, sopp og gorgonzolaost", 209, 309, "spicy"),
-        pizza("lag-din-egen", 17, "Lag din egen", "Legg til de ingrediensene du ønsker! Ost og pizzasaus er inkludert.", 169, 259, "pepperoni"),
-        item("hvitloksdressing", "Hvitløksdressing", "", 25, "sauce", { type: "sauce" }),
-        item("bearnaisesaus-product", "Béarnaisesaus", "", 25, "sauce", { type: "sauce" })
-      ]
-    },
-    {
-      id: "kebab",
-      title: "KEBAB RETTER",
-      note: "",
-      imageClass: "kebab-strip",
-      items: [
-        item("kebab-pita", "Kebab i pita", "Hjemmebakt pitabrød, ekte döner kebabkjøtt, salat, rødløk, agurk og hvitløksaus", 189, "kebab", { type: "kebab-pita" }),
-        item("kylling-pita", "Kylling kebab i pita", "Hjemmebakt pitabrød, kyllingkebabkjøtt, salat, rødløk, agurk og hvitløksaus", 189, "kebab", { type: "kebab-pita" }),
-        item("kebab-rull", "Kebab Rull", "Hjemmebakt lefsebrød, ekte döner kebabkjøtt, salat, rødløk, agurk og hvitløksaus", 210, "wrap", { type: "kebab-wrap" }),
-        item("kylling-rull", "Kylling Kebab Rull", "Hjemmebakt lefsebrød, kyllingkebabkjøtt, salat, rødløk, agurk og hvitløksaus", 210, "wrap", { type: "kebab-wrap" }),
-        item("kebabtallerken", "Kebabtallerken", "Ekte döner kebabkjøtt, salat, rødløk, agurk, hvitløksaus og pommes frites", 239, "plate", { type: "kebab-plate" }),
-        item("kylling-kebabtallerken", "Kylling Kebabtallerken", "Kyllingkebabkjøtt, salat, rødløk, agurk, hjemmelaget hvitløksaus og pommes frites", 239, "plate", { type: "kebab-plate" })
-      ]
-    },
-    {
-      id: "burger",
-      title: "HJEMMELAGDE BURGER",
-      note: "Hjemmelagde burgere på 180 g, tilberedt med ferske ingredienser for maksimal smak.",
-      imageClass: "burger-strip",
-      items: [
-        item("dobbel-burger", "Lag dobbel burger", "Dobbel glede, dobbel smak!", 89, "burger"),
-        item("hamburger-tallerken", "Hamburger Tallerken", "Crispy salat med dressing, løk, tomat og pommes frites", 209, "burger"),
-        item("cheese-burger-tallerken", "Cheese Burger Tallerken", "Crispy salat med ost, dressing, løk, tomat og pommes frites", 229, "burger", { allergens: "Halal" }),
-        item("bbq-bacon-cheese", "BBQ Bacon Cheese Tallerken", "Crispy salat med dressing, BBQ-saus, bacon, ost, løk, tomat og pommes frites", 249, "burger"),
-        item("blue-cheese-burger", "Blue cheese Burger Tallerken", "Crispy salat med dressing, BBQ-saus, blåmuggost, bacon, løk, tomat og pommes frites", 259, "burger"),
-        item("nachos-burger", "Nachos Burger Tallerken", "Crispy salat med dressing, ost, nachos, jalapeño, tacosaus, løk, tomat og pommes frites", 259, "burger"),
-        item("parma-burger", "Parma Burger Tallerken", "Parmaskinke, crispy salat, hvitløksaus, ost, løk, tomat og pommes frites", 259, "burger"),
-        item("burger-pommes", "Pommes frites", "", 59),
-        item("sotpotet-fries", "Søtpotet fries", "", 75),
-        item("mozzarellasticks", "Mozzarellasticks 5 stk", "", 75),
-        item("lokringer", "Løkringer 6 stk", "", 59)
-      ]
-    },
-    {
-      id: "andre",
-      title: "ANDRE RETTER",
-      note: "Alle våre retter tilberedes på flatgrill for optimal smak.",
-      imageClass: "burger-strip",
-      items: [
-        item("biffsnadder", "BIFFSNADDER", "Marinert biffkjøtt, paprika, løk, sopp, frisk salat, pommes frites, béarnaisesaus og brød", 259),
-        item("kyllingsnadder", "KYLLINGSNADDER", "Marinert kyllingkjøtt, paprika, løk, frisk salat, pommes frites, hvitløksaus og brød", 259),
-        item("hvitloksnadder", "HVITLØKSNADDER", "Marinert biffkjøtt, paprika, løk, sopp, fersk hvitløk, frisk salat, pommes frites, hvitløksaus og brød", 259),
-        item("fish-chips", "FISH & CHIPS", "Serveres med remulade, frisk salat og pommes frites", 229),
-        item("lovstek", "LØVSTEK", "Grovkvernet storfekjøtt 150 g, frisk salat, pommes frites og hjemmelaget béarnaisesaus", 199),
-        item("kyllingsalat", "KYLLINGSALAT", "Marinert kyllingkjøtt, ost og frisk salatmix. Serveres med hjemmebakt brød og smør.", 219, "green"),
-        item("skinke-salat", "SKINKE-SALAT", "Skinke, frisk salatmix og ost. Serveres med hjemmebakt brød og smør.", 199, "green")
-      ]
-    },
-    {
-      id: "vegetar",
-      title: "VEGETAR MENY",
-      note: "",
-      imageClass: "kebab-strip",
-      items: [
-        item("vegetarburger", "VEGETARBURGER", "Dressing, BBQ-saus, cheddarost, crispy salat, løk, soltørkede tomater og pommes frites", 220, "green", { allergens: "Vegetar" }),
-        item("vegetar-pizza", "VEGETAR PIZZA", "Paprika, løk, sopp, mais, ananas, soltørkede tomater og rukkola", 185, "green", { allergens: "Vegetar" })
-      ]
-    },
-    {
-      id: "diverse",
-      title: "DIVERSE RETTER",
-      note: "",
-      imageClass: "burger-strip",
-      items: [
-        item("diverse-pommes", "Pommes frites", "", 59),
-        item("diverse-sotpotet", "Søtpotet fries", "", 75),
-        item("diverse-mozzarella", "Mozzarellasticks 5 stk", "", 75),
-        item("diverse-lokringer", "Løkringer 6 stk", "", 59)
-      ]
-    },
-    {
-      id: "barne",
-      title: "BARNE MENY",
-      note: "",
-      imageClass: "pizza-strip",
-      items: [
-        item("barneburger", "BARNEBURGER", "Plain burger. Serveres med pommes frites.", 155, "burger"),
-        item("barnepizza", "BARNEPIZZA", "Barnepizza med skinke eller pepperoni.", 155, "pepperoni"),
-        item("barne-pommes", "Pommes frites", "", 59),
-        item("kyllingnuggets", "KYLLINGNUGGETS", "5 stk kyllingnuggets med pommes frites", 135)
-      ]
-    },
-    {
-      id: "drikker",
-      title: "DRIKKER",
-      note: "",
-      imageClass: "kebab-strip",
-      items: [
-        item("mineralvann-05", "MINERALVANN 0.5L", "Du velger drikke når du henter maten på restauranten.", 39, "sauce"),
-        item("mineralvann-15", "MINERALVANN 1.5L", "Du velger drikke når du henter maten på restauranten.", 59, "sauce")
-      ]
-    }
-  ];
-
-  const strengthGroup = {
-    id: STRENGTH_GROUP_ID,
-    title: "Velg styrke",
-    type: "single",
-    required: true,
-    options: [
-      { id: "mild", label: "Mild", price: 0, default: true },
-      { id: "medium", label: "Medium", price: 0, default: false },
-      { id: "sterk", label: "Sterk", price: 0, default: false }
-    ]
-  };
-
-  const clone = (value) => JSON.parse(JSON.stringify(value));
-  const keepOperationalFields = (oldItem, newItem) => {
-    const previous = oldItem || {};
-    const operationalKeys = ["hidden", "soldOut", "soldOutUntil"];
-    const merged = { ...newItem };
-    operationalKeys.forEach((key) => {
-      if (Object.prototype.hasOwnProperty.call(previous, key)) merged[key] = previous[key];
-    });
-    if (typeof previous.imageUrl === "string" && previous.imageUrl.trim()) {
-      merged.imageUrl = previous.imageUrl.trim();
-    }
-    if (newItem.id !== "cheese-burger-tallerken" && newItem.id !== "vegetarburger" && newItem.id !== "vegetar-pizza" && previous.allergens) {
-      merged.allergens = previous.allergens;
-    }
-    const oldGroups = Array.isArray(previous.optionGroupIds) ? previous.optionGroupIds : [];
-    merged.optionGroupIds = newItem.type && newItem.type.startsWith("kebab-")
-      ? [...new Set([...oldGroups, STRENGTH_GROUP_ID])]
-      : oldGroups;
-    if (previous.optionGroupIdsBySize) merged.optionGroupIdsBySize = previous.optionGroupIdsBySize;
-    return merged;
-  };
-
-  function upgrade(source) {
-    const input = source && typeof source === "object" ? source : {};
-    if (Number(input.catalogVersion || 0) >= VERSION) return { config: input, changed: false };
-
-    const existingSections = Array.isArray(input.sections) ? input.sections : [];
-    const oldItems = new Map();
-    existingSections.forEach((section) => {
-      (Array.isArray(section.items) ? section.items : []).forEach((entry) => oldItems.set(String(entry.id || ""), entry));
-    });
-
-    const nextSections = clone(sections).map((section) => {
-      const oldSection = existingSections.find((entry) => String(entry.id || "") === section.id);
-      const mergedSection = { ...section };
-      ["hidden", "soldOut", "soldOutUntil"].forEach((key) => {
-        if (oldSection && Object.prototype.hasOwnProperty.call(oldSection, key)) mergedSection[key] = oldSection[key];
-      });
-      mergedSection.items = section.items.map((entry) => keepOperationalFields(oldItems.get(entry.id), entry));
-      return mergedSection;
-    });
-
-    const optionGroups = Array.isArray(input.optionGroups) ? clone(input.optionGroups) : [];
-    const strengthIndex = optionGroups.findIndex((group) => String(group.id || "") === STRENGTH_GROUP_ID);
-    if (strengthIndex >= 0) optionGroups[strengthIndex] = clone(strengthGroup);
-    else optionGroups.push(clone(strengthGroup));
-
-    return {
-      changed: true,
-      config: {
-        ...input,
-        sections: nextSections,
-        optionGroups,
-        catalogVersion: VERSION
-      }
-    };
-  }
-
-  function menuPatch(config) {
-    return {
-      sections: config.sections,
-      optionGroups: config.optionGroups,
-      catalogVersion: VERSION
-    };
-  }
-
-  global.KOLMenuCatalog = { VERSION, STRENGTH_GROUP_ID, upgrade, menuPatch };
-})(window);
-
-</script>
 <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -984,14 +717,33 @@
 /* ===== admin.js INLINED ===== */
 const firebaseDatabaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/";
 firebase.initializeApp({ databaseURL: firebaseDatabaseUrl });
-const menuRef = firebase.database().ref("/");
+const rootMenuRef = firebase.database().ref("/");
+const MENU_CONFIG_KEYS = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
+const menuFieldRefs = Object.fromEntries(MENU_CONFIG_KEYS.map((key) => [key, firebase.database().ref(`/${key}`)]));
 const ordersRef = firebase.database().ref("/orders");
 const rescueDealsRef = firebase.database().ref("/rescueDeals");
-// TÜRKÇE: ICE Min Side Tampermonkey scripti bu path'i dinliyor.
-// Admin siparişi onaylayınca buraya SMS işi yazıyoruz.
-const iceSmsCurrentRef = firebase.database().ref("/iceSmsQueue/current");
-const iceSmsDeviceStatusRef = firebase.database().ref("/iceSmsQueue/deviceStatus");
+const publicMostOrderedRef = firebase.database().ref("/publicStats/mostOrdered");
+const iceSmsQueueRef = firebase.database().ref("/iceSmsQueue");
+const iceSmsCurrentRef = iceSmsQueueRef.child("current");
+const iceSmsPendingRef = iceSmsQueueRef.child("pending");
+const iceSmsDeviceStatusRef = iceSmsQueueRef.child("deviceStatus");
 const firebaseConnectionRef = firebase.database().ref(".info/connected");
+
+async function readMenuConfigOnce() {
+  const entries = await Promise.all(MENU_CONFIG_KEYS.map(async (key) => {
+    const snapshot = await menuFieldRefs[key].once("value");
+    return [key, snapshot.val()];
+  }));
+  return Object.fromEntries(entries);
+}
+
+async function writeMenuConfigFields(value = {}) {
+  const patch = {};
+  MENU_CONFIG_KEYS.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(value, key)) patch[key] = value[key];
+  });
+  await rootMenuRef.update(patch);
+}
 
 const fields = {
   productId: document.querySelector("#productId"),
@@ -1353,6 +1105,51 @@ function buildReadyOrderSmsMessage(order = {}) {
   return limitIceSmsText(`${greeting} Bestillingen din hos KØL Grill & Pizza er klar for henting ✅ Velkommen!${linkText}`, 360);
 }
 
+
+function isIceSmsTerminalStatus(status = "") {
+  return ["sent", "done", "completed", "failed", "cancelled"].includes(String(status || "").toLowerCase());
+}
+
+let iceSmsPromotePromise = null;
+async function promoteNextIceSmsJob() {
+  if (iceSmsPromotePromise) return iceSmsPromotePromise;
+  iceSmsPromotePromise = (async () => {
+    const currentSnapshot = await iceSmsCurrentRef.once("value");
+    const current = currentSnapshot.val();
+    if (current && !isIceSmsTerminalStatus(current.status)) return current;
+    if (current) await iceSmsCurrentRef.remove();
+
+    const pendingSnapshot = await iceSmsPendingRef.orderByChild("createdAt").limitToFirst(1).once("value");
+    let nextKey = "";
+    let nextJob = null;
+    pendingSnapshot.forEach((child) => {
+      if (!nextJob) {
+        nextKey = child.key;
+        nextJob = child.val();
+      }
+    });
+    if (!nextJob || !nextKey) return null;
+
+    const dispatchedAt = new Date().toISOString();
+    const dispatchedJob = { ...nextJob, status: "pending", dispatchedAt };
+    const result = await iceSmsCurrentRef.transaction((existing) => {
+      if (existing && !isIceSmsTerminalStatus(existing.status)) return;
+      return dispatchedJob;
+    });
+    if (result.committed) {
+      await iceSmsPendingRef.child(nextKey).remove();
+      return dispatchedJob;
+    }
+    return result.snapshot?.val() || null;
+  })().catch((error) => {
+    console.error("SMS-kø kunne ikke promoteres:", error);
+    return null;
+  }).finally(() => {
+    iceSmsPromotePromise = null;
+  });
+  return iceSmsPromotePromise;
+}
+
 async function enqueueIceSmsJob(order = {}, readyMinutes = DEFAULT_READY_MINUTES, fulfillAt = null, options = {}) {
   const phone = normalizeIceSmsQueuePhone(order.customer?.phone || "");
   if (!phone || phone.length < 8) {
@@ -1380,10 +1177,11 @@ async function enqueueIceSmsJob(order = {}, readyMinutes = DEFAULT_READY_MINUTES
   };
 
   try {
-    await iceSmsCurrentRef.set(job);
+    await iceSmsPendingRef.child(job.id).set(job);
+    await promoteNextIceSmsJob();
     const smsLog = {
       queued: true,
-      queuePath: "iceSmsQueue/current",
+      queuePath: `iceSmsQueue/pending/${job.id}`,
       jobId: job.id,
       type: smsType,
       phone: job.phone,
@@ -1394,12 +1192,12 @@ async function enqueueIceSmsJob(order = {}, readyMinutes = DEFAULT_READY_MINUTES
     };
     await ordersRef.child(order.id).child("iceSms").child(smsType).set(smsLog);
     await ordersRef.child(order.id).child("iceSmsLast").set(smsLog);
-    setStatus("SMS-jobb sendt til Tampermonkey.");
+    setStatus("SMS-jobb lagt i kø.");
     return job;
   } catch (error) {
     console.error("Kunne ikke skrive ICE SMS-jobb:", error);
-    showToast("SMS-jobb kunne ikke sendes til Firebase.");
-    setStatus("SMS-jobb kunne ikke sendes til Firebase.");
+    showToast("SMS-jobb kunne ikke legges i kø.");
+    setStatus("SMS-jobb kunne ikke legges i kø.");
     return null;
   }
 }
@@ -1478,6 +1276,10 @@ function normalizeAdminOrderRecord(order = {}, id = "") {
     ...order,
     id: safeAdminText(id || order.id, `order-${Date.now()}`),
     status,
+    orderType: safeAdminText(order.orderType || order.order_type, "pickup"),
+    clientOrderCount: Math.max(1, safeAdminNumber(order.clientOrderCount ?? order.client_order_count, 1)),
+    confirmedAt: safeAdminText(order.confirmedAt || order.confirmed_at || order.acceptedAt),
+    fulfillTime: safeAdminText(order.fulfillTime || order.fulfill_time),
     customer: {
       fullName: safeAdminText(order.customer?.fullName || [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(" ")),
       firstName: safeAdminText(order.customer?.firstName),
@@ -1766,8 +1568,7 @@ function normalizeOptionGroups(value) {
 
 
 function normalizeConfig(value) {
-  const catalogResult = window.KOLMenuCatalog?.upgrade(value || {});
-  const source = catalogResult?.config || value || {};
+  const source = value || {};
   const sections = asArray(source?.sections).map((section) => {
     const { hidden, soldOut, soldOutUntil, ...cleanSection } = section || {};
     return {
@@ -1846,19 +1647,17 @@ function renderCachedMenuIfAvailable(message = "Viser siste lokale meny mens Fir
   return true;
 }
 
+
+
 async function loadData() {
   setStatus("Synkroniserer med Firebase...");
-  const snapshot = await menuRef.once("value");
-  const value = snapshot.val();
-  rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
-
-  // TÜRKÇE: Firebase tamamen silinmişse bile config boş kalmasın.
-  // Boş config ile admin panelinde kategori/ürün ekleme devam eder.
-  const catalogUpgrade = hasValidConfig(value) ? window.KOLMenuCatalog?.upgrade(value || {}) : null;
-  const effectiveValue = catalogUpgrade?.config || value;
-  config = hasValidConfig(value) ? normalizeConfig(effectiveValue) : createEmptyConfig();
-  if (hasValidConfig(value)) saveAdminMenuCache(effectiveValue);
-  if (catalogUpgrade?.changed) await menuRef.update(window.KOLMenuCatalog.menuPatch(effectiveValue));
+  const [value, rescueSnapshot] = await Promise.all([
+    readMenuConfigOnce(),
+    rescueDealsRef.once("value")
+  ]);
+  rescueDeals = rescueSnapshot.val() && typeof rescueSnapshot.val() === "object" ? rescueSnapshot.val() : {};
+  config = hasValidConfig(value) ? normalizeConfig(value) : createEmptyConfig();
+  if (hasValidConfig(value)) saveAdminMenuCache(value);
   if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
   if (!selectedCategory()) {
     selectedProductIndex = null;
@@ -1867,13 +1666,9 @@ async function loadData() {
     selectedProductIndex = null;
     productEditorOpen = false;
   }
-  renderAll();
-
-  setStatus(
-    hasValidConfig(value)
-      ? "Synkronisert med Firebase."
-      : "Firebase er tom. Du kan starte fra null og legge til kategori."
-  );
+  firebaseReady = true;
+  if (!isEditingField()) renderAll();
+  setStatus(hasValidConfig(value) ? "Synkronisert med Firebase." : "Firebase er tom. Du kan starte fra null og legge til kategori.");
 }
 
 async function saveData() {
@@ -1884,8 +1679,10 @@ async function writeLiveConfig(message = "Lagret automatisk til Firebase.") {
   if (!config) return false;
   try {
     setStatus("Lagrer til Firebase...");
-    // TÜRKÇE: Root'a set() yaparsak /orders silinir. update() siparişleri korur.
-    await menuRef.update(normalizeConfig(config));
+    const normalized = normalizeConfig(config);
+    config = normalized;
+    await writeMenuConfigFields(normalized);
+    saveAdminMenuCache(normalized);
     setStatus(message);
     return true;
   } catch (error) {
@@ -4180,39 +3977,114 @@ function renderOrdersAdmin() {
   refreshAdminLiveTimes();
 }
 
+let adminOrdersById = new Map();
+let adminOrdersRenderTimer = null;
+let adminInitialOrdersTimer = null;
+let publicMostOrderedTimer = null;
+let lastPublicMostOrderedSignature = "";
+
+function buildPublicMostOrderedRows() {
+  const counts = new Map();
+  adminOrders.forEach((order) => {
+    if (!order || (order.status || "pending") === "cancelled") return;
+    asArray(order.items).forEach((item) => {
+      const id = safeAdminText(item?.id || item?.productId);
+      const name = safeAdminText(item?.name);
+      if (!id && !name) return;
+      const key = id || `name:${name.toLocaleLowerCase("nb-NO")}`;
+      const current = counts.get(key) || { id, name, count: 0 };
+      current.count += Math.max(1, safeAdminNumber(item?.quantity || 1));
+      counts.set(key, current);
+    });
+  });
+  return Array.from(counts.values()).sort((a, b) => b.count - a.count).slice(0, 5);
+}
+
+function schedulePublicMostOrderedSync() {
+  window.clearTimeout(publicMostOrderedTimer);
+  publicMostOrderedTimer = window.setTimeout(async () => {
+    const rows = buildPublicMostOrderedRows();
+    const signature = JSON.stringify(rows);
+    if (signature === lastPublicMostOrderedSignature) return;
+    lastPublicMostOrderedSignature = signature;
+    try {
+      await publicMostOrderedRef.set(rows);
+    } catch (error) {
+      console.warn("Bestselgeroversikt kunne ikke lagres.", error);
+    }
+  }, 900);
+}
+
+function flushAdminOrdersFromMap() {
+  adminOrders = Array.from(adminOrdersById.values());
+  try {
+    renderOrdersAdmin();
+  } catch (error) {
+    console.error("Bestillinger kunne ikke vises:", error);
+    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene kunne ikke vises akkurat nå.</p>`;
+  }
+  updateAdminOrderAlarmLoop();
+  schedulePublicMostOrderedSync();
+}
+
+function scheduleAdminOrdersRender() {
+  window.clearTimeout(adminOrdersRenderTimer);
+  adminOrdersRenderTimer = window.setTimeout(flushAdminOrdersFromMap, 80);
+}
+
 function listenForOrders() {
   if (!ordersRef) return;
-  ordersRef.on("value", (snapshot) => {
-    const value = snapshot.val() || {};
-    const nextOrders = Object.entries(value)
-      .map(([id, order]) => normalizeAdminOrderRecord(order, String(id)))
-      .filter(Boolean);
-    const nextIds = new Set(nextOrders.map((order) => order.id));
-    const hasNewPendingOrder = ordersReady && nextOrders.some((order) => {
-      return isAdminOrderFromToday(order) && !knownOrderIdsForSound.has(order.id) && (order.status || "pending") === "pending";
-    });
+  ordersRef.off("value");
+  ordersRef.off("child_added");
+  ordersRef.off("child_changed");
+  ordersRef.off("child_removed");
+  adminOrdersById = new Map();
+  knownOrderIdsForSound = new Set();
+  ordersReady = false;
 
-    adminOrders = nextOrders;
-    knownOrderIdsForSound = nextIds;
-    ordersReady = true;
-    try {
-      renderOrdersAdmin();
-    } catch (error) {
-      console.error("Bestillinger kunne ikke vises:", error);
-      if (ordersAdminList) {
-        ordersAdminList.innerHTML = `<p class="empty-orders">Bestillingene finnes i Firebase, men en testbestilling har feil format. De nye bestillingene beskyttes mot dette nå.</p>`;
-      }
-    }
-    updateAdminOrderAlarmLoop();
+  const markInitialLoadSoon = () => {
+    window.clearTimeout(adminInitialOrdersTimer);
+    adminInitialOrdersTimer = window.setTimeout(() => {
+      ordersReady = true;
+      knownOrderIdsForSound = new Set(adminOrdersById.keys());
+      flushAdminOrdersFromMap();
+    }, 700);
+  };
 
-    if (hasNewPendingOrder) {
+  const onError = (error) => {
+    console.error(error);
+    setStatus("Kunne ikke synkronisere bestillinger.");
+  };
+
+  ordersRef.on("child_added", (snapshot) => {
+    const id = String(snapshot.key || "");
+    const order = normalizeAdminOrderRecord(snapshot.val(), id);
+    if (!order) return;
+    const isNewPending = ordersReady && !knownOrderIdsForSound.has(id) && isAdminOrderFromToday(order) && (order.status || "pending") === "pending";
+    adminOrdersById.set(id, order);
+    knownOrderIdsForSound.add(id);
+    scheduleAdminOrdersRender();
+    markInitialLoadSoon();
+    if (isNewPending) {
       setStatus("Ny bestilling mottatt.");
       showToast("Ny bestilling mottatt.");
     }
-  }, (error) => {
-    console.error(error);
-    if (ordersAdminList) ordersAdminList.innerHTML = `<p class="empty-orders">Kunne ikke lese bestillinger.</p>`;
-  });
+  }, onError);
+
+  ordersRef.on("child_changed", (snapshot) => {
+    const id = String(snapshot.key || "");
+    const order = normalizeAdminOrderRecord(snapshot.val(), id);
+    if (!order) return;
+    adminOrdersById.set(id, order);
+    scheduleAdminOrdersRender();
+  }, onError);
+
+  ordersRef.on("child_removed", (snapshot) => {
+    const id = String(snapshot.key || "");
+    adminOrdersById.delete(id);
+    knownOrderIdsForSound.delete(id);
+    scheduleAdminOrdersRender();
+  }, onError);
 }
 
 async function acceptOrder(orderId, minutes) {
@@ -4224,9 +4096,7 @@ async function acceptOrder(orderId, minutes) {
     status: "accepted",
     readyMinutes,
     acceptedAt,
-    confirmed_at: acceptedAt,
     confirmedAt: acceptedAt,
-    fulfill_time: fulfillAt,
     fulfillTime: fulfillAt,
     ready: false,
     updatedAt: acceptedAt
@@ -4235,9 +4105,7 @@ async function acceptOrder(orderId, minutes) {
     status: "accepted",
     readyMinutes,
     acceptedAt,
-    confirmed_at: acceptedAt,
     confirmedAt: acceptedAt,
-    fulfill_time: fulfillAt,
     fulfillTime: fulfillAt,
     ready: false,
     updatedAt: acceptedAt
@@ -5350,7 +5218,7 @@ function makeAdminTestOrderPayload() {
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     source: "admin-test",
-    order_type: "pickup",
+    orderType: "pickup",
     payment: "pickup",
     printed: false,
     ready: false,
@@ -5990,6 +5858,9 @@ function startDeviceStatusMonitor() {
     iceSmsCurrentRef.on("value", (snapshot) => {
       deviceSmsCurrentJobSnapshot = snapshot.val() || null;
       renderDeviceStatusPanel();
+      if (!deviceSmsCurrentJobSnapshot || isIceSmsTerminalStatus(deviceSmsCurrentJobSnapshot.status)) {
+        window.setTimeout(() => promoteNextIceSmsJob(), 120);
+      }
     });
   }
 
@@ -6055,47 +5926,60 @@ function startOrdersConnectionIndicator() {
 function startRealtimeSync() {
   setStatus("Kobler til Firebase...");
   renderCachedMenuIfAvailable();
-  menuRef.on(
-    "value",
-    async (snapshot) => {
-      const value = snapshot.val();
-      rescueDeals = value?.rescueDeals && typeof value.rescueDeals === "object" ? value.rescueDeals : {};
 
+  const state = {};
+  const seen = new Set();
+  let applyTimer = null;
+  const scheduleApply = () => {
+    window.clearTimeout(applyTimer);
+    applyTimer = window.setTimeout(() => {
+      if (seen.size < MENU_CONFIG_KEYS.length) return;
+      const value = { ...state };
       if (!hasValidConfig(value)) {
-        // TÜRKÇE: Firebase boşsa otomatik test menüsü basmıyoruz.
-        // Sadece boş panel açıyoruz; sen kategori ekleyince ilk kayıt Firebase'e yazılır.
         config = createEmptyConfig();
         selectedCategoryIndex = null;
         selectedProductIndex = null;
         productEditorOpen = false;
         firebaseReady = true;
         if (!isEditingField()) renderAll();
-        setStatus("Firebase er tom. Klar til å lage ny meny uten menu-data.js.");
+        setStatus("Firebase er tom. Klar til å lage ny meny.");
         return;
       }
-
-      const catalogUpgrade = window.KOLMenuCatalog?.upgrade(value || {});
-      const effectiveValue = catalogUpgrade?.config || value;
-      saveAdminMenuCache(effectiveValue);
-      config = normalizeConfig(effectiveValue);
+      saveAdminMenuCache(value);
+      config = normalizeConfig(value);
       if (selectedCategoryIndex !== null && selectedCategoryIndex >= config.sections.length) selectedCategoryIndex = null;
-      if (!selectedCategory()) { selectedProductIndex = null; productEditorOpen = false; }
-      else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) { selectedProductIndex = null; productEditorOpen = false; }
+      if (!selectedCategory()) {
+        selectedProductIndex = null;
+        productEditorOpen = false;
+      } else if (selectedProductIndex !== null && selectedProductIndex >= asArray(selectedCategory()?.items).length) {
+        selectedProductIndex = null;
+        productEditorOpen = false;
+      }
       firebaseReady = true;
       if (!isEditingField()) renderAll();
       setStatus("Koblet til Firebase. Endringer lagres automatisk.");
-      if (catalogUpgrade?.changed) {
-        menuRef.update(window.KOLMenuCatalog.menuPatch(effectiveValue)).catch((error) => {
-          console.warn("Menyoppdateringen kunne ikke lagres permanent ennå.", error);
-        });
-      }
-    },
-    (error) => {
+    }, 40);
+  };
+
+  MENU_CONFIG_KEYS.forEach((key) => {
+    menuFieldRefs[key].on("value", (snapshot) => {
+      state[key] = snapshot.val();
+      seen.add(key);
+      scheduleApply();
+    }, (error) => {
       console.error(error);
-      const hadCache = renderCachedMenuIfAvailable("Kunne ikke koble til Firebase. Viser siste lokale meny.");
+      const hadCache = renderCachedMenuIfAvailable("Kunne ikke lese menyfelt fra Firebase. Viser siste lokale meny.");
       if (!hadCache) setStatus("Kunne ikke koble til Firebase. Sjekk nett/Firebase-regler.");
+    });
+  });
+
+  rescueDealsRef.on("value", (snapshot) => {
+    rescueDeals = snapshot.val() && typeof snapshot.val() === "object" ? snapshot.val() : {};
+    if (firebaseReady && !isEditingField()) {
+      renderCategories();
+      renderProductEditor();
     }
-  );
+  }, (error) => console.warn("Redde maten kunne ikke synkroniseres.", error));
 }
 
 function initBasicSettingsTabs() {

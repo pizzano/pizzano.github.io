@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v36"/>
+<link rel="stylesheet" href="kol-core.css?v=hardening-20260817"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -172,8 +172,11 @@
 <script>
 /* ===== app.js INLINED ===== */
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
-const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
+const firebaseOrdersBaseUrl = `${firebaseBaseUrl}/orders`;
+const firebaseOrdersUrl = `${firebaseOrdersBaseUrl}.json`;
+const firebaseOrderUrl = (orderId) => `${firebaseOrdersBaseUrl}/${encodeURIComponent(String(orderId || ""))}.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
+const firebaseMostOrderedUrl = `${firebaseBaseUrl}/publicStats/mostOrdered.json`;
 const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings", "rescueDeals"];
 
 async function fetchFirebaseMenuConfig() {
@@ -1142,9 +1145,11 @@ function toDatetimeLocalValue(date) {
 
 function roundUpToNextQuarter(date) {
   const result = new Date(date);
+  const hadPartialMinute = result.getSeconds() > 0 || result.getMilliseconds() > 0;
   result.setSeconds(0, 0);
   const minutes = result.getMinutes();
-  const add = (15 - (minutes % 15)) % 15;
+  const remainder = minutes % 15;
+  const add = remainder === 0 ? (hadPartialMinute ? 15 : 0) : 15 - remainder;
   if (add) result.setMinutes(minutes + add);
   return result;
 }
@@ -1727,21 +1732,14 @@ function buildOrderPayload() {
     createdAt,
     updatedAt: createdAt,
 
-    // GloriaFood-lignende metadata vi vil ha i systemet fra start.
+    // Canonical order metadata. Legacy snake_case fields are only read for old orders.
     source: "website",
-    client_order_count: clientOrderCount,
-    confirmed_at: null,
-    fulfill_time: null,
-    printed: false,
-    ready: false,
-    payment,
-    order_type: orderType,
-
-    // camelCase kopier for enklere intern bruk i eget system.
-    sourceName: "website",
     clientOrderCount,
     confirmedAt: null,
     fulfillTime: null,
+    printed: false,
+    ready: false,
+    payment,
     orderType,
 
     processableAfter,
@@ -1840,16 +1838,15 @@ async function syncOrdersByCustomerPhone(phone = getSavedProfilePhone()) {
         updatedAt: value?.updatedAt || value?.createdAt || ""
       }))
       .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
-      .slice(0, 20);
-    const freshOrders = [];
-    for (const row of rows) {
+      .slice(0, 5);
+    const freshOrders = (await Promise.all(rows.map(async (row) => {
       try {
-        const fresh = await fetchOrder(row.id);
-        if (fresh) freshOrders.push(fresh);
+        return await fetchOrder(row.id);
       } catch (error) {
         console.warn("Kunne ikke lese ordre", row.id, error);
+        return null;
       }
-    }
+    }))).filter(Boolean);
     freshOrders.forEach((order) => rememberRecentOrder(order));
     return freshOrders;
   } catch (error) {
@@ -2272,7 +2269,7 @@ async function openProfileModal() {
   const phone = getSavedProfilePhone();
   renderProfileOrders({ phone, loading: !!phone });
   if (phone) await syncOrdersByCustomerPhone(phone);
-  await syncRecentOrdersFromFirebase();
+  await syncRecentOrdersFromFirebase({ includeCompleted: true });
   renderProfileOrders({ phone });
   updateProfileDot();
 }
@@ -2285,26 +2282,40 @@ function closeProfileModal() {
   syncBodyScrollLocks();
 }
 
-async function syncRecentOrdersFromFirebase() {
+async function syncRecentOrdersFromFirebase(options = {}) {
+  const includeCompleted = options.includeCompleted === true;
   const orders = getRecentOrders();
   if (!orders.length) return;
-  const updated = [];
-  for (const order of orders.slice(0, 20)) {
-    if (!order.id) continue;
+  const candidates = (includeCompleted
+    ? orders
+    : orders.filter((order) => {
+        const status = order.status || "pending";
+        return status === "pending" || (status === "accepted" && order.ready !== true);
+      }))
+    .slice(0, includeCompleted ? 5 : 4);
+  if (!candidates.length) return;
+  const updated = await Promise.all(candidates.map(async (order) => {
+    if (!order.id) return order;
     try {
-      const fresh = await fetchOrder(order.id);
-      updated.push(fresh || order);
+      return (await fetchOrder(order.id)) || order;
     } catch {
-      updated.push(order);
+      return order;
     }
-  }
+  }));
   updated.forEach((order) => rememberRecentOrder(order));
 }
 
 function startRecentOrdersSync() {
   window.clearInterval(recentOrdersPollTimer);
-  if (!getRecentOrders().length) return;
-  recentOrdersPollTimer = window.setInterval(syncRecentOrdersFromFirebase, 4000);
+  const hasActive = getRecentOrders().some((order) => {
+    const status = order.status || "pending";
+    return status === "pending" || (status === "accepted" && order.ready !== true);
+  });
+  if (!hasActive) return;
+  syncRecentOrdersFromFirebase();
+  recentOrdersPollTimer = window.setInterval(() => {
+    if (document.visibilityState !== "hidden") syncRecentOrdersFromFirebase();
+  }, 10000);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -2325,10 +2336,12 @@ function resumeActiveOrderPolling() {
 }
 
 async function fetchOrder(orderId) {
-  const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId) return null;
+  const response = await fetch(`${firebaseOrderUrl(cleanOrderId)}?ts=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Kunne ikke lese ordre");
   const data = await response.json();
-  return data ? normalizeCustomerOrder({ id: orderId, ...data }) : null;
+  return data ? normalizeCustomerOrder({ id: cleanOrderId, ...data }) : null;
 }
 
 function getTrackingOrderIdFromUrl() {
@@ -2898,26 +2911,30 @@ function applySiteSettings() {
   refreshHeroStatusPill();
 }
 
-function readCachedMenuConfig() {
+function readCachedMenuRecord() {
   try {
     const cached = localStorage.getItem(menuCacheKey);
     if (!cached) return null;
     const parsed = JSON.parse(cached);
-    return parsed?.config || null;
+    return parsed && parsed.config ? parsed : null;
   } catch (error) {
     console.warn("Lokal meny-cache kunne ikke leses.", error);
     return null;
   }
 }
 
-function saveCachedMenuConfig(config) {
+function readCachedMenuConfig() {
+  return readCachedMenuRecord()?.config || null;
+}
+
+function saveCachedMenuConfig(config, version = null) {
   try {
     localStorage.setItem(menuCacheKey, JSON.stringify({
       savedAt: new Date().toISOString(),
+      version: version == null ? null : String(version),
       config
     }));
   } catch (error) {
-    // TÜRKÇE: LocalStorage dolu/kapalı olabilir. Bu kritik değil; site Firebase ile çalışmaya devam eder.
     console.warn("Lokal meny-cache kunne ikke lagres.", error);
   }
 }
@@ -3065,16 +3082,6 @@ function startRescueDealsSync() {
   }, 15000);
 }
 
-function normalizePopularProductName(value = "") {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^\s*\d+\s*[-.)]?\s*/, "")
-    .replace(/[^a-z0-9æøå]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function getAllVisibleMenuProducts() {
   const list = [];
@@ -3112,47 +3119,6 @@ function saveMostOrderedCache(items = []) {
   } catch (error) {}
 }
 
-function buildMostOrderedFromOrders(ordersData = {}) {
-  const products = getAllVisibleMenuProducts();
-  if (!products.length || !ordersData || typeof ordersData !== "object") return [];
-
-  const byId = new Map(products.map(({ item }) => [String(item.id || ""), item]));
-  const byName = new Map();
-  products.forEach(({ item }) => {
-    const candidates = [item.name, item.title, `${item.number || ""} ${item.name || ""}`]
-      .map(normalizePopularProductName)
-      .filter(Boolean);
-    candidates.forEach((name) => {
-      if (!byName.has(name)) byName.set(name, item);
-    });
-  });
-
-  const scores = new Map();
-  const addScore = (item, qty = 1) => {
-    if (!item?.id) return;
-    const key = String(item.id);
-    scores.set(key, (scores.get(key) || 0) + Math.max(1, Number(qty) || 1));
-  };
-
-  Object.values(ordersData).forEach((order) => {
-    asArray(order?.items).forEach((line) => {
-      const qty = Math.max(1, Number(line?.quantity || line?.qty || 1) || 1);
-      let item = byId.get(String(line?.productId || line?.id || ""));
-      if (!item) {
-        const lineName = normalizePopularProductName(line?.name || line?.title || "");
-        item = byName.get(lineName);
-      }
-      addScore(item, qty);
-    });
-  });
-
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => byId.get(id))
-    .filter(Boolean)
-    .map((item) => ({ ...item, _syntheticMostOrdered: true }))
-    .slice(0, 5);
-}
 
 function getMostOrderedSection() {
   if (!mostOrderedMenuItems.length) return null;
@@ -3168,23 +3134,40 @@ function getMostOrderedSection() {
 }
 
 async function refreshMostOrderedFromDatabase(options = {}) {
-  if (mostOrderedLoading) return;
-  if (!menuSections.length) return;
+  const { render = true } = options;
+  if (mostOrderedLoading || !menuSections.length) return;
   mostOrderedLoading = true;
   try {
-    const response = await fetch(`${firebaseOrdersUrl}?ts=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error("Kunne ikke hente bestillingsstatistikk");
-    const ordersData = await response.json();
-    const nextItems = buildMostOrderedFromOrders(ordersData || {});
-    const nextSignature = nextItems.map((item) => item.id).join("|");
-    const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
-    mostOrderedMenuItems = nextItems;
-    saveMostOrderedCache(nextItems);
-    if (options.render !== false && nextSignature !== oldSignature) {
-      renderMenu();
+    const response = await fetch(`${firebaseMostOrderedUrl}?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Kunne ikke hente bestselgeroversikt");
+    const raw = await response.json();
+    const rows = Array.isArray(raw) ? raw : Object.values(raw || {});
+    const products = getAllVisibleMenuProducts();
+    const byId = new Map(products.map(({ item }) => [String(item?.id || ""), item]));
+    const byName = new Map(products.map(({ item }) => [String(item?.name || "").trim().toLocaleLowerCase("nb-NO"), item]));
+    const nextItems = [];
+    const seen = new Set();
+    rows.sort((a, b) => Number(b?.count || 0) - Number(a?.count || 0)).forEach((row) => {
+      const item = byId.get(String(row?.id || "")) || byName.get(String(row?.name || "").trim().toLocaleLowerCase("nb-NO"));
+      if (!item) return;
+      const key = String(item.id || item.name || "");
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      nextItems.push(item);
+    });
+    const limited = nextItems.slice(0, 5);
+    if (limited.length) {
+      const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
+      const nextSignature = limited.map((item) => item.id).join("|");
+      mostOrderedMenuItems = limited;
+      saveMostOrderedCache(limited);
+      if (render && oldSignature !== nextSignature) renderMenu();
+    } else if (!mostOrderedMenuItems.length) {
+      mostOrderedMenuItems = readCachedMostOrderedItems();
     }
   } catch (error) {
-    console.warn("Mest bestilt kunne ikke hentes fra database.", error);
+    console.warn("Bestselgeroversikt kunne ikke oppdateres.", error);
+    if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
   } finally {
     mostOrderedLoading = false;
   }

@@ -1,0 +1,56 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sections": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "extraOptions": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "customPizzaToppings": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "kebabPitaOptions": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "optionGroups": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "siteSettings": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "rescueDeals": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "publicStats": {
+      "mostOrdered": {
+        ".read": true,
+        ".write": "auth != null && auth.token.admin === true"
+      }
+    },
+    "orders": {
+      "$orderId": {
+        ".read": "auth != null && (auth.token.admin === true || data.child('ownerUid').val() === auth.uid)",
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && newData.child('ownerUid').val() === auth.uid && newData.child('status').val() === 'pending'))"
+      }
+    },
+    "customerOrders": {
+      "$uid": {
+        ".read": "auth != null && (auth.token.admin === true || auth.uid === $uid)",
+        ".write": "auth != null && (auth.token.admin === true || auth.uid === $uid)"
+      }
+    },
+    "iceSmsQueue": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    }
+  }
+}
