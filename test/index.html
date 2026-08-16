@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v35"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v36"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -815,6 +815,7 @@ function formatOrderProfileDate(order = {}) {
 function profileSecondaryText(order = {}) {
   const status = order.status || "pending";
   if (status === "accepted") {
+    if (isOrderReadyForPickup(order)) return "Maten er klar";
     return isTodayOrder(order) ? orderReadySummaryText(order) : "Fullført bestilling";
   }
   if (status === "pending") {
@@ -896,15 +897,21 @@ function rememberRecentOrder(order) {
   updateProfileDot();
 }
 
+function isOrderReadyForPickup(order = {}) {
+  if ((order.status || "pending") !== "accepted") return false;
+  if (order.ready === true) return true;
+  return getCustomerReadyAt(order).getTime() <= Date.now();
+}
+
 function orderStatusText(status = "pending", order = {}) {
-  if (status === "accepted" && order.ready === true) return "Klar";
+  if (status === "accepted" && isOrderReadyForPickup(order)) return "Klar";
   if (status === "accepted") return "Godkjent";
   if (status === "cancelled") return "Kansellert";
   return "Venter";
 }
 
 function orderStatusTitle(status = "pending", order = {}) {
-  if (status === "accepted" && order.ready === true) return "Klar";
+  if (status === "accepted" && isOrderReadyForPickup(order)) return "Klar";
   if (status === "accepted") return "Bekreftet";
   if (status === "cancelled") return "Bestillingen ble kansellert";
   return "Bestillingen er sendt";
@@ -1939,7 +1946,7 @@ function orderStatusHtml(order = {}, options = {}) {
   const deadline = getOrderAcceptDeadline(order);
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
   const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
-  const isReady = status === "accepted" && (order.ready === true || getCustomerReadyAt(order).getTime() <= Date.now());
+  const isReady = status === "accepted" && isOrderReadyForPickup(order);
   const stage = status === "cancelled" ? "cancelled" : isReady ? "ready" : status === "accepted" ? "accepted" : "pending";
 
   const pendingCountdown = waitingOpen
@@ -2097,8 +2104,31 @@ function refreshOrderCountdowns(order = null) {
   });
 
   promoteOrderToAutomaticReady(order);
+  refreshProfileReadyStates();
 }
 
+
+function refreshProfileReadyStates() {
+  if (!profileOrdersEl || !profileModal || profileModal.hidden) return;
+  const recent = getRecentOrders();
+  profileOrdersEl.querySelectorAll("[data-profile-order-card]").forEach((card) => {
+    const id = card.dataset.profileOrderCard || "";
+    const order = recent.find((item) => String(item.id || "") === id);
+    if (!order || (order.status || "pending") !== "accepted") return;
+    const ready = isOrderReadyForPickup(order);
+    card.classList.toggle("status-ready", ready);
+    card.classList.toggle("status-progress", !ready);
+    const title = card.querySelector(".profile-order-title-row > strong");
+    if (title) title.textContent = ready ? "Klar" : "Bekreftet";
+    const pill = card.querySelector(".order-status-pill");
+    if (pill) {
+      pill.textContent = ready ? "Klar" : "Godkjent";
+      pill.classList.toggle("ready", ready);
+    }
+    const secondary = card.querySelector("[data-profile-ready]");
+    if (secondary) secondary.textContent = ready ? "Maten er klar" : profileSecondaryText(order);
+  });
+}
 
 function promoteOrderToAutomaticReady(order = null) {
   if (!order || (order.status || "pending") !== "accepted") return false;
@@ -2163,9 +2193,10 @@ function profileOrderCardHtml(order = {}) {
   const secondary = profileSecondaryText(order);
   const details = isExpanded ? orderLinesHtml(order) : "";
   const orderId = String(order.id || "").slice(-6).toUpperCase();
+  const profileReady = status === "accepted" && isOrderReadyForPickup(order);
   const statusVisual = status === "cancelled"
     ? "status-cancelled"
-    : (status === "accepted" && order.ready === true)
+    : profileReady
       ? "status-ready"
       : "status-progress";
   return `
@@ -2175,7 +2206,7 @@ function profileOrderCardHtml(order = {}) {
           ${isExpanded ? `<span class="profile-selected-marker">Valgt bestilling</span>` : ""}
           <span class="profile-order-title-row">
             <strong>${title}</strong>
-            <span class="order-status-pill ${status} ${order.ready === true ? "ready" : ""}">${orderStatusText(status, order)}</span>
+            <span class="order-status-pill ${status} ${profileReady ? "ready" : ""}">${orderStatusText(status, order)}</span>
           </span>
           <span class="profile-ready-text" data-profile-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(secondary)}</span>
           <span class="profile-order-meta">
