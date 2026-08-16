@@ -1,0 +1,52 @@
+name: UI cleanup V32
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/cleanup-ui-v32.yml
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply cleanup
+        run: python .github/scripts/cleanup_ui_v32.py
+      - name: Validate customer files
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('test/index.html').read_text(encoding='utf-8')
+          css = Path('test/kol-core.css').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, re.S)
+          Path('/tmp/index.js').write_text('\n'.join(scripts), encoding='utf-8')
+          ids = re.findall(r'\bid=["\']([^"\']+)["\']', html)
+          dup_ids = sorted({x for x in ids if ids.count(x) > 1})
+          if dup_ids:
+              raise SystemExit(f'Duplicate IDs: {dup_ids}')
+          if css.count('{') != css.count('}'):
+              raise SystemExit(f'CSS brace mismatch: {css.count("{")} vs {css.count("}")}')
+          assert 'mobile-v32' in html
+          assert 'Valgt bestilling' in html
+          assert 'V64:' not in html
+          assert 'PREMIUM ORDER STATUS V31' not in css
+          assert '.profile-order-card.is-expanded' in css
+          assert '.allergen-note{' in css and 'border-radius:0!important' in css
+          PY
+          node --check /tmp/index.js
+      - name: Commit cleaned files
+        shell: bash
+        run: |
+          git config user.name "KOL Deploy Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add test/index.html test/kol-core.css
+          git commit -m "Clean profile selection and allergen styling"
+          git push
