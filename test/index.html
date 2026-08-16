@@ -172,7 +172,9 @@
 <script>
 /* ===== app.js INLINED ===== */
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
-const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
+const firebaseOrdersBaseUrl = `${firebaseBaseUrl}/orders`;
+const firebaseOrdersUrl = `${firebaseOrdersBaseUrl}.json`;
+const firebaseOrderUrl = (orderId) => `${firebaseOrdersBaseUrl}/${encodeURIComponent(String(orderId || ""))}.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
 const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
 const firebasePublicMenuUrl = `${firebaseBaseUrl}/publicMenu.json`;
@@ -2366,10 +2368,12 @@ function resumeActiveOrderPolling() {
 }
 
 async function fetchOrder(orderId) {
-  const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
+  const cleanOrderId = String(orderId || "").trim();
+  if (!cleanOrderId) return null;
+  const response = await fetch(`${firebaseOrderUrl(cleanOrderId)}?ts=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Kunne ikke lese ordre");
   const data = await response.json();
-  return data ? normalizeCustomerOrder({ id: orderId, ...data }) : null;
+  return data ? normalizeCustomerOrder({ id: cleanOrderId, ...data }) : null;
 }
 
 function getTrackingOrderIdFromUrl() {
