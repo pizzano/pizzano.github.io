@@ -1,4 +1,4 @@
-name: Order status V35
+name: Order status V35 retry
 on:
   push:
     branches: [main]
