@@ -82,7 +82,7 @@ body.kol-customer .quantity-row{width:100%!important;min-height:62px!important;m
 body.kol-customer .quantity-stepper{width:156px!important;min-width:156px!important;height:46px!important;display:grid!important;grid-template-columns:46px 1fr 46px!important;align-items:center!important;gap:0!important;border:1px solid #dcd4cf!important;border-radius:4px!important;overflow:hidden!important;background:#fff!important}
 body.kol-customer .quantity-stepper button{width:46px!important;height:46px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:var(--text)!important;font-size:19px!important;font-weight:400!important;box-shadow:none!important}
 body.kol-customer .quantity-stepper strong{display:grid!important;place-items:center!important;height:46px!important;font-size:16px!important;font-weight:500!important}
-body.kol-customer .allergen-note{margin:0!important;padding:10px 12px!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1.4!important}
+body.kol-customer .allergen-note{width:100%!important;margin:0!important;padding:10px 12px!important;border:0!important;border-top:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:#faf8f5!important;box-shadow:none!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:400!important;line-height:1.4!important}
 body.kol-customer .product-footer{z-index:6!important;flex:0 0 auto!important;width:100%!important;min-height:70px!important;margin:0!important;padding:8px 10px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:center!important;gap:10px!important;border-top:1px solid var(--line)!important;background:#fff!important}
 body.kol-customer .product-footer strong{font-size:17px!important;font-weight:550!important;white-space:nowrap!important}
 body.kol-customer #addConfiguredProduct{width:100%!important;min-height:52px!important;margin:0!important;border:0!important;border-radius:6px!important;background:var(--o)!important;color:#fff!important;font-size:15.5px!important;font-weight:600!important;box-shadow:none!important}
@@ -212,60 +212,48 @@ body.kol-customer .checkout-section-title small{
 }
 
 body.kol-customer .order-live-content{padding:0!important;background:#f3f0eb!important;}
-body.kol-customer .status-v31{--accent:#c98922;--soft:#fff8e9;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;color:#25211e!important;}
-body.kol-customer .status-v31.stage-accepted{--accent:#176746;--soft:#eef7f2;}
-body.kol-customer .status-v31.stage-ready{--accent:#0f5c3d;--soft:#eaf5ee;}
-body.kol-customer .status-v31.stage-cancelled{--accent:#a43a3d;--soft:#fff0f0;}
-body.kol-customer .status-v31-top{height:52px!important;padding:0 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;border-top:3px solid var(--accent)!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
-body.kol-customer .status-v31-badge{display:inline-flex!important;align-items:center!important;min-height:27px!important;padding:0 9px!important;border:1px solid color-mix(in srgb,var(--accent) 45%,white)!important;border-radius:0!important;background:var(--soft)!important;color:var(--accent)!important;font-size:11.5px!important;font-weight:750!important;letter-spacing:.04em!important;text-transform:uppercase!important;}
-body.kol-customer .status-v31-top small{color:#6a615a!important;font-size:12.5px!important;font-weight:500!important;}
-body.kol-customer .status-v31-top b{color:#292420!important;font-weight:700!important;}
-body.kol-customer .status-v31-flow{height:48px!important;padding:0 16px!important;display:grid!important;grid-template-columns:auto 1fr auto 1fr auto!important;align-items:center!important;border-bottom:1px solid #e2dcd6!important;background:#faf8f5!important;}
-body.kol-customer .status-v31-flow span{color:#a19a94!important;font-size:11px!important;font-weight:650!important;white-space:nowrap!important;}
-body.kol-customer .status-v31-flow span.done{color:var(--accent)!important;font-weight:750!important;}
-body.kol-customer .status-v31-flow i{height:1px!important;margin:0 8px!important;background:#d7d0ca!important;}
-body.kol-customer .status-v31-flow.stage-accepted i:first-of-type,body.kol-customer .status-v31-flow.stage-ready i{background:var(--accent)!important;}
-body.kol-customer .status-v31-main{padding:22px 16px 20px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
-body.kol-customer .status-v31-kicker{display:block!important;margin:0 0 6px!important;color:var(--accent)!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.12em!important;line-height:1.2!important;}
-body.kol-customer .status-v31-main h3{margin:0!important;color:#211d1a!important;font-size:23px!important;font-weight:680!important;line-height:1.15!important;letter-spacing:-.025em!important;}
-body.kol-customer .status-v31-main>p{margin:12px 0 0!important;color:#70675f!important;font-size:13px!important;font-weight:400!important;line-height:1.45!important;}
-body.kol-customer .status-v31-time{margin-top:18px!important;padding:15px 16px!important;border:1px solid #dfd7d0!important;border-left:4px solid var(--accent)!important;border-radius:0!important;background:var(--soft)!important;}
-body.kol-customer .status-v31-time>small{display:block!important;margin-bottom:5px!important;color:var(--accent)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;}
-body.kol-customer .status-v31-time.pending>strong{display:block!important;color:#744a13!important;font-size:35px!important;font-weight:560!important;line-height:1!important;letter-spacing:-.04em!important;font-variant-numeric:tabular-nums!important;}
-body.kol-customer .status-v31-time.accepted>div{display:flex!important;align-items:flex-end!important;gap:7px!important;}
-body.kol-customer .status-v31-time.accepted strong{color:#104d36!important;font-size:50px!important;font-weight:540!important;line-height:.95!important;letter-spacing:-.055em!important;font-variant-numeric:tabular-nums!important;}
-body.kol-customer .status-v31-time.accepted em{padding-bottom:5px!important;color:#176746!important;font-size:14px!important;font-weight:650!important;font-style:normal!important;}
-body.kol-customer .status-v31-time.accepted>span{display:block!important;margin-top:7px!important;color:#65736b!important;font-size:12.5px!important;line-height:1.35!important;}
-body.kol-customer .status-v31-pickup{padding:13px 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;border:1px solid #d9d2cb!important;border-top:0!important;background:#fff!important;}
-body.kol-customer .status-v31-pickup small{color:#746b64!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1em!important;}
-body.kol-customer .status-v31-pickup strong{color:#1c342a!important;font-size:19px!important;font-weight:700!important;text-align:right!important;}
-body.kol-customer .status-v31-ready{margin-top:18px!important;padding:18px 16px!important;border-left:5px solid #0a442e!important;background:#0f5c3d!important;color:#fff!important;}
-body.kol-customer .status-v31-ready strong{display:block!important;color:#fff!important;font-size:24px!important;font-weight:700!important;line-height:1.12!important;}
-body.kol-customer .status-v31-ready small{display:block!important;margin-top:7px!important;color:#e1f0e8!important;font-size:13px!important;font-weight:400!important;line-height:1.35!important;}
-body.kol-customer .status-v31-cancel{margin-top:18px!important;padding:17px 16px!important;border:1px solid #e3bcbc!important;border-left:5px solid #a43a3d!important;background:#fff3f3!important;}
-body.kol-customer .status-v31-cancel strong{display:block!important;color:#902b2f!important;font-size:20px!important;font-weight:700!important;line-height:1.15!important;}
-body.kol-customer .status-v31-cancel small{display:block!important;margin-top:6px!important;color:#755f60!important;font-size:12.5px!important;line-height:1.35!important;}
-body.kol-customer .status-v31-help{margin:0!important;padding:11px 16px!important;border-bottom:1px solid #e2dcd6!important;background:#fff9ec!important;color:#6c5d46!important;font-size:12px!important;line-height:1.4!important;}
-body.kol-customer .status-v31-help a{color:#965810!important;font-weight:700!important;text-decoration:none!important;}
+body.kol-customer .live-status{--accent:#c98922;--soft:#fff8e9;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;color:#25211e!important;}
+body.kol-customer .live-status.stage-accepted{--accent:#176746;--soft:#eef7f2;}
+body.kol-customer .live-status.stage-ready{--accent:#0f5c3d;--soft:#eaf5ee;}
+body.kol-customer .live-status.stage-cancelled{--accent:#a43a3d;--soft:#fff0f0;}
+body.kol-customer .live-status-top{height:52px!important;padding:0 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;border-top:3px solid var(--accent)!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
+body.kol-customer .live-status-badge{display:inline-flex!important;align-items:center!important;min-height:27px!important;padding:0 9px!important;border:1px solid color-mix(in srgb,var(--accent) 45%,white)!important;border-radius:0!important;background:var(--soft)!important;color:var(--accent)!important;font-size:11.5px!important;font-weight:750!important;letter-spacing:.04em!important;text-transform:uppercase!important;}
+body.kol-customer .live-status-top small{color:#6a615a!important;font-size:12.5px!important;font-weight:500!important;}
+body.kol-customer .live-status-top b{color:#292420!important;font-weight:700!important;}
+body.kol-customer .live-status-flow{height:48px!important;padding:0 16px!important;display:grid!important;grid-template-columns:auto 1fr auto 1fr auto!important;align-items:center!important;border-bottom:1px solid #e2dcd6!important;background:#faf8f5!important;}
+body.kol-customer .live-status-flow span{color:#a19a94!important;font-size:11px!important;font-weight:650!important;white-space:nowrap!important;}
+body.kol-customer .live-status-flow span.done{color:var(--accent)!important;font-weight:750!important;}
+body.kol-customer .live-status-flow i{height:1px!important;margin:0 8px!important;background:#d7d0ca!important;}
+body.kol-customer .live-status-flow.stage-accepted i:first-of-type,body.kol-customer .live-status-flow.stage-ready i{background:var(--accent)!important;}
+body.kol-customer .live-status-main{padding:22px 16px 20px!important;border-bottom:1px solid #e2dcd6!important;background:#fff!important;}
+body.kol-customer .live-status-kicker{display:block!important;margin:0 0 6px!important;color:var(--accent)!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.12em!important;line-height:1.2!important;}
+body.kol-customer .live-status-main h3{margin:0!important;color:#211d1a!important;font-size:23px!important;font-weight:680!important;line-height:1.15!important;letter-spacing:-.025em!important;}
+body.kol-customer .live-status-main>p{margin:12px 0 0!important;color:#70675f!important;font-size:13px!important;font-weight:400!important;line-height:1.45!important;}
+body.kol-customer .live-status-time{margin-top:18px!important;padding:15px 16px!important;border:1px solid #dfd7d0!important;border-left:4px solid var(--accent)!important;border-radius:0!important;background:var(--soft)!important;}
+body.kol-customer .live-status-time>small{display:block!important;margin-bottom:5px!important;color:var(--accent)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;}
+body.kol-customer .live-status-time.pending>strong{display:block!important;color:#744a13!important;font-size:35px!important;font-weight:560!important;line-height:1!important;letter-spacing:-.04em!important;font-variant-numeric:tabular-nums!important;}
+body.kol-customer .live-status-time.accepted>div{display:flex!important;align-items:flex-end!important;gap:7px!important;}
+body.kol-customer .live-status-time.accepted strong{color:#104d36!important;font-size:50px!important;font-weight:540!important;line-height:.95!important;letter-spacing:-.055em!important;font-variant-numeric:tabular-nums!important;}
+body.kol-customer .live-status-time.accepted em{padding-bottom:5px!important;color:#176746!important;font-size:14px!important;font-weight:650!important;font-style:normal!important;}
+body.kol-customer .live-status-time.accepted>span{display:block!important;margin-top:7px!important;color:#65736b!important;font-size:12.5px!important;line-height:1.35!important;}
+body.kol-customer .live-status-pickup{padding:13px 16px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;border:1px solid #d9d2cb!important;border-top:0!important;background:#fff!important;}
+body.kol-customer .live-status-pickup small{color:#746b64!important;font-size:10px!important;font-weight:800!important;letter-spacing:.1em!important;}
+body.kol-customer .live-status-pickup strong{color:#1c342a!important;font-size:19px!important;font-weight:700!important;text-align:right!important;}
+body.kol-customer .live-status-ready{margin-top:18px!important;padding:18px 16px!important;border-left:5px solid #0a442e!important;background:#0f5c3d!important;color:#fff!important;}
+body.kol-customer .live-status-ready strong{display:block!important;color:#fff!important;font-size:24px!important;font-weight:700!important;line-height:1.12!important;}
+body.kol-customer .live-status-ready small{display:block!important;margin-top:7px!important;color:#e1f0e8!important;font-size:13px!important;font-weight:400!important;line-height:1.35!important;}
+body.kol-customer .live-status-cancel{margin-top:18px!important;padding:17px 16px!important;border:1px solid #e3bcbc!important;border-left:5px solid #a43a3d!important;background:#fff3f3!important;}
+body.kol-customer .live-status-cancel strong{display:block!important;color:#902b2f!important;font-size:20px!important;font-weight:700!important;line-height:1.15!important;}
+body.kol-customer .live-status-cancel small{display:block!important;margin-top:6px!important;color:#755f60!important;font-size:12.5px!important;line-height:1.35!important;}
+body.kol-customer .live-status-help{margin:0!important;padding:11px 16px!important;border-bottom:1px solid #e2dcd6!important;background:#fff9ec!important;color:#6c5d46!important;font-size:12px!important;line-height:1.4!important;}
+body.kol-customer .live-status-help a{color:#965810!important;font-weight:700!important;text-decoration:none!important;}
 body.kol-customer .customer-receipt-lines{margin:0!important;padding:0 16px!important;background:#fff!important;}
 body.kol-customer .customer-receipt-line{padding:13px 0!important;border-bottom:1px solid #e6dfd9!important;border-radius:0!important;background:#fff!important;}
 body.kol-customer .customer-receipt-total{padding:14px 0!important;border-top:1px solid #d0c8c1!important;}
-body.kol-customer .status-v31-close{width:100%!important;min-height:54px!important;margin:0!important;border:0!important;border-top:1px solid #d8d0ca!important;border-radius:0!important;background:#25211f!important;color:#fff!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important;}
-body.kol-customer .status-v31-close:hover,body.kol-customer .status-v31-close:active{background:#25211f!important;transform:none!important;box-shadow:none!important;}
-@media(max-width:380px){body.kol-customer .status-v31-main{padding:19px 14px!important;}body.kol-customer .status-v31-time.accepted strong{font-size:45px!important;}body.kol-customer .status-v31-top,body.kol-customer .status-v31-flow{padding-left:14px!important;padding-right:14px!important;}}
+body.kol-customer .live-status-close{width:100%!important;min-height:54px!important;margin:0!important;border:0!important;border-top:1px solid #d8d0ca!important;border-radius:0!important;background:#25211f!important;color:#fff!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important;}
+body.kol-customer .live-status-close:hover,body.kol-customer .live-status-close:active{background:#25211f!important;transform:none!important;box-shadow:none!important;}
+@media(max-width:380px){body.kol-customer .live-status-main{padding:19px 14px!important;}body.kol-customer .live-status-time.accepted strong{font-size:45px!important;}body.kol-customer .live-status-top,body.kol-customer .live-status-flow{padding-left:14px!important;padding-right:14px!important;}}
 
-body.kol-customer .allergen-note{
-  width:100%!important;
-  margin:0!important;
-  padding:10px 12px!important;
-  border:0!important;
-  border-top:1px solid var(--line)!important;
-  border-bottom:1px solid var(--line)!important;
-  border-radius:0!important;
-  background:#faf8f5!important;
-  box-shadow:none!important;
-  color:var(--muted)!important;
-}
 body.kol-customer .profile-order-card.is-expanded{
   padding:0!important;
   border:0!important;

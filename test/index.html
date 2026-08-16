@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v32"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v33"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -1951,7 +1951,7 @@ function orderStatusHtml(order = {}, options = {}) {
   const badge = waitingOpen ? "Venter" : stage === "cancelled" ? "Kansellert" : stage === "ready" ? "Klar" : stage === "accepted" ? "Bekreftet" : "Venter";
 
   const flow = stage === "cancelled" ? "" : `
-    <div class="status-v31-flow stage-${stage}" aria-label="Bestillingsstatus">
+    <div class="live-status-flow stage-${stage}" aria-label="Bestillingsstatus">
       <span class="done">Mottatt</span><i></i>
       <span class="${stage === "accepted" || stage === "ready" ? "done" : ""}">Bekreftet</span><i></i>
       <span class="${stage === "ready" ? "done" : ""}">Klar</span>
@@ -1960,10 +1960,10 @@ function orderStatusHtml(order = {}, options = {}) {
   let main = "";
   if (stage === "pending") {
     main = `
-      <div class="status-v31-main pending">
-        <span class="status-v31-kicker">BESTILLING MOTTATT</span>
+      <div class="live-status-main pending">
+        <span class="live-status-kicker">BESTILLING MOTTATT</span>
         <h3>${waitingOpen ? "Venter til vi åpner" : "Venter på bekreftelse"}</h3>
-        <div class="status-v31-time pending">
+        <div class="live-status-time pending">
           <small>${waitingOpen ? "ÅPNER" : "SVAR INNEN"}</small>
           <strong data-order-countdown="${escapeAttribute(order.id || "")}">${pendingCountdown}</strong>
         </div>
@@ -1974,15 +1974,15 @@ function orderStatusHtml(order = {}, options = {}) {
     const unit = readyParts?.unit || "";
     const clock = readyParts?.clock || "";
     main = `
-      <div class="status-v31-main accepted">
-        <span class="status-v31-kicker">BESTILLINGEN TILBEREDES</span>
+      <div class="live-status-main accepted">
+        <span class="live-status-kicker">BESTILLINGEN TILBEREDES</span>
         <h3>Bekreftet</h3>
-        <div class="status-v31-time accepted">
+        <div class="live-status-time accepted">
           <small>CA. TID IGJEN</small>
           <div><strong data-customer-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(value)}</strong><em data-customer-ready-unit="${escapeAttribute(order.id || "")}" ${unit ? "" : "hidden"}>${escapeAttribute(unit)}</em></div>
           <span>til maten forventes klar</span>
         </div>
-        <div class="status-v31-pickup">
+        <div class="live-status-pickup">
           <small>HENT CA.</small>
           <strong data-customer-ready-clock="${escapeAttribute(order.id || "")}">${escapeAttribute(clock)}</strong>
         </div>
@@ -1990,10 +1990,10 @@ function orderStatusHtml(order = {}, options = {}) {
       </div>`;
   } else if (stage === "ready") {
     main = `
-      <div class="status-v31-main ready">
-        <span class="status-v31-kicker">KLAR FOR HENTING</span>
+      <div class="live-status-main ready">
+        <span class="live-status-kicker">KLAR FOR HENTING</span>
         <h3>Maten din er klar</h3>
-        <div class="status-v31-ready">
+        <div class="live-status-ready">
           <strong>Kom og hent nå</strong>
           <small>Si navnet ditt og hva du bestilte.</small>
         </div>
@@ -2004,10 +2004,10 @@ function orderStatusHtml(order = {}, options = {}) {
       </div>`;
   } else {
     main = `
-      <div class="status-v31-main cancelled">
-        <span class="status-v31-kicker">BESTILLINGEN ER AVSLUTTET</span>
+      <div class="live-status-main cancelled">
+        <span class="live-status-kicker">BESTILLINGEN ER AVSLUTTET</span>
         <h3>Kansellert</h3>
-        <div class="status-v31-cancel">
+        <div class="live-status-cancel">
           <strong>Ikke hent bestillingen</strong>
           <small>Bestillingen ble kansellert av restauranten.</small>
         </div>
@@ -2017,12 +2017,12 @@ function orderStatusHtml(order = {}, options = {}) {
   const supportPhone = normalizeSiteSettings(siteSettings).phone || "+47 41 14 53 53";
   const supportPhoneDigits = String(supportPhone).replace(/\D/g, "");
   const supportPhoneHref = supportPhoneDigits ? `tel:${supportPhoneDigits.startsWith("47") ? "+" : "+47"}${supportPhoneDigits}` : `tel:${supportPhone.replace(/\s+/g, "")}`;
-  const expiredHelp = expired ? `<p class="status-v31-help">Det tar litt ekstra tid. Ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a> hvis du trenger hjelp.</p>` : "";
+  const expiredHelp = expired ? `<p class="live-status-help">Det tar litt ekstra tid. Ring oss på <a href="${escapeAttribute(supportPhoneHref)}">${escapeAttribute(supportPhone)}</a> hvis du trenger hjelp.</p>` : "";
 
   return `
-    <section class="order-live-status status-v31 stage-${stage}">
-      <div class="status-v31-top">
-        <span class="status-v31-badge">${badge}</span>
+    <section class="order-live-status live-status stage-${stage}">
+      <div class="live-status-top">
+        <span class="live-status-badge">${badge}</span>
         <small>Ordre <b>${orderId}</b></small>
       </div>
       ${flow}
@@ -2030,7 +2030,7 @@ function orderStatusHtml(order = {}, options = {}) {
       ${expiredHelp}
     </section>
     ${options.includeReceipt ? orderLinesHtml(order) : ""}
-    ${options.showCloseButton ? `<button class="order-live-close-inline status-v31-close" type="button" data-close-order-live>Lukk</button>` : ""}
+    ${options.showCloseButton ? `<button class="order-live-close-inline live-status-close" type="button" data-close-order-live>Lukk</button>` : ""}
   `;
 }
 
