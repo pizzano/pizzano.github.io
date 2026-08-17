@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f36a2d">
 <title>KØL Grill & Pizza – Local demo</title>
-<link rel="stylesheet" href="test.css?v=member-sheet-20260817-2345">
+<link rel="stylesheet" href="test.css?v=profile-info-20260817-2354">
 </head>
 <body class="kol-customer">
 <div class="customer-app">
@@ -25,11 +25,6 @@
 </header>
 
 <main class="menu-shell" id="menuShell">
-  <div class="member-shortcuts" id="memberShortcuts" hidden>
-    <button class="member-avatar" id="memberAvatar">F</button>
-    <button id="memberCardShortcut">▣ Medlemskort</button>
-    <button id="qrShortcut">⌗</button>
-  </div>
   <div class="menu-topline"><h1>Meny</h1><button class="allergen-open" id="allergenBtn">⚠ Matallergier <b id="allergenCount"></b></button></div>
   <section id="menuSections"></section>
 </main>
@@ -77,13 +72,23 @@
   <div class="screen-scroll account-sheet-scroll" id="accountContent"></div>
 </section>
 
-<section class="screen" id="infoScreen" hidden>
-  <div class="screen-head"><button class="screen-back" data-close="infoScreen">‹</button><h2>Informasjon</h2></div>
-  <div class="screen-scroll info-grid">
-    <div class="info-block"><h3>Åpningstider</h3><div>Mandag–Søndag <strong>14:00–22:00</strong></div></div>
-    <div class="info-block"><h3>Adresse</h3><div>ØGARDSVEGEN 44, 2100 SKARNES</div></div>
-    <div class="info-block"><h3>Telefon</h3><div>+47 41 14 53 53</div></div>
-    <p class="privacy-note">LocalStorage-demo. Ingen testbestillinger sendes til restauranten.</p>
+<section class="screen info-sheet" id="infoScreen" hidden>
+  <div class="info-sheet-head"><div class="info-sheet-grip"></div><h2>Butikksinformasjon</h2><button class="info-sheet-close" data-close="infoScreen" type="button" aria-label="Lukk">×</button></div>
+  <div class="info-tabs" role="tablist">
+    <button class="info-tab active" data-info-tab="about" type="button">Om KØL</button>
+    <button class="info-tab" data-info-tab="terms" type="button">Vilkår</button>
+    <button class="info-tab" data-info-tab="privacy" type="button">Personvern</button>
+  </div>
+  <div class="screen-scroll info-sheet-scroll">
+    <div class="info-tab-panel active" data-info-panel="about">
+      <section class="store-info-card"><div><strong>KØL Grill &amp; Pizza</strong><span>ØGARDSVEGEN 44<br>2100 SKARNES</span></div><button class="store-map-button" id="storeMapBtn" type="button">⌖ Kart</button></section>
+      <section class="store-section"><h3>Matallergier</h3><div class="store-allergen-card"><div class="store-allergen-icons">🥛 🌾 🥚 🫘 🌿 🟡 ◌ 🐟 🦐 🥜 🌰 ◇</div><p>Har du matallergi? Se allergenene i menyen eller spør oss før du bestiller.</p><button id="infoAllergenBtn" type="button">Se allergener</button></div></section>
+      <section class="store-section"><h3>Kontakt oss</h3><div class="store-contact-card"><a href="tel:+4741145353"><span>☎</span><span><small>Telefon</small><strong>+47 41 14 53 53</strong></span></a></div></section>
+      <section class="store-section"><h3>Sosiale medier</h3><div class="store-social-row"><button type="button">◎ Instagram</button><button type="button">f Facebook</button></div></section>
+      <section class="store-section"><h3>Åpningstider</h3><div class="store-hours-card"><span>Mandag–Søndag</span><strong>14:00–22:00</strong></div></section>
+    </div>
+    <div class="info-tab-panel" data-info-panel="terms"><section class="store-text-card"><h3>Vilkår</h3><p>Bestillingen er bindende når den er sendt. Hentetid er veiledende og kan variere ved stor pågang.</p><p>Denne siden er foreløpig en LocalStorage-test.</p></section></div>
+    <div class="info-tab-panel" data-info-panel="privacy"><section class="store-text-card"><h3>Personvern</h3><p>Testversjonen lagrer konto, favoritter og bestillinger bare på denne enheten. Ingen testdata sendes til en server.</p></section></div>
   </div>
 </section>
 
@@ -135,9 +140,9 @@ const labelAllergen=id=>ALLERGENS.find(a=>a[0]===id)?.[2]||id;
 function saveAccount(){save(KEY.accounts,accounts)}
 function ensureAccount(phone){if(!accounts[phone])accounts[phone]={phone,name:'',email:'',birth:'',marketing:true,stamps:0,rewards:0,favorites:[],createdAt:Date.now()};saveAccount();return accounts[phone]}
 function setSession(phone){session=phone||null;save(KEY.session,session);renderAll()}
-function openScreen(id){$$('.screen').forEach(x=>x.hidden=true);$('#'+id).hidden=false;document.body.classList.toggle('kol-top-back-active',id!=='accountScreen')}
+function openScreen(id){$$('.screen').forEach(x=>x.hidden=true);$('#'+id).hidden=false;document.body.classList.toggle('kol-top-back-active',!['accountScreen','infoScreen'].includes(id))}
 function closeScreens(){$$('.screen').forEach(x=>x.hidden=true);document.body.classList.remove('kol-top-back-active')}
-function renderHeader(){const a=account(),pb=$('#profileBtn'),shortcuts=$('#memberShortcuts');if(a){const letter=(a.name||a.phone||'K').trim().charAt(0).toUpperCase();pb.innerHTML=`<span class="profile-letter">${letter}</span>`;shortcuts.hidden=false;$('#memberAvatar').textContent=letter}else{pb.innerHTML='<svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>';shortcuts.hidden=true}}
+function renderHeader(){const a=account(),pb=$('#profileBtn');if(a){const letter=(a.name||a.phone||'K').trim().charAt(0).toUpperCase();pb.innerHTML=`<span class="profile-letter">${letter}</span>`}else{pb.innerHTML='<svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>'}}
 function renderTabs(){const host=$('#tabs');if(searchOpen){host.innerHTML=`<div class="tab-search"><span>⌕</span><input id="menuSearch" placeholder="Søk i menyen" value="${searchQuery.replace(/"/g,'&quot;')}"><button id="searchCancel">Avbryt</button></div>`;$('#menuSearch').focus();$('#menuSearch').oninput=e=>{searchQuery=e.target.value;renderMenu()};$('#searchCancel').onclick=()=>{searchOpen=false;searchQuery='';renderTabs();renderMenu()};return}host.innerHTML='<button class="search-tab" id="searchOpen">⌕</button>'+menu.map(s=>`<button class="category-tab" data-tab="${s.id}">${s.title}</button>`).join('');$('#searchOpen').onclick=()=>{searchOpen=true;renderTabs()};$$('[data-tab]').forEach(b=>b.onclick=()=>document.querySelector(`[data-section="${b.dataset.tab}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}))}
 function warning(p){const hits=p.allergens.filter(x=>selectedAllergens.has(x));return hits.length?`<div class="menu-allergen-warning">Inneholder: ${hits.map(labelAllergen).join(', ')}</div>`:''}
 function row(p){const fav=activeFav().has(p.id);return `<article class="menu-row" data-product="${p.id}"><div class="menu-thumb" style="${p.image?`background-image:url('${p.image}')`:''}"></div><div class="menu-main"><strong>${p.name}</strong><div class="menu-desc">${p.description||''}</div>${warning(p)}</div><div class="menu-side"><button class="heart ${fav?'active':''}" data-fav="${p.id}">${fav?'♥':'♡'}</button><button class="plus" data-plus="${p.id}">+</button><span class="price">Fra ${money(Math.min(...p.sizes.map(s=>s[1])))}</span></div></article>`}
@@ -154,7 +159,7 @@ function renderCheckoutStep(){[1,2,3].forEach(n=>$('#checkoutStep'+n).hidden=n!=
 function placeOrder(){if(!cart.length)return;const name=$('#checkoutName').value.trim(),phone=$('#checkoutPhone').value.replace(/\D/g,'');if(!name||phone.length!==8){alert('Skriv inn navn og 8-sifret telefonnummer.');return}const total=cart.reduce((s,x)=>s+x.price*x.qty,0),id=Math.random().toString(36).slice(2,8).toUpperCase(),order={id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'};orders.unshift(order);save(KEY.orders,orders);if(account()){const a=account();a.name=a.name||name;const large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);if(large){const sum=a.stamps+large;a.rewards+=Math.floor(sum/10);a.stamps=sum%10}saveAccount()}cart=[];save(KEY.cart,cart);renderCartCount();checkoutStep=1;closeScreens();alert(`Testbestilling ${id} er lagret lokalt.`)}
 function accountFooter(){return `<div class="account-logout-bar"><button class="account-logout" id="logoutBtn" type="button">Logg ut</button></div>`}
 function bindAccountFooter(){const b=$('#logoutBtn');if(b)b.onclick=()=>{setSession(null);renderLogin()}}
-function stampsHtml(a){return Array.from({length:10},(_,i)=>`<span class="stamp ${i<a.stamps?'on':''}">${i<a.stamps?'✓':i+1}</span>`).join('')}
+function stampsHtml(a){return Array.from({length:10},(_,i)=>`<span class="stamp ${i<a.stamps?'on':''}"><b>${i+1}</b><i>🍕</i></span>`).join('')}
 function pizzaProgress(a){return `<section class="pizza-loyalty-card"><div class="pizza-loyalty-top"><div><small>STOR PIZZA-KUPONGER</small><h3>${a.stamps} av 10</h3></div><div class="pizza-reward-badge">${a.rewards||0}<span>gratis</span></div></div><div class="stamps">${stampsHtml(a)}</div><p>Kjøp 10 Stor Pizza – <strong>den 11. er gratis.</strong></p>${a.rewards?`<div class="reward-ready">🎁 ${a.rewards} gratis Stor Pizza klar til bruk</div>`:''}</section>`}
 function accountBack(){return `<button class="account-inline-back" id="accountBack" type="button">← Profil</button>`}
 function bindAccountBack(){const b=$('#accountBack');if(b)b.onclick=renderProfileMenu}
@@ -167,31 +172,25 @@ function renderProfileMenu(){
  const a=account();if(!a){renderLogin();return}
  $('#accountTitle').textContent='Profil';
  const recent=orders.filter(o=>o.phone===a.phone).length;
- $('#accountContent').innerHTML=`<div class="profile-home"><div class="profile-greeting"><div class="member-avatar-large">${escapeHtml((a.name||'K').charAt(0).toUpperCase())}</div><div><small>KØL MEDLEM</small><h2>${escapeHtml(a.name||'KØL-medlem')}</h2><p>+47 ${formatPhone(a.phone)}</p></div></div>${pizzaProgress(a)}<div class="profile-quick-grid"><button data-account="card"><strong>Medlemskort</strong><span>Se kupongkortet ›</span></button><button data-account="orders"><strong>Bestillinger</strong><span>${recent} lagret ›</span></button><button data-account="profile"><strong>Kontaktinfo</strong><span>Navn og e-post ›</span></button><button data-account="qr"><strong>QR-kode</strong><span>Vis i kassa ›</span></button></div></div>${accountFooter()}`;
- $$('[data-account]').forEach(b=>b.onclick=()=>({profile:renderProfileForm,card:renderMemberCard,orders:renderOrders,qr:renderQrView}[b.dataset.account]()));bindAccountFooter()
+ $('#accountContent').innerHTML=`<div class="profile-home"><div class="profile-greeting"><div class="member-avatar-large">${escapeHtml((a.name||'K').charAt(0).toUpperCase())}</div><div><small>KØL MEDLEM</small><h2>${escapeHtml(a.name||'KØL-medlem')}</h2><p>+47 ${formatPhone(a.phone)}</p></div></div>${pizzaProgress(a)}<div class="profile-simple-actions"><button data-account="orders"><span class="profile-action-icon">≡</span><span><strong>Bestillinger</strong><small>${recent} lagret</small></span><b>›</b></button><button data-account="profile"><span class="profile-action-icon">✎</span><span><strong>Kontaktinfo</strong><small>Navn og e-post</small></span><b>›</b></button></div></div>${accountFooter()}`;
+ $$('[data-account]').forEach(b=>b.onclick=()=>({profile:renderProfileForm,orders:renderOrders}[b.dataset.account]()));bindAccountFooter()
 }
 function renderProfileForm(){
  const a=account();$('#accountTitle').textContent='Kontaktinfo';
  $('#accountContent').innerHTML=`${accountBack()}<div class="profile-form"><div class="profile-form-card"><label>Hele navn<input id="pfName" value="${escapeHtml(a.name)}"></label><label>Telefonnummer<input value="+47 ${formatPhone(a.phone)}" disabled></label><label>E-post <small>(valgfritt)</small><input id="pfEmail" type="email" value="${escapeHtml(a.email||'')}"></label></div><label class="check-row"><input id="pfMarketing" type="checkbox" ${a.marketing?'checked':''}> Jeg ønsker tilbud fra KØL</label><button class="primary" id="saveProfile" style="width:100%;margin-top:14px">Lagre</button></div>${accountFooter()}`;
  $('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim()||a.name;a.email=$('#pfEmail').value.trim();a.marketing=$('#pfMarketing').checked;saveAccount();renderAll();renderProfileMenu()};bindAccountBack();bindAccountFooter()
 }
-function renderMemberCard(){
- const a=account();$('#accountTitle').textContent='Medlemskort';
- $('#accountContent').innerHTML=`${accountBack()}<div class="member-card compact-member-card"><div class="member-card-logo">KØL</div><div class="member-card-copy"><strong>${escapeHtml(a.name||'KØL-medlem')}</strong><span>+47 ${formatPhone(a.phone)}</span></div></div>${pizzaProgress(a)}<button class="primary member-qr-button" id="openQrFromCard">Vis QR-kode</button>${accountFooter()}`;
- $('#openQrFromCard').onclick=renderQrView;bindAccountBack();bindAccountFooter()
-}
-function renderQrView(){
- const a=account();$('#accountTitle').textContent='QR-kode';
- $('#accountContent').innerHTML=`${accountBack()}<div class="qr-wrap"><p>Vis QR-koden i kassa for å finne medlemskortet.</p><canvas id="memberQr" width="290" height="290"></canvas><h3>${escapeHtml(a.name||'KØL-medlem')}</h3><strong>+47 ${formatPhone(a.phone)}</strong></div>${accountFooter()}`;drawDemoQr($('#memberQr'),`KOL:${a.phone}`);bindAccountBack();bindAccountFooter()
-}
 function renderOrders(){
  const a=account(),list=orders.filter(o=>o.phone===a.phone);$('#accountTitle').textContent='Bestillinger';
  $('#accountContent').innerHTML=`${accountBack()}<div class="profile-body"><div class="orders-mini-head"><strong>Mine bestillinger</strong><span>${list.length}</span></div>${list.length?list.map(o=>`<div class="order-card"><div class="order-card-top"><strong>Ordre ${o.id}</strong><b>${money(o.total)}</b></div><small>${new Date(o.createdAt).toLocaleString('nb-NO')}</small><div class="order-items-mini">${o.items.map(x=>`${x.qty}x ${x.name} (${x.size})`).join('<br>')}</div></div>`).join(''):'<div class="empty-note">Ingen bestillinger ennå.</div>'}</div>${accountFooter()}`;bindAccountBack();bindAccountFooter()
 }
-function drawDemoQr(c,text){const x=c.getContext('2d'),n=29,s=c.width/n;let seed=[...text].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,2166136261);const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed&1};x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#000';const finder=(ox,oy)=>{for(let y=0;y<7;y++)for(let xx=0;xx<7;xx++)if(xx===0||y===0||xx===6||y===6||(xx>=2&&xx<=4&&y>=2&&y<=4))x.fillRect((ox+xx)*s,(oy+y)*s,Math.ceil(s),Math.ceil(s))};finder(1,1);finder(21,1);finder(1,21);for(let y=0;y<n;y++)for(let xx=0;xx<n;xx++){if((xx<9&&y<9)||(xx>19&&y<9)||(xx<9&&y>19))continue;if(rnd())x.fillRect(xx*s,y*s,Math.ceil(s),Math.ceil(s))}}
 function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size?selectedAllergens.size:''}
 function renderAllergens(){draftAllergens=new Set(selectedAllergens);$('#allergenGrid').innerHTML=ALLERGENS.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join('');$$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()})}
-$('#brandBtn').onclick=closeScreens;$('#infoBtn').onclick=()=>openScreen('infoScreen');$('#profileBtn').onclick=()=>{openScreen('accountScreen');account()?renderProfileMenu():renderLogin()};$('#cartBtn').onclick=()=>{checkoutStep=1;renderCart();openScreen('cartScreen')};$$('[data-close]').forEach(b=>b.onclick=closeScreens);$('#qtyMinus').onclick=()=>{qty=Math.max(1,qty-1);$('#qtyValue').textContent=qty;updateProductTotal()};$('#qtyPlus').onclick=()=>{qty++;$('#qtyValue').textContent=qty;updateProductTotal()};$('#addToCart').onclick=addCart;$('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};$('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};$('#allergenBtn').onclick=()=>{renderAllergens();$('#allergenModal').hidden=false};$('#allergenClose').onclick=()=>$('#allergenModal').hidden=true;$('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);$('#allergenModal').hidden=true;renderAll()};$('#memberAvatar').onclick=()=>{openScreen('accountScreen');renderProfileMenu()};$('#memberCardShortcut').onclick=()=>{openScreen('accountScreen');renderMemberCard()};$('#qrShortcut').onclick=()=>{openScreen('accountScreen');renderQrView()};renderAll();
+$('#brandBtn').onclick=closeScreens;$('#infoBtn').onclick=()=>{openScreen('infoScreen');setInfoTab('about')};
+function setInfoTab(tab){$$('[data-info-tab]').forEach(b=>b.classList.toggle('active',b.dataset.infoTab===tab));$$('[data-info-panel]').forEach(p=>p.classList.toggle('active',p.dataset.infoPanel===tab))}
+$$('[data-info-tab]').forEach(b=>b.onclick=()=>setInfoTab(b.dataset.infoTab));
+$('#storeMapBtn').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query=%C3%98GARDSVEGEN%2044%2C%202100%20SKARNES','_blank','noopener');
+$('#infoAllergenBtn').onclick=()=>{closeScreens();renderAllergens();$('#allergenModal').hidden=false};$('#profileBtn').onclick=()=>{openScreen('accountScreen');account()?renderProfileMenu():renderLogin()};$('#cartBtn').onclick=()=>{checkoutStep=1;renderCart();openScreen('cartScreen')};$$('[data-close]').forEach(b=>b.onclick=closeScreens);$('#qtyMinus').onclick=()=>{qty=Math.max(1,qty-1);$('#qtyValue').textContent=qty;updateProductTotal()};$('#qtyPlus').onclick=()=>{qty++;$('#qtyValue').textContent=qty;updateProductTotal()};$('#addToCart').onclick=addCart;$('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};$('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};$('#allergenBtn').onclick=()=>{renderAllergens();$('#allergenModal').hidden=false};$('#allergenClose').onclick=()=>$('#allergenModal').hidden=true;$('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);$('#allergenModal').hidden=true;renderAll()};renderAll();
 </script>
 </body>
 </html>
