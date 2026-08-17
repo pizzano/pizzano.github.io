@@ -16,5 +16,5 @@ for old,new in repls:
     if old not in s:
         raise SystemExit('missing pattern: '+old[:120])
     s=s.replace(old,new,1)
-# passesAllergens can remain as a harmless helper, but it must no longer be used for rendering.
+# passesAllergens can remain as a harmless helper, but it is no longer used to hide products.
 p.write_text(s,encoding='utf-8')
