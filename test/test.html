@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f36a2d">
 <title>KØL Grill & Pizza – Local demo</title>
-<link rel="stylesheet" href="test.css?v=profile-info-20260817-2354">
+<link rel="stylesheet" href="test.css?v=persistent-header-20260818-0002">
 </head>
 <body class="kol-customer">
 <div class="customer-app">
@@ -140,7 +140,7 @@ const labelAllergen=id=>ALLERGENS.find(a=>a[0]===id)?.[2]||id;
 function saveAccount(){save(KEY.accounts,accounts)}
 function ensureAccount(phone){if(!accounts[phone])accounts[phone]={phone,name:'',email:'',birth:'',marketing:true,stamps:0,rewards:0,favorites:[],createdAt:Date.now()};saveAccount();return accounts[phone]}
 function setSession(phone){session=phone||null;save(KEY.session,session);renderAll()}
-function openScreen(id){$$('.screen').forEach(x=>x.hidden=true);$('#'+id).hidden=false;document.body.classList.toggle('kol-top-back-active',!['accountScreen','infoScreen'].includes(id))}
+function openScreen(id){$$('.screen').forEach(x=>x.hidden=true);$('#'+id).hidden=false;document.body.classList.remove('kol-top-back-active')}
 function closeScreens(){$$('.screen').forEach(x=>x.hidden=true);document.body.classList.remove('kol-top-back-active')}
 function renderHeader(){const a=account(),pb=$('#profileBtn');if(a){const letter=(a.name||a.phone||'K').trim().charAt(0).toUpperCase();pb.innerHTML=`<span class="profile-letter">${letter}</span>`}else{pb.innerHTML='<svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>'}}
 function renderTabs(){const host=$('#tabs');if(searchOpen){host.innerHTML=`<div class="tab-search"><span>⌕</span><input id="menuSearch" placeholder="Søk i menyen" value="${searchQuery.replace(/"/g,'&quot;')}"><button id="searchCancel">Avbryt</button></div>`;$('#menuSearch').focus();$('#menuSearch').oninput=e=>{searchQuery=e.target.value;renderMenu()};$('#searchCancel').onclick=()=>{searchOpen=false;searchQuery='';renderTabs();renderMenu()};return}host.innerHTML='<button class="search-tab" id="searchOpen">⌕</button>'+menu.map(s=>`<button class="category-tab" data-tab="${s.id}">${s.title}</button>`).join('');$('#searchOpen').onclick=()=>{searchOpen=true;renderTabs()};$$('[data-tab]').forEach(b=>b.onclick=()=>document.querySelector(`[data-section="${b.dataset.tab}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}))}
