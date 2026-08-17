@@ -23,14 +23,15 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import re
           css=Path('test/kol-core.css').read_text(encoding='utf-8')
           index=Path('test/index.html').read_text(encoding='utf-8')
           admin=Path('test/admin-panel.html').read_text(encoding='utf-8')
           marker='CUSTOMER TEXT SIZE LOCK V2'
           assert css.count(marker)==1
           tail=css[css.index(marker):]
-          for forbidden in ('grid-template-columns:', 'width:', 'height:', 'min-height:', 'padding:', 'gap:'):
-              assert forbidden not in tail, forbidden
+          forbidden_props = re.findall(r'(?m)^\s*(width|min-width|max-width|height|min-height|max-height|padding|gap|grid-template-columns)\s*:', tail)
+          assert not forbidden_props, forbidden_props
           assert '-webkit-text-size-adjust: none !important' in tail
           assert 'font-size: 15px !important' in tail
           assert 'font-size: 12px !important' in tail
