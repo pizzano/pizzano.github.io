@@ -1,0 +1,46 @@
+name: Apply menu search and allergen UI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-search-allergen-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply patch
+        run: python .github/scripts/add-search-allergen-ui.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('test/index.html').read_text(encoding='utf-8')
+          start = text.find('<script>')
+          end = text.rfind('</script>')
+          if start < 0 or end < 0 or end <= start:
+              raise SystemExit('inline script not found')
+          Path('/tmp/kol-index.js').write_text(text[start + len('<script>'):end], encoding='utf-8')
+          PY
+          node --check /tmp/kol-index.js
+
+      - name: Commit result
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/index.html
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m 'Add menu search and allergen preferences [skip ci]'
+          git push
