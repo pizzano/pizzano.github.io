@@ -19,17 +19,14 @@ jobs:
           p=Path('test/test.html')
           s=p.read_text()
 
-          # cache bust CSS
           s=s.replace('test.css?v=allergen-search-20260818-0115','test.css?v=toast-feedback-20260818-0130',1)
 
-          # shared toast element
           marker='''</section>\n</div>\n\n<script>'''
           replacement='''</section>\n<div class="app-toast" id="appToast" role="status" aria-live="polite" aria-atomic="true"></div>\n</div>\n\n<script>'''
           if marker not in s:
               raise SystemExit('toast insertion marker not found')
           s=s.replace(marker,replacement,1)
 
-          # timer + shared helper
           old="let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap';"
           new="let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap',toastTimer=0;"
           if old not in s: raise SystemExit('state marker not found')
@@ -50,7 +47,6 @@ function showToast(message){
           if helper_marker not in s: raise SystemExit('helper marker not found')
           s=s.replace(helper_marker,helper_new,1)
 
-          # favorite feedback
           old="""    const f=favSet(),id=b.dataset.fav;
     f.has(id)?f.delete(id):f.add(id);
     saveFav(f);
@@ -63,7 +59,6 @@ function showToast(message){
           if old not in s: raise SystemExit('favorite block not found')
           s=s.replace(old,new,1)
 
-          # cart add/update feedback
           old="""  if(editingCartIndex>=0&&cart[editingCartIndex]){cart[editingCartIndex]=entry;editingCartIndex=-1;save(KEY.cart,cart);renderCartCount();renderCart();openView('cartScreen',{tabs:true});return}
   const old=cart.find(x=>x.key===entry.key);old?old.qty+=qty:cart.push(entry);
   save(KEY.cart,cart);renderCartCount();goMenu();"""
@@ -73,31 +68,26 @@ function showToast(message){
           if old not in s: raise SystemExit('cart add/update block not found')
           s=s.replace(old,new,1)
 
-          # cart remove feedback
           old="$$('[data-remove]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.remove,1);save(KEY.cart,cart);renderCart();renderCartCount()});"
           new="$$('[data-remove]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.remove,1);save(KEY.cart,cart);renderCart();renderCartCount();showToast('Produkt fjernet fra handlekurven')});"
           if old not in s: raise SystemExit('cart remove block not found')
           s=s.replace(old,new,1)
 
-          # profile save feedback
           old="$('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim()||a.name;a.email=$('#pfEmail').value.trim();a.marketing=$('#pfMarketing').checked;saveAccounts();renderHeader();renderProfileHome()};"
           new="$('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim()||a.name;a.email=$('#pfEmail').value.trim();a.marketing=$('#pfMarketing').checked;saveAccounts();renderHeader();renderProfileHome();showToast('Profilen er lagret')};"
           if old not in s: raise SystemExit('profile save block not found')
           s=s.replace(old,new,1)
 
-          # logout feedback
           old="$('#logoutBtn').onclick=()=>{setSession(null);renderLogin()};"
           new="$('#logoutBtn').onclick=()=>{setSession(null);renderLogin();showToast('Du er logget ut')};"
           if old not in s: raise SystemExit('logout block not found')
           s=s.replace(old,new,1)
 
-          # allergen toggle feedback
           old="""  $$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()});"""
           new="""  $$('[data-allergen]').forEach(b=>b.onclick=()=>{const id=b.dataset.allergen,wasSelected=draftAllergens.has(id);wasSelected?draftAllergens.delete(id):draftAllergens.add(id);renderAllergens();showToast(wasSelected?`${allergenLabel(id)} fjernet`:`${allergenLabel(id)} valgt`)});"""
           if old not in s: raise SystemExit('allergen toggle block not found')
           s=s.replace(old,new,1)
 
-          # allergen reset/save feedback
           old="$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();};"
           new="$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();showToast('Allergener nullstilt')};"
           if old not in s: raise SystemExit('allergen reset block not found')
@@ -108,7 +98,6 @@ function showToast(message){
           if old not in s: raise SystemExit('allergen save block not found')
           s=s.replace(old,new,1)
 
-          # order sent feedback instead of blocking alert
           old="  alert(`Testbestilling ${id} er lagret lokalt.`);"
           new="  showToast('Bestillingen er sendt');"
           if old not in s: raise SystemExit('order alert not found')
@@ -156,3 +145,4 @@ function showToast(message){
           git add test/test.html test/test.css
           git commit -m 'Add shared action feedback toast'
           git push origin HEAD:main
+# trigger
