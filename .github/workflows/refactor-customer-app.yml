@@ -24,6 +24,13 @@ jobs:
           set -euo pipefail
           sed -i 's/"\.cart-modal",/".cart-panel",/' .github/scripts/refactor-customer-app.py
           sed -i 's/"\.order-live-status",/".live-status",/' .github/scripts/refactor-customer-app.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/refactor-customer-app.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('if "kol-core.css" in admin:', 'if \'href="kol-core.css\' in admin:')
+          path.write_text(text, encoding='utf-8')
+          PY
           python .github/scripts/refactor-customer-app.py
 
       - name: Validate customer app
