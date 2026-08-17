@@ -3,3 +3,23 @@
 .info-sheet{top:auto;bottom:0;height:min(78dvh,760px);border-radius:24px 24px 0 0;overflow:hidden;background:#f7f7f7;box-shadow:0 -100vh 0 100vh rgba(0,0,0,.25),0 -16px 50px rgba(0,0,0,.16)}.info-sheet-head{position:relative;min-height:64px;display:flex;align-items:center;justify-content:center;padding:16px 58px 10px;background:#fff}.info-sheet-head h2{margin:0;font-size:22px}.info-sheet-grip{position:absolute;top:8px;left:50%;width:42px;height:4px;transform:translateX(-50%);border-radius:999px;background:#d9d5d2}.info-sheet-close{position:absolute;right:14px;top:14px;width:38px;height:38px;border:0;border-radius:50%;background:#111;color:#fff;font-size:22px}.info-tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:0 14px;border-bottom:1px solid var(--line);background:#fff}.info-tab{height:48px;border:0;border-bottom:2px solid transparent;background:#fff;color:#777;font-weight:700}.info-tab.active{color:#111;border-bottom-color:#111}.info-sheet-scroll{padding:14px;background:#f7f7f7}.info-tab-panel{display:none}.info-tab-panel.active{display:block}.store-info-card,.store-allergen-card,.store-contact-card,.store-hours-card,.store-text-card{border-radius:14px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.05)}.store-info-card{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px}.store-info-card strong{display:block;font-size:19px}.store-info-card span{display:block;margin-top:7px;color:#777;line-height:1.35}.store-map-button{height:40px;padding:0 14px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#111}.store-section{margin-top:22px}.store-section h3{margin:0 0 10px;font-size:18px}.store-allergen-card{padding:16px}.store-allergen-icons{font-size:20px;letter-spacing:2px;line-height:1.6}.store-allergen-card p{margin:10px 0 14px;color:#555;line-height:1.4}.store-allergen-card button{height:42px;padding:0 16px;border:1px solid #ddd;border-radius:10px;background:#fff;font-weight:700}.store-contact-card{overflow:hidden}.store-contact-card a{display:flex;align-items:center;gap:14px;padding:16px;color:inherit;text-decoration:none}.store-contact-card a>span:first-child{width:38px;height:38px;border-radius:10px;background:#f2f1f0;display:grid;place-items:center;font-size:20px}.store-contact-card small{display:block;color:#777}.store-contact-card strong{display:block;margin-top:3px}.store-social-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.store-social-row button{height:48px;border:0;border-radius:12px;background:#fff;font-weight:700;box-shadow:0 2px 12px rgba(0,0,0,.05)}.store-hours-card{display:flex;align-items:center;justify-content:space-between;padding:16px}.store-hours-card strong{font-size:15px}.store-text-card{padding:18px}.store-text-card h3{margin-top:0}.store-text-card p{color:#555;line-height:1.5}
 
 .appbar{position:relative;z-index:300}.screen:not(.account-sheet):not(.info-sheet){border-top:1px solid var(--line)}
+
+/* Product detail reference layout */
+#productScreen{top:calc(var(--head) + var(--tabs));background:#fff}
+#productScreen .product-detail-scroll{background:#fff}
+#productScreen .product-photo{height:228px;border-bottom:1px solid var(--line);background-size:cover;background-position:center}
+#productScreen .product-name{padding:15px 12px 10px;font-size:21px;font-weight:750;background:#fff}
+#productScreen .product-summary{padding:13px 12px;font-size:14px;line-height:1.45;background:#fff}
+#productScreen .product-choice-head{min-height:46px;padding:0 12px;background:#fbf7f2;font-size:14px}
+#productScreen .product-choice{min-height:52px;padding:0 12px;grid-template-columns:28px minmax(0,1fr) auto;background:#fff}
+#productScreen .product-choice.active{background:#eff9f4;color:#2d765b}
+#productScreen .product-choice .choice-mark{width:24px;height:24px;background:#fff;border-color:#cfc8c3}
+#productScreen .product-choice.active .choice-mark{border-color:#4eb586;background:#f6fffa;color:#27905f}
+#productScreen .product-note-block{padding:15px 12px 8px;border-top:1px solid var(--line)}
+#productScreen .product-body textarea{min-height:74px;border-radius:9px}
+#productScreen .quantity-row{padding:12px;border-top:1px solid var(--line)}
+#productScreen .product-footer{grid-template-columns:98px minmax(0,1fr);padding:9px 10px max(9px,env(safe-area-inset-bottom));background:#fff}
+#productScreen .product-footer>strong{font-size:16px;font-weight:500}
+#productScreen .product-footer .primary{height:52px;border-radius:9px;font-size:15px}
+body.kol-top-back-active .category-tabs-wrap{display:block}
+body.kol-top-back-active .category-tabs-scroll{scroll-behavior:auto}
