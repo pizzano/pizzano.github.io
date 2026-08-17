@@ -1,4 +1,5 @@
 name: Fix customer fixed sizing
+# rerun after trailing-newline cleanup
 on:
   push:
     branches:
