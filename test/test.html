@@ -4,152 +4,165 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f36a2d">
-<title>KØL Grill & Pizza – LocalStorage test</title>
-<link rel="stylesheet" href="test.css?v=simple-20260817-2317">
-
+<title>KØL Grill & Pizza – Local demo</title>
+<link rel="stylesheet" href="test.css?v=member-20260817-2326">
 </head>
-<body class="kol-customer" data-kol-theme="default">
+<body class="kol-customer">
 <div class="customer-app">
 <header class="appbar">
   <div class="appbar-main">
-    <button class="appbar-brand" id="siteNameText" type="button" aria-label="KØL Grill & Pizza">
+    <button class="appbar-brand" id="brandBtn" type="button">
       <span class="brand-label"><b>KØL</b><small>GRILL &amp; PIZZA</small></span>
-      <span class="brand-back-label" aria-hidden="true">← Til meny</span>
+      <span class="brand-back-label">← Til meny</span>
     </button>
-    <div class="appbar-context-title" id="appbarContextTitle" hidden></div>
     <div class="appbar-actions">
-      <button class="icon-button" id="infoToggle" type="button" aria-label="Informasjon"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 10.8v6"></path><path d="M12 7.1h.01"></path></svg></button>
-      <button class="icon-button profile-toggle" id="profileToggle" type="button" aria-label="Mine bestillinger"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"></path></svg><span class="profile-order-dot" id="profileOrderDot" hidden></span></button>
-      <button class="cart-toggle" id="cartToggle" type="button" aria-label="Handlekurv"><svg class="plain-icon" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 11h-11z"></path><path d="M9 8V6.5a3 3 0 0 1 6 0V8"></path></svg><span id="cartCount">0</span></button>
+      <button class="icon-button" id="infoBtn" aria-label="Info"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10.8v6M12 7.1h.01"/></svg></button>
+      <button class="icon-button" id="profileBtn" aria-label="Profil"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg></button>
+      <button class="cart-toggle" id="cartBtn" aria-label="Handlekurv"><svg class="plain-icon" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 11h-11zM9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span id="cartCount">0</span></button>
     </div>
   </div>
-  <nav class="category-tabs-wrap" id="categoryTabsWrap"><div class="category-tabs-scroll" id="categoryTabs"></div></nav>
+  <nav class="category-tabs-wrap"><div class="category-tabs-scroll" id="tabs"></div></nav>
 </header>
 
-<main class="menu-shell"><section id="menuSections" aria-label="Meny"></section></main>
-
-<div class="product-modal mobile-screen" id="productModal" role="dialog" aria-modal="true" hidden>
-  <div class="product-panel mobile-screen-panel">
-    <div class="product-scroll-content mobile-screen-scroll">
-      <div class="product-titlebar"><button class="back-button" id="closeProduct" type="button">‹</button><h2 id="productTitle"></h2><button class="product-titlebar-back-text" id="closeProductText" type="button">Meny</button></div>
-      <div class="product-photo" id="productPhoto"></div>
-      <div class="product-photo-title-wrap"><div class="product-photo-title-chip"><h2 id="productPhotoTitle"></h2></div></div>
-      <div class="product-body"><p class="product-summary" id="productSummary"></p><div id="optionGroups"></div><label class="note-label" for="specialInstructions">Spesielle instrukser</label><textarea id="specialInstructions" rows="2" placeholder="Eksempel: Ingen løk"></textarea><div class="quantity-row"><span>Mengde</span><div class="quantity-stepper"><button id="decreaseProduct" type="button">−</button><strong id="productQuantity">1</strong><button id="increaseProduct" type="button">+</button></div></div><p class="allergen-note" id="productAllergens"></p></div>
-    </div>
-    <div class="product-footer"><strong id="productTotal">0 kr</strong><button id="addConfiguredProduct" type="button">Legg til i handlekurven</button></div>
+<main class="menu-shell" id="menuShell">
+  <div class="member-shortcuts" id="memberShortcuts" hidden>
+    <button class="member-avatar" id="memberAvatar">F</button>
+    <button id="memberCardShortcut">▣ Medlemskort</button>
+    <button id="qrShortcut">⌗</button>
+    <button class="member-lang" id="memberLang">🇳🇴 NO</button>
   </div>
-</div>
+  <div class="menu-topline"><h1>Meny</h1><button class="allergen-open" id="allergenBtn">⚠ Matallergier <b id="allergenCount"></b></button></div>
+  <section id="menuSections"></section>
+</main>
 
-<div class="cart-modal mobile-screen" id="cartModal" role="dialog" aria-modal="true" hidden>
-  <aside class="cart-panel mobile-screen-panel">
-    <div class="cart-header"><h2>Handlekurv</h2></div>
-    <div class="cart-content-scroll mobile-screen-scroll">
-      <div class="cart-order-card">
-        <div class="cart-sales-card checkout-step-panel" id="checkoutOrderSection"><div class="checkout-section-title"><span>1</span><div><strong>Din bestilling</strong></div></div><div id="cartItems"></div><div class="cart-empty" id="cartEmpty">Handlekurven er tom.</div><div class="cart-summary"><div class="total-row compact-total-row"><span>Sluttsum</span><strong id="total">0 kr</strong></div><div class="tax-note-row"><small id="taxNote">(inkl. mva)</small></div></div></div>
-        <section class="checkout-form checkout-step-card checkout-step-panel" id="checkoutPickupSection" hidden><div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong><small>Testversjon – lagres bare lokalt.</small></div></div><div class="pickup-choice"><div class="pickup-options"><label class="pickup-option"><input checked name="pickupMode" type="radio" value="asap"><span>Snarest mulig</span></label><label class="pickup-option"><input name="pickupMode" type="radio" value="later"><span>Velg hentetid</span></label></div><select id="pickupTime" hidden></select></div></section>
-        <section class="checkout-form checkout-contact-card checkout-step-panel" id="checkoutContactSection" hidden><div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small>Lagres på denne enheten.</small></div></div><div class="checkout-grid"><label class="wide">Hele navn<input id="customerFullName" autocomplete="name" placeholder="For- og etternavn"></label><label class="wide">Telefonnummer<input id="customerPhone" inputmode="numeric" maxlength="8" placeholder="8 siffer"></label></div><p class="local-note">Ingen data sendes til Firebase eller server i denne testfilen.</p></section>
+<section class="screen" id="productScreen" hidden>
+  <div class="screen-head"><button class="screen-back" data-close="productScreen">‹</button><h2 id="productTitle">Produkt</h2></div>
+  <div class="screen-scroll">
+    <div class="product-photo" id="productPhoto"></div>
+    <div class="product-body">
+      <p class="product-summary" id="productDesc"></p>
+      <div class="option-box"><h3>Størrelse</h3><div class="size-options" id="sizeOptions"></div></div>
+      <label class="note-label">Spesielle instrukser</label><textarea id="productNote" placeholder="Eksempel: Ingen løk"></textarea>
+      <div class="quantity-row"><span>Mengde</span><div class="quantity-stepper"><button id="qtyMinus">−</button><strong id="qtyValue">1</strong><button id="qtyPlus">+</button></div></div>
+    </div>
+  </div>
+  <div class="product-footer"><strong id="productTotal">0 kr</strong><button class="primary" id="addToCart">Legg til i handlekurven</button></div>
+</section>
+
+<section class="screen" id="cartScreen" hidden>
+  <div class="screen-head"><button class="screen-back" data-close="cartScreen">‹</button><h2>Handlekurv</h2></div>
+  <div class="screen-scroll cart-content-scroll">
+    <div id="checkoutStep1">
+      <div class="checkout-section-title"><span>1</span><div><strong>Din bestilling</strong></div></div>
+      <div id="cartLines"></div>
+      <div class="empty-note" id="cartEmpty">Handlekurven er tom.</div>
+      <div class="cart-summary"><div class="total-row"><span>Sluttsum</span><strong id="cartTotal">0 kr</strong></div><div class="tax-note-row">(inkl. mva)</div></div>
+    </div>
+    <div id="checkoutStep2" hidden>
+      <div class="checkout-section-title"><span>2</span><div><strong>Velg hentetid</strong><small>Testversjon – lagres lokalt.</small></div></div>
+      <div class="pickup-options"><label class="pickup-option"><input type="radio" name="pickup" value="asap" checked><span>Snarest mulig</span></label><label class="pickup-option"><input type="radio" name="pickup" value="later"><span>Senere</span></label></div>
+    </div>
+    <div id="checkoutStep3" hidden>
+      <div class="checkout-section-title"><span>3</span><div><strong>Navn og telefon</strong><small id="checkoutLoginHint">Lagres på denne enheten.</small></div></div>
+      <div class="checkout-grid">
+        <label>Hele navn<input id="checkoutName" autocomplete="name"></label>
+        <label>Telefonnummer<input id="checkoutPhone" inputmode="numeric" maxlength="8"></label>
       </div>
     </div>
-    <div class="checkout-footer"><div class="checkout-progress"><strong class="checkout-step-counter" id="checkoutStepCounter">Steg 1</strong><span class="checkout-next-hint" id="checkoutNextHint">Kontroller varene dine</span></div><div class="checkout-footer-actions"><button class="checkout-back-button" id="checkoutBackButton" type="button" hidden>Tilbake</button><button class="checkout-button" id="checkoutButton" type="button">Neste</button></div></div>
-  </aside>
-</div>
+  </div>
+  <div class="checkout-footer"><div class="checkout-footer-actions"><button class="checkout-back-button" id="checkoutBack" hidden>Tilbake</button><button class="checkout-button" id="checkoutNext">Neste</button></div></div>
+</section>
 
-<div class="profile-modal mobile-screen" id="profileModal" role="dialog" aria-modal="true" hidden><section class="profile-panel mobile-screen-panel"><div class="profile-header"><div class="profile-header-copy"><span>LOKAL HISTORIKK</span><h2>Mine bestillinger</h2></div></div><div class="profile-body mobile-screen-scroll" id="profileOrders"></div></section></div>
-<div class="info-modal mobile-screen" id="infoModal" role="dialog" aria-modal="true" hidden><section class="info-panel mobile-card-panel"><div class="info-header"><div class="info-header-copy"><span>RESTAURANTINFORMASJON</span><h2>KØL Grill & Pizza</h2></div><button class="close-button" id="closeInfo" type="button">×</button></div><div class="info-grid"><section class="info-block"><h3>Åpningstider</h3><div class="info-line"><span>Mandag–Søndag</span><strong>14:00–22:00</strong></div></section><section class="info-block"><h3>Adresse</h3><div class="info-line"><span>ØGARDSVEGEN 44, 2100 SKARNES</span></div></section><section class="info-block"><h3>Telefonnummer</h3><div class="info-line"><span>+47 41 14 53 53</span></div></section></div><p class="privacy-note">Dette er en LocalStorage-test. Ingen bestillinger sendes til restauranten.</p></section></div>
-<div class="order-live-modal mobile-screen" id="orderLiveModal" role="dialog" aria-modal="true" hidden><section class="order-live-panel mobile-screen-panel"><div class="order-live-content mobile-screen-scroll" id="orderLiveContent"></div></section></div>
+<section class="screen" id="accountScreen" hidden>
+  <div class="screen-head"><button class="screen-back" data-close="accountScreen">‹</button><h2 id="accountTitle">Profil</h2></div>
+  <div class="screen-scroll" id="accountContent"></div>
+</section>
 
-<div class="local-allergen-modal" id="allergenModal" role="dialog" aria-modal="true" aria-labelledby="allergenTitle" hidden>
+<section class="screen" id="infoScreen" hidden>
+  <div class="screen-head"><button class="screen-back" data-close="infoScreen">‹</button><h2>Informasjon</h2></div>
+  <div class="screen-scroll info-grid">
+    <div class="info-block"><h3>Åpningstider</h3><div>Mandag–Søndag <strong>14:00–22:00</strong></div></div>
+    <div class="info-block"><h3>Adresse</h3><div>ØGARDSVEGEN 44, 2100 SKARNES</div></div>
+    <div class="info-block"><h3>Telefon</h3><div>+47 41 14 53 53</div></div>
+    <p class="privacy-note">LocalStorage-demo. Ingen testbestillinger sendes til restauranten.</p>
+  </div>
+</section>
+
+<div class="local-allergen-modal" id="allergenModal" hidden>
   <section class="local-allergen-sheet">
-    <div class="local-allergen-head"><button class="local-allergen-close" id="closeAllergens" type="button" aria-label="Lukk">×</button><h2 id="allergenTitle">Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av de valgte allergenene.</p></div>
-    <div class="local-allergen-toolbar local-allergen-toolbar-reset"><button class="local-allergen-reset" id="resetAllergens" type="button">Nullstill</button></div>
+    <div class="local-allergen-head"><button class="local-allergen-close" id="allergenClose">×</button><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av de valgte allergenene.</p></div>
+    <div class="local-allergen-toolbar"><button class="local-allergen-reset" id="allergenReset">Nullstill</button></div>
     <div class="local-allergen-grid" id="allergenGrid"></div>
-    <div class="local-allergen-footer"><div class="local-allergen-device-note">Valgene lagres bare på denne enheten.</div><button class="local-allergen-save" id="saveAllergens" type="button">Lagre</button></div>
+    <div class="local-allergen-footer"><div class="local-allergen-device-note">Valgene lagres bare på denne enheten.</div><button class="local-allergen-save" id="allergenSave">Lagre</button></div>
   </section>
 </div>
 </div>
 
 <script>
-const KEY={menu:'kol-local-menu-v1',cart:'kol-local-cart-v1',fav:'kol-local-favorites-v1',customer:'kol-local-customer-v1',orders:'kol-local-orders-v1',allergens:'kol-local-allergens-v1'};
+const KEY={menu:'kol-demo-menu-v2',cart:'kol-demo-cart-v2',orders:'kol-demo-orders-v2',allergens:'kol-demo-allergens-v2',accounts:'kol-demo-accounts-v1',session:'kol-demo-session-v1',guestFav:'kol-demo-guest-fav-v1'};
 const IMG=['https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=320&q=80','https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=320&q=80','https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=320&q=80'];
-const seedMenu=[
+const MENU=[
 {id:'favorites',title:'Mine favoritter',virtual:true},{id:'popular',title:'Mest bestilt',virtual:true},
 {id:'pizza',title:'Pizza',note:'Alle pizzaer kommer med ost og tomatsaus: Stor for 2–3 personer, medium for 1 person.',items:[
-{id:'p1',name:'1. Clasico',description:'Skinke eller pepperoni',image:IMG[0],allergens:'Allergener: gluten, melk',sizes:[['Medium',145],['Stor',175]]},{id:'p2',name:'2. Capri',description:'Skinke, bacon og sopp',image:IMG[1],allergens:'Allergener: gluten, melk',sizes:[['Medium',155],['Stor',185]]},{id:'p3',name:'3. Al capone',description:'Pepperoni, biff, paprika og løk',image:IMG[0],allergens:'Allergener: gluten, melk',sizes:[['Medium',165],['Stor',195]]},{id:'p4',name:'4. Parma',description:'Parmaskinke, pesto-olje, rukkola og parmesanost',image:IMG[1],allergens:'Allergener: gluten, melk, nøtter',sizes:[['Medium',185],['Stor',215]]},{id:'p5',name:'5. Sjefens favoritt',description:'Biff, skinke, pepperoni og paprika',image:IMG[0],allergens:'Allergener: gluten, melk',sizes:[['Medium',185],['Stor',215]]},{id:'p6',name:'6. Torino',description:'Pepperoni, skinke, løk og paprika',image:IMG[1],allergens:'Allergener: gluten, melk',sizes:[['Medium',175],['Stor',205]]}]},
-{id:'kebab',title:'Kebab retter',note:'Serveres med salat og dressing.',items:[{id:'k1',name:'Kebab i pita',description:'Kebabkjøtt, salat og dressing',image:IMG[2],allergens:'Allergener: gluten, melk',sizes:[['Standard',149]]},{id:'k2',name:'Kebab tallerken',description:'Kebabkjøtt, pommes frites, salat og dressing',image:IMG[2],allergens:'Allergener: melk',sizes:[['Standard',189]]}]},
-{id:'burger',title:'Hjemmelagde burgere',items:[{id:'b1',name:'Cheeseburger',description:'Burger, ost, salat og dressing',image:IMG[2],allergens:'Allergener: gluten, melk, egg',sizes:[['160 g',159],['250 g',199]]},{id:'b2',name:'Baconburger',description:'Burger, bacon, ost og salat',image:IMG[2],allergens:'Allergener: gluten, melk, egg',sizes:[['160 g',179],['250 g',219]]}]},
-{id:'drikke',title:'Drikke',items:[{id:'d1',name:'Coca-Cola 0,5L',description:'Kald drikke',image:'',allergens:'',sizes:[['0,5L',39]]},{id:'d2',name:'Fanta 0,5L',description:'Kald drikke',image:'',allergens:'',sizes:[['0,5L',39]]}]}
+{id:'p1',name:'1. Clasico',description:'Skinke eller pepperoni',image:IMG[0],allergens:['gluten','melk'],sizes:[['Medium',145],['Stor',175]]},
+{id:'p2',name:'2. Capri',description:'Skinke, bacon og sopp',image:IMG[1],allergens:['gluten','melk'],sizes:[['Medium',155],['Stor',185]]},
+{id:'p3',name:'3. Al capone',description:'Pepperoni, biff, paprika og løk',image:IMG[0],allergens:['gluten','melk'],sizes:[['Medium',165],['Stor',195]]},
+{id:'p4',name:'4. Parma',description:'Parmaskinke, pesto-olje, rukkola og parmesanost',image:IMG[1],allergens:['gluten','melk','nøtter'],sizes:[['Medium',185],['Stor',215]]},
+{id:'p5',name:'5. Sjefens favoritt',description:'Biff, skinke, pepperoni og paprika',image:IMG[0],allergens:['gluten','melk'],sizes:[['Medium',185],['Stor',215]]},
+{id:'p6',name:'6. Torino',description:'Pepperoni, skinke, løk og paprika',image:IMG[1],allergens:['gluten','melk'],sizes:[['Medium',175],['Stor',205]]}]},
+{id:'kebab',title:'Kebab retter',items:[
+{id:'k1',name:'Kebab i pita',description:'Kebabkjøtt, salat og dressing',image:IMG[2],allergens:['gluten','melk'],sizes:[['Standard',149]]},
+{id:'k2',name:'Kebab tallerken',description:'Kebabkjøtt, pommes frites, salat og dressing',image:IMG[2],allergens:['melk'],sizes:[['Standard',189]]}]},
+{id:'burger',title:'Hjemmelagde burgere',items:[
+{id:'b1',name:'Cheeseburger',description:'Burger, ost, salat og dressing',image:IMG[2],allergens:['gluten','melk','egg'],sizes:[['160 g',159],['250 g',199]]},
+{id:'b2',name:'Baconburger',description:'Burger, bacon, ost og salat',image:IMG[2],allergens:['gluten','melk','egg'],sizes:[['160 g',179],['250 g',219]]}]},
+{id:'drikke',title:'Drikke',items:[{id:'d1',name:'Coca-Cola 0,5L',description:'Kald drikke',image:'',allergens:[],sizes:[['0,5L',39]]},{id:'d2',name:'Fanta 0,5L',description:'Kald drikke',image:'',allergens:[],sizes:[['0,5L',39]]}]}
 ];
 const ALLERGENS=[['melk','🥛','Melk'],['gluten','🌾','Hvete / gluten'],['egg','🥚','Egg'],['soya','🫘','Soya'],['selleri','🌿','Selleri'],['sennep','🟡','Sennep'],['sesam','◌','Sesam'],['fisk','🐟','Fisk'],['skalldyr','🦐','Skalldyr'],['peanøtter','🥜','Peanøtter'],['nøtter','🌰','Nøtter'],['sulfitter','◇','Sulfitter']];
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-if(!localStorage.getItem(KEY.menu))save(KEY.menu,seedMenu);
-let menu=load(KEY.menu,seedMenu),cart=load(KEY.cart,[]),favorites=new Set(load(KEY.fav,[])),orders=load(KEY.orders,[]),customer=load(KEY.customer,{}),selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),selected=null,qty=1,selectedSize=0,checkoutStep=1,searchOpen=false,searchQuery='',expandedVirtual={favorites:false,popular:false};
-const els={tabs:$('#categoryTabs'),sections:$('#menuSections'),product:$('#productModal'),cart:$('#cartModal'),profile:$('#profileModal'),info:$('#infoModal'),live:$('#orderLiveModal'),cartItems:$('#cartItems'),count:$('#cartCount'),total:$('#total'),profileOrders:$('#profileOrders'),allergenModal:$('#allergenModal'),allergenGrid:$('#allergenGrid')};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+if(!localStorage.getItem(KEY.menu)) save(KEY.menu,MENU);
+let menu=load(KEY.menu,MENU), cart=load(KEY.cart,[]), orders=load(KEY.orders,[]), accounts=load(KEY.accounts,{}), session=load(KEY.session,null), selectedAllergens=new Set(load(KEY.allergens,[])), draftAllergens=new Set(selectedAllergens), searchOpen=false,searchQuery='',expanded={favorites:false,popular:false},selectedProduct=null,selectedSize=0,qty=1,checkoutStep=1;
 const money=n=>`${Number(n||0).toLocaleString('nb-NO')} kr`;
-const normalize=s=>String(s||'').toLocaleLowerCase('nb-NO').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-const allItems=()=>menu.filter(s=>!s.virtual).flatMap(s=>s.items||[]),itemById=id=>allItems().find(x=>x.id===id),basePrice=p=>Math.min(...p.sizes.map(x=>x[1]));
-const allergensOf=p=>{const text=normalize(p.allergens);return ALLERGENS.map(a=>a[0]).filter(id=>text.includes(normalize(id)))};
-const passesAllergens=p=>![...selectedAllergens].some(a=>allergensOf(p).includes(a));
-const matchesSearch=p=>{const q=normalize(searchQuery);return !q||normalize(`${p.name} ${p.description||''} ${p.allergens||''}`).includes(q)};
-function visibleItems(items=[]){return items.filter(matchesSearch)}
-function sectionsForRender(){
-  if(searchOpen){const items=visibleItems(allItems());return [{id:'search-results',title:searchQuery?`Søk: ${searchQuery}`:'Søk i menyen',items,search:true}]}
-  const favItems=allItems().filter(x=>favorites.has(x.id));const popular=allItems().slice(0,5);
-  return menu.map(s=>s.id==='favorites'?{...s,note:'Produkter du har lagret.',items:favItems}:s.id==='popular'?{...s,note:'Populære valg i testmenyen.',items:popular}:{...s,items:(s.items||[])}).filter(s=>(!s.virtual||(s.items&&s.items.length))&&(s.items||[]).length);
-}
-function renderTabs(){
-  if(searchOpen){els.tabs.innerHTML=`<div class="local-search-rail"><label class="local-search-input-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg><input class="local-search-input" id="localSearchInput" type="search" autocomplete="off" placeholder="Søk i menyen" value="${searchQuery.replace(/"/g,'&quot;')}"></label><button class="local-search-cancel" id="cancelSearch" type="button">Avbryt</button></div>`;setTimeout(()=>$('#localSearchInput')?.focus(),0);return;
-  }
-  els.tabs.innerHTML=`<button class="local-search-button" data-search-open type="button" aria-label="Søk"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg></button>`+sectionsForRender().map((s,i)=>`<button class="category-tab ${i===0?'active':''}" data-tab="${s.id}" type="button">${s.title}</button>`).join('');
-}
-const heart=s=>s?'♥':'♡';
-function productAllergenText(p){
-  if(!selectedAllergens.size)return '';
-  const ids=allergensOf(p).filter(id=>selectedAllergens.has(id));
-  if(!ids.length)return '';
-  const labels=ids.map(id=>ALLERGENS.find(x=>x[0]===id)?.[2]||id);
-  return `<div class="local-product-allergens">Inneholder: ${labels.join(', ')}</div>`;
-}
-function productRow(p){return `<article class="menu-row menu-app-product" data-product="${p.id}">${p.image?`<span class="food-thumb custom-thumb" style="background-image:url('${p.image}')"></span>`:`<span class="food-thumb default-thumb"></span>`}<div class="menu-row-main"><div class="menu-row-headline"><strong>${p.name}</strong></div><div class="menu-row-description">${p.description||''}</div>${productAllergenText(p)}</div><div class="menu-app-product-side"><div class="menu-card-actions"><button class="menu-favorite local-fav ${favorites.has(p.id)?'saved':''}" data-fav="${p.id}" type="button" aria-label="Favoritt">${heart(favorites.has(p.id))}</button><button class="menu-app-plus local-plus" data-add="${p.id}" type="button" aria-label="Legg til">+</button></div><span class="menu-row-inline-price">${p.sizes.length>1?'Fra ':''}${money(basePrice(p))}</span></div></article>`}
-function renderMenu(){
-  const sections=sectionsForRender();
-  const allergenButton=`<button class="local-allergen-trigger ${selectedAllergens.size?'has-filter':''}" data-open-allergens type="button"><span aria-hidden="true">⚠</span> Matallergier${selectedAllergens.size?` <span class="local-allergen-count">${selectedAllergens.size}</span>`:''}</button>`;
-  const tools=`<div class="local-menu-tools"><h2>Meny</h2>${allergenButton}</div>`;
-  if(searchOpen){const items=sections[0]?.items||[];els.sections.innerHTML=`${tools}<div class="local-search-meta">${items.length} produkter funnet</div>${items.length?`<section class="menu-app-section"><div class="menu-list">${items.map(productRow).join('')}</div></section>`:`<div class="local-empty-search">Ingen produkter passer søket.</div>`}`;renderTabs();return}
-  els.sections.innerHTML=tools+sections.map(s=>{const limited=s.id==='favorites'||s.id==='popular';const items=limited&&!expandedVirtual[s.id]?(s.items||[]).slice(0,3):(s.items||[]);const more=limited&&(s.items||[]).length>3?`<div class="local-more-wrap"><button class="local-more-button" data-vis-mer="${s.id}" type="button">${expandedVirtual[s.id]?'Vis mindre':'Vis mer'}</button></div>`:'';return `<section class="menu-app-section" data-section="${s.id}"><div class="menu-app-section-head"><h2>${s.title}</h2>${s.note?`<p>${s.note}</p>`:''}</div><div class="menu-list">${items.map(productRow).join('')}</div>${more}</section>`}).join('');renderTabs();
-}
-function setOverlay(type){[els.product,els.cart,els.profile,els.info,els.live].forEach(x=>x.hidden=true);document.body.classList.remove('kol-product-detail-open','cart-open','profile-open','info-open','order-live-open','kol-top-back-active');if(!type)return;const map={product:els.product,cart:els.cart,profile:els.profile,info:els.info,live:els.live};map[type].hidden=false;document.body.classList.add('kol-top-back-active');if(type==='product')document.body.classList.add('kol-product-detail-open');else document.body.classList.add(type==='cart'?'cart-open':type==='profile'?'profile-open':type==='info'?'info-open':'order-live-open');$('#appbarContextTitle').hidden=false;$('#appbarContextTitle').textContent={product:'',cart:'Handlekurv',profile:'Mine bestillinger',info:'Informasjon',live:'Bestillingsstatus'}[type]||''}
-function closeAll(){setOverlay(null);$('#appbarContextTitle').hidden=true}
-function openProduct(id){selected=itemById(id);if(!selected)return;qty=1;selectedSize=0;$('#productTitle').textContent=selected.name;$('#productPhotoTitle').textContent=selected.name;$('#productSummary').textContent=selected.description||'';$('#productPhoto').style.backgroundImage=selected.image?`url('${selected.image}')`:'';$('#specialInstructions').value='';$('#productAllergens').textContent=selected.allergens||'Ingen allergener oppgitt.';renderProductOptions();setOverlay('product')}
-function renderProductOptions(){if(!selected)return;$('#optionGroups').innerHTML=`<section class="option-group"><h3>Størrelse <span>Obligatorisk</span></h3>${selected.sizes.map((s,i)=>`<label class="option-line"><input type="radio" name="localSize" value="${i}" ${i===selectedSize?'checked':''}><span>${s[0]}</span><strong>${money(s[1])}</strong></label>`).join('')}</section>`;$('#productQuantity').textContent=qty;$('#productTotal').textContent=money(selected.sizes[selectedSize][1]*qty)}
-function addSelected(){if(!selected)return;const size=selected.sizes[selectedSize],note=$('#specialInstructions').value.trim(),key=`${selected.id}|${size[0]}|${note}`,existing=cart.find(x=>x.key===key);if(existing)existing.qty+=qty;else cart.push({key,id:selected.id,name:selected.name,size:size[0],price:size[1],qty,note});save(KEY.cart,cart);renderCart();closeAll()}
-function renderCart(){els.count.textContent=cart.reduce((a,x)=>a+x.qty,0);const sum=cart.reduce((a,x)=>a+x.price*x.qty,0);els.total.textContent=money(sum);$('#cartEmpty').hidden=cart.length>0;els.cartItems.innerHTML=cart.map((x,i)=>`<article class="local-cart-line"><div><h3>${x.qty}× ${x.name}</h3><p>${x.size}${x.note?` · ${x.note}`:''}</p><strong>${money(x.price*x.qty)}</strong></div><div class="local-cart-actions"><button data-dec="${i}" type="button">−</button><button data-inc="${i}" type="button">+</button><button data-del="${i}" type="button">×</button></div></article>`).join('');$('#checkoutButton').disabled=!cart.length}
-function setCheckoutStep(n){checkoutStep=Math.max(1,Math.min(3,n));$('#checkoutOrderSection').hidden=checkoutStep!==1;$('#checkoutPickupSection').hidden=checkoutStep!==2;$('#checkoutContactSection').hidden=checkoutStep!==3;$('#checkoutBackButton').hidden=checkoutStep===1;$('#checkoutStepCounter').textContent=`Steg ${checkoutStep}`;$('#checkoutNextHint').textContent=checkoutStep===1?'Kontroller varene dine':checkoutStep===2?'Velg hentetid':'Kontroller kontaktinformasjonen';$('#checkoutButton').textContent=checkoutStep===3?'Send testbestilling':'Neste';$('#checkoutButton').disabled=checkoutStep===1&&!cart.length}
-function openCart(){renderCart();setCheckoutStep(1);setOverlay('cart')}
-function fillTimes(){const select=$('#pickupTime');select.innerHTML='';const now=new Date();for(let i=1;i<=12;i++){const d=new Date(now.getTime()+i*15*60000),o=document.createElement('option');o.value=d.toISOString();o.textContent=d.toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'});select.appendChild(o)}}
-function updatePickup(){const later=$('input[name="pickupMode"]:checked')?.value==='later';$('#pickupTime').hidden=!later;if(later&&!$('#pickupTime').options.length)fillTimes()}
-function submitLocalOrder(){const name=$('#customerFullName').value.trim(),phone=$('#customerPhone').value.replace(/\D/g,'').slice(0,8);if(name.length<2){$('#customerFullName').focus();return}if(!/^\d{8}$/.test(phone)){ $('#customerPhone').focus();return}customer={name,phone};save(KEY.customer,customer);const mode=$('input[name="pickupMode"]:checked')?.value||'asap',total=cart.reduce((a,x)=>a+x.price*x.qty,0),order={id:`LOCAL-${Date.now().toString().slice(-6)}`,createdAt:new Date().toISOString(),status:'local',pickup:mode==='later'?$('#pickupTime').value:'Snarest mulig',items:cart.map(x=>({...x})),total};orders.unshift(order);orders=orders.slice(0,10);save(KEY.orders,orders);cart=[];save(KEY.cart,cart);renderCart();renderProfile();$('#orderLiveContent').innerHTML=`<div class="local-status-card"><h3>Testbestilling lagret</h3><p><strong>${order.id}</strong><br>Bestillingen ligger kun i LocalStorage på denne enheten. Den er ikke sendt til restauranten.</p><p>Sum: <strong>${money(order.total)}</strong></p><button id="closeLocalStatus" type="button">Til meny</button></div>`;setOverlay('live');$('#closeLocalStatus').onclick=closeAll}
-function renderProfile(){if(!orders.length){els.profileOrders.innerHTML='<p class="profile-empty">Ingen lokale bestillinger ennå.</p>';$('#profileOrderDot').hidden=true;return}$('#profileOrderDot').hidden=false;els.profileOrders.innerHTML=orders.map(o=>`<article class="local-order"><strong>${o.id} · ${money(o.total)}</strong><small>${new Date(o.createdAt).toLocaleString('nb-NO')} · ${o.items.reduce((a,x)=>a+x.qty,0)} varer</small></article>`).join('')}
-function toggleFavorite(id){favorites.has(id)?favorites.delete(id):favorites.add(id);save(KEY.fav,[...favorites]);renderMenu()}
-function openSearch(){searchOpen=true;searchQuery='';renderMenu()}
-function closeSearch(){searchOpen=false;searchQuery='';renderMenu()}
-function renderAllergenGrid(){els.allergenGrid.innerHTML=ALLERGENS.map(([id,symbol,label])=>`<button class="local-allergen-option ${draftAllergens.has(id)?'selected':''}" data-allergen="${id}" type="button"><span class="local-allergen-symbol">${symbol}</span><span>${label}</span></button>`).join('');const reset=$('#resetAllergens');if(reset)reset.disabled=draftAllergens.size===0}
-function openAllergens(){draftAllergens=new Set(selectedAllergens);renderAllergenGrid();els.allergenModal.hidden=false}
-function closeAllergens(){els.allergenModal.hidden=true}
-function saveAllergens(){selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);closeAllergens();renderMenu()}
-els.sections.addEventListener('click',e=>{const fav=e.target.closest('[data-fav]');if(fav){e.stopPropagation();toggleFavorite(fav.dataset.fav);return}const add=e.target.closest('[data-add]');if(add){e.stopPropagation();openProduct(add.dataset.add);return}const more=e.target.closest('[data-vis-mer]');if(more){expandedVirtual[more.dataset.visMer]=!expandedVirtual[more.dataset.visMer];renderMenu();return}if(e.target.closest('[data-open-allergens]')){openAllergens();return}const row=e.target.closest('[data-product]');if(row)openProduct(row.dataset.product)});
-els.tabs.addEventListener('click',e=>{if(e.target.closest('[data-search-open]')){openSearch();return}if(e.target.closest('[data-open-allergens]')){openAllergens();return}if(e.target.closest('#cancelSearch')){closeSearch();return}const b=e.target.closest('[data-tab]');if(!b)return;$$('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelector(`[data-section="${b.dataset.tab}"]`)?.scrollIntoView({block:'start'})});
-els.tabs.addEventListener('input',e=>{if(!e.target.matches('#localSearchInput'))return;searchQuery=e.target.value;renderMenu();requestAnimationFrame(()=>{const input=$('#localSearchInput');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length)}})});
-els.allergenGrid.addEventListener('click',e=>{const b=e.target.closest('[data-allergen]');if(!b)return;draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergenGrid()});
-$('#closeAllergens').onclick=closeAllergens;$('#resetAllergens').onclick=()=>{draftAllergens.clear();renderAllergenGrid()};$('#saveAllergens').onclick=saveAllergens;els.allergenModal.addEventListener('click',e=>{if(e.target===els.allergenModal)closeAllergens()});
-$('#optionGroups').addEventListener('change',e=>{if(e.target.name==='localSize'){selectedSize=Number(e.target.value);renderProductOptions()}});
-$('#decreaseProduct').onclick=()=>{qty=Math.max(1,qty-1);renderProductOptions()};$('#increaseProduct').onclick=()=>{qty++;renderProductOptions()};$('#addConfiguredProduct').onclick=addSelected;$('#closeProduct').onclick=closeAll;$('#closeProductText').onclick=closeAll;
-$('#cartToggle').onclick=openCart;$('#profileToggle').onclick=()=>{renderProfile();setOverlay('profile')};$('#infoToggle').onclick=()=>setOverlay('info');$('#closeInfo').onclick=closeAll;$('#siteNameText').onclick=()=>{if(document.body.classList.contains('kol-top-back-active'))closeAll()};
-els.cartItems.addEventListener('click',e=>{const inc=e.target.closest('[data-inc]'),dec=e.target.closest('[data-dec]'),del=e.target.closest('[data-del]'),raw=(inc||dec||del)?.dataset.inc??(inc||dec||del)?.dataset.dec??(inc||dec||del)?.dataset.del,i=Number(raw);if(!Number.isInteger(i))return;if(inc)cart[i].qty++;if(dec)cart[i].qty=Math.max(1,cart[i].qty-1);if(del)cart.splice(i,1);save(KEY.cart,cart);renderCart()});
-$('#checkoutBackButton').onclick=()=>setCheckoutStep(checkoutStep-1);$('#checkoutButton').onclick=()=>{if(checkoutStep<3){setCheckoutStep(checkoutStep+1);return}submitLocalOrder()};$$('input[name="pickupMode"]').forEach(x=>x.onchange=updatePickup);
-$('#customerPhone').addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'').slice(0,8));$('#customerFullName').value=customer.name||'';$('#customerPhone').value=customer.phone||'';
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!els.allergenModal.hidden){closeAllergens();return}if(searchOpen){closeSearch();return}closeAll()});
-renderMenu();renderCart();renderProfile();updatePickup();
+const norm=s=>String(s||'').toLocaleLowerCase('nb-NO').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const items=()=>menu.filter(s=>!s.virtual).flatMap(s=>(s.items||[]).map(p=>({...p,sectionId:s.id})));
+const product=id=>items().find(p=>p.id===id);
+const account=()=>session&&accounts[session]?accounts[session]:null;
+const activeFav=()=>new Set(account()?.favorites||load(KEY.guestFav,[]));
+const saveFav=set=>{if(account()){accounts[session].favorites=[...set];save(KEY.accounts,accounts)}else save(KEY.guestFav,[...set])};
+const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const formatPhone=p=>String(p||'').replace(/(\d{2})(\d{2})(\d{2})(\d{2})/,'$1 $2 $3 $4');
+const labelAllergen=id=>ALLERGENS.find(a=>a[0]===id)?.[2]||id;
+function saveAccount(){save(KEY.accounts,accounts)}
+function ensureAccount(phone){if(!accounts[phone])accounts[phone]={phone,name:'',email:'',birth:'',marketing:true,language:'no',stamps:0,rewards:0,savings:0,favorites:[],createdAt:Date.now()};saveAccount();return accounts[phone]}
+function setSession(phone){session=phone||null;save(KEY.session,session);renderAll()}
+function openScreen(id){$$('.screen').forEach(x=>x.hidden=true);$('#'+id).hidden=false;document.body.classList.add('kol-top-back-active')}
+function closeScreens(){$$('.screen').forEach(x=>x.hidden=true);document.body.classList.remove('kol-top-back-active')}
+function renderHeader(){const a=account(),pb=$('#profileBtn'),shortcuts=$('#memberShortcuts');if(a){const letter=(a.name||a.phone||'K').trim().charAt(0).toUpperCase();pb.innerHTML=`<span class="profile-letter">${letter}</span>`;shortcuts.hidden=false;$('#memberAvatar').textContent=letter;$('#memberLang').textContent=a.language==='en'?'🇬🇧 EN':'🇳🇴 NO'}else{pb.innerHTML='<svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>';shortcuts.hidden=true}}
+function renderTabs(){const host=$('#tabs');if(searchOpen){host.innerHTML=`<div class="tab-search"><span>⌕</span><input id="menuSearch" placeholder="Søk i menyen" value="${searchQuery.replace(/"/g,'&quot;')}"><button id="searchCancel">Avbryt</button></div>`;$('#menuSearch').focus();$('#menuSearch').oninput=e=>{searchQuery=e.target.value;renderMenu()};$('#searchCancel').onclick=()=>{searchOpen=false;searchQuery='';renderTabs();renderMenu()};return}host.innerHTML='<button class="search-tab" id="searchOpen">⌕</button>'+menu.map(s=>`<button class="category-tab" data-tab="${s.id}">${s.title}</button>`).join('');$('#searchOpen').onclick=()=>{searchOpen=true;renderTabs()};$$('[data-tab]').forEach(b=>b.onclick=()=>document.querySelector(`[data-section="${b.dataset.tab}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}))}
+function warning(p){const hits=p.allergens.filter(x=>selectedAllergens.has(x));return hits.length?`<div class="menu-allergen-warning">Inneholder: ${hits.map(labelAllergen).join(', ')}</div>`:''}
+function row(p){const fav=activeFav().has(p.id);return `<article class="menu-row" data-product="${p.id}"><div class="menu-thumb" style="${p.image?`background-image:url('${p.image}')`:''}"></div><div class="menu-main"><strong>${p.name}</strong><div class="menu-desc">${p.description||''}</div>${warning(p)}</div><div class="menu-side"><button class="heart ${fav?'active':''}" data-fav="${p.id}">${fav?'♥':'♡'}</button><button class="plus" data-plus="${p.id}">+</button><span class="price">Fra ${money(Math.min(...p.sizes.map(s=>s[1])))}</span></div></article>`}
+function section(id,title,list,note,virtual){let show=list,more='';if(virtual&&list.length>3&&!expanded[id])show=list.slice(0,3);if(virtual&&list.length>3)more=`<button class="vis-more" data-more="${id}">${expanded[id]?'Vis mindre':'Vis mer'}</button>`;return `<section class="menu-section" data-section="${id}"><div class="menu-section-head"><div><h2>${title}</h2>${note?`<p>${note}</p>`:''}</div>${virtual?`<span>${id==='favorites'?'Produkter du har lagret.':'Populære valg i testmenyen.'}</span>`:''}</div><div>${show.length?show.map(row).join(''):'<div class="empty-note">Ingen produkter her ennå.</div>'}</div>${more}</section>`}
+function renderMenu(){const all=items(),fav=activeFav(),q=norm(searchQuery);if(searchOpen&&q){const found=all.filter(p=>norm(`${p.name} ${p.description}`).includes(q));$('#menuSections').innerHTML=section('search','Søkeresultater',found,`${found.length} produkter`,false);bindMenu();return}const favItems=all.filter(p=>fav.has(p.id)),popular=all.filter(p=>['p1','p2','p3','p4','p5'].includes(p.id));let html='';if(favItems.length)html+=section('favorites','Mine favoritter',favItems,'',true);html+=section('popular','Mest bestilt',popular,'',true);menu.filter(s=>!s.virtual).forEach(s=>html+=section(s.id,s.title,s.items||[],s.note||'',false));$('#menuSections').innerHTML=html;bindMenu()}
+function bindMenu(){$$('[data-plus]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProduct(b.dataset.plus)});$$('[data-product]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openProduct(r.dataset.product)});$$('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const f=activeFav();f.has(b.dataset.fav)?f.delete(b.dataset.fav):f.add(b.dataset.fav);saveFav(f);renderMenu()});$$('[data-more]').forEach(b=>b.onclick=()=>{expanded[b.dataset.more]=!expanded[b.dataset.more];renderMenu()})}
+function openProduct(id){selectedProduct=product(id);selectedSize=0;qty=1;$('#productTitle').textContent=selectedProduct.name;$('#productDesc').textContent=selectedProduct.description;$('#productPhoto').style.backgroundImage=selectedProduct.image?`url('${selectedProduct.image}')`:'';renderSizeOptions();$('#qtyValue').textContent=qty;$('#productNote').value='';updateProductTotal();openScreen('productScreen')}
+function renderSizeOptions(){$('#sizeOptions').innerHTML=selectedProduct.sizes.map((s,i)=>`<button class="size-option ${i===selectedSize?'active':''}" data-size="${i}"><span>${s[0]}</span><strong>${money(s[1])}</strong></button>`).join('');$$('[data-size]').forEach(b=>b.onclick=()=>{selectedSize=+b.dataset.size;renderSizeOptions();updateProductTotal()})}
+function updateProductTotal(){$('#productTotal').textContent=money(selectedProduct.sizes[selectedSize][1]*qty)}
+function addCart(){const size=selectedProduct.sizes[selectedSize],note=$('#productNote').value.trim(),key=`${selectedProduct.id}|${size[0]}|${note}`,old=cart.find(x=>x.key===key);if(old)old.qty+=qty;else cart.push({key,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],price:size[1],qty,note});save(KEY.cart,cart);renderCartCount();closeScreens()}
+function renderCartCount(){$('#cartCount').textContent=cart.reduce((n,x)=>n+x.qty,0)}
+function renderCart(){$('#cartLines').innerHTML=cart.map((x,i)=>`<div class="cart-line"><div><strong>${x.qty}x ${x.name}</strong><small>Størrelse: ${x.size}${x.note?`<br>${x.note}`:''}</small></div><div><b>${money(x.price*x.qty)}</b><div class="cart-line-actions"><button data-minus="${i}">−</button><button data-pluscart="${i}">+</button><button data-remove="${i}">×</button></div></div></div>`).join('');$('#cartEmpty').hidden=cart.length>0;$('#cartTotal').textContent=money(cart.reduce((s,x)=>s+x.price*x.qty,0));$$('[data-minus]').forEach(b=>b.onclick=()=>{const x=cart[+b.dataset.minus];x.qty--;if(x.qty<1)cart.splice(+b.dataset.minus,1);save(KEY.cart,cart);renderCart();renderCartCount()});$$('[data-pluscart]').forEach(b=>b.onclick=()=>{cart[+b.dataset.pluscart].qty++;save(KEY.cart,cart);renderCart();renderCartCount()});$$('[data-remove]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.remove,1);save(KEY.cart,cart);renderCart();renderCartCount()});const a=account();$('#checkoutName').value=a?.name||'';$('#checkoutPhone').value=a?.phone||'';$('#checkoutPhone').disabled=!!a;$('#checkoutLoginHint').textContent=a?'Innlogget medlemskonto.':'Du kan bestille uten å logge inn.';renderCheckoutStep()}
+function renderCheckoutStep(){[1,2,3].forEach(n=>$('#checkoutStep'+n).hidden=n!==checkoutStep);$('#checkoutBack').hidden=checkoutStep===1;$('#checkoutNext').textContent=checkoutStep===3?'Send bestilling':'Neste'}
+function placeOrder(){if(!cart.length)return;const name=$('#checkoutName').value.trim(),phone=$('#checkoutPhone').value.replace(/\D/g,'');if(!name||phone.length!==8){alert('Skriv inn navn og 8-sifret telefonnummer.');return}const total=cart.reduce((s,x)=>s+x.price*x.qty,0),id=Math.random().toString(36).slice(2,8).toUpperCase(),order={id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'};orders.unshift(order);save(KEY.orders,orders);if(account()){const a=account();a.name=a.name||name;const large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);if(large){const sum=a.stamps+large;a.rewards+=Math.floor(sum/10);a.stamps=sum%10}saveAccount()}cart=[];save(KEY.cart,cart);renderCartCount();checkoutStep=1;closeScreens();alert(`Testbestilling ${id} er lagret lokalt.`)}
+function renderLogin(){$('#accountTitle').textContent='Logg inn';$('#accountContent').innerHTML=`<div class="login-wrap"><h2>Logg inn</h2><p>Logg inn på kontoen din</p><label class="phone-label">Telefonnummer</label><div class="phone-field"><div class="country-code">🇳🇴 +47</div><input id="loginPhone" inputmode="numeric" maxlength="8" placeholder="95 55 74 74"></div><button class="primary" id="loginContinue" style="width:100%">Fortsett</button></div>`;$('#loginContinue').onclick=()=>{const p=$('#loginPhone').value.replace(/\D/g,'');if(p.length!==8){alert('Skriv inn et 8-sifret telefonnummer.');return}ensureAccount(p);setSession(p);renderProfileMenu()}}
+function renderProfileMenu(){const a=account();if(!a){renderLogin();return}$('#accountTitle').textContent='Konto';$('#accountContent').innerHTML=`<div class="profile-body"><div class="profile-menu-card"><button data-account="profile">Profil <span>›</span></button><button data-account="card">Medlemskort <span>›</span></button><button data-account="orders">Bestillinger <span>›</span></button><button class="logout" id="logoutBtn">Logg ut <span>›</span></button></div></div>`;$$('[data-account]').forEach(b=>b.onclick=()=>({profile:renderProfileForm,card:renderMemberCard,orders:renderOrders}[b.dataset.account]()));$('#logoutBtn').onclick=()=>{setSession(null);renderLogin()}}
+function renderProfileForm(){const a=account();$('#accountTitle').textContent='Profil';$('#accountContent').innerHTML=`<div class="profile-form"><h2>Kontaktinformasjon</h2><div class="profile-form-card"><label>Fullt navn<input id="pfName" value="${escapeHtml(a.name)}"></label><label>Telefonnummer<input value="+47 ${formatPhone(a.phone)}" disabled></label><label>E-post<input id="pfEmail" type="email" value="${escapeHtml(a.email||'')}"></label><label>Fødselsdato<input id="pfBirth" type="date" value="${a.birth||''}"></label></div><label class="check-row"><input id="pfMarketing" type="checkbox" ${a.marketing?'checked':''}> Jeg ønsker å motta kampanjer og tilbud fra KØL</label><label>Velg språk<select id="pfLang"><option value="no" ${a.language==='no'?'selected':''}>🇳🇴 Norsk</option><option value="en" ${a.language==='en'?'selected':''}>🇬🇧 English</option></select></label><button class="primary" id="saveProfile" style="width:100%;margin-top:18px">Lagre</button></div>`;$('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim();a.email=$('#pfEmail').value.trim();a.birth=$('#pfBirth').value;a.marketing=$('#pfMarketing').checked;a.language=$('#pfLang').value;saveAccount();renderAll();renderProfileMenu()}}
+function renderMemberCard(){const a=account();$('#accountTitle').textContent='Medlemskort';const stamps=Array.from({length:10},(_,i)=>`<span class="stamp ${i<a.stamps?'on':''}">${i<a.stamps?'🍕':'○'}</span>`).join('');$('#accountContent').innerHTML=`<div class="member-card"><div class="member-card-logo">KØL MEDLEM</div><div class="member-name">${escapeHtml(a.name||'KØL-medlem')}</div><div class="member-phone">+47 ${formatPhone(a.phone)}</div></div><div class="stamp-card"><div class="stamp-title"><span>Stor Pizza-kort</span><span>${a.stamps} / 10</span></div><div class="stamps">${stamps}</div><div>${a.rewards?`<div class="reward-ready">🎁 ${a.rewards} gratis Stor Pizza klar</div>`:'Kjøp 10 Stor Pizza – få den 11. gratis.'}</div></div><div class="saving-card"><div class="saving-row"><span>Besparelser</span><strong>${money(a.savings||0)}</strong></div><div class="saving-row"><span>Gratis pizza tilgjengelig</span><strong>${a.rewards||0}</strong></div></div><div class="campaign-card"><strong>Kampanjer</strong><p>Medlemstilbud kommer her senere.</p></div><button class="primary" id="openQrFromCard" style="width:calc(100% - 32px);margin:0 16px 20px">Vis QR-kode</button>`;$('#openQrFromCard').onclick=renderQrView}
+function renderQrView(){const a=account();$('#accountTitle').textContent='QR-kode';$('#accountContent').innerHTML=`<div class="qr-wrap"><h2>QR-kode</h2><p>Vis denne i kassa for å identifisere medlemskapet.</p><canvas id="memberQr" width="290" height="290"></canvas><h3>${escapeHtml(a.name||'KØL-medlem')}</h3><strong>+47 ${formatPhone(a.phone)}</strong><p><small>Demo-QR for LocalStorage-test.</small></p></div>`;drawDemoQr($('#memberQr'),`KOL:${a.phone}`)}
+function renderOrders(){const a=account(),list=orders.filter(o=>o.phone===a.phone);$('#accountTitle').textContent='Bestillinger';$('#accountContent').innerHTML=`<div class="profile-body">${list.length?list.map(o=>`<div class="order-card"><div class="order-card-top"><strong>Ordre ${o.id}</strong><b>${money(o.total)}</b></div><small>${new Date(o.createdAt).toLocaleString('nb-NO')}</small><div style="margin-top:8px">${o.items.map(x=>`${x.qty}x ${x.name} (${x.size})`).join('<br>')}</div></div>`).join(''):'<div class="empty-note">Ingen bestillinger ennå.</div>'}</div>`}
+function drawDemoQr(c,text){const x=c.getContext('2d'),n=29,s=c.width/n;let seed=[...text].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,2166136261);const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed&1};x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#000';const finder=(ox,oy)=>{for(let y=0;y<7;y++)for(let xx=0;xx<7;xx++)if(xx===0||y===0||xx===6||y===6||(xx>=2&&xx<=4&&y>=2&&y<=4))x.fillRect((ox+xx)*s,(oy+y)*s,Math.ceil(s),Math.ceil(s))};finder(1,1);finder(21,1);finder(1,21);for(let y=0;y<n;y++)for(let xx=0;xx<n;xx++){if((xx<9&&y<9)||(xx>19&&y<9)||(xx<9&&y>19))continue;if(rnd())x.fillRect(xx*s,y*s,Math.ceil(s),Math.ceil(s))}}
+function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size?selectedAllergens.size:''}
+function renderAllergens(){draftAllergens=new Set(selectedAllergens);$('#allergenGrid').innerHTML=ALLERGENS.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join('');$$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()})}
+$('#brandBtn').onclick=closeScreens;$('#infoBtn').onclick=()=>openScreen('infoScreen');$('#profileBtn').onclick=()=>{openScreen('accountScreen');account()?renderProfileMenu():renderLogin()};$('#cartBtn').onclick=()=>{checkoutStep=1;renderCart();openScreen('cartScreen')};$$('[data-close]').forEach(b=>b.onclick=closeScreens);$('#qtyMinus').onclick=()=>{qty=Math.max(1,qty-1);$('#qtyValue').textContent=qty;updateProductTotal()};$('#qtyPlus').onclick=()=>{qty++;$('#qtyValue').textContent=qty;updateProductTotal()};$('#addToCart').onclick=addCart;$('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};$('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};$('#allergenBtn').onclick=()=>{renderAllergens();$('#allergenModal').hidden=false};$('#allergenClose').onclick=()=>$('#allergenModal').hidden=true;$('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);$('#allergenModal').hidden=true;renderAll()};$('#memberAvatar').onclick=()=>{openScreen('accountScreen');renderProfileMenu()};$('#memberCardShortcut').onclick=()=>{openScreen('accountScreen');renderMemberCard()};$('#qrShortcut').onclick=()=>{openScreen('accountScreen');renderQrView()};renderAll();
 </script>
 </body>
 </html>
