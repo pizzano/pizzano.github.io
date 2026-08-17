@@ -38,7 +38,6 @@ body.kol-customer .local-search-meta{padding:8px 12px;border-bottom:1px solid va
 body.kol-customer .local-allergen-trigger{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #e2ddd8;border-radius:13px;background:#fff;color:#403a36;font-size:14px;font-weight:500;white-space:nowrap;box-shadow:none}
 body.kol-customer .local-allergen-trigger.has-filter{border-color:#f0b39a;color:#d95622;background:#fffaf7}
 body.kol-customer .local-product-allergens{margin-top:5px;display:flex;align-items:center;gap:4px;min-height:20px}
-body.kol-customer .local-product-allergen-icon{width:20px;height:20px;display:inline-grid;place-items:center;border:1px solid #efc9c2;border-radius:50%;background:#fff8f6;font-size:12px;line-height:1}
 body.kol-customer .local-allergen-count{min-width:21px;height:21px;padding:0 6px;display:inline-grid;place-items:center;border-radius:999px;background:#111;color:#fff;font-size:11px;font-weight:650}
 body.kol-customer .local-filter-note{padding:10px 12px;border-bottom:1px solid #eadfca;background:#fff8e8;color:#6d604c;font-size:12.5px}
 body.kol-customer .local-empty-search{padding:36px 18px;color:var(--muted);font-size:15px;line-height:1.5;text-align:center}
@@ -80,6 +79,19 @@ body.kol-customer #localSearchInput:focus,body.kol-customer #localSearchInput:fo
 body.kol-customer .local-search-cancel{height:42px;padding:0 4px 0 10px;font-size:14px;color:#312d2a}
 body.kol-customer .local-allergen-toolbar-reset{min-height:40px;padding:0 12px 8px;display:flex;justify-content:flex-end;align-items:center;background:#fff}
 body.kol-customer .local-allergen-toolbar-reset .local-allergen-reset{height:32px;padding:0 11px;border-radius:9px;font-size:12px}
+
+
+/* Selected allergen warning: compact text instead of ambiguous icons. */
+body.kol-customer .local-product-allergens{
+  min-height:0;
+  margin-top:4px;
+  display:block;
+  color:#c94f35;
+  font-size:11px;
+  font-weight:400;
+  line-height:1.3;
+  letter-spacing:.01em;
+}
 
 </style>
 </head>
@@ -178,7 +190,13 @@ function renderTabs(){
   els.tabs.innerHTML=`<button class="local-search-button" data-search-open type="button" aria-label="Søk"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg></button>`+sectionsForRender().map((s,i)=>`<button class="category-tab ${i===0?'active':''}" data-tab="${s.id}" type="button">${s.title}</button>`).join('');
 }
 const heart=s=>s?'♥':'♡';
-function productAllergenText(p){if(!selectedAllergens.size)return '';const ids=allergensOf(p).filter(id=>selectedAllergens.has(id));if(!ids.length)return '';return `<div class="local-product-allergens" aria-label="Markerte allergener">${ids.map(id=>{const a=ALLERGENS.find(x=>x[0]===id);return `<span class="local-product-allergen-icon" title="${a?.[2]||id}" aria-label="${a?.[2]||id}">${a?.[1]||'⚠'}</span>`}).join('')}</div>`}
+function productAllergenText(p){
+  if(!selectedAllergens.size)return '';
+  const ids=allergensOf(p).filter(id=>selectedAllergens.has(id));
+  if(!ids.length)return '';
+  const labels=ids.map(id=>ALLERGENS.find(x=>x[0]===id)?.[2]||id);
+  return `<div class="local-product-allergens">Inneholder: ${labels.join(', ')}</div>`;
+}
 function productRow(p){return `<article class="menu-row menu-app-product" data-product="${p.id}">${p.image?`<span class="food-thumb custom-thumb" style="background-image:url('${p.image}')"></span>`:`<span class="food-thumb default-thumb"></span>`}<div class="menu-row-main"><div class="menu-row-headline"><strong>${p.name}</strong></div><div class="menu-row-description">${p.description||''}</div>${productAllergenText(p)}</div><div class="menu-app-product-side"><div class="menu-card-actions"><button class="menu-favorite local-fav ${favorites.has(p.id)?'saved':''}" data-fav="${p.id}" type="button" aria-label="Favoritt">${heart(favorites.has(p.id))}</button><button class="menu-app-plus local-plus" data-add="${p.id}" type="button" aria-label="Legg til">+</button></div><span class="menu-row-inline-price">${p.sizes.length>1?'Fra ':''}${money(basePrice(p))}</span></div></article>`}
 function renderMenu(){
   const sections=sectionsForRender();
