@@ -1,4 +1,5 @@
 name: Polish search UI v2
+# retry after migration pattern fix
 on:
   push:
     paths:
