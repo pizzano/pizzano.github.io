@@ -1,0 +1,98 @@
+name: Favorite and checkout login fix
+on:
+  push:
+    paths:
+      - '.github/workflows/favorites-checkout-login-fix.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch test customer logic
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('test/test.html')
+          s=p.read_text()
+
+          old="""function bindMenu(){
+  $$('[data-plus]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProduct(b.dataset.plus)});
+  $$('[data-product]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openProduct(r.dataset.product)});
+  $$('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const f=favSet();f.has(b.dataset.fav)?f.delete(b.dataset.fav):f.add(b.dataset.fav);saveFav(f);renderTabs();renderMenu()});
+  $$('[data-more]').forEach(b=>b.onclick=()=>{expanded[b.dataset.more]=!expanded[b.dataset.more];renderMenu()});
+}"""
+          new="""function refreshFavoriteUi(){
+  const hasFavorites=favSet().size>0;
+  renderMenu();
+  renderTabs();
+  requestAnimationFrame(()=>{
+    if(!hasFavorites&&document.querySelector('.category-tab.active[data-tab=\"favorites\"]'))setActiveTab('popular',true);
+    else scheduleSync();
+  });
+}
+function bindMenu(){
+  $$('[data-plus]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProduct(b.dataset.plus)});
+  $$('[data-product]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openProduct(r.dataset.product)});
+  $$('[data-fav]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const f=favSet(),id=b.dataset.fav;
+    f.has(id)?f.delete(id):f.add(id);
+    saveFav(f);
+    refreshFavoriteUi();
+  });
+  $$('[data-more]').forEach(b=>b.onclick=()=>{expanded[b.dataset.more]=!expanded[b.dataset.more];renderMenu()});
+}"""
+          if old not in s: raise SystemExit('bindMenu block not found')
+          s=s.replace(old,new,1)
+
+          old2="""  orders.unshift({id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);
+  if(account()){
+    const a=account(),large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);
+    if(large){const sum=(a.stamps||0)+large;a.rewards=(a.rewards||0)+Math.floor(sum/10);a.stamps=sum%10;saveAccounts()}
+  }
+  cart=[];save(KEY.cart,cart);renderCartCount();checkoutStep=1;goMenu();alert(`Testbestilling ${id} er lagret lokalt.`);"""
+          new2="""  orders.unshift({id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);
+  let a=account();
+  if(!a){
+    a=ensureAccount(phone);
+    a.name=name;
+    session=phone;
+    save(KEY.session,session);
+  }else if(!a.name){
+    a.name=name;
+  }
+  const large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);
+  if(large){const sum=(a.stamps||0)+large;a.rewards=(a.rewards||0)+Math.floor(sum/10);a.stamps=sum%10}
+  saveAccounts();
+  cart=[];save(KEY.cart,cart);checkoutStep=1;renderCartCount();renderHeader();renderMenu();renderTabs();goMenu();alert(`Testbestilling ${id} er lagret lokalt.`);"""
+          if old2 not in s: raise SystemExit('placeOrder block not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          grep -q 'function refreshFavoriteUi' test/test.html
+          grep -q 'session=phone' test/test.html
+          grep -q 'save(KEY.session,session)' test/test.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('test/test.html').read_text()
+          m=re.search(r'<script>(.*)</script>',s,re.S)
+          Path('/tmp/test.js').write_text(m.group(1))
+          PY
+          node --check /tmp/test.js
+          git diff --check
+      - name: Commit and clean
+        shell: bash
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/workflows/favorites-checkout-login-fix.yml
+          git add test/test.html
+          git commit -m 'Sync favorites instantly and login checkout customers'
+          git push
