@@ -44,7 +44,7 @@ function renderCheckoutStep'''
           html,n=re.subn(r"function renderCart\(\)\{.*?\}\nfunction renderCheckoutStep",new_cart,html,count=1,flags=re.S)
           if n!=1: raise SystemExit('renderCart replace failed')
 
-          html=re.sub(r'test\.css\?v=[^"\']+','test.css?v=cart-edit-20260818-0042',html,count=1)
+          html=re.sub(r"test\.css\?v=[^\"']+",'test.css?v=cart-edit-20260818-0042',html,count=1)
 
           start=css.find('.cart-line{')
           end=css.find('.cart-summary{',start)
