@@ -1,0 +1,50 @@
+name: Allergen reset autosave
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/allergen-reset-autosave.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make Nullstill save immediately
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('test/test.html')
+          s=p.read_text()
+          old="$('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};"
+          new="$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();};"
+          if old not in s:
+              raise SystemExit('allergen reset handler not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('test/test.html').read_text()
+          m=re.search(r'<script>(.*)</script>',s,re.S)
+          if not m: raise SystemExit('script not found')
+          Path('/tmp/test.js').write_text(m.group(1))
+          PY
+          node --check /tmp/test.js
+          grep -q "save(KEY.allergens,\[\])" test/test.html
+          git diff --check
+      - name: Commit and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/workflows/allergen-reset-autosave.yml
+          git add test/test.html
+          git commit -m 'Save allergen reset immediately'
+          git push origin HEAD:main
