@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f36a2d">
 <title>KØL Grill & Pizza – Local demo</title>
-<link rel="stylesheet" href="test.css?v=clean-cart-20260818-0045">
+<link rel="stylesheet" href="test.css?v=allergen-search-20260818-0115">
 </head>
 <body class="kol-customer">
 <div class="customer-app">
@@ -103,9 +103,9 @@
 <section class="screen" id="allergenScreen" hidden>
   <div class="screen-scroll allergen-scroll">
     <div class="screen-title"><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av dem.</p></div>
-    <div class="allergen-toolbar"><button id="allergenReset">Nullstill</button></div>
+    <div class="allergen-toolbar"><label class="allergen-search"><span>⌕</span><input id="allergenSearch" type="search" placeholder="Søk allergen" autocomplete="off"></label></div>
     <div class="allergen-grid" id="allergenGrid"></div>
-    <div class="allergen-bottom"><div>Valgene lagres bare på denne enheten.</div><button class="primary" id="allergenSave">Lagre</button></div>
+    <div class="allergen-bottom"><div>Valgene lagres bare på denne enheten.</div><div class="allergen-actions"><button id="allergenReset">Nullstill</button><button class="primary" id="allergenSave">Lagre</button></div></div>
   </div>
 </section>
 </div>
@@ -127,11 +127,11 @@ const MENU=[
 {id:'p5',name:'5. Sjefens favoritt',description:'Biff, skinke, pepperoni og paprika',image:IMG[0],allergens:['gluten','melk'],sizes:[['Medium',185],['Stor',215]]},
 {id:'p6',name:'6. Torino',description:'Pepperoni, skinke, løk og paprika',image:IMG[1],allergens:['gluten','melk'],sizes:[['Medium',175],['Stor',205]]}]},
 {id:'kebab',title:'Kebab retter',items:[
-{id:'k1',name:'Kebab i pita',description:'Kebabkjøtt, salat og dressing',image:IMG[2],allergens:['gluten','melk'],strengths:['Mild','Medium','Sterk'],sizes:[['Standard',149]]},
-{id:'k2',name:'Kebab tallerken',description:'Kebabkjøtt, pommes frites, salat og dressing',image:IMG[2],allergens:['melk'],strengths:['Mild','Medium','Sterk'],sizes:[['Standard',189]]}]},
+{id:'k1',name:'Kebab i pita',description:'Kebabkjøtt, salat og dressing',image:IMG[2],allergens:['gluten','melk','egg','sennep','sesam'],strengths:['Mild','Medium','Sterk'],sizes:[['Standard',149]]},
+{id:'k2',name:'Kebab tallerken',description:'Kebabkjøtt, pommes frites, salat og dressing',image:IMG[2],allergens:['melk','egg','sennep'],strengths:['Mild','Medium','Sterk'],sizes:[['Standard',189]]}]},
 {id:'burger',title:'Hjemmelagde burgere',items:[
-{id:'b1',name:'Cheeseburger',description:'Burger, ost, salat og dressing',image:IMG[2],allergens:['gluten','melk','egg'],sizes:[['160 g',159],['250 g',199]]},
-{id:'b2',name:'Baconburger',description:'Burger, bacon, ost og salat',image:IMG[2],allergens:['gluten','melk','egg'],sizes:[['160 g',179],['250 g',219]]}]},
+{id:'b1',name:'Cheeseburger',description:'Burger, ost, salat og dressing',image:IMG[2],allergens:['gluten','melk','egg','sennep','sesam'],sizes:[['160 g',159],['250 g',199]]},
+{id:'b2',name:'Baconburger',description:'Burger, bacon, ost og salat',image:IMG[2],allergens:['gluten','melk','egg','sennep','sesam'],sizes:[['160 g',179],['250 g',219]]}]},
 {id:'drikke',title:'Drikke',items:[
 {id:'d1',name:'Coca-Cola 0,5L',description:'Kald drikke',image:'',allergens:[],sizes:[['0,5L',39]]},
 {id:'d2',name:'Fanta 0,5L',description:'Kald drikke',image:'',allergens:[],sizes:[['0,5L',39]]}]}
@@ -143,10 +143,10 @@ const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const money=n=>`${Number(n||0).toLocaleString('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2})} kr`;
 const productMoney=n=>`${Number(n||0).toLocaleString('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2})} KR`;
 const norm=s=>String(s||'').toLocaleLowerCase('nb-NO').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
 const formatPhone=p=>String(p||'').replace(/(\d{2})(\d{2})(\d{2})(\d{2})/,'$1 $2 $3 $4');
 let cart=load(KEY.cart,[]),orders=load(KEY.orders,[]),accounts=load(KEY.accounts,{}),session=load(KEY.session,null);
-let selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),searchOpen=false,searchQuery='',expanded={popular:false,favorites:false};
+let selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),allergenSearch='',searchOpen=false,searchQuery='',expanded={popular:false,favorites:false};
 let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap';
 
 const realSections=()=>MENU.filter(s=>!s.virtual);
@@ -438,10 +438,12 @@ function renderContact(){
 
 function setInfoTab(tab){$$('[data-info-tab]').forEach(b=>b.classList.toggle('active',b.dataset.infoTab===tab));$$('[data-info-panel]').forEach(p=>p.classList.toggle('active',p.dataset.infoPanel===tab))}
 function renderAllergens(){
-  $('#allergenGrid').innerHTML=ALLERGENS.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join('');
+  const q=norm(allergenSearch);
+  const visible=ALLERGENS.filter(a=>!q||norm(`${a[0]} ${a[2]}`).includes(q));
+  $('#allergenGrid').innerHTML=visible.length?visible.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join(''):'<div class="allergen-empty">Ingen allergener funnet.</div>';
   $$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()});
 }
-function openAllergens(){draftAllergens=new Set(selectedAllergens);renderAllergens();openView('allergenScreen',{tabs:true})}
+function openAllergens(){draftAllergens=new Set(selectedAllergens);allergenSearch='';$('#allergenSearch').value='';renderAllergens();openView('allergenScreen',{tabs:true})}
 function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size||''}
 
 $('#brandBtn').onclick=goMenu;
@@ -457,6 +459,7 @@ $('#qtyPlus').onclick=()=>{qty++;$('#qtyValue').textContent=qty;updateProductTot
 $('#addToCart').onclick=addOrUpdateCart;
 $('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};
 $('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};
+$('#allergenSearch').oninput=e=>{allergenSearch=e.target.value;renderAllergens()};
 $('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};
 $('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);renderAll();goMenu()};
 $('#menuShell').addEventListener('scroll',scheduleSync,{passive:true});
