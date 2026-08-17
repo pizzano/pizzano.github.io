@@ -23,6 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           sed -i 's/"\.cart-modal",/".cart-panel",/' .github/scripts/refactor-customer-app.py
+          sed -i 's/"\.order-live-status",/".live-status",/' .github/scripts/refactor-customer-app.py
           python .github/scripts/refactor-customer-app.py
 
       - name: Validate customer app
