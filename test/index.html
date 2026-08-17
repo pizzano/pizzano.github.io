@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -10,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v36"/>
+<link rel="stylesheet" href="kol-core.css?v=clean-20260817"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -171,7 +170,6 @@
 </div>
 </div>
 <script>
-/* ===== app.js INLINED ===== */
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
 const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
@@ -224,15 +222,10 @@ const activeOrderKey = "kol-grill-active-order-v1";
 const orderReadStateKey = "kol-grill-order-read-state-v1";
 const orderAcceptWindowMs = 3 * 60 * 1000; // TÜRKÇE: Müşteri için sipariş kabul geri sayımı: 3 dakika.
 
-// TÜRKÇE: Müşteri sipariş onayı/kansel durumunu site açıkken sesle duysun diye basit WebAudio kullanıyoruz.
-// Telefon kapalıysa veya tarayıcı tamamen kapalıysa normal web sayfası ses gönderemez; bunun için ayrıca Push Notification gerekir.
 let customerAudioContext = null;
 let customerCustomStatusAudio = null;
 let customerSoundUnlocked = false;
 
-// TÜRKÇE: Menü verisini tarayıcıda saklıyoruz.
-// Böylece sayfa yenilenince Firebase beklenirken boş/yanıp sönen ekran olmaz.
-// Firebase sonra arka planda yenilenir ve veri değişmişse sayfa sessizce güncellenir.
 const menuCacheKey = "kol-menu-cache-v1";
 const featuredProductPreviewLimit = 3;
 let mostOrderedMenuItems = [];
@@ -316,8 +309,6 @@ const orderLiveContent = document.querySelector("#orderLiveContent");
 let checkoutFocusError = null;
 let checkoutStep = 1;
 
-// 20260429: Mobilde popup açıkken arka sayfanın kaymasını tamamen durdurur.
-// Böylece Send bestilling / Legg til-knapper ekran yüksekliği değişince bozulmaz.
 let kolLockedScrollY = 0;
 let kolPageIsLocked = false;
 
@@ -361,6 +352,16 @@ function isCustomerOverlayOpen() {
   );
 }
 
+function hasBlockingCustomerOverlay() {
+  return Boolean(
+    (cartModal && !cartModal.hidden) ||
+    (productModal && !productModal.hidden) ||
+    (profileModal && !profileModal.hidden) ||
+    (infoModal && !infoModal.hidden) ||
+    (quickCheckoutModal && !quickCheckoutModal.hidden)
+  );
+}
+
 function updateTopMenuReturnButton() {
   const productOpen = Boolean(productModal && !productModal.hidden);
   const cartOpen = Boolean(cartModal && !cartModal.hidden);
@@ -399,10 +400,6 @@ function updateTopMenuReturnButton() {
   }
 }
 
-
-// TÜRKÇE: Mobilde sayfanın kilitli kalmaması için body scroll sınıflarını
-// gerçek açık/kapalı modal durumuna göre eşitler.
-
 function syncCategoryTabsVisibility() {
   const hideTabs = document.body.classList.contains("cart-open") ||
     document.body.classList.contains("profile-open") ||
@@ -440,9 +437,6 @@ function syncBodyScrollLocks() {
   updateTopMenuReturnButton();
 }
 
-// 20260429 V22: Popup açıkken arka sayfanın touch/overscroll ile kaymasını engeller.
-// Sadece açık popup içindeki gerçek scroll alanlarına izin verir.
-// V41: Ürün resmi / başlık alanına dokununca da .product-panel scroll etsin.
 (function preventBackgroundScrollWhilePopupOpen() {
   let startY = 0;
   const isCustomerPopupOpen = () => Boolean(
@@ -470,10 +464,6 @@ function syncBodyScrollLocks() {
       return;
     }
 
-    // The category rail is the only horizontal surface left visible while a
-    // product is open. Let the browser own that gesture so momentum scrolling
-    // stays fluid on iOS and Android instead of treating it as a blocked
-    // vertical overscroll at scrollTop 0.
     if (scrollBox.matches?.(".category-tabs-scroll, .category-tabs-wrap")) return;
 
     const currentY = event.touches[0].clientY;
@@ -496,7 +486,6 @@ let quantity = 1;
 let editingCartIndex = null;
 let addingToCart = false;
 let currentOrderPollTimer = null;
-let currentOrderCountdownTimer = null;
 let recentOrdersPollTimer = null;
 let expandedProfileOrderId = "";
 
@@ -664,13 +653,6 @@ function playCustomerStatusSound(status = "pending") {
   }
 }
 
-// ============================================================
-// BESTILLINGSMODUL (KUNDE)
-// ------------------------------------------------------------
-// Sepetteki ürünler Firebase /orders altına gönderilir.
-// Kunden kan se bestillingsstatus og de siste 2 bestillingene.
-// ============================================================
-
 function loadSavedCustomerInfo() {
   try {
     const parsed = JSON.parse(localStorage.getItem(customerStorageKey) || "{}");
@@ -743,7 +725,6 @@ function normalizeCustomerOrderLine(line = {}) {
 }
 
 function aggregateCustomerOrderLines(lines = []) {
-  // TÜRKÇE: Profil/status ekranında aynı ürün tekrarlanmasın; miktar tek satırda toplanır.
   const map = new Map();
   asArray(lines).forEach((line) => {
     const normalized = normalizeCustomerOrderLine(line);
@@ -906,11 +887,9 @@ function rememberRecentOrder(order) {
   if (nextStatus === "pending") setActiveOrderId(order.id);
   if (["accepted", "cancelled"].includes(nextStatus)) clearActiveOrderId(order.id);
 
-  // Status endret etter at kunden allerede har sett bestillingen.
-  // Da åpner vi et rent status-vindu og markerer profilen som ulest.
   if ((statusChanged && ["accepted", "cancelled"].includes(nextStatus)) || becameReady) {
     playCustomerStatusSound(becameReady ? "ready" : nextStatus);
-    renderOrderLiveModal(order, true);
+    if (!hasBlockingCustomerOverlay()) renderOrderLiveModal(order, true);
   }
 
   renderRecentOrders();
@@ -1064,8 +1043,6 @@ function getOrderingTimes() {
   let open = parseTimeParts(matches[0] || "14:00");
   let close = parseTimeParts(matches[1] || "22:00");
 
-  // TÜRKÇE: Sipariş saati artık ayrı değil; dükkan açık olduğu saatlerde sipariş gönderilebilir.
-  // Eski Firebase kayıtlarında orderOpenTime/orderCloseTime kalsa bile müşteri tarafı openingTime değerini esas alır.
   if (!open || !close) {
     open = parseTimeParts(settings.orderOpenTime || "14:00");
     close = parseTimeParts(settings.orderCloseTime || "22:00");
@@ -1085,8 +1062,6 @@ function dateWithTime(parts, base = new Date()) {
 }
 
 function getOrderingWindow(base = new Date()) {
-  // TÜRKÇE: Açılış/kapanış geceyi geçebilir. Örn: 23:00–10:00.
-  // Böyle olunca kapanış ertesi güne alınır; sabah 02:00 hâlâ açık sayılır.
   const times = getOrderingTimes();
   const openToday = dateWithTime(times.open, base);
   const closeToday = dateWithTime(times.close, base);
@@ -1200,8 +1175,6 @@ function buildPickupOptions(minTime, closeAt) {
 }
 
 function canAcceptOrdersNow() {
-  // Vanlige forhåndsbestillinger kan sendes mens restauranten er stengt.
-  // En aktiv servicepause er derimot en eksplisitt sperre fra restauranten.
   return !activeServicePause();
 }
 
@@ -1748,7 +1721,6 @@ function buildOrderPayload() {
     createdAt,
     updatedAt: createdAt,
 
-    // GloriaFood-lignende metadata vi vil ha i systemet fra start.
     source: "website",
     client_order_count: clientOrderCount,
     confirmed_at: null,
@@ -1758,7 +1730,6 @@ function buildOrderPayload() {
     payment,
     order_type: orderType,
 
-    // camelCase kopier for enklere intern bruk i eget system.
     sourceName: "website",
     clientOrderCount,
     confirmedAt: null,
@@ -1782,7 +1753,6 @@ function buildOrderPayload() {
       extraDetails: (line.extraDetails || []).filter((item) => !String(item?.label || "").startsWith("Uten:")),
       extraIds: line.extraIds || [],
 
-      // Pris-deling per varelinje.
       basePrice: safeNumber(line.basePrice),
       defaultBasePrice: safeNumber(line.defaultBasePrice),
       sizePrice: safeNumber(line.sizePrice),
@@ -1849,29 +1819,20 @@ async function syncOrdersByCustomerPhone(phone = getSavedProfilePhone()) {
   const cleanPhone = normalizePhoneDigits(phone);
   if (!cleanPhone) return [];
   saveProfilePhone(cleanPhone);
-  const url = `${customerOrderIndexUrl(cleanPhone)}?ts=${Date.now()}`;
   try {
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(`${customerOrderIndexUrl(cleanPhone)}?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) return [];
-    const index = await response.json();
-    if (!index || typeof index !== "object") return [];
-    const rows = Object.entries(index)
-      .map(([id, value]) => ({
-        id,
-        updatedAt: value?.updatedAt || value?.createdAt || ""
-      }))
+    const indexData = await response.json();
+    if (!indexData || typeof indexData !== "object") return [];
+    const rows = Object.entries(indexData)
+      .map(([id, value]) => ({ id, updatedAt: value?.updatedAt || value?.createdAt || "" }))
       .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
-      .slice(0, 20);
-    const freshOrders = [];
-    for (const row of rows) {
-      try {
-        const fresh = await fetchOrder(row.id);
-        if (fresh) freshOrders.push(fresh);
-      } catch (error) {
-        console.warn("Kunne ikke lese ordre", row.id, error);
-      }
-    }
-    freshOrders.forEach((order) => rememberRecentOrder(order));
+      .slice(0, 5);
+    const freshOrders = (await Promise.all(rows.map(async ({ id }) => {
+      try { return await fetchOrder(id); }
+      catch (error) { console.warn("Kunne ikke lese ordre", id, error); return null; }
+    }))).filter(Boolean);
+    freshOrders.forEach(rememberRecentOrder);
     return freshOrders;
   } catch (error) {
     console.warn("Kunne ikke hente ordre etter telefonnummer", error);
@@ -1977,8 +1938,6 @@ function orderStatusHtml(order = {}, options = {}) {
       : formatCountdown(deadline.getTime() - Date.now());
 
   const badge = waitingOpen ? "Venter" : stage === "cancelled" ? "Kansellert" : stage === "ready" ? "Klar" : stage === "accepted" ? "Bekreftet" : "Venter";
-  const flow = "";
-
   let main = "";
   if (stage === "pending") {
     main = `
@@ -2052,7 +2011,6 @@ function orderStatusHtml(order = {}, options = {}) {
         <span class="live-status-badge">${badge}</span>
         <small>Ordre <b>${orderId}</b></small>
       </div>
-      ${flow}
       ${main}
       ${expiredHelp}
     </section>
@@ -2128,7 +2086,6 @@ function refreshOrderCountdowns(order = null) {
   refreshProfileReadyStates();
 }
 
-
 function refreshProfileReadyStates() {
   if (!profileOrdersEl || !profileModal || profileModal.hidden) return;
   const recent = getRecentOrders();
@@ -2164,30 +2121,22 @@ function promoteOrderToAutomaticReady(order = null) {
 }
 
 function startOrderCountdownUi(order = null) {
-  window.clearInterval(currentOrderCountdownTimer);
   refreshOrderCountdowns(order);
-  const status = order?.status || "pending";
-  if (order && !["pending", "accepted"].includes(status)) return;
-  currentOrderCountdownTimer = window.setInterval(() => refreshOrderCountdowns(order), 1000);
 }
 
 function renderOrderLiveModal(order, forceOpen = false) {
   if (!orderLiveModal || !orderLiveContent || !order) return;
 
-  // TÜRKÇE: Sipariş onay/kansel ekranı açılırken sepet modalını kapatıyoruz.
-  // Böylece müşteride aynı onay ekranı iki defa görünmez.
-  if (typeof closeCartModal === "function" && cartModal && !cartModal.hidden) {
-    closeCartModal();
-  }
-  if (orderStatusBox) orderStatusBox.hidden = true;
-
+  const shouldOpen = forceOpen || !orderLiveModal.hidden;
   orderLiveContent.innerHTML = orderStatusHtml(order, { includeReceipt: true, showCloseButton: true });
   orderLiveContent.scrollTop = 0;
-  if (forceOpen || !orderLiveModal.hidden) {
-    orderLiveModal.hidden = false;
-    document.body.classList.add("order-live-open");
-    startOrderCountdownUi(order);
-  }
+  if (!shouldOpen) return;
+
+  if (cartModal && !cartModal.hidden) closeCartModal();
+  if (orderStatusBox) orderStatusBox.hidden = true;
+  orderLiveModal.hidden = false;
+  document.body.classList.add("order-live-open");
+  startOrderCountdownUi(order);
   syncBodyScrollLocks();
 }
 
@@ -2346,7 +2295,7 @@ function startRecentOrdersSync() {
   syncRecentOrdersFromFirebase();
   recentOrdersPollTimer = window.setInterval(() => {
     if (document.visibilityState !== "hidden") syncRecentOrdersFromFirebase();
-  }, 8000);
+  }, 10000);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -2354,9 +2303,12 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("focus", syncRecentOrdersFromFirebase);
 
-// TÜRKÇE: Profil açıkken onaylanan siparişin kalan dakikasını canlı günceller.
 window.setInterval(() => {
-  refreshOrderCountdowns();
+  const countdownVisible =
+    (profileModal && !profileModal.hidden) ||
+    (orderLiveModal && !orderLiveModal.hidden) ||
+    (cartModal && !cartModal.hidden && orderStatusBox && !orderStatusBox.hidden);
+  if (countdownVisible) refreshOrderCountdowns();
 }, 1000);
 
 function resumeActiveOrderPolling() {
@@ -2533,9 +2485,6 @@ function escapeAttribute(value = "") {
   return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
-// DEFAULT GÖRSEL NOTU:
-// Ürün/kategori resmi yoksa sistem önce siteSettings.defaultImageUrl kullanır.
-// O da yoksa CSS ile çizilmiş sade, hazır bir default görsel gösterir.
 function getDefaultImageUrl() {
   return (siteSettings?.defaultImageUrl || "").trim();
 }
@@ -2558,9 +2507,6 @@ function asArray(value) {
   return [];
 }
 
-// Türkçe not: Admin ve müşteri tarafında ortak status mantığı.
-// "datetime-local" ISO değeri (2026-05-12T22:57) ve Norveç görünümü
-// (12.05.2026 22:57) ikisi de desteklenir.
 function parseKolDateTime(value = "") {
   const raw = String(value || "").replace(/\u00A0/g, " ").trim();
   if (!raw) return null;
@@ -2592,15 +2538,11 @@ function parseKolDateTime(value = "") {
   return Number.isFinite(fallback) ? fallback : null;
 }
 
-// Türkçe not:
-// Üründe/kategoride süreli gizleme veya süreli UTSOLGT varsa süre dolana kadar aktif kalır.
-// Süre dolunca hidden/soldOut eski işaretli kalsa bile müşteri tarafında otomatik online olur.
 function isTimedStatusActive(item = {}) {
   const until = String(item?.soldOutUntil || "").trim();
   if (!until) return false;
   const time = parseKolDateTime(until);
   if (!Number.isFinite(time)) {
-    // Tarih yazılmış ama tarayıcı okuyamıyorsa ürünü yanlışlıkla online yapma.
     return item.hidden === true || item.soldOut === true;
   }
   return time > Date.now();
@@ -3111,17 +3053,6 @@ function startRescueDealsSync() {
   }, 15000);
 }
 
-function normalizePopularProductName(value = "") {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^\s*\d+\s*[-.)]?\s*/, "")
-    .replace(/[^a-z0-9æøå]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function getAllVisibleMenuProducts() {
   const list = [];
   menuSections
@@ -3156,48 +3087,6 @@ function saveMostOrderedCache(items = []) {
       productIds: items.map((item) => String(item?.id || "")).filter(Boolean)
     }));
   } catch (error) {}
-}
-
-function buildMostOrderedFromOrders(ordersData = {}) {
-  const products = getAllVisibleMenuProducts();
-  if (!products.length || !ordersData || typeof ordersData !== "object") return [];
-
-  const byId = new Map(products.map(({ item }) => [String(item.id || ""), item]));
-  const byName = new Map();
-  products.forEach(({ item }) => {
-    const candidates = [item.name, item.title, `${item.number || ""} ${item.name || ""}`]
-      .map(normalizePopularProductName)
-      .filter(Boolean);
-    candidates.forEach((name) => {
-      if (!byName.has(name)) byName.set(name, item);
-    });
-  });
-
-  const scores = new Map();
-  const addScore = (item, qty = 1) => {
-    if (!item?.id) return;
-    const key = String(item.id);
-    scores.set(key, (scores.get(key) || 0) + Math.max(1, Number(qty) || 1));
-  };
-
-  Object.values(ordersData).forEach((order) => {
-    asArray(order?.items).forEach((line) => {
-      const qty = Math.max(1, Number(line?.quantity || line?.qty || 1) || 1);
-      let item = byId.get(String(line?.productId || line?.id || ""));
-      if (!item) {
-        const lineName = normalizePopularProductName(line?.name || line?.title || "");
-        item = byName.get(lineName);
-      }
-      addScore(item, qty);
-    });
-  });
-
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => byId.get(id))
-    .filter(Boolean)
-    .map((item) => ({ ...item, _syntheticMostOrdered: true }))
-    .slice(0, 5);
 }
 
 function getMostOrderedSection() {
@@ -3238,7 +3127,7 @@ async function refreshMostOrderedFromDatabase(options = {}) {
       const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
       const nextSignature = limited.map((item) => item.id).join("|");
       mostOrderedMenuItems = limited;
-      saveCachedMostOrderedItems(limited);
+      saveMostOrderedCache(limited);
       if (render && oldSignature !== nextSignature) renderMenu();
     } else if (!mostOrderedMenuItems.length) {
       mostOrderedMenuItems = readCachedMostOrderedItems();
@@ -3473,8 +3362,6 @@ function isOptionAllowedForSize(option) {
 }
 
 function getProductOptionGroups() {
-  // Türkçe not: optionGroupIds = bütün boylarda ortak gruplar.
-  // optionGroupIdsBySize[selectedSize] = sadece seçilen boy için özel gruplar.
   const commonIds = asArray(selectedProduct?.optionGroupIds);
   const sizeSpecificIds = asArray(selectedProduct?.optionGroupIdsBySize?.[selectedSize]);
   const ids = [...new Set([...commonIds, ...sizeSpecificIds])];
@@ -3487,8 +3374,6 @@ function getProductOptionGroups() {
 }
 
 function getEffectiveGroupType(group = {}) {
-  // TÜRKÇE: Eğer grup yanlışlıkla "Flere valg" olarak kayıt edildiyse ama aslında
-  // Mild / Medium / Sterk gibi güç seçimi ise, müşteri tarafında tek seçim yaparız.
   const labels = asArray(group.options).map((option) => String(option.label || "").toLowerCase()).join(" ");
   const title = String(group.title || "").toLowerCase();
   const looksLikeStrength = title.includes("styrke") || title.includes("sterk") || (labels.includes("mild") && labels.includes("medium") && labels.includes("sterk"));
@@ -3508,10 +3393,8 @@ function getVisibleExtras() {
     );
   }
 
-  // Hvis Firebase bruker optionGroups, vises bare grupper som er koblet til produktet.
   if (menuUsesExplicitOptionGroups) return [];
 
-  // Eldre Firebase-skjema: disse listene er også hentet fra databasen.
   if (isKebabCustomItem(selectedProduct)) {
     return kebabPitaOptions;
   }
@@ -3616,7 +3499,6 @@ function buildCartLine() {
     extraIds: selectedExtraLines.map((option) => option.id),
     quantity,
 
-    // Pris-deling lagres for kvittering, admin, statistikk og fremtidig analyse.
     basePrice: priceParts.basePrice,
     defaultBasePrice: priceParts.defaultBasePrice,
     sizePrice: priceParts.sizePrice,
@@ -3867,9 +3749,6 @@ function requestCategoryScrollSync() {
 function getMarkedMenuProductIds() {
   const ids = new Set();
 
-  // Valgt skal bety: produktet finnes faktisk i handlekurven.
-  // Tidligere ble activeMenuProductId også tatt med, og da kunne et slettet produkt
-  // bli hengende grønt helt til siden ble oppdatert.
   cart.forEach((line) => {
     if (line?.rescueDeal === true) return;
     const id = String(line?.productId || "");
@@ -4271,8 +4150,6 @@ function renderProductModal() {
   if (productPhotoTitle) productPhotoTitle.textContent = finalProductTitle;
   productSummary.textContent = selectedProduct.ingredients || "";
   productQuantity.textContent = quantity;
-  // Nye produkter starter på 1. En vare som redigeres kan settes til 0,
-  // men endringen utføres først når kunden trykker Oppdater.
   decreaseProduct.disabled = quantity <= (editingCartIndex === null ? 1 : 0);
   productTotal.textContent = formatPrice(getCurrentTotal()).toUpperCase();
   addConfiguredProduct.hidden = false;
@@ -4290,8 +4167,6 @@ function renderProductModal() {
 }
 
 function resetProductModalScrollToTop() {
-  // TÜRKÇE: Ürün detayında sadece ürün panelinin kendi scroll'unu sıfırla.
-  // Ana menü scroll'unu sıfırlama; ürün sepete eklenince aynı kategoride kalmalı.
   const targets = [
     document.querySelector(".product-scroll-content"),
     document.querySelector(".product-body"),
@@ -4326,8 +4201,6 @@ function openProduct(id, sectionId = "") {
   renderProductModal();
   productModal.hidden = false;
 
-  // Ürün açıldığında, menü arkada nerede scroll edilmiş olursa olsun
-  // ürünün GERÇEK kategorisini aktif göster (örn. kebab -> Kebab, Drikker değil).
   if (selectedSection?.id) {
     setActiveCategoryTab(selectedSection.id, { centerIntoView: true, behavior: "auto" });
   }
@@ -4439,7 +4312,6 @@ function sortCartLinesForKitchen(lines = []) {
     })
     .sort((a, b) => (
       a.sectionIndex - b.sectionIndex ||
-      // Ücretli ekstra/ek seçim olanlar aynı kategori içinde önce gelsin.
       (b.paidCount > 0) - (a.paidCount > 0) ||
       b.paidCount - a.paidCount ||
       a.itemNumber - b.itemNumber ||
@@ -4510,8 +4382,6 @@ function renderCart() {
         const rawPriceText = safeText(detail?.priceText || "");
         const numericPrice = Number(detail?.price || 0) || 0;
 
-        // Sum skal bare vises når det finnes et reelt betalt tillegg.
-        // Gratis valg som "Velg styrke: Sterk 🔥" skal ikke gi Sum-rad.
         if (numericPrice > 0) return true;
         return /^\+\s*(?!0+(?:[,.]0+)?\b)/.test(rawPriceText);
       });
@@ -4557,8 +4427,6 @@ function renderCart() {
     })
     .join("");
 
-  // V186: Sepette ürünler toplamın üstünde her zaman görünür kalsın.
-  // Önceki CSS/hidden çakışmaları bazı cihazlarda ürün listesini gizliyordu.
   if (cartItems) {
     if (hasCartItems) {
       cartItems.hidden = false;
@@ -4585,7 +4453,6 @@ function renderCart() {
   markSelectedMenuProduct();
 }
 
-// Ürün sepete eklendiğinde çalışan ana fonksiyon.
 async function addConfiguredToCart() {
   if (addingToCart) return;
   if (editingCartIndex === null && quantity < 1) return;
@@ -4614,7 +4481,6 @@ async function addConfiguredToCart() {
     closeProductModal();
     showCustomerFavoriteNotice(wasEditingCartLine ? "Handlekurven er oppdatert" : "Lagt i handlekurven");
 
-    // Sepette düzenleme yapıldıysa Oppdater handlekurv sonrası direkt sepete dön.
     if (wasEditingCartLine) {
       window.requestAnimationFrame(() => {
         openCart();
@@ -4626,7 +4492,6 @@ async function addConfiguredToCart() {
   }
 }
 
-// Sepete müşteri tıklayınca sepet panelini açar.
 function forceCloseNonCartOverlays() {
   if (productModal) productModal.hidden = true;
   if (profileModal) profileModal.hidden = true;
@@ -4634,7 +4499,6 @@ function forceCloseNonCartOverlays() {
   if (infoModal) infoModal.hidden = true;
   if (infoToggle) infoToggle.setAttribute("aria-expanded", "false");
   if (orderLiveModal) orderLiveModal.hidden = true;
-  if (cartModal) cartModal.hidden = cartModal.hidden;
   document.body.classList.remove("profile-open", "modal-open", "order-live-open");
 }
 
@@ -4688,10 +4552,9 @@ function closeInfoModal() {
 document.addEventListener("click", (event) => {
   const tab = event.target.closest?.("[data-category-tab]");
   if (!tab) return;
-
   event.preventDefault();
   event.stopPropagation();
-
+  if (productModal && !productModal.hidden) closeProductModal();
   scrollToMenuSection(tab.dataset.categoryTab);
 }, true);
 
@@ -4757,7 +4620,6 @@ document.addEventListener("click", (event) => {
   showClosedOrderingMessage();
 }, true);
 
-
 optionGroups.addEventListener("change", (event) => {
   if (event.target.name === "size") {
     selectedSize = event.target.value;
@@ -4772,7 +4634,6 @@ optionGroups.addEventListener("change", (event) => {
     selectedExtras = new Set([...selectedExtras].filter((id) => !groupOptionIds.includes(id)));
     selectedExtras.add(event.target.value);
   } else if (event.target.type === "radio" && event.target.name && event.target.value) {
-    // TÜRKÇE: Tek seçimli gruplarda yanlışlıkla birden fazla seçenek seçili kalmasın.
     const radioGroup = getProductOptionGroups().find((group) => group.options.some((option) => option.id === event.target.value));
     if (radioGroup) {
       const ids = radioGroup.options.map((option) => option.id);
@@ -4942,9 +4803,6 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function init() {
-  // Always enter through the menu. Some older mobile layout rules could make a
-  // hidden overlay visible before the first state sync. Tracking links are
-  // handled afterwards and may still open the relevant order view explicitly.
   closeAllCustomerPopupsAndShowMenu();
   applySiteSettings();
   await loadMenuConfig();
@@ -4963,7 +4821,6 @@ async function init() {
   window.requestAnimationFrame(() => refreshCategoryTabsFromCurrentMenu({ preserveActive: false }));
 }
 
-// 20260429 V11: GloriaFood tarzı üst menü butonu ve ikon basılma efekti.
 if (siteNameText) {
   siteNameText.addEventListener("click", () => {
     if (isCustomerOverlayOpen()) closeAllCustomerPopupsAndShowMenu();
@@ -5023,7 +4880,6 @@ if (document.fonts?.ready) {
   }).catch(() => {});
 }
 
-// Prevent duplicate remove events from one touch/click action.
 let kolLastCartRemoveAt = 0;
 
 function kolEditCartLineDirect(index) {
@@ -5038,8 +4894,6 @@ function kolRemoveCartLineDirect(index) {
   index = Number(index);
   const now = Date.now();
 
-  // Mobilde touchstart + pointerdown + click aynı basışta arka arkaya gelebiliyor.
-  // Bu kilit bir basışın sadece tek ürün silmesini garanti eder.
   if (now - kolLastCartRemoveAt < 650) return false;
   kolLastCartRemoveAt = now;
 
@@ -5097,8 +4951,6 @@ function kolCartActionFromEvent(event) {
   }
 }
 
-// One delegated listener survives cart re-renders and works identically with
-// one or many cart lines.
 cartItems?.addEventListener("click", kolCartActionFromEvent);
 
 document.addEventListener("keydown", (event) => {
@@ -5113,59 +4965,6 @@ document.addEventListener("keydown", (event) => {
 
 init();
 
-// 20260429 V8: header kesin olarak body'nin ilk elementi olsun ve sepet durum sınıfları senkron kalsın.
-(function forceKolHeaderAndCartState() {
-  const sync = () => {
-    const hasItems = Array.isArray(cart) && cart.length > 0;
-    document.body.classList.toggle("cart-has-items", hasItems);
-    document.body.classList.toggle("cart-empty-state", !hasItems);
-    if (cartEmpty) cartEmpty.style.display = hasItems ? "none" : "";
-    if (cartItems) cartItems.style.display = hasItems ? "" : "none";
-  };
-  sync();
-  window.addEventListener("resize", sync, { passive: true });
-})();
-
-// 20260429 V6: Android/iPhone Chrome adres çubuğu değişince gerçek görünür yüksekliği CSS'e verir.
-// Bu sayede mobilde Send bestilling ve Legg til i handlevogn butonları ekranın altında sabit kalır.
-(function setKolMobileViewportHeight() {
-  const apply = () => {
-    const height = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight;
-    if (height) document.documentElement.style.setProperty("--kol-mobile-vh", `${height}px`);
-  };
-  apply();
-  window.addEventListener("resize", apply, { passive: true });
-  window.visualViewport?.addEventListener("resize", apply, { passive: true });
-  window.visualViewport?.addEventListener("scroll", apply, { passive: true });
-})();
-
-// Keep the customer iframe edge-to-edge as well; do not force a phone-sized canvas.
-(function syncKolCustomerFrameFullViewport() {
-  const frame = window.frameElement;
-  if (!frame?.classList?.contains("customer-mobile-frame")) return;
-
-  const apply = () => {
-    frame.style.setProperty("width", "100vw", "important");
-    frame.style.setProperty("max-width", "none", "important");
-    frame.style.setProperty("height", "100dvh", "important");
-    frame.style.setProperty("min-height", "100dvh", "important");
-    frame.style.setProperty("margin", "0", "important");
-    frame.style.setProperty("border", "0", "important");
-    frame.style.setProperty("display", "block", "important");
-  };
-
-  apply();
-  window.addEventListener("resize", apply, { passive: true });
-  window.visualViewport?.addEventListener("resize", apply, { passive: true });
-})();
-
-    
-// When a category is chosen while a product is open, close the product and continue to that category.
-document.getElementById("categoryTabs")?.addEventListener("click", (event) => {
-  const tab = event.target.closest("button");
-  if (!tab || !document.body.classList.contains("kol-product-detail-open")) return;
-  document.getElementById("closeProduct")?.click();
-}, true);
 </script>
 </body>
 </html>
