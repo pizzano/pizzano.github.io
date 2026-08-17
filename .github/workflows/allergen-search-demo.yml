@@ -1,3 +1,4 @@
+# trigger
 name: Allergen search demo update
 on:
   push:
