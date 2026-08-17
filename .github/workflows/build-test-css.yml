@@ -1,0 +1,36 @@
+name: Build test.css
+on:
+  push:
+    paths:
+      - '.github/workflows/build-test-css.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build consolidated stylesheet
+        run: python .github/scripts/build-test-css.py
+      - name: Validate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('test/test.html').read_text(encoding='utf-8')
+          c=Path('test/test.css').read_text(encoding='utf-8')
+          assert 'href="test.css?v=20260817-2305"' in h
+          assert '<style>' not in h
+          assert 'href="kol-core.css' not in h
+          assert 'brand-back-label::before' in c
+          assert 'content:none!important' in c
+          assert len(c) > 10000
+          PY
+          git diff --check
+      - name: Commit and clean helpers
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/test.html test/test.css
+          git rm -f .github/scripts/build-test-css.py .github/workflows/build-test-css.yml
+          git commit -m 'Move test styles into dedicated test.css'
+          git push
