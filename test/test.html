@@ -63,10 +63,7 @@
     </div>
     <div id="checkoutStep2" hidden>
       <div class="checkout-title"><span>2</span><div><strong>Velg hentetid</strong><small>Velg når du ønsker å hente.</small></div></div>
-      <div class="pickup-options">
-        <label class="pickup-option"><input type="radio" name="pickup" value="asap" checked><span>Snarest mulig</span></label>
-        <label class="pickup-option"><input type="radio" name="pickup" value="later"><span>Senere</span></label>
-      </div>
+      <div class="pickup-options" id="pickupOptions"></div>
     </div>
     <div id="checkoutStep3" hidden>
       <div class="checkout-title"><span>3</span><div><strong>Navn og telefon</strong><small id="checkoutLoginHint"></small></div></div>
@@ -79,11 +76,11 @@
   <div class="checkout-footer"><button class="secondary" id="checkoutBack" hidden>Tilbake</button><button class="primary" id="checkoutNext">Neste</button></div>
 </section>
 
-<section class="screen no-tabs" id="accountScreen" hidden>
+<section class="screen" id="accountScreen" hidden>
   <div class="screen-scroll" id="accountContent"></div>
 </section>
 
-<section class="screen no-tabs" id="infoScreen" hidden>
+<section class="screen" id="infoScreen" hidden>
   <div class="screen-scroll info-scroll">
     <div class="screen-title"><h2>Butikksinformasjon</h2></div>
     <div class="info-tabs">
@@ -103,7 +100,7 @@
   </div>
 </section>
 
-<section class="screen no-tabs" id="allergenScreen" hidden>
+<section class="screen" id="allergenScreen" hidden>
   <div class="screen-scroll allergen-scroll">
     <div class="screen-title"><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av dem.</p></div>
     <div class="allergen-toolbar"><button id="allergenReset">Nullstill</button></div>
@@ -150,7 +147,7 @@ const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
 const formatPhone=p=>String(p||'').replace(/(\d{2})(\d{2})(\d{2})(\d{2})/,'$1 $2 $3 $4');
 let cart=load(KEY.cart,[]),orders=load(KEY.orders,[]),accounts=load(KEY.accounts,{}),session=load(KEY.session,null);
 let selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),searchOpen=false,searchQuery='',expanded={popular:false,favorites:false};
-let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1;
+let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap';
 
 const realSections=()=>MENU.filter(s=>!s.virtual);
 const items=()=>realSections().flatMap(s=>(s.items||[]).map(p=>({...p,sectionId:s.id})));
@@ -167,6 +164,7 @@ function saveAccounts(){save(KEY.accounts,accounts)}
 function closeViews(){
   $$('.screen').forEach(s=>s.hidden=true);
   document.body.classList.remove('view-open','hide-tabs');
+  $('#cartScreen').style.top='';
 }
 function openView(id,{tabs=true}={}){
   closeViews();
@@ -338,17 +336,46 @@ function renderCart(){
   const a=account();$('#checkoutName').value=a?.name||'';$('#checkoutPhone').value=a?.phone||'';$('#checkoutPhone').disabled=!!a;$('#checkoutLoginHint').textContent=a?'Innlogget medlemskonto.':'Du kan bestille uten å logge inn.';
   renderCheckoutStep();
 }
+function pickupSlots(){
+  const now=new Date(),open=new Date(now),close=new Date(now),start=new Date(now);
+  open.setHours(14,0,0,0);close.setHours(22,0,0,0);start.setSeconds(0,0);
+  const remainder=start.getMinutes()%15;
+  if(remainder)start.setMinutes(start.getMinutes()+(15-remainder));
+  else if(now.getSeconds()>0||now.getMilliseconds()>0)start.setMinutes(start.getMinutes()+15);
+  if(start<open)start.setTime(open.getTime());
+  const slots=[];
+  for(let d=new Date(start);d<close;d.setMinutes(d.getMinutes()+15))slots.push(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
+  return slots;
+}
+function renderPickupTimes(){
+  const slots=pickupSlots();
+  if(pickupChoice!=='asap'&&!slots.includes(pickupChoice))pickupChoice='asap';
+  $('#pickupOptions').innerHTML=`<label class="pickup-option"><input type="radio" name="pickup" value="asap" ${pickupChoice==='asap'?'checked':''}><span>Snarest mulig</span></label>`+
+    slots.map(t=>`<label class="pickup-option"><input type="radio" name="pickup" value="${t}" ${pickupChoice===t?'checked':''}><span>${t}</span></label>`).join('');
+  $$('input[name="pickup"]').forEach(r=>r.onchange=()=>{if(r.checked)pickupChoice=r.value});
+}
 function renderCheckoutStep(){
   [1,2,3].forEach(n=>$('#checkoutStep'+n).hidden=n!==checkoutStep);
   $('#checkoutBack').hidden=checkoutStep===1;
-  $('#checkoutNext').textContent=checkoutStep===3?'Send bestilling':'Neste';
+  const next=$('#checkoutNext');
+  next.textContent=checkoutStep===3?'Send bestilling':'Neste';
+  next.disabled=checkoutStep===1&&!cart.length;
+  next.style.background=next.disabled?'#d4cfcb':'';
+  next.style.opacity=next.disabled?'.78':'';
+  next.style.cursor=next.disabled?'not-allowed':'';
+  if(checkoutStep===2)renderPickupTimes();
+  const cartOpen=!$('#cartScreen').hidden;
+  const focusedCheckout=cartOpen&&checkoutStep>1;
+  document.body.classList.toggle('hide-tabs',focusedCheckout);
+  $('#cartScreen').style.top=focusedCheckout?'var(--head)':'calc(var(--head) + var(--tabs))';
 }
 function placeOrder(){
   if(!cart.length)return;
   const name=$('#checkoutName').value.trim(),phone=$('#checkoutPhone').value.replace(/\D/g,'');
   if(!name||phone.length!==8){alert('Skriv inn navn og 8-sifret telefonnummer.');return}
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0),id=Math.random().toString(36).slice(2,8).toUpperCase();
-  orders.unshift({id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);
+  const pickupTime=pickupChoice==='asap'?'Snarest mulig':pickupChoice;
+  orders.unshift({id,createdAt:Date.now(),name,phone,total,pickupTime,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);
   let a=account();
   if(!a){
     const guestFavorites=load(KEY.guestFav,[]);
@@ -364,7 +391,7 @@ function placeOrder(){
   const large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);
   if(large){const sum=(a.stamps||0)+large;a.rewards=(a.rewards||0)+Math.floor(sum/10);a.stamps=sum%10}
   saveAccounts();
-  cart=[];save(KEY.cart,cart);checkoutStep=1;
+  cart=[];save(KEY.cart,cart);checkoutStep=1;pickupChoice='asap';
   goMenu();renderCartCount();renderHeader();renderMenu();renderTabs();
   alert(`Testbestilling ${id} er lagret lokalt.`);
 }
@@ -393,7 +420,7 @@ function renderProfileHome(){
 }
 function renderOrders(){
   const a=account(),list=orders.filter(o=>o.phone===a.phone);
-  $('#accountContent').innerHTML=`<div class="subhead"><button id="accountBack">‹ Profil</button><h2>Bestillinger</h2></div><div class="profile-body">${list.length?list.map(o=>`<div class="order-card"><div><strong>Ordre ${o.id}</strong><b>${money(o.total)}</b></div><small>${new Date(o.createdAt).toLocaleString('nb-NO')}</small><p>${o.items.map(x=>`${x.qty}x ${escapeHtml(x.name)} (${escapeHtml(x.size)})`).join('<br>')}</p></div>`).join(''):'<div class="empty-note">Ingen bestillinger ennå.</div>'}</div>`;
+  $('#accountContent').innerHTML=`<div class="subhead"><button id="accountBack">‹ Profil</button><h2>Bestillinger</h2></div><div class="profile-body">${list.length?list.map(o=>`<div class="order-card"><div><strong>Ordre ${o.id}</strong><b>${money(o.total)}</b></div><small>${new Date(o.createdAt).toLocaleString('nb-NO')} · ${escapeHtml(o.pickupTime||'Snarest mulig')}</small><p>${o.items.map(x=>`${x.qty}x ${escapeHtml(x.name)} (${escapeHtml(x.size)})`).join('<br>')}</p></div>`).join(''):'<div class="empty-note">Ingen bestillinger ennå.</div>'}</div>`;
   $('#accountBack').onclick=renderProfileHome;
 }
 function renderContact(){
@@ -414,13 +441,13 @@ function renderAllergens(){
   $('#allergenGrid').innerHTML=ALLERGENS.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join('');
   $$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()});
 }
-function openAllergens(){draftAllergens=new Set(selectedAllergens);renderAllergens();openView('allergenScreen',{tabs:false})}
+function openAllergens(){draftAllergens=new Set(selectedAllergens);renderAllergens();openView('allergenScreen',{tabs:true})}
 function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size||''}
 
 $('#brandBtn').onclick=goMenu;
-$('#infoBtn').onclick=()=>{openView('infoScreen',{tabs:false});setInfoTab('about')};
-$('#profileBtn').onclick=()=>{openView('accountScreen',{tabs:false});account()?renderProfileHome():renderLogin()};
-$('#cartBtn').onclick=()=>{checkoutStep=1;renderCart();openView('cartScreen',{tabs:true})};
+$('#infoBtn').onclick=()=>{openView('infoScreen',{tabs:true});setInfoTab('about')};
+$('#profileBtn').onclick=()=>{openView('accountScreen',{tabs:true});account()?renderProfileHome():renderLogin()};
+$('#cartBtn').onclick=()=>{checkoutStep=1;renderCart();openView('cartScreen',{tabs:true});renderCheckoutStep()};
 $('#allergenBtn').onclick=openAllergens;
 $('#infoAllergenBtn').onclick=openAllergens;
 $('#storeMapBtn').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query=%C3%98GARDSVEGEN%2044%2C%202100%20SKARNES','_blank','noopener');
