@@ -460,7 +460,7 @@ $('#addToCart').onclick=addOrUpdateCart;
 $('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};
 $('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};
 $('#allergenSearch').oninput=e=>{allergenSearch=e.target.value;renderAllergens()};
-$('#allergenReset').onclick=()=>{draftAllergens.clear();renderAllergens()};
+$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();};
 $('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);renderAll();goMenu()};
 $('#menuShell').addEventListener('scroll',scheduleSync,{passive:true});
 renderAll();scheduleSync();
