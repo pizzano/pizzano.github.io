@@ -258,10 +258,27 @@ function renderMenu(){
   $('#menuSections').innerHTML=html;
   bindMenu();scheduleSync();
 }
+function refreshFavoriteUi(){
+  const activeBefore=document.querySelector('.category-tab.active')?.dataset.tab||'';
+  const hasFavorites=favSet().size>0;
+  renderMenu();
+  renderTabs();
+  requestAnimationFrame(()=>{
+    if(activeBefore&&document.querySelector(`.category-tab[data-tab="${activeBefore}"]`))setActiveTab(activeBefore,false);
+    else if(!hasFavorites)setActiveTab('popular',false);
+    else scheduleSync();
+  });
+}
 function bindMenu(){
   $$('[data-plus]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProduct(b.dataset.plus)});
   $$('[data-product]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openProduct(r.dataset.product)});
-  $$('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const f=favSet();f.has(b.dataset.fav)?f.delete(b.dataset.fav):f.add(b.dataset.fav);saveFav(f);renderTabs();renderMenu()});
+  $$('[data-fav]').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const f=favSet(),id=b.dataset.fav;
+    f.has(id)?f.delete(id):f.add(id);
+    saveFav(f);
+    refreshFavoriteUi();
+  });
   $$('[data-more]').forEach(b=>b.onclick=()=>{expanded[b.dataset.more]=!expanded[b.dataset.more];renderMenu()});
 }
 
@@ -332,11 +349,24 @@ function placeOrder(){
   if(!name||phone.length!==8){alert('Skriv inn navn og 8-sifret telefonnummer.');return}
   const total=cart.reduce((s,x)=>s+x.price*x.qty,0),id=Math.random().toString(36).slice(2,8).toUpperCase();
   orders.unshift({id,createdAt:Date.now(),name,phone,total,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);
-  if(account()){
-    const a=account(),large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);
-    if(large){const sum=(a.stamps||0)+large;a.rewards=(a.rewards||0)+Math.floor(sum/10);a.stamps=sum%10;saveAccounts()}
+  let a=account();
+  if(!a){
+    const guestFavorites=load(KEY.guestFav,[]);
+    a=ensureAccount(phone);
+    a.name=name;
+    a.favorites=[...new Set([...(a.favorites||[]),...guestFavorites])];
+    save(KEY.guestFav,[]);
+    session=phone;
+    save(KEY.session,session);
+  }else if(!a.name){
+    a.name=name;
   }
-  cart=[];save(KEY.cart,cart);renderCartCount();checkoutStep=1;goMenu();alert(`Testbestilling ${id} er lagret lokalt.`);
+  const large=cart.filter(x=>x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);
+  if(large){const sum=(a.stamps||0)+large;a.rewards=(a.rewards||0)+Math.floor(sum/10);a.stamps=sum%10}
+  saveAccounts();
+  cart=[];save(KEY.cart,cart);checkoutStep=1;
+  goMenu();renderCartCount();renderHeader();renderMenu();renderTabs();
+  alert(`Testbestilling ${id} er lagret lokalt.`);
 }
 
 function stampsHtml(a){return Array.from({length:10},(_,i)=>`<span class="stamp ${i<(a.stamps||0)?'on':''}"><b>${i+1}</b><i>🍕</i></span>`).join('')}
