@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -9,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=hardening-20260817"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v36"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -172,20 +173,37 @@
 <script>
 /* ===== app.js INLINED ===== */
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
-const firebaseOrdersBaseUrl = `${firebaseBaseUrl}/orders`;
-const firebaseOrdersUrl = `${firebaseOrdersBaseUrl}.json`;
-const firebaseOrderUrl = (orderId) => `${firebaseOrdersBaseUrl}/${encodeURIComponent(String(orderId || ""))}.json`;
+const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
+const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
+const firebasePublicMenuUrl = `${firebaseBaseUrl}/publicMenu.json`;
+const firebaseMenuVersionUrl = `${firebaseBaseUrl}/menuVersion.json`;
 const firebaseMostOrderedUrl = `${firebaseBaseUrl}/publicStats/mostOrdered.json`;
-const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings", "rescueDeals"];
+const menuCacheFallbackMaxAgeMs = 30 * 60 * 1000;
 
-async function fetchFirebaseMenuConfig() {
+async function fetchMenuVersion() {
+  const response = await fetch(`${firebaseMenuVersionUrl}?ts=${Date.now()}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Kunne ikke kontrollere menyversjon");
+  const value = await response.json();
+  return value == null ? null : String(value);
+}
+
+async function fetchLegacyMenuConfig() {
   const entries = await Promise.all(firebaseMenuFields.map(async (key) => {
     const response = await fetch(`${firebaseBaseUrl}/${key}.json?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`Kunne ikke hente ${key}`);
     return [key, await response.json()];
   }));
   return Object.fromEntries(entries);
+}
+
+async function fetchFirebaseMenuConfig() {
+  const response = await fetch(`${firebasePublicMenuUrl}?ts=${Date.now()}`, { cache: "no-store" });
+  if (response.ok) {
+    const packed = await response.json();
+    if (packed && typeof packed === "object" && Array.isArray(packed.sections)) return packed;
+  }
+  return fetchLegacyMenuConfig();
 }
 
 let menuSections = [];
@@ -1145,11 +1163,9 @@ function toDatetimeLocalValue(date) {
 
 function roundUpToNextQuarter(date) {
   const result = new Date(date);
-  const hadPartialMinute = result.getSeconds() > 0 || result.getMilliseconds() > 0;
   result.setSeconds(0, 0);
   const minutes = result.getMinutes();
-  const remainder = minutes % 15;
-  const add = remainder === 0 ? (hadPartialMinute ? 15 : 0) : 15 - remainder;
+  const add = (15 - (minutes % 15)) % 15;
   if (add) result.setMinutes(minutes + add);
   return result;
 }
@@ -1732,14 +1748,21 @@ function buildOrderPayload() {
     createdAt,
     updatedAt: createdAt,
 
-    // Canonical order metadata. Legacy snake_case fields are only read for old orders.
+    // GloriaFood-lignende metadata vi vil ha i systemet fra start.
     source: "website",
-    clientOrderCount,
-    confirmedAt: null,
-    fulfillTime: null,
+    client_order_count: clientOrderCount,
+    confirmed_at: null,
+    fulfill_time: null,
     printed: false,
     ready: false,
     payment,
+    order_type: orderType,
+
+    // camelCase kopier for enklere intern bruk i eget system.
+    sourceName: "website",
+    clientOrderCount,
+    confirmedAt: null,
+    fulfillTime: null,
     orderType,
 
     processableAfter,
@@ -1838,15 +1861,16 @@ async function syncOrdersByCustomerPhone(phone = getSavedProfilePhone()) {
         updatedAt: value?.updatedAt || value?.createdAt || ""
       }))
       .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
-      .slice(0, 5);
-    const freshOrders = (await Promise.all(rows.map(async (row) => {
+      .slice(0, 20);
+    const freshOrders = [];
+    for (const row of rows) {
       try {
-        return await fetchOrder(row.id);
+        const fresh = await fetchOrder(row.id);
+        if (fresh) freshOrders.push(fresh);
       } catch (error) {
         console.warn("Kunne ikke lese ordre", row.id, error);
-        return null;
       }
-    }))).filter(Boolean);
+    }
     freshOrders.forEach((order) => rememberRecentOrder(order));
     return freshOrders;
   } catch (error) {
@@ -2269,7 +2293,7 @@ async function openProfileModal() {
   const phone = getSavedProfilePhone();
   renderProfileOrders({ phone, loading: !!phone });
   if (phone) await syncOrdersByCustomerPhone(phone);
-  await syncRecentOrdersFromFirebase({ includeCompleted: true });
+  await syncRecentOrdersFromFirebase();
   renderProfileOrders({ phone });
   updateProfileDot();
 }
@@ -2282,19 +2306,22 @@ function closeProfileModal() {
   syncBodyScrollLocks();
 }
 
-async function syncRecentOrdersFromFirebase(options = {}) {
-  const includeCompleted = options.includeCompleted === true;
+async function syncRecentOrdersFromFirebase() {
   const orders = getRecentOrders();
   if (!orders.length) return;
-  const candidates = (includeCompleted
-    ? orders
-    : orders.filter((order) => {
-        const status = order.status || "pending";
-        return status === "pending" || (status === "accepted" && order.ready !== true);
-      }))
-    .slice(0, includeCompleted ? 5 : 4);
-  if (!candidates.length) return;
-  const updated = await Promise.all(candidates.map(async (order) => {
+  const active = orders
+    .filter((order) => {
+      const status = order.status || "pending";
+      return status === "pending" || (status === "accepted" && !isOrderReadyForPickup(order));
+    })
+    .slice(0, 4);
+
+  if (!active.length) {
+    refreshProfileReadyStates();
+    return;
+  }
+
+  const updated = await Promise.all(active.map(async (order) => {
     if (!order.id) return order;
     try {
       return (await fetchOrder(order.id)) || order;
@@ -2303,19 +2330,23 @@ async function syncRecentOrdersFromFirebase(options = {}) {
     }
   }));
   updated.forEach((order) => rememberRecentOrder(order));
+  refreshProfileReadyStates();
 }
 
 function startRecentOrdersSync() {
   window.clearInterval(recentOrdersPollTimer);
   const hasActive = getRecentOrders().some((order) => {
     const status = order.status || "pending";
-    return status === "pending" || (status === "accepted" && order.ready !== true);
+    return status === "pending" || (status === "accepted" && !isOrderReadyForPickup(order));
   });
-  if (!hasActive) return;
+  if (!hasActive) {
+    refreshProfileReadyStates();
+    return;
+  }
   syncRecentOrdersFromFirebase();
   recentOrdersPollTimer = window.setInterval(() => {
     if (document.visibilityState !== "hidden") syncRecentOrdersFromFirebase();
-  }, 10000);
+  }, 8000);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -2336,12 +2367,10 @@ function resumeActiveOrderPolling() {
 }
 
 async function fetchOrder(orderId) {
-  const cleanOrderId = String(orderId || "").trim();
-  if (!cleanOrderId) return null;
-  const response = await fetch(`${firebaseOrderUrl(cleanOrderId)}?ts=${Date.now()}`, { cache: "no-store" });
+  const response = await fetch(firebaseOrdersUrl.replace("orders.json", `orders/${orderId}.json?ts=${Date.now()}`), { cache: "no-store" });
   if (!response.ok) throw new Error("Kunne ikke lese ordre");
   const data = await response.json();
-  return data ? normalizeCustomerOrder({ id: cleanOrderId, ...data }) : null;
+  return data ? normalizeCustomerOrder({ id: orderId, ...data }) : null;
 }
 
 function getTrackingOrderIdFromUrl() {
@@ -3082,6 +3111,16 @@ function startRescueDealsSync() {
   }, 15000);
 }
 
+function normalizePopularProductName(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^\s*\d+\s*[-.)]?\s*/, "")
+    .replace(/[^a-z0-9æøå]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function getAllVisibleMenuProducts() {
   const list = [];
@@ -3119,6 +3158,47 @@ function saveMostOrderedCache(items = []) {
   } catch (error) {}
 }
 
+function buildMostOrderedFromOrders(ordersData = {}) {
+  const products = getAllVisibleMenuProducts();
+  if (!products.length || !ordersData || typeof ordersData !== "object") return [];
+
+  const byId = new Map(products.map(({ item }) => [String(item.id || ""), item]));
+  const byName = new Map();
+  products.forEach(({ item }) => {
+    const candidates = [item.name, item.title, `${item.number || ""} ${item.name || ""}`]
+      .map(normalizePopularProductName)
+      .filter(Boolean);
+    candidates.forEach((name) => {
+      if (!byName.has(name)) byName.set(name, item);
+    });
+  });
+
+  const scores = new Map();
+  const addScore = (item, qty = 1) => {
+    if (!item?.id) return;
+    const key = String(item.id);
+    scores.set(key, (scores.get(key) || 0) + Math.max(1, Number(qty) || 1));
+  };
+
+  Object.values(ordersData).forEach((order) => {
+    asArray(order?.items).forEach((line) => {
+      const qty = Math.max(1, Number(line?.quantity || line?.qty || 1) || 1);
+      let item = byId.get(String(line?.productId || line?.id || ""));
+      if (!item) {
+        const lineName = normalizePopularProductName(line?.name || line?.title || "");
+        item = byName.get(lineName);
+      }
+      addScore(item, qty);
+    });
+  });
+
+  return [...scores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => byId.get(id))
+    .filter(Boolean)
+    .map((item) => ({ ...item, _syntheticMostOrdered: true }))
+    .slice(0, 5);
+}
 
 function getMostOrderedSection() {
   if (!mostOrderedMenuItems.length) return null;
@@ -3149,10 +3229,8 @@ async function refreshMostOrderedFromDatabase(options = {}) {
     const seen = new Set();
     rows.sort((a, b) => Number(b?.count || 0) - Number(a?.count || 0)).forEach((row) => {
       const item = byId.get(String(row?.id || "")) || byName.get(String(row?.name || "").trim().toLocaleLowerCase("nb-NO"));
-      if (!item) return;
-      const key = String(item.id || item.name || "");
-      if (!key || seen.has(key)) return;
-      seen.add(key);
+      if (!item || seen.has(String(item.id || item.name || ""))) return;
+      seen.add(String(item.id || item.name || ""));
       nextItems.push(item);
     });
     const limited = nextItems.slice(0, 5);
@@ -3160,7 +3238,7 @@ async function refreshMostOrderedFromDatabase(options = {}) {
       const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
       const nextSignature = limited.map((item) => item.id).join("|");
       mostOrderedMenuItems = limited;
-      saveMostOrderedCache(limited);
+      saveCachedMostOrderedItems(limited);
       if (render && oldSignature !== nextSignature) renderMenu();
     } else if (!mostOrderedMenuItems.length) {
       mostOrderedMenuItems = readCachedMostOrderedItems();
@@ -3179,11 +3257,11 @@ function finishMenuLoading() {
 }
 
 async function loadMenuConfig() {
-  const cachedConfig = readCachedMenuConfig();
+  const cachedRecord = readCachedMenuRecord();
+  const cachedConfig = cachedRecord?.config || null;
   let cachedSignature = "";
   let renderedFromCache = false;
 
-  // Son başarılı Firebase menüsünü hemen göster; ardından güncel veriyi çek.
   if (cachedConfig && applyMenuConfig(cachedConfig)) {
     mostOrderedMenuItems = readCachedMostOrderedItems();
     cachedSignature = menuConfigSignature(cachedConfig);
@@ -3192,30 +3270,44 @@ async function loadMenuConfig() {
     renderedFromCache = true;
   }
 
+  let remoteVersion = null;
   try {
-    const config = await fetchFirebaseMenuConfig();
-    const freshSignature = menuConfigSignature(config);
+    remoteVersion = await fetchMenuVersion();
+  } catch (error) {
+    console.warn("Menyversjon kunne ikke kontrolleres.", error);
+  }
 
-    if (applyMenuConfig(config)) {
-      if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
-      saveCachedMenuConfig(config);
-      if (!renderedFromCache || freshSignature !== cachedSignature) {
+  const savedAtMs = cachedRecord?.savedAt ? Date.parse(cachedRecord.savedAt) : 0;
+  const cacheAge = savedAtMs ? Date.now() - savedAtMs : Number.POSITIVE_INFINITY;
+  const versionMatches = Boolean(
+    renderedFromCache && remoteVersion != null && cachedRecord?.version != null && String(cachedRecord.version) === String(remoteVersion)
+  );
+  const safeFallbackCache = Boolean(renderedFromCache && remoteVersion == null && cacheAge < menuCacheFallbackMaxAgeMs);
+
+  if (!versionMatches && !safeFallbackCache) {
+    try {
+      const config = await fetchFirebaseMenuConfig();
+      const freshSignature = menuConfigSignature(config);
+      if (applyMenuConfig(config)) {
+        saveCachedMenuConfig(config, remoteVersion);
+        if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
+        if (!renderedFromCache || freshSignature !== cachedSignature) renderMenu();
+        renderedFromCache = true;
+      }
+    } catch (error) {
+      console.warn("Meny kunne ikke oppdateres fra Firebase.", error);
+      if (!renderedFromCache) {
+        menuSections = [];
         renderMenu();
       }
-      refreshMostOrderedFromDatabase({ render: true });
-    } else if (!renderedFromCache) {
-      menuSections = [];
-      renderMenu();
     }
-  } catch (error) {
-    if (!renderedFromCache) {
-      menuSections = [];
-      renderMenu();
-    }
-    console.warn("Menyen kunne ikke lastes fra Firebase.", error);
-  } finally {
-    finishMenuLoading();
   }
+
+  await Promise.allSettled([
+    refreshRescueDealsFromDatabase({ render: true }),
+    refreshMostOrderedFromDatabase({ render: true })
+  ]);
+  finishMenuLoading();
 }
 
 function normalizeSizeId(label = "", fallback = "") {
