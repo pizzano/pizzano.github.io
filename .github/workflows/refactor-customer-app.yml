@@ -70,7 +70,7 @@ jobs:
           set -euo pipefail
           git config user.name "KOL Refactor Bot"
           git config user.email "actions@users.noreply.github.com"
-          git rm .github/workflows/refactor-customer-app.yml .github/scripts/refactor-customer-app.py
+          git rm -f .github/workflows/refactor-customer-app.yml .github/scripts/refactor-customer-app.py
           git add -- test/index.html test/kol-core.css test/admin-panel.html
           git diff --cached --check
           git status --short
