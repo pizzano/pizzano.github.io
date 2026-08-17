@@ -93,6 +93,14 @@ body.kol-customer .local-product-allergens{
   letter-spacing:.01em;
 }
 
+
+/* Keep only the explicit "← Til meny" label; suppress legacy extra chevron. */
+body.kol-customer .appbar-brand::before,
+body.kol-customer.kol-top-back-active .appbar-brand::before{
+  content:none!important;
+  display:none!important;
+}
+
 </style>
 </head>
 <body class="kol-customer" data-kol-theme="default">
