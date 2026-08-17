@@ -1,10 +1,11 @@
-name: Fix cart auto-close trigger
+name: Fix cart auto close
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - .github/workflows/fix-cart-auto-close.yml
+      - '.github/workflows/fix-cart-auto-close.yml'
 
 permissions:
   contents: write
@@ -17,43 +18,17 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Prevent background order sync from closing cart
+      - name: Patch cart behavior
+        run: python .github/scripts/fix-cart-auto-close.py
+      - name: Validate and publish
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('test/index.html')
-          s = p.read_text(encoding='utf-8')
-          old = '''  if ((statusChanged && ["accepted", "cancelled"].includes(nextStatus)) || becameReady) {
-    playCustomerStatusSound(becameReady ? "ready" : nextStatus);
-    renderOrderLiveModal(order, true);
-  }'''
-          new = '''  if ((statusChanged && ["accepted", "cancelled"].includes(nextStatus)) || becameReady) {
-    playCustomerStatusSound(becameReady ? "ready" : nextStatus);
-    const blockingCustomerOverlayOpen = Boolean(
-      (cartModal && !cartModal.hidden) ||
-      (productModal && !productModal.hidden) ||
-      (profileModal && !profileModal.hidden) ||
-      (infoModal && !infoModal.hidden) ||
-      (quickCheckoutModal && !quickCheckoutModal.hidden)
-    );
-    if (!blockingCustomerOverlayOpen) renderOrderLiveModal(order, true);
-  }'''
-          if old not in s:
-              raise SystemExit('target status-change block not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s, encoding='utf-8')
-          PY
           grep -q 'blockingCustomerOverlayOpen' test/index.html
           git diff --check
-      - name: Commit fix and remove temporary workflow
-        shell: bash
-        run: |
-          set -euo pipefail
           git config user.name "KOL Cart Fix Bot"
           git config user.email "actions@users.noreply.github.com"
-          git rm .github/workflows/fix-cart-auto-close.yml
+          git rm .github/workflows/fix-cart-auto-close.yml .github/scripts/fix-cart-auto-close.py
           git add -- test/index.html
           git commit -m "Keep cart open during background order sync"
           git push origin HEAD:main
