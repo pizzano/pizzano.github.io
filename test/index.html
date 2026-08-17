@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -9,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="format-detection" content="telephone=no"/>
 <title>KØL Grill &amp; Pizza</title>
-<link rel="stylesheet" href="kol-core.css?v=mobile-v35"/>
+<link rel="stylesheet" href="kol-core.css?v=mobile-v36"/>
 </head>
 <body class="menu-loading kol-customer" data-kol-theme="default">
 <div class="customer-app">
@@ -174,15 +175,35 @@
 const firebaseBaseUrl = "https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app";
 const firebaseOrdersUrl = `${firebaseBaseUrl}/orders.json`;
 const firebaseCustomerOrdersBaseUrl = `${firebaseBaseUrl}/customerOrders`;
-const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings", "rescueDeals"];
+const firebaseMenuFields = ["sections", "extraOptions", "customPizzaToppings", "kebabPitaOptions", "optionGroups", "siteSettings"];
+const firebasePublicMenuUrl = `${firebaseBaseUrl}/publicMenu.json`;
+const firebaseMenuVersionUrl = `${firebaseBaseUrl}/menuVersion.json`;
+const firebaseMostOrderedUrl = `${firebaseBaseUrl}/publicStats/mostOrdered.json`;
+const menuCacheFallbackMaxAgeMs = 30 * 60 * 1000;
 
-async function fetchFirebaseMenuConfig() {
+async function fetchMenuVersion() {
+  const response = await fetch(`${firebaseMenuVersionUrl}?ts=${Date.now()}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Kunne ikke kontrollere menyversjon");
+  const value = await response.json();
+  return value == null ? null : String(value);
+}
+
+async function fetchLegacyMenuConfig() {
   const entries = await Promise.all(firebaseMenuFields.map(async (key) => {
     const response = await fetch(`${firebaseBaseUrl}/${key}.json?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`Kunne ikke hente ${key}`);
     return [key, await response.json()];
   }));
   return Object.fromEntries(entries);
+}
+
+async function fetchFirebaseMenuConfig() {
+  const response = await fetch(`${firebasePublicMenuUrl}?ts=${Date.now()}`, { cache: "no-store" });
+  if (response.ok) {
+    const packed = await response.json();
+    if (packed && typeof packed === "object" && Array.isArray(packed.sections)) return packed;
+  }
+  return fetchLegacyMenuConfig();
 }
 
 let menuSections = [];
@@ -815,6 +836,7 @@ function formatOrderProfileDate(order = {}) {
 function profileSecondaryText(order = {}) {
   const status = order.status || "pending";
   if (status === "accepted") {
+    if (isOrderReadyForPickup(order)) return "Maten er klar";
     return isTodayOrder(order) ? orderReadySummaryText(order) : "Fullført bestilling";
   }
   if (status === "pending") {
@@ -888,14 +910,7 @@ function rememberRecentOrder(order) {
   // Da åpner vi et rent status-vindu og markerer profilen som ulest.
   if ((statusChanged && ["accepted", "cancelled"].includes(nextStatus)) || becameReady) {
     playCustomerStatusSound(becameReady ? "ready" : nextStatus);
-    const blockingCustomerOverlayOpen = Boolean(
-      (cartModal && !cartModal.hidden) ||
-      (productModal && !productModal.hidden) ||
-      (profileModal && !profileModal.hidden) ||
-      (infoModal && !infoModal.hidden) ||
-      (quickCheckoutModal && !quickCheckoutModal.hidden)
-    );
-    if (!blockingCustomerOverlayOpen) renderOrderLiveModal(order, true);
+    renderOrderLiveModal(order, true);
   }
 
   renderRecentOrders();
@@ -903,15 +918,21 @@ function rememberRecentOrder(order) {
   updateProfileDot();
 }
 
+function isOrderReadyForPickup(order = {}) {
+  if ((order.status || "pending") !== "accepted") return false;
+  if (order.ready === true) return true;
+  return getCustomerReadyAt(order).getTime() <= Date.now();
+}
+
 function orderStatusText(status = "pending", order = {}) {
-  if (status === "accepted" && order.ready === true) return "Klar";
+  if (status === "accepted" && isOrderReadyForPickup(order)) return "Klar";
   if (status === "accepted") return "Godkjent";
   if (status === "cancelled") return "Kansellert";
   return "Venter";
 }
 
 function orderStatusTitle(status = "pending", order = {}) {
-  if (status === "accepted" && order.ready === true) return "Klar";
+  if (status === "accepted" && isOrderReadyForPickup(order)) return "Klar";
   if (status === "accepted") return "Bekreftet";
   if (status === "cancelled") return "Bestillingen ble kansellert";
   return "Bestillingen er sendt";
@@ -1946,7 +1967,7 @@ function orderStatusHtml(order = {}, options = {}) {
   const deadline = getOrderAcceptDeadline(order);
   const expired = status === "pending" && !waitingOpen && deadline.getTime() <= Date.now();
   const readyParts = status === "accepted" ? orderReadyDisplayParts(order) : null;
-  const isReady = status === "accepted" && (order.ready === true || getCustomerReadyAt(order).getTime() <= Date.now());
+  const isReady = status === "accepted" && isOrderReadyForPickup(order);
   const stage = status === "cancelled" ? "cancelled" : isReady ? "ready" : status === "accepted" ? "accepted" : "pending";
 
   const pendingCountdown = waitingOpen
@@ -2104,8 +2125,31 @@ function refreshOrderCountdowns(order = null) {
   });
 
   promoteOrderToAutomaticReady(order);
+  refreshProfileReadyStates();
 }
 
+
+function refreshProfileReadyStates() {
+  if (!profileOrdersEl || !profileModal || profileModal.hidden) return;
+  const recent = getRecentOrders();
+  profileOrdersEl.querySelectorAll("[data-profile-order-card]").forEach((card) => {
+    const id = card.dataset.profileOrderCard || "";
+    const order = recent.find((item) => String(item.id || "") === id);
+    if (!order || (order.status || "pending") !== "accepted") return;
+    const ready = isOrderReadyForPickup(order);
+    card.classList.toggle("status-ready", ready);
+    card.classList.toggle("status-progress", !ready);
+    const title = card.querySelector(".profile-order-title-row > strong");
+    if (title) title.textContent = ready ? "Klar" : "Bekreftet";
+    const pill = card.querySelector(".order-status-pill");
+    if (pill) {
+      pill.textContent = ready ? "Klar" : "Godkjent";
+      pill.classList.toggle("ready", ready);
+    }
+    const secondary = card.querySelector("[data-profile-ready]");
+    if (secondary) secondary.textContent = ready ? "Maten er klar" : profileSecondaryText(order);
+  });
+}
 
 function promoteOrderToAutomaticReady(order = null) {
   if (!order || (order.status || "pending") !== "accepted") return false;
@@ -2170,9 +2214,10 @@ function profileOrderCardHtml(order = {}) {
   const secondary = profileSecondaryText(order);
   const details = isExpanded ? orderLinesHtml(order) : "";
   const orderId = String(order.id || "").slice(-6).toUpperCase();
+  const profileReady = status === "accepted" && isOrderReadyForPickup(order);
   const statusVisual = status === "cancelled"
     ? "status-cancelled"
-    : (status === "accepted" && order.ready === true)
+    : profileReady
       ? "status-ready"
       : "status-progress";
   return `
@@ -2182,7 +2227,7 @@ function profileOrderCardHtml(order = {}) {
           ${isExpanded ? `<span class="profile-selected-marker">Valgt bestilling</span>` : ""}
           <span class="profile-order-title-row">
             <strong>${title}</strong>
-            <span class="order-status-pill ${status} ${order.ready === true ? "ready" : ""}">${orderStatusText(status, order)}</span>
+            <span class="order-status-pill ${status} ${profileReady ? "ready" : ""}">${orderStatusText(status, order)}</span>
           </span>
           <span class="profile-ready-text" data-profile-ready="${escapeAttribute(order.id || "")}">${escapeAttribute(secondary)}</span>
           <span class="profile-order-meta">
@@ -2264,23 +2309,44 @@ function closeProfileModal() {
 async function syncRecentOrdersFromFirebase() {
   const orders = getRecentOrders();
   if (!orders.length) return;
-  const updated = [];
-  for (const order of orders.slice(0, 20)) {
-    if (!order.id) continue;
-    try {
-      const fresh = await fetchOrder(order.id);
-      updated.push(fresh || order);
-    } catch {
-      updated.push(order);
-    }
+  const active = orders
+    .filter((order) => {
+      const status = order.status || "pending";
+      return status === "pending" || (status === "accepted" && !isOrderReadyForPickup(order));
+    })
+    .slice(0, 4);
+
+  if (!active.length) {
+    refreshProfileReadyStates();
+    return;
   }
+
+  const updated = await Promise.all(active.map(async (order) => {
+    if (!order.id) return order;
+    try {
+      return (await fetchOrder(order.id)) || order;
+    } catch {
+      return order;
+    }
+  }));
   updated.forEach((order) => rememberRecentOrder(order));
+  refreshProfileReadyStates();
 }
 
 function startRecentOrdersSync() {
   window.clearInterval(recentOrdersPollTimer);
-  if (!getRecentOrders().length) return;
-  recentOrdersPollTimer = window.setInterval(syncRecentOrdersFromFirebase, 4000);
+  const hasActive = getRecentOrders().some((order) => {
+    const status = order.status || "pending";
+    return status === "pending" || (status === "accepted" && !isOrderReadyForPickup(order));
+  });
+  if (!hasActive) {
+    refreshProfileReadyStates();
+    return;
+  }
+  syncRecentOrdersFromFirebase();
+  recentOrdersPollTimer = window.setInterval(() => {
+    if (document.visibilityState !== "hidden") syncRecentOrdersFromFirebase();
+  }, 8000);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -2874,26 +2940,30 @@ function applySiteSettings() {
   refreshHeroStatusPill();
 }
 
-function readCachedMenuConfig() {
+function readCachedMenuRecord() {
   try {
     const cached = localStorage.getItem(menuCacheKey);
     if (!cached) return null;
     const parsed = JSON.parse(cached);
-    return parsed?.config || null;
+    return parsed && parsed.config ? parsed : null;
   } catch (error) {
     console.warn("Lokal meny-cache kunne ikke leses.", error);
     return null;
   }
 }
 
-function saveCachedMenuConfig(config) {
+function readCachedMenuConfig() {
+  return readCachedMenuRecord()?.config || null;
+}
+
+function saveCachedMenuConfig(config, version = null) {
   try {
     localStorage.setItem(menuCacheKey, JSON.stringify({
       savedAt: new Date().toISOString(),
+      version: version == null ? null : String(version),
       config
     }));
   } catch (error) {
-    // TÜRKÇE: LocalStorage dolu/kapalı olabilir. Bu kritik değil; site Firebase ile çalışmaya devam eder.
     console.warn("Lokal meny-cache kunne ikke lagres.", error);
   }
 }
@@ -3144,23 +3214,38 @@ function getMostOrderedSection() {
 }
 
 async function refreshMostOrderedFromDatabase(options = {}) {
-  if (mostOrderedLoading) return;
-  if (!menuSections.length) return;
+  const { render = true } = options;
+  if (mostOrderedLoading || !menuSections.length) return;
   mostOrderedLoading = true;
   try {
-    const response = await fetch(`${firebaseOrdersUrl}?ts=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error("Kunne ikke hente bestillingsstatistikk");
-    const ordersData = await response.json();
-    const nextItems = buildMostOrderedFromOrders(ordersData || {});
-    const nextSignature = nextItems.map((item) => item.id).join("|");
-    const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
-    mostOrderedMenuItems = nextItems;
-    saveMostOrderedCache(nextItems);
-    if (options.render !== false && nextSignature !== oldSignature) {
-      renderMenu();
+    const response = await fetch(`${firebaseMostOrderedUrl}?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Kunne ikke hente bestselgeroversikt");
+    const raw = await response.json();
+    const rows = Array.isArray(raw) ? raw : Object.values(raw || {});
+    const products = getAllVisibleMenuProducts();
+    const byId = new Map(products.map(({ item }) => [String(item?.id || ""), item]));
+    const byName = new Map(products.map(({ item }) => [String(item?.name || "").trim().toLocaleLowerCase("nb-NO"), item]));
+    const nextItems = [];
+    const seen = new Set();
+    rows.sort((a, b) => Number(b?.count || 0) - Number(a?.count || 0)).forEach((row) => {
+      const item = byId.get(String(row?.id || "")) || byName.get(String(row?.name || "").trim().toLocaleLowerCase("nb-NO"));
+      if (!item || seen.has(String(item.id || item.name || ""))) return;
+      seen.add(String(item.id || item.name || ""));
+      nextItems.push(item);
+    });
+    const limited = nextItems.slice(0, 5);
+    if (limited.length) {
+      const oldSignature = mostOrderedMenuItems.map((item) => item.id).join("|");
+      const nextSignature = limited.map((item) => item.id).join("|");
+      mostOrderedMenuItems = limited;
+      saveCachedMostOrderedItems(limited);
+      if (render && oldSignature !== nextSignature) renderMenu();
+    } else if (!mostOrderedMenuItems.length) {
+      mostOrderedMenuItems = readCachedMostOrderedItems();
     }
   } catch (error) {
-    console.warn("Mest bestilt kunne ikke hentes fra database.", error);
+    console.warn("Bestselgeroversikt kunne ikke oppdateres.", error);
+    if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
   } finally {
     mostOrderedLoading = false;
   }
@@ -3172,11 +3257,11 @@ function finishMenuLoading() {
 }
 
 async function loadMenuConfig() {
-  const cachedConfig = readCachedMenuConfig();
+  const cachedRecord = readCachedMenuRecord();
+  const cachedConfig = cachedRecord?.config || null;
   let cachedSignature = "";
   let renderedFromCache = false;
 
-  // Son başarılı Firebase menüsünü hemen göster; ardından güncel veriyi çek.
   if (cachedConfig && applyMenuConfig(cachedConfig)) {
     mostOrderedMenuItems = readCachedMostOrderedItems();
     cachedSignature = menuConfigSignature(cachedConfig);
@@ -3185,30 +3270,44 @@ async function loadMenuConfig() {
     renderedFromCache = true;
   }
 
+  let remoteVersion = null;
   try {
-    const config = await fetchFirebaseMenuConfig();
-    const freshSignature = menuConfigSignature(config);
+    remoteVersion = await fetchMenuVersion();
+  } catch (error) {
+    console.warn("Menyversjon kunne ikke kontrolleres.", error);
+  }
 
-    if (applyMenuConfig(config)) {
-      if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
-      saveCachedMenuConfig(config);
-      if (!renderedFromCache || freshSignature !== cachedSignature) {
+  const savedAtMs = cachedRecord?.savedAt ? Date.parse(cachedRecord.savedAt) : 0;
+  const cacheAge = savedAtMs ? Date.now() - savedAtMs : Number.POSITIVE_INFINITY;
+  const versionMatches = Boolean(
+    renderedFromCache && remoteVersion != null && cachedRecord?.version != null && String(cachedRecord.version) === String(remoteVersion)
+  );
+  const safeFallbackCache = Boolean(renderedFromCache && remoteVersion == null && cacheAge < menuCacheFallbackMaxAgeMs);
+
+  if (!versionMatches && !safeFallbackCache) {
+    try {
+      const config = await fetchFirebaseMenuConfig();
+      const freshSignature = menuConfigSignature(config);
+      if (applyMenuConfig(config)) {
+        saveCachedMenuConfig(config, remoteVersion);
+        if (!mostOrderedMenuItems.length) mostOrderedMenuItems = readCachedMostOrderedItems();
+        if (!renderedFromCache || freshSignature !== cachedSignature) renderMenu();
+        renderedFromCache = true;
+      }
+    } catch (error) {
+      console.warn("Meny kunne ikke oppdateres fra Firebase.", error);
+      if (!renderedFromCache) {
+        menuSections = [];
         renderMenu();
       }
-      refreshMostOrderedFromDatabase({ render: true });
-    } else if (!renderedFromCache) {
-      menuSections = [];
-      renderMenu();
     }
-  } catch (error) {
-    if (!renderedFromCache) {
-      menuSections = [];
-      renderMenu();
-    }
-    console.warn("Menyen kunne ikke lastes fra Firebase.", error);
-  } finally {
-    finishMenuLoading();
   }
+
+  await Promise.allSettled([
+    refreshRescueDealsFromDatabase({ render: true }),
+    refreshMostOrderedFromDatabase({ render: true })
+  ]);
+  finishMenuLoading();
 }
 
 function normalizeSizeId(label = "", fallback = "") {
