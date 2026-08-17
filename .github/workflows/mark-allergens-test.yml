@@ -1,0 +1,42 @@
+name: Mark allergens in local test
+on:
+  push:
+    paths:
+      - '.github/scripts/mark-allergens-test.py'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch test.html
+        run: python .github/scripts/mark-allergens-test.py
+      - name: Validate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          s=Path('test/test.html').read_text(encoding='utf-8')
+          checks=[
+            'Produktene skjules ikke.' in s,
+            'local-product-allergen-icon' in s,
+            'function visibleItems(items=[]){return items.filter(matchesSearch)}' in s,
+            'Skjuler produkter med:' not in s,
+            'filter(passesAllergens)' not in s,
+          ]
+          assert all(checks), checks
+          scripts=re.findall(r'<script>([\s\S]*?)</script>',s)
+          assert scripts
+          Path('/tmp/test-inline.js').write_text(scripts[-1],encoding='utf-8')
+          PY
+          node --check /tmp/test-inline.js
+          git diff --check
+      - name: Commit and remove helpers
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/test.html
+          git rm -f .github/scripts/mark-allergens-test.py .github/workflows/mark-allergens-test.yml
+          git commit -m 'Show selected allergens as product icons'
+          git push
