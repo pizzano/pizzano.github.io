@@ -69,6 +69,18 @@ body.kol-customer .local-allergen-device-note{min-height:40px;padding:0 12px;dis
 body.kol-customer .local-allergen-save{height:50px;border:0;border-radius:14px;background:#111;color:#fff;font-size:15px;font-weight:650;box-shadow:none}
 body.kol-customer .local-allergen-save:active{transform:translateY(1px)}
 @media(max-width:370px){body.kol-customer .local-allergen-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.local-allergen-toolbar{grid-template-columns:1fr}.local-allergen-reset{justify-self:end}}
+
+/* Search polish v2: one surface, no nested focus ring. */
+body.kol-customer .local-search-rail{height:54px;padding:6px 12px;gap:8px;border-bottom:1px solid #ece8e5;background:#fff}
+body.kol-customer .local-search-input-wrap{height:42px;padding:0 12px;grid-template-columns:20px minmax(0,1fr);gap:8px;border:1px solid #e3ded9!important;border-radius:13px!important;background:#f8f7f6!important;box-shadow:none!important;transition:border-color .12s ease,background .12s ease}
+body.kol-customer .local-search-input-wrap:focus-within{border-color:#d4cdc7!important;background:#fff!important;box-shadow:none!important;outline:none!important}
+body.kol-customer .local-search-input-wrap svg{width:18px;height:18px;stroke:#77716c}
+body.kol-customer #localSearchInput{height:40px!important;padding:0 6px!important;border:0!important;border-radius:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none!important;-webkit-tap-highlight-color:transparent}
+body.kol-customer #localSearchInput:focus,body.kol-customer #localSearchInput:focus-visible{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important}
+body.kol-customer .local-search-cancel{height:42px;padding:0 4px 0 10px;font-size:14px;color:#312d2a}
+body.kol-customer .local-allergen-toolbar-reset{min-height:40px;padding:0 12px 8px;display:flex;justify-content:flex-end;align-items:center;background:#fff}
+body.kol-customer .local-allergen-toolbar-reset .local-allergen-reset{height:32px;padding:0 11px;border-radius:9px;font-size:12px}
+
 </style>
 </head>
 <body class="kol-customer" data-kol-theme="default">
@@ -124,7 +136,7 @@ body.kol-customer .local-allergen-save:active{transform:translateY(1px)}
 <div class="local-allergen-modal" id="allergenModal" role="dialog" aria-modal="true" aria-labelledby="allergenTitle" hidden>
   <section class="local-allergen-sheet">
     <div class="local-allergen-head"><button class="local-allergen-close" id="closeAllergens" type="button" aria-label="Lukk">×</button><h2 id="allergenTitle">Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av de valgte allergenene.</p></div>
-    <div class="local-allergen-toolbar"><label class="local-allergen-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg><input id="allergenSearch" type="search" autocomplete="off" placeholder="Søk i allergener" aria-label="Søk i allergener"></label><button class="local-allergen-reset" id="resetAllergens" type="button">Nullstill</button></div>
+    <div class="local-allergen-toolbar local-allergen-toolbar-reset"><button class="local-allergen-reset" id="resetAllergens" type="button">Nullstill</button></div>
     <div class="local-allergen-grid" id="allergenGrid"></div>
     <div class="local-allergen-footer"><div class="local-allergen-device-note">Valgene lagres bare på denne enheten.</div><button class="local-allergen-save" id="saveAllergens" type="button">Lagre</button></div>
   </section>
@@ -146,7 +158,7 @@ const ALLERGENS=[['melk','🥛','Melk'],['gluten','🌾','Hvete / gluten'],['egg
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 if(!localStorage.getItem(KEY.menu))save(KEY.menu,seedMenu);
-let menu=load(KEY.menu,seedMenu),cart=load(KEY.cart,[]),favorites=new Set(load(KEY.fav,[])),orders=load(KEY.orders,[]),customer=load(KEY.customer,{}),selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),allergenSearchQuery='',selected=null,qty=1,selectedSize=0,checkoutStep=1,searchOpen=false,searchQuery='',expandedVirtual={favorites:false,popular:false};
+let menu=load(KEY.menu,seedMenu),cart=load(KEY.cart,[]),favorites=new Set(load(KEY.fav,[])),orders=load(KEY.orders,[]),customer=load(KEY.customer,{}),selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),selected=null,qty=1,selectedSize=0,checkoutStep=1,searchOpen=false,searchQuery='',expandedVirtual={favorites:false,popular:false};
 const els={tabs:$('#categoryTabs'),sections:$('#menuSections'),product:$('#productModal'),cart:$('#cartModal'),profile:$('#profileModal'),info:$('#infoModal'),live:$('#orderLiveModal'),cartItems:$('#cartItems'),count:$('#cartCount'),total:$('#total'),profileOrders:$('#profileOrders'),allergenModal:$('#allergenModal'),allergenGrid:$('#allergenGrid')};
 const money=n=>`${Number(n||0).toLocaleString('nb-NO')} kr`;
 const normalize=s=>String(s||'').toLocaleLowerCase('nb-NO').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
@@ -190,15 +202,15 @@ function renderProfile(){if(!orders.length){els.profileOrders.innerHTML='<p clas
 function toggleFavorite(id){favorites.has(id)?favorites.delete(id):favorites.add(id);save(KEY.fav,[...favorites]);renderMenu()}
 function openSearch(){searchOpen=true;searchQuery='';renderMenu()}
 function closeSearch(){searchOpen=false;searchQuery='';renderMenu()}
-function renderAllergenGrid(){const q=normalize(allergenSearchQuery);const visible=ALLERGENS.filter(([id,,label])=>!q||normalize(`${id} ${label}`).includes(q));els.allergenGrid.innerHTML=visible.length?visible.map(([id,symbol,label])=>`<button class="local-allergen-option ${draftAllergens.has(id)?'selected':''}" data-allergen="${id}" type="button"><span class="local-allergen-symbol">${symbol}</span><span>${label}</span></button>`).join(''):'<div class="local-allergen-empty">Ingen allergener funnet.</div>';const reset=$('#resetAllergens');if(reset)reset.disabled=draftAllergens.size===0}
-function openAllergens(){draftAllergens=new Set(selectedAllergens);allergenSearchQuery='';const input=$('#allergenSearch');if(input)input.value='';renderAllergenGrid();els.allergenModal.hidden=false}
+function renderAllergenGrid(){els.allergenGrid.innerHTML=ALLERGENS.map(([id,symbol,label])=>`<button class="local-allergen-option ${draftAllergens.has(id)?'selected':''}" data-allergen="${id}" type="button"><span class="local-allergen-symbol">${symbol}</span><span>${label}</span></button>`).join('');const reset=$('#resetAllergens');if(reset)reset.disabled=draftAllergens.size===0}
+function openAllergens(){draftAllergens=new Set(selectedAllergens);renderAllergenGrid();els.allergenModal.hidden=false}
 function closeAllergens(){els.allergenModal.hidden=true}
 function saveAllergens(){selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);closeAllergens();renderMenu()}
 els.sections.addEventListener('click',e=>{const fav=e.target.closest('[data-fav]');if(fav){e.stopPropagation();toggleFavorite(fav.dataset.fav);return}const add=e.target.closest('[data-add]');if(add){e.stopPropagation();openProduct(add.dataset.add);return}const more=e.target.closest('[data-vis-mer]');if(more){expandedVirtual[more.dataset.visMer]=!expandedVirtual[more.dataset.visMer];renderMenu();return}if(e.target.closest('[data-open-allergens]')){openAllergens();return}const row=e.target.closest('[data-product]');if(row)openProduct(row.dataset.product)});
 els.tabs.addEventListener('click',e=>{if(e.target.closest('[data-search-open]')){openSearch();return}if(e.target.closest('[data-open-allergens]')){openAllergens();return}if(e.target.closest('#cancelSearch')){closeSearch();return}const b=e.target.closest('[data-tab]');if(!b)return;$$('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelector(`[data-section="${b.dataset.tab}"]`)?.scrollIntoView({block:'start'})});
 els.tabs.addEventListener('input',e=>{if(!e.target.matches('#localSearchInput'))return;searchQuery=e.target.value;renderMenu();requestAnimationFrame(()=>{const input=$('#localSearchInput');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length)}})});
 els.allergenGrid.addEventListener('click',e=>{const b=e.target.closest('[data-allergen]');if(!b)return;draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergenGrid()});
-$('#closeAllergens').onclick=closeAllergens;$('#resetAllergens').onclick=()=>{draftAllergens.clear();renderAllergenGrid()};$('#saveAllergens').onclick=saveAllergens;$('#allergenSearch').addEventListener('input',e=>{allergenSearchQuery=e.target.value;renderAllergenGrid()});els.allergenModal.addEventListener('click',e=>{if(e.target===els.allergenModal)closeAllergens()});
+$('#closeAllergens').onclick=closeAllergens;$('#resetAllergens').onclick=()=>{draftAllergens.clear();renderAllergenGrid()};$('#saveAllergens').onclick=saveAllergens;els.allergenModal.addEventListener('click',e=>{if(e.target===els.allergenModal)closeAllergens()});
 $('#optionGroups').addEventListener('change',e=>{if(e.target.name==='localSize'){selectedSize=Number(e.target.value);renderProductOptions()}});
 $('#decreaseProduct').onclick=()=>{qty=Math.max(1,qty-1);renderProductOptions()};$('#increaseProduct').onclick=()=>{qty++;renderProductOptions()};$('#addConfiguredProduct').onclick=addSelected;$('#closeProduct').onclick=closeAll;$('#closeProductText').onclick=closeAll;
 $('#cartToggle').onclick=openCart;$('#profileToggle').onclick=()=>{renderProfile();setOverlay('profile')};$('#infoToggle').onclick=()=>setOverlay('info');$('#closeInfo').onclick=closeAll;$('#siteNameText').onclick=()=>{if(document.body.classList.contains('kol-top-back-active'))closeAll()};
