@@ -888,7 +888,14 @@ function rememberRecentOrder(order) {
   // Da åpner vi et rent status-vindu og markerer profilen som ulest.
   if ((statusChanged && ["accepted", "cancelled"].includes(nextStatus)) || becameReady) {
     playCustomerStatusSound(becameReady ? "ready" : nextStatus);
-    renderOrderLiveModal(order, true);
+    const blockingCustomerOverlayOpen = Boolean(
+      (cartModal && !cartModal.hidden) ||
+      (productModal && !productModal.hidden) ||
+      (profileModal && !profileModal.hidden) ||
+      (infoModal && !infoModal.hidden) ||
+      (quickCheckoutModal && !quickCheckoutModal.hidden)
+    );
+    if (!blockingCustomerOverlayOpen) renderOrderLiveModal(order, true);
   }
 
   renderRecentOrders();
