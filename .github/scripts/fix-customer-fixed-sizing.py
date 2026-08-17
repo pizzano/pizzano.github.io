@@ -237,11 +237,8 @@ body.kol-customer .live-status-ready strong { font-size: 24px !important; }
 body.kol-customer .live-status-cancel strong { font-size: 20px !important; }
 '''
 
-if marker not in css:
-    css = css.rstrip() + block + '\n'
-else:
-    # Replace an existing lock block if this migration is ever rerun.
-    css = css[:css.index(marker)].rstrip() + block + '\n'
+prefix = css if marker not in css else css[:css.index(marker)]
+css = prefix.rstrip() + block.rstrip() + '\n'
 css_path.write_text(css, encoding='utf-8')
 
 for path in (index_path, admin_path):
