@@ -19,7 +19,11 @@ jobs:
           fetch-depth: 0
 
       - name: Apply cleanup
-        run: python .github/scripts/refactor-customer-app.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/"\.cart-modal",/".cart-panel",/' .github/scripts/refactor-customer-app.py
+          python .github/scripts/refactor-customer-app.py
 
       - name: Validate customer app
         shell: bash
