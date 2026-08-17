@@ -1,0 +1,30 @@
+name: Fix allergen regression
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-allergen-regression.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python .github/scripts/fix-allergen-state.py
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          h=Path('test/test.html').read_text(encoding='utf-8')
+          m=re.search(r'<script>([\s\S]*?)</script>',h)
+          assert m
+          Path('/tmp/test.js').write_text(m.group(1),encoding='utf-8')
+          PY
+          node --check /tmp/test.js
+      - run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/scripts/fix-allergen-state.py .github/workflows/fix-allergen-regression.yml
+          git add test/test.html
+          git commit -m 'Fix allergen selection state regression'
+          git push
