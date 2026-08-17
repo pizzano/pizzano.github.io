@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f36a2d">
 <title>KØL Grill & Pizza – Local demo</title>
-<link rel="stylesheet" href="test.css?v=product-reference-20260818-0024">
+<link rel="stylesheet" href="test.css?v=fullscreen-20260818-0037">
 </head>
 <body class="kol-customer">
 <div class="customer-app">
@@ -156,7 +156,7 @@ function closeTransientLayers(){
  const modal=$('#allergenModal');if(modal)modal.hidden=true;
  document.body.classList.remove('kol-top-back-active','allergen-modal-open');
 }
-function openScreen(id){closeTransientLayers();$('#'+id).hidden=false;document.body.classList.toggle('kol-top-back-active',['productScreen','cartScreen','infoScreen'].includes(id))}
+function openScreen(id){closeTransientLayers();$('#'+id).hidden=false;document.body.classList.toggle('kol-top-back-active',['productScreen','cartScreen','infoScreen','accountScreen'].includes(id))}
 function closeScreens(){closeTransientLayers();scheduleActiveCategorySync()}
 function goToCategory(id){
  closeTransientLayers();
@@ -234,8 +234,8 @@ function renderOrders(){
 }
 function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size?selectedAllergens.size:''}
 function renderAllergens(){$('#allergenGrid').innerHTML=ALLERGENS.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join('');$$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()})}
-function closeAllergens(){const modal=$('#allergenModal');if(modal)modal.hidden=true;document.body.classList.remove('allergen-modal-open')}
-function openAllergens(){closeTransientLayers();draftAllergens=new Set(selectedAllergens);renderAllergens();$('#allergenModal').hidden=false;document.body.classList.add('allergen-modal-open')}
+function closeAllergens(){const modal=$('#allergenModal');if(modal)modal.hidden=true;document.body.classList.remove('allergen-modal-open','kol-top-back-active')}
+function openAllergens(){closeTransientLayers();draftAllergens=new Set(selectedAllergens);renderAllergens();$('#allergenModal').hidden=false;document.body.classList.add('allergen-modal-open','kol-top-back-active')}
 $('#brandBtn').onclick=closeScreens;$('#infoBtn').onclick=()=>{openScreen('infoScreen');setInfoTab('about')};
 function setInfoTab(tab){$$('[data-info-tab]').forEach(b=>b.classList.toggle('active',b.dataset.infoTab===tab));$$('[data-info-panel]').forEach(p=>p.classList.toggle('active',p.dataset.infoPanel===tab))}
 $$('[data-info-tab]').forEach(b=>b.onclick=()=>setInfoTab(b.dataset.infoTab));
