@@ -1,0 +1,42 @@
+name: Restore product detail
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-product-detail.yml'
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply focused product detail restoration
+        run: python .github/scripts/restore-product-detail.py
+      - name: Validate JavaScript and product invariants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          h=Path('test/test.html').read_text()
+          assert 'id="productBodyTitle"' in h
+          assert 'id="strengthGroup"' in h
+          assert "strengths:['Mild','Medium','Sterk']" in h
+          assert 'setActiveCategory(selectedProduct.sectionId,true)' in h
+          assert 'Styrke: ${x.strength}' in h
+          assert 'product-detail-20260818-0013' in h
+          scripts=re.findall(r'<script>(.*?)</script>',h,re.S)
+          assert scripts
+          Path('/tmp/product.js').write_text(scripts[-1])
+          PY
+          node --check /tmp/product.js
+          grep -q 'product-choice.active' test/test.css
+          grep -q 'product-choice-head' test/test.css
+          git diff --check
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/scripts/restore-product-detail.py .github/workflows/restore-product-detail.yml
+          git add test/test.html test/test.css
+          git commit -m 'Restore structured product detail options'
+          git push
