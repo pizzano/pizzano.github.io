@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#f36a2d">
 <title>KØL Grill & Pizza – Local demo</title>
 <link rel="stylesheet" href="test.css?v=allergen-search-20260818-0115">
+<style>
+.product-allergens-inline{padding:11px 12px 14px;border-top:1px solid #e8e0da;color:#77706b;font-size:12px;line-height:1.4;background:#fff}.product-allergens-inline strong{color:#4f4844;font-weight:650}.action-toast{position:fixed;z-index:600;left:50%;bottom:max(74px,calc(env(safe-area-inset-bottom) + 74px));transform:translate(-50%,10px);max-width:calc(min(100vw,480px) - 28px);padding:9px 13px;border-radius:10px;background:rgba(25,23,22,.92);color:#fff;font-size:12.5px;line-height:1.3;text-align:center;box-shadow:0 5px 18px #0003;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .2s ease,visibility .2s}.action-toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+</style>
 </head>
 <body class="kol-customer">
 <div class="customer-app">
@@ -48,6 +51,7 @@
         <textarea id="productNote" placeholder="Eksempel: Ingen løk"></textarea>
       </div>
       <div class="quantity-row"><span>Mengde</span><div class="quantity-stepper"><button id="qtyMinus">−</button><strong id="qtyValue">1</strong><button id="qtyPlus">+</button></div></div>
+      <div class="product-allergens-inline" id="productAllergens"><strong>Allergener:</strong> Ingen oppgitt</div>
     </div>
   </div>
   <div class="product-footer"><strong id="productTotal">0,00 KR</strong><button class="primary" id="addToCart">Legg til i handlekurven</button></div>
@@ -108,6 +112,7 @@
     <div class="allergen-bottom"><div>Valgene lagres bare på denne enheten.</div><div class="allergen-actions"><button id="allergenReset">Nullstill</button><button class="primary" id="allergenSave">Lagre</button></div></div>
   </div>
 </section>
+<div class="action-toast" id="actionToast" role="status" aria-live="polite"></div>
 </div>
 
 <script>
@@ -147,7 +152,7 @@ const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
 const formatPhone=p=>String(p||'').replace(/(\d{2})(\d{2})(\d{2})(\d{2})/,'$1 $2 $3 $4');
 let cart=load(KEY.cart,[]),orders=load(KEY.orders,[]),accounts=load(KEY.accounts,{}),session=load(KEY.session,null);
 let selectedAllergens=new Set(load(KEY.allergens,[])),draftAllergens=new Set(selectedAllergens),allergenSearch='',searchOpen=false,searchQuery='',expanded={popular:false,favorites:false};
-let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap';
+let selectedProduct=null,selectedSize=0,selectedStrength='',qty=1,checkoutStep=1,editingCartIndex=-1,pickupChoice='asap',toastTimer=0;
 
 const realSections=()=>MENU.filter(s=>!s.virtual);
 const items=()=>realSections().flatMap(s=>(s.items||[]).map(p=>({...p,sectionId:s.id})));
@@ -157,6 +162,12 @@ const favSet=()=>new Set(account()?.favorites||load(KEY.guestFav,[]));
 const saveFav=set=>{if(account()){accounts[session].favorites=[...set];save(KEY.accounts,accounts)}else save(KEY.guestFav,[...set])};
 const allergenLabel=id=>ALLERGENS.find(a=>a[0]===id)?.[2]||id;
 
+function showToast(message){
+  const toast=$('#actionToast');if(!toast||!message)return;
+  clearTimeout(toastTimer);toast.textContent=message;toast.classList.remove('show');
+  requestAnimationFrame(()=>toast.classList.add('show'));
+  toastTimer=setTimeout(()=>toast.classList.remove('show'),2000);
+}
 function setSession(phone){session=phone||null;save(KEY.session,session);renderHeader();renderTabs();renderMenu()}
 function ensureAccount(phone){if(!accounts[phone])accounts[phone]={phone,name:'',email:'',marketing:true,stamps:0,rewards:0,favorites:[]};save(KEY.accounts,accounts);return accounts[phone]}
 function saveAccounts(){save(KEY.accounts,accounts)}
@@ -272,10 +283,11 @@ function bindMenu(){
   $$('[data-product]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openProduct(r.dataset.product)});
   $$('[data-fav]').forEach(b=>b.onclick=e=>{
     e.stopPropagation();
-    const f=favSet(),id=b.dataset.fav;
-    f.has(id)?f.delete(id):f.add(id);
+    const f=favSet(),id=b.dataset.fav,wasFavorite=f.has(id);
+    wasFavorite?f.delete(id):f.add(id);
     saveFav(f);
     refreshFavoriteUi();
+    showToast(wasFavorite?'Fjernet fra favoritter':'Lagt til i favoritter');
   });
   $$('[data-more]').forEach(b=>b.onclick=()=>{expanded[b.dataset.more]=!expanded[b.dataset.more];renderMenu()});
 }
@@ -296,6 +308,8 @@ function fillProduct(note=''){
   $('#productTitle').textContent=selectedProduct.name;
   $('#productDesc').textContent=selectedProduct.description||'';
   $('#productPhoto').style.backgroundImage=selectedProduct.image?`url('${selectedProduct.image}')`:'';
+  const allergenNames=(selectedProduct.allergens||[]).map(allergenLabel);
+  $('#productAllergens').innerHTML=`<strong>Allergener:</strong> ${allergenNames.length?allergenNames.join(', '):'Ingen oppgitt'}`;
   $('#qtyValue').textContent=qty;$('#productNote').value=note;
   renderSizeOptions();renderStrengthOptions();updateProductTotal();
 }
@@ -317,9 +331,11 @@ function updateProductTotal(){$('#productTotal').textContent=productMoney(select
 function addOrUpdateCart(){
   const size=selectedProduct.sizes[selectedSize],note=$('#productNote').value.trim(),strength=selectedProduct.strengths?.length?selectedStrength:'';
   const entry={key:`${selectedProduct.id}|${size[0]}|${strength}|${note}`,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],strength,price:size[1],qty,note};
-  if(editingCartIndex>=0&&cart[editingCartIndex]){cart[editingCartIndex]=entry;editingCartIndex=-1;save(KEY.cart,cart);renderCartCount();renderCart();openView('cartScreen',{tabs:true});return}
+  if(editingCartIndex>=0&&cart[editingCartIndex]){
+    cart[editingCartIndex]=entry;editingCartIndex=-1;save(KEY.cart,cart);renderCartCount();renderCart();openView('cartScreen',{tabs:true});showToast('Handlekurv oppdatert');return;
+  }
   const old=cart.find(x=>x.key===entry.key);old?old.qty+=qty:cart.push(entry);
-  save(KEY.cart,cart);renderCartCount();goMenu();
+  save(KEY.cart,cart);renderCartCount();goMenu();showToast(`${selectedProduct.name} lagt i handlekurven`);
 }
 
 function renderCart(){
@@ -332,7 +348,10 @@ function renderCart(){
   $('#cartTotal').textContent=money(total);
   $('#taxNote').textContent=`(inkl. mva ${money(total*15/115)})`;
   $$('[data-editcart]').forEach(b=>b.onclick=()=>openCartEdit(+b.dataset.editcart));
-  $$('[data-remove]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.remove,1);save(KEY.cart,cart);renderCart();renderCartCount()});
+  $$('[data-remove]').forEach(b=>b.onclick=()=>{
+    const removed=cart[+b.dataset.remove];
+    cart.splice(+b.dataset.remove,1);save(KEY.cart,cart);renderCart();renderCartCount();showToast(`${removed?.name||'Produkt'} fjernet fra handlekurven`);
+  });
   const a=account();$('#checkoutName').value=a?.name||'';$('#checkoutPhone').value=a?.phone||'';$('#checkoutPhone').disabled=!!a;$('#checkoutLoginHint').textContent=a?'Innlogget medlemskonto.':'Du kan bestille uten å logge inn.';
   renderCheckoutStep();
 }
@@ -393,7 +412,7 @@ function placeOrder(){
   saveAccounts();
   cart=[];save(KEY.cart,cart);checkoutStep=1;pickupChoice='asap';
   goMenu();renderCartCount();renderHeader();renderMenu();renderTabs();
-  alert(`Testbestilling ${id} er lagret lokalt.`);
+  showToast(`Bestilling ${id} sendt`);
 }
 
 function stampsHtml(a){return Array.from({length:10},(_,i)=>`<span class="stamp ${i<(a.stamps||0)?'on':''}"><b>${i+1}</b><i>🍕</i></span>`).join('')}
@@ -404,7 +423,7 @@ function renderLogin(){
     <label>Hele navn</label><input id="loginName" class="text-input" placeholder="Fatih Alemdar">
     <button class="primary full" id="loginContinue">Fortsett</button>
   </div>`;
-  $('#loginContinue').onclick=()=>{const p=$('#loginPhone').value.replace(/\D/g,''),name=$('#loginName').value.trim();if(p.length!==8||!name){alert('Skriv inn hele navnet og et 8-sifret telefonnummer.');return}const a=ensureAccount(p);a.name=name;saveAccounts();setSession(p);renderProfileHome()};
+  $('#loginContinue').onclick=()=>{const p=$('#loginPhone').value.replace(/\D/g,''),name=$('#loginName').value.trim();if(p.length!==8||!name){alert('Skriv inn hele navnet og et 8-sifret telefonnummer.');return}const a=ensureAccount(p);a.name=name;saveAccounts();setSession(p);renderProfileHome();showToast('Innlogget')};
 }
 function renderProfileHome(){
   const a=account();if(!a){renderLogin();return}
@@ -416,7 +435,7 @@ function renderProfileHome(){
     <button class="logout-link" id="logoutBtn">Logg ut</button>
   </div>`;
   $$('[data-account]').forEach(b=>b.onclick=()=>b.dataset.account==='orders'?renderOrders():renderContact());
-  $('#logoutBtn').onclick=()=>{setSession(null);renderLogin()};
+  $('#logoutBtn').onclick=()=>{setSession(null);renderLogin();showToast('Logget ut')};
 }
 function renderOrders(){
   const a=account(),list=orders.filter(o=>o.phone===a.phone);
@@ -433,7 +452,7 @@ function renderContact(){
     <button class="primary full" id="saveProfile">Lagre</button>
   </div>`;
   $('#accountBack').onclick=renderProfileHome;
-  $('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim()||a.name;a.email=$('#pfEmail').value.trim();a.marketing=$('#pfMarketing').checked;saveAccounts();renderHeader();renderProfileHome()};
+  $('#saveProfile').onclick=()=>{a.name=$('#pfName').value.trim()||a.name;a.email=$('#pfEmail').value.trim();a.marketing=$('#pfMarketing').checked;saveAccounts();renderHeader();renderProfileHome();showToast('Profil oppdatert')};
 }
 
 function setInfoTab(tab){$$('[data-info-tab]').forEach(b=>b.classList.toggle('active',b.dataset.infoTab===tab));$$('[data-info-panel]').forEach(p=>p.classList.toggle('active',p.dataset.infoPanel===tab))}
@@ -441,7 +460,11 @@ function renderAllergens(){
   const q=norm(allergenSearch);
   const visible=ALLERGENS.filter(a=>!q||norm(`${a[0]} ${a[2]}`).includes(q));
   $('#allergenGrid').innerHTML=visible.length?visible.map(a=>`<button class="allergen-choice ${draftAllergens.has(a[0])?'active':''}" data-allergen="${a[0]}"><span>${a[1]}</span>${a[2]}</button>`).join(''):'<div class="allergen-empty">Ingen allergener funnet.</div>';
-  $$('[data-allergen]').forEach(b=>b.onclick=()=>{draftAllergens.has(b.dataset.allergen)?draftAllergens.delete(b.dataset.allergen):draftAllergens.add(b.dataset.allergen);renderAllergens()});
+  $$('[data-allergen]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.allergen,label=allergenLabel(id),wasSelected=draftAllergens.has(id);
+    wasSelected?draftAllergens.delete(id):draftAllergens.add(id);
+    renderAllergens();showToast(wasSelected?`${label} fjernet`:`${label} valgt`);
+  });
 }
 function openAllergens(){draftAllergens=new Set(selectedAllergens);allergenSearch='';$('#allergenSearch').value='';renderAllergens();openView('allergenScreen',{tabs:true})}
 function renderAll(){renderHeader();renderTabs();renderMenu();renderCartCount();$('#allergenCount').textContent=selectedAllergens.size||''}
@@ -460,8 +483,8 @@ $('#addToCart').onclick=addOrUpdateCart;
 $('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};
 $('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};
 $('#allergenSearch').oninput=e=>{allergenSearch=e.target.value;renderAllergens()};
-$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();};
-$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);renderAll();goMenu()};
+$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();showToast('Allergener nullstilt')};
+$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);renderAll();goMenu();showToast('Allergener lagret')};
 $('#menuShell').addEventListener('scroll',scheduleSync,{passive:true});
 renderAll();scheduleSync();
 </script>
