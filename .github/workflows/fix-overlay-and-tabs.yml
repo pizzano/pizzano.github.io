@@ -1,0 +1,47 @@
+name: Fix overlay and tab regressions
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-overlay-and-tabs.yml'
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply focused fixes
+        run: python .github/scripts/fix-overlay-and-tabs.py
+      - name: Validate behavior and syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('test/test.html').read_text()
+          css=Path('test/test.css').read_text()
+          checks={
+            'favorites tab conditional': "s.id!=='favorites'||activeFav().size>0" in html,
+            'allergen modal state class': "allergen-modal-open" in html and ".allergen-modal-open .category-tabs-wrap{display:none}" in css,
+            'allergen outside click': "e.target===$('#allergenModal')" in html,
+            'profile closes allergen first': "$('#profileBtn').onclick=()=>{closeAllergens();" in html,
+            'cart closes allergen first': "$('#cartBtn').onclick=()=>{closeAllergens();" in html,
+            'sheet outside click': "document.addEventListener('click',e=>{const openSheet=" in html,
+            'allergen state regression remains fixed': "function renderAllergens(){$('#allergenGrid')" in html and "draftAllergens=new Set(selectedAllergens);renderAllergens()" in html,
+            'category sync remains': "scheduleActiveCategorySync" in html and "setActiveCategory(active,true)" in html,
+          }
+          bad=[k for k,v in checks.items() if not v]
+          for k,v in checks.items(): print(('PASS' if v else 'FAIL'),k)
+          if bad: raise SystemExit('failed: '+', '.join(bad))
+          start=html.index('<script>')+len('<script>')
+          end=html.rindex('</script>')
+          Path('/tmp/test-inline.js').write_text(html[start:end])
+          PY
+          node --check /tmp/test-inline.js
+          git diff --check
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'KOL Test UI Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add test/test.html test/test.css
+          git rm -f .github/scripts/fix-overlay-and-tabs.py .github/workflows/fix-overlay-and-tabs.yml
+          git commit -m 'Fix modal navigation and conditional favorite tab'
+          git push
