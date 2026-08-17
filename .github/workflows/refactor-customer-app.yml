@@ -1,0 +1,66 @@
+name: Refactor customer app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/refactor-customer-app.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply cleanup
+        run: python .github/scripts/refactor-customer-app.py
+
+      - name: Validate customer app
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('test/index.html').read_text(encoding='utf-8')
+          matches = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if len(matches) != 1:
+              raise SystemExit(f'expected exactly one inline script, got {len(matches)}')
+          Path('/tmp/kol-index.js').write_text(matches[0], encoding='utf-8')
+          css = Path('test/kol-core.css').read_text(encoding='utf-8')
+          if any(x in css for x in ('@import', '@layer', '!important')):
+              raise SystemExit('legacy CSS layering remains')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('CSS brace count mismatch')
+          admin = Path('test/admin-panel.html').read_text(encoding='utf-8')
+          if 'href="kol-core.css' in admin:
+              raise SystemExit('admin still depends on customer CSS')
+          print('static invariants passed')
+          PY
+          node --check /tmp/kol-index.js
+          git diff --check
+          grep -q 'function hasBlockingCustomerOverlay' test/index.html
+          grep -q 'const shouldOpen = forceOpen || !orderLiveModal.hidden' test/index.html
+          grep -q 'saveMostOrderedCache(limited)' test/index.html
+          ! grep -q 'buildMostOrderedFromOrders' test/index.html
+          ! grep -q 'syncKolCustomerFrameFullViewport' test/index.html
+          ! grep -q 'currentOrderCountdownTimer' test/index.html
+
+      - name: Commit clean source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KOL Refactor Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/refactor-customer-app.yml .github/scripts/refactor-customer-app.py
+          git add -- test/index.html test/kol-core.css test/admin-panel.html
+          git diff --cached --check
+          git status --short
+          git commit -m "Simplify customer app and stylesheet"
+          git push origin HEAD:main
