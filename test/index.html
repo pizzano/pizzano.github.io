@@ -4931,7 +4931,7 @@ function kolGetProductAllergenIds(item = {}) {
   if (!source) {
     if (item?.type === "sauce") source = "Melk, Egg, Sennep";
     else if (typeof isKebabCustomItem === "function" && isKebabCustomItem(item)) source = "Melk, Egg, Hvete, Sennep, Selleri, Soya";
-    else if (typeof isPizzaItem === "function" && isPizzaItem(item)) source = "Melk, Hvete";
+    else if (String(item?._sourceSectionId || item?.sectionId || "").toLowerCase() === "pizza" || String(item?.type || "").toLowerCase() === "pizza") source = "Melk, Hvete";
   }
   const normalized = kolNormalizeSearchText(source);
   return kolAllergenDefinitions
