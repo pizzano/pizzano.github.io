@@ -1,0 +1,86 @@
+name: Demo coupon QR and manual stamps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/demo-coupon-qr.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch demo coupon QR flow
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('demo/index.html')
+          s=p.read_text(encoding='utf-8')
+
+          if 'cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js' not in s:
+              s=s.replace('</style>\n</head>','''
+.coupon-qr-button{width:100%;height:40px;margin-top:10px;border:1px solid #e7ded8;border-radius:10px;background:#fff;color:#5c514b;font-size:12.5px;font-weight:650}.coupon-qr-wrap{padding:18px 16px 28px;text-align:center}.coupon-qr-card{padding:20px 16px;border:1px solid #e9e1dc;border-radius:18px;background:#fff}.coupon-qr-card h2{margin:0;font-size:21px}.coupon-qr-card p{margin:7px 0 16px;color:#766d67;font-size:13px;line-height:1.45}.coupon-qr-code{width:236px;min-height:236px;margin:0 auto 15px;padding:8px;border:1px solid #ebe4df;border-radius:14px;background:#fff;display:grid;place-items:center}.coupon-qr-code img,.coupon-qr-code canvas{max-width:100%;height:auto!important}.coupon-qr-person strong,.coupon-qr-person small{display:block}.coupon-qr-person strong{font-size:17px}.coupon-qr-person small{margin-top:4px;color:#766d67;font-size:13px}.coupon-qr-back{margin-top:14px;border:0;background:none;color:#7b716b;font-weight:650}
+.kasse-coupon-wrap{padding:16px}.kasse-customer-card{padding:16px;border:1px solid #e8e1dc;border-radius:16px;background:#fff}.kasse-customer-head{display:flex;align-items:center;gap:12px}.kasse-avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f1efed;font-weight:800}.kasse-customer-head strong,.kasse-customer-head small{display:block}.kasse-customer-head strong{font-size:17px}.kasse-customer-head small{margin-top:3px;color:#766d67}.kasse-counter{margin-top:18px;padding:16px;border:1px solid #f2c8b7;border-radius:15px;background:#fffaf7;text-align:center}.kasse-counter small{display:block;color:#d45a2d;font-size:10px;font-weight:800;letter-spacing:.08em}.kasse-counter strong{display:block;margin-top:4px;font-size:28px}.kasse-adjust{display:grid;grid-template-columns:54px 1fr 54px;gap:10px;align-items:center;margin-top:14px}.kasse-adjust button{height:50px;border:1px solid #ded7d2;border-radius:12px;background:#fff;font-size:24px}.kasse-adjust span{font-size:14px;color:#716862}.kasse-reset{width:100%;height:46px;margin-top:12px;border:1px solid #efb9a5;border-radius:11px;background:#fff;color:#c94f26;font-weight:700}.kasse-empty{padding:24px 16px;text-align:center;color:#736a64}.kasse-demo-note{margin-top:12px;color:#918780;font-size:11px;line-height:1.4}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>''',1)
+
+          reward='''<section class="screen" id="rewardScreen" hidden><div class="screen-scroll reward-scroll"><div class="screen-title"><h2>Velg gratis Stor Pizza</h2><p>Du har samlet 10 kuponger. Velg den neste Stor Pizzaen din gratis.</p></div><div class="reward-pizza-list" id="rewardPizzaList"></div></div></section>'''
+          extra='''<section class="screen" id="couponQrScreen" hidden><div class="screen-scroll"><div class="coupon-qr-wrap"><div class="coupon-qr-card"><h2>Kupongkort</h2><p>Vis denne QR-koden i kassen ved telefonbestillinger.</p><div class="coupon-qr-code" id="couponQrCode"></div><div class="coupon-qr-person"><strong id="couponQrName"></strong><small id="couponQrPhone"></small></div><button class="coupon-qr-back" id="couponQrBack">‹ Til profil</button></div></div></div></section>
+<section class="screen" id="kasseScreen" hidden><div class="screen-scroll"><div class="screen-title"><h2>Kupongkontroll</h2><p>Manuell registrering av Stor Pizza-kuponger.</p></div><div class="kasse-coupon-wrap" id="kasseContent"></div></div></section>'''
+          if 'id="couponQrScreen"' not in s:
+              s=s.replace(reward,reward+'\n'+extra,1)
+
+          old="function pizzaProgress(a){normalizeLoyalty(a);const count=Math.min(10,Math.max(0,Number(a.stamps)||0)),ready=count>=10,rewardInCart=cart.some(x=>x.freeReward);let message='';if(ready)message='<strong>Neste Stor Pizza er gratis.</strong>';else if(count===9)message='Kjøp 1 Stor Pizza til – <strong>så er neste Stor Pizza gratis.</strong>';else{const left=10-count;message=`Kjøp ${left} Stor Pizza${left===1?'':'er'} til – så får du <strong>neste Stor Pizza gratis.</strong>`}return `<section class=\"pizza-loyalty-card\"><div class=\"pizza-loyalty-top\"><div><small>STOR PIZZA-KUPONGER</small><h3>${count} av 10</h3></div></div><div class=\"stamps\">${stampsHtml(a)}</div><p>${message}</p>${ready?`<div class=\"reward-ready\">🎁 Gratis Stor Pizza klar</div><button class=\"reward-claim-button\" id=\"claimRewardBtn\" ${rewardInCart?'disabled':''}>${rewardInCart?'Gratis pizza ligger i handlekurven':'Velg gratis Stor Pizza'}</button>`:''}</section>`}"
+          new="function pizzaProgress(a){normalizeLoyalty(a);const count=Math.min(10,Math.max(0,Number(a.stamps)||0)),ready=count>=10,rewardInCart=cart.some(x=>x.freeReward);let message='';if(ready)message='<strong>Neste Stor Pizza er gratis.</strong>';else if(count===9)message='Kjøp 1 Stor Pizza til – <strong>så er neste Stor Pizza gratis.</strong>';else{const left=10-count;message=`Kjøp ${left} Stor Pizza${left===1?'':'er'} til – så får du <strong>neste Stor Pizza gratis.</strong>`}return `<section class=\"pizza-loyalty-card\"><div class=\"pizza-loyalty-top\"><div><small>STOR PIZZA-KUPONGER</small><h3>${count} av 10</h3></div></div><div class=\"stamps\">${stampsHtml(a)}</div><p>${message}</p>${ready?`<div class=\"reward-ready\">🎁 Gratis Stor Pizza klar</div><button class=\"reward-claim-button\" id=\"claimRewardBtn\" ${rewardInCart?'disabled':''}>${rewardInCart?'Gratis pizza ligger i handlekurven':'Velg gratis Stor Pizza'}</button>`:''}<button class=\"coupon-qr-button\" id=\"couponQrBtn\">▦ Vis QR-kode</button></section>`}"
+          if old not in s:
+              raise SystemExit('pizzaProgress block not found')
+          s=s.replace(old,new,1)
+
+          old_profile="function renderProfileHome(){const a=account();if(!a){renderLogin();return}const count=orders.filter(o=>o.phone===a.phone).length;$('#accountContent').innerHTML=`<div class=\"screen-title\"><h2>Profil</h2></div><div class=\"profile-home\"><div class=\"profile-greeting\"><div class=\"member-avatar\">${escapeHtml((a.name||'K').charAt(0).toUpperCase())}</div><div><small>KØL MEDLEM</small><h2>${escapeHtml(a.name||'KØL-medlem')}</h2><p>+47 ${formatPhone(a.phone)}</p></div></div>${pizzaProgress(a)}<div class=\"profile-actions\"><button data-account=\"orders\"><strong>Bestillinger</strong><small>${count} lagret</small><b>›</b></button><button data-account=\"contact\"><strong>Kontaktinfo</strong><small>Navn og e-post</small><b>›</b></button></div><button class=\"logout-link\" id=\"logoutBtn\">Logg ut</button></div>`;$$('[data-account]').forEach(b=>b.onclick=()=>b.dataset.account==='orders'?renderOrders():renderContact());const claim=$('#claimRewardBtn');if(claim&&!claim.disabled)claim.onclick=renderRewardPicker;$('#logoutBtn').onclick=()=>{setSession(null);renderLogin();showToast('Logget ut')}}"
+          new_profile="function renderProfileHome(){const a=account();if(!a){renderLogin();return}const count=orders.filter(o=>o.phone===a.phone).length;$('#accountContent').innerHTML=`<div class=\"profile-home\"><div class=\"profile-greeting\"><div class=\"member-avatar\">${escapeHtml((a.name||'K').charAt(0).toUpperCase())}</div><div><small>KØL MEDLEM</small><h2>${escapeHtml(a.name||'KØL-medlem')}</h2><p>+47 ${formatPhone(a.phone)}</p></div></div>${pizzaProgress(a)}<div class=\"profile-actions\"><button data-account=\"orders\"><strong>Bestillinger</strong><small>${count} lagret</small><b>›</b></button><button data-account=\"contact\"><strong>Kontaktinfo</strong><small>Navn og e-post</small><b>›</b></button></div><button class=\"logout-link\" id=\"logoutBtn\">Logg ut</button></div>`;$$('[data-account]').forEach(b=>b.onclick=()=>b.dataset.account==='orders'?renderOrders():renderContact());const claim=$('#claimRewardBtn');if(claim&&!claim.disabled)claim.onclick=renderRewardPicker;const qr=$('#couponQrBtn');if(qr)qr.onclick=renderCouponQr;$('#logoutBtn').onclick=()=>{setSession(null);renderLogin();showToast('Logget ut')}}"
+          if old_profile not in s:
+              raise SystemExit('renderProfileHome block not found')
+          s=s.replace(old_profile,new_profile,1)
+
+          anchor="function renderRewardPicker(){const a=account();if(!a||a.stamps<10){showToast('Du har ikke en gratis pizza klar');return}if(cart.some(x=>x.freeReward)){showToast('Gratis pizza ligger allerede i handlekurven');return}const pizzas=MENU.find(s=>s.id==='pizza')?.items||[];$('#rewardPizzaList').innerHTML=pizzas.map(p=>{const stor=p.sizes.find(s=>norm(s[0])==='stor');if(!stor)return'';return `<button class=\"reward-pizza-card\" data-reward-pizza=\"${p.id}\"><span class=\"reward-pizza-image\" style=\"background-image:url('${p.image||''}')\"></span><span class=\"reward-pizza-copy\"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.description||'')}</small><em>Stor · ${money(stor[1])} → Gratis</em></span><b>Velg</b></button>`}).join('');$$('[data-reward-pizza]').forEach(b=>b.onclick=()=>openProduct(b.dataset.rewardPizza,{reward:true}));openView('rewardScreen',{tabs:true});setActiveTab('pizza',true)}"
+          funcs=r'''function renderCouponQr(){const a=account();if(!a)return;$('#couponQrName').textContent=a.name||'KØL-medlem';$('#couponQrPhone').textContent=`+47 ${formatPhone(a.phone)}`;const box=$('#couponQrCode');box.innerHTML='';const url=`${location.origin}${location.pathname}?kasse=${encodeURIComponent(a.phone)}`;if(window.QRCode)new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});else box.textContent=a.phone;openView('couponQrScreen',{tabs:true});$('#couponQrBack').onclick=()=>{openView('accountScreen',{tabs:true});renderProfileHome()}}
+function renderKasseMode(phone){const p=String(phone||'').replace(/\D/g,'').slice(-8),a=accounts[p];openView('kasseScreen',{tabs:false});if(!a){$('#kasseContent').innerHTML=`<div class="kasse-empty"><strong>Kunden ble ikke funnet</strong><p>Demoen lagrer kontoer lokalt på enheten.</p></div>`;return}normalizeLoyalty(a);const count=Math.min(10,Math.max(0,Number(a.stamps)||0));$('#kasseContent').innerHTML=`<div class="kasse-customer-card"><div class="kasse-customer-head"><div class="kasse-avatar">${escapeHtml((a.name||'K').charAt(0).toUpperCase())}</div><div><strong>${escapeHtml(a.name||'KØL-medlem')}</strong><small>+47 ${formatPhone(a.phone)}</small></div></div><div class="kasse-counter"><small>STOR PIZZA-KUPONGER</small><strong>${count} / 10</strong><div class="kasse-adjust"><button id="kasseMinus">−</button><span>Juster manuelt</span><button id="kassePlus">+</button></div><button class="kasse-reset" id="kasseReset">${count>=10?'Gratispizza brukt – nullstill':'Nullstill kuponger'}</button></div><div class="kasse-demo-note">Manuell kontroll for telefonbestillinger.</div></div>`;$('#kasseMinus').onclick=()=>adjustKasseStamp(p,-1);$('#kassePlus').onclick=()=>adjustKasseStamp(p,1);$('#kasseReset').onclick=()=>resetKasseStamps(p)}
+function adjustKasseStamp(phone,delta){const a=accounts[phone];if(!a)return;normalizeLoyalty(a);const before=Math.min(10,Math.max(0,Number(a.stamps)||0));a.stamps=Math.max(0,Math.min(10,before+delta));saveAccounts();renderKasseMode(phone);showToast(delta>0?'1 kupong lagt til':'1 kupong fjernet')}
+function resetKasseStamps(phone){const a=accounts[phone];if(!a)return;a.stamps=0;a.rewards=0;saveAccounts();renderKasseMode(phone);showToast('Kupongkort nullstilt')}'''
+          if 'function renderCouponQr()' not in s:
+              s=s.replace(anchor,anchor+'\n'+funcs,1)
+
+          old_end="$('#brandBtn').onclick=goMenu;$('#infoBtn').onclick=()=>{rewardMode=false;loyaltyProgram=false;openView('infoScreen',{tabs:true});setInfoTab('about')};$('#profileBtn').onclick=()=>{rewardMode=false;loyaltyProgram=false;openView('accountScreen',{tabs:true});account()?renderProfileHome():renderLogin()};$('#cartBtn').onclick=()=>{rewardMode=false;loyaltyProgram=false;checkoutStep=1;renderCart();openView('cartScreen',{tabs:true});renderCheckoutStep()};$('#allergenBtn').onclick=openAllergens;$('#infoAllergenBtn').onclick=openAllergens;$('#storeMapBtn').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query=%C3%98GARDSVEGEN%2044%2C%202100%20SKARNES','_blank','noopener');$$('[data-info-tab]').forEach(b=>b.onclick=()=>setInfoTab(b.dataset.infoTab));$('#qtyMinus').onclick=()=>{qty=Math.max(1,qty-1);$('#qtyValue').textContent=qty;updateProductTotal()};$('#qtyPlus').onclick=()=>{qty++;$('#qtyValue').textContent=qty;updateProductTotal()};$('#addToCart').onclick=addOrUpdateCart;$('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};$('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};$('#allergenSearch').oninput=e=>{allergenSearch=e.target.value;renderAllergens()};$('#allergenReset').onclick=()=>{draftAllergens.clear();selectedAllergens.clear();save(KEY.allergens,[]);allergenSearch='';$('#allergenSearch').value='';renderAllergens();renderAll();showToast('Allergener nullstilt')};$('#allergenSave').onclick=()=>{selectedAllergens=new Set(draftAllergens);save(KEY.allergens,[...selectedAllergens]);renderAll();goMenu();showToast('Allergener lagret')};$('#menuShell').addEventListener('scroll',scheduleSync,{passive:true});renderAll();scheduleSync();"
+          new_end=old_end[:-1]+";const kassePhone=new URLSearchParams(location.search).get('kasse');if(kassePhone)requestAnimationFrame(()=>renderKasseMode(kassePhone));"
+          if old_end not in s:
+              raise SystemExit('init block not found')
+          s=s.replace(old_end,new_end,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          git diff --check
+          grep -q 'id="couponQrScreen"' demo/index.html
+          grep -q 'function renderKasseMode' demo/index.html
+          grep -q 'Vis QR-kode' demo/index.html
+          ! grep -q '<div class="screen-title"><h2>Profil</h2></div><div class="profile-home">' demo/index.html
+          grep -q 'Gratispizza brukt – nullstill' demo/index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "KOL Demo Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add demo/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add QR coupon manual controls"
+          git push origin HEAD:main
