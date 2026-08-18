@@ -1,0 +1,163 @@
+name: Demo integration cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/triggers/demo-integration-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clean customer files and prepare admin bridge
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          html_path = Path('demo/index.html')
+          css_path = Path('demo/kol.css')
+          html = html_path.read_text(encoding='utf-8')
+          css = css_path.read_text(encoding='utf-8')
+
+          # 1) Move every customer style out of index.html.
+          style_match = re.search(r'\n?<style>\s*(.*?)\s*</style>\s*', html, re.S)
+          if not style_match:
+              raise SystemExit('Expected inline style block was not found')
+          inline_css = style_match.group(1).strip()
+          html = html[:style_match.start()] + '\n' + html[style_match.end():]
+          inline_css = inline_css.replace('/* Checkout polish */', '/* Checkout */')
+          inline_css = inline_css.replace('!important', '')
+
+          # Remove dead CSS from previous loyalty iterations before appending current component rules.
+          css = re.sub(r'/\* Lean loyalty profile:[\s\S]*?\*/\s*\.pizza-reward,\.loyalty-savings\{[^{}]*\}\s*', '', css)
+          css = re.sub(r'\.pizza-reward\{[^{}]*\}', '', css)
+          css = re.sub(r'\.pizza-reward span\{[^{}]*\}', '', css)
+          css = re.sub(r'\.reward-ready\{[^{}]*\}', '', css)
+          css = css.replace('.info-title{padding:17px 16px 14px!important;', '.info-title{padding:17px 16px 14px;')
+          css = css.replace('.info-title h2{font-size:21px!important}', '.info-title h2{font-size:21px}')
+          css = css.replace('padding-right:42px!important;', 'padding-right:42px;')
+
+          moved_marker = '/* Customer components: product, rewards, QR, checkout */'
+          if moved_marker in css:
+              css = css.split(moved_marker, 1)[0].rstrip()
+          css = css.rstrip() + '\n\n' + moved_marker + '\n' + inline_css + '\n'
+
+          # 2) Cache-bust after consolidation.
+          html = re.sub(r'kol\.css\?v=[^"\']+', 'kol.css?v=clean-admin-ready-20260818', html)
+
+          # 3) Remove abandoned loyalty UI state. Loyalty now counts automatically.
+          html = html.replace('loyaltyEnabled:true,', '')
+          html = html.replace(',rewardMode=false,loyaltyProgram=false;', ',rewardMode=false;')
+          html = html.replace('loyaltyProgram=false;', '')
+
+          # 4) Make MENU replaceable by the future admin/Firebase source.
+          html = html.replace('const MENU=[', 'let MENU=[', 1)
+          old_popular = "html+=menuSection('popular','Mest bestilt',all.filter(p=>['p1','p2','p3','p4','p5'].includes(p.id)),'Populære valg i testmenyen.',true);"
+          html = html.replace(old_popular, "html+=menuSection('popular','Mest bestilt',all.slice(0,5),'Populære valg i testmenyen.',true);")
+
+          # 5) Add stable IDs so admin siteSettings can update store information without rebuilding HTML.
+          html = html.replace('<h3>KØL Grill &amp; Pizza</h3><p>Øgardsvegen 44 · 2100 Skarnes</p>', '<h3 id="storeName">KØL Grill &amp; Pizza</h3><p id="storeAddress">Øgardsvegen 44 · 2100 Skarnes</p>')
+          html = html.replace('<a href="tel:+4741145353"><span>☎</span><b>Ring</b></a>', '<a id="storeCallAction" href="tel:+4741145353"><span>☎</span><b>Ring</b></a>')
+          html = html.replace('<a class="info-list-row" href="tel:+4741145353"><span class="info-row-icon">☎</span><span><strong>Kontakt oss</strong><small>+47 41 14 53 53</small></span><b>›</b></a>', '<a class="info-list-row" id="storePhoneRow" href="tel:+4741145353"><span class="info-row-icon">☎</span><span><strong>Kontakt oss</strong><small id="storePhoneText">+47 41 14 53 53</small></span><b>›</b></a>')
+          html = html.replace('<span><strong>Åpningstider</strong><small>Mandag–søndag</small></span><em>14:00–22:00</em>', '<span><strong>Åpningstider</strong><small id="storeOpeningDays">Mandag–søndag</small></span><em id="storeOpeningTime">14:00–22:00</em>')
+
+          # 6) Admin integration bridge. No network calls are made in demo mode.
+          anchor = "const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));\nconst money="
+          if anchor not in html:
+              raise SystemExit('Utility anchor not found')
+          bridge = r'''const KOL_ADMIN_BRIDGE={mode:'local-demo',databaseURL:'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app/',menuKeys:['sections','extraOptions','customPizzaToppings','kebabPitaOptions','optionGroups','siteSettings','rescueDeals']};
+let ACTIVE_SITE_SETTINGS={restaurantName:'KØL Grill & Pizza',phone:'+47 41 14 53 53',streetAddress:'ØGARDSVEGEN 44',postalCode:'2100',city:'SKARNES',openingDays:'Mandag - Søndag',orderOpenTime:'14:00',orderCloseTime:'22:00',minPreorderMinutes:'0'};
+const ADMIN_ALLERGEN_MAP={melk:'melk',hvete:'gluten',gluten:'gluten',egg:'egg',soya:'soya',selleri:'selleri',sennep:'sennep',sesam:'sesam',fisk:'fisk',skalldyr:'skalldyr','peanøtter':'peanøtter',peanotter:'peanøtter','nøtter':'nøtter',notter:'nøtter',sulfitter:'sulfitter'};
+function adminArray(value){return Array.isArray(value)?value:(value&&typeof value==='object'?Object.values(value):[])}
+function adminAllergens(value){const source=Array.isArray(value)?value:String(value||'').split(/[,;|]/);return [...new Set(source.map(v=>ADMIN_ALLERGEN_MAP[norm(String(v).trim())]).filter(Boolean))]}
+function adminSizes(product={}){let source=adminArray(product.sizes).map((size,index)=>[String(size?.label||size?.name||size?.id||`Valg ${index+1}`),Number(size?.price)]).filter(size=>Number.isFinite(size[1]));if(!source.length&&Number.isFinite(Number(product.mediumPrice)))source.push(['Medium',Number(product.mediumPrice)]);if(!source.length&&Number.isFinite(Number(product.price)))source.push(['Standard',Number(product.price)]);if(Number.isFinite(Number(product.largePrice))&&!source.some(size=>norm(size[0])==='stor'))source.push(['Stor',Number(product.largePrice)]);return source.length?source:[['Standard',0]]}
+function adminStrengths(product={},config={}){const ids=new Set(adminArray(product.optionGroupIds).map(String));const group=adminArray(config.optionGroups).find(g=>ids.has(String(g.id))&&(norm(g.title).includes('styrke')||adminArray(g.options).some(o=>['mild','medium','sterk'].includes(norm(o.label)))));return group?adminArray(group.options).map(o=>String(o.label||'').trim()).filter(Boolean):[]}
+function normalizeAdminConfigForCustomer(config={}){const sections=adminArray(config.sections).map((section,index)=>{const sectionId=String(section?.id||`section-${index+1}`),title=String(section?.title||section?.name||`Kategori ${index+1}`),pizzaSection=norm(`${sectionId} ${title}`).includes('pizza');const sectionItems=adminArray(section?.items).filter(p=>p&&p.hidden!==true&&p.soldOut!==true).map((p,pIndex)=>({id:String(p.id||`${sectionId}-${pIndex+1}`),name:String(p.name||'Produkt'),description:String(p.ingredients||p.description||''),image:String(p.imageUrl||p.image||''),allergens:adminAllergens(p.allergens),sizes:adminSizes(p),strengths:adminStrengths(p,config),optionGroups:adminArray(p.optionGroupIds),loyaltyEligible:pizzaSection}));return{id:sectionId,title,note:String(section?.note||section?.description||''),items:sectionItems}}).filter(section=>section.items.length);return sections}
+function formatStorePhone(value=''){const digits=String(value).replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');return digits.length===8?`+47 ${formatPhone(digits)}`:String(value||'')}
+function applySiteSettings(settings={}){ACTIVE_SITE_SETTINGS={...ACTIVE_SITE_SETTINGS,...settings};const name=ACTIVE_SITE_SETTINGS.restaurantName||'KØL Grill & Pizza',address=[ACTIVE_SITE_SETTINGS.streetAddress,[ACTIVE_SITE_SETTINGS.postalCode,ACTIVE_SITE_SETTINGS.city].filter(Boolean).join(' ')].filter(Boolean).join(' · '),phone=formatStorePhone(ACTIVE_SITE_SETTINGS.phone),tel=String(ACTIVE_SITE_SETTINGS.phone||'').replace(/[^+\d]/g,''),days=String(ACTIVE_SITE_SETTINGS.openingDays||'Mandag - Søndag').replace(/ - /g,'–'),hours=`${ACTIVE_SITE_SETTINGS.orderOpenTime||'14:00'}–${ACTIVE_SITE_SETTINGS.orderCloseTime||'22:00'}`;if($('#storeName'))$('#storeName').textContent=name;if($('#storeAddress'))$('#storeAddress').textContent=address;if($('#storePhoneText'))$('#storePhoneText').textContent=phone;if($('#storeCallAction'))$('#storeCallAction').href=`tel:${tel}`;if($('#storePhoneRow'))$('#storePhoneRow').href=`tel:${tel}`;if($('#storeOpeningDays'))$('#storeOpeningDays').textContent=days;if($('#storeOpeningTime'))$('#storeOpeningTime').textContent=hours}
+function applyAdminConfig(config={}){const sections=normalizeAdminConfigForCustomer(config);if(!sections.length)return false;MENU=[{id:'popular',title:'Mest bestilt',virtual:true},...sections];applySiteSettings(config.siteSettings||{});renderAll();return true}
+function splitCustomerName(fullName=''){const parts=String(fullName).trim().split(/\s+/).filter(Boolean);return{firstName:parts[0]||'',lastName:parts.slice(1).join(' ')}}
+function buildAdminOrderPayload({id,name,phone,total,pickup,lines,createdAt=new Date().toISOString()}){const person=splitCustomerName(name),scheduled=pickup&&pickup!=='asap';return{id:String(id),status:'pending',source:'kol-customer',customer:{fullName:String(name),firstName:person.firstName,lastName:person.lastName,phone:String(phone)},pickup:{mode:scheduled?'scheduled':'asap',time:scheduled?String(pickup):''},items:(lines||[]).map(line=>({productId:String(line.productId||''),name:String(line.name||'Produkt'),quantity:Math.max(1,Number(line.qty)||1),size:String(line.size||''),sizeLabel:String(line.size||''),extras:line.strength?[`Styrke: ${line.strength}`]:[],note:String(line.note||''),unitPrice:Number(line.price)||0,total:(Number(line.price)||0)*(Math.max(1,Number(line.qty)||1)),freeReward:line.freeReward===true})),subtotal:Number(total)||0,total:Number(total)||0,createdAt,updatedAt:createdAt}}
+window.KOLIntegration={...KOL_ADMIN_BRIDGE,applyAdminConfig,applySiteSettings,normalizeAdminConfigForCustomer,buildAdminOrderPayload};
+'''
+          html = html.replace(anchor, "const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));\n" + bridge + "const money=", 1)
+
+          # 7) Make loyalty detection independent of demo product IDs.
+          regular_entry = "const entry={key:`${selectedProduct.id}|${size[0]}|${strength}|${note}`,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],strength,price:size[1],qty,note};"
+          regular_entry_new = "const entry={key:`${selectedProduct.id}|${size[0]}|${strength}|${note}`,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],strength,price:size[1],qty,note,loyaltyEligible:selectedProduct.loyaltyEligible===true||selectedProduct.sectionId==='pizza'};"
+          if regular_entry not in html:
+              raise SystemExit('Regular cart entry signature not found')
+          html = html.replace(regular_entry, regular_entry_new, 1)
+          html = html.replace("x.productId.startsWith('p')&&norm(x.size)==='stor'", "x.loyaltyEligible===true&&norm(x.size)==='stor'")
+          reward_picker = "const pizzas=MENU.find(s=>s.id==='pizza')?.items||[];"
+          html = html.replace(reward_picker, "const pizzas=items().filter(p=>p.loyaltyEligible===true||p.sectionId==='pizza');")
+
+          # 8) Pickup slots read admin site settings instead of hard-coded 14-22.
+          pickup_old = "function pickupSlots(){const now=new Date(),open=new Date(now),close=new Date(now),start=new Date(now);open.setHours(14,0,0,0);close.setHours(22,0,0,0);start.setSeconds(0,0);const rem=start.getMinutes()%15;if(rem)start.setMinutes(start.getMinutes()+(15-rem));else if(now.getSeconds()>0||now.getMilliseconds()>0)start.setMinutes(start.getMinutes()+15);if(start<open)start.setTime(open.getTime());const slots=[];for(let d=new Date(start);d<close;d.setMinutes(d.getMinutes()+15))slots.push(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);return slots}"
+          pickup_new = "function pickupSlots(){const now=new Date(),open=new Date(now),close=new Date(now),start=new Date(now),clock=(value,fallback)=>{const m=String(value||fallback).match(/^(\\d{1,2}):(\\d{2})$/);return m?[Math.min(23,+m[1]),Math.min(59,+m[2])]:fallback.split(':').map(Number)},[oh,om]=clock(ACTIVE_SITE_SETTINGS.orderOpenTime,'14:00'),[ch,cm]=clock(ACTIVE_SITE_SETTINGS.orderCloseTime,'22:00');open.setHours(oh,om,0,0);close.setHours(ch,cm,0,0);start.setSeconds(0,0);const lead=Math.max(0,Number(ACTIVE_SITE_SETTINGS.minPreorderMinutes)||0);start.setMinutes(start.getMinutes()+lead);const rem=start.getMinutes()%15;if(rem)start.setMinutes(start.getMinutes()+(15-rem));else if(now.getSeconds()>0||now.getMilliseconds()>0)start.setMinutes(start.getMinutes()+15);if(start<open)start.setTime(open.getTime());const slots=[];for(let d=new Date(start);d<close;d.setMinutes(d.getMinutes()+15))slots.push(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);return slots}"
+          if pickup_old not in html:
+              raise SystemExit('Pickup slots signature not found')
+          html = html.replace(pickup_old, pickup_new, 1)
+
+          # 9) Emit canonical admin order payload without changing LocalStorage demo behavior.
+          place_anchor = "orders.unshift({id,createdAt:Date.now(),name,phone,total,pickupTime,savings:orderSavings,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);"
+          place_new = "const adminPayload=buildAdminOrderPayload({id,name,phone,total,pickup:pickupChoice,lines:cart});window.dispatchEvent(new CustomEvent('kol:order-ready',{detail:adminPayload}));orders.unshift({id,createdAt:Date.now(),name,phone,total,pickupTime,savings:orderSavings,items:cart.map(x=>({...x})),status:'Sendt'});save(KEY.orders,orders);"
+          if place_anchor not in html:
+              raise SystemExit('Order storage anchor not found')
+          html = html.replace(place_anchor, place_new, 1)
+
+          # Dynamic map uses admin address when config is connected.
+          map_old = "$('#storeMapBtn').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query=%C3%98GARDSVEGEN%2044%2C%202100%20SKARNES','_blank','noopener');"
+          map_new = "$('#storeMapBtn').onclick=()=>{const query=[ACTIVE_SITE_SETTINGS.streetAddress,ACTIVE_SITE_SETTINGS.postalCode,ACTIVE_SITE_SETTINGS.city].filter(Boolean).join(', ');window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`,'_blank','noopener')};"
+          html = html.replace(map_old, map_new)
+
+          # Initial static settings still go through the same rendering path.
+          html = html.replace("renderAll();scheduleSync();const kassePhone=", "applySiteSettings(ACTIVE_SITE_SETTINGS);renderAll();scheduleSync();const kassePhone=")
+
+          html_path.write_text(html, encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
+          PY
+
+      - name: Validate cleanup
+        shell: bash
+        run: |
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('demo/index.html').read_text(encoding='utf-8')
+          css=Path('demo/kol.css').read_text(encoding='utf-8')
+          assert '<style>' not in html and '</style>' not in html
+          assert 'KOLIntegration' in html and 'applyAdminConfig' in html and 'buildAdminOrderPayload' in html
+          assert 'loyaltyProgram' not in html
+          assert 'loyaltyEnabled' not in html
+          assert 'clean-admin-ready-20260818' in html
+          assert 'Customer components: product, rewards, QR, checkout' in css
+          assert 'Lean loyalty profile' not in css
+          scripts=re.findall(r'<script>(.*?)</script>',html,re.S)
+          Path('/tmp/demo-clean.js').write_text('\n'.join(scripts),encoding='utf-8')
+          print('index bytes:',len(html.encode()))
+          print('css bytes:',len(css.encode()))
+          print('inline style blocks: 0')
+          PY
+          node --check /tmp/demo-clean.js
+
+      - name: Commit cleaned customer app
+        shell: bash
+        run: |
+          git config user.name "KOL Integration Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add demo/index.html demo/kol.css
+          git rm -f .github/workflows/demo-integration-cleanup.yml .github/triggers/demo-integration-cleanup
+          git commit -m "Clean demo customer app and prepare admin integration"
+          git push origin HEAD:main
