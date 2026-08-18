@@ -1,0 +1,77 @@
+name: Automatic loyalty demo migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/auto-loyalty-demo.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Make Stor Pizza loyalty automatic
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('demo/index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Remove loyalty UI styles from the product page.
+          start=s.find('.loyalty-optin{')
+          if start!=-1:
+              end=s.find('\n@media(max-width:420px)', start)
+              if end!=-1:
+                  s=s[:start]+s[end:]
+
+          # Remove the visible optional loyalty selector block from product detail.
+          block='''      <div class="loyalty-optin" id="loyaltyGroup" hidden>\n        <div class="loyalty-optin-head"><strong>Lojalitetsprogram</strong><span>Valgfritt</span></div>\n        <label class="loyalty-radio" id="loyaltyRadioRow">\n          <input type="radio" id="loyaltyProgramRadio" name="loyaltyProgramDemo">\n          <span class="loyalty-radio-copy"><b>Hver 11. Stor Pizza gratis</b><small>Tell denne Stor Pizzaen med i kupongkortet.</small></span>\n        </label>\n      </div>\n'''
+          if block not in s:
+              raise SystemExit('loyalty product block not found')
+          s=s.replace(block,'',1)
+
+          # Loyalty is now automatic for every paid Stor Pizza in the pizza section.
+          old="const countsForLoyalty=selectedProduct.sectionId==='pizza'&&selectedProduct.loyaltyEnabled!==false&&norm(size[0])==='stor'&&loyaltyProgram;const entry={key:`${selectedProduct.id}|${size[0]}|${strength}|${note}|${countsForLoyalty?'loyalty':'standard'}`,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],strength,price:size[1],qty,note,loyaltyProgram:countsForLoyalty};"
+          new="const entry={key:`${selectedProduct.id}|${size[0]}|${strength}|${note}`,productId:selectedProduct.id,name:selectedProduct.name,size:size[0],strength,price:size[1],qty,note};"
+          if old not in s:
+              raise SystemExit('cart loyalty opt-in block not found')
+          s=s.replace(old,new,1)
+
+          # Remove customer-facing loyalty labels from cart and order history.
+          s=s.replace("${x.loyaltyProgram?`<br><span class=\"loyalty-cart-note\">Lojalitetsprogram · teller med</span>`:''}","")
+          s=s.replace("${x.loyaltyProgram?' · LOJALITET':''}","")
+
+          # Count all paid Stor Pizza automatically when the order is sent.
+          old2="const locked=(a.stamps||0)>=10,freeUsed=cart.some(x=>x.freeReward),paidLarge=cart.filter(x=>!x.freeReward&&x.loyaltyProgram&&x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);if(locked){if(freeUsed)a.stamps=0}else if(paidLarge)a.stamps=Math.min(10,(a.stamps||0)+paidLarge);"
+          new2="const locked=(a.stamps||0)>=10,freeUsed=cart.some(x=>x.freeReward),paidLarge=cart.filter(x=>!x.freeReward&&x.productId.startsWith('p')&&norm(x.size)==='stor').reduce((n,x)=>n+x.qty,0);if(locked){if(freeUsed)a.stamps=Math.min(10,paidLarge)}else if(paidLarge)a.stamps=Math.min(10,(a.stamps||0)+paidLarge);"
+          if old2 not in s:
+              raise SystemExit('order loyalty counting block not found')
+          s=s.replace(old2,new2,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          git diff --check
+          ! grep -q 'Lojalitetsprogram</strong><span>Valgfritt' demo/index.html
+          ! grep -q 'Tell denne Stor Pizzaen med i kupongkortet' demo/index.html
+          ! grep -q 'x.loyaltyProgram' demo/index.html
+          grep -q "paidLarge=cart.filter(x=>!x.freeReward&&x.productId.startsWith('p')&&norm(x.size)==='stor')" demo/index.html
+          grep -q 'if(locked){if(freeUsed)a.stamps=Math.min(10,paidLarge)}' demo/index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "KOL Demo Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add demo/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Make Stor Pizza loyalty automatic"
+          git push origin HEAD:main
