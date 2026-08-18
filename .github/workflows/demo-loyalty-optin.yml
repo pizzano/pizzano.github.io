@@ -93,7 +93,6 @@ jobs:
 function renderRewardPicker"""
           s=s[:m.start()]+replacement+s[m.end():]
 
-          # This demo should not keep cumulative member savings in the account anymore.
           s=s.replace("const savings=Math.max(0,Number(a.savings)||0);if(a.savings!==savings){a.savings=savings;changed=true}","")
           s=s.replace("accounts[phone]={phone,name:'',email:'',marketing:true,stamps:0,rewards:0,savings:0,favorites:[]}","accounts[phone]={phone,name:'',email:'',marketing:true,stamps:0,rewards:0,favorites:[]}")
           s=s.replace("if(freeUsed)a.savings=(a.savings||0)+orderSavings;","")
@@ -133,3 +132,5 @@ function renderRewardPicker"""
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Clarify loyalty progress and add opt-in"
           git push origin HEAD:main
+
+# trigger
