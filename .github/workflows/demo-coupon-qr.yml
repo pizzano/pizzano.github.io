@@ -84,3 +84,5 @@ function resetKasseStamps(phone){const a=accounts[phone];if(!a)return;a.stamps=0
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Add QR coupon manual controls"
           git push origin HEAD:main
+
+# trigger
