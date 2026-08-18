@@ -1,0 +1,49 @@
+name: Hide ready loyalty in product
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hide-ready-loyalty.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Hide ready loyalty state from product detail
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('demo/index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace(".loyalty-radio.disabled{cursor:default;opacity:.7;background:#f7f5f3}","")
+          old="if(locked){loyaltyProgram=false;radio.checked=false;radio.disabled=true;row.classList.remove('active');row.classList.add('disabled');row.querySelector('.loyalty-radio-copy').innerHTML='<b>Gratispizza er allerede klar</b><small>Nye Stor Pizza teller ikke før gratispizzaen er brukt.</small>';return}"
+          new="if(locked){group.hidden=true;loyaltyProgram=false;radio.checked=false;radio.disabled=false;row.classList.remove('active','disabled');return}"
+          if old not in s:
+              raise SystemExit('locked loyalty block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          git diff --check
+          grep -q "if(locked){group.hidden=true" demo/index.html
+          ! grep -q "Gratispizza er allerede klar" demo/index.html
+          ! grep -q "Nye Stor Pizza teller ikke før gratispizzaen er brukt" demo/index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "KOL Demo Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add demo/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Hide ready loyalty state in product"
+          git push origin HEAD:main
