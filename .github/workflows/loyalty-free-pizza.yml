@@ -296,3 +296,5 @@ function renderRewardPicker(){
           git add demo/index.html demo/kol.css
           git commit -m "Add free pizza loyalty redemption"
           git push origin HEAD:main
+
+# trigger 2026-08-18T14:47+02:00
