@@ -39,3 +39,5 @@ jobs:
           git add demo/index.html demo/kol.css test/test.html test/test.css
           git commit -m "Move demo app to demo folder"
           git push origin HEAD:main
+
+# trigger 2026-08-18
