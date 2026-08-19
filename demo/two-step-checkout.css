@@ -23,7 +23,6 @@
 
 #checkoutStep2 .pickup-options{display:block!important;margin:0;padding:12px;border:0;border-radius:0;background:transparent;box-shadow:none}
 .pickup-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.pickup-mode-row.single-option{grid-template-columns:1fr}
 .pickup-mode-btn{min-height:72px;padding:10px;border:1px solid #e5ddd8;border-radius:12px;background:#fff;color:#332d29;display:grid;grid-template-columns:26px minmax(0,1fr);align-items:center;gap:8px;text-align:left}
 .pickup-mode-btn>span:last-child{min-width:0}
 .pickup-mode-btn strong{display:block;font-size:13px;line-height:1.2;font-weight:700}
@@ -38,29 +37,10 @@
 .pickup-time-btn{height:45px;border:1px solid #e4ddd8;border-radius:10px;background:#fff;color:#3b3531;font-size:13px;font-weight:600}
 .pickup-time-btn.active{border-color:#f36a2d;background:#fff2ec;color:#c34f25;box-shadow:inset 0 0 0 1px rgba(243,106,45,.08)}
 
-.store-hours-note{margin:0 0 10px;padding:10px 11px;border:1px solid #f0d8cc;border-radius:11px;background:#fff9f6;color:#6b4b3d}
-.store-hours-note strong,.store-hours-note small{display:block}
-.store-hours-note strong{font-size:12.5px;font-weight:750}
-.store-hours-note small{margin-top:3px;font-size:10.5px;line-height:1.4;color:#8a6c5e}
-.store-closed-note{margin:0;border-color:#e5d8d3;background:#f7f5f4;color:#554b46}
-.store-closed-note small{color:#7d716b}
-.demo-test-note{border-color:#c9e2d5;background:#f2faf6;color:#1d694c}
-.demo-test-note small{color:#54806d}
-.final-checkout-section.store-closed{border-color:#e2d9d4;background:#fbfaf9}
-
-.ordering-closed-banner{margin:10px 12px 2px;padding:11px 12px;border:1px solid #ead9d1;border-radius:12px;background:#fbf7f5;color:#4d443f}
-.ordering-closed-banner[hidden]{display:none!important}
-.ordering-closed-banner strong,.ordering-closed-banner small{display:block}
-.ordering-closed-banner strong{font-size:13px;font-weight:750;line-height:1.25}
-.ordering-closed-banner small{margin-top:4px;color:#7e716a;font-size:10.5px;line-height:1.4}
-.cart-closed-banner{margin:10px 12px 0;background:#fff8f5;border-color:#f0d2c4;color:#6b3f30}
-.cart-closed-banner small{color:#916b5c}
-
 /* Send button: contact missing = gray, contact ready/time missing = light orange, everything ready = KØL orange */
 #checkoutNext:disabled{background:#d8d3cf!important;color:#fff!important;opacity:.82!important;cursor:not-allowed!important}
 #checkoutNext.needs-time:not(:disabled){background:#f5b091!important;color:#fff!important;opacity:1!important;cursor:pointer!important}
 #checkoutNext.ready:not(:disabled){background:#f36a2d!important;color:#fff!important;opacity:1!important;cursor:pointer!important}
-#checkoutNext.store-closed{background:#d8d3cf!important;color:#fff!important;opacity:.82!important;cursor:not-allowed!important}
 
 /* Menu footer */
 #menuShell::after{content:'Powered by ChatGPT';display:block;padding:28px 14px 32px;text-align:center;color:#9a918b;font-size:11px;line-height:1.3;letter-spacing:.01em;border-top:1px solid #eee7e2;background:#fff}
@@ -73,5 +53,4 @@
   .pickup-mode-check{width:22px;height:22px}
   .pickup-mode-btn strong{font-size:12.5px}
   .pickup-mode-btn small{font-size:9.4px}
-  .ordering-closed-banner{margin-left:10px;margin-right:10px;padding:10px 11px}
 }
