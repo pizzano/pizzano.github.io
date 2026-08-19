@@ -97,12 +97,13 @@
     }
   }
 
-  function checkoutPhoneDigits() {
-    return String(document.querySelector('#checkoutPhone')?.value || session || '').replace(/\D/g, '').slice(-8);
+  function activeSessionPhoneDigits() {
+    if (!session || !accounts?.[session]) return '';
+    return String(session).replace(/\D/g, '').slice(-8);
   }
 
   function isDemoTester() {
-    return checkoutPhoneDigits() === DEMO_TESTER_PHONE;
+    return activeSessionPhoneDigits() === DEMO_TESTER_PHONE;
   }
 
   function storeClockState() {
@@ -446,8 +447,21 @@
     };
   }
 
+  const originalSetSessionForStoreHours = setSession;
+  setSession = function (phone) {
+    originalSetSessionForStoreHours(phone);
+    pickupChoice = '';
+    pickupMode = '';
+    syncStoreClosedUi();
+    if (checkoutStep === 2) {
+      renderPickupTimes();
+      syncCheckoutValidation();
+    }
+  };
+
   document.addEventListener('click', () => setTimeout(syncStoreClosedUi, 0), true);
-  setInterval(syncStoreClosedUi, 30000);
+  window.addEventListener('storage', () => setTimeout(syncStoreClosedUi, 0));
+  setInterval(syncStoreClosedUi, 500);
 
   bindCheckoutValidation();
   renderCheckoutStep();
