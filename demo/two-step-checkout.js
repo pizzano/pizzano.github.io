@@ -40,6 +40,19 @@
   step2.appendChild(pickupSection);
   step3.hidden = true;
 
+  const mainClosedBanner = document.createElement('div');
+  mainClosedBanner.id = 'mainClosedBanner';
+  mainClosedBanner.className = 'ordering-closed-banner';
+  mainClosedBanner.innerHTML = '<strong>Vi har stengt for i dag</strong><small>Du kan fortsatt se menyen og legge varer i handlekurven. Velkommen tilbake i morgen.</small>';
+  const menuTopline = document.querySelector('#menuShell .menu-topline');
+  if (menuTopline) menuTopline.insertAdjacentElement('afterend', mainClosedBanner);
+
+  const cartClosedBanner = document.createElement('div');
+  cartClosedBanner.id = 'cartClosedBanner';
+  cartClosedBanner.className = 'ordering-closed-banner cart-closed-banner';
+  cartClosedBanner.innerHTML = '<strong>Gatekjøkkenet er stengt akkurat nå</strong><small>Du kan beholde varene i handlekurven, men bestilling kan først sendes når vi åpner igjen i morgen.</small>';
+  step1.querySelector('.checkout-title')?.insertAdjacentElement('afterend', cartClosedBanner);
+
   const nameInput = document.querySelector('#checkoutName');
   const phoneInput = document.querySelector('#checkoutPhone');
   if (nameInput) {
@@ -110,6 +123,28 @@
     };
   }
 
+  function syncStoreClosedUi() {
+    const state = storeClockState();
+    const showClosed = state.closedForCustomer;
+    mainClosedBanner.hidden = !showClosed;
+    cartClosedBanner.hidden = !showClosed;
+    document.body.classList.toggle('ordering-closed', showClosed);
+
+    if (checkoutStep === 1) {
+      const next = document.querySelector('#checkoutNext');
+      if (next) {
+        const canContinue = !!cart.length && !showClosed;
+        next.disabled = !canContinue;
+        next.classList.toggle('ready', canContinue);
+        next.classList.toggle('store-closed', showClosed);
+        next.classList.remove('needs-time');
+        next.style.background = '';
+        next.style.opacity = '1';
+        next.style.cursor = canContinue ? 'pointer' : 'not-allowed';
+      }
+    }
+  }
+
   const pickupReady = () => {
     const state = storeClockState();
     if (state.closedForCustomer) return false;
@@ -137,6 +172,7 @@
           <small>Online bestilling stenger kl. ${ACTIVE_SITE_SETTINGS.orderCloseTime || '22:00'}.</small>
         </div>`;
       syncPickupUi();
+      syncStoreClosedUi();
       return;
     }
 
@@ -158,7 +194,7 @@
       </button>` : '';
 
     const notice = state.afterClose && state.tester
-      ? `<div class="store-hours-note demo-test-note"><strong>Demo testmodus</strong><small>Vanlige kunder kan ikke bestille etter kl. ${ACTIVE_SITE_SETTINGS.orderCloseTime || '22:00'}, men testkontoen din kan fortsatt sende en ordre.</small></div>`
+      ? ''
       : state.closingSoon
         ? `<div class="store-hours-note"><strong>Vi stenger snart</strong><small>Det er mindre enn 15 minutter til stengetid. Derfor kan du bare velge Snarest mulig.</small></div>`
         : '';
@@ -193,6 +229,7 @@
       };
     });
     syncPickupUi();
+    syncStoreClosedUi();
   };
 
   syncCheckoutValidation = function () {
@@ -214,6 +251,7 @@
     }
     contactSection.classList.toggle('is-complete', contactReady);
     syncPickupUi();
+    syncStoreClosedUi();
 
     const badge = step2.querySelector('.checkout-title > span');
     if (badge) {
@@ -316,9 +354,11 @@
     if (next) {
       next.textContent = checkoutStep === 2 ? 'Send bestilling' : 'Neste';
       if (checkoutStep === 1) {
-        next.disabled = !cart.length;
-        next.classList.toggle('ready', !!cart.length);
-        next.classList.remove('needs-time', 'store-closed');
+        const canContinue = !!cart.length && !state.closedForCustomer;
+        next.disabled = !canContinue;
+        next.classList.toggle('ready', canContinue);
+        next.classList.toggle('store-closed', state.closedForCustomer);
+        next.classList.remove('needs-time');
       } else {
         next.disabled = !(contact.nameOk && contact.phoneOk) || state.closedForCustomer;
         next.classList.toggle('ready', complete);
@@ -334,6 +374,8 @@
       renderPickupTimes();
       syncCheckoutValidation();
     }
+
+    syncStoreClosedUi();
 
     const cartOpen = !document.querySelector('#cartScreen').hidden;
     const focused = cartOpen && checkoutStep === 2;
@@ -363,6 +405,13 @@
     next.onclick = () => {
       if (checkoutStep === 1 && !cart.length) return;
       if (checkoutStep === 1) {
+        const state = storeClockState();
+        if (state.closedForCustomer) {
+          syncStoreClosedUi();
+          cartClosedBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showToast('Gatekjøkkenet er stengt akkurat nå. Velkommen tilbake i morgen.');
+          return;
+        }
         checkoutStep = 2;
         renderCheckoutStep();
         const c = checkoutContactState();
@@ -397,6 +446,10 @@
     };
   }
 
+  document.addEventListener('click', () => setTimeout(syncStoreClosedUi, 0), true);
+  setInterval(syncStoreClosedUi, 30000);
+
   bindCheckoutValidation();
   renderCheckoutStep();
+  syncStoreClosedUi();
 })();
