@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/two-step-checkout.yml
+      - .github/triggers/two-step-checkout
 
 permissions:
   contents: write
@@ -117,8 +118,6 @@ jobs:
           git config user.name "KOL Checkout Bot"
           git config user.email "actions@users.noreply.github.com"
           git add demo/index.html demo/kol.css
-          git rm -f .github/workflows/two-step-checkout.yml
+          git rm -f .github/workflows/two-step-checkout.yml .github/triggers/two-step-checkout
           git commit -m "Combine checkout into two steps"
           git push origin HEAD:main
-
-# trigger 2026-08-19
