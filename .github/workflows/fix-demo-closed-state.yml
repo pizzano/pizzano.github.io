@@ -1,0 +1,78 @@
+name: Fix demo closed state
+on:
+  push:
+    paths:
+      - '.github/trigger-demo-closed-state.txt'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch active-session tester logic
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('demo/two-step-checkout.js')
+          text = path.read_text()
+          old = """  function checkoutPhoneDigits() {
+    return String(document.querySelector('#checkoutPhone')?.value || session || '').replace(/\\D/g, '').slice(-8);
+  }
+
+  function isDemoTester() {
+    return checkoutPhoneDigits() === DEMO_TESTER_PHONE;
+  }
+"""
+          new = """  function activeSessionPhoneDigits() {
+    if (!session || !accounts?.[session]) return '';
+    return String(session).replace(/\\D/g, '').slice(-8);
+  }
+
+  function isDemoTester() {
+    return activeSessionPhoneDigits() === DEMO_TESTER_PHONE;
+  }
+"""
+          if old not in text:
+              raise SystemExit('tester block not found')
+          text = text.replace(old, new, 1)
+
+          old_tail = """  document.addEventListener('click', () => setTimeout(syncStoreClosedUi, 0), true);
+  setInterval(syncStoreClosedUi, 30000);
+
+  bindCheckoutValidation();
+"""
+          new_tail = """  const originalSetSessionForStoreHours = setSession;
+  setSession = function (phone) {
+    originalSetSessionForStoreHours(phone);
+    pickupChoice = '';
+    pickupMode = '';
+    syncStoreClosedUi();
+    if (checkoutStep === 2) {
+      renderPickupTimes();
+      syncCheckoutValidation();
+    }
+  };
+
+  document.addEventListener('click', () => setTimeout(syncStoreClosedUi, 0), true);
+  window.addEventListener('storage', () => setTimeout(syncStoreClosedUi, 0));
+  setInterval(syncStoreClosedUi, 500);
+
+  bindCheckoutValidation();
+"""
+          if old_tail not in text:
+              raise SystemExit('tail block not found')
+          text = text.replace(old_tail, new_tail, 1)
+          path.write_text(text)
+      - name: Validate JavaScript
+        run: node --check demo/two-step-checkout.js
+      - name: Commit fix and cleanup
+        run: |
+          git config user.name "KOL Demo Fix Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add demo/two-step-checkout.js
+          git rm -f .github/workflows/fix-demo-closed-state.yml .github/trigger-demo-closed-state.txt
+          git commit -m "Fix closed state for active demo session"
+          git push origin main
