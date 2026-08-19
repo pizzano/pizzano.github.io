@@ -48,6 +48,14 @@
 .demo-test-note small{color:#54806d}
 .final-checkout-section.store-closed{border-color:#e2d9d4;background:#fbfaf9}
 
+.ordering-closed-banner{margin:10px 12px 2px;padding:11px 12px;border:1px solid #ead9d1;border-radius:12px;background:#fbf7f5;color:#4d443f}
+.ordering-closed-banner[hidden]{display:none!important}
+.ordering-closed-banner strong,.ordering-closed-banner small{display:block}
+.ordering-closed-banner strong{font-size:13px;font-weight:750;line-height:1.25}
+.ordering-closed-banner small{margin-top:4px;color:#7e716a;font-size:10.5px;line-height:1.4}
+.cart-closed-banner{margin:10px 12px 0;background:#fff8f5;border-color:#f0d2c4;color:#6b3f30}
+.cart-closed-banner small{color:#916b5c}
+
 /* Send button: contact missing = gray, contact ready/time missing = light orange, everything ready = KØL orange */
 #checkoutNext:disabled{background:#d8d3cf!important;color:#fff!important;opacity:.82!important;cursor:not-allowed!important}
 #checkoutNext.needs-time:not(:disabled){background:#f5b091!important;color:#fff!important;opacity:1!important;cursor:pointer!important}
@@ -65,4 +73,5 @@
   .pickup-mode-check{width:22px;height:22px}
   .pickup-mode-btn strong{font-size:12.5px}
   .pickup-mode-btn small{font-size:9.4px}
+  .ordering-closed-banner{margin-left:10px;margin-right:10px;padding:10px 11px}
 }
