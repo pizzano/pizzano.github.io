@@ -54,6 +54,9 @@
 #checkoutNext.ready:not(:disabled){background:#f36a2d!important;color:#fff!important;opacity:1!important;cursor:pointer!important}
 #checkoutNext.store-closed{background:#d8d3cf!important;color:#fff!important;opacity:.82!important;cursor:not-allowed!important}
 
+/* Menu footer */
+#menuShell::after{content:'Powered by ChatGPT';display:block;padding:28px 14px 32px;text-align:center;color:#9a918b;font-size:11px;line-height:1.3;letter-spacing:.01em;border-top:1px solid #eee7e2;background:#fff}
+
 @media(max-width:420px){
   .final-section-head{padding:9px 10px;min-height:59px}
   .keyboard-hint{font-size:10px}
