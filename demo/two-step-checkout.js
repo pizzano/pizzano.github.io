@@ -10,30 +10,33 @@
   const loginHint = document.querySelector('#checkoutLoginHint');
   if (!step1 || !step2 || !step3 || !pickupOptions || !contactGrid) return;
 
+  let pickupMode = '';
+  pickupChoice = '';
+
   const title = step2.querySelector('.checkout-title');
   const titleStrong = title?.querySelector('strong');
   const titleSmall = title?.querySelector('small');
   if (titleStrong) titleStrong.textContent = 'Fullfør bestilling';
-  if (titleSmall) titleSmall.textContent = 'Hentetid og kontaktinformasjon.';
-
-  const pickupSection = document.createElement('section');
-  pickupSection.className = 'final-checkout-section';
-  pickupSection.id = 'finalPickupSection';
-  pickupSection.innerHTML = '<div class="final-section-head"><span>1</span><div><strong>Hentetid</strong><small>Velg når du ønsker å hente.</small></div></div>';
-  pickupSection.appendChild(pickupOptions);
+  if (titleSmall) titleSmall.textContent = 'Fyll inn kontaktinfo først, og velg deretter hentetid.';
 
   const contactSection = document.createElement('section');
   contactSection.className = 'final-checkout-section';
   contactSection.id = 'finalContactSection';
   const contactHead = document.createElement('div');
   contactHead.className = 'final-section-head';
-  contactHead.innerHTML = '<span>2</span><div><strong>Kontaktinformasjon</strong></div>';
-  if (loginHint) contactHead.lastElementChild.appendChild(loginHint);
+  contactHead.innerHTML = '<span>1</span><div><strong>Navn og telefon</strong><small>Vi bruker dette bare for bestillingen din.</small></div>';
+  if (loginHint) loginHint.hidden = true;
   contactSection.appendChild(contactHead);
   contactSection.appendChild(contactGrid);
 
-  step2.appendChild(pickupSection);
+  const pickupSection = document.createElement('section');
+  pickupSection.className = 'final-checkout-section';
+  pickupSection.id = 'finalPickupSection';
+  pickupSection.innerHTML = '<div class="final-section-head"><span>2</span><div><strong>Velg hentetid</strong><small>Velg alltid Snarest mulig eller et bestemt tidspunkt.</small></div></div>';
+  pickupSection.appendChild(pickupOptions);
+
   step2.appendChild(contactSection);
+  step2.appendChild(pickupSection);
   step3.hidden = true;
 
   const nameInput = document.querySelector('#checkoutName');
@@ -57,30 +60,91 @@
   keyboardHint.textContent = 'Trykk Ferdig på tastaturet eller trykk utenfor feltet.';
   contactGrid.insertBefore(keyboardHint, document.querySelector('#checkoutConfirmCard'));
 
+  const pickupReady = () => pickupChoice === 'asap' || /^\d{2}:\d{2}$/.test(String(pickupChoice || ''));
+
+  function syncPickupUi() {
+    pickupSection.classList.toggle('is-complete', pickupReady());
+    pickupSection.classList.toggle('needs-choice', !pickupReady());
+  }
+
+  renderPickupTimes = function () {
+    const slots = pickupSlots();
+    if (/^\d{2}:\d{2}$/.test(String(pickupChoice || '')) && !slots.includes(pickupChoice)) {
+      pickupChoice = '';
+      pickupMode = 'scheduled';
+    }
+    if (pickupChoice === 'asap') pickupMode = 'asap';
+    else if (/^\d{2}:\d{2}$/.test(String(pickupChoice || ''))) pickupMode = 'scheduled';
+
+    pickupOptions.innerHTML = `
+      <div class="pickup-mode-row">
+        <button type="button" class="pickup-mode-btn ${pickupMode === 'asap' ? 'active' : ''}" data-pickup-mode="asap">
+          <span class="pickup-mode-check">${pickupMode === 'asap' ? '✓' : ''}</span>
+          <span><strong>Snarest mulig</strong><small>Hent så snart maten er klar</small></span>
+        </button>
+        <button type="button" class="pickup-mode-btn ${pickupMode === 'scheduled' ? 'active' : ''}" data-pickup-mode="scheduled">
+          <span class="pickup-mode-check">${pickupMode === 'scheduled' ? '✓' : ''}</span>
+          <span><strong>Velg hentetid</strong><small>Velg et tidspunkt</small></span>
+        </button>
+      </div>
+      <div class="pickup-time-grid" ${pickupMode === 'scheduled' ? '' : 'hidden'}>
+        ${slots.map(t => `<button type="button" class="pickup-time-btn ${pickupChoice === t ? 'active' : ''}" data-pickup-time="${t}">${t}</button>`).join('')}
+      </div>`;
+
+    pickupOptions.querySelectorAll('[data-pickup-mode]').forEach(btn => {
+      btn.onclick = () => {
+        pickupMode = btn.dataset.pickupMode;
+        pickupChoice = pickupMode === 'asap' ? 'asap' : '';
+        renderPickupTimes();
+        syncCheckoutValidation();
+      };
+    });
+    pickupOptions.querySelectorAll('[data-pickup-time]').forEach(btn => {
+      btn.onclick = () => {
+        pickupMode = 'scheduled';
+        pickupChoice = btn.dataset.pickupTime;
+        renderPickupTimes();
+        syncCheckoutValidation();
+      };
+    });
+    syncPickupUi();
+  };
+
   syncCheckoutValidation = function () {
     const s = checkoutContactState();
-    const ready = s.nameOk && s.phoneOk;
+    const contactReady = s.nameOk && s.phoneOk;
+    const timeReady = pickupReady();
     const nf = document.querySelector('#checkoutNameField');
     const pf = document.querySelector('#checkoutPhoneField');
     const card = document.querySelector('#checkoutConfirmCard');
+
     nf?.classList.toggle('valid', s.nameOk);
     pf?.classList.toggle('valid', s.phoneOk);
-    if (card) card.hidden = !ready;
-    pickupSection.classList.toggle('is-complete', !!pickupChoice);
-    contactSection.classList.toggle('is-complete', ready);
+    if (card) {
+      card.hidden = !contactReady;
+      if (contactReady) card.querySelector('small').textContent = 'Kontaktinfo er ferdig. Velg hentetid nedenfor.';
+    }
+    contactSection.classList.toggle('is-complete', contactReady);
+    syncPickupUi();
+
     const badge = step2.querySelector('.checkout-title > span');
     if (badge) {
-      badge.textContent = ready ? '✓' : '2';
-      badge.classList.toggle('step-ok', ready);
+      const complete = contactReady && timeReady;
+      badge.textContent = complete ? '✓' : '2';
+      badge.classList.toggle('step-ok', complete);
     }
+
     if (checkoutStep === 2) {
       const next = document.querySelector('#checkoutNext');
       if (next) {
-        next.disabled = !ready;
-        next.classList.toggle('ready', ready);
-        next.style.background = ready ? '' : '#d4cfcb';
-        next.style.opacity = ready ? '1' : '.78';
-        next.style.cursor = ready ? 'pointer' : 'not-allowed';
+        const canPromptTime = contactReady && !timeReady;
+        const canSend = contactReady && timeReady;
+        next.disabled = !contactReady;
+        next.classList.toggle('ready', canSend);
+        next.classList.toggle('needs-time', canPromptTime);
+        next.style.background = '';
+        next.style.opacity = '1';
+        next.style.cursor = contactReady ? 'pointer' : 'not-allowed';
       }
     }
   };
@@ -113,6 +177,9 @@
         if (e.key === 'Enter') {
           e.preventDefault();
           p.blur();
+          if (checkoutContactState().nameOk && checkoutContactState().phoneOk && !pickupReady()) {
+            setTimeout(() => pickupSection.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+          }
         }
       });
     }
@@ -143,24 +210,32 @@
     const step1Badge = step1.querySelector('.checkout-title > span');
     const step2Badge = step2.querySelector('.checkout-title > span');
     const contact = checkoutContactState();
+    const complete = contact.nameOk && contact.phoneOk && pickupReady();
 
     if (step1Badge) {
       step1Badge.textContent = cart.length ? '✓' : '1';
       step1Badge.classList.toggle('step-ok', !!cart.length);
     }
     if (step2Badge) {
-      step2Badge.textContent = contact.nameOk && contact.phoneOk ? '✓' : '2';
-      step2Badge.classList.toggle('step-ok', contact.nameOk && contact.phoneOk);
+      step2Badge.textContent = complete ? '✓' : '2';
+      step2Badge.classList.toggle('step-ok', complete);
     }
 
     const next = document.querySelector('#checkoutNext');
     if (next) {
       next.textContent = checkoutStep === 2 ? 'Send bestilling' : 'Neste';
-      next.disabled = (checkoutStep === 1 && !cart.length) || (checkoutStep === 2 && !(contact.nameOk && contact.phoneOk));
-      next.style.background = next.disabled ? '#d4cfcb' : '';
-      next.style.opacity = next.disabled ? '.78' : '1';
+      if (checkoutStep === 1) {
+        next.disabled = !cart.length;
+        next.classList.toggle('ready', !!cart.length);
+        next.classList.remove('needs-time');
+      } else {
+        next.disabled = !(contact.nameOk && contact.phoneOk);
+        next.classList.toggle('ready', complete);
+        next.classList.toggle('needs-time', contact.nameOk && contact.phoneOk && !pickupReady());
+      }
+      next.style.background = '';
+      next.style.opacity = '1';
       next.style.cursor = next.disabled ? 'not-allowed' : 'pointer';
-      next.classList.toggle('ready', !next.disabled);
     }
 
     if (checkoutStep === 2) {
@@ -172,6 +247,15 @@
     const focused = cartOpen && checkoutStep === 2;
     document.body.classList.toggle('hide-tabs', focused);
     document.querySelector('#cartScreen').style.top = focused ? 'var(--head)' : 'calc(var(--head) + var(--tabs))';
+  };
+
+  const originalPlaceOrder = placeOrder;
+  placeOrder = function () {
+    originalPlaceOrder();
+    if (!cart.length) {
+      pickupChoice = '';
+      pickupMode = '';
+    }
   };
 
   const back = document.querySelector('#checkoutBack');
@@ -194,11 +278,21 @@
         else if (!c.phoneOk) document.querySelector('#checkoutPhone')?.focus();
         return;
       }
+
       const c = checkoutContactState();
       if (!c.nameOk || !c.phoneOk) {
         syncCheckoutValidation();
         return;
       }
+      if (!pickupReady()) {
+        document.activeElement?.blur?.();
+        pickupSection.classList.add('attention');
+        pickupSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Velg hentetid før du sender bestillingen');
+        setTimeout(() => pickupSection.classList.remove('attention'), 1400);
+        return;
+      }
+
       document.activeElement?.blur?.();
       placeOrder();
     };
