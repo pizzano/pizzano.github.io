@@ -1,0 +1,88 @@
+name: Refactor demo app structure
+on:
+  push:
+    paths:
+      - '.github/refactor-demo-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Consolidate demo files
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          root = Path('demo')
+          index_path = root / 'index.html'
+          css_path = root / 'kol.css'
+          legacy_js_path = root / 'two-step-checkout.js'
+          legacy_css_path = root / 'two-step-checkout.css'
+          app_path = root / 'app.js'
+
+          html = index_path.read_text(encoding='utf-8')
+          css = css_path.read_text(encoding='utf-8')
+          extra_js = legacy_js_path.read_text(encoding='utf-8')
+          extra_css = legacy_css_path.read_text(encoding='utf-8')
+
+          match = re.search(r'<script>\s*(.*?)\s*</script>', html, flags=re.S)
+          if not match:
+              raise SystemExit('Inline app script not found')
+
+          base_js = match.group(1).strip()
+          app_js = (
+              "/* KØL customer app — consolidated 2026-08-20 */\n"
+              "/* Core menu, cart, profile, loyalty, allergens and admin bridge */\n\n"
+              + base_js
+              + "\n\n/* Two-step checkout and mobile keyboard UX */\n"
+              + extra_js.strip()
+              + "\n"
+          )
+
+          html = html[:match.start()] + '<script src="app.js?v=20260820"></script>' + html[match.end():]
+          html = re.sub(r'\n?<script src="two-step-checkout\.js\?[^\"]*"></script>', '', html)
+          html = re.sub(r'\n?<link rel="stylesheet" href="two-step-checkout\.css\?[^\"]*">', '', html)
+          html = re.sub(r'kol\.css\?v=[^\"]+', 'kol.css?v=20260820-app', html)
+
+          marker = '/* Consolidated two-step checkout styles — 2026-08-20 */'
+          if marker not in css:
+              css = css.rstrip() + '\n\n' + marker + '\n' + extra_css.strip() + '\n'
+
+          index_path.write_text(html, encoding='utf-8')
+          app_path.write_text(app_js, encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
+
+          legacy_js_path.unlink()
+          legacy_css_path.unlink()
+
+          if '<script>' in html:
+              raise SystemExit('Inline script still present')
+          if 'two-step-checkout.js' in html or 'two-step-checkout.css' in html:
+              raise SystemExit('Legacy checkout references still present')
+      - name: Validate JavaScript
+        run: node --check demo/app.js
+      - name: Validate structure
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('demo/index.html').read_text()
+          assert 'app.js?v=20260820' in html
+          assert 'kol.css?v=20260820-app' in html
+          assert not Path('demo/two-step-checkout.js').exists()
+          assert not Path('demo/two-step-checkout.css').exists()
+          assert Path('demo/app.js').stat().st_size > 10000
+      - name: Commit refactor and cleanup
+        run: |
+          git config user.name "KOL Refactor Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -- demo/index.html demo/kol.css demo/app.js
+          git rm -f demo/two-step-checkout.js demo/two-step-checkout.css
+          git rm -f .github/workflows/refactor-demo-app.yml .github/refactor-demo-trigger.txt
+          git commit -m "Consolidate demo into index css and app js"
+          git push origin main
