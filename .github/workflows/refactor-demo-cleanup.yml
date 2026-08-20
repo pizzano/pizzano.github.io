@@ -1,0 +1,432 @@
+name: Clean demo app internals
+on:
+  push:
+    paths:
+      - '.github/refactor-demo-cleanup-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Remove legacy checkout layers
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          index_path = Path('demo/index.html')
+          app_path = Path('demo/app.js')
+          css_path = Path('demo/kol.css')
+
+          html = index_path.read_text(encoding='utf-8')
+          js = app_path.read_text(encoding='utf-8')
+          css = css_path.read_text(encoding='utf-8')
+
+          old_cart = re.search(r'<section class="screen" id="cartScreen" hidden>.*?</section>\n<section class="screen" id="accountScreen"', html, flags=re.S)
+          if not old_cart:
+              raise SystemExit('cart screen block not found')
+
+          new_cart = '''<section class="screen" id="cartScreen" hidden>
+  <div class="screen-scroll cart-scroll">
+    <div id="checkoutStep1">
+      <div class="checkout-title"><span>1</span><strong>Din bestilling</strong></div>
+      <div id="cartLines"></div>
+      <div class="empty-note" id="cartEmpty">Handlekurven er tom.</div>
+      <div class="cart-summary">
+        <div class="total-row"><span>Sluttsum</span><strong id="cartTotal">0,00 kr</strong></div>
+        <div class="cart-savings" id="cartSavings" hidden></div>
+        <div class="tax-note-row" id="taxNote">(inkl. mva)</div>
+      </div>
+    </div>
+
+    <div id="checkoutStep2" hidden>
+      <div class="checkout-title">
+        <span>2</span>
+        <div><strong>Fullfør bestilling</strong><small>Fyll inn kontaktinfo først, og velg deretter hentetid.</small></div>
+      </div>
+
+      <section class="final-checkout-section" id="finalContactSection">
+        <div class="final-section-head">
+          <span>1</span>
+          <div><strong>Navn og telefon</strong><small>Vi bruker dette bare for bestillingen din.</small></div>
+        </div>
+        <div class="checkout-grid contact-checkout-grid">
+          <label class="checkout-field" id="checkoutNameField">Hele navn
+            <span class="field-control"><input id="checkoutName" type="text" autocomplete="name" autocapitalize="words" enterkeyhint="next" placeholder="Hele navn"><i class="field-check">✓</i></span>
+          </label>
+          <label class="checkout-field" id="checkoutPhoneField">Telefonnummer
+            <span class="field-control"><input id="checkoutPhone" type="tel" autocomplete="tel-national" inputmode="tel" enterkeyhint="done" maxlength="8" placeholder="8 sifre"><i class="field-check">✓</i></span>
+          </label>
+          <small class="keyboard-hint">Trykk Ferdig på tastaturet eller trykk utenfor feltet.</small>
+          <div class="checkout-confirm-card" id="checkoutConfirmCard" hidden>
+            <span>✓</span><div><strong>Kontaktinfo er klar</strong><small>Kontaktinfo er ferdig. Velg hentetid nedenfor.</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-checkout-section" id="finalPickupSection">
+        <div class="final-section-head">
+          <span>2</span>
+          <div><strong>Velg hentetid</strong><small>Velg alltid Snarest mulig eller et bestemt tidspunkt.</small></div>
+        </div>
+        <div class="pickup-options" id="pickupOptions"></div>
+      </section>
+    </div>
+  </div>
+  <div class="checkout-footer"><button class="secondary" id="checkoutBack" hidden>Tilbake</button><button class="primary" id="checkoutNext">Neste</button></div>
+</section>
+<section class="screen" id="accountScreen"'''
+          html = html[:old_cart.start()] + new_cart + html[old_cart.end():]
+
+          html = re.sub(r'<div class="screen-title info-title"><small>KØL GRILL &amp; PIZZA</small><h2>Butikksinformasjon</h2></div>', '', html, count=1)
+
+          def remove_function(text, name):
+              m = re.search(rf'function\s+{re.escape(name)}\s*\(', text)
+              if not m:
+                  return text
+              i = m.end() - 1
+              paren = 0
+              while i < len(text):
+                  ch = text[i]
+                  if ch == '(':
+                      paren += 1
+                  elif ch == ')':
+                      paren -= 1
+                      if paren == 0:
+                          i += 1
+                          break
+                  i += 1
+              while i < len(text) and text[i].isspace():
+                  i += 1
+              if i >= len(text) or text[i] != '{':
+                  raise SystemExit(f'body not found for {name}')
+              start_body = i
+              depth = 0
+              quote = None
+              esc = False
+              template = False
+              i = start_body
+              while i < len(text):
+                  ch = text[i]
+                  if quote:
+                      if esc:
+                          esc = False
+                      elif ch == '\\':
+                          esc = True
+                      elif ch == quote:
+                          quote = None
+                  else:
+                      if ch in ('\"', "'"):
+                          quote = ch
+                      elif ch == '`':
+                          # Template literals in these functions do not contain unmatched braces that affect the outer function.
+                          j = i + 1
+                          esc2 = False
+                          while j < len(text):
+                              cj = text[j]
+                              if esc2:
+                                  esc2 = False
+                              elif cj == '\\':
+                                  esc2 = True
+                              elif cj == '`':
+                                  break
+                              j += 1
+                          i = j
+                      elif ch == '{':
+                          depth += 1
+                      elif ch == '}':
+                          depth -= 1
+                          if depth == 0:
+                              end = i + 1
+                              while end < len(text) and text[end] in ' \t':
+                                  end += 1
+                              if end < len(text) and text[end] == '\n':
+                                  end += 1
+                              return text[:m.start()] + text[end:]
+                  i += 1
+              raise SystemExit(f'unclosed function {name}')
+
+          for fn in ('syncCheckoutValidation', 'bindCheckoutValidation', 'renderPickupTimes', 'renderCheckoutStep'):
+              js = remove_function(js, fn)
+
+          js = js.replace("pickupChoice='asap',toastTimer=0", "pickupChoice='',pickupMode='',toastTimer=0")
+          js = js.replace("pickupChoice='asap';goMenu();", "pickupChoice='';pickupMode='';goMenu();")
+          js = js.replace(";$('#checkoutLoginHint').textContent=a?'Navn og telefon kan endres før bestillingen sendes.':'Fyll inn kontaktinformasjonen din.'", "")
+
+          js = js.replace("$('#checkoutBack').onclick=()=>{checkoutStep=Math.max(1,checkoutStep-1);renderCheckoutStep()};", "")
+          js = js.replace("$('#checkoutNext').onclick=()=>{if(checkoutStep===1&&!cart.length)return;if(checkoutStep<3){checkoutStep++;renderCheckoutStep()}else placeOrder()};", "")
+
+          marker = '/* Two-step checkout and mobile keyboard UX */'
+          if marker not in js:
+              raise SystemExit('checkout marker missing')
+          js = js.split(marker, 1)[0].rstrip() + '\n\n/* Checkout */\n' + r'''(() => {
+  const step1 = document.querySelector('#checkoutStep1');
+  const step2 = document.querySelector('#checkoutStep2');
+  const contactSection = document.querySelector('#finalContactSection');
+  const pickupSection = document.querySelector('#finalPickupSection');
+  const pickupOptions = document.querySelector('#pickupOptions');
+  if (!step1 || !step2 || !contactSection || !pickupSection || !pickupOptions) return;
+
+  const pickupReady = () =>
+    pickupChoice === 'asap' || /^\d{2}:\d{2}$/.test(String(pickupChoice || ''));
+
+  function syncPickupUi() {
+    pickupSection.classList.toggle('is-complete', pickupReady());
+    pickupSection.classList.toggle('needs-choice', !pickupReady());
+  }
+
+  renderPickupTimes = function () {
+    const slots = pickupSlots();
+    if (/^\d{2}:\d{2}$/.test(String(pickupChoice || '')) && !slots.includes(pickupChoice)) {
+      pickupChoice = '';
+      pickupMode = '';
+    }
+    if (pickupChoice === 'asap') pickupMode = 'asap';
+    else if (/^\d{2}:\d{2}$/.test(String(pickupChoice || ''))) pickupMode = 'scheduled';
+
+    pickupOptions.innerHTML = `
+      <div class="pickup-mode-row">
+        <button type="button" class="pickup-mode-btn ${pickupMode === 'asap' ? 'active' : ''}" data-pickup-mode="asap">
+          <span class="pickup-mode-check">${pickupMode === 'asap' ? '✓' : ''}</span>
+          <span><strong>Snarest mulig</strong><small>Hent så snart maten er klar</small></span>
+        </button>
+        <button type="button" class="pickup-mode-btn ${pickupMode === 'scheduled' ? 'active' : ''}" data-pickup-mode="scheduled">
+          <span class="pickup-mode-check">${pickupMode === 'scheduled' ? '✓' : ''}</span>
+          <span><strong>Velg hentetid</strong><small>Velg et tidspunkt</small></span>
+        </button>
+      </div>
+      <div class="pickup-time-grid" ${pickupMode === 'scheduled' ? '' : 'hidden'}>
+        ${slots.map(t => `<button type="button" class="pickup-time-btn ${pickupChoice === t ? 'active' : ''}" data-pickup-time="${t}">${t}</button>`).join('')}
+      </div>`;
+
+    pickupOptions.querySelectorAll('[data-pickup-mode]').forEach(btn => {
+      btn.onclick = () => {
+        pickupMode = btn.dataset.pickupMode;
+        pickupChoice = pickupMode === 'asap' ? 'asap' : '';
+        renderPickupTimes();
+        syncCheckoutValidation();
+      };
+    });
+    pickupOptions.querySelectorAll('[data-pickup-time]').forEach(btn => {
+      btn.onclick = () => {
+        pickupMode = 'scheduled';
+        pickupChoice = btn.dataset.pickupTime;
+        renderPickupTimes();
+        syncCheckoutValidation();
+      };
+    });
+    syncPickupUi();
+  };
+
+  syncCheckoutValidation = function () {
+    const state = checkoutContactState();
+    const contactReady = state.nameOk && state.phoneOk;
+    const timeReady = pickupReady();
+    document.querySelector('#checkoutNameField')?.classList.toggle('valid', state.nameOk);
+    document.querySelector('#checkoutPhoneField')?.classList.toggle('valid', state.phoneOk);
+
+    const confirm = document.querySelector('#checkoutConfirmCard');
+    if (confirm) confirm.hidden = !contactReady;
+    contactSection.classList.toggle('is-complete', contactReady);
+    syncPickupUi();
+
+    const badge = step2.querySelector('.checkout-title > span');
+    if (badge) {
+      const complete = contactReady && timeReady;
+      badge.textContent = complete ? '✓' : '2';
+      badge.classList.toggle('step-ok', complete);
+    }
+
+    if (checkoutStep === 2) {
+      const next = document.querySelector('#checkoutNext');
+      if (next) {
+        next.disabled = !contactReady;
+        next.classList.toggle('ready', contactReady && timeReady);
+        next.classList.toggle('needs-time', contactReady && !timeReady);
+        next.style.background = '';
+        next.style.opacity = '1';
+        next.style.cursor = next.disabled ? 'not-allowed' : 'pointer';
+      }
+    }
+  };
+
+  bindCheckoutValidation = function () {
+    const name = document.querySelector('#checkoutName');
+    const phone = document.querySelector('#checkoutPhone');
+    const bringIntoView = input => setTimeout(() => input?.scrollIntoView({behavior:'smooth', block:'center'}), 180);
+
+    if (name && !name.dataset.validationBound) {
+      name.dataset.validationBound = '1';
+      ['input', 'change', 'blur'].forEach(event => name.addEventListener(event, syncCheckoutValidation));
+      name.addEventListener('focus', () => bringIntoView(name));
+      name.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          phone?.focus();
+        }
+      });
+    }
+
+    if (phone && !phone.dataset.validationBound) {
+      phone.dataset.validationBound = '1';
+      ['input', 'change', 'blur'].forEach(event => phone.addEventListener(event, () => {
+        phone.value = phone.value.replace(/\D/g, '').slice(0, 8);
+        syncCheckoutValidation();
+      }));
+      phone.addEventListener('focus', () => bringIntoView(phone));
+      phone.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          phone.blur();
+          if (checkoutContactState().nameOk && checkoutContactState().phoneOk && !pickupReady()) {
+            setTimeout(() => pickupSection.scrollIntoView({behavior:'smooth', block:'center'}), 80);
+          }
+        }
+      });
+    }
+
+    if (!document.documentElement.dataset.checkoutKeyboardBound) {
+      document.documentElement.dataset.checkoutKeyboardBound = '1';
+      document.addEventListener('pointerdown', event => {
+        const active = document.activeElement;
+        if (!active || !['checkoutName', 'checkoutPhone'].includes(active.id)) return;
+        if (event.target === active || event.target.closest('input, textarea')) return;
+        active.blur();
+      }, {capture:true});
+    }
+
+    syncCheckoutValidation();
+    requestAnimationFrame(syncCheckoutValidation);
+  };
+
+  renderCheckoutStep = function () {
+    step1.hidden = checkoutStep !== 1;
+    step2.hidden = checkoutStep !== 2;
+    const back = document.querySelector('#checkoutBack');
+    if (back) back.hidden = checkoutStep === 1;
+
+    const step1Badge = step1.querySelector('.checkout-title > span');
+    const step2Badge = step2.querySelector('.checkout-title > span');
+    const contact = checkoutContactState();
+    const complete = contact.nameOk && contact.phoneOk && pickupReady();
+
+    if (step1Badge) {
+      step1Badge.textContent = cart.length ? '✓' : '1';
+      step1Badge.classList.toggle('step-ok', !!cart.length);
+    }
+    if (step2Badge) {
+      step2Badge.textContent = complete ? '✓' : '2';
+      step2Badge.classList.toggle('step-ok', complete);
+    }
+
+    const next = document.querySelector('#checkoutNext');
+    if (next) {
+      next.textContent = checkoutStep === 2 ? 'Send bestilling' : 'Neste';
+      if (checkoutStep === 1) {
+        next.disabled = !cart.length;
+        next.classList.toggle('ready', !!cart.length);
+        next.classList.remove('needs-time');
+      } else {
+        const contactReady = contact.nameOk && contact.phoneOk;
+        next.disabled = !contactReady;
+        next.classList.toggle('ready', complete);
+        next.classList.toggle('needs-time', contactReady && !pickupReady());
+      }
+      next.style.background = '';
+      next.style.opacity = '1';
+      next.style.cursor = next.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    if (checkoutStep === 2) {
+      renderPickupTimes();
+      syncCheckoutValidation();
+    }
+
+    const focused = !document.querySelector('#cartScreen').hidden && checkoutStep === 2;
+    document.body.classList.toggle('hide-tabs', focused);
+    document.querySelector('#cartScreen').style.top = focused ? 'var(--head)' : 'calc(var(--head) + var(--tabs))';
+  };
+
+  document.querySelector('#checkoutBack').onclick = () => {
+    document.activeElement?.blur?.();
+    checkoutStep = 1;
+    renderCheckoutStep();
+  };
+
+  document.querySelector('#checkoutNext').onclick = () => {
+    if (checkoutStep === 1) {
+      if (!cart.length) return;
+      checkoutStep = 2;
+      renderCheckoutStep();
+      const contact = checkoutContactState();
+      if (!contact.nameOk) document.querySelector('#checkoutName')?.focus();
+      else if (!contact.phoneOk) document.querySelector('#checkoutPhone')?.focus();
+      return;
+    }
+
+    const contact = checkoutContactState();
+    if (!contact.nameOk || !contact.phoneOk) {
+      syncCheckoutValidation();
+      return;
+    }
+    if (!pickupReady()) {
+      document.activeElement?.blur?.();
+      pickupSection.classList.add('attention');
+      pickupSection.scrollIntoView({behavior:'smooth', block:'center'});
+      showToast('Velg hentetid før du sender bestillingen');
+      setTimeout(() => pickupSection.classList.remove('attention'), 1400);
+      return;
+    }
+    document.activeElement?.blur?.();
+    placeOrder();
+  };
+
+  bindCheckoutValidation();
+  renderCheckoutStep();
+})();
+'''
+
+          # Remove obsolete CSS layers while preserving the user's authored values.
+          css = re.sub(r'/\* Two-stage pickup selector:.*?\*/.*?(?=/\* Profile visual system \*/)', '', css, flags=re.S)
+          css = css.replace('#infoScreen .info-title{display:none!important}\n', '')
+          css = css.replace('#checkoutStep3{display:none!important}\n', '')
+          css = css.replace('#checkoutStep1,#checkoutStep2,#checkoutStep3', '#checkoutStep1,#checkoutStep2')
+          css = css.replace('#checkoutStep1 .checkout-title,#checkoutStep2 .checkout-title,#checkoutStep3 .checkout-title', '#checkoutStep1 .checkout-title,#checkoutStep2 .checkout-title')
+          css = css.replace('#checkoutStep1 .checkout-title:after,#checkoutStep2 .checkout-title:after,#checkoutStep3 .checkout-title:after', '#checkoutStep1 .checkout-title:after,#checkoutStep2 .checkout-title:after')
+          css = css.replace("#checkoutStep1 .checkout-title:after{content:'STEG 1 / 3'}#checkoutStep2 .checkout-title:after{content:'STEG 2 / 3'}#checkoutStep3 .checkout-title:after{content:'STEG 3 / 3'}", "#checkoutStep1 .checkout-title:after{content:'STEG 1 / 2'}#checkoutStep2 .checkout-title:after{content:'STEG 2 / 2'}")
+          css = css.replace('#checkoutStep2 .pickup-options,#checkoutStep3 .checkout-grid', '#checkoutStep2 .pickup-options')
+
+          index_path.write_text(html, encoding='utf-8')
+          app_path.write_text(js, encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
+      - name: Validate JavaScript
+        run: node --check demo/app.js
+      - name: Validate cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+          html = Path('demo/index.html').read_text()
+          js = Path('demo/app.js').read_text()
+          css = Path('demo/kol.css').read_text()
+          assert 'checkoutStep3' not in html
+          assert 'checkoutLoginHint' not in html
+          assert 'info-title' not in html
+          assert 'two-step-checkout' not in html
+          assert "pickupChoice='asap',toastTimer" not in js
+          assert js.count('renderPickupTimes = function') == 1
+          assert js.count('renderCheckoutStep = function') == 1
+          assert js.count('syncCheckoutValidation = function') == 1
+          assert 'Two-stage pickup selector' not in css
+      - name: Commit cleanup and remove workflow
+        run: |
+          git config user.name "KOL Refactor Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -- demo/index.html demo/kol.css demo/app.js
+          git rm -f .github/workflows/refactor-demo-cleanup.yml .github/refactor-demo-cleanup-trigger.txt
+          git commit -m "Remove legacy checkout layers from demo"
+          git push origin main
