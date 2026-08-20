@@ -1,39 +1,210 @@
 <!doctype html>
 <html lang="no">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f36a2d">
-<title>KØL Grill & Pizza – Demo</title>
-<link rel="stylesheet" href="kol.css?v=20260820-app">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f36a2d">
+  <title>KØL Grill & Pizza – Demo</title>
+  <link rel="stylesheet" href="kol.css?v=20260820-refactor">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="kol-customer">
-<div class="customer-app">
-<header class="appbar">
-  <div class="appbar-main">
-    <button class="appbar-brand" id="brandBtn" type="button">
-      <span class="brand-logo"><b>KØL</b><small>GRILL &amp; PIZZA</small></span>
-      <span class="brand-back">‹ Meny</span>
-    </button>
-    <div class="appbar-actions">
-      <button class="icon-button" id="infoBtn" aria-label="Info"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10.8v6M12 7.1h.01"/></svg></button>
-      <button class="icon-button" id="profileBtn" aria-label="Profil"><svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg></button>
-      <button class="icon-button cart-toggle" id="cartBtn" aria-label="Handlekurv"><svg class="plain-icon" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 11h-11zM9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span id="cartCount">0</span></button>
-    </div>
+  <div class="customer-app">
+    <header class="appbar">
+      <div class="appbar-main">
+        <button class="appbar-brand" id="brandBtn" type="button">
+          <span class="brand-logo"><b>KØL</b><small>GRILL &amp; PIZZA</small></span>
+          <span class="brand-back">‹ Meny</span>
+        </button>
+        <div class="appbar-actions">
+          <button class="icon-button" id="infoBtn" aria-label="Info">
+            <svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10.8v6M12 7.1h.01"/></svg>
+          </button>
+          <button class="icon-button" id="profileBtn" aria-label="Profil">
+            <svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>
+          </button>
+          <button class="icon-button cart-toggle" id="cartBtn" aria-label="Handlekurv">
+            <svg class="plain-icon" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 11h-11zM9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+            <span id="cartCount">0</span>
+          </button>
+        </div>
+      </div>
+      <nav class="category-tabs-wrap"><div class="category-tabs-scroll" id="tabs"></div></nav>
+    </header>
+
+    <main class="menu-shell" id="menuShell">
+      <div class="menu-topline">
+        <h1>Meny</h1>
+        <button class="allergen-open" id="allergenBtn">⚠ Matallergier <b id="allergenCount"></b></button>
+      </div>
+      <section id="menuSections"></section>
+    </main>
+
+    <section class="screen" id="productScreen" hidden>
+      <div class="screen-scroll">
+        <div class="product-photo" id="productPhoto"></div>
+        <div class="product-body">
+          <h2 class="product-name" id="productTitle">Produkt</h2>
+          <p class="product-summary" id="productDesc"></p>
+          <div class="reward-product-banner" id="rewardProductBanner" hidden></div>
+          <div class="product-choice-group" id="sizeGroup">
+            <div class="product-choice-head"><strong>Velg størrelse</strong><span>Obligatorisk</span></div>
+            <div id="sizeOptions"></div>
+          </div>
+          <div class="product-choice-group" id="strengthGroup" hidden>
+            <div class="product-choice-head"><strong>Velg styrke</strong><span>Obligatorisk</span></div>
+            <div id="strengthOptions"></div>
+          </div>
+          <div class="product-note-block">
+            <label for="productNote">Spesielle instrukser</label>
+            <textarea id="productNote" placeholder="Eksempel: Ingen løk"></textarea>
+          </div>
+          <div class="quantity-row">
+            <span>Mengde</span>
+            <div class="quantity-stepper">
+              <button id="qtyMinus">−</button>
+              <strong id="qtyValue">1</strong>
+              <button id="qtyPlus">+</button>
+            </div>
+          </div>
+          <div class="product-allergens-inline" id="productAllergens"><strong>Allergener:</strong> Ingen oppgitt</div>
+        </div>
+      </div>
+      <div class="product-footer">
+        <strong id="productTotal">0,00 KR</strong>
+        <button class="primary" id="addToCart">Legg til i handlekurven</button>
+      </div>
+    </section>
+
+    <section class="screen" id="cartScreen" hidden>
+      <div class="screen-scroll cart-scroll">
+        <div id="checkoutStep1">
+          <div class="checkout-title"><span>1</span><strong>Din bestilling</strong></div>
+          <div id="cartLines"></div>
+          <div class="empty-note" id="cartEmpty">Handlekurven er tom.</div>
+          <div class="cart-summary">
+            <div class="total-row"><span>Sluttsum</span><strong id="cartTotal">0,00 kr</strong></div>
+            <div class="cart-savings" id="cartSavings" hidden></div>
+            <div class="tax-note-row" id="taxNote">(inkl. mva)</div>
+          </div>
+        </div>
+
+        <div id="checkoutStep2" hidden>
+          <div class="checkout-title">
+            <span>2</span>
+            <div><strong>Fullfør bestilling</strong><small>Fyll inn kontaktinfo først, og velg deretter hentetid.</small></div>
+          </div>
+
+          <section class="final-checkout-section" id="finalContactSection">
+            <div class="final-section-head">
+              <span>1</span>
+              <div><strong>Navn og telefon</strong><small>Vi bruker dette bare for bestillingen din.</small></div>
+            </div>
+            <div class="checkout-grid contact-checkout-grid">
+              <label class="checkout-field" id="checkoutNameField">Hele navn
+                <span class="field-control"><input id="checkoutName" type="text" autocomplete="name" autocapitalize="words" enterkeyhint="next" placeholder="Hele navn"><i class="field-check">✓</i></span>
+              </label>
+              <label class="checkout-field" id="checkoutPhoneField">Telefonnummer
+                <span class="field-control"><input id="checkoutPhone" type="tel" autocomplete="tel-national" inputmode="tel" enterkeyhint="done" maxlength="8" placeholder="8 sifre"><i class="field-check">✓</i></span>
+              </label>
+              <small class="keyboard-hint">Trykk Ferdig på tastaturet eller trykk utenfor feltet.</small>
+              <div class="checkout-confirm-card" id="checkoutConfirmCard" hidden>
+                <span>✓</span>
+                <div><strong>Kontaktinfo er klar</strong><small>Kontaktinfo er ferdig. Velg hentetid nedenfor.</small></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="final-checkout-section" id="finalPickupSection">
+            <div class="final-section-head">
+              <span>2</span>
+              <div><strong>Velg hentetid</strong><small>Velg alltid Snarest mulig eller et bestemt tidspunkt.</small></div>
+            </div>
+            <div class="pickup-options" id="pickupOptions"></div>
+          </section>
+        </div>
+      </div>
+      <div class="checkout-footer">
+        <button class="secondary" id="checkoutBack" hidden>Tilbake</button>
+        <button class="primary" id="checkoutNext">Neste</button>
+      </div>
+    </section>
+
+    <section class="screen" id="accountScreen" hidden><div class="screen-scroll" id="accountContent"></div></section>
+
+    <section class="screen" id="infoScreen" hidden>
+      <div class="screen-scroll info-scroll">
+        <div class="info-tabs">
+          <button class="info-tab active" data-info-tab="about">Om KØL</button>
+          <button class="info-tab" data-info-tab="terms">Vilkår</button>
+          <button class="info-tab" data-info-tab="privacy">Personvern</button>
+        </div>
+        <div class="info-panel active" data-info-panel="about">
+          <section class="store-card store-main-card">
+            <div class="store-identity">
+              <div class="store-logo-mini">KØL</div>
+              <div><h3 id="storeName">KØL Grill &amp; Pizza</h3><p id="storeAddress">Øgardsvegen 44 · 2100 Skarnes</p></div>
+            </div>
+            <div class="store-quick-actions">
+              <button id="storeMapBtn"><span>⌖</span><b>Kart</b></button>
+              <a id="storeCallAction" href="tel:+4741145353"><span>☎</span><b>Ring</b></a>
+            </div>
+          </section>
+          <section class="info-list-card">
+            <button class="info-list-row" id="infoAllergenBtn"><span class="info-row-icon">⚠</span><span><strong>Matallergier</strong><small>Se allergeninformasjon i menyen</small></span><b>›</b></button>
+            <a class="info-list-row" id="storePhoneRow" href="tel:+4741145353"><span class="info-row-icon">☎</span><span><strong>Kontakt oss</strong><small id="storePhoneText">+47 41 14 53 53</small></span><b>›</b></a>
+            <div class="info-list-row"><span class="info-row-icon">◷</span><span><strong>Åpningstider</strong><small id="storeOpeningDays">Mandag–søndag</small></span><em id="storeOpeningTime">14:00–22:00</em></div>
+          </section>
+          <section class="store-section compact-social">
+            <h3>Følg KØL</h3>
+            <div class="social-row"><button>Instagram</button><button>Facebook</button></div>
+          </section>
+        </div>
+        <div class="info-panel" data-info-panel="terms"><section class="store-card text-card"><h3>Vilkår</h3><p>Bestillingen er bindende når den er sendt. Hentetid er veiledende og kan variere ved stor pågang.</p></section></div>
+        <div class="info-panel" data-info-panel="privacy"><section class="store-card text-card"><h3>Personvern</h3><p>Denne LocalStorage-demoen lagrer konto, favoritter, allergener og bestillinger på denne enheten.</p></section></div>
+      </div>
+    </section>
+
+    <section class="screen" id="rewardScreen" hidden>
+      <div class="screen-scroll reward-scroll">
+        <div class="screen-title"><h2>Velg gratis Stor Pizza</h2><p>Du har samlet 10 kuponger. Velg den neste Stor Pizzaen din gratis.</p></div>
+        <div class="reward-pizza-list" id="rewardPizzaList"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="couponQrScreen" hidden>
+      <div class="screen-scroll">
+        <div class="coupon-qr-wrap"><div class="coupon-qr-card">
+          <h2>Kupongkort</h2>
+          <p>Vis denne QR-koden i kassen ved telefonbestillinger.</p>
+          <div class="coupon-qr-code" id="couponQrCode"></div>
+          <div class="coupon-qr-person"><strong id="couponQrName"></strong><small id="couponQrPhone"></small></div>
+          <button class="coupon-qr-back" id="couponQrBack">‹ Til profil</button>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="screen" id="kasseScreen" hidden>
+      <div class="screen-scroll">
+        <div class="screen-title"><h2>Kupongkontroll</h2><p>Manuell registrering av Stor Pizza-kuponger.</p></div>
+        <div class="kasse-coupon-wrap" id="kasseContent"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="allergenScreen" hidden>
+      <div class="screen-scroll allergen-scroll">
+        <div class="screen-title"><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av dem.</p></div>
+        <div class="allergen-toolbar"><label class="allergen-search"><span>⌕</span><input id="allergenSearch" type="search" placeholder="Søk allergen" autocomplete="off"></label></div>
+        <div class="allergen-grid" id="allergenGrid"></div>
+        <div class="allergen-bottom">
+          <div>Valgene lagres bare på denne enheten.</div>
+          <div class="allergen-actions"><button id="allergenReset">Nullstill</button><button class="primary" id="allergenSave">Lagre</button></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="action-toast" id="actionToast" role="status" aria-live="polite"></div>
   </div>
-  <nav class="category-tabs-wrap"><div class="category-tabs-scroll" id="tabs"></div></nav>
-</header>
-<main class="menu-shell" id="menuShell"><div class="menu-topline"><h1>Meny</h1><button class="allergen-open" id="allergenBtn">⚠ Matallergier <b id="allergenCount"></b></button></div><section id="menuSections"></section></main>
-<section class="screen" id="productScreen" hidden><div class="screen-scroll"><div class="product-photo" id="productPhoto"></div><div class="product-body"><h2 class="product-name" id="productTitle">Produkt</h2><p class="product-summary" id="productDesc"></p><div class="reward-product-banner" id="rewardProductBanner" hidden></div><div class="product-choice-group" id="sizeGroup"><div class="product-choice-head"><strong>Velg størrelse</strong><span>Obligatorisk</span></div><div id="sizeOptions"></div></div><div class="product-choice-group" id="strengthGroup" hidden><div class="product-choice-head"><strong>Velg styrke</strong><span>Obligatorisk</span></div><div id="strengthOptions"></div></div><div class="product-note-block"><label for="productNote">Spesielle instrukser</label><textarea id="productNote" placeholder="Eksempel: Ingen løk"></textarea></div><div class="quantity-row"><span>Mengde</span><div class="quantity-stepper"><button id="qtyMinus">−</button><strong id="qtyValue">1</strong><button id="qtyPlus">+</button></div></div><div class="product-allergens-inline" id="productAllergens"><strong>Allergener:</strong> Ingen oppgitt</div></div></div><div class="product-footer"><strong id="productTotal">0,00 KR</strong><button class="primary" id="addToCart">Legg til i handlekurven</button></div></section>
-<section class="screen" id="cartScreen" hidden><div class="screen-scroll cart-scroll"><div id="checkoutStep1"><div class="checkout-title"><span>1</span><strong>Din bestilling</strong></div><div id="cartLines"></div><div class="empty-note" id="cartEmpty">Handlekurven er tom.</div><div class="cart-summary"><div class="total-row"><span>Sluttsum</span><strong id="cartTotal">0,00 kr</strong></div><div class="cart-savings" id="cartSavings" hidden></div><div class="tax-note-row" id="taxNote">(inkl. mva)</div></div></div><div id="checkoutStep2" hidden><div class="checkout-title"><span>2</span><div><strong>Velg hentetid</strong><small>Velg når du ønsker å hente.</small></div></div><div class="pickup-options" id="pickupOptions"></div></div><div id="checkoutStep3" hidden><div class="checkout-title"><span>3</span><div><strong>Navn og telefon</strong><small id="checkoutLoginHint"></small></div></div><div class="checkout-grid contact-checkout-grid"><label class="checkout-field" id="checkoutNameField">Hele navn<span class="field-control"><input id="checkoutName" autocomplete="name" placeholder="Hele navn"><i class="field-check">✓</i></span></label><label class="checkout-field" id="checkoutPhoneField">Telefonnummer<span class="field-control"><input id="checkoutPhone" inputmode="numeric" maxlength="8" placeholder="8 sifre"><i class="field-check">✓</i></span></label><div class="checkout-confirm-card" id="checkoutConfirmCard" hidden><span>✓</span><div><strong>Kontaktinfo er klar</strong><small>Kontroller opplysningene og send bestillingen.</small></div></div></div></div></div><div class="checkout-footer"><button class="secondary" id="checkoutBack" hidden>Tilbake</button><button class="primary" id="checkoutNext">Neste</button></div></section>
-<section class="screen" id="accountScreen" hidden><div class="screen-scroll" id="accountContent"></div></section>
-<section class="screen" id="infoScreen" hidden><div class="screen-scroll info-scroll"><div class="screen-title info-title"><small>KØL GRILL &amp; PIZZA</small><h2>Butikksinformasjon</h2></div><div class="info-tabs"><button class="info-tab active" data-info-tab="about">Om KØL</button><button class="info-tab" data-info-tab="terms">Vilkår</button><button class="info-tab" data-info-tab="privacy">Personvern</button></div><div class="info-panel active" data-info-panel="about"><section class="store-card store-main-card"><div class="store-identity"><div class="store-logo-mini">KØL</div><div><h3 id="storeName">KØL Grill &amp; Pizza</h3><p id="storeAddress">Øgardsvegen 44 · 2100 Skarnes</p></div></div><div class="store-quick-actions"><button id="storeMapBtn"><span>⌖</span><b>Kart</b></button><a id="storeCallAction" href="tel:+4741145353"><span>☎</span><b>Ring</b></a></div></section><section class="info-list-card"><button class="info-list-row" id="infoAllergenBtn"><span class="info-row-icon">⚠</span><span><strong>Matallergier</strong><small>Se allergeninformasjon i menyen</small></span><b>›</b></button><a class="info-list-row" id="storePhoneRow" href="tel:+4741145353"><span class="info-row-icon">☎</span><span><strong>Kontakt oss</strong><small id="storePhoneText">+47 41 14 53 53</small></span><b>›</b></a><div class="info-list-row"><span class="info-row-icon">◷</span><span><strong>Åpningstider</strong><small id="storeOpeningDays">Mandag–søndag</small></span><em id="storeOpeningTime">14:00–22:00</em></div></section><section class="store-section compact-social"><h3>Følg KØL</h3><div class="social-row"><button>Instagram</button><button>Facebook</button></div></section></div><div class="info-panel" data-info-panel="terms"><section class="store-card text-card"><h3>Vilkår</h3><p>Bestillingen er bindende når den er sendt. Hentetid er veiledende og kan variere ved stor pågang.</p></section></div><div class="info-panel" data-info-panel="privacy"><section class="store-card text-card"><h3>Personvern</h3><p>Denne LocalStorage-demoen lagrer konto, favoritter, allergener og bestillinger på denne enheten.</p></section></div></div></section>
-<section class="screen" id="rewardScreen" hidden><div class="screen-scroll reward-scroll"><div class="screen-title"><h2>Velg gratis Stor Pizza</h2><p>Du har samlet 10 kuponger. Velg den neste Stor Pizzaen din gratis.</p></div><div class="reward-pizza-list" id="rewardPizzaList"></div></div></section>
-<section class="screen" id="couponQrScreen" hidden><div class="screen-scroll"><div class="coupon-qr-wrap"><div class="coupon-qr-card"><h2>Kupongkort</h2><p>Vis denne QR-koden i kassen ved telefonbestillinger.</p><div class="coupon-qr-code" id="couponQrCode"></div><div class="coupon-qr-person"><strong id="couponQrName"></strong><small id="couponQrPhone"></small></div><button class="coupon-qr-back" id="couponQrBack">‹ Til profil</button></div></div></div></section>
-<section class="screen" id="kasseScreen" hidden><div class="screen-scroll"><div class="screen-title"><h2>Kupongkontroll</h2><p>Manuell registrering av Stor Pizza-kuponger.</p></div><div class="kasse-coupon-wrap" id="kasseContent"></div></div></section>
-<section class="screen" id="allergenScreen" hidden><div class="screen-scroll allergen-scroll"><div class="screen-title"><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av dem.</p></div><div class="allergen-toolbar"><label class="allergen-search"><span>⌕</span><input id="allergenSearch" type="search" placeholder="Søk allergen" autocomplete="off"></label></div><div class="allergen-grid" id="allergenGrid"></div><div class="allergen-bottom"><div>Valgene lagres bare på denne enheten.</div><div class="allergen-actions"><button id="allergenReset">Nullstill</button><button class="primary" id="allergenSave">Lagre</button></div></div></div></section>
-<div class="action-toast" id="actionToast" role="status" aria-live="polite"></div></div>
-<script src="app.js?v=20260820"></script>
+  <script src="app.js?v=20260820-refactor"></script>
 </body>
 </html>
