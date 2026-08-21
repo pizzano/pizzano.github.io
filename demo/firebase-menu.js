@@ -46,7 +46,16 @@
     };
   }
 
+  function resetRuntimeMenu() {
+    try {
+      if (typeof MENU !== 'undefined') MENU = [];
+    } catch (error) {
+      console.warn('Runtime menu could not be reset.', error);
+    }
+  }
+
   function clearMenuUi() {
+    resetRuntimeMenu();
     const { tabs, menu, topLine } = menuElements();
     if (tabs) tabs.innerHTML = '';
     if (menu) menu.innerHTML = '';
@@ -54,6 +63,7 @@
   }
 
   function renderDatabaseState({ titleNo, titleEn, detailNo = '', detailEn = '' }) {
+    resetRuntimeMenu();
     const { tabs, menu, topLine } = menuElements();
     if (tabs) tabs.innerHTML = '';
     if (topLine) topLine.hidden = true;
