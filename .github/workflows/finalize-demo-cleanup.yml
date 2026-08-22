@@ -1,0 +1,119 @@
+name: Finalize demo cleanup
+
+on:
+  pull_request:
+    paths:
+      - '.cleanup-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Consolidate and validate demo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for f in demo/app-core.js demo/checkout-stability.js demo/checkout-3step.js demo/checkout-guidance.js demo/index.html demo/kol.css; do
+            test -f "$f"
+          done
+
+          cat > /tmp/app-header.js <<'EOF'
+          /*
+           * KØL GRILL & PIZZA — CUSTOMER APP — STABLE BASELINE 2026-08-23
+           *
+           * MAINTENANCE CONTRACT FOR FUTURE DEVELOPERS / AI AGENTS
+           * -------------------------------------------------------
+           * This is the single canonical JavaScript file for the customer app.
+           * The previous app-core / checkout patch files were consolidated here
+           * without changing their execution order or working behavior.
+           *
+           * CHECKOUT CONTRACT:
+           * - 3 steps: Bestilling -> Kontakt -> Hentetid.
+           * - Completed progress steps are clickable for backwards navigation.
+           * - No pickup option is selected automatically.
+           * - Send bestilling may be clicked without a pickup choice ONLY to show
+           *   the validation warning/focus. It must never submit without a choice.
+           * - Pickup-time restrictions are temporarily in explicit TEST MODE.
+           *   Restore real clock restrictions deliberately before production.
+           *
+           * INTEGRATION CONTRACT:
+           * - Preserve the Firebase/admin menu bridge and `kol:order-ready` event.
+           * - Preserve the admin order payload shape unless admin is changed too.
+           *
+           * CHANGE POLICY:
+           * - Prefer small local edits in this file instead of adding patch files.
+           * - Do not duplicate an existing function merely to override it later.
+           * - index.html = structure, app.js = behavior, kol.css = presentation.
+           * - Keep all customer screens scrollable.
+           */
+          EOF
+
+          cat /tmp/app-header.js demo/app-core.js > /tmp/app.js
+          printf '\n\n/* ===== PICKUP STABILITY / EXPLICIT TEST MODE ===== */\n' >> /tmp/app.js
+          cat demo/checkout-stability.js >> /tmp/app.js
+          printf '\n\n/* ===== THREE-STEP CHECKOUT UX ===== */\n' >> /tmp/app.js
+          cat demo/checkout-3step.js >> /tmp/app.js
+          printf '\n\n/* ===== PICKUP VALIDATION / FOCUS GUIDANCE ===== */\n' >> /tmp/app.js
+          cat demo/checkout-guidance.js >> /tmp/app.js
+
+          node --check /tmp/app.js
+          mv /tmp/app.js demo/app.js
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('demo/index.html')
+          s = p.read_text(encoding='utf-8')
+          note = '''<!--
+          KØL CUSTOMER APP — STABLE BASELINE 2026-08-23
+          MAINTENANCE NOTE: Keep this file as the structural shell. Preserve IDs/classes used by app.js.
+          Business behavior belongs in app.js; reusable visual rules belong in kol.css. Avoid inline patch scripts.
+          -->\n'''
+          if 'KØL CUSTOMER APP — STABLE BASELINE 2026-08-23' not in s:
+              if s.lower().startswith('<!doctype html>') and '\n' in s:
+                  first, rest = s.split('\n', 1)
+                  s = first + '\n' + note + rest
+              else:
+                  s = note + s
+          s = re.sub(r'app\.js\?v=[^"\']+', 'app.js?v=20260823-stable3', s)
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('demo/kol.css')
+          s = p.read_text(encoding='utf-8')
+          note = '''/*
+           * KØL CUSTOMER UI — STABLE BASELINE 2026-08-23
+           * Canonical stylesheet. Reuse existing selectors/tokens before adding rules.
+           * Avoid late duplicate overrides unless documenting a compatibility fix.
+           * Keep vertical scrolling available on every customer screen.
+           */\n'''
+          if 'KØL CUSTOMER UI — STABLE BASELINE 2026-08-23' not in s:
+              s = note + s
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          grep -q 'checkoutStep3' demo/app.js
+          grep -q 'kol:order-ready' demo/app.js
+          grep -q 'PICKUP_TEST_MODE = true' demo/app.js
+          grep -q 'pickup-choice-warning' demo/app.js
+          grep -q 'app.js?v=20260823-stable3' demo/index.html
+
+          rm demo/app-core.js demo/checkout-stability.js demo/checkout-3step.js demo/checkout-guidance.js
+          rm .github/workflows/finalize-demo-cleanup.yml
+
+          git config user.name 'KØL Stable Cleanup'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Consolidate customer app into three stable files'
+          git push origin main
