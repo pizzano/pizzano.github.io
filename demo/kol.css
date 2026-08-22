@@ -1,3 +1,9 @@
+/*
+ * KØL CUSTOMER UI — STABLE BASELINE 2026-08-23
+ * Canonical stylesheet. Reuse existing selectors/tokens before adding rules.
+ * Avoid late duplicate overrides unless documenting a compatibility fix.
+ * Keep vertical scrolling available on every customer screen.
+ */
 :root {
   --o: #f36a2d;
   --bg: #efede9;
