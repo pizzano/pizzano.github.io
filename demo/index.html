@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f36a2d">
+  <title>KØL Grill & Pizza – Demo</title>
+  <link rel="stylesheet" href="kol.css?v=20260822-layout-fix">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style id="focused-ui-fixes">
+    /* 1) Orange header restored */
+    .appbar {
+      background: var(--o);
+      color: #fff;
+      border-bottom: 0;
+      box-shadow: 0 4px 16px rgba(243,106,45,.18);
+    }
+    .appbar-brand,
+    .brand-back,
+    .brand-logo b,
+    .brand-logo small { color: #fff; }
+    .appbar-actions { gap: 8px; }
+    .icon-button {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.42);
+      border-radius: 11px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      box-shadow: none;
+    }
+    .profile-letter { color: #fff; }
+    .cart-toggle { background: rgba(255,255,255,.14); }
+    .cart-toggle #cartCount {
+      right: -5px;
+      top: -7px;
+      background: #1d1d1f;
+      border-color: #fff;
+    }
+
+    /* 2) Category tabs: no clipped text; hide them outside the menu */
+    .category-tabs-wrap {
+      height: var(--tabs);
+      padding: 0;
+      overflow: hidden;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .category-tabs-scroll {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      padding: 0 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .category-tabs-scroll::-webkit-scrollbar { display: none; }
+    .category-tab,
+    .search-tab {
+      flex: 0 0 auto;
+      min-width: max-content;
+      height: 100%;
+      padding: 0 16px;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      background: #fff;
+      color: #5d5d62;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: none;
+    }
+    .category-tab.active {
+      color: var(--o);
+      border-bottom-color: var(--o);
+      background: #fff;
+    }
+    .search-tab {
+      width: 46px;
+      min-width: 46px;
+      padding: 0;
+      font-size: 22px;
+    }
+    body.view-open .category-tabs-wrap { display: none; }
+    body.view-open .screen { top: var(--head); }
+
+    /* 3) Product cards: image and content are one squared card */
+    .menu-section { background: #fff; }
+    .menu-row {
+      position: relative;
+      min-height: 118px;
+      display: grid;
+      grid-template-columns: 112px minmax(0,1fr);
+      gap: 0;
+      margin: 10px 12px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #e8e3df;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(35,28,24,.06);
+    }
+    .menu-thumb {
+      width: 112px;
+      height: 100%;
+      min-height: 118px;
+      align-self: stretch;
+      border-radius: 0;
+      background-color: #eee;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+    .menu-main {
+      min-width: 0;
+      align-self: stretch;
+      padding: 12px 48px 38px 14px;
+    }
+    .menu-main strong {
+      display: block;
+      margin: 0 0 5px;
+      font-size: 15.5px;
+      line-height: 1.25;
+    }
+    .menu-desc {
+      display: -webkit-box;
+      overflow: hidden;
+      color: var(--mut);
+      font-size: 12.5px;
+      line-height: 1.38;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }
+    .menu-allergen-warning {
+      margin-top: 6px;
+      font-size: 10.5px;
+    }
+    .menu-side {
+      position: absolute;
+      inset: 0;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* 4) Favorite on top of product image */
+    .heart {
+      position: absolute;
+      top: 8px;
+      left: 72px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      pointer-events: auto;
+      border: 1px solid #e4dfdb;
+      border-radius: 50%;
+      background: rgba(255,255,255,.96);
+      color: #59514c;
+      font-size: 18px;
+      box-shadow: 0 2px 7px rgba(0,0,0,.1);
+    }
+    .heart.active {
+      border-color: #ffc7a8;
+      color: var(--o);
+      background: #fff8f3;
+    }
+    .plus {
+      position: absolute;
+      right: 10px;
+      bottom: 9px;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      pointer-events: auto;
+      border: 0;
+      border-radius: 50%;
+      background: var(--o);
+      color: #fff;
+      font-size: 22px;
+      box-shadow: none;
+    }
+    .price {
+      position: absolute;
+      left: 126px;
+      right: 52px;
+      bottom: 14px;
+      color: #25211f;
+      font-size: 13px;
+      font-weight: 750;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* 5) Product detail: image and lower content connect cleanly */
+    #productScreen .screen-scroll { background: #fff; }
+    .product-photo {
+      height: 240px;
+      border-bottom: 1px solid var(--line);
+      background-color: #eee;
+    }
+    .product-body {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+      overflow: visible;
+    }
+    .product-name {
+      margin: 0;
+      padding: 16px 14px 7px;
+      border-bottom: 0;
+      font-size: 21px;
+    }
+    .product-summary {
+      margin: 0;
+      padding: 0 14px 15px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .product-choice-head {
+      min-height: 48px;
+      padding: 0 14px;
+      border-radius: 0;
+    }
+    .product-choice {
+      min-height: 58px;
+      padding: 0 14px;
+      border-radius: 0;
+    }
+    .product-note-block { padding: 14px; }
+    .product-note-block textarea { border-radius: 7px; }
+    .quantity-row { padding: 12px 14px; }
+    .quantity-stepper button { border-radius: 7px; }
+    .product-footer {
+      padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+      box-shadow: 0 -3px 12px rgba(0,0,0,.05);
+    }
+    .product-footer .primary { border-radius: 8px; }
+
+    @media (max-width: 360px) {
+      .menu-row { grid-template-columns: 100px minmax(0,1fr); }
+      .menu-thumb { width: 100px; }
+      .heart { left: 60px; }
+      .price { left: 114px; }
+      .menu-main { padding-right: 44px; }
+    }
+  </style>
+</head>
+<body class="kol-customer">
+  <div class="customer-app">
+    <header class="appbar">
+      <div class="appbar-main">
+        <button class="appbar-brand" id="brandBtn" type="button">
+          <span class="brand-logo"><b>KØL</b><small>GRILL &amp; PIZZA</small></span>
+          <span class="brand-back">‹ Meny</span>
+        </button>
+        <div class="appbar-actions">
+          <button class="icon-button" id="infoBtn" aria-label="Info">
+            <svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10.8v6M12 7.1h.01"/></svg>
+          </button>
+          <button class="icon-button" id="profileBtn" aria-label="Profil">
+            <svg class="plain-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.8 19c.8-3.1 3-4.7 6.2-4.7s5.4 1.6 6.2 4.7"/></svg>
+          </button>
+          <button class="icon-button cart-toggle" id="cartBtn" aria-label="Handlekurv">
+            <svg class="plain-icon" viewBox="0 0 24 24"><path d="M5.5 8h13l-1 11h-11zM9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+            <span id="cartCount">0</span>
+          </button>
+        </div>
+      </div>
+      <nav class="category-tabs-wrap"><div class="category-tabs-scroll" id="tabs"></div></nav>
+    </header>
+
+    <main class="menu-shell" id="menuShell">
+      <div class="menu-topline">
+        <h1>Meny</h1>
+        <button class="allergen-open" id="allergenBtn">⚠ Matallergier <b id="allergenCount"></b></button>
+      </div>
+      <section id="menuSections"></section>
+    </main>
+
+    <section class="screen" id="productScreen" hidden>
+      <div class="screen-scroll">
+        <div class="product-photo" id="productPhoto"></div>
+        <div class="product-body">
+          <h2 class="product-name" id="productTitle">Produkt</h2>
+          <p class="product-summary" id="productDesc"></p>
+          <div class="reward-product-banner" id="rewardProductBanner" hidden></div>
+          <div class="product-choice-group" id="sizeGroup">
+            <div class="product-choice-head"><strong>Velg størrelse</strong><span>Obligatorisk</span></div>
+            <div id="sizeOptions"></div>
+          </div>
+          <div class="product-choice-group" id="strengthGroup" hidden>
+            <div class="product-choice-head"><strong>Velg styrke</strong><span>Obligatorisk</span></div>
+            <div id="strengthOptions"></div>
+          </div>
+          <div class="product-note-block">
+            <label for="productNote">Spesielle instrukser</label>
+            <textarea id="productNote" placeholder="Eksempel: Ingen løk"></textarea>
+          </div>
+          <div class="quantity-row">
+            <span>Mengde</span>
+            <div class="quantity-stepper">
+              <button id="qtyMinus">−</button>
+              <strong id="qtyValue">1</strong>
+              <button id="qtyPlus">+</button>
+            </div>
+          </div>
+          <div class="product-allergens-inline" id="productAllergens"><strong>Allergener:</strong> Ingen oppgitt</div>
+        </div>
+      </div>
+      <div class="product-footer">
+        <strong id="productTotal">0,00 KR</strong>
+        <button class="primary" id="addToCart">Legg til i handlekurven</button>
+      </div>
+    </section>
+
+    <section class="screen" id="cartScreen" hidden>
+      <div class="screen-scroll cart-scroll">
+        <div id="checkoutStep1">
+          <div class="checkout-title"><span>1</span><strong>Din bestilling</strong></div>
+          <div id="cartLines"></div>
+          <div class="empty-note" id="cartEmpty">Handlekurven er tom.</div>
+          <div class="cart-summary">
+            <div class="total-row"><span>Sluttsum</span><strong id="cartTotal">0,00 kr</strong></div>
+            <div class="cart-savings" id="cartSavings" hidden></div>
+            <div class="tax-note-row" id="taxNote">(inkl. mva)</div>
+          </div>
+        </div>
+
+        <div id="checkoutStep2" hidden>
+          <div class="checkout-title">
+            <span>2</span>
+            <div><strong>Fullfør bestilling</strong><small>Fyll inn kontaktinfo først, og velg deretter hentetid.</small></div>
+          </div>
+
+          <section class="final-checkout-section" id="finalContactSection">
+            <div class="final-section-head">
+              <span>1</span>
+              <div><strong>Navn og telefon</strong><small>Vi bruker dette bare for bestillingen din.</small></div>
+            </div>
+            <div class="checkout-grid contact-checkout-grid">
+              <label class="checkout-field" id="checkoutNameField">Hele navn
+                <span class="field-control"><input id="checkoutName" type="text" autocomplete="name" autocapitalize="words" enterkeyhint="next" placeholder="Hele navn"><i class="field-check">✓</i></span>
+              </label>
+              <label class="checkout-field" id="checkoutPhoneField">Telefonnummer
+                <span class="field-control"><input id="checkoutPhone" type="tel" autocomplete="tel-national" inputmode="tel" enterkeyhint="done" maxlength="8" placeholder="8 sifre"><i class="field-check">✓</i></span>
+              </label>
+              <small class="keyboard-hint">Trykk Ferdig på tastaturet eller trykk utenfor feltet.</small>
+              <div class="checkout-confirm-card" id="checkoutConfirmCard" hidden>
+                <span>✓</span>
+                <div><strong>Kontaktinfo er klar</strong><small>Kontaktinfo er ferdig. Velg hentetid nedenfor.</small></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="final-checkout-section" id="finalPickupSection">
+            <div class="final-section-head">
+              <span>2</span>
+              <div><strong>Velg hentetid</strong><small>Velg alltid Snarest mulig eller et bestemt tidspunkt.</small></div>
+            </div>
+            <div class="pickup-options" id="pickupOptions"></div>
+          </section>
+        </div>
+      </div>
+      <div class="checkout-footer">
+        <button class="secondary" id="checkoutBack" hidden>Tilbake</button>
+        <button class="primary" id="checkoutNext">Neste</button>
+      </div>
+    </section>
+
+    <section class="screen" id="accountScreen" hidden><div class="screen-scroll" id="accountContent"></div></section>
+
+    <section class="screen" id="infoScreen" hidden>
+      <div class="screen-scroll info-scroll">
+        <div class="info-tabs">
+          <button class="info-tab active" data-info-tab="about">Om KØL</button>
+          <button class="info-tab" data-info-tab="terms">Vilkår</button>
+          <button class="info-tab" data-info-tab="privacy">Personvern</button>
+        </div>
+        <div class="info-panel active" data-info-panel="about">
+          <section class="store-card store-main-card">
+            <div class="store-identity">
+              <div class="store-logo-mini">KØL</div>
+              <div><h3 id="storeName">KØL Grill &amp; Pizza</h3><p id="storeAddress">Øgardsvegen 44 · 2100 Skarnes</p></div>
+            </div>
+            <div class="store-quick-actions">
+              <button id="storeMapBtn"><span>⌖</span><b>Kart</b></button>
+              <a id="storeCallAction" href="tel:+4741145353"><span>☎</span><b>Ring</b></a>
+            </div>
+          </section>
+          <section class="info-list-card">
+            <button class="info-list-row" id="infoAllergenBtn"><span class="info-row-icon">⚠</span><span><strong>Matallergier</strong><small>Se allergeninformasjon i menyen</small></span><b>›</b></button>
+            <a class="info-list-row" id="storePhoneRow" href="tel:+4741145353"><span class="info-row-icon">☎</span><span><strong>Kontakt oss</strong><small id="storePhoneText">+47 41 14 53 53</small></span><b>›</b></a>
+            <div class="info-list-row"><span class="info-row-icon">◷</span><span><strong>Åpningstider</strong><small id="storeOpeningDays">Mandag–søndag</small></span><em id="storeOpeningTime">14:00–22:00</em></div>
+          </section>
+          <section class="store-section compact-social">
+            <h3>Følg KØL</h3>
+            <div class="social-row"><button>Instagram</button><button>Facebook</button></div>
+          </section>
+        </div>
+        <div class="info-panel" data-info-panel="terms"><section class="store-card text-card"><h3>Vilkår</h3><p>Bestillingen er bindende når den er sendt. Hentetid er veiledende og kan variere ved stor pågang.</p></section></div>
+        <div class="info-panel" data-info-panel="privacy"><section class="store-card text-card"><h3>Personvern</h3><p>Denne LocalStorage-demoen lagrer konto, favoritter, allergener og bestillinger på denne enheten.</p></section></div>
+      </div>
+    </section>
+
+    <section class="screen" id="rewardScreen" hidden>
+      <div class="screen-scroll reward-scroll">
+        <div class="screen-title"><h2>Velg gratis Stor Pizza</h2><p>Du har samlet 10 kuponger. Velg den neste Stor Pizzaen din gratis.</p></div>
+        <div class="reward-pizza-list" id="rewardPizzaList"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="couponQrScreen" hidden>
+      <div class="screen-scroll">
+        <div class="coupon-qr-wrap"><div class="coupon-qr-card">
+          <h2>Kupongkort</h2>
+          <p>Vis denne QR-koden i kassen ved telefonbestillinger.</p>
+          <div class="coupon-qr-code" id="couponQrCode"></div>
+          <div class="coupon-qr-person"><strong id="couponQrName"></strong><small id="couponQrPhone"></small></div>
+          <button class="coupon-qr-back" id="couponQrBack">‹ Til profil</button>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="screen" id="kasseScreen" hidden>
+      <div class="screen-scroll">
+        <div class="screen-title"><h2>Kupongkontroll</h2><p>Manuell registrering av Stor Pizza-kuponger.</p></div>
+        <div class="kasse-coupon-wrap" id="kasseContent"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="allergenScreen" hidden>
+      <div class="screen-scroll allergen-scroll">
+        <div class="screen-title"><h2>Matallergier</h2><p>Velg dine matallergier, så varsler vi deg i menyen når et produkt inneholder noen av dem.</p></div>
+        <div class="allergen-toolbar"><label class="allergen-search"><span>⌕</span><input id="allergenSearch" type="search" placeholder="Søk allergen" autocomplete="off"></label></div>
+        <div class="allergen-grid" id="allergenGrid"></div>
+        <div class="allergen-bottom">
+          <div>Valgene lagres bare på denne enheten.</div>
+          <div class="allergen-actions"><button id="allergenReset">Nullstill</button><button class="primary" id="allergenSave">Lagre</button></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="action-toast" id="actionToast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="app.js?v=20260822-layout-fix"></script>
+  <script>
+/* KØL Firebase menu loader — Firebase is the only menu source */
+(() => {
+  'use strict';
+
+  const DATABASE_URL = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+
+  function asArray(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (value && typeof value === 'object') return Object.values(value).filter(Boolean);
+    return [];
+  }
+
+  function normalizeText(value) {
+    return String(value || '')
+      .toLocaleLowerCase('nb-NO')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function looksLikeSpiceGroup(group = {}) {
+    const semanticType = normalizeText(group.semanticType);
+    if (['spice', 'styrke', 'strength'].includes(semanticType)) return true;
+    const title = normalizeText(group.title);
+    const labels = asArray(group.options).map(option => normalizeText(option?.label));
+    return title.includes('styrke') || title.includes('sterk') || ['mild', 'medium', 'sterk'].every(label => labels.includes(label));
+  }
+
+  function adaptForCustomer(rawConfig) {
+    if (!rawConfig || typeof rawConfig !== 'object') return rawConfig;
+    const config = typeof structuredClone === 'function'
+      ? structuredClone(rawConfig)
+      : JSON.parse(JSON.stringify(rawConfig));
+
+    config.optionGroups = asArray(config.optionGroups).map(group => (
+      looksLikeSpiceGroup(group) ? { ...group, type: 'spice' } : group
+    ));
+
+    return config;
+  }
+
+  function menuElements() {
+    return {
+      tabs: document.querySelector('#tabs'),
+      menu: document.querySelector('#menuSections'),
+      topLine: document.querySelector('#menuShell .menu-topline'),
+    };
+  }
+
+  function resetRuntimeMenu() {
+    try {
+      if (typeof MENU !== 'undefined') MENU = [];
+    } catch (error) {
+      console.warn('Runtime menu could not be reset.', error);
+    }
+  }
+
+  function clearMenuUi() {
+    resetRuntimeMenu();
+    const { tabs, menu, topLine } = menuElements();
+    if (tabs) tabs.innerHTML = '';
+    if (menu) menu.innerHTML = '';
+    if (topLine) topLine.hidden = true;
+  }
+
+  function renderDatabaseState({ titleNo, titleEn, detailNo = '', detailEn = '' }) {
+    resetRuntimeMenu();
+    const { tabs, menu, topLine } = menuElements();
+    if (tabs) tabs.innerHTML = '';
+    if (topLine) topLine.hidden = true;
+    if (!menu) return;
+
+    menu.innerHTML = `
+      <div class="empty-note" style="padding:56px 22px;text-align:center;line-height:1.55">
+        <strong style="display:block;color:#302b28;font-size:17px;margin-bottom:6px">${titleNo}</strong>
+        <span style="display:block;color:#746b65;font-size:14px">${titleEn}</span>
+        ${detailNo ? `<small style="display:block;margin-top:14px;color:#938982">${detailNo}<br>${detailEn}</small>` : ''}
+      </div>`;
+  }
+
+  function showMenuUi() {
+    const { topLine } = menuElements();
+    if (topLine) topLine.hidden = false;
+  }
+
+  async function loadFirebaseMenu() {
+    clearMenuUi();
+
+    try {
+      const response = await fetch(`${DATABASE_URL}/.json`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Firebase HTTP ${response.status}`);
+      const config = await response.json();
+
+      if (!config || !asArray(config.sections).length) {
+        renderDatabaseState({
+          titleNo: 'Det finnes ingen data i databasen ennå.',
+          titleEn: 'There is no data in the database yet.',
+        });
+        return false;
+      }
+
+      const integration = window.KOLIntegration;
+      if (!integration?.applyAdminConfig) throw new Error('KOLIntegration er ikke klar');
+
+      const applied = integration.applyAdminConfig(adaptForCustomer(config));
+      if (!applied) {
+        renderDatabaseState({
+          titleNo: 'Det finnes ingen menydata i databasen ennå.',
+          titleEn: 'There is no menu data in the database yet.',
+        });
+        return false;
+      }
+
+      showMenuUi();
+      return true;
+    } catch (error) {
+      console.error('Firebase-meny kunne ikke lastes.', error);
+      renderDatabaseState({
+        titleNo: 'Kunne ikke koble til databasen.',
+        titleEn: 'Could not connect to the database.',
+        detailNo: 'Prøv igjen om litt.',
+        detailEn: 'Please try again shortly.',
+      });
+      return false;
+    }
+  }
+
+  window.KOLFirebaseMenu = { load: loadFirebaseMenu, databaseURL: DATABASE_URL };
+  loadFirebaseMenu();
+})();
+  </script>
+</body>
+</html>
