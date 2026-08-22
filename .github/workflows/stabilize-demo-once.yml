@@ -1,0 +1,68 @@
+name: Stabilize demo once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.stabilize/**'
+      - '.github/workflows/stabilize-demo-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  stabilize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild stabilized demo files
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+
+          root = Path('.')
+          staging = root / '.stabilize'
+          targets = {
+              'app_js': root / 'demo/app.js',
+              'index_html': root / 'demo/index.html',
+              'kol_css': root / 'demo/kol.css',
+          }
+
+          for stem, target in targets.items():
+              chunks = sorted(staging.glob(f'{stem}.*.part'))
+              if not chunks:
+                  raise RuntimeError(f'Missing staged chunks for {stem}')
+              encoded = ''.join(p.read_text().strip() for p in chunks)
+              target.write_bytes(gzip.decompress(base64.b64decode(encoded)))
+          PY
+
+      - name: Verify stabilized runtime
+        shell: bash
+        run: |
+          node --check demo/app.js
+          grep -q 'STABLE RUNTIME CONTRACT' demo/app.js
+          grep -q 'STABLE MARKUP CONTRACT' demo/index.html
+          grep -q 'STABLE VISUAL CONTRACT' demo/kol.css
+          grep -q 'nextOpenPickupSlots' demo/app.js
+          grep -q 'Velg hentetid' demo/app.js
+          test "$(grep -c "kol:order-ready" demo/app.js)" -eq 1
+          test "$(grep -c "checkoutStep3" demo/app.js demo/index.html demo/kol.css || true)" -eq 0
+
+      - name: Remove one-time staging
+        shell: bash
+        run: |
+          rm -rf .stabilize
+          rm -f .github/workflows/stabilize-demo-once.yml
+
+      - name: Commit stabilized demo
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Stabilize demo checkout and runtime" || exit 0
+          git push origin HEAD:main
