@@ -8,8 +8,13 @@
   <link rel="stylesheet" href="kol.css?v=20260820-refactor">
   <style>
     /* Menu-only visual theme. Product, cart, checkout, profile and info screens keep their existing styles. */
+    body.kol-customer { --tabs: 62px; }
+
     .category-tabs-wrap {
-      height: 62px;
+      height: var(--tabs);
+      flex: 0 0 var(--tabs);
+      position: relative;
+      z-index: 34;
       background: #fff;
       border-bottom: 0;
       box-shadow: 0 5px 18px rgba(44, 35, 30, .055);
@@ -55,18 +60,13 @@
       background: #f8f8f9;
     }
 
-    #menuShell.menu-shell {
-      background: #f7f7f8;
-    }
+    #menuShell.menu-shell { background: #f7f7f8; }
     #menuShell .menu-topline {
       padding: 16px 14px 12px;
       border-bottom: 0;
       background: #fff;
     }
-    #menuShell .menu-topline h1 {
-      font-size: 24px;
-      letter-spacing: -.35px;
-    }
+    #menuShell .menu-topline h1 { font-size: 24px; letter-spacing: -.35px; }
     #menuShell .allergen-open {
       height: 40px;
       border-color: #f2d2c5;
@@ -76,20 +76,10 @@
       font-size: 12px;
       font-weight: 700;
     }
-    #menuSections {
-      padding: 2px 10px 14px;
-    }
-    #menuShell .menu-section {
-      border-bottom: 0;
-      padding-bottom: 8px;
-    }
-    #menuShell .menu-section-head {
-      padding: 18px 4px 10px;
-    }
-    #menuShell .menu-section-head h2 {
-      font-size: 19px;
-      letter-spacing: -.2px;
-    }
+    #menuSections { padding: 2px 10px 14px; }
+    #menuShell .menu-section { border-bottom: 0; padding-bottom: 8px; }
+    #menuShell .menu-section-head { padding: 18px 4px 10px; }
+    #menuShell .menu-section-head h2 { font-size: 19px; letter-spacing: -.2px; }
     #menuShell .menu-section-head p {
       margin-top: 5px;
       max-width: 420px;
@@ -98,9 +88,10 @@
       line-height: 1.45;
     }
     #menuShell .menu-row {
+      --menu-thumb-width: 96px;
       position: relative;
       min-height: 110px;
-      grid-template-columns: 96px minmax(0, 1fr) 64px;
+      grid-template-columns: var(--menu-thumb-width) minmax(0, 1fr) 64px;
       gap: 12px;
       margin: 0 0 9px;
       padding: 10px;
@@ -117,16 +108,13 @@
       box-shadow: 0 2px 9px rgba(43, 34, 29, .035);
     }
     #menuShell .menu-thumb {
-      width: 96px;
+      width: var(--menu-thumb-width);
       height: 88px;
       border-radius: 14px;
       background-color: #f0eeec;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .025);
     }
-    #menuShell .menu-main {
-      align-self: center;
-      padding: 2px 0;
-    }
+    #menuShell .menu-main { align-self: center; padding: 2px 0; }
     #menuShell .menu-main strong {
       margin-bottom: 5px;
       color: #272321;
@@ -166,22 +154,23 @@
     }
     #menuShell .heart {
       position: absolute;
-      left: 82px;
-      top: 14px;
+      left: calc(10px + var(--menu-thumb-width) - 36px);
+      top: 15px;
       z-index: 2;
-      width: 29px;
-      height: 29px;
-      border: 0;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid rgba(231, 225, 220, .9);
       border-radius: 50%;
-      background: rgba(255,255,255,.96);
+      background: rgba(255,255,255,.97);
       color: #6d6560;
       font-size: 16px;
-      box-shadow: 0 3px 10px rgba(31, 24, 20, .13);
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 3px 10px rgba(31, 24, 20, .12);
     }
-    #menuShell .heart.active {
-      color: #f36a2d;
-      background: #fff8f4;
-    }
+    #menuShell .heart.active { color: #f36a2d; background: #fff8f4; }
     #menuShell .plus {
       width: 34px;
       height: 34px;
@@ -219,30 +208,57 @@
       background: #fff;
       text-align: center;
     }
-    #menuShell::after {
-      border-top: 0;
-      background: #f7f7f8;
+    #menuShell::after { border-top: 0; background: #f7f7f8; }
+
+    /* Product favorite button: same visual language as the menu image heart. */
+    #productScreen .product-photo { position: relative; }
+    .product-favorite {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 3;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 1px solid rgba(226, 219, 214, .95);
+      border-radius: 50%;
+      background: rgba(255,255,255,.97);
+      color: #625a55;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      line-height: 1;
+      box-shadow: 0 4px 14px rgba(31, 24, 20, .15);
     }
+    .product-favorite.active { color: #f36a2d; background: #fff8f4; border-color: #f1c7b7; }
 
     @media (max-width: 420px) {
-      .category-tabs-wrap { height: 58px; }
+      body.kol-customer { --tabs: 58px; }
+      .category-tabs-wrap { height: var(--tabs); flex-basis: var(--tabs); }
       .category-tabs-scroll { gap: 7px; padding: 7px 9px; }
       .category-tab,
       .search-tab { height: 40px; border-radius: 13px; }
       #menuSections { padding-left: 8px; padding-right: 8px; }
       #menuShell .menu-row {
+        --menu-thumb-width: 84px;
         min-height: 104px;
-        grid-template-columns: 84px minmax(0, 1fr) 58px;
+        grid-template-columns: var(--menu-thumb-width) minmax(0, 1fr) 58px;
         gap: 10px;
         padding: 9px;
         border-radius: 15px;
       }
-      #menuShell .menu-thumb { width: 84px; height: 82px; border-radius: 13px; }
-      #menuShell .heart { left: 72px; top: 12px; width: 27px; height: 27px; }
+      #menuShell .menu-thumb { width: var(--menu-thumb-width); height: 82px; border-radius: 13px; }
+      #menuShell .heart {
+        left: calc(9px + var(--menu-thumb-width) - 34px);
+        top: 13px;
+        width: 28px;
+        height: 28px;
+      }
       #menuShell .menu-main strong { font-size: 14.5px; }
       #menuShell .menu-desc { font-size: 11.8px; }
       #menuShell .plus { width: 32px; height: 32px; margin-top: 17px; }
       #menuShell .price { font-size: 12px; }
+      .product-favorite { width: 40px; height: 40px; top: 12px; right: 12px; }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -281,7 +297,9 @@
 
     <section class="screen" id="productScreen" hidden>
       <div class="screen-scroll">
-        <div class="product-photo" id="productPhoto"></div>
+        <div class="product-photo" id="productPhoto">
+          <button class="product-favorite" id="productFavoriteBtn" type="button" aria-label="Legg til i favoritter">♡</button>
+        </div>
         <div class="product-body">
           <h2 class="product-name" id="productTitle">Produkt</h2>
           <p class="product-summary" id="productDesc"></p>
@@ -576,6 +594,49 @@
   loadFirebaseMenu();
 })();
 
+/* Product-detail favorite control. Uses the same favorite store as menu cards. */
+(() => {
+  const button = document.querySelector('#productFavoriteBtn');
+  const screen = document.querySelector('#productScreen');
+  if (!button || !screen) return;
+
+  function syncProductFavorite() {
+    const selected = state?.product?.selected;
+    if (!selected) {
+      button.hidden = true;
+      return;
+    }
+
+    button.hidden = false;
+    const active = favoriteSet().has(selected.id);
+    button.classList.toggle('active', active);
+    button.textContent = active ? '♥' : '♡';
+    button.setAttribute('aria-label', active ? 'Fjern fra favoritter' : 'Legg til i favoritter');
+  }
+
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selected = state?.product?.selected;
+    if (!selected) return;
+
+    const favorites = favoriteSet();
+    const wasFavorite = favorites.has(selected.id);
+    if (wasFavorite) favorites.delete(selected.id);
+    else favorites.add(selected.id);
+
+    saveFavorites(favorites);
+    refreshFavoriteUi();
+    syncProductFavorite();
+    showToast(wasFavorite ? 'Fjernet fra favoritter' : 'Lagt til i favoritter');
+  });
+
+  const observer = new MutationObserver(() => {
+    if (!screen.hidden) syncProductFavorite();
+  });
+  observer.observe(screen, { attributes: true, attributeFilter: ['hidden'] });
+})();
   </script>
 </body>
 </html>
