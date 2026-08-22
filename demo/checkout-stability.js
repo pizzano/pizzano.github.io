@@ -1,12 +1,13 @@
 /*
- * STABLE CHECKOUT CONTRACT — DO NOT CHANGE WITHOUT A NEW, EXPLICIT USER REQUEST.
- * Purpose: keep the existing two-step checkout behavior intact while making scheduled pickup reliable
- * before opening, during service and after closing. This file must not add menu/admin features.
+ * CHECKOUT PICKUP STABILITY
+ * TEST MODE: time restrictions are temporarily disabled while the checkout is being tested.
+ * Restore normal clock-based availability before production launch.
  */
 (() => {
   if (window.__KOL_CHECKOUT_STABILITY__) return;
   window.__KOL_CHECKOUT_STABILITY__ = true;
 
+  const PICKUP_TEST_MODE = true;
   let pickupDayOffset = 0;
 
   const parseClock = (value, fallback) => {
@@ -27,13 +28,22 @@
     const now = new Date();
     const [openHour, openMinute] = parseClock(activeSiteSettings.orderOpenTime, '14:00');
     const [closeHour, closeMinute] = parseClock(activeSiteSettings.orderCloseTime, '22:00');
-    const lead = Math.max(0, Number(activeSiteSettings.minPreorderMinutes) || 0);
 
     let open = new Date(now);
     let close = new Date(now);
     open.setHours(openHour, openMinute, 0, 0);
     close.setHours(closeHour, closeMinute, 0, 0);
 
+    if (PICKUP_TEST_MODE) {
+      pickupDayOffset = 0;
+      const slots = [];
+      for (let cursor = new Date(open); cursor < close; cursor.setMinutes(cursor.getMinutes() + 15)) {
+        slots.push(`${String(cursor.getHours()).padStart(2, '0')}:${String(cursor.getMinutes()).padStart(2, '0')}`);
+      }
+      return { slots, asapAvailable: true, dayOffset: 0 };
+    }
+
+    const lead = Math.max(0, Number(activeSiteSettings.minPreorderMinutes) || 0);
     let asapAvailable = now >= open && now < close;
     let start = roundUpQuarter(new Date(now.getTime() + lead * 60000));
     pickupDayOffset = 0;
@@ -61,11 +71,7 @@
     return { slots, asapAvailable, dayOffset: pickupDayOffset };
   }
 
-  function nextOpenPickupSlots() {
-    return pickupWindow().slots;
-  }
-
-  pickupSlots = nextOpenPickupSlots;
+  pickupSlots = () => pickupWindow().slots;
 
   renderPickupTimes = function renderPickupTimesStable() {
     const host = $('#pickupOptions');
@@ -96,7 +102,7 @@
       <div class="pickup-mode-row">
         <button type="button" class="pickup-mode-btn ${state.checkout.pickupMode === 'asap' ? 'active' : ''}" data-pickup-mode="asap" ${windowInfo.asapAvailable ? '' : 'disabled'}>
           <span class="pickup-mode-check">${state.checkout.pickupMode === 'asap' ? '✓' : ''}</span>
-          <span><strong>Snarest mulig</strong><small>${windowInfo.asapAvailable ? 'Hent så snart maten er klar' : 'Tilgjengelig når restauranten er åpen'}</small></span>
+          <span><strong>Snarest mulig</strong><small>Hent så snart maten er klar</small></span>
         </button>
         <button type="button" class="pickup-mode-btn ${state.checkout.pickupMode === 'scheduled' ? 'active' : ''}" data-pickup-mode="scheduled">
           <span class="pickup-mode-check">${state.checkout.pickupMode === 'scheduled' ? '✓' : ''}</span>
