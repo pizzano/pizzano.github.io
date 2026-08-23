@@ -2279,14 +2279,7 @@ initialize();
       #checkoutStep3 .pickup-time-btn.active { border-color:#f36a2d; background:#fff2ec; color:#c34f25; }
       #checkoutStep3 .pickup-next-day-note { display:none !important; }
 
-      @media (max-width:420px) {
-        #cartScreen .checkout-progress { gap:3px; padding:6px; }
-        #cartScreen .checkout-progress-step { gap:4px; padding:3px; font-size:9.8px; }
-        #cartScreen .checkout-progress-step i { width:23px;height:23px;flex-basis:23px; }
-        #cartScreen .checkout-step-intro { padding:13px 12px; }
-        #cartScreen .checkout-step-intro strong { font-size:15px; }
-      }
-    `;
+          `;
     document.head.appendChild(style);
   }
 
