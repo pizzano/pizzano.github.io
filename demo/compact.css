@@ -1,7 +1,7 @@
 /*
- * KØL GRILL & PIZZA — COMPACT MOBILE DENSITY 2026-08-23
- * Purpose: GloriaFood-like information density without changing app behavior.
- * This layer only reduces visual scale, spacing and control height.
+ * KØL GRILL & PIZZA — SINGLE COMPACT DENSITY 2026-08-23
+ * One visual scale for the whole customer app.
+ * No width breakpoint changes font sizes, card sizes or control heights.
  */
 
 body.kol-customer {
@@ -109,6 +109,7 @@ body.kol-customer .tab-search input { height: 36px; padding: 0 10px; border-radi
 .cart-summary { padding: 10px; }
 .total-row { font-size: 12.5px; }
 .total-row strong { font-size: 17px; }
+#cartScreen .total-row strong { font-size: 17px; }
 .tax-note-row { margin-top: 3px; font-size: 9px; }
 .cart-savings { margin-top: 6px; padding: 7px 8px; border-radius: 7px; font-size: 10.5px; }
 .checkout-grid { gap: 8px; padding: 10px; }
@@ -219,20 +220,27 @@ body.kol-customer .tab-search input { height: 36px; padding: 0 10px; border-radi
 .coupon-qr-back { height: 40px; margin-top: 10px; border-radius: 8px; font-size: 12px; }
 .action-toast { max-width: calc(100% - 24px); padding: 8px 11px; border-radius: 8px; font-size: 11.5px; }
 
-@media (max-width: 420px) {
-  body.kol-customer { --head: 58px; --tabs: 45px; }
-  body.kol-customer .category-tabs-wrap { height: var(--tabs); flex-basis: var(--tabs); }
-  body.kol-customer .category-tabs-scroll { gap: 4px; padding: 4px 6px; }
-  body.kol-customer .category-tab,
-  body.kol-customer .search-tab { height: 34px; border-radius: 9px; font-size: 11px; }
-  #menuSections { padding-left: 6px; padding-right: 6px; }
-  #menuShell .menu-row { --menu-thumb-width: 70px; min-height: 82px; grid-template-columns: var(--menu-thumb-width) minmax(0,1fr) 48px; gap: 7px; padding: 6px; border-radius: 10px; }
-  #menuShell .menu-thumb { height: 68px; border-radius: 9px; }
-  #menuShell .heart { left: calc(6px + var(--menu-thumb-width) - 27px); top: 8px; width: 24px; height: 24px; }
-  #menuShell .menu-main strong { font-size: 12.5px; }
-  #menuShell .menu-desc { font-size: 10px; }
-  #menuShell .plus { width: 27px; height: 27px; margin-top: 10px; }
-  #menuShell .price { font-size: 10.5px; }
-  .product-photo { height: 142px; }
-  .product-name { font-size: 17px; }
-}
+/*
+ * SINGLE-SIZE LOCK
+ * Older base CSS contains narrow-screen rules. These selectors intentionally
+ * lock the final customer measurements so <=420px and >420px render the same.
+ */
+#checkoutStep1,
+#checkoutStep2 { padding: 10px 10px 14px; }
+#checkoutStep1 .checkout-title,
+#checkoutStep2 .checkout-title { padding-right: 64px; }
+#cartScreen .checkout-title strong { font-size: 14px; }
+#checkoutStep1 .checkout-title::after,
+#checkoutStep2 .checkout-title::after { right: 12px; font-size: 10.5px; }
+#cartScreen .total-row strong { font-size: 17px; }
+#accountScreen .screen-title { padding: 14px 12px 11px; }
+#accountScreen .screen-title h2 { font-size: 18px; }
+#accountScreen .profile-home { padding: 10px 10px 20px; }
+#accountScreen .profile-greeting { padding: 10px; }
+#accountScreen .pizza-loyalty-card { padding: 10px; }
+#accountScreen .stamp { min-height: 49px; }
+#accountScreen .stamp i { font-size: 18px; }
+#rewardScreen .reward-pizza-card { grid-template-columns: 74px minmax(0,1fr) auto; }
+#rewardScreen .reward-pizza-image { width: 74px; height: 74px; }
+#couponQrScreen .coupon-qr-code { width: 236px; min-height: 236px; }
+#kasseScreen .kasse-adjust { grid-template-columns: 54px 1fr 54px; }
