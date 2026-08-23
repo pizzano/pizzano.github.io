@@ -1,0 +1,91 @@
+name: Remove 420px media blocks
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/remove-420.yml
+permissions:
+  contents: write
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove exact 420px media blocks
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          targets = [
+              Path('demo/index.html'),
+              Path('demo/kol.css'),
+              Path('demo/compact.css'),
+              Path('demo/app.js'),
+          ]
+
+          starts = [
+              '@media (max-width:420px)',
+              '@media (max-width: 420px)',
+          ]
+
+          def strip_media_blocks(text: str):
+              removed = 0
+              while True:
+                  hits = [(text.find(s), s) for s in starts if text.find(s) != -1]
+                  if not hits:
+                      break
+                  start, token = min(hits, key=lambda x: x[0])
+                  brace = text.find('{', start + len(token))
+                  if brace == -1:
+                      raise RuntimeError(f'Malformed media rule near offset {start}')
+                  depth = 0
+                  end = None
+                  for i in range(brace, len(text)):
+                      if text[i] == '{':
+                          depth += 1
+                      elif text[i] == '}':
+                          depth -= 1
+                          if depth == 0:
+                              end = i + 1
+                              break
+                  if end is None:
+                      raise RuntimeError(f'Unclosed media rule near offset {start}')
+                  while end < len(text) and text[end] in ' \t':
+                      end += 1
+                  if end < len(text) and text[end] == '\r':
+                      end += 1
+                  if end < len(text) and text[end] == '\n':
+                      end += 1
+                  text = text[:start] + text[end:]
+                  removed += 1
+              return text, removed
+
+          total = 0
+          for path in targets:
+              if not path.exists():
+                  continue
+              old = path.read_text(encoding='utf-8')
+              new, count = strip_media_blocks(old)
+              if count:
+                  path.write_text(new, encoding='utf-8')
+                  print(f'{path}: removed {count}')
+                  total += count
+
+          leftovers = []
+          for path in targets:
+              if path.exists():
+                  text = path.read_text(encoding='utf-8')
+                  if '@media (max-width:420px)' in text or '@media (max-width: 420px)' in text:
+                      leftovers.append(str(path))
+          if leftovers:
+              raise SystemExit(f'420px media rules still remain in: {leftovers}')
+          if total == 0:
+              raise SystemExit('No 420px media blocks were found; refusing false cleanup')
+      - name: Commit cleaned sources
+        run: |
+          git config user.name 'KOL Cleanup Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add demo/index.html demo/kol.css demo/compact.css demo/app.js
+          git commit -m 'Physically remove all 420px media blocks from demo sources'
+          git push origin HEAD:main
