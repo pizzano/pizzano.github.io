@@ -1,0 +1,19 @@
+name: Run frontend v3 migration
+on:
+  push:
+    paths:
+      - '.github/workflows/run-frontend-v3-migration.yml'
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python .github/scripts/apply_frontend_v3.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add demo/admin.html demo/index.html demo/kol.css
+          git commit -m 'Use frontend v3 interface and KOL features' || exit 0
+          git push
