@@ -1,0 +1,122 @@
+name: Consolidate admin
+on:
+  push:
+    paths:
+      - '.github/workflows/consolidate-admin.yml'
+permissions:
+  contents: write
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build clean admin files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          base = Path('demo/admin-v2.js').read_text()
+          picker = Path('demo/admin-picker-tools.js').read_text()
+          preview = Path('demo/admin-choice-preview.js').read_text()
+
+          # CSS now lives in admin.css; remove runtime style injection from JS parts.
+          base = base.replace('injectPolish();\n','')
+          base = re.sub(r'function injectPolish\(\)\{.*?\n\}\nfunction injectLibraryNav', 'function injectLibraryNav', base, flags=re.S)
+          picker = re.sub(r"const style=document\.createElement\('style'\);.*?document\.head\.appendChild\(style\);\n", '', picker, flags=re.S)
+          preview = re.sub(r"const style=document\.createElement\('style'\);.*?document\.head\.appendChild\(style\);\n", '', preview, flags=re.S)
+
+          # Remove low-value product duplication / overflow actions at source.
+          base = base.replace('<button class="icon-btn item-more">⋯</button>','')
+          base = re.sub(r"\$\$\('\.item-more'\).*?;bindDrag\(\);", 'bindDrag();', base)
+          base = base.replace('<button class="quiet" id="duplicate">Dupliser produkt</button> ', '')
+          base = re.sub(r";\$\('#duplicate'\)\.onclick=.*?toast\('Produkt duplisert'\)\}", '', base)
+
+          navfix = r'''
+
+          /* Section navigator: exact scrolling + active section sync */
+          (()=>{
+            let currentEditor=null;
+            function setupSectionNavigator(){
+              const editor=document.querySelector('#editor');
+              const nav=document.querySelector('.product-section-nav');
+              if(!editor||!nav)return;
+              const cards=[...document.querySelectorAll('#editorBody > .admin-section-card')];
+              const buttons=[...nav.querySelectorAll('button')];
+              if(!cards.length||!buttons.length)return;
+              if(nav.dataset.navSync==='1'&&currentEditor===editor)return;
+              nav.dataset.navSync='1';currentEditor=editor;
+              const setActive=i=>buttons.forEach((b,n)=>b.classList.toggle('active',n===i));
+              buttons.forEach((b,i)=>{
+                b.classList.remove('active');
+                b.onclick=()=>{
+                  const card=cards[i];if(!card)return;
+                  const editorTop=editor.getBoundingClientRect().top;
+                  const cardTop=card.getBoundingClientRect().top;
+                  const sticky=(document.querySelector('.editor-head')?.offsetHeight||58)+nav.offsetHeight+8;
+                  editor.scrollTo({top:Math.max(0,editor.scrollTop+(cardTop-editorTop)-sticky),behavior:'smooth'});
+                  setActive(i);
+                };
+              });
+              const sync=()=>{
+                const anchor=editor.getBoundingClientRect().top+(document.querySelector('.editor-head')?.offsetHeight||58)+nav.offsetHeight+14;
+                let active=0;
+                cards.forEach((c,i)=>{if(c.getBoundingClientRect().top<=anchor)active=i;});
+                setActive(active);
+              };
+              editor.addEventListener('scroll',sync,{passive:true});
+              sync();
+            }
+            let pending=false;
+            new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;setupSectionNavigator();});}).observe(document.documentElement,{childList:true,subtree:true});
+            setupSectionNavigator();
+          })();
+          '''
+
+          Path('demo/admin.js').write_text(base+'\n'+picker+'\n'+preview+'\n'+navfix)
+
+          # Fix active-chip styling in extracted CSS.
+          css=Path('demo/admin.css').read_text()
+          css=css.replace('.product-section-nav button.choices{border-color:#f0b89f;background:#fff1ea;color:#ba4d24;font-weight:700}', '.product-section-nav button.active{border-color:#f0b89f;background:#fff1ea;color:#ba4d24;font-weight:700}')
+          Path('demo/admin.css').write_text(css)
+
+          # Replace admin.html with a clean shell that loads only admin.css + admin.js.
+          html='''<!doctype html>
+          <html lang="no">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>KØL Admin – Meny</title>
+            <link rel="stylesheet" href="admin.css?v=20260825-1">
+          </head>
+          <body>
+          <div class="app" id="app">
+            <aside class="sidebar">
+              <div class="brand"><div class="brand-mark">K</div><div><strong>KØL Admin</strong><small>Grill & Pizza</small></div></div>
+              <div class="nav-title">MENY</div>
+              <button class="nav-btn active">☰ &nbsp; Produkter & kategorier</button>
+              <button class="nav-btn" id="previewNav">↗ &nbsp; Åpne kundemeny</button>
+              <div class="nav-note">Endringer lagres automatisk. Dra kategorier og produkter for å endre rekkefølgen.</div>
+            </aside>
+            <section class="workspace">
+              <header class="topbar"><button class="preview" id="previewBtn">Preview & Test Ordering</button><span class="save-state" id="saveState">Laster…</span><button class="save" id="saveBtn" disabled>Lagre nå</button></header>
+              <main class="content"><div class="page-head"><div><h1>Meny</h1><p>Kategorier, produkter, priser, tilgjengelighet og valg.</p></div><div class="tools"><input class="search" id="menuSearch" placeholder="Søk etter produkt"><button class="ghost" id="collapseBtn">Lukk kategori</button></div></div><div id="menuRoot" class="empty">Laster meny…</div><button class="add-category" id="addCategoryBtn">+ Legg til kategori</button></main>
+            </section>
+            <aside class="editor" id="editor"><div class="editor-head"><div><small id="editorEyebrow">PRODUKTINNSTILLINGER</small><h3 id="editorTitle">Produkt</h3></div><button id="closeEditor">×</button></div><div class="editor-body" id="editorBody"></div></aside>
+          </div>
+          <div class="toast" id="toast"></div>
+          <script src="admin.js?v=20260825-1"></script>
+          </body>
+          </html>'''
+          Path('demo/admin.html').write_text('\n'.join(line.strip() for line in html.splitlines())+'\n')
+
+          for name in ['demo/admin-v2.js','demo/admin-picker-tools.js','demo/admin-choice-preview.js']:
+              Path(name).unlink(missing_ok=True)
+          PY
+      - name: Commit consolidated admin
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/admin.html demo/admin.css demo/admin.js demo/admin-v2.js demo/admin-picker-tools.js demo/admin-choice-preview.js
+          git commit -m "Consolidate admin into html css js and fix section navigation"
+          git push
