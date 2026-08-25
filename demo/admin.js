@@ -9,27 +9,8 @@ let config={sections:[],optionGroups:[]}, openSection='', editing=null, search='
 const root=$('#menuRoot'), status=$('#saveState'), saveBtn=$('#saveBtn');
 const uid=(p='id')=>`${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
 
-injectPolish();
 injectLibraryNav();
 
-function injectPolish(){
- const s=document.createElement('style');
- s.textContent=`
- html,body{scrollbar-width:auto;scrollbar-color:#9d958f #ece8e5}
- ::-webkit-scrollbar{width:14px;height:14px}::-webkit-scrollbar-track{background:#ece8e5}::-webkit-scrollbar-thumb{background:#9d958f;border:3px solid #ece8e5;border-radius:10px}::-webkit-scrollbar-thumb:hover{background:#746c67}
- .content{max-width:none!important;width:100%!important;margin:0!important;padding:18px 20px 42px!important}
- .app{grid-template-columns:190px minmax(0,1fr) 0!important}.app.editor-open{grid-template-columns:190px minmax(0,1fr) 420px!important}
- .sidebar{padding:18px 12px!important}.brand{margin-bottom:18px!important}.nav-note{margin-top:12px!important;padding-top:12px!important}
- .topbar{height:58px!important;padding:0 18px!important}.page-head{margin-bottom:12px!important;align-items:center!important}.page-head h1{font-size:22px!important}.page-head p{margin-top:3px!important}
- .category{margin-bottom:8px!important}.category-head{min-height:68px!important;padding:8px 10px!important;grid-template-columns:22px 46px minmax(0,1fr) auto!important}.cat-image{width:44px!important;height:44px!important}.category-body{margin:6px 0 0 16px!important}
- .item{min-height:64px!important;padding:6px 8px!important;margin-bottom:5px!important;grid-template-columns:16px 44px minmax(0,1fr) 78px 126px!important}.item-img{width:42px!important;height:42px!important}
- .editor{overflow-y:scroll!important;scrollbar-gutter:stable;height:100vh!important}.editor-body{padding:8px!important}.editor-head{height:58px!important;padding:0 12px!important}.editor-card{margin-bottom:7px!important}.editor-card-head{height:40px!important;padding:0 10px!important}.editor-card-body{padding:9px!important}
- .field{margin-bottom:7px!important}.field textarea{min-height:58px!important}.chips{gap:4px!important}.chip-check{min-height:30px!important}
- .library-list{display:grid;gap:8px}.library-card{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}.library-card h3{margin:0 0 5px;font-size:13px}.library-card p{margin:0;color:var(--muted);font-size:10.5px}.library-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.library-actions{display:flex;gap:5px}.lib-badge{padding:3px 7px;border-radius:999px;background:#f3f0ee;font-size:9px;color:#6d655f}.lib-badge.orange{background:#fff0e8;color:#c55629}.library-empty{background:#fff;border:1px dashed #d5ccc6;border-radius:12px;padding:32px;text-align:center;color:#8c837d}.library-toolbar{display:flex;gap:8px;align-items:center}.library-toolbar button{height:38px;border-radius:8px;padding:0 12px;font-weight:700}.attach-list{display:grid;gap:6px}.attach-row{border:1px solid #e5dfda;border-radius:9px;padding:9px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff}.attach-row strong{display:block;font-size:11px}.attach-row small{display:block;margin-top:3px;color:#8d847e;font-size:9px}.attached-group{border:1px solid #e7dfda;border-radius:9px;padding:9px;margin-bottom:6px;background:#fff}.attached-group-head{display:flex;align-items:center;gap:8px}.attached-group-head>div{min-width:0;flex:1}.attached-group strong{display:block;font-size:11px}.attached-group small{display:block;color:#8d847e;font-size:9px;margin-top:3px}.attached-group-actions{display:flex;gap:4px}.modal-backdrop{position:fixed;inset:0;z-index:200;background:rgba(30,24,20,.38);display:grid;place-items:center;padding:20px}.modal-card{width:min(520px,100%);max-height:78vh;overflow-y:auto;background:#f8f7f5;border-radius:14px;box-shadow:0 18px 60px #0004;border:1px solid #ddd5d0}.modal-head{position:sticky;top:0;background:#fff;border-bottom:1px solid #e8e2de;padding:12px 14px;display:flex;align-items:center;z-index:2}.modal-head h3{font-size:14px;margin:0}.modal-head button{margin-left:auto;border:0;background:transparent;font-size:22px}.modal-body{padding:10px}.modal-foot{position:sticky;bottom:0;padding:10px;background:#fff;border-top:1px solid #e8e2de}.group-editor-title{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.group-editor-title input{height:38px;border:1px solid #d8d1cc;border-radius:8px;padding:0 10px}.choice-head,.choice-row{grid-template-columns:26px minmax(0,1fr) 78px 28px!important}.shared-warning{padding:8px 9px;border-radius:8px;background:#fff6e9;color:#895d20;font-size:9.5px;line-height:1.4;margin-bottom:8px}
- @media(max-width:980px){.app,.app.editor-open{grid-template-columns:170px minmax(0,1fr)!important}.editor{position:fixed!important;right:0!important;top:0!important;width:min(430px,92vw)!important;box-shadow:-10px 0 30px #0002}.content{padding:14px!important}}
- `;
- document.head.appendChild(s);
-}
 function injectLibraryNav(){
  const navs=$$('.sidebar .nav-btn');
  if(!navs.length)return;
@@ -55,10 +36,10 @@ function showLibrary(){mode='library';setNav('library');closeEditor();$('.page-h
 function filterItems(s){if(!search)return s.items;const q=search.toLocaleLowerCase('nb-NO');return s.items.filter(p=>`${p.name||''} ${p.description||p.ingredients||''}`.toLocaleLowerCase('nb-NO').includes(q))}
 function renderMenu(){if(mode!=='menu')return;root.innerHTML=config.sections.map((s,si)=>sectionHtml(s,si)).join('')||'<div class="empty">Ingen kategorier</div>';bindList()}
 function sectionHtml(s,si){const open=search?filterItems(s).length>0:openSection===s.id;if(search&&!filterItems(s).length)return'';const img=simg(s);return `<section class="category" draggable="true" data-si="${si}"><div class="category-head"><span class="cat-drag">⋮⋮</span><div class="cat-image" ${img?`style="background-image:url('${esc(img)}')"`:''}></div><div class="cat-copy"><strong>${esc(s.title||'Ny kategori')}</strong><small>${esc(s.note||s.description||'Klikk for å åpne')}</small></div><div class="cat-meta"><span class="count">${s.items.length} produkter</span><button class="icon-btn cat-edit" title="Rediger">✎</button><span>${open?'⌃':'⌄'}</span></div></div><div class="category-body" ${open?'':'hidden'}>${filterItems(s).map(p=>itemHtml(p,si,s.items.indexOf(p))).join('')}<button class="add-item" data-add-product="${si}">+ Legg til produkt</button></div></section>`}
-function itemHtml(p,si,pi){const def=p.sizes[Math.min(p.defaultSizeIndex,p.sizes.length-1)],groups=p.optionGroupIds.length,img=pimg(p);return `<article class="item" draggable="true" data-si="${si}" data-pi="${pi}"><span class="drag">≡</span><div class="item-img" ${img?`style="background-image:url('${esc(img)}')"`:''}></div><div class="item-copy"><div class="badges">${def?`<span class="badge green">Standard: ${esc(def.label||'Standard')}</span>`:''}${groups?`<span class="badge orange">${groups} valggruppe${groups>1?'r':''}</span>`:''}${p.hidden?'<span class="badge gray">Skjult</span>':''}${p.soldOut?'<span class="badge red">Utsolgt</span>':''}</div><strong>${esc(p.name||'Nytt produkt')}</strong><small>${esc(p.description||p.ingredients||'')}</small></div><div class="item-price">${esc(priceText(p))}</div><div class="item-actions"><button class="mini-action add-group-direct">+ Valg</button><button class="icon-btn item-edit">✎</button><button class="icon-btn item-more">⋯</button></div></article>`}
+function itemHtml(p,si,pi){const def=p.sizes[Math.min(p.defaultSizeIndex,p.sizes.length-1)],groups=p.optionGroupIds.length,img=pimg(p);return `<article class="item" draggable="true" data-si="${si}" data-pi="${pi}"><span class="drag">≡</span><div class="item-img" ${img?`style="background-image:url('${esc(img)}')"`:''}></div><div class="item-copy"><div class="badges">${def?`<span class="badge green">Standard: ${esc(def.label||'Standard')}</span>`:''}${groups?`<span class="badge orange">${groups} valggruppe${groups>1?'r':''}</span>`:''}${p.hidden?'<span class="badge gray">Skjult</span>':''}${p.soldOut?'<span class="badge red">Utsolgt</span>':''}</div><strong>${esc(p.name||'Nytt produkt')}</strong><small>${esc(p.description||p.ingredients||'')}</small></div><div class="item-price">${esc(priceText(p))}</div><div class="item-actions"><button class="mini-action add-group-direct">+ Valg</button><button class="icon-btn item-edit">✎</button></div></article>`}
 function bindList(){
  $$('.category-head').forEach(h=>h.onclick=e=>{if(e.target.closest('button,.cat-drag'))return;const si=+h.closest('.category').dataset.si;openSection=openSection===config.sections[si].id?'':config.sections[si].id;renderMenu()});
- $$('.cat-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();editCategory(+b.closest('.category').dataset.si)});$$('.item-edit').forEach(b=>b.onclick=()=>{const a=b.closest('.item');editProduct(+a.dataset.si,+a.dataset.pi)});$$('.add-group-direct').forEach(b=>b.onclick=()=>{const a=b.closest('.item');openGroupPicker(+a.dataset.si,+a.dataset.pi)});$$('[data-add-product]').forEach(b=>b.onclick=()=>addProduct(+b.dataset.addProduct));$$('.item-more').forEach(b=>b.onclick=()=>{const a=b.closest('.item'),si=+a.dataset.si,pi=+a.dataset.pi,p=config.sections[si].items[pi];if(confirm(`Dupliser ${p.name||'produkt'}?`)){const c=structuredClone(p);c.id=uid('product');c.name=(c.name||'Produkt')+' – kopi';config.sections[si].items.splice(pi+1,0,c);markDirty();renderMenu()}});bindDrag();
+ $$('.cat-edit').forEach(b=>b.onclick=e=>{e.stopPropagation();editCategory(+b.closest('.category').dataset.si)});$$('.item-edit').forEach(b=>b.onclick=()=>{const a=b.closest('.item');editProduct(+a.dataset.si,+a.dataset.pi)});$$('.add-group-direct').forEach(b=>b.onclick=()=>{const a=b.closest('.item');openGroupPicker(+a.dataset.si,+a.dataset.pi)});$$('[data-add-product]').forEach(b=>b.onclick=()=>addProduct(+b.dataset.addProduct));bindDrag();
 }
 function bindDrag(){
  $$('.category').forEach(cat=>{cat.ondragstart=e=>{if(!e.target.closest('.cat-drag')&&e.target!==cat){e.preventDefault();return}dragData={type:'cat',si:+cat.dataset.si};cat.classList.add('dragging')};cat.ondragend=()=>cat.classList.remove('dragging');cat.ondragover=e=>{if(dragData?.type==='cat'){e.preventDefault();cat.classList.add('drag-over')}};cat.ondragleave=()=>cat.classList.remove('drag-over');cat.ondrop=()=>{cat.classList.remove('drag-over');if(dragData?.type!=='cat')return;const to=+cat.dataset.si,from=dragData.si;if(from!==to){const[m]=config.sections.splice(from,1);config.sections.splice(to,0,m);markDirty();renderMenu()}}});
@@ -71,10 +52,10 @@ function openEditor(title,sub='PRODUKTINNSTILLINGER'){editing=editing||{};$('#ap
 function editCategory(si){const s=config.sections[si];editing={type:'category',si};openEditor('Kategoriinnstillinger','KATEGORI');$('#editorBody').innerHTML=card('Kategori',`<label class="field"><span>Navn</span><input id="catTitle" placeholder="F.eks. Pizza" value="${esc(s.title||'')}"></label><label class="field"><span>Beskrivelse</span><textarea id="catNote" placeholder="Kort beskrivelse">${esc(s.note||s.description||'')}</textarea></label><label class="field"><span>Bilde-URL</span><input id="catImage" placeholder="https://…" value="${esc(s.imageUrl||'')}"></label>`)+card('Handlinger',`<button class="danger-wide" id="deleteCat">Slett kategori</button>`);$('#catTitle').oninput=e=>{s.title=e.target.value;markDirty();renderMenu()};$('#catNote').oninput=e=>{s.note=e.target.value;markDirty();renderMenu()};$('#catImage').oninput=e=>{s.imageUrl=e.target.value;markDirty();renderMenu()};$('#deleteCat').onclick=()=>{if(confirm('Slette kategorien og alle produktene?')){config.sections.splice(si,1);markDirty();closeEditor();renderMenu()}}}
 function addProduct(si){const p={id:uid('product'),name:'',description:'',imageUrl:'',sizes:[{id:uid('size'),label:'',price:0}],defaultSizeIndex:0,allergens:[],optionGroupIds:[],hidden:false,soldOut:false};config.sections[si].items.push(p);openSection=config.sections[si].id;markDirty();renderMenu();editProduct(si,config.sections[si].items.length-1)}
 function editProduct(si,pi){editing={type:'product',si,pi};openEditor(config.sections[si].items[pi].name||'Nytt produkt');renderProductEditor()}
-function renderProductEditor(){const{si,pi}=editing,p=config.sections[si].items[pi];$('#editorBody').innerHTML=card('Grunninformasjon',`<label class="field"><span>Produktnavn</span><input id="pName" placeholder="F.eks. 3 - Al Capone" value="${esc(p.name||'')}"></label><label class="field"><span>Beskrivelse</span><textarea id="pDesc" placeholder="Ingredienser og kort beskrivelse">${esc(p.description||p.ingredients||'')}</textarea></label><label class="field"><span>Bilde-URL</span><input id="pImage" placeholder="https://…" value="${esc(p.imageUrl||p.image||'')}"></label>`)+card('Størrelser og priser',`<div class="size-head"><span>Valgt</span><span>Størrelse</span><span>Pris</span><span></span></div><div id="sizeRows">${p.sizes.map((s,i)=>sizeRow(s,i,p.defaultSizeIndex)).join('')}</div><button class="add-line" id="addSize">+ Legg til størrelse</button><p class="hint">Den markerte størrelsen er valgt når kunden åpner produktet.</p>`,'Velg standard')+card('Allergener',`<div class="chips">${ALLERGENS.map(([id,l])=>`<label class="chip-check"><input type="checkbox" data-allergen="${id}" ${p.allergens.includes(id)?'checked':''}>${l}</label>`).join('')}</div>`)+card('Choices & addons',`${attachedGroupsHtml(p)}<button class="primary-line" id="attachGroup">+ Legg til valggruppe</button><p class="hint">Velg fra biblioteket. Du trenger ikke skrive samme valg på nytt for hvert produkt.</p>`,'Delte valggrupper')+card('Tilgjengelighet',`<label class="toggle-row"><span><strong>Vis produktet</strong><small>Skjul uten å slette</small></span><span class="switch"><input id="visible" type="checkbox" ${p.hidden?'':'checked'}><i></i></span></label><label class="toggle-row"><span><strong>Utsolgt</strong><small>Kunden kan ikke bestille</small></span><span class="switch"><input id="sold" type="checkbox" ${p.soldOut?'checked':''}><i></i></span></label>`)+card('Mer',`<button class="quiet" id="duplicate">Dupliser produkt</button> <button class="danger-wide" id="deleteProduct">Slett produkt</button>`);bindProductEditor()}
+function renderProductEditor(){const{si,pi}=editing,p=config.sections[si].items[pi];$('#editorBody').innerHTML=card('Grunninformasjon',`<label class="field"><span>Produktnavn</span><input id="pName" placeholder="F.eks. 3 - Al Capone" value="${esc(p.name||'')}"></label><label class="field"><span>Beskrivelse</span><textarea id="pDesc" placeholder="Ingredienser og kort beskrivelse">${esc(p.description||p.ingredients||'')}</textarea></label><label class="field"><span>Bilde-URL</span><input id="pImage" placeholder="https://…" value="${esc(p.imageUrl||p.image||'')}"></label>`)+card('Størrelser og priser',`<div class="size-head"><span>Valgt</span><span>Størrelse</span><span>Pris</span><span></span></div><div id="sizeRows">${p.sizes.map((s,i)=>sizeRow(s,i,p.defaultSizeIndex)).join('')}</div><button class="add-line" id="addSize">+ Legg til størrelse</button><p class="hint">Den markerte størrelsen er valgt når kunden åpner produktet.</p>`,'Velg standard')+card('Allergener',`<div class="chips">${ALLERGENS.map(([id,l])=>`<label class="chip-check"><input type="checkbox" data-allergen="${id}" ${p.allergens.includes(id)?'checked':''}>${l}</label>`).join('')}</div>`)+card('Choices & addons',`${attachedGroupsHtml(p)}<button class="primary-line" id="attachGroup">+ Legg til valggruppe</button><p class="hint">Velg fra biblioteket. Du trenger ikke skrive samme valg på nytt for hvert produkt.</p>`,'Delte valggrupper')+card('Tilgjengelighet',`<label class="toggle-row"><span><strong>Vis produktet</strong><small>Skjul uten å slette</small></span><span class="switch"><input id="visible" type="checkbox" ${p.hidden?'':'checked'}><i></i></span></label><label class="toggle-row"><span><strong>Utsolgt</strong><small>Kunden kan ikke bestille</small></span><span class="switch"><input id="sold" type="checkbox" ${p.soldOut?'checked':''}><i></i></span></label>`)+card('Mer',`<button class="danger-wide" id="deleteProduct">Slett produkt</button>`);bindProductEditor()}
 function attachedGroupsHtml(p){const linked=config.optionGroups.filter(g=>p.optionGroupIds.includes(g.id));if(!linked.length)return'<p class="hint">Ingen valggrupper er koblet til dette produktet.</p>';return linked.map(g=>`<div class="attached-group" data-gid="${esc(g.id)}"><div class="attached-group-head"><div><strong>${esc(g.title||'Uten navn')}</strong><small>${g.options.length} alternativer · ${g.selectionMode==='multiple'?'Flere valg':'Ett valg'}</small></div><div class="attached-group-actions"><button class="quiet edit-attached">Rediger</button><button class="remove-mini unlink-attached">×</button></div></div></div>`).join('')}
 function sizeRow(s,i,d){return `<div class="size-row" data-i="${i}"><label><input type="radio" name="defsize" ${i===d?'checked':''}></label><input class="sl" placeholder="F.eks. Stor" value="${esc(s.label||'')}"><input class="sp" type="number" min="0" placeholder="0" value="${Number(s.price)||''}"><button class="remove-mini sr">×</button></div>`}
-function bindProductEditor(){const{si,pi}=editing,p=config.sections[si].items[pi];$('#pName').oninput=e=>{p.name=e.target.value;$('#editorTitle').textContent=p.name||'Nytt produkt';markDirty();renderMenu()};$('#pDesc').oninput=e=>{p.description=e.target.value;delete p.ingredients;markDirty();renderMenu()};$('#pImage').oninput=e=>{p.imageUrl=e.target.value;delete p.image;markDirty();renderMenu()};$$('.size-row').forEach(r=>{const i=+r.dataset.i;r.querySelector('input[type=radio]').onchange=()=>{p.defaultSizeIndex=i;markDirty();renderMenu()};r.querySelector('.sl').oninput=e=>{p.sizes[i].label=e.target.value;markDirty();renderMenu()};r.querySelector('.sp').oninput=e=>{p.sizes[i].price=Number(e.target.value)||0;markDirty();renderMenu()};r.querySelector('.sr').onclick=()=>{if(p.sizes.length===1)return toast('Minst én størrelse må være');p.sizes.splice(i,1);p.defaultSizeIndex=Math.min(p.defaultSizeIndex,p.sizes.length-1);markDirty();renderProductEditor();renderMenu()}});$('#addSize').onclick=()=>{p.sizes.push({id:uid('size'),label:'',price:0});markDirty();renderProductEditor()};$$('[data-allergen]').forEach(c=>c.onchange=e=>{const set=new Set(p.allergens);e.target.checked?set.add(e.target.dataset.allergen):set.delete(e.target.dataset.allergen);p.allergens=[...set];markDirty()});$('#visible').onchange=e=>{p.hidden=!e.target.checked;markDirty();renderMenu()};$('#sold').onchange=e=>{p.soldOut=e.target.checked;markDirty();renderMenu()};$('#attachGroup').onclick=()=>openGroupPicker(si,pi);$$('.unlink-attached').forEach(b=>b.onclick=()=>{const gid=b.closest('.attached-group').dataset.gid;p.optionGroupIds=p.optionGroupIds.filter(id=>id!==gid);markDirty();renderProductEditor();renderMenu()});$$('.edit-attached').forEach(b=>b.onclick=()=>{const gid=b.closest('.attached-group').dataset.gid;const gi=config.optionGroups.findIndex(g=>g.id===gid);if(gi>=0)editLibraryGroup(gi,{returnTo:{si,pi}})});$('#duplicate').onclick=()=>{const c=structuredClone(p);c.id=uid('product');c.name=(c.name||'Produkt')+' – kopi';config.sections[si].items.splice(pi+1,0,c);markDirty();renderMenu();toast('Produkt duplisert')};$('#deleteProduct').onclick=()=>{if(confirm('Slette produktet?')){config.sections[si].items.splice(pi,1);markDirty();closeEditor();renderMenu()}}}
+function bindProductEditor(){const{si,pi}=editing,p=config.sections[si].items[pi];$('#pName').oninput=e=>{p.name=e.target.value;$('#editorTitle').textContent=p.name||'Nytt produkt';markDirty();renderMenu()};$('#pDesc').oninput=e=>{p.description=e.target.value;delete p.ingredients;markDirty();renderMenu()};$('#pImage').oninput=e=>{p.imageUrl=e.target.value;delete p.image;markDirty();renderMenu()};$$('.size-row').forEach(r=>{const i=+r.dataset.i;r.querySelector('input[type=radio]').onchange=()=>{p.defaultSizeIndex=i;markDirty();renderMenu()};r.querySelector('.sl').oninput=e=>{p.sizes[i].label=e.target.value;markDirty();renderMenu()};r.querySelector('.sp').oninput=e=>{p.sizes[i].price=Number(e.target.value)||0;markDirty();renderMenu()};r.querySelector('.sr').onclick=()=>{if(p.sizes.length===1)return toast('Minst én størrelse må være');p.sizes.splice(i,1);p.defaultSizeIndex=Math.min(p.defaultSizeIndex,p.sizes.length-1);markDirty();renderProductEditor();renderMenu()}});$('#addSize').onclick=()=>{p.sizes.push({id:uid('size'),label:'',price:0});markDirty();renderProductEditor()};$$('[data-allergen]').forEach(c=>c.onchange=e=>{const set=new Set(p.allergens);e.target.checked?set.add(e.target.dataset.allergen):set.delete(e.target.dataset.allergen);p.allergens=[...set];markDirty()});$('#visible').onchange=e=>{p.hidden=!e.target.checked;markDirty();renderMenu()};$('#sold').onchange=e=>{p.soldOut=e.target.checked;markDirty();renderMenu()};$('#attachGroup').onclick=()=>openGroupPicker(si,pi);$$('.unlink-attached').forEach(b=>b.onclick=()=>{const gid=b.closest('.attached-group').dataset.gid;p.optionGroupIds=p.optionGroupIds.filter(id=>id!==gid);markDirty();renderProductEditor();renderMenu()});$$('.edit-attached').forEach(b=>b.onclick=()=>{const gid=b.closest('.attached-group').dataset.gid;const gi=config.optionGroups.findIndex(g=>g.id===gid);if(gi>=0)editLibraryGroup(gi,{returnTo:{si,pi}})});$('#deleteProduct').onclick=()=>{if(confirm('Slette produktet?')){config.sections[si].items.splice(pi,1);markDirty();closeEditor();renderMenu()}}}
 function openGroupPicker(si,pi){const p=config.sections[si].items[pi],available=config.optionGroups.filter(g=>!p.optionGroupIds.includes(g.id));const overlay=document.createElement('div');overlay.className='modal-backdrop';overlay.innerHTML=`<div class="modal-card"><div class="modal-head"><h3>Legg til valggruppe</h3><button class="modal-close">×</button></div><div class="modal-body">${available.length?`<div class="attach-list">${available.map(g=>`<div class="attach-row"><div><strong>${esc(g.title||'Uten navn')}</strong><small>${g.options.length} alternativer · brukes på ${usageCount(g.id)} produkt${usageCount(g.id)===1?'':'er'}</small></div><button class="ghost attach-existing" data-gid="${esc(g.id)}">Legg til</button></div>`).join('')}</div>`:'<div class="library-empty">Alle eksisterende valggrupper er allerede koblet til produktet.</div>'}</div><div class="modal-foot"><button class="primary-line create-and-attach">+ Lag ny valggruppe</button></div></div>`;document.body.appendChild(overlay);overlay.querySelector('.modal-close').onclick=()=>overlay.remove();overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};overlay.querySelectorAll('.attach-existing').forEach(b=>b.onclick=()=>{p.optionGroupIds.push(b.dataset.gid);markDirty();overlay.remove();renderMenu();if(editing?.type==='product'&&editing.si===si&&editing.pi===pi)renderProductEditor();toast('Valggruppe lagt til')});overlay.querySelector('.create-and-attach').onclick=()=>{const g=newGroup();config.optionGroups.push(g);p.optionGroupIds.push(g.id);markDirty();overlay.remove();editLibraryGroup(config.optionGroups.length-1,{returnTo:{si,pi}})}}
 function newGroup(){return{id:uid('group'),title:'',selectionMode:'single',required:false,maxSelections:1,defaultOptionIds:[],options:[{id:uid('option'),label:'',price:0}]}}
 function createLibraryGroup(){const g=newGroup();config.optionGroups.push(g);markDirty();editLibraryGroup(config.optionGroups.length-1)}
@@ -86,4 +67,210 @@ function bindGroupEditor(){const{gi}=editing,g=config.optionGroups[gi];$('#gTitl
 function bindTopTools(){const inp=$('#menuSearch');if(inp){inp.value=search;inp.oninput=e=>{search=e.target.value.trim();renderMenu()}}$('#collapseBtn')?.addEventListener('click',()=>{openSection='';renderMenu()})}
 $('#addCategoryBtn').onclick=()=>{const s={id:uid('section'),title:'',note:'',items:[]};config.sections.push(s);openSection=s.id;markDirty();renderMenu();editCategory(config.sections.length-1)};$('#closeEditor').onclick=()=>{const ret=editing?.returnTo;closeEditor();if(ret)editProduct(ret.si,ret.pi)};$('#previewBtn').onclick=()=>window.open('index.html','_blank');$('#previewNav').onclick=()=>window.open('index.html','_blank');saveBtn.onclick=()=>save(true);window.addEventListener('beforeunload',e=>{if(!dirty)return;e.preventDefault();e.returnValue=''});
 bindTopTools();load();
+})();
+(()=>{
+'use strict';
+const DB='https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const asArray=v=>Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[]);
+
+
+async function currentConfig(){
+ const r=await fetch(DB+'/.json',{cache:'no-store'});
+ if(!r.ok)throw new Error('HTTP '+r.status);
+ return await r.json()||{};
+}
+async function groupIndex(gid){
+ const cfg=await currentConfig();
+ const groups=asArray(cfg.optionGroups);
+ return groups.findIndex(g=>String(g?.id||'')===String(gid));
+}
+async function openExistingEditor(gid){
+ const idx=await groupIndex(gid);
+ if(idx<0)throw new Error('Valggruppen ble ikke funnet');
+ document.querySelector('.modal-backdrop')?.remove();
+ document.querySelector('#navChoices')?.click();
+ await sleep(60);
+ const btn=document.querySelector(`[data-edit-group="${idx}"]`);
+ if(!btn)throw new Error('Redigeringsknappen ble ikke funnet');
+ btn.click();
+}
+async function deleteExisting(gid,title){
+ const cfg=await currentConfig();
+ const groups=asArray(cfg.optionGroups);
+ const idx=groups.findIndex(g=>String(g?.id||'')===String(gid));
+ if(idx<0)throw new Error('Valggruppen ble ikke funnet');
+ let used=0;
+ asArray(cfg.sections).forEach(s=>asArray(s?.items).forEach(p=>{if(asArray(p?.optionGroupIds).map(String).includes(String(gid)))used++;}));
+ const name=title&&title!=='Uten navn'?`«${title}»`:'denne valggruppen';
+ const msg=used
+   ? `${name} brukes på ${used} produkt${used===1?'':'er'}. Vil du slette gruppen og fjerne den fra alle disse produktene?`
+   : `Vil du slette ${name}?`;
+ if(!confirm(msg))return;
+ document.querySelector('.modal-backdrop')?.remove();
+ document.querySelector('#navChoices')?.click();
+ await sleep(60);
+ const edit=document.querySelector(`[data-edit-group="${idx}"]`);
+ if(!edit)throw new Error('Valggruppen kunne ikke åpnes');
+ edit.click();
+ await sleep(40);
+ const del=document.querySelector('#deleteGroup');
+ if(!del)throw new Error('Slett-knappen ble ikke funnet');
+ del.click();
+}
+function enhancePicker(modal){
+ if(!modal||modal.dataset.manageEnhanced==='1')return;
+ modal.dataset.manageEnhanced='1';
+ modal.querySelectorAll('.attach-row').forEach(row=>{
+   const add=row.querySelector('.attach-existing');
+   if(!add)return;
+   const gid=add.dataset.gid;
+   const title=row.querySelector('strong')?.textContent?.trim()||'Uten navn';
+   const tools=document.createElement('div');
+   tools.className='attach-row-tools';
+   const edit=document.createElement('button');
+   edit.type='button';edit.className='manage-group';edit.textContent='Rediger';edit.title='Rediger denne valggruppen';
+   const del=document.createElement('button');
+   del.type='button';del.className='delete-group-picker';del.textContent='🗑';del.title='Slett valggruppen';del.setAttribute('aria-label','Slett valggruppen');
+   add.replaceWith(tools);tools.append(edit,del,add);
+   edit.onclick=async()=>{try{await openExistingEditor(gid)}catch(e){alert(e.message)}};
+   del.onclick=async()=>{try{await deleteExisting(gid,title)}catch(e){alert(e.message)}};
+ });
+}
+const observer=new MutationObserver(()=>{
+ document.querySelectorAll('.modal-backdrop .modal-card').forEach(card=>{
+   if(card.querySelector('.attach-existing'))enhancePicker(card);
+ });
+});
+observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+
+(()=>{
+'use strict';
+const DB='https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+let groups=[];
+let quickFilter='all';
+const arr=v=>Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[]);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+
+async function refreshGroups(){
+ try{const r=await fetch(DB+'/.json',{cache:'no-store'});if(!r.ok)return;const cfg=await r.json()||{};groups=arr(cfg.optionGroups).map(g=>({...g,id:String(g?.id||''),options:arr(g?.options),defaultOptionIds:arr(g?.defaultOptionIds).map(String)}));enhance();}catch{}
+}
+function modeText(g){return g.selectionMode==='multiple'?`Flere valg · maks ${Math.max(1,Number(g.maxSelections)||1)}`:'Ett valg'}
+function previewHtml(g){
+ const defaults=new Set(arr(g.defaultOptionIds).map(String));
+ const opts=arr(g.options);
+ return `<div class="choice-preview-box"><div class="choice-preview-rule"><span class="choice-preview-pill orange">${esc(modeText(g))}</span><span class="choice-preview-pill ${g.required?'orange':'green'}">${g.required?'Obligatorisk':'Valgfritt'}</span>${defaults.size?`<span class="choice-preview-pill">${defaults.size} standardvalg</span>`:''}</div>${opts.length?`<div class="choice-preview-list">${opts.map(o=>{const on=defaults.has(String(o.id||''));const price=Number(o.price)||0;return `<div class="choice-preview-option ${on?'default':''}"><span class="choice-preview-mark">${on?'✓':''}</span><span>${esc(o.label||'Uten navn')}</span><span class="choice-preview-price">${price?`+${price} kr`:'0 kr'}</span></div>`}).join('')}</div>`:'<div class="choice-preview-empty">Ingen alternativer i denne valggruppen.</div>'}</div>`;
+}
+
+function removeLowValueActions(){
+ document.querySelectorAll('#duplicate').forEach(e=>e.remove());
+ document.querySelectorAll('.item-more').forEach(e=>e.remove());
+}
+function sectionInfo(title){
+ const t=(title||'').trim().toLowerCase();
+ if(t.includes('grunninformasjon'))return ['product','Produkt','▤'];
+ if(t.includes('størrelser'))return ['sizes','Størrelser & priser','↔'];
+ if(t.includes('allergener'))return ['allergens','Allergener','!'];
+ if(t.includes('choices')||t.includes('tillegg og valg'))return ['choices','Choices & addons','+'];
+ if(t.includes('tilgjengelighet'))return ['availability','Tilgjengelighet','✓'];
+ if(t==='mer'||t.includes('handlinger'))return ['danger','Handlinger','⋮'];
+ return ['other',title||'Innstillinger','•'];
+}
+function modernizeEditorCards(){
+ const body=document.querySelector('#editorBody');if(!body)return;
+ const cards=[...body.querySelectorAll(':scope > .editor-card')];
+ cards.forEach(card=>{
+   const h=card.querySelector('.editor-card-head h4');if(!h)return;
+   const [key,label,icon]=sectionInfo(h.textContent);
+   card.classList.add('admin-section-card');card.dataset.section=key;
+   h.textContent=label;h.setAttribute('data-icon',icon);
+ });
+ const isProduct=document.querySelector('#editorEyebrow')?.textContent?.toUpperCase().includes('PRODUKT');
+ if(isProduct&&cards.length&&!body.querySelector('.product-section-nav')){
+   const nav=document.createElement('div');nav.className='product-section-nav';
+   cards.filter(c=>c.dataset.section!=='other').forEach(c=>{
+     const b=document.createElement('button');const h=c.querySelector('h4');b.textContent=h?.textContent||'Seksjon';if(c.dataset.section==='choices')b.classList.add('choices');b.onclick=()=>c.scrollIntoView({behavior:'smooth',block:'start'});nav.appendChild(b);
+   });
+   body.prepend(nav);
+ }
+}
+function ensureQuickFilters(){
+ const tools=document.querySelector('.tools');if(!tools||!document.querySelector('#menuSearch'))return;
+ if(tools.querySelector('.admin-quick-filters'))return;
+ const box=document.createElement('div');box.className='admin-quick-filters';
+ box.innerHTML=`<button class="admin-filter-btn active" data-filter="all">Alle</button><button class="admin-filter-btn" data-filter="sold"><span class="filter-dot"></span>Utsolgt</button><button class="admin-filter-btn" data-filter="hidden"><span class="filter-dot"></span>Skjult</button>`;
+ tools.appendChild(box);
+ box.querySelectorAll('button').forEach(b=>b.onclick=()=>{quickFilter=b.dataset.filter;box.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));applyQuickFilter();});
+}
+function applyQuickFilter(){
+ document.querySelectorAll('.category').forEach(cat=>{
+   const items=[...cat.querySelectorAll('.item')];let visible=0;
+   items.forEach(item=>{
+     const sold=[...item.querySelectorAll('.badge')].some(x=>x.textContent.includes('Utsolgt'));
+     const hidden=[...item.querySelectorAll('.badge')].some(x=>x.textContent.includes('Skjult'));
+     const show=quickFilter==='all'||(quickFilter==='sold'&&sold)||(quickFilter==='hidden'&&hidden);
+     item.style.display=show?'':'none';if(show)visible++;
+   });
+   cat.style.display=(quickFilter==='all'||visible>0)?'':'none';
+ });
+}
+function enhance(){
+ removeLowValueActions();
+ ensureQuickFilters();
+ modernizeEditorCards();
+ applyQuickFilter();
+ document.querySelectorAll('.attached-group[data-gid]').forEach(card=>{
+   if(card.querySelector('.choice-preview-box'))return;
+   const g=groups.find(x=>x.id===card.dataset.gid);if(!g)return;
+   card.insertAdjacentHTML('beforeend',previewHtml(g));
+ });
+}
+let scheduled=false;
+const observer=new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;enhance();});});
+observer.observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('focus',refreshGroups);
+setInterval(refreshGroups,5000);
+refreshGroups();
+enhance();
+})();
+
+
+/* Section navigator: exact scrolling + active section sync */
+(()=>{
+  let currentEditor=null;
+  function setupSectionNavigator(){
+    const editor=document.querySelector('#editor');
+    const nav=document.querySelector('.product-section-nav');
+    if(!editor||!nav)return;
+    const cards=[...document.querySelectorAll('#editorBody > .admin-section-card')];
+    const buttons=[...nav.querySelectorAll('button')];
+    if(!cards.length||!buttons.length)return;
+    if(nav.dataset.navSync==='1'&&currentEditor===editor)return;
+    nav.dataset.navSync='1';currentEditor=editor;
+    const setActive=i=>buttons.forEach((b,n)=>b.classList.toggle('active',n===i));
+    buttons.forEach((b,i)=>{
+      b.classList.remove('active');
+      b.onclick=()=>{
+        const card=cards[i];if(!card)return;
+        const editorTop=editor.getBoundingClientRect().top;
+        const cardTop=card.getBoundingClientRect().top;
+        const sticky=(document.querySelector('.editor-head')?.offsetHeight||58)+nav.offsetHeight+8;
+        editor.scrollTo({top:Math.max(0,editor.scrollTop+(cardTop-editorTop)-sticky),behavior:'smooth'});
+        setActive(i);
+      };
+    });
+    const sync=()=>{
+      const anchor=editor.getBoundingClientRect().top+(document.querySelector('.editor-head')?.offsetHeight||58)+nav.offsetHeight+14;
+      let active=0;
+      cards.forEach((c,i)=>{if(c.getBoundingClientRect().top<=anchor)active=i;});
+      setActive(active);
+    };
+    editor.addEventListener('scroll',sync,{passive:true});
+    sync();
+  }
+  let pending=false;
+  new MutationObserver(()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;setupSectionNavigator();});}).observe(document.documentElement,{childList:true,subtree:true});
+  setupSectionNavigator();
 })();
