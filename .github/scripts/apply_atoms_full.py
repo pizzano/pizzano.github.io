@@ -1,0 +1,4 @@
+from pathlib import Path
+import gzip,base64
+FILES={
+'index.html':'H4sIAFESjmoC/92923IbSZIo+M6vSHE1DaBFgBdJdaFE6uhClTSiLiaqam2mRqeUJJJgCgkkOjNBFVuDtX6ZtfM8Z8x2fqDH7Ng8rdmaTZnNW+sHzjf0l6zfIsIjMhMkVVT32a...TRUNCATED
