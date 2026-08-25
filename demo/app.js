@@ -469,7 +469,10 @@ function renderMenu() {
   }
   el.menuList.innerHTML = blocks
     .map(
-      (block) => `
+      (block) => {
+      const collapsible = block.key === 'favorites' || block.key === 'popular';
+      const visibleCount = collapsible && !ui.expandedBlocks.has(block.key) ? 3 : block.items.length;
+      return `
       <section class="cat-block" id="blk_${escapeHtml(block.key)}" data-block="${escapeHtml(block.key)}">
         <div class="cat-head">
           <h2>${escapeHtml(block.title)}</h2>
@@ -478,10 +481,11 @@ function renderMenu() {
       }</span>
         </div>
         <div class="prod-grid">
-          ${block.items.slice(0, ui.expandedBlocks.has(block.key) ? block.items.length : 3).map(({ item, section }) => productCardHtml(item, section)).join('')}
+          ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
-        ${block.items.length > 3 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Gizle' : 'Vis mer'}</button>` : ''}
-      </section>`
+        ${collapsible && block.items.length > 3 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Gizle' : 'Vis mer'}</button>` : ''}
+      </section>`;
+      }
     )
     .join('');
 }
