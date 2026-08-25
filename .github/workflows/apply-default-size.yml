@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch app.js
-        shell: python
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           p=Path('demo/app.js')
           s=p.read_text(encoding='utf-8')
@@ -38,6 +38,7 @@ jobs:
               raise SystemExit('openProduct target not found')
           s=s.replace(old2,new2,1)
           p.write_text(s,encoding='utf-8')
+          PY
       - name: Commit
         run: |
           git config user.name 'KOL Admin Bot'
