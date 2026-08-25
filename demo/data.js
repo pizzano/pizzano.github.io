@@ -301,7 +301,7 @@ export function getPickupSlots() {
   const state = getOpenState();
   if (!state.open) return [];
 
-  const prep = Math.max(Number(settings.prepMinutes) || 0, 0);
+  const prep = Math.max(Number(settings.prepMinutes) || 0, 30);
   const interval = Math.min(Math.max(Number(settings.slotIntervalMinutes) || 15, 5), 60);
   const close = parseTime(settings.orderCloseTime) ?? 22 * 60;
   const open = parseTime(settings.orderOpenTime) ?? 14 * 60;
@@ -310,9 +310,7 @@ export function getPickupSlots() {
   const earliest = Math.max(now + prep, open + prep);
   const closeAdjusted = close > open ? close : close + 1440;
 
-  const slots = [
-    { value: 'asap', label: prep ? `Snarest (ca. ${prep} min)` : 'Snarest' },
-  ];
+  const slots = [];
 
   let cursor = Math.ceil(earliest / interval) * interval;
   while (cursor <= closeAdjusted - 10 && slots.length < 25) {

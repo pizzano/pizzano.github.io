@@ -65,8 +65,10 @@ let cart = Array.isArray(loadJSON(CART_KEY, [])) ? loadJSON(CART_KEY, []) : [];
 const ui = {
   view: 'menu',
   activeCategory: '',
+  search: '',
   checkoutStep: 1,
   pickup: null,
+  pickupMode: null,
   editingLineId: null,
   expandedBlocks: new Set(),
   allergensOpen: false,
@@ -97,6 +99,7 @@ const el = {
   appHeader: $('appHeader'),
   catBar: $('catBar'),
   catScroll: $('catScroll'),
+  menuSearch: null,
   menuList: $('menuList'),
   btnAllergens: $('btnAllergens'),
   allergenPicker: $('allergenPicker'),
@@ -146,6 +149,7 @@ const el = {
   errPhone: $('errPhone'),
   saveProfile: $('saveProfile'),
   timeGrid: $('timeGrid'),
+  pickupChoices: $('pickupChoices'),
   pickupHint: $('pickupHint'),
   errTime: $('errTime'),
   reviewCard: $('reviewCard'),
@@ -222,7 +226,8 @@ function toggleFavorite(itemId) {
 }
 
 function visibleItems(section) {
-  return (section.items || []).filter((item) => !item.hidden);
+  const query = ui.search.trim().toLocaleLowerCase('no');
+  return (section.items || []).filter((item) => !item.hidden && (!query || `${item.name} ${item.description} ${item.ingredients}`.toLocaleLowerCase('no').includes(query)));
 }
 
 const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
@@ -231,7 +236,7 @@ function renderAllergenPicker() {
   const labels = [...new Set((store.allergenCatalog || []).map((item) => item.label))];
   el.allergenPicker.hidden = !ui.allergensOpen;
   el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
-  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('');
+  el.allergenPicker.innerHTML = `<p class="allergen-help">Velg allergener du vil markere i menyen. Produktene skjules ikke.</p>${labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('')}`;
 }
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
@@ -240,7 +245,7 @@ function menuBlocks() {
 
   const favItems = profile.favorites
     .map((id) => findItem(id))
-    .filter(({ item }) => item && !item.hidden);
+    .filter(({ item }) => item && visibleItems({ items: [item] }).length);
   if (favItems.length) {
     blocks.push({
       key: 'favorites',
@@ -252,7 +257,7 @@ function menuBlocks() {
 
   const popularItems = (store.popularItemIds || [])
     .map((id) => findItem(id))
-    .filter(({ item }) => item && !item.hidden);
+    .filter(({ item }) => item && visibleItems({ items: [item] }).length);
   if (popularItems.length) {
     blocks.push({
       key: 'popular',
@@ -311,7 +316,7 @@ function renderCategories() {
   if (!blocks.some((block) => block.key === ui.activeCategory)) {
     ui.activeCategory = blocks.length ? blocks[0].key : '';
   }
-  el.catScroll.innerHTML = blocks
+  el.catScroll.innerHTML = `<label class="cat-search" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><input id="menuSearch" type="search" placeholder="Søk" value="${escapeHtml(ui.search)}"></label>` + blocks
     .map(
       (block) =>
         `<button class="cat-tab${block.key === ui.activeCategory ? ' is-active' : ''}" role="tab" aria-selected="${
@@ -319,6 +324,12 @@ function renderCategories() {
         }" data-cat="${escapeHtml(block.key)}" type="button">${escapeHtml(block.title)}</button>`
     )
     .join('');
+  el.menuSearch = $('menuSearch');
+  el.menuSearch.addEventListener('input', () => {
+    ui.search = el.menuSearch.value;
+    renderCategories();
+    renderMenu();
+  });
   centerActiveTab(false);
 }
 
@@ -990,20 +1001,26 @@ function renderCheckout() {
 
   // Hentetider styres av adminpanelet (tilberedningstid + intervall).
   const slots = getPickupSlots();
-  if (!slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
+  if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (slots.length) {
-    el.pickupHint.textContent = 'Velg et tidspunkt for å fullføre bestillingen.';
+    el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.pickupMode === ui.pickupMode);
+    });
+    el.timeGrid.hidden = ui.pickupMode !== 'scheduled';
+    el.pickupHint.textContent = ui.pickupMode === 'scheduled'
+      ? 'Velg hentetid. Tidene starter minst 30 minutter frem i tid.'
+      : 'Velg Snarest mulig eller Velg tid.';
     el.timeGrid.innerHTML = slots
       .map(
         (slot) =>
-          `<button class="time-btn${slot.value === 'asap' ? ' is-soon' : ''}${
-            ui.pickup === slot.value ? ' is-active' : ''
+          `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''
           }" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`
       )
       .join('');
   } else {
     const state = getOpenState();
     el.pickupHint.textContent = `Restauranten er stengt nå. Vi åpner ${state.opensAt}.`;
+    el.pickupChoices.hidden = true;
     el.timeGrid.innerHTML =
       '<p class="hint">Ingen hentetider tilgjengelig akkurat nå.</p>';
   }
@@ -1106,6 +1123,7 @@ async function placeOrder() {
   cart = [];
   persistCart();
   ui.pickup = null;
+  ui.pickupMode = null;
   if (el.custComment) el.custComment.value = '';
 
   el.confirmText.textContent = `Takk, ${name}! Vi lager bestillingen din klar til henting.`;
@@ -1444,6 +1462,15 @@ el.btnStepNext.addEventListener('click', () => {
     return;
   }
   placeOrder();
+});
+
+el.pickupChoices.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-pickup-mode]');
+  if (!button) return;
+  ui.pickupMode = button.dataset.pickupMode;
+  ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
+  el.errTime.hidden = true;
+  renderCheckout();
 });
 
 el.timeGrid.addEventListener('click', (event) => {

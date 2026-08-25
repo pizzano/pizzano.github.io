@@ -59,7 +59,6 @@
             </div>
             <div class="allergen-toolbar">
                 <button class="allergen-toggle" id="btnAllergens" type="button">Matallergier</button>
-                <p>Velg allergener du vil markere i menyen. Produktene skjules ikke.</p>
             </div>
             <div class="allergen-picker" id="allergenPicker" hidden></div>
             <div class="closed-banner" id="closedBanner" hidden>
@@ -128,8 +127,12 @@
 
             <div class="step-panel" id="step3" hidden>
                 <h2 class="sec-title">Når vil du hente?</h2>
-                <p class="hint" id="pickupHint">Velg et tidspunkt for å fullføre bestillingen.</p>
-                <div class="time-grid" id="timeGrid"></div>
+                <p class="hint" id="pickupHint">Velg hvordan du vil hente bestillingen.</p>
+                <div class="pickup-choices" id="pickupChoices">
+                    <button class="pickup-choice" data-pickup-mode="asap" type="button">Snarest mulig</button>
+                    <button class="pickup-choice" data-pickup-mode="scheduled" type="button">Velg tid</button>
+                </div>
+                <div class="time-grid" id="timeGrid" hidden></div>
                 <p class="err" id="errTime" hidden>Velg en hentetid.</p>
                 <div class="review-card" id="reviewCard"></div>
             </div>

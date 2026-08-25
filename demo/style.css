@@ -210,6 +210,11 @@ svg {
     transition: background .14s ease, color .14s ease, border-color .14s ease;
 }
 
+.cat-search { position: sticky; left: 0; z-index: 2; display: flex; align-items: center; gap: 4px; height: 32px; min-width: 94px; padding: 0 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink-2); }
+.cat-search svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
+.cat-search input { min-width: 0; width: 48px; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12.5px; }
+.cat-search input::-webkit-search-cancel-button { display: none; }
+
 .cat-tab:hover { border-color: var(--line-strong); }
 
 .cat-tab.is-active {
@@ -671,10 +676,14 @@ main {
 .allergen-toggle, .show-more { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-1); font: inherit; font-size: 12px; font-weight: 700; padding: 6px 10px; white-space: nowrap; }
 .allergen-toggle.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .allergen-picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+.allergen-help { flex-basis: 100%; margin: 0 0 2px; color: var(--ink-2); font-size: 12px; }
 .allergen-choice { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); padding: 5px 8px; font-size: 12px; }
 .allergen-choice.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .prod-allergens { margin: 3px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.25; }
 .show-more { display: block; width: calc(100% - 2px); margin: 8px 1px 2px; background: transparent; }
+.pickup-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.pickup-choice { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; }
+.pickup-choice.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 
 .comment-area {
     width: 100%;
