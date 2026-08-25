@@ -67,6 +67,7 @@ const ui = {
   view: 'menu',
   activeCategory: '',
   search: '',
+  searchOpen: false,
   checkoutStep: 1,
   pickup: null,
   pickupMode: null,
@@ -326,7 +327,10 @@ function renderCategories() {
   if (!blocks.some((block) => block.key === ui.activeCategory)) {
     ui.activeCategory = blocks.length ? blocks[0].key : '';
   }
-  el.catScroll.innerHTML = `<label class="cat-search" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><input id="menuSearch" type="search" placeholder="Søk" value="${escapeHtml(ui.search)}"></label>` + blocks
+  const searchControl = ui.searchOpen
+    ? `<label class="tab-search" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><input id="menuSearch" type="search" placeholder="Søk i menyen" value="${escapeHtml(ui.search)}"><button id="closeMenuSearch" type="button" aria-label="Lukk søk">×</button></label>`
+    : `<button class="search-tab" id="openMenuSearch" type="button" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></button>`;
+  const categoryTabs = ui.searchOpen ? '' : blocks
     .map(
       (block) =>
         `<button class="cat-tab${block.key === ui.activeCategory ? ' is-active' : ''}" role="tab" aria-selected="${
@@ -334,10 +338,23 @@ function renderCategories() {
         }" data-cat="${escapeHtml(block.key)}" type="button">${escapeHtml(block.title)}</button>`
     )
     .join('');
+  el.catScroll.innerHTML = searchControl + categoryTabs;
   el.menuSearch = $('menuSearch');
-  el.menuSearch.addEventListener('input', () => {
-    ui.search = el.menuSearch.value;
+  const openSearch = $('openMenuSearch');
+  const closeSearch = $('closeMenuSearch');
+  if (openSearch) openSearch.addEventListener('click', () => {
+    ui.searchOpen = true;
     renderCategories();
+    requestAnimationFrame(() => el.menuSearch && el.menuSearch.focus());
+  });
+  if (closeSearch) closeSearch.addEventListener('click', () => {
+    ui.search = '';
+    ui.searchOpen = false;
+    renderCategories();
+    renderMenu();
+  });
+  if (el.menuSearch) el.menuSearch.addEventListener('input', () => {
+    ui.search = el.menuSearch.value;
     renderMenu();
   });
   centerActiveTab(false);
