@@ -1095,3 +1095,65 @@ body.kol-customer .profile-greeting,body.kol-customer .pizza-loyalty-card,body.k
 
 /* responsive admin: preserve usability on narrower desktop */
 @media (max-width:1100px){body:not(.kol-customer) .app{grid-template-columns:190px minmax(0,1fr) 360px!important}body:not(.kol-customer) .content{padding-left:12px!important;padding-right:12px!important}}
+
+/* ===== KOL ATOMS REMIX FINAL ===== */
+:root{--rx-bg:#f4f5f6;--rx-s:#fff;--rx-ink:#1d2024;--rx-muted:#727b85;--rx-line:#e1e4e7;--rx-orange:#e8620f;--rx-green:#2d9b61;--rx-side:#20252a}
+body:not(.kol-customer){background:var(--rx-bg)!important;color:var(--rx-ink)!important}
+body:not(.kol-customer) .app{grid-template-columns:224px minmax(0,1fr) 0!important;background:var(--rx-bg)!important}
+body:not(.kol-customer) .app.editor-open{grid-template-columns:224px minmax(0,1fr) 410px!important}
+body:not(.kol-customer) .sidebar{background:var(--rx-side)!important;color:#e8ebef!important;border:0!important;padding:14px 12px!important}
+body:not(.kol-customer) .brand{border-bottom:1px solid rgba(255,255,255,.09)!important;padding:3px 5px 15px!important;margin-bottom:12px!important}
+body:not(.kol-customer) .brand-mark{background:var(--rx-orange)!important;width:34px!important;height:34px!important;border-radius:9px!important}
+body:not(.kol-customer) .brand strong{color:#fff!important}.brand small{color:#99a2ac!important}
+body:not(.kol-customer) .nav-title{color:#7d8791!important}
+body:not(.kol-customer) .nav-btn{color:#c7cdd4!important;background:transparent!important;border-radius:8px!important;min-height:42px!important}
+body:not(.kol-customer) .nav-btn:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
+body:not(.kol-customer) .nav-btn.active{background:var(--rx-orange)!important;color:#fff!important;box-shadow:none!important}
+body:not(.kol-customer) .nav-note{margin-top:auto!important;background:transparent!important;border:0!important;border-top:1px solid rgba(255,255,255,.09)!important;color:#8f99a3!important;padding:13px 5px 0!important}
+body:not(.kol-customer) .workspace,body:not(.kol-customer) .content{background:var(--rx-bg)!important}
+body:not(.kol-customer) .topbar{height:62px!important;background:#fff!important;border-bottom:1px solid var(--rx-line)!important;box-shadow:none!important}
+body:not(.kol-customer) .preview{background:var(--rx-green)!important;border-radius:8px!important;height:38px!important}
+body:not(.kol-customer) .save{background:var(--rx-orange)!important;border-radius:8px!important;height:38px!important}
+body:not(.kol-customer) .content{padding:20px 18px 34px!important}
+body:not(.kol-customer) .page-head h1{font-size:22px!important;letter-spacing:-.025em!important}.page-head p{color:#7d8690!important}
+body:not(.kol-customer) .search{border:1px solid #d5d9dd!important;border-radius:8px!important;background:#fff!important;height:38px!important}
+body:not(.kol-customer) .category-head{background:#fff!important;border:1px solid var(--rx-line)!important;border-radius:10px!important;box-shadow:0 2px 8px rgba(24,30,38,.06)!important;min-height:70px!important}
+body:not(.kol-customer) .category-body{margin-left:20px!important}
+body:not(.kol-customer) .item{background:#fff!important;border:1px solid var(--rx-line)!important;border-radius:9px!important;box-shadow:0 1px 3px rgba(24,30,38,.045)!important;min-height:66px!important}
+body:not(.kol-customer) .item:hover,body:not(.kol-customer) .category-head:hover{border-color:#cbd0d5!important}
+body:not(.kol-customer) .cat-image,body:not(.kol-customer) .item-img{border-radius:8px!important;background-color:#eef0f2!important}
+body:not(.kol-customer) .badge.green{background:#e8f6ec!important;color:#227448!important}.badge.orange{background:#fdf0e7!important;color:#bd510e!important}
+body:not(.kol-customer) .mini-action{border:1px solid #efb28c!important;background:#fff7f1!important;color:#bd4e0c!important;border-radius:7px!important}
+body:not(.kol-customer) .editor{background:#f7f8f9!important;border-left:1px solid var(--rx-line)!important;box-shadow:-5px 0 18px rgba(20,24,30,.05)!important}
+body:not(.kol-customer) .editor-head{height:62px!important;background:#fff!important;border-bottom:1px solid var(--rx-line)!important}
+body:not(.kol-customer) .editor-body{background:#f7f8f9!important;padding:10px!important;scrollbar-color:#707b85 #e5e8eb!important}
+body:not(.kol-customer) .editor-body::-webkit-scrollbar{width:12px!important}.editor-body::-webkit-scrollbar-track{background:#e5e8eb!important}.editor-body::-webkit-scrollbar-thumb{background:#707b85!important;border:3px solid #e5e8eb!important;border-radius:999px!important}
+body:not(.kol-customer) .editor-card{background:#fff!important;border:1px solid var(--rx-line)!important;border-radius:10px!important;box-shadow:none!important}
+body:not(.kol-customer) .editor-card-head{background:#fafbfb!important;border-bottom:1px solid #eceef0!important}
+body:not(.kol-customer) .admin-section-card[data-section="choices"]{border-color:#efc2a9!important;background:#fffaf7!important}.admin-section-card[data-section="choices"] .editor-card-head{background:#fff1e8!important}
+body:not(.kol-customer) .product-section-nav button{background:#fff!important;border:1px solid #d8dde1!important;color:#67717b!important}.product-section-nav button.active{background:var(--rx-orange)!important;border-color:var(--rx-orange)!important;color:#fff!important}
+body:not(.kol-customer) .library-card{background:#fff!important;border:1px solid var(--rx-line)!important;border-radius:10px!important;box-shadow:0 2px 8px rgba(24,30,38,.06)!important}
+body:not(.kol-customer) .field input,body:not(.kol-customer) .field textarea,body:not(.kol-customer) .size-row input,body:not(.kol-customer) .choice-row input{border-color:#d6dade!important;border-radius:8px!important}
+
+body.kol-customer{background:#f5f6f7!important;color:#202428!important}
+body.kol-customer .customer-app{background:#f5f6f7!important}
+body.kol-customer .appbar{background:#fff!important;color:#252a2f!important;box-shadow:0 1px 0 #e5e8ea!important}
+body.kol-customer .appbar-main{background:#fff!important;height:58px!important}
+body.kol-customer .appbar-brand{color:#252a2f!important}.brand-logo small{color:#7b848d!important}
+body.kol-customer .icon-button{width:37px!important;height:37px!important;border:1px solid #e1e4e7!important;border-radius:9px!important;background:#fff!important;color:#525c65!important}
+body.kol-customer .cart-toggle #cartCount{background:var(--rx-orange)!important}
+body.kol-customer .category-tabs-wrap{background:#fff!important;border-bottom:1px solid #e5e8ea!important;box-shadow:none!important}
+body.kol-customer .category-tab,body.kol-customer .search-tab{border:1px solid #e1e4e7!important;border-radius:8px!important;background:#fff!important;color:#5d6670!important}
+body.kol-customer .category-tab.active{background:var(--rx-orange)!important;border-color:var(--rx-orange)!important;color:#fff!important}
+body.kol-customer #menuShell.menu-shell{background:#f5f6f7!important}
+body.kol-customer #menuShell .menu-topline{background:#f5f6f7!important}
+body.kol-customer #menuShell .menu-row{background:#fff!important;border:1px solid #e1e4e7!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(24,30,38,.05)!important}
+body.kol-customer #menuShell .menu-thumb{border-radius:8px!important}
+body.kol-customer #menuShell .plus{border-radius:8px!important;background:#fff7f1!important;border:1px solid #efb28c!important;color:var(--rx-orange)!important}
+body.kol-customer .screen{background:#f5f6f7!important}
+body.kol-customer .product-body{background:#fff!important}.product-photo{height:145px!important}
+body.kol-customer .product-choice-head{background:#f7f8f9!important;border-color:#e5e8ea!important}.product-choice{background:#fff!important;border-color:#e9ecee!important}
+body.kol-customer .product-choice.active{background:#fff6ef!important;color:#b94d0d!important}.product-choice.active .choice-mark{background:var(--rx-orange)!important;border-color:var(--rx-orange)!important;color:#fff!important}
+body.kol-customer .primary{background:var(--rx-orange)!important;border-radius:8px!important}.secondary{border-radius:8px!important}
+body.kol-customer .product-footer,body.kol-customer .checkout-footer{background:#fff!important;border-top:1px solid #e1e4e7!important;box-shadow:0 -4px 14px rgba(24,30,38,.05)!important}
+body.kol-customer .final-checkout-section,body.kol-customer .profile-greeting,body.kol-customer .pizza-loyalty-card,body.kol-customer .store-card,body.kol-customer .info-list-card{background:#fff!important;border:1px solid #e1e4e7!important;border-radius:10px!important;box-shadow:0 1px 3px rgba(24,30,38,.04)!important}
