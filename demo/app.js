@@ -37,11 +37,6 @@ const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
 const PIZZA_GOAL = 11;
 
-const COUPONS = {
-  KOL10: { label: '10 % rabatt', type: 'percent', value: 10 },
-  HENT50: { label: '50 kr rabatt over 300 kr', type: 'amount', value: 50, min: 300 },
-};
-
 function loadJSON(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -71,9 +66,11 @@ const ui = {
   view: 'menu',
   activeCategory: '',
   checkoutStep: 1,
-  coupon: null,
   pickup: null,
   editingLineId: null,
+  expandedBlocks: new Set(),
+  allergensOpen: false,
+  selectedAllergens: [],
 };
 
 /** Åpent produkt i sheet. */
@@ -101,6 +98,8 @@ const el = {
   catBar: $('catBar'),
   catScroll: $('catScroll'),
   menuList: $('menuList'),
+  btnAllergens: $('btnAllergens'),
+  allergenPicker: $('allergenPicker'),
   syncBadge: $('syncBadge'),
   openStatus: $('openStatus'),
   openDot: $('openDot'),
@@ -137,11 +136,9 @@ const el = {
   stepper: $('stepper'),
   step1: $('step1'),
   step2: $('step2'),
+  step3: $('step3'),
   checkoutLines: $('checkoutLines'),
   step1Total: $('step1Total'),
-  couponInput: $('couponInput'),
-  btnApplyCoupon: $('btnApplyCoupon'),
-  couponHint: $('couponHint'),
   custName: $('custName'),
   custPhone: $('custPhone'),
   custComment: $('custComment'),
@@ -161,7 +158,6 @@ const el = {
   loyaltyText: $('loyaltyText'),
   stamps: $('stamps'),
   rewardBox: $('rewardBox'),
-  couponList: $('couponList'),
   favList: $('favList'),
   orderList: $('orderList'),
   infoName: $('infoName'),
@@ -227,6 +223,15 @@ function toggleFavorite(itemId) {
 
 function visibleItems(section) {
   return (section.items || []).filter((item) => !item.hidden);
+}
+
+const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
+
+function renderAllergenPicker() {
+  const labels = [...new Set((store.allergenCatalog || []).map((item) => item.label))];
+  el.allergenPicker.hidden = !ui.allergensOpen;
+  el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
+  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('');
 }
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
@@ -387,6 +392,7 @@ function productCardHtml(item, section) {
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
   const desc = item.description || item.ingredients || section.note || '';
+  const markedAllergens = allergenLabels(item).filter((label) => ui.selectedAllergens.includes(label));
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       ${
@@ -400,6 +406,7 @@ function productCardHtml(item, section) {
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
+        ${markedAllergens.length ? `<p class="prod-allergens">${markedAllergens.map((label) => `${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}`).join(' ')}</p>` : ''}
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
@@ -433,8 +440,9 @@ function renderMenu() {
       }</span>
         </div>
         <div class="prod-grid">
-          ${block.items.map(({ item, section }) => productCardHtml(item, section)).join('')}
+          ${block.items.slice(0, ui.expandedBlocks.has(block.key) ? block.items.length : 3).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
+        ${block.items.length > 3 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Gizle' : 'Vis mer'}</button>` : ''}
       </section>`
     )
     .join('');
@@ -848,16 +856,6 @@ function computeDiscount(subtotal) {
     }
   }
 
-  if (ui.coupon && COUPONS[ui.coupon]) {
-    const coupon = COUPONS[ui.coupon];
-    if (!coupon.min || subtotal >= coupon.min) {
-      const value =
-        coupon.type === 'percent' ? (subtotal * coupon.value) / 100 : coupon.value;
-      total += value;
-      parts.push(`Kupong ${ui.coupon}`);
-    }
-  }
-
   total = Math.min(total, subtotal);
   return { amount: Math.round(total * 100) / 100, label: parts.join(' + ') || 'Rabatt' };
 }
@@ -962,7 +960,7 @@ function renderBottomBar() {
 
 function setStep(step) {
   ui.checkoutStep = step;
-  const panels = [el.step1, el.step2];
+  const panels = [el.step1, el.step2, el.step3];
   panels.forEach((panel, index) => {
     panel.hidden = index + 1 !== step;
   });
@@ -972,7 +970,7 @@ function setStep(step) {
     node.classList.toggle('is-done', value < step);
   });
   el.btnStepBack.textContent = step === 1 ? 'Til handlekurven' : 'Tilbake';
-  el.btnStepNext.textContent = step === 2 ? 'Send bestilling' : 'Neste';
+  el.btnStepNext.textContent = step === 3 ? 'Send bestilling' : 'Neste';
   renderCheckout();
 }
 
@@ -1107,10 +1105,7 @@ async function placeOrder() {
 
   cart = [];
   persistCart();
-  ui.coupon = null;
   ui.pickup = null;
-  el.couponInput.value = '';
-  el.couponHint.textContent = '';
   if (el.custComment) el.custComment.value = '';
 
   el.confirmText.textContent = `Takk, ${name}! Vi lager bestillingen din klar til henting.`;
@@ -1151,13 +1146,6 @@ function renderProfile() {
     return `<span class="stamp ${index < filled ? 'is-filled' : ''}">${index + 1}</span>`;
   }).join('');
   el.rewardBox.hidden = profile.freePizzas <= 0;
-
-  el.couponList.innerHTML = Object.entries(COUPONS)
-    .map(
-      ([code, coupon]) =>
-        `<li><code>${escapeHtml(code)}</code><span>${escapeHtml(coupon.label)}</span></li>`
-    )
-    .join('');
 
   const favs = profile.favorites
     .map((id) => findItem(id))
@@ -1267,6 +1255,14 @@ el.catScroll.addEventListener('click', (event) => {
 });
 
 document.addEventListener('click', (event) => {
+  const toggleBlock = event.target.closest('[data-toggle-block]');
+  if (toggleBlock) {
+    const key = toggleBlock.dataset.toggleBlock;
+    if (ui.expandedBlocks.has(key)) ui.expandedBlocks.delete(key);
+    else ui.expandedBlocks.add(key);
+    renderMenu();
+    return;
+  }
   const openBtn = event.target.closest('[data-open]');
   if (openBtn) {
     openProduct(openBtn.dataset.open);
@@ -1444,7 +1440,7 @@ el.btnStepNext.addEventListener('click', () => {
     el.errName.hidden = Boolean(name);
     el.errPhone.hidden = validPhone(phone);
     if (!name || !validPhone(phone)) return;
-    placeOrder();
+    setStep(3);
     return;
   }
   placeOrder();
@@ -1458,26 +1454,19 @@ el.timeGrid.addEventListener('click', (event) => {
   renderCheckout();
 });
 
-el.btnApplyCoupon.addEventListener('click', () => {
-  const code = el.couponInput.value.trim().toUpperCase();
-  if (!code) {
-    ui.coupon = null;
-    el.couponHint.textContent = 'Kupongen er fjernet.';
-    renderCheckout();
-    return;
-  }
-  const coupon = COUPONS[code];
-  if (!coupon) {
-    ui.coupon = null;
-    el.couponHint.textContent = 'Ugyldig kupongkode.';
-  } else if (coupon.min && cartSubtotal() < coupon.min) {
-    ui.coupon = null;
-    el.couponHint.textContent = `Kupongen gjelder fra ${formatPrice(coupon.min)}.`;
-  } else {
-    ui.coupon = code;
-    el.couponHint.textContent = `${coupon.label} er lagt til.`;
-  }
-  renderCheckout();
+el.btnAllergens.addEventListener('click', () => {
+  ui.allergensOpen = !ui.allergensOpen;
+  renderAllergenPicker();
+});
+el.allergenPicker.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-allergen]');
+  if (!button) return;
+  const label = button.dataset.allergen;
+  ui.selectedAllergens = ui.selectedAllergens.includes(label)
+    ? ui.selectedAllergens.filter((value) => value !== label)
+    : [...ui.selectedAllergens, label];
+  renderAllergenPicker();
+  renderMenu();
 });
 
 [el.custName, el.custPhone].forEach((input) => {
@@ -1522,6 +1511,7 @@ function renderAll() {
   const changed = reconcileCart();
   renderCategories();
   renderMenu();
+  renderAllergenPicker();
   renderOpenState();
   renderCartCount();
   renderBottomBar();

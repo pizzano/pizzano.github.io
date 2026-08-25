@@ -504,6 +504,7 @@ main {
     right: 0;
     bottom: 0;
     max-height: 94vh;
+    max-height: 94dvh;
     background: var(--surface);
     border-radius: 14px 14px 0 0;
     display: flex;
@@ -662,6 +663,18 @@ main {
     border: 1px solid var(--line);
     color: var(--ink-2);
 }
+
+#btnBack[hidden] { display: none !important; }
+
+.allergen-toolbar { display: flex; align-items: center; gap: 9px; padding: 8px 12px 2px; }
+.allergen-toolbar p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.25; }
+.allergen-toggle, .show-more { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-1); font: inherit; font-size: 12px; font-weight: 700; padding: 6px 10px; white-space: nowrap; }
+.allergen-toggle.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.allergen-picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+.allergen-choice { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); padding: 5px 8px; font-size: 12px; }
+.allergen-choice.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.prod-allergens { margin: 3px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.25; }
+.show-more { display: block; width: calc(100% - 2px); margin: 8px 1px 2px; background: transparent; }
 
 .comment-area {
     width: 100%;

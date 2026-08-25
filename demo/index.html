@@ -57,6 +57,11 @@
                 <span id="openStatus">Åpent nå · kun henting</span>
                 <span class="sync-badge" id="syncBadge">Kobler til…</span>
             </div>
+            <div class="allergen-toolbar">
+                <button class="allergen-toggle" id="btnAllergens" type="button">Matallergier</button>
+                <p>Velg allergener du vil markere i menyen. Produktene skjules ikke.</p>
+            </div>
+            <div class="allergen-picker" id="allergenPicker" hidden></div>
             <div class="closed-banner" id="closedBanner" hidden>
                 <strong id="closedTitle">Restauranten er stengt</strong>
                 <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
@@ -84,21 +89,14 @@
         <section class="view view-checkout" id="viewCheckout" aria-label="Bestilling" hidden>
             <ol class="steps" id="stepper">
                 <li class="step is-active" data-step="1"><span class="step-num">1</span>Bestilling</li>
-                <li class="step" data-step="2"><span class="step-num">2</span>Kontakt og hentetid</li>
+                <li class="step" data-step="2"><span class="step-num">2</span>Kontakt</li>
+                <li class="step" data-step="3"><span class="step-num">3</span>Hentetid</li>
             </ol>
 
             <!-- Steg 1 -->
             <div class="step-panel is-active" id="step1">
                 <h2 class="sec-title">Din bestilling</h2>
                 <div id="checkoutLines" class="cart-lines cart-lines-compact"></div>
-                <div class="coupon-box">
-                    <label class="field-label" for="couponInput">Kupongkode</label>
-                    <div class="coupon-row">
-                        <input id="couponInput" class="input" type="text" placeholder="F.eks. KOL10" autocomplete="off">
-                        <button class="btn btn-outline" id="btnApplyCoupon" type="button">Bruk</button>
-                    </div>
-                    <p class="hint" id="couponHint"></p>
-                </div>
                 <div class="sum-row sum-total"><span>Totalt</span><strong id="step1Total">0 kr</strong></div>
             </div>
 
@@ -126,6 +124,9 @@
                     <input type="checkbox" id="saveProfile" checked>
                     <span>Husk navn og nummer til neste gang</span>
                 </label>
+            </div>
+
+            <div class="step-panel" id="step3" hidden>
                 <h2 class="sec-title">Når vil du hente?</h2>
                 <p class="hint" id="pickupHint">Velg et tidspunkt for å fullføre bestillingen.</p>
                 <div class="time-grid" id="timeGrid"></div>
@@ -168,11 +169,6 @@
                     <strong>Gratis pizza opptjent!</strong>
                     <span>Trekkes automatisk fra på neste pizzabestilling.</span>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2 class="sec-title">Mine kuponger</h2>
-                <ul class="coupon-list" id="couponList"></ul>
             </div>
 
             <div class="card">
