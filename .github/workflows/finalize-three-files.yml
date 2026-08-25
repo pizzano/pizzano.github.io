@@ -32,12 +32,12 @@ jobs:
 
           index = re.sub(r'\s*<link[^>]+href=["\']compact\.css[^>]*>\s*', '\n', index, flags=re.I)
           core_bundle = app_core.rstrip() + '\n\n' + customer_options.rstrip()
-          index = re.sub(r'<script[^>]+src=["\']app\.js[^>]*></script>', '<script>\n' + core_bundle.replace('</script>', '<\\/script>') + '\n</script>', index, count=1, flags=re.I)
+          index = re.sub(r'<script[^>]+src=["\']app\.js[^>]*></script>', lambda m: '<script>\n' + core_bundle.replace('</script>', '<\\/script>') + '\n</script>', index, count=1, flags=re.I)
           index = re.sub(r'href=["\']kol\.css[^"\']*["\']', 'href="kol.css?v=20260825-threefile"', index, count=1, flags=re.I)
           (d/'index.html').write_text(index, encoding='utf-8')
 
           admin = re.sub(r'<link[^>]+href=["\']admin\.css[^>]*>', '<link rel="stylesheet" href="kol.css?v=20260825-threefile">', admin, count=1, flags=re.I)
-          admin = re.sub(r'<script[^>]+src=["\']admin\.js[^>]*></script>', '<script>\n' + admin_js.replace('</script>', '<\\/script>') + '\n</script>', admin, count=1, flags=re.I)
+          admin = re.sub(r'<script[^>]+src=["\']admin\.js[^>]*></script>', lambda m: '<script>\n' + admin_js.replace('</script>', '<\\/script>') + '\n</script>', admin, count=1, flags=re.I)
           (d/'admin.html').write_text(admin, encoding='utf-8')
 
           for name in ['admin.css','admin.js','app.js','app-core.js','customer-options.js','compact.css']:
@@ -59,4 +59,4 @@ jobs:
           git add -A demo
           git commit -m 'Convert demo to admin index and kol css only' || exit 0
           git push
-# trigger: 2026-08-25
+# trigger: fixed replacement
