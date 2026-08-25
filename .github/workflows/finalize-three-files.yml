@@ -27,28 +27,23 @@ jobs:
           customer_options = (d/'customer-options.js').read_text(encoding='utf-8') if (d/'customer-options.js').exists() else ''
           admin_js = (d/'admin.js').read_text(encoding='utf-8') if (d/'admin.js').exists() else ''
 
-          # One shared stylesheet: customer + compact layer + admin.
           merged_css = kol.rstrip() + '\n\n/* ===== CUSTOMER COMPACT LAYER ===== */\n' + compact.strip() + '\n\n/* ===== ADMIN PANEL ===== */\n' + admin_css.strip() + '\n'
           (d/'kol.css').write_text(merged_css, encoding='utf-8')
 
-          # Customer: keep HTML + all customer JS inline; only kol.css external.
           index = re.sub(r'\s*<link[^>]+href=["\']compact\.css[^>]*>\s*', '\n', index, flags=re.I)
           core_bundle = app_core.rstrip() + '\n\n' + customer_options.rstrip()
           index = re.sub(r'<script[^>]+src=["\']app\.js[^>]*></script>', '<script>\n' + core_bundle.replace('</script>', '<\\/script>') + '\n</script>', index, count=1, flags=re.I)
           index = re.sub(r'href=["\']kol\.css[^"\']*["\']', 'href="kol.css?v=20260825-threefile"', index, count=1, flags=re.I)
           (d/'index.html').write_text(index, encoding='utf-8')
 
-          # Admin: use the same kol.css and inline admin JS.
           admin = re.sub(r'<link[^>]+href=["\']admin\.css[^>]*>', '<link rel="stylesheet" href="kol.css?v=20260825-threefile">', admin, count=1, flags=re.I)
           admin = re.sub(r'<script[^>]+src=["\']admin\.js[^>]*></script>', '<script>\n' + admin_js.replace('</script>', '<\\/script>') + '\n</script>', admin, count=1, flags=re.I)
           (d/'admin.html').write_text(admin, encoding='utf-8')
 
-          # Remove superseded files: demo must contain only admin.html, index.html, kol.css.
           for name in ['admin.css','admin.js','app.js','app-core.js','customer-options.js','compact.css']:
               p=d/name
               if p.exists(): p.unlink()
 
-          # Basic assertions against accidental broken references.
           assert 'admin.js' not in (d/'admin.html').read_text(encoding='utf-8')
           assert 'admin.css' not in (d/'admin.html').read_text(encoding='utf-8')
           assert 'app.js' not in (d/'index.html').read_text(encoding='utf-8')
@@ -64,3 +59,4 @@ jobs:
           git add -A demo
           git commit -m 'Convert demo to admin index and kol css only' || exit 0
           git push
+# trigger: 2026-08-25
