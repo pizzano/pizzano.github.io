@@ -35,6 +35,7 @@ import {
 
 const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
+const ALLERGEN_KEY = 'kol_allergens_v1';
 const PIZZA_GOAL = 11;
 
 function loadJSON(key, fallback) {
@@ -72,7 +73,8 @@ const ui = {
   editingLineId: null,
   expandedBlocks: new Set(),
   allergensOpen: false,
-  selectedAllergens: [],
+  selectedAllergens: loadJSON(ALLERGEN_KEY, []),
+  allergenSearch: '',
 };
 
 /** Åpent produkt i sheet. */
@@ -102,7 +104,12 @@ const el = {
   menuSearch: null,
   menuList: $('menuList'),
   btnAllergens: $('btnAllergens'),
+  allergenModal: $('allergenModal'),
   allergenPicker: $('allergenPicker'),
+  allergenSearch: $('allergenSearch'),
+  allergenClose: $('allergenClose'),
+  allergenReset: $('allergenReset'),
+  allergenSave: $('allergenSave'),
   syncBadge: $('syncBadge'),
   openStatus: $('openStatus'),
   openDot: $('openDot'),
@@ -233,10 +240,13 @@ function visibleItems(section) {
 const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
 
 function renderAllergenPicker() {
-  const labels = [...new Set((store.allergenCatalog || []).map((item) => item.label))];
-  el.allergenPicker.hidden = !ui.allergensOpen;
+  const query = ui.allergenSearch.trim().toLocaleLowerCase('no');
+  const labels = [...new Set((store.allergenCatalog || []).map((item) => item.label))]
+    .filter((label) => !query || label.toLocaleLowerCase('no').includes(query));
+  el.allergenModal.hidden = !ui.allergensOpen;
   el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
-  el.allergenPicker.innerHTML = `<p class="allergen-help">Velg allergener du vil markere i menyen. Produktene skjules ikke.</p>${labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('')}`;
+  el.allergenSearch.value = ui.allergenSearch;
+  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('') || '<p class="hint">Ingen allergener funnet.</p>';
 }
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
@@ -1482,9 +1492,14 @@ el.timeGrid.addEventListener('click', (event) => {
 });
 
 el.btnAllergens.addEventListener('click', () => {
-  ui.allergensOpen = !ui.allergensOpen;
+  ui.allergensOpen = true;
   renderAllergenPicker();
 });
+el.allergenClose.addEventListener('click', () => { ui.allergensOpen = false; renderAllergenPicker(); });
+el.allergenModal.addEventListener('click', (event) => { if (event.target === el.allergenModal) { ui.allergensOpen = false; renderAllergenPicker(); } });
+el.allergenSearch.addEventListener('input', () => { ui.allergenSearch = el.allergenSearch.value; renderAllergenPicker(); });
+el.allergenReset.addEventListener('click', () => { ui.selectedAllergens = []; renderAllergenPicker(); });
+el.allergenSave.addEventListener('click', () => { saveJSON(ALLERGEN_KEY, ui.selectedAllergens); ui.allergensOpen = false; renderAllergenPicker(); renderMenu(); });
 el.allergenPicker.addEventListener('click', (event) => {
   const button = event.target.closest('[data-allergen]');
   if (!button) return;
@@ -1493,7 +1508,6 @@ el.allergenPicker.addEventListener('click', (event) => {
     ? ui.selectedAllergens.filter((value) => value !== label)
     : [...ui.selectedAllergens, label];
   renderAllergenPicker();
-  renderMenu();
 });
 
 [el.custName, el.custPhone].forEach((input) => {

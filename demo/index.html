@@ -60,7 +60,6 @@
             <div class="allergen-toolbar">
                 <button class="allergen-toggle" id="btnAllergens" type="button">Matallergier</button>
             </div>
-            <div class="allergen-picker" id="allergenPicker" hidden></div>
             <div class="closed-banner" id="closedBanner" hidden>
                 <strong id="closedTitle">Restauranten er stengt</strong>
                 <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
@@ -213,6 +212,15 @@
             </div>
         </section>
     </main>
+
+    <div class="allergen-modal" id="allergenModal" hidden>
+        <section class="allergen-dialog" aria-modal="true" role="dialog" aria-label="Matallergier">
+            <header><div><h2>Matallergier</h2><p>Velg allergier. Vi varsler i menyen.</p></div><button id="allergenClose" type="button" aria-label="Lukk">×</button></header>
+            <label class="allergen-search"><span>⌕</span><input id="allergenSearch" type="search" placeholder="Søk allergen" autocomplete="off"></label>
+            <div class="allergen-picker" id="allergenPicker"></div>
+            <footer><button id="allergenReset" class="btn btn-outline" type="button">Nullstill</button><button id="allergenSave" class="btn btn-primary" type="button">Lagre</button></footer>
+        </section>
+    </div>
 
     <!-- ============ BUNNLINJE (kurv) ============ -->
     <div class="bottom-bar" id="bottomBar" hidden>

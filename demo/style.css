@@ -679,6 +679,13 @@ main {
 .allergen-help { flex-basis: 100%; margin: 0 0 2px; color: var(--ink-2); font-size: 12px; }
 .allergen-choice { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); padding: 5px 8px; font-size: 12px; }
 .allergen-choice.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.allergen-modal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: end center; padding: 16px; background: rgba(20,24,30,.42); }
+.allergen-modal[hidden] { display: none; }
+.allergen-dialog { width: min(560px, 100%); max-height: min(700px, calc(100dvh - 32px)); display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding: 16px; border-radius: 18px; background: var(--surface); box-shadow: 0 14px 40px rgba(20,24,30,.22); }
+.allergen-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.allergen-dialog h2 { margin: 0; font-size: 20px; }.allergen-dialog header p { margin: 4px 0 0; color: var(--ink-2); font-size: 12px; }.allergen-dialog header button { border: 0; background: transparent; color: var(--ink-2); font-size: 28px; line-height: 1; }
+.allergen-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink-2); }.allergen-search input { height: 39px; min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; font: inherit; }
+.allergen-dialog .allergen-picker { min-height: 120px; overflow: auto; padding: 2px; }.allergen-dialog footer { display: flex; gap: 8px; }.allergen-dialog footer .btn { flex: 1; }
 .prod-allergens { margin: 3px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.25; }
 .show-more { display: block; width: calc(100% - 2px); margin: 8px 1px 2px; background: transparent; }
 .pickup-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
@@ -1136,6 +1143,7 @@ main {
     gap: 8px;
     margin-top: 10px;
 }
+.checkout-actions { position: sticky; bottom: 0; z-index: 35; margin: 14px -12px 0; padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 18px rgba(20,24,30,.06); }
 
 .checkout-actions .btn { flex: 1; }
 
