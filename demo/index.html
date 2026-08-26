@@ -86,19 +86,11 @@
         <!-- ============ CHECKOUT ============ -->
         <section class="view view-checkout" id="viewCheckout" aria-label="Bestilling" hidden>
             <ol class="steps" id="stepper">
-                <li class="step is-active" data-step="1"><span class="step-num">1</span>Bestilling</li>
                 <li class="step" data-step="2"><span class="step-num">2</span>Kontakt</li>
                 <li class="step" data-step="3"><span class="step-num">3</span>Hentetid</li>
             </ol>
 
-            <!-- Steg 1 -->
-            <div class="step-panel is-active" id="step1">
-                <h2 class="sec-title">Din bestilling</h2>
-                <div id="checkoutLines" class="cart-lines cart-lines-compact"></div>
-                <div class="sum-row sum-total"><span>Totalt</span><strong id="step1Total">0 kr</strong></div>
-            </div>
-
-            <!-- Steg 2 -->
+            <!-- Steg 2 — handlekurven er steg 1 -->
             <div class="step-panel" id="step2" hidden>
                 <h2 class="sec-title">Kontaktinformasjon</h2>
                 <div class="field">
