@@ -138,7 +138,6 @@ const el = {
   cTitle: $('cTitle'),
   cNote: $('cNote'),
   cImage: $('cImage'),
-  cLoyalty: $('cLoyalty'),
   categoryErr: $('categoryErr'),
   btnSaveCategory: $('btnSaveCategory'),
   modalOrder: $('modalOrder'),
@@ -643,7 +642,6 @@ function openCategoryModal(sectionId) {
   el.cTitle.value = section ? section.title : '';
   el.cNote.value = section ? section.note : '';
   el.cImage.value = section ? section.imageUrl : '';
-  el.cLoyalty.checked = section ? Boolean(section.loyaltyEligible) : false;
   el.categoryErr.hidden = true;
   openModal(el.modalCategory);
   el.cTitle.focus();
@@ -663,7 +661,6 @@ el.btnSaveCategory.addEventListener('click', () => {
     title,
     note: el.cNote.value.trim(),
     imageUrl: el.cImage.value.trim(),
-    loyaltyEligible: el.cLoyalty.checked,
   };
 
   if (categoryDraft.isNew) {
@@ -1575,13 +1572,6 @@ function renderOrderDetail(orderId) {
     </div>
     <div class="detail-sum">
       <div><span>Delsum</span><strong>${formatPrice(order.subtotal)}</strong></div>
-      ${
-        order.discount > 0
-          ? `<div><span>${escapeHtml(
-              order.discountLabel || 'Rabatt'
-            )}</span><strong>−${formatPrice(order.discount)}</strong></div>`
-          : ''
-      }
       <div class="is-total"><span>Totalt</span><strong>${formatPrice(
         order.total
       )}</strong></div>
