@@ -384,7 +384,6 @@ function seedState() {
         note: '',
         imageUrl: '',
         type: 'pizza',
-        loyaltyEligible: true,
         items: [
           {
             id: 'it_margherita',
@@ -407,7 +406,6 @@ function seedState() {
         note: '',
         imageUrl: '',
         type: '',
-        loyaltyEligible: false,
         items: [
           {
             id: 'it_cola',
@@ -496,8 +494,6 @@ function normalizeOrders(raw) {
           ? order.status
           : 'mottatt',
         statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
-        discount: Number(order.discount) || 0,
-        discountLabel: String(order.discountLabel || ''),
         subtotal: Number(order.subtotal) || 0,
         total: Number(order.total) || 0,
         lines: asArray(order.lines).map((line) => ({
@@ -549,7 +545,6 @@ function normalizeState(raw) {
     note: typeof section.note === 'string' ? section.note : '',
     imageUrl: typeof section.imageUrl === 'string' ? section.imageUrl : '',
     type: typeof section.type === 'string' ? section.type : '',
-    loyaltyEligible: Boolean(section.loyaltyEligible),
     items: asArray(section.items).map((item) => {
       const sizes = asArray(item.sizes).map((size) => ({
         id: size.id || uid('sz'),
