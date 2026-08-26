@@ -691,7 +691,7 @@ main {
 .prod-allergens { margin: 3px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.25; }
 .show-more { display: block; width: calc(100% - 2px); margin: 8px 1px 2px; background: transparent; }
 .pickup-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-.pickup-choice { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; }
+.pickup-choice { min-height: 54px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; }
 .pickup-choice.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 
 .comment-area {
@@ -1103,17 +1103,17 @@ main {
 
 .time-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     margin-bottom: 8px;
 }
 
 .time-btn {
-    height: 44px;
+    height: 54px;
     border: 1px solid var(--line);
     border-radius: var(--r-sm);
     background: var(--surface);
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--ink);
     transition: border-color .14s ease, background .14s ease, color .14s ease;
@@ -1148,6 +1148,7 @@ main {
 .checkout-actions { position: sticky; bottom: 0; z-index: 35; margin: 14px -12px 0; padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 18px rgba(20,24,30,.06); }
 
 .checkout-actions .btn { flex: 1; }
+.checkout-actions #btnStepBack { flex: 0 0 calc(33.333% - 4px); }
 
 /* -------------------------- Profil -------------------------- */
 
