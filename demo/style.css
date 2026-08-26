@@ -917,8 +917,6 @@ main {
     padding: 3px 0;
 }
 
-.sum-discount { color: var(--ok); }
-
 .sum-total {
     font-size: 16px;
     color: var(--ink);
@@ -1097,10 +1095,6 @@ main {
 
 .check-line input { accent-color: var(--accent); width: 17px; height: 17px; }
 
-.coupon-box { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
-.coupon-row { display: flex; gap: 6px; }
-.coupon-row .input { flex: 1; }
-
 .time-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1149,74 +1143,9 @@ main {
 
 .checkout-actions .btn { flex: 1; }
 .checkout-actions #btnStepBack { flex: 0 0 calc(33.333% - 4px); }
+.checkout-actions #btnKeepShopping { flex: 0 0 calc(33.333% - 4px); }
 
 /* -------------------------- Profil -------------------------- */
-
-.stamps {
-    display: grid;
-    grid-template-columns: repeat(11, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.stamp {
-    aspect-ratio: 1;
-    border-radius: 50%;
-    border: 1px dashed var(--line-strong);
-    display: grid;
-    place-items: center;
-    font-size: 10.5px;
-    color: var(--ink-3);
-    background: var(--surface-2);
-}
-
-.stamp.is-filled {
-    border: 1px solid var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent-dark);
-    font-weight: 700;
-}
-
-.stamp.is-reward {
-    border: 1px solid var(--ok);
-    background: var(--ok-soft);
-    color: var(--ok);
-    font-weight: 700;
-}
-
-.reward-box {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: var(--ok-soft);
-    border: 1px solid #cfe9d8;
-    border-radius: var(--r-md);
-    padding: 9px 10px;
-    font-size: 13px;
-    color: #16653a;
-}
-
-.coupon-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-
-.coupon-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px dashed var(--line-strong);
-    border-radius: var(--r-sm);
-    padding: 8px 10px;
-    font-size: 13px;
-    background: var(--surface-2);
-}
-
-.coupon-list code {
-    font-weight: 700;
-    color: var(--accent-dark);
-    background: var(--accent-soft);
-    border-radius: 5px;
-    padding: 1px 6px;
-    font-size: 12.5px;
-}
 
 .mini-list { display: grid; gap: 7px; }
 
