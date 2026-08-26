@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link data-mgx-overview="icon" rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
-    <link rel="stylesheet" href="/demo/style.css?v=20260826-2">
+    <link rel="stylesheet" href="/demo/style.css?v=20260826-3">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -73,13 +73,12 @@
             <div id="cartLines" class="cart-lines"></div>
             <div class="cart-summary" id="cartSummary" hidden>
                 <div class="sum-row"><span>Delsum</span><strong id="cartSubtotal">0 kr</strong></div>
-                <div class="sum-row sum-discount" id="cartDiscountRow" hidden>
-                    <span id="cartDiscountLabel">Rabatt</span><strong id="cartDiscount">0 kr</strong>
-                </div>
                 <div class="sum-row sum-total"><span>Totalt</span><strong id="cartTotal">0 kr</strong></div>
                 <p class="closed-hint" id="cartClosedHint" hidden>Restauranten er stengt, så bestillingen kan ikke sendes nå.</p>
-                <button class="btn btn-primary btn-block" id="btnToCheckout" type="button">Gå til bestilling</button>
-                <button class="btn btn-ghost btn-block" id="btnKeepShopping" type="button">Fortsett å handle</button>
+            </div>
+            <div class="checkout-actions cart-actions" id="cartActions" hidden>
+                <button class="btn btn-outline" id="btnKeepShopping" type="button">Fortsett å handle</button>
+                <button class="btn btn-primary" id="btnToCheckout" type="button">Neste: Kontakt</button>
             </div>
         </section>
 
@@ -130,7 +129,7 @@
 
             <div class="checkout-actions">
                 <button class="btn btn-outline" id="btnStepBack" type="button">Tilbake</button>
-                <button class="btn btn-primary" id="btnStepNext" type="button">Neste</button>
+                <button class="btn btn-primary" id="btnStepNext" type="button">Neste: Hentetid</button>
             </div>
         </section>
 
@@ -153,16 +152,6 @@
                 </div>
                 <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
                 <span class="saved-flash" id="profileSaved" hidden>Lagret</span>
-            </div>
-
-            <div class="card">
-                <h2 class="sec-title">Stempelkort</h2>
-                <p class="hint" id="loyaltyText">Hver 11. pizza er gratis.</p>
-                <div class="stamps" id="stamps"></div>
-                <div class="reward-box" id="rewardBox" hidden>
-                    <strong>Gratis pizza opptjent!</strong>
-                    <span>Trekkes automatisk fra på neste pizzabestilling.</span>
-                </div>
             </div>
 
             <div class="card">
@@ -265,7 +254,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/app.js?v=20260826-2"></script>
+    <script type="module" src="/demo/app.js?v=20260826-3"></script>
 </body>
 
 </html>
