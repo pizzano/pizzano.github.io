@@ -68,7 +68,7 @@ const ui = {
   activeCategory: '',
   search: '',
   searchOpen: false,
-  checkoutStep: 1,
+  checkoutStep: 2,
   pickup: null,
   pickupMode: null,
   editingLineId: null,
@@ -145,11 +145,8 @@ const el = {
   barCount: $('barCount'),
   barTotal: $('barTotal'),
   stepper: $('stepper'),
-  step1: $('step1'),
   step2: $('step2'),
   step3: $('step3'),
-  checkoutLines: $('checkoutLines'),
-  step1Total: $('step1Total'),
   custName: $('custName'),
   custPhone: $('custPhone'),
   custComment: $('custComment'),
@@ -1002,16 +999,14 @@ function renderBottomBar() {
 
 function setStep(step) {
   ui.checkoutStep = step;
-  const panels = [el.step1, el.step2, el.step3];
-  panels.forEach((panel, index) => {
-    panel.hidden = index + 1 !== step;
-  });
+  el.step2.hidden = step !== 2;
+  el.step3.hidden = step !== 3;
   el.stepper.querySelectorAll('.step').forEach((node) => {
     const value = Number(node.dataset.step);
     node.classList.toggle('is-active', value === step);
     node.classList.toggle('is-done', value < step);
   });
-  el.btnStepBack.textContent = step === 1 ? 'Til handlekurven' : 'Tilbake';
+  el.btnStepBack.textContent = 'Tilbake';
   el.btnStepNext.textContent = step === 3 ? 'Send bestilling' : 'Neste';
   renderCheckout();
 }
@@ -1021,11 +1016,9 @@ function renderCheckout() {
     setView('cart');
     return;
   }
-  el.checkoutLines.innerHTML = cart.map((line) => cartLineHtml(line, true)).join('');
   const subtotal = cartSubtotal();
   const discount = computeDiscount(subtotal);
   const total = subtotal - discount.amount;
-  el.step1Total.textContent = formatPrice(total);
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
@@ -1034,6 +1027,7 @@ function renderCheckout() {
   const slots = getPickupSlots();
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (slots.length) {
+    el.pickupChoices.hidden = false;
     el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.pickupMode === ui.pickupMode);
     });
@@ -1470,19 +1464,15 @@ el.btnToCheckout.addEventListener('click', () => {
     return;
   }
   setView('checkout');
-  setStep(1);
+  setStep(2);
 });
 
 el.btnStepBack.addEventListener('click', () => {
-  if (ui.checkoutStep === 1) setView('cart');
-  else setStep(ui.checkoutStep - 1);
+  if (ui.checkoutStep === 2) setView('cart');
+  else setStep(2);
 });
 
 el.btnStepNext.addEventListener('click', () => {
-  if (ui.checkoutStep === 1) {
-    setStep(2);
-    return;
-  }
   if (ui.checkoutStep === 2) {
     const name = el.custName.value.trim();
     const phone = el.custPhone.value.replace(/\s/g, '');
