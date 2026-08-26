@@ -36,7 +36,6 @@ import {
 const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
 const ALLERGEN_KEY = 'kol_allergens_v1';
-const PIZZA_GOAL = 11;
 
 function loadJSON(key, fallback) {
   try {
@@ -56,7 +55,7 @@ function saveJSON(key, value) {
 }
 
 const profile = Object.assign(
-  { name: '', phone: '', favorites: [], pizzaCount: 0, freePizzas: 0 },
+  { name: '', phone: '', favorites: [] },
   loadJSON(PROFILE_KEY, {})
 );
 profile.favorites = Array.isArray(profile.favorites) ? profile.favorites : [];
@@ -133,11 +132,9 @@ const el = {
   cartLines: $('cartLines'),
   cartSummary: $('cartSummary'),
   cartSubtotal: $('cartSubtotal'),
-  cartDiscountRow: $('cartDiscountRow'),
-  cartDiscountLabel: $('cartDiscountLabel'),
-  cartDiscount: $('cartDiscount'),
   cartTotal: $('cartTotal'),
   cartClosedHint: $('cartClosedHint'),
+  cartActions: $('cartActions'),
   btnToCheckout: $('btnToCheckout'),
   btnKeepShopping: $('btnKeepShopping'),
   bottomBar: $('bottomBar'),
@@ -164,9 +161,6 @@ const el = {
   profPhone: $('profPhone'),
   btnSaveProfile: $('btnSaveProfile'),
   profileSaved: $('profileSaved'),
-  loyaltyText: $('loyaltyText'),
-  stamps: $('stamps'),
-  rewardBox: $('rewardBox'),
   favList: $('favList'),
   orderList: $('orderList'),
   infoName: $('infoName'),
@@ -859,46 +853,6 @@ function cartCount() {
   return cart.reduce((sum, line) => sum + line.quantity, 0);
 }
 
-/** Sant når produktet gir stempel (pizza). */
-function isLoyaltyItem(item, section) {
-  if (!item || !section) return false;
-  if (section.loyaltyEligible) return true;
-  return /pizza/i.test(section.title || '') || /pizza/i.test(item.name || '');
-}
-
-function pizzaCountInCart() {
-  let count = 0;
-  for (const line of cart) {
-    const { item, section } = findItem(line.itemId);
-    if (isLoyaltyItem(item, section)) count += line.quantity;
-  }
-  return count;
-}
-
-/** Rabatt fra lojalitet + kupong. */
-function computeDiscount(subtotal) {
-  const parts = [];
-  let total = 0;
-
-  if (profile.freePizzas > 0) {
-    let cheapest = null;
-    for (const line of cart) {
-      const { item, section } = findItem(line.itemId);
-      if (!isLoyaltyItem(item, section)) continue;
-      const optionIds = Object.values(line.selections || {}).flat();
-      const unit = computeLinePrice(item, line.sizeId, optionIds, 1);
-      if (!cheapest || unit < cheapest) cheapest = unit;
-    }
-    if (cheapest) {
-      total += cheapest;
-      parts.push('Gratis pizza (stempelkort)');
-    }
-  }
-
-  total = Math.min(total, subtotal);
-  return { amount: Math.round(total * 100) / 100, label: parts.join(' + ') || 'Rabatt' };
-}
-
 function cartLineHtml(line, compact) {
   const { item } = findItem(line.itemId);
   if (!item) return '';
@@ -961,17 +915,15 @@ function renderCart() {
     el.cartLines.innerHTML =
       '<div class="empty-note"><strong>Handlekurven er tom</strong>Legg til noe godt fra menyen.</div>';
     el.cartSummary.hidden = true;
+    el.cartActions.hidden = true;
     return;
   }
   el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line, false)).join('');
   const subtotal = cartSubtotal();
-  const discount = computeDiscount(subtotal);
   el.cartSubtotal.textContent = formatPrice(subtotal);
-  el.cartDiscountRow.hidden = discount.amount <= 0;
-  el.cartDiscountLabel.textContent = discount.label;
-  el.cartDiscount.textContent = `−${formatPrice(discount.amount)}`;
-  el.cartTotal.textContent = formatPrice(subtotal - discount.amount);
+  el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
+  el.cartActions.hidden = false;
 }
 
 function renderCartCount() {
@@ -987,9 +939,8 @@ function renderBottomBar() {
   el.bottomBar.hidden = !show;
   if (show) {
     const subtotal = cartSubtotal();
-    const discount = computeDiscount(subtotal);
     el.barCount.textContent = String(count);
-    el.barTotal.textContent = formatPrice(subtotal - discount.amount);
+    el.barTotal.textContent = formatPrice(subtotal);
   }
 }
 
@@ -1007,7 +958,7 @@ function setStep(step) {
     node.classList.toggle('is-done', value < step);
   });
   el.btnStepBack.textContent = 'Tilbake';
-  el.btnStepNext.textContent = step === 3 ? 'Send bestilling' : 'Neste';
+  el.btnStepNext.textContent = step === 3 ? 'Send bestilling' : 'Neste: Hentetid';
   renderCheckout();
 }
 
@@ -1017,8 +968,7 @@ function renderCheckout() {
     return;
   }
   const subtotal = cartSubtotal();
-  const discount = computeDiscount(subtotal);
-  const total = subtotal - discount.amount;
+  const total = subtotal;
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
@@ -1062,13 +1012,6 @@ function renderCheckout() {
           : escapeHtml(ui.pickup)
         : 'Ikke valgt'
     }</strong></div>
-    ${
-      discount.amount > 0
-        ? `<div><span>${escapeHtml(discount.label)}</span><strong>−${formatPrice(
-            discount.amount
-          )}</strong></div>`
-        : ''
-    }
     <div><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>`;
 }
 
@@ -1097,8 +1040,7 @@ async function placeOrder() {
   el.errTime.hidden = true;
 
   const subtotal = cartSubtotal();
-  const discount = computeDiscount(subtotal);
-  const total = subtotal - discount.amount;
+  const total = subtotal;
 
   const lines = cart.map((line) => {
     const { item } = findItem(line.itemId);
@@ -1116,9 +1058,6 @@ async function placeOrder() {
   });
 
   el.btnStepNext.disabled = true;
-  const pizzas = pizzaCountInCart();
-  const usedFreePizza = profile.freePizzas > 0 && pizzas > 0;
-
   const order = await submitOrder({
     customerName: name,
     phone: `+47${phone}`,
@@ -1127,18 +1066,10 @@ async function placeOrder() {
     type: 'henting',
     lines,
     subtotal,
-    discount: discount.amount,
-    discountLabel: discount.amount > 0 ? discount.label : '',
     total,
   });
   el.btnStepNext.disabled = false;
 
-  if (usedFreePizza) profile.freePizzas -= 1;
-  profile.pizzaCount += pizzas;
-  while (profile.pizzaCount >= PIZZA_GOAL) {
-    profile.pizzaCount -= PIZZA_GOAL;
-    profile.freePizzas += 1;
-  }
   if (el.saveProfile.checked) {
     profile.name = name;
     profile.phone = phone;
@@ -1157,12 +1088,7 @@ async function placeOrder() {
       order.id.slice(-6).toUpperCase()
     )}</strong></div>
     <div><span>Hentetid</span><strong>${escapeHtml(order.pickup)}</strong></div>
-    <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>
-    ${
-      profile.freePizzas > 0
-        ? '<div><span>Bonus</span><strong>Gratis pizza klar til neste gang</strong></div>'
-        : ''
-    }`;
+    <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`;
   el.confirmBackdrop.hidden = false;
   el.confirmModal.hidden = false;
   renderCartCount();
@@ -1175,20 +1101,6 @@ async function placeOrder() {
 function renderProfile() {
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
-
-  const filled = profile.pizzaCount % PIZZA_GOAL;
-  el.loyaltyText.textContent = `Hver 11. pizza er gratis. Du har ${filled} av ${PIZZA_GOAL} stempler${
-    profile.freePizzas > 0 ? ` og ${profile.freePizzas} gratis pizza klar` : ''
-  }.`;
-  el.stamps.innerHTML = Array.from({ length: PIZZA_GOAL }, (_, index) => {
-    if (index === PIZZA_GOAL - 1) {
-      return `<span class="stamp ${
-        filled >= PIZZA_GOAL - 1 ? 'is-reward' : ''
-      }" title="Gratis pizza">★</span>`;
-    }
-    return `<span class="stamp ${index < filled ? 'is-filled' : ''}">${index + 1}</span>`;
-  }).join('');
-  el.rewardBox.hidden = profile.freePizzas <= 0;
 
   const favs = profile.favorites
     .map((id) => findItem(id))
