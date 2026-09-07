@@ -460,12 +460,13 @@ function renderMenu() {
       const visibleCount = collapsible && !ui.expandedBlocks.has(block.key) ? 3 : block.items.length;
       return `
       <section class="cat-block" id="blk_${escapeHtml(block.key)}" data-block="${escapeHtml(block.key)}">
-        <div class="cat-head">
-          <h2>${escapeHtml(block.title)}</h2>
-          <span>${block.items.length} ${block.items.length === 1 ? 'produkt' : 'produkter'}${
-        block.note ? ` · ${escapeHtml(block.note)}` : ''
-      }</span>
-        </div>
+        <header class="cat-head">
+          <div class="cat-title-row">
+            <h2>${escapeHtml(block.title)}</h2>
+            <span class="cat-count">${block.items.length} ${block.items.length === 1 ? 'produkt' : 'produkter'}</span>
+          </div>
+          ${block.note ? `<p class="cat-description">${escapeHtml(block.note)}</p>` : ''}
+        </header>
         <div class="prod-grid">
           ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
@@ -480,11 +481,12 @@ function renderMenu() {
 function renderOpenState() {
   const state = getOpenState();
   const settings = store.settings || {};
-  el.openStatus.textContent = state.open
-    ? `${state.label} · kun henting · stenger ${state.closesAt}`
-    : `${state.label} · åpner ${state.opensAt}`;
+  el.openStatus.textContent = state.label;
+  document.getElementById('pickupDetails').textContent = state.open
+    ? `Kun henting · stenger ${state.closesAt}`
+    : `Kun henting · åpner ${state.opensAt}`;
   el.openDot.classList.toggle('is-closed', !state.open);
-  el.closedBanner.hidden = state.open;
+  el.closedBanner.hidden = state.open || !settings.closedMessage;
   if (!state.open) {
     el.closedTitle.textContent = 'Restauranten er stengt';
     el.closedText.textContent =
