@@ -439,13 +439,8 @@ function productCardHtml(item, section) {
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
-        <button class="fav-btn${isFavorite(item.id) ? ' is-on' : ''}" data-fav="${escapeHtml(
-    item.id
-  )}" type="button" aria-label="${isFavorite(item.id) ? 'Fjern favoritt' : 'Legg til favoritt'}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.8C19 15.6 12 20 12 20z"/></svg>
-        </button>
         <button class="add-btn" data-open="${escapeHtml(item.id)}" type="button" ${
-    soldOut ? 'disabled aria-label="Utsolgt"' : 'aria-label="Velg og legg til"'
+    soldOut ? 'disabled aria-label="Utsolgt"' : 'aria-label="Åpne produkt og velg"'
   }>+</button>
       </div>
     </div>`;
