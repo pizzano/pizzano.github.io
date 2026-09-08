@@ -164,6 +164,45 @@
     font-weight: 650;
 }
 
+/* Tum islemlerde kullanilan alttan onay mesaji */
+.toast {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 16px !important;
+    background: #168447 !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(14, 103, 55, .28) !important;
+    opacity: 1;
+    transition: opacity .55s ease, transform .55s ease;
+}
+
+.toast::before {
+    content: '✓';
+    width: 20px;
+    height: 20px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.toast.is-fading {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+}
+
+.toast[hidden] {
+    display: none !important;
+}
+
 @media (min-width: 640px) {
     .allergen-modal {
         align-items: center;
