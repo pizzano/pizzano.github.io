@@ -6,6 +6,11 @@
   allergenStyles.href = '/demo/allergen-modal.css?v=20260908-5';
   document.head.appendChild(allergenStyles);
 
+  const checkoutStyles = document.createElement('link');
+  checkoutStyles.rel = 'stylesheet';
+  checkoutStyles.href = '/demo/checkout-fixed.css?v=20260908-1';
+  document.head.appendChild(checkoutStyles);
+
   const allergenUi = document.createElement('script');
   allergenUi.type = 'module';
   allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
