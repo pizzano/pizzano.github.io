@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v10';
+const CACHE_NAME = 'kol-demo-v11';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/style.css',
@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: 'no-store' })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
