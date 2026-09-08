@@ -3,19 +3,66 @@
 
   /*
    * Customer-side Firebase traffic guard.
-   * data.js currently asks the Realtime Database root for updates frequently.
-   * On the customer page we keep the latest successful root response in memory
-   * and reuse it for two minutes. While the tab is hidden we never refresh an
-   * existing cached response. This keeps the menu stable, prevents unnecessary
-   * full re-renders/image flicker and dramatically reduces Firebase bandwidth.
+   *
+   * data.js still asks the database root for updates, but the customer page
+   * never needs to download the whole database on every poll. We intercept
+   * those root GETs and use a lightweight strategy instead:
+   *   1) show the menu from localStorage immediately;
+   *   2) check only /updatedAt.json at a modest interval;
+   *   3) fetch menu nodes only when updatedAt actually changed;
+   *   4) never download the global /orders tree for customers;
+   *   5) refresh only the customer's own active order IDs, and only while
+   *      there actually are active recent orders.
+   *
    * Admin is unaffected because admin.html does not load install.js.
    */
   const FIREBASE_DB = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
-  const FIREBASE_ROOT_TTL = 2 * 60 * 1000;
+  const MENU_LOCAL_KEY = 'kol_menu_state_v2';
+  const ORDERS_LOCAL_KEY = 'kol_orders_v1';
+  const MENU_CHECK_MS = 45 * 1000;
+  const ORDER_CHECK_MS = 60 * 1000;
+  const ACTIVE_ORDER_MAX_AGE = 24 * 60 * 60 * 1000;
+  const ACTIVE_ORDER_LIMIT = 4;
   const nativeFetch = window.fetch.bind(window);
-  let firebaseRootResponse = null;
-  let firebaseRootFetchedAt = 0;
-  let firebaseRootRequest = null;
+
+  let cachedMenu = readStoredJSON(MENU_LOCAL_KEY, null);
+  let lastMenuCheckAt = 0;
+  let lastOwnOrdersCheckAt = 0;
+  let menuSyncRequest = null;
+  let ownOrdersSyncRequest = null;
+
+  function readStoredJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function writeStoredJSON(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function firebaseUrl(path) {
+    const clean = String(path || '').replace(/^\/+|\/+$/g, '');
+    return `${FIREBASE_DB}/${clean ? `${clean}.json` : '.json'}?_=${Date.now()}`;
+  }
+
+  async function getFirebaseJSON(path) {
+    const response = await nativeFetch(firebaseUrl(path), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`Firebase GET failed (${response.status})`);
+    return response.json();
+  }
 
   function isFirebaseRootGet(input, init) {
     const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
@@ -28,38 +75,185 @@
     }
   }
 
+  function normalizeCachedMenu(menu) {
+    if (!menu || typeof menu !== 'object') return null;
+    return {
+      schemaVersion: menu.schemaVersion,
+      settings: menu.settings || menu.siteSettings || null,
+      siteSettings: menu.siteSettings || menu.settings || null,
+      allergenCatalog: Array.isArray(menu.allergenCatalog) ? menu.allergenCatalog : [],
+      sections: Array.isArray(menu.sections) ? menu.sections : [],
+      optionGroups: Array.isArray(menu.optionGroups) ? menu.optionGroups : [],
+      popularItemIds: Array.isArray(menu.popularItemIds) ? menu.popularItemIds : [],
+      updatedAt: Number(menu.updatedAt) || 0,
+    };
+  }
+
+  async function fetchMenuNodes(remoteUpdatedAt) {
+    const [sections, optionGroups, allergenCatalog, settings, siteSettings, popularItemIds, schemaVersion] =
+      await Promise.all([
+        getFirebaseJSON('sections'),
+        getFirebaseJSON('optionGroups'),
+        getFirebaseJSON('allergenCatalog'),
+        getFirebaseJSON('settings'),
+        getFirebaseJSON('siteSettings'),
+        getFirebaseJSON('popularItemIds'),
+        getFirebaseJSON('schemaVersion'),
+      ]);
+
+    const next = normalizeCachedMenu({
+      schemaVersion,
+      settings: settings || siteSettings,
+      siteSettings: siteSettings || settings,
+      allergenCatalog,
+      sections,
+      optionGroups,
+      popularItemIds,
+      updatedAt: Number(remoteUpdatedAt) || Date.now(),
+    });
+
+    if (!next || !next.sections.length) throw new Error('Firebase menu is empty');
+    cachedMenu = next;
+    writeStoredJSON(MENU_LOCAL_KEY, next);
+    return next;
+  }
+
+  async function syncMenuIfNeeded(force = false) {
+    const now = Date.now();
+    if (!force && cachedMenu && now - lastMenuCheckAt < MENU_CHECK_MS) return cachedMenu;
+    if (document.hidden && cachedMenu) return cachedMenu;
+    if (menuSyncRequest) return menuSyncRequest;
+
+    menuSyncRequest = (async () => {
+      try {
+        const remoteUpdatedAt = Number(await getFirebaseJSON('updatedAt')) || 0;
+        lastMenuCheckAt = Date.now();
+
+        const localUpdatedAt = Number(cachedMenu?.updatedAt) || 0;
+        if (cachedMenu && remoteUpdatedAt && remoteUpdatedAt === localUpdatedAt) return cachedMenu;
+
+        // Only the rare "menu really changed" path downloads the menu itself.
+        return await fetchMenuNodes(remoteUpdatedAt);
+      } finally {
+        menuSyncRequest = null;
+      }
+    })();
+
+    return menuSyncRequest;
+  }
+
+  function getOwnOrders() {
+    const orders = readStoredJSON(ORDERS_LOCAL_KEY, []);
+    return Array.isArray(orders) ? orders : [];
+  }
+
+  function getActiveOwnOrders(orders) {
+    const now = Date.now();
+    return orders
+      .filter((order) => {
+        if (!order?.id) return false;
+        if (order.status === 'fullfort' || order.status === 'avvist') return false;
+        const createdAt = Number(order.createdAt) || 0;
+        return !createdAt || now - createdAt <= ACTIVE_ORDER_MAX_AGE;
+      })
+      .slice(0, ACTIVE_ORDER_LIMIT);
+  }
+
+  async function syncOwnActiveOrdersIfNeeded(force = false) {
+    const orders = getOwnOrders();
+    const active = getActiveOwnOrders(orders);
+    if (!active.length) return orders;
+
+    const now = Date.now();
+    if (!force && now - lastOwnOrdersCheckAt < ORDER_CHECK_MS) return orders;
+    if (document.hidden) return orders;
+    if (ownOrdersSyncRequest) return ownOrdersSyncRequest;
+
+    ownOrdersSyncRequest = (async () => {
+      try {
+        const remoteRecords = await Promise.all(
+          active.map(async (order) => {
+            try {
+              return await getFirebaseJSON(`orders/${encodeURIComponent(order.id)}`);
+            } catch (_) {
+              return null;
+            }
+          })
+        );
+        lastOwnOrdersCheckAt = Date.now();
+
+        const byId = new Map(
+          remoteRecords.filter((record) => record?.id).map((record) => [record.id, record])
+        );
+        let changed = false;
+        const merged = orders.map((order) => {
+          const remote = byId.get(order.id);
+          if (!remote) return order;
+          if (remote.status === order.status && remote.statusUpdatedAt === order.statusUpdatedAt) return order;
+          changed = true;
+          return {
+            ...order,
+            status: remote.status || order.status,
+            statusUpdatedAt: Number(remote.statusUpdatedAt) || order.statusUpdatedAt,
+          };
+        });
+
+        if (changed) writeStoredJSON(ORDERS_LOCAL_KEY, merged);
+        return changed ? merged : orders;
+      } finally {
+        ownOrdersSyncRequest = null;
+      }
+    })();
+
+    return ownOrdersSyncRequest;
+  }
+
+  function toFirebaseOrdersObject(orders) {
+    const result = {};
+    for (const order of orders || []) {
+      if (order?.id) result[order.id] = order;
+    }
+    return result;
+  }
+
+  function makeSyntheticRoot(menu, orders) {
+    const safeMenu = normalizeCachedMenu(menu) || normalizeCachedMenu(cachedMenu) || {};
+    return {
+      ...safeMenu,
+      orders: toFirebaseOrdersObject(orders),
+    };
+  }
+
+  function jsonResponse(value) {
+    return new Response(JSON.stringify(value ?? null), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    });
+  }
+
   window.fetch = async function efficientCustomerFetch(input, init) {
     if (!isFirebaseRootGet(input, init)) return nativeFetch(input, init);
 
-    const now = Date.now();
-    const cacheIsFresh = firebaseRootResponse && now - firebaseRootFetchedAt < FIREBASE_ROOT_TTL;
+    try {
+      // The frequent root poll becomes, at most, one tiny updatedAt request every
+      // 45 seconds. The menu itself is downloaded only when that value changed.
+      const [menu, orders] = await Promise.all([
+        syncMenuIfNeeded(false),
+        syncOwnActiveOrdersIfNeeded(false),
+      ]);
 
-    // No Firebase traffic while the customer is not looking at the page.
-    if (firebaseRootResponse && (document.hidden || cacheIsFresh)) {
-      return firebaseRootResponse.clone();
+      if (menu?.sections?.length) return jsonResponse(makeSyntheticRoot(menu, orders));
+    } catch (err) {
+      // If the lightweight path fails, keep the locally cached menu visible.
+      const localMenu = normalizeCachedMenu(cachedMenu || readStoredJSON(MENU_LOCAL_KEY, null));
+      if (localMenu?.sections?.length) {
+        return jsonResponse(makeSyntheticRoot(localMenu, getOwnOrders()));
+      }
     }
 
-    // Several refresh triggers can fire together (poll/focus/visibility).
-    // Share one network request instead of downloading the database repeatedly.
-    if (firebaseRootRequest) {
-      const response = await firebaseRootRequest;
-      return response.clone();
-    }
-
-    firebaseRootRequest = nativeFetch(input, init)
-      .then((response) => {
-        if (response.ok) {
-          firebaseRootResponse = response.clone();
-          firebaseRootFetchedAt = Date.now();
-        }
-        return response;
-      })
-      .finally(() => {
-        firebaseRootRequest = null;
-      });
-
-    const response = await firebaseRootRequest;
-    return response.clone();
+    // First ever visit with no local menu: preserve the old full-root request as
+    // a one-time safety fallback instead of leaving the customer with no menu.
+    return nativeFetch(input, init);
   };
 
   function loadModule(id, src) {
