@@ -3,6 +3,7 @@
 
   const ua = navigator.userAgent || '';
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isOpera = /OPR\//i.test(ua) || /Opera/i.test(ua);
   const isChromium = /Android|Chrome|Chromium|Edg|OPR|SamsungBrowser/i.test(ua) && !isIOS;
 
   const isStandalone = () =>
@@ -10,13 +11,12 @@
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.navigator.standalone === true;
 
-  // iPhone/iPad Safari does not expose beforeinstallprompt. This button is
-  // therefore only shown where the real browser install dialog can be used.
   if (!isChromium || isStandalone()) return;
 
   let deferredPrompt = null;
   let installCard = null;
   let installButton = null;
+  let installHelp = null;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -86,6 +86,17 @@
       opacity: .55;
       cursor: default;
     }
+
+    .pwa-info-install-help {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f4eee9;
+      color: #4d433d;
+      font-size: 13px;
+      line-height: 1.45;
+    }
   `;
   document.head.appendChild(style);
 
@@ -93,6 +104,18 @@
     if (!installButton) return;
     installButton.disabled = !ready;
     installButton.textContent = ready ? 'Installer app' : 'Klargjør installasjon…';
+  }
+
+  function setOperaFallback() {
+    if (!installButton || deferredPrompt) return;
+    installButton.disabled = false;
+    installButton.textContent = 'Installer via Opera';
+  }
+
+  function showOperaHelp() {
+    if (!installHelp) return;
+    installHelp.hidden = false;
+    installHelp.innerHTML = 'Opera gir ikke nettsiden tilgang til den native installasjonsdialogen. Trykk <strong>⋮</strong> i Opera og velg <strong>Installer app</strong> eller <strong>Legg til på startskjermen</strong>.';
   }
 
   function ensureCard() {
@@ -112,9 +135,11 @@
         <span>Installer bestillingssiden på telefonen. Etterpå åpnes den som en app uten vanlig adressefelt.</span>
       </div>
       <button class="pwa-info-install-button" type="button" disabled>Klargjør installasjon…</button>
+      <p class="pwa-info-install-help" hidden></p>
     `;
 
     installButton = installCard.querySelector('.pwa-info-install-button');
+    installHelp = installCard.querySelector('.pwa-info-install-help');
 
     const firstCard = infoView.querySelector('.card');
     if (firstCard) {
@@ -124,7 +149,10 @@
     }
 
     installButton.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
+      if (!deferredPrompt) {
+        if (isOpera) showOperaHelp();
+        return;
+      }
 
       const promptEvent = deferredPrompt;
       deferredPrompt = null;
@@ -138,22 +166,28 @@
           installCard?.remove();
           installCard = null;
           installButton = null;
+          installHelp = null;
+          return;
         }
       } catch (_) {
         // Browseren bestemmer når et nytt installasjonstilbud kan gis.
       }
+
+      if (isOpera) setOperaFallback();
     });
 
-    setReady(Boolean(deferredPrompt));
+    if (deferredPrompt) setReady(true);
+    else if (isOpera) setOperaFallback();
+    else setReady(false);
+
     return installCard;
   }
 
-  // Capture the browser's real install event so our Info button can open the
-  // exact same native Android/Chromium installation dialog.
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredPrompt = event;
     ensureCard();
+    if (installHelp) installHelp.hidden = true;
     setReady(true);
   });
 
@@ -162,11 +196,9 @@
     installCard?.remove();
     installCard = null;
     installButton = null;
+    installHelp = null;
   });
 
-  // Keep the install option visible in Info even before Chrome has finished
-  // checking installability. The button becomes active as soon as the native
-  // beforeinstallprompt event arrives.
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ensureCard, { once: true });
   } else {
