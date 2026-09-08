@@ -1,9 +1,9 @@
-const CACHE_NAME = 'kol-demo-v11';
+const CACHE_NAME = 'kol-demo-v12';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/style.css',
   '/demo/allergen-modal.css',
-  '/demo/allergen-autosave.js',
+  '/demo/allergen-ui.js',
   '/demo/app.js',
   '/demo/install.js',
   '/demo/data.js',
