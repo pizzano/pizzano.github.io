@@ -133,7 +133,6 @@
   background: var(--surface);
   flex: none;
 }
-/* Compatibility hook: app.js still references this hidden button. */
 #allergenSave { display: none !important; }
 #allergenReset {
   width: 100%;
@@ -411,7 +410,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .cat-count { font-size: 11px; }
   .cat-description { margin-top: 3px; font-size: 11.5px; line-height: 1.4; }
 
-  /* Final mobile product-card values (merged from all prior override files). */
   .prod-grid { gap: 5px !important; }
   .prod-card {
     grid-template-columns: clamp(80px, 21.5vw, 92px) minmax(0, 1fr) 46px !important;
@@ -673,4 +671,60 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 @media (max-width: 380px) {
   #barCart { font-size: 13px; padding-left: 9px; padding-right: 9px; }
   #barCart .bar-count { margin-right: 2px; }
+}
+
+/* ======================== Desktop = mobile-style list ======================== */
+@media (min-width: 640px) {
+  :root { --header-h: 48px; --cat-h: 40px; }
+  body { font-size: 14px; line-height: 1.4; }
+
+  .header-inner,
+  .cat-scroll,
+  main { max-width: 720px !important; }
+
+  .header-inner { height: 48px; gap: 5px; padding: 0 8px; }
+  .brand { gap: 6px; }
+  .brand-mark { width: 26px; height: 26px; }
+  .brand-text strong { font-size: 14px; }
+  .brand-text small { font-size: 9px; }
+  .hdr-actions { gap: 0; }
+  .hdr-btn { width: 36px; height: 36px; border-radius: 8px; }
+  .hdr-btn svg { width: 19px; height: 19px; }
+
+  .cat-scroll { gap: 5px; padding: 5px 8px; scroll-padding-left: 8px; }
+  .cat-tab { height: 30px; padding: 0 11px; border-radius: 15px; font-size: 12.5px; }
+  .search-tab { flex-basis: 30px; width: 30px; height: 30px; }
+
+  main { padding: 8px 8px 78px; }
+  .menu-overview { margin-bottom: 18px; padding: 11px; border-radius: 12px; }
+  .pickup-copy strong { font-size: 13px; }
+  .pickup-copy > span { font-size: 11px; }
+  .menu-overview .allergen-toggle { min-height: 36px; padding: 0 11px; font-size: 12px; border-radius: 9px; }
+
+  .cat-block { margin-bottom: 22px; }
+  .cat-head { padding: 0 0 8px 9px; margin-bottom: 8px; }
+  .cat-head h2 { font-size: 15px; }
+  .cat-count { font-size: 11px; }
+  .cat-description { margin-top: 3px; font-size: 11.5px; line-height: 1.4; }
+
+  .prod-grid { grid-template-columns: 1fr !important; gap: 5px !important; }
+  .prod-card {
+    grid-template-columns: 96px minmax(0, 1fr) 48px !important;
+    min-height: 90px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
+  }
+  .prod-thumb { min-height: 90px !important; }
+  .prod-info { padding: 7px 5px 24px 9px !important; justify-content: center !important; }
+  .prod-name { margin: 0 0 2px !important; font-size: 13.2px !important; line-height: 1.15 !important; font-weight: 780 !important; }
+  .prod-desc { font-size: 11px !important; line-height: 1.22 !important; -webkit-line-clamp: 2; }
+  .prod-card .prod-allergens { margin-top: 4px !important; font-size: 9.8px !important; line-height: 1.15 !important; font-weight: 700 !important; }
+  .prod-side { padding: 7px 7px 0 0 !important; }
+  .add-btn { width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 10px !important; font-size: 19px !important; box-shadow: 0 1px 4px rgba(232, 98, 15, .14) !important; }
+  .prod-price { right: 8px !important; bottom: 7px !important; font-size: 12.4px !important; }
+  .prod-price small { margin-right: 2px !important; font-size: 9.8px !important; }
+
+  .bar-btn { max-width: 704px !important; min-height: 46px; font-size: 13px; }
+  .view-cart > .checkout-actions,
+  .view-checkout > .checkout-actions { width: min(100%, 720px) !important; max-width: 720px !important; }
 }
