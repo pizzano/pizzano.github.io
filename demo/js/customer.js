@@ -1047,7 +1047,6 @@ async function placeOrder() {
   const subtotal = cartSubtotal();
   const total = subtotal;
 
-\
   const lines = cart.map((line) => {
     const { item } = findItem(line.itemId);
     const size = (item.sizes || []).find((s) => s.id === line.sizeId);
@@ -1108,7 +1107,6 @@ async function placeOrder() {
  * Profil
  * ------------------------------------------------------------------ */
 
-\
   function previousOrderSelections(item, line) {
     const groups = getItemOptionGroups(item);
     const savedSelections =
@@ -1260,7 +1258,6 @@ function renderProfile() {
         .join('')
     : '<p class="hint">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
 
-\
     const live = getOrders();
     const orders = getLocalOrders();
     el.orderList.innerHTML = orders.length
@@ -1308,7 +1305,6 @@ function renderProfile() {
       : '<p class="hint">Ingen tidligere bestillinger.</p>';
   }
 
-\
   function reorder(orderId) {
     const order = getLocalOrders().find((entry) => entry.id === orderId);
     if (!order) return;
