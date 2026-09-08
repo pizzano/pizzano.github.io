@@ -24,6 +24,22 @@
                 width: 100%;
                 min-height: 96px;
             }
+
+            /* Handlekurvens handlingsrad ligger direkte i view-et, ikke inni
+               et panel med 12px innvendig padding. Den generelle negative
+               margen gjorde derfor siden bredere enn viewporten og lot Opera
+               panorere hele siden sidelengs under vertikal scrolling. */
+            .view-cart {
+                overflow-x: clip;
+            }
+
+            .view-cart .cart-actions {
+                position: static;
+                width: 100%;
+                max-width: 100%;
+                margin: 14px 0 0;
+                padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+            }
         }
     </style>
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
