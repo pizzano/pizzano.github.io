@@ -11,6 +11,11 @@
   checkoutStyles.href = '/demo/checkout-fixed.css?v=20260908-1';
   document.head.appendChild(checkoutStyles);
 
+  const productCardStyles = document.createElement('link');
+  productCardStyles.rel = 'stylesheet';
+  productCardStyles.href = '/demo/product-cards-modern.css?v=20260908-1';
+  document.head.appendChild(productCardStyles);
+
   const allergenUi = document.createElement('script');
   allergenUi.type = 'module';
   allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
