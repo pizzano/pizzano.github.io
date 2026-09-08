@@ -3,12 +3,12 @@
 
   const allergenStyles = document.createElement('link');
   allergenStyles.rel = 'stylesheet';
-  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-3';
+  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-4';
   document.head.appendChild(allergenStyles);
 
   const allergenAutosave = document.createElement('script');
   allergenAutosave.type = 'module';
-  allergenAutosave.src = '/demo/allergen-autosave.js?v=20260908-1';
+  allergenAutosave.src = '/demo/allergen-autosave.js?v=20260908-2';
   document.head.appendChild(allergenAutosave);
 
   const isStandalone = () =>
