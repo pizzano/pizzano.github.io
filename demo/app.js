@@ -1346,6 +1346,14 @@ el.btnInfo.addEventListener('click', () => setView(ui.view === 'info' ? 'menu' :
 el.btnProfile.addEventListener('click', () =>
   setView(ui.view === 'profile' ? 'menu' : 'profile')
 );
+document.querySelectorAll('.profile-section').forEach((section) => {
+  section.addEventListener('toggle', () => {
+    if (!section.open) return;
+    document.querySelectorAll('.profile-section').forEach((other) => {
+      if (other !== section) other.open = false;
+    });
+  });
+});
 el.btnCart.addEventListener('click', () => setView('cart'));
 el.barCart.addEventListener('click', () => setView('cart'));
 el.btnKeepShopping.addEventListener('click', () => setView('menu'));
@@ -1480,6 +1488,12 @@ function updateSyncBadge() {
 }
 
 updateSyncBadge();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/demo/service-worker.js').catch(() => {});
+  });
+}
 
 subscribe((_state, origin) => {
   const changed = renderAll();

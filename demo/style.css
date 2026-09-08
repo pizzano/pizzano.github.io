@@ -80,9 +80,9 @@ svg {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: #fff1e6;
-    border-bottom: 1px solid #f3d2bd;
-    box-shadow: 0 2px 10px rgba(177, 78, 16, .08);
+    background: #33251f;
+    border-bottom: 1px solid #4b3830;
+    box-shadow: 0 3px 12px rgba(29, 18, 13, .18);
 }
 
 .header-inner {
@@ -100,7 +100,7 @@ svg {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    color: var(--ink);
+    color: #fff;
     margin-right: auto;
     min-width: 0;
 }
@@ -126,7 +126,7 @@ svg {
 
 .brand-text small {
     font-size: 10.5px;
-    color: var(--ink-3);
+    color: #ddc9bd;
     letter-spacing: .04em;
     text-transform: uppercase;
 }
@@ -150,8 +150,8 @@ svg {
     transition: background .14s ease, color .14s ease;
 }
 
-.hdr-btn:hover { background: var(--surface-2); color: var(--ink); }
-.hdr-btn.is-on { color: var(--accent); }
+.hdr-btn:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.hdr-btn.is-on { color: #ff9a5b; background: rgba(255, 255, 255, .08); }
 .hdr-back { margin-left: -4px; }
 
 .cart-count {
@@ -1371,6 +1371,26 @@ main {
 .view-profile .mini-row .link-btn { padding: 10px 12px; background: var(--accent-soft); border-radius: 9px; text-decoration: none; flex: none; }
 .view-profile .mini-sub { line-height: 1.5; }
 .view-profile #btnSaveProfile { min-height: 46px; }
+.profile-section { padding: 0 !important; overflow: hidden; }
+.profile-section > summary {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 700;
+}
+.profile-section > summary::-webkit-details-marker { display: none; }
+.profile-section > summary:hover { background: var(--surface-2); }
+.profile-section[open] > summary { border-bottom: 1px solid var(--line); }
+.profile-chevron { color: var(--accent); font-size: 22px; line-height: 1; transition: transform .16s ease; }
+.profile-section[open] .profile-chevron { transform: rotate(180deg); }
+.profile-section-body { padding: 16px 20px 20px; }
 .info-call { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; margin: 12px 0 16px; background: var(--accent-soft); border-radius: 10px; color: var(--accent-dark); text-decoration: none; font-weight: 600; font-size: 14px; }
 .info-detail { padding: 12px 0; border-top: 1px solid var(--line); }
 .info-detail > span { font-size: 12px; color: var(--ink-2); }
@@ -1385,4 +1405,50 @@ main {
     .hdr-actions { gap: 0; }
     .brand { gap: 5px; }
     .view-profile .card, .view-info .card { padding: 16px; }
+}
+
+/* Mobil: la hovedflatene gå helt ut til skjermkanten. Innholdet beholder
+   sin egen luft, mens kortenes ytre marg ikke lager en smal kolonne. */
+@media (max-width: 639px) {
+    main { padding-left: 0; padding-right: 0; }
+    .view-menu { padding-left: 10px; padding-right: 10px; }
+
+    .view-cart > .view-title,
+    .view-profile > .view-title,
+    .view-profile > .page-intro,
+    .view-info > .view-title,
+    .view-cart > .steps,
+    .view-checkout > .steps {
+        margin-left: 12px;
+        margin-right: 12px;
+    }
+
+    .cart-line,
+    .cart-summary,
+    .step-panel,
+    .view-profile .card,
+    .view-info .card {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .view-info .card { padding-left: 16px; padding-right: 16px; }
+    .profile-section > summary { padding-left: 16px; padding-right: 16px; }
+    .profile-section-body { padding-left: 16px; padding-right: 16px; }
+    .staff-access { margin-left: 12px; margin-right: 12px; }
+
+    .sheet-body { padding-left: 0; padding-right: 0; }
+    .sheet-hero { border-radius: 0; }
+    .sheet-name,
+    .sheet-desc,
+    .sheet-allergens { margin-left: 12px; margin-right: 12px; }
+    .opt-group {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
 }

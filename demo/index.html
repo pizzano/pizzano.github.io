@@ -4,9 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#33251f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KØL Bestill">
+    <link rel="manifest" href="/demo/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/demo/icons/kol-icon-192.png">
     <link data-mgx-overview="icon" rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
-    <link rel="stylesheet" href="/demo/style.css?v=20260908-2">
+    <link rel="stylesheet" href="/demo/style.css?v=20260908-3">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -141,33 +147,35 @@
             <h1 class="view-title">Min profil</h1>
             <p class="page-intro">Dine opplysninger, favoritter og tidligere bestillinger.</p>
 
-            <div class="card">
-                <h2 class="sec-title">Kontaktopplysninger</h2>
-                <p class="section-help">Lagre her hvis du vil fylle ut raskere neste gang.</p>
-                <div class="field">
-                    <label class="field-label" for="profName">Navn</label>
-                    <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
-                </div>
-                <div class="field">
-                    <label class="field-label" for="profPhone">Mobilnummer</label>
-                    <div class="phone-row">
-                        <span class="phone-prefix">+47</span>
-                        <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+            <details class="card profile-section" name="profile-sections" open>
+                <summary><span>Kontaktopplysninger</span><span class="profile-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="profile-section-body">
+                    <p class="section-help">Lagre her hvis du vil fylle ut raskere neste gang.</p>
+                    <div class="field">
+                        <label class="field-label" for="profName">Navn</label>
+                        <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
                     </div>
+                    <div class="field">
+                        <label class="field-label" for="profPhone">Mobilnummer</label>
+                        <div class="phone-row">
+                            <span class="phone-prefix">+47</span>
+                            <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
+                    <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
                 </div>
-                <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
-                <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
-            </div>
+            </details>
 
-            <div class="card">
-                <h2 class="sec-title">Mine favoritter</h2>
-                <div id="favList" class="mini-list"></div>
-            </div>
+            <details class="card profile-section" name="profile-sections">
+                <summary><span>Mine favoritter</span><span class="profile-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="profile-section-body"><div id="favList" class="mini-list"></div></div>
+            </details>
 
-            <div class="card">
-                <h2 class="sec-title">Mine bestillinger</h2>
-                <div id="orderList" class="mini-list"></div>
-            </div>
+            <details class="card profile-section" name="profile-sections">
+                <summary><span>Mine bestillinger</span><span class="profile-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="profile-section-body"><div id="orderList" class="mini-list"></div></div>
+            </details>
         </section>
 
         <!-- ============ INFO ============ -->
@@ -255,7 +263,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/app.js?v=20260908-2"></script>
+    <script type="module" src="/demo/app.js?v=20260908-3"></script>
 </body>
 
 </html>
