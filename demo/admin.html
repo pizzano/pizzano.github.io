@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/admin.css?v=20260826-2">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260908-1">
 </head>
 
 <body>
@@ -63,7 +63,6 @@
 
         <!-- ================= HOVEDINNHOLD ================= -->
         <main class="main-col">
-            <!-- Produkter & kategorier -->
             <section class="page is-active" id="pageProducts">
                 <header class="page-head">
                     <div class="page-title">
@@ -89,7 +88,6 @@
                 </div>
             </section>
 
-            <!-- Choices & addons -->
             <section class="page" id="pageGroups" hidden>
                 <header class="page-head">
                     <div class="page-title">
@@ -109,7 +107,6 @@
                 </div>
             </section>
 
-            <!-- Bestillinger -->
             <section class="page" id="pageOrders" hidden>
                 <header class="page-head">
                     <div class="page-title">
@@ -134,7 +131,6 @@
                 </div>
             </section>
 
-            <!-- Restaurantinnstillinger -->
             <section class="page" id="pageSettings" hidden>
                 <header class="page-head">
                     <div class="page-title">
@@ -234,7 +230,6 @@
             </section>
         </main>
 
-        <!-- ================= PRODUKTINNSTILLINGER ================= -->
         <aside class="settings-col" id="settingsCol">
             <div class="settings-empty" id="settingsEmpty">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
@@ -263,7 +258,6 @@
                 </nav>
 
                 <div class="settings-scroll" id="settingsScroll">
-                    <!-- Produkt -->
                     <section class="set-section" id="secProdukt" data-section="produkt">
                         <h3 class="set-title">Produkt</h3>
                         <div class="set-field">
@@ -288,7 +282,6 @@
                         </label>
                     </section>
 
-                    <!-- Størrelser & priser -->
                     <section class="set-section" id="secStorrelser" data-section="storrelser">
                         <h3 class="set-title">Størrelser &amp; priser</h3>
                         <p class="set-hint">Velg radioknappen for størrelsen som skal være standard for kunden.</p>
@@ -302,14 +295,12 @@
                         <button class="btn btn-outline btn-sm" id="btnAddSize" type="button">+ Legg til størrelse</button>
                     </section>
 
-                    <!-- Allergener -->
                     <section class="set-section" id="secAllergener" data-section="allergener">
                         <h3 class="set-title">Allergener</h3>
                         <p class="set-hint">Kryss av alt produktet inneholder. Vises på kundens produktside.</p>
                         <div id="allergenGrid" class="allergen-grid"></div>
                     </section>
 
-                    <!-- Choices & addons -->
                     <section class="set-section" id="secValg" data-section="valg">
                         <h3 class="set-title">Choices &amp; addons</h3>
                         <p class="set-hint">Grupper hentes fra det felles biblioteket. Endrer du gruppen, endres den på alle produkter som bruker den.</p>
@@ -317,7 +308,6 @@
                         <button class="btn btn-outline btn-sm" id="btnAttachGroup" type="button">+ Legg til valggruppe</button>
                     </section>
 
-                    <!-- Tilgjengelighet -->
                     <section class="set-section" id="secTilgjengelighet" data-section="tilgjengelighet">
                         <h3 class="set-title">Tilgjengelighet</h3>
                         <label class="toggle-row">
@@ -336,7 +326,6 @@
                         </label>
                     </section>
 
-                    <!-- Handlinger -->
                     <section class="set-section" id="secHandlinger" data-section="handlinger">
                         <h3 class="set-title">Handlinger</h3>
                         <div class="set-field">
@@ -354,7 +343,6 @@
         </aside>
     </div>
 
-    <!-- ================= MODAL: BIBLIOTEK ================= -->
     <div class="modal-backdrop" id="modalBackdrop" hidden></div>
 
     <div class="modal modal-lib" id="modalLibrary" role="dialog" aria-modal="true" aria-label="Velg valggruppe" hidden>
@@ -374,7 +362,6 @@
         </footer>
     </div>
 
-    <!-- ================= MODAL: VALGGRUPPE-EDITOR ================= -->
     <div class="modal modal-editor" id="modalEditor" role="dialog" aria-modal="true" aria-label="Rediger valggruppe" hidden>
         <header class="modal-head">
             <h2 id="editorTitle">Ny valggruppe</h2>
@@ -447,7 +434,6 @@
         </footer>
     </div>
 
-    <!-- ================= MODAL: KATEGORI ================= -->
     <div class="modal modal-category" id="modalCategory" role="dialog" aria-modal="true" aria-label="Kategori" hidden>
         <header class="modal-head">
             <h2 id="categoryTitle">Ny kategori</h2>
@@ -476,7 +462,6 @@
         </footer>
     </div>
 
-    <!-- ================= MODAL: ORDREDETALJ ================= -->
     <div class="modal modal-order" id="modalOrder" role="dialog" aria-modal="true" aria-label="Bestillingsdetaljer" hidden>
         <header class="modal-head">
             <h2 id="orderTitle">Bestilling</h2>
@@ -490,7 +475,6 @@
         </footer>
     </div>
 
-    <!-- ================= MODAL: BEKREFT ================= -->
     <div class="modal modal-confirm" id="modalConfirm" role="dialog" aria-modal="true" aria-label="Bekreft" hidden>
         <header class="modal-head">
             <h2 id="confirmTitle">Bekreft</h2>
@@ -506,7 +490,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/admin.js?v=20260826-3"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260908-1"></script>
 </body>
 
 </html>
