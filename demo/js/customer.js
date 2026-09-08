@@ -1047,17 +1047,28 @@ async function placeOrder() {
   const subtotal = cartSubtotal();
   const total = subtotal;
 
+\
   const lines = cart.map((line) => {
     const { item } = findItem(line.itemId);
     const size = (item.sizes || []).find((s) => s.id === line.sizeId);
     const optionIds = Object.values(line.selections || {}).flat();
+    const optionDetails = describeSelection(optionIds).map((addon) => ({
+      groupTitle: addon.groupTitle || 'Tilvalg',
+      label: addon.label,
+      price: Number(addon.price) || 0,
+    }));
     return {
       itemId: line.itemId,
       name: item ? item.name : 'Ukjent',
+      sizeId: size ? size.id : line.sizeId || null,
       size: size ? size.label : '',
       quantity: line.quantity,
-      options: describeSelection(optionIds).map((addon) => addon.label),
+      selections: JSON.parse(JSON.stringify(line.selections || {})),
+      optionIds: [...optionIds],
+      options: optionDetails.map((addon) => addon.label),
+      optionDetails,
       comment: line.comment || '',
+      unitPrice: computeLinePrice(item, line.sizeId, optionIds, 1),
       price: computeLinePrice(item, line.sizeId, optionIds, line.quantity),
     };
   });
@@ -1097,6 +1108,130 @@ async function placeOrder() {
  * Profil
  * ------------------------------------------------------------------ */
 
+\
+  function previousOrderSelections(item, line) {
+    const groups = getItemOptionGroups(item);
+    const savedSelections =
+      line && line.selections && typeof line.selections === 'object'
+        ? line.selections
+        : {};
+    const savedIds = new Set([
+      ...(Array.isArray(line.optionIds) ? line.optionIds : []),
+      ...Object.values(savedSelections)
+        .flat()
+        .filter((id) => typeof id === 'string'),
+    ]);
+    const savedLabels = new Set([
+      ...(Array.isArray(line.options) ? line.options : []),
+      ...(Array.isArray(line.optionDetails)
+        ? line.optionDetails.map((entry) => entry && entry.label)
+        : []),
+    ].filter(Boolean).map((label) => String(label)));
+
+    const selections = {};
+    for (const group of groups) {
+      const options = group.options || [];
+      const validIds = new Set(options.map((option) => option.id));
+      let picked = Array.isArray(savedSelections[group.id])
+        ? savedSelections[group.id].filter((id) => validIds.has(id))
+        : [];
+
+      if (!picked.length && savedIds.size) {
+        picked = options.filter((option) => savedIds.has(option.id)).map((option) => option.id);
+      }
+      if (!picked.length && savedLabels.size) {
+        picked = options
+          .filter((option) => savedLabels.has(option.label))
+          .map((option) => option.id);
+      }
+      if (!picked.length && group.required) {
+        picked = (group.defaultOptionIds || []).filter((id) => validIds.has(id));
+      }
+
+      selections[group.id] = group.selectionMode === 'single'
+        ? picked.slice(0, 1)
+        : picked.slice(0, Math.max(Number(group.maxSelections) || picked.length, 1));
+    }
+    return selections;
+  }
+
+  function previousOrderOptionDetails(line) {
+    if (Array.isArray(line.optionDetails) && line.optionDetails.length) {
+      return line.optionDetails
+        .filter((entry) => entry && entry.label)
+        .map((entry) => ({
+          groupTitle: entry.groupTitle || 'Tilvalg',
+          label: entry.label,
+          price: Number.isFinite(Number(entry.price)) ? Number(entry.price) : null,
+        }));
+    }
+
+    const labels = Array.isArray(line.options) ? line.options.filter(Boolean) : [];
+    if (!labels.length) return [];
+    const remaining = new Set(labels.map((label) => String(label)));
+    const details = [];
+    const { item } = findItem(line.itemId);
+
+    if (item) {
+      for (const group of getItemOptionGroups(item)) {
+        for (const option of group.options || []) {
+          if (!remaining.has(option.label)) continue;
+          details.push({
+            groupTitle: group.title || 'Tilvalg',
+            label: option.label,
+            price: Number(option.price) || 0,
+          });
+          remaining.delete(option.label);
+        }
+      }
+    }
+
+    for (const label of remaining) {
+      details.push({ groupTitle: 'Tilvalg', label, price: null });
+    }
+    return details;
+  }
+
+  function orderHistoryLineHtml(line) {
+    const details = previousOrderOptionDetails(line);
+    const grouped = new Map();
+    for (const detail of details) {
+      const key = detail.groupTitle || 'Tilvalg';
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(detail);
+    }
+    const groupsHtml = Array.from(grouped.entries())
+      .map(([title, items]) => `
+        <div class="order-history-option-group">
+          <span>${escapeHtml(title)}</span>
+          <ul>${items.map((item) => `
+            <li>
+              <span>${escapeHtml(item.label)}</span>
+              ${item.price > 0 ? `<strong>+${formatPrice(item.price)}</strong>` : ''}
+            </li>`).join('')}</ul>
+        </div>`)
+      .join('');
+
+    return `
+      <div class="order-history-line">
+        <div class="order-history-line-head">
+          <strong>${escapeHtml(`${line.quantity || 1}× ${line.name || 'Produkt'}`)}</strong>
+          <b>${formatPrice(Number(line.price) || 0)}</b>
+        </div>
+        ${line.size ? `<div class="order-history-size"><span>Størrelse</span><strong>${escapeHtml(line.size)}</strong></div>` : ''}
+        ${groupsHtml}
+        ${line.comment ? `<p class="order-history-comment">«${escapeHtml(line.comment)}»</p>` : ''}
+      </div>`;
+  }
+
+  function orderStatusClass(status) {
+    const value = String(status || '').toLocaleLowerCase('no');
+    if (value.includes('avvist')) return 'is-rejected';
+    if (value.includes('klar') || value.includes('fullført')) return 'is-done';
+    if (value.includes('tilbered')) return 'is-active';
+    return 'is-new';
+  }
+
 function renderProfile() {
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
@@ -1125,82 +1260,101 @@ function renderProfile() {
         .join('')
     : '<p class="hint">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
 
-  const live = getOrders();
-  const orders = getLocalOrders();
-  el.orderList.innerHTML = orders.length
-    ? orders
-        .slice(0, 6)
-        .map((order) => {
-          const date = new Date(order.createdAt);
-          const stamp = `${String(date.getDate()).padStart(2, '0')}.${String(
-            date.getMonth() + 1
-          ).padStart(2, '0')} kl. ${String(date.getHours()).padStart(2, '0')}:${String(
-            date.getMinutes()
-          ).padStart(2, '0')}`;
-          const summary = (order.lines || [])
-            .map((line) => `${line.quantity}× ${line.name}`)
-            .join(', ');
-          const current = live.find((entry) => entry.id === order.id);
-          const status = orderStatusLabel(current ? current.status : order.status);
-          return `
-            <div class="mini-row">
-              <div class="mini-body">
-                <p class="mini-title">${formatPrice(order.total)} · ${escapeHtml(stamp)}</p>
-                <p class="mini-sub">${escapeHtml(summary)}</p>
-                <p class="mini-status">Status: ${escapeHtml(status)}</p>
-              </div>
-              <button class="link-btn" data-reorder="${escapeHtml(
-                order.id
-              )}" type="button">Bestill igjen</button>
-            </div>`;
-        })
-        .join('')
-    : '<p class="hint">Ingen tidligere bestillinger.</p>';
-}
+\
+    const live = getOrders();
+    const orders = getLocalOrders();
+    el.orderList.innerHTML = orders.length
+      ? orders
+          .slice(0, 30)
+          .map((order) => {
+            const date = new Date(order.createdAt);
+            const stamp = `${String(date.getDate()).padStart(2, '0')}.${String(
+              date.getMonth() + 1
+            ).padStart(2, '0')}.${date.getFullYear()} · ${String(date.getHours()).padStart(2, '0')}:${String(
+              date.getMinutes()
+            ).padStart(2, '0')}`;
+            const summary = (order.lines || [])
+              .map((line) => `${line.quantity}× ${line.name}`)
+              .join(', ');
+            const current = live.find((entry) => entry.id === order.id);
+            const status = orderStatusLabel(current ? current.status : order.status);
+            const details = (order.lines || []).map(orderHistoryLineHtml).join('');
+            const shortId = String(order.id || '').slice(-6).toUpperCase();
+            return `
+              <details class="order-history-card">
+                <summary>
+                  <div class="order-history-top">
+                    <div class="order-history-total">
+                      <strong>${formatPrice(order.total)}</strong>
+                      <span>${escapeHtml(stamp)}</span>
+                    </div>
+                    <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
+                  </div>
+                  <p class="order-history-summary">${escapeHtml(summary)}</p>
+                  <span class="order-history-toggle">Se detaljer <i aria-hidden="true">⌄</i></span>
+                </summary>
+                <div class="order-history-details">
+                  <div class="order-history-lines">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
+                  <div class="order-history-meta">
+                    <div><span>Ordrenummer</span><strong>${escapeHtml(shortId || '—')}</strong></div>
+                    <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
+                    <div><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
+                  </div>
+                  <button class="btn btn-primary order-reorder-btn" data-reorder="${escapeHtml(order.id)}" type="button">Bestill samme igjen</button>
+                </div>
+              </details>`;
+          })
+          .join('')
+      : '<p class="hint">Ingen tidligere bestillinger.</p>';
+  }
 
-function reorder(orderId) {
-  const order = getLocalOrders().find((entry) => entry.id === orderId);
-  if (!order) return;
-  let added = 0;
-  for (const line of order.lines || []) {
-    const { item } = findItem(line.itemId);
-    if (!item || item.hidden || item.soldOut) continue;
-    const size =
-      (item.sizes || []).find((s) => s.label === line.size) || getDefaultSize(item);
-    const selections = defaultSelectionFor(item);
-    const signature = lineSignature(
-      item.id,
-      size ? size.id : null,
-      selections,
-      line.comment
-    );
-    const existing = cart.find((entry) => entry.signature === signature);
-    if (existing) existing.quantity += line.quantity;
-    else
-      cart.push({
-        lineId: uid('ln'),
-        signature,
-        itemId: item.id,
-        sizeId: size ? size.id : null,
+\
+  function reorder(orderId) {
+    const order = getLocalOrders().find((entry) => entry.id === orderId);
+    if (!order) return;
+    let added = 0;
+    for (const line of order.lines || []) {
+      const { item } = findItem(line.itemId);
+      if (!item || item.hidden || item.soldOut) continue;
+      const size =
+        (item.sizes || []).find((s) => s.id === line.sizeId) ||
+        (item.sizes || []).find((s) => s.label === line.size) ||
+        getDefaultSize(item);
+      const selections = previousOrderSelections(item, line);
+      const signature = lineSignature(
+        item.id,
+        size ? size.id : null,
         selections,
-        comment: line.comment || '',
-        quantity: line.quantity,
-      });
-    added += line.quantity;
+        line.comment
+      );
+      const existing = cart.find((entry) => entry.signature === signature);
+      const quantity = Math.max(1, Number(line.quantity) || 1);
+      if (existing) existing.quantity += quantity;
+      else
+        cart.push({
+          lineId: uid('ln'),
+          signature,
+          itemId: item.id,
+          sizeId: size ? size.id : null,
+          selections,
+          comment: line.comment || '',
+          quantity,
+        });
+      added += quantity;
+    }
+    persistCart();
+    renderCartCount();
+    renderBottomBar();
+    if (added) {
+      toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i handlekurven med samme valg.`);
+      setView('cart');
+    } else {
+      toast('Produktene er ikke tilgjengelige nå.');
+    }
   }
-  persistCart();
-  renderCartCount();
-  renderBottomBar();
-  if (added) {
-    toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i handlekurven.`);
-    setView('cart');
-  } else {
-    toast('Produktene er ikke tilgjengelige nå.');
-  }
-}
 
-/* ------------------------------------------------------------------ *
- * Hendelser
+  /* ------------------------------------------------------------------ *
+   * Hendelser
  * ------------------------------------------------------------------ */
 
 el.catScroll.addEventListener('click', (event) => {
