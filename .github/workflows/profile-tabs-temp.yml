@@ -12,7 +12,183 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply profile tabs patch
-        run: echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQpodG1sX3BhdGg9UGF0aCgnZGVtby9pbmRleC5odG1sJykKanNfcGF0aD1QYXRoKCdkZW1vL2pzL2N1c3RvbWVyLmpzJykKY3NzX3BhdGg9UGF0aCgnZGVtby9jc3MvY3VzdG9tZXIuY3NzJykKc3dfcGF0aD1QYXRoKCdkZW1vL3NlcnZpY2Utd29ya2VyLmpzJykKCmh0bWw9aHRtbF9wYXRoLnJlYWRfdGV4dChlbmNvZGluZz0ndXRmLTgnKQpzdGFydD1odG1sLmZpbmQoJyAgICAgICAgICAgIDxkZXRhaWxzIGNsYXNzPSJjYXJkIHByb2ZpbGUtc2VjdGlvbiIgbmFtZT0icHJvZmlsZS1zZWN0aW9ucyIgb3Blbj4nKQplbmRfbWFya2VyPScgICAgICAgICAgICA8L2RldGFpbHM+XG4gICAgICAgIDwvc2VjdGlvbj5cblxuICAgICAgICA8IS0tID09PT09PT09PT09PSBJTkZPID09PT09PT09PT09PSAtLT4nCmVuZD1odG1sLmZpbmQoZW5kX21hcmtlcixzdGFydCkKaWYgc3RhcnQ8MCBvciBlbmQ8MDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoJ1Byb2ZpbGUgYWNjb3JkaW9uIGJsb2NrIG5vdCBmb3VuZCcpCmVuZF9kZXRhaWxzPWVuZCtsZW4oJyAgICAgICAgICAgIDwvZGV0YWlscz4nKQpuZXdfcHJvZmlsZT0nICAgICAgICAgICAgPG5hdiBjbGFzcz0icHJvZmlsZS10YWJzIiByb2xlPSJ0YWJsaXN0IiBhcmlhLWxhYmVsPSJQcm9maWxpbm5ob2xkIj5cbiAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJwcm9maWxlLXRhYiBpcy1hY3RpdmUiIGRhdGEtcHJvZmlsZS10YWI9ImNvbnRhY3QiIGlkPSJwcm9maWxlVGFiQ29udGFjdCIgdHlwZT0iYnV0dG9uIiByb2xlPSJ0YWIiIGFyaWEtc2VsZWN0ZWQ9InRydWUiIGFyaWEtY29udHJvbHM9InByb2ZpbGVQYW5lbENvbnRhY3QiPktvbnRha3Q8L2J1dHRvbj5cbiAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJwcm9maWxlLXRhYiIgZGF0YS1wcm9maWxlLXRhYj0iZmF2b3JpdGVzIiBpZD0icHJvZmlsZVRhYkZhdm9yaXRlcyIgdHlwZT0iYnV0dG9uIiByb2xlPSJ0YWIiIGFyaWEtc2VsZWN0ZWQ9ImZhbHNlIiBhcmlhLWNvbnRyb2xzPSJwcm9maWxlUGFuZWxGYXZvcml0ZXMiPkZhdm9yaXR0ZXI8L2J1dHRvbj5cbiAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJwcm9maWxlLXRhYiIgZGF0YS1wcm9maWxlLXRhYj0ib3JkZXJzIiBpZD0icHJvZmlsZVRhYk9yZGVycyIgdHlwZT0iYnV0dG9uIiByb2xlPSJ0YWIiIGFyaWEtc2VsZWN0ZWQ9ImZhbHNlIiBhcmlhLWNvbnRyb2xzPSJwcm9maWxlUGFuZWxPcmRlcnMiPkJlc3RpbGxpbmdlcjwvYnV0dG9uPlxuICAgICAgICAgICAgPC9uYXY+XG5cbiAgICAgICAgICAgIDxkaXYgY2xhc3M9InByb2ZpbGUtdGFiLXBhbmVscyI+XG4gICAgICAgICAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImNhcmQgcHJvZmlsZS10YWItcGFuZWwgaXMtYWN0aXZlIiBpZD0icHJvZmlsZVBhbmVsQ29udGFjdCIgZGF0YS1wcm9maWxlLXBhbmVsPSJjb250YWN0IiByb2xlPSJ0YWJwYW5lbCIgYXJpYS1sYWJlbGxlZGJ5PSJwcm9maWxlVGFiQ29udGFjdCI+XG4gICAgICAgICAgICAgICAgICAgIDxwIGNsYXNzPSJzZWN0aW9uLWhlbHAiPkxhZ3JlIGhlciBodmlzIGR1IHZpbCBmeWxsZSB1dCByYXNrZXJlIG5lc3RlIGdhbmcuPC9wPlxuICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmaWVsZCI+XG4gICAgICAgICAgICAgICAgICAgICAgICA8bGFiZWwgY2xhc3M9ImZpZWxkLWxhYmVsIiBmb3I9InByb2ZOYW1lIj5OYXZuPC9sYWJlbD5cbiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InZhbGlkYXRlZC1pbnB1dCI+PGlucHV0IGlkPSJwcm9mTmFtZSIgY2xhc3M9ImlucHV0IiB0eXBlPSJ0ZXh0IiBwbGFjZWhvbGRlcj0iRm9ybmF2biBvZyBldHRlcm5hdm4iPjxzcGFuIGNsYXNzPSJ2YWxpZC1jaGVjayIgaGlkZGVuIGFyaWEtbGFiZWw9Ikd5bGRpZyI+4pyTPC9zcGFuPjwvZGl2PlxuICAgICAgICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZmllbGQiPlxuICAgICAgICAgICAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzPSJmaWVsZC1sYWJlbCIgZm9yPSJwcm9mUGhvbmUiPk1vYmlsbnVtbWVyPC9sYWJlbD5cbiAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InBob25lLXJvdyI+XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9InBob25lLXByZWZpeCI+KzQ3PC9zcGFuPlxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InZhbGlkYXRlZC1pbnB1dCI+PGlucHV0IGlkPSJwcm9mUGhvbmUiIGNsYXNzPSJpbnB1dCIgdHlwZT0idGVsIiBpbnB1dG1vZGU9Im51bWVyaWMiIHBsYWNlaG9sZGVyPSI4IHNpZmZlciI+PHNwYW4gY2xhc3M9InZhbGlkLWNoZWNrIiBoaWRkZW4gYXJpYS1sYWJlbD0iR3lsaWciPuKckzwvc3Bhbj48L2Rpdj5cbiAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBpZD0iYnRuU2F2ZVByb2ZpbGUiIHR5cGU9ImJ1dHRvbiI+TGFncmUgb3BwbHlzbmluZ2VyPC9idXR0b24+XG4gICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzYXZlZC1mbGFzaCIgaWQ9InByb2ZpbGVTYXZlZCIgcm9sZT0ic3RhdHVzIiBoaWRkZW4+4pyTIExhZ3JldDwvc3Bhbj5cbiAgICAgICAgICAgICAgICA8L3NlY3Rpb24+XG5cbiAgICAgICAgICAgICAgICA8c2VjdGlvbiBjbGFzcz0iY2FyZCBwcm9maWxlLXRhYi1wYW5lbCIgaWQ9InByb2ZpbGVQYW5lbEZhdm9yaXRlcyIgZGF0YS1wcm9maWxlLXBhbmVsPSJmYXZvcml0ZXMiIHJvbGU9InRhYnBhbmVsIiBhcmlhLWxhYmVsbGVkYnk9InByb2ZpbGVUYWJGYXZvcml0ZXMiIGhpZGRlbj5cbiAgICAgICAgICAgICAgICAgICAgPGRpdiBpZD0iZmF2TGlzdCIgY2xhc3M9Im1pbmktbGlzdCI+PC9kaXY+XG4gICAgICAgICAgICAgICAgPC9zZWN0aW9uPlxuXG4gICAgICAgICAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImNhcmQgcHJvZmlsZS10YWItcGFuZWwiIGlkPSJwcm9maWxlUGFuZWxPcmRlcnMiIGRhdGEtcHJvZmlsZS1wYW5lbD0ib3JkZXJzIiByb2xlPSJ0YWJwYW5lbCIgYXJpYS1sYWJlbGxlZGJ5PSJwcm9maWxlVGFiT3JkZXJzIiBoaWRkZW4+XG4gICAgICAgICAgICAgICAgICAgIDxkaXYgaWQ9Im9yZGVyTGlzdCIgY2xhc3M9Im1pbmktbGlzdCI+PC9kaXY+XG4gICAgICAgICAgICAgICAgPC9zZWN0aW9uPlxuICAgICAgICAgICAgPC9kaXY+JwpodG1sPWh0bWxbOnN0YXJ0XStuZXdfcHJvZmlsZX0raHRtbFtlbmRfZGV0YWlsczpdCmh0bWw9aHRtbC5yZXBsYWNlKCc/dj0yMDI2MDkwOC0xJywnP3Y9MjAyNjA5MDktMScpCmh0bWxfcGF0aC53cml0ZV90ZXh0KGh0bWwsZW5jb2Rpbmc9J3V0Zi04JykKCmpzPWpzX3BhdGgucmVhZF90ZXh0KGVuY29kaW5nPSd1dGYtOCcpCmhlbHBlcl9tYXJrZXI9J2Z1bmN0aW9uIHJlbmRlclByb2ZpbGUoKSB7JwpoZWxwZXI9J2Z1bmN0aW9uIHNldFByb2ZpbGVUYWIodGFiTmFtZSkge1xuICBjb25zdCB2YWxpZFRhYnMgPSBuZXcgU2V0KFtcJ2NvbnRhY3RcJywgXCdmYXZvcml0ZXNcJywgXCdvcmRlcnNcJ10pO1xuICBjb25zdCBhY3RpdmVUYWIgPSB2YWxpZFRhYnMuaGFzKHRhYk5hbWUpID8gdGFiTmFtZSA6IFwnY29udGFjdFwnO1xuICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKFwnW2RhdGEtcHJvZmlsZS10YWJdXCcpLmZvckVhY2goKGJ1dHRvbikgPT4ge1xuICAgIGNvbnN0IGFjdGl2ZSA9IGJ1dHRvbi5kYXRhc2V0LnByb2ZpbGVUYWIgPT09IGFjdGl2ZVRhYjtcbiAgICBidXR0b24uY2xhc3NMaXN0LnRvZ2dsZShcJ2lzLWFjdGl2ZVwnLCBhY3RpdmUpO1xuICAgIGJ1dHRvbi5zZXRBdHRyaWJ1dGUoXCdhcmlhLXNlbGVjdGVkXCcsIFN0cmluZyhhY3RpdmUpKTtcbiAgfSk7XG4gIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoXCdbZGF0YS1wcm9maWxlLXBhbmVsXVwnKS5mb3JFYWNoKChwYW5lbCkgPT4ge1xuICAgIGNvbnN0IGFjdGl2ZSA9IHBhbmVsLmRhdGFzZXQucHJvZmlsZVBhbmVsID09PSBhY3RpdmVUYWI7XG4gICAgcGFuZWwuY2xhc3NMaXN0LnRvZ2dsZShcJ2lzLWFjdGl2ZVwnLCBhY3RpdmUpO1xuICAgIHBhbmVsLmhpZGRlbiA9ICFhY3RpdmU7XG4gIH0pO1xuICBjb25zdCBhY3RpdmVCdXR0b24gPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBbZGF0YS1wcm9maWxlLXRhYj0iJHthY3RpdmVUYWJ9Il1gKTtcbiAgaWYgKGFjdGl2ZUJ1dHRvbiAmJiB0eXBlb2YgYWN0aXZlQnV0dG9uLnNjcm9sbEludG9WaWV3ID09PSBcJ2Z1bmN0aW9uXCcpIHtcbiAgICBhY3RpdmVCdXR0b24uc2Nyb2xsSW50b1ZpZXcoeyBiZWhhdmlvcjogXCdzbW9vdGhcJyw gYmxvY2s6IFwnbmVhcmVzdFwnLCBpbmxpbmU6IFwnY2VudGVyXCcgfSk7XG4gIH1cbn1cblxuJwppZiAnZnVuY3Rpb24gc2V0UHJvZmlsZVRhYih0YWJOYW1lKScgbm90IGluIGpzOgogICAgaWYgaGVscGVyX21hcmtlciBub3QgaW4ganM6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgncmVuZGVyUHJvZmlsZSBtYXJrZXIgbm90IGZvdW5kJykKICAgIGpzPWpzLnJlcGxhY2UoaGVscGVyX21hcmtlcixoZWxwZXIraGVscGVyX21hcmtlciwxKQpjbGlja19tYXJrZXI9ImRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoJ2NsaWNrJywgKGV2ZW50KSA9PiB7XG4iCmNsaWNrX2NvZGU9JyAgY29uc3QgcHJvZmlsZVRhYiA9IGV2ZW50LnRhcmdldC5jbG9zZXN0KFwnW2RhdGEtcHJvZmlsZS10YWJdXCcpO1xuICBpZiAocHJvZmlsZVRhYikge1xuICAgIHNldFByb2ZpbGVUYWIocHJvZmlsZVRhYi5kYXRhc2V0LnByb2ZpbGVUYWIpO1xuICAgIHJldHVybjtcbiAgfVxuJwppZiBjbGlja19jb2RlIG5vdCBpbiBqczoKICAgIGlmIGNsaWNrX21hcmtlciBub3QgaW4ganM6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgnZG9jdW1lbnQgY2xpY2sgbWFya2VyIG5vdCBmb3VuZCcpCiAgICBqcz1qcy5yZXBsYWNlKGNsaWNrX21hcmtlcixjbGlja19tYXJrZXIrY2xpY2tfY29kZSwxKQpqc19wYXRoLndyaXRlX3RleHQoanMsZW5jb2Rpbmc9J3V0Zi04JykKCmNzcz1jc3NfcGF0aC5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKbWFya2VyPScvKiA9PT09PT09PT09PT09PT09PT09PT0gSG9yaXpvbnRhbCBwcm9maWxlIHRhYnMgPT09PT09PT09PT09PT09PT09PT0gKi8nCmNzc19hZGQ9J1xuLyogPT09PT09PT09PT09PT09PT09PT0gSG9yaXpvbnRhbCBwcm9maWxlIHRhYnMgPT09PT09PT09PT09PT09PT09PT0gKi9cbiN2aWV3UHJvZmlsZSAucHJvZmlsZS10YWJzIHtcbiAgZGlzcGxheTogZmxleDtcbiAgYWxpZ24taXRlbXM6IGNlbnRlcjtcbiAgZ2FwOiA2cHg7XG4gIHdpZHRoOiAxMDAlO1xuICBtYXJnaW46IDJweCAwIDEwcHg7XG4gIHBhZGRpbmc6IDJweCAwIDVweDtcbiAgb3ZlcmZsb3cteDogYXV0bztcbiAgb3ZlcmZsb3cteTogaGlkZGVuO1xuICBzY3JvbGwtc25hcC10eXBlOiB4IHByb3hpbWl0eTtcbiAgc2Nyb2xsYmFyLXdpZHRoOiBub25lO1xuICAtd2Via2l0LW92ZXJmbG93LXNjcm9sbGluZzogdG91Y2g7XG59XG4jdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiczo6LXdlYmtpdC1zY3JvbGxiYXIgeyBkaXNwbGF5OiBub25lOyB9XG4jdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiIHtcbiAgZmxleDogMSAwIGF1dG87XG4gIG1pbi13aWR0aDogMTEycHg7XG4gIG1pbi1oZWlnaHQ6IDM4cHg7XG4gIHBhZGRpbmc6IDAgMTRweDtcbiAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tbGluZSk7XG4gIGJvcmRlci1yYWRpdXM6IDk5OXB4O1xuICBiYWNrZ3JvdW5kOiB2YXIoLS1zdXJmYWNlKTtcbiAgY29sb3I6IHZhcigtLWluay0yKTtcbiAgZm9udDogaW5oZXJpdDtcbiAgZm9udC1zaXplOiAxMi41cHg7XG4gIGxpbmUtaGVpZ2h0OiAxO1xuICBmb250LXdlaWdodDogNzAwO1xuICB3aGl0ZS1zcGFjZTogbm93cmFwO1xuICB0ZXh0LWFsaWduOiBjZW50ZXI7XG4gIHNjcm9sbC1zbmFwLWFsaWduOiBjZW50ZXI7XG4gIHRyYW5zaXRpb246IGJhY2tncm91bmQgLjE2cyBlYXNlLCBjb2xvciAuMTZzIGVhc2UsIGJvcmRlci1jb2xvciAuMTZzIGVhc2UsIGJveC1zaGFkb3cgLjE2cyBlYXNlO1xufVxuI3ZpZXdQcm9maWxlIC5wcm9maWxlLXRhYjpob3ZlciB7IGJvcmRlci1jb2xvcjogdmFyKC0tbGluZS1zdHJvbmcpOyB9XG4jdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiLmlzLWFjdGl2ZSB7XG4gIGJvcmRlci1jb2xvcjogdmFyKC0tYWNjZW50KTtcbiAgYmFja2dyb3VuZDogdmFyKC0tYWNjZW50KTtcbiAgY29sb3I6ICNmZmY7XG4gIGJveC1zaGFkb3c6IDAgMnB4IDZweCByZ2JhKDIzMiwgOTgsIDE1LCAuMTQpO1xufVxuI3ZpZXdQcm9maWxlIC5wcm9maWxlLXRhYjpmb2N1cy12aXNpYmxlIHtcbiAgb3V0bGluZTogMnB4IHNvbGlkIHJnYmEoMjMyLCA5OCwgMTUsIC4yOCk7XG4gIG91dGxpbmUtb2Zmc2V0OiAycHg7XG59XG4jdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiLXBhbmVscyB7IHdpZHRoOiAxMDAlOyB9XG4jdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiLXBhbmVsIHtcbiAgbWFyZ2luOiAwO1xuICBwYWRkaW5nOiAxNHB4O1xuICBib3JkZXItcmFkaXVzOiAxM3B4O1xuICBhbmltYXRpb246IHByb2ZpbGVQYW5lbEluIC4xNnMgZWFzZTtcbn1cbiN2aWV3UHJvZmlsZSAucHJvZmlsZS10YWItcGFuZWxbaGlkZGVuXSB7IGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDsgfVxuQGtleWZyYW1lcyBwcm9maWxlUGFuZWxJbiB7XG4gIGZyb20geyBvcGFjaXR5OiAwOyB0cmFuc2Zvcm06IHRyYW5zbGF0ZVkoM3B4KTsgfVxuICB0byB7IG9wYWNpdHk6IDE7IHRyYW5zZm9ybTogdHJhbnNsYXRlWSgwKTsgfVxufVxuQG1lZGlhIChwcmVmZXJzLXJlZHVjZWQtbW90aW9uOiByZWR1Y2UpIHtcbiAgI3ZpZXdQcm9maWxlIC5wcm9maWxlLXRhYi1wYW5lbCB7IGFuaW1hdGlvbjogbm9uZTsgfVxuICAjdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiIHsgdHJhbnNpdGlvbjogbm9uZTsgfVxufVxuQG1lZGlhIChtYXgtd2lkdGg6IDQyMHB4KSB7XG4gICN2aWV3UHJvZmlsZSAucHJvZmlsZS10YWJzIHsgZ2FwOiA1cHg7IG1hcmdpbi1ib3R0b206IDhweDsgfVxuICAjdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiIHtcbiAgICBtaW4td2lkdGg6IDEwNHB4O1xuICAgIG1pbi1oZWlnaHQ6IDM2cHg7XG4gICAgcGFkZGluZzogMCAxMnB4O1xuICAgIGZvbnQtc2l6ZTogMTJweDtcbiAgfVxuICAjdmlld1Byb2ZpbGUgLnByb2ZpbGUtdGFiLXBhbmVsIHsgcGFkZGluZzogMTFweDsgYm9yZGVyLXJhZGl1czogMTFweDsgfVxufVxuJwppZiBtYXJrZXIgbm90IGluIGNzczoKICAgIGNzcyArPSBjc3NfYWRkCmNzc19wYXRoLndyaXRlX3RleHQoY3NzLGVuY29kaW5nPSd1dGYtOCcpCgpzdz1zd19wYXRoLnJlYWRfdGV4dChlbmNvZGluZz0ndXRmLTgnKQpzdz1yZS5zdWIociJjb25zdCBDQUNIRV9OQU1FID0gJ2tvbC1kZW1vLXZcZCsnOyIsImNvbnN0IENBQ0hFX05BTUUgPSAna29sLWRlbW8tdjI2JzsiLHN3LGNvdW50PTEpCnN3X3BhdGgud3JpdGVfdGV4dChzdyxlbmNvZGluZz0ndXRmLTgnKQo=' | base64 -d | python3
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          html_path = Path("demo/index.html")
+          js_path = Path("demo/js/customer.js")
+          css_path = Path("demo/css/customer.css")
+          sw_path = Path("demo/service-worker.js")
+
+          html = html_path.read_text(encoding="utf-8")
+          start = html.find('            <details class="card profile-section" name="profile-sections" open>')
+          end_marker = '            </details>\n        </section>\n\n        <!-- ============ INFO ============ -->'
+          end = html.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit("Profile accordion block not found")
+          end_details = end + len('            </details>')
+
+          new_profile = '''            <nav class="profile-tabs" role="tablist" aria-label="Profilinnhold">
+              <button class="profile-tab is-active" data-profile-tab="contact" id="profileTabContact" type="button" role="tab" aria-selected="true" aria-controls="profilePanelContact">Kontakt</button>
+              <button class="profile-tab" data-profile-tab="favorites" id="profileTabFavorites" type="button" role="tab" aria-selected="false" aria-controls="profilePanelFavorites">Favoritter</button>
+              <button class="profile-tab" data-profile-tab="orders" id="profileTabOrders" type="button" role="tab" aria-selected="false" aria-controls="profilePanelOrders">Bestillinger</button>
+          </nav>
+
+          <div class="profile-tab-panels">
+              <section class="card profile-tab-panel is-active" id="profilePanelContact" data-profile-panel="contact" role="tabpanel" aria-labelledby="profileTabContact">
+                  <p class="section-help">Lagre her hvis du vil fylle ut raskere neste gang.</p>
+                  <div class="field">
+                      <label class="field-label" for="profName">Navn</label>
+                      <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                  </div>
+                  <div class="field">
+                      <label class="field-label" for="profPhone">Mobilnummer</label>
+                      <div class="phone-row">
+                          <span class="phone-prefix">+47</span>
+                          <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                      </div>
+                  </div>
+                  <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
+                  <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
+              </section>
+
+              <section class="card profile-tab-panel" id="profilePanelFavorites" data-profile-panel="favorites" role="tabpanel" aria-labelledby="profileTabFavorites" hidden>
+                  <div id="favList" class="mini-list"></div>
+              </section>
+
+              <section class="card profile-tab-panel" id="profilePanelOrders" data-profile-panel="orders" role="tabpanel" aria-labelledby="profileTabOrders" hidden>
+                  <div id="orderList" class="mini-list"></div>
+              </section>
+          </div>'''
+
+          html = html[:start] + new_profile + html[end_details:]
+          html = html.replace("?v=20260908-1", "?v=20260909-1")
+          html_path.write_text(html, encoding="utf-8")
+
+          js = js_path.read_text(encoding="utf-8")
+          helper_marker = "function renderProfile() {"
+          helper = '''function setProfileTab(tabName) {
+            const validTabs = new Set(['contact', 'favorites', 'orders']);
+            const activeTab = validTabs.has(tabName) ? tabName : 'contact';
+            document.querySelectorAll('[data-profile-tab]').forEach((button) => {
+              const active = button.dataset.profileTab === activeTab;
+              button.classList.toggle('is-active', active);
+              button.setAttribute('aria-selected', String(active));
+            });
+            document.querySelectorAll('[data-profile-panel]').forEach((panel) => {
+              const active = panel.dataset.profilePanel === activeTab;
+              panel.classList.toggle('is-active', active);
+              panel.hidden = !active;
+            });
+            const activeButton = document.querySelector('[data-profile-tab="' + activeTab + '"]');
+            if (activeButton && typeof activeButton.scrollIntoView === 'function') {
+              activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+          }
+
+          '''
+          if "function setProfileTab(tabName)" not in js:
+              if helper_marker not in js:
+                  raise SystemExit("renderProfile marker not found")
+              js = js.replace(helper_marker, helper + helper_marker, 1)
+
+          click_marker = "document.addEventListener('click', (event) => {\n"
+          click_code = '''  const profileTab = event.target.closest('[data-profile-tab]');
+            if (profileTab) {
+              setProfileTab(profileTab.dataset.profileTab);
+              return;
+            }
+          '''
+          if click_code not in js:
+              if click_marker not in js:
+                  raise SystemExit("document click marker not found")
+              js = js.replace(click_marker, click_marker + click_code, 1)
+          js_path.write_text(js, encoding="utf-8")
+
+          css = css_path.read_text(encoding="utf-8")
+          marker = "/* ======================== Horizontal profile tabs ======================== */"
+          if marker not in css:
+              css += '''
+
+          /* ======================== Horizontal profile tabs ======================== */
+          #viewProfile .profile-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            margin: 2px 0 10px;
+            padding: 2px 0 5px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x proximity;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+          }
+          #viewProfile .profile-tabs::-webkit-scrollbar { display: none; }
+          #viewProfile .profile-tab {
+            flex: 1 0 auto;
+            min-width: 112px;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--ink-2);
+            font: inherit;
+            font-size: 12.5px;
+            line-height: 1;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
+            scroll-snap-align: center;
+            transition: background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+          }
+          #viewProfile .profile-tab:hover { border-color: var(--line-strong); }
+          #viewProfile .profile-tab.is-active {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(232, 98, 15, .14);
+          }
+          #viewProfile .profile-tab:focus-visible {
+            outline: 2px solid rgba(232, 98, 15, .28);
+            outline-offset: 2px;
+          }
+          #viewProfile .profile-tab-panels { width: 100%; }
+          #viewProfile .profile-tab-panel {
+            margin: 0;
+            padding: 14px;
+            border-radius: 13px;
+            animation: profilePanelIn .16s ease;
+          }
+          #viewProfile .profile-tab-panel[hidden] { display: none !important; }
+          @keyframes profilePanelIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            #viewProfile .profile-tab-panel { animation: none; }
+            #viewProfile .profile-tab { transition: none; }
+          }
+          @media (max-width: 420px) {
+            #viewProfile .profile-tabs { gap: 5px; margin-bottom: 8px; }
+            #viewProfile .profile-tab {
+              min-width: 104px;
+              min-height: 36px;
+              padding: 0 12px;
+              font-size: 12px;
+            }
+            #viewProfile .profile-tab-panel { padding: 11px; border-radius: 11px; }
+          }
+          '''
+          css_path.write_text(css, encoding="utf-8")
+
+          sw = sw_path.read_text(encoding="utf-8")
+          sw = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v26';", sw, count=1)
+          sw_path.write_text(sw, encoding="utf-8")
+          PY
       - name: Validate customer JavaScript
         run: node --check demo/js/customer.js
       - name: Commit profile tabs
