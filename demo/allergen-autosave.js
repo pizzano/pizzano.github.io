@@ -1,99 +1,110 @@
-import { findItem, allergenLabels } from './data.js';
-
 const ALLERGEN_KEY = 'kol_allergens_v1';
-const ALLERGEN_ICONS = {
-  'Hvete / gluten': '🌾',
-  Melk: '🥛',
-  Egg: '🥚',
-  Soya: '🌱',
-  Selleri: '🌿',
-  Sennep: '🟡',
-  Sesam: '⚪',
-  Fisk: '🐟',
-  Skalldyr: '🦐',
-  Peanøtter: '🥜',
-  Nøtter: '🌰',
-  Sulfitter: '🍷',
-};
 
-function readSelectedFromPicker() {
-  return Array.from(document.querySelectorAll('#allergenPicker .allergen-choice.is-on'))
-    .map((button) => button.dataset.allergen)
-    .filter(Boolean);
+function loadSelected() {
+  try {
+    const value = JSON.parse(localStorage.getItem(ALLERGEN_KEY) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch (_) {
+    return [];
+  }
 }
 
 function persistSelected(selected) {
   try {
     localStorage.setItem(ALLERGEN_KEY, JSON.stringify(selected));
+    return true;
   } catch (_) {
-    // LocalStorage kan være blokkert i enkelte private nettlesermoduser.
+    return false;
   }
 }
 
-function updateVisibleMenu(selected) {
-  const selectedSet = new Set(selected);
+let ownToastTimer = null;
+let ownFadeTimer = null;
 
-  document.querySelectorAll('.prod-card[data-item]').forEach((card) => {
-    const result = findItem(card.dataset.item);
-    const item = result && result.item;
-    if (!item) return;
+function showSuccessToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
 
-    const marked = allergenLabels(item).filter((label) => selectedSet.has(label));
-    const info = card.querySelector('.prod-info');
-    if (!info) return;
+  if (ownToastTimer) clearTimeout(ownToastTimer);
+  if (ownFadeTimer) clearTimeout(ownFadeTimer);
 
-    let warning = info.querySelector('.prod-allergens');
+  toast.classList.remove('is-fading');
+  toast.textContent = message;
+  toast.hidden = false;
 
-    if (!marked.length) {
-      if (warning) warning.remove();
-      return;
-    }
+  ownFadeTimer = setTimeout(() => {
+    toast.classList.add('is-fading');
+  }, 1400);
 
-    if (!warning) {
-      warning = document.createElement('p');
-      warning.className = 'prod-allergens';
-      const price = info.querySelector('.prod-price');
-      if (price) info.insertBefore(warning, price);
-      else info.appendChild(warning);
-    }
+  ownToastTimer = setTimeout(() => {
+    toast.hidden = true;
+    toast.classList.remove('is-fading');
+  }, 2000);
+}
 
-    warning.textContent = marked
-      .map((label) => `${ALLERGEN_ICONS[label] || '•'} ${label}`)
-      .join(' ');
-  });
-
-  const allergenButton = document.getElementById('btnAllergens');
+function forceAppMenuRefresh() {
+  const saveButton = document.getElementById('allergenSave');
+  const openButton = document.getElementById('btnAllergens');
   const modal = document.getElementById('allergenModal');
-  if (allergenButton) {
-    allergenButton.classList.toggle(
-      'is-on',
-      selected.length > 0 || Boolean(modal && !modal.hidden)
-    );
+
+  // app.js'nin kendi Lagre handler'i ui.selectedAllergens'i kalici kaydeder
+  // ve renderMenu() calistirir. Ardindan ayni event-loop icinde popup'i
+  // yeniden acariz; tarayici arada frame cizmedigi icin kapanma gorunmez.
+  if (saveButton && openButton && modal && !modal.hidden) {
+    saveButton.click();
+    openButton.click();
   }
 }
 
-function commitCurrentSelection() {
-  const selected = readSelectedFromPicker();
-  persistSelected(selected);
-  updateVisibleMenu(selected);
-}
-
-// Appens egen handler oppdaterer først .is-on-statusen. Deretter leser vi
-// resultatet, lagrer det og oppdaterer menyen uten å lukke allergenvelgeren.
+// Bu listener document seviyesinde bubble asamasinda calisir. Boylece once
+// app.js'nin allergenPicker/allergenReset handler'lari ui state'ini gunceller.
 document.addEventListener('click', (event) => {
   const choice = event.target.closest('#allergenPicker [data-allergen]');
   const reset = event.target.closest('#allergenReset');
-  if (!choice && !reset) return;
 
-  setTimeout(commitCurrentSelection, 0);
-});
+  if (choice) {
+    const label = choice.dataset.allergen;
+    if (!label) return;
 
-// Sikrer korrekt visning hvis scriptet lastes etter at menyen allerede er tegnet.
-window.addEventListener('load', () => {
-  try {
-    const selected = JSON.parse(localStorage.getItem(ALLERGEN_KEY) || '[]');
-    if (Array.isArray(selected)) updateVisibleMenu(selected);
-  } catch (_) {
-    // Ignorer ugyldig lokal lagring.
+    const current = loadSelected();
+    const selected = current.includes(label)
+      ? current.filter((value) => value !== label)
+      : [...current, label];
+
+    persistSelected(selected);
+    forceAppMenuRefresh();
+    showSuccessToast('Allergener oppdatert');
+    return;
+  }
+
+  if (reset) {
+    persistSelected([]);
+    forceAppMenuRefresh();
+    showSuccessToast('Allergener nullstilt');
+    return;
+  }
+
+  // Profil kaydi da ayni yesil onay bildirimi kullansin.
+  if (event.target.closest('#btnSaveProfile')) {
+    setTimeout(() => showSuccessToast('Opplysninger lagret'), 0);
   }
 });
+
+// app.js'nin mevcut toast bildirimlerini de ayni 2 saniyelik, yumusak
+// kaybolan yesil onay stiline uyarlar.
+const toast = document.getElementById('toast');
+if (toast) {
+  const observer = new MutationObserver(() => {
+    if (toast.hidden) {
+      toast.classList.remove('is-fading');
+      return;
+    }
+
+    toast.classList.remove('is-fading');
+    clearTimeout(toast._kolFadeTimer);
+    toast._kolFadeTimer = setTimeout(() => {
+      if (!toast.hidden) toast.classList.add('is-fading');
+    }, 1500);
+  });
+  observer.observe(toast, { attributes: true, attributeFilter: ['hidden'] });
+}
