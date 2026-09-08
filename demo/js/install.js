@@ -1,6 +1,67 @@
 (() => {
   'use strict';
 
+  /*
+   * Customer-side Firebase traffic guard.
+   * data.js currently asks the Realtime Database root for updates frequently.
+   * On the customer page we keep the latest successful root response in memory
+   * and reuse it for two minutes. While the tab is hidden we never refresh an
+   * existing cached response. This keeps the menu stable, prevents unnecessary
+   * full re-renders/image flicker and dramatically reduces Firebase bandwidth.
+   * Admin is unaffected because admin.html does not load install.js.
+   */
+  const FIREBASE_DB = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+  const FIREBASE_ROOT_TTL = 2 * 60 * 1000;
+  const nativeFetch = window.fetch.bind(window);
+  let firebaseRootResponse = null;
+  let firebaseRootFetchedAt = 0;
+  let firebaseRootRequest = null;
+
+  function isFirebaseRootGet(input, init) {
+    const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+    if (method !== 'GET') return false;
+    try {
+      const url = new URL(input instanceof Request ? input.url : String(input), location.href);
+      return url.origin === new URL(FIREBASE_DB).origin && (url.pathname === '/.json' || url.pathname === '/');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  window.fetch = async function efficientCustomerFetch(input, init) {
+    if (!isFirebaseRootGet(input, init)) return nativeFetch(input, init);
+
+    const now = Date.now();
+    const cacheIsFresh = firebaseRootResponse && now - firebaseRootFetchedAt < FIREBASE_ROOT_TTL;
+
+    // No Firebase traffic while the customer is not looking at the page.
+    if (firebaseRootResponse && (document.hidden || cacheIsFresh)) {
+      return firebaseRootResponse.clone();
+    }
+
+    // Several refresh triggers can fire together (poll/focus/visibility).
+    // Share one network request instead of downloading the database repeatedly.
+    if (firebaseRootRequest) {
+      const response = await firebaseRootRequest;
+      return response.clone();
+    }
+
+    firebaseRootRequest = nativeFetch(input, init)
+      .then((response) => {
+        if (response.ok) {
+          firebaseRootResponse = response.clone();
+          firebaseRootFetchedAt = Date.now();
+        }
+        return response;
+      })
+      .finally(() => {
+        firebaseRootRequest = null;
+      });
+
+    const response = await firebaseRootRequest;
+    return response.clone();
+  };
+
   function loadModule(id, src) {
     if (document.getElementById(id)) return;
     const script = document.createElement('script');
