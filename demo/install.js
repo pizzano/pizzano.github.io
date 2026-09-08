@@ -1,6 +1,11 @@
 (() => {
   'use strict';
 
+  const allergenStyles = document.createElement('link');
+  allergenStyles.rel = 'stylesheet';
+  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-1';
+  document.head.appendChild(allergenStyles);
+
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches ||
