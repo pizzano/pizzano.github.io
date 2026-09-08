@@ -16,6 +16,12 @@
   productCardStyles.href = '/demo/product-cards-modern.css?v=20260908-1';
   document.head.appendChild(productCardStyles);
 
+  // Last mobile layer: keeps the whole customer UI lighter and more compact.
+  const compactMobileStyles = document.createElement('link');
+  compactMobileStyles.rel = 'stylesheet';
+  compactMobileStyles.href = '/demo/mobile-compact.css?v=20260908-1';
+  document.head.appendChild(compactMobileStyles);
+
   const allergenUi = document.createElement('script');
   allergenUi.type = 'module';
   allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
@@ -35,17 +41,17 @@
   style.textContent = `
     .pwa-info-install-card {
       display: grid;
-      grid-template-columns: 52px minmax(0, 1fr);
-      gap: 12px;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 10px;
       align-items: center;
       border: 1px solid rgba(239, 104, 18, .18);
       background: #fffaf6;
     }
 
     .pwa-info-install-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 15px;
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
       display: grid;
       place-items: center;
       background: #33251f;
@@ -64,29 +70,29 @@
 
     .pwa-info-install-copy strong {
       display: block;
-      margin-bottom: 4px;
-      font-size: 17px;
+      margin-bottom: 3px;
+      font-size: 15px;
       color: #2f2723;
     }
 
     .pwa-info-install-copy span {
       display: block;
       color: #746b66;
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: 12px;
+      line-height: 1.38;
     }
 
     .pwa-info-install-button {
       grid-column: 1 / -1;
       width: 100%;
       border: 0;
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-top: 3px;
+      border-radius: 11px;
+      padding: 11px 14px;
+      margin-top: 2px;
       background: #ef6812;
       color: #fff;
       font: inherit;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 800;
       cursor: pointer;
     }
