@@ -1,0 +1,75 @@
+/* KØL – faste handlingsknapper i kurv og checkout */
+
+/* Når kurv eller checkout er aktiv, skal innholdet rulle inni selve visningen. */
+main:has(> .view-cart:not([hidden])),
+main:has(> .view-checkout:not([hidden])) {
+    height: calc(100dvh - var(--header-h));
+    max-height: calc(100dvh - var(--header-h));
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.view-cart,
+.view-checkout {
+    min-height: 0;
+}
+
+main:has(> .view-cart:not([hidden])) > .view-cart,
+main:has(> .view-checkout:not([hidden])) > .view-checkout {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+
+main:has(> .view-cart:not([hidden])) > .view-cart::-webkit-scrollbar,
+main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Handlingsradene skal alltid være synlige nederst, uansett hvor langt innholdet er. */
+.view-cart > .checkout-actions,
+.view-checkout > .checkout-actions {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    z-index: 70 !important;
+    width: min(100%, 1040px) !important;
+    max-width: 1040px !important;
+    margin: 0 !important;
+    padding: 10px max(10px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)) !important;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, .98) !important;
+    border-top: 1px solid var(--line) !important;
+    box-shadow: 0 -8px 22px rgba(20, 24, 30, .10) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.view-cart > .checkout-actions .btn,
+.view-checkout > .checkout-actions .btn {
+    min-height: 50px;
+}
+
+/* Geniş ekranda buton alanı içerikle aynı hizada kalsın. */
+@media (min-width: 1040px) {
+    .view-cart > .checkout-actions,
+    .view-checkout > .checkout-actions {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
+
+/* :has desteği olmayan eski tarayıcılarda da butonlar sabit kalır. */
+@supports not selector(main:has(> .view-cart:not([hidden]))) {
+    .view-cart,
+    .view-checkout {
+        padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    }
+}
