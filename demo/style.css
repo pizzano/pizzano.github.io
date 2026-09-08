@@ -122,11 +122,12 @@ svg {
 .brand-text strong {
     font-size: 16px;
     letter-spacing: .06em;
+    color: #ffffff;
 }
 
 .brand-text small {
     font-size: 10.5px;
-    color: #ddc9bd;
+    color: #f1e4dc;
     letter-spacing: .04em;
     text-transform: uppercase;
 }
@@ -1357,7 +1358,7 @@ main {
 }
 
 /* Clear contact feedback and account information. */
-.hdr-btn { width: 44px; height: 44px; flex: none; color: #394452; }
+.hdr-btn { width: 44px; height: 44px; flex: none; color: #f8eee9; }
 .hdr-btn svg { width: 26px; height: 26px; stroke-width: 1.9; }
 .validated-input { position: relative; flex: 1; min-width: 0; }
 .validated-input .input { padding-right: 38px; }
