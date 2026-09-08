@@ -1,7 +1,8 @@
-const CACHE_NAME = 'kol-demo-v7';
+const CACHE_NAME = 'kol-demo-v8';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/style.css',
+  '/demo/allergen-modal.css',
   '/demo/app.js',
   '/demo/install.js',
   '/demo/data.js',
