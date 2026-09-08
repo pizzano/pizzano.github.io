@@ -1,0 +1,34 @@
+name: Temporary order history syntax fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/order-history-syntax-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove accidental patch markers and validate JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('demo/js/customer.js')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          lines = [line for line in lines if line.strip() != '\\']
+          p.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+          node --check demo/js/customer.js
+      - name: Commit syntax fix
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add demo/js/customer.js
+          git diff --cached --check
+          git commit -m 'Fix order history JavaScript syntax'
+          git push origin HEAD:main
