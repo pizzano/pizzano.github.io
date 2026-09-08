@@ -860,6 +860,64 @@ main {
     margin: 0 0 1px;
 }
 
+.line-details {
+    display: grid;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+}
+
+.line-size {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.line-size strong { color: var(--ink); font-weight: 650; }
+
+.line-detail-label {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--ink-3);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.line-addon-list {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.line-addon-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding-left: 11px;
+    position: relative;
+    color: var(--ink-2);
+}
+
+.line-addon-list li::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: .62em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.line-addon-list strong { flex: none; color: var(--ink); font-weight: 600; }
+
 .line-comment {
     font-size: 12.5px;
     color: var(--warn);

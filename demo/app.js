@@ -835,31 +835,51 @@ function cartLineHtml(line, compact) {
   const optionIds = Object.values(line.selections || {}).flat();
   const price = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
   const addons = describeSelection(optionIds);
+  const addonGroups = addons.reduce((groups, addon) => {
+    let group = groups.find((entry) => entry.title === addon.groupTitle);
+    if (!group) {
+      group = { title: addon.groupTitle, items: [] };
+      groups.push(group);
+    }
+    group.items.push(addon);
+    return groups;
+  }, []);
 
   return `
     <div class="cart-line" data-line="${escapeHtml(line.lineId)}">
       <span class="line-qty">${line.quantity}×</span>
       <div class="line-body">
         <p class="line-name">${escapeHtml(item.name)}</p>
-        ${
-          size
-            ? `<p class="line-meta">Størrelse: ${escapeHtml(size.label)} · ${formatPrice(
-                getSizePrice(item, line.sizeId)
-              )}</p>`
-            : ''
-        }
-        ${
-          addons.length
-            ? `<p class="line-meta">${addons
-                .map(
-                  (addon) =>
-                    `${escapeHtml(addon.label)}${
-                      addon.price > 0 ? ` (+${formatPrice(addon.price)})` : ''
-                    }`
-                )
-                .join(' · ')}</p>`
-            : ''
-        }
+        <div class="line-details">
+          ${
+            size
+              ? `<div class="line-size">
+                   <span>Størrelse</span>
+                   <strong>${escapeHtml(size.label)}</strong>
+                   <span>${formatPrice(getSizePrice(item, line.sizeId))}</span>
+                 </div>`
+              : ''
+          }
+          ${addonGroups
+            .map(
+              (group) => `
+                <div class="line-addon-group">
+                  <span class="line-detail-label">${escapeHtml(group.title || 'Tilvalg')}</span>
+                  <ul class="line-addon-list">
+                    ${group.items
+                      .map(
+                        (addon) => `
+                          <li>
+                            <span>${escapeHtml(addon.label)}</span>
+                            ${addon.price > 0 ? `<strong>+${formatPrice(addon.price)}</strong>` : ''}
+                          </li>`
+                      )
+                      .join('')}
+                  </ul>
+                </div>`
+            )
+            .join('')}
+        </div>
         ${line.comment ? `<p class="line-comment">«${escapeHtml(line.comment)}»</p>` : ''}
         ${
           compact
