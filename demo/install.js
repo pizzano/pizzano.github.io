@@ -22,6 +22,12 @@
   compactMobileStyles.href = '/demo/mobile-compact.css?v=20260908-1';
   document.head.appendChild(compactMobileStyles);
 
+  // Product-specific mobile refinement: removes excess height/padding from menu cards.
+  const tightProductStyles = document.createElement('link');
+  tightProductStyles.rel = 'stylesheet';
+  tightProductStyles.href = '/demo/product-cards-tight-mobile.css?v=20260908-1';
+  document.head.appendChild(tightProductStyles);
+
   const allergenUi = document.createElement('script');
   allergenUi.type = 'module';
   allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
