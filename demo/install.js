@@ -1,22 +1,15 @@
 (() => {
   'use strict';
 
-  const ua = navigator.userAgent || '';
-  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isOpera = /OPR\//i.test(ua) || /Opera/i.test(ua);
-  const isChromium = /Android|Chrome|Chromium|Edg|OPR|SamsungBrowser/i.test(ua) && !isIOS;
-
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.navigator.standalone === true;
 
-  if (!isChromium || isStandalone()) return;
+  if (isStandalone()) return;
 
   let deferredPrompt = null;
   let installCard = null;
-  let installButton = null;
-  let installHelp = null;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -78,51 +71,22 @@
       cursor: pointer;
     }
 
-    .pwa-info-install-button:active:not(:disabled) {
+    .pwa-info-install-button:active {
       transform: scale(.99);
-    }
-
-    .pwa-info-install-button:disabled {
-      opacity: .55;
-      cursor: default;
-    }
-
-    .pwa-info-install-help {
-      grid-column: 1 / -1;
-      margin: 0;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #f4eee9;
-      color: #4d433d;
-      font-size: 13px;
-      line-height: 1.45;
     }
   `;
   document.head.appendChild(style);
 
-  function setReady(ready) {
-    if (!installButton) return;
-    installButton.disabled = !ready;
-    installButton.textContent = ready ? 'Installer app' : 'Klargjør installasjon…';
+  function removeCard() {
+    installCard?.remove();
+    installCard = null;
   }
 
-  function setOperaFallback() {
-    if (!installButton || deferredPrompt) return;
-    installButton.disabled = false;
-    installButton.textContent = 'Installer via Opera';
-  }
-
-  function showOperaHelp() {
-    if (!installHelp) return;
-    installHelp.hidden = false;
-    installHelp.innerHTML = 'Opera gir ikke nettsiden tilgang til den native installasjonsdialogen. Trykk <strong>⋮</strong> i Opera og velg <strong>Installer app</strong> eller <strong>Legg til på startskjermen</strong>.';
-  }
-
-  function ensureCard() {
-    if (installCard) return installCard;
+  function showInstallCard() {
+    if (!deferredPrompt || installCard || isStandalone()) return;
 
     const infoView = document.getElementById('viewInfo');
-    if (!infoView) return null;
+    if (!infoView) return;
 
     installCard = document.createElement('div');
     installCard.className = 'card pwa-info-install-card';
@@ -132,76 +96,47 @@
       </div>
       <div class="pwa-info-install-copy">
         <strong>Installer KØL-appen</strong>
-        <span>Installer bestillingssiden på telefonen. Etterpå åpnes den som en app uten vanlig adressefelt.</span>
+        <span>Installer bestillingssiden på enheten og åpne den som en app uten vanlig adressefelt.</span>
       </div>
-      <button class="pwa-info-install-button" type="button" disabled>Klargjør installasjon…</button>
-      <p class="pwa-info-install-help" hidden></p>
+      <button class="pwa-info-install-button" type="button">Installer app</button>
     `;
 
-    installButton = installCard.querySelector('.pwa-info-install-button');
-    installHelp = installCard.querySelector('.pwa-info-install-help');
+    const cards = infoView.querySelectorAll('.card');
+    const lastInfoCard = cards[cards.length - 1];
+    const staffAccess = infoView.querySelector('.staff-access');
 
-    const firstCard = infoView.querySelector('.card');
-    if (firstCard) {
-      firstCard.insertAdjacentElement('afterend', installCard);
-    } else {
-      infoView.appendChild(installCard);
-    }
+    if (lastInfoCard) lastInfoCard.insertAdjacentElement('afterend', installCard);
+    else if (staffAccess) staffAccess.insertAdjacentElement('beforebegin', installCard);
+    else infoView.appendChild(installCard);
 
-    installButton.addEventListener('click', async () => {
+    installCard.querySelector('.pwa-info-install-button').addEventListener('click', async () => {
       if (!deferredPrompt) {
-        if (isOpera) showOperaHelp();
+        removeCard();
         return;
       }
 
       const promptEvent = deferredPrompt;
       deferredPrompt = null;
-      setReady(false);
 
       try {
         await promptEvent.prompt();
-        const choice = await promptEvent.userChoice;
-
-        if (choice && choice.outcome === 'accepted') {
-          installCard?.remove();
-          installCard = null;
-          installButton = null;
-          installHelp = null;
-          return;
-        }
+        await promptEvent.userChoice;
       } catch (_) {
-        // Browseren bestemmer når et nytt installasjonstilbud kan gis.
+        // Native prompt is controlled by the browser.
       }
 
-      if (isOpera) setOperaFallback();
+      removeCard();
     });
-
-    if (deferredPrompt) setReady(true);
-    else if (isOpera) setOperaFallback();
-    else setReady(false);
-
-    return installCard;
   }
 
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredPrompt = event;
-    ensureCard();
-    if (installHelp) installHelp.hidden = true;
-    setReady(true);
+    showInstallCard();
   });
 
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
-    installCard?.remove();
-    installCard = null;
-    installButton = null;
-    installHelp = null;
+    removeCard();
   });
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureCard, { once: true });
-  } else {
-    ensureCard();
-  }
 })();
