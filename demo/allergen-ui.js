@@ -90,10 +90,10 @@ let toastHideTimer = null;
 let toastDeadline = 0;
 let internalToastChange = false;
 
-function ensureToastStyle() {
-  if (document.getElementById('kolToastStyle')) return;
+function ensureUiStyle() {
+  if (document.getElementById('kolUiStyle')) return;
   const style = document.createElement('style');
-  style.id = 'kolToastStyle';
+  style.id = 'kolUiStyle';
   style.textContent = `
     .toast {
       position: fixed !important;
@@ -145,6 +145,40 @@ function ensureToastStyle() {
       line-height: 1.3 !important;
       font-weight: 650 !important;
     }
+
+    #barCart {
+      gap: 10px;
+    }
+    #barCart .bar-left {
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 5px;
+      justify-content: flex-start;
+      white-space: nowrap;
+    }
+    #barCart .bar-right {
+      flex: 0 0 auto;
+      gap: 5px;
+      justify-content: flex-end;
+      white-space: nowrap;
+      font-weight: 750;
+    }
+    #barCart .kol-bar-label {
+      font-weight: 650;
+    }
+    #barCart .kol-bar-cta {
+      font-weight: 800;
+    }
+    @media (max-width: 380px) {
+      #barCart {
+        font-size: 13px;
+        padding-left: 9px;
+        padding-right: 9px;
+      }
+      #barCart .bar-count {
+        margin-right: 2px;
+      }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -155,7 +189,7 @@ function startToastLife() {
 
   clearTimeout(toastFadeTimer);
   clearTimeout(toastHideTimer);
-  toastDeadline = Date.now() + 3000;
+  toastDeadline = Date.now() + 2000;
   toast.classList.remove('kol-toast-fade', 'kol-toast-visible');
 
   requestAnimationFrame(() => {
@@ -165,7 +199,7 @@ function startToastLife() {
   toastFadeTimer = setTimeout(() => {
     toast.classList.remove('kol-toast-visible');
     toast.classList.add('kol-toast-fade');
-  }, 2500);
+  }, 1500);
 
   toastHideTimer = setTimeout(() => {
     internalToastChange = true;
@@ -173,7 +207,7 @@ function startToastLife() {
     toast.classList.remove('kol-toast-visible', 'kol-toast-fade');
     internalToastChange = false;
     toastDeadline = 0;
-  }, 3000);
+  }, 2000);
 }
 
 function showSuccess(message) {
@@ -217,11 +251,55 @@ function enhanceExistingToast() {
   });
 }
 
-function initAllergens() {
-  ensureToastStyle();
-  enhanceExistingToast();
+function initCheckoutBar() {
+  const count = document.getElementById('barCount');
+  const total = document.getElementById('barTotal');
+  if (!count || !total) return;
 
-  // Capture phase: write the exact new state to localStorage before app.js rerenders.
+  const left = count.parentElement;
+  const right = total.parentElement;
+  if (!left || !right) return;
+
+  Array.from(left.childNodes).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) node.remove();
+  });
+  Array.from(right.childNodes).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) node.remove();
+  });
+
+  let label = left.querySelector('.kol-bar-label');
+  if (!label) {
+    label = document.createElement('span');
+    label.className = 'kol-bar-label';
+    left.appendChild(label);
+  }
+
+  let cta = right.querySelector('.kol-bar-cta');
+  if (!cta) {
+    cta = document.createElement('span');
+    cta.className = 'kol-bar-cta';
+    cta.textContent = '· Til kassen →';
+    right.appendChild(cta);
+  }
+
+  const syncLabel = () => {
+    const n = Number.parseInt(count.textContent, 10) || 0;
+    label.textContent = n === 1 ? 'vare' : 'varer';
+  };
+
+  syncLabel();
+  new MutationObserver(syncLabel).observe(count, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+}
+
+function initAllergens() {
+  ensureUiStyle();
+  enhanceExistingToast();
+  initCheckoutBar();
+
   document.addEventListener('click', (event) => {
     const choice = event.target.closest('#allergenPicker [data-allergen]');
     if (choice) {
@@ -238,7 +316,6 @@ function initAllergens() {
         showSuccess(exists ? `${label} fjernet.` : `${label} lagret.`);
       }
 
-      // app.js also toggles its in-memory state during bubbling. Re-apply after that render.
       setTimeout(() => {
         applyPickerState(next);
         updateMenu(next);
@@ -283,7 +360,6 @@ function initAllergens() {
     }).observe(menu, { childList: true, subtree: true });
   }
 
-  // First paint and later async menu/data renders.
   updateMenu(readSelected());
   setTimeout(() => updateMenu(readSelected()), 250);
   setTimeout(() => updateMenu(readSelected()), 1000);
