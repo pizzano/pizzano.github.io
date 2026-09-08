@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link data-mgx-overview="icon" rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
-    <link rel="stylesheet" href="/demo/style.css?v=20260908-1">
+    <link rel="stylesheet" href="/demo/style.css?v=20260908-2">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -105,25 +105,17 @@
                 <h2 class="sec-title">Kontaktinformasjon</h2>
                 <div class="field">
                     <label class="field-label" for="custName">Navn</label>
-                    <input id="custName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name">
+                    <div class="validated-input"><input id="custName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
                     <p class="err" id="errName" hidden>Skriv inn navnet ditt.</p>
                 </div>
                 <div class="field">
                     <label class="field-label" for="custPhone">Mobilnummer</label>
                     <div class="phone-row">
                         <span class="phone-prefix">+47</span>
-                        <input id="custPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel">
+                        <div class="validated-input"><input id="custPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
                     </div>
                     <p class="err" id="errPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
                 </div>
-                <div class="field">
-                    <label class="field-label" for="custComment">Melding til restauranten (valgfritt)</label>
-                    <textarea id="custComment" class="input textarea-small" placeholder="F.eks. jeg henter litt senere"></textarea>
-                </div>
-                <label class="check-line">
-                    <input type="checkbox" id="saveProfile" checked>
-                    <span>Husk navn og nummer til neste gang</span>
-                </label>
             </div>
 
             <div class="step-panel" id="step3" hidden>
@@ -147,22 +139,24 @@
         <!-- ============ PROFIL ============ -->
         <section class="view view-profile" id="viewProfile" aria-label="Min profil" hidden>
             <h1 class="view-title">Min profil</h1>
+            <p class="page-intro">Dine opplysninger, favoritter og tidligere bestillinger.</p>
 
             <div class="card">
-                <h2 class="sec-title">Mine opplysninger</h2>
+                <h2 class="sec-title">Kontaktopplysninger</h2>
+                <p class="section-help">Lagre her hvis du vil fylle ut raskere neste gang.</p>
                 <div class="field">
                     <label class="field-label" for="profName">Navn</label>
-                    <input id="profName" class="input" type="text" placeholder="Fornavn og etternavn">
+                    <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
                 </div>
                 <div class="field">
                     <label class="field-label" for="profPhone">Mobilnummer</label>
                     <div class="phone-row">
                         <span class="phone-prefix">+47</span>
-                        <input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer">
+                        <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
                     </div>
                 </div>
                 <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
-                <span class="saved-flash" id="profileSaved" hidden>Lagret</span>
+                <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
             </div>
 
             <div class="card">
@@ -182,9 +176,9 @@
             <div class="card">
                 <h2 class="sec-title" id="infoName">KØL Grill &amp; Pizza</h2>
                 <p class="info-line" id="infoAddress">—</p>
-                <p class="info-line" id="infoPhone">—</p>
-                <p class="info-line" id="infoPickup">—</p>
-                <p class="info-line" id="infoPayment">—</p>
+                <a class="info-call" id="infoPhone">—</a>
+                <div class="info-detail"><span>Henting</span><p id="infoPickup">—</p></div>
+                <div class="info-detail"><span>Betaling</span><p id="infoPayment">—</p></div>
             </div>
             <div class="card">
                 <h2 class="sec-title">Åpningstider</h2>
@@ -197,11 +191,7 @@
                 <h2 class="sec-title">Allergener</h2>
                 <p class="info-line">Allergener vises på hvert produkt. Kontakt oss ved spørsmål om innhold.</p>
             </div>
-            <div class="card">
-                <h2 class="sec-title">For ansatte</h2>
-                <p class="info-line">Administrer meny, priser, valggrupper og bestillinger i adminpanelet.</p>
-                <a class="btn btn-outline btn-block" href="/demo/admin.html">Åpne adminpanel</a>
-            </div>
+            <details class="staff-access"><summary>For ansatte</summary><a class="btn btn-outline btn-block" href="/demo/admin.html">Åpne adminpanel</a></details>
         </section>
     </main>
 
@@ -265,7 +255,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/app.js?v=20260908-1"></script>
+    <script type="module" src="/demo/app.js?v=20260908-2"></script>
 </body>
 
 </html>
