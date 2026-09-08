@@ -1230,6 +1230,25 @@ async function placeOrder() {
     return 'is-new';
   }
 
+function setProfileTab(tabName) {
+  const validTabs = new Set(['contact', 'favorites', 'orders']);
+  const activeTab = validTabs.has(tabName) ? tabName : 'contact';
+  document.querySelectorAll('[data-profile-tab]').forEach((button) => {
+    const active = button.dataset.profileTab === activeTab;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('[data-profile-panel]').forEach((panel) => {
+    const active = panel.dataset.profilePanel === activeTab;
+    panel.classList.toggle('is-active', active);
+    panel.hidden = !active;
+  });
+  const activeButton = document.querySelector('[data-profile-tab="' + activeTab + '"]');
+  if (activeButton && typeof activeButton.scrollIntoView === 'function') {
+    activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+}
+
 function renderProfile() {
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
@@ -1360,6 +1379,11 @@ el.catScroll.addEventListener('click', (event) => {
 });
 
 document.addEventListener('click', (event) => {
+  const profileTab = event.target.closest('[data-profile-tab]');
+  if (profileTab) {
+    setProfileTab(profileTab.dataset.profileTab);
+    return;
+  }
   const toggleBlock = event.target.closest('[data-toggle-block]');
   if (toggleBlock) {
     const key = toggleBlock.dataset.toggleBlock;
