@@ -3,31 +3,13 @@
 
   const allergenStyles = document.createElement('link');
   allergenStyles.rel = 'stylesheet';
-  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-2';
+  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-3';
   document.head.appendChild(allergenStyles);
 
-  function commitAllergenSelectionWithoutClosing() {
-    const modal = document.getElementById('allergenModal');
-    const saveButton = document.getElementById('allergenSave');
-    const openButton = document.getElementById('btnAllergens');
-
-    if (!modal || modal.hidden || !saveButton || !openButton) return;
-
-    // Bruk appens eksisterende lagring/rendering, men åpne velgeren igjen
-    // i samme event-loop slik at brukeren ikke ser en lukking mellom valgene.
-    saveButton.click();
-    openButton.click();
-  }
-
-  document.addEventListener('click', (event) => {
-    const allergenChoice = event.target.closest('#allergenPicker [data-allergen]');
-    const resetButton = event.target.closest('#allergenReset');
-
-    if (!allergenChoice && !resetButton) return;
-
-    // Appens egen click-handler må først få oppdatere valgt/ikke valgt-status.
-    setTimeout(commitAllergenSelectionWithoutClosing, 0);
-  });
+  const allergenAutosave = document.createElement('script');
+  allergenAutosave.type = 'module';
+  allergenAutosave.src = '/demo/allergen-autosave.js?v=20260908-1';
+  document.head.appendChild(allergenAutosave);
 
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
