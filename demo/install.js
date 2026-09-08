@@ -8,7 +8,7 @@
 
   const allergenUi = document.createElement('script');
   allergenUi.type = 'module';
-  allergenUi.src = '/demo/allergen-ui.js?v=20260908-1';
+  allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
   document.head.appendChild(allergenUi);
 
   const isStandalone = () =>
