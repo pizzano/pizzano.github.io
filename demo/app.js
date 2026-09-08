@@ -131,7 +131,6 @@ const el = {
   },
   cartLines: $('cartLines'),
   cartSummary: $('cartSummary'),
-  cartSubtotal: $('cartSubtotal'),
   cartTotal: $('cartTotal'),
   cartClosedHint: $('cartClosedHint'),
   cartActions: $('cartActions'),
@@ -915,7 +914,6 @@ function renderCart() {
   }
   el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line, false)).join('');
   const subtotal = cartSubtotal();
-  el.cartSubtotal.textContent = formatPrice(subtotal);
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
   el.cartActions.hidden = false;
