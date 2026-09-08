@@ -146,10 +146,8 @@ const el = {
   step3: $('step3'),
   custName: $('custName'),
   custPhone: $('custPhone'),
-  custComment: $('custComment'),
   errName: $('errName'),
   errPhone: $('errPhone'),
-  saveProfile: $('saveProfile'),
   timeGrid: $('timeGrid'),
   pickupChoices: $('pickupChoices'),
   pickupHint: $('pickupHint'),
@@ -504,7 +502,10 @@ function renderInfo() {
   el.infoAddress.textContent = `${settings.streetAddress || ''}, ${settings.postalCode || ''} ${
     settings.city || ''
   }`.trim();
-  el.infoPhone.textContent = `Telefon: ${settings.phone || '—'}`;
+  el.infoPhone.textContent = settings.phone ? `Ring ${settings.phone}` : 'Telefon ikke oppgitt';
+  const phone = String(settings.phone || '').replace(/[^+\d]/g, '');
+  if (phone) el.infoPhone.setAttribute('href', `tel:${phone}`);
+  else el.infoPhone.removeAttribute('href');
   el.infoPickup.textContent = settings.pickupInfo || 'Henting i restauranten';
   el.infoPayment.textContent = settings.paymentInfo || 'Betaling ved henting';
   el.infoDays.textContent = settings.openingDays || 'Mandag – søndag';
@@ -948,6 +949,8 @@ function renderCheckout() {
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
+  el.btnStepNext.disabled = false;
+  updateContactValidation();
 
   const state = getOpenState();
   const slots = getPickupSlots();
@@ -983,6 +986,18 @@ function renderCheckout() {
         : 'Ikke valgt'
     }</strong></div>
     <div><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>`;
+}
+
+function updateContactValidation() {
+  for (const [name, phone] of [[el.custName, el.custPhone], [el.profName, el.profPhone]]) {
+    for (const input of [name, phone]) {
+      const valid = input === name ? Boolean(input.value.trim()) : validPhone(input.value);
+      const wrapper = input.closest('.validated-input');
+      wrapper.classList.toggle('is-valid', valid);
+      wrapper.querySelector('.valid-check').hidden = !valid;
+    }
+  }
+  if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value);
 }
 
 function validPhone(value) {
@@ -1034,7 +1049,6 @@ async function placeOrder() {
     customerName: name,
     phone: `+47${phone}`,
     pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
-    comment: el.custComment ? el.custComment.value.trim() : '',
     type: 'henting',
     lines,
     subtotal,
@@ -1042,17 +1056,12 @@ async function placeOrder() {
   });
   el.btnStepNext.disabled = false;
 
-  if (el.saveProfile.checked) {
-    profile.name = name;
-    profile.phone = phone;
-  }
-  persistProfile();
+
 
   cart = [];
   persistCart();
   ui.pickup = null;
   ui.pickupMode = null;
-  if (el.custComment) el.custComment.value = '';
 
   el.confirmText.textContent = `Takk, ${name}! Vi lager bestillingen din klar til henting.`;
   el.confirmMeta.innerHTML = `
@@ -1073,6 +1082,7 @@ async function placeOrder() {
 function renderProfile() {
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
+  updateContactValidation();
 
   const favs = profile.favorites
     .map((id) => findItem(id))
@@ -1414,6 +1424,10 @@ el.allergenPicker.addEventListener('click', (event) => {
       if (validPhone(input.value)) el.errPhone.hidden = true;
     }
   });
+});
+
+[el.custName, el.custPhone, el.profName, el.profPhone].forEach((input) => {
+  input.addEventListener('input', updateContactValidation);
 });
 
 el.btnSaveProfile.addEventListener('click', () => {
