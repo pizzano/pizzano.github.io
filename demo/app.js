@@ -602,14 +602,7 @@ function optionGroupHtml(group, problems) {
   const picked = draft.selections[group.id] || [];
   const isMulti = group.selectionMode === 'multiple';
   const atMax = isMulti && picked.length >= group.maxSelections;
-  const badges = [
-    `<span class="badge">${
-      isMulti ? `Flere valg · maks ${group.maxSelections}` : 'Ett valg'
-    }</span>`,
-    group.required
-      ? '<span class="badge badge-req">Obligatorisk</span>'
-      : '<span class="badge">Valgfritt</span>',
-  ].join('');
+  const badges = `<span class="opt-guidance">${group.required ? (isMulti ? 'Velg opptil' : 'Velg') : 'Valgfritt · opptil'} ${isMulti ? group.maxSelections : 1}${group.required && isMulti && group.minSelections > 0 && group.minSelections !== group.maxSelections ? ` (minst ${group.minSelections})` : ''}</span>`;
 
   const rows = (group.options || [])
     .filter((option) => option.label)
@@ -663,22 +656,17 @@ function renderSheet() {
       <div class="opt-group">
         <div class="opt-head">
           <h3 class="opt-title">Velg størrelse</h3>
-          <span class="badge">Ett valg</span>
-          <span class="badge badge-req">Obligatorisk</span>
+          <span class="opt-guidance">Velg én</span>
         </div>
         <div class="opt-rows">
           ${item.sizes
             .map(
-              (size, index) => `
+              (size) => `
             <label class="opt-row${size.id === draft.sizeId ? ' is-checked' : ''}">
               <input type="radio" name="size" data-size="${escapeHtml(size.id)}" ${
                 size.id === draft.sizeId ? 'checked' : ''
               }>
-              <span class="opt-label">${escapeHtml(size.label)}${
-                index === item.defaultSizeIndex
-                  ? ' <span class="badge badge-def">Standard</span>'
-                  : ''
-              }</span>
+              <span class="opt-label">${escapeHtml(size.label)}</span>
               <span class="opt-price">${formatPrice(size.price)}</span>
             </label>`
             )
@@ -693,22 +681,11 @@ function renderSheet() {
         ? `<img class="sheet-hero" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}">`
         : ''
     }
-    <h3 class="sheet-name">${escapeHtml(item.name)}${
-    item.soldOut ? ' <span class="tag tag-soldout">Utsolgt</span>' : ''
-  }</h3>
+    ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     <p class="sheet-desc">${escapeHtml(item.description || item.ingredients || '')}</p>
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
-    <div class="opt-group">
-      <div class="opt-head"><h3 class="opt-title">Allergener</h3></div>
-      ${
-        allergens.length
-          ? `<div class="allergen-row">${allergens
-              .map((label) => `<span class="allergen-chip">${escapeHtml(label)}</span>`)
-              .join('')}</div>`
-          : '<p class="hint">Ingen registrerte allergener.</p>'
-      }
-    </div>
+    <div class="sheet-allergens"><strong>Allergener</strong><span>${allergens.length ? allergens.map(escapeHtml).join(' · ') : 'Ingen registrerte allergener.'}</span></div>
     <div class="opt-group">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
@@ -720,7 +697,7 @@ function renderSheet() {
   el.sheetTotal.textContent = formatPrice(draftTotal());
   el.btnAddToCart.querySelector('span').textContent = draft.editingLineId
     ? 'Oppdater handlekurven'
-    : 'Legg til i handlekurven';
+    : 'Legg til';
   el.btnAddToCart.disabled = item.soldOut;
 
   if (draft.showErrors && message) {
@@ -952,6 +929,8 @@ function setStep(step) {
   el.stepper.querySelectorAll('.step').forEach((node) => {
     const value = Number(node.dataset.step);
     node.classList.toggle('is-active', value === step);
+    if (value === step) node.setAttribute('aria-current', 'step');
+    else node.removeAttribute('aria-current');
     node.classList.toggle('is-done', value < step);
   });
   el.btnStepBack.textContent = 'Tilbake';
@@ -970,32 +949,26 @@ function renderCheckout() {
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
 
-  // Hentetider styres av adminpanelet (tilberedningstid + intervall).
+  const state = getOpenState();
   const slots = getPickupSlots();
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
-  if (slots.length) {
-    el.pickupChoices.hidden = false;
-    el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.pickupMode === ui.pickupMode);
-    });
-    el.timeGrid.hidden = ui.pickupMode !== 'scheduled';
-    el.pickupHint.textContent = ui.pickupMode === 'scheduled'
-      ? 'Velg hentetid. Tidene starter minst 30 minutter frem i tid.'
-      : 'Velg Snarest mulig eller Velg tid.';
-    el.timeGrid.innerHTML = slots
-      .map(
-        (slot) =>
-          `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''
-          }" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`
-      )
-      .join('');
-  } else {
-    const state = getOpenState();
-    el.pickupHint.textContent = `Restauranten er stengt nå. Vi åpner ${state.opensAt}.`;
-    el.pickupChoices.hidden = true;
-    el.timeGrid.innerHTML =
-      '<p class="hint">Ingen hentetider tilgjengelig akkurat nå.</p>';
-  }
+  if (!state.open) ui.pickup = null;
+  el.pickupChoices.hidden = !state.open;
+  el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
+    const active = button.dataset.pickupMode === ui.pickupMode;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  const showTimes = state.open && ui.pickupMode === 'scheduled';
+  el.timeGrid.hidden = !showTimes;
+  el.timeGrid.innerHTML = showTimes
+    ? slots.map((slot) => `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''}" aria-pressed="${ui.pickup === slot.value}" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`).join('')
+    : '';
+  el.pickupHint.textContent = !state.open
+    ? `Vi åpner ${state.opensAt}.`
+    : showTimes
+      ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
+      : ui.pickupMode === 'asap' ? 'Vi lager bestillingen så snart vi kan.' : 'Velg når du vil hente bestillingen.';
 
   el.reviewCard.innerHTML = `
     <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
@@ -1030,7 +1003,9 @@ async function placeOrder() {
     el.errPhone.hidden = validPhone(phone);
     return;
   }
-  if (!ui.pickup) {
+  if (!ui.pickup || (ui.pickupMode === 'scheduled' && !getPickupSlots().some((slot) => slot.value === ui.pickup))) {
+    ui.pickup = null;
+    renderCheckout();
     el.errTime.hidden = false;
     return;
   }
@@ -1397,6 +1372,7 @@ el.btnStepNext.addEventListener('click', () => {
 el.pickupChoices.addEventListener('click', (event) => {
   const button = event.target.closest('[data-pickup-mode]');
   if (!button) return;
+  if (!getOpenState().open) return;
   ui.pickupMode = button.dataset.pickupMode;
   ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
   el.errTime.hidden = true;
@@ -1405,7 +1381,7 @@ el.pickupChoices.addEventListener('click', (event) => {
 
 el.timeGrid.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-time]');
-  if (!btn) return;
+  if (!btn || ui.pickupMode !== 'scheduled' || !getPickupSlots().some((slot) => slot.value === btn.dataset.time)) return;
   ui.pickup = btn.dataset.time;
   el.errTime.hidden = true;
   renderCheckout();
