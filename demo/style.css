@@ -1355,3 +1355,34 @@ main {
     .qty button { width: 30px; }
     .time-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Clear contact feedback and account information. */
+.hdr-btn { width: 44px; height: 44px; flex: none; color: #394452; }
+.hdr-btn svg { width: 26px; height: 26px; stroke-width: 1.9; }
+.validated-input { position: relative; flex: 1; min-width: 0; }
+.validated-input .input { padding-right: 38px; }
+.validated-input.is-valid .input { border-color: #8ac5a0; background: #f7fcf8; }
+.valid-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: white; font-size: 13px; font-weight: 700; pointer-events: none; }
+.page-intro, .section-help { margin: 0 0 18px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+.view-profile .card, .view-info .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }
+.view-profile .sec-title, .view-info .sec-title { margin-bottom: 12px; font-size: 16px; }
+.view-profile .mini-row { padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; gap: 12px; }
+.view-profile .mini-row:last-child { border-bottom: 0; }
+.view-profile .mini-row .link-btn { padding: 10px 12px; background: var(--accent-soft); border-radius: 9px; text-decoration: none; flex: none; }
+.view-profile .mini-sub { line-height: 1.5; }
+.view-profile #btnSaveProfile { min-height: 46px; }
+.info-call { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; margin: 12px 0 16px; background: var(--accent-soft); border-radius: 10px; color: var(--accent-dark); text-decoration: none; font-weight: 600; font-size: 14px; }
+.info-detail { padding: 12px 0; border-top: 1px solid var(--line); }
+.info-detail > span { font-size: 12px; color: var(--ink-2); }
+.info-detail p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; }
+.view-info .hours li { flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.view-info #infoOpenNow { margin: 12px 0 0; color: var(--ink-2); line-height: 1.5; }
+.staff-access { color: var(--ink-2); font-size: 12px; padding: 8px 4px; }
+.staff-access summary { cursor: pointer; padding: 8px 0; }
+.staff-access a { margin-top: 8px; }
+@media (max-width: 360px) {
+    .header-inner { gap: 4px; padding: 0 8px; }
+    .hdr-actions { gap: 0; }
+    .brand { gap: 5px; }
+    .view-profile .card, .view-info .card { padding: 16px; }
+}
