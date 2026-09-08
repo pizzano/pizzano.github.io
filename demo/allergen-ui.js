@@ -29,16 +29,16 @@ function writeSelected(selected) {
   const clean = [...new Set(selected.filter(Boolean))];
   try {
     localStorage.setItem(ALLERGEN_KEY, JSON.stringify(clean));
+    return true;
   } catch (_) {
     return false;
   }
-  return true;
 }
 
 function applyPickerState(selected = readSelected()) {
-  const set = new Set(selected);
+  const selectedSet = new Set(selected);
   document.querySelectorAll('#allergenPicker [data-allergen]').forEach((button) => {
-    const active = set.has(button.dataset.allergen);
+    const active = selectedSet.has(button.dataset.allergen);
     button.classList.toggle('is-on', active);
     button.setAttribute('aria-pressed', String(active));
   });
@@ -63,7 +63,7 @@ function updateMenu(selected = readSelected()) {
     let warning = info.querySelector('.prod-allergens');
 
     if (!matches.length) {
-      if (warning) warning.remove();
+      warning?.remove();
       card.classList.remove('has-selected-allergen');
       return;
     }
@@ -78,7 +78,6 @@ function updateMenu(selected = readSelected()) {
       if (price) info.insertBefore(warning, price);
       else info.appendChild(warning);
     }
-
     if (warning.textContent !== text) warning.textContent = text;
   });
 
@@ -89,99 +88,6 @@ let toastFadeTimer = null;
 let toastHideTimer = null;
 let toastDeadline = 0;
 let internalToastChange = false;
-
-function ensureUiStyle() {
-  if (document.getElementById('kolUiStyle')) return;
-  const style = document.createElement('style');
-  style.id = 'kolUiStyle';
-  style.textContent = `
-    .toast {
-      position: fixed !important;
-      left: 50% !important;
-      bottom: calc(82px + env(safe-area-inset-bottom)) !important;
-      z-index: 180 !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      width: max-content !important;
-      max-width: calc(100vw - 24px) !important;
-      min-height: 42px !important;
-      padding: 9px 15px !important;
-      border: 1px solid #86e6a5 !important;
-      border-radius: 999px !important;
-      background: #f1fff5 !important;
-      color: #168542 !important;
-      box-shadow: 0 8px 24px rgba(21, 128, 61, .10) !important;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      line-height: 1.35 !important;
-      text-align: left !important;
-      pointer-events: none !important;
-      opacity: 0;
-      transform: translate(-50%, 18px);
-      transition: opacity .45s ease, transform .45s ease !important;
-    }
-    .toast::before {
-      content: '✓';
-      flex: none;
-      font-size: 16px;
-      line-height: 1;
-      color: #169447;
-    }
-    .toast.kol-toast-visible {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-    .toast.kol-toast-fade {
-      opacity: 0;
-      transform: translate(-50%, -10px);
-    }
-    .toast[hidden] { display: none !important; }
-
-    .prod-allergens {
-      margin: 5px 0 0 !important;
-      color: #b64e09 !important;
-      font-size: 11.5px !important;
-      line-height: 1.3 !important;
-      font-weight: 650 !important;
-    }
-
-    #barCart {
-      gap: 10px;
-    }
-    #barCart .bar-left {
-      flex: 1 1 auto;
-      min-width: 0;
-      gap: 5px;
-      justify-content: flex-start;
-      white-space: nowrap;
-    }
-    #barCart .bar-right {
-      flex: 0 0 auto;
-      gap: 5px;
-      justify-content: flex-end;
-      white-space: nowrap;
-      font-weight: 750;
-    }
-    #barCart .kol-bar-label {
-      font-weight: 650;
-    }
-    #barCart .kol-bar-cta {
-      font-weight: 800;
-    }
-    @media (max-width: 380px) {
-      #barCart {
-        font-size: 13px;
-        padding-left: 9px;
-        padding-right: 9px;
-      }
-      #barCart .bar-count {
-        margin-right: 2px;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 function startToastLife() {
   const toast = document.getElementById('toast');
@@ -283,8 +189,8 @@ function initCheckoutBar() {
   }
 
   const syncLabel = () => {
-    const n = Number.parseInt(count.textContent, 10) || 0;
-    label.textContent = n === 1 ? 'vare' : 'varer';
+    const value = Number.parseInt(count.textContent, 10) || 0;
+    label.textContent = value === 1 ? 'vare' : 'varer';
   };
 
   syncLabel();
@@ -296,10 +202,10 @@ function initCheckoutBar() {
 }
 
 function initAllergens() {
-  ensureUiStyle();
   enhanceExistingToast();
   initCheckoutBar();
 
+  // Capture phase writes to localStorage before app.js handles the same click.
   document.addEventListener('click', (event) => {
     const choice = event.target.closest('#allergenPicker [data-allergen]');
     if (choice) {

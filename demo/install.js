@@ -1,37 +1,14 @@
 (() => {
   'use strict';
 
-  const allergenStyles = document.createElement('link');
-  allergenStyles.rel = 'stylesheet';
-  allergenStyles.href = '/demo/allergen-modal.css?v=20260908-5';
-  document.head.appendChild(allergenStyles);
-
-  const checkoutStyles = document.createElement('link');
-  checkoutStyles.rel = 'stylesheet';
-  checkoutStyles.href = '/demo/checkout-fixed.css?v=20260908-1';
-  document.head.appendChild(checkoutStyles);
-
-  const productCardStyles = document.createElement('link');
-  productCardStyles.rel = 'stylesheet';
-  productCardStyles.href = '/demo/product-cards-modern.css?v=20260908-1';
-  document.head.appendChild(productCardStyles);
-
-  // Last mobile layer: keeps the whole customer UI lighter and more compact.
-  const compactMobileStyles = document.createElement('link');
-  compactMobileStyles.rel = 'stylesheet';
-  compactMobileStyles.href = '/demo/mobile-compact.css?v=20260908-1';
-  document.head.appendChild(compactMobileStyles);
-
-  // Product-specific mobile refinement: removes excess height/padding from menu cards.
-  const tightProductStyles = document.createElement('link');
-  tightProductStyles.rel = 'stylesheet';
-  tightProductStyles.href = '/demo/product-cards-tight-mobile.css?v=20260908-1';
-  document.head.appendChild(tightProductStyles);
-
-  const allergenUi = document.createElement('script');
-  allergenUi.type = 'module';
-  allergenUi.src = '/demo/allergen-ui.js?v=20260908-2';
-  document.head.appendChild(allergenUi);
+  // Customer-side enhancements that sit on top of the main app module.
+  if (!document.getElementById('allergenUiModule')) {
+    const script = document.createElement('script');
+    script.id = 'allergenUiModule';
+    script.type = 'module';
+    script.src = '/demo/allergen-ui.js?v=20260908-3';
+    document.head.appendChild(script);
+  }
 
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
@@ -42,72 +19,6 @@
 
   let deferredPrompt = null;
   let installCard = null;
-
-  const style = document.createElement('style');
-  style.textContent = `
-    .pwa-info-install-card {
-      display: grid;
-      grid-template-columns: 48px minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      border: 1px solid rgba(239, 104, 18, .18);
-      background: #fffaf6;
-    }
-
-    .pwa-info-install-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 13px;
-      display: grid;
-      place-items: center;
-      background: #33251f;
-      overflow: hidden;
-    }
-
-    .pwa-info-install-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .pwa-info-install-copy {
-      min-width: 0;
-    }
-
-    .pwa-info-install-copy strong {
-      display: block;
-      margin-bottom: 3px;
-      font-size: 15px;
-      color: #2f2723;
-    }
-
-    .pwa-info-install-copy span {
-      display: block;
-      color: #746b66;
-      font-size: 12px;
-      line-height: 1.38;
-    }
-
-    .pwa-info-install-button {
-      grid-column: 1 / -1;
-      width: 100%;
-      border: 0;
-      border-radius: 11px;
-      padding: 11px 14px;
-      margin-top: 2px;
-      background: #ef6812;
-      color: #fff;
-      font: inherit;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .pwa-info-install-button:active {
-      transform: scale(.99);
-    }
-  `;
-  document.head.appendChild(style);
 
   function removeCard() {
     installCard?.remove();
@@ -149,14 +60,12 @@
 
       const promptEvent = deferredPrompt;
       deferredPrompt = null;
-
       try {
         await promptEvent.prompt();
         await promptEvent.userChoice;
       } catch (_) {
-        // Native prompt is controlled by the browser.
+        // Native install UI is controlled by the browser.
       }
-
       removeCard();
     });
   }
