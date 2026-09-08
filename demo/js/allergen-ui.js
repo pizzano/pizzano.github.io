@@ -184,9 +184,9 @@ function initCheckoutBar() {
   if (!cta) {
     cta = document.createElement('span');
     cta.className = 'kol-bar-cta';
-    cta.textContent = '· Til kassen →';
     right.appendChild(cta);
   }
+  cta.textContent = '· Gå til kassen →';
 
   const syncLabel = () => {
     const value = Number.parseInt(count.textContent, 10) || 0;
@@ -205,7 +205,6 @@ function initAllergens() {
   enhanceExistingToast();
   initCheckoutBar();
 
-  // Capture phase writes to localStorage before app.js handles the same click.
   document.addEventListener('click', (event) => {
     const choice = event.target.closest('#allergenPicker [data-allergen]');
     if (choice) {
