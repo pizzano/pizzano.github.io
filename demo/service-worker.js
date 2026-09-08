@@ -1,8 +1,9 @@
-const CACHE_NAME = 'kol-demo-v2';
+const CACHE_NAME = 'kol-demo-v3';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/style.css',
   '/demo/app.js',
+  '/demo/install.js',
   '/demo/data.js',
   '/demo/manifest.webmanifest',
   '/demo/icons/kol-icon-192.png',
