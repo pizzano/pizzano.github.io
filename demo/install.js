@@ -2,35 +2,37 @@
   'use strict';
 
   const ua = navigator.userAgent || '';
-  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isChromium = /Android|Chrome|Chromium|Edg|OPR|SamsungBrowser/i.test(ua) && !isIOS;
 
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches ||
     window.navigator.standalone === true;
 
-  if (!isAndroid || isStandalone()) return;
+  // iPhone/iPad Safari does not expose beforeinstallprompt. This button is
+  // therefore only shown where the real browser install dialog can be used.
+  if (!isChromium || isStandalone()) return;
 
   let deferredPrompt = null;
   let installCard = null;
+  let installButton = null;
 
   const style = document.createElement('style');
   style.textContent = `
     .pwa-info-install-card {
-      display: none;
+      display: grid;
+      grid-template-columns: 52px minmax(0, 1fr);
       gap: 12px;
       align-items: center;
-    }
-
-    .pwa-info-install-card.is-ready {
-      display: grid;
-      grid-template-columns: 48px minmax(0, 1fr);
+      border: 1px solid rgba(239, 104, 18, .18);
+      background: #fffaf6;
     }
 
     .pwa-info-install-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
+      width: 52px;
+      height: 52px;
+      border-radius: 15px;
       display: grid;
       place-items: center;
       background: #33251f;
@@ -49,8 +51,8 @@
 
     .pwa-info-install-copy strong {
       display: block;
-      margin-bottom: 3px;
-      font-size: 16px;
+      margin-bottom: 4px;
+      font-size: 17px;
       color: #2f2723;
     }
 
@@ -58,7 +60,7 @@
       display: block;
       color: #746b66;
       font-size: 13px;
-      line-height: 1.35;
+      line-height: 1.4;
     }
 
     .pwa-info-install-button {
@@ -67,7 +69,7 @@
       border: 0;
       border-radius: 14px;
       padding: 14px 16px;
-      margin-top: 2px;
+      margin-top: 3px;
       background: #ef6812;
       color: #fff;
       font: inherit;
@@ -76,11 +78,22 @@
       cursor: pointer;
     }
 
-    .pwa-info-install-button:active {
+    .pwa-info-install-button:active:not(:disabled) {
       transform: scale(.99);
+    }
+
+    .pwa-info-install-button:disabled {
+      opacity: .55;
+      cursor: default;
     }
   `;
   document.head.appendChild(style);
+
+  function setReady(ready) {
+    if (!installButton) return;
+    installButton.disabled = !ready;
+    installButton.textContent = ready ? 'Installer app' : 'Klargjør installasjon…';
+  }
 
   function ensureCard() {
     if (installCard) return installCard;
@@ -96,10 +109,12 @@
       </div>
       <div class="pwa-info-install-copy">
         <strong>Installer KØL-appen</strong>
-        <span>Legg bestillingssiden på startskjermen og åpne den uten vanlig adressefelt.</span>
+        <span>Installer bestillingssiden på telefonen. Etterpå åpnes den som en app uten vanlig adressefelt.</span>
       </div>
-      <button class="pwa-info-install-button" type="button">Installer app</button>
+      <button class="pwa-info-install-button" type="button" disabled>Klargjør installasjon…</button>
     `;
+
+    installButton = installCard.querySelector('.pwa-info-install-button');
 
     const firstCard = infoView.querySelector('.card');
     if (firstCard) {
@@ -108,11 +123,12 @@
       infoView.appendChild(installCard);
     }
 
-    installCard.querySelector('.pwa-info-install-button').addEventListener('click', async () => {
+    installButton.addEventListener('click', async () => {
       if (!deferredPrompt) return;
 
       const promptEvent = deferredPrompt;
       deferredPrompt = null;
+      setReady(false);
 
       try {
         await promptEvent.prompt();
@@ -121,32 +137,39 @@
         if (choice && choice.outcome === 'accepted') {
           installCard?.remove();
           installCard = null;
-        } else {
-          // Chrome bruker prompt-eventet kun én gang. Dersom brukeren avbryter,
-          // skjuler vi knappen til nettleseren tilbyr installasjon på nytt.
-          installCard?.classList.remove('is-ready');
+          installButton = null;
         }
       } catch (_) {
-        installCard?.classList.remove('is-ready');
+        // Browseren bestemmer når et nytt installasjonstilbud kan gis.
       }
     });
 
+    setReady(Boolean(deferredPrompt));
     return installCard;
   }
 
+  // Capture the browser's real install event so our Info button can open the
+  // exact same native Android/Chromium installation dialog.
   window.addEventListener('beforeinstallprompt', (event) => {
-    // Vi stopper bare nettleserens tilfeldige/menybaserte håndtering slik at
-    // den samme ekte Android-installasjonsdialogen kan åpnes fra vår Info-knapp.
     event.preventDefault();
     deferredPrompt = event;
-
-    const card = ensureCard();
-    if (card) card.classList.add('is-ready');
+    ensureCard();
+    setReady(true);
   });
 
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     installCard?.remove();
     installCard = null;
+    installButton = null;
   });
+
+  // Keep the install option visible in Info even before Chrome has finished
+  // checking installability. The button becomes active as soon as the native
+  // beforeinstallprompt event arrives.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureCard, { once: true });
+  } else {
+    ensureCard();
+  }
 })();
