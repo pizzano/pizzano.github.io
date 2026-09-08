@@ -1,14 +1,18 @@
 (() => {
   'use strict';
 
-  // Customer-side enhancements that sit on top of the main app module.
-  if (!document.getElementById('allergenUiModule')) {
+  function loadModule(id, src) {
+    if (document.getElementById(id)) return;
     const script = document.createElement('script');
-    script.id = 'allergenUiModule';
+    script.id = id;
     script.type = 'module';
-    script.src = '/demo/js/allergen-ui.js?v=20260908-4';
+    script.src = src;
     document.head.appendChild(script);
   }
+
+  // Customer-side enhancements that sit on top of the main app module.
+  loadModule('allergenUiModule', '/demo/js/allergen-ui.js?v=20260908-4');
+  loadModule('contactPersistenceModule', '/demo/js/contact-persistence.js?v=20260908-1');
 
   const isStandalone = () =>
     window.matchMedia('(display-mode: standalone)').matches ||
