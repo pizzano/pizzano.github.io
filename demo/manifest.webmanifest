@@ -2,9 +2,14 @@
   "name": "KØL Grill & Pizza Bestilling",
   "short_name": "KØL Bestill",
   "description": "Bestill takeaway fra KØL Grill & Pizza.",
+  "id": "/demo/",
   "start_url": "/demo/index.html",
   "scope": "/demo/",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "background_color": "#f5f6f7",
   "theme_color": "#33251f",
   "icons": [
