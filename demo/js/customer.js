@@ -303,7 +303,10 @@ function setView(view) {
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
   if (view === 'profile') renderProfile();
-  if (view === 'info') renderInfo();
+  if (view === 'info') {
+    setInfoTab('contact');
+    renderInfo();
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -492,6 +495,25 @@ function renderOpenState() {
   el.btnToCheckout.disabled = !state.open;
   el.cartClosedHint.hidden = state.open;
   return state;
+}
+
+function setInfoTab(tabName) {
+  const validTabs = new Set(['contact', 'hours', 'allergens']);
+  const activeTab = validTabs.has(tabName) ? tabName : 'contact';
+  document.querySelectorAll('#viewInfo [data-info-tab]').forEach((button) => {
+    const active = button.dataset.infoTab === activeTab;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('#viewInfo [data-info-panel]').forEach((panel) => {
+    const active = panel.dataset.infoPanel === activeTab;
+    panel.classList.toggle('is-active', active);
+    panel.hidden = !active;
+  });
+  const activeButton = document.querySelector('#viewInfo [data-info-tab="' + activeTab + '"]');
+  if (activeButton && typeof activeButton.scrollIntoView === 'function') {
+    activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
 }
 
 function renderInfo() {
@@ -1382,6 +1404,11 @@ document.addEventListener('click', (event) => {
   const profileTab = event.target.closest('[data-profile-tab]');
   if (profileTab) {
     setProfileTab(profileTab.dataset.profileTab);
+    return;
+  }
+  const infoTab = event.target.closest('[data-info-tab]');
+  if (infoTab) {
+    setInfoTab(infoTab.dataset.infoTab);
     return;
   }
   const toggleBlock = event.target.closest('[data-toggle-block]');
