@@ -262,11 +262,17 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 }
 .prod-card:active { background: #fffaf6; }
 .prod-thumb {
-  width: 100% !important;
-  height: 100% !important;
+  width: 124px !important;
+  height: 124px !important;
+  min-width: 124px !important;
   min-height: 124px !important;
+  max-width: 124px !important;
+  max-height: 124px !important;
   display: block;
+  align-self: start;
   object-fit: cover;
+  object-position: center;
+  aspect-ratio: 1 / 1;
   border-radius: 0 !important;
   background: #f1f3f4;
 }
@@ -412,16 +418,21 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
   .prod-grid { gap: 5px !important; }
   .prod-card {
-    grid-template-columns: clamp(80px, 21.5vw, 92px) minmax(0, 1fr) 46px !important;
+    grid-template-columns: 88px minmax(0, 1fr) 46px !important;
     min-height: 88px !important;
     border-radius: 12px !important;
     box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
   }
   .prod-thumb {
-    width: 100% !important;
-    height: 100% !important;
+    width: 88px !important;
+    height: 88px !important;
+    min-width: 88px !important;
     min-height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
     object-fit: cover;
+    object-position: center;
+    aspect-ratio: 1 / 1;
   }
   .prod-info { padding: 7px 5px 24px 9px !important; justify-content: center !important; }
   .prod-name {
@@ -709,12 +720,22 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
   .prod-grid { grid-template-columns: 1fr !important; gap: 5px !important; }
   .prod-card {
-    grid-template-columns: 96px minmax(0, 1fr) 48px !important;
+    grid-template-columns: 90px minmax(0, 1fr) 48px !important;
     min-height: 90px !important;
     border-radius: 12px !important;
     box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
   }
-  .prod-thumb { min-height: 90px !important; }
+  .prod-thumb {
+    width: 90px !important;
+    height: 90px !important;
+    min-width: 90px !important;
+    min-height: 90px !important;
+    max-width: 90px !important;
+    max-height: 90px !important;
+    object-fit: cover;
+    object-position: center;
+    aspect-ratio: 1 / 1;
+  }
   .prod-info { padding: 7px 5px 24px 9px !important; justify-content: center !important; }
   .prod-name { margin: 0 0 2px !important; font-size: 13.2px !important; line-height: 1.15 !important; font-weight: 780 !important; }
   .prod-desc { font-size: 11px !important; line-height: 1.22 !important; -webkit-line-clamp: 2; }
