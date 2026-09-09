@@ -1,0 +1,23 @@
+name: Uniform product images
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/uniform-product-images-temp.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply image sizing patch
+        run: python3 .github/scripts/uniform_product_images_temp.py
+      - name: Commit update and cleanup
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/uniform-product-images-temp.yml .github/scripts/uniform_product_images_temp.py
+          git add demo/css/customer.css demo/index.html demo/service-worker.js .github/workflows/uniform-product-images-temp.yml .github/scripts/uniform_product_images_temp.py
+          git commit -m 'Normalize product image dimensions across menu cards'
+          git push origin HEAD:main
