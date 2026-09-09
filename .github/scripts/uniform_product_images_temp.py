@@ -1,0 +1,107 @@
+from pathlib import Path
+import re
+
+css_path = Path('demo/css/customer.css')
+html_path = Path('demo/index.html')
+sw_path = Path('demo/service-worker.js')
+
+css = css_path.read_text(encoding='utf-8')
+
+old_base = '''.prod-thumb {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 124px !important;
+  display: block;
+  object-fit: cover;
+  border-radius: 0 !important;
+  background: #f1f3f4;
+}'''
+new_base = '''.prod-thumb {
+  width: 124px !important;
+  height: 124px !important;
+  min-width: 124px !important;
+  min-height: 124px !important;
+  max-width: 124px !important;
+  max-height: 124px !important;
+  display: block;
+  align-self: start;
+  object-fit: cover;
+  object-position: center;
+  aspect-ratio: 1 / 1;
+  border-radius: 0 !important;
+  background: #f1f3f4;
+}'''
+if old_base not in css:
+    raise SystemExit('Base prod-thumb block not found')
+css = css.replace(old_base, new_base, 1)
+
+old_mobile = '''  .prod-card {
+    grid-template-columns: clamp(80px, 21.5vw, 92px) minmax(0, 1fr) 46px !important;
+    min-height: 88px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
+  }
+  .prod-thumb {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 88px !important;
+    object-fit: cover;
+  }'''
+new_mobile = '''  .prod-card {
+    grid-template-columns: 88px minmax(0, 1fr) 46px !important;
+    min-height: 88px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
+  }
+  .prod-thumb {
+    width: 88px !important;
+    height: 88px !important;
+    min-width: 88px !important;
+    min-height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
+    object-fit: cover;
+    object-position: center;
+    aspect-ratio: 1 / 1;
+  }'''
+if old_mobile not in css:
+    raise SystemExit('Mobile product block not found')
+css = css.replace(old_mobile, new_mobile, 1)
+
+old_desktop = '''  .prod-card {
+    grid-template-columns: 96px minmax(0, 1fr) 48px !important;
+    min-height: 90px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
+  }
+  .prod-thumb { min-height: 90px !important; }'''
+new_desktop = '''  .prod-card {
+    grid-template-columns: 90px minmax(0, 1fr) 48px !important;
+    min-height: 90px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 3px rgba(25, 31, 38, .055) !important;
+  }
+  .prod-thumb {
+    width: 90px !important;
+    height: 90px !important;
+    min-width: 90px !important;
+    min-height: 90px !important;
+    max-width: 90px !important;
+    max-height: 90px !important;
+    object-fit: cover;
+    object-position: center;
+    aspect-ratio: 1 / 1;
+  }'''
+if old_desktop not in css:
+    raise SystemExit('Desktop product block not found')
+css = css.replace(old_desktop, new_desktop, 1)
+css_path.write_text(css, encoding='utf-8')
+
+html = html_path.read_text(encoding='utf-8')
+html = re.sub(r'/demo/css/customer-base\.css\?v=[^"\']+', '/demo/css/customer-base.css?v=20260909-3', html, count=1)
+html = re.sub(r'/demo/css/customer\.css\?v=[^"\']+', '/demo/css/customer.css?v=20260909-3', html, count=1)
+html_path.write_text(html, encoding='utf-8')
+
+sw = sw_path.read_text(encoding='utf-8')
+sw = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v28';", sw, count=1)
+sw_path.write_text(sw, encoding='utf-8')
