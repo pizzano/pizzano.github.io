@@ -207,7 +207,7 @@ function toast(message) {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     el.toast.hidden = true;
-  }, 2200);
+  }, 2000);
 }
 
 function isFavorite(itemId) {
@@ -707,7 +707,14 @@ function renderSheet() {
     <p class="sheet-desc">${escapeHtml(item.description || item.ingredients || '')}</p>
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
-    <div class="sheet-allergens"><strong>Allergener</strong><span>${allergens.length ? allergens.map(escapeHtml).join(' · ') : 'Ingen registrerte allergener.'}</span></div>
+    <div class="sheet-allergens" aria-label="Allergener">
+      <span class="sheet-allergens-label">Allergener</span>
+      <div class="sheet-allergen-chips">
+        ${allergens.length
+          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
+          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
+      </div>
+    </div>
     <div class="opt-group">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
@@ -1515,6 +1522,29 @@ el.sheetBody.addEventListener('change', (event) => {
   renderSheet();
 });
 
+// Product-sheet choice feedback
+el.sheetBody.addEventListener('change', (event) => {
+  if (!draft) return;
+  const target = event.target;
+  const { item } = findItem(draft.itemId);
+  if (!item) return;
+
+  if (target.dataset.size) {
+    const size = (item.sizes || []).find((entry) => entry.id === target.dataset.size);
+    toast(size ? `Størrelse valgt: ${size.label}.` : 'Størrelse oppdatert.');
+    return;
+  }
+
+  const groupId = target.dataset.group;
+  const optionId = target.dataset.option;
+  if (!groupId || !optionId) return;
+  const group = getItemOptionGroups(item).find((entry) => entry.id === groupId);
+  const option = group?.options?.find((entry) => entry.id === optionId);
+  if (!option) return;
+  const selected = (draft.selections[groupId] || []).includes(optionId);
+  toast(`${option.label} ${selected ? 'valgt.' : 'fjernet.'}`);
+});
+
 el.sheetBody.addEventListener('input', (event) => {
   if (draft && event.target.id === 'draftComment') draft.comment = event.target.value;
 });
@@ -1536,6 +1566,13 @@ el.qtyPlus.addEventListener('click', () => {
 el.btnAddToCart.addEventListener('click', addDraftToCart);
 el.sheetClose.addEventListener('click', closeSheet);
 el.sheetBackdrop.addEventListener('click', closeSheet);
+el.sheetTitle.addEventListener('click', closeSheet);
+el.sheetTitle.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    closeSheet();
+  }
+});
 
 el.sheetFav.addEventListener('click', () => {
   if (!draft) return;
@@ -1543,6 +1580,7 @@ el.sheetFav.addEventListener('click', () => {
   el.sheetFav.classList.toggle('is-on', isFavorite(draft.itemId));
   renderCategories();
   renderMenu();
+  toast(isFavorite(draft.itemId) ? 'Lagt til i favoritter.' : 'Fjernet fra favoritter.');
 });
 
 document.addEventListener('keydown', (event) => {

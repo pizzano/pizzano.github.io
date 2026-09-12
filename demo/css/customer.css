@@ -859,3 +859,64 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   }
   :is(#viewProfile, #viewInfo) .profile-tab-panel { padding: 11px; border-radius: 11px; }
 }
+
+
+/* ======================== Product sheet interaction polish ======================== */
+#sheetTitle[role="button"] {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color .15s ease, background .15s ease;
+}
+#sheetTitle[role="button"]:hover { color: var(--accent-dark); }
+#sheetTitle[role="button"]:focus-visible {
+  outline: 2px solid rgba(232, 98, 15, .28);
+  outline-offset: 3px;
+}
+
+.sheet-allergens {
+  display: block !important;
+  margin: 12px 0 !important;
+  padding: 11px 12px !important;
+  border: 1px solid #eadfd8;
+  border-radius: 12px;
+  background: #fffaf6;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sheet-allergens-label {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+.sheet-allergen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sheet-allergen-chip,
+.sheet-allergen-none {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 4px 8px;
+  border: 1px solid #eadfd8;
+  border-radius: 999px;
+  background: #fff;
+  color: #6c5549;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.sheet-allergen-none {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+@media (max-width: 639px) {
+  .sheet-allergens { margin: 9px 0 !important; padding: 9px 10px !important; }
+  .sheet-allergens-label { margin-bottom: 6px; font-size: 11.5px; }
+  .sheet-allergen-chip,
+  .sheet-allergen-none { min-height: 25px; padding: 3px 7px; font-size: 10.5px; }
+}
