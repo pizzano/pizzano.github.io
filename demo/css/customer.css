@@ -959,3 +959,30 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 @media (prefers-reduced-motion: reduce) {
   #step3 .pickup-choice { animation: none !important; }
 }
+
+/* ======================== Selected option confirmation green ======================== */
+.product-sheet .opt-row.is-checked,
+#productSheet .opt-row.is-checked {
+  border-color: #8bcfa6 !important;
+  background: #edf9f1 !important;
+  box-shadow: inset 0 0 0 1px rgba(31, 143, 82, .035);
+}
+.product-sheet .opt-row.is-checked .opt-label,
+#productSheet .opt-row.is-checked .opt-label {
+  color: #176b3a;
+}
+.product-sheet .opt-row.is-checked .opt-price,
+#productSheet .opt-row.is-checked .opt-price {
+  color: #277a48;
+}
+.product-sheet .opt-row input[type="radio"],
+.product-sheet .opt-row input[type="checkbox"],
+#productSheet .opt-row input[type="radio"],
+#productSheet .opt-row input[type="checkbox"] {
+  accent-color: #238a4b;
+}
+.product-sheet .opt-row.is-checked:hover,
+#productSheet .opt-row.is-checked:hover {
+  border-color: #70bf91 !important;
+  background: #e8f7ed !important;
+}
