@@ -1,0 +1,85 @@
+name: Pickup choice attention patch
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/pickup-choice-attention-temp.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply pickup choice attention styling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          css_path = Path('demo/css/customer.css')
+          html_path = Path('demo/index.html')
+          sw_path = Path('demo/service-worker.js')
+
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* ======================== Pickup choice attention ======================== */'
+          if marker not in css:
+              css += r'''
+
+/* ======================== Pickup choice attention ======================== */
+@keyframes pickupChoiceNudge {
+  0%, 100% { transform: translateX(0) scale(1); }
+  16% { transform: translateX(-3px) scale(1.012); }
+  32% { transform: translateX(3px) scale(1.012); }
+  48% { transform: translateX(-2px) scale(1.006); }
+  64% { transform: translateX(2px) scale(1.006); }
+  80% { transform: translateX(0) scale(1); }
+}
+
+@keyframes pickupChoiceErrorNudge {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+#step3:not([hidden]) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice {
+  animation: pickupChoiceNudge .9s ease-in-out 2;
+  border-color: #efb184;
+  box-shadow: 0 0 0 3px rgba(232, 98, 15, .055);
+}
+#step3:not([hidden]) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice:nth-child(2) {
+  animation-delay: .08s;
+}
+#step3:has(#errTime:not([hidden])) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice {
+  animation-name: pickupChoiceErrorNudge;
+  animation-duration: .46s;
+  animation-delay: 0s;
+  animation-iteration-count: 3;
+  border-color: #ed7f40;
+  box-shadow: 0 0 0 3px rgba(232, 98, 15, .10);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #step3 .pickup-choice { animation: none !important; }
+}
+'''
+              css_path.write_text(css, encoding='utf-8')
+
+          html = html_path.read_text(encoding='utf-8')
+          html = re.sub(r'/demo/css/customer\.css\?v=[^\"\']+', '/demo/css/customer.css?v=20260914-1', html, count=1)
+          html_path.write_text(html, encoding='utf-8')
+
+          sw = sw_path.read_text(encoding='utf-8')
+          sw = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v30';", sw, count=1)
+          sw_path.write_text(sw, encoding='utf-8')
+          PY
+      - name: Commit update and cleanup
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/pickup-choice-attention-temp.yml
+          git add demo/css/customer.css demo/index.html demo/service-worker.js .github/workflows/pickup-choice-attention-temp.yml
+          git commit -m 'Guide pickup selection with subtle attention motion'
+          git push origin HEAD:main
