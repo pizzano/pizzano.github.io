@@ -920,3 +920,42 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .sheet-allergen-chip,
   .sheet-allergen-none { min-height: 25px; padding: 3px 7px; font-size: 10.5px; }
 }
+
+/* ======================== Pickup choice attention ======================== */
+@keyframes pickupChoiceNudge {
+  0%, 100% { transform: translateX(0) scale(1); }
+  16% { transform: translateX(-3px) scale(1.012); }
+  32% { transform: translateX(3px) scale(1.012); }
+  48% { transform: translateX(-2px) scale(1.006); }
+  64% { transform: translateX(2px) scale(1.006); }
+  80% { transform: translateX(0) scale(1); }
+}
+
+@keyframes pickupChoiceErrorNudge {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+#step3:not([hidden]) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice {
+  animation: pickupChoiceNudge .9s ease-in-out 2;
+  border-color: #efb184;
+  box-shadow: 0 0 0 3px rgba(232, 98, 15, .055);
+}
+#step3:not([hidden]) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice:nth-child(2) {
+  animation-delay: .08s;
+}
+#step3:has(#errTime:not([hidden])) .pickup-choices:not(:has(.pickup-choice.is-active)) .pickup-choice {
+  animation-name: pickupChoiceErrorNudge;
+  animation-duration: .46s;
+  animation-delay: 0s;
+  animation-iteration-count: 3;
+  border-color: #ed7f40;
+  box-shadow: 0 0 0 3px rgba(232, 98, 15, .10);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #step3 .pickup-choice { animation: none !important; }
+}
