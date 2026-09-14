@@ -1,0 +1,48 @@
+name: Repair customer upgrade runner
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-customer-upgrade-runner-temp.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair replacement handling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/customer-order-flow-upgrade-temp.yml')
+          s = p.read_text(encoding='utf-8')
+          old = """          def sub_once(text, pattern, replacement, label, flags=0):
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f'Pattern not found: {label}')
+              return updated
+"""
+          new = """          def sub_once(text, pattern, replacement, label, flags=0):
+              compiled = re.compile(pattern, flags)
+              def repl(match):
+                  if isinstance(replacement, str) and replacement.startswith(r'\\1') and match.lastindex:
+                      return replacement.replace(r'\\1', match.group(1), 1).replace(r'\\n', '\\n')
+                  return replacement
+              updated, count = compiled.subn(repl, text, count=1)
+              if count != 1:
+                  raise SystemExit(f'Pattern not found: {label}')
+              return updated
+"""
+          if old not in s:
+              raise SystemExit('sub_once block not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit repair and cleanup
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/fix-customer-upgrade-runner-temp.yml
+          git add .github/workflows/customer-order-flow-upgrade-temp.yml .github/workflows/fix-customer-upgrade-runner-temp.yml
+          git commit -m 'Repair customer upgrade workflow replacements'
+          git push origin HEAD:main
