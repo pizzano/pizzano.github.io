@@ -423,6 +423,20 @@ function setView(view) {
  * Kategoribar: horisontal scroll + scroll-spy
  * ------------------------------------------------------------------ */
 
+function categoryIcon(block) {
+  const title = String(block?.title || '').toLocaleLowerCase('no');
+  if (block?.key === 'favorites') return '♥';
+  if (block?.key === 'popular') return '★';
+  if (title.includes('pizza')) return '🍕';
+  if (title.includes('kebab')) return '🌯';
+  if (title.includes('burger')) return '🍔';
+  if (title.includes('drikk')) return '🥤';
+  if (title.includes('barn')) return '☺';
+  if (title.includes('veget')) return '🥗';
+  if (title.includes('diverse') || title.includes('andre')) return '🍽';
+  return '•';
+}
+
 function renderCategories() {
   const blocks = menuBlocks();
   if (!blocks.some((block) => block.key === ui.activeCategory)) {
@@ -436,7 +450,7 @@ function renderCategories() {
       (block) =>
         `<button class="cat-tab${block.key === ui.activeCategory ? ' is-active' : ''}" role="tab" aria-selected="${
           block.key === ui.activeCategory
-        }" data-cat="${escapeHtml(block.key)}" type="button">${escapeHtml(block.title)}</button>`
+        }" data-cat="${escapeHtml(block.key)}" type="button"><span class="cat-icon" aria-hidden="true">${categoryIcon(block)}</span><span class="cat-label">${escapeHtml(block.title)}</span></button>`
     )
     .join('');
   el.catScroll.innerHTML = searchControl + categoryTabs;
@@ -531,7 +545,7 @@ function productCardHtml(item, section) {
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
   const desc = item.description || item.ingredients || section.note || '';
-  const markedAllergens = allergenLabels(item).filter((label) => ui.selectedAllergens.includes(label));
+  const cardAllergens = allergenLabels(item).slice(0, 2);
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       ${
@@ -545,7 +559,7 @@ function productCardHtml(item, section) {
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
-        ${markedAllergens.length ? `<p class="prod-allergens">${markedAllergens.map((label) => `${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}`).join(' ')}</p>` : ''}
+        ${cardAllergens.length ? `<div class="prod-allergens">${cardAllergens.map((label) => `<span class="allergen-mini-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')}</div>` : ''}
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
