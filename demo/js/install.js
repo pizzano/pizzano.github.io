@@ -20,7 +20,7 @@
   const MENU_LOCAL_KEY = 'kol_menu_state_v2';
   const ORDERS_LOCAL_KEY = 'kol_orders_v1';
   const MENU_CHECK_MS = 45 * 1000;
-  const ORDER_CHECK_MS = 60 * 1000;
+  const ORDER_CHECK_MS = 30 * 1000;
   const ACTIVE_ORDER_MAX_AGE = 24 * 60 * 60 * 1000;
   const ACTIVE_ORDER_LIMIT = 4;
   const nativeFetch = window.fetch.bind(window);

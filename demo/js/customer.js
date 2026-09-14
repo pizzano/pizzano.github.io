@@ -36,6 +36,7 @@ import {
 const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
 const ALLERGEN_KEY = 'kol_allergens_v1';
+const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
 
 function loadJSON(key, fallback) {
   try {
@@ -75,6 +76,10 @@ const ui = {
   allergensOpen: false,
   selectedAllergens: loadJSON(ALLERGEN_KEY, []),
   allergenSearch: '',
+  orderSubmitting: false,
+  orderSendFailed: false,
+  pendingOrderId: null,
+  pendingOrderFingerprint: '',
 };
 
 /** Åpent produkt i sheet. */
@@ -160,6 +165,8 @@ const el = {
   profileSaved: $('profileSaved'),
   favList: $('favList'),
   orderList: $('orderList'),
+  activeOrderMenu: $('activeOrderMenu'),
+  activeOrderProfile: $('activeOrderProfile'),
   infoName: $('infoName'),
   infoAddress: $('infoAddress'),
   infoPhone: $('infoPhone'),
@@ -201,8 +208,9 @@ function escapeHtml(text) {
 }
 
 let toastTimer = null;
-function toast(message) {
+function toast(message, tone = 'success') {
   el.toast.textContent = message;
+  el.toast.dataset.tone = tone;
   el.toast.hidden = false;
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
@@ -284,6 +292,107 @@ function headerOffset() {
   return el.appHeader ? el.appHeader.getBoundingClientRect().height : 96;
 }
 
+const CUSTOMER_STATUS_FLOW = [
+  { id: 'mottatt', label: 'Mottatt', short: 'Mottatt' },
+  { id: 'bekreftet', label: 'Bekreftet', short: 'Bekreftet' },
+  { id: 'tilberedning', label: 'Tilberedes', short: 'Lages' },
+  { id: 'klar', label: 'Klar for henting', short: 'Klar' },
+  { id: 'fullfort', label: 'Ferdig', short: 'Ferdig' },
+];
+
+function mergedCustomerOrders() {
+  const localOrders = getLocalOrders();
+  const liveOrders = getOrders();
+  const local = Array.isArray(localOrders) ? localOrders : [];
+  const live = Array.isArray(liveOrders) ? liveOrders : [];
+  const byId = new Map(local.filter((order) => order?.id).map((order) => [order.id, order]));
+  for (const remote of live) {
+    if (!remote?.id) continue;
+    const previous = byId.get(remote.id) || {};
+    byId.set(remote.id, {
+      ...previous,
+      ...remote,
+      lines: remote.lines?.length ? remote.lines : (previous.lines || []),
+    });
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)
+  );
+}
+
+function activeCustomerOrders() {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  return mergedCustomerOrders().filter((order) => {
+    if (!order?.id || order.status === 'fullfort' || order.status === 'avvist') return false;
+    const createdAt = Number(order.createdAt) || 0;
+    return !createdAt || createdAt >= cutoff;
+  });
+}
+
+function activeOrderCardHtml(order, extraCount = 0) {
+  const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
+  const index = foundIndex < 0 ? 0 : foundIndex;
+  const shortId = String(order.id || '').slice(-6).toUpperCase();
+  const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
+    const complete = stepIndex < index;
+    const current = stepIndex === index;
+    return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}">
+      <span class="order-progress-dot">${complete ? '✓' : ''}</span>
+      <small>${escapeHtml(step.short)}</small>
+    </div>`;
+  }).join('');
+  return `<section class="active-order-card${order.status === 'klar' ? ' is-ready' : ''}" aria-label="Aktiv bestilling">
+    <div class="active-order-head">
+      <div>
+        <span class="active-order-kicker">Aktiv bestilling${extraCount ? ` · +${extraCount}` : ''}</span>
+        <strong>${escapeHtml(orderStatusLabel(order.status))}</strong>
+      </div>
+      <span class="active-order-number">#${escapeHtml(shortId)}</span>
+    </div>
+    <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
+    <div class="active-order-meta">
+      <span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span>
+      <span><b>${formatPrice(order.total)}</b></span>
+    </div>
+    <button class="active-order-open" data-active-orders type="button">Se bestillingen</button>
+  </section>`;
+}
+
+function notifyReadyOrders(orders) {
+  const notified = new Set(loadJSON(READY_NOTIFIED_KEY, []));
+  let changed = false;
+  for (const order of orders) {
+    if (order.status !== 'klar' || notified.has(order.id)) continue;
+    notified.add(order.id);
+    changed = true;
+    toast('✓ Bestillingen din er klar for henting.');
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('KØL Grill & Pizza', { body: 'Bestillingen din er klar for henting.' });
+      } catch (_) {}
+    }
+  }
+  if (changed) saveJSON(READY_NOTIFIED_KEY, Array.from(notified).slice(-30));
+}
+
+function renderActiveOrders() {
+  const orders = activeCustomerOrders();
+  const html = orders.length ? activeOrderCardHtml(orders[0], Math.max(0, orders.length - 1)) : '';
+  for (const target of [el.activeOrderMenu, el.activeOrderProfile]) {
+    if (!target) continue;
+    target.hidden = !orders.length;
+    target.innerHTML = html;
+  }
+  notifyReadyOrders(orders);
+}
+
+function resetPendingOrderSubmission() {
+  if (ui.orderSubmitting) return;
+  ui.orderSendFailed = false;
+  ui.pendingOrderId = null;
+  ui.pendingOrderFingerprint = '';
+}
+
 /* ------------------------------------------------------------------ *
  * Navigasjon mellom visninger
  * ------------------------------------------------------------------ */
@@ -300,6 +409,7 @@ function setView(view) {
   el.btnCart.classList.toggle('is-on', view === 'cart' || view === 'checkout');
   window.scrollTo({ top: 0 });
   renderBottomBar();
+  renderActiveOrders();
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
   if (view === 'profile') renderProfile();
@@ -439,9 +549,9 @@ function productCardHtml(item, section) {
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
-        <button class="add-btn" data-open="${escapeHtml(item.id)}" type="button" ${
-    soldOut ? 'disabled aria-label="Utsolgt"' : 'aria-label="Åpne produkt og velg"'
-  }>+</button>
+        ${soldOut
+          ? '<span class="prod-soldout-badge">Utsolgt</span>'
+          : `<button class="add-btn" data-open="${escapeHtml(item.id)}" type="button" aria-label="Åpne produkt og velg">+</button>`}
       </div>
     </div>`;
 }
@@ -786,6 +896,7 @@ function addDraftToCart() {
     });
   }
 
+  resetPendingOrderSubmission();
   persistCart();
   toast(
     draft.editingLineId ? 'Handlekurven er oppdatert.' : `${item.name} lagt i handlekurven.`
@@ -982,7 +1093,7 @@ function setStep(step) {
     node.classList.toggle('is-done', value < step);
   });
   el.btnStepBack.textContent = 'Tilbake';
-  el.btnStepNext.textContent = step === 3 ? 'Send bestilling' : 'Neste: Hentetid';
+  el.btnStepNext.textContent = step === 3 ? (ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling') : 'Neste: Hentetid';
   renderCheckout();
 }
 
@@ -996,7 +1107,7 @@ function renderCheckout() {
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
-  el.btnStepNext.disabled = false;
+  el.btnStepNext.disabled = ui.orderSubmitting;
   updateContactValidation();
 
   const state = getOpenState();
@@ -1020,19 +1131,23 @@ function renderCheckout() {
       ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
       : ui.pickupMode === 'asap' ? 'Vi lager bestillingen så snart vi kan.' : 'Velg når du vil hente bestillingen.';
 
+  const reviewLines = cart.map((line) => cartLineHtml(line, true)).join('');
   el.reviewCard.innerHTML = `
-    <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-    <div><span>Telefon</span><strong>${
-      el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'
-    }</strong></div>
-    <div><span>Hentetid</span><strong>${
-      ui.pickup
-        ? ui.pickup === 'asap'
-          ? 'Snarest'
-          : escapeHtml(ui.pickup)
-        : 'Ikke valgt'
-    }</strong></div>
-    <div><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>`;
+    <div class="checkout-review-head">
+      <div><span>Kontroller bestillingen</span><strong>Din bestilling</strong></div>
+      <button class="link-btn" data-review-cart type="button">Endre kurv</button>
+    </div>
+    <div class="checkout-review-lines">${reviewLines}</div>
+    <div class="checkout-review-meta">
+      <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
+      <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+      <div><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
+      <div class="checkout-review-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
+    </div>`;
+  if (ui.checkoutStep === 3) {
+    el.btnStepNext.disabled = ui.orderSubmitting;
+    el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
+  }
 }
 
 function updateContactValidation() {
@@ -1052,9 +1167,10 @@ function validPhone(value) {
 }
 
 async function placeOrder() {
+  if (ui.orderSubmitting) return;
   const state = getOpenState();
   if (!state.open) {
-    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`);
+    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
     return;
   }
   const name = el.custName.value.trim();
@@ -1073,9 +1189,21 @@ async function placeOrder() {
   }
   el.errTime.hidden = true;
 
+  const unavailable = cart.find((line) => {
+    const { item } = findItem(line.itemId);
+    return !item || item.hidden || item.soldOut;
+  });
+  if (unavailable) {
+    reconcileCart();
+    renderCartCount();
+    renderBottomBar();
+    setView('cart');
+    toast('En vare er ikke lenger tilgjengelig. Handlekurven er oppdatert.', 'error');
+    return;
+  }
+
   const subtotal = cartSubtotal();
   const total = subtotal;
-
   const lines = cart.map((line) => {
     const { item } = findItem(line.itemId);
     const size = (item.sizes || []).find((s) => s.id === line.sizeId);
@@ -1101,35 +1229,60 @@ async function placeOrder() {
     };
   });
 
-  el.btnStepNext.disabled = true;
-  const order = await submitOrder({
-    customerName: name,
-    phone: `+47${phone}`,
-    pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
-    type: 'henting',
-    lines,
-    subtotal,
-    total,
+  const fingerprint = JSON.stringify({
+    name,
+    phone,
+    pickup: ui.pickup,
+    cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.comment]),
   });
-  el.btnStepNext.disabled = false;
+  if (!ui.pendingOrderId || ui.pendingOrderFingerprint !== fingerprint) {
+    ui.pendingOrderId = uid('ord');
+    ui.pendingOrderFingerprint = fingerprint;
+  }
 
+  ui.orderSubmitting = true;
+  ui.orderSendFailed = false;
+  renderCheckout();
 
+  let order;
+  try {
+    order = await submitOrder({
+      id: ui.pendingOrderId,
+      customerName: name,
+      phone: `+47${phone}`,
+      pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
+      type: 'henting',
+      lines,
+      subtotal,
+      total,
+    });
+  } catch (err) {
+    ui.orderSubmitting = false;
+    ui.orderSendFailed = true;
+    renderCheckout();
+    toast('Bestillingen ble ikke sendt. Trykk «Prøv igjen».', 'error');
+    return;
+  }
 
+  ui.orderSubmitting = false;
+  ui.orderSendFailed = false;
+  ui.pendingOrderId = null;
+  ui.pendingOrderFingerprint = '';
   cart = [];
   persistCart();
   ui.pickup = null;
   ui.pickupMode = null;
 
-  el.confirmText.textContent = `Takk, ${name}! Vi lager bestillingen din klar til henting.`;
+  el.confirmText.textContent = `Takk, ${name}! Bestillingen er mottatt av restauranten.`;
   el.confirmMeta.innerHTML = `
-    <div><span>Ordrenummer</span><strong>${escapeHtml(
-      order.id.slice(-6).toUpperCase()
-    )}</strong></div>
+    <div><span>Ordrenummer</span><strong>${escapeHtml(order.id.slice(-6).toUpperCase())}</strong></div>
+    <div><span>Status</span><strong>Mottatt</strong></div>
     <div><span>Hentetid</span><strong>${escapeHtml(order.pickup)}</strong></div>
     <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`;
   el.confirmBackdrop.hidden = false;
   el.confirmModal.hidden = false;
   renderCartCount();
+  renderActiveOrders();
 }
 
 /* ------------------------------------------------------------------ *
@@ -1254,8 +1407,8 @@ async function placeOrder() {
   function orderStatusClass(status) {
     const value = String(status || '').toLocaleLowerCase('no');
     if (value.includes('avvist')) return 'is-rejected';
-    if (value.includes('klar') || value.includes('fullført')) return 'is-done';
-    if (value.includes('tilbered')) return 'is-active';
+    if (value.includes('klar') || value.includes('ferdig') || value.includes('fullført')) return 'is-done';
+    if (value.includes('bekreftet') || value.includes('tilbered')) return 'is-active';
     return 'is-new';
   }
 
@@ -1279,6 +1432,7 @@ function setProfileTab(tabName) {
 }
 
 function renderProfile() {
+  renderActiveOrders();
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
   updateContactValidation();
@@ -1386,6 +1540,7 @@ function renderProfile() {
         });
       added += quantity;
     }
+    resetPendingOrderSubmission();
     persistCart();
     renderCartCount();
     renderBottomBar();
@@ -1416,6 +1571,17 @@ document.addEventListener('click', (event) => {
   const infoTab = event.target.closest('[data-info-tab]');
   if (infoTab) {
     setInfoTab(infoTab.dataset.infoTab);
+    return;
+  }
+  const activeOrdersBtn = event.target.closest('[data-active-orders]');
+  if (activeOrdersBtn) {
+    setView('profile');
+    setProfileTab('orders');
+    return;
+  }
+  const reviewCartBtn = event.target.closest('[data-review-cart]');
+  if (reviewCartBtn) {
+    setView('cart');
     return;
   }
   const toggleBlock = event.target.closest('[data-toggle-block]');
@@ -1473,6 +1639,7 @@ el.cartLines.addEventListener('click', (event) => {
     return;
   }
 
+  resetPendingOrderSubmission();
   persistCart();
   renderCart();
   renderCartCount();
@@ -1648,6 +1815,7 @@ el.pickupChoices.addEventListener('click', (event) => {
   const button = event.target.closest('[data-pickup-mode]');
   if (!button) return;
   if (!getOpenState().open) return;
+  ui.orderSendFailed = false;
   ui.pickupMode = button.dataset.pickupMode;
   ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
   el.errTime.hidden = true;
@@ -1657,6 +1825,7 @@ el.pickupChoices.addEventListener('click', (event) => {
 el.timeGrid.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-time]');
   if (!btn || ui.pickupMode !== 'scheduled' || !getPickupSlots().some((slot) => slot.value === btn.dataset.time)) return;
+  ui.orderSendFailed = false;
   ui.pickup = btn.dataset.time;
   el.errTime.hidden = true;
   renderCheckout();
@@ -1731,6 +1900,7 @@ function renderAll() {
   renderOpenState();
   renderCartCount();
   renderBottomBar();
+  renderActiveOrders();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
   if (ui.view === 'profile') renderProfile();

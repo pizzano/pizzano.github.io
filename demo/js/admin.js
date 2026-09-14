@@ -1426,9 +1426,7 @@ function filteredOrders() {
   const orders = getOrders();
   if (ui.orderFilter === 'all') return orders;
   if (ui.orderFilter === 'active') {
-    return orders.filter(
-      (order) => order.status === 'mottatt' || order.status === 'tilberedning'
-    );
+    return orders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(order.status));
   }
   return orders.filter((order) => order.status === ui.orderFilter);
 }

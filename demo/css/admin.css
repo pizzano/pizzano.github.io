@@ -1469,3 +1469,4 @@ body.hide-settings-col .admin-shell { grid-template-columns: 236px minmax(0, 1fr
     .scroll-area, .settings-scroll { max-height: none; overflow: visible; }
     .settings-col { border-left: 0; border-top: 1px solid var(--line); }
 }
+.status-pill[data-status="bekreftet"] { background: #eef6ff; border-color: #c9ddf4; color: #2d6598; }

@@ -326,10 +326,11 @@ export function getPickupSlots() {
  * ------------------------------------------------------------------ */
 
 export const ORDER_STATUSES = [
-  { id: 'mottatt', label: 'Ny' },
-  { id: 'tilberedning', label: 'Under tilberedning' },
-  { id: 'klar', label: 'Klar' },
-  { id: 'fullfort', label: 'Fullført' },
+  { id: 'mottatt', label: 'Mottatt' },
+  { id: 'bekreftet', label: 'Bekreftet' },
+  { id: 'tilberedning', label: 'Tilberedes' },
+  { id: 'klar', label: 'Klar for henting' },
+  { id: 'fullfort', label: 'Ferdig' },
   { id: 'avvist', label: 'Avvist' },
 ];
 
@@ -897,30 +898,38 @@ const ORDERS_KEY = 'kol_orders_v1';
 
 /** Lagrer en ordre. Returnerer ordren med ID. */
 export async function submitOrder(order) {
+  const now = Date.now();
   const record = {
     ...order,
-    id: uid('ord'),
-    createdAt: Date.now(),
+    id: order && order.id ? String(order.id) : uid('ord'),
+    createdAt: Number(order && order.createdAt) || now,
     status: 'mottatt',
-    statusUpdatedAt: Date.now(),
+    statusUpdatedAt: now,
   };
+
+  // Vis aldri ordren som mottatt før Firebase faktisk har bekreftet den.
+  // Ved retry brukes samme ordre-ID, så et nytt trykk kan ikke lage en duplikat.
+  if (!remoteEnabled) throw new Error('Bestillingstjenesten er ikke tilgjengelig.');
   try {
-    if (remoteEnabled) {
-      await restPut(`${ORDERS_PATH}/${record.id}`, record);
-      remoteOnline = true;
-    }
+    await restPut(`${ORDERS_PATH}/${record.id}`, record);
+    remoteOnline = true;
   } catch (err) {
-    console.warn('Kunne ikke lagre ordre i databasen:', err);
+    remoteOnline = false;
+    throw new Error('Bestillingen kunne ikke sendes. Prøv igjen.');
   }
-  store.orders = normalizeOrders([record, ...store.orders]);
-  emitData('local');
+
   try {
     const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
-    existing.unshift(record);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(existing.slice(0, 30)));
+    const deduped = Array.isArray(existing)
+      ? existing.filter((entry) => entry && entry.id !== record.id)
+      : [];
+    deduped.unshift(record);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(deduped.slice(0, 30)));
   } catch (err) {
     console.warn('Kunne ikke lagre ordre lokalt:', err);
   }
+  store.orders = normalizeOrders([record, ...store.orders.filter((entry) => entry.id !== record.id)]);
+  emitData('local');
   return record;
 }
 
@@ -965,9 +974,8 @@ export function getStats() {
   const todays = (store.orders || []).filter(
     (order) => order.createdAt >= startOfDay.getTime()
   );
-  const active = (store.orders || []).filter(
-    (order) => order.status === 'mottatt' || order.status === 'tilberedning'
-  );
+  const activeStatuses = new Set(['mottatt', 'bekreftet', 'tilberedning', 'klar']);
+  const active = (store.orders || []).filter((order) => activeStatuses.has(order.status));
   return {
     categoryCount: sections.length,
     itemCount: items.length,

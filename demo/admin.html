@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260908-1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260914-1">
 </head>
 
 <body>
@@ -117,10 +117,11 @@
                         <div class="filter-group" role="group" aria-label="Filtrer bestillinger">
                             <button class="filter-btn is-active" data-order-filter="active" type="button">Aktive</button>
                             <button class="filter-btn" data-order-filter="all" type="button">Alle</button>
-                            <button class="filter-btn" data-order-filter="mottatt" type="button">Ny</button>
-                            <button class="filter-btn" data-order-filter="tilberedning" type="button">Under tilberedning</button>
+                            <button class="filter-btn" data-order-filter="mottatt" type="button">Mottatt</button>
+                            <button class="filter-btn" data-order-filter="bekreftet" type="button">Bekreftet</button>
+                            <button class="filter-btn" data-order-filter="tilberedning" type="button">Tilberedes</button>
                             <button class="filter-btn" data-order-filter="klar" type="button">Klar</button>
-                            <button class="filter-btn" data-order-filter="fullfort" type="button">Fullført</button>
+                            <button class="filter-btn" data-order-filter="fullfort" type="button">Ferdig</button>
                         </div>
                         <button class="btn btn-outline btn-sm" id="btnRefreshOrders" type="button">Oppdater</button>
                     </div>
@@ -490,7 +491,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260908-1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260914-1"></script>
 </body>
 
 </html>
