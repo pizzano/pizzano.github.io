@@ -1877,3 +1877,262 @@ textarea.input {
 .checkout-review-total>span,.checkout-review-total>strong{font-size:14px!important;font-weight:800!important}
 @media(max-width:520px){.checkout-review-summary{padding:11px 12px}.checkout-review-summary-main strong{font-size:12.5px}.checkout-review-summary-main span,.checkout-review-summary-action::after{font-size:11px}.checkout-review-lines{padding-left:12px!important;padding-right:12px!important}.checkout-review-lines .cart-line{gap:9px!important;padding:11px 0!important}.checkout-review-lines .line-name{font-size:12.5px!important}.checkout-review-lines .line-details,.checkout-review-lines .line-comment{font-size:10.5px!important}.checkout-review-lines .line-price{font-size:12.5px!important}.checkout-review-meta{padding-left:12px!important;padding-right:12px!important}.checkout-review-meta::before{font-size:12.5px}.checkout-review-meta>div{min-height:36px!important;font-size:11px!important}.checkout-review-meta>div>strong{font-size:12px!important}}
 
+
+/* Checkout review cart-like final polish 2026-09-15 */
+.checkout-review-summary{
+  min-height:54px!important;
+  padding:0 14px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+}
+.checkout-review-summary-main{
+  display:flex!important;
+  align-items:center!important;
+  min-width:0!important;
+}
+.checkout-review-summary-main>span{display:none!important}
+.checkout-review-summary-main>strong{
+  margin:0!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:700!important;
+}
+.checkout-review-summary-action{
+  margin-left:auto!important;
+  white-space:nowrap!important;
+}
+.checkout-review-summary-action::after{
+  font-size:12px!important;
+  font-weight:700!important;
+}
+.checkout-review-details{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#f7f7f6!important;
+}
+.checkout-review-lines{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:10px!important;
+}
+.checkout-review-lines .cart-line{
+  display:grid!important;
+  grid-template-columns:30px minmax(0,1fr) auto!important;
+  grid-template-rows:auto!important;
+  align-items:start!important;
+  gap:9px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:11px!important;
+  border:1px solid #eee9e4!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  box-shadow:0 2px 8px rgba(28,24,20,.04)!important;
+}
+.checkout-review-lines .cart-line:last-child{border-bottom:1px solid #eee9e4!important}
+.checkout-review-lines .line-qty{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:30px!important;
+  min-width:30px!important;
+  height:30px!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:9px!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.checkout-review-lines .line-body{
+  grid-column:2!important;
+  grid-row:1!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:0!important;
+}
+.checkout-review-lines .line-name{
+  margin:1px 0 7px!important;
+  color:var(--ink)!important;
+  font-size:12.5px!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+.checkout-review-lines .line-details{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  font-size:10.5px!important;
+}
+.checkout-review-lines .line-size{
+  display:grid!important;
+  grid-template-columns:60px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.checkout-review-lines .line-size>span,
+.checkout-review-lines .line-size>strong{
+  min-width:0!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+.checkout-review-lines .line-size strong{
+  color:var(--ink)!important;
+  font-size:11px!important;
+  font-weight:650!important;
+}
+.checkout-review-lines .line-addon-group{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:4px!important;
+  min-width:0!important;
+}
+.checkout-review-lines .line-detail-label{
+  color:var(--ink-3)!important;
+  font-size:10px!important;
+  font-weight:700!important;
+}
+.checkout-review-lines .line-addon-list{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:3px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  list-style:none!important;
+}
+.checkout-review-lines .line-addon-list li{
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:9px!important;
+  min-width:0!important;
+  color:var(--ink-2)!important;
+  font-size:10.5px!important;
+  line-height:1.35!important;
+}
+.checkout-review-lines .line-addon-list li span{
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+}
+.checkout-review-lines .line-addon-list li strong{
+  flex:none!important;
+  color:var(--ink)!important;
+  font-size:10.5px!important;
+  font-weight:650!important;
+  white-space:nowrap!important;
+}
+.checkout-review-lines .line-comment{
+  margin:7px 0 0!important;
+  padding:7px 9px!important;
+  border-radius:8px!important;
+  background:#f7f7f6!important;
+  color:var(--ink-2)!important;
+  font-size:10.5px!important;
+  line-height:1.35!important;
+  font-weight:500!important;
+}
+.checkout-review-lines .line-right{
+  grid-column:3!important;
+  grid-row:1!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  justify-content:flex-end!important;
+  width:auto!important;
+  min-width:max-content!important;
+  margin:0!important;
+  padding:0!important;
+}
+.checkout-review-lines .line-price{
+  margin:1px 0 0!important;
+  color:var(--ink)!important;
+  font-size:12.5px!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+.checkout-review-meta{
+  display:flex!important;
+  flex-direction:column!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0 10px 10px!important;
+  padding:11px 12px 3px!important;
+  border:1px solid #eee9e4!important;
+  border-radius:14px!important;
+  background:#fff!important;
+}
+.checkout-review-meta::before{
+  padding:0 0 5px!important;
+  color:var(--ink)!important;
+  font-size:12.5px!important;
+  font-weight:700!important;
+}
+.checkout-review-meta>div{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:36px!important;
+  padding:8px 0!important;
+  border-bottom:1px solid var(--line)!important;
+  color:var(--ink-2)!important;
+  font-size:11px!important;
+  font-weight:500!important;
+}
+.checkout-review-meta>div:last-child{border-bottom:0!important}
+.checkout-review-meta>div>span{
+  flex:0 0 auto!important;
+  min-width:72px!important;
+}
+.checkout-review-meta>div>strong{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  color:var(--ink)!important;
+  font-size:11.5px!important;
+  line-height:1.35!important;
+  font-weight:650!important;
+  text-align:right!important;
+  overflow-wrap:anywhere!important;
+}
+.checkout-review-total{
+  margin-top:2px!important;
+  padding-top:9px!important;
+}
+.checkout-review-total>span{
+  font-size:12px!important;
+  font-weight:700!important;
+}
+.checkout-review-total>strong{
+  font-size:14px!important;
+  font-weight:750!important;
+  white-space:nowrap!important;
+}
+@media(max-width:360px){
+  .checkout-review-lines .cart-line{grid-template-columns:28px minmax(0,1fr)!important}
+  .checkout-review-lines .line-qty{width:28px!important;min-width:28px!important;height:28px!important}
+  .checkout-review-lines .line-right{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-content:flex-start!important;
+    margin-top:4px!important;
+  }
+}
