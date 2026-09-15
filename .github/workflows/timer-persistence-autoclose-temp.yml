@@ -1,9 +1,10 @@
-name: Timer persistence and auto-close fix
+name: Timer persistence fix
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - .github/workflows/timer-persistence-autoclose-temp.yml
+      - '.github/workflows/timer-persistence-autoclose-temp.yml'
 permissions:
   contents: write
 jobs:
@@ -11,102 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch stable countdown fields and one-second close
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          VERSION = '20260915-timerfix2'
-
-          # data.js: normalizeOrders was dropping the live timer fields on every poll.
-          p = Path('demo/js/data.js')
-          s = p.read_text(encoding='utf-8')
-          start = s.index('function normalizeOrders(raw) {')
-          end = s.index('\nfunction normalizeState', start)
-          segment = s[start:end]
-          if 'estimatedMinutes:' not in segment:
-              needle = "        statusUpdatedAt: Number(order.statusUpdatedAt) || 0,\n"
-              insert = needle + "        estimatedMinutes: Number(order.estimatedMinutes) > 0 ? Number(order.estimatedMinutes) : null,\n        estimatedAt: Number(order.estimatedAt) || null,\n        estimatedReadyAt: Number(order.estimatedReadyAt) || null,\n"
-              if needle not in segment:
-                  raise SystemExit('normalizeOrders statusUpdatedAt line not found')
-              segment = segment.replace(needle, insert, 1)
-              s = s[:start] + segment + s[end:]
-          p.write_text(s, encoding='utf-8')
-
-          # Keep every module on the exact same data.js URL so there is only one store instance.
-          for file in ['demo/js/customer.js', 'demo/js/admin.js', 'demo/js/allergen-ui.js']:
-              p = Path(file)
-              s = p.read_text(encoding='utf-8')
-              s = re.sub(r"from './data\.js(?:\?v=[^']+)?';", f"from './data.js?v={VERSION}';", s)
-              p.write_text(s, encoding='utf-8')
-
-          # customer.js: never render a static/zero-minute fallback; only render authoritative countdown.
-          p = Path('demo/js/customer.js')
-          s = p.read_text(encoding='utf-8')
-          s = s.replace("${escapeHtml(customerOrderCountdown(order) || `Ca. ${estimated} min`)}", "${escapeHtml(customerOrderCountdown(order))}")
-          p.write_text(s, encoding='utf-8')
-
-          # admin.js: after acceptance keep the accepted detail visible for one second, then close it.
-          p = Path('demo/js/admin.js')
-          s = p.read_text(encoding='utf-8')
-          old = '''  selectedOrderId = null;
-  closeModals();
-  renderOrders();
-  renderStats();
-  toast(`Bestillingen er godtatt · ${minutes} min.`);
-});'''
-          new = '''  selectedOrderId = acceptedOrderId;
-  closeModals();
-  renderOrders();
-  renderStats();
-  toast(`Bestillingen er godtatt · ${minutes} min.`);
-  window.setTimeout(() => {
-    if (selectedOrderId !== acceptedOrderId) return;
-    selectedOrderId = null;
-    renderOrders();
-  }, 1000);
-});'''
-          if old not in s:
-              raise SystemExit('accept handler close block not found')
-          s = s.replace(old, new, 1)
-
-          # Detail timer: show remaining time whenever a real ready timestamp exists.
-          s = s.replace("  const countdown = orderCountdown(order);\n  const isPending = order.status === 'mottatt';", "  const countdown = orderCountdown(order);\n  const hasCountdown = Number(order.estimatedReadyAt) > 0;\n  const isPending = order.status === 'mottatt';", 1)
-          old_meta = '''          ${estimated && !isPending ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>
-          <div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}'''
-          new_meta = '''          ${!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : ''}
-          ${!isPending && hasCountdown ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}'''
-          if old_meta in s:
-              s = s.replace(old_meta, new_meta, 1)
-          p.write_text(s, encoding='utf-8')
-
-          # Cache bust entry modules and service worker.
-          for file, pattern, repl in [
-              ('demo/index.html', r'/demo/js/customer\.js\?v=[^\"\']+', f'/demo/js/customer.js?v={VERSION}'),
-              ('demo/admin.html', r'/demo/js/admin\.js\?v=[^\"\']+', f'/demo/js/admin.js?v={VERSION}'),
-          ]:
-              p = Path(file)
-              s = p.read_text(encoding='utf-8')
-              s = re.sub(pattern, repl, s)
-              p.write_text(s, encoding='utf-8')
-
-          p = Path('demo/service-worker.js')
-          s = p.read_text(encoding='utf-8')
-          s = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v47';", s)
-          p.write_text(s, encoding='utf-8')
-          PY
+      - name: Apply patch
+        run: python3 .github/scripts/timer_persistence_autoclose.py
       - name: Validate JavaScript
         run: |
           node --check demo/js/data.js
           node --check demo/js/customer.js
           node --check demo/js/admin.js
           node --check demo/js/allergen-ui.js
-      - name: Commit and cleanup
+      - name: Commit and clean temporary files
         run: |
           git config user.name 'KOL Deploy Bot'
           git config user.email 'actions@users.noreply.github.com'
           rm .github/workflows/timer-persistence-autoclose-temp.yml
-          git add demo/js/data.js demo/js/customer.js demo/js/admin.js demo/js/allergen-ui.js demo/index.html demo/admin.html demo/service-worker.js .github/workflows/timer-persistence-autoclose-temp.yml
-          git commit -m 'Persist live timers and auto-close accepted order detail'
+          rm .github/scripts/timer_persistence_autoclose.py
+          git add demo/js/data.js demo/js/customer.js demo/js/admin.js demo/js/allergen-ui.js demo/index.html demo/admin.html demo/service-worker.js .github/workflows/timer-persistence-autoclose-temp.yml .github/scripts/timer_persistence_autoclose.py
+          git commit -m 'Persist live countdowns and close accepted detail after one second'
           git push origin HEAD:main
