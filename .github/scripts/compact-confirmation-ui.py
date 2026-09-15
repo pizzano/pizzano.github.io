@@ -84,26 +84,25 @@ if old_render not in js:
     raise SystemExit('renderConfirmationAccepted block not found')
 js = js.replace(old_render, new_render, 1)
 
-old_timeout = "  }, 8000);\n}"
-new_timeout = "  }, 3000);\n}"
 anchor = js.find('function startAcceptedConfirmationHold(order)')
 if anchor < 0:
     raise SystemExit('startAcceptedConfirmationHold not found')
 end = js.find('function renderConfirmationTimeout', anchor)
 block = js[anchor:end]
+old_timeout = '  }, 8000);\n}'
+new_timeout = '  }, 3000);\n}'
 if old_timeout not in block:
     raise SystemExit('accepted redirect timeout not found')
 block = block.replace(old_timeout, new_timeout, 1)
 block = block.replace('// Long enough to read the accepted time, then move to the live order card.', '// Show the compact confirmation briefly, then return to the main menu.')
 js = js[:anchor] + block + js[end:]
 
-old_total_label = '<div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`
-new_total_label = '<div><span>Beløp</span><strong>${formatPrice(order.total)}</strong></div>`
+old_total_label = '<div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>'
+new_total_label = '<div><span>Beløp</span><strong>${formatPrice(order.total)}</strong></div>'
 if old_total_label not in js:
     raise SystemExit('confirmation total row not found')
 js = js.replace(old_total_label, new_total_label, 1)
 
-# Hide the fixed checkout buttons as soon as sending starts, before the modal appears.
 old_submit_line = "  el.btnStepNext.disabled = ui.orderSubmitting;\n  updateContactValidation();"
 new_submit_line = "  el.btnStepNext.disabled = ui.orderSubmitting;\n  el.views.checkout.classList.toggle('is-submitting', ui.orderSubmitting);\n  updateContactValidation();"
 if old_submit_line not in js:
