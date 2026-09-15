@@ -1509,11 +1509,21 @@ let orderConfirmOrderId = '';
 let orderConfirmDeadline = 0;
 let orderConfirmTimedOut = false;
 let orderConfirmResolved = false;
+let orderConfirmAcceptedTimer = null;
+let orderConfirmRedirectTimer = null;
 
 function stopOrderConfirmationWait() {
   if (orderConfirmTimer) {
     clearInterval(orderConfirmTimer);
     orderConfirmTimer = null;
+  }
+  if (orderConfirmAcceptedTimer) {
+    clearInterval(orderConfirmAcceptedTimer);
+    orderConfirmAcceptedTimer = null;
+  }
+  if (orderConfirmRedirectTimer) {
+    clearTimeout(orderConfirmRedirectTimer);
+    orderConfirmRedirectTimer = null;
   }
   orderConfirmOrderId = '';
   orderConfirmDeadline = 0;
@@ -1541,6 +1551,20 @@ function confirmationTimeLeftText() {
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function confirmationReadyLeftText(order) {
+  const readyAt = Number(order?.estimatedReadyAt) || 0;
+  if (!readyAt) {
+    const minutes = Math.max(0, Number(order?.estimatedMinutes) || 0);
+    return minutes > 0 ? `ca. ${minutes} min igjen` : 'Bekreftet';
+  }
+  const remaining = Math.max(0, readyAt - Date.now());
+  if (!remaining) return 'Klar nå';
+  const seconds = Math.ceil(remaining / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${String(secs).padStart(2, '0')} igjen`;
 }
 
 function confirmationBaseRows(order) {
@@ -1573,14 +1597,16 @@ function renderConfirmationAccepted(order) {
   const scheduled = order.pickupMode === 'scheduled' || (order.pickup && order.pickup !== 'Snarest');
   const readyNow = order.status === 'klar';
   if (title) title.textContent = readyNow ? 'Maten er klar!' : 'Bestillingen er bekreftet';
-  el.confirmModal.dataset.waiting = 'false';
+  // Hold modal locked while the confirmation is shown. No accidental backdrop/Escape close.
+  el.confirmModal.dataset.waiting = 'true';
   el.confirmModal.dataset.state = readyNow ? 'ready' : 'accepted';
+  if (el.btnConfirmDone) el.btnConfirmDone.hidden = true;
   el.confirmText.textContent = readyNow
     ? 'Bestillingen din er klar for henting.'
     : scheduled
       ? `Restauranten har bekreftet hentetiden ${order.pickup}.`
       : minutes > 0
-        ? `Restauranten har bekreftet bestillingen. Du har fått ca. ${minutes} minutter.`
+        ? `Restauranten har bekreftet bestillingen og satt ca. ${minutes} minutter.`
         : 'Restauranten har bekreftet bestillingen din.';
 
   const acceptMessage = readyNow
@@ -1588,15 +1614,45 @@ function renderConfirmationAccepted(order) {
     : scheduled
       ? `<strong>Hentetid ${escapeHtml(order.pickup || '')}</strong><small>Bestillingen er bekreftet.</small>`
       : minutes > 0
-        ? `<strong>Ca. ${minutes} minutter</strong><small>Restauranten har satt forventet tid.</small>`
-        : '<strong>Bekreftet</strong><small>Følg bestillingen videre på forsiden.</small>';
+        ? `<strong>Ca. ${minutes} minutter</strong><small>Oppgitt av restauranten.</small>`
+        : '<strong>Bekreftet</strong><small>Bestillingen er tatt imot.</small>';
+
+  const countdown = !scheduled && !readyNow && minutes > 0
+    ? `<div class="confirm-ready-countdown"><span>Forventet klar om</span><strong data-confirm-ready-countdown>${escapeHtml(confirmationReadyLeftText(order))}</strong><small>Nedtellingen fortsetter på forsiden.</small></div>`
+    : '';
 
   el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
     <div class="confirm-accepted-status">
       <span class="confirm-accepted-check" aria-hidden="true">✓</span>
       <div>${acceptMessage}</div>
     </div>
-    <p class="confirm-auto-return">Du sendes automatisk til forsiden for å følge bestillingen.</p>`;
+    ${countdown}
+    <p class="confirm-auto-return">Du sendes til forsiden om noen sekunder, og kan følge bestillingen live der.</p>`;
+}
+
+function startAcceptedConfirmationHold(order) {
+  if (orderConfirmAcceptedTimer) clearInterval(orderConfirmAcceptedTimer);
+  if (orderConfirmRedirectTimer) clearTimeout(orderConfirmRedirectTimer);
+
+  orderConfirmAcceptedTimer = window.setInterval(() => {
+    const current = confirmationOrderSnapshot(order.id) || order;
+    const node = el.confirmMeta.querySelector('[data-confirm-ready-countdown]');
+    if (node) node.textContent = confirmationReadyLeftText(current);
+  }, 500);
+
+  // Long enough to read the accepted time, then move to the live order card.
+  orderConfirmRedirectTimer = window.setTimeout(() => {
+    if (orderConfirmAcceptedTimer) {
+      clearInterval(orderConfirmAcceptedTimer);
+      orderConfirmAcceptedTimer = null;
+    }
+    orderConfirmRedirectTimer = null;
+    el.confirmModal.dataset.waiting = 'false';
+    orderConfirmOrderId = '';
+    orderConfirmDeadline = 0;
+    closeConfirm();
+    renderActiveOrders();
+  }, 8000);
 }
 
 function renderConfirmationTimeout(order) {
@@ -1649,13 +1705,7 @@ function checkOrderConfirmationWait() {
     ui.focusedOrderId = order.id;
     renderConfirmationAccepted(order);
     renderActiveOrders();
-    window.setTimeout(() => {
-      el.confirmModal.dataset.waiting = 'false';
-      orderConfirmOrderId = '';
-      orderConfirmDeadline = 0;
-      closeConfirm();
-      renderActiveOrders();
-    }, order.status === 'klar' ? 3500 : 2800);
+    startAcceptedConfirmationHold(order);
     return;
   }
 
@@ -1674,6 +1724,10 @@ function checkOrderConfirmationWait() {
 function startOrderConfirmationWait(order, name) {
   if (!order?.id) return;
   if (orderConfirmTimer) clearInterval(orderConfirmTimer);
+  if (orderConfirmAcceptedTimer) clearInterval(orderConfirmAcceptedTimer);
+  if (orderConfirmRedirectTimer) clearTimeout(orderConfirmRedirectTimer);
+  orderConfirmAcceptedTimer = null;
+  orderConfirmRedirectTimer = null;
   orderConfirmOrderId = order.id;
   orderConfirmDeadline = Date.now() + ORDER_CONFIRM_WAIT_MS;
   orderConfirmTimedOut = false;
@@ -1681,10 +1735,15 @@ function startOrderConfirmationWait(order, name) {
   ui.focusedOrderId = order.id;
   rememberCustomerOrder(order);
   persistCustomerOrderSnapshot(order);
-  watchActiveOrder(order.id);
+
+  // Show the waiting screen FIRST. A watcher failure must never leave the customer on "Sender…".
   renderConfirmationWaiting(order, name);
   el.confirmBackdrop.hidden = false;
   el.confirmModal.hidden = false;
+
+  // Current live-order implementation uses the multi-order watcher API.
+  syncActiveOrderWatchers([order.id]);
+  void fetchActiveOrderNow(order.id);
   checkOrderConfirmationWait();
   orderConfirmTimer = window.setInterval(checkOrderConfirmationWait, 1000);
 }
