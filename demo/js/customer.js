@@ -831,6 +831,12 @@ function renderSheet() {
     <p class="sheet-desc">${escapeHtml(item.description || item.ingredients || '')}</p>
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
+    <div class="opt-group">
+      <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
+      <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
+        draft.comment
+      )}</textarea>
+    </div>
     <div class="sheet-allergens" aria-label="Allergener">
       <span class="sheet-allergens-label">Allergener</span>
       <div class="sheet-allergen-chips">
@@ -838,12 +844,6 @@ function renderSheet() {
           ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
           : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
       </div>
-    </div>
-    <div class="opt-group">
-      <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
-      <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
-        draft.comment
-      )}</textarea>
     </div>`;
 
   el.qtyValue.textContent = String(draft.quantity);
