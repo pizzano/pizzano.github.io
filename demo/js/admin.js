@@ -30,6 +30,7 @@ import {
   getOrders,
   updateOrderStatus,
   updateOrderEstimate,
+  rejectOrder,
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
@@ -46,7 +47,7 @@ const ui = {
   search: '',
   filter: 'all',
   groupSearch: '',
-  orderFilter: 'active',
+  orderFilter: 'all',
   activeChip: 'produkt',
 };
 
@@ -62,6 +63,8 @@ let confirmAction = null;
 let attachTargetItemId = null;
 /** Åpen ordre i detaljmodalen. */
 let openOrderId = null;
+let selectedOrderId = null;
+let actionOrderId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -95,6 +98,9 @@ const el = {
   orderList: $('orderList'),
   orderFilterBtns: document.querySelectorAll('.filter-btn[data-order-filter]'),
   btnRefreshOrders: $('btnRefreshOrders'),
+  orderDetailPane: $('orderDetailPane'),
+  orderDetailEmpty: $('orderDetailEmpty'),
+  orderDetailLive: $('orderDetailLive'),
   settingsEmpty: $('settingsEmpty'),
   settingsWrap: $('settingsWrap'),
   settingsName: $('settingsName'),
@@ -144,6 +150,17 @@ const el = {
   modalOrder: $('modalOrder'),
   orderTitle: $('orderTitle'),
   orderBody: $('orderBody'),
+  modalAcceptOrder: $('modalAcceptOrder'),
+  acceptOrderTitle: $('acceptOrderTitle'),
+  acceptQuickTimes: $('acceptQuickTimes'),
+  acceptMinutes: $('acceptMinutes'),
+  btnAcceptConfirm: $('btnAcceptConfirm'),
+  modalRejectOrder: $('modalRejectOrder'),
+  rejectOrderTitle: $('rejectOrderTitle'),
+  rejectCallBtn: $('rejectCallBtn'),
+  rejectReasons: $('rejectReasons'),
+  rejectMessage: $('rejectMessage'),
+  btnRejectConfirm: $('btnRejectConfirm'),
   modalConfirm: $('modalConfirm'),
   confirmTitle: $('confirmTitle'),
   confirmBody: $('confirmBody'),
@@ -1423,216 +1440,345 @@ function deleteGroup(groupId) {
  * Bestillinger
  * ------------------------------------------------------------------ */
 
-const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) => ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(status.id));
+const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) =>
+  ['bekreftet', 'tilberedning', 'klar'].includes(status.id)
+);
 
 function filteredOrders() {
   const orders = getOrders();
   if (ui.orderFilter === 'all') return orders;
   if (ui.orderFilter === 'active') {
-    return orders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(order.status));
+    return orders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning'].includes(order.status));
   }
-  return orders.filter((order) => order.status === ui.orderFilter);
+  if (ui.orderFilter === 'klar') return orders.filter((order) => order.status === 'klar');
+  return orders;
 }
 
-function adminOrderCardHtml(order, isNew = false) {
-  const shortId = String(order.id || '').slice(-6).toUpperCase();
-  const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
+function compactOrderTime(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function orderElapsed(order) {
+  const seconds = Math.max(0, Math.floor((Date.now() - (Number(order.createdAt) || Date.now())) / 1000));
+  if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
+  }
+  const hours = Math.floor(seconds / 3600);
+  return `${hours}t ${Math.floor((seconds % 3600) / 60)}m`;
+}
+
+function orderCountdown(order) {
+  const readyAt = Number(order.estimatedReadyAt) || 0;
+  if (!readyAt) return '';
+  const seconds = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${String(secs).padStart(2, '0')}`;
+}
+
+function orderListStatus(order) {
+  if (order.status === 'mottatt') return 'Venter på svar';
+  if (order.status === 'bekreftet') return 'Godtatt';
+  if (order.status === 'tilberedning') return 'Tilberedes';
+  if (order.status === 'klar') return 'Klar for henting';
+  if (order.status === 'avvist') return 'Avvist';
+  if (order.status === 'fullfort') return 'Ferdig';
+  return orderStatusLabel(order.status);
+}
+
+function orderListRowHtml(order, isNew = false) {
+  const selected = order.id === selectedOrderId;
+  const countdown = orderCountdown(order);
+  const timer = order.status === 'mottatt' ? orderElapsed(order) : (countdown || formatPrice(order.total));
   return `
-    <article class="order-card admin-order-card${isNew ? ' is-new-order' : ''}" data-order="${escapeHtml(order.id)}">
-      <header class="admin-order-head">
-        <div>
-          <div class="admin-order-number-row">
-            <strong>#${escapeHtml(shortId)}</strong>
-            ${isNew ? '<span class="new-order-badge">NY</span>' : ''}
-          </div>
-          <span>${escapeHtml(timeStamp(order.createdAt))}</span>
-        </div>
-        <span class="status-pill" data-status="${escapeHtml(order.status)}">${escapeHtml(orderStatusLabel(order.status))}</span>
+    <button class="orders-list-row${isNew ? ' is-new' : ''}${selected ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button">
+      <span class="orders-list-icon" aria-hidden="true">${order.type === 'levering' ? '🛵' : '🥡'}</span>
+      <span class="orders-list-main">
+        <span class="orders-list-name-row">
+          <strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>
+          ${isNew ? '<b class="orders-new-pill">NY</b>' : ''}
+        </span>
+        <small><i class="orders-status-mark"></i>${escapeHtml(orderListStatus(order))}</small>
+      </span>
+      <span class="orders-list-side">
+        <strong class="orders-live-time" data-order-clock="${escapeHtml(order.id)}">${escapeHtml(timer)}</strong>
+        <small>${escapeHtml(compactOrderTime(order.createdAt))}</small>
+      </span>
+    </button>`;
+}
+
+function renderOrderTabs(allOrders) {
+  const counts = {
+    all: allOrders.length,
+    active: allOrders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning'].includes(order.status)).length,
+    klar: allOrders.filter((order) => order.status === 'klar').length,
+  };
+  const labels = { all: 'Alle', active: 'Pågår', klar: 'Klar' };
+  el.orderFilterBtns.forEach((button) => {
+    const key = button.dataset.orderFilter;
+    button.classList.toggle('is-active', key === ui.orderFilter);
+    button.innerHTML = `<span>${labels[key] || key}</span><b>${counts[key] ?? 0}</b>`;
+  });
+}
+
+function renderOrderList() {
+  const orders = filteredOrders();
+  const newOrders = orders.filter((order) => order.status === 'mottatt');
+  const otherOrders = orders.filter((order) => order.status !== 'mottatt');
+  const sections = [];
+  if (newOrders.length) {
+    sections.push(`
+      <section class="orders-list-section is-new-section">
+        <div class="orders-list-section-title"><span><i></i>Nye bestillinger</span><b>${newOrders.length}</b></div>
+        ${newOrders.map((order) => orderListRowHtml(order, true)).join('')}
+      </section>`);
+  }
+  if (otherOrders.length) {
+    sections.push(`
+      <section class="orders-list-section">
+        <div class="orders-list-section-title"><span>${ui.orderFilter === 'all' ? 'Andre' : 'Bestillinger'}</span><b>${otherOrders.length}</b></div>
+        ${otherOrders.map((order) => orderListRowHtml(order, false)).join('')}
+      </section>`);
+  }
+  el.orderList.innerHTML = sections.join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Det er ingenting i denne visningen.</span></div>';
+}
+
+function detailLineHtml(line) {
+  const options = Array.isArray(line.options) ? line.options : [];
+  const optionDetails = Array.isArray(line.optionDetails) ? line.optionDetails : [];
+  const optionText = optionDetails.length
+    ? optionDetails.map((item) => item && item.label).filter(Boolean)
+    : options;
+  return `
+    <div class="pos-order-line">
+      <span class="pos-order-qty">${Number(line.quantity) || 1}×</span>
+      <div class="pos-order-line-body">
+        <strong>${escapeHtml(line.name || 'Produkt')}</strong>
+        ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
+        ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
+        ${line.comment ? `<small class="pos-order-note">${escapeHtml(line.comment)}</small>` : ''}
+      </div>
+      <b>${formatPrice(line.price)}</b>
+    </div>`;
+}
+
+function renderOrderDetail(orderId) {
+  const order = getOrders().find((entry) => entry.id === orderId);
+  if (!order) {
+    selectedOrderId = null;
+    el.orderDetailEmpty.hidden = false;
+    el.orderDetailLive.hidden = true;
+    el.orderDetailLive.innerHTML = '';
+    return;
+  }
+  selectedOrderId = order.id;
+  const shortId = String(order.id || '').slice(-8).toUpperCase();
+  const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
+  const isPending = order.status === 'mottatt';
+  const phone = String(order.phone || '').trim();
+  const tel = phone.replace(/[^+\d]/g, '');
+  const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'LEVERING' : 'HENTING';
+  const payment = String(store.settings?.paymentInfo || 'Ved henting').toUpperCase();
+  const actionHtml = isPending
+    ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">×</button>
+       <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">GODTA${estimated ? ` (${estimated} MIN)` : ''}</button>`
+    : order.status === 'avvist' || order.status === 'fullfort'
+      ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
+      : `<div class="pos-progress-actions">${ADMIN_ORDER_STATUSES.map((status) => `<button class="${status.id === order.status ? 'is-active' : ''}" data-detail-status="${escapeHtml(status.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}</div>`;
+
+  el.orderDetailEmpty.hidden = true;
+  el.orderDetailLive.hidden = false;
+  el.orderDetailLive.innerHTML = `
+    <article class="pos-order-detail">
+      <header class="pos-detail-top">
+        <div class="pos-detail-total">${formatPrice(order.total)}</div>
+        <div class="pos-detail-pills"><span>${escapeHtml(pickupType)}</span><span>${escapeHtml(payment)}</span></div>
       </header>
-      <div class="admin-order-customer">
-        <strong>${escapeHtml(order.customerName || '—')}</strong>
-        <span>${escapeHtml(order.phone || '—')}</span>
+      <div class="pos-detail-scroll">
+        <section class="pos-meta-block">
+          <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
+          <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
+          <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
+          ${estimated ? `<div><span>Forventet</span><strong>Ca. ${estimated} min</strong></div>` : ''}
+        </section>
+        <section class="pos-customer-block">
+          <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span>★ Kunde</span></div>
+          ${phone ? `<a class="pos-customer-phone" href="tel:${escapeHtml(tel)}">${escapeHtml(phone)}</a>` : ''}
+        </section>
+        <section class="pos-items-block">
+          <h3>Order items</h3>
+          <div class="pos-order-lines">${(order.lines || []).map(detailLineHtml).join('')}</div>
+          ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
+        </section>
+        <section class="pos-totals-block">
+          <div><span>Sub-total</span><strong>${formatPrice(order.subtotal ?? order.total)}</strong></div>
+          <div class="is-total"><span>Total</span><strong>${formatPrice(order.total)}</strong></div>
+        </section>
+        ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? `
+          <section class="pos-estimate-editor">
+            <div><strong>Forventet tid</strong><span>Kunden ser denne tiden live.</span></div>
+            <label><input data-detail-estimate type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
+            <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater</button>
+          </section>` : ''}
       </div>
-      <div class="admin-order-pickup"><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
-      <div class="admin-order-lines">
-        ${(order.lines || []).map((line) => `
-          <div class="admin-order-line">
-            <span class="admin-order-qty">${Number(line.quantity) || 1}×</span>
-            <div>
-              <strong>${escapeHtml(line.name || 'Produkt')}</strong>
-              ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
-              ${(line.options || []).length ? `<small>${line.options.map((opt) => escapeHtml(opt)).join(' · ')}</small>` : ''}
-              ${line.comment ? `<small class="admin-order-comment">«${escapeHtml(line.comment)}»</small>` : ''}
-            </div>
-            <b>${formatPrice(line.price)}</b>
-          </div>`).join('')}
-      </div>
-      <div class="admin-order-total"><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
-      <div class="admin-order-estimate">
-        <div class="admin-order-estimate-copy">
-          <strong>Forventet tid</strong>
-          <span>${estimated ? `Kunden ser ca. ${estimated} min` : 'Skriv tiden kunden skal se'}</span>
-        </div>
-        <div class="admin-order-estimate-control">
-          <input class="input" data-estimate-input="${escapeHtml(order.id)}" type="number" inputmode="numeric" min="1" max="180" step="1" value="${estimated || ''}" placeholder="10">
-          <span>min</span>
-          <button class="btn btn-primary btn-xs" data-save-estimate="${escapeHtml(order.id)}" type="button">Send tid</button>
-        </div>
-      </div>
-      <div class="admin-order-status-actions" role="group" aria-label="Endre status">
-        ${ADMIN_ORDER_STATUSES.map((status) => `<button class="admin-status-btn${status.id === order.status ? ' is-active' : ''}" data-set-list-status="${escapeHtml(status.id)}" data-order-id="${escapeHtml(order.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}
-      </div>
-      <button class="admin-order-detail-btn" data-order-detail="${escapeHtml(order.id)}" type="button">Se detaljer</button>
+      <footer class="pos-detail-actions">${actionHtml}</footer>
     </article>`;
 }
 
 function renderOrders() {
-  const orders = filteredOrders();
   const all = getOrders();
-  const newOrders = orders.filter((order) => order.status === 'mottatt');
-  const otherOrders = orders.filter((order) => order.status !== 'mottatt');
-  el.ordersSummary.textContent = `${all.length} bestillinger totalt · ${all.filter((order) => order.status === 'mottatt').length} nye venter`;
-  const sections = [];
-  if (newOrders.length) {
-    sections.push(`<section class="admin-order-section is-new-section"><div class="admin-order-section-head"><div><span class="admin-order-live-dot"></span><strong>Nye bestillinger</strong></div><span>${newOrders.length}</span></div><div class="admin-order-grid">${newOrders.map((order) => adminOrderCardHtml(order, true)).join('')}</div></section>`);
+  renderOrderTabs(all);
+  el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) => order.status === 'mottatt').length} nye`;
+  const visible = filteredOrders();
+  if (!selectedOrderId || !visible.some((order) => order.id === selectedOrderId)) {
+    selectedOrderId = visible.find((order) => order.status === 'mottatt')?.id || visible[0]?.id || null;
   }
-  if (otherOrders.length) {
-    sections.push(`<section class="admin-order-section"><div class="admin-order-section-head"><div><strong>${ui.orderFilter === 'active' ? 'Pågående bestillinger' : 'Bestillinger'}</strong></div><span>${otherOrders.length}</span></div><div class="admin-order-grid">${otherOrders.map((order) => adminOrderCardHtml(order, false)).join('')}</div></section>`);
+  renderOrderList();
+  if (selectedOrderId) renderOrderDetail(selectedOrderId);
+  else {
+    el.orderDetailEmpty.hidden = false;
+    el.orderDetailLive.hidden = true;
   }
-  el.orderList.innerHTML = sections.join('') || '<div class="empty-card"><strong>Ingen bestillinger</strong><p>Nye bestillinger fra kundesiden vises her automatisk.</p></div>';
-  if (openOrderId && !el.modalOrder.hidden) renderOrderDetail(openOrderId);
 }
 
-el.orderFilterBtns.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    ui.orderFilter = btn.dataset.orderFilter;
-    el.orderFilterBtns.forEach((entry) => {
-      entry.classList.toggle('is-active', entry === btn);
-    });
+el.orderFilterBtns.forEach((button) => {
+  button.addEventListener('click', () => {
+    ui.orderFilter = button.dataset.orderFilter;
+    selectedOrderId = null;
     renderOrders();
   });
 });
 
-el.orderList.addEventListener('change', async (event) => {
-  const select = event.target.closest('[data-status-select]');
-  if (!select) return;
-  const orderId = select.dataset.statusSelect;
-  const ok = await updateOrderStatus(orderId, select.value);
+el.orderList.addEventListener('click', (event) => {
+  const row = event.target.closest('[data-select-order]');
+  if (!row) return;
+  selectedOrderId = row.dataset.selectOrder;
   renderOrders();
-  renderStats();
-  toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
 });
 
-el.orderList.addEventListener('click', async (event) => {
-  const statusBtn = event.target.closest('[data-set-list-status]');
-  if (statusBtn) {
-    const ok = await updateOrderStatus(statusBtn.dataset.orderId, statusBtn.dataset.setListStatus);
+function openAcceptOrder(orderId) {
+  const order = getOrders().find((entry) => entry.id === orderId);
+  if (!order) return;
+  actionOrderId = order.id;
+  const shortId = String(order.id).slice(-6).toUpperCase();
+  el.acceptOrderTitle.textContent = `Godta #${shortId}`;
+  const minutes = Math.max(1, Number(order.estimatedMinutes) || 15);
+  el.acceptMinutes.value = String(minutes);
+  el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((button) => {
+    button.classList.toggle('is-active', Number(button.dataset.acceptMinutes) === minutes);
+  });
+  openModal(el.modalAcceptOrder);
+}
+
+function openRejectOrder(orderId) {
+  const order = getOrders().find((entry) => entry.id === orderId);
+  if (!order) return;
+  actionOrderId = order.id;
+  const shortId = String(order.id).slice(-6).toUpperCase();
+  el.rejectOrderTitle.textContent = `Avvis #${shortId}`;
+  const phone = String(order.phone || '').trim();
+  const tel = phone.replace(/[^+\d]/g, '');
+  el.rejectCallBtn.textContent = phone ? `Ring ${phone}` : 'Telefon mangler';
+  el.rejectCallBtn.href = phone ? `tel:${tel}` : '#';
+  el.rejectCallBtn.classList.toggle('is-disabled', !phone);
+  const defaultReason = el.rejectReasons.querySelector('input[value="Ingen spesifikk grunn"]');
+  if (defaultReason) defaultReason.checked = true;
+  el.rejectMessage.value = '';
+  openModal(el.modalRejectOrder);
+}
+
+el.orderDetailLive.addEventListener('click', async (event) => {
+  const accept = event.target.closest('[data-open-accept]');
+  if (accept) {
+    openAcceptOrder(accept.dataset.openAccept);
+    return;
+  }
+  const reject = event.target.closest('[data-open-reject]');
+  if (reject) {
+    openRejectOrder(reject.dataset.openReject);
+    return;
+  }
+  const status = event.target.closest('[data-detail-status]');
+  if (status && selectedOrderId) {
+    const ok = await updateOrderStatus(selectedOrderId, status.dataset.detailStatus);
     renderOrders();
     renderStats();
     toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
     return;
   }
-  const estimateBtn = event.target.closest('[data-save-estimate]');
-  if (estimateBtn) {
-    const orderId = estimateBtn.dataset.saveEstimate;
-    const card = estimateBtn.closest('[data-order]');
-    const input = card?.querySelector('[data-estimate-input]');
+  const saveEstimate = event.target.closest('[data-save-detail-estimate]');
+  if (saveEstimate) {
+    const input = el.orderDetailLive.querySelector('[data-detail-estimate]');
     const minutes = Math.max(0, Math.min(180, Math.round(Number(input?.value) || 0)));
     if (!minutes) {
       toast('Skriv antall minutter først.');
-      if (input) input.focus();
+      input?.focus();
       return;
     }
-    const ok = await updateOrderEstimate(orderId, minutes);
+    const ok = await updateOrderEstimate(saveEstimate.dataset.saveDetailEstimate, minutes);
     renderOrders();
     toast(ok ? `Ca. ${minutes} min er sendt til kunden.` : 'Kunne ikke sende tiden.');
-    return;
   }
-  const detail = event.target.closest('[data-order-detail]');
-  if (!detail) return;
-  openOrderId = detail.dataset.orderDetail;
-  renderOrderDetail(openOrderId);
-  openModal(el.modalOrder);
 });
 
-el.orderList.addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter' || !event.target.matches('[data-estimate-input]')) return;
-  event.preventDefault();
-  event.target.closest('[data-order]')?.querySelector('[data-save-estimate]')?.click();
+el.acceptQuickTimes.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-accept-minutes]');
+  if (!button) return;
+  const minutes = Number(button.dataset.acceptMinutes) || 15;
+  el.acceptMinutes.value = String(minutes);
+  el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((entry) => entry.classList.toggle('is-active', entry === button));
 });
 
-function renderOrderDetail(orderId) {
-  const order = getOrders().find((entry) => entry.id === orderId);
-  if (!order) {
-    closeModals();
+el.acceptMinutes.addEventListener('input', () => {
+  const minutes = Number(el.acceptMinutes.value) || 0;
+  el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((button) => {
+    button.classList.toggle('is-active', Number(button.dataset.acceptMinutes) === minutes);
+  });
+});
+
+el.btnAcceptConfirm.addEventListener('click', async () => {
+  if (!actionOrderId) return;
+  const minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
+  if (!minutes) {
+    toast('Velg eller skriv minutter.');
+    el.acceptMinutes.focus();
     return;
   }
-  el.orderTitle.textContent = `Bestilling #${order.id.slice(-6).toUpperCase()}`;
-  el.orderBody.innerHTML = `
-    <div class="detail-grid">
-      <div><span>Kunde</span><strong>${escapeHtml(order.customerName || '—')}</strong></div>
-      <div><span>Telefon</span><strong>${escapeHtml(order.phone || '—')}</strong></div>
-      <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-      <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
-      <div><span>Forventet tid</span><strong>${Number(order.estimatedMinutes) > 0 ? `Ca. ${Number(order.estimatedMinutes)} min` : '—'}</strong></div>
-      <div><span>Status</span><strong>${escapeHtml(
-        orderStatusLabel(order.status)
-      )}</strong></div>
-      <div><span>Type</span><strong>${escapeHtml(order.type || 'henting')}</strong></div>
-    </div>
-    ${
-      order.comment
-        ? `<p class="detail-comment">Melding fra kunden: «${escapeHtml(order.comment)}»</p>`
-        : ''
-    }
-    <h3 class="detail-title">Varer</h3>
-    <div class="detail-lines">
-      ${(order.lines || [])
-        .map(
-          (line) => `
-        <div class="detail-line">
-          <span class="dl-qty">${line.quantity}×</span>
-          <span class="dl-body">
-            <strong>${escapeHtml(line.name)}</strong>
-            ${line.size ? `<small>Størrelse: ${escapeHtml(line.size)}</small>` : ''}
-            ${
-              (line.options || []).length
-                ? `<small>${line.options.map((opt) => escapeHtml(opt)).join(' · ')}</small>`
-                : ''
-            }
-            ${line.comment ? `<small>«${escapeHtml(line.comment)}»</small>` : ''}
-          </span>
-          <span class="dl-price">${formatPrice(line.price)}</span>
-        </div>`
-        )
-        .join('')}
-    </div>
-    <div class="detail-sum">
-      <div><span>Delsum</span><strong>${formatPrice(order.subtotal)}</strong></div>
-      <div class="is-total"><span>Totalt</span><strong>${formatPrice(
-        order.total
-      )}</strong></div>
-    </div>
-    <div class="detail-actions">
-      ${ADMIN_ORDER_STATUSES.map(
-        (status) =>
-          `<button class="btn ${
-            status.id === order.status ? 'btn-primary' : 'btn-outline'
-          } btn-xs" data-set-status="${escapeHtml(status.id)}" type="button">${escapeHtml(
-            status.label
-          )}</button>`
-      ).join('')}
-    </div>`;
-}
-
-el.orderBody.addEventListener('click', async (event) => {
-  const btn = event.target.closest('[data-set-status]');
-  if (!btn || !openOrderId) return;
-  const ok = await updateOrderStatus(openOrderId, btn.dataset.setStatus);
-  renderOrderDetail(openOrderId);
+  el.btnAcceptConfirm.disabled = true;
+  const timeOk = await updateOrderEstimate(actionOrderId, minutes);
+  const statusOk = timeOk ? await updateOrderStatus(actionOrderId, 'bekreftet') : false;
+  el.btnAcceptConfirm.disabled = false;
+  if (!statusOk) {
+    toast('Kunne ikke godta bestillingen.');
+    return;
+  }
+  selectedOrderId = actionOrderId;
+  closeModals();
   renderOrders();
   renderStats();
-  toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
+  toast(`Bestillingen er godtatt · ca. ${minutes} min.`);
+});
+
+el.btnRejectConfirm.addEventListener('click', async () => {
+  if (!actionOrderId) return;
+  const reason = el.rejectReasons.querySelector('input[name="rejectReason"]:checked')?.value || 'Ingen spesifikk grunn';
+  const message = el.rejectMessage.value.trim();
+  el.btnRejectConfirm.disabled = true;
+  const ok = await rejectOrder(actionOrderId, reason, message);
+  el.btnRejectConfirm.disabled = false;
+  if (!ok) {
+    toast('Kunne ikke avvise bestillingen.');
+    return;
+  }
+  selectedOrderId = null;
+  closeModals();
+  renderOrders();
+  renderStats();
+  toast('Bestillingen er avvist.');
 });
 
 el.btnRefreshOrders.addEventListener('click', async () => {
@@ -1640,6 +1786,15 @@ el.btnRefreshOrders.addEventListener('click', async () => {
   renderAll();
   toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
 });
+
+function refreshOrderClocks() {
+  if (ui.page !== 'orders') return;
+  document.querySelectorAll('[data-order-clock]').forEach((node) => {
+    const order = getOrders().find((entry) => entry.id === node.dataset.orderClock);
+    if (!order) return;
+    node.textContent = order.status === 'mottatt' ? orderElapsed(order) : (orderCountdown(order) || formatPrice(order.total));
+  });
+}
 
 /* ------------------------------------------------------------------ *
  * Restaurantinnstillinger
@@ -1787,6 +1942,8 @@ function closeModals() {
     el.modalEditor,
     el.modalCategory,
     el.modalOrder,
+    el.modalAcceptOrder,
+    el.modalRejectOrder,
     el.modalConfirm,
   ].forEach((node) => {
     node.hidden = true;
@@ -1794,6 +1951,7 @@ function closeModals() {
   document.body.style.overflow = '';
   attachTargetItemId = null;
   openOrderId = null;
+  actionOrderId = null;
 }
 
 document.addEventListener('click', (event) => {
@@ -1858,4 +2016,5 @@ setInterval(() => {
   if (ui.page === 'settings') renderSettingsPreviewOnly();
 }, 5000);
 
+setInterval(refreshOrderClocks, 1000);
 renderAll();

@@ -995,6 +995,43 @@ export async function updateOrderEstimate(orderId, minutes) {
   }
 }
 
+
+/** Avviser en ordre og lagrer årsaken. */
+export async function rejectOrder(orderId, reason = '', message = '') {
+  const order = store.orders.find((entry) => entry.id === orderId);
+  if (!order) return false;
+  const previous = {
+    status: order.status,
+    statusUpdatedAt: order.statusUpdatedAt,
+    rejectionReason: order.rejectionReason,
+    rejectionMessage: order.rejectionMessage,
+  };
+  order.status = 'avvist';
+  order.statusUpdatedAt = Date.now();
+  order.rejectionReason = String(reason || 'Ingen spesifikk grunn');
+  order.rejectionMessage = String(message || '').trim();
+  emitData('local');
+  setSaveState('saving');
+  try {
+    if (remoteEnabled) {
+      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+        status: order.status,
+        statusUpdatedAt: order.statusUpdatedAt,
+        rejectionReason: order.rejectionReason,
+        rejectionMessage: order.rejectionMessage,
+      });
+      remoteOnline = true;
+    }
+    setSaveState('saved');
+    return true;
+  } catch (err) {
+    Object.assign(order, previous);
+    emitData('local');
+    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+    return false;
+  }
+}
+
 /** Alle ordre, nyeste først. */
 export function getOrders() {
   return store.orders || [];

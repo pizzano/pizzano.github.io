@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-orders2">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-orderspro1">
 </head>
 
 <body>
@@ -107,28 +107,35 @@
                 </div>
             </section>
 
-            <section class="page" id="pageOrders" hidden>
-                <header class="page-head">
-                    <div class="page-title">
+            <section class="page orders-page" id="pageOrders" hidden>
+                <header class="orders-topbar">
+                    <div class="orders-title-block">
                         <h1>Bestillinger</h1>
                         <p id="ordersSummary">—</p>
                     </div>
-                    <div class="page-tools">
-                        <div class="filter-group" role="group" aria-label="Filtrer bestillinger">
-                            <button class="filter-btn is-active" data-order-filter="active" type="button">Aktive</button>
-                            <button class="filter-btn" data-order-filter="all" type="button">Alle</button>
-                            <button class="filter-btn" data-order-filter="mottatt" type="button">Mottatt</button>
-                            <button class="filter-btn" data-order-filter="bekreftet" type="button">Bekreftet</button>
-                            <button class="filter-btn" data-order-filter="tilberedning" type="button">Tilberedes</button>
-                            <button class="filter-btn" data-order-filter="klar" type="button">Klar</button>
-                            <button class="filter-btn" data-order-filter="fullfort" type="button">Ferdig</button>
-                        </div>
+                    <div class="orders-top-actions">
+                        <span class="orders-live-label"><i></i> Live</span>
                         <button class="btn btn-outline btn-sm" id="btnRefreshOrders" type="button">Oppdater</button>
                     </div>
                 </header>
-                <div class="stat-row" id="orderStatRow"></div>
-                <div class="scroll-area" id="orderArea">
-                    <div id="orderList" class="order-list"></div>
+                <div id="orderStatRow" hidden></div>
+                <div class="orders-app">
+                    <aside class="orders-inbox" aria-label="Bestillingsliste">
+                        <nav class="orders-tabs" aria-label="Filtrer bestillinger">
+                            <button class="orders-tab is-active" data-order-filter="all" type="button">Alle</button>
+                            <button class="orders-tab" data-order-filter="active" type="button">Pågår</button>
+                            <button class="orders-tab" data-order-filter="klar" type="button">Klar</button>
+                        </nav>
+                        <div id="orderList" class="orders-list"></div>
+                    </aside>
+                    <section class="order-detail-pane" id="orderDetailPane" aria-label="Bestillingsdetaljer">
+                        <div class="order-detail-empty" id="orderDetailEmpty">
+                            <div class="order-detail-empty-icon">↗</div>
+                            <strong>Velg en bestilling</strong>
+                            <p>Trykk på en bestilling til venstre for å se varer og håndtere den.</p>
+                        </div>
+                        <div class="order-detail-live" id="orderDetailLive" hidden></div>
+                    </section>
                 </div>
             </section>
 
@@ -476,6 +483,56 @@
         </footer>
     </div>
 
+
+    <div class="modal modal-order-action modal-accept-order" id="modalAcceptOrder" role="dialog" aria-modal="true" aria-label="Godta bestilling" hidden>
+        <header class="modal-head order-action-head">
+            <button class="order-action-back" data-close-modal type="button" aria-label="Tilbake">←</button>
+            <h2 id="acceptOrderTitle">Godta bestilling</h2>
+        </header>
+        <div class="modal-body order-action-body">
+            <span class="order-action-eyebrow">FORVENTET TID</span>
+            <p class="order-action-lead">Velg hvor mange minutter kunden skal se.</p>
+            <div class="accept-quick-times" id="acceptQuickTimes">
+                <button type="button" data-accept-minutes="10">10 min</button>
+                <button type="button" data-accept-minutes="15" class="is-active">15 min</button>
+                <button type="button" data-accept-minutes="20">20 min</button>
+                <button type="button" data-accept-minutes="30">30 min</button>
+            </div>
+            <label class="accept-manual-time">
+                <span>Manuelt</span>
+                <span class="accept-manual-control"><input id="acceptMinutes" type="number" min="1" max="180" step="1" value="15" inputmode="numeric"><b>min</b></span>
+            </label>
+        </div>
+        <footer class="modal-foot order-action-foot">
+            <button class="order-accept-confirm" id="btnAcceptConfirm" type="button">Godta bestilling</button>
+        </footer>
+    </div>
+
+    <div class="modal modal-order-action modal-reject-order" id="modalRejectOrder" role="dialog" aria-modal="true" aria-label="Avvis bestilling" hidden>
+        <header class="modal-head order-action-head">
+            <button class="order-action-back" data-close-modal type="button" aria-label="Tilbake">←</button>
+            <h2 id="rejectOrderTitle">Avvis bestilling</h2>
+        </header>
+        <div class="modal-body order-action-body">
+            <div class="reject-call-card">
+                <p>Vi anbefaler å ringe kunden først hvis problemet kan løses raskt.</p>
+                <a id="rejectCallBtn" href="#">Ring kunden</a>
+            </div>
+            <span class="order-action-eyebrow">VELG ÅRSAK</span>
+            <div class="reject-reasons" id="rejectReasons">
+                <label><input type="radio" name="rejectReason" value="Ingen spesifikk grunn" checked><span>Ingen spesifikk grunn</span></label>
+                <label><input type="radio" name="rejectReason" value="Vi har det travelt"><span>Vi har det travelt</span></label>
+                <label><input type="radio" name="rejectReason" value="Utsolgt"><span>Utsolgt</span></label>
+                <label><input type="radio" name="rejectReason" value="Kan ikke levere"><span>Kan ikke levere</span></label>
+                <label><input type="radio" name="rejectReason" value="Egendefinert melding"><span>Egendefinert melding</span></label>
+            </div>
+            <textarea id="rejectMessage" class="reject-message" rows="3" placeholder="Valgfri melding / intern kommentar"></textarea>
+        </div>
+        <footer class="modal-foot order-action-foot">
+            <button class="order-reject-confirm" id="btnRejectConfirm" type="button">Avvis bestilling</button>
+        </footer>
+    </div>
+
     <div class="modal modal-confirm" id="modalConfirm" role="dialog" aria-modal="true" aria-label="Bekreft" hidden>
         <header class="modal-head">
             <h2 id="confirmTitle">Bekreft</h2>
@@ -491,7 +548,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260914-1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260915-orderspro1"></script>
 </body>
 
 </html>
