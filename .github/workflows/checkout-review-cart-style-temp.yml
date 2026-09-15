@@ -11,271 +11,288 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply checkout review redesign
+      - name: Polish checkout review on mobile
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
+          cat >> demo/css/customer.css <<'CSS'
 
-          js_path = Path('demo/js/customer.js')
-          js = js_path.read_text(encoding='utf-8')
-          start = js.index("  const reviewLines = cart.map((line) => cartLineHtml(line, true)).join('');")
-          end = js.index("  if (ui.checkoutStep === 3) {", start)
-          block = r'''  const reviewCount = cartCount();
-          const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
-          const reviewItems = cart.map((line) => {
-            const { item } = findItem(line.itemId);
-            if (!item) return '';
-            const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
-            const optionIds = Object.values(line.selections || {}).flat();
-            const linePrice = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
-            const addons = describeSelection(optionIds);
-            const addonGroups = addons.reduce((groups, addon) => {
-              let group = groups.find((entry) => entry.title === addon.groupTitle);
-              if (!group) {
-                group = { title: addon.groupTitle || 'Tilvalg', items: [] };
-                groups.push(group);
-              }
-              group.items.push(addon);
-              return groups;
-            }, []);
-            return `
-              <article class="checkout-review-item">
-                <div class="checkout-review-item-top">
-                  <span class="checkout-review-item-qty">${line.quantity}×</span>
-                  <div class="checkout-review-item-main">
-                    <strong class="checkout-review-item-name">${escapeHtml(item.name)}</strong>
-                    ${size ? `<div class="checkout-review-item-row"><span>Størrelse</span><b>${escapeHtml(size.label)}</b><em>${formatPrice(getSizePrice(item, line.sizeId))}</em></div>` : ''}
-                  </div>
-                  <strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
-                </div>
-                ${addonGroups.map((group) => `
-                  <div class="checkout-review-addon-group">
-                    <span class="checkout-review-addon-title">${escapeHtml(group.title)}</span>
-                    ${group.items.map((addon) => `
-                      <div class="checkout-review-addon-row">
-                        <span>• ${escapeHtml(addon.label)}</span>
-                        ${addon.price > 0 ? `<strong>+${formatPrice(addon.price)}</strong>` : '<strong>Inkludert</strong>'}
-                      </div>`).join('')}
-                  </div>`).join('')}
-                ${line.comment ? `<div class="checkout-review-comment">${escapeHtml(line.comment)}</div>` : ''}
-              </article>`;
-          }).join('');
-
-          el.reviewCard.innerHTML = `
-            <div class="checkout-review-head">
-              <div><span>Kontroller bestillingen</span><strong>Din bestilling</strong></div>
-              <button class="link-btn" data-review-cart type="button">Endre kurv</button>
-            </div>
-            <details class="checkout-review-toggle">
-              <summary class="checkout-review-summary">
-                <strong class="checkout-review-count">${escapeHtml(reviewLabel)}</strong>
-                <span class="checkout-review-summary-action" aria-hidden="true"></span>
-              </summary>
-              <div class="checkout-review-details">
-                <div class="checkout-review-items">${reviewItems}</div>
-                <div class="checkout-review-info">
-                  <h4>Din informasjon</h4>
-                  <div class="checkout-review-info-row"><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-                  <div class="checkout-review-info-row"><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
-                  <div class="checkout-review-info-row"><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
-                  <div class="checkout-review-info-row is-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
-                </div>
-              </div>
-            </details>`;
-'''
-          js = js[:start] + block + js[end:]
-          js_path.write_text(js, encoding='utf-8')
-
-          css_path = Path('demo/css/customer.css')
-          css = css_path.read_text(encoding='utf-8')
-          marker = '/* Checkout review cart-style polish 2026-09-15 */'
-          css_block = r'''
-
-/* Checkout review cart-style polish 2026-09-15 */
-.checkout-review-summary{
-  min-height:56px;
-  padding:0 16px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:16px!important;
+/* Checkout review cart-like final polish 2026-09-15 */
+.checkout-review-summary {
+  min-height: 54px !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
 }
-.checkout-review-count{
-  color:var(--ink);
-  font-size:13px;
-  line-height:1;
-  font-weight:700;
+.checkout-review-summary-main {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
 }
-.checkout-review-summary-action::after{
-  content:'Vis mer';
-  font-size:12px;
-  font-weight:700;
+.checkout-review-summary-main > span {
+  display: none !important;
 }
-.checkout-review-toggle[open] .checkout-review-summary-action::after{content:'Skjul'}
-.checkout-review-details{padding:0;background:#f7f7f6}
-.checkout-review-items{display:grid;gap:10px;padding:12px}
-.checkout-review-item{
-  width:100%;
-  min-width:0;
-  padding:12px;
-  border:1px solid #eee9e4;
-  border-radius:14px;
-  background:#fff;
-  box-shadow:0 2px 8px rgba(28,24,20,.04);
+.checkout-review-summary-main > strong {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
 }
-.checkout-review-item-top{
-  display:grid;
-  grid-template-columns:32px minmax(0,1fr) auto;
-  align-items:start;
-  gap:10px;
+.checkout-review-summary-action {
+  margin-left: auto !important;
+  white-space: nowrap !important;
 }
-.checkout-review-item-qty{
-  width:32px;
-  height:32px;
-  display:grid;
-  place-items:center;
-  border-radius:9px;
-  background:var(--accent-soft);
-  color:var(--accent-dark);
-  font-size:11.5px;
-  font-weight:700;
+.checkout-review-summary-action::after {
+  font-size: 12px !important;
+  font-weight: 700 !important;
 }
-.checkout-review-item-main{min-width:0}
-.checkout-review-item-name{
-  display:block;
-  margin:1px 0 7px;
-  color:var(--ink);
-  font-size:13px;
-  line-height:1.25;
-  font-weight:700;
-  overflow-wrap:anywhere;
+.checkout-review-details {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #f7f7f6 !important;
 }
-.checkout-review-item-total{
-  padding-top:1px;
-  color:var(--ink);
-  font-size:13px;
-  line-height:1.25;
-  font-weight:700;
-  white-space:nowrap;
+.checkout-review-lines {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 10px !important;
 }
-.checkout-review-item-row{
-  display:grid;
-  grid-template-columns:66px minmax(0,1fr) auto;
-  align-items:center;
-  gap:7px;
-  color:var(--ink-2);
-  font-size:11px;
+.checkout-review-lines .cart-line {
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) auto !important;
+  grid-template-rows: auto !important;
+  align-items: start !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 11px !important;
+  border: 1px solid #eee9e4 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(28, 24, 20, .04) !important;
 }
-.checkout-review-item-row b{color:var(--ink);font-size:11.5px;font-weight:650}
-.checkout-review-item-row em{font-style:normal;color:var(--ink-2);white-space:nowrap}
-.checkout-review-addon-group{
-  margin:10px 0 0 42px;
-  padding-top:8px;
-  border-top:1px dashed var(--line);
+.checkout-review-lines .cart-line:last-child {
+  border-bottom: 1px solid #eee9e4 !important;
 }
-.checkout-review-addon-title{
-  display:block;
-  margin-bottom:4px;
-  color:var(--ink-3);
-  font-size:10px;
-  line-height:1.2;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.03em;
+.checkout-review-lines .line-qty {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 9px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
 }
-.checkout-review-addon-row{
-  min-width:0;
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  padding:2px 0;
-  color:var(--ink-2);
-  font-size:11px;
-  line-height:1.35;
+.checkout-review-lines .line-body {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
 }
-.checkout-review-addon-row span{min-width:0;overflow-wrap:anywhere}
-.checkout-review-addon-row strong{flex:none;color:var(--ink);font-size:11px;font-weight:650;white-space:nowrap}
-.checkout-review-comment{
-  margin:9px 0 0 42px;
-  padding:8px 10px;
-  border-radius:9px;
-  background:#f7f7f6;
-  color:var(--ink-2);
-  font-size:10.5px;
-  line-height:1.4;
+.checkout-review-lines .line-name {
+  margin: 1px 0 7px !important;
+  color: var(--ink) !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
 }
-.checkout-review-info{
-  margin:0 12px 12px;
-  padding:12px 14px 4px;
-  border:1px solid #eee9e4;
-  border-radius:14px;
-  background:#fff;
+.checkout-review-lines .line-details {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  font-size: 10.5px !important;
 }
-.checkout-review-info h4{
-  margin:0 0 5px;
-  color:var(--ink);
-  font-size:13px;
-  font-weight:700;
+.checkout-review-lines .line-size {
+  display: grid !important;
+  grid-template-columns: 60px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
-.checkout-review-info-row{
-  min-height:38px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  padding:8px 0;
-  border-bottom:1px solid var(--line);
-  color:var(--ink-2);
-  font-size:11.5px;
+.checkout-review-lines .line-size > span,
+.checkout-review-lines .line-size > strong {
+  min-width: 0 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
 }
-.checkout-review-info-row:last-child{border-bottom:0}
-.checkout-review-info-row strong{
-  min-width:0;
-  color:var(--ink);
-  font-size:12px;
-  line-height:1.35;
-  font-weight:650;
-  text-align:right;
-  overflow-wrap:anywhere;
+.checkout-review-lines .line-size strong {
+  color: var(--ink) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
 }
-.checkout-review-info-row.is-total{margin-top:3px;min-height:44px;color:var(--ink);font-size:12.5px;font-weight:700}
-.checkout-review-info-row.is-total strong{font-size:14px;font-weight:750}
-@media(max-width:520px){
-  .checkout-review-summary{min-height:54px;padding:0 14px!important}
-  .checkout-review-items{gap:8px;padding:10px}
-  .checkout-review-item{padding:11px}
-  .checkout-review-item-top{grid-template-columns:30px minmax(0,1fr) auto;gap:9px}
-  .checkout-review-item-qty{width:30px;height:30px;font-size:11px}
-  .checkout-review-item-name{font-size:12.5px}
-  .checkout-review-item-total{font-size:12.5px}
-  .checkout-review-item-row{grid-template-columns:60px minmax(0,1fr) auto;font-size:10.5px}
-  .checkout-review-item-row b{font-size:11px}
-  .checkout-review-addon-group,.checkout-review-comment{margin-left:39px}
-  .checkout-review-info{margin:0 10px 10px;padding:11px 12px 3px}
-  .checkout-review-info-row{min-height:36px;font-size:11px}
-  .checkout-review-info-row strong{font-size:11.5px}
+.checkout-review-lines .line-addon-group {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 4px !important;
+  min-width: 0 !important;
 }
-'''
-          if marker not in css:
-              css_path.write_text(css.rstrip()+css_block+'\n',encoding='utf-8')
-
-          index_path = Path('demo/index.html')
-          index = index_path.read_text(encoding='utf-8')
-          index = re.sub(r'/demo/css/customer\.css\?v=[^\"\']+', '/demo/css/customer.css?v=20260915-food4', index)
-          index_path.write_text(index, encoding='utf-8')
-
-          sw_path = Path('demo/service-worker.js')
-          sw = sw_path.read_text(encoding='utf-8')
-          sw = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v36';", sw)
-          sw_path.write_text(sw, encoding='utf-8')
-          PY
+.checkout-review-lines .line-detail-label {
+  color: var(--ink-3) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+.checkout-review-lines .line-addon-list {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 3px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+.checkout-review-lines .line-addon-list li {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  color: var(--ink-2) !important;
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
+}
+.checkout-review-lines .line-addon-list li span {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+.checkout-review-lines .line-addon-list li strong {
+  flex: none !important;
+  color: var(--ink) !important;
+  font-size: 10.5px !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+}
+.checkout-review-lines .line-comment {
+  margin: 7px 0 0 !important;
+  padding: 7px 9px !important;
+  border-radius: 8px !important;
+  background: #f7f7f6 !important;
+  color: var(--ink-2) !important;
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
+  font-weight: 500 !important;
+}
+.checkout-review-lines .line-right {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  width: auto !important;
+  min-width: max-content !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.checkout-review-lines .line-price {
+  margin: 1px 0 0 !important;
+  color: var(--ink) !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+.checkout-review-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 10px 10px !important;
+  padding: 11px 12px 3px !important;
+  border: 1px solid #eee9e4 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+.checkout-review-meta::before {
+  padding: 0 0 5px !important;
+  color: var(--ink) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+}
+.checkout-review-meta > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 36px !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+.checkout-review-meta > div:last-child {
+  border-bottom: 0 !important;
+}
+.checkout-review-meta > div > span {
+  flex: 0 0 auto !important;
+  min-width: 72px !important;
+}
+.checkout-review-meta > div > strong {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  color: var(--ink) !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+  font-weight: 650 !important;
+  text-align: right !important;
+  overflow-wrap: anywhere !important;
+}
+.checkout-review-total {
+  margin-top: 2px !important;
+  padding-top: 9px !important;
+}
+.checkout-review-total > span {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+.checkout-review-total > strong {
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 360px) {
+  .checkout-review-lines .cart-line {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+  }
+  .checkout-review-lines .line-qty {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+  }
+  .checkout-review-lines .line-right {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-content: flex-start !important;
+    margin-top: 4px !important;
+  }
+}
+CSS
+          sed -i -E 's#(/demo/css/customer\.css\?v=)[^" ]+#\1v20260915-food4#' demo/index.html || true
+          sed -i "s/const CACHE_NAME = 'kol-demo-v35';/const CACHE_NAME = 'kol-demo-v36';/" demo/service-worker.js
       - name: Commit and cleanup
         run: |
           git config user.name 'KOL Deploy Bot'
           git config user.email 'actions@users.noreply.github.com'
           rm .github/workflows/checkout-review-cart-style-temp.yml
-          git add demo/js/customer.js demo/css/customer.css demo/index.html demo/service-worker.js .github/workflows/checkout-review-cart-style-temp.yml
-          git commit -m 'Match checkout review details to cart style'
+          git add demo/css/customer.css demo/index.html demo/service-worker.js .github/workflows/checkout-review-cart-style-temp.yml
+          git commit -m 'Polish checkout review details like cart'
           git push origin HEAD:main
