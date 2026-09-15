@@ -495,6 +495,9 @@ function normalizeOrders(raw) {
           ? order.status
           : 'mottatt',
         statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
+        estimatedMinutes: Number(order.estimatedMinutes) > 0 ? Number(order.estimatedMinutes) : null,
+        estimatedAt: Number(order.estimatedAt) || null,
+        estimatedReadyAt: Number(order.estimatedReadyAt) || null,
         subtotal: Number(order.subtotal) || 0,
         total: Number(order.total) || 0,
         lines: asArray(order.lines).map((line) => ({

@@ -35,7 +35,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js';
+} from './data.js?v=20260915-timerfix2';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -1596,6 +1596,7 @@ function renderOrderDetail(orderId) {
   const shortId = String(order.id || '').slice(-8).toUpperCase();
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const countdown = orderCountdown(order);
+  const hasCountdown = Number(order.estimatedReadyAt) > 0;
   const isPending = order.status === 'mottatt';
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
@@ -1624,8 +1625,8 @@ function renderOrderDetail(orderId) {
           <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
           <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-          ${estimated && !isPending ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>
-          <div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
+          ${!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : ''}
+          ${!isPending && hasCountdown ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
         </section>
         <section class="pos-customer-block">
           <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span>★ Kunde</span></div>
@@ -1792,11 +1793,16 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
     toast('Kunne ikke godta bestillingen.');
     return;
   }
-  selectedOrderId = null;
+  selectedOrderId = acceptedOrderId;
   closeModals();
   renderOrders();
   renderStats();
   toast(`Bestillingen er godtatt · ${minutes} min.`);
+  window.setTimeout(() => {
+    if (selectedOrderId !== acceptedOrderId) return;
+    selectedOrderId = null;
+    renderOrders();
+  }, 1000);
 });
 
 el.btnRejectConfirm.addEventListener('click', async () => {
