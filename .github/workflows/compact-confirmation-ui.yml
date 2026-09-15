@@ -1,0 +1,23 @@
+name: Compact confirmation UI
+on:
+  push:
+    branches:
+      - fix/compact-confirmation-20260915
+    paths:
+      - .github/workflows/compact-confirmation-ui.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply compact confirmation patch
+        run: python3 .github/scripts/compact-confirmation-ui.py
+      - name: Commit patched demo
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add demo/index.html demo/js/customer.js demo/css/customer.css
+          git commit -m 'Compact customer confirmation and hide send footer' || exit 0
+          git push origin HEAD:fix/compact-confirmation-20260915
