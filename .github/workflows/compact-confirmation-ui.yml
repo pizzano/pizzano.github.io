@@ -5,6 +5,7 @@ on:
       - fix/compact-confirmation-20260915
     paths:
       - .github/workflows/compact-confirmation-ui.yml
+      - .github/scripts/compact-confirmation-ui.py
 permissions:
   contents: write
 jobs:
