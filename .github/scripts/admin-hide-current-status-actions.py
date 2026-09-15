@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 JS = Path('demo/js/admin.js')
 CSS = Path('demo/css/admin.css')
@@ -8,36 +9,25 @@ js = JS.read_text(encoding='utf-8')
 css = CSS.read_text(encoding='utf-8')
 html = HTML.read_text(encoding='utf-8')
 
-old_actions = r'''  const actionHtml = isPending
-    ? `<button class=\"pos-reject-btn\" data-open-reject=\"${escapeHtml(order.id)}\" type=\"button\" aria-label=\"Avvis bestilling\">×</button>
-       <button class=\"pos-accept-btn\" data-open-accept=\"${escapeHtml(order.id)}\" type=\"button\">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
-    : order.status === 'avvist' || order.status === 'fullfort'
-      ? `<div class=\"pos-closed-status\">${escapeHtml(orderStatusLabel(order.status))}</div>`
-      : `<div class=\"pos-progress-actions\">${ADMIN_ORDER_STATUSES.map((status) => `<button class=\"${status.id === (order.status === 'tilberedning' ? 'bekreftet' : order.status) ? 'is-active' : ''}\" data-detail-status=\"${escapeHtml(status.id)}\" type=\"button\">${escapeHtml(status.label)}</button>`).join('')}</div>`;'''
-
 new_actions = r'''  const effectiveStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
   const actionHtml = isPending
-    ? `<button class=\"pos-reject-btn\" data-open-reject=\"${escapeHtml(order.id)}\" type=\"button\" aria-label=\"Avvis bestilling\">×</button>
-       <button class=\"pos-accept-btn\" data-open-accept=\"${escapeHtml(order.id)}\" type=\"button\">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
+    ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">×</button>
+       <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
     : order.status === 'avvist' || order.status === 'fullfort'
-      ? `<div class=\"pos-closed-status\">${escapeHtml(orderStatusLabel(order.status))}</div>`
+      ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
       : effectiveStatus === 'bekreftet'
-        ? `<div class=\"pos-progress-actions\"><button data-detail-status=\"klar\" type=\"button\">Klar for henting</button></div>`
-        : '';'''
+        ? `<div class="pos-progress-actions"><button data-detail-status="klar" type="button">Klar for henting</button></div>`
+        : '';
 
-if old_actions not in js:
+  el.orderDetailEmpty.hidden = true;'''
+
+action_pattern = re.compile(
+    r"  const actionHtml = isPending\n.*?;\n\n  el\.orderDetailEmpty\.hidden = true;",
+    re.S,
+)
+js, count = action_pattern.subn(new_actions, js, count=1)
+if count != 1:
     raise SystemExit('order action block not found')
-js = js.replace(old_actions, new_actions, 1)
-
-old_handler = r'''  const status = event.target.closest('[data-detail-status]');
-  if (status && selectedOrderId) {
-    const orderId = selectedOrderId;
-    const nextStatus = status.dataset.detailStatus;
-    const ok = await updateOrderStatus(orderId, nextStatus);
-    if (ok && nextStatus === 'klar') selectedOrderId = null;
-    renderOrders();
-    renderStats();
-    toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');'''
 
 new_handler = r'''  const status = event.target.closest('[data-detail-status]');
   if (status && selectedOrderId) {
@@ -58,11 +48,18 @@ new_handler = r'''  const status = event.target.closest('[data-detail-status]');
     if (ok) selectedOrderId = null;
     renderOrders();
     renderStats();
-    toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');'''
+    toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
+    return;
+  }
+  const saveEstimate = event.target.closest('[data-save-detail-estimate]');'''
 
-if old_handler not in js:
+handler_pattern = re.compile(
+    r"  const status = event\.target\.closest\('\[data-detail-status\]'\);\n.*?\n  const saveEstimate = event\.target\.closest\('\[data-save-detail-estimate\]'\);",
+    re.S,
+)
+js, count = handler_pattern.subn(new_handler, js, count=1)
+if count != 1:
     raise SystemExit('detail status handler not found')
-js = js.replace(old_handler, new_handler, 1)
 
 css_marker = '/* Single forward status action 2026-09-15 */'
 if css_marker not in css:
