@@ -1609,12 +1609,15 @@ function renderOrderDetail(orderId) {
   const tel = phone.replace(/[^+\d]/g, '');
   const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'LEVERING' : 'HENTING';
   const payment = String(store.settings?.paymentInfo || 'Ved henting').toUpperCase();
+  const effectiveStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
   const actionHtml = isPending
     ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">×</button>
        <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
     : order.status === 'avvist' || order.status === 'fullfort'
       ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
-      : `<div class="pos-progress-actions">${ADMIN_ORDER_STATUSES.map((status) => `<button class="${status.id === (order.status === 'tilberedning' ? 'bekreftet' : order.status) ? 'is-active' : ''}" data-detail-status="${escapeHtml(status.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}</div>`;
+      : effectiveStatus === 'bekreftet'
+        ? `<div class="pos-progress-actions"><button data-detail-status="klar" type="button">Klar for henting</button></div>`
+        : '';
 
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
@@ -1773,8 +1776,19 @@ el.orderDetailLive.addEventListener('click', async (event) => {
   if (status && selectedOrderId) {
     const orderId = selectedOrderId;
     const nextStatus = status.dataset.detailStatus;
+    const currentOrder = getOrders().find((entry) => entry.id === orderId);
+    const currentStatus = currentOrder?.status === 'tilberedning' ? 'bekreftet' : currentOrder?.status;
+
+    // Statusknappen er kun en fremoverhandling: Bekreftet -> Klar for henting.
+    // Hvis ordren allerede er klar (manuelt eller automatisk), ignoreres gamle/stale klikk.
+    if (currentStatus !== 'bekreftet' || nextStatus !== 'klar') {
+      renderOrders();
+      renderStats();
+      return;
+    }
+
     const ok = await updateOrderStatus(orderId, nextStatus);
-    if (ok && nextStatus === 'klar') selectedOrderId = null;
+    if (ok) selectedOrderId = null;
     renderOrders();
     renderStats();
     toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
