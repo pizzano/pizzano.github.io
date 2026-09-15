@@ -1629,3 +1629,17 @@ body.hide-settings-col .admin-shell { grid-template-columns: 236px minmax(0, 1fr
     white-space: normal;
   }
 }
+
+
+/* Atomic accept timer polish 2026-09-15 */
+.orders-app.is-list-only .orders-list-center {
+  font-size: clamp(15px, 1.35vw, 20px) !important;
+  font-weight: 750 !important;
+  letter-spacing: -.01em !important;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 900px) {
+  .orders-app.is-list-only .orders-list-center {
+    font-size: 15px !important;
+  }
+}

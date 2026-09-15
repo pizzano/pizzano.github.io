@@ -30,6 +30,7 @@ import {
   getOrders,
   updateOrderStatus,
   updateOrderEstimate,
+  acceptOrderWithEstimate,
   rejectOrder,
   refreshFromDatabase,
   ORDER_STATUSES,
@@ -65,7 +66,6 @@ let attachTargetItemId = null;
 let openOrderId = null;
 let selectedOrderId = null;
 let actionOrderId = null;
-let lastAutoOpenedPendingId = null;
 const autoReadyBusy = new Set();
 
 const $ = (id) => document.getElementById(id);
@@ -1500,14 +1500,16 @@ function orderCenterText(order) {
   if (order.status === 'mottatt') return 'Venter på svar';
   if (['bekreftet', 'tilberedning'].includes(order.status)) {
     const readyAt = Number(order.estimatedReadyAt) || 0;
+    const label = order.status === 'bekreftet' ? 'Godtatt' : 'Tilberedes';
     if (readyAt) {
       const remainingMs = readyAt - Date.now();
-      if (remainingMs <= 0) return 'Klar nå';
+      if (remainingMs <= 0) return `${label} · Klar nå`;
       const seconds = Math.ceil(remainingMs / 1000);
       const minutes = Math.floor(seconds / 60);
       const secs = seconds % 60;
-      return `${minutes} min. ${String(secs).padStart(2, '0')} sek.`;
+      return `${label} · ${minutes}:${String(secs).padStart(2, '0')} igjen`;
     }
+    return label;
   }
   return orderListStatus(order);
 }
@@ -1659,11 +1661,6 @@ function renderOrders() {
     selectedOrderId = null;
   }
 
-  const newestPending = visible.find((order) => order.status === 'mottatt');
-  if (newestPending && newestPending.id !== lastAutoOpenedPendingId) {
-    selectedOrderId = newestPending.id;
-    lastAutoOpenedPendingId = newestPending.id;
-  }
 
   renderOrderList();
   if (selectedOrderId) {
@@ -1725,7 +1722,6 @@ function openRejectOrder(orderId) {
 el.orderDetailLive.addEventListener('click', async (event) => {
   const closeDetail = event.target.closest('[data-close-order-detail]');
   if (closeDetail) {
-    if (selectedOrderId) lastAutoOpenedPendingId = selectedOrderId;
     selectedOrderId = null;
     renderOrders();
     return;
@@ -1783,7 +1779,6 @@ el.acceptMinutes.addEventListener('input', () => {
 
 el.btnAcceptConfirm.addEventListener('click', async () => {
   if (!actionOrderId) return;
-  const acceptedOrderId = actionOrderId;
   const minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
   if (!minutes) {
     toast('Velg eller skriv minutter.');
@@ -1791,19 +1786,17 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
     return;
   }
   el.btnAcceptConfirm.disabled = true;
-  const timeOk = await updateOrderEstimate(actionOrderId, minutes);
-  const statusOk = timeOk ? await updateOrderStatus(actionOrderId, 'bekreftet') : false;
+  const ok = await acceptOrderWithEstimate(actionOrderId, minutes);
   el.btnAcceptConfirm.disabled = false;
-  if (!statusOk) {
+  if (!ok) {
     toast('Kunne ikke godta bestillingen.');
     return;
   }
-  lastAutoOpenedPendingId = acceptedOrderId;
   selectedOrderId = null;
   closeModals();
   renderOrders();
   renderStats();
-  toast(`Bestillingen er godtatt · ca. ${minutes} min.`);
+  toast(`Bestillingen er godtatt · ${minutes} min.`);
 });
 
 el.btnRejectConfirm.addEventListener('click', async () => {

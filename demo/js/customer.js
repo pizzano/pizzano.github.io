@@ -372,6 +372,7 @@ function activeOrderCardHtml(order) {
   const shortId = String(order.id || '').slice(-6).toUpperCase();
   const readyNow = order.status === 'klar';
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
+  const hasLiveEstimate = estimated > 0 && Number(order.estimatedReadyAt) > 0 && ['bekreftet', 'tilberedning'].includes(order.status);
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
@@ -383,7 +384,7 @@ function activeOrderCardHtml(order) {
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}</div>
     </div>
     <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
-    ${estimated && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order) || `Ca. ${estimated} min`)}</strong><small>oppgitt av restauranten</small></div>` : ''}
+    ${hasLiveEstimate && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order) || `Ca. ${estimated} min`)}</strong><small>oppgitt av restauranten</small></div>` : ''}
     ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
     <div class="active-order-meta"><span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span><span><b>${formatPrice(order.total)}</b></span></div>
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
@@ -486,7 +487,7 @@ function refreshCustomerOrderCountdowns() {
     const order = byId.get(node.dataset.customerCountdown);
     if (!order) return;
     const countdown = customerOrderCountdown(order);
-    node.textContent = countdown || (Number(order.estimatedMinutes) > 0 ? `Ca. ${Number(order.estimatedMinutes)} min` : '');
+    node.textContent = countdown || '';
   });
 
   // Use the raw live order state for the transition. Presentation helpers must
