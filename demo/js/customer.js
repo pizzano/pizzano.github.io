@@ -338,49 +338,44 @@ function activeCustomerOrders() {
   const seen = readySeenIds();
   return mergedCustomerOrders().filter((order) => {
     if (!order?.id || order.status === 'fullfort' || order.status === 'avvist') return false;
-    if (order.status === 'klar' && seen.has(order.id)) return false;
+    if (order.status === 'klar') {
+      if (seen.has(order.id)) return false;
+      const readyAt = Number(order.statusUpdatedAt) || Number(order.createdAt) || Date.now();
+      if (Date.now() - readyAt >= 5 * 60 * 1000) return false;
+    }
     const createdAt = Number(order.createdAt) || 0;
     return !createdAt || createdAt >= cutoff;
   });
 }
 
-function activeOrderCardHtml(order, extraCount = 0) {
+function activeOrderCardHtml(order) {
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
   const readyNow = order.status === 'klar';
+  const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
-    return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}">
-      <span class="order-progress-dot">${complete ? '✓' : ''}</span>
-      <small>${escapeHtml(step.short)}</small>
-    </div>`;
+    return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${complete ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
   }).join('');
-  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}" aria-label="Aktiv bestilling">
+  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
-      <div>
-        <span class="active-order-kicker">Aktiv bestilling${extraCount ? ` · +${extraCount}` : ''}</span>
-        <strong class="active-order-live-status">${escapeHtml(readyNow ? 'Klar for henting' : orderStatusLabel(order.status))}</strong>
-      </div>
-      <span class="active-order-number">#${escapeHtml(shortId)}</span>
+      <div><span class="active-order-kicker">Aktiv bestilling</span><strong class="active-order-live-status">${escapeHtml(readyNow ? 'Klar for henting' : orderStatusLabel(order.status))}</strong></div>
+      <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}</div>
     </div>
     <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
+    ${estimated && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong>Ca. ${estimated} min</strong><small>oppgitt av restauranten</small></div>` : ''}
     ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
-    <div class="active-order-meta">
-      <span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span>
-      <span><b>${formatPrice(order.total)}</b></span>
-    </div>
+    <div class="active-order-meta"><span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span><span><b>${formatPrice(order.total)}</b></span></div>
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
   </section>`;
 }
 
-let activeOrderStream = null;
-let activeOrderStreamId = '';
+const activeOrderStreams = new Map();
+const activeOrderFetchBusy = new Set();
 let activeOrderFallbackTimer = null;
-let activeOrderFetchBusy = false;
-let readyDismissTimer = null;
-let readyDismissOrderId = '';
+const readyDismissTimers = new Map();
 
 function upsertLiveOrder(orderId, remote) {
   if (!remote || !orderId) return;
@@ -389,11 +384,7 @@ function upsertLiveOrder(orderId, remote) {
   const index = orders.findIndex((entry) => entry?.id === orderId);
   if (index >= 0) {
     const previous = orders[index] || {};
-    orders[index] = {
-      ...previous,
-      ...normalized,
-      lines: normalized.lines?.length ? normalized.lines : (previous.lines || []),
-    };
+    orders[index] = { ...previous, ...normalized, lines: normalized.lines?.length ? normalized.lines : (previous.lines || []) };
   } else {
     orders.unshift(normalized);
   }
@@ -401,13 +392,10 @@ function upsertLiveOrder(orderId, remote) {
 }
 
 async function fetchActiveOrderNow(orderId) {
-  if (!orderId || activeOrderFetchBusy) return;
-  activeOrderFetchBusy = true;
+  if (!orderId || activeOrderFetchBusy.has(orderId)) return;
+  activeOrderFetchBusy.add(orderId);
   try {
-    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json?ts=${Date.now()}`, {
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    });
+    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json?ts=${Date.now()}`, { cache: 'no-store', headers: { Accept: 'application/json' } });
     if (!response.ok) return;
     const remote = await response.json();
     if (!remote) return;
@@ -415,61 +403,53 @@ async function fetchActiveOrderNow(orderId) {
     renderActiveOrders();
     if (ui.view === 'profile') renderProfile();
   } catch (_) {
-    /* normal sync remains as fallback */
   } finally {
-    activeOrderFetchBusy = false;
+    activeOrderFetchBusy.delete(orderId);
   }
 }
 
-function stopActiveOrderWatcher() {
-  if (activeOrderStream) {
-    activeOrderStream.close();
-    activeOrderStream = null;
+function syncActiveOrderWatchers(orderIds) {
+  const wanted = new Set(orderIds.filter(Boolean).slice(0, 8));
+  for (const [orderId, source] of activeOrderStreams.entries()) {
+    if (wanted.has(orderId)) continue;
+    try { source.close(); } catch (_) {}
+    activeOrderStreams.delete(orderId);
   }
-  if (activeOrderFallbackTimer) {
-    clearInterval(activeOrderFallbackTimer);
-    activeOrderFallbackTimer = null;
+  for (const orderId of wanted) {
+    if (activeOrderStreams.has(orderId)) continue;
+    fetchActiveOrderNow(orderId);
+    if ('EventSource' in window) {
+      try {
+        const source = new EventSource(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json`);
+        const refresh = () => fetchActiveOrderNow(orderId);
+        source.addEventListener('put', refresh);
+        source.addEventListener('patch', refresh);
+        source.onerror = () => {};
+        activeOrderStreams.set(orderId, source);
+      } catch (_) {}
+    }
   }
-  activeOrderStreamId = '';
-}
-
-function watchActiveOrder(orderId) {
-  if (!orderId) {
-    stopActiveOrderWatcher();
-    return;
-  }
-  if (activeOrderStreamId === orderId) return;
-  stopActiveOrderWatcher();
-  activeOrderStreamId = orderId;
-  fetchActiveOrderNow(orderId);
-
-  if ('EventSource' in window) {
-    try {
-      const source = new EventSource(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json`);
-      const refresh = () => fetchActiveOrderNow(orderId);
-      source.addEventListener('put', refresh);
-      source.addEventListener('patch', refresh);
-      activeOrderStream = source;
-    } catch (_) {}
-  }
-
-  activeOrderFallbackTimer = window.setInterval(() => {
-    if (!document.hidden && activeOrderStreamId === orderId) fetchActiveOrderNow(orderId);
-  }, 4000);
+  if (activeOrderFallbackTimer) clearInterval(activeOrderFallbackTimer);
+  activeOrderFallbackTimer = wanted.size ? window.setInterval(() => {
+    if (!document.hidden) for (const orderId of wanted) fetchActiveOrderNow(orderId);
+  }, 5000) : null;
 }
 
 function scheduleReadyDismiss(order) {
-  if (!order || order.status !== 'klar' || readySeenIds().has(order.id) || document.hidden) return;
-  if (readyDismissTimer && readyDismissOrderId === order.id) return;
-  if (readyDismissTimer) clearTimeout(readyDismissTimer);
-  readyDismissOrderId = order.id;
-  readyDismissTimer = window.setTimeout(() => {
+  if (!order || order.status !== 'klar' || readySeenIds().has(order.id) || readyDismissTimers.has(order.id)) return;
+  const readyAt = Number(order.statusUpdatedAt) || Date.now();
+  const remaining = Math.max(0, 5 * 60 * 1000 - (Date.now() - readyAt));
+  if (!remaining) {
     markReadySeen(order.id);
-    readyDismissTimer = null;
-    readyDismissOrderId = '';
+    return;
+  }
+  const timer = window.setTimeout(() => {
+    readyDismissTimers.delete(order.id);
+    markReadySeen(order.id);
     renderActiveOrders();
     if (ui.view === 'profile') renderProfile();
-  }, 12000);
+  }, remaining);
+  readyDismissTimers.set(order.id, timer);
 }
 
 function notifyReadyOrders(orders) {
@@ -491,16 +471,16 @@ function notifyReadyOrders(orders) {
 
 function renderActiveOrders() {
   const orders = activeCustomerOrders();
-  const current = orders[0] || null;
-  const html = current ? activeOrderCardHtml(current, Math.max(0, orders.length - 1)) : '';
+  const cards = orders.map((order) => activeOrderCardHtml(order)).join('');
+  const html = orders.length ? `<div class="active-orders-carousel">${orders.length > 1 ? `<div class="active-orders-carousel-head"><strong>${orders.length} aktive bestillinger</strong><div><button data-order-carousel="prev" type="button" aria-label="Forrige bestilling">‹</button><button data-order-carousel="next" type="button" aria-label="Neste bestilling">›</button></div></div>` : ''}<div class="active-orders-track" data-active-orders-track>${cards}</div></div>` : '';
   for (const target of [el.activeOrderMenu, el.activeOrderProfile]) {
     if (!target) continue;
-    target.hidden = !current;
+    target.hidden = !orders.length;
     target.innerHTML = html;
   }
-  watchActiveOrder(current?.id || '');
+  syncActiveOrderWatchers(orders.map((order) => order.id));
   notifyReadyOrders(orders);
-  if (current?.status === 'klar') scheduleReadyDismiss(current);
+  orders.filter((order) => order.status === 'klar').forEach(scheduleReadyDismiss);
 }
 
 function openActiveOrderInProfile(orderId) {
@@ -1786,6 +1766,26 @@ document.addEventListener('click', (event) => {
   const infoTab = event.target.closest('[data-info-tab]');
   if (infoTab) {
     setInfoTab(infoTab.dataset.infoTab);
+    return;
+  }
+  const readyDismiss = event.target.closest('[data-ready-dismiss]');
+  if (readyDismiss) {
+    const orderId = readyDismiss.dataset.readyDismiss;
+    const timer = readyDismissTimers.get(orderId);
+    if (timer) clearTimeout(timer);
+    readyDismissTimers.delete(orderId);
+    markReadySeen(orderId);
+    renderActiveOrders();
+    if (ui.view === 'profile') renderProfile();
+    return;
+  }
+  const carouselBtn = event.target.closest('[data-order-carousel]');
+  if (carouselBtn) {
+    const track = carouselBtn.closest('.active-orders-carousel')?.querySelector('[data-active-orders-track]');
+    if (track) {
+      const direction = carouselBtn.dataset.orderCarousel === 'prev' ? -1 : 1;
+      track.scrollBy({ left: direction * Math.max(track.clientWidth * 0.88, 260), behavior: 'smooth' });
+    }
     return;
   }
   const activeOrdersBtn = event.target.closest('[data-active-orders]');

@@ -960,6 +960,41 @@ export async function updateOrderStatus(orderId, status) {
   }
 }
 
+/** Oppdaterer forventet ventetid på en ordre (admin). */
+export async function updateOrderEstimate(orderId, minutes) {
+  const order = store.orders.find((entry) => entry.id === orderId);
+  if (!order) return false;
+  const value = Math.max(0, Math.min(180, Math.round(Number(minutes) || 0)));
+  const previous = {
+    estimatedMinutes: order.estimatedMinutes,
+    estimatedAt: order.estimatedAt,
+    estimatedReadyAt: order.estimatedReadyAt,
+  };
+  const now = Date.now();
+  order.estimatedMinutes = value || null;
+  order.estimatedAt = value ? now : null;
+  order.estimatedReadyAt = value ? now + value * 60 * 1000 : null;
+  emitData('local');
+  setSaveState('saving');
+  try {
+    if (remoteEnabled) {
+      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+        estimatedMinutes: order.estimatedMinutes,
+        estimatedAt: order.estimatedAt,
+        estimatedReadyAt: order.estimatedReadyAt,
+      });
+      remoteOnline = true;
+    }
+    setSaveState('saved');
+    return true;
+  } catch (err) {
+    Object.assign(order, previous);
+    emitData('local');
+    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+    return false;
+  }
+}
+
 /** Alle ordre, nyeste først. */
 export function getOrders() {
   return store.orders || [];

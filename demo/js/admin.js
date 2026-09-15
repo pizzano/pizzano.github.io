@@ -29,6 +29,7 @@ import {
   getStats,
   getOrders,
   updateOrderStatus,
+  updateOrderEstimate,
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
@@ -1422,6 +1423,8 @@ function deleteGroup(groupId) {
  * Bestillinger
  * ------------------------------------------------------------------ */
 
+const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) => ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(status.id));
+
 function filteredOrders() {
   const orders = getOrders();
   if (ui.orderFilter === 'all') return orders;
@@ -1431,67 +1434,72 @@ function filteredOrders() {
   return orders.filter((order) => order.status === ui.orderFilter);
 }
 
+function adminOrderCardHtml(order, isNew = false) {
+  const shortId = String(order.id || '').slice(-6).toUpperCase();
+  const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
+  return `
+    <article class="order-card admin-order-card${isNew ? ' is-new-order' : ''}" data-order="${escapeHtml(order.id)}">
+      <header class="admin-order-head">
+        <div>
+          <div class="admin-order-number-row">
+            <strong>#${escapeHtml(shortId)}</strong>
+            ${isNew ? '<span class="new-order-badge">NY</span>' : ''}
+          </div>
+          <span>${escapeHtml(timeStamp(order.createdAt))}</span>
+        </div>
+        <span class="status-pill" data-status="${escapeHtml(order.status)}">${escapeHtml(orderStatusLabel(order.status))}</span>
+      </header>
+      <div class="admin-order-customer">
+        <strong>${escapeHtml(order.customerName || '—')}</strong>
+        <span>${escapeHtml(order.phone || '—')}</span>
+      </div>
+      <div class="admin-order-pickup"><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
+      <div class="admin-order-lines">
+        ${(order.lines || []).map((line) => `
+          <div class="admin-order-line">
+            <span class="admin-order-qty">${Number(line.quantity) || 1}×</span>
+            <div>
+              <strong>${escapeHtml(line.name || 'Produkt')}</strong>
+              ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
+              ${(line.options || []).length ? `<small>${line.options.map((opt) => escapeHtml(opt)).join(' · ')}</small>` : ''}
+              ${line.comment ? `<small class="admin-order-comment">«${escapeHtml(line.comment)}»</small>` : ''}
+            </div>
+            <b>${formatPrice(line.price)}</b>
+          </div>`).join('')}
+      </div>
+      <div class="admin-order-total"><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
+      <div class="admin-order-estimate">
+        <div class="admin-order-estimate-copy">
+          <strong>Forventet tid</strong>
+          <span>${estimated ? `Kunden ser ca. ${estimated} min` : 'Skriv tiden kunden skal se'}</span>
+        </div>
+        <div class="admin-order-estimate-control">
+          <input class="input" data-estimate-input="${escapeHtml(order.id)}" type="number" inputmode="numeric" min="1" max="180" step="1" value="${estimated || ''}" placeholder="10">
+          <span>min</span>
+          <button class="btn btn-primary btn-xs" data-save-estimate="${escapeHtml(order.id)}" type="button">Send tid</button>
+        </div>
+      </div>
+      <div class="admin-order-status-actions" role="group" aria-label="Endre status">
+        ${ADMIN_ORDER_STATUSES.map((status) => `<button class="admin-status-btn${status.id === order.status ? ' is-active' : ''}" data-set-list-status="${escapeHtml(status.id)}" data-order-id="${escapeHtml(order.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}
+      </div>
+      <button class="admin-order-detail-btn" data-order-detail="${escapeHtml(order.id)}" type="button">Se detaljer</button>
+    </article>`;
+}
+
 function renderOrders() {
   const orders = filteredOrders();
   const all = getOrders();
-  el.ordersSummary.textContent = `${all.length} bestillinger totalt · ${
-    all.filter((order) => order.status === 'mottatt').length
-  } nye venter`;
-
-  el.orderList.innerHTML = orders.length
-    ? orders
-        .map(
-          (order) => `
-      <article class="order-card" data-order="${escapeHtml(order.id)}">
-        <header class="order-head">
-          <div class="order-id">
-            <strong>#${escapeHtml(order.id.slice(-6).toUpperCase())}</strong>
-            <span>${escapeHtml(timeStamp(order.createdAt))}</span>
-          </div>
-          <span class="status-pill" data-status="${escapeHtml(
-            order.status
-          )}">${escapeHtml(orderStatusLabel(order.status))}</span>
-        </header>
-        <div class="order-meta">
-          <span><strong>${escapeHtml(order.customerName || '—')}</strong></span>
-          <span>${escapeHtml(order.phone || '—')}</span>
-          <span>Hentetid: <strong>${escapeHtml(order.pickup || '—')}</strong></span>
-          <span>Total: <strong>${formatPrice(order.total)}</strong></span>
-        </div>
-        <ul class="order-lines">
-          ${(order.lines || [])
-            .slice(0, 4)
-            .map(
-              (line) =>
-                `<li>${line.quantity}× ${escapeHtml(line.name)}${
-                  line.size ? ` · ${escapeHtml(line.size)}` : ''
-                }</li>`
-            )
-            .join('')}
-          ${
-            (order.lines || []).length > 4
-              ? `<li class="more">+${(order.lines || []).length - 4} flere linjer</li>`
-              : ''
-          }
-        </ul>
-        <footer class="order-foot">
-          <select class="input input-status" data-status-select="${escapeHtml(order.id)}">
-            ${ORDER_STATUSES.map(
-              (status) =>
-                `<option value="${escapeHtml(status.id)}"${
-                  status.id === order.status ? ' selected' : ''
-                }>${escapeHtml(status.label)}</option>`
-            ).join('')}
-          </select>
-          <button class="btn btn-outline btn-xs" data-order-detail="${escapeHtml(
-            order.id
-          )}" type="button">Se detaljer</button>
-        </footer>
-      </article>`
-        )
-        .join('')
-    : '<div class="empty-card"><strong>Ingen bestillinger</strong><p>Nye bestillinger fra kundesiden vises her automatisk.</p></div>';
-
+  const newOrders = orders.filter((order) => order.status === 'mottatt');
+  const otherOrders = orders.filter((order) => order.status !== 'mottatt');
+  el.ordersSummary.textContent = `${all.length} bestillinger totalt · ${all.filter((order) => order.status === 'mottatt').length} nye venter`;
+  const sections = [];
+  if (newOrders.length) {
+    sections.push(`<section class="admin-order-section is-new-section"><div class="admin-order-section-head"><div><span class="admin-order-live-dot"></span><strong>Nye bestillinger</strong></div><span>${newOrders.length}</span></div><div class="admin-order-grid">${newOrders.map((order) => adminOrderCardHtml(order, true)).join('')}</div></section>`);
+  }
+  if (otherOrders.length) {
+    sections.push(`<section class="admin-order-section"><div class="admin-order-section-head"><div><strong>${ui.orderFilter === 'active' ? 'Pågående bestillinger' : 'Bestillinger'}</strong></div><span>${otherOrders.length}</span></div><div class="admin-order-grid">${otherOrders.map((order) => adminOrderCardHtml(order, false)).join('')}</div></section>`);
+  }
+  el.orderList.innerHTML = sections.join('') || '<div class="empty-card"><strong>Ingen bestillinger</strong><p>Nye bestillinger fra kundesiden vises her automatisk.</p></div>';
   if (openOrderId && !el.modalOrder.hidden) renderOrderDetail(openOrderId);
 }
 
@@ -1515,12 +1523,42 @@ el.orderList.addEventListener('change', async (event) => {
   toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
 });
 
-el.orderList.addEventListener('click', (event) => {
+el.orderList.addEventListener('click', async (event) => {
+  const statusBtn = event.target.closest('[data-set-list-status]');
+  if (statusBtn) {
+    const ok = await updateOrderStatus(statusBtn.dataset.orderId, statusBtn.dataset.setListStatus);
+    renderOrders();
+    renderStats();
+    toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
+    return;
+  }
+  const estimateBtn = event.target.closest('[data-save-estimate]');
+  if (estimateBtn) {
+    const orderId = estimateBtn.dataset.saveEstimate;
+    const card = estimateBtn.closest('[data-order]');
+    const input = card?.querySelector('[data-estimate-input]');
+    const minutes = Math.max(0, Math.min(180, Math.round(Number(input?.value) || 0)));
+    if (!minutes) {
+      toast('Skriv antall minutter først.');
+      if (input) input.focus();
+      return;
+    }
+    const ok = await updateOrderEstimate(orderId, minutes);
+    renderOrders();
+    toast(ok ? `Ca. ${minutes} min er sendt til kunden.` : 'Kunne ikke sende tiden.');
+    return;
+  }
   const detail = event.target.closest('[data-order-detail]');
   if (!detail) return;
   openOrderId = detail.dataset.orderDetail;
   renderOrderDetail(openOrderId);
   openModal(el.modalOrder);
+});
+
+el.orderList.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || !event.target.matches('[data-estimate-input]')) return;
+  event.preventDefault();
+  event.target.closest('[data-order]')?.querySelector('[data-save-estimate]')?.click();
 });
 
 function renderOrderDetail(orderId) {
@@ -1536,6 +1574,7 @@ function renderOrderDetail(orderId) {
       <div><span>Telefon</span><strong>${escapeHtml(order.phone || '—')}</strong></div>
       <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
       <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
+      <div><span>Forventet tid</span><strong>${Number(order.estimatedMinutes) > 0 ? `Ca. ${Number(order.estimatedMinutes)} min` : '—'}</strong></div>
       <div><span>Status</span><strong>${escapeHtml(
         orderStatusLabel(order.status)
       )}</strong></div>
@@ -1575,7 +1614,7 @@ function renderOrderDetail(orderId) {
       )}</strong></div>
     </div>
     <div class="detail-actions">
-      ${ORDER_STATUSES.map(
+      ${ADMIN_ORDER_STATUSES.map(
         (status) =>
           `<button class="btn ${
             status.id === order.status ? 'btn-primary' : 'btn-outline'
