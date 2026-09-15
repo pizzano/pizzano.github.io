@@ -31,11 +31,12 @@ import {
   updateOrderStatus,
   updateOrderEstimate,
   acceptOrderWithEstimate,
+  acceptScheduledOrder,
   rejectOrder,
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260915-three-stage2';
+} from './data.js?v=20260915-scheduled-pickup1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -156,6 +157,11 @@ const el = {
   acceptOrderTitle: $('acceptOrderTitle'),
   acceptQuickTimes: $('acceptQuickTimes'),
   acceptMinutes: $('acceptMinutes'),
+  acceptManualTime: $('acceptManualTime'),
+  acceptTimeEyebrow: $('acceptTimeEyebrow'),
+  acceptTimeLead: $('acceptTimeLead'),
+  scheduledAcceptCard: $('scheduledAcceptCard'),
+  scheduledAcceptTime: $('scheduledAcceptTime'),
   btnAcceptConfirm: $('btnAcceptConfirm'),
   modalRejectOrder: $('modalRejectOrder'),
   rejectOrderTitle: $('rejectOrderTitle'),
@@ -1598,13 +1604,14 @@ function renderOrderDetail(orderId) {
   const countdown = orderCountdown(order);
   const hasCountdown = Number(order.estimatedReadyAt) > 0;
   const isPending = order.status === 'mottatt';
+  const scheduledPickup = isScheduledPickupOrder(order);
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
   const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'LEVERING' : 'HENTING';
   const payment = String(store.settings?.paymentInfo || 'Ved henting').toUpperCase();
   const actionHtml = isPending
     ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">×</button>
-       <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">GODTA${estimated ? ` (${estimated} MIN)` : ''}</button>`
+       <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
     : order.status === 'avvist' || order.status === 'fullfort'
       ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
       : `<div class="pos-progress-actions">${ADMIN_ORDER_STATUSES.map((status) => `<button class="${status.id === (order.status === 'tilberedning' ? 'bekreftet' : order.status) ? 'is-active' : ''}" data-detail-status="${escapeHtml(status.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}</div>`;
@@ -1625,7 +1632,7 @@ function renderOrderDetail(orderId) {
           <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
           <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-          ${!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : ''}
+          ${!isPending && scheduledPickup ? `<div><span>Planlagt henting</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>` : (!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : '')}
           ${!isPending && hasCountdown ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
         </section>
         <section class="pos-customer-block">
@@ -1641,12 +1648,16 @@ function renderOrderDetail(orderId) {
           <div><span>Sub-total</span><strong>${formatPrice(order.subtotal ?? order.total)}</strong></div>
           <div class="is-total"><span>Total</span><strong>${formatPrice(order.total)}</strong></div>
         </section>
-        ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? `
+        ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? (scheduledPickup ? `
+          <section class="pos-scheduled-pickup-summary">
+            <div><span>Planlagt henting</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
+            <small>Blir automatisk «Klar for henting» når hentetiden kommer.</small>
+          </section>` : `
           <section class="pos-estimate-editor">
             <div><strong>Forventet tid</strong><span>Kunden ser denne tiden live.</span></div>
             <label><input data-detail-estimate autocomplete="off" type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
             <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater</button>
-          </section>` : ''}
+          </section>`) : ''}
       </div>
       <footer class="pos-detail-actions">${actionHtml}</footer>
     </article>`;
@@ -1689,17 +1700,38 @@ el.orderList.addEventListener('click', (event) => {
   renderOrders();
 });
 
+function isScheduledPickupOrder(order) {
+  if (!order) return false;
+  if (order.pickupMode === 'scheduled') return true;
+  return /^(\d{1,2}):(\d{2})$/.test(String(order.pickup || '').trim());
+}
+
 function openAcceptOrder(orderId) {
   const order = getOrders().find((entry) => entry.id === orderId);
   if (!order) return;
   actionOrderId = order.id;
   const shortId = String(order.id).slice(-6).toUpperCase();
+  const scheduled = isScheduledPickupOrder(order);
   el.acceptOrderTitle.textContent = `Godta #${shortId}`;
-  const minutes = Math.max(1, Number(order.estimatedMinutes) || 15);
-  el.acceptMinutes.value = String(minutes);
-  el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((button) => {
-    button.classList.toggle('is-active', Number(button.dataset.acceptMinutes) === minutes);
-  });
+  el.scheduledAcceptCard.hidden = !scheduled;
+  el.acceptQuickTimes.hidden = scheduled;
+  el.acceptManualTime.hidden = scheduled;
+  if (scheduled) {
+    const pickupTime = String(order.pickup || '').trim();
+    el.acceptTimeEyebrow.textContent = 'HENTETID';
+    el.acceptTimeLead.textContent = 'Kunden har allerede valgt hentetid. Godta bestillingen uten å sette ekstra minutter.';
+    el.scheduledAcceptTime.textContent = pickupTime || 'Planlagt';
+    el.btnAcceptConfirm.textContent = pickupTime ? `Godta · henting ${pickupTime}` : 'Godta bestilling';
+  } else {
+    el.acceptTimeEyebrow.textContent = 'FORVENTET TID';
+    el.acceptTimeLead.textContent = 'Velg hvor mange minutter kunden skal se.';
+    el.btnAcceptConfirm.textContent = 'Godta bestilling';
+    const minutes = Math.max(1, Number(order.estimatedMinutes) || 15);
+    el.acceptMinutes.value = String(minutes);
+    el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((button) => {
+      button.classList.toggle('is-active', Number(button.dataset.acceptMinutes) === minutes);
+    });
+  }
   openModal(el.modalAcceptOrder);
 }
 
@@ -1780,25 +1812,33 @@ el.acceptMinutes.addEventListener('input', () => {
 
 el.btnAcceptConfirm.addEventListener('click', async () => {
   if (!actionOrderId) return;
-  const minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
-  if (!minutes) {
-    toast('Velg eller skriv minutter.');
-    el.acceptMinutes.focus();
-    return;
-  }
   const acceptedOrderId = actionOrderId;
+  const order = getOrders().find((entry) => entry.id === acceptedOrderId);
+  if (!order) return;
+  const scheduled = isScheduledPickupOrder(order);
+  let minutes = 0;
+  if (!scheduled) {
+    minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
+    if (!minutes) {
+      toast('Velg eller skriv minutter.');
+      el.acceptMinutes.focus();
+      return;
+    }
+  }
   el.btnAcceptConfirm.disabled = true;
-  const ok = await acceptOrderWithEstimate(acceptedOrderId, minutes);
+  const ok = scheduled
+    ? await acceptScheduledOrder(acceptedOrderId)
+    : await acceptOrderWithEstimate(acceptedOrderId, minutes);
   el.btnAcceptConfirm.disabled = false;
   if (!ok) {
-    toast('Kunne ikke godta bestillingen.');
+    toast(scheduled ? 'Kunne ikke godta den planlagte hentetiden.' : 'Kunne ikke godta bestillingen.');
     return;
   }
   selectedOrderId = acceptedOrderId;
   closeModals();
   renderOrders();
   renderStats();
-  toast(`Bestillingen er godtatt · ${minutes} min.`);
+  toast(scheduled ? `Bestillingen er godtatt · henting ${order.pickup}.` : `Bestillingen er godtatt · ${minutes} min.`);
   window.setTimeout(() => {
     if (selectedOrderId !== acceptedOrderId) return;
     selectedOrderId = null;

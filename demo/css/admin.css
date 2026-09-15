@@ -1647,3 +1647,7 @@ body.hide-settings-col .admin-shell { grid-template-columns: 236px minmax(0, 1fr
 
 /* Two post-accept status controls 2026-09-15 */
 .pos-progress-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
+
+/* Scheduled pickup accept UI 2026-09-15 */
+.scheduled-accept-card{display:grid;gap:8px;margin:14px 0 4px;padding:18px;border:1px solid #d8e8dc;border-radius:16px;background:#f3fbf5}.scheduled-accept-card[hidden]{display:none!important}.scheduled-accept-card>span{color:#6b7b70;font-size:11px;font-weight:800;letter-spacing:.06em}.scheduled-accept-card>strong{color:#18211b;font-size:34px;line-height:1;font-weight:850}.scheduled-accept-card>small{color:#657169;font-size:13px;line-height:1.45}.pos-scheduled-pickup-summary{display:grid;gap:8px;padding:16px 18px;border:1px solid #dce7df;border-radius:14px;background:#f6fbf7}.pos-scheduled-pickup-summary>div{display:flex;align-items:center;justify-content:space-between;gap:16px}.pos-scheduled-pickup-summary span{color:#617067;font-size:13px}.pos-scheduled-pickup-summary strong{color:#18211b;font-size:20px}.pos-scheduled-pickup-summary small{color:#7a867f;font-size:12px}

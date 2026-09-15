@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260915-three-stage2';
+} from './data.js?v=20260915-scheduled-pickup1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1490,6 +1490,17 @@ function validPhone(value) {
   return /^[49]\d{7}$/.test(String(value).replace(/\s/g, ''));
 }
 
+
+function resolveScheduledPickupAt(value) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+  if (!match) return null;
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
+  return target.getTime();
+}
+
 async function placeOrder() {
   if (ui.orderSubmitting) return;
   const state = getOpenState();
@@ -1575,6 +1586,8 @@ async function placeOrder() {
       customerName: name,
       phone: `+47${phone}`,
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
+      pickupMode: ui.pickupMode === 'scheduled' ? 'scheduled' : 'asap',
+      scheduledPickupAt: ui.pickupMode === 'scheduled' ? resolveScheduledPickupAt(ui.pickup) : null,
       type: 'henting',
       lines,
       subtotal,

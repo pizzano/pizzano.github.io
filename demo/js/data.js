@@ -490,6 +490,8 @@ function normalizeOrders(raw) {
         customerName: String(order.customerName || ''),
         phone: String(order.phone || ''),
         pickup: String(order.pickup || ''),
+        pickupMode: order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? 'scheduled' : 'asap',
+        scheduledPickupAt: Number(order.scheduledPickupAt) || null,
         comment: String(order.comment || ''),
         type: String(order.type || 'henting'),
         status: ORDER_STATUSES.some((s) => s.id === order.status)
@@ -1043,6 +1045,63 @@ export async function acceptOrderWithEstimate(orderId, minutes) {
         status: 'bekreftet',
         statusUpdatedAt: now,
         estimatedMinutes: value,
+        estimatedAt: now,
+        estimatedReadyAt: readyAt,
+      });
+      remoteOnline = true;
+    }
+    setSaveState('saved');
+    return true;
+  } catch (err) {
+    Object.assign(order, previous);
+    emitData('local');
+    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+    return false;
+  }
+}
+
+
+/** Godtar en tidsbestilt ordre og bruker kundens valgte hentetid som klar-tid. */
+export async function acceptScheduledOrder(orderId) {
+  const order = store.orders.find((entry) => entry.id === orderId);
+  if (!order) return false;
+  const now = Date.now();
+  let readyAt = Number(order.scheduledPickupAt) || 0;
+  if (!readyAt) {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(order.pickup || '').trim());
+    if (!match) return false;
+    const target = new Date(now);
+    target.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    if (target.getTime() <= now) target.setDate(target.getDate() + 1);
+    readyAt = target.getTime();
+  }
+  const previous = {
+    status: order.status,
+    statusUpdatedAt: order.statusUpdatedAt,
+    pickupMode: order.pickupMode,
+    scheduledPickupAt: order.scheduledPickupAt,
+    estimatedMinutes: order.estimatedMinutes,
+    estimatedAt: order.estimatedAt,
+    estimatedReadyAt: order.estimatedReadyAt,
+  };
+  const minutes = Math.max(1, Math.ceil((readyAt - now) / 60000));
+  order.status = 'bekreftet';
+  order.statusUpdatedAt = now;
+  order.pickupMode = 'scheduled';
+  order.scheduledPickupAt = readyAt;
+  order.estimatedMinutes = minutes;
+  order.estimatedAt = now;
+  order.estimatedReadyAt = readyAt;
+  emitData('local');
+  setSaveState('saving');
+  try {
+    if (remoteEnabled) {
+      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+        status: 'bekreftet',
+        statusUpdatedAt: now,
+        pickupMode: 'scheduled',
+        scheduledPickupAt: readyAt,
+        estimatedMinutes: minutes,
         estimatedAt: now,
         estimatedReadyAt: readyAt,
       });

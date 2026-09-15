@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-three-stage2">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-scheduled-pickup1">
 </head>
 
 <body>
@@ -488,15 +488,20 @@
             <h2 id="acceptOrderTitle">Godta bestilling</h2>
         </header>
         <div class="modal-body order-action-body">
-            <span class="order-action-eyebrow">FORVENTET TID</span>
-            <p class="order-action-lead">Velg hvor mange minutter kunden skal se.</p>
+            <span class="order-action-eyebrow" id="acceptTimeEyebrow">FORVENTET TID</span>
+            <p class="order-action-lead" id="acceptTimeLead">Velg hvor mange minutter kunden skal se.</p>
+            <div class="scheduled-accept-card" id="scheduledAcceptCard" hidden>
+                <span>PLANLAGT HENTING</span>
+                <strong id="scheduledAcceptTime">--:--</strong>
+                <small>Bestillingen blir automatisk «Klar for henting» på dette tidspunktet.</small>
+            </div>
             <div class="accept-quick-times" id="acceptQuickTimes">
                 <button type="button" data-accept-minutes="10">10 min</button>
                 <button type="button" data-accept-minutes="15" class="is-active">15 min</button>
                 <button type="button" data-accept-minutes="20">20 min</button>
                 <button type="button" data-accept-minutes="30">30 min</button>
             </div>
-            <label class="accept-manual-time">
+            <label class="accept-manual-time" id="acceptManualTime">
                 <span>Manuelt</span>
                 <span class="accept-manual-control"><input id="acceptMinutes" type="number" min="1" max="180" step="1" value="15" inputmode="numeric"><b>min</b></span>
             </label>
@@ -546,7 +551,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260915-three-stage2"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260915-scheduled-pickup1"></script>
 </body>
 
 </html>
