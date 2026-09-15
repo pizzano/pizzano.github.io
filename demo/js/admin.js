@@ -35,7 +35,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260915-orderfix3';
+} from './data.js?v=20260915-three-stage2';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -1443,7 +1443,7 @@ function deleteGroup(groupId) {
  * ------------------------------------------------------------------ */
 
 const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) =>
-  ['bekreftet', 'tilberedning', 'klar'].includes(status.id)
+  ['bekreftet', 'klar'].includes(status.id)
 );
 
 function syncOrdersWorkspaceLayout() {
@@ -1607,7 +1607,7 @@ function renderOrderDetail(orderId) {
        <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">GODTA${estimated ? ` (${estimated} MIN)` : ''}</button>`
     : order.status === 'avvist' || order.status === 'fullfort'
       ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
-      : `<div class="pos-progress-actions">${ADMIN_ORDER_STATUSES.map((status) => `<button class="${status.id === order.status ? 'is-active' : ''}" data-detail-status="${escapeHtml(status.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}</div>`;
+      : `<div class="pos-progress-actions">${ADMIN_ORDER_STATUSES.map((status) => `<button class="${status.id === (order.status === 'tilberedning' ? 'bekreftet' : order.status) ? 'is-active' : ''}" data-detail-status="${escapeHtml(status.id)}" type="button">${escapeHtml(status.label)}</button>`).join('')}</div>`;
 
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
@@ -1786,8 +1786,9 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
     el.acceptMinutes.focus();
     return;
   }
+  const acceptedOrderId = actionOrderId;
   el.btnAcceptConfirm.disabled = true;
-  const ok = await acceptOrderWithEstimate(actionOrderId, minutes);
+  const ok = await acceptOrderWithEstimate(acceptedOrderId, minutes);
   el.btnAcceptConfirm.disabled = false;
   if (!ok) {
     toast('Kunne ikke godta bestillingen.');

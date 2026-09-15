@@ -336,6 +336,7 @@ export const ORDER_STATUSES = [
 
 /** Etikett for en ordrestatus. */
 export function orderStatusLabel(status) {
+  if (status === 'tilberedning') return 'Bekreftet';
   const found = ORDER_STATUSES.find((entry) => entry.id === status);
   return found ? found.label : 'Ny';
 }

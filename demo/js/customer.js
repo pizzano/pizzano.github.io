@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260915-orderfix3';
+} from './data.js?v=20260915-three-stage2';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -300,7 +300,6 @@ function headerOffset() {
 const CUSTOMER_STATUS_FLOW = [
   { id: 'mottatt', label: 'Mottatt', short: 'Mottatt' },
   { id: 'bekreftet', label: 'Bekreftet', short: 'Bekreftet' },
-  { id: 'tilberedning', label: 'Tilberedes', short: 'Lages' },
   { id: 'klar', label: 'Klar for henting', short: 'Klar' },
 ];
 
@@ -424,7 +423,8 @@ function customerOrderCountdown(order) {
 
 function activeOrderCardHtml(order) {
   const rejectedNow = order.status === 'avvist';
-  const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
+  const progressStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
+  const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === progressStatus);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
   const readyNow = order.status === 'klar';

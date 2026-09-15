@@ -3084,3 +3084,7 @@ textarea.input {
 }
 .order-history-rejection strong { font-size: 12.5px; }
 .order-history-rejection span { font-size: 11.5px; line-height: 1.4; }
+
+
+/* Three-stage customer progress 2026-09-15 */
+.order-progress{grid-template-columns:repeat(3,minmax(0,1fr))!important}

@@ -1643,3 +1643,7 @@ body.hide-settings-col .admin-shell { grid-template-columns: 236px minmax(0, 1fr
     font-size: 15px !important;
   }
 }
+
+
+/* Two post-accept status controls 2026-09-15 */
+.pos-progress-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
