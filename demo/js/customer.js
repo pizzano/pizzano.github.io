@@ -1146,18 +1146,31 @@ function renderCheckout() {
       : ui.pickupMode === 'asap' ? 'Vi lager bestillingen så snart vi kan.' : 'Velg når du vil hente bestillingen.';
 
   const reviewLines = cart.map((line) => cartLineHtml(line, true)).join('');
+  const reviewCount = cartCount();
+  const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
   el.reviewCard.innerHTML = `
     <div class="checkout-review-head">
       <div><span>Kontroller bestillingen</span><strong>Din bestilling</strong></div>
       <button class="link-btn" data-review-cart type="button">Endre kurv</button>
     </div>
-    <div class="checkout-review-lines">${reviewLines}</div>
-    <div class="checkout-review-meta">
-      <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-      <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
-      <div><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
-      <div class="checkout-review-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
-    </div>`;
+    <details class="checkout-review-toggle">
+      <summary class="checkout-review-summary">
+        <div class="checkout-review-summary-main">
+          <strong>${escapeHtml(reviewLabel)}</strong>
+          <span>Trykk for å se detaljer</span>
+        </div>
+        <span class="checkout-review-summary-action" aria-hidden="true"></span>
+      </summary>
+      <div class="checkout-review-details">
+        <div class="checkout-review-lines">${reviewLines}</div>
+        <div class="checkout-review-meta">
+          <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
+          <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+          <div><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
+          <div class="checkout-review-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
+        </div>
+      </div>
+    </details>`;
   if (ui.checkoutStep === 3) {
     el.btnStepNext.disabled = ui.orderSubmitting;
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
