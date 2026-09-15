@@ -1,0 +1,30 @@
+name: Run order UX upgrade patch
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/order-ux-upgrade2-temp.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: python3 .github/scripts/order_ux_patch_temp.py
+      - name: Validate JavaScript
+        run: |
+          node --check demo/js/data.js
+          node --check demo/js/admin.js
+          node --check demo/js/customer.js
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f .github/workflows/order-ux-upgrade-temp.yml
+          rm -f .github/workflows/order-ux-upgrade2-temp.yml
+          rm -f .github/scripts/order_ux_patch_temp.py
+          git add demo/js/data.js demo/js/admin.js demo/js/customer.js demo/css/admin.css demo/css/customer.css demo/index.html demo/admin.html demo/service-worker.js .github/workflows/order-ux-upgrade-temp.yml .github/workflows/order-ux-upgrade2-temp.yml .github/scripts/order_ux_patch_temp.py
+          git commit -m 'Upgrade admin order intake and customer live tracking'
+          git push origin HEAD:main
