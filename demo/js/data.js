@@ -802,11 +802,23 @@ function applyRemoteMenu(value) {
 /** Tar imot ordre fra databasen. Returnerer true hvis noe endret seg. */
 function applyRemoteOrders(value) {
   const next = normalizeOrders(value);
-  const before = JSON.stringify(store.orders.map((o) => [o.id, o.status]));
-  const after = JSON.stringify(next.map((o) => [o.id, o.status]));
+  const snapshot = (orders) => JSON.stringify((orders || []).map((o) => [
+    o.id,
+    o.status,
+    Number(o.statusUpdatedAt) || 0,
+    Number(o.estimatedMinutes) || 0,
+    Number(o.estimatedAt) || 0,
+    Number(o.estimatedReadyAt) || 0,
+    o.pickup || '',
+    Number(o.total) || 0,
+    Array.isArray(o.lines) ? o.lines.length : 0,
+  ]));
+  const before = snapshot(store.orders);
+  const after = snapshot(next);
   store.orders = next;
   return before !== after;
 }
+
 
 /** Henter siste versjon fra databasen. */
 async function pullRemote() {

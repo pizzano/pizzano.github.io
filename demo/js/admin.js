@@ -1477,7 +1477,9 @@ function orderElapsed(order) {
 function orderCountdown(order) {
   const readyAt = Number(order.estimatedReadyAt) || 0;
   if (!readyAt) return '';
-  const seconds = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  const remainingMs = readyAt - Date.now();
+  if (remainingMs <= 0) return '';
+  const seconds = Math.ceil(remainingMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${minutes}:${String(secs).padStart(2, '0')}`;
@@ -1493,10 +1495,25 @@ function orderListStatus(order) {
   return orderStatusLabel(order.status);
 }
 
+function orderCenterText(order) {
+  if (order.status === 'klar') return 'Klar for henting';
+  if (order.status === 'mottatt') return 'Venter på svar';
+  if (['bekreftet', 'tilberedning'].includes(order.status)) {
+    const readyAt = Number(order.estimatedReadyAt) || 0;
+    if (readyAt) {
+      const remainingMs = readyAt - Date.now();
+      if (remainingMs <= 0) return 'Klar nå';
+      const seconds = Math.ceil(remainingMs / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes} min. ${String(secs).padStart(2, '0')} sek.`;
+    }
+  }
+  return orderListStatus(order);
+}
+
 function orderListRowHtml(order, isNew = false) {
   const selected = order.id === selectedOrderId;
-  const countdown = orderCountdown(order);
-  const timer = order.status === 'mottatt' ? orderElapsed(order) : (countdown || formatPrice(order.total));
   return `
     <button class="orders-list-row${isNew ? ' is-new' : ''}${selected ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button">
       <span class="orders-list-icon" aria-hidden="true">${order.type === 'levering' ? '🛵' : '🥡'}</span>
@@ -1507,8 +1524,9 @@ function orderListRowHtml(order, isNew = false) {
         </span>
         <small><i class="orders-status-mark"></i>${escapeHtml(orderListStatus(order))}</small>
       </span>
+      <span class="orders-list-center" data-order-center="${escapeHtml(order.id)}">${escapeHtml(orderCenterText(order))}</span>
       <span class="orders-list-side">
-        <strong class="orders-live-time" data-order-clock="${escapeHtml(order.id)}">${escapeHtml(timer)}</strong>
+        <strong>${order.status === 'klar' ? 'Klar' : formatPrice(order.total)}</strong>
         <small>${escapeHtml(compactOrderTime(order.createdAt))}</small>
       </span>
     </button>`;
@@ -1604,7 +1622,8 @@ function renderOrderDetail(orderId) {
           <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
           <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-          ${estimated && !isPending ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || '00:00')}</strong></div>` : ''}
+          ${estimated && !isPending ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>
+          <div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
         </section>
         <section class="pos-customer-block">
           <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span>★ Kunde</span></div>
@@ -1622,7 +1641,7 @@ function renderOrderDetail(orderId) {
         ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? `
           <section class="pos-estimate-editor">
             <div><strong>Forventet tid</strong><span>Kunden ser denne tiden live.</span></div>
-            <label><input data-detail-estimate type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
+            <label><input data-detail-estimate autocomplete="off" type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
             <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater</button>
           </section>` : ''}
       </div>
@@ -1835,17 +1854,18 @@ async function promoteExpiredOrdersToReady() {
 
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
-  document.querySelectorAll('[data-order-clock]').forEach((node) => {
-    const order = getOrders().find((entry) => entry.id === node.dataset.orderClock);
+  document.querySelectorAll('[data-order-center]').forEach((node) => {
+    const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
     if (!order) return;
-    node.textContent = order.status === 'mottatt' ? orderElapsed(order) : (orderCountdown(order) || (order.status === 'klar' ? 'Klar' : formatPrice(order.total)));
+    node.textContent = orderCenterText(order);
   });
   document.querySelectorAll('[data-detail-countdown]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.detailCountdown);
     if (!order) return;
-    node.textContent = orderCountdown(order) || (order.status === 'klar' ? 'Klar nå' : '00:00');
+    node.textContent = orderCountdown(order) || (order.status === 'klar' ? 'Klar nå' : '—');
   });
 }
+
 
 /* ------------------------------------------------------------------ *
  * Restaurantinnstillinger
