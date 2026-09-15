@@ -1145,7 +1145,6 @@ function renderCheckout() {
       ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
       : ui.pickupMode === 'asap' ? 'Vi lager bestillingen så snart vi kan.' : 'Velg når du vil hente bestillingen.';
 
-  const reviewLines = cart.map((line) => cartLineHtml(line, true)).join('');
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
   const reviewItems = cart.map((line) => {
@@ -1164,45 +1163,48 @@ function renderCheckout() {
       group.items.push(addon);
       return groups;
     }, []);
+
     return `
       <article class="checkout-review-item">
         <div class="checkout-review-item-top">
-<span class="checkout-review-item-qty">${line.quantity}×</span>
-<div class="checkout-review-item-main">
-  <strong class="checkout-review-item-name">${escapeHtml(item.name)}</strong>
-  ${size ? `
-    <div class="checkout-review-meta">
-      <span class="checkout-review-meta-label">Størrelse</span>
-      <strong class="checkout-review-meta-value">${escapeHtml(size.label)}</strong>
-      <span class="checkout-review-meta-price">${formatPrice(getSizePrice(item, line.sizeId))}</span>
-    </div>` : ''}
-</div>
-<strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
+          <span class="checkout-review-item-qty">${line.quantity}×</span>
+          <div class="checkout-review-item-main">
+            <div class="checkout-review-title-row">
+              <strong class="checkout-review-item-name">${escapeHtml(item.name)}</strong>
+              <strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
+            </div>
+            ${size ? `
+              <div class="checkout-review-meta-row">
+                <span>Størrelse</span>
+                <strong>${escapeHtml(size.label)}</strong>
+                <small>${formatPrice(getSizePrice(item, line.sizeId))}</small>
+              </div>` : ''}
+            ${addonGroups.length ? `
+              <div class="checkout-review-addon-wrap">
+                ${addonGroups.map((group) => `
+                  <section class="checkout-review-addon-group">
+                    <span class="checkout-review-addon-title">${escapeHtml(group.title)}</span>
+                    ${group.items.map((addon) => `
+                      <div class="checkout-review-addon-row">
+                        <span class="checkout-review-addon-name">• ${escapeHtml(addon.label)}</span>
+                        <strong class="checkout-review-addon-price">${addon.price > 0 ? `+${formatPrice(addon.price)}` : 'Inkludert'}</strong>
+                      </div>`).join('')}
+                  </section>`).join('')}
+              </div>` : ''}
+            ${line.comment ? `
+              <div class="checkout-review-comment">
+                <span>Kommentar</span>
+                <p>${escapeHtml(line.comment)}</p>
+              </div>` : ''}
+          </div>
         </div>
-        ${addonGroups.length ? `
-<div class="checkout-review-addon-wrap">
-  ${addonGroups.map((group) => `
-    <section class="checkout-review-addon-group">
-      <span class="checkout-review-addon-title">${escapeHtml(group.title)}</span>
-      ${group.items.map((addon) => `
-        <div class="checkout-review-addon-row">
-          <span class="checkout-review-addon-name">• ${escapeHtml(addon.label)}</span>
-          <strong class="checkout-review-addon-price">${addon.price > 0 ? `+${formatPrice(addon.price)}` : 'Inkludert'}</strong>
-        </div>`).join('')}
-    </section>`).join('')}
-</div>` : ''}
-        ${line.comment ? `
-<div class="checkout-review-comment">
-  <span>Kommentar</span>
-  <p>${escapeHtml(line.comment)}</p>
-</div>` : ''}
       </article>`;
   }).join('');
 
   el.reviewCard.innerHTML = `
     <div class="checkout-review-head">
       <div class="checkout-review-head-copy">
-        <span>Kontroller bestillingen</span>
+        <span.Kontroller bestillingen</span>
         <strong>Din bestilling</strong>
       </div>
       <button class="link-btn" data-review-cart type="button">Endre kurv</button>
@@ -1210,17 +1212,18 @@ function renderCheckout() {
     <details class="checkout-review-toggle">
       <summary class="checkout-review-summary">
         <strong class="checkout-review-count">${escapeHtml(reviewLabel)}</strong>
+        <span class="checkout-review-summary-hint">Se innhold og detaljer</span>
         <span class="checkout-review-summary-action" aria-hidden="true"></span>
       </summary>
       <div class="checkout-review-details">
         <div class="checkout-review-items">${reviewItems || '<div class="checkout-review-empty">Ingen varer i kurven.</div>'}</div>
-        <div class="checkout-review-info">
-<h4>Din informasjon</h4>
-<div class="checkout-review-info-row"><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-<div class="checkout-review-info-row"><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
-<div class="checkout-review-info-row"><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
-<div class="checkout-review-info-row is-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
-        </div>
+        <section class="checkout-review-info" aria-label="Din informasjon">
+          <h4>Din informasjon</h4>
+          <div class="checkout-review-info-row"><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
+          <div class="checkout-review-info-row"><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+          <div class="checkout-review-info-row"><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
+          <div class="checkout-review-info-row is-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
+        </section>
       </div>
     </details>`;
   if (ui.checkoutStep === 3) {

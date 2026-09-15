@@ -1200,7 +1200,6 @@ main {
     color: var(--ink-2);
 }
 
-.review-card div { display: flex; justify-content: space-between; padding: 2px 0; }
 .review-card strong { color: var(--ink); }
 
 .checkout-actions {

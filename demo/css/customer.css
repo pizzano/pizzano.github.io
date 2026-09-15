@@ -2508,3 +2508,341 @@ textarea.input {
   .checkout-review-info-row.is-total strong { font-size: 14px; }
 }
 
+/* Checkout review definitive mobile reset 2026-09-15 */
+#reviewCard,
+#reviewCard * { box-sizing: border-box; }
+#reviewCard { width: 100% !important; min-width: 0 !important; overflow: hidden !important; padding: 0 !important; }
+#reviewCard div,
+#reviewCard section,
+#reviewCard article { min-width: 0; }
+
+#reviewCard .checkout-review-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: #fff !important;
+}
+#reviewCard .checkout-review-head-copy {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 3px !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-head-copy span {
+  color: var(--ink-3) !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  font-weight: 650 !important;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+#reviewCard .checkout-review-head-copy strong {
+  color: var(--ink) !important;
+  font-size: 17px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+}
+#reviewCard .checkout-review-head .link-btn {
+  flex: 0 0 auto !important;
+  margin: 1px 0 0 !important;
+  padding: 0 !important;
+  color: var(--accent) !important;
+  font-size: 12.5px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+#reviewCard .checkout-review-toggle { display: block !important; width: 100% !important; background: #fff !important; }
+#reviewCard .checkout-review-summary {
+  list-style: none !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 0 16px !important;
+  background: #fff !important;
+  cursor: pointer;
+}
+#reviewCard .checkout-review-summary::-webkit-details-marker { display: none !important; }
+#reviewCard .checkout-review-count {
+  color: var(--ink) !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+#reviewCard .checkout-review-summary-hint {
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  line-height: 1.3 !important;
+  font-weight: 500 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#reviewCard .checkout-review-summary-action {
+  color: var(--accent) !important;
+  font-size: 12.5px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+#reviewCard .checkout-review-summary-action::after { content: 'Vis mer' !important; }
+#reviewCard .checkout-review-toggle[open] .checkout-review-summary-action::after { content: 'Skjul' !important; }
+
+#reviewCard .checkout-review-details {
+  display: block !important;
+  width: 100% !important;
+  padding: 10px !important;
+  border-top: 1px solid var(--line) !important;
+  background: #f7f7f6 !important;
+}
+#reviewCard .checkout-review-items {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-item {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  border: 1px solid #ece7e1 !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 9px rgba(35,28,24,.045) !important;
+}
+#reviewCard .checkout-review-item-top {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0,1fr) !important;
+  align-items: start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-item-qty {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent-dark) !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+#reviewCard .checkout-review-item-main {
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-title-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-item-name {
+  min-width: 0 !important;
+  margin: 0 !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  font-weight: 780 !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+#reviewCard .checkout-review-item-total {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+#reviewCard .checkout-review-meta-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  margin-top: 7px !important;
+  padding: 0 !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+#reviewCard .checkout-review-meta-row > strong {
+  color: var(--ink) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+#reviewCard .checkout-review-meta-row > small {
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  white-space: nowrap !important;
+}
+#reviewCard .checkout-review-addon-wrap {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 10px 0 0 !important;
+  padding: 0 !important;
+}
+#reviewCard .checkout-review-addon-group {
+  display: block !important;
+  width: 100% !important;
+  padding: 9px 0 0 !important;
+  border-top: 1px dashed var(--line) !important;
+}
+#reviewCard .checkout-review-addon-title {
+  display: block !important;
+  margin: 0 0 5px !important;
+  color: var(--ink-3) !important;
+  font-size: 9.5px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+#reviewCard .checkout-review-addon-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 3px 0 !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+#reviewCard .checkout-review-addon-name {
+  min-width: 0 !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+#reviewCard .checkout-review-addon-price {
+  flex: 0 0 auto !important;
+  color: var(--ink) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+#reviewCard .checkout-review-comment {
+  display: block !important;
+  width: 100% !important;
+  margin: 10px 0 0 !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  background: #f7f7f6 !important;
+}
+#reviewCard .checkout-review-comment span {
+  display: block !important;
+  margin: 0 0 3px !important;
+  color: var(--ink-3) !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+}
+#reviewCard .checkout-review-comment p {
+  margin: 0 !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+#reviewCard .checkout-review-info {
+  display: block !important;
+  width: 100% !important;
+  margin: 10px 0 0 !important;
+  padding: 12px !important;
+  border: 1px solid #ece7e1 !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+}
+#reviewCard .checkout-review-info h4 {
+  margin: 0 0 5px !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+}
+#reviewCard .checkout-review-info-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-height: 39px !important;
+  padding: 9px 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+#reviewCard .checkout-review-info-row:last-child { border-bottom: 0 !important; }
+#reviewCard .checkout-review-info-row > span { flex: 0 0 auto !important; }
+#reviewCard .checkout-review-info-row > strong {
+  min-width: 0 !important;
+  max-width: 64% !important;
+  color: var(--ink) !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  text-align: right !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+#reviewCard .checkout-review-info-row.is-total {
+  margin-top: 2px !important;
+  padding-top: 11px !important;
+}
+#reviewCard .checkout-review-info-row.is-total > span,
+#reviewCard .checkout-review-info-row.is-total > strong {
+  color: var(--ink) !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 520px) {
+  #reviewCard .checkout-review-head { padding: 13px 14px !important; }
+  #reviewCard .checkout-review-head-copy strong { font-size: 16px !important; }
+  #reviewCard .checkout-review-summary {
+    grid-template-columns: auto auto !important;
+    justify-content: space-between !important;
+    gap: 6px 10px !important;
+    min-height: 0 !important;
+    padding: 12px 14px !important;
+  }
+  #reviewCard .checkout-review-summary-hint {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    white-space: normal !important;
+    font-size: 11px !important;
+  }
+  #reviewCard .checkout-review-details { padding: 9px !important; }
+  #reviewCard .checkout-review-item { padding: 11px !important; border-radius: 14px !important; }
+  #reviewCard .checkout-review-item-top { grid-template-columns: 31px minmax(0,1fr) !important; gap: 9px !important; }
+  #reviewCard .checkout-review-item-qty { width: 31px !important; min-width: 31px !important; height: 31px !important; }
+  #reviewCard .checkout-review-title-row { gap: 8px !important; }
+  #reviewCard .checkout-review-item-name { font-size: 13.5px !important; }
+  #reviewCard .checkout-review-item-total { font-size: 13.5px !important; }
+  #reviewCard .checkout-review-info { padding: 11px !important; }
+}
+
