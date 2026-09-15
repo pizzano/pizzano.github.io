@@ -1364,6 +1364,7 @@ function renderCheckout() {
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
   el.btnStepNext.disabled = ui.orderSubmitting;
+  el.views.checkout.classList.toggle('is-submitting', ui.orderSubmitting);
   updateContactValidation();
 
   const state = getOpenState();
@@ -1571,7 +1572,7 @@ function confirmationBaseRows(order) {
   return `
     <div><span>Ordrenummer</span><strong>${escapeHtml(String(order.id || '').slice(-6).toUpperCase())}</strong></div>
     <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
-    <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`;
+    <div><span>Beløp</span><strong>${formatPrice(order.total)}</strong></div>`;
 }
 
 function renderConfirmationWaiting(order, name) {
@@ -1596,38 +1597,32 @@ function renderConfirmationAccepted(order) {
   const minutes = Math.max(0, Number(order.estimatedMinutes) || 0);
   const scheduled = order.pickupMode === 'scheduled' || (order.pickup && order.pickup !== 'Snarest');
   const readyNow = order.status === 'klar';
-  if (title) title.textContent = readyNow ? 'Maten er klar!' : 'Bestillingen er bekreftet';
-  // Hold modal locked while the confirmation is shown. No accidental backdrop/Escape close.
+  if (title) title.textContent = readyNow ? 'Klar for henting' : 'Bestillingen er bekreftet';
   el.confirmModal.dataset.waiting = 'true';
   el.confirmModal.dataset.state = readyNow ? 'ready' : 'accepted';
   if (el.btnConfirmDone) el.btnConfirmDone.hidden = true;
+
   el.confirmText.textContent = readyNow
-    ? 'Bestillingen din er klar for henting.'
+    ? 'Maten din er klar.'
     : scheduled
-      ? `Restauranten har bekreftet hentetiden ${order.pickup}.`
+      ? `Henting ${order.pickup}.`
       : minutes > 0
-        ? `Restauranten har bekreftet bestillingen og satt ca. ${minutes} minutter.`
-        : 'Restauranten har bekreftet bestillingen din.';
+        ? `Ca. ${minutes} minutter.`
+        : 'Bestillingen er tatt imot.';
 
-  const acceptMessage = readyNow
-    ? '<strong>Klar for henting</strong><small>Kom og hent maten din nå.</small>'
+  const statusLine = readyNow
+    ? '<strong>Klar nå</strong>'
     : scheduled
-      ? `<strong>Hentetid ${escapeHtml(order.pickup || '')}</strong><small>Bestillingen er bekreftet.</small>`
+      ? `<strong>${escapeHtml(order.pickup || '')}</strong>`
       : minutes > 0
-        ? `<strong>Ca. ${minutes} minutter</strong><small>Oppgitt av restauranten.</small>`
-        : '<strong>Bekreftet</strong><small>Bestillingen er tatt imot.</small>';
-
-  const countdown = !scheduled && !readyNow && minutes > 0
-    ? `<div class="confirm-ready-countdown"><span>Forventet klar om</span><strong data-confirm-ready-countdown>${escapeHtml(confirmationReadyLeftText(order))}</strong><small>Nedtellingen fortsetter på forsiden.</small></div>`
-    : '';
+        ? `<strong data-confirm-ready-countdown>${escapeHtml(confirmationReadyLeftText(order))}</strong>`
+        : '<strong>Bekreftet</strong>';
 
   el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
     <div class="confirm-accepted-status">
       <span class="confirm-accepted-check" aria-hidden="true">✓</span>
-      <div>${acceptMessage}</div>
-    </div>
-    ${countdown}
-    <p class="confirm-auto-return">Du sendes til forsiden om noen sekunder, og kan følge bestillingen live der.</p>`;
+      <div>${statusLine}</div>
+    </div>`;
 }
 
 function startAcceptedConfirmationHold(order) {
@@ -1640,7 +1635,7 @@ function startAcceptedConfirmationHold(order) {
     if (node) node.textContent = confirmationReadyLeftText(current);
   }, 500);
 
-  // Long enough to read the accepted time, then move to the live order card.
+  // Show the compact confirmation briefly, then return to the main menu.
   orderConfirmRedirectTimer = window.setTimeout(() => {
     if (orderConfirmAcceptedTimer) {
       clearInterval(orderConfirmAcceptedTimer);
@@ -1652,7 +1647,7 @@ function startAcceptedConfirmationHold(order) {
     orderConfirmDeadline = 0;
     closeConfirm();
     renderActiveOrders();
-  }, 8000);
+  }, 3000);
 }
 
 function renderConfirmationTimeout(order) {
