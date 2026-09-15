@@ -5,6 +5,7 @@ on:
       - fix/admin-hide-current-status-actions-20260915
     paths:
       - .github/workflows/admin-hide-current-status-actions.yml
+      - .github/scripts/admin-hide-current-status-actions.py
 permissions:
   contents: write
 jobs:
