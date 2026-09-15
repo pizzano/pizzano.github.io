@@ -366,6 +366,16 @@ function activeCustomerOrders() {
   });
 }
 
+
+function customerOrderCountdown(order) {
+  const readyAt = Number(order?.estimatedReadyAt) || 0;
+  if (!readyAt) return '';
+  const seconds = Math.max(0, Math.ceil((readyAt - Date.now()) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${String(secs).padStart(2, '0')} igjen`;
+}
+
 function activeOrderCardHtml(order) {
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
   const index = foundIndex < 0 ? 0 : foundIndex;
@@ -383,7 +393,7 @@ function activeOrderCardHtml(order) {
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}</div>
     </div>
     <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
-    ${estimated && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong>Ca. ${estimated} min</strong><small>oppgitt av restauranten</small></div>` : ''}
+    ${estimated && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order) || `Ca. ${estimated} min`)}</strong><small>oppgitt av restauranten</small></div>` : ''}
     ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
     <div class="active-order-meta"><span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span><span><b>${formatPrice(order.total)}</b></span></div>
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
@@ -392,6 +402,7 @@ function activeOrderCardHtml(order) {
 
 const activeOrderStreams = new Map();
 const activeOrderFetchBusy = new Set();
+const customerAutoReadyBusy = new Set();
 let activeOrderFallbackTimer = null;
 const readyDismissTimers = new Map();
 const scheduledReadyTransitions = new Map();
@@ -452,6 +463,47 @@ function syncActiveOrderWatchers(orderIds) {
   activeOrderFallbackTimer = wanted.size ? window.setInterval(() => {
     if (!document.hidden) for (const orderId of wanted) fetchActiveOrderNow(orderId);
   }, 5000) : null;
+}
+
+
+async function promoteCustomerExpiredOrder(order) {
+  if (!order?.id || customerAutoReadyBusy.has(order.id)) return;
+  const readyAt = Number(order.estimatedReadyAt) || 0;
+  if (!readyAt || readyAt > Date.now() || !['bekreftet', 'tilberedning'].includes(order.status)) return;
+  customerAutoReadyBusy.add(order.id);
+  const now = Date.now();
+  const optimistic = { ...order, status: 'klar', statusUpdatedAt: now };
+  upsertLiveOrder(order.id, optimistic);
+  renderActiveOrders();
+  if (ui.view === 'profile') renderProfile();
+  try {
+    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(order.id)}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'klar', statusUpdatedAt: now }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  } catch (_) {
+    await fetchActiveOrderNow(order.id);
+  } finally {
+    customerAutoReadyBusy.delete(order.id);
+  }
+}
+
+function refreshCustomerOrderCountdowns() {
+  const orders = activeCustomerOrders();
+  const byId = new Map(orders.map((order) => [order.id, order]));
+  document.querySelectorAll('[data-customer-countdown]').forEach((node) => {
+    const order = byId.get(node.dataset.customerCountdown);
+    if (!order) return;
+    node.textContent = customerOrderCountdown(order) || (order.status === 'klar' ? 'Klar nå' : `Ca. ${Math.max(0, Number(order.estimatedMinutes) || 0)} min`);
+  });
+  for (const order of orders) {
+    const readyAt = Number(order.estimatedReadyAt) || 0;
+    if (readyAt > 0 && readyAt <= Date.now() && ['bekreftet', 'tilberedning'].includes(order.status)) {
+      void promoteCustomerExpiredOrder(order);
+    }
+  }
 }
 
 function scheduleReadyDismiss(order) {
@@ -2198,6 +2250,10 @@ setInterval(() => {
   updateSyncBadge();
   renderOpenState();
 }, 5000);
+
+// Vis resttid sekund for sekund. Når tiden er ute, går ordren automatisk til Klar.
+setInterval(refreshCustomerOrderCountdowns, 1000);
+refreshCustomerOrderCountdowns();
 
 renderAll();
 

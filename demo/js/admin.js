@@ -98,7 +98,7 @@ const el = {
   ordersSummary: $('ordersSummary'),
   orderStatRow: $('orderStatRow'),
   orderList: $('orderList'),
-  orderFilterBtns: document.querySelectorAll('.filter-btn[data-order-filter]'),
+  orderFilterBtns: document.querySelectorAll('.orders-tab[data-order-filter]'),
   btnRefreshOrders: $('btnRefreshOrders'),
   orderDetailPane: $('orderDetailPane'),
   orderDetailEmpty: $('orderDetailEmpty'),
@@ -1453,13 +1453,8 @@ function syncOrdersWorkspaceLayout() {
 }
 
 function filteredOrders() {
-  const orders = getOrders();
-  if (ui.orderFilter === 'all') return orders;
-  if (ui.orderFilter === 'active') {
-    return orders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning'].includes(order.status));
-  }
-  if (ui.orderFilter === 'klar') return orders.filter((order) => order.status === 'klar');
-  return orders;
+  ui.orderFilter = 'all';
+  return getOrders();
 }
 
 function compactOrderTime(value) {
@@ -1520,16 +1515,10 @@ function orderListRowHtml(order, isNew = false) {
 }
 
 function renderOrderTabs(allOrders) {
-  const counts = {
-    all: allOrders.length,
-    active: allOrders.filter((order) => ['mottatt', 'bekreftet', 'tilberedning'].includes(order.status)).length,
-    klar: allOrders.filter((order) => order.status === 'klar').length,
-  };
-  const labels = { all: 'Alle', active: 'Pågår', klar: 'Klar' };
+  ui.orderFilter = 'all';
   el.orderFilterBtns.forEach((button) => {
-    const key = button.dataset.orderFilter;
-    button.classList.toggle('is-active', key === ui.orderFilter);
-    button.innerHTML = `<span>${labels[key] || key}</span><b>${counts[key] ?? 0}</b>`;
+    button.classList.add('is-active');
+    button.innerHTML = `<span>Alle</span><b>${allOrders.length}</b>`;
   });
 }
 
@@ -1586,6 +1575,7 @@ function renderOrderDetail(orderId) {
   selectedOrderId = order.id;
   const shortId = String(order.id || '').slice(-8).toUpperCase();
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
+  const countdown = orderCountdown(order);
   const isPending = order.status === 'mottatt';
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
@@ -1603,15 +1593,18 @@ function renderOrderDetail(orderId) {
   el.orderDetailLive.innerHTML = `
     <article class="pos-order-detail">
       <header class="pos-detail-top">
-        <div class="pos-detail-total">${formatPrice(order.total)}</div>
-        <div class="pos-detail-pills"><span>${escapeHtml(pickupType)}</span><span>${escapeHtml(payment)}</span></div>
+        <div class="pos-detail-heading">
+          <div class="pos-detail-total">${formatPrice(order.total)}</div>
+          <div class="pos-detail-pills"><span>${escapeHtml(pickupType)}</span><span>${escapeHtml(payment)}</span></div>
+        </div>
+        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Lukk bestillingen og gå tilbake til listen">×</button>
       </header>
       <div class="pos-detail-scroll">
         <section class="pos-meta-block">
           <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
           <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-          ${estimated ? `<div><span>Forventet</span><strong>Ca. ${estimated} min</strong></div>` : ''}
+          ${estimated && !isPending ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || '00:00')}</strong></div>` : ''}
         </section>
         <section class="pos-customer-block">
           <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span>★ Kunde</span></div>
@@ -1711,6 +1704,13 @@ function openRejectOrder(orderId) {
 }
 
 el.orderDetailLive.addEventListener('click', async (event) => {
+  const closeDetail = event.target.closest('[data-close-order-detail]');
+  if (closeDetail) {
+    if (selectedOrderId) lastAutoOpenedPendingId = selectedOrderId;
+    selectedOrderId = null;
+    renderOrders();
+    return;
+  }
   const accept = event.target.closest('[data-open-accept]');
   if (accept) {
     openAcceptOrder(accept.dataset.openAccept);
@@ -1838,7 +1838,12 @@ function refreshOrderClocks() {
   document.querySelectorAll('[data-order-clock]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderClock);
     if (!order) return;
-    node.textContent = order.status === 'mottatt' ? orderElapsed(order) : (orderCountdown(order) || formatPrice(order.total));
+    node.textContent = order.status === 'mottatt' ? orderElapsed(order) : (orderCountdown(order) || (order.status === 'klar' ? 'Klar' : formatPrice(order.total)));
+  });
+  document.querySelectorAll('[data-detail-countdown]').forEach((node) => {
+    const order = getOrders().find((entry) => entry.id === node.dataset.detailCountdown);
+    if (!order) return;
+    node.textContent = orderCountdown(order) || (order.status === 'klar' ? 'Klar nå' : '00:00');
   });
 }
 

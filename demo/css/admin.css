@@ -1526,3 +1526,65 @@ body.hide-settings-col .admin-shell { grid-template-columns: 236px minmax(0, 1fr
     padding-right: 14px;
   }
 }
+
+
+/* Single-tab orders + live countdown 2026-09-15 */
+.orders-tabs {
+  grid-template-columns: minmax(0, 180px) !important;
+  justify-content: start;
+}
+.orders-tab {
+  width: 100%;
+}
+.pos-detail-top {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-right: 72px !important;
+}
+.pos-detail-heading {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.pos-detail-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dfe4e9;
+  border-radius: 50%;
+  background: #fff;
+  color: #56606d;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(28, 35, 43, .06);
+}
+.pos-detail-close:hover {
+  border-color: #cdd4dc;
+  background: #f7f8f9;
+  color: #171c22;
+}
+.pos-meta-countdown strong,
+.orders-live-time {
+  font-variant-numeric: tabular-nums;
+}
+.pos-meta-countdown strong {
+  color: #ef6c00 !important;
+  font-size: 18px !important;
+  letter-spacing: .03em;
+}
+.orders-list-row:not(.is-new) .orders-live-time {
+  color: #ef6c00;
+}
+@media (max-width: 760px) {
+  .orders-tabs { grid-template-columns: 1fr !important; }
+  .pos-detail-top { padding-right: 64px !important; }
+  .pos-detail-close { top: 14px; right: 14px; }
+}
