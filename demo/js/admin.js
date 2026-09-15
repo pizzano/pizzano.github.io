@@ -65,6 +65,8 @@ let attachTargetItemId = null;
 let openOrderId = null;
 let selectedOrderId = null;
 let actionOrderId = null;
+let lastAutoOpenedPendingId = null;
+const autoReadyBusy = new Set();
 
 const $ = (id) => document.getElementById(id);
 
@@ -1444,6 +1446,12 @@ const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) =>
   ['bekreftet', 'tilberedning', 'klar'].includes(status.id)
 );
 
+function syncOrdersWorkspaceLayout() {
+  const workspace = document.querySelector('.orders-app');
+  if (!workspace) return;
+  workspace.classList.toggle('is-list-only', !selectedOrderId);
+}
+
 function filteredOrders() {
   const orders = getOrders();
   if (ui.orderFilter === 'all') return orders;
@@ -1634,15 +1642,26 @@ function renderOrders() {
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) => order.status === 'mottatt').length} nye`;
   const visible = filteredOrders();
-  if (!selectedOrderId || !visible.some((order) => order.id === selectedOrderId)) {
-    selectedOrderId = visible.find((order) => order.status === 'mottatt')?.id || visible[0]?.id || null;
+
+  if (selectedOrderId && !visible.some((order) => order.id === selectedOrderId)) {
+    selectedOrderId = null;
   }
+
+  const newestPending = visible.find((order) => order.status === 'mottatt');
+  if (newestPending && newestPending.id !== lastAutoOpenedPendingId) {
+    selectedOrderId = newestPending.id;
+    lastAutoOpenedPendingId = newestPending.id;
+  }
+
   renderOrderList();
-  if (selectedOrderId) renderOrderDetail(selectedOrderId);
-  else {
+  if (selectedOrderId) {
+    renderOrderDetail(selectedOrderId);
+  } else {
     el.orderDetailEmpty.hidden = false;
     el.orderDetailLive.hidden = true;
+    el.orderDetailLive.innerHTML = '';
   }
+  syncOrdersWorkspaceLayout();
 }
 
 el.orderFilterBtns.forEach((button) => {
@@ -1704,7 +1723,10 @@ el.orderDetailLive.addEventListener('click', async (event) => {
   }
   const status = event.target.closest('[data-detail-status]');
   if (status && selectedOrderId) {
-    const ok = await updateOrderStatus(selectedOrderId, status.dataset.detailStatus);
+    const orderId = selectedOrderId;
+    const nextStatus = status.dataset.detailStatus;
+    const ok = await updateOrderStatus(orderId, nextStatus);
+    if (ok && nextStatus === 'klar') selectedOrderId = null;
     renderOrders();
     renderStats();
     toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
@@ -1742,6 +1764,7 @@ el.acceptMinutes.addEventListener('input', () => {
 
 el.btnAcceptConfirm.addEventListener('click', async () => {
   if (!actionOrderId) return;
+  const acceptedOrderId = actionOrderId;
   const minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
   if (!minutes) {
     toast('Velg eller skriv minutter.');
@@ -1756,7 +1779,8 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
     toast('Kunne ikke godta bestillingen.');
     return;
   }
-  selectedOrderId = actionOrderId;
+  lastAutoOpenedPendingId = acceptedOrderId;
+  selectedOrderId = null;
   closeModals();
   renderOrders();
   renderStats();
@@ -1786,6 +1810,28 @@ el.btnRefreshOrders.addEventListener('click', async () => {
   renderAll();
   toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
 });
+
+async function promoteExpiredOrdersToReady() {
+  const now = Date.now();
+  const due = getOrders().filter((order) => {
+    const readyAt = Number(order.estimatedReadyAt) || 0;
+    return readyAt > 0 && readyAt <= now && ['bekreftet', 'tilberedning'].includes(order.status);
+  });
+  for (const order of due) {
+    if (autoReadyBusy.has(order.id)) continue;
+    autoReadyBusy.add(order.id);
+    try {
+      const ok = await updateOrderStatus(order.id, 'klar');
+      if (!ok) continue;
+      if (selectedOrderId === order.id) selectedOrderId = null;
+      renderOrders();
+      renderStats();
+      toast(`#${String(order.id).slice(-6).toUpperCase()} er automatisk klar for henting.`);
+    } finally {
+      autoReadyBusy.delete(order.id);
+    }
+  }
+}
 
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
@@ -2016,5 +2062,9 @@ setInterval(() => {
   if (ui.page === 'settings') renderSettingsPreviewOnly();
 }, 5000);
 
-setInterval(refreshOrderClocks, 1000);
+setInterval(() => {
+  refreshOrderClocks();
+  void promoteExpiredOrdersToReady();
+}, 1000);
+void promoteExpiredOrdersToReady();
 renderAll();

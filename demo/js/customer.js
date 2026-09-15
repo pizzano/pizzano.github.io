@@ -333,10 +333,28 @@ function markReadySeen(orderId) {
   saveJSON(READY_SEEN_KEY, Array.from(seen).slice(-30));
 }
 
+function effectiveCustomerOrder(order) {
+  if (!order) return order;
+  const readyAt = Number(order.estimatedReadyAt) || 0;
+  if (
+    readyAt > 0 &&
+    readyAt <= Date.now() &&
+    ['bekreftet', 'tilberedning'].includes(order.status)
+  ) {
+    return {
+      ...order,
+      status: 'klar',
+      statusUpdatedAt: readyAt,
+      autoReady: true,
+    };
+  }
+  return order;
+}
+
 function activeCustomerOrders() {
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   const seen = readySeenIds();
-  return mergedCustomerOrders().filter((order) => {
+  return mergedCustomerOrders().map(effectiveCustomerOrder).filter((order) => {
     if (!order?.id || order.status === 'fullfort' || order.status === 'avvist') return false;
     if (order.status === 'klar') {
       if (seen.has(order.id)) return false;
@@ -376,6 +394,7 @@ const activeOrderStreams = new Map();
 const activeOrderFetchBusy = new Set();
 let activeOrderFallbackTimer = null;
 const readyDismissTimers = new Map();
+const scheduledReadyTransitions = new Map();
 
 function upsertLiveOrder(orderId, remote) {
   if (!remote || !orderId) return;
@@ -452,6 +471,31 @@ function scheduleReadyDismiss(order) {
   readyDismissTimers.set(order.id, timer);
 }
 
+function syncScheduledReadyTransitions(orders) {
+  const keep = new Set();
+  for (const order of orders) {
+    if (!order?.id || !['bekreftet', 'tilberedning'].includes(order.status)) continue;
+    const readyAt = Number(order.estimatedReadyAt) || 0;
+    if (!readyAt) continue;
+    keep.add(order.id);
+    const existing = scheduledReadyTransitions.get(order.id);
+    if (existing && existing.readyAt === readyAt) continue;
+    if (existing) window.clearTimeout(existing.timer);
+    const delay = Math.max(0, readyAt - Date.now()) + 80;
+    const timer = window.setTimeout(() => {
+      scheduledReadyTransitions.delete(order.id);
+      renderActiveOrders();
+      if (ui.view === 'profile') renderProfile();
+    }, delay);
+    scheduledReadyTransitions.set(order.id, { timer, readyAt });
+  }
+  for (const [orderId, entry] of scheduledReadyTransitions.entries()) {
+    if (keep.has(orderId)) continue;
+    window.clearTimeout(entry.timer);
+    scheduledReadyTransitions.delete(orderId);
+  }
+}
+
 function notifyReadyOrders(orders) {
   const notified = new Set(loadJSON(READY_NOTIFIED_KEY, []));
   let changed = false;
@@ -478,6 +522,7 @@ function renderActiveOrders() {
     target.hidden = !orders.length;
     target.innerHTML = html;
   }
+  syncScheduledReadyTransitions(orders);
   syncActiveOrderWatchers(orders.map((order) => order.id));
   notifyReadyOrders(orders);
   orders.filter((order) => order.status === 'klar').forEach(scheduleReadyDismiss);
