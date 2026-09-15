@@ -189,13 +189,24 @@
         const merged = orders.map((order) => {
           const remote = byId.get(order.id);
           if (!remote) return order;
-          if (remote.status === order.status && remote.statusUpdatedAt === order.statusUpdatedAt) return order;
-          changed = true;
-          return {
+          const next = {
             ...order,
-            status: remote.status || order.status,
-            statusUpdatedAt: Number(remote.statusUpdatedAt) || order.statusUpdatedAt,
+            ...remote,
+            id: order.id,
+            lines: Array.isArray(remote.lines) && remote.lines.length ? remote.lines : (order.lines || []),
           };
+          const beforeKey = JSON.stringify([
+            order.status || '', Number(order.statusUpdatedAt) || 0,
+            Number(order.estimatedMinutes) || 0, Number(order.estimatedAt) || 0,
+            Number(order.estimatedReadyAt) || 0, order.rejectionReason || '', order.rejectionMessage || ''
+          ]);
+          const afterKey = JSON.stringify([
+            next.status || '', Number(next.statusUpdatedAt) || 0,
+            Number(next.estimatedMinutes) || 0, Number(next.estimatedAt) || 0,
+            Number(next.estimatedReadyAt) || 0, next.rejectionReason || '', next.rejectionMessage || ''
+          ]);
+          if (beforeKey !== afterKey) changed = true;
+          return next;
         });
 
         if (changed) writeStoredJSON(ORDERS_LOCAL_KEY, merged);
@@ -266,7 +277,7 @@
   }
 
   // Customer-side enhancement module.
-  loadModule('allergenUiModule', '/demo/js/allergen-ui.js?v=20260908-4');
+  loadModule('allergenUiModule', '/demo/js/allergen-ui.js?v=20260915-orderfix3');
 
   // Keep checkout contact details across refreshes and promote them to the
   // customer's profile after the first successful order. This is small enough

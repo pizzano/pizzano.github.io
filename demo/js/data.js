@@ -498,6 +498,8 @@ function normalizeOrders(raw) {
         estimatedMinutes: Number(order.estimatedMinutes) > 0 ? Number(order.estimatedMinutes) : null,
         estimatedAt: Number(order.estimatedAt) || null,
         estimatedReadyAt: Number(order.estimatedReadyAt) || null,
+        rejectionReason: String(order.rejectionReason || ''),
+        rejectionMessage: String(order.rejectionMessage || ''),
         subtotal: Number(order.subtotal) || 0,
         total: Number(order.total) || 0,
         lines: asArray(order.lines).map((line) => ({
@@ -812,6 +814,8 @@ function applyRemoteOrders(value) {
     Number(o.estimatedMinutes) || 0,
     Number(o.estimatedAt) || 0,
     Number(o.estimatedReadyAt) || 0,
+    o.rejectionReason || '',
+    o.rejectionMessage || '',
     o.pickup || '',
     Number(o.total) || 0,
     Array.isArray(o.lines) ? o.lines.length : 0,

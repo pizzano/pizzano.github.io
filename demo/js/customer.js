@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260915-timerfix2';
+} from './data.js?v=20260915-orderfix3';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -39,6 +39,8 @@ const CART_KEY = 'kol_cart_v1';
 const ALLERGEN_KEY = 'kol_allergens_v1';
 const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
 const READY_SEEN_KEY = 'kol_ready_seen_v1';
+const CUSTOMER_ORDERS_KEY = 'kol_orders_v1';
+const REJECTED_SEEN_KEY = 'kol_rejected_seen_v1';
 
 function loadJSON(key, fallback) {
   try {
@@ -302,26 +304,63 @@ const CUSTOMER_STATUS_FLOW = [
   { id: 'klar', label: 'Klar for henting', short: 'Klar' },
 ];
 
+const stableCustomerOrderSnapshots = new Map();
+
+function mergeStableCustomerOrder(previous = {}, incoming = {}) {
+  const next = { ...previous, ...incoming };
+  for (const key of ['estimatedMinutes', 'estimatedAt', 'estimatedReadyAt', 'rejectionReason', 'rejectionMessage']) {
+    const value = incoming ? incoming[key] : null;
+    if ((value === undefined || value === null || value === '') && previous[key] !== undefined && previous[key] !== null && previous[key] !== '') {
+      next[key] = previous[key];
+    }
+  }
+  if ((!Array.isArray(next.lines) || !next.lines.length) && Array.isArray(previous.lines)) next.lines = previous.lines;
+  return next;
+}
+
+function rememberCustomerOrder(order) {
+  if (!order?.id) return order || {};
+  const previous = stableCustomerOrderSnapshots.get(order.id) || {};
+  const next = mergeStableCustomerOrder(previous, order);
+  stableCustomerOrderSnapshots.set(order.id, next);
+  return next;
+}
+
+function persistCustomerOrderSnapshot(order) {
+  if (!order?.id) return;
+  const remembered = rememberCustomerOrder(order);
+  const current = loadJSON(CUSTOMER_ORDERS_KEY, []);
+  const list = Array.isArray(current) ? [...current] : [];
+  const index = list.findIndex((entry) => entry?.id === remembered.id);
+  if (index >= 0) list[index] = mergeStableCustomerOrder(list[index], remembered);
+  else list.unshift(remembered);
+  saveJSON(CUSTOMER_ORDERS_KEY, list.slice(0, 30));
+}
+
 function mergedCustomerOrders() {
   const localOrders = getLocalOrders();
   const liveOrders = getOrders();
   const local = Array.isArray(localOrders) ? localOrders : [];
   const live = Array.isArray(liveOrders) ? liveOrders : [];
-  const byId = new Map(local.filter((order) => order?.id).map((order) => [order.id, order]));
+  const byId = new Map();
+
+  for (const order of local) {
+    if (!order?.id) continue;
+    byId.set(order.id, rememberCustomerOrder(order));
+  }
+
   for (const remote of live) {
     if (!remote?.id) continue;
-    const previous = byId.get(remote.id) || {};
-    byId.set(remote.id, {
-      ...previous,
-      ...remote,
-      status: remote.status || previous.status || 'mottatt',
-      statusUpdatedAt: remote.statusUpdatedAt ?? previous.statusUpdatedAt ?? null,
-      estimatedMinutes: remote.estimatedMinutes ?? null,
-      estimatedAt: remote.estimatedAt ?? null,
-      estimatedReadyAt: remote.estimatedReadyAt ?? null,
-      lines: remote.lines?.length ? remote.lines : (previous.lines || []),
-    });
+    const previous = byId.get(remote.id) || stableCustomerOrderSnapshots.get(remote.id) || {};
+    const merged = rememberCustomerOrder(mergeStableCustomerOrder(previous, remote));
+    byId.set(remote.id, merged);
   }
+
+  for (const [orderId, snapshot] of stableCustomerOrderSnapshots.entries()) {
+    if (!byId.has(orderId)) continue;
+    byId.set(orderId, mergeStableCustomerOrder(byId.get(orderId), snapshot));
+  }
+
   return Array.from(byId.values()).sort(
     (a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)
   );
@@ -338,14 +377,31 @@ function markReadySeen(orderId) {
   saveJSON(READY_SEEN_KEY, Array.from(seen).slice(-30));
 }
 
+function rejectedSeenIds() {
+  return new Set(loadJSON(REJECTED_SEEN_KEY, []));
+}
+
+function markRejectedSeen(orderId) {
+  if (!orderId) return;
+  const seen = rejectedSeenIds();
+  seen.add(orderId);
+  saveJSON(REJECTED_SEEN_KEY, Array.from(seen).slice(-30));
+}
+
 
 function activeCustomerOrders() {
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-  const seen = readySeenIds();
+  const readySeen = readySeenIds();
+  const rejectedSeen = rejectedSeenIds();
   return mergedCustomerOrders().filter((order) => {
-    if (!order?.id || order.status === 'fullfort' || order.status === 'avvist') return false;
+    if (!order?.id || order.status === 'fullfort') return false;
+    if (order.status === 'avvist') {
+      if (rejectedSeen.has(order.id)) return false;
+      const createdAt = Number(order.createdAt) || 0;
+      return !createdAt || createdAt >= cutoff;
+    }
     if (order.status === 'klar') {
-      if (seen.has(order.id)) return false;
+      if (readySeen.has(order.id)) return false;
       const readyAt = Number(order.statusUpdatedAt) || Number(order.createdAt) || Date.now();
       if (Date.now() - readyAt >= 5 * 60 * 1000) return false;
     }
@@ -367,25 +423,31 @@ function customerOrderCountdown(order) {
 }
 
 function activeOrderCardHtml(order) {
+  const rejectedNow = order.status === 'avvist';
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
   const readyNow = order.status === 'klar';
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const hasLiveEstimate = estimated > 0 && Number(order.estimatedReadyAt) > 0 && ['bekreftet', 'tilberedning'].includes(order.status);
+  const rejectionReason = String(order.rejectionReason || '').trim();
+  const rejectionMessage = String(order.rejectionMessage || '').trim();
+  const rejectionTitle = rejectionReason && rejectionReason !== 'Egendefinert melding' ? rejectionReason : 'Bestillingen ble avvist';
+  const rejectionDetail = rejectionMessage || (rejectionReason === 'Egendefinert melding' ? '' : 'Kontakt restauranten hvis du lurer på noe.');
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
     return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${complete ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
   }).join('');
-  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
+  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
-      <div><span class="active-order-kicker">Aktiv bestilling</span><strong class="active-order-live-status">${escapeHtml(readyNow ? 'Klar for henting' : orderStatusLabel(order.status))}</strong></div>
-      <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}</div>
+      <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span><strong class="active-order-live-status">${escapeHtml(rejectedNow ? 'Avvist' : (readyNow ? 'Klar for henting' : orderStatusLabel(order.status)))}</strong></div>
+      <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}${rejectedNow ? `<button class="active-order-dismiss" data-rejected-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk avvisningsmeldingen">×</button>` : ''}</div>
     </div>
-    <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
-    ${hasLiveEstimate && !readyNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong><small>oppgitt av restauranten</small></div>` : ''}
+    ${!rejectedNow ? `<div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>` : ''}
+    ${hasLiveEstimate && !readyNow && !rejectedNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong><small>oppgitt av restauranten</small></div>` : ''}
     ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
+    ${rejectedNow ? `<div class="active-order-rejected-callout"><span class="rejected-mark">×</span><div><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionDetail ? `<small>${escapeHtml(rejectionDetail)}</small>` : ''}</div></div>` : ''}
     <div class="active-order-meta"><span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span><span><b>${formatPrice(order.total)}</b></span></div>
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
   </section>`;
@@ -399,7 +461,8 @@ const readyDismissTimers = new Map();
 
 function upsertLiveOrder(orderId, remote) {
   if (!remote || !orderId) return;
-  const normalized = { ...remote, id: remote.id || orderId };
+  const normalized = rememberCustomerOrder({ ...remote, id: remote.id || orderId });
+  persistCustomerOrderSnapshot(normalized);
   const orders = Array.isArray(store.orders) ? [...store.orders] : [];
   const index = orders.findIndex((entry) => entry?.id === orderId);
   if (index >= 0) {
@@ -1737,7 +1800,11 @@ function renderProfile() {
               .map((line) => `${line.quantity}× ${line.name}`)
               .join(', ');
             const current = live.find((entry) => entry.id === order.id);
-            const status = orderStatusLabel(current ? current.status : order.status);
+            const displayOrder = current ? mergeStableCustomerOrder(order, current) : order;
+            const status = orderStatusLabel(displayOrder.status);
+            const rejectionReason = String(displayOrder.rejectionReason || '').trim();
+            const rejectionMessage = String(displayOrder.rejectionMessage || '').trim();
+            const rejectionTitle = rejectionReason && rejectionReason !== 'Egendefinert melding' ? rejectionReason : 'Bestillingen ble avvist';
             const details = (order.lines || []).map(orderHistoryLineHtml).join('');
             const shortId = String(order.id || '').slice(-6).toUpperCase();
             return `
@@ -1754,6 +1821,7 @@ function renderProfile() {
                   <span class="order-history-toggle">Se detaljer <i aria-hidden="true">⌄</i></span>
                 </summary>
                 <div class="order-history-details">
+                  ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
                   <div class="order-history-lines">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
                   <div class="order-history-meta">
                     <div><span>Ordrenummer</span><strong>${escapeHtml(shortId || '—')}</strong></div>
@@ -1841,6 +1909,13 @@ document.addEventListener('click', (event) => {
     if (timer) clearTimeout(timer);
     readyDismissTimers.delete(orderId);
     markReadySeen(orderId);
+    renderActiveOrders();
+    if (ui.view === 'profile') renderProfile();
+    return;
+  }
+  const rejectedDismiss = event.target.closest('[data-rejected-dismiss]');
+  if (rejectedDismiss) {
+    markRejectedSeen(rejectedDismiss.dataset.rejectedDismiss);
     renderActiveOrders();
     if (ui.view === 'profile') renderProfile();
     return;

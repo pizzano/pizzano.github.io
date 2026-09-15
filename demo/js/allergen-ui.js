@@ -1,4 +1,4 @@
-import { findItem, allergenLabels } from './data.js?v=20260915-timerfix2';
+import { findItem, allergenLabels } from './data.js?v=20260915-orderfix3';
 
 const ALLERGEN_KEY = 'kol_allergens_v1';
 const ALLERGEN_ICONS = {

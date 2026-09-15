@@ -35,7 +35,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260915-timerfix2';
+} from './data.js?v=20260915-orderfix3';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
