@@ -1501,6 +1501,195 @@ function resolveScheduledPickupAt(value) {
   return target.getTime();
 }
 
+
+/* Order confirmation wait flow 2026-09-15 */
+const ORDER_CONFIRM_WAIT_MS = 3 * 60 * 1000;
+let orderConfirmTimer = null;
+let orderConfirmOrderId = '';
+let orderConfirmDeadline = 0;
+let orderConfirmTimedOut = false;
+let orderConfirmResolved = false;
+
+function stopOrderConfirmationWait() {
+  if (orderConfirmTimer) {
+    clearInterval(orderConfirmTimer);
+    orderConfirmTimer = null;
+  }
+  orderConfirmOrderId = '';
+  orderConfirmDeadline = 0;
+  orderConfirmTimedOut = false;
+  orderConfirmResolved = false;
+}
+
+function confirmationRestaurantPhone() {
+  const settings = store.settings || {};
+  const label = String(settings.phone || '').trim();
+  const tel = label.replace(/[^+\d]/g, '');
+  return { label, tel };
+}
+
+function confirmationOrderSnapshot(orderId) {
+  if (!orderId) return null;
+  const live = mergedCustomerOrders().find((order) => order?.id === orderId);
+  if (live) return live;
+  return stableCustomerOrderSnapshots.get(orderId) || null;
+}
+
+function confirmationTimeLeftText() {
+  const remaining = Math.max(0, orderConfirmDeadline - Date.now());
+  const seconds = Math.ceil(remaining / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function confirmationBaseRows(order) {
+  return `
+    <div><span>Ordrenummer</span><strong>${escapeHtml(String(order.id || '').slice(-6).toUpperCase())}</strong></div>
+    <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
+    <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`;
+}
+
+function renderConfirmationWaiting(order, name) {
+  const title = el.confirmModal.querySelector('h2');
+  if (title) title.textContent = 'Venter på bekreftelse';
+  el.confirmModal.dataset.waiting = 'true';
+  el.confirmModal.dataset.state = 'waiting';
+  if (el.btnConfirmDone) el.btnConfirmDone.hidden = true;
+  el.confirmText.textContent = `Takk, ${name}! Bestillingen er sendt. Vi venter nå på svar fra restauranten.`;
+  el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
+    <div class="confirm-wait-status">
+      <span class="confirm-live-dot" aria-hidden="true"></span>
+      <div>
+        <strong>Venter på restauranten</strong>
+        <small>Vi holder deg her i opptil 3 minutter · <b data-confirm-countdown>${confirmationTimeLeftText()}</b> igjen</small>
+      </div>
+    </div>`;
+}
+
+function renderConfirmationAccepted(order) {
+  const title = el.confirmModal.querySelector('h2');
+  const minutes = Math.max(0, Number(order.estimatedMinutes) || 0);
+  const scheduled = order.pickupMode === 'scheduled' || (order.pickup && order.pickup !== 'Snarest');
+  const readyNow = order.status === 'klar';
+  if (title) title.textContent = readyNow ? 'Maten er klar!' : 'Bestillingen er bekreftet';
+  el.confirmModal.dataset.waiting = 'false';
+  el.confirmModal.dataset.state = readyNow ? 'ready' : 'accepted';
+  el.confirmText.textContent = readyNow
+    ? 'Bestillingen din er klar for henting.'
+    : scheduled
+      ? `Restauranten har bekreftet hentetiden ${order.pickup}.`
+      : minutes > 0
+        ? `Restauranten har bekreftet bestillingen. Du har fått ca. ${minutes} minutter.`
+        : 'Restauranten har bekreftet bestillingen din.';
+
+  const acceptMessage = readyNow
+    ? '<strong>Klar for henting</strong><small>Kom og hent maten din nå.</small>'
+    : scheduled
+      ? `<strong>Hentetid ${escapeHtml(order.pickup || '')}</strong><small>Bestillingen er bekreftet.</small>`
+      : minutes > 0
+        ? `<strong>Ca. ${minutes} minutter</strong><small>Restauranten har satt forventet tid.</small>`
+        : '<strong>Bekreftet</strong><small>Følg bestillingen videre på forsiden.</small>';
+
+  el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
+    <div class="confirm-accepted-status">
+      <span class="confirm-accepted-check" aria-hidden="true">✓</span>
+      <div>${acceptMessage}</div>
+    </div>
+    <p class="confirm-auto-return">Du sendes automatisk til forsiden for å følge bestillingen.</p>`;
+}
+
+function renderConfirmationTimeout(order) {
+  const title = el.confirmModal.querySelector('h2');
+  const phone = confirmationRestaurantPhone();
+  if (title) title.textContent = 'Vi venter fortsatt på svar';
+  el.confirmModal.dataset.waiting = 'true';
+  el.confirmModal.dataset.state = 'timeout';
+  el.confirmText.textContent = 'Det har gått 3 minutter uten bekreftelse. Vi kan være opptatt i restauranten akkurat nå.';
+  const phoneAction = phone.tel
+    ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>`
+    : '<span class="confirm-phone-missing">Telefonnummer er ikke tilgjengelig akkurat nå.</span>';
+  el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
+    <div class="confirm-timeout-status">
+      <strong>Ikke bekreftet ennå</strong>
+      <small>Ring oss for å sjekke bestillingen eller bestille på telefon. Hvis vi bekrefter her etterpå, oppdateres denne siden automatisk.</small>
+      ${phoneAction}
+    </div>`;
+}
+
+function checkOrderConfirmationWait() {
+  if (!orderConfirmOrderId || el.confirmModal.hidden || orderConfirmResolved) return;
+  const order = confirmationOrderSnapshot(orderConfirmOrderId);
+  if (!order) return;
+  persistCustomerOrderSnapshot(order);
+
+  if (order.status === 'avvist') {
+    orderConfirmResolved = true;
+    if (orderConfirmTimer) {
+      clearInterval(orderConfirmTimer);
+      orderConfirmTimer = null;
+    }
+    const title = el.confirmModal.querySelector('h2');
+    const phone = confirmationRestaurantPhone();
+    if (title) title.textContent = 'Bestillingen ble ikke godkjent';
+    el.confirmModal.dataset.waiting = 'false';
+    el.confirmModal.dataset.state = 'rejected';
+    el.confirmText.textContent = order.rejectionMessage || order.rejectionReason || 'Restauranten kunne dessverre ikke ta imot bestillingen.';
+    const phoneAction = phone.tel ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>` : '';
+    el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}<div class="confirm-timeout-status">${phoneAction}</div>`;
+    return;
+  }
+
+  if (['bekreftet', 'tilberedning', 'klar'].includes(order.status)) {
+    orderConfirmResolved = true;
+    if (orderConfirmTimer) {
+      clearInterval(orderConfirmTimer);
+      orderConfirmTimer = null;
+    }
+    ui.focusedOrderId = order.id;
+    renderConfirmationAccepted(order);
+    renderActiveOrders();
+    window.setTimeout(() => {
+      el.confirmModal.dataset.waiting = 'false';
+      orderConfirmOrderId = '';
+      orderConfirmDeadline = 0;
+      closeConfirm();
+      renderActiveOrders();
+    }, order.status === 'klar' ? 3500 : 2800);
+    return;
+  }
+
+  if (!orderConfirmTimedOut && Date.now() >= orderConfirmDeadline) {
+    orderConfirmTimedOut = true;
+    renderConfirmationTimeout(order);
+    return;
+  }
+
+  if (!orderConfirmTimedOut) {
+    const countdown = el.confirmMeta.querySelector('[data-confirm-countdown]');
+    if (countdown) countdown.textContent = confirmationTimeLeftText();
+  }
+}
+
+function startOrderConfirmationWait(order, name) {
+  if (!order?.id) return;
+  if (orderConfirmTimer) clearInterval(orderConfirmTimer);
+  orderConfirmOrderId = order.id;
+  orderConfirmDeadline = Date.now() + ORDER_CONFIRM_WAIT_MS;
+  orderConfirmTimedOut = false;
+  orderConfirmResolved = false;
+  ui.focusedOrderId = order.id;
+  rememberCustomerOrder(order);
+  persistCustomerOrderSnapshot(order);
+  watchActiveOrder(order.id);
+  renderConfirmationWaiting(order, name);
+  el.confirmBackdrop.hidden = false;
+  el.confirmModal.hidden = false;
+  checkOrderConfirmationWait();
+  orderConfirmTimer = window.setInterval(checkOrderConfirmationWait, 1000);
+}
+
+
 async function placeOrder() {
   if (ui.orderSubmitting) return;
   const state = getOpenState();
@@ -1610,14 +1799,7 @@ async function placeOrder() {
   ui.pickup = null;
   ui.pickupMode = null;
 
-  el.confirmText.textContent = `Takk, ${name}! Bestillingen er mottatt av restauranten.`;
-  el.confirmMeta.innerHTML = `
-    <div><span>Ordrenummer</span><strong>${escapeHtml(order.id.slice(-6).toUpperCase())}</strong></div>
-    <div><span>Status</span><strong>Mottatt</strong></div>
-    <div><span>Hentetid</span><strong>${escapeHtml(order.pickup)}</strong></div>
-    <div><span>Å betale ved henting</span><strong>${formatPrice(order.total)}</strong></div>`;
-  el.confirmBackdrop.hidden = false;
-  el.confirmModal.hidden = false;
+  startOrderConfirmationWait(order, name);
   renderCartCount();
   renderActiveOrders();
 }
@@ -2247,6 +2429,7 @@ el.profPhone.addEventListener('input', () => {
 });
 
 function closeConfirm() {
+  if (el.confirmModal.dataset.waiting === 'true') return;
   el.confirmModal.hidden = true;
   el.confirmBackdrop.hidden = true;
   setView('menu');
