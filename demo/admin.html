@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-scheduled-pickup1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-ordersfullscreen1">
 </head>
 
 <body>
@@ -60,6 +60,10 @@
                 <p class="side-hint" id="backendHint">Lagring: —</p>
             </div>
         </aside>
+
+        <button class="orders-sidebar-toggle" id="btnOrdersSidebarToggle" type="button" aria-label="Vis adminmeny" title="Vis adminmeny">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
 
         <!-- ================= HOVEDINNHOLD ================= -->
         <main class="main-col">
@@ -551,7 +555,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260915-adminstatus1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260915-ordersfullscreen1"></script>
 </body>
 
 </html>

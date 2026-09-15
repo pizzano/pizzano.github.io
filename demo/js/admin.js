@@ -101,6 +101,7 @@ const el = {
   orderList: $('orderList'),
   orderFilterBtns: document.querySelectorAll('.orders-tab[data-order-filter]'),
   btnRefreshOrders: $('btnRefreshOrders'),
+  btnOrdersSidebarToggle: $('btnOrdersSidebarToggle'),
   orderDetailPane: $('orderDetailPane'),
   orderDetailEmpty: $('orderDetailEmpty'),
   orderDetailLive: $('orderDetailLive'),
@@ -238,6 +239,14 @@ function timeStamp(value) {
  * Sidebar-navigasjon
  * ------------------------------------------------------------------ */
 
+function setOrdersSidebarCollapsed(collapsed) {
+  const shouldCollapse = ui.page === 'orders' && Boolean(collapsed);
+  document.body.classList.toggle('orders-sidebar-collapsed', shouldCollapse);
+  if (el.btnOrdersSidebarToggle) {
+    el.btnOrdersSidebarToggle.setAttribute('aria-expanded', String(!shouldCollapse));
+  }
+}
+
 function setPage(page) {
   ui.page = page;
   for (const [name, node] of Object.entries(el.pages)) {
@@ -248,12 +257,19 @@ function setPage(page) {
     link.classList.toggle('is-active', link.dataset.nav === page);
   });
   document.body.classList.toggle('hide-settings-col', page !== 'products');
+  setOrdersSidebarCollapsed(page === 'orders');
   renderAll();
 }
 
 el.sideLinks.forEach((link) => {
   link.addEventListener('click', () => setPage(link.dataset.nav));
 });
+
+if (el.btnOrdersSidebarToggle) {
+  el.btnOrdersSidebarToggle.addEventListener('click', () => {
+    setOrdersSidebarCollapsed(false);
+  });
+}
 
 /* ------------------------------------------------------------------ *
  * Lagringsstatus
