@@ -1,0 +1,135 @@
+name: Product allergen and card shadow polish
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/product-allergen-card-shadow-temp.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply product UI polish
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          js_path = Path('demo/js/customer.js')
+          js = js_path.read_text(encoding='utf-8')
+
+          allergen = '''    <div class="sheet-allergens" aria-label="Allergener">
+      <span class="sheet-allergens-label">Allergener</span>
+      <div class="sheet-allergen-chips">
+        ${allergens.length
+          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
+          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
+      </div>
+    </div>
+'''
+          comment = '''    <div class="opt-group">
+      <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
+      <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
+        draft.comment
+      )}</textarea>
+    </div>'''
+
+          old = allergen + comment
+          new = comment + '\n' + allergen.rstrip('\n')
+          if old in js:
+              js = js.replace(old, new, 1)
+          elif js.find(allergen) >= 0 and js.find(comment) >= 0 and js.find(allergen) < js.find(comment):
+              js = js.replace(allergen, '', 1)
+              js = js.replace(comment, comment + '\n' + allergen.rstrip('\n'), 1)
+          elif js.find(allergen) < 0:
+              raise SystemExit('Allergen block not found')
+          js_path.write_text(js, encoding='utf-8')
+
+          css_path = Path('demo/css/customer.css')
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* Product allergen bottom + menu card shadow 2026-09-15 */'
+          if marker in css:
+              css = css.split(marker)[0].rstrip() + '\n'
+          css += r'''
+
+/* Product allergen bottom + menu card shadow 2026-09-15 */
+.sheet-allergens {
+  margin: 12px 0 4px !important;
+  padding: 13px 14px !important;
+  border: 1px solid #eadfd3 !important;
+  border-radius: 18px !important;
+  background: #fffaf5 !important;
+  display: grid !important;
+  gap: 9px !important;
+  box-shadow: none !important;
+}
+.sheet-allergens::before { content: none !important; display: none !important; }
+.sheet-allergens-label {
+  display: block !important;
+  margin: 0 !important;
+  color: #211a16 !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+}
+.sheet-allergen-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+.sheet-allergen-chip,
+.sheet-allergen-none {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 30px !important;
+  padding: 5px 10px !important;
+  border: 1px solid #ead9ca !important;
+  border-radius: 999px !important;
+  background: #fff8f1 !important;
+  color: #76523f !important;
+  font-size: 11.5px !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.prod-card {
+  border-color: #ebe5df !important;
+  box-shadow: 0 8px 22px rgba(41, 29, 22, .10), 0 2px 6px rgba(41, 29, 22, .05) !important;
+}
+.prod-card:hover {
+  box-shadow: 0 12px 28px rgba(41, 29, 22, .12), 0 3px 8px rgba(41, 29, 22, .06) !important;
+}
+
+@media (max-width: 560px) {
+  .sheet-allergens { padding: 12px !important; border-radius: 16px !important; }
+  .sheet-allergens-label { font-size: 12.5px !important; }
+  .sheet-allergen-chip,
+  .sheet-allergen-none { min-height: 28px !important; padding: 4px 9px !important; font-size: 11px !important; }
+  .prod-card { box-shadow: 0 7px 18px rgba(41, 29, 22, .09), 0 2px 5px rgba(41, 29, 22, .05) !important; }
+}
+'''
+          css_path.write_text(css, encoding='utf-8')
+
+          index_path = Path('demo/index.html')
+          index = index_path.read_text(encoding='utf-8')
+          index = re.sub(r'/demo/css/customer\.css\?v=[^"\']+', '/demo/css/customer.css?v=20260915-productpolish1', index)
+          index_path.write_text(index, encoding='utf-8')
+
+          sw_path = Path('demo/service-worker.js')
+          sw = sw_path.read_text(encoding='utf-8')
+          sw = re.sub(r"const CACHE_NAME = 'kol-demo-v\d+';", "const CACHE_NAME = 'kol-demo-v39';", sw)
+          sw_path.write_text(sw, encoding='utf-8')
+          PY
+          node --check demo/js/customer.js
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/product-allergen-card-shadow-temp.yml
+          git add demo/js/customer.js demo/css/customer.css demo/index.html demo/service-worker.js .github/workflows/product-allergen-card-shadow-temp.yml
+          git commit -m 'Polish product allergens and menu card shadows'
+          git push origin HEAD:main
