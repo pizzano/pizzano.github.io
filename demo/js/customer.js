@@ -8,6 +8,7 @@
 
 import {
   store,
+  DB_URL,
   subscribe,
   ready,
   backendInfo,
@@ -37,6 +38,7 @@ const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
 const ALLERGEN_KEY = 'kol_allergens_v1';
 const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
+const READY_SEEN_KEY = 'kol_ready_seen_v1';
 
 function loadJSON(key, fallback) {
   try {
@@ -80,6 +82,7 @@ const ui = {
   orderSendFailed: false,
   pendingOrderId: null,
   pendingOrderFingerprint: '',
+  focusedOrderId: '',
 };
 
 /** Åpent produkt i sheet. */
@@ -297,7 +300,6 @@ const CUSTOMER_STATUS_FLOW = [
   { id: 'bekreftet', label: 'Bekreftet', short: 'Bekreftet' },
   { id: 'tilberedning', label: 'Tilberedes', short: 'Lages' },
   { id: 'klar', label: 'Klar for henting', short: 'Klar' },
-  { id: 'fullfort', label: 'Ferdig', short: 'Ferdig' },
 ];
 
 function mergedCustomerOrders() {
@@ -320,10 +322,23 @@ function mergedCustomerOrders() {
   );
 }
 
+function readySeenIds() {
+  return new Set(loadJSON(READY_SEEN_KEY, []));
+}
+
+function markReadySeen(orderId) {
+  if (!orderId) return;
+  const seen = readySeenIds();
+  seen.add(orderId);
+  saveJSON(READY_SEEN_KEY, Array.from(seen).slice(-30));
+}
+
 function activeCustomerOrders() {
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const seen = readySeenIds();
   return mergedCustomerOrders().filter((order) => {
     if (!order?.id || order.status === 'fullfort' || order.status === 'avvist') return false;
+    if (order.status === 'klar' && seen.has(order.id)) return false;
     const createdAt = Number(order.createdAt) || 0;
     return !createdAt || createdAt >= cutoff;
   });
@@ -333,6 +348,7 @@ function activeOrderCardHtml(order, extraCount = 0) {
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === order.status);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
+  const readyNow = order.status === 'klar';
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
@@ -341,21 +357,119 @@ function activeOrderCardHtml(order, extraCount = 0) {
       <small>${escapeHtml(step.short)}</small>
     </div>`;
   }).join('');
-  return `<section class="active-order-card${order.status === 'klar' ? ' is-ready' : ''}" aria-label="Aktiv bestilling">
+  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
       <div>
         <span class="active-order-kicker">Aktiv bestilling${extraCount ? ` · +${extraCount}` : ''}</span>
-        <strong>${escapeHtml(orderStatusLabel(order.status))}</strong>
+        <strong class="active-order-live-status">${escapeHtml(readyNow ? 'Klar for henting' : orderStatusLabel(order.status))}</strong>
       </div>
       <span class="active-order-number">#${escapeHtml(shortId)}</span>
     </div>
     <div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>
+    ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
     <div class="active-order-meta">
       <span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span>
       <span><b>${formatPrice(order.total)}</b></span>
     </div>
-    <button class="active-order-open" data-active-orders type="button">Se bestillingen</button>
+    <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
   </section>`;
+}
+
+let activeOrderStream = null;
+let activeOrderStreamId = '';
+let activeOrderFallbackTimer = null;
+let activeOrderFetchBusy = false;
+let readyDismissTimer = null;
+let readyDismissOrderId = '';
+
+function upsertLiveOrder(orderId, remote) {
+  if (!remote || !orderId) return;
+  const normalized = { ...remote, id: remote.id || orderId };
+  const orders = Array.isArray(store.orders) ? [...store.orders] : [];
+  const index = orders.findIndex((entry) => entry?.id === orderId);
+  if (index >= 0) {
+    const previous = orders[index] || {};
+    orders[index] = {
+      ...previous,
+      ...normalized,
+      lines: normalized.lines?.length ? normalized.lines : (previous.lines || []),
+    };
+  } else {
+    orders.unshift(normalized);
+  }
+  store.orders = orders;
+}
+
+async function fetchActiveOrderNow(orderId) {
+  if (!orderId || activeOrderFetchBusy) return;
+  activeOrderFetchBusy = true;
+  try {
+    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json?ts=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return;
+    const remote = await response.json();
+    if (!remote) return;
+    upsertLiveOrder(orderId, remote);
+    renderActiveOrders();
+    if (ui.view === 'profile') renderProfile();
+  } catch (_) {
+    /* normal sync remains as fallback */
+  } finally {
+    activeOrderFetchBusy = false;
+  }
+}
+
+function stopActiveOrderWatcher() {
+  if (activeOrderStream) {
+    activeOrderStream.close();
+    activeOrderStream = null;
+  }
+  if (activeOrderFallbackTimer) {
+    clearInterval(activeOrderFallbackTimer);
+    activeOrderFallbackTimer = null;
+  }
+  activeOrderStreamId = '';
+}
+
+function watchActiveOrder(orderId) {
+  if (!orderId) {
+    stopActiveOrderWatcher();
+    return;
+  }
+  if (activeOrderStreamId === orderId) return;
+  stopActiveOrderWatcher();
+  activeOrderStreamId = orderId;
+  fetchActiveOrderNow(orderId);
+
+  if ('EventSource' in window) {
+    try {
+      const source = new EventSource(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json`);
+      const refresh = () => fetchActiveOrderNow(orderId);
+      source.addEventListener('put', refresh);
+      source.addEventListener('patch', refresh);
+      activeOrderStream = source;
+    } catch (_) {}
+  }
+
+  activeOrderFallbackTimer = window.setInterval(() => {
+    if (!document.hidden && activeOrderStreamId === orderId) fetchActiveOrderNow(orderId);
+  }, 4000);
+}
+
+function scheduleReadyDismiss(order) {
+  if (!order || order.status !== 'klar' || readySeenIds().has(order.id) || document.hidden) return;
+  if (readyDismissTimer && readyDismissOrderId === order.id) return;
+  if (readyDismissTimer) clearTimeout(readyDismissTimer);
+  readyDismissOrderId = order.id;
+  readyDismissTimer = window.setTimeout(() => {
+    markReadySeen(order.id);
+    readyDismissTimer = null;
+    readyDismissOrderId = '';
+    renderActiveOrders();
+    if (ui.view === 'profile') renderProfile();
+  }, 12000);
 }
 
 function notifyReadyOrders(orders) {
@@ -365,10 +479,10 @@ function notifyReadyOrders(orders) {
     if (order.status !== 'klar' || notified.has(order.id)) continue;
     notified.add(order.id);
     changed = true;
-    toast('✓ Bestillingen din er klar for henting.');
+    toast('✓ Maten din er klar – kom og hent nå.');
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification('KØL Grill & Pizza', { body: 'Bestillingen din er klar for henting.' });
+        new Notification('KØL Grill & Pizza', { body: 'Maten din er klar – kom og hent nå.' });
       } catch (_) {}
     }
   }
@@ -377,13 +491,32 @@ function notifyReadyOrders(orders) {
 
 function renderActiveOrders() {
   const orders = activeCustomerOrders();
-  const html = orders.length ? activeOrderCardHtml(orders[0], Math.max(0, orders.length - 1)) : '';
+  const current = orders[0] || null;
+  const html = current ? activeOrderCardHtml(current, Math.max(0, orders.length - 1)) : '';
   for (const target of [el.activeOrderMenu, el.activeOrderProfile]) {
     if (!target) continue;
-    target.hidden = !orders.length;
+    target.hidden = !current;
     target.innerHTML = html;
   }
+  watchActiveOrder(current?.id || '');
   notifyReadyOrders(orders);
+  if (current?.status === 'klar') scheduleReadyDismiss(current);
+}
+
+function openActiveOrderInProfile(orderId) {
+  if (!orderId) return;
+  ui.focusedOrderId = orderId;
+  setView('profile');
+  setProfileTab('orders');
+  window.requestAnimationFrame(() => {
+    const selectorId = window.CSS?.escape ? CSS.escape(orderId) : orderId.replace(/"/g, '\"');
+    const card = document.querySelector(`.order-history-card[data-order-card-id="${selectorId}"]`);
+    if (!card) return;
+    card.open = true;
+    card.classList.add('is-focused');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => card.classList.remove('is-focused'), 2200);
+  });
 }
 
 function resetPendingOrderSubmission() {
@@ -1543,7 +1676,7 @@ function renderProfile() {
     : '<p class="hint">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
 
     const live = getOrders();
-    const orders = getLocalOrders();
+    const orders = mergedCustomerOrders();
     el.orderList.innerHTML = orders.length
       ? orders
           .slice(0, 30)
@@ -1562,7 +1695,7 @@ function renderProfile() {
             const details = (order.lines || []).map(orderHistoryLineHtml).join('');
             const shortId = String(order.id || '').slice(-6).toUpperCase();
             return `
-              <details class="order-history-card">
+              <details class="order-history-card${ui.focusedOrderId === order.id ? ' is-focused' : ''}" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
                 <summary>
                   <div class="order-history-top">
                     <div class="order-history-total">
@@ -1657,8 +1790,7 @@ document.addEventListener('click', (event) => {
   }
   const activeOrdersBtn = event.target.closest('[data-active-orders]');
   if (activeOrdersBtn) {
-    setView('profile');
-    setProfileTab('orders');
+    openActiveOrderInProfile(activeOrdersBtn.dataset.activeOrders);
     return;
   }
   const reviewCartBtn = event.target.closest('[data-review-cart]');
@@ -2023,3 +2155,14 @@ setInterval(() => {
 }, 5000);
 
 renderAll();
+
+
+// live-order-visibility-refresh
+window.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  const current = activeCustomerOrders()[0];
+  if (current) {
+    fetchActiveOrderNow(current.id);
+    if (current.status === 'klar') scheduleReadyDismiss(current);
+  }
+});
