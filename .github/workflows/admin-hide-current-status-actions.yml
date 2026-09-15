@@ -1,0 +1,23 @@
+name: Admin status actions
+on:
+  push:
+    branches:
+      - fix/admin-hide-current-status-actions-20260915
+    paths:
+      - .github/workflows/admin-hide-current-status-actions.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply admin status action patch
+        run: python3 .github/scripts/admin-hide-current-status-actions.py
+      - name: Commit patched admin
+        run: |
+          git config user.name 'KOL Deploy Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add demo/js/admin.js demo/css/admin.css demo/admin.html
+          git commit -m 'Hide repeated admin order status buttons' || exit 0
+          git push origin HEAD:fix/admin-hide-current-status-actions-20260915
