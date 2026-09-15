@@ -2136,3 +2136,375 @@ textarea.input {
     margin-top:4px!important;
   }
 }
+
+/* Checkout review clean layout 2026-09-15 */
+.checkout-review-head,
+.checkout-review-summary,
+.checkout-review-details,
+.checkout-review-items,
+.checkout-review-item,
+.checkout-review-item-top,
+.checkout-review-item-main,
+.checkout-review-addon-wrap,
+.checkout-review-addon-group,
+.checkout-review-addon-row,
+.checkout-review-comment,
+.checkout-review-info,
+.checkout-review-info-row {
+  box-sizing: border-box;
+}
+
+.checkout-review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.checkout-review-head-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.checkout-review-head-copy span {
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.checkout-review-head-copy strong {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+.checkout-review-head .link-btn {
+  flex: none;
+  padding-top: 2px;
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.checkout-review-toggle {
+  display: block;
+  background: #fff;
+}
+.checkout-review-summary {
+  list-style: none;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 56px;
+  padding: 0 16px !important;
+  cursor: pointer;
+  background: #fff;
+}
+.checkout-review-summary::-webkit-details-marker { display: none; }
+.checkout-review-count {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 800;
+}
+.checkout-review-summary-action {
+  flex: none;
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+}
+.checkout-review-summary-action::after { content: 'Vis mer'; }
+.checkout-review-toggle[open] .checkout-review-summary-action::after { content: 'Skjul'; }
+
+.checkout-review-details {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  background: #f7f7f6;
+  border-top: 1px solid var(--line);
+}
+.checkout-review-items {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+}
+.checkout-review-item {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid #eee9e4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(22, 28, 36, .05);
+}
+.checkout-review-item-top {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+.checkout-review-item-qty {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+.checkout-review-item-main {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.checkout-review-item-name {
+  display: block;
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 800;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.checkout-review-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.checkout-review-meta-label {
+  color: var(--ink-2);
+}
+.checkout-review-meta-value {
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.checkout-review-meta-price {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.checkout-review-item-total {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+  align-self: start;
+}
+.checkout-review-addon-wrap {
+  margin: 12px 0 0 48px;
+  display: grid;
+  gap: 10px;
+}
+.checkout-review-addon-group {
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.checkout-review-addon-title {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.checkout-review-addon-row {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.checkout-review-addon-name {
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.checkout-review-addon-price {
+  flex: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.checkout-review-comment {
+  margin: 12px 0 0 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8f8f7;
+}
+.checkout-review-comment span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.checkout-review-comment p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.checkout-review-empty {
+  padding: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.checkout-review-info {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid #eee9e4;
+  border-radius: 16px;
+  background: #fff;
+}
+.checkout-review-info h4 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+.checkout-review-info-row {
+  min-height: 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.checkout-review-info-row:last-child { border-bottom: 0; }
+.checkout-review-info-row strong {
+  max-width: 58%;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 700;
+  text-align: right;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.checkout-review-info-row.is-total {
+  align-items: center;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.checkout-review-info-row.is-total strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .checkout-review-head {
+    padding: 12px 14px;
+    align-items: flex-start;
+  }
+  .checkout-review-head-copy strong { font-size: 16px; }
+  .checkout-review-summary {
+    min-height: 54px;
+    padding: 0 14px !important;
+  }
+  .checkout-review-count { font-size: 15px; }
+  .checkout-review-summary-action { font-size: 12.5px; }
+  .checkout-review-details {
+    gap: 10px;
+    padding: 10px;
+  }
+  .checkout-review-items { gap: 10px; }
+  .checkout-review-item {
+    padding: 12px;
+    border-radius: 15px;
+  }
+  .checkout-review-item-top {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .checkout-review-item-qty {
+    width: 32px;
+    height: 32px;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    font-size: 11px;
+  }
+  .checkout-review-item-main {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 7px;
+  }
+  .checkout-review-item-name {
+    font-size: 14px;
+    line-height: 1.22;
+  }
+  .checkout-review-meta {
+    gap: 6px;
+    font-size: 11.5px;
+  }
+  .checkout-review-meta-value { font-size: 12px; }
+  .checkout-review-item-total {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    margin-top: 2px;
+    font-size: 15px;
+  }
+  .checkout-review-addon-wrap,
+  .checkout-review-comment {
+    margin-left: 42px;
+  }
+  .checkout-review-addon-row,
+  .checkout-review-comment p,
+  .checkout-review-info-row {
+    font-size: 11.5px;
+  }
+  .checkout-review-info {
+    padding: 12px;
+    border-radius: 15px;
+  }
+  .checkout-review-info h4 { font-size: 14px; }
+  .checkout-review-info-row strong {
+    max-width: 56%;
+    font-size: 12.5px;
+  }
+  .checkout-review-info-row.is-total strong { font-size: 14px; }
+}
+

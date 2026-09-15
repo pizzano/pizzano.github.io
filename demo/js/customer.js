@@ -1148,26 +1148,78 @@ function renderCheckout() {
   const reviewLines = cart.map((line) => cartLineHtml(line, true)).join('');
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
+  const reviewItems = cart.map((line) => {
+    const { item } = findItem(line.itemId);
+    if (!item) return '';
+    const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
+    const optionIds = Object.values(line.selections || {}).flat();
+    const linePrice = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+    const addons = describeSelection(optionIds);
+    const addonGroups = addons.reduce((groups, addon) => {
+      let group = groups.find((entry) => entry.title === addon.groupTitle);
+      if (!group) {
+        group = { title: addon.groupTitle || 'Tilvalg', items: [] };
+        groups.push(group);
+      }
+      group.items.push(addon);
+      return groups;
+    }, []);
+    return `
+      <article class="checkout-review-item">
+        <div class="checkout-review-item-top">
+<span class="checkout-review-item-qty">${line.quantity}×</span>
+<div class="checkout-review-item-main">
+  <strong class="checkout-review-item-name">${escapeHtml(item.name)}</strong>
+  ${size ? `
+    <div class="checkout-review-meta">
+      <span class="checkout-review-meta-label">Størrelse</span>
+      <strong class="checkout-review-meta-value">${escapeHtml(size.label)}</strong>
+      <span class="checkout-review-meta-price">${formatPrice(getSizePrice(item, line.sizeId))}</span>
+    </div>` : ''}
+</div>
+<strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
+        </div>
+        ${addonGroups.length ? `
+<div class="checkout-review-addon-wrap">
+  ${addonGroups.map((group) => `
+    <section class="checkout-review-addon-group">
+      <span class="checkout-review-addon-title">${escapeHtml(group.title)}</span>
+      ${group.items.map((addon) => `
+        <div class="checkout-review-addon-row">
+          <span class="checkout-review-addon-name">• ${escapeHtml(addon.label)}</span>
+          <strong class="checkout-review-addon-price">${addon.price > 0 ? `+${formatPrice(addon.price)}` : 'Inkludert'}</strong>
+        </div>`).join('')}
+    </section>`).join('')}
+</div>` : ''}
+        ${line.comment ? `
+<div class="checkout-review-comment">
+  <span>Kommentar</span>
+  <p>${escapeHtml(line.comment)}</p>
+</div>` : ''}
+      </article>`;
+  }).join('');
+
   el.reviewCard.innerHTML = `
     <div class="checkout-review-head">
-      <div><span>Kontroller bestillingen</span><strong>Din bestilling</strong></div>
+      <div class="checkout-review-head-copy">
+        <span>Kontroller bestillingen</span>
+        <strong>Din bestilling</strong>
+      </div>
       <button class="link-btn" data-review-cart type="button">Endre kurv</button>
     </div>
     <details class="checkout-review-toggle">
       <summary class="checkout-review-summary">
-        <div class="checkout-review-summary-main">
-          <strong>${escapeHtml(reviewLabel)}</strong>
-          <span>Trykk for å se detaljer</span>
-        </div>
+        <strong class="checkout-review-count">${escapeHtml(reviewLabel)}</strong>
         <span class="checkout-review-summary-action" aria-hidden="true"></span>
       </summary>
       <div class="checkout-review-details">
-        <div class="checkout-review-lines">${reviewLines}</div>
-        <div class="checkout-review-meta">
-          <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-          <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
-          <div><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
-          <div class="checkout-review-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
+        <div class="checkout-review-items">${reviewItems || '<div class="checkout-review-empty">Ingen varer i kurven.</div>'}</div>
+        <div class="checkout-review-info">
+<h4>Din informasjon</h4>
+<div class="checkout-review-info-row"><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
+<div class="checkout-review-info-row"><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+<div class="checkout-review-info-row"><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
+<div class="checkout-review-info-row is-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
         </div>
       </div>
     </details>`;
