@@ -3204,3 +3204,53 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
     padding: 15px !important;
   }
 }
+
+
+/* Compact active order card 2026-09-16 */
+.active-order-card:not(.is-rejected) .active-order-head > div:first-child {
+  display: flex;
+  align-items: center;
+}
+.active-order-estimate.active-order-estimate-compact {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 78px;
+  padding: 14px 12px !important;
+  margin-top: 10px;
+  border: 1px solid #d6e9dc;
+  border-radius: 14px;
+  background: #f5fbf7;
+  color: #2a8753;
+  text-align: center;
+}
+.active-order-estimate-compact .active-order-estimate-label {
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 750;
+  color: #4e9a6f;
+}
+.active-order-estimate-compact .active-order-estimate-clock {
+  flex: none;
+  font-size: 15px;
+  line-height: 1;
+  filter: grayscale(1);
+  opacity: .72;
+}
+.active-order-estimate-compact strong[data-customer-countdown] {
+  font-size: 18px !important;
+  line-height: 1.2;
+  font-weight: 850;
+  color: #237b49 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap;
+}
+.active-order-card:not(.is-rejected) .active-order-open {
+  margin-top: 10px;
+}
+@media (max-width: 420px) {
+  .active-order-estimate.active-order-estimate-compact { gap: 5px; min-height: 72px; padding: 12px 9px !important; }
+  .active-order-estimate-compact .active-order-estimate-label { font-size: 15.5px; }
+  .active-order-estimate-compact strong[data-customer-countdown] { font-size: 17px !important; }
+}

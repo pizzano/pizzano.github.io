@@ -418,7 +418,7 @@ function customerOrderCountdown(order) {
   const seconds = Math.ceil(remainingMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${minutes}:${String(secs).padStart(2, '0')} igjen`;
+  return `${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
 function activeOrderCardHtml(order) {
@@ -441,14 +441,13 @@ function activeOrderCardHtml(order) {
   }).join('');
   return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
-      <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span><strong class="active-order-live-status">${escapeHtml(rejectedNow ? 'Avvist' : (readyNow ? 'Klar for henting' : orderStatusLabel(order.status)))}</strong></div>
+      <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span>${rejectedNow ? '<strong class="active-order-live-status">Avvist</strong>' : ''}</div>
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}${rejectedNow ? `<button class="active-order-dismiss" data-rejected-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk avvisningsmeldingen">×</button>` : ''}</div>
     </div>
     ${!rejectedNow ? `<div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>` : ''}
-    ${hasLiveEstimate && !readyNow && !rejectedNow ? `<div class="active-order-estimate"><span>⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong><small>oppgitt av restauranten</small></div>` : ''}
+    ${hasLiveEstimate && !readyNow && !rejectedNow ? `<div class="active-order-estimate active-order-estimate-compact"><span class="active-order-estimate-label">Maten er klar om</span><span class="active-order-estimate-clock" aria-hidden="true">⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong></div>` : ''}
     ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
     ${rejectedNow ? `<div class="active-order-rejected-callout"><span class="rejected-mark">×</span><div><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionDetail ? `<small>${escapeHtml(rejectionDetail)}</small>` : ''}</div></div>` : ''}
-    <div class="active-order-meta"><span>Henting <b>${escapeHtml(order.pickup || '—')}</b></span><span><b>${formatPrice(order.total)}</b></span></div>
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
   </section>`;
 }
