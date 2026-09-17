@@ -9,42 +9,8 @@ function injectStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-    .menu-overview-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-left: auto;
-      flex: 0 0 auto;
-    }
-
     .shop-info-trigger {
-      width: 44px;
-      height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 44px;
-      border: 1px solid #e3dbd6;
-      border-radius: 14px;
-      background: #fff;
-      color: #5f493d;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform .14s ease, background .14s ease, border-color .14s ease;
-    }
-
-    .shop-info-trigger:hover { background: #fff8f3; border-color: #d8cbc3; }
-    .shop-info-trigger:active { transform: scale(.96); }
-    .shop-info-trigger:focus-visible { outline: 3px solid rgba(255, 96, 0, .22); outline-offset: 2px; }
-    .shop-info-trigger svg {
-      width: 22px;
-      height: 22px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      flex: none;
     }
 
     .shop-info-modal[hidden] { display: none !important; }
@@ -175,9 +141,6 @@ function injectStyles() {
     body.shop-info-open { overflow: hidden !important; }
 
     @media (max-width: 420px) {
-      .menu-overview-actions { gap: 6px; }
-      .shop-info-trigger { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
-      .shop-info-trigger svg { width: 20px; height: 20px; }
       .shop-info-modal { padding: 14px; align-items: flex-end; }
       .shop-info-dialog { width: 100%; border-radius: 22px 22px 18px 18px; padding: 22px 19px 20px; }
     }
@@ -245,27 +208,19 @@ function makeTrigger() {
   let button = document.getElementById(TRIGGER_ID);
   if (button) return button;
 
-  const allergenButton = document.getElementById('btnAllergens');
-  const row = allergenButton?.closest('.menu-overview-row');
-  if (!allergenButton || !row) return null;
-
-  let actions = row.querySelector('.menu-overview-actions');
-  if (!actions) {
-    actions = document.createElement('div');
-    actions.className = 'menu-overview-actions';
-    row.insertBefore(actions, allergenButton);
-    actions.appendChild(allergenButton);
-  }
+  const profileButton = document.getElementById('btnProfile');
+  const actions = profileButton?.closest('.hdr-actions');
+  if (!profileButton || !actions) return null;
 
   button = document.createElement('button');
-  button.className = 'shop-info-trigger';
+  button.className = 'hdr-btn shop-info-trigger';
   button.id = TRIGGER_ID;
   button.type = 'button';
   button.setAttribute('aria-label', 'Butikkinfo');
   button.setAttribute('aria-haspopup', 'dialog');
   button.setAttribute('aria-controls', MODAL_ID);
   button.innerHTML = storeIcon();
-  actions.insertBefore(button, allergenButton);
+  actions.insertBefore(button, profileButton);
   return button;
 }
 
