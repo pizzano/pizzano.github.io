@@ -267,18 +267,6 @@
     return nativeFetch(input, init);
   };
 
-  function loadModule(id, src) {
-    if (document.getElementById(id)) return;
-    const script = document.createElement('script');
-    script.id = id;
-    script.type = 'module';
-    script.src = src;
-    document.head.appendChild(script);
-  }
-
-  // Customer-side enhancement module.
-  loadModule('allergenUiModule', '/demo/js/allergen-ui.js?v=20260915-orderfix3');
-
   // Keep checkout contact details across refreshes and promote them to the
   // customer's profile after the first successful order. This is small enough
   // to live in the existing customer bootstrap instead of a separate file.
