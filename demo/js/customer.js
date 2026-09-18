@@ -1163,7 +1163,7 @@ function cartCount() {
   return cart.reduce((sum, line) => sum + line.quantity, 0);
 }
 
-function cartLineHtml(line, compact) {
+function cartLineHtml(line) {
   const { item } = findItem(line.itemId);
   if (!item) return '';
   const size = (item.sizes || []).find((s) => s.id === line.sizeId);
@@ -1216,26 +1216,18 @@ function cartLineHtml(line, compact) {
             .join('')}
         </div>
         ${line.comment ? `<p class="line-comment">«${escapeHtml(line.comment)}»</p>` : ''}
-        ${
-          compact
-            ? ''
-            : `<div class="line-actions">
+        <div class="line-actions">
                  <button class="link-btn" data-edit="${escapeHtml(line.lineId)}" type="button">Endre</button>
                  <button class="link-btn is-danger" data-remove="${escapeHtml(line.lineId)}" type="button">Fjern</button>
-               </div>`
-        }
+               </div>
       </div>
       <div class="line-right">
         <span class="line-price">${formatPrice(price)}</span>
-        ${
-          compact
-            ? ''
-            : `<span class="line-step">
+        <span class="line-step">
                  <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
                  <span>${line.quantity}</span>
                  <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
-               </span>`
-        }
+               </span>
       </div>
     </div>`;
 }
@@ -1248,7 +1240,7 @@ function renderCart() {
     el.cartActions.hidden = true;
     return;
   }
-  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line, false)).join('');
+  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line)).join('');
   const subtotal = cartSubtotal();
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
