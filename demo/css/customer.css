@@ -96,13 +96,6 @@
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
 }
-.allergen-help {
-  grid-column: 1 / -1;
-  margin: 0 0 2px;
-  color: var(--ink-2);
-  font-size: 14px;
-  line-height: 1.4;
-}
 .allergen-choice {
   min-height: 52px;
   width: 100%;
@@ -517,18 +510,12 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   }
 
   .profile-section summary { min-height: 48px; padding: 10px 0; font-size: 14px; }
-  .profile-section-body { padding-top: 8px; }
   .mini-row { gap: 8px; padding: 8px 0; }
   .mini-row img { width: 44px; height: 44px; }
   .mini-title { font-size: 12.5px; }
   .mini-sub,
-  .mini-status { font-size: 11px; }
-
-
-  .product-sheet { border-radius: 16px 16px 0 0; }
   .sheet-head { min-height: 48px; padding: 8px 10px; }
   .sheet-head h2,
-  .sheet-title { font-size: 16px; }
   .sheet-body { padding: 10px; }
   .sheet-desc { font-size: 12.5px; }
   .opt-group { margin-bottom: 10px; }
@@ -536,10 +523,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .opt-guidance { font-size: 10.5px; }
   .opt-row { min-height: 42px; padding: 8px 10px; font-size: 12.5px; }
   .comment-area { min-height: 72px; padding: 9px 10px; font-size: 13px; }
-  .sheet-footer {
-    padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-  }
-
   .bottom-bar { padding: 7px 8px calc(7px + env(safe-area-inset-bottom)); }
   .bar-btn { min-height: 46px; padding: 0 11px; border-radius: 10px; font-size: 13px; }
   .bar-count { min-width: 26px; height: 26px; line-height: 26px; font-size: 11px; }
@@ -908,27 +891,21 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 }
 
 /* ======================== Selected option confirmation green ======================== */
-.product-sheet .opt-row.is-checked,
 #productSheet .opt-row.is-checked {
   border-color: #8bcfa6 !important;
   background: #edf9f1 !important;
   box-shadow: inset 0 0 0 1px rgba(31, 143, 82, .035);
 }
-.product-sheet .opt-row.is-checked .opt-label,
 #productSheet .opt-row.is-checked .opt-label {
   color: #176b3a;
 }
-.product-sheet .opt-row.is-checked .opt-price,
 #productSheet .opt-row.is-checked .opt-price {
   color: #277a48;
 }
-.product-sheet .opt-row input[type="radio"],
-.product-sheet .opt-row input[type="checkbox"],
 #productSheet .opt-row input[type="radio"],
 #productSheet .opt-row input[type="checkbox"] {
   accent-color: #238a4b;
 }
-.product-sheet .opt-row.is-checked:hover,
 #productSheet .opt-row.is-checked:hover {
   border-color: #70bf91 !important;
   background: #e8f7ed !important;
@@ -954,8 +931,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 .order-progress-step.is-complete::before,.order-progress-step.is-current::before { background: #65b980; }
 .order-progress-step.is-complete .order-progress-dot { border-color: #2f9653; background: #2f9653; }
 .order-progress-step.is-current .order-progress-dot { border-color: #2f9653; box-shadow: 0 0 0 4px rgba(47,150,83,.12); }
-.active-order-meta { display: flex; justify-content: space-between; gap: 8px; padding-top: 9px; border-top: 1px solid #dde9e0; color: #66736b; font-size: 11.5px; }
-.active-order-meta b { color: #263d2e; }
 .active-order-open { width: 100%; min-height: 34px; margin-top: 10px; border: 1px solid #b9dcc5; border-radius: 9px; background: #fff; color: #267943; font: inherit; font-size: 12px; font-weight: 750; }
 .prod-soldout-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; padding: 0 8px; border-radius: 9px; background: #f1f3f4; color: #747c83; font-size: 10.5px; font-weight: 750; white-space: nowrap; }
 @media (max-width: 639px) {
@@ -967,7 +942,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .order-progress-step small { font-size: 8.5px; line-height: 1.1; }
   .order-progress-dot { width: 16px; height: 16px; }
   .order-progress-step::before { top: 7px; }
-  .active-order-meta { font-size: 10.5px; }
   .active-order-open { min-height: 32px; margin-top: 8px; font-size: 11px; }
 }
 
@@ -1289,7 +1263,6 @@ main {
   border-radius: 0 !important;
   object-fit: cover;
 }
-.sheet-name { display: none; }
 .sheet-desc { margin: 12px 2px 14px !important; font-size: 12.5px; line-height: 1.45; }
 .opt-group {
   margin-top: 10px;
@@ -1434,7 +1407,7 @@ textarea.input {
   background: var(--accent);
   box-shadow: 0 10px 25px rgba(214,78,0,.23);
 }
-.bottom-bar button,.bar-cart {
+.bottom-bar button {
   min-height: 54px;
   border-radius: 17px;
   background: var(--accent);
@@ -1694,18 +1667,6 @@ textarea.input {
   font-size: 12px;
   line-height: 1.35;
 }
-.checkout-review-meta-label {
-  color: var(--ink-2);
-}
-.checkout-review-meta-value {
-  color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 700;
-}
-.checkout-review-meta-price {
-  color: var(--ink-2);
-  white-space: nowrap;
-}
 .checkout-review-item-total {
   color: var(--ink);
   font-size: 16px;
@@ -1884,7 +1845,6 @@ textarea.input {
     gap: 6px;
     font-size: 11.5px;
   }
-  .checkout-review-meta-value { font-size: 12px; }
   .checkout-review-item-total {
     grid-column: 2;
     grid-row: 2;
@@ -2513,7 +2473,6 @@ textarea.input {
 .confirm-timeout-status{grid-template-columns:1fr!important;border-color:#f0d5ac!important;background:#fff9ef!important;gap:7px!important}
 .confirm-call-button{display:flex!important;align-items:center!important;justify-content:center!important;min-height:48px!important;margin-top:6px!important;padding:0 16px!important;border-radius:12px!important;background:#f56608!important;color:#fff!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 6px 14px rgba(245,102,8,.17)!important}
 .confirm-phone-missing{display:block!important;color:#8b6550!important;font-size:12px!important}
-.confirm-auto-return{margin:9px 0 0!important;color:var(--ink-2)!important;font-size:11.5px!important;text-align:center!important}
 .confirm-meta [data-confirm-countdown]{color:#f56608!important;font-variant-numeric:tabular-nums!important}
 @media(max-width:520px){.confirm-wait-status,.confirm-accepted-status,.confirm-timeout-status{padding:12px!important;border-radius:13px!important}.confirm-call-button{min-height:46px!important}.confirm-modal[data-state="waiting"] .confirm-icon{animation-duration:1.5s}}
 
@@ -2526,7 +2485,6 @@ textarea.input {
 .confirm-ready-countdown>span{color:#557060;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .confirm-ready-countdown>strong{color:#168343;font-size:28px;line-height:1.1;font-weight:850;font-variant-numeric:tabular-nums}
 .confirm-ready-countdown>small{color:#6f7f75;font-size:12px;line-height:1.35}
-.confirm-auto-return{margin:12px 0 0;color:#77706a;font-size:12.5px;line-height:1.45;text-align:center}
 .confirm-modal[data-state="waiting"] .confirm-icon{animation:confirmPulse 1.5s ease-in-out infinite}
 @keyframes confirmPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(43,163,94,.22)}50%{transform:scale(1.05);box-shadow:0 0 0 12px rgba(43,163,94,0)}}
 
@@ -2598,9 +2556,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 .confirm-modal[data-state="accepted"] .confirm-accepted-status small,
 .confirm-modal[data-state="ready"] .confirm-accepted-status small,
 .confirm-ready-countdown,
-.confirm-auto-return {
-  display: none !important;
-}
 @media (max-width: 520px) {
   .confirm-modal[data-state="accepted"],
   .confirm-modal[data-state="ready"] {
