@@ -1263,21 +1263,6 @@ main {
     font-weight: 600;
 }
 
-.info-line { margin: 0 0 4px; font-size: 13.5px; color: var(--ink-2); }
-
-.hours { list-style: none; margin: 0; padding: 0; }
-
-.hours li {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13.5px;
-    padding: 4px 0;
-    border-bottom: 1px solid var(--line);
-    color: var(--ink-2);
-}
-
-.hours li:last-child { border-bottom: 0; }
-
 /* ---------------------- Bekreftelse ---------------------- */
 
 .confirm-modal {
@@ -1419,8 +1404,8 @@ main {
 .validated-input.is-valid .input { border-color: #8ac5a0; background: #f7fcf8; }
 .valid-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: white; font-size: 13px; font-weight: 700; pointer-events: none; }
 .page-intro, .section-help { margin: 0 0 18px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
-.view-profile .card, .view-info .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }
-.view-profile .sec-title, .view-info .sec-title { margin-bottom: 12px; font-size: 16px; }
+.view-profile .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }
+.view-profile .sec-title { margin-bottom: 12px; font-size: 16px; }
 .view-profile .mini-row { padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; gap: 12px; }
 .view-profile .mini-row:last-child { border-bottom: 0; }
 .view-profile .mini-row .link-btn { padding: 10px 12px; background: var(--accent-soft); border-radius: 9px; text-decoration: none; flex: none; }
@@ -1446,20 +1431,11 @@ main {
 .profile-chevron { color: var(--accent); font-size: 22px; line-height: 1; transition: transform .16s ease; }
 .profile-section[open] .profile-chevron { transform: rotate(180deg); }
 .profile-section-body { padding: 16px 20px 20px; }
-.info-call { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; margin: 12px 0 16px; background: var(--accent-soft); border-radius: 10px; color: var(--accent-dark); text-decoration: none; font-weight: 600; font-size: 14px; }
-.info-detail { padding: 12px 0; border-top: 1px solid var(--line); }
-.info-detail > span { font-size: 12px; color: var(--ink-2); }
-.info-detail p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; }
-.view-info .hours li { flex-wrap: wrap; gap: 8px; padding: 8px 0; }
-.view-info #infoOpenNow { margin: 12px 0 0; color: var(--ink-2); line-height: 1.5; }
-.staff-access { color: var(--ink-2); font-size: 12px; padding: 8px 4px; }
-.staff-access summary { cursor: pointer; padding: 8px 0; }
-.staff-access a { margin-top: 8px; }
 @media (max-width: 360px) {
     .header-inner { gap: 4px; padding: 0 8px; }
     .hdr-actions { gap: 0; }
     .brand { gap: 5px; }
-    .view-profile .card, .view-info .card { padding: 16px; }
+    .view-profile .card { padding: 16px; }
 }
 
 /* Mobil: la hovedflatene gå helt ut til skjermkanten. Innholdet beholder
@@ -1471,7 +1447,6 @@ main {
     .view-cart > .view-title,
     .view-profile > .view-title,
     .view-profile > .page-intro,
-    .view-info > .view-title,
     .view-cart > .steps,
     .view-checkout > .steps {
         margin-left: 12px;
@@ -1481,18 +1456,15 @@ main {
     .cart-line,
     .cart-summary,
     .step-panel,
-    .view-profile .card,
-    .view-info .card {
+    .view-profile .card {
         border-left: 0;
         border-right: 0;
         border-radius: 0;
         box-shadow: none;
     }
 
-    .view-info .card { padding-left: 16px; padding-right: 16px; }
     .profile-section > summary { padding-left: 16px; padding-right: 16px; }
     .profile-section-body { padding-left: 16px; padding-right: 16px; }
-    .staff-access { margin-left: 12px; margin-right: 12px; }
 
     .sheet-body { padding-left: 0; padding-right: 0; }
     .sheet-hero { border-radius: 0; }
