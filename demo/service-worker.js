@@ -1,9 +1,8 @@
-const CACHE_NAME = 'kol-demo-v52-maint1';
+const CACHE_NAME = 'kol-demo-v53-core2';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
   '/demo/css/customer.css',
-  '/demo/js/allergen-ui.js',
   '/demo/js/customer.js',
   '/demo/js/shop-info.js',
   '/demo/js/install.js',
