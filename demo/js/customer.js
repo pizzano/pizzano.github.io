@@ -127,7 +127,6 @@ const el = {
   closedTitle: $('closedTitle'),
   closedText: $('closedText'),
   btnBack: $('btnBack'),
-  btnInfo: $('btnInfo'),
   btnProfile: $('btnProfile'),
   btnCart: $('btnCart'),
   cartCount: $('cartCount'),
@@ -137,7 +136,6 @@ const el = {
     cart: $('viewCart'),
     checkout: $('viewCheckout'),
     profile: $('viewProfile'),
-    info: $('viewInfo'),
   },
   cartLines: $('cartLines'),
   cartSummary: $('cartSummary'),
@@ -172,14 +170,6 @@ const el = {
   orderList: $('orderList'),
   activeOrderMenu: $('activeOrderMenu'),
   activeOrderProfile: $('activeOrderProfile'),
-  infoName: $('infoName'),
-  infoAddress: $('infoAddress'),
-  infoPhone: $('infoPhone'),
-  infoPickup: $('infoPickup'),
-  infoPayment: $('infoPayment'),
-  infoDays: $('infoDays'),
-  infoHours: $('infoHours'),
-  infoOpenNow: $('infoOpenNow'),
   sheet: $('productSheet'),
   sheetBackdrop: $('sheetBackdrop'),
   sheetTitle: $('sheetTitle'),
@@ -646,7 +636,6 @@ function setView(view) {
   el.catBar.hidden = view !== 'menu';
   el.btnBack.hidden = view === 'menu';
   el.btnProfile.classList.toggle('is-on', view === 'profile');
-  el.btnInfo.classList.toggle('is-on', view === 'info');
   el.btnCart.classList.toggle('is-on', view === 'cart' || view === 'checkout');
   window.scrollTo({ top: 0 });
   renderBottomBar();
@@ -654,10 +643,6 @@ function setView(view) {
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
   if (view === 'profile') renderProfile();
-  if (view === 'info') {
-    setInfoTab('contact');
-    renderInfo();
-  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -861,51 +846,6 @@ function renderOpenState() {
   el.cartClosedHint.hidden = state.open;
   return state;
 }
-
-function setInfoTab(tabName) {
-  const validTabs = new Set(['contact', 'hours', 'allergens']);
-  const activeTab = validTabs.has(tabName) ? tabName : 'contact';
-  document.querySelectorAll('#viewInfo [data-info-tab]').forEach((button) => {
-    const active = button.dataset.infoTab === activeTab;
-    button.classList.toggle('is-active', active);
-    button.setAttribute('aria-selected', String(active));
-  });
-  document.querySelectorAll('#viewInfo [data-info-panel]').forEach((panel) => {
-    const active = panel.dataset.infoPanel === activeTab;
-    panel.classList.toggle('is-active', active);
-    panel.hidden = !active;
-  });
-  const activeButton = document.querySelector('#viewInfo [data-info-tab="' + activeTab + '"]');
-  if (activeButton && typeof activeButton.scrollIntoView === 'function') {
-    activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
-}
-
-function renderInfo() {
-  const settings = store.settings || {};
-  const state = getOpenState();
-  el.infoName.textContent = settings.restaurantName || 'KØL Grill & Pizza';
-  el.infoAddress.textContent = `${settings.streetAddress || ''}, ${settings.postalCode || ''} ${
-    settings.city || ''
-  }`.trim();
-  el.infoPhone.textContent = settings.phone ? `Ring ${settings.phone}` : 'Telefon ikke oppgitt';
-  const phone = String(settings.phone || '').replace(/[^+\d]/g, '');
-  if (phone) el.infoPhone.setAttribute('href', `tel:${phone}`);
-  else el.infoPhone.removeAttribute('href');
-  el.infoPickup.textContent = settings.pickupInfo || 'Henting i restauranten';
-  el.infoPayment.textContent = settings.paymentInfo || 'Betaling ved henting';
-  el.infoDays.textContent = settings.openingDays || 'Mandag – søndag';
-  el.infoHours.textContent = `${settings.orderOpenTime || '14:00'} – ${
-    settings.orderCloseTime || '22:00'
-  }`;
-  el.infoOpenNow.textContent = state.open
-    ? `Vi har åpent nå og stenger ${state.closesAt}.`
-    : `Vi har stengt nå. Neste åpning ${state.opensAt}.`;
-}
-
-/* ------------------------------------------------------------------ *
- * Produkt-sheet med størrelser og valggrupper
- * ------------------------------------------------------------------ */
 
 function defaultSelectionFor(item) {
   const selections = {};
@@ -1323,7 +1263,7 @@ function renderCartCount() {
 function renderBottomBar() {
   const count = cartCount();
   const show =
-    count > 0 && (ui.view === 'menu' || ui.view === 'info' || ui.view === 'profile');
+    count > 0 && (ui.view === 'menu' || ui.view === 'profile');
   el.bottomBar.hidden = !show;
   if (show) {
     const subtotal = cartSubtotal();
@@ -2145,11 +2085,6 @@ document.addEventListener('click', (event) => {
     setProfileTab(profileTab.dataset.profileTab);
     return;
   }
-  const infoTab = event.target.closest('[data-info-tab]');
-  if (infoTab) {
-    setInfoTab(infoTab.dataset.infoTab);
-    return;
-  }
   const readyDismiss = event.target.closest('[data-ready-dismiss]');
   if (readyDismiss) {
     const orderId = readyDismiss.dataset.readyDismiss;
@@ -2369,7 +2304,6 @@ el.brandHome.addEventListener('click', (event) => {
   setView('menu');
 });
 
-el.btnInfo.addEventListener('click', () => setView(ui.view === 'info' ? 'menu' : 'info'));
 el.btnProfile.addEventListener('click', () =>
   setView(ui.view === 'profile' ? 'menu' : 'profile')
 );
@@ -2508,7 +2442,6 @@ function renderAll() {
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
   if (ui.view === 'profile') renderProfile();
-  if (ui.view === 'info') renderInfo();
   if (draft) renderSheet();
   return changed;
 }
