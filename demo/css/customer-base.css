@@ -1310,23 +1310,6 @@ main {
 .confirm-meta div { display: flex; justify-content: space-between; padding: 2px 0; }
 .confirm-meta strong { color: var(--ink); }
 
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 78px;
-    transform: translateX(-50%);
-    z-index: 80;
-    background: #23282f;
-    color: #fff;
-    font-size: 13px;
-    padding: 8px 14px;
-    border-radius: 18px;
-    box-shadow: var(--shadow-md);
-    max-width: calc(100% - 32px);
-    text-align: center;
-}
-
-.toast[hidden] { display: none; }
 
 /* ---------------------- Tablet/desktop ---------------------- */
 
