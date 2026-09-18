@@ -1305,7 +1305,6 @@ main {
   font-size: 12px;
   font-weight: 800;
 }
-.comment-group textarea,
 textarea.input {
   min-height: 88px;
   border-radius: 13px;
