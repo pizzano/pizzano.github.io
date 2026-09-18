@@ -1,5 +1,5 @@
 /**
- * app.js — Kundelogikk for KØL Grill & Pizza.
+ * customer.js — Kundelogikk for KØL Grill & Pizza.
  *
  * Hele menyen vises i én rullende liste. Kategoribaren scroller horisontalt og
  * følger sидen: når kunden scroller, markeres riktig kategori og baren flytter
@@ -11,7 +11,6 @@ import {
   DB_URL,
   subscribe,
   ready,
-  backendInfo,
   formatPrice,
   getItemBasePrice,
   getSizePrice,
@@ -119,8 +118,6 @@ const el = {
   allergenSearch: $('allergenSearch'),
   allergenClose: $('allergenClose'),
   allergenReset: $('allergenReset'),
-  allergenSave: $('allergenSave'),
-  syncBadge: $('syncBadge'),
   openStatus: $('openStatus'),
   openDot: $('openDot'),
   closedBanner: $('closedBanner'),
@@ -147,6 +144,7 @@ const el = {
   bottomBar: $('bottomBar'),
   barCart: $('barCart'),
   barCount: $('barCount'),
+  barLabel: $('barLabel'),
   barTotal: $('barTotal'),
   stepper: $('stepper'),
   step2: $('step2'),
@@ -238,7 +236,7 @@ function renderAllergenPicker() {
   el.allergenModal.hidden = !ui.allergensOpen;
   el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
   el.allergenSearch.value = ui.allergenSearch;
-  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('') || '<p class="hint">Ingen allergener funnet.</p>';
+  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button" aria-pressed="${ui.selectedAllergens.includes(label)}">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('') || '<p class="hint">Ingen allergener funnet.</p>';
 }
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
@@ -771,7 +769,10 @@ function productCardHtml(item, section) {
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
   const desc = item.description || item.ingredients || section.note || '';
-  const cardAllergens = allergenLabels(item).slice(0, 2);
+  const selectedAllergens = new Set(ui.selectedAllergens);
+  const cardAllergens = allergenLabels(item)
+    .filter((label) => selectedAllergens.has(label))
+    .slice(0, 2);
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       ${
@@ -1162,7 +1163,7 @@ function cartCount() {
   return cart.reduce((sum, line) => sum + line.quantity, 0);
 }
 
-function cartLineHtml(line, compact) {
+function cartLineHtml(line) {
   const { item } = findItem(line.itemId);
   if (!item) return '';
   const size = (item.sizes || []).find((s) => s.id === line.sizeId);
@@ -1215,26 +1216,18 @@ function cartLineHtml(line, compact) {
             .join('')}
         </div>
         ${line.comment ? `<p class="line-comment">«${escapeHtml(line.comment)}»</p>` : ''}
-        ${
-          compact
-            ? ''
-            : `<div class="line-actions">
+        <div class="line-actions">
                  <button class="link-btn" data-edit="${escapeHtml(line.lineId)}" type="button">Endre</button>
                  <button class="link-btn is-danger" data-remove="${escapeHtml(line.lineId)}" type="button">Fjern</button>
-               </div>`
-        }
+               </div>
       </div>
       <div class="line-right">
         <span class="line-price">${formatPrice(price)}</span>
-        ${
-          compact
-            ? ''
-            : `<span class="line-step">
+        <span class="line-step">
                  <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
                  <span>${line.quantity}</span>
                  <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
-               </span>`
-        }
+               </span>
       </div>
     </div>`;
 }
@@ -1247,7 +1240,7 @@ function renderCart() {
     el.cartActions.hidden = true;
     return;
   }
-  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line, false)).join('');
+  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line)).join('');
   const subtotal = cartSubtotal();
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
@@ -1268,6 +1261,7 @@ function renderBottomBar() {
   if (show) {
     const subtotal = cartSubtotal();
     el.barCount.textContent = String(count);
+    el.barLabel.textContent = count === 1 ? 'vare' : 'varer';
     el.barTotal.textContent = formatPrice(subtotal);
   }
 }
@@ -1386,7 +1380,7 @@ function renderCheckout() {
   el.reviewCard.innerHTML = `
     <div class="checkout-review-head">
       <div class="checkout-review-head-copy">
-        <span.Kontroller bestillingen</span>
+        <span>Kontroller bestillingen</span>
         <strong>Din bestilling</strong>
       </div>
       <button class="link-btn" data-review-cart type="button">Endre kurv</button>
@@ -2375,16 +2369,25 @@ el.btnAllergens.addEventListener('click', () => {
 el.allergenClose.addEventListener('click', () => { ui.allergensOpen = false; renderAllergenPicker(); });
 el.allergenModal.addEventListener('click', (event) => { if (event.target === el.allergenModal) { ui.allergensOpen = false; renderAllergenPicker(); } });
 el.allergenSearch.addEventListener('input', () => { ui.allergenSearch = el.allergenSearch.value; renderAllergenPicker(); });
-el.allergenReset.addEventListener('click', () => { ui.selectedAllergens = []; renderAllergenPicker(); });
-el.allergenSave.addEventListener('click', () => { saveJSON(ALLERGEN_KEY, ui.selectedAllergens); ui.allergensOpen = false; renderAllergenPicker(); renderMenu(); });
+el.allergenReset.addEventListener('click', () => {
+  ui.selectedAllergens = [];
+  saveJSON(ALLERGEN_KEY, ui.selectedAllergens);
+  renderAllergenPicker();
+  renderMenu();
+  toast('Matallergier nullstilt.');
+});
 el.allergenPicker.addEventListener('click', (event) => {
   const button = event.target.closest('[data-allergen]');
   if (!button) return;
   const label = button.dataset.allergen;
-  ui.selectedAllergens = ui.selectedAllergens.includes(label)
+  const selected = ui.selectedAllergens.includes(label);
+  ui.selectedAllergens = selected
     ? ui.selectedAllergens.filter((value) => value !== label)
     : [...ui.selectedAllergens, label];
+  saveJSON(ALLERGEN_KEY, ui.selectedAllergens);
   renderAllergenPicker();
+  renderMenu();
+  toast(selected ? `${label} fjernet.` : `${label} lagret.`);
 });
 
 [el.custName, el.custPhone].forEach((input) => {
@@ -2446,13 +2449,6 @@ function renderAll() {
   return changed;
 }
 
-function updateSyncBadge() {
-  el.syncBadge.textContent =
-    backendInfo.mode === 'firebase' ? 'Live · Firebase' : 'Frakoblet · lokal kopi';
-}
-
-updateSyncBadge();
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/demo/service-worker.js').catch(() => {});
@@ -2461,19 +2457,16 @@ if ('serviceWorker' in navigator) {
 
 subscribe((_state, origin) => {
   const changed = renderAll();
-  updateSyncBadge();
   if (origin === 'remote' && changed) toast('Menyen er oppdatert av restauranten.');
 });
 
 ready().then(() => {
-  updateSyncBadge();
   renderAll();
   setView('menu');
 });
 
 // Status og åpningstid holdes oppdatert mens siden er åpen.
 setInterval(() => {
-  updateSyncBadge();
   renderOpenState();
 }, 5000);
 

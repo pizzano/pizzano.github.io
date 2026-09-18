@@ -12,8 +12,8 @@
     <link rel="apple-touch-icon" href="/demo/icons/kol-icon-192.png">
     <link data-mgx-overview="icon" rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
-    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20260918-maint1">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20260918-maint1">
+    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20260918-core2">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20260918-core2">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -57,7 +57,7 @@
         <section class="view view-menu is-active" id="viewMenu" aria-label="Meny">
             <div class="menu-overview">
                 <div class="menu-overview-row">
-                    <div class="pickup-note" id="pickupNote">
+                    <div class="pickup-note">
                         <span class="dot-open" id="openDot" aria-hidden="true"></span>
                         <div class="pickup-copy">
                             <strong id="openStatus">Åpent nå</strong>
@@ -66,7 +66,6 @@
                     </div>
                     <button class="allergen-toggle" id="btnAllergens" type="button">Matallergier</button>
                 </div>
-                <span id="syncBadge" hidden></span>
                 <div class="closed-banner" id="closedBanner" hidden>
                     <strong id="closedTitle">Restauranten er stengt</strong>
                     <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
@@ -180,7 +179,7 @@
 
     </main>
 
-    <!-- Matallergier. Lagre-knappen beholdes som skjult kompatibilitetskrok for app.js. -->
+    <!-- Matallergier -->
     <div class="allergen-modal" id="allergenModal" hidden>
         <section class="allergen-dialog" aria-modal="true" role="dialog" aria-label="Matallergier">
             <header><div><h2>Matallergier</h2><p>Velg allergier. Vi varsler i menyen.</p></div><button id="allergenClose" type="button" aria-label="Lukk">×</button></header>
@@ -188,7 +187,6 @@
             <div class="allergen-picker" id="allergenPicker"></div>
             <footer>
                 <button id="allergenReset" class="btn btn-outline" type="button">Nullstill</button>
-                <button id="allergenSave" type="button" hidden aria-hidden="true" tabindex="-1"></button>
             </footer>
         </section>
     </div>
@@ -196,7 +194,7 @@
     <!-- ============ BUNNLINJE (kurv) ============ -->
     <div class="bottom-bar" id="bottomBar" hidden>
         <button class="bar-btn" id="barCart" type="button">
-            <span class="bar-left"><span class="bar-count" id="barCount">0</span><span class="kol-bar-label">varer</span></span>
+            <span class="bar-left"><span class="bar-count" id="barCount">0</span><span class="kol-bar-label" id="barLabel">varer</span></span>
             <span class="bar-right"><span id="barTotal">0 kr</span><span class="kol-bar-cta">· Til kassen →</span></span>
         </button>
     </div>
@@ -244,9 +242,9 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="/demo/js/install.js?v=20260918-maint1"></script>
-    <script type="module" src="/demo/js/customer.js?v=20260918-maint1"></script>
-    <script type="module" src="/demo/js/shop-info.js?v=20260918-maint1"></script>
+    <script src="/demo/js/install.js?v=20260918-core2"></script>
+    <script type="module" src="/demo/js/customer.js?v=20260918-core2"></script>
+    <script type="module" src="/demo/js/shop-info.js?v=20260918-core2"></script>
 </body>
 
 </html>

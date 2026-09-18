@@ -315,16 +315,6 @@ main {
 
 .closed-hint[hidden] { display: none; }
 
-.sync-badge {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--ink-3);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 1px 7px;
-}
-
 /* ---------------------- Menyliste ---------------------- */
 
 .menu-list { display: block; }
@@ -435,29 +425,6 @@ main {
     flex: none;
 }
 
-.fav-btn {
-    width: 32px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--line);
-    background: var(--surface);
-    color: var(--ink-3);
-    border-radius: var(--r-sm);
-    transition: color .14s ease, border-color .14s ease, background .14s ease;
-}
-
-.fav-btn svg { width: 17px; height: 17px; }
-.fav-btn:hover { border-color: var(--line-strong); color: var(--ink-2); }
-
-.fav-btn.is-on {
-    color: var(--accent);
-    border-color: #f3c9ab;
-    background: var(--accent-soft);
-}
-
-.fav-btn.is-on svg { fill: currentColor; }
-
 .add-btn {
     width: 32px;
     height: 32px;
@@ -491,8 +458,6 @@ main {
 }
 
 .tag-soldout { background: var(--danger-soft); color: var(--danger); }
-.tag-free { background: var(--ok-soft); color: var(--ok); }
-
 .empty-note {
     background: var(--surface);
     border: 1px dashed var(--line-strong);
@@ -590,12 +555,6 @@ main {
     margin-bottom: 10px;
 }
 
-.sheet-name {
-    font-size: 17px;
-    font-weight: 700;
-    margin: 0 0 3px;
-}
-
 .sheet-desc {
     font-size: 13.5px;
     color: var(--ink-2);
@@ -636,9 +595,6 @@ main {
     white-space: nowrap;
 }
 
-.badge-req { background: var(--warn-soft); border-color: #f0dcbd; color: var(--warn); }
-.badge-def { background: var(--ok-soft); border-color: #cfe9d8; color: var(--ok); }
-
 .opt-rows { display: grid; gap: 6px; }
 
 .opt-row {
@@ -671,13 +627,6 @@ main {
 .opt-invalid .opt-title { color: var(--danger); }
 .opt-invalid .opt-rows { outline: 1px solid var(--danger-soft); border-radius: var(--r-sm); }
 
-.allergen-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 4px;
-}
-
 .allergen-chip {
     font-size: 11.5px;
     padding: 2px 8px;
@@ -692,7 +641,6 @@ main {
 .allergen-toggle, .show-more { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-1); font: inherit; font-size: 12px; font-weight: 700; padding: 6px 10px; white-space: nowrap; }
 .allergen-toggle.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .allergen-picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
-.allergen-help { flex-basis: 100%; margin: 0 0 2px; color: var(--ink-2); font-size: 12px; }
 .allergen-choice { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink-2); padding: 5px 8px; font-size: 12px; }
 .allergen-choice.is-on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .allergen-modal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: end center; padding: 16px; background: rgba(20,24,30,.42); }
@@ -811,9 +759,6 @@ main {
 
 .btn-outline:hover { background: transparent !important; border-color: var(--ink-3); }
 
-.btn-ghost { background: transparent; color: var(--ink-2); }
-.btn-ghost:hover { background: var(--surface-2); }
-
 .btn-block { width: 100%; }
 
 .btn-add { flex: 1; justify-content: space-between; }
@@ -852,12 +797,6 @@ main {
     font-size: 14px;
     font-weight: 650;
     margin: 0 0 2px;
-}
-
-.line-meta {
-    font-size: 12.5px;
-    color: var(--ink-2);
-    margin: 0 0 1px;
 }
 
 .line-details {
@@ -995,8 +934,6 @@ main {
     font-weight: 700;
     margin-bottom: 10px;
 }
-
-.cart-lines-compact .cart-line { box-shadow: none; }
 
 /* ------------------------ Bunnlinje ------------------------ */
 
@@ -1154,16 +1091,6 @@ main {
     color: var(--ink-3);
 }
 
-.check-line {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13.5px;
-    color: var(--ink-2);
-}
-
-.check-line input { accent-color: var(--accent); width: 17px; height: 17px; }
-
 .time-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1189,8 +1116,6 @@ main {
     border-color: var(--accent);
     color: #fff;
 }
-
-.time-btn.is-soon { grid-column: 1 / -1; }
 
 .review-card {
     border-top: 1px solid var(--line);
@@ -1239,21 +1164,6 @@ main {
 .mini-body { flex: 1; min-width: 0; }
 .mini-title { font-size: 13.5px; font-weight: 650; margin: 0; }
 .mini-sub { font-size: 12px; color: var(--ink-3); margin: 0; }
-
-.mini-status {
-    margin: 2px 0 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent-dark);
-}
-
-.textarea-small {
-    height: auto;
-    min-height: 62px;
-    padding: 8px 10px;
-    resize: vertical;
-    line-height: 1.4;
-}
 
 .saved-flash {
     display: inline-block;
@@ -1310,23 +1220,6 @@ main {
 .confirm-meta div { display: flex; justify-content: space-between; padding: 2px 0; }
 .confirm-meta strong { color: var(--ink); }
 
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 78px;
-    transform: translateX(-50%);
-    z-index: 80;
-    background: #23282f;
-    color: #fff;
-    font-size: 13px;
-    padding: 8px 14px;
-    border-radius: 18px;
-    box-shadow: var(--shadow-md);
-    max-width: calc(100% - 32px);
-    text-align: center;
-}
-
-.toast[hidden] { display: none; }
 
 /* ---------------------- Tablet/desktop ---------------------- */
 
@@ -1428,9 +1321,6 @@ main {
 .profile-section > summary::-webkit-details-marker { display: none; }
 .profile-section > summary:hover { background: var(--surface-2); }
 .profile-section[open] > summary { border-bottom: 1px solid var(--line); }
-.profile-chevron { color: var(--accent); font-size: 22px; line-height: 1; transition: transform .16s ease; }
-.profile-section[open] .profile-chevron { transform: rotate(180deg); }
-.profile-section-body { padding: 16px 20px 20px; }
 @media (max-width: 360px) {
     .header-inner { gap: 4px; padding: 0 8px; }
     .hdr-actions { gap: 0; }
@@ -1464,11 +1354,8 @@ main {
     }
 
     .profile-section > summary { padding-left: 16px; padding-right: 16px; }
-    .profile-section-body { padding-left: 16px; padding-right: 16px; }
-
     .sheet-body { padding-left: 0; padding-right: 0; }
     .sheet-hero { border-radius: 0; }
-    .sheet-name,
     .sheet-desc,
     .sheet-allergens { margin-left: 12px; margin-right: 12px; }
     .opt-group {
