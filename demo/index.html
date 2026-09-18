@@ -12,8 +12,8 @@
     <link rel="apple-touch-icon" href="/demo/icons/kol-icon-192.png">
     <link data-mgx-overview="icon" rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
-    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20260915-reviewfix2">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20260916-activeorder1">
+    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20260918-maint1">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20260918-maint1">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -38,9 +38,6 @@
                 </span>
             </a>
             <nav class="hdr-actions" aria-label="Hovedhandlinger">
-                <button class="hdr-btn" id="btnInfo" type="button" aria-label="Informasjon om restauranten" hidden aria-hidden="true" tabindex="-1">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6v.5"/></svg>
-                </button>
                 <button class="hdr-btn" id="btnProfile" type="button" aria-label="Min profil og favoritter">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg>
                 </button>
@@ -181,41 +178,6 @@
 </div>
         </section>
 
-        <!-- ============ INFO ============ -->
-        <section class="view view-info" id="viewInfo" aria-label="Informasjon" hidden>
-            <h1 class="view-title">Informasjon</h1>
-
-            <nav class="profile-tabs" role="tablist" aria-label="Informasjon">
-                <button class="profile-tab is-active" data-info-tab="contact" id="infoTabContact" type="button" role="tab" aria-selected="true" aria-controls="infoPanelContact">Kontakt</button>
-                <button class="profile-tab" data-info-tab="hours" id="infoTabHours" type="button" role="tab" aria-selected="false" aria-controls="infoPanelHours">Åpningstider</button>
-                <button class="profile-tab" data-info-tab="allergens" id="infoTabAllergens" type="button" role="tab" aria-selected="false" aria-controls="infoPanelAllergens">Allergener</button>
-            </nav>
-
-            <div class="profile-tab-panels">
-                <section class="card profile-tab-panel is-active" id="infoPanelContact" data-info-panel="contact" role="tabpanel" aria-labelledby="infoTabContact">
-                    <h2 class="sec-title" id="infoName">KØL Grill &amp; Pizza</h2>
-                    <p class="info-line" id="infoAddress">—</p>
-                    <a class="info-call" id="infoPhone">—</a>
-                    <div class="info-detail"><span>Henting</span><p id="infoPickup">—</p></div>
-                    <div class="info-detail"><span>Betaling</span><p id="infoPayment">—</p></div>
-                </section>
-
-                <section class="card profile-tab-panel" id="infoPanelHours" data-info-panel="hours" role="tabpanel" aria-labelledby="infoTabHours" hidden>
-                    <h2 class="sec-title">Åpningstider</h2>
-                    <ul class="hours">
-                        <li><span id="infoDays">Mandag – søndag</span><span id="infoHours">14:00 – 22:00</span></li>
-                    </ul>
-                    <p class="hint" id="infoOpenNow">—</p>
-                </section>
-
-                <section class="card profile-tab-panel" id="infoPanelAllergens" data-info-panel="allergens" role="tabpanel" aria-labelledby="infoTabAllergens" hidden>
-                    <h2 class="sec-title">Allergener</h2>
-                    <p class="info-line">Allergener vises på hvert produkt. Kontakt oss ved spørsmål om innhold.</p>
-                </section>
-            </div>
-
-            <details class="staff-access"><summary>For ansatte</summary><a class="btn btn-outline btn-block" href="/demo/admin.html">Åpne adminpanel</a></details>
-        </section>
     </main>
 
     <!-- Matallergier. Lagre-knappen beholdes som skjult kompatibilitetskrok for app.js. -->
@@ -282,9 +244,9 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="/demo/js/install.js?v=20260915-orderfix3"></script>
-    <script type="module" src="/demo/js/customer.js?v=20260916-activeorder1"></script>
-    <script type="module" src="/demo/js/shop-info.js?v=20260917-shopinfo2"></script>
+    <script src="/demo/js/install.js?v=20260918-maint1"></script>
+    <script type="module" src="/demo/js/customer.js?v=20260918-maint1"></script>
+    <script type="module" src="/demo/js/shop-info.js?v=20260918-maint1"></script>
 </body>
 
 </html>

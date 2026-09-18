@@ -300,16 +300,8 @@ function closeModal() {
   if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
 }
 
-function removeLegacyInfo() {
-  // customer.js har allerede hentet referansene sine når denne modulen kjøres.
-  // Deretter fjernes den gamle info-knappen og den gamle fullskjerms infosiden fra DOM-en.
-  document.getElementById('btnInfo')?.remove();
-  document.getElementById('viewInfo')?.remove();
-}
-
 function init() {
   injectStyles();
-  removeLegacyInfo();
   const modal = buildModal();
   const trigger = makeTrigger();
   if (!modal || !trigger) return;
