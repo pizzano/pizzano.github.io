@@ -133,7 +133,6 @@
   background: var(--surface);
   flex: none;
 }
-#allergenSave { display: none !important; }
 #allergenReset {
   width: 100%;
   min-height: 40px;
@@ -566,28 +565,27 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 .toast {
   position: fixed !important;
   left: 50% !important;
-  bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+  right: auto !important;
+  bottom: calc(78px + env(safe-area-inset-bottom)) !important;
   z-index: 180 !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
   width: max-content !important;
-  max-width: calc(100vw - 24px) !important;
+  max-width: calc(100vw - 28px) !important;
   min-height: 42px !important;
   padding: 9px 15px !important;
-  border: 1px solid #86e6a5 !important;
+  border: 1px solid #9bdcaf !important;
   border-radius: 999px !important;
-  background: #f1fff5 !important;
-  color: #168542 !important;
-  box-shadow: 0 8px 24px rgba(21, 128, 61, .10) !important;
+  background: #f0faf3 !important;
+  color: #208242 !important;
+  box-shadow: 0 8px 25px rgba(36,94,53,.13) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   line-height: 1.35 !important;
   text-align: left !important;
   pointer-events: none !important;
-  opacity: 0;
-  transform: translate(-50%, 18px);
-  transition: opacity .45s ease, transform .45s ease !important;
+  transform: translateX(-50%);
 }
 .toast::before {
   content: '✓';
@@ -596,8 +594,11 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   line-height: 1;
   color: #169447;
 }
-.toast.kol-toast-visible { opacity: 1; transform: translate(-50%, 0); }
-.toast.kol-toast-fade { opacity: 0; transform: translate(-50%, -10px); }
+.toast[data-tone='error'] {
+  border-color: #f1b8b5 !important;
+  background: #fff2f1 !important;
+  color: #a2322c !important;
+}
 .toast[hidden] { display: none !important; }
 
 .prod-allergens {
@@ -975,7 +976,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 .checkout-review-meta strong { color: var(--ink); text-align: right; }
 .checkout-review-total { margin-top: 2px; padding-top: 9px; border-top: 1px solid var(--line); }
 .checkout-review-total strong { font-size: 15px; }
-.toast[data-tone="error"] { border-color: #f1b8b5 !important; background: #fff2f1 !important; color: #a2322c !important; }
 @media (max-width: 639px) {
   .active-order-slot { margin-bottom: 10px; }
   .active-order-card { padding: 10px; border-radius: 12px; }
@@ -1501,22 +1501,6 @@ textarea.input {
 .allergen-choice { border-radius: 14px; background: #fff; }
 .allergen-choice.is-on { border-color: #78ca8d; background: #f1faf3; color: #24733c; }
 
-.toast {
-  left: 50% !important;
-  right: auto !important;
-  bottom: calc(78px + env(safe-area-inset-bottom)) !important;
-  transform: translate(-50%, 16px);
-  width: max-content;
-  max-width: calc(100% - 28px);
-  border-radius: 999px !important;
-  padding: 9px 15px !important;
-  background: #f0faf3 !important;
-  border: 1px solid #9bdcaf !important;
-  color: #208242 !important;
-  box-shadow: 0 8px 25px rgba(36,94,53,.13) !important;
-}
-.toast:not([hidden]) { transform: translate(-50%, 0); }
-.toast[data-tone='error'] { background: #fff2f1 !important; border-color: #f1b8b5 !important; color: #a2322c !important; }
 
 @media (max-width: 560px) {
   :root { --header-h: 58px; --cat-h: 70px; }
