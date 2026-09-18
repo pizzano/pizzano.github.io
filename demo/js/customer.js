@@ -411,30 +411,79 @@ function customerOrderCountdown(order) {
 
 function activeOrderCardHtml(order) {
   const rejectedNow = order.status === 'avvist';
+  const readyNow = order.status === 'klar';
+  const confirmedNow = ['bekreftet', 'tilberedning'].includes(order.status);
   const progressStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === progressStatus);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
-  const readyNow = order.status === 'klar';
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
-  const hasLiveEstimate = estimated > 0 && Number(order.estimatedReadyAt) > 0 && ['bekreftet', 'tilberedning'].includes(order.status);
+  const hasLiveEstimate =
+    confirmedNow && estimated > 0 && Number(order.estimatedReadyAt) > 0;
   const rejectionReason = String(order.rejectionReason || '').trim();
   const rejectionMessage = String(order.rejectionMessage || '').trim();
-  const rejectionTitle = rejectionReason && rejectionReason !== 'Egendefinert melding' ? rejectionReason : 'Bestillingen ble avvist';
-  const rejectionDetail = rejectionMessage || (rejectionReason === 'Egendefinert melding' ? '' : 'Kontakt restauranten hvis du lurer på noe.');
+  const rejectionTitle =
+    rejectionReason && rejectionReason !== 'Egendefinert melding'
+      ? rejectionReason
+      : 'Bestillingen ble avvist';
+  const rejectionDetail =
+    rejectionMessage ||
+    (rejectionReason === 'Egendefinert melding'
+      ? ''
+      : 'Kontakt restauranten hvis du lurer på noe.');
+
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
-    return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${complete ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
+    const checked = complete || (readyNow && current);
+    return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${checked ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
   }).join('');
+
+  let statusPanel = '';
+  if (!rejectedNow) {
+    if (readyNow) {
+      statusPanel = `
+        <div class="active-order-status-box is-ready">
+          <span class="active-order-status-check" aria-hidden="true">✓</span>
+          <div>
+            <strong>Klar for henting</strong>
+            <small>Bestillingen din er klar.</small>
+          </div>
+        </div>`;
+    } else if (hasLiveEstimate) {
+      statusPanel = `
+        <div class="active-order-status-box is-confirmed">
+          <span class="active-order-status-label">Maten er klar om</span>
+          <span class="active-order-status-clock" aria-hidden="true">⏱</span>
+          <strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong>
+        </div>`;
+    } else if (confirmedNow) {
+      statusPanel = `
+        <div class="active-order-status-box is-confirmed is-text">
+          <div>
+            <strong>Bestillingen er bekreftet</strong>
+            <small>Restauranten gjør klar bestillingen.</small>
+          </div>
+        </div>`;
+    } else {
+      statusPanel = `
+        <div class="active-order-status-box is-waiting">
+          <span class="active-order-status-dot" aria-hidden="true"></span>
+          <div>
+            <strong>Venter på bekreftelse</strong>
+            <small>Restauranten har mottatt bestillingen.</small>
+          </div>
+        </div>`;
+    }
+  }
+
   return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
       <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span>${rejectedNow ? '<strong class="active-order-live-status">Avvist</strong>' : ''}</div>
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}${rejectedNow ? `<button class="active-order-dismiss" data-rejected-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk avvisningsmeldingen">×</button>` : ''}</div>
     </div>
     ${!rejectedNow ? `<div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>` : ''}
-    ${hasLiveEstimate && !readyNow && !rejectedNow ? `<div class="active-order-estimate active-order-estimate-compact"><span class="active-order-estimate-label">Maten er klar om</span><span class="active-order-estimate-clock" aria-hidden="true">⏱</span><strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong></div>` : ''}
-    ${readyNow ? `<div class="active-order-ready-callout"><span class="ready-check">✓</span><div><strong>Maten din er klar</strong><small>Kom og hent bestillingen nå.</small></div></div>` : ''}
+    ${statusPanel}
     ${rejectedNow ? `<div class="active-order-rejected-callout"><span class="rejected-mark">×</span><div><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionDetail ? `<small>${escapeHtml(rejectionDetail)}</small>` : ''}</div></div>` : ''}
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
   </section>`;
