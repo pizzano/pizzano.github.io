@@ -393,8 +393,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .card { padding: 10px; margin-bottom: 8px; border-radius: 11px; }
   .page-intro,
   .section-help,
-  .hint,
-  .info-line { font-size: 12.5px; }
+  .hint { font-size: 12.5px; }
 
   .menu-overview { margin-bottom: 18px; padding: 11px; border-radius: 12px; }
   .menu-overview-row { gap: 8px; }
@@ -526,11 +525,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .mini-sub,
   .mini-status { font-size: 11px; }
 
-  .info-detail { padding: 10px 0; }
-  .info-detail > span { font-size: 11.5px; }
-  .info-detail p { margin-top: 3px; font-size: 13px; }
-  .info-call { min-height: 36px; padding: 8px 10px; font-size: 12.5px; }
-  .hours { font-size: 12.5px; }
 
   .product-sheet { border-radius: 16px 16px 0 0; }
   .sheet-head { min-height: 48px; padding: 8px 10px; }
@@ -630,54 +624,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 }
 #barCart .kol-bar-label { font-weight: 650; }
 #barCart .kol-bar-cta { font-weight: 800; }
-
-/* ======================== PWA install card ======================== */
-.pwa-info-install-card {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  border: 1px solid rgba(239, 104, 18, .18);
-  background: #fffaf6;
-}
-.pwa-info-install-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 13px;
-  display: grid;
-  place-items: center;
-  background: #33251f;
-  overflow: hidden;
-}
-.pwa-info-install-icon img { width: 100%; height: 100%; object-fit: cover; }
-.pwa-info-install-copy { min-width: 0; }
-.pwa-info-install-copy strong {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 15px;
-  color: #2f2723;
-}
-.pwa-info-install-copy span {
-  display: block;
-  color: #746b66;
-  font-size: 12px;
-  line-height: 1.38;
-}
-.pwa-info-install-button {
-  grid-column: 1 / -1;
-  width: 100%;
-  border: 0;
-  border-radius: 11px;
-  padding: 11px 14px;
-  margin-top: 2px;
-  background: #ef6812;
-  color: #fff;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.pwa-info-install-button:active { transform: scale(.99); }
 
 @media (max-width: 380px) {
   #barCart { font-size: 13px; padding-left: 9px; padding-right: 9px; }
@@ -790,7 +736,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
 
 /* ======================== Horizontal profile tabs ======================== */
-:is(#viewProfile, #viewInfo) .profile-tabs {
+#viewProfile .profile-tabs {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -803,8 +749,8 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-:is(#viewProfile, #viewInfo) .profile-tabs::-webkit-scrollbar { display: none; }
-:is(#viewProfile, #viewInfo) .profile-tab {
+#viewProfile .profile-tabs::-webkit-scrollbar { display: none; }
+#viewProfile .profile-tab {
   flex: 1 0 auto;
   min-width: 112px;
   min-height: 38px;
@@ -822,42 +768,42 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   scroll-snap-align: center;
   transition: background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
-:is(#viewProfile, #viewInfo) .profile-tab:hover { border-color: var(--line-strong); }
-:is(#viewProfile, #viewInfo) .profile-tab.is-active {
+#viewProfile .profile-tab:hover { border-color: var(--line-strong); }
+#viewProfile .profile-tab.is-active {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
   box-shadow: 0 2px 6px rgba(232, 98, 15, .14);
 }
-:is(#viewProfile, #viewInfo) .profile-tab:focus-visible {
+#viewProfile .profile-tab:focus-visible {
   outline: 2px solid rgba(232, 98, 15, .28);
   outline-offset: 2px;
 }
-:is(#viewProfile, #viewInfo) .profile-tab-panels { width: 100%; }
-:is(#viewProfile, #viewInfo) .profile-tab-panel {
+#viewProfile .profile-tab-panels { width: 100%; }
+#viewProfile .profile-tab-panel {
   margin: 0;
   padding: 14px;
   border-radius: 13px;
   animation: profilePanelIn .16s ease;
 }
-:is(#viewProfile, #viewInfo) .profile-tab-panel[hidden] { display: none !important; }
+#viewProfile .profile-tab-panel[hidden] { display: none !important; }
 @keyframes profilePanelIn {
   from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(#viewProfile, #viewInfo) .profile-tab-panel { animation: none; }
-  :is(#viewProfile, #viewInfo) .profile-tab { transition: none; }
+  #viewProfile .profile-tab-panel { animation: none; }
+  #viewProfile .profile-tab { transition: none; }
 }
 @media (max-width: 420px) {
-  :is(#viewProfile, #viewInfo) .profile-tabs { gap: 5px; margin-bottom: 8px; }
-  :is(#viewProfile, #viewInfo) .profile-tab {
+  #viewProfile .profile-tabs { gap: 5px; margin-bottom: 8px; }
+  #viewProfile .profile-tab {
     min-width: 104px;
     min-height: 36px;
     padding: 0 12px;
     font-size: 12px;
   }
-  :is(#viewProfile, #viewInfo) .profile-tab-panel { padding: 11px; border-radius: 11px; }
+  #viewProfile .profile-tab-panel { padding: 11px; border-radius: 11px; }
 }
 
 
