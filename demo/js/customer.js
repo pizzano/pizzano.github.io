@@ -1380,7 +1380,7 @@ function renderCheckout() {
   el.reviewCard.innerHTML = `
     <div class="checkout-review-head">
       <div class="checkout-review-head-copy">
-        <span.Kontroller bestillingen</span>
+        <span>Kontroller bestillingen</span>
         <strong>Din bestilling</strong>
       </div>
       <button class="link-btn" data-review-cart type="button">Endre kurv</button>
