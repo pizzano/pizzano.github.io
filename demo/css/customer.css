@@ -331,6 +331,15 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   transform: translateY(1px);
   box-shadow: 0 1px 4px rgba(232, 98, 15, .18);
 }
+.add-btn.is-select {
+  width: auto !important;
+  min-width: 52px !important;
+  padding: 0 11px !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+}
 .add-btn:disabled { opacity: .45; box-shadow: none; }
 .prod-price {
   position: absolute !important;
