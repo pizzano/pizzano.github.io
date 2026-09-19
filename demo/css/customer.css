@@ -1126,44 +1126,12 @@ main {
   background: #f2efeb;
 }
 .prod-info {
-  position: relative;
   width: 100%;
   min-width: 0;
   flex: 1;
   justify-content: flex-start;
-  padding: 10px 50px 54px 11px !important;
+  padding: 10px 11px 54px !important;
 }
-.prod-fav-btn {
-  position: absolute;
-  top: 8px;
-  right: 9px;
-  z-index: 3;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #242321;
-  cursor: pointer;
-}
-.prod-fav-btn svg {
-  width: 27px;
-  height: 27px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.prod-fav-btn.is-on {
-  color: var(--accent);
-  background: #fff4ec;
-}
-.prod-fav-btn.is-on svg { fill: currentColor; }
-.prod-fav-btn:active { transform: scale(.94); }
 .prod-name {
   margin: 0 0 4px !important;
   font-size: 14px !important;
@@ -1460,7 +1428,7 @@ textarea.input {
   .prod-grid { gap: 8px !important; }
   .prod-card { min-height: 238px; border-radius: 16px !important; }
   .prod-thumb { height: 124px !important; min-height: 124px !important; max-height: 124px !important; }
-  .prod-info { padding: 9px 44px 48px 9px !important; }
+  .prod-info { padding: 9px 9px 48px !important; }
   .prod-name { font-size: 12.5px !important; }
   .prod-desc { min-height: 29px; font-size: 10.5px !important; }
   .prod-card .prod-allergens { margin-top: 6px !important; gap: 3px; }
@@ -1482,10 +1450,8 @@ textarea.input {
   .prod-grid { grid-template-columns: 1fr !important; }
   .prod-card { min-height: 112px; flex-direction: row; }
   .prod-thumb { width: 112px !important; height: 112px !important; min-width: 112px !important; min-height: 112px !important; max-width: 112px !important; max-height: 112px !important; }
-  .prod-info { padding: 10px 44px 30px 10px !important; }
+  .prod-info { padding: 10px 45px 30px 10px !important; }
   .prod-price { left: 122px !important; bottom: 10px !important; }
-  .prod-fav-btn { top: 7px; right: 7px; width: 30px; height: 30px; }
-  .prod-fav-btn svg { width: 24px; height: 24px; }
 }
 
 @media (min-width: 640px) {

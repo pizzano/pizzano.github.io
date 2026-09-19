@@ -824,9 +824,6 @@ function productCardHtml(item, section) {
           : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
       }
       <div class="prod-info">
-        <button class="prod-fav-btn${isFavorite(item.id) ? ' is-on' : ''}" data-fav="${escapeHtml(item.id)}" type="button" aria-label="${isFavorite(item.id) ? 'Fjern fra favoritter' : 'Legg til i favoritter'}" aria-pressed="${isFavorite(item.id)}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.8C19 15.6 12 20 12 20z"/></svg>
-        </button>
         <p class="prod-name">
           ${escapeHtml(item.name)}
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
@@ -2160,19 +2157,8 @@ document.addEventListener('click', (event) => {
     return;
   }
   const card = event.target.closest('.prod-card');
-  if (card && !event.target.closest('[data-fav]')) {
+  if (card) {
     openProduct(card.dataset.item);
-    return;
-  }
-  const favBtn = event.target.closest('[data-fav]');
-  if (favBtn) {
-    const itemId = favBtn.dataset.fav;
-    toggleFavorite(itemId);
-    const nowFavorite = isFavorite(itemId);
-    renderCategories();
-    renderMenu();
-    if (ui.view === 'profile') renderProfile();
-    toast(nowFavorite ? 'Lagt til i favoritter.' : 'Fjernet fra favoritter.');
     return;
   }
   const reorderBtn = event.target.closest('[data-reorder]');
