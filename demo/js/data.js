@@ -875,7 +875,14 @@ function applyRemoteOrders(value) {
     o.rejectionMessage || '',
     o.pickup || '',
     Number(o.total) || 0,
-    Array.isArray(o.lines) ? o.lines.length : 0,
+    Array.isArray(o.lines)
+      ? o.lines.map((line) => [
+          line.itemId || '',
+          Number(line.quantity) || 1,
+          line.comment || '',
+          Array.isArray(line.removedIngredients) ? line.removedIngredients.join('|') : '',
+        ])
+      : [],
   ]));
   const before = snapshot(store.orders);
   const after = snapshot(next);
