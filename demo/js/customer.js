@@ -141,11 +141,6 @@ const el = {
   cartActions: $('cartActions'),
   btnToCheckout: $('btnToCheckout'),
   btnKeepShopping: $('btnKeepShopping'),
-  bottomBar: $('bottomBar'),
-  barCart: $('barCart'),
-  barCount: $('barCount'),
-  barLabel: $('barLabel'),
-  barTotal: $('barTotal'),
   stepper: $('stepper'),
   step2: $('step2'),
   step3: $('step3'),
@@ -685,7 +680,6 @@ function setView(view) {
   el.btnProfile.classList.toggle('is-on', view === 'profile');
   el.btnCart.classList.toggle('is-on', view === 'cart' || view === 'checkout');
   window.scrollTo({ top: 0 });
-  renderBottomBar();
   renderActiveOrders();
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
@@ -830,6 +824,9 @@ function productCardHtml(item, section) {
           : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
       }
       <div class="prod-info">
+        <button class="prod-fav-btn${isFavorite(item.id) ? ' is-on' : ''}" data-fav="${escapeHtml(item.id)}" type="button" aria-label="${isFavorite(item.id) ? 'Fjern fra favoritter' : 'Legg til i favoritter'}" aria-pressed="${isFavorite(item.id)}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.8C19 15.6 12 20 12 20z"/></svg>
+        </button>
         <p class="prod-name">
           ${escapeHtml(item.name)}
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
@@ -863,7 +860,6 @@ function renderMenu() {
         <header class="cat-head">
           <div class="cat-title-row">
             <h2>${escapeHtml(block.title)}</h2>
-            <span class="cat-count">${block.items.length} ${block.items.length === 1 ? 'produkt' : 'produkter'}</span>
           </div>
           ${block.note ? `<p class="cat-description">${escapeHtml(block.note)}</p>` : ''}
         </header>
@@ -1148,7 +1144,6 @@ function addDraftToCart() {
   );
   closeSheet();
   renderCartCount();
-  renderBottomBar();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
 }
@@ -1302,18 +1297,6 @@ function renderCartCount() {
   el.cartCount.hidden = count === 0;
 }
 
-function renderBottomBar() {
-  const count = cartCount();
-  const show =
-    count > 0 && (ui.view === 'menu' || ui.view === 'profile');
-  el.bottomBar.hidden = !show;
-  if (show) {
-    const subtotal = cartSubtotal();
-    el.barCount.textContent = String(count);
-    el.barLabel.textContent = count === 1 ? 'vare' : 'varer';
-    el.barTotal.textContent = formatPrice(subtotal);
-  }
-}
 
 /* ------------------------------------------------------------------ *
  * Checkout
@@ -1756,8 +1739,7 @@ async function placeOrder() {
   if (unavailable) {
     reconcileCart();
     renderCartCount();
-    renderBottomBar();
-    setView('cart');
+      setView('cart');
     toast('En vare er ikke lenger tilgjengelig. Handlekurven er oppdatert.', 'error');
     return;
   }
@@ -2103,8 +2085,7 @@ function renderProfile() {
     resetPendingOrderSubmission();
     persistCart();
     renderCartCount();
-    renderBottomBar();
-    if (added) {
+      if (added) {
       toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i handlekurven med samme valg.`);
       setView('cart');
     } else {
@@ -2185,10 +2166,13 @@ document.addEventListener('click', (event) => {
   }
   const favBtn = event.target.closest('[data-fav]');
   if (favBtn) {
-    toggleFavorite(favBtn.dataset.fav);
+    const itemId = favBtn.dataset.fav;
+    toggleFavorite(itemId);
+    const nowFavorite = isFavorite(itemId);
     renderCategories();
     renderMenu();
     if (ui.view === 'profile') renderProfile();
+    toast(nowFavorite ? 'Lagt til i favoritter.' : 'Fjernet fra favoritter.');
     return;
   }
   const reorderBtn = event.target.closest('[data-reorder]');
@@ -2224,7 +2208,6 @@ el.cartLines.addEventListener('click', (event) => {
   persistCart();
   renderCart();
   renderCartCount();
-  renderBottomBar();
 });
 
 el.sheetBody.addEventListener('change', (event) => {
@@ -2359,7 +2342,6 @@ document.querySelectorAll('.profile-section').forEach((section) => {
   });
 });
 el.btnCart.addEventListener('click', () => setView('cart'));
-el.barCart.addEventListener('click', () => setView('cart'));
 el.btnKeepShopping.addEventListener('click', () => setView('menu'));
 
 el.btnToCheckout.addEventListener('click', () => {
@@ -2489,7 +2471,6 @@ function renderAll() {
   renderAllergenPicker();
   renderOpenState();
   renderCartCount();
-  renderBottomBar();
   renderActiveOrders();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
