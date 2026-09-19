@@ -1723,7 +1723,7 @@ body.orders-sidebar-collapsed .orders-app {
   font-size: 12px;
 }
 .ingredient-admin-head span {
-  color: var(--muted);
+  color: var(--ink-3);
   font-size: 11px;
   line-height: 1.35;
 }
@@ -1755,14 +1755,14 @@ body.orders-sidebar-collapsed .orders-app {
   white-space: nowrap;
 }
 .ingredient-admin-row > span small {
-  color: var(--muted);
+  color: var(--ink-3);
   font-size: 10.5px;
 }
 .ingredient-admin-empty {
   padding: 10px;
   border: 1px dashed var(--line);
   border-radius: 10px;
-  color: var(--muted);
+  color: var(--ink-3);
   font-size: 11px;
   line-height: 1.4;
 }
