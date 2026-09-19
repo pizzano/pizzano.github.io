@@ -155,7 +155,7 @@ export function buildIngredientRules(value, existing = []) {
 /** Normaliserte ingrediensregler for et produkt. */
 export function getItemIngredientRules(item) {
   if (!item) return [];
-  const source = item.ingredients || item.description || '';
+  const source = item.ingredients || '';
   return buildIngredientRules(source, item.ingredientRules || []);
 }
 
@@ -615,14 +615,14 @@ function normalizeState(raw) {
       const description =
         typeof item.description === 'string' ? item.description.trim() : '';
       const ingredientRules = buildIngredientRules(
-        ingredients || description,
+        ingredients,
         item.ingredientRules || []
       );
       return {
         id: item.id || uid('it'),
         name: typeof item.name === 'string' ? item.name.trim() : '',
         description: description || ingredients,
-        ingredients: ingredients || description,
+        ingredients,
         ingredientRules,
         imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : '',
         sizes,
