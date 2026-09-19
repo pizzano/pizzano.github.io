@@ -1257,7 +1257,8 @@ function quickAddProduct(itemId) {
   if (!item || item.hidden || item.soldOut) return;
   const sizes = item.sizes || [];
   const groups = getItemOptionGroups(item);
-  if (sizes.length > 1 || groups.length > 0) {
+  const hasIngredientChoices = getItemIngredientRules(item).some((rule) => rule.removable);
+  if (sizes.length > 1 || groups.length > 0 || hasIngredientChoices) {
     openProduct(itemId);
     return;
   }
