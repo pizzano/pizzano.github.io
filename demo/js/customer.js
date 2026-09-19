@@ -1157,7 +1157,7 @@ function renderSheet() {
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
     <div class="opt-group">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
-      <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
+      <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
         draft.comment
       )}</textarea>
     </div>
