@@ -370,7 +370,8 @@ function matchesSearch(item) {
   const needle = ui.search.toLowerCase();
   return (
     (item.name || '').toLowerCase().includes(needle) ||
-    (item.description || '').toLowerCase().includes(needle)
+    (item.description || '').toLowerCase().includes(needle) ||
+    (item.ingredients || '').toLowerCase().includes(needle)
   );
 }
 
