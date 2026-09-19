@@ -1396,7 +1396,9 @@ function renderCheckout() {
   const slots = getPickupSlots();
   const prepMinutes = Math.max(1, Number(store.settings?.prepMinutes) || 25);
   const asapChoice = el.pickupChoices.querySelector('[data-pickup-mode="asap"]');
+  const asapTitle = asapChoice?.querySelector('strong');
   const asapEstimate = asapChoice?.querySelector('small');
+  if (asapTitle) asapTitle.textContent = 'Snarest';
   if (asapEstimate) asapEstimate.textContent = `Ca. ${prepMinutes} min`;
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (!state.open) ui.pickup = null;
@@ -1415,7 +1417,7 @@ function renderCheckout() {
     ? `Vi åpner ${state.opensAt}.`
     : showTimes
       ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
-      : ui.pickupMode === 'asap' ? `Forventet klart om ca. ${prepMinutes} min.` : 'Velg når du vil hente bestillingen.';
+      : ui.pickupMode === 'asap' ? 'Estimert tid – restauranten bekrefter endelig tid.' : 'Velg når du vil hente bestillingen.';
 
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
