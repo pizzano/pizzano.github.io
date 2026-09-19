@@ -20,6 +20,8 @@ import {
   formatPrice,
   getItemBasePrice,
   getItemOptionGroups,
+  buildIngredientRules,
+  getItemIngredientRules,
   countProductsUsingGroup,
   findItem,
   findOptionGroup,
@@ -36,7 +38,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260915-scheduled-pickup1';
+} from './data.js?v=20260920-ingredients1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -114,6 +116,8 @@ const el = {
   settingsScroll: $('settingsScroll'),
   fName: $('fName'),
   fDesc: $('fDesc'),
+  fIngredients: $('fIngredients'),
+  ingredientRuleList: $('ingredientRuleList'),
   fImage: $('fImage'),
   fImagePreview: $('fImagePreview'),
   fPopular: $('fPopular'),
@@ -366,7 +370,8 @@ function matchesSearch(item) {
   const needle = ui.search.toLowerCase();
   return (
     (item.name || '').toLowerCase().includes(needle) ||
-    (item.description || '').toLowerCase().includes(needle)
+    (item.description || '').toLowerCase().includes(needle) ||
+    (item.ingredients || '').toLowerCase().includes(needle)
   );
 }
 
@@ -650,6 +655,7 @@ function createProduct(sectionId) {
       name: 'Nytt produkt',
       description: '',
       ingredients: '',
+      ingredientRules: [],
       imageUrl: '',
       sizes: [{ id: uid('sz'), label: 'Normal', price: 0 }],
       defaultSizeIndex: 0,
@@ -748,7 +754,9 @@ function renderPanel() {
   )} · ${(item.sizes || []).length} størrelser`;
 
   el.fName.value = item.name || '';
-  el.fDesc.value = item.description || item.ingredients || '';
+  el.fDesc.value = item.description || '';
+  el.fIngredients.value = item.ingredients || '';
+  renderIngredientRules(item);
   el.fImage.value = item.imageUrl || '';
   el.fImagePreview.src = item.imageUrl || '';
   el.fImagePreview.style.display = item.imageUrl ? 'block' : 'none';
@@ -838,6 +846,21 @@ function renderPanel() {
     .join('');
 }
 
+function renderIngredientRules(item = selectedItem().item) {
+  if (!el.ingredientRuleList) return;
+  const rules = getItemIngredientRules(item);
+  el.ingredientRuleList.innerHTML = rules.length
+    ? rules.map((rule, index) => `
+        <label class="ingredient-admin-row">
+          <span>
+            <strong>${escapeHtml(rule.name)}</strong>
+            <small>${rule.removable ? 'Kunden kan fjerne denne' : 'Låst – kan ikke fjernes'}</small>
+          </span>
+          <input class="switch" type="checkbox" data-ingredient-removable="${index}" ${rule.removable ? 'checked' : ''} aria-label="Kan ${escapeHtml(rule.name)} fjernes av kunden">
+        </label>`).join('')
+    : '<div class="ingredient-admin-empty">Ingen ingredienser ennå. Skriv ingrediensene over, adskilt med komma.</div>';
+}
+
 /** Endrer valgt produkt uten å bygge panelet på nytt. */
 function updateItem(updater, { rerenderPanel = false } = {}) {
   const { item } = selectedItem();
@@ -859,8 +882,33 @@ el.fName.addEventListener('input', () => {
 el.fDesc.addEventListener('input', () => {
   updateItem((item) => {
     item.description = el.fDesc.value;
-    item.ingredients = el.fDesc.value;
   });
+});
+
+el.fIngredients.addEventListener('input', () => {
+  updateItem((item) => {
+    item.ingredients = el.fIngredients.value;
+    item.ingredientRules = buildIngredientRules(
+      item.ingredients,
+      item.ingredientRules || []
+    );
+  });
+  renderIngredientRules();
+});
+
+el.ingredientRuleList.addEventListener('change', (event) => {
+  const rawIndex = event.target.dataset.ingredientRemovable;
+  if (rawIndex === undefined) return;
+  const index = Number(rawIndex);
+  updateItem((item) => {
+    item.ingredientRules = buildIngredientRules(
+      item.ingredients,
+      item.ingredientRules || []
+    );
+    if (!item.ingredientRules[index]) return;
+    item.ingredientRules[index].removable = event.target.checked;
+  });
+  renderIngredientRules();
 });
 
 el.fImage.addEventListener('input', () => {
@@ -1599,6 +1647,7 @@ function detailLineHtml(line) {
         <strong>${escapeHtml(line.name || 'Produkt')}</strong>
         ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
         ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
+        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(String(name).toLocaleUpperCase('no'))).join(', ')}</small>` : ''}
         ${line.comment ? `<small class="pos-order-note">${escapeHtml(line.comment)}</small>` : ''}
       </div>
       <b>${formatPrice(line.price)}</b>

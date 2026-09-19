@@ -1711,3 +1711,70 @@ body.orders-sidebar-collapsed .orders-app {
         padding-left: 60px;
     }
 }
+
+/* Product ingredient removal controls */
+.ingredient-admin-head {
+  display: grid;
+  gap: 3px;
+  margin: 10px 0 8px;
+}
+.ingredient-admin-head strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+.ingredient-admin-head span {
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.ingredient-admin-list {
+  display: grid;
+  gap: 7px;
+}
+.ingredient-admin-row {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+}
+.ingredient-admin-row > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.ingredient-admin-row > span strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ingredient-admin-row > span small {
+  color: var(--ink-3);
+  font-size: 10.5px;
+}
+.ingredient-admin-empty {
+  padding: 10px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pos-order-removed {
+  display: inline-flex !important;
+  width: fit-content;
+  margin-top: 5px;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: #fff0f0;
+  color: #c53b38 !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+}

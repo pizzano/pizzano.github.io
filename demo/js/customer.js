@@ -16,6 +16,7 @@ import {
   getSizePrice,
   getDefaultSize,
   getItemOptionGroups,
+  getItemIngredientRules,
   computeLinePrice,
   describeSelection,
   findItem,
@@ -27,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260915-scheduled-pickup1';
+} from './data.js?v=20260920-ingredients1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -864,7 +865,7 @@ function productCardHtml(item, section) {
   const soldOut = item.soldOut;
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
-  const needsChoice = multi || getItemOptionGroups(item).length > 0;
+  const needsChoice = multi || getItemOptionGroups(item).length > 0 || getItemIngredientRules(item).some((rule) => rule.removable);
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
   const cardAllergens = allergenLabels(item)
@@ -977,6 +978,10 @@ function openProduct(itemId, editLine = null) {
       ? JSON.parse(JSON.stringify(editLine.selections))
       : defaultSelectionFor(item),
     comment: editLine ? editLine.comment : '',
+    removedIngredients: editLine && Array.isArray(editLine.removedIngredients)
+      ? [...editLine.removedIngredients]
+      : [],
+    ingredientsOpen: Boolean(editLine && Array.isArray(editLine.removedIngredients) && editLine.removedIngredients.length),
     quantity: editLine ? editLine.quantity : 1,
     editingLineId: editLine ? editLine.lineId : null,
     showErrors: false,
@@ -1079,6 +1084,40 @@ function renderSheet() {
   const { problems, message } = validateDraft();
   const groups = getItemOptionGroups(item);
   const allergens = allergenLabels(item);
+  const removableIngredients = getItemIngredientRules(item).filter((rule) => rule.removable);
+  const removedSet = new Set((draft.removedIngredients || []).map((name) => String(name).toLocaleLowerCase('no')));
+  const removedNames = removableIngredients
+    .filter((rule) => removedSet.has(rule.name.toLocaleLowerCase('no')))
+    .map((rule) => rule.name);
+  draft.removedIngredients = removedNames;
+  const ingredientCustomizeHtml = removableIngredients.length
+    ? `
+      <div class="ingredient-customize${draft.ingredientsOpen ? ' is-open' : ''}">
+        <button class="ingredient-customize-toggle" data-toggle-ingredients type="button" aria-expanded="${draft.ingredientsOpen}">
+          <span>
+            <strong>Tilpass ingredienser</strong>
+            <small>${removedNames.length ? `Uten: ${escapeHtml(removedNames.join(', '))}` : 'Ingen endringer'}</small>
+          </span>
+          <i aria-hidden="true">›</i>
+        </button>
+        <div class="ingredient-customize-body"${draft.ingredientsOpen ? '' : ' hidden'}>
+          <div class="ingredient-customize-head">
+            <strong>Ingredienser</strong>
+            <span>Trykk for å fjerne</span>
+          </div>
+          <div class="ingredient-chip-list">
+            ${removableIngredients.map((rule) => {
+              const removed = removedSet.has(rule.name.toLocaleLowerCase('no'));
+              return `<button class="ingredient-chip${removed ? ' is-removed' : ''}" data-remove-ingredient="${escapeHtml(rule.name)}" type="button" aria-pressed="${removed}">
+                <span aria-hidden="true">${removed ? '+' : '✓'}</span>${escapeHtml(rule.name)}
+              </button>`;
+            }).join('')}
+          </div>
+          ${removedNames.length ? `<p class="ingredient-removed-summary"><span aria-hidden="true">⊘</span><strong>Uten:</strong> ${escapeHtml(removedNames.join(', '))}</p>` : ''}
+          <p class="ingredient-customize-help">Fjernede ingredienser kan legges tilbake med ett trykk.</p>
+        </div>
+      </div>`
+    : '';
 
   const sizeHtml =
     (item.sizes || []).length > 0
@@ -1113,11 +1152,12 @@ function renderSheet() {
     }
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     <p class="sheet-desc">${escapeHtml(item.description || item.ingredients || '')}</p>
+    ${ingredientCustomizeHtml}
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
     <div class="opt-group">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
-      <textarea class="comment-area" id="draftComment" placeholder="F.eks. uten løk, godt stekt">${escapeHtml(
+      <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
         draft.comment
       )}</textarea>
     </div>
@@ -1149,9 +1189,14 @@ function renderSheet() {
  * Handlekurv
  * ------------------------------------------------------------------ */
 
-function lineSignature(itemId, sizeId, selections, comment) {
+function lineSignature(itemId, sizeId, selections, comment, removedIngredients = []) {
   const optionIds = Object.values(selections).flat().slice().sort().join(',');
-  return `${itemId}|${sizeId}|${optionIds}|${(comment || '').trim().toLowerCase()}`;
+  const removed = (removedIngredients || [])
+    .map((name) => String(name || '').trim().toLocaleLowerCase('no'))
+    .filter(Boolean)
+    .sort()
+    .join(',');
+  return `${itemId}|${sizeId}|${optionIds}|${removed}|${(comment || '').trim().toLowerCase()}`;
 }
 
 function addDraftToCart() {
@@ -1172,7 +1217,8 @@ function addDraftToCart() {
     draft.itemId,
     draft.sizeId,
     draft.selections,
-    draft.comment
+    draft.comment,
+    draft.removedIngredients
   );
 
   if (draft.editingLineId) {
@@ -1190,6 +1236,7 @@ function addDraftToCart() {
       sizeId: draft.sizeId,
       selections: JSON.parse(JSON.stringify(draft.selections)),
       comment: draft.comment,
+      removedIngredients: [...(draft.removedIngredients || [])],
       quantity: draft.quantity,
     });
   }
@@ -1210,7 +1257,8 @@ function quickAddProduct(itemId) {
   if (!item || item.hidden || item.soldOut) return;
   const sizes = item.sizes || [];
   const groups = getItemOptionGroups(item);
-  if (sizes.length > 1 || groups.length > 0) {
+  const hasIngredientChoices = getItemIngredientRules(item).some((rule) => rule.removable);
+  if (sizes.length > 1 || groups.length > 0 || hasIngredientChoices) {
     openProduct(itemId);
     return;
   }
@@ -1218,7 +1266,7 @@ function quickAddProduct(itemId) {
   const size = getDefaultSize(item);
   const sizeId = size ? size.id : null;
   const selections = {};
-  const signature = lineSignature(item.id, sizeId, selections, '');
+  const signature = lineSignature(item.id, sizeId, selections, '', []);
   const existing = cart.find((line) => line.signature === signature);
   if (existing) {
     existing.quantity += 1;
@@ -1230,6 +1278,7 @@ function quickAddProduct(itemId) {
       sizeId,
       selections,
       comment: '',
+      removedIngredients: [],
       quantity: 1,
     });
   }
@@ -1274,11 +1323,19 @@ function reconcileCart() {
       if (after.length !== before.length) changed = true;
       line.selections[group.id] = after;
     }
+    const removableNames = new Set(
+      getItemIngredientRules(item)
+        .filter((rule) => rule.removable)
+        .map((rule) => rule.name.toLocaleLowerCase('no'))
+    );
+    line.removedIngredients = (Array.isArray(line.removedIngredients) ? line.removedIngredients : [])
+      .filter((name) => removableNames.has(String(name).toLocaleLowerCase('no')));
     line.signature = lineSignature(
       line.itemId,
       line.sizeId,
       line.selections,
-      line.comment
+      line.comment,
+      line.removedIngredients
     );
     kept.push(line);
   }
@@ -1353,6 +1410,7 @@ function cartLineHtml(line) {
             )
             .join('')}
         </div>
+        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<p class="line-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</p>` : ''}
         ${line.comment ? `<p class="line-comment">«${escapeHtml(line.comment)}»</p>` : ''}
         <div class="line-actions">
                  <button class="link-btn" data-edit="${escapeHtml(line.lineId)}" type="button">Endre</button>
@@ -1504,6 +1562,8 @@ function renderCheckout() {
                       </div>`).join('')}
                   </section>`).join('')}
               </div>` : ''}
+            ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `
+              <div class="checkout-review-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</div>` : ''}
             ${line.comment ? `
               <div class="checkout-review-comment">
                 <span>Kommentar</span>
@@ -1871,6 +1931,7 @@ async function placeOrder() {
       options: optionDetails.map((addon) => addon.label),
       optionDetails,
       comment: line.comment || '',
+      removedIngredients: [...(line.removedIngredients || [])],
       unitPrice: computeLinePrice(item, line.sizeId, optionIds, 1),
       price: computeLinePrice(item, line.sizeId, optionIds, line.quantity),
     };
@@ -1880,7 +1941,7 @@ async function placeOrder() {
     name,
     phone,
     pickup: ui.pickup,
-    cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.comment]),
+    cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment]),
   });
   if (!ui.pendingOrderId || ui.pendingOrderFingerprint !== fingerprint) {
     ui.pendingOrderId = uid('ord');
@@ -2042,6 +2103,7 @@ async function placeOrder() {
         </div>
         ${line.size ? `<div class="order-history-size"><span>Størrelse</span><strong>${escapeHtml(line.size)}</strong></div>` : ''}
         ${groupsHtml}
+        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<p class="order-history-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</p>` : ''}
         ${line.comment ? `<p class="order-history-comment">«${escapeHtml(line.comment)}»</p>` : ''}
       </div>`;
   }
@@ -2166,11 +2228,19 @@ function renderProfile() {
         (item.sizes || []).find((s) => s.label === line.size) ||
         getDefaultSize(item);
       const selections = previousOrderSelections(item, line);
+      const allowedRemovals = new Set(
+        getItemIngredientRules(item)
+          .filter((rule) => rule.removable)
+          .map((rule) => rule.name.toLocaleLowerCase('no'))
+      );
+      const removedIngredients = (Array.isArray(line.removedIngredients) ? line.removedIngredients : [])
+        .filter((name) => allowedRemovals.has(String(name).toLocaleLowerCase('no')));
       const signature = lineSignature(
         item.id,
         size ? size.id : null,
         selections,
-        line.comment
+        line.comment,
+        removedIngredients
       );
       const existing = cart.find((entry) => entry.signature === signature);
       const quantity = Math.max(1, Number(line.quantity) || 1);
@@ -2183,6 +2253,7 @@ function renderProfile() {
           sizeId: size ? size.id : null,
           selections,
           comment: line.comment || '',
+          removedIngredients,
           quantity,
         });
       added += quantity;
@@ -2307,6 +2378,38 @@ el.cartLines.addEventListener('click', (event) => {
   persistCart();
   renderCart();
   renderCartCount();
+});
+
+el.sheetBody.addEventListener('click', (event) => {
+  if (!draft) return;
+  const toggle = event.target.closest('[data-toggle-ingredients]');
+  if (toggle) {
+    draft.ingredientsOpen = !draft.ingredientsOpen;
+    renderSheet();
+    return;
+  }
+
+  const ingredientBtn = event.target.closest('[data-remove-ingredient]');
+  if (!ingredientBtn) return;
+  const { item } = findItem(draft.itemId);
+  if (!item) return;
+  const name = ingredientBtn.dataset.removeIngredient;
+  const rule = getItemIngredientRules(item).find(
+    (entry) => entry.removable && entry.name.toLocaleLowerCase('no') === String(name).toLocaleLowerCase('no')
+  );
+  if (!rule) return;
+
+  const current = new Set((draft.removedIngredients || []).map((entry) => String(entry).toLocaleLowerCase('no')));
+  const key = rule.name.toLocaleLowerCase('no');
+  if (current.has(key)) {
+    draft.removedIngredients = (draft.removedIngredients || []).filter(
+      (entry) => String(entry).toLocaleLowerCase('no') !== key
+    );
+  } else {
+    draft.removedIngredients = [...(draft.removedIngredients || []), rule.name];
+  }
+  draft.ingredientsOpen = true;
+  renderSheet();
 });
 
 el.sheetBody.addEventListener('change', (event) => {

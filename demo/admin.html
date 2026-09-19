@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260915-ordersfullscreen1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260920-ingredients1">
 </head>
 
 <body>
@@ -260,6 +260,7 @@
 
                 <nav class="chip-nav" id="chipNav" aria-label="Seksjoner">
                     <button class="chip is-active" data-chip="produkt" type="button">Produkt</button>
+                    <button class="chip" data-chip="ingredienser" type="button">Ingredienser</button>
                     <button class="chip" data-chip="storrelser" type="button">Størrelser &amp; priser</button>
                     <button class="chip" data-chip="allergener" type="button">Allergener</button>
                     <button class="chip" data-chip="valg" type="button">Choices &amp; addons</button>
@@ -275,8 +276,8 @@
                             <input id="fName" class="input" type="text" placeholder="F.eks. Kebabpizza">
                         </div>
                         <div class="set-field">
-                            <label class="lbl" for="fDesc">Beskrivelse / ingredienser</label>
-                            <textarea id="fDesc" class="textarea" placeholder="F.eks. Tomatsaus, ost, kebabkjøtt, løk"></textarea>
+                            <label class="lbl" for="fDesc">Beskrivelse</label>
+                            <textarea id="fDesc" class="textarea" placeholder="Kort tekst kunden ser under produktnavnet"></textarea>
                         </div>
                         <div class="set-field">
                             <label class="lbl" for="fImage">Bilde-URL</label>
@@ -290,6 +291,20 @@
                             </span>
                             <input type="checkbox" id="fPopular" class="switch">
                         </label>
+                    </section>
+
+                    <section class="set-section" id="secIngredienser" data-section="ingredienser">
+                        <h3 class="set-title">Ingredienser</h3>
+                        <p class="set-hint">Skriv ingrediensene med komma. Systemet lager kundens valg automatisk. Nye ingredienser kan fjernes som standard.</p>
+                        <div class="set-field">
+                            <label class="lbl" for="fIngredients">Ingrediensliste</label>
+                            <textarea id="fIngredients" class="textarea" placeholder="F.eks. Kebabkjøtt, salat, tomat, løk, mais"></textarea>
+                        </div>
+                        <div class="ingredient-admin-head">
+                            <strong>Kan fjernes av kunden</strong>
+                            <span>Slå av for hovedingredienser, f.eks. kebabkjøtt</span>
+                        </div>
+                        <div id="ingredientRuleList" class="ingredient-admin-list"></div>
                     </section>
 
                     <section class="set-section" id="secStorrelser" data-section="storrelser">
@@ -555,7 +570,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260915-ordersfullscreen1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260920-ingredients1"></script>
 </body>
 
 </html>

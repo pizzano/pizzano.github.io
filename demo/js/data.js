@@ -25,7 +25,7 @@ export const DB_URL = 'https://bestill-19-default-rtdb.europe-west1.firebasedata
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const POLL_INTERVAL = 4000;
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const LOCAL_KEY = 'kol_menu_state_v2';
 const CHANNEL_NAME = 'kol_menu_sync';
@@ -111,6 +111,52 @@ export function getItemOptionGroups(item) {
   return item.optionGroupIds
     .map((groupId) => findOptionGroup(groupId))
     .filter(Boolean);
+}
+
+/**
+ * Deler adminens ingrediensfelt i rene navn.
+ * Komma, semikolon og linjeskift støttes slik at nye produkter er enkle å legge inn.
+ */
+export function splitIngredientNames(value) {
+  const seen = new Set();
+  return String(value || '')
+    .split(/[,;\n]+/)
+    .map((name) => name.trim().replace(/\s+/g, ' '))
+    .filter((name) => {
+      if (!name) return false;
+      const key = name.toLocaleLowerCase('no');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+/**
+ * Lager/stabiliserer ingrediensregler fra ingrediensteksten.
+ * Nye ingredienser kan fjernes som standard; admin kan låse enkeltingredienser.
+ */
+export function buildIngredientRules(value, existing = []) {
+  const previous = new Map(
+    asArray(existing)
+      .map((entry) => {
+        if (typeof entry === 'string') return [entry.toLocaleLowerCase('no'), { name: entry, removable: true }];
+        if (!entry || typeof entry !== 'object') return null;
+        const name = String(entry.name || entry.label || '').trim();
+        return name ? [name.toLocaleLowerCase('no'), { name, removable: entry.removable !== false }] : null;
+      })
+      .filter(Boolean)
+  );
+  return splitIngredientNames(value).map((name) => {
+    const prior = previous.get(name.toLocaleLowerCase('no'));
+    return { name, removable: prior ? prior.removable !== false : true };
+  });
+}
+
+/** Normaliserte ingrediensregler for et produkt. */
+export function getItemIngredientRules(item) {
+  if (!item) return [];
+  const source = item.ingredients || '';
+  return buildIngredientRules(source, item.ingredientRules || []);
 }
 
 /** Antall produkter som bruker en valggruppe. */
@@ -510,6 +556,9 @@ function normalizeOrders(raw) {
           name: String(line.name || ''),
           size: String(line.size || ''),
           comment: String(line.comment || ''),
+          removedIngredients: asArray(line.removedIngredients)
+            .map((name) => String(name || '').trim())
+            .filter(Boolean),
           options: asArray(line.options).map((opt) =>
             typeof opt === 'string' ? opt : String(opt.label || '')
           ),
@@ -565,11 +614,16 @@ function normalizeState(raw) {
         typeof item.ingredients === 'string' ? item.ingredients.trim() : '';
       const description =
         typeof item.description === 'string' ? item.description.trim() : '';
+      const ingredientRules = buildIngredientRules(
+        ingredients,
+        item.ingredientRules || []
+      );
       return {
         id: item.id || uid('it'),
         name: typeof item.name === 'string' ? item.name.trim() : '',
         description: description || ingredients,
-        ingredients: ingredients || description,
+        ingredients,
+        ingredientRules,
         imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : '',
         sizes,
         defaultSizeIndex: Math.min(
@@ -821,7 +875,14 @@ function applyRemoteOrders(value) {
     o.rejectionMessage || '',
     o.pickup || '',
     Number(o.total) || 0,
-    Array.isArray(o.lines) ? o.lines.length : 0,
+    Array.isArray(o.lines)
+      ? o.lines.map((line) => [
+          line.itemId || '',
+          Number(line.quantity) || 1,
+          line.comment || '',
+          Array.isArray(line.removedIngredients) ? line.removedIngredients.join('|') : '',
+        ])
+      : [],
   ]));
   const before = snapshot(store.orders);
   const after = snapshot(next);
