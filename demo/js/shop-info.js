@@ -1,4 +1,4 @@
-import { store, ready, subscribe } from './data.js?v=20260915-scheduled-pickup1';
+import { store, ready, subscribe } from './data.js?v=20260920-ingredients1';
 
 const STYLE_ID = 'shopInfoStyles';
 const MODAL_ID = 'shopInfoModal';
