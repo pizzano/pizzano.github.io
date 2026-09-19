@@ -865,7 +865,7 @@ function productCardHtml(item, section) {
   const soldOut = item.soldOut;
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
-  const needsChoice = multi || getItemOptionGroups(item).length > 0;
+  const needsChoice = multi || getItemOptionGroups(item).length > 0 || getItemIngredientRules(item).some((rule) => rule.removable);
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
   const cardAllergens = allergenLabels(item)
