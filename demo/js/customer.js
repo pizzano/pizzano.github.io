@@ -854,7 +854,7 @@ function renderMenu() {
     .map(
       (block) => {
       const collapsible = block.key === 'favorites' || block.key === 'popular';
-      const visibleCount = collapsible && !ui.expandedBlocks.has(block.key) ? 3 : block.items.length;
+      const visibleCount = collapsible && !ui.expandedBlocks.has(block.key) ? 4 : block.items.length;
       return `
       <section class="cat-block" id="blk_${escapeHtml(block.key)}" data-block="${escapeHtml(block.key)}">
         <header class="cat-head">
@@ -866,7 +866,7 @@ function renderMenu() {
         <div class="prod-grid">
           ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
-        ${collapsible && block.items.length > 3 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Gizle' : 'Vis mer'}</button>` : ''}
+        ${collapsible && block.items.length > 4 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Vis mindre' : 'Vis mer'}</button>` : ''}
       </section>`;
       }
     )
