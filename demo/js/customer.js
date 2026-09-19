@@ -219,7 +219,25 @@ function toggleFavorite(itemId) {
 
 function visibleItems(section) {
   const query = ui.search.trim().toLocaleLowerCase('no');
-  return (section.items || []).filter((item) => !item.hidden && (!query || `${item.name} ${item.description} ${item.ingredients}`.toLocaleLowerCase('no').includes(query)));
+  return (section.items || []).filter((item) => {
+    if (item.hidden) return false;
+    if (!query) return true;
+    const sizeLabels = (item.sizes || []).map((size) => size.label).join(' ');
+    const optionLabels = getItemOptionGroups(item)
+      .flatMap((group) => [group.title, ...(group.options || []).map((option) => option.label)])
+      .join(' ');
+    const searchText = [
+      item.name,
+      item.description,
+      item.ingredients,
+      section.title,
+      section.note,
+      sizeLabels,
+      optionLabels,
+      allergenLabels(item).join(' '),
+    ].filter(Boolean).join(' ').toLocaleLowerCase('no');
+    return searchText.includes(query);
+  });
 }
 
 const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
@@ -710,7 +728,7 @@ function renderCategories() {
     ui.activeCategory = blocks.length ? blocks[0].key : '';
   }
   const searchControl = ui.searchOpen
-    ? `<label class="tab-search" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><input id="menuSearch" type="search" placeholder="Søk i menyen" value="${escapeHtml(ui.search)}"><button id="closeMenuSearch" type="button" aria-label="Lukk søk">×</button></label>`
+    ? `<label class="tab-search" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><input id="menuSearch" type="search" placeholder="Søk pizza, kebab, kylling…" value="${escapeHtml(ui.search)}"><button id="closeMenuSearch" type="button" aria-label="Lukk søk">×</button></label>`
     : `<button class="search-tab" id="openMenuSearch" type="button" aria-label="Søk i menyen"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></button>`;
   const categoryTabs = ui.searchOpen ? '' : blocks
     .map(
@@ -811,6 +829,7 @@ function productCardHtml(item, section) {
   const soldOut = item.soldOut;
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
+  const needsChoice = multi || getItemOptionGroups(item).length > 0;
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
   const cardAllergens = allergenLabels(item)
@@ -835,7 +854,9 @@ function productCardHtml(item, section) {
       <div class="prod-side">
         ${soldOut
           ? '<span class="prod-soldout-badge">Utsolgt</span>'
-          : `<button class="add-btn" data-open="${escapeHtml(item.id)}" type="button" aria-label="Åpne produkt og velg">+</button>`}
+          : needsChoice
+            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg størrelse eller tilvalg for ${escapeHtml(item.name)}">Velg</button>`
+            : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i handlekurven">+</button>`}
       </div>
     </div>`;
 }
@@ -843,8 +864,9 @@ function productCardHtml(item, section) {
 function renderMenu() {
   const blocks = menuBlocks();
   if (!blocks.length) {
-    el.menuList.innerHTML =
-      '<div class="empty-note"><strong>Menyen er tom</strong>Kom tilbake litt senere.</div>';
+    el.menuList.innerHTML = ui.search.trim()
+      ? '<div class="empty-note"><strong>Ingen treff</strong>Prøv et annet søkeord.</div>'
+      : '<div class="empty-note"><strong>Menyen er tom</strong>Kom tilbake litt senere.</div>';
     return;
   }
   el.menuList.innerHTML = blocks
@@ -1145,6 +1167,43 @@ function addDraftToCart() {
   if (ui.view === 'checkout') renderCheckout();
 }
 
+function quickAddProduct(itemId) {
+  const { item } = findItem(itemId);
+  if (!item || item.hidden || item.soldOut) return;
+  const sizes = item.sizes || [];
+  const groups = getItemOptionGroups(item);
+  if (sizes.length > 1 || groups.length > 0) {
+    openProduct(itemId);
+    return;
+  }
+
+  const size = getDefaultSize(item);
+  const sizeId = size ? size.id : null;
+  const selections = {};
+  const signature = lineSignature(item.id, sizeId, selections, '');
+  const existing = cart.find((line) => line.signature === signature);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      lineId: uid('ln'),
+      signature,
+      itemId: item.id,
+      sizeId,
+      selections,
+      comment: '',
+      quantity: 1,
+    });
+  }
+
+  resetPendingOrderSubmission();
+  persistCart();
+  renderCartCount();
+  if (ui.view === 'cart') renderCart();
+  if (ui.view === 'checkout') renderCheckout();
+  toast(`${item.name} lagt i handlekurven.`);
+}
+
 /** Fjerner kurvlinjer som ikke lenger er gyldige (skjult/utsolgt/slettet). */
 function reconcileCart() {
   let changed = false;
@@ -1301,6 +1360,10 @@ function renderCartCount() {
 
 function setStep(step) {
   ui.checkoutStep = step;
+  if (step === 3 && !ui.pickupMode && getOpenState().open) {
+    ui.pickupMode = 'asap';
+    ui.pickup = 'asap';
+  }
   el.step2.hidden = step !== 2;
   el.step3.hidden = step !== 3;
   el.stepper.querySelectorAll('.step').forEach((node) => {
@@ -1331,6 +1394,10 @@ function renderCheckout() {
 
   const state = getOpenState();
   const slots = getPickupSlots();
+  const prepMinutes = Math.max(1, Number(store.settings?.prepMinutes) || 25);
+  const asapChoice = el.pickupChoices.querySelector('[data-pickup-mode="asap"]');
+  const asapEstimate = asapChoice?.querySelector('small');
+  if (asapEstimate) asapEstimate.textContent = `Ca. ${prepMinutes} min`;
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (!state.open) ui.pickup = null;
   el.pickupChoices.hidden = !state.open;
@@ -1348,7 +1415,7 @@ function renderCheckout() {
     ? `Vi åpner ${state.opensAt}.`
     : showTimes
       ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
-      : ui.pickupMode === 'asap' ? 'Vi lager bestillingen så snart vi kan.' : 'Velg når du vil hente bestillingen.';
+      : ui.pickupMode === 'asap' ? `Forventet klart om ca. ${prepMinutes} min.` : 'Velg når du vil hente bestillingen.';
 
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
@@ -2149,6 +2216,11 @@ document.addEventListener('click', (event) => {
     if (ui.expandedBlocks.has(key)) ui.expandedBlocks.delete(key);
     else ui.expandedBlocks.add(key);
     renderMenu();
+    return;
+  }
+  const quickAddBtn = event.target.closest('[data-quick-add]');
+  if (quickAddBtn) {
+    quickAddProduct(quickAddBtn.dataset.quickAdd);
     return;
   }
   const openBtn = event.target.closest('[data-open]');
