@@ -1647,7 +1647,7 @@ function detailLineHtml(line) {
         <strong>${escapeHtml(line.name || 'Produkt')}</strong>
         ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
         ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
-        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(name).toLocaleUpperCase('no')).join(', ')}</small>` : ''}
+        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(String(name).toLocaleUpperCase('no'))).join(', ')}</small>` : ''}
         ${line.comment ? `<small class="pos-order-note">${escapeHtml(line.comment)}</small>` : ''}
       </div>
       <b>${formatPrice(line.price)}</b>
