@@ -825,6 +825,41 @@ window.addEventListener('resize', () => centerActiveTab(false));
  * Rendering: meny
  * ------------------------------------------------------------------ */
 
+function productCartQuantity(itemId) {
+  return cart.reduce(
+    (sum, line) => sum + (line.itemId === itemId ? Number(line.quantity) || 0 : 0),
+    0
+  );
+}
+
+function productCartBadgeHtml(itemId) {
+  const quantity = productCartQuantity(itemId);
+  return quantity > 0
+    ? `<span class="prod-cart-badge" aria-label="${quantity} i handlekurven"><span aria-hidden="true">✓</span> ${quantity} i handlekurven</span>`
+    : '';
+}
+
+function refreshProductCartBadges() {
+  if (!el.menuList) return;
+  el.menuList.querySelectorAll('.prod-card[data-item]').forEach((card) => {
+    const media = card.querySelector('.prod-media');
+    if (!media) return;
+    const quantity = productCartQuantity(card.dataset.item);
+    let badge = media.querySelector('.prod-cart-badge');
+    if (quantity <= 0) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'prod-cart-badge';
+      media.appendChild(badge);
+    }
+    badge.setAttribute('aria-label', `${quantity} i handlekurven`);
+    badge.innerHTML = `<span aria-hidden="true">✓</span> ${quantity} i handlekurven`;
+  });
+}
+
 function productCardHtml(item, section) {
   const soldOut = item.soldOut;
   const price = getItemBasePrice(item);
@@ -837,11 +872,14 @@ function productCardHtml(item, section) {
     .slice(0, 2);
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
-      ${
-        item.imageUrl
-          ? `<img class="prod-thumb" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-          : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
-      }
+      <div class="prod-media">
+        ${
+          item.imageUrl
+            ? `<img class="prod-thumb" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+            : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
+        }
+        ${productCartBadgeHtml(item.id)}
+      </div>
       <div class="prod-info">
         <p class="prod-name">
           ${escapeHtml(item.name)}
@@ -1351,6 +1389,7 @@ function renderCartCount() {
   const count = cartCount();
   el.cartCount.textContent = String(count);
   el.cartCount.hidden = count === 0;
+  refreshProductCartBadges();
 }
 
 
