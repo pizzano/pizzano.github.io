@@ -25,7 +25,7 @@ export const DB_URL = 'https://bestill-19-default-rtdb.europe-west1.firebasedata
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const POLL_INTERVAL = 4000;
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 const LOCAL_KEY = 'kol_menu_state_v2';
 const CHANNEL_NAME = 'kol_menu_sync';
@@ -262,6 +262,7 @@ const DEFAULT_SETTINGS = {
   minPreorderMinutes: 0,
   prepMinutes: 25,
   slotIntervalMinutes: 15,
+  menuLayout: 'grid',
   manualClosed: false,
   closedMessage: 'Vi tar ikke imot bestillinger akkurat nå.',
 };
@@ -507,6 +508,7 @@ function normalizeSettings(raw) {
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
   );
+  settings.menuLayout = settings.menuLayout === 'list' ? 'list' : 'grid';
   settings.openingTime = `${settings.orderOpenTime} - ${settings.orderCloseTime}`;
   return settings;
 }

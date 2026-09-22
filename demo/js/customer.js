@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260920-ingredients1';
+} from './data.js?v=20260922-menulayout1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -868,7 +868,8 @@ function productCardHtml(item, section) {
   const needsChoice = multi || getItemOptionGroups(item).length > 0 || getItemIngredientRules(item).some((rule) => rule.removable);
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
-  const cardAllergens = allergenLabels(item)
+  const allCardAllergens = allergenLabels(item);
+  const cardAllergens = allCardAllergens
     .filter((label) => selectedAllergens.has(label))
     .slice(0, 2);
   return `
@@ -887,6 +888,7 @@ function productCardHtml(item, section) {
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
+        ${allCardAllergens.length ? `<p class="prod-list-allergens"><span aria-hidden="true">⚠</span> Inneholder ${escapeHtml(allCardAllergens.join(', '))}</p>` : ''}
         ${cardAllergens.length ? `<div class="prod-allergens">${cardAllergens.map((label) => `<span class="allergen-mini-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')}</div>` : ''}
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
@@ -902,6 +904,7 @@ function productCardHtml(item, section) {
 
 function renderMenu() {
   const blocks = menuBlocks();
+  const menuLayout = store.settings?.menuLayout === 'list' ? 'list' : 'grid';
   if (!blocks.length) {
     el.menuList.innerHTML = ui.search.trim()
       ? '<div class="empty-note"><strong>Ingen treff</strong>Prøv et annet søkeord.</div>'
@@ -921,7 +924,7 @@ function renderMenu() {
           </div>
           ${block.note ? `<p class="cat-description">${escapeHtml(block.note)}</p>` : ''}
         </header>
-        <div class="prod-grid">
+        <div class="prod-grid menu-layout-${menuLayout}">
           ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
         ${collapsible && block.items.length > 4 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Vis mindre' : 'Vis mer'}</button>` : ''}
