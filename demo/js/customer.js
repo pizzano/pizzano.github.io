@@ -249,6 +249,9 @@ function renderAllergenPicker() {
     .filter((label) => !query || label.toLocaleLowerCase('no').includes(query));
   el.allergenModal.hidden = !ui.allergensOpen;
   el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
+  el.btnAllergens.textContent = ui.selectedAllergens.length
+    ? `Matallergier (${ui.selectedAllergens.length})`
+    : 'Matallergier';
   el.allergenSearch.value = ui.allergenSearch;
   el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button" aria-pressed="${ui.selectedAllergens.includes(label)}">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('') || '<p class="hint">Ingen allergener funnet.</p>';
 }
@@ -869,9 +872,9 @@ function productCardHtml(item, section) {
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
   const allCardAllergens = allergenLabels(item);
-  const cardAllergens = allCardAllergens
-    .filter((label) => selectedAllergens.has(label))
-    .slice(0, 2);
+  const matchedAllergens = allCardAllergens
+    .filter((label) => selectedAllergens.has(label));
+  const cardAllergens = matchedAllergens.slice(0, 2);
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       <div class="prod-media">
@@ -888,7 +891,7 @@ function productCardHtml(item, section) {
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
-        ${allCardAllergens.length ? `<p class="prod-list-allergens"><span aria-hidden="true">⚠</span> Inneholder ${escapeHtml(allCardAllergens.join(', '))}</p>` : ''}
+        ${matchedAllergens.length ? `<p class="prod-list-allergens"><span aria-hidden="true">⚠</span> Inneholder ${escapeHtml(matchedAllergens.join(', '))}</p>` : ''}
         ${cardAllergens.length ? `<div class="prod-allergens">${cardAllergens.map((label) => `<span class="allergen-mini-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')}</div>` : ''}
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
