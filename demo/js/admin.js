@@ -1622,20 +1622,7 @@ function compactOrderTime(value) {
   if (!value) return '—';
   const date = new Date(value);
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
-function orderElapsed(order) {
-  const seconds = Math.max(0, Math.floor((Date.now() - (Number(order.createdAt) || Date.now())) / 1000));
-  if (seconds < 3600) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${String(secs).padStart(2, '0')}`;
-  }
-  const hours = Math.floor(seconds / 3600);
-  return `${hours}t ${Math.floor((seconds % 3600) / 60)}m`;
-}
-
-function orderCountdown(order) {
+}function orderCountdown(order) {
   const readyAt = Number(order.estimatedReadyAt) || 0;
   if (!readyAt) return '';
   const remainingMs = readyAt - Date.now();
