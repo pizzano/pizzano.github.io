@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260922-productmodal1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260922-menulayout1">
 </head>
 
 <body>
@@ -199,6 +199,33 @@
                             </div>
                             <p class="set-hint">Kunden får «Snarest» pluss faste tider fram til stengetid.</p>
                             <div class="slot-preview" id="slotPreview"></div>
+                        </article>
+
+                        <article class="set-card">
+                            <h2>Menyvisning</h2>
+                            <p class="set-hint">Velg hvordan produktene skal vises i kundemenyen. Endringen vises med en gang.</p>
+                            <div class="menu-layout-options" role="radiogroup" aria-label="Menyvisning">
+                                <label class="menu-layout-choice">
+                                    <input type="radio" name="menuLayout" id="sMenuLayoutGrid" value="grid">
+                                    <span class="menu-layout-demo is-grid" aria-hidden="true">
+                                        <i></i><i></i><i></i><i></i>
+                                    </span>
+                                    <span class="menu-layout-copy">
+                                        <strong>Kortvisning</strong>
+                                        <small>Store bilder i to kolonner.</small>
+                                    </span>
+                                </label>
+                                <label class="menu-layout-choice">
+                                    <input type="radio" name="menuLayout" id="sMenuLayoutList" value="list">
+                                    <span class="menu-layout-demo is-list" aria-hidden="true">
+                                        <i></i><i></i><i></i>
+                                    </span>
+                                    <span class="menu-layout-copy">
+                                        <strong>Listevisning</strong>
+                                        <small>Kompakt visning som er rask å skanne.</small>
+                                    </span>
+                                </label>
+                            </div>
                         </article>
 
                         <article class="set-card">
@@ -566,7 +593,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260922-productmodal1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260922-menulayout1"></script>
 </body>
 
 </html>
