@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260922-menulayout1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260922-maintenance1">
 </head>
 
 <body>
@@ -87,7 +87,7 @@
                     </div>
                 </header>
                 <div class="stat-row" id="statRow"></div>
-                <div class="scroll-area" id="categoryArea">
+                <div class="scroll-area">
                     <div id="categoryList" class="cat-list"></div>
                 </div>
             </section>
@@ -106,7 +106,7 @@
                         <button class="btn btn-primary btn-sm" id="btnNewGroup" type="button">+ Lag ny valggruppe</button>
                     </div>
                 </header>
-                <div class="scroll-area" id="groupArea">
+                <div class="scroll-area">
                     <div id="groupLibrary" class="group-grid"></div>
                 </div>
             </section>
@@ -148,7 +148,7 @@
                         <p>Åpningstid, hentetid og kontaktinformasjon. Endringene vises umiddelbart for kunden.</p>
                     </div>
                 </header>
-                <div class="scroll-area" id="settingsArea">
+                <div class="scroll-area">
                     <div class="settings-grid">
 
                         <article class="set-card">
@@ -292,7 +292,7 @@
                 </nav>
 
                 <div class="settings-scroll" id="settingsScroll">
-                    <section class="set-section" id="secProdukt" data-section="produkt">
+                    <section class="set-section" data-section="produkt">
                         <h3 class="set-title">Produkt</h3>
                         <div class="set-field">
                             <label class="lbl" for="fName">Produktnavn</label>
@@ -316,7 +316,7 @@
                         </label>
                     </section>
 
-                    <section class="set-section" id="secIngredienser" data-section="ingredienser">
+                    <section class="set-section" data-section="ingredienser">
                         <h3 class="set-title">Ingredienser</h3>
                         <p class="set-hint">Lag én tagg per ingrediens. Du kan endre navn, slette taggen eller låse den slik at kunden ikke kan fjerne den.</p>
                         <div class="ingredient-add-row">
@@ -330,7 +330,7 @@
                         <div id="ingredientRuleList" class="ingredient-admin-list"></div>
                     </section>
 
-                    <section class="set-section" id="secStorrelser" data-section="storrelser">
+                    <section class="set-section" data-section="storrelser">
                         <h3 class="set-title">Størrelser &amp; priser</h3>
                         <p class="set-hint">Velg radioknappen for størrelsen som skal være standard for kunden.</p>
                         <div class="size-head">
@@ -343,20 +343,20 @@
                         <button class="btn btn-outline btn-sm" id="btnAddSize" type="button">+ Legg til størrelse</button>
                     </section>
 
-                    <section class="set-section" id="secAllergener" data-section="allergener">
+                    <section class="set-section" data-section="allergener">
                         <h3 class="set-title">Allergener</h3>
                         <p class="set-hint">Kryss av alt produktet inneholder. Vises på kundens produktside.</p>
                         <div id="allergenGrid" class="allergen-grid"></div>
                     </section>
 
-                    <section class="set-section" id="secValg" data-section="valg">
+                    <section class="set-section" data-section="valg">
                         <h3 class="set-title">Choices &amp; addons</h3>
                         <p class="set-hint">Grupper hentes fra det felles biblioteket. Endrer du gruppen, endres den på alle produkter som bruker den.</p>
                         <div id="attachedGroups" class="attached-list"></div>
                         <button class="btn btn-outline btn-sm" id="btnAttachGroup" type="button">+ Legg til valggruppe</button>
                     </section>
 
-                    <section class="set-section" id="secTilgjengelighet" data-section="tilgjengelighet">
+                    <section class="set-section" data-section="tilgjengelighet">
                         <h3 class="set-title">Tilgjengelighet</h3>
                         <label class="toggle-row">
                             <span class="toggle-body">
@@ -374,7 +374,7 @@
                         </label>
                     </section>
 
-                    <section class="set-section" id="secHandlinger" data-section="handlinger">
+                    <section class="set-section" data-section="handlinger">
                         <h3 class="set-title">Handlinger</h3>
                         <div class="set-field">
                             <label class="lbl" for="fMoveCategory">Flytt til kategori</label>
@@ -453,7 +453,7 @@
                 </div>
                 <div id="gOptionRows" class="opt-rows-edit"></div>
                 <button class="btn btn-outline btn-sm" id="btnAddOption" type="button">+ Legg til alternativ</button>
-                <p class="set-hint" id="gDefaultHint">«Start» er alternativet som er forhåndsvalgt når kunden åpner produktet.</p>
+                <p class="set-hint">«Start» er alternativet som er forhåndsvalgt når kunden åpner produktet.</p>
             </div>
 
             <div class="set-field">
@@ -593,7 +593,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260922-menulayout1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260922-maintenance1"></script>
 </body>
 
 </html>
