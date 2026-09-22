@@ -20,7 +20,6 @@ import {
   formatPrice,
   getItemBasePrice,
   getItemOptionGroups,
-  buildIngredientRules,
   getItemIngredientRules,
   countProductsUsingGroup,
   findItem,
