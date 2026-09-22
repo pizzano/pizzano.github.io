@@ -3222,3 +3222,80 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
     font-size: 12.5px !important;
   }
 }
+
+/* Mobile space polish */
+@media (max-width: 639px) {
+  /* Let compact list products use the full phone width. */
+  .view-menu .prod-grid.menu-layout-list {
+    width: calc(100% + 16px) !important;
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Keep the in-cart badge short and fully inside narrow thumbnails. */
+  .prod-grid.menu-layout-list .prod-cart-badge {
+    left: 5px !important;
+    right: 5px !important;
+    bottom: 5px !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 21px !important;
+    justify-content: center;
+    padding: 3px 5px !important;
+    overflow: hidden;
+    font-size: 9.2px !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prod-grid.menu-layout-list .prod-cart-badge > span {
+    flex: none;
+    font-size: 11px !important;
+  }
+
+  /* Use every available pixel in the fixed action bar on phones. */
+  .view-cart > .checkout-actions,
+  .view-checkout > .checkout-actions {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    gap: 6px !important;
+    padding: 6px max(6px, env(safe-area-inset-right))
+      calc(6px + env(safe-area-inset-bottom))
+      max(6px, env(safe-area-inset-left)) !important;
+    border-radius: 0 !important;
+    transform: none !important;
+  }
+
+  .view-cart > .checkout-actions .btn,
+  .view-checkout > .checkout-actions .btn {
+    min-width: 0 !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    flex: 1 1 0 !important;
+    padding: 0 8px !important;
+    border-radius: 11px !important;
+  }
+
+  .view-cart #btnKeepShopping,
+  .view-checkout #btnStepBack {
+    flex-grow: .9 !important;
+  }
+
+  .view-cart #btnToCheckout,
+  .view-checkout #btnStepNext {
+    flex-grow: 1.55 !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .view-menu .prod-grid.menu-layout-list {
+    width: calc(100% + 18px) !important;
+    margin-left: -9px !important;
+    margin-right: -9px !important;
+  }
+}
