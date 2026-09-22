@@ -836,7 +836,7 @@ function productCartQuantity(itemId) {
 function productCartBadgeHtml(itemId) {
   const quantity = productCartQuantity(itemId);
   return quantity > 0
-    ? `<span class="prod-cart-badge" aria-label="${quantity} i handlekurven"><span aria-hidden="true">✓</span> ${quantity} i handlekurven</span>`
+    ? `<span class="prod-cart-badge" aria-label="${quantity} i kurven"><span aria-hidden="true">✓</span> ${quantity} i kurven</span>`
     : '';
 }
 
@@ -856,8 +856,8 @@ function refreshProductCartBadges() {
       badge.className = 'prod-cart-badge';
       media.appendChild(badge);
     }
-    badge.setAttribute('aria-label', `${quantity} i handlekurven`);
-    badge.innerHTML = `<span aria-hidden="true">✓</span> ${quantity} i handlekurven`;
+    badge.setAttribute('aria-label', `${quantity} i kurven`);
+    badge.innerHTML = `<span aria-hidden="true">✓</span> ${quantity} i kurven`;
   });
 }
 
@@ -897,7 +897,7 @@ function productCardHtml(item, section) {
           ? '<span class="prod-soldout-badge">Utsolgt</span>'
           : needsChoice
             ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg størrelse eller tilvalg for ${escapeHtml(item.name)}">Velg</button>`
-            : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i handlekurven">+</button>`}
+            : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven">+</button>`}
       </div>
     </div>`;
 }
@@ -1247,7 +1247,7 @@ function addDraftToCart() {
   resetPendingOrderSubmission();
   persistCart();
   toast(
-    draft.editingLineId ? 'Handlekurven er oppdatert.' : `${item.name} lagt i handlekurven.`
+    draft.editingLineId ? 'Handlekurven er oppdatert.' : `${item.name} lagt i kurven.`
   );
   closeSheet();
   renderCartCount();
@@ -1291,7 +1291,7 @@ function quickAddProduct(itemId) {
   renderCartCount();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
-  toast(`${item.name} lagt i handlekurven.`);
+  toast(`${item.name} lagt i kurven.`);
 }
 
 /** Fjerner kurvlinjer som ikke lenger er gyldige (skjult/utsolgt/slettet). */
@@ -1494,12 +1494,9 @@ function renderCheckout() {
 
   const state = getOpenState();
   const slots = getPickupSlots();
-  const prepMinutes = Math.max(1, Number(store.settings?.prepMinutes) || 25);
   const asapChoice = el.pickupChoices.querySelector('[data-pickup-mode="asap"]');
   const asapTitle = asapChoice?.querySelector('strong');
-  const asapEstimate = asapChoice?.querySelector('small');
   if (asapTitle) asapTitle.textContent = 'Snarest';
-  if (asapEstimate) asapEstimate.textContent = `Ca. ${prepMinutes} min`;
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (!state.open) ui.pickup = null;
   el.pickupChoices.hidden = !state.open;
@@ -2265,7 +2262,7 @@ function renderProfile() {
     persistCart();
     renderCartCount();
       if (added) {
-      toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i handlekurven med samme valg.`);
+      toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i kurven med samme valg.`);
       setView('cart');
     } else {
       toast('Produktene er ikke tilgjengelige nå.');
