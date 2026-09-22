@@ -1303,16 +1303,7 @@ main {
 }
 .opt-row:has(input:checked) .opt-label,
 .opt-row:has(input:checked) .opt-price { color: #24733c !important; }
-.opt-row input { accent-color: var(--ok); }
-.sheet-allergens {
-  margin: 10px 0 0 !important;
-  padding: 12px !important;
-  border: 1px solid #eee1d2;
-  border-radius: 16px;
-  background: #fffaf4;
-  gap: 6px !important;
-}
-.sheet-allergens::before {
+.opt-row input { accent-color: var(--ok); }.sheet-allergens::before {
   content: 'Allergener';
   width: 100%;
   margin-bottom: 3px;
