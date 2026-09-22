@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v66-popupscroll1';
+const CACHE_NAME = 'kol-demo-v67-rootscroll1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
