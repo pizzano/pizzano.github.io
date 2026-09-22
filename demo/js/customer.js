@@ -908,6 +908,7 @@ function productCardHtml(item, section) {
 function renderMenu() {
   const blocks = menuBlocks();
   const menuLayout = store.settings?.menuLayout === 'list' ? 'list' : 'grid';
+  const specialBlockLimit = 4;
   if (!blocks.length) {
     el.menuList.innerHTML = ui.search.trim()
       ? '<div class="empty-note"><strong>Ingen treff</strong>Prøv et annet søkeord.</div>'
@@ -918,7 +919,10 @@ function renderMenu() {
     .map(
       (block) => {
       const collapsible = block.key === 'favorites' || block.key === 'popular';
-      const visibleCount = collapsible && !ui.expandedBlocks.has(block.key) ? 4 : block.items.length;
+      const expanded = collapsible && ui.expandedBlocks.has(block.key);
+      const visibleCount = collapsible && !expanded
+        ? Math.min(specialBlockLimit, block.items.length)
+        : block.items.length;
       return `
       <section class="cat-block" id="blk_${escapeHtml(block.key)}" data-block="${escapeHtml(block.key)}">
         <header class="cat-head">
@@ -930,7 +934,7 @@ function renderMenu() {
         <div class="prod-grid menu-layout-${menuLayout}">
           ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
-        ${collapsible && block.items.length > 4 ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button">${ui.expandedBlocks.has(block.key) ? 'Vis mindre' : 'Vis mer'}</button>` : ''}
+        ${collapsible && block.items.length > specialBlockLimit ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button" aria-expanded="${expanded}">${expanded ? 'Vis mindre' : `Vis mer (${block.items.length - specialBlockLimit})`}</button>` : ''}
       </section>`;
       }
     )
