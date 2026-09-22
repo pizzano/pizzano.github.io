@@ -3227,9 +3227,9 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 @media (max-width: 639px) {
   /* Let compact list products use the full phone width. */
   .view-menu .prod-grid.menu-layout-list {
-    width: calc(100% + 18px) !important;
-    margin-left: -9px !important;
-    margin-right: -9px !important;
+    width: calc(100% + 16px) !important;
+    margin-left: -8px !important;
+    margin-right: -8px !important;
     border-left: 0 !important;
     border-right: 0 !important;
     border-radius: 0 !important;
@@ -3289,5 +3289,13 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   .view-cart #btnToCheckout,
   .view-checkout #btnStepNext {
     flex-grow: 1.55 !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .view-menu .prod-grid.menu-layout-list {
+    width: calc(100% + 18px) !important;
+    margin-left: -9px !important;
+    margin-right: -9px !important;
   }
 }
