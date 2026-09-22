@@ -20,7 +20,6 @@ import {
   formatPrice,
   getItemBasePrice,
   getItemOptionGroups,
-  buildIngredientRules,
   getItemIngredientRules,
   countProductsUsingGroup,
   findItem,
@@ -107,7 +106,8 @@ const el = {
   orderDetailPane: $('orderDetailPane'),
   orderDetailEmpty: $('orderDetailEmpty'),
   orderDetailLive: $('orderDetailLive'),
-  settingsEmpty: $('settingsEmpty'),
+  settingsCol: $('settingsCol'),
+  productEditorBackdrop: $('productEditorBackdrop'),
   settingsWrap: $('settingsWrap'),
   settingsName: $('settingsName'),
   settingsPath: $('settingsPath'),
@@ -116,7 +116,8 @@ const el = {
   settingsScroll: $('settingsScroll'),
   fName: $('fName'),
   fDesc: $('fDesc'),
-  fIngredients: $('fIngredients'),
+  fIngredientNew: $('fIngredientNew'),
+  btnAddIngredient: $('btnAddIngredient'),
   ingredientRuleList: $('ingredientRuleList'),
   fImage: $('fImage'),
   fImagePreview: $('fImagePreview'),
@@ -252,6 +253,10 @@ function setOrdersSidebarCollapsed(collapsed) {
 }
 
 function setPage(page) {
+  if (page !== 'products' && ui.selectedItemId) {
+    ui.selectedItemId = null;
+    renderPanel();
+  }
   ui.page = page;
   for (const [name, node] of Object.entries(el.pages)) {
     node.hidden = name !== page;
@@ -260,7 +265,6 @@ function setPage(page) {
   el.sideLinks.forEach((link) => {
     link.classList.toggle('is-active', link.dataset.nav === page);
   });
-  document.body.classList.toggle('hide-settings-col', page !== 'products');
   setOrdersSidebarCollapsed(page === 'orders');
   renderAll();
 }
@@ -741,12 +745,15 @@ el.btnSaveCategory.addEventListener('click', () => {
 function renderPanel() {
   const { item, section } = selectedItem();
   if (!item) {
-    el.settingsEmpty.hidden = false;
-    el.settingsWrap.hidden = true;
+    el.settingsCol.hidden = true;
+    el.productEditorBackdrop.hidden = true;
+    document.body.classList.remove('product-editor-open');
     return;
   }
-  el.settingsEmpty.hidden = true;
+  el.settingsCol.hidden = false;
+  el.productEditorBackdrop.hidden = false;
   el.settingsWrap.hidden = false;
+  document.body.classList.add('product-editor-open');
 
   el.settingsName.textContent = item.name || 'Uten navn';
   el.settingsPath.textContent = `${section.title} · ${formatPrice(
@@ -755,7 +762,6 @@ function renderPanel() {
 
   el.fName.value = item.name || '';
   el.fDesc.value = item.description || '';
-  el.fIngredients.value = item.ingredients || '';
   renderIngredientRules(item);
   el.fImage.value = item.imageUrl || '';
   el.fImagePreview.src = item.imageUrl || '';
@@ -846,20 +852,45 @@ function renderPanel() {
     .join('');
 }
 
+function normalizedIngredientRules(item = selectedItem().item) {
+  return getItemIngredientRules(item).map((rule) => ({
+    name: String(rule.name || '').trim(),
+    removable: rule.removable !== false,
+  })).filter((rule) => rule.name);
+}
+
+function syncIngredientRules(item, rules) {
+  const seen = new Set();
+  const cleaned = [];
+  for (const rule of rules || []) {
+    const name = String(rule.name || '').trim().replace(/\s+/g, ' ');
+    const key = name.toLocaleLowerCase('no');
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push({ name, removable: rule.removable !== false });
+  }
+  item.ingredientRules = cleaned;
+  item.ingredients = cleaned.map((rule) => rule.name).join(', ');
+}
+
 function renderIngredientRules(item = selectedItem().item) {
   if (!el.ingredientRuleList) return;
-  const rules = getItemIngredientRules(item);
+  const rules = normalizedIngredientRules(item);
   el.ingredientRuleList.innerHTML = rules.length
     ? rules.map((rule, index) => `
-        <label class="ingredient-admin-row">
-          <span>
-            <strong>${escapeHtml(rule.name)}</strong>
-            <small>${rule.removable ? 'Kunden kan fjerne denne' : 'Låst – kan ikke fjernes'}</small>
-          </span>
-          <input class="switch" type="checkbox" data-ingredient-removable="${index}" ${rule.removable ? 'checked' : ''} aria-label="Kan ${escapeHtml(rule.name)} fjernes av kunden">
-        </label>`).join('')
-    : '<div class="ingredient-admin-empty">Ingen ingredienser ennå. Skriv ingrediensene over, adskilt med komma.</div>';
+        <div class="ingredient-admin-row" data-ingredient-row="${index}">
+          <input class="input ingredient-name-input" type="text" data-ingredient-name="${index}" value="${escapeHtml(rule.name)}" aria-label="Ingrediensnavn">
+          <label class="ingredient-remove-toggle">
+            <span>Kan fjernes</span>
+            <input class="switch" type="checkbox" data-ingredient-removable="${index}" ${rule.removable ? 'checked' : ''} aria-label="Kan ${escapeHtml(rule.name)} fjernes av kunden">
+          </label>
+          <button class="icon-btn is-danger ingredient-delete-btn" data-delete-ingredient="${index}" type="button" aria-label="Slett ${escapeHtml(rule.name)}" title="Slett ingrediens">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>
+          </button>
+        </div>`).join('')
+    : '<div class="ingredient-admin-empty">Ingen ingredienser ennå. Legg til én tagg om gangen.</div>';
 }
+
 
 /** Endrer valgt produkt uten å bygge panelet på nytt. */
 function updateItem(updater, { rerenderPanel = false } = {}) {
@@ -885,30 +916,85 @@ el.fDesc.addEventListener('input', () => {
   });
 });
 
-el.fIngredients.addEventListener('input', () => {
-  updateItem((item) => {
-    item.ingredients = el.fIngredients.value;
-    item.ingredientRules = buildIngredientRules(
-      item.ingredients,
-      item.ingredientRules || []
-    );
+function addIngredientFromAdmin() {
+  const name = el.fIngredientNew.value.trim().replace(/\s+/g, ' ');
+  if (!name) {
+    el.fIngredientNew.focus();
+    return;
+  }
+  const { item } = selectedItem();
+  if (!item) return;
+  const rules = normalizedIngredientRules(item);
+  if (rules.some((rule) => rule.name.toLocaleLowerCase('no') === name.toLocaleLowerCase('no'))) {
+    toast('Ingrediensen finnes allerede.');
+    el.fIngredientNew.select();
+    return;
+  }
+  updateItem((target) => {
+    syncIngredientRules(target, [...rules, { name, removable: true }]);
   });
+  el.fIngredientNew.value = '';
   renderIngredientRules();
+  el.fIngredientNew.focus();
+}
+
+el.btnAddIngredient.addEventListener('click', addIngredientFromAdmin);
+el.fIngredientNew.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  addIngredientFromAdmin();
 });
 
 el.ingredientRuleList.addEventListener('change', (event) => {
-  const rawIndex = event.target.dataset.ingredientRemovable;
-  if (rawIndex === undefined) return;
-  const index = Number(rawIndex);
-  updateItem((item) => {
-    item.ingredientRules = buildIngredientRules(
-      item.ingredients,
-      item.ingredientRules || []
+  const nameIndex = event.target.dataset.ingredientName;
+  const removableIndex = event.target.dataset.ingredientRemovable;
+  if (nameIndex === undefined && removableIndex === undefined) return;
+
+  const { item } = selectedItem();
+  if (!item) return;
+  const rules = normalizedIngredientRules(item);
+  const index = Number(nameIndex !== undefined ? nameIndex : removableIndex);
+  if (!rules[index]) return;
+
+  if (nameIndex !== undefined) {
+    const nextName = event.target.value.trim().replace(/\s+/g, ' ');
+    if (!nextName) {
+      toast('Ingrediensnavnet kan ikke være tomt.');
+      renderIngredientRules();
+      return;
+    }
+    const duplicate = rules.some(
+      (rule, ruleIndex) =>
+        ruleIndex !== index &&
+        rule.name.toLocaleLowerCase('no') === nextName.toLocaleLowerCase('no')
     );
-    if (!item.ingredientRules[index]) return;
-    item.ingredientRules[index].removable = event.target.checked;
-  });
+    if (duplicate) {
+      toast('Ingrediensen finnes allerede.');
+      renderIngredientRules();
+      return;
+    }
+    rules[index].name = nextName;
+  } else {
+    rules[index].removable = event.target.checked;
+  }
+
+  updateItem((target) => syncIngredientRules(target, rules));
   renderIngredientRules();
+});
+
+el.ingredientRuleList.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-delete-ingredient]');
+  if (!button) return;
+  const index = Number(button.dataset.deleteIngredient);
+  const { item } = selectedItem();
+  if (!item) return;
+  const rules = normalizedIngredientRules(item);
+  const removed = rules[index];
+  if (!removed) return;
+  rules.splice(index, 1);
+  updateItem((target) => syncIngredientRules(target, rules));
+  renderIngredientRules();
+  toast(`«${removed.name}» er slettet.`);
 });
 
 el.fImage.addEventListener('input', () => {
@@ -1106,11 +1192,14 @@ el.btnDeleteProduct.addEventListener('click', () => {
   );
 });
 
-el.btnCloseSettings.addEventListener('click', () => {
+function closeProductEditor() {
   ui.selectedItemId = null;
   renderCategories();
   renderPanel();
-});
+}
+
+el.btnCloseSettings.addEventListener('click', closeProductEditor);
+el.productEditorBackdrop.addEventListener('click', closeProductEditor);
 
 /* ------------------------------------------------------------------ *
  * Scroll-spy i høyre panel
@@ -2151,7 +2240,12 @@ document.addEventListener('click', (event) => {
 el.modalBackdrop.addEventListener('click', closeModals);
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !el.modalBackdrop.hidden) closeModals();
+  if (event.key !== 'Escape') return;
+  if (!el.modalBackdrop.hidden) {
+    closeModals();
+    return;
+  }
+  if (!el.settingsCol.hidden) closeProductEditor();
 });
 
 function askConfirm(title, body, action) {
