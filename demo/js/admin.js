@@ -37,7 +37,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260920-ingredients1';
+} from './data.js?v=20260922-menulayout1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -191,6 +191,8 @@ const el = {
     prepMinutes: $('sPrepMinutes'),
     slotIntervalMinutes: $('sSlotInterval'),
     slotPreview: $('slotPreview'),
+    menuLayoutGrid: $('sMenuLayoutGrid'),
+    menuLayoutList: $('sMenuLayoutList'),
     restaurantName: $('sRestaurantName'),
     streetAddress: $('sStreetAddress'),
     postalCode: $('sPostalCode'),
@@ -2105,6 +2107,9 @@ function renderSettings() {
   if (el.settings.manualClosed !== document.activeElement) {
     el.settings.manualClosed.checked = Boolean(settings.manualClosed);
   }
+  const menuLayout = settings.menuLayout === 'list' ? 'list' : 'grid';
+  el.settings.menuLayoutGrid.checked = menuLayout === 'grid';
+  el.settings.menuLayoutList.checked = menuLayout === 'list';
 
   const state = getOpenState();
   el.settings.openStateLine.textContent = state.open
@@ -2172,6 +2177,16 @@ function renderSettingsPreviewOnly() {
 }
 
 SETTING_FIELDS.forEach(([key, type]) => bindSettingField(key, type));
+
+[el.settings.menuLayoutGrid, el.settings.menuLayoutList].forEach((field) => {
+  field.addEventListener('change', () => {
+    if (!field.checked) return;
+    mutate((state) => {
+      state.settings.menuLayout = field.value === 'list' ? 'list' : 'grid';
+    });
+    toast(field.value === 'list' ? 'Listevisning er aktiv.' : 'Kortvisning er aktiv.');
+  });
+});
 
 el.settings.manualClosed.addEventListener('change', () => {
   const closed = el.settings.manualClosed.checked;
