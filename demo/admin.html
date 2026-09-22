@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260920-ingredients1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260922-productmodal1">
 </head>
 
 <body>
@@ -240,20 +240,16 @@
             </section>
         </main>
 
-        <aside class="settings-col" id="settingsCol">
-            <div class="settings-empty" id="settingsEmpty">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-                <strong>Ingen produkt valgt</strong>
-                <p>Åpne en kategori og velg et produkt for å redigere navn, priser, valggrupper og tilgjengelighet.</p>
-            </div>
+        <div class="product-editor-backdrop" id="productEditorBackdrop" hidden></div>
 
-            <div class="settings-wrap" id="settingsWrap" hidden>
+        <aside class="settings-col product-editor-modal" id="settingsCol" role="dialog" aria-modal="true" aria-label="Rediger produkt" hidden>
+            <div class="settings-wrap" id="settingsWrap">
                 <header class="settings-head">
                     <div class="settings-title">
                         <h2 id="settingsName">Produkt</h2>
                         <p id="settingsPath">—</p>
                     </div>
-                    <button class="icon-btn" id="btnCloseSettings" type="button" aria-label="Lukk panel">
+                    <button class="icon-btn" id="btnCloseSettings" type="button" aria-label="Lukk produktredigering">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
                     </button>
                 </header>
@@ -295,14 +291,14 @@
 
                     <section class="set-section" id="secIngredienser" data-section="ingredienser">
                         <h3 class="set-title">Ingredienser</h3>
-                        <p class="set-hint">Skriv ingrediensene med komma. Systemet lager kundens valg automatisk. Nye ingredienser kan fjernes som standard.</p>
-                        <div class="set-field">
-                            <label class="lbl" for="fIngredients">Ingrediensliste</label>
-                            <textarea id="fIngredients" class="textarea" placeholder="F.eks. Kebabkjøtt, salat, tomat, løk, mais"></textarea>
+                        <p class="set-hint">Lag én tagg per ingrediens. Du kan endre navn, slette taggen eller låse den slik at kunden ikke kan fjerne den.</p>
+                        <div class="ingredient-add-row">
+                            <input id="fIngredientNew" class="input" type="text" placeholder="F.eks. Pepperoni" autocomplete="off">
+                            <button class="btn btn-primary btn-sm" id="btnAddIngredient" type="button">+ Legg til</button>
                         </div>
                         <div class="ingredient-admin-head">
-                            <strong>Kan fjernes av kunden</strong>
-                            <span>Slå av for hovedingredienser, f.eks. kebabkjøtt</span>
+                            <strong>Ingredienser på produktet</strong>
+                            <span>«Kan fjernes» av = ingrediensen kan ikke velges bort av kunden.</span>
                         </div>
                         <div id="ingredientRuleList" class="ingredient-admin-list"></div>
                     </section>
@@ -570,7 +566,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260920-ingredients1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260922-productmodal1"></script>
 </body>
 
 </html>
