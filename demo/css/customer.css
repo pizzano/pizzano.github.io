@@ -217,11 +217,33 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
   background-clip: padding-box;
 }
 @media (max-width: 639px) {
+  /*
+   * Mobile must scroll the document itself, not an inner cart/checkout pane.
+   * This lets Chrome/Samsung Internet show/hide the address bar naturally,
+   * exactly like the menu page.
+   */
+  main:has(> .view-cart:not([hidden])),
+  main:has(> .view-checkout:not([hidden])) {
+    height: auto !important;
+    max-height: none !important;
+    min-height: calc(100dvh - var(--header-h)) !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+
   main:has(> .view-cart:not([hidden])) > .view-cart,
   main:has(> .view-checkout:not([hidden])) > .view-checkout {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    overscroll-behavior-y: auto !important;
+    -webkit-overflow-scrolling: auto;
     scrollbar-width: none;
     scrollbar-gutter: auto;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
   }
+
   main:has(> .view-cart:not([hidden])) > .view-cart::-webkit-scrollbar,
   main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
     width: 0;
@@ -537,7 +559,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
   }
   main:has(> .view-cart:not([hidden])) > .view-cart,
   main:has(> .view-checkout:not([hidden])) > .view-checkout {
-    padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
   }
 
   .profile-section summary { min-height: 48px; padding: 10px 0; font-size: 14px; }
