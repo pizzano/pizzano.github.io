@@ -1648,28 +1648,7 @@ let orderConfirmDeadline = 0;
 let orderConfirmTimedOut = false;
 let orderConfirmResolved = false;
 let orderConfirmAcceptedTimer = null;
-let orderConfirmRedirectTimer = null;
-
-function stopOrderConfirmationWait() {
-  if (orderConfirmTimer) {
-    clearInterval(orderConfirmTimer);
-    orderConfirmTimer = null;
-  }
-  if (orderConfirmAcceptedTimer) {
-    clearInterval(orderConfirmAcceptedTimer);
-    orderConfirmAcceptedTimer = null;
-  }
-  if (orderConfirmRedirectTimer) {
-    clearTimeout(orderConfirmRedirectTimer);
-    orderConfirmRedirectTimer = null;
-  }
-  orderConfirmOrderId = '';
-  orderConfirmDeadline = 0;
-  orderConfirmTimedOut = false;
-  orderConfirmResolved = false;
-}
-
-function confirmationRestaurantPhone() {
+let orderConfirmRedirectTimer = null;function confirmationRestaurantPhone() {
   const settings = store.settings || {};
   const label = String(settings.phone || '').trim();
   const tel = label.replace(/[^+\d]/g, '');
