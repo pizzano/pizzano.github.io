@@ -1,0 +1,656 @@
+/* =========================================================
+   KØL light / dark theme
+   Shared by customer menu and admin.
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #101214;
+  --surface: #181b1f;
+  --surface-2: #1d2125;
+  --surface-3: #24292e;
+
+  --ink: #f2f4f5;
+  --ink-2: #c1c7ce;
+  --ink-3: #8f98a2;
+
+  --line: #30363c;
+  --line-strong: #424a52;
+
+  --accent: #ff711c;
+  --accent-dark: #ff8c49;
+  --accent-soft: #352116;
+
+  --ok: #49c779;
+  --ok-soft: #14281c;
+  --ok-line: #28573a;
+
+  --warn: #e5a056;
+  --warn-soft: #332619;
+
+  --danger: #ef6868;
+  --danger-soft: #351c1d;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .28);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, .34);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, .45);
+  --shadow-up: 0 -7px 22px rgba(0, 0, 0, .34);
+  --shadow-soft: 0 4px 18px rgba(0, 0, 0, .24);
+  --shadow-food: 0 9px 28px rgba(0, 0, 0, .3);
+}
+
+/* ------------------------- Theme buttons ------------------------- */
+.theme-icon {
+  width: 20px;
+  height: 20px;
+}
+.theme-icon-sun { display: none; }
+html[data-theme="dark"] .theme-icon-moon { display: none; }
+html[data-theme="dark"] .theme-icon-sun { display: block; }
+
+.hdr-btn.theme-toggle {
+  flex: none;
+}
+
+.admin-theme-toggle {
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #dce2e7;
+}
+.admin-theme-toggle:hover {
+  background: rgba(255,255,255,.11);
+  color: #fff;
+}
+
+/* ========================= CUSTOMER ========================= */
+html[data-theme="dark"] body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .app-header {
+  background: #211713;
+  border-bottom-color: #3a2922;
+  box-shadow: 0 4px 18px rgba(0,0,0,.34);
+}
+
+html[data-theme="dark"] .brand-text small {
+  color: #c9bab2;
+}
+
+html[data-theme="dark"] .cat-bar {
+  background: #15181b !important;
+  border-color: var(--line) !important;
+  box-shadow: 0 3px 14px rgba(0,0,0,.24) !important;
+}
+
+html[data-theme="dark"] .cat-tab,
+html[data-theme="dark"] .search-tab,
+html[data-theme="dark"] .tab-search {
+  border-color: var(--line) !important;
+  background: #1b1f23 !important;
+  color: var(--ink-2) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .cat-tab:hover,
+html[data-theme="dark"] .search-tab:hover {
+  border-color: #505860 !important;
+  background: #22272c !important;
+}
+
+html[data-theme="dark"] .cat-tab.is-active {
+  color: #ff9b5e !important;
+  border-color: #70442a !important;
+  background: linear-gradient(180deg, #332116 0%, #291b14 100%) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] main {
+  background: #121416 !important;
+  box-shadow: 0 0 42px rgba(0,0,0,.18) !important;
+}
+
+html[data-theme="dark"] .menu-overview {
+  border-color: #294735 !important;
+  background: linear-gradient(135deg, #17261d 0%, #161d19 100%) !important;
+}
+
+html[data-theme="dark"] .menu-overview .allergen-toggle {
+  border-color: var(--line-strong) !important;
+  background: #1c2024 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .closed-banner {
+  border-color: #61462a !important;
+  background: #2c2117 !important;
+  color: #f0c38d !important;
+}
+
+html[data-theme="dark"] .prod-card,
+html[data-theme="dark"] .prod-grid.menu-layout-list,
+html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card {
+  border-color: var(--line) !important;
+  background: #191c20 !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+html[data-theme="dark"] .prod-card:hover,
+html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card:hover {
+  border-color: #68422c !important;
+  background: #1f2022 !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
+}
+
+html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card {
+  border-bottom-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .prod-name,
+html[data-theme="dark"] .cat-head h2,
+html[data-theme="dark"] .view-title,
+html[data-theme="dark"] .sec-title {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .prod-desc,
+html[data-theme="dark"] .cat-description,
+html[data-theme="dark"] .page-intro,
+html[data-theme="dark"] .hint,
+html[data-theme="dark"] .section-help {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .allergen-mini-chip {
+  background: #27241f !important;
+  color: #d6c5b7 !important;
+}
+
+html[data-theme="dark"] .show-more,
+html[data-theme="dark"] .show-more[aria-expanded="true"] {
+  border-color: #5a3927 !important;
+  background: #251b16 !important;
+  color: #ff8a43 !important;
+}
+
+html[data-theme="dark"] .prod-cart-badge {
+  border-color: #2f6b47 !important;
+  background: rgba(20,29,24,.94) !important;
+  color: #72db98 !important;
+}
+
+html[data-theme="dark"] .sheet-backdrop {
+  background: rgba(0,0,0,.72) !important;
+}
+
+html[data-theme="dark"] .sheet,
+html[data-theme="dark"] .sheet-head,
+html[data-theme="dark"] .sheet-body,
+html[data-theme="dark"] .sheet-foot {
+  background: #171a1e !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .sheet-head,
+html[data-theme="dark"] .sheet-foot {
+  border-color: var(--line) !important;
+}
+
+html[data-theme="dark"] .sheet-close,
+html[data-theme="dark"] .sheet-fav,
+html[data-theme="dark"] .qty {
+  border-color: var(--line) !important;
+  background: #22262a !important;
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .sheet-desc {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .opt-group,
+html[data-theme="dark"] .opt-row,
+html[data-theme="dark"] .ingredient-customize,
+html[data-theme="dark"] .ingredient-customize-toggle,
+html[data-theme="dark"] textarea.input {
+  border-color: var(--line) !important;
+  background: #1d2125 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .ingredient-customize-body {
+  border-color: var(--line) !important;
+}
+
+html[data-theme="dark"] .opt-row:has(input:checked) {
+  border-color: #397a50 !important;
+  background: #16271c !important;
+}
+
+html[data-theme="dark"] .opt-row:has(input:checked) .opt-label,
+html[data-theme="dark"] .opt-row:has(input:checked) .opt-price {
+  color: #70d494 !important;
+}
+
+html[data-theme="dark"] .ingredient-chip {
+  border-color: #397a50 !important;
+  background: #17281d !important;
+  color: #70d494 !important;
+}
+
+html[data-theme="dark"] .ingredient-chip.is-removed {
+  border-color: #824340 !important;
+  background: #311d1d !important;
+  color: #ff8a84 !important;
+}
+
+html[data-theme="dark"] .ingredient-removed-summary,
+html[data-theme="dark"] .line-removed,
+html[data-theme="dark"] .order-history-removed,
+html[data-theme="dark"] .checkout-review-removed {
+  background: transparent !important;
+  color: #ff9691 !important;
+  border-color: #b4544f !important;
+}
+
+html[data-theme="dark"] .sheet-allergens {
+  border-color: #604b37 !important;
+  background: #292118 !important;
+}
+
+html[data-theme="dark"] .sheet-allergen-chip,
+html[data-theme="dark"] .sheet-allergen-none {
+  border-color: #604b37 !important;
+  background: #33271c !important;
+  color: #e4c3a8 !important;
+}
+
+html[data-theme="dark"] .cart-line,
+html[data-theme="dark"] .cart-summary,
+html[data-theme="dark"] .step-panel,
+html[data-theme="dark"] .review-card,
+html[data-theme="dark"] .checkout-review-item,
+html[data-theme="dark"] .checkout-review-info,
+html[data-theme="dark"] .checkout-review-empty,
+html[data-theme="dark"] .checkout-review-head,
+html[data-theme="dark"] .checkout-review-toggle,
+html[data-theme="dark"] .checkout-review-summary,
+html[data-theme="dark"] #reviewCard .checkout-review-head,
+html[data-theme="dark"] #reviewCard .checkout-review-toggle,
+html[data-theme="dark"] #reviewCard .checkout-review-summary,
+html[data-theme="dark"] #reviewCard .checkout-review-item,
+html[data-theme="dark"] #reviewCard .checkout-review-info {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .input,
+html[data-theme="dark"] .phone-prefix,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  border-color: var(--line-strong) !important;
+  background: #171a1e !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #727c86 !important;
+}
+
+html[data-theme="dark"] .pickup-choice {
+  border-color: var(--line) !important;
+  background: #1b1f23 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .pickup-choice[aria-pressed="true"],
+html[data-theme="dark"] .pickup-choice.is-on {
+  border-color: #397a50 !important;
+  background: #17281d !important;
+}
+
+html[data-theme="dark"] .time-btn {
+  border-color: var(--line) !important;
+  background: #1c2024 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .time-btn.is-active,
+html[data-theme="dark"] .time-btn[aria-pressed="true"] {
+  border-color: var(--accent) !important;
+  background: #352116 !important;
+  color: #ff9d64 !important;
+}
+
+html[data-theme="dark"] .btn-outline {
+  border-color: var(--line-strong) !important;
+  background: #1c2024 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .view-cart > .checkout-actions,
+html[data-theme="dark"] .view-checkout > .checkout-actions {
+  border-color: var(--line) !important;
+  background: rgba(23,26,30,.98) !important;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.32) !important;
+}
+
+html[data-theme="dark"] #viewProfile .profile-tabs,
+html[data-theme="dark"] #viewProfile .profile-tab-panel {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+}
+
+html[data-theme="dark"] #viewProfile .profile-tab {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] #viewProfile .profile-tab.is-active {
+  color: #fff !important;
+  background: var(--accent) !important;
+}
+
+html[data-theme="dark"] .mini-row {
+  border-color: var(--line) !important;
+}
+
+html[data-theme="dark"] .active-order-card {
+  border-color: #29583a !important;
+  background: linear-gradient(135deg,#16261c,#181d1a) !important;
+}
+
+html[data-theme="dark"] .active-order-open,
+html[data-theme="dark"] .active-orders-carousel-head button,
+html[data-theme="dark"] .active-order-dismiss {
+  border-color: #315d40 !important;
+  background: #1c2220 !important;
+  color: #70d494 !important;
+}
+
+html[data-theme="dark"] .order-progress-dot {
+  border-color: #4a5550 !important;
+  background: #1b2020 !important;
+}
+
+html[data-theme="dark"] .order-history-card,
+html[data-theme="dark"] .order-history-line {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+}
+
+html[data-theme="dark"] .order-history-details {
+  border-color: var(--line) !important;
+  background: #15181b !important;
+}
+
+html[data-theme="dark"] .order-history-line-head strong,
+html[data-theme="dark"] .order-history-line-head b,
+html[data-theme="dark"] .order-history-meta strong {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .order-history-summary,
+html[data-theme="dark"] .order-history-size,
+html[data-theme="dark"] .order-history-meta > div {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .allergen-modal,
+html[data-theme="dark"] .modal-backdrop {
+  background: rgba(0,0,0,.72) !important;
+}
+
+html[data-theme="dark"] .allergen-dialog,
+html[data-theme="dark"] .allergen-dialog footer,
+html[data-theme="dark"] .confirm-modal {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .allergen-search,
+html[data-theme="dark"] .allergen-choice {
+  border-color: var(--line) !important;
+  background: #1e2226 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .allergen-choice.is-on {
+  border-color: #6b422a !important;
+  background: #322117 !important;
+  color: #ff9d64 !important;
+}
+
+html[data-theme="dark"] .toast {
+  border-color: var(--line-strong) !important;
+  background: #23282d !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .shop-info-modal {
+  background: rgba(0,0,0,.72) !important;
+}
+
+html[data-theme="dark"] .shop-info-dialog {
+  background: #191d21 !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .shop-info-close {
+  background: #252a2f !important;
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .shop-info-list,
+html[data-theme="dark"] .shop-info-row {
+  border-color: var(--line) !important;
+}
+
+html[data-theme="dark"] .shop-info-row-icon {
+  background: #332116 !important;
+  color: #ff8c49 !important;
+}
+
+html[data-theme="dark"] .shop-info-label {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] .shop-info-value,
+html[data-theme="dark"] .shop-info-value:visited {
+  color: var(--ink) !important;
+}
+
+/* ========================= ADMIN ========================= */
+html[data-theme="dark"] {
+  --sidebar: #121519;
+}
+
+html[data-theme="dark"] .admin-shell,
+html[data-theme="dark"] .main-col {
+  background: var(--bg) !important;
+}
+
+html[data-theme="dark"] .sidebar {
+  background: #111418 !important;
+  border-right-color: #2b3035 !important;
+}
+
+html[data-theme="dark"] .side-brand {
+  border-color: rgba(255,255,255,.09) !important;
+}
+
+html[data-theme="dark"] .page-head,
+html[data-theme="dark"] .orders-topbar,
+html[data-theme="dark"] .orders-inbox,
+html[data-theme="dark"] .orders-list,
+html[data-theme="dark"] .order-detail-live,
+html[data-theme="dark"] .pos-order-detail,
+html[data-theme="dark"] .pos-detail-actions,
+html[data-theme="dark"] .order-action-foot {
+  border-color: var(--line) !important;
+  background: #181b1f !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .scroll-area,
+html[data-theme="dark"] .orders-app,
+html[data-theme="dark"] .order-detail-pane {
+  background: #121519 !important;
+}
+
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .set-card,
+html[data-theme="dark"] .cat-card,
+html[data-theme="dark"] .group-card,
+html[data-theme="dark"] .settings-col,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .ingredient-admin-row,
+html[data-theme="dark"] .ingredient-admin-empty,
+html[data-theme="dark"] .menu-layout-choice {
+  border-color: var(--line) !important;
+  background: #1a1e22 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .cat-card.is-open,
+html[data-theme="dark"] .menu-layout-choice:hover,
+html[data-theme="dark"] .menu-layout-choice:has(input:checked) {
+  border-color: #68422c !important;
+  background: #241b17 !important;
+}
+
+html[data-theme="dark"] .cat-body,
+html[data-theme="dark"] .group-opt,
+html[data-theme="dark"] .toggle-row,
+html[data-theme="dark"] .ingredient-admin-row {
+  border-color: var(--line) !important;
+  background: #171b1f !important;
+}
+
+html[data-theme="dark"] .input,
+html[data-theme="dark"] .textarea,
+html[data-theme="dark"] .select,
+html[data-theme="dark"] .ingredient-name-input,
+html[data-theme="dark"] .pos-estimate-editor label {
+  border-color: var(--line-strong) !important;
+  background: #14171a !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .filter-group,
+html[data-theme="dark"] .chip-nav,
+html[data-theme="dark"] .search-wrap {
+  border-color: var(--line) !important;
+  background: #171b1f !important;
+}
+
+html[data-theme="dark"] .filter-btn,
+html[data-theme="dark"] .chip {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .filter-btn.is-active,
+html[data-theme="dark"] .chip.is-active {
+  color: #fff !important;
+  background: var(--accent) !important;
+}
+
+html[data-theme="dark"] .orders-list-row {
+  border-color: var(--line) !important;
+  background: #181b1f !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .orders-list-row:hover,
+html[data-theme="dark"] .orders-list-row.is-selected {
+  background: #20252a !important;
+}
+
+html[data-theme="dark"] .order-detail-empty-icon {
+  background: #20252a !important;
+  color: #77818b !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .pos-detail-pills span:first-child {
+  background: #303841 !important;
+}
+
+html[data-theme="dark"] .pos-progress-actions button,
+html[data-theme="dark"] .accept-quick-times button,
+html[data-theme="dark"] .pos-detail-close {
+  border-color: var(--line-strong) !important;
+  background: #20252a !important;
+  color: var(--ink-2) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .pos-progress-actions button.is-active {
+  border-color: #3da95a !important;
+  background: #3da95a !important;
+  color: #fff !important;
+}
+
+html[data-theme="dark"] .accept-quick-times button.is-active {
+  border-color: #8b4e25 !important;
+  background: #312017 !important;
+  color: #ff9a5b !important;
+}
+
+html[data-theme="dark"] .pos-order-general-note,
+html[data-theme="dark"] .pos-order-removed {
+  background: #321d1d !important;
+  color: #ff918c !important;
+}
+
+html[data-theme="dark"] .menu-layout-demo {
+  border-color: var(--line) !important;
+  background: #15181b !important;
+}
+
+html[data-theme="dark"] .menu-layout-demo.is-grid i,
+html[data-theme="dark"] .menu-layout-demo.is-list i {
+  background: #242a2f !important;
+  box-shadow: inset 0 0 0 1px #3c444c !important;
+}
+
+html[data-theme="dark"] .modal-backdrop,
+html[data-theme="dark"] .product-editor-backdrop {
+  background: rgba(0,0,0,.68) !important;
+}
+
+html[data-theme="dark"] .settings-head,
+html[data-theme="dark"] .settings-scroll {
+  border-color: var(--line) !important;
+  background: #1a1e22 !important;
+}
+
+html[data-theme="dark"] .admin-toast {
+  background: #2a3036 !important;
+  color: #fff !important;
+}
+
+html[data-theme="dark"] ::selection {
+  background: rgba(255,113,28,.32);
+}
