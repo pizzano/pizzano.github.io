@@ -209,6 +209,7 @@ function makeTrigger() {
   if (button) return button;
 
   const profileButton = document.getElementById('btnProfile');
+  const themeButton = document.getElementById('btnTheme');
   const actions = profileButton?.closest('.hdr-actions');
   if (!profileButton || !actions) return null;
 
@@ -220,7 +221,7 @@ function makeTrigger() {
   button.setAttribute('aria-haspopup', 'dialog');
   button.setAttribute('aria-controls', MODAL_ID);
   button.innerHTML = storeIcon();
-  actions.insertBefore(button, profileButton);
+  actions.insertBefore(button, themeButton || profileButton);
   return button;
 }
 
