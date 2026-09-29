@@ -25,7 +25,7 @@ export const DB_URL = 'https://bestill-19-default-rtdb.europe-west1.firebasedata
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const POLL_INTERVAL = 4000;
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 const LOCAL_KEY = 'kol_menu_state_v2';
 const CHANNEL_NAME = 'kol_menu_sync';
@@ -263,6 +263,11 @@ const DEFAULT_SETTINGS = {
   prepMinutes: 25,
   slotIntervalMinutes: 15,
   menuLayout: 'grid',
+  adminMobileEnabled: true,
+  customerMobileEnabled: true,
+  adminDarkModeEnabled: true,
+  customerDarkModeEnabled: true,
+  ingredientCustomizationEnabled: true,
   manualClosed: false,
   closedMessage: 'Vi tar ikke imot bestillinger akkurat nå.',
 };
