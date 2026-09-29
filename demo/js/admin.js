@@ -2241,6 +2241,7 @@ function applyAdminInterfaceSettings(settings = store.settings || {}) {
 
   if (el.btnAdminTheme) {
     el.btnAdminTheme.hidden = !darkEnabled;
+    el.btnAdminTheme.style.display = darkEnabled ? '' : 'none';
   }
   if (!darkEnabled && window.KolTheme?.get?.() === 'dark') {
     window.KolTheme.set('light');
