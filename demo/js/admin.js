@@ -593,6 +593,21 @@ function resetDrag() {
 
 el.categoryList.addEventListener('dragend', resetDrag);
 
+function scrollCategoryToTop(categoryId, behavior = 'smooth') {
+  const scroller = el.categoryList.closest('.scroll-area');
+  const card = el.categoryList.querySelector(`[data-category="${CSS.escape(categoryId)}"]`);
+  if (!scroller || !card) return;
+
+  const scrollerRect = scroller.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  const targetTop = scroller.scrollTop + cardRect.top - scrollerRect.top - 8;
+
+  scroller.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior,
+  });
+}
+
 /* ------------------------------------------------------------------ *
  * Klikk i kategorilisten
  * ------------------------------------------------------------------ */
@@ -600,9 +615,15 @@ el.categoryList.addEventListener('dragend', resetDrag);
 el.categoryList.addEventListener('click', (event) => {
   const toggle = event.target.closest('[data-toggle]');
   if (toggle) {
-    ui.openCategoryId =
-      ui.openCategoryId === toggle.dataset.toggle ? null : toggle.dataset.toggle;
+    const categoryId = toggle.dataset.toggle;
+    const opening = ui.openCategoryId !== categoryId;
+    ui.openCategoryId = opening ? categoryId : null;
     renderCategories();
+    if (opening) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => scrollCategoryToTop(categoryId));
+      });
+    }
     return;
   }
 
@@ -1207,36 +1228,81 @@ el.productEditorBackdrop.addEventListener('click', closeProductEditor);
  * Scroll-spy i høyre panel
  * ------------------------------------------------------------------ */
 
-const sectionNodes = Array.from(document.querySelectorAll('.set-section[data-section]'));
+let chipScrollLock = null;
+
+function editorSectionNodes() {
+  return Array.from(el.settingsScroll.querySelectorAll('.set-section[data-section]'));
+}
+
+function centerActiveEditorChip(name, behavior = 'smooth') {
+  const chip = el.chipNav.querySelector(`[data-chip="${CSS.escape(name)}"]`);
+  if (!chip) return;
+  const targetLeft = chip.offsetLeft - (el.chipNav.clientWidth - chip.offsetWidth) / 2;
+  const maxLeft = Math.max(0, el.chipNav.scrollWidth - el.chipNav.clientWidth);
+  el.chipNav.scrollTo({
+    left: Math.max(0, Math.min(targetLeft, maxLeft)),
+    behavior,
+  });
+}
+
+function scrollEditorToSection(name, behavior = 'smooth') {
+  const target = editorSectionNodes().find((node) => node.dataset.section === name);
+  if (!target) return;
+
+  if (chipScrollLock) clearTimeout(chipScrollLock);
+  setActiveChip(name);
+  centerActiveEditorChip(name, behavior);
+
+  const scrollerRect = el.settingsScroll.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const targetTop =
+    el.settingsScroll.scrollTop + targetRect.top - scrollerRect.top - 8;
+
+  el.settingsScroll.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior,
+  });
+
+  chipScrollLock = setTimeout(() => {
+    chipScrollLock = null;
+    setActiveChip(name);
+  }, behavior === 'smooth' ? 550 : 0);
+}
 
 el.chipNav.addEventListener('click', (event) => {
   const chip = event.target.closest('[data-chip]');
   if (!chip) return;
-  const target = sectionNodes.find((node) => node.dataset.section === chip.dataset.chip);
-  if (!target) return;
-  el.settingsScroll.scrollTo({
-    top: target.offsetTop - 8,
-    behavior: 'smooth',
-  });
+  scrollEditorToSection(chip.dataset.chip);
 });
 
 function setActiveChip(name) {
-  if (ui.activeChip === name) return;
   ui.activeChip = name;
   el.chipNav.querySelectorAll('.chip').forEach((chip) => {
-    chip.classList.toggle('is-active', chip.dataset.chip === name);
+    const on = chip.dataset.chip === name;
+    chip.classList.toggle('is-active', on);
+    chip.setAttribute('aria-selected', String(on));
   });
 }
 
 el.settingsScroll.addEventListener(
   'scroll',
   () => {
-    const line = el.settingsScroll.scrollTop + 60;
-    let current = sectionNodes[0];
-    for (const node of sectionNodes) {
-      if (node.offsetTop <= line) current = node;
+    if (chipScrollLock) return;
+    const nodes = editorSectionNodes();
+    if (!nodes.length) return;
+
+    const scrollerTop = el.settingsScroll.getBoundingClientRect().top;
+    const line = scrollerTop + 28;
+    let current = nodes[0];
+
+    for (const node of nodes) {
+      if (node.getBoundingClientRect().top <= line) current = node;
     }
-    if (current) setActiveChip(current.dataset.section);
+
+    if (current) {
+      setActiveChip(current.dataset.section);
+      centerActiveEditorChip(current.dataset.section, 'auto');
+    }
   },
   { passive: true }
 );
