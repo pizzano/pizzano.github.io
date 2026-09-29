@@ -7,7 +7,7 @@
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260929-focusgreen1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260929-nestedchoices1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20260923-theme1">
 </head>
 
@@ -29,14 +29,19 @@
             </div>
 
             <nav class="side-nav" aria-label="Hovedmeny">
-                <button class="side-link is-active" data-nav="products" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                    Produkter &amp; kategorier
-                </button>
-                <button class="side-link" data-nav="groups" type="button">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.4"/><circle cx="7" cy="17" r="2.4"/><path d="M12 7h8M12 17h8"/></svg>
-                    Choices &amp; addons
-                </button>
+                <div class="side-menu-block is-expanded" id="productsMenuBlock">
+                    <button class="side-link side-link-parent is-active" data-nav="products" type="button" aria-controls="productsSubnav" aria-expanded="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                        <span class="side-link-label">Produkter &amp; kategorier</span>
+                        <svg class="side-menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                    </button>
+                    <div class="side-subnav" id="productsSubnav">
+                        <button class="side-link side-sub-link" data-nav="groups" type="button">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><path d="M12 7h8M12 17h8"/></svg>
+                            <span>Choices &amp; addons</span>
+                        </button>
+                    </div>
+                </div>
                 <button class="side-link" data-nav="orders" type="button">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12l1 16H5L6 4z"/><path d="M9 9h6M9 13h6"/></svg>
                     Bestillinger
@@ -108,6 +113,14 @@
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
                             <input id="groupSearch" class="input" type="search" placeholder="Søk i valggrupper…" autocomplete="off">
+                        </div>
+                        <div class="view-toggle" role="group" aria-label="Visningsmodus">
+                            <button class="view-toggle-btn" data-group-view="grid" type="button" aria-label="Kortvisning" title="Kortvisning">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+                            </button>
+                            <button class="view-toggle-btn is-active" data-group-view="list" type="button" aria-label="Listevisning" title="Listevisning">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+                            </button>
                         </div>
                         <button class="btn btn-primary btn-sm" id="btnNewGroup" type="button">+ Lag ny valggruppe</button>
                     </div>
@@ -599,7 +612,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260929-focusgreen1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260929-nestedchoices1"></script>
 </body>
 
 </html>
