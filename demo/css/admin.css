@@ -92,6 +92,39 @@ select { font-family: inherit; font-size: inherit; color: inherit; }button { cur
     background: var(--accent);
     color: #fff;
     font-weight: 600;
+}.side-menu-block {
+    display: grid;
+    gap: 3px;
+}.side-link-parent .side-link-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}.side-menu-chevron {
+    width: 14px !important;
+    height: 14px !important;
+    margin-left: auto;
+    transition: transform .16s ease;
+}.side-menu-block.is-expanded .side-menu-chevron {
+    transform: rotate(90deg);
+}.side-link-parent.has-active-child {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}.side-subnav {
+    display: grid;
+    gap: 2px;
+    margin: 0 0 2px 18px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, .14);
+}.side-subnav[hidden] {
+    display: none;
+}.side-sub-link {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 12.8px;
+}.side-sub-link svg {
+    width: 15px;
+    height: 15px;
 }.side-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .1); }.save-state {
     display: flex;
     align-items: center;
@@ -154,6 +187,35 @@ select { font-family: inherit; font-size: inherit; color: inherit; }button { cur
     background: var(--accent-soft);
     color: var(--accent-dark);
     font-weight: 600;
+}.view-toggle {
+    display: inline-flex;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--surface);
+}.view-toggle-btn {
+    width: 38px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-3);
+    transition: background .14s ease, color .14s ease;
+}.view-toggle-btn:last-child {
+    border-right: 0;
+}.view-toggle-btn:hover {
+    background: var(--surface-3);
+    color: var(--ink);
+}.view-toggle-btn.is-active {
+    background: #182230;
+    color: #fff;
+}.view-toggle-btn svg {
+    width: 17px;
+    height: 17px;
 }
 
 /* --------------- Synlige scrollbars --------------- */.scroll-area,
@@ -235,8 +297,11 @@ select { font-family: inherit; font-size: inherit; color: inherit; }button { cur
 
 /* -------------------- Valggruppe-bibliotek -------------------- */.group-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 10px;
+}.group-grid.is-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}.group-grid.is-list {
+    grid-template-columns: minmax(0, 1fr);
 }.group-card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -1116,4 +1181,79 @@ html[data-theme="dark"] .set-section.is-focus-target {
 }
 html[data-theme="dark"] .set-section.is-focus-target {
     box-shadow: inset 0 0 0 2px rgba(85, 185, 111, .72), 0 6px 16px rgba(0, 0, 0, .18);
+}
+
+
+/* ---------------- Choices: liste/kort-visning ---------------- */
+.group-grid.is-list .group-card {
+    display: grid;
+    grid-template-columns: minmax(210px, .7fr) minmax(280px, 1.3fr) auto;
+    grid-template-areas:
+        "group-head group-options group-actions"
+        "group-meta group-options group-actions";
+    column-gap: 18px;
+    row-gap: 4px;
+    align-items: start;
+    padding: 14px 16px;
+}
+.group-grid.is-list .group-card header {
+    grid-area: group-head;
+}
+.group-grid.is-list .group-meta {
+    grid-area: group-meta;
+    margin: 0;
+}
+.group-grid.is-list .group-opts {
+    grid-area: group-options;
+    margin: 0;
+}
+.group-grid.is-list .group-card footer {
+    grid-area: group-actions;
+    align-self: center;
+    white-space: nowrap;
+}
+.group-grid.is-list .group-card h3 {
+    font-size: 15px;
+}
+html[data-theme="dark"] .view-toggle {
+    border-color: var(--line);
+    background: var(--surface);
+}
+html[data-theme="dark"] .view-toggle-btn {
+    background: var(--surface);
+    color: var(--ink-3);
+}
+html[data-theme="dark"] .view-toggle-btn:hover {
+    background: var(--surface-3);
+    color: var(--ink);
+}
+html[data-theme="dark"] .view-toggle-btn.is-active {
+    background: #e9edf2;
+    color: #182230;
+}
+
+@media (max-width: 1100px) {
+    .side-menu-block {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .side-subnav {
+        display: flex;
+        margin: 0;
+        padding: 0;
+        border-left: 0;
+    }
+    .side-link-parent .side-menu-chevron {
+        display: none;
+    }
+}
+@media (max-width: 900px) {
+    .group-grid.is-list .group-card {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "group-head group-actions"
+            "group-meta group-actions"
+            "group-options group-options";
+    }
 }

@@ -43,6 +43,14 @@ import {
  * UI-tilstand
  * ------------------------------------------------------------------ */
 
+const initialGroupView = (() => {
+  try {
+    return localStorage.getItem('kol-admin-group-view') === 'grid' ? 'grid' : 'list';
+  } catch {
+    return 'list';
+  }
+})();
+
 const ui = {
   page: 'products',
   openCategoryId: null,
@@ -51,6 +59,7 @@ const ui = {
   search: '',
   filter: 'all',
   groupSearch: '',
+  groupView: initialGroupView,
   orderFilter: 'all',
   activeChip: 'produkt',
 };
@@ -75,6 +84,8 @@ const $ = (id) => document.getElementById(id);
 
 const el = {
   sideLinks: document.querySelectorAll('.side-link[data-nav]'),
+  productsMenuBlock: $('productsMenuBlock'),
+  productsSubnav: $('productsSubnav'),
   pages: {
     products: $('pageProducts'),
     groups: $('pageGroups'),
@@ -96,6 +107,7 @@ const el = {
   categoryList: $('categoryList'),
   groupsSummary: $('groupsSummary'),
   groupSearch: $('groupSearch'),
+  groupViewBtns: document.querySelectorAll('[data-group-view]'),
   btnNewGroup: $('btnNewGroup'),
   groupLibrary: $('groupLibrary'),
   ordersSummary: $('ordersSummary'),
@@ -268,6 +280,20 @@ function setPage(page) {
   el.sideLinks.forEach((link) => {
     link.classList.toggle('is-active', link.dataset.nav === page);
   });
+
+  const inProductsArea = page === 'products' || page === 'groups';
+  if (el.productsMenuBlock) {
+    el.productsMenuBlock.classList.toggle('is-expanded', inProductsArea);
+    el.productsMenuBlock.classList.toggle('has-active-child', page === 'groups');
+  }
+  if (el.productsSubnav) el.productsSubnav.hidden = !inProductsArea;
+
+  const productsLink = Array.from(el.sideLinks).find((link) => link.dataset.nav === 'products');
+  if (productsLink) {
+    productsLink.setAttribute('aria-expanded', String(inProductsArea));
+    productsLink.classList.toggle('has-active-child', page === 'groups');
+  }
+
   setOrdersSidebarCollapsed(page === 'orders');
   renderAll();
 }
@@ -1326,6 +1352,14 @@ el.settingsScroll.addEventListener(
  * ------------------------------------------------------------------ */
 
 function renderGroupLibrary() {
+  el.groupLibrary.classList.toggle('is-list', ui.groupView === 'list');
+  el.groupLibrary.classList.toggle('is-grid', ui.groupView === 'grid');
+  el.groupViewBtns.forEach((button) => {
+    const active = button.dataset.groupView === ui.groupView;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+
   const groups = (store.optionGroups || []).filter((group) =>
     (group.title || '').toLowerCase().includes(ui.groupSearch.toLowerCase())
   );
@@ -1397,6 +1431,18 @@ el.groupLibrary.addEventListener('click', (event) => {
 el.groupSearch.addEventListener('input', () => {
   ui.groupSearch = el.groupSearch.value.trim();
   renderGroupLibrary();
+});
+
+el.groupViewBtns.forEach((button) => {
+  button.addEventListener('click', () => {
+    ui.groupView = button.dataset.groupView === 'grid' ? 'grid' : 'list';
+    try {
+      localStorage.setItem('kol-admin-group-view', ui.groupView);
+    } catch {
+      // Visningen fungerer fortsatt selv om lokal lagring er blokkert.
+    }
+    renderGroupLibrary();
+  });
 });
 
 el.btnNewGroup.addEventListener('click', () => openEditor(null));
