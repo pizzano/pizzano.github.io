@@ -46,6 +46,7 @@ import {
 const ui = {
   page: 'products',
   openCategoryId: null,
+  focusedCategoryId: null,
   selectedItemId: null,
   search: '',
   filter: 'all',
@@ -405,7 +406,9 @@ function renderCategories() {
       const soldOutCount = (section.items || []).filter((item) => item.soldOut).length;
 
       return `
-      <section class="cat-card${isOpen ? ' is-open' : ''}" data-category="${escapeHtml(
+      <section class="cat-card${isOpen ? ' is-open' : ''}${
+        ui.focusedCategoryId === section.id ? ' is-focus-target' : ''
+      }" data-category="${escapeHtml(
         section.id
       )}" draggable="false">
         <header class="cat-card-head">
@@ -618,6 +621,7 @@ el.categoryList.addEventListener('click', (event) => {
     const categoryId = toggle.dataset.toggle;
     const opening = ui.openCategoryId !== categoryId;
     ui.openCategoryId = opening ? categoryId : null;
+    ui.focusedCategoryId = opening ? categoryId : null;
     renderCategories();
     if (opening) {
       requestAnimationFrame(() => {
@@ -666,6 +670,7 @@ el.categoryList.addEventListener('click', (event) => {
   if (itemId && !event.target.closest('[data-drag-item]')) {
     ui.selectedItemId = itemId;
     ui.activeChip = 'produkt';
+    if (row?.dataset.section) ui.focusedCategoryId = row.dataset.section;
     renderCategories();
     renderPanel();
     el.settingsScroll.scrollTop = 0;
@@ -693,6 +698,7 @@ function createProduct(sectionId) {
     });
   });
   ui.openCategoryId = sectionId;
+  ui.focusedCategoryId = sectionId;
   ui.selectedItemId = newId;
   ui.activeChip = 'produkt';
   renderCategories();
@@ -873,6 +879,9 @@ function renderPanel() {
         }>${escapeHtml(entry.title)}</option>`
     )
     .join('');
+
+  setActiveChip(ui.activeChip || 'produkt');
+  centerActiveEditorChip(ui.activeChip || 'produkt', 'auto');
 }
 
 function normalizedIngredientRules(item = selectedItem().item) {
@@ -1167,6 +1176,7 @@ el.fMoveCategory.addEventListener('change', () => {
     to.items.push(moved);
   });
   ui.openCategoryId = targetId;
+  ui.focusedCategoryId = targetId;
   renderCategories();
   renderPanel();
   toast('Produktet er flyttet til ny kategori.');
@@ -1281,6 +1291,10 @@ function setActiveChip(name) {
     const on = chip.dataset.chip === name;
     chip.classList.toggle('is-active', on);
     chip.setAttribute('aria-selected', String(on));
+  });
+
+  editorSectionNodes().forEach((section) => {
+    section.classList.toggle('is-focus-target', section.dataset.section === name);
   });
 }
 
