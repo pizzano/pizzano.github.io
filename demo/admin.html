@@ -7,7 +7,7 @@
     <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
     <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20260929-interfacecontrols1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20260929-settingscats1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20260923-theme1">
 </head>
 
@@ -164,23 +164,21 @@
                 <header class="page-head">
                     <div class="page-title">
                         <h1>Restaurantinnstillinger</h1>
-                        <p>Åpningstid, hentetid og kontaktinformasjon. Endringene vises umiddelbart for kunden.</p>
-                    </div>
-                    <div class="page-tools">
-                        <div class="view-toggle" role="group" aria-label="Visning av restaurantinnstillinger">
-                            <button class="view-toggle-btn" data-settings-view="grid" type="button" aria-label="Kortvisning" title="Kortvisning">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
-                            </button>
-                            <button class="view-toggle-btn is-active" data-settings-view="list" type="button" aria-label="Listevisning" title="Listevisning">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
-                            </button>
-                        </div>
+                        <p>Velg en kategori under og endre bare det du trenger.</p>
                     </div>
                 </header>
-                <div class="scroll-area">
-                    <div class="settings-grid is-list" id="settingsGrid">
+                <nav class="settings-section-nav" id="settingsSectionNav" aria-label="Kategorier for restaurantinnstillinger">
+                    <button class="settings-section-btn is-active" data-settings-section-tab="status" type="button">Åpen / stengt</button>
+                    <button class="settings-section-btn" data-settings-section-tab="hours" type="button">Åpningstider</button>
+                    <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Hentetid</button>
+                    <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
+                    <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
+                    <button class="settings-section-btn" data-settings-section-tab="contact" type="button">Kontakt</button>
+                </nav>
+                <div class="scroll-area settings-section-scroll">
+                    <div class="settings-grid is-list is-sectioned" id="settingsGrid">
 
-                        <article class="set-card">
+                        <article class="set-card settings-section-card" data-settings-section="status">
                             <h2>Åpen eller stengt</h2>
                             <label class="toggle-row">
                                 <span class="toggle-body">
@@ -196,7 +194,7 @@
                             <p class="state-line" id="openStateLine">—</p>
                         </article>
 
-                        <article class="set-card">
+                        <article class="set-card settings-section-card" data-settings-section="hours" hidden>
                             <h2>Åpningstider</h2>
                             <div class="field-grid">
                                 <div class="set-field">
@@ -214,7 +212,7 @@
                             </div>
                         </article>
 
-                        <article class="set-card">
+                        <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
                             <h2>Hentetid</h2>
                             <div class="field-grid">
                                 <div class="set-field">
@@ -230,7 +228,7 @@
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
-                        <article class="set-card">
+                        <article class="set-card settings-section-card" data-settings-section="menu" hidden>
                             <h2>Menyvisning</h2>
                             <p class="set-hint">Velg hvordan produktene skal vises i kundemenyen. Endringen vises med en gang.</p>
                             <div class="menu-layout-options" role="radiogroup" aria-label="Menyvisning">
@@ -257,7 +255,7 @@
                             </div>
                         </article>
 
-                        <article class="set-card interface-control-card">
+                        <article class="set-card interface-control-card settings-section-card" data-settings-section="interface" hidden>
                             <h2>Grensesnitt og funksjoner</h2>
                             <p class="set-hint">Slå funksjoner av og på uten å slette dem. Kundeinnstillinger oppdateres automatisk i kundemenyen.</p>
 
@@ -318,7 +316,7 @@
                             </div>
                         </article>
 
-                        <article class="set-card">
+                        <article class="set-card settings-section-card" data-settings-section="contact" hidden>
                             <h2>Kontakt og henting</h2>
                             <div class="set-field">
                                 <label class="lbl" for="sRestaurantName">Restaurantnavn</label>
@@ -683,7 +681,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20260929-interfacecontrols2"></script>
+    <script type="module" src="/demo/js/admin.js?v=20260929-settingscats1"></script>
 </body>
 
 </html>
