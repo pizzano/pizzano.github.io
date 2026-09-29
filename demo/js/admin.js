@@ -59,6 +59,16 @@ const initialSettingsView = (() => {
   }
 })();
 
+const SETTINGS_SECTIONS = new Set(['status', 'hours', 'pickup', 'menu', 'interface', 'contact']);
+const initialSettingsSection = (() => {
+  try {
+    const saved = localStorage.getItem('kol-admin-settings-section');
+    return SETTINGS_SECTIONS.has(saved) ? saved : 'status';
+  } catch {
+    return 'status';
+  }
+})();
+
 const ui = {
   page: 'products',
   openCategoryId: null,
@@ -69,6 +79,7 @@ const ui = {
   groupSearch: '',
   groupView: initialGroupView,
   settingsView: initialSettingsView,
+  settingsSection: initialSettingsSection,
   orderFilter: 'all',
   activeChip: 'produkt',
 };
@@ -121,6 +132,8 @@ const el = {
   groupLibrary: $('groupLibrary'),
   settingsGrid: $('settingsGrid'),
   settingsViewBtns: document.querySelectorAll('[data-settings-view]'),
+  settingsSectionBtns: document.querySelectorAll('[data-settings-section-tab]'),
+  settingsSectionCards: document.querySelectorAll('[data-settings-section]'),
   btnAdminTheme: $('btnAdminTheme'),
   ordersSummary: $('ordersSummary'),
   orderStatRow: $('orderStatRow'),
@@ -2213,13 +2226,24 @@ function refreshOrderClocks() {
 
 function renderSettingsLayout() {
   if (!el.settingsGrid) return;
-  const view = ui.settingsView === 'grid' ? 'grid' : 'list';
-  el.settingsGrid.classList.toggle('is-grid', view === 'grid');
-  el.settingsGrid.classList.toggle('is-list', view === 'list');
-  el.settingsViewBtns.forEach((button) => {
-    const active = button.dataset.settingsView === view;
+
+  // Restaurantinnstillinger uses one focused category at a time.
+  el.settingsGrid.classList.remove('is-grid');
+  el.settingsGrid.classList.add('is-list', 'is-sectioned');
+
+  const section = SETTINGS_SECTIONS.has(ui.settingsSection)
+    ? ui.settingsSection
+    : 'status';
+  ui.settingsSection = section;
+
+  el.settingsSectionBtns.forEach((button) => {
+    const active = button.dataset.settingsSectionTab === section;
     button.classList.toggle('is-active', active);
-    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-selected', String(active));
+  });
+
+  el.settingsSectionCards.forEach((card) => {
+    card.hidden = card.dataset.settingsSection !== section;
   });
 }
 
@@ -2362,15 +2386,24 @@ function renderSettingsPreviewOnly() {
 
 SETTING_FIELDS.forEach(([key, type]) => bindSettingField(key, type));
 
-el.settingsViewBtns.forEach((button) => {
+el.settingsSectionBtns.forEach((button) => {
   button.addEventListener('click', () => {
-    ui.settingsView = button.dataset.settingsView === 'grid' ? 'grid' : 'list';
+    const section = button.dataset.settingsSectionTab;
+    if (!SETTINGS_SECTIONS.has(section)) return;
+
+    ui.settingsSection = section;
     try {
-      localStorage.setItem('kol-admin-settings-view', ui.settingsView);
+      localStorage.setItem('kol-admin-settings-section', section);
     } catch {
-      // Visningen fungerer fortsatt uten lokal lagring.
+      // Kategorien fungerer fortsatt uten lokal lagring.
     }
+
     renderSettingsLayout();
+
+    const scroller = el.settingsGrid?.closest('.settings-section-scroll');
+    if (scroller) {
+      scroller.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   });
 });
 
