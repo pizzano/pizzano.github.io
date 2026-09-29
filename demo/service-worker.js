@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v69-focusscroll1';
+const CACHE_NAME = 'kol-demo-v70-focusgreen1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
