@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v74-settingscats1';
+const CACHE_NAME = 'kol-demo-v75-sidebarmenu1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
