@@ -2687,6 +2687,7 @@ function applyCustomerInterfaceSettings() {
 
   if (el.btnTheme) {
     el.btnTheme.hidden = !darkEnabled;
+    el.btnTheme.style.display = darkEnabled ? '' : 'none';
   }
   if (!darkEnabled && window.KolTheme?.get?.() === 'dark') {
     window.KolTheme.set('light');
