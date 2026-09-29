@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260922-menulayout1';
+} from './data.js?v=20260929-interfacecontrols1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -125,6 +125,7 @@ const el = {
   closedTitle: $('closedTitle'),
   closedText: $('closedText'),
   btnBack: $('btnBack'),
+  btnTheme: $('btnTheme'),
   btnProfile: $('btnProfile'),
   btnCart: $('btnCart'),
   cartCount: $('cartCount'),
@@ -868,7 +869,12 @@ function productCardHtml(item, section) {
   const soldOut = item.soldOut;
   const price = getItemBasePrice(item);
   const multi = (item.sizes || []).length > 1;
-  const needsChoice = multi || getItemOptionGroups(item).length > 0 || getItemIngredientRules(item).some((rule) => rule.removable);
+  const ingredientCustomizationEnabled = store.settings?.ingredientCustomizationEnabled !== false;
+  const needsChoice =
+    multi ||
+    getItemOptionGroups(item).length > 0 ||
+    (ingredientCustomizationEnabled &&
+      getItemIngredientRules(item).some((rule) => rule.removable));
   const desc = item.description || item.ingredients || section.note || '';
   const selectedAllergens = new Set(ui.selectedAllergens);
   const allCardAllergens = allergenLabels(item);
@@ -1094,7 +1100,15 @@ function renderSheet() {
   const { problems, message } = validateDraft();
   const groups = getItemOptionGroups(item);
   const allergens = allergenLabels(item);
-  const removableIngredients = getItemIngredientRules(item).filter((rule) => rule.removable);
+  const ingredientCustomizationEnabled =
+    store.settings?.ingredientCustomizationEnabled !== false;
+  const removableIngredients = ingredientCustomizationEnabled
+    ? getItemIngredientRules(item).filter((rule) => rule.removable)
+    : [];
+  if (!ingredientCustomizationEnabled) {
+    draft.removedIngredients = [];
+    draft.ingredientsOpen = false;
+  }
   const removedSet = new Set((draft.removedIngredients || []).map((name) => String(name).toLocaleLowerCase('no')));
   const removedNames = removableIngredients
     .filter((rule) => removedSet.has(rule.name.toLocaleLowerCase('no')))
@@ -2652,7 +2666,35 @@ el.confirmBackdrop.addEventListener('click', closeConfirm);
  * Oppstart og live-oppdatering fra admin
  * ------------------------------------------------------------------ */
 
+function applyCustomerInterfaceSettings() {
+  const settings = store.settings || {};
+  const mobileEnabled = settings.customerMobileEnabled !== false;
+  const darkEnabled = settings.customerDarkModeEnabled !== false;
+  const viewport = document.querySelector('meta[name="viewport"]');
+
+  document.documentElement.dataset.customerMobile = mobileEnabled ? 'on' : 'off';
+  document.documentElement.style.minWidth = mobileEnabled ? '' : '1024px';
+  document.body.style.minWidth = mobileEnabled ? '' : '1024px';
+
+  if (viewport) {
+    viewport.setAttribute(
+      'content',
+      mobileEnabled
+        ? 'width=device-width, initial-scale=1.0, viewport-fit=cover'
+        : 'width=1024'
+    );
+  }
+
+  if (el.btnTheme) {
+    el.btnTheme.hidden = !darkEnabled;
+  }
+  if (!darkEnabled && window.KolTheme?.get?.() === 'dark') {
+    window.KolTheme.set('light');
+  }
+}
+
 function renderAll() {
+  applyCustomerInterfaceSettings();
   const changed = reconcileCart();
   renderCategories();
   renderMenu();

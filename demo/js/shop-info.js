@@ -1,4 +1,4 @@
-import { store, ready, subscribe } from './data.js?v=20260922-menulayout1';
+import { store, ready, subscribe } from './data.js?v=20260929-interfacecontrols1';
 
 const STYLE_ID = 'shopInfoStyles';
 const MODAL_ID = 'shopInfoModal';
