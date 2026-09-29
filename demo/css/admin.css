@@ -1292,3 +1292,72 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
 .settings-grid.is-list .set-card {
     width: 100%;
 }
+
+
+/* ---------------- Restaurantinnstillinger: kategorier ---------------- */
+.settings-section-nav {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+.settings-section-nav::-webkit-scrollbar {
+    height: 0;
+}
+.settings-section-btn {
+    flex: none;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 12.5px;
+    font-weight: 650;
+    white-space: nowrap;
+    transition: background .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease;
+}
+.settings-section-btn:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+    background: var(--surface-2);
+}
+.settings-section-btn.is-active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 7px rgba(232, 98, 15, .18);
+}
+.settings-grid.is-sectioned {
+    grid-template-columns: minmax(0, 1fr);
+}
+.settings-grid.is-sectioned .settings-section-card[hidden] {
+    display: none !important;
+}
+.settings-grid.is-sectioned .settings-section-card:not([hidden]) {
+    animation: settingsSectionIn .16s ease-out;
+}
+@keyframes settingsSectionIn {
+    from { opacity: .55; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.settings-section-scroll {
+    padding-top: 14px;
+}
+@media (max-width: 620px) {
+    .settings-section-nav {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .settings-section-btn {
+        min-height: 32px;
+        padding: 0 11px;
+        font-size: 12px;
+    }
+}
