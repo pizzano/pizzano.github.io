@@ -37,7 +37,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260922-menulayout1';
+} from './data.js?v=20260929-interfacecontrols1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -46,6 +46,14 @@ import {
 const initialGroupView = (() => {
   try {
     return localStorage.getItem('kol-admin-group-view') === 'grid' ? 'grid' : 'list';
+  } catch {
+    return 'list';
+  }
+})();
+
+const initialSettingsView = (() => {
+  try {
+    return localStorage.getItem('kol-admin-settings-view') === 'grid' ? 'grid' : 'list';
   } catch {
     return 'list';
   }
@@ -60,6 +68,7 @@ const ui = {
   filter: 'all',
   groupSearch: '',
   groupView: initialGroupView,
+  settingsView: initialSettingsView,
   orderFilter: 'all',
   activeChip: 'produkt',
 };
@@ -110,6 +119,9 @@ const el = {
   groupViewBtns: document.querySelectorAll('[data-group-view]'),
   btnNewGroup: $('btnNewGroup'),
   groupLibrary: $('groupLibrary'),
+  settingsGrid: $('settingsGrid'),
+  settingsViewBtns: document.querySelectorAll('[data-settings-view]'),
+  btnAdminTheme: $('btnAdminTheme'),
   ordersSummary: $('ordersSummary'),
   orderStatRow: $('orderStatRow'),
   orderList: $('orderList'),
@@ -206,6 +218,11 @@ const el = {
     slotPreview: $('slotPreview'),
     menuLayoutGrid: $('sMenuLayoutGrid'),
     menuLayoutList: $('sMenuLayoutList'),
+    adminMobileEnabled: $('sAdminMobileEnabled'),
+    customerMobileEnabled: $('sCustomerMobileEnabled'),
+    adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
+    customerDarkModeEnabled: $('sCustomerDarkModeEnabled'),
+    ingredientCustomizationEnabled: $('sIngredientCustomizationEnabled'),
     restaurantName: $('sRestaurantName'),
     streetAddress: $('sStreetAddress'),
     postalCode: $('sPostalCode'),
@@ -2194,6 +2211,50 @@ function refreshOrderClocks() {
  * Restaurantinnstillinger
  * ------------------------------------------------------------------ */
 
+function renderSettingsLayout() {
+  if (!el.settingsGrid) return;
+  const view = ui.settingsView === 'grid' ? 'grid' : 'list';
+  el.settingsGrid.classList.toggle('is-grid', view === 'grid');
+  el.settingsGrid.classList.toggle('is-list', view === 'list');
+  el.settingsViewBtns.forEach((button) => {
+    const active = button.dataset.settingsView === view;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function applyAdminInterfaceSettings(settings = store.settings || {}) {
+  const mobileEnabled = settings.adminMobileEnabled !== false;
+  const darkEnabled = settings.adminDarkModeEnabled !== false;
+  const viewport = document.querySelector('meta[name="viewport"]');
+
+  document.documentElement.dataset.adminMobile = mobileEnabled ? 'on' : 'off';
+  document.documentElement.style.minWidth = mobileEnabled ? '' : '1180px';
+  document.body.style.minWidth = mobileEnabled ? '' : '1180px';
+
+  if (viewport) {
+    viewport.setAttribute(
+      'content',
+      mobileEnabled ? 'width=device-width, initial-scale=1.0' : 'width=1180'
+    );
+  }
+
+  if (el.btnAdminTheme) {
+    el.btnAdminTheme.hidden = !darkEnabled;
+  }
+  if (!darkEnabled && window.KolTheme?.get?.() === 'dark') {
+    window.KolTheme.set('light');
+  }
+}
+
+const BOOLEAN_SETTING_FIELDS = [
+  'adminMobileEnabled',
+  'customerMobileEnabled',
+  'adminDarkModeEnabled',
+  'customerDarkModeEnabled',
+  'ingredientCustomizationEnabled',
+];
+
 const SETTING_FIELDS = [
   ['restaurantName', 'text'],
   ['streetAddress', 'text'],
@@ -2212,6 +2273,9 @@ const SETTING_FIELDS = [
 
 function renderSettings() {
   const settings = store.settings || {};
+  renderSettingsLayout();
+  applyAdminInterfaceSettings(settings);
+
   for (const [key] of SETTING_FIELDS) {
     const field = el.settings[key];
     if (!field || field === document.activeElement) continue;
@@ -2220,6 +2284,12 @@ function renderSettings() {
   if (el.settings.manualClosed !== document.activeElement) {
     el.settings.manualClosed.checked = Boolean(settings.manualClosed);
   }
+  BOOLEAN_SETTING_FIELDS.forEach((key) => {
+    const field = el.settings[key];
+    if (field && field !== document.activeElement) {
+      field.checked = settings[key] !== false;
+    }
+  });
   const menuLayout = settings.menuLayout === 'list' ? 'list' : 'grid';
   el.settings.menuLayoutGrid.checked = menuLayout === 'grid';
   el.settings.menuLayoutList.checked = menuLayout === 'list';
@@ -2290,6 +2360,38 @@ function renderSettingsPreviewOnly() {
 }
 
 SETTING_FIELDS.forEach(([key, type]) => bindSettingField(key, type));
+
+el.settingsViewBtns.forEach((button) => {
+  button.addEventListener('click', () => {
+    ui.settingsView = button.dataset.settingsView === 'grid' ? 'grid' : 'list';
+    try {
+      localStorage.setItem('kol-admin-settings-view', ui.settingsView);
+    } catch {
+      // Visningen fungerer fortsatt uten lokal lagring.
+    }
+    renderSettingsLayout();
+  });
+});
+
+BOOLEAN_SETTING_FIELDS.forEach((key) => {
+  const field = el.settings[key];
+  if (!field) return;
+  field.addEventListener('change', () => {
+    const enabled = field.checked;
+    mutate((state) => {
+      state.settings[key] = enabled;
+    });
+    applyAdminInterfaceSettings(store.settings || {});
+    const labels = {
+      adminMobileEnabled: 'Mobilvisning i admin',
+      customerMobileEnabled: 'Mobilvisning for kunder',
+      adminDarkModeEnabled: 'Mørk modus i admin',
+      customerDarkModeEnabled: 'Mørk modus for kunder',
+      ingredientCustomizationEnabled: 'Tilpass ingredienser',
+    };
+    toast(`${labels[key] || 'Funksjonen'} er ${enabled ? 'på' : 'av'}.`);
+  });
+});
 
 [el.settings.menuLayoutGrid, el.settings.menuLayoutList].forEach((field) => {
   field.addEventListener('change', () => {
