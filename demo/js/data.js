@@ -267,6 +267,7 @@ const DEFAULT_SETTINGS = {
   customerMobileEnabled: true,
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
+  shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
   manualClosed: false,
   closedMessage: 'Vi tar ikke imot bestillinger akkurat nå.',
