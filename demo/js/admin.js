@@ -37,7 +37,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20260929-interfacecontrols1';
+} from './data.js?v=20261001-shopinfo1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -235,6 +235,7 @@ const el = {
     customerMobileEnabled: $('sCustomerMobileEnabled'),
     adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
     customerDarkModeEnabled: $('sCustomerDarkModeEnabled'),
+    shopInfoEnabled: $('sShopInfoEnabled'),
     ingredientCustomizationEnabled: $('sIngredientCustomizationEnabled'),
     restaurantName: $('sRestaurantName'),
     streetAddress: $('sStreetAddress'),
@@ -2277,6 +2278,7 @@ const BOOLEAN_SETTING_FIELDS = [
   'customerMobileEnabled',
   'adminDarkModeEnabled',
   'customerDarkModeEnabled',
+  'shopInfoEnabled',
   'ingredientCustomizationEnabled',
 ];
 
@@ -2421,6 +2423,7 @@ BOOLEAN_SETTING_FIELDS.forEach((key) => {
       customerMobileEnabled: 'Mobilvisning for kunder',
       adminDarkModeEnabled: 'Mørk modus i admin',
       customerDarkModeEnabled: 'Mørk modus for kunder',
+      shopInfoEnabled: 'Butikkinformasjon for kunder',
       ingredientCustomizationEnabled: 'Tilpass ingredienser',
     };
     toast(`${labels[key] || 'Funksjonen'} er ${enabled ? 'på' : 'av'}.`);

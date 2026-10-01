@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20260929-interfacecontrols1';
+} from './data.js?v=20261001-shopinfo1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
