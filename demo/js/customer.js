@@ -1596,13 +1596,6 @@ function renderCheckout() {
   }).join('');
 
   el.reviewCard.innerHTML = `
-    <div class="checkout-review-head">
-      <div class="checkout-review-head-copy">
-        <span>Kontroller bestillingen</span>
-        <strong>Din bestilling</strong>
-      </div>
-      <button class="link-btn" data-review-cart type="button">Endre kurv</button>
-    </div>
     <details class="checkout-review-toggle">
       <summary class="checkout-review-summary">
         <strong class="checkout-review-count">${escapeHtml(reviewLabel)}</strong>
@@ -2315,11 +2308,6 @@ document.addEventListener('click', (event) => {
   const activeOrdersBtn = event.target.closest('[data-active-orders]');
   if (activeOrdersBtn) {
     openActiveOrderInProfile(activeOrdersBtn.dataset.activeOrders);
-    return;
-  }
-  const reviewCartBtn = event.target.closest('[data-review-cart]');
-  if (reviewCartBtn) {
-    setView('cart');
     return;
   }
   const toggleBlock = event.target.closest('[data-toggle-block]');
