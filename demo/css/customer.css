@@ -619,7 +619,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
 }
 
 
-
 /* ======================== Desktop = mobile-style list ======================== */
 @media (min-width: 640px) {
   :root { --header-h: 48px; --cat-h: 40px; }
@@ -1498,7 +1497,7 @@ textarea.input {
 }
 
 /* Checkout review clean layout 2026-09-15 */
-.checkout-review-head,
+
 .checkout-review-summary,
 .checkout-review-details,
 .checkout-review-items,
@@ -1512,44 +1511,6 @@ textarea.input {
 .checkout-review-info,
 .checkout-review-info-row {
   box-sizing: border-box;
-}
-
-.checkout-review-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
-  background: #fff;
-}
-.checkout-review-head-copy {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-.checkout-review-head-copy span {
-  color: var(--ink-3);
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-}
-.checkout-review-head-copy strong {
-  color: var(--ink);
-  font-size: 17px;
-  line-height: 1.2;
-  font-weight: 800;
-}
-.checkout-review-head .link-btn {
-  flex: none;
-  padding-top: 2px;
-  color: var(--accent);
-  font-size: 13px;
-  line-height: 1.2;
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .checkout-review-toggle {
@@ -1783,11 +1744,7 @@ textarea.input {
 }
 
 @media (max-width: 520px) {
-  .checkout-review-head {
-    padding: 12px 14px;
-    align-items: flex-start;
-  }
-  .checkout-review-head-copy strong { font-size: 16px; }
+
   .checkout-review-summary {
     min-height: 54px;
     padding: 0 14px !important;
@@ -1862,47 +1819,6 @@ textarea.input {
 #reviewCard div,
 #reviewCard section,
 #reviewCard article { min-width: 0; }
-
-#reviewCard .checkout-review-head {
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  width: 100% !important;
-  padding: 14px 16px !important;
-  border-bottom: 1px solid var(--line) !important;
-  background: #fff !important;
-}
-#reviewCard .checkout-review-head-copy {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 3px !important;
-  padding: 0 !important;
-}
-#reviewCard .checkout-review-head-copy span {
-  color: var(--ink-3) !important;
-  font-size: 10.5px !important;
-  line-height: 1.2 !important;
-  font-weight: 650 !important;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-#reviewCard .checkout-review-head-copy strong {
-  color: var(--ink) !important;
-  font-size: 17px !important;
-  line-height: 1.2 !important;
-  font-weight: 800 !important;
-}
-#reviewCard .checkout-review-head .link-btn {
-  flex: 0 0 auto !important;
-  margin: 1px 0 0 !important;
-  padding: 0 !important;
-  color: var(--accent) !important;
-  font-size: 12.5px !important;
-  line-height: 1.2 !important;
-  font-weight: 700 !important;
-  white-space: nowrap !important;
-}
 
 #reviewCard .checkout-review-toggle { display: block !important; width: 100% !important; background: #fff !important; }
 #reviewCard .checkout-review-summary {
@@ -2168,8 +2084,7 @@ textarea.input {
 }
 
 @media (max-width: 520px) {
-  #reviewCard .checkout-review-head { padding: 13px 14px !important; }
-  #reviewCard .checkout-review-head-copy strong { font-size: 16px !important; }
+
   #reviewCard .checkout-review-summary {
     grid-template-columns: auto auto !important;
     justify-content: space-between !important;
@@ -2192,7 +2107,6 @@ textarea.input {
   #reviewCard .checkout-review-item-total { font-size: 13.5px !important; }
   #reviewCard .checkout-review-info { padding: 11px !important; }
 }
-
 
 
 /* Product allergen bottom + menu card shadow 2026-09-15 */
@@ -2309,7 +2223,6 @@ textarea.input {
 
 /* Multi live order carousel 2026-09-15 */
 .active-orders-carousel{width:100%;min-width:0}.active-orders-carousel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:0 2px}.active-orders-carousel-head strong{color:var(--ink);font-size:12px;font-weight:800}.active-orders-carousel-head>div{display:flex;gap:6px}.active-orders-carousel-head button{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:20px;line-height:1;box-shadow:0 2px 7px rgba(25,31,38,.06)}.active-orders-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-inline:contain;padding:1px 1px 4px}.active-orders-track::-webkit-scrollbar{display:none}.active-orders-track .active-order-card{flex:0 0 min(420px,calc(100vw - 34px));scroll-snap-align:start;min-width:0}.active-order-head-actions{display:flex;align-items:center;gap:8px}.active-order-dismiss{width:28px;height:28px;display:grid;place-items:center;border:1px solid #b9ddc4;border-radius:50%;background:#fff;color:#3b8054;font-size:18px;line-height:1}.order-progress-step.is-current .order-progress-dot{background:#28a65a!important;border-color:#28a65a!important;box-shadow:0 0 0 0 rgba(40,166,90,.38);animation:customerStatusPulse 1.35s ease-out infinite}.order-progress-step.is-current small{color:#258448!important;font-weight:800}.active-order-live-status{animation:customerLiveText 1.55s ease-in-out infinite}@keyframes customerStatusPulse{0%{box-shadow:0 0 0 0 rgba(40,166,90,.4);transform:scale(1)}55%{box-shadow:0 0 0 8px rgba(40,166,90,0);transform:scale(1.08)}100%{box-shadow:0 0 0 0 rgba(40,166,90,0);transform:scale(1)}}@keyframes customerLiveText{0%,100%{opacity:1}50%{opacity:.58}}.active-order-card.is-ready .active-order-live-status{animation:none}@media(min-width:900px){.active-orders-track .active-order-card{flex-basis:calc(50% - 5px)}}@media(max-width:520px){.active-orders-track .active-order-card{flex-basis:calc(100vw - 44px)}}
-
 
 
 /* Rejected order notice 2026-09-15 */
