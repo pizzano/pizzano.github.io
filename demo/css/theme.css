@@ -415,30 +415,32 @@ html[data-theme="dark"] .order-history-meta > div {
   color: var(--ink-2) !important;
 }
 
-html[data-theme="dark"] .allergen-modal,
 html[data-theme="dark"] .modal-backdrop {
   background: rgba(0,0,0,.72) !important;
 }
 
-html[data-theme="dark"] .allergen-dialog,
-html[data-theme="dark"] .allergen-dialog footer,
 html[data-theme="dark"] .confirm-modal {
   border-color: var(--line) !important;
   background: #191d21 !important;
   color: var(--ink) !important;
 }
 
-html[data-theme="dark"] .allergen-search,
-html[data-theme="dark"] .allergen-choice {
+html[data-theme="dark"] .allergen-visibility-control {
   border-color: var(--line) !important;
   background: #1e2226 !important;
-  color: var(--ink) !important;
+  color: var(--ink-2) !important;
 }
 
-html[data-theme="dark"] .allergen-choice.is-on {
-  border-color: #6b422a !important;
-  background: #322117 !important;
-  color: #ff9d64 !important;
+html[data-theme="dark"] .allergen-visibility-switch {
+  background: #4a5158 !important;
+}
+
+html[data-theme="dark"] .allergen-visibility-control input:checked + .allergen-visibility-switch {
+  background: #35a760 !important;
+}
+
+html[data-theme="dark"] .prod-list-allergens {
+  color: #ff746b !important;
 }
 
 html[data-theme="dark"] .toast {
