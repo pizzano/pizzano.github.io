@@ -36,7 +36,7 @@ import {
 
 const PROFILE_KEY = 'kol_profile_v1';
 const CART_KEY = 'kol_cart_v1';
-const ALLERGEN_KEY = 'kol_allergens_v1';
+const ALLERGEN_VISIBILITY_KEY = 'kol_show_allergens_v1';
 const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
 const READY_SEEN_KEY = 'kol_ready_seen_v1';
 const CUSTOMER_ORDERS_KEY = 'kol_orders_v1';
@@ -77,9 +77,7 @@ const ui = {
   pickupMode: null,
   editingLineId: null,
   expandedBlocks: new Set(),
-  allergensOpen: false,
-  selectedAllergens: loadJSON(ALLERGEN_KEY, []),
-  allergenSearch: '',
+  showAllergens: loadJSON(ALLERGEN_VISIBILITY_KEY, false) === true,
   orderSubmitting: false,
   orderSendFailed: false,
   pendingOrderId: null,
@@ -113,12 +111,7 @@ const el = {
   catScroll: $('catScroll'),
   menuSearch: null,
   menuList: $('menuList'),
-  btnAllergens: $('btnAllergens'),
-  allergenModal: $('allergenModal'),
-  allergenPicker: $('allergenPicker'),
-  allergenSearch: $('allergenSearch'),
-  allergenClose: $('allergenClose'),
-  allergenReset: $('allergenReset'),
+  allergenVisibilityToggle: $('allergenVisibilityToggle'),
   openStatus: $('openStatus'),
   openDot: $('openDot'),
   closedBanner: $('closedBanner'),
@@ -244,18 +237,11 @@ function visibleItems(section) {
 
 const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
 
-function renderAllergenPicker() {
-  const query = ui.allergenSearch.trim().toLocaleLowerCase('no');
-  const labels = [...new Set((store.allergenCatalog || []).map((item) => item.label))]
-    .filter((label) => !query || label.toLocaleLowerCase('no').includes(query));
-  el.allergenModal.hidden = !ui.allergensOpen;
-  el.btnAllergens.classList.toggle('is-on', ui.allergensOpen || ui.selectedAllergens.length > 0);
-  el.btnAllergens.textContent = ui.selectedAllergens.length
-    ? `Matallergier (${ui.selectedAllergens.length})`
-    : 'Matallergier';
-  el.allergenSearch.value = ui.allergenSearch;
-  el.allergenPicker.innerHTML = labels.map((label) => `<button class="allergen-choice${ui.selectedAllergens.includes(label) ? ' is-on' : ''}" data-allergen="${escapeHtml(label)}" type="button" aria-pressed="${ui.selectedAllergens.includes(label)}">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</button>`).join('') || '<p class="hint">Ingen allergener funnet.</p>';
+function renderAllergenVisibilityControl() {
+  if (!el.allergenVisibilityToggle) return;
+  el.allergenVisibilityToggle.checked = Boolean(ui.showAllergens);
 }
+
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
 function menuBlocks() {
@@ -876,11 +862,7 @@ function productCardHtml(item, section) {
     (ingredientCustomizationEnabled &&
       getItemIngredientRules(item).some((rule) => rule.removable));
   const desc = item.description || item.ingredients || section.note || '';
-  const selectedAllergens = new Set(ui.selectedAllergens);
-  const allCardAllergens = allergenLabels(item);
-  const matchedAllergens = allCardAllergens
-    .filter((label) => selectedAllergens.has(label));
-  const cardAllergens = matchedAllergens.slice(0, 2);
+  const cardAllergens = ui.showAllergens ? allergenLabels(item) : [];
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       <div class="prod-media">
@@ -897,15 +879,14 @@ function productCardHtml(item, section) {
           ${soldOut ? '<span class="tag tag-soldout">Utsolgt</span>' : ''}
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
-        ${matchedAllergens.length ? `<p class="prod-list-allergens"><span aria-hidden="true">⚠</span> Inneholder ${escapeHtml(matchedAllergens.join(', '))}</p>` : ''}
-        ${cardAllergens.length ? `<div class="prod-allergens">${cardAllergens.map((label) => `<span class="allergen-mini-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')}</div>` : ''}
+        ${cardAllergens.length ? `<p class="prod-list-allergens">Inneholder ${escapeHtml(cardAllergens.join(', '))}</p>` : ''}
         <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
         ${soldOut
           ? '<span class="prod-soldout-badge">Utsolgt</span>'
           : needsChoice
-            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg størrelse eller tilvalg for ${escapeHtml(item.name)}">Velg</button>`
+            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Legg til ${escapeHtml(item.name)}">+ Legg til</button>`
             : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven">+</button>`}
       </div>
     </div>`;
@@ -2583,33 +2564,14 @@ el.timeGrid.addEventListener('click', (event) => {
   renderCheckout();
 });
 
-el.btnAllergens.addEventListener('click', () => {
-  ui.allergensOpen = true;
-  renderAllergenPicker();
-});
-el.allergenClose.addEventListener('click', () => { ui.allergensOpen = false; renderAllergenPicker(); });
-el.allergenModal.addEventListener('click', (event) => { if (event.target === el.allergenModal) { ui.allergensOpen = false; renderAllergenPicker(); } });
-el.allergenSearch.addEventListener('input', () => { ui.allergenSearch = el.allergenSearch.value; renderAllergenPicker(); });
-el.allergenReset.addEventListener('click', () => {
-  ui.selectedAllergens = [];
-  saveJSON(ALLERGEN_KEY, ui.selectedAllergens);
-  renderAllergenPicker();
-  renderMenu();
-  toast('Matallergier nullstilt.');
-});
-el.allergenPicker.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-allergen]');
-  if (!button) return;
-  const label = button.dataset.allergen;
-  const selected = ui.selectedAllergens.includes(label);
-  ui.selectedAllergens = selected
-    ? ui.selectedAllergens.filter((value) => value !== label)
-    : [...ui.selectedAllergens, label];
-  saveJSON(ALLERGEN_KEY, ui.selectedAllergens);
-  renderAllergenPicker();
-  renderMenu();
-  toast(selected ? `${label} fjernet.` : `${label} lagret.`);
-});
+if (el.allergenVisibilityToggle) {
+  el.allergenVisibilityToggle.addEventListener('change', () => {
+    ui.showAllergens = el.allergenVisibilityToggle.checked;
+    saveJSON(ALLERGEN_VISIBILITY_KEY, ui.showAllergens);
+    renderMenu();
+  });
+}
+
 
 [el.custName, el.custPhone].forEach((input) => {
   input.addEventListener('input', () => {
@@ -2687,7 +2649,7 @@ function renderAll() {
   const changed = reconcileCart();
   renderCategories();
   renderMenu();
-  renderAllergenPicker();
+  renderAllergenVisibilityControl();
   renderOpenState();
   renderCartCount();
   renderActiveOrders();
