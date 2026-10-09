@@ -2157,36 +2157,110 @@ async function placeOrder() {
   }
 
   function orderHistoryLineHtml(line) {
+    const quantity = Math.max(1, Number(line.quantity) || 1);
     const details = previousOrderOptionDetails(line);
     const grouped = new Map();
+
     for (const detail of details) {
       const key = detail.groupTitle || 'Tilvalg';
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push(detail);
+      if (!grouped.has(key)) grouped.set(key, { labels: [], price: 0, hasKnownPrice: false });
+      const group = grouped.get(key);
+      group.labels.push(detail.label);
+      if (Number.isFinite(Number(detail.price))) {
+        group.price += Number(detail.price) || 0;
+        group.hasKnownPrice = true;
+      }
     }
-    const groupsHtml = Array.from(grouped.entries())
-      .map(([title, items]) => `
-        <div class="order-history-option-group">
-          <span>${escapeHtml(title)}</span>
-          <ul>${items.map((item) => `
-            <li>
-              <span>${escapeHtml(item.label)}</span>
-              ${item.price > 0 ? `<strong>+${formatPrice(item.price)}</strong>` : ''}
-            </li>`).join('')}</ul>
-        </div>`)
-      .join('');
+
+    const paidExtrasPerUnit = details.reduce(
+      (sum, detail) => sum + (Number.isFinite(Number(detail.price)) ? Math.max(0, Number(detail.price) || 0) : 0),
+      0
+    );
+
+    const savedUnitPrice = Number(line.unitPrice);
+    const savedLineTotal = Number(line.price) || 0;
+    const resolvedUnitPrice = Number.isFinite(savedUnitPrice) && savedUnitPrice > 0
+      ? savedUnitPrice
+      : quantity > 0
+        ? savedLineTotal / quantity
+        : savedLineTotal;
+
+    const baseUnitPrice = Math.max(0, resolvedUnitPrice - paidExtrasPerUnit);
+    const lineTotal = savedLineTotal > 0 ? savedLineTotal : resolvedUnitPrice * quantity;
+
+    const priceBreakdown = (unitPrice, { extra = false, included = false, unknown = false } = {}) => {
+      const price = Number(unitPrice) || 0;
+      if (unknown) return '';
+      if (included || price <= 0) {
+        return '<b class="order-history-cart-price is-included">Inkludert</b>';
+      }
+      if (quantity > 1) {
+        return `<b class="order-history-cart-price${extra ? ' is-extra' : ''}"><span class="order-history-cart-multiplier"><strong>${quantity}</strong> x</span> ${formatPrice(price)}</b>`;
+      }
+      return `<b class="order-history-cart-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
+    };
+
+    const detailRows = [];
+
+    if (line.size) {
+      detailRows.push(
+        `<div class="order-history-cart-row">
+          <span class="order-history-cart-left"><b>Størrelse:</b> <span>${escapeHtml(line.size)}</span></span>
+          <span class="order-history-cart-leader" aria-hidden="true"></span>
+          ${priceBreakdown(baseUnitPrice)}
+        </div>`
+      );
+    }
+
+    for (const [title, group] of grouped.entries()) {
+      detailRows.push(
+        `<div class="order-history-cart-row">
+          <span class="order-history-cart-left"><b>${escapeHtml(title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
+          <span class="order-history-cart-leader" aria-hidden="true"></span>
+          ${priceBreakdown(group.price, {
+            extra: group.hasKnownPrice && group.price > 0,
+            included: group.hasKnownPrice && group.price <= 0,
+            unknown: !group.hasKnownPrice,
+          })}
+        </div>`
+      );
+    }
+
+    if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
+      detailRows.push(
+        `<div class="order-history-cart-row is-note">
+          <span class="order-history-cart-left"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
+        </div>`
+      );
+    }
+
+    if (line.comment) {
+      detailRows.push(
+        `<div class="order-history-cart-row is-note">
+          <span class="order-history-cart-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+        </div>`
+      );
+    }
+
+    const { item } = findItem(line.itemId);
+    const imageHtml = item?.imageUrl
+      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(line.name || item.name || 'Produkt')}" loading="lazy">`
+      : `<span class="order-history-cart-fallback" aria-hidden="true">${escapeHtml(String(line.name || item?.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
 
     return `
-      <div class="order-history-line">
-        <div class="order-history-line-head">
-          <strong>${escapeHtml(`${line.quantity || 1}× ${line.name || 'Produkt'}`)}</strong>
-          <b>${formatPrice(Number(line.price) || 0)}</b>
+      <article class="order-history-cart-item">
+        <div class="order-history-cart-media">${imageHtml}</div>
+        <div class="order-history-cart-main">
+          <div class="order-history-cart-title-row">
+            <div class="order-history-cart-title-wrap">
+              <span class="order-history-cart-qty">${quantity}×</span>
+              <strong class="order-history-cart-name">${escapeHtml(line.name || item?.name || 'Produkt')}</strong>
+            </div>
+            <strong class="order-history-cart-total">${formatPrice(lineTotal)}</strong>
+          </div>
+          ${detailRows.length ? `<div class="order-history-cart-lines">${detailRows.join('')}</div>` : ''}
         </div>
-        ${line.size ? `<div class="order-history-size"><span>Størrelse</span><strong>${escapeHtml(line.size)}</strong></div>` : ''}
-        ${groupsHtml}
-        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<p class="order-history-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</p>` : ''}
-        ${line.comment ? `<p class="order-history-comment">«${escapeHtml(line.comment)}»</p>` : ''}
-      </div>`;
+      </article>`;
   }
 
   function orderStatusClass(status) {
@@ -2336,7 +2410,7 @@ function renderProfile() {
                 </summary>
                 <div class="order-history-details">
                   ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
-                  <div class="order-history-lines">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
+                  <div class="order-history-lines order-history-cart-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
                   <div class="order-history-meta">
                     <div><span>Ordrenummer</span><strong>${escapeHtml(shortId || '—')}</strong></div>
                     <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
