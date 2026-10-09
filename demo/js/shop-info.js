@@ -8,7 +8,7 @@ import {
 
 const STYLE_ID = 'shopInfoStyles';
 const MODAL_ID = 'shopInfoModal';
-const TRIGGER_ID = 'btnShopInfo';
+const TRIGGER_ID = 'profileShopInfo';
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -406,25 +406,9 @@ function buildModal() {
 }
 
 function makeTrigger() {
-  let button = document.getElementById(TRIGGER_ID);
-  if (button) return button;
-
-  const profileButton = document.getElementById('btnProfile');
-  const themeButton = document.getElementById('btnTheme');
-  const actions = profileButton?.closest('.hdr-actions');
-  if (!profileButton || !actions) return null;
-
-  button = document.createElement('button');
-  button.className = 'hdr-btn shop-info-trigger';
-  button.id = TRIGGER_ID;
-  button.type = 'button';
-  button.setAttribute('aria-label', 'Restaurantinformasjon');
-  button.setAttribute('aria-haspopup', 'dialog');
-  button.setAttribute('aria-controls', MODAL_ID);
-  button.innerHTML = storeIcon();
-  actions.insertBefore(button, themeButton || profileButton);
-  return button;
+  return document.getElementById(TRIGGER_ID);
 }
+
 
 function cleanPhone(value) {
   return String(value || '').replace(/[^+\d]/g, '');
@@ -459,7 +443,7 @@ function renderShopInfo() {
 
   if (trigger) {
     trigger.hidden = !enabled;
-    trigger.style.display = enabled ? '' : 'none';
+    trigger.style.display = enabled ? '' : 'grid';
   }
   if (!enabled && modal && !modal.hidden) closeModal();
   if (!enabled) return;
