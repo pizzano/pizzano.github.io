@@ -787,3 +787,9 @@ html[data-theme="dark"] .view-cart .cart-stepper-minus {
   background: #181c20 !important;
   color: #ff9158 !important;
 }
+
+
+/* ======================== Handlekurv antall x enhetspris v7 ======================== */
+html[data-theme="dark"] .view-cart .cart-detail-multiplier strong {
+  color: #fff !important;
+}
