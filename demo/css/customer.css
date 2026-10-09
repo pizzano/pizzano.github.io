@@ -4241,3 +4241,22 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 11.5px;
   }
 }
+
+
+/* ======================== Handlekurv: antall x enhetspris v7 ======================== */
+.view-cart .cart-detail-multiplier {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-right: 1px;
+  font-weight: 650;
+}
+
+.view-cart .cart-detail-multiplier strong {
+  color: #211d1a;
+  font-weight: 900;
+}
+
+.view-cart .cart-detail-price {
+  font-weight: 700;
+}
