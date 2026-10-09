@@ -670,3 +670,51 @@ html[data-theme="dark"] .admin-toast {
 html[data-theme="dark"] ::selection {
   background: rgba(255,113,28,.32);
 }
+
+
+/* ======================== Handlekurv produktkort ======================== */
+html[data-theme="dark"] .view-cart .cart-line.cart-product-card {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .cart-product-media,
+html[data-theme="dark"] .cart-product-fallback {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] .cart-product-fallback {
+  color: #ff9a5e !important;
+}
+
+html[data-theme="dark"] .cart-product-name,
+html[data-theme="dark"] .cart-product-unit b,
+html[data-theme="dark"] .cart-product-total,
+html[data-theme="dark"] .cart-product-stepper span {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] .cart-product-unit,
+html[data-theme="dark"] .cart-product-details {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] .cart-product-remove {
+  color: var(--ink-2) !important;
+}
+
+html[data-theme="dark"] .cart-product-remove:hover {
+  background: #34201d !important;
+  color: #ff8178 !important;
+}
+
+html[data-theme="dark"] .cart-product-stepper {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] .cart-product-stepper button {
+  background: #181c20 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}

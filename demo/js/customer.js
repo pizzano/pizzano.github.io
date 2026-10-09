@@ -1378,71 +1378,52 @@ function cartCount() {
 function cartLineHtml(line) {
   const { item } = findItem(line.itemId);
   if (!item) return '';
-  const size = (item.sizes || []).find((s) => s.id === line.sizeId);
+
+  const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
   const optionIds = Object.values(line.selections || {}).flat();
-  const price = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+  const lineTotal = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+  const unitPrice = computeLinePrice(item, line.sizeId, optionIds, 1);
   const addons = describeSelection(optionIds);
-  const addonGroups = addons.reduce((groups, addon) => {
-    let group = groups.find((entry) => entry.title === addon.groupTitle);
-    if (!group) {
-      group = { title: addon.groupTitle, items: [] };
-      groups.push(group);
-    }
-    group.items.push(addon);
-    return groups;
-  }, []);
+
+  const detailParts = [];
+  if (size?.label) detailParts.push(size.label);
+  if (addons.length) detailParts.push(addons.map((addon) => addon.label).join(', '));
+  if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
+    detailParts.push(`Uten: ${line.removedIngredients.join(', ')}`);
+  }
+  if (line.comment) detailParts.push(`«${line.comment}»`);
+
+  const imageHtml = item.imageUrl
+    ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+    : `<span class="cart-product-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
 
   return `
-    <div class="cart-line" data-line="${escapeHtml(line.lineId)}">
-      <span class="line-qty">${line.quantity}×</span>
-      <div class="line-body">
-        <p class="line-name">${escapeHtml(item.name)}</p>
-        <div class="line-details">
-          ${
-            size
-              ? `<div class="line-size">
-                   <span>Størrelse</span>
-                   <strong>${escapeHtml(size.label)}</strong>
-                   <span>${formatPrice(getSizePrice(item, line.sizeId))}</span>
-                 </div>`
-              : ''
-          }
-          ${addonGroups
-            .map(
-              (group) => `
-                <div class="line-addon-group">
-                  <span class="line-detail-label">${escapeHtml(group.title || 'Tilvalg')}</span>
-                  <ul class="line-addon-list">
-                    ${group.items
-                      .map(
-                        (addon) => `
-                          <li>
-                            <span>${escapeHtml(addon.label)}</span>
-                            ${addon.price > 0 ? `<strong>+${formatPrice(addon.price)}</strong>` : ''}
-                          </li>`
-                      )
-                      .join('')}
-                  </ul>
-                </div>`
-            )
-            .join('')}
+    <article class="cart-line cart-product-card" data-line="${escapeHtml(line.lineId)}">
+      <div class="cart-product-media">
+        ${imageHtml}
+      </div>
+
+      <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
+        <strong class="cart-product-name">${escapeHtml(item.name)}</strong>
+        <span class="cart-product-unit">Pris per 1: <b>${formatPrice(unitPrice)}</b></span>
+        ${detailParts.length ? `<span class="cart-product-details">${escapeHtml(detailParts.join(' · '))}</span>` : ''}
+      </button>
+
+      <button class="cart-product-remove" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 7h8m-7 0 .7 12h4.6L15 7M9.5 7V5.5h5V7M6 7h12"/>
+        </svg>
+      </button>
+
+      <div class="cart-product-bottom">
+        <div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
+          <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
+          <span>${line.quantity}</span>
+          <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
         </div>
-        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<p class="line-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</p>` : ''}
-        ${line.comment ? `<p class="line-comment">«${escapeHtml(line.comment)}»</p>` : ''}
-        <div class="line-actions">
-                 <button class="link-btn" data-edit="${escapeHtml(line.lineId)}" type="button">Endre</button>
-                 <button class="link-btn is-danger" data-remove="${escapeHtml(line.lineId)}" type="button">Fjern</button>
-               </div>
+        <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
       </div>
-      <div class="line-right">
-        <span class="line-price">${formatPrice(price)}</span>
-        <span class="line-step">
-                 <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
-                 <span>${line.quantity}</span>
-                 <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
-               </span>
-      </div>
-    </div>`;
+    </article>`;
 }
 
 function renderCart() {
