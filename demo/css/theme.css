@@ -828,3 +828,38 @@ html[data-theme="dark"] #reviewCard .checkout-review-qty-pill {
   background: #2a211c !important;
   color: #ff9861 !important;
 }
+
+
+/* ======================== Mine bestillinger cart style v2 ======================== */
+html[data-theme="dark"] #orderList .order-history-cart-item {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-cart-media,
+html[data-theme="dark"] #orderList .order-history-cart-fallback {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-cart-name,
+html[data-theme="dark"] #orderList .order-history-cart-total,
+html[data-theme="dark"] #orderList .order-history-cart-price,
+html[data-theme="dark"] #orderList .order-history-cart-multiplier strong {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-cart-row,
+html[data-theme="dark"] #orderList .order-history-cart-left b,
+html[data-theme="dark"] #orderList .order-history-cart-price.is-included {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-cart-leader {
+  border-bottom-color: #5b646c !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-cart-qty {
+  background: #2a211c !important;
+  color: #ff9861 !important;
+}
