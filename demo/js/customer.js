@@ -1397,7 +1397,9 @@ function cartLineHtml(line) {
 
   const detailRows = [];
   if (size?.label) {
-    detailRows.push(`<span class="cart-detail-row"><b>Størrelse:</b> ${escapeHtml(size.label)}</span>`);
+    detailRows.push(
+      `<span class="cart-detail-row"><b>Størrelse:</b> ${escapeHtml(size.label)} <span class="cart-detail-separator">|</span> <b class="cart-detail-price">${formatPrice(getSizePrice(item, line.sizeId))}</b></span>`
+    );
   }
   addonGroups.forEach((group) => {
     detailRows.push(
