@@ -150,6 +150,15 @@ const el = {
   reviewCard: $('reviewCard'),
   btnStepBack: $('btnStepBack'),
   btnStepNext: $('btnStepNext'),
+  profileHome: $('profileHome'),
+  profileDetail: $('profileDetail'),
+  profileHeroAvatar: $('profileHeroAvatar'),
+  profileHeroName: $('profileHeroName'),
+  profileHeroPhone: $('profileHeroPhone'),
+  profileContactMeta: $('profileContactMeta'),
+  profileFavoritesMeta: $('profileFavoritesMeta'),
+  profileOrdersMeta: $('profileOrdersMeta'),
+  profilePanelTitle: $('profilePanelTitle'),
   profName: $('profName'),
   profPhone: $('profPhone'),
   btnSaveProfile: $('btnSaveProfile'),
@@ -692,7 +701,10 @@ function setView(view) {
   renderActiveOrders();
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
-  if (view === 'profile') renderProfile();
+  if (view === 'profile') {
+    showProfileHome();
+    renderProfile();
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -2090,24 +2102,57 @@ async function placeOrder() {
     return 'is-new';
   }
 
+function profileInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'K';
+  if (parts.length === 1) return parts[0].slice(0, 1).toLocaleUpperCase('no');
+  return (parts[0][0] + parts[parts.length - 1][0]).toLocaleUpperCase('no');
+}
+
+function formatProfilePhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(0, 8);
+  if (!digits) return 'Kundeprofil';
+  return '+47 ' + digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+}
+
+function showProfileHome() {
+  if (el.profileHome) el.profileHome.hidden = false;
+  if (el.profileDetail) el.profileDetail.hidden = true;
+  document.querySelectorAll('[data-profile-tab]').forEach((button) => {
+    button.classList.remove('is-active');
+    button.removeAttribute('aria-current');
+  });
+}
+
 function setProfileTab(tabName) {
   const validTabs = new Set(['contact', 'favorites', 'orders']);
   const activeTab = validTabs.has(tabName) ? tabName : 'contact';
+  const titles = {
+    contact: 'Rediger profil',
+    favorites: 'Favoritter',
+    orders: 'Mine bestillinger',
+  };
+
+  if (el.profileHome) el.profileHome.hidden = true;
+  if (el.profileDetail) el.profileDetail.hidden = false;
+  if (el.profilePanelTitle) el.profilePanelTitle.textContent = titles[activeTab];
+
   document.querySelectorAll('[data-profile-tab]').forEach((button) => {
     const active = button.dataset.profileTab === activeTab;
     button.classList.toggle('is-active', active);
-    button.setAttribute('aria-selected', String(active));
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
   });
+
   document.querySelectorAll('[data-profile-panel]').forEach((panel) => {
     const active = panel.dataset.profilePanel === activeTab;
     panel.classList.toggle('is-active', active);
     panel.hidden = !active;
   });
-  const activeButton = document.querySelector('[data-profile-tab="' + activeTab + '"]');
-  if (activeButton && typeof activeButton.scrollIntoView === 'function') {
-    activeButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 function renderProfile() {
   renderActiveOrders();
@@ -2115,9 +2160,24 @@ function renderProfile() {
   el.profPhone.value = profile.phone || '';
   updateContactValidation();
 
+  if (el.profileHeroAvatar) el.profileHeroAvatar.textContent = profileInitials(profile.name);
+  if (el.profileHeroName) el.profileHeroName.textContent = profile.name || 'Min profil';
+  if (el.profileHeroPhone) el.profileHeroPhone.textContent = formatProfilePhone(profile.phone);
+  if (el.profileContactMeta) {
+    el.profileContactMeta.textContent = profile.name || profile.phone
+      ? 'Navn og mobilnummer lagret'
+      : 'Navn og mobilnummer';
+  }
+
   const favs = profile.favorites
     .map((id) => findItem(id))
     .filter(({ item }) => item && !item.hidden);
+  if (el.profileFavoritesMeta) {
+    el.profileFavoritesMeta.textContent = favs.length
+      ? `${favs.length} ${favs.length === 1 ? 'favoritt' : 'favoritter'}`
+      : 'Ingen favoritter ennå';
+  }
+
   el.favList.innerHTML = favs.length
     ? favs
         .map(
@@ -2140,6 +2200,11 @@ function renderProfile() {
 
     const live = getOrders();
     const orders = mergedCustomerOrders();
+    if (el.profileOrdersMeta) {
+      el.profileOrdersMeta.textContent = orders.length
+        ? `${orders.length} ${orders.length === 1 ? 'bestilling' : 'bestillinger'}`
+        : 'Ingen tidligere bestillinger';
+    }
     el.orderList.innerHTML = orders.length
       ? orders
           .slice(0, 30)
@@ -2254,6 +2319,12 @@ el.catScroll.addEventListener('click', (event) => {
 });
 
 document.addEventListener('click', (event) => {
+  const profileHomeButton = event.target.closest('[data-profile-home]');
+  if (profileHomeButton) {
+    showProfileHome();
+    return;
+  }
+
   const profileTab = event.target.closest('[data-profile-tab]');
   if (profileTab) {
     setProfileTab(profileTab.dataset.profileTab);
@@ -2591,6 +2662,10 @@ el.btnSaveProfile.addEventListener('click', () => {
   profile.name = el.profName.value.trim();
   profile.phone = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
   persistProfile();
+  if (el.profileHeroAvatar) el.profileHeroAvatar.textContent = profileInitials(profile.name);
+  if (el.profileHeroName) el.profileHeroName.textContent = profile.name || 'Min profil';
+  if (el.profileHeroPhone) el.profileHeroPhone.textContent = formatProfilePhone(profile.phone);
+  if (el.profileContactMeta) el.profileContactMeta.textContent = 'Navn og mobilnummer lagret';
   el.profileSaved.hidden = false;
   setTimeout(() => {
     el.profileSaved.hidden = true;
