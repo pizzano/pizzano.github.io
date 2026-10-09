@@ -749,3 +749,35 @@ html[data-theme="dark"] .view-cart .cart-detail-price.is-included {
 html[data-theme="dark"] .view-cart .cart-detail-leader {
   border-bottom-color: #5b646c !important;
 }
+
+
+/* ======================== Handlekurv enkel mengdekontroll v5 ======================== */
+html[data-theme="dark"] .cart-clear-btn {
+  border-color: #4b372b !important;
+  background: #2a211c !important;
+  color: #ff9861 !important;
+}
+
+html[data-theme="dark"] .cart-clear-btn:hover {
+  border-color: #65442f !important;
+  background: #34271f !important;
+}
+
+html[data-theme="dark"] .view-cart .cart-product-stepper.is-trash-plus {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] .view-cart .cart-product-stepper.is-trash-plus button {
+  background: #181c20 !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .view-cart .cart-stepper-trash {
+  color: #ff9158 !important;
+}
+
+html[data-theme="dark"] .view-cart .cart-stepper-plus {
+  background: #f2650f !important;
+  color: #fff !important;
+}
