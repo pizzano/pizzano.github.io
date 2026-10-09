@@ -5542,3 +5542,119 @@ html[data-theme="dark"] .cart-detail-row b {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ======================== Favoritter: Bestill + Fjern ======================== */
+#favList .mini-row {
+  grid-template-columns: 58px minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+#favList .mini-row > img {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 9px !important;
+  object-fit: cover !important;
+}
+
+#favList .mini-body {
+  min-width: 0 !important;
+}
+
+#favList .favorite-row-actions {
+  flex: none;
+  display: grid;
+  justify-items: stretch;
+  gap: 6px;
+  min-width: 72px;
+}
+
+#favList .favorite-order-btn,
+#favList .favorite-remove-btn {
+  min-width: 72px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+
+#favList .favorite-order-btn {
+  border: 1px solid #ffe0cd;
+  background: #fff0e5;
+  color: #ef5b0c;
+}
+
+#favList .favorite-order-btn:hover {
+  border-color: #ffc9a7;
+  background: #ffe9d9;
+}
+
+#favList .favorite-remove-btn {
+  border: 1px solid #f1d6d2;
+  background: #fff;
+  color: #b94b43;
+}
+
+#favList .favorite-remove-btn:hover {
+  border-color: #e8bbb5;
+  background: #fff3f1;
+  color: #a83a32;
+}
+
+#favList .favorite-order-btn:active,
+#favList .favorite-remove-btn:active {
+  transform: scale(.97);
+}
+
+#favList .favorite-remove-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 520px) {
+  #favList .mini-row {
+    grid-template-columns: 50px minmax(0,1fr) auto !important;
+    gap: 10px !important;
+    padding: 10px 0 !important;
+  }
+
+  #favList .mini-row > img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  #favList .favorite-row-actions {
+    min-width: 66px;
+    gap: 5px;
+  }
+
+  #favList .favorite-order-btn,
+  #favList .favorite-remove-btn {
+    min-width: 66px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 10px;
+    font-size: 10.5px;
+  }
+
+  #favList .favorite-remove-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+}

@@ -2372,7 +2372,16 @@ function renderProfile() {
             <p class="mini-title">${escapeHtml(item.name)}</p>
             <p class="mini-sub">${formatPrice(getItemBasePrice(item))}</p>
           </div>
-          <button class="link-btn" data-open="${escapeHtml(item.id)}" type="button">Bestill</button>
+          <div class="favorite-row-actions">
+            <button class="favorite-order-btn" data-open="${escapeHtml(item.id)}" type="button">Bestill</button>
+            <button class="favorite-remove-btn" data-remove-favorite="${escapeHtml(item.id)}" type="button" aria-label="Fjern ${escapeHtml(item.name)} fra favoritter">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8c0 4.8-7 9.2-7 9.2Z"/>
+                <path d="M8.5 12.5h7"/>
+              </svg>
+              <span>Fjern</span>
+            </button>
+          </div>
         </div>`
         )
         .join('')
@@ -2569,6 +2578,19 @@ document.addEventListener('click', (event) => {
     quickAddProduct(quickAddBtn.dataset.quickAdd);
     return;
   }
+  const removeFavoriteBtn = event.target.closest('[data-remove-favorite]');
+  if (removeFavoriteBtn) {
+    const itemId = removeFavoriteBtn.dataset.removeFavorite;
+    if (isFavorite(itemId)) {
+      toggleFavorite(itemId);
+      renderCategories();
+      renderMenu();
+      renderProfile();
+      toast('Fjernet fra favoritter.');
+    }
+    return;
+  }
+
   const openBtn = event.target.closest('[data-open]');
   if (openBtn) {
     openProduct(openBtn.dataset.open);
