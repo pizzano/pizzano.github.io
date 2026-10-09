@@ -793,3 +793,38 @@ html[data-theme="dark"] .view-cart .cart-stepper-minus {
 html[data-theme="dark"] .view-cart .cart-detail-multiplier strong {
   color: #fff !important;
 }
+
+
+/* ======================== Checkout review cart style v2 ======================== */
+html[data-theme="dark"] #reviewCard .checkout-review-card {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] #reviewCard .checkout-review-media,
+html[data-theme="dark"] #reviewCard .checkout-review-media-fallback {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] #reviewCard .checkout-review-item-name,
+html[data-theme="dark"] #reviewCard .checkout-review-item-total,
+html[data-theme="dark"] #reviewCard .checkout-review-line-price,
+html[data-theme="dark"] #reviewCard .checkout-review-multiplier strong {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] #reviewCard .checkout-review-line,
+html[data-theme="dark"] #reviewCard .checkout-review-line-left b,
+html[data-theme="dark"] #reviewCard .checkout-review-line-price.is-included {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] #reviewCard .checkout-review-line-leader {
+  border-bottom-color: #5b646c !important;
+}
+
+html[data-theme="dark"] #reviewCard .checkout-review-qty-pill {
+  background: #2a211c !important;
+  color: #ff9861 !important;
+}

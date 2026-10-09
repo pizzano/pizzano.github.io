@@ -1594,55 +1594,91 @@ function renderCheckout() {
   const reviewItems = cart.map((line) => {
     const { item } = findItem(line.itemId);
     if (!item) return '';
+
     const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
     const optionIds = Object.values(line.selections || {}).flat();
     const linePrice = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
     const addons = describeSelection(optionIds);
+
     const addonGroups = addons.reduce((groups, addon) => {
-      let group = groups.find((entry) => entry.title === addon.groupTitle);
+      const title = String(addon.groupTitle || 'Tilvalg').trim() || 'Tilvalg';
+      let group = groups.find((entry) => entry.title === title);
       if (!group) {
-        group = { title: addon.groupTitle || 'Tilvalg', items: [] };
+        group = { title, labels: [], price: 0 };
         groups.push(group);
       }
-      group.items.push(addon);
+      group.labels.push(addon.label);
+      group.price += Number(addon.price) || 0;
       return groups;
     }, []);
 
+    const reviewPriceHtml = (unitPrice, { extra = false, included = false } = {}) => {
+      const price = Number(unitPrice) || 0;
+      if (included || price <= 0) {
+        return '<b class="checkout-review-line-price is-included">Inkludert</b>';
+      }
+
+      if (line.quantity > 1) {
+        return `<b class="checkout-review-line-price${extra ? ' is-extra' : ''}"><span class="checkout-review-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
+      }
+
+      return `<b class="checkout-review-line-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
+    };
+
+    const detailRows = [];
+
+    if (size?.label) {
+      detailRows.push(
+        `<div class="checkout-review-line">
+          <span class="checkout-review-line-left"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
+          <span class="checkout-review-line-leader" aria-hidden="true"></span>
+          ${reviewPriceHtml(getSizePrice(item, line.sizeId))}
+        </div>`
+      );
+    }
+
+    addonGroups.forEach((group) => {
+      detailRows.push(
+        `<div class="checkout-review-line">
+          <span class="checkout-review-line-left"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
+          <span class="checkout-review-line-leader" aria-hidden="true"></span>
+          ${reviewPriceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
+        </div>`
+      );
+    });
+
+    if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
+      detailRows.push(
+        `<div class="checkout-review-line is-note">
+          <span class="checkout-review-line-left"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
+        </div>`
+      );
+    }
+
+    if (line.comment) {
+      detailRows.push(
+        `<div class="checkout-review-line is-note">
+          <span class="checkout-review-line-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+        </div>`
+      );
+    }
+
+    const imageHtml = item.imageUrl
+      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+      : `<span class="checkout-review-media-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
+
     return `
-      <article class="checkout-review-item">
-        <div class="checkout-review-item-top">
-          <span class="checkout-review-item-qty">${line.quantity}×</span>
-          <div class="checkout-review-item-main">
-            <div class="checkout-review-title-row">
+      <article class="checkout-review-card">
+        <div class="checkout-review-media">${imageHtml}</div>
+        <div class="checkout-review-main">
+          <div class="checkout-review-title-row">
+            <div class="checkout-review-title-wrap">
+              <span class="checkout-review-qty-pill">${line.quantity}×</span>
               <strong class="checkout-review-item-name">${escapeHtml(item.name)}</strong>
-              <strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
             </div>
-            ${size ? `
-              <div class="checkout-review-meta-row">
-                <span>Størrelse</span>
-                <strong>${escapeHtml(size.label)}</strong>
-                <small>${formatPrice(getSizePrice(item, line.sizeId))}</small>
-              </div>` : ''}
-            ${addonGroups.length ? `
-              <div class="checkout-review-addon-wrap">
-                ${addonGroups.map((group) => `
-                  <section class="checkout-review-addon-group">
-                    <span class="checkout-review-addon-title">${escapeHtml(group.title)}</span>
-                    ${group.items.map((addon) => `
-                      <div class="checkout-review-addon-row">
-                        <span class="checkout-review-addon-name">• ${escapeHtml(addon.label)}</span>
-                        <strong class="checkout-review-addon-price">${addon.price > 0 ? `+${formatPrice(addon.price)}` : 'Inkludert'}</strong>
-                      </div>`).join('')}
-                  </section>`).join('')}
-              </div>` : ''}
-            ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `
-              <div class="checkout-review-removed"><strong>Uten:</strong> ${escapeHtml(line.removedIngredients.join(', '))}</div>` : ''}
-            ${line.comment ? `
-              <div class="checkout-review-comment">
-                <span>Kommentar</span>
-                <p>${escapeHtml(line.comment)}</p>
-              </div>` : ''}
+            <strong class="checkout-review-item-total">${formatPrice(linePrice)}</strong>
           </div>
+          ${detailRows.length ? `<div class="checkout-review-lines">${detailRows.join('')}</div>` : ''}
         </div>
       </article>`;
   }).join('');
