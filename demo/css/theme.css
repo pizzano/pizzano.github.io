@@ -763,11 +763,11 @@ html[data-theme="dark"] .cart-clear-btn:hover {
   background: #34271f !important;
 }
 
-html[data-theme="dark"] .view-cart .cart-product-stepper.is-trash-plus {
+html[data-theme="dark"] .view-cart .cart-product-stepper.is-smart-stepper {
   background: #24292e !important;
 }
 
-html[data-theme="dark"] .view-cart .cart-product-stepper.is-trash-plus button {
+html[data-theme="dark"] .view-cart .cart-product-stepper.is-smart-stepper button {
   background: #181c20 !important;
   color: var(--ink) !important;
   box-shadow: none !important;
@@ -780,4 +780,10 @@ html[data-theme="dark"] .view-cart .cart-stepper-trash {
 html[data-theme="dark"] .view-cart .cart-stepper-plus {
   background: #f2650f !important;
   color: #fff !important;
+}
+
+
+html[data-theme="dark"] .view-cart .cart-stepper-minus {
+  background: #181c20 !important;
+  color: #ff9158 !important;
 }
