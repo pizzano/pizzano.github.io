@@ -5101,3 +5101,444 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 9.8px;
   }
 }
+
+
+/* ======================== Hentetid: helt ny pickup review v4 ======================== */
+#reviewCard.pickup-review-host {
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#reviewCard .pickup-review {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e7dfd8;
+  border-radius: 20px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(36,26,20,.035);
+}
+
+#reviewCard .pickup-review-summary {
+  list-style: none;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 18px;
+  cursor: pointer;
+  user-select: none;
+  background: #fff;
+}
+
+#reviewCard .pickup-review-summary::-webkit-details-marker {
+  display: none;
+}
+
+#reviewCard .pickup-review-summary-copy {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+#reviewCard .pickup-review-summary-copy strong {
+  color: #211d1a;
+  font-size: 16px;
+  line-height: 1.1;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+#reviewCard .pickup-review-summary-copy span {
+  min-width: 0;
+  overflow: hidden;
+  color: #77706a;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 550;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#reviewCard .pickup-review-summary-action {
+  flex: none;
+  color: #e85a10;
+  font-size: 12.5px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+#reviewCard .pickup-review-summary-action::after {
+  content: 'Vis mer';
+}
+
+#reviewCard .pickup-review[open] .pickup-review-summary-action::after {
+  content: 'Skjul';
+}
+
+#reviewCard .pickup-review-body {
+  display: grid;
+  gap: 14px;
+  padding: 0 14px 14px;
+  background: #faf9f7;
+}
+
+#reviewCard .pickup-review-list {
+  display: grid;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+#reviewCard .pickup-review-item {
+  display: grid;
+  grid-template-columns: 104px minmax(0,1fr);
+  min-height: 128px;
+  column-gap: 14px;
+  align-items: stretch;
+  padding: 12px 14px;
+  border: 1px solid #e9e2dc;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(36,26,20,.04);
+}
+
+#reviewCard .pickup-review-media {
+  width: 104px;
+  height: 104px;
+  align-self: center;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #f3f1ee;
+}
+
+#reviewCard .pickup-review-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+#reviewCard .pickup-review-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg,#fff2e8,#f8e5d7);
+  color: #d76522;
+  font-size: 29px;
+  font-weight: 850;
+}
+
+#reviewCard .pickup-review-product {
+  min-width: 0;
+  width: 100%;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#reviewCard .pickup-review-product-copy {
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+#reviewCard .pickup-review-name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #25201d;
+  font-size: 14px;
+  line-height: 1.22;
+  font-weight: 780;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#reviewCard .pickup-review-rows {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+}
+
+#reviewCard .pickup-review-row {
+  display: grid;
+  grid-template-columns: minmax(0,auto) minmax(10px,1fr) auto;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #8a817a;
+  font-size: 10.5px;
+  line-height: 1.26;
+  font-weight: 400;
+}
+
+#reviewCard .pickup-review-row.is-note {
+  grid-template-columns: minmax(0,1fr);
+}
+
+#reviewCard .pickup-review-row-copy {
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  overflow: hidden;
+}
+
+#reviewCard .pickup-review-row-copy b {
+  flex: none;
+  color: #6a625c;
+  font-weight: 600;
+}
+
+#reviewCard .pickup-review-row-copy span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#reviewCard .pickup-review-row.is-note .pickup-review-row-copy span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+#reviewCard .pickup-review-dots {
+  min-width: 10px;
+  height: .72em;
+  border-bottom: 1px dotted #b9afa7;
+  opacity: .8;
+}
+
+#reviewCard .pickup-review-price {
+  color: #302a26;
+  font-size: 10.5px;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#reviewCard .pickup-review-price.is-included {
+  color: #8a817a;
+  font-weight: 550;
+}
+
+#reviewCard .pickup-review-multiplier {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-right: 1px;
+  font-weight: 650;
+}
+
+#reviewCard .pickup-review-multiplier strong {
+  color: #211d1a;
+  font-weight: 900;
+}
+
+#reviewCard .pickup-review-product-foot {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+#reviewCard .pickup-review-qty {
+  min-width: 34px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #fff1e6;
+  color: #e65b12;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+#reviewCard .pickup-review-total {
+  color: #211d1a;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+#reviewCard .pickup-review-info {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e9e2dc;
+  border-radius: 18px;
+  background: #fff;
+}
+
+#reviewCard .pickup-review-info-head,
+#reviewCard .pickup-review-pay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#reviewCard .pickup-review-info-head strong {
+  color: #25201d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#reviewCard .pickup-review-info-head span {
+  color: #247c48;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+#reviewCard .pickup-review-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#reviewCard .pickup-review-info-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: #f8f6f4;
+}
+
+#reviewCard .pickup-review-info-grid span,
+#reviewCard .pickup-review-pay span {
+  color: #817972;
+  font-size: 10px;
+  font-weight: 550;
+}
+
+#reviewCard .pickup-review-info-grid strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #2a2522;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#reviewCard .pickup-review-pay {
+  padding-top: 2px;
+}
+
+#reviewCard .pickup-review-pay strong {
+  color: #211d1a;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+#reviewCard .pickup-review-empty {
+  padding: 18px;
+  border-radius: 16px;
+  background: #fff;
+  color: #77706a;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  #reviewCard.pickup-review-host {
+    margin-top: 12px;
+  }
+
+  #reviewCard .pickup-review {
+    border-radius: 18px;
+  }
+
+  #reviewCard .pickup-review-summary {
+    min-height: 62px;
+    padding: 0 14px;
+  }
+
+  #reviewCard .pickup-review-summary-copy {
+    gap: 9px;
+  }
+
+  #reviewCard .pickup-review-summary-copy strong {
+    font-size: 15px;
+  }
+
+  #reviewCard .pickup-review-summary-copy span {
+    font-size: 11px;
+  }
+
+  #reviewCard .pickup-review-body {
+    gap: 12px;
+    padding: 0 10px 10px;
+  }
+
+  #reviewCard .pickup-review-list {
+    gap: 12px;
+    padding-top: 10px;
+  }
+
+  #reviewCard .pickup-review-item {
+    grid-template-columns: 92px minmax(0,1fr);
+    min-height: 112px;
+    column-gap: 12px;
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  #reviewCard .pickup-review-media {
+    width: 92px;
+    height: 92px;
+    border-radius: 15px;
+  }
+
+  #reviewCard .pickup-review-name {
+    font-size: 14px;
+  }
+
+  #reviewCard .pickup-review-row,
+  #reviewCard .pickup-review-price {
+    font-size: 9.8px;
+  }
+
+  #reviewCard .pickup-review-qty {
+    min-width: 31px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  #reviewCard .pickup-review-total {
+    font-size: 15px;
+  }
+
+  #reviewCard .pickup-review-info {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  #reviewCard .pickup-review-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
