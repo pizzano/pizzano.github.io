@@ -118,7 +118,7 @@ const el = {
   closedTitle: $('closedTitle'),
   closedText: $('closedText'),
   btnBack: $('btnBack'),
-  btnTheme: $('btnTheme'),
+  profileThemeToggle: $('profileThemeToggle'),
   btnProfile: $('btnProfile'),
   btnCart: $('btnCart'),
   cartCount: $('cartCount'),
@@ -2710,9 +2710,9 @@ function applyCustomerInterfaceSettings() {
     );
   }
 
-  if (el.btnTheme) {
-    el.btnTheme.hidden = !darkEnabled;
-    el.btnTheme.style.display = darkEnabled ? '' : 'none';
+  if (el.profileThemeToggle) {
+    el.profileThemeToggle.hidden = !darkEnabled;
+    el.profileThemeToggle.style.display = darkEnabled ? '' : 'none';
   }
   if (!darkEnabled && window.KolTheme?.get?.() === 'dark') {
     window.KolTheme.set('light');
