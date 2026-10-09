@@ -129,6 +129,7 @@ const el = {
     checkout: $('viewCheckout'),
     profile: $('viewProfile'),
   },
+  cartHeaderActions: $('cartHeaderActions'),
   cartLines: $('cartLines'),
   cartSummary: $('cartSummary'),
   cartTotal: $('cartTotal'),
@@ -1476,14 +1477,16 @@ function cartLineHtml(line) {
 
 function renderCart() {
   if (!cart.length) {
+    if (el.cartHeaderActions) el.cartHeaderActions.innerHTML = '';
     el.cartLines.innerHTML =
       '<div class="empty-note"><strong>Handlekurven er tom</strong>Legg til noe godt fra menyen.</div>';
     el.cartSummary.hidden = true;
     el.cartActions.hidden = true;
     return;
   }
-  el.cartLines.innerHTML = `
-    <div class="cart-topbar">
+
+  if (el.cartHeaderActions) {
+    el.cartHeaderActions.innerHTML = `
       <button class="cart-clear-btn" data-clear-cart type="button" aria-label="Tøm handlekurv">
         <span>Tøm handlekurv</span>
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1494,9 +1497,10 @@ function renderCart() {
           <path d="M10 10.5v5.5M14 10.5v5.5"/>
         </svg>
       </button>
-    </div>
-    ${cart.map((line) => cartLineHtml(line)).join('')}
-  `;
+    `;
+  }
+
+  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line)).join('');
   const subtotal = cartSubtotal();
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
@@ -2430,6 +2434,17 @@ document.addEventListener('click', (event) => {
   }
   const reorderBtn = event.target.closest('[data-reorder]');
   if (reorderBtn) reorder(reorderBtn.dataset.reorder);
+});
+
+el.cartHeaderActions?.addEventListener('click', (event) => {
+  const clearCart = event.target.closest('[data-clear-cart]');
+  if (!clearCart) return;
+
+  cart = [];
+  resetPendingOrderSubmission();
+  persistCart();
+  renderCart();
+  renderCartCount();
 });
 
 el.cartLines.addEventListener('click', (event) => {
