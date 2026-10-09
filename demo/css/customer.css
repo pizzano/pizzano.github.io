@@ -4010,3 +4010,152 @@ html[data-theme="dark"] .cart-detail-row b {
     height: 26px;
   }
 }
+
+
+/* ======================== Handlekurv: enkel mengdekontroll v5 ======================== */
+.cart-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 2px;
+}
+
+.cart-clear-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 13px;
+  border: 1px solid #f0dfd1;
+  border-radius: 12px;
+  background: #fff7ef;
+  color: #e95112;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 720;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.cart-clear-btn:hover {
+  border-color: #eacbb6;
+  background: #fff1e5;
+}
+
+.cart-clear-btn:active {
+  transform: scale(.98);
+}
+
+.cart-clear-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.view-cart .cart-product-bottomrow {
+  grid-template-columns: auto minmax(72px, 1fr);
+  gap: 8px;
+}
+
+.view-cart .cart-product-stepper.is-trash-plus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 2px 3px;
+  border-radius: 999px;
+  background: #f6f4f2;
+}
+
+.view-cart .cart-product-stepper.is-trash-plus button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(32, 25, 21, .08);
+  cursor: pointer;
+}
+
+.view-cart .cart-product-stepper.is-trash-plus > span {
+  min-width: 22px;
+  color: #2d2824;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.view-cart .cart-stepper-trash {
+  color: #ee5a18 !important;
+}
+
+.view-cart .cart-stepper-trash svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.view-cart .cart-stepper-plus {
+  color: #fff !important;
+  background: #f2650f !important;
+  font-size: 18px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  box-shadow: 0 3px 8px rgba(242, 101, 15, .20) !important;
+}
+
+.view-cart .cart-product-actions,
+.view-cart .cart-product-edit,
+.view-cart .cart-product-remove,
+.view-cart [data-dec] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .cart-topbar {
+    margin-bottom: 1px;
+  }
+
+  .cart-clear-btn {
+    min-height: 36px;
+    padding: 0 11px;
+    gap: 7px;
+    border-radius: 11px;
+    font-size: 12px;
+  }
+
+  .cart-clear-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .view-cart .cart-product-bottomrow {
+    grid-template-columns: auto minmax(62px, 1fr);
+    gap: 6px;
+  }
+
+  .view-cart .cart-product-stepper.is-trash-plus {
+    min-height: 32px;
+  }
+
+  .view-cart .cart-product-stepper.is-trash-plus button {
+    width: 26px;
+    height: 26px;
+  }
+
+  .view-cart .cart-stepper-trash svg {
+    width: 13px;
+    height: 13px;
+  }
+}
