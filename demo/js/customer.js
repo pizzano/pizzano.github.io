@@ -2397,16 +2397,30 @@ function renderProfile() {
             const shortId = String(order.id || '').slice(-6).toUpperCase();
             return `
               <details class="order-history-card${ui.focusedOrderId === order.id ? ' is-focused' : ''}" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
-                <summary>
-                  <div class="order-history-top">
-                    <div class="order-history-total">
-                      <strong>${formatPrice(order.total)}</strong>
-                      <span>${escapeHtml(stamp)}</span>
+                <summary class="order-history-summary-shell">
+                  <div class="order-history-collapsed-summary">
+                    <div class="order-history-top">
+                      <div class="order-history-total">
+                        <strong>${formatPrice(order.total)}</strong>
+                        <span>${escapeHtml(stamp)}</span>
+                      </div>
+                      <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
                     </div>
-                    <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
+                    <p class="order-history-summary">${escapeHtml(summary)}</p>
+                    <span class="order-history-toggle">Se detaljer <i aria-hidden="true">⌄</i></span>
                   </div>
-                  <p class="order-history-summary">${escapeHtml(summary)}</p>
-                  <span class="order-history-toggle">Se detaljer <i aria-hidden="true">⌄</i></span>
+
+                  <div class="order-history-open-summary">
+                    <div class="order-history-open-identity">
+                      <span class="order-history-open-kicker">BESTILLING</span>
+                      <strong>#${escapeHtml(shortId || '—')}</strong>
+                      <span class="order-history-open-date">${escapeHtml(stamp)}</span>
+                    </div>
+                    <div class="order-history-open-actions">
+                      <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
+                      <span class="order-history-hide-label">Skjul <i aria-hidden="true">⌃</i></span>
+                    </div>
+                  </div>
                 </summary>
                 <div class="order-history-details">
                   ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
