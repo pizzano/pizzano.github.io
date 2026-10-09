@@ -718,3 +718,21 @@ html[data-theme="dark"] .cart-product-stepper button {
   color: var(--ink) !important;
   box-shadow: none !important;
 }
+
+
+/* ======================== Handlekurv produktkort v3 ======================== */
+html[data-theme="dark"] .view-cart .cart-product-iconbtn {
+  border-color: #31363b !important;
+  background: #1d2226 !important;
+  color: var(--ink-2) !important;
+}
+html[data-theme="dark"] .view-cart .cart-product-edit:hover {
+  border-color: #65402b !important;
+  background: #302118 !important;
+  color: #ff9a5e !important;
+}
+html[data-theme="dark"] .view-cart .cart-product-remove:hover {
+  border-color: #5a2f2a !important;
+  background: #34201d !important;
+  color: #ff8178 !important;
+}
