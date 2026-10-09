@@ -1452,16 +1452,18 @@ function cartLineHtml(line) {
         </button>
 
         <div class="cart-product-bottomrow">
-          <div class="cart-product-stepper is-trash-plus" role="group" aria-label="Antall ${escapeHtml(item.name)}">
-            <button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 7h8"/>
-                <path d="M5.5 7h13"/>
-                <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
-                <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
-                <path d="M10 10.5v5.5M14 10.5v5.5"/>
-              </svg>
-            </button>
+          <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
+            ${line.quantity > 1
+              ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
+              : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 7h8"/>
+                    <path d="M5.5 7h13"/>
+                    <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
+                    <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
+                    <path d="M10 10.5v5.5M14 10.5v5.5"/>
+                  </svg>
+                </button>`}
             <span>${line.quantity}</span>
             <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
           </div>
@@ -2433,6 +2435,7 @@ document.addEventListener('click', (event) => {
 el.cartLines.addEventListener('click', (event) => {
   const clearCart = event.target.closest('[data-clear-cart]');
   const inc = event.target.closest('[data-inc]');
+  const dec = event.target.closest('[data-dec]');
   const remove = event.target.closest('[data-remove]');
   const edit = event.target.closest('[data-edit]');
 
@@ -2441,6 +2444,9 @@ el.cartLines.addEventListener('click', (event) => {
   } else if (inc) {
     const line = cart.find((entry) => entry.lineId === inc.dataset.inc);
     if (line) line.quantity += 1;
+  } else if (dec) {
+    const line = cart.find((entry) => entry.lineId === dec.dataset.dec);
+    if (line && line.quantity > 1) line.quantity -= 1;
   } else if (remove) {
     cart = cart.filter((entry) => entry.lineId !== remove.dataset.remove);
   } else if (edit) {
