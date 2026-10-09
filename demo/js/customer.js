@@ -1397,6 +1397,19 @@ function cartLineHtml(line) {
     return groups;
   }, []);
 
+  const quantityPriceHtml = (unitPrice, { extra = false, included = false } = {}) => {
+    const price = Number(unitPrice) || 0;
+    if (included || price <= 0) {
+      return '<b class="cart-detail-price is-included">Inkludert</b>';
+    }
+
+    if (line.quantity > 1) {
+      return `<b class="cart-detail-price${extra ? ' is-extra' : ''}"><span class="cart-detail-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
+    }
+
+    return `<b class="cart-detail-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
+  };
+
   const detailRows = [];
 
   if (size?.label) {
@@ -1404,18 +1417,17 @@ function cartLineHtml(line) {
       `<span class="cart-detail-row">
         <span class="cart-detail-left"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
         <span class="cart-detail-leader" aria-hidden="true"></span>
-        <b class="cart-detail-price">${formatPrice(getSizePrice(item, line.sizeId))}</b>
+        ${quantityPriceHtml(getSizePrice(item, line.sizeId))}
       </span>`
     );
   }
 
   addonGroups.forEach((group) => {
-    const priceText = group.price > 0 ? `+ ${formatPrice(group.price)}` : 'Inkludert';
     detailRows.push(
       `<span class="cart-detail-row">
         <span class="cart-detail-left"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
         <span class="cart-detail-leader" aria-hidden="true"></span>
-        <b class="cart-detail-price${group.price > 0 ? ' is-extra' : ' is-included'}">${escapeHtml(priceText)}</b>
+        ${quantityPriceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
       </span>`
     );
   });
