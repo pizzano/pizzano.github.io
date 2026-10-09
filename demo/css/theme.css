@@ -736,3 +736,16 @@ html[data-theme="dark"] .view-cart .cart-product-remove:hover {
   background: #34201d !important;
   color: #ff8178 !important;
 }
+
+
+/* ======================== Handlekurv detaljer/priser v4 ======================== */
+html[data-theme="dark"] .view-cart .cart-detail-left b,
+html[data-theme="dark"] .view-cart .cart-detail-price {
+  color: #d5dbe0 !important;
+}
+html[data-theme="dark"] .view-cart .cart-detail-price.is-included {
+  color: #9da6ad !important;
+}
+html[data-theme="dark"] .view-cart .cart-detail-leader {
+  border-bottom-color: #5b646c !important;
+}
