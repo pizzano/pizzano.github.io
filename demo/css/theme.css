@@ -918,3 +918,65 @@ html[data-theme="dark"] #orderList .order-history-open-identity > strong {
 html[data-theme="dark"] #orderList .order-history-hide-label {
   color: #ff9158 !important;
 }
+
+
+/* ======================== Hentetid pickup review v4 ======================== */
+html[data-theme="dark"] #reviewCard .pickup-review,
+html[data-theme="dark"] #reviewCard .pickup-review-summary,
+html[data-theme="dark"] #reviewCard .pickup-review-item,
+html[data-theme="dark"] #reviewCard .pickup-review-info,
+html[data-theme="dark"] #reviewCard .pickup-review-empty {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-body {
+  background: #15191d !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-media,
+html[data-theme="dark"] #reviewCard .pickup-review-fallback {
+  background: #24292e !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-summary-copy strong,
+html[data-theme="dark"] #reviewCard .pickup-review-name,
+html[data-theme="dark"] #reviewCard .pickup-review-total,
+html[data-theme="dark"] #reviewCard .pickup-review-price,
+html[data-theme="dark"] #reviewCard .pickup-review-multiplier strong,
+html[data-theme="dark"] #reviewCard .pickup-review-info-head strong,
+html[data-theme="dark"] #reviewCard .pickup-review-info-grid strong,
+html[data-theme="dark"] #reviewCard .pickup-review-pay strong {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-summary-copy span,
+html[data-theme="dark"] #reviewCard .pickup-review-row,
+html[data-theme="dark"] #reviewCard .pickup-review-row-copy b,
+html[data-theme="dark"] #reviewCard .pickup-review-price.is-included,
+html[data-theme="dark"] #reviewCard .pickup-review-info-grid span,
+html[data-theme="dark"] #reviewCard .pickup-review-pay span {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-dots {
+  border-bottom-color: #5b646c !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-qty {
+  background: #2a211c !important;
+  color: #ff9861 !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-info-grid > div {
+  background: #20252a !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-summary-action {
+  color: #ff9158 !important;
+}
+
+html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
+  color: #70d494 !important;
+}

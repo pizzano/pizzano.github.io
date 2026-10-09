@@ -1612,92 +1612,103 @@ function renderCheckout() {
       return groups;
     }, []);
 
-    const reviewPriceHtml = (unitPrice, { extra = false, included = false } = {}) => {
+    const priceHtml = (unitPrice, { extra = false, included = false } = {}) => {
       const price = Number(unitPrice) || 0;
       if (included || price <= 0) {
-        return '<b class="checkout-cart-price is-included">Inkludert</b>';
+        return '<b class="pickup-review-price is-included">Inkludert</b>';
       }
-
       if (line.quantity > 1) {
-        return `<b class="checkout-cart-price${extra ? ' is-extra' : ''}"><span class="checkout-cart-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
+        return `<b class="pickup-review-price${extra ? ' is-extra' : ''}"><span class="pickup-review-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
       }
-
-      return `<b class="checkout-cart-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
+      return `<b class="pickup-review-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
     };
 
-    const detailRows = [];
+    const rows = [];
 
     if (size?.label) {
-      detailRows.push(
-        `<div class="checkout-review-line">
-          <span class="checkout-cart-left"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
-          <span class="checkout-cart-leader" aria-hidden="true"></span>
-          ${reviewPriceHtml(getSizePrice(item, line.sizeId))}
+      rows.push(
+        `<div class="pickup-review-row">
+          <span class="pickup-review-row-copy"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
+          <span class="pickup-review-dots" aria-hidden="true"></span>
+          ${priceHtml(getSizePrice(item, line.sizeId))}
         </div>`
       );
     }
 
     addonGroups.forEach((group) => {
-      detailRows.push(
-        `<div class="checkout-review-line">
-          <span class="checkout-cart-left"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
-          <span class="checkout-cart-leader" aria-hidden="true"></span>
-          ${reviewPriceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
+      rows.push(
+        `<div class="pickup-review-row">
+          <span class="pickup-review-row-copy"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
+          <span class="pickup-review-dots" aria-hidden="true"></span>
+          ${priceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
         </div>`
       );
     });
 
     if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
-      detailRows.push(
-        `<div class="checkout-cart-row is-note">
-          <span class="checkout-cart-left"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
+      rows.push(
+        `<div class="pickup-review-row is-note">
+          <span class="pickup-review-row-copy"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
         </div>`
       );
     }
 
     if (line.comment) {
-      detailRows.push(
-        `<div class="checkout-cart-row is-note">
-          <span class="checkout-cart-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+      rows.push(
+        `<div class="pickup-review-row is-note">
+          <span class="pickup-review-row-copy"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
         </div>`
       );
     }
 
     const imageHtml = item.imageUrl
       ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-      : `<span class="checkout-cart-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
+      : `<span class="pickup-review-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
 
     return `
-      <article class="checkout-cart-card">
-        <div class="checkout-cart-media">${imageHtml}</div>
-        <div class="checkout-cart-content">
-          <div class="checkout-cart-copy">
-            <strong class="checkout-cart-name">${escapeHtml(item.name)}</strong>
-            ${detailRows.length ? `<div class="checkout-cart-details">${detailRows.join('')}</div>` : ''}
+      <article class="pickup-review-item">
+        <div class="pickup-review-media">${imageHtml}</div>
+        <div class="pickup-review-product">
+          <div class="pickup-review-product-copy">
+            <strong class="pickup-review-name">${escapeHtml(item.name)}</strong>
+            ${rows.length ? `<div class="pickup-review-rows">${rows.join('')}</div>` : ''}
           </div>
-          <div class="checkout-cart-bottom">
-            <span class="checkout-cart-qty">${line.quantity}×</span>
-            <strong class="checkout-cart-total">${formatPrice(linePrice)}</strong>
+          <div class="pickup-review-product-foot">
+            <span class="pickup-review-qty">${line.quantity}×</span>
+            <strong class="pickup-review-total">${formatPrice(linePrice)}</strong>
           </div>
         </div>
       </article>`;
   }).join('');
 
   el.reviewCard.innerHTML = `
-    <details class="checkout-review-toggle">
-      <summary class="checkout-review-summary">
-        <strong class="checkout-review-count">${escapeHtml(reviewLabel)}</strong>
-        <span class="checkout-review-summary-hint">Se innhold og detaljer</span>
-        <span class="checkout-review-summary-action" aria-hidden="true"></span>
+    <details class="pickup-review">
+      <summary class="pickup-review-summary">
+        <div class="pickup-review-summary-copy">
+          <strong>${escapeHtml(reviewLabel)}</strong>
+          <span>Se innhold og detaljer</span>
+        </div>
+        <span class="pickup-review-summary-action" aria-hidden="true"></span>
       </summary>
-      <div class="checkout-review-details">
-        <div class="checkout-review-items">${reviewItems || '<div class="checkout-review-empty">Ingen varer i kurven.</div>'}</div>
-        <section class="checkout-review-info" aria-label="Din informasjon">
-          <h4>Din informasjon</h4>
-          <div class="checkout-review-info-row"><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
-          <div class="checkout-review-info-row"><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
-          <div class="checkout-review-info-row"><span>Hentetid</span><strong>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</strong></div>
-          <div class="checkout-review-info-row is-total"><span>Å betale ved henting</span><strong>${formatPrice(total)}</strong></div>
+
+      <div class="pickup-review-body">
+        <div class="pickup-review-list">
+          ${reviewItems || '<div class="pickup-review-empty">Ingen varer i kurven.</div>'}
+        </div>
+
+        <section class="pickup-review-info" aria-label="Din informasjon">
+          <div class="pickup-review-info-head">
+            <strong>Din informasjon</strong>
+            <span>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</span>
+          </div>
+          <div class="pickup-review-info-grid">
+            <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
+            <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+          </div>
+          <div class="pickup-review-pay">
+            <span>Å betale ved henting</span>
+            <strong>${formatPrice(total)}</strong>
+          </div>
         </section>
       </div>
     </details>`;
