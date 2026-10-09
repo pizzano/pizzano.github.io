@@ -4969,3 +4969,135 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 15px !important;
   }
 }
+
+
+/* ======================== Mine bestillinger: åpen bestilling uten dobbel oversikt v3 ======================== */
+#orderList .order-history-summary-shell {
+  position: relative;
+}
+
+#orderList .order-history-open-summary {
+  display: none;
+}
+
+#orderList .order-history-card[open] > .order-history-summary-shell {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #edf0f2;
+  background: #fff;
+}
+
+#orderList .order-history-card[open] .order-history-collapsed-summary {
+  display: none !important;
+}
+
+#orderList .order-history-card[open] .order-history-open-summary {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+}
+
+#orderList .order-history-open-identity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "kicker kicker"
+    "id date";
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+#orderList .order-history-open-kicker {
+  grid-area: kicker;
+  color: #969da5;
+  font-size: 8.5px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .055em;
+}
+
+#orderList .order-history-open-identity > strong {
+  grid-area: id;
+  color: #25282c;
+  font-size: 13px;
+  line-height: 1.15;
+  font-weight: 850;
+}
+
+#orderList .order-history-open-date {
+  grid-area: date;
+  min-width: 0;
+  overflow: hidden;
+  color: #7b838d;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#orderList .order-history-open-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+#orderList .order-history-hide-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #d75a0d;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+#orderList .order-history-hide-label i {
+  font-style: normal;
+  font-size: 10px;
+}
+
+#orderList .order-history-card[open] .order-history-details {
+  border-top: 0 !important;
+}
+
+@media (max-width: 520px) {
+  #orderList .order-history-card[open] > .order-history-summary-shell {
+    padding: 9px 10px !important;
+  }
+
+  #orderList .order-history-card[open] .order-history-open-summary {
+    gap: 8px;
+  }
+
+  #orderList .order-history-open-identity {
+    column-gap: 6px;
+  }
+
+  #orderList .order-history-open-identity > strong {
+    font-size: 12px;
+  }
+
+  #orderList .order-history-open-date {
+    max-width: 125px;
+    font-size: 9.2px;
+  }
+
+  #orderList .order-history-open-actions {
+    gap: 6px;
+  }
+
+  #orderList .order-history-open-summary .order-status-pill {
+    min-height: 23px;
+    padding: 0 8px;
+    font-size: 9.8px;
+  }
+
+  #orderList .order-history-hide-label {
+    font-size: 9.8px;
+  }
+}
