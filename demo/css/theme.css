@@ -980,3 +980,22 @@ html[data-theme="dark"] #reviewCard .pickup-review-summary-action {
 html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
   color: #70d494 !important;
 }
+
+
+/* ======================== Favoritter actions ======================== */
+html[data-theme="dark"] #favList .favorite-order-btn {
+  border-color: #5c3a28 !important;
+  background: #302118 !important;
+  color: #ff9861 !important;
+}
+
+html[data-theme="dark"] #favList .favorite-remove-btn {
+  border-color: #5e3533 !important;
+  background: #1c2024 !important;
+  color: #ff8d86 !important;
+}
+
+html[data-theme="dark"] #favList .favorite-remove-btn:hover {
+  border-color: #7a4541 !important;
+  background: #32201f !important;
+}
