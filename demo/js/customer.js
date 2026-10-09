@@ -1388,32 +1388,50 @@ function cartLineHtml(line) {
     const title = String(addon.groupTitle || 'Tilvalg').trim() || 'Tilvalg';
     let group = groups.find((entry) => entry.title === title);
     if (!group) {
-      group = { title, labels: [] };
+      group = { title, labels: [], price: 0 };
       groups.push(group);
     }
     group.labels.push(addon.label);
+    group.price += Number(addon.price) || 0;
     return groups;
   }, []);
 
   const detailRows = [];
+
   if (size?.label) {
     detailRows.push(
-      `<span class="cart-detail-row"><b>Størrelse:</b> ${escapeHtml(size.label)} <span class="cart-detail-separator">|</span> <b class="cart-detail-price">${formatPrice(getSizePrice(item, line.sizeId))}</b></span>`
+      `<span class="cart-detail-row">
+        <span class="cart-detail-left"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
+        <span class="cart-detail-leader" aria-hidden="true"></span>
+        <b class="cart-detail-price">${formatPrice(getSizePrice(item, line.sizeId))}</b>
+      </span>`
     );
   }
+
   addonGroups.forEach((group) => {
+    const priceText = group.price > 0 ? `+ ${formatPrice(group.price)}` : 'Inkludert';
     detailRows.push(
-      `<span class="cart-detail-row"><b>${escapeHtml(group.title)}:</b> ${escapeHtml(group.labels.join(', '))}</span>`
+      `<span class="cart-detail-row">
+        <span class="cart-detail-left"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
+        <span class="cart-detail-leader" aria-hidden="true"></span>
+        <b class="cart-detail-price${group.price > 0 ? ' is-extra' : ' is-included'}">${escapeHtml(priceText)}</b>
+      </span>`
     );
   });
+
   if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
     detailRows.push(
-      `<span class="cart-detail-row"><b>Uten:</b> ${escapeHtml(line.removedIngredients.join(', '))}</span>`
+      `<span class="cart-detail-row is-note">
+        <span class="cart-detail-left"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
+      </span>`
     );
   }
+
   if (line.comment) {
     detailRows.push(
-      `<span class="cart-detail-row"><b>Kommentar:</b> ${escapeHtml(line.comment)}</span>`
+      `<span class="cart-detail-row is-note">
+        <span class="cart-detail-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+      </span>`
     );
   }
 
@@ -1433,34 +1451,34 @@ function cartLineHtml(line) {
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
-        <div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
-          <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
-          <span>${line.quantity}</span>
-          <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
+        <div class="cart-product-bottomrow">
+          <div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
+            <button data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>
+            <span>${line.quantity}</span>
+            <button data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
+          </div>
+
+          <div class="cart-product-actions">
+            <button class="cart-product-iconbtn cart-product-edit" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 19.5h4l9.8-9.8a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0l-9.8 9.8v4Z"/>
+                <path d="m13.6 6.4 4 4"/>
+              </svg>
+            </button>
+
+            <button class="cart-product-iconbtn cart-product-remove" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 7h8"/>
+                <path d="M5.5 7h13"/>
+                <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
+                <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
+                <path d="M10 10.5v5.5M14 10.5v5.5"/>
+              </svg>
+            </button>
+          </div>
+
+          <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
         </div>
-      </div>
-
-      <div class="cart-product-side">
-        <div class="cart-product-actions">
-          <button class="cart-product-iconbtn cart-product-edit" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4.5 19.5h4l9.8-9.8a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0l-9.8 9.8v4Z"/>
-              <path d="m13.6 6.4 4 4"/>
-            </svg>
-          </button>
-
-          <button class="cart-product-iconbtn cart-product-remove" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8 7h8"/>
-              <path d="M5.5 7h13"/>
-              <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
-              <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
-              <path d="M10 10.5v5.5M14 10.5v5.5"/>
-            </svg>
-          </button>
-        </div>
-
-        <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
       </div>
     </article>`;
 }
