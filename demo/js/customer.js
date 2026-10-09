@@ -1382,16 +1382,38 @@ function cartLineHtml(line) {
   const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
   const optionIds = Object.values(line.selections || {}).flat();
   const lineTotal = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
-  const unitPrice = computeLinePrice(item, line.sizeId, optionIds, 1);
   const addons = describeSelection(optionIds);
 
-  const detailParts = [];
-  if (size?.label) detailParts.push(size.label);
-  if (addons.length) detailParts.push(addons.map((addon) => addon.label).join(', '));
-  if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
-    detailParts.push(`Uten: ${line.removedIngredients.join(', ')}`);
+  const addonGroups = addons.reduce((groups, addon) => {
+    const title = String(addon.groupTitle || 'Tilvalg').trim() || 'Tilvalg';
+    let group = groups.find((entry) => entry.title === title);
+    if (!group) {
+      group = { title, labels: [] };
+      groups.push(group);
+    }
+    group.labels.push(addon.label);
+    return groups;
+  }, []);
+
+  const detailRows = [];
+  if (size?.label) {
+    detailRows.push(`<span class="cart-detail-row"><b>Størrelse:</b> ${escapeHtml(size.label)}</span>`);
   }
-  if (line.comment) detailParts.push(`«${line.comment}»`);
+  addonGroups.forEach((group) => {
+    detailRows.push(
+      `<span class="cart-detail-row"><b>${escapeHtml(group.title)}:</b> ${escapeHtml(group.labels.join(', '))}</span>`
+    );
+  });
+  if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
+    detailRows.push(
+      `<span class="cart-detail-row"><b>Uten:</b> ${escapeHtml(line.removedIngredients.join(', '))}</span>`
+    );
+  }
+  if (line.comment) {
+    detailRows.push(
+      `<span class="cart-detail-row"><b>Kommentar:</b> ${escapeHtml(line.comment)}</span>`
+    );
+  }
 
   const imageHtml = item.imageUrl
     ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
@@ -1405,8 +1427,7 @@ function cartLineHtml(line) {
 
       <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
         <strong class="cart-product-name">${escapeHtml(item.name)}</strong>
-        <span class="cart-product-unit">Pris per 1: <b>${formatPrice(unitPrice)}</b></span>
-        ${detailParts.length ? `<span class="cart-product-details">${escapeHtml(detailParts.join(' · '))}</span>` : ''}
+        ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
       </button>
 
       <button class="cart-product-remove" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
