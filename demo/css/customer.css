@@ -4260,3 +4260,221 @@ html[data-theme="dark"] .cart-detail-row b {
 .view-cart .cart-detail-price {
   font-weight: 700;
 }
+
+
+/* ======================== Checkout review: sepet tasarımı v2 ======================== */
+#reviewCard .checkout-review-items {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+#reviewCard .checkout-review-card {
+  display: grid !important;
+  grid-template-columns: 96px minmax(0, 1fr) !important;
+  gap: 13px !important;
+  align-items: start !important;
+  width: 100% !important;
+  padding: 11px !important;
+  border: 1px solid #ebe4de !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 3px 12px rgba(42, 31, 25, .045) !important;
+}
+
+#reviewCard .checkout-review-media {
+  width: 96px !important;
+  height: 96px !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  background: #f3f1ee !important;
+}
+
+#reviewCard .checkout-review-media img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+}
+
+#reviewCard .checkout-review-media-fallback {
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  background: linear-gradient(145deg, #fff2e8, #f8e5d7) !important;
+  color: #d76522 !important;
+  font-size: 28px !important;
+  font-weight: 850 !important;
+}
+
+#reviewCard .checkout-review-main {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+#reviewCard .checkout-review-title-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+#reviewCard .checkout-review-title-wrap {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+#reviewCard .checkout-review-qty-pill {
+  flex: none !important;
+  min-width: 34px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 8px !important;
+  border-radius: 11px !important;
+  background: #fff1e6 !important;
+  color: #e65b12 !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+#reviewCard .checkout-review-item-name {
+  min-width: 0 !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  word-break: break-word !important;
+}
+
+#reviewCard .checkout-review-item-total {
+  flex: none !important;
+  color: var(--ink) !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+}
+
+#reviewCard .checkout-review-lines {
+  display: grid !important;
+  gap: 2px !important;
+  width: 100% !important;
+}
+
+#reviewCard .checkout-review-line {
+  display: grid !important;
+  grid-template-columns: minmax(0, auto) minmax(10px, 1fr) auto !important;
+  align-items: baseline !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  color: #8a817a !important;
+  font-size: 10.5px !important;
+  line-height: 1.28 !important;
+  font-weight: 400 !important;
+}
+
+#reviewCard .checkout-review-line.is-note {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+#reviewCard .checkout-review-line-left {
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+}
+
+#reviewCard .checkout-review-line-left b {
+  flex: none !important;
+  color: #6a625c !important;
+  font-weight: 600 !important;
+}
+
+#reviewCard .checkout-review-line-left span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#reviewCard .checkout-review-line.is-note .checkout-review-line-left span {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+#reviewCard .checkout-review-line-leader {
+  min-width: 10px !important;
+  height: .72em !important;
+  border-bottom: 1px dotted #b9afa7 !important;
+  opacity: .8 !important;
+}
+
+#reviewCard .checkout-review-line-price {
+  color: #302a26 !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+#reviewCard .checkout-review-line-price.is-included {
+  color: #8a817a !important;
+  font-weight: 550 !important;
+}
+
+#reviewCard .checkout-review-multiplier {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 2px !important;
+  margin-right: 1px !important;
+  font-weight: 650 !important;
+}
+
+#reviewCard .checkout-review-multiplier strong {
+  color: #211d1a !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 520px) {
+  #reviewCard .checkout-review-card {
+    grid-template-columns: 84px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 9px !important;
+    border-radius: 15px !important;
+  }
+
+  #reviewCard .checkout-review-media {
+    width: 84px !important;
+    height: 84px !important;
+    border-radius: 13px !important;
+  }
+
+  #reviewCard .checkout-review-title-wrap {
+    gap: 6px !important;
+  }
+
+  #reviewCard .checkout-review-qty-pill {
+    min-width: 31px !important;
+    height: 28px !important;
+    padding: 0 6px !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+  }
+
+  #reviewCard .checkout-review-item-name,
+  #reviewCard .checkout-review-item-total {
+    font-size: 12.5px !important;
+  }
+
+  #reviewCard .checkout-review-line,
+  #reviewCard .checkout-review-line-price {
+    font-size: 9.5px !important;
+  }
+}
