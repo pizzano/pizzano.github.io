@@ -898,3 +898,23 @@ html[data-theme="dark"] #reviewCard .checkout-cart-qty {
   background: #2a211c !important;
   color: #ff9861 !important;
 }
+
+
+/* ======================== Mine bestillinger open summary v3 ======================== */
+html[data-theme="dark"] #orderList .order-history-card[open] > .order-history-summary-shell {
+  border-color: var(--line) !important;
+  background: #191d21 !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-open-kicker,
+html[data-theme="dark"] #orderList .order-history-open-date {
+  color: var(--ink-3) !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-open-identity > strong {
+  color: var(--ink) !important;
+}
+
+html[data-theme="dark"] #orderList .order-history-hide-label {
+  color: #ff9158 !important;
+}
