@@ -14,8 +14,8 @@
     <title data-mgx-overview="title">KØL Grill &amp; Pizza — Bestill takeaway</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/customer-base.css?v=20260918-core2">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20261008-allergen-toggle1">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261008-allergen-toggle1">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20261009-profilemenu1">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261009-profilemenu1">
     <meta data-mgx-overview="description" name="description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza. Enkel bestilling, klar til avtalt hentetid." />
     <meta data-mgx-overview="og:title" property="og:title" content="KØL Grill &amp; Pizza — Bestill takeaway" />
     <meta data-mgx-overview="og:description" property="og:description" content="Bestill pizza, kebab og burger til henting hos KØL Grill &amp; Pizza." />
@@ -149,42 +149,89 @@
 
         <!-- ============ PROFIL ============ -->
         <section class="view view-profile" id="viewProfile" aria-label="Min profil" hidden>
-            <h1 class="view-title">Min profil</h1>
-            <p class="page-intro">Dine opplysninger, favoritter og tidligere bestillinger.</p>
+            <div class="profile-home" id="profileHome">
+                <div class="profile-hero">
+                    <span class="profile-kicker">Profil</span>
+                    <div class="profile-avatar" id="profileHeroAvatar" aria-hidden="true">K</div>
+                    <strong class="profile-hero-name" id="profileHeroName">Min profil</strong>
+                    <span class="profile-hero-sub" id="profileHeroPhone">Kundeprofil</span>
+                </div>
 
-            <nav class="profile-tabs" role="tablist" aria-label="Profilinnhold">
-    <button class="profile-tab is-active" data-profile-tab="contact" type="button" role="tab" aria-selected="true" aria-controls="profilePanelContact">Kontakt</button>
-    <button class="profile-tab" data-profile-tab="orders" type="button" role="tab" aria-selected="false" aria-controls="profilePanelOrders">Bestillinger</button>
-    <button class="profile-tab" data-profile-tab="favorites" type="button" role="tab" aria-selected="false" aria-controls="profilePanelFavorites">Favoritter</button>
-</nav>
+                <nav class="profile-menu" aria-label="Profilmeny">
+                    <button class="profile-menu-row" id="profileTabContact" data-profile-tab="contact" type="button">
+                        <span class="profile-menu-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6"/></svg>
+                        </span>
+                        <span class="profile-menu-copy">
+                            <strong>Rediger profil</strong>
+                            <small id="profileContactMeta">Navn og mobilnummer</small>
+                        </span>
+                        <span class="profile-menu-chevron" aria-hidden="true">›</span>
+                    </button>
 
-<div class="profile-tab-panels">
-    <section class="card profile-tab-panel is-active" data-profile-panel="contact" role="tabpanel" aria-labelledby="profileTabContact">
-        <p class="section-help">Lagre her hvis du vil fylle ut raskere neste gang.</p>
-        <div class="field">
-            <label class="field-label" for="profName">Navn</label>
-            <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
-        </div>
-        <div class="field">
-            <label class="field-label" for="profPhone">Mobilnummer</label>
-            <div class="phone-row">
-                <span class="phone-prefix">+47</span>
-                <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                    <button class="profile-menu-row" id="profileTabFavorites" data-profile-tab="favorites" type="button">
+                        <span class="profile-menu-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                        </span>
+                        <span class="profile-menu-copy">
+                            <strong>Favoritter</strong>
+                            <small id="profileFavoritesMeta">Ingen favoritter ennå</small>
+                        </span>
+                        <span class="profile-menu-chevron" aria-hidden="true">›</span>
+                    </button>
+
+                    <button class="profile-menu-row" id="profileTabOrders" data-profile-tab="orders" type="button">
+                        <span class="profile-menu-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h12l1 16H5L6 4Z"/><path d="M9 9h6M9 13h6"/></svg>
+                        </span>
+                        <span class="profile-menu-copy">
+                            <strong>Mine bestillinger</strong>
+                            <small id="profileOrdersMeta">Ingen tidligere bestillinger</small>
+                        </span>
+                        <span class="profile-menu-chevron" aria-hidden="true">›</span>
+                    </button>
+                </nav>
             </div>
-        </div>
-        <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
-        <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
-    </section>
 
-    <section class="card profile-tab-panel" data-profile-panel="favorites" role="tabpanel" aria-labelledby="profileTabFavorites" hidden>
-        <div id="favList" class="mini-list"></div>
-    </section>
+            <div class="profile-detail" id="profileDetail" hidden>
+                <header class="profile-detail-head">
+                    <button class="profile-detail-back" data-profile-home type="button" aria-label="Tilbake til profil">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+                    </button>
+                    <div>
+                        <span>Profil</span>
+                        <h1 id="profilePanelTitle">Rediger profil</h1>
+                    </div>
+                </header>
 
-    <section class="card profile-tab-panel" data-profile-panel="orders" role="tabpanel" aria-labelledby="profileTabOrders" hidden>
-        <div id="activeOrderProfile" class="active-order-slot active-order-slot-profile" hidden></div>
-        <div id="orderList" class="mini-list"></div>
-    </section>
-</div>
+                <div class="profile-tab-panels">
+                    <section class="card profile-tab-panel is-active" data-profile-panel="contact">
+                        <p class="section-help">Lagre navn og mobilnummer for raskere bestilling neste gang.</p>
+                        <div class="field">
+                            <label class="field-label" for="profName">Navn</label>
+                            <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="profPhone">Mobilnummer</label>
+                            <div class="phone-row">
+                                <span class="phone-prefix">+47</span>
+                                <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
+                        <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
+                    </section>
+
+                    <section class="card profile-tab-panel" data-profile-panel="favorites" hidden>
+                        <div id="favList" class="mini-list"></div>
+                    </section>
+
+                    <section class="card profile-tab-panel" data-profile-panel="orders" hidden>
+                        <div id="activeOrderProfile" class="active-order-slot active-order-slot-profile" hidden></div>
+                        <div id="orderList" class="mini-list"></div>
+                    </section>
+                </div>
+            </div>
         </section>
 
     </main>
@@ -233,7 +280,7 @@
     <div class="toast" id="toast" hidden></div>
 
     <script src="/demo/js/install.js?v=20260918-core2"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261008-allergen-toggle1"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261009-profilemenu1"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261001-shopinfo1"></script>
 </body>
 

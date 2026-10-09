@@ -355,19 +355,33 @@ html[data-theme="dark"] .view-checkout > .checkout-actions {
   box-shadow: 0 -10px 30px rgba(0,0,0,.32) !important;
 }
 
-html[data-theme="dark"] #viewProfile .profile-tabs,
 html[data-theme="dark"] #viewProfile .profile-tab-panel {
   border-color: var(--line) !important;
   background: #191d21 !important;
 }
 
-html[data-theme="dark"] #viewProfile .profile-tab {
-  color: var(--ink-2) !important;
+html[data-theme="dark"] .profile-avatar {
+  border-color: #191d21 !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.28) !important;
 }
 
-html[data-theme="dark"] #viewProfile .profile-tab.is-active {
-  color: #fff !important;
-  background: var(--accent) !important;
+html[data-theme="dark"] .profile-avatar::after {
+  border-color: #191d21 !important;
+}
+
+html[data-theme="dark"] .profile-menu-row:hover {
+  background: #231b17 !important;
+}
+
+html[data-theme="dark"] .profile-menu-icon {
+  background: #352318 !important;
+  color: #ff9a5e !important;
+}
+
+html[data-theme="dark"] .profile-detail-back {
+  border-color: var(--line) !important;
+  background: #1c2024 !important;
+  color: var(--ink-2) !important;
 }
 
 html[data-theme="dark"] .mini-row {
