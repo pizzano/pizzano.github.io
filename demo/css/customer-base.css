@@ -507,7 +507,7 @@ select {
 /* Clear contact feedback and account information. */.hdr-btn {   flex: none;  }.validated-input { position: relative; flex: 1; min-width: 0; }.validated-input .input { padding-right: 38px; }.validated-input.is-valid .input { border-color: #8ac5a0; background: #f7fcf8; }.valid-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: white; font-size: 13px; font-weight: 700; pointer-events: none; }.page-intro,
 .section-help { margin: 0 0 18px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }.view-profile .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }.view-profile .sec-title { margin-bottom: 12px; font-size: 16px; }.view-profile .mini-row { padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; gap: 12px; }.view-profile .mini-row:last-child { border-bottom: 0; }.view-profile .mini-row .link-btn { padding: 10px 12px; background: var(--accent-soft); border-radius: 9px; text-decoration: none; flex: none; }.view-profile .mini-sub { line-height: 1.5; }.view-profile #btnSaveProfile { min-height: 46px; }@media (max-width: 360px){.header-inner { gap: 4px; padding: 0 8px; }.hdr-actions { gap: 0; }.brand { gap: 5px; }.view-profile .card { padding: 16px; }
 }
-main { padding-left: 0; padding-right: 0; }.view-menu { padding-left: 10px; padding-right: 10px; }.view-cart > .view-title,
+main { padding-left: 0; padding-right: 0; }.view-menu { margin-left: -9px; margin-right: -9px; padding-left: 5px; padding-right: 5px; }.view-cart > .view-title,
 .view-profile > .view-title,
 .view-profile > .page-intro,
 .view-cart > .steps,
