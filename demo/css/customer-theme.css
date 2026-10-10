@@ -62,3 +62,10 @@ html[data-customer-palette] .saved-flash { border-radius: 10px; }
 html[data-customer-palette] .toast[data-tone="error"]::before { content: "!"; }
 
 html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
+
+/* Removed ingredients stay interactive, but look inactive. */
+html[data-customer-palette] .ingredient-chip.is-removed {
+  background: var(--palette-bg) !important;
+  color: var(--palette-muted) !important;
+  border-color: var(--palette-border) !important;
+}

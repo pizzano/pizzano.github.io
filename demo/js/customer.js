@@ -1009,6 +1009,9 @@ function openProduct(itemId, editLine = null) {
     removedIngredients: editLine && Array.isArray(editLine.removedIngredients)
       ? [...editLine.removedIngredients]
       : [],
+    autoIngredientComment: editLine && Array.isArray(editLine.removedIngredients) && editLine.removedIngredients.length &&
+      String(editLine.comment || '').split('\n').some(line => line.trim() === `Uten ${editLine.removedIngredients.join(', ')}`)
+      ? `Uten ${editLine.removedIngredients.join(', ')}` : '',
     ingredientsOpen: Boolean(editLine && Array.isArray(editLine.removedIngredients) && editLine.removedIngredients.length),
     quantity: editLine ? editLine.quantity : 1,
     editingLineId: editLine ? editLine.lineId : null,
@@ -1145,7 +1148,7 @@ function renderSheet() {
             ${removableIngredients.map((rule) => {
               const removed = removedSet.has(rule.name.toLocaleLowerCase('no'));
               return `<button class="ingredient-chip${removed ? ' is-removed' : ''}" data-remove-ingredient="${escapeHtml(rule.name)}" type="button" aria-pressed="${removed}">
-                <span aria-hidden="true">${removed ? '+' : '✓'}</span>${escapeHtml(rule.name)}
+                <span aria-hidden="true">${removed ? '−' : '✓'}</span>${escapeHtml(rule.name)}
               </button>`;
             }).join('')}
           </div>
@@ -2693,6 +2696,12 @@ el.sheetBody.addEventListener('click', (event) => {
   } else {
     draft.removedIngredients = [...(draft.removedIngredients || []), rule.name];
   }
+  const previousAutoComment = draft.autoIngredientComment || '';
+  const lines = String(draft.comment || '').split('\n');
+  const manualLines = previousAutoComment ? lines.filter(line => line.trim() !== previousAutoComment) : lines;
+  draft.autoIngredientComment = draft.removedIngredients.length
+    ? `Uten ${draft.removedIngredients.join(', ')}` : '';
+  draft.comment = [...manualLines.filter(line => line.trim()), ...(draft.autoIngredientComment ? [draft.autoIngredientComment] : [])].join('\n');
   draft.ingredientsOpen = true;
   renderSheet();
 });
