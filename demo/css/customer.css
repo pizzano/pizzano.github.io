@@ -6259,3 +6259,76 @@ html[data-theme="dark"] .cart-detail-row b {
     transform: translateX(-4px) !important;
   }
 }
+
+
+/* ======================== Mobil meny: luftigere produktrekker v18 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 76px minmax(0,1fr) 40px !important;
+    column-gap: 10px !important;
+    min-height: 104px !important;
+    padding: 10px 8px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 76px !important;
+    min-width: 76px !important;
+    height: 82px !important;
+    min-height: 82px !important;
+    align-self: center !important;
+  }
+
+  .view-menu .prod-info {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 3px 0 !important;
+    gap: 5px !important;
+  }
+
+  .view-menu .prod-name {
+    margin: 0 !important;
+    line-height: 1.16 !important;
+  }
+
+  .view-menu .prod-desc {
+    line-height: 1.24 !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    line-height: 1.2 !important;
+  }
+
+  .view-menu .prod-side {
+    width: 40px !important;
+    min-width: 40px !important;
+    min-height: 82px !important;
+    align-content: center !important;
+    row-gap: 11px !important;
+    transform: translateX(-2px) !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 74px minmax(0,1fr) 40px !important;
+    column-gap: 9px !important;
+    min-height: 100px !important;
+    padding: 9px 7px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 74px !important;
+    min-width: 74px !important;
+    height: 78px !important;
+    min-height: 78px !important;
+  }
+
+  .view-menu .prod-side {
+    min-height: 78px !important;
+    row-gap: 10px !important;
+  }
+}
