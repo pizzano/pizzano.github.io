@@ -5944,3 +5944,72 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 11.8px !important;
   }
 }
+
+
+/* ======================== Mobil meny: kompakt + rett over pris v14 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-side {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 5px !important;
+  }
+
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select,
+  .view-menu .prod-grid.menu-layout-list .add-btn,
+  .view-menu .prod-grid.menu-layout-list .add-btn.is-select,
+  .view-menu .prod-grid.menu-layout-grid .add-btn,
+  .view-menu .prod-grid.menu-layout-grid .add-btn.is-select {
+    box-sizing: border-box !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    flex: 0 0 30px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: var(--accent) !important;
+    color: #fff !important;
+    font-size: 19px !important;
+    line-height: 1 !important;
+    font-weight: 650 !important;
+    box-shadow: 0 2px 6px rgba(232,98,15,.16) !important;
+  }
+
+  .view-menu .add-btn::after,
+  .view-menu .add-btn.is-select::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  .view-menu .prod-price {
+    width: 100% !important;
+    margin: 0 !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select,
+  .view-menu .prod-grid.menu-layout-list .add-btn,
+  .view-menu .prod-grid.menu-layout-list .add-btn.is-select,
+  .view-menu .prod-grid.menu-layout-grid .add-btn,
+  .view-menu .prod-grid.menu-layout-grid .add-btn.is-select {
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    flex-basis: 30px !important;
+  }
+}
