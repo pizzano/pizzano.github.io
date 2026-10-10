@@ -6,7 +6,7 @@
   display: grid;
   place-items: end center;
   padding: 0;
-  background: color-mix(in srgb, var(--palette-ink) 56%, transparent);
+  background: color-mix(in srgb, var(--palette-deep) 56%, transparent);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
 }
@@ -19,9 +19,9 @@
   border: 1px solid color-mix(in srgb, var(--palette-accent) 8%, transparent);
   border-radius: 24px 24px 0 0;
   border-bottom: 0;
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-ink);
-  box-shadow: 0 28px 90px color-mix(in srgb, var(--palette-ink) 30%, transparent);
+  box-shadow: 0 28px 90px color-mix(in srgb, var(--palette-deep) 30%, transparent);
   animation: shopInfoIn .18s ease-out;
 }
 @keyframes shopInfoIn {
@@ -33,8 +33,8 @@
   padding: 24px 58px 20px 22px;
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--palette-accent) 16%, transparent), transparent 42%),
-    linear-gradient(145deg, var(--palette-paper) 0%, var(--palette-paper) 70%);
-  border-bottom: 1px solid var(--palette-paper);
+    linear-gradient(145deg, var(--palette-surface) 0%, var(--palette-surface) 70%);
+  border-bottom: 1px solid var(--palette-border);
 }
 .shop-info-close {
   position: absolute;
@@ -44,13 +44,13 @@
   height: 38px;
   display: grid;
   place-items: end center;
-  border: 1px solid var(--palette-paper);
+  border: 1px solid var(--palette-border);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--palette-paper) 82%, transparent);
+  background: color-mix(in srgb, var(--palette-surface) 82%, transparent);
   color: var(--palette-accent);
   font: 400 25px/1 Arial, sans-serif;
   cursor: pointer;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--palette-ink) 6%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--palette-deep) 6%, transparent);
 }
 .shop-info-brandline {
   display: flex;
@@ -66,13 +66,13 @@
   place-items: end center;
   border-radius: 14px;
   background: var(--palette-accent);
-  color: var(--palette-paper);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--palette-accent) 22%, transparent);
+  color: var(--palette-light);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--palette-deep) 22%, transparent);
 }
 .shop-info-mark svg { width: 24px; height: 24px; }
 .shop-info-kicker {
   margin: 0 0 2px;
-  color: var(--palette-ink);
+  color: var(--palette-muted);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .10em;
@@ -93,13 +93,13 @@
   min-height: 40px;
   padding: 9px 12px;
   border-radius: 12px;
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-accent);
   font-size: 12.5px;
   font-weight: 750;
 }
 .shop-info-status[data-open="false"] {
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-accent);
 }
 .shop-info-status-dot {
@@ -114,7 +114,7 @@
 .shop-info-section + .shop-info-section { margin-top: 18px; }
 .shop-info-section-title {
   margin: 0 0 9px;
-  color: var(--palette-ink);
+  color: var(--palette-muted);
   font-size: 10.5px;
   font-weight: 850;
   letter-spacing: .08em;
@@ -128,9 +128,9 @@
 .shop-info-card {
   min-width: 0;
   padding: 13px;
-  border: 1px solid var(--palette-paper);
+  border: 1px solid var(--palette-border);
   border-radius: 14px;
-  background: var(--palette-paper);
+  background: var(--palette-surface);
 }
 
 .shop-info-card-head {
@@ -138,7 +138,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
-  color: var(--palette-ink);
+  color: var(--palette-muted);
   font-size: 11px;
   font-weight: 750;
 }
@@ -161,7 +161,7 @@
 .shop-info-subvalue {
   display: block;
   margin-top: 3px;
-  color: var(--palette-ink);
+  color: var(--palette-muted);
   font-size: 11.5px;
   line-height: 1.42;
 }
@@ -178,9 +178,9 @@ a.shop-info-value:hover { text-decoration: underline; text-underline-offset: 3px
   flex: none;
   min-width: 58px;
   padding: 7px 10px;
-  border: 1px solid var(--palette-paper);
+  border: 1px solid var(--palette-border);
   border-radius: 999px;
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-accent);
   font-size: 11.5px;
   font-weight: 800;
@@ -189,10 +189,10 @@ a.shop-info-value:hover { text-decoration: underline; text-underline-offset: 3px
 .shop-info-time.is-asap {
   background: var(--palette-accent);
   border-color: var(--palette-accent);
-  color: var(--palette-paper);
+  color: var(--palette-light);
 }
 .shop-info-empty-time {
-  color: var(--palette-ink);
+  color: var(--palette-muted);
   font-size: 12px;
   font-weight: 650;
 }
@@ -209,9 +209,9 @@ a.shop-info-value:hover { text-decoration: underline; text-underline-offset: 3px
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid var(--palette-paper);
+  border: 1px solid var(--palette-border);
   border-radius: 12px;
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-ink);
   font-size: 12px;
   font-weight: 800;
@@ -220,26 +220,26 @@ a.shop-info-value:hover { text-decoration: underline; text-underline-offset: 3px
 .shop-info-action.is-primary {
   border-color: var(--palette-accent);
   background: var(--palette-accent);
-  color: var(--palette-paper);
+  color: var(--palette-light);
 }
 .shop-info-action[hidden] { display: none !important; }
 .shop-info-action svg { width: 16px; height: 16px; }
 body.shop-info-open { overflow: hidden !important; }
 
 html[data-theme="dark"] .shop-info-dialog {
-  border-color: var(--palette-paper);
-  background: var(--palette-paper);
+  border-color: var(--palette-border);
+  background: var(--palette-surface);
   color: var(--palette-ink);
 }
 html[data-theme="dark"] .shop-info-hero {
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--palette-accent) 18%, transparent), transparent 42%),
-    linear-gradient(145deg, var(--palette-paper) 0%, var(--palette-paper) 70%);
-  border-bottom-color: var(--palette-paper);
+    linear-gradient(145deg, var(--palette-surface) 0%, var(--palette-surface) 70%);
+  border-bottom-color: var(--palette-border);
 }
 html[data-theme="dark"] .shop-info-close {
-  border-color: var(--palette-paper);
-  background: var(--palette-paper);
+  border-color: var(--palette-border);
+  background: var(--palette-surface);
   color: var(--palette-ink);
 }
 html[data-theme="dark"] .shop-info-kicker,
@@ -250,21 +250,21 @@ html[data-theme="dark"] .shop-info-empty-time {
   color: var(--palette-ink);
 }
 html[data-theme="dark"] .shop-info-card {
-  border-color: var(--palette-paper);
-  background: var(--palette-paper);
+  border-color: var(--palette-border);
+  background: var(--palette-surface);
 }
 html[data-theme="dark"] .shop-info-value,
 html[data-theme="dark"] .shop-info-value:visited {
   color: var(--palette-ink);
 }
 html[data-theme="dark"] .shop-info-action {
-  border-color: var(--palette-paper);
-  background: var(--palette-paper);
+  border-color: var(--palette-border);
+  background: var(--palette-surface);
   color: var(--palette-ink);
 }
 html[data-theme="dark"] .shop-info-time {
   border-color: var(--palette-accent);
-  background: var(--palette-paper);
+  background: var(--palette-surface);
   color: var(--palette-accent);
 }
 html[data-theme="dark"] .shop-info-time.is-asap {
@@ -277,10 +277,32 @@ html[data-theme="dark"] .shop-info-time.is-asap {
   .shop-info-card.is-wide { grid-column: auto; }
   .shop-info-actions { position: sticky; bottom: 0; padding-top: 10px; background: inherit; }
 
-/* Shared separators and feedback retain contrast without extra base colors. */
+/* Customer theme roles are shared across all customer flows. */
 :root[data-customer-palette] {
-  --line: color-mix(in srgb, var(--palette-ink) 16%, var(--palette-paper));
-  --line-strong: color-mix(in srgb, var(--palette-ink) 28%, var(--palette-paper));
-  --ink-2: var(--palette-ink);
-  --ink-3: var(--palette-ink);
+  --bg: var(--palette-bg); --surface: var(--palette-surface); --surface-2: var(--palette-bg); --surface-3: var(--palette-soft);
+  --ink: var(--palette-ink); --ink-2: var(--palette-muted); --ink-3: var(--palette-muted);
+  --line: var(--palette-border); --line-strong: var(--palette-border);
+  --accent: var(--palette-accent); --accent-dark: var(--palette-accent); --accent-soft: var(--palette-soft);
+  --ok: var(--palette-success); --danger: var(--palette-danger);
+  --ok-soft: var(--palette-soft); --danger-soft: var(--palette-soft);
 }
+html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
+html[data-customer-palette] body::before { background: none; }
+html[data-customer-palette] .view-menu .prod-grid { background: var(--palette-surface); border-color: var(--palette-border); }
+html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
+html[data-customer-palette] .btn-primary, html[data-customer-palette] .add-btn, html[data-customer-palette] .btn-add { background: var(--palette-accent); color: var(--palette-on-accent); }
+html[data-customer-palette] .view-menu .prod-grid .add-btn { color: var(--palette-on-accent); }
+html[data-customer-palette] .prod-cart-badge { background: var(--palette-surface); color: var(--palette-success); border-color: var(--palette-border); }
+html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success); }
+
+/* Keep shared legacy dark overrides aligned with the customer theme. */
+html[data-customer-palette] main { background: var(--palette-bg) !important; }
+html[data-customer-palette] .app-header { background: var(--palette-deep) !important; }
+html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; }
+html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
+html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: end; justify-items: end; }
+html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
+html[data-customer-palette] .allergen-visibility-switch { background: var(--palette-border); }
+html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
+html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent); }

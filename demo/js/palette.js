@@ -1,18 +1,24 @@
-/** Three-color customer palettes, shared with the admin selector. */
+/** Restaurant themes: accent, page, surface, text and border, with semantic feedback. */
+const theme = (label, light, dark) => ({ label, colors: light, light, dark });
 export const CUSTOMER_PALETTES = {
-  reference: { label: 'Modern · bildet', colors: ['#FF9340', '#F7F9FC', '#212226'] },
-  lively: { label: 'Livlig og appetittvekkende', colors: ['#FF4A22', '#FAFAF5', '#2B2523'] },
-  fresh: { label: 'Friskt og økologisk', colors: ['#3B7A57', '#F4F7F5', '#1E2922'] },
-  gourmet: { label: 'Gourmet og varmt', colors: ['#D97706', '#FFFDF9', '#37251B'] },
+  reference: theme('Modern café · varm oransje', ['#BE570C','#F7F8FA','#FFFFFF','#24272C','#D8DDE3'], ['#FFAD66','#15181D','#20252D','#F3F5F7','#444C58']),
+  lively: theme('Bistro · tomatrød', ['#C93D24','#FAF7F3','#FFFFFF','#302522','#DED5CE'], ['#FF927C','#1C1715','#2A211E','#FAF1ED','#574840']),
+  fresh: theme('Hage · naturlig grønn', ['#326A4B','#F3F7F3','#FFFFFF','#22352A','#CFDED2'], ['#8BD5A6','#131D17','#1F2C23','#EDF6EF','#415B49']),
+  gourmet: theme('Gourmet · karamell og krem', ['#A95B0A','#FAF6EF','#FFFDF8','#35291F','#DDD0BC'], ['#F2BC72','#1D1812','#2B241C','#FAF2E6','#5A4A35']),
 };
 export function applyCustomerPalette(value) {
   const key = Object.hasOwn(CUSTOMER_PALETTES, value) ? value : 'reference';
-  const [accent, paper, ink] = CUSTOMER_PALETTES[key].colors;
   const root = document.documentElement;
+  const dark = root.dataset.theme === 'dark';
+  const palette = CUSTOMER_PALETTES[key];
+  const [accent, bg, surface, ink, border] = dark ? palette.dark : palette.light;
   root.dataset.customerPalette = key;
-  root.style.setProperty('--palette-accent', accent);
-  root.style.setProperty('--palette-light', paper);
-  root.style.setProperty('--palette-dark', ink);
+  const values = {accent, bg, surface, ink, border, paper: surface, light: palette.light[2], deep: palette.dark[0] === accent ? palette.dark[1] : palette.light[3],
+    muted: `color-mix(in srgb, ${ink} 74%, ${surface})`,
+    soft: `color-mix(in srgb, ${accent} ${dark ? 16 : 9}%, ${surface})`,
+    'on-accent': dark ? palette.dark[1] : '#FFFFFF',
+    success: dark ? '#91D3AF' : '#326B4D', danger: dark ? '#FFACA4' : '#B9342B'};
+  for (const [name, color] of Object.entries(values)) root.style.setProperty(`--palette-${name}`, color);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = root.dataset.theme === 'dark' ? ink : paper;
+  if (meta) meta.content = bg;
 }

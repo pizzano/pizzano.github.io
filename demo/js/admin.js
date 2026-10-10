@@ -2300,12 +2300,21 @@ const SETTING_FIELDS = [
 el.settings.customerPalette.replaceChildren(...Object.entries(CUSTOMER_PALETTES).map(([key, palette]) => new Option(palette.label, key)));
 function renderPalettePreview() {
   const palette = CUSTOMER_PALETTES[store.settings?.customerPalette] || CUSTOMER_PALETTES.reference;
-  $('customerPalettePreview').replaceChildren(...palette.colors.map(color => {
-    const swatch = document.createElement('span');
-    swatch.style.backgroundColor = color;
-    swatch.style.color = color === palette.colors[2] ? palette.colors[1] : palette.colors[2];
-    swatch.textContent = color;
-    return swatch;
+  $('customerPalettePreview').replaceChildren(...['light', 'dark'].map(mode => {
+    const group = document.createElement('div');
+    group.className = 'palette-mode-preview';
+    const title = document.createElement('strong');
+    title.textContent = mode === 'light' ? 'Lys modus' : 'Mørk modus';
+    group.append(title);
+    const labels = ['Hovedfarge', 'Bakgrunn', 'Kort', 'Tekst', 'Kantlinje'];
+    palette[mode].forEach((color, index) => {
+      const swatch = document.createElement('span');
+      swatch.style.backgroundColor = color;
+      swatch.style.color = index === 3 || mode === 'dark' && (index === 1 || index === 2 || index === 4) ? '#FFFFFF' : '#212226';
+      swatch.textContent = labels[index] + ' ' + color;
+      group.append(swatch);
+    });
+    return group;
   }));
 }
 function renderSettings() {
