@@ -101,6 +101,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
   background-clip: padding-box;
 }
 
+@media (hover: none) and (pointer: coarse) {
   main:has(> .view-cart:not([hidden])) > .view-cart,
   main:has(> .view-checkout:not([hidden])) > .view-checkout {
     scrollbar-width: none;
@@ -111,6 +112,8 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
     width: 0;
     height: 0;
   }
+
+}
 
 .view-cart > .checkout-actions,
 .view-checkout > .checkout-actions {
@@ -1647,7 +1650,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
       calc(6px + env(safe-area-inset-bottom))
       max(6px, env(safe-area-inset-left)) !important;
     border-radius: 0 !important;
-    transform: none !important;
   }
 
   .view-cart > .checkout-actions .btn,
@@ -1714,6 +1716,7 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   background: #bdb5ae;
 }
 
+@media (hover: none) and (pointer: coarse) {
   .sheet-body,
   .allergen-dialog .allergen-picker,
   .confirm-modal {
@@ -1725,6 +1728,8 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
     width: 0;
     height: 0;
   }
+
+}
 
 /* ======================== Profile tools ======================== */
 .profile-menu-row.has-switch {
@@ -3824,6 +3829,39 @@ body { width: 100%; max-width: 520px; margin-inline: auto; }
 .header-inner, .cat-scroll, main { max-width: 520px; }
 .view-cart > .checkout-actions, .view-checkout > .checkout-actions {
   left: 50% !important; right: auto !important; width: min(100%, 520px) !important;
-  max-width: 520px !important; transform: translateX(-50%);
+  max-width: 520px !important; transform: translateX(-50%) !important;
 }
 .active-orders-track .active-order-card { flex-basis: calc(100% - 2px); }
+
+/* Mouse/trackpad devices: visible scroll handles without another layout. */
+@media (hover: hover) and (pointer: fine) {
+  :root { --scroll-thumb: #e8620f; --scroll-thumb-hover: #c94f06; --scroll-track: #efe5db; }
+  :root[data-theme="dark"] { --scroll-track: #33271f; --scroll-thumb: #ff963f; --scroll-thumb-hover: #ffb36b; }
+  html, body, body * {
+    scrollbar-width: auto !important;
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track) !important;
+  }
+  html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+  html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, body *::-webkit-scrollbar-track {
+    background: var(--scroll-track) !important;
+    border-radius: 8px;
+  }
+  html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, body *::-webkit-scrollbar-thumb {
+    min-height: 40px;
+    min-width: 40px;
+    border: 3px solid var(--scroll-track) !important;
+    border-radius: 8px;
+    background: var(--scroll-thumb) !important;
+    background-clip: padding-box !important;
+  }
+  html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover, body *::-webkit-scrollbar-thumb:hover {
+    background: var(--scroll-thumb-hover) !important;
+  }
+  main > :is(.view-cart, .view-checkout), .sheet-body, .shop-info-dialog, .allergen-picker, .confirm-modal {
+    scrollbar-gutter: stable;
+  }
+}
