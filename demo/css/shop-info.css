@@ -122,7 +122,7 @@
 }
 .shop-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+
   gap: 9px;
 }
 .shop-info-card {
@@ -132,7 +132,7 @@
   border-radius: 14px;
   background: #fcfbfa;
 }
-.shop-info-card.is-wide { grid-column: 1 / -1; }
+
 .shop-info-card-head {
   display: flex;
   align-items: center;

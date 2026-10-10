@@ -128,13 +128,6 @@ html[data-theme="dark"] .menu-overview {
   background: linear-gradient(135deg, #17261d 0%, #161d19 100%) !important;
 }
 
-html[data-theme="dark"] .menu-overview .allergen-toggle {
-  border-color: var(--line-strong) !important;
-  background: #1c2024 !important;
-  color: var(--ink) !important;
-  box-shadow: none !important;
-}
-
 html[data-theme="dark"] .closed-banner {
   border-color: #61462a !important;
   background: #2c2117 !important;
@@ -521,13 +514,13 @@ html[data-theme="dark"] .group-card,
 html[data-theme="dark"] .settings-col,
 html[data-theme="dark"] .modal,
 html[data-theme="dark"] .ingredient-admin-row,
-html[data-theme="dark"] .ingredient-admin-empty{
+html[data-theme="dark"] .ingredient-admin-empty {
   border-color: var(--line) !important;
   background: #1a1e22 !important;
   color: var(--ink) !important;
   box-shadow: none !important;
 }
-html[data-theme="dark"] .cat-card.is-open{
+html[data-theme="dark"] .cat-card.is-open {
   border-color: #68422c !important;
   background: #241b17 !important;
 }
@@ -896,23 +889,23 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
   }
 
   html[data-theme="dark"] .view-menu .prod-card:hover,
-  html[data-theme="dark"] .view-menu .prod-card:active {
+html[data-theme="dark"] .view-menu .prod-card:active {
     background: #1d2226 !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-media,
-  html[data-theme="dark"] .view-menu .prod-thumb,
-  html[data-theme="dark"] .view-menu .prod-thumb.prod-thumb-empty {
+html[data-theme="dark"] .view-menu .prod-thumb,
+html[data-theme="dark"] .view-menu .prod-thumb.prod-thumb-empty {
     background: #24292e !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-name,
-  html[data-theme="dark"] .view-menu .prod-price {
+html[data-theme="dark"] .view-menu .prod-price {
     color: var(--ink) !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-desc,
-  html[data-theme="dark"] .view-menu .prod-price small {
+html[data-theme="dark"] .view-menu .prod-price small {
     color: var(--ink-3) !important;
   }
 

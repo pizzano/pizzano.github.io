@@ -2819,14 +2819,6 @@ el.brandHome.addEventListener('click', (event) => {
 el.btnProfile.addEventListener('click', () =>
   setView(ui.view === 'profile' ? 'menu' : 'profile')
 );
-document.querySelectorAll('.profile-section').forEach((section) => {
-  section.addEventListener('toggle', () => {
-    if (!section.open) return;
-    document.querySelectorAll('.profile-section').forEach((other) => {
-      if (other !== section) other.open = false;
-    });
-  });
-});
 el.btnCart.addEventListener('click', () => setView('cart'));
 el.btnKeepShopping.addEventListener('click', () => setView('menu'));
 
