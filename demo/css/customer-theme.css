@@ -69,3 +69,15 @@ html[data-customer-palette] .ingredient-chip.is-removed {
   color: var(--palette-muted) !important;
   border-color: var(--palette-border) !important;
 }
+
+/* Text must follow the selected background, including pale selected controls. */
+html[data-customer-palette] .time-btn.is-active,
+html[data-customer-palette] .time-btn[aria-pressed="true"] { color: var(--palette-ink) !important; background: var(--palette-soft) !important; }
+html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .cart-stepper-plus, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: var(--palette-on-accent) !important; }
+html[data-customer-palette] .order-progress-dot { color: var(--palette-muted); }
+html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { color: var(--palette-on-accent) !important; }
+html[data-customer-palette] .valid-check { color: var(--palette-bg); }
+
+html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { background: var(--palette-accent) !important; }
+html[data-customer-palette] .cat-tab.is-active { color: var(--palette-ink) !important; }
+html[data-customer-palette] :is(.step.is-active, .step.is-done) { color: var(--palette-ink); }
