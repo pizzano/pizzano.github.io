@@ -893,7 +893,6 @@ function productCardHtml(item, section) {
         </p>
         <p class="prod-desc">${escapeHtml(desc)}</p>
         ${cardAllergens.length ? `<p class="prod-list-allergens">Inneholder ${escapeHtml(cardAllergens.join(', '))}</p>` : ''}
-        <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
       <div class="prod-side">
         ${soldOut
@@ -901,6 +900,7 @@ function productCardHtml(item, section) {
           : needsChoice
             ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg og legg til ${escapeHtml(item.name)}">+</button>`
             : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven">+</button>`}
+        <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
       </div>
     </div>`;
 }
