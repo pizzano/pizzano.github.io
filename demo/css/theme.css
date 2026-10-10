@@ -999,3 +999,34 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
   border-color: #7a4541 !important;
   background: #32201f !important;
 }
+
+
+/* ======================== Mobil compact menu rows v8 ======================== */
+@media (max-width: 639px) {
+  html[data-theme="dark"] .view-menu .prod-grid,
+  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-list,
+  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-grid,
+  html[data-theme="dark"] .view-menu .prod-card {
+    border-color: var(--line) !important;
+    background: #191d21 !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-card:hover,
+  html[data-theme="dark"] .view-menu .prod-card:active {
+    background: #1d2226 !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-name,
+  html[data-theme="dark"] .view-menu .prod-price {
+    color: var(--ink) !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-desc,
+  html[data-theme="dark"] .view-menu .prod-price small {
+    color: var(--ink-3) !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-list-allergens {
+    color: #ff746b !important;
+  }
+}
