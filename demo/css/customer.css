@@ -3670,3 +3670,37 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   .shop-info-dialog,
 .confirm-modal { overflow-y: auto !important; }
 }
+
+/* Compact product summaries: cart, pickup and order history. */
+.view-cart .cart-line.cart-product-card,
+#reviewCard .pickup-review-item,
+#orderList .order-history-cart-item {
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+  min-height: 82px !important;
+  gap: 8px !important;
+  padding: 8px !important;
+}
+.view-cart .cart-product-media,
+#reviewCard .pickup-review-media,
+#orderList .order-history-cart-media {
+  width: 64px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  border-radius: 10px !important;
+}
+.view-cart .cart-product-media img,
+.view-cart .cart-product-fallback {
+  width: 100%;
+  height: 64px !important;
+  min-height: 64px !important;
+}
+.view-cart .cart-product-name,
+#reviewCard .pickup-review-name,
+#orderList .order-history-cart-name {
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+}
+.view-cart .cart-product-content,
+#reviewCard .pickup-review-product { gap: 4px; }
+#orderList .order-history-cart-list,
+#reviewCard .pickup-review-list { gap: 8px !important; }
