@@ -1274,3 +1274,7 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
         font-size: 12px;
     }
 }
+
+.customer-palette-preview { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.customer-palette-preview span { padding: 14px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; font-weight: 700; }
+#sCustomerPalette { width: 100%; }

@@ -1,3 +1,4 @@
+import { CUSTOMER_PALETTES } from './palette.js';
 /**
  * admin.js — Adminpanel for KØL Grill & Pizza.
  *
@@ -232,6 +233,7 @@ const el = {
     adminMobileEnabled: $('sAdminMobileEnabled'),
     adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
     customerDarkModeEnabled: $('sCustomerDarkModeEnabled'),
+    customerPalette: $('sCustomerPalette'),
     shopInfoEnabled: $('sShopInfoEnabled'),
     ingredientCustomizationEnabled: $('sIngredientCustomizationEnabled'),
     restaurantName: $('sRestaurantName'),
@@ -2279,6 +2281,7 @@ const BOOLEAN_SETTING_FIELDS = [
 ];
 
 const SETTING_FIELDS = [
+  ['customerPalette', 'text'],
   ['restaurantName', 'text'],
   ['streetAddress', 'text'],
   ['postalCode', 'text'],
@@ -2294,7 +2297,19 @@ const SETTING_FIELDS = [
   ['slotIntervalMinutes', 'number'],
 ];
 
+el.settings.customerPalette.replaceChildren(...Object.entries(CUSTOMER_PALETTES).map(([key, palette]) => new Option(palette.label, key)));
+function renderPalettePreview() {
+  const palette = CUSTOMER_PALETTES[store.settings?.customerPalette] || CUSTOMER_PALETTES.reference;
+  $('customerPalettePreview').replaceChildren(...palette.colors.map(color => {
+    const swatch = document.createElement('span');
+    swatch.style.backgroundColor = color;
+    swatch.style.color = color === palette.colors[2] ? palette.colors[1] : palette.colors[2];
+    swatch.textContent = color;
+    return swatch;
+  }));
+}
 function renderSettings() {
+  renderPalettePreview();
   const settings = store.settings || {};
   renderSettingsLayout();
   applyAdminInterfaceSettings(settings);
@@ -2360,6 +2375,7 @@ function bindSettingField(key, type) {
 
 /** Oppdaterer bare forhåndsvisningen, slik at fokus i feltet beholdes. */
 function renderSettingsPreviewOnly() {
+  renderPalettePreview();
   const state = getOpenState();
   el.settings.openStateLine.textContent = state.open
     ? `Status nå: åpent for bestillinger, stenger ${state.closesAt}.`

@@ -265,6 +265,7 @@ const DEFAULT_SETTINGS = {
   adminMobileEnabled: true,
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
+  customerPalette: 'reference',
   shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
   manualClosed: false,
@@ -507,6 +508,7 @@ function normalizeSettings(raw) {
       settings[key] = String(base[key]);
     }
   }
+  if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),

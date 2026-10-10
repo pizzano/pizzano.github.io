@@ -1,3 +1,4 @@
+import { applyCustomerPalette } from './palette.js';
 /**
  * customer.js — Kundelogikk for KØL Grill & Pizza.
  *
@@ -2941,6 +2942,7 @@ function applyCustomerInterfaceSettings() {
 }
 
 function renderAll() {
+  applyCustomerPalette(store.settings?.customerPalette);
   applyCustomerInterfaceSettings();
   const changed = reconcileCart();
   renderCategories();
@@ -2993,3 +2995,5 @@ window.addEventListener('visibilitychange', () => {
     if (current.status === 'klar') scheduleReadyDismiss(current);
   }
 });
+
+document.addEventListener('kolthemechange', () => applyCustomerPalette(store.settings?.customerPalette));

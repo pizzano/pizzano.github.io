@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v118-menu-edge1';
+const CACHE_NAME = 'kol-demo-v119-palette1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -10,6 +10,7 @@ const APP_SHELL = [
   '/demo/js/shop-info.js',
   '/demo/js/install.js',
   '/demo/js/data.js',
+  '/demo/js/palette.js',
   '/demo/manifest.webmanifest',
   '/demo/icons/kol-icon-192.png',
   '/demo/icons/kol-icon-512.png',
