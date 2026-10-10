@@ -899,7 +899,7 @@ function productCardHtml(item, section) {
         ${soldOut
           ? '<span class="prod-soldout-badge">Utsolgt</span>'
           : needsChoice
-            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Legg til ${escapeHtml(item.name)}">+ Legg til</button>`
+            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg og legg til ${escapeHtml(item.name)}">+</button>`
             : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven">+</button>`}
       </div>
     </div>`;

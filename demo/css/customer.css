@@ -5916,3 +5916,166 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 12.3px !important;
   }
 }
+
+
+/* ======================== Mobil meny: referanse-layout v9 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 100px minmax(0, 1fr) 38px !important;
+    min-height: 68px !important;
+    height: 68px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 100px !important;
+    height: 68px !important;
+    min-width: 100px !important;
+    min-height: 68px !important;
+    max-width: 100px !important;
+    max-height: 68px !important;
+  }
+
+  .view-menu .prod-thumb {
+    width: 100px !important;
+    height: 68px !important;
+    min-width: 100px !important;
+    min-height: 68px !important;
+    max-width: 100px !important;
+    max-height: 68px !important;
+    aspect-ratio: auto !important;
+    object-fit: cover !important;
+  }
+
+  .view-menu .prod-info {
+    height: 68px !important;
+    padding: 6px 2px 17px 9px !important;
+    justify-content: center !important;
+  }
+
+  .view-menu .prod-name {
+    margin: 0 0 3px !important;
+    font-size: 11.8px !important;
+    line-height: 1.08 !important;
+    font-weight: 830 !important;
+  }
+
+  .view-menu .prod-desc {
+    font-size: 9.9px !important;
+    line-height: 1.08 !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    margin-top: 3px !important;
+    font-size: 8.9px !important;
+    line-height: 1.05 !important;
+    font-weight: 450 !important;
+  }
+
+  .view-menu .prod-side {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 68px !important;
+    padding: 7px 7px 0 0 !important;
+  }
+
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 15px !important;
+    line-height: 22px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+  }
+
+  .view-menu .add-btn::after,
+  .view-menu .add-btn.is-select::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  .view-menu .prod-price {
+    right: 7px !important;
+    bottom: 6px !important;
+    font-size: 10.9px !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+  }
+
+  .view-menu .prod-price small {
+    margin-right: 2px !important;
+    font-size: 8.2px !important;
+    font-weight: 500 !important;
+  }
+
+  .view-menu .prod-cart-badge {
+    transform: scale(.78);
+    transform-origin: left bottom;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 92px minmax(0, 1fr) 36px !important;
+    min-height: 64px !important;
+    height: 64px !important;
+  }
+
+  .view-menu .prod-media,
+  .view-menu .prod-thumb {
+    width: 92px !important;
+    height: 64px !important;
+    min-width: 92px !important;
+    min-height: 64px !important;
+    max-width: 92px !important;
+    max-height: 64px !important;
+  }
+
+  .view-menu .prod-info {
+    height: 64px !important;
+    padding: 5px 2px 16px 8px !important;
+  }
+
+  .view-menu .prod-name {
+    font-size: 11.3px !important;
+  }
+
+  .view-menu .prod-desc {
+    font-size: 9.4px !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    font-size: 8.5px !important;
+  }
+
+  .view-menu .prod-side {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 64px !important;
+    padding: 6px 6px 0 0 !important;
+  }
+
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select {
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
+    min-height: 21px !important;
+    font-size: 14px !important;
+    line-height: 21px !important;
+  }
+
+  .view-menu .prod-price {
+    right: 6px !important;
+    bottom: 5px !important;
+    font-size: 10.4px !important;
+  }
+}
