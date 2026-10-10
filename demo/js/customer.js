@@ -1,3 +1,4 @@
+import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
 /**
  * customer.js — Kundelogikk for KØL Grill & Pizza.
@@ -1152,7 +1153,6 @@ function renderSheet() {
               </button>`;
             }).join('')}
           </div>
-          ${removedNames.length ? `<p class="ingredient-removed-summary"><span aria-hidden="true">⊘</span><strong>Uten:</strong> ${escapeHtml(removedNames.join(', '))}</p>` : ''}
           <p class="ingredient-customize-help">Fjernede ingredienser kan legges tilbake med ett trykk.</p>
         </div>
       </div>`
@@ -1461,10 +1461,10 @@ function cartLineHtml(line) {
     );
   }
 
-  if (line.comment) {
+  if (getDisplayComment(line)) {
     detailRows.push(
       `<span class="cart-detail-row is-note">
-        <span class="cart-detail-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+        <span class="cart-detail-left"><b>Kommentar:</b> <span>${escapeHtml(getDisplayComment(line))}</span></span>
       </span>`
     );
   }
@@ -1674,10 +1674,10 @@ function renderCheckout() {
       );
     }
 
-    if (line.comment) {
+    if (getDisplayComment(line)) {
       rows.push(
         `<div class="pickup-review-row is-note">
-          <span class="pickup-review-row-copy"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+          <span class="pickup-review-row-copy"><b>Kommentar:</b> <span>${escapeHtml(getDisplayComment(line))}</span></span>
         </div>`
       );
     }
@@ -2266,10 +2266,10 @@ async function placeOrder() {
       );
     }
 
-    if (line.comment) {
+    if (getDisplayComment(line)) {
       detailRows.push(
         `<div class="order-history-cart-row is-note">
-          <span class="order-history-cart-left"><b>Kommentar:</b> <span>${escapeHtml(line.comment)}</span></span>
+          <span class="order-history-cart-left"><b>Kommentar:</b> <span>${escapeHtml(getDisplayComment(line))}</span></span>
         </div>`
       );
     }

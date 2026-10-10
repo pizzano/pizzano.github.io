@@ -47,7 +47,7 @@ html[data-customer-palette] .toast[data-tone="error"] { background: var(--palett
 html[data-customer-palette] .toast[data-tone="error"]::before { color: var(--palette-danger); }
 html[data-customer-palette] :is(.saved-flash, .ingredient-chip, .prod-cart-badge) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
 html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success) !important; }
-html[data-customer-palette] :is(.ingredient-chip.is-removed, .ingredient-removed-summary) { background: var(--palette-removed-soft) !important; color: var(--palette-accent) !important; border: 1px solid var(--palette-accent) !important; }
+html[data-customer-palette] .ingredient-chip.is-removed { background: var(--palette-removed-soft) !important; color: var(--palette-accent) !important; border: 1px solid var(--palette-accent) !important; }
 html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-light); }
 
 /* Strong, consistent boundaries and distinct control states. */

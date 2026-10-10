@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v125-readable7';
+const CACHE_NAME = 'kol-demo-v126-dedup8';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -12,6 +12,7 @@ const APP_SHELL = [
   '/demo/js/install.js',
   '/demo/js/data.js',
   '/demo/js/palette.js',
+  '/demo/js/order-comments.js',
   '/demo/manifest.webmanifest',
   '/demo/icons/kol-icon-192.png',
   '/demo/icons/kol-icon-512.png',

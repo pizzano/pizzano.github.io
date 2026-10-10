@@ -1,3 +1,4 @@
+import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 /**
  * admin.js — Adminpanel for KØL Grill & Pizza.
@@ -1882,7 +1883,7 @@ function detailLineHtml(line) {
         ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
         ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
         ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(String(name).toLocaleUpperCase('no'))).join(', ')}</small>` : ''}
-        ${line.comment ? `<small class="pos-order-note">${escapeHtml(line.comment)}</small>` : ''}
+        ${getDisplayComment(line) ? `<small class="pos-order-note">${escapeHtml(getDisplayComment(line))}</small>` : ''}
       </div>
       <b>${formatPrice(line.price)}</b>
     </div>`;

@@ -253,11 +253,6 @@ html[data-theme="dark"] .ingredient-chip.is-removed {
   color: var(--palette-accent, #ff8a84) !important;
 }
 
-html[data-theme="dark"] .ingredient-removed-summary {
-  background: transparent !important;
-  color: var(--palette-accent, #ff9691) !important;
-  border-color: var(--palette-accent, #b4544f) !important;
-}
 
 html[data-theme="dark"] .sheet-allergens {
   border-color: var(--palette-accent, #604b37) !important;

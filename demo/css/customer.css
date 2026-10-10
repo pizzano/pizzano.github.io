@@ -1524,19 +1524,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   background: var(--palette-surface);
   color: var(--palette-accent);
 }
-.ingredient-removed-summary {
-  margin: 10px 0 0;
-  padding: 8px 10px;
-  border-radius: 9px;
-  background: var(--palette-surface);
-  color: var(--palette-accent);
-  font-size: 11.5px;
-  line-height: 1.3;
-}
-.ingredient-removed-summary > span {
-  margin-right: 5px;
-  font-size: 14px;
-}
 .ingredient-customize-help {
   margin: 7px 0 0;
   color: var(--palette-accent);
