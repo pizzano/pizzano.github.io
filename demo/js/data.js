@@ -262,9 +262,7 @@ const DEFAULT_SETTINGS = {
   minPreorderMinutes: 0,
   prepMinutes: 25,
   slotIntervalMinutes: 15,
-  menuLayout: 'grid',
   adminMobileEnabled: true,
-  customerMobileEnabled: true,
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
   shopInfoEnabled: true,
@@ -514,7 +512,6 @@ function normalizeSettings(raw) {
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
   );
-  settings.menuLayout = settings.menuLayout === 'list' ? 'list' : 'grid';
   settings.openingTime = `${settings.orderOpenTime} - ${settings.orderCloseTime}`;
   return settings;
 }

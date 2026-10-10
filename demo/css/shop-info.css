@@ -271,7 +271,6 @@ html[data-theme="dark"] .shop-info-time.is-asap {
   color: #fff;
 }
 
-@media (max-width: 520px) {
   .shop-info-modal {
     padding: 0;
     place-items: end center;
@@ -285,5 +284,3 @@ html[data-theme="dark"] .shop-info-time.is-asap {
   .shop-info-grid { grid-template-columns: 1fr; }
   .shop-info-card.is-wide { grid-column: auto; }
   .shop-info-actions { position: sticky; bottom: 0; padding-top: 10px; background: inherit; }
-}
-  

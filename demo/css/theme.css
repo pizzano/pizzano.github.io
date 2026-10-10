@@ -142,21 +142,21 @@ html[data-theme="dark"] .closed-banner {
 }
 
 html[data-theme="dark"] .prod-card,
-html[data-theme="dark"] .prod-grid.menu-layout-list,
-html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card {
+html[data-theme="dark"] .prod-grid,
+html[data-theme="dark"] .prod-grid .prod-card {
   border-color: var(--line) !important;
   background: #191c20 !important;
   box-shadow: var(--shadow-soft) !important;
 }
 
 html[data-theme="dark"] .prod-card:hover,
-html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card:hover {
+html[data-theme="dark"] .prod-grid .prod-card:hover {
   border-color: #68422c !important;
   background: #1f2022 !important;
   box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
 }
 
-html[data-theme="dark"] .prod-grid.menu-layout-list .prod-card {
+html[data-theme="dark"] .prod-grid .prod-card {
   border-bottom-color: var(--line) !important;
   box-shadow: none !important;
 }
@@ -514,7 +514,6 @@ html[data-theme="dark"] .orders-app,
 html[data-theme="dark"] .order-detail-pane {
   background: #121519 !important;
 }
-
 html[data-theme="dark"] .stat-card,
 html[data-theme="dark"] .set-card,
 html[data-theme="dark"] .cat-card,
@@ -522,17 +521,13 @@ html[data-theme="dark"] .group-card,
 html[data-theme="dark"] .settings-col,
 html[data-theme="dark"] .modal,
 html[data-theme="dark"] .ingredient-admin-row,
-html[data-theme="dark"] .ingredient-admin-empty,
-html[data-theme="dark"] .menu-layout-choice {
+html[data-theme="dark"] .ingredient-admin-empty{
   border-color: var(--line) !important;
   background: #1a1e22 !important;
   color: var(--ink) !important;
   box-shadow: none !important;
 }
-
-html[data-theme="dark"] .cat-card.is-open,
-html[data-theme="dark"] .menu-layout-choice:hover,
-html[data-theme="dark"] .menu-layout-choice:has(input:checked) {
+html[data-theme="dark"] .cat-card.is-open{
   border-color: #68422c !important;
   background: #241b17 !important;
 }
@@ -621,17 +616,6 @@ html[data-theme="dark"] .pos-order-removed {
   color: #ff918c !important;
 }
 
-html[data-theme="dark"] .menu-layout-demo {
-  border-color: var(--line) !important;
-  background: #15181b !important;
-}
-
-html[data-theme="dark"] .menu-layout-demo.is-grid i,
-html[data-theme="dark"] .menu-layout-demo.is-list i {
-  background: #242a2f !important;
-  box-shadow: inset 0 0 0 1px #3c444c !important;
-}
-
 html[data-theme="dark"] .modal-backdrop,
 html[data-theme="dark"] .product-editor-backdrop {
   background: rgba(0,0,0,.68) !important;
@@ -651,7 +635,6 @@ html[data-theme="dark"] .admin-toast {
 html[data-theme="dark"] ::selection {
   background: rgba(255,113,28,.32);
 }
-
 
 /* ======================== Handlekurv produktkort ======================== */
 html[data-theme="dark"] .view-cart .cart-line.cart-product-card {
@@ -700,7 +683,6 @@ html[data-theme="dark"] .cart-product-stepper button {
   box-shadow: none !important;
 }
 
-
 /* ======================== Handlekurv produktkort v3 ======================== */
 html[data-theme="dark"] .view-cart .cart-product-iconbtn {
   border-color: #31363b !important;
@@ -718,7 +700,6 @@ html[data-theme="dark"] .view-cart .cart-product-remove:hover {
   color: #ff8178 !important;
 }
 
-
 /* ======================== Handlekurv detaljer/priser v4 ======================== */
 html[data-theme="dark"] .view-cart .cart-detail-left b,
 html[data-theme="dark"] .view-cart .cart-detail-price {
@@ -730,7 +711,6 @@ html[data-theme="dark"] .view-cart .cart-detail-price.is-included {
 html[data-theme="dark"] .view-cart .cart-detail-leader {
   border-bottom-color: #5b646c !important;
 }
-
 
 /* ======================== Handlekurv enkel mengdekontroll v5 ======================== */
 html[data-theme="dark"] .cart-clear-btn {
@@ -763,18 +743,15 @@ html[data-theme="dark"] .view-cart .cart-stepper-plus {
   color: #fff !important;
 }
 
-
 html[data-theme="dark"] .view-cart .cart-stepper-minus {
   background: #181c20 !important;
   color: #ff9158 !important;
 }
 
-
 /* ======================== Handlekurv antall x enhetspris v7 ======================== */
 html[data-theme="dark"] .view-cart .cart-detail-multiplier strong {
   color: #fff !important;
 }
-
 
 /* ======================== Mine bestillinger cart style v2 ======================== */
 html[data-theme="dark"] #orderList .order-history-cart-item {
@@ -810,7 +787,6 @@ html[data-theme="dark"] #orderList .order-history-cart-qty {
   color: #ff9861 !important;
 }
 
-
 /* ======================== Mine bestillinger open summary v3 ======================== */
 html[data-theme="dark"] #orderList .order-history-card[open] > .order-history-summary-shell {
   border-color: var(--line) !important;
@@ -829,7 +805,6 @@ html[data-theme="dark"] #orderList .order-history-open-identity > strong {
 html[data-theme="dark"] #orderList .order-history-hide-label {
   color: #ff9158 !important;
 }
-
 
 /* ======================== Hentetid pickup review v4 ======================== */
 html[data-theme="dark"] #reviewCard .pickup-review,
@@ -892,7 +867,6 @@ html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
   color: #70d494 !important;
 }
 
-
 /* ======================== Favoritter actions ======================== */
 html[data-theme="dark"] #favList .favorite-order-btn {
   border-color: #5c3a28 !important;
@@ -911,11 +885,7 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
   background: #32201f !important;
 }
 
-/* ======================== Mobil meny produktliste v13 dark ======================== */
-@media (max-width: 639px) {
-  html[data-theme="dark"] .view-menu .prod-grid,
-  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-list,
-  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-grid {
+  html[data-theme="dark"] .view-menu .prod-grid {
     border-color: var(--line) !important;
     background: #191d21 !important;
   }
@@ -959,4 +929,3 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
     background: #3a2323 !important;
     color: #ff8c84 !important;
   }
-}

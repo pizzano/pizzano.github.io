@@ -28,7 +28,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261001-shopinfo1';
+} from './data.js?v=20261010-mobileonly1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -907,7 +907,6 @@ function productCardHtml(item, section) {
 
 function renderMenu() {
   const blocks = menuBlocks();
-  const menuLayout = store.settings?.menuLayout === 'list' ? 'list' : 'grid';
   const specialBlockLimit = 4;
   if (!blocks.length) {
     el.menuList.innerHTML = ui.search.trim()
@@ -931,7 +930,7 @@ function renderMenu() {
           </div>
           ${block.note ? `<p class="cat-description">${escapeHtml(block.note)}</p>` : ''}
         </header>
-        <div class="prod-grid menu-layout-${menuLayout}">
+        <div class="prod-grid">
           ${block.items.slice(0, visibleCount).map(({ item, section }) => productCardHtml(item, section)).join('')}
         </div>
         ${collapsible && block.items.length > specialBlockLimit ? `<button class="show-more" data-toggle-block="${escapeHtml(block.key)}" type="button" aria-expanded="${expanded}">${expanded ? 'Vis mindre' : `Vis mer (${block.items.length - specialBlockLimit})`}</button>` : ''}
@@ -2920,22 +2919,7 @@ el.confirmBackdrop.addEventListener('click', closeConfirm);
 
 function applyCustomerInterfaceSettings() {
   const settings = store.settings || {};
-  const mobileEnabled = settings.customerMobileEnabled !== false;
   const darkEnabled = settings.customerDarkModeEnabled !== false;
-  const viewport = document.querySelector('meta[name="viewport"]');
-
-  document.documentElement.dataset.customerMobile = mobileEnabled ? 'on' : 'off';
-  document.documentElement.style.minWidth = mobileEnabled ? '' : '1024px';
-  document.body.style.minWidth = mobileEnabled ? '' : '1024px';
-
-  if (viewport) {
-    viewport.setAttribute(
-      'content',
-      mobileEnabled
-        ? 'width=device-width, initial-scale=1.0, viewport-fit=cover'
-        : 'width=1024'
-    );
-  }
 
   if (el.profileThemeToggle) {
     el.profileThemeToggle.hidden = !darkEnabled;

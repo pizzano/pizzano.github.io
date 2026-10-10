@@ -37,7 +37,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261001-shopinfo1';
+} from './data.js?v=20261010-mobileonly1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -229,10 +229,7 @@ const el = {
     prepMinutes: $('sPrepMinutes'),
     slotIntervalMinutes: $('sSlotInterval'),
     slotPreview: $('slotPreview'),
-    menuLayoutGrid: $('sMenuLayoutGrid'),
-    menuLayoutList: $('sMenuLayoutList'),
     adminMobileEnabled: $('sAdminMobileEnabled'),
-    customerMobileEnabled: $('sCustomerMobileEnabled'),
     adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
     customerDarkModeEnabled: $('sCustomerDarkModeEnabled'),
     shopInfoEnabled: $('sShopInfoEnabled'),
@@ -2275,7 +2272,6 @@ function applyAdminInterfaceSettings(settings = store.settings || {}) {
 
 const BOOLEAN_SETTING_FIELDS = [
   'adminMobileEnabled',
-  'customerMobileEnabled',
   'adminDarkModeEnabled',
   'customerDarkModeEnabled',
   'shopInfoEnabled',
@@ -2317,9 +2313,6 @@ function renderSettings() {
       field.checked = settings[key] !== false;
     }
   });
-  const menuLayout = settings.menuLayout === 'list' ? 'list' : 'grid';
-  el.settings.menuLayoutGrid.checked = menuLayout === 'grid';
-  el.settings.menuLayoutList.checked = menuLayout === 'list';
 
   const state = getOpenState();
   el.settings.openStateLine.textContent = state.open
@@ -2420,23 +2413,12 @@ BOOLEAN_SETTING_FIELDS.forEach((key) => {
     applyAdminInterfaceSettings(store.settings || {});
     const labels = {
       adminMobileEnabled: 'Mobilvisning i admin',
-      customerMobileEnabled: 'Mobilvisning for kunder',
       adminDarkModeEnabled: 'Mørk modus i admin',
       customerDarkModeEnabled: 'Mørk modus for kunder',
       shopInfoEnabled: 'Butikkinformasjon for kunder',
       ingredientCustomizationEnabled: 'Tilpass ingredienser',
     };
     toast(`${labels[key] || 'Funksjonen'} er ${enabled ? 'på' : 'av'}.`);
-  });
-});
-
-[el.settings.menuLayoutGrid, el.settings.menuLayoutList].forEach((field) => {
-  field.addEventListener('change', () => {
-    if (!field.checked) return;
-    mutate((state) => {
-      state.settings.menuLayout = field.value === 'list' ? 'list' : 'grid';
-    });
-    toast(field.value === 'list' ? 'Listevisning er aktiv.' : 'Kortvisning er aktiv.');
   });
 });
 
