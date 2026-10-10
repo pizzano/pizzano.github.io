@@ -6013,3 +6013,85 @@ html[data-theme="dark"] .cart-detail-row b {
     flex-basis: 30px !important;
   }
 }
+
+
+/* ======================== Mobil meny: + og pris i faste rader v15 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-side {
+    position: relative !important;
+    display: grid !important;
+    grid-template-rows: 30px auto !important;
+    grid-auto-flow: row !important;
+    align-content: end !important;
+    justify-items: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    row-gap: 6px !important;
+    width: 52px !important;
+    min-width: 52px !important;
+    min-height: 80px !important;
+    padding: 0 0 3px !important;
+    overflow: visible !important;
+  }
+
+  .view-menu .prod-side > .add-btn,
+  .view-menu .prod-side > .add-btn.is-select {
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    place-self: center !important;
+    border-radius: 10px !important;
+  }
+
+  .view-menu .prod-side > .prod-price {
+    grid-row: 2 !important;
+    grid-column: 1 !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    place-self: center !important;
+    color: #171a1f !important;
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+    font-weight: 850 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .view-menu .prod-side > .prod-price small {
+    display: inline !important;
+    margin: 0 3px 0 0 !important;
+    font-size: 9.4px !important;
+    line-height: inherit !important;
+    vertical-align: baseline !important;
+  }
+
+  .view-menu .prod-side > .prod-soldout-badge {
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    place-self: center !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-side {
+    width: 48px !important;
+    min-width: 48px !important;
+    min-height: 74px !important;
+  }
+}
