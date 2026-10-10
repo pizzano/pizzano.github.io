@@ -1000,20 +1000,29 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
   background: #32201f !important;
 }
 
-
-/* ======================== Mobil compact menu rows v8 ======================== */
+/* ======================== Mobil meny produktliste v10 dark ======================== */
 @media (max-width: 639px) {
   html[data-theme="dark"] .view-menu .prod-grid,
   html[data-theme="dark"] .view-menu .prod-grid.menu-layout-list,
-  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-grid,
-  html[data-theme="dark"] .view-menu .prod-card {
+  html[data-theme="dark"] .view-menu .prod-grid.menu-layout-grid {
     border-color: var(--line) !important;
+    background: #191d21 !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-card {
+    border-bottom-color: var(--line) !important;
     background: #191d21 !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-card:hover,
   html[data-theme="dark"] .view-menu .prod-card:active {
     background: #1d2226 !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-media,
+  html[data-theme="dark"] .view-menu .prod-thumb,
+  html[data-theme="dark"] .view-menu .prod-thumb.prod-thumb-empty {
+    background: #24292e !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-name,
@@ -1028,5 +1037,15 @@ html[data-theme="dark"] #favList .favorite-remove-btn:hover {
 
   html[data-theme="dark"] .view-menu .prod-list-allergens {
     color: #ff746b !important;
+  }
+
+  html[data-theme="dark"] .view-menu .prod-soldout-badge {
+    background: #2a3036 !important;
+    color: #a7afb8 !important;
+  }
+
+  html[data-theme="dark"] .view-menu .tag.tag-soldout {
+    background: #3a2323 !important;
+    color: #ff8c84 !important;
   }
 }
