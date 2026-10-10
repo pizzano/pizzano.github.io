@@ -3865,3 +3865,13 @@ body { width: 100%; max-width: 520px; margin-inline: auto; }
     scrollbar-gutter: stable;
   }
 }
+
+/* Keep desktop scrolling next to the mobile application content. */
+@media (hover: hover) and (pointer: fine) {
+  body { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  .app-header { flex: none; }
+  main { flex: 1; min-height: 0; width: 100%; height: auto !important; max-height: none !important; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
+  main:has(> .view-cart:not([hidden])), main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
+  .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto !important; overflow-x: hidden; }
+  .shop-info-dialog, .allergen-picker, .confirm-modal { overflow-y: auto !important; }
+}

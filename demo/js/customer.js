@@ -689,6 +689,16 @@ function resetPendingOrderSubmission() {
  * Navigasjon mellom visninger
  * ------------------------------------------------------------------ */
 
+// The menu scrolls inside main on mouse devices and in the page on touch devices.
+function pageScrollTarget() {
+  const main = document.getElementById('main');
+  return main && getComputedStyle(main).overflowY === 'auto' ? main : window;
+}
+
+function scrollPage(options) {
+  pageScrollTarget().scrollTo(options);
+}
+
 function setView(view) {
   ui.view = view;
   for (const [name, node] of Object.entries(el.views)) {
@@ -698,7 +708,7 @@ function setView(view) {
   el.btnBack.hidden = view === 'menu';
   el.btnProfile.classList.toggle('is-on', view === 'profile');
   el.btnCart.classList.toggle('is-on', view === 'cart' || view === 'checkout');
-  window.scrollTo({ top: 0 });
+  scrollPage({ top: 0 });
   renderActiveOrders();
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
@@ -797,8 +807,11 @@ function scrollToCategory(key) {
   spyLockTimer = setTimeout(() => {
     spyLocked = false;
   }, 700);
-  const top = block.getBoundingClientRect().top + window.scrollY - headerOffset() - 8;
-  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  const target = pageScrollTarget();
+  const top = target === window
+    ? block.getBoundingClientRect().top + window.scrollY - headerOffset() - 8
+    : block.getBoundingClientRect().top - target.getBoundingClientRect().top + target.scrollTop - 8;
+  target.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   setActiveCategory(key);
 }
 
@@ -807,10 +820,14 @@ function spyActiveCategory() {
   if (ui.view !== 'menu' || spyLocked) return;
   const blocks = Array.from(el.menuList.querySelectorAll('[data-block]'));
   if (!blocks.length) return;
-  const line = headerOffset() + 24;
+  const target = pageScrollTarget();
+  const line = (target === window ? headerOffset() : target.getBoundingClientRect().top) + 24;
 
   // Nederst på siden: siste kategori er aktiv.
-  if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 24) {
+  const atBottom = target === window
+    ? window.innerHeight + window.scrollY >= document.body.scrollHeight - 24
+    : target.clientHeight + target.scrollTop >= target.scrollHeight - 24;
+  if (atBottom) {
     setActiveCategory(blocks[blocks.length - 1].dataset.block);
     return;
   }
@@ -823,6 +840,7 @@ function spyActiveCategory() {
 }
 
 window.addEventListener('scroll', spyActiveCategory, { passive: true });
+document.getElementById('main')?.addEventListener('scroll', spyActiveCategory, { passive: true });
 window.addEventListener('resize', () => centerActiveTab(false));
 
 /* ------------------------------------------------------------------ *
@@ -2329,7 +2347,7 @@ function setProfileTab(tabName) {
     panel.hidden = !active;
   });
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollPage({ top: 0, behavior: 'smooth' });
 }
 
 
