@@ -5658,3 +5658,261 @@ html[data-theme="dark"] .cart-detail-row b {
     height: 13px;
   }
 }
+
+
+/* ======================== Mobil meny: kompakte produktlinjer v8 ======================== */
+@media (max-width: 639px) {
+  .view-menu .cat-block {
+    margin-bottom: 18px !important;
+  }
+
+  .view-menu .cat-head {
+    margin-bottom: 5px !important;
+    padding: 0 0 6px 6px !important;
+  }
+
+  .view-menu .prod-grid,
+  .view-menu .prod-grid.menu-layout-list,
+  .view-menu .prod-grid.menu-layout-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    border-top: 1px solid #eee7e1 !important;
+    border-bottom: 1px solid #eee7e1 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 94px minmax(0, 1fr) 44px !important;
+    min-height: 94px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-bottom: 1px solid #eee7e1 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .view-menu .prod-card:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .view-menu .prod-card:hover,
+  .view-menu .prod-card:active {
+    border-color: #eee7e1 !important;
+    background: #fffaf7 !important;
+    box-shadow: none !important;
+  }
+
+  .view-menu .prod-media {
+    grid-column: 1 !important;
+    width: 94px !important;
+    height: 94px !important;
+    min-width: 94px !important;
+    min-height: 94px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: stretch !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+  }
+
+  .view-menu .prod-thumb {
+    width: 94px !important;
+    height: 94px !important;
+    min-width: 94px !important;
+    min-height: 94px !important;
+    max-width: 94px !important;
+    max-height: 94px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .view-menu .prod-info {
+    grid-column: 2 !important;
+    min-width: 0 !important;
+    padding: 9px 3px 23px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
+  }
+
+  .view-menu .prod-name {
+    width: 100% !important;
+    margin: 0 0 4px !important;
+    overflow: hidden !important;
+    color: #171a1f !important;
+    font-size: 13.4px !important;
+    line-height: 1.14 !important;
+    font-weight: 820 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .view-menu .prod-desc {
+    width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: #665f59 !important;
+    font-size: 10.7px !important;
+    line-height: 1.2 !important;
+    font-weight: 400 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    width: 100% !important;
+    margin: 4px 0 0 !important;
+    overflow: hidden !important;
+    color: #d34e43 !important;
+    font-size: 9.7px !important;
+    line-height: 1.15 !important;
+    font-weight: 450 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+  }
+
+  .view-menu .prod-side {
+    grid-column: 3 !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 100% !important;
+    padding: 9px 8px 0 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-end !important;
+  }
+
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select {
+    width: 29px !important;
+    height: 29px !important;
+    min-width: 29px !important;
+    min-height: 29px !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: var(--accent) !important;
+    color: #fff !important;
+    font-size: 0 !important;
+    line-height: 1 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 5px rgba(232,98,15,.16) !important;
+  }
+
+  .view-menu .add-btn::after,
+  .view-menu .add-btn.is-select::after {
+    content: '+' !important;
+    display: block !important;
+    color: #fff !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    font-weight: 500 !important;
+    transform: translateY(-1px);
+  }
+
+  .view-menu .prod-price {
+    position: absolute !important;
+    right: 8px !important;
+    bottom: 9px !important;
+    margin: 0 !important;
+    color: #171a1f !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+  }
+
+  .view-menu .prod-price small {
+    margin-right: 3px !important;
+    color: #77706a !important;
+    font-size: 9.5px !important;
+    font-weight: 500 !important;
+  }
+
+  .view-menu .prod-soldout-badge {
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 84px minmax(0,1fr) 40px !important;
+    min-height: 84px !important;
+  }
+
+  .view-menu .prod-media,
+  .view-menu .prod-thumb {
+    width: 84px !important;
+    height: 84px !important;
+    min-width: 84px !important;
+    min-height: 84px !important;
+    max-width: 84px !important;
+    max-height: 84px !important;
+  }
+
+  .view-menu .prod-info {
+    padding: 7px 2px 21px 8px !important;
+  }
+
+  .view-menu .prod-name {
+    margin-bottom: 3px !important;
+    font-size: 12.7px !important;
+  }
+
+  .view-menu .prod-desc {
+    font-size: 10.1px !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    margin-top: 3px !important;
+    font-size: 9px !important;
+  }
+
+  .view-menu .prod-side {
+    width: 40px !important;
+    min-width: 40px !important;
+    padding: 7px 7px 0 0 !important;
+  }
+
+  .view-menu .add-btn,
+  .view-menu .add-btn.is-select {
+    width: 27px !important;
+    height: 27px !important;
+    min-width: 27px !important;
+    min-height: 27px !important;
+  }
+
+  .view-menu .add-btn::after,
+  .view-menu .add-btn.is-select::after {
+    font-size: 18px !important;
+  }
+
+  .view-menu .prod-price {
+    right: 7px !important;
+    bottom: 7px !important;
+    font-size: 12.3px !important;
+  }
+}
