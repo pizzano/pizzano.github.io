@@ -4,19 +4,21 @@
   inset: 0;
   z-index: 10000;
   display: grid;
-  place-items: center;
-  padding: 20px;
+  place-items: end center;
+  padding: 0;
   background: rgba(25, 17, 13, .56);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
 }
 .shop-info-dialog {
   width: min(100%, 520px);
-  max-height: min(88vh, 760px);
+  max-width: 520px;
+  max-height: 90dvh;
   overflow: auto;
   overscroll-behavior: contain;
   border: 1px solid rgba(69, 48, 37, .08);
-  border-radius: 24px;
+  border-radius: 24px 24px 0 0;
+  border-bottom: 0;
   background: #fff;
   color: #241914;
   box-shadow: 0 28px 90px rgba(38, 21, 12, .30);
@@ -41,7 +43,7 @@
   width: 38px;
   height: 38px;
   display: grid;
-  place-items: center;
+  place-items: end center;
   border: 1px solid #eadfd9;
   border-radius: 12px;
   background: rgba(255,255,255,.82);
@@ -61,7 +63,7 @@
   height: 44px;
   flex: none;
   display: grid;
-  place-items: center;
+  place-items: end center;
   border-radius: 14px;
   background: #f2650f;
   color: #fff;
@@ -271,16 +273,6 @@ html[data-theme="dark"] .shop-info-time.is-asap {
   color: #fff;
 }
 
-  .shop-info-modal {
-    padding: 0;
-    place-items: end center;
-  }
-  .shop-info-dialog {
-    width: 100%;
-    max-height: 90vh;
-    border-radius: 24px 24px 0 0;
-    border-bottom: 0;
-  }
   .shop-info-grid { grid-template-columns: 1fr; }
   .shop-info-card.is-wide { grid-column: auto; }
   .shop-info-actions { position: sticky; bottom: 0; padding-top: 10px; background: inherit; }

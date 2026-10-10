@@ -738,7 +738,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar-thu
   --ok-soft: #edf8f0;
   --brown: #35231c;
   --brown-2: #452c22;
-  --app-width: 760px;
+  --app-width: 520px;
   --r-card: 20px;
   --shadow-food: 0 8px 26px rgba(55, 38, 29, .08);
   --shadow-soft: 0 3px 14px rgba(55, 38, 29, .06);
