@@ -1,10 +1,11 @@
-const CACHE_NAME = 'kol-demo-v121-borders3';
+const CACHE_NAME = 'kol-demo-v122-states4';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
   '/demo/css/customer.css',
   '/demo/css/theme.css',
   '/demo/css/shop-info.css',
+  '/demo/css/customer-theme.css',
   '/demo/js/theme.js',
   '/demo/js/customer.js',
   '/demo/js/shop-info.js',

@@ -1,0 +1,64 @@
+/* Customer theme roles are shared across all customer flows. */
+:root[data-customer-palette] {
+  --bg: var(--palette-bg); --surface: var(--palette-surface); --surface-2: var(--palette-bg); --surface-3: var(--palette-soft);
+  --ink: var(--palette-ink); --ink-2: var(--palette-muted); --ink-3: var(--palette-muted);
+  --line: var(--palette-border); --line-strong: var(--palette-border);
+  --accent: var(--palette-accent); --accent-dark: var(--palette-accent); --accent-soft: var(--palette-soft);
+  --ok: var(--palette-success); --danger: var(--palette-danger);
+  --ok-soft: var(--palette-soft); --danger-soft: var(--palette-soft);
+}
+html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
+html[data-customer-palette] body::before { background: none; }
+html[data-customer-palette] .view-menu .prod-grid { background: var(--palette-surface); border-color: var(--palette-border); }
+html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
+html[data-customer-palette] .btn-primary, html[data-customer-palette] .add-btn, html[data-customer-palette] .btn-add { background: var(--palette-accent); color: var(--palette-on-accent); }
+html[data-customer-palette] .view-menu .prod-grid .add-btn { color: var(--palette-on-accent); }
+html[data-customer-palette] .prod-cart-badge { background: var(--palette-surface); color: var(--palette-success); border-color: var(--palette-border); }
+html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success); }
+
+/* Keep shared legacy dark overrides aligned with the customer theme. */
+html[data-customer-palette] main { background: var(--palette-bg) !important; }
+html[data-customer-palette] .app-header { background: var(--palette-deep) !important; }
+html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; }
+html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
+html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: end; justify-items: end; }
+html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
+html[data-customer-palette] .allergen-visibility-switch { background: var(--palette-border); }
+html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
+html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent); }
+
+/* Visible boundaries for customer cards, choices and controls. */
+html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .opt-row, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .cart-product-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-close, .sheet-fav, .sheet-err, .empty-state) {
+  border: 1px solid var(--palette-border) !important;
+}
+html[data-customer-palette] .profile-menu-row { background: var(--palette-surface); border-radius: 14px; }
+html[data-customer-palette] .profile-menu { display: grid; gap: 10px; }
+html[data-customer-palette] :is(.sheet, .shop-info-dialog) { border: 1px solid var(--palette-border); }
+html[data-customer-palette] :is(.sheet-head, .sheet-foot, .cart-actions, .checkout-actions) { border-color: var(--palette-border) !important; }
+html[data-customer-palette] :is(.opt-row.is-selected, .opt-row.is-checked, .opt-row:has(input:checked), .pickup-choice.is-selected, .time-btn.is-selected, .time-btn.is-active) { border-color: var(--palette-accent) !important; background: var(--palette-soft) !important; }
+html[data-customer-palette] .profile-theme-switch { background: var(--palette-border) !important; border: 1px solid var(--palette-border); }
+html[data-customer-palette] .profile-menu-row[aria-pressed="true"] .profile-theme-switch { background: var(--palette-accent) !important; }
+html[data-customer-palette] .profile-theme-switch::after { background: var(--palette-light) !important; }
+/* Positive feedback and removed ingredients have separate theme-aware tones. */
+html[data-customer-palette] .toast { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border-color: var(--palette-success) !important; }
+html[data-customer-palette] .toast::before { color: var(--palette-success); }
+html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
+html[data-customer-palette] .toast[data-tone="error"]::before { color: var(--palette-danger); }
+html[data-customer-palette] :is(.saved-flash, .ingredient-chip, .prod-cart-badge) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
+html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success) !important; }
+html[data-customer-palette] :is(.ingredient-chip.is-removed, .ingredient-removed-summary) { background: var(--palette-removed-soft) !important; color: var(--palette-accent) !important; border: 1px solid var(--palette-accent) !important; }
+html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-light); }
+
+/* Strong, consistent boundaries and distinct control states. */
+html[data-customer-palette] { --line: var(--palette-border); --line-strong: var(--palette-border); }
+html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .cart-product-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
+html[data-customer-palette] :is(.allergen-visibility-switch, .profile-theme-switch) { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
+html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch, html[data-customer-palette] .profile-menu-row[aria-pressed="true"] .profile-theme-switch { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] :is(.opt-row.is-checked, .opt-row:has(input:checked), .time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-soft) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .ingredient-customize.is-open { border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .ingredient-customize.is-open .ingredient-customize-toggle { background: var(--palette-soft) !important; color: var(--palette-accent); border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .saved-flash { border-radius: 10px; }
+html[data-customer-palette] .toast[data-tone="error"]::before { content: "!"; }
+
+html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
