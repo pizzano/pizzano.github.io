@@ -260,10 +260,7 @@ html[data-theme="dark"] .ingredient-chip.is-removed {
   color: #ff8a84 !important;
 }
 
-html[data-theme="dark"] .ingredient-removed-summary,
-html[data-theme="dark"] .line-removed,
-html[data-theme="dark"] .order-history-removed,
-html[data-theme="dark"] .checkout-review-removed {
+html[data-theme="dark"] .ingredient-removed-summary {
   background: transparent !important;
   color: #ff9691 !important;
   border-color: #b4544f !important;
@@ -283,19 +280,7 @@ html[data-theme="dark"] .sheet-allergen-none {
 
 html[data-theme="dark"] .cart-line,
 html[data-theme="dark"] .cart-summary,
-html[data-theme="dark"] .step-panel,
-html[data-theme="dark"] .review-card,
-html[data-theme="dark"] .checkout-review-item,
-html[data-theme="dark"] .checkout-review-info,
-html[data-theme="dark"] .checkout-review-empty,
-
-html[data-theme="dark"] .checkout-review-toggle,
-html[data-theme="dark"] .checkout-review-summary,
-
-html[data-theme="dark"] #reviewCard .checkout-review-toggle,
-html[data-theme="dark"] #reviewCard .checkout-review-summary,
-html[data-theme="dark"] #reviewCard .checkout-review-item,
-html[data-theme="dark"] #reviewCard .checkout-review-info {
+html[data-theme="dark"] .step-panel {
   border-color: var(--line) !important;
   background: #191d21 !important;
   color: var(--ink) !important;
@@ -406,8 +391,7 @@ html[data-theme="dark"] .order-progress-dot {
   background: #1b2020 !important;
 }
 
-html[data-theme="dark"] .order-history-card,
-html[data-theme="dark"] .order-history-line {
+html[data-theme="dark"] .order-history-card {
   border-color: var(--line) !important;
   background: #191d21 !important;
 }
@@ -417,14 +401,11 @@ html[data-theme="dark"] .order-history-details {
   background: #15181b !important;
 }
 
-html[data-theme="dark"] .order-history-line-head strong,
-html[data-theme="dark"] .order-history-line-head b,
 html[data-theme="dark"] .order-history-meta strong {
   color: var(--ink) !important;
 }
 
 html[data-theme="dark"] .order-history-summary,
-html[data-theme="dark"] .order-history-size,
 html[data-theme="dark"] .order-history-meta > div {
   color: var(--ink-2) !important;
 }
@@ -795,41 +776,6 @@ html[data-theme="dark"] .view-cart .cart-detail-multiplier strong {
 }
 
 
-/* ======================== Checkout review cart style v2 ======================== */
-html[data-theme="dark"] #reviewCard .checkout-review-card {
-  border-color: var(--line) !important;
-  background: #191d21 !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-review-media,
-html[data-theme="dark"] #reviewCard .checkout-review-media-fallback {
-  background: #24292e !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-review-item-name,
-html[data-theme="dark"] #reviewCard .checkout-review-item-total,
-html[data-theme="dark"] #reviewCard .checkout-review-line-price,
-html[data-theme="dark"] #reviewCard .checkout-review-multiplier strong {
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-review-line,
-html[data-theme="dark"] #reviewCard .checkout-review-line-left b,
-html[data-theme="dark"] #reviewCard .checkout-review-line-price.is-included {
-  color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-review-line-leader {
-  border-bottom-color: #5b646c !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-review-qty-pill {
-  background: #2a211c !important;
-  color: #ff9861 !important;
-}
-
-
 /* ======================== Mine bestillinger cart style v2 ======================== */
 html[data-theme="dark"] #orderList .order-history-cart-item {
   border-color: var(--line) !important;
@@ -860,41 +806,6 @@ html[data-theme="dark"] #orderList .order-history-cart-leader {
 }
 
 html[data-theme="dark"] #orderList .order-history-cart-qty {
-  background: #2a211c !important;
-  color: #ff9861 !important;
-}
-
-
-/* ======================== Hentetid review cart style v3 ======================== */
-html[data-theme="dark"] #reviewCard .checkout-cart-card {
-  border-color: var(--line) !important;
-  background: #191d21 !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-cart-media,
-html[data-theme="dark"] #reviewCard .checkout-cart-fallback {
-  background: #24292e !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-cart-name,
-html[data-theme="dark"] #reviewCard .checkout-cart-total,
-html[data-theme="dark"] #reviewCard .checkout-cart-price,
-html[data-theme="dark"] #reviewCard .checkout-cart-multiplier strong {
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-cart-row,
-html[data-theme="dark"] #reviewCard .checkout-cart-left b,
-html[data-theme="dark"] #reviewCard .checkout-cart-price.is-included {
-  color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-cart-leader {
-  border-bottom-color: #5b646c !important;
-}
-
-html[data-theme="dark"] #reviewCard .checkout-cart-qty {
   background: #2a211c !important;
   color: #ff9861 !important;
 }
