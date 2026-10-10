@@ -276,24 +276,6 @@
   const cleanPhone = (value) => String(value || '').replace(/[^\d]/g, '').slice(0, 8);
   const validPhone = (value) => /^[49]\d{7}$/.test(cleanPhone(value));
 
-  function readJSON(key, fallback = {}) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (_) {
-      return fallback;
-    }
-  }
-
-  function writeJSON(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   function getCheckoutContact() {
     return {
       name: (byId('custName')?.value || '').trim(),
@@ -304,12 +286,12 @@
   function saveCheckoutDraft() {
     const contact = getCheckoutContact();
     if (!contact.name && !contact.phone) return;
-    writeJSON(CONTACT_KEY, contact);
+    writeStoredJSON(CONTACT_KEY, contact);
   }
 
   function restoreCheckoutContact() {
-    const draft = readJSON(CONTACT_KEY, {});
-    const profile = readJSON(PROFILE_KEY, {});
+    const draft = readStoredJSON(CONTACT_KEY, {});
+    const profile = readStoredJSON(PROFILE_KEY, {});
     const name = draft.name || profile.name || '';
     const phone = cleanPhone(draft.phone || profile.phone || '');
 
@@ -323,14 +305,14 @@
     const name = (byId('profName')?.value || '').trim();
     const phone = cleanPhone(byId('profPhone')?.value || '');
     if (!name && !phone) return;
-    writeJSON(CONTACT_KEY, { name, phone });
+    writeStoredJSON(CONTACT_KEY, { name, phone });
   }
 
   function promoteSuccessfulOrderToProfile() {
     const contact = getCheckoutContact();
     if (!contact.name || !validPhone(contact.phone)) return;
 
-    writeJSON(CONTACT_KEY, contact);
+    writeStoredJSON(CONTACT_KEY, contact);
 
     const profName = byId('profName');
     const profPhone = byId('profPhone');
@@ -343,8 +325,8 @@
       return;
     }
 
-    const previous = readJSON(PROFILE_KEY, {});
-    writeJSON(PROFILE_KEY, {
+    const previous = readStoredJSON(PROFILE_KEY, {});
+    writeStoredJSON(PROFILE_KEY, {
       ...previous,
       name: contact.name,
       phone: contact.phone,
