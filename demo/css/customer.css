@@ -6157,3 +6157,105 @@ html[data-theme="dark"] .cart-detail-row b {
     min-width: 44px !important;
   }
 }
+
+
+/* ======================== Mobil meny: balansert kortbredde v17 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 80px minmax(0,1fr) 40px !important;
+    column-gap: 5px !important;
+    padding: 8px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 80px !important;
+    min-width: 80px !important;
+    height: 80px !important;
+    min-height: 80px !important;
+  }
+
+  .view-menu .prod-info {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 2px 0 2px 5px !important;
+  }
+
+  .view-menu .prod-name {
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 13.35px !important;
+    line-height: 1.14 !important;
+    letter-spacing: -.015em !important;
+  }
+
+  .view-menu .prod-desc {
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 10.95px !important;
+    line-height: 1.22 !important;
+  }
+
+  .view-menu .prod-list-allergens {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .view-menu .prod-side {
+    width: 40px !important;
+    min-width: 40px !important;
+    min-height: 80px !important;
+    grid-template-rows: 30px auto !important;
+    align-content: center !important;
+    row-gap: 10px !important;
+    padding: 0 !important;
+    transform: translateX(-4px) !important;
+  }
+
+  .view-menu .prod-side > .add-btn,
+  .view-menu .prod-side > .add-btn.is-select {
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+  }
+
+  .view-menu .prod-side > .prod-price {
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 78px minmax(0,1fr) 40px !important;
+    column-gap: 5px !important;
+    padding: 7px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 78px !important;
+    min-width: 78px !important;
+    height: 76px !important;
+    min-height: 76px !important;
+  }
+
+  .view-menu .prod-info {
+    padding-left: 5px !important;
+  }
+
+  .view-menu .prod-side {
+    width: 40px !important;
+    min-width: 40px !important;
+    min-height: 76px !important;
+    row-gap: 9px !important;
+    transform: translateX(-4px) !important;
+  }
+}
