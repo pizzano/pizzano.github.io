@@ -5659,7 +5659,7 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 }
 
-/* ======================== Mobil meny: produktliste bygget på nytt v10 ======================== */
+/* ======================== Mobil meny: produktliste finjustert v12 ======================== */
 @media (max-width: 639px) {
   .view-menu .cat-block {
     margin-bottom: 18px !important;
@@ -5685,21 +5685,20 @@ html[data-theme="dark"] .cart-detail-row b {
   .view-menu .prod-card,
   .view-menu .prod-grid.menu-layout-list .prod-card,
   .view-menu .prod-grid.menu-layout-grid .prod-card {
-    position: relative !important;
     display: grid !important;
-    grid-template-columns: 94px minmax(0,1fr) 66px !important;
+    grid-template-columns: 96px minmax(0, 1fr) 58px !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
     min-height: 94px !important;
     height: auto !important;
+    padding: 7px 8px !important;
     margin: 0 !important;
-    padding: 8px 8px !important;
-    overflow: hidden !important;
     border: 0 !important;
     border-bottom: 1px solid #eee7e1 !important;
     border-radius: 0 !important;
     background: #fff !important;
     box-shadow: none !important;
+    overflow: visible !important;
   }
 
   .view-menu .prod-card:last-child {
@@ -5714,21 +5713,19 @@ html[data-theme="dark"] .cart-detail-row b {
 
   .view-menu .prod-media {
     grid-column: 1 !important;
-    width: 94px !important;
-    height: 78px !important;
-    min-width: 94px !important;
-    min-height: 78px !important;
-    max-width: 94px !important;
-    max-height: 78px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    align-self: center !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     overflow: hidden !important;
     border-radius: 10px !important;
     background: #f7f5f2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .view-menu .prod-thumb {
@@ -5738,81 +5735,82 @@ html[data-theme="dark"] .cart-detail-row b {
     min-height: 0 !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    margin: 0 !important;
-    aspect-ratio: auto !important;
     object-fit: contain !important;
     object-position: center !important;
+    display: block !important;
+    aspect-ratio: auto !important;
     border-radius: 10px !important;
     background: #f7f5f2 !important;
   }
 
   .view-menu .prod-thumb.prod-thumb-empty {
-    display: block !important;
     background: #efebe7 !important;
   }
 
   .view-menu .prod-info {
     grid-column: 2 !important;
     min-width: 0 !important;
-    padding: 4px 0 !important;
+    padding: 2px 0 !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: flex-start !important;
-    gap: 0 !important;
+    gap: 2px !important;
   }
 
   .view-menu .prod-name {
     width: 100% !important;
-    margin: 0 0 5px !important;
-    overflow: hidden !important;
+    margin: 0 0 2px !important;
     color: #171a1f !important;
-    font-size: 13.4px !important;
-    line-height: 1.15 !important;
+    font-size: 13.8px !important;
+    line-height: 1.12 !important;
     font-weight: 820 !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
   .view-menu .prod-desc {
     width: 100% !important;
     margin: 0 !important;
-    overflow: hidden !important;
     color: #675f58 !important;
-    font-size: 10.8px !important;
-    line-height: 1.2 !important;
+    font-size: 11px !important;
+    line-height: 1.16 !important;
     font-weight: 400 !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    display: block !important;
-    -webkit-line-clamp: unset !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
   }
 
   .view-menu .prod-list-allergens {
     width: 100% !important;
-    margin: 5px 0 0 !important;
-    overflow: hidden !important;
+    margin: 1px 0 0 !important;
     color: #d14c43 !important;
     font-size: 9.8px !important;
-    line-height: 1.15 !important;
+    line-height: 1.14 !important;
     font-weight: 450 !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    display: block !important;
-    -webkit-line-clamp: unset !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
   }
 
   .view-menu .prod-side {
     grid-column: 3 !important;
-    width: 66px !important;
-    min-width: 66px !important;
-    height: 78px !important;
-    align-self: center !important;
+    width: 58px !important;
+    min-width: 58px !important;
+    min-height: 76px !important;
+    align-self: stretch !important;
     padding: 2px 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-end !important;
-    justify-content: space-between !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
   }
 
@@ -5832,7 +5830,8 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 19px !important;
     line-height: 1 !important;
     font-weight: 500 !important;
-    box-shadow: 0 2px 6px rgba(232,98,15,.18) !important;
+    box-shadow: 0 2px 6px rgba(232, 98, 15, .18) !important;
+    flex: 0 0 auto !important;
   }
 
   .view-menu .add-btn::after,
@@ -5841,33 +5840,38 @@ html[data-theme="dark"] .cart-detail-row b {
     display: none !important;
   }
 
-  .view-menu .prod-price {
-    position: static !important;
-    margin: auto 0 0 !important;
-    color: #171a1f !important;
-    font-size: 12.6px !important;
-    line-height: 1 !important;
-    font-weight: 850 !important;
-    white-space: nowrap !important;
-    text-align: right !important;
-  }
-
-  .view-menu .prod-price small {
-    margin-right: 3px !important;
-    color: #77706a !important;
-    font-size: 9.2px !important;
-    font-weight: 500 !important;
-  }
-
   .view-menu .prod-soldout-badge {
-    min-width: 0 !important;
-    padding: 5px 7px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 5px 8px !important;
     border-radius: 999px !important;
     background: #f1f2f3 !important;
     color: #8b8f96 !important;
     font-size: 9px !important;
     line-height: 1 !important;
     font-weight: 700 !important;
+    white-space: nowrap !important;
+  }
+
+  .view-menu .prod-price {
+    position: static !important;
+    margin: 0 !important;
+    color: #171a1f !important;
+    font-size: 12.8px !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .view-menu .prod-price small {
+    display: inline-block !important;
+    margin-right: 2px !important;
+    color: #77706a !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
   }
 
   .view-menu .tag.tag-soldout {
@@ -5879,6 +5883,7 @@ html[data-theme="dark"] .cart-detail-row b {
     font-size: 8.5px !important;
     line-height: 1 !important;
     font-weight: 800 !important;
+    vertical-align: middle !important;
   }
 
   .view-menu .prod-cart-badge {
@@ -5893,39 +5898,36 @@ html[data-theme="dark"] .cart-detail-row b {
   .view-menu .prod-card,
   .view-menu .prod-grid.menu-layout-list .prod-card,
   .view-menu .prod-grid.menu-layout-grid .prod-card {
-    grid-template-columns: 84px minmax(0,1fr) 58px !important;
-    gap: 8px !important;
-    min-height: 88px !important;
+    grid-template-columns: 88px minmax(0, 1fr) 54px !important;
+    min-height: 92px !important;
+    gap: 7px !important;
     padding: 7px !important;
   }
 
   .view-menu .prod-media {
-    width: 84px !important;
+    width: 88px !important;
+    min-width: 88px !important;
     height: 72px !important;
-    min-width: 84px !important;
     min-height: 72px !important;
-    max-width: 84px !important;
     max-height: 72px !important;
   }
 
   .view-menu .prod-name {
-    margin-bottom: 4px !important;
-    font-size: 12.7px !important;
+    font-size: 13px !important;
   }
 
   .view-menu .prod-desc {
-    font-size: 10.2px !important;
+    font-size: 10.3px !important;
   }
 
   .view-menu .prod-list-allergens {
-    margin-top: 4px !important;
     font-size: 9.2px !important;
   }
 
   .view-menu .prod-side {
-    width: 58px !important;
-    min-width: 58px !important;
-    height: 72px !important;
+    width: 54px !important;
+    min-width: 54px !important;
+    min-height: 72px !important;
   }
 
   .view-menu .add-btn,
