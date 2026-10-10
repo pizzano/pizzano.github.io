@@ -6,6 +6,12 @@ export const CUSTOMER_PALETTES = {
   fresh: theme('Hage · naturlig grønn', ['#326A4B','#F3F7F3','#FFFFFF','#22352A','#CFDED2'], ['#8BD5A6','#131D17','#1F2C23','#EDF6EF','#415B49']),
   gourmet: theme('Gourmet · karamell og krem', ['#A95B0A','#FAF6EF','#FFFDF8','#35291F','#DDD0BC'], ['#F2BC72','#1D1812','#2B241C','#FAF2E6','#5A4A35']),
 };
+const feedbackColors = {
+  reference: ['#276B65', '#82D3C4'],
+  lively: ['#75501C', '#EAC481'],
+  fresh: ['#326A4B', '#8BD5A6'],
+  gourmet: ['#66528C', '#CDB4EA'],
+};
 export function applyCustomerPalette(value) {
   const key = Object.hasOwn(CUSTOMER_PALETTES, value) ? value : 'reference';
   const root = document.documentElement;
@@ -17,7 +23,10 @@ export function applyCustomerPalette(value) {
     muted: `color-mix(in srgb, ${ink} 74%, ${surface})`,
     soft: `color-mix(in srgb, ${accent} ${dark ? 16 : 9}%, ${surface})`,
     'on-accent': dark ? palette.dark[1] : '#FFFFFF',
-    success: dark ? '#91D3AF' : '#326B4D', danger: dark ? '#FFACA4' : '#B9342B'};
+    success: feedbackColors[key][dark ? 1 : 0],
+    'success-soft': `color-mix(in srgb, ${feedbackColors[key][dark ? 1 : 0]} ${dark ? 18 : 10}%, ${surface})`,
+    'removed-soft': `color-mix(in srgb, ${accent} ${dark ? 22 : 12}%, ${surface})`,
+    danger: dark ? '#FFACA4' : '#B9342B'};
   for (const [name, color] of Object.entries(values)) root.style.setProperty(`--palette-${name}`, color);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = bg;

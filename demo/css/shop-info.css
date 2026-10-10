@@ -306,3 +306,25 @@ html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: righ
 html[data-customer-palette] .allergen-visibility-switch { background: var(--palette-border); }
 html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
 html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent); }
+
+/* Visible boundaries for customer cards, choices and controls. */
+html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .opt-row, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .cart-product-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-close, .sheet-fav, .sheet-err, .empty-state) {
+  border: 1px solid var(--palette-border) !important;
+}
+html[data-customer-palette] .profile-menu-row { background: var(--palette-surface); border-radius: 14px; }
+html[data-customer-palette] .profile-menu { display: grid; gap: 10px; }
+html[data-customer-palette] :is(.sheet, .shop-info-dialog) { border: 1px solid var(--palette-border); }
+html[data-customer-palette] :is(.sheet-head, .sheet-foot, .cart-actions, .checkout-actions) { border-color: var(--palette-border) !important; }
+html[data-customer-palette] :is(.opt-row.is-selected, .opt-row.is-checked, .opt-row:has(input:checked), .pickup-choice.is-selected, .time-btn.is-selected, .time-btn.is-active) { border-color: var(--palette-accent) !important; background: var(--palette-soft) !important; }
+html[data-customer-palette] .profile-theme-switch { background: var(--palette-border) !important; border: 1px solid var(--palette-border); }
+html[data-customer-palette] .profile-menu-row[aria-pressed="true"] .profile-theme-switch { background: var(--palette-accent) !important; }
+html[data-customer-palette] .profile-theme-switch::after { background: var(--palette-light) !important; }
+/* Positive feedback and removed ingredients have separate theme-aware tones. */
+html[data-customer-palette] .toast { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border-color: var(--palette-success) !important; }
+html[data-customer-palette] .toast::before { color: var(--palette-success); }
+html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
+html[data-customer-palette] .toast[data-tone="error"]::before { color: var(--palette-danger); }
+html[data-customer-palette] :is(.saved-flash, .ingredient-chip, .prod-cart-badge, .validated-input.is-valid .input) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
+html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success) !important; }
+html[data-customer-palette] :is(.ingredient-chip.is-removed, .ingredient-removed-summary) { background: var(--palette-removed-soft) !important; color: var(--palette-accent) !important; border: 1px solid var(--palette-accent) !important; }
+html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-light); }
