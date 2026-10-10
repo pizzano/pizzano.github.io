@@ -6095,3 +6095,65 @@ html[data-theme="dark"] .cart-detail-row b {
     min-height: 74px !important;
   }
 }
+
+
+/* ======================== Mobil meny: bredere produkttekst v16 ======================== */
+@media (max-width: 639px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 86px minmax(0,1fr) 46px !important;
+    column-gap: 4px !important;
+    row-gap: 0 !important;
+    padding: 7px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 86px !important;
+    min-width: 86px !important;
+    height: 80px !important;
+    min-height: 80px !important;
+  }
+
+  .view-menu .prod-info {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 2px 2px 2px 0 !important;
+  }
+
+  .view-menu .prod-name,
+  .view-menu .prod-desc,
+  .view-menu .prod-list-allergens {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .view-menu .prod-side {
+    width: 46px !important;
+    min-width: 46px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .view-menu .prod-card,
+  .view-menu .prod-grid.menu-layout-list .prod-card,
+  .view-menu .prod-grid.menu-layout-grid .prod-card {
+    grid-template-columns: 80px minmax(0,1fr) 44px !important;
+    column-gap: 4px !important;
+    padding: 6px !important;
+  }
+
+  .view-menu .prod-media {
+    width: 80px !important;
+    min-width: 80px !important;
+    height: 74px !important;
+    min-height: 74px !important;
+  }
+
+  .view-menu .prod-side {
+    width: 44px !important;
+    min-width: 44px !important;
+  }
+}
