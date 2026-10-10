@@ -4820,10 +4820,10 @@ html[data-theme="dark"] .cart-detail-row b {
     grid-template-columns: 76px minmax(0,1fr) 46px !important;
     align-items: center !important;
     column-gap: 11px !important;
-    min-height: 122px !important;
+    min-height: 98px !important;
     height: auto !important;
     margin: 0 !important;
-    padding: 11px 10px !important;
+    padding: 8px 6px !important;
     overflow: hidden !important;
     border: 0 !important;
     border-bottom: 1px solid #eee7e1 !important;
@@ -4940,7 +4940,7 @@ html[data-theme="dark"] .cart-detail-row b {
     grid-column: 3 !important;
     width: 46px !important;
     min-width: 46px !important;
-    min-height: 88px !important;
+    min-height: 76px !important;
     align-self: center !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -5021,8 +5021,8 @@ html[data-theme="dark"] .cart-detail-row b {
   .view-menu .prod-grid.menu-layout-list .prod-card {
     grid-template-columns: 72px minmax(0,1fr) 44px !important;
     column-gap: 10px !important;
-    min-height: 118px !important;
-    padding: 10px 8px !important;
+    min-height: 98px !important;
+    padding: 8px 6px !important;
   }
 
   .view-menu .prod-grid.menu-layout-list .prod-media,
