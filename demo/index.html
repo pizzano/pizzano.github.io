@@ -42,6 +42,9 @@
                 </span>
             </a>
             <nav class="hdr-actions" aria-label="Hovedhandlinger">
+                <button class="hdr-btn" id="profileThemeToggle" data-theme-toggle type="button" aria-label="Bytt til mørk modus" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
+                </button>
                 <button class="hdr-btn" id="btnProfile" type="button" aria-label="Min profil og favoritter">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg>
                 </button>
@@ -202,17 +205,6 @@
                         </span>
                         <span class="profile-menu-chevron" aria-hidden="true">›</span>
                     </button>
-
-                    <button class="profile-menu-row has-switch" id="profileThemeToggle" data-theme-toggle type="button" aria-label="Bytt til mørk modus" aria-pressed="false">
-                        <span class="profile-menu-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
-                        </span>
-                        <span class="profile-menu-copy">
-                            <strong>Mørk modus</strong>
-                            <small>Bytt mellom lys og mørk visning</small>
-                        </span>
-                        <span class="profile-theme-switch" aria-hidden="true"></span>
-                    </button>
                 </nav>
             </div>
 
@@ -303,7 +295,7 @@
     <div class="toast" id="toast" hidden></div>
 
     <script src="/demo/js/install.js?v=20261010-clean2"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261011-dedup8"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261011-header9"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261010-clean2"></script>
 </body>
 
