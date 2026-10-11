@@ -1551,10 +1551,6 @@ function renderCartCount() {
 
 function setStep(step) {
   ui.checkoutStep = step;
-  if (step === 3 && !ui.pickupMode && getOpenState().open) {
-    ui.pickupMode = 'asap';
-    ui.pickup = 'asap';
-  }
   el.step2.hidden = step !== 2;
   el.step3.hidden = step !== 3;
   el.stepper.querySelectorAll('.step').forEach((node) => {
@@ -1567,6 +1563,11 @@ function setStep(step) {
   el.btnStepBack.textContent = 'Tilbake';
   el.btnStepNext.textContent = step === 3 ? (ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling') : 'Neste: Hentetid';
   renderCheckout();
+}
+
+function hasValidPickup() {
+  return getOpenState().open && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
+    || ui.pickupMode === 'scheduled' && getPickupSlots().some((slot) => slot.value === ui.pickup));
 }
 
 function renderCheckout() {
@@ -1589,7 +1590,7 @@ function renderCheckout() {
   const asapTitle = asapChoice?.querySelector('strong');
   if (asapTitle) asapTitle.textContent = 'Snarest';
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
-  if (!state.open) ui.pickup = null;
+  if (!state.open) { ui.pickup = null; ui.pickupMode = null; }
   el.pickupChoices.hidden = !state.open;
   el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
     const active = button.dataset.pickupMode === ui.pickupMode;
@@ -1731,7 +1732,7 @@ function renderCheckout() {
       </div>
     </details>`;
   if (ui.checkoutStep === 3) {
-    el.btnStepNext.disabled = ui.orderSubmitting;
+    el.btnStepNext.disabled = ui.orderSubmitting || !hasValidPickup();
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
   }
 }
@@ -1999,7 +2000,7 @@ async function placeOrder() {
     el.errPhone.hidden = validPhone(phone);
     return;
   }
-  if (!ui.pickup || (ui.pickupMode === 'scheduled' && !getPickupSlots().some((slot) => slot.value === ui.pickup))) {
+  if (!hasValidPickup()) {
     ui.pickup = null;
     renderCheckout();
     el.errTime.hidden = false;
@@ -2854,7 +2855,7 @@ el.btnStepNext.addEventListener('click', () => {
 
 el.pickupChoices.addEventListener('click', (event) => {
   const button = event.target.closest('[data-pickup-mode]');
-  if (!button) return;
+  if (!button || !['asap', 'scheduled'].includes(button.dataset.pickupMode)) return;
   if (!getOpenState().open) return;
   ui.orderSendFailed = false;
   ui.pickupMode = button.dataset.pickupMode;

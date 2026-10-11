@@ -84,3 +84,18 @@ html[data-customer-palette] :is(.step.is-active, .step.is-done) { color: var(--p
 
 html[data-customer-palette] .toast[data-tone="warning"] { background: var(--palette-warning-soft) !important; color: var(--palette-warning) !important; border-color: var(--palette-warning) !important; }
 html[data-customer-palette] .toast[data-tone="warning"]::before { content: "!"; color: var(--palette-warning); }
+
+/* Explicit pickup choices: strong fill, including the selected clock time. */
+html[data-customer-palette] #pickupChoices .pickup-choice.is-active,
+html[data-customer-palette] #timeGrid .time-btn.is-active {
+  background: var(--palette-accent) !important;
+  color: var(--palette-on-accent) !important;
+  border-color: var(--palette-accent) !important;
+}
+html[data-customer-palette] #pickupChoices .pickup-choice.is-active :is(strong, small) { color: inherit !important; }
+html[data-customer-palette][data-theme="dark"] #pickupChoices .pickup-choice.is-active,
+html[data-customer-palette][data-theme="dark"] #timeGrid .time-btn.is-active {
+  background: var(--palette-deep) !important;
+  color: var(--palette-ink) !important;
+  box-shadow: inset 0 0 0 1px var(--palette-accent);
+}
