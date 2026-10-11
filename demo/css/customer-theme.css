@@ -188,12 +188,16 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
   background: color-mix(in srgb, var(--palette-border) 10%, var(--palette-surface)) !important;
 }
 
-.pizza-bonus { display: grid; gap: 10px; text-align: center; padding: 18px; margin: 14px 0; background: var(--palette-surface); }
+#pizzaBonus.pizza-bonus { border-radius: 18px !important; display: grid; gap: 10px; text-align: center; padding: 18px; margin: 14px 0; background: var(--palette-surface); }
 .pizza-bonus h2 { font-size: 21px; margin: 0; }
 .pizza-bonus p, .pizza-bonus small { margin: 0; color: var(--palette-muted); }
-.bonus-ring { width: min(100%, 250px); margin: 0 auto; }
-.bonus-ring path { fill: var(--palette-border); }
-.bonus-ring path.earned { fill: var(--palette-accent); }
+.pizza-bonus .bonus-ring { display: block; width: min(100%, 280px); height: auto; aspect-ratio: 1; margin: 0 auto; fill: none; stroke: none; }
+.bonus-ring .bonus-wedge { fill: color-mix(in srgb, var(--palette-border) 65%, var(--palette-surface)); }
+.bonus-ring .earned .bonus-wedge { fill: var(--palette-accent); }
+.bonus-ring .bonus-pizza-icon { fill: none; stroke: var(--palette-muted); stroke-width: 1.6; }
+.bonus-ring .earned .bonus-pizza-icon { stroke: var(--palette-on-accent); }
+.bonus-ring .bonus-gift { fill: none; stroke: var(--palette-ink); stroke-width: 1.8; }
+.pizza-bonus #usePizzaBonus { border-radius: 999px; }
 .bonus-ring text { fill: var(--palette-ink); font-size: 17px; stroke: none; }
 .bonus-ring .bonus-count { font-size: 44px; font-weight: 800; }
 .bonus-ring .bonus-caption { font-size: 13px; font-weight: 650; }
