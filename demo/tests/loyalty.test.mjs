@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from '../js/loyalty.js';
+import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza, automaticPizzaIndex } from '../js/loyalty.js';
 const event = (id, at, quantity, redeemed = false) => ({ id, at, quantity, redeemed });
 test('Norwegian phone formats share the same loyalty account', () => {
   for (const value of ['47955574', '+47 47955574', '004747955574']) assert.equal(loyaltyPhone(value), '47955574');
@@ -26,4 +26,14 @@ test('Replayed event IDs are counted once and confirmation order wins', () => {
   events.b=event('b',2,0,true);
   assert.equal(pizzaBonus(events).count,0);
   assert.equal(pizzaBonus({c:event('c',3,4),...events}).count,4);
+});
+
+test('Automatic bonus selects the cheapest large pizza only after ten paid pizzas', () => {
+  const lines=[{eligible:true,quantity:2,basePrice:245},{eligible:true,quantity:1,basePrice:195},{eligible:false,quantity:1,basePrice:20}];
+  assert.equal(automaticPizzaIndex(lines,9),1);
+  assert.equal(automaticPizzaIndex([{eligible:true,quantity:1,basePrice:245}],9),-1);
+  assert.equal(automaticPizzaIndex([{eligible:true,quantity:2,basePrice:245}],9),0);
+  assert.equal(automaticPizzaIndex([{eligible:true,quantity:10,basePrice:245}],0),-1);
+  assert.equal(automaticPizzaIndex([{eligible:true,quantity:11,basePrice:245}],0),0);
+  assert.equal(pizzaBonus({a:event('a',1,9),b:event('b',2,2,true)}).count,0);
 });

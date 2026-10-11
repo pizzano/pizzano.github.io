@@ -1,4 +1,4 @@
-import { loyaltyPhone, largePizza } from './loyalty.js';
+import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
 /**
@@ -12,6 +12,7 @@ import { applyCustomerPalette } from './palette.js';
 import {
   store,
   getPizzaBonus,
+  setPizzaOffersConsent,
   DB_URL,
   subscribe,
   ready,
@@ -32,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-loyalty27';
+} from './data.js?v=20261012-consent30';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -94,6 +95,8 @@ let draft = null;
 let bonusState = null;
 let bonusLoading = false;
 let choosingBonus = false;
+let cartBonusLoading = false;
+let cartBonusFetchedAt = 0;
 /** Hindrer at scroll-spy overstyrer mens vi scroller programmatisk. */
 let spyLocked = false;
 let spyLockTimer = null;
@@ -1012,6 +1015,7 @@ function openProduct(itemId, editLine = null) {
   const defaultSize = getDefaultSize(item);
   draft = {
     itemId: item.id,
+    loyaltyAuto: Boolean(editLine?.loyaltyAuto),
     loyaltyFree: Boolean(editLine?.loyaltyFree),
     loyaltyCycle: editLine?.loyaltyCycle || null,
     sizeId: editLine ? editLine.sizeId : defaultSize ? defaultSize.id : null,
@@ -1223,12 +1227,12 @@ function renderSheet() {
       </div>
     </div>`;
 
-  if (draft.loyaltyFree) {
+  if (draft.loyaltyFree && !draft.loyaltyAuto) {
     draft.quantity = 1;
     el.sheetBody.querySelectorAll('[data-size]').forEach(input => { input.disabled = input.dataset.size !== draft.sizeId; });
   }
-  el.qtyPlus.disabled = Boolean(draft.loyaltyFree);
-  el.qtyMinus.disabled = Boolean(draft.loyaltyFree);
+  el.qtyPlus.disabled = Boolean(draft.loyaltyFree && !draft.loyaltyAuto);
+  el.qtyMinus.disabled = Boolean(draft.loyaltyFree && !draft.loyaltyAuto);
   el.qtyValue.textContent = String(draft.quantity);
   el.sheetTotal.textContent = formatPrice(draftTotal());
   el.btnAddToCart.querySelector('span').textContent = draft.editingLineId
@@ -1297,9 +1301,10 @@ function addDraftToCart() {
       selections: JSON.parse(JSON.stringify(draft.selections)),
       comment: draft.comment,
       removedIngredients: [...(draft.removedIngredients || [])],
+      loyaltyAuto: Boolean(draft.loyaltyAuto),
       loyaltyFree: Boolean(draft.loyaltyFree),
       loyaltyCycle: draft.loyaltyCycle || null,
-      quantity: draft.loyaltyFree ? 1 : draft.quantity,
+      quantity: draft.loyaltyFree && !draft.loyaltyAuto ? 1 : draft.quantity,
     });
   }
 
@@ -1331,7 +1336,7 @@ function quickAddProduct(itemId) {
   const sizeId = size ? size.id : null;
   const selections = {};
   const signature = lineSignature(item.id, sizeId, selections, '', []);
-  const existing = cart.find((line) => line.signature === signature && !line.loyaltyFree);
+  const existing = cart.find((line) => line.signature === signature && (!line.loyaltyFree || line.loyaltyAuto));
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -1376,7 +1381,7 @@ function reconcileCart() {
       const size = item.sizes.find(size => size.id === line.sizeId);
       if (hasReward || !largePizza(section, size)) { changed = true; continue; }
       hasReward = true;
-      if (line.quantity !== 1) { line.quantity = 1; changed = true; }
+      if (!line.loyaltyAuto && line.quantity !== 1) { line.quantity = 1; changed = true; }
     }
     const groups = getItemOptionGroups(item);
     const groupIds = new Set(groups.map((group) => group.id));
@@ -1415,6 +1420,25 @@ function reconcileCart() {
   cart = kept;
   if (changed) persistCart();
   return changed;
+}
+
+function applyAutomaticPizzaBonus() {
+  for (const line of cart) if (line.loyaltyAuto) { line.loyaltyFree = false; line.loyaltyAuto = false; line.loyaltyCycle = null; }
+  const phone = loyaltyPhone(el.custPhone.value || profile.phone);
+  const state = bonusState?.phone === phone ? bonusState : null;
+  if (!state?.consent || state.pending || cart.some(line=>line.loyaltyFree)) return;
+  const index = automaticPizzaIndex(cart.map(line=>{
+    const {item,section}=findItem(line.itemId);
+    return { quantity: line.quantity, eligible: largePizza(section,item?.sizes?.find(size=>size.id===line.sizeId)), basePrice: item ? getSizePrice(item,line.sizeId) : Infinity };
+  }),state.count);
+  if (index >= 0) Object.assign(cart[index], { loyaltyFree: true, loyaltyAuto: true, loyaltyCycle: state.cycle });
+}
+
+function refreshCartPizzaBonus(force = false) {
+  const phone = loyaltyPhone(el.custPhone.value || profile.phone);
+  if (!phone || cartBonusLoading || (!force && bonusState?.phone === phone && Date.now()-cartBonusFetchedAt<10000)) return;
+  cartBonusLoading = true;
+  getPizzaBonus(phone).then(state=>{ bonusState=state;cartBonusFetchedAt=Date.now(); applyAutomaticPizzaBonus(); persistCart(); if(ui.view==='cart') renderCart();if(ui.view==='checkout') renderCheckout(); }).catch(()=>{}).finally(()=>{cartBonusLoading=false;});
 }
 
 function bonusLinePrice(item, line, optionIds, quantity) {
@@ -1519,7 +1543,7 @@ function cartLineHtml(line) {
 
       <div class="cart-product-content">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-          <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · Gratis pizza' : ''}</strong>
+          <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · 1 gratis pizza' : ''}</strong>
           ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
@@ -1542,6 +1566,8 @@ function cartLineHtml(line) {
 }
 
 function renderCart() {
+  applyAutomaticPizzaBonus();
+  refreshCartPizzaBonus();
   if (!cart.length) {
     if (el.cartHeaderActions) el.cartHeaderActions.innerHTML = '';
     el.cartLines.innerHTML =
@@ -1601,6 +1627,10 @@ function hasValidPickup() {
 }
 
 function renderCheckout() {
+  applyAutomaticPizzaBonus();
+  refreshCartPizzaBonus();
+  const consentPhone = loyaltyPhone(el.custPhone.value || profile.phone);
+  $('pizzaOffersConsent').checked = bonusState?.phone === consentPhone && bonusState.consent === true;
   if (!cart.length) {
     setView('cart');
     return;
@@ -1719,7 +1749,7 @@ function renderCheckout() {
         <div class="pickup-review-media">${imageHtml}</div>
         <div class="pickup-review-product">
           <div class="pickup-review-product-copy">
-            <strong class="pickup-review-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · Gratis pizza' : ''}</strong>
+            <strong class="pickup-review-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · 1 gratis pizza' : ''}</strong>
             ${rows.length ? `<div class="pickup-review-rows">${rows.join('')}</div>` : ''}
           </div>
           <div class="pickup-review-product-foot">
@@ -2058,12 +2088,22 @@ async function placeOrder() {
     return;
   }
 
+  const hadAutomaticReward = cart.some(line => line.loyaltyAuto);
+  bonusState = await getPizzaBonus(phone).catch(() => null);
+  if (!cart.length || ui.orderSubmitting) return;
+  applyAutomaticPizzaBonus();
+  if (hadAutomaticReward && !cart.some(line => line.loyaltyAuto)) {
+    renderCheckout();
+    toast('Pizzabonus kunne ikke bekreftes. Kontroller kurven før du sender på nytt.', 'warning');
+    return;
+  }
   const rewardLine = cart.find(line => line.loyaltyFree);
   if (rewardLine) {
     const state = await getPizzaBonus(phone).catch(() => null);
     const { section, item } = findItem(rewardLine.itemId);
     const size = item?.sizes?.find(size => size.id === rewardLine.sizeId);
-    if (!state?.ready || state.phone !== loyaltyPhone(profile.phone) || state.cycle !== rewardLine.loyaltyCycle || !largePizza(section, size) || rewardLine.quantity !== 1) {
+    const paidCount = cart.reduce((sum,line)=>{const found=findItem(line.itemId);return sum+(largePizza(found.section,found.item?.sizes?.find(size=>size.id===line.sizeId)) ? line.quantity-(line.loyaltyFree?1:0) : 0)},0);
+    if ((!state?.ready && !(rewardLine.loyaltyAuto && state?.consent && state.count + paidCount >= 10)) || (!rewardLine.loyaltyAuto && state.phone !== loyaltyPhone(profile.phone)) || state.cycle !== rewardLine.loyaltyCycle || !largePizza(section, size) || (!rewardLine.loyaltyAuto && rewardLine.quantity !== 1)) {
       toast('Gratispizza er ikke tilgjengelig for dette mobilnummeret.', 'error'); return;
     }
   }
@@ -2080,7 +2120,7 @@ async function placeOrder() {
     }));
     return {
       itemId: line.itemId,
-      name: (item ? item.name : 'Ukjent') + (line.loyaltyFree ? ' · Gratis pizza' : ''),
+      name: (item ? item.name : 'Ukjent') + (line.loyaltyFree ? ' · 1 gratis pizza' : ''),
       loyaltyFree: Boolean(line.loyaltyFree),
       loyaltyEligible: largePizza(findItem(line.itemId).section, size),
       sizeId: size ? size.id : line.sizeId || null,
@@ -2092,7 +2132,7 @@ async function placeOrder() {
       optionDetails,
       comment: line.comment || '',
       removedIngredients: [...(line.removedIngredients || [])],
-      unitPrice: bonusLinePrice(item, line, optionIds, 1),
+      unitPrice: bonusLinePrice(item, line, optionIds, line.quantity) / line.quantity,
       price: bonusLinePrice(item, line, optionIds, line.quantity),
     };
   });
@@ -2116,7 +2156,7 @@ async function placeOrder() {
   try {
     order = await submitOrder({
       id: ui.pendingOrderId,
-      loyaltyReward: rewardLine ? { cycle: rewardLine.loyaltyCycle } : null,
+      loyaltyReward: rewardLine ? { cycle: rewardLine.loyaltyCycle, automatic: Boolean(rewardLine.loyaltyAuto) } : null,
       customerName: name,
       phone: `+47${phone}`,
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
@@ -2589,7 +2629,7 @@ function renderProfile() {
         line.comment,
         removedIngredients
       );
-      const existing = cart.find((entry) => entry.signature === signature && !entry.loyaltyFree);
+      const existing = cart.find((entry) => entry.signature === signature && (!entry.loyaltyFree || entry.loyaltyAuto));
       const quantity = Math.max(1, Number(line.quantity) || 1);
       if (existing) existing.quantity += quantity;
       else
@@ -2732,7 +2772,7 @@ el.cartLines.addEventListener('click', (event) => {
     cart = [];
   } else if (inc) {
     const line = cart.find((entry) => entry.lineId === inc.dataset.inc);
-    if (line && !line.loyaltyFree) line.quantity += 1;
+    if (line && (!line.loyaltyFree || line.loyaltyAuto)) line.quantity += 1;
   } else if (dec) {
     const line = cart.find((entry) => entry.lineId === dec.dataset.dec);
     if (line && line.quantity > 1) line.quantity -= 1;
@@ -2863,7 +2903,7 @@ el.qtyMinus.addEventListener('click', () => {
 
 el.qtyPlus.addEventListener('click', () => {
   if (!draft) return;
-  if (draft.loyaltyFree) return;
+  if (draft.loyaltyFree && !draft.loyaltyAuto) return;
   draft.quantity = Math.min(30, draft.quantity + 1);
   el.qtyValue.textContent = String(draft.quantity);
   el.sheetTotal.textContent = formatPrice(draftTotal());
@@ -2986,6 +3026,18 @@ if (el.allergenVisibilityToggle) {
 [el.custName, el.custPhone, el.profName, el.profPhone].forEach((input) => {
   input.addEventListener('input', updateContactValidation);
 });
+
+$('pizzaOffersConsent').addEventListener('change', async event => {
+  const enabled = event.target.checked;
+  event.target.disabled = true;
+  try {
+    await setPizzaOffersConsent(el.custPhone.value || profile.phone, enabled);
+    bonusState = await getPizzaBonus(el.custPhone.value || profile.phone);
+    applyAutomaticPizzaBonus(); persistCart(); renderCheckout();
+  } catch (error) { event.target.checked = !enabled; toast(error.message || 'Kunne ikke lagre valget.', 'error'); }
+  finally { event.target.disabled = false; }
+});
+el.custPhone.addEventListener('input',()=>{ cartBonusFetchedAt=0; refreshCartPizzaBonus(true); });
 
 el.btnSaveProfile.addEventListener('click', () => {
   profile.name = el.profName.value.trim();

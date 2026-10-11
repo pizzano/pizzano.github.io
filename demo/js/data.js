@@ -991,6 +991,12 @@ export function hasUnsavedChanges() {
 
 const ORDERS_KEY = 'kol_orders_v1';
 
+export async function setPizzaOffersConsent(phoneValue, enabled) {
+  const phone = loyaltyPhone(phoneValue);
+  if (!phone) throw new Error('Skriv inn et gyldig mobilnummer.');
+  await restPatch(`pizzaBonus/${phone}`, { offersConsent: enabled === true, consentUpdatedAt: Date.now(), consentText: 'Ja, jeg vil få beskjed om gratis pizza, tilbud.' });
+}
+
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
@@ -1000,12 +1006,15 @@ export async function getPizzaBonus(phoneValue) {
   const state = pizzaBonus(events);
   const reservation = account?.reservations?.[state.cycle];
   const pendingOrder = reservation && orders?.[reservation.orderId];
-  return { ...state, phone, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
+  return { ...state, phone, consent: account?.offersConsent === true, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
 }
 
 async function reservePizzaReward(record) {
   const state = await getPizzaBonus(record.phone);
-  if (!state.ready || state.cycle !== record.loyaltyReward.cycle) throw new Error('Pizzabonus er ikke tilgjengelig.');
+  if (record.loyaltyReward.automatic && !state.consent) throw new Error('Aktiver valget for automatisk pizzabonus.');
+  const paidCount = (record.lines || []).reduce((sum,line) => sum + (line.loyaltyEligible ? Math.max(0, Number(line.quantity) - (line.loyaltyFree ? 1 : 0)) : 0), 0);
+  const earnedInCart = record.loyaltyReward.automatic && state.consent && state.count + paidCount >= 10;
+  if ((!state.ready && !earnedInCart) || state.cycle !== record.loyaltyReward.cycle) throw new Error('Pizzabonus er ikke tilgjengelig.');
   const url = `${DB_URL}/pizzaBonus/${state.phone}/reservations/${state.cycle}.json`;
   for (let attempt = 0; attempt < 4; attempt++) {
     const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
@@ -1038,7 +1047,7 @@ async function patchConfirmedPizzaOrder(order, changes) {
     }
     const quantity = (order.lines || []).reduce((sum,line) => {
       const section = store.sections.find(s => s.items?.some(item => item.id === line.itemId));
-      return sum + (!line.loyaltyFree && (line.loyaltyEligible || largePizza(section, line.size)) ? Number(line.quantity) || 0 : 0);
+      return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
     },0);
     patch[`pizzaBonus/${phone}/events/${order.id}`] = { id: order.id, at, quantity, redeemed: Boolean(order.loyaltyReward) };
   }
@@ -1063,7 +1072,7 @@ export async function submitOrder(order) {
   try {
     if (record.loyaltyReward) {
       const rewards = (record.lines || []).filter(line => line.loyaltyFree);
-      if (rewards.length !== 1 || rewards[0].quantity !== 1 || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
+      if (rewards.length !== 1 || (record.loyaltyReward.automatic ? rewards[0].quantity < 1 : rewards[0].quantity !== 1) || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
       await reservePizzaReward(record);
     }
     await restPut(`${ORDERS_PATH}/${record.id}`, record);
