@@ -13,8 +13,6 @@ html[data-customer-palette] .view-menu .prod-grid { background: var(--palette-su
 html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
 html[data-customer-palette] .btn-primary, html[data-customer-palette] .add-btn, html[data-customer-palette] .btn-add { background: var(--palette-accent); color: var(--palette-on-accent); }
 html[data-customer-palette] .view-menu .prod-grid .add-btn { color: var(--palette-on-accent); }
-html[data-customer-palette] .prod-cart-badge { background: var(--palette-surface); color: var(--palette-success); border-color: var(--palette-border); }
-html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success); }
 
 /* Keep shared legacy dark overrides aligned with the customer theme. */
 html[data-customer-palette] main { background: var(--palette-bg) !important; }
@@ -37,29 +35,23 @@ html[data-customer-palette] .profile-menu { display: grid; gap: 10px; }
 html[data-customer-palette] :is(.sheet, .shop-info-dialog) { border: 1px solid var(--palette-border); }
 html[data-customer-palette] :is(.sheet-head, .sheet-foot, .cart-actions, .checkout-actions) { border-color: var(--palette-border) !important; }
 html[data-customer-palette] :is(.opt-row.is-selected, .opt-row.is-checked, .opt-row:has(input:checked), .pickup-choice.is-selected, .time-btn.is-selected, .time-btn.is-active) { border-color: var(--palette-accent) !important; background: var(--palette-soft) !important; }
-html[data-customer-palette] .profile-theme-switch { background: var(--palette-border) !important; border: 1px solid var(--palette-border); }
-html[data-customer-palette] .profile-menu-row[aria-pressed="true"] .profile-theme-switch { background: var(--palette-accent) !important; }
-html[data-customer-palette] .profile-theme-switch::after { background: var(--palette-light) !important; }
 /* Positive feedback and removed ingredients have separate theme-aware tones. */
 html[data-customer-palette] .toast { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border-color: var(--palette-success) !important; }
 html[data-customer-palette] .toast::before { color: var(--palette-success); }
 html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-danger-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
-html[data-customer-palette] .toast[data-tone="error"]::before { color: var(--palette-danger); }
+html[data-customer-palette] .toast[data-tone="error"]::before { content: "!"; color: var(--palette-danger); }
 html[data-customer-palette] :is(.saved-flash, .ingredient-chip, .prod-cart-badge) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
 html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success) !important; }
-html[data-customer-palette] .ingredient-chip.is-removed { background: var(--palette-removed-soft) !important; color: var(--palette-accent) !important; border: 1px solid var(--palette-accent) !important; }
-html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-light); }
+html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-bg); }
 
 /* Strong, consistent boundaries and distinct control states. */
-html[data-customer-palette] { --line: var(--palette-border); --line-strong: var(--palette-border); }
 html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .cart-product-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
-html[data-customer-palette] :is(.allergen-visibility-switch, .profile-theme-switch) { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
-html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch, html[data-customer-palette] .profile-menu-row[aria-pressed="true"] .profile-theme-switch { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
+html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
 html[data-customer-palette] :is(.opt-row.is-checked, .opt-row:has(input:checked), .time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-soft) !important; border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open { border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open .ingredient-customize-toggle { background: var(--palette-soft) !important; color: var(--palette-accent); border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .saved-flash { border-radius: 10px; }
-html[data-customer-palette] .toast[data-tone="error"]::before { content: "!"; }
 
 html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
 
@@ -73,10 +65,9 @@ html[data-customer-palette] .ingredient-chip.is-removed {
 /* Text must follow the selected background, including pale selected controls. */
 html[data-customer-palette] .time-btn.is-active,
 html[data-customer-palette] .time-btn[aria-pressed="true"] { color: var(--palette-ink) !important; background: var(--palette-soft) !important; }
-html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .cart-stepper-plus, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: var(--palette-on-accent) !important; }
+html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .cart-stepper-plus, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
 html[data-customer-palette] .order-progress-dot { color: var(--palette-muted); }
 html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { color: var(--palette-on-accent) !important; }
-html[data-customer-palette] .valid-check { color: var(--palette-bg); }
 
 html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { background: var(--palette-accent) !important; }
 html[data-customer-palette] .cat-tab.is-active { color: var(--palette-ink) !important; }
