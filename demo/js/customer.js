@@ -1732,7 +1732,7 @@ function renderCheckout() {
       </div>
     </details>`;
   if (ui.checkoutStep === 3) {
-    el.btnStepNext.disabled = ui.orderSubmitting || !hasValidPickup();
+    el.btnStepNext.disabled = ui.orderSubmitting;
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
   }
 }
@@ -2003,7 +2003,15 @@ async function placeOrder() {
   if (!hasValidPickup()) {
     ui.pickup = null;
     renderCheckout();
+    el.errTime.textContent = ui.pickupMode === 'scheduled'
+      ? 'Velg et klokkeslett før du sender bestillingen.'
+      : 'Velg Snarest eller Velg tid før du sender bestillingen.';
     el.errTime.hidden = false;
+    const target = ui.pickupMode === 'scheduled' ? el.timeGrid : el.pickupChoices;
+    target.classList.remove('pickup-needs-choice');
+    void target.offsetWidth; // Restart feedback on every unsuccessful attempt.
+    target.classList.add('pickup-needs-choice');
+    el.errTime.scrollIntoView({ block: 'nearest' });
     return;
   }
   el.errTime.hidden = true;
@@ -2861,6 +2869,8 @@ el.pickupChoices.addEventListener('click', (event) => {
   ui.pickupMode = button.dataset.pickupMode;
   ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
   el.errTime.hidden = true;
+  el.pickupChoices.classList.remove('pickup-needs-choice');
+  el.timeGrid.classList.remove('pickup-needs-choice');
   renderCheckout();
 });
 
@@ -2870,6 +2880,8 @@ el.timeGrid.addEventListener('click', (event) => {
   ui.orderSendFailed = false;
   ui.pickup = btn.dataset.time;
   el.errTime.hidden = true;
+  el.pickupChoices.classList.remove('pickup-needs-choice');
+  el.timeGrid.classList.remove('pickup-needs-choice');
   renderCheckout();
 });
 
