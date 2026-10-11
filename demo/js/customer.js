@@ -996,7 +996,7 @@ function openProduct(itemId, editLine = null) {
   const { item } = findItem(itemId);
   if (!item || item.hidden) return;
   if (item.soldOut && !editLine) {
-    toast('Produktet er utsolgt akkurat nå.');
+    toast('Produktet er utsolgt akkurat nå.', 'warning');
     return;
   }
   const defaultSize = getDefaultSize(item);
@@ -2525,7 +2525,7 @@ function renderProfile() {
       toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i kurven med samme valg.`);
       setView('cart');
     } else {
-      toast('Produktene er ikke tilgjengelige nå.');
+      toast('Produktene er ikke tilgjengelige nå.', 'warning');
     }
   }
 
@@ -2725,7 +2725,7 @@ el.sheetBody.addEventListener('change', (event) => {
     if (target.checked) {
       if (current.size >= group.maxSelections) {
         target.checked = false;
-        toast(`Maks ${group.maxSelections} valg i «${group.title}».`);
+        toast(`Maks ${group.maxSelections} valg i «${group.title}».`, 'warning');
         return;
       }
       current.add(optionId);
@@ -2827,7 +2827,7 @@ el.btnToCheckout.addEventListener('click', () => {
   if (!cart.length) return;
   const state = getOpenState();
   if (!state.open) {
-    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`);
+    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'warning');
     return;
   }
   setView('checkout');

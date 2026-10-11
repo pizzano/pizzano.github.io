@@ -5,7 +5,7 @@
   --line: var(--palette-border); --line-strong: var(--palette-border);
   --accent: var(--palette-accent); --accent-dark: var(--palette-accent); --accent-soft: var(--palette-soft);
   --ok: var(--palette-success); --danger: var(--palette-danger);
-  --ok-soft: var(--palette-soft); --danger-soft: var(--palette-soft);
+  --ok-soft: var(--palette-success-soft); --danger-soft: var(--palette-danger-soft);
 }
 html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
 html[data-customer-palette] body::before { background: none; }
@@ -43,7 +43,7 @@ html[data-customer-palette] .profile-theme-switch::after { background: var(--pal
 /* Positive feedback and removed ingredients have separate theme-aware tones. */
 html[data-customer-palette] .toast { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border-color: var(--palette-success) !important; }
 html[data-customer-palette] .toast::before { color: var(--palette-success); }
-html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
+html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-danger-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
 html[data-customer-palette] .toast[data-tone="error"]::before { color: var(--palette-danger); }
 html[data-customer-palette] :is(.saved-flash, .ingredient-chip, .prod-cart-badge) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
 html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-success) !important; }
@@ -65,9 +65,9 @@ html[data-customer-palette] .validated-input.is-valid .input { background: var(-
 
 /* Removed ingredients stay interactive, but look inactive. */
 html[data-customer-palette] .ingredient-chip.is-removed {
-  background: var(--palette-bg) !important;
-  color: var(--palette-muted) !important;
-  border-color: var(--palette-border) !important;
+  background: var(--palette-removed-soft) !important;
+  color: var(--palette-warning) !important;
+  border-color: var(--palette-warning) !important;
 }
 
 /* Text must follow the selected background, including pale selected controls. */
@@ -81,3 +81,6 @@ html[data-customer-palette] .valid-check { color: var(--palette-bg); }
 html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { background: var(--palette-accent) !important; }
 html[data-customer-palette] .cat-tab.is-active { color: var(--palette-ink) !important; }
 html[data-customer-palette] :is(.step.is-active, .step.is-done) { color: var(--palette-ink); }
+
+html[data-customer-palette] .toast[data-tone="warning"] { background: var(--palette-warning-soft) !important; color: var(--palette-warning) !important; border-color: var(--palette-warning) !important; }
+html[data-customer-palette] .toast[data-tone="warning"]::before { content: "!"; color: var(--palette-warning); }

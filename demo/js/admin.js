@@ -2307,11 +2307,11 @@ function renderPalettePreview() {
     const title = document.createElement('strong');
     title.textContent = mode === 'light' ? 'Lys modus' : 'Mørk modus';
     group.append(title);
-    const labels = ['Hovedfarge', 'Bakgrunn', 'Kort', 'Tekst', 'Kantlinje'];
+    const labels = ['Hovedfarge', 'Bakgrunn', 'Kort', 'Tekst', 'Kantlinje', 'Bekreftelse', 'Uten / varsel'];
     palette[mode].forEach((color, index) => {
       const swatch = document.createElement('span');
       swatch.style.backgroundColor = color;
-      swatch.style.color = index === 3 || mode === 'dark' && (index === 1 || index === 2 || index === 4) ? '#FFFFFF' : '#212226';
+      swatch.style.color = [0, 3, 5, 6].includes(index) && mode === 'light' || mode === 'dark' && [1, 2, 4].includes(index) ? '#FFFFFF' : '#212226';
       swatch.textContent = labels[index] + ' ' + color;
       group.append(swatch);
     });
