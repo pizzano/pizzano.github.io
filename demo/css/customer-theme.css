@@ -117,3 +117,17 @@ html[data-customer-palette] #profileThemeToggle {
 #profileThemeToggle[aria-pressed="false"] .theme-toggle-moon,
 #profileThemeToggle[aria-pressed="true"] .theme-toggle-sun { display: none; }
 #profileThemeToggle:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
+
+/* Sheet icon buttons must remain distinct from the sheet surface. */
+html[data-customer-palette] :is(.sheet-close, .sheet-fav) {
+  background: var(--palette-bg) !important;
+  border: 1px solid var(--palette-border) !important;
+  color: var(--palette-ink) !important;
+}
+html[data-customer-palette] :is(.sheet-close, .sheet-fav):hover,
+html[data-customer-palette] .sheet-fav.is-on {
+  background: var(--palette-soft) !important;
+  border-color: var(--palette-accent) !important;
+  color: var(--palette-accent) !important;
+}
+html[data-customer-palette] .hdr-btn:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }

@@ -708,12 +708,13 @@ body::before {
 
   border-radius: 50%;
   color: var(--palette-light);
-  background: color-mix(in srgb, var(--palette-surface) 8%, transparent);
+  background: color-mix(in srgb, var(--palette-light) 12%, var(--palette-deep));
+  border: 1px solid color-mix(in srgb, var(--palette-light) 35%, var(--palette-deep));
   transition: transform .15s ease, background .15s ease;
 }
-.hdr-btn:hover { background: color-mix(in srgb, var(--palette-surface) 15%, transparent); }
+.hdr-btn:hover { background: color-mix(in srgb, var(--palette-light) 22%, var(--palette-deep)); }
 .hdr-btn:active { transform: scale(.96); }
-.hdr-btn.is-on { color: var(--palette-accent); background: color-mix(in srgb, var(--palette-surface) 12%, transparent); }
+.hdr-btn.is-on { color: var(--palette-accent); background: color-mix(in srgb, var(--palette-light) 18%, var(--palette-deep)); }
 .hdr-btn svg { width: 20px; height: 20px; stroke-width: 1.75; }
 .cart-count { top: -1px; right: -1px; min-width: 18px; height: 18px; line-height: 18px; font-size: 10px; box-shadow: 0 0 0 2px var(--brown); }
 
