@@ -205,5 +205,7 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
 
 .bonus-savings { display: block; margin-top: 3px; color: var(--palette-success); font-size: 12px; font-weight: 700; }
 
-.pizza-offers-consent { display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-top: 14px; border: 1px solid var(--palette-border); border-radius: 12px; background: var(--palette-soft); color: var(--palette-ink); font-size: 13px; }
+.pizza-offers-consent { text-align: left; display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-top: 14px; border: 1px solid var(--palette-border); border-radius: 18px !important; background: var(--palette-soft); color: var(--palette-ink); font-size: 13px; }
 .pizza-offers-consent input { width: 18px; height: 18px; flex: none; margin: 0; accent-color: var(--palette-accent); }
+
+.profile-home .profile-hero { padding: 8px; border-radius: 18px !important; background: color-mix(in srgb, var(--palette-border) 25%, var(--palette-surface)); }

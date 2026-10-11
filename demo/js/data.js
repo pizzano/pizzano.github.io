@@ -994,7 +994,7 @@ const ORDERS_KEY = 'kol_orders_v1';
 export async function setPizzaOffersConsent(phoneValue, enabled) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) throw new Error('Skriv inn et gyldig mobilnummer.');
-  await restPatch(`pizzaBonus/${phone}`, { offersConsent: enabled === true, consentUpdatedAt: Date.now(), consentText: 'Ja, jeg vil få beskjed om gratis pizza, tilbud.' });
+  await restPatch(`pizzaBonus/${phone}`, { offersConsent: enabled === true, consentUpdatedAt: Date.now(), consentText: 'Varsle meg om gratis pizza og bruk pizzabonus automatisk.' });
 }
 
 export async function getPizzaBonus(phoneValue) {

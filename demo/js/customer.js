@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-consent30';
+} from './data.js?v=20261012-bonuspref32';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1629,8 +1629,7 @@ function hasValidPickup() {
 function renderCheckout() {
   applyAutomaticPizzaBonus();
   refreshCartPizzaBonus();
-  const consentPhone = loyaltyPhone(el.custPhone.value || profile.phone);
-  $('pizzaOffersConsent').checked = bonusState?.phone === consentPhone && bonusState.consent === true;
+
   if (!cart.length) {
     setView('cart');
     return;
@@ -2458,7 +2457,7 @@ function renderPizzaBonus() {
       return `<g class="bonus-segment ${i>=10-state.count?'earned':''}"><path class="bonus-wedge" d="M${a} A104 104 0 0 1 ${b} L${c} A72 72 0 0 0 ${d}Z"/><g class="bonus-pizza-icon" transform="translate(${icon[0]-10} ${icon[1]-10})"><path d="M4 3Q10-1 17 5L5 19Z M4 3Q10 1 16 6"/><circle cx="8" cy="7" r="1.2"/><circle cx="11" cy="10" r="1.2"/><circle cx="6.5" cy="13" r="1"/></g></g>`;
     }).join('');
     const gift = state.ready ? '<g class="bonus-gift" transform="translate(110 62) scale(.8)"><path d="M0 8h24v6H0zM3 14v16h18V14M12 8v22M12 8C2 8 2-3 7-1c4 1 5 9 5 9s1-8 5-9c5-2 5 9-5 9Z"/></g>' : '';
-    host.innerHTML = `<h2>Din pizzabonus</h2><p>Kjøp 10 store pizzaer, få den 11. gratis</p><svg class="bonus-ring" viewBox="0 0 240 240" role="img" aria-label="${state.count} av 10 pizzaer registrert">${paths}${gift}<text class="bonus-count" x="120" y="${state.ready?128:119}" text-anchor="middle">${state.count}</text><text class="bonus-caption" x="120" y="${state.ready?149:141}" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="15">registrert</tspan></text></svg><strong>${state.ready?'Du har fått en gratis pizza!':`${10-state.count} pizzaer igjen til din gratis pizza`}</strong>${state.ready?`<p>Din neste store pizza er gratis.</p><button class="btn btn-primary" id="usePizzaBonus" type="button" ${state.pending?'disabled':''}>${state.pending?'Gratispizza venter på bekreftelse':'Bestill gratis pizza'}</button>`:''}<small>Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small>`;
+    host.innerHTML = `<h2>Din pizzabonus</h2><p>Kjøp 10 store pizzaer, få den 11. gratis</p><svg class="bonus-ring" viewBox="0 0 240 240" role="img" aria-label="${state.count} av 10 pizzaer registrert">${paths}${gift}<text class="bonus-count" x="120" y="${state.ready?128:119}" text-anchor="middle">${state.count}</text><text class="bonus-caption" x="120" y="${state.ready?149:141}" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="15">registrert</tspan></text></svg><strong>${state.ready?'Du har fått en gratis pizza!':`${10-state.count} pizzaer igjen til din gratis pizza`}</strong>${state.ready?`<p>Din neste store pizza er gratis.</p><button class="btn btn-primary" id="usePizzaBonus" type="button" ${state.pending?'disabled':''}>${state.pending?'Gratispizza venter på bekreftelse':'Bestill gratis pizza'}</button>`:''}<small>Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small><label class="pizza-offers-consent"><input id="pizzaOffersConsent" type="checkbox" ${state.consent?'checked':''}><span>Varsle meg om gratis pizza og bruk pizzabonus automatisk.</span></label>`;
   }
   if (!bonusLoading) {
     bonusLoading = true;
@@ -3027,13 +3026,14 @@ if (el.allergenVisibilityToggle) {
   input.addEventListener('input', updateContactValidation);
 });
 
-$('pizzaOffersConsent').addEventListener('change', async event => {
+$('pizzaBonus').addEventListener('change', async event => {
+  if (event.target.id !== 'pizzaOffersConsent') return;
   const enabled = event.target.checked;
   event.target.disabled = true;
   try {
-    await setPizzaOffersConsent(el.custPhone.value || profile.phone, enabled);
-    bonusState = await getPizzaBonus(el.custPhone.value || profile.phone);
-    applyAutomaticPizzaBonus(); persistCart(); renderCheckout();
+    await setPizzaOffersConsent(profile.phone, enabled);
+    bonusState = await getPizzaBonus(profile.phone);
+    applyAutomaticPizzaBonus(); persistCart(); renderPizzaBonus();
   } catch (error) { event.target.checked = !enabled; toast(error.message || 'Kunne ikke lagre valget.', 'error'); }
   finally { event.target.disabled = false; }
 });

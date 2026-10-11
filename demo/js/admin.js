@@ -39,7 +39,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-consent30';
+} from './data.js?v=20261012-bonuspref32';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
