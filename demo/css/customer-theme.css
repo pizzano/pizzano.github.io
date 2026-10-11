@@ -182,3 +182,8 @@ html[data-customer-palette] .view-cart .cart-stepper-minus {
   color: #fff !important;
   box-shadow: 0 3px 8px color-mix(in srgb, var(--palette-deep) 20%, transparent) !important;
 }
+
+/* Gentle theme tint for the pickup contact summary. */
+html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
+  background: color-mix(in srgb, var(--palette-border) 10%, var(--palette-surface)) !important;
+}
