@@ -1071,7 +1071,7 @@ function optionGroupHtml(group, problems) {
   const picked = draft.selections[group.id] || [];
   const isMulti = group.selectionMode === 'multiple';
   const atMax = isMulti && picked.length >= group.maxSelections;
-  const badges = `<span class="opt-guidance">${group.required ? (isMulti ? 'Velg opptil' : 'Velg') : 'Valgfritt · opptil'} ${isMulti ? group.maxSelections : 1}${group.required && isMulti && group.minSelections > 0 && group.minSelections !== group.maxSelections ? ` (minst ${group.minSelections})` : ''}</span>`;
+  const badges = `<span class="opt-guidance">${group.required ? 'Velg tilvalg' : 'Valgfritt'}</span>`;
 
   const rows = (group.options || [])
     .filter((option) => option.label)
