@@ -39,7 +39,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261010-mobileonly1';
+} from './data.js?v=20261012-loyalty27';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

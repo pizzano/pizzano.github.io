@@ -1,3 +1,4 @@
+import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js';
 /**
  * data.js — Delt datalag for KØL Grill & Pizza.
  *
@@ -541,6 +542,8 @@ function normalizeOrders(raw) {
         id: order.id || uid('ord'),
         createdAt: Number(order.createdAt) || 0,
         customerName: String(order.customerName || ''),
+        loyaltyReward: order.loyaltyReward || null,
+        loyaltyConfirmedAt: Number(order.loyaltyConfirmedAt) || null,
         phone: String(order.phone || ''),
         pickup: String(order.pickup || ''),
         pickupMode: order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? 'scheduled' : 'asap',
@@ -561,6 +564,8 @@ function normalizeOrders(raw) {
         lines: asArray(order.lines).map((line) => ({
           itemId: String(line.itemId || ''),
           name: String(line.name || ''),
+          loyaltyEligible: Boolean(line.loyaltyEligible),
+          loyaltyFree: Boolean(line.loyaltyFree),
           size: String(line.size || ''),
           comment: String(line.comment || ''),
           removedIngredients: asArray(line.removedIngredients)
@@ -986,6 +991,61 @@ export function hasUnsavedChanges() {
 
 const ORDERS_KEY = 'kol_orders_v1';
 
+export async function getPizzaBonus(phoneValue) {
+  const phone = loyaltyPhone(phoneValue);
+  if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
+  const [account, orders] = await Promise.all([restGet(`pizzaBonus/${phone}`), restGet(ORDERS_PATH)]);
+  const history = historicalPizzaEvents(Object.values(orders || {}), phone, store.sections);
+  const events = { ...history, ...(account?.events || {}) };
+  const state = pizzaBonus(events);
+  const reservation = account?.reservations?.[state.cycle];
+  const pendingOrder = reservation && orders?.[reservation.orderId];
+  return { ...state, phone, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
+}
+
+async function reservePizzaReward(record) {
+  const state = await getPizzaBonus(record.phone);
+  if (!state.ready || state.cycle !== record.loyaltyReward.cycle) throw new Error('Pizzabonus er ikke tilgjengelig.');
+  const url = `${DB_URL}/pizzaBonus/${state.phone}/reservations/${state.cycle}.json`;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
+    if (!response.ok) throw new Error('Kunne ikke kontrollere pizzabonus.');
+    const existing = await response.json();
+    if (existing?.orderId === record.id) return;
+    if (existing) {
+      const order = await restGet(`${ORDERS_PATH}/${existing.orderId}`);
+      if (order ? !['avvist','kansellert'].includes(order.status) : Date.now() - Number(existing.at) < 600000) throw new Error('Gratispizza er allerede reservert.');
+    }
+    const etag = response.headers.get('ETag');
+    if (!etag) throw new Error('Kunne ikke reservere pizzabonus sikkert.');
+    const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify({ orderId: record.id, at: Date.now() }) });
+    if (result.ok) return;
+    if (result.status !== 412) throw new Error('Kunne ikke reservere pizzabonus.');
+  }
+  throw new Error('Pizzabonus er opptatt. Prøv igjen.');
+}
+
+async function patchConfirmedPizzaOrder(order, changes) {
+  const phone = loyaltyPhone(order.phone);
+  const at = order.loyaltyConfirmedAt || Date.now();
+  const patch = {};
+  for (const [key,value] of Object.entries({ ...changes, loyaltyConfirmedAt: at })) patch[`orders/${order.id}/${key}`] = value;
+  if (phone) {
+    const account = await restGet(`pizzaBonus/${phone}`);
+    const history = historicalPizzaEvents(store.orders, phone, store.sections);
+    for (const [id,event] of Object.entries(history)) {
+      if (id !== order.id && !account?.events?.[id]) patch[`pizzaBonus/${phone}/events/${id}`] = event;
+    }
+    const quantity = (order.lines || []).reduce((sum,line) => {
+      const section = store.sections.find(s => s.items?.some(item => item.id === line.itemId));
+      return sum + (!line.loyaltyFree && (line.loyaltyEligible || largePizza(section, line.size)) ? Number(line.quantity) || 0 : 0);
+    },0);
+    patch[`pizzaBonus/${phone}/events/${order.id}`] = { id: order.id, at, quantity, redeemed: Boolean(order.loyaltyReward) };
+  }
+  await restPatch('', patch);
+  order.loyaltyConfirmedAt = at;
+}
+
 /** Lagrer en ordre. Returnerer ordren med ID. */
 export async function submitOrder(order) {
   const now = Date.now();
@@ -1001,11 +1061,16 @@ export async function submitOrder(order) {
   // Ved retry brukes samme ordre-ID, så et nytt trykk kan ikke lage en duplikat.
   if (!remoteEnabled) throw new Error('Bestillingstjenesten er ikke tilgjengelig.');
   try {
+    if (record.loyaltyReward) {
+      const rewards = (record.lines || []).filter(line => line.loyaltyFree);
+      if (rewards.length !== 1 || rewards[0].quantity !== 1 || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
+      await reservePizzaReward(record);
+    }
     await restPut(`${ORDERS_PATH}/${record.id}`, record);
     remoteOnline = true;
   } catch (err) {
     remoteOnline = false;
-    throw new Error('Bestillingen kunne ikke sendes. Prøv igjen.');
+    throw new Error(err?.message || 'Bestillingen kunne ikke sendes. Prøv igjen.');
   }
 
   try {
@@ -1034,10 +1099,8 @@ export async function updateOrderStatus(orderId, status) {
   setSaveState('saving');
   try {
     if (remoteEnabled) {
-      await restPatch(`${ORDERS_PATH}/${orderId}`, {
-        status,
-        statusUpdatedAt: order.statusUpdatedAt,
-      });
+      if (status === 'bekreftet') await patchConfirmedPizzaOrder(order, { status, statusUpdatedAt: order.statusUpdatedAt });
+      else await restPatch(`${ORDERS_PATH}/${orderId}`, { status, statusUpdatedAt: order.statusUpdatedAt });
       remoteOnline = true;
     }
     setSaveState('saved');
@@ -1109,7 +1172,7 @@ export async function acceptOrderWithEstimate(orderId, minutes) {
   setSaveState('saving');
   try {
     if (remoteEnabled) {
-      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+      await patchConfirmedPizzaOrder(order, {
         status: 'bekreftet',
         statusUpdatedAt: now,
         estimatedMinutes: value,
@@ -1164,7 +1227,7 @@ export async function acceptScheduledOrder(orderId) {
   setSaveState('saving');
   try {
     if (remoteEnabled) {
-      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+      await patchConfirmedPizzaOrder(order, {
         status: 'bekreftet',
         statusUpdatedAt: now,
         pickupMode: 'scheduled',

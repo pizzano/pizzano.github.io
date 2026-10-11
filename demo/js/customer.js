@@ -1,3 +1,4 @@
+import { loyaltyPhone, largePizza } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
 /**
@@ -10,6 +11,7 @@ import { applyCustomerPalette } from './palette.js';
 
 import {
   store,
+  getPizzaBonus,
   DB_URL,
   subscribe,
   ready,
@@ -30,7 +32,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261010-mobileonly1';
+} from './data.js?v=20261012-loyalty27';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -89,6 +91,8 @@ const ui = {
 
 /** Åpent produkt i sheet. */
 let draft = null;
+let bonusState = null;
+let bonusLoading = false;
 /** Hindrer at scroll-spy overstyrer mens vi scroller programmatisk. */
 let spyLocked = false;
 let spyLockTimer = null;
@@ -1007,6 +1011,8 @@ function openProduct(itemId, editLine = null) {
   const defaultSize = getDefaultSize(item);
   draft = {
     itemId: item.id,
+    loyaltyFree: Boolean(editLine?.loyaltyFree),
+    loyaltyCycle: editLine?.loyaltyCycle || null,
     sizeId: editLine ? editLine.sizeId : defaultSize ? defaultSize.id : null,
     selections: editLine
       ? JSON.parse(JSON.stringify(editLine.selections))
@@ -1064,7 +1070,7 @@ function draftTotal() {
   const { item } = findItem(draft.itemId);
   if (!item) return 0;
   const optionIds = Object.values(draft.selections).flat();
-  return computeLinePrice(item, draft.sizeId, optionIds, draft.quantity);
+  return bonusLinePrice(item, draft, optionIds, draft.quantity);
 }
 
 function optionGroupHtml(group, problems) {
@@ -1211,6 +1217,12 @@ function renderSheet() {
       </div>
     </div>`;
 
+  if (draft.loyaltyFree) {
+    draft.quantity = 1;
+    el.sheetBody.querySelectorAll('[data-size]').forEach(input => { input.disabled = input.dataset.size !== draft.sizeId; });
+  }
+  el.qtyPlus.disabled = Boolean(draft.loyaltyFree);
+  el.qtyMinus.disabled = Boolean(draft.loyaltyFree);
   el.qtyValue.textContent = String(draft.quantity);
   el.sheetTotal.textContent = formatPrice(draftTotal());
   el.btnAddToCart.querySelector('span').textContent = draft.editingLineId
@@ -1247,6 +1259,7 @@ function addDraftToCart() {
   const commentField = document.getElementById('draftComment');
   if (commentField) draft.comment = commentField.value.trim();
 
+  if (draft.loyaltyFree && cart.some(line => line.loyaltyFree && line.lineId !== draft.editingLineId)) { toast('Du har allerede en gratis pizza i kurven.', 'warning'); return; }
   const check = validateDraft();
   if (!check.valid) {
     draft.showErrors = true;
@@ -1266,7 +1279,7 @@ function addDraftToCart() {
     cart = cart.filter((line) => line.lineId !== draft.editingLineId);
   }
 
-  const existing = cart.find((line) => line.signature === signature);
+  const existing = cart.find((line) => line.signature === signature && Boolean(line.loyaltyFree) === Boolean(draft?.loyaltyFree));
   if (existing) {
     existing.quantity += draft.quantity;
   } else {
@@ -1278,7 +1291,9 @@ function addDraftToCart() {
       selections: JSON.parse(JSON.stringify(draft.selections)),
       comment: draft.comment,
       removedIngredients: [...(draft.removedIngredients || [])],
-      quantity: draft.quantity,
+      loyaltyFree: Boolean(draft.loyaltyFree),
+      loyaltyCycle: draft.loyaltyCycle || null,
+      quantity: draft.loyaltyFree ? 1 : draft.quantity,
     });
   }
 
@@ -1308,7 +1323,7 @@ function quickAddProduct(itemId) {
   const sizeId = size ? size.id : null;
   const selections = {};
   const signature = lineSignature(item.id, sizeId, selections, '', []);
-  const existing = cart.find((line) => line.signature === signature);
+  const existing = cart.find((line) => line.signature === signature && !line.loyaltyFree);
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -1336,6 +1351,7 @@ function quickAddProduct(itemId) {
 function reconcileCart() {
   let changed = false;
   const kept = [];
+  let hasReward = false;
   for (const line of cart) {
     const { item } = findItem(line.itemId);
     if (!item || item.hidden || item.soldOut) {
@@ -1346,6 +1362,13 @@ function reconcileCart() {
       const fallback = getDefaultSize(item);
       line.sizeId = fallback ? fallback.id : null;
       changed = true;
+    }
+    if (line.loyaltyFree) {
+      const { section } = findItem(line.itemId);
+      const size = item.sizes.find(size => size.id === line.sizeId);
+      if (hasReward || !largePizza(section, size)) { changed = true; continue; }
+      hasReward = true;
+      if (line.quantity !== 1) { line.quantity = 1; changed = true; }
     }
     const groups = getItemOptionGroups(item);
     const groupIds = new Set(groups.map((group) => group.id));
@@ -1386,12 +1409,17 @@ function reconcileCart() {
   return changed;
 }
 
+function bonusLinePrice(item, line, optionIds, quantity) {
+  const price = computeLinePrice(item, line.sizeId, optionIds, quantity);
+  return line.loyaltyFree ? Math.max(0, price - getSizePrice(item, line.sizeId)) : price;
+}
+
 function cartSubtotal() {
   return cart.reduce((sum, line) => {
     const { item } = findItem(line.itemId);
     if (!item) return sum;
     const optionIds = Object.values(line.selections || {}).flat();
-    return sum + computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+    return sum + bonusLinePrice(item, line, optionIds, line.quantity);
   }, 0);
 }
 
@@ -1405,7 +1433,7 @@ function cartLineHtml(line) {
 
   const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
   const optionIds = Object.values(line.selections || {}).flat();
-  const lineTotal = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+  const lineTotal = bonusLinePrice(item, line, optionIds, line.quantity);
   const addons = describeSelection(optionIds);
 
   const addonGroups = addons.reduce((groups, addon) => {
@@ -1483,7 +1511,7 @@ function cartLineHtml(line) {
 
       <div class="cart-product-content">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-          <strong class="cart-product-name">${escapeHtml(item.name)}</strong>
+          <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · Gratis pizza' : ''}</strong>
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
@@ -1609,7 +1637,7 @@ function renderCheckout() {
 
     const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
     const optionIds = Object.values(line.selections || {}).flat();
-    const linePrice = computeLinePrice(item, line.sizeId, optionIds, line.quantity);
+    const linePrice = bonusLinePrice(item, line, optionIds, line.quantity);
     const addons = describeSelection(optionIds);
 
     const addonGroups = addons.reduce((groups, addon) => {
@@ -1682,7 +1710,7 @@ function renderCheckout() {
         <div class="pickup-review-media">${imageHtml}</div>
         <div class="pickup-review-product">
           <div class="pickup-review-product-copy">
-            <strong class="pickup-review-name">${escapeHtml(item.name)}</strong>
+            <strong class="pickup-review-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · Gratis pizza' : ''}</strong>
             ${rows.length ? `<div class="pickup-review-rows">${rows.join('')}</div>` : ''}
           </div>
           <div class="pickup-review-product-foot">
@@ -2021,6 +2049,15 @@ async function placeOrder() {
     return;
   }
 
+  const rewardLine = cart.find(line => line.loyaltyFree);
+  if (rewardLine) {
+    const state = await getPizzaBonus(phone).catch(() => null);
+    const { section, item } = findItem(rewardLine.itemId);
+    const size = item?.sizes?.find(size => size.id === rewardLine.sizeId);
+    if (!state?.ready || state.phone !== loyaltyPhone(profile.phone) || state.cycle !== rewardLine.loyaltyCycle || !largePizza(section, size) || rewardLine.quantity !== 1) {
+      toast('Gratispizza er ikke tilgjengelig for dette mobilnummeret.', 'error'); return;
+    }
+  }
   const subtotal = cartSubtotal();
   const total = subtotal;
   const lines = cart.map((line) => {
@@ -2034,7 +2071,9 @@ async function placeOrder() {
     }));
     return {
       itemId: line.itemId,
-      name: item ? item.name : 'Ukjent',
+      name: (item ? item.name : 'Ukjent') + (line.loyaltyFree ? ' · Gratis pizza' : ''),
+      loyaltyFree: Boolean(line.loyaltyFree),
+      loyaltyEligible: largePizza(findItem(line.itemId).section, size),
       sizeId: size ? size.id : line.sizeId || null,
       size: size ? size.label : '',
       quantity: line.quantity,
@@ -2044,8 +2083,8 @@ async function placeOrder() {
       optionDetails,
       comment: line.comment || '',
       removedIngredients: [...(line.removedIngredients || [])],
-      unitPrice: computeLinePrice(item, line.sizeId, optionIds, 1),
-      price: computeLinePrice(item, line.sizeId, optionIds, line.quantity),
+      unitPrice: bonusLinePrice(item, line, optionIds, 1),
+      price: bonusLinePrice(item, line, optionIds, line.quantity),
     };
   });
 
@@ -2053,7 +2092,7 @@ async function placeOrder() {
     name,
     phone,
     pickup: ui.pickup,
-    cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment]),
+    cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment, line.loyaltyFree, line.loyaltyCycle]),
   });
   if (!ui.pendingOrderId || ui.pendingOrderFingerprint !== fingerprint) {
     ui.pendingOrderId = uid('ord');
@@ -2068,6 +2107,7 @@ async function placeOrder() {
   try {
     order = await submitOrder({
       id: ui.pendingOrderId,
+      loyaltyReward: rewardLine ? { cycle: rewardLine.loyaltyCycle } : null,
       customerName: name,
       phone: `+47${phone}`,
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
@@ -2082,7 +2122,7 @@ async function placeOrder() {
     ui.orderSubmitting = false;
     ui.orderSendFailed = true;
     renderCheckout();
-    toast('Bestillingen ble ikke sendt. Trykk «Prøv igjen».', 'error');
+    toast(err?.message || 'Bestillingen ble ikke sendt. Trykk «Prøv igjen».', 'error');
     return;
   }
 
@@ -2354,7 +2394,45 @@ function setProfileTab(tabName) {
 }
 
 
+function renderPizzaBonus() {
+  const host = $('pizzaBonus');
+  if (!host) return;
+  const phone = loyaltyPhone(profile.phone);
+  if (!phone) { host.innerHTML = '<h2>Din pizzabonus</h2><p>Lagre mobilnummeret ditt for å samle pizzabonus.</p>'; return; }
+  const state = bonusState?.phone === phone ? bonusState : null;
+  if (!state) host.innerHTML = '<h2>Din pizzabonus</h2><p>Henter pizzabonus…</p>';
+  else {
+    const paths = Array.from({length:10}, (_,i) => {
+      const angle = i * 36 - 90, end = angle + 33;
+      const xy = (r,a) => [120 + r*Math.cos(a*Math.PI/180),120+r*Math.sin(a*Math.PI/180)];
+      const a=xy(104,angle),b=xy(104,end),c=xy(72,end),d=xy(72,angle),icon=xy(88,angle+16.5);
+      return `<path class="${i<state.count?'earned':''}" d="M${a} A104 104 0 0 1 ${b} L${c} A72 72 0 0 0 ${d}Z"/><text x="${icon[0]}" y="${icon[1]+5}" text-anchor="middle">🍕</text>`;
+    }).join('');
+    host.innerHTML = `<h2>Din pizzabonus</h2><p>Kjøp 10 store pizzaer, få den 11. gratis</p><svg class="bonus-ring" viewBox="0 0 240 240" role="img" aria-label="${state.count} av 10 pizzaer registrert">${paths}<text class="bonus-count" x="120" y="119" text-anchor="middle">${state.count}</text><text class="bonus-caption" x="120" y="144" text-anchor="middle">pizza registrert</text></svg><strong>${state.ready?'Du har fått en gratis pizza!':`${10-state.count} pizzaer igjen til din gratis pizza`}</strong>${state.ready?`<button class="btn btn-primary" id="usePizzaBonus" type="button" ${state.pending?'disabled':''}>${state.pending?'Gratispizza venter på bekreftelse':'Bestill gratis pizza'}</button>`:''}<small>Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small><div id="bonusPizzaChoices"></div>`;
+  }
+  if (!bonusLoading) {
+    bonusLoading = true;
+    getPizzaBonus(phone).then(next => { bonusState = next; }).catch(() => { if (!state) host.innerHTML = '<h2>Din pizzabonus</h2><p>Kunne ikke hente bonus. Prøv igjen senere.</p>'; }).finally(() => { bonusLoading = false; if (loyaltyPhone(profile.phone) !== phone) renderPizzaBonus(); else if (bonusState?.phone === phone) { bonusLoading = true; renderPizzaBonus(); bonusLoading = false; } });
+  }
+}
+
+$('pizzaBonus')?.addEventListener('click', event => {
+  if (event.target.closest('#usePizzaBonus')) {
+    if (!bonusState?.ready || bonusState.pending) return;
+    $('bonusPizzaChoices').innerHTML = store.sections.flatMap(section => section.items.filter(item => !item.hidden && !item.soldOut && item.sizes.some(size => largePizza(section,size))).map(item => `<button type="button" class="bonus-pizza-choice" data-bonus-pizza="${escapeHtml(item.id)}">${escapeHtml(item.name)} <span>Gratis stor pizza</span></button>`)).join('') || '<p>Ingen store pizzaer tilgjengelig akkurat nå.</p>';
+  }
+  const button = event.target.closest('[data-bonus-pizza]');
+  if (!button || !bonusState?.ready || bonusState.pending) return;
+  if (cart.some(line => line.loyaltyFree)) { setView('cart'); return; }
+  const {section,item} = findItem(button.dataset.bonusPizza);
+  openProduct(item.id);
+  draft.loyaltyFree = true; draft.loyaltyCycle = bonusState.cycle;
+  draft.sizeId = item.sizes.find(size => largePizza(section,size)).id;
+  renderSheet();
+});
+
 function renderProfile() {
+  renderPizzaBonus();
   renderActiveOrders();
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
@@ -2504,7 +2582,7 @@ function renderProfile() {
         line.comment,
         removedIngredients
       );
-      const existing = cart.find((entry) => entry.signature === signature);
+      const existing = cart.find((entry) => entry.signature === signature && !entry.loyaltyFree);
       const quantity = Math.max(1, Number(line.quantity) || 1);
       if (existing) existing.quantity += quantity;
       else
@@ -2647,7 +2725,7 @@ el.cartLines.addEventListener('click', (event) => {
     cart = [];
   } else if (inc) {
     const line = cart.find((entry) => entry.lineId === inc.dataset.inc);
-    if (line) line.quantity += 1;
+    if (line && !line.loyaltyFree) line.quantity += 1;
   } else if (dec) {
     const line = cart.find((entry) => entry.lineId === dec.dataset.dec);
     if (line && line.quantity > 1) line.quantity -= 1;
@@ -2778,6 +2856,7 @@ el.qtyMinus.addEventListener('click', () => {
 
 el.qtyPlus.addEventListener('click', () => {
   if (!draft) return;
+  if (draft.loyaltyFree) return;
   draft.quantity = Math.min(30, draft.quantity + 1);
   el.qtyValue.textContent = String(draft.quantity);
   el.sheetTotal.textContent = formatPrice(draftTotal());
