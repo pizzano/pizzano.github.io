@@ -142,7 +142,7 @@ html[data-customer-palette] .hdr-btn.is-on:hover {
 
 /* Cart quantity is a red notification badge in every restaurant theme. */
 html[data-customer-palette] .hdr-cart .cart-count {
-  background: var(--palette-danger) !important;
-  color: var(--palette-bg) !important;
+  background: #ff1000 !important;
+  color: #ffffff !important;
   box-shadow: 0 0 0 2px var(--palette-deep);
 }
