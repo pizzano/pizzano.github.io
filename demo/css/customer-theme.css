@@ -175,8 +175,9 @@ html[data-customer-palette] #productSheet .opt-row:has(input:checked) :is(.opt-l
   #productSheet .opt-row input::before { display: none; }
 }
 
-/* Remove-item action matches the add action, with a white bin icon. */
-html[data-customer-palette] .view-cart .cart-stepper-trash {
+/* Remove and decrease actions match the add action, with white symbols. */
+html[data-customer-palette] .view-cart .cart-stepper-trash,
+html[data-customer-palette] .view-cart .cart-stepper-minus {
   background: var(--palette-accent) !important;
   color: #fff !important;
   box-shadow: 0 3px 8px color-mix(in srgb, var(--palette-deep) 20%, transparent) !important;
