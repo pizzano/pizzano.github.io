@@ -99,3 +99,42 @@ html[data-customer-palette][data-theme="dark"] #timeGrid .time-btn.is-active {
   color: var(--palette-ink) !important;
   box-shadow: inset 0 0 0 1px var(--palette-accent);
 }
+
+/* Sun/moon slider beside the profile action. */
+html[data-customer-palette] #profileThemeToggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 68px;
+  height: 36px;
+  padding: 0 7px;
+  border: 1px solid var(--palette-muted);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--palette-deep) 85%, var(--palette-accent));
+  color: var(--palette-light);
+  isolation: isolate;
+}
+#profileThemeToggle .theme-toggle-knob {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--palette-accent);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 25%);
+  transition: transform .2s ease;
+  z-index: -1;
+}
+#profileThemeToggle[aria-pressed="true"] .theme-toggle-knob { transform: translateX(32px); }
+#profileThemeToggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; }
+#profileThemeToggle .theme-toggle-moon { fill: currentColor; stroke: none; }
+#profileThemeToggle[aria-pressed="false"] .theme-toggle-sun,
+#profileThemeToggle[aria-pressed="true"] .theme-toggle-moon { color: var(--palette-on-accent); }
+#profileThemeToggle[aria-pressed="false"] .theme-toggle-moon,
+#profileThemeToggle[aria-pressed="true"] .theme-toggle-sun { opacity: .55; }
+#profileThemeToggle:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  #profileThemeToggle .theme-toggle-knob { transition: none; }
+}
