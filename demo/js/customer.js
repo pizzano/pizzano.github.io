@@ -1492,13 +1492,7 @@ function cartLineHtml(line) {
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
               : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8 7h8"/>
-                    <path d="M5.5 7h13"/>
-                    <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
-                    <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
-                    <path d="M10 10.5v5.5M14 10.5v5.5"/>
-                  </svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="3" rx="1"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M5 8l1.2 12a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 8M9 12l6 6M15 12l-6 6"/></svg>
                 </button>`}
             <span>${line.quantity}</span>
             <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
@@ -1524,13 +1518,7 @@ function renderCart() {
     el.cartHeaderActions.innerHTML = `
       <button class="cart-clear-btn" data-clear-cart type="button" aria-label="Tøm handlekurv">
         <span>Tøm handlekurv</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 7h8"/>
-          <path d="M5.5 7h13"/>
-          <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
-          <path d="m7.5 7 .8 11.2A2 2 0 0 0 10.3 20h3.4a2 2 0 0 0 2-1.8L16.5 7"/>
-          <path d="M10 10.5v5.5M14 10.5v5.5"/>
-        </svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="3" rx="1"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M5 8l1.2 12a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 8M9 12l6 6M15 12l-6 6"/></svg>
       </button>
     `;
   }
