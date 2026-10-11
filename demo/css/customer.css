@@ -714,7 +714,8 @@ body::before {
 }
 .hdr-btn:hover { background: color-mix(in srgb, var(--palette-light) 22%, var(--palette-deep)); }
 .hdr-btn:active { transform: scale(.96); }
-.hdr-btn.is-on { color: var(--palette-accent); background: color-mix(in srgb, var(--palette-light) 18%, var(--palette-deep)); }
+.hdr-btn.is-on { color: var(--palette-on-accent); background: var(--palette-accent); border-color: var(--palette-accent); }
+.hdr-btn.is-on:hover { background: var(--palette-accent); }
 .hdr-btn svg { width: 20px; height: 20px; stroke-width: 1.75; }
 .cart-count { top: -1px; right: -1px; min-width: 18px; height: 18px; line-height: 18px; font-size: 10px; box-shadow: 0 0 0 2px var(--brown); }
 

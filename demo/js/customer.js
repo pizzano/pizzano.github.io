@@ -708,8 +708,13 @@ function setView(view) {
   }
   el.catBar.hidden = view !== 'menu';
   el.btnBack.hidden = view === 'menu';
-  el.btnProfile.classList.toggle('is-on', view === 'profile');
-  el.btnCart.classList.toggle('is-on', view === 'cart' || view === 'checkout');
+  for (const [button, active] of [[el.btnProfile, view === 'profile'], [el.btnCart, view === 'cart' || view === 'checkout']]) {
+    button.classList.toggle('is-on', active);
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  }
+  if (view === 'menu') el.brandHome.setAttribute('aria-current', 'page');
+  else el.brandHome.removeAttribute('aria-current');
   scrollPage({ top: 0 });
   renderActiveOrders();
   if (view === 'cart') renderCart();

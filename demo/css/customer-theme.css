@@ -131,3 +131,11 @@ html[data-customer-palette] .sheet-fav.is-on {
   color: var(--palette-accent) !important;
 }
 html[data-customer-palette] .hdr-btn:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
+
+/* Active header navigation uses a solid, readable theme accent. */
+html[data-customer-palette] .hdr-btn.is-on,
+html[data-customer-palette] .hdr-btn.is-on:hover {
+  background: var(--palette-accent) !important;
+  color: var(--palette-on-accent) !important;
+  border-color: var(--palette-accent) !important;
+}
