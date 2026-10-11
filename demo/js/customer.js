@@ -93,6 +93,7 @@ const ui = {
 let draft = null;
 let bonusState = null;
 let bonusLoading = false;
+let choosingBonus = false;
 /** Hindrer at scroll-spy overstyrer mens vi scroller programmatisk. */
 let spyLocked = false;
 let spyLockTimer = null;
@@ -1032,6 +1033,11 @@ function openProduct(itemId, editLine = null) {
   el.sheetBackdrop.hidden = false;
   el.sheet.hidden = false;
   document.body.style.overflow = 'hidden';
+  if (choosingBonus && !editLine && bonusState?.ready && !bonusState.pending && !cart.some(line => line.loyaltyFree)) {
+    const { section } = findItem(itemId);
+    const large = item.sizes.find(size => largePizza(section, size));
+    if (large) { draft.loyaltyFree = true; draft.loyaltyCycle = bonusState.cycle; draft.sizeId = large.id; }
+  }
   renderSheet();
   el.sheetBody.scrollTop = 0;
 }
@@ -1297,6 +1303,7 @@ function addDraftToCart() {
     });
   }
 
+  if (draft.loyaltyFree) choosingBonus = false;
   resetPendingOrderSubmission();
   persistCart();
   toast(
@@ -1309,6 +1316,7 @@ function addDraftToCart() {
 }
 
 function quickAddProduct(itemId) {
+  if (choosingBonus) { openProduct(itemId); return; }
   const { item } = findItem(itemId);
   if (!item || item.hidden || item.soldOut) return;
   const sizes = item.sizes || [];
@@ -1512,6 +1520,7 @@ function cartLineHtml(line) {
       <div class="cart-product-content">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
           <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · Gratis pizza' : ''}</strong>
+          ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
@@ -2409,7 +2418,7 @@ function renderPizzaBonus() {
       return `<g class="bonus-segment ${i>=10-state.count?'earned':''}"><path class="bonus-wedge" d="M${a} A104 104 0 0 1 ${b} L${c} A72 72 0 0 0 ${d}Z"/><g class="bonus-pizza-icon" transform="translate(${icon[0]-10} ${icon[1]-10})"><path d="M4 3Q10-1 17 5L5 19Z M4 3Q10 1 16 6"/><circle cx="8" cy="7" r="1.2"/><circle cx="11" cy="10" r="1.2"/><circle cx="6.5" cy="13" r="1"/></g></g>`;
     }).join('');
     const gift = state.ready ? '<g class="bonus-gift" transform="translate(110 62) scale(.8)"><path d="M0 8h24v6H0zM3 14v16h18V14M12 8v22M12 8C2 8 2-3 7-1c4 1 5 9 5 9s1-8 5-9c5-2 5 9-5 9Z"/></g>' : '';
-    host.innerHTML = `<h2>Din pizzabonus</h2><p>Kjøp 10 store pizzaer, få den 11. gratis</p><svg class="bonus-ring" viewBox="0 0 240 240" role="img" aria-label="${state.count} av 10 pizzaer registrert">${paths}${gift}<text class="bonus-count" x="120" y="${state.ready?128:119}" text-anchor="middle">${state.count}</text><text class="bonus-caption" x="120" y="${state.ready?149:141}" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="15">registrert</tspan></text></svg><strong>${state.ready?'Du har fått en gratis pizza!':`${10-state.count} pizzaer igjen til din gratis pizza`}</strong>${state.ready?`<p>Din neste store pizza er gratis.</p><button class="btn btn-primary" id="usePizzaBonus" type="button" ${state.pending?'disabled':''}>${state.pending?'Gratispizza venter på bekreftelse':'Bestill gratis pizza'}</button>`:''}<small>Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small><div id="bonusPizzaChoices"></div>`;
+    host.innerHTML = `<h2>Din pizzabonus</h2><p>Kjøp 10 store pizzaer, få den 11. gratis</p><svg class="bonus-ring" viewBox="0 0 240 240" role="img" aria-label="${state.count} av 10 pizzaer registrert">${paths}${gift}<text class="bonus-count" x="120" y="${state.ready?128:119}" text-anchor="middle">${state.count}</text><text class="bonus-caption" x="120" y="${state.ready?149:141}" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="15">registrert</tspan></text></svg><strong>${state.ready?'Du har fått en gratis pizza!':`${10-state.count} pizzaer igjen til din gratis pizza`}</strong>${state.ready?`<p>Din neste store pizza er gratis.</p><button class="btn btn-primary" id="usePizzaBonus" type="button" ${state.pending?'disabled':''}>${state.pending?'Gratispizza venter på bekreftelse':'Bestill gratis pizza'}</button>`:''}<small>Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small>`;
   }
   if (!bonusLoading) {
     bonusLoading = true;
@@ -2418,18 +2427,15 @@ function renderPizzaBonus() {
 }
 
 $('pizzaBonus')?.addEventListener('click', event => {
-  if (event.target.closest('#usePizzaBonus')) {
-    if (!bonusState?.ready || bonusState.pending) return;
-    $('bonusPizzaChoices').innerHTML = store.sections.flatMap(section => section.items.filter(item => !item.hidden && !item.soldOut && item.sizes.some(size => largePizza(section,size))).map(item => `<button type="button" class="bonus-pizza-choice" data-bonus-pizza="${escapeHtml(item.id)}">${escapeHtml(item.name)} <span>Gratis stor pizza</span></button>`)).join('') || '<p>Ingen store pizzaer tilgjengelig akkurat nå.</p>';
-  }
-  const button = event.target.closest('[data-bonus-pizza]');
-  if (!button || !bonusState?.ready || bonusState.pending) return;
+  if (!event.target.closest('#usePizzaBonus') || !bonusState?.ready || bonusState.pending) return;
   if (cart.some(line => line.loyaltyFree)) { setView('cart'); return; }
-  const {section,item} = findItem(button.dataset.bonusPizza);
-  openProduct(item.id);
-  draft.loyaltyFree = true; draft.loyaltyCycle = bonusState.cycle;
-  draft.sizeId = item.sizes.find(size => largePizza(section,size)).id;
-  renderSheet();
+  const section = store.sections.find(section => section.items.some(item => !item.hidden && !item.soldOut && item.sizes.some(size => largePizza(section, size))));
+  if (!section) { toast('Ingen store pizzaer tilgjengelig akkurat nå.', 'warning'); return; }
+  choosingBonus = true;
+  ui.search = ''; ui.searchOpen = false;
+  setView('menu'); renderMenu();
+  scrollToCategory(section.id);
+  toast('Velg din gratis store pizza. Ekstra tilvalg betales separat.');
 });
 
 function renderProfile() {
