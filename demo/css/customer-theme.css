@@ -161,12 +161,13 @@ html[data-customer-palette] #productSheet .opt-row:has(input:checked) :is(.opt-l
   content: "";
   width: 9px;
   height: 5px;
-  border-left: 2px solid var(--palette-on-accent);
-  border-bottom: 2px solid var(--palette-on-accent);
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
   transform: rotate(-45deg) translateY(-1px);
   visibility: hidden;
 }
-#productSheet .opt-row input:checked { background: var(--palette-accent); border-color: var(--palette-accent); }
+html[data-customer-palette] #productSheet .opt-row input:checked { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette][data-theme="dark"] #productSheet .opt-row input:checked { background: color-mix(in srgb, var(--palette-accent) 35%, var(--palette-surface)) !important; }
 #productSheet .opt-row input:checked::before { visibility: visible; }
 #productSheet .opt-row input:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
 #productSheet .opt-row input:disabled { cursor: not-allowed; }
