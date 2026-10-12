@@ -34,7 +34,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartheader51';
+} from './data.js?v=20261012-cartclean52';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1809,7 +1809,7 @@ function renderCheckout() {
         <section class="pickup-review-info" aria-label="Din informasjon">
           <div class="pickup-review-info-head">
             <strong>Din informasjon</strong>
-            <span>${ui.pickup ? (ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)) : 'Ikke valgt'}</span>
+            ${hasValidPickup() ? `<span>${ui.pickup === 'asap' ? 'Snarest' : escapeHtml(ui.pickup)}</span>` : ''}
           </div>
           <div class="pickup-review-info-grid">
             <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
