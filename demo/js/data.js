@@ -111,12 +111,14 @@ export function findItem(itemId) {
 export function getItemOptionGroups(item, sizeId = null) {
   if (!item) return [];
   const sizes = sizeId === '*' ? item.sizes || [] : [(item.sizes || []).find(size=>size.id===(sizeId || getDefaultSize(item)?.id))].filter(Boolean);
-  return [...new Set([...(item.optionGroupIds || []), ...sizes.flatMap(size=>size.optionGroupIds || [])])].map(findOptionGroup).filter(Boolean);
+  const attached = [...new Set([...(item.optionGroupIds || []), ...sizes.flatMap(size=>size.optionGroupIds || [])])];
+  return [...new Set([...(item.optionGroupOrder || []).filter(id => attached.includes(id)), ...attached])].map(findOptionGroup).filter(Boolean);
 }
 
 /** Detach from both the product and all of its size-specific attachments. */
 export function removeItemOptionGroup(item, groupId) {
   if (!item) return;
+  item.optionGroupOrder = (item.optionGroupOrder || []).filter(id => id !== groupId);
   item.optionGroupIds = (item.optionGroupIds || []).filter(id => id !== groupId);
   for (const size of item.sizes || []) {
     size.optionGroupIds = (size.optionGroupIds || []).filter(id => id !== groupId);
@@ -592,6 +594,7 @@ function normalizeState(raw) {
           })
           .filter(Boolean),
         optionGroupIds: asArray(item.optionGroupIds).filter((id) => groupIds.has(id)),
+        optionGroupOrder: [...new Set(asArray(item.optionGroupOrder))].filter(id => groupIds.has(id) && [...asArray(item.optionGroupIds), ...sizes.flatMap(size => size.optionGroupIds)].includes(id)),
         hidden: Boolean(item.hidden),
         soldOut: Boolean(item.soldOut),
       };

@@ -43,7 +43,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-detach37';
+} from './data.js?v=20261012-grouporder38';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -909,7 +909,9 @@ function renderPanel() {
     ? groups
         .map(
           (group) => `
-      <div class="attached-row">
+      <div class="attached-row" data-attached-group="${escapeHtml(group.id)}">
+        <button type="button" class="icon-btn group-drag-handle" aria-label="Dra for å flytte ${escapeHtml(group.title)}" title="Dra for å endre rekkefølgen">⠿</button>
+        <div class="group-move-buttons"><button type="button" class="icon-btn" data-move-group="${escapeHtml(group.id)}" data-direction="-1" aria-label="Flytt opp">↑</button><button type="button" class="icon-btn" data-move-group="${escapeHtml(group.id)}" data-direction="1" aria-label="Flytt ned">↓</button></div>
         <div class="attached-main">
           <strong>${escapeHtml(group.title || 'Uten navn')}</strong>
           <span>${
@@ -1228,7 +1230,51 @@ el.allergenGrid.addEventListener('change', (event) => {
   );
 });
 
+let groupDrag = null;
+el.attachedGroups.addEventListener('pointerdown', event => {
+  const handle = event.target.closest('.group-drag-handle');
+  const { item } = selectedItem();
+  if (!handle || !item || event.button !== 0) return;
+  event.preventDefault();
+  handle.setPointerCapture(event.pointerId);
+  const row = handle.closest('[data-attached-group]');
+  groupDrag = { row, itemId: item.id, pointerId: event.pointerId };
+  row.classList.add('is-dragging');
+});
+el.attachedGroups.addEventListener('pointermove', event => {
+  if (!groupDrag || event.pointerId !== groupDrag.pointerId) return;
+  event.preventDefault();
+  const rows = [...el.attachedGroups.querySelectorAll('[data-attached-group]')].filter(row => row !== groupDrag.row);
+  const before = rows.find(row => event.clientY < row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2);
+  if (before) el.attachedGroups.insertBefore(groupDrag.row, before);
+  else el.attachedGroups.appendChild(groupDrag.row);
+});
+function finishGroupDrag(event) {
+  if (!groupDrag || event.pointerId !== groupDrag.pointerId) return;
+  const { item } = selectedItem();
+  const ids = [...el.attachedGroups.querySelectorAll('[data-attached-group]')].map(row => row.dataset.attachedGroup);
+  groupDrag.row.classList.remove('is-dragging');
+  const itemId = groupDrag.itemId;
+  groupDrag = null;
+  if (event.type === 'pointercancel') { renderPanel(); return; }
+  if (item?.id === itemId) updateItem(target => { target.optionGroupOrder = ids; }, { rerenderPanel: true });
+}
+el.attachedGroups.addEventListener('pointerup', finishGroupDrag);
+el.attachedGroups.addEventListener('pointercancel', finishGroupDrag);
+
 el.attachedGroups.addEventListener('click', (event) => {
+  const move = event.target.closest('[data-move-group]');
+  if (move) {
+    const { item } = selectedItem();
+    if (!item) return;
+    const ids = getItemOptionGroups(item, '*').map(group => group.id);
+    const from = ids.indexOf(move.dataset.moveGroup), to = from + Number(move.dataset.direction);
+    if (from < 0 || to < 0 || to >= ids.length) return;
+    [ids[from], ids[to]] = [ids[to], ids[from]];
+    updateItem(target => { target.optionGroupOrder = ids; }, { rerenderPanel: true });
+    return;
+  }
+
   const edit = event.target.closest('[data-edit-group]');
   if (edit) {
     openEditor(edit.dataset.editGroup);

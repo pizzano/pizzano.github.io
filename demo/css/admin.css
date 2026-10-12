@@ -1281,3 +1281,8 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
 
 .palette-mode-preview { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
 .palette-mode-preview > strong { width: 100%; margin-top: 8px; }
+
+.group-drag-handle { cursor: grab; touch-action: none; user-select: none; flex-shrink: 0; }
+.attached-row.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
+.group-move-buttons { display: flex; flex-direction: column; gap: 2px; }
+.group-move-buttons .icon-btn { width: 24px; height: 24px; font-size: 14px; }
