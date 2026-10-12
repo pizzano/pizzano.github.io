@@ -35,7 +35,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261013-soundpersist58';
+} from './data.js?v=20261013-orderdetails59';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -674,20 +674,25 @@ function renderActiveOrders() {
   orders.filter((order) => order.status === 'klar').forEach(scheduleReadyDismiss);
 }
 
+// Keep the selection across live refreshes; enforce one expanded order even
+// on browsers without native named-details grouping.
+document.addEventListener('toggle', event => {
+  const card = event.target;
+  if (!(card instanceof HTMLDetailsElement) || !card.isConnected || !card.matches('.order-history-card[data-order-card-id]')) return;
+  if (card.open) {
+    ui.focusedOrderId = card.dataset.orderCardId;
+    document.querySelectorAll('.order-history-card[open]').forEach(other => { if (other !== card) other.open = false; });
+  } else if (ui.focusedOrderId === card.dataset.orderCardId) {
+    ui.focusedOrderId = '';
+  }
+}, true);
+
 function openActiveOrderInProfile(orderId) {
   if (!orderId) return;
   ui.focusedOrderId = orderId;
   setView('profile');
   setProfileTab('orders');
-  window.requestAnimationFrame(() => {
-    const selectorId = window.CSS?.escape ? CSS.escape(orderId) : orderId.replace(/"/g, '\"');
-    const card = document.querySelector(`.order-history-card[data-order-card-id="${selectorId}"]`);
-    if (!card) return;
-    card.open = true;
-    card.classList.add('is-focused');
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    window.setTimeout(() => card.classList.remove('is-focused'), 2200);
-  });
+
 }
 
 function resetPendingOrderSubmission() {
@@ -2585,7 +2590,7 @@ function renderProfile() {
             const details = (order.lines || []).map(orderHistoryLineHtml).join('');
             const shortId = String(order.id || '').slice(-6).toUpperCase();
             return `
-              <details class="order-history-card${ui.focusedOrderId === order.id ? ' is-focused' : ''}" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
+              <details name="customer-order-history" class="order-history-card" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
                 <summary class="order-history-summary-shell">
                   <div class="order-history-collapsed-summary">
                     <div class="order-history-top">

@@ -43,7 +43,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261013-soundpersist58';
+} from './data.js?v=20261013-orderdetails59';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
