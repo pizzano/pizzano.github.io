@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v166-cartgap48';
+const CACHE_NAME = 'kol-demo-v167-cartsort49';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -8,6 +8,7 @@ const APP_SHELL = [
   '/demo/css/customer-theme.css',
   '/demo/js/theme.js',
   '/demo/js/customer.js',
+  '/demo/js/cart-order.js',
   '/demo/js/shop-info.js',
   '/demo/js/install.js',
   '/demo/js/data.js',

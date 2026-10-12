@@ -1,3 +1,4 @@
+import { sortCartByCategory } from './cart-order.js';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
@@ -33,7 +34,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartgap48';
+} from './data.js?v=20261012-cartsort49';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1597,7 +1598,7 @@ function renderCart() {
     `;
   }
 
-  el.cartLines.innerHTML = cart.map((line) => cartLineHtml(line)).join('');
+  el.cartLines.innerHTML = sortCartByCategory(cart, store.sections).map((line) => cartLineHtml(line)).join('');
   const subtotal = cartSubtotal();
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
@@ -1697,7 +1698,7 @@ function renderCheckout() {
 
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
-  const reviewItems = cart.map((line) => {
+  const reviewItems = sortCartByCategory(cart, store.sections).map((line) => {
     const { item } = findItem(line.itemId);
     if (!item) return '';
 

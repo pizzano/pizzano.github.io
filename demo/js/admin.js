@@ -43,7 +43,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-cartgap48';
+} from './data.js?v=20261012-cartsort49';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
