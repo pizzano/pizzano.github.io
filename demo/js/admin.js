@@ -1833,6 +1833,7 @@ function deleteGroup(groupId) {
  * Bestillinger
  * ------------------------------------------------------------------ */
 
+const pendingOrderMinutes = new Map();
 let knownPendingOrders = null;
 let orderAudio = null;
 let orderSoundEnabled = false;
@@ -1865,8 +1866,10 @@ function syncOrdersWorkspaceLayout() {
   document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
 }
 function filteredOrders() {
-  return getOrders();
+  const query = (document.getElementById('orderSearch')?.value || '').trim().toLocaleLowerCase('nb-NO');
+  return getOrders().filter(order => !query || [order.id, order.customerName, order.phone].some(value => String(value || '').toLocaleLowerCase('nb-NO').includes(query)));
 }
+document.getElementById('orderSearch').addEventListener('input', renderOrderList);
 function pendingWait(order) {
   const minutes = Math.max(0, Math.floor((Date.now() - Number(order.createdAt)) / 60000));
   return minutes ? `Venter · ${minutes} min` : 'Venter på svar';
@@ -1916,7 +1919,7 @@ function orderCenterText(order) {
 }
 
 function orderListRowHtml(order, isNew = false) {
-  return `<button class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
+  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
     <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
     <span class="orders-list-side"><strong>${formatPrice(order.total)}</strong><small>${escapeHtml(compactOrderTime(order.createdAt))}</small></span>
@@ -1931,28 +1934,12 @@ function renderOrderTabs(allOrders) {
   });
 }
 function renderOrderList() {
-  const orders = filteredOrders();
-  const newOrders = orders.filter((order) => order.status === 'mottatt');
-  newOrders.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
-  const otherOrders = orders.filter((order) => order.status !== 'mottatt');
-  const sections = [];
-  if (newOrders.length) {
-    sections.push(`
-      <section class="orders-list-section is-new-section">
-        <div class="orders-list-section-title"><span><i></i>Nye bestillinger</span><b>${newOrders.length}</b></div>
-        ${newOrders.map((order) => orderListRowHtml(order, true)).join('')}
-      </section>`);
-  }
-  if (otherOrders.length) {
-    sections.push(`
-      <section class="orders-list-section">
-        <div class="orders-list-section-title"><span>${ui.orderFilter === 'all' ? 'Andre' : 'Bestillinger'}</span><b>${otherOrders.length}</b></div>
-        ${otherOrders.map((order) => orderListRowHtml(order, false)).join('')}
-      </section>`);
-  }
-  el.orderList.innerHTML = sections.join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Det er ingenting i denne visningen.</span></div>';
+  const orders = filteredOrders().sort((a, b) => {
+    if (a.status === 'mottatt' && b.status === 'mottatt') return Number(a.createdAt) - Number(b.createdAt);
+    return Number(b.status === 'mottatt') - Number(a.status === 'mottatt');
+  });
+  el.orderList.innerHTML = orders.map(order => orderListRowHtml(order, order.status === 'mottatt')).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Ingen bestillinger å vise.</span></div>';
 }
-
 function detailLineHtml(line) {
   const options = Array.isArray(line.options) ? line.options : [];
   const optionDetails = Array.isArray(line.optionDetails) ? line.optionDetails : [];
@@ -1975,6 +1962,8 @@ function detailLineHtml(line) {
 }
 
 function renderOrderDetail(orderId) {
+  const previousDetail = el.orderDetailLive.querySelector('[data-order-detail-id]');
+  const scrollTop = previousDetail?.dataset.orderDetailId === orderId ? (el.orderDetailLive.querySelector('.pos-detail-scroll')?.scrollTop || 0) : 0;
   const editing = el.orderDetailLive.querySelector('[data-detail-estimate]');
   const draft = editing && document.activeElement === editing ? { id: selectedOrderId, value: editing.value } : null;
   const order = getOrders().find((entry) => entry.id === orderId);
@@ -1988,46 +1977,38 @@ function renderOrderDetail(orderId) {
   selectedOrderId = order.id;
   const shortId = String(order.id || '').slice(-8).toUpperCase();
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
-  const countdown = orderCountdown(order);
-  const hasCountdown = Number(order.estimatedReadyAt) > 0;
   const isPending = order.status === 'mottatt';
   const scheduledPickup = isScheduledPickupOrder(order);
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
-  const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'LEVERING' : 'HENTING';
-  const payment = String(store.settings?.paymentInfo || 'Ved henting').toUpperCase();
-  const effectiveStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
+  const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'Levering' : 'Henting';
+  const payment = String(store.settings?.paymentInfo || 'Betales ved henting');
+  const proposedMinutes = pendingOrderMinutes.get(order.id) || 15;
+  const readyTime = compactOrderTime(order.estimatedReadyAt);
   const actionHtml = isPending
-    ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">Avvis</button>
-       <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
-    : order.status === 'avvist' || order.status === 'fullfort'
-      ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
-      : effectiveStatus === 'bekreftet'
-        ? `<div class="pos-progress-actions"><button data-detail-status="klar" type="button">Klar for henting</button></div>`
-        : order.status === 'klar' ? '<div class="pos-progress-actions"><button data-detail-status="fullfort" type="button">Utlevert · fullfør bestilling</button></div>' : '';
-
+    ? `<div class="order-preparation">${scheduledPickup
+        ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
+        : `<span>Klar om</span><div class="order-minute-buttons" aria-label="Forberedelsestid">${[10,15,20,30].map(minutes => `<button data-order-minutes="${minutes}" class="${proposedMinutes === minutes ? 'is-active' : ''}" aria-pressed="${proposedMinutes === minutes}" type="button">${minutes} min</button>`).join('')}<button data-open-accept="${escapeHtml(order.id)}" type="button">Annen tid</button></div>`}</div>
+      <div class="order-decision-buttons"><button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button">Avvis</button>
+      <button class="pos-accept-btn" data-accept-inline="${escapeHtml(order.id)}" type="button">Godta · ${scheduledPickup ? escapeHtml(order.pickup) : `${proposedMinutes} min`}</button></div>`
+    : ['avvist', 'fullfort'].includes(order.status)
+      ? `<div class="pos-closed-status">${escapeHtml(orderListStatus(order))}</div>`
+      : `<div class="order-ready-summary"><strong>${order.status === 'klar' ? 'Klar for henting' : `Henting ${readyTime}`}</strong>${order.status !== 'klar' && order.estimatedReadyAt ? `<span data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(orderCountdown(order) || 'Klar nå')}</span>` : ''}${!scheduledPickup && order.status !== 'klar' ? `<button data-edit-order-time type="button">Endre tid</button>` : ''}</div>
+        <div class="pos-progress-actions"><button data-detail-status="${order.status === 'klar' ? 'fullfort' : 'klar'}" type="button">${order.status === 'klar' ? 'Utlevert · fullfør bestilling' : 'Marker klar for henting'}</button></div>`;
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
   el.orderDetailLive.innerHTML = `
-    <article class="pos-order-detail">
+    <article class="pos-order-detail" data-order-detail-id="${escapeHtml(order.id)}">
       <header class="pos-detail-top">
-        <div class="pos-detail-heading">
-          <div class="pos-detail-total">${formatPrice(order.total)}</div>
-          <div class="pos-detail-pills"><span>${escapeHtml(pickupType)}</span><span>${escapeHtml(payment)}</span></div>
-        </div>
-        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Lukk bestillingen og gå tilbake til listen">×</button>
+        <div class="pos-detail-heading"><div class="order-number-row"><strong>#${escapeHtml(shortId)}</strong><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${escapeHtml(isPending ? 'Ny bestilling' : orderListStatus(order))}</span></div><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2></div>
+        <div class="order-heading-right"><strong class="pos-detail-total">${formatPrice(order.total)}</strong><button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingene">×</button></div>
       </header>
       <div class="pos-detail-scroll">
-        <section class="pos-meta-block">
-          <div><span>Bestillingsnummer</span><strong>${escapeHtml(shortId)}</strong></div>
-          <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
+        <section class="order-facts" aria-label="Bestillingsinformasjon">
+          <div><span>${escapeHtml(pickupType)}</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
+          <div><span>Betaling</span><strong>${escapeHtml(payment)}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
-          ${!isPending && scheduledPickup ? `<div><span>Planlagt henting</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>` : (!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : '')}
-          ${!isPending && hasCountdown ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
-        </section>
-        <section class="pos-customer-block">
-          <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong></div>
-          ${phone ? `<a class="pos-customer-phone" href="tel:${escapeHtml(tel)}">${escapeHtml(phone)}</a>` : ''}
+          ${phone ? `<a class="order-call" href="tel:${escapeHtml(tel)}"><span>${escapeHtml(phone)}</span><strong>Ring</strong></a>` : '<div><span>Telefon</span><strong>Ikke oppgitt</strong></div>'}
         </section>
         <section class="pos-items-block">
           <h3>Bestilte varer</h3>
@@ -2035,23 +2016,15 @@ function renderOrderDetail(orderId) {
           ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
-        <section class="pos-totals-block">
-          <div><span>Delsum</span><strong>${formatPrice(order.subtotal ?? order.total)}</strong></div>
-          <div class="is-total"><span>Å betale</span><strong>${formatPrice(order.total)}</strong></div>
-        </section>
-        ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? (scheduledPickup ? `
-          <section class="pos-scheduled-pickup-summary">
-            <div><span>Planlagt henting</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
-            <small>Blir automatisk «Klar for henting» når hentetiden kommer.</small>
-          </section>` : `
-          <section class="pos-estimate-editor">
-            <div><strong>Forventet tid</strong><span>Kunden ser denne tiden live.</span></div>
-            <label><input data-detail-estimate autocomplete="off" type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
-            <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater</button>
-          </section>`) : ''}
+        ${!isPending && !scheduledPickup && ['bekreftet', 'tilberedning'].includes(order.status) ? `
+          <section class="pos-estimate-editor" ${draft ? '' : 'hidden'}>
+            <label><input data-detail-estimate aria-label="Forventet tid i minutter" autocomplete="off" type="number" min="1" max="180" step="1" value="${estimated || ''}" placeholder="15"><b>min</b></label>
+            <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater tid</button>
+          </section>` : ''}
       </div>
       <footer class="pos-detail-actions">${actionHtml}</footer>
     </article>`;
+  el.orderDetailLive.querySelector('.pos-detail-scroll').scrollTop = scrollTop;
   if (draft?.id === order.id) {
     const input = el.orderDetailLive.querySelector('[data-detail-estimate]');
     if (input) { input.value = draft.value; input.focus({ preventScroll: true }); }
@@ -2164,6 +2137,28 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     renderOrders();
     return;
   }
+  const minuteChoice = event.target.closest('[data-order-minutes]');
+  if (minuteChoice && selectedOrderId) {
+    pendingOrderMinutes.set(selectedOrderId, Number(minuteChoice.dataset.orderMinutes));
+    renderOrderDetail(selectedOrderId); return;
+  }
+  const inlineAccept = event.target.closest('[data-accept-inline]');
+  if (inlineAccept) {
+    if (inlineAccept.disabled) return;
+    const order = getOrders().find(entry => entry.id === inlineAccept.dataset.acceptInline);
+    if (!order || order.status !== 'mottatt') { renderOrders(); return; }
+    actionOrderId = order.id;
+    el.acceptMinutes.value = String(pendingOrderMinutes.get(order.id) || 15);
+    inlineAccept.disabled = true;
+    await confirmAcceptOrder();
+    if (inlineAccept.isConnected) inlineAccept.disabled = false;
+    return;
+  }
+  if (event.target.closest('[data-edit-order-time]')) {
+    const editor = el.orderDetailLive.querySelector('.pos-estimate-editor');
+    if (editor) { editor.hidden = !editor.hidden; if (!editor.hidden) { editor.querySelector('input').focus(); editor.scrollIntoView({ block: 'nearest' }); } }
+    return;
+  }
   const accept = event.target.closest('[data-open-accept]');
   if (accept) {
     openAcceptOrder(accept.dataset.openAccept);
@@ -2223,7 +2218,7 @@ el.acceptMinutes.addEventListener('input', () => {
   });
 });
 
-el.btnAcceptConfirm.addEventListener('click', async () => {
+async function confirmAcceptOrder() {
   if (!actionOrderId) return;
   const acceptedOrderId = actionOrderId;
   const order = getOrders().find((entry) => entry.id === acceptedOrderId);
@@ -2253,7 +2248,8 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
   renderStats();
   toast(scheduled ? `Bestillingen er godtatt · henting ${order.pickup}.` : `Bestillingen er godtatt · ${minutes} min.`);
 
-});
+}
+el.btnAcceptConfirm.addEventListener('click', confirmAcceptOrder);
 
 el.btnRejectConfirm.addEventListener('click', async () => {
   if (!actionOrderId || el.btnRejectConfirm.disabled) return;
