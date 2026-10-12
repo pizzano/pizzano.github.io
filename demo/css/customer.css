@@ -3595,10 +3595,11 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 .view-cart .cart-product-total { white-space: nowrap; font-size: 14px; }
 
 /* A single price column for product, extras and total. */
-.view-cart .cart-detail-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.view-cart .cart-detail-row { display: grid; grid-template-columns: minmax(0, auto) minmax(8px, 1fr) auto; gap: 5px; }
 .view-cart .cart-detail-left { display: block; overflow: visible; }
 .view-cart .cart-detail-left span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.view-cart .cart-detail-leader { display: none; }
+.view-cart .cart-detail-leader { display: block; height: 0; align-self: end; margin-bottom: 3px; border-bottom: 1px solid color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)); opacity: .8; }
+.view-cart .cart-product-totalrow .cart-detail-leader { flex: 1; min-width: 8px; }
 .view-cart .cart-detail-price { display: block; text-align: right; white-space: nowrap; }
 .view-cart .cart-product-totalrow { display: flex; width: 100%; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 4px; }
 .view-cart .cart-product-totalrow > span { color: var(--palette-muted); font-size: 11px; }

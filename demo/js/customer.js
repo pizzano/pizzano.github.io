@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartprices46';
+} from './data.js?v=20261012-cartlines47';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1560,7 +1560,7 @@ function cartLineHtml(line) {
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
-        <div class="cart-product-totalrow"><span>Totalt</span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
+        <div class="cart-product-totalrow"><span>Totalt</span><span class="cart-detail-leader" aria-hidden="true"></span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
       </div>
           <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
             <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
