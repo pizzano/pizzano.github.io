@@ -2072,7 +2072,7 @@ html[data-theme="dark"] .cart-detail-row b {
 }
 
 .view-cart .cart-product-stepper {
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 1;
   justify-self: start;
   align-self: center;
@@ -3553,7 +3553,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 
 /* Compact product summaries: cart, pickup and order history. */
 .view-cart .cart-line.cart-product-card {
-  grid-template-columns: 64px minmax(0, 1fr) max-content 32px !important;
+  grid-template-columns: 64px minmax(0, 1fr) 32px !important;
   gap: 6px !important;
   min-height: 106px !important;
   padding: 8px !important;
@@ -3594,8 +3594,11 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 .view-cart .cart-product-content { justify-content: center; }
 .view-cart .cart-product-total { white-space: nowrap; font-size: 14px; }
 
-/* The main total sits beside the details in the compact vertical layout. */
-.view-cart .cart-detail-row { display: block; }
+/* A single price column for product, extras and total. */
+.view-cart .cart-detail-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
 .view-cart .cart-detail-left { display: block; overflow: visible; }
 .view-cart .cart-detail-left span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.view-cart .cart-detail-leader, .view-cart .cart-detail-price { display: none; }
+.view-cart .cart-detail-leader { display: none; }
+.view-cart .cart-detail-price { display: block; text-align: right; white-space: nowrap; }
+.view-cart .cart-product-totalrow { display: flex; width: 100%; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 4px; }
+.view-cart .cart-product-totalrow > span { color: var(--palette-muted); font-size: 11px; }

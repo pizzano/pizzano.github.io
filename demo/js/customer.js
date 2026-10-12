@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartvertical45';
+} from './data.js?v=20261012-cartprices46';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1515,9 +1515,12 @@ function cartLineHtml(line) {
   }
 
   addonGroups.forEach((group) => {
+    const title = group.title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
+    const heading = title.charAt(0).toLocaleUpperCase('no') + title.slice(1);
+    const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
     detailRows.push(
       `<span class="cart-detail-row">
-        <span class="cart-detail-left"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
+        <span class="cart-detail-left"><b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b> <span>${escapeHtml(labels.join(', '))}</span></span>
         <span class="cart-detail-leader" aria-hidden="true"></span>
         ${quantityPriceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
       </span>`
@@ -1557,6 +1560,7 @@ function cartLineHtml(line) {
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
+        <div class="cart-product-totalrow"><span>Totalt</span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
       </div>
           <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
             <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
@@ -1568,7 +1572,6 @@ function cartLineHtml(line) {
                 </button>`}
           </div>
 
-          <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
 
     </article>`;
 }
