@@ -721,7 +721,7 @@ body::before {
   text-align: center;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--palette-deep) 3.5%, transparent);
 }
-.cat-tab .cat-icon {  line-height: 1; filter: saturate(.8); }
+.cat-tab .cat-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; line-height: 1; }
 .cat-tab .cat-label { display: block; max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cat-tab.is-active {
   color: var(--palette-accent);
@@ -956,7 +956,6 @@ textarea.input {
   .hdr-btn { width: 36px; height: 36px; }
   .cat-scroll { min-height: 70px; padding: 7px 8px 8px; gap: 6px; }
   .cat-tab { height: 54px; min-width: 72px; max-width: 108px; padding: 5px 8px; border-radius: 14px; font-size: 9.5px; }
-  .cat-tab .cat-icon { font-size: 16px; }
   .search-tab { flex-basis: 42px; width: 42px; height: 54px; border-radius: 14px; }
   main { padding: 10px 9px 26px; }
   .menu-overview { margin-bottom: 15px; padding: 11px 12px; border-radius: 16px; }

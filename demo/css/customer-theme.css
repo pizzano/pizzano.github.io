@@ -209,3 +209,6 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
 .pizza-offers-consent input { width: 18px; height: 18px; flex: none; margin: 0; accent-color: var(--palette-accent); }
 
 .profile-home .profile-hero { padding: 8px; border-radius: 18px !important; background: color-mix(in srgb, var(--palette-border) 25%, var(--palette-surface)); }
+
+html[data-customer-palette] .cat-tab .cat-icon svg { width: 19px; height: 19px; color: var(--palette-muted); }
+html[data-customer-palette] .cat-tab:is(.is-active, :hover) .cat-icon svg { color: var(--palette-accent); }

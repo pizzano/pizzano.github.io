@@ -739,16 +739,22 @@ function setView(view) {
 
 function categoryIcon(block) {
   const title = String(block?.title || '').toLocaleLowerCase('no');
-  if (block?.key === 'favorites') return '♥';
-  if (block?.key === 'popular') return '★';
-  if (title.includes('pizza')) return '🍕';
-  if (title.includes('kebab')) return '🌯';
-  if (title.includes('burger')) return '🍔';
-  if (title.includes('drikk')) return '🥤';
-  if (title.includes('barn')) return '☺';
-  if (title.includes('veget')) return '🥗';
-  if (title.includes('diverse') || title.includes('andre')) return '🍽';
-  return '•';
+  const icons = {
+    favorites: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+    popular: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z"/>',
+    pizza: '<path d="M5 3c5-1 10 1 14 5L5 21Z M5 7c4-1 7 1 11 4"/><circle cx="8" cy="10" r="1"/><circle cx="11" cy="13" r="1"/><circle cx="7" cy="16" r="1"/>',
+    kebab: '<path d="m6 8 7 13 8-7L8 5Z M6 8l-2-3 4-3 3 3 M12 8l4-4m-1 7 5-3M9 12l3-3m0 8 3-3"/>',
+    burger: '<path d="M4 10a8 8 0 0 1 16 0Z M3 13h18M4 16h16v2a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3Z M8 7h.01M12 5h.01M16 7h.01"/>',
+    drink: '<path d="M6 7h12l-2 14H8Z M5 7h14M12 7l2-5h4"/>',
+    children: '<circle cx="12" cy="12" r="9"/><path d="M8 14a4 4 0 0 0 8 0M8 9h.01M16 9h.01"/>',
+    vegetarian: '<path d="M20 3C9 2 4 6 5 13c1 5 7 6 11 2 3-3 4-7 4-12Z M4 21 16 8M9 16v-5m0 5h5"/>',
+    meal: '<circle cx="14" cy="12" r="7"/><path d="M2 3v5a2 2 0 0 0 4 0V3M4 3v18M22 3v18"/>',
+  };
+  const key = block?.key === 'favorites' ? 'favorites' : block?.key === 'popular' ? 'popular'
+    : title.includes('pizza') ? 'pizza' : title.includes('kebab') ? 'kebab'
+    : title.includes('burger') ? 'burger' : title.includes('drikk') ? 'drink'
+    : title.includes('barn') ? 'children' : title.includes('veget') ? 'vegetarian' : 'meal';
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[key]}</svg>`;
 }
 
 function renderCategories() {
