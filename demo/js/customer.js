@@ -34,7 +34,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-checkmarks50';
+} from './data.js?v=20261012-cartheader51';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1555,23 +1555,26 @@ function cartLineHtml(line) {
       </div>
 
       <div class="cart-product-content">
+        <div class="cart-product-heading">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
           <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · 1 gratis pizza' : ''}</strong>
           ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
-          ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
-        <div class="cart-product-totalrow"><span>Totalt</span><span class="cart-detail-leader" aria-hidden="true"></span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
-      </div>
           <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
-            <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
-            <span>${line.quantity}</span>
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
               : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
                   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
                 </button>`}
+            <span>${line.quantity}</span>
+            <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
           </div>
+        </div>
+        ${detailRows.length ? `<button class="cart-product-copy cart-product-detailcopy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre tilvalg for ${escapeHtml(item.name)}"><span class="cart-product-details">${detailRows.join('')}</span></button>` : ''}
+        <div class="cart-product-totalrow"><span>Totalt</span><span class="cart-detail-leader" aria-hidden="true"></span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
+      </div>
+
 
 
     </article>`;

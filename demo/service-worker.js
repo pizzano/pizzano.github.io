@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v168-checkmarks50';
+const CACHE_NAME = 'kol-demo-v169-cartheader51';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
