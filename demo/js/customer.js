@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartcompact42';
+} from './data.js?v=20261012-cartposition43';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1557,7 +1557,7 @@ function cartLineHtml(line) {
           ${detailRows.length ? `<span class="cart-product-details">${detailRows.join('')}</span>` : ''}
         </button>
 
-        <div class="cart-product-bottomrow">
+      </div>
           <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
@@ -1569,8 +1569,7 @@ function cartLineHtml(line) {
           </div>
 
           <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
-        </div>
-      </div>
+
     </article>`;
 }
 

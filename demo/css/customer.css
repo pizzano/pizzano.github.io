@@ -1976,7 +1976,7 @@ html[data-theme="dark"] .cart-detail-row b {
 /* ======================== Handlekurv: detaljer og priser v4 ======================== */
 .view-cart .cart-line.cart-product-card {
 
-  grid-template-rows: 1fr;
+  grid-template-rows: auto auto;
   align-items: stretch;
 }
 
@@ -2071,16 +2071,9 @@ html[data-theme="dark"] .cart-detail-row b {
   font-weight: 550;
 }
 
-.view-cart .cart-product-bottomrow {
-  width: 100%;
-  display: grid;
-
-  align-items: center;
-
-  margin-top: 4px;
-}
-
 .view-cart .cart-product-stepper {
+  grid-column: 1 / -1;
+  grid-row: 2;
   justify-self: start;
   align-self: center;
 }
@@ -2090,6 +2083,8 @@ html[data-theme="dark"] .cart-detail-row b {
 }
 
 .view-cart .cart-product-total {
+  grid-column: 2;
+  grid-row: 2;
   justify-self: end;
   align-self: center;
 }
@@ -2119,10 +2114,6 @@ html[data-theme="dark"] .cart-detail-row b {
 @media (max-width: 370px) {
   .view-cart .cart-line.cart-product-card {
     grid-template-columns: 82px minmax(0, 1fr);
-  }
-
-  .view-cart .cart-product-bottomrow {
-    gap: 5px;
   }
 
   .view-cart .cart-product-iconbtn {
@@ -2259,11 +2250,6 @@ html[data-theme="dark"] .cart-detail-row b {
   .cart-clear-btn svg {
     width: 15px;
     height: 15px;
-  }
-
-  .view-cart .cart-product-bottomrow {
-    grid-template-columns: auto minmax(62px, 1fr);
-    gap: 6px;
   }
 
   .view-cart .cart-product-stepper.is-smart-stepper {
