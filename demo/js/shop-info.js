@@ -47,7 +47,7 @@ function buildModal() {
           <span class="shop-info-mark">${storeIcon()}</span>
           <div>
             <p class="shop-info-kicker">Restaurantinformasjon</p>
-            <h2 class="shop-info-title" id="shopInfoTitle">KØL Grill &amp; Pizza</h2>
+            <h2 class="shop-info-title" id="shopInfoTitle">Restauranten</h2>
           </div>
         </div>
         <div class="shop-info-status" id="shopInfoStatus" data-open="true">
@@ -146,7 +146,7 @@ function renderShopInfo() {
 
   const state = getOpenState();
   const slots = getPickupSlots();
-  const name = String(settings.restaurantName || 'KØL Grill & Pizza').trim();
+  const name = String(settings.restaurantName || 'Restauranten').trim();
   const address = addressText(settings);
   const phone = String(settings.phone || '').trim();
   const orderOpen = String(settings.orderOpenTime || '').trim();

@@ -2,13 +2,14 @@
 <html lang="no">
 
 <head>
+    <script src="/demo/config.js?v=20261012-empty34"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" />
-    <title>KØL Admin — Meny, bestillinger &amp; innstillinger</title>
+    <link rel="icon" href="/demo/icons/restaurant.svg" />
+    <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-bonuspref32">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-empty34">
 </head>
 
 <body>
@@ -17,10 +18,10 @@
         <!-- ================= SIDEBAR ================= -->
         <aside class="sidebar">
             <div class="side-brand">
-                <img src="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbaoicakgq/logo-kol-flame-mark.png" alt="KØL">
+                <img src="/demo/icons/restaurant.svg" alt="Restaurantlogo">
                 <div>
-                    <strong>KØL Admin</strong>
-                    <small>Grill &amp; Pizza</small>
+                    <strong>Admin</strong>
+                    <small>Bestill takeaway</small>
                 </div>
                 <button class="admin-theme-toggle" id="btnAdminTheme" data-theme-toggle type="button" aria-label="Bytt til mørk modus" aria-pressed="false">
                     <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
@@ -81,6 +82,10 @@
                         <p id="productsSummary">—</p>
                     </div>
                     <div class="page-tools">
+                        <button class="btn btn-outline" id="btnImportMenu" type="button">Importer meny-JSON</button>
+                        <button class="btn btn-outline" id="btnExportMenu" type="button">Eksporter meny-JSON</button>
+                        <input id="menuImportFile" type="file" accept=".json,application/json" hidden>
+                        <div id="menuImportPreview" class="card" hidden><p id="menuImportSummary"></p><button class="btn btn-primary" id="btnApplyMenuImport" type="button">Importer denne menyen</button><button class="btn btn-outline" id="btnCancelMenuImport" type="button">Avbryt</button></div>
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
                             <input id="productSearch" class="input" type="search" placeholder="Søk i produkter…" autocomplete="off">
@@ -302,6 +307,7 @@
                             <div class="set-field">
                                 <label class="lbl" for="sRestaurantName">Restaurantnavn</label>
                                 <input id="sRestaurantName" class="input" type="text">
+                                <label class="lbl" for="sRestaurantLogo">Logo-URL</label><input id="sRestaurantLogo" class="input" type="url" placeholder="https://…">
                             </div>
                             <div class="set-field">
                                 <label class="lbl" for="sStreetAddress">Gateadresse</label>
@@ -662,7 +668,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261012-bonuspref32"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261012-empty34"></script>
 </body>
 
 </html>

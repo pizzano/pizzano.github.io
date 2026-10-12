@@ -1,6 +1,6 @@
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js';
 /**
- * data.js — Delt datalag for KØL Grill & Pizza.
+ * data.js — Delt datalag for Restauranten.
  *
  * Brukes av både kundesiden (app.js) og adminpanelet (admin.js).
  * Datakilde: Firebase Realtime Database via REST — vanlige fetch()-kall mot
@@ -21,14 +21,14 @@ import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './l
 /* ------------------------------------------------------------------ *
  * 1. Database (Firebase Realtime Database REST)
  * ------------------------------------------------------------------ */
-export const DB_URL = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+export const DB_URL = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/, '');
 
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const POLL_INTERVAL = 4000;
 const SCHEMA_VERSION = 6;
 
-const LOCAL_KEY = 'kol_menu_state_v2';
+const LOCAL_KEY = 'bestill_menu_state_v3';
 const CHANNEL_NAME = 'kol_menu_sync';
 
 /* ------------------------------------------------------------------ *
@@ -247,17 +247,18 @@ export function allergenLabels(item) {
  * ------------------------------------------------------------------ */
 
 const DEFAULT_SETTINGS = {
-  restaurantName: 'KØL Grill & Pizza',
-  streetAddress: 'ØGARDSVEGEN 44',
-  postalCode: '2100',
-  city: 'SKARNES',
-  country: 'Norway',
-  phone: '+47 41 14 53 53',
+  restaurantName: '',
+  restaurantLogo: '',
+  streetAddress: '',
+  postalCode: '',
+  city: '',
+  country: '',
+  phone: '',
   timezone: 'Europe/Oslo',
-  openingDays: 'Mandag - Søndag',
-  openingTime: '14:00 - 22:00',
-  orderOpenTime: '14:00',
-  orderCloseTime: '22:00',
+  openingDays: '',
+  openingTime: '',
+  orderOpenTime: '',
+  orderCloseTime: '',
   pickupInfo: 'Henting i restauranten',
   paymentInfo: 'Betaling ved henting',
   minPreorderMinutes: 0,
@@ -269,7 +270,7 @@ const DEFAULT_SETTINGS = {
   customerPalette: 'reference',
   shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
-  manualClosed: false,
+  manualClosed: true,
   closedMessage: 'Vi tar ikke imot bestillinger akkurat nå.',
 };
 
@@ -395,93 +396,11 @@ export function orderStatusLabel(status) {
 }
 
 /* ------------------------------------------------------------------ *
- * 6. Startdata (kun fallback hvis databasen er tom)
+ * 6. Tom starttilstand — ingen eksempelmeny
  * ------------------------------------------------------------------ */
 
-function seedState() {
-  const size = (label, price) => ({ id: uid('sz'), label, price });
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    settings: { ...DEFAULT_SETTINGS },
-    allergenCatalog: clone(DEFAULT_ALLERGENS),
-    optionGroups: [
-      {
-        id: 'og_styrke',
-        title: 'Velg styrke',
-        selectionMode: 'single',
-        required: true,
-        maxSelections: 1,
-        defaultOptionIds: ['opt_styrke_medium'],
-        options: [
-          { id: 'opt_styrke_mild', label: 'Mild', price: 0 },
-          { id: 'opt_styrke_medium', label: 'Medium', price: 0 },
-          { id: 'opt_styrke_sterk', label: 'Sterk', price: 0 },
-        ],
-      },
-      {
-        id: 'og_topping',
-        title: 'Ekstra topping',
-        selectionMode: 'multiple',
-        required: false,
-        maxSelections: 3,
-        defaultOptionIds: [],
-        options: [
-          { id: 'opt_top_ost', label: 'Ekstra ost', price: 25 },
-          { id: 'opt_top_skinke', label: 'Skinke', price: 20 },
-          { id: 'opt_top_jalapeno', label: 'Jalapeño', price: 15 },
-        ],
-      },
-    ],
-    sections: [
-      {
-        id: 'pizza',
-        title: 'PIZZA',
-        note: '',
-        imageUrl: '',
-        type: 'pizza',
-        items: [
-          {
-            id: 'it_margherita',
-            name: 'Margherita',
-            description: 'Tomatsaus, ost, oregano',
-            ingredients: 'Tomatsaus, ost, oregano',
-            imageUrl: '',
-            sizes: [size('Medium', 155), size('Stor', 245)],
-            defaultSizeIndex: 0,
-            allergens: ['gluten', 'melk'],
-            optionGroupIds: ['og_topping'],
-            hidden: false,
-            soldOut: false,
-          },
-        ],
-      },
-      {
-        id: 'drikker',
-        title: 'DRIKKER',
-        note: '',
-        imageUrl: '',
-        type: '',
-        items: [
-          {
-            id: 'it_cola',
-            name: 'Coca-Cola',
-            description: '0,5 l',
-            ingredients: '',
-            imageUrl: '',
-            sizes: [size('0,5 l', 39)],
-            defaultSizeIndex: 0,
-            allergens: [],
-            optionGroupIds: [],
-            hidden: false,
-            soldOut: false,
-          },
-        ],
-      },
-    ],
-    popularItemIds: [],
-    orders: [],
-    updatedAt: Date.now(),
-  };
+function emptyState() {
+  return { schemaVersion: SCHEMA_VERSION, settings: { ...DEFAULT_SETTINGS }, allergenCatalog: clone(DEFAULT_ALLERGENS), optionGroups: [], sections: [], popularItemIds: [], orders: [], updatedAt: 0 };
 }
 
 /* ------------------------------------------------------------------ *
@@ -692,7 +611,7 @@ function normalizeState(raw) {
  * ------------------------------------------------------------------ */
 
 /** Delt, mutérbar tilstand. Les fritt, skriv kun via mutate(). */
-export const store = normalizeState(seedState());
+export const store = normalizeState(emptyState());
 
 const dataListeners = new Set();
 const statusListeners = new Set();
@@ -782,6 +701,7 @@ if (typeof BroadcastChannel !== 'undefined') {
   }
 }
 
+let remoteMenuPath = '';
 let pollTimer = null;
 let saveTimer = null;
 let readyResolve;
@@ -867,10 +787,12 @@ function menuPayload() {
 
 /** Tar imot menydata fra databasen. Returnerer true hvis noe endret seg. */
 function applyRemoteMenu(value) {
-  if (!value || typeof value !== 'object' || !value.sections) return false;
-  if (Number(value.updatedAt) === Number(store.updatedAt)) return false;
-  replaceMenuState(value);
-  return true;
+  remoteMenuPath = value?.menu ? 'menu' : '';
+  const source = value?.menu || value || {};
+  const normalized = normalizeState(source);
+  const before = JSON.stringify(menuPayload());
+  replaceMenuState(normalized);
+  return before !== JSON.stringify(menuPayload());
 }
 
 /** Tar imot ordre fra databasen. Returnerer true hvis noe endret seg. */
@@ -939,7 +861,7 @@ async function persist() {
   try {
     store.updatedAt = Date.now();
     if (remoteEnabled) {
-      await restPatch('', menuPayload());
+      await restPatch(remoteMenuPath, menuPayload());
       remoteOnline = true;
     }
     writeLocal();
@@ -981,6 +903,28 @@ export function mutate(updater, options = {}) {
 }
 
 /** Om det finnes ulagrede endringer. */
+export function exportMenuJSON() { return clone(menuPayload()); }
+
+export async function importMenuJSON(raw) {
+  const source = raw?.menu || raw;
+  if (!source || !Array.isArray(source.sections)) throw new Error('Bruk en Bestill meny-JSON med sections. Andre menyformater må konverteres først.');
+  const itemIds = new Set();
+  for (const section of source.sections) {
+    if (!section || !Array.isArray(section.items)) throw new Error('Hver kategori må ha en items-liste.');
+    for (const item of section.items) {
+      if (!item || !item.name || !Array.isArray(item.sizes) || !item.sizes.length) throw new Error('Hvert produkt må ha navn og minst én størrelse/pris.');
+      if (item.id && itemIds.has(item.id)) throw new Error('Duplisert produkt-ID.');
+      if (item.id) itemIds.add(item.id);
+      if (item.sizes.some(size=>!Number.isFinite(Number(size.price)) || Number(size.price)<0)) throw new Error('Ugyldig produktpris.');
+    }
+  }
+  const before = exportMenuJSON();
+  replaceMenuState({ ...source, settings: source.settings || source.siteSettings || store.settings });
+  emitData('local');
+  if (!await saveNow()) { replaceMenuState(before);emitData('local');throw new Error('Importen kunne ikke lagres. Prøv igjen.'); }
+  return true;
+}
+
 export function hasUnsavedChanges() {
   return saveState === 'dirty' || saveState === 'saving' || saveState === 'error';
 }
@@ -989,7 +933,7 @@ export function hasUnsavedChanges() {
  * 10. Ordre
  * ------------------------------------------------------------------ */
 
-const ORDERS_KEY = 'kol_orders_v1';
+const ORDERS_KEY = 'bestill_orders_v2';
 
 export async function setPizzaOffersConsent(phoneValue, enabled) {
   const phone = loyaltyPhone(phoneValue);
@@ -1347,14 +1291,10 @@ async function bootstrap() {
     try {
       const root = await restGet('');
       remoteOnline = true;
-      if (root && typeof root === 'object' && root.sections) {
-        replaceMenuState(root);
-        applyRemoteOrders(root.orders);
-      } else {
-        // Databasen er tom: legg inn startmenyen én gang.
-        store.updatedAt = Date.now();
-        await restPatch('', menuPayload());
-      }
+      remoteMenuPath = root?.menu ? 'menu' : '';
+      replaceMenuState(root?.menu || root || {});
+      applyRemoteOrders(root?.orders);
+
     } catch (err) {
       remoteOnline = false;
       console.warn('Databasen er ikke tilgjengelig nå, bruker lokal kopi:', err);

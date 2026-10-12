@@ -16,9 +16,9 @@
    *
    * Admin is unaffected because admin.html does not load install.js.
    */
-  const FIREBASE_DB = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
-  const MENU_LOCAL_KEY = 'kol_menu_state_v2';
-  const ORDERS_LOCAL_KEY = 'kol_orders_v1';
+  const FIREBASE_DB = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/, '');
+  const MENU_LOCAL_KEY = 'bestill_menu_state_v3';
+  const ORDERS_LOCAL_KEY = 'bestill_orders_v2';
   const MENU_CHECK_MS = 45 * 1000;
   const ORDER_CHECK_MS = 30 * 1000;
   const ACTIVE_ORDER_MAX_AGE = 24 * 60 * 60 * 1000;
@@ -90,6 +90,8 @@
   }
 
   async function fetchMenuNodes(remoteUpdatedAt) {
+    const nested = await getFirebaseJSON('menu');
+    if (nested && typeof nested === 'object') { cachedMenu = normalizeCachedMenu(nested); writeStoredJSON(MENU_LOCAL_KEY, cachedMenu); return cachedMenu; }
     const [sections, optionGroups, allergenCatalog, settings, siteSettings, popularItemIds, schemaVersion] =
       await Promise.all([
         getFirebaseJSON('sections'),
@@ -112,7 +114,7 @@
       updatedAt: Number(remoteUpdatedAt) || Date.now(),
     });
 
-    if (!next || !next.sections.length) throw new Error('Firebase menu is empty');
+    if (!next) throw new Error('Invalid menu');
     cachedMenu = next;
     writeStoredJSON(MENU_LOCAL_KEY, next);
     return next;
@@ -129,8 +131,6 @@
         const remoteUpdatedAt = Number(await getFirebaseJSON('updatedAt')) || 0;
         lastMenuCheckAt = Date.now();
 
-        const localUpdatedAt = Number(cachedMenu?.updatedAt) || 0;
-        if (cachedMenu && remoteUpdatedAt && remoteUpdatedAt === localUpdatedAt) return cachedMenu;
 
         // Only the rare "menu really changed" path downloads the menu itself.
         return await fetchMenuNodes(remoteUpdatedAt);
@@ -253,7 +253,7 @@
         syncOwnActiveOrdersIfNeeded(false),
       ]);
 
-      if (menu?.sections?.length) return jsonResponse(makeSyntheticRoot(menu, orders));
+      if (menu) return jsonResponse(makeSyntheticRoot(menu, orders));
     } catch (err) {
       // If the lightweight path fails, keep the locally cached menu visible.
       const localMenu = normalizeCachedMenu(cachedMenu || readStoredJSON(MENU_LOCAL_KEY, null));
@@ -270,8 +270,8 @@
   // Keep checkout contact details across refreshes and promote them to the
   // customer's profile after the first successful order. This is small enough
   // to live in the existing customer bootstrap instead of a separate file.
-  const PROFILE_KEY = 'kol_profile_v1';
-  const CONTACT_KEY = 'kol_checkout_contact_v1';
+  const PROFILE_KEY = 'bestill_profile_v2';
+  const CONTACT_KEY = 'bestill_checkout_contact_v2';
   const byId = (id) => document.getElementById(id);
   const cleanPhone = (value) => String(value || '').replace(/[^\d]/g, '').slice(0, 8);
   const validPhone = (value) => /^[49]\d{7}$/.test(cleanPhone(value));

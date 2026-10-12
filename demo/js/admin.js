@@ -1,7 +1,7 @@
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 /**
- * admin.js — Adminpanel for KØL Grill & Pizza.
+ * admin.js — Adminpanel for Restauranten.
  *
  * Fire sider: produkter/kategorier, valggruppe-bibliotek, bestillinger og
  * restaurantinnstillinger. Alt skrives til det delte datalaget (Firebase RTDB
@@ -10,6 +10,8 @@ import { CUSTOMER_PALETTES } from './palette.js';
 
 import {
   store,
+  importMenuJSON,
+  exportMenuJSON,
   subscribe,
   ready,
   mutate,
@@ -39,7 +41,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-bonuspref32';
+} from './data.js?v=20261012-empty34';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -238,6 +240,7 @@ const el = {
     shopInfoEnabled: $('sShopInfoEnabled'),
     ingredientCustomizationEnabled: $('sIngredientCustomizationEnabled'),
     restaurantName: $('sRestaurantName'),
+    restaurantLogo: $('sRestaurantLogo'),
     streetAddress: $('sStreetAddress'),
     postalCode: $('sPostalCode'),
     city: $('sCity'),
@@ -2284,6 +2287,7 @@ const BOOLEAN_SETTING_FIELDS = [
 const SETTING_FIELDS = [
   ['customerPalette', 'text'],
   ['restaurantName', 'text'],
+  ['restaurantLogo', 'text'],
   ['streetAddress', 'text'],
   ['postalCode', 'text'],
   ['city', 'text'],
@@ -2547,6 +2551,9 @@ el.btnConfirmOk.addEventListener('click', () => {
  * ------------------------------------------------------------------ */
 
 function renderAll() {
+  const brandLogo = document.querySelector('.side-brand img');
+  if (brandLogo) brandLogo.src = store.settings.restaurantLogo || '/demo/icons/restaurant.svg';
+  document.querySelector('.side-brand strong')?.replaceChildren(document.createTextNode(store.settings.restaurantName ? store.settings.restaurantName + ' Admin' : 'Admin'));
   renderStats();
   if (ui.page === 'products') {
     renderCategories();
@@ -2581,3 +2588,26 @@ setInterval(() => {
 }, 1000);
 void promoteExpiredOrdersToReady();
 renderAll();
+
+let pendingMenuImport = null;
+$('btnImportMenu').addEventListener('click', ()=>$('menuImportFile').click());
+$('menuImportFile').addEventListener('change', async event=>{
+  const file=event.target.files?.[0];if(!file)return;
+  try {
+    const raw=JSON.parse(await file.text()); const menu=raw?.menu||raw;
+    if(!Array.isArray(menu?.sections))throw new Error('Velg en Bestill meny-JSON med sections. Andre formater må konverteres først.');
+    pendingMenuImport=raw;
+    $('menuImportSummary').textContent=`${menu.sections.length} kategorier, ${menu.sections.reduce((sum,s)=>sum+(s.items?.length||0),0)} produkter. Menyen erstattes. Bestillinger og pizzabonus beholdes.`;
+    $('menuImportPreview').hidden=false;
+  }catch(error){toast(error.message,'error');}
+  event.target.value='';
+});
+$('btnCancelMenuImport').addEventListener('click',()=>{pendingMenuImport=null;$('menuImportPreview').hidden=true;});
+$('btnApplyMenuImport').addEventListener('click',async event=>{
+  if(!pendingMenuImport)return;event.target.disabled=true;
+  try{await importMenuJSON(pendingMenuImport);pendingMenuImport=null;$('menuImportPreview').hidden=true;toast('Menyen er importert.');}catch(error){toast(error.message,'error');}finally{event.target.disabled=false;}
+});
+$('btnExportMenu').addEventListener('click',()=>{
+  const url=URL.createObjectURL(new Blob([JSON.stringify(exportMenuJSON(),null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download='menu.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});

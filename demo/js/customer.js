@@ -2,7 +2,7 @@ import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
 /**
- * customer.js — Kundelogikk for KØL Grill & Pizza.
+ * customer.js — Kundelogikk for Restauranten.
  *
  * Hele menyen vises i én rullende liste. Kategoribaren scroller horisontalt og
  * følger sидen: når kunden scroller, markeres riktig kategori og baren flytter
@@ -33,18 +33,18 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-bonuspref32';
+} from './data.js?v=20261012-empty34';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
  * ------------------------------------------------------------------ */
 
-const PROFILE_KEY = 'kol_profile_v1';
-const CART_KEY = 'kol_cart_v1';
+const PROFILE_KEY = 'bestill_profile_v2';
+const CART_KEY = 'bestill_cart_v2';
 const ALLERGEN_VISIBILITY_KEY = 'kol_show_allergens_v1';
 const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
 const READY_SEEN_KEY = 'kol_ready_seen_v1';
-const CUSTOMER_ORDERS_KEY = 'kol_orders_v1';
+const CUSTOMER_ORDERS_KEY = 'bestill_orders_v2';
 const REJECTED_SEEN_KEY = 'kol_rejected_seen_v1';
 
 function loadJSON(key, fallback) {
@@ -651,7 +651,7 @@ function notifyReadyOrders(orders) {
     toast('✓ Maten din er klar – kom og hent nå.');
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification('KØL Grill & Pizza', { body: 'Maten din er klar – kom og hent nå.' });
+        new Notification(store.settings.restaurantName || 'Bestill', { body: 'Maten din er klar – kom og hent nå.' });
       } catch (_) {}
     }
   }
@@ -3092,6 +3092,13 @@ function applyCustomerInterfaceSettings() {
 }
 
 function renderAll() {
+  const restaurantName = store.settings.restaurantName || 'Bestill';
+  el.brandHome.querySelector('strong').textContent = restaurantName;
+  el.brandHome.querySelector('small').textContent = store.settings.restaurantName ? '' : 'Bestill takeaway';
+  const logo = el.brandHome.querySelector('img');
+  logo.src = store.settings.restaurantLogo || '/demo/icons/restaurant.svg';
+  logo.alt = restaurantName;
+  document.title = `${restaurantName} — Bestill takeaway`;
   applyCustomerPalette(store.settings?.customerPalette);
   applyCustomerInterfaceSettings();
   const changed = reconcileCart();

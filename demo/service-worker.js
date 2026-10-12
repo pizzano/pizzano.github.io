@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v151-category33';
+const CACHE_NAME = 'kol-demo-v152-empty34';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -15,8 +15,8 @@ const APP_SHELL = [
   '/demo/js/order-comments.js',
   '/demo/js/loyalty.js',
   '/demo/manifest.webmanifest',
-  '/demo/icons/kol-icon-192.png',
-  '/demo/icons/kol-icon-512.png',
+  '/demo/icons/restaurant.svg',
+  '/demo/config.js',
 ];
 
 self.addEventListener('install', (event) => {
