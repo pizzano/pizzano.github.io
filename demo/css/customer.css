@@ -2072,7 +2072,7 @@ html[data-theme="dark"] .cart-detail-row b {
 }
 
 .view-cart .cart-product-stepper {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: 2;
   justify-self: start;
   align-self: center;
