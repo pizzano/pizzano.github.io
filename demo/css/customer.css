@@ -1976,8 +1976,8 @@ html[data-theme="dark"] .cart-detail-row b {
 /* ======================== Handlekurv: detaljer og priser v4 ======================== */
 .view-cart .cart-line.cart-product-card {
 
-  grid-template-rows: auto auto;
-  align-items: stretch;
+  grid-template-rows: auto;
+  align-items: center;
 }
 
 .view-cart .cart-product-media {
@@ -2072,8 +2072,8 @@ html[data-theme="dark"] .cart-detail-row b {
 }
 
 .view-cart .cart-product-stepper {
-  grid-column: 2;
-  grid-row: 2;
+  grid-column: 4;
+  grid-row: 1;
   justify-self: start;
   align-self: center;
 }
@@ -2083,8 +2083,8 @@ html[data-theme="dark"] .cart-detail-row b {
 }
 
 .view-cart .cart-product-total {
-  grid-column: 2;
-  grid-row: 2;
+  grid-column: 3;
+  grid-row: 1;
   justify-self: end;
   align-self: center;
 }
@@ -2122,7 +2122,7 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 
   .view-cart .cart-product-stepper button {
-    width: 32px;
+    width: 30px;
     height: 30px;
   }
 }
@@ -2171,6 +2171,7 @@ html[data-theme="dark"] .cart-detail-row b {
 
 .view-cart .cart-product-stepper.is-smart-stepper {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   gap: 0;
 
@@ -2188,9 +2189,9 @@ html[data-theme="dark"] .cart-detail-row b {
   padding: 0;
   border: 0;
   border-radius: 0;
-  width: 32px;
+  width: 30px;
   height: 30px;
-  flex: 0 0 32px;
+  flex: 0 0 30px;
   background: var(--palette-surface);
   box-shadow: none;
   cursor: pointer;
@@ -2257,7 +2258,7 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 
   .view-cart .cart-product-stepper.is-smart-stepper button {
-    width: 32px;
+    width: 30px;
     height: 30px;
   }
 
@@ -3551,7 +3552,13 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 }
 
 /* Compact product summaries: cart, pickup and order history. */
-.view-cart .cart-line.cart-product-card,
+.view-cart .cart-line.cart-product-card {
+  grid-template-columns: 64px minmax(0, 1fr) max-content 32px !important;
+  gap: 6px !important;
+  min-height: 106px !important;
+  padding: 8px !important;
+}
+
 #reviewCard .pickup-review-item,
 #orderList .order-history-cart-item {
   grid-template-columns: 64px minmax(0, 1fr) !important;
@@ -3583,3 +3590,12 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #reviewCard .pickup-review-product { gap: 4px; }
 #orderList .order-history-cart-list,
 #reviewCard .pickup-review-list { gap: 8px !important; }
+
+.view-cart .cart-product-content { justify-content: center; }
+.view-cart .cart-product-total { white-space: nowrap; font-size: 14px; }
+
+/* The main total sits beside the details in the compact vertical layout. */
+.view-cart .cart-detail-row { display: block; }
+.view-cart .cart-detail-left { display: block; overflow: visible; }
+.view-cart .cart-detail-left span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.view-cart .cart-detail-leader, .view-cart .cart-detail-price { display: none; }

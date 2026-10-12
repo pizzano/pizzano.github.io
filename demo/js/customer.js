@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartalign44';
+} from './data.js?v=20261012-cartvertical45';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1559,13 +1559,13 @@ function cartLineHtml(line) {
 
       </div>
           <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
+            <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
+            <span>${line.quantity}</span>
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
               : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
                   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
                 </button>`}
-            <span>${line.quantity}</span>
-            <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
           </div>
 
           <strong class="cart-product-total">${formatPrice(lineTotal)}</strong>
