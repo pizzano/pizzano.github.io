@@ -43,7 +43,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261013-orderalarm57';
+} from './data.js?v=20261013-soundpersist58';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -1848,7 +1848,35 @@ function validOrderAlarmUrl(value) {
   if (!value.trim()) return '';
   try { const url = new URL(value.trim(), location.href); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
 }
-let orderSoundEnabled = false;
+const ORDER_SOUND_KEY = 'bestill_admin_order_sound';
+let orderSoundEnabled = true;
+try { orderSoundEnabled = localStorage.getItem(ORDER_SOUND_KEY) !== 'off'; } catch {}
+let orderSoundBlocked = false;
+let orderMp3Starting = false;
+function renderOrderSoundPreference() {
+  const button = document.getElementById('btnOrderSound');
+  button.setAttribute('aria-pressed', String(orderSoundEnabled));
+  button.textContent = orderSoundEnabled ? 'Lyd på' : 'Lyd av';
+  button.title = orderSoundEnabled ? (orderSoundBlocked ? 'Lyd er på, men nettleseren krever et trykk på skjermen. Denne knappen slår lyd av.' : 'Slå av bestillingsalarmen') : 'Slå på bestillingsalarmen';
+}
+renderOrderSoundPreference();
+async function unlockOrderSound() {
+  if (!orderSoundEnabled) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!orderAudio && AudioContextClass) orderAudio = new AudioContextClass();
+    if (orderAudio?.state !== 'running') await orderAudio?.resume();
+  } catch {}
+  orderSoundBlocked = false;
+  renderOrderSoundPreference();
+  if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+}
+function unlockOrderSoundFromGesture(event) {
+  if (event.target.closest?.('#btnOrderSound')) return;
+  void unlockOrderSound();
+}
+document.addEventListener('pointerdown', unlockOrderSoundFromGesture);
+document.addEventListener('keydown', unlockOrderSoundFromGesture);
 function playOrderAlert() {
   if (!orderSoundEnabled) return;
   const url = validOrderAlarmUrl(String(store.settings?.orderAlarmUrl || ''));
@@ -1858,13 +1886,29 @@ function playOrderAlert() {
       orderMp3 = new Audio(url); orderMp3Url = url; orderMp3.loop = true;
       orderMp3.onerror = () => { failedOrderMp3Url = url; orderMp3?.pause(); toast('MP3-filen kunne ikke spilles. Standardalarmen brukes.'); playOrderAlert(); };
     }
-    if (orderMp3.paused) orderMp3.play().catch(() => {
-      failedOrderMp3Url = url;
-      toast('MP3-filen kunne ikke spilles. Standardalarmen brukes.');
-      playOrderAlert();
-    });
+    if (orderMp3.paused && !orderMp3Starting && !orderSoundBlocked) {
+      const clip = orderMp3;
+      orderMp3Starting = true;
+      clip.play().then(() => {
+        if (!orderSoundEnabled || clip !== orderMp3 || !getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) clip.pause();
+        orderSoundBlocked = false;
+        renderOrderSoundPreference();
+      }).catch(error => {
+        if (clip !== orderMp3 || !orderSoundEnabled) return;
+        if (error.name === 'NotAllowedError') {
+          orderSoundBlocked = true;
+          renderOrderSoundPreference();
+          return;
+        }
+        if (error.name === 'AbortError') return;
+        failedOrderMp3Url = url;
+        toast('MP3-filen kunne ikke spilles. Standardalarmen brukes.');
+        playOrderAlert();
+      }).finally(() => { orderMp3Starting = false; });
+    }
     return;
   }
+  orderMp3?.pause();
   if (!orderSoundEnabled || !orderAudio || orderAudio.state !== 'running' || activeOrderSounds.size) return;
   const oscillator = orderAudio.createOscillator();
   const gain = orderAudio.createGain();
@@ -1877,17 +1921,12 @@ function playOrderAlert() {
   gain.gain.exponentialRampToValueAtTime(.001, orderAudio.currentTime + .6);
   oscillator.start(); oscillator.stop(orderAudio.currentTime + .6);
 }
-document.getElementById('btnOrderSound').addEventListener('click', async event => {
-  const button = event.currentTarget;
-  try {
-    if (!orderAudio) orderAudio = new (window.AudioContext || window.webkitAudioContext)();
-    await orderAudio.resume();
-    orderSoundEnabled = !orderSoundEnabled;
-    button.setAttribute('aria-pressed', String(orderSoundEnabled));
-    button.textContent = orderSoundEnabled ? 'Lyd på' : 'Aktiver lyd';
-    if (orderSoundEnabled) { failedOrderMp3Url = ''; if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert(); }
-    else stopOrderAlert();
-  } catch { toast('Lyd kunne ikke aktiveres på denne enheten.'); }
+document.getElementById('btnOrderSound').addEventListener('click', async () => {
+  orderSoundEnabled = !orderSoundEnabled;
+  try { localStorage.setItem(ORDER_SOUND_KEY, orderSoundEnabled ? 'on' : 'off'); } catch {}
+  renderOrderSoundPreference();
+  if (orderSoundEnabled) { failedOrderMp3Url = ''; await unlockOrderSound(); }
+  else { orderSoundBlocked = false; stopOrderAlert(); }
 });
 function stopOrderAlert() {
   orderMp3?.pause();
