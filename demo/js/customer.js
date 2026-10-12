@@ -1,3 +1,4 @@
+import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
@@ -34,7 +35,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartclean52';
+} from './data.js?v=20261013-orderdeadline56';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -504,7 +505,7 @@ function activeOrderCardHtml(order) {
 
   return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
-      <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span>${rejectedNow ? '<strong class="active-order-live-status">Avvist</strong>' : ''}</div>
+      <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span>${rejectedNow ? `<strong class="active-order-live-status">${order.rejectionCode === 'confirmation_timeout' ? 'Avbrutt' : 'Avvist'}</strong>` : ''}</div>
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}${rejectedNow ? `<button class="active-order-dismiss" data-rejected-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk avvisningsmeldingen">×</button>` : ''}</div>
     </div>
     ${!rejectedNow ? `<div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>` : ''}
@@ -1858,7 +1859,6 @@ function resolveScheduledPickupAt(value) {
 
 
 /* Order confirmation wait flow 2026-09-15 */
-const ORDER_CONFIRM_WAIT_MS = 3 * 60 * 1000;
 let orderConfirmTimer = null;
 let orderConfirmOrderId = '';
 let orderConfirmDeadline = 0;
@@ -1986,17 +1986,17 @@ function startAcceptedConfirmationHold(order) {
 function renderConfirmationTimeout(order) {
   const title = el.confirmModal.querySelector('h2');
   const phone = confirmationRestaurantPhone();
-  if (title) title.textContent = 'Vi venter fortsatt på svar';
+  if (title) title.textContent = 'Svarfristen er ute';
   el.confirmModal.dataset.waiting = 'true';
   el.confirmModal.dataset.state = 'timeout';
-  el.confirmText.textContent = 'Det har gått 3 minutter uten bekreftelse. Vi kan være opptatt i restauranten akkurat nå.';
+  el.confirmText.textContent = 'Det har gått 3 minutter uten bekreftelse. Vi kontrollerer at bestillingen blir avbrutt.';
   const phoneAction = phone.tel
     ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>`
     : '<span class="confirm-phone-missing">Telefonnummer er ikke tilgjengelig akkurat nå.</span>';
   el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
     <div class="confirm-timeout-status">
       <strong>Ikke bekreftet ennå</strong>
-      <small>Ring oss for å sjekke bestillingen eller bestille på telefon. Hvis vi bekrefter her etterpå, oppdateres denne siden automatisk.</small>
+      <small>Vent på avbruddsbekreftelsen før du sender en ny bestilling. Du kan også ringe restauranten.</small>
       ${phoneAction}
     </div>`;
 }
@@ -2015,7 +2015,7 @@ function checkOrderConfirmationWait() {
     }
     const title = el.confirmModal.querySelector('h2');
     const phone = confirmationRestaurantPhone();
-    if (title) title.textContent = 'Bestillingen ble ikke godkjent';
+    if (title) title.textContent = order.rejectionCode === 'confirmation_timeout' ? 'Bestillingen er avbrutt' : 'Bestillingen ble ikke godkjent';
     el.confirmModal.dataset.waiting = 'false';
     el.confirmModal.dataset.state = 'rejected';
     el.confirmText.textContent = order.rejectionMessage || order.rejectionReason || 'Restauranten kunne dessverre ikke ta imot bestillingen.';
@@ -2057,7 +2057,7 @@ function startOrderConfirmationWait(order, name) {
   orderConfirmAcceptedTimer = null;
   orderConfirmRedirectTimer = null;
   orderConfirmOrderId = order.id;
-  orderConfirmDeadline = Date.now() + ORDER_CONFIRM_WAIT_MS;
+  orderConfirmDeadline = confirmationDeadline(order);
   orderConfirmTimedOut = false;
   orderConfirmResolved = false;
   ui.focusedOrderId = order.id;

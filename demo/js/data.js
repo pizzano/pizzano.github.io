@@ -1,3 +1,4 @@
+import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js';
 /**
@@ -472,6 +473,8 @@ function normalizeOrders(raw) {
       return {
         id: order.id || uid('ord'),
         createdAt: Number(order.createdAt) || 0,
+        confirmationDeadline: confirmationDeadline(order),
+        rejectionCode: String(order.rejectionCode || ''),
         customerName: String(order.customerName || ''),
         loyaltyReward: order.loyaltyReward || null,
         loyaltyConfirmedAt: Number(order.loyaltyConfirmedAt) || null,
@@ -1007,22 +1010,70 @@ async function reservePizzaReward(record) {
 async function patchConfirmedPizzaOrder(order, changes) {
   const phone = loyaltyPhone(order.phone);
   const at = order.loyaltyConfirmedAt || Date.now();
-  const patch = {};
-  for (const [key,value] of Object.entries({ ...changes, loyaltyConfirmedAt: at })) patch[`orders/${order.id}/${key}`] = value;
-  if (phone) {
-    const account = await restGet(`pizzaBonus/${phone}`);
-    const history = historicalPizzaEvents(store.orders, phone, store.sections);
-    for (const [id,event] of Object.entries(history)) {
-      if (id !== order.id && !account?.events?.[id]) patch[`pizzaBonus/${phone}/events/${id}`] = event;
+  // Confirm the order and loyalty event together. ETag prevents a timeout or
+  // another tablet from being overwritten after this snapshot was read.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const url = `${DB_URL}/.json`;
+    const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
+    if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen.');
+    const root = await response.json() || {};
+    const current = root.orders?.[order.id];
+    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
+    const etag = response.headers.get('ETag');
+    if (!etag) throw new Error('Kunne ikke godta bestillingen sikkert.');
+    root.orders[order.id] = { ...current, ...changes, loyaltyConfirmedAt: at };
+    if (phone) {
+      root.pizzaBonus ||= {};
+      const account = root.pizzaBonus[phone] ||= {};
+      account.events ||= {};
+      const history = historicalPizzaEvents(normalizeOrders(root.orders), phone, store.sections);
+      for (const [id, event] of Object.entries(history)) {
+        if (id !== order.id && !account.events[id]) account.events[id] = event;
+      }
+      const quantity = (current.lines || []).reduce((sum, line) => {
+        const section = store.sections.find(section => section.items?.some(item => item.id === line.itemId));
+        return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
+      }, 0);
+      account.events[order.id] = { id: order.id, at, quantity, redeemed: Boolean(current.loyaltyReward) };
     }
-    const quantity = (order.lines || []).reduce((sum,line) => {
-      const section = store.sections.find(s => s.items?.some(item => item.id === line.itemId));
-      return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
-    },0);
-    patch[`pizzaBonus/${phone}/events/${order.id}`] = { id: order.id, at, quantity, redeemed: Boolean(order.loyaltyReward) };
+    const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify(root) });
+    if (result.ok) { order.loyaltyConfirmedAt = at; return; }
+    if (result.status !== 412) throw new Error('Kunne ikke godta bestillingen.');
   }
-  await restPatch('', patch);
-  order.loyaltyConfirmedAt = at;
+  throw new Error('Bestillingen ble endret. Oppdater og prøv igjen.');
+}
+
+const expiringOrders = new Set();
+export async function expireUnconfirmedOrders() {
+  if (!remoteEnabled || navigator.onLine === false) return;
+  const due = store.orders.filter(order => confirmationExpired(order) && !expiringOrders.has(order.id));
+  for (const order of due) {
+    expiringOrders.add(order.id);
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const url = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
+        const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
+        if (!response.ok) throw new Error('Kunne ikke kontrollere svarfristen.');
+        const current = await response.json();
+        if (!current) break;
+        if (!confirmationExpired(current)) {
+          const index = store.orders.findIndex(entry => entry.id === order.id);
+          if (index >= 0) store.orders[index] = normalizeOrders([current])[0];
+          emitData('remote'); break;
+        }
+        const etag = response.headers.get('ETag');
+        if (!etag) throw new Error('Kunne ikke avbryte sikkert.');
+        const cancelled = { ...current, status: 'avvist', statusUpdatedAt: Date.now(), rejectionCode: 'confirmation_timeout', rejectionReason: 'Svarfristen er ute', rejectionMessage: 'Bestillingen ble automatisk avbrutt fordi restauranten ikke bekreftet den innen 3 minutter.' };
+        const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify(cancelled) });
+        if (result.status === 412) continue;
+        if (!result.ok) throw new Error('Kunne ikke avbryte bestillingen.');
+        const index = store.orders.findIndex(entry => entry.id === order.id);
+        if (index >= 0) store.orders[index] = normalizeOrders([cancelled])[0];
+        emitData('remote'); break;
+      }
+    } catch { /* Retry on the next tick; never claim cancellation before it is saved. */ }
+    finally { expiringOrders.delete(order.id); }
+  }
 }
 
 /** Lagrer en ordre. Returnerer ordren med ID. */
@@ -1033,6 +1084,7 @@ export async function submitOrder(order) {
     id: order && order.id ? String(order.id) : uid('ord'),
     createdAt: Number(order && order.createdAt) || now,
     status: 'mottatt',
+    confirmationDeadline: (Number(order && order.createdAt) || now) + ORDER_CONFIRM_WAIT_MS,
     statusUpdatedAt: now,
   };
 
@@ -1351,6 +1403,8 @@ async function bootstrap() {
 
   emitData('init');
   readyResolve(store);
+  void expireUnconfirmedOrders();
+  window.setInterval(expireUnconfirmedOrders, 1000);
 }
 
 bootstrap();

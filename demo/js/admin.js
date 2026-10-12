@@ -1,3 +1,4 @@
+import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
@@ -42,7 +43,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261012-cartclean52';
+} from './data.js?v=20261013-orderdeadline56';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -1881,8 +1882,7 @@ function filteredOrders() {
 }
 document.getElementById('orderSearch').addEventListener('input', renderOrderList);
 function pendingWait(order) {
-  const minutes = Math.max(0, Math.floor((Date.now() - Number(order.createdAt)) / 60000));
-  return minutes ? `Venter · ${minutes} min` : 'Venter på svar';
+  return confirmationExpired(order) ? 'Svarfristen er ute' : `Ny · ${confirmationRemaining(order)} igjen`;
 }
 function compactOrderTime(value) {
   if (!value) return '—';
@@ -1904,7 +1904,7 @@ function orderListStatus(order) {
   if (order.status === 'bekreftet') return 'Godtatt';
   if (order.status === 'tilberedning') return 'Tilberedes';
   if (order.status === 'klar') return 'Klar for henting';
-  if (order.status === 'avvist') return 'Avvist';
+  if (order.status === 'avvist') return order.rejectionCode === 'confirmation_timeout' ? 'Avbrutt · ingen bekreftelse' : 'Avvist';
   if (order.status === 'fullfort') return 'Ferdig';
   return orderStatusLabel(order.status);
 }
@@ -2009,7 +2009,7 @@ function renderOrderDetail(orderId) {
   el.orderDetailLive.innerHTML = `
     <article class="pos-order-detail" data-order-detail-id="${escapeHtml(order.id)}">
       <header class="pos-detail-top">
-        <div class="pos-detail-heading"><div class="order-customer-heading"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${escapeHtml(isPending ? 'Ny bestilling' : orderListStatus(order))}</span></div></div>
+        <div class="pos-detail-heading"><div class="order-customer-heading"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span></div></div>
         <div class="order-heading-right"><strong class="pos-detail-total">${formatPrice(order.total)}</strong><button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingene">×</button></div>
       </header>
       <div class="pos-detail-scroll">
@@ -2323,6 +2323,10 @@ async function promoteExpiredOrdersToReady() {
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
   updateOrdersConnection();
+  document.querySelectorAll('[data-pending-countdown]').forEach(node => {
+    const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
+    if (order) node.textContent = pendingWait(order);
+  });
   document.querySelectorAll('[data-order-center]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
     if (!order) return;
