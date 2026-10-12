@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-grouporder38';
+} from './data.js?v=20261012-pickup39';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1800,7 +1800,7 @@ function renderCheckout() {
       </div>
     </details>`;
   if (ui.checkoutStep === 3) {
-    el.btnStepNext.disabled = ui.orderSubmitting;
+    el.btnStepNext.disabled = ui.orderSubmitting || !hasValidPickup();
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
   }
 }

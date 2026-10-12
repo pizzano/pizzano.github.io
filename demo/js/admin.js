@@ -43,7 +43,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-grouporder38';
+} from './data.js?v=20261012-pickup39';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

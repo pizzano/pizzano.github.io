@@ -215,3 +215,12 @@ html[data-customer-palette] .cat-tab:is(.is-active, :hover) .cat-icon svg { colo
 
 .option-quantity { display: inline-flex; gap: 6px; align-items: center; flex: none; }
 .option-quantity button { width: 26px; height: 26px; border: 1px solid var(--palette-border); border-radius: 8px; background: var(--palette-accent); color: var(--palette-on-accent); }
+
+/* Checkout action stays neutral until a valid pickup choice is complete. */
+html[data-customer-palette] #btnStepNext:disabled {
+  background: var(--palette-border) !important;
+  color: var(--palette-muted) !important;
+  border-color: var(--palette-border) !important;
+  box-shadow: none;
+  cursor: not-allowed;
+}
