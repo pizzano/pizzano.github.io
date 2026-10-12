@@ -44,12 +44,12 @@ html[data-theme="dark"] .orders-page {--ot-bg:#101b20;--ot-surface:#1b2a31;--ot-
 :root .orders-page .pos-order-detail {height:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--ot-surface);}
 :root .orders-page .pos-detail-top {display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 22px 12px;flex:none;}
 :root .orders-page .pos-detail-heading {min-width:0;}
-:root .orders-page .order-number-row {display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-:root .orders-page .order-number-row>strong {font-size:25px;overflow-wrap:anywhere;}
+:root .orders-page .order-customer-heading {display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
 :root .orders-page .order-status-badge {padding:5px 10px;border-radius:20px;background:var(--ot-selected);color:var(--ot-accent);font-size:12px;font-weight:700;}
 :root .orders-page .order-status-badge[data-status="mottatt"] {background:var(--ot-note);color:var(--ot-note-ink);}
 :root .orders-page .order-status-badge:is([data-status="avvist"],[data-status="fullfort"]) {background:var(--ot-bg);color:var(--ot-muted);}
-:root .orders-page .pos-detail-heading h2 {margin:4px 0 0;font-size:20px;overflow-wrap:anywhere;}
+:root .orders-page .pos-detail-heading h2 {margin:0;font-size:20px;overflow-wrap:anywhere;}
 :root .orders-page .order-heading-right {display:flex;gap:12px;align-items:center;}
 :root .orders-page .pos-detail-total {font-size:26px;white-space:nowrap;}
 :root .orders-page .pos-detail-close {width:40px;height:40px;border:1px solid var(--ot-line);border-radius:9px;background:var(--ot-surface);color:var(--ot-muted);font-size:25px;}
@@ -98,7 +98,7 @@ html[data-theme="dark"] .orders-page .orders-top-actions .btn {color:var(--ot-in
 html[data-theme="dark"] .orders-page .orders-top-actions .btn[aria-pressed="true"] {color:var(--ot-accent)!important;background:var(--ot-selected)!important;}
 @media(min-width:1150px) {:root .orders-page .pos-detail-actions:has(.order-decision-buttons) {flex-direction:row;align-items:center;justify-content:space-between;} :root .orders-page .order-decision-buttons {grid-template-columns:105px minmax(160px,1fr);} }
 @media(max-width:1000px) {:root .orders-page .orders-app {grid-template-columns:285px minmax(0,1fr);} :root .orders-page .pos-detail-top {padding:16px;} :root .orders-page .order-facts {margin-left:16px;margin-right:16px;grid-template-columns:1fr 1fr;} :root .orders-page .pos-items-block,:root .orders-page .pos-detail-actions {padding-left:16px;padding-right:16px;} :root .orders-page .pos-detail-total {font-size:22px;} :root .orders-page .order-heading-right {gap:7px;} }
-@media(max-width:700px) {:root .orders-page .orders-topbar {padding-right:10px;gap:8px;} :root .orders-page .orders-title-block h1 {font-size:18px;} :root .orders-page .orders-top-actions {gap:5px;} :root .orders-page .orders-top-actions button {padding:0 8px;font-size:11px;} :root .orders-page .orders-live-label {display:none;} :root .orders-page .orders-app {grid-template-columns:1fr;width:calc(100% - 16px);margin:8px auto;height:calc(100dvh - 84px);} :root .orders-page .order-detail-pane {display:none;} :root .orders-page .has-selection .orders-inbox {display:none;} :root .orders-page .has-selection .order-detail-pane {display:flex;} :root .orders-page .order-number-row>strong {font-size:21px;} :root .orders-page .order-status-badge {font-size:10px;} :root .orders-page .pos-detail-heading h2 {font-size:17px;} :root .orders-page .order-heading-right {flex-direction:column;gap:5px;align-items:flex-end;} :root .orders-page .order-minute-buttons {gap:5px;} :root .orders-page .order-minute-buttons button {padding:0 9px;} }
+@media(max-width:700px) {:root .orders-page .orders-topbar {padding-right:10px;gap:8px;} :root .orders-page .orders-title-block h1 {font-size:18px;} :root .orders-page .orders-top-actions {gap:5px;} :root .orders-page .orders-top-actions button {padding:0 8px;font-size:11px;} :root .orders-page .orders-live-label {display:none;} :root .orders-page .orders-app {grid-template-columns:1fr;width:calc(100% - 16px);margin:8px auto;height:calc(100dvh - 84px);} :root .orders-page .order-detail-pane {display:none;} :root .orders-page .has-selection .orders-inbox {display:none;} :root .orders-page .has-selection .order-detail-pane {display:flex;}  :root .orders-page .order-status-badge {font-size:10px;} :root .orders-page .pos-detail-heading h2 {font-size:17px;} :root .orders-page .order-heading-right {flex-direction:column;gap:5px;align-items:flex-end;} :root .orders-page .order-minute-buttons {gap:5px;} :root .orders-page .order-minute-buttons button {padding:0 9px;} }
 .modal-order-action {width:460px;}
 .modal-order-action :is(.accept-quick-times button,.order-accept-confirm,.order-reject-confirm) {min-height:48px;font-size:15px;}
 .modal-order-action .reject-reason {min-height:48px;}
@@ -108,3 +108,7 @@ html[data-theme="dark"] .modal-order-action :is(.reject-reasons label,.accept-ma
 html[data-theme="dark"] .modal-order-action :is(.accept-manual-time,.scheduled-accept-card) {background:var(--surface-2);border-color:var(--line-strong);}
 html[data-theme="dark"] .modal-order-action :is(.accept-manual-control input,.scheduled-accept-card strong) {background:transparent;color:var(--ink);}
 html[data-theme="dark"] .modal-order-action .scheduled-accept-card :is(span,small) {color:var(--ink-2);}
+:root .orders-page .orders-group-gap {height:16px;background:var(--ot-bg);border-top:1px solid var(--ot-line);border-bottom:1px solid var(--ot-line);}
+:root .orders-page .orders-list-row.is-new:not(.is-seen) {animation:incoming-order-glow 1.8s ease-in-out infinite;}
+@keyframes incoming-order-glow {0%,100% {background:var(--ot-surface);} 50% {background:var(--ot-note);}}
+@media(prefers-reduced-motion:reduce) {:root .orders-page .orders-list-row.is-new:not(.is-seen) {animation:none;background:var(--ot-note);}}

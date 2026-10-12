@@ -1835,12 +1835,17 @@ function deleteGroup(groupId) {
 
 const pendingOrderMinutes = new Map();
 let knownPendingOrders = null;
+const acknowledgedOrders = new Set();
+const activeOrderSounds = new Set();
+let acceptedDetailCloseTimer = null;
 let orderAudio = null;
 let orderSoundEnabled = false;
 function playOrderAlert() {
   if (!orderSoundEnabled || !orderAudio || orderAudio.state !== 'running') return;
   const oscillator = orderAudio.createOscillator();
   const gain = orderAudio.createGain();
+  activeOrderSounds.add(oscillator);
+  oscillator.onended = () => { activeOrderSounds.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
   oscillator.connect(gain); gain.connect(orderAudio.destination);
   oscillator.frequency.setValueAtTime(660, orderAudio.currentTime);
   oscillator.frequency.setValueAtTime(880, orderAudio.currentTime + .18);
@@ -1857,10 +1862,15 @@ document.getElementById('btnOrderSound').addEventListener('click', async event =
     button.setAttribute('aria-pressed', String(orderSoundEnabled));
     button.textContent = orderSoundEnabled ? 'Lyd på' : 'Aktiver lyd';
     if (orderSoundEnabled) playOrderAlert();
+    else stopOrderAlert();
   } catch { toast('Lyd kunne ikke aktiveres på denne enheten.'); }
 });
+function stopOrderAlert() {
+  for (const oscillator of activeOrderSounds) { try { oscillator.stop(); } catch {} }
+  activeOrderSounds.clear();
+}
 window.setInterval(() => {
-  if (getOrders().some(order => order.status === 'mottatt')) playOrderAlert();
+  if (getOrders().some(order => order.status === 'mottatt' && !acknowledgedOrders.has(order.id))) playOrderAlert();
 }, 15000);
 function syncOrdersWorkspaceLayout() {
   document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
@@ -1919,7 +1929,7 @@ function orderCenterText(order) {
 }
 
 function orderListRowHtml(order, isNew = false) {
-  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
+  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
     <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
     <span class="orders-list-side"><strong>${formatPrice(order.total)}</strong><small>${escapeHtml(compactOrderTime(order.createdAt))}</small></span>
@@ -1938,7 +1948,7 @@ function renderOrderList() {
     if (a.status === 'mottatt' && b.status === 'mottatt') return Number(a.createdAt) - Number(b.createdAt);
     return Number(b.status === 'mottatt') - Number(a.status === 'mottatt');
   });
-  el.orderList.innerHTML = orders.map(order => orderListRowHtml(order, order.status === 'mottatt')).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Ingen bestillinger å vise.</span></div>';
+  el.orderList.innerHTML = orders.map((order, index) => `${index > 0 && order.status !== 'mottatt' && orders[index - 1].status === 'mottatt' ? '<div class="orders-group-gap" aria-hidden="true"></div>' : ''}${orderListRowHtml(order, order.status === 'mottatt')}`).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Ingen bestillinger å vise.</span></div>';
 }
 function detailLineHtml(line) {
   const options = Array.isArray(line.options) ? line.options : [];
@@ -1975,7 +1985,6 @@ function renderOrderDetail(orderId) {
     return;
   }
   selectedOrderId = order.id;
-  const shortId = String(order.id || '').slice(-8).toUpperCase();
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const isPending = order.status === 'mottatt';
   const scheduledPickup = isScheduledPickupOrder(order);
@@ -2000,7 +2009,7 @@ function renderOrderDetail(orderId) {
   el.orderDetailLive.innerHTML = `
     <article class="pos-order-detail" data-order-detail-id="${escapeHtml(order.id)}">
       <header class="pos-detail-top">
-        <div class="pos-detail-heading"><div class="order-number-row"><strong>#${escapeHtml(shortId)}</strong><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${escapeHtml(isPending ? 'Ny bestilling' : orderListStatus(order))}</span></div><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2></div>
+        <div class="pos-detail-heading"><div class="order-customer-heading"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${escapeHtml(isPending ? 'Ny bestilling' : orderListStatus(order))}</span></div></div>
         <div class="order-heading-right"><strong class="pos-detail-total">${formatPrice(order.total)}</strong><button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingene">×</button></div>
       </header>
       <div class="pos-detail-scroll">
@@ -2040,7 +2049,7 @@ function updateOrdersConnection() {
 function renderOrders() {
   const all = getOrders();
   const pendingIds = new Set(all.filter(order => order.status === 'mottatt').map(order => order.id));
-  if (knownPendingOrders && [...pendingIds].some(id => !knownPendingOrders.has(id))) playOrderAlert();
+  if (knownPendingOrders && [...pendingIds].some(id => !knownPendingOrders.has(id) && !acknowledgedOrders.has(id))) playOrderAlert();
   knownPendingOrders = pendingIds;
   updateOrdersConnection();
   renderOrderTabs(all);
@@ -2074,7 +2083,10 @@ el.orderFilterBtns.forEach((button) => {
 el.orderList.addEventListener('click', (event) => {
   const row = event.target.closest('[data-select-order]');
   if (!row) return;
+  clearTimeout(acceptedDetailCloseTimer);
   selectedOrderId = row.dataset.selectOrder;
+  acknowledgedOrders.add(selectedOrderId);
+  stopOrderAlert();
   renderOrders();
 });
 
@@ -2242,11 +2254,19 @@ async function confirmAcceptOrder() {
     toast(scheduled ? 'Kunne ikke godta den planlagte hentetiden.' : 'Kunne ikke godta bestillingen.');
     return;
   }
+  acknowledgedOrders.add(acceptedOrderId);
+  stopOrderAlert();
   selectedOrderId = acceptedOrderId;
   closeModals();
   renderOrders();
   renderStats();
   toast(scheduled ? `Bestillingen er godtatt · henting ${order.pickup}.` : `Bestillingen er godtatt · ${minutes} min.`);
+  clearTimeout(acceptedDetailCloseTimer);
+  acceptedDetailCloseTimer = window.setTimeout(() => {
+    if (selectedOrderId !== acceptedOrderId) return;
+    selectedOrderId = null;
+    renderOrders();
+  }, 1000);
 
 }
 el.btnAcceptConfirm.addEventListener('click', confirmAcceptOrder);
