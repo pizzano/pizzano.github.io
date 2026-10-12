@@ -2,14 +2,14 @@
 <html lang="no">
 
 <head>
-    <script src="/demo/config.js?v=20261012-sizegroups35"></script>
+    <script src="/demo/config.js?v=20261012-ingredients36"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/demo/icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-sizegroups35">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-ingredients36">
 </head>
 
 <body>
@@ -393,7 +393,8 @@
 
                     <section class="set-section" data-section="ingredienser">
                         <h3 class="set-title">Ingredienser</h3>
-                        <p class="set-hint">Lag én tagg per ingrediens. Du kan endre navn, slette taggen eller låse den slik at kunden ikke kan fjerne den.</p>
+                        <p class="set-hint">Ingredienser foreslås fra produktbeskrivelsen. Kontroller listen. Slå av «Kan fjernes», slett eller legg til manuelt.</p>
+                        <div class="ingredient-add-row"><button class="btn btn-outline btn-sm" id="btnDetectIngredients" type="button">Hent fra beskrivelsen</button><button class="btn btn-outline btn-sm" id="btnResetIngredients" type="button">Nullstill</button></div>
                         <div class="ingredient-add-row">
                             <input id="fIngredientNew" class="input" type="text" placeholder="F.eks. Pepperoni" autocomplete="off">
                             <button class="btn btn-primary btn-sm" id="btnAddIngredient" type="button">+ Legg til</button>
@@ -668,7 +669,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261012-sizegroups35"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261012-ingredients36"></script>
 </body>
 
 </html>

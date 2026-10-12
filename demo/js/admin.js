@@ -1,3 +1,4 @@
+import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 /**
@@ -41,7 +42,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-sizegroups35';
+} from './data.js?v=20261012-ingredients36';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -160,6 +161,8 @@ const el = {
   fDesc: $('fDesc'),
   fIngredientNew: $('fIngredientNew'),
   btnAddIngredient: $('btnAddIngredient'),
+  btnDetectIngredients: $('btnDetectIngredients'),
+  btnResetIngredients: $('btnResetIngredients'),
   ingredientRuleList: $('ingredientRuleList'),
   fImage: $('fImage'),
   fImagePreview: $('fImagePreview'),
@@ -961,6 +964,8 @@ function syncIngredientRules(item, rules) {
     seen.add(key);
     cleaned.push({ name, removable: rule.removable !== false });
   }
+  item.ingredientDetectionInitialized = true;
+  item.ingredientRulesEdited = true;
   item.ingredientRules = cleaned;
   item.ingredients = cleaned.map((rule) => rule.name).join(', ');
 }
@@ -1007,6 +1012,17 @@ el.fDesc.addEventListener('input', () => {
     item.description = el.fDesc.value;
   });
 });
+el.fDesc.addEventListener('change', () => {
+  const { item } = selectedItem();
+  if (!item || item.ingredientRulesEdited) return;
+  const rules = detectIngredientRules(item.description);
+  updateItem(target => {
+    syncIngredientRules(target, rules);
+    target.ingredientRulesEdited = false;
+    if (!target.ingredientDefaults?.length) target.ingredientDefaults = rules.map(rule => ({...rule}));
+  });
+  renderIngredientRules();
+});
 
 function addIngredientFromAdmin() {
   const name = el.fIngredientNew.value.trim().replace(/\s+/g, ' ');
@@ -1031,6 +1047,23 @@ function addIngredientFromAdmin() {
 }
 
 el.btnAddIngredient.addEventListener('click', addIngredientFromAdmin);
+el.btnDetectIngredients.addEventListener('click', () => {
+  const { item } = selectedItem();
+  if (!item) return;
+  const existing = normalizedIngredientRules(item);
+  const names = new Set(existing.map(rule => rule.name.toLocaleLowerCase('no')));
+  const added = detectIngredientRules(item.description).filter(rule => !names.has(rule.name.toLocaleLowerCase('no')));
+  updateItem(target => syncIngredientRules(target, [...existing, ...added]));
+  renderIngredientRules();
+  toast(added.length ? `${added.length} ingredienser lagt til. Kontroller listen.` : 'Ingen nye ingredienser funnet. Du kan legge til manuelt.');
+});
+el.btnResetIngredients.addEventListener('click', () => {
+  const { item } = selectedItem();
+  if (!item) return;
+  updateItem(target => syncIngredientRules(target, target.ingredientDefaults || []));
+  renderIngredientRules();
+  toast('Den opprinnelige ingredienslisten er gjenopprettet.');
+});
 el.fIngredientNew.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return;
   event.preventDefault();

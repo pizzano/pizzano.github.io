@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v153-sizegroups35';
+const CACHE_NAME = 'kol-demo-v154-ingredients36';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   '/demo/js/shop-info.js',
   '/demo/js/install.js',
   '/demo/js/data.js',
+  '/demo/js/ingredient-detection.js',
   '/demo/js/palette.js',
   '/demo/js/order-comments.js',
   '/demo/js/loyalty.js',

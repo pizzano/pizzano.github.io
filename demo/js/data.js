@@ -1,3 +1,4 @@
+import { detectIngredientRules } from './ingredient-detection.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js';
 /**
  * data.js — Delt datalag for Restauranten.
@@ -545,20 +546,29 @@ function normalizeState(raw) {
         optionGroupIds: asArray(size.optionGroupIds).filter(id=>groupIds.has(id)),
       }));
       const maxIndex = Math.max(sizes.length - 1, 0);
-      const ingredients =
+      let ingredients =
         typeof item.ingredients === 'string' ? item.ingredients.trim() : '';
       const description =
         typeof item.description === 'string' ? item.description.trim() : '';
-      const ingredientRules = buildIngredientRules(
-        ingredients,
-        item.ingredientRules || []
-      );
+      const explicitRules = Array.isArray(item.ingredientRules) ? item.ingredientRules : [];
+      if (!ingredients && explicitRules.length) ingredients = explicitRules.map(rule => typeof rule === 'string' ? rule : rule.name).filter(Boolean).join(', ');
+      let ingredientRules = buildIngredientRules(ingredients, explicitRules);
+      if (!ingredients && !item.ingredientDetectionInitialized) {
+        ingredientRules = detectIngredientRules(description);
+        ingredients = ingredientRules.map(rule => rule.name).join(', ');
+      }
+      const ingredientDefaults = Array.isArray(item.ingredientDefaults)
+        ? buildIngredientRules(item.ingredientDefaults.map(rule => rule.name).join(', '), item.ingredientDefaults)
+        : ingredientRules.map(rule => ({...rule}));
       return {
         id: item.id || uid('it'),
         name: typeof item.name === 'string' ? item.name.trim() : '',
         description: description || ingredients,
         ingredients,
         ingredientRules,
+        ingredientDefaults,
+        ingredientDetectionInitialized: true,
+        ingredientRulesEdited: item.ingredientRulesEdited === true,
         imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : '',
         sizes,
         defaultSizeIndex: Math.min(
