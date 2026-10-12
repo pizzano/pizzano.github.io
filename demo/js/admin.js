@@ -25,6 +25,7 @@ import {
   formatPrice,
   getItemBasePrice,
   getItemOptionGroups,
+  removeItemOptionGroup,
   getItemIngredientRules,
   countProductsUsingGroup,
   findItem,
@@ -42,7 +43,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-ingredients36';
+} from './data.js?v=20261012-detach37';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -903,7 +904,7 @@ function renderPanel() {
     .join('');
 
   // Valggrupper
-  const groups = getItemOptionGroups(item);
+  const groups = getItemOptionGroups(item, '*');
   el.attachedGroups.innerHTML = groups.length
     ? groups
         .map(
@@ -918,7 +919,7 @@ function renderPanel() {
           } · ${group.required ? 'Obligatorisk' : 'Valgfritt'} · ${
             (group.options || []).length
           } alternativer</span>
-          <small>Brukes av ${countProductsUsingGroup(group.id)} produkter</small>
+          <small>${(item.optionGroupIds || []).includes(group.id) ? 'Alle størrelser' : escapeHtml((item.sizes || []).filter(size => (size.optionGroupIds || []).includes(group.id)).map(size => size.label).join(', '))} · Brukes av ${countProductsUsingGroup(group.id)} produkter</small>
         </div>
         <button class="btn btn-outline btn-xs" data-edit-group="${escapeHtml(
           group.id
@@ -1237,9 +1238,7 @@ el.attachedGroups.addEventListener('click', (event) => {
   if (!detach) return;
   updateItem(
     (item) => {
-      item.optionGroupIds = (item.optionGroupIds || []).filter(
-        (id) => id !== detach.dataset.detachGroup
-      );
+      removeItemOptionGroup(item, detach.dataset.detachGroup);
     },
     { rerenderPanel: true }
   );
@@ -1783,7 +1782,7 @@ function deleteGroup(groupId) {
     state.optionGroups = state.optionGroups.filter((group) => group.id !== groupId);
     for (const section of state.sections) {
       for (const item of section.items) {
-        item.optionGroupIds = (item.optionGroupIds || []).filter((id) => id !== groupId);
+        removeItemOptionGroup(item, groupId);
       }
     }
   });

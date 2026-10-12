@@ -114,6 +114,15 @@ export function getItemOptionGroups(item, sizeId = null) {
   return [...new Set([...(item.optionGroupIds || []), ...sizes.flatMap(size=>size.optionGroupIds || [])])].map(findOptionGroup).filter(Boolean);
 }
 
+/** Detach from both the product and all of its size-specific attachments. */
+export function removeItemOptionGroup(item, groupId) {
+  if (!item) return;
+  item.optionGroupIds = (item.optionGroupIds || []).filter(id => id !== groupId);
+  for (const size of item.sizes || []) {
+    size.optionGroupIds = (size.optionGroupIds || []).filter(id => id !== groupId);
+  }
+}
+
 /**
  * Deler adminens ingrediensfelt i rene navn.
  * Komma, semikolon og linjeskift støttes slik at nye produkter er enkle å legge inn.
