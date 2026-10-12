@@ -180,7 +180,7 @@ html[data-customer-palette] .view-cart .cart-stepper-trash,
 html[data-customer-palette] .view-cart .cart-stepper-minus {
   background: var(--palette-accent) !important;
   color: #fff !important;
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--palette-deep) 20%, transparent) !important;
+  box-shadow: none !important;
 }
 
 /* Gentle theme tint for the pickup contact summary. */

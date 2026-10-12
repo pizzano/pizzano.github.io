@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-pickupfeedback40';
+} from './data.js?v=20261012-cartstepper41';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1562,7 +1562,7 @@ function cartLineHtml(line) {
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
               : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="3" rx="1"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M5 8l1.2 12a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 8M9 12l6 6M15 12l-6 6"/></svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
                 </button>`}
             <span>${line.quantity}</span>
             <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
@@ -1590,7 +1590,7 @@ function renderCart() {
     el.cartHeaderActions.innerHTML = `
       <button class="cart-clear-btn" data-clear-cart type="button" aria-label="Tøm handlekurv">
         <span>Tøm handlekurv</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="3" rx="1"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M5 8l1.2 12a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 8M9 12l6 6M15 12l-6 6"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
       </button>
     `;
   }

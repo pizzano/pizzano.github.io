@@ -2131,8 +2131,8 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 
   .view-cart .cart-product-stepper button {
-    width: 26px;
-    height: 26px;
+    width: 38px;
+    height: 36px;
   }
 }
 
@@ -2181,10 +2181,12 @@ html[data-theme="dark"] .cart-detail-row b {
 .view-cart .cart-product-stepper.is-smart-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 
-  padding: 2px 3px;
-  border-radius: 999px;
+  padding: 0;
+  border: 1px solid var(--palette-border);
+  overflow: hidden;
+  border-radius: 10px;
   background: var(--palette-surface);
 }
 
@@ -2194,16 +2196,22 @@ html[data-theme="dark"] .cart-detail-row b {
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
+  width: 38px;
+  height: 36px;
+  flex: 0 0 38px;
   background: var(--palette-surface);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--palette-deep) 8%, transparent);
+  box-shadow: none;
   cursor: pointer;
 }
 
 .view-cart .cart-product-stepper.is-smart-stepper > span {
-  min-width: 22px;
+  min-width: 38px;
+  height: 36px;
+  display: grid;
+  place-items: center;
   color: var(--palette-ink);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 800;
   text-align: center;
 }
@@ -2227,7 +2235,7 @@ html[data-theme="dark"] .cart-detail-row b {
   font-size: 18px !important;
   font-weight: 650 !important;
   line-height: 1 !important;
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--palette-deep) 20%, transparent) !important;
+  box-shadow: none !important;
 }
 
 .view-cart .cart-product-actions,
@@ -2263,13 +2271,13 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 
   .view-cart .cart-product-stepper.is-smart-stepper button {
-    width: 26px;
-    height: 26px;
+    width: 38px;
+    height: 36px;
   }
 
   .view-cart .cart-stepper-trash svg {
-    width: 13px;
-    height: 13px;
+    width: 17px;
+    height: 17px;
   }
 
 /* Smart quantity: 1 = trash, 2+ = minus */
@@ -3210,8 +3218,8 @@ html[data-theme="dark"] .cart-detail-row b {
   }
 
   #favList .favorite-remove-btn svg {
-    width: 13px;
-    height: 13px;
+    width: 17px;
+    height: 17px;
   }
 
   .view-menu .cat-block {
