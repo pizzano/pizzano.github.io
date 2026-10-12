@@ -2,15 +2,15 @@
 <html lang="no">
 
 <head>
-    <script src="/demo/config.js?v=20261013-orderdeadline56"></script>
+    <script src="/demo/config.js?v=20261013-orderalarm57"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/demo/icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20261013-orderdeadline56">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-orderdeadline56">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261013-orderdeadline56">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20261013-orderalarm57">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-orderalarm57">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261013-orderalarm57">
 </head>
 
 <body>
@@ -262,6 +262,13 @@
 
                             </div>
 
+                            <div class="feature-setting-group">
+                                <div class="feature-setting-head"><strong>Bestillingsalarm</strong><small>Alarmen fortsetter til bestillingen er godtatt, avvist eller automatisk avbrutt.</small></div>
+                                <label class="lbl" for="sOrderAlarmUrl">MP3-lenke</label>
+                                <input id="sOrderAlarmUrl" class="input" type="text" inputmode="url" placeholder="https://eksempel.no/alarm.mp3" aria-describedby="orderAlarmHelp">
+                                <small id="orderAlarmHelp">Bruk en direkte HTTPS-lenke eller en filsti som /demo/alarm.mp3. Tomt felt bruker standardalarmen. Aktiver lyd på hver enhet.</small>
+                                <button class="btn btn-outline btn-sm" id="btnTestOrderAlarm" type="button">Test lyd</button>
+                            </div>
                             <div class="feature-setting-group">
                                 <div class="feature-setting-head">
                                     <strong>Mørk modus</strong>
@@ -672,7 +679,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261013-orderdeadline56"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261013-orderalarm57"></script>
 </body>
 
 </html>

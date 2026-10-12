@@ -274,6 +274,7 @@ const DEFAULT_SETTINGS = {
   orderCloseTime: '',
   pickupInfo: 'Henting i restauranten',
   paymentInfo: 'Betaling ved henting',
+  orderAlarmUrl: '/demo/soundreality-police-operation-siren-144229.mp3',
   minPreorderMinutes: 0,
   prepMinutes: 25,
   slotIntervalMinutes: 15,

@@ -43,7 +43,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261013-orderdeadline56';
+} from './data.js?v=20261013-orderalarm57';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -251,6 +251,7 @@ const el = {
     phone: $('sPhone'),
     pickupInfo: $('sPickupInfo'),
     paymentInfo: $('sPaymentInfo'),
+    orderAlarmUrl: $('sOrderAlarmUrl'),
   },
 };
 
@@ -1835,14 +1836,36 @@ function deleteGroup(groupId) {
  * ------------------------------------------------------------------ */
 
 const pendingOrderMinutes = new Map();
-let knownPendingOrders = null;
 const acknowledgedOrders = new Set();
 const activeOrderSounds = new Set();
 let acceptedDetailCloseTimer = null;
 let orderAudio = null;
+let orderMp3 = null;
+let orderMp3Url = '';
+let failedOrderMp3Url = '';
+let orderAlarmPreview = null;
+function validOrderAlarmUrl(value) {
+  if (!value.trim()) return '';
+  try { const url = new URL(value.trim(), location.href); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
+}
 let orderSoundEnabled = false;
 function playOrderAlert() {
-  if (!orderSoundEnabled || !orderAudio || orderAudio.state !== 'running') return;
+  if (!orderSoundEnabled) return;
+  const url = validOrderAlarmUrl(String(store.settings?.orderAlarmUrl || ''));
+  if (url && url !== failedOrderMp3Url) {
+    if (!orderMp3 || orderMp3Url !== url) {
+      orderMp3?.pause();
+      orderMp3 = new Audio(url); orderMp3Url = url; orderMp3.loop = true;
+      orderMp3.onerror = () => { failedOrderMp3Url = url; orderMp3?.pause(); toast('MP3-filen kunne ikke spilles. Standardalarmen brukes.'); playOrderAlert(); };
+    }
+    if (orderMp3.paused) orderMp3.play().catch(() => {
+      failedOrderMp3Url = url;
+      toast('MP3-filen kunne ikke spilles. Standardalarmen brukes.');
+      playOrderAlert();
+    });
+    return;
+  }
+  if (!orderSoundEnabled || !orderAudio || orderAudio.state !== 'running' || activeOrderSounds.size) return;
   const oscillator = orderAudio.createOscillator();
   const gain = orderAudio.createGain();
   activeOrderSounds.add(oscillator);
@@ -1862,17 +1885,20 @@ document.getElementById('btnOrderSound').addEventListener('click', async event =
     orderSoundEnabled = !orderSoundEnabled;
     button.setAttribute('aria-pressed', String(orderSoundEnabled));
     button.textContent = orderSoundEnabled ? 'Lyd på' : 'Aktiver lyd';
-    if (orderSoundEnabled) playOrderAlert();
+    if (orderSoundEnabled) { failedOrderMp3Url = ''; if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert(); }
     else stopOrderAlert();
   } catch { toast('Lyd kunne ikke aktiveres på denne enheten.'); }
 });
 function stopOrderAlert() {
+  orderMp3?.pause();
+  if (orderMp3) orderMp3.currentTime = 0;
   for (const oscillator of activeOrderSounds) { try { oscillator.stop(); } catch {} }
   activeOrderSounds.clear();
 }
 window.setInterval(() => {
-  if (getOrders().some(order => order.status === 'mottatt' && !acknowledgedOrders.has(order.id))) playOrderAlert();
-}, 15000);
+  if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+  else stopOrderAlert();
+}, 2000);
 function syncOrdersWorkspaceLayout() {
   document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
 }
@@ -2048,9 +2074,8 @@ function updateOrdersConnection() {
 }
 function renderOrders() {
   const all = getOrders();
-  const pendingIds = new Set(all.filter(order => order.status === 'mottatt').map(order => order.id));
-  if (knownPendingOrders && [...pendingIds].some(id => !knownPendingOrders.has(id) && !acknowledgedOrders.has(id))) playOrderAlert();
-  knownPendingOrders = pendingIds;
+  if (all.some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+  else stopOrderAlert();
   updateOrdersConnection();
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) => order.status === 'mottatt').length} nye`;
@@ -2086,7 +2111,6 @@ el.orderList.addEventListener('click', (event) => {
   clearTimeout(acceptedDetailCloseTimer);
   selectedOrderId = row.dataset.selectOrder;
   acknowledgedOrders.add(selectedOrderId);
-  stopOrderAlert();
   renderOrders();
 });
 
@@ -2255,7 +2279,6 @@ async function confirmAcceptOrder() {
     return;
   }
   acknowledgedOrders.add(acceptedOrderId);
-  stopOrderAlert();
   selectedOrderId = acceptedOrderId;
   closeModals();
   renderOrders();
@@ -2410,6 +2433,7 @@ const SETTING_FIELDS = [
   ['phone', 'text'],
   ['pickupInfo', 'text'],
   ['paymentInfo', 'text'],
+  ['orderAlarmUrl', 'alarmUrl'],
   ['openingDays', 'text'],
   ['closedMessage', 'text'],
   ['orderOpenTime', 'text'],
@@ -2480,11 +2504,32 @@ function renderSettings() {
     : '<span class="preview-title">Ingen hentetider — restauranten er stengt nå.</span>';
 }
 
+$('btnTestOrderAlarm').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  if (orderAlarmPreview && !orderAlarmPreview.paused) {
+    orderAlarmPreview.pause(); button.textContent = 'Test lyd'; return;
+  }
+  const field = el.settings.orderAlarmUrl;
+  const url = validOrderAlarmUrl(field.value);
+  if (!url) { toast('Legg inn en gyldig MP3-lenke først.'); field.focus(); return; }
+  orderAlarmPreview = new Audio(url);
+  orderAlarmPreview.onended = () => { button.textContent = 'Test lyd'; };
+  orderAlarmPreview.onerror = () => { button.textContent = 'Test lyd'; toast('Lydfilen kunne ikke spilles. Kontroller lenken.'); };
+  try { await orderAlarmPreview.play(); button.textContent = 'Stopp test'; }
+  catch { button.textContent = 'Test lyd'; toast('Lydfilen kunne ikke spilles. Kontroller lenken.'); }
+});
+
 function bindSettingField(key, type) {
   const field = el.settings[key];
   if (!field) return;
   const handler = () => {
     const raw = field.value;
+    if (type === 'alarmUrl') {
+      const url = validOrderAlarmUrl(raw);
+      field.setCustomValidity(url === null ? 'Bruk en gyldig HTTP- eller HTTPS-lenke til lydfilen.' : '');
+      if (url === null) return;
+      failedOrderMp3Url = '';
+    }
     mutate(
       (state) => {
         if (type === 'number') {
