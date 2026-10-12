@@ -212,3 +212,6 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
 
 html[data-customer-palette] .cat-tab .cat-icon svg { width: 19px; height: 19px; color: var(--palette-muted); }
 html[data-customer-palette] .cat-tab:is(.is-active, :hover) .cat-icon svg { color: var(--palette-accent); }
+
+.option-quantity { display: inline-flex; gap: 6px; align-items: center; flex: none; }
+.option-quantity button { width: 26px; height: 26px; border: 1px solid var(--palette-border); border-radius: 8px; background: var(--palette-accent); color: var(--palette-on-accent); }

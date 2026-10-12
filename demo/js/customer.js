@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-empty34';
+} from './data.js?v=20261012-sizegroups35';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -238,7 +238,7 @@ function visibleItems(section) {
     if (item.hidden) return false;
     if (!query) return true;
     const sizeLabels = (item.sizes || []).map((size) => size.label).join(' ');
-    const optionLabels = getItemOptionGroups(item)
+    const optionLabels = getItemOptionGroups(item, '*')
       .flatMap((group) => [group.title, ...(group.options || []).map((option) => option.label)])
       .join(' ');
     const searchText = [
@@ -1002,7 +1002,7 @@ function renderOpenState() {
 function defaultSelectionFor(item) {
   const selections = {};
   for (const group of getItemOptionGroups(item)) {
-    const valid = new Set((group.options || []).map((opt) => opt.id));
+    const valid = new Set((group.options || []).filter(opt=>!opt.soldOut).map((opt) => opt.id));
     let defaults = (group.defaultOptionIds || []).filter((id) => valid.has(id));
     if (group.selectionMode === 'single') defaults = defaults.slice(0, 1);
     else defaults = defaults.slice(0, group.maxSelections);
@@ -1068,13 +1068,13 @@ function validateDraft() {
   let message = '';
   if (!item) return { valid: false, problems, message: 'Produktet finnes ikke.' };
 
-  for (const group of getItemOptionGroups(item)) {
+  for (const group of getItemOptionGroups(item, draft.sizeId)) {
     const picked = draft.selections[group.id] || [];
-    if (group.required && picked.length === 0) {
+    if (group.required && new Set(picked).size < (group.minSelections || 1)) {
       problems.add(group.id);
       if (!message) message = `Velg i «${group.title}» for å fortsette.`;
     }
-    if (group.selectionMode === 'multiple' && picked.length > group.maxSelections) {
+    if (group.selectionMode === 'multiple' && new Set(picked).size > group.maxSelections) {
       problems.add(group.id);
       if (!message) message = `Du kan velge maks ${group.maxSelections} i «${group.title}».`;
     }
@@ -1092,14 +1092,14 @@ function draftTotal() {
 function optionGroupHtml(group, problems) {
   const picked = draft.selections[group.id] || [];
   const isMulti = group.selectionMode === 'multiple';
-  const atMax = isMulti && picked.length >= group.maxSelections;
+  const atMax = isMulti && new Set(picked).size >= group.maxSelections;
   const badges = `<span class="opt-guidance">${group.required ? 'Velg tilvalg' : 'Valgfritt'}</span>`;
 
   const rows = (group.options || [])
     .filter((option) => option.label)
     .map((option) => {
       const checked = picked.includes(option.id);
-      const blocked = atMax && !checked;
+      const blocked = option.soldOut || (atMax && !checked);
       return `
         <label class="opt-row${checked ? ' is-checked' : ''}${blocked ? ' is-blocked' : ''}">
           <input type="${isMulti ? 'checkbox' : 'radio'}" name="grp_${escapeHtml(group.id)}"
@@ -1109,6 +1109,7 @@ function optionGroupHtml(group, problems) {
           <span class="opt-price">${
             option.price > 0 ? `+${formatPrice(option.price)}` : 'Inkludert'
           }</span>
+          ${group.allowQuantity && checked ? `<span class="option-quantity"><button type="button" data-addon-quantity="-1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Færre ${escapeHtml(option.label)}">−</button><b>${picked.filter(id=>id===option.id).length}</b><button type="button" data-addon-quantity="1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Flere ${escapeHtml(option.label)}">+</button></span>` : ''}
         </label>`;
     })
     .join('');
@@ -1137,8 +1138,11 @@ function renderSheet() {
     draft.sizeId = fallback ? fallback.id : null;
   }
 
+  const groups = getItemOptionGroups(item, draft.sizeId);
+  const activeGroups = new Set(groups.map(group=>group.id));
+  for (const id of Object.keys(draft.selections)) if (!activeGroups.has(id)) delete draft.selections[id];
+  for (const group of groups) if (!Array.isArray(draft.selections[group.id])) draft.selections[group.id] = [...(group.defaultOptionIds || [])];
   const { problems, message } = validateDraft();
-  const groups = getItemOptionGroups(item);
   const allergens = allergenLabels(item);
   const ingredientCustomizationEnabled =
     store.settings?.ingredientCustomizationEnabled !== false;
@@ -1389,7 +1393,7 @@ function reconcileCart() {
       hasReward = true;
       if (!line.loyaltyAuto && line.quantity !== 1) { line.quantity = 1; changed = true; }
     }
-    const groups = getItemOptionGroups(item);
+    const groups = getItemOptionGroups(item, line.sizeId);
     const groupIds = new Set(groups.map((group) => group.id));
     for (const key of Object.keys(line.selections || {})) {
       if (!groupIds.has(key)) {
@@ -1398,11 +1402,10 @@ function reconcileCart() {
       }
     }
     for (const group of groups) {
-      const valid = new Set((group.options || []).map((opt) => opt.id));
+      const valid = new Set((group.options || []).filter(opt=>!opt.soldOut).map((opt) => opt.id));
       const before = line.selections[group.id] || [];
       let after = before.filter((id) => valid.has(id));
-      if (group.selectionMode === 'single') after = after.slice(0, 1);
-      else after = after.slice(0, group.maxSelections);
+      if (!group.allowQuantity) after = after.slice(0, group.selectionMode === 'single' ? 1 : group.maxSelections);
       if (after.length !== before.length) changed = true;
       line.selections[group.id] = after;
     }
@@ -2199,7 +2202,7 @@ async function placeOrder() {
  * ------------------------------------------------------------------ */
 
   function previousOrderSelections(item, line) {
-    const groups = getItemOptionGroups(item);
+    const groups = getItemOptionGroups(item, item.sizes?.find(size=>size.label===line.size)?.id);
     const savedSelections =
       line && line.selections && typeof line.selections === 'object'
         ? line.selections
@@ -2237,7 +2240,7 @@ async function placeOrder() {
         picked = (group.defaultOptionIds || []).filter((id) => validIds.has(id));
       }
 
-      selections[group.id] = group.selectionMode === 'single'
+      selections[group.id] = group.allowQuantity ? picked.slice(0,30) : group.selectionMode === 'single'
         ? picked.slice(0, 1)
         : picked.slice(0, Math.max(Number(group.maxSelections) || picked.length, 1));
     }
@@ -2262,7 +2265,7 @@ async function placeOrder() {
     const { item } = findItem(line.itemId);
 
     if (item) {
-      for (const group of getItemOptionGroups(item)) {
+      for (const group of getItemOptionGroups(item, '*')) {
         for (const option of group.options || []) {
           if (!remaining.has(option.label)) continue;
           details.push({
@@ -2799,6 +2802,19 @@ el.cartLines.addEventListener('click', (event) => {
 
 el.sheetBody.addEventListener('click', (event) => {
   if (!draft) return;
+  const quantityButton = event.target.closest('[data-addon-quantity]');
+  if (quantityButton) {
+    event.preventDefault();
+    const {item} = findItem(draft.itemId);
+    const group = getItemOptionGroups(item, draft.sizeId).find(group=>group.id===quantityButton.dataset.addonGroup);
+    if (!group?.allowQuantity) return;
+    const ids = [...(draft.selections[group.id] || [])], id = quantityButton.dataset.addonOption;
+    if (!group.options.some(option=>option.id===id && !option.soldOut)) return;
+    const count = ids.filter(value=>value===id).length;
+    if (quantityButton.dataset.addonQuantity==='1') { if(count>=30)return;ids.push(id); }
+    else { const index=ids.indexOf(id);if(index>=0)ids.splice(index,1); }
+    draft.selections[group.id]=ids;renderSheet();return;
+  }
   const toggle = event.target.closest('[data-toggle-ingredients]');
   if (toggle) {
     draft.ingredientsOpen = !draft.ingredientsOpen;
@@ -2843,7 +2859,7 @@ el.sheetBody.addEventListener('change', (event) => {
   const optionId = target.dataset.option;
   if (!groupId || !optionId) return;
 
-  const group = getItemOptionGroups(findItem(draft.itemId).item).find(
+  const group = getItemOptionGroups(findItem(draft.itemId).item, draft.sizeId).find(
     (entry) => entry.id === groupId
   );
   if (!group) return;
@@ -2888,7 +2904,7 @@ el.sheetBody.addEventListener('change', (event) => {
   const groupId = target.dataset.group;
   const optionId = target.dataset.option;
   if (!groupId || !optionId) return;
-  const group = getItemOptionGroups(item).find((entry) => entry.id === groupId);
+  const group = getItemOptionGroups(item, draft.sizeId).find((entry) => entry.id === groupId);
   const option = group?.options?.find((entry) => entry.id === optionId);
   if (!option) return;
   const selected = (draft.selections[groupId] || []).includes(optionId);

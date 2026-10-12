@@ -41,7 +41,7 @@ import {
   refreshFromDatabase,
   ORDER_STATUSES,
   orderStatusLabel,
-} from './data.js?v=20261012-empty34';
+} from './data.js?v=20261012-sizegroups35';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

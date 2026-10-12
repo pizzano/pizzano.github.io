@@ -107,11 +107,10 @@ export function findItem(itemId) {
 }
 
 /** Valggrupper som faktisk finnes, i produktets rekkefølge. */
-export function getItemOptionGroups(item) {
-  if (!item || !Array.isArray(item.optionGroupIds)) return [];
-  return item.optionGroupIds
-    .map((groupId) => findOptionGroup(groupId))
-    .filter(Boolean);
+export function getItemOptionGroups(item, sizeId = null) {
+  if (!item) return [];
+  const sizes = sizeId === '*' ? item.sizes || [] : [(item.sizes || []).find(size=>size.id===(sizeId || getDefaultSize(item)?.id))].filter(Boolean);
+  return [...new Set([...(item.optionGroupIds || []), ...sizes.flatMap(size=>size.optionGroupIds || [])])].map(findOptionGroup).filter(Boolean);
 }
 
 /**
@@ -165,7 +164,7 @@ export function countProductsUsingGroup(groupId) {
   let count = 0;
   for (const section of store.sections || []) {
     for (const item of section.items || []) {
-      if ((item.optionGroupIds || []).includes(groupId)) count += 1;
+      if ([...(item.optionGroupIds || []), ...(item.sizes || []).flatMap(size=>size.optionGroupIds || [])].includes(groupId)) count += 1;
     }
   }
   return count;
@@ -189,14 +188,15 @@ export function computeLinePrice(item, sizeId, optionIds, quantity = 1) {
 /** Slår opp etiketter for valgte alternativer, gruppert. */
 export function describeSelection(optionIds) {
   const labels = [];
-  for (const optionId of optionIds || []) {
+  for (const optionId of new Set(optionIds || [])) {
+    const quantity = (optionIds || []).filter(id=>id===optionId).length;
     for (const group of store.optionGroups || []) {
       const option = (group.options || []).find((opt) => opt.id === optionId);
       if (option) {
         labels.push({
           groupTitle: group.title,
-          label: option.label,
-          price: Number(option.price) || 0,
+          label: quantity > 1 ? `${quantity} × ${option.label}` : option.label,
+          price: (Number(option.price) || 0) * quantity,
         });
         break;
       }
@@ -515,6 +515,8 @@ function normalizeState(raw) {
     title: typeof group.title === 'string' ? group.title : '',
     selectionMode: group.selectionMode === 'multiple' ? 'multiple' : 'single',
     required: Boolean(group.required),
+    minSelections: group.required ? Math.max(1, Number(group.minSelections) || 1) : 0,
+    allowQuantity: Boolean(group.allowQuantity),
     maxSelections: Number(group.maxSelections) > 0 ? Number(group.maxSelections) : 1,
     defaultOptionIds: asArray(group.defaultOptionIds).filter(
       (id) => typeof id === 'string'
@@ -523,6 +525,7 @@ function normalizeState(raw) {
       id: option.id || uid('opt'),
       label: typeof option.label === 'string' ? option.label : '',
       price: Number(option.price) || 0,
+      soldOut: Boolean(option.soldOut),
     })),
   }));
 
@@ -539,6 +542,7 @@ function normalizeState(raw) {
         id: size.id || uid('sz'),
         label: typeof size.label === 'string' ? size.label : '',
         price: Number(size.price) || 0,
+        optionGroupIds: asArray(size.optionGroupIds).filter(id=>groupIds.has(id)),
       }));
       const maxIndex = Math.max(sizes.length - 1, 0);
       const ingredients =
