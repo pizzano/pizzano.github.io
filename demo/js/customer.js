@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-cartlines47';
+} from './data.js?v=20261012-cartgap48';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand

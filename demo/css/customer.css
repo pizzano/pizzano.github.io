@@ -3591,7 +3591,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #orderList .order-history-cart-list,
 #reviewCard .pickup-review-list { gap: 8px !important; }
 
-.view-cart .cart-product-content { justify-content: center; }
+.view-cart .cart-product-content { justify-content: center; padding-inline-end: 8px; }
 .view-cart .cart-product-total { white-space: nowrap; font-size: 14px; }
 
 /* A single price column for product, extras and total. */
