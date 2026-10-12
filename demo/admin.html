@@ -2,14 +2,15 @@
 <html lang="no">
 
 <head>
-    <script src="/demo/config.js?v=20261012-cartclean52"></script>
+    <script src="/demo/config.js?v=20261012-ordertaking53"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/demo/icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20261012-cartclean52">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-cartclean52">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20261012-ordertaking53">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261012-ordertaking53">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261012-ordertaking53">
 </head>
 
 <body>
@@ -138,7 +139,8 @@
                         <p id="ordersSummary">—</p>
                     </div>
                     <div class="orders-top-actions">
-                        <span class="orders-live-label"><i></i> Live</span>
+                        <span class="orders-live-label" id="ordersConnection" role="status"></span>
+                        <button class="btn btn-outline btn-sm" id="btnOrderSound" type="button" aria-pressed="false">Aktiver lyd</button>
                         <button class="btn btn-outline btn-sm" id="btnRefreshOrders" type="button">Oppdater</button>
                     </div>
                 </header>
@@ -146,7 +148,7 @@
                 <div class="orders-app">
                     <aside class="orders-inbox" aria-label="Bestillingsliste">
                         <nav class="orders-tabs" aria-label="Bestillinger">
-                            <button class="orders-tab is-active" data-order-filter="all" type="button">Alle</button>
+                            <button class="orders-tab" data-order-filter="all" type="button">Alle</button>
                         </nav>
                         <div id="orderList" class="orders-list"></div>
                     </aside>
@@ -669,7 +671,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261012-cartclean52"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261012-ordertaking53"></script>
 </body>
 
 </html>

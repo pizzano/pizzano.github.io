@@ -485,21 +485,13 @@ html[data-theme="dark"] .side-brand {
 }
 
 html[data-theme="dark"] .page-head,
-html[data-theme="dark"] .orders-topbar,
-html[data-theme="dark"] .orders-inbox,
-html[data-theme="dark"] .orders-list,
-html[data-theme="dark"] .order-detail-live,
-html[data-theme="dark"] .pos-order-detail,
-html[data-theme="dark"] .pos-detail-actions,
 html[data-theme="dark"] .order-action-foot {
   border-color: var(--line) !important;
   background: var(--palette-surface, #181b1f) !important;
   color: var(--ink) !important;
 }
 
-html[data-theme="dark"] .scroll-area,
-html[data-theme="dark"] .orders-app,
-html[data-theme="dark"] .order-detail-pane {
+html[data-theme="dark"] .scroll-area{
   background: var(--palette-surface, #121519) !important;
 }
 html[data-theme="dark"] .stat-card,
@@ -531,8 +523,7 @@ html[data-theme="dark"] .ingredient-admin-row {
 html[data-theme="dark"] .input,
 html[data-theme="dark"] .textarea,
 html[data-theme="dark"] .select,
-html[data-theme="dark"] .ingredient-name-input,
-html[data-theme="dark"] .pos-estimate-editor label {
+html[data-theme="dark"] .ingredient-name-input{
   border-color: var(--line-strong) !important;
   background: var(--palette-surface, #14171a) !important;
   color: var(--ink) !important;
@@ -555,53 +546,17 @@ html[data-theme="dark"] .chip.is-active {
   color: var(--palette-ink, #fff) !important;
   background: var(--accent) !important;
 }
-
-html[data-theme="dark"] .orders-list-row {
-  border-color: var(--line) !important;
-  background: var(--palette-surface, #181b1f) !important;
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] .orders-list-row:hover,
-html[data-theme="dark"] .orders-list-row.is-selected {
-  background: var(--palette-surface, #20252a) !important;
-}
-
-html[data-theme="dark"] .order-detail-empty-icon {
-  background: var(--palette-surface, #20252a) !important;
-  color: var(--palette-ink, #77818b) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] .pos-detail-pills span:first-child {
-  background: var(--palette-surface, #303841) !important;
-}
-
-html[data-theme="dark"] .pos-progress-actions button,
-html[data-theme="dark"] .accept-quick-times button,
-html[data-theme="dark"] .pos-detail-close {
+html[data-theme="dark"] .accept-quick-times button{
   border-color: var(--line-strong) !important;
   background: var(--palette-surface, #20252a) !important;
   color: var(--ink-2) !important;
   box-shadow: none !important;
 }
 
-html[data-theme="dark"] .pos-progress-actions button.is-active {
-  border-color: var(--palette-accent, #3da95a) !important;
-  background: var(--palette-accent, #3da95a) !important;
-  color: var(--palette-ink, #fff) !important;
-}
-
 html[data-theme="dark"] .accept-quick-times button.is-active {
   border-color: var(--palette-accent, #8b4e25) !important;
   background: var(--palette-surface, #312017) !important;
   color: var(--palette-accent, #ff9a5b) !important;
-}
-
-html[data-theme="dark"] .pos-order-general-note,
-html[data-theme="dark"] .pos-order-removed {
-  background: var(--palette-surface, #321d1d) !important;
-  color: var(--palette-accent, #ff918c) !important;
 }
 
 html[data-theme="dark"] .modal-backdrop,

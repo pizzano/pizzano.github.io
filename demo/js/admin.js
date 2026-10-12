@@ -41,7 +41,6 @@ import {
   acceptScheduledOrder,
   rejectOrder,
   refreshFromDatabase,
-  ORDER_STATUSES,
   orderStatusLabel,
 } from './data.js?v=20261012-cartclean52';
 
@@ -283,14 +282,7 @@ function selectedItem() {
 
 function timeStamp(value) {
   if (!value) return '—';
-  const date = new Date(value);
-  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(
-    2,
-    '0'
-  )} kl. ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(
-    2,
-    '0'
-  )}`;
+  return new Intl.DateTimeFormat('nb-NO', { timeZone: 'Europe/Oslo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
 
 /* ------------------------------------------------------------------ *
@@ -1841,26 +1833,49 @@ function deleteGroup(groupId) {
  * Bestillinger
  * ------------------------------------------------------------------ */
 
-const ADMIN_ORDER_STATUSES = ORDER_STATUSES.filter((status) =>
-  ['bekreftet', 'klar'].includes(status.id)
-);
-
-function syncOrdersWorkspaceLayout() {
-  const workspace = document.querySelector('.orders-app');
-  if (!workspace) return;
-  workspace.classList.toggle('is-list-only', !selectedOrderId);
+let knownPendingOrders = null;
+let orderAudio = null;
+let orderSoundEnabled = false;
+function playOrderAlert() {
+  if (!orderSoundEnabled || !orderAudio || orderAudio.state !== 'running') return;
+  const oscillator = orderAudio.createOscillator();
+  const gain = orderAudio.createGain();
+  oscillator.connect(gain); gain.connect(orderAudio.destination);
+  oscillator.frequency.setValueAtTime(660, orderAudio.currentTime);
+  oscillator.frequency.setValueAtTime(880, orderAudio.currentTime + .18);
+  gain.gain.setValueAtTime(.12, orderAudio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001, orderAudio.currentTime + .6);
+  oscillator.start(); oscillator.stop(orderAudio.currentTime + .6);
 }
-
+document.getElementById('btnOrderSound').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  try {
+    if (!orderAudio) orderAudio = new (window.AudioContext || window.webkitAudioContext)();
+    await orderAudio.resume();
+    orderSoundEnabled = !orderSoundEnabled;
+    button.setAttribute('aria-pressed', String(orderSoundEnabled));
+    button.textContent = orderSoundEnabled ? 'Lyd på' : 'Aktiver lyd';
+    if (orderSoundEnabled) playOrderAlert();
+  } catch { toast('Lyd kunne ikke aktiveres på denne enheten.'); }
+});
+window.setInterval(() => {
+  if (getOrders().some(order => order.status === 'mottatt')) playOrderAlert();
+}, 15000);
+function syncOrdersWorkspaceLayout() {
+  document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
+}
 function filteredOrders() {
-  ui.orderFilter = 'all';
   return getOrders();
 }
-
+function pendingWait(order) {
+  const minutes = Math.max(0, Math.floor((Date.now() - Number(order.createdAt)) / 60000));
+  return minutes ? `Venter · ${minutes} min` : 'Venter på svar';
+}
 function compactOrderTime(value) {
   if (!value) return '—';
-  const date = new Date(value);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}function orderCountdown(order) {
+  return new Intl.DateTimeFormat('nb-NO', { timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+}
+function orderCountdown(order) {
   const readyAt = Number(order.estimatedReadyAt) || 0;
   if (!readyAt) return '';
   const remainingMs = readyAt - Date.now();
@@ -1872,7 +1887,7 @@ function compactOrderTime(value) {
 }
 
 function orderListStatus(order) {
-  if (order.status === 'mottatt') return 'Venter på svar';
+  if (order.status === 'mottatt') return pendingWait(order);
   if (order.status === 'bekreftet') return 'Godtatt';
   if (order.status === 'tilberedning') return 'Tilberedes';
   if (order.status === 'klar') return 'Klar for henting';
@@ -1883,7 +1898,7 @@ function orderListStatus(order) {
 
 function orderCenterText(order) {
   if (order.status === 'klar') return 'Klar for henting';
-  if (order.status === 'mottatt') return 'Venter på svar';
+  if (order.status === 'mottatt') return pendingWait(order);
   if (['bekreftet', 'tilberedning'].includes(order.status)) {
     const readyAt = Number(order.estimatedReadyAt) || 0;
     const label = order.status === 'bekreftet' ? 'Godtatt' : 'Tilberedes';
@@ -1901,36 +1916,24 @@ function orderCenterText(order) {
 }
 
 function orderListRowHtml(order, isNew = false) {
-  const selected = order.id === selectedOrderId;
-  return `
-    <button class="orders-list-row${isNew ? ' is-new' : ''}${selected ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button">
-      <span class="orders-list-icon" aria-hidden="true">${order.type === 'levering' ? '🛵' : '🥡'}</span>
-      <span class="orders-list-main">
-        <span class="orders-list-name-row">
-          <strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>
-          ${isNew ? '<b class="orders-new-pill">NY</b>' : ''}
-        </span>
-        <small><i class="orders-status-mark"></i>${escapeHtml(orderListStatus(order))}</small>
-      </span>
-      <span class="orders-list-center" data-order-center="${escapeHtml(order.id)}">${escapeHtml(orderCenterText(order))}</span>
-      <span class="orders-list-side">
-        <strong>${order.status === 'klar' ? 'Klar' : formatPrice(order.total)}</strong>
-        <small>${escapeHtml(compactOrderTime(order.createdAt))}</small>
-      </span>
-    </button>`;
+  return `<button class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
+    <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
+    <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
+    <span class="orders-list-side"><strong>${formatPrice(order.total)}</strong><small>${escapeHtml(compactOrderTime(order.createdAt))}</small></span>
+    <span class="orders-list-center" data-order-center="${escapeHtml(order.id)}">${escapeHtml(orderCenterText(order))}</span>
+  </button>`;
 }
-
 function renderOrderTabs(allOrders) {
-  ui.orderFilter = 'all';
-  el.orderFilterBtns.forEach((button) => {
+  el.orderFilterBtns.forEach(button => {
     button.classList.add('is-active');
+    button.setAttribute('aria-pressed', 'true');
     button.innerHTML = `<span>Alle</span><b>${allOrders.length}</b>`;
   });
 }
-
 function renderOrderList() {
   const orders = filteredOrders();
   const newOrders = orders.filter((order) => order.status === 'mottatt');
+  newOrders.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
   const otherOrders = orders.filter((order) => order.status !== 'mottatt');
   const sections = [];
   if (newOrders.length) {
@@ -1961,6 +1964,7 @@ function detailLineHtml(line) {
       <span class="pos-order-qty">${Number(line.quantity) || 1}×</span>
       <div class="pos-order-line-body">
         <strong>${escapeHtml(line.name || 'Produkt')}</strong>
+        ${line.loyaltyFree ? '<small class="order-bonus-label">Gratis pizza</small>' : ''}
         ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
         ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
         ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(String(name).toLocaleUpperCase('no'))).join(', ')}</small>` : ''}
@@ -1971,6 +1975,8 @@ function detailLineHtml(line) {
 }
 
 function renderOrderDetail(orderId) {
+  const editing = el.orderDetailLive.querySelector('[data-detail-estimate]');
+  const draft = editing && document.activeElement === editing ? { id: selectedOrderId, value: editing.value } : null;
   const order = getOrders().find((entry) => entry.id === orderId);
   if (!order) {
     selectedOrderId = null;
@@ -1992,13 +1998,13 @@ function renderOrderDetail(orderId) {
   const payment = String(store.settings?.paymentInfo || 'Ved henting').toUpperCase();
   const effectiveStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
   const actionHtml = isPending
-    ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">×</button>
+    ? `<button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button" aria-label="Avvis bestilling">Avvis</button>
        <button class="pos-accept-btn" data-open-accept="${escapeHtml(order.id)}" type="button">${scheduledPickup ? `GODTA · ${escapeHtml(order.pickup || '')}` : `GODTA${estimated ? ` (${estimated} MIN)` : ''}`}</button>`
     : order.status === 'avvist' || order.status === 'fullfort'
       ? `<div class="pos-closed-status">${escapeHtml(orderStatusLabel(order.status))}</div>`
       : effectiveStatus === 'bekreftet'
         ? `<div class="pos-progress-actions"><button data-detail-status="klar" type="button">Klar for henting</button></div>`
-        : '';
+        : order.status === 'klar' ? '<div class="pos-progress-actions"><button data-detail-status="fullfort" type="button">Utlevert · fullfør bestilling</button></div>' : '';
 
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
@@ -2013,24 +2019,25 @@ function renderOrderDetail(orderId) {
       </header>
       <div class="pos-detail-scroll">
         <section class="pos-meta-block">
-          <div><span>Order ID</span><strong>${escapeHtml(shortId)}</strong></div>
+          <div><span>Bestillingsnummer</span><strong>${escapeHtml(shortId)}</strong></div>
           <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || 'Snarest')}</strong></div>
           <div><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div>
           ${!isPending && scheduledPickup ? `<div><span>Planlagt henting</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>` : (!isPending && estimated ? `<div><span>Gitt tid</span><strong>${estimated} min</strong></div>` : '')}
           ${!isPending && hasCountdown ? `<div class="pos-meta-countdown"><span>Tid igjen</span><strong data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(countdown || (order.status === 'klar' ? 'Klar nå' : '—'))}</strong></div>` : ''}
         </section>
         <section class="pos-customer-block">
-          <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span>★ Kunde</span></div>
+          <div class="pos-customer-name"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong></div>
           ${phone ? `<a class="pos-customer-phone" href="tel:${escapeHtml(tel)}">${escapeHtml(phone)}</a>` : ''}
         </section>
         <section class="pos-items-block">
-          <h3>Order items</h3>
+          <h3>Bestilte varer</h3>
           <div class="pos-order-lines">${(order.lines || []).map(detailLineHtml).join('')}</div>
+          ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
         <section class="pos-totals-block">
-          <div><span>Sub-total</span><strong>${formatPrice(order.subtotal ?? order.total)}</strong></div>
-          <div class="is-total"><span>Total</span><strong>${formatPrice(order.total)}</strong></div>
+          <div><span>Delsum</span><strong>${formatPrice(order.subtotal ?? order.total)}</strong></div>
+          <div class="is-total"><span>Å betale</span><strong>${formatPrice(order.total)}</strong></div>
         </section>
         ${!isPending && !['avvist', 'fullfort'].includes(order.status) ? (scheduledPickup ? `
           <section class="pos-scheduled-pickup-summary">
@@ -2045,10 +2052,24 @@ function renderOrderDetail(orderId) {
       </div>
       <footer class="pos-detail-actions">${actionHtml}</footer>
     </article>`;
+  if (draft?.id === order.id) {
+    const input = el.orderDetailLive.querySelector('[data-detail-estimate]');
+    if (input) { input.value = draft.value; input.focus({ preventScroll: true }); }
+  }
 }
 
+function updateOrdersConnection() {
+  const connection = document.getElementById('ordersConnection');
+  const connected = navigator.onLine && backendInfo.mode === 'firebase';
+  connection.classList.toggle('is-offline', !connected);
+  connection.innerHTML = `<i></i>${connected ? 'Tilkoblet' : 'Frakoblet'} `;
+}
 function renderOrders() {
   const all = getOrders();
+  const pendingIds = new Set(all.filter(order => order.status === 'mottatt').map(order => order.id));
+  if (knownPendingOrders && [...pendingIds].some(id => !knownPendingOrders.has(id))) playOrderAlert();
+  knownPendingOrders = pendingIds;
+  updateOrdersConnection();
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) => order.status === 'mottatt').length} nye`;
   const visible = filteredOrders();
@@ -2092,7 +2113,7 @@ function isScheduledPickupOrder(order) {
 
 function openAcceptOrder(orderId) {
   const order = getOrders().find((entry) => entry.id === orderId);
-  if (!order) return;
+  if (!order || order.status !== 'mottatt') { toast('Bestillingen er allerede behandlet.'); return; }
   actionOrderId = order.id;
   const shortId = String(order.id).slice(-6).toUpperCase();
   const scheduled = isScheduledPickupOrder(order);
@@ -2121,7 +2142,7 @@ function openAcceptOrder(orderId) {
 
 function openRejectOrder(orderId) {
   const order = getOrders().find((entry) => entry.id === orderId);
-  if (!order) return;
+  if (!order || order.status !== 'mottatt') { toast('Bestillingen er allerede behandlet.'); return; }
   actionOrderId = order.id;
   const shortId = String(order.id).slice(-6).toUpperCase();
   el.rejectOrderTitle.textContent = `Avvis #${shortId}`;
@@ -2160,16 +2181,13 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     const currentOrder = getOrders().find((entry) => entry.id === orderId);
     const currentStatus = currentOrder?.status === 'tilberedning' ? 'bekreftet' : currentOrder?.status;
 
-    // Statusknappen er kun en fremoverhandling: Bekreftet -> Klar for henting.
-    // Hvis ordren allerede er klar (manuelt eller automatisk), ignoreres gamle/stale klikk.
-    if (currentStatus !== 'bekreftet' || nextStatus !== 'klar') {
-      renderOrders();
-      renderStats();
-      return;
+    if (!((currentStatus === 'bekreftet' && nextStatus === 'klar') || (currentStatus === 'klar' && nextStatus === 'fullfort'))) {
+      renderOrders(); return;
     }
-
+    if (status.disabled) return;
+    status.disabled = true;
     const ok = await updateOrderStatus(orderId, nextStatus);
-    if (ok) selectedOrderId = null;
+    if (ok && nextStatus === 'fullfort') selectedOrderId = null;
     renderOrders();
     renderStats();
     toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
@@ -2209,12 +2227,12 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
   if (!actionOrderId) return;
   const acceptedOrderId = actionOrderId;
   const order = getOrders().find((entry) => entry.id === acceptedOrderId);
-  if (!order) return;
+  if (!order || order.status !== 'mottatt' || el.btnAcceptConfirm.disabled) return;
   const scheduled = isScheduledPickupOrder(order);
   let minutes = 0;
   if (!scheduled) {
-    minutes = Math.max(1, Math.min(180, Math.round(Number(el.acceptMinutes.value) || 0)));
-    if (!minutes) {
+    minutes = Number(el.acceptMinutes.value);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) {
       toast('Velg eller skriv minutter.');
       el.acceptMinutes.focus();
       return;
@@ -2234,15 +2252,12 @@ el.btnAcceptConfirm.addEventListener('click', async () => {
   renderOrders();
   renderStats();
   toast(scheduled ? `Bestillingen er godtatt · henting ${order.pickup}.` : `Bestillingen er godtatt · ${minutes} min.`);
-  window.setTimeout(() => {
-    if (selectedOrderId !== acceptedOrderId) return;
-    selectedOrderId = null;
-    renderOrders();
-  }, 1000);
+
 });
 
 el.btnRejectConfirm.addEventListener('click', async () => {
-  if (!actionOrderId) return;
+  if (!actionOrderId || el.btnRejectConfirm.disabled) return;
+  if (getOrders().find(order => order.id === actionOrderId)?.status !== 'mottatt') { closeModals(); renderOrders(); toast('Bestillingen er allerede behandlet.'); return; }
   const reason = el.rejectReasons.querySelector('input[name="rejectReason"]:checked')?.value || 'Ingen spesifikk grunn';
   const message = el.rejectMessage.value.trim();
   el.btnRejectConfirm.disabled = true;
@@ -2260,7 +2275,9 @@ el.btnRejectConfirm.addEventListener('click', async () => {
 });
 
 el.btnRefreshOrders.addEventListener('click', async () => {
+  el.btnRefreshOrders.disabled = true;
   const online = await refreshFromDatabase();
+  el.btnRefreshOrders.disabled = false;
   renderAll();
   toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
 });
@@ -2289,6 +2306,7 @@ async function promoteExpiredOrdersToReady() {
 
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
+  updateOrdersConnection();
   document.querySelectorAll('[data-order-center]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
     if (!order) return;
@@ -2330,7 +2348,7 @@ function renderSettingsLayout() {
 }
 
 function applyAdminInterfaceSettings(settings = store.settings || {}) {
-  const mobileEnabled = settings.adminMobileEnabled !== false;
+  const mobileEnabled = ui.page === 'orders' || settings.adminMobileEnabled !== false;
   const darkEnabled = settings.adminDarkModeEnabled !== false;
   const viewport = document.querySelector('meta[name="viewport"]');
 
