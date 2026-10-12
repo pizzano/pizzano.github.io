@@ -217,10 +217,15 @@ html[data-customer-palette] .cat-tab:is(.is-active, :hover) .cat-icon svg { colo
 .option-quantity button { width: 26px; height: 26px; border: 1px solid var(--palette-border); border-radius: 8px; background: var(--palette-accent); color: var(--palette-on-accent); }
 
 /* Checkout action stays neutral until a valid pickup choice is complete. */
-html[data-customer-palette] #btnStepNext:disabled {
+html[data-customer-palette] #btnStepNext:disabled,
+html[data-customer-palette] #btnStepNext[aria-disabled="true"] {
   background: var(--palette-border) !important;
   color: var(--palette-muted) !important;
   border-color: var(--palette-border) !important;
   box-shadow: none;
   cursor: not-allowed;
 }
+
+#step3 .pickup-choice-hint > button { animation: pickupHintMotion .55s ease-out; }
+@keyframes pickupHintMotion { 0%,100% { transform: translateY(0); } 35% { transform: translateY(-4px); } 70% { transform: translateY(2px); } }
+@media (prefers-reduced-motion: reduce) { #step3 .pickup-choice-hint > button { animation: none; } }

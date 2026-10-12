@@ -33,7 +33,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261012-pickup39';
+} from './data.js?v=20261012-pickupfeedback40';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1628,11 +1628,27 @@ function setStep(step) {
   el.btnStepBack.textContent = 'Tilbake';
   el.btnStepNext.textContent = step === 3 ? (ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling') : 'Neste: Hentetid';
   renderCheckout();
+  if (step === 3 && !hasValidPickup()) showPickupFeedback(false);
 }
 
 function hasValidPickup() {
   return getOpenState().open && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
     || ui.pickupMode === 'scheduled' && getPickupSlots().some((slot) => slot.value === ui.pickup));
+}
+
+function showPickupFeedback(showError = true) {
+  const target = ui.pickupMode === 'scheduled' ? el.timeGrid : el.pickupChoices;
+  const className = showError ? 'pickup-needs-choice' : 'pickup-choice-hint';
+  target.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
+  void target.offsetWidth;
+  target.classList.add(className);
+  if (showError) {
+    el.errTime.textContent = ui.pickupMode === 'scheduled'
+      ? 'Velg et klokkeslett før du sender bestillingen.'
+      : 'Velg Snarest eller Velg tid før du sender bestillingen.';
+    el.errTime.hidden = false;
+    el.errTime.scrollIntoView({ block: 'nearest' });
+  }
 }
 
 function renderCheckout() {
@@ -1649,6 +1665,7 @@ function renderCheckout() {
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
   el.btnStepNext.disabled = ui.orderSubmitting;
+  el.btnStepNext.removeAttribute('aria-disabled');
   el.views.checkout.classList.toggle('is-submitting', ui.orderSubmitting);
   updateContactValidation();
 
@@ -1800,7 +1817,8 @@ function renderCheckout() {
       </div>
     </details>`;
   if (ui.checkoutStep === 3) {
-    el.btnStepNext.disabled = ui.orderSubmitting || !hasValidPickup();
+    el.btnStepNext.disabled = ui.orderSubmitting;
+    el.btnStepNext.setAttribute('aria-disabled', String(ui.orderSubmitting || !hasValidPickup()));
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
   }
 }
@@ -2071,15 +2089,7 @@ async function placeOrder() {
   if (!hasValidPickup()) {
     ui.pickup = null;
     renderCheckout();
-    el.errTime.textContent = ui.pickupMode === 'scheduled'
-      ? 'Velg et klokkeslett før du sender bestillingen.'
-      : 'Velg Snarest eller Velg tid før du sender bestillingen.';
-    el.errTime.hidden = false;
-    const target = ui.pickupMode === 'scheduled' ? el.timeGrid : el.pickupChoices;
-    target.classList.remove('pickup-needs-choice');
-    void target.offsetWidth; // Restart feedback on every unsuccessful attempt.
-    target.classList.add('pickup-needs-choice');
-    el.errTime.scrollIntoView({ block: 'nearest' });
+    showPickupFeedback();
     return;
   }
   el.errTime.hidden = true;
@@ -2989,6 +2999,8 @@ el.btnStepBack.addEventListener('click', () => {
 });
 
 el.btnStepNext.addEventListener('click', () => {
+  if (ui.orderSubmitting) return;
+  if (ui.checkoutStep === 3 && !hasValidPickup()) { showPickupFeedback(); return; }
   if (ui.checkoutStep === 2) {
     const name = el.custName.value.trim();
     const phone = el.custPhone.value.replace(/\s/g, '');
@@ -3009,8 +3021,8 @@ el.pickupChoices.addEventListener('click', (event) => {
   ui.pickupMode = button.dataset.pickupMode;
   ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
   el.errTime.hidden = true;
-  el.pickupChoices.classList.remove('pickup-needs-choice');
-  el.timeGrid.classList.remove('pickup-needs-choice');
+  el.pickupChoices.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
+  el.timeGrid.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
   renderCheckout();
 });
 
@@ -3020,8 +3032,8 @@ el.timeGrid.addEventListener('click', (event) => {
   ui.orderSendFailed = false;
   ui.pickup = btn.dataset.time;
   el.errTime.hidden = true;
-  el.pickupChoices.classList.remove('pickup-needs-choice');
-  el.timeGrid.classList.remove('pickup-needs-choice');
+  el.pickupChoices.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
+  el.timeGrid.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
   renderCheckout();
 });
 
