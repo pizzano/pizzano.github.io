@@ -2278,32 +2278,32 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   background:var(--palette-surface);
   box-shadow:0 3px 12px color-mix(in srgb,var(--palette-deep) 4%,transparent);
 }
-#viewProfile .profile-tab-panel.profile-contact-card {padding:15px 14px 14px;}
-#viewCheckout #step2.checkout-contact-card {padding:14px 13px 13px;}
+#viewProfile .profile-tab-panel.profile-contact-card {padding:13px 12px 12px;}
+#viewCheckout #step2.checkout-contact-card {padding:12px 12px 11px;}
 #viewCheckout .checkout-contact-card .sec-title {
-  margin:0 0 14px;color:var(--palette-ink);
-  font-size:16px;line-height:1.2;font-weight:800;
+  margin:0 0 12px;color:var(--palette-ink);
+  font-size:15px;line-height:1.2;font-weight:800;
 }
 #viewProfile .profile-contact-card .contact-form-field,
 #viewCheckout .checkout-contact-card .contact-form-field {
-  min-width:0;margin:0 0 15px;
+  min-width:0;margin:0 0 13px;
 }
 #viewCheckout .checkout-contact-card .contact-form-field:last-child {margin-bottom:0;}
 #viewProfile .profile-contact-card .contact-form-label,
 #viewCheckout .checkout-contact-card .contact-form-label {
-  display:flex;align-items:center;gap:9px;
-  margin:0 0 8px;
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 7px;
   color:var(--palette-ink);
-  font-size:14.5px;font-weight:800;line-height:1.2;
+  font-size:13.5px;font-weight:800;line-height:1.2;
 }
 #viewProfile .contact-form-icon,#viewCheckout .contact-form-icon {
-  width:36px;height:36px;flex:none;
-  display:grid;place-items:center;border-radius:11px;
+  width:32px;height:32px;flex:none;
+  display:grid;place-items:center;border-radius:10px;
   background:color-mix(in srgb,var(--palette-accent) 6%,var(--palette-surface));
   color:var(--palette-ink);
 }
 #viewProfile .contact-form-icon svg,
-#viewCheckout .contact-form-icon svg {width:19px;height:19px;}
+#viewCheckout .contact-form-icon svg {width:17px;height:17px;}
 #viewProfile .profile-contact-card .contact-form-control,
 #viewCheckout .checkout-contact-card .contact-form-control {
   display:block;position:relative;min-width:0;
@@ -2319,8 +2319,8 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #viewProfile .profile-contact-card .contact-form-control .input,
 #viewCheckout .checkout-contact-card .contact-form-control .input {
   display:block;width:100%;min-width:0;
-  min-height:52px;height:52px;
-  padding:0 43px 0 12px;
+  min-height:48px;height:48px;
+  padding:0 40px 0 11px;
   border:0;border-radius:inherit;
   font-size:16px!important;line-height:1.3;
   font-weight:400;color:var(--palette-ink);
@@ -2337,12 +2337,12 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 }
 #viewProfile .profile-contact-card .contact-form-phone .phone-prefix,
 #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {
-  display:grid;place-items:center;flex:0 0 59px;
-  min-height:52px;padding:0 8px;
+  display:grid;place-items:center;flex:0 0 54px;
+  min-height:48px;padding:0 7px;
   border:1px solid var(--palette-border);border-right:0;
   border-radius:12px 0 0 12px;
   background:color-mix(in srgb,var(--palette-accent) 3%,var(--palette-surface));
-  color:var(--palette-ink);font-size:15px;font-weight:500;
+  color:var(--palette-ink);font-size:14px;font-weight:500;
 }
 #viewProfile .profile-contact-card .contact-form-phone .contact-form-control,
 #viewCheckout .checkout-contact-card .contact-form-phone .contact-form-control {
@@ -2354,9 +2354,9 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 }
 #viewProfile .profile-contact-card .valid-check,
 #viewCheckout .checkout-contact-card .valid-check {
-  right:10px;width:25px;height:25px;border-radius:50%;
+  right:9px;width:22px;height:22px;border-radius:50%;
   background:var(--palette-accent);color:var(--palette-light);
-  font-size:16px;font-weight:800;line-height:1;
+  font-size:14px;font-weight:800;line-height:1;
 }
 #viewProfile .profile-contact-card .valid-check[hidden],
 #viewCheckout .checkout-contact-card .valid-check[hidden] {display:none!important;}
@@ -2369,17 +2369,21 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   box-shadow:0 4px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent);
 }
 #viewProfile #profileSaved:not([hidden]) {display:inline-flex;margin-top:8px;}
-#viewCheckout .checkout-contact-card .err {margin-top:6px;font-size:11.5px;line-height:1.35;}
+#viewCheckout .checkout-contact-card .err {margin-top:5px;font-size:11px;line-height:1.35;}
 @media (max-width:370px) {
-  #viewProfile .profile-tab-panel.profile-contact-card {padding:12px;}
-  #viewCheckout #step2.checkout-contact-card {padding:12px;}
+  #viewProfile .profile-tab-panel.profile-contact-card {padding:11px;}
+  #viewCheckout #step2.checkout-contact-card {padding:11px;}
   #viewProfile .profile-contact-help {font-size:12px;}
   #viewProfile .profile-contact-card .contact-form-label,
-  #viewCheckout .checkout-contact-card .contact-form-label {font-size:14px;}
-  #viewProfile .contact-form-icon,#viewCheckout .contact-form-icon {width:34px;height:34px;}
-  #viewProfile .contact-form-icon svg,#viewCheckout .contact-form-icon svg {width:18px;height:18px;}
+  #viewCheckout .checkout-contact-card .contact-form-label {font-size:13px;gap:7px;}
+  #viewProfile .contact-form-icon,#viewCheckout .contact-form-icon {width:30px;height:30px;}
+  #viewProfile .contact-form-icon svg,#viewCheckout .contact-form-icon svg {width:16px;height:16px;}
   #viewProfile .profile-contact-card .contact-form-phone .phone-prefix,
-  #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {flex-basis:56px;}
+  #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {flex-basis:52px;min-height:46px;font-size:13px;}
+  #viewProfile .profile-contact-card .contact-form-control .input,
+  #viewCheckout .checkout-contact-card .contact-form-control .input {min-height:46px;height:46px;font-size:16px!important;}
+  #viewProfile .profile-contact-card .valid-check,
+  #viewCheckout .checkout-contact-card .valid-check {width:21px;height:21px;font-size:13px;}
 }
 
 /* iOS: keep autofocused text at 16px, hide the fixed checkout bar while
