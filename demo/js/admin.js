@@ -2037,13 +2037,30 @@ function orderCenterText(order) {
   return orderListStatus(order);
 }
 
+
+function shortOrderCode(order) {
+  return '#' + String(order.id || '').slice(-6).toUpperCase();
+}
+
 function orderListRowHtml(order, isNew = false) {
+  const pickupScheduled = isScheduledPickupOrder(order);
+  const displayTime = pickupScheduled ? String(order.pickup || '—') : compactOrderTime(order.createdAt);
+  const timeTitle = pickupScheduled ? 'Hentetid' : 'Bestilt kl.';
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
-    <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
-    <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
+    <span class="orders-list-main">
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
+      <span class="orders-list-meta">
+        <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>Henting</span></span>
+        <span class="orders-list-divider" aria-hidden="true"></span>
+        <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span></span>
+      </span>
+    </span>
+    <span class="orders-list-price">${formatPrice(order.total)}</span>
+    <span class="orders-list-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 4 8 8-8 8"/></svg></span>
     <span class="orders-list-center" data-order-center="${escapeHtml(order.id)}">${escapeHtml(orderCenterText(order))}</span>
   </button>`;
 }
+
 function renderOrderTabs(allOrders) {
   const scheduledCount = allOrders.filter(isUpcomingScheduledOrder).length;
   el.orderFilterBtns.forEach(button => {
@@ -2140,7 +2157,7 @@ function renderOrderDetail(orderId) {
           ${phone ? `<a class="order-call" href="tel:${escapeHtml(tel)}" aria-label="Ring ${escapeHtml(phone)}"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span class="order-fact-copy"><span>Telefonnummer</span><strong>${escapeHtml(phone)}</strong></span></a>` : `<div><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><div class="order-fact-copy"><span>Telefonnummer</span><strong>Ikke oppgitt</strong></div></div>`}
         </section>
         <div class="pos-detail-heading">
-          <div class="order-customer-heading"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span></div>
+          <div class="order-customer-heading"><div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div></div><span class="order-status-badge" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span></div>
         </div>
       </header>
       <div class="pos-detail-scroll">
