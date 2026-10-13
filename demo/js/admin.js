@@ -2023,7 +2023,7 @@ function orderCenterText(order) {
 }
 
 function orderListRowHtml(order, isNew = false) {
-  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
+  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
     <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
     <span class="orders-list-side"><strong>${formatPrice(order.total)}</strong><small>${escapeHtml(compactOrderTime(order.createdAt))}</small></span>
@@ -2031,20 +2031,34 @@ function orderListRowHtml(order, isNew = false) {
   </button>`;
 }
 function renderOrderTabs(allOrders) {
+  const scheduledCount = allOrders.filter(isUpcomingScheduledOrder).length;
   el.orderFilterBtns.forEach(button => {
-    button.classList.add('is-active');
-    button.setAttribute('aria-pressed', 'true');
-    button.innerHTML = `<span>Alle</span><b>${allOrders.length}</b>`;
+    const active = button.dataset.orderFilter === ui.orderFilter;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+    const count = button.querySelector('b');
+    if (count) count.textContent = String(button.dataset.orderFilter === 'scheduled' ? scheduledCount : allOrders.length);
   });
 }
 function renderOrderList() {
   // Keep the employee's place when Firebase refreshes the order list.
   const previousScrollTop = el.orderList.scrollTop;
   const orders = filteredOrders().sort((a, b) => {
-    if (a.status === 'mottatt' && b.status === 'mottatt') return Number(a.createdAt) - Number(b.createdAt);
-    return Number(b.status === 'mottatt') - Number(a.status === 'mottatt');
+    if (ui.orderFilter === 'scheduled') {
+      return (scheduledPickupTimestamp(a) ?? Infinity) - (scheduledPickupTimestamp(b) ?? Infinity)
+        || Number(a.createdAt || 0) - Number(b.createdAt || 0);
+    }
+    const aNew = a.status === 'mottatt';
+    const bNew = b.status === 'mottatt';
+    if (aNew !== bNew) return Number(bNew) - Number(aNew);
+    if (aNew && bNew) return Number(a.createdAt) - Number(b.createdAt);
+    const aScheduled = isUpcomingScheduledOrder(a);
+    const bScheduled = isUpcomingScheduledOrder(b);
+    if (aScheduled !== bScheduled) return Number(bScheduled) - Number(aScheduled);
+    if (aScheduled && bScheduled) return scheduledPickupTimestamp(a) - scheduledPickupTimestamp(b);
+    return Number(b.createdAt || 0) - Number(a.createdAt || 0);
   });
-  el.orderList.innerHTML = orders.map((order, index) => `${index > 0 && order.status !== 'mottatt' && orders[index - 1].status === 'mottatt' ? '<div class="orders-group-gap" aria-hidden="true"></div>' : ''}${orderListRowHtml(order, order.status === 'mottatt')}`).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Ingen bestillinger å vise.</span></div>';
+  el.orderList.innerHTML = orders.map((order, index) => `${ui.orderFilter === 'all' && index > 0 && order.status !== 'mottatt' && orders[index - 1].status === 'mottatt' ? '<div class="orders-group-gap" aria-hidden="true"></div>' : ''}${orderListRowHtml(order, order.status === 'mottatt')}`).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
@@ -2416,6 +2430,7 @@ async function promoteExpiredOrdersToReady() {
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
   updateOrdersConnection();
+  renderOrderTabs(getOrders());
   document.querySelectorAll('[data-pending-countdown]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
     if (order) node.textContent = pendingWait(order);
