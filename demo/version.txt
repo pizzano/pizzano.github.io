@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-noprofilefavorites72
-Removed profile Favoritter menu, panel and associated JS/CSS; menu favorites retained
+Bestill.online release: 20261013-compactname73
+Hele Navn in profile and checkout; compact contact fields with iPhone-safe input size
 Source: pizzano/pizzano.github.io main
