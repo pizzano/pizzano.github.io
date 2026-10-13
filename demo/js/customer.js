@@ -1531,8 +1531,7 @@ function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineI
   const sizeRow = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${size ? `<b>Størrelse:</b> ${escapeHtml(size)}` : ''}</span><b class="cart-detail-price">${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</b></span>`;
   return `<article class="cart-product-card"${lineId ? ` data-line="${id}"` : ''}>
     <div class="cart-product-heading"><${copyTag} class="cart-product-copy"${editAttrs}>
-      <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong></span>
-      ${free ? `<span class="bonus-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}
+      <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong>${free ? `<span class="bonus-savings cart-product-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}</span>
     </${copyTag}>${quantityHtml}</div>
     <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${sizeRow}${rows.join('')}</span></${copyTag}>
     <div class="cart-product-totalrow"><span>Sum</span><strong class="cart-product-total">${formatPrice(total)}</strong></div>
