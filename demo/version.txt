@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-cartsleek82
-Compact cart update: smaller red quantity controls, slimmer option strips, Sum and Totalt; category ordering remains intact
+Bestill.online release: 20261013-cartpill83
+Compact cart: pill-shaped red quantity controls, slim product/option/total rows, inline actual free-pizza savings; category sorting intact
 Source: pizzano/pizzano.github.io main
