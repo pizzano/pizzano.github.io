@@ -2,6 +2,7 @@ import { confirmationRemaining, confirmationExpired } from './order-confirmation
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
+import { sortCartByCategory } from './cart-order.js';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -2109,6 +2110,8 @@ function renderOrderDetail(orderId) {
     return;
   }
   selectedOrderId = order.id;
+  // Older orders may have been saved in the original add-to-cart order.
+  const sortedLines = sortCartByCategory(order.lines || [], store.sections);
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const isPending = order.status === 'mottatt';
   const scheduledPickup = isScheduledPickupOrder(order);
@@ -2143,8 +2146,8 @@ function renderOrderDetail(orderId) {
       <div class="pos-detail-scroll">
 
         <section class="pos-items-block">
-          <div class="pos-items-heading"><h3>Bestilte varer</h3><span>${(order.lines || []).reduce((sum, line) => sum + Math.max(1, Number(line.quantity) || 1), 0)} varer</span></div>
-          <div class="pos-order-lines">${(order.lines || []).map(detailLineHtml).join('')}</div>
+          <div class="pos-items-heading"><h3>Bestilte varer</h3><span>${sortedLines.reduce((sum, line) => sum + Math.max(1, Number(line.quantity) || 1), 0)} varer</span></div>
+          <div class="pos-order-lines">${sortedLines.map(detailLineHtml).join('')}</div>
           ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
