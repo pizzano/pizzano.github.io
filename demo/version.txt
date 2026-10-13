@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-profileios69
-Rediger profil redesigned; checkout and profile iPhone input keyboard fix
+Bestill.online release: 20261013-favorites70
+Favoritter: image rows, item prices and stacked Bestill / Fjern buttons
 Source: pizzano/pizzano.github.io main
