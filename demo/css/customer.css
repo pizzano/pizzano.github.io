@@ -191,8 +191,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .time-grid { gap: 6px; }
   .time-btn { min-height: 38px; font-size: 12px; }
 
-  .cart-line { padding: 10px 8px; gap: 8px; }
-
   .link-btn { font-size: 11.5px; }
 
   .view-cart > .checkout-actions .btn,
@@ -884,21 +882,6 @@ textarea.input {
 .step.is-done { color: var(--palette-accent); border-color: var(--palette-accent); }
 .step.is-done .step-num { background: var(--palette-accent); color: var(--palette-light); }
 .view-title { margin: 2px 0 12px;  font-weight: 850; letter-spacing: -.025em; }
-.cart-lines { gap: 10px; }
-.cart-line {
-  border: 1px solid var(--palette-border);
-  border-radius: 18px;
-  background: var(--palette-surface);
-  box-shadow: var(--shadow-soft);
-}
-.cart-summary {
-  margin-top: 10px;
-  padding: 14px;
-  border: 0;
-  border-radius: 18px;
-  background: var(--palette-surface);
-  box-shadow: var(--shadow-soft);
-}
 .sum-total { font-size: 16px; font-weight: 850; }
 .step-panel {
 
@@ -1547,439 +1530,11 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   }
 }
 
-/* ======================== Handlekurv: produktkort ======================== */
-.view-cart .cart-lines {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 12px;
-}
 
-.view-cart .cart-line.cart-product-card {
-  position: relative;
 
-  border: 1px solid var(--palette-border);
 
-  background: var(--palette-surface);
-  box-shadow: 0 4px 15px color-mix(in srgb, var(--palette-deep) 4.5%, transparent);
-}
 
-.cart-product-media {
-  grid-column: 1;
-  grid-row: 1 / 3;
 
-  height: 100%;
-
-  overflow: hidden;
-
-  background: var(--palette-surface);
-}
-
-.cart-product-media img {
-  width: 100%;
-  height: 100%;
-  min-height: 100px;
-  display: block;
-  object-fit: cover;
-}
-
-.cart-product-fallback {
-  width: 100%;
-  height: 100%;
-  min-height: 100px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(145deg, var(--palette-surface), var(--palette-surface));
-  color: var(--palette-accent);
-  font-size: 29px;
-  font-weight: 850;
-}
-
-.cart-product-copy {
-  min-width: 0;
-  align-self: start;
-  display: grid;
-  gap: 4px;
-  padding: 2px 0 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.cart-product-name {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--palette-ink);
-
-  line-height: 1.22;
-  font-weight: 760;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.cart-product-details {
-  min-width: 0;
-  display: grid;
-
-  margin-top: 1px;
-}
-
-.cart-detail-row {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--palette-muted);
-
-  font-weight: 400;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.cart-detail-row b {
-  color: var(--palette-muted);
-  font-weight: 600;
-}
-
-.cart-product-bottom {
-  grid-column: 2 / 4;
-  grid-row: 2;
-  align-self: end;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cart-product-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-
-  padding: 3px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--palette-surface);
-}
-
-.cart-product-stepper button {
-
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--palette-surface);
-  color: var(--palette-muted);
-  font: inherit;
-
-  font-weight: 650;
-  line-height: 1;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--palette-deep) 8%, transparent);
-}
-
-.cart-product-stepper span {
-
-  color: var(--palette-ink);
-
-  font-weight: 760;
-  text-align: center;
-}
-
-.cart-product-total {
-  color: var(--palette-ink);
-
-  line-height: 1;
-  font-weight: 850;
-  white-space: nowrap;
-}
-
-.view-cart .cart-summary {
-  margin-top: 4px;
-}
-
-  .view-cart .cart-line.cart-product-card {
-
-    row-gap: 7px;
-
-    border-radius: 16px;
-  }
-
-  .cart-product-media {
-    width: 84px;
-    min-height: 90px;
-    border-radius: 13px;
-  }
-
-  .cart-product-media img,
-.cart-product-fallback {
-    min-height: 90px;
-  }
-
-  .cart-product-name {
-    font-size: 13px;
-  }
-
-  .cart-product-details {
-    gap: 1px;
-  }
-
-  .cart-detail-row {
-    font-size: 9.8px;
-    line-height: 1.22;
-  }
-
-  .cart-product-stepper {
-    min-height: 31px;
-  }
-
-  .cart-product-stepper button {
-    width: 25px;
-    height: 25px;
-    font-size: 15px;
-  }
-
-  .cart-product-stepper span {
-    min-width: 20px;
-    font-size: 12px;
-  }
-
-  .cart-product-total {
-    font-size: 14px;
-  }
-
-@media (max-width: 360px) {
-  .view-cart .cart-line.cart-product-card {
-    grid-template-columns: 76px minmax(0, 1fr) 30px;
-    column-gap: 9px;
-  }
-
-  .cart-product-media {
-    width: 76px;
-    min-height: 84px;
-  }
-
-  .cart-product-media img,
-.cart-product-fallback {
-    min-height: 84px;
-  }
-}
-
-html[data-theme="dark"] .cart-detail-row {
-  color: var(--palette-ink);
-}
-html[data-theme="dark"] .cart-detail-row b {
-  color: var(--palette-ink);
-}
-
-/* ======================== Handlekurv: produktkort v3 ======================== */
-.view-cart .cart-line.cart-product-card {
-  display: grid;
-}
-
-.view-cart .cart-product-media {
-
-  align-self: center;
-}
-
-.view-cart .cart-product-media img,
-.view-cart .cart-product-fallback {
-  height: 100%;
-}
-
-.view-cart .cart-product-content {
-
-  display: flex;
-  flex-direction: column;
-}
-
-.view-cart .cart-product-copy {
-  display: grid;
-  gap: 4px;
-
-  padding: 0;
-}
-
-.view-cart .cart-product-stepper {
-
-  margin: 0;
-}
-
-  .view-cart .cart-line.cart-product-card {
-
-    column-gap: 12px;
-    padding: 10px 12px;
-  }
-
-  .view-cart .cart-product-media {
-    width: 92px;
-    height: 92px;
-    min-height: 92px;
-  }
-
-  .view-cart .cart-product-media img,
-.view-cart .cart-product-fallback {
-    min-height: 92px;
-  }
-
-@media (max-width: 370px) {
-  .view-cart .cart-line.cart-product-card {
-
-    column-gap: 10px;
-    padding: 9px 10px;
-  }
-
-  .view-cart .cart-product-media {
-    width: 82px;
-    height: 82px;
-    min-height: 82px;
-  }
-
-  .view-cart .cart-product-media img,
-.view-cart .cart-product-fallback {
-    min-height: 82px;
-  }
-}
-
-/* ======================== Handlekurv: detaljer og priser v4 ======================== */
-.view-cart .cart-line.cart-product-card {
-
-  grid-template-rows: auto;
-  align-items: center;
-}
-
-.view-cart .cart-product-media {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.view-cart .cart-product-content {
-  grid-column: 2;
-  grid-row: 1;
-  min-width: 0;
-  width: 100%;
-  align-self: stretch;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.view-cart .cart-product-copy {
-  min-width: 0;
-  width: 100%;
-}
-
-.view-cart .cart-product-details {
-  width: 100%;
-  display: grid;
-  gap: 2px;
-}
-
-.view-cart .cart-detail-row {
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(10px, 1fr) auto;
-  align-items: baseline;
-
-  min-width: 0;
-  color: var(--palette-muted);
-
-  line-height: 1.26;
-  font-weight: 400;
-}
-
-.view-cart .cart-detail-row.is-note {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.view-cart .cart-detail-left {
-  min-width: 0;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  overflow: hidden;
-}
-
-.view-cart .cart-detail-left b {
-  flex: none;
-  color: var(--palette-muted);
-  font-weight: 600;
-}
-
-.view-cart .cart-detail-left span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.view-cart .cart-detail-row.is-note .cart-detail-left span {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-
-.view-cart .cart-detail-leader {
-  min-width: 10px;
-  height: .72em;
-  border-bottom: 1px dotted var(--palette-border);
-  opacity: .8;
-}
-
-.view-cart .cart-detail-price {
-  color: var(--palette-ink);
-
-  white-space: nowrap;
-}
-
-.view-cart .cart-detail-price.is-extra {
-  color: var(--palette-ink);
-}
-
-.view-cart .cart-detail-price.is-included {
-  color: var(--palette-muted);
-  font-weight: 550;
-}
-
-.view-cart .cart-product-stepper {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: start;
-  align-self: center;
-}
-
-.view-cart .cart-product-total {
-  justify-self: end;
-  align-self: center;
-}
-
-  .view-cart .cart-line.cart-product-card {
-    grid-template-columns: 92px minmax(0, 1fr);
-    min-height: 112px;
-  }
-
-  .view-cart .cart-detail-row {
-    gap: 4px;
-    font-size: 9.8px;
-  }
-
-  .view-cart .cart-detail-price {
-    font-size: 9.8px;
-  }
-
-  .view-cart .cart-product-total {
-    font-size: 15px;
-  }
-
-@media (max-width: 370px) {
-  .view-cart .cart-line.cart-product-card {
-    grid-template-columns: 82px minmax(0, 1fr);
-  }
-
-  .view-cart .cart-product-stepper button {
-    width: 30px;
-    height: 30px;
-  }
-}
 
 /* ======================== Handlekurv: enkel mengdekontroll v5 ======================== */
 .cart-topbar {
@@ -1988,135 +1543,11 @@ html[data-theme="dark"] .cart-detail-row b {
   margin: 0 0 2px;
 }
 
-.cart-clear-btn {
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid var(--palette-border);
-
-  background: var(--palette-surface);
-  color: var(--palette-accent);
-  font: inherit;
-
-  font-weight: 720;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .15s ease;
-}
-
-.cart-clear-btn:hover {
-  border-color: var(--palette-border);
-  background: var(--palette-surface);
-}
-
-.cart-clear-btn:active {
-  transform: scale(.98);
-}
-
-.cart-clear-btn svg {
-
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.85;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.view-cart .cart-product-stepper.is-smart-stepper {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0;
-
-  padding: 0;
-  border: 1px solid var(--palette-border);
-  overflow: hidden;
-  border-radius: 8px;
-  background: var(--palette-surface);
-}
-
-.view-cart .cart-product-stepper.is-smart-stepper button {
-
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  background: var(--palette-surface);
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.view-cart .cart-product-stepper.is-smart-stepper > span {
-  min-width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  color: var(--palette-ink);
-  font-size: 13px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.view-cart .cart-stepper-trash {
-  color: var(--palette-accent) !important;
-}
-
-.view-cart .cart-stepper-trash svg {
-
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.view-cart .cart-stepper-plus {
-  color: var(--palette-light) !important;
-  background: var(--palette-accent) !important;
-  font-size: 17px !important;
-  font-weight: 650 !important;
-  line-height: 1 !important;
-  box-shadow: none !important;
-}
-
   .cart-topbar {
     margin-bottom: 1px;
   }
 
-  .cart-clear-btn {
-    min-height: 36px;
-    padding: 0 11px;
-    gap: 7px;
-    border-radius: 11px;
-    font-size: 12px;
-  }
-
-  .cart-clear-btn svg {
-    width: 15px;
-    height: 15px;
-  }
-
-  .view-cart .cart-product-stepper.is-smart-stepper {
-    min-height: 32px;
-  }
-
-  .view-cart .cart-product-stepper.is-smart-stepper button {
-    width: 30px;
-    height: 30px;
-  }
-
-  .view-cart .cart-stepper-trash svg {
-    width: 15px;
-    height: 15px;
-  }
-
-/* Smart quantity: 1 = trash, 2+ = minus */
-.view-cart .cart-stepper-minus {
+/* Smart quantity: 1 = trash{
   color: var(--palette-accent) !important;
   background: var(--palette-surface) !important;
   font-size: 18px !important;
@@ -2124,91 +1555,11 @@ html[data-theme="dark"] .cart-detail-row b {
   line-height: 1 !important;
 }
 
-/* ======================== Handlekurv: tittel + tøm på én linje v6 ======================== */
-.view-cart .cart-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin: 0 0 12px;
-}
-
-.view-cart .cart-header-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-}
-
-.view-cart .cart-header-actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.view-cart .cart-header-actions:empty {
-  display: none;
-}
-
-.view-cart .cart-header-actions .cart-clear-btn {
-
-  white-space: nowrap;
-}
-
 .view-cart .cart-topbar {
   display: none !important;
 }
 
-  .view-cart .cart-header-row {
-    gap: 10px;
-    margin-bottom: 10px;
-  }
 
-  .view-cart .cart-header-title {
-    font-size: 24px;
-    line-height: 1.1;
-  }
-
-  .view-cart .cart-header-actions .cart-clear-btn {
-    min-height: 40px;
-    padding: 0 13px;
-    font-size: 12.5px;
-    border-radius: 13px;
-  }
-
-@media (max-width: 360px) {
-  .view-cart .cart-header-row {
-    gap: 8px;
-  }
-
-  .view-cart .cart-header-title {
-    font-size: 22px;
-  }
-
-  .view-cart .cart-header-actions .cart-clear-btn {
-    padding: 0 10px;
-    gap: 6px;
-    font-size: 11.5px;
-  }
-}
-
-/* ======================== Handlekurv: antall x enhetspris v7 ======================== */
-.view-cart .cart-detail-multiplier {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 2px;
-  margin-right: 1px;
-  font-weight: 650;
-}
-
-.view-cart .cart-detail-multiplier strong {
-  color: var(--palette-ink);
-  font-weight: 900;
-}
-
-.view-cart .cart-detail-price {
-  font-weight: 700;
-}
 
 /* ======================== Mine bestillinger: samme stil som handlekurv v2 ======================== */
 #orderList .order-history-cart-list {
@@ -3399,8 +2750,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 .confirm-modal { overflow-y: auto !important; }
 }
 
-/* Compact product summaries: cart, pickup and order history. */
-.view-cart .cart-line.cart-product-card {
+/* Compact product summaries: cart{
   grid-template-columns: 64px minmax(0, 1fr) !important;
   gap: 6px !important;
   min-height: 106px !important;
@@ -3414,7 +2764,6 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   gap: 8px !important;
   padding: 8px !important;
 }
-.view-cart .cart-product-media,
 #reviewCard .pickup-review-media,
 #orderList .order-history-cart-media {
   width: 64px !important;
@@ -3422,36 +2771,13 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   min-height: 64px !important;
   border-radius: 10px !important;
 }
-.view-cart .cart-product-media img,
-.view-cart .cart-product-fallback {
-  width: 100%;
-  height: 64px !important;
-  min-height: 64px !important;
-}
-.view-cart .cart-product-name,
 #reviewCard .pickup-review-name,
 #orderList .order-history-cart-name {
   font-size: 13px !important;
   line-height: 1.25 !important;
 }
-.view-cart .cart-product-content,
 #reviewCard .pickup-review-product { gap: 4px; }
 #orderList .order-history-cart-list,
 #reviewCard .pickup-review-list { gap: 8px !important; }
 
-.view-cart .cart-product-content { justify-content: center; padding-inline-end: 0; }
-.view-cart .cart-product-total { white-space: nowrap; font-size: 14px; }
-
-/* A single price column for product, extras and total. */
-.view-cart .cart-detail-row { display: grid; grid-template-columns: minmax(0, auto) minmax(8px, 1fr) auto; gap: 5px; }
-.view-cart .cart-detail-left { display: block; overflow: visible; }
-.view-cart .cart-detail-left span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.view-cart .cart-detail-leader { display: block; height: 0; align-self: end; margin-bottom: 3px; border-bottom: 1px solid color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)); opacity: .8; }
-.view-cart .cart-product-totalrow .cart-detail-leader { flex: 1; min-width: 8px; }
-.view-cart .cart-detail-price { display: block; text-align: right; white-space: nowrap; }
-.view-cart .cart-product-totalrow { display: flex; width: 100%; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 4px; }
-.view-cart .cart-product-totalrow > span { color: var(--palette-muted); font-size: 11px; }
-
-.view-cart .cart-product-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; width: 100%; }
-.view-cart .cart-product-heading .cart-product-copy { grid-column: 1; grid-row: 1; align-self: center; }
-.view-cart .cart-product-heading .cart-product-stepper { justify-self: end; align-self: start; }
+/* A single price column for product{ display: grid; grid-template-columns: minmax(0, auto) minmax(8px, 1fr) auto; gap: 5px; }

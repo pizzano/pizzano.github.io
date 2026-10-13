@@ -27,7 +27,7 @@ html[data-customer-palette] .allergen-visibility-switch::after { background: var
 html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent); }
 
 /* Visible boundaries for customer cards, choices and controls. */
-html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .opt-row, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .cart-product-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-close, .sheet-fav, .sheet-err, .empty-state) {
+html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .opt-row, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-close, .sheet-fav, .sheet-err, .empty-state) {
   border: 1px solid var(--palette-border) !important;
 }
 html[data-customer-palette] .profile-menu-row { background: var(--palette-surface); border-radius: 14px; }
@@ -45,7 +45,7 @@ html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-succe
 html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-bg); }
 
 /* Strong, consistent boundaries and distinct control states. */
-html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .cart-product-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
+html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
 html[data-customer-palette] .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
 html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
 html[data-customer-palette] :is(.opt-row.is-checked, .opt-row:has(input:checked), .time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-soft) !important; border-color: var(--palette-accent) !important; }
@@ -65,7 +65,7 @@ html[data-customer-palette] .ingredient-chip.is-removed {
 /* Text must follow the selected background, including pale selected controls. */
 html[data-customer-palette] .time-btn.is-active,
 html[data-customer-palette] .time-btn[aria-pressed="true"] { color: var(--palette-ink) !important; background: var(--palette-soft) !important; }
-html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .cart-stepper-plus, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
+html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
 html[data-customer-palette] .order-progress-dot { color: var(--palette-muted); }
 html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { color: var(--palette-on-accent) !important; }
 
@@ -176,9 +176,7 @@ html[data-customer-palette][data-theme="dark"] #productSheet .opt-row input:chec
   #productSheet .opt-row input::before { display: none; }
 }
 
-/* Remove and decrease actions match the add action, with white symbols. */
-html[data-customer-palette] .view-cart .cart-stepper-trash,
-html[data-customer-palette] .view-cart .cart-stepper-minus {
+/* Remove and decrease actions match the add action{
   background: var(--palette-accent) !important;
   color: #fff !important;
   box-shadow: none !important;

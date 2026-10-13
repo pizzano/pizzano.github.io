@@ -35,7 +35,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261013-orderdetails59';
+} from './data.js?v=20261013-cartcompact60';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1496,40 +1496,21 @@ function cartLineHtml(line) {
     return groups;
   }, []);
 
-  const quantityPriceHtml = (unitPrice, { extra = false, included = false } = {}) => {
+  const quantityPriceHtml = (unitPrice, { included = false } = {}) => {
     const price = Number(unitPrice) || 0;
-    if (included || price <= 0) {
-      return '<b class="cart-detail-price is-included">Inkludert</b>';
-    }
-
-    if (line.quantity > 1) {
-      return `<b class="cart-detail-price${extra ? ' is-extra' : ''}"><span class="cart-detail-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
-    }
-
-    return `<b class="cart-detail-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
+    return included || price <= 0
+      ? '<b class="cart-detail-price is-included">Inkludert</b>'
+      : `<b class="cart-detail-price">+ ${formatPrice(price * line.quantity)}</b>`;
   };
-
   const detailRows = [];
-
-  if (size?.label) {
-    detailRows.push(
-      `<span class="cart-detail-row">
-        <span class="cart-detail-left"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
-        <span class="cart-detail-leader" aria-hidden="true"></span>
-        ${quantityPriceHtml(getSizePrice(item, line.sizeId))}
-      </span>`
-    );
-  }
-
   addonGroups.forEach((group) => {
     const title = group.title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
     const heading = title.charAt(0).toLocaleUpperCase('no') + title.slice(1);
     const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
     detailRows.push(
       `<span class="cart-detail-row">
-        <span class="cart-detail-left"><b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b> <span>${escapeHtml(labels.join(', '))}</span></span>
-        <span class="cart-detail-leader" aria-hidden="true"></span>
-        ${quantityPriceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
+        <span class="cart-detail-left">${group.price <= 0 && labels.length ? escapeHtml(labels.join(', ')) : `${escapeHtml(heading)}${labels.length ? `: ${escapeHtml(labels.join(', '))}` : ''}`}</span>
+        ${group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : quantityPriceHtml(group.price)}
       </span>`
     );
   });
@@ -1563,11 +1544,11 @@ function cartLineHtml(line) {
       <div class="cart-product-content">
         <div class="cart-product-heading">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-          <strong class="cart-product-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · 1 gratis pizza' : ''}</strong>
+          <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(item.name)}</strong><span class="cart-product-baseprice"> · ${line.loyaltyFree ? '1 gratis pizza' : `${formatPrice(getSizePrice(item, line.sizeId))}${line.quantity > 1 ? ' / stk' : ''}`}</span></span>${size?.label ? `<span class="cart-product-size">${escapeHtml(size.label)}</span>` : ''}
           ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
         </button>
 
-          <div class="cart-product-stepper is-smart-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
+          <div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
             ${line.quantity > 1
               ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
               : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
@@ -1578,7 +1559,7 @@ function cartLineHtml(line) {
           </div>
         </div>
         ${detailRows.length ? `<button class="cart-product-copy cart-product-detailcopy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre tilvalg for ${escapeHtml(item.name)}"><span class="cart-product-details">${detailRows.join('')}</span></button>` : ''}
-        <div class="cart-product-totalrow"><span>Totalt</span><span class="cart-detail-leader" aria-hidden="true"></span><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
+        <div class="cart-product-totalrow"><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
       </div>
 
 
@@ -1601,8 +1582,7 @@ function renderCart() {
   if (el.cartHeaderActions) {
     el.cartHeaderActions.innerHTML = `
       <button class="cart-clear-btn" data-clear-cart type="button" aria-label="Tøm handlekurv">
-        <span>Tøm handlekurv</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg><span>Tøm handlekurv</span>
       </button>
     `;
   }

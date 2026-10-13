@@ -265,9 +265,6 @@ html[data-theme="dark"] .sheet-allergen-none {
   background: var(--palette-surface, #33271c) !important;
   color: var(--palette-ink, #e4c3a8) !important;
 }
-
-html[data-theme="dark"] .cart-line,
-html[data-theme="dark"] .cart-summary,
 html[data-theme="dark"] .step-panel {
   border-color: var(--line) !important;
   background: var(--palette-surface, #191d21) !important;
@@ -577,97 +574,6 @@ html[data-theme="dark"] .admin-toast {
 
 html[data-theme="dark"] ::selection {
   background: color-mix(in srgb, var(--palette-accent, rgb(255,113,28)) 32%, transparent);
-}
-
-/* ======================== Handlekurv produktkort ======================== */
-html[data-theme="dark"] .view-cart .cart-line.cart-product-card {
-  border-color: var(--line) !important;
-  background: var(--palette-surface, #191d21) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] .cart-product-media,
-html[data-theme="dark"] .cart-product-fallback {
-  background: var(--palette-surface, #24292e) !important;
-}
-
-html[data-theme="dark"] .cart-product-fallback {
-  color: var(--palette-accent, #ff9a5e) !important;
-}
-
-html[data-theme="dark"] .cart-product-name,
-html[data-theme="dark"] .cart-product-unit b,
-html[data-theme="dark"] .cart-product-total,
-html[data-theme="dark"] .cart-product-stepper span {
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] .cart-product-unit,
-html[data-theme="dark"] .cart-product-details {
-  color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] .cart-product-stepper {
-  background: var(--palette-surface, #24292e) !important;
-}
-
-html[data-theme="dark"] .cart-product-stepper button {
-  background: var(--palette-surface, #181c20) !important;
-  color: var(--ink) !important;
-  box-shadow: none !important;
-}
-
-/* ======================== Handlekurv detaljer/priser v4 ======================== */
-html[data-theme="dark"] .view-cart .cart-detail-left b,
-html[data-theme="dark"] .view-cart .cart-detail-price {
-  color: var(--palette-ink, #d5dbe0) !important;
-}
-html[data-theme="dark"] .view-cart .cart-detail-price.is-included {
-  color: var(--palette-ink, #9da6ad) !important;
-}
-html[data-theme="dark"] .view-cart .cart-detail-leader {
-  border-bottom-color: var(--palette-border, #5b646c) !important;
-}
-
-/* ======================== Handlekurv enkel mengdekontroll v5 ======================== */
-html[data-theme="dark"] .cart-clear-btn {
-  border-color: var(--palette-accent, #4b372b) !important;
-  background: var(--palette-surface, #2a211c) !important;
-  color: var(--palette-accent, #ff9861) !important;
-}
-
-html[data-theme="dark"] .cart-clear-btn:hover {
-  border-color: var(--palette-accent, #65442f) !important;
-  background: var(--palette-surface, #34271f) !important;
-}
-
-html[data-theme="dark"] .view-cart .cart-product-stepper.is-smart-stepper {
-  background: var(--palette-surface, #24292e) !important;
-}
-
-html[data-theme="dark"] .view-cart .cart-product-stepper.is-smart-stepper button {
-  background: var(--palette-surface, #181c20) !important;
-  color: var(--ink) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] .view-cart .cart-stepper-trash {
-  color: var(--palette-accent, #ff9158) !important;
-}
-
-html[data-theme="dark"] .view-cart .cart-stepper-plus {
-  background: var(--palette-accent, #f2650f) !important;
-  color: var(--palette-ink, #fff) !important;
-}
-
-html[data-theme="dark"] .view-cart .cart-stepper-minus {
-  background: var(--palette-surface, #181c20) !important;
-  color: var(--palette-accent, #ff9158) !important;
-}
-
-/* ======================== Handlekurv antall x enhetspris v7 ======================== */
-html[data-theme="dark"] .view-cart .cart-detail-multiplier strong {
-  color: var(--palette-ink, #fff) !important;
 }
 
 /* ======================== Mine bestillinger cart style v2 ======================== */

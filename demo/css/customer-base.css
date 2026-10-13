@@ -350,12 +350,7 @@ select {
     background: transparent !important;
 
     color: var(--ink);
-}.btn-outline:hover { background: transparent !important; border-color: var(--ink-3); }.btn-block { width: 100%; }.btn-add { flex: 1; justify-content: space-between; }.btn-add strong { font-weight: 700; }
-
-/* ------------------------ Handlekurv ------------------------ */.cart-lines { display: grid;  margin-bottom: 10px; }.cart-line {
-    display: grid;
-    grid-template-columns: 30px 1fr auto;
-}.link-btn {
+}.btn-outline:hover { background: transparent !important; border-color: var(--ink-3); }.btn-block { width: 100%; }.btn-add { flex: 1; justify-content: space-between; }.btn-add strong { font-weight: 700; }.link-btn {
     border: 0;
     background: transparent;
     padding: 0;
@@ -514,8 +509,7 @@ main { padding-left: 0; padding-right: 0; }.view-menu { margin-left: -9px; margi
 .view-checkout > .steps {
         margin-left: 12px;
         margin-right: 12px;
-    }.cart-line,
-.cart-summary,
+    }
 .step-panel,
 .view-profile .card {
         border-left: 0;
