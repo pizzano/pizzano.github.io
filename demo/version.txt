@@ -1,5 +1,6 @@
-Bestill.online customer release: 20261013-menusoft91
-Menu Soft UI: individual 16–18px radius product cards with restrained theme-colored shadows; 34px visual add buttons with 44px touch targets; softly raised category tiles and open-status/allergen controls. Matches all four customer palettes in light and dark mode.
-Kept: existing product/price text, favorites, allergen toggle, basket and order operations.
+Bestill.online customer release: 20261013-productsheet92
+Product sheet: reference-inspired ingredient customization tile with icon, separate size and extras cards, selected-size badge, round radio/square checkbox controls, theme-aware selected states, section dividers and accessible kitchen comment field.
+Unchanged: existing product photograph, X/favorite header, allergen chips below comment, quantity and pinned Legg til footer, prices and ordering logic.
+Palettes: all four customer palettes in light/dark mode.
 Admin release: 20261013-cartplanned90
 Source: pizzano/pizzano.github.io main
