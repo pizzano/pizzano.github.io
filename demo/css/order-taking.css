@@ -183,6 +183,7 @@ border-left-color:var(--ot-accent);
 :root .orders-page .order-detail-pane {
   display:flex;min-width:0;min-height:0;
   padding:0;overflow:hidden;
+  container-type:inline-size;
   background:var(--ot-surface);
   border-left:0;border-radius:0 20px 20px 0;
 }
@@ -209,11 +210,19 @@ border-left-color:var(--ot-accent);
   background:var(--ot-selected);
 }
 :root .orders-page .pos-detail-top {
-display:grid;grid-template-columns:minmax(175px,1fr) minmax(280px,auto) 44px;align-items:center;column-gap:15px;row-gap:10px;min-width:0;padding:17px 20px 10px;
+  display:grid;
+  grid-template-columns:44px max-content minmax(0,1fr);
+  grid-template-rows:auto;
+  align-items:center;column-gap:clamp(12px,1.8vw,30px);row-gap:10px;
+  min-width:0;padding:17px 20px 11px;
 }
-:root .orders-page .pos-detail-heading {min-width:0;}
+:root .orders-page .pos-detail-heading {
+  min-width:0;grid-column:3;grid-row:1;
+  justify-self:end;text-align:right;
+}
 :root .orders-page .order-customer-heading {
-display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  display:flex;gap:10px;align-items:center;
+  justify-content:flex-end;flex-wrap:wrap;
 }
 :root .orders-page .pos-detail-heading h2 {
   margin:0;color:var(--ot-ink);font-size:clamp(20px,2vw,27px);
@@ -236,7 +245,13 @@ display:flex;gap:10px;align-items:center;flex-wrap:wrap;
   background:var(--ot-surface);color:var(--ot-muted);
 }
 :root .orders-page .order-facts {
-display:grid;grid-template-columns:minmax(116px,auto) minmax(140px,auto);grid-column:2;grid-row:1;align-items:center;gap:0;min-width:0;max-width:100%;margin:0;padding:7px 10px;border:1px solid color-mix(in srgb,var(--ot-line) 75%,transparent);border-radius:13px;background:var(--ot-surface);box-shadow:0 5px 15px rgba(12,44,72,.045);
+  display:grid;grid-template-columns:minmax(116px,auto) minmax(140px,auto);
+  grid-column:2;grid-row:1;
+  align-items:center;gap:0;min-width:0;max-width:100%;
+  margin:0;padding:7px 10px;
+  border:1px solid color-mix(in srgb,var(--ot-line) 75%,transparent);
+  border-radius:13px;background:var(--ot-surface);
+  box-shadow:0 5px 15px rgba(12,44,72,.045);
 }
 :root .orders-page .order-facts>div,
 :root .orders-page .order-facts>.order-call {
@@ -265,7 +280,13 @@ display:grid;grid-template-columns:minmax(116px,auto) minmax(140px,auto);grid-co
 
 
 :root .orders-page .pos-detail-close {
-display:grid;place-items:center;grid-column:3;grid-row:1;justify-self:end;width:43px;height:43px;border:1px solid var(--ot-line);border-radius:12px;background:var(--ot-surface);color:var(--ot-ink);font-size:28px;font-weight:600;line-height:1;box-shadow:var(--ot-shadow);cursor:pointer;
+  display:grid;place-items:center;
+  grid-column:1;grid-row:1;justify-self:start;
+  width:43px;height:43px;
+  border:1px solid var(--ot-line);border-radius:12px;
+  background:var(--ot-surface);color:var(--ot-ink);
+  font-size:28px;font-weight:600;line-height:1;
+  box-shadow:var(--ot-shadow);cursor:pointer;
 }
 :root .orders-page .pos-detail-close:hover {box-shadow:var(--ot-shadow-hover);}
 :root .orders-page .pos-detail-scroll {
@@ -457,9 +478,7 @@ html[data-theme="dark"] .orders-page .pos-progress-actions button {background:li
 
 @media(max-width:1350px) {
   :root .orders-page .orders-app {grid-template-columns:minmax(270px,29%) minmax(0,1fr);}
-  :root .orders-page .pos-detail-top {grid-template-columns:minmax(155px,1fr) auto;gap:11px;padding:17px 17px 7px;}
-  :root .orders-page .order-facts {grid-column:1/-1;grid-row:2;justify-self:start;}
-  :root .orders-page .pos-detail-close {grid-column:2;grid-row:1;}
+  :root .orders-page .pos-detail-top {column-gap:12px;padding:17px 17px 9px;}
   :root .orders-page .pos-detail-scroll {padding:0 17px 14px;}
   :root .orders-page .pos-detail-actions {flex-wrap:wrap;gap:10px;}
   :root .orders-page .order-decision-buttons {margin-left:auto;}
@@ -512,7 +531,7 @@ html[data-theme="dark"] .orders-page .pos-progress-actions button {background:li
   :root .orders-page .order-fact-icon svg {width:16px;height:16px;}
   :root .orders-page .order-fact-copy>span {font-size:10px;}
   :root .orders-page .order-fact-copy strong {font-size:11px;}
-  :root .orders-page .pos-detail-close {grid-column:2;grid-row:1;width:36px;height:36px;font-size:23px;}
+  :root .orders-page .pos-detail-close {width:36px;height:36px;font-size:23px;}
   :root .orders-page .pos-detail-scroll {padding:0 9px 8px;}
   :root .orders-page .pos-items-heading h3 {font-size:15px;}
   :root .orders-page .pos-order-line-body strong,:root .orders-page .pos-order-line>b {font-size:13px;}
@@ -530,6 +549,27 @@ html[data-theme="dark"] .orders-page .pos-progress-actions button {background:li
   :root .orders-page .pos-order-qty {width:34px;height:34px;}
   :root .orders-page .order-minute-buttons button {font-size:11px;padding:0 7px;min-height:38px;}
   :root .orders-page .order-decision-buttons {grid-template-columns:1fr 1.4fr;}
+}
+/* Switch to two rows only when the actual detail pane is too narrow for
+   the three-part header; viewport width alone does not reflect sidebar size. */
+@container (max-width:720px) {
+  :root .orders-page .pos-detail-top {
+    grid-template-columns:44px minmax(0,1fr);
+    grid-template-rows:auto auto;
+    align-items:center;
+    row-gap:10px;
+  }
+  :root .orders-page .pos-detail-close {
+    grid-column:1;grid-row:1;justify-self:start;
+  }
+  :root .orders-page .pos-detail-heading {
+    grid-column:2;grid-row:1;justify-self:end;
+    text-align:right;
+  }
+  :root .orders-page .order-facts {
+    grid-column:1/-1;grid-row:2;justify-self:stretch;
+    max-width:100%;
+  }
 }
 @media(prefers-reduced-motion:reduce) {
   :root .orders-page button,:root .orders-page .orders-list-row {transition:none!important;}
