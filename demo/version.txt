@@ -1,4 +1,5 @@
-Bestill.online release: 20261013-cartplanned90
-Customer cart: stepper actions follow the selected palette in light/dark mode, with 34px controls (32px on narrow phones). Quantity, prices and totals remain unchanged.
-Admin Planlagte: only orders with a future pickup timestamp and active status. Expired scheduled orders stay in Alle, and the list refreshes when the pickup time passes.
+Bestill.online customer release: 20261013-menusoft91
+Menu Soft UI: individual 16–18px radius product cards with restrained theme-colored shadows; 34px visual add buttons with 44px touch targets; softly raised category tiles and open-status/allergen controls. Matches all four customer palettes in light and dark mode.
+Kept: existing product/price text, favorites, allergen toggle, basket and order operations.
+Admin release: 20261013-cartplanned90
 Source: pizzano/pizzano.github.io main
