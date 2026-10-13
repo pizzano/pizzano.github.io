@@ -1178,7 +1178,7 @@ function optionGroupHtml(group, problems) {
 
 function renderSheet() {
   if (!draft) return;
-  const { item, section } = findItem(draft.itemId);
+  const { item } = findItem(draft.itemId);
   if (!item) {
     closeSheet();
     return;
@@ -1196,8 +1196,6 @@ function renderSheet() {
   for (const group of groups) if (!Array.isArray(draft.selections[group.id])) draft.selections[group.id] = [...(group.defaultOptionIds || [])];
   const { problems, message } = validateDraft();
   const allergens = allergenLabels(item);
-  const selectedSize = (item.sizes || []).find(size => size.id === draft.sizeId);
-  const basePrice = Number(selectedSize?.price ?? item.price ?? 0);
   const ingredientCustomizationEnabled =
     store.settings?.ingredientCustomizationEnabled !== false;
   const removableIngredients = ingredientCustomizationEnabled
@@ -1272,10 +1270,6 @@ function renderSheet() {
         : ''
     }
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
-    <div class="sheet-product-summary">
-      ${section?.title ? `<span class="sheet-product-category">${escapeHtml(section.title)}</span>` : ''}
-      <strong class="sheet-product-base-price">${draft.loyaltyFree ? 'Gratis pizza' : formatPrice(basePrice)}</strong>
-    </div>
     ${item.description || item.ingredients ? `<p class="sheet-desc">${escapeHtml(item.description || item.ingredients)}</p>` : ''}
     <div class="sheet-allergens" aria-label="Allergener">
       <span class="sheet-allergens-label">Allergener</span>
