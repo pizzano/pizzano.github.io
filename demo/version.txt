@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-productnosummary87
-Product sheet: removed extra category and base-price summary row, including unused JS variables and CSS. Keep header, image, allergies, size/extras and fixed quantity/cart footer.
+Bestill.online release: 20261013-allergensbelow88
+Product details: allergens appear directly below Kommentar til kjøkkenet with 17px top spacing. Existing header, image, size/extras, comments, quantity and add-to-cart logic unchanged.
 Source: pizzano/pizzano.github.io main
