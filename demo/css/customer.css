@@ -993,21 +993,6 @@ textarea.input {
 }
 /* Product detail BODY only: light, separate choices like the reference.
    The existing photo, close/favorite header and checkout footer are untouched. */
-#productSheet .sheet-product-summary {
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;min-height:30px;margin:7px 2px 5px;
-}
-#productSheet .sheet-product-category {
-  display:inline-flex;align-items:center;min-height:24px;
-  max-width:75%;padding:3px 10px;border-radius:999px;
-  background:var(--palette-soft);color:var(--palette-muted);
-  font-size:11.5px;font-weight:550;line-height:1.3;
-  overflow-wrap:anywhere;
-}
-#productSheet .sheet-product-base-price {
-  margin-left:auto;font-size:16px;font-weight:750;line-height:1.2;
-  color:var(--palette-accent);white-space:nowrap;
-}
 #productSheet .sheet-body > .sheet-desc {
   margin:10px 2px 12px !important;
   color:var(--palette-muted);
@@ -1086,7 +1071,6 @@ textarea.input {
   #productSheet .opt-row {min-height:45px;padding:8px 10px;gap:8px;}
   #productSheet .opt-row .opt-label {font-size:12.5px;}
   #productSheet .opt-row .opt-price {font-size:11.5px;}
-  #productSheet .sheet-product-category {font-size:11px;}
 }
 
 .sheet-foot {
