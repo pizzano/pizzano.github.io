@@ -2055,8 +2055,6 @@ function renderOrderDetail(orderId) {
   const scheduledPickup = isScheduledPickupOrder(order);
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
-  const pickupType = String(order.type || 'henting').toLocaleLowerCase('no').includes('lever') ? 'Levering' : 'Henting';
-  const payment = String(store.settings?.paymentInfo || 'Betales ved henting');
   const proposedMinutes = pendingOrderMinutes.get(order.id) || 15;
   const readyTime = compactOrderTime(order.estimatedReadyAt);
   const actionHtml = isPending
