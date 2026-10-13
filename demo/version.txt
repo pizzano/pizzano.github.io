@@ -1,6 +1,8 @@
 Bestill.online customer release: 20261013-sheetcompact94
 Product modal: thinner 44px option cards, 20px radio/check controls, smaller 12px option labels, 11px prices and 58px kitchen comment with 12px text. Keep 9px between options and 17px between feature groups; product ingredients description remains 13.5px. Compact ingredient tile and allergen chips. iPhone comment focus prevents unexpected zoom.
 Preserved photo, X/favorite header, fixed quantity/Legg til footer, all palette themes and existing prices, option/ingredient behavior, cart and ordering.
-Admin release: 20261014-detailheading96
+Admin release: 20261014-manualready97
 Admin order detail header: status pill at left, centered customer name and Bestillingskode below, thin vertical divider at right. Dynamic status and all order controls preserved. Narrow sidebar and pickup countdown unchanged.
 Source: pizzano/pizzano.github.io main
+
+Manual ready status only: no auto-promotion on admin, customer or backend. Time expiration displays an estimate, not "Klar". SMS remains off until securely configured.

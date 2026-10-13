@@ -3,11 +3,10 @@
 const { initializeApp } = require('firebase-admin/app');
 const { getDatabase } = require('firebase-admin/database');
 const { onValueUpdated } = require('firebase-functions/v2/database');
-const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { logger } = require('firebase-functions');
 const {
-  notificationKind, norwegianMobile, smsText, validGatewayResponse, shouldAutoReady,
+  notificationKind, norwegianMobile, smsText, validGatewayResponse,
 } = require('./sms-core.cjs');
 
 initializeApp({
@@ -94,44 +93,4 @@ exports.smsOnOrderStatus = onValueUpdated({
     await destination.update({ state: 'failed', updatedAt: Date.now() });
     logger.error('SMS notification failed', { kind, orderId, error: error.message });
   }
-});
-
-
-/**
- * Replicates the existing admin-page timed transition as a backend job.
- * Explicit opt-in: no order state updates on deployment unless enabled.
- *
- * Admin SDK transactions ensure that an employee status change, an admin-page
- * auto-promotion and this job cannot all promote the same order twice.
- */
-exports.autoReadyOrders = onSchedule({
-  schedule: 'every 1 minutes',
-  region: 'europe-west1',
-  timeZone: 'Europe/Oslo',
-  memory: '256MiB',
-  maxInstances: 1,
-  timeoutSeconds: 55,
-}, async () => {
-  if (process.env.SMS_AUTO_READY_ENABLED !== 'true') return;
-  const database = getDatabase();
-  const now = Date.now();
-  const statuses = ['bekreftet', 'tilberedning'];
-  const snapshots = await Promise.all(statuses.map(status =>
-    database.ref('orders').orderByChild('status').equalTo(status).limitToLast(250).get()
-  ));
-
-  let processed = 0;
-  for (const snapshot of snapshots) {
-    if (!snapshot.exists()) continue;
-    for (const [orderId, order] of Object.entries(snapshot.val())) {
-      if (!shouldAutoReady(order, now)) continue;
-      const ref = database.ref('orders').child(orderId);
-      const result = await ref.transaction(current => {
-        if (!shouldAutoReady(current, Date.now())) return;
-        return { ...current, status: 'klar', statusUpdatedAt: Date.now() };
-      }, undefined, false);
-      if (result.committed) processed += 1;
-    }
-  }
-  if (processed > 0) logger.info('Orders promoted to ready on backend', { count: processed });
 });

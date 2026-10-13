@@ -60,21 +60,6 @@ function smsText(order, kind) {
 }
 
 
-/**
- * Guard against promoting old uncollected orders when a newly deployed
- * scheduler scans historical orders. Only very recent due orders qualify.
- */
-function shouldAutoReady(order, now) {
-  if (!order || !['bekreftet', 'tilberedning'].includes(order.status)) return false;
-  const readyAt = Number(order.estimatedReadyAt) || 0;
-  const createdAt = Number(order.createdAt) || 0;
-  if (!Number.isFinite(now) || !readyAt || !createdAt) return false;
-  const maxOrderAge = 24 * 60 * 60 * 1000;
-  const maxOverdue = 60 * 60 * 1000;
-  return readyAt <= now && readyAt > now - maxOverdue
-    && createdAt > now - maxOrderAge && createdAt <= now;
-}
-
 function validGatewayResponse(httpStatus, payload) {
   return httpStatus >= 200 && httpStatus < 300
     && payload && typeof payload === 'object'
@@ -83,5 +68,5 @@ function validGatewayResponse(httpStatus, payload) {
 
 module.exports = {
   notificationKind, norwegianMobile, pickupDate, pickupLabel, smsText,
-  validGatewayResponse, shouldAutoReady, NO_SMS_STATES,
+  validGatewayResponse, NO_SMS_STATES,
 };

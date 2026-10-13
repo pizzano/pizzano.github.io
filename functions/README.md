@@ -30,11 +30,10 @@ Traccar SMS Gateway and its mobile/internet connection must remain available.
      (use a **freshly rotated token**, not the value previously posted in chat)
    - create LOCAL file functions/.env.bestill-19 containing:
        SMS_NOTIFICATIONS_ENABLED=true
-       SMS_AUTO_READY_ENABLED=true
-     (never commit this file). Activate only after reviewing the database rules
-     and confirming that employees want automatic "klar" transitions.
-   - firebase deploy --only functions
-   - verify both smsOnOrderStatus and autoReadyOrders are shown as deployed.
+     (never commit this file). Activate only after reviewing database rules
+     and ice's commercial SMS conditions.
+   - firebase deploy --only functions:smsOnOrderStatus
+   - verify smsOnOrderStatus is shown as deployed.
 5. Send two non-customer test orders with a valid Norwegian mobile number and verify
    SMS text and smsNotifications entries in the Firebase console. Check receipt on
    the destination handset; a Traccar gateway API success isn't a carrier delivery proof.
@@ -47,16 +46,12 @@ Traccar SMS Gateway and its mobile/internet connection must remain available.
 - Notifications are **OFF by default** until SMS_NOTIFICATIONS_ENABLED=true is deployed.
 - Cloud gateway passes recipients and message content via Traccar's cloud service.
 - Send only essential transactional SMS; follow privacy rules and retention policies.
-- The optional autoReadyOrders Cloud Scheduler function checks recent orders every minute,
-  even if the admin panel is not open. This consumes billable Cloud Scheduler / Function
-  resources and requires SMS_AUTO_READY_ENABLED=true to update statuses. Only
-  orders with a ready time in the last hour and created in the last 24 hours are
-  eligible, to avoid sending notifications for historical orders at first launch.
-  It requires an index on "status" for efficient Firebase RTDB queries.
-- The original admin.js timer may also mark orders ready while an employee is using
-  the admin panel. The backend uses a transaction to avoid double updates, and
-  the SMS sender deduplicates the resulting notification.
-- Until both cloud functions are deployed with secrets and enabled, automatic SMS
+- **Klar for henting is manual only.** Pickup countdown expiry never updates status.
+  Only staff pressing "Marker klar for henting" records that transition.
+  The second SMS can only trigger after this saved transition.
+- Customer page never PATCHes an order to "klar" just because the timer elapsed.
+- There is no Firebase Cloud Scheduler or recurring backend SMS job.
+- Until the SMS function is deployed with its secret and enabled, automatic SMS
   does NOT send. A test of the source code is not a test of live cloud delivery.
 
 ## Test locally

@@ -105,7 +105,6 @@ let attachTargetItemId = null;
 let openOrderId = null;
 let selectedOrderId = null;
 let actionOrderId = null;
-const autoReadyBusy = new Set();
 
 const $ = (id) => document.getElementById(id);
 
@@ -2033,7 +2032,7 @@ function orderCenterText(order) {
     const label = order.status === 'bekreftet' ? 'Godtatt' : 'Tilberedes';
     if (readyAt) {
       const remainingMs = readyAt - Date.now();
-      if (remainingMs <= 0) return `${label} · Klar nå`;
+      if (remainingMs <= 0) return `${label} · Tid utløpt`;
       const seconds = Math.ceil(remainingMs / 1000);
       const minutes = Math.floor(seconds / 60);
       const secs = seconds % 60;
@@ -2081,8 +2080,7 @@ function orderListRemainingTime(order) {
   );
   if (!pickupAt) return '';
   const milliseconds = pickupAt - Date.now();
-  if (milliseconds <= 0) return isScheduledPickupOrder(order) && order.status === 'mottatt'
-    ? 'Hentetid nå' : 'Klar nå';
+  if (milliseconds <= 0) return 'Tid utløpt';
   if (milliseconds < 60000) return Math.ceil(milliseconds / 1000) + ' sek';
   const minutes = Math.ceil(milliseconds / 60000);
   if (minutes < 60) return minutes + ' min';
@@ -2500,28 +2498,6 @@ el.btnRefreshOrders.addEventListener('click', async () => {
   toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
 });
 
-async function promoteExpiredOrdersToReady() {
-  const now = Date.now();
-  const due = getOrders().filter((order) => {
-    const readyAt = Number(order.estimatedReadyAt) || 0;
-    return readyAt > 0 && readyAt <= now && ['bekreftet', 'tilberedning'].includes(order.status);
-  });
-  for (const order of due) {
-    if (autoReadyBusy.has(order.id)) continue;
-    autoReadyBusy.add(order.id);
-    try {
-      const ok = await updateOrderStatus(order.id, 'klar');
-      if (!ok) continue;
-      if (selectedOrderId === order.id) selectedOrderId = null;
-      renderOrders();
-      renderStats();
-      toast(`#${String(order.id).slice(-6).toUpperCase()} er automatisk klar for henting.`);
-    } finally {
-      autoReadyBusy.delete(order.id);
-    }
-  }
-}
-
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
   updateOrdersConnection();
@@ -2555,7 +2531,7 @@ function refreshOrderClocks() {
   document.querySelectorAll('[data-detail-countdown]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.detailCountdown);
     if (!order) return;
-    node.textContent = orderSummaryCountdown(order) || (isScheduledPickupOrder(order) ? 'Hentetid nå' : 'Klar nå');
+    node.textContent = orderSummaryCountdown(order) || (order.status === 'klar' ? 'Klar nå' : 'Estimert tid passert');
   });
 }
 
@@ -2941,10 +2917,9 @@ setInterval(() => {
 }, 5000);
 
 setInterval(() => {
+  // A pickup estimate must never imply the kitchen has actually finished.
   refreshOrderClocks();
-  void promoteExpiredOrdersToReady();
 }, 1000);
-void promoteExpiredOrdersToReady();
 renderAll();
 
 let pendingMenuImport = null;

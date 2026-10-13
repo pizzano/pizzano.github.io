@@ -427,7 +427,7 @@ function customerOrderCountdown(order) {
   const readyAt = Number(order?.estimatedReadyAt) || 0;
   if (!readyAt) return '';
   const remainingMs = readyAt - Date.now();
-  if (remainingMs <= 0) return 'Klar nå';
+  if (remainingMs <= 0) return 'Estimert tid passert';
   const seconds = Math.ceil(remainingMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -478,7 +478,7 @@ function activeOrderCardHtml(order) {
     } else if (hasLiveEstimate) {
       statusPanel = `
         <div class="active-order-status-box is-confirmed">
-          <span class="active-order-status-label">Maten er klar om</span>
+          <span class="active-order-status-label">Estimert hentetid om</span>
           <span class="active-order-status-clock" aria-hidden="true">⏱</span>
           <strong data-customer-countdown="${escapeHtml(order.id)}">${escapeHtml(customerOrderCountdown(order))}</strong>
         </div>`;
@@ -516,7 +516,6 @@ function activeOrderCardHtml(order) {
 
 const activeOrderStreams = new Map();
 const activeOrderFetchBusy = new Set();
-const customerAutoReadyBusy = new Set();
 let activeOrderFallbackTimer = null;
 const readyDismissTimers = new Map();
 
@@ -580,30 +579,6 @@ function syncActiveOrderWatchers(orderIds) {
 }
 
 
-async function promoteCustomerExpiredOrder(order) {
-  if (!order?.id || customerAutoReadyBusy.has(order.id)) return;
-  const readyAt = Number(order.estimatedReadyAt) || 0;
-  if (!readyAt || readyAt > Date.now() || !['bekreftet', 'tilberedning'].includes(order.status)) return;
-  customerAutoReadyBusy.add(order.id);
-  const now = Date.now();
-  const optimistic = { ...order, status: 'klar', statusUpdatedAt: now };
-  upsertLiveOrder(order.id, optimistic);
-  renderActiveOrders();
-  if (ui.view === 'profile') renderProfile();
-  try {
-    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(order.id)}.json`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'klar', statusUpdatedAt: now }),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  } catch (_) {
-    await fetchActiveOrderNow(order.id);
-  } finally {
-    customerAutoReadyBusy.delete(order.id);
-  }
-}
-
 function refreshCustomerOrderCountdowns() {
   const visibleOrders = activeCustomerOrders();
   const byId = new Map(visibleOrders.map((order) => [order.id, order]));
@@ -614,14 +589,7 @@ function refreshCustomerOrderCountdowns() {
     node.textContent = countdown || '';
   });
 
-  // Use the raw live order state for the transition. Presentation helpers must
-  // never mark an order ready only visually without persisting it to Firebase.
-  for (const order of mergedCustomerOrders()) {
-    const readyAt = Number(order.estimatedReadyAt) || 0;
-    if (readyAt > 0 && readyAt <= Date.now() && ['bekreftet', 'tilberedning'].includes(order.status)) {
-      void promoteCustomerExpiredOrder(order);
-    }
-  }
+  // Time passing never changes status. Only staff can confirm the food is ready.
 }
 
 function scheduleReadyDismiss(order) {
