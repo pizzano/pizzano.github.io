@@ -1856,7 +1856,7 @@ let orderMp3Starting = false;
 function renderOrderSoundPreference() {
   const button = document.getElementById('btnOrderSound');
   button.setAttribute('aria-pressed', String(orderSoundEnabled));
-  button.textContent = orderSoundEnabled ? 'Lyd på' : 'Lyd av';
+  button.innerHTML = `<svg class="orders-tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>${orderSoundEnabled ? 'Lyd på' : 'Lyd av'}</span>`;
   button.title = orderSoundEnabled ? (orderSoundBlocked ? 'Lyd er på, men nettleseren krever et trykk på skjermen. Denne knappen slår lyd av.' : 'Slå av bestillingsalarmen') : 'Slå på bestillingsalarmen';
 }
 renderOrderSoundPreference();
@@ -2082,7 +2082,7 @@ function renderOrderDetail(orderId) {
           <div class="order-fact-received"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span><div class="order-fact-copy"><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div></div>
           ${phone ? `<a class="order-call" href="tel:${escapeHtml(tel)}" aria-label="Ring ${escapeHtml(phone)}"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span class="order-fact-copy"><span>Telefonnummer</span><strong>${escapeHtml(phone)}</strong></span></a>` : `<div><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><div class="order-fact-copy"><span>Telefonnummer</span><strong>Ikke oppgitt</strong></div></div>`}
         </section>
-        <div class="order-heading-right"><strong class="pos-detail-total">${formatPrice(order.total)}</strong><button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingene">···</button></div>
+        <div class="order-heading-right"><strong class="pos-detail-total">${formatPrice(order.total)}</strong><button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingene">×</button></div>
       </header>
       <div class="pos-detail-scroll">
 
