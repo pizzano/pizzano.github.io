@@ -1274,7 +1274,7 @@ function renderSheet() {
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     <div class="sheet-product-summary">
       ${section?.title ? `<span class="sheet-product-category">${escapeHtml(section.title)}</span>` : ''}
-      <strong class="sheet-product-base-price">${formatPrice(basePrice)}</strong>
+      <strong class="sheet-product-base-price">${draft.loyaltyFree ? 'Gratis pizza' : formatPrice(basePrice)}</strong>
     </div>
     ${item.description || item.ingredients ? `<p class="sheet-desc">${escapeHtml(item.description || item.ingredients)}</p>` : ''}
     <div class="sheet-allergens" aria-label="Allergener">
