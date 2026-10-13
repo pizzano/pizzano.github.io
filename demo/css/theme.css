@@ -691,8 +691,8 @@ html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
 }
 
   html[data-theme="dark"] .view-menu .prod-grid {
-    border-color: var(--line) !important;
-    background: var(--palette-surface, #191d21) !important;
+    border-color: transparent !important;
+    background: transparent !important;
   }
 
   html[data-theme="dark"] .view-menu .prod-card {
