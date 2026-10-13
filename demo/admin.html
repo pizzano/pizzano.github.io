@@ -147,9 +147,10 @@
                 <div id="orderStatRow" hidden></div>
                 <div class="orders-app">
                     <aside class="orders-inbox" aria-label="Bestillingsliste">
-                        <nav class="orders-tabs" aria-label="Bestillinger">
+                        <nav class="orders-tabs" aria-label="Filtrer bestillinger">
+                            <button class="orders-tab is-active" data-order-filter="all" type="button" aria-pressed="true"><span>Alle</span><b>0</b></button>
+                            <button class="orders-tab" data-order-filter="scheduled" type="button" aria-pressed="false" title="Aktive bestillinger med valgt hentetid"><span>Planlagte</span><b>0</b></button>
                             <input id="orderSearch" type="search" placeholder="Søk i bestillinger…" aria-label="Søk etter navn, telefon eller bestillingsnummer">
-                            <button class="orders-tab" data-order-filter="all" type="button">Alle</button>
                         </nav>
                         <div id="orderList" class="orders-list"></div>
                     </aside>
