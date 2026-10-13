@@ -690,24 +690,6 @@ html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
   color: var(--palette-accent, #70d494) !important;
 }
 
-/* ======================== Favoritter actions ======================== */
-html[data-theme="dark"] #favList .favorite-order-btn {
-  border-color: var(--palette-accent, #5c3a28) !important;
-  background: var(--palette-surface, #302118) !important;
-  color: var(--palette-accent, #ff9861) !important;
-}
-
-html[data-theme="dark"] #favList .favorite-remove-btn {
-  border-color: var(--palette-accent, #5e3533) !important;
-  background: var(--palette-surface, #1c2024) !important;
-  color: var(--palette-accent, #ff8d86) !important;
-}
-
-html[data-theme="dark"] #favList .favorite-remove-btn:hover {
-  border-color: var(--palette-accent, #7a4541) !important;
-  background: var(--palette-surface, #32201f) !important;
-}
-
   html[data-theme="dark"] .view-menu .prod-grid {
     border-color: var(--line) !important;
     background: var(--palette-surface, #191d21) !important;
