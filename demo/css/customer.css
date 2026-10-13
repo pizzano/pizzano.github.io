@@ -2363,3 +2363,121 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   .shop-info-dialog,
 .confirm-modal { overflow-y: auto !important; }
 }
+
+/* Profile and checkout contact forms: shared field presentation. */
+#viewProfile .profile-detail-head {align-items:flex-start;gap:14px;margin-bottom:16px;padding-top:4px;}
+#viewProfile .profile-detail-head .profile-detail-back {flex:none;}
+#viewProfile .profile-detail-head > div {min-width:0;padding-top:3px;}
+#viewProfile .profile-detail-head span {font-size:11px;}
+#viewProfile .profile-detail-head h1 {font-size:clamp(24px,5.8vw,29px);line-height:1.12;letter-spacing:-.025em;}
+#viewProfile .profile-contact-help {display:block;margin:10px 0 0;color:var(--palette-muted);font-size:13px;font-weight:400;line-height:1.45;letter-spacing:0;text-transform:none;}
+#viewProfile .profile-contact-help[hidden] {display:none!important;}
+#viewProfile .profile-tab-panel.profile-contact-card {
+  padding:20px 16px 16px;
+  border:1px solid var(--palette-border);
+  border-radius:20px;
+  background:var(--palette-surface);
+  box-shadow:0 6px 20px color-mix(in srgb,var(--palette-deep) 5%,transparent);
+}
+#viewCheckout #step2.checkout-contact-card {
+  padding:17px 15px;
+  border:1px solid var(--palette-border);
+  border-radius:18px;
+  background:var(--palette-surface);
+}
+#viewCheckout .checkout-contact-card .sec-title {margin:0 0 16px;font-size:18px;}
+#viewProfile .profile-contact-card .contact-form-field,
+#viewCheckout .checkout-contact-card .contact-form-field {margin:0 0 20px;min-width:0;}
+#viewProfile .profile-contact-card .contact-form-label,
+#viewCheckout .checkout-contact-card .contact-form-label {
+  display:flex;align-items:center;gap:12px;
+  margin:0 0 12px;
+  color:var(--palette-ink);font-size:17px;font-weight:800;
+  line-height:1.2;
+}
+#viewProfile .contact-form-icon,#viewCheckout .contact-form-icon {
+  width:44px;height:44px;flex:none;
+  display:grid;place-items:center;
+  border-radius:13px;
+  background:color-mix(in srgb,var(--palette-accent) 7%,var(--palette-surface));
+  color:var(--palette-ink);
+}
+#viewProfile .contact-form-icon svg,#viewCheckout .contact-form-icon svg {width:23px;height:23px;}
+#viewProfile .profile-contact-card .contact-form-control,
+#viewCheckout .checkout-contact-card .contact-form-control {
+  display:block;position:relative;min-width:0;
+  border:1px solid var(--palette-border);border-radius:15px;
+  background:var(--palette-surface);
+}
+#viewProfile .profile-contact-card .contact-form-control:focus-within,
+#viewCheckout .checkout-contact-card .contact-form-control:focus-within {
+  border-color:var(--palette-accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--palette-accent) 12%,transparent);
+}
+#viewProfile .profile-contact-card .contact-form-control .input,
+#viewCheckout .checkout-contact-card .contact-form-control .input {
+  display:block;width:100%;min-width:0;min-height:63px;height:63px;
+  border:0;border-radius:inherit;padding:10px 49px 10px 14px;
+  font-size:16px!important;
+  line-height:1.3;color:var(--palette-ink);
+  -webkit-text-size-adjust:100%;
+  -webkit-appearance:none;appearance:none;
+}
+#viewProfile .profile-contact-card .contact-form-control .input:focus,
+#viewCheckout .checkout-contact-card .contact-form-control .input:focus {
+  outline:none;box-shadow:none;
+}
+#viewProfile .profile-contact-card .contact-form-phone,
+#viewCheckout .checkout-contact-card .contact-form-phone {
+  display:flex;align-items:stretch;min-width:0;gap:0;
+}
+#viewProfile .profile-contact-card .contact-form-phone .phone-prefix,
+#viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {
+  display:grid;place-items:center;flex:0 0 72px;
+  min-height:63px;padding:0 10px;
+  border:1px solid var(--palette-border);border-right:0;
+  border-radius:15px 0 0 15px;
+  background:color-mix(in srgb,var(--palette-accent) 3%,var(--palette-surface));
+  color:var(--palette-ink);font-size:16px;font-weight:500;
+}
+#viewProfile .profile-contact-card .contact-form-phone .contact-form-control,
+#viewCheckout .checkout-contact-card .contact-form-phone .contact-form-control {flex:1;min-width:0;border-radius:0 15px 15px 0;}
+#viewProfile .profile-contact-card .contact-form-phone .contact-form-control .input,
+#viewCheckout .checkout-contact-card .contact-form-phone .contact-form-control .input {border-radius:0 15px 15px 0;}
+#viewProfile .profile-contact-card .valid-check,
+#viewCheckout .checkout-contact-card .valid-check {
+  right:12px;width:29px;height:29px;border-radius:50%;
+  background:var(--palette-accent);color:var(--palette-light);
+  font-size:19px;font-weight:800;line-height:1;
+}
+#viewProfile .profile-contact-card .valid-check[hidden],
+#viewCheckout .checkout-contact-card .valid-check[hidden] {display:none!important;}
+#viewProfile #btnSaveProfile {
+  display:block;width:100%;min-height:62px;
+  border-radius:15px;font-size:17px;font-weight:800;
+  margin:9px 0 0;padding:10px 15px;
+  background:var(--palette-accent);color:var(--palette-light);
+  box-shadow:0 5px 17px color-mix(in srgb,var(--palette-deep) 12%,transparent);
+}
+#viewProfile #profileSaved:not([hidden]) {display:inline-flex;margin-top:10px;}
+@media(max-width:370px) {
+  #viewProfile .profile-tab-panel.profile-contact-card {padding:15px 12px;}
+  #viewProfile .profile-contact-help {font-size:12px;}
+  #viewProfile .profile-contact-card .contact-form-label,
+  #viewCheckout .checkout-contact-card .contact-form-label {font-size:16px;}
+  #viewProfile .contact-form-icon,#viewCheckout .contact-form-icon {width:40px;height:40px;}
+  #viewProfile .profile-contact-card .contact-form-control .input,
+  #viewCheckout .checkout-contact-card .contact-form-control .input {font-size:16px!important;}
+  #viewProfile .profile-contact-card .contact-form-phone .phone-prefix,
+  #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {flex-basis:62px;}
+}
+/* iOS: keep autofocused text at 16px, hide the fixed checkout bar while
+   editing, and match the checkout scroll region to the visual keyboard viewport.
+   Safari handles the input scrolling itself; never force scrollIntoView on focus. */
+html.ios-contact-keyboard-open main:has(> .view-checkout:not([hidden])) {
+  height:calc(var(--ios-contact-viewport,100dvh) - var(--header-h));
+  max-height:calc(var(--ios-contact-viewport,100dvh) - var(--header-h));
+}
+html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
+  visibility:hidden!important;pointer-events:none!important;
+}
