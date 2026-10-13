@@ -2049,10 +2049,31 @@ function shortOrderCode(order) {
   return '#' + String(order.id || '').slice(-6).toUpperCase();
 }
 
+function orderListPickupTime(order) {
+  // SENERE has a customer-chosen pickup time, even before staff acceptance.
+  if (isScheduledPickupOrder(order)) {
+    const selected = String(order.pickup || '').trim();
+    if (/^\d{1,2}:\d{2}$/.test(selected)) return selected;
+    const scheduledAt = Number(order.scheduledPickupAt) || 0;
+    return scheduledAt > 0 ? compactOrderTime(scheduledAt) : '—';
+  }
+
+  // SNAREST shows when the order will be ready, never when it was received.
+  const readyAt = Number(order.estimatedReadyAt) || 0;
+  if (readyAt > 0) return compactOrderTime(readyAt);
+
+  // Recover older orders where only the estimate start and minutes were stored.
+  const estimatedAt = Number(order.estimatedAt) || 0;
+  const minutes = Number(order.estimatedMinutes) || 0;
+  return estimatedAt > 0 && minutes > 0
+    ? compactOrderTime(estimatedAt + minutes * 60000)
+    : '—'; // No pickup time exists until the ASAP order is accepted.
+}
+
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
-  const displayTime = pickupScheduled ? String(order.pickup || '—') : compactOrderTime(order.createdAt);
-  const timeTitle = pickupScheduled ? 'Valgt hentetid' : 'Bestilt kl.';
+  const displayTime = orderListPickupTime(order);
+  const timeTitle = pickupScheduled ? 'Valgt hentetid' : (displayTime === '—' ? 'Hentetid ikke satt ennå' : 'Estimert hentetid');
   const pickupLabel = pickupScheduled ? 'SENERE' : 'SNAREST';
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
