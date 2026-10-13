@@ -5,6 +5,30 @@ const repo=require('path').resolve(__dirname,'../..');
 const server=http.createServer((req,res)=>{try{const p=repo+new URL(req.url,'http://localhost').pathname;res.setHeader('content-type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.mp3')?'audio/mpeg':'text/html');res.end(fs.readFileSync(p))}catch{res.writeHead(404);res.end()}});
 const now=Date.now();const base=(id,status)=>({id,status,createdAt:now-120000,customerName:'Test '+id,phone:'+4795557474',pickup:'Snarest',pickupMode:'asap',total:299,subtotal:299,lines:[{name:'Testpizza',size:'Stor',quantity:1,price:299,removedIngredients:['agurk'],comment:'Godt stekt'}]});
 const root={orders:{asap:base('asap','mottatt'),scheduled:{...base('scheduled','mottatt'),pickupMode:'scheduled',pickup:'23:50'},accepted:{...base('accepted','bekreftet'),estimatedReadyAt:now+3600000,estimatedMinutes:60},ready:base('ready','klar'),history:base('history','avvist')}};
+// Regression: a delayed Firebase poll must never resurrect an accepted order.
+const syncSource=fs.readFileSync(repo+'/demo/js/data.js','utf8');
+const syncBegin=syncSource.indexOf('const orderWriteGuards = new Map();');
+const syncEnd=syncSource.indexOf('/** Tar imot ordre fra databasen.',syncBegin);
+assert(syncBegin>0&&syncEnd>syncBegin,'Order status sync guard exists');
+const syncStore={orders:[{id:'stale',status:'bekreftet',statusUpdatedAt:Date.now(),estimatedMinutes:15}]};
+const syncApi=new Function('store',syncSource.slice(syncBegin,syncEnd)+
+  '\nreturn {beginOrderStatusWrite,finishOrderStatusWrite,mergePendingOrderStatuses,orderWriteGuards};')(syncStore);
+const oldSnapshot={id:'stale',status:'mottatt',statusUpdatedAt:syncStore.orders[0].statusUpdatedAt-4000};
+const guard=syncApi.beginOrderStatusWrite(syncStore.orders[0]);
+assert.equal(syncApi.mergePendingOrderStatuses([oldSnapshot])[0].status,'bekreftet','Late poll cannot revive Ny during acceptance');
+syncApi.finishOrderStatusWrite('stale',guard,true);
+assert.equal(syncApi.mergePendingOrderStatuses([oldSnapshot])[0].status,'bekreftet','Late poll cannot revive Ny after successful acceptance');
+assert.equal(syncApi.mergePendingOrderStatuses([{...syncStore.orders[0]}])[0].status,'bekreftet');
+assert.equal(syncApi.orderWriteGuards.size,0,'Guard ends after Firebase confirmation');
+const newerGuard=syncApi.beginOrderStatusWrite(syncStore.orders[0]);
+assert.equal(syncApi.mergePendingOrderStatuses([{...oldSnapshot,status:'klar',statusUpdatedAt:Date.now()+1000}])[0].status,'klar',
+  'Truly newer remote status is still applied');
+const rejectedGuard=syncApi.beginOrderStatusWrite(syncStore.orders[0]);
+syncApi.finishOrderStatusWrite('stale',rejectedGuard,false);
+assert.equal(syncApi.mergePendingOrderStatuses([oldSnapshot])[0].status,'mottatt','Failed write must not hide database state');
+assert(syncSource.includes('if (requestId < lastAppliedOrdersPullId) return;'),
+  'Out-of-order Firebase polling responses are discarded');
+
 async function waitStatus(id,status){for(let i=0;i<200;i++){if(root.orders[id]?.status===status)return;await new Promise(r=>setTimeout(r,20))}throw Error(`Order ${id} did not reach ${status}`)}
 const get=(path)=>path.split('/').filter(Boolean).reduce((v,k)=>v?.[k],root);
 let version=1;let raceOnExpiration='';let etagConflicts=0;
