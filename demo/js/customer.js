@@ -1483,7 +1483,7 @@ function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineI
     ${quantity > 1 ? `<button class="cart-stepper-minus" data-dec="${id}" type="button" aria-label="Færre">−</button>` : `<button class="cart-stepper-trash" data-remove="${id}" type="button" aria-label="Fjern ${escapeHtml(name)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button>`}
     <span>${quantity}</span><button class="cart-stepper-plus" data-inc="${id}" type="button" aria-label="Flere">+</button></div>`
     : `<span class="cart-product-quantity" aria-label="Antall: ${quantity}">${quantity}×</span>`;
-  const sizeRow = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${size ? `<b>Størrelse:</b> ${escapeHtml(size)} · ` : ''}${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</span></span>`;
+  const sizeRow = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${size ? `<b>Størrelse:</b> ${escapeHtml(size)}` : ''}</span><b class="cart-detail-price">${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</b></span>`;
   return `<article class="cart-product-card"${lineId ? ` data-line="${id}"` : ''}>
     <div class="cart-product-heading"><${copyTag} class="cart-product-copy"${editAttrs}>
       <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong></span>
@@ -1528,7 +1528,7 @@ function cartLineHtml(line, editable = true) {
     const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
     detailRows.push(
       `<span class="cart-detail-row">
-        <span class="cart-detail-left">${group.price <= 0 && labels.length ? escapeHtml(labels.join(', ')) : `${escapeHtml(heading)}${labels.length ? `: ${escapeHtml(labels.join(', '))}` : ''}`}</span>
+        <span class="cart-detail-left">${group.price <= 0 && labels.length ? `<b>${escapeHtml(labels.join(', '))}</b>` : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`}</span>
         ${group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : quantityPriceHtml(group.price)}
       </span>`
     );
@@ -2222,8 +2222,8 @@ async function placeOrder() {
     for (const [title, group] of grouped.entries()) {
       const heading = title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
       const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
-      const copy = group.hasKnownPrice && group.price <= 0 && labels.length ? labels.join(', ') : `${heading}${labels.length ? ': ' + labels.join(', ') : ''}`;
-      detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left">${escapeHtml(copy)}</span>${!group.hasKnownPrice ? '' : group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : `<b class="cart-detail-price">+ ${formatPrice(group.price * quantity)}</b>`}</span>`);
+      const copy = group.hasKnownPrice && group.price <= 0 && labels.length ? `<b>${escapeHtml(labels.join(', '))}</b>` : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`;
+      detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left">${copy}</span>${!group.hasKnownPrice ? '' : group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : `<b class="cart-detail-price">+ ${formatPrice(group.price * quantity)}</b>`}</span>`);
     }
     if (line.removedIngredients?.length) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Uten:</b> ${escapeHtml(line.removedIngredients.join(', '))}</span></span>`);
     if (getDisplayComment(line)) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Kommentar:</b> ${escapeHtml(getDisplayComment(line))}</span></span>`);
