@@ -66,8 +66,7 @@ html[data-theme="dark"] .orders-page {
   box-shadow:var(--ot-shadow);
   transition:box-shadow .15s ease,transform .15s ease,border-color .15s;
 }
-:root .orders-page #btnOrderSound::before {content:'◖))';font-size:16px;font-weight:900;letter-spacing:-.12em;}
-:root .orders-page #btnRefreshOrders::before {content:'⟳';font-size:24px;font-weight:500;line-height:0;}
+:root .orders-page .orders-tool-icon {width:21px;height:21px;flex:none;color:currentColor;}
 :root .orders-page .orders-top-actions button[aria-pressed="true"] {
   border-color:color-mix(in srgb,var(--ot-accent) 23%,var(--ot-line));
   background:linear-gradient(180deg,var(--ot-surface),var(--ot-selected));
