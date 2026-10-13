@@ -2,6 +2,17 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs=require('fs'),http=require('http'),assert=require('assert');
 const repo=require('path').resolve(__dirname,'../..');
+// Styles for order handling live in one stylesheet; unrelated admin views
+// must not define another copy of the same order buttons or sidebar.
+const adminBaseCSS=fs.readFileSync(repo+'/demo/css/admin.css','utf8');
+const orderWorkspaceCSS=fs.readFileSync(repo+'/demo/css/order-taking.css','utf8');
+for(const activeRule of ['.orders-sidebar-toggle','.scheduled-accept-card','.order-action-head','.accept-quick-times']) {
+  assert(orderWorkspaceCSS.includes(activeRule),'Order-taking module missing '+activeRule);
+  assert(!adminBaseCSS.includes(activeRule),'Duplicate order-taking style remains in admin.css: '+activeRule);
+}
+assert(orderWorkspaceCSS.includes('grid-template-rows:auto minmax(0,1fr) auto'),
+  'Products retain independent scroll with pinned action footer');
+
 const server=http.createServer((req,res)=>{try{const p=repo+new URL(req.url,'http://localhost').pathname;res.setHeader('content-type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.mp3')?'audio/mpeg':'text/html');res.end(fs.readFileSync(p))}catch{res.writeHead(404);res.end()}});
 const now=Date.now();const base=(id,status)=>({id,status,createdAt:now-120000,customerName:'Test '+id,phone:'+4795557474',pickup:'Snarest',pickupMode:'asap',total:299,subtotal:299,lines:[{name:'Testpizza',size:'Stor',quantity:1,price:299,removedIngredients:['agurk'],comment:'Godt stekt'}]});
 const root={orders:{asap:base('asap','mottatt'),scheduled:{...base('scheduled','mottatt'),pickupMode:'scheduled',pickup:'23:50'},accepted:{...base('accepted','bekreftet'),estimatedReadyAt:now+3600000,estimatedMinutes:60},ready:base('ready','klar'),history:base('history','avvist')}};
