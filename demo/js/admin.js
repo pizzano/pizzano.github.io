@@ -1941,9 +1941,38 @@ window.setInterval(() => {
 function syncOrdersWorkspaceLayout() {
   document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
 }
+// Use the precise pickup timestamp saved with the order, falling back to
+// the creation date for older scheduled orders without scheduledPickupAt.
+function scheduledPickupTimestamp(order) {
+  if (!order || !isScheduledPickupOrder(order)) return null;
+  const saved = Number(order.scheduledPickupAt);
+  if (Number.isFinite(saved) && saved > 0) return saved;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(order.pickup || '').trim());
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  const parsed = Number(order.createdAt) || Date.parse(order.createdAt);
+  const createdAt = Number.isFinite(parsed) && parsed > 0 ? parsed : Date.now();
+  const pickup = new Date(createdAt);
+  pickup.setHours(hour, minute, 0, 0);
+  if (pickup.getTime() <= createdAt) pickup.setDate(pickup.getDate() + 1);
+  return pickup.getTime();
+}
+
+function isUpcomingScheduledOrder(order) {
+  // Overdue orders remain visible until fulfilled or rejected.
+  return ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(order.status)
+    && scheduledPickupTimestamp(order) !== null;
+}
+
 function filteredOrders() {
   const query = (document.getElementById('orderSearch')?.value || '').trim().toLocaleLowerCase('nb-NO');
-  return getOrders().filter(order => !query || [order.id, order.customerName, order.phone].some(value => String(value || '').toLocaleLowerCase('nb-NO').includes(query)));
+  return getOrders().filter(order =>
+    (ui.orderFilter !== 'scheduled' || isUpcomingScheduledOrder(order))
+    && (!query || [order.id, order.customerName, order.phone, order.pickup]
+      .some(value => String(value || '').toLocaleLowerCase('nb-NO').includes(query)))
+  );
 }
 document.getElementById('orderSearch').addEventListener('input', renderOrderList);
 function pendingWait(order) {
