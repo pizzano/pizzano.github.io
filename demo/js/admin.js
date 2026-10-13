@@ -1995,6 +1995,13 @@ function orderCountdown(order) {
   return `${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
+function orderSummaryCountdown(order) {
+  const readyAt = isScheduledPickupOrder(order)
+    ? scheduledPickupTimestamp(order)
+    : Number(order.estimatedReadyAt) || 0;
+  if (!readyAt) return '';
+  return orderCountdown({ estimatedReadyAt: readyAt });
+}
 function orderListStatus(order) {
   if (order.status === 'mottatt') return pendingWait(order);
   if (order.status === 'bekreftet') return 'Godtatt';
@@ -2045,12 +2052,13 @@ function shortOrderCode(order) {
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
   const displayTime = pickupScheduled ? String(order.pickup || '—') : compactOrderTime(order.createdAt);
-  const timeTitle = pickupScheduled ? 'Hentetid' : 'Bestilt kl.';
+  const timeTitle = pickupScheduled ? 'Valgt hentetid' : 'Bestilt kl.';
+  const pickupLabel = pickupScheduled ? 'SENERE' : 'SNAREST';
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
       <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
       <span class="orders-list-meta">
-        <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>Henting</span></span>
+        <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-divider" aria-hidden="true"></span>
         <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span></span>
       </span>
@@ -2135,7 +2143,9 @@ function renderOrderDetail(orderId) {
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
   const proposedMinutes = pendingOrderMinutes.get(order.id) || 15;
-  const readyTime = compactOrderTime(order.estimatedReadyAt);
+  const readyTime = scheduledPickup ? String(order.pickup || '—') : compactOrderTime(order.estimatedReadyAt);
+  const pickupModeLabel = scheduledPickup ? 'SENERE' : 'SNAREST';
+  const readinessCountdown = orderSummaryCountdown(order);
   const actionHtml = isPending
     ? `<div class="order-preparation">${scheduledPickup
         ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
@@ -2144,7 +2154,7 @@ function renderOrderDetail(orderId) {
       <button class="pos-accept-btn" data-accept-inline="${escapeHtml(order.id)}" type="button">Godta · ${scheduledPickup ? escapeHtml(order.pickup) : `${proposedMinutes} min`}</button></div>`
     : ['avvist', 'fullfort'].includes(order.status)
       ? `<div class="pos-closed-status">${escapeHtml(orderListStatus(order))}</div>`
-      : `<div class="order-ready-summary"><strong>${order.status === 'klar' ? 'Klar for henting' : `Henting ${readyTime}`}</strong>${order.status !== 'klar' && order.estimatedReadyAt ? `<span data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(orderCountdown(order) || 'Klar nå')}</span>` : ''}${!scheduledPickup && order.status !== 'klar' ? `<button data-edit-order-time type="button">Endre tid</button>` : ''}</div>
+      : `<div class="order-ready-summary"><strong>${order.status === 'klar' ? 'Klar for henting' : `${pickupModeLabel} ${readyTime}`}</strong>${order.status !== 'klar' && readinessCountdown ? `<span data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(readinessCountdown)}</span>` : ''}${!scheduledPickup && order.status !== 'klar' ? `<button data-edit-order-time type="button">Endre tid</button>` : ''}</div>
         <div class="pos-progress-actions"><button data-detail-status="${order.status === 'klar' ? 'fullfort' : 'klar'}" type="button">${order.status === 'klar' ? 'Utlevert · fullfør bestilling' : 'Marker klar for henting'}</button></div>`;
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
@@ -2485,7 +2495,7 @@ function refreshOrderClocks() {
   document.querySelectorAll('[data-detail-countdown]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.detailCountdown);
     if (!order) return;
-    node.textContent = orderCountdown(order) || (order.status === 'klar' ? 'Klar nå' : '—');
+    node.textContent = orderSummaryCountdown(order) || (isScheduledPickupOrder(order) ? 'Hentetid nå' : 'Klar nå');
   });
 }
 
