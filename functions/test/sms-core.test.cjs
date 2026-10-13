@@ -1,7 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { notificationKind, norwegianMobile, pickupLabel, smsText, validGatewayResponse } = require('../sms-core.cjs');
+const { notificationKind, norwegianMobile, pickupLabel, smsText, validGatewayResponse, shouldAutoReady } = require('../sms-core.cjs');
 
 test('only accepts the two intended transitions', () => {
   assert.equal(notificationKind({ status: 'mottatt' }, { status: 'bekreftet' }), 'accepted');
@@ -42,4 +42,17 @@ test('checks body even when HTTP response is 200', () => {
   assert.equal(validGatewayResponse(200, { successCount: 0, failureCount: 1 }), false);
   assert.equal(validGatewayResponse(200, { successCount: 1, failureCount: 0 }), true);
   assert.equal(validGatewayResponse(401, { successCount: 1, failureCount: 0 }), false);
+});
+
+
+test('scheduled auto-ready only promotes recent due and accepted orders', () => {
+  const now = Date.parse('2026-10-14T17:00:00Z');
+  const order = { status:'bekreftet', createdAt:now-30*60000, estimatedReadyAt:now-1*60000 };
+  assert.equal(shouldAutoReady(order,now),true);
+  assert.equal(shouldAutoReady({ ...order, status:'klar' },now),false);
+  assert.equal(shouldAutoReady({ ...order, estimatedReadyAt:now+5*60000 },now),false);
+  assert.equal(shouldAutoReady({ ...order, estimatedReadyAt:now-61*60000 },now),false);
+  assert.equal(shouldAutoReady({ ...order, createdAt:now-25*3600000 },now),false);
+  assert.equal(shouldAutoReady({ ...order, status:'mottatt' },now),false);
+  assert.equal(shouldAutoReady({ ...order, status:'tilberedning' },now),true);
 });
