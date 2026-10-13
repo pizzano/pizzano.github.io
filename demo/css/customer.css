@@ -961,115 +961,120 @@ textarea.input {
   border-color: var(--palette-border);
   background: var(--palette-surface);
 }
-/* Compact product sheet: smaller controls with distinct spacing between option groups.
+/* Extra-compact mobile product sheet: thin controls, with breathing room between groups.
    The photo/header and the fixed quantity/Legg til footer live in their existing styles. */
 #productSheet .sheet-body > .sheet-desc {
-  margin:9px 3px 15px !important;
-  color:var(--palette-muted);font-size:14px;line-height:1.45;
+  margin:8px 2px 13px !important;
+  color:var(--palette-muted);font-size:13.5px;line-height:1.45;
 }
 #productSheet .opt-group {
-  margin:19px 0 0;padding:15px 0 0 !important;
+  margin:17px 0 0;padding:12px 0 0 !important;
   border:0 !important;border-top:1px solid var(--palette-border) !important;
   border-radius:0 !important;background:transparent !important;
   box-shadow:none !important;
 }
 #productSheet .opt-group--size {
-  padding-top:7px !important;border-top:0 !important;
+  padding-top:5px !important;border-top:0 !important;
 }
 #productSheet .opt-group--comment {
-  margin-top:19px;padding-top:16px !important;
+  margin-top:17px;padding-top:12px !important;
 }
 #productSheet .opt-head {
   display:flex;align-items:center;justify-content:flex-start;
-  flex-wrap:wrap;gap:6px 8px;margin:0 1px 10px;
+  flex-wrap:wrap;gap:6px 8px;margin:0 1px 9px;
 }
 #productSheet .opt-group h3 {
   margin:0;color:var(--palette-ink);
-  font-size:14px;font-weight:780;line-height:1.25;letter-spacing:-.01em;
+  font-size:12.5px;font-weight:800;line-height:1.25;letter-spacing:-.01em;
 }
 #productSheet .opt-guidance {
-  display:inline-flex;align-items:center;min-height:22px;
+  display:inline-flex;align-items:center;min-height:21px;
   padding:2px 8px;border-radius:999px;
   background:var(--palette-soft);color:var(--palette-muted);
-  font-size:10px;font-weight:600;line-height:1.15;
+  font-size:9.5px;font-weight:600;line-height:1.15;
 }
 #productSheet .opt-selected-size {
-  display:inline-flex;align-items:center;gap:6px;margin-left:auto;
-  padding:2px 7px 2px 3px;min-height:26px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:5px;margin-left:auto;
+  padding:2px 7px 2px 3px;min-height:24px;border-radius:999px;
   background:var(--palette-soft);color:var(--palette-ink);
-  font-size:10.5px;font-weight:650;line-height:1.2;white-space:nowrap;
+  font-size:10px;font-weight:650;line-height:1.2;white-space:nowrap;
 }
 #productSheet .opt-selected-check {
   display:grid;place-items:center;flex:none;
-  width:20px;height:20px;border-radius:50%;
+  width:18px;height:18px;border-radius:50%;
   background:var(--palette-accent);color:var(--palette-on-accent);
-  font-size:11px;font-weight:800;line-height:1;
+  font-size:10px;font-weight:800;line-height:1;
 }
-#productSheet .opt-rows {display:grid;gap:8px;}
+#productSheet .opt-rows {display:grid;gap:9px;}
 #productSheet .opt-row {
-  display:flex;align-items:center;gap:10px;min-height:48px;
-  margin:0;padding:9px 11px;
-  border:1px solid var(--palette-border);border-radius:14px;
+  display:flex;align-items:center;gap:9px;min-height:44px;
+  margin:0;padding:7px 10px;
+  border:1px solid var(--palette-border);border-radius:12px;
   background:var(--palette-surface);color:var(--palette-ink);
-  box-shadow:0 1px 6px color-mix(in srgb,var(--palette-deep) 6%,transparent) !important;
+  box-shadow:0 1px 4px color-mix(in srgb,var(--palette-deep) 5%,transparent) !important;
   cursor:pointer;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
 }
 #productSheet .opt-row.is-checked,
 #productSheet .opt-row:has(input:checked) {
   border-color:var(--palette-accent) !important;
   background:var(--palette-soft) !important;
-  box-shadow:0 2px 8px color-mix(in srgb,var(--palette-deep) 8%,transparent),
-    inset 0 0 0 1px color-mix(in srgb,var(--palette-accent) 15%,transparent) !important;
+  box-shadow:0 2px 6px color-mix(in srgb,var(--palette-deep) 6%,transparent) !important;
 }
 #productSheet .opt-row.is-blocked {opacity:.5;cursor:not-allowed;}
 #productSheet .opt-row:has(.option-quantity) {flex-wrap:wrap;}
 #productSheet .opt-row .opt-label {
-  flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.3;
+  flex:1 1 auto;min-width:0;font-size:12px;line-height:1.28;
   font-weight:500;color:var(--palette-ink);
 }
 #productSheet .opt-row .opt-price {
   flex:none;margin-left:auto;white-space:nowrap;
-  font-size:11.5px;line-height:1.2;font-weight:600;color:var(--palette-muted);
+  font-size:11px;line-height:1.15;font-weight:600;color:var(--palette-muted);
 }
 #productSheet .comment-area {
-  width:100%;min-height:72px;padding:11px 12px;
-  border:1px solid var(--palette-border);border-radius:14px;
+  width:100%;min-height:58px;padding:9px 11px;
+  border:1px solid var(--palette-border);border-radius:12px;
   background:var(--palette-surface);color:var(--palette-ink);
-  font-size:16px;line-height:1.35;resize:vertical;
+  font-size:12px;line-height:1.3;resize:vertical;
   box-shadow:inset 0 1px 2px color-mix(in srgb,var(--palette-deep) 4%,transparent);
 }
-#productSheet .comment-area::placeholder {color:var(--palette-muted);}
+#productSheet .comment-area::placeholder {color:var(--palette-muted);font-size:12px;}
+/* On iPhones, focused input text remains >=16px to avoid automatic page zoom. */
+@supports (-webkit-touch-callout:none) {
+  #productSheet .comment-area:focus {font-size:16px;}
+}
 #productSheet .sheet-allergens {
   display:flex !important;flex-wrap:wrap;align-items:center;
-  gap:6px !important;margin:15px 2px 4px !important;
+  gap:5px !important;margin:12px 2px 3px !important;
   padding:0 !important;border:0 !important;border-radius:0 !important;
   background:transparent !important;box-shadow:none !important;
 }
 #productSheet .sheet-allergens-label {
-  margin:0;font-size:11px !important;font-weight:600 !important;
+  margin:0;font-size:10px !important;font-weight:600 !important;
   color:var(--palette-muted);
 }
 #productSheet .sheet-allergen-chips {
   display:flex !important;flex-wrap:wrap;align-items:center;
-  gap:6px !important;min-width:0;
+  gap:5px !important;min-width:0;
 }
 #productSheet .sheet-allergen-chip,
 #productSheet .sheet-allergen-none {
   display:inline-flex !important;align-items:center;
-  min-height:22px !important;padding:3px 7px !important;
+  min-height:21px !important;padding:2px 7px !important;
   border:1px solid var(--palette-border) !important;
   border-radius:999px !important;
   background:var(--palette-soft) !important;color:var(--palette-accent) !important;
-  font-size:10.5px !important;font-weight:550 !important;
+  font-size:10px !important;font-weight:550 !important;
   line-height:1.2 !important;white-space:normal !important;
 }
 @media(max-width:370px) {
-  #productSheet .opt-row {min-height:46px;padding:8px 10px;gap:9px;border-radius:13px;}
-  #productSheet .opt-row .opt-label {font-size:12px;}
-  #productSheet .opt-row .opt-price {font-size:11px;}
-  #productSheet .opt-group h3 {font-size:13.5px;}
+  #productSheet .opt-row {min-height:44px;padding:7px 9px;gap:8px;border-radius:11px;}
+  #productSheet .opt-row .opt-label {font-size:11.5px;}
+  #productSheet .opt-row .opt-price {font-size:10.5px;}
+  #productSheet .opt-group h3 {font-size:12px;}
   #productSheet .opt-head {gap:6px;margin-bottom:9px;}
   #productSheet .opt-guidance {padding:2px 7px;}
+  #productSheet .comment-area {min-height:54px;padding:8px 10px;font-size:11.5px;}
+  #productSheet .comment-area::placeholder {font-size:11.5px;}
 }
 
 .sheet-foot {
@@ -1566,39 +1571,39 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 
 /* Ingredient removal customization */
 .ingredient-customize {
-  margin:11px 0 16px;border:1px solid var(--palette-border);
-  border-radius:15px;background:var(--palette-surface);
+  margin:10px 0 14px;border:1px solid var(--palette-border);
+  border-radius:14px;background:var(--palette-surface);
   box-shadow:0 3px 10px color-mix(in srgb,var(--palette-deep) 6%,transparent);
   overflow:hidden;
 }
 .ingredient-customize-toggle {
-  width:100%;min-height:60px;display:flex;align-items:center;
-  justify-content:space-between;gap:10px;padding:10px 12px;
+  width:100%;min-height:52px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;padding:8px 11px;
   border:0;background:var(--palette-surface);color:var(--palette-ink);
   text-align:left;cursor:pointer;
 }
 .ingredient-customize-icon {
   display:grid;place-items:center;flex:none;
-  width:36px;height:36px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;
   background:var(--palette-soft);color:var(--palette-accent);
 }
-.ingredient-customize-icon svg {width:21px;height:21px;}
+.ingredient-customize-icon svg {width:19px;height:19px;}
 .ingredient-customize-toggle > .ingredient-customize-copy {
-  min-width:0;flex:1;display:grid;gap:3px;
+  min-width:0;flex:1;display:grid;gap:2px;
 }
 .ingredient-customize-toggle strong {
-  color:var(--palette-ink);font-size:13.5px;
+  color:var(--palette-ink);font-size:12.5px;
   line-height:1.2;font-weight:780;
 }
 .ingredient-customize-toggle small {
   overflow:hidden;color:var(--palette-muted);
-  font-size:11px;line-height:1.25;
+  font-size:10.5px;line-height:1.25;
   text-overflow:ellipsis;white-space:nowrap;
 }
 .ingredient-customize-toggle i {
   flex: none;
   color: var(--palette-muted);
-  font-size: 24px;
+  font-size: 19px;
   line-height: 1;
   font-style: normal;
   transform: rotate(0deg);
@@ -1662,11 +1667,11 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 }
 
 @media (max-width: 420px) {
-  .ingredient-customize { margin:10px 0 14px; border-radius:15px; }
-  .ingredient-customize-toggle { min-height:56px; padding:9px 10px; }
-  .ingredient-customize-icon {width:34px;height:34px;}
-  .ingredient-customize-toggle strong {font-size:13px;}
-  .ingredient-customize-toggle small {font-size:10.5px;}
+  .ingredient-customize { margin:9px 0 13px; border-radius:13px; }
+  .ingredient-customize-toggle { min-height:50px; padding:8px 10px; }
+  .ingredient-customize-icon {width:32px;height:32px;}
+  .ingredient-customize-toggle strong {font-size:12px;}
+  .ingredient-customize-toggle small {font-size:10px;}
   .ingredient-customize-body { padding: 0 10px 10px; }
   .ingredient-chip-list { gap: 6px; }
   .ingredient-chip { min-height: 32px; padding: 6px 9px; font-size: 11.5px; }
