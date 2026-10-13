@@ -27,9 +27,11 @@
 .view-cart .cart-detail-included {font-size:12px;white-space:nowrap;}
 .view-cart .cart-detail-row.is-note {background:color-mix(in srgb,var(--palette-warning) 12%,var(--palette-surface));color:var(--palette-ink);}
 .view-cart .cart-product-totalrow {display:flex;justify-content:flex-end;margin-top:9px;padding-top:8px;border-top:1px solid var(--palette-border);}
-.view-cart .cart-product-total {font-size:20px;font-weight:800;line-height:1.2;white-space:nowrap;}
+.view-cart .cart-product-total,
+.view-cart .cart-summary .sum-total>span,
+.view-cart .cart-summary .sum-total>strong {font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;}
 .view-cart .cart-summary {margin-top:14px;padding:16px;border:1px solid color-mix(in srgb,var(--palette-border) 50%,transparent);border-radius:15px;background:var(--palette-surface);}
-.view-cart .cart-summary .sum-row {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0;color:var(--palette-ink);font-size:21px;font-weight:800;border:0;}
+.view-cart .cart-summary .sum-row {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0;color:var(--palette-ink);border:0;}
 .view-cart .cart-product-copy:focus-visible,.view-cart .cart-clear-btn:focus-visible,.view-cart .cart-product-stepper button:focus-visible {outline:2px solid var(--palette-ink);outline-offset:-2px;}
 .view-cart .cart-summary[hidden] {display:none;}
 @media(max-width:370px) {.view-cart .cart-product-card {grid-template-columns:58px minmax(0,1fr);gap:9px;padding:11px;}.view-cart .cart-product-media {width:58px;height:58px;}.view-cart .cart-product-heading {gap:6px;}.view-cart .cart-product-name {font-size:14px;}.view-cart .cart-product-stepper {grid-template-columns:25px 24px 25px;}.view-cart .cart-product-stepper button {width:25px;}.view-cart .cart-header-title {font-size:23px;}.view-cart .cart-clear-btn {font-size:11px;padding:0 9px;}.view-cart .cart-detail-row {padding:5px 4px;font-size:11px;}.view-cart .cart-detail-price,.view-cart .cart-detail-included {font-size:11px;}}
