@@ -961,79 +961,79 @@ textarea.input {
   border-color: var(--palette-border);
   background: var(--palette-surface);
 }
-/* Product sheet content: clear groups and large, accessible option controls.
+/* Compact product sheet: smaller controls with distinct spacing between option groups.
    The photo/header and the fixed quantity/Legg til footer live in their existing styles. */
 #productSheet .sheet-body > .sheet-desc {
-  margin:12px 3px 16px !important;
-  color:var(--palette-muted);font-size:13px;line-height:1.5;
+  margin:9px 3px 15px !important;
+  color:var(--palette-muted);font-size:14px;line-height:1.45;
 }
 #productSheet .opt-group {
-  margin:20px 0 0;padding:17px 0 0 !important;
+  margin:19px 0 0;padding:15px 0 0 !important;
   border:0 !important;border-top:1px solid var(--palette-border) !important;
   border-radius:0 !important;background:transparent !important;
   box-shadow:none !important;
 }
 #productSheet .opt-group--size {
-  padding-top:9px !important;border-top:0 !important;
+  padding-top:7px !important;border-top:0 !important;
 }
 #productSheet .opt-group--comment {
-  margin-top:21px;padding-top:18px !important;
+  margin-top:19px;padding-top:16px !important;
 }
 #productSheet .opt-head {
   display:flex;align-items:center;justify-content:flex-start;
-  flex-wrap:wrap;gap:8px 10px;margin:0 1px 12px;
+  flex-wrap:wrap;gap:6px 8px;margin:0 1px 10px;
 }
 #productSheet .opt-group h3 {
   margin:0;color:var(--palette-ink);
-  font-size:16px;font-weight:800;line-height:1.28;letter-spacing:-.012em;
+  font-size:14px;font-weight:780;line-height:1.25;letter-spacing:-.01em;
 }
 #productSheet .opt-guidance {
-  display:inline-flex;align-items:center;min-height:25px;
-  padding:3px 10px;border-radius:999px;
+  display:inline-flex;align-items:center;min-height:22px;
+  padding:2px 8px;border-radius:999px;
   background:var(--palette-soft);color:var(--palette-muted);
-  font-size:11px;font-weight:600;line-height:1.2;
+  font-size:10px;font-weight:600;line-height:1.15;
 }
 #productSheet .opt-selected-size {
-  display:inline-flex;align-items:center;gap:7px;margin-left:auto;
-  padding:3px 9px 3px 4px;min-height:30px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:6px;margin-left:auto;
+  padding:2px 7px 2px 3px;min-height:26px;border-radius:999px;
   background:var(--palette-soft);color:var(--palette-ink);
-  font-size:12px;font-weight:650;line-height:1.2;white-space:nowrap;
+  font-size:10.5px;font-weight:650;line-height:1.2;white-space:nowrap;
 }
 #productSheet .opt-selected-check {
   display:grid;place-items:center;flex:none;
-  width:23px;height:23px;border-radius:50%;
+  width:20px;height:20px;border-radius:50%;
   background:var(--palette-accent);color:var(--palette-on-accent);
-  font-size:13px;font-weight:800;line-height:1;
+  font-size:11px;font-weight:800;line-height:1;
 }
 #productSheet .opt-rows {display:grid;gap:8px;}
 #productSheet .opt-row {
-  display:flex;align-items:center;gap:12px;min-height:60px;
-  margin:0;padding:12px 14px;
-  border:1px solid var(--palette-border);border-radius:17px;
+  display:flex;align-items:center;gap:10px;min-height:48px;
+  margin:0;padding:9px 11px;
+  border:1px solid var(--palette-border);border-radius:14px;
   background:var(--palette-surface);color:var(--palette-ink);
-  box-shadow:0 2px 8px color-mix(in srgb,var(--palette-deep) 6%,transparent) !important;
+  box-shadow:0 1px 6px color-mix(in srgb,var(--palette-deep) 6%,transparent) !important;
   cursor:pointer;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
 }
 #productSheet .opt-row.is-checked,
 #productSheet .opt-row:has(input:checked) {
   border-color:var(--palette-accent) !important;
   background:var(--palette-soft) !important;
-  box-shadow:0 3px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent),
+  box-shadow:0 2px 8px color-mix(in srgb,var(--palette-deep) 8%,transparent),
     inset 0 0 0 1px color-mix(in srgb,var(--palette-accent) 15%,transparent) !important;
 }
 #productSheet .opt-row.is-blocked {opacity:.5;cursor:not-allowed;}
 #productSheet .opt-row:has(.option-quantity) {flex-wrap:wrap;}
 #productSheet .opt-row .opt-label {
-  flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.35;
+  flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.3;
   font-weight:500;color:var(--palette-ink);
 }
 #productSheet .opt-row .opt-price {
   flex:none;margin-left:auto;white-space:nowrap;
-  font-size:13px;line-height:1.2;font-weight:600;color:var(--palette-muted);
+  font-size:11.5px;line-height:1.2;font-weight:600;color:var(--palette-muted);
 }
 #productSheet .comment-area {
-  width:100%;min-height:87px;padding:13px 14px;
-  border:1px solid var(--palette-border);border-radius:16px;
+  width:100%;min-height:72px;padding:11px 12px;
+  border:1px solid var(--palette-border);border-radius:14px;
   background:var(--palette-surface);color:var(--palette-ink);
   font-size:16px;line-height:1.35;resize:vertical;
   box-shadow:inset 0 1px 2px color-mix(in srgb,var(--palette-deep) 4%,transparent);
@@ -1041,7 +1041,7 @@ textarea.input {
 #productSheet .comment-area::placeholder {color:var(--palette-muted);}
 #productSheet .sheet-allergens {
   display:flex !important;flex-wrap:wrap;align-items:center;
-  gap:6px !important;margin:17px 2px 4px !important;
+  gap:6px !important;margin:15px 2px 4px !important;
   padding:0 !important;border:0 !important;border-radius:0 !important;
   background:transparent !important;box-shadow:none !important;
 }
@@ -1056,20 +1056,20 @@ textarea.input {
 #productSheet .sheet-allergen-chip,
 #productSheet .sheet-allergen-none {
   display:inline-flex !important;align-items:center;
-  min-height:24px !important;padding:3px 8px !important;
+  min-height:22px !important;padding:3px 7px !important;
   border:1px solid var(--palette-border) !important;
   border-radius:999px !important;
   background:var(--palette-soft) !important;color:var(--palette-accent) !important;
-  font-size:11px !important;font-weight:550 !important;
+  font-size:10.5px !important;font-weight:550 !important;
   line-height:1.2 !important;white-space:normal !important;
 }
 @media(max-width:370px) {
-  #productSheet .opt-row {min-height:54px;padding:9px 11px;gap:9px;border-radius:15px;}
-  #productSheet .opt-row .opt-label {font-size:13.5px;}
-  #productSheet .opt-row .opt-price {font-size:12px;}
-  #productSheet .opt-group h3 {font-size:15px;}
-  #productSheet .opt-head {gap:6px;margin-bottom:10px;}
-  #productSheet .opt-guidance {padding:3px 7px;}
+  #productSheet .opt-row {min-height:46px;padding:8px 10px;gap:9px;border-radius:13px;}
+  #productSheet .opt-row .opt-label {font-size:12px;}
+  #productSheet .opt-row .opt-price {font-size:11px;}
+  #productSheet .opt-group h3 {font-size:13.5px;}
+  #productSheet .opt-head {gap:6px;margin-bottom:9px;}
+  #productSheet .opt-guidance {padding:2px 7px;}
 }
 
 .sheet-foot {
@@ -1566,33 +1566,33 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 
 /* Ingredient removal customization */
 .ingredient-customize {
-  margin:14px 0 17px;border:1px solid var(--palette-border);
-  border-radius:18px;background:var(--palette-surface);
+  margin:11px 0 16px;border:1px solid var(--palette-border);
+  border-radius:15px;background:var(--palette-surface);
   box-shadow:0 3px 10px color-mix(in srgb,var(--palette-deep) 6%,transparent);
   overflow:hidden;
 }
 .ingredient-customize-toggle {
-  width:100%;min-height:70px;display:flex;align-items:center;
-  justify-content:space-between;gap:12px;padding:12px 14px;
+  width:100%;min-height:60px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;padding:10px 12px;
   border:0;background:var(--palette-surface);color:var(--palette-ink);
   text-align:left;cursor:pointer;
 }
 .ingredient-customize-icon {
   display:grid;place-items:center;flex:none;
-  width:44px;height:44px;border-radius:50%;
+  width:36px;height:36px;border-radius:50%;
   background:var(--palette-soft);color:var(--palette-accent);
 }
-.ingredient-customize-icon svg {width:25px;height:25px;}
+.ingredient-customize-icon svg {width:21px;height:21px;}
 .ingredient-customize-toggle > .ingredient-customize-copy {
-  min-width:0;flex:1;display:grid;gap:4px;
+  min-width:0;flex:1;display:grid;gap:3px;
 }
 .ingredient-customize-toggle strong {
-  color:var(--palette-ink);font-size:15px;
-  line-height:1.2;font-weight:800;
+  color:var(--palette-ink);font-size:13.5px;
+  line-height:1.2;font-weight:780;
 }
 .ingredient-customize-toggle small {
   overflow:hidden;color:var(--palette-muted);
-  font-size:12px;line-height:1.3;
+  font-size:11px;line-height:1.25;
   text-overflow:ellipsis;white-space:nowrap;
 }
 .ingredient-customize-toggle i {
@@ -1662,11 +1662,11 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 }
 
 @media (max-width: 420px) {
-  .ingredient-customize { margin: 10px 0 15px; border-radius:16px; }
-  .ingredient-customize-toggle { min-height:64px; padding:10px 11px; }
-  .ingredient-customize-icon {width:40px;height:40px;}
-  .ingredient-customize-toggle strong {font-size:14px;}
-  .ingredient-customize-toggle small {font-size:11.5px;}
+  .ingredient-customize { margin:10px 0 14px; border-radius:15px; }
+  .ingredient-customize-toggle { min-height:56px; padding:9px 10px; }
+  .ingredient-customize-icon {width:34px;height:34px;}
+  .ingredient-customize-toggle strong {font-size:13px;}
+  .ingredient-customize-toggle small {font-size:10.5px;}
   .ingredient-customize-body { padding: 0 10px 10px; }
   .ingredient-chip-list { gap: 6px; }
   .ingredient-chip { min-height: 32px; padding: 6px 9px; font-size: 11.5px; }
