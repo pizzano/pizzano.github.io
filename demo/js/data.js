@@ -1166,6 +1166,7 @@ export async function updateOrderStatus(orderId, status) {
   const order = store.orders.find((entry) => entry.id === orderId);
   if (!order) return false;
   const previous = order.status;
+  const previousStatusUpdatedAt = order.statusUpdatedAt;
   order.status = status;
   order.statusUpdatedAt = Date.now();
   const writeGuard = beginOrderStatusWrite(order);
@@ -1183,6 +1184,7 @@ export async function updateOrderStatus(orderId, status) {
   } catch (err) {
     finishOrderStatusWrite(orderId, writeGuard, false);
     order.status = previous;
+    order.statusUpdatedAt = previousStatusUpdatedAt;
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
     return false;
