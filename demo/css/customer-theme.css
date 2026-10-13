@@ -22,9 +22,7 @@ html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat
 html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
 html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: end; justify-items: end; }
 html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
-html[data-customer-palette] .allergen-visibility-switch { background: var(--palette-border); }
 html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
-html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent); }
 
 /* Visible boundaries for customer cards, choices and controls. */
 html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .opt-row, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-close, .sheet-fav, .sheet-err, .empty-state) {
@@ -67,9 +65,10 @@ html[data-customer-palette] .time-btn.is-active,
 html[data-customer-palette] .time-btn[aria-pressed="true"] { color: var(--palette-ink) !important; background: var(--palette-soft) !important; }
 html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
 html[data-customer-palette] .order-progress-dot { color: var(--palette-muted); }
-html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { color: var(--palette-on-accent) !important; }
-
-html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot { background: var(--palette-accent) !important; }
+html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot {
+  color: var(--palette-on-accent) !important;
+  background: var(--palette-accent) !important;
+}
 html[data-customer-palette] .cat-tab.is-active { color: var(--palette-ink) !important; }
 html[data-customer-palette] :is(.step.is-active, .step.is-done) { color: var(--palette-ink); }
 
