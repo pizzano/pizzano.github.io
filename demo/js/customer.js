@@ -2402,20 +2402,22 @@ function renderProfile() {
   }
 
   el.favList.innerHTML = favs.length
-    ? favs
-        .map(
-          ({ item }) => `
-        <div class="mini-row">
-          ${
-            item.imageUrl
-              ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-              : ''
-          }
-          <div class="mini-body">
-            <p class="mini-title">${escapeHtml(item.name)}</p>
-            <p class="mini-sub">${formatPrice(getItemBasePrice(item))}</p>
+    ? favs.map(({ item }) => `
+        <article class="favorite-item">
+          <div class="favorite-item-media">
+            ${item.imageUrl
+              ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">`
+              : `<span class="favorite-item-placeholder" aria-hidden="true">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4"/><circle cx="9" cy="8" r="1"/>
+                   </svg>
+                 </span>`}
           </div>
-          <div class="favorite-row-actions">
+          <div class="favorite-item-copy">
+            <strong class="favorite-item-name">${escapeHtml(item.name)}</strong>
+            <span class="favorite-item-price">${formatPrice(getItemBasePrice(item))}</span>
+          </div>
+          <div class="favorite-item-actions">
             <button class="favorite-order-btn" data-open="${escapeHtml(item.id)}" type="button">Bestill</button>
             <button class="favorite-remove-btn" data-remove-favorite="${escapeHtml(item.id)}" type="button" aria-label="Fjern ${escapeHtml(item.name)} fra favoritter">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2425,10 +2427,8 @@ function renderProfile() {
               <span>Fjern</span>
             </button>
           </div>
-        </div>`
-        )
-        .join('')
-    : '<p class="hint">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
+        </article>`).join('')
+    : '<p class="favorites-empty">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
 
     const live = getOrders();
     const orders = mergedCustomerOrders();
