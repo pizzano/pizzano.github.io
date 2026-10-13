@@ -1,3 +1,57 @@
+/* Order-specific modal, acceptance, and collapsed-navigation styles.
+   These belong to the same admin order-taking feature, not global admin CSS. */
+.modal-order-action {width:390px;max-width:calc(100vw - 28px);border-radius:14px}.order-action-head {padding:14px 16px}.order-action-back {width:32px;height:32px;border:0;background:transparent;color:#4e5965;font-size:20px}.order-action-head h2 {font-size:15px}.order-action-body {padding:18px 20px}.order-action-eyebrow {display:block;margin-bottom:7px;color:#9da3aa;font-size:9.5px;font-weight:800;letter-spacing:.09em}.order-action-lead {font-size:12.5px!important;color:#606a75!important}.accept-quick-times {display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:15px 0}.accept-quick-times button {height:38px;border:1px solid #d8dde1;border-radius:20px;background:#fff;color:#53606c;font-size:12px;font-weight:700}.accept-quick-times button.is-active {border-color:#ef7b12;background:#fff8f1;color:#dd680d}.accept-manual-time {height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border:1px solid #e1e5e8;border-radius:9px}.accept-manual-time>span:first-child {color:#626c77;font-size:12px}.accept-manual-control {display:flex;align-items:center;gap:5px}.accept-manual-control input {width:56px;border:0;outline:0;text-align:right;font-size:16px;font-weight:700}.accept-manual-control b {font-size:11px;color:#818991}.order-action-foot {padding:12px 20px 18px;background:#fff}.order-accept-confirm,
+.order-reject-confirm {width:100%;height:48px;border:0;border-radius:7px;color:#fff;font-size:13px;font-weight:800;letter-spacing:.05em}.order-accept-confirm {background:#56c45f}.order-reject-confirm {background:#f04f4b}.reject-call-card {margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #eceff1}.reject-call-card p {font-size:12.5px!important;line-height:1.5!important;color:#5c6672!important}.reject-call-card a {height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#f78a16;color:#fff;text-decoration:none;font-size:13px;font-weight:750}.reject-call-card a.is-disabled {pointer-events:none;opacity:.45}.reject-reasons {display:grid;gap:3px}.reject-reasons label {min-height:42px;display:flex;align-items:center;gap:10px;padding:0 4px;color:#59636e;font-size:12.5px}.reject-reasons input {width:18px;height:18px;accent-color:#55bd60}.reject-message {width:100%;margin-top:10px;padding:9px 10px;border:1px solid #dfe3e6;border-radius:8px;resize:vertical;font:inherit}.btn:disabled,
+.order-accept-confirm:disabled,
+.order-reject-confirm:disabled {opacity:.55;cursor:wait}
+
+
+/* Scheduled pickup accept UI 2026-09-15 */.scheduled-accept-card {display:grid;gap:8px;margin:14px 0 4px;padding:18px;border:1px solid #d8e8dc;border-radius:16px;background:#f3fbf5}.scheduled-accept-card[hidden] {display:none!important}.scheduled-accept-card>span {color:#6b7b70;font-size:11px;font-weight:800;letter-spacing:.06em}.scheduled-accept-card>strong {color:#18211b;font-size:34px;line-height:1;font-weight:850}.scheduled-accept-card>small {color:#657169;font-size:13px;line-height:1.45}
+
+
+/* Orders fullscreen workspace 2026-09-15 */.orders-sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 13px;
+    left: 14px;
+    z-index: 120;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dfe4e8;
+    border-radius: 12px;
+    background: #1f2429;
+    color: #fff;
+    box-shadow: 0 5px 18px rgba(20, 24, 30, .16);
+}.orders-sidebar-toggle:hover { background: #2a3036; }.orders-sidebar-toggle svg { width: 21px; height: 21px; }body.orders-sidebar-collapsed .admin-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+}body.orders-sidebar-collapsed .sidebar {
+    display: none !important;
+}body.orders-sidebar-collapsed .orders-sidebar-toggle {
+    display: inline-flex;
+}body.orders-sidebar-collapsed .main-col {
+    grid-column: 1;
+    width: 100%;
+    border-right: 0;
+}body.orders-sidebar-collapsed .orders-topbar {
+    padding-left: 76px;
+}body.orders-sidebar-collapsed .orders-page,
+body.orders-sidebar-collapsed .orders-app {
+    width: 100%;
+    max-width: none;
+}@media (max-width: 720px){.orders-sidebar-toggle {
+        top: 9px;
+        left: 9px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }body.orders-sidebar-collapsed .orders-topbar {
+        padding-left: 60px;
+    }
+}
+
 /* Admin order-taking workspace — cohesive mint selection and elevated controls.
    All rules stay scoped to .orders-page, other admin pages remain unchanged. */
 :root .orders-page {
