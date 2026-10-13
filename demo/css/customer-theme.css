@@ -141,32 +141,33 @@ html[data-customer-palette] .hdr-cart .cart-count {
 html[data-customer-palette] #productSheet .opt-row:has(input:checked) {
   background: var(--palette-soft) !important;
   border-color: var(--palette-accent) !important;
-  box-shadow: none;
+  box-shadow: 0 3px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent),
+    inset 0 0 0 1px color-mix(in srgb,var(--palette-accent) 15%,transparent);
 }
 html[data-customer-palette] #productSheet .opt-row:has(input:checked) :is(.opt-label, .opt-price) { color: var(--palette-ink) !important; }
 #productSheet .opt-row input:is([type="radio"], [type="checkbox"]) {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid var(--palette-muted);
-  border-radius: 6px;
-  background: var(--palette-surface);
-  display: grid;
-  place-content: center;
-  cursor: pointer;
+  appearance:none;-webkit-appearance:none;flex:none;
+  width:26px;height:26px;margin:0;
+  display:grid;place-content:center;cursor:pointer;
+  border:1.5px solid var(--palette-muted);
+  border-radius:8px;background:var(--palette-surface);
+  transition:background .15s ease,border-color .15s ease;
 }
-#productSheet .opt-row input:is([type="radio"], [type="checkbox"])::before {
-  content: "";
-  width: 9px;
-  height: 5px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  transform: rotate(-45deg) translateY(-1px);
-  visibility: hidden;
+#productSheet .opt-row input[type="radio"] {border-radius:50%;}
+#productSheet .opt-row input[type="checkbox"]::before {
+  content:"";width:11px;height:6px;
+  border-left:2px solid var(--palette-on-accent);
+  border-bottom:2px solid var(--palette-on-accent);
+  transform:rotate(-45deg) translateY(-1px);
+  visibility:hidden;
+}
+#productSheet .opt-row input[type="radio"]::before {
+  content:"";width:10px;height:10px;
+  border-radius:50%;background:var(--palette-on-accent);
+  visibility:hidden;
 }
 html[data-customer-palette] #productSheet .opt-row input:checked { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
-html[data-customer-palette][data-theme="dark"] #productSheet .opt-row input:checked { background: color-mix(in srgb, var(--palette-accent) 35%, var(--palette-surface)) !important; }
+html[data-customer-palette][data-theme="dark"] #productSheet .opt-row input:checked { background:var(--palette-accent) !important; border-color:var(--palette-accent) !important; }
 #productSheet .opt-row input:checked::before { visibility: visible; }
 #productSheet .opt-row input:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
 #productSheet .opt-row input:disabled { cursor: not-allowed; }
