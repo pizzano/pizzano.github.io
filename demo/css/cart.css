@@ -178,10 +178,10 @@ html[data-theme="dark"] .view-cart {
   .view-cart .cart-product-heading {gap:6px;margin-bottom:6px;}
   .view-cart .cart-product-name {font-size:14.5px;}
   .view-cart .cart-product-savings {font-size:11px;}
-   .view-cart .cart-product-stepper {grid-template-columns:30px 26px 30px;min-height:32px;border-radius:999px;}
+  .view-cart .cart-product-stepper {grid-template-columns:30px 26px 30px;min-height:32px;border-radius:999px;}
   .view-cart .cart-product-stepper button {width:30px;min-height:32px;font-size:15px;}
   .view-cart .cart-product-stepper>span {font-size:12px;}
-   .view-cart .cart-stepper-trash svg {width:12px;height:12px;}
+  .view-cart .cart-stepper-trash svg {width:12px;height:12px;}
   .view-cart .cart-detail-row {min-height:24px;padding:4px 7px;font-size:11px;}
   .view-cart .cart-detail-price {font-size:11px;}
   .view-cart .cart-header-title {font-size:20px;}
