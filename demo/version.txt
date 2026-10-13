@@ -1,6 +1,5 @@
-Bestill.online customer release: 20261013-productsheet92
-Product sheet: reference-inspired ingredient customization tile with icon, separate size and extras cards, selected-size badge, round radio/square checkbox controls, theme-aware selected states, section dividers and accessible kitchen comment field.
-Unchanged: existing product photograph, X/favorite header, allergen chips below comment, quantity and pinned Legg til footer, prices and ordering logic.
-Palettes: all four customer palettes in light/dark mode.
+Bestill.online customer release: 20261013-sheetcompact93
+Product modal is slimmer for phones: 48px selection rows (46px at <=370px), smaller labels, chips, radio/checkbox and ingredient tile. Retained 8px gaps between choices and ~19px separated option groups; product description remains readable at 14px.
+Preserved photo, close/favorites header, fixed quantity and Legg til footer, all color themes and existing prices, options, comments, allergens, cart and ordering logic.
 Admin release: 20261013-cartplanned90
 Source: pizzano/pizzano.github.io main
