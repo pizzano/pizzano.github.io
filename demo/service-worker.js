@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v195-cartsleek82';
+const CACHE_NAME = 'kol-demo-v196-cartpill83';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
