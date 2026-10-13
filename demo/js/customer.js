@@ -172,6 +172,7 @@ const el = {
   profileFavoritesMeta: $('profileFavoritesMeta'),
   profileOrdersMeta: $('profileOrdersMeta'),
   profilePanelTitle: $('profilePanelTitle'),
+  profileContactHelp: $('profileContactHelp'),
   profName: $('profName'),
   profPhone: $('profPhone'),
   btnSaveProfile: $('btnSaveProfile'),
@@ -705,6 +706,52 @@ function resetPendingOrderSubmission() {
 /* ------------------------------------------------------------------ *
  * Navigasjon mellom visninger
  * ------------------------------------------------------------------ */
+
+/* iPhone Safari: keyboard changes the visual viewport without always resizing
+ * 100dvh. Keep checkout's inner scroll area in the visible portion, and allow
+ * native Safari focus scrolling instead of issuing competing scrollIntoView calls. */
+function setupIOSContactKeyboard() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS) return;
+
+  const root = document.documentElement;
+  const isContactField = (node) => node instanceof HTMLElement
+    && node.matches('#profName, #profPhone, #custName, #custPhone');
+  let frame = 0;
+
+  function updateVisibleHeight() {
+    if (!root.classList.contains('ios-contact-keyboard-open')) return;
+    if (frame) cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      if (!root.classList.contains('ios-contact-keyboard-open')) return;
+      const viewport = window.visualViewport;
+      if (viewport && viewport.height > 0) {
+        root.style.setProperty('--ios-contact-viewport', `${Math.round(viewport.height)}px`);
+      }
+    });
+  }
+
+  document.addEventListener('focusin', (event) => {
+    if (!isContactField(event.target)) return;
+    root.classList.add('ios-contact-keyboard-open');
+    updateVisibleHeight();
+  });
+  document.addEventListener('focusout', (event) => {
+    if (!isContactField(event.target)) return;
+    // A focus switch between the name and phone fields must not flicker the layout.
+    window.setTimeout(() => {
+      if (isContactField(document.activeElement)) return;
+      root.classList.remove('ios-contact-keyboard-open');
+      root.style.removeProperty('--ios-contact-viewport');
+    }, 100);
+  });
+  window.visualViewport?.addEventListener('resize', updateVisibleHeight);
+  window.addEventListener('orientationchange', updateVisibleHeight);
+}
+
+setupIOSContactKeyboard();
 
 // The menu scrolls inside main on mouse devices and in the page on touch devices.
 function pageScrollTarget() {
@@ -2275,6 +2322,7 @@ function setProfileTab(tabName) {
   if (el.profileHome) el.profileHome.hidden = true;
   if (el.profileDetail) el.profileDetail.hidden = false;
   if (el.profilePanelTitle) el.profilePanelTitle.textContent = titles[activeTab];
+  if (el.profileContactHelp) el.profileContactHelp.hidden = activeTab !== 'contact';
 
   document.querySelectorAll('[data-profile-tab]').forEach((button) => {
     const active = button.dataset.profileTab === activeTab;
