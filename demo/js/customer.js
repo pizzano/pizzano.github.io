@@ -169,7 +169,6 @@ const el = {
   profileHeroName: $('profileHeroName'),
   profileHeroPhone: $('profileHeroPhone'),
   profileContactMeta: $('profileContactMeta'),
-  profileFavoritesMeta: $('profileFavoritesMeta'),
   profileOrdersMeta: $('profileOrdersMeta'),
   profilePanelTitle: $('profilePanelTitle'),
   profileContactHelp: $('profileContactHelp'),
@@ -177,7 +176,6 @@ const el = {
   profPhone: $('profPhone'),
   btnSaveProfile: $('btnSaveProfile'),
   profileSaved: $('profileSaved'),
-  favList: $('favList'),
   orderList: $('orderList'),
   activeOrderMenu: $('activeOrderMenu'),
   activeOrderProfile: $('activeOrderProfile'),
@@ -2311,11 +2309,10 @@ function showProfileHome() {
 }
 
 function setProfileTab(tabName) {
-  const validTabs = new Set(['contact', 'favorites', 'orders']);
+  const validTabs = new Set(['contact', 'orders']);
   const activeTab = validTabs.has(tabName) ? tabName : 'contact';
   const titles = {
     contact: 'Rediger profil',
-    favorites: 'Favoritter',
     orders: 'Mine bestillinger',
   };
 
@@ -2391,44 +2388,6 @@ function renderProfile() {
       ? 'Navn og mobilnummer lagret'
       : 'Navn og mobilnummer';
   }
-
-  const favs = profile.favorites
-    .map((id) => findItem(id))
-    .filter(({ item }) => item && !item.hidden);
-  if (el.profileFavoritesMeta) {
-    el.profileFavoritesMeta.textContent = favs.length
-      ? `${favs.length} ${favs.length === 1 ? 'favoritt' : 'favoritter'}`
-      : 'Ingen favoritter ennå';
-  }
-
-  el.favList.innerHTML = favs.length
-    ? favs.map(({ item }) => `
-        <article class="favorite-item">
-          <div class="favorite-item-media">
-            ${item.imageUrl
-              ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">`
-              : `<span class="favorite-item-placeholder" aria-hidden="true">
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                     <path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4"/><circle cx="9" cy="8" r="1"/>
-                   </svg>
-                 </span>`}
-          </div>
-          <div class="favorite-item-copy">
-            <strong class="favorite-item-name">${escapeHtml(item.name)}</strong>
-            <span class="favorite-item-price">${formatPrice(getItemBasePrice(item))}</span>
-          </div>
-          <div class="favorite-item-actions">
-            <button class="favorite-order-btn" data-open="${escapeHtml(item.id)}" type="button">Bestill</button>
-            <button class="favorite-remove-btn" data-remove-favorite="${escapeHtml(item.id)}" type="button" aria-label="Fjern ${escapeHtml(item.name)} fra favoritter">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8c0 4.8-7 9.2-7 9.2Z"/>
-                <path d="M8.5 12.5h7"/>
-              </svg>
-              <span>Fjern</span>
-            </button>
-          </div>
-        </article>`).join('')
-    : '<p class="favorites-empty">Ingen favoritter ennå. Trykk hjerteikonet på et produkt.</p>';
 
     const live = getOrders();
     const orders = mergedCustomerOrders();
@@ -2615,19 +2574,6 @@ document.addEventListener('click', (event) => {
     quickAddProduct(quickAddBtn.dataset.quickAdd);
     return;
   }
-  const removeFavoriteBtn = event.target.closest('[data-remove-favorite]');
-  if (removeFavoriteBtn) {
-    const itemId = removeFavoriteBtn.dataset.removeFavorite;
-    if (isFavorite(itemId)) {
-      toggleFavorite(itemId);
-      renderCategories();
-      renderMenu();
-      renderProfile();
-      toast('Fjernet fra favoritter.');
-    }
-    return;
-  }
-
   const openBtn = event.target.closest('[data-open]');
   if (openBtn) {
     openProduct(openBtn.dataset.open);
