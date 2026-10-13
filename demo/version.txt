@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-productclean86
-Product sheet: retain existing photo, title/close/favorite header and quantity/add-to-cart footer; simplify middle with category, selected size price, description, allergens before choices, and slim theme-aware selection rows. Preserve menu/cart/admin/Firebase workflows.
+Bestill.online release: 20261013-productnosummary87
+Product sheet: removed extra category and base-price summary row, including unused JS variables and CSS. Keep header, image, allergies, size/extras and fixed quantity/cart footer.
 Source: pizzano/pizzano.github.io main
