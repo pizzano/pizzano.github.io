@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-cartred79
-Reference cart: red quantity controls, spaced option strips, aligned prices and theme-aware cards
+Bestill.online release: 20261013-cartslim80
+Slim mobile cart: smaller red quantity buttons, thinner extras and cards, preserved prices and theme compatibility
 Source: pizzano/pizzano.github.io main
