@@ -1,3 +1,4 @@
-Bestill.online release: 20261013-allergensbelow88
-Product details: allergens appear directly below Kommentar til kjøkkenet with 17px top spacing. Existing header, image, size/extras, comments, quantity and add-to-cart logic unchanged.
+Bestill.online admin release: 20261013-adminsingle89
+Fix: only one admin page visible at a time. The hidden-page rule now overrides the Bestillinger workspace display:flex styling. Navigation behavior and order processing remain unchanged.
+Customer release: 20261013-allergensbelow88
 Source: pizzano/pizzano.github.io main
