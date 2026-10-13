@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-ordersync84
-Prevent stale Firebase polling responses from temporarily showing already accepted orders as new; preserve latest status across devices
+Bestill.online release: 20261013-cleanup85
+Cleanup: remove unused cart, allergen, confirmation and admin CSS; merge theme duplicates; keep admin order-taking styles together in order-taking.css. Preserve working order/checkout/loyalty/Firebase logic.
 Source: pizzano/pizzano.github.io main
