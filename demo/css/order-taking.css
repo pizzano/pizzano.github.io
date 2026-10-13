@@ -129,6 +129,36 @@ html[data-theme="dark"] .orders-page {
 :root .orders-page .orders-top-actions button:hover {box-shadow:var(--ot-shadow-hover);transform:translateY(-1px);}
 :root .orders-page .orders-top-actions button:active {transform:translateY(1px);box-shadow:0 1px 3px rgba(0,0,0,.11);}
 
+
+/* Display real SMS sender status, not only Firebase or phone connectivity. */
+:root .orders-page .orders-sms-indicator {
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:37px;padding:7px 11px;border-radius:12px;
+  border:1px solid #e8d398;background:color-mix(in srgb,#fff0c7 78%,var(--ot-surface));
+  color:#866017;font-size:12px;line-height:1.1;font-weight:850;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(15,36,50,.035);
+}
+:root .orders-page .orders-sms-icon {width:17px;height:17px;flex:none;}
+:root .orders-page .orders-sms-dot {width:8px;height:8px;border-radius:50%;flex:none;background:#d59c29;box-shadow:0 0 0 3px rgba(213,156,41,.12);}
+:root .orders-page .orders-sms-indicator.is-active {background:color-mix(in srgb,#daf5e3 78%,var(--ot-surface));color:#097349;border-color:#a7d7ba;}
+:root .orders-page .orders-sms-indicator.is-active .orders-sms-dot {background:#0a9d60;box-shadow:0 0 0 3px rgba(10,157,96,.12);}
+:root .orders-page .orders-sms-indicator.is-error {background:color-mix(in srgb,#fae4de 78%,var(--ot-surface));color:#af453d;border-color:#ecc2bc;}
+:root .orders-page .orders-sms-indicator.is-error .orders-sms-dot {background:#dc5a51;box-shadow:0 0 0 3px rgba(220,90,81,.12);}
+html[data-theme="dark"] .orders-page .orders-sms-indicator.is-pending {background:#443520;color:#f6d68a;border-color:#796035;}
+html[data-theme="dark"] .orders-page .orders-sms-indicator.is-active {background:#163e2e;color:#b4eacb;border-color:#316f54;}
+html[data-theme="dark"] .orders-page .orders-sms-indicator.is-error {background:#492b2a;color:#ffc3bc;border-color:#84413a;}
+@media(max-width:1050px) {
+  :root .orders-page .orders-topbar {gap:11px;}
+  :root .orders-page .orders-top-actions {gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+  :root .orders-page .orders-sms-indicator {min-height:32px;padding:6px 9px;font-size:11px;}
+  :root .orders-page .orders-sms-icon {width:15px;height:15px;}
+}
+@media(max-width:650px) {
+  :root .orders-page .orders-topbar {height:auto;min-height:76px;padding-top:8px;padding-bottom:8px;flex-wrap:wrap;}
+  :root .orders-page .orders-top-actions {width:100%;justify-content:flex-end;}
+  :root .orders-page .orders-sms-indicator {order:-1;margin-right:auto;}
+}
+
 /* Reference-inspired horizontal order cards; isolated to the admin order workspace. */
 :root .orders-page .orders-app {
   flex:1 1 0;min-width:0;min-height:0;

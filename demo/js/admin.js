@@ -2243,6 +2243,61 @@ function renderOrderDetail(orderId) {
   }
 }
 
+
+/* Reads only non-sensitive sender health info from an optional backend.
+   Green requires a fresh (<90s) verified gateway heartbeat AND enabled sending.
+   Manual SMS tests do not turn automatic-order SMS green. */
+let smsStatusFetching = false;
+function displaySmsStatus(mode, text, help) {
+  const badge = document.getElementById('ordersSmsStatus');
+  if (!badge) return;
+  badge.classList.toggle('is-pending', mode === 'pending');
+  badge.classList.toggle('is-active', mode === 'active');
+  badge.classList.toggle('is-error', mode === 'error');
+  badge.querySelector('[data-sms-status-text]').textContent = text;
+  badge.title = help;
+}
+async function refreshSmsStatus() {
+  const configured = String(window.BESTILL_CONFIG?.smsStatusUrl || '').trim();
+  if (!configured) {
+    displaySmsStatus('pending','SMS ikke aktiv','Traccar sendte en test-SMS, men automatisk ordrebekreftelse er ikke koblet til.');
+    return;
+  }
+  if (smsStatusFetching) return;
+  smsStatusFetching = true;
+  try {
+    const endpoint = new URL(configured, location.href);
+    if (endpoint.protocol !== 'https:' && !(endpoint.protocol === 'http:' && endpoint.origin === location.origin)) {
+      throw new Error('Invalid SMS URL');
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let response;
+    try {
+      response = await fetch(endpoint.href, {cache:'no-store',credentials:'omit',signal:controller.signal});
+    } finally { clearTimeout(timeout); }
+    if (!response.ok) throw new Error('SMS status failure');
+    const status = await response.json();
+    const age = Date.now() - Date.parse(String(status?.lastGatewayCheckAt || ''));
+    const online = status?.smsEnabled === true && status?.gatewayOnline === true
+      && Number.isFinite(age) && age >= 0 && age < 90000;
+    if (online) {
+      displaySmsStatus('active','SMS fungerer','Nylig bekreftet av den tilkoblede SMS-serveren.');
+    } else if (status?.smsEnabled === true) {
+      displaySmsStatus('error','SMS frakoblet','SMS er aktivert, men tilkoblingen er ikke bekreftet.');
+    } else {
+      displaySmsStatus('pending','SMS ikke aktiv','Automatisk SMS er ennå ikke aktivert.');
+    }
+  } catch (_) {
+    displaySmsStatus('error','SMS utilgjengelig','Kunne ikke kontakte SMS-statusserveren.');
+  } finally { smsStatusFetching = false; }
+}
+void refreshSmsStatus();
+window.setInterval(refreshSmsStatus, 45000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void refreshSmsStatus();
+});
+
 function updateOrdersConnection() {
   const connection = document.getElementById('ordersConnection');
   const connected = navigator.onLine && backendInfo.mode === 'firebase';
