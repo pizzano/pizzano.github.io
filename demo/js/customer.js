@@ -1214,7 +1214,8 @@ function renderSheet() {
     ? `
       <div class="ingredient-customize${draft.ingredientsOpen ? ' is-open' : ''}">
         <button class="ingredient-customize-toggle" data-toggle-ingredients type="button" aria-expanded="${draft.ingredientsOpen}">
-          <span>
+          <span class="ingredient-customize-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5" fill="var(--palette-surface)"/><circle cx="15" cy="17" r="2.5" fill="var(--palette-surface)"/></svg></span>
+          <span class="ingredient-customize-copy">
             <strong>Tilpass ingredienser</strong>
             <small>${removedNames.length ? `Uten: ${escapeHtml(removedNames.join(', '))}` : 'Ingen endringer'}</small>
           </span>
@@ -1241,10 +1242,13 @@ function renderSheet() {
   const sizeHtml =
     (item.sizes || []).length > 0
       ? `
-      <div class="opt-group">
+      <div class="opt-group opt-group--size">
         <div class="opt-head">
           <h3 class="opt-title">Størrelse</h3>
           <span class="opt-guidance">Påkrevd</span>
+          ${(item.sizes || []).find(size => size.id === draft.sizeId)
+            ? `<span class="opt-selected-size"><span class="opt-selected-check" aria-hidden="true">✓</span>${escapeHtml((item.sizes || []).find(size => size.id === draft.sizeId).label)}</span>`
+            : ''}
         </div>
         <div class="opt-rows">
           ${item.sizes
@@ -1274,7 +1278,7 @@ function renderSheet() {
     ${ingredientCustomizeHtml}
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
-    <div class="opt-group">
+    <div class="opt-group opt-group--comment">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
         draft.comment
