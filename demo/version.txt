@@ -1,5 +1,6 @@
 Bestill.online customer release: 20261013-sheetcompact94
 Product modal: thinner 44px option cards, 20px radio/check controls, smaller 12px option labels, 11px prices and 58px kitchen comment with 12px text. Keep 9px between options and 17px between feature groups; product ingredients description remains 13.5px. Compact ingredient tile and allergen chips. iPhone comment focus prevents unexpected zoom.
 Preserved photo, X/favorite header, fixed quantity/Legg til footer, all palette themes and existing prices, option/ingredient behavior, cart and ordering.
-Admin release: 20261013-cartplanned90
+Admin release: 20261013-admintickets91
+Admin order inbox: ticket-shaped compact cards, status dots and state badges beside customer/pickup, mint filters; existing live order interaction preserved.
 Source: pizzano/pizzano.github.io main

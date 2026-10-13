@@ -2041,7 +2041,6 @@ function orderListRowHtml(order, isNew = false) {
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main"><span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
     <small>#${escapeHtml(String(order.id).slice(-6).toUpperCase())} · ${escapeHtml(isScheduledPickupOrder(order) ? `Henting ${order.pickup}` : 'Snarest')}</small></span>
-    <span class="orders-list-side"><strong>${formatPrice(order.total)}</strong><small>${escapeHtml(compactOrderTime(order.createdAt))}</small></span>
     <span class="orders-list-center" data-order-center="${escapeHtml(order.id)}">${escapeHtml(orderCenterText(order))}</span>
   </button>`;
 }
