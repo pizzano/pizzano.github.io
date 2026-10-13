@@ -1,4 +1,4 @@
-Bestill.online admin release: 20261013-adminsingle89
-Fix: only one admin page visible at a time. The hidden-page rule now overrides the Bestillinger workspace display:flex styling. Navigation behavior and order processing remain unchanged.
-Customer release: 20261013-allergensbelow88
+Bestill.online release: 20261013-cartplanned90
+Customer cart: stepper actions follow the selected palette in light/dark mode, with 34px controls (32px on narrow phones). Quantity, prices and totals remain unchanged.
+Admin Planlagte: only orders with a future pickup timestamp and active status. Expired scheduled orders stay in Alle, and the list refreshes when the pickup time passes.
 Source: pizzano/pizzano.github.io main
