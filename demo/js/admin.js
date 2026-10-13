@@ -2009,11 +2009,14 @@ function renderOrderTabs(allOrders) {
   });
 }
 function renderOrderList() {
+  // Keep the employee's place when Firebase refreshes the order list.
+  const previousScrollTop = el.orderList.scrollTop;
   const orders = filteredOrders().sort((a, b) => {
     if (a.status === 'mottatt' && b.status === 'mottatt') return Number(a.createdAt) - Number(b.createdAt);
     return Number(b.status === 'mottatt') - Number(a.status === 'mottatt');
   });
   el.orderList.innerHTML = orders.map((order, index) => `${index > 0 && order.status !== 'mottatt' && orders[index - 1].status === 'mottatt' ? '<div class="orders-group-gap" aria-hidden="true"></div>' : ''}${orderListRowHtml(order, order.status === 'mottatt')}`).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>Ingen bestillinger å vise.</span></div>';
+  el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
   const options = Array.isArray(line.options) ? line.options : [];
