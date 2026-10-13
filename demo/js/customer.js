@@ -1145,7 +1145,7 @@ function optionGroupHtml(group, problems) {
   const picked = draft.selections[group.id] || [];
   const isMulti = group.selectionMode === 'multiple';
   const atMax = isMulti && new Set(picked).size >= group.maxSelections;
-  const badges = `<span class="opt-guidance">${group.required ? 'Velg tilvalg' : 'Valgfritt'}</span>`;
+  const badges = `<span class="opt-guidance">${group.required ? 'Påkrevd' : 'Valgfritt'}</span>`;
 
   const rows = (group.options || [])
     .filter((option) => option.label)
@@ -1178,7 +1178,7 @@ function optionGroupHtml(group, problems) {
 
 function renderSheet() {
   if (!draft) return;
-  const { item } = findItem(draft.itemId);
+  const { item, section } = findItem(draft.itemId);
   if (!item) {
     closeSheet();
     return;
@@ -1196,6 +1196,8 @@ function renderSheet() {
   for (const group of groups) if (!Array.isArray(draft.selections[group.id])) draft.selections[group.id] = [...(group.defaultOptionIds || [])];
   const { problems, message } = validateDraft();
   const allergens = allergenLabels(item);
+  const selectedSize = (item.sizes || []).find(size => size.id === draft.sizeId);
+  const basePrice = Number(selectedSize?.price ?? item.price ?? 0);
   const ingredientCustomizationEnabled =
     store.settings?.ingredientCustomizationEnabled !== false;
   const removableIngredients = ingredientCustomizationEnabled
@@ -1243,8 +1245,8 @@ function renderSheet() {
       ? `
       <div class="opt-group">
         <div class="opt-head">
-          <h3 class="opt-title">Velg størrelse</h3>
-          <span class="opt-guidance">Velg én</span>
+          <h3 class="opt-title">Størrelse</h3>
+          <span class="opt-guidance">Påkrevd</span>
         </div>
         <div class="opt-rows">
           ${item.sizes
@@ -1270,7 +1272,19 @@ function renderSheet() {
         : ''
     }
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
-    <p class="sheet-desc">${escapeHtml(item.description || item.ingredients || '')}</p>
+    <div class="sheet-product-summary">
+      ${section?.title ? `<span class="sheet-product-category">${escapeHtml(section.title)}</span>` : ''}
+      <strong class="sheet-product-base-price">${formatPrice(basePrice)}</strong>
+    </div>
+    ${item.description || item.ingredients ? `<p class="sheet-desc">${escapeHtml(item.description || item.ingredients)}</p>` : ''}
+    <div class="sheet-allergens" aria-label="Allergener">
+      <span class="sheet-allergens-label">Allergener</span>
+      <div class="sheet-allergen-chips">
+        ${allergens.length
+          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
+          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
+      </div>
+    </div>
     ${ingredientCustomizeHtml}
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
@@ -1280,14 +1294,7 @@ function renderSheet() {
         draft.comment
       )}</textarea>
     </div>
-    <div class="sheet-allergens" aria-label="Allergener">
-      <span class="sheet-allergens-label">Allergener</span>
-      <div class="sheet-allergen-chips">
-        ${allergens.length
-          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
-          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
-      </div>
-    </div>`;
+`;
 
   if (draft.loyaltyFree && !draft.loyaltyAuto) {
     draft.quantity = 1;
