@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-historyretry66
-Mine bestillinger reference card layout
+Bestill.online release: 20261013-extrabold67
+Shared cart details: bold extras, right-aligned size price, wider quantity buttons
 Source: pizzano/pizzano.github.io main
