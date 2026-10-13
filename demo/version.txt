@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-compactorders68
-Mine bestillinger: fixed compact single-row status on all phone sizes
+Bestill.online release: 20261013-profileios69
+Rediger profil redesigned; checkout and profile iPhone input keyboard fix
 Source: pizzano/pizzano.github.io main
