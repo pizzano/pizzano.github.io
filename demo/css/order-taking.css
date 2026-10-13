@@ -285,9 +285,18 @@ html[data-theme="dark"] .orders-page {
   color:var(--ot-accent);
 }
 :root .orders-page .orders-list-time {
+  gap:5px;
   color:var(--ot-muted);
   background:color-mix(in srgb,var(--ot-bg) 75%,var(--ot-surface));
 }
+:root .orders-page .orders-list-remaining {
+  display:inline-flex;align-items:center;min-width:0;
+  padding-left:6px;margin-left:1px;
+  border-left:1px solid var(--ot-line);
+  color:var(--ot-accent);font-size:10px;font-weight:850;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+:root .orders-page .orders-list-remaining[hidden] {display:none!important;}
 :root .orders-page .orders-list-meta svg {
   width:16px;height:16px;flex:none;
 }

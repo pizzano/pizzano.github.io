@@ -1,6 +1,6 @@
 Bestill.online customer release: 20261013-sheetcompact94
 Product modal: thinner 44px option cards, 20px radio/check controls, smaller 12px option labels, 11px prices and 58px kitchen comment with 12px text. Keep 9px between options and 17px between feature groups; product ingredients description remains 13.5px. Compact ingredient tile and allergen chips. iPhone comment focus prevents unexpected zoom.
 Preserved photo, X/favorite header, fixed quantity/Legg til footer, all palette themes and existing prices, option/ingredient behavior, cart and ordering.
-Admin release: 20261014-pickuptime94
-Admin order inbox: SENERE shows selected pickup clock time; SNAREST shows accepted estimated-ready time (fallback to estimatedAt + estimatedMinutes for older orders). Pending orders with no delivery estimate show — instead of received time. Narrow inbox and mint order detail unchanged.
+Admin release: 20261014-orderremaining95
+Admin order inbox: chosen SENERE pickup time or confirmed SNAREST estimated-ready time, plus a live remaining-duration label immediately beside the pickup clock. Refreshes each second; no countdown for pending ASAP orders with no estimate or completed/rejected orders. Other compact layout retained.
 Source: pizzano/pizzano.github.io main

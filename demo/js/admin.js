@@ -2070,18 +2070,45 @@ function orderListPickupTime(order) {
     : '—'; // No pickup time exists until the ASAP order is accepted.
 }
 
+function orderListRemainingTime(order) {
+  if (['fullfort', 'avvist'].includes(order.status)) return '';
+  if (order.status === 'klar') return 'Klar nå';
+  const pickupAt = isScheduledPickupOrder(order) ? scheduledPickupTimestamp(order) : (
+    Number(order.estimatedReadyAt) ||
+    (Number(order.estimatedAt) > 0 && Number(order.estimatedMinutes) > 0
+      ? Number(order.estimatedAt) + Number(order.estimatedMinutes) * 60000
+      : 0)
+  );
+  if (!pickupAt) return '';
+  const milliseconds = pickupAt - Date.now();
+  if (milliseconds <= 0) return isScheduledPickupOrder(order) && order.status === 'mottatt'
+    ? 'Hentetid nå' : 'Klar nå';
+  if (milliseconds < 60000) return Math.ceil(milliseconds / 1000) + ' sek';
+  const minutes = Math.ceil(milliseconds / 60000);
+  if (minutes < 60) return minutes + ' min';
+  if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return hours + ' t' + (rest ? ' ' + rest + ' m' : '');
+  }
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.ceil((minutes % 1440) / 60);
+  return days + ' d' + (hours ? ' ' + hours + ' t' : '');
+}
+
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
   const displayTime = orderListPickupTime(order);
   const timeTitle = pickupScheduled ? 'Valgt hentetid' : (displayTime === '—' ? 'Hentetid ikke satt ennå' : 'Estimert hentetid');
   const pickupLabel = pickupScheduled ? 'SENERE' : 'SNAREST';
+  const remainingTime = orderListRemainingTime(order);
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
       <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-divider" aria-hidden="true"></span>
-        <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span></span>
+        <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span><span class="orders-list-remaining" data-order-remaining="${escapeHtml(order.id)}" ${remainingTime ? '' : 'hidden'}>${escapeHtml(remainingTime)}</span></span>
       </span>
     </span>
     <span class="orders-list-price">${formatPrice(order.total)}</span>
@@ -2512,6 +2539,14 @@ function refreshOrderClocks() {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
     if (!order) return;
     node.textContent = orderCenterText(order);
+  });
+  // Keep the small pickup countdown live without re-rendering the order cards.
+  document.querySelectorAll('[data-order-remaining]').forEach((node) => {
+    const order = getOrders().find((entry) => entry.id === node.dataset.orderRemaining);
+    if (!order) return;
+    const remaining = orderListRemainingTime(order);
+    node.textContent = remaining;
+    node.hidden = !remaining;
   });
   document.querySelectorAll('[data-detail-countdown]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.detailCountdown);
