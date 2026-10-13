@@ -2,9 +2,9 @@
 <html lang="no">
 
 <head>
-    <script src="/demo/config.js?v=20261013-compactorders68"></script>
+    <script src="/demo/config.js?v=20261013-profileios69"></script>
     <meta charset="UTF-8">
-    <meta name="bestill-build" content="20261013-compactorders68">
+    <meta name="bestill-build" content="20261013-profileios69">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#33251f">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,10 +16,10 @@
     <title>Restauranten — Bestill takeaway</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20261013-compactorders68">
-    <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-compactorders68">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20261013-profileios69">
+    <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-profileios69">
     <link rel="stylesheet" href="/demo/css/shop-info.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261013-compactorders68">
+    <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261013-profileios69">
     <meta name="description" content="Bestill pizza, kebab og burger til henting fra restauranten. Enkel bestilling, klar til avtalt hentetid." />
     <meta property="og:title" content="Restauranten — Bestill takeaway" />
     <meta property="og:description" content="Bestill pizza, kebab og burger til henting fra restauranten." />
@@ -27,7 +27,7 @@
     <meta name="twitter:title" content="Restauranten — Bestill takeaway" />
     <meta name="twitter:description" content="Bestill pizza, kebab og burger til henting fra restauranten." />
     <meta name="twitter:image" content="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbbjicakga/pizza-pepperoni-stone-oven.png" />
-    <link rel="stylesheet" href="/demo/css/cart.css?v=20261013-compactorders68">
+    <link rel="stylesheet" href="/demo/css/cart.css?v=20261013-profileios69">
 </head>
 
 <body>
@@ -120,18 +120,28 @@
                 <li class="step" data-step="3"><span class="step-num">3</span>Hentetid</li>
             </ol>
 
-            <div class="step-panel" id="step2" hidden>
+            <div class="step-panel checkout-contact-card" id="step2" hidden>
                 <h2 class="sec-title">Kontaktinformasjon</h2>
-                <div class="field">
-                    <label class="field-label" for="custName">Navn</label>
-                    <div class="validated-input"><input id="custName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                <div class="field contact-form-field">
+                    <label class="field-label contact-form-label" for="custName">
+                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Navn</span>
+                    </label>
+                    <div class="validated-input contact-form-control">
+                        <input id="custName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
+                        <span class="valid-check" hidden aria-label="Gyldig">✓</span>
+                    </div>
                     <p class="err" id="errName" hidden>Skriv inn navnet ditt.</p>
                 </div>
-                <div class="field">
-                    <label class="field-label" for="custPhone">Mobilnummer</label>
-                    <div class="phone-row">
+                <div class="field contact-form-field">
+                    <label class="field-label contact-form-label" for="custPhone">
+                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span>Mobilnummer</span>
+                    </label>
+                    <div class="phone-row contact-form-phone">
                         <span class="phone-prefix">+47</span>
-                        <div class="validated-input"><input id="custPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                        <div class="validated-input contact-form-control">
+                            <input id="custPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="done">
+                            <span class="valid-check" hidden aria-label="Gyldig">✓</span>
+                        </div>
                     </div>
                     <p class="err" id="errPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
                 </div>
@@ -220,21 +230,31 @@
                     <div>
                         <span>Profil</span>
                         <h1 id="profilePanelTitle">Rediger profil</h1>
+                        <p class="profile-contact-help" id="profileContactHelp" hidden>Lagre navn og mobilnummer for raskere bestilling neste gang.</p>
                     </div>
                 </header>
 
                 <div class="profile-tab-panels">
-                    <section class="card profile-tab-panel is-active" data-profile-panel="contact">
-                        <p class="section-help">Lagre navn og mobilnummer for raskere bestilling neste gang.</p>
-                        <div class="field">
-                            <label class="field-label" for="profName">Navn</label>
-                            <div class="validated-input"><input id="profName" class="input" type="text" placeholder="Fornavn og etternavn"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                    <section class="card profile-tab-panel profile-contact-card is-active" data-profile-panel="contact">
+                        <div class="field contact-form-field">
+                            <label class="field-label contact-form-label" for="profName">
+                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Navn</span>
+                            </label>
+                            <div class="validated-input contact-form-control">
+                                <input id="profName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
+                                <span class="valid-check" hidden aria-label="Gyldig">✓</span>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="profPhone">Mobilnummer</label>
-                            <div class="phone-row">
+                        <div class="field contact-form-field">
+                            <label class="field-label contact-form-label" for="profPhone">
+                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span>Mobilnummer</span>
+                            </label>
+                            <div class="phone-row contact-form-phone">
                                 <span class="phone-prefix">+47</span>
-                                <div class="validated-input"><input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer"><span class="valid-check" hidden aria-label="Gyldig">✓</span></div>
+                                <div class="validated-input contact-form-control">
+                                    <input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="done">
+                                    <span class="valid-check" hidden aria-label="Gyldig">✓</span>
+                                </div>
                             </div>
                         </div>
                         <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
@@ -298,9 +318,9 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="/demo/js/install.js?v=20261013-compactorders68"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261013-compactorders68"></script>
-    <script type="module" src="/demo/js/shop-info.js?v=20261013-compactorders68"></script>
+    <script src="/demo/js/install.js?v=20261013-profileios69"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261013-profileios69"></script>
+    <script type="module" src="/demo/js/shop-info.js?v=20261013-profileios69"></script>
 </body>
 
 </html>
