@@ -825,9 +825,47 @@ function applyRemoteMenu(value) {
   return before !== JSON.stringify(menuPayload());
 }
 
+/* A GET begun before a status write can return after the local update.
+   Keep local status until Firebase confirms it, without hiding newer updates. */
+const orderWriteGuards = new Map();
+let nextOrdersPullId = 0;
+let lastAppliedOrdersPullId = 0;
+function beginOrderStatusWrite(order) {
+  const guard = { status: order.status,
+    statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
+    expiresAt: Date.now() + 30000, committed: false };
+  orderWriteGuards.set(order.id, guard);
+  return guard;
+}
+function finishOrderStatusWrite(orderId, guard, succeeded) {
+  if (orderWriteGuards.get(orderId) !== guard) return;
+  if (succeeded) guard.committed = true;
+  else orderWriteGuards.delete(orderId);
+}
+function mergePendingOrderStatuses(next) {
+  if (!orderWriteGuards.size) return next;
+  const localById = new Map(store.orders.map(order => [order.id, order]));
+  return next.map(remote => {
+    const guard = orderWriteGuards.get(remote.id);
+    if (!guard) return remote;
+    const version = Number(remote.statusUpdatedAt) || 0;
+    if (guard.committed && remote.status === guard.status
+        && version >= guard.statusUpdatedAt) {
+      orderWriteGuards.delete(remote.id);
+      return remote;
+    }
+    if (Date.now() > guard.expiresAt || version > guard.statusUpdatedAt) {
+      orderWriteGuards.delete(remote.id);
+      return remote;
+    }
+    const local = localById.get(remote.id);
+    return local?.status === guard.status ? local : remote;
+  });
+}
+
 /** Tar imot ordre fra databasen. Returnerer true hvis noe endret seg. */
 function applyRemoteOrders(value) {
-  const next = normalizeOrders(value);
+  const next = mergePendingOrderStatuses(normalizeOrders(value));
   const snapshot = (orders) => JSON.stringify((orders || []).map((o) => [
     o.id,
     o.status,
@@ -858,9 +896,12 @@ function applyRemoteOrders(value) {
 /** Henter siste versjon fra databasen. */
 async function pullRemote() {
   if (!remoteEnabled) return;
+  const requestId = ++nextOrdersPullId;
   try {
     const root = await restGet('');
     remoteOnline = true;
+    if (requestId < lastAppliedOrdersPullId) return;
+    lastAppliedOrdersPullId = requestId;
     const menuChanged =
       saveState === 'dirty' || saveState === 'saving' ? false : applyRemoteMenu(root);
     const ordersChanged = applyRemoteOrders(root && root.orders);
@@ -1127,6 +1168,7 @@ export async function updateOrderStatus(orderId, status) {
   const previous = order.status;
   order.status = status;
   order.statusUpdatedAt = Date.now();
+  const writeGuard = beginOrderStatusWrite(order);
   emitData('local');
   setSaveState('saving');
   try {
@@ -1135,9 +1177,11 @@ export async function updateOrderStatus(orderId, status) {
       else await restPatch(`${ORDERS_PATH}/${orderId}`, { status, statusUpdatedAt: order.statusUpdatedAt });
       remoteOnline = true;
     }
+    finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
     return true;
   } catch (err) {
+    finishOrderStatusWrite(orderId, writeGuard, false);
     order.status = previous;
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
@@ -1200,6 +1244,7 @@ export async function acceptOrderWithEstimate(orderId, minutes) {
   order.estimatedMinutes = value;
   order.estimatedAt = now;
   order.estimatedReadyAt = readyAt;
+  const writeGuard = beginOrderStatusWrite(order);
   emitData('local');
   setSaveState('saving');
   try {
@@ -1213,9 +1258,11 @@ export async function acceptOrderWithEstimate(orderId, minutes) {
       });
       remoteOnline = true;
     }
+    finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
     return true;
   } catch (err) {
+    finishOrderStatusWrite(orderId, writeGuard, false);
     Object.assign(order, previous);
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
@@ -1255,6 +1302,7 @@ export async function acceptScheduledOrder(orderId) {
   order.estimatedMinutes = minutes;
   order.estimatedAt = now;
   order.estimatedReadyAt = readyAt;
+  const writeGuard = beginOrderStatusWrite(order);
   emitData('local');
   setSaveState('saving');
   try {
@@ -1270,9 +1318,11 @@ export async function acceptScheduledOrder(orderId) {
       });
       remoteOnline = true;
     }
+    finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
     return true;
   } catch (err) {
+    finishOrderStatusWrite(orderId, writeGuard, false);
     Object.assign(order, previous);
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
@@ -1295,6 +1345,7 @@ export async function rejectOrder(orderId, reason = '', message = '') {
   order.statusUpdatedAt = Date.now();
   order.rejectionReason = String(reason || 'Ingen spesifikk grunn');
   order.rejectionMessage = String(message || '').trim();
+  const writeGuard = beginOrderStatusWrite(order);
   emitData('local');
   setSaveState('saving');
   try {
@@ -1307,9 +1358,11 @@ export async function rejectOrder(orderId, reason = '', message = '') {
       });
       remoteOnline = true;
     }
+    finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
     return true;
   } catch (err) {
+    finishOrderStatusWrite(orderId, writeGuard, false);
     Object.assign(order, previous);
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
