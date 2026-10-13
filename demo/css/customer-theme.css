@@ -9,16 +9,16 @@
 }
 html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
 html[data-customer-palette] body::before { background: none; }
-html[data-customer-palette] .view-menu .prod-grid { background: var(--palette-surface); border-color: var(--palette-border); }
+html[data-customer-palette] .view-menu .prod-grid { background: transparent; border-color: transparent; }
 html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
 html[data-customer-palette] .btn-primary, html[data-customer-palette] .add-btn, html[data-customer-palette] .btn-add { background: var(--palette-accent); color: var(--palette-on-accent); }
-html[data-customer-palette] .view-menu .prod-grid .add-btn { color: var(--palette-on-accent); }
+html[data-customer-palette] .view-menu .prod-grid .add-btn { background: transparent; color: transparent; }
 
 /* Keep shared legacy dark overrides aligned with the customer theme. */
 html[data-customer-palette] main { background: var(--palette-bg) !important; }
 html[data-customer-palette] .app-header { background: var(--palette-deep) !important; }
-html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; }
-html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; box-shadow: 0 5px 13px color-mix(in srgb,var(--palette-deep) 10%,transparent); }
+html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; box-shadow: 0 6px 15px color-mix(in srgb,var(--palette-deep) 14%,transparent); }
 html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
 html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: end; justify-items: end; }
 html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
