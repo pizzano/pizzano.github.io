@@ -1962,9 +1962,10 @@ function scheduledPickupTimestamp(order) {
 }
 
 function isUpcomingScheduledOrder(order) {
-  // Overdue orders remain visible until fulfilled or rejected.
-  return ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(order.status)
-    && scheduledPickupTimestamp(order) !== null;
+  const pickupAt = scheduledPickupTimestamp(order);
+  // "Planlagte" is only for future pickup times. Past orders remain in "Alle".
+  return ['mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(order?.status)
+    && pickupAt !== null && pickupAt > Date.now();
 }
 
 function filteredOrders() {
@@ -2447,6 +2448,15 @@ function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
   updateOrdersConnection();
   renderOrderTabs(getOrders());
+  // When a pickup time passes, remove it immediately from Planlagte even
+  // when no Firebase update occurs. Avoid rerendering if the list is current.
+  if (ui.orderFilter === 'scheduled') {
+    const visibleIds = [...el.orderList.querySelectorAll('[data-select-order]')]
+      .map(node => node.dataset.selectOrder);
+    const upcomingIds = filteredOrders().map(order => order.id);
+    if (visibleIds.length !== upcomingIds.length
+        || upcomingIds.some(id => !visibleIds.includes(id))) renderOrderList();
+  }
   document.querySelectorAll('[data-pending-countdown]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
     if (order) node.textContent = pendingWait(order);
