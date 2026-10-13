@@ -145,9 +145,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
   .sec-title { margin-bottom: 7px;  }
   .card { padding: 10px; margin-bottom: 8px; border-radius: 11px; }
-  .page-intro,
-.section-help,
-.hint { font-size: 12.5px; }
+  .hint { font-size: 12.5px; }
 
   .menu-overview-row { gap: 8px; }
 
@@ -191,7 +189,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .time-grid { gap: 6px; }
   .time-btn { min-height: 38px; font-size: 12px; }
 
-  .link-btn { font-size: 11.5px; }
+  
 
   .view-cart > .checkout-actions .btn,
 .view-checkout > .checkout-actions .btn {
@@ -203,11 +201,10 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
     padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
   }
 
-  .mini-row { gap: 8px; padding: 8px 0; }
-  .mini-row img { width: 44px; height: 44px; }
-  .mini-title { font-size: 12.5px; }
-  .mini-sub,
-.sheet-head { min-height: 48px; padding: 8px 10px; }
+  
+  
+  
+  .sheet-head { min-height: 48px; padding: 8px 10px; }
   .sheet-head h2,
 .sheet-body { padding: 10px; }
 
@@ -911,15 +908,7 @@ main {
 .cat-title-row { align-items: center; }
 .cat-head h2 {  line-height: 1.15; font-weight: 830; letter-spacing: -.025em; }
 .cat-description { margin-top: 4px; font-size: 11.5px; line-height: 1.35; }
-.allergen-mini-chip {
-  display: inline-flex;
-  align-items: center;
 
-  border-radius: 8px;
-  background: var(--palette-surface);
-  color: var(--palette-muted);
-  white-space: nowrap;
-}
 .show-more {
   width: 100%;
   min-height: 38px;
@@ -1089,7 +1078,7 @@ textarea.input {
 
   .cat-block { margin-bottom: 22px; }
   .cat-head h2 { font-size: 17px; }
-  .allergen-mini-chip { min-height: 18px; padding: 0 5px; font-size: 8.5px; }
+  
   .sheet { max-height: 96dvh !important; }
   .sheet-hero { height: 205px !important; }
   .opt-group { padding: 10px; border-radius: 15px; }
@@ -1292,10 +1281,8 @@ textarea.input {
 .confirm-modal[data-state="waiting"],
 .confirm-modal[data-state="accepted"],
 .confirm-modal[data-state="timeout"] {max-width:500px;}
-.confirm-ready-countdown {display:grid;gap:5px;margin-top:12px;padding:16px;border:1px solid var(--palette-border);border-radius:16px;background:var(--palette-surface);text-align:center;}
-.confirm-ready-countdown>span {color:var(--palette-muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
-.confirm-ready-countdown>strong {color:var(--palette-accent);font-size:28px;line-height:1.1;font-weight:850;font-variant-numeric:tabular-nums;}
-.confirm-ready-countdown>small {color:var(--palette-muted);font-size:12px;line-height:1.35;}
+
+
 .confirm-modal[data-state="waiting"] .confirm-icon {animation:confirmPulse 1.5s ease-in-out infinite;}
 @keyframes confirmPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb, var(--palette-deep) 22%, transparent)}50%{transform:scale(1.05);box-shadow:0 0 0 12px color-mix(in srgb, var(--palette-deep) 0%, transparent)}}
 
@@ -1673,36 +1660,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 }
 
 
-
-
-
-
-
-/* ======================== Handlekurv: enkel mengdekontroll v5 ======================== */
-.cart-topbar {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 0 2px;
-}
-
-  .cart-topbar {
-    margin-bottom: 1px;
-  }
-
-/* Smart quantity: 1 = trash{
-  color: var(--palette-accent) !important;
-  background: var(--palette-surface) !important;
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-.view-cart .cart-topbar {
-  display: none !important;
-}
-
-
-
 /* ======================== Hentetid: helt ny pickup review v4 ======================== */
 #reviewCard.pickup-review-host {
   width: 100%;
@@ -2054,9 +2011,7 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
     white-space: normal;
   }
 
-  .view-menu .prod-grid .prod-allergens {
-    display: none;
-  }
+  
 
   .view-menu .prod-grid .prod-side {
     position: static;
