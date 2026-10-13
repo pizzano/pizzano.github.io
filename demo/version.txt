@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-cartpill83
-Compact cart: pill-shaped red quantity controls, slim product/option/total rows, inline actual free-pizza savings; category sorting intact
+Bestill.online release: 20261013-ordersync84
+Prevent stale Firebase polling responses from temporarily showing already accepted orders as new; preserve latest status across devices
 Source: pizzano/pizzano.github.io main
