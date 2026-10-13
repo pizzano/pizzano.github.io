@@ -2006,6 +2006,19 @@ function orderListStatus(order) {
 function orderCenterText(order) {
   if (order.status === 'klar') return 'Klar for henting';
   if (order.status === 'mottatt') return pendingWait(order);
+  if (isUpcomingScheduledOrder(order) && ['bekreftet', 'tilberedning'].includes(order.status)) {
+    const pickupAt = scheduledPickupTimestamp(order);
+    const remaining = pickupAt - Date.now();
+    const label = order.status === 'bekreftet' ? 'Godtatt' : 'Tilberedes';
+    if (remaining <= 0) return label + ' · Hentetid nå';
+    const minutesLeft = Math.ceil(remaining / 60000);
+    const days = Math.floor(minutesLeft / 1440);
+    const hours = Math.floor((minutesLeft % 1440) / 60);
+    const minutes = minutesLeft % 60;
+    const duration = days ? days + ' d ' + hours + ' t'
+      : hours ? hours + ' t ' + minutes + ' min' : minutes + ' min';
+    return label + ' · ' + duration + ' igjen';
+  }
   if (['bekreftet', 'tilberedning'].includes(order.status)) {
     const readyAt = Number(order.estimatedReadyAt) || 0;
     const label = order.status === 'bekreftet' ? 'Godtatt' : 'Tilberedes';
