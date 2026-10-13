@@ -1,3 +1,3 @@
-Bestill.online release: 20261013-cleanup85
-Cleanup: remove unused cart, allergen, confirmation and admin CSS; merge theme duplicates; keep admin order-taking styles together in order-taking.css. Preserve working order/checkout/loyalty/Firebase logic.
+Bestill.online release: 20261013-productclean86
+Product sheet: retain existing photo, title/close/favorite header and quantity/add-to-cart footer; simplify middle with category, selected size price, description, allergens before choices, and slim theme-aware selection rows. Preserve menu/cart/admin/Firebase workflows.
 Source: pizzano/pizzano.github.io main
