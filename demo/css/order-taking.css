@@ -372,23 +372,39 @@ html[data-theme="dark"] .orders-page {
   min-width:0;padding:19px 20px 14px;
 }
 :root .orders-page .pos-detail-heading {
-  min-width:0;grid-column:3;grid-row:1;
-  justify-self:end;text-align:right;
+  min-width:0;width:100%;grid-column:3;grid-row:1;
+  justify-self:stretch;text-align:center;
 }
-:root .orders-page .order-customer-heading {
-  display:flex;gap:10px;align-items:center;
-  justify-content:flex-end;flex-wrap:wrap;
+:root .orders-page .order-customer-heading--centered {
+  display:grid;grid-template-columns:max-content minmax(0,1fr) 2px;
+  align-items:center;width:100%;min-width:0;
+  gap:clamp(8px,1.15vw,17px);
 }
-:root .orders-page .pos-detail-heading h2 {
-  margin:0;color:var(--ot-ink);font-size:clamp(20px,2.1vw,29px);
-  font-weight:850;letter-spacing:-.035em;overflow-wrap:anywhere;
+:root .orders-page .order-customer-heading--centered .order-status-badge {
+  justify-self:start;min-width:0;max-width:190px;min-height:43px;
+  padding:8px 12px;border-radius:13px;
+  white-space:normal;text-align:center;
+  font-size:12px;font-weight:850;line-height:1.22;
+}
+:root .orders-page .order-customer-heading--centered .order-customer-title {
+  width:100%;min-width:0;max-width:100%;text-align:center;
+}
+:root .orders-page .order-customer-heading--centered h2 {
+  margin:0;color:var(--ot-ink);font-size:clamp(20px,2vw,29px);
+  line-height:1.09;font-weight:900;letter-spacing:-.035em;
+  overflow-wrap:anywhere;
+}
+:root .orders-page .order-header-divider {
+  display:block;width:2px;min-height:64px;align-self:stretch;
+  background:var(--ot-ink);border-radius:2px;opacity:.8;
 }
 
 
 :root .orders-page .order-customer-title {min-width:0;max-width:100%;}
 :root .orders-page .order-detail-code {
-  margin-top:5px;color:var(--ot-muted);
-  font-size:12px;line-height:1.3;font-weight:650;
+  margin-top:8px;color:var(--ot-muted);
+  font-size:12px;line-height:1.35;font-weight:700;
+  text-align:center;
 }
 :root .orders-page .order-detail-code strong {
   display:inline-block;margin-left:5px;color:var(--ot-ink);
@@ -755,6 +771,29 @@ html[data-theme="dark"] .orders-page .pos-progress-actions button {background:li
     max-width:100%;
   }
 }
+/* Align the ticket-like customer heading without compressing the order facts. */
+@container (max-width:720px) {
+  :root .orders-page .pos-detail-heading {width:100%;justify-self:stretch;text-align:center;}
+  :root .orders-page .order-customer-heading--centered {gap:9px;}
+  :root .orders-page .order-customer-heading--centered .order-status-badge {
+    min-height:36px;padding:6px 9px;font-size:11px;max-width:145px;
+  }
+  :root .orders-page .order-customer-heading--centered h2 {font-size:clamp(16px,2vw,25px);}
+  :root .orders-page .order-header-divider {min-height:51px;}
+}
+@container (max-width:440px) {
+  :root .orders-page .pos-detail-top {grid-template-rows:auto auto auto;}
+  :root .orders-page .pos-detail-heading {grid-column:1/-1;grid-row:2;justify-self:stretch;}
+  :root .orders-page .order-facts {grid-column:1/-1;grid-row:3;justify-self:stretch;}
+  :root .orders-page .order-customer-heading--centered .order-status-badge {
+    max-width:126px;padding:6px 8px;font-size:10px;
+  }
+  :root .orders-page .order-customer-heading--centered h2 {font-size:18px;}
+  :root .orders-page .order-detail-code {font-size:10px;}
+  :root .orders-page .order-detail-code strong {font-size:11px;}
+  :root .orders-page .order-header-divider {min-height:45px;}
+}
+
 @media(prefers-reduced-motion:reduce) {
   :root .orders-page button,:root .orders-page .orders-list-row {transition:none!important;}
 }
