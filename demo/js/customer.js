@@ -2064,7 +2064,8 @@ async function placeOrder() {
   }
   const subtotal = cartSubtotal();
   const total = subtotal;
-  const lines = cart.map((line) => {
+  // Persist the same category order the customer sees in Kurv and checkout.
+  const lines = sortCartByCategory(cart, store.sections).map((line) => {
     const { item } = findItem(line.itemId);
     const size = (item.sizes || []).find((s) => s.id === line.sizeId);
     const optionIds = Object.values(line.selections || {}).flat();
@@ -2409,7 +2410,7 @@ const dayLabel = validDate && date.toDateString() === now.toDateString()
   ? 'IDAG'
   : validDate ? `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}` : 'BESTILLING';
 const clock = validDate ? `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '—';
-const lines = displayOrder.lines?.length ? displayOrder.lines : (order.lines || []);
+const lines = sortCartByCategory(displayOrder.lines?.length ? displayOrder.lines : (order.lines || []), store.sections);
 const firstLine = lines[0];
 const summary = firstLine
   ? `${Math.max(1, Number(firstLine.quantity) || 1)} × ${firstLine.name || 'Produkt'}${lines.length > 1 ? ` + ${lines.length - 1} til` : ''}`
