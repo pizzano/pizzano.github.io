@@ -1271,14 +1271,6 @@ function renderSheet() {
     }
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     ${item.description || item.ingredients ? `<p class="sheet-desc">${escapeHtml(item.description || item.ingredients)}</p>` : ''}
-    <div class="sheet-allergens" aria-label="Allergener">
-      <span class="sheet-allergens-label">Allergener</span>
-      <div class="sheet-allergen-chips">
-        ${allergens.length
-          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
-          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
-      </div>
-    </div>
     ${ingredientCustomizeHtml}
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
@@ -1287,6 +1279,14 @@ function renderSheet() {
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
         draft.comment
       )}</textarea>
+    </div>
+    <div class="sheet-allergens" aria-label="Allergener">
+      <span class="sheet-allergens-label">Allergener</span>
+      <div class="sheet-allergen-chips">
+        ${allergens.length
+          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
+          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
+      </div>
     </div>
 `;
 
