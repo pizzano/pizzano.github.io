@@ -1544,7 +1544,7 @@ function cartLineHtml(line) {
       <div class="cart-product-content">
         <div class="cart-product-heading">
         <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-          <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(item.name)}</strong><span class="cart-product-baseprice"> · ${line.loyaltyFree ? '1 gratis pizza' : `${formatPrice(getSizePrice(item, line.sizeId))}${line.quantity > 1 ? ' / stk' : ''}`}</span></span>${size?.label ? `<span class="cart-product-size">${escapeHtml(size.label)}</span>` : ''}
+          <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(item.name)}</strong><span class="cart-product-baseprice"> · ${line.loyaltyFree ? '1 gratis pizza' : `${formatPrice(getSizePrice(item, line.sizeId))}${line.quantity > 1 ? ' / stk' : ''}`}</span></span>${size?.label ? `<span class="cart-product-size">Størrelse: ${escapeHtml(size.label)}</span>` : ''}
           ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
         </button>
 
