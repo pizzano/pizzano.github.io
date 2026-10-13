@@ -1483,13 +1483,13 @@ function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineI
     ${quantity > 1 ? `<button class="cart-stepper-minus" data-dec="${id}" type="button" aria-label="Færre">−</button>` : `<button class="cart-stepper-trash" data-remove="${id}" type="button" aria-label="Fjern ${escapeHtml(name)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button>`}
     <span>${quantity}</span><button class="cart-stepper-plus" data-inc="${id}" type="button" aria-label="Flere">+</button></div>`
     : `<span class="cart-product-quantity" aria-label="Antall: ${quantity}">${quantity}×</span>`;
+  const sizeRow = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${size ? `<b>Størrelse:</b> ${escapeHtml(size)} · ` : ''}${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</span></span>`;
   return `<article class="cart-product-card"${lineId ? ` data-line="${id}"` : ''}>
     <div class="cart-product-heading"><${copyTag} class="cart-product-copy"${editAttrs}>
       <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong></span>
-      <span class="cart-product-size">${size ? `Størrelse: ${escapeHtml(size)} · ` : ''}${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</span>
       ${free ? `<span class="bonus-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}
     </${copyTag}>${quantityHtml}</div>
-    ${rows.length ? `<${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${rows.join('')}</span></${copyTag}>` : ''}
+    <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${sizeRow}${rows.join('')}</span></${copyTag}>
     <div class="cart-product-totalrow"><span>Sum</span><strong class="cart-product-total">${formatPrice(total)}</strong></div>
   </article>`;
 }
