@@ -2235,7 +2235,8 @@ async function placeOrder() {
   function orderStatusClass(status) {
     const value = String(status || '').toLocaleLowerCase('no');
     if (value.includes('avvist')) return 'is-rejected';
-    if (value.includes('klar') || value.includes('ferdig') || value.includes('fullført')) return 'is-done';
+    if (value.includes('klar')) return 'is-ready';
+    if (value.includes('ferdig') || value.includes('fullført')) return 'is-done';
     if (value.includes('bekreftet') || value.includes('tilbered')) return 'is-active';
     return 'is-new';
   }
@@ -2392,61 +2393,55 @@ function renderProfile() {
       ? orders
           .slice(0, 30)
           .map((order) => {
-            const date = new Date(order.createdAt);
-            const stamp = `${String(date.getDate()).padStart(2, '0')}.${String(
-              date.getMonth() + 1
-            ).padStart(2, '0')}.${date.getFullYear()} · ${String(date.getHours()).padStart(2, '0')}:${String(
-              date.getMinutes()
-            ).padStart(2, '0')}`;
-            const summary = (order.lines || [])
-              .map((line) => `${line.quantity}× ${line.name}`)
-              .join(', ');
             const current = live.find((entry) => entry.id === order.id);
-            const displayOrder = current ? mergeStableCustomerOrder(order, current) : order;
-            const status = orderStatusLabel(displayOrder.status);
-            const rejectionReason = String(displayOrder.rejectionReason || '').trim();
-            const rejectionMessage = String(displayOrder.rejectionMessage || '').trim();
-            const rejectionTitle = rejectionReason && rejectionReason !== 'Egendefinert melding' ? rejectionReason : 'Bestillingen ble avvist';
-            const details = (order.lines || []).map(orderHistoryLineHtml).join('');
-            const shortId = String(order.id || '').slice(-6).toUpperCase();
-            return `
-              <details name="customer-order-history" class="order-history-card" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
-                <summary class="order-history-summary-shell">
-                  <div class="order-history-collapsed-summary">
-                    <div class="order-history-top">
-                      <div class="order-history-total">
-                        <strong>${formatPrice(order.total)}</strong>
-                        <span>${escapeHtml(stamp)}</span>
-                      </div>
-                      <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
-                    </div>
-                    <p class="order-history-summary">${escapeHtml(summary)}</p>
-                    <span class="order-history-toggle">Se detaljer <i aria-hidden="true">⌄</i></span>
-                  </div>
-
-                  <div class="order-history-open-summary">
-                    <div class="order-history-open-identity">
-                      <span class="order-history-open-kicker">BESTILLING</span>
-                      <strong>#${escapeHtml(shortId || '—')}</strong>
-                      <span class="order-history-open-date">${escapeHtml(stamp)}</span>
-                    </div>
-                    <div class="order-history-open-actions">
-                      <span class="order-status-pill ${orderStatusClass(status)}">${escapeHtml(status)}</span>
-                      <span class="order-history-hide-label">Skjul <i aria-hidden="true">⌃</i></span>
-                    </div>
-                  </div>
-                </summary>
-                <div class="order-history-details">
-                  ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
-                  <div class="order-history-lines order-history-cart-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
-                  <div class="product-summary-total"><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
-                  <div class="order-history-meta">
-                    <div><span>Ordrenummer</span><strong>${escapeHtml(shortId || '—')}</strong></div>
-                    <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
-                  </div>
-                  <button class="btn btn-primary order-reorder-btn" data-reorder="${escapeHtml(order.id)}" type="button">Bestill samme igjen</button>
-                </div>
-              </details>`;
+const displayOrder = current ? mergeStableCustomerOrder(order, current) : order;
+const date = new Date(displayOrder.createdAt || order.createdAt);
+const validDate = !Number.isNaN(date.getTime());
+const now = new Date();
+const dayLabel = validDate && date.toDateString() === now.toDateString()
+  ? 'IDAG'
+  : validDate ? `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}` : 'BESTILLING';
+const clock = validDate ? `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '—';
+const lines = displayOrder.lines?.length ? displayOrder.lines : (order.lines || []);
+const firstLine = lines[0];
+const summary = firstLine
+  ? `${Math.max(1, Number(firstLine.quantity) || 1)} × ${firstLine.name || 'Produkt'}${lines.length > 1 ? ` + ${lines.length - 1} til` : ''}`
+  : 'Ingen varer';
+const status = orderStatusLabel(displayOrder.status);
+const statusClass = orderStatusClass(displayOrder.status);
+const statusIcon = statusClass === 'is-rejected' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>' : statusClass === 'is-ready' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' : statusClass === 'is-done' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const rejectionReason = String(displayOrder.rejectionReason || '').trim();
+const rejectionMessage = String(displayOrder.rejectionMessage || '').trim();
+const rejectionTitle = rejectionReason && rejectionReason !== 'Egendefinert melding' ? rejectionReason : 'Bestillingen ble avvist';
+const details = lines.map(orderHistoryLineHtml).join('');
+const shortId = String(order.id || '').slice(-6).toUpperCase();
+const total = Number(displayOrder.total ?? order.total) || 0;
+const pickup = String(displayOrder.pickup || order.pickup || '—');
+return `
+  <details name="customer-order-history" class="order-history-card ${statusClass}" data-order-card-id="${escapeHtml(order.id)}"${ui.focusedOrderId === order.id ? ' open' : ''}>
+    <summary class="order-history-summary-shell">
+      <span class="order-history-header">
+        <span class="order-history-calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>
+        <span class="order-history-heading">
+          <strong>${escapeHtml(dayLabel)} <span class="order-history-mid-dot">·</span> kl. ${escapeHtml(clock)}</strong>
+          <small>Bestillingsnr. #${escapeHtml(shortId || '—')}</small>
+        </span>
+        <span class="order-status-pill ${statusClass}"><span class="order-status-icon">${statusIcon}</span><span>${escapeHtml(status)}</span></span>
+        <span class="order-history-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+      </span>
+      <span class="order-history-compact"><span>${escapeHtml(summary)}</span><strong>${formatPrice(total)}</strong></span>
+    </summary>
+    <div class="order-history-details">
+      ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
+      <div class="order-history-lines order-history-cart-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
+      <div class="order-history-grand-total"><span>Totalt</span><strong>${formatPrice(total)}</strong></div>
+      <div class="order-history-footer">
+        <div class="order-history-meta-item"><small>Hentetid</small><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${escapeHtml(pickup)}</strong></div>
+        <div class="order-history-meta-item"><small>Ordrenummer</small><strong>#${escapeHtml(shortId || '—')}</strong></div>
+        <button class="btn btn-primary order-reorder-btn" data-reorder="${escapeHtml(order.id)}" type="button">Bestill samme igjen</button>
+      </div>
+    </div>
+  </details>`;
           })
           .join('')
       : '<p class="hint">Ingen tidligere bestillinger.</p>';
