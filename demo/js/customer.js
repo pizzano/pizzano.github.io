@@ -1475,7 +1475,26 @@ function cartCount() {
   return cart.reduce((sum, line) => sum + line.quantity, 0);
 }
 
-function cartLineHtml(line) {
+function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineId = '', free = false}) {
+  const id = escapeHtml(lineId);
+  const copyTag = lineId ? 'button' : 'div';
+  const editAttrs = lineId ? ` type="button" data-edit="${id}" aria-label="Endre ${escapeHtml(name)}"` : '';
+  const quantityHtml = lineId ? `<div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(name)}">
+    ${quantity > 1 ? `<button class="cart-stepper-minus" data-dec="${id}" type="button" aria-label="Færre">−</button>` : `<button class="cart-stepper-trash" data-remove="${id}" type="button" aria-label="Fjern ${escapeHtml(name)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button>`}
+    <span>${quantity}</span><button class="cart-stepper-plus" data-inc="${id}" type="button" aria-label="Flere">+</button></div>`
+    : `<span class="cart-product-quantity" aria-label="Antall: ${quantity}">${quantity}×</span>`;
+  return `<article class="cart-product-card"${lineId ? ` data-line="${id}"` : ''}>
+    <div class="cart-product-heading"><${copyTag} class="cart-product-copy"${editAttrs}>
+      <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong></span>
+      <span class="cart-product-size">${size ? `Størrelse: ${escapeHtml(size)} · ` : ''}${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</span>
+      ${free ? `<span class="bonus-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}
+    </${copyTag}>${quantityHtml}</div>
+    ${rows.length ? `<${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${rows.join('')}</span></${copyTag}>` : ''}
+    <div class="cart-product-totalrow"><span>Sum</span><strong class="cart-product-total">${formatPrice(total)}</strong></div>
+  </article>`;
+}
+
+function cartLineHtml(line, editable = true) {
   const { item } = findItem(line.itemId);
   if (!item) return '';
 
@@ -1531,40 +1550,9 @@ function cartLineHtml(line) {
     );
   }
 
-  const imageHtml = item.imageUrl
-    ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-    : `<span class="cart-product-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
-
-  return `
-    <article class="cart-line cart-product-card" data-line="${escapeHtml(line.lineId)}">
-      <div class="cart-product-media">
-        ${imageHtml}
-      </div>
-
-      <div class="cart-product-content">
-        <div class="cart-product-heading">
-        <button class="cart-product-copy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre ${escapeHtml(item.name)}">
-          <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(item.name)}</strong><span class="cart-product-baseprice"> · ${line.loyaltyFree ? '1 gratis pizza' : `${formatPrice(getSizePrice(item, line.sizeId))}${line.quantity > 1 ? ' / stk' : ''}`}</span></span>${size?.label ? `<span class="cart-product-size">Størrelse: ${escapeHtml(size.label)}</span>` : ''}
-          ${line.loyaltyFree ? `<span class="bonus-savings">Du sparer ${formatPrice(getSizePrice(item, line.sizeId))}</span>` : ''}
-        </button>
-
-          <div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(item.name)}">
-            ${line.quantity > 1
-              ? `<button class="cart-stepper-minus" data-dec="${escapeHtml(line.lineId)}" type="button" aria-label="Færre">−</button>`
-              : `<button class="cart-stepper-trash" data-remove="${escapeHtml(line.lineId)}" type="button" aria-label="Fjern ${escapeHtml(item.name)}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>
-                </button>`}
-            <span>${line.quantity}</span>
-            <button class="cart-stepper-plus" data-inc="${escapeHtml(line.lineId)}" type="button" aria-label="Flere">+</button>
-          </div>
-        </div>
-        ${detailRows.length ? `<button class="cart-product-copy cart-product-detailcopy" data-edit="${escapeHtml(line.lineId)}" type="button" aria-label="Endre tilvalg for ${escapeHtml(item.name)}"><span class="cart-product-details">${detailRows.join('')}</span></button>` : ''}
-        <div class="cart-product-totalrow"><strong class="cart-product-total">${formatPrice(lineTotal)}</strong></div>
-      </div>
-
-
-
-    </article>`;
+  return productSummaryHtml({name: item.name, size: size?.label, quantity: line.quantity,
+    basePrice: getSizePrice(item, line.sizeId), total: lineTotal, rows: detailRows,
+    lineId: editable ? line.lineId : '', free: line.loyaltyFree});
 }
 
 function renderCart() {
@@ -1687,95 +1675,7 @@ function renderCheckout() {
 
   const reviewCount = cartCount();
   const reviewLabel = `${reviewCount} ${reviewCount === 1 ? 'vare' : 'varer'}`;
-  const reviewItems = sortCartByCategory(cart, store.sections).map((line) => {
-    const { item } = findItem(line.itemId);
-    if (!item) return '';
-
-    const size = (item.sizes || []).find((entry) => entry.id === line.sizeId);
-    const optionIds = Object.values(line.selections || {}).flat();
-    const linePrice = bonusLinePrice(item, line, optionIds, line.quantity);
-    const addons = describeSelection(optionIds);
-
-    const addonGroups = addons.reduce((groups, addon) => {
-      const title = String(addon.groupTitle || 'Tilvalg').trim() || 'Tilvalg';
-      let group = groups.find((entry) => entry.title === title);
-      if (!group) {
-        group = { title, labels: [], price: 0 };
-        groups.push(group);
-      }
-      group.labels.push(addon.label);
-      group.price += Number(addon.price) || 0;
-      return groups;
-    }, []);
-
-    const priceHtml = (unitPrice, { extra = false, included = false } = {}) => {
-      const price = Number(unitPrice) || 0;
-      if (included || price <= 0) {
-        return '<b class="pickup-review-price is-included">Inkludert</b>';
-      }
-      if (line.quantity > 1) {
-        return `<b class="pickup-review-price${extra ? ' is-extra' : ''}"><span class="pickup-review-multiplier"><strong>${line.quantity}</strong> x</span> ${formatPrice(price)}</b>`;
-      }
-      return `<b class="pickup-review-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
-    };
-
-    const rows = [];
-
-    if (size?.label) {
-      rows.push(
-        `<div class="pickup-review-row">
-          <span class="pickup-review-row-copy"><b>Størrelse:</b> <span>${escapeHtml(size.label)}</span></span>
-          <span class="pickup-review-dots" aria-hidden="true"></span>
-          ${priceHtml(getSizePrice(item, line.sizeId))}
-        </div>`
-      );
-    }
-
-    addonGroups.forEach((group) => {
-      rows.push(
-        `<div class="pickup-review-row">
-          <span class="pickup-review-row-copy"><b>${escapeHtml(group.title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
-          <span class="pickup-review-dots" aria-hidden="true"></span>
-          ${priceHtml(group.price, { extra: group.price > 0, included: group.price <= 0 })}
-        </div>`
-      );
-    });
-
-    if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
-      rows.push(
-        `<div class="pickup-review-row is-note">
-          <span class="pickup-review-row-copy"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
-        </div>`
-      );
-    }
-
-    if (getDisplayComment(line)) {
-      rows.push(
-        `<div class="pickup-review-row is-note">
-          <span class="pickup-review-row-copy"><b>Kommentar:</b> <span>${escapeHtml(getDisplayComment(line))}</span></span>
-        </div>`
-      );
-    }
-
-    const imageHtml = item.imageUrl
-      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-      : `<span class="pickup-review-fallback" aria-hidden="true">${escapeHtml(String(item.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
-
-    return `
-      <article class="pickup-review-item">
-        <div class="pickup-review-media">${imageHtml}</div>
-        <div class="pickup-review-product">
-          <div class="pickup-review-product-copy">
-            <strong class="pickup-review-name">${escapeHtml(item.name)}${line.loyaltyFree ? ' · 1 gratis pizza' : ''}</strong>
-            ${rows.length ? `<div class="pickup-review-rows">${rows.join('')}</div>` : ''}
-          </div>
-          <div class="pickup-review-product-foot">
-            <span class="pickup-review-qty">${line.quantity}×</span>
-            <strong class="pickup-review-total">${formatPrice(linePrice)}</strong>
-          </div>
-        </div>
-      </article>`;
-  }).join('');
+  const reviewItems = sortCartByCategory(cart, store.sections).map(line => cartLineHtml(line, false)).join('');
 
   el.reviewCard.innerHTML = `
     <details class="pickup-review">
@@ -1792,6 +1692,7 @@ function renderCheckout() {
           ${reviewItems || '<div class="pickup-review-empty">Ingen varer i kurven.</div>'}
         </div>
 
+        <div class="product-summary-total"><span>Totalt</span><strong>${formatPrice(total)}</strong></div>
         <section class="pickup-review-info" aria-label="Din informasjon">
           <div class="pickup-review-info-head">
             <strong>Din informasjon</strong>
@@ -2317,79 +2218,18 @@ async function placeOrder() {
     const baseUnitPrice = Math.max(0, resolvedUnitPrice - paidExtrasPerUnit);
     const lineTotal = savedLineTotal > 0 ? savedLineTotal : resolvedUnitPrice * quantity;
 
-    const priceBreakdown = (unitPrice, { extra = false, included = false, unknown = false } = {}) => {
-      const price = Number(unitPrice) || 0;
-      if (unknown) return '';
-      if (included || price <= 0) {
-        return '<b class="order-history-cart-price is-included">Inkludert</b>';
-      }
-      if (quantity > 1) {
-        return `<b class="order-history-cart-price${extra ? ' is-extra' : ''}"><span class="order-history-cart-multiplier"><strong>${quantity}</strong> x</span> ${formatPrice(price)}</b>`;
-      }
-      return `<b class="order-history-cart-price${extra ? ' is-extra' : ''}">${extra ? '+ ' : ''}${formatPrice(price)}</b>`;
-    };
-
     const detailRows = [];
-
-    if (line.size) {
-      detailRows.push(
-        `<div class="order-history-cart-row">
-          <span class="order-history-cart-left"><b>Størrelse:</b> <span>${escapeHtml(line.size)}</span></span>
-          <span class="order-history-cart-leader" aria-hidden="true"></span>
-          ${priceBreakdown(baseUnitPrice)}
-        </div>`
-      );
-    }
-
     for (const [title, group] of grouped.entries()) {
-      detailRows.push(
-        `<div class="order-history-cart-row">
-          <span class="order-history-cart-left"><b>${escapeHtml(title)}:</b> <span>${escapeHtml(group.labels.join(', '))}</span></span>
-          <span class="order-history-cart-leader" aria-hidden="true"></span>
-          ${priceBreakdown(group.price, {
-            extra: group.hasKnownPrice && group.price > 0,
-            included: group.hasKnownPrice && group.price <= 0,
-            unknown: !group.hasKnownPrice,
-          })}
-        </div>`
-      );
+      const heading = title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
+      const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
+      const copy = group.hasKnownPrice && group.price <= 0 && labels.length ? labels.join(', ') : `${heading}${labels.length ? ': ' + labels.join(', ') : ''}`;
+      detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left">${escapeHtml(copy)}</span>${!group.hasKnownPrice ? '' : group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : `<b class="cart-detail-price">+ ${formatPrice(group.price * quantity)}</b>`}</span>`);
     }
-
-    if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
-      detailRows.push(
-        `<div class="order-history-cart-row is-note">
-          <span class="order-history-cart-left"><b>Uten:</b> <span>${escapeHtml(line.removedIngredients.join(', '))}</span></span>
-        </div>`
-      );
-    }
-
-    if (getDisplayComment(line)) {
-      detailRows.push(
-        `<div class="order-history-cart-row is-note">
-          <span class="order-history-cart-left"><b>Kommentar:</b> <span>${escapeHtml(getDisplayComment(line))}</span></span>
-        </div>`
-      );
-    }
-
+    if (line.removedIngredients?.length) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Uten:</b> ${escapeHtml(line.removedIngredients.join(', '))}</span></span>`);
+    if (getDisplayComment(line)) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Kommentar:</b> ${escapeHtml(getDisplayComment(line))}</span></span>`);
     const { item } = findItem(line.itemId);
-    const imageHtml = item?.imageUrl
-      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(line.name || item.name || 'Produkt')}" loading="lazy">`
-      : `<span class="order-history-cart-fallback" aria-hidden="true">${escapeHtml(String(line.name || item?.name || '?').slice(0, 1).toLocaleUpperCase('no'))}</span>`;
-
-    return `
-      <article class="order-history-cart-item">
-        <div class="order-history-cart-media">${imageHtml}</div>
-        <div class="order-history-cart-main">
-          <div class="order-history-cart-title-row">
-            <div class="order-history-cart-title-wrap">
-              <span class="order-history-cart-qty">${quantity}×</span>
-              <strong class="order-history-cart-name">${escapeHtml(line.name || item?.name || 'Produkt')}</strong>
-            </div>
-            <strong class="order-history-cart-total">${formatPrice(lineTotal)}</strong>
-          </div>
-          ${detailRows.length ? `<div class="order-history-cart-lines">${detailRows.join('')}</div>` : ''}
-        </div>
-      </article>`;
+    return productSummaryHtml({name: line.name || item?.name || 'Produkt', size: line.size,
+      quantity, basePrice: baseUnitPrice, total: lineTotal, rows: detailRows, free: line.loyaltyFree});
   }
 
   function orderStatusClass(status) {
@@ -2599,10 +2439,10 @@ function renderProfile() {
                 <div class="order-history-details">
                   ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
                   <div class="order-history-lines order-history-cart-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
+                  <div class="product-summary-total"><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
                   <div class="order-history-meta">
                     <div><span>Ordrenummer</span><strong>${escapeHtml(shortId || '—')}</strong></div>
                     <div><span>Hentetid</span><strong>${escapeHtml(order.pickup || '—')}</strong></div>
-                    <div><span>Totalt</span><strong>${formatPrice(order.total)}</strong></div>
                   </div>
                   <button class="btn btn-primary order-reorder-btn" data-reorder="${escapeHtml(order.id)}" type="button">Bestill samme igjen</button>
                 </div>
