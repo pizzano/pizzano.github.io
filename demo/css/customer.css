@@ -258,79 +258,173 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 .toast[hidden] { display: none !important; }\
 
       
-/* Mine bestillinger – shared cart rows, reference order cards */
-#orderList {display:grid;gap:12px;min-width:0}
-#orderList .order-history-card {min-width:0;overflow:hidden;border:1px solid var(--palette-border);border-radius:20px;background:var(--palette-surface);box-shadow:0 3px 16px color-mix(in srgb,var(--palette-deep) 6%,transparent)}
-#orderList .order-history-card[open] {border-color:color-mix(in srgb,var(--palette-accent) 40%,var(--palette-border));background:color-mix(in srgb,var(--palette-accent) 3%,var(--palette-surface));box-shadow:0 5px 20px color-mix(in srgb,var(--palette-deep) 10%,transparent)}
-#orderList .order-history-summary-shell {display:block;cursor:pointer;list-style:none;padding:13px 14px;user-select:none}
-#orderList .order-history-summary-shell::-webkit-details-marker {display:none}
-#orderList .order-history-summary-shell::marker {content:""}
-#orderList .order-history-header {display:grid;grid-template-columns:44px minmax(0,1fr) auto 17px;align-items:center;gap:9px;min-width:0}
-#orderList .order-history-calendar {width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:color-mix(in srgb,var(--palette-accent) 10%,var(--palette-surface));color:var(--palette-accent)}
-#orderList .order-history-calendar svg {width:25px;height:25px}
-#orderList .order-history-heading {display:grid;gap:4px;min-width:0}
-#orderList .order-history-heading>strong {color:var(--palette-ink);font-size:clamp(14px,3.8vw,17px);font-weight:800;line-height:1.18;white-space:nowrap}
-#orderList .order-history-mid-dot {color:var(--palette-accent);padding-inline:2px}
-#orderList .order-history-heading>small {color:var(--palette-muted);font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#orderList .order-status-pill {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:35px;max-width:100%;padding:4px 10px;border-radius:999px;border:0;color:var(--palette-accent);background:color-mix(in srgb,var(--palette-accent) 11%,var(--palette-surface));font-size:12px;line-height:1.15;font-weight:800;white-space:nowrap}
-#orderList .order-status-icon {width:22px;height:22px;display:grid;place-items:center;flex:none;border-radius:50%;color:var(--palette-accent)}
-#orderList .order-status-icon svg {width:20px;height:20px}
-#orderList .order-status-pill.is-rejected {color:#a34d20;background:#faece2}
-#orderList .order-status-pill.is-rejected .order-status-icon {color:#fff;background:#ab4a22}
-#orderList .order-status-pill.is-rejected svg {width:15px;height:15px}
-#orderList .order-status-pill.is-done {color:#24613a;background:#e4f3e7}
-#orderList .order-status-pill.is-done .order-status-icon {color:#fff;background:#28633d}
-#orderList .order-status-pill.is-ready {color:#195633;background:#e4f4e9}
-#orderList .order-history-chevron {width:17px;height:24px;display:grid;place-items:center;color:var(--palette-accent)}
-#orderList .order-history-chevron svg {width:17px;height:17px;transition:transform .15s ease}
-#orderList .order-history-card[open] .order-history-chevron svg {transform:rotate(180deg)}
-#orderList .order-history-compact {display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--palette-border);font-size:13px;line-height:1.35;color:var(--palette-ink)}
-#orderList .order-history-compact>span {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#orderList .order-history-compact>strong {flex:none;font-size:16px;font-weight:800;white-space:nowrap}
-#orderList .order-history-card[open] .order-history-compact {display:none}
-#orderList .order-history-details {padding:0 12px 12px}
-#orderList .order-history-lines {display:grid;gap:9px}
-#orderList .order-history-cart-list .cart-product-card {display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:8px;padding:12px;border:1px solid color-mix(in srgb,var(--palette-border) 40%,transparent);border-radius:14px;background:var(--palette-surface)}
-#orderList .order-history-cart-list .cart-product-heading {grid-column:1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:baseline;margin:0;min-width:0}
-#orderList .order-history-cart-list .cart-product-name {font-size:16px;font-weight:800;line-height:1.2}
-#orderList .order-history-cart-list .cart-product-quantity {min-width:0;min-height:0;border:0;border-radius:0;font-size:13px;font-weight:500;white-space:nowrap}
-#orderList .order-history-cart-list .cart-product-totalrow {grid-column:2;grid-row:1;align-self:baseline;margin:0;padding:0;border:0}
-#orderList .order-history-cart-list .cart-product-totalrow>span {display:none}
-#orderList .order-history-cart-list .cart-product-total {font-size:16px;font-weight:800;line-height:1.2;white-space:nowrap}
-#orderList .order-history-cart-list .cart-product-detailcopy {grid-column:1/-1;grid-row:2}
-#orderList .order-history-cart-list .cart-product-details {display:grid;gap:5px}
-#orderList .order-history-cart-list .cart-detail-row {min-height:29px;align-items:center;padding:6px 9px;border-radius:9px;background:color-mix(in srgb,var(--palette-accent) 5%,var(--palette-surface));font-size:12px;line-height:1.4}
-#orderList .order-history-cart-list .cart-product-size b {font-weight:800;color:var(--palette-ink)}
-#orderList .order-history-grand-total {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:13px 3px 0;border-top:1px solid var(--palette-border)}
-#orderList .order-history-grand-total>span,#orderList .order-history-grand-total>strong {font-size:17px;font-weight:800;line-height:1.2;white-space:nowrap}
-#orderList .order-history-footer {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,1.35fr);gap:9px;align-items:stretch;margin-top:13px;padding-top:13px;border-top:1px solid var(--palette-border)}
-#orderList .order-history-meta-item {min-width:0;display:grid;align-content:center;gap:5px}
-#orderList .order-history-meta-item:first-child {padding-right:7px;border-right:1px solid var(--palette-border)}
-#orderList .order-history-meta-item>small {font-size:11px;font-weight:500;color:var(--palette-muted)}
-#orderList .order-history-meta-item>strong {display:flex;align-items:center;gap:5px;min-width:0;color:var(--palette-ink);font-size:12px;font-weight:750;line-height:1.3;overflow-wrap:anywhere}
-#orderList .order-history-meta-item>strong svg {width:16px;height:16px;flex:none;color:var(--palette-accent)}
-#orderList .order-reorder-btn {width:100%;min-height:51px;margin:0;padding:8px 9px;border-radius:11px;font-size:12px;font-weight:800;line-height:1.3;white-space:normal}
-#orderList .order-history-rejection {display:grid;gap:4px;margin-bottom:11px;padding:10px;border:1px solid #eec9b1;border-radius:10px;background:color-mix(in srgb,#f3ad83 14%,var(--palette-surface))}
-#orderList .order-history-rejection strong,#orderList .order-history-rejection span {font-size:12px}
-#orderList .order-history-summary-shell:focus-visible,#orderList .order-reorder-btn:focus-visible {outline:2px solid var(--palette-accent);outline-offset:2px}
-@media(max-width:440px) {
- #orderList .order-history-summary-shell {padding:12px}
- #orderList .order-history-header {grid-template-columns:40px minmax(0,1fr) 18px;gap:8px}
- #orderList .order-history-calendar {width:40px;height:40px}
- #orderList .order-history-heading>strong {font-size:15px}
- #orderList .order-status-pill {grid-column:2;grid-row:2;justify-self:start;min-height:28px;padding:3px 10px;font-size:11px}
- #orderList .order-history-chevron {grid-column:3;grid-row:1/3;align-self:center}
- #orderList .order-history-compact {font-size:12px}
- #orderList .order-history-cart-list .cart-product-card {column-gap:7px;padding:10px}
- #orderList .order-history-cart-list .cart-product-name,#orderList .order-history-cart-list .cart-product-total {font-size:14px}
- #orderList .order-history-footer {grid-template-columns:1fr 1fr}
- #orderList .order-reorder-btn {grid-column:1/-1;min-height:46px}
+/* Mine bestillinger: compact four-column layout, including narrow phones.
+   Keep the same sizes at every viewport; the status never drops to a second row. */
+#viewProfile .profile-tab-panel[data-profile-panel="orders"] {padding:9px;}
+#orderList {display:grid;gap:9px;min-width:0;}
+#orderList .order-history-card {
+  min-width:0;overflow:hidden;
+  border:1px solid var(--palette-border);
+  border-radius:16px;background:var(--palette-surface);
+  box-shadow:0 3px 12px color-mix(in srgb,var(--palette-deep) 6%,transparent);
 }
-@media(min-width:441px) and (max-width:520px) {
- #orderList .order-history-header {grid-template-columns:42px minmax(0,1fr) auto 15px;gap:7px}
- #orderList .order-history-calendar {width:42px;height:42px}
- #orderList .order-history-heading>strong {font-size:15px}
- #orderList .order-status-pill {font-size:11px;padding:4px 8px;gap:4px}
+#orderList .order-history-card[open] {
+  border-color:color-mix(in srgb,var(--palette-accent) 40%,var(--palette-border));
+  background:color-mix(in srgb,var(--palette-accent) 3%,var(--palette-surface));
+  box-shadow:0 5px 17px color-mix(in srgb,var(--palette-deep) 9%,transparent);
+}
+#orderList .order-history-summary-shell {
+  display:block;cursor:pointer;list-style:none;
+  padding:10px;user-select:none;
+}
+#orderList .order-history-summary-shell::-webkit-details-marker {display:none;}
+#orderList .order-history-summary-shell::marker {content:"";}
+#orderList .order-history-header {
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) max-content 12px;
+  grid-template-rows:auto;
+  align-items:center;
+  column-gap:5px;min-width:0;
+}
+#orderList .order-history-calendar {
+  grid-column:1;grid-row:1;
+  width:30px;height:30px;display:grid;place-items:center;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--palette-accent) 10%,var(--palette-surface));
+  color:var(--palette-accent);
+}
+#orderList .order-history-calendar svg {width:18px;height:18px;}
+#orderList .order-history-heading {
+  grid-column:2;grid-row:1;display:grid;
+  gap:3px;min-width:0;
+}
+#orderList .order-history-heading>strong {
+  color:var(--palette-ink);font-size:11.5px;
+  font-weight:800;line-height:1.18;
+  letter-spacing:-.025em;white-space:nowrap;
+}
+#orderList .order-history-mid-dot {color:var(--palette-accent);padding-inline:1px;}
+#orderList .order-history-heading>small {
+  color:var(--palette-muted);
+  font-size:9px;line-height:1.2;
+  letter-spacing:-.01em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#orderList .order-status-pill {
+  grid-column:3;grid-row:1;justify-self:end;
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:3px;min-height:25px;max-width:100%;
+  padding:3px 6px;
+  border-radius:999px;border:0;
+  color:var(--palette-accent);
+  background:color-mix(in srgb,var(--palette-accent) 11%,var(--palette-surface));
+  font-size:9px;line-height:1.1;font-weight:800;
+  letter-spacing:-.015em;white-space:nowrap;
+}
+#orderList .order-status-icon {
+  width:15px;height:15px;display:grid;place-items:center;
+  flex:none;border-radius:50%;color:var(--palette-accent);
+}
+#orderList .order-status-icon svg {width:14px;height:14px;}
+#orderList .order-status-pill.is-rejected {color:#a34d20;background:#faece2;}
+#orderList .order-status-pill.is-rejected .order-status-icon {color:#fff;background:#ab4a22;}
+#orderList .order-status-pill.is-rejected svg {width:11px;height:11px;}
+#orderList .order-status-pill.is-done {color:#24613a;background:#e4f3e7;}
+#orderList .order-status-pill.is-done .order-status-icon {color:#fff;background:#28633d;}
+#orderList .order-status-pill.is-ready {color:#195633;background:#e4f4e9;}
+#orderList .order-history-chevron {
+  grid-column:4;grid-row:1;
+  width:12px;height:22px;display:grid;
+  place-items:center;color:var(--palette-accent);
+}
+#orderList .order-history-chevron svg {width:12px;height:12px;transition:transform .15s ease;}
+#orderList .order-history-card[open] .order-history-chevron svg {transform:rotate(180deg);}
+#orderList .order-history-compact {
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:8px;margin-top:9px;padding-top:9px;
+  border-top:1px solid var(--palette-border);
+  font-size:11px;line-height:1.35;color:var(--palette-ink);
+}
+#orderList .order-history-compact>span {
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#orderList .order-history-compact>strong {
+  flex:none;font-size:14px;font-weight:800;white-space:nowrap;
+}
+#orderList .order-history-card[open] .order-history-compact {display:none;}
+#orderList .order-history-details {padding:0 9px 10px;}
+#orderList .order-history-lines {display:grid;gap:8px;}
+#orderList .order-history-cart-list .cart-product-card {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  column-gap:8px;row-gap:7px;padding:9px;
+  border:1px solid color-mix(in srgb,var(--palette-border) 40%,transparent);
+  border-radius:12px;background:var(--palette-surface);
+}
+#orderList .order-history-cart-list .cart-product-heading {
+  grid-column:1;grid-row:1;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  gap:5px;align-items:baseline;margin:0;min-width:0;
+}
+#orderList .order-history-cart-list .cart-product-name {font-size:13px;font-weight:800;line-height:1.2;}
+#orderList .order-history-cart-list .cart-product-quantity {
+  min-width:0;min-height:0;border:0;border-radius:0;
+  font-size:11px;font-weight:500;white-space:nowrap;
+}
+#orderList .order-history-cart-list .cart-product-totalrow {
+  grid-column:2;grid-row:1;align-self:baseline;margin:0;padding:0;border:0;
+}
+#orderList .order-history-cart-list .cart-product-totalrow>span {display:none;}
+#orderList .order-history-cart-list .cart-product-total {font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;}
+#orderList .order-history-cart-list .cart-product-detailcopy {grid-column:1/-1;grid-row:2;}
+#orderList .order-history-cart-list .cart-product-details {display:grid;gap:5px;}
+#orderList .order-history-cart-list .cart-detail-row {
+  min-height:28px;align-items:center;padding:5px 7px;
+  border-radius:8px;
+  background:color-mix(in srgb,var(--palette-accent) 5%,var(--palette-surface));
+  font-size:11px;line-height:1.4;
+}
+#orderList .order-history-cart-list .cart-product-size b {font-weight:800;color:var(--palette-ink);}
+#orderList .order-history-grand-total {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-top:11px;padding:12px 3px 0;
+  border-top:1px solid var(--palette-border);
+}
+#orderList .order-history-grand-total>span,
+#orderList .order-history-grand-total>strong {font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap;}
+#orderList .order-history-footer {
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,1.35fr);
+  gap:7px;align-items:stretch;
+  margin-top:11px;padding-top:11px;border-top:1px solid var(--palette-border);
+}
+#orderList .order-history-meta-item {min-width:0;display:grid;align-content:center;gap:4px;}
+#orderList .order-history-meta-item:first-child {padding-right:6px;border-right:1px solid var(--palette-border);}
+#orderList .order-history-meta-item>small {font-size:10px;font-weight:500;color:var(--palette-muted);}
+#orderList .order-history-meta-item>strong {
+  display:flex;align-items:center;gap:4px;min-width:0;
+  color:var(--palette-ink);font-size:10.5px;
+  font-weight:750;line-height:1.3;overflow-wrap:anywhere;
+}
+#orderList .order-history-meta-item>strong svg {width:13px;height:13px;flex:none;color:var(--palette-accent);}
+#orderList .order-reorder-btn {
+  width:100%;min-height:48px;margin:0;padding:8px 6px;
+  border-radius:10px;font-size:11px;font-weight:800;
+  line-height:1.3;white-space:normal;
+}
+#orderList .order-history-rejection {
+  display:grid;gap:4px;margin-bottom:10px;padding:9px;
+  border:1px solid #eec9b1;border-radius:10px;
+  background:color-mix(in srgb,#f3ad83 14%,var(--palette-surface));
+}
+#orderList .order-history-rejection strong,
+#orderList .order-history-rejection span {font-size:11px;}
+#orderList .order-history-summary-shell:focus-visible,
+#orderList .order-reorder-btn:focus-visible {
+  outline:2px solid var(--palette-accent);outline-offset:2px;
+}
+/* On tiny phones only the footer stacks; the status always stays next to the date. */
+@media (max-width:380px) {
+  #orderList .order-history-footer {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  #orderList .order-reorder-btn {grid-column:1/-1;min-height:46px;}
 }
 
 /* ======================== Profile menu ======================== */
