@@ -1,6 +1,37 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const fs=require('fs'),http=require('http'),assert=require('assert'),path=require('path');
 const repo=path.resolve(__dirname,'../..');
+/* Category order is shared by Kurv, order submission, order history and admin. */
+const sorterSource=fs.readFileSync(path.join(repo,'demo/js/cart-order.js'),'utf8')
+  .replace('export function sortCartByCategory','function sortCartByCategory');
+const sortCartByCategory=new Function(sorterSource+'\nreturn sortCartByCategory;')();
+const exampleSections=[
+  {id:'pizza',items:[{id:'capri'},{id:'sjefens'}]},
+  {id:'burger',items:[{id:'blueburger'},{id:'doubleburger'}]}
+];
+const addedOutOfOrder=[
+  {itemId:'blueburger',price:259},
+  {itemId:'capri',price:224},
+  {itemId:'doubleburger',price:318},
+  {itemId:'sjefens',price:482}
+];
+const sortedExample=sortCartByCategory(addedOutOfOrder,exampleSections);
+assert.deepStrictEqual(sortedExample.map(line=>line.itemId),
+  ['capri','sjefens','blueburger','doubleburger'],
+  'Category sorting matches customer cart order, not add-to-cart order');
+assert.deepStrictEqual(addedOutOfOrder.map(line=>line.itemId),
+  ['blueburger','capri','doubleburger','sjefens'],
+  'Sorting must not modify the original cart');
+assert.equal(sortedExample.reduce((sum,line)=>sum+line.price,0),1283,
+  'Category sorting must not change the order total');
+const customerSource=fs.readFileSync(path.join(repo,'demo/js/customer.js'),'utf8');
+const adminSource=fs.readFileSync(path.join(repo,'demo/js/admin.js'),'utf8');
+assert(customerSource.includes('const lines = sortCartByCategory(cart, store.sections).map('),
+  'Submitted order lines must follow the visible cart ordering');
+assert(customerSource.includes('const lines = sortCartByCategory(displayOrder.lines?.length'),
+  'Customer order history must follow the visible cart ordering');
+assert(adminSource.includes('const sortedLines = sortCartByCategory(order.lines || [], store.sections);'),
+  'Existing admin order history must follow category ordering');
 const server=http.createServer((req,res)=>{try{const file=repo+new URL(req.url,'http://localhost').pathname;res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(file))}catch{res.writeHead(404);res.end()}});
 const photo='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="80" height="80" fill="%23edaa57"/%3E%3C/svg%3E';
 const menu={settings:{restaurantName:'Test',customerPalette:'fresh',orderOpenTime:'00:00',orderCloseTime:'23:59'},sections:[{id:'pizza',title:'Pizza',type:'pizza',items:[{id:'classico',name:'1. Classico',imageUrl:photo,visible:true,sizes:[{id:'stor',label:'Stor',price:294,optionGroupIds:['alt','fries','dough']}]},{id:'favorite',name:'5. Sjefens favoritt',imageUrl:photo,visible:true,sizes:[{id:'stor2',label:'Stor',price:334}]}]}],optionGroups:[{id:'alt',title:'Alternativ',selectionMode:'single',options:[{id:'pep',label:'Bare pepperoni',price:0}]},{id:'fries',title:'Pommes frites på pizzaen (stor)',options:[{id:'f',label:'Ja, takk!',price:49}]},{id:'dough',title:'Ekstra bunn (300 g deig)',options:[{id:'d',label:'Ja, takk!',price:49}]}]};
