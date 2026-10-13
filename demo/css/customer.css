@@ -1000,7 +1000,7 @@ textarea.input {
 }
 #productSheet .sheet-allergens {
   display:flex !important;flex-wrap:wrap;align-items:center;
-  gap:6px !important;margin:0 2px 14px !important;
+  gap:6px !important;margin:17px 2px 4px !important;
   padding:0 !important;border:0 !important;
   border-radius:0 !important;background:transparent !important;
   box-shadow:none !important;
