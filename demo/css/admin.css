@@ -150,7 +150,10 @@ select { font-family: inherit; font-size: inherit; color: inherit; }button { cur
     background: var(--bg);
     border-right: 0;
     overflow: hidden;
-}.page { display: none; flex-direction: column; min-height: 0; flex: 1; }.page.is-active { display: flex; }.page[hidden] { display: none; }.page-head {
+}.page { display: none; flex-direction: column; min-height: 0; flex: 1; }.page.is-active { display: flex; }
+/* A page hidden by navigation must stay hidden even when a later feature
+   stylesheet gives that page a more specific display rule (e.g. orders). */
+.main-col > .page[hidden] { display: none !important; }.page-head {
     flex: none;
     background: var(--surface);
     border-bottom: 1px solid var(--line);
