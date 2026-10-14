@@ -21,14 +21,14 @@ Traccar SMS Gateway and its mobile/internet connection must remain available.
    status changes; the current static-site REST integration cannot by itself prove admin
    identity. Never enable notifications if public writers can forge order status updates.
 2. Check ice terms for sending automatically generated restaurant SMS.
-3. In the Firebase console, ensure project bestill-19 uses the Blaze plan. Cloud
+3. In the Firebase console, ensure project kol-grill-pizza uses the Blaze plan. Cloud
    Functions require Blaze; usage and Google Secret Manager may have charges.
 4. Install firebase-tools (one-time) and authenticate to the project, or connect the
    official Firebase deployment plugin. From the repository root:
-   - firebase use bestill-19
+   - firebase use kol-grill-pizza
    - firebase functions:secrets:set TRACCAR_CLOUD_TOKEN
      (use a **freshly rotated token**, not the value previously posted in chat)
-   - create LOCAL file functions/.env.bestill-19 containing:
+   - create LOCAL file functions/.env.kol-grill-pizza containing:
        SMS_NOTIFICATIONS_ENABLED=true
      (never commit this file). Activate only after reviewing database rules
      and ice's commercial SMS conditions.
