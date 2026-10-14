@@ -11,11 +11,11 @@ const {notificationKind, pickupLabel} = require('./sms-core.cjs');
 
 const webhookSecret = defineSecret('EMAIL_WEBHOOK_SECRET');
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxJ3zodPAhByPaEC7Z-_FPDjifsCT2-_ydcOTkr02bCnxqIMIDxNd6DhurHgF03SG4/exec';
-if (!getApps().length) initializeApp({databaseURL:'https://kol-grill-pizza-default-rtdb.firebaseio.com'});
+if (!getApps().length) initializeApp({databaseURL:'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app'});
 
 exports.emailOnOrderStatus = onValueUpdated({
   ref:'/orders/{orderId}',
-  instance: 'kol-grill-pizza-default-rtdb',
+  instance:'bestill-19-default-rtdb',
   region:'europe-west1',
   secrets:[webhookSecret],
   maxInstances:3,
