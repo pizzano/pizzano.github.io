@@ -145,6 +145,16 @@
                     </div>
                     <p class="err" id="errPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
                 </div>
+                <div class="field contact-form-field">
+                    <label class="field-label contact-form-label" for="custEmail">
+                        <span class="contact-form-icon" aria-hidden="true">✉</span><span>E-postadresse <small>(valgfritt)</small></span>
+                    </label>
+                    <p class="hint">Skriv inn e-post hvis du vil få beskjed om bestillingens tidspunkt.</p>
+                    <div class="contact-form-control">
+                        <input id="custEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
+                    </div>
+                    <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
+                </div>
             </div>
 
             <div class="step-panel" id="step3" hidden>
@@ -306,7 +316,7 @@
     <div class="toast" id="toast" hidden></div>
 
     <script src="/demo/js/install.js?v=20261013-sheetcompact94"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261015-progress115"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261015-email116"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261013-sheetcompact94"></script>
 </body>
 
