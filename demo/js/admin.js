@@ -387,6 +387,8 @@ function renderStats() {
     ? `Åpent · stenger ${state.closesAt}`
     : `Stengt · åpner ${state.opensAt}`;
 
+  const productsHeading = document.getElementById('productsHeading');
+  if (productsHeading) productsHeading.textContent = `${stats.categoryCount} Kategorier | ${stats.itemCount} Produkter`;
   el.navOrderBadge.hidden = stats.newOrders === 0;
   el.navOrderBadge.textContent = String(stats.newOrders);
 
@@ -506,10 +508,12 @@ function renderCategories() {
               <span class="cat-category-fallback">${categoryEmoji}</span>
               ${categoryImage ? `<img src="${escapeHtml(categoryImage)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
             </span>
-            <span class="cat-name">${escapeHtml(section.title || 'Uten navn')}</span>
-            <span class="cat-meta">${(section.items || []).length} produkter${
+            <span class="cat-labels">
+              <span class="cat-name">${escapeHtml(section.title || 'Uten navn')}</span>
+              <span class="cat-meta">${(section.items || []).length} produkter${
         soldOutCount ? ` · ${soldOutCount} utsolgt` : ''
       }${hiddenCount ? ` · ${hiddenCount} skjult` : ''}</span>
+            </span>
           </button>
           <span class="cat-tools">
             <button class="icon-btn" data-edit-cat="${escapeHtml(
