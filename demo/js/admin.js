@@ -2881,6 +2881,168 @@ function renderPalettePreview() {
     return group;
   }));
 }
+
+/* Weekly opening times share siteSettings with the customer order page. */
+const weeklyRowsEl=document.getElementById('weeklyHoursRows');
+const weeklyErrorEl=document.getElementById('weeklyHoursError');
+const sameHoursPanel=document.getElementById('sameHoursPanel');
+const temporaryClosePanel=document.getElementById('temporaryClosePanel');
+const TIME_PATTERN=/^([01]\d|2[0-3]):[0-5]\d$/;
+function timeIsValid(value){return TIME_PATTERN.test(String(value||''));}
+function validateWeeklyForm(){
+  if(ui.page!=='settings')return true;
+  for(const row of weeklyRowsEl.querySelectorAll('[data-week-row]')){
+    if(row.classList.contains('is-closed'))continue;
+    const opening=row.querySelector('[data-week-open]');
+    const closing=row.querySelector('[data-week-close]');
+    if(!timeIsValid(opening.value)||!timeIsValid(closing.value)){
+      weeklyErrorEl.textContent='Ugyldig klokkeslett. Bruk HH:mm (00:00–23:59).';
+      weeklyErrorEl.hidden=false;return false;
+    }
+    if(opening.value===closing.value){
+      weeklyErrorEl.textContent='Åpner og stenger kan ikke ha samme tid: '+row.dataset.weekRow+'.';
+      weeklyErrorEl.hidden=false;return false;
+    }
+  }
+  weeklyErrorEl.hidden=true;return true;
+}
+function renderWeeklyHours(settings){
+  if(document.activeElement?.closest?.('#weeklyHoursRows'))return;
+  const days=getWeeklyHours(settings);
+  weeklyRowsEl.innerHTML=days.map((day,i)=>{
+    const label=RESTAURANT_WEEKDAYS[i];
+    const id=label.id;
+    const closed=!day.enabled;
+    const dateLabel=label.name;
+    return '<div class="restaurant-schedule-row'+(closed?' is-closed':'')+'" role="row" data-week-row="'+id+'">'
+      +'<div class="restaurant-day-name" role="cell"><span class="restaurant-day-tag">'+label.short+'</span><span>'+dateLabel+'</span></div>'
+      +'<div role="cell"><label class="restaurant-day-switch" aria-label="'+dateLabel+' åpen">'
+      +'<input type="checkbox" data-week-toggle="'+id+'" '+(closed?'':'checked')+'><span aria-hidden="true"></span></label></div>'
+      +'<div class="restaurant-time-cell" role="cell"><input type="time" step="60" aria-label="Åpner '+dateLabel+'" data-week-open="'+id+'" value="'+day.open+'" '+(closed?'disabled':'')+'>'
+      +'<span class="restaurant-stengt">Stengt</span></div>'
+      +'<div class="restaurant-time-cell" role="cell"><input type="time" step="60" aria-label="Stenger '+dateLabel+'" data-week-close="'+id+'" value="'+day.close+'" '+(closed?'disabled':'')+'>'
+      +'<span class="restaurant-stengt">Stengt</span></div></div>';
+  }).join('');
+}
+function renderRestaurantStatus(){
+  const status=getOpenState();
+  const container=document.querySelector('.restaurant-settings-status');
+  if(container)container.dataset.open=String(status.open);
+  const manuallyClosed=status.reason==='manuelt';
+  document.getElementById('restaurantStatusTitle').textContent=status.open?'Restauranten er åpen':manuallyClosed?'Midlertidig stengt':'Restauranten er stengt';
+  document.getElementById('restaurantStatusDetail').textContent=status.open?'Stenger kl. '+status.closesAt
+    :status.opensAt==='—'?'Ingen planlagt åpningstid':'Åpner kl. '+status.opensAt;
+  let extra='';
+  if(manuallyClosed&&status.manualClosedUntil){
+    try {
+      extra=' Midlertidig stengt til '+new Intl.DateTimeFormat('nb-NO',{
+        timeZone:store.settings?.timezone||'Europe/Oslo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'
+      }).format(new Date(status.manualClosedUntil))+'.';
+    }catch {extra=' Midlertidig stengt.';}
+  } else if(manuallyClosed)extra=' Manuelt stengt til du åpner igjen.';
+  el.settings.openStateLine.textContent=(status.open
+    ?'Åpent for bestilling – stenger '+status.closesAt+'.'
+    :'Stengt for bestilling – åpner '+status.opensAt+'.')+extra;
+  el.settings.openStateLine.dataset.open=String(status.open);
+  const settings=store.settings||{};
+  const effectiveManualClose=settings.manualClosed===true
+    &&(!settings.manualClosedUntil||Number(settings.manualClosedUntil)>Date.now());
+  document.getElementById('temporaryCloseLabel').textContent=effectiveManualClose?'Åpne igjen':'Steng midlertidig';
+  el.settings.manualClosed.checked=effectiveManualClose;
+}
+function updateWeeklyDay(dayId,key,value){
+  mutate(state=>{
+    const week=getWeeklyHours(state.settings).map(day=>({...day}));
+    const entry=week.find(day=>day.id===dayId);
+    if(entry){entry[key]=value;state.settings.weeklyHours=week;}
+  });
+  renderStats();renderSettingsPreviewOnly();
+}
+weeklyRowsEl.addEventListener('change',event=>{
+  const toggle=event.target.closest('[data-week-toggle]');
+  if(toggle){
+    const row=toggle.closest('[data-week-row]');
+    const enabled=toggle.checked;
+    row.classList.toggle('is-closed',!enabled);
+    row.querySelectorAll('input[type=time]').forEach(input=>input.disabled=!enabled);
+    updateWeeklyDay(toggle.dataset.weekToggle,'enabled',enabled);
+    validateWeeklyForm();return;
+  }
+  const field=event.target;
+  const key=field.matches('[data-week-open]')?'open':field.matches('[data-week-close]')?'close':null;
+  if(!key)return;
+  if(!validateWeeklyForm()){field.reportValidity();return;}
+  updateWeeklyDay(field.closest('[data-week-row]').dataset.weekRow,key,field.value);
+});
+function currentWeek(){return getWeeklyHours(store.settings).map(day=>({...day}));}
+function renderBulkDayOptions(){
+  const week=currentWeek();
+  document.getElementById('sameHoursDays').innerHTML=week.map((day,i)=>
+    '<label class="restaurant-bulk-day'+(day.enabled?'':' is-disabled')+'">'
+    +'<input type="checkbox" data-bulk-day="'+day.id+'" '+(day.enabled?'checked':'disabled')+'>'
+    +RESTAURANT_WEEKDAYS[i].short+'</label>'
+  ).join('');
+  document.getElementById('sameOpenTime').value=week.find(day=>day.enabled)?.open||'10:00';
+  document.getElementById('sameCloseTime').value=week.find(day=>day.enabled)?.close||'22:00';
+  document.getElementById('sameHoursError').hidden=true;
+}
+document.getElementById('btnSameHours').addEventListener('click',()=>{
+  temporaryClosePanel.hidden=true;
+  sameHoursPanel.hidden=!sameHoursPanel.hidden;
+  if(!sameHoursPanel.hidden)renderBulkDayOptions();
+});
+document.getElementById('btnCancelSameHours').addEventListener('click',()=>sameHoursPanel.hidden=true);
+document.getElementById('btnApplySameHours').addEventListener('click',()=>{
+  const opening=document.getElementById('sameOpenTime').value;
+  const closing=document.getElementById('sameCloseTime').value;
+  const selected=Array.from(document.querySelectorAll('[data-bulk-day]:checked')).map(node=>node.dataset.bulkDay);
+  const error=document.getElementById('sameHoursError');
+  if(!timeIsValid(opening)||!timeIsValid(closing)||opening===closing){
+    error.textContent='Oppgi to forskjellige klokkeslett i HH:mm-format.';error.hidden=false;return;
+  }
+  if(!selected.length){error.textContent='Velg minst én åpen dag.';error.hidden=false;return;}
+  const names=selected.map(id=>RESTAURANT_WEEKDAYS.find(d=>d.id===id)?.name).filter(Boolean).join(', ');
+  askConfirm('Bruke samme åpningstider?','Tidene '+opening+'–'+closing+' brukes på: '+names+'. Stengte dager endres ikke.',()=>{
+    mutate(state=>{
+      const week=getWeeklyHours(state.settings).map(day=>({...day}));
+      week.forEach(day=>{if(day.enabled&&selected.includes(day.id)){day.open=opening;day.close=closing;}});
+      state.settings.weeklyHours=week;
+    });
+    sameHoursPanel.hidden=true;
+    renderWeeklyHours(store.settings);renderStats();renderSettingsPreviewOnly();
+    toast('Åpningstidene oppdateres og lagres.');
+  });
+});
+document.getElementById('btnTemporaryClose').addEventListener('click',()=>{
+  const settings=store.settings||{};
+  const closed=settings.manualClosed===true
+    &&(!settings.manualClosedUntil||Number(settings.manualClosedUntil)>Date.now());
+  if(closed){
+    askConfirm('Åpne nettbestilling igjen?','Den manuelle stengingen fjernes. Åpningstidsplanen beholdes.',()=>{
+      mutate(state=>{state.settings.manualClosed=false;state.settings.manualClosedUntil=0;});
+      temporaryClosePanel.hidden=true;renderStats();renderSettingsPreviewOnly();
+    });return;
+  }
+  sameHoursPanel.hidden=true;
+  temporaryClosePanel.hidden=!temporaryClosePanel.hidden;
+});
+document.getElementById('btnCancelTemporaryClose').addEventListener('click',()=>temporaryClosePanel.hidden=true);
+document.getElementById('btnApplyTemporaryClose').addEventListener('click',()=>{
+  const minutes=Number(document.getElementById('temporaryCloseDuration').value)||0;
+  askConfirm('Stenge nettbestilling?',minutes>0
+    ?'Nettbestillingen stenges i '+minutes+' minutter. Ukesplanen endres ikke.'
+    :'Nettbestillingen stenges inntil du åpner igjen. Ukesplanen endres ikke.',()=>{
+      mutate(state=>{
+        state.settings.manualClosed=true;
+        state.settings.manualClosedUntil=minutes>0?Date.now()+minutes*60000:0;
+      });
+      temporaryClosePanel.hidden=true;renderStats();renderSettingsPreviewOnly();
+    });
+});
+window.setInterval(()=>{
+  if(ui.page==='settings'){renderRestaurantStatus();renderStats();}
+},60000);
+
 function renderSettings() {
   renderPalettePreview();
   const settings = store.settings || {};
