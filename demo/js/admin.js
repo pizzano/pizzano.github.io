@@ -2133,17 +2133,13 @@ function renderOrderList() {
       return (scheduledPickupTimestamp(a) ?? Infinity) - (scheduledPickupTimestamp(b) ?? Infinity)
         || Number(a.createdAt || 0) - Number(b.createdAt || 0);
     }
-    const aNew = a.status === 'mottatt';
-    const bNew = b.status === 'mottatt';
-    if (aNew !== bNew) return Number(bNew) - Number(aNew);
-    if (aNew && bNew) return Number(a.createdAt) - Number(b.createdAt);
-    const aScheduled = isUpcomingScheduledOrder(a);
-    const bScheduled = isUpcomingScheduledOrder(b);
-    if (aScheduled !== bScheduled) return Number(bScheduled) - Number(aScheduled);
-    if (aScheduled && bScheduled) return scheduledPickupTimestamp(a) - scheduledPickupTimestamp(b);
-    return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    // ALLE: Sort exclusively by received time (Mottatt), newest first.
+    // Scheduled pickup, estimated ready time and order status have no priority here.
+    return (Number(b.createdAt) || Date.parse(b.createdAt) || 0)
+      - (Number(a.createdAt) || Date.parse(a.createdAt) || 0)
+      || String(b.id || '').localeCompare(String(a.id || ''));
   });
-  el.orderList.innerHTML = orders.map((order, index) => `${ui.orderFilter === 'all' && index > 0 && order.status !== 'mottatt' && orders[index - 1].status === 'mottatt' ? '<div class="orders-group-gap" aria-hidden="true"></div>' : ''}${orderListRowHtml(order, order.status === 'mottatt')}`).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
+  el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order, order.status === 'mottatt')).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
