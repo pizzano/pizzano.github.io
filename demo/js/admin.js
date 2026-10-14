@@ -2245,6 +2245,85 @@ function renderOrderDetail(orderId) {
    Green requires a fresh (<90s) verified gateway heartbeat AND enabled sending.
    Manual SMS tests do not turn automatic-order SMS green. */
 let smsStatusFetching = false;
+
+/* Real Android Internet heartbeat. Read-only fixed JSONP callback; the secret
+ * heartbeat URL belongs only in MacroDroid on the Samsung phone. */
+const PHONE_STATUS_URL='https://script.google.com/macros/s/AKfycbzq654V3KIhYzy9M1uUu7RnFpmEon7bIAbHIfDFnoy10BP_N6huNejlp0pLe6Q5PU-IiQ/exec';
+let phoneState=null,phoneStateReceived=0,phoneCheckInProgress=false;
+function currentPhoneState() {
+  if(!phoneState||Date.now()-phoneStateReceived>180000)return null;
+  const age=Date.now()-Date.parse(String(phoneState.observedAt||''));
+  return Number.isFinite(age)&&age>=0&&age<180000?phoneState:null;
+}
+function drawPhoneState(){
+  const badge=document.getElementById('ordersPhoneStatus');
+  if(!badge)return;
+  const info=currentPhoneState();
+  let kind='unknown',label='Mobil: ukjent',help='Telefonforbindelsen er ennå ikke bekreftet.';
+  if(info){
+    if(info.phoneMonitorConfigured!==true){
+      label='Mobil: ikke satt opp';help='MacroDroid-signal er ikke konfigurert.';
+    }else{
+      const age=Date.now()-Date.parse(String(info.phoneLastSeenAt||''));
+      const fresh=info.phoneOnline===true&&Number.isFinite(age)&&age>=0&&age<=300000;
+      kind=fresh?'online':'offline';
+      label=fresh?'Mobil online':'Mobil frakoblet';
+      help=fresh?'Samsung har sendt et ferskt internett-signal. Ingen garanti for SMS-levering.':'Ingen nytt signal fra Samsung på over fem minutter. Kontroller strøm, internett og MacroDroid.';
+    }
+  }
+  badge.classList.toggle('is-online',kind==='online');
+  badge.classList.toggle('is-offline',kind==='offline');
+  badge.classList.toggle('is-unknown',kind==='unknown');
+  badge.querySelector('[data-phone-text]').textContent=label;
+  badge.title=help;
+}
+function drawVerifiedSmsState(){
+  const info=currentPhoneState();
+  if(!info){
+    displaySmsStatus('pending','SMS ukjent','Ingen fersk status fra telefonmonitoren.');
+    return;
+  }
+  if(info.smsMode==='TEST'){
+    displaySmsStatus('pending','SMS TEST','Kun testtelefonnummeret kan motta SMS.');
+  }else if(info.smsMode!=='LIVE'){
+    displaySmsStatus('pending','SMS av','Automatiske SMS er slått av.');
+  }else if(info.smsPollOnline!==true){
+    displaySmsStatus('error','SMS kontroll stoppet','Google Apps Script-kontrollen svarer ikke nylig.');
+  }else if(info.phoneMonitorConfigured!==true||info.phoneOnline!==true){
+    displaySmsStatus('error','SMS venter på mobil','Mobilens internettforbindelse er ikke bekreftet.');
+  }else if(info.smsRecentlySubmitted===true){
+    displaySmsStatus('active','SMS fungerer','Telefonen er online og Traccar har akseptert en SMS nylig. Dette er ikke en leveringsgaranti.');
+  }else{
+    displaySmsStatus('pending','SMS klar','LIVE, kontrollen kjører og mobilen er online. Ingen nylig SMS-innsending bekreftet.');
+  }
+}
+function refreshPhoneState(){
+  if(phoneCheckInProgress||document.hidden)return;
+  phoneCheckInProgress=true;
+  let script=null,timeout=null,finished=false;
+  const finish=(data)=>{
+    if(finished)return;
+    finished=true;
+    if(timeout!==null)clearTimeout(timeout);
+    if(script&&script.parentNode)script.parentNode.removeChild(script);
+    window.__kolPhoneStatusCallback=undefined;
+    phoneCheckInProgress=false;
+    phoneState=data&&typeof data==='object'?data:null;
+    phoneStateReceived=phoneState?Date.now():0;
+    drawPhoneState();drawVerifiedSmsState();
+  };
+  window.__kolPhoneStatusCallback=finish;
+  script=document.createElement('script');
+  script.async=true;script.referrerPolicy='no-referrer';
+  script.onerror=()=>finish(null);
+  script.src=PHONE_STATUS_URL+'?kolPhoneStatus=1&t='+Date.now();
+  timeout=setTimeout(()=>finish(null),12000);
+  document.head.appendChild(script);
+}
+void refreshPhoneState();
+window.setInterval(()=>{drawPhoneState();drawVerifiedSmsState();refreshPhoneState();},45000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPhoneState();});
+
 function displaySmsStatus(mode, text, help) {
   const badge = document.getElementById('ordersSmsStatus');
   if (!badge) return;
@@ -2255,6 +2334,7 @@ function displaySmsStatus(mode, text, help) {
   badge.title = help;
 }
 async function refreshSmsStatus() {
+  if(currentPhoneState()){drawVerifiedSmsState();return;}
   const configured = String(window.BESTILL_CONFIG?.smsStatusUrl || '').trim();
   if (!configured) {
     displaySmsStatus('pending','SMS ikke aktiv','Traccar sendte en test-SMS, men automatisk ordrebekreftelse er ikke koblet til.');
@@ -2279,7 +2359,7 @@ async function refreshSmsStatus() {
     const online = status?.smsEnabled === true && status?.gatewayOnline === true
       && Number.isFinite(age) && age >= 0 && age < 90000;
     if (online) {
-      displaySmsStatus('active','SMS fungerer','Nylig bekreftet av den tilkoblede SMS-serveren.');
+      displaySmsStatus('pending','SMS: mobil ukjent','SMS-serveren svarte, men mobilens internettstatus er ikke bekreftet.');
     } else if (status?.smsEnabled === true) {
       displaySmsStatus('error','SMS frakoblet','SMS er aktivert, men tilkoblingen er ikke bekreftet.');
     } else {

@@ -872,3 +872,21 @@ html[data-theme="dark"] .orders-page .pos-detail-sms-feedback {background:#163f3
   :root .orders-page .orders-row-sms svg {width:15px;height:15px;}
   :root .orders-page .pos-detail-sms-feedback {font-size:10px;padding:3px 6px;}
 }
+
+/* Free Samsung heartbeat indicator in the compact orders toolbar. */
+:root .orders-page .orders-phone-indicator {
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ min-height:37px;padding:7px 10px;border-radius:12px;
+ background:var(--ot-surface);border:1px solid var(--ot-line);
+ color:var(--ot-muted);font-size:12px;font-weight:850;line-height:1.1;white-space:nowrap;
+}
+:root .orders-page .orders-phone-indicator svg {width:15px;height:18px;flex:none;}
+:root .orders-page .orders-phone-dot {width:8px;height:8px;border-radius:50%;flex:none;background:#9babb8;box-shadow:0 0 0 3px rgba(155,171,184,.12);}
+:root .orders-page .orders-phone-indicator.is-online {color:#08764d;border-color:#afdac0;background:color-mix(in srgb,#daf8e8 78%,var(--ot-surface));}
+:root .orders-page .orders-phone-indicator.is-online .orders-phone-dot {background:#09a465;box-shadow:0 0 0 3px rgba(9,164,101,.12);}
+:root .orders-page .orders-phone-indicator.is-offline {color:#ae443e;border-color:#e9b7b4;background:color-mix(in srgb,#f9e5e0 78%,var(--ot-surface));}
+:root .orders-page .orders-phone-indicator.is-offline .orders-phone-dot {background:#df5b52;box-shadow:0 0 0 3px rgba(223,91,82,.12);}
+html[data-theme="dark"] .orders-page .orders-phone-indicator.is-online {color:#b9f5d5;background:#163f30;border-color:#347255;}
+html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#ffc4c0;background:#492b2a;border-color:#7d413b;}
+@media(max-width:1050px){:root .orders-page .orders-phone-indicator{min-height:32px;padding:6px 9px;font-size:11px;}}
+@media(max-width:650px){:root .orders-page .orders-phone-indicator{order:-1;}}

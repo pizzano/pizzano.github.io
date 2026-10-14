@@ -1,7 +1,7 @@
 Bestill.online customer release: 20261013-sheetcompact94
 Product modal: thinner 44px option cards, 20px radio/check controls, smaller 12px option labels, 11px prices and 58px kitchen comment with 12px text. Keep 9px between options and 17px between feature groups; product ingredients description remains 13.5px. Compact ingredient tile and allergen chips. iPhone comment focus prevents unexpected zoom.
 Preserved photo, X/favorite header, fixed quantity/Legg til footer, all palette themes and existing prices, option/ingredient behavior, cart and ordering.
-Admin release: 20261014-manual-ready-guard101
+Admin release: 20261014-telefon-lys102
 Admin order detail header: status pill at left, centered customer name and Bestillingskode below, thin vertical divider at right. Dynamic status and all order controls preserved. Narrow sidebar and pickup countdown unchanged.
 Source: pizzano/pizzano.github.io main
 
@@ -15,3 +15,5 @@ SMS receipt icon in order list and SMS ble sendt label in detail based on succes
 ALLE tab: newest Mottatt (createdAt) first, irrespective of status or estimated/scheduled pickup. Planlagte tab keeps scheduled pickup time order. Removed separator that depended on status grouping. All SMS receipts and status behaviors preserved.
 
 MANUAL READY SAFETY: Staff must press Marker klar for henting; the dedicated handler stamps staffReadyAt == statusUpdatedAt, generic updateOrderStatus('klar') forbidden. Companion Apps Script guard must be installed before resuming SMS trigger. Older admin tabs should be closed and reopened.
+
+Independent Samsung internet heartbeat status lamp in admin order bar. Direct Apps Script status uses read-only fixed JSONP and requires GAS v4 plus MacroDroid. SMS indikator never assumes an FCM submission proves phone online. All SMS sends remain unchanged.
