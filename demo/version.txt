@@ -19,3 +19,5 @@ MANUAL READY SAFETY: Staff must press Marker klar for henting; the dedicated han
 Independent Samsung internet heartbeat status lamp in admin order bar. Direct Apps Script status uses read-only fixed JSONP and requires GAS v4 plus MacroDroid. SMS indikator never assumes an FCM submission proves phone online. All SMS sends remain unchanged.
 
 Compact neon status/action toolbar. Icon only (Firebase/network, SMS Cloud, manual Samsung battery/network reminder, persistent sound toggle, refresh); hover/focus/tap show tooltip. No MacroDroid, no phone tracking, and no changes to SMS send logic.
+
+Bestillinger 20261014-orders-reference109: screenshot-based white compact two-column order workspace with left lists, 4 pale status tiles, metadata/customer/SMS header, compact items and mint-green ETA / manual-ready action. Replaced previous order UI CSS and removed neon UI block, kept all order data, callbacks, actual SMS status and staff-ready safeguard.
