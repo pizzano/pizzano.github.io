@@ -489,6 +489,7 @@ function normalizeOrders(raw) {
           ? order.status
           : 'mottatt',
         statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
+        staffReadyAt: Number(order.staffReadyAt) || null,
         estimatedMinutes: Number(order.estimatedMinutes) > 0 ? Number(order.estimatedMinutes) : null,
         estimatedAt: Number(order.estimatedAt) || null,
         estimatedReadyAt: Number(order.estimatedReadyAt) || null,
@@ -1163,7 +1164,48 @@ export async function submitOrder(order) {
 }
 
 /** Oppdaterer status på en ordre (admin). */
+/**
+ * Dedicated staff confirmation: a timer can never produce this marker.
+ * status/statusUpdatedAt/staffReadyAt are saved in one Firebase PATCH.
+ */
+export async function markOrderReadyManually(orderId) {
+  const order = store.orders.find((entry) => entry.id === orderId);
+  if (!order || !['bekreftet', 'tilberedning'].includes(order.status)) return false;
+  const previous = {
+    status: order.status,
+    statusUpdatedAt: order.statusUpdatedAt,
+    staffReadyAt: order.staffReadyAt,
+  };
+  const now = Date.now();
+  order.status = 'klar';
+  order.statusUpdatedAt = now;
+  order.staffReadyAt = now;
+  const writeGuard = beginOrderStatusWrite(order);
+  emitData('local');
+  setSaveState('saving');
+  try {
+    if (remoteEnabled) {
+      await restPatch(`${ORDERS_PATH}/${orderId}`, {
+        status: 'klar',
+        statusUpdatedAt: now,
+        staffReadyAt: now,
+      });
+      remoteOnline = true;
+    }
+    finishOrderStatusWrite(orderId, writeGuard, true);
+    setSaveState('saved');
+    return true;
+  } catch (err) {
+    finishOrderStatusWrite(orderId, writeGuard, false);
+    Object.assign(order, previous);
+    emitData('local');
+    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+    return false;
+  }
+}
 export async function updateOrderStatus(orderId, status) {
+  // Generic status updates must never assert manual kitchen completion.
+  if (status === 'klar') return false;
   const order = store.orders.find((entry) => entry.id === orderId);
   if (!order) return false;
   const previous = order.status;

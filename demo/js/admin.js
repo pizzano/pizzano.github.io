@@ -38,13 +38,14 @@ import {
   getStats,
   getOrders,
   updateOrderStatus,
+  markOrderReadyManually,
   updateOrderEstimate,
   acceptOrderWithEstimate,
   acceptScheduledOrder,
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261013-ordersync84';
+} from './data.js?v=20261014-manual-ready-guard101';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -2504,7 +2505,10 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     }
     if (status.disabled) return;
     status.disabled = true;
-    const ok = await updateOrderStatus(orderId, nextStatus);
+    // Explicit employee press is required for ready status and SMS.
+    const ok = nextStatus === 'klar'
+      ? await markOrderReadyManually(orderId)
+      : await updateOrderStatus(orderId, nextStatus);
     if (ok && nextStatus === 'fullfort') selectedOrderId = null;
     renderOrders();
     renderStats();
