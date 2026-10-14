@@ -492,6 +492,7 @@ function normalizeOrders(raw) {
         estimatedMinutes: Number(order.estimatedMinutes) > 0 ? Number(order.estimatedMinutes) : null,
         estimatedAt: Number(order.estimatedAt) || null,
         estimatedReadyAt: Number(order.estimatedReadyAt) || null,
+        estimateUpdatedAt: Number(order.estimateUpdatedAt) || null,
         rejectionReason: String(order.rejectionReason || ''),
         rejectionMessage: String(order.rejectionMessage || ''),
         subtotal: Number(order.subtotal) || 0,
@@ -1200,11 +1201,14 @@ export async function updateOrderEstimate(orderId, minutes) {
     estimatedMinutes: order.estimatedMinutes,
     estimatedAt: order.estimatedAt,
     estimatedReadyAt: order.estimatedReadyAt,
+    estimateUpdatedAt: order.estimateUpdatedAt,
   };
   const now = Date.now();
   order.estimatedMinutes = value || null;
   order.estimatedAt = value ? now : null;
   order.estimatedReadyAt = value ? now + value * 60 * 1000 : null;
+  // Only a staff Endre tid save triggers the SMS update, never a countdown.
+  order.estimateUpdatedAt = value ? now : null;
   emitData('local');
   setSaveState('saving');
   try {
@@ -1213,6 +1217,7 @@ export async function updateOrderEstimate(orderId, minutes) {
         estimatedMinutes: order.estimatedMinutes,
         estimatedAt: order.estimatedAt,
         estimatedReadyAt: order.estimatedReadyAt,
+        estimateUpdatedAt: order.estimateUpdatedAt,
       });
       remoteOnline = true;
     }

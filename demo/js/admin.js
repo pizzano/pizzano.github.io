@@ -2102,7 +2102,7 @@ function orderListRowHtml(order, isNew = false) {
   const remainingTime = orderListRemainingTime(order);
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
-      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS ble sendt via Traccar" aria-label="SMS ble sendt via Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-divider" aria-hidden="true"></span>
@@ -2215,7 +2215,7 @@ function renderOrderDetail(orderId) {
         <div class="pos-detail-heading">
           <div class="order-customer-heading order-customer-heading--centered">
             <span class="order-status-badge" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span>
-            <div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div></div>
+            <div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div><div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div></div>
             <span class="order-header-divider" aria-hidden="true"></span>
           </div>
         </div>
@@ -2298,6 +2298,64 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void refreshSmsStatus();
 });
 
+
+/* The list shows actual successful gateway submissions, never guessed SMS status. */
+const smsReceiptCache = new Map();
+let smsReceiptFetching = false;
+function smsReceiptSent(id) {
+  const receipt = smsReceiptCache.get(String(id));
+  return Boolean(receipt && (receipt.acceptedAt || receipt.readyAt || receipt.estimateUpdatedAt));
+}
+function smsReceiptDetail(id) {
+  const r = smsReceiptCache.get(String(id));
+  if (!r) return '';
+  const types = [];
+  if (r.acceptedAt) types.push('Bekreftelse');
+  if (r.estimateUpdatedAt) types.push('Endret hentetid');
+  if (r.readyAt) types.push('Klar for henting');
+  return types.length ? 'SMS ble sendt · ' + types.join(' · ') : '';
+}
+function updateSmsReceiptMarkers() {
+  document.querySelectorAll('[data-order-sms]').forEach(node => {
+    node.hidden = !smsReceiptSent(node.dataset.orderSms);
+  });
+  document.querySelectorAll('[data-detail-sms]').forEach(node => {
+    const id = node.dataset.detailSms;
+    node.hidden = !smsReceiptSent(id);
+    const label = node.querySelector('[data-detail-sms-label]');
+    if (label) label.textContent = smsReceiptDetail(id);
+  });
+}
+async function refreshSmsReceipts() {
+  if (document.hidden || smsReceiptFetching || ui.page !== 'orders') return;
+  const visible = filteredOrders()
+    .filter(o => o.status !== 'mottatt' && /^ord_[a-z0-9]{7,40}$/i.test(o.id))
+    .sort((a,b) => (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
+  const ids = visible.slice(0,39).map(o=>o.id);
+  if (selectedOrderId && /^ord_[a-z0-9]{7,40}$/i.test(selectedOrderId) && !ids.includes(selectedOrderId)) ids.push(selectedOrderId);
+  if (!ids.length) return;
+  smsReceiptFetching = true;
+  try {
+    const query = new URLSearchParams({ids:ids.join(',')});
+    const response = await fetch('https://pizzano-github-io.vercel.app/api/sms-receipts?' + query,
+      {cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(7500)});
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!payload || !payload.receipts || typeof payload.receipts !== 'object') return;
+    for (const id of ids) {
+      const info = payload.receipts[id];
+      if (!info || typeof info !== 'object') continue;
+      const time = key => Number.isSafeInteger(Number(info[key])) && Number(info[key]) > 0 ? Number(info[key]) : null;
+      smsReceiptCache.set(id, {acceptedAt:time('acceptedAt'),readyAt:time('readyAt'),estimateUpdatedAt:time('estimateUpdatedAt')});
+    }
+    updateSmsReceiptMarkers();
+  } catch (_) {
+    // Missing receipts must never be shown as successfully sent.
+  } finally { smsReceiptFetching = false; }
+}
+window.setInterval(() => { void refreshSmsReceipts(); }, 25000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshSmsReceipts(); });
+
 function updateOrdersConnection() {
   const connection = document.getElementById('ordersConnection');
   const connected = navigator.onLine && backendInfo.mode === 'firebase';
@@ -2327,6 +2385,7 @@ function renderOrders() {
     el.orderDetailLive.innerHTML = '';
   }
   syncOrdersWorkspaceLayout();
+  void refreshSmsReceipts();
 }
 
 el.orderFilterBtns.forEach((button) => {
@@ -2467,7 +2526,7 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     }
     const ok = await updateOrderEstimate(saveEstimate.dataset.saveDetailEstimate, minutes);
     renderOrders();
-    toast(ok ? `Ca. ${minutes} min er sendt til kunden.` : 'Kunne ikke sende tiden.');
+    toast(ok ? 'Ny hentetid lagret. SMS sendes automatisk hvis aktiv.' : 'Kunne ikke lagre ny tid.');
   }
 });
 
