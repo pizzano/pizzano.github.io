@@ -7,3 +7,5 @@ Source: pizzano/pizzano.github.io main
 
 Manual ready status only: no auto-promotion on admin, customer or backend. Time expiration displays an estimate, not "Klar". SMS remains off until securely configured.
 SMS status indicator: truthfully shows SMS ikke aktiv until an external secure sender reports verified online state. Auto sending remains disabled; Traccar manual SMS test previously succeeded.
+
+SMS status monitor: static admin calls read-only Vercel /api/sms-status proxy; backend reads token-free Apps Script doGet URL from Vercel env KOL_SMS_HEALTH_URL. Until configured, badge remains offline/pending, never falsely green.
