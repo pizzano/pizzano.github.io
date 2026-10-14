@@ -1762,7 +1762,7 @@ function updateContactValidation() {
 
 function validOptionalEmail(value) {
   const email = String(value || '').trim();
-  return !email || (email.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email));
+  return !email || (email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 }
 
 function validPhone(value) {
