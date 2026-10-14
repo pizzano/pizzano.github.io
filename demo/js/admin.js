@@ -35,6 +35,8 @@ import {
   getAllergenCatalog,
   getOpenState,
   getPickupSlots,
+  getWeeklyHours,
+  RESTAURANT_WEEKDAYS,
   getStats,
   getOrders,
   updateOrderStatus,
@@ -45,7 +47,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261014-manual-ready-guard101';
+} from './data.js?v=20261014-settings-weekly108';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -67,7 +69,7 @@ const initialSettingsView = (() => {
   }
 })();
 
-const SETTINGS_SECTIONS = new Set(['status', 'hours', 'pickup', 'menu', 'interface', 'contact']);
+const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact']);
 const initialSettingsSection = (() => {
   try {
     const saved = localStorage.getItem('kol-admin-settings-section');
@@ -361,10 +363,13 @@ onStatus(({ state, message }) => {
   el.saveState.title = message || '';
 });
 
-el.btnSaveNow.addEventListener('click', async () => {
-  const ok = await saveNow();
-  toast(ok ? 'Alle endringer er lagret.' : 'Kunne ikke lagre. Prøv igjen.');
-});
+async function saveRestaurantChanges(){
+  if(!validateWeeklyForm()){toast('Kontroller åpningstidene før du lagrer.');return;}
+  const ok=await saveNow();
+  toast(ok?'Alle endringer er lagret.':'Kunne ikke lagre i Firebase. Prøv igjen.');
+}
+el.btnSaveNow.addEventListener('click',saveRestaurantChanges);
+document.getElementById('btnSaveSettings').addEventListener('click',saveRestaurantChanges);
 
 window.addEventListener('beforeunload', (event) => {
   if (!hasUnsavedChanges()) return;
@@ -2897,16 +2902,8 @@ function renderSettings() {
     }
   });
 
-  const state = getOpenState();
-  el.settings.openStateLine.textContent = state.open
-    ? `Status nå: åpent for bestillinger, stenger ${state.closesAt}.`
-    : `Status nå: stengt. ${
-        state.reason === 'manuelt'
-          ? 'Manuelt stengt av dere.'
-          : `Åpner igjen ${state.opensAt}.`
-      }`;
-  el.settings.openStateLine.dataset.open = String(state.open);
-
+  renderWeeklyHours(settings);
+  renderRestaurantStatus();
   const slots = getPickupSlots();
   el.settings.slotPreview.innerHTML = slots.length
     ? `<span class="preview-title">Kundens hentetider nå:</span>${slots
@@ -2965,14 +2962,7 @@ function bindSettingField(key, type) {
 /** Oppdaterer bare forhåndsvisningen, slik at fokus i feltet beholdes. */
 function renderSettingsPreviewOnly() {
   renderPalettePreview();
-  const state = getOpenState();
-  el.settings.openStateLine.textContent = state.open
-    ? `Status nå: åpent for bestillinger, stenger ${state.closesAt}.`
-    : `Status nå: stengt. ${
-        state.reason === 'manuelt'
-          ? 'Manuelt stengt av dere.'
-          : `Åpner igjen ${state.opensAt}.`
-      }`;
+  renderRestaurantStatus();
   const slots = getPickupSlots();
   el.settings.slotPreview.innerHTML = slots.length
     ? `<span class="preview-title">Kundens hentetider nå:</span>${slots
