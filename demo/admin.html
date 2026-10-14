@@ -8,10 +8,11 @@
     <link rel="icon" href="/demo/icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-detailheading96">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-neon-icons103">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
+    <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
 </head>
 
 <body>
@@ -109,14 +110,19 @@
                 <header class="page-head">
                     <div class="page-title">
                         <h1>Choices &amp; addons</h1>
-                        <p id="groupsSummary">Gjenbrukbart bibliotek — lag én gang, bruk på mange produkter.</p>
+                        <p id="groupsSummary">Lag valggrupper for pizza, burgere og andre produkter. Disse vises som tilvalg i nettbestillingen.</p>
                     </div>
                     <div class="page-tools">
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
                             <input id="groupSearch" class="input" type="search" placeholder="Søk i valggrupper…" autocomplete="off">
                         </div>
-                        <div class="view-toggle" role="group" aria-label="Visningsmodus">
+                        <div class="group-filter-chips" role="group" aria-label="Filtrer valggrupper">
+                            <button class="group-filter-chip is-active" type="button" data-group-filter="all" aria-pressed="true">Alle (0)</button>
+                            <button class="group-filter-chip" type="button" data-group-filter="required" aria-pressed="false">Obligatorisk (0)</button>
+                            <button class="group-filter-chip" type="button" data-group-filter="optional" aria-pressed="false">Valgfritt (0)</button>
+                        </div>
+                        <div class="view-toggle group-view-toggle" role="group" aria-label="Visningsmodus">
                             <button class="view-toggle-btn" data-group-view="grid" type="button" aria-label="Kortvisning" title="Kortvisning">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
                             </button>
@@ -127,8 +133,8 @@
                         <button class="btn btn-primary btn-sm" id="btnNewGroup" type="button">+ Lag ny valggruppe</button>
                     </div>
                 </header>
-                <div class="scroll-area">
-                    <div id="groupLibrary" class="group-grid"></div>
+                <div class="scroll-area group-library-scroll">
+                    <div id="groupLibrary" class="group-grid" aria-live="polite"></div>
                 </div>
             </section>
 
@@ -717,7 +723,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-admin-exact-reference106"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261014-choices-accordion107"></script>
 </body>
 
 </html>
