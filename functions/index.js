@@ -10,7 +10,7 @@ const {
 } = require('./sms-core.cjs');
 
 initializeApp({
-  databaseURL: 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app',
+  databaseURL: 'https://kol-grill-pizza-default-rtdb.firebaseio.com',
 });
 
 const gatewayToken = defineSecret('TRACCAR_CLOUD_TOKEN');
@@ -39,7 +39,7 @@ async function sendSMS(phone, message, token) {
  */
 exports.smsOnOrderStatus = onValueUpdated({
   ref: '/orders/{orderId}',
-  instance: 'bestill-19-default-rtdb',
+  instance: 'kol-grill-pizza-default-rtdb',
   region: 'europe-west1',
   secrets: [gatewayToken],
   maxInstances: 3,
