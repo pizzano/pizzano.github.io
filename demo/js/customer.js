@@ -1757,12 +1757,20 @@ function updateContactValidation() {
       wrapper.querySelector('.valid-check').hidden = !valid;
     }
   }
-  if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value) || !validOptionalEmail(el.custEmail?.value);
+  const emailValid = validOptionalEmail(el.custEmail?.value);
+  if (el.errEmail) el.errEmail.hidden = emailValid;
+  if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value) || !emailValid;
 }
 
 function validOptionalEmail(value) {
   const email = String(value || '').trim();
-  return !email || (email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  if (!email) return true;
+  if (email.length > 254) return false;
+  // Use browser-native email validation to avoid escaping mistakes.
+  const probe = document.createElement('input');
+  probe.type = 'email';
+  probe.value = email;
+  return probe.validity.valid && email.includes('.');
 }
 
 function validPhone(value) {
