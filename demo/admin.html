@@ -221,27 +221,10 @@
                                     <p>Bestem når restauranten er åpen for bestilling.</p>
                                 </div>
                                 <div class="restaurant-hours-actions">
-                                    <button class="restaurant-quick-btn" id="btnSameHours" type="button">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>
-                                        Samme tider alle dager
-                                    </button>
                                     <button class="restaurant-quick-btn restaurant-quick-danger" id="btnTemporaryClose" type="button">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8v8M14 8v8"/></svg>
                                         <span id="temporaryCloseLabel">Steng midlertidig</span>
                                     </button>
-                                </div>
-                            </div>
-                            <div class="restaurant-inline-panel" id="sameHoursPanel" hidden>
-                                <div class="restaurant-inline-title"><strong>Samme åpningstider</strong><span>Kun åpne, valgte dager endres.</span></div>
-                                <div class="restaurant-bulk-fields">
-                                    <label>Åpner <input type="time" id="sameOpenTime" step="60" value="10:00"></label>
-                                    <label>Stenger <input type="time" id="sameCloseTime" step="60" value="22:00"></label>
-                                </div>
-                                <div class="restaurant-bulk-days" id="sameHoursDays"></div>
-                                <p class="restaurant-form-error" id="sameHoursError" role="alert" hidden></p>
-                                <div class="restaurant-inline-actions">
-                                    <button class="btn btn-primary" id="btnApplySameHours" type="button">Bruk tidene</button>
-                                    <button class="btn btn-outline" id="btnCancelSameHours" type="button">Avbryt</button>
                                 </div>
                             </div>
                             <div class="restaurant-inline-panel" id="temporaryClosePanel" hidden>

@@ -62,15 +62,7 @@
 #pageSettings .restaurant-closed-message .input{width:100%}
 #pageSettings .restaurant-inline-panel{margin:0 20px 16px;padding:15px 17px;border:1px solid #f2dbc8;border-radius:12px;background:#fff9f3;font-size:12px}
 #pageSettings .restaurant-inline-panel[hidden]{display:none!important}
-#pageSettings .restaurant-inline-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-#pageSettings .restaurant-inline-title>span{color:#786e66}
-#pageSettings .restaurant-bulk-fields,.restaurant-inline-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#pageSettings .restaurant-bulk-fields label{display:flex;align-items:center;gap:8px;font-weight:680}
-#pageSettings .restaurant-bulk-fields input{height:38px;padding:0 8px;border:1px solid #dbe4ec;border-radius:8px;font:500 13px system-ui;background:white}
-#pageSettings .restaurant-bulk-days{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0}
-#pageSettings .restaurant-bulk-day{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border:1px solid #eadbce;border-radius:8px;background:#fff;font-size:11px}
-#pageSettings .restaurant-bulk-day input{accent-color:#ff6a0e}
-#pageSettings .restaurant-bulk-day.is-disabled{opacity:.52}
+#pageSettings .restaurant-inline-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #pageSettings .restaurant-inline-actions{margin-top:13px}
 #pageSettings .restaurant-form-error{margin:9px 0 0;color:#d4423d;font-size:12px;font-weight:650}
 #pageSettings .restaurant-form-error[hidden]{display:none!important}
@@ -91,7 +83,6 @@ html[data-theme="dark"] #pageSettings .restaurant-schedule-head,html[data-theme=
 html[data-theme="dark"] #pageSettings .restaurant-quick-btn{background:var(--surface);border-color:var(--line)}
 html[data-theme="dark"] #pageSettings .restaurant-quick-danger{background:#482a2b;color:#ff9a97}
 html[data-theme="dark"] #pageSettings .restaurant-inline-panel{background:#382b24;border-color:#70533b;color:var(--ink)}
-html[data-theme="dark"] #pageSettings .restaurant-bulk-day{background:var(--surface);border-color:var(--line)}
 html[data-theme="dark"] #pageSettings .restaurant-info-note{background:#1f344e;color:#9ec6fa}
 @media(max-width:1250px){#pageSettings .page-head{gap:10px}#pageSettings .restaurant-settings-status{min-height:51px;padding:9px 13px;min-width:185px}#pageSettings .restaurant-schedule-head,#pageSettings .restaurant-schedule-row{grid-template-columns:minmax(135px,1fr) minmax(66px,.43fr) minmax(136px,1fr) minmax(136px,1fr);gap:6px}#pageSettings .restaurant-hours-header{align-items:flex-start}#pageSettings .restaurant-hours-actions{gap:6px}#pageSettings .restaurant-quick-btn{padding:0 10px}}
 @media(max-width:760px){#pageSettings .page-head{padding:16px 14px 12px}#pageSettings .page-title h1{font-size:23px}#pageSettings .restaurant-settings-status{margin-left:0;flex:1}#pageSettings .settings-section-nav{padding:6px 12px 12px}#pageSettings .settings-section-scroll{padding:9px 11px 25px}#pageSettings .restaurant-hours-header{padding:14px 12px;display:grid}#pageSettings .restaurant-hours-actions{justify-content:flex-start}#pageSettings .restaurant-schedule{margin:0 9px 15px;overflow-x:auto}#pageSettings .restaurant-schedule-head,#pageSettings .restaurant-schedule-row{min-width:520px}#pageSettings .restaurant-hours-footer{padding:0 12px 13px}#pageSettings .restaurant-inline-panel{margin:0 9px 13px}#pageSettings .restaurant-settings-status{min-width:0}#pageSettings #btnSaveSettings{min-height:42px}#pageSettings .restaurant-info-note{padding:13px}}

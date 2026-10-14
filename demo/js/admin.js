@@ -2885,7 +2885,6 @@ function renderPalettePreview() {
 /* Weekly opening times share siteSettings with the customer order page. */
 const weeklyRowsEl=document.getElementById('weeklyHoursRows');
 const weeklyErrorEl=document.getElementById('weeklyHoursError');
-const sameHoursPanel=document.getElementById('sameHoursPanel');
 const temporaryClosePanel=document.getElementById('temporaryClosePanel');
 const TIME_PATTERN=/^([01]\d|2[0-3]):[0-5]\d$/;
 function timeIsValid(value){return TIME_PATTERN.test(String(value||''));}
@@ -2974,45 +2973,6 @@ weeklyRowsEl.addEventListener('change',event=>{
   if(!validateWeeklyForm()){field.reportValidity();return;}
   updateWeeklyDay(field.closest('[data-week-row]').dataset.weekRow,key,field.value);
 });
-function currentWeek(){return getWeeklyHours(store.settings).map(day=>({...day}));}
-function renderBulkDayOptions(){
-  const week=currentWeek();
-  document.getElementById('sameHoursDays').innerHTML=week.map((day,i)=>
-    '<label class="restaurant-bulk-day'+(day.enabled?'':' is-disabled')+'">'
-    +'<input type="checkbox" data-bulk-day="'+day.id+'" '+(day.enabled?'checked':'disabled')+'>'
-    +RESTAURANT_WEEKDAYS[i].short+'</label>'
-  ).join('');
-  document.getElementById('sameOpenTime').value=week.find(day=>day.enabled)?.open||'10:00';
-  document.getElementById('sameCloseTime').value=week.find(day=>day.enabled)?.close||'22:00';
-  document.getElementById('sameHoursError').hidden=true;
-}
-document.getElementById('btnSameHours').addEventListener('click',()=>{
-  temporaryClosePanel.hidden=true;
-  sameHoursPanel.hidden=!sameHoursPanel.hidden;
-  if(!sameHoursPanel.hidden)renderBulkDayOptions();
-});
-document.getElementById('btnCancelSameHours').addEventListener('click',()=>sameHoursPanel.hidden=true);
-document.getElementById('btnApplySameHours').addEventListener('click',()=>{
-  const opening=document.getElementById('sameOpenTime').value;
-  const closing=document.getElementById('sameCloseTime').value;
-  const selected=Array.from(document.querySelectorAll('[data-bulk-day]:checked')).map(node=>node.dataset.bulkDay);
-  const error=document.getElementById('sameHoursError');
-  if(!timeIsValid(opening)||!timeIsValid(closing)||opening===closing){
-    error.textContent='Oppgi to forskjellige klokkeslett i HH:mm-format.';error.hidden=false;return;
-  }
-  if(!selected.length){error.textContent='Velg minst én åpen dag.';error.hidden=false;return;}
-  const names=selected.map(id=>RESTAURANT_WEEKDAYS.find(d=>d.id===id)?.name).filter(Boolean).join(', ');
-  askConfirm('Bruke samme åpningstider?','Tidene '+opening+'–'+closing+' brukes på: '+names+'. Stengte dager endres ikke.',()=>{
-    mutate(state=>{
-      const week=getWeeklyHours(state.settings).map(day=>({...day}));
-      week.forEach(day=>{if(day.enabled&&selected.includes(day.id)){day.open=opening;day.close=closing;}});
-      state.settings.weeklyHours=week;
-    });
-    sameHoursPanel.hidden=true;
-    renderWeeklyHours(store.settings);renderStats();renderSettingsPreviewOnly();
-    toast('Åpningstidene oppdateres og lagres.');
-  });
-});
 document.getElementById('btnTemporaryClose').addEventListener('click',()=>{
   const settings=store.settings||{};
   const closed=settings.manualClosed===true
@@ -3023,7 +2983,6 @@ document.getElementById('btnTemporaryClose').addEventListener('click',()=>{
       temporaryClosePanel.hidden=true;renderStats();renderSettingsPreviewOnly();
     });return;
   }
-  sameHoursPanel.hidden=true;
   temporaryClosePanel.hidden=!temporaryClosePanel.hidden;
 });
 document.getElementById('btnCancelTemporaryClose').addEventListener('click',()=>temporaryClosePanel.hidden=true);
