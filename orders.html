@@ -287,7 +287,7 @@
   import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
 
   const firebaseConfig = {
-    databaseURL: "https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app"
+    databaseURL: "https://kol-grill-pizza-default-rtdb.firebaseio.com"
   };
 
   window.fbApp = initializeApp(firebaseConfig);
@@ -749,7 +749,7 @@ document.addEventListener("click", (e) => {
    FIREBASE FETCH
 =============================== */
 async function fetchOrder(i) {
-  const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/orders/${i}.json`;
+  const url = `https://kol-grill-pizza-default-rtdb.firebaseio.com/orders/${i}.json`;
 
   try {
     const r = await fetch(url);
@@ -769,7 +769,7 @@ async function fetchOrder(i) {
 
 async function fetchPizzaTotal(phone) {
   const digits = cleanPhoneDigits(phone);
-  const url = `https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app/${digits}/total.json`;
+  const url = `https://kol-grill-pizza-default-rtdb.firebaseio.com/${digits}/total.json`;
 
   try {
     const r = await fetch(url);
