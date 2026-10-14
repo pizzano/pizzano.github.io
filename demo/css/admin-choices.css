@@ -1,0 +1,72 @@
+
+/* Choices & addons – reference-matched, page-scoped, single source of truth. */
+#pageGroups{background:#f5f7fa}
+#pageGroups .page-head{padding:23px 28px 20px;background:transparent;border:0;align-items:center;gap:13px}
+#pageGroups .page-title h1{font-size:29px;font-weight:820;letter-spacing:-.04em;line-height:1.2;color:#182337}
+#pageGroups .page-title p{margin-top:5px;font-size:12px;color:#7b8ba5}
+#pageGroups .page-tools{gap:7px;justify-content:flex-end}
+#pageGroups .search-wrap .input{width:195px;height:43px;padding-left:37px;font-size:12px;background:#fff;border:1px solid #e0e7ee;border-radius:10px}
+#pageGroups .group-filter-chips{display:flex;align-items:center;gap:5px}
+#pageGroups .group-filter-chip{height:42px;padding:0 12px;border:1px solid transparent;border-radius:10px;background:#edf1f6;color:#516078;white-space:nowrap;font-size:12px;font-weight:650;cursor:pointer}
+#pageGroups .group-filter-chip.is-active{border-color:#ff8f50;background:#fff9f4;color:#f15d0e;font-weight:760}
+#pageGroups .group-filter-chip:hover{filter:brightness(.98)}
+#pageGroups .group-view-toggle{height:39px;border-radius:9px;background:#fff}
+#pageGroups .group-view-toggle .view-toggle-btn{width:31px;height:37px}
+#pageGroups .group-view-toggle .view-toggle-btn svg{width:15px;height:15px}
+#pageGroups .group-view-toggle .view-toggle-btn.is-active{background:#edf3f8;color:#344762}
+#pageGroups #btnNewGroup{height:44px;padding:0 15px;border-radius:10px;border:1px solid #f2670e;background:linear-gradient(#ff7824,#fc5d04);color:white;font-weight:740;font-size:12.5px;box-shadow:0 3px 0 #bc4805,0 8px 13px rgba(240,99,17,.13);transition:transform .13s,box-shadow .13s}
+#pageGroups #btnNewGroup:hover{transform:translateY(-1px);box-shadow:0 4px 0 #bc4805,0 9px 16px rgba(240,99,17,.16)}
+#pageGroups #btnNewGroup:active{transform:translateY(2px);box-shadow:0 1px 0 #bc4805}
+#pageGroups .group-library-scroll{padding:0 28px 28px;scrollbar-width:thin}
+#pageGroups .group-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+#pageGroups .group-grid.is-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))}
+#pageGroups .group-card{display:flex;flex-direction:column;min-width:0;gap:0;padding:0;border-radius:16px;overflow:hidden;background:#fff;border:1px solid #e7ecf4;box-shadow:0 3px 9px rgba(20,37,65,.035),0 11px 25px rgba(20,37,65,.06);transition:box-shadow .16s,border-color .16s}
+#pageGroups .group-card:hover{border-color:#d9e3ef;box-shadow:0 5px 12px rgba(20,37,65,.05),0 15px 29px rgba(20,37,65,.07)}
+#pageGroups .group-card.is-open{padding-bottom:14px}
+#pageGroups .group-card-head{display:grid;grid-template-columns:47px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:68px;padding:11px 20px}
+#pageGroups .group-expand-toggle{width:42px;height:42px;display:grid;place-items:center;padding:0;border:1px solid #e0e8ef;border-radius:50%;background:#f3f6fa;color:#223146;cursor:pointer}
+#pageGroups .group-expand-toggle svg{width:19px;height:19px;transition:transform .16s}
+#pageGroups .group-card.is-open .group-expand-toggle svg{transform:rotate(-90deg)}
+#pageGroups .group-heading-button{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0;text-align:left;border:0;background:transparent;padding:0;cursor:pointer}
+#pageGroups .group-card-name{font-size:17px;font-weight:790;line-height:1.2;color:#1a263b}
+#pageGroups .group-pills{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
+#pageGroups .group-pill{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:5px 12px;border-radius:9px;background:#edf2f8;color:#516381;font-size:12px;white-space:nowrap}
+#pageGroups .group-pill-required{background:#fff0e5;color:#f4600f;font-weight:700}
+#pageGroups .group-required-dot{width:12px;height:12px;border-radius:50%;background:#ff6710;box-shadow:inset 0 0 0 4px #ff6710,inset 0 0 0 5px white}
+#pageGroups .group-option-count{margin-left:8px;color:#8296b2;font-size:12px;white-space:nowrap}
+#pageGroups .group-card-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+#pageGroups .group-action{height:41px;min-width:101px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;border:1px solid #dfe6ee;border-radius:10px;background:#fff;color:#1b293b;font-size:12px;font-weight:750;box-shadow:0 2px 5px rgba(20,40,69,.04);cursor:pointer;transition:transform .12s,box-shadow .12s}
+#pageGroups .group-action svg{width:17px;height:17px;flex:none}
+#pageGroups .group-action:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(20,40,69,.1)}
+#pageGroups .group-action:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(20,40,69,.03)}
+#pageGroups .group-action-delete{min-width:92px;background:#fff0f1;border-color:#ffdade;color:#f02d3d}
+#pageGroups .group-card-detail{padding:3px 20px 0}
+#pageGroups .group-card-detail[hidden]{display:none!important}
+#pageGroups .group-option-table{border:1px solid #e6edf4;border-radius:11px;overflow:hidden;background:#fff}
+#pageGroups .group-option-table-head{display:grid;grid-template-columns:minmax(0,1fr) 165px 45px;min-height:40px;align-items:center;padding:0 15px 0 72px;background:#f1f4f8;color:#51617b;font-size:12px;font-weight:720}
+#pageGroups .group-option-line{display:grid;grid-template-columns:27px minmax(0,1fr) 165px 45px;align-items:center;gap:10px;min-height:55px;padding:0 15px 0 12px;border-top:1px solid #e8edf4}
+#pageGroups .group-option-line:hover{background:#fcfdff}
+#pageGroups .group-option-grip{display:grid;place-items:center;cursor:grab;user-select:none;color:#8296af;letter-spacing:-3px;font-size:18px}
+#pageGroups .group-option-grip:active{cursor:grabbing}
+#pageGroups .group-option-name{font-size:13px;color:#233047;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pageGroups .group-option-price{justify-self:start;min-width:80px;padding:7px 12px;border-radius:9px;background:#edf2f8;color:#5b6e89;font-size:12px;text-align:center;white-space:nowrap}
+#pageGroups .group-option-more{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#637995;cursor:pointer}
+#pageGroups .group-option-more svg{width:17px;height:17px}
+#pageGroups .group-option-more:hover{background:#eef3f8}
+#pageGroups .group-option-empty{padding:16px;color:#7989a2;font-size:12px}
+#pageGroups .group-add-alternative{display:flex;align-items:center;gap:14px;width:100%;min-height:53px;margin-top:10px;padding:0 22px;border:0;border-radius:10px;background:#fff0e6;color:#f15e0b;font-size:13.5px;font-weight:750;cursor:pointer;transition:background .12s,transform .12s}
+#pageGroups .group-add-alternative:hover{background:#ffe5d3}
+#pageGroups .group-add-alternative:active{transform:translateY(1px)}
+#pageGroups .group-add-dot{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#ff680f;color:#fff}
+#pageGroups .group-add-dot svg{width:16px;height:16px}
+html[data-theme="dark"] #pageGroups{background:var(--bg)}
+html[data-theme="dark"] #pageGroups .page-title h1,html[data-theme="dark"] #pageGroups .group-card-name,html[data-theme="dark"] #pageGroups .group-option-name{color:var(--ink)}
+html[data-theme="dark"] #pageGroups .search-wrap .input,html[data-theme="dark"] #pageGroups .group-card,html[data-theme="dark"] #pageGroups .group-action,html[data-theme="dark"] #pageGroups .group-option-table,html[data-theme="dark"] #pageGroups .group-option-line{background:var(--surface);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] #pageGroups .group-pill,html[data-theme="dark"] #pageGroups .group-filter-chip,html[data-theme="dark"] #pageGroups .group-expand-toggle,html[data-theme="dark"] #pageGroups .group-option-table-head,html[data-theme="dark"] #pageGroups .group-option-price{background:var(--surface-3);color:var(--ink-2);border-color:var(--line)}
+html[data-theme="dark"] #pageGroups .group-pill-required,html[data-theme="dark"] #pageGroups .group-add-alternative{background:#432d22;color:#ffb68b}
+html[data-theme="dark"] #pageGroups .group-filter-chip.is-active{border-color:#fe9d61;background:#4b2e20;color:#ffab73}
+html[data-theme="dark"] #pageGroups .group-action-delete{background:#45292d;color:#ff8b92;border-color:#793f48}
+@media(max-width:1500px){#pageGroups .page-head{gap:10px}#pageGroups .search-wrap .input{width:170px}#pageGroups .group-filter-chip{padding:0 9px}}
+@media(max-width:1180px){#pageGroups .page-head{padding:17px 17px 14px}#pageGroups .group-library-scroll{padding:0 17px 25px}#pageGroups .group-card-head{padding:10px 14px;gap:8px}#pageGroups .group-card-actions{gap:5px}#pageGroups .group-action{min-width:0;padding:0 9px}}
+@media(max-width:850px){#pageGroups .page-head{display:grid;gap:12px}#pageGroups .page-tools{justify-content:flex-start}#pageGroups .search-wrap{flex:1 1 100%}#pageGroups .search-wrap .input{width:100%}#pageGroups .group-card-head{grid-template-columns:40px minmax(0,1fr);grid-template-areas:"toggle main" "actions actions"}#pageGroups .group-expand-toggle{grid-area:toggle}#pageGroups .group-heading-button{grid-area:main}#pageGroups .group-card-actions{grid-area:actions;justify-content:flex-end}#pageGroups .group-pill{font-size:10px;padding:4px 8px;min-height:27px}}
+@media(max-width:540px){#pageGroups .page-head{padding:14px 11px 12px}#pageGroups .page-title h1{font-size:23px}#pageGroups .group-library-scroll{padding:0 10px 20px;overflow:visible}#pageGroups .group-filter-chips{gap:3px}#pageGroups .group-filter-chip{height:37px;padding:0 7px;font-size:10px}#pageGroups .group-card-head{padding:8px 10px}#pageGroups .group-card-name{font-size:14px}#pageGroups .group-option-count{font-size:10px}#pageGroups .group-action{height:35px;min-width:0;flex:1;padding:0 7px;font-size:11px}#pageGroups .group-card-actions .group-action svg{width:14px;height:14px}#pageGroups .group-card-detail{padding:0 9px}#pageGroups .group-option-table-head{grid-template-columns:minmax(0,1fr) 110px 20px;padding:0 7px 0 25px;font-size:10px}#pageGroups .group-option-line{grid-template-columns:16px minmax(0,1fr) 110px 24px;padding:0 6px;gap:5px}#pageGroups .group-option-name{font-size:11px}#pageGroups .group-option-price{min-width:0;padding:5px 7px;font-size:10px}#pageGroups .group-option-more{width:23px;height:30px}#pageGroups .group-add-alternative{padding:0 12px;min-height:46px;font-size:12px}}
