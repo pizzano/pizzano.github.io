@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-neon-icons103">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261014-settings-weekly108">
 </head>
 
 <body>
@@ -192,12 +193,19 @@
                 <header class="page-head">
                     <div class="page-title">
                         <h1>Restaurantinnstillinger</h1>
-                        <p>Velg en kategori under og endre bare det du trenger.</p>
+                        <p>Tilpass åpningstider, menyvisning og annen informasjon for din restaurant.</p>
                     </div>
+                    <div class="restaurant-settings-status">
+                        <span class="restaurant-settings-status-dot" id="restaurantStatusDot" aria-hidden="true"></span>
+                        <span><strong id="restaurantStatusTitle">Kontrollerer åpningstid…</strong><small id="restaurantStatusDetail">—</small></span>
+                    </div>
+                    <button class="btn btn-primary" id="btnSaveSettings" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h14l2 3v13H4zM7 4v7h10V4M7 20v-7h10v7"/></svg>
+                        Lagre endringer
+                    </button>
                 </header>
                 <nav class="settings-section-nav" id="settingsSectionNav" aria-label="Kategorier for restaurantinnstillinger">
                     <button class="settings-section-btn is-active" data-settings-section-tab="status" type="button">Åpen / stengt</button>
-                    <button class="settings-section-btn" data-settings-section-tab="hours" type="button">Åpningstider</button>
                     <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Hentetid</button>
                     <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
@@ -206,39 +214,82 @@
                 <div class="scroll-area settings-section-scroll">
                     <div class="settings-grid is-list is-sectioned" id="settingsGrid">
 
-                        <article class="set-card settings-section-card" data-settings-section="status">
-                            <h2>Åpen eller stengt</h2>
-                            <label class="toggle-row">
-                                <span class="toggle-body">
-                                    <strong>Steng bestillinger nå</strong>
-                                    <small>Kunden kan se menyen, men ikke sende bestilling.</small>
-                                </span>
-                                <input type="checkbox" id="sManualClosed" class="switch">
-                            </label>
-                            <div class="set-field">
-                                <label class="lbl" for="sClosedMessage">Melding når det er stengt</label>
-                                <input id="sClosedMessage" class="input" type="text" placeholder="F.eks. Vi åpner igjen kl. 14:00">
-                            </div>
-                            <p class="state-line" id="openStateLine">—</p>
-                        </article>
-
-                        <article class="set-card settings-section-card" data-settings-section="hours" hidden>
-                            <h2>Åpningstider</h2>
-                            <div class="field-grid">
-                                <div class="set-field">
-                                    <label class="lbl" for="sOpenTime">Åpner (bestilling)</label>
-                                    <input id="sOpenTime" class="input" type="time">
+                        <article class="set-card settings-section-card restaurant-hours-card" data-settings-section="status">
+                            <div class="restaurant-hours-header">
+                                <div>
+                                    <h2>Åpningstider</h2>
+                                    <p>Bestem når restauranten er åpen for bestilling.</p>
                                 </div>
-                                <div class="set-field">
-                                    <label class="lbl" for="sCloseTime">Stenger (bestilling)</label>
-                                    <input id="sCloseTime" class="input" type="time">
+                                <div class="restaurant-hours-actions">
+                                    <button class="restaurant-quick-btn" id="btnSameHours" type="button">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>
+                                        Samme tider alle dager
+                                    </button>
+                                    <button class="restaurant-quick-btn restaurant-quick-danger" id="btnTemporaryClose" type="button">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8v8M14 8v8"/></svg>
+                                        <span id="temporaryCloseLabel">Steng midlertidig</span>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="set-field">
-                                <label class="lbl" for="sOpeningDays">Åpningsdager (tekst til kunden)</label>
-                                <input id="sOpeningDays" class="input" type="text" placeholder="Mandag - Søndag">
+                            <div class="restaurant-inline-panel" id="sameHoursPanel" hidden>
+                                <div class="restaurant-inline-title"><strong>Samme åpningstider</strong><span>Kun åpne, valgte dager endres.</span></div>
+                                <div class="restaurant-bulk-fields">
+                                    <label>Åpner <input type="time" id="sameOpenTime" step="60" value="10:00"></label>
+                                    <label>Stenger <input type="time" id="sameCloseTime" step="60" value="22:00"></label>
+                                </div>
+                                <div class="restaurant-bulk-days" id="sameHoursDays"></div>
+                                <p class="restaurant-form-error" id="sameHoursError" role="alert" hidden></p>
+                                <div class="restaurant-inline-actions">
+                                    <button class="btn btn-primary" id="btnApplySameHours" type="button">Bruk tidene</button>
+                                    <button class="btn btn-outline" id="btnCancelSameHours" type="button">Avbryt</button>
+                                </div>
+                            </div>
+                            <div class="restaurant-inline-panel" id="temporaryClosePanel" hidden>
+                                <strong>Steng nettbestilling midlertidig</strong>
+                                <p>Ukeplanen beholdes. Restauranten åpnes automatisk når perioden er over, innenfor åpningstiden.</p>
+                                <label for="temporaryCloseDuration">Åpne igjen etter</label>
+                                <select id="temporaryCloseDuration" class="input">
+                                    <option value="0">Manuelt (til jeg åpner igjen)</option>
+                                    <option value="30">30 minutter</option>
+                                    <option value="60">1 time</option>
+                                    <option value="120">2 timer</option>
+                                    <option value="240">4 timer</option>
+                                    <option value="480">8 timer</option>
+                                    <option value="1440">24 timer</option>
+                                </select>
+                                <div class="restaurant-inline-actions">
+                                    <button class="btn btn-primary" id="btnApplyTemporaryClose" type="button">Bekreft stenging</button>
+                                    <button class="btn btn-outline" id="btnCancelTemporaryClose" type="button">Avbryt</button>
+                                </div>
+                            </div>
+                            <div class="restaurant-schedule" role="table" aria-label="Åpningstider for nettbestilling">
+                                <div class="restaurant-schedule-head" role="row">
+                                    <span role="columnheader">Dag</span>
+                                    <span role="columnheader">Åpen</span>
+                                    <span role="columnheader">Åpner (bestilling)</span>
+                                    <span role="columnheader">Stenger (bestilling)</span>
+                                </div>
+                                <div id="weeklyHoursRows" class="restaurant-schedule-rows" role="rowgroup"></div>
+                            </div>
+                            <div class="restaurant-hours-footer">
+                                <p class="state-line" id="openStateLine">—</p>
+                                <div class="restaurant-closed-message">
+                                    <label class="lbl" for="sClosedMessage">Melding når det er stengt</label>
+                                    <input id="sClosedMessage" class="input" type="text" placeholder="F.eks. Vi åpner igjen kl. 14:00">
+                                </div>
+                            </div>
+                            <p class="restaurant-form-error" id="weeklyHoursError" role="alert" hidden></p>
+                            <div class="restaurant-legacy-hours" hidden aria-hidden="true">
+                                <input id="sManualClosed" type="checkbox">
+                                <input id="sOpenTime" type="time">
+                                <input id="sCloseTime" type="time">
+                                <input id="sOpeningDays" type="text">
                             </div>
                         </article>
+                        <div class="restaurant-info-note" data-settings-section="status">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg>
+                            Endringer i åpningstider gjelder for nettbestilling.
+                        </div>
 
                         <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
                             <h2>Hentetid</h2>
@@ -723,7 +774,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-choices-accordion107"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261014-settings-weekly108"></script>
 </body>
 
 </html>
