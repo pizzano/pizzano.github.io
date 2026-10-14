@@ -94,3 +94,6 @@ exports.smsOnOrderStatus = onValueUpdated({
     logger.error('SMS notification failed', { kind, orderId, error: error.message });
   }
 });
+
+// Independent customer e-mail notification function; SMS remains unchanged.
+exports.emailOnOrderStatus = require('./email.js').emailOnOrderStatus;
