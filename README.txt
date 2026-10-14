@@ -5,7 +5,7 @@ Dosyalar:
 - gavekort-admin.html
 
 Firebase:
-- databaseURL: https://kol-grill-pizza-default-rtdb.firebaseio.com
+- databaseURL: https://bestill-pizza-default-rtdb.europe-west1.firebasedatabase.app
 - ana dizin: gavekort
 - işlem geçmişi: gavekort_logg
 
