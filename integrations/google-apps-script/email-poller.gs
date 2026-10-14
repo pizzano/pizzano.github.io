@@ -3,7 +3,7 @@
  * SMS code is not used. No publicly readable Firebase rules required.
  * Uses the Google account authorized in Apps Script to read Firebase.
  */
-const KOL_DB = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
+const KOL_DB = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
 const KOL_MAX_ORDER_AGE_MS = 48 * 60 * 60 * 1000;
 const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 
