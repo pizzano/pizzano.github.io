@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-neon-icons103">
+    <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-reference105">
 </head>
 
 <body>
@@ -83,10 +84,6 @@
                         <p id="productsSummary">—</p>
                     </div>
                     <div class="page-tools">
-                        <button class="btn btn-outline" id="btnImportMenu" type="button">Importer meny-JSON</button>
-                        <button class="btn btn-outline" id="btnExportMenu" type="button">Eksporter meny-JSON</button>
-                        <input id="menuImportFile" type="file" accept=".json,application/json" hidden>
-                        <div id="menuImportPreview" class="card" hidden><p id="menuImportSummary"></p><button class="btn btn-primary" id="btnApplyMenuImport" type="button">Importer denne menyen</button><button class="btn btn-outline" id="btnCancelMenuImport" type="button">Avbryt</button></div>
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
                             <input id="productSearch" class="input" type="search" placeholder="Søk i produkter…" autocomplete="off">
@@ -100,7 +97,11 @@
                     </div>
                 </header>
                 <div class="stat-row" id="statRow"></div>
-                <div class="scroll-area">
+                <div class="dashboard-category-head">
+                    <h2>Kategorier</h2>
+                    <span class="dashboard-order-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v15m0-15L5 7m3-3 3 3m5 13V5m0 15-3-3m3 3 3-3"/></svg>Dra for å endre rekkefølge</span>
+                </div>
+                <div class="scroll-area dashboard-categories-scroll">
                     <div id="categoryList" class="cat-list"></div>
                 </div>
             </section>
@@ -253,6 +254,26 @@
                         <article class="set-card settings-section-card" data-settings-section="menu" hidden>
                             <h2>Menyvisning</h2>
                             <p class="set-hint">Kundemenyen bruker én kompakt mobilvisning på alle enheter.</p>
+                            <div class="menu-json-settings">
+                                <h3>Importer eller eksporter menyen</h3>
+                                <p class="set-hint">Ta en sikkerhetskopi eller importer kategorier og produkter. Import erstatter menyen, men beholder bestillinger og pizzabonus.</p>
+                                <div class="menu-json-actions">
+                                    <button class="btn btn-outline menu-json-btn" id="btnImportMenu" type="button">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 11l5 5 5-5M4 17v3h16v-3"/></svg>Importer meny-JSON
+                                    </button>
+                                    <button class="btn btn-outline menu-json-btn" id="btnExportMenu" type="button">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m-5-5 5 5 5-5M4 17v3h16v-3"/></svg>Eksporter meny-JSON
+                                    </button>
+                                    <input id="menuImportFile" type="file" accept=".json,application/json" hidden>
+                                </div>
+                                <div id="menuImportPreview" class="menu-json-preview card" hidden>
+                                    <p id="menuImportSummary"></p>
+                                    <div class="menu-json-preview-actions">
+                                        <button class="btn btn-primary" id="btnApplyMenuImport" type="button">Importer denne menyen</button>
+                                        <button class="btn btn-outline" id="btnCancelMenuImport" type="button">Avbryt</button>
+                                    </div>
+                                </div>
+                            </div>
                         </article>
 
                         <article class="set-card interface-control-card settings-section-card" data-settings-section="interface" hidden>
@@ -697,7 +718,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-neon-icons103"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261014-admin-reference105"></script>
 </body>
 
 </html>
