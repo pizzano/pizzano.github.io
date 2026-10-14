@@ -423,6 +423,10 @@ function activeCustomerOrders() {
 }
 
 
+function isEstimatedPickupTimeReached(order) {
+  return ['bekreftet', 'tilberedning'].includes(order?.status) && Number(order?.estimatedReadyAt) > 0 && Number(order.estimatedReadyAt) <= Date.now();
+}
+
 function customerOrderCountdown(order) {
   const readyAt = Number(order?.estimatedReadyAt) || 0;
   if (!readyAt) return '';
@@ -437,8 +441,9 @@ function customerOrderCountdown(order) {
 function activeOrderCardHtml(order) {
   const rejectedNow = order.status === 'avvist';
   const readyNow = order.status === 'klar';
+  const estimatedReadyNow = !readyNow && isEstimatedPickupTimeReached(order);
   const confirmedNow = ['bekreftet', 'tilberedning'].includes(order.status);
-  const progressStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
+  const progressStatus = estimatedReadyNow ? 'klar' : (order.status === 'tilberedning' ? 'bekreftet' : order.status);
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === progressStatus);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
@@ -460,7 +465,7 @@ function activeOrderCardHtml(order) {
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
-    const checked = complete || (readyNow && current);
+    const checked = complete || ((readyNow || estimatedReadyNow) && current);
     return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${checked ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
   }).join('');
 
@@ -475,7 +480,7 @@ function activeOrderCardHtml(order) {
             <small>Bestillingen din er klar.</small>
           </div>
         </div>`;
-    } else if (hasLiveEstimate && Number(order.estimatedReadyAt) <= Date.now()) {
+    } else if (estimatedReadyNow) {
       statusPanel = `<div class="active-order-status-box is-confirmed is-text"><strong>Maten er klar for henting</strong></div>`;
     } else if (hasLiveEstimate) {
       statusPanel = `
@@ -588,12 +593,9 @@ function refreshCustomerOrderCountdowns() {
     const order = byId.get(node.dataset.customerCountdown);
     if (!order) return;
     const countdown = customerOrderCountdown(order);
-    if (Number(order.estimatedReadyAt) > 0 && Number(order.estimatedReadyAt) <= Date.now()) {
-      const box = node.closest('.active-order-status-box');
-      if (box) {
-        box.classList.add('is-text');
-        box.textContent = 'Maten er klar for henting';
-      }
+    if (isEstimatedPickupTimeReached(order)) {
+      renderActiveCustomerOrders();
+      return;
     } else {
       node.textContent = countdown || '';
     }
