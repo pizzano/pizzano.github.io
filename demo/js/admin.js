@@ -969,6 +969,9 @@ function renderPanel() {
           } alternativer</span>
           <small>${(item.optionGroupIds || []).includes(group.id) ? 'Alle størrelser' : escapeHtml((item.sizes || []).filter(size => (size.optionGroupIds || []).includes(group.id)).map(size => size.label).join(', '))} · Brukes av ${countProductsUsingGroup(group.id)} produkter</small>
         </div>
+        <div class="group-size-picker" aria-label="Velg størrelser">
+          ${(item.sizes || []).map(size => `<label class="group-size-choice"><input type="checkbox" data-group-size="${escapeHtml(group.id)}" data-size-id="${escapeHtml(size.id)}" ${((item.optionGroupIds || []).includes(group.id) || (size.optionGroupIds || []).includes(group.id)) ? 'checked' : ''}><span>${escapeHtml(size.label || 'Standard')}</span></label>`).join('')}
+        </div>
         <button class="btn btn-outline btn-xs" data-edit-group="${escapeHtml(
           group.id
         )}" type="button">Rediger</button>
@@ -1308,6 +1311,25 @@ function finishGroupDrag(event) {
 el.attachedGroups.addEventListener('pointerup', finishGroupDrag);
 el.attachedGroups.addEventListener('pointercancel', finishGroupDrag);
 
+el.attachedGroups.addEventListener('change', event => {
+  const checkbox = event.target.closest('[data-group-size]');
+  if (!checkbox) return;
+  const groupId = checkbox.dataset.groupSize;
+  updateItem(item => {
+    if ((item.optionGroupIds || []).includes(groupId)) {
+      item.optionGroupIds = item.optionGroupIds.filter(id => id !== groupId);
+      for (const size of item.sizes || []) {
+        size.optionGroupIds ||= [];
+        if (!size.optionGroupIds.includes(groupId)) size.optionGroupIds.push(groupId);
+      }
+    }
+    const size = (item.sizes || []).find(entry => entry.id === checkbox.dataset.sizeId);
+    if (!size) return;
+    size.optionGroupIds ||= [];
+    size.optionGroupIds = checkbox.checked ? [...new Set([...size.optionGroupIds, groupId])] : size.optionGroupIds.filter(id => id !== groupId);
+  }, {rerenderPanel:true});
+  toast('Størrelsene for valggruppen er lagret.');
+});
 el.attachedGroups.addEventListener('click', (event) => {
   const move = event.target.closest('[data-move-group]');
   if (move) {
@@ -1640,49 +1662,40 @@ el.groupViewBtns.forEach(button=>{
 el.btnNewGroup.addEventListener('click',()=>openEditor(null));
 
 function renderLibraryModal() {
-  const { item } = selectedItem();
-  const attached = new Set((item && item.optionGroupIds) || []);
+  const {item} = selectedItem();
   const groups = store.optionGroups || [];
-  el.libraryList.innerHTML = groups.length
-    ? groups
-        .map(
-          (group) => `
-      <div class="lib-row">
-        <div class="lib-main">
-          <strong>${escapeHtml(group.title || 'Uten navn')}</strong>
-          <span>${
-            group.selectionMode === 'multiple'
-              ? `Flere valg · maks ${group.maxSelections}`
-              : 'Ett valg'
-          } · ${(group.options || []).length} alternativer · brukes av ${countProductsUsingGroup(
-            group.id
-          )}</span>
-        </div>
-        ${
-          attached.has(group.id)
-            ? '<span class="pill pill-ok">Lagt til</span>'
-            : `<button class="btn btn-primary btn-xs" data-attach="${escapeHtml(
-                group.id
-              )}" type="button">Legg til</button>`
-        }
-      </div>`
-        )
-        .join('')
-    : '<p class="cat-empty">Biblioteket er tomt. Lag en ny valggruppe.</p>';
+  const attached = new Set(getItemOptionGroups(item, '*').map(group => group.id));
+  el.libraryList.innerHTML = groups.length ? groups.map(group => `
+    <div class="lib-row group-library-row">
+      <div class="lib-main"><strong>${escapeHtml(group.title || 'Uten navn')}</strong>
+        <span>${group.selectionMode === 'multiple' ? 'Flere valg' : 'Ett valg'} · ${(group.options || []).length} alternativer</span>
+        <div class="group-size-picker">${(item?.sizes || []).map(size => `<label class="group-size-choice"><input type="checkbox" data-library-size="${escapeHtml(group.id)}" data-size-id="${escapeHtml(size.id)}" ${((item.optionGroupIds || []).includes(group.id) || (size.optionGroupIds || []).includes(group.id)) ? 'checked' : ''}><span>${escapeHtml(size.label || 'Standard')}</span></label>`).join('')}</div>
+      </div>
+      ${attached.has(group.id) ? '<span class="pill pill-ok">Lagt til</span>' : '<span class="pill">Velg størrelse</span>'}
+    </div>`).join('') : '<p class="cat-empty">Biblioteket er tomt. Lag en ny valggruppe.</p>';
 }
-
-el.libraryList.addEventListener('click', (event) => {
-  const attach = event.target.closest('[data-attach]');
-  if (!attach || !attachTargetItemId) return;
-  const groupId = attach.dataset.attach;
+el.libraryList.addEventListener('change', event => {
+  const checkbox = event.target.closest('[data-library-size]');
+  if (!checkbox || !attachTargetItemId) return;
+  const groupId = checkbox.dataset.librarySize;
   mutate(() => {
-    const { item } = findItem(attachTargetItemId);
+    const {item} = findItem(attachTargetItemId);
     if (!item) return;
-    if (!item.optionGroupIds.includes(groupId)) item.optionGroupIds.push(groupId);
+    if ((item.optionGroupIds || []).includes(groupId)) {
+      item.optionGroupIds = item.optionGroupIds.filter(id => id !== groupId);
+      for (const size of item.sizes || []) {
+        size.optionGroupIds ||= [];
+        if (!size.optionGroupIds.includes(groupId)) size.optionGroupIds.push(groupId);
+      }
+    }
+    const size = (item.sizes || []).find(entry => entry.id === checkbox.dataset.sizeId);
+    if (!size) return;
+    size.optionGroupIds ||= [];
+    size.optionGroupIds = checkbox.checked ? [...new Set([...size.optionGroupIds, groupId])] : size.optionGroupIds.filter(id => id !== groupId);
   });
   renderPanel();
   renderLibraryModal();
-  toast('Valggruppen er lagt til produktet.');
+  toast('Valggruppen er oppdatert for valgt størrelse.');
 });
 
 el.btnNewGroupFromModal.addEventListener('click', () => {
