@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261014-settings-weekly108">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
+    <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-group111">
 </head>
 
 <body>
@@ -586,60 +587,32 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
         </header>
-        <div class="modal-body">
-            <div class="set-field">
+        <div class="modal-body group-editor-body">
+            <section class="group-editor-card">
+                <h3>Grunnleggende</h3>
                 <label class="lbl" for="gTitle">Navn på valggruppen</label>
                 <input id="gTitle" class="input" type="text" placeholder="F.eks. Velg saus">
-            </div>
-
-            <div class="set-field">
-                <span class="lbl">Hvor mange kan kunden velge?</span>
+            </section>
+            <section class="group-editor-card">
+                <h3>Valgtype</h3>
+                <p class="group-editor-subtitle">Hvor mange kan kunden velge?</p>
                 <div class="mode-row">
-                    <label class="mode-card">
-                        <input type="radio" name="gMode" value="single" id="gModeSingle">
-                        <span>
-                            <strong>Ett valg</strong>
-                            <small>Kunden velger nøyaktig ett alternativ, f.eks. én saus.</small>
-                        </span>
-                    </label>
-                    <label class="mode-card">
-                        <input type="radio" name="gMode" value="multiple" id="gModeMultiple">
-                        <span>
-                            <strong>Flere valg</strong>
-                            <small>Kunden kan krysse av flere, f.eks. ekstra topping.</small>
-                        </span>
-                    </label>
+                    <label class="mode-card"><input type="radio" name="gMode" value="single" id="gModeSingle"><span><strong>Ett valg</strong><small>Kunden velger ett alternativ, f.eks. én saus.</small></span></label>
+                    <label class="mode-card"><input type="radio" name="gMode" value="multiple" id="gModeMultiple"><span><strong>Flere valg</strong><small>Kunden kan velge flere alternativer.</small></span></label>
                 </div>
-            </div>
-
-            <div class="set-field">
-                <span class="lbl">Alternativer</span>
-                <div class="opt-head-row">
-                    <span>Start</span>
-                    <span>Alternativ</span>
-                    <span>+ pris</span>
-                    <span></span>
-                </div>
+                <div class="set-field" id="gMaxWrap" hidden><label class="lbl" for="gMax">Maks antall kunden kan velge</label><input id="gMax" class="input input-narrow" type="number" min="1" step="1" placeholder="3"></div>
+            </section>
+            <section class="group-editor-card">
+                <h3>Alternativer</h3>
+                <div class="opt-head-row"><span>Start</span><span>Alternativ</span><span>+ pris</span><span></span></div>
                 <div id="gOptionRows" class="opt-rows-edit"></div>
                 <button class="btn btn-outline btn-sm" id="btnAddOption" type="button">+ Legg til alternativ</button>
                 <p class="set-hint">«Start» er alternativet som er forhåndsvalgt når kunden åpner produktet.</p>
-            </div>
-
-            <div class="set-field">
-                <label class="toggle-row">
-                    <span class="toggle-body">
-                        <strong>Obligatorisk valg</strong>
-                        <small>Kunden må velge her før varen kan legges i handlekurven.</small>
-                    </span>
-                    <input type="checkbox" id="gRequired" class="switch">
-                </label>
-            </div>
-
-            <div class="set-field" id="gMaxWrap" hidden>
-                <label class="lbl" for="gMax">Maks antall kunden kan velge</label>
-                <input id="gMax" class="input input-narrow" type="number" min="1" step="1" placeholder="3">
-            </div>
-
+            </section>
+            <section class="group-editor-card">
+                <h3>Regler</h3>
+                <label class="toggle-row"><span class="toggle-body"><strong>Obligatorisk valg</strong><small>Kunden må velge her før varen kan legges i handlekurven.</small></span><input type="checkbox" id="gRequired" class="switch"></label>
+            </section>
             <p class="modal-err" id="editorErr" hidden></p>
         </div>
         <footer class="modal-foot modal-foot-split">
