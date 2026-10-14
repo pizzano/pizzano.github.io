@@ -130,6 +130,7 @@ function kolBuildReceipt_(order, kind) {
     : 'Bestillingen din er nå markert som klar av restauranten. Du kan hente maten.';
   const total = kolKr_(order.total);
   const subtotal = kolKr_(order.subtotal == null ? order.total : order.subtotal);
+  const mvaIncluded = kolKr_((Number(order.total) || 0) * 15 / 115);
   const html =
     '<!doctype html><html lang="no"><body style="margin:0;padding:20px 10px;background:#f3f6f8;font-family:Arial,Helvetica,sans-serif;color:#1c293b;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:620px;margin:auto;border-collapse:collapse;background:#ffffff;border:1px solid #e6ebf0;border-radius:14px;">' +
@@ -150,7 +151,8 @@ function kolBuildReceipt_(order, kind) {
     (rows || '<tr><td style="padding:16px;">Ingen produktlinjer lagret.</td></tr>') +
     '<tr><td style="padding:12px 16px;color:#6c7788;font-size:12px;">Delsum</td><td align="right" style="padding:12px 16px;white-space:nowrap;font-size:13px;">' +
     safe(subtotal) + '</td></tr>' +
-    '<tr><td style="padding:14px 16px;background:#edf7f0;font-size:15px;font-weight:800;">Totalt</td>' +
+    '<tr><td style="padding:9px 16px;color:#6c7788;font-size:12px;">Herav MVA (15 %)</td><td align="right" style="padding:9px 16px;white-space:nowrap;font-size:13px;">' + safe(mvaIncluded) + '</td></tr>' +
+    '<tr><td style="padding:14px 16px;background:#edf7f0;font-size:15px;font-weight:800;">Totalt å betale</td>' +
     '<td align="right" style="padding:14px 16px;background:#edf7f0;white-space:nowrap;font-size:16px;font-weight:800;">' +
     safe(total) + '</td></tr></table></td></tr>' +
     (kolPlain_(order.comment) ? '<tr><td style="padding:12px 22px;font-size:12px;color:#4b596c;"><b>Kommentar til bestillingen:</b> ' + safe(order.comment) + '</td></tr>' : '') +
@@ -163,7 +165,7 @@ function kolBuildReceipt_(order, kind) {
     '\n\n' + info.map(function(row){return row.join(': ');}).join('\n') +
     '\n\nRestaurantens adresse: Øgardsvegen 44, 2100 Skarnes' +
     '\n\nDine bestillingsdetaljer:\n' + detailText +
-    '\n\nDelsum: ' + subtotal + '\nTotalt: ' + total +
+    '\n\nDelsum: ' + subtotal + '\nHerav MVA (15 %): ' + mvaIncluded + '\nTotalt å betale: ' + total +
     '\n\nHilsen KØL Grill & Pizza\nskarnes.restaurant@gmail.com';
   return {html:html,text:text,subject:(accepted ? 'Bestilling bekreftet' : 'Klar for henting') + ' #' + ref + ' – KØL Grill & Pizza'};
 }
