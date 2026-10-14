@@ -10,7 +10,7 @@
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261014-detailheading96">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-telefon-lys102">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-neon-icons103">
 </head>
 
 <body>
@@ -138,20 +138,27 @@
                         <h1>Bestillinger</h1>
                         <p id="ordersSummary" hidden>—</p>
                     </div>
-                    <div class="orders-top-actions">
-                        <span class="orders-live-label" id="ordersConnection" role="status"></span>
-                        <span class="orders-sms-indicator is-pending" id="ordersSmsStatus" role="status" aria-live="polite" title="Traccar-testen fungerte, men automatisk SMS fra bestillinger er ikke koblet til ennå">
-                          <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h7"/></svg>
-                          <i class="orders-sms-dot" aria-hidden="true"></i>
-                          <span data-sms-status-text>SMS ikke aktiv</span>
-                        </span>
-                        <span class="orders-phone-indicator is-unknown" id="ordersPhoneStatus" role="status" aria-live="polite" title="Ingen nyere signal fra Samsung">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/></svg>
-                          <i class="orders-phone-dot" aria-hidden="true"></i>
-                          <span data-phone-text>Mobil: ukjent</span>
-                        </span>
-                        <button class="btn btn-outline btn-sm" id="btnOrderSound" type="button" aria-pressed="true">Lyd på</button>
-                        <button class="btn btn-outline btn-sm" id="btnRefreshOrders" type="button"><svg class="orders-tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.8 9a7 7 0 0 1 11.7-2L20 12M4 12l2.5 5a7 7 0 0 0 11.7-2"/></svg><span>Oppdater</span></button>
+                    <div class="orders-top-actions orders-lightbar" aria-label="Bestillingssystem – status og kontroller">
+                        <button class="orders-light orders-light-net is-on" id="ordersConnection" type="button" aria-label="Nettforbindelse" title="Nettstatus (nettleser og Firebase)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.4 8.7c5.7-5.1 13.5-5.1 19.2 0M5.7 12.2c3.7-3.3 8.9-3.3 12.6 0M9 15.7c1.8-1.5 4.2-1.5 6 0"/><circle cx="12" cy="19.2" r="1.05" fill="currentColor" stroke="none"/></svg>
+                          <span class="orders-light-tooltip" data-light-net-text>Kontrollerer nettforbindelsen…</span>
+                        </button>
+                        <button class="orders-light orders-sms-indicator is-pending" id="ordersSmsStatus" type="button" aria-label="SMS-tjeneste – kontrollerer" title="SMS-tjenestens status">
+                          <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h8M8 13h5"/></svg>
+                          <span class="orders-light-tooltip" data-sms-status-text>SMS – sjekker status</span>
+                        </button>
+                        <button class="orders-light orders-phone-manual is-manual" id="ordersPhoneStatus" type="button" aria-label="Telefon: manuell kontroll" title="Telefon: Batteri og internett sjekkes manuelt av personalet">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.7" width="11" height="18.6" rx="2.2"/><path d="M11.2 18h1.6"/></svg>
+                          <span class="orders-light-tooltip">Mobil: Sjekk batteri og internett selv. Ingen automatisk overvåking.</span>
+                        </button>
+                        <button class="orders-light orders-light-sound" id="btnOrderSound" type="button" aria-pressed="true" aria-label="Bestillingslyd på" title="Bestillingslyd">
+                          <svg class="orders-tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+                          <span class="orders-light-tooltip">Bestillingslyd er på · trykk for å slå av</span>
+                        </button>
+                        <button class="orders-light orders-light-refresh" id="btnRefreshOrders" type="button" aria-label="Oppdater bestillinger" title="Oppdater bestillinger">
+                          <svg class="orders-tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.8 9a7 7 0 0 1 11.7-2L20 12M4 12l2.5 5a7 7 0 0 0 11.7-2"/></svg>
+                          <span class="orders-light-tooltip">Oppdater bestillinger · trykk for å laste ny status</span>
+                        </button>
                     </div>
                 </header>
                 <div id="orderStatRow" hidden></div>
@@ -690,7 +697,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-telefon-lys102"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261014-neon-icons103"></script>
 </body>
 
 </html>
