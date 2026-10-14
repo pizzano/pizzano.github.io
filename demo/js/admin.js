@@ -955,10 +955,10 @@ function renderPanel() {
     ? groups
         .map(
           (group) => `
-      <div class="attached-row" data-attached-group="${escapeHtml(group.id)}">
+      <div class="attached-row choice-group-card" data-attached-group="${escapeHtml(group.id)}">
         <button type="button" class="icon-btn group-drag-handle" aria-label="Dra for å flytte ${escapeHtml(group.title)}" title="Dra for å endre rekkefølgen">⠿</button>
         <div class="group-move-buttons"><button type="button" class="icon-btn" data-move-group="${escapeHtml(group.id)}" data-direction="-1" aria-label="Flytt opp">↑</button><button type="button" class="icon-btn" data-move-group="${escapeHtml(group.id)}" data-direction="1" aria-label="Flytt ned">↓</button></div>
-        <div class="attached-main">
+        <div class="attached-main choice-group-info">
           <strong>${escapeHtml(group.title || 'Uten navn')}</strong>
           <span>${
             group.selectionMode === 'multiple'
@@ -969,12 +969,12 @@ function renderPanel() {
           } alternativer</span>
           <small>${(item.optionGroupIds || []).includes(group.id) ? 'Alle størrelser' : escapeHtml((item.sizes || []).filter(size => (size.optionGroupIds || []).includes(group.id)).map(size => size.label).join(', '))} · Brukes av ${countProductsUsingGroup(group.id)} produkter</small>
         </div>
-        <div class="group-size-picker" aria-label="Velg størrelser">
+        <div class="group-size-picker choice-group-sizes" aria-label="Velg størrelser">
           ${(item.sizes || []).map(size => `<label class="group-size-choice"><input type="checkbox" data-group-size="${escapeHtml(group.id)}" data-size-id="${escapeHtml(size.id)}" ${((item.optionGroupIds || []).includes(group.id) || (size.optionGroupIds || []).includes(group.id)) ? 'checked' : ''}><span>${escapeHtml(size.label || 'Standard')}</span></label>`).join('')}
         </div>
         <button class="btn btn-outline btn-xs" data-edit-group="${escapeHtml(
           group.id
-        )}" type="button">Rediger</button>
+        )}" type="button">✎ &nbsp; Rediger</button>
         <button class="icon-btn is-danger" data-detach-group="${escapeHtml(
           group.id
         )}" type="button" aria-label="Fjern fra produktet" title="Fjern fra produktet">
