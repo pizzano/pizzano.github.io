@@ -778,6 +778,7 @@ el.categoryList.addEventListener('click', (event) => {
   if (itemId && !event.target.closest('[data-drag-item]')) {
     ui.selectedItemId = itemId;
     ui.activeChip = 'produkt';
+    ui.activeChip = 'produkt';
     if (row?.dataset.section) ui.focusedCategoryId = row.dataset.section;
     renderCategories();
     renderPanel();
@@ -808,6 +809,7 @@ function createProduct(sectionId) {
   ui.openCategoryId = sectionId;
   ui.focusedCategoryId = sectionId;
   ui.selectedItemId = newId;
+  ui.activeChip = 'produkt';
   ui.activeChip = 'produkt';
   renderCategories();
   renderPanel();
@@ -1380,6 +1382,7 @@ el.btnDuplicateProduct.addEventListener('click', () => {
     target.items.splice(index + 1, 0, copy);
   });
   ui.selectedItemId = copyId;
+  ui.activeChip = 'produkt';
   renderCategories();
   renderPanel();
   toast('Produktet er kopiert som skjult.');
@@ -1417,91 +1420,57 @@ el.btnCloseSettings.addEventListener('click', closeProductEditor);
 el.productEditorBackdrop.addEventListener('click', closeProductEditor);
 
 /* ------------------------------------------------------------------ *
- * Scroll-spy i høyre panel
+ * Produktmodal: én aktiv fane, øvrige paneler forblir i DOM
  * ------------------------------------------------------------------ */
-
-let chipScrollLock = null;
-
 function editorSectionNodes() {
   return Array.from(el.settingsScroll.querySelectorAll('.set-section[data-section]'));
 }
-
-function centerActiveEditorChip(name, behavior = 'smooth') {
-  const chip = el.chipNav.querySelector(`[data-chip="${CSS.escape(name)}"]`);
+function centerActiveEditorChip(name, behavior = 'auto') {
+  const chip = [...el.chipNav.querySelectorAll('[data-chip]')].find(node => node.dataset.chip === name);
   if (!chip) return;
-  const targetLeft = chip.offsetLeft - (el.chipNav.clientWidth - chip.offsetWidth) / 2;
-  const maxLeft = Math.max(0, el.chipNav.scrollWidth - el.chipNav.clientWidth);
-  el.chipNav.scrollTo({
-    left: Math.max(0, Math.min(targetLeft, maxLeft)),
-    behavior,
-  });
+  chip.scrollIntoView({block: 'nearest', inline: 'nearest', behavior});
 }
-
-function scrollEditorToSection(name, behavior = 'smooth') {
-  const target = editorSectionNodes().find((node) => node.dataset.section === name);
-  if (!target) return;
-
-  if (chipScrollLock) clearTimeout(chipScrollLock);
-  setActiveChip(name);
-  centerActiveEditorChip(name, behavior);
-
-  const scrollerRect = el.settingsScroll.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  const targetTop =
-    el.settingsScroll.scrollTop + targetRect.top - scrollerRect.top - 8;
-
-  el.settingsScroll.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior,
-  });
-
-  chipScrollLock = setTimeout(() => {
-    chipScrollLock = null;
-    setActiveChip(name);
-  }, behavior === 'smooth' ? 550 : 0);
-}
-
-el.chipNav.addEventListener('click', (event) => {
-  const chip = event.target.closest('[data-chip]');
-  if (!chip) return;
-  scrollEditorToSection(chip.dataset.chip);
-});
-
 function setActiveChip(name) {
-  ui.activeChip = name;
-  el.chipNav.querySelectorAll('.chip').forEach((chip) => {
-    const on = chip.dataset.chip === name;
-    chip.classList.toggle('is-active', on);
-    chip.setAttribute('aria-selected', String(on));
+  const valid = editorSectionNodes().some(node => node.dataset.section === name);
+  const activeName = valid ? name : 'produkt';
+  ui.activeChip = activeName;
+  el.chipNav.querySelectorAll('[data-chip]').forEach(chip => {
+    const active = chip.dataset.chip === activeName;
+    chip.classList.toggle('is-active', active);
+    chip.setAttribute('aria-selected', String(active));
+    chip.tabIndex = active ? 0 : -1;
   });
-
-  editorSectionNodes().forEach((section) => {
-    section.classList.toggle('is-focus-target', section.dataset.section === name);
+  editorSectionNodes().forEach(panel => {
+    const active = panel.dataset.section === activeName;
+    panel.hidden = !active;
+    panel.classList.toggle('is-active', active);
   });
+  el.settingsScroll.scrollTop = 0;
 }
-
-el.settingsScroll.addEventListener(
-  'scroll',
-  () => {
-    if (chipScrollLock) return;
-    const nodes = editorSectionNodes();
-    if (!nodes.length) return;
-
-    const scrollerTop = el.settingsScroll.getBoundingClientRect().top;
-    const line = scrollerTop + 28;
-    let current = nodes[0];
-
-    for (const node of nodes) {
-      if (node.getBoundingClientRect().top <= line) current = node;
-    }
-
-    if (current) {
-      setActiveChip(current.dataset.section);
-      centerActiveEditorChip(current.dataset.section, 'auto');
-    }
-  },
-  { passive: true }
-);
+function scrollEditorToSection(name, behavior = 'auto') {
+  setActiveChip(name);
+  centerActiveEditorChip(ui.activeChip, behavior);
+}
+el.chipNav.addEventListener('click', event => {
+  const chip = event.target.closest('[data-chip]');
+  if (chip) scrollEditorToSection(chip.dataset.chip);
+});
+el.chipNav.addEventListener('keydown', event => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  const chips = [...el.chipNav.querySelectorAll('[data-chip]')];
+  const index = chips.findIndex(chip => chip.classList.contains('is-active'));
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? chips.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + chips.length) % chips.length;
+  event.preventDefault();
+  scrollEditorToSection(chips[next].dataset.chip);
+  chips[next].focus();
+});
+const productSaveButton = document.getElementById('btnSaveProductModal');
+if (productSaveButton) productSaveButton.addEventListener('click', () => {
+  toast('Endringene er lagret.');
+  closeProductEditor();
+});
+const productCancelButton = document.getElementById('btnCancelProductModal');
+if (productCancelButton) productCancelButton.addEventListener('click', closeProductEditor);
 
 /* ------------------------------------------------------------------ *
  * Valggruppe-bibliotek
