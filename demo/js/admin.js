@@ -85,6 +85,9 @@ const ui = {
   search: '',
   filter: 'all',
   groupSearch: '',
+  groupFilter: 'all',
+  groupOpenId: null,
+  groupOpenInitialized: false,
   groupView: initialGroupView,
   settingsView: initialSettingsView,
   settingsSection: initialSettingsSection,
@@ -1499,101 +1502,168 @@ el.settingsScroll.addEventListener(
  * Valggruppe-bibliotek
  * ------------------------------------------------------------------ */
 
-function renderGroupLibrary() {
-  el.groupLibrary.classList.toggle('is-list', ui.groupView === 'list');
-  el.groupLibrary.classList.toggle('is-grid', ui.groupView === 'grid');
-  el.groupViewBtns.forEach((button) => {
-    const active = button.dataset.groupView === ui.groupView;
-    button.classList.toggle('is-active', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
 
-  const groups = (store.optionGroups || []).filter((group) =>
-    (group.title || '').toLowerCase().includes(ui.groupSearch.toLowerCase())
-  );
-  el.groupsSummary.textContent = `${
-    (store.optionGroups || []).length
-  } valggrupper i biblioteket — endring treffer alle produkter som bruker gruppen.`;
-
-  el.groupLibrary.innerHTML = groups.length
-    ? groups
-        .map(
-          (group) => `
-      <article class="group-card">
-        <header>
-          <h3>${escapeHtml(group.title || 'Uten navn')}</h3>
-          <span class="pill">${countProductsUsingGroup(group.id)} produkter</span>
-        </header>
-        <p class="group-meta">${
-          group.selectionMode === 'multiple'
-            ? `Flere valg · maks ${group.maxSelections}`
-            : 'Ett valg'
-        } · ${group.required ? 'Obligatorisk' : 'Valgfritt'}</p>
-        <ul class="group-opts">
-          ${(group.options || [])
-            .slice(0, 5)
-            .map(
-              (option) =>
-                `<li><span>${escapeHtml(option.label || 'Uten navn')}</span><span>${
-                  option.price > 0 ? `+${formatPrice(option.price)}` : 'Inkludert'
-                }</span></li>`
-            )
-            .join('')}
-          ${
-            (group.options || []).length > 5
-              ? `<li class="more">+${(group.options || []).length - 5} flere</li>`
-              : ''
-          }
-        </ul>
-        <footer>
-          <button class="btn btn-outline btn-xs" data-edit-group="${escapeHtml(
-            group.id
-          )}" type="button">Rediger</button>
-          <button class="btn btn-danger btn-xs" data-del-group="${escapeHtml(
-            group.id
-          )}" type="button">Slett</button>
-        </footer>
-      </article>`
-        )
-        .join('')
-    : '<div class="empty-card"><strong>Ingen valggrupper</strong><p>Lag din første gruppe, f.eks. «Velg saus».</p></div>';
+const GROUP_ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const GROUP_PENCIL='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h3l9-9-3-3-9 9v3zM14.5 6.5l3 3"/></svg>';
+const GROUP_PLUS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+const GROUP_TRASH='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>';
+function groupChoiceSummary(group) {
+  if (group.selectionMode !== 'multiple') return 'Ett valg';
+  const max = Number(group.maxSelections);
+  return max > 0 ? 'Flere valg · maks ' + max : 'Flere valg';
 }
-
-el.groupLibrary.addEventListener('click', (event) => {
-  const edit = event.target.closest('[data-edit-group]');
-  if (edit) {
-    openEditor(edit.dataset.editGroup);
+function renderGroupLibrary() {
+  el.groupLibrary.classList.toggle('is-list',ui.groupView==='list');
+  el.groupLibrary.classList.toggle('is-grid',ui.groupView==='grid');
+  el.groupViewBtns.forEach(button=>{
+    const active=button.dataset.groupView===ui.groupView;
+    button.classList.toggle('is-active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+  const all=store.optionGroups||[];
+  const requiredCount=all.filter(g=>Boolean(g.required)).length;
+  document.querySelectorAll('[data-group-filter]').forEach(button=>{
+    const f=button.dataset.groupFilter;
+    const count=f==='required'?requiredCount:f==='optional'?all.length-requiredCount:all.length;
+    const name=f==='required'?'Obligatorisk':f==='optional'?'Valgfritt':'Alle';
+    button.textContent=name+' ('+count+')';
+    button.classList.toggle('is-active',f===ui.groupFilter);
+    button.setAttribute('aria-pressed',String(f===ui.groupFilter));
+  });
+  const needle=ui.groupSearch.toLocaleLowerCase('nb-NO');
+  const groups=all.filter(g=>(ui.groupFilter==='all'||Boolean(g.required)===(ui.groupFilter==='required'))
+    && (!needle||(g.title||'').toLocaleLowerCase('nb-NO').includes(needle)));
+  if(!ui.groupOpenInitialized&&groups.length){
+    ui.groupOpenId=groups[0].id;ui.groupOpenInitialized=true;
+  }else if(ui.groupOpenId&&groups.length&&!groups.some(g=>g.id===ui.groupOpenId)){
+    ui.groupOpenId=groups[0].id;
+  }
+  el.groupLibrary.innerHTML=groups.length?groups.map(group=>{
+    const id=escapeHtml(group.id);
+    const title=escapeHtml(group.title||'Uten navn');
+    const open=ui.groupOpenId===group.id;
+    const options=group.options||[];
+    const productCount=countProductsUsingGroup(group.id);
+    const required=Boolean(group.required);
+    const choiceCount=options.length+' '+(options.length===1?'alternativ':'alternativer');
+    const tableId='group-options-'+id;
+    return `
+      <article class="group-card${open?' is-open':''}" data-library-group="${id}">
+        <header class="group-card-head">
+          <button class="group-expand-toggle" type="button" data-toggle-library-group="${id}"
+             aria-expanded="${open}" aria-controls="${tableId}" aria-label="${open?'Lukk':'Vis'} ${title}">${GROUP_ARROW}</button>
+          <button class="group-heading-button" type="button" data-toggle-library-group="${id}"
+             aria-expanded="${open}" aria-controls="${tableId}">
+            <span class="group-card-name">${title}</span>
+            <span class="group-pills">
+              <span class="group-pill">${productCount} ${productCount===1?'produkt':'produkter'}</span>
+              <span class="group-pill${required?' group-pill-required':''}">${required?'<i class="group-required-dot" aria-hidden="true"></i>Obligatorisk':'Valgfritt'}</span>
+              <span class="group-pill">${escapeHtml(groupChoiceSummary(group))}</span>
+              ${open?'':`<span class="group-option-count">${choiceCount}</span>`}
+            </span>
+          </button>
+          <div class="group-card-actions">
+            <button class="group-action" data-edit-group="${id}" type="button">${GROUP_PENCIL} Rediger</button>
+            <button class="group-action" data-add-group-option="${id}" type="button">${GROUP_PLUS} Legg til</button>
+            <button class="group-action group-action-delete" data-del-group="${id}" type="button">${GROUP_TRASH} Slett</button>
+          </div>
+        </header>
+        <div class="group-card-detail" id="${tableId}" ${open?'':'hidden'}>
+          <div class="group-option-table">
+            <div class="group-option-table-head"><span>Alternativer (${options.length})</span><span>Pris / Status</span><span></span></div>
+            ${options.length?options.map(option=>`
+              <div class="group-option-line" data-library-parent="${id}" data-library-option="${escapeHtml(option.id)}">
+                <span class="group-option-grip" draggable="true" data-drag-library-option="${escapeHtml(option.id)}" data-library-parent="${id}" title="Dra for å endre rekkefølgen">⋮⋮</span>
+                <span class="group-option-name">${escapeHtml(option.label||'Uten navn')}</span>
+                <span class="group-option-price">${Number(option.price)>0?'+'+escapeHtml(formatPrice(option.price)):'Inkludert'}</span>
+                <button class="group-option-more" type="button" data-edit-library-option="${escapeHtml(option.id)}" data-library-parent="${id}" aria-label="Rediger alternativ"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></button>
+              </div>`).join(''):'<div class="group-option-empty">Ingen alternativer ennå.</div>'}
+          </div>
+          <button class="group-add-alternative" data-add-group-option="${id}" type="button">
+            <span class="group-add-dot">${GROUP_PLUS}</span> Legg til nytt alternativ
+          </button>
+        </div>
+      </article>`;
+  }).join(''):'<div class="empty-card group-library-empty"><strong>Ingen valggrupper funnet</strong><p>Prøv et annet søk eller filter, eller lag en ny valggruppe.</p></div>';
+}
+function addGroupOptionFromLibrary(groupId){
+  openEditor(groupId);
+  if(!editorDraft)return;
+  const newOption={id:uid('opt'),label:'',price:0};
+  editorDraft.options.push(newOption);
+  renderEditorRows();
+  el.gOptionRows.querySelector('[data-label="'+CSS.escape(newOption.id)+'"]')?.focus();
+}
+el.groupLibrary.addEventListener('click',event=>{
+  const toggle=event.target.closest('[data-toggle-library-group]');
+  if(toggle){
+    const id=toggle.dataset.toggleLibraryGroup;
+    ui.groupOpenId=ui.groupOpenId===id?null:id;ui.groupOpenInitialized=true;
+    renderGroupLibrary();return;
+  }
+  const add=event.target.closest('[data-add-group-option]');
+  if(add){addGroupOptionFromLibrary(add.dataset.addGroupOption);return;}
+  const option=event.target.closest('[data-edit-library-option]');
+  if(option){
+    openEditor(option.dataset.libraryParent);
+    el.gOptionRows.querySelector('[data-label="'+CSS.escape(option.dataset.editLibraryOption)+'"]')?.focus();
     return;
   }
-  const del = event.target.closest('[data-del-group]');
-  if (!del) return;
-  const group = findOptionGroup(del.dataset.delGroup);
-  if (!group) return;
-  askConfirm(
-    'Slette valggruppen?',
-    `«${group.title}» fjernes fra ${countProductsUsingGroup(group.id)} produkter.`,
-    () => deleteGroup(group.id)
-  );
+  const edit=event.target.closest('[data-edit-group]');
+  if(edit){openEditor(edit.dataset.editGroup);return;}
+  const del=event.target.closest('[data-del-group]');
+  if(!del)return;
+  const group=findOptionGroup(del.dataset.delGroup);
+  if(!group)return;
+  askConfirm('Slette valggruppen?',`«${group.title}» fjernes fra ${countProductsUsingGroup(group.id)} produkter.`,
+    ()=>deleteGroup(group.id));
 });
-
-el.groupSearch.addEventListener('input', () => {
-  ui.groupSearch = el.groupSearch.value.trim();
+let draggingLibraryOption=null;
+el.groupLibrary.addEventListener('dragstart',event=>{
+  const grip=event.target.closest('[data-drag-library-option]');
+  if(!grip)return;
+  draggingLibraryOption={id:grip.dataset.dragLibraryOption,groupId:grip.dataset.libraryParent};
+  event.dataTransfer.effectAllowed='move';
+  event.dataTransfer.setData('text/plain',draggingLibraryOption.id);
+});
+el.groupLibrary.addEventListener('dragover',event=>{
+  const row=event.target.closest('[data-library-option]');
+  if(row&&draggingLibraryOption&&row.dataset.libraryParent===draggingLibraryOption.groupId)
+    event.preventDefault();
+});
+el.groupLibrary.addEventListener('drop',event=>{
+  const row=event.target.closest('[data-library-option]');
+  const drag=draggingLibraryOption;draggingLibraryOption=null;
+  if(!drag||!row||row.dataset.libraryParent!==drag.groupId||row.dataset.libraryOption===drag.id)return;
+  event.preventDefault();
+  mutate(state=>{
+    const group=state.optionGroups.find(g=>g.id===drag.groupId);
+    if(!group||!Array.isArray(group.options))return;
+    const from=group.options.findIndex(o=>o.id===drag.id);
+    const to=group.options.findIndex(o=>o.id===row.dataset.libraryOption);
+    if(from<0||to<0)return;
+    const [moved]=group.options.splice(from,1);
+    group.options.splice(to,0,moved);
+  });
+  renderGroupLibrary();
+  toast('Rekkefølgen er endret.');
+});
+el.groupLibrary.addEventListener('dragend',()=>{draggingLibraryOption=null;});
+document.querySelectorAll('[data-group-filter]').forEach(button=>{
+  button.addEventListener('click',()=>{ui.groupFilter=button.dataset.groupFilter;renderGroupLibrary();});
+});
+el.groupSearch.addEventListener('input',()=>{
+  ui.groupSearch=el.groupSearch.value.trim();
   renderGroupLibrary();
 });
-
-el.groupViewBtns.forEach((button) => {
-  button.addEventListener('click', () => {
-    ui.groupView = button.dataset.groupView === 'grid' ? 'grid' : 'list';
-    try {
-      localStorage.setItem('kol-admin-group-view', ui.groupView);
-    } catch {
-      // Visningen fungerer fortsatt selv om lokal lagring er blokkert.
-    }
+el.groupViewBtns.forEach(button=>{
+  button.addEventListener('click',()=>{
+    ui.groupView=button.dataset.groupView==='grid'?'grid':'list';
+    try{localStorage.setItem('kol-admin-group-view',ui.groupView);}catch{}
     renderGroupLibrary();
   });
 });
-
-el.btnNewGroup.addEventListener('click', () => openEditor(null));
+el.btnNewGroup.addEventListener('click',()=>openEditor(null));
 
 function renderLibraryModal() {
   const { item } = selectedItem();
