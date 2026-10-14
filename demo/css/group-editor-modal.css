@@ -25,3 +25,12 @@
 #modalEditor #btnSaveGroup{background:#f96812;color:#fff;border-color:#f96812}
 #modalEditor #btnDeleteGroup{background:#d52929;color:white;border-color:#d52929}
 @media(max-width:600px){#modalEditor.modal-editor{width:100vw;max-height:100dvh;border-radius:0}#modalEditor .group-editor-body{padding:12px}#modalEditor .group-editor-card{padding:12px}#modalEditor .mode-row{grid-template-columns:1fr}#modalEditor .mode-card{min-height:65px}#modalEditor .modal-foot{gap:8px;flex-wrap:wrap}#modalEditor .modal-foot .foot-right{display:flex;gap:6px}}
+
+/* Manual attachment per individual product size */
+.product-editor-modal .attached-row{flex-wrap:wrap;row-gap:8px}
+.product-editor-modal .group-size-picker{display:flex;flex-wrap:wrap;align-items:center;gap:5px;flex:1 1 100%;padding:4px 0 0 54px}
+.group-library-row .group-size-picker{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.group-size-choice{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:8px;border:1px solid #dce5ed;background:#fff;font-size:11.5px;color:#43546a;cursor:pointer}
+.group-size-choice:has(input:checked){background:#eaf8ee;border-color:#91d7aa;color:#147549}
+.group-size-choice input{width:14px;height:14px;accent-color:#199653}
+@media(max-width:600px){.product-editor-modal .group-size-picker{padding-left:0}}
