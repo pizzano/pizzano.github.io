@@ -322,7 +322,7 @@ export const RESTAURANT_WEEKDAYS = Object.freeze([
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
 function validClock(text) { return typeof text==='string' && HH_MM.test(text) ? text : null; }
 export function getWeeklyHours(settings=store.settings||DEFAULT_SETTINGS) {
-  const open = validClock(settings.orderOpenTime) || '10:00';
+  const open = validClock(settings.orderOpenTime) || '14:00';
   const close = validClock(settings.orderCloseTime) || '22:00';
   if (!Array.isArray(settings.weeklyHours) || settings.weeklyHours.length!==7)
     return RESTAURANT_WEEKDAYS.map(day=>({id:day.id,enabled:true,open,close}));
@@ -374,6 +374,8 @@ function scheduleAt(settings,now) {
     open:Boolean(active),active,upcoming,
     opensAt:upcoming?.start||'—',
     closesAt:active?.end||today.close,
+    opensOnDay:upcoming?.day??null,
+    minutesUntilOpen:upcoming?.minutesUntilOpen??null,
   };
 }
 
@@ -395,7 +397,9 @@ export function getOpenState(at=new Date()) {
       }else opensAt=reopening?.opensAt||opensAt;
     }
     return {open:false,reason:'manuelt',label:'Stengt',opensAt,closesAt:scheduled.closesAt,
-      manualClosedUntil:until>now.getTime()?until:0,minutesToClose:0};
+      manualClosedUntil:until>now.getTime()?until:0,minutesToClose:0,
+      opensOnDay:reopening?.opensOnDay??scheduled.opensOnDay,
+      minutesUntilOpen:reopening?.minutesUntilOpen??scheduled.minutesUntilOpen};
   }
   return {
     open:scheduled.open,reason:scheduled.open?'':'utenfor_apningstid',
@@ -403,6 +407,7 @@ export function getOpenState(at=new Date()) {
     opensAt:scheduled.opensAt,closesAt:scheduled.closesAt,
     manualClosedUntil:0,
     minutesToClose:scheduled.active?.minutesToClose||0,
+    opensOnDay:scheduled.opensOnDay,minutesUntilOpen:scheduled.minutesUntilOpen,
   };
 }
 /** Pickup options calculated from the active window, including after midnight. */
@@ -483,7 +488,7 @@ function normalizeSettings(raw) {
   settings.weeklyHours=Array.isArray(rawWeek)&&rawWeek.length===7
     ? RESTAURANT_WEEKDAYS.map((day,i)=>({
         id:day.id,enabled:rawWeek[i]?.enabled!==false,
-        open:validClock(rawWeek[i]?.open)||validClock(settings.orderOpenTime)||'10:00',
+        open:validClock(rawWeek[i]?.open)||validClock(settings.orderOpenTime)||'14:00',
         close:validClock(rawWeek[i]?.close)||validClock(settings.orderCloseTime)||'22:00',
       })) : null;
   settings.manualClosedUntil=Number.isFinite(Number(base.manualClosedUntil))
