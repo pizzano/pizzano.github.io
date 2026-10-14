@@ -594,7 +594,7 @@ function refreshCustomerOrderCountdowns() {
     if (!order) return;
     const countdown = customerOrderCountdown(order);
     if (isEstimatedPickupTimeReached(order)) {
-      renderActiveCustomerOrders();
+      renderActiveOrders();
       return;
     } else {
       node.textContent = countdown || '';
