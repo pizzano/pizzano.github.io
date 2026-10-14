@@ -319,7 +319,7 @@ function setPage(page) {
     el.productsMenuBlock.classList.toggle('is-expanded', inProductsArea);
     el.productsMenuBlock.classList.toggle('has-active-child', page === 'groups');
   }
-  if (el.productsSubnav) el.productsSubnav.hidden = !inProductsArea;
+  if (el.productsSubnav) el.productsSubnav.hidden = false;
 
   const productsLink = Array.from(el.sideLinks).find((link) => link.dataset.nav === 'products');
   if (productsLink) {
@@ -373,6 +373,11 @@ window.addEventListener('beforeunload', (event) => {
  * Oppsummering
  * ------------------------------------------------------------------ */
 
+function dashboardStatIcon(label) {
+  const icons = {"Kategorier":"<path d=\"M3 6a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v10H3z\"/><path d=\"M3 10h18\"/>","Produkter":"<path d=\"m12 2.5 8.5 5v9L12 21l-8.5-4.5v-9zM3.5 7.5l8.5 5 8.5-5M12 12.5V21\"/>","Utsolgt":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m5.6 18.4 12.8-12.8\"/>","Skjult":"<path d=\"M3 3l18 18M10 5.2A11 11 0 0 1 12 5c4.8 0 8.5 3 10 7a13 13 0 0 1-3.3 4.4M6.4 6.6A13 13 0 0 0 2 12c1.5 4 5.2 7 10 7 1.1 0 2-.2 3-.5\"/><path d=\"M10 10a3 3 0 0 0 4 4\"/>","Valggrupper":"<path d=\"m12 2.5 9 5.5-9 5.5-9-5.5zM3 12.5l9 5.5 9-5.5M3 17l9 5.5 9-5.5\"/>","Nye bestillinger":"<path d=\"M5 3h14v18l-3.5-2-3.5 2-3.5-2L5 21zM9 8h6M9 12h6M9 16h4\"/>"};
+  const tones = {"Kategorier":"orange","Produkter":"blue","Utsolgt":"red","Skjult":"slate","Valggrupper":"purple","Nye bestillinger":"green"};
+  return `<span class="stat-card-icon stat-card-icon--${tones[label] || 'slate'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[label] || icons.Kategorier}</svg></span>`;
+}
 function renderStats() {
   const stats = getStats();
   const state = getOpenState();
@@ -400,9 +405,9 @@ function renderStats() {
   el.statRow.innerHTML = cards
     .map(
       (card) =>
-        `<div class="stat-card${card.tone ? ` is-${card.tone}` : ''}"><strong>${escapeHtml(
+        `<div class="stat-card${card.tone ? ` is-${card.tone}` : ''}">${dashboardStatIcon(card.label)}<span class="stat-card-info"><strong>${escapeHtml(
           String(card.value)
-        )}</strong><span>${escapeHtml(card.label)}</span></div>`
+        )}</strong><span>${escapeHtml(card.label)}</span></span></div>`
     )
     .join('');
 
@@ -441,6 +446,26 @@ function matchesSearch(item) {
   );
 }
 
+function dashboardCategoryImage(section) {
+  const item = (section.items || []).find(product => product && typeof product.imageUrl === 'string' && product.imageUrl.trim());
+  const raw = String(item?.imageUrl || section.imageUrl || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw, window.location.href);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
+  } catch { return ''; }
+}
+function dashboardCategoryEmoji(title) {
+  const t = String(title || '').toLowerCase();
+  if (t.includes('pizza')) return '🍕';
+  if (t.includes('kebab')) return '🥙';
+  if (t.includes('burger')) return '🍔';
+  if (t.includes('vegetar') || t.includes('salat')) return '🥬';
+  if (t.includes('tilbeh') || t.includes('dressing')) return '🥣';
+  if (t.includes('barn')) return '🧀';
+  if (t.includes('drikk')) return '🥤';
+  return '🍽️';
+}
 function renderCategories() {
   const sections = store.sections || [];
   const totalItems = sections.reduce(
@@ -461,6 +486,8 @@ function renderCategories() {
         (item) => matchesFilter(item) && matchesSearch(item)
       );
       const isOpen = ui.openCategoryId === section.id || Boolean(ui.search);
+      const categoryImage = dashboardCategoryImage(section);
+      const categoryEmoji = dashboardCategoryEmoji(section.title);
       const hiddenCount = (section.items || []).filter((item) => item.hidden).length;
       const soldOutCount = (section.items || []).filter((item) => item.soldOut).length;
 
@@ -474,8 +501,11 @@ function renderCategories() {
           <span class="drag-handle" data-drag-cat="${escapeHtml(
             section.id
           )}" draggable="true" title="Dra for å flytte kategorien" aria-hidden="true">⋮⋮</span>
-          <button class="cat-toggle" data-toggle="${escapeHtml(section.id)}" type="button">
-            <svg class="chev${isOpen ? ' is-open' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          <button class="cat-toggle" data-toggle="${escapeHtml(section.id)}" type="button" aria-expanded="${isOpen}" aria-label="Vis produkter i ${escapeHtml(section.title || 'Uten navn')}">
+            <span class="cat-category-thumb cat-category-thumb--${index % 6}" aria-hidden="true">
+              <span class="cat-category-fallback">${categoryEmoji}</span>
+              ${categoryImage ? `<img src="${escapeHtml(categoryImage)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+            </span>
             <span class="cat-name">${escapeHtml(section.title || 'Uten navn')}</span>
             <span class="cat-meta">${(section.items || []).length} produkter${
         soldOutCount ? ` · ${soldOutCount} utsolgt` : ''
@@ -497,8 +527,10 @@ function renderCategories() {
             )}" type="button" aria-label="Slett kategorien" title="Slett kategorien">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>
             </button>
-            <span class="cat-index">${index + 1}</span>
-          </span>
+            </span>
+          <button class="cat-expand-btn" data-toggle="${escapeHtml(section.id)}" type="button" aria-label="${isOpen ? 'Lukk' : 'Vis'} produkter i ${escapeHtml(section.title || 'Uten navn')}" aria-expanded="${isOpen}">
+            <svg class="chev${isOpen ? ' is-open' : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
         </header>
         <div class="cat-body"${isOpen ? '' : ' hidden'}>
           ${
@@ -556,6 +588,11 @@ function renderCategories() {
     })
     .join('');
 }
+
+// Fall back to the category symbol when the first product photo fails.
+el.categoryList.addEventListener('error', event => {
+  if (event.target?.matches?.('.cat-category-thumb img')) event.target.remove();
+}, true);
 
 /* ------------------------------------------------------------------ *
  * Dra-og-slipp
