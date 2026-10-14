@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261014-settings-weekly108">
+    <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
 </head>
 
 <body>
@@ -444,39 +445,42 @@
                     </button>
                 </header>
 
-                <nav class="chip-nav" id="chipNav" aria-label="Seksjoner">
-                    <button class="chip is-active" data-chip="produkt" type="button">Produkt</button>
-                    <button class="chip" data-chip="ingredienser" type="button">Ingredienser</button>
-                    <button class="chip" data-chip="storrelser" type="button">Størrelser &amp; priser</button>
-                    <button class="chip" data-chip="allergener" type="button">Allergener</button>
-                    <button class="chip" data-chip="valg" type="button">Choices &amp; addons</button>
-                    <button class="chip" data-chip="tilgjengelighet" type="button">Tilgjengelighet</button>
-                    <button class="chip" data-chip="handlinger" type="button">Handlinger</button>
+                <nav class="chip-nav" id="chipNav" aria-label="Produktseksjoner" role="tablist">
+                    <button class="chip is-active" data-chip="produkt" type="button" role="tab">Produkt</button>
+                    <button class="chip" data-chip="ingredienser" type="button" role="tab">Ingredienser</button>
+                    <button class="chip" data-chip="storrelser" type="button" role="tab">Størrelser &amp; priser</button>
+                    <button class="chip" data-chip="allergener" type="button" role="tab">Allergener</button>
+                    <button class="chip" data-chip="valg" type="button" role="tab">Choices &amp; addons</button>
+                    <button class="chip" data-chip="tilgjengelighet" type="button" role="tab">Tilgjengelighet</button>
+                    <button class="chip" data-chip="handlinger" type="button" role="tab">Handlinger</button>
                 </nav>
 
                 <div class="settings-scroll" id="settingsScroll">
-                    <section class="set-section" data-section="produkt">
-                        <h3 class="set-title">Produkt</h3>
-                        <div class="set-field">
-                            <label class="lbl" for="fName">Produktnavn</label>
-                            <input id="fName" class="input" type="text" placeholder="F.eks. Kebabpizza">
+                    <section class="set-section is-active product-main-panel" data-section="produkt" role="tabpanel">
+                        <div class="product-edit-columns">
+                            <div class="product-edit-column">
+                                <div class="product-edit-card">
+                                    <div class="product-edit-field-heading"><span class="product-edit-icon">▣</span><div><label class="lbl" for="fName">Produktnavn</label><p>Navnet som vises til kundene.</p></div></div>
+                                    <input id="fName" class="input" type="text" placeholder="F.eks. Kebabpizza">
+                                </div>
+                                <div class="product-edit-card product-edit-description">
+                                    <div class="product-edit-field-heading"><span class="product-edit-icon">▤</span><div><label class="lbl" for="fDesc">Beskrivelse</label><p>En kort beskrivelse av produktet som vises i menyen.</p></div></div>
+                                    <textarea id="fDesc" class="textarea" placeholder="Kort tekst kunden ser under produktnavnet"></textarea>
+                                </div>
+                            </div>
+                            <div class="product-edit-column">
+                                <div class="product-edit-card">
+                                    <div class="product-edit-field-heading"><span class="product-edit-icon">▧</span><div><label class="lbl" for="fImage">Bilde-URL</label><p>Lim inn en URL til et bilde av produktet.</p></div></div>
+                                    <input id="fImage" class="input" type="url" placeholder="https://…">
+                                    <div class="img-preview"><img id="fImagePreview" alt="Forhåndsvisning"></div>
+                                </div>
+                                <label class="toggle-row product-edit-card product-edit-popular">
+                                    <span class="product-edit-icon">☆</span>
+                                    <span class="toggle-body"><strong>Mest bestilt</strong><small>Vises i «Mest bestilt» øverst i kundemenyen.</small></span>
+                                    <input type="checkbox" id="fPopular" class="switch">
+                                </label>
+                            </div>
                         </div>
-                        <div class="set-field">
-                            <label class="lbl" for="fDesc">Beskrivelse</label>
-                            <textarea id="fDesc" class="textarea" placeholder="Kort tekst kunden ser under produktnavnet"></textarea>
-                        </div>
-                        <div class="set-field">
-                            <label class="lbl" for="fImage">Bilde-URL</label>
-                            <input id="fImage" class="input" type="url" placeholder="https://…">
-                            <div class="img-preview"><img id="fImagePreview" alt="Forhåndsvisning"></div>
-                        </div>
-                        <label class="toggle-row">
-                            <span class="toggle-body">
-                                <strong>Mest bestilt</strong>
-                                <small>Vises i «Mest bestilt» øverst i kundemenyen.</small>
-                            </span>
-                            <input type="checkbox" id="fPopular" class="switch">
-                        </label>
                     </section>
 
                     <section class="set-section" data-section="ingredienser">
@@ -549,8 +553,9 @@
                         <p class="set-hint">Produktet fjernes fra kundemenyen umiddelbart.</p>
                     </section>
 
-                    <div class="scroll-tail" aria-hidden="true"></div>
+
                 </div>
+                <footer class="product-edit-footer"><button type="button" class="btn btn-outline" id="btnCancelProductModal">Avbryt</button><button type="button" class="btn btn-primary" id="btnSaveProductModal">▣ &nbsp; Lagre endringer</button></footer>
             </div>
         </aside>
     </div>
@@ -757,7 +762,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-orders-reference109"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261015-product-modal110"></script>
 </body>
 
 </html>
