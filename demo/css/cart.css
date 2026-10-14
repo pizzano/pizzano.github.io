@@ -110,7 +110,8 @@ button.cart-product-copy {cursor:pointer;}
   color:var(--palette-success,var(--palette-accent));
   white-space:nowrap;
 }
-.view-cart .cart-product-name {font-size:15px;font-weight:780;line-height:1.18;letter-spacing:-.01em;}
+/* Product headings use the restaurant's existing confirmation/success colour, across light/dark palettes. */
+.view-cart .cart-product-name {font-size:15px;font-weight:780;line-height:1.18;letter-spacing:-.01em;color:var(--palette-success,#4CAF50);}
 .view-cart .cart-product-stepper {
   grid-template-columns:32px 28px 32px;min-height:34px;overflow:hidden;
   border:1px solid var(--palette-accent);border-radius:999px;
