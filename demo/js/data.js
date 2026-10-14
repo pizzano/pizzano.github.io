@@ -272,6 +272,8 @@ const DEFAULT_SETTINGS = {
   openingTime: '',
   orderOpenTime: '',
   orderCloseTime: '',
+  weeklyHours: null,
+  manualClosedUntil: 0,
   pickupInfo: 'Henting i restauranten',
   paymentInfo: 'Betaling ved henting',
   orderAlarmUrl: '/demo/soundreality-police-operation-siren-144229.mp3',
@@ -292,8 +294,9 @@ const DEFAULT_SETTINGS = {
 export function parseTime(text) {
   const match = /^(\d{1,2})[:.](\d{2})$/.exec(String(text || '').trim());
   if (!match) return null;
-  const hour = Math.min(Number(match[1]), 23);
-  const minute = Math.min(Number(match[2]), 59);
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
   return hour * 60 + minute;
 }
 
@@ -305,87 +308,119 @@ export function formatMinutes(total) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-/** Klokken nå i restaurantens tidssone, som minutter etter midnatt. */
-function nowMinutes(date = new Date()) {
-  const timezone = (store.settings && store.settings.timezone) || 'Europe/Oslo';
-  try {
-    const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).formatToParts(date);
-    const hour = Number(parts.find((p) => p.type === 'hour')?.value) || 0;
-    const minute = Number(parts.find((p) => p.type === 'minute')?.value) || 0;
-    return hour * 60 + minute;
-  } catch (err) {
-    return date.getHours() * 60 + date.getMinutes();
-  }
-}
 
-/**
- * Om restauranten tar imot bestillinger nå.
- * @returns {{open:boolean, reason:string, label:string, opensAt:string, closesAt:string}}
- */
-export function getOpenState() {
-  const settings = store.settings || DEFAULT_SETTINGS;
-  const opensAt = settings.orderOpenTime || '14:00';
-  const closesAt = settings.orderCloseTime || '22:00';
-
-  if (settings.manualClosed) {
+/* Shared weekly-hours engine: the customer and admin use precisely this state.
+ * weeklyHours=null means the legacy single time applies every day, untouched.
+ * When weeklyHours is configured, it becomes the sole source for opening checks.
+ * All day indices use Monday=0 ... Sunday=6 in Europe/Oslo. */
+export const RESTAURANT_WEEKDAYS = Object.freeze([
+  { id:'mon', short:'Man', name:'Mandag' }, { id:'tue', short:'Tir', name:'Tirsdag' },
+  { id:'wed', short:'Ons', name:'Onsdag' }, { id:'thu', short:'Tor', name:'Torsdag' },
+  { id:'fri', short:'Fre', name:'Fredag' }, { id:'sat', short:'Lør', name:'Lørdag' },
+  { id:'sun', short:'Søn', name:'Søndag' },
+]);
+const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+function validClock(text) { return typeof text==='string' && HH_MM.test(text) ? text : null; }
+export function getWeeklyHours(settings=store.settings||DEFAULT_SETTINGS) {
+  const open = validClock(settings.orderOpenTime) || '10:00';
+  const close = validClock(settings.orderCloseTime) || '22:00';
+  if (!Array.isArray(settings.weeklyHours) || settings.weeklyHours.length!==7)
+    return RESTAURANT_WEEKDAYS.map(day=>({id:day.id,enabled:true,open,close}));
+  return RESTAURANT_WEEKDAYS.map((day,i)=>{
+    const raw=settings.weeklyHours[i]||{};
     return {
-      open: false,
-      reason: 'manuelt',
-      label: 'Stengt',
-      opensAt,
-      closesAt,
+      id:day.id, enabled:raw.enabled!==false,
+      open:validClock(raw.open)||open,
+      close:validClock(raw.close)||close,
     };
+  });
+}
+function localClock(date,timezone) {
+  const parts=new Intl.DateTimeFormat('en-GB',{
+    timeZone:timezone,hour:'2-digit',minute:'2-digit',weekday:'short',hour12:false,
+  }).formatToParts(date);
+  const hours=Number(parts.find(p=>p.type==='hour')?.value)||0;
+  const minutes=Number(parts.find(p=>p.type==='minute')?.value)||0;
+  const label=String(parts.find(p=>p.type==='weekday')?.value||'Mon').toLowerCase().slice(0,3);
+  const weekdayIndex=['mon','tue','wed','thu','fri','sat','sun'].indexOf(label);
+  return {minute:hours%24*60+minutes,weekday:weekdayIndex>=0?weekdayIndex:0};
+}
+function scheduleAt(settings,now) {
+  const timezone=settings.timezone||'Europe/Oslo';
+  let clock;
+  try { clock=localClock(now,timezone); } catch {
+    const d=now.getDay();clock={minute:now.getHours()*60+now.getMinutes(),weekday:(d+6)%7};
   }
-
-  const open = parseTime(opensAt);
-  const close = parseTime(closesAt);
-  if (open === null || close === null) {
-    return { open: true, reason: '', label: 'Åpent', opensAt, closesAt };
+  const week=getWeeklyHours(settings);
+  const t=clock.minute,i=clock.weekday;
+  const yesterday=week[(i+6)%7],today=week[i];
+  const yStart=parseTime(yesterday.open),yEnd=parseTime(yesterday.close);
+  const tStart=parseTime(today.open),tEnd=parseTime(today.close);
+  let active=null;
+  if(yesterday.enabled&&yStart!==null&&yEnd!==null&&yEnd<=yStart&&t<yEnd)
+    active={end:yesterday.close,minutesToClose:yEnd-t,day:(i+6)%7};
+  if(!active&&today.enabled&&tStart!==null&&tEnd!==null&&t>=tStart&&(tEnd<=tStart||t<tEnd))
+    active={end:today.close,minutesToClose:(tEnd>tStart?tEnd-t:1440-t+tEnd),day:i};
+  let upcoming=null;
+  for(let offset=0;offset<=7;offset++){
+    const day=week[(i+offset)%7];
+    if(!day.enabled)continue;
+    const minutes=parseTime(day.open);
+    if(minutes===null)continue;
+    const distance=offset*1440+minutes-t;
+    if(distance>0){upcoming={start:day.open,day:(i+offset)%7,minutesUntilOpen:distance};break;}
   }
-
-  const now = nowMinutes();
-  const isOpen = close > open ? now >= open && now < close : now >= open || now < close;
-
   return {
-    open: isOpen,
-    reason: isOpen ? '' : 'utenfor_apningstid',
-    label: isOpen ? 'Åpent nå' : 'Stengt nå',
-    opensAt,
-    closesAt,
+    open:Boolean(active),active,upcoming,
+    opensAt:upcoming?.start||'—',
+    closesAt:active?.end||today.close,
   };
 }
 
-/**
- * Hentetider basert på tilberedningstid og intervall fra admin.
- * @returns {{value:string,label:string}[]}
- */
-export function getPickupSlots() {
-  const settings = store.settings || DEFAULT_SETTINGS;
-  const state = getOpenState();
-  if (!state.open) return [];
-
-  const prep = Math.max(Number(settings.prepMinutes) || 0, 30);
-  const interval = Math.min(Math.max(Number(settings.slotIntervalMinutes) || 15, 5), 60);
-  const close = parseTime(settings.orderCloseTime) ?? 22 * 60;
-  const open = parseTime(settings.orderOpenTime) ?? 14 * 60;
-
-  const now = nowMinutes();
-  const earliest = Math.max(now + prep, open + prep);
-  const closeAdjusted = close > open ? close : close + 1440;
-
-  const slots = [];
-
-  let cursor = Math.ceil(earliest / interval) * interval;
-  while (cursor <= closeAdjusted - 10 && slots.length < 25) {
-    const label = formatMinutes(cursor);
-    slots.push({ value: label, label });
-    cursor += interval;
+/** Returns the same truthful restaurant status to customer and staff.
+ * Date parameter permits deterministic time-window tests. */
+export function getOpenState(at=new Date()) {
+  const settings=store.settings||DEFAULT_SETTINGS;
+  const now=at instanceof Date?at:new Date(at);
+  const scheduled=scheduleAt(settings,now);
+  const until=Number(settings.manualClosedUntil)||0;
+  const temporarilyClosed=settings.manualClosed===true && (until<=0||until>now.getTime());
+  if(temporarilyClosed){
+    const reopening=until>now.getTime()?scheduleAt(settings,new Date(until)):null;
+    let opensAt=scheduled.opensAt;
+    if(until>now.getTime()){
+      if(reopening?.open){
+        try{opensAt=new Intl.DateTimeFormat('nb-NO',{timeZone:settings.timezone||'Europe/Oslo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(until));}
+        catch{opensAt=formatMinutes(new Date(until).getHours()*60+new Date(until).getMinutes());}
+      }else opensAt=reopening?.opensAt||opensAt;
+    }
+    return {open:false,reason:'manuelt',label:'Stengt',opensAt,closesAt:scheduled.closesAt,
+      manualClosedUntil:until>now.getTime()?until:0,minutesToClose:0};
   }
+  return {
+    open:scheduled.open,reason:scheduled.open?'':'utenfor_apningstid',
+    label:scheduled.open?'Åpent nå':'Stengt nå',
+    opensAt:scheduled.opensAt,closesAt:scheduled.closesAt,
+    manualClosedUntil:0,
+    minutesToClose:scheduled.active?.minutesToClose||0,
+  };
+}
+/** Pickup options calculated from the active window, including after midnight. */
+export function getPickupSlots() {
+  const settings=store.settings||DEFAULT_SETTINGS;
+  const state=getOpenState();
+  if(!state.open)return [];
+  const prep=Math.max(Number(settings.prepMinutes)||0,30);
+  const interval=Math.min(Math.max(Number(settings.slotIntervalMinutes)||15,5),60);
+  const remaining=Number(state.minutesToClose)||0;
+  if(remaining<=prep+10)return [];
+  let nowMinute;
+  try{nowMinute=localClock(new Date(),settings.timezone||'Europe/Oslo').minute;}
+  catch{const d=new Date();nowMinute=d.getHours()*60+d.getMinutes();}
+  const latest=nowMinute+remaining-10;
+  const slots=[];
+  for(let m=Math.ceil((nowMinute+prep)/interval)*interval;m<=latest&&slots.length<25;m+=interval)
+    slots.push({value:formatMinutes(m),label:formatMinutes(m)});
   return slots;
 }
 
@@ -431,6 +466,7 @@ function normalizeSettings(raw) {
   const base = raw && typeof raw === 'object' ? raw : {};
   const settings = { ...DEFAULT_SETTINGS };
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    if (key === 'weeklyHours') continue;
     if (base[key] === undefined || base[key] === null) continue;
     const fallback = DEFAULT_SETTINGS[key];
     if (typeof fallback === 'number') {
@@ -442,6 +478,16 @@ function normalizeSettings(raw) {
       settings[key] = String(base[key]);
     }
   }
+  // Preserve legacy one-time schedule until an employee edits weekly hours.
+  const rawWeek=base.weeklyHours;
+  settings.weeklyHours=Array.isArray(rawWeek)&&rawWeek.length===7
+    ? RESTAURANT_WEEKDAYS.map((day,i)=>({
+        id:day.id,enabled:rawWeek[i]?.enabled!==false,
+        open:validClock(rawWeek[i]?.open)||validClock(settings.orderOpenTime)||'10:00',
+        close:validClock(rawWeek[i]?.close)||validClock(settings.orderCloseTime)||'22:00',
+      })) : null;
+  settings.manualClosedUntil=Number.isFinite(Number(base.manualClosedUntil))
+    ? Math.max(0,Number(base.manualClosedUntil)):0;
   if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
   settings.slotIntervalMinutes = Math.min(
