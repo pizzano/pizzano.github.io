@@ -154,6 +154,8 @@ const el = {
   step3: $('step3'),
   custName: $('custName'),
   custPhone: $('custPhone'),
+  custEmail: $('custEmail'),
+  errEmail: $('errEmail'),
   errName: $('errName'),
   errPhone: $('errPhone'),
   timeGrid: $('timeGrid'),
@@ -1730,6 +1732,7 @@ function renderCheckout() {
           <div class="pickup-review-info-grid">
             <div><span>Navn</span><strong>${escapeHtml(el.custName.value || '—')}</strong></div>
             <div><span>Telefon</span><strong>${el.custPhone.value ? `+47 ${escapeHtml(el.custPhone.value)}` : '—'}</strong></div>
+            ${el.custEmail?.value?.trim() ? `<div><span>E-post</span><strong>${escapeHtml(el.custEmail.value.trim())}</strong></div>` : ''}
           </div>
           <div class="pickup-review-pay">
             <span>Å betale ved henting</span>
@@ -1754,7 +1757,12 @@ function updateContactValidation() {
       wrapper.querySelector('.valid-check').hidden = !valid;
     }
   }
-  if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value);
+  if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value) || !validOptionalEmail(el.custEmail?.value);
+}
+
+function validOptionalEmail(value) {
+  const email = String(value || '').trim();
+  return !email || (email.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email));
 }
 
 function validPhone(value) {
@@ -2080,12 +2088,21 @@ async function placeOrder() {
   const fingerprint = JSON.stringify({
     name,
     phone,
+    email: el.custEmail?.value?.trim() || '',
     pickup: ui.pickup,
     cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment, line.loyaltyFree, line.loyaltyCycle]),
   });
   if (!ui.pendingOrderId || ui.pendingOrderFingerprint !== fingerprint) {
     ui.pendingOrderId = uid('ord');
     ui.pendingOrderFingerprint = fingerprint;
+  }
+
+  if (!validOptionalEmail(el.custEmail?.value)) {
+    ui.checkoutStep = 2;
+    if (el.errEmail) el.errEmail.hidden = false;
+    renderCheckout();
+    el.custEmail.focus();
+    return;
   }
 
   ui.orderSubmitting = true;
@@ -2099,6 +2116,7 @@ async function placeOrder() {
       loyaltyReward: rewardLine ? { cycle: rewardLine.loyaltyCycle, automatic: Boolean(rewardLine.loyaltyAuto) } : null,
       customerName: name,
       phone: `+47${phone}`,
+      email: (el.custEmail?.value || '').trim().toLowerCase(),
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
       pickupMode: ui.pickupMode === 'scheduled' ? 'scheduled' : 'asap',
       scheduledPickupAt: ui.pickupMode === 'scheduled' ? resolveScheduledPickupAt(ui.pickup) : null,
@@ -2890,6 +2908,11 @@ el.btnSaveProfile.addEventListener('click', () => {
   setTimeout(() => {
     el.profileSaved.hidden = true;
   }, 1800);
+});
+
+if (el.custEmail) el.custEmail.addEventListener('input', () => {
+  if (el.errEmail) el.errEmail.hidden = validOptionalEmail(el.custEmail.value);
+  updateContactValidation();
 });
 
 el.profPhone.addEventListener('input', () => {
