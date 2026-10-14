@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261014-detailheading96">
     <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261014-neon-icons103">
-    <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-reference105">
+    <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
 </head>
 
 <body>
@@ -80,7 +80,7 @@
             <section class="page is-active" id="pageProducts">
                 <header class="page-head">
                     <div class="page-title">
-                        <h1>Produkter &amp; kategorier</h1>
+                        <h1 id="productsHeading">Produkter &amp; kategorier</h1>
                         <p id="productsSummary">—</p>
                     </div>
                     <div class="page-tools">
@@ -96,9 +96,8 @@
                         <button class="btn btn-primary btn-sm" id="btnNewCategory" type="button">+ Ny kategori</button>
                     </div>
                 </header>
-                <div class="stat-row" id="statRow"></div>
+                <div class="stat-row" id="statRow" hidden aria-hidden="true"></div>
                 <div class="dashboard-category-head">
-                    <h2>Kategorier</h2>
                     <span class="dashboard-order-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v15m0-15L5 7m3-3 3 3m5 13V5m0 15-3-3m3 3 3-3"/></svg>Dra for å endre rekkefølge</span>
                 </div>
                 <div class="scroll-area dashboard-categories-scroll">
@@ -718,7 +717,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261014-admin-reference105"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261014-admin-exact-reference106"></script>
 </body>
 
 </html>
