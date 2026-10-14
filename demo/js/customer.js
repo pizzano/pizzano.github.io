@@ -427,7 +427,7 @@ function customerOrderCountdown(order) {
   const readyAt = Number(order?.estimatedReadyAt) || 0;
   if (!readyAt) return '';
   const remainingMs = readyAt - Date.now();
-  if (remainingMs <= 0) return 'Estimert tid passert';
+  if (remainingMs <= 0) return 'Maten er klar for henting';
   const seconds = Math.ceil(remainingMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -475,6 +475,8 @@ function activeOrderCardHtml(order) {
             <small>Bestillingen din er klar.</small>
           </div>
         </div>`;
+    } else if (hasLiveEstimate && Number(order.estimatedReadyAt) <= Date.now()) {
+      statusPanel = `<div class="active-order-status-box is-confirmed is-text"><strong>Maten er klar for henting</strong></div>`;
     } else if (hasLiveEstimate) {
       statusPanel = `
         <div class="active-order-status-box is-confirmed">
@@ -586,7 +588,15 @@ function refreshCustomerOrderCountdowns() {
     const order = byId.get(node.dataset.customerCountdown);
     if (!order) return;
     const countdown = customerOrderCountdown(order);
-    node.textContent = countdown || '';
+    if (Number(order.estimatedReadyAt) > 0 && Number(order.estimatedReadyAt) <= Date.now()) {
+      const box = node.closest('.active-order-status-box');
+      if (box) {
+        box.classList.add('is-text');
+        box.textContent = 'Maten er klar for henting';
+      }
+    } else {
+      node.textContent = countdown || '';
+    }
   });
 
   // Time passing never changes status. Only staff can confirm the food is ready.
