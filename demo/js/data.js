@@ -987,33 +987,28 @@ function applyRemoteOrders(value) {
  */
 function applyStreamChange(value, path, data, isPatch) {
   const segments = String(path || '/').split('/').filter(Boolean);
-  if (!segments.length) {
-    if (!isPatch) return data && typeof data === 'object' ? data : {};
-    const root = value && typeof value === 'object' ? value : {};
+  const root = value && typeof value === 'object' ? value : {};
+
+  if (isPatch) {
+    // Firebase multipath updates can contain keys such as "id/status".
+    // Apply each changed leaf instead of treating that as a literal key.
     for (const [key, entry] of Object.entries(data && typeof data === 'object' ? data : {})) {
-      if (entry === null) delete root[key];
-      else root[key] = entry;
+      const destination = '/' + [...segments, key].join('/');
+      applyStreamChange(root, destination, entry, false);
     }
     return root;
   }
-  const root = value && typeof value === 'object' ? value : {};
+
+  if (!segments.length) return data && typeof data === 'object' ? data : {};
+
   let target = root;
   for (const segment of segments.slice(0, -1)) {
     if (!target[segment] || typeof target[segment] !== 'object') target[segment] = {};
     target = target[segment];
   }
   const key = segments[segments.length - 1];
-  if (isPatch && data && typeof data === 'object' && !Array.isArray(data)) {
-    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
-    for (const [part, entry] of Object.entries(data)) {
-      if (entry === null) delete target[key][part];
-      else target[key][part] = entry;
-    }
-  } else if (data === null) {
-    delete target[key];
-  } else {
-    target[key] = data;
-  }
+  if (data === null) delete target[key];
+  else target[key] = data;
   return root;
 }
 
@@ -1054,7 +1049,14 @@ function beginOrdersStream() {
     };
     source.addEventListener('put', event => update(event, false));
     source.addEventListener('patch', event => update(event, true));
-    source.onerror = () => { ordersStreamHealthy = false; };
+    source.onerror = () => {
+      ordersStreamHealthy = false;
+      if (source.readyState === 2) {
+        source.close();
+        if (ordersStream === source) ordersStream = null;
+        scheduleStreamReconnect();
+      }
+    };
     for (const kind of ['cancel', 'auth_revoked']) {
       source.addEventListener(kind, () => {
         ordersStreamHealthy = false;
@@ -1091,7 +1093,14 @@ function beginMenuStream() {
     menuStream = source;
     source.addEventListener('put', applyMenuVersionEvent);
     source.addEventListener('patch', applyMenuVersionEvent);
-    source.onerror = () => { menuStreamHealthy = false; };
+    source.onerror = () => {
+      menuStreamHealthy = false;
+      if (source.readyState === 2) {
+        source.close();
+        if (menuStream === source) menuStream = null;
+        scheduleStreamReconnect();
+      }
+    };
     for (const kind of ['cancel', 'auth_revoked']) {
       source.addEventListener(kind, () => {
         menuStreamHealthy = false;
