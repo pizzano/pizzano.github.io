@@ -2380,3 +2380,69 @@ html.ios-contact-keyboard-open main:has(> .view-checkout:not([hidden])) {
 html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   visibility:hidden!important;pointer-events:none!important;
 }
+
+
+/* Reference Kontakt layout — scoped to checkout, preserving all behavior. */
+#viewCheckout #step2.checkout-contact-card {
+  padding: clamp(15px, 3.2vw, 21px);
+  border-radius: 19px;
+  box-shadow: 0 5px 20px color-mix(in srgb, var(--palette-deep) 4%, transparent);
+}
+#viewCheckout .checkout-contact-card .sec-title {
+  font-size: clamp(17px, 3.6vw, 21px);
+  letter-spacing: -.025em;
+  margin-bottom: 18px;
+}
+#viewCheckout .checkout-contact-card .contact-form-field { margin-bottom: 17px; }
+#viewCheckout .checkout-contact-card .contact-form-field:last-child { margin-bottom: 0; }
+#viewCheckout .checkout-contact-card .contact-form-label {
+  font-size: clamp(14px, 3vw, 16px);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+#viewCheckout .checkout-contact-card .contact-form-label .contact-requirement {
+  color: var(--palette-muted);
+  font-size: .9em;
+  font-weight: 400;
+}
+#viewCheckout .checkout-contact-card .contact-form-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 11px;
+}
+#viewCheckout .checkout-contact-card .contact-form-icon svg { width: 19px; height: 19px; }
+#viewCheckout .checkout-contact-card .contact-form-control {
+  border-radius: 12px;
+}
+#viewCheckout .checkout-contact-card .contact-form-control .input {
+  min-height: 52px;
+  height: 52px;
+  padding-left: 14px;
+}
+#viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {
+  min-height: 52px;
+  flex-basis: 60px;
+  font-size: 16px;
+}
+#viewCheckout .checkout-contact-card .contact-form-phone .contact-form-control,
+#viewCheckout .checkout-contact-card .contact-form-phone .contact-form-control .input {
+  border-radius: 0 12px 12px 0;
+}
+#viewCheckout .checkout-contact-card .validated-input.is-valid,
+#viewCheckout .checkout-contact-card .contact-form-control:has(input:valid:not(:placeholder-shown)) {
+  background: color-mix(in srgb, var(--palette-accent) 7%, var(--palette-surface));
+}
+#viewCheckout .checkout-contact-card .contact-email-help {
+  margin: 9px 1px 0;
+  color: var(--palette-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+@media (max-width: 370px) {
+  #viewCheckout #step2.checkout-contact-card { padding: 13px; }
+  #viewCheckout .checkout-contact-card .contact-form-field { margin-bottom: 14px; }
+  #viewCheckout .checkout-contact-card .contact-form-icon { width: 31px; height: 31px; }
+  #viewCheckout .checkout-contact-card .contact-form-control .input { min-height: 48px; height: 48px; }
+  #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix { min-height: 48px; flex-basis: 53px; }
+}
