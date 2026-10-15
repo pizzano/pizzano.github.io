@@ -3,7 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { printKitchenTicket, checkEpsonConnection } from './order-printer.js?v=20261015-printerstatus125';
+import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261015-printer-typography128';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -48,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261015-printoptions123';
+} from './data.js?v=20261015-printer-typography128';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -70,7 +70,7 @@ const initialSettingsView = (() => {
   }
 })();
 
-const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact']);
+const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer']);
 const initialSettingsSection = (() => {
   try {
     const saved = localStorage.getItem('kol-admin-settings-section');
@@ -366,7 +366,13 @@ onStatus(({ state, message }) => {
 
 async function saveRestaurantChanges(){
   if(!validateWeeklyForm()){toast('Kontroller åpningstidene før du lagrer.');return;}
+  const printerWasDirty = commitPrinterTypographyDraft();
   const ok=await saveNow();
+  if (printerWasDirty) {
+    printerTypographyDirty = !ok;
+    printerSaveState.textContent = ok ? 'Printerinnstillingene er lagret.' : 'Lagring av printerinnstillinger feilet.';
+    printerSaveState.dataset.status = ok ? 'saved' : 'error';
+  }
   toast(ok?'Alle endringer er lagret.':'Kunne ikke lagre i Firebase. Prøv igjen.');
 }
 el.btnSaveNow.addEventListener('click',saveRestaurantChanges);
@@ -2686,7 +2692,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
   printingOrderIds.add(orderId);
   if (selectedOrderId === orderId) renderOrderDetail(orderId);
   try {
-    await printKitchenTicket(order, { reprint });
+    await printKitchenTicket(order, { reprint, typography: store.settings });
     setEpsonPrinterStatus('ok', 'Siste utskrift bekreftet av Epson.');
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
@@ -2906,6 +2912,124 @@ function refreshOrderClocks() {
 /* ------------------------------------------------------------------ *
  * Restaurantinnstillinger
  * ------------------------------------------------------------------ */
+
+const printerTypographyFields = [...document.querySelectorAll('[data-printer-typography]')];
+const printerPreviewImage = $('printerTypographyPreview');
+const printerSaveState = $('printerTypographySaveStatus');
+const printerPreviewSample = (() => {
+  const t = Date.now();
+  return {
+    id: 'ord_m8example', customerName: 'Thomas Dahl', phone: '+47 95557474',
+    status: 'bekreftet', pickup: 'Snarest', pickupMode: 'asap',
+    createdAt: t - 10 * 60000, estimatedAt: t - 9 * 60000,
+    estimatedReadyAt: t, estimatedMinutes: 10,
+    lines: [
+      { name: '1. Classico', quantity: 1, price: 319, size: 'Stor',
+        optionDetails: [
+          { groupTitle: 'Alternativer', label: 'Bare pepperoni', price: 0 },
+          { groupTitle: 'Velg saus', label: 'Hvitløksaus', price: 25 },
+        ] },
+      { name: 'Kebabrull', quantity: 2, price: 230, size: 'Standard',
+        optionDetails: [{ groupTitle: 'Tilvalg', label: 'Litt pommes frites i kebaben? Ja, takk!', price: 20 }] },
+    ],
+    subtotal: 779, total: 779,
+  };
+})();
+let printerTypographyDraft = null;
+let printerTypographyDirty = false;
+let printerTypographyFrame = 0;
+
+function drawPrinterSettingsPreview() {
+  if (!printerPreviewImage || !printerTypographyDraft || ui.settingsSection !== 'printer') return;
+  try {
+    const canvas = renderKitchenReceiptCanvas(printerPreviewSample, { typography: printerTypographyDraft });
+    printerPreviewImage.src = canvas.toDataURL('image/png');
+    printerPreviewImage.dataset.width = String(canvas.width);
+  } catch (error) {
+    console.error('Kunne ikke tegne eksempelkvittering', error);
+    printerSaveState.textContent = 'Kunne ikke vise kvitteringen: ' + error.message;
+    printerSaveState.dataset.status = 'error';
+  }
+}
+function queuePrinterSettingsPreview() {
+  if (printerTypographyFrame) cancelAnimationFrame(printerTypographyFrame);
+  printerTypographyFrame = requestAnimationFrame(() => {
+    printerTypographyFrame = 0;
+    drawPrinterSettingsPreview();
+  });
+}
+function syncPrinterTypographySettings() {
+  if (!printerTypographyFields.length) return;
+  // Do not overwrite the active slider draft with a Firebase rerender.
+  if (!printerTypographyDirty || !printerTypographyDraft) {
+    printerTypographyDraft = normalizePrinterTypography(store.settings);
+    printerTypographyFields.forEach((input) => {
+      input.value = String(printerTypographyDraft[input.dataset.printerTypography]);
+      const output = document.querySelector('[data-printer-output="' + input.dataset.printerTypography + '"]');
+      if (output) output.textContent = input.value + ' px';
+    });
+  }
+  queuePrinterSettingsPreview();
+}
+function setPrinterDraftDirty() {
+  printerTypographyDirty = true;
+  printerSaveState.textContent = 'Endringene vises i eksempelkvitteringen. Trykk lagre for å bruke dem på ekte kvitteringer.';
+  printerSaveState.dataset.status = 'dirty';
+}
+function commitPrinterTypographyDraft() {
+  if (!printerTypographyDirty || !printerTypographyDraft) return false;
+  const approved = normalizePrinterTypography(printerTypographyDraft);
+  mutate(state => {
+    Object.assign(state.settings, approved);
+  });
+  return true;
+}
+async function savePrinterTypographyDraft() {
+  const changed = commitPrinterTypographyDraft();
+  if (!changed) {
+    printerSaveState.textContent = 'Printerinnstillingene er allerede lagret.';
+    printerSaveState.dataset.status = 'saved';
+    return true;
+  }
+  const button = $('btnSavePrinterTypography');
+  button.disabled = true;
+  printerSaveState.textContent = 'Lagrer printerinnstillingene…';
+  printerSaveState.dataset.status = '';
+  try {
+    const saved = await saveNow();
+    printerTypographyDirty = !saved;
+    printerSaveState.textContent = saved
+      ? 'Printerinnstillingene er lagret og brukes på neste utskrift.'
+      : 'Lagring feilet. Prøv igjen når Firebase er tilgjengelig.';
+    printerSaveState.dataset.status = saved ? 'saved' : 'error';
+    if (saved) toast('Printerinnstillingene er lagret.');
+    return saved;
+  } finally {
+    button.disabled = false;
+  }
+}
+printerTypographyFields.forEach(input => {
+  input.addEventListener('input', () => {
+    if (!printerTypographyDraft) printerTypographyDraft = normalizePrinterTypography(store.settings);
+    const key = input.dataset.printerTypography;
+    printerTypographyDraft[key] = Number(input.value);
+    const output = document.querySelector('[data-printer-output="' + key + '"]');
+    if (output) output.textContent = input.value + ' px';
+    setPrinterDraftDirty();
+    queuePrinterSettingsPreview();
+  });
+});
+$('btnSavePrinterTypography').addEventListener('click', () => { void savePrinterTypographyDraft(); });
+$('btnResetPrinterTypography').addEventListener('click', () => {
+  printerTypographyDraft = { ...DEFAULT_PRINTER_TYPOGRAPHY };
+  printerTypographyFields.forEach((input) => {
+    input.value = String(printerTypographyDraft[input.dataset.printerTypography]);
+    const output = document.querySelector('[data-printer-output="' + input.dataset.printerTypography + '"]');
+    if (output) output.textContent = input.value + ' px';
+  });
+  setPrinterDraftDirty();
+  queuePrinterSettingsPreview();
+});
 
 function renderSettingsLayout() {
   if (!el.settingsGrid) return;
@@ -3128,6 +3252,7 @@ function renderSettings() {
   const settings = store.settings || {};
   renderSettingsLayout();
   applyAdminInterfaceSettings(settings);
+  syncPrinterTypographySettings();
 
   for (const [key] of SETTING_FIELDS) {
     const field = el.settings[key];
@@ -3231,6 +3356,7 @@ el.settingsSectionBtns.forEach((button) => {
     }
 
     renderSettingsLayout();
+    if (section === 'printer') syncPrinterTypographySettings();
 
     const scroller = el.settingsGrid?.closest('.settings-section-scroll');
     if (scroller) {
