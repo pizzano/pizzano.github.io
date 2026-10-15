@@ -35,7 +35,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261016-loyalty133';
+} from './data.js?v=20261016-ordersend134';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1678,6 +1678,7 @@ function renderCheckout() {
   el.custPhone.value = el.custPhone.value || profile.phone || '';
   if (el.custEmail) el.custEmail.value = el.custEmail.value || profile.email || '';
   el.btnStepNext.disabled = ui.orderSubmitting;
+  el.btnStepBack.disabled = ui.orderSubmitting;
   el.btnStepNext.removeAttribute('aria-disabled');
   el.views.checkout.classList.toggle('is-submitting', ui.orderSubmitting);
   updateContactValidation();
@@ -2045,11 +2046,20 @@ async function placeOrder() {
     return;
   }
 
+  // Show "Sender…" and prevent duplicate taps before the loyalty network check.
   const hadAutomaticReward = cart.some(line => line.loyaltyAuto);
+  ui.orderSubmitting = true;
+  ui.orderSendFailed = false;
+  renderCheckout();
   bonusState = await getPizzaBonus(phone).catch(() => null);
-  if (!cart.length || ui.orderSubmitting) return;
+  if (!cart.length) {
+    ui.orderSubmitting = false;
+    renderCheckout();
+    return;
+  }
   applyAutomaticPizzaBonus();
   if (hadAutomaticReward && !cart.some(line => line.loyaltyAuto)) {
+    ui.orderSubmitting = false;
     renderCheckout();
     toast('Pizzabonus kunne ikke bekreftes. Kontroller kurven før du sender på nytt.', 'warning');
     return;
@@ -2061,6 +2071,8 @@ async function placeOrder() {
     const size = item?.sizes?.find(size => size.id === rewardLine.sizeId);
     const paidCount = cart.reduce((sum,line)=>{const found=findItem(line.itemId);return sum+(largePizza(found.section,found.item?.sizes?.find(size=>size.id===line.sizeId)) ? line.quantity-(line.loyaltyFree?1:0) : 0)},0);
     if ((!state?.ready && !(rewardLine.loyaltyAuto && state?.consent && state.count + paidCount >= 10)) || (!rewardLine.loyaltyAuto && state.phone !== loyaltyPhone(profile.phone)) || state.cycle !== rewardLine.loyaltyCycle || !largePizza(section, size) || (!rewardLine.loyaltyAuto && rewardLine.quantity !== 1)) {
+      ui.orderSubmitting = false;
+      renderCheckout();
       toast('Gratispizza er ikke tilgjengelig for dette mobilnummeret.', 'error'); return;
     }
   }
@@ -2108,6 +2120,7 @@ async function placeOrder() {
   }
 
   if (!validOptionalEmail(el.custEmail?.value)) {
+    ui.orderSubmitting = false;
     ui.checkoutStep = 2;
     if (el.errEmail) el.errEmail.hidden = false;
     renderCheckout();
@@ -2115,10 +2128,7 @@ async function placeOrder() {
     return;
   }
 
-  ui.orderSubmitting = true;
-  ui.orderSendFailed = false;
-  renderCheckout();
-
+  // Sending state was activated before coupon preflight.
   let order;
   try {
     order = await submitOrder({
@@ -2829,6 +2839,7 @@ el.btnToCheckout.addEventListener('click', () => {
 });
 
 el.btnStepBack.addEventListener('click', () => {
+  if (ui.orderSubmitting) return;
   if (ui.checkoutStep === 2) setView('cart');
   else setStep(2);
 });

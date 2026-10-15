@@ -1480,12 +1480,10 @@ async function patchConfirmedPizzaOrder(order, changes) {
     if (!result.ok) throw new Error('Kunne ikke godta bestillingen.');
     order.loyaltyConfirmedAt = at;
     if (phone) {
-      try {
-        await syncPizzaBonusEvent_({ ...accepted, id: order.id });
-      } catch (error) {
-        // The order is confirmed even when the credit write needs a retry.
-        console.warn('Bestilling bekreftet, pizzabonus venter på synkronisering:', error);
-      }
+      // The order is already confirmed. Keep the durable loyaltyEventPending marker
+      // and credit the phone's account in the admin repair queue, without
+      // blocking acceptance or accidentally sending extra SMS/email.
+      queuePendingLoyaltyRepairs_([{ ...accepted, id: order.id }]);
     }
     return;
   }
