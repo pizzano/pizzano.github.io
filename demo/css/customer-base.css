@@ -282,7 +282,7 @@ select {
     background: var(--surface-2);
     border: 1px solid var(--line);
     color: var(--ink-2);
-}#btnBack[hidden] { display: none !important; }.show-more {     font: inherit;    white-space: nowrap; }.show-more { display: block;    }.pickup-choices { display: grid; grid-template-columns: 1fr 1fr;  margin: 10px 0; }.pickup-choice {      color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; }.pickup-choice.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }.comment-area {
+}#btnBack[hidden] { display: none !important; }.show-more {font: inherit;    white-space: nowrap; display: block; }.pickup-choices { display: grid; grid-template-columns: 1fr 1fr;  margin: 10px 0; }.pickup-choice {      color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; }.pickup-choice.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }.comment-area {
     width: 100%;
 
     resize: vertical;
@@ -429,11 +429,9 @@ select {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--palette-light);
-}.checkout-actions {
-    display: flex;
+}.checkout-actions {display: flex;
     gap: 8px;
-    margin-top: 10px;
-}.checkout-actions { position: sticky; bottom: 0; z-index: 35; margin: 14px -12px 0; padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 18px color-mix(in srgb, var(--palette-deep) 6%, transparent); }.checkout-actions .btn { flex: 1; }.checkout-actions #btnStepBack { flex: 0 0 calc(33.333% - 4px); }.checkout-actions #btnKeepShopping { flex: 0 0 calc(33.333% - 4px); }
+    margin-top: 10px; position: sticky; bottom: 0; z-index: 35; margin: 14px -12px 0; padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 18px color-mix(in srgb, var(--palette-deep) 6%, transparent); }.checkout-actions .btn { flex: 1; }.checkout-actions #btnStepBack { flex: 0 0 calc(33.333% - 4px); }.checkout-actions #btnKeepShopping { flex: 0 0 calc(33.333% - 4px); }
 
 /* -------------------------- Profil -------------------------- */.mini-list { display: grid; gap: 7px; }
 

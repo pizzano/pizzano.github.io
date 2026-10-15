@@ -108,8 +108,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
-.view-cart > .checkout-actions .btn,
-.view-checkout > .checkout-actions .btn { min-height: 50px; }
+
 @supports not selector(main:has(> .view-cart:not([hidden]))) {
   .view-cart,
 .view-checkout { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
@@ -132,11 +131,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
   .menu-overview-row { gap: 8px; }
 
-  .pickup-note .dot-open {
-  margin:0;width:11px;height:11px;
-  box-shadow:0 0 0 6px color-mix(in srgb,var(--palette-success) 12%,transparent),
-  0 2px 6px color-mix(in srgb,var(--palette-deep) 16%,transparent);
-}
+  
   .pickup-copy { gap: 1px; }
 
   .menu-overview .allergen-visibility-control {
@@ -186,7 +181,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
   
   
   
-  .sheet-head { min-height: 48px; padding: 8px 10px; }
+  
   .sheet-head h2,
 .sheet-body { padding: 10px; }
 
@@ -690,8 +685,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 }
 
   .sheet-allergens-label { margin-bottom: 6px; font-size: 11.5px; }
-  .sheet-allergen-chip,
-.sheet-allergen-none { min-height: 25px; padding: 3px 7px; font-size: 10.5px; }
+  
 
 /* ======================== Pickup choice attention ======================== */
 @keyframes pickupChoiceErrorNudge {
@@ -820,11 +814,11 @@ body::before {
 }
 .cat-scroll {
   width:min(100%,var(--app-width));max-width:var(--app-width);
-  align-items:stretch;scroll-padding-left:12px;gap:9px;
+  align-items:stretch;scroll-padding-left:12px;
 }
 .cat-tab {
   display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:5px;border:1px solid var(--palette-border);border-radius:16px;
+  gap:5px;border:1px solid var(--palette-border);
   background:var(--palette-surface);color:var(--palette-ink);
   font-weight:650;line-height:1.1;white-space:normal;text-align:center;
   box-shadow:0 5px 13px color-mix(in srgb,var(--palette-deep) 10%,transparent),
@@ -860,7 +854,7 @@ main {
 
 .menu-overview {
   margin:0 0 16px;border:1px solid var(--palette-border);
-  border-radius:18px;background:var(--palette-surface);
+  background:var(--palette-surface);
   box-shadow:0 7px 18px color-mix(in srgb,var(--palette-deep) 11%,transparent),
   inset 0 1px 0 color-mix(in srgb,var(--palette-light) 19%,transparent);
 }
@@ -2263,7 +2257,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   box-shadow:0 3px 12px color-mix(in srgb,var(--palette-deep) 4%,transparent);
 }
 #viewProfile .profile-tab-panel.profile-contact-card {padding:13px 12px 12px;}
-#viewCheckout #step2.checkout-contact-card {padding:12px 12px 11px;}
+
 #viewCheckout .checkout-contact-card .sec-title {
   margin:0 0 12px;color:var(--palette-ink);
   font-size:15px;line-height:1.2;font-weight:800;
@@ -2272,7 +2266,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #viewCheckout .checkout-contact-card .contact-form-field {
   min-width:0;margin:0 0 13px;
 }
-#viewCheckout .checkout-contact-card .contact-form-field:last-child {margin-bottom:0;}
+
 #viewProfile .profile-contact-card .contact-form-label,
 #viewCheckout .checkout-contact-card .contact-form-label {
   display:flex;align-items:center;gap:8px;
