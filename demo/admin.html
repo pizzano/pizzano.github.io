@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261015-printerlive126">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261014-settings-weekly108">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261015-printer-typography128">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -231,6 +231,7 @@
                     <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
                     <button class="settings-section-btn" data-settings-section-tab="contact" type="button">Kontakt</button>
+                    <button class="settings-section-btn" data-settings-section-tab="printer" type="button">Printer ayarları</button>
                 </nav>
                 <div class="scroll-area settings-section-scroll">
                     <div class="settings-grid is-list is-sectioned" id="settingsGrid">
@@ -411,6 +412,49 @@
                             </div>
                         </article>
 
+
+                        <article class="set-card settings-section-card printer-settings-card" data-settings-section="printer" hidden>
+                            <h2>Printer ayarları</h2>
+                            <p class="set-hint">Juster skrifttypestørrelsene for kjøkkenkvitteringen. Forhåndsvisningen bruker nøyaktig samme bitmap-renderer som Epson TM-T20II.</p>
+                            <div class="printer-settings-content">
+                                <div class="printer-settings-controls" id="printerTypographyControls">
+                                    <div class="printer-settings-field">
+                                        <label for="printerQtySize">Antall (1x, 2x)</label>
+                                        <div><input type="range" id="printerQtySize" data-printer-typography="printerQtySize" min="28" max="52" step="1" value="39"><output for="printerQtySize" data-printer-output="printerQtySize">39 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-field">
+                                        <label for="printerItemNameSize">Produktnavn (tynn skrift)</label>
+                                        <div><input type="range" id="printerItemNameSize" data-printer-typography="printerItemNameSize" min="25" max="45" step="1" value="35"><output for="printerItemNameSize" data-printer-output="printerItemNameSize">35 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-field">
+                                        <label for="printerSizeTextSize">Størrelse (Stor / Medium)</label>
+                                        <div><input type="range" id="printerSizeTextSize" data-printer-typography="printerSizeTextSize" min="19" max="38" step="1" value="28"><output for="printerSizeTextSize" data-printer-output="printerSizeTextSize">28 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-field">
+                                        <label for="printerExtraTextSize">Alternativer og ekstra</label>
+                                        <div><input type="range" id="printerExtraTextSize" data-printer-typography="printerExtraTextSize" min="16" max="33" step="1" value="22"><output for="printerExtraTextSize" data-printer-output="printerExtraTextSize">22 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-field">
+                                        <label for="printerPriceSize">Varepriser</label>
+                                        <div><input type="range" id="printerPriceSize" data-printer-typography="printerPriceSize" min="19" max="34" step="1" value="24"><output for="printerPriceSize" data-printer-output="printerPriceSize">24 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-field">
+                                        <label for="printerSidePadding">Sidemarger (576 px utskriftsbredde)</label>
+                                        <div><input type="range" id="printerSidePadding" data-printer-typography="printerSidePadding" min="2" max="18" step="1" value="5"><output for="printerSidePadding" data-printer-output="printerSidePadding">5 px</output></div>
+                                    </div>
+                                    <div class="printer-settings-actions">
+                                        <button type="button" class="btn btn-primary" id="btnSavePrinterTypography">Lagre printerinnstillinger</button>
+                                        <button type="button" class="btn btn-outline" id="btnResetPrinterTypography">Standardverdier</button>
+                                    </div>
+                                    <p class="printer-settings-save-status" id="printerTypographySaveStatus" role="status">Endringene forhåndsvises direkte. Lagre for å bruke dem på kvitteringer.</p>
+                                    <p class="set-hint">Papiret er 80 mm. Epson kan skrive ut opptil 576 punkter (omtrent 72 mm). Hele denne bredden benyttes med svært små sidemarger, uten å kutte teksten.</p>
+                                </div>
+                                <div class="printer-settings-preview">
+                                    <div class="printer-settings-preview-head"><strong>Eksempelkvittering</strong><small>Samme som utskrift · skaleres kun på skjermen</small></div>
+                                    <img id="printerTypographyPreview" alt="Forhåndsvisning av Epson-kvitteringen i svart-hvitt, med justerbare skrifter">
+                                </div>
+                            </div>
+                        </article>
                         <article class="set-card settings-section-card" data-settings-section="contact" hidden>
                             <h2>Kontakt og henting</h2>
                             <div class="set-field">
@@ -754,7 +798,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261015-printerlive127"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261015-printer-typography128"></script>
 </body>
 
 </html>
