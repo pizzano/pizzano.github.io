@@ -419,6 +419,7 @@ function activeCustomerOrders() {
       const readyAt = Number(order.statusUpdatedAt) || Number(order.createdAt) || Date.now();
       if (Date.now() - readyAt >= 5 * 60 * 1000) return false;
     }
+    if (isEstimatedPickupTimeReached(order) && Date.now() - Number(order.estimatedReadyAt) >= 5 * 60 * 1000) return false;
     const createdAt = Number(order.createdAt) || 0;
     return !createdAt || createdAt >= cutoff;
   });
@@ -590,6 +591,11 @@ function syncActiveOrderWatchers(orderIds) {
 
 function refreshCustomerOrderCountdowns() {
   const visibleOrders = activeCustomerOrders();
+  const visibleIds = new Set(visibleOrders.map((order) => order.id));
+  if (document.querySelector('[data-active-order-card]') && [...document.querySelectorAll('[data-active-order-card]')].some((node) => !visibleIds.has(node.dataset.activeOrderCard))) {
+    renderActiveOrders();
+    return;
+  }
   const byId = new Map(visibleOrders.map((order) => [order.id, order]));
   document.querySelectorAll('[data-customer-countdown]').forEach((node) => {
     const order = byId.get(node.dataset.customerCountdown);
