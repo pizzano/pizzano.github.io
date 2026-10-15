@@ -3,6 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
+import { printKitchenTicket } from './order-printer.js?v=20261015-eposreceipt123';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -47,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261014-settings-weekly108';
+} from './data.js?v=20261015-printoptions123';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -2336,7 +2337,7 @@ function renderOrderDetail(orderId) {
             <button data-save-detail-estimate="${escapeHtml(order.id)}" type="button">Oppdater tid</button>
           </section>` : ''}
       </div>
-      <footer class="pos-detail-actions">${actionHtml}</footer>
+      <footer class="pos-detail-actions">${!isPending && order.status !== 'avvist' ? `<button class="order-reprint-btn" type="button" data-reprint-order="${escapeHtml(order.id)}" ${printingOrderIds.has(order.id) ? 'disabled' : ''} aria-label="Skriv ut bestilling på nytt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM17 12h2"/></svg><span>${printingOrderIds.has(order.id) ? 'Skriver ut…' : 'Skriv ut på nytt'}</span></button>` : ''}${actionHtml}</footer>
     </article>`;
   el.orderDetailLive.querySelector('.pos-detail-scroll').scrollTop = scrollTop;
   if (draft?.id === order.id) {
@@ -2568,7 +2569,36 @@ function openRejectOrder(orderId) {
   openModal(el.modalRejectOrder);
 }
 
+// Utskrift foregår på Android-nettbrettet via HTTPS direkte til Epson i lokalnettet.
+const printingOrderIds = new Set();
+async function printOrderFromAdmin(orderId, reprint = false) {
+  if (!orderId || printingOrderIds.has(orderId)) return;
+  const order = getOrders().find((item) => item.id === orderId);
+  if (!order) {
+    toast('Fant ikke bestillingen for utskrift.');
+    return;
+  }
+  printingOrderIds.add(orderId);
+  if (selectedOrderId === orderId) renderOrderDetail(orderId);
+  try {
+    await printKitchenTicket(order, { reprint });
+    toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
+  } catch (error) {
+    console.error('Epson kvittering kunne ikke skrives ut', error);
+    toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
+  } finally {
+    printingOrderIds.delete(orderId);
+    if (selectedOrderId === orderId) renderOrderDetail(orderId);
+  }
+}
+
 el.orderDetailLive.addEventListener('click', async (event) => {
+  const reprint = event.target.closest('[data-reprint-order]');
+  if (reprint) {
+    if (reprint.disabled) return;
+    void printOrderFromAdmin(reprint.dataset.reprintOrder, true);
+    return;
+  }
   const closeDetail = event.target.closest('[data-close-order-detail]');
   if (closeDetail) {
     selectedOrderId = null;
@@ -2689,6 +2719,8 @@ async function confirmAcceptOrder() {
   renderOrders();
   renderStats();
   toast(scheduled ? `Bestillingen er godtatt · henting ${order.pickup}.` : `Bestillingen er godtatt · ${minutes} min.`);
+  // Skrives én gang fra nettbrettet som godtar ordren, aldri fra en Firebase-statuslytter.
+  void printOrderFromAdmin(acceptedOrderId);
   clearTimeout(acceptedDetailCloseTimer);
   acceptedDetailCloseTimer = window.setTimeout(() => {
     if (selectedOrderId !== acceptedOrderId) return;
