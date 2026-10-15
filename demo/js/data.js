@@ -27,7 +27,8 @@ export const DB_URL = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/
 
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
-const POLL_INTERVAL = 4000;
+const FALLBACK_ORDERS_INTERVAL = 15000;
+const FALLBACK_MENU_INTERVAL = 60000;
 const SCHEMA_VERSION = 6;
 
 const LOCAL_KEY = 'bestill_menu_state_v3';
@@ -809,7 +810,17 @@ if (typeof BroadcastChannel !== 'undefined') {
 }
 
 let remoteMenuPath = '';
-let pollTimer = null;
+let fallbackTimer = null;
+let ordersStream = null;
+let menuStream = null;
+let ordersStreamHealthy = false;
+let menuStreamHealthy = false;
+let ordersRaw = {};
+let orderStreamRevision = 0;
+let ordersFallbackBusy = false;
+let menuFallbackBusy = false;
+let lastMenuFallbackAt = 0;
+let menuRefreshPromise = null;
 let saveTimer = null;
 let readyResolve;
 const readyPromise = new Promise((resolve) => {
@@ -970,39 +981,243 @@ function applyRemoteOrders(value) {
 }
 
 
-/** Henter siste versjon fra databasen. */
+/** Apply Firebase Realtime Database SSE put/patch deltas to the local orders
+ * snapshot. Firebase paths are relative to /orders.json. No root re-download
+ * is needed when a single order changes.
+ */
+function applyStreamChange(value, path, data, isPatch) {
+  const segments = String(path || '/').split('/').filter(Boolean);
+  if (!segments.length) {
+    if (!isPatch) return data && typeof data === 'object' ? data : {};
+    const root = value && typeof value === 'object' ? value : {};
+    for (const [key, entry] of Object.entries(data && typeof data === 'object' ? data : {})) {
+      if (entry === null) delete root[key];
+      else root[key] = entry;
+    }
+    return root;
+  }
+  const root = value && typeof value === 'object' ? value : {};
+  let target = root;
+  for (const segment of segments.slice(0, -1)) {
+    if (!target[segment] || typeof target[segment] !== 'object') target[segment] = {};
+    target = target[segment];
+  }
+  const key = segments[segments.length - 1];
+  if (isPatch && data && typeof data === 'object' && !Array.isArray(data)) {
+    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+    for (const [part, entry] of Object.entries(data)) {
+      if (entry === null) delete target[key][part];
+      else target[key][part] = entry;
+    }
+  } else if (data === null) {
+    delete target[key];
+  } else {
+    target[key] = data;
+  }
+  return root;
+}
+
+function parseFirebaseEvent(event) {
+  const value = JSON.parse(event.data);
+  if (!value || typeof value.path !== 'string' || !Object.hasOwn(value, 'data')) {
+    throw new Error('Ugyldig Firebase-endringsmelding.');
+  }
+  return value;
+}
+
+function streamUrl(path) {
+  return DB_URL + '/' + path + '.json';
+}
+
+function beginOrdersStream() {
+  if (!('EventSource' in window)) return;
+  try {
+    const source = new EventSource(streamUrl(ORDERS_PATH));
+    ordersStream = source;
+    const update = (event, patch) => {
+      try {
+        const change = parseFirebaseEvent(event);
+        ordersRaw = applyStreamChange(ordersRaw, change.path, change.data, patch);
+        orderStreamRevision += 1;
+        ordersStreamHealthy = true;
+        remoteOnline = true;
+        if (applyRemoteOrders(ordersRaw)) emitData('remote');
+      } catch (error) {
+        ordersStreamHealthy = false;
+        console.warn('Kunne ikke bruke Firebase ordreoppdatering:', error);
+        // A malformed stream event cannot be trusted. Reconnect from a new
+        // complete snapshot instead of accepting more partial updates.
+        source.close();
+        if (ordersStream === source) ordersStream = null;
+        scheduleStreamReconnect();
+      }
+    };
+    source.addEventListener('put', event => update(event, false));
+    source.addEventListener('patch', event => update(event, true));
+    source.onerror = () => { ordersStreamHealthy = false; };
+    for (const kind of ['cancel', 'auth_revoked']) {
+      source.addEventListener(kind, () => {
+        ordersStreamHealthy = false;
+        source.close();
+        if (ordersStream === source) ordersStream = null;
+        scheduleStreamReconnect();
+      });
+    }
+  } catch (error) {
+    ordersStreamHealthy = false;
+    console.warn('Firebase ordre-stream kan ikke åpnes:', error);
+  }
+}
+
+function applyMenuVersionEvent(event) {
+  try {
+    const change = parseFirebaseEvent(event);
+    const version = Number(change.data);
+    if (change.path !== '/' || !Number.isFinite(version) || version <= 0) return;
+    menuStreamHealthy = true;
+    remoteOnline = true;
+    if (version !== Number(store.updatedAt)) void reloadRemoteMenu();
+  } catch (error) {
+    menuStreamHealthy = false;
+    console.warn('Firebase meny-stream feilet:', error);
+  }
+}
+
+function beginMenuStream() {
+  if (!('EventSource' in window)) return;
+  try {
+    const path = remoteMenuPath ? remoteMenuPath + '/updatedAt' : 'updatedAt';
+    const source = new EventSource(streamUrl(path));
+    menuStream = source;
+    source.addEventListener('put', applyMenuVersionEvent);
+    source.addEventListener('patch', applyMenuVersionEvent);
+    source.onerror = () => { menuStreamHealthy = false; };
+    for (const kind of ['cancel', 'auth_revoked']) {
+      source.addEventListener(kind, () => {
+        menuStreamHealthy = false;
+        source.close();
+        if (menuStream === source) menuStream = null;
+        scheduleStreamReconnect();
+      });
+    }
+  } catch (error) {
+    menuStreamHealthy = false;
+    console.warn('Firebase meny-stream kan ikke åpnes:', error);
+  }
+}
+
+let reconnectTimer = null;
+function scheduleStreamReconnect() {
+  if (reconnectTimer || !remoteEnabled) return;
+  reconnectTimer = window.setTimeout(() => {
+    reconnectTimer = null;
+    if (document.hidden || navigator.onLine === false) return;
+    if (!ordersStream) beginOrdersStream();
+    if (!menuStream) beginMenuStream();
+    void fallbackSync();
+  }, 3000);
+}
+
+/** Menu is refreshed only if updatedAt changes, not for every order. */
+async function reloadRemoteMenu() {
+  if (saveState === 'dirty' || saveState === 'saving') return;
+  if (menuRefreshPromise) return menuRefreshPromise;
+  menuRefreshPromise = (async () => {
+    const value = await restGet(remoteMenuPath);
+    const updated = applyRemoteMenu(remoteMenuPath ? { menu: value } : value);
+    remoteOnline = true;
+    if (updated) {
+      writeLocal();
+      emitData('remote');
+    }
+  })().catch(error => {
+    console.warn('Kunne ikke oppdatere restaurantmenyen:', error);
+  }).finally(() => { menuRefreshPromise = null; });
+  return menuRefreshPromise;
+}
+
+/** Manual full refresh. Only called by a user action, never by a timer. */
 async function pullRemote() {
   if (!remoteEnabled) return;
-  const requestId = ++nextOrdersPullId;
+  const revision = orderStreamRevision;
   try {
     const root = await restGet('');
     remoteOnline = true;
-    if (requestId < lastAppliedOrdersPullId) return;
-    lastAppliedOrdersPullId = requestId;
-    const menuChanged =
-      saveState === 'dirty' || saveState === 'saving' ? false : applyRemoteMenu(root);
-    const ordersChanged = applyRemoteOrders(root && root.orders);
+    const menuChanged = saveState === 'dirty' || saveState === 'saving'
+      ? false : applyRemoteMenu(root);
+    // A live SSE delta may have arrived while this GET was in flight.
+    const ordersChanged = revision === orderStreamRevision
+      ? applyRemoteOrders(ordersRaw = root?.orders || {})
+      : false;
+    if (menuChanged) writeLocal();
     if (menuChanged || ordersChanged) emitData('remote');
   } catch (err) {
     remoteOnline = false;
   }
 }
 
-/** Manuell oppfrisking (brukes av admin-knappen). */
 export async function refreshFromDatabase() {
   await pullRemote();
   return remoteOnline;
 }
 
-/** Live-oppdatering ved jevnlig polling, samt når fanen får fokus igjen. */
+/** REST fallback while a stream is unavailable; never download the whole DB. */
+async function fallbackSync() {
+  if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
+  if (!ordersStreamHealthy && !ordersFallbackBusy) {
+    ordersFallbackBusy = true;
+    const revision = orderStreamRevision;
+    try {
+      const orders = await restGet(ORDERS_PATH);
+      remoteOnline = true;
+      if (revision === orderStreamRevision) {
+        ordersRaw = orders || {};
+        if (applyRemoteOrders(ordersRaw)) emitData('remote');
+      }
+    } catch (error) {
+      if (!menuStreamHealthy) remoteOnline = false;
+    } finally {
+      ordersFallbackBusy = false;
+    }
+  }
+
+  const now = Date.now();
+  if (!menuStreamHealthy && !menuFallbackBusy &&
+      (now - lastMenuFallbackAt >= FALLBACK_MENU_INTERVAL)) {
+    lastMenuFallbackAt = now;
+    menuFallbackBusy = true;
+    try {
+      const version = Number(await restGet(remoteMenuPath ? remoteMenuPath + '/updatedAt' : 'updatedAt'));
+      if (version > 0 && version !== Number(store.updatedAt)) await reloadRemoteMenu();
+      remoteOnline = true;
+    } catch (error) {
+      if (!ordersStreamHealthy) remoteOnline = false;
+    } finally {
+      menuFallbackBusy = false;
+    }
+  }
+}
+
 function startPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(pullRemote, POLL_INTERVAL);
-  window.addEventListener('focus', pullRemote);
+  // Separate streams: full orders only at first connect, subsequent changes are
+  // small Firebase SSE patches. Menu is watched via a numeric version only.
+  beginOrdersStream();
+  beginMenuStream();
+  if (fallbackTimer) clearInterval(fallbackTimer);
+  fallbackTimer = window.setInterval(() => { void fallbackSync(); }, FALLBACK_ORDERS_INTERVAL);
+  window.addEventListener('focus', () => { void fallbackSync(); });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) pullRemote();
+    if (!document.hidden) {
+      if (!ordersStream && !menuStream) scheduleStreamReconnect();
+      void fallbackSync();
+    }
+  });
+  window.addEventListener('online', () => {
+    if (!ordersStream || !menuStream) scheduleStreamReconnect();
+    void fallbackSync();
   });
 }
+
 
 async function persist() {
   setSaveState('saving');
@@ -1549,7 +1764,8 @@ async function bootstrap() {
       remoteOnline = true;
       remoteMenuPath = root?.menu ? 'menu' : '';
       replaceMenuState(root?.menu || root || {});
-      applyRemoteOrders(root?.orders);
+      ordersRaw = root?.orders || {};
+      applyRemoteOrders(ordersRaw);
 
     } catch (err) {
       remoteOnline = false;
