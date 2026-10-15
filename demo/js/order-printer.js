@@ -388,6 +388,36 @@ function printerSettings() {
   return { host, scheme, deviceId };
 }
 
+/* Manual/periodic printer status check: a no-paper Epson ePOS command.
+ * Never treat navigator.onLine or the Firebase icon as printer health. */
+export async function checkEpsonConnection() {
+  const config = printerSettings();
+  const endpoint = config.scheme + '://' + config.host +
+    '/cgi-bin/epos/service.cgi?devid=' + encodeURIComponent(config.deviceId) + '&timeout=6000';
+  const body = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
+    '<epos-print xmlns="' + EPOS_NS + '"></epos-print></s:Body></s:Envelope>';
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '""' },
+      body, cache: 'no-store', signal: controller.signal
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const documentXml = new DOMParser().parseFromString(await response.text(), 'text/xml');
+    const node = documentXml.getElementsByTagNameNS(EPOS_NS, 'response')[0] ||
+      documentXml.getElementsByTagName('response')[0];
+    if (!node || !['true', '1'].includes(String(node.getAttribute('success')))) {
+      throw new Error('Epson kunne ikke bekrefte tilkoblingen.');
+    }
+    return true;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 export async function printKitchenTicket(order, { reprint = false } = {}) {
   const config = printerSettings();
   const endpoint = config.scheme + '://' + config.host +
