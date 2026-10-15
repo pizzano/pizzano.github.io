@@ -3,7 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { printKitchenTicket } from './order-printer.js?v=20261015-raster124';
+import { printKitchenTicket, checkEpsonConnection } from './order-printer.js?v=20261015-printerstatus125';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -2571,6 +2571,60 @@ function openRejectOrder(orderId) {
 
 // Utskrift foregår på Android-nettbrettet via HTTPS direkte til Epson i lokalnettet.
 const printingOrderIds = new Set();
+
+const printerStatusButton = document.getElementById('ordersPrinterStatus');
+const printerStatusTooltip = document.getElementById('ordersPrinterTooltip');
+const printerStatusPanel = document.getElementById('ordersPrinterPanel');
+const printerStatusText = document.getElementById('ordersPrinterMessage');
+const printerTestButton = document.getElementById('ordersPrinterCheck');
+let printerCheckRunning = false;
+function setEpsonPrinterStatus(status, message) {
+  printerStatusButton.classList.remove('is-pending', 'is-active', 'is-offline');
+  printerStatusButton.classList.add(status === 'ok' ? 'is-active' : status === 'error' ? 'is-offline' : 'is-pending');
+  const shortStatus = status === 'ok' ? 'Epson tilkoblet' : status === 'error' ? 'Epson ikke tilgjengelig' : 'Epson kontrolleres';
+  printerStatusButton.title = shortStatus;
+  printerStatusButton.setAttribute('aria-label', shortStatus);
+  printerStatusTooltip.textContent = shortStatus + ' · trykk for detaljer';
+  printerStatusText.textContent = message;
+}
+async function testEpsonFromOrders() {
+  if (printerCheckRunning) return;
+  printerCheckRunning = true;
+  printerTestButton.disabled = true;
+  setEpsonPrinterStatus('pending', 'Kontrollerer Epson over lokalnettverket…');
+  try {
+    await checkEpsonConnection();
+    setEpsonPrinterStatus('ok', 'Tilkobling OK · Epson bekreftet ePOS-forespørselen.');
+  } catch (error) {
+    setEpsonPrinterStatus('error', 'Ingen bekreftet kontakt med Epson. Åpne Epson, logg inn ved behov og prøv igjen.');
+    console.warn('Epson printer status:', error);
+  } finally {
+    printerCheckRunning = false;
+    printerTestButton.disabled = false;
+  }
+}
+printerStatusButton.addEventListener('click', () => {
+  const opened = printerStatusPanel.hidden;
+  printerStatusPanel.hidden = !opened;
+  printerStatusButton.setAttribute('aria-expanded', String(opened));
+});
+document.getElementById('ordersPrinterClose').addEventListener('click', () => {
+  printerStatusPanel.hidden = true;
+  printerStatusButton.setAttribute('aria-expanded', 'false');
+});
+printerTestButton.addEventListener('click', () => { void testEpsonFromOrders(); });
+document.addEventListener('click', (event) => {
+  if (!printerStatusPanel.hidden && !printerStatusPanel.contains(event.target) && !printerStatusButton.contains(event.target)) {
+    printerStatusPanel.hidden = true;
+    printerStatusButton.setAttribute('aria-expanded', 'false');
+  }
+});
+// A small, paperless status request: printer status is separate from internet/Firebase status.
+window.setTimeout(() => { if (!document.hidden) void testEpsonFromOrders(); }, 1600);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void testEpsonFromOrders();
+});
+
 async function printOrderFromAdmin(orderId, reprint = false) {
   if (!orderId || printingOrderIds.has(orderId)) return;
   const order = getOrders().find((item) => item.id === orderId);
@@ -2582,9 +2636,11 @@ async function printOrderFromAdmin(orderId, reprint = false) {
   if (selectedOrderId === orderId) renderOrderDetail(orderId);
   try {
     await printKitchenTicket(order, { reprint });
+    setEpsonPrinterStatus('ok', 'Siste utskrift bekreftet av Epson.');
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
+    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Åpne Epson for pålogging/tilkobling og prøv igjen.');
     toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
   } finally {
     printingOrderIds.delete(orderId);
