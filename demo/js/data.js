@@ -549,6 +549,7 @@ function normalizeOrders(raw) {
         customerName: String(order.customerName || ''),
         loyaltyReward: order.loyaltyReward || null,
         loyaltyConfirmedAt: Number(order.loyaltyConfirmedAt) || null,
+        loyaltyEventPending: order.loyaltyEventPending === true,
         phone: String(order.phone || ''),
         pickup: String(order.pickup || ''),
         pickupMode: order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? 'scheduled' : 'asap',
@@ -977,6 +978,7 @@ function applyRemoteOrders(value) {
   const before = snapshot(store.orders);
   const after = snapshot(next);
   store.orders = next;
+  queuePendingLoyaltyRepairs_(next);
   return before !== after;
 }
 
@@ -1316,13 +1318,20 @@ export async function setPizzaOffersConsent(phoneValue, enabled) {
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
-  const [account, orders] = await Promise.all([restGet(`pizzaBonus/${phone}`), restGet(ORDERS_PATH)]);
-  const history = historicalPizzaEvents(Object.values(orders || {}), phone, store.sections);
-  const events = { ...history, ...(account?.events || {}) };
-  const state = pizzaBonus(events);
+  // One customer account, not the full /orders collection.
+  const account = await restGet(`pizzaBonus/${phone}`);
+  const state = pizzaBonus(account?.events || {});
   const reservation = account?.reservations?.[state.cycle];
-  const pendingOrder = reservation && orders?.[reservation.orderId];
-  return { ...state, phone, consent: account?.offersConsent === true, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
+  let pending = false;
+  if (reservation) {
+    const reservedId = String(reservation.orderId || '');
+    const reservedOrder = reservedId
+      ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservedId)}`) : null;
+    pending = reservedOrder
+      ? !['avvist', 'kansellert'].includes(reservedOrder.status)
+      : Date.now() - Number(reservation.at || 0) < 600000;
+  }
+  return { ...state, phone, consent: account?.offersConsent === true, pending };
 }
 
 async function reservePizzaReward(record) {
@@ -1350,38 +1359,85 @@ async function reservePizzaReward(record) {
   throw new Error('Pizzabonus er opptatt. Prøv igjen.');
 }
 
-async function patchConfirmedPizzaOrder(order, changes) {
+// A conditional write on this one order replaces the former full-root ETag PUT.
+async function syncPizzaBonusEvent_(order) {
   const phone = loyaltyPhone(order.phone);
-  const at = order.loyaltyConfirmedAt || Date.now();
-  // Confirm the order and loyalty event together. ETag prevents a timeout or
-  // another tablet from being overwritten after this snapshot was read.
+  if (!phone || !order.id || !Number(order.loyaltyConfirmedAt)) return;
+  const quantity = (order.lines || []).reduce((sum, line) => {
+    const section = store.sections.find(s => s.items?.some(item => item.id === line.itemId));
+    return sum + ((line.loyaltyEligible || largePizza(section, line.size))
+      ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
+  }, 0);
+  const event = {
+    id: order.id,
+    at: Number(order.loyaltyConfirmedAt),
+    quantity,
+    redeemed: Boolean(order.loyaltyReward),
+  };
+  await restPut(`pizzaBonus/${phone}/events/${encodeURIComponent(order.id)}`, event);
+  // Never update statusUpdatedAt while storing the bonus: no duplicate SMS or email.
+  await restPatch(`${ORDERS_PATH}/${encodeURIComponent(order.id)}`,
+    { loyaltyEventPending: null });
+}
+
+// Failed loyalty writes are repaired on the next restaurant-admin snapshot.
+// A persistent marker prevents permanently losing credit after a network error.
+const pendingLoyaltyRepairs = new Set();
+function queuePendingLoyaltyRepairs_(orders) {
+  if (typeof window === 'undefined' || !window.location.pathname.endsWith('/admin.html')) return;
+  for (const order of orders) {
+    if (!order.loyaltyEventPending || !order.loyaltyConfirmedAt ||
+        !['bekreftet', 'tilberedning', 'klar', 'fullfort'].includes(order.status) ||
+        pendingLoyaltyRepairs.has(order.id)) continue;
+    pendingLoyaltyRepairs.add(order.id);
+    window.setTimeout(async () => {
+      try {
+        await syncPizzaBonusEvent_(order);
+      } catch (error) {
+        console.warn('Kunne ikke reparere pizzabonus for ordre:', order.id, error);
+      } finally {
+        pendingLoyaltyRepairs.delete(order.id);
+      }
+    }, 1000);
+  }
+}
+
+async function patchConfirmedPizzaOrder(order, changes) {
+  const at = Number(order.loyaltyConfirmedAt) || Date.now();
+  const phone = loyaltyPhone(order.phone);
+  const url = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const url = `${DB_URL}/.json`;
-    const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
+    const response = await fetch(url, {
+      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
+    });
     if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen.');
-    const root = await response.json() || {};
-    const current = root.orders?.[order.id];
-    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
+    const current = await response.json();
+    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) {
+      throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
+    }
     const etag = response.headers.get('ETag');
     if (!etag) throw new Error('Kunne ikke godta bestillingen sikkert.');
-    root.orders[order.id] = { ...current, ...changes, loyaltyConfirmedAt: at };
+    const accepted = {
+      ...current, ...changes, loyaltyConfirmedAt: at,
+      ...(phone ? { loyaltyEventPending: true } : {}),
+    };
+    const result = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(accepted),
+    });
+    if (result.status === 412) continue;
+    if (!result.ok) throw new Error('Kunne ikke godta bestillingen.');
+    order.loyaltyConfirmedAt = at;
     if (phone) {
-      root.pizzaBonus ||= {};
-      const account = root.pizzaBonus[phone] ||= {};
-      account.events ||= {};
-      const history = historicalPizzaEvents(normalizeOrders(root.orders), phone, store.sections);
-      for (const [id, event] of Object.entries(history)) {
-        if (id !== order.id && !account.events[id]) account.events[id] = event;
+      try {
+        await syncPizzaBonusEvent_({ ...accepted, id: order.id });
+      } catch (error) {
+        // The order is confirmed even when the credit write needs a retry.
+        console.warn('Bestilling bekreftet, pizzabonus venter på synkronisering:', error);
       }
-      const quantity = (current.lines || []).reduce((sum, line) => {
-        const section = store.sections.find(section => section.items?.some(item => item.id === line.itemId));
-        return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
-      }, 0);
-      account.events[order.id] = { id: order.id, at, quantity, redeemed: Boolean(current.loyaltyReward) };
     }
-    const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify(root) });
-    if (result.ok) { order.loyaltyConfirmedAt = at; return; }
-    if (result.status !== 412) throw new Error('Kunne ikke godta bestillingen.');
+    return;
   }
   throw new Error('Bestillingen ble endret. Oppdater og prøv igjen.');
 }
