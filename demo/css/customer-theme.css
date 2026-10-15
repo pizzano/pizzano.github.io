@@ -49,7 +49,6 @@ html[data-customer-palette] .allergen-visibility-control input:checked + .allerg
 html[data-customer-palette] :is(.opt-row.is-checked, .opt-row:has(input:checked), .time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-soft) !important; border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open { border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open .ingredient-customize-toggle { background: var(--palette-soft) !important; color: var(--palette-accent); border-color: var(--palette-accent) !important; }
-html[data-customer-palette] .saved-flash { border-radius: 10px; }
 
 html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
 

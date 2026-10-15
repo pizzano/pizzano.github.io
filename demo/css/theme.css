@@ -163,15 +163,8 @@ html[data-theme="dark"] .sec-title {
 
 html[data-theme="dark"] .prod-desc,
 html[data-theme="dark"] .cat-description,
-html[data-theme="dark"] .page-intro,
-html[data-theme="dark"] .hint,
-html[data-theme="dark"] .section-help {
+html[data-theme="dark"] .hint{
   color: var(--ink-2) !important;
-}
-
-html[data-theme="dark"] .allergen-mini-chip {
-  background: var(--palette-surface, #27241f) !important;
-  color: var(--palette-ink, #d6c5b7) !important;
 }
 
 html[data-theme="dark"] .show-more,
@@ -354,10 +347,6 @@ html[data-theme="dark"] .profile-detail-back {
   color: var(--ink-2) !important;
 }
 
-html[data-theme="dark"] .mini-row {
-  border-color: var(--line) !important;
-}
-
 html[data-theme="dark"] .active-order-card {
   border-color: var(--palette-accent, #29583a) !important;
   background: linear-gradient(135deg,var(--palette-surface, #16261c),var(--palette-surface, #181d1a)) !important;
@@ -441,20 +430,6 @@ html[data-theme="dark"] .shop-info-dialog {
 html[data-theme="dark"] .shop-info-close {
   background: var(--palette-surface, #252a2f) !important;
   color: var(--ink-2) !important;
-}
-
-html[data-theme="dark"] .shop-info-list,
-html[data-theme="dark"] .shop-info-row {
-  border-color: var(--line) !important;
-}
-
-html[data-theme="dark"] .shop-info-row-icon {
-  background: var(--palette-surface, #332116) !important;
-  color: var(--palette-accent, #ff8c49) !important;
-}
-
-html[data-theme="dark"] .shop-info-label {
-  color: var(--ink-3) !important;
 }
 
 html[data-theme="dark"] .shop-info-value,
@@ -574,59 +549,13 @@ html[data-theme="dark"] .admin-toast {
 
 html[data-theme="dark"] ::selection {
   background: color-mix(in srgb, var(--palette-accent, rgb(255,113,28)) 32%, transparent);
-}
+}/* ======================== Mine bestillinger cart style v2 ======================== */
 
-/* ======================== Mine bestillinger cart style v2 ======================== */
-html[data-theme="dark"] #orderList .order-history-cart-item {
-  border-color: var(--line) !important;
-  background: var(--palette-surface, #191d21) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-cart-media,
-html[data-theme="dark"] #orderList .order-history-cart-fallback {
-  background: var(--palette-surface, #24292e) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-cart-name,
-html[data-theme="dark"] #orderList .order-history-cart-total,
-html[data-theme="dark"] #orderList .order-history-cart-price,
-html[data-theme="dark"] #orderList .order-history-cart-multiplier strong {
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-cart-row,
-html[data-theme="dark"] #orderList .order-history-cart-left b,
-html[data-theme="dark"] #orderList .order-history-cart-price.is-included {
-  color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-cart-leader {
-  border-bottom-color: var(--palette-border, #5b646c) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-cart-qty {
-  background: var(--palette-surface, #2a211c) !important;
-  color: var(--palette-accent, #ff9861) !important;
-}
 
 /* ======================== Mine bestillinger open summary v3 ======================== */
 html[data-theme="dark"] #orderList .order-history-card[open] > .order-history-summary-shell {
   border-color: var(--line) !important;
   background: var(--palette-surface, #191d21) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-open-kicker,
-html[data-theme="dark"] #orderList .order-history-open-date {
-  color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-open-identity > strong {
-  color: var(--ink) !important;
-}
-
-html[data-theme="dark"] #orderList .order-history-hide-label {
-  color: var(--palette-accent, #ff9158) !important;
 }
 
 /* ======================== Hentetid pickup review v4 ======================== */
@@ -642,11 +571,6 @@ html[data-theme="dark"] #reviewCard .pickup-review-empty {
 
 html[data-theme="dark"] #reviewCard .pickup-review-body {
   background: var(--palette-surface, #15191d) !important;
-}
-
-html[data-theme="dark"] #reviewCard .pickup-review-media,
-html[data-theme="dark"] #reviewCard .pickup-review-fallback {
-  background: var(--palette-surface, #24292e) !important;
 }
 
 html[data-theme="dark"] #reviewCard .pickup-review-summary-copy strong,
@@ -667,15 +591,6 @@ html[data-theme="dark"] #reviewCard .pickup-review-price.is-included,
 html[data-theme="dark"] #reviewCard .pickup-review-info-grid span,
 html[data-theme="dark"] #reviewCard .pickup-review-pay span {
   color: var(--ink-3) !important;
-}
-
-html[data-theme="dark"] #reviewCard .pickup-review-dots {
-  border-bottom-color: var(--palette-border, #5b646c) !important;
-}
-
-html[data-theme="dark"] #reviewCard .pickup-review-qty {
-  background: var(--palette-surface, #2a211c) !important;
-  color: var(--palette-accent, #ff9861) !important;
 }
 
 html[data-theme="dark"] #reviewCard .pickup-review-info-grid > div {

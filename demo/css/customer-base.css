@@ -350,15 +350,7 @@ select {
     background: transparent !important;
 
     color: var(--ink);
-}.btn-outline:hover { background: transparent !important; border-color: var(--ink-3); }.btn-block { width: 100%; }.btn-add { flex: 1; justify-content: space-between; }.btn-add strong { font-weight: 700; }.link-btn {
-    border: 0;
-    background: transparent;
-    padding: 0;
-
-    font-weight: 600;
-    color: var(--accent);
-    text-decoration: underline;
-}.link-btn.is-danger { color: var(--danger); }.sum-row {
+}.btn-outline:hover { background: transparent !important; border-color: var(--ink-3); }.btn-block { width: 100%; }.btn-add { flex: 1; justify-content: space-between; }.btn-add strong { font-weight: 700; }.sum-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -443,27 +435,7 @@ select {
     margin-top: 10px;
 }.checkout-actions { position: sticky; bottom: 0; z-index: 35; margin: 14px -12px 0; padding: 12px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 18px color-mix(in srgb, var(--palette-deep) 6%, transparent); }.checkout-actions .btn { flex: 1; }.checkout-actions #btnStepBack { flex: 0 0 calc(33.333% - 4px); }.checkout-actions #btnKeepShopping { flex: 0 0 calc(33.333% - 4px); }
 
-/* -------------------------- Profil -------------------------- */.mini-list { display: grid; gap: 7px; }.mini-row {
-    display: flex;
-    align-items: center;
-
-    border: 1px solid var(--line);
-    border-radius: var(--r-sm);
-
-    background: var(--surface);
-}.mini-row img {
-
-    border-radius: 6px;
-    object-fit: cover;
-    flex: none;
-    background: var(--surface-2);
-}.mini-body { flex: 1; min-width: 0; }.mini-title {  font-weight: 650; margin: 0; }.mini-sub { font-size: 12px; color: var(--ink-3); margin: 0; }.saved-flash {
-    display: inline-block;
-    margin-left: 8px;
-    font-size: 12.5px;
-    color: var(--ok);
-    font-weight: 600;
-}
+/* -------------------------- Profil -------------------------- */.mini-list { display: grid; gap: 7px; }
 
 /* ---------------------- Bekreftelse ---------------------- */.confirm-modal {
     position: fixed;
@@ -499,12 +471,10 @@ select {
 /* Shared choice layout for product details and checkout. */.opt-guidance {  color: var(--ink-2); font-weight: 400; }.sheet-allergens { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 16px 2px 4px;    }.sheet-allergens strong { font-weight: 600; }.sheet-desc:empty { display: none; }.opt-label { line-height: 1.4; overflow-wrap: anywhere; }.pickup-choice { display: flex; flex-direction: column;  justify-content: center; gap: 5px;   }.pickup-choice small {  font-weight: 400; color: var(--ink-2); }.input { min-height: 46px; font-size: 16px; }.time-grid { margin-top: 12px;  }.time-btn { height: 46px; }.steps { gap: 6px;  }.step { border: 0; background: transparent;  gap: 5px;   border-radius: 0; }.step.is-active { background: transparent;  }.step.is-done { background: transparent;  }.checkout-actions .btn {  height: auto; padding: 10px 8px;  }.btn-add { min-width: 0; font-size: 14px; }.btn-add strong { white-space: nowrap; }@media (max-width: 360px){.sheet-body { padding: 12px; }.opt-group { padding: 12px; }.sheet-foot { padding-left: 8px; padding-right: 8px; }.qty button { width: 30px; }.time-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* Clear contact feedback and account information. */.hdr-btn {   flex: none;  }.validated-input { position: relative; flex: 1; min-width: 0; }.validated-input .input { padding-right: 38px; }.validated-input.is-valid .input { border-color: var(--palette-border); background: var(--palette-surface); }.valid-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: var(--palette-light); font-size: 13px; font-weight: 700; pointer-events: none; }.page-intro,
-.section-help { margin: 0 0 18px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }.view-profile .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }.view-profile .sec-title { margin-bottom: 12px; font-size: 16px; }.view-profile .mini-row { padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; gap: 12px; }.view-profile .mini-row:last-child { border-bottom: 0; }.view-profile .mini-row .link-btn { padding: 10px 12px; background: var(--accent-soft); border-radius: 9px; text-decoration: none; flex: none; }.view-profile .mini-sub { line-height: 1.5; }.view-profile #btnSaveProfile { min-height: 46px; }@media (max-width: 360px){.header-inner { gap: 4px; padding: 0 8px; }.hdr-actions { gap: 0; }.brand { gap: 5px; }.view-profile .card { padding: 16px; }
+/* Clear contact feedback and account information. */.hdr-btn {   flex: none;  }.validated-input { position: relative; flex: 1; min-width: 0; }.validated-input .input { padding-right: 38px; }.validated-input.is-valid .input { border-color: var(--palette-border); background: var(--palette-surface); }.valid-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: var(--palette-light); font-size: 13px; font-weight: 700; pointer-events: none; }.view-profile .card { padding: 20px; margin-bottom: 16px; border-radius: 16px; box-shadow: none; }.view-profile .sec-title { margin-bottom: 12px; font-size: 16px; }.view-profile #btnSaveProfile { min-height: 46px; }@media (max-width: 360px){.header-inner { gap: 4px; padding: 0 8px; }.hdr-actions { gap: 0; }.brand { gap: 5px; }.view-profile .card { padding: 16px; }
 }
 main { padding-left: 0; padding-right: 0; }.view-menu { margin-left: -9px; margin-right: -9px; padding-left: 5px; padding-right: 5px; }.view-cart > .view-title,
 .view-profile > .view-title,
-.view-profile > .page-intro,
 .view-cart > .steps,
 .view-checkout > .steps {
         margin-left: 12px;

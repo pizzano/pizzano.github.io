@@ -472,7 +472,7 @@ select.input:focus {
     background: #fff;
     box-shadow: var(--shadow-sm);
     transition: transform .16s ease;
-}.switch:checked { background: var(--ok); }.switch:checked::after { transform: translateX(18px); }.scroll-tail { height: 40px; }
+}.switch:checked { background: var(--ok); }.switch:checked::after { transform: translateX(18px); }
 
 /* ------------------------ Knapper ------------------------ */.btn {
     height: 36px;
@@ -656,17 +656,7 @@ select.input:focus {
     background: transparent;
     text-align: left;
     padding: 0;
-}.cat-toggle .chev { width: 16px; height: 16px; color: var(--ink-3); flex: none; transition: transform .16s ease; }.cat-toggle .chev.is-open { transform: rotate(90deg); }.cat-card-head .cat-name { font-size: 14px; font-weight: 700; white-space: nowrap; }.cat-card-head .cat-meta { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.cat-tools { display: flex; align-items: center; gap: 5px; flex: none; }.icon-btn.is-danger { color: var(--danger); }.icon-btn.is-danger:hover { background: var(--danger-soft); border-color: #f6cdcb; }.cat-index {
-    min-width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: var(--surface-3);
-    color: var(--ink-3);
-    font-size: 11.5px;
-    font-weight: 700;
-    line-height: 22px;
-    text-align: center;
-}.cat-card.is-drop { border-color: var(--accent); background: var(--accent-soft); }.cat-empty { font-size: 12.5px; color: var(--ink-3); margin: 6px 2px; }.empty-card {
+}.cat-toggle .chev { width: 16px; height: 16px; color: var(--ink-3); flex: none; transition: transform .16s ease; }.cat-toggle .chev.is-open { transform: rotate(90deg); }.cat-card-head .cat-name { font-size: 14px; font-weight: 700; white-space: nowrap; }.cat-card-head .cat-meta { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.cat-tools { display: flex; align-items: center; gap: 5px; flex: none; }.icon-btn.is-danger { color: var(--danger); }.icon-btn.is-danger:hover { background: var(--danger-soft); border-color: #f6cdcb; }.cat-card.is-drop { border-color: var(--accent); background: var(--accent-soft); }.cat-empty { font-size: 12.5px; color: var(--ink-3); margin: 6px 2px; }.empty-card {
     background: var(--surface);
     border: 1px dashed var(--line-strong);
     border-radius: var(--r-lg);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v209-firebasestream131';
+const CACHE_NAME = 'kol-demo-v210-css-cleanup1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
