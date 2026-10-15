@@ -2578,49 +2578,99 @@ const printerStatusPanel = document.getElementById('ordersPrinterPanel');
 const printerStatusText = document.getElementById('ordersPrinterMessage');
 const printerTestButton = document.getElementById('ordersPrinterCheck');
 let printerCheckRunning = false;
+let printerProbeEpoch = 0;
+let printerWarningShown = false;
+let printerWarningAutoOpened = false;
+
 function setEpsonPrinterStatus(status, message) {
   printerStatusButton.classList.remove('is-pending', 'is-active', 'is-offline');
   printerStatusButton.classList.add(status === 'ok' ? 'is-active' : status === 'error' ? 'is-offline' : 'is-pending');
-  const shortStatus = status === 'ok' ? 'Epson tilkoblet' : status === 'error' ? 'Epson ikke tilgjengelig' : 'Epson kontrolleres';
+  const shortStatus = status === 'ok' ? 'Epson tilkoblet'
+    : status === 'error' ? 'Epson: tilkoblingsfeil' : 'Epson: sjekker tilkobling';
   printerStatusButton.title = shortStatus;
   printerStatusButton.setAttribute('aria-label', shortStatus);
   printerStatusTooltip.textContent = shortStatus + ' · trykk for detaljer';
   printerStatusText.textContent = message;
+
+  if (status === 'ok') {
+    printerWarningShown = false;
+    if (printerWarningAutoOpened) {
+      printerStatusPanel.hidden = true;
+      printerStatusButton.setAttribute('aria-expanded', 'false');
+      printerWarningAutoOpened = false;
+    }
+  } else if (status === 'error' && !printerWarningShown && ui.page === 'orders') {
+    // Show one warning per outage, rather than repeatedly disturbing kitchen staff.
+    printerWarningShown = true;
+    if (printerStatusPanel.hidden) {
+      printerStatusPanel.hidden = false;
+      printerWarningAutoOpened = true;
+      printerStatusButton.setAttribute('aria-expanded', 'true');
+    }
+    toast('Epson-skriveren kan ikke nås. Trykk «Åpne Epson» og logg inn med epson / epson.');
+  }
 }
-async function testEpsonFromOrders() {
-  if (printerCheckRunning) return;
+async function testEpsonFromOrders({ manual = false } = {}) {
+  if (document.hidden || printerCheckRunning) return;
+  const epoch = ++printerProbeEpoch;
   printerCheckRunning = true;
   printerTestButton.disabled = true;
-  setEpsonPrinterStatus('pending', 'Kontrollerer Epson over lokalnettverket…');
+  // Preserve the red outage indication during periodic retries instead of
+  // flickering to gray every 10 seconds.
+  if (manual || !printerStatusButton.classList.contains('is-offline')) {
+    setEpsonPrinterStatus('pending', 'Kontrollerer Epson over lokalnettverket…');
+  }
   try {
     await checkEpsonConnection();
+    if (epoch !== printerProbeEpoch) return;
     setEpsonPrinterStatus('ok', 'Tilkobling OK · Epson bekreftet ePOS-forespørselen.');
   } catch (error) {
-    setEpsonPrinterStatus('error', 'Ingen bekreftet kontakt med Epson. Åpne Epson, logg inn ved behov og prøv igjen.');
+    if (epoch !== printerProbeEpoch) return;
+    setEpsonPrinterStatus('error', 'Ingen kontakt med Epson på 192.168.1.25. Åpne Epson, logg inn med epson / epson ved behov, og prøv på nytt.');
     console.warn('Epson printer status:', error);
   } finally {
-    printerCheckRunning = false;
-    printerTestButton.disabled = false;
+    if (epoch === printerProbeEpoch) {
+      printerCheckRunning = false;
+      printerTestButton.disabled = false;
+    }
   }
+}
+function invalidateEpsonConnection() {
+  ++printerProbeEpoch;
+  printerCheckRunning = false;
+  printerTestButton.disabled = false;
+  setEpsonPrinterStatus('error', 'Nettverket ble koblet fra. Epson-skriveren kan ikke bekreftes. Etter tilkobling: test igjen. Brukernavn: epson · passord: epson.');
 }
 printerStatusButton.addEventListener('click', () => {
   const opened = printerStatusPanel.hidden;
   printerStatusPanel.hidden = !opened;
   printerStatusButton.setAttribute('aria-expanded', String(opened));
+  if (opened) printerWarningAutoOpened = false;
 });
 document.getElementById('ordersPrinterClose').addEventListener('click', () => {
   printerStatusPanel.hidden = true;
+  printerWarningAutoOpened = false;
   printerStatusButton.setAttribute('aria-expanded', 'false');
 });
-printerTestButton.addEventListener('click', () => { void testEpsonFromOrders(); });
+printerTestButton.addEventListener('click', () => { void testEpsonFromOrders({ manual: true }); });
 document.addEventListener('click', (event) => {
   if (!printerStatusPanel.hidden && !printerStatusPanel.contains(event.target) && !printerStatusButton.contains(event.target)) {
     printerStatusPanel.hidden = true;
+    printerWarningAutoOpened = false;
     printerStatusButton.setAttribute('aria-expanded', 'false');
   }
 });
-// A small, paperless status request: printer status is separate from internet/Firebase status.
+// An ePOS probe sends NO receipt and consumes NO paper.
+// Detect disconnects even while the wider internet/Firebase remains online.
 window.setTimeout(() => { if (!document.hidden) void testEpsonFromOrders(); }, 1600);
+window.setInterval(() => {
+  if (!document.hidden && ui.page === 'orders') void testEpsonFromOrders();
+}, 10000);
+window.addEventListener('offline', invalidateEpsonConnection);
+window.addEventListener('online', () => {
+  // Going online is not proof that the printer is reachable.
+  window.setTimeout(() => { if (!document.hidden) void testEpsonFromOrders(); }, 1000);
+});
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void testEpsonFromOrders();
 });
@@ -2640,7 +2690,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
-    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Åpne Epson for pålogging/tilkobling og prøv igjen.');
+    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Åpne Epson på 192.168.1.25 og logg inn med epson / epson ved behov.');
     toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
   } finally {
     printingOrderIds.delete(orderId);
