@@ -562,6 +562,12 @@ function normalizeOrders(raw) {
           options: asArray(line.options).map((opt) =>
             typeof opt === 'string' ? opt : String(opt.label || '')
           ),
+          // Preserve option prices for kitchen slips; line.price already includes extras.
+          optionDetails: asArray(line.optionDetails).map((opt) => ({
+            groupTitle: String(opt?.groupTitle || ''),
+            label: String(opt?.label || ''),
+            price: Number(opt?.price) || 0,
+          })).filter((opt) => opt.label),
           quantity: Number(line.quantity) || 1,
           price: Number(line.price) || 0,
         })),
