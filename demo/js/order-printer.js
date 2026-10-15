@@ -83,15 +83,39 @@ function pickupLabel(order) {
 /* Draw the full receipt as a high-contrast image, then send Epson's packed
  * 1-bit raster. Epson's <image> XML element does NOT accept PNG/JPEG bytes. */
 const RASTER_WIDTH = 576; // TM-T20II 80mm paper at 203dpi (72mm printable)
-const RASTER_MARGIN = 17;
-const RASTER_INNER = RASTER_WIDTH - RASTER_MARGIN * 2;
+export const DEFAULT_PRINTER_TYPOGRAPHY = Object.freeze({
+  printerQtySize: 39,
+  printerItemNameSize: 35,
+  printerSizeTextSize: 28,
+  printerExtraTextSize: 22,
+  printerPriceSize: 24,
+  printerSidePadding: 5,
+});
+export const PRINTER_TYPOGRAPHY_LIMITS = Object.freeze({
+  printerQtySize: [28, 52],
+  printerItemNameSize: [25, 45],
+  printerSizeTextSize: [19, 38],
+  printerExtraTextSize: [16, 33],
+  printerPriceSize: [19, 34],
+  printerSidePadding: [2, 18],
+});
+export function normalizePrinterTypography(source = {}) {
+  const input = source && typeof source === 'object' ? source : {};
+  return Object.fromEntries(Object.entries(DEFAULT_PRINTER_TYPOGRAPHY).map(([key, fallback]) => {
+    const value = Number(input[key]);
+    const [minimum, maximum] = PRINTER_TYPOGRAPHY_LIMITS[key];
+    return [key, Number.isFinite(value) && value > 0
+      ? Math.min(maximum, Math.max(minimum, Math.round(value)))
+      : fallback];
+  }));
+}
 
-function paintKitchenReceipt(ctx, order, reprint) {
+function paintKitchenReceipt(ctx, order, reprint, typography) {
   const c = ctx;
   const ink = '#050505';
-  const x = RASTER_MARGIN;
+  const x = typography.printerSidePadding;
   const right = RASTER_WIDTH - x;
-  const wide = RASTER_INNER;
+  const wide = RASTER_WIDTH - x * 2;
   let y = 18;
   c.fillStyle = '#fff';
   c.fillRect(0, 0, RASTER_WIDTH, c.canvas.height);
@@ -230,33 +254,71 @@ function paintKitchenReceipt(ctx, order, reprint) {
       y += 9; line(x, right, y, 2, true); y += 19;
     }
     const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-    const label = quantity + 'x ' + String(item.name || 'Produkt');
-    // Reserve room for unit price and the employee check-off square.
+    const countText = quantity + 'x';
+    const name = String(item.name || 'Produkt');
     const entryTop = y;
-    c.strokeStyle = ink; c.lineWidth = 3;
-    c.strokeRect(right - 36, entryTop + 2, 33, 33);
-    type(24, true);
+    // Use almost the entire 576-dot printable span; reserve the right edge for
+    // the checkbox and price, then give the name all remaining available width.
+    c.strokeStyle = ink;
+    c.lineWidth = 3;
+    c.strokeRect(right - 35, entryTop + 4, 32, 32);
+    type(typography.printerPriceSize, true);
     c.textAlign = 'right';
-    c.fillText(money(item.price), right - 49, entryTop + 3, 138);
+    c.fillText(money(item.price), right - 43, entryTop + 5, 150);
     c.textAlign = 'left';
-    textLines(label, x + 1, wide - 205, 31, true, 37);
-    y = Math.max(y, entryTop + 43);
-    const addLine = (heading, description) => {
+
+    type(typography.printerQtySize, true);
+    const countWidth = c.measureText(countText).width;
+    c.fillText(countText, x + 1, entryTop);
+    const nameX = x + countWidth + 14;
+    const nameMaxWidth = Math.max(110, (right - 202) - nameX);
+    const itemNameRows = words(name, nameMaxWidth, typography.printerItemNameSize, false);
+    let rowY = entryTop + Math.max(1, Math.round((typography.printerQtySize - typography.printerItemNameSize) / 3));
+    type(typography.printerItemNameSize, false);
+    for (const nameRow of itemNameRows) {
+      c.fillText(nameRow, nameX, rowY, nameMaxWidth);
+      rowY += typography.printerItemNameSize + 6;
+    }
+    y = Math.max(entryTop + typography.printerQtySize + 11, rowY + 3, entryTop + 43);
+
+    const addLine = (heading, description, isSize = false) => {
       if (!description) return;
-      textLines(heading + ': ' + description, x + 52, wide - 55, 23, true, 29);
+      const indent = x + Math.min(52, Math.round(countWidth + 10));
+      const available = right - indent - 5;
+      const headingText = heading + ': ';
+      if (isSize) {
+        type(21, false);
+        const labelWidth = c.measureText(headingText).width;
+        type(typography.printerSizeTextSize, true);
+        const valueWidth = c.measureText(String(description)).width;
+        if (labelWidth + valueWidth <= available) {
+          type(21, false);
+          c.fillText(headingText, indent, y + 3);
+          type(typography.printerSizeTextSize, true);
+          c.fillText(String(description), indent + labelWidth, y, available - labelWidth);
+          y += Math.max(31, typography.printerSizeTextSize + 5);
+        } else {
+          textLines(headingText.trim(), indent, available, 21, false, 27);
+          textLines(description, indent, available, typography.printerSizeTextSize,
+            true, typography.printerSizeTextSize + 5);
+        }
+      } else {
+        textLines(headingText + description, indent, available, typography.printerExtraTextSize,
+          false, typography.printerExtraTextSize + 7);
+      }
     };
-    if (item.size) addLine('Størrelse', item.size);
+    if (item.size) addLine('Størrelse', item.size, true);
     const options = Array.isArray(item.optionDetails) && item.optionDetails.length
       ? item.optionDetails
       : (Array.isArray(item.options) ? item.options : []).map(opt =>
         typeof opt === 'string' ? {label: opt} : opt);
     for (const opt of options) {
       if (!opt) continue;
-      const name = typeof opt === 'string' ? opt : opt.label;
-      if (!name) continue;
+      const optionName = typeof opt === 'string' ? opt : opt.label;
+      if (!optionName) continue;
       const title = opt.groupTitle || 'Alternativer';
       const supplement = Number(opt.price) > 0 ? ' (+' + money(opt.price) + ')' : '';
-      addLine(title, String(name) + supplement);
+      addLine(title, String(optionName) + supplement);
     }
     if (Array.isArray(item.removedIngredients) && item.removedIngredients.length)
       addLine('Uten', item.removedIngredients.join(', '));
@@ -303,8 +365,9 @@ function paintKitchenReceipt(ctx, order, reprint) {
   return y;
 }
 
-export function renderKitchenReceiptCanvas(order, { reprint = false } = {}) {
+export function renderKitchenReceiptCanvas(order, { reprint = false, typography = {} } = {}) {
   if (!order || !order.id) throw new Error('Bestillingen mangler ordre-ID.');
+  const chosenTypography = normalizePrinterTypography(typography);
   const canvas = document.createElement('canvas');
   canvas.width = RASTER_WIDTH;
   canvas.height = 1600;
@@ -312,7 +375,7 @@ export function renderKitchenReceiptCanvas(order, { reprint = false } = {}) {
   for (let attempt = 0; attempt < 6; attempt++) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('Nettbrettet kan ikke tegne kvitteringen.');
-    height = paintKitchenReceipt(ctx, order, reprint);
+    height = paintKitchenReceipt(ctx, order, reprint, chosenTypography);
     if (height <= canvas.height) break;
     if (height > 24000) throw new Error('Bestillingen er for lang for én kvittering.');
     canvas.height = Math.max(canvas.height * 2, Math.ceil(height / 100) * 100);
@@ -362,10 +425,10 @@ function packed1BitRaster(canvas) {
   return images.join('') + '<feed line="3"/><cut type="feed"/>';
 }
 
-async function bitmapReceiptXml(order, reprint = false) {
+async function bitmapReceiptXml(order, reprint = false, typography = {}) {
   // Ensure that the Android system fonts have finished loading before rasterization.
   try { await document.fonts?.ready; } catch {}
-  const canvas = renderKitchenReceiptCanvas(order, { reprint });
+  const canvas = renderKitchenReceiptCanvas(order, { reprint, typography });
   return packed1BitRaster(canvas);
 }
 
@@ -418,11 +481,11 @@ export async function checkEpsonConnection() {
   }
 }
 
-export async function printKitchenTicket(order, { reprint = false } = {}) {
+export async function printKitchenTicket(order, { reprint = false, typography = {} } = {}) {
   const config = printerSettings();
   const endpoint = config.scheme + '://' + config.host +
     '/cgi-bin/epos/service.cgi?devid=' + encodeURIComponent(config.deviceId) + '&timeout=10000';
-  const content = await bitmapReceiptXml(order, reprint);
+  const content = await bitmapReceiptXml(order, reprint, typography);
   // Epson TM-T20II ePOS-Print 5.0 uses the SOAP envelope proven by /demo/test-printer.html.
   const body = '<?xml version="1.0" encoding="UTF-8"?>' +
     '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
