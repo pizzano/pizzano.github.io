@@ -1,109 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="no">
 <head>
-<meta charset="UTF-8">
-<title>Printer</title>
-<style>
-body {
-    background:#111;
-    color:white;
-    font-family:Arial;
-    padding:40px;
-}
-button {
-    padding:15px 30px;
-    font-size:18px;
-    background:#00c853;
-    border:none;
-    border-radius:8px;
-    color:white;
-    cursor:pointer;
-}
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,follow">
+<meta http-equiv="refresh" content="0; url=/demo/test-printer.html">
+<title>Bestill — KØL Grill &amp; Pizza</title>
+<script>location.replace("/demo/test-printer.html" + location.search + location.hash);</script>
 </head>
-<body>
-
-<h2>🧾 Fiş Yazdır</h2>
-<button onclick="printReceipt()">Yazdır</button>
-
-<script>
-async function printReceipt() {
-
-    const ESC = "\x1B";
-    const GS  = "\x1D";
-
-    let text = "";
-
-    text += ESC + "@";
-    text += ESC + "a" + "\x01";
-
-    function header(line) {
-        return GS+"!"+"\x11" + GS+"B"+"\x01" + line + "\n" + GS+"B"+"\x00" + GS+"!"+"\x00";
-    }
-
-    text += header(" HENTING ");
-    text += header(" SNAREST 60 MIN ");
-    text += header(" 24. APRIL 20:36 ");
-
-    text += ESC + "a" + "\x00";
-
-    text += "\n";
-    text += "(!) No plastic cutlery\n\n";
-
-    text += ESC+"E"+ "\x01";
-    text += "Enheter\n";
-    text += ESC+"E"+ "\x00";
-
-    function item(name) {
-        let space = 42 - name.length - 3;
-        if (space < 1) space = 1;
-        return name + " ".repeat(space) + "[ ]\n";
-    }
-
-    text += item("2x Pizza Prosciutto");
-    text += "   Size: Small\n";
-    text += "   Crust: Fluffy\n\n";
-
-    text += item("1x Pizza Pepperoni");
-    text += "   Size: Medium\n\n";
-
-    text += "-".repeat(42) + "\n";
-
-    text += ESC+"E"+ "\x01";
-    text += "Bestillingsdetaljer\n";
-    text += ESC+"E"+ "\x00";
-
-    function line(l, r) {
-        let space = 42 - l.length - r.length;
-        return l + " ".repeat(space) + r + "\n";
-    }
-
-    text += line("Nummer:", "1");
-    text += line("Fornavn:", "FATIH");
-    text += line("Etternavn:", "ALEMDAR");
-
-    text += "\n\n";
-
-    text += GS + "V" + "A" + "\x00";
-
-    // 🔥 BURASI DEĞİŞTİ
-    try {
-        await fetch("http://192.168.1.102:5000/", {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ text })
-        });
-
-        alert("Gönderildi");
-
-    } catch (err) {
-        alert("HATA: " + err.message);
-    }
-}
-</script>
-
-</body>
+<body><p>Siden er flyttet til <a href="/demo/test-printer.html">/demo/test-printer.html</a>.</p></body>
 </html>
