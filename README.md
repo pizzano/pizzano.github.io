@@ -12,7 +12,7 @@ Nettstedet er **https://bestill.online/**. GitHub Pages behandler `demo` og `DEM
 | Epson testutskrift | [demo/test-printer.html](demo/test-printer.html) |
 | Privat bildeutskrift (80 mm) | [demo/tools/PrivatPrinter.html](demo/tools/PrivatPrinter.html) |
 
-Se [demo/README.md](demo/README.md) for mapper, CSS- og JavaScript-avhengigheter, printer og vedlikehold.
+Se [demo/README.md](demo/README.md) for mapper, CSS- og JavaScript-avhengigheter, printer og vedlikehold. KØL-timelister og gavekort er samlet under **demo/tools/** og **demo/gavekort/**, med de gamle adressene bevart som videresendinger.
 Kjør `node demo/tools/audit-references.mjs` for å teste lokale filreferanser etter endringer.
 
 ## Hva må fortsatt ligge utenfor /demo?

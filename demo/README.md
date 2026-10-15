@@ -44,3 +44,15 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 4. Test både mobil/Android og desktop, samt Epson-utskrift ved skriverendringer.
 5. Push til `main`. Behold eksisterende `/demo/`-URL-er.
 6. Ved behov: gjenopprett en gammel fil fra `backup-before-demo-cleanup-20261015`.
+
+
+## KØL-tillegg samlet i /demo (uten å endre de andre prosjektene)
+
+| KØL-verktoy | Gjeldende fil | Tidligere nettadresse |
+| --- | --- | --- |
+| Ansatt-timelister (lokal utskrift) | `tools/Timelister.html` | `/Timelister.html` (videresendes) |
+| Kundens gavekort | `gavekort/index.html` | `/gavekort.html` (videresendes) |
+| Administrasjon av gavekort | `gavekort/admin.html` | `/gavekort-admin.html` (videresendes) |
+| Privat bildefunksjon til Epson | `tools/PrivatPrinter.html` | `/PrivatPrinter.html` (videresendes) |
+
+**Andre prosjekter og nettsteder er urørt.** `api/` må ligge i repo-roten for Vercel API-rutene, og `functions/` er kildekatalogen i `firebase.json` for Firebase Functions. Flytting av disse uten ny distribusjonskonfigurasjon ville ødelegge eksisterende endepunkter, så de forblir i rotnivå. `CNAME`, `index.html` og `img/` trengs fortsatt av nettstedets hovedside. Ingen SMS-, e-post-, databaser- eller ordrelogikk ble endret i denne samlingen.
