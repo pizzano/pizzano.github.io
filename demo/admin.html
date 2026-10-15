@@ -10,7 +10,7 @@
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261014-detailheading96">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261015-eposreceipt123">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261015-printerstatus125">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261014-admin-exact-reference106">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261014-settings-weekly108">
@@ -152,6 +152,20 @@
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.4 8.7c5.7-5.1 13.5-5.1 19.2 0M5.7 12.2c3.7-3.3 8.9-3.3 12.6 0M9 15.7c1.8-1.5 4.2-1.5 6 0"/><circle cx="12" cy="19.2" r="1.05" fill="currentColor" stroke="none"/></svg>
                           <span class="orders-light-tooltip" data-light-net-text>Kontrollerer nettforbindelsen…</span>
                         </button>
+                        <button class="orders-light orders-printer-indicator is-pending" id="ordersPrinterStatus" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="ordersPrinterPanel" aria-label="Epson-skriver: sjekker" title="Epson TM-T20II · skrivertilkobling">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M17 11h2"/></svg>
+                          <span class="orders-light-tooltip" id="ordersPrinterTooltip">Epson: kontrollerer tilkobling…</span>
+                        </button>
+                        <div class="orders-printer-panel" id="ordersPrinterPanel" hidden role="region" aria-label="Epson TM-T20II">
+                          <div class="orders-printer-panel-head"><strong>Epson TM-T20II</strong><button id="ordersPrinterClose" type="button" aria-label="Lukk skriverpanel">×</button></div>
+                          <p class="orders-printer-panel-status" id="ordersPrinterMessage" role="status">Tilkoblingen er ikke kontrollert.</p>
+                          <p class="orders-printer-panel-ip">IP: <b>192.168.1.25</b> · ePOS-Print</p>
+                          <div class="orders-printer-panel-buttons">
+                            <button id="ordersPrinterCheck" type="button">Test tilkobling</button>
+                            <a id="ordersPrinterOpen" href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">Åpne Epson ↗</a>
+                          </div>
+                          <p class="orders-printer-panel-hint">Hvis skriveren spør om innlogging: bruk kontoen du tidligere lagret i nettleseren. Den offentlige demosiden lagrer ikke passord.</p>
+                        </div>
                         <button class="orders-light orders-sms-indicator is-pending" id="ordersSmsStatus" type="button" aria-label="SMS-tjeneste – kontrollerer" title="SMS-tjenestens status">
                           <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h8M8 13h5"/></svg>
                           <span class="orders-light-tooltip" data-sms-status-text>SMS – sjekker status</span>
@@ -735,7 +749,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261015-raster124"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261015-printerstatus125"></script>
 </body>
 
 </html>
