@@ -20,7 +20,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Ikoner | `icons/` | PWA-ikoner og restaurantikon |
 | PWA | `manifest.webmanifest`, `service-worker.js`, `js/install.js` | Installering, mellomlagring og nettverksoppførsel |
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
-| Tester | `tests/` | Kontroll av ordre, handlekurv og logikk |
+
 | Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
 | Apps Script-kopi | `integrations/google-apps-script/` | Referansekopi av e-post-poller (ikke automatisk utplassert) |
 
@@ -56,3 +56,5 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
 `api/` forblir i roten for Vercel API-ruter, og `functions/` forblir i roten for Firebase-funksjoner. Ingen SMS-, e-post-, database- eller ordrelogikk er endret.
+
+Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
