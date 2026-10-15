@@ -1,82 +1,43 @@
-# KØL Gmail ve SMS — Daha az Firebase trafiği
+# KØL SMS + e-post – Google Apps Script kaynakları
 
-**Bu klasör kaynak kodudur.** GitHub'a yüklemek Google Apps Script projelerini
-otomatik güncellemez. Canlı SMS ve e-posta ancak Google Apps Script içinde
-kaydedildikten sonra yeni sorguları kullanmaya başlar.
+## SMS – **tek bildirim, Hentetid**
 
-## 1. Firebase RTDB indekslerini birleştir
+**Bu klasördeki `Kode.gs` TAM SMS uygulamasıdır (427 satır).**
+Eskiden bulunan kısa `sms-query-patch.gs` sadece 63 satırlık bir fonksiyondu;
+tam dosyanın yerine yapıştırılırsa SMS fonksiyonları kayboluyordu. Bu dosya artık kaldırıldı.
 
-Firebase Console → **KOL Grill Pizza** → Realtime Database → **Rules**.
+1. [Kode.gs](Kode.gs) dosyasını aç ve içeriğini tamamen kopyala.
+2. Google Apps Script **KOL SMS Gateway → Kode.gs** sayfasındaki bütün kodu
+   önce yedekleyip bu **tam kod** ile değiştir ve **Kaydet**.
+3. Mevcut Script Properties, Traccar anahtarı, TEST/LIVE ayarları, gönderim
+   geçmişi ve dakikalık `pollOrdersForSms` tetikleyicisi aynı kalır.
+4. **`setupLiveSms()`, `setupTestSms()`, `sendTestSms()` tekrar çalıştırma.**
+   Bunlar sistemin modunu veya aktivasyonunu değiştirebilir veya test SMS'i yollar.
+5. `diagnoseSms()` güvenli okuma kontrolü için kullanılabilir.
+6. Yeni siparişi `bekreftet` yapınca **bir** SMS gönderilir. İçinde seçilen
+   **Hentetid** ya da **Forventet hentetid** bulunur.
+   `Endre tid`, `Marker klar for henting` ve süre bitişi için SMS gönderilmez.
 
-Mevcut erişim izinlerini ve diğer kuralları SİLME. Var olan "rules" nesnesinin
-"orders" altına şu özellik eklenmeli:
+Firebase RTDB `orders` indeksinde `statusUpdatedAt` gerekli. İndeks kurulamazsa
+kod yalnızca son 80 siparişi okuyan güvenli, sınırlı yedeğe geçer.
+SMS gönderiminde `KOL_SENT_<id>_accepted` koruması korunur;
+aynı siparişe birden fazla onay SMS'i gönderilmez.
 
+**Not:** GitHub yayını Google Apps Script kodunu otomatik değiştirmez.
+Canlı Apps Script projesine manuel yapıştırma gereklidir.
+
+## E-posta
+
+`email-poller.gs` bağımsızdır. SMS kısıtlaması e-posta gönderimlerini değiştirmez.
+Mevcut `kontrollerEpostBestillinger` dakika tetikleyicisini koru; e-posta
+sistemini yeniden kurmak için `installerEpostVarsler` fonksiyonunu çalıştırma.
+
+## Firebase kuralları ve gizlilik
+
+Kullanılan RTDB `/orders` altında indeks:
 ```json
 ".indexOn": ["statusUpdatedAt", "estimateUpdatedAt"]
 ```
-
-Şu bir *örnektir*; bunu mevcut Rules içeriğinin tamamıyla değiştirme:
-
-```json
-{
-  "rules": {
-    "orders": {
-      ".indexOn": ["statusUpdatedAt", "estimateUpdatedAt"]
-    }
-  }
-}
-```
-
-Okuma/yazma güvenliği için mevcut `.read`, `.write` ve başka `orders`
-kuralları olduğu gibi kalmalı. İndeks, erişim izni vermez; yalnızca
-sunucunun sorguyu verimli çalıştırmasını sağlar.
-
-## 2. E-post: "EPOST GONDERME KØL" → EmailPoller.gs
-
-`email-poller.gs` dosyasının **tam güncellenmiş içeriğini** mevcut
-EmailPoller.gs içine kopyala ve kaydet. Sonra `testFirebaseTilgang()`
-fonksiyonunu çalıştır ve hata olmadığını kontrol et.
-
-**`installerEpostVarsler()` fonksiyonunu yeniden çalıştırma.** Mevcut
-`kontrollerEpostBestillinger` dakika tetikleyicisi, aynı Script Properties
-kontrol kayıtları ve Gmail HTML şablonu korunuyor.
-
-Kod son başarılı sorgunun zamanını saklar, 2 dakikalık çakışma payı
-bırakır ve yalnızca `statusUpdatedAt` değişmiş siparişleri okur.
-İlk optimize çalışma en fazla son 48 saati tarar. Okuma başarısızsa
-geçici olarak yalnızca **son 120 siparişi** indirir.
-Yeni indeks gelene kadar e-postalar bu yedekten çalışabilir; 120 yeni
-siparişten daha eski bir bekleyen sipariş, yedekte gözden kaçabilir.
-
-## 3. SMS: "KOL SMS Gateway" → Kode.gs
-
-Mevcut LIVE Apps Script içinde `function kolFetchRecentOrders_()`
-fonksiyonunu bul. **Yalnızca bu fonksiyonu**, `sms-query-patch.gs`
-dosyasındaki aynı isimli fonksiyonla değiştir. Kodun geri kalanına
-dokunma. Özellikle Traccar token, TEST/LIVE modu, `setupLiveSms()`,
-`pollOrdersForSms()`, `kolMessage_()`, günlük SMS limiti ve geçmiş
-gönderim kayıtları aynen kalır.
-
-**`setupLiveSms()` fonksiyonunu tekrar çalıştırma.**
-
-SMS sorguları yaklaşık son 20 dakikadaki:
-- `statusUpdatedAt`: Godta bestilling / Marker klar for henting
-- `estimateUpdatedAt`: Endre tid (durum değişmeden de SMS gönderilmeli)
-
-değişikliklerini birlikte getirir. Eski 80-siparişlik anahtar tabanlı
-sorgu, indeks sorunu halinde otomatik yedek olarak korunur.
-
-## 4. Canlı doğrulama
-
-1. Rules içindeki indeksleri kaydet.
-2. E-posta Apps Script kodunu güncelle, `testFirebaseTilgang` testini çalıştır.
-3. SMS Apps Script'te yalnızca `kolFetchRecentOrders_` fonksiyonunu değiştir.
-4. Apps Script **Kjøringer / Executions** sayfasında indeks/yedek okuma
-   uyarısı bulunmadığını kontrol et.
-5. Yeni bir test siparişi oluştur, onayla, gerekiyorsa Endre tid işlemini
-   yap, ardından personelin `Marker klar for henting` düğmesine bas.
-   E-posta ve SMS'in beklenen sayıda geldiğini doğrula.
-6. Firebase → Usage → Downloads grafiğini sonraki gün karşılaştır.
-
-Çalışan `functions/`, Traccar, Epson, Firebase sipariş verisi ve
-müşteri arayüzleri bu değişiklikte değiştirilmedi.
+İndeks izni açmaz. Veritabanında `.read: true` / `.write: true` bulunması
+müşteri bilgilerinin herkesçe okunabilmesi ve değiştirilebilmesi anlamına gelir;
+canlıya geçmeden kimlik doğrulamalı ve kısıtlı kurallar kullanılmalı.
