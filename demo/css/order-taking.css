@@ -701,3 +701,18 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
   width:6px;height:6px;top:3px;right:2px;
  }
 }
+
+
+/* Live Epson diagnostic: clear warning and readable default-login hint. */
+.orders-page .orders-printer-credentials{
+ margin:11px 0 12px;padding:11px 12px;border:1px solid var(--ot-line);
+ border-radius:10px;background:var(--ot-selected);
+ font-size:12px;color:var(--ot-ink);
+}
+.orders-page .orders-printer-credentials>strong{display:block;margin-bottom:7px;font-size:12px}
+.orders-page .orders-printer-credentials>div{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.orders-page .orders-printer-credentials b{font-size:13px;letter-spacing:.01em}
+.orders-page .orders-printer-panel-status{line-height:1.5}
+.orders-page .orders-printer-indicator.is-offline{border-color:#e9b5ad!important;background:#fff2f0!important;color:#ba403b!important}
+.orders-page .orders-printer-indicator.is-active{border-color:#b5ddc3!important}
+html[data-theme="dark"] .orders-page .orders-printer-indicator.is-offline{background:#492b2a!important;color:#ffc4c0!important}
