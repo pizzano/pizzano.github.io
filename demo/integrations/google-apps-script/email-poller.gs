@@ -1,22 +1,22 @@
 /**
  * KØL Grill & Pizza — Gmail notification poller.
- * SMS code is not used. No publicly readable Firebase rules required.
- * Uses the Google account authorized in Apps Script to read Firebase.
+ * Reference source stored in GitHub; the live Google Apps Script project
+ * is managed separately. SMS code is not used.
+ * Reads the restaurant's new Firebase RTDB via its configured public-read rules.
+ * Protect customer data by restricting reads before enabling production traffic.
  */
-const KOL_DB = 'https://bestill-19-default-rtdb.europe-west1.firebasedatabase.app';
+const KOL_DB = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const KOL_MAX_ORDER_AGE_MS = 48 * 60 * 60 * 1000;
 const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 
 function kolReadOrders_() {
-  const token = ScriptApp.getOAuthToken();
   const response = UrlFetchApp.fetch(KOL_DB + '/orders.json', {
     method: 'get',
-    headers: {Authorization: 'Bearer ' + token},
     muteHttpExceptions: true
   });
   if (response.getResponseCode() !== 200) {
     throw new Error('Firebase lesefeil (HTTP ' + response.getResponseCode() +
-      '). Kontroller Apps Script OAuth-tilgang og Firebase IAM. Ikke gjør databasen offentlig.');
+      '). Kontroller databaseadressen og Firebase RTDB lesetilgang.');
   }
   const data = JSON.parse(response.getContentText() || 'null');
   return data && typeof data === 'object' ? data : {};
