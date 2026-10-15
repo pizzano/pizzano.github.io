@@ -67,10 +67,11 @@ function saveJSON(key, value) {
 }
 
 const profile = Object.assign(
-  { name: '', phone: '', favorites: [] },
+  { name: '', phone: '', email: '', favorites: [] },
   loadJSON(PROFILE_KEY, {})
 );
 profile.favorites = Array.isArray(profile.favorites) ? profile.favorites : [];
+profile.email = typeof profile.email === 'string' ? profile.email : '';
 
 let cart = Array.isArray(loadJSON(CART_KEY, [])) ? loadJSON(CART_KEY, []) : [];
 
@@ -176,8 +177,11 @@ const el = {
   profileContactHelp: $('profileContactHelp'),
   profName: $('profName'),
   profPhone: $('profPhone'),
+  profEmail: $('profEmail'),
+  errProfName: $('errProfName'),
+  errProfPhone: $('errProfPhone'),
+  errProfEmail: $('errProfEmail'),
   btnSaveProfile: $('btnSaveProfile'),
-  profileSaved: $('profileSaved'),
   orderList: $('orderList'),
   activeOrderMenu: $('activeOrderMenu'),
   activeOrderProfile: $('activeOrderProfile'),
@@ -1681,6 +1685,7 @@ function renderCheckout() {
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
+  if (el.custEmail) el.custEmail.value = el.custEmail.value || profile.email || '';
   el.btnStepNext.disabled = ui.orderSubmitting;
   el.btnStepNext.removeAttribute('aria-disabled');
   el.views.checkout.classList.toggle('is-submitting', ui.orderSubmitting);
@@ -2395,6 +2400,8 @@ function renderProfile() {
   renderActiveOrders();
   el.profName.value = profile.name || '';
   el.profPhone.value = profile.phone || '';
+  el.profEmail.value = profile.email || '';
+  updateProfileValidation();
   updateContactValidation();
 
   if (el.profileHeroAvatar) el.profileHeroAvatar.textContent = profileInitials(profile.name);
@@ -2402,8 +2409,8 @@ function renderProfile() {
   if (el.profileHeroPhone) el.profileHeroPhone.textContent = formatProfilePhone(profile.phone);
   if (el.profileContactMeta) {
     el.profileContactMeta.textContent = profile.name || profile.phone
-      ? 'Navn og mobilnummer lagret'
-      : 'Navn og mobilnummer';
+      ? (profile.email ? 'Navn, mobilnummer og e-post lagret' : 'Navn og mobilnummer lagret')
+      : 'Navn, mobilnummer og e-post';
   }
 
     const live = getOrders();
@@ -2910,27 +2917,72 @@ $('pizzaBonus').addEventListener('change', async event => {
 });
 el.custPhone.addEventListener('input',()=>{ cartBonusFetchedAt=0; refreshCartPizzaBonus(true); });
 
+function updateProfileValidation({ showErrors = false } = {}) {
+  const nameValid = Boolean(el.profName.value.trim());
+  const phoneValid = validPhone(el.profPhone.value);
+  const emailValue = el.profEmail.value.trim();
+  const emailValid = validOptionalEmail(emailValue);
+  for (const [input, valid] of [
+    [el.profName, nameValid],
+    [el.profPhone, phoneValid],
+    [el.profEmail, emailValid && Boolean(emailValue)],
+  ]) {
+    const field = input.closest('.validated-input');
+    if (!field) continue;
+    field.classList.toggle('is-valid', valid);
+    const check = field.querySelector('.valid-check');
+    if (check) check.hidden = !valid;
+  }
+  el.errProfName.hidden = !showErrors || nameValid;
+  el.errProfPhone.hidden = !showErrors || phoneValid;
+  el.errProfEmail.hidden = emailValid || (!showErrors && !emailValue);
+  return nameValid && phoneValid && emailValid;
+}
+
 el.btnSaveProfile.addEventListener('click', () => {
+  if (!updateProfileValidation({ showErrors: true })) {
+    const invalidInput = !el.profName.value.trim() ? el.profName
+      : !validPhone(el.profPhone.value) ? el.profPhone : el.profEmail;
+    toast('Kontroller kontaktopplysningene før du lagrer.', 'error');
+    invalidInput.focus();
+    return;
+  }
+  const previousEmail = profile.email || '';
   profile.name = el.profName.value.trim();
   profile.phone = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
+  profile.email = el.profEmail.value.trim().toLowerCase();
   persistProfile();
+
+  // Saved profile details also populate the next checkout, without overwriting
+  // text the customer has intentionally typed into the order form.
+  if (!el.custName.value.trim()) el.custName.value = profile.name;
+  if (!el.custPhone.value.trim()) el.custPhone.value = profile.phone;
+  if (!el.custEmail.value.trim() || el.custEmail.value.trim().toLowerCase() === previousEmail.toLowerCase()) {
+    el.custEmail.value = profile.email;
+  }
+  updateContactValidation();
+  updateProfileValidation();
   if (el.profileHeroAvatar) el.profileHeroAvatar.textContent = profileInitials(profile.name);
   if (el.profileHeroName) el.profileHeroName.textContent = profile.name || 'Min profil';
   if (el.profileHeroPhone) el.profileHeroPhone.textContent = formatProfilePhone(profile.phone);
-  if (el.profileContactMeta) el.profileContactMeta.textContent = 'Navn og mobilnummer lagret';
-  el.profileSaved.hidden = false;
-  setTimeout(() => {
-    el.profileSaved.hidden = true;
-  }, 1800);
+  if (el.profileContactMeta) {
+    el.profileContactMeta.textContent = profile.email
+      ? 'Navn, mobilnummer og e-post lagret'
+      : 'Navn og mobilnummer lagret';
+  }
+  toast('✓ Profilopplysningene dine er lagret.');
 });
+
+for (const input of [el.profName, el.profPhone, el.profEmail]) {
+  input.addEventListener('input', () => {
+    if (input === el.profPhone) el.profPhone.value = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
+    updateProfileValidation();
+  });
+}
 
 if (el.custEmail) el.custEmail.addEventListener('input', () => {
   if (el.errEmail) el.errEmail.hidden = validOptionalEmail(el.custEmail.value);
   updateContactValidation();
-});
-
-el.profPhone.addEventListener('input', () => {
-  el.profPhone.value = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
 });
 
 function closeConfirm() {
