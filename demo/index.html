@@ -153,8 +153,24 @@
                     <div class="contact-form-control">
                         <input id="custEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
                     </div>
-                    <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
+                    <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse for å motta oppdateringer.</p>
                 </div>
+                <fieldset class="notification-preference" aria-label="Hvordan vil du motta oppdateringer?">
+                    <legend>Hvordan vil du motta oppdateringer?</legend>
+                    <div class="notification-options">
+                        <label class="notification-option">
+                            <input type="radio" name="notificationPreference" value="email" checked>
+                            <span class="notification-option-icon" aria-hidden="true">✉</span>
+                            <span class="notification-option-copy"><strong>E-post</strong></span>
+                        </label>
+                        <label class="notification-option">
+                            <input type="radio" name="notificationPreference" value="both">
+                            <span class="notification-option-icon" aria-hidden="true">✉ + SMS</span>
+                            <span class="notification-option-copy"><strong>Begge deler</strong><small>SMS + E-post</small></span>
+                        </label>
+                    </div>
+                    <p class="notification-help">Du mottar oppdateringer om bestillingen på valgt kanal.</p>
+                </fieldset>
             </div>
 
             <div class="step-panel" id="step3" hidden>
@@ -316,7 +332,7 @@
     <div class="toast" id="toast" hidden></div>
 
     <script src="/demo/js/install.js?v=20261013-sheetcompact94"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261015-estimated-dismiss120"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261015-notifychoice121"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261013-sheetcompact94"></script>
 </body>
 
