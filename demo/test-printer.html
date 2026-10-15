@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7f3">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Test Printer | KØL Grill &amp; Pizza</title>
+  <style>
+    :root{color-scheme:light;--navy:#233548;--text:#354558;--muted:#6b7885;--border:#dfe7e2;--green:#327b55;--pale:#eef8f0;--bg:#f5f7f3}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--text)}
+    .wrap{width:min(100%,790px);margin:0 auto;padding:22px 16px 55px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{font-size:12px;letter-spacing:.09em;font-weight:900;color:var(--navy)}
+    .back{color:var(--green);text-decoration:none;font-size:12px;font-weight:700}
+    h1{color:var(--navy);font-size:23px;letter-spacing:-.04em;line-height:1.2;margin:4px 0 8px}h2{font-size:15px;letter-spacing:-.015em;color:var(--navy);margin:0 0 13px}
+    p{margin:0 0 12px}.subtitle{color:var(--muted);font-size:13px;margin-bottom:18px}
+    .card{padding:19px 18px;margin:12px 0;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 18px rgba(26,55,43,.035)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-size:12px;font-weight:720;color:var(--navy);display:block;margin:0 0 6px}
+    input{width:100%;background:#fff;border:1px solid #cfdbd4;border-radius:10px;min-height:43px;padding:9px 11px;font:inherit;color:var(--navy);outline:0}
+    input:focus{border-color:#58aa78;box-shadow:0 0 0 3px rgba(65,155,100,.13)}
+    .hint{font-size:11px;color:var(--muted);margin-top:6px}
+    .actionrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
+    button,.buttonlink{border:0;border-radius:10px;padding:11px 13px;min-height:42px;cursor:pointer;font:700 12px/1.3 inherit;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    button:disabled{cursor:wait;opacity:.6}
+    .primary{color:white;background:var(--green)}.secondary{color:#24583c;background:#e6f4e9;border:1px solid #d2e9d6}
+    .neutral{color:var(--navy);background:#f3f5f6;border:1px solid #e1e7ea}
+    .notice{background:#fffaf0;border:1px solid #f0dfb8;border-radius:12px;padding:11px 13px;font-size:12px;color:#705722;margin:14px 0 0}
+    .notice strong{display:block;margin-bottom:4px}
+    #result{padding:12px;border-radius:12px;background:#f2f5f4;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;min-height:46px}
+    #result[data-type="ok"]{background:#e6f6ea;color:#1d6841}
+    #result[data-type="error"]{background:#fff0eb;color:#923c26}
+    #result[data-type="info"]{background:#eff4f9;color:#315472}
+    .sample{display:flex;justify-content:center;background:#edf1ee;border-radius:13px;padding:18px 10px}
+    #receipt{width:300px;max-width:100%;background:white;color:#111;padding:19px 16px;font:12px/1.48 ui-monospace,SFMono-Regular,Consolas,monospace;box-shadow:0 7px 19px rgba(0,0,0,.08)}
+    #receipt h3{font-size:18px;line-height:1.2;text-align:center;margin:0 0 4px}#receipt .center{text-align:center}
+    #receipt .sep{border-top:1px dashed #777;margin:11px 0}
+    #receipt .line{display:flex;justify-content:space-between;gap:8px}#receipt .line b{white-space:nowrap}
+    #receipt small{font-size:11px}
+    .step{font-size:12px;color:var(--muted)}.step strong{color:var(--navy)}
+    .footer{font-size:11px;color:var(--muted);text-align:center;margin-top:23px}
+    @media(max-width:480px){.wrap{padding:16px 12px 35px}.grid{grid-template-columns:1fr}.card{padding:16px 14px}.actionrow>button,.actionrow>a{flex:1 1 auto}.top{margin-bottom:13px}}
+    @media print{
+      @page{size:80mm auto;margin:3mm}
+      body{background:#fff;margin:0;padding:0}
+      .wrap,.card,.sample{display:contents!important;background:none!important;border:0!important;padding:0!important;margin:0!important;box-shadow:none!important}
+      .top,h1,.subtitle,h2,.grid,.notice,.actionrow,#result,.step,.footer,.screen-only{display:none!important}
+      #receipt{display:block!important;width:72mm!important;max-width:72mm!important;padding:0!important;margin:0!important;box-shadow:none!important;font-size:11px!important;color:#000}
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><div class="brand">KØL GRILL &amp; PIZZA</div><a class="back" href="/demo/index.html">← Tilbake til demo</a></div>
+  <h1>Test Printer</h1>
+  <p class="subtitle">Epson TM-T20II • Nettverkstest og prøvekvittering. Ingen ekte bestillinger sendes.</p>
+
+  <section class="card">
+    <h2>1. Skriverinnstillinger</h2>
+    <div class="grid">
+      <div><label for="ip">Skriverens IP-adresse</label><input id="ip" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="f.eks. 192.168.1.100"><div class="hint">IP-adressen finner du på skriverens nettverksstatusark.</div></div>
+      <div><label for="device">ePOS-enhets-ID</label><input id="device" type="text" autocomplete="off" spellcheck="false" value="local_printer" maxlength="48"><div class="hint">Vanligvis «local_printer». Må samsvare med Epson-innstillingene.</div></div>
+    </div>
+    <div class="actionrow">
+      <button type="button" id="openAdmin" class="neutral">Åpne skriverens IP-side ↗</button>
+      <button type="button" id="check" class="secondary">Test ePOS-tilkobling</button>
+      <button type="button" id="send" class="primary">Skriv ut testkvittering</button>
+    </div>
+    <div class="notice" id="restriction">
+      <strong>Viktig om Android og nettlesere</strong>
+      <span id="restrictionText">Vercel bruker HTTPS. Nettleseren kan blokkere direkte HTTP-kall til en lokal skriver (mixed content, CORS eller tilgang til privat nettverk). At IP-siden åpnes betyr ikke at ePOS-utskrift vil fungere.</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Testresultat</h2>
+    <div id="result" data-type="info" role="status" aria-live="polite">Klar for test. Koble nettbrettet til samme lokale nettverk som skriveren.</div>
+    <p class="hint" style="margin-top:10px">«Tilkobling OK» vises bare når Epson ePOS-tjenesten faktisk returnerer et vellykket svar. Et blokkert nettverkskall bekrefter ikke skriverstatus.</p>
+  </section>
+
+  <section class="card">
+    <h2>3. Testkvittering</h2>
+    <div class="sample">
+      <div id="receipt">
+        <h3>KØL GRILL &amp; PIZZA</h3>
+        <div class="center">TESTKVITTERING</div>
+        <div class="center">IKKE EN EKTE BESTILLING</div>
+        <div class="sep"></div>
+        <div>Testnr: #TEST-001</div>
+        <div id="receiptDate">Tid: –</div>
+        <div class="sep"></div>
+        <div class="line"><span>1 × Pizza Classico</span><b>199,00 kr</b></div>
+        <small>+ Ekstra ost: 19,00 kr</small>
+        <div class="sep"></div>
+        <div class="line"><span>Totalt</span><b>218,00 kr</b></div>
+        <div class="line"><span>Herav MVA (15 %)</span><span>28,43 kr</span></div>
+        <div class="sep"></div>
+        <div class="center">Dette er bare en skrivertest.</div>
+      </div>
+    </div>
+    <div class="actionrow"><button type="button" id="androidPrint" class="neutral">Skriv ut via Android</button></div>
+    <p class="hint" style="margin-top:9px">Denne knappen åpner Androids utskriftsdialog. Velg en tilgjengelig skriver/utskriftstjeneste. Dette er et alternativ til ePOS og er ikke automatisk utskrift.</p>
+  </section>
+  <section class="card step">
+    <h2>Hva betyr testene?</h2>
+    <p><strong>Åpne IP-side:</strong> Tester om nettleseren kan åpne skriverens administrasjonsside. Dette viser ikke at ePOS er støttet.</p>
+    <p><strong>Test ePOS-tilkobling:</strong> Sender en tom Epson ePOS-Print XML-jobb (ingen papirbruk) og sjekker svar fra skriveren.</p>
+    <p><strong>Skriv ut testkvittering:</strong> Forsøker å skrive en prøvekvittering via ePOS. Virker bare på ePOS-kompatible skrivere når nettleseren gir nettverkstilgang.</p>
+    <p><strong>Skriv ut via Android:</strong> Bruker nettbrettets vanlige utskriftsdialog dersom direkte nettutskrift blokkeres.</p>
+    <p><strong>Merk:</strong> Ikke alle TM-T20II Ethernet-varianter støtter ePOS-Print. TM-T20II Ethernet Plus og TM-T20II-i er egne varianter. Vanlig ESC/POS på TCP-port 9100 kan ikke sendes direkte med vanlig nettleser-JavaScript.</p>
+  </section>
+  <p class="footer">Kun testverktøy • Ingen Firebase-endringer • Ingen SMS- eller e-postendringer</p>
+</main>
+<script>
+(function () {
+  'use strict';
+  var el = function (id) { return document.getElementById(id); };
+  var busy = false;
+  var ipInput = el('ip');
+  var deviceInput = el('device');
+  var buttons = [el('check'), el('send')];
+  var state = el('result');
+  try {
+    ipInput.value = localStorage.getItem('kol_test_printer_ip') || '';
+    deviceInput.value = localStorage.getItem('kol_test_printer_device') || 'local_printer';
+  } catch (_) {}
+  el('receiptDate').textContent = 'Tid: ' + new Intl.DateTimeFormat('nb-NO', {
+    dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Oslo'
+  }).format(new Date());
+
+  function setStatus(msg, type) {
+    state.textContent = msg;
+    state.dataset.type = type || 'info';
+  }
+  function settings() {
+    var ip = ipInput.value.trim();
+    var device = deviceInput.value.trim();
+    var pieces = ip.split('.');
+    if (pieces.length !== 4 || pieces.some(function (part) { return !/^\d{1,3}$/.test(part) || Number(part) > 255; })) {
+      throw Error('Oppgi en gyldig IPv4-adresse, f.eks. 192.168.1.100.');
+    }
+    var p = pieces.map(Number);
+    var privateIp = p[0] === 10 || (p[0] === 172 && p[1] >= 16 && p[1] <= 31) ||
+      (p[0] === 192 && p[1] === 168) || (p[0] === 169 && p[1] === 254);
+    if (!privateIp) throw Error('Bruk skriverens lokale IP-adresse (192.168.x.x, 10.x.x.x eller 172.16–31.x.x).');
+    if (!/^[a-zA-Z0-9_-]{1,48}$/.test(device)) throw Error('Enhets-ID kan bare inneholde bokstaver, tall, _ og -.');
+    try {
+      localStorage.setItem('kol_test_printer_ip', ip);
+      localStorage.setItem('kol_test_printer_device', device);
+    } catch (_) {}
+    return { ip: ip, device: device };
+  }
+  function xmlText(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+  }
+  function envelope(content) {
+    return '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
+      '<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">' +
+      content + '</epos-print></s:Body></s:Envelope>';
+  }
+  function textLine(text, options) {
+    return (options || '') + '<text>' + xmlText(text) + '&#10;</text>';
+  }
+  function makeTicket() {
+    var time = new Intl.DateTimeFormat('nb-NO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Oslo' }).format(new Date());
+    return '<text align="center"/><text width="2" height="2"/>' + textLine('KOL GRILL & PIZZA') +
+      '<text width="1" height="1"/>' + textLine('TESTKVITTERING') + textLine('IKKE EKTE BESTILLING') +
+      textLine('--------------------------------') + '<text align="left"/>' +
+      textLine('Testnr: #TEST-001') + textLine('Tid: ' + time) +
+      textLine('--------------------------------') +
+      textLine('1 x Pizza Classico     199,00 kr') +
+      textLine('+ Ekstra ost            19,00 kr') +
+      textLine('--------------------------------') +
+      textLine('TOTALT                 218,00 kr') +
+      textLine('Herav MVA (15 %)        28,43 kr') +
+      textLine('--------------------------------') + '<text align="center"/>' +
+      textLine('Kun skrivertest') + '<feed line="3"/><cut type="feed"/>';
+  }
+  async function testPrint(printTicket) {
+    if (busy) return;
+    var conf;
+    try { conf = settings(); } catch (err) { setStatus(err.message, 'error'); return; }
+    busy = true; buttons.forEach(function (b) { b.disabled = true; });
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 12000);
+    try {
+      setStatus(printTicket ? 'Sender testkvittering til Epson ePOS …' : 'Tester Epson ePOS-tilkobling …', 'info');
+      var url = 'http://' + conf.ip + '/cgi-bin/epos/service.cgi?devid=' +
+        encodeURIComponent(conf.device) + '&timeout=10000';
+      var response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/xml; charset=utf-8', 'SOAPAction': '""' },
+        body: envelope(printTicket ? makeTicket() : ''),
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      if (!response.ok) throw Error('HTTP ' + response.status + ' fra skriveren.');
+      var body = await response.text();
+      var doc = new DOMParser().parseFromString(body, 'text/xml');
+      if (doc.querySelector('parsererror')) throw Error('Ugyldig XML-svar fra enheten.');
+      var nodes = doc.getElementsByTagNameNS('http://www.epson-pos.com/schemas/2011/03/epos-print', 'response');
+      if (!nodes.length) nodes = doc.getElementsByTagName('response');
+      if (!nodes.length) throw Error('Ingen ePOS-respons. Enheten støtter kanskje ikke ePOS-Print.');
+      var result = nodes[0];
+      var success = result.getAttribute('success') === 'true' || result.getAttribute('success') === '1';
+      if (!success) throw Error('Epson returnerte feil: ' + (result.getAttribute('code') || 'ukjent') +
+        ' (status: ' + (result.getAttribute('status') || 'ukjent') + ').');
+      setStatus(printTicket ?
+        'Epson ePOS svarte OK på utskriftsjobben. Kontroller at testkvitteringen kom ut.' :
+        'ePOS-tilkobling OK! Skriveren bekreftet testforespørselen uten utskrift.', 'ok');
+    } catch (err) {
+      var suffix = location.protocol === 'https:' ?
+        '\n\nMerk: HTTPS-siden kan bli blokkert fra å bruke skriverens HTTP-adresse av Chrome (mixed content / CORS / privat nettverk). En feil her betyr ikke nødvendigvis at skriveren er offline.' : '';
+      setStatus('Kunne ikke bekrefte ePOS-' + (printTicket ? 'utskrift' : 'tilkobling') + '.\n' +
+        (err.name === 'AbortError' ? 'Tidsavbrudd (12 sekunder).' : err.message) +
+        '\nKontroller lokal IP, samme Wi-Fi/LAN, skriverens ePOS-støtte og nettlesertilgang.' + suffix, 'error');
+    } finally {
+      clearTimeout(timeout); busy = false;
+      buttons.forEach(function (b) { b.disabled = false; });
+    }
+  }
+  el('openAdmin').addEventListener('click', function () {
+    try {
+      var conf = settings();
+      var target = 'http://' + conf.ip + '/';
+      var a = document.createElement('a');
+      a.href = target;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a); a.click(); a.remove();
+      setStatus('Åpnet ' + target + ' i en ny fane (hvis nettleseren tillot det). Hvis siden ikke åpnes, sjekk IP og Wi-Fi.', 'info');
+    } catch (err) { setStatus(err.message, 'error'); }
+  });
+  el('check').addEventListener('click', function () { testPrint(false); });
+  el('send').addEventListener('click', function () { testPrint(true); });
+  el('androidPrint').addEventListener('click', function () {
+    setStatus('Åpner Androids utskriftsdialog. Dette bekrefter ikke direkte ePOS-tilkobling.', 'info');
+    window.print();
+  });
+})();
+</script>
+</body>
+</html>
