@@ -56,7 +56,15 @@ function kolReadOrders_() {
 function kolNotificationKind_(previous, order) {
   const after = String(order.status || '');
   if (previous === 'mottatt' && after === 'bekreftet') return 'accepted';
-  if ((previous === 'bekreftet' || previous === 'tilberedning') && after === 'klar') return 'ready';
+  // A countdown is NOT evidence that the kitchen finished the order.
+  // Only a real manual "Marker klar for henting" DB write can send this mail.
+  const actualReadyAt = Number(order.staffReadyAt) || 0;
+  const statusAt = Number(order.statusUpdatedAt) || 0;
+  if (after === 'klar' &&
+      ['mottatt', 'bekreftet', 'tilberedning'].includes(previous) &&
+      actualReadyAt > 0 && Math.abs(actualReadyAt - statusAt) <= 10000) {
+    return 'ready';
+  }
   return '';
 }
 
@@ -111,94 +119,174 @@ function kolDetailRows_(line) {
   if (kolPlain_(line.comment)) details.push({name:'Kommentar',text:kolPlain_(line.comment)});
   return details;
 }
+/** Gmail-safe, mobile-first HTML e-mail templates.
+ * Accepted and ready both use the same branded order summary and their OWN
+ * heading. The ready e-mail never shows a countdown or asks the customer to
+ * wait another N minutes.
+ */
 function kolBuildReceipt_(order, kind) {
   const safe = kolHtmlEscape_;
-  const name = kolPlain_(order.customerName);
-  const firstName = name.split(/\s+/)[0] || '';
-  const ref = kolPlain_(order.id).slice(-6).toUpperCase();
   const accepted = kind === 'accepted';
-  const estimate = Number(order.estimatedMinutes) || 0;
-  const pickup = kolPickup_(order);
-  const headline = accepted ? 'Bestilling bekreftet' : 'Maten er klar for henting!';
-  const pickupHeading = accepted
-    ? (estimate > 0 ? 'Estimert hentetid: ' + estimate + ' min' : (pickup ? 'Hentetid: ' + pickup : 'Vi gir beskjed når maten er klar'))
-    : 'Klar for henting';
+  if (!accepted && kind !== 'ready') throw new Error('Ukjent e-postvarsel: ' + kind);
+
+  const firstName = kolPlain_(order.customerName).split(/\s+/)[0] || 'kunde';
+  const ref = kolPlain_(order.id).slice(-6).toUpperCase() || 'ORDRE';
+  const total = Number(order.total) || 0;
+  const subtotal = Number(order.subtotal == null ? order.total : order.subtotal) || 0;
+  const numberFormat = function(amount, decimals) {
+    return Number(amount || 0).toLocaleString('nb-NO', {
+      minimumFractionDigits:decimals, maximumFractionDigits:decimals
+    });
+  };
+  const money = function(amount) {
+    const value = Number(amount) || 0;
+    return numberFormat(value, Number.isInteger(value) ? 0 : 2) + ' kr';
+  };
+  const money2 = function(amount) { return numberFormat(amount, 2) + ' kr'; };
+  const hms = function(timeMs, pattern) {
+    return timeMs > 0 ? Utilities.formatDate(new Date(timeMs), 'Europe/Oslo', pattern) : '';
+  };
+  const scheduled = order.pickupMode === 'scheduled' ||
+    /^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup));
+  const plannedAt = Number(order.scheduledPickupAt) ||
+    Number(order.estimatedReadyAt) || 0;
+  const chosenTime = /^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup))
+    ? kolPlain_(order.pickup).padStart(5, '0') : '';
+  const clock = hms(plannedAt, 'HH:mm') || chosenTime;
+  const minutes = Number(order.estimatedMinutes) || 0;
+  const readyAt = Number(order.staffReadyAt) || Number(order.statusUpdatedAt) || 0;
+  const readyClock = hms(readyAt, 'HH:mm');
+  const createdAt = Number(order.createdAt) || 0;
+
+  const headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
+  const mainTime = accepted ? (clock || 'Snarest') : (readyClock || 'Nå');
+  const mainLabel = accepted ? 'Hentetid:' : 'Klar kl.:';
+  const statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
+  const statusRight = accepted
+    ? (scheduled ? (hms(Number(order.scheduledPickupAt) || 0, 'dd.MM.yyyy') || 'Avtalt tid')
+      : (minutes > 0 ? 'Ca. ' + Math.ceil(minutes) + ' ' + (Math.ceil(minutes) === 1 ? 'minutt' : 'minutter') : 'Så snart som mulig'))
+    : 'Du kan hente maten nå';
+  const intro = accepted
+    ? 'Vi har bekreftet bestillingen din og forbereder maten. Du kan hente den på tidspunktet som er vist over.'
+    : 'Gode nyheter! Personalet har markert bestillingen din som klar. Du kan komme og hente maten.';
+  const subject = (accepted ? 'Bestillingen din er bekreftet' : 'Bestillingen din er klar for henting')
+    + ' #' + ref + ' – KØL Grill & Pizza';
+
+  const info = [
+    ['Bestillingskode', '#' + ref],
+    ['Bestilt', createdAt ? hms(createdAt, 'dd.MM.yyyy, HH:mm') : '—'],
+    ['Navn', kolPlain_(order.customerName) || '—'],
+    ['Telefon', kolPlain_(order.phone) || '—']
+  ];
+  const infoRows = info.map(function(pair) {
+    return '<tr>' +
+      '<td style="padding:10px 12px;border-bottom:1px solid #e5e8e1;font-size:13px;color:#68736c;">' + safe(pair[0]) + '</td>' +
+      '<td align="right" style="padding:10px 12px;border-bottom:1px solid #e5e8e1;font-size:13px;font-weight:bold;color:#15291d;">' + safe(pair[1]) + '</td>' +
+      '</tr>';
+  }).join('');
+
   const lines = Array.isArray(order.lines) ? order.lines : [];
   const rows = lines.map(function(line) {
     const qty = Math.max(1, Number(line.quantity) || 1);
-    const detailHtml = kolDetailRows_(line).map(function(detail) {
-      return '<div style="margin-top:5px;font-size:12px;line-height:1.5;color:#657185"><b>' +
-        safe(detail.name) + ':</b> ' + safe(detail.text) + '</div>';
+    const details = kolDetailRows_(line);
+    const detailsHtml = details.map(function(detail) {
+      return '<div style="font-size:12px;line-height:18px;color:#738077;margin-top:4px;">' +
+        '<strong style="color:#415449;">' + safe(detail.name) + ':</strong> ' + safe(detail.text) + '</div>';
     }).join('');
-    return '<tr><td style="padding:14px 16px;border-bottom:1px solid #edf0f2;vertical-align:top;">' +
-      '<div style="font-size:14px;font-weight:700;color:#1c293b;">' + qty + ' × ' +
-      safe(line.name || 'Produkt') + '</div>' + detailHtml +
-      '</td><td align="right" style="padding:14px 16px;border-bottom:1px solid #edf0f2;vertical-align:top;white-space:nowrap;font-weight:700;color:#1c293b;font-size:13px;">' +
-      safe(kolKr_(line.price)) + '</td></tr>';
+    return '<tr><td style="padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;">' +
+      '<div style="font-size:15px;line-height:21px;color:#142a1d;">' +
+      '<strong>' + safe(qty) + ' ×</strong> <strong>' + safe(line.name || 'Produkt') + '</strong></div>' +
+      detailsHtml + '</td>' +
+      '<td align="right" style="padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;white-space:nowrap;font-size:14px;font-weight:bold;color:#142a1d;">' +
+      safe(money(line.price)) + '</td></tr>';
   }).join('');
-  const detailText = lines.map(function(line) {
-    const row = [(Math.max(1,Number(line.quantity)||1)) + ' x ' + kolPlain_(line.name) + ' – ' + kolKr_(line.price)];
+
+  const detailsPlain = lines.map(function(line) {
+    const row = [Math.max(1, Number(line.quantity)||1) + ' x ' +
+      kolPlain_(line.name) + ' — ' + money(line.price)];
     kolDetailRows_(line).forEach(function(d) {row.push('  ' + d.name + ': ' + d.text);});
     return row.join('\n');
   }).join('\n\n');
-  const orderDate = Number(order.createdAt) > 0 ?
-    Utilities.formatDate(new Date(Number(order.createdAt)), 'Europe/Oslo', 'dd.MM.yyyy HH:mm') : '';
-  const info = [
-    ['Ordrenummer', '#' + ref],
-    ['Kunde', name || '—'],
-    ['Telefon', kolPlain_(order.phone) || '—'],
-    ['E-post', kolPlain_(order.email) || '—'],
-    ['Bestilt', orderDate || '—'],
-    ['Henting', pickup || kolPlain_(order.pickup) || 'Snarest']
-  ];
-  const infoHtml = info.map(function(pair) {
-    return '<tr><td style="padding:7px 0;color:#7b8797;font-size:12px;">' +
-      safe(pair[0]) + '</td><td align="right" style="padding:7px 0;color:#263447;font-size:12px;font-weight:600;">' +
-      safe(pair[1]) + '</td></tr>';
-  }).join('');
-  const intro = accepted
-    ? 'Takk for din bestilling! Vi har bekreftet bestillingen din for henting.'
-    : 'Bestillingen din er nå markert som klar av restauranten. Du kan hente maten.';
-  const total = kolKr_(order.total);
-  const subtotal = kolKr_(order.subtotal == null ? order.total : order.subtotal);
-  const mvaIncluded = kolKr_((Number(order.total) || 0) * 15 / 115);
+
+  const orderLink = 'https://bestill.online/demo/index.html';
+  const totalMva = total * 15 / 115; // Display as included (not added to total).
   const html =
-    '<!doctype html><html lang="no"><body style="margin:0;padding:20px 10px;background:#f3f6f8;font-family:Arial,Helvetica,sans-serif;color:#1c293b;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:620px;margin:auto;border-collapse:collapse;background:#ffffff;border:1px solid #e6ebf0;border-radius:14px;">' +
-    '<tr><td align="center" style="padding:24px 20px 16px;font-weight:800;font-size:20px;color:#1b293b;">KØL Grill &amp; Pizza</td></tr>' +
-    '<tr><td align="center" style="padding:26px 18px;background:#eaf7ee;border-top:1px solid #d9eedd;border-bottom:1px solid #d9eedd;">' +
-    '<div style="font-size:15px;font-weight:700;color:#207449;">' + safe(headline) + '</div>' +
-    '<div style="font-size:23px;line-height:1.35;margin-top:8px;color:#163d2b;font-weight:800;">' + safe(pickupHeading) + '</div></td></tr>' +
-    '<tr><td style="padding:22px 22px 10px;font-size:13px;line-height:1.65;color:#4b596c;">' +
-    'Hei ' + safe(firstName || 'kunde') + '!<p style="margin:9px 0 0;">' + safe(intro) + '</p></td></tr>' +
-    '<tr><td style="padding:14px 22px;"><div style="padding:15px 17px;border-radius:11px;background:#f3f9f5;border:1px solid #e0ece4;">' +
-    '<div style="font-size:13px;font-weight:800;margin-bottom:9px;">Restaurantens adresse for henting</div>' +
-    '<a href="https://www.google.com/maps/search/?api=1&amp;query=%C3%98gardsvegen+44%2C+2100+Skarnes" style="font-size:13px;color:#166e4b;">Øgardsvegen 44, 2100 Skarnes</a>' +
-    '</div></td></tr>' +
-    '<tr><td style="padding:9px 22px 17px;"><div style="font-size:14px;font-weight:800;margin:0 0 10px;">Dine bestillingsopplysninger</div>' +
-    '<table width="100%" role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">' + infoHtml + '</table></td></tr>' +
-    '<tr><td style="padding:5px 22px;"><div style="font-size:15px;font-weight:800;margin-bottom:11px;">Dine bestillingsdetaljer</div>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;background:#fafbfc;border:1px solid #e9edf1;">' +
-    (rows || '<tr><td style="padding:16px;">Ingen produktlinjer lagret.</td></tr>') +
-    '<tr><td style="padding:12px 16px;color:#6c7788;font-size:12px;">Delsum</td><td align="right" style="padding:12px 16px;white-space:nowrap;font-size:13px;">' +
-    safe(subtotal) + '</td></tr>' +
-    '<tr><td style="padding:9px 16px;color:#6c7788;font-size:12px;">Herav MVA (15 %)</td><td align="right" style="padding:9px 16px;white-space:nowrap;font-size:13px;">' + safe(mvaIncluded) + '</td></tr>' +
-    '<tr><td style="padding:14px 16px;background:#edf7f0;font-size:15px;font-weight:800;">Totalt å betale</td>' +
-    '<td align="right" style="padding:14px 16px;background:#edf7f0;white-space:nowrap;font-size:16px;font-weight:800;">' +
-    safe(total) + '</td></tr></table></td></tr>' +
-    (kolPlain_(order.comment) ? '<tr><td style="padding:12px 22px;font-size:12px;color:#4b596c;"><b>Kommentar til bestillingen:</b> ' + safe(order.comment) + '</td></tr>' : '') +
-    '<tr><td style="padding:23px 22px;font-size:12px;line-height:1.7;color:#667589;">Takk for bestillingen!<br>' +
-    'Vennlig hilsen,<br><b>KØL Grill &amp; Pizza</b><br>' +
-    '<a href="mailto:skarnes.restaurant@gmail.com" style="color:#1c7a53;">skarnes.restaurant@gmail.com</a></td></tr>' +
-    '</table></body></html>';
-  const text = 'KØL Grill & Pizza\n' + headline + '\n' + pickupHeading +
-    '\n\nHei ' + (firstName || 'kunde') + '!\n' + intro +
-    '\n\n' + info.map(function(row){return row.join(': ');}).join('\n') +
-    '\n\nRestaurantens adresse: Øgardsvegen 44, 2100 Skarnes' +
-    '\n\nDine bestillingsdetaljer:\n' + detailText +
-    '\n\nDelsum: ' + subtotal + '\nHerav MVA (15 %): ' + mvaIncluded + '\nTotalt å betale: ' + total +
-    '\n\nHilsen KØL Grill & Pizza\nskarnes.restaurant@gmail.com';
-  return {html:html,text:text,subject:(accepted ? 'Bestilling bekreftet' : 'Klar for henting') + ' #' + ref + ' – KØL Grill & Pizza'};
+    '<!doctype html><html lang="no"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#eef1eb;font-family:Arial,Helvetica,sans-serif;color:#15291d;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#eef1eb;border-collapse:collapse;">' +
+    '<tr><td align="center" style="padding:20px 10px 30px;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;max-width:620px;border-collapse:collapse;background:#fffefa;">' +
+
+    // Branded hero: avoids remotely loaded CSS or images, which Gmail can block.
+    '<tr><td align="center" style="padding:30px 15px 24px;background:#10291c;color:#fff8e8;border-bottom:4px solid #bda36b;">' +
+    '<div style="font-size:11px;line-height:18px;letter-spacing:3px;color:#d7bf8b;">✦ GOD MAT SAMLER FOLK ✦</div>' +
+    '<div style="font-size:46px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#fff9ec;">KØL</div>' +
+    '<div style="font-size:16px;line-height:24px;letter-spacing:5px;font-weight:bold;color:#fff9ec;">GRILL &amp; PIZZA</div>' +
+    '<div style="padding-top:8px;font-size:11px;line-height:16px;letter-spacing:2px;color:#dac89e;">PIZZA &nbsp;·&nbsp; GRILL &nbsp;·&nbsp; KVALITET</div>' +
+    '</td></tr>' +
+
+    '<tr><td style="padding:16px 15px 8px;background:#fffefa;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;background:#eef4e7;border-radius:16px;">' +
+    '<tr><td align="center" style="padding:20px 10px 8px;color:#20442b;font-size:12px;line-height:20px;font-weight:800;letter-spacing:1px;">' +
+    safe(headline) + '</td></tr>' +
+    '<tr><td align="center" style="padding:0 6px 23px;color:#10291c;">' +
+    '<div style="font-size:20px;font-weight:800;line-height:26px;">' + safe(mainLabel) + '</div>' +
+    '<div style="font-size:52px;line-height:1.15;font-weight:900;letter-spacing:-1px;">' + safe(mainTime) + '</div>' +
+    '</td></tr></table></td></tr>' +
+
+    '<tr><td style="padding:0 15px 13px;background:#fffefa;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f6f6f0;border-collapse:separate;border-radius:13px;">' +
+    '<tr><td width="48%" align="center" style="padding:15px 7px;color:#123c27;font-size:15px;font-weight:bold;">' + safe(statusLeft) + '</td>' +
+    '<td width="52%" align="center" style="padding:15px 7px;border-left:1px solid #e3e6dd;color:#193b27;font-size:14px;font-weight:bold;">' +
+    safe(statusRight) + '</td></tr></table></td></tr>' +
+
+    '<tr><td style="padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;">' +
+    'Hei ' + safe(firstName) + '!<br>' + safe(intro) + '</td></tr>' +
+
+    '<tr><td style="padding:0 15px 14px;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
+    '<tr><td colspan="2" style="padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;">Bestillingsdetaljer</td></tr>' +
+    infoRows +
+    '<tr><td colspan="2" style="padding:12px;font-size:12px;color:#65736a;line-height:19px;">' +
+    '<strong>Henting:</strong> Øgardsvegen 44, 2100 Skarnes<br>' +
+    '<a href="https://www.google.com/maps/search/?api=1&amp;query=%C3%98gardsvegen+44%2C+2100+Skarnes" style="color:#286844;text-decoration:underline;">Vis veibeskrivelse</a>' +
+    '</td></tr></table></td></tr>' +
+
+    '<tr><td style="padding:0 15px 14px;">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
+    '<tr><td colspan="2" style="padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;">Bestilte varer</td></tr>' +
+    (rows || '<tr><td colspan="2" style="padding:15px;font-size:13px;">Ingen produktlinjer lagret.</td></tr>') +
+    '<tr><td style="padding:12px;color:#657369;font-size:13px;">Delsum</td><td align="right" style="padding:12px;color:#263c2e;font-size:13px;white-space:nowrap;">' +
+    safe(money2(subtotal)) + '</td></tr>' +
+    '<tr><td style="padding:0 12px 15px;color:#657369;font-size:13px;">Herav MVA (15 %)</td><td align="right" style="padding:0 12px 15px;color:#263c2e;font-size:13px;white-space:nowrap;">' +
+    safe(money2(totalMva)) + '</td></tr>' +
+    '<tr><td style="padding:17px 12px;background:#123c2b;color:white;font-size:23px;font-weight:800;">Totalt</td>' +
+    '<td align="right" style="padding:17px 12px;background:#123c2b;color:white;font-size:23px;font-weight:800;white-space:nowrap;">' +
+    safe(money(total)) + '</td></tr>' +
+    '</table></td></tr>' +
+
+    (kolPlain_(order.comment) ? '<tr><td style="padding:2px 26px 14px;font-size:12px;color:#536457;"><strong>Kommentar:</strong> ' + safe(order.comment) + '</td></tr>' : '') +
+    '<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;line-height:20px;">' +
+    'Takk for at du bestiller hos<br><strong style="color:#143623;font-size:13px;letter-spacing:1px;">KØL GRILL &amp; PIZZA</strong><br>' +
+    '<a href="' + orderLink + '" style="color:#286844;">Se vår meny</a><br>' +
+    '<a href="mailto:skarnes.restaurant@gmail.com" style="color:#286844;">skarnes.restaurant@gmail.com</a>' +
+    '</td></tr></table></td></tr></table></body></html>';
+
+  const text =
+    'KØL Grill & Pizza\n' +
+    (accepted ? 'Bestillingen din er bekreftet.' : 'Bestillingen din er klar for henting!') +
+    '\n' + mainLabel + ' ' + mainTime +
+    '\n' + statusLeft + ' – ' + statusRight +
+    '\n\nHei ' + firstName + '! ' + intro +
+    '\n\n' + info.map(function(p) {return p[0] + ': ' + p[1];}).join('\n') +
+    '\nHenting: Øgardsvegen 44, 2100 Skarnes' +
+    '\n\nBestilte varer:\n' + detailsPlain +
+    '\n\nDelsum: ' + money2(subtotal) +
+    '\nHerav MVA (15 %): ' + money2(totalMva) +
+    '\nTotalt: ' + money(total) +
+    '\n\nVennlig hilsen KØL Grill & Pizza';
+  return { subject:subject, html:html, text:text };
 }
 
 function kolSendMail_(order, kind) {
@@ -226,7 +314,31 @@ function forhåndsvisEpostEksempel() {
       optionDetails:[{groupTitle:'Ekstra topping',label:'Pepperoni',price:19}],
       removedIngredients:['Løk'],comment:'Godt stekt'}]
   };
-  Logger.log(kolBuildReceipt_(sample,'accepted').html);
+  Logger.log('BEKREFTET HTML: ' + kolBuildReceipt_(sample,'accepted').html);
+  sample.staffReadyAt = Date.now();
+  sample.statusUpdatedAt = sample.staffReadyAt;
+  Logger.log('KLAR HTML: ' + kolBuildReceipt_(sample,'ready').html);
+}
+
+/** Sends two sample template emails ONLY to this Apps Script account. */
+function testBeggeEpostMalerTilMeg() {
+  const to = Session.getEffectiveUser().getEmail();
+  if (!to) throw new Error('Fant ingen e-postadresse til pålogget konto.');
+  const now = Date.now();
+  const sample = {
+    id:'TEST-5549NO', customerName:'Testkunde', phone:'+47 40000000',
+    email:to, createdAt:now-300000, pickup:'Snarest', pickupMode:'asap',
+    estimatedMinutes:15, estimatedReadyAt:now+15*60000,
+    staffReadyAt:now, statusUpdatedAt:now,
+    subtotal:503, total:503,
+    lines:[
+      {name:'1. Classico',quantity:1,price:294,size:'Stor',optionDetails:[{groupTitle:'Alternativer',label:'Bare skinke'}]},
+      {name:'Hamburger Tallerken',quantity:1,price:209,size:'Standard'}
+    ]
+  };
+  kolSendMail_(sample,'accepted');
+  kolSendMail_(sample,'ready');
+  Logger.log('Begge HTML-malene sendt til skripteieren: ' + to);
 }
 
 function kolOrderKey_(id) {
@@ -293,10 +405,16 @@ function kontrollerEpostBestillinger() {
         continue;
       }
       const checkpoint = JSON.parse(previousJson);
+      if (!checkpoint.sent || typeof checkpoint.sent !== 'object') checkpoint.sent = {};
       const kind = kolNotificationKind_(checkpoint.status, order);
       const stamp = String(order.statusUpdatedAt || '0');
       const eventKey = kind + ':' + stamp;
-      if (kind && !checkpoint.sent[eventKey]) {
+      // One accepted and one ready mail maximum per order, even after
+      // a status rollback/reconfirmation. Existing event keys still count.
+      const alreadyProcessed = kind && Object.keys(checkpoint.sent).some(function(key) {
+        return key.indexOf(kind + ':') === 0;
+      });
+      if (kind && !alreadyProcessed) {
         // This is a single best-effort delivery: mark before sending to avoid duplicate mail.
         checkpoint.sent[eventKey] = 'attempted';
         checkpoint.status = status;
