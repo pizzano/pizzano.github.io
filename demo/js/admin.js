@@ -2617,7 +2617,8 @@ async function testEpsonFromOrders({ manual = false } = {}) {
   printerTestButton.disabled = true;
   // Preserve the red outage indication during periodic retries instead of
   // flickering to gray every 10 seconds.
-  if (manual || !printerStatusButton.classList.contains('is-offline')) {
+  if (manual || (!printerStatusButton.classList.contains('is-offline') &&
+    !printerStatusButton.classList.contains('is-active'))) {
     setEpsonPrinterStatus('pending', 'Kontrollerer Epson over lokalnettverket…');
   }
   try {
