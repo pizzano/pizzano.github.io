@@ -16,7 +16,7 @@
     <title>Restauranten — Bestill takeaway</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20261015-contactref122">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20261015-profilecontact129">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-sheetcompact94">
     <link rel="stylesheet" href="/demo/css/shop-info.css?v=20261011-states4">
     <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261013-sheetcompact94">
@@ -192,7 +192,7 @@
                         </span>
                         <span class="profile-menu-copy">
                             <strong>Rediger profil</strong>
-                            <small id="profileContactMeta">Navn og mobilnummer</small>
+                            <small id="profileContactMeta">Navn, mobilnummer og e-post</small>
                         </span>
                         <span class="profile-menu-chevron" aria-hidden="true">›</span>
                     </button>
@@ -230,37 +230,52 @@
                     <div>
                         <span>Profil</span>
                         <h1 id="profilePanelTitle">Rediger profil</h1>
-                        <p class="profile-contact-help" id="profileContactHelp" hidden>Lagre navn og mobilnummer for raskere bestilling neste gang.</p>
+                        <p class="profile-contact-help" id="profileContactHelp" hidden>Lagre kontaktopplysningene dine for raskere bestilling neste gang.</p>
                     </div>
                 </header>
 
                 <div class="profile-tab-panels">
                     <section class="card profile-tab-panel profile-contact-card is-active" data-profile-panel="contact">
+                        <h2 class="sec-title">Kontaktinformasjon</h2>
                         <div class="field contact-form-field">
                             <label class="field-label contact-form-label" for="profName">
-                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Hele Navn</span>
+                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span>
+                                <span>Hele navn <small class="contact-requirement">(påkrevd)</small></span>
                             </label>
                             <div class="validated-input contact-form-control">
                                 <input id="profName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
                                 <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                             </div>
+                            <p class="err" id="errProfName" hidden>Skriv inn navnet ditt.</p>
                         </div>
                         <div class="field contact-form-field">
                             <label class="field-label contact-form-label" for="profPhone">
-                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span>Mobilnummer</span>
+                                <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span>
+                                <span>Mobilnummer <small class="contact-requirement">(påkrevd)</small></span>
                             </label>
                             <div class="phone-row contact-form-phone">
                                 <span class="phone-prefix">+47</span>
                                 <div class="validated-input contact-form-control">
-                                    <input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="done">
+                                    <input id="profPhone" class="input" type="tel" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="next" maxlength="8">
                                     <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                                 </div>
                             </div>
+                            <p class="err" id="errProfPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
+                        </div>
+                        <div class="field contact-form-field">
+                            <label class="field-label contact-form-label" for="profEmail">
+                                <span class="contact-form-icon" aria-hidden="true">✉</span>
+                                <span>E-postadresse <small class="contact-requirement">(valgfri)</small></span>
+                            </label>
+                            <div class="validated-input contact-form-control">
+                                <input id="profEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email" enterkeyhint="done">
+                                <span class="valid-check" hidden aria-label="Gyldig">✓</span>
+                            </div>
+                            <p class="contact-email-help">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
+                            <p class="err" id="errProfEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                         </div>
                         <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
-                        <span class="saved-flash" id="profileSaved" role="status" hidden>✓ Lagret</span>
                     </section>
-
 
                     <section class="card profile-tab-panel" data-profile-panel="orders" hidden>
                         <div id="activeOrderProfile" class="active-order-slot active-order-slot-profile" hidden></div>
@@ -316,7 +331,7 @@
     <div class="toast" id="toast" hidden></div>
 
     <script src="/demo/js/install.js?v=20261013-sheetcompact94"></script>
-    <script type="module" src="/demo/js/customer.js?v=20261015-estimated-dismiss120"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261015-profilecontact129"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261013-sheetcompact94"></script>
 </body>
 
