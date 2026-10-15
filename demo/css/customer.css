@@ -2446,3 +2446,75 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   #viewCheckout .checkout-contact-card .contact-form-control .input { min-height: 48px; height: 48px; }
   #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix { min-height: 48px; flex-basis: 53px; }
 }
+
+
+/* Rediger profil: same compact Kontaktinformasjon card as the checkout.
+   The green checks are driven by the profile validation logic. */
+#viewProfile .profile-contact-card.profile-tab-panel {
+  padding:clamp(15px,3.2vw,21px);
+  border-radius:19px;
+  box-shadow:0 5px 20px color-mix(in srgb,var(--palette-deep) 4%,transparent);
+}
+#viewProfile .profile-contact-card .sec-title {
+  color:var(--palette-ink);
+  font-size:clamp(17px,3.6vw,21px);
+  font-weight:800;
+  letter-spacing:-.025em;
+  line-height:1.2;
+  margin:0 0 18px;
+}
+#viewProfile .profile-contact-card .contact-form-field {margin-bottom:17px;}
+#viewProfile .profile-contact-card .contact-form-label {
+  font-size:clamp(14px,3vw,16px);
+  gap:10px;
+  margin-bottom:8px;
+}
+#viewProfile .profile-contact-card .contact-form-label .contact-requirement {
+  color:var(--palette-muted);
+  font-size:.9em;
+  font-weight:400;
+}
+#viewProfile .profile-contact-card .contact-form-icon {
+  width:35px;height:35px;border-radius:11px;
+}
+#viewProfile .profile-contact-card .contact-form-icon svg {
+  width:19px;height:19px;
+}
+#viewProfile .profile-contact-card .contact-form-control {
+  border-radius:12px;
+}
+#viewProfile .profile-contact-card .contact-form-control .input {
+  min-height:52px;height:52px;padding-left:14px;
+}
+#viewProfile .profile-contact-card .contact-form-phone .phone-prefix {
+  min-height:52px;flex-basis:60px;font-size:16px;
+}
+#viewProfile .profile-contact-card .contact-form-phone .contact-form-control,
+#viewProfile .profile-contact-card .contact-form-phone .contact-form-control .input {
+  border-radius:0 12px 12px 0;
+}
+#viewProfile .profile-contact-card .validated-input.is-valid {
+  border-color:var(--palette-accent);
+  background:color-mix(in srgb,var(--palette-accent) 7%,var(--palette-surface));
+}
+#viewProfile .profile-contact-card .validated-input.is-valid .input {
+  background:transparent;
+}
+#viewProfile .profile-contact-card .contact-email-help {
+  margin:9px 1px 0;
+  color:var(--palette-muted);
+  font-size:12px;
+  line-height:1.5;
+  font-weight:400;
+}
+#viewProfile .profile-contact-card .err {
+  margin-top:5px;font-size:11px;line-height:1.35;
+}
+#viewProfile #btnSaveProfile {margin-top:15px;}
+@media(max-width:370px) {
+  #viewProfile .profile-contact-card.profile-tab-panel{padding:13px}
+  #viewProfile .profile-contact-card .contact-form-field{margin-bottom:14px}
+  #viewProfile .profile-contact-card .contact-form-icon{width:31px;height:31px}
+  #viewProfile .profile-contact-card .contact-form-control .input{min-height:48px;height:48px}
+  #viewProfile .profile-contact-card .contact-form-phone .phone-prefix{min-height:48px;flex-basis:53px}
+}
