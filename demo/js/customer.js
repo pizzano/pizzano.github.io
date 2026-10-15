@@ -542,6 +542,10 @@ function upsertLiveOrder(orderId, remote) {
   const index = orders.findIndex((entry) => entry?.id === orderId);
   if (index >= 0) {
     const previous = orders[index] || {};
+    // A one-off HTTP response might arrive after a newer live SSE patch.
+    // Never put a stale status or pickup-time estimate back on the screen.
+    if (Number(previous.statusUpdatedAt) > Number(normalized.statusUpdatedAt) ||
+        Number(previous.estimateUpdatedAt) > Number(normalized.estimateUpdatedAt)) return;
     orders[index] = { ...previous, ...normalized, lines: normalized.lines?.length ? normalized.lines : (previous.lines || []) };
   } else {
     orders.unshift(normalized);
