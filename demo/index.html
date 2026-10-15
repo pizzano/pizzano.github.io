@@ -16,7 +16,7 @@
     <title>Restauranten — Bestill takeaway</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261011-states4">
-    <link rel="stylesheet" href="/demo/css/customer.css?v=20261013-sheetcompact94">
+    <link rel="stylesheet" href="/demo/css/customer.css?v=20261015-contactref122">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261013-sheetcompact94">
     <link rel="stylesheet" href="/demo/css/shop-info.css?v=20261011-states4">
     <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261013-sheetcompact94">
@@ -124,7 +124,7 @@
                 <h2 class="sec-title">Kontaktinformasjon</h2>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custName">
-                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Hele Navn</span>
+                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Hele navn <small class="contact-requirement">(påkrevd)</small></span>
                     </label>
                     <div class="validated-input contact-form-control">
                         <input id="custName" class="input" type="text" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
@@ -134,7 +134,7 @@
                 </div>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custPhone">
-                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span>Mobilnummer</span>
+                        <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span>Mobilnummer <small class="contact-requirement">(påkrevd)</small></span>
                     </label>
                     <div class="phone-row contact-form-phone">
                         <span class="phone-prefix">+47</span>
@@ -147,12 +147,12 @@
                 </div>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custEmail">
-                        <span class="contact-form-icon" aria-hidden="true">✉</span><span>E-postadresse <small>(valgfritt)</small></span>
+                        <span class="contact-form-icon" aria-hidden="true">✉</span><span>E-postadresse <small class="contact-requirement">(valgfri)</small></span>
                     </label>
-                    <p class="hint">Skriv inn e-post hvis du vil få beskjed om bestillingens tidspunkt.</p>
                     <div class="contact-form-control">
                         <input id="custEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
                     </div>
+                    <p class="contact-email-help">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
                     <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                 </div>
             </div>
