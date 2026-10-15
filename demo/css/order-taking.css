@@ -657,3 +657,47 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
     gap:9px;
   }
 }
+
+
+/* Epson TM-T20II status next to internet indicator. This tests the printer,
+   not general internet access. */
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-active{color:#079f65}
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-active::after,
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-offline::after{
+ content:'';position:absolute;top:9px;right:8px;width:8px;height:8px;
+ border:2px solid #f3f8fb;border-radius:50%;background:#09af6e;
+}
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-offline::after{background:#dc5656}
+html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-active{color:#91e6b7}
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-panel{
+ position:absolute;top:calc(100% + 12px);right:0;z-index:3000;
+ width:min(326px,calc(100vw - 18px));padding:16px;
+ background:var(--ot-surface);color:var(--ot-ink);border:1px solid var(--ot-line);
+ border-radius:15px;box-shadow:0 16px 35px rgba(0,0,0,.18);
+ font-size:12px;line-height:1.45;
+}
+.orders-page .orders-top-actions.orders-lightbar .orders-printer-panel[hidden]{display:none!important}
+.orders-page .orders-printer-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.orders-page .orders-printer-panel-head strong{font-size:15px}
+.orders-page .orders-printer-panel-head button{border:0;background:transparent;font-size:26px;line-height:1;color:var(--ot-ink)}
+.orders-page .orders-printer-panel-status{
+ margin:12px 0 7px;font-weight:750;
+}
+.orders-page .orders-printer-panel-ip{margin:0 0 13px;color:var(--ot-muted)}
+.orders-page .orders-printer-panel-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.orders-page .orders-printer-panel-buttons :is(button,a){
+ display:flex;align-items:center;justify-content:center;min-height:39px;padding:8px 10px;
+ border:1px solid #a8cbb4;border-radius:9px;background:#e7f4ea;
+ color:#205d39;font-weight:770;font-size:12px;white-space:nowrap;
+ text-decoration:none;cursor:pointer;
+}
+.orders-page .orders-printer-panel-buttons a{background:#126b48;border-color:#126b48;color:#fff}
+.orders-page .orders-printer-panel-buttons button:disabled{opacity:.5;cursor:wait}
+.orders-page .orders-printer-panel-hint{color:var(--ot-muted);font-size:11px;margin:12px 0 0}
+@media(max-width:510px){
+ .orders-page .orders-title-block h1{font-size:16px}
+ .orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-active::after,
+ .orders-page .orders-top-actions.orders-lightbar .orders-printer-indicator.is-offline::after{
+  width:6px;height:6px;top:3px;right:2px;
+ }
+}
