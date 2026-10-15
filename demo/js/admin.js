@@ -48,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261015-printer-typography128';
+} from './data.js?v=20261015-stream130';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
