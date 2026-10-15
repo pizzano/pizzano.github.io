@@ -528,9 +528,10 @@ function activeOrderCardHtml(order) {
   </section>`;
 }
 
-const activeOrderStreams = new Map();
+// The shared data layer streams /orders.json via Firebase SSE.
+// Do not create another SSE connection and a 5-second fetch loop per order.
 const activeOrderFetchBusy = new Set();
-let activeOrderFallbackTimer = null;
+const initialActiveOrderChecks = new Set();
 const readyDismissTimers = new Map();
 
 function upsertLiveOrder(orderId, remote) {
@@ -552,7 +553,9 @@ async function fetchActiveOrderNow(orderId) {
   if (!orderId || activeOrderFetchBusy.has(orderId)) return;
   activeOrderFetchBusy.add(orderId);
   try {
-    const response = await fetch(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json?ts=${Date.now()}`, { cache: 'no-store', headers: { Accept: 'application/json' } });
+    const response = await fetch(DB_URL + '/orders/' + encodeURIComponent(orderId) + '.json?ts=' + Date.now(), {
+      cache: 'no-store', headers: { Accept: 'application/json' }
+    });
     if (!response.ok) return;
     const remote = await response.json();
     if (!remote) return;
@@ -567,31 +570,15 @@ async function fetchActiveOrderNow(orderId) {
 
 function syncActiveOrderWatchers(orderIds) {
   const wanted = new Set(orderIds.filter(Boolean).slice(0, 8));
-  for (const [orderId, source] of activeOrderStreams.entries()) {
-    if (wanted.has(orderId)) continue;
-    try { source.close(); } catch (_) {}
-    activeOrderStreams.delete(orderId);
+  for (const id of initialActiveOrderChecks) if (!wanted.has(id)) initialActiveOrderChecks.delete(id);
+  for (const id of wanted) {
+    if (initialActiveOrderChecks.has(id)) continue;
+    initialActiveOrderChecks.add(id);
+    // One targeted read when an active order first appears; after that the
+    // shared SSE updates store.orders immediately with no periodic GET.
+    void fetchActiveOrderNow(id);
   }
-  for (const orderId of wanted) {
-    if (activeOrderStreams.has(orderId)) continue;
-    fetchActiveOrderNow(orderId);
-    if ('EventSource' in window) {
-      try {
-        const source = new EventSource(`${DB_URL}/orders/${encodeURIComponent(orderId)}.json`);
-        const refresh = () => fetchActiveOrderNow(orderId);
-        source.addEventListener('put', refresh);
-        source.addEventListener('patch', refresh);
-        source.onerror = () => {};
-        activeOrderStreams.set(orderId, source);
-      } catch (_) {}
-    }
-  }
-  if (activeOrderFallbackTimer) clearInterval(activeOrderFallbackTimer);
-  activeOrderFallbackTimer = wanted.size ? window.setInterval(() => {
-    if (!document.hidden) for (const orderId of wanted) fetchActiveOrderNow(orderId);
-  }, 5000) : null;
 }
-
 
 function refreshCustomerOrderCountdowns() {
   const visibleOrders = activeCustomerOrders();
