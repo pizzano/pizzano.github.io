@@ -155,6 +155,7 @@ const el = {
   custName: $('custName'),
   custPhone: $('custPhone'),
   custEmail: $('custEmail'),
+  notificationChoices: document.querySelectorAll('input[name="notificationPreference"]'),
   errEmail: $('errEmail'),
   errName: $('errName'),
   errPhone: $('errPhone'),
@@ -1754,6 +1755,13 @@ function renderCheckout() {
   }
 }
 
+function selectedNotificationPreference() {
+  return document.querySelector('input[name="notificationPreference"]:checked')?.value === 'both' ? 'both' : 'email';
+}
+function validNotificationEmail() {
+  return Boolean(el.custEmail?.value?.trim()) && validOptionalEmail(el.custEmail.value);
+}
+
 function updateContactValidation() {
   for (const [name, phone] of [[el.custName, el.custPhone], [el.profName, el.profPhone]]) {
     for (const input of [name, phone]) {
@@ -1763,7 +1771,7 @@ function updateContactValidation() {
       wrapper.querySelector('.valid-check').hidden = !valid;
     }
   }
-  const emailValid = validOptionalEmail(el.custEmail?.value);
+  const emailValid = validNotificationEmail();
   if (el.errEmail) el.errEmail.hidden = emailValid;
   if (ui.checkoutStep === 2) el.btnStepNext.disabled = !el.custName.value.trim() || !validPhone(el.custPhone.value) || !emailValid;
 }
@@ -2103,6 +2111,7 @@ async function placeOrder() {
     name,
     phone,
     email: el.custEmail?.value?.trim() || '',
+    notificationPreference: selectedNotificationPreference(),
     pickup: ui.pickup,
     cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment, line.loyaltyFree, line.loyaltyCycle]),
   });
@@ -2111,7 +2120,7 @@ async function placeOrder() {
     ui.pendingOrderFingerprint = fingerprint;
   }
 
-  if (!validOptionalEmail(el.custEmail?.value)) {
+  if (!validNotificationEmail()) {
     ui.checkoutStep = 2;
     if (el.errEmail) el.errEmail.hidden = false;
     renderCheckout();
@@ -2131,6 +2140,7 @@ async function placeOrder() {
       customerName: name,
       phone: `+47${phone}`,
       email: (el.custEmail?.value || '').trim().toLowerCase(),
+      notificationPreference: selectedNotificationPreference(),
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
       pickupMode: ui.pickupMode === 'scheduled' ? 'scheduled' : 'asap',
       scheduledPickupAt: ui.pickupMode === 'scheduled' ? resolveScheduledPickupAt(ui.pickup) : null,
@@ -2923,6 +2933,8 @@ el.btnSaveProfile.addEventListener('click', () => {
     el.profileSaved.hidden = true;
   }, 1800);
 });
+
+el.notificationChoices.forEach((choice) => choice.addEventListener('change', updateContactValidation));
 
 if (el.custEmail) el.custEmail.addEventListener('input', () => {
   if (el.errEmail) el.errEmail.hidden = validOptionalEmail(el.custEmail.value);
