@@ -9,16 +9,47 @@ const KOL_DB = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const KOL_MAX_ORDER_AGE_MS = 48 * 60 * 60 * 1000;
 const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 
+// Narrow indexed Firebase query. Initial read covers the most recent 48h;
+// subsequent scans read changes since the last successful poll (+ 2m overlap).
+// Firebase RTDB /orders requires ".indexOn": ["statusUpdatedAt"].
+const KOL_EMAIL_SCAN_CURSOR_KEY = 'KOL_EMAIL_LAST_SUCCESSFUL_SCAN_MS';
+const KOL_EMAIL_SCAN_OVERLAP_MS = 2 * 60 * 1000;
+let kolEmailIndexedQueryOk_ = false;
+
 function kolReadOrders_() {
-  const response = UrlFetchApp.fetch(KOL_DB + '/orders.json', {
-    method: 'get',
-    muteHttpExceptions: true
+  const now = Date.now();
+  const props = PropertiesService.getScriptProperties();
+  const lastScan = Number(props.getProperty(KOL_EMAIL_SCAN_CURSOR_KEY)) || 0;
+  const since = Math.max(
+    now - KOL_MAX_ORDER_AGE_MS,
+    lastScan > 0 ? lastScan - KOL_EMAIL_SCAN_OVERLAP_MS : now - KOL_MAX_ORDER_AGE_MS
+  );
+  const url = KOL_DB + '/orders.json?orderBy=' +
+    encodeURIComponent(JSON.stringify('statusUpdatedAt')) +
+    '&startAt=' + encodeURIComponent(String(since));
+  const response = UrlFetchApp.fetch(url, {
+    method: 'get', muteHttpExceptions: true
   });
-  if (response.getResponseCode() !== 200) {
-    throw new Error('Firebase lesefeil (HTTP ' + response.getResponseCode() +
-      '). Kontroller databaseadressen og Firebase RTDB lesetilgang.');
+  if (response.getResponseCode() === 200) {
+    kolEmailIndexedQueryOk_ = true;
+    const data = JSON.parse(response.getContentText() || 'null');
+    return data && typeof data === 'object' ? data : {};
   }
-  const data = JSON.parse(response.getContentText() || 'null');
+
+  // Bounded fallback: keep notifications working even before the indexes
+  // have been configured; never read /orders.json without a query.
+  Logger.log('E-post: indeksert lesing feilet (HTTP ' +
+    response.getResponseCode() + '). Bruker begrenset reserve; konfigurer .indexOn.');
+  kolEmailIndexedQueryOk_ = false;
+  const fallbackUrl = KOL_DB + '/orders.json?orderBy=' +
+    encodeURIComponent(JSON.stringify('$key')) + '&limitToLast=120';
+  const fallback = UrlFetchApp.fetch(fallbackUrl, {
+    method: 'get', muteHttpExceptions: true
+  });
+  if (fallback.getResponseCode() !== 200) {
+    throw new Error('Firebase lesefeil (HTTP ' + fallback.getResponseCode() + ').');
+  }
+  const data = JSON.parse(fallback.getContentText() || 'null');
   return data && typeof data === 'object' ? data : {};
 }
 
@@ -236,6 +267,7 @@ function installerEpostVarsler() {
     const existing = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'kontrollerEpostBestillinger');
     for (const trigger of existing) ScriptApp.deleteTrigger(trigger);
     ScriptApp.newTrigger('kontrollerEpostBestillinger').timeBased().everyMinutes(1).create();
+    if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     Logger.log('E-postovervåking aktivert. Eksisterende ordre registrert: ' + seeded + '. Ingen gamle meldinger sendt.');
   } finally { lock.releaseLock(); }
 }
@@ -290,6 +322,9 @@ function kontrollerEpostBestillinger() {
         props.setProperty(key, JSON.stringify(checkpoint));
       }
     }
+    // Only advance after successfully processing the entire batch.
+    // Keep the cursor when falling back to bounded key reads.
+    if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
   } finally { lock.releaseLock(); }
 }
 
