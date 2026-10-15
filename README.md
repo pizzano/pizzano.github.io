@@ -12,7 +12,7 @@ Nettstedet er **https://bestill.online/**. GitHub Pages behandler `demo` og `DEM
 | Epson testutskrift | [demo/test-printer.html](demo/test-printer.html) |
 | Privat bildeutskrift (80 mm) | [demo/tools/PrivatPrinter.html](demo/tools/PrivatPrinter.html) |
 
-Se [demo/README.md](demo/README.md) for mapper, CSS- og JavaScript-avhengigheter, printer og vedlikehold. KØL-timelister og gavekort er samlet under **demo/tools/** og **demo/gavekort/**, med de gamle adressene bevart som videresendinger.
+Se [demo/README.md](demo/README.md) for mapper, CSS- og JavaScript-avhengigheter, printer og vedlikehold. KØL-timelister er samlet under **demo/tools/**. Gavekort er et separat prosjekt og ligger uendret på de opprinnelige rotadressene.
 Kjør `node demo/tools/audit-references.mjs` for å teste lokale filreferanser etter endringer.
 
 ## Hva må fortsatt ligge utenfor /demo?
@@ -20,7 +20,7 @@ Kjør `node demo/tools/audit-references.mjs` for å teste lokale filreferanser e
 - `index.html`, `img/`, `CNAME`: eksisterende hovedside og domene (må ikke flyttes).
 - `api/`: eksisterende serverless API-endepunkter (ruting krever denne mappen).
 - `functions/`, `firebase.json`, `.firebaserc`: Firebase Functions og deployoppsett (krever rotnivå).
-- `gavekort*.html`, `Timelister.html`, `sms.html`, `tell.html`, `kayit.html`: separate tjenester/sider. Ikke del av /demo; gamle URL-er beholdes.
+- `gavekort.html`, `gavekort-admin.html`, `sms.html`, `tell.html`, `kayit.html`: separate tjenester/sider. Ikke del av /demo og skal ikke flyttes.
 - `404.html`: nettstedets feilhåndtering.
 
 Gamle `/admin.html`, `/orders.html`, `/test/`, `/printer.html` og `/PrivatPrinter.html` er nå små videresendinger til aktive /demo-sider. De store gamle implementasjonene er tatt ut av hovedgrenen for å unngå forveksling.

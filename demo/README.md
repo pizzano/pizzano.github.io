@@ -34,7 +34,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - Printerfontene kan settes i **Restaurantinnstillinger → Printer ayarları**; samme Canvas brukes til forhåndsvisning og utskrift.
 - SMS og e-post er koblet til eksterne prosesser. Kode i `functions/` og Google Apps Script påvirkes **ikke** ved å flytte referansekopier herfra.
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
-- Andre sider i rotmappen (`gavekort`, `Timelister` osv.) er separate og kan ha egne brukere.
+- Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
 
 ## Arbeidsrutine
 
@@ -46,13 +46,13 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 6. Ved behov: gjenopprett en gammel fil fra `backup-before-demo-cleanup-20261015`.
 
 
-## KØL-tillegg samlet i /demo (uten å endre de andre prosjektene)
+## KØL-verktøy som hører til /demo
 
-| KØL-verktoy | Gjeldende fil | Tidligere nettadresse |
+| Verktøy | Fil | Gammel adresse |
 | --- | --- | --- |
 | Ansatt-timelister (lokal utskrift) | `tools/Timelister.html` | `/Timelister.html` (videresendes) |
-| Kundens gavekort | `gavekort/index.html` | `/gavekort.html` (videresendes) |
-| Administrasjon av gavekort | `gavekort/admin.html` | `/gavekort-admin.html` (videresendes) |
-| Privat bildefunksjon til Epson | `tools/PrivatPrinter.html` | `/PrivatPrinter.html` (videresendes) |
+| Privat Epson-bildeutskrift | `tools/PrivatPrinter.html` | `/PrivatPrinter.html` (videresendes) |
 
-**Andre prosjekter og nettsteder er urørt.** `api/` må ligge i repo-roten for Vercel API-rutene, og `functions/` er kildekatalogen i `firebase.json` for Firebase Functions. Flytting av disse uten ny distribusjonskonfigurasjon ville ødelegge eksisterende endepunkter, så de forblir i rotnivå. `CNAME`, `index.html` og `img/` trengs fortsatt av nettstedets hovedside. Ingen SMS-, e-post-, databaser- eller ordrelogikk ble endret i denne samlingen.
+**Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
+
+`api/` forblir i roten for Vercel API-ruter, og `functions/` forblir i roten for Firebase-funksjoner. Ingen SMS-, e-post-, database- eller ordrelogikk er endret.
