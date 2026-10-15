@@ -3,7 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { printKitchenTicket } from './order-printer.js?v=20261015-eposreceipt123';
+import { printKitchenTicket } from './order-printer.js?v=20261015-raster124';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
