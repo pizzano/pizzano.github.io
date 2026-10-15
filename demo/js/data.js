@@ -1315,12 +1315,23 @@ export async function setPizzaOffersConsent(phoneValue, enabled) {
   await restPatch(`pizzaBonus/${phone}`, { offersConsent: enabled === true, consentUpdatedAt: Date.now(), consentText: 'Varsle meg om gratis pizza og bruk pizzabonus automatisk.' });
 }
 
+function pizzaBonusAccountState_(account) {
+  const events = account?.events && typeof account.events === 'object' ? account.events : {};
+  const valid = Number.isInteger(account?.pizzaCount) && account.pizzaCount >= 0 &&
+    account.pizzaCount <= 10 && typeof account?.pizzaCycle === 'string' &&
+    Number.isInteger(account?.pizzaCountedEvents) &&
+    account.pizzaCountedEvents === Object.keys(events).length;
+  return valid
+    ? { count: account.pizzaCount, cycle: account.pizzaCycle, ready: account.pizzaCount === 10 }
+    : pizzaBonus(events);
+}
+
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
   // One customer account, not the full /orders collection.
   const account = await restGet(`pizzaBonus/${phone}`);
-  const state = pizzaBonus(account?.events || {});
+  const state = pizzaBonusAccountState_(account);
   const reservation = account?.reservations?.[state.cycle];
   let pending = false;
   if (reservation) {
@@ -1368,14 +1379,53 @@ async function syncPizzaBonusEvent_(order) {
     return sum + ((line.loyaltyEligible || largePizza(section, line.size))
       ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
   }, 0);
-  const event = {
-    id: order.id,
-    at: Number(order.loyaltyConfirmedAt),
-    quantity,
-    redeemed: Boolean(order.loyaltyReward),
-  };
-  await restPut(`pizzaBonus/${phone}/events/${encodeURIComponent(order.id)}`, event);
-  // Never update statusUpdatedAt while storing the bonus: no duplicate SMS or email.
+  const event = { id: order.id, at: Number(order.loyaltyConfirmedAt),
+    quantity, redeemed: Boolean(order.loyaltyReward) };
+  const url = `${DB_URL}/pizzaBonus/${phone}.json`;
+  let credited = false;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const response = await fetch(url, {
+      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
+    });
+    if (!response.ok) throw new Error('Kunne ikke lese pizzabonus.');
+    const etag = response.headers.get('ETag');
+    if (!etag) throw new Error('Pizzabonus ETag mangler.');
+    const account = await response.json() || {};
+    const events = account.events && typeof account.events === 'object' ? account.events : {};
+    const state = pizzaBonusAccountState_(account);
+    const alreadyCredited = Object.prototype.hasOwnProperty.call(events, order.id);
+    const previousCounted = Object.keys(events).length;
+    if (alreadyCredited && account.pizzaCount === state.count &&
+        account.pizzaCycle === state.cycle &&
+        account.pizzaCountedEvents === previousCounted) {
+      credited = true;
+      break;
+    }
+    const nextEvents = alreadyCredited ? events : { ...events, [order.id]: event };
+    const latestAt = Number(account.pizzaLastEventAt) ||
+      Object.values(events).reduce((max, e) => Math.max(max, Number(e.at) || 0), 0);
+    const outOfOrder = !alreadyCredited && event.at < latestAt;
+    const nextState = alreadyCredited
+      ? state
+      : outOfOrder
+        ? pizzaBonus(nextEvents)
+        : event.redeemed && state.count + quantity >= 10
+          ? { count: 0, cycle: order.id }
+          : { count: Math.min(10, state.count + quantity), cycle: state.cycle };
+    const updated = { ...account, events: nextEvents, pizzaCount: nextState.count,
+      pizzaCycle: nextState.cycle, pizzaCountedEvents: Object.keys(nextEvents).length,
+      pizzaLastEventAt: Math.max(latestAt, event.at) };
+    const saved = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(updated),
+    });
+    if (saved.status === 412) continue;
+    if (!saved.ok) throw new Error('Kunne ikke lagre pizzabonus.');
+    credited = true;
+    break;
+  }
+  if (!credited) throw new Error('Pizzabonus ble endret samtidig. Prøv på nytt.');
   await restPatch(`${ORDERS_PATH}/${encodeURIComponent(order.id)}`,
     { loyaltyEventPending: null });
 }

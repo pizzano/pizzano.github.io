@@ -48,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261016-loyalty132';
+} from './data.js?v=20261016-loyalty133';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
