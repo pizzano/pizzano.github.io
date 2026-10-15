@@ -107,7 +107,15 @@
         <div class="center">Dette er bare en skrivertest.</div>
       </div>
     </div>
-    <div class="actionrow"><button type="button" id="androidPrint" class="neutral">Skriv ut via Android</button></div>
+    <div class="actionrow">
+      <button type="button" id="bitmapPreview" class="secondary">Vis ny bildekvittering</button>
+      <button type="button" id="bitmapPrint" class="primary">Skriv ut bildekvittering</button>
+      <button type="button" id="androidPrint" class="neutral">Skriv ut via Android</button>
+    </div>
+    <div id="bitmapPreviewBox" hidden style="margin-top:14px;padding:12px;background:#edf1ee;border-radius:12px;text-align:center">
+      <p style="margin:0 0 10px;color:#405647;font-size:12px">Forhåndsvisning av samme bildefil som Epson skriver ut</p>
+      <img id="bitmapPreviewImage" alt="Ny bildekvittering med mørke overskrifter, sjekkbokser, priser og telefonnummer" style="width:288px;max-width:100%;height:auto;background:#fff;border:1px solid #d4ddd6">
+    </div>
     <p class="hint" style="margin-top:9px">Denne knappen åpner Androids utskriftsdialog. Velg en tilgjengelig skriver/utskriftstjeneste. Dette er et alternativ til ePOS og er ikke automatisk utskrift.</p>
   </section>
   <section class="card step">
@@ -247,6 +255,47 @@
   });
   el('check').addEventListener('click', function () { testPrint(false); });
   el('send').addEventListener('click', function () { testPrint(true); });
+
+  // Same shared Canvas-to-raster engine as Bestillinger; no actual Firebase order.
+  function sampleBitmapOrder() {
+    const now = Date.now();
+    return {
+      id:'TEST-001', customerName:'Thomas Dahl', phone:'+47 95557474',
+      pickup:'Snarest', pickupMode:'asap', createdAt:now-2*60000,
+      status:'bekreftet', estimatedAt:now, statusUpdatedAt:now,
+      estimatedReadyAt:now+9*60000, estimatedMinutes:9,
+      subtotal:518,total:518,
+      lines:[
+        {quantity:1,name:'Cheese Burger Tallerken',price:189},
+        {quantity:1,name:'Kebab i pita',price:129,
+          optionDetails:[{groupTitle:'Velg styrke',label:'Sterk',price:0}],
+          comment:'Litt pommes frites i kebaben: Ja, takk!'},
+        {quantity:1,name:'11 - CALZONE (innbakt)',price:200,size:'Medium Pizza',
+          optionDetails:[{groupTitle:'Velg saus',label:'Hvitløksaus',price:0}]}
+      ]
+    };
+  }
+  async function runBitmapPreview(print) {
+    try {
+      if (print) settings();
+      const mod = await import('/demo/js/order-printer.js?v=20261015-raster124');
+      if (print) {
+        setStatus('Sender svart-hvitt-bilde til Epson …','info');
+        await mod.printKitchenTicket(sampleBitmapOrder(),{reprint:false});
+        setStatus('Epson bekreftet bildeutskriften. Kontroller kvitteringen.','ok');
+      } else {
+        const canvas = mod.renderKitchenReceiptCanvas(sampleBitmapOrder());
+        el('bitmapPreviewImage').src = canvas.toDataURL('image/png');
+        el('bitmapPreviewBox').hidden = false;
+        setStatus('Forhåndsvisningen er klar. Trykk «Skriv ut bildekvittering» for utskrift.','ok');
+      }
+    } catch (error) {
+      setStatus('Kunne ikke ' + (print ? 'skrive ut' : 'vise forhåndsvisning') +
+        ': ' + String(error?.message || error),'error');
+    }
+  }
+  el('bitmapPreview').addEventListener('click', function () { void runBitmapPreview(false); });
+  el('bitmapPrint').addEventListener('click', function () { void runBitmapPreview(true); });
   el('androidPrint').addEventListener('click', function () {
     setStatus('Åpner Androids utskriftsdialog. Dette bekrefter ikke direkte ePOS-tilkobling.', 'info');
     window.print();
