@@ -88,3 +88,31 @@ html[data-theme="dark"] #pageSettings .restaurant-info-note{background:#1f344e;c
 @media(max-width:760px){#pageSettings .page-head{padding:16px 14px 12px}#pageSettings .page-title h1{font-size:23px}#pageSettings .restaurant-settings-status{margin-left:0;flex:1}#pageSettings .settings-section-nav{padding:6px 12px 12px}#pageSettings .settings-section-scroll{padding:9px 11px 25px}#pageSettings .restaurant-hours-header{padding:14px 12px;display:grid}#pageSettings .restaurant-hours-actions{justify-content:flex-start}#pageSettings .restaurant-schedule{margin:0 9px 15px;overflow-x:auto}#pageSettings .restaurant-schedule-head,#pageSettings .restaurant-schedule-row{min-width:520px}#pageSettings .restaurant-hours-footer{padding:0 12px 13px}#pageSettings .restaurant-inline-panel{margin:0 9px 13px}#pageSettings .restaurant-settings-status{min-width:0}#pageSettings #btnSaveSettings{min-height:42px}#pageSettings .restaurant-info-note{padding:13px}}
 @media(max-width:420px){#pageSettings .restaurant-hours-actions{flex-wrap:wrap}#pageSettings .restaurant-quick-btn{min-height:39px;padding:0 10px;font-size:11px}#pageSettings .restaurant-settings-status{flex:1 1 100%}#pageSettings .settings-section-btn{min-height:36px;padding:0 13px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){#pageSettings .restaurant-quick-btn,#pageSettings #btnSaveSettings,#pageSettings .settings-section-btn{transition:none}}
+
+
+/* KØL thermal printer controls — shared 576-dot Canvas preview/actual print. */
+#pageSettings .printer-settings-card{background:var(--surface);color:var(--ink)}
+#pageSettings .printer-settings-card>h2{font-size:21px;margin-bottom:7px}
+#pageSettings .printer-settings-content{display:grid;grid-template-columns:minmax(240px,.95fr) minmax(275px,1.05fr);gap:24px;align-items:start;margin-top:17px}
+#pageSettings .printer-settings-controls{min-width:0;display:grid;gap:13px}
+#pageSettings .printer-settings-field{padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+#pageSettings .printer-settings-field label{display:block;margin-bottom:11px;font-weight:750;font-size:13px;color:var(--ink)}
+#pageSettings .printer-settings-field>div{display:flex;align-items:center;gap:14px}
+#pageSettings .printer-settings-field input[type=range]{min-width:0;flex:1;accent-color:#326f4a;height:21px;cursor:pointer}
+#pageSettings .printer-settings-field output{flex:0 0 50px;min-width:50px;text-align:right;font-weight:800;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+#pageSettings .printer-settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px}
+#pageSettings .printer-settings-actions button{min-height:40px;font-size:12px}
+#pageSettings .printer-settings-save-status{font-size:12px;line-height:1.5;color:var(--ink-2);margin:2px 0}
+#pageSettings .printer-settings-save-status[data-status=dirty]{color:#b16a1d;font-weight:750}
+#pageSettings .printer-settings-save-status[data-status=saved]{color:#18704a;font-weight:750}
+#pageSettings .printer-settings-save-status[data-status=error]{color:#d5443e;font-weight:750}
+#pageSettings .printer-settings-preview{background:#eff1f0;border:1px solid #dce5df;border-radius:15px;padding:15px 12px;min-width:0}
+#pageSettings .printer-settings-preview-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px;color:#213b2c}
+#pageSettings .printer-settings-preview-head strong{font-size:14px}
+#pageSettings .printer-settings-preview-head small{font-size:11px;color:#526759}
+#pageSettings #printerTypographyPreview{display:block;width:min(100%,330px);height:auto;max-width:100%;margin:auto;image-rendering:auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.09)}
+html[data-theme="dark"] #pageSettings .printer-settings-preview{background:#283c30;border-color:var(--line)}
+html[data-theme="dark"] #pageSettings .printer-settings-preview-head{color:#dbe9df}
+html[data-theme="dark"] #pageSettings .printer-settings-preview-head small{color:#c4d1c8}
+@media(max-width:870px){#pageSettings .printer-settings-content{grid-template-columns:1fr}#pageSettings #printerTypographyPreview{width:min(100%,360px)}}
+@media(max-width:400px){#pageSettings .printer-settings-card{padding:15px 12px}#pageSettings .printer-settings-field{padding:11px 10px}}
