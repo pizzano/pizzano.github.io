@@ -18,8 +18,8 @@
     .card{padding:19px 18px;margin:12px 0;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 18px rgba(26,55,43,.035)}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     label{font-size:12px;font-weight:720;color:var(--navy);display:block;margin:0 0 6px}
-    input{width:100%;background:#fff;border:1px solid #cfdbd4;border-radius:10px;min-height:43px;padding:9px 11px;font:inherit;color:var(--navy);outline:0}
-    input:focus{border-color:#58aa78;box-shadow:0 0 0 3px rgba(65,155,100,.13)}
+    input,select{width:100%;background:#fff;border:1px solid #cfdbd4;border-radius:10px;min-height:43px;padding:9px 11px;font:inherit;color:var(--navy);outline:0}
+    input:focus,select:focus{border-color:#58aa78;box-shadow:0 0 0 3px rgba(65,155,100,.13)}
     .hint{font-size:11px;color:var(--muted);margin-top:6px}
     .actionrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}
     button,.buttonlink{border:0;border-radius:10px;padding:11px 13px;min-height:42px;cursor:pointer;font:700 12px/1.3 inherit;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
@@ -62,6 +62,14 @@
       <div><label for="ip">Skriverens IP-adresse</label><input id="ip" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="f.eks. 192.168.1.100"><div class="hint">IP-adressen finner du på skriverens nettverksstatusark.</div></div>
       <div><label for="device">ePOS-enhets-ID</label><input id="device" type="text" autocomplete="off" spellcheck="false" value="local_printer" maxlength="48"><div class="hint">Vanligvis «local_printer». Må samsvare med Epson-innstillingene.</div></div>
     </div>
+    <div style="margin-top:13px">
+      <label for="scheme">Tilkoblingsprotokoll</label>
+      <select id="scheme" aria-label="Tilkoblingsprotokoll">
+        <option value="https">HTTPS (anbefalt: skriverens nettside åpnes med HTTPS)</option>
+        <option value="http">HTTP (eldre skrivere; kan blokkeres i nettleseren)</option>
+      </select>
+      <div class="hint">Start med HTTPS etter at ePOS-Print er satt til Enable. Velg HTTP bare som alternativ test.</div>
+    </div>
     <div class="actionrow">
       <button type="button" id="openAdmin" class="neutral">Åpne skriverens IP-side ↗</button>
       <button type="button" id="check" class="secondary">Test ePOS-tilkobling</button>
@@ -69,7 +77,7 @@
     </div>
     <div class="notice" id="restriction">
       <strong>Viktig om Android og nettlesere</strong>
-      <span id="restrictionText">Vercel bruker HTTPS. Nettleseren kan blokkere direkte HTTP-kall til en lokal skriver (mixed content, CORS eller tilgang til privat nettverk). At IP-siden åpnes betyr ikke at ePOS-utskrift vil fungere.</span>
+      <span id="restrictionText">Vercel bruker HTTPS. HTTP-kall kan blokkeres av nettleseren. Også direkte HTTPS-kall kan blokkeres av CORS, sertifikat eller privatnettverkstillatelser. At Epson-konfigurasjonssiden åpnes betyr ikke at ePOS-utskrift vil fungere.</span>
     </div>
   </section>
 
@@ -119,11 +127,13 @@
   var busy = false;
   var ipInput = el('ip');
   var deviceInput = el('device');
+  var schemeInput = el('scheme');
   var buttons = [el('check'), el('send')];
   var state = el('result');
   try {
     ipInput.value = localStorage.getItem('kol_test_printer_ip') || '';
     deviceInput.value = localStorage.getItem('kol_test_printer_device') || 'local_printer';
+    schemeInput.value = localStorage.getItem('kol_test_printer_scheme') || 'https';
   } catch (_) {}
   el('receiptDate').textContent = 'Tid: ' + new Intl.DateTimeFormat('nb-NO', {
     dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Oslo'
@@ -148,8 +158,9 @@
     try {
       localStorage.setItem('kol_test_printer_ip', ip);
       localStorage.setItem('kol_test_printer_device', device);
+      localStorage.setItem('kol_test_printer_scheme', schemeInput.value);
     } catch (_) {}
-    return { ip: ip, device: device };
+    return { ip: ip, device: device, scheme: schemeInput.value === 'http' ? 'http' : 'https' };
   }
   function xmlText(value) {
     return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -188,7 +199,7 @@
     var timeout = setTimeout(function () { controller.abort(); }, 12000);
     try {
       setStatus(printTicket ? 'Sender testkvittering til Epson ePOS …' : 'Tester Epson ePOS-tilkobling …', 'info');
-      var url = 'http://' + conf.ip + '/cgi-bin/epos/service.cgi?devid=' +
+      var url = conf.scheme + '://' + conf.ip + '/cgi-bin/epos/service.cgi?devid=' +
         encodeURIComponent(conf.device) + '&timeout=10000';
       var response = await fetch(url, {
         method: 'POST',
@@ -225,7 +236,7 @@
   el('openAdmin').addEventListener('click', function () {
     try {
       var conf = settings();
-      var target = 'http://' + conf.ip + '/';
+      var target = conf.scheme + '://' + conf.ip + '/';
       var a = document.createElement('a');
       a.href = target;
       a.target = '_blank';
