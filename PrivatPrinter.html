@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f7f3">
+  <meta name="robots" content="noindex,nofollow">
+  <title>PrivatPrinter | Epson TM-T20II</title>
+  <style>
+    :root{color-scheme:light;--ink:#1c3040;--muted:#607080;--green:#2e6e4a;--line:#dce7df;--bg:#f3f7f3;--shadow:0 8px 24px rgba(22,55,35,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;font:14px/1.48 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+    button,input,select{font:inherit}
+    button,a{touch-action:manipulation}
+    button{cursor:pointer}
+    button:disabled{opacity:.54;cursor:wait}
+    .wrap{max-width:1080px;margin:auto;padding:22px 16px 70px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:13px}
+    .brand-icon{width:49px;height:49px;border-radius:14px;display:grid;place-items:center;background:#203c2c;color:#fff}
+    .brand-icon svg{width:26px;height:26px}
+    h1{font-size:26px;letter-spacing:-.05em;margin:0;line-height:1.15}
+    .subtitle{font-size:12px;color:var(--muted);margin:5px 0 0}
+    .status-icons{display:flex;gap:8px}
+    .status-btn{width:52px;height:52px;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;background:white;color:#a97b22;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.025)}
+    .status-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+    .status-btn[data-state="ok"]{color:#158a50;border-color:#b8dec7;background:#f2fff7}
+    .status-btn[data-state="bad"]{color:#c44141;border-color:#ebbdba;background:#fff3f1}
+    .status-btn[data-state="checking"]{color:#b28b34}
+    .status-btn::after{content:'';position:absolute;right:6px;top:6px;width:7px;height:7px;border:2px solid #fff;border-radius:50%;background:currentColor}
+    .status-btn.refresh{color:#233b4b}
+    .status-btn.refresh::after{display:none}
+    .columns{display:grid;grid-template-columns:315px minmax(0,1fr);gap:16px;align-items:start}
+    .card{border:1px solid var(--line);border-radius:17px;background:white;box-shadow:var(--shadow);padding:19px}
+    h2{font-size:17px;letter-spacing:-.025em;margin:0 0 6px}
+    h3{font-size:14px;margin:0 0 9px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.55;margin:0 0 15px}
+    .field{margin:14px 0}
+    .field label{font-size:12px;font-weight:800;display:block;margin-bottom:6px}
+    .field input,.field select{width:100%;padding:11px 12px;min-height:42px;border:1px solid #cbded2;border-radius:10px;background:#fff;color:var(--ink)}
+    .field input:focus,.field select:focus{outline:2px solid #b9e2c9}
+    .field small{color:var(--muted);display:block;font-size:11px;margin-top:5px}
+    .inline{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .buttons{display:flex;gap:9px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-height:43px;background:white;color:var(--ink);font-size:12px;font-weight:800;text-decoration:none}
+    .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+    .btn.soft{background:#eef7ef;border-color:#cee4d4;color:#276840}
+    .btn.danger{background:#fff2f0;border-color:#ecc8c3;color:#ac4542}
+    .notice{padding:11px 12px;border-radius:10px;border:1px solid #ebdfc3;background:#fff9ed;margin:13px 0;color:#65512d;font-size:12px}
+    .notice[data-state="ok"]{background:#eaf8ee;border-color:#c5e5ce;color:#236443}
+    .notice[data-state="bad"]{background:#fff0ec;border-color:#efccc6;color:#9a3634}
+    .notice[data-state="checking"]{background:#f4f7fa;border-color:#d9e2e8;color:#506778}
+    .login{background:#f4f8f5;border:1px solid var(--line);border-radius:11px;padding:12px;margin:13px 0}
+    .login p{font-size:12px;font-weight:700;margin:0 0 6px}
+    .login-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+    .login-row b{font-size:13px}
+    .upload{border:2px dashed #b7d3bf;background:#f9fcf8;border-radius:15px;padding:27px 14px;display:block;text-align:center;cursor:pointer}
+    .upload svg{width:30px;height:30px;stroke:#32734d;stroke-width:1.8;fill:none;margin:0 auto 7px}
+    .upload strong{display:block;font-size:16px}
+    .upload span{color:var(--muted);font-size:12px}
+    .upload.drag{background:#e8f7ea;border-color:#428c5d}
+    input[type=file]{display:none}
+    .options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:13px}
+    .options .field{margin:0}
+    .action-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:19px 0 11px}
+    .action-header h3{margin:0;font-size:16px}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px}
+    .image-card{overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#fff}
+    .image-card figure{margin:0;height:190px;background:#eef2ed;display:flex;align-items:center;justify-content:center}
+    .image-card img{width:100%;height:100%;object-fit:contain}
+    .image-detail{padding:12px}
+    .image-detail strong{display:block;font-size:12px;overflow-wrap:anywhere}
+    .image-detail p{color:var(--muted);font-size:11px;margin:4px 0 11px}
+    .image-detail .buttons{gap:6px}
+    .image-detail .btn{flex:1;padding:8px 6px;min-height:36px;font-size:11px}
+    .empty{padding:27px 14px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px;font-size:13px}
+    .privacy{margin-top:18px;font-size:12px;color:var(--muted)}
+    #progress{margin-top:13px;border-radius:10px;padding:11px 12px;font-size:12px;background:#edf5ed;color:#225d3b}
+    #progress[hidden],#empty[hidden],#printerWarning[hidden]{display:none}
+    #printerWarning{margin-top:10px;padding:12px;border-radius:11px;background:#fff1ed;border:1px solid #efc9c4;font-size:12px;color:#963a32}
+    #printerWarning a{color:inherit;font-weight:800}
+    .modal{position:fixed;inset:0;background:rgba(15,30,23,.68);display:grid;place-items:center;padding:18px;z-index:40}
+    .modal[hidden]{display:none}
+    .modal-content{background:#fff;border-radius:16px;padding:16px;width:min(92vw,570px);max-height:92vh;overflow:auto}
+    .modal-content img{width:100%;height:auto;display:block;margin:10px auto;background:#fff}
+    .modal-content h3{margin:0}
+    @media(max-width:820px){.columns{grid-template-columns:1fr}}
+    @media(max-width:540px){.wrap{padding:15px 11px 45px}.card{padding:15px}.brand h1{font-size:21px}.status-btn{width:42px;height:42px;border-radius:11px}.status-btn svg{width:20px;height:20px}.options{grid-template-columns:1fr 1fr}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.image-card figure{height:165px}.action-header .buttons{width:100%}.action-header .btn{flex:1}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linejoin="round">
+            <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/>
+          </svg>
+        </div>
+        <div><h1>PrivatPrinter</h1><p class="subtitle">Epson TM-T20II · 80 mm · kun lokal utskrift</p></div>
+      </div>
+      <div class="status-icons">
+        <button id="internetBtn" class="status-btn" type="button" data-state="checking" title="Internettstatus" aria-label="Internettstatus">
+          <svg viewBox="0 0 24 24"><path d="M2 9c6-5 14-5 20 0M5 12c4-3 10-3 14 0M9 16c2-1.5 4-1.5 6 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button id="printerBtn" class="status-btn" type="button" data-state="checking" title="Epson skriverstatus" aria-label="Epson skriverstatus">
+          <svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
+        </button>
+        <button id="refreshBtn" class="status-btn refresh" type="button" title="Sjekk nå" aria-label="Oppdater skriverstatus">
+          <svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.8 9a7 7 0 0 1 11.7-2L20 12M4 12l2.5 5a7 7 0 0 0 11.7-2"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="columns">
+      <section class="card">
+        <h2>Skriverforbindelse</h2>
+        <p class="hint">Epson er koblet til lokalt nettverk. En tilkoblingstest gjøres hvert 10. sekund uten å bruke papir.</p>
+        <div class="field">
+          <label for="printerIp">Skriverens IP-adresse</label>
+          <input id="printerIp" value="192.168.1.25" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="deviceId">ePOS-enhets-ID</label>
+          <input id="deviceId" value="local_printer" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="statusMessage" class="notice" data-state="checking" role="status" aria-live="polite">Sjekker Epson…</div>
+        <div id="printerWarning" hidden role="alert">
+          Epson svarte ikke. Åpne skriverens nettside, logg inn og sjekk tilkoblingen.
+          <div class="login">
+            <p>Innlogging (standard)</p>
+            <div class="login-row"><span>Brukernavn</span><b>epson</b></div>
+            <div class="login-row"><span>Passord</span><b>epson</b></div>
+          </div>
+          <a href="https://192.168.1.25/" id="warningOpen" target="_blank" rel="noopener noreferrer">Åpne Epson ↗</a>
+        </div>
+        <div class="login">
+          <p>Hvis Epson ber om innlogging</p>
+          <div class="login-row"><span>Brukernavn</span><b>epson</b></div>
+          <div class="login-row"><span>Passord</span><b>epson</b></div>
+        </div>
+        <div class="buttons">
+          <button id="testBtn" type="button" class="btn soft">Test tilkobling</button>
+          <a id="openPrinter" href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer" class="btn">Åpne Epson ↗</a>
+        </div>
+        <p class="privacy">HTTPS og ePOS-Print brukes som i den fungerende skrivertesten. Hvis Epson ber om innlogging må det gjøres i nettleseren; siden sender aldri passordet automatisk.</p>
+      </section>
+
+      <section class="card">
+        <h2>Bildeutskrift</h2>
+        <p class="hint">Velg bilder. De blir automatisk tilpasset <b>80 mm termopapir</b> (576 piksler utskriftsbredde) uten beskjæring. Utskriften er svart/hvit.</p>
+        <label class="upload" id="dropZone" for="fileInput">
+          <svg viewBox="0 0 24 24"><path d="M12 16V3m0 0-5 5m5-5 5 5M4 16v4h16v-4"/></svg>
+          <strong>Velg bilder</strong>
+          <span>Trykk her eller dra inn bilder · JPG, PNG, WebP</span>
+        </label>
+        <input id="fileInput" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/bmp">
+        <div class="options">
+          <div class="field">
+            <label for="printMode">Bildekvalitet</label>
+            <select id="printMode"><option value="photo">Foto · mykere gråtoner</option><option value="sharp">Tekst / logo · skarp</option></select>
+          </div>
+          <div class="field">
+            <label for="brightness">Lysstyrke: <span id="brightnessLabel">100 %</span></label>
+            <input id="brightness" type="range" min="70" max="140" value="100" step="5">
+          </div>
+          <div class="field">
+            <label for="contrast">Kontrast: <span id="contrastLabel">115 %</span></label>
+            <input id="contrast" type="range" min="70" max="165" value="115" step="5">
+          </div>
+        </div>
+        <div class="action-header">
+          <h3>Mine bilder <span id="count">(0)</span></h3>
+          <div class="buttons">
+            <button id="clearBtn" class="btn danger" type="button">Fjern alle</button>
+            <button id="printAllBtn" class="btn primary" type="button">Skriv ut alle</button>
+          </div>
+        </div>
+        <div id="empty" class="empty">Ingen bilder valgt. Velg et bilde for å se det her.</div>
+        <div id="gallery" class="gallery"></div>
+        <div id="progress" hidden role="status" aria-live="polite"></div>
+        <p class="privacy"><b>Privat:</b> Bildene sendes ikke til noen server. De beholdes kun i minnet i denne fanen som dataURL, og behandlet bildedata sendes direkte til skriverens lokale IP når du velger utskrift. Lukker du fanen, forsvinner bildene.</p>
+      </section>
+    </div>
+  </main>
+  <div id="previewModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Bildevisning">
+    <div class="modal-content">
+      <div class="inline"><h3 id="previewName">Forhåndsvisning</h3><button class="btn" type="button" id="closePreview">Lukk ×</button></div>
+      <img id="previewImage" alt="Valgt bilde">
+      <p class="hint">Originalbildet. Epson skriver ut i termisk svart/hvitt.</p>
+    </div>
+  </div>
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const EPOS_NS = 'http://www.epson-pos.com/schemas/2011/03/epos-print';
+    const PRINTER_WIDTH = 576; // 72 mm printable area on 80mm TM-T20II roll
+    const ROW_BYTES = PRINTER_WIDTH / 8;
+    const CHUNK_HEIGHT = 256;
+    const MAX_HEIGHT = 16000;
+    const MAX_FILES = 20;
+    const entries = [];
+    let sequence = 0;
+    let printing = false;
+    let checking = false;
+    let checkEpoch = 0;
+    let warningAlreadyShown = false;
+
+    const setStatus = (target, value, msg) => {
+      const element = $(target);
+      element.dataset.state = value;
+      element.title = msg;
+      element.setAttribute('aria-label', msg);
+    };
+    function notify(text, type = 'checking') {
+      $('statusMessage').dataset.state = type;
+      $('statusMessage').textContent = text;
+    }
+    function internetStatus() {
+      const online = navigator.onLine;
+      setStatus('internetBtn', online ? 'ok' : 'bad', online ? 'Internett: tilkoblet' : 'Internett: frakoblet');
+      return online;
+    }
+    function settings() {
+      const ip = $('printerIp').value.trim();
+      const pieces = ip.split('.');
+      if (pieces.length !== 4 || pieces.some(p => !/^\d{1,3}$/.test(p) || Number(p) > 255)) {
+        throw new Error('Skriv en gyldig IPv4-adresse, f.eks. 192.168.1.25.');
+      }
+      const numbers = pieces.map(Number);
+      const privateIp = numbers[0] === 10 || (numbers[0] === 172 && numbers[1] >= 16 && numbers[1] <= 31) ||
+        (numbers[0] === 192 && numbers[1] === 168);
+      if (!privateIp) throw new Error('Skriv skriverens private lokalnett-IP.');
+      const device = $('deviceId').value.trim();
+      if (!/^[\w-]{1,48}$/.test(device)) throw new Error('Ugyldig ePOS-enhets-ID.');
+      return { ip, device };
+    }
+    function updateEpsonLinks() {
+      try {
+        const conf = settings();
+        $('openPrinter').href = 'https://' + conf.ip + '/';
+        $('warningOpen').href = 'https://' + conf.ip + '/';
+      } catch { /* Links keep their last valid address. */ }
+    }
+    function xmlRequest(inner) {
+      return '<?xml version="1.0" encoding="UTF-8"?>' +
+        '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
+        '<epos-print xmlns="' + EPOS_NS + '">' + inner + '</epos-print>' +
+        '</s:Body></s:Envelope>';
+    }
+    async function sendEpson(inner, timeout = 12000) {
+      const conf = settings();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const endpoint = 'https://' + conf.ip + '/cgi-bin/epos/service.cgi?devid=' +
+          encodeURIComponent(conf.device) + '&timeout=' + Math.min(timeout, 20000);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '""' },
+          body: xmlRequest(inner), cache: 'no-store', signal: controller.signal
+        });
+        if (!response.ok) throw new Error('Epson HTTP ' + response.status);
+        const data = new DOMParser().parseFromString(await response.text(), 'text/xml');
+        if (data.querySelector('parsererror')) throw new Error('Ugyldig svar fra Epson.');
+        const confirmation = data.getElementsByTagNameNS(EPOS_NS, 'response')[0] ||
+          data.getElementsByTagName('response')[0];
+        if (!confirmation) throw new Error('Ingen ePOS-bekreftelse fra skriveren.');
+        if (!['true','1'].includes(confirmation.getAttribute('success'))) {
+          throw new Error('Epson: ' + (confirmation.getAttribute('code') || 'ukjent feil'));
+        }
+        return true;
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('Epson svarte ikke før tidsavbrudd.');
+        if (error instanceof TypeError) throw new Error('Ingen kontakt med Epson. Sjekk samme Wi-Fi, HTTPS og skrivertilkobling.');
+        throw error;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    function printerState(state, message) {
+      setStatus('printerBtn', state, message);
+      notify(message, state);
+      if (state === 'ok') {
+        warningAlreadyShown = false;
+        $('printerWarning').hidden = true;
+      } else if (state === 'bad' && !warningAlreadyShown) {
+        $('printerWarning').hidden = false;
+        warningAlreadyShown = true;
+      }
+    }
+    async function checkPrinter() {
+      if (checking || printing || document.hidden) return;
+      const thisEpoch = ++checkEpoch;
+      checking = true;
+      $('testBtn').disabled = true;
+      internetStatus();
+      if ($('printerBtn').dataset.state !== 'ok' && $('printerBtn').dataset.state !== 'bad') {
+        printerState('checking', 'Kontrollerer Epson…');
+      }
+      try {
+        await sendEpson('', 8000);
+        if (thisEpoch === checkEpoch) printerState('ok', 'Epson tilkoblet · ePOS-Print OK.');
+      } catch (error) {
+        if (thisEpoch === checkEpoch) printerState('bad', error.message);
+      } finally {
+        checking = false;
+        $('testBtn').disabled = false;
+      }
+    }
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Kunne ikke lese ' + file.name));
+        reader.readAsDataURL(file);
+      });
+    }
+    function readImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Ugyldig bildefil.'));
+        img.src = src;
+      });
+    }
+    const sizeLabel = n => n >= 1048576 ? (n/1048576).toFixed(1)+' MB' : Math.ceil(n/1024)+' KB';
+    function updateGallery() {
+      const gallery = $('gallery');
+      gallery.replaceChildren();
+      $('empty').hidden = entries.length > 0;
+      $('count').textContent = '(' + entries.length + ')';
+      $('clearBtn').disabled = printing || entries.length === 0;
+      $('printAllBtn').disabled = printing || entries.length === 0;
+      for (const item of entries) {
+        const card = document.createElement('article');
+        card.className = 'image-card';
+        const figure = document.createElement('figure');
+        const img = document.createElement('img');
+        img.src = item.url;
+        img.alt = item.name;
+        figure.appendChild(img);
+        const detail = document.createElement('div');
+        detail.className = 'image-detail';
+        const name = document.createElement('strong');
+        name.textContent = item.name;
+        const size = document.createElement('p');
+        size.textContent = item.width + ' × ' + item.height + ' · ' + sizeLabel(item.bytes);
+        const actions = document.createElement('div');
+        actions.className = 'buttons';
+        const preview = document.createElement('button');
+        preview.type = 'button'; preview.className = 'btn soft'; preview.textContent = 'Vis';
+        preview.onclick = () => {
+          $('previewName').textContent = item.name;
+          $('previewImage').src = item.url;
+          $('previewModal').hidden = false;
+        };
+        const print = document.createElement('button');
+        print.type = 'button'; print.className = 'btn primary'; print.textContent = 'Skriv ut';
+        print.disabled = printing;
+        print.onclick = () => { void printImages([item]); };
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'btn danger'; remove.textContent = '×';
+        remove.disabled = printing;
+        remove.setAttribute('aria-label','Fjern ' + item.name);
+        remove.onclick = () => {
+          const i = entries.indexOf(item);
+          if (i >= 0) entries.splice(i,1);
+          updateGallery();
+        };
+        actions.append(preview,print,remove);
+        detail.append(name,size,actions);
+        card.append(figure,detail);
+        gallery.appendChild(card);
+      }
+    }
+    async function addFiles(files) {
+      const imageFiles = [...files].filter(f => /^image\/(jpeg|png|webp|gif|bmp)$/i.test(f.type));
+      for (const file of imageFiles.slice(0,Math.max(0,MAX_FILES-entries.length))) {
+        if (file.size > 20*1024*1024) {
+          $('progress').hidden = false;
+          $('progress').textContent = file.name + ' er for stor (maks 20 MB).';
+          continue;
+        }
+        try {
+          const url = await fileToDataURL(file);
+          const img = await readImage(url);
+          const computedHeight = Math.round(img.naturalHeight * PRINTER_WIDTH / img.naturalWidth);
+          if (computedHeight > MAX_HEIGHT) throw new Error('Bildet er for langt for en utskrift. Maks ' + MAX_HEIGHT + ' piksler i utskriftshøyde.');
+          entries.push({id:++sequence,url,name:file.name,bytes:file.size,width:img.naturalWidth,height:img.naturalHeight});
+        } catch (error) {
+          $('progress').hidden = false;
+          $('progress').textContent = file.name + ': ' + error.message;
+        }
+      }
+      updateGallery();
+    }
+
+    function binaryBase64(bytes) {
+      let binary = '';
+      for (let i=0;i<bytes.length;i+=8192) {
+        binary += String.fromCharCode(...bytes.subarray(i,i+8192));
+      }
+      return btoa(binary);
+    }
+    function rasterize(canvas) {
+      const width = PRINTER_WIDTH;
+      const height = canvas.height;
+      const ctx = canvas.getContext('2d', {willReadFrequently:true});
+      const pixels = ctx.getImageData(0,0,width,height).data;
+      const mode = $('printMode').value;
+      const brightness = Number($('brightness').value)/100;
+      const contrast = Number($('contrast').value)/100;
+      const chunks=[];
+      let thisChunk=[];
+      let chunkRows=0;
+      let currentErr=new Float32Array(width+2);
+      let nextErr=new Float32Array(width+2);
+
+      const flush=()=>{
+        if (!chunkRows) return;
+        const bytes = new Uint8Array(thisChunk);
+        chunks.push('<image width="' + width + '" height="' + chunkRows +
+          '" color="color_1" mode="mono" align="center">' + binaryBase64(bytes) + '</image>');
+        thisChunk=[]; chunkRows=0;
+      };
+      for (let y=0;y<height;y++) {
+        const packed=new Uint8Array(ROW_BYTES);
+        for (let x=0;x<width;x++) {
+          const pos=(y*width+x)*4;
+          let v=(pixels[pos]*.299+pixels[pos+1]*.587+pixels[pos+2]*.114);
+          v=(v-127.5)*contrast+127.5;
+          v=Math.max(0,Math.min(255,v*brightness));
+          if (mode==='photo') v=Math.max(0,Math.min(255,v+currentErr[x+1]));
+          const black=v<128;
+          if (black) packed[x>>3] |= 0x80>>(x&7);
+          if (mode==='photo') {
+            const err=v-(black?0:255);
+            currentErr[x+2]+=err*7/16;
+            nextErr[x]+=err*3/16;
+            nextErr[x+1]+=err*5/16;
+            nextErr[x+2]+=err*1/16;
+          }
+        }
+        for (let b=0;b<packed.length;b++) thisChunk.push(packed[b]);
+        chunkRows++;
+        if (chunkRows===CHUNK_HEIGHT) flush();
+        if (mode==='photo') {
+          const tmp=currentErr;currentErr=nextErr;nextErr=tmp;nextErr.fill(0);
+        }
+      }
+      flush();
+      return chunks.join('')+'<feed line="3"/><cut type="feed"/>';
+    }
+    async function buildPrintData(url) {
+      const img=await readImage(url);
+      const height=Math.max(1,Math.round(img.naturalHeight*PRINTER_WIDTH/img.naturalWidth));
+      if (height>MAX_HEIGHT) throw new Error('Bildet er for langt (maks '+MAX_HEIGHT+' piksler).');
+      const canvas=document.createElement('canvas');
+      canvas.width=PRINTER_WIDTH;canvas.height=height;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+      ctx.drawImage(img,0,0,PRINTER_WIDTH,height);
+      return rasterize(canvas);
+    }
+    async function printImages(images) {
+      if (printing || !images.length) return;
+      printing=true;
+      updateGallery();
+      $('testBtn').disabled=true;
+      $('progress').hidden=false;
+      try {
+        for (let i=0;i<images.length;i++) {
+          $('progress').textContent='Forbereder bilde ' + (i+1) + ' av ' + images.length + '…';
+          const data=await buildPrintData(images[i].url);
+          $('progress').textContent='Sender bilde ' + (i+1) + ' av ' + images.length + ' til Epson…';
+          await sendEpson(data,20000);
+          printerState('ok','Utskrift bekreftet av Epson.'); // success from printer ePOS response
+        }
+        $('progress').textContent=images.length + (images.length===1?' bilde er':' bilder er') + ' sendt til Epson.';
+      } catch (error) {
+        printerState('bad','Utskriftsfeil: '+error.message);
+        $('progress').textContent='Utskrift mislyktes: '+error.message+'. Trykk «Åpne Epson» og prøv igjen.';
+      } finally {
+        printing=false;
+        $('testBtn').disabled=false;
+        updateGallery();
+      }
+    }
+
+    $('fileInput').addEventListener('change',e=>{
+      void addFiles(e.target.files).finally(()=>{e.target.value='';});
+    });
+    $('dropZone').addEventListener('dragover',e=>{e.preventDefault();$('dropZone').classList.add('drag');});
+    $('dropZone').addEventListener('dragleave',()=>{$('dropZone').classList.remove('drag');});
+    $('dropZone').addEventListener('drop',e=>{
+      e.preventDefault();$('dropZone').classList.remove('drag');
+      void addFiles(e.dataTransfer.files);
+    });
+    $('closePreview').addEventListener('click',()=>{$('previewModal').hidden=true;});
+    $('previewModal').addEventListener('click',e=>{
+      if(e.target===$('previewModal')) $('previewModal').hidden=true;
+    });
+    $('clearBtn').addEventListener('click',()=>{if(printing)return;entries.length=0;updateGallery();});
+    $('printAllBtn').addEventListener('click',()=>{void printImages([...entries]);});
+    $('testBtn').addEventListener('click',()=>{void checkPrinter();});
+    $('refreshBtn').addEventListener('click',()=>{internetStatus();void checkPrinter();});
+    $('printerBtn').addEventListener('click',()=>{
+      const panel=$('printerWarning');
+      panel.hidden=!panel.hidden;
+      if(!panel.hidden) panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+    $('internetBtn').addEventListener('click',()=>internetStatus());
+    $('printerIp').addEventListener('input',()=>{updateEpsonLinks();void checkPrinter();});
+    $('deviceId').addEventListener('change',()=>{void checkPrinter();});
+    $('brightness').addEventListener('input',e=>{$('brightnessLabel').textContent=e.target.value+' %';});
+    $('contrast').addEventListener('input',e=>{$('contrastLabel').textContent=e.target.value+' %';});
+    window.addEventListener('offline',()=>{
+      ++checkEpoch; internetStatus();printerState('bad','Nettverket ble frakoblet. Epson er ikke bekreftet.');
+    });
+    window.addEventListener('online',()=>{internetStatus();void checkPrinter();});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkPrinter();});
+    updateEpsonLinks();
+    internetStatus();
+    updateGallery();
+    setTimeout(()=>{void checkPrinter();},500);
+    setInterval(()=>{if(!document.hidden)void checkPrinter();},10000);
+  })();
+  </script>
+</body>
+</html>
