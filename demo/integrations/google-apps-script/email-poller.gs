@@ -160,7 +160,7 @@ function kolBuildReceipt_(order, kind) {
 
   const headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
   const mainTime = accepted ? (clock || 'Snarest') : (readyClock || 'Nå');
-  const mainLabel = accepted ? 'Hentetid:' : 'Klar kl.:';
+  const mainLabel = accepted ? 'Hentetid:' : 'Klar kl.';
   const statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
   const statusRight = accepted
     ? (scheduled ? (hms(Number(order.scheduledPickupAt) || 0, 'dd.MM.yyyy') || 'Avtalt tid')
