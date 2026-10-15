@@ -278,7 +278,7 @@
   async function runBitmapPreview(print) {
     try {
       if (print) settings();
-      const mod = await import('/demo/js/order-printer.js?v=20261015-raster124');
+      const mod = await import('/demo/js/order-printer.js?v=20261015-printerstatus125');
       if (print) {
         setStatus('Sender svart-hvitt-bilde til Epson …','info');
         await mod.printKitchenTicket(sampleBitmapOrder(),{reprint:false});
