@@ -123,7 +123,7 @@ function paintKitchenReceipt(ctx, order, reprint, typography) {
   c.textAlign = 'left';
 
   const type = (px, heavy = false, italic = false, color = ink) => {
-    c.font = (italic ? 'italic ' : '') + (heavy ? '900 ' : '500 ') +
+    c.font = (italic ? 'italic ' : '') + (heavy ? '900 ' : '400 ') +
       px + 'px Arial, Helvetica, sans-serif';
     c.fillStyle = color;
   };
