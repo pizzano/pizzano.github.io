@@ -26,11 +26,41 @@ aynı siparişe birden fazla onay SMS'i gönderilmez.
 **Not:** GitHub yayını Google Apps Script kodunu otomatik değiştirmez.
 Canlı Apps Script projesine manuel yapıştırma gereklidir.
 
-## E-posta
+## E-posta — iki ayrı HTML şablonu (Bekreftet + Klar)
 
-`email-poller.gs` bağımsızdır. SMS kısıtlaması e-posta gönderimlerini değiştirmez.
-Mevcut `kontrollerEpostBestillinger` dakika tetikleyicisini koru; e-posta
-sistemini yeniden kurmak için `installerEpostVarsler` fonksiyonunu çalıştırma.
+**[email-poller.gs](email-poller.gs)** tam `EmailPoller.gs` kaynağıdır.
+
+- **İlk e-posta, Bekreftet:** seçilen/tahmin edilen saati büyük **Hentetid**
+  başlığıyla gösterir. "Snarest", tahmini dakika, ürünler, seçenekler, telefon,
+  vergi ve toplam tutar yer alır.
+- **İkinci e-posta, Klar for henting:** sipariş gerçekten **personel tarafından**
+  hazır işaretlenince oluşturulur. Büyük hazır bildirimi ve gerçek
+  `staffReadyAt` saati gösterilir. Sürenin dolması *e-posta göndermez*.
+- İki gönderim farklı **subject** ve HTML gövdeye sahiptir. Mevcut geçmiş
+  `kol_order_...` kayıtları ve kind-temelli tekrar önleme koruması korunur.
+- SMS tarafında değişiklik yoktur: sipariş başına tek Hentetid SMS'i gönderilir.
+- Gmail için harici görsel gerektirmeyen koyu yeşil, krem ve altın tonlarında
+  masaüstü/mobil uyumlu, inline CSS kullanan e-posta tasarımı kullanılır.
+
+### Mevcut Apps Script'e güncelleme
+
+1. Google Apps Script → **EPOST GONDERME KØL** → `EmailPoller.gs`.
+2. Var olan kodunun kopyasını al. [GitHub tam kodunu](email-poller.gs)
+   aç, içeriğini **tamamını** Apps Script'e yapıştır ve kaydet.
+3. Fonksiyon listesinden **`testBeggeEpostMalerTilMeg()`** seçip çalıştır.
+   İki **örnek** e-posta yalnızca Apps Script'i çalıştırdığın Gmail hesabına
+   gider; müşterilere gönderilmez. Gmail'deki görüntüyü kontrol et.
+4. Mevcut `kontrollerEpostBestillinger()` zaman tetikleyicisini **koru**.
+   Kurulumu sıfırlayan `installerEpostVarsler()` fonksiyonunu çalıştırma.
+5. Test siparişi oluştur, onayla, ardından restoran ekranındaki **Marker klar
+   for henting** butonuna bas. Gerçek müşteri e-postasına iki farklı mail
+   gitmeli. Bu süreçte yalnızca **ilk Hentetid SMS'i** gider.
+6. Firebase indirme optimizasyonu korunur: indeksli
+   `statusUpdatedAt` sorgusu ve son başarılı tarama zamanını kullanır.
+
+**Not:** GitHub'a yayınlama, Google Apps Script dosyasını **otomatik
+güncellemez**. Müşteri e-postalarını gönderen canlı proje ancak bu kaynak
+yapıştırılıp kaydedildiğinde yeni tasarımı kullanır.
 
 ## Firebase kuralları ve gizlilik
 
