@@ -280,6 +280,14 @@ const DEFAULT_SETTINGS = {
   minPreorderMinutes: 0,
   prepMinutes: 25,
   slotIntervalMinutes: 15,
+  // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
+  // stored alongside the restaurant settings and shared across tablets.
+  printerQtySize: 39,
+  printerItemNameSize: 35,
+  printerSizeTextSize: 28,
+  printerExtraTextSize: 22,
+  printerPriceSize: 24,
+  printerSidePadding: 5,
   adminMobileEnabled: true,
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
@@ -499,6 +507,16 @@ function normalizeSettings(raw) {
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
   );
+  for (const [field, low, high] of [
+    ['printerQtySize', 28, 52],
+    ['printerItemNameSize', 25, 45],
+    ['printerSizeTextSize', 19, 38],
+    ['printerExtraTextSize', 16, 33],
+    ['printerPriceSize', 19, 34],
+    ['printerSidePadding', 2, 18],
+  ]) {
+    settings[field] = Math.min(high, Math.max(low, Number(settings[field]) || DEFAULT_SETTINGS[field]));
+  }
   settings.openingTime = `${settings.orderOpenTime} - ${settings.orderCloseTime}`;
   return settings;
 }
