@@ -87,203 +87,219 @@ const RASTER_MARGIN = 17;
 const RASTER_INNER = RASTER_WIDTH - RASTER_MARGIN * 2;
 
 function paintKitchenReceipt(ctx, order, reprint) {
-  let y = 16;
   const c = ctx;
-  const black = '#101010';
-  const margin = RASTER_MARGIN;
-  c.fillStyle = '#ffffff';
+  const ink = '#050505';
+  const x = RASTER_MARGIN;
+  const right = RASTER_WIDTH - x;
+  const wide = RASTER_INNER;
+  let y = 18;
+  c.fillStyle = '#fff';
   c.fillRect(0, 0, RASTER_WIDTH, c.canvas.height);
   c.textBaseline = 'top';
-
-  function font(px = 22, heavy = false, italic = false) {
-    c.font = (italic ? 'italic ' : '') + (heavy ? '800 ' : '500 ') + px + 'px Arial, Helvetica, sans-serif';
-    c.fillStyle = black;
-  }
-
-  // Unlike fixed-column ESC/POS text, canvas measures each word before wrapping.
-  function wrapped(value, width, px = 22, heavy = false, italic = false) {
-    font(px, heavy, italic);
-    const words = String(value ?? '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
-    const lines = [];
-    let row = '';
-    for (const word of words) {
-      if (!row) { row = word; continue; }
-      const combined = row + ' ' + word;
-      if (c.measureText(combined).width <= width) row = combined;
-      else { lines.push(row); row = word; }
-    }
-    if (row) lines.push(row);
-    const fitted = [];
-    for (const line of lines) {
-      if (c.measureText(line).width <= width) { fitted.push(line); continue; }
-      let fragment = '';
-      for (const letter of line) {
-        if (fragment && c.measureText(fragment + letter).width > width) {
-          fitted.push(fragment);
-          fragment = '';
-        }
-        fragment += letter;
-      }
-      if (fragment) fitted.push(fragment);
-    }
-    return fitted.length ? fitted : [''];
-  }
-  function blockText(value, x, width, px = 22, heavy = false, step = 27, italic = false) {
-    const lines = wrapped(value, width, px, heavy, italic);
-    font(px, heavy, italic);
-    for (const line of lines) {
-      c.fillText(line, x, y);
-      y += step;
-    }
-  }
-  function rule() {
-    c.fillStyle = '#151515';
-    c.fillRect(margin, y, RASTER_INNER, 2);
-    y += 17;
-  }
-  function strip(left, right = '', height = 51) {
-    c.fillStyle = black;
-    c.fillRect(margin, y, RASTER_INNER, height);
-    c.fillStyle = '#fff';
-    c.font = '800 28px Arial, Helvetica, sans-serif';
-    c.textBaseline = 'middle';
-    c.fillText(String(left), margin + 15, y + height / 2, RASTER_INNER - 40);
-    if (right) {
-      c.textAlign = 'right';
-      c.fillText(String(right), RASTER_WIDTH - margin - 15, y + height / 2,
-        Math.min(RASTER_INNER * .55, RASTER_INNER - c.measureText(String(left)).width - 32));
-      c.textAlign = 'left';
-    }
-    c.textBaseline = 'top';
-    y += height + 10;
-  }
-  function field(label, value, important = false) {
-    const l = String(label);
-    const r = String(value ?? '—');
-    font(21, false);
-    const labelWidth = c.measureText(l).width;
-    font(22, important);
-    if (labelWidth + c.measureText(r).width < RASTER_INNER - 12) {
-      font(21);
-      c.fillText(l, margin, y);
-      font(22, important);
-      c.textAlign = 'right';
-      c.fillText(r, RASTER_WIDTH - margin, y);
-      c.textAlign = 'left';
-      y += 33;
-    } else {
-      font(20);
-      c.fillText(l, margin, y);
-      y += 25;
-      blockText(r, margin + 16, RASTER_INNER - 16, 22, important, 29);
-      y += 4;
-    }
-  }
-
-  c.textAlign = 'center';
-  font(27, true);
-  c.fillText('KØL GRILL & PIZZA', RASTER_WIDTH / 2, y);
-  y += 34;
-  font(17, false);
-  c.fillText(reprint ? 'KOPI / NY UTSKRIFT' : 'KJØKKENBESTILLING', RASTER_WIDTH / 2, y);
-  y += 32;
   c.textAlign = 'left';
 
-  strip('Henting');
-  const pickupTime = isScheduled(order)
-    ? pickupLabel(order)
-    : (Number(order.estimatedMinutes) > 0 ? Math.round(Number(order.estimatedMinutes)) + ' minutt' : '');
-  strip(isScheduled(order) ? 'Planlagt' : 'Snarest', pickupTime);
-  strip(dateTime(order.createdAt));
+  const type = (px, heavy = false, italic = false, color = ink) => {
+    c.font = (italic ? 'italic ' : '') + (heavy ? '900 ' : '500 ') +
+      px + 'px Arial, Helvetica, sans-serif';
+    c.fillStyle = color;
+  };
+  const line = (a, b, yy, weight = 2, dash = false) => {
+    c.save();
+    c.strokeStyle = ink;
+    c.lineWidth = weight;
+    if (dash) c.setLineDash([11, 8]);
+    c.beginPath(); c.moveTo(a, yy); c.lineTo(b, yy); c.stroke();
+    c.restore();
+  };
+  const words = (value, width, px, heavy = false) => {
+    type(px, heavy);
+    const result = [];
+    const paragraphs = String(value == null ? '' : value).split(/\r?\n/);
+    for (const paragraph of paragraphs) {
+      let row = '';
+      for (const word of paragraph.trim().split(/\s+/).filter(Boolean)) {
+        const candidate = row ? row + ' ' + word : word;
+        if (row && c.measureText(candidate).width > width) {
+          result.push(row);
+          row = word;
+        } else row = candidate;
+        while (row.length > 1 && c.measureText(row).width > width) {
+          let last = row.length - 1;
+          while (last > 1 && c.measureText(row.slice(0, last)).width > width) last--;
+          result.push(row.slice(0, last));
+          row = row.slice(last);
+        }
+      }
+      if (row) result.push(row);
+    }
+    return result.length ? result : [''];
+  };
+  const textLines = (value, left, maxWidth, px = 22, heavy = false, step = 27, italic = false) => {
+    const rows = words(value, maxWidth, px, heavy);
+    type(px, heavy, italic);
+    for (const row of rows) {
+      c.fillText(row, left, y, maxWidth);
+      y += step;
+    }
+  };
+  const field = (label, value, heavy = false) => {
+    const v = String(value == null || value === '' ? '—' : value);
+    type(22, true);
+    const lw = c.measureText(label).width;
+    type(22, heavy);
+    const vw = c.measureText(v).width;
+    if (lw + vw + 18 <= wide) {
+      type(22, true);
+      c.fillText(label, x + 2, y);
+      type(22, heavy);
+      c.textAlign = 'right';
+      c.fillText(v, right - 2, y);
+      c.textAlign = 'left';
+      y += 36;
+    } else {
+      type(22, true);
+      c.fillText(label, x + 2, y);
+      y += 29;
+      textLines(v, x + 20, wide - 24, 22, heavy, 29);
+      y += 3;
+    }
+  };
+  const blackBox = (value, yTop, width, height, px = 40) => {
+    c.fillStyle = ink;
+    c.fillRect(x, yTop, width, height);
+    type(px, true, false, '#fff');
+    c.textBaseline = 'middle';
+    c.fillText(value, x + 14, yTop + height / 2, width - 23);
+    c.textBaseline = 'top';
+  };
+  const section = (label) => {
+    type(28, true);
+    c.fillText(label, x + 2, y);
+    const span = Math.min(wide - 10, c.measureText(label).width + 15);
+    line(x + span, right, y + 23, 3);
+    y += 49;
+  };
+  const clockIcon = (cx, cy) => {
+    c.save();
+    c.lineWidth = 4;
+    c.strokeStyle = ink;
+    c.beginPath(); c.arc(cx, cy, 15, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx, cy - 10); c.lineTo(cx + 9, cy + 4); c.stroke();
+    c.beginPath(); c.moveTo(cx - 8, cy - 22); c.lineTo(cx + 8, cy - 22); c.stroke();
+    c.restore();
+  };
 
-  const readyTimestamp = Number(order.estimatedReadyAt) || Number(order.scheduledPickupAt);
-  if (readyTimestamp > 0) {
-    font(19, true);
-    c.fillText('Forventet hentetid: ' + dateTime(readyTimestamp), margin + 3, y);
-    y += 35;
+  const desiredReadyAt = Number(order.estimatedReadyAt) || Number(order.scheduledPickupAt) || 0;
+  const hhmm = desiredReadyAt > 0
+    ? new Intl.DateTimeFormat('nb-NO', {
+      timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).format(new Date(desiredReadyAt))
+    : (/^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? order.pickup : '—');
+  type(61, true);
+  c.fillText('Hentetid: ' + hhmm, x + 1, y, wide - 2);
+  y += 83;
+  if (reprint) {
+    type(19, true);
+    c.fillText('KOPI / NY UTSKRIFT', x + 4, y);
+    y += 29;
   }
-  y += 8;
-  font(21, true);
-  c.fillText('Enheter', margin, y);
-  y += 38;
 
-  const lines = Array.isArray(order.lines) ? order.lines : [];
-  if (!lines.length) blockText('Ingen varer registrert.', margin, RASTER_INNER, 22, false, 28);
+  const barHeight = 72;
+  const blackWidth = isScheduled(order) ? 310 : 304;
+  blackBox(isScheduled(order) ? 'Planlagt' : 'Snarest', y, blackWidth, barHeight, 43);
+  c.strokeStyle = ink;
+  c.lineWidth = 3;
+  c.strokeRect(x + blackWidth, y + 1.5, wide - blackWidth - 1.5, barHeight - 3);
+  clockIcon(x + blackWidth + 35, y + barHeight / 2);
+  const estimate = Math.round(Number(order.estimatedMinutes) || 0);
+  const duration = isScheduled(order) ? hhmm
+    : (estimate > 0 ? estimate + (estimate === 1 ? ' minutt' : ' minutt') : '—');
+  type(30, true);
+  c.textAlign = 'right';
+  c.fillText(duration, right - 11, y + 20, wide - blackWidth - 65);
+  c.textAlign = 'left';
+  y += barHeight + 30;
+  line(x, right, y, 3);
+  y += 24;
+  section('ENHETER');
 
-  for (const line of lines) {
-    const qty = Math.max(1, Math.floor(Number(line.quantity) || 1));
-    const name = qty + '× ' + String(line.name || 'Produkt');
-    const titleY = y;
-    // Keep a check box to the right, like the supplied reference receipt.
-    c.lineWidth = 2;
-    c.strokeStyle = black;
-    c.strokeRect(RASTER_WIDTH - margin - 26, titleY + 3, 23, 23);
-    blockText(name, margin, RASTER_INNER - 46, 25, true, 31);
-    font(21, true);
+  const entries = Array.isArray(order.lines) ? order.lines : [];
+  if (!entries.length) textLines('Ingen varer registrert', x + 2, wide, 24, false, 34);
+  entries.forEach((item, index) => {
+    if (index) {
+      y += 9; line(x, right, y, 2, true); y += 19;
+    }
+    const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+    const label = quantity + 'x ' + String(item.name || 'Produkt');
+    // Reserve room for unit price and the employee check-off square.
+    const entryTop = y;
+    c.strokeStyle = ink; c.lineWidth = 3;
+    c.strokeRect(right - 36, entryTop + 2, 33, 33);
+    type(24, true);
     c.textAlign = 'right';
-    c.fillText(money(line.price), RASTER_WIDTH - margin - 2, y);
+    c.fillText(money(item.price), right - 49, entryTop + 3, 138);
     c.textAlign = 'left';
-    y += 30;
-
-    if (line.size) blockText('Størrelse: ' + line.size, margin + 17, RASTER_INNER - 24, 21, true, 27, true);
-
-    const opts = Array.isArray(line.optionDetails) && line.optionDetails.length
-      ? line.optionDetails
-      : (Array.isArray(line.options) ? line.options : []).map(opt =>
-          typeof opt === 'string' ? { label: opt } : opt);
-
-    for (const opt of opts) {
+    textLines(label, x + 1, wide - 205, 31, true, 37);
+    y = Math.max(y, entryTop + 43);
+    const addLine = (heading, description) => {
+      if (!description) return;
+      textLines(heading + ': ' + description, x + 52, wide - 55, 23, true, 29);
+    };
+    if (item.size) addLine('Størrelse', item.size);
+    const options = Array.isArray(item.optionDetails) && item.optionDetails.length
+      ? item.optionDetails
+      : (Array.isArray(item.options) ? item.options : []).map(opt =>
+        typeof opt === 'string' ? {label: opt} : opt);
+    for (const opt of options) {
       if (!opt) continue;
-      const label = typeof opt === 'string' ? opt : String(opt.label || '');
-      if (!label) continue;
-      const detail = (opt.groupTitle ? opt.groupTitle + ': ' : '') + label;
+      const name = typeof opt === 'string' ? opt : opt.label;
+      if (!name) continue;
+      const title = opt.groupTitle || 'Alternativer';
       const supplement = Number(opt.price) > 0 ? ' (+' + money(opt.price) + ')' : '';
-      blockText(detail + supplement, margin + 17, RASTER_INNER - 25, 20, true, 27, true);
+      addLine(title, String(name) + supplement);
     }
-    if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
-      blockText('UTEN: ' + line.removedIngredients.join(', '), margin + 17, RASTER_INNER - 25, 21, true, 28);
-    }
-    if (line.comment) blockText('Kommentar: ' + line.comment, margin + 17, RASTER_INNER - 25, 21, true, 28);
-    if (line.loyaltyFree) blockText('GRATIS PIZZA / BONUS', margin + 17, RASTER_INNER - 25, 20, true, 27);
-    y += 16;
-  }
+    if (Array.isArray(item.removedIngredients) && item.removedIngredients.length)
+      addLine('Uten', item.removedIngredients.join(', '));
+    if (item.comment) addLine('Kommentar', item.comment);
+    if (item.loyaltyFree) addLine('Bonus', 'Gratis pizza');
+    y += 17;
+  });
 
   if (order.comment) {
-    rule();
-    blockText('ORDREKOMMENTAR:', margin, RASTER_INNER, 22, true, 29);
-    blockText(order.comment, margin, RASTER_INNER, 22, true, 29);
-    y += 8;
+    y += 5; line(x, right, y, 2); y += 19;
+    textLines('Kommentar: ' + order.comment, x + 4, wide - 8, 22, true, 29);
+    y += 11;
   }
 
-  y += 4;
-  rule();
-  font(27, true);
-  c.fillText('Bestillingsdetaljer:', margin, y);
-  y += 44;
+  y += 8;
+  line(x, right, y, 3);
+  y += 20;
+  section('BESTILLINGSDETALJER');
   const id = String(order.id || '—');
-  field('Nummer:', id.length > 22 ? id.slice(-18) : id, true);
-  const acceptedAt = Number(order.estimatedAt) || (
+  field('Nummer:', id, false);
+  const accepted = Number(order.estimatedAt) || (
     ['bekreftet', 'tilberedning'].includes(order.status) ? Number(order.statusUpdatedAt) : 0
   );
-  field('Bekreftet kl.:', dateTime(acceptedAt));
-  const names = String(order.customerName || '').trim().split(/\s+/).filter(Boolean);
-  field('Fornavn:', names.shift() || '—', true);
-  field('Etternavn:', names.join(' ') || '—', true);
-  field('Telefon:', order.phone || 'Ikke oppgitt', true);
+  field('Bekreftet kl.:', dateTime(accepted));
+  field('Fornavn/Etternavn:', String(order.customerName || '—'), true);
+  field('Telefon:', String(order.phone || 'Ikke oppgitt'), true);
 
-  y += 7;
-  rule();
+  y += 11; line(x, right, y, 3); y += 22;
   if (Number(order.subtotal) > 0) field('Delsum:', money(order.subtotal));
   const total = Number(order.total) || 0;
   field('Herav MVA (15 %):', money(total * 15 / 115));
-  y += 5;
-  strip('TOTALT', money(total), 57);
-  y += 15;
-  font(18, true);
-  c.textAlign = 'center';
-  c.fillText('KØL Grill & Pizza · Takk!', RASTER_WIDTH / 2, y);
+
+  y += 12;
+  c.fillStyle = ink;
+  c.fillRect(x, y, wide, 78);
+  type(42, true, false, '#fff');
+  c.textBaseline = 'middle';
+  c.fillText('Totalt', x + 20, y + 39);
+  c.textAlign = 'right';
+  c.fillText(money(total), right - 18, y + 39, wide * .55);
   c.textAlign = 'left';
-  y += 48;
+  c.textBaseline = 'top';
+  y += 96;
   return y;
 }
 
