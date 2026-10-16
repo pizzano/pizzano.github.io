@@ -1109,11 +1109,11 @@ function syncCustomerStreams() {
   }
 }
 
-async function pollCustomerOrders() {
+async function pollCustomerOrders(force = false) {
   if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
   const now = Date.now();
-  if (now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
-  const ids = customerTrackedIds().filter(id => !customerStreams.get(id)?.healthy);
+  if (!force && now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
+  const ids = customerTrackedIds().filter(id => force || !customerStreams.get(id)?.healthy);
   if (!ids.length) return;
   lastCustomerPollAt = now;
   customerPollBusy = true;
@@ -1237,7 +1237,7 @@ function scheduleStreamReconnect() {
     else if (!ordersStream) beginOrdersStream();
     if (!menuStream) beginMenuStream();
     void fallbackSync();
-  }, 3000);
+  }, CUSTOMER_MODE ? 30000 : 3000);
 }
 
 // Menu-only reads avoid downloading /orderArchive or /pizzaBonus.
@@ -1298,8 +1298,7 @@ async function pullRemote() {
   if (!remoteEnabled) return;
   if (CUSTOMER_MODE) {
     await reloadRemoteMenu();
-    lastCustomerPollAt = 0;
-    await pollCustomerOrders();
+    await pollCustomerOrders(true);
     return;
   }
   const revision = orderStreamRevision;
@@ -1358,7 +1357,7 @@ async function fallbackSync() {
       if (version > 0 && version !== Number(store.updatedAt)) await reloadRemoteMenu();
       remoteOnline = true;
     } catch (error) {
-      if (!ordersStreamHealthy) remoteOnline = false;
+      if (!CUSTOMER_MODE && !ordersStreamHealthy) remoteOnline = false;
     } finally {
       menuFallbackBusy = false;
     }
