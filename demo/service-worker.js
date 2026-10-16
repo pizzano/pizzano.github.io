@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v214-firebase1';
+const CACHE_NAME = 'kol-demo-v215-email1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
