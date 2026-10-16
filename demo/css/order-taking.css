@@ -515,6 +515,40 @@ html[data-theme="dark"] .modal-order-action .scheduled-accept-card :is(span,smal
   border:1px solid color-mix(in srgb,#49b58a 30%,var(--ot-line));
 }
 :root .orders-page .orders-row-sms svg {width:17px;height:17px;flex:none;}
+
+/* E-post has its OWN evidence: only a MailApp-accepted receipt is green. */
+:root .orders-page .orders-row-email {
+  width:25px;height:23px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:8px;color:#087e53;
+  background:color-mix(in srgb,#d7f6e7 82%,var(--ot-surface));
+  border:1px solid color-mix(in srgb,#49b58a 30%,var(--ot-line));
+}
+:root .orders-page .orders-row-email svg {width:17px;height:17px;flex:none;}
+:root .orders-page .orders-row-email[hidden] {display:none!important;}
+:root .orders-page .pos-detail-email-feedback {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  max-width:100%;margin-top:5px;padding:4px 9px;border-radius:9px;
+  font-size:11px;font-weight:800;line-height:1.3;
+  text-align:center;white-space:normal;
+}
+:root .orders-page .pos-detail-email-feedback svg {flex:none;width:14px;height:14px;}
+:root .orders-page .pos-detail-email-feedback.is-sent {
+  color:#087f53;background:color-mix(in srgb,#d7f6e7 82%,var(--ot-surface));
+}
+:root .orders-page .pos-detail-email-feedback.is-unverified {
+  color:var(--ot-muted);background:var(--ot-surface);
+  border:1px solid var(--ot-line);
+}
+html[data-theme="dark"] .orders-page .orders-row-email,
+html[data-theme="dark"] .orders-page .pos-detail-email-feedback.is-sent {
+  background:#163f30;color:#b1f1d1;border-color:#357357;
+}
+@media(max-width:450px) {
+  :root .orders-page .orders-row-email {width:22px;height:21px;border-radius:7px;}
+  :root .orders-page .orders-row-email svg {width:15px;height:15px;}
+  :root .orders-page .pos-detail-email-feedback {font-size:10px;padding:3px 6px;}
+}
+
 :root .orders-page .orders-row-sms[hidden],
 :root .orders-page .pos-detail-sms-feedback[hidden] {display:none!important;}
 :root .orders-page .pos-detail-sms-feedback {
@@ -570,7 +604,7 @@ html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#
  width:24px;height:24px;stroke:currentColor;filter:none;
 }
 .orders-page .orders-top-actions.orders-lightbar .orders-light-net.is-on,
-.orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator.is-active{color:#079f65}
+.orders-page .orders-top-actions.orders-lightbar :is(.orders-sms-indicator,.orders-email-indicator).is-active{color:#079f65}
 .orders-page .orders-top-actions.orders-lightbar .orders-light.is-pending,
 .orders-page .orders-top-actions.orders-lightbar .orders-light.is-manual,
 .orders-page .orders-top-actions.orders-lightbar .orders-light.is-warning{color:#b78a42}
@@ -581,7 +615,7 @@ html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#
 /* The phone has no remote battery/network telemetry, so do not imply it does. */
 .orders-page .orders-top-actions.orders-lightbar .orders-phone-manual{display:none}
 .orders-page .orders-top-actions.orders-lightbar .orders-light-net.is-on::after,
-.orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator.is-active::after{
+.orders-page .orders-top-actions.orders-lightbar :is(.orders-sms-indicator,.orders-email-indicator).is-active::after{
  content:'';position:absolute;top:9px;right:8px;width:8px;height:8px;
  border:2px solid #f3f8fb;border-radius:50%;background:#09af6e;
 }
@@ -603,7 +637,7 @@ html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#
 .orders-page .orders-top-actions.orders-lightbar .orders-light:last-child:is(:hover,:focus,:focus-visible) .orders-light-tooltip{transform:translate(0,0)}
 html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders-light{background:var(--ot-surface);border-color:var(--ot-line);color:var(--ot-ink)}
 html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders-light-net.is-on,
-html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator.is-active{color:#91e6b7}
+html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar :is(.orders-sms-indicator,.orders-email-indicator).is-active{color:#91e6b7}
 @media(max-width:1050px){
  .orders-page .orders-top-actions.orders-lightbar{gap:7px}
  .orders-page .orders-top-actions.orders-lightbar .orders-light{width:43px;height:43px;min-width:43px;min-height:43px;border-radius:11px}
@@ -614,7 +648,7 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
  .orders-page .orders-top-actions.orders-lightbar .orders-light{width:34px;height:35px;min-width:34px;min-height:35px;border-radius:9px}
  .orders-page .orders-top-actions.orders-lightbar .orders-light svg{width:19px;height:19px}
  .orders-page .orders-top-actions.orders-lightbar .orders-light-net.is-on::after,
- .orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator.is-active::after{
+ .orders-page .orders-top-actions.orders-lightbar :is(.orders-sms-indicator,.orders-email-indicator).is-active::after{
   width:6px;height:6px;top:3px;right:2px;
  }
 }
