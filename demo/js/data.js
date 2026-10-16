@@ -554,6 +554,14 @@ function normalizeOrders(raw) {
         loyaltyReward: order.loyaltyReward || null,
         loyaltyConfirmedAt: Number(order.loyaltyConfirmedAt) || null,
         phone: String(order.phone || ''),
+        email: String(order.email || ''),
+        // Only a MailApp success receipt saved by the email poller makes
+        // admin show "E-post sendt". Missing receipts mean unverified.
+        emailReceipts: order.emailReceipts && typeof order.emailReceipts === 'object'
+          ? {
+            accepted: order.emailReceipts.accepted || null,
+            ready: order.emailReceipts.ready || null,
+          } : null,
         pickup: String(order.pickup || ''),
         pickupMode: order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? 'scheduled' : 'asap',
         scheduledPickupAt: Number(order.scheduledPickupAt) || null,
@@ -962,6 +970,7 @@ function applyRemoteOrders(value) {
     o.id,
     o.status,
     Number(o.statusUpdatedAt) || 0,
+    JSON.stringify(o.emailReceipts || {}),
     Number(o.estimatedMinutes) || 0,
     Number(o.estimatedAt) || 0,
     Number(o.estimatedReadyAt) || 0,
