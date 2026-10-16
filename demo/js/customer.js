@@ -35,7 +35,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261016-cleanall1';
+} from './data.js?v=20261016-orders100a';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand

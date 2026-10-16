@@ -1127,13 +1127,26 @@ function scheduleStreamReconnect() {
   }, 3000);
 }
 
+// Menu-only reads avoid downloading /orderArchive or /pizzaBonus.
+const LEGACY_MENU_FIELDS = [
+  'schemaVersion', 'settings', 'siteSettings', 'allergenCatalog',
+  'sections', 'optionGroups', 'popularItemIds', 'updatedAt',
+];
+async function readRemoteMenuSnapshot() {
+  const nested = await restGet('menu');
+  if (nested && typeof nested === 'object') return { menu: nested };
+  const values = await Promise.all(LEGACY_MENU_FIELDS.map(field => restGet(field)));
+  return Object.fromEntries(LEGACY_MENU_FIELDS.map((field, i) => [field, values[i]]));
+}
+
 /** Menu is refreshed only if updatedAt changes, not for every order. */
 async function reloadRemoteMenu() {
   if (saveState === 'dirty' || saveState === 'saving') return;
   if (menuRefreshPromise) return menuRefreshPromise;
   menuRefreshPromise = (async () => {
-    const value = await restGet(remoteMenuPath);
-    const updated = applyRemoteMenu(remoteMenuPath ? { menu: value } : value);
+    const snapshot = remoteMenuPath
+      ? { menu: await restGet('menu') } : await readRemoteMenuSnapshot();
+    const updated = applyRemoteMenu(snapshot);
     remoteOnline = true;
     if (updated) {
       writeLocal();
@@ -1150,13 +1163,15 @@ async function pullRemote() {
   if (!remoteEnabled) return;
   const revision = orderStreamRevision;
   try {
-    const root = await restGet('');
+    const [menu, orders] = await Promise.all([
+      readRemoteMenuSnapshot(), restGet(ORDERS_PATH),
+    ]);
     remoteOnline = true;
     const menuChanged = saveState === 'dirty' || saveState === 'saving'
-      ? false : applyRemoteMenu(root);
-    // A live SSE delta may have arrived while this GET was in flight.
+      ? false : applyRemoteMenu(menu);
+    // A live SSE delta may have arrived while these GETs were in flight.
     const ordersChanged = revision === orderStreamRevision
-      ? applyRemoteOrders(ordersRaw = root?.orders || {})
+      ? applyRemoteOrders(ordersRaw = orders || {})
       : false;
     if (menuChanged) writeLocal();
     if (menuChanged || ordersChanged) emitData('remote');
@@ -1352,38 +1367,35 @@ async function reservePizzaReward(record) {
   throw new Error('Pizzabonus er opptatt. Prøv igjen.');
 }
 
+// Confirm just one Firebase order via its ETag. The admin loyalty-sync
+// module writes bonus events independently after this status is saved.
 async function patchConfirmedPizzaOrder(order, changes) {
-  const phone = loyaltyPhone(order.phone);
-  const at = order.loyaltyConfirmedAt || Date.now();
-  // Confirm the order and loyalty event together. ETag prevents a timeout or
-  // another tablet from being overwritten after this snapshot was read.
+  const at = Number(order.loyaltyConfirmedAt) || Date.now();
+  const url = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const url = `${DB_URL}/.json`;
-    const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
+    const response = await fetch(url, {
+      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
+    });
     if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen.');
-    const root = await response.json() || {};
-    const current = root.orders?.[order.id];
-    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
+    const current = await response.json();
+    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) {
+      throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
+    }
     const etag = response.headers.get('ETag');
     if (!etag) throw new Error('Kunne ikke godta bestillingen sikkert.');
-    root.orders[order.id] = { ...current, ...changes, loyaltyConfirmedAt: at };
-    if (phone) {
-      root.pizzaBonus ||= {};
-      const account = root.pizzaBonus[phone] ||= {};
-      account.events ||= {};
-      const history = historicalPizzaEvents(normalizeOrders(root.orders), phone, store.sections);
-      for (const [id, event] of Object.entries(history)) {
-        if (id !== order.id && !account.events[id]) account.events[id] = event;
-      }
-      const quantity = (current.lines || []).reduce((sum, line) => {
-        const section = store.sections.find(section => section.items?.some(item => item.id === line.itemId));
-        return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
-      }, 0);
-      account.events[order.id] = { id: order.id, at, quantity, redeemed: Boolean(current.loyaltyReward) };
-    }
-    const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify(root) });
-    if (result.ok) { order.loyaltyConfirmedAt = at; return; }
-    if (result.status !== 412) throw new Error('Kunne ikke godta bestillingen.');
+    const accepted = { ...current, ...changes, loyaltyConfirmedAt: at };
+    const saved = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(accepted),
+    });
+    if (saved.status === 412) continue;
+    if (!saved.ok) throw new Error('Kunne ikke godta bestillingen.');
+    order.loyaltyConfirmedAt = at;
+    // Wake only the existing bonus worker. It runs asynchronously and never
+    // makes staff wait for a coupon transaction.
+    window.dispatchEvent(new Event('kol-order-confirmed'));
+    return;
   }
   throw new Error('Bestillingen ble endret. Oppdater og prøv igjen.');
 }
@@ -1771,11 +1783,13 @@ async function bootstrap() {
 
   if (remoteEnabled) {
     try {
-      const root = await restGet('');
+      const [menu, orders] = await Promise.all([
+        readRemoteMenuSnapshot(), restGet(ORDERS_PATH),
+      ]);
       remoteOnline = true;
-      remoteMenuPath = root?.menu ? 'menu' : '';
-      replaceMenuState(root?.menu || root || {});
-      ordersRaw = root?.orders || {};
+      remoteMenuPath = menu?.menu ? 'menu' : '';
+      replaceMenuState(menu?.menu || menu || {});
+      ordersRaw = orders || {};
       applyRemoteOrders(ordersRaw);
 
     } catch (err) {

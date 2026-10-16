@@ -94,3 +94,33 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
   database-roten. Disse kritiske flytene endres **ikke** som del av oppryddingen.
   For å avgrense lyttere og låse ned kundedata trengs en egen testet
   autentiserings-/migreringsplan.
+
+
+## 100 levende bestillinger og separat arkiv (2026-10-16)
+
+- `/orders` inneholder de **100 nyeste ordrene** samt eldre åpne
+  bestillinger som ikke trygt kan fjernes. `/orderArchive/{orderId}`
+  lagrer en separat, lettere historikk for arkiverte ordre.
+- `js/orders-archive.js` kjører **bare mens restaurantens adminside er
+  åpen/aktiv**, i små bolker. Dette er ikke en 24/7 Firebase-jobb.
+- Ingen ordre slettes uten at hele arkivkopien er skrevet og lest tilbake,
+  og ETag-betinget DELETE viser at ordren ikke har endret seg underveis.
+- Kun `fullfort`, `avvist` eller `klar` med `staffReadyAt`, minst
+  **72 timer etter siste statusendring**, kan arkiveres. Ventende og
+  bekreftede ordre beholdes selv om antallet midlertidig overstiger 100.
+- Bekreftede pizzaer krever at `pizzaBonus/{telefon}/events/{orderId}`
+  allerede finnes før ordren kan arkiveres.
+- Bestillingsgodkjenning benytter nå ETag på **én** `/orders/{id}`
+  i stedet for databaseroten. Den separate `js/loyalty-sync.js`
+  oppdaterer bonusen etter lagret aksept uten å holde godkjenningsknappen
+  opptatt. Oppstart/oppdatering leser kun meny og `/orders`; ingen
+  rotlesing som automatisk inkluderer hele arkivet.
+- Systemet kan beholde mer enn 100 live-ordre hvis det ikke finnes nok
+  arkiverbare ordre, eller hvis admin er lukket. En uavhengig serverjobb
+  krever separat utrulling via Firebase.
+- **Personvern:** Kunde-/telefondata lagres i arkivet. RTDB-regler
+  som tillater global `.read`/`.write` er ikke sikre for kundeinformasjon.
+  Innfør autentisering og ordentlig tilgangskontroll før arkivet tilbys
+  som oppslagstjeneste for kunder. Ikke del hele arkivtreet.
+- Kundens `Mine bestillinger` bruker fortsatt egne lokalt lagrede ordre;
+  historikk fra andre enheter krever fremtidig autorisert oppslag.
