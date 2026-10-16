@@ -10,7 +10,7 @@
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261016-cleanall1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261016-clean1">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261016-cleanall1">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261017-email1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
     <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261016-cleanall1">
@@ -174,6 +174,10 @@
                         <button class="orders-light orders-sms-indicator is-pending" id="ordersSmsStatus" type="button" aria-label="SMS-tjeneste – kontrollerer" title="SMS-tjenestens status">
                           <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h8M8 13h5"/></svg>
                           <span class="orders-light-tooltip" data-sms-status-text>SMS – sjekker status</span>
+                        </button>
+                        <button class="orders-light orders-email-indicator is-pending" id="ordersEmailStatus" type="button" aria-label="E-post – kontrollerer" title="E-posttjeneste: sjekker siste vellykkede kjøring">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+                          <span class="orders-light-tooltip" data-email-status-text>E-post – venter på tjenestekontroll</span>
                         </button>
                         <button class="orders-light orders-phone-manual is-manual" type="button" aria-label="Telefon: manuell kontroll" title="Telefon: Batteri og internett sjekkes manuelt av personalet">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.7" width="11" height="18.6" rx="2.2"/><path d="M11.2 18h1.6"/></svg>
@@ -798,7 +802,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261017-firebase1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261017-email1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261017-firebase1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261017-firebase1"></script>
 </body>
