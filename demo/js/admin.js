@@ -3,7 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261015-printer-typography128';
+import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -48,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261015-stream130';
+} from './data.js?v=20261016-cleanall1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

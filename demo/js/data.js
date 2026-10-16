@@ -1316,12 +1316,14 @@ export async function setPizzaOffersConsent(phoneValue, enabled) {
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
-  const [account, orders] = await Promise.all([restGet(`pizzaBonus/${phone}`), restGet(ORDERS_PATH)]);
-  const history = historicalPizzaEvents(Object.values(orders || {}), phone, store.sections);
+  const account = await restGet(`pizzaBonus/${phone}`);
+  const synced = account?.pizzaCountSynced === true && account.events && typeof account.events === 'object';
+  const orders = synced ? null : await restGet(ORDERS_PATH);
+  const history = synced ? {} : historicalPizzaEvents(Object.values(orders || {}), phone, store.sections);
   const events = { ...history, ...(account?.events || {}) };
   const state = pizzaBonus(events);
   const reservation = account?.reservations?.[state.cycle];
-  const pendingOrder = reservation && orders?.[reservation.orderId];
+  const pendingOrder = reservation?.orderId ? (synced ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`) : orders?.[reservation.orderId]) : null;
   return { ...state, phone, consent: account?.offersConsent === true, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
 }
 

@@ -89,7 +89,6 @@ html[data-theme="dark"] #pageSettings .restaurant-info-note{background:#1f344e;c
 @media(max-width:420px){#pageSettings .restaurant-hours-actions{flex-wrap:wrap}#pageSettings .restaurant-quick-btn{min-height:39px;padding:0 10px;font-size:11px}#pageSettings .restaurant-settings-status{flex:1 1 100%}#pageSettings .settings-section-btn{min-height:36px;padding:0 13px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){#pageSettings .restaurant-quick-btn,#pageSettings #btnSaveSettings,#pageSettings .settings-section-btn{transition:none}}
 
-
 /* KØL thermal printer controls — shared 576-dot Canvas preview/actual print. */
 #pageSettings .printer-settings-card{background:var(--surface);color:var(--ink)}
 #pageSettings .printer-settings-card>h2{font-size:21px;margin-bottom:7px}

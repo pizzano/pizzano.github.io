@@ -8,12 +8,12 @@
     <link rel="icon" href="/demo/icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
-    <link rel="stylesheet" href="/demo/css/admin.css?v=20261016-clean1">
+    <link rel="stylesheet" href="/demo/css/admin.css?v=20261016-cleanall1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261016-clean1">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261015-printerlive126">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261016-cleanall1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261015-printer-typography128">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261016-cleanall1">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -167,7 +167,7 @@
                           </div>
                           <div class="orders-printer-panel-buttons">
                             <button id="ordersPrinterCheck" type="button">Test tilkobling</button>
-                            <a id="ordersPrinterOpen" href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">Åpne Epson ↗</a>
+                            <a href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">Åpne Epson ↗</a>
                           </div>
                           <p class="orders-printer-panel-hint">Trykk «Åpne Epson» og logg inn i nettleseren. Disse er skriverens standardverdier; hvis passordet er endret, bruk det nye. Ingen automatisk pålogging.</p>
                         </div>
@@ -175,7 +175,7 @@
                           <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h8M8 13h5"/></svg>
                           <span class="orders-light-tooltip" data-sms-status-text>SMS – sjekker status</span>
                         </button>
-                        <button class="orders-light orders-phone-manual is-manual" id="ordersPhoneStatus" type="button" aria-label="Telefon: manuell kontroll" title="Telefon: Batteri og internett sjekkes manuelt av personalet">
+                        <button class="orders-light orders-phone-manual is-manual" type="button" aria-label="Telefon: manuell kontroll" title="Telefon: Batteri og internett sjekkes manuelt av personalet">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.7" width="11" height="18.6" rx="2.2"/><path d="M11.2 18h1.6"/></svg>
                           <span class="orders-light-tooltip">Mobil: Sjekk batteri og internett selv. Ingen automatisk overvåking.</span>
                         </button>
@@ -217,7 +217,7 @@
                         <p>Tilpass åpningstider, menyvisning og annen informasjon for din restaurant.</p>
                     </div>
                     <div class="restaurant-settings-status">
-                        <span class="restaurant-settings-status-dot" id="restaurantStatusDot" aria-hidden="true"></span>
+                        <span class="restaurant-settings-status-dot" aria-hidden="true"></span>
                         <span><strong id="restaurantStatusTitle">Kontrollerer åpningstid…</strong><small id="restaurantStatusDetail">—</small></span>
                     </div>
                     <button class="btn btn-primary" id="btnSaveSettings" type="button">
@@ -225,7 +225,7 @@
                         Lagre endringer
                     </button>
                 </header>
-                <nav class="settings-section-nav" id="settingsSectionNav" aria-label="Kategorier for restaurantinnstillinger">
+                <nav class="settings-section-nav" aria-label="Kategorier for restaurantinnstillinger">
                     <button class="settings-section-btn is-active" data-settings-section-tab="status" type="button">Åpen / stengt</button>
                     <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Hentetid</button>
                     <button class="settings-section-btn" data-settings-section-tab="printer" type="button">Printer ayarları</button>
@@ -417,7 +417,7 @@
                             <h2>Printer ayarları</h2>
                             <p class="set-hint">Juster skrifttypestørrelsene for kjøkkenkvitteringen. Forhåndsvisningen bruker nøyaktig samme bitmap-renderer som Epson TM-T20II.</p>
                             <div class="printer-settings-content">
-                                <div class="printer-settings-controls" id="printerTypographyControls">
+                                <div class="printer-settings-controls">
                                     <div class="printer-settings-field">
                                         <label for="printerQtySize">Antall (1x, 2x)</label>
                                         <div><input type="range" id="printerQtySize" data-printer-typography="printerQtySize" min="28" max="52" step="1" value="39"><output for="printerQtySize" data-printer-output="printerQtySize">39 px</output></div>
@@ -798,8 +798,8 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261015-stream130"></script>
-    <script type="module" src="/demo/js/loyalty-sync.js?v=20261016-coupon-counter1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261016-cleanall1"></script>
+    <script type="module" src="/demo/js/loyalty-sync.js?v=20261016-cleanall1"></script>
 </body>
 
 </html>

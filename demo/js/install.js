@@ -133,6 +133,10 @@
 
 
         // Only the rare "menu really changed" path downloads the menu itself.
+        if (cachedMenu && cachedMenu.sections?.length &&
+            remoteUpdatedAt > 0 && remoteUpdatedAt === Number(cachedMenu.updatedAt)) {
+          return cachedMenu;
+        }
         return await fetchMenuNodes(remoteUpdatedAt);
       } finally {
         menuSyncRequest = null;

@@ -68,3 +68,29 @@ Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgren
 - No changes to Google Apps Script, Firebase Functions, SMS, email or Epson. If Firebase security rules are tightened later, make sure streaming REST reads remain authorized.
 
 Cache-busting versions on both entrypoints and the PWA service-worker must be advanced when this logic changes.
+
+## Vedlikehold og trygg opprydding (2026-10-16)
+
+- Klient-, admin-, bonus- og butikkinfo-modulen må importere **samme versjonerte URL**
+  til `js/data.js`. To forskjellige versjoner skaper separate modulinstanser og
+  ekstra Firebase-lyttere.
+- `js/install.js` henter ikke menyen på nytt når den lagrede `updatedAt`-verdien
+  fortsatt matcher Firebase. En ny menyversjon leses fortsatt som normalt.
+- `getPizzaBonus()` henter bare `pizzaBonus/{telefon}` for kontoer med
+  `pizzaCountSynced=true`; usynkroniserte kontoer beholder historikk-fallback.
+  En aktiv bonusreservasjon kontrollerer kun den reserverte ordren.
+- `service-worker.js` mellomlagrer bare offentlig app-skall og `/demo/`.
+  API-svar og ukjente nettsider lagres ikke. Gamle cache-versjoner slettes
+  ved aktivering av en ny service-worker.
+- Ubrukte, gamle tekstutskrifts-hjelpere er fjernet fra Epson-modulen.
+  Aktiv Canvas-bitmaputskrift og test-printerverktøy er beholdt.
+- Urefererte rotbilder `img/btn.png`, `img/gratis.gif`, `img/load.gif`,
+  `img/logom.png` og `img/stemp.jpg` er ryddet bort fra hovedgrenen.
+  Filene kan gjenopprettes fra Git-historikken.
+- Legacy URL-er `test.html`, `test/index.html` og `test/admin-panel.html`
+  beholdes som videresendinger slik at bokmerker ikke brytes.
+- Viktig gjenstående jobb: den delte SSE-lyttingen åpner fremdeles
+  `/orders.json`, og godkjenning av ordre bruker fortsatt ETag mot
+  database-roten. Disse kritiske flytene endres **ikke** som del av oppryddingen.
+  For å avgrense lyttere og låse ned kundedata trengs en egen testet
+  autentiserings-/migreringsplan.

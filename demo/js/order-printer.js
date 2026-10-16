@@ -10,55 +10,11 @@ const EPSON_DEFAULT = {
   deviceId: 'local_printer'
 };
 const EPOS_NS = 'http://www.epson-pos.com/schemas/2011/03/epos-print';
-const CHARS = 40;
-
-function xml(value) {
-  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-function wrap(text, width = CHARS) {
-  const result = [];
-  for (const paragraph of String(text ?? '').split(/\r?\n/)) {
-    let current = '';
-    for (const word of paragraph.trim().split(/\s+/).filter(Boolean)) {
-      if (current && current.length + 1 + word.length > width) {
-        result.push(current);
-        current = '';
-      }
-      if (word.length > width) {
-        if (current) { result.push(current); current = ''; }
-        for (let i = 0; i < word.length; i += width) result.push(word.slice(i, i + width));
-      } else {
-        current = current ? current + ' ' + word : word;
-      }
-    }
-    result.push(current);
-  }
-  return result;
-}
-
-function text(value) { return '<text>' + xml(value) + '&#10;</text>'; }
-function rows(value, indent = '') {
-  return wrap(value, CHARS - indent.length).map(line => text(indent + line)).join('');
-}
-function separator() { return text('-'.repeat(CHARS)); }
-function bold(on) { return '<text em="' + (on ? 'true' : 'false') + '"/>'; }
-function align(where) { return '<text align="' + where + '"/>'; }
-function size(multiplier) { return '<text width="' + multiplier + '" height="' + multiplier + '"/>'; }
 function money(amount) {
   const value = Number(amount);
   return (Number.isFinite(value) ? value : 0).toLocaleString('nb-NO', {
     minimumFractionDigits: 2, maximumFractionDigits: 2
   }) + ' kr';
-}
-function twoColumns(left, right) {
-  const l = String(left || '').trim();
-  const r = String(right || '').trim();
-  if (l.length + 1 + r.length <= CHARS) {
-    return text(l + ' '.repeat(CHARS - l.length - r.length) + r);
-  }
-  return rows(l) + text(r.padStart(CHARS, ' '));
 }
 function dateTime(time) {
   const stamp = Number(time);
@@ -69,16 +25,6 @@ function dateTime(time) {
 }
 function isScheduled(order) {
   return order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || ''));
-}
-function pickupLabel(order) {
-  if (isScheduled(order)) {
-    const requested = String(order.pickup || '').trim();
-    const scheduled = Number(order.scheduledPickupAt) || Number(order.estimatedReadyAt);
-    return requested && /^\d{1,2}:\d{2}$/.test(requested)
-      ? 'Kl. ' + requested
-      : dateTime(scheduled);
-  }
-  return 'Snarest';
 }
 /* Draw the full receipt as a high-contrast image, then send Epson's packed
  * 1-bit raster. Epson's <image> XML element does NOT accept PNG/JPEG bytes. */

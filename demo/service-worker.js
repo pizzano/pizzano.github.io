@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v211-overrides2';
+const CACHE_NAME = 'kol-demo-v212-cleanall1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -37,19 +37,32 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Only cache the app shell and the /demo/ home alias, not arbitrary API pages.
+const CACHEABLE_PATHS = new Set([...APP_SHELL, '/demo/']);
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin || !CACHEABLE_PATHS.has(url.pathname)) return;
+  const key = new Request(url.origin + url.pathname);
 
   event.respondWith(
     fetch(request, { cache: 'no-store' })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(key, copy)));
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match('/demo/index.html')))
+      .catch(async () => {
+        const cached = await caches.match(key);
+        if (cached) return cached;
+        if (url.pathname === '/demo/' || url.pathname === '/demo/index.html') {
+          return (await caches.match('/demo/index.html')) || Response.error();
+        }
+        return Response.error();
+      })
   );
 });

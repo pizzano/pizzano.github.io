@@ -5,9 +5,7 @@
 .order-accept-confirm:disabled,
 .order-reject-confirm:disabled {opacity:.55;cursor:wait}
 
-
 /* Scheduled pickup accept UI 2026-09-15 */.scheduled-accept-card {display:grid;gap:8px;margin:14px 0 4px;padding:18px;border:1px solid #d8e8dc;border-radius:16px;background:#f3fbf5}.scheduled-accept-card[hidden] {display:none!important}.scheduled-accept-card>span {color:#6b7b70;font-size:11px;font-weight:800;letter-spacing:.06em}.scheduled-accept-card>strong {color:#18211b;font-size:34px;line-height:1;font-weight:850}.scheduled-accept-card>small {color:#657169;font-size:13px;line-height:1.45}
-
 
 /* Orders fullscreen workspace 2026-09-15 */.orders-sidebar-toggle {
     display: none;
@@ -51,7 +49,6 @@ body.orders-sidebar-collapsed .orders-app {
         padding-left: 60px;
     }
 }
-
 
 /* Bestillinger: reference-matched desktop ticket layout.
    Single order-workspace style block; old layouts are replaced, not overridden. */
@@ -508,7 +505,6 @@ html[data-theme="dark"] .modal-order-action .scheduled-accept-card :is(span,smal
 @keyframes incoming-order-pulse {0%,100% {box-shadow:0 3px 10px rgba(17,45,67,.06);}50% {box-shadow:0 4px 20px rgba(231,116,5,.19);}}
 @media(prefers-reduced-motion:reduce) {:root .orders-page .orders-list-row.is-new:not(.is-seen) {animation:none;}}
 
-
 /* SMS receipt badge only appears for a real successful gateway submission. */
 :root .orders-page .orders-list-name-row {display:flex;align-items:center;gap:7px;min-width:0;}
 :root .orders-page .orders-list-name-row strong {min-width:0;flex:0 1 auto;}
@@ -555,8 +551,6 @@ html[data-theme="dark"] .orders-page .orders-phone-indicator.is-online {color:#b
 html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#ffc4c0;background:#492b2a;border-color:#7d413b;}
 @media(max-width:1050px){:root .orders-page .orders-phone-indicator{min-height:32px;padding:6px 9px;font-size:11px;}}
 @media(max-width:650px){:root .orders-page .orders-phone-indicator{order:-1;}}
-
-
 
 /* Order toolbar: four pale reference tiles with real connection/SMS semantics. */
 .orders-page .orders-top-actions.orders-lightbar{
@@ -629,7 +623,6 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
  .orders-page .orders-top-actions.orders-lightbar .orders-light-tooltip{transition:none}
 }
 
-
 /* Epson kitchen slip: reprint action kept secondary to status buttons. */
 .orders-page .pos-detail-actions .order-reprint-btn {
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -657,7 +650,6 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
     gap:9px;
   }
 }
-
 
 /* Epson TM-T20II status next to internet indicator. This tests the printer,
    not general internet access. */
@@ -701,7 +693,6 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
   width:6px;height:6px;top:3px;right:2px;
  }
 }
-
 
 /* Live Epson diagnostic: clear warning and readable default-login hint. */
 .orders-page .orders-printer-credentials{

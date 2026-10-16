@@ -131,7 +131,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
 
   .menu-overview-row { gap: 8px; }
 
-  
   .pickup-copy { gap: 1px; }
 
   .menu-overview .allergen-visibility-control {
@@ -166,8 +165,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .time-grid { gap: 6px; }
   .time-btn { min-height: 38px; font-size: 12px; }
 
-  
-
   .view-cart > .checkout-actions .btn,
 .view-checkout > .checkout-actions .btn {
 
@@ -178,10 +175,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
     padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
   }
 
-  
-  
-  
-  
   .sheet-head h2,
 .sheet-body { padding: 10px; }
 
@@ -231,7 +224,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 }
 .toast[hidden] { display: none !important; }\
 
-      
 /* Mine bestillinger: compact four-column layout, including narrow phones.
    Keep the same sizes at every viewport; the status never drops to a second row. */
 #viewProfile .profile-tab-panel[data-profile-panel="orders"] {padding:9px;}
@@ -685,7 +677,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 }
 
   .sheet-allergens-label { margin-bottom: 6px; font-size: 11.5px; }
-  
 
 /* ======================== Pickup choice attention ======================== */
 @keyframes pickupChoiceErrorNudge {
@@ -1167,7 +1158,7 @@ textarea.input {
 
   .cat-block { margin-bottom: 22px; }
   .cat-head h2 { font-size: 17px; }
-  
+
   .sheet { max-height: 96dvh !important; }
   .sheet-hero { height: 205px !important; }
   .opt-group { padding: 10px; border-radius: 15px; }
@@ -1370,7 +1361,6 @@ textarea.input {
 .confirm-modal[data-state="waiting"],
 .confirm-modal[data-state="accepted"],
 .confirm-modal[data-state="timeout"] {max-width:500px;}
-
 
 .confirm-modal[data-state="waiting"] .confirm-icon {animation:confirmPulse 1.5s ease-in-out infinite;}
 @keyframes confirmPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb, var(--palette-deep) 22%, transparent)}50%{transform:scale(1.05);box-shadow:0 0 0 12px color-mix(in srgb, var(--palette-deep) 0%, transparent)}}
@@ -1742,7 +1732,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   }
 }
 
-
 /* ======================== Hentetid: helt ny pickup review v4 ======================== */
 #reviewCard.pickup-review-host {
   width: 100%;
@@ -1984,8 +1973,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease;
 }
 
-
-
   .view-menu .prod-grid .prod-media {
   position:relative;grid-column:1;width:76px;min-width:76px;max-width:76px;
   height:76px;min-height:76px;max-height:76px;
@@ -2034,8 +2021,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
     overflow: hidden;
     white-space: normal;
   }
-
-  
 
   .view-menu .prod-grid .prod-side {
   position:static;inset:auto;grid-column:3;width:54px;min-width:54px;
@@ -2094,7 +2079,6 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   .view-menu .prod-grid .prod-card,
   .view-menu .prod-grid .add-btn::before {transition:none;}
 }
-
 
   .view-menu .prod-grid .prod-price {
   position:static;inset:auto;grid-row:2;width:auto;
@@ -2375,7 +2359,6 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   visibility:hidden!important;pointer-events:none!important;
 }
 
-
 /* Reference Kontakt layout — scoped to checkout, preserving all behavior. */
 #viewCheckout #step2.checkout-contact-card {
   padding: clamp(15px, 3.2vw, 21px);
@@ -2440,7 +2423,6 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   #viewCheckout .checkout-contact-card .contact-form-control .input { min-height: 48px; height: 48px; }
   #viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix { min-height: 48px; flex-basis: 53px; }
 }
-
 
 /* Rediger profil: same compact Kontaktinformasjon card as the checkout.
    The green checks are driven by the profile validation logic. */
