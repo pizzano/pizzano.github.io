@@ -62,6 +62,53 @@ Canlı Apps Script projesine manuel yapıştırma gereklidir.
 güncellemez**. Müşteri e-postalarını gönderen canlı proje ancak bu kaynak
 yapıştırılıp kaydedildiğinde yeni tasarımı kullanır.
 
+## E-posta gönderimi ve doğrulama (17.10.2026)
+
+- **Neden kayboluyordu:** Bir sipariş ilk dakika dolmadan `bekreftet`
+  olursa Apps Script ilk taramada durumunu kaydedip bildirim göndermiyordu.
+- **Düzeltme:** Yeni kod, son **60 dakika** içinde gerçekten `bekreftet`
+  olmuş siparişi ilk defa görse bile kabul e-postasını gönderir.
+  `klar` e-postası yalnızca gerçek `staffReadyAt` ile gönderilir.
+  Eski birikmiş siparişlere toplu e-posta göndermez. Kod ilk çalıştığında,
+  eski bug nedeniyle son bir saat içinde atlanan siparişleri bir kez kontrol eder.
+  Sonraki taramalarda yine iki dakikalık indeksli pencere kullanılır.
+- **Tekrar önleme:** `KOL_SENT` SMS geçmişine dokunulmaz. E-posta için
+  `kol_order_...` / `sent` checkpoint'leri korunur; başarısız veya belirsiz
+  `MailApp` gönderimi körlemesine tekrarlanmaz.
+- **Gerçek kayıt:** Ancak `MailApp.sendEmail` başarılı döndükten sonra,
+  `/orders/{id}/emailReceipts/{accepted|ready}` yazılır. Restoran ekranındaki
+  yeşil zarf bu kayıt yoksa **görünmez**. Bu kayıt e-posta servisinin gönderimi
+  kabul ettiğini gösterir; alıcının gelen kutusuna teslim garantisi değildir.
+- **Bağlantı kontrolü:** Her çalışan tetikleyici `/emailHealth` altına son
+  çalışma ve kalan MailApp günlük gönderim kotasını yazar.
+  Admin paneli yaklaşık 90 saniyede bir bu küçük kaydı okur.
+  Son 3 dakika içinde geçerli kontrol bulunmazsa e-posta göstergesi yeşil olmaz.
+  SMS / printer durumları bağımsızdır.
+- **Firebase izinleri:** Yeni kod `/orders/{id}/emailReceipts` ve
+  `/emailHealth` yollarına yazabilmelidir. Firebase erişim kurallarını sırf
+  bu işlem için **herkese açık yazma** haline getirmeyin. DEMO'nun açık kuralları
+  güvenilir gönderim kanıtı için yeterince güvenli değildir; gerçek müşteriler
+  öncesinde sunucu tarafında kimlik doğrulama ve yazma yetkileri gerekir.
+
+### Canlı Apps Script'e geçirmek için
+
+1. GitHub'daki güncel [email-poller.gs](email-poller.gs) dosyasını tamamen
+   kopyalayın; **EPOST GONDERME KØL → EmailPoller.gs** içinde eskisinin yerine
+   yapıştırın ve kaydedin. Önce mevcut kodu yedekleyin.
+2. `installerEpostVarsler()` **çalıştırmayın**; bu, eski siparişlerin
+   durum kayıtlarını ve tetikleyiciyi değiştirir. Mevcut dakikalık
+   `kontrollerEpostBestillinger` tetikleyicisi kalmalıdır.
+3. Apps Script **Yürütmeler** sekmesinde `kontrollerEpostBestillinger`
+   hatasız çalışıyor mu kontrol edin. Yeni kodu elle ilk kez çalıştırmak
+   son bir saatin gerçekten onaylanmış, ancak henüz e-posta almamış DEMO
+   siparişlerine bildirim gönderebilir.
+4. Yeni test siparişi verin, hemen `Bekreft` yapın, MailApp gönderim
+   kaydını ve admin ekranındaki yeşil e-posta işaretini kontrol edin.
+   `Marker klar for henting` sonrası ikinci e-posta için de tekrar edin.
+
+**Önemli:** GitHub'a commit/push yapmak Apps Script web arayüzündeki canlı
+`EmailPoller.gs` kaynağını otomatik olarak değiştirmez.
+
 ## Firebase kuralları ve gizlilik
 
 Kullanılan RTDB `/orders` altında indeks:
