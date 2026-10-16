@@ -14,6 +14,9 @@ const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 // Firebase RTDB /orders requires ".indexOn": ["statusUpdatedAt"].
 const KOL_EMAIL_SCAN_CURSOR_KEY = 'KOL_EMAIL_LAST_SUCCESSFUL_SCAN_MS';
 const KOL_EMAIL_SCAN_OVERLAP_MS = 2 * 60 * 1000;
+// Only notify for recent staff status events. Prevents a new installation
+// from suddenly emailing old test orders after first start.
+const KOL_EMAIL_EVENT_MAX_AGE_MS = 60 * 60 * 1000;
 let kolEmailIndexedQueryOk_ = false;
 
 function kolReadOrders_() {
@@ -53,16 +56,22 @@ function kolReadOrders_() {
   return data && typeof data === 'object' ? data : {};
 }
 
-function kolNotificationKind_(previous, order) {
+function kolNotificationKind_(previous, order, now) {
   const after = String(order.status || '');
-  if (previous === 'mottatt' && after === 'bekreftet') return 'accepted';
-  // A countdown is NOT evidence that the kitchen finished the order.
-  // Only a real manual "Marker klar for henting" DB write can send this mail.
-  const actualReadyAt = Number(order.staffReadyAt) || 0;
   const statusAt = Number(order.statusUpdatedAt) || 0;
+  const age = now - statusAt;
+  if (!statusAt || age < -60000 || age > KOL_EMAIL_EVENT_MAX_AGE_MS) return '';
+  // Polling runs about once per minute. First seen can already be confirmed;
+  // previous === after is NOT proof that an email has been sent.
+  if (after === 'bekreftet' &&
+      ['', 'mottatt', 'bekreftet'].includes(String(previous || ''))) {
+    return 'accepted';
+  }
+  // A countdown cannot trigger "ready": manual staffReadyAt is required.
+  const staffReadyAt = Number(order.staffReadyAt) || 0;
   if (after === 'klar' &&
-      ['mottatt', 'bekreftet', 'tilberedning'].includes(previous) &&
-      actualReadyAt > 0 && Math.abs(actualReadyAt - statusAt) <= 10000) {
+      ['', 'mottatt', 'bekreftet', 'tilberedning', 'klar'].includes(String(previous || '')) &&
+      staffReadyAt > 0 && Math.abs(staffReadyAt - statusAt) <= 10000) {
     return 'ready';
   }
   return '';
@@ -304,6 +313,43 @@ function kolSendMail_(order, kind) {
   return true;
 }
 
+/**
+ * Persist independent evidence AFTER MailApp.sendEmail returns successfully.
+ * The admin reads the existing order SSE; no per-order polling is needed.
+ * "accepted" means accepted by MailApp, not proven delivered to inbox.
+ */
+function kolEmailPutJson_(path, body) {
+  const response = UrlFetchApp.fetch(KOL_DB + '/' + path + '.json', {
+    method:'put', contentType:'application/json',
+    payload:JSON.stringify(body), muteHttpExceptions:true
+  });
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Firebase bekreftelse HTTP ' + response.getResponseCode());
+  }
+}
+
+function kolEmailReceipt_(id, kind, order, sentAt) {
+  if (!/^ord_[a-z0-9]{7,40}$/i.test(String(id)) || !['accepted','ready'].includes(kind)) {
+    throw new Error('Ugyldig e-postkvitteringsnøkkel.');
+  }
+  kolEmailPutJson_('orders/' + encodeURIComponent(id) +
+    '/emailReceipts/' + kind, {
+      sentAt: Number(sentAt) || Date.now(),
+      statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
+      provider: 'MailApp', state:'accepted'
+    });
+}
+
+/** Fresh proof of working polling and mail authorization, not mail delivery. */
+function kolEmailHeartbeat_(now, state) {
+  const quota = MailApp.getRemainingDailyQuota();
+  kolEmailPutJson_('emailHealth', {
+    checkedAt:now, quotaRemaining:Number(quota) || 0,
+    status:state === 'ok' && quota > 0 ? 'ok' : 'unavailable',
+    source:'apps-script-email-poller'
+  });
+}
+
 /** Preview without sending customer email. Run and inspect execution log. */
 function forhåndsvisEpostEksempel() {
   const sample = {
@@ -400,30 +446,38 @@ function kontrollerEpostBestillinger() {
       const key = kolOrderKey_(id);
       const previousJson = props.getProperty(key);
       const status = String(order.status || '');
-      if (!previousJson) {
-        props.setProperty(key, JSON.stringify({status:status, updated:now, sent:{}}));
-        continue;
-      }
-      const checkpoint = JSON.parse(previousJson);
+      const checkpoint = previousJson
+        ? JSON.parse(previousJson)
+        : {status:'', updated:now, sent:{}};
       if (!checkpoint.sent || typeof checkpoint.sent !== 'object') checkpoint.sent = {};
-      const kind = kolNotificationKind_(checkpoint.status, order);
+
+      const kind = kolNotificationKind_(checkpoint.status, order, now);
       const stamp = String(order.statusUpdatedAt || '0');
       const eventKey = kind + ':' + stamp;
-      // One accepted and one ready mail maximum per order, even after
-      // a status rollback/reconfirmation. Existing event keys still count.
-      const alreadyProcessed = kind && Object.keys(checkpoint.sent).some(function(key) {
-        return key.indexOf(kind + ':') === 0;
+      // One email of each kind maximum: never duplicate a completed or
+      // uncertain MailApp send after timeout or a manual re-confirmation.
+      const alreadyProcessed = kind && Object.keys(checkpoint.sent).some(function(k) {
+        return k.indexOf(kind + ':') === 0;
       });
       if (kind && !alreadyProcessed) {
-        // This is a single best-effort delivery: mark before sending to avoid duplicate mail.
         checkpoint.sent[eventKey] = 'attempted';
         checkpoint.status = status;
         checkpoint.updated = now;
         props.setProperty(key, JSON.stringify(checkpoint));
         try {
           if (kolSendMail_(Object.assign({id:id},order), kind)) {
+            const sentAt = Date.now();
             checkpoint.sent[eventKey] = 'sent';
             props.setProperty(key, JSON.stringify(checkpoint));
+            // MailApp succeeded; only then publish the order confirmation.
+            try {
+              kolEmailReceipt_(id, kind, order, sentAt);
+            } catch (receiptError) {
+              // Never claim a receipt that was not stored. Do not resend mail
+              // just because this separate bookkeeping write failed.
+              Logger.log('E-post sendt, men kvittering ikke lagret for ordre '
+                + id.slice(-6) + ': ' + receiptError.message);
+            }
             Logger.log('E-post sendt: ' + kind + ', ordre ' + id.slice(-6));
           } else {
             checkpoint.sent[eventKey] = 'skipped_no_email';
@@ -434,15 +488,19 @@ function kontrollerEpostBestillinger() {
           props.setProperty(key, JSON.stringify(checkpoint));
           Logger.log('E-postfeil på ordre ' + id.slice(-6) + ': ' + err.message);
         }
-      } else if (checkpoint.status !== status) {
+      } else if (!previousJson || checkpoint.status !== status) {
         checkpoint.status = status;
         checkpoint.updated = now;
         props.setProperty(key, JSON.stringify(checkpoint));
       }
     }
-    // Only advance after successfully processing the entire batch.
-    // Keep the cursor when falling back to bounded key reads.
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
+    try { kolEmailHeartbeat_(now, 'ok'); }
+    catch (err) { Logger.log('E-postkontroll kunne ikke publiseres: ' + err.message); }
+  } catch (err) {
+    Logger.log('E-postpoller feilet: ' + err.message);
+    try { kolEmailHeartbeat_(Date.now(), 'error'); } catch (_) {}
+    throw err;
   } finally { lock.releaseLock(); }
 }
 
