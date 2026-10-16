@@ -6,7 +6,7 @@
  * A completed order is first copied to /orderArchive/{id}, read back and
  * verified. Only then is /orders/{id} removed using its original ETag.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261016-orders100a';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261017-firebase1';
 import { loyaltyPhone } from './loyalty.js';
 
 const LIVE_LIMIT = 100;

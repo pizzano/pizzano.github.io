@@ -24,6 +24,10 @@ import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './l
  * 1. Database (Firebase Realtime Database REST)
  * ------------------------------------------------------------------ */
 export const DB_URL = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/, '');
+const CUSTOMER_MODE = window.BESTILL_CONFIG?.customerOnly === true;
+const CUSTOMER_ORDER_LIMIT = 4;
+const CUSTOMER_ORDER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CUSTOMER_ORDER_POLL_MS = 30 * 1000;
 
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
@@ -1024,6 +1028,114 @@ function streamUrl(path) {
   return DB_URL + '/' + path + '.json';
 }
 
+// Customer pages never open /orders.json. Each recent order is followed by
+// its own Firebase SSE listener, so other customers' details are not downloaded.
+const customerStreams = new Map();
+let customerPollBusy = false;
+let lastCustomerPollAt = 0;
+
+function customerTrackedIds() {
+  const now = Date.now();
+  const ids = [];
+  for (const saved of getLocalOrders()) {
+    const id = String(saved?.id || '');
+    if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || ids.includes(id)) continue;
+    const createdAt = Number(saved.createdAt) || 0;
+    if (!createdAt || now - createdAt > CUSTOMER_ORDER_MAX_AGE_MS) continue;
+    const current = ordersRaw[id] || saved;
+    if (['avvist', 'fullfort'].includes(current.status)) continue;
+    ids.push(id);
+    if (ids.length >= CUSTOMER_ORDER_LIMIT) break;
+  }
+  return ids;
+}
+
+function syncCustomerStreams() {
+  if (!CUSTOMER_MODE) return;
+  const ids = new Set(customerTrackedIds());
+  for (const [id, entry] of customerStreams) {
+    if (ids.has(id)) continue;
+    entry.source.close();
+    customerStreams.delete(id);
+  }
+  if (!('EventSource' in window) || navigator.onLine === false) return;
+  for (const id of ids) {
+    if (customerStreams.has(id)) continue;
+    try {
+      const source = new EventSource(streamUrl(ORDERS_PATH + '/' + encodeURIComponent(id)));
+      const entry = {source, healthy: false};
+      customerStreams.set(id, entry);
+      const update = (event, isPatch) => {
+        try {
+          const change = parseFirebaseEvent(event);
+          if (change.path === '/' && change.data === null) {
+            delete ordersRaw[id];
+          } else {
+            ordersRaw[id] = applyStreamChange(ordersRaw[id] || {}, change.path, change.data, isPatch);
+          }
+          entry.healthy = true;
+          remoteOnline = true;
+          if (applyRemoteOrders(ordersRaw)) emitData('remote');
+          // A finished/rejected order no longer needs a permanent listener.
+          if (!customerTrackedIds().includes(id)) syncCustomerStreams();
+        } catch (error) {
+          entry.healthy = false;
+          source.close();
+          if (customerStreams.get(id) === entry) customerStreams.delete(id);
+          scheduleStreamReconnect();
+        }
+      };
+      source.addEventListener('put', event => update(event, false));
+      source.addEventListener('patch', event => update(event, true));
+      source.onerror = () => {
+        entry.healthy = false;
+        if (source.readyState === 2) {
+          source.close();
+          if (customerStreams.get(id) === entry) customerStreams.delete(id);
+          scheduleStreamReconnect();
+        }
+      };
+      for (const kind of ['cancel', 'auth_revoked']) {
+        source.addEventListener(kind, () => {
+          entry.healthy = false;
+          source.close();
+          if (customerStreams.get(id) === entry) customerStreams.delete(id);
+          scheduleStreamReconnect();
+        });
+      }
+    } catch (error) {
+      console.warn('Kundens ordrelytting er ikke tilgjengelig:', error);
+    }
+  }
+}
+
+async function pollCustomerOrders(force = false) {
+  if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
+  const now = Date.now();
+  if (!force && now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
+  const ids = customerTrackedIds().filter(id => force || !customerStreams.get(id)?.healthy);
+  if (!ids.length) return;
+  lastCustomerPollAt = now;
+  customerPollBusy = true;
+  try {
+    const responses = await Promise.all(ids.map(async id => {
+      try { return [id, await restGet(ORDERS_PATH + '/' + encodeURIComponent(id))]; }
+      catch { return [id, undefined]; }
+    }));
+    let changed = false;
+    for (const [id, order] of responses) {
+      if (order === undefined) continue;
+      if (order) ordersRaw[id] = order;
+      else delete ordersRaw[id];
+      changed = true;
+    }
+    if (changed && applyRemoteOrders(ordersRaw)) emitData('remote');
+    syncCustomerStreams();
+  } finally {
+    customerPollBusy = false;
+  }
+}
+
 function beginOrdersStream() {
   if (!('EventSource' in window)) return;
   try {
@@ -1121,10 +1233,11 @@ function scheduleStreamReconnect() {
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null;
     if (document.hidden || navigator.onLine === false) return;
-    if (!ordersStream) beginOrdersStream();
+    if (CUSTOMER_MODE) syncCustomerStreams();
+    else if (!ordersStream) beginOrdersStream();
     if (!menuStream) beginMenuStream();
     void fallbackSync();
-  }, 3000);
+  }, CUSTOMER_MODE ? 30000 : 3000);
 }
 
 // Menu-only reads avoid downloading /orderArchive or /pizzaBonus.
@@ -1137,6 +1250,28 @@ async function readRemoteMenuSnapshot() {
   if (nested && typeof nested === 'object') return { menu: nested };
   const values = await Promise.all(LEGACY_MENU_FIELDS.map(field => restGet(field)));
   return Object.fromEntries(LEGACY_MENU_FIELDS.map((field, i) => [field, values[i]]));
+}
+
+// A cached menu requires only a tiny version read at startup. In particular,
+// neither customers nor staff need to re-download the whole menu every visit.
+async function readStartupMenu(local) {
+  if (local?.sections?.length && Number(local.updatedAt) > 0) {
+    try {
+      let revision = Number(await restGet('updatedAt')) || 0;
+      if (revision > 0) {
+        remoteMenuPath = '';
+      } else {
+        revision = Number(await restGet('menu/updatedAt')) || 0;
+        if (revision > 0) remoteMenuPath = 'menu';
+      }
+      if (revision > 0 && revision === Number(local.updatedAt)) return null;
+    } catch (_) {
+      // A version-check error must not strand a first-time or stale client.
+    }
+  }
+  const snapshot = await readRemoteMenuSnapshot();
+  remoteMenuPath = snapshot?.menu ? 'menu' : '';
+  return snapshot?.menu || snapshot || {};
 }
 
 /** Menu is refreshed only if updatedAt changes, not for every order. */
@@ -1161,6 +1296,11 @@ async function reloadRemoteMenu() {
 /** Manual full refresh. Only called by a user action, never by a timer. */
 async function pullRemote() {
   if (!remoteEnabled) return;
+  if (CUSTOMER_MODE) {
+    await reloadRemoteMenu();
+    await pollCustomerOrders(true);
+    return;
+  }
   const revision = orderStreamRevision;
   try {
     const [menu, orders] = await Promise.all([
@@ -1188,7 +1328,9 @@ export async function refreshFromDatabase() {
 /** REST fallback while a stream is unavailable; never download the whole DB. */
 async function fallbackSync() {
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
-  if (!ordersStreamHealthy && !ordersFallbackBusy) {
+  if (CUSTOMER_MODE) {
+    await pollCustomerOrders();
+  } else if (!ordersStreamHealthy && !ordersFallbackBusy) {
     ordersFallbackBusy = true;
     const revision = orderStreamRevision;
     try {
@@ -1215,7 +1357,7 @@ async function fallbackSync() {
       if (version > 0 && version !== Number(store.updatedAt)) await reloadRemoteMenu();
       remoteOnline = true;
     } catch (error) {
-      if (!ordersStreamHealthy) remoteOnline = false;
+      if (!CUSTOMER_MODE && !ordersStreamHealthy) remoteOnline = false;
     } finally {
       menuFallbackBusy = false;
     }
@@ -1225,19 +1367,25 @@ async function fallbackSync() {
 function startPolling() {
   // Separate streams: full orders only at first connect, subsequent changes are
   // small Firebase SSE patches. Menu is watched via a numeric version only.
-  beginOrdersStream();
+  if (CUSTOMER_MODE) syncCustomerStreams();
+  else beginOrdersStream();
   beginMenuStream();
   if (fallbackTimer) clearInterval(fallbackTimer);
   fallbackTimer = window.setInterval(() => { void fallbackSync(); }, FALLBACK_ORDERS_INTERVAL);
-  window.addEventListener('focus', () => { void fallbackSync(); });
+  window.addEventListener('focus', () => {
+    if (CUSTOMER_MODE) syncCustomerStreams();
+    void fallbackSync();
+  });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      if (!ordersStream && !menuStream) scheduleStreamReconnect();
+      if (CUSTOMER_MODE) syncCustomerStreams();
+      if (!menuStream || (!CUSTOMER_MODE && !ordersStream)) scheduleStreamReconnect();
       void fallbackSync();
     }
   });
   window.addEventListener('online', () => {
-    if (!ordersStream || !menuStream) scheduleStreamReconnect();
+    if (CUSTOMER_MODE) syncCustomerStreams();
+    if (!menuStream || (!CUSTOMER_MODE && !ordersStream)) scheduleStreamReconnect();
     void fallbackSync();
   });
 }
@@ -1333,12 +1481,20 @@ export async function getPizzaBonus(phoneValue) {
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
   const account = await restGet(`pizzaBonus/${phone}`);
   const synced = account?.pizzaCountSynced === true && account.events && typeof account.events === 'object';
-  const orders = synced ? null : await restGet(ORDERS_PATH);
-  const history = synced ? {} : historicalPizzaEvents(Object.values(orders || {}), phone, store.sections);
+  // Never scan other customers' orders for a legacy unsynced bonus account.
+  // The admin's independent bonus worker persists accepted order events.
+  const historyOrders = synced ? [] : CUSTOMER_MODE
+    ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
+    : Object.values(await restGet(ORDERS_PATH) || {});
+  const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
   const events = { ...history, ...(account?.events || {}) };
   const state = pizzaBonus(events);
   const reservation = account?.reservations?.[state.cycle];
-  const pendingOrder = reservation?.orderId ? (synced ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`) : orders?.[reservation.orderId]) : null;
+  const pendingOrder = reservation?.orderId
+    ? (CUSTOMER_MODE || synced
+      ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`)
+      : historyOrders.find(order => order.id === reservation.orderId))
+    : null;
   return { ...state, phone, consent: account?.offersConsent === true, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
 }
 
@@ -1472,6 +1628,10 @@ export async function submitOrder(order) {
     console.warn('Kunne ikke lagre ordre lokalt:', err);
   }
   store.orders = normalizeOrders([record, ...store.orders.filter((entry) => entry.id !== record.id)]);
+  if (CUSTOMER_MODE) {
+    ordersRaw[record.id] = record;
+    syncCustomerStreams();
+  }
   emitData('local');
   return record;
 }
@@ -1781,17 +1941,22 @@ async function bootstrap() {
   const local = loadLocal();
   if (local) replaceMenuState(local);
 
+  if (CUSTOMER_MODE) {
+    // Only the customer's own recent orders are ever placed in this snapshot.
+    ordersRaw = Object.fromEntries(getLocalOrders().filter(order =>
+      order?.id && /^ord_[a-z0-9]{7,40}$/i.test(String(order.id)) &&
+      Date.now() - (Number(order.createdAt) || 0) <= CUSTOMER_ORDER_MAX_AGE_MS
+    ).slice(0, CUSTOMER_ORDER_LIMIT).map(order => [order.id, order]));
+    applyRemoteOrders(ordersRaw);
+  }
+
   if (remoteEnabled) {
     try {
-      const [menu, orders] = await Promise.all([
-        readRemoteMenuSnapshot(), restGet(ORDERS_PATH),
-      ]);
+      const menu = await readStartupMenu(local);
       remoteOnline = true;
-      remoteMenuPath = menu?.menu ? 'menu' : '';
-      replaceMenuState(menu?.menu || menu || {});
-      ordersRaw = orders || {};
-      applyRemoteOrders(ordersRaw);
-
+      if (menu) replaceMenuState(menu);
+      // Do not fetch /orders here: the restaurant SSE initial "put" supplies
+      // one current snapshot. Customer streams fetch only owned order IDs.
     } catch (err) {
       remoteOnline = false;
       console.warn('Databasen er ikke tilgjengelig nå, bruker lokal kopi:', err);
