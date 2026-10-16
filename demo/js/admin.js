@@ -48,7 +48,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261016-orders100a';
+} from './data.js?v=20261017-firebase1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -2405,7 +2405,7 @@ async function refreshSmsStatus() {
   } finally { smsStatusFetching = false; }
 }
 void refreshSmsStatus();
-window.setInterval(refreshSmsStatus, 45000);
+window.setInterval(refreshSmsStatus, 120000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void refreshSmsStatus();
 });
@@ -2465,7 +2465,7 @@ async function refreshSmsReceipts() {
     // Missing receipts must never be shown as successfully sent.
   } finally { smsReceiptFetching = false; }
 }
-window.setInterval(() => { void refreshSmsReceipts(); }, 25000);
+window.setInterval(() => { void refreshSmsReceipts(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshSmsReceipts(); });
 
 function updateOrdersConnection() {
