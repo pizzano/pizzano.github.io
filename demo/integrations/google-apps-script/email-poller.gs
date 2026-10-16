@@ -17,15 +17,22 @@ const KOL_EMAIL_SCAN_OVERLAP_MS = 2 * 60 * 1000;
 // Only notify for recent staff status events. Prevents a new installation
 // from suddenly emailing old test orders after first start.
 const KOL_EMAIL_EVENT_MAX_AGE_MS = 60 * 60 * 1000;
+const KOL_EMAIL_FIRST_SEEN_FIX_KEY = 'KOL_EMAIL_FIRST_SEEN_FIX_VERSION';
+const KOL_EMAIL_FIRST_SEEN_FIX_VERSION = '20261017-v1';
 let kolEmailIndexedQueryOk_ = false;
 
 function kolReadOrders_() {
   const now = Date.now();
   const props = PropertiesService.getScriptProperties();
   const lastScan = Number(props.getProperty(KOL_EMAIL_SCAN_CURSOR_KEY)) || 0;
+  // One-time recovery for accepted test orders missed by the old first-scan
+  // bug. Normal subsequent polls retain the small indexed two-minute overlap.
+  const firstRunWithFix = props.getProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY)
+    !== KOL_EMAIL_FIRST_SEEN_FIX_VERSION;
   const since = Math.max(
     now - KOL_MAX_ORDER_AGE_MS,
-    lastScan > 0 ? lastScan - KOL_EMAIL_SCAN_OVERLAP_MS : now - KOL_MAX_ORDER_AGE_MS
+    firstRunWithFix ? now - KOL_EMAIL_EVENT_MAX_AGE_MS :
+      (lastScan > 0 ? lastScan - KOL_EMAIL_SCAN_OVERLAP_MS : now - KOL_MAX_ORDER_AGE_MS)
   );
   const url = KOL_DB + '/orders.json?orderBy=' +
     encodeURIComponent(JSON.stringify('statusUpdatedAt')) +
@@ -495,6 +502,7 @@ function kontrollerEpostBestillinger() {
       }
     }
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
+    props.setProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY, KOL_EMAIL_FIRST_SEEN_FIX_VERSION);
     try { kolEmailHeartbeat_(now, 'ok'); }
     catch (err) { Logger.log('E-postkontroll kunne ikke publiseres: ' + err.message); }
   } catch (err) {
