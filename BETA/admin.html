@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#eef3ee">
+  <title>KØL BETA — Restaurant (lokal test)</title>
+  <link rel="stylesheet" href="./css/app.css">
+  <script type="module" src="./src/admin/main.js"></script>
+</head>
+<body class="staff-page">
+  <div class="safety-strip" role="status">BETA · Restaurantens lokale testmodus · Ingen ekte SMS, e-post eller utskrift</div>
+  <header class="site-header shell">
+    <a href="./index.html" class="brand"><span class="brand-mark">KØL</span><span>GRILL & PIZZA <small>BETA</small></span></a>
+    <nav class="header-actions" aria-label="Hovedmeny">
+      <span class="connection-pill" title="Denne visningen er ikke koblet til Firebase"><span class="dot"></span> Lokal test</span>
+      <a href="./index.html" class="nav-link">Kundemeny</a>
+    </nav>
+  </header>
+  <main class="shell admin-main">
+    <div class="admin-head">
+      <div><div class="eyebrow">RESTAURANT · TESTDATA</div><h1>Bestillinger</h1><p class="lead">Mottak, Bekreft, Klar for henting og Fullført — uten eksterne tjenester.</p></div>
+      <button id="clearOrders" class="btn btn-secondary" type="button">Nullstill testdata</button>
+    </div>
+    <div class="staff-grid">
+      <section class="panel orders-pane" aria-label="Ordreliste"><div class="panel-heading"><h2>Alle testbestillinger</h2><span id="orderCount" class="count-badge">0</span></div><div id="orderList" class="order-list" aria-live="polite"></div></section>
+      <section class="panel details-pane" aria-label="Valgt bestilling"><div id="orderDetail" aria-live="polite"><div class="empty-state">Velg en testbestilling i listen.</div></div></section>
+    </div>
+  </main>
+  <footer class="footer shell">Alt lagres lokalt i denne nettleseren. Ingen Firebase eller kundevarsling er aktiv.</footer>
+</body>
+</html>
