@@ -2405,11 +2405,11 @@ function renderProfile() {
   }
 
     const live = getOrders();
-    const orders = mergedCustomerOrders();
+    const orders = activeCustomerOrders();
     if (el.profileOrdersMeta) {
       el.profileOrdersMeta.textContent = orders.length
         ? `${orders.length} ${orders.length === 1 ? 'bestilling' : 'bestillinger'}`
-        : 'Ingen tidligere bestillinger';
+        : 'Ingen aktive bestillinger';
     }
     el.orderList.innerHTML = orders.length
       ? orders
@@ -2466,7 +2466,7 @@ return `
   </details>`;
           })
           .join('')
-      : '<p class="hint">Ingen tidligere bestillinger.</p>';
+      : '<p class="hint">Ingen aktive bestillinger.</p>';
   }
 
   function reorder(orderId) {
