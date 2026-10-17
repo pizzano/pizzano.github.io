@@ -96,31 +96,13 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
   autentiserings-/migreringsplan.
 
 
-## 100 levende bestillinger og separat arkiv (2026-10-16)
+## 100 nyeste bestillinger uten arkiv (2026-10-17)
 
-- `/orders` inneholder de **100 nyeste ordrene** samt eldre åpne
-  bestillinger som ikke trygt kan fjernes. `/orderArchive/{orderId}`
-  lagrer en separat, lettere historikk for arkiverte ordre.
-- `js/orders-archive.js` kjører **bare mens restaurantens adminside er
-  åpen/aktiv**, i små bolker. Dette er ikke en 24/7 Firebase-jobb.
-- Ingen ordre slettes uten at hele arkivkopien er skrevet og lest tilbake,
-  og ETag-betinget DELETE viser at ordren ikke har endret seg underveis.
-- Kun `fullfort`, `avvist` eller `klar` med `staffReadyAt`, minst
-  **72 timer etter siste statusendring**, kan arkiveres. Ventende og
-  bekreftede ordre beholdes selv om antallet midlertidig overstiger 100.
-- Bekreftede pizzaer krever at `pizzaBonus/{telefon}/events/{orderId}`
-  allerede finnes før ordren kan arkiveres.
-- Bestillingsgodkjenning benytter nå ETag på **én** `/orders/{id}`
-  i stedet for databaseroten. Den separate `js/loyalty-sync.js`
-  oppdaterer bonusen etter lagret aksept uten å holde godkjenningsknappen
-  opptatt. Oppstart/oppdatering leser kun meny og `/orders`; ingen
-  rotlesing som automatisk inkluderer hele arkivet.
-- Systemet kan beholde mer enn 100 live-ordre hvis det ikke finnes nok
-  arkiverbare ordre, eller hvis admin er lukket. En uavhengig serverjobb
-  krever separat utrulling via Firebase.
-- **Personvern:** Kunde-/telefondata lagres i arkivet. RTDB-regler
-  som tillater global `.read`/`.write` er ikke sikre for kundeinformasjon.
-  Innfør autentisering og ordentlig tilgangskontroll før arkivet tilbys
-  som oppslagstjeneste for kunder. Ikke del hele arkivtreet.
-- Kundens `Mine bestillinger` bruker fortsatt egne lokalt lagrede ordre;
-  historikk fra andre enheter krever fremtidig autorisert oppslag.
+- `/orders` beholder **de 100 nyeste bestillingene**. Bestillinger eldre enn de 100 nyeste slettes **permanent** fra Firebase når de er trygt avsluttet. Det opprettes **ikke noe nytt ordrearkiv**.
+- Oppryddingen ligger i `js/orders-archive.js` (eldre filnavn beholdt for kompatibilitet), og kjører **bare når restaurantens adminside er åpen/aktiv**, i bolker på inntil 12, samt ved oppstart og omtrent hvert femte minutt. Ingen 24/7-serverjobb er satt opp.
+- `/orderArchive` er en gammel arkivstruktur. Adminsiden forsøker å slette denne **én gang per sideøkt** når den er tilgjengelig. Ved nettverksfeil prøver den igjen senere. Det foretas ingen ny kopiering til arkivet.
+- Sikring: De 100 nyeste og alle åpne ordrer beholdes; bare `fullfort`, `avvist` eller `klar` (med `staffReadyAt`) som er minst **72 timer etter siste statusendring**, kan slettes. Dette beskytter pågående bestillinger og gir SMS-/e-postpollere tid til å lese statusendringer.
+- Slettingen sjekker ordren på nytt og benytter ETag-betinget DELETE; om en ordre endrer seg underveis, beholdes den. Bekreftede pizzabonuspoeng må være lagret under `pizzaBonus/{telefon}/events/{orderId}` før kilden fjernes.
+- Det kan midlertidig være **mer enn 100** ordrer dersom ingen kan slettes trygt eller restaurantens adminside er lukket.
+- Kundenes `Mine bestillinger` viser nå bare **aktive/relevante** bestillinger (inkludert statusvarsler som ennå ikke er lukket), ikke historisk ordreoversikt. Lokale ordresnapshots brukes fortsatt for aktiv ordresporing og bonus-fallback, men gammel historikk vises ikke.
+- **Viktig:** Sletting fra Firebase er irreversibel. Bilag og salgsdokumentasjon som er nødvendig for bokføring må ivaretas i et separat godkjent regnskaps-/kassesystem.
