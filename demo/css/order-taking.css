@@ -619,6 +619,17 @@ html[data-theme="dark"] .orders-page .orders-phone-indicator.is-offline {color:#
  content:'';position:absolute;top:9px;right:8px;width:8px;height:8px;
  border:2px solid #f3f8fb;border-radius:50%;background:#09af6e;
 }
+/* Three clear SMS states without requiring an SMS in the last 24 hours. */
+.orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator:is(.is-pending,.is-error)::after{
+ content:'';position:absolute;top:9px;right:8px;width:8px;height:8px;
+ border:2px solid #f3f8fb;border-radius:50%;background:#e5a339;
+}
+.orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator.is-error::after{background:#db5757}
+@media(max-width:510px){
+ .orders-page .orders-top-actions.orders-lightbar .orders-sms-indicator:is(.is-pending,.is-error)::after{
+  width:6px;height:6px;top:3px;right:2px;
+ }
+}
 .orders-page .orders-top-actions.orders-lightbar .orders-light:hover{transform:translateY(-1px);box-shadow:var(--ot-shadow-hover)}
 .orders-page .orders-top-actions.orders-lightbar .orders-light:active{transform:translateY(1px)}
 .orders-page .orders-top-actions.orders-lightbar .orders-light-tooltip{
