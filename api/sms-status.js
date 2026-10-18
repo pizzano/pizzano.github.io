@@ -19,6 +19,10 @@ module.exports = async function handler(req, res) {
     smsEnabled: false,
     gatewayOnline: false,
     lastGatewayCheckAt: null,
+    liveConfigured: null,
+    pollHealthy: false,
+    statusReachable: false,
+    lastSuccessfulPollAt: null,
   });
 
   const address = String(process.env.KOL_SMS_HEALTH_URL || '').trim();
@@ -42,11 +46,19 @@ module.exports = async function handler(req, res) {
     const date = Date.parse(String(result.lastGatewayCheckAt || ''));
     const age = Date.now() - date;
     const recentlyPolled = Number.isFinite(age) && age >= 0 && age < 90000;
-    // If polling is stale, do not imply that the sender remains active.
+    // The one-minute Google trigger may run late. This is a successful
+    // Firebase polling heartbeat, NOT proof that an SMS was delivered.
+    const pollHealthy = Number.isFinite(age) && age >= 0 && age < 180000;
+    const liveConfigured = result.smsEnabled === true;
+    // Keep previous response fields for backward compatibility.
     return res.status(200).json({
-      smsEnabled: result.smsEnabled === true && recentlyPolled,
+      smsEnabled: liveConfigured && recentlyPolled,
       gatewayOnline: result.gatewayOnline === true && recentlyPolled,
       lastGatewayCheckAt: recentlyPolled ? new Date(date).toISOString() : null,
+      liveConfigured,
+      pollHealthy,
+      statusReachable: true,
+      lastSuccessfulPollAt: Number.isFinite(date) ? new Date(date).toISOString() : null,
     });
   } catch (_) {
     // Avoid leaking Google error pages, Script URLs or credentials.
