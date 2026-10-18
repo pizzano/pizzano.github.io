@@ -2386,12 +2386,10 @@ function renderOrderDetail(orderId) {
 }
 
 
-/* Reads only non-sensitive sender health info from an optional backend.
-   Green requires a fresh (<90s) verified gateway heartbeat AND enabled sending.
-   Manual SMS tests do not turn automatic-order SMS green. */
+/* Read-only SMS health indicator. Green means LIVE + recent successful
+   Firebase poll; it does not claim gateway or Android handset delivery. */
 let smsStatusFetching = false;
 
-/* No phone heartbeat or MacroDroid: Android battery/internet are checked manually. */
 function displaySmsStatus(mode, text, help) {
   const badge = document.getElementById('ordersSmsStatus');
   if (!badge) return;
@@ -2402,10 +2400,47 @@ function displaySmsStatus(mode, text, help) {
   badge.title = text + ': ' + help;
   badge.setAttribute('aria-label', 'SMS: ' + text);
 }
+
+// Interpret both the improved API and the old response during rollout.
+function classifySmsHealth(status, now = Date.now()) {
+  if (!status || status.statusReachable === false) {
+    return ['error', 'SMS-kontroll frakoblet',
+      'Kan ikke kontrollere Apps Script. En tidligere sendt SMS bekrefter ikke nåværende drift.'];
+  }
+  const lastPoll = Date.parse(String(status.lastSuccessfulPollAt || status.lastGatewayCheckAt || ''));
+  const age = now - lastPoll;
+  const freshPoll = Number.isFinite(age) && age >= -60000 && age < 180000;
+  if (status.liveConfigured === true) {
+    if (status.pollHealthy === true && freshPoll) {
+      return ['active', 'SMS aktiv',
+        'LIVE og siste automatiske Firebase-kontroll OK. Traccar og mobilens forbindelse verifiseres først ved sending.'];
+    }
+    if (!Number.isFinite(lastPoll)) {
+      return ['pending', 'SMS-kontroll venter',
+        'LIVE er aktivert, men ingen vellykket automatisk kontroll er registrert ennå.'];
+    }
+    return ['error', 'SMS-kontroll frakoblet',
+      'LIVE er aktivert, men siste vellykkede kontroll er for gammel. Sjekk Apps Script-utløseren.'];
+  }
+  if (status.liveConfigured === false) {
+    return ['error', 'SMS ikke LIVE',
+      'Automatisk SMS er deaktivert eller står i TEST-modus.'];
+  }
+  // Legacy Vercel response: smsEnabled means LIVE and recent polling.
+  // Never depend on gatewayOnline, which requires a recent sent SMS.
+  if (status.smsEnabled === true && freshPoll) {
+    return ['active', 'SMS aktiv',
+      'LIVE og siste automatiske kontroll OK. En sendt SMS kreves ikke for grønt lys.'];
+  }
+  return ['pending', 'SMS-status ubekreftet',
+    'Venter på bekreftet LIVE-status fra kontrollserveren.'];
+}
+
 async function refreshSmsStatus() {
   const configured = String(window.BESTILL_CONFIG?.smsStatusUrl || '').trim();
   if (!configured) {
-    displaySmsStatus('pending','SMS ikke aktiv','Traccar sendte en test-SMS, men automatisk ordrebekreftelse er ikke koblet til.');
+    displaySmsStatus('error', 'SMS ikke konfigurert',
+      'Ingen SMS-statusadresse er konfigurert.');
     return;
   }
   if (smsStatusFetching) return;
@@ -2422,27 +2457,20 @@ async function refreshSmsStatus() {
       response = await fetch(endpoint.href, {cache:'no-store',credentials:'omit',signal:controller.signal});
     } finally { clearTimeout(timeout); }
     if (!response.ok) throw new Error('SMS status failure');
-    const status = await response.json();
-    const age = Date.now() - Date.parse(String(status?.lastGatewayCheckAt || ''));
-    const online = status?.smsEnabled === true && status?.gatewayOnline === true
-      && Number.isFinite(age) && age >= 0 && age < 90000;
-    if (online) {
-      displaySmsStatus('active','SMS API aktiv','Apps Script kjører i LIVE og Traccar har nylig godtatt en SMS. Samsungs strøm og internett kontrolleres ikke fra panelet.');
-    } else if (status?.smsEnabled === true) {
-      displaySmsStatus('error','SMS frakoblet','SMS er aktivert, men tilkoblingen er ikke bekreftet.');
-    } else {
-      displaySmsStatus('pending','SMS ikke aktiv','Automatisk SMS er ennå ikke aktivert.');
-    }
+    displaySmsStatus(...classifySmsHealth(await response.json()));
   } catch (_) {
-    displaySmsStatus('error','SMS utilgjengelig','Kunne ikke kontakte SMS-statusserveren.');
+    displaySmsStatus('error', 'SMS-kontroll frakoblet',
+      'Kunne ikke kontakte SMS-statusserveren.');
   } finally { smsStatusFetching = false; }
 }
 void refreshSmsStatus();
-window.setInterval(refreshSmsStatus, 120000);
+window.setInterval(refreshSmsStatus, 60000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void refreshSmsStatus();
 });
-
+document.getElementById('ordersSmsStatus')?.addEventListener('click', () => {
+  void refreshSmsStatus();
+});
 
 /* E-mail sender health is independent of SMS and printer connectivity.
    Green only after a RECENT poller heartbeat plus MailApp authorization/quota.
