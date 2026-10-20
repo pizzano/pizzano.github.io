@@ -63,7 +63,22 @@ function categories(){
   .concat(catalog.categories.map(c=>({id:c.id,name:c.name,icon:c.icon})));
  cats.innerHTML=blocks.map(c=>'<button type="button" class="category-button" data-action="category" data-id="'+e(c.id)+'"><span class="cat-icon">'+e(c.icon)+'</span><span class="cat-name">'+e(c.name)+'</span></button>').join('');
  cats.scrollLeft=previousScroll;
+ lastActiveCategory='';
  requestAnimationFrame(updateCategoryIndicator);
+}
+let lastActiveCategory='';
+function activateCategory(id,center=true){
+ if(!id)return;
+ const buttons=Array.from(cats.querySelectorAll('.category-button'));
+ const active=buttons.find(button=>button.dataset.id===id);
+ buttons.forEach(button=>button.classList.toggle('active',button===active));
+ if(active&&center){
+  const left=active.offsetLeft-(cats.clientWidth-active.offsetWidth)/2;
+  const max=Math.max(0,cats.scrollWidth-cats.clientWidth);
+  const target=Math.min(max,Math.max(0,left));
+  cats.scrollTo({left:target,behavior:'smooth'});
+ }
+ lastActiveCategory=id;
 }
 function menuCard(p){
  const allergen=state.allergens&&p.allergens?.length?'<p class="product-allergens">Inneholder '+e(p.allergens.join(', '))+'</p>':'';
@@ -317,7 +332,7 @@ function onAction(action,target){
  if(action==='category'){
   if(id==='search'){vs.search=true;vs.query='';render();$('menuSearch')?.focus();return;}
   if(id==='popular'&&!catalog.popularIds.length)return;
-  cats.querySelectorAll('.category-button').forEach(button=>button.classList.toggle('active',button.dataset.id===id));
+  activateCategory(id);
   document.getElementById('cat-'+id)?.scrollIntoView({behavior:'smooth',block:'start'});return;
  }
  if(action==='restaurant-info'){openInfo();return;}
@@ -434,9 +449,7 @@ main.addEventListener('scroll',()=>{
   if(block.getBoundingClientRect().top<=offset)active=block.id.slice(4);
  }
  if(!active)active=main.querySelector('section[id^="cat-"]')?.id.slice(4)||'';
- if(active){
-  cats.querySelectorAll('.category-button').forEach(button=>button.classList.toggle('active',button.dataset.id===active));
- }
+ if(active&&active!==lastActiveCategory)activateCategory(active);
 },{passive:true});
 cats.addEventListener('scroll',updateCategoryIndicator,{passive:true});
 categoryIndicator?.addEventListener('click',event=>{
