@@ -1,7 +1,7 @@
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
- addLine,changeQuantity,clearCart,setProfile,escapeHtml,openState,
+ addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder
 } from './store.js?v=20261020-beta3';
 import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261020-beta3';
@@ -67,7 +67,11 @@ function categories(){
  cats.innerHTML=blocks.map(c=>'<button type="button" class="category-button '+(c.id==='search'?'category-search-button':'')+'" data-action="category" data-id="'+e(c.id)+'" aria-label="'+e(c.name)+'"><span class="cat-icon">'+iconSvg(c.iconKey)+'</span>'+(c.id==='search'?'':'<span class="cat-name">'+e(c.name)+'</span>')+'</button>').join('');
  cats.scrollLeft=previousScroll;
  lastActiveCategory='';
- requestAnimationFrame(updateCategoryIndicator);
+ requestAnimationFrame(()=>{
+  const selected=blocks.some(c=>c.id==='popular')?'popular':blocks.find(c=>c.id!=='search')?.id;
+  if(selected)activateCategory(selected,false);
+  updateCategoryIndicator();
+ });
 }
 let lastActiveCategory='';
 function activateCategory(id,center=true){
@@ -274,11 +278,11 @@ function infoMarkup(){
   '<div class="info-card"><span class="status-dot '+(!s.open?'closed':'')+'"></span> <strong style="display:inline">'+(s.open?'Åpent for bestilling · stenger '+e(s.closesAt):'Stengt nå')+'</strong></div>'+
   '<div class="info-section">BESTILLING & HENTING</div>'+
   '<div class="info-card"><span class="small">◷ &nbsp; Bestillingstider</span><strong>'+e(r.openTimes[(new Date().getDay()+6)%7]?.from||'14:00')+'–'+e(r.openTimes[(new Date().getDay()+6)%7]?.to||'22:00')+'</strong></div>'+
-  '<div class="info-card"><span class="small">♧ &nbsp; Estimert hentetid</span><strong>Ca. '+r.pickupMinutes+' min</strong><span class="small">Henting i restauranten</span></div>'+
+  '<div class="info-card"><span class="small">'+iconSvg('orders')+' Estimert hentetid</span><strong>Ca. '+r.pickupMinutes+' min</strong><span class="small">Henting i restauranten</span></div>'+
   '<div class="info-card"><span class="small">☰ &nbsp; Neste hentetider</span><div class="time-grid">'+pickupSlots().slice(0,8).map(t=>'<span class="time-pill">'+e(t)+'</span>').join('')+'</div></div>'+
   '<div class="info-section">PRAKTISK INFORMASJON</div>'+
   '<div class="info-card"><span class="small">⌖ &nbsp; Adresse</span><strong>'+e([r.address,r.postcode,r.city].filter(Boolean).join(', ')||'Adresse ikke angitt')+'</strong></div>'+
-  '<div class="info-card"><span class="small">♧ &nbsp; Telefon</span><strong>'+e(r.phone||'Telefon ikke angitt')+'</strong></div>'+
+  '<div class="info-card"><span class="small">'+iconSvg('phone')+' Telefon</span><strong>'+e(r.phone||'Telefon ikke angitt')+'</strong></div>'+
   '<div class="sheet-footer" style="position:relative;box-shadow:none;padding:7px 0">'+
    (r.phone?'<a class="button primary" style="flex:1" href="tel:'+e(r.phone.replace(/\s/g,''))+'">Ring restauranten</a>':'')+
    (r.address?'<a class="button" style="flex:1" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([r.address,r.city].join(', '))+'">Vis adresse</a>':'')+'</div>';
@@ -355,7 +359,12 @@ function onAction(action,target){
  }
  if(action==='add-product'){addSelectedProduct();return;}
  if(action==='clear-cart'){if(!state.cart.length)return;if(window.confirm('Vil du tømme handlekurven?')){clearCart();vs.step=1;render();}return;}
- if(action==='plus-line'||action==='delete-line'){changeQuantity(line,action==='plus-line'?1:-1);if(!state.cart.length)vs.step=1;render();return;}
+ if(action==='plus-line'||action==='delete-line'){
+  if(action==='delete-line')removeLine(line);
+  else changeQuantity(line,1);
+  if(!state.cart.length)vs.step=1;
+  render();return;
+ }
  if(action==='edit-line'){const l=state.cart.find(x=>x.id===line);if(l)openProduct(l.productId,l.id);return;}
  if(action==='continue-shop'||action==='go-menu'){setPage('menu');return;}
  if(action==='next-contact'){if(validateCart()){vs.step=2;render();scrollMainTop();}return;}
