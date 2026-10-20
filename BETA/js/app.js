@@ -3,7 +3,8 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,clearCart,setProfile,toggleFavorite,escapeHtml,openState,
  pickupSlots,sendOrder
-} from './store.js?v=20261020-beta2';
+} from './store.js?v=20261020-beta3';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261020-beta3';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -59,9 +60,11 @@ function updateCategoryIndicator(){
 }
 function categories(){
  const previousScroll=cats.scrollLeft;
- const blocks=[{id:'search',name:'Søk',icon:'⌕'},{id:'popular',name:'Mest bestilt',icon:'☆'}]
-  .concat(catalog.categories.map(c=>({id:c.id,name:c.name,icon:c.icon})));
- cats.innerHTML=blocks.map(c=>'<button type="button" class="category-button" data-action="category" data-id="'+e(c.id)+'"><span class="cat-icon">'+e(c.icon)+'</span><span class="cat-name">'+e(c.name)+'</span></button>').join('');
+ const popularHasItems=catalog.popularIds.some(id=>Boolean(findProduct(id)?.p));
+ const blocks=[{id:'search',name:'Søk',iconKey:'search'}]
+  .concat(popularHasItems?[{id:'popular',name:'Mest bestilt',iconKey:'popular'}]:[])
+  .concat(catalog.categories.filter(c=>c.products.length>0).map(c=>({id:c.id,name:c.name,iconKey:resolveCategoryIcon(c.iconKey,c.name)})));
+ cats.innerHTML=blocks.map(c=>'<button type="button" class="category-button '+(c.id==='search'?'category-search-button':'')+'" data-action="category" data-id="'+e(c.id)+'" aria-label="'+e(c.name)+'"><span class="cat-icon">'+iconSvg(c.iconKey)+'</span>'+(c.id==='search'?'':'<span class="cat-name">'+e(c.name)+'</span>')+'</button>').join('');
  cats.scrollLeft=previousScroll;
  lastActiveCategory='';
  requestAnimationFrame(updateCategoryIndicator);
@@ -99,9 +102,8 @@ function menuMarkup(){
  let html='<div class="status-card"><div class="status-main"><span class="status-dot '+(!status.open?'closed':'')+'"></span><div><strong>'+(!status.open?'Stengt nå':'Åpent nå')+'</strong><p class="small">Kun henting · '+(status.open?'stenger '+e(status.closesAt):'åpner '+e(status.opensAt))+'</p></div></div>'+
   '<button type="button" class="status-details" data-action="restaurant-info" aria-label="Restaurantinformasjon" title="Restaurantinformasjon">i</button>'+ 
   '<label class="toggle-inline">Vis allergener <input data-toggle="allergens" type="checkbox" '+(state.allergens?'checked':'')+' aria-label="Vis allergener"></label></div>';
- if(config.mode==='preview')html+='<div class="preview-banner">BETA forhåndsvisning · Menyen hentes fra Firebase. Bestillinger sendes ikke til restauranten.</div>';
  if(vs.search){
-  html+='<label class="search-box"><span style="font-size:24px">⌕</span><input id="menuSearch" type="search" placeholder="Søk pizza, kebab, burger…" value="'+e(vs.query)+'" autocomplete="off"><button class="round-close" data-action="close-search" type="button" style="width:30px;height:30px">×</button></label>';
+  html+='<label class="search-box"><span class="search-icon">'+iconSvg('search')+'</span><input id="menuSearch" type="search" placeholder="Søk pizza, kebab, burger…" value="'+e(vs.query)+'" autocomplete="off"><button class="round-close" data-action="close-search" type="button" style="width:30px;height:30px">×</button></label>';
   const q=vs.query.toLocaleLowerCase('nb-NO').trim();
   const results=catalog.categories.flatMap(c=>c.products.filter(p=>(p.name+' '+p.description+' '+c.name).toLocaleLowerCase('nb-NO').includes(q)));
   return html+(results.length?results.map(menuCard).join(''):'<div class="no-results">Ingen produkter funnet.</div>');
