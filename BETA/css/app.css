@@ -131,9 +131,9 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .cart-head{display:flex;align-items:center;justify-content:space-between;gap:7px;min-height:30px}
 .cart-product-heading{display:flex;align-items:center;gap:7px;min-width:0;flex:1;flex-wrap:wrap}
 .cart-product-name{min-width:0;color:var(--green);font-size:13px;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
-.cart-edit-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:28px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--green);font-size:10.5px;font-weight:750;white-space:nowrap}
+.cart-edit-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--green)}
 .cart-edit-btn:hover{border-color:var(--green);background:var(--subtle)}
-.cart-edit-btn svg{width:15px;height:15px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cart-edit-btn svg{width:17px;height:17px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cart-head strong{font-size:15px}
 .cart-qty{display:flex;align-items:center;overflow:hidden;border-radius:12px;background:var(--green);color:#fff;flex-shrink:0}
 .cart-qty button{border:0;color:inherit;background:transparent;width:31px;height:31px;font-size:18px;display:grid;place-items:center}.cart-qty button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
