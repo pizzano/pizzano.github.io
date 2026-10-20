@@ -4,7 +4,7 @@ import {
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder
 } from './store.js?v=20261021-beta4';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta6';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta10';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -228,7 +228,7 @@ function cartCard(line){
  if(line.comment)extras.push('<div class="cart-line cart-comment"><span>Kommentar: '+e(line.comment)+'</span></div>');
  return '<article class="cart-card cart-item">'+
   '<div class="cart-head"><div class="cart-product-heading"><strong class="cart-product-name">'+e(p.name)+'</strong>'+
-  '<button type="button" class="cart-edit-btn" data-action="edit-line" data-line="'+e(line.id)+'" aria-label="Rediger '+e(p.name)+'" title="Rediger produkt">'+iconSvg('edit')+'<span>Rediger</span></button></div>'+
+  '<button type="button" class="cart-edit-btn" data-action="edit-line" data-line="'+e(line.id)+'" aria-label="Rediger '+e(p.name)+'" title="Rediger produkt">'+iconSvg('edit')+'</button></div>'+
   '<div class="cart-qty"><button data-action="'+(line.quantity>1?'minus-line':'delete-line')+'" data-line="'+e(line.id)+'" aria-label="'+(line.quantity>1?'Reduser antall '+e(p.name):'Fjern '+e(p.name))+'" title="'+(line.quantity>1?'Reduser antall':'Fjern vare')+'">'+(line.quantity>1?'−':iconSvg('trash'))+'</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Legg til én '+e(p.name)+'">+</button></div></div>'+
   '<div class="cart-line cart-size"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
   extras.join('')+'<div class="cart-sum"><span>Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
@@ -342,7 +342,13 @@ function renderBottom(){
  bar.hidden=false;
  if(vs.step===1)bar.innerHTML=btn('Fortsett å handle','continue-shop')+(state.cart.length?btn('Neste: Kontakt','next-contact',true):'');
  else if(vs.step===2)bar.innerHTML=btn('Tilbake','previous-step')+btn('Neste: Hentetid','next-pickup',true);
- else bar.innerHTML=btn('Tilbake','previous-step')+btn(vs.submitting?'Sender…':'Send bestilling','send-order',true,vs.submitting||!state.cart.length);
+ else {
+  const modeChosen=vs.pickupMode==='asap'||(vs.pickupMode==='scheduled'&&Boolean(vs.pickupTime));
+  const validTime=vs.pickupMode!=='scheduled'||pickupSlots().includes(vs.pickupTime);
+  const canSubmit=!vs.submitting&&state.cart.length>0&&openState().open&&modeChosen&&validTime;
+  bar.innerHTML=btn('Tilbake','previous-step')+
+   btn(vs.submitting?'Sender…':'Send bestilling','send-order',true,!canSubmit);
+ }
 }
 function render(){
  header();if(!catalogReady()){bar.hidden=true;return;}
@@ -378,8 +384,8 @@ async function submit(){
   vs.pickupIntroPending=true;
   render();return;
  }
- if(vs.pickupMode==='scheduled'&&!vs.pickupTime){
-  vs.pickupWarning='Velg et hentetidspunkt før du sender bestillingen.';
+ if(vs.pickupMode==='scheduled'&&(!vs.pickupTime||!pickupSlots().includes(vs.pickupTime))){
+  vs.pickupWarning='Velg et gyldig hentetidspunkt før du sender bestillingen.';
   vs.pickupIntroPending=false;
   render();return;
  }
