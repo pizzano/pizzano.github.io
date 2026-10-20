@@ -1,7 +1,7 @@
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
- addLine,changeQuantity,clearCart,setProfile,toggleFavorite,escapeHtml,openState,
+ addLine,changeQuantity,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder
 } from './store.js?v=20261020-beta3';
 import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261020-beta3';
@@ -113,9 +113,8 @@ function menuMarkup(){
  for(const c of catalog.categories)html+=sectionBlock(c.id,c.name,c.description,c.products);
  return html;
 }
-function sheetHeader(title,favorite=false){
- return '<div class="sheet-head"><button type="button" class="round-close" data-action="close-sheet" aria-label="Lukk">×</button><h2>'+e(title)+'</h2>'+
-  (favorite?'<button type="button" class="round-close" data-action="favorite" aria-label="Favoritt">'+(state.favorites.includes(draft?.productId)?'♥':'♡')+'</button>':'<span style="width:42px"></span>')+'</div>';
+function sheetHeader(title){
+ return '<div class="sheet-head"><button type="button" class="round-close" data-action="close-sheet" aria-label="Lukk">×</button><h2>'+e(title)+'</h2><span class="sheet-head-spacer" aria-hidden="true"></span></div>';
 }
 function showSheet(html){const firstOpen=sheet.hidden;sheet.innerHTML=html;backdrop.hidden=false;sheet.hidden=false;if(firstOpen){const scroll=sheet.querySelector('.sheet-scroll');if(scroll)scroll.scrollTop=0;}}
 function closeSheet(){sheet.hidden=true;backdrop.hidden=true;sheet.innerHTML='';draft=null;editLineId=null;}
@@ -138,7 +137,7 @@ function renderProductSheet(){
  if(!draft)return;const found=findProduct(draft.productId);if(!found)return;
  const p=found.p,oldScroll=sheet.querySelector('.sheet-scroll')?.scrollTop||0;
  const removable=(p.ingredientRules||[]).filter(x=>x.removable).map(x=>x.name);
- let body=sheetHeader(p.name,true)+photo(p,'sheet-photo')+
+ let body=sheetHeader(p.name)+photo(p,'sheet-photo')+
   '<div class="sheet-scroll"><div class="muted">'+e(p.description)+'</div>';
  if(config.restaurant.ingredientCustomizationEnabled&&removable.length){
   body+='<button class="ingredient-box" data-action="ingredients" type="button"><span><strong>⚙ &nbsp; Tilpass ingredienser</strong><span class="small block">'+(draft.removedIngredients.length?e(draft.removedIngredients.join(', '))+' fjernet':'Ingen endringer')+'</span></span><span>›</span></button>';
@@ -188,29 +187,34 @@ function cartCard(line){
  const extras=[];
  for(const g of applicableGroups(p,line.sizeId)){
   for(const id of line.options?.[g.id]||[]){
-   const o=g.options.find(x=>x.id===id);if(o)extras.push('<div class="cart-line"><strong>'+e(o.label)+'</strong><span>'+ (o.price?money(o.price):'inkludert')+'</span></div>');
+   const o=g.options.find(x=>x.id===id);
+   if(o)extras.push('<div class="cart-line cart-extra"><span>'+e(o.label)+'</span><span>'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</span></div>');
   }
  }
- if(line.removedIngredients?.length)extras.push('<div class="cart-line"><strong>Uten:</strong> '+e(line.removedIngredients.join(', '))+'</div>');
- if(line.comment)extras.push('<div class="cart-line">Kommentar: '+e(line.comment)+'</div>');
- return '<article class="cart-card"><div class="cart-head"><button class="brand-name" style="color:var(--green);font-size:15px" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
-  '<div class="cart-qty"><button data-action="delete-line" data-line="'+e(line.id)+'" aria-label="Fjern vare" title="Fjern vare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg></button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Flere">+</button></div></div>'+
-  '<div class="cart-line"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
-  extras.join('')+'<div class="cart-sum"><span class="muted">Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
+ if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span>Uten '+e(line.removedIngredients.join(', '))+'</span></div>');
+ if(line.comment)extras.push('<div class="cart-line cart-comment"><span>Kommentar: '+e(line.comment)+'</span></div>');
+ return '<article class="cart-card cart-item">'+
+  '<div class="cart-head"><button class="cart-product-link" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
+  '<div class="cart-qty"><button data-action="delete-line" data-line="'+e(line.id)+'" aria-label="Fjern '+e(p.name)+'" title="Fjern vare">'+iconSvg('trash')+'</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Legg til én '+e(p.name)+'">+</button></div></div>'+
+  '<div class="cart-line cart-size"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
+  extras.join('')+'<div class="cart-sum"><span>Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
 }
 function cartMarkup(){
- return steps()+'<div class="page-heading"><h2>Handlekurv</h2>'+btn('♧ Tøm handlekurv','clear-cart',false,false,'small-btn')+'</div>'+
- (state.cart.length?state.cart.map(cartCard).join('')+'<div class="cart-card total-card"><span>Totalt</span><span>'+money(cartTotal())+'</span></div>':
- '<div class="empty"><div class="emoji">🛒</div><h2>Handlekurven er tom</h2><p>Velg noe godt fra menyen.</p></div>');
+ const hasItems=state.cart.length>0;
+ return steps()+'<div class="page-heading"><h2>Handlekurv</h2>'+
+  (hasItems?btn(iconSvg('trash')+' Tøm handlekurv','clear-cart',false,false,'small-btn icon-button'):'')+'</div>'+
+  (hasItems?state.cart.map(cartCard).join('')+
+  '<div class="cart-card cart-grand-total"><strong>Totalt</strong><strong>'+money(cartTotal())+'</strong></div>':
+  '<div class="empty"><div class="emoji">🛒</div><h2>Handlekurven er tom</h2><p>Velg noe godt fra menyen.</p></div>');
 }
 function contactMarkup(profileMode=false){
  const data=state.profile;
  const form='<div class="panel"><h2>Kontaktinformasjon</h2>'+
-  '<label class="field-label" for="fullName"><span class="field-icon">♙</span> Hele navn <span class="optional">(påkrevd)</span></label>'+
+  '<label class="field-label" for="fullName"><span class="field-icon">'+iconSvg('user')+'</span> Hele navn <span class="optional">(påkrevd)</span></label>'+
   '<input class="input-field" id="fullName" autocomplete="name" maxlength="80" value="'+e(data.name)+'" placeholder="Navn og etternavn" required>'+
-  '<label class="field-label" for="phoneNumber"><span class="field-icon">♧</span> Mobilnummer <span class="optional">(påkrevd)</span></label>'+
+  '<label class="field-label" for="phoneNumber"><span class="field-icon">'+iconSvg('phone')+'</span> Mobilnummer <span class="optional">(påkrevd)</span></label>'+
   '<div class="phone-field"><span class="prefix">+47</span><input class="input-field" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required></div>'+
-  '<label class="field-label" for="emailAddress"><span class="field-icon">✉</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
+  '<label class="field-label" for="emailAddress"><span class="field-icon">'+iconSvg('mail')+'</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
   '<input class="input-field" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+
   '<p class="helper">Hvis du skriver inn e-post, sender restauranten informasjon om bestillingen når en ekte bestillingstjeneste er tilkoblet.</p>'+
   (profileMode?'<button class="button primary full mt20" data-action="save-profile">Lagre opplysninger</button>':'')+'</div>';
@@ -249,17 +253,19 @@ function bonusMarkup(){
 }
 function profileMarkup(){
  const p=state.profile,name=p.name||'Gjest';
- const initials=name.split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+ const initials=name.split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toUpperCase();
+ const r=config.restaurant;
+ const restaurantSummary=[r.address,r.postcode,r.city].filter(Boolean).join(', ')||r.phone||r.name;
  return '<div class="profile-summary"><div class="avatar">'+e(initials||'G')+'</div><div><h2>'+e(name)+'</h2><span class="muted">'+(p.phone?'+47 '+e(p.phone):'Ingen telefon registrert')+'</span></div></div>'+
   bonusMarkup()+
-  '<button class="menu-row" data-action="profile-edit"><span class="row-icon">♙</span><span class="grow"><strong>Rediger profil</strong><span class="small block">Navn, mobilnummer og e-post lagret</span></span>›</button>'+
-  '<button class="menu-row" data-action="orders"><span class="row-icon">▤</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' lokale testbestillinger':'Ingen aktive bestillinger')+'</span></span>›</button>'+
-  '<button class="menu-row" data-action="favorites"><span class="row-icon">♡</span><span class="grow"><strong>Mine favoritter</strong><span class="small block">'+state.favorites.length+' lagret</span></span>›</button>';
+  '<button class="menu-row" data-action="profile-edit"><span class="row-icon">'+iconSvg('user')+'</span><span class="grow"><strong>Rediger profil</strong><span class="small block">Navn, mobilnummer og e-post lagret</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
+  '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' lokale testbestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
+  '<button class="menu-row" data-action="restaurant-info"><span class="row-icon">'+iconSvg('store')+'</span><span class="grow"><strong>Restaurantinformasjon</strong><span class="small block">'+e(restaurantSummary)+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>';
 }
 function ordersMarkup(){
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
- return html+'<div class="preview-banner">Dette er lokale BETA-testbestillinger, ikke bestillinger hos restauranten.</div>'+
+ return html+'<p class="helper">Dette er lokale testbestillinger, ikke bestillinger hos restauranten.</p>'+
   state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Testbestilling</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
 }
 function infoMarkup(){
@@ -281,7 +287,7 @@ function openInfo(){showSheet(sheetHeader('Restaurantinformasjon')+'<div class="
 function renderBottom(){
  if(vs.page!=='cart'){bar.hidden=true;bar.innerHTML='';return;}
  bar.hidden=false;
- if(vs.step===1)bar.innerHTML=btn('Fortsett å handle','continue-shop')+btn('Neste: Kontakt','next-contact',true,!state.cart.length);
+ if(vs.step===1)bar.innerHTML=btn('Fortsett å handle','continue-shop')+(state.cart.length?btn('Neste: Kontakt','next-contact',true):'');
  else if(vs.step===2)bar.innerHTML=btn('Tilbake','previous-step')+btn('Neste: Hentetid','next-pickup',true);
  else bar.innerHTML=btn('Tilbake','previous-step')+btn(vs.submitting?'Sender…':config.mode==='preview'?'Opprett testbestilling':'Send bestilling','send-order',true,vs.submitting||!vs.pickupMode||(vs.pickupMode==='scheduled'&&!vs.pickupTime)||!openState().open);
 }
@@ -293,10 +299,7 @@ function render(){
  }else if(vs.page==='profile')main.innerHTML=profileMarkup();
  else if(vs.page==='profile-edit')main.innerHTML=contactMarkup(true);
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
- else if(vs.page==='favorites'){
-  main.innerHTML='<div class="page-heading"><h1>Mine favoritter</h1></div>'+
-  (state.favorites.length?state.favorites.map(id=>findProduct(id)?.p).filter(Boolean).map(menuCard).join(''):'<div class="empty">Ingen favoritter lagret ennå.</div>');
- }else if(vs.page==='confirmed'){
+ else if(vs.page==='confirmed'){ }else if(vs.page==='confirmed'){
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
    '<h2>Testbestilling opprettet</h2><p class="helper">BETA er i forhåndsvisning. Ingen bestilling, SMS eller e-post er sendt til restauranten.</p>'+
    '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
@@ -346,16 +349,13 @@ function onAction(action,target){
   const v=target.dataset.value||'';draft.removedIngredients=draft.removedIngredients.includes(v)?draft.removedIngredients.filter(x=>x!==v):[...draft.removedIngredients,v];
   draft.comment=$('productComment')?.value||draft.comment;renderProductSheet();return;
  }
- if(action==='favorite'){
-  toggleFavorite(draft.productId);renderProductSheet();toast('Favoritter oppdatert.');return;
- }
  if(action==='draft-plus'||action==='draft-minus'){
   draft.comment=$('productComment')?.value||draft.comment;
   draft.quantity=Math.max(1,Math.min(99,draft.quantity+(action==='draft-plus'?1:-1)));renderProductSheet();return;
  }
  if(action==='add-product'){addSelectedProduct();return;}
- if(action==='clear-cart'){clearCart();render();return;}
- if(action==='plus-line'||action==='delete-line'){changeQuantity(line,action==='plus-line'?1:-1);render();return;}
+ if(action==='clear-cart'){if(!state.cart.length)return;if(window.confirm('Vil du tømme handlekurven?')){clearCart();vs.step=1;render();}return;}
+ if(action==='plus-line'||action==='delete-line'){changeQuantity(line,action==='plus-line'?1:-1);if(!state.cart.length)vs.step=1;render();return;}
  if(action==='edit-line'){const l=state.cart.find(x=>x.id===line);if(l)openProduct(l.productId,l.id);return;}
  if(action==='continue-shop'||action==='go-menu'){setPage('menu');return;}
  if(action==='next-contact'){if(validateCart()){vs.step=2;render();scrollMainTop();}return;}
@@ -368,7 +368,6 @@ function onAction(action,target){
  if(action==='profile-edit'){setPage('profile-edit');return;}
  if(action==='save-profile'){if(storeForm()){toast('Opplysninger lagret.');setPage('profile');}return;}
  if(action==='orders'){setPage('orders');return;}
- if(action==='favorites'){setPage('favorites');return;}
 }
 document.addEventListener('click',event=>{
  const t=event.target.closest('[data-action]');if(!t)return;
@@ -417,7 +416,7 @@ backdrop.addEventListener('click',closeSheet);
 $('brandButton').addEventListener('click',()=>{vs.search=false;vs.query='';setPage('menu');});
 $('profileButton').addEventListener('click',()=>setPage('profile'));
 $('cartButton').addEventListener('click',()=>{vs.step=1;setPage('cart');});
-$('backButton').addEventListener('click',()=>{if(vs.page==='cart'&&vs.step>1){vs.step--;render();return;}if(vs.page==='profile-edit'||vs.page==='orders'||vs.page==='favorites'){setPage('profile');return;}setPage('menu');});
+$('backButton').addEventListener('click',()=>{if(vs.page==='cart'&&vs.step>1){vs.step--;render();return;}if(vs.page==='profile-edit'||vs.page==='orders'){setPage('profile');return;}setPage('menu');});
 $('themeButton').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';persist();render();});
 async function boot(){
  main.innerHTML='<div class="empty"><div class="emoji">🍕</div><h2>Henter menyen…</h2><p>Fra Firebase</p></div>';
