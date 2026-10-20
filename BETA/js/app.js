@@ -3,7 +3,7 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,clearCart,setProfile,toggleFavorite,escapeHtml,openState,
  pickupSlots,sendOrder
-} from './store.js';
+} from './store.js?v=20261020-beta2';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
