@@ -28,7 +28,7 @@ function normalize(raw){
  // Cache only PUBLIC storefront settings, not old DEMO printer/admin configuration.
  const publicKeys=['restaurantName','restaurantLogo','phone','streetAddress','postalCode','city',
   'timezone','manualClosed','manualClosedUntil','prepMinutes','slotIntervalMinutes',
-  'ingredientCustomizationEnabled','weeklyHours','orderOpenTime','orderCloseTime'];
+  'ingredientCustomizationEnabled','weeklyHours','orderOpenTime','orderCloseTime','customerPalette'];
  const settings=Object.fromEntries(publicKeys.filter(key=>sourceSettings[key]!==undefined).map(key=>[key,sourceSettings[key]]));
  const allergens=asArray(raw.allergenCatalog).map(a=>typeof a==='string'?{id:a.toLowerCase(),label:a}:{id:str(a.id),label:str(a.label||a.id)}).filter(x=>x.id);
  const dictionary=allergens.length?allergens:fallbackAllergens;
@@ -77,6 +77,7 @@ function apply(data){
  r.pickupMinutes=Number(s.prepMinutes)||25;
  r.pickupIntervalMinutes=Number(s.slotIntervalMinutes)||15;
  r.ingredientCustomizationEnabled=s.ingredientCustomizationEnabled!==false;
+ if(['reference','lively','fresh','gourmet'].includes(str(s.customerPalette)))r.palette=s.customerPalette;
  const t=s.weeklyHours;
  if(Array.isArray(t)&&t.length===7){
   r.openTimes=t.map(d=>({enabled:d?.enabled!==false,from:str(d?.open)||'14:00',to:str(d?.close)||'22:00'}));
