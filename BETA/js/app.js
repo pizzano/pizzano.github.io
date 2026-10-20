@@ -3,8 +3,8 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder
-} from './store.js?v=20261020-beta3';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261020-beta3';
+} from './store.js?v=20261021-beta4';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta4';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
