@@ -158,7 +158,17 @@ function renderProductSheet(){
    g.options.map(o=>'<label class="option-label '+(values.includes(o.id)?'selected':'')+'"><input type="'+(g.multiple?'checkbox':'radio')+'" name="group-'+e(g.id)+'" data-field="option" data-group="'+e(g.id)+'" value="'+e(o.id)+'" '+(values.includes(o.id)?'checked':'')+'><span class="grow">'+e(o.label)+'</span><span class="small">'+(o.price?'+':'')+money(o.price)+'</span></label>').join('')+'</section>';
  }
  body+='<section class="option-group"><div class="option-heading">Kommentar <span class="option-hint">Valgfritt</span></div>'+
-  '<textarea id="productComment" class="input-field" maxlength="300" placeholder="Spesielle ønsker…">'+e(draft.comment||'')+'</textarea></section></div>';
+  '<textarea id="productComment" class="input-field" maxlength="300" placeholder="Spesielle ønsker…">'+e(draft.comment||'')+'</textarea></section>';
+ // Show product allergens even if the allergen visibility toggle is off on the menu.
+ // These values are already provided by the cached Firebase product catalog.
+ const allergens=[...new Set((p.allergens||[]).map(v=>String(v||'').trim()).filter(Boolean))];
+ body+='<section class="product-allergen-section" aria-label="Allergener">'+
+  '<h3 class="product-allergen-title">Allergener</h3>'+
+  (allergens.length?'<div class="product-allergen-tags">'+allergens.map(name=>
+   '<span class="product-allergen-tag">'+e(name)+'</span>').join('')+'</div>':
+   '<p class="product-allergen-missing">Allergeninformasjon er ikke oppgitt for dette produktet.</p>')+
+  '<p class="product-allergen-note">Ved allergi, kontakt restauranten før bestilling. Tilvalg kan inneholde andre allergener.</p>'+
+  '</section></div>';
  body+='<div class="sheet-footer"><div class="qty-control"><button data-action="draft-minus" aria-label="Mindre">−</button><strong>'+draft.quantity+'</strong><button data-action="draft-plus" aria-label="Mer">+</button></div>'+
   '<button class="button primary" data-action="add-product"><span>'+(editLineId?'Oppdater':'Legg til')+'</span><strong>'+sheetPrice()+'</strong></button></div>';
  showSheet(body);const scroll=sheet.querySelector('.sheet-scroll');if(scroll)scroll.scrollTop=oldScroll;
