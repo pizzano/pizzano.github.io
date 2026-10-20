@@ -3,8 +3,8 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta12';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta12';
+} from './store.js?v=20261021-beta13';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta13';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -335,10 +335,14 @@ function ordersMarkup(){
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
- const address=[r.address,r.postcode,r.city].filter(Boolean).join(', ');
- const locationQuery=[r.address,r.postcode,r.city].filter(Boolean).join(' ');
+ const street=String(r.address||'').trim();
+ const locality=[r.postcode,r.city].filter(Boolean).join(' ').trim();
+ const address=locality&&street.toLocaleLowerCase('nb-NO').includes(locality.toLocaleLowerCase('nb-NO'))
+  ?street:[street,locality].filter(Boolean).join(', ');
+ const locationQuery=address;
  const mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(locationQuery);
  const phone=String(r.phone||'').trim(),phoneUrl='tel:'+phone.replace(/[^\d+]/g,'');
+ const email=String(r.email||'').trim();
  // Respect the restaurant timezone, rather than the phone's local weekday.
  const now=new Date();
  const weekday=new Intl.DateTimeFormat('en-GB',{timeZone:r.timezone||'Europe/Oslo',weekday:'short'}).format(now).slice(0,3).toLowerCase();
@@ -347,19 +351,10 @@ function infoMarkup(){
  const dayName=new Intl.DateTimeFormat(config.locale,{timeZone:r.timezone||'Europe/Oslo',weekday:'long'}).format(now);
  const hours=today.enabled===false?'Stengt i dag':e((today.from||'14:00')+' – '+(today.to||'22:00'));
  const hoursNote='I dag · '+dayName.charAt(0).toUpperCase()+dayName.slice(1);
- const slots=pickupSlots().slice(0,7);
  // The decorative picture reuses a Firebase menu image already available in cache.
  const pizzaCategory=catalog.categories.find(c=>c.kind==='pizza');
  const hero=pizzaCategory?.products.find(p=>p.image)?.image||'';
  const brand=r.logoUrl?'<img class="restaurant-info-logo" src="'+e(r.logoUrl)+'" alt="" loading="lazy" decoding="async">':iconSvg('store');
- const payments=Array.isArray(r.paymentMethods)?r.paymentMethods:[];
- const paymentIcons=payments.map(method=>{
-  if(method==='visa')return '<span class="restaurant-payment-brand restaurant-payment-visa">VISA</span>';
-  if(method==='mastercard')return '<span class="restaurant-payment-brand restaurant-payment-mastercard" aria-label="Mastercard"><i></i><i></i></span>';
-  if(method==='cash'||method==='kontant')return '<span class="restaurant-payment-brand" title="Kontant">'+iconSvg('banknote')+'</span>';
-  if(method==='vipps')return '<span class="restaurant-payment-brand">Vipps</span>';
-  return '';
- }).filter(Boolean).join('');
  return '<div class="restaurant-info-hero">'+
   (hero?'<img class="restaurant-info-hero-photo" src="'+e(hero)+'" alt="" loading="lazy" decoding="async">':'')+
   '<div class="restaurant-info-brand"><span class="restaurant-info-brand-icon">'+brand+'</span><div class="restaurant-info-brand-copy">'+
@@ -381,12 +376,6 @@ function infoMarkup(){
     '<span class="restaurant-info-label">Estimert hentetid</span><strong>Ca. '+e(r.pickupMinutes)+' min</strong>'+
     '<span class="restaurant-info-hint">Henting i restauranten</span>'+
    '</div><span class="restaurant-info-decor">'+iconSvg('clock')+'</span></div>'+
-  '<div class="restaurant-info-feature restaurant-info-times">'+
-   '<div class="restaurant-info-times-title"><span class="restaurant-info-mini-icon">'+iconSvg('list')+'</span>'+
-   '<span class="restaurant-info-label">Neste hentetider</span></div>'+
-   (slots.length?'<div class="restaurant-info-time-list">'+slots.map((time,i)=>'<span class="restaurant-info-time'+(i===0?' is-next':'')+'">'+e(time)+'</span>').join('')+'</div>':
-   '<p class="restaurant-info-empty">Ingen hentetider tilgjengelig akkurat nå.</p>')+
-  '</div>'+
   '<div class="restaurant-info-section-title">Kontaktinformasjon</div>'+
   '<div class="restaurant-info-contact">'+
    '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('map-pin')+'</span>'+
@@ -397,9 +386,12 @@ function infoMarkup(){
     '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Telefon</span><strong>'+e(phone||'Telefon ikke angitt')+'</strong></div>'+
     (phone?'<a class="restaurant-info-outline-button" href="'+e(phoneUrl)+'" aria-label="Ring restauranten">'+iconSvg('phone')+'<span>Ring oss</span></a>':'')+
    '</div>'+
+   '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('mail')+'</span>'+
+    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">E-post</span><strong>'+e(email||'E-post ikke angitt')+'</strong></div>'+
+    (email?'<a class="restaurant-info-outline-button" href="mailto:'+e(email)+'" aria-label="Send e-post">'+iconSvg('mail')+'<span>Send e-post</span></a>':'')+
+   '</div>'+
    '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('credit-card')+'</span>'+
-    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Betaling</span><span class="restaurant-info-payment-text">'+e(r.paymentInfo||'Spør restauranten om betalingsmåter')+'</span></div>'+
-    (paymentIcons?'<div class="restaurant-info-payment-brands">'+paymentIcons+'</div>':'')+
+    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Betaling</span><span class="restaurant-info-payment-text">'+e(r.paymentInfo||'Kort og kontant')+'</span></div>'+
    '</div>'+
   '</div>'+
   '<div class="restaurant-info-actions">'+

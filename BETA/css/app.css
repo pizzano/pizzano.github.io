@@ -214,7 +214,7 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
  --ri-ink:var(--text);--ri-muted:var(--muted);--ri-accent:var(--green);
  --ri-surface:color-mix(in srgb,var(--subtle) 72%,var(--card));
  --ri-divider:color-mix(in srgb,var(--line) 45%,transparent);
- width:min(780px,calc(100vw - 28px));max-height:min(94dvh,960px);
+ width:min(560px,calc(100vw - 24px));max-height:min(94dvh,960px);
  top:50%;bottom:auto;transform:translate(-50%,-50%);
  border-radius:26px;background:var(--card);box-shadow:0 28px 80px rgba(12,35,23,.31);
 }
@@ -243,14 +243,6 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .restaurant-info-hint{display:block;color:var(--ri-muted);font-size:14px;line-height:1.45}
 .restaurant-info-decor{margin-left:auto;opacity:.34;color:var(--green)}
 .restaurant-info-decor svg{width:64px;height:64px}
-.restaurant-info-times{display:block;min-height:0;padding:19px 23px 18px}
-.restaurant-info-times-title{display:flex;align-items:center;gap:19px}
-.restaurant-info-mini-icon{width:47px;flex:0 0 47px;display:grid;place-items:center;color:var(--green)}
-.restaurant-info-mini-icon svg{width:29px;height:29px}
-.restaurant-info-time-list{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;margin-top:15px;padding-bottom:3px}
-.restaurant-info-time{flex:1 0 auto;min-width:65px;display:inline-flex;align-items:center;justify-content:center;border-radius:50px;border:1px solid var(--ri-divider);background:var(--card);padding:9px 13px;line-height:1.1;color:var(--green);font-size:13px;font-weight:800}
-.restaurant-info-time.is-next{background:var(--green);color:#fff;border-color:var(--green)}
-.restaurant-info-empty{font-size:13px;color:var(--ri-muted);margin:12px 0 0}
 .restaurant-info-section-title{border-top:1px solid var(--ri-divider);padding:20px 8px 13px;margin-top:17px}
 .restaurant-info-contact{padding:0 6px}
 .restaurant-info-contact-row{display:flex;align-items:center;gap:18px;min-height:99px;padding:13px 0;border-bottom:1px solid var(--ri-divider)}
@@ -261,13 +253,6 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .restaurant-info-payment-text{display:block;margin-top:7px;font-size:13px;color:var(--ri-muted);line-height:1.4}
 .restaurant-info-outline-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-width:123px;min-height:45px;padding:8px 13px;border-radius:30px;border:1px solid color-mix(in srgb,var(--green) 19%,var(--line));color:var(--green);background:var(--card);text-decoration:none;font-size:13px;font-weight:800}
 .restaurant-info-outline-button svg{width:19px;height:19px}
-.restaurant-info-payment-brands{display:flex;align-items:center;gap:6px}
-.restaurant-payment-brand{display:grid;place-items:center;min-width:39px;height:32px;border-radius:9px;padding:0 5px;background:var(--card);border:1px solid var(--ri-divider);color:var(--green);font-weight:900;font-size:12px}
-.restaurant-payment-brand svg{width:25px;height:25px}
-.restaurant-payment-visa{color:#18488d;font-style:italic}
-.restaurant-payment-mastercard{display:flex;align-items:center;justify-content:center;width:48px}
-.restaurant-payment-mastercard i{display:block;width:20px;height:20px;border-radius:50%;background:#ea2228}
-.restaurant-payment-mastercard i+i{margin-left:-8px;background:rgba(248,159,27,.9)}
 .restaurant-info-actions{display:flex;gap:12px;margin:19px 0 0}
 .restaurant-info-action{flex:1;display:flex;justify-content:center;align-items:center;gap:10px;min-height:61px;border-radius:16px;border:1px solid var(--ri-divider);padding:12px 15px;font-size:15px;font-weight:800;text-decoration:none;text-align:center}
 .restaurant-info-action svg{width:22px;height:22px;flex:0 0 22px}
@@ -275,7 +260,7 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .restaurant-info-action-secondary{background:color-mix(in srgb,var(--green) 10%,var(--card));color:var(--green)}
 .restaurant-info-outline-button:focus-visible,.restaurant-info-action:focus-visible,.restaurant-info-close:focus-visible{outline:3px solid var(--green);outline-offset:3px}
 @media(max-width:600px){
- .sheet.restaurant-info-sheet{width:100%;max-height:96dvh;top:auto;bottom:0;transform:translateX(-50%);border-radius:24px 24px 0 0}
+ .sheet.restaurant-info-sheet{width:calc(100vw - 12px);max-height:96dvh;top:auto;bottom:0;transform:translateX(-50%);border-radius:24px 24px 0 0}
  .restaurant-info-sheet .restaurant-info-hero{min-height:132px;padding:18px 55px 18px 16px}
  .restaurant-info-brand{gap:11px}
  .restaurant-info-brand-icon{height:56px;width:56px;flex-basis:56px;border-radius:16px}
@@ -293,12 +278,6 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
  .restaurant-info-feature-copy strong{font-size:20px;margin:4px 0 1px}
  .restaurant-info-hint{font-size:12px}
  .restaurant-info-decor svg{width:42px;height:42px}
- .restaurant-info-times{padding:14px 13px;min-height:0}
- .restaurant-info-times-title{gap:11px}
- .restaurant-info-mini-icon{width:37px;flex-basis:37px}
- .restaurant-info-mini-icon svg{width:22px;height:22px}
- .restaurant-info-time{min-width:61px;padding:8px 10px;font-size:12px}
- .restaurant-info-time-list{margin-top:11px;gap:6px}
  .restaurant-info-section-title{padding:15px 5px 8px;margin-top:11px}
  .restaurant-info-contact{padding:0 3px}
  .restaurant-info-contact-row{gap:11px;min-height:75px;padding:10px 0}
@@ -318,7 +297,6 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
  .restaurant-info-outline-button span{display:none}
  .restaurant-info-outline-button{width:40px;height:40px}
  .restaurant-info-hero-photo{opacity:.35}
- .restaurant-info-payment-brands{gap:3px}
 }
 .notice{position:fixed;left:50%;bottom:85px;transform:translateX(-50%);z-index:30;background:#263e2e;color:#fff;padding:12px 18px;border-radius:13px;max-width:min(90vw,440px);box-shadow:var(--shadow);text-align:center}
 .empty{text-align:center;color:var(--muted);padding:70px 20px}

@@ -26,12 +26,10 @@ const paths = Object.freeze({
   orders:'<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 3"/>',
   bag:'<rect x="4" y="7" width="16" height="15" rx="2"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/>',
-  list:'<path d="M5 6h14M5 12h14M5 18h14"/>',
   close:'<path d="M5 5l14 14M19 5 5 19"/>',
   map:'<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16"/>',
   'map-pin':'<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
   'credit-card':'<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M3 10h18"/>',
-  banknote:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M5 9h1M18 15h1"/>',
   chevron:'<path d="m9 5 7 7-7 7"/>',
 });
 const aliases=Object.freeze({

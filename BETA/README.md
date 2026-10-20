@@ -45,3 +45,10 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - İsim/logo/telefon/adres/açılış/kapanış/slots ve pickup süresi mevcut Firebase catalog önbelleğinden hesaplanır; yeni Firebase GET veya listener eklenmedi. Header fotoğrafı varsa aynı catalog içindeki pizza ürün resmini yeniden kullanır.
 - `siteSettings.paymentInfo` ve `siteSettings.paymentMethods` (isteğe bağlı dizi) diğer açık `siteSettings` alanlarıyla aynı mevcut GET üzerinden desteklenir. Tanımlı değilse ödeme yöntemi uydurulmaz.
 - `demo/` etkilenmez. Tüm tema renkleri CSS değişkenlerinden türetilir; eski info stilleri doğrudan kaldırıldı.
+
+## beta13: kompakt Restaurantinformasjon
+- Restaurantinformasjon holder seg innenfor hovedappens bredde (maks 560px), med 6px mobilmarg.
+- Neste hentetider-kort, ikon og ubrukt CSS er fjernet, sammen med betalingslogoer.
+- Betaling viser Kort og kontant via BETA-restauranten sin config; eventuelt siteSettings.paymentInfo kan overstyre uten ekstra Firebase-kall.
+- E-post vises fra samme Firebase siteSettings.email/contactEmail når registrert. Restaurantens BETA-config har en tenant-spesifikk e-post som fallback for eksisterende lokal cache.
+- Adresse dupliserer ikke postnummer og sted når de allerede finnes i streetAddress. Ingen endring i DEMO eller Firebase synkroniseringslogikk.

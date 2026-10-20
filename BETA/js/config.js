@@ -15,7 +15,7 @@ export const config={
     revalidateMs:5*60*1000
   },
   restaurant:{
-    name:'Restauranten', logo:'🍕',logoUrl:'',phone:'',address:'',city:'',postcode:'',paymentInfo:'',paymentMethods:[],
+    name:'Restauranten', logo:'🍕',logoUrl:'',phone:'',email:'skarnes.restaurant@gmail.com',address:'',city:'',postcode:'',paymentInfo:'Kort og kontant',
     pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',
     manualClosed:false,manualClosedUntil:0,
     openTimes: Array.from({length:7},()=>({enabled:true,from:'14:00',to:'22:00'})),
