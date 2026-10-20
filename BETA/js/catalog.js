@@ -24,7 +24,12 @@ async function getField(field){
 function readCache(){try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');return cached&&cached.menu&&cached.savedAt?cached:null;}catch{return null;}}
 function saveCache(obj){try{localStorage.setItem(cacheKey,JSON.stringify(obj));}catch{}}
 function normalize(raw){
- const settings=raw.siteSettings||raw.settings||{};
+ const sourceSettings=raw.siteSettings||raw.settings||{};
+ // Cache only PUBLIC storefront settings, not old DEMO printer/admin configuration.
+ const publicKeys=['restaurantName','restaurantLogo','phone','streetAddress','postalCode','city',
+  'timezone','manualClosed','manualClosedUntil','prepMinutes','slotIntervalMinutes',
+  'ingredientCustomizationEnabled','weeklyHours','orderOpenTime','orderCloseTime'];
+ const settings=Object.fromEntries(publicKeys.filter(key=>sourceSettings[key]!==undefined).map(key=>[key,sourceSettings[key]]));
  const allergens=asArray(raw.allergenCatalog).map(a=>typeof a==='string'?{id:a.toLowerCase(),label:a}:{id:str(a.id),label:str(a.label||a.id)}).filter(x=>x.id);
  const dictionary=allergens.length?allergens:fallbackAllergens;
  const label=id=>dictionary.find(a=>a.id.toLowerCase()===str(id).toLowerCase()||a.label.toLowerCase()===str(id).toLowerCase())?.label||str(id);
@@ -95,9 +100,11 @@ export async function loadCatalog({force=false}={}){
       menuStatus={source:'firebase-verified',error:'',lastChecked:lastCheck};
       saveCache({...cached,checkedAt:lastCheck});return catalog;
     }
-    const fields=['sections','optionGroups','allergenCatalog','popularItemIds','siteSettings','settings'];
+    const fields=['sections','optionGroups','allergenCatalog','popularItemIds','siteSettings'];
     const values=await Promise.all(fields.map(getField));
     const data=Object.fromEntries(fields.map((f,i)=>[f,values[i]]));
+    // Legacy installations without siteSettings still work. One fallback request only.
+    if(!data.siteSettings)data.settings=await getField('settings');
     data.updatedAt=revision;
     const normalized=normalize(data);
     if(!normalized.categories.length)throw new Error('Firebase-menyen er tom.');
