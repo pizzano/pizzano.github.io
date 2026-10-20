@@ -18,6 +18,7 @@ const paths = Object.freeze({
   vegetarian:'<path d="M20 3C9 2 4 6 5 13c1 5 7 6 11 2 3-3 4-7 4-12Z M4 21 16 8M9 16v-5m0 5h5"/>',
   meal:'<circle cx="14" cy="12" r="7"/><path d="M2 3v5a2 2 0 0 0 4 0V3M4 3v18M22 3v18"/>',
   trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/>',
+  edit:'<path d="M12 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7"/><path d="M16 4a2.1 2.1 0 0 1 3 3l-9.5 9.5-4 1 1-4L16 4Z"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   phone:'<path d="M7 3H4.5A2 2 0 0 0 2.5 5.2 18 18 0 0 0 18.8 21.5 2 2 0 0 0 21 19.5V17l-5-2.2-2.4 2.2a16 16 0 0 1-6.6-6.6L9.2 8z"/>',
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/>',
