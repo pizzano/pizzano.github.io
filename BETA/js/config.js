@@ -19,7 +19,7 @@ export const config={
     pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',
     manualClosed:false,manualClosedUntil:0,
     openTimes: Array.from({length:7},()=>({enabled:true,from:'14:00',to:'22:00'})),
-    themes:{primary:'#3e6649',dark:'#24332a',page:'#f5f7f1'},
+    palette:'reference', // reference | lively | fresh | gourmet (also settable via Firebase customerPalette).
     loyalty:{enabled:true,buy:10,free:1,eligibleCategory:'pizza'},
     showAllergensByDefault:true,
     ingredientCustomizationEnabled:true
