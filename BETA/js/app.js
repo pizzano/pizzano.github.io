@@ -104,7 +104,6 @@ function sectionBlock(id,title,note,items){
 function menuMarkup(){
  const status=openState(),r=config.restaurant;
  let html='<div class="status-card"><div class="status-main"><span class="status-dot '+(!status.open?'closed':'')+'"></span><div><strong>'+(!status.open?'Stengt nå':'Åpent nå')+'</strong><p class="small">Kun henting · '+(status.open?'stenger '+e(status.closesAt):'åpner '+e(status.opensAt))+'</p></div></div>'+
-  '<button type="button" class="status-details" data-action="restaurant-info" aria-label="Restaurantinformasjon" title="Restaurantinformasjon">i</button>'+ 
   '<label class="toggle-inline">Vis allergener <input data-toggle="allergens" type="checkbox" '+(state.allergens?'checked':'')+' aria-label="Vis allergener"></label></div>';
  if(vs.search){
   html+='<label class="search-box"><span class="search-icon">'+iconSvg('search')+'</span><input id="menuSearch" type="search" placeholder="Søk pizza, kebab, burger…" value="'+e(vs.query)+'" autocomplete="off"><button class="round-close" data-action="close-search" type="button" style="width:30px;height:30px">×</button></label>';
@@ -167,7 +166,6 @@ function renderProductSheet(){
   (allergens.length?'<div class="product-allergen-tags">'+allergens.map(name=>
    '<span class="product-allergen-tag">'+e(name)+'</span>').join('')+'</div>':
    '<p class="product-allergen-missing">Allergeninformasjon er ikke oppgitt for dette produktet.</p>')+
-  '<p class="product-allergen-note">Ved allergi, kontakt restauranten før bestilling. Tilvalg kan inneholde andre allergener.</p>'+
   '</section></div>';
  body+='<div class="sheet-footer"><div class="qty-control"><button data-action="draft-minus" aria-label="Mindre">−</button><strong>'+draft.quantity+'</strong><button data-action="draft-plus" aria-label="Mer">+</button></div>'+
   '<button class="button primary" data-action="add-product"><span>'+(editLineId?'Oppdater':'Legg til')+'</span><strong>'+sheetPrice()+'</strong></button></div>';
@@ -270,7 +268,7 @@ function contactMarkup(profileMode=false){
   '<div class="phone-field '+contactEntryClass('phoneNumber',data.phone)+'"><span class="prefix">+47</span><input class="input-field contact-input" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required>'+contactValidMark()+'</div>'+
   '<label class="field-label" for="emailAddress"><span class="field-icon">'+iconSvg('mail')+'</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
   '<div class="'+contactEntryClass('emailAddress',data.email)+'"><input class="input-field contact-input" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+contactValidMark()+'</div>'+
-  '<p class="helper contact-hint">Hvis du skriver inn e-post, sender restauranten informasjon om bestillingen når en ekte bestillingstjeneste er tilkoblet.</p>'+
+  '<p class="helper contact-hint">Oppgi e-post for å få kvittering og hentetid.</p>'+
   (profileMode?'<button class="button primary full mt20" data-action="save-profile">Lagre opplysninger</button>':'')+'</div>';
  return (profileMode?'<div class="page-heading"><div><span class="small">PROFIL</span><h1>Rediger profil</h1><p class="small mt8">Lagre kontaktopplysningene dine for raskere bestilling.</p></div></div>':steps())+form;
 }
