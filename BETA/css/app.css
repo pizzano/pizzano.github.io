@@ -131,10 +131,13 @@ textarea.input-field{resize:vertical;min-height:75px}
 .cart-qty button{border:0;color:inherit;background:transparent;width:31px;height:31px;font-size:18px;display:grid;place-items:center}.cart-qty button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cart-qty span{display:grid;place-items:center;background:var(--card);color:var(--text);height:31px;min-width:29px;font-size:12px;font-weight:800}
 .cart-line{display:flex;justify-content:space-between;align-items:center;gap:7px;background:var(--bg);border-radius:7px;margin:4px 0;padding:5px 8px;font-size:11px;line-height:1.25;min-height:25px}
-.cart-line strong{flex-shrink:0;font-size:11px}
+.cart-line > strong{flex-shrink:0;font-size:11px}
 .cart-size{margin-top:7px}
 .cart-extra{padding-top:4px;padding-bottom:4px}
-.cart-extra span:first-child{min-width:0;overflow-wrap:anywhere}.cart-extra span:last-child:not(:first-child){white-space:nowrap;color:var(--muted)}
+.cart-extra-description{min-width:0;overflow-wrap:anywhere}
+.cart-extra-key{font-weight:400;color:var(--muted)}
+.cart-extra-value{font-weight:750;color:var(--text)}
+.cart-extra-amount{flex-shrink:0;white-space:nowrap;font-weight:750;color:var(--text)}
 .cart-comment{background:var(--subtle);word-break:break-word}
 .cart-sum{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:6px;padding:6px 2px 0;font-size:11px;color:var(--muted)}
 .cart-sum strong{font-size:13px;color:var(--text)}
