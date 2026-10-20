@@ -233,16 +233,34 @@ function cartMarkup(){
   '<div class="cart-card cart-grand-total"><strong>Totalt</strong><strong>'+money(cartTotal())+'</strong></div>':
   '<div class="empty"><div class="emoji">🛒</div><h2>Handlekurven er tom</h2><p>Velg noe godt fra menyen.</p></div>');
 }
+/** Local format feedback only, not phone/email ownership verification. */
+function isContactValueValid(id,value){
+ const str=String(value??'').trim();
+ if(id==='fullName')return str.length>=2;
+ if(id==='phoneNumber')return /^\d{8}$/.test(str.replace(/\D/g,''));
+ if(id==='emailAddress')return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+ return false;
+}
+function contactEntryClass(id,value){
+ return 'contact-entry'+(isContactValueValid(id,value)?' is-valid':'');
+}
+function contactValidMark(){
+ return '<span class="contact-check" aria-hidden="true">✓</span>';
+}
+function refreshContactEntry(input){
+ const wrapper=input.closest('.contact-entry');
+ if(wrapper)wrapper.classList.toggle('is-valid',isContactValueValid(input.id,input.value));
+}
 function contactMarkup(profileMode=false){
  const data=state.profile;
- const form='<div class="panel"><h2>Kontaktinformasjon</h2>'+
+ const form='<div class="panel contact-panel"><h2>Kontaktinformasjon</h2>'+
   '<label class="field-label" for="fullName"><span class="field-icon">'+iconSvg('user')+'</span> Hele navn <span class="optional">(påkrevd)</span></label>'+
-  '<input class="input-field" id="fullName" autocomplete="name" maxlength="80" value="'+e(data.name)+'" placeholder="Navn og etternavn" required>'+
+  '<div class="'+contactEntryClass('fullName',data.name)+'"><input class="input-field contact-input" id="fullName" autocomplete="name" maxlength="80" value="'+e(data.name)+'" placeholder="Navn og etternavn" required>'+contactValidMark()+'</div>'+
   '<label class="field-label" for="phoneNumber"><span class="field-icon">'+iconSvg('phone')+'</span> Mobilnummer <span class="optional">(påkrevd)</span></label>'+
-  '<div class="phone-field"><span class="prefix">+47</span><input class="input-field" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required></div>'+
+  '<div class="phone-field '+contactEntryClass('phoneNumber',data.phone)+'"><span class="prefix">+47</span><input class="input-field contact-input" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required>'+contactValidMark()+'</div>'+
   '<label class="field-label" for="emailAddress"><span class="field-icon">'+iconSvg('mail')+'</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
-  '<input class="input-field" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+
-  '<p class="helper">Hvis du skriver inn e-post, sender restauranten informasjon om bestillingen når en ekte bestillingstjeneste er tilkoblet.</p>'+
+  '<div class="'+contactEntryClass('emailAddress',data.email)+'"><input class="input-field contact-input" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+contactValidMark()+'</div>'+
+  '<p class="helper contact-hint">Hvis du skriver inn e-post, sender restauranten informasjon om bestillingen når en ekte bestillingstjeneste er tilkoblet.</p>'+
   (profileMode?'<button class="button primary full mt20" data-action="save-profile">Lagre opplysninger</button>':'')+'</div>';
  return (profileMode?'<div class="page-heading"><div><span class="small">PROFIL</span><h1>Rediger profil</h1><p class="small mt8">Lagre kontaktopplysningene dine for raskere bestilling.</p></div></div>':steps())+form;
 }
@@ -441,6 +459,10 @@ document.addEventListener('change',event=>{
 });
 document.addEventListener('input',event=>{
  const t=event.target;
+ if(t.id==='fullName'||t.id==='phoneNumber'||t.id==='emailAddress'){
+  refreshContactEntry(t);
+  return;
+ }
  if(t.id==='menuSearch'){
   const start=t.selectionStart;vs.query=t.value;
   // Keep the input and focus while replacing only the results area.
