@@ -31,8 +31,9 @@ function toast(message) {
   toast.timer = setTimeout(() => { node.hidden = true; }, 2800);
 }
 function safeImage(raw) {
+  if (!raw || !String(raw).trim()) return '';
   try {
-    const url = new URL(String(raw || ''), location.href);
+    const url = new URL(String(raw).trim(), location.href);
     return ['https:', 'http:'].includes(url.protocol) ? url.href : '';
   } catch { return ''; }
 }
