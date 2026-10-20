@@ -4,8 +4,8 @@
  */
 export const config={
   tenantId:'kol-grill-pizza',
-  mode:'preview', // Preview orders remain LOCAL: absolutely no writes to DEMO/Firebase.
-  apiBase:'',      // Future secure, server-validated ordering service.
+  mode:'api',     // Live mode requires a configured backend. No direct browser writes to Firebase.
+  apiBase:'',      // Enter an authenticated server endpoint only when ready for live orders.
   locale:'nb-NO',
   currency:'NOK',
   menu:{
