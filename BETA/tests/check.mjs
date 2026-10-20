@@ -11,8 +11,8 @@ const script = readFileSync(resolve(root, 'js/app.js'), 'utf8');
 
 assert.match(html, /lang="nb"/, 'Norwegian locale');
 assert.match(html, /BETA · FORHÅNDSVISNING/, 'Beta warning must be visible');
-assert.match(html, /js\/app\.js\?v=beta-02/, 'Missing versioned BETA app import');
-assert.match(html, /css\/site\.css\?v=beta-02/, 'Missing versioned BETA stylesheet');
+assert.match(html, /js\/app\.js\?v=beta-03/, 'Missing versioned BETA app import');
+assert.match(html, /css\/site\.css\?v=beta-03/, 'Missing versioned BETA stylesheet');
 assert.doesNotMatch(html + css + script, /\/demo\/|\/DEMO\//i, 'No imported DEMO source allowed');
 assert.doesNotMatch(script, /new EventSource\s*\(|onValue\s*\(/, 'No browsing streams');
 assert.doesNotMatch(script, /method:\s*['"](PUT|POST|PATCH|DELETE)['"]/i, 'Read-only preview cannot write orders');
@@ -20,6 +20,9 @@ assert.doesNotMatch(script, /\/orders\.json/, 'Browsing must not download orders
 assert.doesNotMatch(css, /@import|fonts\.googleapis/, 'No external font request');
 assert.match(script, /getPrice\s*\(/, 'Missing price calculator');
 assert.match(script, /pickupTimes\s*\(/, 'Missing pickup logic');
+assert.match(script, /function saveProfile\(/, 'Missing profile editing');
+assert.match(script, /function menuCard\(/, 'Missing product rendering');
+assert.doesNotMatch(css, /!important/, 'Do not layer emergency CSS overrides');
 new Function(script);
 
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
@@ -28,7 +31,7 @@ const idSet = new Set(ids);
 for (const match of script.matchAll(/\$\('([^']+)'\)/g)) {
   assert(idSet.has(match[1]), 'Missing element #' + match[1]);
 }
-for (const name of ['menuView','cartView','contactView','pickupView','successView']) {
+for (const name of ['menuView','cartView','contactView','pickupView','profileView','successView']) {
   assert(idSet.has(name), 'Missing step ' + name);
 }
 
