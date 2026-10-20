@@ -124,8 +124,11 @@ textarea.input-field{resize:vertical;min-height:75px}
 .cart-card,.panel,.profile-summary{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:14px;box-shadow:var(--shadow);margin:10px 0}
 .cart-item{padding:9px 10px 8px;border-radius:14px;margin:6px 0;box-shadow:0 3px 10px rgba(33,57,38,.04)}
 .cart-head{display:flex;align-items:center;justify-content:space-between;gap:7px;min-height:30px}
-.cart-product-link{min-width:0;flex:1;text-align:left;background:none;border:0;padding:2px 0;color:var(--green);font-size:13px;font-weight:800;line-height:1.2;white-space:normal}
-.cart-product-link:hover{text-decoration:underline}
+.cart-product-heading{display:flex;align-items:center;gap:7px;min-width:0;flex:1;flex-wrap:wrap}
+.cart-product-name{min-width:0;color:var(--green);font-size:13px;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
+.cart-edit-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:28px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--green);font-size:10.5px;font-weight:750;white-space:nowrap}
+.cart-edit-btn:hover{border-color:var(--green);background:var(--subtle)}
+.cart-edit-btn svg{width:15px;height:15px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cart-head strong{font-size:15px}
 .cart-qty{display:flex;align-items:center;overflow:hidden;border-radius:12px;background:var(--green);color:#fff;flex-shrink:0}
 .cart-qty button{border:0;color:inherit;background:transparent;width:31px;height:31px;font-size:18px;display:grid;place-items:center}.cart-qty button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -135,8 +138,8 @@ textarea.input-field{resize:vertical;min-height:75px}
 .cart-size{margin-top:7px}
 .cart-extra{padding-top:4px;padding-bottom:4px}
 .cart-extra-description{min-width:0;overflow-wrap:anywhere}
-.cart-extra-key{font-weight:400;color:var(--muted)}
-.cart-extra-value{font-weight:750;color:var(--text)}
+.cart-extra-key{font-weight:750;color:var(--text)}
+.cart-extra-value{font-weight:400;color:var(--muted)}
 .cart-extra-amount{flex-shrink:0;white-space:nowrap;font-weight:750;color:var(--text)}
 .cart-comment{background:var(--subtle);word-break:break-word}
 .cart-sum{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:6px;padding:6px 2px 0;font-size:11px;color:var(--muted)}
