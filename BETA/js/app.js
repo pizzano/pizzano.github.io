@@ -186,15 +186,19 @@ function steps(){
  return '<div class="steps">'+['Kurv','Kontakt','Hentetid'].map((name,i)=>'<div class="step '+(i+1<vs.step?'done':i+1===vs.step?'active':'')+'"><span class="step-num">'+(i+1)+'</span>'+name+'</div>').join('')+'</div>';
 }
 /** Present selections in context: never show "Ja, takk!" without its question. */
-function cartOptionLabel(group,option){
+function cartOptionParts(group,option){
  const answer=String(option.label||'').trim();
  const prompt=String(group.title||'').trim()
   .replace(/\?/g,'')
   .replace(/^(velg|legg til)\s+/i,'')
+  .replace(/[\s:;,]+$/g,'')
   .replace(/\s+/g,' ')
   .trim();
- if(!prompt)return answer;
- return prompt+': '+answer;
+ return {prompt,answer};
+}
+function cartOptionLabel(group,option){
+ const {prompt,answer}=cartOptionParts(group,option);
+ return prompt?prompt+': '+answer:answer;
 }
 function cartCard(line){
  const f=findProduct(line.productId);if(!f)return '';
@@ -203,10 +207,16 @@ function cartCard(line){
  for(const g of applicableGroups(p,line.sizeId)){
   for(const id of line.options?.[g.id]||[]){
    const o=g.options.find(x=>x.id===id);
-   if(o)extras.push('<div class="cart-line cart-extra"><span>'+e(cartOptionLabel(g,o))+'</span><span>'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</span></div>');
+   if(o){
+    const {prompt,answer}=cartOptionParts(g,o);
+    const description=(prompt?'<span class="cart-extra-key">'+e(prompt)+':</span> ':'')+
+      '<strong class="cart-extra-value">'+e(answer)+'</strong>';
+    extras.push('<div class="cart-line cart-extra"><span class="cart-extra-description">'+description+'</span>'+
+      '<strong class="cart-extra-amount">'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</strong></div>');
+   }
   }
  }
- if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span>Uten '+e(line.removedIngredients.join(', '))+'</span></div>');
+ if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span class="cart-extra-description"><span class="cart-extra-key">Uten:</span> <strong class="cart-extra-value">'+e(line.removedIngredients.join(', '))+'</strong></span></div>');
  if(line.comment)extras.push('<div class="cart-line cart-comment"><span>Kommentar: '+e(line.comment)+'</span></div>');
  return '<article class="cart-card cart-item">'+
   '<div class="cart-head"><button class="cart-product-link" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
