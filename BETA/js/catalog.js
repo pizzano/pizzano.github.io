@@ -5,8 +5,8 @@
  * publish only their menu/settings under a tenant-scoped public menu path.
  * Local cached snapshot + tiny version check (<= once per 5m per tab).
  */
-import {config} from './config.js?v=20261020-beta3';
-import {resolveCategoryIcon} from './icons.js?v=20261020-beta3';
+import {config} from './config.js?v=20261021-beta4';
+import {resolveCategoryIcon} from './icons.js?v=20261021-beta4';
 export const catalog={version:'',allergens:[],optionGroups:{},categories:[],popularIds:[]};
 export let menuStatus={source:'none',error:'',lastChecked:0};
 const menu=config.menu;
