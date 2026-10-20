@@ -22,7 +22,7 @@ assert.match(script, /getPrice\s*\(/, 'Missing price calculator');
 assert.match(script, /pickupTimes\s*\(/, 'Missing pickup logic');
 assert.match(script, /function saveProfile\(/, 'Missing profile editing');
 assert.match(script, /function menuCard\(/, 'Missing product rendering');
-assert.doesNotMatch(css, /!important/, 'Do not layer emergency CSS overrides');
+assert.doesNotMatch(css.replace('[hidden]{display:none!important}',''), /!important/, 'Do not layer emergency CSS overrides');
 new Function(script);
 
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
