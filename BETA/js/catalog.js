@@ -5,7 +5,8 @@
  * publish only their menu/settings under a tenant-scoped public menu path.
  * Local cached snapshot + tiny version check (<= once per 5m per tab).
  */
-import {config} from './config.js?v=20261020-beta2';
+import {config} from './config.js?v=20261020-beta3';
+import {resolveCategoryIcon} from './icons.js?v=20261020-beta3';
 export const catalog={version:'',allergens:[],optionGroups:{},categories:[],popularIds:[]};
 export let menuStatus={source:'none',error:'',lastChecked:0};
 const menu=config.menu;
@@ -44,7 +45,7 @@ function normalize(raw){
  }
  const categories=asArray(raw.sections).filter(c=>c&&c.id).map(c=>{
    const kind=/pizza/i.test(c.title||'')?'pizza':/kebab/i.test(c.title||'')?'kebab':/burger/i.test(c.title||'')?'burger':'annet';
-   return {id:str(c.id),kind,name:str(c.title),icon:({pizza:'🍕',kebab:'🥙',burger:'🍔',annet:'🍴'})[kind],description:str(c.note),products:
+   return {id:str(c.id),kind,name:str(c.title),iconKey:resolveCategoryIcon(c.iconKey||c.icon||c.iconName||c.iconType,c.title),description:str(c.note),products:
     asArray(c.items).filter(p=>p&&p.id&&!p.hidden).map(p=>{
      const sizes=asArray(p.sizes).map(s=>({id:str(s.id),name:str(s.label||s.name||'Standard'),price:number(s.price),optionGroupIds:asArray(s.optionGroupIds)})).filter(s=>s.id);
      const idx=Math.min(sizes.length-1,Math.max(0,Number(p.defaultSizeIndex)||0));
