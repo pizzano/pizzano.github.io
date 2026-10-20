@@ -3,7 +3,7 @@
 'use strict';
 
 const DATABASE = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
-const KEY = { menu: 'kol_beta_menu_v1', cart: 'kol_beta_cart_v1', contact: 'kol_beta_contact_v1' };
+const KEY = { menu: 'kol_beta_menu_v1', cart: 'kol_beta_cart_v1', contact: 'kol_beta_contact_v1', favorites: 'kol_beta_favorites_v1', theme: 'kol_beta_theme_v1' };
 const $ = (id) => document.getElementById(id);
 const list = (value) => Array.isArray(value) ? value.filter(Boolean) : value && typeof value === 'object' ? Object.values(value).filter(Boolean) : [];
 const money = (value) => (Number(value) || 0).toLocaleString('nb-NO', { maximumFractionDigits: 2 }) + ' kr';
@@ -13,11 +13,13 @@ const writeLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringi
 const uniqueId = () => (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'beta-' + Date.now() + '-' + Math.random().toString(36).slice(2));
 const state = {
   catalog: null, cart: readLocal(KEY.cart, []), contact: readLocal(KEY.contact, {}),
+  favorites: readLocal(KEY.favorites, []), menuSource: 'root',
   category: 'all', search: '', allergens: true, view: 'menu', draft: null,
   editingId: null, pickupMode: '', pickupTime: '', lastFetch: 0,
   online: navigator.onLine !== false
 };
 if (!Array.isArray(state.cart)) state.cart = [];
+if (!Array.isArray(state.favorites)) state.favorites = [];
 const dayNames = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
 const required = (id) => $(id);
 
@@ -77,7 +79,8 @@ function normalizeCatalog(raw) {
     }))
   }));
   const allergens = new Map(list(source.allergenCatalog).map((x) => [String(x.id || ''), String(x.label || x.id || '')]));
-  return { settings, groups, sections, allergens, revision: Number(source.updatedAt) || 0 };
+  return { settings, groups, sections, allergens, revision: Number(source.updatedAt) || 0,
+    popularIds: list(source.popularItemIds).map(String) };
 }
 function itemById(id) {
   for (const section of state.catalog?.sections || []) {
@@ -147,45 +150,131 @@ function allergensHTML(item) {
   return '<div class="allergen-list">' + item.allergens.map((id) =>
     '<span class="allergen-tag">' + safe(state.catalog.allergens.get(id) || id) + '</span>').join('') + '</div>';
 }
+
+function isFavorite(id) { return state.favorites.includes(id); }
+function setFavorite(id) {
+  state.favorites = isFavorite(id) ? state.favorites.filter((x) => x !== id) : [...state.favorites,id];
+  writeLocal(KEY.favorites,state.favorites);
+  if (state.draft?.itemId === id) updateDialogFavorite(id);
+  renderMenu();
+}
+function updateDialogFavorite(id) {
+  $('dialogFavorite').setAttribute('aria-pressed',String(isFavorite(id)));
+  $('dialogFavorite').textContent = isFavorite(id) ? '♥' : '♡';
+  $('dialogFavorite').setAttribute('aria-label',isFavorite(id) ? 'Fjern fra favoritter' : 'Legg til favoritter');
+}
+function cardIcon(section) {
+  return logoEmoji(section);
+}
 function menuCard(item, section) {
   const sizes = item.sizes;
-  const min = sizes.length ? Math.min(...sizes.map((s) => s.price)) : 0;
+  const min = sizes.length ? Math.min(...sizes.map((size) => size.price)) : 0;
   const image = item.image || '';
   const body = '<button class="product-body" type="button" data-open="' + safe(item.id) + '">' +
     '<span class="product-name">' + safe(item.name) + '</span>' +
     '<p class="product-description">' + safe(item.description || item.ingredients || 'Tilberedt med gode råvarer') + '</p>' +
     '<div class="product-bottom"><strong class="product-price">' + (sizes.length > 1 ? 'Fra ' : '') + money(min) + '</strong>' +
-    (item.soldOut ? '<span class="product-tag">Utsolgt</span>' : sizes.length > 1 ? '<span class="product-tag">Flere størrelser</span>' : '') +
+    (item.soldOut ? '<span class="product-tag">Utsolgt</span>' : sizes.length > 1 ? '<span class="product-tag">Velg størrelse</span>' : '') +
     '</div>' + allergensHTML(item) + '</button>';
   const visual = image ? '<img class="product-image" loading="lazy" decoding="async" alt="" src="' + safe(image) + '">' :
-    '<div class="product-image product-placeholder" aria-hidden="true">' + logoEmoji(section) + '</div>';
-  return '<article class="product-card ' + (item.soldOut ? 'soldout' : '') + '">' +
-    body + visual + (item.soldOut ? '' : '<button type="button" class="product-add" data-open="' + safe(item.id) + '" aria-label="Tilpass ' + safe(item.name) + '">+</button>') + '</article>';
+    '<div class="product-image product-placeholder" aria-hidden="true">' + cardIcon(section) + '</div>';
+  return '<article class="product-card ' + (item.soldOut ? 'soldout' : '') + '">' + body + visual +
+    '<button class="favorite-small ' + (isFavorite(item.id) ? 'is-active' : '') + '" type="button" data-favorite="' +
+    safe(item.id) + '" aria-label="' + (isFavorite(item.id) ? 'Fjern fra favoritter: ' : 'Legg til favoritter: ') +
+    safe(item.name) + '" aria-pressed="' + isFavorite(item.id) + '">' + (isFavorite(item.id) ? '♥' : '♡') + '</button>' +
+    (item.soldOut ? '' : '<button type="button" class="product-add" data-open="' + safe(item.id) +
+    '" aria-label="Tilpass ' + safe(item.name) + '">+</button>') + '</article>';
 }
-function renderCategories() {
-  const sections = state.catalog?.sections || [];
-  $('categories').innerHTML = '<button class="category-chip" type="button" data-category="all" aria-pressed="' + (state.category === 'all') + '">Alle</button>' +
-    sections.filter((s) => s.items.some((i) => !i.hidden)).map((s) =>
-      '<button class="category-chip" type="button" data-category="' + safe(s.id) + '" aria-pressed="' + (state.category === s.id) + '">' + safe(s.title) + '</button>').join('');
+function displayBlocks() {
+  if (!state.catalog) return [];
+  const sections = state.catalog.sections;
+  const visible = sections.map((section) => ({section, products:visibleItems(section)}))
+    .filter((entry) => entry.products.length);
+  if (state.search) return visible.map(({section,products}) => ({
+    key:section.id,title:section.title,note:section.note,entries:products.map((item) => ({item,section}))
+  }));
+  const blocks = [];
+  const favorites = state.favorites.map(itemById).filter((ref) => ref && !ref.item.hidden);
+  if (favorites.length) blocks.push({key:'favorites',title:'Mine favoritter',
+    note:'Produkter du har lagret',entries:favorites});
+  const popular = state.catalog.popularIds.map(itemById).filter((ref) => ref && !ref.item.hidden);
+  if (popular.length) blocks.push({key:'popular',title:'Mest bestilt',
+    note:'Gjestenes favoritter',entries:popular});
+  return [...blocks,...visible.map(({section,products}) => ({
+    key:section.id,title:section.title,note:section.note,entries:products.map((item) => ({item,section}))
+  }))];
+}
+function categoryEmoji(block) {
+  if (block.key === 'favorites') return '♡';
+  if (block.key === 'popular') return '☆';
+  return logoEmoji({title:block.title});
+}
+function renderCategories(blocks = displayBlocks()) {
+  $('categories').innerHTML = '<button class="search-tab" type="button" data-toggle-search aria-pressed="' +
+    (!$('menuControls').hidden) + '" aria-label="Søk i menyen">' +
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg></button>' +
+    blocks.map((block) =>
+      '<button class="category-chip" type="button" data-category="' + safe(block.key) +
+      '" aria-pressed="' + (state.category === block.key) + '">' +
+      '<span class="category-icon" aria-hidden="true">' + categoryEmoji(block) + '</span>' +
+      '<span class="category-name">' + safe(block.title) + '</span></button>').join('');
+}
+function setActiveCategory(id, center = false) {
+  if (!id || state.category === id) return;
+  state.category = id;
+  let selected = null;
+  $('categories').querySelectorAll('[data-category]').forEach((button) => {
+    const active = button.dataset.category === id;
+    button.setAttribute('aria-pressed',String(active));
+    if (active) selected = button;
+  });
+  if (center && selected) selected.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+function scrollToCategory(id) {
+  const node = document.getElementById('blk_' + id);
+  if (!node) return;
+  setActiveCategory(id,true);
+  node.scrollIntoView({behavior:'smooth',block:'start'});
+}
+let spyScheduled = false;
+function spyMenu() {
+  if (spyScheduled || state.view !== 'menu') return;
+  spyScheduled = true;
+  requestAnimationFrame(() => {
+    spyScheduled = false;
+    if (state.view !== 'menu') return;
+    const blocks = $('menuSections').querySelectorAll('.menu-section');
+    let selected = blocks[0]?.dataset.block;
+    const edge = $('categoriesBar').getBoundingClientRect().bottom + 22;
+    for (const element of blocks) {
+      if (element.getBoundingClientRect().top <= edge) selected = element.dataset.block;
+    }
+    if (selected) setActiveCategory(selected,false);
+  });
 }
 function renderMenu() {
   if (!state.catalog) return;
-  renderCategories();
-  const sections = state.catalog.sections.filter((s) => state.category === 'all' || state.category === s.id);
-  const visible = sections.map((s) => ({section:s, products:visibleItems(s)})).filter((entry) => entry.products.length);
-  $('menuCount').textContent = visible.reduce((n, s) => n + s.products.length, 0) + ' produkter';
-  $('menuSections').innerHTML = visible.length ? visible.map(({section,products}) =>
-    '<section class="menu-section" aria-label="' + safe(section.title) + '"><div class="menu-section-heading"><h3>' + safe(section.title) +
-    '</h3><small>' + products.length + ' valg</small></div><div class="product-grid">' +
-    products.map((item) => menuCard(item,section)).join('') + '</div></section>').join('') :
-    '<div class="empty-state">Ingen produkter funnet. Prøv et annet søk.</div>';
+  const blocks = displayBlocks();
+  $('menuSections').innerHTML = blocks.length ? blocks.map((block) =>
+    '<section class="menu-section" data-block="' + safe(block.key) + '" id="blk_' + safe(block.key) +
+    '" aria-label="' + safe(block.title) + '">' +
+    '<div class="menu-section-heading"><div><h3>' + safe(block.title) + '</h3>' +
+    (block.note ? '<p class="menu-section-note">' + safe(block.note) + '</p>' : '') + '</div>' +
+    '<small>' + block.entries.length + ' valg</small></div><div class="product-grid">' +
+    block.entries.map(({item,section}) => menuCard(item,section)).join('') +
+    '</div></section>').join('') : '<div class="empty-state">Ingen produkter funnet.</div>';
+  if (!blocks.some((block) => block.key === state.category)) state.category = blocks[0]?.key || '';
+  renderCategories(blocks);
   updateCounters();
 }
+
 function showView(name) {
   if (!['menu', 'cart', 'contact', 'pickup', 'success'].includes(name)) name = 'menu';
   if (name !== 'menu' && name !== 'success' && !state.cart.length) name = 'menu';
   state.view = name;
+  document.body.dataset.view = name;
   for (const view of ['menu','cart','contact','pickup','success']) $(view + 'View').hidden = view !== name;
+  $('categoriesBar').hidden = name !== 'menu';
   if (name === 'cart') renderCart();
   if (name === 'contact') { populateContact(); renderSummary('contactSummary'); }
   if (name === 'pickup') { renderPickup(); renderSummary('pickupSummary'); }
@@ -217,6 +306,7 @@ function openProduct(itemId, editId) {
   $('dialogAllergens').innerHTML = allergensHTML(item);
   $('dialogComment').value = state.draft.comment;
   $('dialogError').hidden = true;
+  updateDialogFavorite(item.id);
   initializeDefaults(item);
   renderDraft();
   $('productOverlay').hidden = false;
@@ -448,13 +538,18 @@ function opening() {
     today,nowMinute:clock.minutes,settings};
 }
 function updateOpening() {
-  const result = opening();
-  $('headerStatus').classList.toggle('is-closed', !result.open);
-  $('headerStatus').innerHTML = '<span class="status-dot"></span>' + safe(result.label);
+  const current = opening();
+  $('headerStatus').textContent = current.label;
+  $('openDot').classList.toggle('is-closed', !current.open);
+  $('closedBanner').hidden = current.open;
+  $('closedMessage').textContent = state.catalog?.settings?.closedMessage ||
+    'Du kan se menyen, men restauranten tar ikke imot bestillinger akkurat nå.';
   const settings = state.catalog?.settings || {};
   $('heroOpening').textContent = settings.orderOpenTime && settings.orderCloseTime ?
-    'Åpningstid: ' + settings.orderOpenTime + '–' + settings.orderCloseTime : 'Henting i restauranten';
+    'Kun henting · Åpent ' + settings.orderOpenTime + '–' + settings.orderCloseTime :
+    'Kun henting · Betaling ved henting';
 }
+
 function pickupTimes() {
   const details = opening();
   if (!details.open) return [];
@@ -514,49 +609,83 @@ async function fetchValue(path) {
     return await response.json();
   } finally { clearTimeout(timer); }
 }
-async function retrieveMenu() {
-  let nested = await fetchValue('menu');
-  if (nested && list(nested.sections).length) return nested;
-  const fields = ['sections','optionGroups','allergenCatalog','settings','siteSettings','updatedAt'];
+async function retrieveMenu(source) {
+  // Never probe /menu.json when the live schema is rooted at /updatedAt.
+  if (source === 'nested') {
+    const nested = await fetchValue('menu');
+    if (nested && list(nested.sections).length) return nested;
+    throw new Error('Menydata mangler på /menu.');
+  }
+  const fields = ['sections','optionGroups','allergenCatalog','settings','siteSettings','popularItemIds','updatedAt'];
   const results = await Promise.all(fields.map((name) => fetchValue(name)));
-  const data = Object.fromEntries(fields.map((field,index) => [field,results[index]]));
+  const data = Object.fromEntries(fields.map((name,index) => [name,results[index]]));
   if (!list(data.sections).length) throw new Error('Menydata mangler.');
   return data;
 }
+
 function showCatalog(raw) {
   const previous = state.catalog?.revision;
   state.catalog = normalizeCatalog(raw);
   validCart();
   $('menuLoading').hidden = true;
   $('menuError').hidden = true;
-  if (previous !== state.catalog.revision) renderMenu();
-  else renderMenu();
+  renderMenu();
   updateOpening();
 }
-async function refreshCatalog() {
-  const cache = readLocal(KEY.menu,null);
-  if (cache?.data && cache.savedAt > Date.now() - 1000*60*60*24*7) {
-    try { showCatalog(cache.data); } catch {}
-  }
-  try {
-    // Menybesøk gjør ikke langvarig Firebase-abonnement. Én liten versjonssjekk.
-    let revision = Number(await fetchValue('updatedAt')) || 0;
-    if (!revision) revision = Number(await fetchValue('menu/updatedAt')) || 0;
-    if (!state.catalog || !revision || revision !== state.catalog.revision) {
-      const raw = await retrieveMenu();
-      showCatalog(raw);
-      writeLocal(KEY.menu,{savedAt:Date.now(),data:raw});
-    }
-    $('menuError').hidden = true;
-    state.lastFetch = Date.now();
-  } catch (error) {
-    $('menuLoading').hidden = true;
+let activeRefresh = null;
+async function refreshCatalog(force = false) {
+  if (activeRefresh) return activeRefresh;
+  activeRefresh = (async () => {
     if (!state.catalog) {
-      $('menuError').textContent = 'Kunne ikke hente menyen. Kontroller nettverket og prøv igjen.';
-      $('menuError').hidden = false;
-      $('menuSections').innerHTML = '<div class="empty-state"><button class="btn btn-secondary" type="button" id="retryMenu">Prøv igjen</button></div>';
-    } else toast('Viser sist lagrede meny. Ingen nettverkstilgang.');
-  }
+      const cache = readLocal(KEY.menu,null);
+      if (cache?.data && cache.data.sections) {
+        try { state.menuSource = cache.source || 'root'; showCatalog(cache.data); } catch {}
+      }
+    }
+    if (!force && state.lastFetch && Date.now() - state.lastFetch < 60000) return;
+    try {
+      // Cached visitors fetch only a tiny version integer. No open SSE/socket.
+      const rootVersion = Number(await fetchValue('updatedAt')) || 0;
+      const nestedVersion = rootVersion ? 0 : Number(await fetchValue('menu/updatedAt')) || 0;
+      const source = rootVersion ? 'root' : (nestedVersion ? 'nested' : 'root');
+      const revision = rootVersion || nestedVersion;
+      if (!state.catalog || !revision || revision !== state.catalog.revision ||
+          state.menuSource !== source) {
+        const raw = await retrieveMenu(source);
+        showCatalog(raw);
+        state.menuSource = source;
+        writeLocal(KEY.menu,{savedAt:Date.now(),source,data:raw});
+      }
+      $('menuError').hidden = true;
+      state.lastFetch = Date.now();
+    } catch (error) {
+      $('menuLoading').hidden = true;
+      if (!state.catalog) {
+        $('menuError').textContent = 'Kunne ikke hente menyen. Kontroller nettverket og prøv igjen.';
+        $('menuError').hidden = false;
+        $('menuSections').innerHTML =
+          '<div class="empty-state"><button class="btn btn-secondary" type="button" id="retryMenu">Prøv igjen</button></div>';
+      } else toast('Viser sist lagrede meny. Ingen nettverkstilgang.');
+      // Retrying on focus is safe, never a tight request loop.
+      state.lastFetch = Date.now();
+    }
+  })();
+  try { await activeRefresh; } finally { activeRefresh = null; }
+}
+
+function closeSearch() {
+  $('menuControls').hidden = true;
+  $('menuSearch').value = '';
+  state.search = '';
+  $('clearSearch').hidden = true;
+  renderMenu();
+}
+function toggleTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  writeLocal(KEY.theme,dark ? 'light' : 'dark');
+  $('themeButton').setAttribute('aria-pressed',String(!dark));
+  $('themeButton').setAttribute('aria-label',dark ? 'Bytt til mørk modus' : 'Bytt til lys modus');
 }
 function bindEvents() {
   document.addEventListener('click', (event) => {
@@ -565,7 +694,17 @@ function bindEvents() {
     const item = event.target.closest('[data-open]');
     if (item) { openProduct(item.dataset.open); return; }
     const category = event.target.closest('[data-category]');
-    if (category) {state.category = category.dataset.category;renderMenu();return;}
+    if (category) {scrollToCategory(category.dataset.category);return;}
+    const favorite = event.target.closest('[data-favorite]');
+    if (favorite) {setFavorite(favorite.dataset.favorite);return;}
+    const searchToggle = event.target.closest('[data-toggle-search]');
+    if (searchToggle) {
+      $('menuControls').hidden = !$('menuControls').hidden;
+      searchToggle.setAttribute('aria-pressed',String(!$('menuControls').hidden));
+      if (!$('menuControls').hidden) $('menuSearch').focus();
+      else closeSearch();
+      return;
+    }
     const edit = event.target.closest('[data-edit]');
     if (edit) { const line = state.cart.find((x) => x.id === edit.dataset.edit); if (line) openProduct(line.itemId,line.id); return; }
     const plus = event.target.closest('[data-cart-plus]');
@@ -580,6 +719,7 @@ function bindEvents() {
     if (optionQty) {optionQuantity(optionQty);return;}
     if (event.target.id === 'retryMenu') refreshCatalog();
   });
+  $('closeSearch').addEventListener('click',closeSearch);
   $('menuSearch').addEventListener('input', (event) => {
     state.search = event.target.value.trim();
     $('clearSearch').hidden = !state.search;
@@ -592,6 +732,11 @@ function bindEvents() {
     renderMenu();
     $('menuSearch').focus();
   });
+  $('dialogFavorite').addEventListener('click', () => {
+    if (state.draft) setFavorite(state.draft.itemId);
+  });
+  $('themeButton').addEventListener('click',toggleTheme);
+  window.addEventListener('scroll',spyMenu,{passive:true});
   $('allergenToggle').addEventListener('change', (event) => {
     state.allergens = event.target.checked;
     renderMenu();
@@ -635,6 +780,9 @@ function bindEvents() {
   });
 }
 $('year').textContent = String(new Date().getFullYear());
+document.documentElement.dataset.theme = readLocal(KEY.theme,'light') === 'dark' ? 'dark' : 'light';
+$('themeButton').setAttribute('aria-pressed',String(document.documentElement.dataset.theme === 'dark'));
+document.body.dataset.view = 'menu';
 bindEvents();
 refreshCatalog();
 setInterval(updateOpening, 60000);
