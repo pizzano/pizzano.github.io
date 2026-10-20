@@ -88,7 +88,8 @@ function itemById(id) {
 }
 function itemGroups(item, sizeId) {
   const size = item.sizes.find((s) => s.id === sizeId);
-  const ids = [...new Set([...item.optionGroupOrder, ...item.optionGroupIds, ...(size?.optionGroupIds || [])])];
+  const allowed = new Set([...item.optionGroupIds, ...(size?.optionGroupIds || [])]);
+  const ids = [...new Set([...item.optionGroupOrder.filter((id) => allowed.has(id)), ...allowed])];
   return ids.map((id) => state.catalog.groups.find((g) => g.id === id)).filter(Boolean);
 }
 function getPrice(item, sizeId, selections) {
@@ -515,7 +516,7 @@ async function fetchValue(path) {
 }
 async function retrieveMenu() {
   let nested = await fetchValue('menu');
-  if (nested && Array.isArray(nested.sections)) return nested;
+  if (nested && list(nested.sections).length) return nested;
   const fields = ['sections','optionGroups','allergenCatalog','settings','siteSettings','updatedAt'];
   const results = await Promise.all(fields.map((name) => fetchValue(name)));
   const data = Object.fromEntries(fields.map((field,index) => [field,results[index]]));
