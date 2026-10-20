@@ -4,7 +4,7 @@ import {
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder
 } from './store.js?v=20261021-beta4';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta4';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta6';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -209,17 +209,18 @@ function cartCard(line){
    const o=g.options.find(x=>x.id===id);
    if(o){
     const {prompt,answer}=cartOptionParts(g,o);
-    const description=(prompt?'<span class="cart-extra-key">'+e(prompt)+':</span> ':'')+
-      '<strong class="cart-extra-value">'+e(answer)+'</strong>';
+    const description=(prompt?'<strong class="cart-extra-key">'+e(prompt)+':</strong> ':'')+
+      '<span class="cart-extra-value">'+e(answer)+'</span>';
     extras.push('<div class="cart-line cart-extra"><span class="cart-extra-description">'+description+'</span>'+
       '<strong class="cart-extra-amount">'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</strong></div>');
    }
   }
  }
- if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span class="cart-extra-description"><span class="cart-extra-key">Uten:</span> <strong class="cart-extra-value">'+e(line.removedIngredients.join(', '))+'</strong></span></div>');
+ if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span class="cart-extra-description"><strong class="cart-extra-key">Uten:</strong> <span class="cart-extra-value">'+e(line.removedIngredients.join(', '))+'</span></span></div>');
  if(line.comment)extras.push('<div class="cart-line cart-comment"><span>Kommentar: '+e(line.comment)+'</span></div>');
  return '<article class="cart-card cart-item">'+
-  '<div class="cart-head"><button class="cart-product-link" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
+  '<div class="cart-head"><div class="cart-product-heading"><strong class="cart-product-name">'+e(p.name)+'</strong>'+
+  '<button type="button" class="cart-edit-btn" data-action="edit-line" data-line="'+e(line.id)+'" aria-label="Rediger '+e(p.name)+'" title="Rediger produkt">'+iconSvg('edit')+'<span>Rediger</span></button></div>'+
   '<div class="cart-qty"><button data-action="'+(line.quantity>1?'minus-line':'delete-line')+'" data-line="'+e(line.id)+'" aria-label="'+(line.quantity>1?'Reduser antall '+e(p.name):'Fjern '+e(p.name))+'" title="'+(line.quantity>1?'Reduser antall':'Fjern vare')+'">'+(line.quantity>1?'−':iconSvg('trash'))+'</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Legg til én '+e(p.name)+'">+</button></div></div>'+
   '<div class="cart-line cart-size"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
   extras.join('')+'<div class="cart-sum"><span>Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
