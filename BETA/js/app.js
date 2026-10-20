@@ -9,7 +9,7 @@ import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261020-beta3';
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
 const e=escapeHtml;
-const vs={page:'menu',step:1,search:false,query:'',pickupMode:'',pickupTime:'',expanded:false,showPopular:true,submitting:false};
+const vs={page:'menu',step:1,search:false,query:'',pickupMode:'',pickupTime:'',pickupWarning:'',pickupIntroPending:false,expanded:false,showPopular:true,submitting:false};
 let draft=null,editLineId=null,ingredientsExpanded=false,noticeTimer=null;
 const prettyDay=()=>new Intl.DateTimeFormat(config.locale,{weekday:'long',day:'numeric',month:'long'}).format(new Date());
 const btn=(label,action,primary=false,disabled=false,extra='')=>'<button class="button '+(primary?'primary':'ghost')+' '+extra+'" data-action="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
@@ -199,7 +199,7 @@ function cartCard(line){
  if(line.comment)extras.push('<div class="cart-line cart-comment"><span>Kommentar: '+e(line.comment)+'</span></div>');
  return '<article class="cart-card cart-item">'+
   '<div class="cart-head"><button class="cart-product-link" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
-  '<div class="cart-qty"><button data-action="delete-line" data-line="'+e(line.id)+'" aria-label="Fjern '+e(p.name)+'" title="Fjern vare">'+iconSvg('trash')+'</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Legg til én '+e(p.name)+'">+</button></div></div>'+
+  '<div class="cart-qty"><button data-action="'+(line.quantity>1?'minus-line':'delete-line')+'" data-line="'+e(line.id)+'" aria-label="'+(line.quantity>1?'Reduser antall '+e(p.name):'Fjern '+e(p.name))+'" title="'+(line.quantity>1?'Reduser antall':'Fjern vare')+'">'+(line.quantity>1?'−':iconSvg('trash'))+'</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Legg til én '+e(p.name)+'">+</button></div></div>'+
   '<div class="cart-line cart-size"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
   extras.join('')+'<div class="cart-sum"><span>Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
 }
@@ -235,10 +235,11 @@ function storeForm(){
 function pickupMarkup(){
  const slots=pickupSlots(),open=openState().open;
  let html=steps()+'<div class="panel"><h3 style="font-size:18px">Når vil du hente?</h3><p class="muted mt8">Velg når du vil hente bestillingen.</p>';
- html+='<div class="pickup-grid mt14">'+
+ html+='<div class="pickup-grid mt14'+(vs.pickupIntroPending&&!vs.pickupMode?' pickup-nudge':'')+'" id="pickupChoices" role="group" aria-label="Velg hentetid">'+
   '<button class="pickup-choice '+(vs.pickupMode==='asap'?'selected':'')+'" data-action="pickup-mode" data-value="asap" '+(!open?'disabled':'')+'><strong>Snarest</strong><small>Så snart som mulig</small></button>'+
   '<button class="pickup-choice '+(vs.pickupMode==='scheduled'?'selected':'')+'" data-action="pickup-mode" data-value="scheduled" '+(!open||!slots.length?'disabled':'')+'><strong>Velg tid</strong><small>Hent på et klokkeslett</small></button></div>';
- if(!open)html+='<p class="helper">Restauranten er stengt nå. Test av bestilling er ikke tilgjengelig utenfor åpningstiden.</p>';
+ if(vs.pickupWarning)html+='<p id="pickupWarning" class="pickup-warning" role="alert">'+e(vs.pickupWarning)+'</p>';
+ if(!open)html+='<p class="helper">Restauranten er stengt nå. Bestillinger er ikke tilgjengelige.</p>';
  if(vs.pickupMode==='scheduled')html+='<div class="time-grid">'+slots.map(time=>'<button class="time-pill '+(vs.pickupTime===time?'selected':'')+'" data-action="pickup-time" data-value="'+e(time)+'">'+e(time)+'</button>').join('')+'</div>';
  html+='<button class="order-summary-toggle" data-action="expand-order"><span><b>'+cartQuantity()+' varer</b> <span class="small">Se innhold og detaljer</span></span><strong>'+(vs.expanded?'Vis mindre':'Vis mer')+'</strong></button>';
  if(vs.expanded)html+='<div>'+state.cart.map(cartCard).join('')+'</div>';
@@ -252,7 +253,7 @@ function bonusMarkup(){
  return '<div class="panel bonus-box"><h2>Din pizzabonus</h2><p class="muted mt14">Kjøp '+goal+' store pizzaer, få den '+(goal+1)+'. gratis</p>'+
   '<div class="bonus-ring" style="background:conic-gradient('+colors+')"><div class="ring-center"><b>'+count+'</b><span>pizza<br>registrert</span></div></div>'+
   '<strong>'+(goal-count)+' pizzaer igjen til din gratis pizza</strong>'+
-  '<p class="helper">BETA: Viser kun lokale testpoeng. Ekte pizzabonus kobles trygt til en restaurantserver senere.</p>'+
+  '<p class="helper">Pizzabonus blir aktivert når restauranten tar imot bestillinger i denne løsningen.</p>'+
   '<label class="preference"><input type="checkbox" data-toggle="offers" '+(state.loyalty.offersConsent?'checked':'')+'> Varsle meg om gratis pizza og bruk pizzabonus automatisk.</label></div>';
 }
 function profileMarkup(){
@@ -263,14 +264,14 @@ function profileMarkup(){
  return '<div class="profile-summary"><div class="avatar">'+e(initials||'G')+'</div><div><h2>'+e(name)+'</h2><span class="muted">'+(p.phone?'+47 '+e(p.phone):'Ingen telefon registrert')+'</span></div></div>'+
   bonusMarkup()+
   '<button class="menu-row" data-action="profile-edit"><span class="row-icon">'+iconSvg('user')+'</span><span class="grow"><strong>Rediger profil</strong><span class="small block">Navn, mobilnummer og e-post lagret</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
-  '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' lokale testbestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
+  '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' bestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
   '<button class="menu-row" data-action="restaurant-info"><span class="row-icon">'+iconSvg('store')+'</span><span class="grow"><strong>Restaurantinformasjon</strong><span class="small block">'+e(restaurantSummary)+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>';
 }
 function ordersMarkup(){
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
- return html+'<p class="helper">Dette er lokale testbestillinger, ikke bestillinger hos restauranten.</p>'+
-  state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Testbestilling</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
+ return html+
+  state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Mottatt</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
@@ -293,7 +294,7 @@ function renderBottom(){
  bar.hidden=false;
  if(vs.step===1)bar.innerHTML=btn('Fortsett å handle','continue-shop')+(state.cart.length?btn('Neste: Kontakt','next-contact',true):'');
  else if(vs.step===2)bar.innerHTML=btn('Tilbake','previous-step')+btn('Neste: Hentetid','next-pickup',true);
- else bar.innerHTML=btn('Tilbake','previous-step')+btn(vs.submitting?'Sender…':config.mode==='preview'?'Opprett testbestilling':'Send bestilling','send-order',true,vs.submitting||!vs.pickupMode||(vs.pickupMode==='scheduled'&&!vs.pickupTime)||!openState().open);
+ else bar.innerHTML=btn('Tilbake','previous-step')+btn(vs.submitting?'Sender…':'Send bestilling','send-order',true,vs.submitting||!state.cart.length);
 }
 function render(){
  header();if(!catalogReady()){bar.hidden=true;return;}
@@ -303,12 +304,13 @@ function render(){
  }else if(vs.page==='profile')main.innerHTML=profileMarkup();
  else if(vs.page==='profile-edit')main.innerHTML=contactMarkup(true);
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
- else if(vs.page==='confirmed'){ }else if(vs.page==='confirmed'){
+ else if(vs.page==='confirmed'){
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>Testbestilling opprettet</h2><p class="helper">BETA er i forhåndsvisning. Ingen bestilling, SMS eller e-post er sendt til restauranten.</p>'+
+   '<h2>Bestillingen er mottatt</h2><p class="helper">Restauranten har mottatt bestillingen din. Følg med på bekreftelsen.</p>'+
    '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
  }
  renderBottom();
+ if(vs.page==='cart'&&vs.step===3)vs.pickupIntroPending=false;
 }
 function validateCart(){
  if(!state.cart.length){toast('Handlekurven er tom.');return false;}
@@ -322,8 +324,19 @@ function validateCart(){
  return true;
 }
 async function submit(){
- if(vs.submitting||!validateCart()||!vs.pickupMode||(vs.pickupMode==='scheduled'&&!vs.pickupTime))return;
- if(config.mode!=='preview'&&!openState().open){toast('Restauranten er stengt.');return;}
+ if(vs.submitting||!validateCart())return;
+ if(!vs.pickupMode){
+  vs.pickupWarning='Velg Snarest eller Velg tid før du sender bestillingen.';
+  vs.pickupIntroPending=true;
+  render();return;
+ }
+ if(vs.pickupMode==='scheduled'&&!vs.pickupTime){
+  vs.pickupWarning='Velg et hentetidspunkt før du sender bestillingen.';
+  vs.pickupIntroPending=false;
+  render();return;
+ }
+ if(!openState().open){toast('Restauranten er stengt.');return;}
+ vs.pickupWarning='';
  vs.submitting=true;renderBottom();
  const lines=state.cart.map(l=>{const f=findProduct(l.productId),p=f.p,s=selectedSize(p,l.sizeId);
   const options=applicableGroups(p,l.sizeId).flatMap(g=>(l.options?.[g.id]||[]).map(id=>g.options.find(x=>x.id===id)).filter(Boolean).map(x=>({label:x.label,price:x.price})));
@@ -359,19 +372,22 @@ function onAction(action,target){
  }
  if(action==='add-product'){addSelectedProduct();return;}
  if(action==='clear-cart'){if(!state.cart.length)return;if(window.confirm('Vil du tømme handlekurven?')){clearCart();vs.step=1;render();}return;}
- if(action==='plus-line'||action==='delete-line'){
+ if(action==='plus-line'||action==='minus-line'||action==='delete-line'){
   if(action==='delete-line')removeLine(line);
-  else changeQuantity(line,1);
+  else changeQuantity(line,action==='minus-line'?-1:1);
   if(!state.cart.length)vs.step=1;
   render();return;
  }
  if(action==='edit-line'){const l=state.cart.find(x=>x.id===line);if(l)openProduct(l.productId,l.id);return;}
  if(action==='continue-shop'||action==='go-menu'){setPage('menu');return;}
  if(action==='next-contact'){if(validateCart()){vs.step=2;render();scrollMainTop();}return;}
- if(action==='next-pickup'){if(storeForm()){vs.step=3;render();scrollMainTop();}return;}
- if(action==='previous-step'){vs.step=Math.max(1,vs.step-1);render();scrollMainTop();return;}
- if(action==='pickup-mode'){vs.pickupMode=target.dataset.value;vs.pickupTime='';render();return;}
- if(action==='pickup-time'){vs.pickupTime=target.dataset.value;render();return;}
+ if(action==='next-pickup'){if(storeForm()){
+  vs.step=3;vs.pickupWarning='';vs.pickupIntroPending=!vs.pickupMode;
+  render();scrollMainTop();
+ }return;}
+ if(action==='previous-step'){vs.step=Math.max(1,vs.step-1);vs.pickupWarning='';vs.pickupIntroPending=false;render();scrollMainTop();return;}
+ if(action==='pickup-mode'){vs.pickupMode=target.dataset.value;vs.pickupTime='';vs.pickupWarning='';vs.pickupIntroPending=false;render();return;}
+ if(action==='pickup-time'){vs.pickupTime=target.dataset.value;vs.pickupWarning='';render();return;}
  if(action==='expand-order'){vs.expanded=!vs.expanded;render();return;}
  if(action==='send-order'){void submit();return;}
  if(action==='profile-edit'){setPage('profile-edit');return;}
