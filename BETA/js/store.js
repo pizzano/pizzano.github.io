@@ -1,5 +1,5 @@
-import {config} from './config.js?v=20261020-beta2';
-import {catalog,loadCatalog,menuStatus,catalogReady} from './catalog.js?v=20261020-beta2';
+import {config} from './config.js?v=20261020-beta3';
+import {catalog,loadCatalog,menuStatus,catalogReady} from './catalog.js?v=20261020-beta3';
 export {config,catalog,loadCatalog,menuStatus,catalogReady};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -8,10 +8,10 @@ export const state={
  profile:read('profile',{name:'',phone:'',email:''}),
  cart:read('cart',[]), orders:read('orders',[]),
  loyalty:read('loyalty',{count:0,used:0,offersConsent:false}),
- favorites:read('favorites',[]),allergens:read('allergens',config.restaurant.showAllergensByDefault),
+ allergens:read('allergens',config.restaurant.showAllergensByDefault),
  theme:read('theme','light')
 };
-export function persist(){for(const k of ['profile','cart','orders','loyalty','favorites','allergens','theme'])write(k,state[k]);}
+export function persist(){for(const k of ['profile','cart','orders','loyalty','allergens','theme'])write(k,state[k]);}
 export const money=n=>new Intl.NumberFormat(config.locale,{maximumFractionDigits:2}).format(Number(n)||0)+' kr';
 export const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function findProduct(id){for(const c of catalog.categories){const p=c.products.find(x=>x.id===id);if(p)return {p,c};}return null;}
@@ -47,7 +47,6 @@ export function changeQuantity(id,n){
 }
 export function clearCart(){state.cart=[];persist();}
 export function setProfile(data){state.profile={...data};persist();}
-export function toggleFavorite(id){state.favorites=state.favorites.includes(id)?state.favorites.filter(x=>x!==id):[...state.favorites,id];persist();}
 const clock=t=>{const m=String(t||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):0;};
 export function openState(date=new Date()){
  const r=config.restaurant;
