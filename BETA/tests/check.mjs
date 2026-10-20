@@ -11,8 +11,8 @@ const script = readFileSync(resolve(root, 'js/app.js'), 'utf8');
 
 assert.match(html, /lang="nb"/, 'Norwegian locale');
 assert.match(html, /BETA · FORHÅNDSVISNING/, 'Beta warning must be visible');
-assert.match(html, /js\/app\.js\?v=beta-03/, 'Missing versioned BETA app import');
-assert.match(html, /css\/site\.css\?v=beta-03/, 'Missing versioned BETA stylesheet');
+assert.match(html, /js\/app\.js\?v=beta-04/, 'Missing versioned BETA app import');
+assert.match(html, /css\/site\.css\?v=beta-04/, 'Missing versioned BETA stylesheet');
 assert.doesNotMatch(html + css + script, /\/demo\/|\/DEMO\//i, 'No imported DEMO source allowed');
 assert.doesNotMatch(script, /new EventSource\s*\(|onValue\s*\(/, 'No browsing streams');
 assert.doesNotMatch(script, /method:\s*['"](PUT|POST|PATCH|DELETE)['"]/i, 'Read-only preview cannot write orders');
