@@ -45,3 +45,14 @@ node BETA/tests/check.mjs
 BETA kan åpnes som statiske filer via GitHub Pages på `/BETA/index.html`. Nettstedets tilpassede domene/distribusjon må kontrolleres før adressen annonseres. Statisk kontroll og mock-kjøring av menylesing og kurv er gjennomført; reell mobilvisning, hosting og faktisk Firebase-forbruk er foreløpig ikke verifisert.
 
 NB: Firebase RTDB-regler som tillater offentlige skriverettigheter må sikres før produksjonsbruk, uavhengig av at BETA akkurat nå er lesebasert.
+
+## BETA v04 (2026-10-20) — kundeskjermer rekonstruert
+
+- Kundeskjermene har samme grunnstruktur som DEMO: kompakt toppfelt, horisontale SVG-kategorier, hente-/allergenstatus og korte horisontale produktlinjer med **bilde til venstre**, tekst i midten og pris/`+` til høyre.
+- Favoritter settes i produktarket; produktkort har ikke ekstra hjerteknapp.
+- Produktark: separat toppfelt med lukking/tittel/favoritt, bilde, ingrediens- og tilvalgsfelt, fast bunnrad for antall og Legg i kurv.
+- Kurv: ett smalt produktkort per ordrelinje, detaljer + antall i samme kort, kun én totalsum og to handlinger. Kontakt og hentetid bruker samme kompakte trinnlinje, uten store sidekolonner.
+- Profil: egen side med kundedetaljer, redigerbar kontakt, Mine bestillinger (foreløpig inaktiv) og restaurantinformasjon; pizzabonus er tydelig merket som framtidig integrasjon og ingen poeng blir funnet på.
+- `css/site.css` ble **erstattet i sin helhet**, ikke tilføyd overstyringsregler. Én deklarasjon per hovedkomponent, og `[hidden]` beholder standard sikkerhetsregelen `display:none!important` for å forhindre utilsiktet visning.
+- `js/app.js` ble oppdatert med de nye skjermene og enkle ikoner. Ingen endring av Firebase-bestilling, SMS, e-post eller DEMO.
+- Statisk kontroll og syntetiske menylastings-, pris-, kurv- og profiltester ble utført. **Mobil nettlesergjennomgang mot den faktiske siden gjenstår.**
