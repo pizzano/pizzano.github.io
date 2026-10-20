@@ -215,9 +215,25 @@ function displayBlocks() {
   }))];
 }
 function categoryEmoji(block) {
-  if (block.key === 'favorites') return '♡';
-  if (block.key === 'popular') return '☆';
-  return logoEmoji({title:block.title});
+  const title = String(block.title || '').toLocaleLowerCase('nb');
+  const shapes = {
+    heart: '<path d="M20.4 5.5a5.1 5.1 0 0 0-7.2 0L12 6.7l-1.2-1.2a5.1 5.1 0 0 0-7.2 7.2L12 21l8.4-8.3a5.1 5.1 0 0 0 0-7.2Z"/>',
+    star: '<path d="m12 2.5 3 6.1 6.8 1-4.9 4.7 1.2 6.8L12 17.9l-6.1 3.2 1.2-6.8-4.9-4.7 6.8-1Z"/>',
+    pizza: '<path d="M4 3c6-1 13 2 17 7L5 21Z"/><path d="M4.5 6.5c4-1 9 1.4 13 5.8"/><circle cx="8.5" cy="10" r="1"/><circle cx="12.3" cy="13.3" r="1"/><circle cx="8.4" cy="16" r="1"/>',
+    burger:'<path d="M4 11a8 8 0 0 1 16 0Z"/><path d="M3 14h18M4.5 17h15v1.4A2.6 2.6 0 0 1 16.9 21H7.1a2.6 2.6 0 0 1-2.6-2.6Z"/><path d="M8 7h.01M13 6h.01M17 8h.01"/>',
+    kebab:'<path d="m5 7 7.5 15 9-8.5L8 4Z"/><path d="M6 9 3 6l4-4 3 3M11 9l4-4M13 14l5-4M10 17l3-4"/>',
+    drink:'<path d="M5 7h14l-2 14H7Z"/><path d="M4 7h16M12 7l3-5h4"/>',
+    salad:'<path d="M4 13c.8 5 3.6 8 8 8s7.2-3 8-8Z"/><path d="M8 13C4 10 5 6 9 5c3 1 4 4 3 8M15 13c-2-5 .3-8 4-8 2 4 .4 6.8-2 8"/>',
+    meal:'<circle cx="14" cy="12" r="7"/><path d="M3 3v5c0 2 3 2 3 0V3M4.5 3v18M22 3v18"/>'
+  };
+  const icon = block.key === 'favorites' ? 'heart' :
+    block.key === 'popular' ? 'star' :
+    title.includes('pizza') ? 'pizza' :
+    title.includes('burger') ? 'burger' :
+    title.includes('kebab') ? 'kebab' :
+    title.includes('drikk') ? 'drink' :
+    title.includes('salat') ? 'salad' : 'meal';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + shapes[icon] + '</svg>';
 }
 function renderCategories(blocks = displayBlocks()) {
   $('categories').innerHTML = '<button class="search-tab" type="button" data-toggle-search aria-pressed="' +
