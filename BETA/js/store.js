@@ -45,6 +45,7 @@ export function changeQuantity(id,n){
  const x=state.cart.find(l=>l.id===id);if(!x)return;
  x.quantity=Math.max(0,Number(x.quantity||0)+n);state.cart=state.cart.filter(l=>l.quantity>0);persist();
 }
+export function removeLine(id){const before=state.cart.length;state.cart=state.cart.filter(l=>l.id!==id);if(state.cart.length!==before)persist();}
 export function clearCart(){state.cart=[];persist();}
 export function setProfile(data){state.profile={...data};persist();}
 const clock=t=>{const m=String(t||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):0;};
