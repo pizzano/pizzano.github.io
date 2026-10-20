@@ -6,8 +6,11 @@ const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));
 const write=(key,val)=>{try{localStorage.setItem(prefix+key,JSON.stringify(val));}catch{}};
 export const state={
  profile:read('profile',{name:'',phone:'',email:''}),
- cart:read('cart',[]), orders:read('orders',[]),
- loyalty:read('loyalty',{count:0,used:0,offersConsent:false}),
+ cart:read('cart',[]),
+ // Never show old browser-only mock orders as accepted orders.
+ orders:read('orders',[]).filter(order=>order && order.status!=='preview' && !String(order.id||'').startsWith('preview-')),
+ // Loyalty points must come from an authenticated server, never from local mock purchases.
+ loyalty:{count:0,used:0,offersConsent:read('loyalty',{offersConsent:false}).offersConsent===true},
  allergens:read('allergens',config.restaurant.showAllergensByDefault),
  theme:read('theme','light')
 };
@@ -77,23 +80,12 @@ export function pickupSlots(date=new Date()){
  }
  return out;
 }
-export function addPreviewLoyalty(lines){
- const count=lines.reduce((n,line)=>{const f=findProduct(line.productId);
-  return n+(f?.c.kind===config.restaurant.loyalty.eligibleCategory&&/stor/i.test(selectedSize(f.p,line.sizeId).name)?line.quantity:0);
- },0);
- state.loyalty.count+=count;persist();
-}
-/** BETA does NOT write to the existing production/demo Firebase.
- * Future real orders require a privileged backend to verify prices, stock,
- * identity, tenant access, gift pizza reservations and order idempotency.
+/** Server-only checkout: no local fake orders or locally credited rewards.
+ * The backend must verify restaurant, price, availability, order idempotency
+ * and loyalty independently before confirming the order.
  */
 export async function sendOrder(order){
- if(config.mode==='preview'){
-  const record={...order,id:'preview-'+(crypto.randomUUID?.()||Date.now()),status:'preview',createdAt:Date.now()};
-  state.orders.unshift(record);state.orders=state.orders.slice(0,15);
-  addPreviewLoyalty(order.lines);persist();return record;
- }
- if(config.mode!=='api'||!config.apiBase)throw new Error('Bestillingsserver er ikke konfigurert.');
+ if(config.mode!=='api'||!config.apiBase)throw new Error('Bestillinger er ikke aktivert ennå.');
  const response=await fetch(config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/orders',{
   method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),credentials:'omit'
  });
