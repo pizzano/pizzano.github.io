@@ -54,3 +54,12 @@ Før live oppstart trengs en **egen backend** for sikre nye ordrer, ordresporing
 - Bekreft at demo bestillinger/varsler ikke påvirkes.
 
 Designet er basert på skjermbilder fra den tidligere DEMO-kundeopplevelsen, men kildekoden er selvstendig.
+
+## Kunde-UI scroll og tema (2026-10-20)
+- `main#mainContent` er egen vertikal scroll-container. Profil, kurv, kontakt og hentetid kan rulles helt ned uavhengig av topp- og bunnfeltet.
+- Produktsheet og restaurantinformasjon har egen `.sheet-scroll`, med modal-heading og produkthandling på plass. Innholdet kan rulles også på korte mobilskjermer.
+- Kategorimenyen har en ekte horisontal indikator, knyttet til rulleposisjonen. Indikatoren kan klikkes og navigeres med piltaster.
+- Restaurantens navn i headeren går til menyen. Restaurantinfo åpnes med `i` ved Åpent/Stengt-status.
+- Pizzabonus bruker mindre ring og kompakt, mørkegrønt design. Kurv har ikon for søppelbøtte.
+- Fire semantiske fargetema: `reference`, `lively`, `fresh`, `gourmet` (og mørk variant). Alle sentrale UI-flater bruker CSS custom properties; valget tas fra `siteSettings.customerPalette` i Firebase eller fra `BETA/js/config.js` ved manglende verdi.
+- CSS og JS lastes med `20261020-beta2` for å unngå blanding av gamle moduler etter publisering.
