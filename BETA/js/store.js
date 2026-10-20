@@ -1,5 +1,5 @@
-import {config} from './config.js?v=20261021-beta11';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta11';
+import {config} from './config.js?v=20261021-beta12';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta12';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};

@@ -5,8 +5,8 @@
  * publish only their menu/settings under a tenant-scoped public menu path.
  * Local menu cache, one tiny SSE revision stream and REST fallback only when offline.
  */
-import {config} from './config.js?v=20261021-beta11';
-import {resolveCategoryIcon} from './icons.js?v=20261021-beta11';
+import {config} from './config.js?v=20261021-beta12';
+import {resolveCategoryIcon} from './icons.js?v=20261021-beta12';
 export const catalog={version:'',allergens:[],optionGroups:{},categories:[],popularIds:[]};
 export let menuStatus={source:'none',error:'',lastChecked:0};
 const menu=config.menu;
@@ -29,7 +29,8 @@ function normalize(raw){
  // Cache only PUBLIC storefront settings, not old DEMO printer/admin configuration.
  const publicKeys=['restaurantName','restaurantLogo','phone','streetAddress','postalCode','city',
   'timezone','manualClosed','manualClosedUntil','prepMinutes','slotIntervalMinutes',
-  'ingredientCustomizationEnabled','weeklyHours','orderOpenTime','orderCloseTime','customerPalette'];
+  'ingredientCustomizationEnabled','weeklyHours','orderOpenTime','orderCloseTime','customerPalette',
+  'paymentInfo','paymentMethods'];
  const settings=Object.fromEntries(publicKeys.filter(key=>sourceSettings[key]!==undefined).map(key=>[key,sourceSettings[key]]));
  const allergens=asArray(raw.allergenCatalog).map(a=>typeof a==='string'?{id:a.toLowerCase(),label:a}:{id:str(a.id),label:str(a.label||a.id)}).filter(x=>x.id);
  const dictionary=allergens.length?allergens:fallbackAllergens;
@@ -72,6 +73,10 @@ function apply(data){
  r.address=str(s.streetAddress)||'';
  r.city=str(s.city)||'';
  r.postcode=str(s.postalCode)||'';
+ r.paymentInfo=str(s.paymentInfo);
+ r.paymentMethods=Array.isArray(s.paymentMethods)
+  ?s.paymentMethods.map(method=>str(method).toLowerCase()).filter(method=>['visa','mastercard','cash','kontant','vipps'].includes(method))
+  :[];
  r.timezone=str(s.timezone)||r.timezone;
  r.manualClosed=s.manualClosed===true;
  r.manualClosedUntil=number(s.manualClosedUntil);

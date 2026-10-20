@@ -3,8 +3,8 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta11';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta11';
+} from './store.js?v=20261021-beta12';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta12';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -119,8 +119,20 @@ function menuMarkup(){
 function sheetHeader(title){
  return '<div class="sheet-head"><button type="button" class="round-close" data-action="close-sheet" aria-label="Lukk">×</button><h2>'+e(title)+'</h2><span class="sheet-head-spacer" aria-hidden="true"></span></div>';
 }
-function showSheet(html){const firstOpen=sheet.hidden;sheet.innerHTML=html;backdrop.hidden=false;sheet.hidden=false;if(firstOpen){const scroll=sheet.querySelector('.sheet-scroll');if(scroll)scroll.scrollTop=0;}}
-function closeSheet(){sheet.hidden=true;backdrop.hidden=true;sheet.innerHTML='';draft=null;editLineId=null;}
+function showSheet(html,variant='product'){
+ const firstOpen=sheet.hidden;
+ const oldScroll=firstOpen?0:sheet.querySelector('.sheet-scroll')?.scrollTop||0;
+ sheet.classList.toggle('restaurant-info-sheet',variant==='restaurant-info');
+ sheet.setAttribute('aria-label',variant==='restaurant-info'?'Restaurantinformasjon':'Produktdetaljer');
+ sheet.innerHTML=html;backdrop.hidden=false;sheet.hidden=false;
+ const scroll=sheet.querySelector('.sheet-scroll');
+ if(scroll)scroll.scrollTop=oldScroll;
+}
+function closeSheet(){
+ sheet.hidden=true;backdrop.hidden=true;sheet.innerHTML='';
+ sheet.classList.remove('restaurant-info-sheet');
+ draft=null;editLineId=null;
+}
 function newDraft(p){
  const size=selectedSize(p,p.defaultSizeId),options={};
  for(const g of applicableGroups(p,size.id)){
@@ -323,20 +335,80 @@ function ordersMarkup(){
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
- return '<div class="info-heading"><span class="info-icon">▣</span><div><span class="small">RESTAURANTINFORMASJON</span><h2>'+e(r.name)+'</h2></div></div>'+
-  '<div class="info-card"><span class="status-dot '+(!s.open?'closed':'')+'"></span> <strong style="display:inline">'+(s.open?'Åpent for bestilling · stenger '+e(s.closesAt):'Stengt nå')+'</strong></div>'+
-  '<div class="info-section">BESTILLING & HENTING</div>'+
-  '<div class="info-card"><span class="small">◷ &nbsp; Bestillingstider</span><strong>'+e(r.openTimes[(new Date().getDay()+6)%7]?.from||'14:00')+'–'+e(r.openTimes[(new Date().getDay()+6)%7]?.to||'22:00')+'</strong></div>'+
-  '<div class="info-card"><span class="small">'+iconSvg('orders')+' Estimert hentetid</span><strong>Ca. '+r.pickupMinutes+' min</strong><span class="small">Henting i restauranten</span></div>'+
-  '<div class="info-card"><span class="small">☰ &nbsp; Neste hentetider</span><div class="time-grid">'+pickupSlots().slice(0,8).map(t=>'<span class="time-pill">'+e(t)+'</span>').join('')+'</div></div>'+
-  '<div class="info-section">PRAKTISK INFORMASJON</div>'+
-  '<div class="info-card"><span class="small">⌖ &nbsp; Adresse</span><strong>'+e([r.address,r.postcode,r.city].filter(Boolean).join(', ')||'Adresse ikke angitt')+'</strong></div>'+
-  '<div class="info-card"><span class="small">'+iconSvg('phone')+' Telefon</span><strong>'+e(r.phone||'Telefon ikke angitt')+'</strong></div>'+
-  '<div class="sheet-footer" style="position:relative;box-shadow:none;padding:7px 0">'+
-   (r.phone?'<a class="button primary" style="flex:1" href="tel:'+e(r.phone.replace(/\s/g,''))+'">Ring restauranten</a>':'')+
-   (r.address?'<a class="button" style="flex:1" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([r.address,r.city].join(', '))+'">Vis adresse</a>':'')+'</div>';
+ const address=[r.address,r.postcode,r.city].filter(Boolean).join(', ');
+ const locationQuery=[r.address,r.postcode,r.city].filter(Boolean).join(' ');
+ const mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(locationQuery);
+ const phone=String(r.phone||'').trim(),phoneUrl='tel:'+phone.replace(/[^\d+]/g,'');
+ // Respect the restaurant timezone, rather than the phone's local weekday.
+ const now=new Date();
+ const weekday=new Intl.DateTimeFormat('en-GB',{timeZone:r.timezone||'Europe/Oslo',weekday:'short'}).format(now).slice(0,3).toLowerCase();
+ const todayIndex=['mon','tue','wed','thu','fri','sat','sun'].indexOf(weekday);
+ const today=r.openTimes[todayIndex]||{};
+ const dayName=new Intl.DateTimeFormat(config.locale,{timeZone:r.timezone||'Europe/Oslo',weekday:'long'}).format(now);
+ const hours=today.enabled===false?'Stengt i dag':e((today.from||'14:00')+' – '+(today.to||'22:00'));
+ const hoursNote='I dag · '+dayName.charAt(0).toUpperCase()+dayName.slice(1);
+ const slots=pickupSlots().slice(0,7);
+ // The decorative picture reuses a Firebase menu image already available in cache.
+ const pizzaCategory=catalog.categories.find(c=>c.kind==='pizza');
+ const hero=pizzaCategory?.products.find(p=>p.image)?.image||'';
+ const brand=r.logoUrl?'<img class="restaurant-info-logo" src="'+e(r.logoUrl)+'" alt="" loading="lazy" decoding="async">':iconSvg('store');
+ const payments=Array.isArray(r.paymentMethods)?r.paymentMethods:[];
+ const paymentIcons=payments.map(method=>{
+  if(method==='visa')return '<span class="restaurant-payment-brand restaurant-payment-visa">VISA</span>';
+  if(method==='mastercard')return '<span class="restaurant-payment-brand restaurant-payment-mastercard" aria-label="Mastercard"><i></i><i></i></span>';
+  if(method==='cash'||method==='kontant')return '<span class="restaurant-payment-brand" title="Kontant">'+iconSvg('banknote')+'</span>';
+  if(method==='vipps')return '<span class="restaurant-payment-brand">Vipps</span>';
+  return '';
+ }).filter(Boolean).join('');
+ return '<div class="restaurant-info-hero">'+
+  (hero?'<img class="restaurant-info-hero-photo" src="'+e(hero)+'" alt="" loading="lazy" decoding="async">':'')+
+  '<div class="restaurant-info-brand"><span class="restaurant-info-brand-icon">'+brand+'</span><div class="restaurant-info-brand-copy">'+
+   '<span class="restaurant-info-eyebrow">Restaurantinformasjon</span>'+
+   '<h2>'+e(r.name)+'</h2>'+
+   '<span class="restaurant-info-status '+(s.open?'':'is-closed')+'"><span class="restaurant-info-status-dot"></span>'+
+    (s.open?'Åpent for bestilling · stenger '+e(s.closesAt):'Stengt for bestilling')+'</span>'+
+  '</div></div>'+
+  '<button type="button" class="restaurant-info-close" data-action="close-sheet" aria-label="Lukk restaurantinformasjon">'+iconSvg('close')+'</button>'+
+ '</div>'+
+ '<div class="sheet-scroll restaurant-info-scroll">'+
+  '<div class="restaurant-info-feature">'+
+   '<span class="restaurant-info-feature-icon">'+iconSvg('clock')+'</span><div class="restaurant-info-feature-copy">'+
+    '<span class="restaurant-info-label">Bestillingstider</span><strong>'+hours+'</strong>'+
+    '<span class="restaurant-info-hint">'+e(hoursNote)+'</span>'+
+   '</div></div>'+
+  '<div class="restaurant-info-feature">'+
+   '<span class="restaurant-info-feature-icon">'+iconSvg('bag')+'</span><div class="restaurant-info-feature-copy">'+
+    '<span class="restaurant-info-label">Estimert hentetid</span><strong>Ca. '+e(r.pickupMinutes)+' min</strong>'+
+    '<span class="restaurant-info-hint">Henting i restauranten</span>'+
+   '</div><span class="restaurant-info-decor">'+iconSvg('clock')+'</span></div>'+
+  '<div class="restaurant-info-feature restaurant-info-times">'+
+   '<div class="restaurant-info-times-title"><span class="restaurant-info-mini-icon">'+iconSvg('list')+'</span>'+
+   '<span class="restaurant-info-label">Neste hentetider</span></div>'+
+   (slots.length?'<div class="restaurant-info-time-list">'+slots.map((time,i)=>'<span class="restaurant-info-time'+(i===0?' is-next':'')+'">'+e(time)+'</span>').join('')+'</div>':
+   '<p class="restaurant-info-empty">Ingen hentetider tilgjengelig akkurat nå.</p>')+
+  '</div>'+
+  '<div class="restaurant-info-section-title">Kontaktinformasjon</div>'+
+  '<div class="restaurant-info-contact">'+
+   '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('map-pin')+'</span>'+
+    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Adresse</span><strong>'+e(address||'Adresse ikke angitt')+'</strong></div>'+
+    (r.address?'<a class="restaurant-info-outline-button" target="_blank" rel="noopener noreferrer" href="'+e(mapUrl)+'" aria-label="Vis adresse på kart">'+iconSvg('map')+'<span>Vis på kart</span></a>':'')+
+   '</div>'+
+   '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('phone')+'</span>'+
+    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Telefon</span><strong>'+e(phone||'Telefon ikke angitt')+'</strong></div>'+
+    (phone?'<a class="restaurant-info-outline-button" href="'+e(phoneUrl)+'" aria-label="Ring restauranten">'+iconSvg('phone')+'<span>Ring oss</span></a>':'')+
+   '</div>'+
+   '<div class="restaurant-info-contact-row"><span class="restaurant-info-round-icon">'+iconSvg('credit-card')+'</span>'+
+    '<div class="restaurant-info-contact-text"><span class="restaurant-info-label">Betaling</span><span class="restaurant-info-payment-text">'+e(r.paymentInfo||'Spør restauranten om betalingsmåter')+'</span></div>'+
+    (paymentIcons?'<div class="restaurant-info-payment-brands">'+paymentIcons+'</div>':'')+
+   '</div>'+
+  '</div>'+
+  '<div class="restaurant-info-actions">'+
+   (phone?'<a class="restaurant-info-action restaurant-info-action-primary" href="'+e(phoneUrl)+'">'+iconSvg('phone')+' Ring restauranten</a>':'')+
+   (r.address?'<a class="restaurant-info-action restaurant-info-action-secondary" target="_blank" rel="noopener noreferrer" href="'+e(mapUrl)+'">'+iconSvg('map')+' Vis adresse</a>':'')+
+  '</div>'+
+ '</div>';
 }
-function openInfo(){showSheet(sheetHeader('Restaurantinformasjon')+'<div class="sheet-scroll">'+infoMarkup()+'</div>');}
+function openInfo(){showSheet(infoMarkup(),'restaurant-info');}
 function renderBottom(){
  if(vs.page!=='cart'){bar.hidden=true;bar.innerHTML='';return;}
  bar.hidden=false;
@@ -503,6 +575,8 @@ $('backButton').addEventListener('click',()=>{if(vs.page==='cart'&&vs.step>1){vs
 $('themeButton').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';persist();render();});
 
 function catalogChanged(){
+ // Refresh the visible restaurant information only when the public menu revision changes.
+ if(!sheet.hidden&&sheet.classList.contains('restaurant-info-sheet'))openInfo();
  // Live menu changes update cart totals and availability without a page reload.
  if(draft){
   const found=findProduct(draft.productId);

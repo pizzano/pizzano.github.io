@@ -39,3 +39,9 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - Yeni restoranlarda `config.menu.basePath` her restoranın kendi `tenants/<id>/public/menu` düğümünü göstermeli; siparişler ve kişisel bilgiler auth/role korumalı ayrı alanda tutulmalı. Her restoran sadece kendi revision akışını dinlemelidir.
 - DEMO her ayar/ürün kaydında `updatedAt` değerini yazar. Canlı yansıma bu sözleşmeye bağlıdır. `siteSettings` olmayan eski kurulumlarda cache'deki public ayarlar (varsa) veya varsayılanlar kullanılır; büyük/özel `settings` ağdan indirilmez.
 - Firebase bağlantı, HTTP ve SSE protokol yükünü faturaya dahil eder. SSE'nin 5 dakikalık GET'e göre kesin tasarrufu gerçek Usage/Downloads testleri olmadan söylenemez. Her sekme kendi SSE bağlantısını açar; eski bir sekme gizlenince kapanır.
+
+## beta12: Restaurantinformasjon tasarımı
+- Mevcut profil `Restaurantinformasjon` penceresi referans görsel tarzında yeniden düzenlendi: restoran başlığı, görsel, açık/kapalı durumu, saatler, hentetid, sonraki saatler, kontakt, ve iki işlevsel arama/harita bağlantısı. Masaüstü merkez modal, mobil kompakt alt sheet.
+- İsim/logo/telefon/adres/açılış/kapanış/slots ve pickup süresi mevcut Firebase catalog önbelleğinden hesaplanır; yeni Firebase GET veya listener eklenmedi. Header fotoğrafı varsa aynı catalog içindeki pizza ürün resmini yeniden kullanır.
+- `siteSettings.paymentInfo` ve `siteSettings.paymentMethods` (isteğe bağlı dizi) diğer açık `siteSettings` alanlarıyla aynı mevcut GET üzerinden desteklenir. Tanımlı değilse ödeme yöntemi uydurulmaz.
+- `demo/` etkilenmez. Tüm tema renkleri CSS değişkenlerinden türetilir; eski info stilleri doğrudan kaldırıldı.
