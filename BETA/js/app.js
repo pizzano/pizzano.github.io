@@ -185,6 +185,17 @@ function addSelectedProduct(){
 function steps(){
  return '<div class="steps">'+['Kurv','Kontakt','Hentetid'].map((name,i)=>'<div class="step '+(i+1<vs.step?'done':i+1===vs.step?'active':'')+'"><span class="step-num">'+(i+1)+'</span>'+name+'</div>').join('')+'</div>';
 }
+/** Present selections in context: never show "Ja, takk!" without its question. */
+function cartOptionLabel(group,option){
+ const answer=String(option.label||'').trim();
+ const prompt=String(group.title||'').trim()
+  .replace(/\?/g,'')
+  .replace(/^(velg|legg til)\s+/i,'')
+  .replace(/\s+/g,' ')
+  .trim();
+ if(!prompt)return answer;
+ return prompt+': '+answer;
+}
 function cartCard(line){
  const f=findProduct(line.productId);if(!f)return '';
  const p=f.p,size=selectedSize(p,line.sizeId);
@@ -192,7 +203,7 @@ function cartCard(line){
  for(const g of applicableGroups(p,line.sizeId)){
   for(const id of line.options?.[g.id]||[]){
    const o=g.options.find(x=>x.id===id);
-   if(o)extras.push('<div class="cart-line cart-extra"><span>'+e(o.label)+'</span><span>'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</span></div>');
+   if(o)extras.push('<div class="cart-line cart-extra"><span>'+e(cartOptionLabel(g,o))+'</span><span>'+(o.price?'+ '+money(o.price*line.quantity):'inkludert')+'</span></div>');
   }
  }
  if(line.removedIngredients?.length)extras.push('<div class="cart-line cart-extra"><span>Uten '+e(line.removedIngredients.join(', '))+'</span></div>');
@@ -339,7 +350,7 @@ async function submit(){
  vs.pickupWarning='';
  vs.submitting=true;renderBottom();
  const lines=state.cart.map(l=>{const f=findProduct(l.productId),p=f.p,s=selectedSize(p,l.sizeId);
-  const options=applicableGroups(p,l.sizeId).flatMap(g=>(l.options?.[g.id]||[]).map(id=>g.options.find(x=>x.id===id)).filter(Boolean).map(x=>({label:x.label,price:x.price})));
+  const options=applicableGroups(p,l.sizeId).flatMap(g=>(l.options?.[g.id]||[]).map(id=>g.options.find(x=>x.id===id)).filter(Boolean).map(x=>({groupId:g.id,groupTitle:g.title,id:x.id,label:x.label,description:cartOptionLabel(g,x),price:x.price})));
   return {itemId:p.id,productId:p.id,name:p.name,size:s.name,sizeId:s.id,quantity:l.quantity,options,removedIngredients:l.removedIngredients||[],comment:l.comment||'',price:linePrice(l)};
  });
  try{
