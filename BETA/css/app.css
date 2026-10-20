@@ -48,7 +48,7 @@ h3{font-size:15px}
 .category-button .cat-icon{font-size:18px}.category-button .cat-name{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:119px}
 .category-scroll-indicator{height:5px;margin:1px 18px 0;background:var(--line);border-radius:4px;position:relative;cursor:pointer;touch-action:pan-x}
 .category-scroll-indicator span{display:block;position:absolute;top:0;left:0;background:var(--green);border-radius:4px;width:100%;height:100%;transition:left .12s ease,width .12s ease}
-.main-content{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;scroll-padding-top:12px;padding:12px 10px 106px;outline:none}
+.main-content{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;scroll-padding-top:12px;padding:12px 10px 24px;outline:none}
 .status-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);margin-bottom:18px}
 .status-main{display:flex;align-items:center;gap:11px;min-width:0}
 .status-dot{display:inline-block;width:11px;height:11px;flex:0 0 auto;border-radius:50%;background:#21717b;box-shadow:0 0 0 5px #e5eee8}
@@ -166,7 +166,7 @@ textarea.input-field{resize:vertical;min-height:75px}
 .empty{text-align:center;color:var(--muted);padding:70px 20px}
 .empty .emoji{font-size:40px;margin-bottom:12px}
 .status-pill{font-size:11px;padding:4px 9px;border-radius:99px;background:var(--subtle);color:var(--green)}
-@media(max-width:410px){.product-card{gap:9px;min-height:99px}.product-photo,.product-placeholder{width:72px;height:72px}.product-title{font-size:13px}.product-description{font-size:11px}.product-action .price{font-size:12px}.header-icon{width:36px;height:36px}.brand-name{font-size:15px}.panel{padding:17px}.main-content{padding-left:8px;padding-right:8px}}
+@media(max-width:410px){.status-card{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:9px}.status-card .toggle-inline{grid-column:1/-1;justify-self:end}.product-card{gap:9px;min-height:99px}.product-photo,.product-placeholder{width:72px;height:72px}.product-title{font-size:13px}.product-description{font-size:11px}.product-action .price{font-size:12px}.header-icon{width:36px;height:36px}.brand-name{font-size:15px}.panel{padding:17px}.main-content{padding-left:8px;padding-right:8px}}
 @media(min-width:700px){.app-shell{border-left:1px solid #d5dfd2;border-right:1px solid #d5dfd2}}
 
 
