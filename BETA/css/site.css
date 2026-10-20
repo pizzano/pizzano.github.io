@@ -278,5 +278,6 @@ svg{height:20px;width:20px;fill:none;stroke:currentColor;stroke-width:1.85;strok
 }
 @media(prefers-reduced-motion:reduce) {
   html{scroll-behavior:auto}
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .loading-grid>div{animation:none}
+  .product-card,.option-pick,.btn{transition:none}
 }
