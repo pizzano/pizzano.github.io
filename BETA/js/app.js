@@ -1,0 +1,639 @@
+/* KØL BETA customer app: independent implementation, read-only Firebase.
+   No legacy DEMO imports, no order writes, no always-on listeners. */
+'use strict';
+
+const DATABASE = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
+const KEY = { menu: 'kol_beta_menu_v1', cart: 'kol_beta_cart_v1', contact: 'kol_beta_contact_v1' };
+const $ = (id) => document.getElementById(id);
+const list = (value) => Array.isArray(value) ? value.filter(Boolean) : value && typeof value === 'object' ? Object.values(value).filter(Boolean) : [];
+const money = (value) => (Number(value) || 0).toLocaleString('nb-NO', { maximumFractionDigits: 2 }) + ' kr';
+const safe = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const readLocal = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+const writeLocal = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} };
+const uniqueId = () => (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'beta-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+const state = {
+  catalog: null, cart: readLocal(KEY.cart, []), contact: readLocal(KEY.contact, {}),
+  category: 'all', search: '', allergens: true, view: 'menu', draft: null,
+  editingId: null, pickupMode: '', pickupTime: '', lastFetch: 0,
+  online: navigator.onLine !== false
+};
+if (!Array.isArray(state.cart)) state.cart = [];
+const dayNames = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+const required = (id) => $(id);
+
+function toast(message) {
+  const node = $('toast');
+  node.textContent = message;
+  node.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { node.hidden = true; }, 2800);
+}
+function safeImage(raw) {
+  try {
+    const url = new URL(String(raw || ''), location.href);
+    return ['https:', 'http:'].includes(url.protocol) ? url.href : '';
+  } catch { return ''; }
+}
+function logoEmoji(section) {
+  const label = String(section?.title || '').toLowerCase();
+  if (label.includes('pizza')) return '🍕';
+  if (label.includes('burger')) return '🍔';
+  if (label.includes('kebab') || label.includes('grill')) return '🥙';
+  if (label.includes('drikk')) return '🥤';
+  if (label.includes('salat')) return '🥗';
+  return '🍽️';
+}
+function normalizeCatalog(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const settings = source.settings || source.siteSettings || {};
+  const groups = list(source.optionGroups).map((group) => ({
+    id: String(group.id || ''), title: String(group.title || 'Tilvalg'),
+    mode: group.selectionMode === 'multiple' ? 'multiple' : 'single',
+    required: Boolean(group.required),
+    min: Math.max(0, Number(group.minSelections) || (group.required ? 1 : 0)),
+    max: group.selectionMode === 'multiple' ? Math.max(1, Number(group.maxSelections) || 99) : 1,
+    allowQuantity: group.allowQuantity === true,
+    defaults: list(group.defaultOptionIds).map(String),
+    options: list(group.options).map((o) => ({
+      id: String(o.id || ''), label: String(o.label || ''),
+      price: Number(o.price) || 0, soldOut: o.soldOut === true
+    }))
+  }));
+  const sections = list(source.sections).map((section) => ({
+    id: String(section.id || ''), title: String(section.title || ''), note: String(section.note || ''),
+    items: list(section.items).map((item) => ({
+      id: String(item.id || ''), name: String(item.name || ''),
+      description: String(item.description || ''), ingredients: String(item.ingredients || ''),
+      image: safeImage(item.imageUrl), hidden: item.hidden === true, soldOut: item.soldOut === true,
+      defaultSizeIndex: Math.max(0, Number(item.defaultSizeIndex) || 0),
+      allergens: list(item.allergens).map(String),
+      optionGroupIds: list(item.optionGroupIds).map(String),
+      optionGroupOrder: list(item.optionGroupOrder).map(String),
+      ingredientRules: list(item.ingredientRules).map((x) => typeof x === 'string' ? {name:x,removable:true} : {name:String(x.name || ''),removable:x.removable !== false}),
+      sizes: list(item.sizes).map((size) => ({
+        id: String(size.id || ''), label: String(size.label || ''), price: Number(size.price) || 0,
+        optionGroupIds: list(size.optionGroupIds).map(String)
+      }))
+    }))
+  }));
+  const allergens = new Map(list(source.allergenCatalog).map((x) => [String(x.id || ''), String(x.label || x.id || '')]));
+  return { settings, groups, sections, allergens, revision: Number(source.updatedAt) || 0 };
+}
+function itemById(id) {
+  for (const section of state.catalog?.sections || []) {
+    const item = section.items.find((value) => value.id === id);
+    if (item) return { item, section };
+  }
+  return null;
+}
+function itemGroups(item, sizeId) {
+  const size = item.sizes.find((s) => s.id === sizeId);
+  const ids = [...new Set([...item.optionGroupOrder, ...item.optionGroupIds, ...(size?.optionGroupIds || [])])];
+  return ids.map((id) => state.catalog.groups.find((g) => g.id === id)).filter(Boolean);
+}
+function getPrice(item, sizeId, selections) {
+  const size = item.sizes.find((s) => s.id === sizeId) || item.sizes[0];
+  let total = Number(size?.price) || 0;
+  for (const group of itemGroups(item, sizeId)) {
+    for (const optionId of selections[group.id] || []) {
+      const opt = group.options.find((o) => o.id === optionId);
+      if (opt) total += opt.price;
+    }
+  }
+  return total;
+}
+function cartDetails(entry) {
+  const ref = itemById(entry.itemId);
+  if (!ref) return null;
+  const size = ref.item.sizes.find((s) => s.id === entry.sizeId) || ref.item.sizes[0];
+  const extras = [];
+  for (const group of itemGroups(ref.item, entry.sizeId)) {
+    const counts = {};
+    for (const id of entry.selections?.[group.id] || []) counts[id] = (counts[id] || 0) + 1;
+    for (const [id, qty] of Object.entries(counts)) {
+      const option = group.options.find((o) => o.id === id);
+      if (option) extras.push((qty > 1 ? qty + '× ' : '') + option.label + (option.price ? ' (+' + money(option.price * qty) + ')' : ''));
+    }
+  }
+  return { ...ref, size, extras, unit: getPrice(ref.item, entry.sizeId, entry.selections || {}), total: getPrice(ref.item, entry.sizeId, entry.selections || {}) * entry.qty };
+}
+function validCart() {
+  const old = state.cart.length;
+  state.cart = state.cart.filter((line) => {
+    const ref = itemById(line.itemId);
+    return ref && !ref.item.hidden && !ref.item.soldOut &&
+      ref.item.sizes.some((s) => s.id === line.sizeId);
+  });
+  if (state.cart.length !== old) { writeLocal(KEY.cart, state.cart); toast('Handlekurven ble oppdatert etter menyendring.'); }
+}
+function total() { return state.cart.reduce((sum, line) => sum + (cartDetails(line)?.total || 0), 0); }
+function count() { return state.cart.reduce((sum, line) => sum + (Number(line.qty) || 0), 0); }
+function updateCounters() {
+  const number = count();
+  $('headerCartCount').textContent = String(number);
+  $('headerCartCount').hidden = number === 0;
+  $('mobileCart').hidden = number === 0 || state.view !== 'menu';
+  $('mobileCount').textContent = String(number);
+  $('mobileTotal').textContent = money(total());
+}
+function visibleItems(section) {
+  const search = state.search.toLocaleLowerCase('nb');
+  return section.items.filter((item) => !item.hidden && (!search ||
+    [item.name, item.description, item.ingredients, section.title].join(' ').toLocaleLowerCase('nb').includes(search)));
+}
+function allergensHTML(item) {
+  if (!state.allergens || !item.allergens.length) return '';
+  return '<div class="allergen-list">' + item.allergens.map((id) =>
+    '<span class="allergen-tag">' + safe(state.catalog.allergens.get(id) || id) + '</span>').join('') + '</div>';
+}
+function menuCard(item, section) {
+  const sizes = item.sizes;
+  const min = sizes.length ? Math.min(...sizes.map((s) => s.price)) : 0;
+  const image = item.image || '';
+  const body = '<button class="product-body" type="button" data-open="' + safe(item.id) + '">' +
+    '<span class="product-name">' + safe(item.name) + '</span>' +
+    '<p class="product-description">' + safe(item.description || item.ingredients || 'Tilberedt med gode råvarer') + '</p>' +
+    '<div class="product-bottom"><strong class="product-price">' + (sizes.length > 1 ? 'Fra ' : '') + money(min) + '</strong>' +
+    (item.soldOut ? '<span class="product-tag">Utsolgt</span>' : sizes.length > 1 ? '<span class="product-tag">Flere størrelser</span>' : '') +
+    '</div>' + allergensHTML(item) + '</button>';
+  const visual = image ? '<img class="product-image" loading="lazy" decoding="async" alt="" src="' + safe(image) + '">' :
+    '<div class="product-image product-placeholder" aria-hidden="true">' + logoEmoji(section) + '</div>';
+  return '<article class="product-card ' + (item.soldOut ? 'soldout' : '') + '">' +
+    body + visual + (item.soldOut ? '' : '<button type="button" class="product-add" data-open="' + safe(item.id) + '" aria-label="Tilpass ' + safe(item.name) + '">+</button>') + '</article>';
+}
+function renderCategories() {
+  const sections = state.catalog?.sections || [];
+  $('categories').innerHTML = '<button class="category-chip" type="button" data-category="all" aria-pressed="' + (state.category === 'all') + '">Alle</button>' +
+    sections.filter((s) => s.items.some((i) => !i.hidden)).map((s) =>
+      '<button class="category-chip" type="button" data-category="' + safe(s.id) + '" aria-pressed="' + (state.category === s.id) + '">' + safe(s.title) + '</button>').join('');
+}
+function renderMenu() {
+  if (!state.catalog) return;
+  renderCategories();
+  const sections = state.catalog.sections.filter((s) => state.category === 'all' || state.category === s.id);
+  const visible = sections.map((s) => ({section:s, products:visibleItems(s)})).filter((entry) => entry.products.length);
+  $('menuCount').textContent = visible.reduce((n, s) => n + s.products.length, 0) + ' produkter';
+  $('menuSections').innerHTML = visible.length ? visible.map(({section,products}) =>
+    '<section class="menu-section" aria-label="' + safe(section.title) + '"><div class="menu-section-heading"><h3>' + safe(section.title) +
+    '</h3><small>' + products.length + ' valg</small></div><div class="product-grid">' +
+    products.map((item) => menuCard(item,section)).join('') + '</div></section>').join('') :
+    '<div class="empty-state">Ingen produkter funnet. Prøv et annet søk.</div>';
+  updateCounters();
+}
+function showView(name) {
+  if (!['menu', 'cart', 'contact', 'pickup', 'success'].includes(name)) name = 'menu';
+  if (name !== 'menu' && name !== 'success' && !state.cart.length) name = 'menu';
+  state.view = name;
+  for (const view of ['menu','cart','contact','pickup','success']) $(view + 'View').hidden = view !== name;
+  if (name === 'cart') renderCart();
+  if (name === 'contact') { populateContact(); renderSummary('contactSummary'); }
+  if (name === 'pickup') { renderPickup(); renderSummary('pickupSummary'); }
+  updateCounters();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function closeModal() {
+  $('productOverlay').hidden = true;
+  state.draft = null;
+  state.editingId = null;
+  document.body.style.overflow = '';
+}
+function openProduct(itemId, editId) {
+  const ref = itemById(itemId);
+  if (!ref || ref.item.soldOut || ref.item.hidden) return;
+  const item = ref.item;
+  const original = editId ? state.cart.find((x) => x.id === editId) : null;
+  const size = original?.sizeId || item.sizes[Math.min(item.defaultSizeIndex, item.sizes.length - 1)]?.id;
+  if (!size) { toast('Ingen størrelser tilgjengelig for dette produktet.'); return; }
+  const selections = original ? structuredClone(original.selections || {}) : {};
+  state.draft = {
+    itemId: item.id, sizeId: size, qty: original?.qty || 1, selections,
+    removedIngredients: [...(original?.removedIngredients || [])], comment: original?.comment || ''
+  };
+  state.editingId = original?.id || null;
+  $('dialogTitle').textContent = item.name;
+  $('dialogDescription').textContent = item.description || item.ingredients || '';
+  $('dialogImage').innerHTML = item.image ? '<img alt="" src="' + safe(item.image) + '">' : logoEmoji(ref.section);
+  $('dialogAllergens').innerHTML = allergensHTML(item);
+  $('dialogComment').value = state.draft.comment;
+  $('dialogError').hidden = true;
+  initializeDefaults(item);
+  renderDraft();
+  $('productOverlay').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('dialogTitle').focus?.();
+}
+function initializeDefaults(item) {
+  for (const group of itemGroups(item,state.draft.sizeId)) {
+    if (state.draft.selections[group.id]) continue;
+    state.draft.selections[group.id] = group.defaults.filter((id) =>
+      group.options.some((o) => o.id === id && !o.soldOut)).slice(0,group.max);
+  }
+}
+function optionsTotal(group) {
+  return (state.draft.selections[group.id] || []).length;
+}
+function optionHTML(group,option) {
+  const current = state.draft.selections[group.id] || [];
+  const n = current.filter((id) => id === option.id).length;
+  const base = '<span>' + safe(option.label) + '</span>' + (option.price ? '<small>+' + money(option.price) + '</small>' : '');
+  if (group.allowQuantity && group.mode === 'multiple') {
+    return '<div class="option-pick ' + (option.soldOut ? 'is-disabled' : '') + '"><div class="option-caption">' + base + '</div>' +
+      '<div class="mini-qty"><button type="button" data-option-minus="' + safe(option.id) + '" data-option-group="' + safe(group.id) + '" aria-label="Fjern ett valg">−</button>' +
+      '<strong>' + n + '</strong><button type="button" data-option-plus="' + safe(option.id) + '" data-option-group="' + safe(group.id) + '" aria-label="Legg til ett valg" ' + (option.soldOut ? 'disabled' : '') + '>+</button></div></div>';
+  }
+  return '<label class="option-pick ' + (option.soldOut ? 'is-disabled' : '') + '"><input type="' + (group.mode === 'single' ? 'radio' : 'checkbox') +
+    '" name="choice-' + safe(group.id) + '" data-option="' + safe(option.id) + '" data-group="' + safe(group.id) +
+    '" ' + (n ? 'checked ' : '') + (option.soldOut ? 'disabled ' : '') + '>' + base + '</label>';
+}
+function renderDraft() {
+  const draft = state.draft;
+  if (!draft) return;
+  const ref = itemById(draft.itemId), item = ref.item;
+  $('dialogSizes').innerHTML = item.sizes.length > 1 ?
+    '<div class="dialog-group"><h3>Størrelse</h3><div class="option-picks">' + item.sizes.map((s) =>
+      '<label class="option-pick"><input type="radio" name="size" data-size="' + safe(s.id) + '" ' +
+      (s.id === draft.sizeId ? 'checked' : '') + '><span>' + safe(s.label || 'Standard') + '</span><small>' + money(s.price) +
+      '</small></label>').join('') + '</div></div>' : '';
+  $('dialogOptions').innerHTML = itemGroups(item,draft.sizeId).map((group) =>
+    '<div class="dialog-group"><h3>' + safe(group.title) + '</h3><span class="group-hint">' +
+    (group.required ? 'Obligatorisk valg' : 'Valgfritt') + (group.mode === 'multiple' ? ' · opptil ' + group.max + ' valg' : '') +
+    '</span><div class="option-picks">' +
+    (!group.required && group.mode === 'single' ? '<label class="option-pick"><input type="radio" name="choice-' + safe(group.id) + '" data-clear-group="' + safe(group.id) + '" ' + (optionsTotal(group) ? '' : 'checked') + '><span>Ingen tilvalg</span></label>' : '') +
+    group.options.map((option) => optionHTML(group,option)).join('') +
+    '</div></div>').join('');
+  const rules = item.ingredientRules.length ? item.ingredientRules : item.ingredients.split(',').map((name) => ({name:name.trim(),removable:true})).filter((i)=>i.name);
+  $('dialogIngredients').innerHTML = state.catalog.settings.ingredientCustomizationEnabled === false || !rules.some((r) => r.removable) ? '' :
+    '<div class="dialog-group"><h3>Tilpass ingredienser</h3><span class="group-hint">Velg det du ønsker å fjerne</span><div class="option-picks">' +
+    rules.filter((r) => r.removable && r.name).map((r) =>
+      '<label class="option-pick"><input type="checkbox" data-remove-ingredient="' + safe(r.name) + '" ' +
+      (draft.removedIngredients.includes(r.name) ? 'checked' : '') + '><span>Uten ' + safe(r.name) + '</span></label>').join('') +
+    '</div></div>';
+  $('dialogQty').textContent = String(draft.qty);
+  $('dialogMinus').disabled = draft.qty <= 1;
+  $('dialogPlus').disabled = draft.qty >= 20;
+  $('dialogTotal').textContent = money(getPrice(item,draft.sizeId,draft.selections) * draft.qty);
+}
+function optionChange(input) {
+  const draft = state.draft;
+  if (!draft) return;
+  if (input.dataset.size) {
+    draft.sizeId = input.dataset.size;
+    draft.selections = {};
+    initializeDefaults(itemById(draft.itemId).item);
+  } else if (input.dataset.clearGroup) {
+    draft.selections[input.dataset.clearGroup] = [];
+  } else if (input.dataset.group) {
+    const group = state.catalog.groups.find((g) => g.id === input.dataset.group);
+    if (!group) return;
+    const active = draft.selections[group.id] || [];
+    if (group.mode === 'single') draft.selections[group.id] = input.checked ? [input.dataset.option] : [];
+    else if (input.checked) {
+      if (active.length >= group.max) { input.checked = false; toast('Du kan velge maks ' + group.max + ' alternativ.'); return; }
+      draft.selections[group.id] = [...active, input.dataset.option];
+    } else draft.selections[group.id] = active.filter((id) => id !== input.dataset.option);
+  } else if (input.dataset.removeIngredient) {
+    draft.removedIngredients = input.checked ?
+      [...new Set([...draft.removedIngredients,input.dataset.removeIngredient])] :
+      draft.removedIngredients.filter((x) => x !== input.dataset.removeIngredient);
+  }
+  renderDraft();
+}
+function optionQuantity(button) {
+  const draft = state.draft;
+  if (!draft) return;
+  const group = state.catalog.groups.find((g) => g.id === button.dataset.optionGroup);
+  if (!group) return;
+  const id = button.dataset.optionPlus || button.dataset.optionMinus;
+  const current = draft.selections[group.id] || [];
+  if (button.dataset.optionPlus) {
+    if (current.length >= group.max) { toast('Maks ' + group.max + ' valg.'); return; }
+    draft.selections[group.id] = [...current,id];
+  } else {
+    const at = current.indexOf(id);
+    if (at > -1) draft.selections[group.id] = current.filter((_,i) => i !== at);
+  }
+  renderDraft();
+}
+function addToCart() {
+  const draft = state.draft;
+  if (!draft) return;
+  const ref = itemById(draft.itemId);
+  if (!ref) return;
+  for (const group of itemGroups(ref.item,draft.sizeId)) {
+    const size = (draft.selections[group.id] || []).length;
+    if ((group.required && size < Math.max(1,group.min)) || size > group.max) {
+      $('dialogError').textContent = 'Kontroller valgene under «' + group.title + '».';
+      $('dialogError').hidden = false;
+      return;
+    }
+  }
+  draft.comment = $('dialogComment').value.trim().slice(0,250);
+  const line = {id:state.editingId || uniqueId(), ...draft};
+  const existing = state.cart.findIndex((x) => x.id === state.editingId);
+  if (existing >= 0) state.cart[existing] = line;
+  else {
+    const match = state.cart.find((x) => x.itemId === line.itemId && x.sizeId === line.sizeId &&
+      JSON.stringify(x.selections) === JSON.stringify(line.selections) &&
+      JSON.stringify(x.removedIngredients) === JSON.stringify(line.removedIngredients) && x.comment === line.comment);
+    if (match) match.qty = Math.min(99,match.qty + line.qty);
+    else state.cart.push(line);
+  }
+  saveCart();
+  closeModal();
+  toast('Lagt i handlekurven');
+  if (state.view === 'cart') renderCart();
+}
+function saveCart() { writeLocal(KEY.cart,state.cart); updateCounters(); }
+function renderCartLine(entry) {
+  const info = cartDetails(entry);
+  if (!info) return '';
+  const notes = [
+    'Størrelse: ' + (info.size?.label || 'Standard'),
+    ...info.extras,
+    ...(entry.removedIngredients?.length ? ['Uten: ' + entry.removedIngredients.join(', ')] : []),
+    ...(entry.comment ? ['Kommentar: ' + entry.comment] : [])
+  ];
+  return '<article class="cart-line"><div><div class="cart-line-name">' + safe(info.item.name) + '</div>' +
+    '<div class="cart-line-meta">' + safe(notes[0]) + '</div>' +
+    notes.slice(1).map((text) => '<div class="cart-line-extra">' + safe(text) + '</div>').join('') +
+    '<button class="inline-link" type="button" data-edit="' + safe(entry.id) + '">Endre valg</button></div>' +
+    '<div class="cart-line-actions"><div class="cart-line-price">' + money(info.total) +
+    '</div><div class="qty-control"><button type="button" aria-label="Fjern ett" data-cart-minus="' + safe(entry.id) + '">−</button>' +
+    '<span>' + entry.qty + '</span><button type="button" aria-label="Legg til ett" data-cart-plus="' + safe(entry.id) +
+    '">+</button></div><button class="inline-link" type="button" data-cart-remove="' + safe(entry.id) + '">Fjern</button></div></article>';
+}
+function renderCart() {
+  $('cartLines').innerHTML = state.cart.length ? state.cart.map(renderCartLine).join('') :
+    '<div class="empty-state">Handlekurven er tom. Finn noe godt fra menyen.</div>';
+  $('cartSubtotal').textContent = money(total());
+  $('cartTotal').textContent = money(total());
+  $('goContact').disabled = !state.cart.length;
+}
+function modifyCart(id, change) {
+  const line = state.cart.find((x) => x.id === id);
+  if (!line) return;
+  if (change === 0 || line.qty + change < 1) state.cart = state.cart.filter((x) => x.id !== id);
+  else line.qty = Math.min(99,line.qty + change);
+  saveCart();
+  if (!state.cart.length && state.view !== 'cart') showView('cart');
+  renderCart();
+}
+function summaryHTML() {
+  return '<h3>Din bestilling</h3>' + state.cart.map((line) => {
+    const info = cartDetails(line);
+    return info ? '<div class="summary-line"><span>' + line.qty + '× ' + safe(info.item.name) +
+      '</span><b>' + money(info.total) + '</b></div>' : '';
+  }).join('') +
+    '<div class="summary-line total"><span>Totalt</span><strong>' + money(total()) + '</strong></div>' +
+    '<p>Betaling ved henting. Dette er en BETA-forhåndsvisning.</p>';
+}
+function renderSummary(id) { $(id).innerHTML = summaryHTML(); }
+function populateContact() {
+  $('customerName').value = state.contact.name || '';
+  $('customerPhone').value = state.contact.phone || '';
+  $('customerEmail').value = state.contact.email || '';
+  $('contactError').hidden = true;
+}
+function validateContact() {
+  const name = $('customerName').value.trim().replace(/\s+/g,' ');
+  const phone = $('customerPhone').value.replace(/\D/g, '');
+  const email = $('customerEmail').value.trim();
+  let error = '';
+  if (name.split(' ').length < 2 || name.length < 3) error = 'Oppgi både fornavn og etternavn.';
+  else if (!/^\d{8}$/.test(phone)) error = 'Mobilnummeret må bestå av 8 siffer.';
+  else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) error = 'Kontroller e-postadressen.';
+  $('contactError').textContent = error;
+  $('contactError').hidden = !error;
+  if (error) return false;
+  state.contact = {name,phone,email};
+  writeLocal(KEY.contact,state.contact);
+  return true;
+}
+function osloClock(date = new Date()) {
+  const values = {};
+  for (const part of new Intl.DateTimeFormat('en-GB',
+    {timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit',weekday:'short',hour12:false}).formatToParts(date))
+    values[part.type] = part.value;
+  const short = values.weekday?.slice(0,3) || 'Mon';
+  return {day:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(short),
+    minutes:(Number(values.hour) % 24) * 60 + Number(values.minute)};
+}
+function toMinutes(value) {
+  const parts = /^(\d{1,2}):(\d{2})$/.exec(String(value || ''));
+  return parts ? Number(parts[1])*60+Number(parts[2]) : null;
+}
+function hhmm(n) { return String(Math.floor((n % 1440) / 60)).padStart(2,'0') + ':' + String(n % 60).padStart(2,'0'); }
+function opening() {
+  if (!state.catalog) return {open:false,label:'Laster…',remaining:0};
+  const settings = state.catalog.settings || {};
+  const clock = osloClock();
+  const weekly = Array.isArray(settings.weeklyHours) && settings.weeklyHours.length === 7 ?
+    settings.weeklyHours : dayNames.map(() => ({enabled:true,open:settings.orderOpenTime || '14:00',close:settings.orderCloseTime || '22:00'}));
+  const today = weekly[clock.day] || {};
+  const yesterday = weekly[(clock.day + 6) % 7] || {};
+  const todayStart = toMinutes(today.open), todayEnd = toMinutes(today.close);
+  const yesterdayStart = toMinutes(yesterday.open), yesterdayEnd = toMinutes(yesterday.close);
+  let remaining = 0;
+  if (today.enabled !== false && todayStart !== null && todayEnd !== null && clock.minutes >= todayStart &&
+      (todayEnd > todayStart ? clock.minutes < todayEnd : true))
+    remaining = (todayEnd > todayStart ? todayEnd : todayEnd + 1440) - clock.minutes;
+  else if (yesterday.enabled !== false && yesterdayStart !== null && yesterdayEnd !== null &&
+    yesterdayEnd <= yesterdayStart && clock.minutes < yesterdayEnd)
+    remaining = yesterdayEnd - clock.minutes;
+  const until = Number(settings.manualClosedUntil) || 0;
+  const forced = settings.manualClosed === true && (!until || until > Date.now());
+  return {open:!forced && remaining > 0,remaining,
+    label: !forced && remaining > 0 ? 'Åpent nå' : 'Stengt nå',
+    today,nowMinute:clock.minutes,settings};
+}
+function updateOpening() {
+  const result = opening();
+  $('headerStatus').classList.toggle('is-closed', !result.open);
+  $('headerStatus').innerHTML = '<span class="status-dot"></span>' + safe(result.label);
+  const settings = state.catalog?.settings || {};
+  $('heroOpening').textContent = settings.orderOpenTime && settings.orderCloseTime ?
+    'Åpningstid: ' + settings.orderOpenTime + '–' + settings.orderCloseTime : 'Henting i restauranten';
+}
+function pickupTimes() {
+  const details = opening();
+  if (!details.open) return [];
+  const start = details.nowMinute + Math.max(30,Number(details.settings.prepMinutes) || 30);
+  const interval = Math.max(5,Math.min(60,Number(details.settings.slotIntervalMinutes) || 15));
+  const latest = details.nowMinute + details.remaining - 10;
+  const slots = [];
+  for (let n = Math.ceil(start / interval) * interval; n <= latest && slots.length < 25; n+=interval) slots.push(hhmm(n));
+  return slots;
+}
+function renderPickup() {
+  $('pickupAsap').classList.toggle('selected', state.pickupMode === 'asap');
+  $('pickupScheduled').classList.toggle('selected', state.pickupMode === 'scheduled');
+  const slots = pickupTimes();
+  $('pickupSlots').hidden = state.pickupMode !== 'scheduled';
+  $('pickupSlots').innerHTML = slots.map((time) =>
+    '<button type="button" class="time-chip ' + (time === state.pickupTime ? 'selected' : '') +
+    '" data-slot="' + safe(time) + '">' + safe(time) + '</button>').join('') ||
+    '<div class="notice notice-warn">Ingen tilgjengelige hentetider nå.</div>';
+  $('pickupNotice').hidden = opening().open;
+  $('pickupNotice').textContent = 'Restauranten er stengt nå. Du kan teste skjermene, men ingen ordre kan sendes fra BETA.';
+  $('pickupError').hidden = true;
+}
+function orderPreview() {
+  if (!state.pickupMode || (state.pickupMode === 'scheduled' && !state.pickupTime)) {
+    $('pickupError').textContent = 'Velg Snarest eller en hentetid.';
+    $('pickupError').hidden = false;
+    return;
+  }
+  const pickup = state.pickupMode === 'asap' ? 'Snarest' : state.pickupTime;
+  $('successDetails').innerHTML = '<div><strong>Navn:</strong> ' + safe(state.contact.name) + '</div>' +
+    '<div><strong>Telefon:</strong> ' + safe(state.contact.phone) + '</div>' +
+    '<div><strong>Hentetid:</strong> ' + safe(pickup) + '</div>' +
+    '<div><strong>Varer:</strong> ' + count() + '</div>' +
+    '<div><strong>Totalt:</strong> ' + money(total()) + '</div>';
+  showView('success');
+}
+function showProfile() {
+  const profile = state.contact;
+  $('profileDetails').innerHTML = '<dl><dt>Navn</dt><dd>' + safe(profile.name || 'Ikke oppgitt') +
+    '</dd><dt>Mobil</dt><dd>' + safe(profile.phone || 'Ikke oppgitt') +
+    '</dd><dt>E-post</dt><dd>' + safe(profile.email || 'Valgfritt') +
+    '</dd><dt>Pizzabonus</dt><dd>Vises når BETA får sin egen sikre ordreflyt.</dd></dl>';
+  $('profileOverlay').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeProfile() { $('profileOverlay').hidden = true; document.body.style.overflow = ''; }
+
+async function fetchValue(path) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(DATABASE + '/' + path + '.json', {
+      signal:controller.signal,cache:'no-store',credentials:'omit'
+    });
+    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
+    return await response.json();
+  } finally { clearTimeout(timer); }
+}
+async function retrieveMenu() {
+  let nested = await fetchValue('menu');
+  if (nested && Array.isArray(nested.sections)) return nested;
+  const fields = ['sections','optionGroups','allergenCatalog','settings','siteSettings','updatedAt'];
+  const results = await Promise.all(fields.map((name) => fetchValue(name)));
+  const data = Object.fromEntries(fields.map((field,index) => [field,results[index]]));
+  if (!list(data.sections).length) throw new Error('Menydata mangler.');
+  return data;
+}
+function showCatalog(raw) {
+  const previous = state.catalog?.revision;
+  state.catalog = normalizeCatalog(raw);
+  validCart();
+  $('menuLoading').hidden = true;
+  $('menuError').hidden = true;
+  if (previous !== state.catalog.revision) renderMenu();
+  else renderMenu();
+  updateOpening();
+}
+async function refreshCatalog() {
+  const cache = readLocal(KEY.menu,null);
+  if (cache?.data && cache.savedAt > Date.now() - 1000*60*60*24*7) {
+    try { showCatalog(cache.data); } catch {}
+  }
+  try {
+    // Menybesøk gjør ikke langvarig Firebase-abonnement. Én liten versjonssjekk.
+    let revision = Number(await fetchValue('updatedAt')) || 0;
+    if (!revision) revision = Number(await fetchValue('menu/updatedAt')) || 0;
+    if (!state.catalog || !revision || revision !== state.catalog.revision) {
+      const raw = await retrieveMenu();
+      showCatalog(raw);
+      writeLocal(KEY.menu,{savedAt:Date.now(),data:raw});
+    }
+    $('menuError').hidden = true;
+    state.lastFetch = Date.now();
+  } catch (error) {
+    $('menuLoading').hidden = true;
+    if (!state.catalog) {
+      $('menuError').textContent = 'Kunne ikke hente menyen. Kontroller nettverket og prøv igjen.';
+      $('menuError').hidden = false;
+      $('menuSections').innerHTML = '<div class="empty-state"><button class="btn btn-secondary" type="button" id="retryMenu">Prøv igjen</button></div>';
+    } else toast('Viser sist lagrede meny. Ingen nettverkstilgang.');
+  }
+}
+function bindEvents() {
+  document.addEventListener('click', (event) => {
+    const go = event.target.closest('[data-go]');
+    if (go) { showView(go.dataset.go); return; }
+    const item = event.target.closest('[data-open]');
+    if (item) { openProduct(item.dataset.open); return; }
+    const category = event.target.closest('[data-category]');
+    if (category) {state.category = category.dataset.category;renderMenu();return;}
+    const edit = event.target.closest('[data-edit]');
+    if (edit) { const line = state.cart.find((x) => x.id === edit.dataset.edit); if (line) openProduct(line.itemId,line.id); return; }
+    const plus = event.target.closest('[data-cart-plus]');
+    if (plus) {modifyCart(plus.dataset.cartPlus,1);return;}
+    const minus = event.target.closest('[data-cart-minus]');
+    if (minus) {modifyCart(minus.dataset.cartMinus,-1);return;}
+    const remove = event.target.closest('[data-cart-remove]');
+    if (remove) {modifyCart(remove.dataset.cartRemove,0);return;}
+    const slot = event.target.closest('[data-slot]');
+    if (slot) {state.pickupTime = slot.dataset.slot;renderPickup();return;}
+    const optionQty = event.target.closest('[data-option-plus],[data-option-minus]');
+    if (optionQty) {optionQuantity(optionQty);return;}
+    if (event.target.id === 'retryMenu') refreshCatalog();
+  });
+  $('menuSearch').addEventListener('input', (event) => {
+    state.search = event.target.value.trim();
+    $('clearSearch').hidden = !state.search;
+    renderMenu();
+  });
+  $('clearSearch').addEventListener('click', () => {
+    $('menuSearch').value = '';
+    state.search = '';
+    $('clearSearch').hidden = true;
+    renderMenu();
+    $('menuSearch').focus();
+  });
+  $('allergenToggle').addEventListener('change', (event) => {
+    state.allergens = event.target.checked;
+    renderMenu();
+  });
+  $('goContact').addEventListener('click', () => showView('contact'));
+  $('contactForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (validateContact()) showView('pickup');
+  });
+  document.querySelectorAll('[data-pickup]').forEach((button) =>
+    button.addEventListener('click', () => {
+      state.pickupMode = button.dataset.pickup;
+      state.pickupTime = '';
+      renderPickup();
+    }));
+  $('previewOrder').addEventListener('click',orderPreview);
+  $('backToMenu').addEventListener('click', () => showView('menu'));
+  $('profileButton').addEventListener('click',showProfile);
+  document.querySelectorAll('[data-close-profile]').forEach((button) =>
+    button.addEventListener('click',closeProfile));
+  document.querySelectorAll('[data-close-modal]').forEach((button) =>
+    button.addEventListener('click',closeModal));
+  $('dialogSizes').addEventListener('change',(event) => optionChange(event.target));
+  $('dialogOptions').addEventListener('change',(event) => optionChange(event.target));
+  $('dialogIngredients').addEventListener('change',(event) => optionChange(event.target));
+  $('dialogMinus').addEventListener('click',() => {
+    if (state.draft) {state.draft.qty = Math.max(1,state.draft.qty-1);renderDraft();}
+  });
+  $('dialogPlus').addEventListener('click',() => {
+    if (state.draft) {state.draft.qty = Math.min(20,state.draft.qty+1);renderDraft();}
+  });
+  $('dialogAdd').addEventListener('click',addToCart);
+  document.addEventListener('keydown',(event) => {
+    if (event.key === 'Escape') { if (!$('productOverlay').hidden) closeModal(); else if (!$('profileOverlay').hidden) closeProfile(); }
+  });
+  window.addEventListener('online',() => {
+    if (Date.now() - state.lastFetch > 180000) refreshCatalog();
+  });
+  document.addEventListener('visibilitychange',() => {
+    if (!document.hidden && Date.now() - state.lastFetch > 300000) refreshCatalog();
+  });
+}
+$('year').textContent = String(new Date().getFullYear());
+bindEvents();
+refreshCatalog();
+setInterval(updateOpening, 60000);
