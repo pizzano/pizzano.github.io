@@ -3,65 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f7f9f7">
+  <meta name="theme-color" content="#f7f8fa">
   <meta name="description" content="KØL Grill & Pizza – utforsk menyen og bygg din bestilling. BETA forhåndsvisning.">
   <title>KØL Grill & Pizza · BETA</title>
-  <link rel="stylesheet" href="./css/site.css?v=beta-01">
-  <script defer type="module" src="./js/app.js?v=beta-01"></script>
+  <link rel="stylesheet" href="./css/site.css?v=beta-02">
+  <script defer type="module" src="./js/app.js?v=beta-02"></script>
 </head>
 <body>
-  <div class="beta-ribbon"><span class="beta-pulse"></span>BETA FORHÅNDSVISNING <span aria-hidden="true">·</span> Ingen bestillinger sendes ennå</div>
+
+  <div class="beta-ribbon"><span class="beta-pulse"></span>BETA · FORHÅNDSVISNING <span class="beta-info">Bestillinger sendes ikke ennå</span></div>
   <header class="site-header">
     <div class="header-inner">
-      <button class="brand" type="button" data-go="menu" aria-label="Tilbake til meny">
+      <button class="brand" type="button" data-go="menu" aria-label="Tilbake til menyen">
         <span class="brand-mark" aria-hidden="true">K<span>Ø</span>L</span>
-        <span class="brand-name"><strong>KØL Grill & Pizza</strong><small>Skarnes · Bestill takeaway</small></span>
+        <span class="brand-name"><strong>Bestill</strong><small>KØL GRILL &amp; PIZZA</small></span>
       </button>
       <div class="header-actions">
-        <span class="open-pill" id="headerStatus"><span class="status-dot"></span>Henter åpningstider</span>
+        <button class="icon-button theme-button" type="button" id="themeButton" aria-label="Bytt til mørk modus" aria-pressed="false" title="Lys / mørk modus">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.5A8 8 0 0 1 8.5 4 8.4 8.4 0 1 0 20 15.5Z"/></svg>
+        </button>
         <button class="icon-button" type="button" id="profileButton" aria-label="Min profil" title="Min profil">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20c.6-4 3.4-6 7.2-6s6.6 2 7.2 6"/></svg>
         </button>
-        <button class="header-cart" type="button" data-go="cart" aria-label="Åpne handlekurv">
+        <button class="icon-button cart-header-button" type="button" data-go="cart" aria-label="Handlekurv">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.2a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
-          <span>Kurv</span><span class="cart-count" id="headerCartCount" hidden>0</span>
+          <span class="cart-count" id="headerCartCount" hidden>0</span>
         </button>
       </div>
     </div>
+    <nav class="categories-bar" id="categoriesBar" aria-label="Menykategorier">
+      <div class="categories" id="categories"></div>
+    </nav>
   </header>
 
   <main class="page-shell" id="page">
     <section class="menu-view" id="menuView">
-      <div class="hero">
-        <div class="hero-copy">
-          <span class="eyebrow"><span class="eyebrow-spark">✦</span> Laget med omtanke. Klart til henting.</span>
-          <h1>God mat. <em>Enklere</em> bestilling.</h1>
-          <p>Pizza, grill og dine favoritter – akkurat slik du liker dem. Velg, tilpass og hent når det passer.</p>
-          <div class="hero-meta"><span id="heroOpening">Åpningstider lastes…</span><span class="meta-separator">•</span><span>Betal ved henting</span></div>
+      <div class="menu-overview">
+        <div class="menu-overview-row">
+          <div class="pickup-note">
+            <span class="status-dot" id="openDot"></span>
+            <div class="pickup-copy">
+              <strong id="headerStatus">Henter åpningstider…</strong>
+              <span id="heroOpening">Kun henting · Betaling ved henting</span>
+            </div>
+          </div>
+          <label class="simple-toggle" for="allergenToggle">
+            <span>Vis allergener</span>
+            <input id="allergenToggle" type="checkbox" checked>
+            <span class="toggle-track" aria-hidden="true"></span>
+          </label>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="hero-circle circle-one"></div><div class="hero-circle circle-two"></div>
-          <div class="hero-food">🍕</div><div class="art-float top">Ferskt hver dag <span>✦</span></div><div class="art-float bottom">KØL <strong>Skarnes</strong></div>
-        </div>
+        <div class="closed-banner" id="closedBanner" hidden><strong>Restauranten er stengt nå</strong><span id="closedMessage">Du kan fortsatt se menyen.</span></div>
       </div>
-
-      <div class="menu-topline">
-        <div><span class="section-kicker">UTFORSK MENYEN</span><h2>Hva frister i dag?</h2></div>
-        <div class="menu-count" id="menuCount">Laster menyen…</div>
-      </div>
-      <div class="menu-controls">
+      <div class="menu-controls" id="menuControls" hidden>
         <label class="searchbox">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.4 4.4"/></svg>
-          <input id="menuSearch" type="search" placeholder="Søk etter pizza, kebab, burger…" autocomplete="off" aria-label="Søk i menyen">
+          <input id="menuSearch" type="search" placeholder="Søk pizza, kebab, burger…" autocomplete="off" aria-label="Søk i menyen">
           <button type="button" id="clearSearch" class="search-clear" aria-label="Tøm søk" hidden>×</button>
         </label>
-        <label class="simple-toggle" title="Vis allergener"><input id="allergenToggle" type="checkbox" checked><span>Vis allergener</span></label>
+        <button type="button" id="closeSearch" class="close-search" aria-label="Lukk søk">Lukk</button>
       </div>
-      <nav class="categories" id="categories" aria-label="Menykategorier"></nav>
       <div id="menuError" class="notice notice-error" role="alert" hidden></div>
-      <div id="menuLoading" class="loading-grid" aria-label="Laster meny"><div></div><div></div><div></div><div></div></div>
-      <div id="menuSections" class="menu-sections"></div>
-      <div class="footnote">Opplysninger om allergener er veiledende. Kontakt restauranten ved alvorlig allergi.</div>
+      <div id="menuLoading" class="loading-grid" aria-label="Laster menyen"><div></div><div></div><div></div><div></div></div>
+      <div class="menu-sections" id="menuSections"></div>
+      <p class="footnote">Har du allergier? Informasjonen er veiledende. Spør restauranten ved behov.</p>
     </section>
 
     <section class="stage-view" id="cartView" hidden>
@@ -117,7 +122,7 @@
   <footer class="site-footer"><div class="footer-inner"><div><strong>KØL Grill & Pizza</strong><small>Skarnes · God mat, enkelt bestilt.</small></div><span>© <span id="year"></span> KØL · BETA</span></div></footer>
 
   <div class="mobile-cart" id="mobileCart" hidden><button type="button" data-go="cart"><span class="mobile-count" id="mobileCount">0</span><strong>Se handlekurv</strong><span id="mobileTotal">0 kr</span><span>→</span></button></div>
-  <div class="overlay" id="productOverlay" hidden><div class="overlay-shade" data-close-modal></div><section class="product-dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button class="dialog-close" type="button" data-close-modal aria-label="Lukk">×</button><div id="dialogImage" class="dialog-image"></div><div class="dialog-content"><div class="dialog-heading"><span class="section-kicker">TILPASS BESTILLINGEN</span><h2 id="dialogTitle"></h2><p id="dialogDescription"></p><div id="dialogAllergens" class="allergen-list"></div></div><div id="dialogSizes"></div><div id="dialogOptions"></div><div id="dialogIngredients"></div><label class="field-label" for="dialogComment">Kommentar til kjøkkenet <span class="optional">(valgfritt)</span></label><textarea id="dialogComment" rows="2" maxlength="250" placeholder="Noe vi bør vite?"></textarea><div class="form-error" id="dialogError" role="alert" hidden></div></div><div class="dialog-footer"><div class="qty-control"><button type="button" id="dialogMinus" aria-label="Reduser antall">−</button><span id="dialogQty">1</span><button type="button" id="dialogPlus" aria-label="Øk antall">+</button></div><button class="btn btn-primary add-button" type="button" id="dialogAdd">Legg i kurv <strong id="dialogTotal">0 kr</strong></button></div></section></div>
+  <div class="overlay" id="productOverlay" hidden><div class="overlay-shade" data-close-modal></div><section class="product-dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button class="dialog-close" type="button" data-close-modal aria-label="Lukk">×</button><div id="dialogImage" class="dialog-image"></div><button type="button" id="dialogFavorite" class="dialog-favorite" aria-pressed="false" aria-label="Legg til favoritter" title="Favoritt">♡</button><div class="dialog-content"><div class="dialog-heading"><span class="section-kicker">TILPASS BESTILLINGEN</span><h2 id="dialogTitle"></h2><p id="dialogDescription"></p><div id="dialogAllergens" class="allergen-list"></div></div><div id="dialogSizes"></div><div id="dialogOptions"></div><div id="dialogIngredients"></div><label class="field-label" for="dialogComment">Kommentar til kjøkkenet <span class="optional">(valgfritt)</span></label><textarea id="dialogComment" rows="2" maxlength="250" placeholder="Noe vi bør vite?"></textarea><div class="form-error" id="dialogError" role="alert" hidden></div></div><div class="dialog-footer"><div class="qty-control"><button type="button" id="dialogMinus" aria-label="Reduser antall">−</button><span id="dialogQty">1</span><button type="button" id="dialogPlus" aria-label="Øk antall">+</button></div><button class="btn btn-primary add-button" type="button" id="dialogAdd">Legg i kurv <strong id="dialogTotal">0 kr</strong></button></div></section></div>
   <div class="overlay" id="profileOverlay" hidden><div class="overlay-shade" data-close-profile></div><section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileTitle"><button class="dialog-close" type="button" data-close-profile aria-label="Lukk">×</button><span class="section-kicker">MIN SIDE</span><h2 id="profileTitle">Din profil</h2><p>Kontaktopplysningene lagres bare i denne nettleseren under BETA.</p><div id="profileDetails"></div><button class="btn btn-secondary btn-full" type="button" data-close-profile>Ferdig</button></section></div>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
