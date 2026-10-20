@@ -6,7 +6,7 @@ import {
 } from './store.js';
 
 const $=id=>document.getElementById(id);
-const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop');
+const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
 const e=escapeHtml;
 const vs={page:'menu',step:1,search:false,query:'',pickupMode:'',pickupTime:'',expanded:false,showPopular:true,submitting:false};
 let draft=null,editLineId=null,ingredientsExpanded=false,noticeTimer=null;
@@ -30,20 +30,40 @@ function header(){
  $('cartBadge').hidden=cartQuantity()===0;
  $('backButton').hidden=vs.page==='menu';
  $('categorySection').hidden=vs.page!=='menu';
+ const palette=['reference','lively','fresh','gourmet'].includes(r.palette)?r.palette:'reference';
+ document.body.classList.remove('theme-reference','theme-lively','theme-fresh','theme-gourmet');
+ document.body.classList.add('theme-'+palette);
  document.body.classList.toggle('dark',state.theme==='dark');
- document.body.style.setProperty('--green',state.theme==='dark'?'#568763':(r.themes?.primary||'#3e6649'));
 }
+function scrollMainTop(){main.scrollTop=0;}
 function setPage(page){
+ if(!sheet.hidden)closeSheet();
  vs.page=page;
  if(page==='cart'&&vs.step<1)vs.step=1;
- window.scrollTo({top:0,behavior:'instant'});
  render();
+ scrollMainTop();
+}
+function updateCategoryIndicator(){
+ if(!categoryIndicator)return;
+ const thumb=categoryIndicator.querySelector('span');if(!thumb)return;
+ const total=Math.max(1,cats.scrollWidth),view=Math.max(0,cats.clientWidth);
+ const maxScroll=Math.max(0,cats.scrollWidth-cats.clientWidth);
+ const width=Math.min(100,Math.max(8,(view/total)*100));
+ const left=maxScroll>0?(Math.min(maxScroll,Math.max(0,cats.scrollLeft))/total)*100:0;
+ thumb.style.width=width+'%';
+ thumb.style.left=left+'%';
+ categoryIndicator.setAttribute('aria-valuemin','0');
+ categoryIndicator.setAttribute('aria-valuemax',String(Math.round(maxScroll)));
+ categoryIndicator.setAttribute('aria-valuenow',String(Math.round(cats.scrollLeft)));
+ categoryIndicator.style.visibility=maxScroll>1?'visible':'hidden';
 }
 function categories(){
+ const previousScroll=cats.scrollLeft;
  const blocks=[{id:'search',name:'Søk',icon:'⌕'},{id:'popular',name:'Mest bestilt',icon:'☆'}]
   .concat(catalog.categories.map(c=>({id:c.id,name:c.name,icon:c.icon})));
  cats.innerHTML=blocks.map(c=>'<button type="button" class="category-button" data-action="category" data-id="'+e(c.id)+'"><span class="cat-icon">'+e(c.icon)+'</span><span class="cat-name">'+e(c.name)+'</span></button>').join('');
- cats.scrollLeft=0;
+ cats.scrollLeft=previousScroll;
+ requestAnimationFrame(updateCategoryIndicator);
 }
 function menuCard(p){
  const allergen=state.allergens&&p.allergens?.length?'<p class="product-allergens">Inneholder '+e(p.allergens.join(', '))+'</p>':'';
@@ -62,6 +82,7 @@ function sectionBlock(id,title,note,items){
 function menuMarkup(){
  const status=openState(),r=config.restaurant;
  let html='<div class="status-card"><div class="status-main"><span class="status-dot '+(!status.open?'closed':'')+'"></span><div><strong>'+(!status.open?'Stengt nå':'Åpent nå')+'</strong><p class="small">Kun henting · '+(status.open?'stenger '+e(status.closesAt):'åpner '+e(status.opensAt))+'</p></div></div>'+
+  '<button type="button" class="status-details" data-action="restaurant-info" aria-label="Restaurantinformasjon" title="Restaurantinformasjon">i</button>'+ 
   '<label class="toggle-inline">Vis allergener <input data-toggle="allergens" type="checkbox" '+(state.allergens?'checked':'')+' aria-label="Vis allergener"></label></div>';
  if(config.mode==='preview')html+='<div class="preview-banner">BETA forhåndsvisning · Menyen hentes fra Firebase. Bestillinger sendes ikke til restauranten.</div>';
  if(vs.search){
@@ -79,8 +100,8 @@ function sheetHeader(title,favorite=false){
  return '<div class="sheet-head"><button type="button" class="round-close" data-action="close-sheet" aria-label="Lukk">×</button><h2>'+e(title)+'</h2>'+
   (favorite?'<button type="button" class="round-close" data-action="favorite" aria-label="Favoritt">'+(state.favorites.includes(draft?.productId)?'♥':'♡')+'</button>':'<span style="width:42px"></span>')+'</div>';
 }
-function showSheet(html){sheet.innerHTML=html;backdrop.hidden=false;sheet.hidden=false;document.body.style.overflow='hidden';}
-function closeSheet(){sheet.hidden=true;backdrop.hidden=true;sheet.innerHTML='';document.body.style.overflow='';draft=null;editLineId=null;}
+function showSheet(html){const firstOpen=sheet.hidden;sheet.innerHTML=html;backdrop.hidden=false;sheet.hidden=false;if(firstOpen){const scroll=sheet.querySelector('.sheet-scroll');if(scroll)scroll.scrollTop=0;}}
+function closeSheet(){sheet.hidden=true;backdrop.hidden=true;sheet.innerHTML='';draft=null;editLineId=null;}
 function newDraft(p){
  const size=selectedSize(p,p.defaultSizeId),options={};
  for(const g of applicableGroups(p,size.id)){
@@ -98,7 +119,7 @@ function openProduct(id,editId=null){
 }
 function renderProductSheet(){
  if(!draft)return;const found=findProduct(draft.productId);if(!found)return;
- const p=found.p,oldScroll=sheet.scrollTop;
+ const p=found.p,oldScroll=sheet.querySelector('.sheet-scroll')?.scrollTop||0;
  const removable=(p.ingredientRules||[]).filter(x=>x.removable).map(x=>x.name);
  let body=sheetHeader(p.name,true)+photo(p,'sheet-photo')+
   '<div class="sheet-scroll"><div class="muted">'+e(p.description)+'</div>';
@@ -120,7 +141,7 @@ function renderProductSheet(){
   '<textarea id="productComment" class="input-field" maxlength="300" placeholder="Spesielle ønsker…">'+e(draft.comment||'')+'</textarea></section></div>';
  body+='<div class="sheet-footer"><div class="qty-control"><button data-action="draft-minus" aria-label="Mindre">−</button><strong>'+draft.quantity+'</strong><button data-action="draft-plus" aria-label="Mer">+</button></div>'+
   '<button class="button primary" data-action="add-product"><span>'+(editLineId?'Oppdater':'Legg til')+'</span><strong>'+sheetPrice()+'</strong></button></div>';
- showSheet(body);sheet.scrollTop=oldScroll;
+ showSheet(body);const scroll=sheet.querySelector('.sheet-scroll');if(scroll)scroll.scrollTop=oldScroll;
 }
 function optionUpdate(groupId,optionId,checked){
  const found=findProduct(draft.productId);const g=applicableGroups(found.p,draft.sizeId).find(x=>x.id===groupId);
@@ -156,7 +177,7 @@ function cartCard(line){
  if(line.removedIngredients?.length)extras.push('<div class="cart-line"><strong>Uten:</strong> '+e(line.removedIngredients.join(', '))+'</div>');
  if(line.comment)extras.push('<div class="cart-line">Kommentar: '+e(line.comment)+'</div>');
  return '<article class="cart-card"><div class="cart-head"><button class="brand-name" style="color:var(--green);font-size:15px" data-action="edit-line" data-line="'+e(line.id)+'">'+e(p.name)+'</button>'+
-  '<div class="cart-qty"><button data-action="delete-line" data-line="'+e(line.id)+'" aria-label="Fjern">♜</button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Flere">+</button></div></div>'+
+  '<div class="cart-qty"><button data-action="delete-line" data-line="'+e(line.id)+'" aria-label="Fjern vare" title="Fjern vare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg></button><span>'+line.quantity+'</span><button data-action="plus-line" data-line="'+e(line.id)+'" aria-label="Flere">+</button></div></div>'+
   '<div class="cart-line"><span><b>Størrelse:</b> '+e(size.name)+'</span><strong>'+money(size.price*line.quantity)+'</strong></div>'+
   extras.join('')+'<div class="cart-sum"><span class="muted">Sum</span><strong>'+money(linePrice(line))+'</strong></div></article>';
 }
@@ -201,7 +222,7 @@ function pickupMarkup(){
 function bonusMarkup(){
  const enabled=config.restaurant.loyalty.enabled,goal=config.restaurant.loyalty.buy||10;
  const count=state.loyalty.count%goal;
- const colors=Array.from({length:goal},(_,i)=>((i<count?'var(--green)':'#cfdbca')+' '+(i*360/goal)+'deg '+((i+1)*360/goal-5)+'deg, var(--card) '+((i+1)*360/goal-5)+'deg '+((i+1)*360/goal)+'deg')).join(', ');
+ const colors=Array.from({length:goal},(_,i)=>((i<count?'var(--bonus-accent)':'var(--bonus-idle)')+' '+(i*360/goal)+'deg '+((i+1)*360/goal-5)+'deg, var(--card) '+((i+1)*360/goal-5)+'deg '+((i+1)*360/goal)+'deg')).join(', ');
  if(!enabled)return '';
  return '<div class="panel bonus-box"><h2>Din pizzabonus</h2><p class="muted mt14">Kjøp '+goal+' store pizzaer, få den '+(goal+1)+'. gratis</p>'+
   '<div class="bonus-ring" style="background:conic-gradient('+colors+')"><div class="ring-center"><b>'+count+'</b><span>pizza<br>registrert</span></div></div>'+
@@ -299,6 +320,7 @@ function onAction(action,target){
   cats.querySelectorAll('.category-button').forEach(button=>button.classList.toggle('active',button.dataset.id===id));
   document.getElementById('cat-'+id)?.scrollIntoView({behavior:'smooth',block:'start'});return;
  }
+ if(action==='restaurant-info'){openInfo();return;}
  if(action==='close-search'){vs.search=false;vs.query='';render();return;}
  if(action==='product'){openProduct(id);return;}
  if(action==='close-sheet'){closeSheet();return;}
@@ -319,9 +341,9 @@ function onAction(action,target){
  if(action==='plus-line'||action==='delete-line'){changeQuantity(line,action==='plus-line'?1:-1);render();return;}
  if(action==='edit-line'){const l=state.cart.find(x=>x.id===line);if(l)openProduct(l.productId,l.id);return;}
  if(action==='continue-shop'||action==='go-menu'){setPage('menu');return;}
- if(action==='next-contact'){if(validateCart()){vs.step=2;render();window.scrollTo(0,0);}return;}
- if(action==='next-pickup'){if(storeForm()){vs.step=3;render();window.scrollTo(0,0);}return;}
- if(action==='previous-step'){vs.step=Math.max(1,vs.step-1);render();return;}
+ if(action==='next-contact'){if(validateCart()){vs.step=2;render();scrollMainTop();}return;}
+ if(action==='next-pickup'){if(storeForm()){vs.step=3;render();scrollMainTop();}return;}
+ if(action==='previous-step'){vs.step=Math.max(1,vs.step-1);render();scrollMainTop();return;}
  if(action==='pickup-mode'){vs.pickupMode=target.dataset.value;vs.pickupTime='';render();return;}
  if(action==='pickup-time'){vs.pickupTime=target.dataset.value;render();return;}
  if(action==='expand-order'){vs.expanded=!vs.expanded;render();return;}
@@ -375,7 +397,7 @@ document.addEventListener('keydown',event=>{
  }
 });
 backdrop.addEventListener('click',closeSheet);
-$('brandButton').addEventListener('click',openInfo);
+$('brandButton').addEventListener('click',()=>{vs.search=false;vs.query='';setPage('menu');});
 $('profileButton').addEventListener('click',()=>setPage('profile'));
 $('cartButton').addEventListener('click',()=>{vs.step=1;setPage('cart');});
 $('backButton').addEventListener('click',()=>{if(vs.page==='cart'&&vs.step>1){vs.step--;render();return;}if(vs.page==='profile-edit'||vs.page==='orders'||vs.page==='favorites'){setPage('profile');return;}setPage('menu');});
@@ -404,14 +426,34 @@ async function checkMenu(){
  }catch{}
  finally{refreshing=false;}
 }
-window.addEventListener('scroll',()=>{
+main.addEventListener('scroll',()=>{
  if(vs.page!=='menu'||vs.search||document.hidden)return;
+ const offset=main.getBoundingClientRect().top+30;
  let active='';
  for(const block of main.querySelectorAll('section[id^="cat-"]')){
-  if(block.getBoundingClientRect().top<195)active=block.id.slice(4);
+  if(block.getBoundingClientRect().top<=offset)active=block.id.slice(4);
  }
- if(active)cats.querySelectorAll('.category-button').forEach(button=>button.classList.toggle('active',button.dataset.id===active));
+ if(!active)active=main.querySelector('section[id^="cat-"]')?.id.slice(4)||'';
+ if(active){
+  cats.querySelectorAll('.category-button').forEach(button=>button.classList.toggle('active',button.dataset.id===active));
+ }
 },{passive:true});
+cats.addEventListener('scroll',updateCategoryIndicator,{passive:true});
+categoryIndicator?.addEventListener('click',event=>{
+ const bounds=categoryIndicator.getBoundingClientRect();
+ if(!bounds.width)return;
+ const progress=Math.max(0,Math.min(1,(event.clientX-bounds.left)/bounds.width));
+ const target=Math.max(0,progress*cats.scrollWidth-cats.clientWidth/2);
+ cats.scrollTo({left:target,behavior:'smooth'});
+});
+categoryIndicator?.addEventListener('keydown',event=>{
+ if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+ event.preventDefault();
+ const delta=event.key==='ArrowLeft'?-100:event.key==='ArrowRight'?100:0;
+ const destination=event.key==='Home'?0:event.key==='End'?cats.scrollWidth:cats.scrollLeft+delta;
+ cats.scrollTo({left:destination,behavior:'smooth'});
+});
+window.addEventListener('resize',updateCategoryIndicator);
 window.addEventListener('focus',()=>void checkMenu());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkMenu();});
 setInterval(()=>{if(!document.hidden)void checkMenu();},5*60*1000);
