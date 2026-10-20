@@ -7,6 +7,7 @@ Dette er en **ny, separat kundeapp** under /BETA/. DEMO-kode er ikke kopiert hit
 - Inngang: `BETA/index.html`
 - Utseende: `BETA/css/app.css`
 - UI/kurv/bestillingssteg: `BETA/js/app.js`
+- SVG icon set: `BETA/js/icons.js`
 - Profil/kurv/preview-bestillinger: `BETA/js/store.js`
 - Firebase-katalogadapter: `BETA/js/catalog.js`
 - Restoran og datakilde: `BETA/js/config.js`
@@ -29,7 +30,7 @@ BETA oppretter ingen Firebase-lyttere for kunden, og setter ikke opp egen minutt
 Den beholder lokal katalogkopi og kontrollerer `updatedAt` høyst hver femte minutt per aktiv fane. Hvis versjonen er uendret, lastes ikke menyen på nytt. Ved nettfeil kan siste menykopi vises. Før bestilling i en ekte produksjonsversjon må backend alltid kontrollere nyeste priser, utsolgt-status og åpningstid.
 
 ## Viktig: forhåndsvisning
-`config.mode='preview'`. Handlekurv, produkter, ingredienstilpasning, størrelse, valg, profil, favoritter, pizzabonusvisning, checkout og testbestillinger kan prøves lokalt.
+`config.mode='preview'`. Handlekurv, produkter, ingredienstilpasning, størrelse, valg, profil, restaurantinformasjon, pizzabonusvisning, checkout og testbestillinger kan prøves lokalt.
 
 **Testbestillinger sendes IKKE til restauranten eller DEMO Firebase.** De lagres lokalt i nettleseren. Det sendes **ingen SMS, e-post eller kjøkkenutskrift**. Pizzabonus er kun en lokal eksempel-/testteller og kan ikke brukes som virkelig lojalitetssaldo.
 
@@ -63,3 +64,14 @@ Designet er basert på skjermbilder fra den tidligere DEMO-kundeopplevelsen, men
 - Pizzabonus bruker mindre ring og kompakt, mørkegrønt design. Kurv har ikon for søppelbøtte.
 - Fire semantiske fargetema: `reference`, `lively`, `fresh`, `gourmet` (og mørk variant). Alle sentrale UI-flater bruker CSS custom properties; valget tas fra `siteSettings.customerPalette` i Firebase eller fra `BETA/js/config.js` ved manglende verdi.
 - CSS og JS lastes med `20261020-beta2` for å unngå blanding av gamle moduler etter publisering.
+
+## Oppdatering: kategorier og kompakt kurv
+- Kategoriene er fortsatt hentet fra Firebase `sections`. Ingen kategorier eller priser er hardkodet.
+- Ikoner vises som ekte SVG via et trygt sett i `BETA/js/icons.js`, basert på samme symboler som tidligere DEMO.
+- Hver Firebase-kategori kan få sitt eget valgfrie `iconKey` (alternativt `icon`, `iconName`, `iconType`). Eksempel: `"vegetarian"`. Lovlige ikoner: `pizza`, `kebab`, `burger`, `meal`, `drink`, `children`, `vegetarian`, `popular`. Uten felt velges passende ikon automatisk fra kategoritittelen. Den framtidige BETA-adminen kan skrive `iconKey` direkte til kategorien i Firebase og oppdatere `updatedAt`. Utrygge SVG-strenger fra databasen blir aldri kjørt.
+- Søkefanen bruker også SVG-lupe; kategoristrek og aktiv kategori følger scroll.
+- «Mine favoritter» (inkludert hjerte og lokal favorittfunksjon) er fjernet. Profilen viser i stedet «Restaurantinformasjon» med data fra Firebase og åpner detaljvinduet.
+- Kurven bruker kompakte varekort, synlige størrelser/tilvalg og tydelig sum. Alle slettinger bruker samme SVG-søppelbøtte.
+- «Tøm handlekurv» er ikke synlig når kurven er tom. «Neste: Kontakt» skjules også for tom kurv. Søppelbøtten på en varelinje fjerner hele linjen, også ved antall over én. «Tøm handlekurv» krever bekreftelse.
+- Menyens forhåndsvisningsbanner er fjernet. **Kundens testbestilling er fortsatt ikke en reell ordre**; dette opplyses ved testbekreftelsen.
+- Endrede kundeassetter bruker `20261020-beta3` for cache-invalidering.
