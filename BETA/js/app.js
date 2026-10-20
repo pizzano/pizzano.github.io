@@ -2,9 +2,9 @@ import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
- pickupSlots,sendOrder
-} from './store.js?v=20261021-beta4';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta10';
+ pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
+} from './store.js?v=20261021-beta11';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta11';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -501,6 +501,24 @@ $('profileButton').addEventListener('click',()=>setPage('profile'));
 $('cartButton').addEventListener('click',()=>{vs.step=1;setPage('cart');});
 $('backButton').addEventListener('click',()=>{if(vs.page==='cart'&&vs.step>1){vs.step--;render();return;}if(vs.page==='profile-edit'||vs.page==='orders'){setPage('profile');return;}setPage('menu');});
 $('themeButton').addEventListener('click',()=>{state.theme=state.theme==='dark'?'light':'dark';persist();render();});
+
+function catalogChanged(){
+ // Live menu changes update cart totals and availability without a page reload.
+ if(draft){
+  const found=findProduct(draft.productId);
+  if(!found||found.p.soldOut){
+   closeSheet();toast('Produktet er ikke lenger tilgjengelig.');
+  }else{
+   draft.comment=$('productComment')?.value??draft.comment;
+   const size=selectedSize(found.p,draft.sizeId);
+   draft.sizeId=size.id;
+   const groups=applicableGroups(found.p,size.id);
+   draft.options=Object.fromEntries(groups.map(g=>[g.id,(draft.options[g.id]||[]).filter(id=>g.options.some(o=>o.id===id))]));
+   renderProductSheet();
+  }
+ }
+ render();
+}
 async function boot(){
  main.innerHTML='<div class="empty"><div class="emoji">🍕</div><h2>Henter menyen…</h2><p>Fra Firebase</p></div>';
  header();
@@ -508,23 +526,22 @@ async function boot(){
   await loadCatalog();
   if(!catalogReady())throw new Error('Ingen produkter tilgjengelig.');
   render();
+  startCatalogSync(catalogChanged);
  }catch(err){
   main.innerHTML='<div class="empty"><div class="emoji">⚠️</div><h2>Kunne ikke hente menyen</h2><p>'+e(err.message||'Firebase svarer ikke.')+'</p><button class="button primary mt20" id="retryMenu">Prøv igjen</button></div>';
   $('retryMenu')?.addEventListener('click',()=>void boot());
  }
 }
 void boot();
-// Only revalidate the revision occasionally, never listen to entire /orders or root.
-let refreshing=false;
-async function checkMenu(){
- if(refreshing||document.hidden||!catalogReady())return;
- refreshing=true;const old=catalog.version;
- try{
-  await loadCatalog();
-  if(catalog.version!==old){render();toast('Menyen er oppdatert.');}
- }catch{}
- finally{refreshing=false;}
-}
+// Close the one small stream when not used; reconnect to get the latest revision.
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)stopCatalogSync();
+ else if(catalogReady())startCatalogSync(catalogChanged);
+});
+window.addEventListener('online',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
+window.addEventListener('offline',stopCatalogSync);
+window.addEventListener('pagehide',stopCatalogSync);
+window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
 main.addEventListener('scroll',()=>{
  if(vs.page!=='menu'||vs.search||document.hidden)return;
  const offset=main.getBoundingClientRect().top+30;
@@ -551,6 +568,3 @@ categoryIndicator?.addEventListener('keydown',event=>{
  cats.scrollTo({left:destination,behavior:'smooth'});
 });
 window.addEventListener('resize',updateCategoryIndicator);
-window.addEventListener('focus',()=>void checkMenu());
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkMenu();});
-setInterval(()=>{if(!document.hidden)void checkMenu();},5*60*1000);

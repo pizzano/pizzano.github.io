@@ -3,10 +3,10 @@
  * Read-only: never reads /orders, /pizzaBonus, /emailHealth or / root.
  * The existing DEMO stores menu fields directly at root. New restaurants should
  * publish only their menu/settings under a tenant-scoped public menu path.
- * Local cached snapshot + tiny version check (<= once per 5m per tab).
+ * Local menu cache, one tiny SSE revision stream and REST fallback only when offline.
  */
-import {config} from './config.js?v=20261021-beta4';
-import {resolveCategoryIcon} from './icons.js?v=20261021-beta4';
+import {config} from './config.js?v=20261021-beta11';
+import {resolveCategoryIcon} from './icons.js?v=20261021-beta11';
 export const catalog={version:'',allergens:[],optionGroups:{},categories:[],popularIds:[]};
 export let menuStatus={source:'none',error:'',lastChecked:0};
 const menu=config.menu;
@@ -86,40 +86,159 @@ function apply(data){
   r.openTimes=Array.from({length:7},()=>({enabled:true,from:str(s.orderOpenTime)||'14:00',to:str(s.orderCloseTime)||'22:00'}));
  }
 }
+
+/* Preserve the beta:v2 localStorage cache key and existing normalized menu.
+ * DEMO already writes siteSettings and updatedAt on each menu/settings save.
+ * Never read the root, /orders or the potentially private /settings node. */
+const publicFields=['sections','optionGroups','allergenCatalog','popularItemIds','siteSettings'];
 let pending=null;
-let lastCheck=0;
-export async function loadCatalog({force=false}={}){
+let source=null,started=false,healthy=false,onChange=null;
+let fallbackTimer=null,initialTimer=null,reconnectTimer=null,retryTimer=null;
+let polling=null,refreshing=null,wanted=null,latest=null,retryMs=30000;
+const same=(a,b)=>String(a??'')===String(b??'');
+const active=()=>started&&!document.hidden&&(typeof navigator==='undefined'||navigator.onLine!==false);
+function clear(ref){if(ref!==null)clearTimeout(ref);}
+
+/** Cache-first boot: warm visits do no menu GET and keep old user caches. */
+export async function loadCatalog({force=false,revision}={}){
  if(pending)return pending;
+ const cached=readCache();
+ if(cached&&!catalogReady())apply(cached.menu);
+ if(cached&&!force){
+  menuStatus={source:'cache',error:'',lastChecked:cached.checkedAt||0};
+  return catalog;
+ }
+ if(cached&&revision!==undefined&&same(cached.menu.version,revision)){
+  apply(cached.menu);return catalog;
+ }
  pending=(async()=>{
-   const cached=readCache();
-   if(cached){apply(cached.menu);menuStatus={source:'cache',error:'',lastChecked:cached.checkedAt||0};}
+  try{
+   const names=revision===undefined?[...publicFields,menu.revisionField]:publicFields;
+   const values=await Promise.all(names.map(getField));
+   const data=Object.fromEntries(names.map((name,i)=>[name,values[i]]));
+   data.updatedAt=revision===undefined?data[menu.revisionField]:revision;
+   // Compatibility for cached legacy installations, without fetching /settings.
+   if(data.siteSettings==null)data.siteSettings=cached?.menu?.settings||null;
+   const normalized=normalize(data);
+   if(!normalized.categories.length)throw new Error('Firebase-menyen er tom.');
+   apply(normalized);
    const now=Date.now();
-   if(!force&&cached&&now-(cached.checkedAt||0)<menu.revalidateMs)return catalog;
-   try{
-    const revision=await getField(menu.revisionField);
-    lastCheck=Date.now();
-    if(cached && revision!=null && String(revision)===String(cached.menu.version)){
-      menuStatus={source:'firebase-verified',error:'',lastChecked:lastCheck};
-      saveCache({...cached,checkedAt:lastCheck});return catalog;
-    }
-    const fields=['sections','optionGroups','allergenCatalog','popularItemIds','siteSettings'];
-    const values=await Promise.all(fields.map(getField));
-    const data=Object.fromEntries(fields.map((f,i)=>[f,values[i]]));
-    // Legacy installations without siteSettings still work. One fallback request only.
-    if(!data.siteSettings)data.settings=await getField('settings');
-    data.updatedAt=revision;
-    const normalized=normalize(data);
-    if(!normalized.categories.length)throw new Error('Firebase-menyen er tom.');
-    apply(normalized);
-    menuStatus={source:'firebase',error:'',lastChecked:lastCheck};
-    saveCache({menu:normalized,savedAt:Date.now(),checkedAt:lastCheck});
-    return catalog;
-   }catch(err){
-    menuStatus={source:cached?'offline-cache':'error',error:err.message||'Kunne ikke hente menyen.',lastChecked:Date.now()};
-    if(cached)return catalog;
-    throw err;
-   }
+   saveCache({menu:normalized,savedAt:now,checkedAt:now});
+   menuStatus={source:'firebase',error:'',lastChecked:now};
+   return catalog;
+  }catch(err){
+   menuStatus={source:cached?'offline-cache':'error',error:err.message||'Firebase svarer ikke.',lastChecked:Date.now()};
+   throw err;
+  }
  })().finally(()=>pending=null);
  return pending;
+}
+function retryUpdate(){
+ if(retryTimer!==null||!active())return;
+ retryTimer=setTimeout(()=>{
+  retryTimer=null;
+  if(active()&&latest!==null&&!same(latest,catalog.version))queueVersion(latest);
+ },retryMs);
+ retryMs=Math.min(retryMs*2,300000);
+}
+/** Only one menu snapshot request at a time, even during rapid admin saves. */
+function queueVersion(revision){
+ if(revision==null||!active())return;
+ latest=revision;wanted=revision;
+ if(refreshing)return;
+ refreshing=(async()=>{
+  while(wanted!==null&&active()){
+   const next=wanted;wanted=null;
+   if(same(catalog.version,next))continue;
+   try{
+    const before=catalog.version;
+    await loadCatalog({force:true,revision:next});
+    if(!same(before,catalog.version))onChange?.();
+    retryMs=30000;
+    clear(retryTimer);retryTimer=null;
+   }catch(err){
+    menuStatus={source:'offline-cache',error:err.message||'Menyoppdatering feilet.',lastChecked:Date.now()};
+    retryUpdate();
+    break;
+   }
+  }
+ })().finally(()=>{
+  refreshing=null;
+  if(wanted!==null&&!same(wanted,catalog.version)&&active())queueVersion(wanted);
+ });
+}
+async function pollVersion(){
+ if(!active()||healthy||polling)return;
+ polling=(async()=>{
+  try{
+   const revision=await getField(menu.revisionField);
+   if(revision!==null)queueVersion(revision);
+  }catch(err){
+   menuStatus={source:catalogReady()?'offline-cache':'error',error:err.message||'Frakoblet.',lastChecked:Date.now()};
+  }
+ })().finally(()=>polling=null);
+ return polling;
+}
+function closeSource(){
+ clear(initialTimer);initialTimer=null;
+ if(source){source.close();source=null;}
+ healthy=false;
+}
+function reconnect(){
+ if(reconnectTimer!==null||!active())return;
+ reconnectTimer=setTimeout(()=>{reconnectTimer=null;connect();},30000);
+}
+function connect(){
+ if(!active()||source||typeof EventSource==='undefined')return;
+ try{
+  const stream=new EventSource(url(menu.revisionField));
+  source=stream;healthy=false;
+  initialTimer=setTimeout(()=>{initialTimer=null;if(!healthy)void pollVersion();},8000);
+  const update=event=>{
+   if(source!==stream)return;
+   try{
+    const msg=JSON.parse(event.data);
+    if(!msg||msg.path!=='/'||!Object.prototype.hasOwnProperty.call(msg,'data'))return;
+    const version=msg.data;
+    if(version===null||!['string','number'].includes(typeof version))return;
+    healthy=true;clear(initialTimer);initialTimer=null;
+    if(same(version,catalog.version)){
+     menuStatus={source:'firebase-verified',error:'',lastChecked:Date.now()};
+    }else queueVersion(version);
+   }catch{menuStatus={source:'offline-cache',error:'Ugyldig Firebase-melding.',lastChecked:Date.now()};}
+  };
+  stream.addEventListener('put',update);
+  stream.addEventListener('patch',update);
+  for(const type of ['cancel','auth_revoked']){
+   stream.addEventListener(type,()=>{
+    if(source!==stream)return;
+    stopCatalogSync();
+    menuStatus={source:'error',error:'Firebase tilgang avvist.',lastChecked:Date.now()};
+   });
+  }
+  stream.onerror=()=>{
+   if(source!==stream)return;
+   healthy=false;
+   if(stream.readyState===2){closeSource();reconnect();}
+  };
+ }catch{closeSource();reconnect();}
+}
+/** SSE is one scalar /updatedAt listener, never whole-menu or order streams. */
+export function startCatalogSync(callback){
+ onChange=callback;
+ if(started||document.hidden||(typeof navigator!=='undefined'&&navigator.onLine===false))return;
+ started=true;
+ connect();
+ // Timer makes no Firebase requests while SSE is healthy.
+ fallbackTimer=setInterval(()=>{if(!healthy)void pollVersion();},menu.revalidateMs);
+ if(typeof EventSource==='undefined')void pollVersion();
+}
+export function stopCatalogSync(){
+ started=false;closeSource();
+ if(fallbackTimer!==null)clearInterval(fallbackTimer);
+ fallbackTimer=null;
+ clear(reconnectTimer);reconnectTimer=null;
+ clear(retryTimer);retryTimer=null;
+ wanted=null;
 }
 export function catalogReady(){return !!catalog.categories.length}
