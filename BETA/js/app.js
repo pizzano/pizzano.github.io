@@ -167,25 +167,34 @@ function updateDialogFavorite(id) {
 function cardIcon(section) {
   return logoEmoji(section);
 }
+function cartQuantityFor(itemId) {
+  return state.cart.reduce((sum,line) => sum + (line.itemId === itemId ? line.qty : 0),0);
+}
 function menuCard(item, section) {
   const sizes = item.sizes;
-  const min = sizes.length ? Math.min(...sizes.map((size) => size.price)) : 0;
-  const image = item.image || '';
-  const body = '<button class="product-body" type="button" data-open="' + safe(item.id) + '">' +
-    '<span class="product-name">' + safe(item.name) + '</span>' +
-    '<p class="product-description">' + safe(item.description || item.ingredients || 'Tilberedt med gode råvarer') + '</p>' +
-    '<div class="product-bottom"><strong class="product-price">' + (sizes.length > 1 ? 'Fra ' : '') + money(min) + '</strong>' +
-    (item.soldOut ? '<span class="product-tag">Utsolgt</span>' : sizes.length > 1 ? '<span class="product-tag">Velg størrelse</span>' : '') +
-    '</div>' + allergensHTML(item) + '</button>';
-  const visual = image ? '<img class="product-image" loading="lazy" decoding="async" alt="" src="' + safe(image) + '">' :
-    '<div class="product-image product-placeholder" aria-hidden="true">' + cardIcon(section) + '</div>';
-  return '<article class="product-card ' + (item.soldOut ? 'soldout' : '') + '">' + body + visual +
-    '<button class="favorite-small ' + (isFavorite(item.id) ? 'is-active' : '') + '" type="button" data-favorite="' +
-    safe(item.id) + '" aria-label="' + (isFavorite(item.id) ? 'Fjern fra favoritter: ' : 'Legg til favoritter: ') +
-    safe(item.name) + '" aria-pressed="' + isFavorite(item.id) + '">' + (isFavorite(item.id) ? '♥' : '♡') + '</button>' +
-    (item.soldOut ? '' : '<button type="button" class="product-add" data-open="' + safe(item.id) +
-    '" aria-label="Tilpass ' + safe(item.name) + '">+</button>') + '</article>';
+  const base = sizes.length ? Math.min(...sizes.map((size) => size.price)) : 0;
+  const desc = item.description || item.ingredients || section.note || '';
+  const badge = cartQuantityFor(item.id);
+  const image = item.image
+    ? '<img class="product-image" loading="lazy" decoding="async" alt="" src="' + safe(item.image) + '">'
+    : '<span class="product-image product-placeholder" aria-hidden="true">🍴</span>';
+  const photo = '<div class="product-media">' + image +
+    (badge ? '<span class="in-cart-badge">✓ ' + badge + ' i kurven</span>' : '') + '</div>';
+  return '<article class="product-card' + (item.soldOut ? ' soldout' : '') + '">' +
+    '<button class="product-open" type="button" data-open="' + safe(item.id) + '" aria-label="Se ' + safe(item.name) + '">' +
+    photo +
+    '<span class="product-information"><strong class="product-name">' + safe(item.name) + '</strong>' +
+    '<span class="product-description">' + safe(desc) + '</span>' +
+    (state.allergens && item.allergens.length ? '<small class="product-allergens">Inneholder ' +
+      safe(item.allergens.map((id) => state.catalog.allergens.get(id) || id).join(', ')) + '</small>' : '') +
+    '</span></button><div class="product-actions">' +
+    (item.soldOut ? '<span class="product-soldout">Utsolgt</span>' :
+      '<button class="product-add" type="button" data-open="' + safe(item.id) +
+      '" aria-label="Legg til ' + safe(item.name) + '">+</button>') +
+    '<strong class="product-price">' + (sizes.length > 1 ? '<small>fra </small>' : '') + money(base) + '</strong>' +
+    '</div></article>';
 }
+
 function displayBlocks() {
   if (!state.catalog) return [];
   const sections = state.catalog.sections;
@@ -270,15 +279,17 @@ function renderMenu() {
 }
 
 function showView(name) {
-  if (!['menu', 'cart', 'contact', 'pickup', 'success'].includes(name)) name = 'menu';
-  if (name !== 'menu' && name !== 'success' && !state.cart.length) name = 'menu';
+  if (!['menu', 'cart', 'contact', 'pickup', 'profile', 'success'].includes(name)) name = 'menu';
+  if (['cart', 'contact', 'pickup'].includes(name) && !state.cart.length) name = 'menu';
   state.view = name;
   document.body.dataset.view = name;
-  for (const view of ['menu','cart','contact','pickup','success']) $(view + 'View').hidden = view !== name;
+  for (const view of ['menu','cart','contact','pickup','profile','success']) $(view + 'View').hidden = view !== name;
+  $('headerBack').hidden = name === 'menu';
   $('categoriesBar').hidden = name !== 'menu';
   if (name === 'cart') renderCart();
-  if (name === 'contact') { populateContact(); renderSummary('contactSummary'); }
+  if (name === 'contact') populateContact();
   if (name === 'pickup') { renderPickup(); renderSummary('pickupSummary'); }
+  if (name === 'profile') renderProfile();
   updateCounters();
   window.scrollTo({top:0,behavior:'instant'});
 }
@@ -303,7 +314,7 @@ function openProduct(itemId, editId) {
   state.editingId = original?.id || null;
   $('dialogTitle').textContent = item.name;
   $('dialogDescription').textContent = item.description || item.ingredients || '';
-  $('dialogImage').innerHTML = item.image ? '<img alt="" src="' + safe(item.image) + '">' : logoEmoji(ref.section);
+  $('dialogImage').innerHTML = item.image ? '<img alt="" src="' + safe(item.image) + '">' : '<span aria-hidden="true">🍴</span>';
   $('dialogAllergens').innerHTML = allergensHTML(item);
   $('dialogComment').value = state.draft.comment;
   $('dialogError').hidden = true;
@@ -440,19 +451,24 @@ function renderCartLine(entry) {
   const info = cartDetails(entry);
   if (!info) return '';
   const notes = [
-    'Størrelse: ' + (info.size?.label || 'Standard'),
-    ...info.extras,
-    ...(entry.removedIngredients?.length ? ['Uten: ' + entry.removedIngredients.join(', ')] : []),
-    ...(entry.comment ? ['Kommentar: ' + entry.comment] : [])
+    '<b>Størrelse:</b> ' + safe(info.size?.label || 'Standard'),
+    ...info.extras.map((item) => safe(item)),
+    ...(entry.removedIngredients?.length ? ['<b>Uten:</b> ' + safe(entry.removedIngredients.join(', '))] : []),
+    ...(entry.comment ? ['<b>Kommentar:</b> ' + safe(entry.comment)] : [])
   ];
-  return '<article class="cart-line"><div><div class="cart-line-name">' + safe(info.item.name) + '</div>' +
-    '<div class="cart-line-meta">' + safe(notes[0]) + '</div>' +
-    notes.slice(1).map((text) => '<div class="cart-line-extra">' + safe(text) + '</div>').join('') +
-    '<button class="inline-link" type="button" data-edit="' + safe(entry.id) + '">Endre valg</button></div>' +
-    '<div class="cart-line-actions"><div class="cart-line-price">' + money(info.total) +
-    '</div><div class="qty-control"><button type="button" aria-label="Fjern ett" data-cart-minus="' + safe(entry.id) + '">−</button>' +
-    '<span>' + entry.qty + '</span><button type="button" aria-label="Legg til ett" data-cart-plus="' + safe(entry.id) +
-    '">+</button></div><button class="inline-link" type="button" data-cart-remove="' + safe(entry.id) + '">Fjern</button></div></article>';
+  return '<article class="cart-line">' +
+    '<div class="cart-line-top"><button class="cart-title" data-edit="' + safe(entry.id) +
+    '" type="button">' + safe(info.item.name) + '</button>' +
+    '<div class="qty-control"><button data-cart-minus="' + safe(entry.id) +
+    '" aria-label="Færre" type="button">−</button><span>' + entry.qty +
+    '</span><button data-cart-plus="' + safe(entry.id) +
+    '" aria-label="Flere" type="button">+</button></div></div>' +
+    '<button class="cart-detail" type="button" data-edit="' + safe(entry.id) + '">' +
+      '<span class="cart-size-row">' + notes[0] + '<strong>' + money(info.unit) + ' / stk</strong></span>' +
+      notes.slice(1).map((text) => '<span class="cart-detail-row">' + text + '</span>').join('') +
+    '</button><div class="cart-line-bottom"><button type="button" data-cart-remove="' +
+    safe(entry.id) + '" class="text-action">Fjern</button><span>Sum <strong>' +
+    money(info.total) + '</strong></span></div></article>';
 }
 function renderCart() {
   $('cartLines').innerHTML = state.cart.length ? state.cart.map(renderCartLine).join('') :
@@ -460,6 +476,8 @@ function renderCart() {
   $('cartSubtotal').textContent = money(total());
   $('cartTotal').textContent = money(total());
   $('goContact').disabled = !state.cart.length;
+  $('cartBottom').hidden = !state.cart.length;
+  $('clearCart').hidden = !state.cart.length;
 }
 function modifyCart(id, change) {
   const line = state.cart.find((x) => x.id === id);
@@ -471,13 +489,15 @@ function modifyCart(id, change) {
   renderCart();
 }
 function summaryHTML() {
-  return '<h3>Din bestilling</h3>' + state.cart.map((line) => {
-    const info = cartDetails(line);
-    return info ? '<div class="summary-line"><span>' + line.qty + '× ' + safe(info.item.name) +
-      '</span><b>' + money(info.total) + '</b></div>' : '';
-  }).join('') +
-    '<div class="summary-line total"><span>Totalt</span><strong>' + money(total()) + '</strong></div>' +
-    '<p>Betaling ved henting. Dette er en BETA-forhåndsvisning.</p>';
+  return '<h3>Bestillingen din</h3>' +
+    state.cart.map((line) => {
+      const info = cartDetails(line);
+      if (!info) return '';
+      return '<div class="review-line"><span><strong>' + line.qty + '× ' +
+        safe(info.item.name) + '</strong><small>Størrelse: ' +
+        safe(info.size?.label || 'Standard') + '</small></span><b>' + money(info.total) + '</b></div>';
+    }).join('') +
+    '<div class="review-total"><span>Totalt</span><strong>' + money(total()) + '</strong></div>';
 }
 function renderSummary(id) { $(id).innerHTML = summaryHTML(); }
 function populateContact() {
@@ -492,7 +512,7 @@ function validateContact() {
   const email = $('customerEmail').value.trim();
   let error = '';
   if (name.split(' ').length < 2 || name.length < 3) error = 'Oppgi både fornavn og etternavn.';
-  else if (!/^\d{8}$/.test(phone)) error = 'Mobilnummeret må bestå av 8 siffer.';
+  else if (!/^[49]\d{7}$/.test(phone)) error = 'Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.';
   else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) error = 'Kontroller e-postadressen.';
   $('contactError').textContent = error;
   $('contactError').hidden = !error;
@@ -562,6 +582,8 @@ function pickupTimes() {
   return slots;
 }
 function renderPickup() {
+  $('pickupAsap').setAttribute('aria-pressed',String(state.pickupMode === 'asap'));
+  $('pickupScheduled').setAttribute('aria-pressed',String(state.pickupMode === 'scheduled'));
   $('pickupAsap').classList.toggle('selected', state.pickupMode === 'asap');
   $('pickupScheduled').classList.toggle('selected', state.pickupMode === 'scheduled');
   const slots = pickupTimes();
@@ -588,17 +610,55 @@ function orderPreview() {
     '<div><strong>Totalt:</strong> ' + money(total()) + '</div>';
   showView('success');
 }
-function showProfile() {
-  const profile = state.contact;
-  $('profileDetails').innerHTML = '<dl><dt>Navn</dt><dd>' + safe(profile.name || 'Ikke oppgitt') +
-    '</dd><dt>Mobil</dt><dd>' + safe(profile.phone || 'Ikke oppgitt') +
-    '</dd><dt>E-post</dt><dd>' + safe(profile.email || 'Valgfritt') +
-    '</dd><dt>Pizzabonus</dt><dd>Vises når BETA får sin egen sikre ordreflyt.</dd></dl>';
-  $('profileOverlay').hidden = false;
-  document.body.style.overflow = 'hidden';
+function renderProfile() {
+  const p = state.contact || {};
+  $('profileAvatar').textContent = (p.name || 'K').trim().slice(0,1).toUpperCase();
+  $('profileName').textContent = p.name || 'Min profil';
+  $('profilePhone').textContent = p.phone ? '+47 ' + p.phone : 'Kundeprofil';
+  renderProfilePage('home');
 }
-function closeProfile() { $('profileOverlay').hidden = true; document.body.style.overflow = ''; }
-
+function renderProfilePage(page) {
+  const target = ['home','edit','orders','info'].includes(page) ? page : 'home';
+  $('profileHome').hidden = target !== 'home';
+  for (const key of ['Edit','Orders','Info']) $('profile'+key).hidden = key.toLowerCase() !== target;
+  if (target === 'edit') {
+    $('profileEditName').value = state.contact.name || '';
+    $('profileEditPhone').value = state.contact.phone || '';
+    $('profileEditEmail').value = state.contact.email || '';
+    $('profileError').hidden = true;
+  }
+  if (target === 'info') {
+    const settings = state.catalog?.settings || {};
+    const hours = settings.orderOpenTime && settings.orderCloseTime ?
+      safe(settings.orderOpenTime) + '–' + safe(settings.orderCloseTime) : 'Se åpningstider i menyen';
+    const addr = [settings.streetAddress,settings.postalCode,settings.city].filter(Boolean).join(', ');
+    $('restaurantInfo').innerHTML =
+      '<div><b>Henting</b><span>Henting i restauranten</span></div>' +
+      '<div><b>Åpningstider</b><span>' + hours + '</span></div>' +
+      '<div><b>Adresse</b><span>' + safe(addr || 'Skarnes') + '</span></div>' +
+      '<div><b>Betaling</b><span>Ved henting</span></div>';
+  }
+}
+function saveProfile(event) {
+  event.preventDefault();
+  const name = $('profileEditName').value.trim().replace(/\s+/g,' ');
+  const phone = $('profileEditPhone').value.replace(/\D/g,'');
+  const email = $('profileEditEmail').value.trim();
+  const valid = name.length >= 3 && name.includes(' ') &&
+    /^[49]\d{7}$/.test(phone) && (!email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  if (!valid) {
+    $('profileError').textContent = 'Sjekk fullt navn, norsk mobilnummer og e-postadresse.';
+    $('profileError').hidden = false;
+    return;
+  }
+  state.contact = {name,phone,email};
+  writeLocal(KEY.contact,state.contact);
+  $('profileName').textContent = name;
+  $('profilePhone').textContent = '+47 '+phone;
+  $('profileAvatar').textContent = name[0].toUpperCase();
+  renderProfilePage('home');
+  toast('Profilen er lagret på denne enheten.');
+}
 async function fetchValue(path) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
@@ -700,6 +760,8 @@ function toggleTheme() {
 }
 function bindEvents() {
   document.addEventListener('click', (event) => {
+    const profileLink = event.target.closest('[data-profile-page]');
+    if (profileLink) { renderProfilePage(profileLink.dataset.profilePage); return; }
     const go = event.target.closest('[data-go]');
     if (go) { showView(go.dataset.go); return; }
     const item = event.target.closest('[data-open]');
@@ -752,6 +814,9 @@ function bindEvents() {
     state.allergens = event.target.checked;
     renderMenu();
   });
+  $('clearCart').addEventListener('click', () => {
+    state.cart = []; saveCart(); renderCart(); toast('Handlekurven er tømt.');
+  });
   $('goContact').addEventListener('click', () => showView('contact'));
   $('contactForm').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -765,9 +830,11 @@ function bindEvents() {
     }));
   $('previewOrder').addEventListener('click',orderPreview);
   $('backToMenu').addEventListener('click', () => showView('menu'));
-  $('profileButton').addEventListener('click',showProfile);
-  document.querySelectorAll('[data-close-profile]').forEach((button) =>
-    button.addEventListener('click',closeProfile));
+  $('profileButton').addEventListener('click',() => showView('profile'));
+  $('profileForm').addEventListener('submit',saveProfile);
+  $('headerBack').addEventListener('click', () => {
+    showView(({cart:'menu',contact:'cart',pickup:'contact',profile:'menu',success:'menu'})[state.view] || 'menu');
+  });
   document.querySelectorAll('[data-close-modal]').forEach((button) =>
     button.addEventListener('click',closeModal));
   $('dialogSizes').addEventListener('change',(event) => optionChange(event.target));
@@ -781,7 +848,7 @@ function bindEvents() {
   });
   $('dialogAdd').addEventListener('click',addToCart);
   document.addEventListener('keydown',(event) => {
-    if (event.key === 'Escape') { if (!$('productOverlay').hidden) closeModal(); else if (!$('profileOverlay').hidden) closeProfile(); }
+    if (event.key === 'Escape' && !$('productOverlay').hidden) closeModal();
   });
   window.addEventListener('online',() => {
     if (Date.now() - state.lastFetch > 180000) refreshCatalog();
