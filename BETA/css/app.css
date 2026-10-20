@@ -181,7 +181,6 @@ textarea.input-field{resize:vertical;min-height:75px}
 .info-card .small{font-size:12px}.info-card .small svg{width:15px;height:15px;vertical-align:middle;margin-right:6px;color:var(--green)}
 .info-card strong{display:block;margin:6px 0;font-size:14px}
 .info-section{font-size:11px;font-weight:800;letter-spacing:.09em;margin:18px 3px 9px;color:var(--muted)}
-.preview-banner{background:#fff4cc;color:#625014;border:1px solid #edd88a;border-radius:12px;padding:10px;font-size:12px;margin:9px 0 14px}
 .notice{position:fixed;left:50%;bottom:85px;transform:translateX(-50%);z-index:30;background:#263e2e;color:#fff;padding:12px 18px;border-radius:13px;max-width:min(90vw,440px);box-shadow:var(--shadow);text-align:center}
 .empty{text-align:center;color:var(--muted);padding:70px 20px}
 .empty .emoji{font-size:40px;margin-bottom:12px}
