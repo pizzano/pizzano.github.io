@@ -609,17 +609,26 @@ async function fetchValue(path) {
     return await response.json();
   } finally { clearTimeout(timer); }
 }
-async function retrieveMenu(source) {
-  // Never probe /menu.json when the live schema is rooted at /updatedAt.
+async function retrieveMenu(source, revision) {
+  // Use one version check and fetch only the public menu branches.
   if (source === 'nested') {
     const nested = await fetchValue('menu');
     if (nested && list(nested.sections).length) return nested;
     throw new Error('Menydata mangler på /menu.');
   }
-  const fields = ['sections','optionGroups','allergenCatalog','settings','siteSettings','popularItemIds','updatedAt'];
+  const fields = ['sections','optionGroups','allergenCatalog','settings','popularItemIds'];
   const results = await Promise.all(fields.map((name) => fetchValue(name)));
   const data = Object.fromEntries(fields.map((name,index) => [name,results[index]]));
-  if (!list(data.sections).length) throw new Error('Menydata mangler.');
+  if (!data.settings) data.siteSettings = await fetchValue('siteSettings');
+  data.updatedAt = revision;
+  if (!list(data.sections).length) {
+    // Old root timestamps can coexist with the newer nested menu schema.
+    const nested = await fetchValue('menu');
+    if (nested && list(nested.sections).length) {
+      return { ...nested, updatedAt: Number(nested.updatedAt) || revision };
+    }
+    throw new Error('Menydata mangler.');
+  }
   return data;
 }
 
@@ -651,10 +660,11 @@ async function refreshCatalog(force = false) {
       const revision = rootVersion || nestedVersion;
       if (!state.catalog || !revision || revision !== state.catalog.revision ||
           state.menuSource !== source) {
-        const raw = await retrieveMenu(source);
+        const raw = await retrieveMenu(source, revision);
+        const actualSource = source;
         showCatalog(raw);
-        state.menuSource = source;
-        writeLocal(KEY.menu,{savedAt:Date.now(),source,data:raw});
+        state.menuSource = actualSource;
+        writeLocal(KEY.menu,{savedAt:Date.now(),source:actualSource,data:raw});
       }
       $('menuError').hidden = true;
       state.lastFetch = Date.now();
