@@ -118,3 +118,8 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Arşiv sadece Historikk seçildiğinde yetkili ve sınırlı 50 kayıt sorgusuyla yüklenir; canlı dinleyici değildir.
 - Sipariş durumu uyuşmayan geçişler 409 döner; tekrarlanan onay SMS ve mutfak fişi tekrarını tetiklemez.
 - DEMO değişmedi. Gerçek üretim testi için ayrı özel Firebase ve bildirim kimlikleri zorunludur.
+
+## beta22 – admin giriş formu geçici olarak kaldırıldı
+- Admin sayfası doğrudan açılır, e-posta kodu / giriş ekranı gösterilmez. Alle, Planlagte, Historikk ve arama UI korunur.
+- Herkese açık sipariş erişimi veya kişisel müşteri bilgisi verilmez. Sunucu yetkilendirmesi kaldırılmamıştır; gerçek sipariş işlemleri kimlik yetkisi verilene kadar kapalıdır.
+- DEMO ve Firebase kuralları değişmedi.
