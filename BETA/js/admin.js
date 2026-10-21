@@ -11,7 +11,7 @@ const labels={mottatt:'Ny',bekreftet:'Bekreftet',klar:'Klar for henting',utlever
 let session=null,unsubscribe=null,filter='all',selected=null,audio=null;
 let orders=new Map(),toastTimer=0,alarmTimer=0,maintenanceTimer=0;
 let activeTx=new Set(),expirationBusy=new Set();
-let soundEnabled=false,cleanupBusy=false,initialLoad=true;
+let soundEnabled=false,cleanupBusy=false,initialLoad=true,lastCleanupAt=0;
 const printKey='beta:printed:'+config.tenantId+':';
 function showToast(message){const box=$('toast');box.textContent=message;box.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.hidden=true,5500);}
 function setConnection(message,type=''){const n=$('connection');n.textContent=message;n.className='connection '+type;}
@@ -39,7 +39,7 @@ function renderList(){
    '<div class="order-row-top"><span class="order-row-name">'+e(name)+'</span><span class="pill '+e(o.status)+'">'+e(expired?'Utløpt':(labels[o.status]||o.status))+'</span></div>'+
    '<div class="order-row-note">#'+e(o.id.slice(-8))+' · '+e(date(o.createdAt))+' · '+e(o.phone)+'</div>'+
    '<div class="order-row-bottom"><span class="muted">'+e(pickup(o))+'</span><span class="order-price">'+money(o.total)+'</span></div>'+
-   (o.status==='mottatt'?'<div class="order-row-note">Svar innen <b>'+remaining(o.confirmationDeadline)+'</b></div>':'')+
+   (o.status==='mottatt'?'<div class="order-row-note">Svar innen <b data-countdown="'+e(o.id)+'">'+remaining(o.confirmationDeadline)+'</b></div>':'')+
    '</button>';
  }).join(''):'<p class="helper" style="padding:10px">Ingen bestillinger i dette utvalget.</p>';
  if(selected&&!orders.has(selected))selected=null;
@@ -112,7 +112,7 @@ function renderDetail(){
  $('orderDetail').innerHTML='<div class="detail">'+
   '<div class="detail-head"><div><p>BESTILLING #'+e(o.id.slice(-10))+'</p><h2>'+e(o.customerName||'Kunde')+'</h2><p>'+e(date(o.createdAt))+'</p></div>'+
   '<span class="pill '+e(o.status)+'">'+e(expired?'Utløpt':(labels[o.status]||o.status))+'</span></div>'+
-  '<div class="clock-box '+(expired?'expired':'')+'"><div class="summary-line"><span>'+e(pickup(o))+'</span><strong>'+e(o.status==='mottatt'?(expired?'Frist utløpt':remaining(o.confirmationDeadline)):remaining(displayAt))+'</strong></div>'+
+  '<div class="clock-box '+(expired?'expired':'')+'"><div class="summary-line"><span>'+e(pickup(o))+'</span><strong '+(o.status==='mottatt'?'data-countdown="'+e(o.id)+'"':'data-remaining="'+e(o.id)+'"')+'>'+e(o.status==='mottatt'?(expired?'Frist utløpt':remaining(o.confirmationDeadline)):remaining(displayAt))+'</strong></div>'+
    '<div class="big-time">'+e(displayAt?time(displayAt):(o.pickupMode==='scheduled'?o.pickup:'Snarest'))+'</div>'+
    '<p>'+e(o.status==='mottatt'?'Venter på restaurantens godkjenning':o.status==='klar'?'Klar til henting':o.status==='avvist'?(o.rejectionReason||'Avvist'):'Forventet hentetid')+'</p></div>'+
   '<div class="box"><h3>Bestilte varer</h3>'+details+
@@ -174,7 +174,7 @@ function reconnect(){
   refreshAlarm();
   if(initialLoad){initialLoad=false;return;}
   if(operation==='upsert'&&value?.status==='mottatt'&&!document.hidden)refreshAlarm();
-  if(orders.size>=100)void maintain();
+  if(orders.size>=100&&Date.now()-lastCleanupAt>600000)void maintain();
  },error=>{setConnection('Firebase: '+error.message,'error');showToast('Firebase-lesing ble avvist. Sjekk sikkerhetsreglene.');});
  setConnection('Firebase tilkoblet','connected');
 }
@@ -189,8 +189,8 @@ async function expirySweep(){
  }
 }
 async function maintain(){
- if(cleanupBusy||!session||document.hidden||orders.size<100)return;
- cleanupBusy=true;
+ if(cleanupBusy||!session||document.hidden||orders.size<100||Date.now()-lastCleanupAt<600000)return;
+ cleanupBusy=true;lastCleanupAt=Date.now();
  try{
   // Small oldest-children read only during cleanup; SSE already holds latest 100.
   const c=session;
@@ -302,7 +302,10 @@ function tick(){
   const o=orders.get(node.dataset.countdown);
   if(o)node.textContent=remaining(o.confirmationDeadline);
  }
- if(orders.size)renderList();
+ for(const node of document.querySelectorAll('[data-remaining]')){
+  const o=orders.get(node.dataset.remaining);
+  if(o)node.textContent=remaining(o.estimatedReadyAt||o.scheduledPickupAt);
+ }
  refreshAlarm();
 }
 setInterval(tick,1000);
