@@ -24,7 +24,7 @@ function filteredOrders(){
 function isExpired(o){return o.status==='mottatt'&&Date.now()>Number(o.confirmationDeadline||0);}
 function remaining(n){const v=Math.max(0,Math.ceil((Number(n||0)-Date.now())/1000)),mins=Math.floor(v/60);return String(mins).padStart(2,'0')+':'+String(v%60).padStart(2,'0');}
 function pickup(o){
- if(o.pickupMode==='scheduled')return 'PLANLAGT '+(time(o.scheduledPickupAt)||o.pickup||'');
+ if(o.pickupMode==='scheduled')return 'PLANLAGT '+(o.scheduledPickupAt?time(o.scheduledPickupAt):(o.pickup||'—'));
  return 'SNAREST '+(o.status==='mottatt'?'venter':(o.estimatedReadyAt?time(o.estimatedReadyAt):''));
 }
 function renderList(){
@@ -89,7 +89,7 @@ function emailDraft(o){
  const items=(o.lines||[]).map(x=>String(x.quantity)+' × '+x.name+' ('+x.size+')').join('\n');
  return 'Hei '+o.customerName+'!\n\nBestillingen er '+(o.status==='bekreftet'?'bekreftet.':'mottatt.')+
  '\nForventet hentetid: '+pickup(o)+'\n\n'+items+'\n\nTotalt: '+money(o.total)+
- '\n\nKØL Grill & Pizza';
+ '\n\n'+config.restaurant.name;
 }
 function smsDraft(o){
  return 'Hei '+o.customerName+'! Din bestilling hos '+config.restaurant.name+
@@ -215,7 +215,7 @@ async function writeAction(action){
  const o=orders.get(selected);if(!o||!session||activeTx.has(o.id))return;
  let op='',payload=null;
  if(action==='accept'){
-  if(!expectedPrice(o).valid)return showToast('Menypisen må kontrolleres før godkjenning.');
+  if(!expectedPrice(o).valid)return showToast('Menyprisen må kontrolleres før godkjenning.');
   if(o.pickupMode==='scheduled'){op='godta-planlagt';payload=pickerMillis($('acceptTime')?.value);}
   else{op='godta';payload=Number($('minutesInput')?.value);}
  }else if(action==='reject'){op='avvis';payload='Restauranten kunne ikke ta imot bestillingen.';}
