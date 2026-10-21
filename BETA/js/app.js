@@ -5,12 +5,14 @@ import {
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
 } from './store.js?v=20261021-beta13';
 import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta13';
+import {watchCustomerOrder} from './orders.js?v=20261021-beta15';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
 const e=escapeHtml;
 const vs={page:'menu',step:1,search:false,query:'',pickupMode:'',pickupTime:'',pickupWarning:'',pickupIntroPending:false,expanded:false,showPopular:true,submitting:false};
 let draft=null,editLineId=null,ingredientsExpanded=false,noticeTimer=null;
+const orderWatchers=new Map();
 const prettyDay=()=>new Intl.DateTimeFormat(config.locale,{weekday:'long',day:'numeric',month:'long'}).format(new Date());
 const btn=(label,action,primary=false,disabled=false,extra='')=>'<button class="button '+(primary?'primary':'ghost')+' '+extra+'" data-action="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 
@@ -327,6 +329,42 @@ function profileMarkup(){
   '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' bestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
   '<button class="menu-row" data-action="restaurant-info"><span class="row-icon">'+iconSvg('store')+'</span><span class="grow"><strong>Restaurantinformasjon</strong><span class="small block">'+e(restaurantSummary)+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>';
 }
+function statusText(order){
+ return {mottatt:'Venter på bekreftelse',bekreftet:'Bekreftet',klar:'Klar for henting',
+  utlevert:'Utlevert',avvist:'Avvist'}[order.status]||'Venter på bekreftelse';
+}
+function approvedPickup(order){
+ const at=Number(order.scheduledPickupAt||order.estimatedReadyAt)||0;
+ return at?new Date(at).toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit'}):
+  (order.pickupMode==='asap'?'Snarest':String(order.pickup||''));
+}
+async function trackOrder(order){
+ if(!order?.id||orderWatchers.has(order.id)||document.hidden)return;
+ if(['avvist','utlevert','fullfort'].includes(order.status))return;
+ const slot={close:null};orderWatchers.set(order.id,slot);
+ try{
+  const close=await watchCustomerOrder(order.id,(next,error)=>{
+   if(error){console.warn('Ordrestatus:',error.message);return;}
+   if(!next)return;
+   const index=state.orders.findIndex(o=>o.id===next.id);
+   if(index<0)return;
+   state.orders[index]={...state.orders[index],...next};persist();
+   if(vs.page==='orders'||vs.page==='profile'||vs.page==='confirmed')render();
+   if(['avvist','utlevert','fullfort'].includes(next.status)){
+    const entry=orderWatchers.get(next.id);entry?.close?.();orderWatchers.delete(next.id);
+   }
+  });
+  slot.close=close;
+  if(orderWatchers.get(order.id)!==slot)close();
+ }catch(error){orderWatchers.delete(order.id);console.warn('Ordrestatus:',error.message);}
+}
+function stopOrderTracking(){
+ for(const slot of orderWatchers.values())slot.close?.();
+ orderWatchers.clear();
+}
+function beginOrderTracking(){
+ for(const order of state.orders.slice(0,4))void trackOrder(order);
+}
 function ordersMarkup(){
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
@@ -424,7 +462,7 @@ function render(){
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
  else if(vs.page==='confirmed'){
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>Bestillingen er mottatt</h2><p class="helper">Restauranten har mottatt bestillingen din. Følg med på bekreftelsen.</p>'+
+   '<h2>Bestillingen er mottatt</h2><p class="helper">'+e(statusText(state.orders[0]||{}))+' · '+e(approvedPickup(state.orders[0]||{}))+'</p>'+
    '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
  }
  renderBottom();
@@ -461,9 +499,10 @@ async function submit(){
   return {itemId:p.id,productId:p.id,name:p.name,size:s.name,sizeId:s.id,quantity:l.quantity,options,removedIngredients:l.removedIngredients||[],comment:l.comment||'',price:linePrice(l)};
  });
  try{
-  await sendOrder({tenantId:config.tenantId,customerName:state.profile.name,phone:state.profile.phone,email:state.profile.email,
+  const saved=await sendOrder({tenantId:config.tenantId,customerName:state.profile.name,phone:state.profile.phone,email:state.profile.email,
    type:'henting',pickupMode:vs.pickupMode,pickup:vs.pickupMode==='asap'?'Snarest':vs.pickupTime,total:cartTotal(),lines});
   clearCart();vs.step=1;vs.pickupMode='';vs.pickupTime='';setPage('confirmed');
+  void trackOrder(saved);
  }catch(err){toast(err.message||'Kunne ikke lagre.');}
  finally{vs.submitting=false;renderBottom();}
 }
@@ -593,6 +632,7 @@ async function boot(){
   if(!catalogReady())throw new Error('Ingen produkter tilgjengelig.');
   render();
   startCatalogSync(catalogChanged);
+  beginOrderTracking();
  }catch(err){
   main.innerHTML='<div class="empty"><div class="emoji">⚠️</div><h2>Kunne ikke hente menyen</h2><p>'+e(err.message||'Firebase svarer ikke.')+'</p><button class="button primary mt20" id="retryMenu">Prøv igjen</button></div>';
   $('retryMenu')?.addEventListener('click',()=>void boot());
@@ -601,13 +641,13 @@ async function boot(){
 void boot();
 // Close the one small stream when not used; reconnect to get the latest revision.
 document.addEventListener('visibilitychange',()=>{
- if(document.hidden)stopCatalogSync();
- else if(catalogReady())startCatalogSync(catalogChanged);
+ if(document.hidden){stopCatalogSync();stopOrderTracking();}
+ else {if(catalogReady())startCatalogSync(catalogChanged);beginOrderTracking();}
 });
 window.addEventListener('online',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
 window.addEventListener('offline',stopCatalogSync);
-window.addEventListener('pagehide',stopCatalogSync);
-window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
+window.addEventListener('pagehide',()=>{stopCatalogSync();stopOrderTracking();});
+window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);beginOrderTracking();});
 main.addEventListener('scroll',()=>{
  if(vs.page!=='menu'||vs.search||document.hidden)return;
  const offset=main.getBoundingClientRect().top+30;
