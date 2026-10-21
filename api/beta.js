@@ -578,7 +578,7 @@ module.exports=async function betaHandler(req,res){
   }
   if(sub==='admin/menu/import'&&req.method==='POST'){
    verifyAdmin(e,req,tenant,true);
-   return importTrustedMenu(e,tenant,res);
+   return await importTrustedMenu(e,tenant,res);
   }
   if(sub==='admin/session'&&req.method==='GET'){
    const auth=verifyAdmin(e,req,tenant);
@@ -588,26 +588,26 @@ module.exports=async function betaHandler(req,res){
    verifyAdmin(e,req,tenant,true);
    return res.status(204).end();
   }
-  if(sub==='admin/orders/events'&&req.method==='GET')return streamAdmin(e,req,tenant,res);
+  if(sub==='admin/orders/events'&&req.method==='GET')return await streamAdmin(e,req,tenant,res);
   if(sub==='admin/orders'&&req.method==='GET'){
    verifyAdmin(e,req,tenant);
    if(req.query?.status!=='active'||String(req.query?.limit)!=='100')throw fail(422,'Only bounded active queries.');
-   return listActive(e,tenant,res);
+   return await listActive(e,tenant,res);
   }
   const estimateAction=/^admin\/orders\/(ord_[a-zA-Z0-9_-]{15,50})\/estimate$/.exec(sub);
   if(estimateAction&&req.method==='POST'){
    verifyAdmin(e,req,tenant,true);
-   return updateEstimate(e,req,tenant,estimateAction[1],res);
+   return await updateEstimate(e,req,tenant,estimateAction[1],res);
   }
   const action=/^admin\/orders\/(ord_[a-zA-Z0-9_-]{15,50})\/(confirm|ready|complete)$/.exec(sub);
   if(action&&req.method==='POST'){
    verifyAdmin(e,req,tenant,true);
-   return transition(e,req,tenant,action[1],action[2],res);
+   return await transition(e,req,tenant,action[1],action[2],res);
   }
   const events=/^orders\/(ord_[a-zA-Z0-9_-]{15,50})\/events$/.exec(sub);
-  if(events&&req.method==='GET')return streamCustomer(e,req,tenant,events[1],res);
+  if(events&&req.method==='GET')return await streamCustomer(e,req,tenant,events[1],res);
   const customer=/^orders\/(ord_[a-zA-Z0-9_-]{15,50})\/status$/.exec(sub);
-  if(customer&&req.method==='GET')return status(e,req,tenant,customer[1],res);
+  if(customer&&req.method==='GET')return await status(e,req,tenant,customer[1],res);
   throw fail(404,'Unknown endpoint.');
  }catch(error){
   const code=Number(error.status)||500;
