@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="no">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#f3f7f6">
+ <title>Bestillinger — BETA Admin</title>
+ <link rel="stylesheet" href="./css/admin.css?v=20261021-beta15">
+</head>
+<body>
+<div class="shell">
+ <header class="topbar">
+  <div class="brand"><span class="brand-icon">K</span><div><strong id="restaurantName">Restaurant</strong><small>Bestillinger · BETA</small></div></div>
+  <div class="top-actions"><span id="connection" class="connection">Ikke tilkoblet</span><button id="enableSound" type="button" class="secondary">Aktiver lyd</button><button id="signOut" type="button" class="secondary" hidden>Logg ut</button></div>
+ </header>
+ <main>
+  <section class="login-card" id="loginPane">
+   <h1>Restaurantinnlogging</h1>
+   <p>Logg inn med restaurantens Firebase Authentication-konto.</p>
+   <form id="loginForm"><label>E-post<input type="email" id="loginEmail" autocomplete="username" required></label><label>Passord<input type="password" id="loginPassword" autocomplete="current-password" required></label><button class="primary" id="loginSubmit" type="submit">Logg inn</button></form>
+   <p id="loginError" role="alert" class="error" hidden></p>
+  </section>
+  <section id="ordersPane" class="orders-layout" hidden>
+   <aside class="order-sidebar">
+    <div class="sidebar-heading"><div><h1>Bestillinger</h1><p><span id="orderCount">0</span> bestillinger · <span id="newCount">0</span> nye</p></div><span id="newBadge" class="counter" hidden>0</span></div>
+    <div class="tabs" role="group" aria-label="Filtrer bestillinger"><button type="button" class="active" data-filter="all">Alle</button><button type="button" data-filter="scheduled">Planlagte</button></div>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Søk navn, telefon eller bestilling" aria-label="Søk bestillinger"></label>
+    <div id="orderList" class="order-list" aria-live="polite"></div>
+   </aside>
+   <section class="detail-pane" aria-label="Bestillingsdetaljer">
+    <div id="detailEmpty" class="detail-empty"><div class="empty-symbol">☷</div><h2>Velg en bestilling</h2><p>Bestillingsdetaljene vises her.</p></div>
+    <div id="orderDetail" hidden></div>
+   </section>
+  </section>
+ </main>
+ <div class="toast" id="toast" role="status" hidden></div>
+</div>
+<script type="module" src="./js/admin.js?v=20261021-beta15"></script>
+</body>
+</html>
