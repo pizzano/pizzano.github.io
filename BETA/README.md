@@ -13,7 +13,7 @@
 
 ## Firebase veri kullanımı
 Müşteri menüsü Firebase Realtime Database'den okunur; ürün verileri dosyada sabit değildir. Eski DEMO örneğinde yalnızca gerekli alanlar okunur:
-`updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings`; `siteSettings` yoksa `settings` yedek olarak kullanılır.
+`updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings`. Tam `/settings` ağdan indirilmez; önbellekteki eski ayarlar yalnızca uyumluluk için kullanılabilir.
 
 Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoksa) yalnızca `updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings` okur. Sonraki açılışta menü için **0 GET**; yalnızca `/updatedAt.json` SSE akışının ilk küçük sürüm değeri gelir. Değişiklik yoksa menü tekrar indirilmez. Değiştiğinde yalnızca beş public menü alanı okunur. SSE sağlıklıyken zamanlanmış Firebase GET yoktur. SSE açılamazsa 8 saniye sonra ve devamında 5 dakikada bir sadece sürüm GET kullanılır. Arka planda ve bağlantı kesilince canlı dinleyici kapatılır. BETA kök, `/settings`, `/orders`, `/pizzaBonus` okumaz.
 
@@ -57,3 +57,37 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - Kategori çubuğunda (buton ve gösterge üstünde de) fare dikey tekerleği yatay kaydırır; yatay touchpad jestleri ve mobil dokunma doğal çalışır. Scroll bitişinde dikey tekerlek engellenmez, Ctrl+wheel/zoom değişmez.
 - MainContent ve her tür sheet-scroll (ürün/restaurant modalı) için tek CSS bloğunda 5px Soft UI turkuaz scrollbar: Firefox scrollbar-color + Chromium/Opera WebKit thumb/track. Üst kategori native scrollbar gizli kalır çünkü mevcut ince özel scrollbar zaten görünür ve aynı tonu kullanır.
 - Firebase katalog, SSE ve veri önbelleği koduna hiç dokunulmadı.
+
+## beta15 — güvenli sipariş ve restoran paneli iskeleti
+
+**Yayınlanan kod:**
+- `BETA/admin.html`, `BETA/js/admin.js`, `BETA/css/admin.css`: mobil/PC Bestillinger paneli, çalışan girişi, Alle/Planlagte, arama, canlı sipariş listesi, Bekreft, Marker klar, Utlevert ve manuel Skriv ut på nytt. Admin oturumu sunucu tarafından doğrulanmadıkça herhangi bir sipariş okunmaz veya yazılmaz.
+- `BETA/js/printer.js`: bağımsız Epson TM-T20II 80mm raster ePOS kopyası; sadece onayı veren cihaz ilk başarılı, yeni durum geçişinden sonra yazdırır. İşlem tekrarı otomatik ikinci fiş üretmez. Yeniden yazdırma ayrı çalışır. IP cihazda `beta:printer:<tenantId>:host` ile saklanır (asla Firebase'de aralıklı sorgulanmaz).
+- `BETA/js/store.js`: sunucunun idempotent kabulünü zorunlu kılan sipariş gönderme. Tekrar denemelerde aynı payload için aynı UUID kullanılır; istemci kendi başına sipariş kabulü uydurmaz. Yanıt `mottatt`, sunucu ID'si ve `createdAt` içermelidir.
+- `BETA/js/order-status.js`: sadece `confirmed` ve `Mine bestillinger` açıkken, yalnızca en güncel aktif siparişin yetkili statü SSE akışını takip eder. İstemci tam `/orders` okumaz. Sayfa arka plandayken veya kapandığında bağlantı kapanır. SSE sorununda yalnızca aynı sipariş için küçük durum GET kullanılır.
+- `BETA/js/catalog.js` ve modül import URL'leri aynı sürüme eşitlendi; birden fazla config örneği yaratılmaz. Mevcut `beta:v2` menü/sepetteki kullanıcı önbelleği korunur.
+
+**Güvenlik nedeniyle canlı BETA siparişleri HÂLÂ DEVRE DIŞI.**
+`config.apiBase` bilerek boş; `/api`, DEMO, Firebase kuralları veya canlı SMS/e-posta servislerine dokunulmadı. Sunucu kimliği, Firebase Admin SDK kimlik bilgileri, HTTPS, doğru Security Rules ve sipariş doğrulaması olmadan doğrudan istemci Firebase yazması güvenli değildir. Yeni admin sayfası boş/kapalı durumu açıkça gösterir.
+
+### BETA API sözleşmesi — sunucu tarafında uygulanması ZORUNLU
+Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve restoran erişimi sunucu tarafında doğrulanmalıdır. `cache-control: no-store` kullan.
+
+**Müşteri (oturum gerektirmeyen, hız sınırlı):**
+- `POST /orders` — `Idempotency-Key: <UUID>` başlığı + menüdeki ürün ID/size/choice/quantity, iletişim, pickup ile gönderilir. Sunucu fiyatı, ekstraları, geçerli restoran saatini, hentetid, idempotency anahtarını ve bonusu **sunucu tarafındaki güncel menüden** yeniden doğrular; kimlik/fiyatı istemciden doğru varsaymaz. Tek transaction içinde `mottatt` oluşturur, tekrarında aynı kimliği döner. Başarılı JSON: `{id,tenantId,status:"mottatt",createdAt,accessToken}`. `accessToken` en az 20 karakter, kriptografik rastgele ve **yalnızca bu siparişi okumaya** yetkili olmalıdır. Kalıcı veritabanında düz metin token saklama, hash sakla.
+- `GET /orders/{id}/events` — `Authorization: Bearer <accessToken>` ile sadece o siparişin `{id,status,statusUpdatedAt,estimatedReadyAt}` SSE olaylarını ve ilk snapshot'ını verir. Diğer müşterilerin bilgilerini asla içermez.
+- `GET /orders/{id}/status` — aynı Bearer ile küçük JSON/ETag; sadece SSE çalışmadığında. Kod 304 yanıtını kabul eder.
+
+**Restoran admin (giriş zorunlu, HttpOnly Secure SameSite cookie + CSRF):**
+- `POST /admin/sessions` — çalışan kullanıcı adı/şifreyi yalnızca sunucu doğrular; `{authenticated:true,csrfToken}` döner. Giriş deneme sınırı ve rol denetimi gereklidir.
+- `GET /admin/session` — aynı oturumun durumunu ve CSRF token'ını döner; `DELETE /admin/sessions` çıkış yapar.
+- `GET /admin/orders/events?status=active&limit=100` — ilk `{type:"snapshot",orders:[...]}`, ardından sadece ilgili tenant'ın aktif siparişlerinden `{type:"upsert",order}` veya `{type:"remove",id}` SSE. `mottatt,bekreftet,tilberedning,klar` ile sınırla; eski arşivi dinleme.
+- `GET /admin/orders?status=active&limit=100` — yalnızca canlı akış düştüğünde 30 saniyede bir fallback; rol denetimi + sunucu filtreleri/limitleri zorunlu.
+- `POST /admin/orders/{id}/confirm|ready|complete` — `X-CSRF-Token` ve `idempotencyKey,expectedStatus,expectedVersion` ile sunucuda atomik beklenen durum kontrolü. Yanıt `{order,transitioned:true|false}`. **Yalnızca** `transitioned:true` ilk mutfak fişini tetikler. `mottatt→bekreftet→klar→fullfort` geçişleri personel yetkisiyle yapılır. `Klar` yalnızca butona basılınca olur, süre dolunca olmaz.
+- Onay transition'u ayrıca sunucu tarafındaki bildirim outbox'ına **bir** `accepted` SMS ve varsa e-posta fişi kaydetmeli. SMS `Klar` için **otomatik gönderilmemeli**. E-posta için kabul ve (isteğe bağlı) gerçek manuel `Klar` olayı ayrıdır. Kanıtlanmış teslimat olmadan `sent` gösterme. Ağ zaman aşımında yanıt gelmeyen SMS'i körlemesine tekrarlama.
+
+**Çok restoran ve maliyet:**
+- Önerilen sunucu veri yolları: `tenants/{id}/public/menu`, `tenants/{id}/orders/active`, `tenants/{id}/orders/archive`, `tenants/{id}/notifications/outbox`, `tenants/{id}/staff` ve kimlik erişim haritası. Başka restoranın verisi sorguya dahil edilmemeli.
+- Her restoran admin için **bir** yetkili aktif sipariş SSE; her açık müşteri durum ekranı için **bir** özel sipariş SSE; menü için **bir** küçük `updatedAt` SSE. Aynı sipariş listesi için yeni polling başlatma.
+- 100 müşteri sipariş geçmişi açık değilse sadece menü sürüm akışları açık kalır. Aktif sipariş ekranı açık olan 100 müşteri için ilave 100 küçük durum akışı olur. SSE'nin polling'e maliyet avantajı varsayılmamalıdır: gerçek Firebase faturası, aktif bağlantı ve aktarılan bayt ölçülmelidir.
+- Üretime geçişte var olan DEMO `/orders` hiçbir şekilde BETA için herkese açık yazma yolu olarak kullanılmamalıdır.

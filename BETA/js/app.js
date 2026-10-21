@@ -1,10 +1,11 @@
+import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta15';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta13';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta13';
+} from './store.js?v=20261021-beta15';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta15';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -330,8 +331,15 @@ function profileMarkup(){
 function ordersMarkup(){
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
- return html+
-  state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Mottatt</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
+ return html+state.orders.map(o=>{
+  const label=orderLabels[o.status]||'Status ukjent';
+  const when=Number(o.estimatedReadyAt)>0?new Date(o.estimatedReadyAt).toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit'}):'';
+  const items=Array.isArray(o.lines)?o.lines:[];
+  return '<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">'+e(label)+'</span></div>'+
+   '<p class="small mt8">'+items.map(l=>e(l.name)+' × '+e(l.quantity)).join(', ')+'</p>'+
+   (when?'<p class="small mt8">Forventet hentetid: <strong>'+e(when)+'</strong></p>':'')+
+   '<div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>';
+ }).join('');
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
@@ -423,9 +431,13 @@ function render(){
  else if(vs.page==='profile-edit')main.innerHTML=contactMarkup(true);
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
  else if(vs.page==='confirmed'){
+  const latest=state.orders[0]||{};
+  const label=orderLabels[latest.status]||'Status ukjent';
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>Bestillingen er mottatt</h2><p class="helper">Restauranten har mottatt bestillingen din. Følg med på bekreftelsen.</p>'+
-   '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
+   '<h2>Bestillingen er mottatt</h2><p class="helper">Vi venter på restaurantens bekreftelse.</p>'+
+   '<div class="status-pill mt14">'+e(label)+'</div>'+
+   '<button class="button primary full mt20" data-action="orders">Se bestillingsstatus</button>'+
+   '<button class="button full mt14" data-action="go-menu">Tilbake til menyen</button></div>';
  }
  renderBottom();
  if(vs.page==='cart'&&vs.step===3)vs.pickupIntroPending=false;
@@ -598,16 +610,30 @@ async function boot(){
   $('retryMenu')?.addEventListener('click',()=>void boot());
  }
 }
+
+let stopCustomerStatus=null;
+function syncCustomerOrderWatch(){
+ if(stopCustomerStatus){stopCustomerStatus();stopCustomerStatus=null;}
+ if(document.hidden||!(vs.page==='confirmed'||vs.page==='orders'))return;
+ const current=state.orders.find(orderCanTrack);
+ if(!current)return;
+ stopCustomerStatus=watchOrder(current,()=>{
+  persist();
+  if(vs.page==='confirmed'||vs.page==='orders')render();
+ });
+}
+
 void boot();
 // Close the one small stream when not used; reconnect to get the latest revision.
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden)stopCatalogSync();
  else if(catalogReady())startCatalogSync(catalogChanged);
+ syncCustomerOrderWatch();
 });
 window.addEventListener('online',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
 window.addEventListener('offline',stopCatalogSync);
-window.addEventListener('pagehide',stopCatalogSync);
-window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
+window.addEventListener('pagehide',()=>{stopCatalogSync();if(stopCustomerStatus){stopCustomerStatus();stopCustomerStatus=null;}});
+window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);syncCustomerOrderWatch();});
 main.addEventListener('scroll',()=>{
  if(vs.page!=='menu'||vs.search||document.hidden)return;
  const offset=main.getBoundingClientRect().top+30;

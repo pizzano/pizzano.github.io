@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1c252e">
+<title>Bestillinger – BETA Admin</title>
+<link rel="stylesheet" href="./css/admin.css?v=20261021-beta15">
+</head>
+<body>
+<div id="adminApp" class="admin-layout">
+ <aside class="sidebar" id="adminSidebar">
+  <div class="sidebar-brand"><span class="brand-mark">🍕</span><div><strong id="shopTitle">Restaurant Admin</strong><small>BESTILL TAKEAWAY · BETA</small></div></div>
+  <nav aria-label="Administrasjon"><a href="./index.html">Meny (BETA)</a><a class="is-active" href="./admin.html" aria-current="page">Bestillinger</a></nav>
+  <div class="sidebar-bottom"><div class="sidebar-status" id="sidebarStatus">Venter på trygg tilkobling</div><button id="logout" type="button" hidden>Logg ut</button></div>
+ </aside>
+ <div class="admin-main">
+  <header class="admin-top">
+   <button class="mobile-menu" id="toggleSidebar" aria-label="Vis meny" type="button">☰</button>
+   <h1>Bestillinger</h1>
+   <div class="admin-tools"><span id="connectionStatus" class="connection-indicator">Frakoblet</span>
+    <button type="button" id="toggleSound" title="Bestillingslyd" aria-pressed="true">🔊</button>
+    <button type="button" id="refreshOrders" title="Oppdater bestillinger">↻</button></div>
+  </header>
+  <section class="admin-gate" id="adminGate" aria-live="polite">
+   <div class="gate-card">
+    <h2 id="gateTitle">Bestillingsadministrasjon</h2>
+    <p id="gateHelp">BETA er ikke koblet til en godkjent ordre-API. Ingen ekte bestillinger kan behandles ennå.</p>
+    <form id="loginForm" hidden autocomplete="on">
+     <label>Brukernavn<input id="username" name="username" autocomplete="username" required></label>
+     <label>Passord<input id="password" name="password" type="password" autocomplete="current-password" required></label>
+     <button type="submit" id="loginButton">Logg inn</button>
+    </form>
+   </div>
+  </section>
+  <main class="orders-workspace" id="workspace" hidden>
+   <div class="orders-sidebar">
+    <div class="order-filters"><button data-filter="all" aria-pressed="true" class="is-active">Alle <b id="allCount">0</b></button><button data-filter="scheduled" aria-pressed="false">Planlagte <b id="scheduledCount">0</b></button></div>
+    <label class="order-search"><span class="sr-only">Søk i bestillinger</span><input id="orderSearch" type="search" placeholder="Søk i bestillinger…"></label>
+    <div class="orders-list" id="orderList" aria-label="Aktive bestillinger"></div>
+   </div>
+   <section class="order-details" id="orderDetails" aria-live="polite"><div class="empty-detail"><span>↗</span><h2>Velg en bestilling</h2><p>Trykk på en bestilling til venstre for å se varer og håndtere den.</p></div></section>
+  </main>
+  <div class="toast" id="adminToast" role="status" hidden></div>
+ </div>
+</div>
+<script type="module" src="./js/admin.js?v=20261021-beta15"></script>
+</body>
+</html>

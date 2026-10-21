@@ -16,7 +16,7 @@ export const config={
   },
   restaurant:{
     name:'Restauranten', logo:'🍕',logoUrl:'',phone:'',email:'skarnes.restaurant@gmail.com',address:'',city:'',postcode:'',paymentInfo:'Kort og kontant',
-    pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',
+    pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',printerHost:'192.168.1.25',
     manualClosed:false,manualClosedUntil:0,
     openTimes: Array.from({length:7},()=>({enabled:true,from:'14:00',to:'22:00'})),
     palette:'reference', // reference | lively | fresh | gourmet (also settable via Firebase customerPalette).
