@@ -3,7 +3,7 @@ import {
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta13';
+} from './store.js?v=20261021-beta15';
 import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta13';
 import {watchCustomerOrder} from './orders.js?v=20261021-beta15';
 
