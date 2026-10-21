@@ -65,3 +65,8 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3eae
 .admin-auth-again{display:block;background:none;border:0;color:#117563;margin:12px auto 0;font-size:12px;text-decoration:underline}
 .admin-auth-message{min-height:20px;margin-top:12px!important}
 @media(max-width:500px){.admin-connect{min-width:68px;padding:0 8px!important;font-size:11px!important}.admin-auth-panel{padding:24px}}
+
+/* Never confuse test data with live restaurant orders. */
+.admin-beta-label{display:inline-flex;align-items:center;padding:6px 9px;border:1px solid #b4ddce;border-radius:20px;background:#e4f6ee;color:#125f48;font-size:10px;letter-spacing:.03em;font-weight:850;white-space:nowrap}
+@media(max-width:800px){.admin-beta-label{font-size:9px;padding:4px 6px}}
+@media(max-width:420px){.admin-beta-label{display:none}}

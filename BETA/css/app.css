@@ -325,3 +325,8 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .main-content>section[id^="cat-"]{scroll-margin-top:10px}
 .status-card .status-main{flex:1}
 @media(max-height:620px){.sheet-photo{height:min(20dvh,120px)}.sheet-head{flex-basis:56px;height:56px}.bonus-ring{height:160px;width:160px}.bonus-ring:before{inset:28px}}
+
+/* Persistent, unmistakable label for the public BETA test screen. */
+.beta-test-banner{margin:0;padding:6px 12px;flex:0 0 auto;background:#e6f5ef;color:#245e4f;border-bottom:1px solid #acd5c6;font-size:11px;line-height:1.35;text-align:center}
+.beta-test-banner strong{letter-spacing:.06em;font-weight:900}
+body.dark .beta-test-banner{background:#2e4a3f;color:#ecfff6;border-color:#557967}

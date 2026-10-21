@@ -1,5 +1,6 @@
-import {config} from './config.js?v=20261021-beta26';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta26';
+import {config} from './config.js?v=20261021-beta27';
+import {addTestOrder} from './test-orders.js?v=20261021-beta27';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta27';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -104,8 +105,19 @@ function clearPendingCheckout(key){
   if(pending?.key===key)localStorage.removeItem(pendingKey);
  }catch{}
 }
-/** Return order only after a verified server acknowledgement. */
+/** Return order only after the selected database has acknowledged a write. */
 export async function sendOrder(order){
+ if(config.mode==='firebase-test'){
+  const key=pendingCheckout(order);
+  let startedAt=Date.now();
+  try{startedAt=Number(JSON.parse(localStorage.getItem(pendingKey)||'null')?.createdAt)||startedAt;}catch{}
+  // NO personal data is sent to Firebase during BETA-only tests.
+  // The adapter also strips comments and notification recipient fields.
+  const accepted=await addTestOrder(order,key,startedAt);
+  state.orders=[accepted,...state.orders.filter(o=>o.id!==accepted.id)].slice(0,15);
+  persist();clearPendingCheckout(key);
+  return accepted;
+ }
  if(config.mode!=='api'||!config.apiBase)throw new Error('Bestillinger er ikke aktivert ennå.');
  const key=pendingCheckout(order);
  const controller=new AbortController();

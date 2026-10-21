@@ -3,7 +3,8 @@
  * Requires an opaque, order-scoped customer token issued by the backend.
  * Only the visible order page opens a connection; status is never guessed from time.
  */
-import {config} from './config.js?v=20261021-beta26';
+import {config} from './config.js?v=20261021-beta27';
+import {getTestOrder} from './test-orders.js?v=20261021-beta27';
 
 export const orderLabels=Object.freeze({
  mottatt:'Mottatt – venter på bekreftelse',
@@ -15,6 +16,7 @@ const activeStates=new Set(['mottatt','bekreftet','tilberedning','klar']);
 const safeId=id=>/^[a-zA-Z0-9_-]{8,90}$/.test(String(id||''));
 const root=()=>config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId);
 export function orderCanTrack(order){
+ if(config.mode==='firebase-test')return Boolean(/^test_[0-9]{13}_[a-f0-9]{12}$/.test(String(order?.id||''))&&activeStates.has(order?.status));
  return Boolean(config.apiBase&&safeId(order?.id)&&typeof order?.accessToken==='string'&&order.accessToken.length>=20&&activeStates.has(order?.status));
 }
 /**
@@ -25,6 +27,29 @@ export function orderCanTrack(order){
  */
 export function watchOrder(order,notify){
  if(!orderCanTrack(order)||typeof fetch!=='function')return ()=>{};
+ if(config.mode==='firebase-test'){
+  let stopped=false,timer=null,busy=false;
+  async function check(){
+   if(stopped||busy||document.hidden)return;
+   busy=true;
+   try{
+    const remote=await getTestOrder(order.id);
+    if(!remote||stopped)return;
+    if(Number(remote.statusUpdatedAt)>Number(order.statusUpdatedAt||0)){
+     order.status=remote.status;
+     order.statusUpdatedAt=remote.statusUpdatedAt;
+     order.estimatedReadyAt=remote.estimatedReadyAt||0;
+     notify(order);
+     if(!activeStates.has(remote.status))stop();
+    }
+   }catch(error){console.warn('BETA teststatus er midlertidig utilgjengelig');}
+   finally{busy=false;}
+  }
+  function stop(){stopped=true;if(timer!==null)clearInterval(timer);timer=null;}
+  void check();
+  timer=setInterval(()=>{if(!document.hidden)void check();},10000);
+  return stop;
+ }
  let stopped=false,controller=null,timer=null,delay=5000,etag='';
  let consecutiveFailures=0;
  const base=root()+'/orders/'+encodeURIComponent(order.id);

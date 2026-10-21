@@ -1,3 +1,15 @@
+# BETA — ACTIVE TEST ARCHITECTURE (20261021-beta27)
+
+**Only the existing KØL Realtime Database is used for test ordering.**
+`https://kol-grill-pizza-default-rtdb.firebaseio.com/betaTest/orders`.
+There are no Vercel/Cloud Functions order calls, no separate project,
+no SMS/email and no real customer information in persisted test orders.
+This version replaces the retired beta25/beta26 server architecture.
+See `BETA/API-DEPLOYMENT.md` (now the test-only architecture guide).
+The older historical entries below are for reference only.
+
+---
+
 # BETA — restoranbağımsız sipariş sistemi
 
 `BETA/index.html` müşterinin arayüzüdür. `demo/` ayrı ve değişmeden kalır.

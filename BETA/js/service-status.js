@@ -2,8 +2,9 @@
  * Checks real HTTP reachability; configured does not mean SMS/e-mail delivered.
  * Only 1 small backend health GET every 90 seconds when the tab is visible.
  */
-import {config} from './config.js?v=20261021-beta26';
-import {checkEpsonConnection,currentPrinterHost,savePrinterHost} from './printer.js?v=20261021-beta26';
+import {config} from './config.js?v=20261021-beta27';
+import {testHealth} from './test-orders.js?v=20261021-beta27';
+import {checkEpsonConnection,currentPrinterHost,savePrinterHost} from './printer.js?v=20261021-beta27';
 const $=id=>document.getElementById(id);
 let healthBusy=false,printerBusy=false,lastHealth=0,healthTimer=null,started=false;
 function indicator(name,mode,label,description){
@@ -55,10 +56,19 @@ async function checkServices(force=false){
  if(healthBusy||document.hidden)return;
  if(!force&&Date.now()-lastHealth<85000)return;
  if(navigator.onLine===false){unavailable();return;}
- if(!config.apiBase){unavailable();return;}
+ if(config.mode!=='firebase-test'&&!config.apiBase){unavailable();return;}
  healthBusy=true;
  const ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),6500);
  try{
+  if(config.mode==='firebase-test'){
+   await testHealth();
+   indicator('Net','on','Firebase tilkoblet','BETA testordrer leses fra den eksisterende databasen');
+   indicator('Sms','pending','SMS avskrudd','Ingen SMS sendes fra BETA testbestillinger');
+   indicator('Email','pending','E-post avskrudd','Ingen e-post sendes fra BETA testbestillinger');
+   $('connectionStatus').textContent='Firebase BETA test';
+   $('sidebarStatus').textContent='● Testordrer · Firebase Realtime Database';
+   lastHealth=Date.now();return;
+  }
   const url=config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/health';
   const result=await fetch(url,{method:'GET',cache:'no-store',credentials:'omit',headers:{Accept:'application/json'},signal:ctrl.signal});
   if(!result.ok)throw new Error('HTTP '+result.status);

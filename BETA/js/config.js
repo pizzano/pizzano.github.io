@@ -4,8 +4,9 @@
  */
 export const config={
   tenantId:'kol-grill-pizza',
-  mode:'api',     // Live mode requires a configured backend. No direct browser writes to Firebase.
-  apiBase:'https://europe-west1-bestill-19.cloudfunctions.net/betaOrders', // BETA Firebase HTTP gateway; fails closed until securely deployed.
+  mode:'firebase-test', // Only internal BETA test orders; never use for live customers.
+  apiBase:'', // No Vercel or Cloud Functions API.
+  testDatabaseUrl:'https://kol-grill-pizza-default-rtdb.firebaseio.com', // Same RTDB as BETA public menu, isolated betaTest/orders path.
   locale:'nb-NO',
   currency:'NOK',
   menu:{

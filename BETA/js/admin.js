@@ -2,10 +2,11 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta26';
-import {orderLabels} from './order-status.js?v=20261021-beta26';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta26';
-import {startServiceStatus} from './service-status.js?v=20261021-beta26';
+import {config} from './config.js?v=20261021-beta27';
+import {listTestOrders,updateTestOrder,streamTestOrders} from './test-orders.js?v=20261021-beta27';
+import {orderLabels} from './order-status.js?v=20261021-beta27';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta27';
+import {startServiceStatus} from './service-status.js?v=20261021-beta27';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -30,6 +31,13 @@ function connectedState(ok){
  $('sidebarStatus').textContent=ok?'● Aktiv bestillingsovervåking':'● Ingen aktiv strøm';
 }
 async function request(path,{method='GET',body=null,csrf=false}={}){
+ if(config.mode==='firebase-test'){
+  if(method==='GET'&&path.startsWith('/orders/archive'))return {orders:(await listTestOrders()).filter(o=>o.status==='fullfort').slice(0,50)};
+  if(method==='GET'&&path.startsWith('/orders?'))return {orders:(await listTestOrders()).filter(o=>o.status!=='fullfort')};
+  const match=/^\/orders\/(test_[0-9]{13}_[a-f0-9]{12})\/(confirm|estimate|ready|complete)$/.exec(path);
+  if(method==='POST'&&match)return updateTestOrder(match[1],match[2],body||{});
+  throw new Error('Denne handlingen er ikke tilgjengelig i BETA testmodus.');
+ }
  if(!config.apiBase)throw new Error('API er ikke konfigurert.');
  const headers={Accept:'application/json'};
  if(body!==null)headers['Content-Type']='application/json';
@@ -58,6 +66,12 @@ function showWorkspace(){
  renderDetails();
 }
 function updateAdminSessionControls(){
+ if(config.mode==='firebase-test'){
+  $('connectAdmin').hidden=true;
+  $('importMenu').hidden=true;
+  $('refreshOrders').disabled=false;
+  return;
+ }
  const button=$('connectAdmin');
  button.dataset.connected=String(session);
  button.textContent=session?'Logg ut':'Koble til';
@@ -254,7 +268,30 @@ async function refresh(){
   .then(()=>connectedState(true)).catch(()=>connectedState(false)).finally(()=>syncRequest=null);
  return syncRequest;
 }
+async function startTestSync(){
+ if(document.hidden||stream||reconnectTimer!==null)return;
+ const controller=new AbortController();stream=controller;
+ try{
+  await streamTestOrders(rows=>{
+   const before=new Set(orders.keys()),wasReady=seenInitial;
+   snapshot(rows);
+   if(wasReady&&rows.some(o=>o.status==='mottatt'&&!before.has(o.id)))alertNew();
+   connectedState(true);reconnectDelay=5000;
+  },controller.signal);
+ }catch(error){
+  if(!controller.signal.aborted){connectedState(false);console.warn('BETA testordre strøm avsluttet',error.message);}
+ }finally{
+  if(stream===controller){
+   stream=null;connectedState(false);
+   if(!document.hidden){
+    const delay=reconnectDelay;reconnectDelay=Math.min(reconnectDelay*2,60000);
+    reconnectTimer=setTimeout(()=>{reconnectTimer=null;void startSync();},delay);
+   }
+  }
+ }
+}
 async function startSync(){
+ if(config.mode==='firebase-test')return startTestSync();
  if(!session||document.hidden||stream||reconnectTimer!==null||!config.apiBase)return;
  const controller=new AbortController();
  stream=controller;
@@ -394,9 +431,12 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',stopSync);
 window.addEventListener('pageshow',()=>{if(session)void startSync();});
-// Public entry remains an empty preview. Private orders require staff OTP;
- // no browser receives service credentials or anonymous order data.
+// Test-only RTDB: no OTP, no real customer data, no SMS/e-mail, no production API.
+if(config.mode==='firebase-test')session=true;
 showWorkspace();
 updateAdminSessionControls();
 startServiceStatus();
-void restoreAdminSession();
+if(config.mode==='firebase-test'){
+ void refresh();
+ void startSync();
+}else void restoreAdminSession();
