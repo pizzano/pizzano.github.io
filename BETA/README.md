@@ -52,3 +52,8 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - Betaling viser Kort og kontant via BETA-restauranten sin config; eventuelt siteSettings.paymentInfo kan overstyre uten ekstra Firebase-kall.
 - E-post vises fra samme Firebase siteSettings.email/contactEmail når registrert. Restaurantens BETA-config har en tenant-spesifikk e-post som fallback for eksisterende lokal cache.
 - Adresse dupliserer ikke postnummer og sted når de allerede finnes i streetAddress. Ingen endring i DEMO eller Firebase synkroniseringslogikk.
+
+## beta14 — kaydırma düzeni
+- Kategori çubuğunda (buton ve gösterge üstünde de) fare dikey tekerleği yatay kaydırır; yatay touchpad jestleri ve mobil dokunma doğal çalışır. Scroll bitişinde dikey tekerlek engellenmez, Ctrl+wheel/zoom değişmez.
+- MainContent ve her tür sheet-scroll (ürün/restaurant modalı) için tek CSS bloğunda 5px Soft UI turkuaz scrollbar: Firefox scrollbar-color + Chromium/Opera WebKit thumb/track. Üst kategori native scrollbar gizli kalır çünkü mevcut ince özel scrollbar zaten görünür ve aynı tonu kullanır.
+- Firebase katalog, SSE ve veri önbelleği koduna hiç dokunulmadı.

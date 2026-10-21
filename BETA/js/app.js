@@ -619,6 +619,19 @@ main.addEventListener('scroll',()=>{
  if(active&&active!==lastActiveCategory)activateCategory(active);
 },{passive:true});
 cats.addEventListener('scroll',updateCategoryIndicator,{passive:true});
+// Desktop wheel on the category strip scrolls it horizontally, even over a
+// category button or the indicator. Trackpad horizontal gestures stay native.
+$('categorySection').addEventListener('wheel',event=>{
+ if(event.ctrlKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)||!event.deltaY)return;
+ const max=Math.max(0,cats.scrollWidth-cats.clientWidth);
+ if(max<=1)return;
+ const factor=event.deltaMode===1?16:event.deltaMode===2?cats.clientWidth:1;
+ const next=Math.max(0,Math.min(max,cats.scrollLeft+event.deltaY*factor));
+ // At an edge, keep vertical wheel scrolling available to the parent page.
+ if(Math.abs(next-cats.scrollLeft)<.5)return;
+ if(event.cancelable)event.preventDefault();
+ cats.scrollLeft=next;
+},{passive:false});
 categoryIndicator?.addEventListener('click',event=>{
  const bounds=categoryIndicator.getBoundingClientRect();
  if(!bounds.width)return;

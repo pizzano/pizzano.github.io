@@ -1,5 +1,5 @@
 /* BETA: one maintainable design system; no stacked legacy overrides. */
-:root{--green:#355d40;--deep:#24332a;--bg:#f5f7f1;--card:#fffffb;--line:#c0d0bd;--subtle:#edf2eb;--text:#243127;--muted:#667266;--bonus-accent:#254c32;--bonus-idle:#d1dfd0;--badge:#ef3029;--shadow:0 7px 22px rgba(33,57,38,.075);--r:19px;--header:66px;color-scheme:light}
+:root{--green:#355d40;--deep:#24332a;--bg:#f5f7f1;--card:#fffffb;--line:#c0d0bd;--subtle:#edf2eb;--text:#243127;--muted:#667266;--bonus-accent:#254c32;--bonus-idle:#d1dfd0;--badge:#ef3029;--scroll-thumb:#187b74;--scroll-thumb-hover:#105f5a;--scroll-track:rgba(24,123,116,.09);--shadow:0 7px 22px rgba(33,57,38,.075);--r:19px;--header:66px;color-scheme:light}
 /* All four restaurant palettes share the same semantic tokens.
    Switching palettes never requires overriding individual buttons/cards. */
 body.theme-reference{--green:#355d40;--deep:#24332a;--bg:#f5f7f1;--card:#fffffb;--line:#c0d0bd;--subtle:#edf2eb;--text:#243127;--muted:#667266;--bonus-accent:#254c32;--bonus-idle:#d1dfd0}
@@ -52,9 +52,9 @@ h3{font-size:15px}
 .category-search-button .cat-icon{width:23px;height:23px}
 .search-icon{display:inline-grid;place-items:center;color:var(--muted)}
 .category-button:focus-visible{outline-offset:-3px}
-.category-scroll-indicator{height:5px;margin:1px 18px 0;background:var(--line);border-radius:4px;position:relative;cursor:pointer;touch-action:pan-x}
-.category-scroll-indicator span{display:block;position:absolute;top:0;left:0;background:var(--green);border-radius:4px;width:100%;height:100%;transition:left .12s ease,width .12s ease}
-.main-content{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;scroll-padding-top:12px;padding:12px 10px 24px;outline:none}
+.category-scroll-indicator{height:5px;margin:1px 18px 0;background:var(--scroll-track);border-radius:4px;position:relative;cursor:pointer;touch-action:pan-x}
+.category-scroll-indicator span{display:block;position:absolute;top:0;left:0;background:var(--scroll-thumb);border-radius:4px;width:100%;height:100%;transition:left .12s ease,width .12s ease}
+.main-content{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-padding-top:12px;padding:12px 10px 24px;outline:none}
 .status-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);margin-bottom:18px}
 .status-main{display:flex;align-items:center;gap:11px;min-width:0}
 .status-dot{display:inline-block;width:11px;height:11px;flex:0 0 auto;border-radius:50%;background:#21717b;box-shadow:0 0 0 5px #e5eee8}
@@ -86,7 +86,7 @@ h3{font-size:15px}
 .sheet-head h2{font-size:17px;max-width:72%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sheet-head-spacer{width:42px;flex:0 0 42px}
 .round-close{height:42px;width:42px;background:var(--bg);border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--text);font-size:21px}
 .sheet-photo{width:100%;height:min(20dvh,160px);flex:0 0 auto;object-fit:cover;display:block}
-.sheet-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding:9px 13px 16px}
+.sheet-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding:9px 13px 16px}
 .ingredient-box{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:9px;color:var(--text);text-align:left}
 .ingredient-box strong{font-size:13px}
 .ingredient-panel{padding:7px 2px;display:flex;gap:6px;flex-wrap:wrap}
@@ -234,7 +234,7 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 .restaurant-info-status.is-closed .restaurant-info-status-dot{background:#c35448}
 .restaurant-info-close{position:absolute;right:17px;top:17px;z-index:3;border:1px solid var(--ri-divider);width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:var(--card);color:var(--ri-ink);box-shadow:0 5px 15px rgba(15,35,25,.09)}
 .restaurant-info-close svg{width:20px;height:20px}
-.restaurant-info-sheet .restaurant-info-scroll{padding:15px 22px 22px;scrollbar-width:thin}
+.restaurant-info-sheet .restaurant-info-scroll{padding:15px 22px 22px}
 .restaurant-info-feature{position:relative;display:flex;align-items:center;gap:22px;min-height:124px;padding:20px 24px;margin:0 0 12px;background:var(--ri-surface);border-radius:23px;overflow:hidden}
 .restaurant-info-feature-icon,.restaurant-info-round-icon{width:66px;height:66px;flex:0 0 66px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--green) 8%,var(--card));color:var(--green);border:1px solid color-mix(in srgb,var(--green) 8%,transparent)}
 .restaurant-info-feature-icon svg,.restaurant-info-round-icon svg{width:29px;height:29px}
@@ -306,10 +306,15 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 @media(min-width:700px){.app-shell{border-left:1px solid #d5dfd2;border-right:1px solid #d5dfd2}}
 
 
-/* Nested scroll containers keep profile, cart, checkout, restaurant info and
-   product options independently scrollable at every device height. */
-.main-content::-webkit-scrollbar,.sheet-scroll::-webkit-scrollbar{width:6px}
-.main-content::-webkit-scrollbar-thumb,.sheet-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+/* One matching thin teal scrollbar for every native BETA scrolling pane.
+   Firefox uses scrollbar-color; Chrome/Opera use ::-webkit-scrollbar.
+   Mobile keeps the platform's native overlay scrolling and touch gestures.
+   The category strip has its existing custom scrollbar indicator instead. */
+.main-content,.sheet-scroll{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
+.main-content::-webkit-scrollbar,.sheet-scroll::-webkit-scrollbar{width:5px;height:5px}
+.main-content::-webkit-scrollbar-track,.sheet-scroll::-webkit-scrollbar-track{background:var(--scroll-track);border-radius:12px}
+.main-content::-webkit-scrollbar-thumb,.sheet-scroll::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:12px}
+.main-content::-webkit-scrollbar-thumb:hover,.sheet-scroll::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover)}
 .main-content>section[id^="cat-"]{scroll-margin-top:10px}
 .status-card .status-main{flex:1}
 @media(max-height:620px){.sheet-photo{height:min(20dvh,120px)}.sheet-head{flex-basis:56px;height:56px}.bonus-ring{height:160px;width:160px}.bonus-ring:before{inset:28px}}
