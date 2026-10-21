@@ -1,70 +1,44 @@
 /**
- * BETA-only realtime order transport. Authentication + RTDB, no own backend.
- * All write/read access is enforced by the deployed Firebase Security Rules.
+ * BETA direct Realtime Database adapter. No Firebase Authentication, Vercel,
+ * Functions or other backend. Requires RTDB read/write rules to permit access.
+ * Important: public rules cannot protect customer PII or privileged actions.
  */
-import {config} from './config.js?v=20261021-beta15';
+import {config} from './config.js?v=20261021-beta17';
 const tenant=config.tenantId;
 const path='beta/tenants/'+tenant+'/orders';
-const adminsPath='beta/admins';
 let apiPromise=null;
 const version='10.14.1';
-function failSetup(){
- if(!config.firebase?.apiKey||!config.firebase?.projectId||!config.orders?.databaseUrl)
-  throw new Error('Firebase Authentication er ikke konfigurert. Bestillinger er deaktivert.');
- if(config.orders.databaseUrl.replace(/\/$/,'')===config.menu.databaseUrl.replace(/\/$/,''))
-  throw new Error('Bestillingsdatabasen må isoleres fra den offentlige DEMO-databasen.');
-}
 async function client(){
- failSetup();
  if(apiPromise)return apiPromise;
  apiPromise=Promise.all([
   import('https://www.gstatic.com/firebasejs/'+version+'/firebase-app.js'),
-  import('https://www.gstatic.com/firebasejs/'+version+'/firebase-auth.js'),
   import('https://www.gstatic.com/firebasejs/'+version+'/firebase-database.js')
- ]).then(([base,auth,db])=>{
-  const app=base.getApps().find(x=>x.name==='beta-'+tenant)||base.initializeApp({
-   apiKey:config.firebase.apiKey,
-   authDomain:config.firebase.authDomain||config.firebase.projectId+'.firebaseapp.com',
-   projectId:config.firebase.projectId,
-   databaseURL:config.orders.databaseUrl
-  },'beta-'+tenant);
-  return {auth,db,authClient:auth.getAuth(app),database:db.getDatabase(app,config.orders.databaseUrl)};
+ ]).then(([base,db])=>{
+  const dbURL=config.orders?.databaseUrl||config.menu.databaseUrl;
+  if(!/^https:\/\/[^/]+\.firebaseio\.com\/?$|^https:\/\/[^/]+\.firebasedatabase\.app\/?$/.test(dbURL))
+   throw new Error('Firebase Realtime Database-adressen er ugyldig.');
+  const app=base.getApps().find(a=>a.name==='beta-'+tenant)||
+    base.initializeApp({databaseURL:dbURL},'beta-'+tenant);
+  return {db,database:db.getDatabase(app)};
  }).catch(error=>{apiPromise=null;throw error;});
  return apiPromise;
 }
-async function signedCustomer(){
- const c=await client();
- await c.authClient.authStateReady();
- if(!c.authClient.currentUser)await c.auth.signInAnonymously(c.authClient);
- const user=c.authClient.currentUser;
- if(!user)throw new Error('Kunne ikke logge inn kunden.');
- return {...c,user};
+function customerId(){
+ const key='beta:customer-id:'+tenant;
+ try{
+  let id=localStorage.getItem(key);
+  if(!id){id='guest_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');localStorage.setItem(key,id);}
+  return id;
+ }catch{return 'guest_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');}
 }
-export async function getAdminSession(){
- const c=await client();
- await c.authClient.authStateReady();
- if(!c.authClient.currentUser||c.authClient.currentUser.isAnonymous)return null;
- const user=c.authClient.currentUser;
- const role=await c.db.get(c.db.ref(c.database,adminsPath+'/'+user.uid+'/tenants/'+tenant));
- return role.val()==='admin'?{...c,user}:null;
-}
-export async function adminLogin(email,password){
- const c=await client();
- await c.auth.signInWithEmailAndPassword(c.authClient,email,password);
- const session=await getAdminSession();
- if(!session){await c.auth.signOut(c.authClient);throw new Error('Ingen admin-tilgang til denne restauranten.');}
- return session;
-}
-export async function adminLogout(){
- const c=await client();await c.auth.signOut(c.authClient);
-}
+export async function getAdminSession(){return client();}
 const ticketKey='beta:pending:'+tenant;
 function loadTicket(){try{return JSON.parse(localStorage.getItem(ticketKey)||'null');}catch{return null;}}
 function saveTicket(ticket){try{localStorage.setItem(ticketKey,JSON.stringify(ticket));}catch{}}
 function clearTicket(){try{localStorage.removeItem(ticketKey);}catch{}}
 function newId(){
  const bytes=crypto.getRandomValues(new Uint8Array(16));
- return 'ord_'+Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+ return 'ord_'+Date.now().toString(36).padStart(10,'0')+'_'+Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
 }
 function orderPayload(draft,uid,id){
  const t=Date.now();
@@ -86,29 +60,30 @@ function orderPayload(draft,uid,id){
 }
 /** Exactly one generated id per identical pending draft; recover after lost ACK. */
 export async function submitFirebaseOrder(draft){
- const c=await signedCustomer();
+ const c=await client();
+ const uid=customerId();
  const fingerprint=JSON.stringify(draft);
  let ticket=loadTicket();
- if(!ticket||ticket.uid!==c.user.uid||ticket.fingerprint!==fingerprint)
-  ticket={id:newId(),uid:c.user.uid,fingerprint};
+ if(!ticket||ticket.uid!==uid||ticket.fingerprint!==fingerprint)
+  ticket={id:newId(),uid:uid,fingerprint};
  const ref=c.db.ref(c.database,path+'/'+ticket.id);
  saveTicket(ticket);
- const payload=orderPayload(draft,c.user.uid,ticket.id);
+ const payload=orderPayload(draft,uid,ticket.id);
  if(!/^\d{8}$/.test(payload.phone)||payload.customerName.length<2||!payload.lines.length||
     payload.lines.length>40||!Number.isFinite(payload.total)||payload.total<0)
   throw new Error('Ugyldig bestilling.');
  try{
-  await c.db.set(ref,payload);
-  clearTicket();return payload;
+  // Transaction prevents overwriting a previously accepted order on retry.
+  const result=await c.db.runTransaction(ref,current=>current||payload,{applyLocally:false});
+  const saved=result.snapshot.val();
+  if(!saved||saved.customerUid!==uid)throw new Error('Denne bestillings-ID-en finnes allerede.');
+  clearTicket();return saved;
  }catch(error){
-  // A retried write may be rejected because the first request already succeeded.
-  try {
+  try{
    const snap=await c.db.get(ref);
-   if(snap.exists()&&snap.val().customerUid===c.user.uid){
-    clearTicket();return snap.val();
-   }
+   if(snap.exists()&&snap.val()?.customerUid===uid){clearTicket();return snap.val();}
   }catch(_){}
-  throw new Error('Firebase avviste bestillingen. Kontroller tilkobling og sikkerhetsregler.');
+  throw new Error('Firebase kunne ikke lagre bestillingen: '+(error?.message||'Tilkobling eller tilgang avvist.'));
  }
 }
 export async function watchCustomerOrder(id,onChange){
@@ -116,14 +91,14 @@ export async function watchCustomerOrder(id,onChange){
  const orderRef=c.db.ref(c.database,path+'/'+id);
  const unsubscribe=c.db.onValue(orderRef,snapshot=>{
   const value=snapshot.val();
-  if(value&&value.customerUid===c.user.uid)onChange(value);
+  if(value&&value.customerUid===uid)onChange(value);
  },error=>onChange(null,error));
  return unsubscribe;
 }
 /** One ordered bounded admin listener; change events carry only changed children. */
 export function watchAdminOrders(session,onChange,onError){
  const c=session;
- const q=c.db.query(c.db.ref(c.database,path),c.db.orderByChild('createdAt'),c.db.limitToLast(100));
+ const q=c.db.query(c.db.ref(c.database,path),c.db.orderByKey(),c.db.limitToLast(100));
  const stops=[
   c.db.onChildAdded(q,s=>onChange('upsert',s.key,s.val()),onError),
   c.db.onChildChanged(q,s=>onChange('upsert',s.key,s.val()),onError),
