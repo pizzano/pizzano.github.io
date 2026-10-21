@@ -87,7 +87,8 @@ export async function submitFirebaseOrder(draft){
  }
 }
 export async function watchCustomerOrder(id,onChange){
- const c=await signedCustomer();
+ const c=await client();
+ const uid=customerId();
  const orderRef=c.db.ref(c.database,path+'/'+id);
  const unsubscribe=c.db.onValue(orderRef,snapshot=>{
   const value=snapshot.val();
