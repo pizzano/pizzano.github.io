@@ -109,3 +109,5 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Brukernavn/passord og innloggingssperre er midlertidig fjernet fra `BETA/admin.html`, og admin-siden åpnes direkte med Alle/Planlagte, søk og detaljlayout.
 - Inntil en sikker innloggingsløsning er valgt, sender den åpne siden **ingen** forespørsler om private ordre, og knapper for datatilgang/import er deaktivert. Ingen kundeopplysninger eksponeres; ingen falske ordre vises.
 - Backend `api/beta.js` beholder krav om autentisert admin for liste, statusendringer, SMS, e-post og katalogimport. DEMO og Firebase Security Rules ble ikke endret.
+
+## beta20 – åpen administrasjon: tom-listen rendres korrekt første gang og ved endret filter.

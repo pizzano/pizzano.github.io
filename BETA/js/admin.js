@@ -2,9 +2,9 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta19';
-import {orderLabels} from './order-status.js?v=20261021-beta19';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta19';
+import {config} from './config.js?v=20261021-beta20';
+import {orderLabels} from './order-status.js?v=20261021-beta20';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta20';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +12,7 @@ const money=value=>new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).form
 const fmt=time=>Number(time)>0?new Intl.DateTimeFormat('nb-NO',{timeZone:config.restaurant.timezone||'Europe/Oslo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(Number(time))):'–';
 const orders=new Map(),running=new Set(),actionKeys=new Map();
 let selected='',filter='all',query='',stream=null,healthy=false,connected=false;
-let fallback=null,initialTimer=null,reconnectTimer=null,syncRequest=null,csrfToken='',accessToken='',session=false,seenInitial=false,lastList='',soundEnabled=true;
+let fallback=null,initialTimer=null,reconnectTimer=null,syncRequest=null,csrfToken='',accessToken='',session=false,seenInitial=false,lastList=null,soundEnabled=true;
 let reconnectDelay=5000;
 const base=()=>config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/admin';
 function toast(message){
@@ -59,7 +59,7 @@ function stopSync(){
 function resetPrivateSession(){
  stopSync();
  orders.clear();session=false;csrfToken='';accessToken='';selected='';
- seenInitial=false;lastList='';
+ seenInitial=false;lastList=null;
  renderList();renderDetails();
  $('sidebarStatus').textContent='Administrasjon under oppsett';
  $('connectionStatus').textContent='Klargjøres';
@@ -266,20 +266,20 @@ async function action(type,o){
 $('orderList').addEventListener('click',event=>{
  const button=event.target.closest('[data-select]');
  if(!button)return;
- selected=button.dataset.select;lastList='';updateScreen();
+ selected=button.dataset.select;lastList=null;updateScreen();
 });
 $('orderDetails').addEventListener('click',event=>{
  const button=event.target.closest('[data-act]');
  if(!button)return;
- if(button.dataset.act==='close'){selected='';lastList='';updateScreen();return;}
+ if(button.dataset.act==='close'){selected='';lastList=null;updateScreen();return;}
  void action(button.dataset.act,orders.get(selected));
 });
 document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{
  filter=button.dataset.filter;
  document.querySelectorAll('[data-filter]').forEach(b=>{b.classList.toggle('is-active',b===button);b.setAttribute('aria-pressed',String(b===button));});
- lastList='';renderList();
+ lastList=null;renderList();
 }));
-$('orderSearch').addEventListener('input',event=>{query=event.target.value.toLocaleLowerCase('nb-NO').trim();lastList='';renderList();});
+$('orderSearch').addEventListener('input',event=>{query=event.target.value.toLocaleLowerCase('nb-NO').trim();lastList=null;renderList();});
 $('refreshOrders').addEventListener('click',()=>void refresh());
 $('importMenu').addEventListener('click',async()=>{
  if(!session||!window.confirm('Oppdatere BETA sin private meny fra DEMO?'))return;
