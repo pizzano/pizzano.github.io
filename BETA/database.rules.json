@@ -1,0 +1,35 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "beta": {
+      "admins": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      },
+      "tenants": {
+        "$tenant": {
+          "orders": {
+            ".indexOn": ["createdAt"],
+            ".read": "auth != null && root.child('beta/admins').child(auth.uid).child('tenants').child($tenant).val() === 'admin' && query.orderByChild === 'createdAt' && ((query.limitToLast !== null && query.limitToLast <= 100) || (query.limitToFirst !== null && query.limitToFirst <= 25))",
+            "$orderId": {
+              ".read": "auth != null && (data.child('customerUid').val() === auth.uid || root.child('beta/admins').child(auth.uid).child('tenants').child($tenant).val() === 'admin')",
+              ".write": "auth != null && (root.child('beta/admins').child(auth.uid).child('tenants').child($tenant).val() === 'admin' || (!data.exists() && newData.exists() && newData.child('customerUid').val() === auth.uid && newData.child('status').val() === 'mottatt'))",
+              ".validate": "newData.hasChildren(['id','tenantId','customerUid','customerName','phone','status','createdAt','statusUpdatedAt','confirmationDeadline','pickupMode','pickup','lines','total']) && newData.child('id').val() === $orderId && newData.child('tenantId').val() === $tenant && newData.child('customerUid').isString() && newData.child('customerName').isString() && newData.child('customerName').val().length >= 2 && newData.child('customerName').val().length <= 90 && newData.child('phone').isString() && newData.child('phone').val().matches(/^[0-9]{8}$/) && newData.child('total').isNumber() && newData.child('total').val() >= 0 && newData.child('total').val() <= 200000 && newData.child('createdAt').isNumber() && newData.child('createdAt').val() > now - 300000 && newData.child('createdAt').val() < now + 300000 && newData.child('pickupMode').val() in ['asap','scheduled'] && newData.child('lines').exists() && newData.child('status').val() in ['mottatt','bekreftet','klar','avvist','utlevert','fullfort']",
+              "email": {
+                ".validate": "newData.isString() && newData.val().length <= 180"
+              },
+              "lines": {
+                "$line": {
+                  ".validate": "newData.hasChildren(['itemId','sizeId','quantity','price']) && newData.child('itemId').isString() && newData.child('sizeId').isString() && newData.child('quantity').isNumber() && newData.child('quantity').val() >= 1 && newData.child('quantity').val() <= 20 && newData.child('price').isNumber() && newData.child('price').val() >= 0"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
