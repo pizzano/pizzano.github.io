@@ -2208,6 +2208,33 @@ function orderListRemainingTime(order) {
   return days + ' d' + (hours ? ' ' + hours + ' t' : '');
 }
 
+// A green e-mail badge requires an actual MailApp success acknowledgement
+// persisted by the independent Apps Script poller. A confirmed order alone
+// is NEVER proof of an email being sent.
+function emailReceiptKinds(order) {
+  const receipts = order?.emailReceipts || {};
+  const valid = (kind) => {
+    const entry = receipts[kind];
+    const at = Number(entry?.sentAt) || 0;
+    return entry?.state === 'accepted' && entry?.provider === 'MailApp'
+      && at > 0 && at >= (Number(order?.createdAt) || 0);
+  };
+  return { accepted: valid('accepted'), ready: valid('ready') };
+}
+function emailReceiptSent(order) {
+  const kinds = emailReceiptKinds(order);
+  return kinds.accepted || kinds.ready;
+}
+function emailReceiptDetail(order) {
+  const kinds = emailReceiptKinds(order);
+  const labels = [];
+  if (kinds.accepted) labels.push('Bekreftelse');
+  if (kinds.ready) labels.push('Klar for henting');
+  if (labels.length) return 'E-post sendt · ' + labels.join(' · ');
+  if (order.status === 'mottatt') return 'E-post venter på bekreftelse';
+  return 'E-post ikke bekreftet sendt';
+}
+
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
   const displayTime = orderListPickupTime(order);
@@ -2216,7 +2243,7 @@ function orderListRowHtml(order, isNew = false) {
   const remainingTime = orderListRemainingTime(order);
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
-      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS ble sendt via Traccar" aria-label="SMS ble sendt via Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp" aria-label="E-post godtatt av MailApp" ${emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-divider" aria-hidden="true"></span>
@@ -2325,7 +2352,12 @@ function renderOrderDetail(orderId) {
         <span class="order-status-badge pos-header-status" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span>
         <div class="pos-detail-heading">
           <div class="order-customer-heading order-customer-heading--centered">
-            <div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div></div>
+            <div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div><div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
+              ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
+                ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
+                    title="${emailReceiptSent(order) ? 'MailApp har godtatt sendingen. Levering til innboks er ikke bekreftet.' : 'Ingen bekreftet e-postkvittering fra MailApp.'}"
+                    ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>${escapeHtml(emailReceiptDetail(order))}</span></div>`
+                : ''}</div>
             <span class="order-header-divider" aria-hidden="true"></span>
           </div>
         </div>
@@ -2353,6 +2385,149 @@ function renderOrderDetail(orderId) {
   }
 }
 
+
+/* Read-only SMS health indicator. Green means LIVE + recent successful
+   Firebase poll; it does not claim gateway or Android handset delivery. */
+let smsStatusFetching = false;
+
+function displaySmsStatus(mode, text, help) {
+  const badge = document.getElementById('ordersSmsStatus');
+  if (!badge) return;
+  badge.classList.toggle('is-pending', mode === 'pending');
+  badge.classList.toggle('is-active', mode === 'active');
+  badge.classList.toggle('is-error', mode === 'error');
+  badge.querySelector('[data-sms-status-text]').textContent = text + ' · ' + help;
+  badge.title = text + ': ' + help;
+  badge.setAttribute('aria-label', 'SMS: ' + text);
+}
+
+// SMS sender health is written by the existing Google Apps Script poller
+// directly to Firebase RTDB; no Vercel or browser-side SMS gateway calls.
+function classifySmsHealth(status, now = Date.now()) {
+  if (!status || status.source !== 'apps-script-sms-poller') {
+    return ['pending', 'SMS-status ikke bekreftet',
+      'Venter på kontrollstatus fra SMS-tjenesten i Firebase.'];
+  }
+  if (status.liveConfigured !== true) {
+    return ['error', 'SMS ikke LIVE', 'SMS-tjenesten er deaktivert eller i TEST-modus.'];
+  }
+  const age = now - Number(status.checkedAt || 0);
+  if (status.pollHealthy === true && age >= -60000 && age < 180000) {
+    return ['active', 'SMS-overvåking aktiv',
+      'Siste Firebase-kontroll OK. Bare lagret Traccar-kvittering bekrefter sendt SMS.'];
+  }
+  return ['error', 'SMS-kontroll frakoblet',
+    'Ingen fersk kontroll fra SMS-tjenesten i Firebase.'];
+}
+
+async function refreshSmsStatus() {
+  if (smsStatusFetching || document.hidden) return;
+  if (!DB_URL) {
+    displaySmsStatus('error', 'SMS ikke konfigurert', 'Firebase-adresse mangler.');
+    return;
+  }
+  smsStatusFetching = true;
+  try {
+    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
+      cache:'no-store', signal:AbortSignal.timeout(7500)
+    });
+    if (!response.ok) throw new Error('Firebase SMS-kontroll HTTP ' + response.status);
+    displaySmsStatus(...classifySmsHealth(await response.json()));
+  } catch (_) {
+    displaySmsStatus('error', 'SMS-kontroll frakoblet',
+      'Kunne ikke hente SMS-status fra Firebase.');
+  } finally { smsStatusFetching = false; }
+}
+void refreshSmsStatus();
+window.setInterval(refreshSmsStatus, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void refreshSmsStatus();
+});
+document.getElementById('ordersSmsStatus')?.addEventListener('click', () => {
+  void refreshSmsStatus();
+});
+
+/* E-mail sender health is independent of SMS and printer connectivity.
+   Green only after a RECENT poller heartbeat plus MailApp authorization/quota.
+   It does not claim successful delivery of each customer message. */
+let emailStatusFetching = false;
+function displayEmailStatus(mode, label, explanation) {
+  const el = document.getElementById('ordersEmailStatus');
+  if (!el) return;
+  for (const state of ['pending','active','error']) el.classList.toggle('is-' + state, mode === state);
+  el.querySelector('[data-email-status-text]').textContent = label + ' · ' + explanation;
+  el.setAttribute('aria-label', 'E-post: ' + label);
+  el.title = label + ': ' + explanation;
+}
+async function refreshEmailStatus() {
+  if (emailStatusFetching || document.hidden) return;
+  if (!DB_URL) {
+    displayEmailStatus('error', 'E-post utilgjengelig', 'Firebase-adresse mangler.');
+    return;
+  }
+  emailStatusFetching = true;
+  try {
+    const url = DB_URL + '/emailHealth.json?_=' + Date.now();
+    const response = await fetch(url, {
+      method:'GET', cache:'no-store', signal:AbortSignal.timeout(7500)
+    });
+    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
+    const health = await response.json();
+    const age = Date.now() - Number(health?.checkedAt || 0);
+    const active = health?.source === 'apps-script-email-poller'
+      && health?.status === 'ok' && Number(health?.quotaRemaining) > 0
+      && age >= -60000 && age <= 180000;
+    if (active) {
+      displayEmailStatus('active', 'E-post aktiv',
+        'Apps Script kontrollerte Firebase og MailApp nylig. Innbokslevering kan ikke garanteres.');
+    } else if (health?.status === 'unavailable') {
+      displayEmailStatus('error', 'E-post utilgjengelig', 'MailApp-kvoten er oppbrukt eller senderen feilet.');
+    } else {
+      displayEmailStatus('pending', 'E-post ikke bekreftet',
+        'Ingen fersk kontroll fra Apps Script. Sjekk utløseren og loggene.');
+    }
+  } catch (error) {
+    displayEmailStatus('error', 'E-post frakoblet', 'Kunne ikke hente senderens kontrollstatus.');
+  } finally { emailStatusFetching = false; }
+}
+void refreshEmailStatus();
+window.setInterval(() => { void refreshEmailStatus(); }, 90000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void refreshEmailStatus();
+});
+document.getElementById('ordersEmailStatus')?.addEventListener('click', () => { void refreshEmailStatus(); });
+
+/* Display only provider-accepted SMS receipts stored by the sender in
+   Firebase /orders/{id}/smsReceipts. A confirmed order is not proof of SMS. */
+function smsReceiptKinds(order) {
+  const receipts = order?.smsReceipts || {};
+  const valid = (kind) => {
+    const receipt = receipts[kind];
+    const sentAt = Number(receipt?.sentAt) || 0;
+    return receipt?.provider === 'Traccar' && receipt?.state === 'accepted'
+      && sentAt > 0 && sentAt >= (Number(order?.createdAt) || 0);
+  };
+  return {
+    accepted: valid('accepted'),
+    ready: valid('ready'),
+    estimateUpdated: valid('estimateUpdated'),
+  };
+}
+function smsReceiptSent(id) {
+  const order = getOrders().find(order => order.id === String(id));
+  if (!order) return false;
+  return Object.values(smsReceiptKinds(order)).some(Boolean);
+}
+function smsReceiptDetail(id) {
+  const order = getOrders().find(order => order.id === String(id));
+  if (!order) return '';
+  const kinds = smsReceiptKinds(order);
+  const labels = [];
+  if (kinds.accepted) labels.push('Bekreftelse');
+  if (kinds.estimateUpdated) labels.push('Endret hentetid');
+  if (kinds.ready) labels.push('Klar for henting');
+  return labels.length ? 'SMS ble sendt · ' + labels.join(' · ') : '';
+}
 
 function updateOrdersConnection() {
   const connection = document.getElementById('ordersConnection');
