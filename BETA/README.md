@@ -123,3 +123,10 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Admin sayfası doğrudan açılır, e-posta kodu / giriş ekranı gösterilmez. Alle, Planlagte, Historikk ve arama UI korunur.
 - Herkese açık sipariş erişimi veya kişisel müşteri bilgisi verilmez. Sunucu yetkilendirmesi kaldırılmamıştır; gerçek sipariş işlemleri kimlik yetkisi verilene kadar kapalıdır.
 - DEMO ve Firebase kuralları değişmedi.
+
+## beta23 – ordremottak feildiagnostikk og tjenesteindikatorer
+- `api/beta.js` har ny liten offentlig `GET /v1/tenants/kol-grill-pizza/health` med booleans for servertilgjengelighet og konfigurasjon. Den leser **ingen Firebase-data** og avslører ingen tokens, kundedata eller private miljøverdier.
+- Ved 503 `SERVICE_NOT_READY` viser kunden eksplisitt at **ingen bestilling er mottatt**. Samme idempotency-nøkkel beholdes for andre usikre utfall. Ingen direkte skriverett mot DEMO Firebase.
+- Admin-panelet har fire uavhengige indikatorer: nett (ekte HTTPS-svar), Epson (ekte lokal ePOS-test ved klikk, med IP-felt), BETA-SMS og BETA-e-post (konfigurasjonsstatus; **ikke leveringskvitteringer**). Rød ved manglende oppsett, gul ved konfigurert men ubekreftet, grønn nett/skriver kun etter vellykket teknisk test.
+- Ett GET mot egen `/health` ved admin-oppstart og høyst ett ekstra per ca. 90 sekunder mens fanen er aktiv; **null ekstra Firebase listeners**. Epson-status gir ingen papirutskrift.
+- Dersom tjenestevariabler ennå ikke er satt opp på Vercel, er ordremottaket av sikkerhetshensyn fortsatt deaktivert, selv om menyen er synlig. DEMO og aktive Firebase-regler er ikke endret.

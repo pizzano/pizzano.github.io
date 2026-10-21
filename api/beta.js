@@ -50,6 +50,26 @@ function cors(req,res){
  res.setHeader('Access-Control-Max-Age','600');
  return !origin||allowedOrigins.has(origin);
 }
+/** Public, read-only capability signal; does not touch Firebase and cannot
+ * tell whether SMS/e-mail was delivered. In particular, no PII or secrets. */
+function setupState(){
+ const e=env();
+ const dbUrlValid=/^https:\/\/[a-z0-9.-]+\.(?:firebaseio\.com|firebasedatabase\.app)$/.test(e.db);
+ const separateDatabase=dbUrlValid&&!e.db.includes(DEMO_DB)&&e.db!==BASE_MENU;
+ let accountValid=false;
+ try{
+  const a=JSON.parse(e.account);
+  accountValid=Boolean(a.project_id&&a.client_email&&a.private_key);
+ }catch{}
+ const smsConfigured=Boolean(e.smsToken);
+ const emailConfigured=Boolean(e.resendKey&&e.emailFrom);
+ const credentialsReady=Boolean(separateDatabase&&accountValid&&e.secret.length>=32&&
+  e.adminEmail&&smsConfigured&&emailConfigured);
+ return {status:credentialsReady?'configuration-present':'setup-required',
+  apiReachable:true,ordersConfigured:credentialsReady,
+  smsConfigured,emailConfigured,
+  printerCheck:'local-browser-only'};
+}
 function requireConfigured(){
  const e=env();
  if(!e.db||!e.secret||!e.account||!e.adminEmail||!e.resendKey||!e.emailFrom)
@@ -617,6 +637,7 @@ module.exports=async function betaHandler(req,res){
   if(!match)throw fail(404,'Not found.');
   const tenant=match[1],sub=match[2];
   if(!tenantValid(tenant)||tenant!=='kol-grill-pizza')throw fail(404,'Unknown tenant.');
+  if(sub==='health'&&req.method==='GET')return write(res,200,setupState());
   const e=requireConfigured();
   await assertPrivacy(e,tenant);
   if(sub==='orders'&&req.method==='POST')return await submit(e,req,tenant,res);
@@ -668,6 +689,9 @@ module.exports=async function betaHandler(req,res){
  }catch(error){
   const code=Number(error.status)||500;
   if(code>=500)console.error('BETA backend unavailable:',error.message);
-  return write(res,code>=400&&code<=599?code:500,{error:code<500?error.message:'Service unavailable.'});
+  return write(res,code>=400&&code<=599?code:500,{
+   code:code===503?'SERVICE_NOT_READY':code===409?'CONFLICT':code===422?'INVALID_ORDER':'REQUEST_FAILED',
+   error:code===503?'BETA bestillingsmottak er ikke aktivert på serveren. Ingen bestilling er registrert.':code<500?error.message:'Service unavailable.'
+  });
  }
 };

@@ -3,7 +3,7 @@
  * Requires an opaque, order-scoped customer token issued by the backend.
  * Only the visible order page opens a connection; status is never guessed from time.
  */
-import {config} from './config.js?v=20261021-beta21';
+import {config} from './config.js?v=20261021-beta23';
 
 export const orderLabels=Object.freeze({
  mottatt:'Mottatt – venter på bekreftelse',

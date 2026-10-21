@@ -95,6 +95,21 @@ test('BETA guarded checkout, notifications, transitions, and archive (all mocked
    {itemId:'pizza1',sizeId:'small',quantity:1,options:[],comment:''}
   ]
  };
+ const configured=await call('GET','health');
+ assert.equal(configured.statusCode,200);
+ assert.equal(configured.data.apiReachable,true);
+ assert.equal(configured.data.ordersConfigured,true);
+ assert.equal(configured.data.smsConfigured,true);
+ assert.equal(configured.data.emailConfigured,true);
+ // A missing private Firebase environment cannot silently accept real orders.
+ const savedDatabase=process.env.BETA_FIREBASE_DATABASE_URL;
+ delete process.env.BETA_FIREBASE_DATABASE_URL;
+ const unconfigured=await call('GET','health');
+ assert.equal(unconfigured.data.ordersConfigured,false);
+ const denied=await call('POST','orders',body,{'idempotency-key':'cccccccc-cccc-4ccc-8ccc-cccccccccccc'});
+ assert.equal(denied.statusCode,503);
+ assert.equal(denied.data.code,'SERVICE_NOT_READY');
+ process.env.BETA_FIREBASE_DATABASE_URL=savedDatabase;
  const key='11111111-1111-4111-8111-111111111111';
  let result=await call('POST','orders',body,{'idempotency-key':key});
  assert.equal(result.statusCode,201);

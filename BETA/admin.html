@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1c252e">
 <title>Bestillinger – BETA Admin</title>
-<link rel="stylesheet" href="./css/admin.css?v=20261021-beta22">
+<link rel="stylesheet" href="./css/admin.css?v=20261021-beta23">
 </head>
 <body>
 <div id="adminApp" class="admin-layout">
@@ -20,10 +20,25 @@
   <header class="admin-top">
    <button class="mobile-menu" id="toggleSidebar" aria-label="Vis meny" type="button">☰</button>
    <h1>Bestillinger</h1>
-   <div class="admin-tools"><span id="connectionStatus" class="connection-indicator">Frakoblet</span>
+   <div class="admin-tools">
+    <div class="service-status-bar" role="group" aria-label="Tjenestestatus">
+     <button type="button" class="service-status is-pending" id="serviceNet" aria-label="Internett: kontrollerer" title="Kontroller internett og API" data-service="net"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a4.5 4.5 0 0 1 6 0"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg></button>
+     <button type="button" class="service-status is-pending" id="servicePrinter" aria-expanded="false" aria-controls="servicePrinterPanel" aria-label="Epson: ikke testet" title="Epson TM-T20II, trykk for test" data-service="printer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2M6 14h12v7H6zM17 11h2"/></svg></button>
+     <button type="button" class="service-status is-pending" id="serviceSms" aria-label="SMS: kontrollerer" title="SMS-tjeneste, trykk for status" data-service="sms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5zM8 10h8M8 13h5"/></svg></button>
+     <button type="button" class="service-status is-pending" id="serviceEmail" aria-label="E-post: kontrollerer" title="E-posttjeneste, trykk for status" data-service="email"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></button>
+    </div>
+    <span id="connectionStatus" class="connection-indicator">Ordremottak kontrolleres</span>
     <button type="button" id="toggleSound" title="Bestillingslyd" aria-pressed="true">🔊</button>
-    <button type="button" id="importMenu" title="Synkroniser menykatalog">☷</button><button type="button" id="refreshOrders" title="Oppdater bestillinger">↻</button></div>
+    <button type="button" id="importMenu" title="Synkroniser menykatalog">☷</button>
+    <button type="button" id="refreshOrders" title="Oppdater bestillinger">↻</button>
+   </div>
   </header>
+  <div class="service-printer-panel" id="servicePrinterPanel" hidden>
+    <strong>Epson TM-T20II</strong><span id="servicePrinterMessage" role="status">Skriveren er ikke testet.</span>
+    <label>IP <input id="servicePrinterIp" inputmode="decimal" autocomplete="off" aria-label="Epson IP-adresse" placeholder="192.168.1.25"></label>
+    <button id="servicePrinterTest" type="button">Test tilkobling</button>
+    <a id="servicePrinterOpen" href="#" target="_blank" rel="noopener noreferrer">Åpne Epson ↗</a>
+   </div>
   <main class="orders-workspace" id="workspace">
    <div class="orders-sidebar">
     <div class="order-filters"><button data-filter="all" aria-pressed="true" class="is-active">Alle <b id="allCount">0</b></button><button data-filter="scheduled" aria-pressed="false">Planlagte <b id="scheduledCount">0</b></button><button data-filter="archive" aria-pressed="false">Historikk</button></div>
@@ -35,6 +50,6 @@
   <div class="toast" id="adminToast" role="status" hidden></div>
  </div>
 </div>
-<script type="module" src="./js/admin.js?v=20261021-beta22"></script>
+<script type="module" src="./js/admin.js?v=20261021-beta23"></script>
 </body>
 </html>

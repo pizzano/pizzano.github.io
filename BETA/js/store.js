@@ -1,5 +1,5 @@
-import {config} from './config.js?v=20261021-beta21';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta21';
+import {config} from './config.js?v=20261021-beta23';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta23';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -123,10 +123,20 @@ export async function sendOrder(order){
     :'Ingen sikker bekreftelse fra serveren. Prøv igjen med samme bestilling.');
  }finally{clearTimeout(timeout);}
  if(!response.ok){
-  if(response.status===409)throw new Error('Bestillingen ble allerede behandlet med andre opplysninger. Kontakt restauranten.');
-  if(response.status>=500)throw new Error('Tjenesten svarer ikke. Prøv igjen – bestillings-ID beholdes.');
-  // Validation errors can be fixed, but an unknown result is never assumed.
-  throw new Error('Bestillingen kunne ikke godtas. Kontroller hentetid, varer og opplysninger.');
+  // A 503 due to missing server configuration is NOT an uncertain order:
+  // do not encourage repeatedly pressing Send or claim an order exists.
+  const problem=await response.json().catch(()=>null);
+  if(response.status===503 && problem?.code==='SERVICE_NOT_READY')
+   throw new Error('Nettbestilling er ikke aktivert hos restauranten ennå. Bestillingen er ikke sendt. Ring restauranten for å bestille.');
+  if(response.status===409)
+   throw new Error('Bestillingen kan ikke bekreftes. Menypris eller hentetid kan ha endret seg. Oppdater siden før ny bestilling.');
+  if(response.status===422)
+   throw new Error('Kontroller navn, telefonnummer, varer og hentetid. Bestillingen ble ikke godtatt.');
+  if(response.status>=500)
+   throw new Error('Mottakstjenesten er midlertidig utilgjengelig. Ingen bekreftelse mottatt – prøv igjen med samme bestilling senere.');
+  if(response.status===403||response.status===401)
+   throw new Error('Bestillingen ble avvist av tjenesten. Ingen bestilling er bekreftet.');
+  throw new Error('Bestillingen kunne ikke godtas. Kontroller opplysningene.');
  }
  const result=await response.json().catch(()=>null);
  if(!result?.id||!['mottatt','bekreftet','tilberedning','klar'].includes(result.status)||!Number.isFinite(Number(result.createdAt)))

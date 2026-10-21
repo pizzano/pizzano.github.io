@@ -1,11 +1,11 @@
-import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta21';
+import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta23';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta21';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta21';
+} from './store.js?v=20261021-beta23';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta23';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
