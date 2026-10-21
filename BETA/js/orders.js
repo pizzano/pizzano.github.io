@@ -9,7 +9,7 @@ const adminsPath='beta/admins';
 let apiPromise=null;
 const version='10.14.1';
 function failSetup(){
- if(!config.firebase?.apiKey||!config.firebase?.projectId)
+ if(!config.firebase?.apiKey||!config.firebase?.projectId||!config.orders?.databaseUrl)
   throw new Error('Firebase Authentication er ikke konfigurert. Bestillinger er deaktivert.');
 }
 async function client(){
@@ -24,15 +24,15 @@ async function client(){
    apiKey:config.firebase.apiKey,
    authDomain:config.firebase.authDomain||config.firebase.projectId+'.firebaseapp.com',
    projectId:config.firebase.projectId,
-   databaseURL:config.menu.databaseUrl
+   databaseURL:config.orders.databaseUrl
   },'beta-'+tenant);
-  return {auth,db,authClient:auth.getAuth(app),database:db.getDatabase(app)};
+  return {auth,db,authClient:auth.getAuth(app),database:db.getDatabase(app,config.orders.databaseUrl)};
  }).catch(error=>{apiPromise=null;throw error;});
  return apiPromise;
 }
 async function signedCustomer(){
  const c=await client();
- await c.auth.authStateReady();
+ await c.authClient.authStateReady();
  if(!c.authClient.currentUser)await c.auth.signInAnonymously(c.authClient);
  const user=c.authClient.currentUser;
  if(!user)throw new Error('Kunne ikke logge inn kunden.');
