@@ -21,5 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Mock checkout to archive; no customer notifications
+      - name: Original Vercel API regression (kept isolated)
         run: node --test BETA/tests/beta-api.test.cjs
+      - name: Firebase Cloud Functions checkout-to-admin mock integration
+        env:
+          BETA_BACKEND_FIREBASE: '1'
+        run: node --test BETA/tests/beta-api.test.cjs
+      - name: Cloud Functions entrypoint and security tests
+        run: node --test BETA/tests/firebase-adapter.test.cjs

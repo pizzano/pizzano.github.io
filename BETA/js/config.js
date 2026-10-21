@@ -5,7 +5,7 @@
 export const config={
   tenantId:'kol-grill-pizza',
   mode:'api',     // Live mode requires a configured backend. No direct browser writes to Firebase.
-  apiBase:'https://pizzano-github-io.vercel.app/api/beta', // Isolated API; fails closed without protected BETA credentials.
+  apiBase:'https://europe-west1-bestill-19.cloudfunctions.net/betaOrders', // BETA Firebase HTTP gateway; fails closed until securely deployed.
   locale:'nb-NO',
   currency:'NOK',
   menu:{

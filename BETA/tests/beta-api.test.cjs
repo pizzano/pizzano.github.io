@@ -3,7 +3,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const {generateKeyPairSync}=require('node:crypto');
 const {EventEmitter}=require('node:events');
-const handler=require('../../api/beta.js');
+const handler=require(process.env.BETA_BACKEND_FIREBASE==='1'?'../functions/beta-handler.cjs':'../../api/beta.js');
 
 test('BETA guarded checkout, notifications, transitions, and archive (all mocked)',async()=>{
  const tenant='kol-grill-pizza',dbName='beta-isolated-test-default-rtdb';
@@ -74,8 +74,13 @@ test('BETA guarded checkout, notifications, transitions, and archive (all mocked
  async function call(method,path,body,headers={},query={}){
   const req=new EventEmitter();
   req.method=method;
-  req.query={path:'v1/tenants/'+tenant+'/'+path,...query};
-  req.url='/api/beta/v1/tenants/'+tenant+'/'+path;
+  if(process.env.BETA_BACKEND_FIREBASE==='1'){
+   req.query={...query}; // No Vercel rewrite; native Cloud Functions URL path.
+   req.url='/v1/tenants/'+tenant+'/'+path;
+  }else{
+   req.query={path:'v1/tenants/'+tenant+'/'+path,...query};
+   req.url='/api/beta/v1/tenants/'+tenant+'/'+path;
+  }
   req.headers={origin:'https://bestill.online',...headers};
   req.body=body;
   const res=new EventEmitter();

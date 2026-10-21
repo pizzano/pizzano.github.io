@@ -1,34 +1,72 @@
-# BETA private order API – deployment readiness
+# Firebase Cloud Functions – BETA private order API
 
-API origin: https://pizzano-github-io.vercel.app/api/beta
-Only the BETA private order API uses this new route; DEMO routes are untouched.
-Production credentials required in Vercel environment (never in GitHub):
-BETA_FIREBASE_DATABASE_URL (a NEW dedicated Realtime Database, not DEMO).
-BETA_FIREBASE_SERVICE_ACCOUNT_JSON (service account JSON for that private instance).
-BETA_SESSION_SECRET (random secret at least 32 characters).
-BETA_ADMIN_EMAIL (verified recipient of one-time admin login codes).
-BETA_SMS_GATEWAY_TOKEN (separate SMS authorization token for the BETA Traccar gateway).
-BETA_RESEND_API_KEY and BETA_EMAIL_FROM (verified email sender for BETA email).
+The static customer and restaurant panels remain at `bestill.online/BETA/`,
+but **all BETA order operations now target Firebase Cloud Functions directly**.
+They do not call Vercel. Backend endpoint (after deployment):
+`https://europe-west1-bestill-19.cloudfunctions.net/betaOrders`
 
-The separate database MUST deny unauthenticated reads and writes. Candidate rules are BETA/firebase.rules.json.
-Rules are not applied automatically, and Firebase credentials cannot be recovered from the public GitHub repository.
-Live API refuses all requests without the required separate Firebase/admin configuration.
-An unauthenticated Firebase read probe must return 401/403, otherwise API refuses to process orders.
+## Isolation and prerequisite access
 
-After admin authentication, its menu/status and menu/import routes can initialize a private verified
-menu snapshot from the public DEMO menu. This is a one-time staff-approved import, not a DEMO modification.
-Customer orders use only the private snapshot for server-side size, option and price validation.
-DEMO menu version updates will require a new controlled import until the BETA admin manages its own public menu.
+- Firebase project: `bestill-19` (already contains unrelated existing functions).
+  BETA has its **own** `BETA/firebase.json`, `BETA/functions`, and unique
+  `kol-beta-orders` codebase. It does not change or redeploy `functions/index.js`,
+  the DEMO site, the default SMS database, or the public catalog database.
+- The Firebase project owner must authorize a Firebase connection or Firebase
+  CLI deployment. Cloud Functions Gen 2 require Blaze billing (charges possible).
+- Create a **separate Realtime Database instance** in europe-west1, not
+  `bestill-19-default-rtdb` or `kol-grill-pizza-default-rtdb`. Apply
+  `BETA/firebase.rules.json` **only** to that instance, denying all
+  unauthenticated read/write operations. Index active orders by createdAt.
+  This action is not automated and must be verified before accepting real orders.
+- The Gen 2 runtime uses Google Application Default Credentials (ADC) rather
+  than checked-in service-account JSON. Give its runtime identity only the
+  Firebase RTDB project/database permissions it needs. Never commit tokens,
+  credentials, or customer orders to GitHub.
 
-Admin login is one-time email code (8 digits, 7 minutes TTL, 5 guesses, 2-minute cooldown). Signed Bearer session lasts up to 8 hours and is stored per-tab in sessionStorage.
-Public checkout uses a deterministic order ID derived from HMAC of tenant + idempotency key.
-Customer status uses a scoped token; active admin orders use one bounded last-100 SSE.
-State changes use Firebase ETag CAS with staff role and expected status/version checks.
-Complete moves an order to archive and removes it from the active orders stream.
-No Klar SMS is sent; the only SMS attempt is after the first confirmed transition.
-Provider attempts are claimed atomically before HTTP send; uncertain delivery is not retried blindly.
-Provider success does not prove delivery to the customer.
+## Secure Cloud Functions configuration (never in git)
 
-Remaining production prerequisites: deploy service credentials, initialize protected snapshot,
-verify rate limits and notification providers, test against a private test database and dummy recipients.
-Do not treat code tests or Vercel deployment readiness as an end-to-end customer transaction.
+Deploy from the `BETA` directory with the Firebase CLI, selecting project
+`bestill-19`. Install dependencies once in `BETA/functions` (`npm install`).
+Provide non-secret Firebase parameters when prompted (they are written to an
+ignored `BETA/functions/.env.bestill-19`):
+
+- `BETA_FIREBASE_DATABASE_URL` – **new private** RTDB URL.
+- `BETA_ADMIN_EMAIL` – real staff mailbox for 8-digit OTP.
+- `BETA_EMAIL_FROM` – verified Resend sending address.
+
+Create these three Firebase Secret Manager secrets with
+`firebase functions:secrets:set <NAME>` in project `bestill-19`:
+
+- `BETA_SESSION_SECRET` – random 32+-character secret.
+- `BETA_SMS_GATEWAY_TOKEN` – rotated Traccar gateway key.
+- `BETA_RESEND_API_KEY` – verified Resend API key.
+
+Deploy only the isolated codebase from the `BETA` directory:
+`firebase deploy --project bestill-19 --only functions:kol-beta-orders`.
+Deploying the root/default functions risks affecting unrelated SMS functions.
+
+The public `health` endpoint must show `ordersConfigured: true`. Open
+`/BETA/admin.html`, select **Koble til**, send and verify the administrator
+OTP, and import the approved menu into the private RTDB **once** with the ☷
+button. Price checks then use only the locked private menu snapshot, not
+publicly editable data. Re-import after approved menu changes.
+
+## Behavior and verification
+
+- Customers submit public checkout requests through Firebase; idempotency
+  prevents duplicate orders on retry. Data is stored only in private RTDB.
+- Admin login uses 8-digit one-use email code; signed sessions and CSRF
+  are verified on the server. Active Admin SSE stream is bounded to **100**
+  recent active orders. Order history is loaded only on explicit request.
+- Only first confirmation attempts SMS and optional email. Ready never sends
+  a second SMS automatically. Provider requests use atomic claims to avoid
+  duplicate sends on unclear delivery outcomes.
+- Customer order-scoped tokens authorize only their own status, never
+  other customers' names/numbers/orders. Epson prints from Admin browser.
+- Run both API suites plus Firebase entrypoint tests; then verify a full
+  live transaction with dummy customer details and valid test recipients:
+  new order, Admin receipt, confirm, pickup time, email, SMS, printing,
+  ready, archive, and denied anonymous private RTDB read (401/403).
+- **Not live until Firebase owner configures/deploys and tests the function,
+  secrets, protected database and notifications.** The API fails closed
+  rather than falsely accepting a real order.

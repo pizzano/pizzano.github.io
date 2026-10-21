@@ -2,8 +2,8 @@
  * Checks real HTTP reachability; configured does not mean SMS/e-mail delivered.
  * Only 1 small backend health GET every 90 seconds when the tab is visible.
  */
-import {config} from './config.js?v=20261021-beta23';
-import {checkEpsonConnection,currentPrinterHost,savePrinterHost} from './printer.js?v=20261021-beta23';
+import {config} from './config.js?v=20261021-beta26';
+import {checkEpsonConnection,currentPrinterHost,savePrinterHost} from './printer.js?v=20261021-beta26';
 const $=id=>document.getElementById(id);
 let healthBusy=false,printerBusy=false,lastHealth=0,healthTimer=null,started=false;
 function indicator(name,mode,label,description){

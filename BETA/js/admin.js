@@ -2,10 +2,10 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta23';
-import {orderLabels} from './order-status.js?v=20261021-beta23';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta23';
-import {startServiceStatus} from './service-status.js?v=20261021-beta23';
+import {config} from './config.js?v=20261021-beta26';
+import {orderLabels} from './order-status.js?v=20261021-beta26';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta26';
+import {startServiceStatus} from './service-status.js?v=20261021-beta26';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

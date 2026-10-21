@@ -1,0 +1,17 @@
+{
+  "name": "kol-beta-orders-functions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private BETA Firebase order API; no Vercel.",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "test": "node --test ../tests/beta-api.test.cjs ../tests/firebase-adapter.test.cjs"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.0.0",
+    "google-auth-library": "^10.0.0"
+  }
+}

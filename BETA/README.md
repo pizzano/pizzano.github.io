@@ -142,3 +142,8 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Ingen privat data vises før sesjonen er bekreftet. Logg ut tømmer liste, token og ordreopplysninger. Meny-import for private ordre får kun ansatte utføre.
 - Produksjonsstart krever fortsatt separat låst Firebase-database med servicekonto og Vercel miljøvariabler, inkludert OTP e-post/SMS/Resend. Uten disse lukker BETA API bestillingsmottaket med 503.
 - Kun BETA-filer er endret, ikke DEMO eller API-kode.
+
+## beta26 – Firebase Cloud Functions BETA sipariş arka ucu
+- Müşteri ve Admin ekranı sipariş, durum ve yetki işlemlerini artık `https://europe-west1-bestill-19.cloudfunctions.net/betaOrders` üstünden yürütür; Vercel API kullanılmaz. Mevcut statik sayfa dağıtımı bu değişikliğin dışında kalır.
+- Yeni `BETA/functions` Firebase Gen2 kod tabanı ve bağımsız `BETA/firebase.json` mevcut DEMO/functions verisini ve tetikleyicilerini değiştirmez. Müşteri verileri için ayrı ve kapalı BETA Realtime Database zorunludur.
+- Admin OTP, imzalı oturum, CSRF, 100 aktif sipariş akışı, SMS/e-posta tek-attempt koruması, Epson tekrar basımı ve önbellekli menü özellikleri korunur. Üretim açılışı Firebase yetkisi ve gizli yapılandırmalar tamamlandıktan sonra mümkündür. Ayrıntılar `BETA/API-DEPLOYMENT.md`.
