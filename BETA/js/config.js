@@ -4,8 +4,8 @@
  */
 export const config={
   tenantId:'kol-grill-pizza',
-  mode:'api',     // Live mode requires a configured backend. No direct browser writes to Firebase.
-  apiBase:'',      // Enter an authenticated server endpoint only when ready for live orders.
+  mode:'firebase', // Only Firebase Authentication and Firebase Realtime Database.
+  firebase:{apiKey:'',projectId:'kol-grill-pizza',authDomain:'kol-grill-pizza.firebaseapp.com'}, // Set real Firebase Web API key before enabling checkout.
   locale:'nb-NO',
   currency:'NOK',
   menu:{
