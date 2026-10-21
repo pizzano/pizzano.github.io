@@ -130,3 +130,8 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Admin-panelet har fire uavhengige indikatorer: nett (ekte HTTPS-svar), Epson (ekte lokal ePOS-test ved klikk, med IP-felt), BETA-SMS og BETA-e-post (konfigurasjonsstatus; **ikke leveringskvitteringer**). Rød ved manglende oppsett, gul ved konfigurert men ubekreftet, grønn nett/skriver kun etter vellykket teknisk test.
 - Ett GET mot egen `/health` ved admin-oppstart og høyst ett ekstra per ca. 90 sekunder mens fanen er aktiv; **null ekstra Firebase listeners**. Epson-status gir ingen papirutskrift.
 - Dersom tjenestevariabler ennå ikke er satt opp på Vercel, er ordremottaket av sikkerhetshensyn fortsatt deaktivert, selv om menyen er synlig. DEMO og aktive Firebase-regler er ikke endret.
+
+## beta24 – scrollbars, kunde + admin (21.10.2026)
+- Konsolidert 4px scrollbar, turkis thumb/hover/track på kundens meny, alle modalark, ordreliste, ordredetaljer og admin-sidepanel. Firefox bruker standard `scrollbar-width:thin` og `scrollbar-color`; Chromium (Chrome/Opera) bruker `::-webkit-scrollbar` uten at standard-egenskaper overstyrer 4px-stylingen.
+- Kategorimenyen: vertikalt musehjul flytter stripen horisontalt uten å klikke. Virker over knapper og den egendefinerte indikatoren, normaliserer pixel/line/page wheel-delta og deaktiverer snap kortvarig. Native horisontal touchpad og mobil swipe beholdes; zoom og kant-scroll beholdes.
+- Ingen endringer i Firebase/caching, ordre, betaling eller eksisterende menyfunksjoner. Kodeendringene begrenser seg til BETA.

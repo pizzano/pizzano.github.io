@@ -1,9 +1,9 @@
-:root{--ink:#132344;--muted:#617a91;--green:#137a64;--line:#dfe8f0;--bg:#f4f8fb;--paper:#fff;--shadow:0 4px 18px #142e4910}
+:root{--ink:#132344;--muted:#617a91;--green:#137a64;--line:#dfe8f0;--bg:#f4f8fb;--paper:#fff;--shadow:0 4px 18px #142e4910;--scroll-thumb:#187b74;--scroll-thumb-hover:#105f5a;--scroll-track:rgba(24,123,116,.09)}
 *{box-sizing:border-box}html,body{margin:0;height:100%;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
 button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}[hidden]{display:none!important}
 button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3eae9d;outline-offset:2px}.sr-only{position:absolute;clip:rect(0,0,0,0);width:1px;height:1px;overflow:hidden}
 .admin-layout{display:flex;height:100vh;height:100dvh;min-height:0}
-.sidebar{flex:0 0 255px;background:linear-gradient(#212a36,#171f28);color:#f4f8fc;display:flex;flex-direction:column;padding:24px 14px}
+.sidebar{flex:0 0 255px;background:linear-gradient(#212a36,#171f28);color:#f4f8fc;display:flex;flex-direction:column;padding:24px 14px;overflow-y:auto;min-height:0}
 .sidebar-brand{display:flex;gap:12px;padding:2px 8px 28px;border-bottom:1px solid #ffffff20}.sidebar-brand strong{display:block;font-size:15px}.sidebar-brand small{display:block;color:#a4bbc6;font-size:10px;letter-spacing:.06em}.brand-mark{display:grid;place-items:center;background:#35414a;width:42px;height:42px;border-radius:13px}
 .sidebar nav{padding-top:20px;display:grid;gap:8px}.sidebar nav a{padding:14px 16px;border-radius:13px;color:#e7f0f4;text-decoration:none;font-weight:750}.sidebar nav a.is-active{background:#ff781e;color:#fff}
 .sidebar-bottom{margin-top:auto;display:grid;gap:12px}.sidebar-status{padding:13px;border-radius:12px;background:#173e32;color:#a8efd3;font-size:12px}.sidebar-bottom button{border:1px solid #566575;border-radius:10px;padding:10px;background:transparent;color:#fff}
@@ -33,7 +33,16 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3eae
 .detail-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px 0}.detail-facts div{background:#f5f9f9;padding:11px;border-radius:12px}.detail-facts span{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.detail-facts strong{overflow-wrap:anywhere}
 .detail-items{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:17px 0}.detail-items h3{margin:0 0 11px}.detail-line{padding:11px 0;border-top:1px solid var(--line)}.detail-line:first-of-type{border-top:0}.detail-line strong{display:block}.detail-line small{display:block;color:var(--muted)}.detail-total{display:flex;justify-content:space-between;margin-top:15px;font-size:17px;font-weight:800}
 .detail-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.detail-actions button{background:var(--green);color:#fff;border:0;border-radius:11px;padding:12px 16px;font-weight:800}.detail-actions button.secondary{background:#ebf5f1;color:var(--green)}.detail-actions input{max-width:90px;border:1px solid var(--line);border-radius:10px;padding:10px}.detail-actions label{display:flex;align-items:center;gap:7px}.detail-note{color:var(--muted);font-size:12px;margin:12px 0}.toast{position:fixed;right:16px;bottom:20px;z-index:9;padding:13px 19px;border-radius:12px;background:#1d3d34;color:#fff;box-shadow:var(--shadow)}
-.orders-list,.order-details{scrollbar-width:thin;scrollbar-color:#187b74 #edf5f3}.orders-list::-webkit-scrollbar,.order-details::-webkit-scrollbar{width:5px}.orders-list::-webkit-scrollbar-thumb,.order-details::-webkit-scrollbar-thumb{background:#187b74;border-radius:8px}
+/* Same teal Soft UI scrollbars as the customer page: Firefox standard,
+   Chromium/Opera 4px WebKit track; native mobile touch scrolling remains intact. */
+:where(html,body,.sidebar,.orders-list,.order-details){scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
+@supports selector(::-webkit-scrollbar){
+ :where(html,body,.sidebar,.orders-list,.order-details){scrollbar-width:auto;scrollbar-color:auto}
+ :where(html,body,.sidebar,.orders-list,.order-details)::-webkit-scrollbar{width:4px;height:4px}
+ :where(html,body,.sidebar,.orders-list,.order-details)::-webkit-scrollbar-track{background:var(--scroll-track);border-radius:12px}
+ :where(html,body,.sidebar,.orders-list,.order-details)::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:12px}
+ :where(html,body,.sidebar,.orders-list,.order-details)::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover)}
+}
 .mobile-menu{display:none}
 @media(max-width:950px){.sidebar{flex-basis:205px}.orders-workspace{padding:10px;grid-template-columns:minmax(260px,340px) minmax(0,1fr)}.admin-top{padding:0 16px}}
 @media(max-width:700px){.sidebar{position:fixed;inset:0 auto 0 0;width:240px;z-index:5;transform:translateX(-105%);transition:transform .2s}.sidebar.is-open{transform:none}.mobile-menu{display:grid}.admin-top{height:70px;flex-basis:70px;gap:10px}.admin-top h1{font-size:23px}.orders-workspace{display:flex;flex-direction:column}.orders-sidebar{min-height:220px;max-height:46%;flex:none}.order-details{flex:1;min-height:180px}.detail-facts{grid-template-columns:1fr 1fr}.connection-indicator{display:none}}

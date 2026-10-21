@@ -645,18 +645,28 @@ main.addEventListener('scroll',()=>{
  if(active&&active!==lastActiveCategory)activateCategory(active);
 },{passive:true});
 cats.addEventListener('scroll',updateCategoryIndicator,{passive:true});
-// Desktop wheel on the category strip scrolls it horizontally, even over a
-// category button or the indicator. Trackpad horizontal gestures stay native.
+// No focus/click required: a vertical mouse wheel moves categories horizontally
+// even while hovering their buttons or the indicator. Preserve trackpad horizontal
+// scrolling, Ctrl/Cmd+wheel zoom, mobile touch and page scrolling at strip edges.
+let categoryWheelIdle=0;
 $('categorySection').addEventListener('wheel',event=>{
- if(event.ctrlKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)||!event.deltaY)return;
+ if(event.ctrlKey||event.metaKey)return;
  const max=Math.max(0,cats.scrollWidth-cats.clientWidth);
  if(max<=1)return;
- const factor=event.deltaMode===1?16:event.deltaMode===2?cats.clientWidth:1;
- const next=Math.max(0,Math.min(max,cats.scrollLeft+event.deltaY*factor));
- // At an edge, keep vertical wheel scrolling available to the parent page.
- if(Math.abs(next-cats.scrollLeft)<.5)return;
+ const scale=event.deltaMode===1?16:event.deltaMode===2?cats.clientWidth:1;
+ const dx=event.deltaX*scale,dy=event.deltaY*scale;
+ const horizontal=Math.abs(dx)>Math.abs(dy);
+ if(horizontal&&cats.contains(event.target))return; // Native trackpad gesture.
+ const delta=horizontal?dx:dy;
+ if(!delta)return;
+ const current=cats.scrollLeft;
+ const next=Math.max(0,Math.min(max,current+delta));
+ if(Math.abs(next-current)<.5)return; // Allow page scroll at either edge.
  if(event.cancelable)event.preventDefault();
+ cats.classList.add('is-wheel-scrolling'); // Avoid scroll-snap swallowing wheel steps.
  cats.scrollLeft=next;
+ clearTimeout(categoryWheelIdle);
+ categoryWheelIdle=setTimeout(()=>cats.classList.remove('is-wheel-scrolling'),170);
 },{passive:false});
 categoryIndicator?.addEventListener('click',event=>{
  const bounds=categoryIndicator.getBoundingClientRect();

@@ -52,7 +52,7 @@ h3{font-size:15px}
 .category-search-button .cat-icon{width:23px;height:23px}
 .search-icon{display:inline-grid;place-items:center;color:var(--muted)}
 .category-button:focus-visible{outline-offset:-3px}
-.category-scroll-indicator{height:5px;margin:1px 18px 0;background:var(--scroll-track);border-radius:4px;position:relative;cursor:pointer;touch-action:pan-x}
+.category-scroll-indicator{height:4px;margin:1px 18px 0;background:var(--scroll-track);border-radius:4px;position:relative;cursor:pointer;touch-action:pan-x}
 .category-scroll-indicator span{display:block;position:absolute;top:0;left:0;background:var(--scroll-thumb);border-radius:4px;width:100%;height:100%;transition:left .12s ease,width .12s ease}
 .main-content{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-padding-top:12px;padding:12px 10px 24px;outline:none}
 .status-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);margin-bottom:18px}
@@ -306,15 +306,22 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
 @media(min-width:700px){.app-shell{border-left:1px solid #d5dfd2;border-right:1px solid #d5dfd2}}
 
 
-/* One matching thin teal scrollbar for every native BETA scrolling pane.
-   Firefox uses scrollbar-color; Chrome/Opera use ::-webkit-scrollbar.
-   Mobile keeps the platform's native overlay scrolling and touch gestures.
-   The category strip has its existing custom scrollbar indicator instead. */
-.main-content,.sheet-scroll{scrollbar-width:thin;scrollbar-color:var(--scroll-thumb) var(--scroll-track)}
-.main-content::-webkit-scrollbar,.sheet-scroll::-webkit-scrollbar{width:5px;height:5px}
-.main-content::-webkit-scrollbar-track,.sheet-scroll::-webkit-scrollbar-track{background:var(--scroll-track);border-radius:12px}
-.main-content::-webkit-scrollbar-thumb,.sheet-scroll::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:12px}
-.main-content::-webkit-scrollbar-thumb:hover,.sheet-scroll::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover)}
+/* Unified scrollbars for the menu, all dialogs and any document-level overflow.
+   Firefox uses standard thin/color properties; Chromium/Opera use a precise 4px
+   track. Reset standard properties in Chromium so they do not override ::-webkit.
+   The category strip retains its native-hidden bar and matching draggable indicator. */
+:where(html,body,.main-content,.sheet-scroll){
+ scrollbar-width:thin;
+ scrollbar-color:var(--scroll-thumb) var(--scroll-track);
+}
+@supports selector(::-webkit-scrollbar){
+ :where(html,body,.main-content,.sheet-scroll){scrollbar-width:auto;scrollbar-color:auto}
+ :where(html,body,.main-content,.sheet-scroll)::-webkit-scrollbar{width:4px;height:4px}
+ :where(html,body,.main-content,.sheet-scroll)::-webkit-scrollbar-track{background:var(--scroll-track);border-radius:12px}
+ :where(html,body,.main-content,.sheet-scroll)::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:12px}
+ :where(html,body,.main-content,.sheet-scroll)::-webkit-scrollbar-thumb:hover{background:var(--scroll-thumb-hover)}
+}
+.category-scroller.is-wheel-scrolling{scroll-snap-type:none}
 .main-content>section[id^="cat-"]{scroll-margin-top:10px}
 .status-card .status-main{flex:1}
 @media(max-height:620px){.sheet-photo{height:min(20dvh,120px)}.sheet-head{flex-basis:56px;height:56px}.bonus-ring{height:160px;width:160px}.bonus-ring:before{inset:28px}}
