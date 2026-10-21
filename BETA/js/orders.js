@@ -194,8 +194,9 @@ export async function deleteOldOrders(session,orders){
   const tx=await c.db.runTransaction(r,current=>{
    if(!current||!['utlevert','fullfort','avvist'].includes(current.status)||
       Date.now()-Math.max(Number(current.statusUpdatedAt)||0,Number(current.createdAt)||0)<=72*3600000)return;
-   // Bonus may not be reconciled. Never delete any loyalty-bearing order.
-   if(current.loyaltyReward||current.loyaltyEligible||current.loyaltyConfirmedAt)return;
+   // Never delete a completed order before its pizza-bonus credit is reconciled.
+   // Until a trusted bonus worker marks loyaltySettled=true, preserve it.
+   if(current.status!=='avvist' && current.loyaltySettled!==true)return;
    return null;
   },{applyLocally:false});
   if(tx.committed)count++;
