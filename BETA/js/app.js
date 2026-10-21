@@ -13,6 +13,73 @@ const e=escapeHtml;
 const vs={page:'menu',step:1,search:false,query:'',pickupMode:'',pickupTime:'',pickupWarning:'',pickupIntroPending:false,expanded:false,showPopular:true,submitting:false};
 let draft=null,editLineId=null,ingredientsExpanded=false,noticeTimer=null;
 const orderWatchers=new Map();
+const READY_CARD_MS=5*60*1000;
+let waitingOrderId=null;
+const asClock=ms=>{const n=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');};
+function visibleCustomerOrders(){
+ const now=Date.now();
+ return state.orders.filter(o=>o?.id&&(
+  (o.status==='mottatt'&&now<Number(o.confirmationDeadline||0))||
+  o.status==='bekreftet'||
+  (o.status==='klar'&&now-(Number(o.staffReadyAt)||Number(o.statusUpdatedAt)||now)<READY_CARD_MS)));
+}
+function orderCode(o){return String(o.id||'').slice(-6).toUpperCase();}
+function orderCountdown(o){
+ if(o.status==='mottatt')return asClock(Number(o.confirmationDeadline||0)-Date.now());
+ if(o.status==='klar')return asClock(Number(o.staffReadyAt||o.statusUpdatedAt||0)+READY_CARD_MS-Date.now());
+ const at=Number(o.estimatedReadyAt||o.scheduledPickupAt)||0;
+ return at?asClock(at-Date.now()):'—';
+}
+function activeOrderMarkup(){
+ const o=visibleCustomerOrders()[0];if(!o)return '';
+ const step=o.status==='mottatt'?1:o.status==='bekreftet'?2:3;
+ const status=o.status==='mottatt'?'pending':o.status==='klar'?'ready':'accepted';
+ return '<section class="active-order-card '+status+'" aria-label="Aktiv bestilling">'+
+  '<div class="active-order-header"><strong>AKTIV BESTILLING</strong><span>#'+e(orderCode(o))+'</span></div>'+
+  '<div class="active-order-steps">'+['Mottatt','Bekreftet','Klar'].map((label,i)=>
+   '<div class="active-order-step '+(i<step?'done':'')+'"><span class="active-step-dot">'+(i<step-1?'✓':'')+'</span><span>'+label+'</span></div>').join('')+'</div>'+
+  '<div class="active-order-time"><span>'+(status==='pending'?'Venter på bekreftelse':status==='ready'?'Klar for henting · vises i 5 minutter':'Estimert hentetid om')+'</span>'+
+   '<strong data-customer-countdown="'+e(o.id)+'">'+e(orderCountdown(o))+'</strong></div>'+
+  '<button type="button" class="active-order-details" data-action="orders">Se bestillingen</button></section>';
+}
+function waitingMarkup(o){
+ const expired=Date.now()>=Number(o.confirmationDeadline||0),rejected=o.status==='avvist';
+ return '<div class="order-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="orderConfirmTitle">'+
+  '<div class="order-confirm-symbol '+(expired||rejected?'warning':'')+'">'+(expired||rejected?'!':'✓')+'</div>'+
+  '<h2 id="orderConfirmTitle">'+(rejected?'Bestillingen ble avvist':expired?'Svarfristen har gått ut':'Venter på bekreftelse')+'</h2>'+
+  '<p class="order-confirm-intro">'+(rejected?e(o.rejectionReason||'Restauranten kunne ikke godta bestillingen.'):
+   expired?'Restauranten har ikke svart innen tre minutter. Kontakt restauranten ved behov.':
+   'Takk, '+e(o.customerName||'')+'! Bestillingen er sendt. Vi venter nå på svar fra restauranten.')+'</p>'+
+  '<div class="order-confirm-summary"><div><span>Ordrenummer</span><strong>'+e(orderCode(o))+'</strong></div>'+
+   '<div><span>Hentetid</span><strong>'+e(approvedPickup(o))+'</strong></div>'+
+   '<div><span>Beløp</span><strong>'+money(o.total)+'</strong></div></div>'+
+  '<div class="order-confirm-wait"><span class="wait-dot"></span><div><strong>'+
+  (rejected?'Bestillingen ble ikke godkjent':expired?'Ingen bekreftelse mottatt':'Venter på restauranten')+'</strong><p>'+
+  (expired||rejected?'Du kan gå tilbake til menyen.':'Vi holder deg her i opptil 3 minutter · <b data-wait-countdown="'+e(o.id)+'">'+orderCountdown(o)+'</b> igjen')+
+  '</p></div></div>'+
+  (expired||rejected?'<button class="button primary full mt14" data-wait-close type="button">Tilbake til menyen</button>':'')+'</div>';
+}
+function syncWaitingDialog(){
+ const overlay=$('orderConfirmation');if(!overlay)return;
+ const o=state.orders.find(x=>x.id===waitingOrderId);
+ if(!o){overlay.hidden=true;return;}
+ if(o.status==='bekreftet'||o.status==='klar'){
+  waitingOrderId=null;overlay.hidden=true;vs.search=false;vs.query='';setPage('menu');
+  toast(o.status==='klar'?'Bestillingen er klar for henting!':'Bestillingen er bekreftet!');return;
+ }
+ overlay.innerHTML=waitingMarkup(o);overlay.hidden=false;
+}
+function pruneCustomerOrders(){
+ const now=Date.now(),before=state.orders.length;
+ state.orders=state.orders.filter(o=>!['utlevert','fullfort','avvist'].includes(o.status)&&
+  !(o.status==='klar'&&now-(Number(o.staffReadyAt)||Number(o.statusUpdatedAt)||now)>=READY_CARD_MS));
+ if(state.orders.length!==before){
+  persist();
+  for(const [id,entry] of orderWatchers)if(!state.orders.some(o=>o.id===id)){entry.close?.();orderWatchers.delete(id);}
+  if(['menu','orders','profile'].includes(vs.page)){const scroll=main.scrollTop;render();main.scrollTop=scroll;}
+ }
+}
+
 const prettyDay=()=>new Intl.DateTimeFormat(config.locale,{weekday:'long',day:'numeric',month:'long'}).format(new Date());
 const btn=(label,action,primary=false,disabled=false,extra='')=>'<button class="button '+(primary?'primary':'ghost')+' '+extra+'" data-action="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 
@@ -107,6 +174,7 @@ function menuMarkup(){
  const status=openState(),r=config.restaurant;
  let html='<div class="status-card"><div class="status-main"><span class="status-dot '+(!status.open?'closed':'')+'"></span><div><strong>'+(!status.open?'Stengt nå':'Åpent nå')+'</strong><p class="small">Kun henting · '+(status.open?'stenger '+e(status.closesAt):'åpner '+e(status.opensAt))+'</p></div></div>'+
   '<label class="toggle-inline">Vis allergener <input data-toggle="allergens" type="checkbox" '+(state.allergens?'checked':'')+' aria-label="Vis allergener"></label></div>';
+ html+=activeOrderMarkup();
  if(vs.search){
   html+='<label class="search-box"><span class="search-icon">'+iconSvg('search')+'</span><input id="menuSearch" type="search" placeholder="Søk pizza, kebab, burger…" value="'+e(vs.query)+'" autocomplete="off"><button class="round-close" data-action="close-search" type="button" style="width:30px;height:30px">×</button></label>';
   const q=vs.query.toLocaleLowerCase('nb-NO').trim();
