@@ -1,4 +1,4 @@
-# BETA — ACTIVE TEST ARCHITECTURE (20261021-beta27)
+# BETA — ACTIVE TEST ARCHITECTURE (20261021-beta28)
 
 **Only the existing KØL Realtime Database is used for test ordering.**
 `https://kol-grill-pizza-default-rtdb.firebaseio.com/betaTest/orders`.
@@ -159,3 +159,6 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Müşteri ve Admin ekranı sipariş, durum ve yetki işlemlerini artık `https://europe-west1-bestill-19.cloudfunctions.net/betaOrders` üstünden yürütür; Vercel API kullanılmaz. Mevcut statik sayfa dağıtımı bu değişikliğin dışında kalır.
 - Yeni `BETA/functions` Firebase Gen2 kod tabanı ve bağımsız `BETA/firebase.json` mevcut DEMO/functions verisini ve tetikleyicilerini değiştirmez. Müşteri verileri için ayrı ve kapalı BETA Realtime Database zorunludur.
 - Admin OTP, imzalı oturum, CSRF, 100 aktif sipariş akışı, SMS/e-posta tek-attempt koruması, Epson tekrar basımı ve önbellekli menü özellikleri korunur. Üretim açılışı Firebase yetkisi ve gizli yapılandırmalar tamamlandıktan sonra mümkündür. Ayrıntılar `BETA/API-DEPLOYMENT.md`.
+
+## beta28 – intern testing uansett åpningstid
+I firebase-test-modus er testkjøpet og hentetidsvalgene aktive også utenfor restaurantens åpningstider. Vanlige driftstider i DEMO og øvrig drift endres ikke. BETA-kontaktfeltet opplyser at ingen e-post eller SMS sendes ved testing.

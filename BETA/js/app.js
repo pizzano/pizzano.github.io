@@ -1,11 +1,11 @@
-import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta27';
+import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta28';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta27';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta27';
+} from './store.js?v=20261021-beta28';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta28';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -281,7 +281,7 @@ function contactMarkup(profileMode=false){
   '<div class="phone-field '+contactEntryClass('phoneNumber',data.phone)+'"><span class="prefix">+47</span><input class="input-field contact-input" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required>'+contactValidMark()+'</div>'+
   '<label class="field-label" for="emailAddress"><span class="field-icon">'+iconSvg('mail')+'</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
   '<div class="'+contactEntryClass('emailAddress',data.email)+'"><input class="input-field contact-input" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+contactValidMark()+'</div>'+
-  '<p class="helper contact-hint">Oppgi e-post for å få kvittering og hentetid.</p>'+
+  '<p class="helper contact-hint">'+(config.mode==='firebase-test'?'Testmodus: Ingen e-post eller SMS sendes.':'Oppgi e-post for å få kvittering og hentetid.')+'</p>'+
   (profileMode?'<button class="button primary full mt20" data-action="save-profile">Lagre opplysninger</button>':'')+'</div>';
  return (profileMode?'<div class="page-heading"><div><span class="small">PROFIL</span><h1>Rediger profil</h1><p class="small mt8">Lagre kontaktopplysningene dine for raskere bestilling.</p></div></div>':steps())+form;
 }
@@ -294,7 +294,7 @@ function storeForm(){
  setProfile({name,phone,email});return true;
 }
 function pickupMarkup(){
- const slots=pickupSlots(),open=openState().open;
+ const slots=pickupSlots(),open=openState().open||config.mode==='firebase-test';
  let html=steps()+'<div class="panel"><h3 style="font-size:18px">Når vil du hente?</h3><p class="muted mt8">Velg når du vil hente bestillingen.</p>';
  html+='<div class="pickup-grid mt14'+(vs.pickupIntroPending&&!vs.pickupMode?' pickup-nudge':'')+'" id="pickupChoices" role="group" aria-label="Velg hentetid">'+
   '<button class="pickup-choice '+(vs.pickupMode==='asap'?'selected':'')+'" data-action="pickup-mode" data-value="asap" '+(!open?'disabled':'')+'><strong>Snarest</strong><small>Så snart som mulig</small></button>'+
@@ -417,7 +417,7 @@ function renderBottom(){
  else {
   const modeChosen=vs.pickupMode==='asap'||(vs.pickupMode==='scheduled'&&Boolean(vs.pickupTime));
   const validTime=vs.pickupMode!=='scheduled'||pickupSlots().includes(vs.pickupTime);
-  const canSubmit=!vs.submitting&&state.cart.length>0&&openState().open&&modeChosen&&validTime;
+  const canSubmit=!vs.submitting&&state.cart.length>0&&(openState().open||config.mode==='firebase-test')&&modeChosen&&validTime;
   bar.innerHTML=btn('Tilbake','previous-step')+
    btn(vs.submitting?'Sender…':'Send bestilling','send-order',true,!canSubmit);
  }
@@ -465,7 +465,7 @@ async function submit(){
   vs.pickupIntroPending=false;
   render();return;
  }
- if(!openState().open){toast('Restauranten er stengt.');return;}
+ if(!openState().open&&config.mode!=='firebase-test'){toast('Restauranten er stengt.');return;}
  vs.pickupWarning='';
  vs.submitting=true;renderBottom();
  const lines=state.cart.map(l=>{const f=findProduct(l.productId),p=f.p,s=selectedSize(p,l.sizeId);

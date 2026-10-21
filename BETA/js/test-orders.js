@@ -3,7 +3,7 @@
  * Never transmit user names, phones, emails, or checkout comments to public test RTDB.
  * This cannot be promoted to real customer orders without private auth/rules.
  */
-import {config} from './config.js?v=20261021-beta27';
+import {config} from './config.js?v=20261021-beta28';
 const root=()=>config.testDatabaseUrl.replace(/\/$/,'')+'/betaTest/orders';
 const safeId=id=>/^test_[0-9]{13}_[a-f0-9]{12}$/.test(String(id||''));
 const url=(id='',query='')=>root()+(id?'/'+encodeURIComponent(id):'')+'.json'+query;

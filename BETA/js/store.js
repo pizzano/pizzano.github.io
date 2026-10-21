@@ -1,6 +1,6 @@
-import {config} from './config.js?v=20261021-beta27';
-import {addTestOrder} from './test-orders.js?v=20261021-beta27';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta27';
+import {config} from './config.js?v=20261021-beta28';
+import {addTestOrder} from './test-orders.js?v=20261021-beta28';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta28';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -70,13 +70,13 @@ export function openState(date=new Date()){
 }
 export const isOpen=date=>openState(date).open;
 export function pickupSlots(date=new Date()){
- if(!isOpen(date))return [];
+ if(!isOpen(date)&&config.mode!=='firebase-test')return [];
  const out=[],step=config.restaurant.pickupIntervalMinutes||15;
  const base=new Date(date.getTime()+(config.restaurant.pickupMinutes||25)*60000);
  base.setSeconds(0,0);base.setMinutes(Math.ceil(base.getMinutes()/step)*step);
  for(let i=0;i<24;i++){
   const d=new Date(base.getTime()+i*step*60000);
-  if(!isOpen(d))break;
+  if(!isOpen(d)&&config.mode!=='firebase-test')break;
   out.push(d.toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit'}));
  }
  return out;

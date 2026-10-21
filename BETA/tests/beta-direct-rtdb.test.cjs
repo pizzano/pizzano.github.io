@@ -109,3 +109,11 @@ test('BETA client uses existing KØL Realtime Database, never bestill-pizza or h
  assert.match(admin,/streamTestOrders/);
  assert.match(store,/addTestOrder/);
 });
+
+test('test checkout works outside restaurant hours without altering live hours',()=>{
+ const app=fs.readFileSync(path.join(__dirname,'../js/app.js'),'utf8');
+ const store=fs.readFileSync(path.join(__dirname,'../js/store.js'),'utf8');
+ assert.ok(app.includes("openState().open||config.mode==='firebase-test'"));
+ assert.ok(store.includes("!isOpen(date)&&config.mode!=='firebase-test'"));
+ assert.match(app,/Testmodus: Ingen e-post eller SMS sendes/);
+});
