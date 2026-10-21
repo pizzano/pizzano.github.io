@@ -91,3 +91,8 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Her restoran admin için **bir** yetkili aktif sipariş SSE; her açık müşteri durum ekranı için **bir** özel sipariş SSE; menü için **bir** küçük `updatedAt` SSE. Aynı sipariş listesi için yeni polling başlatma.
 - 100 müşteri sipariş geçmişi açık değilse sadece menü sürüm akışları açık kalır. Aktif sipariş ekranı açık olan 100 müşteri için ilave 100 küçük durum akışı olur. SSE'nin polling'e maliyet avantajı varsayılmamalıdır: gerçek Firebase faturası, aktif bağlantı ve aktarılan bayt ölçülmelidir.
 - Üretime geçişte var olan DEMO `/orders` hiçbir şekilde BETA için herkese açık yazma yolu olarak kullanılmamalıdır.
+
+## beta16 — sparsom SSE fallback
+- Admin SSE kobler til på nytt med backoff ved lukket strøm. GET-fallback kun hvert 60. sekund dersom strømmen er nede. Frisk SSE genererer ingen fallback GET.
+- Kundens private ordrestrøm tar høyst én umiddelbar status GET ved strømfeil før den forsøker ny SSE med backoff.
+- Dette aktiverer **ikke** bestillinger. Adminidentitet, betalingssikkerhet, Firebase-tilgang og varsling krever sikker server-API. DEMO er urørt.

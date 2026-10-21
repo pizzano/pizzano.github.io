@@ -3,7 +3,7 @@
  * Requires an opaque, order-scoped customer token issued by the backend.
  * Only the visible order page opens a connection; status is never guessed from time.
  */
-import {config} from './config.js?v=20261021-beta15';
+import {config} from './config.js?v=20261021-beta16';
 
 export const orderLabels=Object.freeze({
  mottatt:'Mottatt – venter på bekreftelse',
@@ -26,6 +26,7 @@ export function orderCanTrack(order){
 export function watchOrder(order,notify){
  if(!orderCanTrack(order)||typeof fetch!=='function')return ()=>{};
  let stopped=false,controller=null,timer=null,delay=5000,etag='';
+ let consecutiveFailures=0;
  const base=root()+'/orders/'+encodeURIComponent(order.id);
  const headers=()=>({Authorization:'Bearer '+order.accessToken});
  const statusUpdate=payload=>{
@@ -69,7 +70,7 @@ export function watchOrder(order,notify){
    const response=await fetch(base+'/events',{headers:{...headers(),Accept:'text/event-stream'},cache:'no-store',signal:controller.signal});
    if(response.status===401||response.status===403||response.status===404){stop();return;}
    if(!response.ok||!response.body||!response.headers.get('Content-Type')?.includes('text/event-stream'))throw new Error('SSE not available');
-   delay=5000;
+   delay=5000;consecutiveFailures=0;
    const reader=response.body.getReader();
    const decoder=new TextDecoder();
    let buffer='';
@@ -90,7 +91,7 @@ export function watchOrder(order,notify){
     }
    }
   }catch(error){
-   if(!stopped&&error.name!=='AbortError')await pollOnce();
+   if(!stopped&&error.name!=='AbortError'&&++consecutiveFailures===1)await pollOnce();
   }finally{
    controller=null;
    later();

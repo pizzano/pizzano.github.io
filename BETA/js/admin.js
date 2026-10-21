@@ -2,9 +2,9 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta15';
-import {orderLabels} from './order-status.js?v=20261021-beta15';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta15';
+import {config} from './config.js?v=20261021-beta16';
+import {orderLabels} from './order-status.js?v=20261021-beta16';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta16';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +12,8 @@ const money=value=>new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).form
 const fmt=time=>Number(time)>0?new Intl.DateTimeFormat('nb-NO',{timeZone:config.restaurant.timezone||'Europe/Oslo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(Number(time))):'–';
 const orders=new Map(),running=new Set(),actionKeys=new Map();
 let selected='',filter='all',query='',stream=null,healthy=false,connected=false;
-let fallback=null,initialTimer=null,syncRequest=null,csrfToken='',session=false,seenInitial=false,lastList='',soundEnabled=true;
+let fallback=null,initialTimer=null,reconnectTimer=null,syncRequest=null,csrfToken='',session=false,seenInitial=false,lastList='',soundEnabled=true;
+let reconnectDelay=5000;
 const base=()=>config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/admin';
 function toast(message){
  const target=$('adminToast');target.textContent=message;target.hidden=false;
@@ -57,6 +58,7 @@ function stopSync(){
  if(stream){stream.close();stream=null;}
  if(fallback!==null)clearInterval(fallback);fallback=null;
  if(initialTimer!==null)clearTimeout(initialTimer);initialTimer=null;
+ if(reconnectTimer!==null)clearTimeout(reconnectTimer);reconnectTimer=null;
  healthy=false;connectedState(false);
 }
 function signOut(clearCookie=true){
@@ -186,20 +188,30 @@ async function refresh(){
  return syncRequest;
 }
 function startSync(){
- if(!session||document.hidden||stream||!config.apiBase)return;
+ if(!session||document.hidden||stream||reconnectTimer!==null||!config.apiBase)return;
  // Open exactly one tenant-scoped, authenticated SSE for active orders.
  const url=base()+'/orders/events?status=active&limit=100';
  if(typeof EventSource!=='undefined'){
   stream=new EventSource(url,{withCredentials:true});
-  const accept=event=>{try{const payload=JSON.parse(event.data);healthy=true;connectedState(true);change(payload);}catch{}};
+  const accept=event=>{try{const payload=JSON.parse(event.data);healthy=true;reconnectDelay=5000;connectedState(true);change(payload);}catch{}};
   stream.onmessage=accept;
   stream.addEventListener('snapshot',accept);
   stream.addEventListener('upsert',accept);
   stream.addEventListener('remove',accept);
-  stream.onerror=()=>{healthy=false;connectedState(false);};
+  stream.onerror=()=>{
+   healthy=false;connectedState(false);
+   if(stream?.readyState===EventSource.CLOSED){
+    stream.close();stream=null;
+    if(initialTimer!==null)clearTimeout(initialTimer);initialTimer=null;
+    if(reconnectTimer===null&&session&&!document.hidden){
+     const wait=reconnectDelay;reconnectDelay=Math.min(60000,reconnectDelay*2);
+     reconnectTimer=setTimeout(()=>{reconnectTimer=null;startSync();},wait);
+    }
+   }
+  };
   initialTimer=setTimeout(()=>{initialTimer=null;if(!seenInitial)void refresh();},8000);
  }else void refresh();
- fallback=setInterval(()=>{if(!healthy)void refresh();},30000);
+ fallback=setInterval(()=>{if(!healthy)void refresh();},60000);
 }
 async function action(type,o){
  if(!session||!o||running.has(o.id))return;
