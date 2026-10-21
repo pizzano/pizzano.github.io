@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1c252e">
 <title>Bestillinger – BETA Admin</title>
-<link rel="stylesheet" href="./css/admin.css?v=20261021-beta24">
+<link rel="stylesheet" href="./css/admin.css?v=20261021-beta25">
 </head>
 <body>
 <div id="adminApp" class="admin-layout">
@@ -29,7 +29,8 @@
     </div>
     <span id="connectionStatus" class="connection-indicator">Ordremottak kontrolleres</span>
     <button type="button" id="toggleSound" title="Bestillingslyd" aria-pressed="true">🔊</button>
-    <button type="button" id="importMenu" title="Synkroniser menykatalog">☷</button>
+    <button type="button" id="connectAdmin" class="admin-connect" title="Koble til sikkert bestillingsmottak" aria-haspopup="dialog" aria-controls="adminAuth" aria-expanded="false">Koble til</button>
+     <button type="button" id="importMenu" title="Synkroniser menykatalog">☷</button>
     <button type="button" id="refreshOrders" title="Oppdater bestillinger">↻</button>
    </div>
   </header>
@@ -47,9 +48,25 @@
    </div>
    <section class="order-details" id="orderDetails" aria-live="polite"><div class="empty-detail"><span>↗</span><h2>Velg en bestilling</h2><p>Trykk på en bestilling til venstre for å se varer og håndtere den.</p></div></section>
   </main>
-  <div class="toast" id="adminToast" role="status" hidden></div>
+  <div class="admin-auth-backdrop" id="adminAuth" hidden>
+    <section class="admin-auth-panel" role="dialog" aria-modal="true" aria-labelledby="authTitle" aria-describedby="authIntro">
+     <button type="button" id="authClose" class="admin-auth-close" aria-label="Lukk">×</button>
+     <span class="admin-auth-eyebrow">Sikker tilkobling</span>
+     <h2 id="authTitle">Koble til bestillinger</h2>
+     <p id="authIntro">Få en engangskode på restaurantens administrator-e-post for å aktivere private bestillinger.</p>
+     <button type="button" id="sendLoginCode" class="admin-auth-submit">Send engangskode</button>
+     <form id="authVerify" hidden>
+      <label for="adminCode">Engangskode (8 siffer)</label>
+      <input id="adminCode" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" placeholder="00000000" required>
+      <button type="submit" class="admin-auth-submit">Koble til</button>
+      <button type="button" id="sendAgain" class="admin-auth-again">Send ny kode</button>
+     </form>
+     <p id="authMessage" class="admin-auth-message" role="status" aria-live="polite"></p>
+    </section>
+   </div>
+   <div class="toast" id="adminToast" role="status" hidden></div>
  </div>
 </div>
-<script type="module" src="./js/admin.js?v=20261021-beta24"></script>
+<script type="module" src="./js/admin.js?v=20261021-beta25"></script>
 </body>
 </html>

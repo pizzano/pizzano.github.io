@@ -135,3 +135,10 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Konsolidert 4px scrollbar, turkis thumb/hover/track på kundens meny, alle modalark, ordreliste, ordredetaljer og admin-sidepanel. Firefox bruker standard `scrollbar-width:thin` og `scrollbar-color`; Chromium (Chrome/Opera) bruker `::-webkit-scrollbar` uten at standard-egenskaper overstyrer 4px-stylingen.
 - Kategorimenyen: vertikalt musehjul flytter stripen horisontalt uten å klikke. Virker over knapper og den egendefinerte indikatoren, normaliserer pixel/line/page wheel-delta og deaktiverer snap kortvarig. Native horisontal touchpad og mobil swipe beholdes; zoom og kant-scroll beholdes.
 - Ingen endringer i Firebase/caching, ordre, betaling eller eksisterende menyfunksjoner. Kodeendringene begrenser seg til BETA.
+
+## beta25: sikker kobling til Admin-bestillinger
+- Administrasjon åpnes fortsatt direkte i tom visning, uten tvungen innloggingsside. Koble til knappen starter 8-sifret engangskode via eksisterende server-autentisering.
+- En gyldig sesjon åpner kun autorisert ordreoversikt (maks 100) og SSE; servervaliderte statusendringer og CSRF beholdes. En tabbsesjon kan gjenopptas først etter sjekk mot serveren.
+- Ingen privat data vises før sesjonen er bekreftet. Logg ut tømmer liste, token og ordreopplysninger. Meny-import for private ordre får kun ansatte utføre.
+- Produksjonsstart krever fortsatt separat låst Firebase-database med servicekonto og Vercel miljøvariabler, inkludert OTP e-post/SMS/Resend. Uten disse lukker BETA API bestillingsmottaket med 503.
+- Kun BETA-filer er endret, ikke DEMO eller API-kode.

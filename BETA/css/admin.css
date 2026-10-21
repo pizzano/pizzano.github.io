@@ -48,3 +48,20 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #3eae
 @media(max-width:700px){.sidebar{position:fixed;inset:0 auto 0 0;width:240px;z-index:5;transform:translateX(-105%);transition:transform .2s}.sidebar.is-open{transform:none}.mobile-menu{display:grid}.admin-top{height:70px;flex-basis:70px;gap:10px}.admin-top h1{font-size:23px}.orders-workspace{display:flex;flex-direction:column}.orders-sidebar{min-height:220px;max-height:46%;flex:none}.order-details{flex:1;min-height:180px}.detail-facts{grid-template-columns:1fr 1fr}.connection-indicator{display:none}}
 
 @media(max-width:500px){.admin-top{gap:6px;padding:0 7px}.admin-top h1{font-size:18px}.admin-tools #importMenu,.admin-tools #refreshOrders{display:none}.admin-tools #toggleSound{width:32px;height:35px;padding:0;font-size:16px}.service-status-bar{gap:2px}.admin-tools .service-status{width:29px;height:34px}}
+
+/* Secure admin OTP is optional on entry; preview remains directly accessible. */
+.admin-connect{min-width:85px;padding:0 12px!important;width:auto!important;font-size:12px!important;font-weight:800;background:#e2f5ed!important;color:#08604d!important;border-color:#bbdfd2!important}
+.admin-connect[data-connected="true"]{background:#e9f5f3!important;color:#1e6054!important}
+.admin-auth-backdrop{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#142a30a6;padding:18px}
+.admin-auth-panel{position:relative;width:min(100%,410px);border:1px solid #d2e9df;border-radius:23px;padding:30px;background:var(--paper);box-shadow:0 22px 65px #09231e44}
+.admin-auth-panel h2{font-size:23px;margin:7px 35px 9px 0;line-height:1.2;color:var(--ink)}
+.admin-auth-panel p{font-size:13px;line-height:1.5;color:var(--muted)}
+.admin-auth-eyebrow{font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#137a64}
+.admin-auth-close{position:absolute;top:15px;right:16px;background:#f1f7f4;border:1px solid var(--line);border-radius:50%;width:34px;height:34px;font-size:24px;line-height:1}
+.admin-auth-submit{display:block;width:100%;min-height:46px;border:0;border-radius:12px;margin-top:20px;background:#137a64;color:#fff;font-weight:800}
+.admin-auth-submit:disabled{opacity:.5}
+.admin-auth-panel form label{display:block;margin-top:18px;font-size:12px;font-weight:800}
+.admin-auth-panel form input{width:100%;min-height:47px;padding:10px 13px;border:1px solid #bad5ce;border-radius:12px;margin-top:7px;font-size:19px;letter-spacing:.2em;text-align:center}
+.admin-auth-again{display:block;background:none;border:0;color:#117563;margin:12px auto 0;font-size:12px;text-decoration:underline}
+.admin-auth-message{min-height:20px;margin-top:12px!important}
+@media(max-width:500px){.admin-connect{min-width:68px;padding:0 8px!important;font-size:11px!important}.admin-auth-panel{padding:24px}}

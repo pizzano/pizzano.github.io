@@ -44,7 +44,11 @@ async function request(path,{method='GET',body=null,csrf=false}={}){
   if(path!=='/login/request'&&path!=='/login/verify'&&path!=='/session')resetPrivateSession();
   throw new Error('Ingen gyldig administratortilgang.');
  }
- if(!response.ok)throw new Error('Serveren avviste forespørselen (HTTP '+response.status+').');
+ if(!response.ok){
+  const detail=await response.json().catch(()=>null);
+  throw new Error(response.status===503?'Ordremottaket er ikke konfigurert på serveren.':
+   detail?.error||'Serveren avviste forespørselen (HTTP '+response.status+').');
+ }
  return response.status===204?{}:response.json();
 }
 function showWorkspace(){
@@ -52,6 +56,67 @@ function showWorkspace(){
  $('workspace').hidden=false;
  renderList();
  renderDetails();
+}
+function updateAdminSessionControls(){
+ const button=$('connectAdmin');
+ button.dataset.connected=String(session);
+ button.textContent=session?'Logg ut':'Koble til';
+ button.title=session?'Logg ut av bestillingsmottaket':'Koble til sikkert bestillingsmottak';
+ $('refreshOrders').disabled=!session;
+ $('importMenu').disabled=!session;
+}
+function toggleAuth(open){
+ $('adminAuth').hidden=!open;
+ $('connectAdmin').setAttribute('aria-expanded',String(open));
+ if(open){
+  $('authMessage').textContent='';
+  $('sendLoginCode').focus();
+ }else $('connectAdmin').focus();
+}
+function authError(message){$('authMessage').textContent=message;}
+async function sendAdminCode(){
+ const button=$('sendLoginCode'),again=$('sendAgain');
+ button.disabled=true;again.disabled=true;
+ authError('Sender engangskode…');
+ try{
+  await request('/login/request',{method:'POST',body:{}});
+  $('sendLoginCode').hidden=true;
+  $('authVerify').hidden=false;
+  $('adminCode').focus();
+  authError('Kode sendt. Den er gyldig i 7 minutter.');
+ }catch(error){authError(error.message||'Kunne ikke sende kode.');}
+ finally{button.disabled=false;again.disabled=false;}
+}
+async function connectWithCode(event){
+ event.preventDefault();
+ const code=String($('adminCode').value||'').trim();
+ if(!/^\d{8}$/.test(code)){authError('Skriv inn 8 siffer.');return;}
+ const button=$('authVerify').querySelector('[type="submit"]');
+ button.disabled=true;authError('Kontrollerer koden…');
+ try{
+  const result=await request('/login/verify',{method:'POST',body:{code}});
+  if(!result.authenticated||!result.accessToken||!result.csrfToken)throw new Error('Ugyldig innloggingssvar.');
+  accessToken=result.accessToken;csrfToken=result.csrfToken;session=true;
+  try{sessionStorage.setItem(savedSessionKey,accessToken);}catch{}
+  updateAdminSessionControls();lastList='';showWorkspace();toggleAuth(false);
+  $('adminCode').value='';$('authVerify').hidden=true;$('sendLoginCode').hidden=false;
+  await refresh();void startSync();
+  try{
+   const menuState=await request('/menu/status');
+   if(!menuState.configured)toast('Privat meny mangler: trykk ☷ for å importere den godkjente menyen.');
+  }catch{toast('Tilkoblet, men privat menystatus kunne ikke kontrolleres.');}
+ }catch(error){authError(error.message||'Ugyldig eller utløpt kode.');}
+ finally{button.disabled=false;}
+}
+async function restoreAdminSession(){
+ if(!accessToken)return;
+ try{
+  const info=await request('/session');
+  if(!info.authenticated||!info.csrfToken)throw new Error('Utløpt sesjon.');
+  csrfToken=info.csrfToken;session=true;
+  updateAdminSessionControls();lastList='';renderList();
+  await refresh();void startSync();
+ }catch{resetPrivateSession();}
 }
 function stopSync(){
  if(stream){stream.abort();stream=null;}
@@ -64,6 +129,7 @@ function resetPrivateSession(){
  stopSync();orders.clear();archived=[];archiveLoaded=false;
  session=false;csrfToken='';accessToken='';selected='';seenInitial=false;lastList=null;
  try{sessionStorage.removeItem(savedSessionKey);}catch{}
+ updateAdminSessionControls();
  renderList();renderDetails();
 }
 function snapshot(data){
@@ -128,17 +194,17 @@ function renderList(){
  const visible=filter==='archive'
   ?archived.filter(o=>!query||(String(o.customerName||'')+' '+String(o.phone||'')+' '+String(o.id||'')).toLocaleLowerCase('nb-NO').includes(query))
   :visibleOrders();
- const signature=visible.map(o=>o.id+':'+String(o.statusUpdatedAt||0)+':'+(o.id===selected)).join('|');
+ const signature=(session?'private':'anonymous')+'|'+visible.map(o=>o.id+':'+String(o.statusUpdatedAt||0)+':'+(o.id===selected)).join('|');
  if(signature===lastList)return;
  lastList=signature;
  const host=$('orderList'),scroll=host.scrollTop;
- host.innerHTML=visible.map(o=>{
+ host.innerHTML=(!session?'<p class="detail-note">Koble til for å se private bestillinger.</p>':visible.map(o=>{
   const status=orderLabels[o.status]||o.status;
   return '<button class="order-row'+(o.id===selected?' is-selected':'')+'" type="button" data-select="'+e(o.id)+'">'+
    '<strong>'+e(o.customerName||'Ukjent kunde')+'</strong>'+
    '<div class="order-row-meta"><span class="status">'+e(status)+'</span><b>'+money(o.total)+'</b></div>'+
    '<div class="order-row-meta"><span>'+e(o.pickupMode==='scheduled'?'Planlagt':'Snarest')+'</span><span>'+e(fmt(o.createdAt))+'</span></div></button>';
- }).join('')||'<p class="detail-note">Ingen aktive bestillinger.</p>';
+ }).join('')||'<p class="detail-note">Ingen aktive bestillinger.</p>');
  host.scrollTop=scroll;
 }
 function lineMarkup(line){
@@ -293,6 +359,18 @@ document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListen
 }));
 $('orderSearch').addEventListener('input',event=>{query=event.target.value.toLocaleLowerCase('nb-NO').trim();lastList='';renderList();});
 $('refreshOrders').addEventListener('click',()=>void refresh());
+ $('connectAdmin').addEventListener('click',()=>{
+  if(session){
+   resetPrivateSession();
+   toast('Logget ut fra bestillingsmottaket.');
+  }else toggleAuth(true);
+ });
+ $('authClose').addEventListener('click',()=>toggleAuth(false));
+ $('adminAuth').addEventListener('click',event=>{if(event.target===$('adminAuth'))toggleAuth(false);});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('adminAuth').hidden)toggleAuth(false);});
+ $('sendLoginCode').addEventListener('click',()=>void sendAdminCode());
+ $('sendAgain').addEventListener('click',()=>void sendAdminCode());
+ $('authVerify').addEventListener('submit',event=>void connectWithCode(event));
 $('importMenu').addEventListener('click',async()=>{
  if(!session||!window.confirm('Oppdatere BETA sin private meny fra DEMO?'))return;
  $('importMenu').disabled=true;
@@ -316,10 +394,9 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',stopSync);
 window.addEventListener('pageshow',()=>{if(session)void startSync();});
-// Public interface only: private orders remain protected on the server.
+// Public entry remains an empty preview. Private orders require staff OTP;
+ // no browser receives service credentials or anonymous order data.
 showWorkspace();
-$('sidebarStatus').textContent='Administrasjon under oppsett';
-$('connectionStatus').textContent='Klargjøres';
-$('refreshOrders').disabled=true;
-$('importMenu').disabled=true;
+updateAdminSessionControls();
 startServiceStatus();
+void restoreAdminSession();
