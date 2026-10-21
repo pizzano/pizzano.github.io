@@ -5,7 +5,8 @@
 export const config={
   tenantId:'kol-grill-pizza',
   mode:'firebase', // Only Firebase Authentication and Firebase Realtime Database.
-  firebase:{apiKey:'',projectId:'kol-grill-pizza',authDomain:'kol-grill-pizza.firebaseapp.com'}, // Set real Firebase Web API key before enabling checkout.
+  firebase:{apiKey:'',projectId:'',authDomain:''}, // Credentials for an isolated Firebase Auth project.
+  orders:{databaseUrl:''}, // REQUIRED: private RTDB instance; never use the public DEMO database.
   locale:'nb-NO',
   currency:'NOK',
   menu:{
