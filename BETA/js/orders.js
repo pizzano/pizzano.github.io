@@ -11,6 +11,8 @@ const version='10.14.1';
 function failSetup(){
  if(!config.firebase?.apiKey||!config.firebase?.projectId||!config.orders?.databaseUrl)
   throw new Error('Firebase Authentication er ikke konfigurert. Bestillinger er deaktivert.');
+ if(config.orders.databaseUrl.replace(/\/$/,'')===config.menu.databaseUrl.replace(/\/$/,''))
+  throw new Error('Bestillingsdatabasen må isoleres fra den offentlige DEMO-databasen.');
 }
 async function client(){
  failSetup();
