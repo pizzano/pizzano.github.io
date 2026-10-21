@@ -40,7 +40,7 @@ async function signedCustomer(){
 }
 export async function getAdminSession(){
  const c=await client();
- await c.auth.authStateReady();
+ await c.authClient.authStateReady();
  if(!c.authClient.currentUser||c.authClient.currentUser.isAnonymous)return null;
  const user=c.authClient.currentUser;
  const role=await c.db.get(c.db.ref(c.database,adminsPath+'/'+user.uid+'/tenants/'+tenant));
