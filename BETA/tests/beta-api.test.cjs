@@ -1,19 +1,17 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {generateKeyPairSync,randomBytes,pbkdf2Sync}=require('node:crypto');
+const {generateKeyPairSync}=require('node:crypto');
 const {EventEmitter}=require('node:events');
 const handler=require('../../api/beta.js');
 
 test('BETA guarded checkout, notifications, transitions, and archive (all mocked)',async()=>{
  const tenant='kol-grill-pizza',dbName='beta-isolated-test-default-rtdb';
  const {privateKey}=generateKeyPairSync('rsa',{modulusLength:2048,publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
- const salt=randomBytes(16),password='unit-only-pass';
  process.env.BETA_FIREBASE_DATABASE_URL='https://'+dbName+'.firebaseio.com';
  process.env.BETA_FIREBASE_SERVICE_ACCOUNT_JSON=JSON.stringify({project_id:'beta-test',client_email:'test@beta.invalid',private_key:privateKey});
  process.env.BETA_SESSION_SECRET='testing-secret-'.repeat(5);
- process.env.BETA_ADMIN_USERNAME='unit-admin';
- process.env.BETA_ADMIN_PASSWORD_HASH=salt.toString('hex')+':'+pbkdf2Sync(password,salt,250000,32,'sha256').toString('hex');
+ process.env.BETA_ADMIN_EMAIL='admin@unit.invalid';
  process.env.BETA_SMS_GATEWAY_TOKEN='mock-traccar-token';
  process.env.BETA_RESEND_API_KEY='mock-resend-key';
  process.env.BETA_EMAIL_FROM='test@unit.invalid';
@@ -119,13 +117,33 @@ test('BETA guarded checkout, notifications, transitions, and archive (all mocked
  assert.deepEqual(Object.keys(mine.data).sort(),['estimatedReadyAt','id','status','statusUpdatedAt']);
  const anon=await call('GET','admin/orders',null,{}, {status:'active',limit:'100'});
  assert.equal(anon.statusCode,401);
- const bad=await call('POST','admin/sessions',{username:'unit-admin',password:'wrong'});
+ // A password is NEVER accepted for admin login. One-time email code only.
+ const legacy=await call('POST','admin/sessions',{username:'unit-admin',password:'old-password'});
+ assert.equal(legacy.statusCode,404);
+ const challenge=await call('POST','admin/login/request',{});
+ assert.equal(challenge.statusCode,200);
+ assert.equal(challenge.data.sent,true);
+ assert.equal(email,1);
+ assert.equal(sent[0].request.to[0],'admin@unit.invalid');
+ const code=sent[0].request.text.match(/\b\d{8}\b/)?.[0];
+ assert.match(code,/^\d{8}$/);
+ const flood=await call('POST','admin/login/request',{});
+ assert.equal(flood.statusCode,429);
+ const bad=await call('POST','admin/login/verify',{code:code==='00000000'?'00000001':'00000000'});
  assert.equal(bad.statusCode,401);
- const login=await call('POST','admin/sessions',{username:'unit-admin',password});
+ const login=await call('POST','admin/login/verify',{code});
  assert.equal(login.statusCode,200);
+ assert.ok(login.data.accessToken);
+ const replay=await call('POST','admin/login/verify',{code});
+ assert.equal(replay.statusCode,401);
  const adminHeaders={authorization:'Bearer '+login.data.accessToken,'x-csrf-token':login.data.csrfToken};
  const active=await call('GET','admin/orders',null,adminHeaders,{status:'active',limit:'100'});
  assert.equal(active.statusCode,200);assert.equal(active.data.orders.length,1);
+ // Wrong transitions must not silently return transitioned:false.
+ const tooEarly=await call('POST','admin/orders/'+id+'/ready',{
+  expectedStatus:'mottatt',expectedVersion:Date.now()
+ },adminHeaders);
+ assert.equal(tooEarly.statusCode,409);
  const initial=fakeDB.tenants[tenant].orders.active[id];
  const confirmed=await call('POST','admin/orders/'+id+'/confirm',{
   expectedStatus:'mottatt',expectedVersion:initial.statusUpdatedAt,estimatedMinutes:25
@@ -133,12 +151,12 @@ test('BETA guarded checkout, notifications, transitions, and archive (all mocked
  assert.equal(confirmed.statusCode,200);
  assert.equal(confirmed.data.transitioned,true);
  assert.equal(confirmed.data.order.status,'bekreftet');
- assert.equal(sms,1);assert.equal(email,1);
+ assert.equal(sms,1);assert.equal(email,2);
  const repeat=await call('POST','admin/orders/'+id+'/confirm',{
   expectedStatus:'mottatt',expectedVersion:initial.statusUpdatedAt,estimatedMinutes:25
  },adminHeaders);
  assert.equal(repeat.statusCode,200);assert.equal(repeat.data.transitioned,false);
- assert.equal(sms,1);assert.equal(email,1);
+ assert.equal(sms,1);assert.equal(email,2);
  const changed=await call('POST','admin/orders/'+id+'/estimate',{
   expectedVersion:confirmed.data.order.statusUpdatedAt,estimatedMinutes:35
  },adminHeaders);
@@ -157,9 +175,15 @@ test('BETA guarded checkout, notifications, transitions, and archive (all mocked
  assert.equal(completed.data.order.status,'fullfort');
  assert.equal(get('tenants/'+tenant+'/orders/active/'+id),null);
  assert.equal(get('tenants/'+tenant+'/orders/archive/'+id).status,'fullfort');
- assert.equal(sms,1);assert.equal(email,1);
+ assert.equal(sms,1);assert.equal(email,2);
  const after=await call('GET','admin/orders',null,adminHeaders,{status:'active',limit:'100'});
  assert.equal(after.data.orders.length,0);
+ const publicHistory=await call('GET','admin/orders/archive',null,{}, {limit:'50'});
+ assert.equal(publicHistory.statusCode,401);
+ const history=await call('GET','admin/orders/archive',null,adminHeaders,{limit:'50'});
+ assert.equal(history.statusCode,200);
+ assert.equal(history.data.orders.length,1);
+ assert.equal(history.data.orders[0].status,'fullfort');
  const archivedCustomer=await call('GET','orders/'+id+'/status',null,{authorization:'Bearer '+customerToken});
  assert.equal(archivedCustomer.data.status,'fullfort');
  assert.ok(google>=1);

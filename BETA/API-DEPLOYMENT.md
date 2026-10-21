@@ -6,7 +6,7 @@ Production credentials required in Vercel environment (never in GitHub):
 BETA_FIREBASE_DATABASE_URL (a NEW dedicated Realtime Database, not DEMO).
 BETA_FIREBASE_SERVICE_ACCOUNT_JSON (service account JSON for that private instance).
 BETA_SESSION_SECRET (random secret at least 32 characters).
-BETA_ADMIN_USERNAME, BETA_ADMIN_PASSWORD_HASH (PBKDF2-SHA256 250000 iterations, 32-byte key, salt_hex:hash_hex format).
+BETA_ADMIN_EMAIL (verified recipient of one-time admin login codes).
 BETA_SMS_GATEWAY_TOKEN (separate SMS authorization token for the BETA Traccar gateway).
 BETA_RESEND_API_KEY and BETA_EMAIL_FROM (verified email sender for BETA email).
 
@@ -20,7 +20,7 @@ menu snapshot from the public DEMO menu. This is a one-time staff-approved impor
 Customer orders use only the private snapshot for server-side size, option and price validation.
 DEMO menu version updates will require a new controlled import until the BETA admin manages its own public menu.
 
-Admin Bearer session is held in volatile JS memory and works across bestill.online and Vercel origins.
+Admin login is one-time email code (8 digits, 7 minutes TTL, 5 guesses, 2-minute cooldown). Signed Bearer session lasts up to 8 hours and is stored per-tab in sessionStorage.
 Public checkout uses a deterministic order ID derived from HMAC of tenant + idempotency key.
 Customer status uses a scoped token; active admin orders use one bounded last-100 SSE.
 State changes use Firebase ETag CAS with staff role and expected status/version checks.

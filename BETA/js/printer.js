@@ -1,4 +1,4 @@
-import {config} from './config.js?v=20261021-beta18';
+import {config} from './config.js?v=20261021-beta21';
 /**
  * Standalone BETA Epson TM-T20II ePOS-Print adapter; no DEMO imports.
  * Independent BETA copy of the known ePOS raster receipt implementation.

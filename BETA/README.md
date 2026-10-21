@@ -111,3 +111,10 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Backend `api/beta.js` beholder krav om autentisert admin for liste, statusendringer, SMS, e-post og katalogimport. DEMO og Firebase Security Rules ble ikke endret.
 
 ## beta20 – åpen administrasjon: tom-listen rendres korrekt første gang og ved endret filter.
+
+## beta21 – korumalı sipariş akışı
+- Müşteri onay öncesi istenen hentetid, onay sonrası sunucudaki gerçek hentetid görüntülenir.
+- Admin yetkisi parola yerine e-postaya gelen tek kullanımlık kod ile sağlanır (7 dk kod, 5 deneme, 2 dk bekleme, 8 saatlik tab oturumu).
+- Arşiv sadece Historikk seçildiğinde yetkili ve sınırlı 50 kayıt sorgusuyla yüklenir; canlı dinleyici değildir.
+- Sipariş durumu uyuşmayan geçişler 409 döner; tekrarlanan onay SMS ve mutfak fişi tekrarını tetiklemez.
+- DEMO değişmedi. Gerçek üretim testi için ayrı özel Firebase ve bildirim kimlikleri zorunludur.

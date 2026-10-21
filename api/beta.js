@@ -10,8 +10,7 @@ const env=()=>({
  db:String(process.env.BETA_FIREBASE_DATABASE_URL||'').replace(/\/$/,''),
  secret:String(process.env.BETA_SESSION_SECRET||''),
  account:String(process.env.BETA_FIREBASE_SERVICE_ACCOUNT_JSON||''),
- adminUser:String(process.env.BETA_ADMIN_USERNAME||''),
- adminHash:String(process.env.BETA_ADMIN_PASSWORD_HASH||''),
+ adminEmail:String(process.env.BETA_ADMIN_EMAIL||''),
  smsToken:String(process.env.BETA_SMS_GATEWAY_TOKEN||''),
  resendKey:String(process.env.BETA_RESEND_API_KEY||''),
  emailFrom:String(process.env.BETA_EMAIL_FROM||'')
@@ -53,7 +52,7 @@ function cors(req,res){
 }
 function requireConfigured(){
  const e=env();
- if(!e.db||!e.secret||!e.account||!e.adminHash||!e.adminUser)
+ if(!e.db||!e.secret||!e.account||!e.adminEmail||!e.resendKey||!e.emailFrom)
   throw fail(503,'BETA private database / administrator credentials are not configured.');
  if(!/^https:\/\/[a-z0-9.-]+\.(?:firebaseio\.com|firebasedatabase\.app)$/.test(e.db))
   throw fail(503,'Private database URL is invalid.');
@@ -61,6 +60,7 @@ function requireConfigured(){
   throw fail(503,'DEMO database cannot store private BETA customer orders.');
  if(e.secret.length<32)throw fail(503,'Session secret is missing.');
  if(!e.smsToken||!e.resendKey||!e.emailFrom)throw fail(503,'BETA notification provider credentials are missing.');
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.adminEmail))throw fail(503,'Invalid BETA admin email.');
  let account;try{account=JSON.parse(e.account);}catch{throw fail(503,'Invalid service account.');}
  if(!account.client_email||!account.private_key||!account.project_id)throw fail(503,'Invalid service account.');
  return {...e,account};
@@ -182,12 +182,6 @@ function verifyAdmin(e,req,tenant,mutation=false){
  const user=verifySession(e,req,tenant);
  if(mutation&&!equals(req.headers['x-csrf-token']||'',user.csrfToken))throw fail(403,'CSRF check failed.');
  return user;
-}
-function comparePassword(password,encoded){
- const pair=String(encoded).split(':');
- if(pair.length!==2||!(/^[a-f0-9]{32,64}$/i.test(pair[0]))||!(/^[a-f0-9]{64}$/i.test(pair[1])))throw fail(503,'Invalid admin password verifier.');
- const hash=crypto.pbkdf2Sync(String(password),Buffer.from(pair[0],'hex'),250000,32,'sha256');
- return equals(hash.toString('hex'),pair[1]);
 }
 function privatePath(tenant,sub){return 'tenants/'+tenant+'/'+sub;}
 /** Trusted menu snapshot: never price orders from anonymously writable DEMO.
@@ -373,6 +367,15 @@ async function listActive(e,tenant,res){
  const orders=Object.values(data.data||{}).filter(active).sort((a,b)=>b.createdAt-a.createdAt).map(recordPublic);
  return write(res,200,{orders});
 }
+/** Explicit-history request only; never a live archive listener. */
+async function listArchive(e,tenant,res){
+ const data=await db(e,privatePath(tenant,'orders/archive'),{
+  query:'?orderBy=%22createdAt%22&limitToLast=50'
+ });
+ const orders=Object.values(data.data||{}).filter(o=>o&&o.tenantId===tenant)
+  .sort((a,b)=>number(b.createdAt)-number(a.createdAt)).map(recordPublic);
+ return write(res,200,{orders});
+}
 async function transition(e,req,tenant,id,kind,res){
  const body=json(req),allowed={confirm:'mottatt',ready:'bekreftet',complete:'klar'};
  if(!allowed[kind])throw fail(404,'Unknown action.');
@@ -382,12 +385,11 @@ async function transition(e,req,tenant,id,kind,res){
   if(!before)throw fail(404,'Order not found.');
   if(before.tenantId!==tenant)throw fail(403,'Wrong restaurant.');
   if(before.status!==allowed[kind]){
-   if((kind==='confirm'&&['bekreftet','tilberedning','klar'].includes(before.status))||
-      (kind==='ready'&&before.status==='klar')||
-      (kind==='complete'&&before.status==='fullfort'))
-    if(kind==='confirm'&&before.notifications)await notifyAccepted(e,tenant,id);
+   const already=(kind==='confirm'&&['bekreftet','tilberedning','klar'].includes(before.status))||
+     (kind==='ready'&&before.status==='klar');
+   if(!already)throw fail(409,'Order status changed.');
+   if(kind==='confirm'&&before.notifications)await notifyAccepted(e,tenant,id);
    return write(res,200,{order:recordPublic(before),transitioned:false});
-   throw fail(409,'Order status changed.');
   }
   if(body.expectedStatus!==before.status||number(body.expectedVersion)!==number(before.statusUpdatedAt))
     throw fail(409,'Order was updated, refresh.');
@@ -542,12 +544,60 @@ async function updateEstimate(e,req,tenant,id,res){
  throw fail(409,'Order was changed. Refresh.');
 }
 
-async function login(e,req,tenant,res){
- const input=json(req),username=str(input.username),password=str(input.password);
- if(username.length>100||password.length>200)throw fail(401,'Wrong login.');
- if(!equals(username,e.adminUser)||!comparePassword(password,e.adminHash))throw fail(401,'Wrong login.');
- const token=makeSession(e,tenant);
- return write(res,200,{authenticated:true,accessToken:token,csrfToken:hmac(e.secret,'csrf:'+token)});
+/** One-time email sign-in, without an admin password or public access.
+ * Code hash and failure counter are stored in the SEPARATE private database.
+ * The auth slot is scoped to one tenant; no anonymous Firebase reads.
+ */
+const OTP_TTL=7*60*1000;
+const OTP_COOLDOWN=2*60*1000;
+const OTP_ATTEMPTS=5;
+function otpPath(tenant){return privatePath(tenant,'auth/adminEmailOtp');}
+function otpHash(e,nonce,code){return hmac(e.secret,'otp:'+nonce+':'+code);}
+async function issueLoginCode(e,tenant,res){
+ const path=otpPath(tenant),now=Date.now();
+ const code=String(crypto.randomInt(0,100000000)).padStart(8,'0');
+ const nonce=crypto.randomBytes(18).toString('base64url');
+ for(let i=0;i<4;i++){
+  const {data,etag}=await db(e,path,{etag:true});
+  if(data&&Number(data.issuedAt)>now-OTP_COOLDOWN)
+   throw fail(429,'Vent litt før du ber om en ny kode.');
+  const next={nonce,hash:otpHash(e,nonce,code),issuedAt:now,expiresAt:now+OTP_TTL,attempts:0};
+  const updated=await db(e,path,{method:'PUT',match:etag,body:next});
+  if(updated.status===412)continue;
+  const email=await fetch('https://api.resend.com/emails',{
+   method:'POST',
+   headers:{Authorization:'Bearer '+e.resendKey,'Content-Type':'application/json',
+    'Idempotency-Key':'beta-admin-login-'+tenant+'-'+nonce},
+   body:JSON.stringify({
+    from:e.emailFrom,to:[e.adminEmail],
+    subject:'Engangskode – KØL Grill & Pizza Admin',
+    text:'Din engangskode er '+code+'. Den er gyldig i 7 minutter. Hvis du ikke ba om koden, kan du ignorere denne e-posten.'
+   }),
+   signal:AbortSignal.timeout(7000)
+  });
+  if(!email.ok)throw fail(503,'Kunne ikke sende engangskoden.');
+  return write(res,200,{sent:true,expiresInSeconds:420});
+ }
+ throw fail(429,'Forsøk igjen om litt.');
+}
+async function verifyLoginCode(e,tenant,req,res){
+ const code=str(json(req).code);
+ if(!/^\d{8}$/.test(code))throw fail(401,'Feil eller utløpt kode.');
+ const path=otpPath(tenant);
+ for(let i=0;i<5;i++){
+  const {data,etag}=await db(e,path,{etag:true});
+  const now=Date.now();
+  if(!data||Number(data.expiresAt)<now||Number(data.attempts)>=OTP_ATTEMPTS)
+   throw fail(401,'Feil eller utløpt kode.');
+  const valid=equals(otpHash(e,data.nonce,code),data.hash);
+  const next=valid?null:{...data,attempts:Number(data.attempts)+1};
+  const updated=await db(e,path,{method:'PUT',body:next,match:etag});
+  if(updated.status===412)continue;
+  if(!valid)throw fail(401,'Feil eller utløpt kode.');
+  const token=makeSession(e,tenant);
+  return write(res,200,{authenticated:true,accessToken:token,csrfToken:hmac(e.secret,'csrf:'+token)});
+ }
+ throw fail(429,'For mange samtidige innloggingsforsøk.');
 }
 function routePath(req){
  const p=req.query?.path;
@@ -570,7 +620,8 @@ module.exports=async function betaHandler(req,res){
   const e=requireConfigured();
   await assertPrivacy(e,tenant);
   if(sub==='orders'&&req.method==='POST')return await submit(e,req,tenant,res);
-  if(sub==='admin/sessions'&&req.method==='POST')return await login(e,req,tenant,res);
+  if(sub==='admin/login/request'&&req.method==='POST')return await issueLoginCode(e,tenant,res);
+  if(sub==='admin/login/verify'&&req.method==='POST')return await verifyLoginCode(e,tenant,req,res);
   if(sub==='admin/menu/status'&&req.method==='GET'){
    verifyAdmin(e,req,tenant);
    const v=await db(e,privatePath(tenant,'catalog/updatedAt'));
@@ -587,6 +638,11 @@ module.exports=async function betaHandler(req,res){
   if(sub==='admin/sessions'&&req.method==='DELETE'){
    verifyAdmin(e,req,tenant,true);
    return res.status(204).end();
+  }
+  if(sub==='admin/orders/archive'&&req.method==='GET'){
+   verifyAdmin(e,req,tenant);
+   if(String(req.query?.limit)!=='50')throw fail(422,'Only a bounded archive query is allowed.');
+   return await listArchive(e,tenant,res);
   }
   if(sub==='admin/orders/events'&&req.method==='GET')return await streamAdmin(e,req,tenant,res);
   if(sub==='admin/orders'&&req.method==='GET'){

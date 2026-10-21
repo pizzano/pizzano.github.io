@@ -1,11 +1,11 @@
-import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta18';
+import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta21';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta18';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta18';
+} from './store.js?v=20261021-beta21';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta21';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -333,11 +333,11 @@ function ordersMarkup(){
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
  return html+state.orders.map(o=>{
   const label=orderLabels[o.status]||'Status ukjent';
-  const when=Number(o.estimatedReadyAt)>0?new Date(o.estimatedReadyAt).toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit'}):'';
+  const when=Number(o.estimatedReadyAt)>0?new Date(o.estimatedReadyAt).toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit',timeZone:config.restaurant.timezone}):'';
   const items=Array.isArray(o.lines)?o.lines:[];
   return '<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">'+e(label)+'</span></div>'+
    '<p class="small mt8">'+items.map(l=>e(l.name)+' × '+e(l.quantity)).join(', ')+'</p>'+
-   (when?'<p class="small mt8">Forventet hentetid: <strong>'+e(when)+'</strong></p>':'')+
+   (when?'<p class="small mt8">Forventet hentetid: <strong>'+e(when)+'</strong></p>':o.pickupMode==='scheduled'?'<p class="small mt8">Ønsket hentetid: <strong>'+e(o.pickup)+'</strong></p>':'')+
    '<div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>';
  }).join('');
 }
