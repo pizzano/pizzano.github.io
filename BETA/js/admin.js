@@ -108,46 +108,69 @@ function renderDetail(){
  const o=orders.get(selected);
  if(!o){$('detailEmpty').hidden=false;$('orderDetail').hidden=true;return;}
  $('detailEmpty').hidden=true;$('orderDetail').hidden=false;
- const expired=isExpired(o),check=expectedPrice(o);
- const canEdit=['mottatt','bekreftet'].includes(o.status);
- const displayAt=o.estimatedReadyAt||o.scheduledPickupAt||0;
- const details=(o.lines||[]).map(l=>'<div class="item">'+
-  '<div class="item-main"><span>'+e(l.quantity)+' × '+e(l.name)+'</span><span>'+money(l.price)+'</span></div>'+
-  '<p class="sub">'+e(l.size||'')+
-  (Array.isArray(l.options)&&l.options.length?'<br>'+l.options.map(x=>e((x.groupTitle?x.groupTitle+': ':'')+(x.description||x.label||x.id))).join('<br>'):'')+
-  (l.removedIngredients?.length?'<br>Uten: '+e(l.removedIngredients.join(', ')):'')+
-  (l.comment?'<br>Kommentar: '+e(l.comment):'')+'</p></div>').join('');
+ const expired=isExpired(o),check=expectedPrice(o),isNew=o.status==='mottatt'&&!expired;
+ const displayAt=Number(o.estimatedReadyAt||o.scheduledPickupAt)||0;
  const printDone=localStorage.getItem(printKey+o.id)==='1';
+ const notify=o.notification||{};
+ const displayNotification=(kind,text)=>{
+  const state=notify[kind];
+  return '<span class="notification-chip '+(state==='sent'?'sent':'unsent')+'">'+
+   (state==='sent'?'✓ ':'○ ')+text+(state==='sent'?' sendt':state==='failed'?' feilet':state==='pending'?' venter':' ikke bekreftet')+'</span>';
+ };
+ const productLines=(o.lines||[]).map(line=>{
+  const choices=(Array.isArray(line.options)?line.options:[]).map(x=>
+   e((x.groupTitle?x.groupTitle+': ':'')+(x.description||x.label||x.id))).join(' · ');
+  const extras=[line.size,choices,
+   Array.isArray(line.removedIngredients)&&line.removedIngredients.length?'Uten: '+line.removedIngredients.join(', '):'',
+   line.comment?'Kommentar: '+line.comment:''].filter(Boolean).map(e).join('<br>');
+  return '<div class="ordered-product"><span class="item-qty">'+e(line.quantity)+'×</span>'+
+    '<div class="item-description"><strong>'+e(line.name)+'</strong><p>'+extras+'</p></div>'+
+    '<strong class="item-cost">'+money(line.price)+'</strong></div>';
+ }).join('');
+ let footer='';
+ if(isNew){
+  footer='<div class="footer-pickup">'+(o.pickupMode==='scheduled'?
+    '<label>Hentetid <input class="time-input" id="acceptTime" type="time" value="'+e(o.pickup)+'"></label>':
+    '<label>SNAREST · minutter <input class="action-input" id="minutesInput" type="number" min="5" max="180" value="'+e(String(config.restaurant.pickupMinutes||25))+'"></label>')+
+   '</div><div class="footer-actions"><button class="danger" data-action="reject">Avvis</button>'+
+   '<button class="primary main-action" data-action="accept" '+(!check.valid?'disabled':'')+'>✓ Godta bestilling</button></div>';
+ }else if(o.status==='bekreftet'){
+  footer='<button class="outline-print" data-action="print">▣ Skriv ut på nytt</button>'+
+   '<div class="footer-pickup"><span class="footer-pickup-label">'+e(pickup(o))+'</span>'+
+   '<label>Ny hentetid <input class="time-input" id="changeTime" type="time" value="'+e(displayAt?time(displayAt):'')+'"></label>'+
+   '<button class="secondary" data-action="change">Endre tid</button></div>'+
+   '<button class="primary main-action" data-action="ready">✓ Marker klar for henting</button>';
+ }else if(o.status==='klar'){
+  footer='<button class="outline-print" data-action="print">▣ Skriv ut på nytt</button>'+
+   '<span class="footer-pickup-label">KLAR FOR HENTING</span>'+
+   '<button class="primary main-action" data-action="delivered">✓ Utlevert</button>';
+ }else{
+  footer='<button class="outline-print" data-action="print">▣ Skriv ut på nytt</button>'+
+   '<span class="pill '+e(o.status)+'">'+e(expired?'Frist utløpt':labels[o.status]||o.status)+'</span>';
+ }
  $('orderDetail').innerHTML='<div class="detail">'+
-  '<div class="detail-head"><div><p>BESTILLING #'+e(o.id.slice(-10))+'</p><h2>'+e(o.customerName||'Kunde')+'</h2><p>'+e(date(o.createdAt))+'</p></div>'+
-  '<span class="pill '+e(o.status)+'">'+e(expired?'Utløpt':(labels[o.status]||o.status))+'</span></div>'+
-  '<div class="clock-box '+(expired?'expired':'')+'"><div class="summary-line"><span>'+e(pickup(o))+'</span><strong '+(o.status==='mottatt'?'data-countdown="'+e(o.id)+'"':'data-remaining="'+e(o.id)+'"')+'>'+e(o.status==='mottatt'?(expired?'Frist utløpt':remaining(o.confirmationDeadline)):remaining(displayAt))+'</strong></div>'+
-   '<div class="big-time">'+e(displayAt?time(displayAt):(o.pickupMode==='scheduled'?o.pickup:'Snarest'))+'</div>'+
-   '<p>'+e(o.status==='mottatt'?'Venter på restaurantens godkjenning':o.status==='klar'?'Klar til henting':o.status==='avvist'?(o.rejectionReason||'Avvist'):'Forventet hentetid')+'</p></div>'+
-  '<div class="box"><h3>Bestilte varer</h3>'+details+
-  '<div class="summary-line total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div></div>'+
-  '<div class="box"><h3>Kundeinformasjon</h3><dl class="info-grid"><div><dt>Navn</dt><dd>'+e(o.customerName)+'</dd></div>'+
-  '<div><dt>Telefon</dt><dd>'+e(o.phone)+'</dd></div><div><dt>E-post</dt><dd>'+e(o.email||'Ikke oppgitt')+'</dd></div>'+
-  '<div><dt>Henting</dt><dd>'+e(pickup(o))+'</dd></div></dl></div>'+
-  (!check.valid?'<p class="warn">Pris må kontrolleres: '+e(check.reason)+'</p>':'')+
-  '<div class="box"><h3>Behandle bestillingen</h3>'+
-  (o.status==='mottatt'&&!expired?
-   '<div class="button-row">'+(o.pickupMode==='asap'?'<label>Minutter <input class="action-input" id="minutesInput" type="number" min="5" max="180" value="'+e(String(config.restaurant.pickupMinutes||25))+'"></label>':'<label>Hentetid <input class="time-input" id="acceptTime" type="time" value="'+e(o.pickup)+'"></label>')+
-   '<button class="primary" data-action="accept" '+(!check.valid?'disabled':'')+'>Godta</button><button class="danger" data-action="reject">Avvis</button></div>':'')+
-  (o.status==='bekreftet'?'<div class="button-row"><label>Ny hentetid <input class="time-input" id="changeTime" type="time" value="'+e(displayAt?time(displayAt):'')+'"></label><button data-action="change">Endre tid</button><button class="primary" data-action="ready">Klar</button></div>':'')+
-  (o.status==='klar'?'<div class="button-row"><button class="primary" data-action="delivered">Utlevert</button></div>':'')+
-  ((o.status==='mottatt'&&expired)?'<p class="warn">Fristen er utløpt. Ordren kan ikke godtas.</p>':'')+
-  '<div class="button-row"><button class="secondary" data-action="print">Skriv ut på nytt</button></div>'+
+  '<div class="detail-body"><section class="order-hero">'+
+   '<div class="hero-content"><h2>'+e(o.customerName||'Kunde')+'</h2>'+
+   '<p>Bestillingskode <strong>#'+e(o.id.slice(-8).toUpperCase())+'</strong></p>'+
+   '<div class="notification-chips">'+displayNotification('sms','SMS')+displayNotification('email','E-post')+'</div>'+
+   '</div><div class="hero-bag" aria-hidden="true">♧</div></section>'+
+  '<section class="order-info-strip">'+
+   '<div class="info-unit"><span class="round-icon">◷</span><div><small>Mottatt</small><strong>'+e(date(o.createdAt))+'</strong></div></div>'+
+   '<div class="info-unit"><span class="round-icon">☎</span><div><small>Telefonnummer</small><strong>'+e(o.phone||'—')+'</strong></div></div>'+
+   '<span class="pill '+e(expired?'avvist':o.status)+'">'+e(expired?'Frist utløpt':labels[o.status]||o.status)+'</span></section>'+
+  '<div class="items-heading"><h3>Bestilte varer</h3><span>'+(o.lines||[]).reduce((n,l)=>n+(Number(l.quantity)||0),0)+' varer</span></div>'+
+  '<section class="ordered-products">'+productLines+'</section>'+
+  '<div class="order-total-line"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>'+
+  (isNew?'<div class="answer-countdown">Ny bestilling – svar innen <strong data-countdown="'+e(o.id)+'">'+remaining(o.confirmationDeadline)+'</strong></div>':'')+
+  (expired?'<p class="warn">Svarfristen er utløpt. Bestillingen kan ikke godtas.</p>':'')+
+  (!check.valid?'<p class="warn">Kontroller pris før godkjenning: '+e(check.reason)+'</p>':'')+
+  '<details class="order-extra-tools"><summary>Kontakt, varslingsstatus og skriverinnstillinger</summary>'+
+  '<p class="helper">'+e(noteStatus(o))+' · Åpning av SMS/e-post er ikke bekreftet sending.</p>'+
+  '<div class="button-row"><button data-action="sms">Åpne SMS</button><button data-action="email" '+(!o.email?'disabled':'')+'>Åpne e-postkvittering</button></div>'+
   '<p class="helper">Epson: '+(printDone?'Utskrift bekreftet på denne enheten.':'Ingen bekreftet utskrift på denne enheten.')+'</p>'+
-  '</div><div class="box"><h3>Varslinger og kvittering</h3>'+
-  '<p class="helper">'+e(noteStatus(o))+'</p>'+
-  '<p class="helper">Automatisk SMS og e-post krever en egen sendetjeneste. Åpning av SMS/e-post nedenfor bekrefter ikke levering.</p>'+
-  '<div class="button-row"><button data-action="sms">Åpne SMS</button><button data-action="email" '+(!o.email?'disabled':'')+'>Åpne e-postkvittering</button></div></div>'+
-  '<div class="box"><h3>Skriverinnstillinger</h3>'+
-  '<div class="button-row"><label>IP <input class="time-input" id="printerHost" placeholder="192.168.1.25" value="'+e(localStorage.getItem('beta:printer:host')||'192.168.1.25')+'"></label>'+
-  '<button data-action="save-printer">Lagre skriver</button><button data-action="check-printer">Test skriver</button></div>'+
-  '<p class="helper">Epson ePOS, 80 mm papir. Lokal HTTPS-tilgang må være tillatt av nettleseren.</p></div>'+
-  '</div>';
+  '<div class="button-row"><label>Skriver-IP <input class="time-input" id="printerHost" value="'+e(localStorage.getItem('beta:printer:host')||'192.168.1.25')+'" placeholder="192.168.1.25"></label>'+
+  '<button data-action="save-printer">Lagre skriver</button><button data-action="check-printer">Test skriver</button></div></details>'+
+  '</div><footer class="order-footer">'+footer+'</footer></div>';
 }
 function stopAlarm(){if(alarmTimer){clearInterval(alarmTimer);alarmTimer=0;}}
 function beep(){
