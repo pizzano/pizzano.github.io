@@ -394,7 +394,7 @@ function profileMarkup(){
  return '<div class="profile-summary"><div class="avatar">'+e(initials||'G')+'</div><div><h2>'+e(name)+'</h2><span class="muted">'+(p.phone?'+47 '+e(p.phone):'Ingen telefon registrert')+'</span></div></div>'+
   bonusMarkup()+
   '<button class="menu-row" data-action="profile-edit"><span class="row-icon">'+iconSvg('user')+'</span><span class="grow"><strong>Rediger profil</strong><span class="small block">Navn, mobilnummer og e-post lagret</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
-  '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(state.orders.length?state.orders.length+' bestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
+  '<button class="menu-row" data-action="orders"><span class="row-icon">'+iconSvg('orders')+'</span><span class="grow"><strong>Mine bestillinger</strong><span class="small block">'+(visibleCustomerOrders().length?visibleCustomerOrders().length+' aktive bestillinger':'Ingen aktive bestillinger')+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>'+
   '<button class="menu-row" data-action="restaurant-info"><span class="row-icon">'+iconSvg('store')+'</span><span class="grow"><strong>Restaurantinformasjon</strong><span class="small block">'+e(restaurantSummary)+'</span></span>'+iconSvg('chevron','row-chevron')+'</button>';
 }
 function statusText(order){
@@ -409,6 +409,7 @@ function approvedPickup(order){
 async function trackOrder(order){
  if(!order?.id||orderWatchers.has(order.id)||document.hidden)return;
  if(['avvist','utlevert','fullfort'].includes(order.status))return;
+ if(order.status==='klar'&&Date.now()-(Number(order.staffReadyAt)||Number(order.statusUpdatedAt)||Date.now())>=READY_CARD_MS)return;
  const slot={close:null};orderWatchers.set(order.id,slot);
  try{
   const close=await watchCustomerOrder(order.id,(next,error)=>{
@@ -416,8 +417,15 @@ async function trackOrder(order){
    if(!next)return;
    const index=state.orders.findIndex(o=>o.id===next.id);
    if(index<0)return;
-   state.orders[index]={...state.orders[index],...next};persist();
-   if(vs.page==='orders'||vs.page==='profile'||vs.page==='confirmed')render();
+   const old=state.orders[index];
+   const changed=old.status!==next.status||old.statusUpdatedAt!==next.statusUpdatedAt||
+    old.estimatedReadyAt!==next.estimatedReadyAt||old.staffReadyAt!==next.staffReadyAt;
+   state.orders[index]={...old,...next};persist();
+   if(waitingOrderId===next.id)syncWaitingDialog();
+   else if(changed&&['menu','orders','profile'].includes(vs.page)){
+    const scroll=main.scrollTop;render();main.scrollTop=scroll;
+   }
+   if(next.status==='klar')pruneCustomerOrders();
    if(['avvist','utlevert','fullfort'].includes(next.status)){
     const entry=orderWatchers.get(next.id);entry?.close?.();orderWatchers.delete(next.id);
    }
@@ -431,13 +439,17 @@ function stopOrderTracking(){
  orderWatchers.clear();
 }
 function beginOrderTracking(){
+ pruneCustomerOrders();
  for(const order of state.orders.slice(0,4))void trackOrder(order);
 }
 function ordersMarkup(){
+ const active=visibleCustomerOrders();
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
- if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
- return html+
-  state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Mottatt</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
+ if(!active.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen aktive bestillinger.</div>';
+ return html+active.map(o=>'<div class="cart-card customer-order-detail">'+
+  '<div class="cart-head"><strong>#'+e(orderCode(o))+'</strong><span class="status-pill">'+e(statusText(o))+'</span></div>'+
+  '<p class="small mt8">'+(o.lines||[]).map(l=>e(l.name)+' × '+e(l.quantity)).join(', ')+'</p>'+
+  '<div class="cart-sum"><span>'+e(approvedPickup(o))+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
@@ -529,8 +541,8 @@ function render(){
  else if(vs.page==='profile-edit')main.innerHTML=contactMarkup(true);
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
  else if(vs.page==='confirmed'){
-  main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>Bestillingen er mottatt</h2><p class="helper">'+e(statusText(state.orders[0]||{}))+' · '+e(approvedPickup(state.orders[0]||{}))+'</p>'+
+  main.innerHTML='<div class="panel order-confirm-underlay"><div class="order-confirm-underlay-icon">✓</div>'+
+   '<h2>Bestillingen er sendt</h2><p class="helper">Vi venter på svar fra restauranten.</p>'+
    '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
  }
  renderBottom();
@@ -569,8 +581,8 @@ async function submit(){
  try{
   const saved=await sendOrder({tenantId:config.tenantId,customerName:state.profile.name,phone:state.profile.phone,email:state.profile.email,
    type:'henting',pickupMode:vs.pickupMode,pickup:vs.pickupMode==='asap'?'Snarest':vs.pickupTime,total:cartTotal(),lines});
-  clearCart();vs.step=1;vs.pickupMode='';vs.pickupTime='';setPage('confirmed');
-  void trackOrder(saved);
+  clearCart();vs.step=1;vs.pickupMode='';vs.pickupTime='';waitingOrderId=saved.id;
+  setPage('confirmed');syncWaitingDialog();void trackOrder(saved);
  }catch(err){toast(err.message||'Kunne ikke lagre.');}
  finally{vs.submitting=false;renderBottom();}
 }
@@ -667,6 +679,10 @@ document.addEventListener('keydown',event=>{
  }
 });
 backdrop.addEventListener('click',closeSheet);
+$('orderConfirmation')?.addEventListener('click',event=>{
+ if(!event.target.closest('[data-wait-close]'))return;
+ waitingOrderId=null;$('orderConfirmation').hidden=true;setPage('menu');
+});
 $('brandButton').addEventListener('click',()=>{vs.search=false;vs.query='';setPage('menu');});
 $('profileButton').addEventListener('click',()=>setPage('profile'));
 $('cartButton').addEventListener('click',()=>{vs.step=1;setPage('cart');});
@@ -698,7 +714,10 @@ async function boot(){
  try{
   await loadCatalog();
   if(!catalogReady())throw new Error('Ingen produkter tilgjengelig.');
-  render();
+  pruneCustomerOrders();
+  const pending=state.orders.find(o=>o.status==='mottatt'&&Date.now()<Number(o.confirmationDeadline||0));
+  if(pending){waitingOrderId=pending.id;vs.page='confirmed';}
+  render();if(pending)syncWaitingDialog();
   startCatalogSync(catalogChanged);
   beginOrderTracking();
  }catch(err){
@@ -755,3 +774,17 @@ categoryIndicator?.addEventListener('keydown',event=>{
  cats.scrollTo({left:destination,behavior:'smooth'});
 });
 window.addEventListener('resize',updateCategoryIndicator);
+setInterval(()=>{
+ if(document.hidden)return;
+ for(const node of document.querySelectorAll('[data-customer-countdown],[data-wait-countdown]')){
+  const o=state.orders.find(x=>x.id===(node.dataset.customerCountdown||node.dataset.waitCountdown));
+  if(o)node.textContent=orderCountdown(o);
+ }
+ if(waitingOrderId){
+  const order=state.orders.find(x=>x.id===waitingOrderId);
+  if(order&&Date.now()>=Number(order.confirmationDeadline||0)&&
+     !$('orderConfirmation')?.querySelector('[data-wait-close]'))syncWaitingDialog();
+ }
+ if(state.orders.some(o=>o.status==='klar'&&Date.now()-(Number(o.staffReadyAt)||Number(o.statusUpdatedAt)||Date.now())>=READY_CARD_MS))
+  pruneCustomerOrders();
+},1000);
