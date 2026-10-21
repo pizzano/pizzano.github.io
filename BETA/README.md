@@ -1,15 +1,3 @@
-# BETA — ACTIVE TEST ARCHITECTURE (20261021-beta28)
-
-**Only the existing KØL Realtime Database is used for test ordering.**
-`https://kol-grill-pizza-default-rtdb.firebaseio.com/betaTest/orders`.
-There are no Vercel/Cloud Functions order calls, no separate project,
-no SMS/email and no real customer information in persisted test orders.
-This version replaces the retired beta25/beta26 server architecture.
-See `BETA/API-DEPLOYMENT.md` (now the test-only architecture guide).
-The older historical entries below are for reference only.
-
----
-
 # BETA — restoranbağımsız sipariş sistemi
 
 `BETA/index.html` müşterinin arayüzüdür. `demo/` ayrı ve değişmeden kalır.
@@ -25,7 +13,7 @@ The older historical entries below are for reference only.
 
 ## Firebase veri kullanımı
 Müşteri menüsü Firebase Realtime Database'den okunur; ürün verileri dosyada sabit değildir. Eski DEMO örneğinde yalnızca gerekli alanlar okunur:
-`updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings`. Tam `/settings` ağdan indirilmez; önbellekteki eski ayarlar yalnızca uyumluluk için kullanılabilir.
+`updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings`; `siteSettings` yoksa `settings` yedek olarak kullanılır.
 
 Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoksa) yalnızca `updatedAt`, `sections`, `optionGroups`, `allergenCatalog`, `popularItemIds`, `siteSettings` okur. Sonraki açılışta menü için **0 GET**; yalnızca `/updatedAt.json` SSE akışının ilk küçük sürüm değeri gelir. Değişiklik yoksa menü tekrar indirilmez. Değiştiğinde yalnızca beş public menü alanı okunur. SSE sağlıklıyken zamanlanmış Firebase GET yoktur. SSE açılamazsa 8 saniye sonra ve devamında 5 dakikada bir sadece sürüm GET kullanılır. Arka planda ve bağlantı kesilince canlı dinleyici kapatılır. BETA kök, `/settings`, `/orders`, `/pizzaBonus` okumaz.
 
@@ -69,96 +57,3 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - Kategori çubuğunda (buton ve gösterge üstünde de) fare dikey tekerleği yatay kaydırır; yatay touchpad jestleri ve mobil dokunma doğal çalışır. Scroll bitişinde dikey tekerlek engellenmez, Ctrl+wheel/zoom değişmez.
 - MainContent ve her tür sheet-scroll (ürün/restaurant modalı) için tek CSS bloğunda 5px Soft UI turkuaz scrollbar: Firefox scrollbar-color + Chromium/Opera WebKit thumb/track. Üst kategori native scrollbar gizli kalır çünkü mevcut ince özel scrollbar zaten görünür ve aynı tonu kullanır.
 - Firebase katalog, SSE ve veri önbelleği koduna hiç dokunulmadı.
-
-## beta15 — güvenli sipariş ve restoran paneli iskeleti
-
-**Yayınlanan kod:**
-- `BETA/admin.html`, `BETA/js/admin.js`, `BETA/css/admin.css`: mobil/PC Bestillinger paneli, çalışan girişi, Alle/Planlagte, arama, canlı sipariş listesi, Bekreft, Marker klar, Utlevert ve manuel Skriv ut på nytt. Admin oturumu sunucu tarafından doğrulanmadıkça herhangi bir sipariş okunmaz veya yazılmaz.
-- `BETA/js/printer.js`: bağımsız Epson TM-T20II 80mm raster ePOS kopyası; sadece onayı veren cihaz ilk başarılı, yeni durum geçişinden sonra yazdırır. İşlem tekrarı otomatik ikinci fiş üretmez. Yeniden yazdırma ayrı çalışır. IP cihazda `beta:printer:<tenantId>:host` ile saklanır (asla Firebase'de aralıklı sorgulanmaz).
-- `BETA/js/store.js`: sunucunun idempotent kabulünü zorunlu kılan sipariş gönderme. Tekrar denemelerde aynı payload için aynı UUID kullanılır; istemci kendi başına sipariş kabulü uydurmaz. Yanıt `mottatt`, sunucu ID'si ve `createdAt` içermelidir.
-- `BETA/js/order-status.js`: sadece `confirmed` ve `Mine bestillinger` açıkken, yalnızca en güncel aktif siparişin yetkili statü SSE akışını takip eder. İstemci tam `/orders` okumaz. Sayfa arka plandayken veya kapandığında bağlantı kapanır. SSE sorununda yalnızca aynı sipariş için küçük durum GET kullanılır.
-- `BETA/js/catalog.js` ve modül import URL'leri aynı sürüme eşitlendi; birden fazla config örneği yaratılmaz. Mevcut `beta:v2` menü/sepetteki kullanıcı önbelleği korunur.
-
-**Güvenlik nedeniyle canlı BETA siparişleri HÂLÂ DEVRE DIŞI.**
-`config.apiBase` artık Vercel BETA API adresine ayarlandı; ancak özel sunucu kimlik bilgileri sağlanana kadar güvenli şekilde 503 döner; `/api`, DEMO, Firebase kuralları veya canlı SMS/e-posta servislerine dokunulmadı. Sunucu kimliği, Firebase Admin SDK kimlik bilgileri, HTTPS, doğru Security Rules ve sipariş doğrulaması olmadan doğrudan istemci Firebase yazması güvenli değildir. Yeni admin sayfası boş/kapalı durumu açıkça gösterir.
-
-### BETA API sözleşmesi — sunucu tarafında uygulanması ZORUNLU
-Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve restoran erişimi sunucu tarafında doğrulanmalıdır. `cache-control: no-store` kullan.
-
-**Müşteri (oturum gerektirmeyen, hız sınırlı):**
-- `POST /orders` — `Idempotency-Key: <UUID>` başlığı + menüdeki ürün ID/size/choice/quantity, iletişim, pickup ile gönderilir. Sunucu fiyatı, ekstraları, geçerli restoran saatini, hentetid, idempotency anahtarını ve bonusu **sunucu tarafındaki güncel menüden** yeniden doğrular; kimlik/fiyatı istemciden doğru varsaymaz. Tek transaction içinde `mottatt` oluşturur, tekrarında aynı kimliği döner. Başarılı JSON: `{id,tenantId,status:"mottatt",createdAt,accessToken}`. `accessToken` en az 20 karakter, kriptografik rastgele ve **yalnızca bu siparişi okumaya** yetkili olmalıdır. Kalıcı veritabanında düz metin token saklama, hash sakla.
-- `GET /orders/{id}/events` — `Authorization: Bearer <accessToken>` ile sadece o siparişin `{id,status,statusUpdatedAt,estimatedReadyAt}` SSE olaylarını ve ilk snapshot'ını verir. Diğer müşterilerin bilgilerini asla içermez.
-- `GET /orders/{id}/status` — aynı Bearer ile küçük JSON/ETag; sadece SSE çalışmadığında. Kod 304 yanıtını kabul eder.
-
-**Restoran admin (giriş zorunlu, HttpOnly Secure SameSite cookie + CSRF):**
-- `POST /admin/sessions` — çalışan kullanıcı adı/şifreyi yalnızca sunucu doğrular; `{authenticated:true,csrfToken}` döner. Giriş deneme sınırı ve rol denetimi gereklidir.
-- `GET /admin/session` — aynı oturumun durumunu ve CSRF token'ını döner; `DELETE /admin/sessions` çıkış yapar.
-- `GET /admin/orders/events?status=active&limit=100` — ilk `{type:"snapshot",orders:[...]}`, ardından sadece ilgili tenant'ın aktif siparişlerinden `{type:"upsert",order}` veya `{type:"remove",id}` SSE. `mottatt,bekreftet,tilberedning,klar` ile sınırla; eski arşivi dinleme.
-- `GET /admin/orders?status=active&limit=100` — yalnızca canlı akış düştüğünde 30 saniyede bir fallback; rol denetimi + sunucu filtreleri/limitleri zorunlu.
-- `POST /admin/orders/{id}/confirm|ready|complete` — `X-CSRF-Token` ve `idempotencyKey,expectedStatus,expectedVersion` ile sunucuda atomik beklenen durum kontrolü. Yanıt `{order,transitioned:true|false}`. **Yalnızca** `transitioned:true` ilk mutfak fişini tetikler. `mottatt→bekreftet→klar→fullfort` geçişleri personel yetkisiyle yapılır. `Klar` yalnızca butona basılınca olur, süre dolunca olmaz.
-- Onay transition'u ayrıca sunucu tarafındaki bildirim outbox'ına **bir** `accepted` SMS ve varsa e-posta fişi kaydetmeli. SMS `Klar` için **otomatik gönderilmemeli**. E-posta için kabul ve (isteğe bağlı) gerçek manuel `Klar` olayı ayrıdır. Kanıtlanmış teslimat olmadan `sent` gösterme. Ağ zaman aşımında yanıt gelmeyen SMS'i körlemesine tekrarlama.
-
-**Çok restoran ve maliyet:**
-- Önerilen sunucu veri yolları: `tenants/{id}/public/menu`, `tenants/{id}/orders/active`, `tenants/{id}/orders/archive`, `tenants/{id}/notifications/outbox`, `tenants/{id}/staff` ve kimlik erişim haritası. Başka restoranın verisi sorguya dahil edilmemeli.
-- Her restoran admin için **bir** yetkili aktif sipariş SSE; her açık müşteri durum ekranı için **bir** özel sipariş SSE; menü için **bir** küçük `updatedAt` SSE. Aynı sipariş listesi için yeni polling başlatma.
-- 100 müşteri sipariş geçmişi açık değilse sadece menü sürüm akışları açık kalır. Aktif sipariş ekranı açık olan 100 müşteri için ilave 100 küçük durum akışı olur. SSE'nin polling'e maliyet avantajı varsayılmamalıdır: gerçek Firebase faturası, aktif bağlantı ve aktarılan bayt ölçülmelidir.
-- Üretime geçişte var olan DEMO `/orders` hiçbir şekilde BETA için herkese açık yazma yolu olarak kullanılmamalıdır.
-
-## beta16 — sparsom SSE fallback
-- Admin SSE kobler til på nytt med backoff ved lukket strøm. GET-fallback kun hvert 60. sekund dersom strømmen er nede. Frisk SSE genererer ingen fallback GET.
-- Kundens private ordrestrøm tar høyst én umiddelbar status GET ved strømfeil før den forsøker ny SSE med backoff.
-- Dette aktiverer **ikke** bestillinger. Adminidentitet, betalingssikkerhet, Firebase-tilgang og varsling krever sikker server-API. DEMO er urørt.
-
-## beta18 — güvenli BETA sipariş sunucusu (ortam değişkenleri olmadan kapalı)
-- `api/beta.js` yalnızca BETA için Vercel API, `/api/beta/:path*` yönlendirmesi `vercel.json` içinde. DEMO ve eski SMS health API'leri değişmedi.
-- Özel Firebase Realtime Database + sunucu hesabı zorunlu; DEMO'ya ait herkese açık/yazılabilir veritabanında müşteri siparişi oluşturulması bilinçli engellenir. Anonim okuma reddi kontrol edilir.
-- Müşteri siparişleri sunucuda korunmuş menü kopyasından tekrar fiyatlandırılır. Admin ilk oturumda özel menü eksikse eski DEMO menüsünü bir kez içeri alır; sonradan gerektiğinde menü senkronizasyonunu elle başlatabilir. Menü importu yalnızca yetkili admin işlemidir.
-- Idempotent sipariş oluşturma, Bearer ile yalnızca siparişin durumunu okuma, admin şifreli oturum, tek REST/SSE gerçek zamanlı aktif liste, onay, süre değiştirme, hazır, teslim, arşiv ve Epson fiş adapteri hazırlandı. Müşteri mesajları için Traccar/Resend kodu eklenmiştir; yalnızca ilk onay SMS'i, belirsiz gönderimler asla körlemesine tekrarlanmaz.
-- **Gerçek servis testi yapılamadı:** Vercel projesinde BETA için gerekli Firebase servis hesabı, ayrı veritabanı, admin kullanıcı ve bildirim sağlayıcı anahtarları yok. Testler sahte Firebase/SMS/e-posta ile çalışır, gerçek alıcılara bildirim gitmez.
-- API kurulum gereksinimleri ve güvenlik sınırları için `BETA/API-DEPLOYMENT.md` dosyasına bak. `BETA/firebase.rules.json` kuralları yalnızca örnektir, canlı veritabanına otomatik uygulanmaz.
-
-## beta19 – åpen visning av BETA-administrasjon
-- Brukernavn/passord og innloggingssperre er midlertidig fjernet fra `BETA/admin.html`, og admin-siden åpnes direkte med Alle/Planlagte, søk og detaljlayout.
-- Inntil en sikker innloggingsløsning er valgt, sender den åpne siden **ingen** forespørsler om private ordre, og knapper for datatilgang/import er deaktivert. Ingen kundeopplysninger eksponeres; ingen falske ordre vises.
-- Backend `api/beta.js` beholder krav om autentisert admin for liste, statusendringer, SMS, e-post og katalogimport. DEMO og Firebase Security Rules ble ikke endret.
-
-## beta20 – åpen administrasjon: tom-listen rendres korrekt første gang og ved endret filter.
-
-## beta21 – korumalı sipariş akışı
-- Müşteri onay öncesi istenen hentetid, onay sonrası sunucudaki gerçek hentetid görüntülenir.
-- Admin yetkisi parola yerine e-postaya gelen tek kullanımlık kod ile sağlanır (7 dk kod, 5 deneme, 2 dk bekleme, 8 saatlik tab oturumu).
-- Arşiv sadece Historikk seçildiğinde yetkili ve sınırlı 50 kayıt sorgusuyla yüklenir; canlı dinleyici değildir.
-- Sipariş durumu uyuşmayan geçişler 409 döner; tekrarlanan onay SMS ve mutfak fişi tekrarını tetiklemez.
-- DEMO değişmedi. Gerçek üretim testi için ayrı özel Firebase ve bildirim kimlikleri zorunludur.
-
-## beta22 – admin giriş formu geçici olarak kaldırıldı
-- Admin sayfası doğrudan açılır, e-posta kodu / giriş ekranı gösterilmez. Alle, Planlagte, Historikk ve arama UI korunur.
-- Herkese açık sipariş erişimi veya kişisel müşteri bilgisi verilmez. Sunucu yetkilendirmesi kaldırılmamıştır; gerçek sipariş işlemleri kimlik yetkisi verilene kadar kapalıdır.
-- DEMO ve Firebase kuralları değişmedi.
-
-## beta23 – ordremottak feildiagnostikk og tjenesteindikatorer
-- `api/beta.js` har ny liten offentlig `GET /v1/tenants/kol-grill-pizza/health` med booleans for servertilgjengelighet og konfigurasjon. Den leser **ingen Firebase-data** og avslører ingen tokens, kundedata eller private miljøverdier.
-- Ved 503 `SERVICE_NOT_READY` viser kunden eksplisitt at **ingen bestilling er mottatt**. Samme idempotency-nøkkel beholdes for andre usikre utfall. Ingen direkte skriverett mot DEMO Firebase.
-- Admin-panelet har fire uavhengige indikatorer: nett (ekte HTTPS-svar), Epson (ekte lokal ePOS-test ved klikk, med IP-felt), BETA-SMS og BETA-e-post (konfigurasjonsstatus; **ikke leveringskvitteringer**). Rød ved manglende oppsett, gul ved konfigurert men ubekreftet, grønn nett/skriver kun etter vellykket teknisk test.
-- Ett GET mot egen `/health` ved admin-oppstart og høyst ett ekstra per ca. 90 sekunder mens fanen er aktiv; **null ekstra Firebase listeners**. Epson-status gir ingen papirutskrift.
-- Dersom tjenestevariabler ennå ikke er satt opp på Vercel, er ordremottaket av sikkerhetshensyn fortsatt deaktivert, selv om menyen er synlig. DEMO og aktive Firebase-regler er ikke endret.
-
-## beta24 – scrollbars, kunde + admin (21.10.2026)
-- Konsolidert 4px scrollbar, turkis thumb/hover/track på kundens meny, alle modalark, ordreliste, ordredetaljer og admin-sidepanel. Firefox bruker standard `scrollbar-width:thin` og `scrollbar-color`; Chromium (Chrome/Opera) bruker `::-webkit-scrollbar` uten at standard-egenskaper overstyrer 4px-stylingen.
-- Kategorimenyen: vertikalt musehjul flytter stripen horisontalt uten å klikke. Virker over knapper og den egendefinerte indikatoren, normaliserer pixel/line/page wheel-delta og deaktiverer snap kortvarig. Native horisontal touchpad og mobil swipe beholdes; zoom og kant-scroll beholdes.
-- Ingen endringer i Firebase/caching, ordre, betaling eller eksisterende menyfunksjoner. Kodeendringene begrenser seg til BETA.
-
-## beta25: sikker kobling til Admin-bestillinger
-- Administrasjon åpnes fortsatt direkte i tom visning, uten tvungen innloggingsside. Koble til knappen starter 8-sifret engangskode via eksisterende server-autentisering.
-- En gyldig sesjon åpner kun autorisert ordreoversikt (maks 100) og SSE; servervaliderte statusendringer og CSRF beholdes. En tabbsesjon kan gjenopptas først etter sjekk mot serveren.
-- Ingen privat data vises før sesjonen er bekreftet. Logg ut tømmer liste, token og ordreopplysninger. Meny-import for private ordre får kun ansatte utføre.
-- Produksjonsstart krever fortsatt separat låst Firebase-database med servicekonto og Vercel miljøvariabler, inkludert OTP e-post/SMS/Resend. Uten disse lukker BETA API bestillingsmottaket med 503.
-- Kun BETA-filer er endret, ikke DEMO eller API-kode.
-
-## beta26 – Firebase Cloud Functions BETA sipariş arka ucu
-- Müşteri ve Admin ekranı sipariş, durum ve yetki işlemlerini artık `https://europe-west1-bestill-19.cloudfunctions.net/betaOrders` üstünden yürütür; Vercel API kullanılmaz. Mevcut statik sayfa dağıtımı bu değişikliğin dışında kalır.
-- Yeni `BETA/functions` Firebase Gen2 kod tabanı ve bağımsız `BETA/firebase.json` mevcut DEMO/functions verisini ve tetikleyicilerini değiştirmez. Müşteri verileri için ayrı ve kapalı BETA Realtime Database zorunludur.
-- Admin OTP, imzalı oturum, CSRF, 100 aktif sipariş akışı, SMS/e-posta tek-attempt koruması, Epson tekrar basımı ve önbellekli menü özellikleri korunur. Üretim açılışı Firebase yetkisi ve gizli yapılandırmalar tamamlandıktan sonra mümkündür. Ayrıntılar `BETA/API-DEPLOYMENT.md`.
-
-## beta28 – intern testing uansett åpningstid
-I firebase-test-modus er testkjøpet og hentetidsvalgene aktive også utenfor restaurantens åpningstider. Vanlige driftstider i DEMO og øvrig drift endres ikke. BETA-kontaktfeltet opplyser at ingen e-post eller SMS sendes ved testing.

@@ -1,6 +1,5 @@
-import {config} from './config.js?v=20261021-beta28';
-import {addTestOrder} from './test-orders.js?v=20261021-beta28';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta28';
+import {config} from './config.js?v=20261021-beta13';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta13';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -70,92 +69,28 @@ export function openState(date=new Date()){
 }
 export const isOpen=date=>openState(date).open;
 export function pickupSlots(date=new Date()){
- if(!isOpen(date)&&config.mode!=='firebase-test')return [];
+ if(!isOpen(date))return [];
  const out=[],step=config.restaurant.pickupIntervalMinutes||15;
  const base=new Date(date.getTime()+(config.restaurant.pickupMinutes||25)*60000);
  base.setSeconds(0,0);base.setMinutes(Math.ceil(base.getMinutes()/step)*step);
  for(let i=0;i<24;i++){
   const d=new Date(base.getTime()+i*step*60000);
-  if(!isOpen(d)&&config.mode!=='firebase-test')break;
+  if(!isOpen(d))break;
   out.push(d.toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit'}));
  }
  return out;
 }
-/**
- * Browser retries retain the SAME idempotency key for an unchanged order.
- * A key alone is not sufficient: the authenticated server MUST atomically
- * deduplicate (tenantId, key), validate prices/menu/options and return the
- * original result after a timeout. No direct client Firebase writes.
+/** Server-only checkout: no local fake orders or locally credited rewards.
+ * The backend must verify restaurant, price, availability, order idempotency
+ * and loyalty independently before confirming the order.
  */
-const pendingKey=prefix+'checkout-pending';
-function pendingCheckout(order){
- const fingerprint=JSON.stringify(order);
- let saved=null;
- try{saved=JSON.parse(localStorage.getItem(pendingKey)||'null');}catch{}
- if(saved?.fingerprint===fingerprint && /^[0-9a-f-]{36}$/i.test(saved.key))return saved.key;
- if(typeof crypto?.randomUUID!=='function')throw new Error('En sikker bestillings-ID kunne ikke opprettes.');
- const key=crypto.randomUUID();
- try{localStorage.setItem(pendingKey,JSON.stringify({key,fingerprint,createdAt:Date.now()}));}
- catch{throw new Error('Kunne ikke sikre bestillingen mot duplikater. Kontroller nettleserlagring.');}
- return key;
-}
-function clearPendingCheckout(key){
- try{
-  const pending=JSON.parse(localStorage.getItem(pendingKey)||'null');
-  if(pending?.key===key)localStorage.removeItem(pendingKey);
- }catch{}
-}
-/** Return order only after the selected database has acknowledged a write. */
 export async function sendOrder(order){
- if(config.mode==='firebase-test'){
-  const key=pendingCheckout(order);
-  let startedAt=Date.now();
-  try{startedAt=Number(JSON.parse(localStorage.getItem(pendingKey)||'null')?.createdAt)||startedAt;}catch{}
-  // NO personal data is sent to Firebase during BETA-only tests.
-  // The adapter also strips comments and notification recipient fields.
-  const accepted=await addTestOrder(order,key,startedAt);
-  state.orders=[accepted,...state.orders.filter(o=>o.id!==accepted.id)].slice(0,15);
-  persist();clearPendingCheckout(key);
-  return accepted;
- }
  if(config.mode!=='api'||!config.apiBase)throw new Error('Bestillinger er ikke aktivert ennå.');
- const key=pendingCheckout(order);
- const controller=new AbortController();
- const timeout=setTimeout(()=>controller.abort(),20000);
- let response;
- try{
-  response=await fetch(config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/orders',{
-   method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key},
-   body:JSON.stringify(order),credentials:'omit',cache:'no-store',signal:controller.signal
-  });
- }catch(error){
-  // An unknown outcome must retain the same key for an explicit retry.
-  throw new Error(error.name==='AbortError'
-    ?'Forespørselen tok for lang tid. Prøv igjen – samme bestilling blir ikke sendt på nytt.'
-    :'Ingen sikker bekreftelse fra serveren. Prøv igjen med samme bestilling.');
- }finally{clearTimeout(timeout);}
- if(!response.ok){
-  // A 503 due to missing server configuration is NOT an uncertain order:
-  // do not encourage repeatedly pressing Send or claim an order exists.
-  const problem=await response.json().catch(()=>null);
-  if(response.status===503 && problem?.code==='SERVICE_NOT_READY')
-   throw new Error('Nettbestilling er ikke aktivert hos restauranten ennå. Bestillingen er ikke sendt. Ring restauranten for å bestille.');
-  if(response.status===409)
-   throw new Error('Bestillingen kan ikke bekreftes. Menypris eller hentetid kan ha endret seg. Oppdater siden før ny bestilling.');
-  if(response.status===422)
-   throw new Error('Kontroller navn, telefonnummer, varer og hentetid. Bestillingen ble ikke godtatt.');
-  if(response.status>=500)
-   throw new Error('Mottakstjenesten er midlertidig utilgjengelig. Ingen bekreftelse mottatt – prøv igjen med samme bestilling senere.');
-  if(response.status===403||response.status===401)
-   throw new Error('Bestillingen ble avvist av tjenesten. Ingen bestilling er bekreftet.');
-  throw new Error('Bestillingen kunne ikke godtas. Kontroller opplysningene.');
- }
- const result=await response.json().catch(()=>null);
- if(!result?.id||!['mottatt','bekreftet','tilberedning','klar'].includes(result.status)||!Number.isFinite(Number(result.createdAt)))
-  throw new Error('Ugyldig ordrebekreftelse. Prøv igjen med samme bestilling.');
- const accepted={...order,...result,createdAt:Number(result.createdAt),status:result.status};
- state.orders=[accepted,...state.orders.filter(o=>o.id!==accepted.id)].slice(0,15);
- persist();
- clearPendingCheckout(key);
- return accepted;
+ const response=await fetch(config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/orders',{
+  method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),credentials:'omit'
+ });
+ if(!response.ok)throw new Error('Bestillingen kunne ikke sendes. Prøv igjen.');
+ const result=await response.json();
+ if(!result.id)throw new Error('Mangler bekreftelse fra serveren.');
+ state.orders.unshift({...order,...result});state.orders=state.orders.slice(0,15);persist();return result;
 }

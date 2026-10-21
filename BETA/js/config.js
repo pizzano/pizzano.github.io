@@ -4,9 +4,8 @@
  */
 export const config={
   tenantId:'kol-grill-pizza',
-  mode:'firebase-test', // Only internal BETA test orders; never use for live customers.
-  apiBase:'', // No Vercel or Cloud Functions API.
-  testDatabaseUrl:'https://kol-grill-pizza-default-rtdb.firebaseio.com', // Same RTDB as BETA public menu, isolated betaTest/orders path.
+  mode:'api',     // Live mode requires a configured backend. No direct browser writes to Firebase.
+  apiBase:'',      // Enter an authenticated server endpoint only when ready for live orders.
   locale:'nb-NO',
   currency:'NOK',
   menu:{
@@ -17,7 +16,7 @@ export const config={
   },
   restaurant:{
     name:'Restauranten', logo:'🍕',logoUrl:'',phone:'',email:'skarnes.restaurant@gmail.com',address:'',city:'',postcode:'',paymentInfo:'Kort og kontant',
-    pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',printerHost:'192.168.1.25',
+    pickupMinutes:25,pickupIntervalMinutes:15,timezone:'Europe/Oslo',
     manualClosed:false,manualClosedUntil:0,
     openTimes: Array.from({length:7},()=>({enabled:true,from:'14:00',to:'22:00'})),
     palette:'reference', // reference | lively | fresh | gourmet (also settable via Firebase customerPalette).

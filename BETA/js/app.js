@@ -1,11 +1,10 @@
-import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta28';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta28';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta28';
+} from './store.js?v=20261021-beta13';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta13';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -281,7 +280,7 @@ function contactMarkup(profileMode=false){
   '<div class="phone-field '+contactEntryClass('phoneNumber',data.phone)+'"><span class="prefix">+47</span><input class="input-field contact-input" id="phoneNumber" type="tel" inputmode="numeric" maxlength="8" autocomplete="tel-national" value="'+e(data.phone)+'" placeholder="8 sifre" required>'+contactValidMark()+'</div>'+
   '<label class="field-label" for="emailAddress"><span class="field-icon">'+iconSvg('mail')+'</span> E-postadresse <span class="optional">(valgfri)</span></label>'+
   '<div class="'+contactEntryClass('emailAddress',data.email)+'"><input class="input-field contact-input" id="emailAddress" type="email" autocomplete="email" maxlength="120" value="'+e(data.email)+'" placeholder="navn@example.no">'+contactValidMark()+'</div>'+
-  '<p class="helper contact-hint">'+(config.mode==='firebase-test'?'Testmodus: Ingen e-post eller SMS sendes.':'Oppgi e-post for å få kvittering og hentetid.')+'</p>'+
+  '<p class="helper contact-hint">Oppgi e-post for å få kvittering og hentetid.</p>'+
   (profileMode?'<button class="button primary full mt20" data-action="save-profile">Lagre opplysninger</button>':'')+'</div>';
  return (profileMode?'<div class="page-heading"><div><span class="small">PROFIL</span><h1>Rediger profil</h1><p class="small mt8">Lagre kontaktopplysningene dine for raskere bestilling.</p></div></div>':steps())+form;
 }
@@ -294,7 +293,7 @@ function storeForm(){
  setProfile({name,phone,email});return true;
 }
 function pickupMarkup(){
- const slots=pickupSlots(),open=openState().open||config.mode==='firebase-test';
+ const slots=pickupSlots(),open=openState().open;
  let html=steps()+'<div class="panel"><h3 style="font-size:18px">Når vil du hente?</h3><p class="muted mt8">Velg når du vil hente bestillingen.</p>';
  html+='<div class="pickup-grid mt14'+(vs.pickupIntroPending&&!vs.pickupMode?' pickup-nudge':'')+'" id="pickupChoices" role="group" aria-label="Velg hentetid">'+
   '<button class="pickup-choice '+(vs.pickupMode==='asap'?'selected':'')+'" data-action="pickup-mode" data-value="asap" '+(!open?'disabled':'')+'><strong>Snarest</strong><small>Så snart som mulig</small></button>'+
@@ -331,15 +330,8 @@ function profileMarkup(){
 function ordersMarkup(){
  let html='<div class="page-heading"><h1>Mine bestillinger</h1></div>';
  if(!state.orders.length)return html+'<div class="empty"><div class="emoji">▤</div>Ingen bestillinger her ennå.</div>';
- return html+state.orders.map(o=>{
-  const label=orderLabels[o.status]||'Status ukjent';
-  const when=Number(o.estimatedReadyAt)>0?new Date(o.estimatedReadyAt).toLocaleTimeString(config.locale,{hour:'2-digit',minute:'2-digit',timeZone:config.restaurant.timezone}):'';
-  const items=Array.isArray(o.lines)?o.lines:[];
-  return '<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">'+e(label)+'</span></div>'+
-   '<p class="small mt8">'+items.map(l=>e(l.name)+' × '+e(l.quantity)).join(', ')+'</p>'+
-   (when?'<p class="small mt8">Forventet hentetid: <strong>'+e(when)+'</strong></p>':o.pickupMode==='scheduled'?'<p class="small mt8">Ønsket hentetid: <strong>'+e(o.pickup)+'</strong></p>':'')+
-   '<div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>';
- }).join('');
+ return html+
+  state.orders.map(o=>'<div class="cart-card"><div class="cart-head"><strong>'+new Date(o.createdAt).toLocaleString(config.locale)+'</strong><span class="status-pill">Mottatt</span></div><p class="small mt8">'+o.lines.map(l=>e(l.name)+' × '+l.quantity).join(', ')+'</p><div class="cart-sum"><span>'+e(o.pickupMode==='asap'?'Snarest':o.pickup)+'</span><strong>'+money(o.total)+'</strong></div></div>').join('');
 }
 function infoMarkup(){
  const r=config.restaurant,s=openState();
@@ -417,7 +409,7 @@ function renderBottom(){
  else {
   const modeChosen=vs.pickupMode==='asap'||(vs.pickupMode==='scheduled'&&Boolean(vs.pickupTime));
   const validTime=vs.pickupMode!=='scheduled'||pickupSlots().includes(vs.pickupTime);
-  const canSubmit=!vs.submitting&&state.cart.length>0&&(openState().open||config.mode==='firebase-test')&&modeChosen&&validTime;
+  const canSubmit=!vs.submitting&&state.cart.length>0&&openState().open&&modeChosen&&validTime;
   bar.innerHTML=btn('Tilbake','previous-step')+
    btn(vs.submitting?'Sender…':'Send bestilling','send-order',true,!canSubmit);
  }
@@ -431,13 +423,9 @@ function render(){
  else if(vs.page==='profile-edit')main.innerHTML=contactMarkup(true);
  else if(vs.page==='orders')main.innerHTML=ordersMarkup();
  else if(vs.page==='confirmed'){
-  const latest=state.orders[0]||{};
-  const label=orderLabels[latest.status]||'Status ukjent';
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>'+e(latest.status==='mottatt'?'Bestillingen er mottatt':label)+'</h2><p class="helper">'+e(latest.status==='mottatt'?'Vi venter på restaurantens bekreftelse.':'Følg statusen under Mine bestillinger.')+'</p>'+
-   '<div class="status-pill mt14">'+e(label)+'</div>'+
-   '<button class="button primary full mt20" data-action="orders">Se bestillingsstatus</button>'+
-   '<button class="button full mt14" data-action="go-menu">Tilbake til menyen</button></div>';
+   '<h2>Bestillingen er mottatt</h2><p class="helper">Restauranten har mottatt bestillingen din. Følg med på bekreftelsen.</p>'+
+   '<button class="button primary full mt20" data-action="go-menu">Tilbake til menyen</button></div>';
  }
  renderBottom();
  if(vs.page==='cart'&&vs.step===3)vs.pickupIntroPending=false;
@@ -465,7 +453,7 @@ async function submit(){
   vs.pickupIntroPending=false;
   render();return;
  }
- if(!openState().open&&config.mode!=='firebase-test'){toast('Restauranten er stengt.');return;}
+ if(!openState().open){toast('Restauranten er stengt.');return;}
  vs.pickupWarning='';
  vs.submitting=true;renderBottom();
  const lines=state.cart.map(l=>{const f=findProduct(l.productId),p=f.p,s=selectedSize(p,l.sizeId);
@@ -610,30 +598,16 @@ async function boot(){
   $('retryMenu')?.addEventListener('click',()=>void boot());
  }
 }
-
-let stopCustomerStatus=null;
-function syncCustomerOrderWatch(){
- if(stopCustomerStatus){stopCustomerStatus();stopCustomerStatus=null;}
- if(document.hidden||!(vs.page==='confirmed'||vs.page==='orders'))return;
- const current=state.orders.find(orderCanTrack);
- if(!current)return;
- stopCustomerStatus=watchOrder(current,()=>{
-  persist();
-  if(vs.page==='confirmed'||vs.page==='orders')render();
- });
-}
-
 void boot();
 // Close the one small stream when not used; reconnect to get the latest revision.
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden)stopCatalogSync();
  else if(catalogReady())startCatalogSync(catalogChanged);
- syncCustomerOrderWatch();
 });
 window.addEventListener('online',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
 window.addEventListener('offline',stopCatalogSync);
-window.addEventListener('pagehide',()=>{stopCatalogSync();if(stopCustomerStatus){stopCustomerStatus();stopCustomerStatus=null;}});
-window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);syncCustomerOrderWatch();});
+window.addEventListener('pagehide',stopCatalogSync);
+window.addEventListener('pageshow',()=>{if(catalogReady())startCatalogSync(catalogChanged);});
 main.addEventListener('scroll',()=>{
  if(vs.page!=='menu'||vs.search||document.hidden)return;
  const offset=main.getBoundingClientRect().top+30;
@@ -645,28 +619,18 @@ main.addEventListener('scroll',()=>{
  if(active&&active!==lastActiveCategory)activateCategory(active);
 },{passive:true});
 cats.addEventListener('scroll',updateCategoryIndicator,{passive:true});
-// No focus/click required: a vertical mouse wheel moves categories horizontally
-// even while hovering their buttons or the indicator. Preserve trackpad horizontal
-// scrolling, Ctrl/Cmd+wheel zoom, mobile touch and page scrolling at strip edges.
-let categoryWheelIdle=0;
+// Desktop wheel on the category strip scrolls it horizontally, even over a
+// category button or the indicator. Trackpad horizontal gestures stay native.
 $('categorySection').addEventListener('wheel',event=>{
- if(event.ctrlKey||event.metaKey)return;
+ if(event.ctrlKey||Math.abs(event.deltaX)>Math.abs(event.deltaY)||!event.deltaY)return;
  const max=Math.max(0,cats.scrollWidth-cats.clientWidth);
  if(max<=1)return;
- const scale=event.deltaMode===1?16:event.deltaMode===2?cats.clientWidth:1;
- const dx=event.deltaX*scale,dy=event.deltaY*scale;
- const horizontal=Math.abs(dx)>Math.abs(dy);
- if(horizontal&&cats.contains(event.target))return; // Native trackpad gesture.
- const delta=horizontal?dx:dy;
- if(!delta)return;
- const current=cats.scrollLeft;
- const next=Math.max(0,Math.min(max,current+delta));
- if(Math.abs(next-current)<.5)return; // Allow page scroll at either edge.
+ const factor=event.deltaMode===1?16:event.deltaMode===2?cats.clientWidth:1;
+ const next=Math.max(0,Math.min(max,cats.scrollLeft+event.deltaY*factor));
+ // At an edge, keep vertical wheel scrolling available to the parent page.
+ if(Math.abs(next-cats.scrollLeft)<.5)return;
  if(event.cancelable)event.preventDefault();
- cats.classList.add('is-wheel-scrolling'); // Avoid scroll-snap swallowing wheel steps.
  cats.scrollLeft=next;
- clearTimeout(categoryWheelIdle);
- categoryWheelIdle=setTimeout(()=>cats.classList.remove('is-wheel-scrolling'),170);
 },{passive:false});
 categoryIndicator?.addEventListener('click',event=>{
  const bounds=categoryIndicator.getBoundingClientRect();
