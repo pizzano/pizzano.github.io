@@ -15,6 +15,11 @@ let draft=null,editLineId=null,ingredientsExpanded=false,noticeTimer=null;
 const orderWatchers=new Map();
 const READY_CARD_MS=5*60*1000;
 let waitingOrderId=null;
+const readyDismissKey='beta:ready-dismissed:'+config.tenantId;
+const dismissedReadyCards=new Set((()=>{
+ try{const ids=JSON.parse(localStorage.getItem(readyDismissKey)||'[]');return Array.isArray(ids)?ids.slice(-20):[];}
+ catch{return [];}
+})());
 const asClock=ms=>{const n=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');};
 function visibleCustomerOrders(){
  const now=Date.now();
@@ -26,20 +31,22 @@ function visibleCustomerOrders(){
 function orderCode(o){return String(o.id||'').slice(-6).toUpperCase();}
 function orderCountdown(o){
  if(o.status==='mottatt')return asClock(Number(o.confirmationDeadline||0)-Date.now());
- if(o.status==='klar')return asClock(Number(o.staffReadyAt||o.statusUpdatedAt||0)+READY_CARD_MS-Date.now());
  const at=Number(o.estimatedReadyAt||o.scheduledPickupAt)||0;
  return at?asClock(at-Date.now()):'—';
 }
 function activeOrderMarkup(){
- const o=visibleCustomerOrders()[0];if(!o)return '';
+ const o=visibleCustomerOrders().find(order=>order.status!=='klar'||!dismissedReadyCards.has(order.id));if(!o)return '';
  const step=o.status==='mottatt'?1:o.status==='bekreftet'?2:3;
  const status=o.status==='mottatt'?'pending':o.status==='klar'?'ready':'accepted';
  return '<section class="active-order-card '+status+'" aria-label="Aktiv bestilling">'+
-  '<div class="active-order-header"><strong>AKTIV BESTILLING</strong><span>#'+e(orderCode(o))+'</span></div>'+
+  '<div class="active-order-header"><strong>AKTIV BESTILLING</strong><div class="active-order-meta"><span>#'+e(orderCode(o))+'</span>'+
+  (status==='ready'?'<button class="active-order-close" type="button" data-action="dismiss-ready-order" data-id="'+e(o.id)+'" aria-label="Lukk bestillingskortet" title="Lukk">×</button>':'')+
+  '</div></div>'+
   '<div class="active-order-steps">'+['Mottatt','Bekreftet','Klar'].map((label,i)=>
    '<div class="active-order-step '+(i<step?'done':'')+'"><span class="active-step-dot">'+(i<step-1?'✓':'')+'</span><span>'+label+'</span></div>').join('')+'</div>'+
-  '<div class="active-order-time"><span>'+(status==='pending'?'Venter på bekreftelse':status==='ready'?'Klar for henting · vises i 5 minutter':'Estimert hentetid om')+'</span>'+
-   '<strong data-customer-countdown="'+e(o.id)+'">'+e(orderCountdown(o))+'</strong></div>'+
+  '<div class="active-order-time '+(status==='ready'?'ready':'')+'"><span>'+
+  (status==='pending'?'Venter på bekreftelse':status==='ready'?'Klar for henting':'Estimert hentetid om')+'</span>'+
+  (status==='ready'?'':'<strong data-customer-countdown="'+e(o.id)+'">'+e(orderCountdown(o))+'</strong>')+'</div>'+
   '<button type="button" class="active-order-details" data-action="orders">Se bestillingen</button></section>';
 }
 function waitingMarkup(o){
@@ -588,6 +595,14 @@ async function submit(){
 }
 function onAction(action,target){
  const id=target.dataset.id,line=target.dataset.line;
+ if(action==='dismiss-ready-order'){
+  if(state.orders.some(order=>order.id===id&&order.status==='klar')){
+   dismissedReadyCards.add(id);
+   try{localStorage.setItem(readyDismissKey,JSON.stringify([...dismissedReadyCards].slice(-20)));}catch{}
+   const scroll=main.scrollTop;render();main.scrollTop=scroll;
+  }
+  return;
+ }
  if(action==='category'){
   if(id==='search'){vs.search=true;vs.query='';render();$('menuSearch')?.focus();return;}
   if(id==='popular'&&!catalog.popularIds.length)return;
