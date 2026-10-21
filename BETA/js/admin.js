@@ -32,18 +32,27 @@ function renderList(){
  const fresh=all.filter(o=>o.status==='mottatt'&&!isExpired(o)).length;
  $('orderCount').textContent=all.length;$('newCount').textContent=fresh;
  $('newBadge').hidden=!fresh;$('newBadge').textContent=fresh;
+ $('newAlert').hidden=!fresh;
+ $('newAlert').textContent=fresh===1?'● Ny bestilling venter på svar':'● '+fresh+' nye bestillinger venter på svar';
+ $('printerDot').hidden=!all.some(o=>o.status==='mottatt'&&!isExpired(o));
  const node=$('orderList');
  node.innerHTML=arr.length?arr.map(o=>{
-  const expired=isExpired(o),name=o.customerName||'Kunde';
-  return '<button class="order-row '+(o.id===selected?'selected':'')+'" type="button" data-order="'+e(o.id)+'">'+
-   '<div class="order-row-top"><span class="order-row-name">'+e(name)+'</span><span class="pill '+e(o.status)+'">'+e(expired?'Utløpt':(labels[o.status]||o.status))+'</span></div>'+
-   '<div class="order-row-note">#'+e(o.id.slice(-8))+' · '+e(date(o.createdAt))+' · '+e(o.phone)+'</div>'+
-   '<div class="order-row-bottom"><span class="muted">'+e(pickup(o))+'</span><span class="order-price">'+money(o.total)+'</span></div>'+
-   (o.status==='mottatt'?'<div class="order-row-note">Svar innen <b data-countdown="'+e(o.id)+'">'+remaining(o.confirmationDeadline)+'</b></div>':'')+
-   '</button>';
- }).join(''):'<p class="helper" style="padding:10px">Ingen bestillinger i dette utvalget.</p>';
- if(selected&&!orders.has(selected))selected=null;
- if(!selected&&arr.length)selected=arr[0].id;
+  const expired=isExpired(o),isNew=o.status==='mottatt'&&!expired;
+  const state=expired?'avvist':o.status;
+  const smsSent=o.notification?.sms==='sent',emailSent=o.notification?.email==='sent';
+  return '<button class="order-row '+(o.id===selected?'selected ':'')+(isNew?'is-new':'')+
+   '" type="button" data-order="'+e(o.id)+'" aria-label="Bestilling fra '+e(o.customerName||'Kunde')+'">'+
+   '<span class="order-status-dot '+e(state)+'"></span>'+
+   '<div class="order-row-content"><div class="order-row-top"><span class="order-row-name">'+e(o.customerName||'Kunde')+'</span>'+
+    (smsSent?'<span class="mini-receipt" title="SMS bekreftet sendt">✉</span>':'')+
+    (emailSent?'<span class="mini-receipt" title="E-post bekreftet sendt">✉</span>':'')+
+    (isNew?'<span class="pill mottatt">Ny</span>':'')+
+   '</div><div class="order-row-bottom"><div class="order-row-meta">'+
+   '<span class="pickup-chip '+(o.pickupMode==='scheduled'?'scheduled':'')+'">'+e(o.pickupMode==='scheduled'?'PLANLAGT':'SNAREST')+'</span>'+
+   '<span class="row-clock">'+(isNew?'<b data-countdown="'+e(o.id)+'">'+remaining(o.confirmationDeadline)+'</b>':e(date(o.createdAt)))+'</span></div>'+
+   '<strong class="order-price">'+money(o.total)+'</strong><span class="order-chevron">›</span></div></div></button>';
+ }).join(''):'<div class="empty-list">Ingen bestillinger i dette utvalget.</div>';
+ if(!arr.some(o=>o.id===selected))selected=arr[0]?.id||null;
  if(selected)renderDetail();else{$('orderDetail').hidden=true;$('detailEmpty').hidden=false;}
 }
 function expectedPrice(order){
