@@ -1,5 +1,5 @@
-import {config} from './config.js?v=20261021-beta15';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta15';
+import {config} from './config.js?v=20261021-beta17';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta17';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -82,7 +82,7 @@ export function pickupSlots(date=new Date()){
 }
 /** Actual Firebase acknowledgement is required before showing success. */
 export async function sendOrder(order){
- const {submitFirebaseOrder}=await import('./orders.js?v=20261021-beta15');
+ const {submitFirebaseOrder}=await import('./orders.js?v=20261021-beta17');
  const result=await submitFirebaseOrder(order);
  state.orders=[result,...state.orders.filter(x=>x.id!==result.id)].slice(0,4);
  persist();return result;
