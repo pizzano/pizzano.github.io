@@ -1,6 +1,6 @@
 import {config} from './config.js?v=20261021-beta15';
 import {catalog,loadCatalog,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta15';
-import {getAdminSession,adminLogin,adminLogout,watchAdminOrders,updateAdminOrder,deleteOldOrders} from './orders.js?v=20261021-beta15';
+import {getAdminSession,watchAdminOrders,updateAdminOrder,deleteOldOrders} from './orders.js?v=20261021-beta15';
 import {printKitchenTicket,checkEpsonConnection} from './printer.js?v=20261021-beta15';
 const $=id=>document.getElementById(id);
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
@@ -259,26 +259,23 @@ async function clickAction(action){
  }
 }
 async function openAdmin(){
+ // BETA admin opens directly; live orders stay unavailable without an authorized Firebase session.
+ renderList();
  try{
   session=await getAdminSession();
-  if(!session){$('loginPane').hidden=false;$('ordersPane').hidden=true;setConnection('Ikke innlogget');return;}
-  $('loginPane').hidden=true;$('ordersPane').hidden=false;$('signOut').hidden=false;
-  try{await loadCatalog();startCatalogSync(()=>renderDetail());}catch(e){console.warn(e);}
-  reconnect();await expirySweep();
- }catch(error){setConnection('Konfigurasjon mangler','error');$('loginError').textContent=error.message;$('loginError').hidden=false;}
+  if(!session){
+   setConnection('Forhåndsvisning · ordretilgang ikke aktiv');
+   return;
+  }
+  try{await loadCatalog();startCatalogSync(()=>renderDetail());}catch(error){console.warn('Meny:',error.message);}
+  reconnect();
+  await expirySweep();
+ }catch(error){
+  session=null;
+  setConnection('Forhåndsvisning · Firebase ikke konfigurert');
+  console.info('BETA admin kjører uten live ordretilgang:',error.message);
+ }
 }
-$('loginForm').addEventListener('submit',async evt=>{
- evt.preventDefault();$('loginError').hidden=true;$('loginSubmit').disabled=true;
- try{session=await adminLogin($('loginEmail').value,$('loginPassword').value);await openAdmin();}
- catch(err){$('loginError').textContent=err.message;$('loginError').hidden=false;}
- finally{$('loginSubmit').disabled=false;}
-});
-$('signOut').addEventListener('click',async()=>{
- unsubscribe?.();unsubscribe=null;stopAlarm();stopCatalogSync();
- try{await adminLogout();}catch(err){showToast(err.message);}
- session=null;orders.clear();selected=null;$('signOut').hidden=true;
- $('ordersPane').hidden=true;$('loginPane').hidden=false;setConnection('Ikke innlogget');
-});
 $('enableSound').addEventListener('click',async()=>{
  try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();await audio.resume();soundEnabled=true;
   $('enableSound').textContent='Lyd aktiv';beep();refreshAlarm();}
