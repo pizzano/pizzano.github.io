@@ -2,6 +2,16 @@
 
 Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/test`-mappen.
 
+## Kun Firebase Realtime Database som backend (2026-10-22)
+
+Kunde- og adminappene i `/demo/` bruker Firebase Realtime Database REST direkte for meny, innstillinger, bestillinger og ordrestatuser. GitHub Pages leverer bare statiske HTML/CSS/JS-filer. Ingen Vercel API-er, SMS-status-endepunkter, SMS-kvitteringsoppslag eller Apps Script-kontroller blir kalt fra appen.
+
+**Automatisk SMS og e-post er IKKE en del av denne modusen.** Ordrestatuser vises i kundeappen når kunden åpner den, og varsling på kjøkkenets adminside skjer lokalt. Epson-utskrift krever fortsatt direkte tilkobling til lokal skriver (ikke en skytjeneste).
+
+**VIKTIG FØR PRODUKSJON:** Fjernet frontendkode stopper ikke allerede utplasserte Google Apps Script-triggere, Firebase Cloud Functions eller Vercel-deployments. Slå av disse separat i respektive konsoller for å stanse automatisk sending og eksterne kostnader. Endringene her berører bare `/demo/` og deaktiverer ikke fjernressurser.
+
+**Sikkerhet:** Realtime Database må ha tilgangsregler som verner om personopplysninger og administrative endringer. En offentlig nettside med direkte databaseaksess og uten trygg autentisering kan ikke sikkert beskytte kundedata eller skille mellom kunde og ansatt. Ikke sett en åpen `/orders`-database i produksjon uten en gjennomtenkt tilgangsmodell.
+
 ## Kart over filene
 
 | Del | Plassering | Formål |
@@ -22,7 +32,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
 | Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
-| Apps Script-kopi | `integrations/google-apps-script/` | Referansekopi av e-post-poller (ikke automatisk utplassert) |
+| Eldre integrasjonskilder | `integrations/google-apps-script/` | Kun historisk referansekopi; ikke brukt av appen |
 
 ## Ikke flytt eller slett ukritisk
 
@@ -32,7 +42,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - Epson: `js/order-printer.js` bruker HTTPS mot lokal IP `192.168.1.25`, enhets-ID `local_printer`.
 - Papiret er 80 mm, mens utskriftsbildet er 576 piksler bredt (ca. 72 mm skrivbart område).
 - Printerfontene kan settes i **Restaurantinnstillinger → Printer ayarları**; samme Canvas brukes til forhåndsvisning og utskrift.
-- SMS og e-post er koblet til eksterne prosesser. Kode i `functions/` og Google Apps Script påvirkes **ikke** ved å flytte referansekopier herfra.
+- Gamle SMS/e-post-integrasjoner kan fremdeles kjøre utenfor dette repoet. Deaktiver eventuelle aktive triggere/funksjoner separat; `/demo/` sender ikke SMS eller e-post.
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
 - Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
 
@@ -55,7 +65,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
-`api/` forblir i roten for Vercel API-ruter, og `functions/` forblir i roten for Firebase-funksjoner. Ingen SMS-, e-post-, database- eller ordrelogikk er endret.
+Rotmappens `api/` og `functions/` er separate, eldre integrasjonskilder. `/demo/` kaller ikke lenger Vercel API-rutene. Sletting av kildekode stopper ikke utplasserte tjenester.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
 
