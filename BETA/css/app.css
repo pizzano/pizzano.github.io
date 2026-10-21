@@ -298,6 +298,50 @@ textarea.input-field{resize:vertical;min-height:58px;padding:10px 12px;font-size
  .restaurant-info-outline-button{width:40px;height:40px}
  .restaurant-info-hero-photo{opacity:.35}
 }
+
+/* Active order status is part of the menu, not a separate full-screen page. */
+.active-order-card{margin:0 0 17px;padding:14px 13px 12px;border:1px solid var(--line);border-radius:17px;background:var(--card);box-shadow:var(--shadow);color:var(--text)}
+.active-order-card.accepted{border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+.active-order-card.ready{background:color-mix(in srgb,var(--green) 7%,var(--card));border-color:var(--green)}
+.active-order-card.pending{border-color:color-mix(in srgb,#d8a442 50%,var(--line))}
+.active-order-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;color:var(--green);font-size:11px}
+.active-order-header strong{font-size:11px;letter-spacing:.2px}
+.active-order-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:0 25px 10px;position:relative;text-align:center}
+.active-order-steps:before{content:"";position:absolute;top:9px;left:calc(16.666% + 6px);right:calc(16.666% + 6px);height:3px;background:var(--line)}
+.active-order-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--muted)}
+.active-step-dot{width:20px;height:20px;border:2px solid var(--line);border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:12px;line-height:1}
+.active-order-step.done{color:var(--green)}
+.active-order-step.done .active-step-dot{background:var(--green);border-color:var(--green);color:#fff}
+.active-order-time{margin-top:3px;padding:19px 12px;min-height:84px;border:1px solid var(--line);border-radius:13px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;color:var(--green);text-align:center}
+.active-order-time span{font-size:14px;font-weight:750}
+.active-order-time strong{font-size:20px;letter-spacing:.2px;font-variant-numeric:tabular-nums}
+.active-order-details{margin-top:10px;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:transparent;color:var(--green);font-size:12px;font-weight:800}
+.active-order-details:hover{background:var(--subtle)}
+.customer-order-detail .cart-sum{margin-top:14px}
+.order-confirm-underlay{margin:28px 0;text-align:center;padding:38px 20px}
+.order-confirm-underlay-icon{font-size:38px;color:var(--green);margin-bottom:14px}
+/* Dedicated waiting dialog, bounded to the restaurant application viewport. */
+.order-confirm-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:15px;background:rgba(22,39,30,.45);backdrop-filter:blur(2px)}
+.order-confirm-dialog{width:min(100%,560px);max-height:calc(100dvh - 30px);overflow:auto;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:17px;padding:24px 19px 25px;box-shadow:0 24px 75px rgba(22,39,30,.2)}
+.order-confirm-symbol{margin:0 auto 16px;display:grid;place-items:center;width:59px;height:59px;border:3px solid var(--line);border-radius:50%;font-size:31px;color:var(--green);font-weight:600}
+.order-confirm-symbol.warning{color:#b35a42;border-color:#ebc7b5}
+.order-confirm-dialog h2{text-align:center;font-size:20px;line-height:1.25}
+.order-confirm-intro{text-align:center;margin:12px auto 17px;max-width:425px;color:var(--muted);font-size:13px;line-height:1.6}
+.order-confirm-summary{border-top:1px solid var(--line);padding:13px 0;display:grid;gap:7px}
+.order-confirm-summary>div{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.order-confirm-summary span{color:var(--muted)}
+.order-confirm-summary strong{font-weight:750;text-align:right}
+.order-confirm-wait{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;margin-top:8px;padding:14px}
+.order-confirm-wait .wait-dot{width:13px;height:13px;flex:0 0 13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px var(--subtle)}
+.order-confirm-wait strong{display:block;font-size:13px}
+.order-confirm-wait p{font-size:12px;color:var(--muted);margin-top:4px}
+.order-confirm-wait b{font-variant-numeric:tabular-nums;color:var(--green)}
+@media(max-width:410px){
+ .active-order-steps{padding-inline:10px}
+ .active-order-time{padding:14px 9px;min-height:75px}
+ .active-order-time strong{font-size:18px}
+ .order-confirm-dialog{padding:21px 15px}
+}
 .notice{position:fixed;left:50%;bottom:85px;transform:translateX(-50%);z-index:30;background:#263e2e;color:#fff;padding:12px 18px;border-radius:13px;max-width:min(90vw,440px);box-shadow:var(--shadow);text-align:center}
 .empty{text-align:center;color:var(--muted);padding:70px 20px}
 .empty .emoji{font-size:40px;margin-bottom:12px}
