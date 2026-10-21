@@ -1,11 +1,11 @@
-import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta15';
+import {orderLabels,orderCanTrack,watchOrder} from './order-status.js?v=20261021-beta18';
 import {
  config,catalog,state,loadCatalog,menuStatus,catalogReady,persist,money,findProduct,
  basePrice,selectedSize,applicableGroups,unitPrice,linePrice,cartTotal,cartQuantity,
  addLine,changeQuantity,removeLine,clearCart,setProfile,escapeHtml,openState,
  pickupSlots,sendOrder,startCatalogSync,stopCatalogSync
-} from './store.js?v=20261021-beta15';
-import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta15';
+} from './store.js?v=20261021-beta18';
+import {iconSvg,resolveCategoryIcon} from './icons.js?v=20261021-beta18';
 
 const $=id=>document.getElementById(id);
 const main=$('mainContent'),bar=$('bottomBar'),cats=$('categoryScroller'),sheet=$('sheet'),backdrop=$('backdrop'),categoryIndicator=$('categoryIndicator');
@@ -434,7 +434,7 @@ function render(){
   const latest=state.orders[0]||{};
   const label=orderLabels[latest.status]||'Status ukjent';
   main.innerHTML='<div class="panel" style="text-align:center;margin-top:45px"><div style="font-size:48px">✓</div>'+
-   '<h2>Bestillingen er mottatt</h2><p class="helper">Vi venter på restaurantens bekreftelse.</p>'+
+   '<h2>'+e(latest.status==='mottatt'?'Bestillingen er mottatt':label)+'</h2><p class="helper">'+e(latest.status==='mottatt'?'Vi venter på restaurantens bekreftelse.':'Følg statusen under Mine bestillinger.')+'</p>'+
    '<div class="status-pill mt14">'+e(label)+'</div>'+
    '<button class="button primary full mt20" data-action="orders">Se bestillingsstatus</button>'+
    '<button class="button full mt14" data-action="go-menu">Tilbake til menyen</button></div>';

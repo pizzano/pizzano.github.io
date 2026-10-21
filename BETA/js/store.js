@@ -1,5 +1,5 @@
-import {config} from './config.js?v=20261021-beta16';
-import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta16';
+import {config} from './config.js?v=20261021-beta18';
+import {catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta18';
 export {config,catalog,loadCatalog,menuStatus,catalogReady,startCatalogSync,stopCatalogSync};
 const prefix='beta:v2:'+config.tenantId+':';
 const read=(key,def)=>{try{const x=JSON.parse(localStorage.getItem(prefix+key));return x??def;}catch{return def;}};
@@ -129,9 +129,9 @@ export async function sendOrder(order){
   throw new Error('Bestillingen kunne ikke godtas. Kontroller hentetid, varer og opplysninger.');
  }
  const result=await response.json().catch(()=>null);
- if(!result?.id||result.status!=='mottatt'||!Number.isFinite(Number(result.createdAt)))
+ if(!result?.id||!['mottatt','bekreftet','tilberedning','klar'].includes(result.status)||!Number.isFinite(Number(result.createdAt)))
   throw new Error('Ugyldig ordrebekreftelse. Prøv igjen med samme bestilling.');
- const accepted={...order,...result,createdAt:Number(result.createdAt),status:'mottatt'};
+ const accepted={...order,...result,createdAt:Number(result.createdAt),status:result.status};
  state.orders=[accepted,...state.orders.filter(o=>o.id!==accepted.id)].slice(0,15);
  persist();
  clearPendingCheckout(key);

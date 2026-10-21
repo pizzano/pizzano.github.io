@@ -1,0 +1,25 @@
+name: BETA secure order API tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'BETA/**'
+      - 'api/beta.js'
+      - 'vercel.json'
+      - '.github/workflows/beta-order-tests.yml'
+  pull_request:
+    paths:
+      - 'BETA/**'
+      - 'api/beta.js'
+      - 'vercel.json'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mock checkout to archive; no customer notifications
+        run: node --test BETA/tests/beta-api.test.cjs

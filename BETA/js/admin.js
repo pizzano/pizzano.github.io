@@ -2,9 +2,9 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta16';
-import {orderLabels} from './order-status.js?v=20261021-beta16';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta16';
+import {config} from './config.js?v=20261021-beta18';
+import {orderLabels} from './order-status.js?v=20261021-beta18';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta18';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +12,7 @@ const money=value=>new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).form
 const fmt=time=>Number(time)>0?new Intl.DateTimeFormat('nb-NO',{timeZone:config.restaurant.timezone||'Europe/Oslo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(Number(time))):'–';
 const orders=new Map(),running=new Set(),actionKeys=new Map();
 let selected='',filter='all',query='',stream=null,healthy=false,connected=false;
-let fallback=null,initialTimer=null,reconnectTimer=null,syncRequest=null,csrfToken='',session=false,seenInitial=false,lastList='',soundEnabled=true;
+let fallback=null,initialTimer=null,reconnectTimer=null,syncRequest=null,csrfToken='',accessToken='',session=false,seenInitial=false,lastList='',soundEnabled=true;
 let reconnectDelay=5000;
 const base=()=>config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/admin';
 function toast(message){
@@ -29,11 +29,12 @@ async function request(path,{method='GET',body=null,csrf=false}={}){
  if(!config.apiBase)throw new Error('API er ikke konfigurert.');
  const headers={Accept:'application/json'};
  if(body!==null)headers['Content-Type']='application/json';
+ if(accessToken)headers.Authorization='Bearer '+accessToken;
  if(csrf){
   if(!csrfToken)throw new Error('Sesjonen mangler CSRF-beskyttelse.');
   headers['X-CSRF-Token']=csrfToken;
  }
- const response=await fetch(base()+path,{method,headers,body:body===null?undefined:JSON.stringify(body),credentials:'include',cache:'no-store'});
+ const response=await fetch(base()+path,{method,headers,body:body===null?undefined:JSON.stringify(body),credentials:'omit',cache:'no-store'});
  if(response.status===401||response.status===403){
   // An expired session cannot leave the customer list accessible on screen.
   if(path!=='/sessions'&&path!=='/session')signOut(false);
@@ -55,21 +56,20 @@ function showWorkspace(){
  renderList();renderDetails();
 }
 function stopSync(){
- if(stream){stream.close();stream=null;}
+ if(stream){stream.abort();stream=null;}
  if(fallback!==null)clearInterval(fallback);fallback=null;
  if(initialTimer!==null)clearTimeout(initialTimer);initialTimer=null;
  if(reconnectTimer!==null)clearTimeout(reconnectTimer);reconnectTimer=null;
  healthy=false;connectedState(false);
 }
-function signOut(clearCookie=true){
- const token=csrfToken;
- stopSync();orders.clear();session=false;csrfToken='';selected='';seenInitial=false;lastList='';
+function signOut(revoke=true){
+ const token=accessToken,csrf=csrfToken;
+ stopSync();orders.clear();session=false;csrfToken='';accessToken='';selected='';seenInitial=false;lastList='';
  showGate('Logg inn for å håndtere bestillinger.',Boolean(config.apiBase));
- if(clearCookie&&config.apiBase&&token){
-  // Explicit logout is protected by the existing session's CSRF token.
-  void fetch(base()+'/sessions',{method:'DELETE',credentials:'include',cache:'no-store',
-   headers:{'X-CSRF-Token':token}}).catch(()=>{});
- }
+ if(revoke&&config.apiBase&&token)void fetch(base()+'/sessions',{
+  method:'DELETE',credentials:'omit',cache:'no-store',
+  headers:{Authorization:'Bearer '+token,'X-CSRF-Token':csrf}
+ }).catch(()=>{});
 }
 function snapshot(data){
  if(!Array.isArray(data))return;
@@ -159,7 +159,9 @@ function detailButtons(order){
    '<button type="button" data-act="confirm">Bekreft bestilling</button></div>';
  }
  if(['bekreftet','tilberedning'].includes(order.status)){
-  return '<div class="detail-actions"><button type="button" data-act="ready">Marker klar for henting</button>'+
+  return '<div class="detail-actions"><label>Endre tid <input type="number" id="newPrepareMinutes" min="1" max="180" value="'+e(order.estimatedMinutes||25)+'"> min</label>'+
+   '<button class="secondary" data-act="estimate">Lagre tid</button>'+
+   '<button type="button" data-act="ready">Marker klar for henting</button>'+
    '<button type="button" class="secondary" data-act="print">Skriv ut på nytt</button></div>';
  }
  if(order.status==='klar')return '<div class="detail-actions"><button data-act="complete">Utlevert · fullfør bestilling</button>'+
@@ -175,7 +177,7 @@ function renderDetails(){
   '<section class="detail-items"><h3>Bestilte varer</h3>'+
   (Array.isArray(o.lines)?o.lines:[]).map(lineMarkup).join('')+
   '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div></section>'+
-  '<p class="detail-note">SMS og e-post håndteres av separate serverprosesser etter lagret bekreftelse. Klar sender ingen automatisk SMS.</p>'+
+  '<p class="detail-note">SMS/e-post: '+e(o.notifications?.sms?.state||'ukjent')+' / '+e(o.notifications?.email?.state||'ukjent')+'. Klar sender aldri automatisk SMS.</p>'+
   detailButtons(o)+
   '<div class="detail-actions"><label>Epson IP <input id="printerHost" value="'+e(currentPrinterHost())+'" placeholder="192.168.1.25" inputmode="decimal"></label>'+
   '<button class="secondary" type="button" data-act="test-printer">Test skriver</button></div>';
@@ -187,31 +189,46 @@ async function refresh(){
   .then(()=>connectedState(true)).catch(()=>connectedState(false)).finally(()=>syncRequest=null);
  return syncRequest;
 }
-function startSync(){
+async function startSync(){
  if(!session||document.hidden||stream||reconnectTimer!==null||!config.apiBase)return;
- // Open exactly one tenant-scoped, authenticated SSE for active orders.
+ const controller=new AbortController();
+ stream=controller;
  const url=base()+'/orders/events?status=active&limit=100';
- if(typeof EventSource!=='undefined'){
-  stream=new EventSource(url,{withCredentials:true});
-  const accept=event=>{try{const payload=JSON.parse(event.data);healthy=true;reconnectDelay=5000;connectedState(true);change(payload);}catch{}};
-  stream.onmessage=accept;
-  stream.addEventListener('snapshot',accept);
-  stream.addEventListener('upsert',accept);
-  stream.addEventListener('remove',accept);
-  stream.onerror=()=>{
-   healthy=false;connectedState(false);
-   if(stream?.readyState===EventSource.CLOSED){
-    stream.close();stream=null;
-    if(initialTimer!==null)clearTimeout(initialTimer);initialTimer=null;
-    if(reconnectTimer===null&&session&&!document.hidden){
-     const wait=reconnectDelay;reconnectDelay=Math.min(60000,reconnectDelay*2);
-     reconnectTimer=setTimeout(()=>{reconnectTimer=null;startSync();},wait);
-    }
+ try{
+  const response=await fetch(url,{
+   headers:{Authorization:'Bearer '+accessToken,Accept:'text/event-stream'},
+   credentials:'omit',cache:'no-store',signal:controller.signal
+  });
+  if(!response.ok||!response.body||!response.headers.get('Content-Type')?.includes('text/event-stream'))
+   throw new Error('Kunne ikke åpne live bestillinger.');
+  healthy=true;connectedState(true);
+  const reader=response.body.getReader(),decoder=new TextDecoder();
+  let chunk='';
+  while(!controller.signal.aborted){
+   const {done,value}=await reader.read();
+   if(done)break;
+   chunk+=decoder.decode(value,{stream:true}).replace(/\r\n/g,'\n');
+   if(chunk.length>180000)throw new Error('Ugyldig ordre-hendelse.');
+   let end;
+   while((end=chunk.indexOf('\n\n'))>=0){
+    const raw=chunk.slice(0,end);chunk=chunk.slice(end+2);
+    const payload=raw.split('\n').filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trimStart()).join('\n');
+    if(!payload)continue;
+    try{change(JSON.parse(payload));}catch(error){console.warn('Order stream event skipped',error);}
    }
-  };
-  initialTimer=setTimeout(()=>{initialTimer=null;if(!seenInitial)void refresh();},8000);
- }else void refresh();
- fallback=setInterval(()=>{if(!healthy)void refresh();},60000);
+  }
+ }catch(error){
+  if(!controller.signal.aborted){healthy=false;connectedState(false);}
+ }finally{
+  if(stream===controller){
+   stream=null;healthy=false;connectedState(false);
+   if(session&&!document.hidden){
+    if(reconnectTimer!==null)clearTimeout(reconnectTimer);
+    const wait=reconnectDelay;reconnectDelay=Math.min(reconnectDelay*2,60000);
+    reconnectTimer=setTimeout(()=>{reconnectTimer=null;void startSync();},wait);
+   }
+  }
+ }
 }
 async function action(type,o){
  if(!session||!o||running.has(o.id))return;
@@ -224,11 +241,11 @@ async function action(type,o){
   }catch(err){toast('Epson-test feilet: '+err.message);}
   return;
  }
- const allowed={confirm:['mottatt'],ready:['bekreftet','tilberedning'],complete:['klar']};
+ const allowed={confirm:['mottatt'],estimate:['bekreftet','tilberedning'],ready:['bekreftet','tilberedning'],complete:['klar']};
  if(!allowed[type]?.includes(o.status))return;
  let minutes=0;
- if(type==='confirm'&&o.pickupMode!=='scheduled'){
-  minutes=Number($('prepareMinutes')?.value);
+ if(type==='estimate'||type==='confirm'&&o.pickupMode!=='scheduled'){
+  minutes=Number($(type==='estimate'?'newPrepareMinutes':'prepareMinutes')?.value);
   if(!Number.isInteger(minutes)||minutes<1||minutes>180){toast('Velg 1–180 minutter.');return;}
  }
  const key=o.id+':'+type+':'+String(o.statusUpdatedAt||0);
@@ -238,7 +255,7 @@ async function action(type,o){
   const output=await request('/orders/'+encodeURIComponent(o.id)+'/'+type,{
    method:'POST',csrf:true,
    body:{idempotencyKey:actionKeys.get(key),expectedStatus:o.status,expectedVersion:o.statusUpdatedAt||0,
-    ...(type==='confirm'&&o.pickupMode!=='scheduled'?{estimatedMinutes:minutes}:{})}
+    ...((type==='estimate'||type==='confirm'&&o.pickupMode!=='scheduled')?{estimatedMinutes:minutes}:{})}
   });
   const changed=output.order;
   if(!changed||changed.id!==o.id||changed.tenantId!==config.tenantId)throw new Error('Ugyldig svar fra serveren.');
@@ -253,12 +270,20 @@ async function action(type,o){
  }catch(err){toast(err.message||'Kunne ikke oppdatere bestillingen.');}
  finally{running.delete(o.id);renderDetails();}
 }
+async function prepareTrustedMenu(){
+ const status=await request('/menu/status');
+ if(status.configured!==true){
+  await request('/menu/import',{method:'POST',csrf:true});
+  toast('Menyen er importert til BETA sin private database.');
+ }
+}
 async function checkSession(){
  if(!config.apiBase){showGate('Sikker ordre-API er ennå ikke konfigurert. Ingen bestillinger blir behandlet.');return;}
+ if(!accessToken){showGate('Logg inn med restaurantens administratorkonto.',true);return;}
  try{
   const info=await request('/session');
   if(info.authenticated!==true||!info.csrfToken)throw new Error('Ingen gyldig sesjon');
-  csrfToken=info.csrfToken;session=true;showWorkspace();startSync();
+  csrfToken=info.csrfToken;session=true;showWorkspace();void startSync();
  }catch{showGate('Logg inn med en godkjent administratorkonto.',true);}
 }
 $('loginForm').addEventListener('submit',async event=>{
@@ -268,7 +293,9 @@ $('loginForm').addEventListener('submit',async event=>{
   const info=await request('/sessions',{method:'POST',body:{username:$('username').value,password:$('password').value}});
   $('password').value='';
   if(info.authenticated!==true||!info.csrfToken)throw new Error('Ugyldig sesjon fra serveren.');
-  session=true;csrfToken=info.csrfToken;showWorkspace();startSync();
+  if(typeof info.accessToken!=='string'||info.accessToken.length<25)throw new Error('Serveren mangler autorisert sesjon.');
+  accessToken=info.accessToken;session=true;csrfToken=info.csrfToken;
+  await prepareTrustedMenu();showWorkspace();void startSync();
  }catch(error){toast('Innlogging feilet. '+error.message);}
  finally{$('loginButton').disabled=false;}
 });
@@ -291,6 +318,13 @@ document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListen
 }));
 $('orderSearch').addEventListener('input',event=>{query=event.target.value.toLocaleLowerCase('nb-NO').trim();lastList='';renderList();});
 $('refreshOrders').addEventListener('click',()=>void refresh());
+$('importMenu').addEventListener('click',async()=>{
+ if(!session||!window.confirm('Oppdatere BETA sin private meny fra DEMO?'))return;
+ $('importMenu').disabled=true;
+ try{await request('/menu/import',{method:'POST',csrf:true});toast('Menyen er synkronisert.');}
+ catch(error){toast('Kunne ikke oppdatere menykatalogen: '+error.message);}
+ finally{$('importMenu').disabled=false;}
+});
 $('toggleSound').addEventListener('click',()=>{
  soundEnabled=!soundEnabled;
  $('toggleSound').setAttribute('aria-pressed',String(soundEnabled));
@@ -303,8 +337,8 @@ $('toggleSound').addEventListener('click',()=>{
 $('toggleSidebar').addEventListener('click',()=>$('adminSidebar').classList.toggle('is-open'));
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden)stopSync();
- else if(session)startSync();
+ else if(session)void startSync();
 });
 window.addEventListener('pagehide',stopSync);
-window.addEventListener('pageshow',()=>{if(session)startSync();});
+window.addEventListener('pageshow',()=>{if(session)void startSync();});
 void checkSession();

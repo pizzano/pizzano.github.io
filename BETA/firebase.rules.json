@@ -1,0 +1,17 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "tenants": {
+      "$tenant": {
+        "orders": {
+          "active": {
+            ".indexOn": [
+              "createdAt"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -68,7 +68,7 @@ Mevcut `beta:v2` menü önbelleği aynen kullanılır. İlk yükleme (cache yoks
 - `BETA/js/catalog.js` ve modül import URL'leri aynı sürüme eşitlendi; birden fazla config örneği yaratılmaz. Mevcut `beta:v2` menü/sepetteki kullanıcı önbelleği korunur.
 
 **Güvenlik nedeniyle canlı BETA siparişleri HÂLÂ DEVRE DIŞI.**
-`config.apiBase` bilerek boş; `/api`, DEMO, Firebase kuralları veya canlı SMS/e-posta servislerine dokunulmadı. Sunucu kimliği, Firebase Admin SDK kimlik bilgileri, HTTPS, doğru Security Rules ve sipariş doğrulaması olmadan doğrudan istemci Firebase yazması güvenli değildir. Yeni admin sayfası boş/kapalı durumu açıkça gösterir.
+`config.apiBase` artık Vercel BETA API adresine ayarlandı; ancak özel sunucu kimlik bilgileri sağlanana kadar güvenli şekilde 503 döner; `/api`, DEMO, Firebase kuralları veya canlı SMS/e-posta servislerine dokunulmadı. Sunucu kimliği, Firebase Admin SDK kimlik bilgileri, HTTPS, doğru Security Rules ve sipariş doğrulaması olmadan doğrudan istemci Firebase yazması güvenli değildir. Yeni admin sayfası boş/kapalı durumu açıkça gösterir.
 
 ### BETA API sözleşmesi — sunucu tarafında uygulanması ZORUNLU
 Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve restoran erişimi sunucu tarafında doğrulanmalıdır. `cache-control: no-store` kullan.
@@ -96,3 +96,11 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Admin SSE kobler til på nytt med backoff ved lukket strøm. GET-fallback kun hvert 60. sekund dersom strømmen er nede. Frisk SSE genererer ingen fallback GET.
 - Kundens private ordrestrøm tar høyst én umiddelbar status GET ved strømfeil før den forsøker ny SSE med backoff.
 - Dette aktiverer **ikke** bestillinger. Adminidentitet, betalingssikkerhet, Firebase-tilgang og varsling krever sikker server-API. DEMO er urørt.
+
+## beta18 — güvenli BETA sipariş sunucusu (ortam değişkenleri olmadan kapalı)
+- `api/beta.js` yalnızca BETA için Vercel API, `/api/beta/:path*` yönlendirmesi `vercel.json` içinde. DEMO ve eski SMS health API'leri değişmedi.
+- Özel Firebase Realtime Database + sunucu hesabı zorunlu; DEMO'ya ait herkese açık/yazılabilir veritabanında müşteri siparişi oluşturulması bilinçli engellenir. Anonim okuma reddi kontrol edilir.
+- Müşteri siparişleri sunucuda korunmuş menü kopyasından tekrar fiyatlandırılır. Admin ilk oturumda özel menü eksikse eski DEMO menüsünü bir kez içeri alır; sonradan gerektiğinde menü senkronizasyonunu elle başlatabilir. Menü importu yalnızca yetkili admin işlemidir.
+- Idempotent sipariş oluşturma, Bearer ile yalnızca siparişin durumunu okuma, admin şifreli oturum, tek REST/SSE gerçek zamanlı aktif liste, onay, süre değiştirme, hazır, teslim, arşiv ve Epson fiş adapteri hazırlandı. Müşteri mesajları için Traccar/Resend kodu eklenmiştir; yalnızca ilk onay SMS'i, belirsiz gönderimler asla körlemesine tekrarlanmaz.
+- **Gerçek servis testi yapılamadı:** Vercel projesinde BETA için gerekli Firebase servis hesabı, ayrı veritabanı, admin kullanıcı ve bildirim sağlayıcı anahtarları yok. Testler sahte Firebase/SMS/e-posta ile çalışır, gerçek alıcılara bildirim gitmez.
+- API kurulum gereksinimleri ve güvenlik sınırları için `BETA/API-DEPLOYMENT.md` dosyasına bak. `BETA/firebase.rules.json` kuralları yalnızca örnektir, canlı veritabanına otomatik uygulanmaz.
