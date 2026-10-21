@@ -80,17 +80,10 @@ export function pickupSlots(date=new Date()){
  }
  return out;
 }
-/** Server-only checkout: no local fake orders or locally credited rewards.
- * The backend must verify restaurant, price, availability, order idempotency
- * and loyalty independently before confirming the order.
- */
+/** Actual Firebase acknowledgement is required before showing success. */
 export async function sendOrder(order){
- if(config.mode!=='api'||!config.apiBase)throw new Error('Bestillinger er ikke aktivert ennå.');
- const response=await fetch(config.apiBase.replace(/\/$/,'')+'/v1/tenants/'+encodeURIComponent(config.tenantId)+'/orders',{
-  method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),credentials:'omit'
- });
- if(!response.ok)throw new Error('Bestillingen kunne ikke sendes. Prøv igjen.');
- const result=await response.json();
- if(!result.id)throw new Error('Mangler bekreftelse fra serveren.');
- state.orders.unshift({...order,...result});state.orders=state.orders.slice(0,15);persist();return result;
+ const {submitFirebaseOrder}=await import('./orders.js?v=20261021-beta15');
+ const result=await submitFirebaseOrder(order);
+ state.orders=[result,...state.orders.filter(x=>x.id!==result.id)].slice(0,4);
+ persist();return result;
 }
