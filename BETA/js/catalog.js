@@ -5,7 +5,7 @@
  * publish only their menu/settings under a tenant-scoped public menu path.
  * Local menu cache, one tiny SSE revision stream and REST fallback only when offline.
  */
-import {config} from './config.js?v=20261021-beta13';
+import {config} from './config.js?v=20261021-beta15';
 import {resolveCategoryIcon} from './icons.js?v=20261021-beta13';
 export const catalog={version:'',allergens:[],optionGroups:{},categories:[],popularIds:[]};
 export let menuStatus={source:'none',error:'',lastChecked:0};
