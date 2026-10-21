@@ -1,5 +1,5 @@
 import {config} from './config.js?v=20261021-beta15';
-import {catalog,loadCatalog,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta13';
+import {catalog,loadCatalog,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta15';
 import {getAdminSession,adminLogin,adminLogout,watchAdminOrders,updateAdminOrder,deleteOldOrders} from './orders.js?v=20261021-beta15';
 import {printKitchenTicket,checkEpsonConnection} from './printer.js?v=20261021-beta15';
 const $=id=>document.getElementById(id);
