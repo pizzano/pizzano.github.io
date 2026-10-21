@@ -2,9 +2,9 @@
  * The server must enforce roles, CSRF, tenant isolation and atomic transitions.
  * EventSource carries only active orders (max 100) and closes when tab is hidden.
  */
-import {config} from './config.js?v=20261021-beta18';
-import {orderLabels} from './order-status.js?v=20261021-beta18';
-import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta18';
+import {config} from './config.js?v=20261021-beta19';
+import {orderLabels} from './order-status.js?v=20261021-beta19';
+import {printKitchenTicket,checkEpsonConnection,savePrinterHost,currentPrinterHost} from './printer.js?v=20261021-beta19';
 
 const $=id=>document.getElementById(id);
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -37,23 +37,17 @@ async function request(path,{method='GET',body=null,csrf=false}={}){
  const response=await fetch(base()+path,{method,headers,body:body===null?undefined:JSON.stringify(body),credentials:'omit',cache:'no-store'});
  if(response.status===401||response.status===403){
   // An expired session cannot leave the customer list accessible on screen.
-  if(path!=='/sessions'&&path!=='/session')signOut(false);
+  if(path!=='/sessions'&&path!=='/session')resetPrivateSession();
   throw new Error('Ingen gyldig administratortilgang.');
  }
  if(!response.ok)throw new Error('Serveren avviste forespørselen (HTTP '+response.status+').');
  return response.status===204?{}:response.json();
 }
-function showGate(message,login=false){
- $('adminGate').hidden=false;$('workspace').hidden=true;
- $('gateTitle').textContent=login?'Logg inn som ansatt':'Bestillingsadministrasjon';
- $('gateHelp').textContent=message;
- $('loginForm').hidden=!login;
- $('logout').hidden=true;
-}
 function showWorkspace(){
- $('adminGate').hidden=true;$('workspace').hidden=false;$('logout').hidden=false;
  $('shopTitle').textContent=config.restaurant.name;
- renderList();renderDetails();
+ $('workspace').hidden=false;
+ renderList();
+ renderDetails();
 }
 function stopSync(){
  if(stream){stream.abort();stream=null;}
@@ -62,14 +56,13 @@ function stopSync(){
  if(reconnectTimer!==null)clearTimeout(reconnectTimer);reconnectTimer=null;
  healthy=false;connectedState(false);
 }
-function signOut(revoke=true){
- const token=accessToken,csrf=csrfToken;
- stopSync();orders.clear();session=false;csrfToken='';accessToken='';selected='';seenInitial=false;lastList='';
- showGate('Logg inn for å håndtere bestillinger.',Boolean(config.apiBase));
- if(revoke&&config.apiBase&&token)void fetch(base()+'/sessions',{
-  method:'DELETE',credentials:'omit',cache:'no-store',
-  headers:{Authorization:'Bearer '+token,'X-CSRF-Token':csrf}
- }).catch(()=>{});
+function resetPrivateSession(){
+ stopSync();
+ orders.clear();session=false;csrfToken='';accessToken='';selected='';
+ seenInitial=false;lastList='';
+ renderList();renderDetails();
+ $('sidebarStatus').textContent='Administrasjon under oppsett';
+ $('connectionStatus').textContent='Klargjøres';
 }
 function snapshot(data){
  if(!Array.isArray(data))return;
@@ -139,7 +132,7 @@ function renderList(){
    '<strong>'+e(o.customerName||'Ukjent kunde')+'</strong>'+
    '<div class="order-row-meta"><span class="status">'+e(status)+'</span><b>'+money(o.total)+'</b></div>'+
    '<div class="order-row-meta"><span>'+e(o.pickupMode==='scheduled'?'Planlagt':'Snarest')+'</span><span>'+e(fmt(o.createdAt))+'</span></div></button>';
- }).join('')||'<p class="detail-note">Ingen aktive bestillinger.</p>';
+ }).join('')||'<p class="detail-note">'+(session?'Ingen aktive bestillinger.':'Ingen bestillinger er tilgjengelige i visningsmodus.')+'</p>';
  host.scrollTop=scroll;
 }
 function lineMarkup(line){
@@ -170,7 +163,7 @@ function detailButtons(order){
 }
 function renderDetails(){
  const host=$('orderDetails'),o=orders.get(selected);
- if(!o){host.innerHTML='<div class="empty-detail"><span>↗</span><h2>Velg en bestilling</h2><p>Trykk på en bestilling til venstre for å se varer og håndtere den.</p></div>';return;}
+ if(!o){host.innerHTML='<div class="empty-detail"><span>↗</span><h2>Bestillinger</h2><p>Administrasjonssiden er åpen uten innlogging. Private bestillinger krever sikker servertilgang.</p></div>';return;}
  host.innerHTML='<div class="detail-header"><div><h2>'+e(o.customerName||'Bestilling')+'</h2><p>#'+e(o.id)+'</p></div><button type="button" class="detail-close" data-act="close">Lukk</button></div>'+
   '<div class="detail-facts"><div><span>Telefon</span><strong>'+e(o.phone||'–')+'</strong></div><div><span>E-post</span><strong>'+e(o.email||'–')+'</strong></div>'+
   '<div><span>Mottatt</span><strong>'+e(fmt(o.createdAt))+'</strong></div><div><span>Hentetid</span><strong>'+e(fmt(o.scheduledPickupAt||o.estimatedReadyAt))+'</strong></div></div>'+
@@ -270,36 +263,6 @@ async function action(type,o){
  }catch(err){toast(err.message||'Kunne ikke oppdatere bestillingen.');}
  finally{running.delete(o.id);renderDetails();}
 }
-async function prepareTrustedMenu(){
- const status=await request('/menu/status');
- if(status.configured!==true){
-  await request('/menu/import',{method:'POST',csrf:true});
-  toast('Menyen er importert til BETA sin private database.');
- }
-}
-async function checkSession(){
- if(!config.apiBase){showGate('Sikker ordre-API er ennå ikke konfigurert. Ingen bestillinger blir behandlet.');return;}
- if(!accessToken){showGate('Logg inn med restaurantens administratorkonto.',true);return;}
- try{
-  const info=await request('/session');
-  if(info.authenticated!==true||!info.csrfToken)throw new Error('Ingen gyldig sesjon');
-  csrfToken=info.csrfToken;session=true;showWorkspace();void startSync();
- }catch{showGate('Logg inn med en godkjent administratorkonto.',true);}
-}
-$('loginForm').addEventListener('submit',async event=>{
- event.preventDefault();
- $('loginButton').disabled=true;
- try{
-  const info=await request('/sessions',{method:'POST',body:{username:$('username').value,password:$('password').value}});
-  $('password').value='';
-  if(info.authenticated!==true||!info.csrfToken)throw new Error('Ugyldig sesjon fra serveren.');
-  if(typeof info.accessToken!=='string'||info.accessToken.length<25)throw new Error('Serveren mangler autorisert sesjon.');
-  accessToken=info.accessToken;session=true;csrfToken=info.csrfToken;
-  await prepareTrustedMenu();showWorkspace();void startSync();
- }catch(error){toast('Innlogging feilet. '+error.message);}
- finally{$('loginButton').disabled=false;}
-});
-$('logout').addEventListener('click',()=>signOut());
 $('orderList').addEventListener('click',event=>{
  const button=event.target.closest('[data-select]');
  if(!button)return;
@@ -341,4 +304,11 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',stopSync);
 window.addEventListener('pageshow',()=>{if(session)void startSync();});
-void checkSession();
+// Preview UI opens immediately; protected APIs and customer records remain closed.
+showWorkspace();
+$('sidebarStatus').textContent='Administrasjon under oppsett';
+$('connectionStatus').textContent='Klargjøres';
+$('refreshOrders').disabled=true;
+$('refreshOrders').title='Krever sikker ordretilgang';
+$('importMenu').disabled=true;
+$('importMenu').title='Krever sikker ordretilgang';

@@ -104,3 +104,8 @@ Tüm yollar `{apiBase}/v1/tenants/{tenantId}` altındadır; tenant, domain ve re
 - Idempotent sipariş oluşturma, Bearer ile yalnızca siparişin durumunu okuma, admin şifreli oturum, tek REST/SSE gerçek zamanlı aktif liste, onay, süre değiştirme, hazır, teslim, arşiv ve Epson fiş adapteri hazırlandı. Müşteri mesajları için Traccar/Resend kodu eklenmiştir; yalnızca ilk onay SMS'i, belirsiz gönderimler asla körlemesine tekrarlanmaz.
 - **Gerçek servis testi yapılamadı:** Vercel projesinde BETA için gerekli Firebase servis hesabı, ayrı veritabanı, admin kullanıcı ve bildirim sağlayıcı anahtarları yok. Testler sahte Firebase/SMS/e-posta ile çalışır, gerçek alıcılara bildirim gitmez.
 - API kurulum gereksinimleri ve güvenlik sınırları için `BETA/API-DEPLOYMENT.md` dosyasına bak. `BETA/firebase.rules.json` kuralları yalnızca örnektir, canlı veritabanına otomatik uygulanmaz.
+
+## beta19 – åpen visning av BETA-administrasjon
+- Brukernavn/passord og innloggingssperre er midlertidig fjernet fra `BETA/admin.html`, og admin-siden åpnes direkte med Alle/Planlagte, søk og detaljlayout.
+- Inntil en sikker innloggingsløsning er valgt, sender den åpne siden **ingen** forespørsler om private ordre, og knapper for datatilgang/import er deaktivert. Ingen kundeopplysninger eksponeres; ingen falske ordre vises.
+- Backend `api/beta.js` beholder krav om autentisert admin for liste, statusendringer, SMS, e-post og katalogimport. DEMO og Firebase Security Rules ble ikke endret.
