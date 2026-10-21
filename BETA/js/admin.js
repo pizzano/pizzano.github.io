@@ -1,6 +1,6 @@
-import {config} from './config.js?v=20261021-beta15';
-import {catalog,loadCatalog,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta15';
-import {getAdminSession,watchAdminOrders,updateAdminOrder,deleteOldOrders} from './orders.js?v=20261021-beta15';
+import {config} from './config.js?v=20261021-beta17';
+import {catalog,loadCatalog,catalogReady,startCatalogSync,stopCatalogSync} from './catalog.js?v=20261021-beta17';
+import {getAdminSession,watchAdminOrders,updateAdminOrder,deleteOldOrders} from './orders.js?v=20261021-beta17';
 import {printKitchenTicket,checkEpsonConnection} from './printer.js?v=20261021-beta15';
 const $=id=>document.getElementById(id);
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
@@ -259,12 +259,12 @@ async function clickAction(action){
  }
 }
 async function openAdmin(){
- // BETA admin opens directly; live orders stay unavailable without an authorized Firebase session.
+ // Direct Realtime Database connection: admin opens without authentication.
  renderList();
  try{
   session=await getAdminSession();
   if(!session){
-   setConnection('Forhåndsvisning · ordretilgang ikke aktiv');
+   setConnection('Firebase-tilgang ikke tilgjengelig');
    return;
   }
   try{await loadCatalog();startCatalogSync(()=>renderDetail());}catch(error){console.warn('Meny:',error.message);}
@@ -272,8 +272,8 @@ async function openAdmin(){
   await expirySweep();
  }catch(error){
   session=null;
-  setConnection('Forhåndsvisning · Firebase ikke konfigurert');
-  console.info('BETA admin kjører uten live ordretilgang:',error.message);
+  setConnection('Firebase: '+(error?.message||'tilkobling mislyktes'),'error');
+  console.error('Firebase-tilkobling mislyktes:',error.message);
  }
 }
 $('enableSound').addEventListener('click',async()=>{
