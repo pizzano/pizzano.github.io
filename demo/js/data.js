@@ -1540,16 +1540,93 @@ async function reservePizzaReward(record) {
   throw new Error('Pizzabonus er opptatt. Prøv igjen.');
 }
 
-// Confirm just one Firebase order via its ETag. The admin loyalty-sync
-// module writes bonus events independently after this status is saved.
+// Verify a restaurant acceptance against Firebase before claiming success.
+// The regular path keeps the order, pickup estimate and status atomic with ETag.
+// Some RTDB rules reject replacing an entire order with PUT (e.g. protected
+// receipt children). Only in that case, use a guarded status-leaf transaction.
 async function patchConfirmedPizzaOrder(order, changes) {
+  if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
   const at = Number(order.loyaltyConfirmedAt) || Date.now();
-  const url = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
+  const orderPath = `${ORDERS_PATH}/${encodeURIComponent(order.id)}`;
+  const url = `${DB_URL}/${orderPath}.json`;
+  const statusUrl = `${DB_URL}/${orderPath}/status.json`;
+  const expectedTime = Number(changes.statusUpdatedAt) || 0;
+
+  async function checkWrittenOrder(fallback) {
+    // An HTTP 200 from Firebase means the write committed. Check the stored
+    // status as well; a stale local success must not deceive staff or customers.
+    let result = fallback;
+    try {
+      const current = await restGet(orderPath);
+      if (current) result = current;
+    } catch (error) {
+      // Successful Firebase PUT response remains a trustworthy commit receipt
+      // if the follow-up diagnostic GET temporarily fails.
+      if (!fallback || fallback.status !== 'bekreftet') throw error;
+    }
+    if (!result || result.status !== 'bekreftet' ||
+        (expectedTime && Number(result.statusUpdatedAt) < expectedTime)) {
+      throw new Error('Firebase bekreftet ikke ordrestatusen. Oppdater bestillingene.');
+    }
+    order.loyaltyConfirmedAt = Number(result.loyaltyConfirmedAt) || at;
+    window.dispatchEvent(new Event('kol-order-confirmed'));
+    return result;
+  }
+
+  async function confirmWithProtectedFieldFallback(current) {
+    // Only run when an order-level PUT is denied; never downgrade an ETag
+    // conflict to an unconditional status overwrite.
+    if (confirmationExpired(current) || current.status !== 'mottatt') {
+      throw new Error('Svarfristen er ute eller ordren er allerede behandlet.');
+    }
+    const statusResponse = await fetch(statusUrl, {
+      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
+    });
+    if (!statusResponse.ok) {
+      throw new Error('Kunne ikke kontrollere ordrestatustransaksjonen (' + statusResponse.status + ').');
+    }
+    const status = await statusResponse.json();
+    const statusEtag = statusResponse.headers.get('ETag');
+    if (status !== 'mottatt' || !statusEtag) {
+      throw new Error('Ordren er allerede behandlet. Oppdater siden.');
+    }
+
+    const fields = { ...changes, loyaltyConfirmedAt: at };
+    delete fields.status;
+    // Stage pickup details before flipping status, so Apps Script reads the
+    // correct confirmed pickup time when it sees the status transition.
+    try {
+      await restPatch(orderPath, fields);
+    } catch (error) {
+      // Some rules only allow writes directly at a leaf, not a parent PATCH.
+      // In that case stage all required fields individually BEFORE status.
+      if (!/\((400|401|403)\)/.test(String(error.message))) throw error;
+      for (const [key, value] of Object.entries(fields)) {
+        await restPut(orderPath + '/' + encodeURIComponent(key), value);
+      }
+    }
+
+    // The status ETag is tied to the status leaf. A competing employee or the
+    // three-minute timeout wins safely: never overwrite that newer state.
+    const committed = await fetch(statusUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': statusEtag },
+      body: JSON.stringify('bekreftet')
+    });
+    if (committed.status === 412) {
+      throw new Error('Ordren ble endret samtidig. Oppdater siden og kontroller status.');
+    }
+    if (!committed.ok) {
+      throw new Error('Kunne ikke lagre bekreftet status i Firebase (' + committed.status + ').');
+    }
+    return checkWrittenOrder({ ...current, ...fields, status: 'bekreftet' });
+  }
+
   for (let attempt = 0; attempt < 4; attempt++) {
     const response = await fetch(url, {
-      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
+      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
     });
-    if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen.');
+    if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen (' + response.status + ').');
     const current = await response.json();
     if (!current || current.status !== 'mottatt' || confirmationExpired(current)) {
       throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
@@ -1560,17 +1637,17 @@ async function patchConfirmedPizzaOrder(order, changes) {
     const saved = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'if-match': etag },
-      body: JSON.stringify(accepted),
+      body: JSON.stringify(accepted)
     });
     if (saved.status === 412) continue;
-    if (!saved.ok) throw new Error('Kunne ikke godta bestillingen.');
-    order.loyaltyConfirmedAt = at;
-    // Wake only the existing bonus worker. It runs asynchronously and never
-    // makes staff wait for a coupon transaction.
-    window.dispatchEvent(new Event('kol-order-confirmed'));
-    return;
+    if ([400, 401, 403].includes(saved.status)) {
+      return confirmWithProtectedFieldFallback(current);
+    }
+    if (!saved.ok) throw new Error('Firebase nektet å lagre bestillingen (' + saved.status + ').');
+    const written = await saved.json().catch(() => accepted);
+    return checkWrittenOrder(written || accepted);
   }
-  throw new Error('Bestillingen ble endret. Oppdater og prøv igjen.');
+  throw new Error('Bestillingen ble endret samtidig flere ganger. Oppdater og prøv igjen.');
 }
 
 const expiringOrders = new Set();
