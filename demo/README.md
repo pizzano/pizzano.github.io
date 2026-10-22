@@ -8,7 +8,6 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | --- | --- | --- |
 | Kundeapp | `index.html` | Nettbestilling og ordresporing |
 | Restaurantapp | `admin.html` | Bestillinger, produktmeny, restaurant- og printerinnstillinger |
-| Epson test | `test-printer.html` | Test av ePOS-utskrift og kvittering |
 | Privat skriver | `tools/PrivatPrinter.html` | Lokale bilder → 576-pikslers Epson-bitmap; bilder lastes ikke opp |
 | Firebase URL | `config.js` | Database-adressen for bare /demo |
 | Synk / ordre / lagring | `js/data.js` | Felles data, bestillinger og innstillinger |
@@ -17,7 +16,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Epson ePOS | `js/order-printer.js` | 80 mm bildekvit., forhåndsvisning og printerstatus |
 | Små delte moduler | `js/cart-order.js`, `js/loyalty.js`, `js/palette.js` m.fl. | Aktiv logikk importert av kunde eller admin |
 | Design | `css/` | Aktive stilark. Ikke slett én CSS bare fordi den har få regler |
-| Ikoner | `icons/` | PWA-ikoner og restaurantikon |
+| Ikoner | `icons/` | Brukt appikon (`kol-icon-192.png`) og restaurantikon (`restaurant.svg`) |
 | PWA | `manifest.webmanifest`, `service-worker.js`, `js/install.js` | Installering, mellomlagring og nettverksoppførsel |
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
@@ -50,14 +49,13 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 | Verktøy | Fil | Gammel adresse |
 | --- | --- | --- |
-| Ansatt-timelister (lokal utskrift) | `tools/Timelister.html` | `/Timelister.html` (videresendes) |
 | Privat Epson-bildeutskrift | `tools/PrivatPrinter.html` | `/PrivatPrinter.html` (videresendes) |
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
 Ubrukte Vercel SMS-ruter i `api/` og den separate eksperimentelle Firebase Functions-kildemappen `functions/` er fjernet fra GitHub. Rotfilen `firebase.json` ble også fjernet fordi den kun konfigurerte denne utdaterte `functions/`-mappen. Dette endrer **ikke** allerede deployede Firebase Functions utenfor GitHub.
 
-Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
+Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Den gamle, separate `test-printer.html`-siden er allerede fjernet. Aktiv Epson-test/tilkoblingskontroll er i `js/order-printer.js` og restaurantpanelet.
 
 ## Firebase bandwidth improvement (2026-10-15)
 
@@ -83,17 +81,14 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
   API-svar og ukjente nettsider lagres ikke. Gamle cache-versjoner slettes
   ved aktivering av en ny service-worker.
 - Ubrukte, gamle tekstutskrifts-hjelpere er fjernet fra Epson-modulen.
-  Aktiv Canvas-bitmaputskrift og test-printerverktøy er beholdt.
+  Aktiv Canvas-bitmaputskrift og Epson-tilkoblingskontroll i restaurantpanelet er beholdt.
 - Urefererte rotbilder `img/btn.png`, `img/gratis.gif`, `img/load.gif`,
   `img/logom.png` og `img/stemp.jpg` er ryddet bort fra hovedgrenen.
   Filene kan gjenopprettes fra Git-historikken.
-- Legacy URL-er `test.html`, `test/index.html` og `test/admin-panel.html`
-  beholdes som videresendinger slik at bokmerker ikke brytes.
-- Viktig gjenstående jobb: den delte SSE-lyttingen åpner fremdeles
-  `/orders.json`, og godkjenning av ordre bruker fortsatt ETag mot
-  database-roten. Disse kritiske flytene endres **ikke** som del av oppryddingen.
-  For å avgrense lyttere og låse ned kundedata trengs en egen testet
-  autentiserings-/migreringsplan.
+- Viktig: delt ordre-SSE lytter fortsatt til `/orders.json`; godkjenning
+  bruker ETag-beskyttet skriving på den aktuelle ordren med kontrollert
+  reservevei. Disse kritiske flytene endres **ikke** som del av oppryddingen.
+  Datatilgang og autentisering bør gjennomgås i en egen testet plan.
 
 
 ## 100 nyeste bestillinger uten arkiv (2026-10-17)
@@ -177,3 +172,25 @@ Ved feil viser admin en melding og kunden forblir på ventestatus;
 kundens bekreftelsesdialog kontrollerer sin egen ordre, og et SSE-signal
 oppdaterer både kunde og admin. Ikke gjør disse kritiske skrive- og
 sync-funksjonene om som del av SMS-oppryddingen.
+
+## Bruksbasert filopprydding (2026-10-23)
+
+Kontrollerte kjørende innlastinger (`index.html`, `admin.html`),
+JavaScript-importer, stilark, manifest, bilder, lyd og service-worker:
+
+- Slettet ubrukt `icons/kol-icon-512.png` (ikke referert av HTML,
+  webmanifest, JS, CSS eller service-worker). `kol-icon-192.png` og
+  `restaurant.svg` er fremdeles i bruk og ble beholdt.
+- `test-printer.html` var allerede slettet før denne gjennomgangen;
+  fjerna gamle referanser i denne README-filen, Epson-kildekommentarer og
+  `tools/audit-references.mjs`. Ellers ville referansesjekken meldt
+  feil for en fil som ikke skal eksistere.
+- **Beholdt:** alle CSS-filer som lastes av kundesiden/admin, JS-modulene
+  som importeres, SMS-/e-postkildekopier, Epson-skriverlogikk, lydfil,
+  PWA-filer og privat Epson-bildeverktøy med egen rotvideresending.
+- **Beholdt som bevisste manuelle verktøy, ikke runtime-avhengigheter:**
+  `tools/convert_globalfood.py` (framtidig meny-konvertering) og
+  `tools/audit-references.mjs` (integritetskontroll). Disse lastes
+  ikke av kunden, men har fortsatt en vedlikeholdsfunksjon.
+- Ingen endringer i Firebase-bestillinger, SMS, e-post, Epson-kvitteringer,
+  statusflyt eller CSS/HTML-layout inngikk i denne oppryddingen.
