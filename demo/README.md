@@ -162,3 +162,28 @@ før produksjonsbruk; offentlige klienter må **ikke** kunne forfalske
 med en pålitelig serveridentitet før reglene strammes inn; ellers får
 Apps Script HTTP 401/403 og UI-statusen forblir ubekreftet. Verken
 Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
+
+## Bekreftelse som forsvant ved sideoppdatering (2026-10-22)
+
+- Restaurantens «Godta»-handling er nå **server-first**: admin viser aldri
+  en lokal «bekreftet» ordre før Firebase har kvittert for lagringen.
+  Feil blir vist som en tydelig 10-sekunders toast med HTTP/konfliktårsak.
+- Standard bekreftelse bevarer den eksisterende ETag-beskyttede
+  ordreoppdateringen. Hvis sikkerhetsregler avviser hel-ordre-PUT med
+  400/401/403, prøver koden en forsiktig reservevei: hent ETag på
+  `orders/{id}/status`, lagre nødvendige hentetidfelter, og skriv
+  **kun status** med `if-match`. ETag-konflikter (412) medfører IKKE
+  blind statusoverskriving; personalet må kontrollere ordren.
+- Etter vellykket operasjon forsøker koden en ekstra ordrelesing for å
+  bekrefte `status=bekreftet`, og admin oppdaterer visningen med serverdata.
+  Det er ikke en garanti for at kunden mottok SMS/e-post.
+- Kundens bekreftelsesdialog leser allerede egen ordre direkte fra Firebase
+  opptil hvert 4. sekund i de tre minuttene den venter; ingen bred
+  databaseforespørsel eller Vercel-endepunkt er lagt til.
+- Alle aktive klient-/adminmoduler deler nå samme versjonerte import av
+  `js/data.js`, og service-worker-cachen er oppdatert.
+- **Test før full drift:** Legg inn én ny testordre og godta innen 3 minutter.
+  Bekreft `orders/{id}/status=bekreftet` i Firebase, at kunden får
+  «Bestillingen er bekreftet», og at ordren ikke kommer tilbake som
+  «Mottatt» når admin lastes på nytt. Ved rødt feilmeldingsvarsel,
+  noter meldingen og kontroller Firebase RTDB-reglene.
