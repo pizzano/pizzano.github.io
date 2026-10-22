@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173b2c">
+<title>KØL — SMS-telefon, tilkoblingskontroll</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light;color:#183526;background:#f4f8f6}
+*{box-sizing:border-box}body{margin:0;padding:28px 16px;min-height:100svh}
+main{margin:0 auto;max-width:460px;background:#fff;border:1px solid #dce7de;border-radius:23px;padding:25px;box-shadow:0 18px 45px #223a2d14}
+h1{font-size:1.5rem;margin:0 0 6px}.sub{color:#60756a;margin:0 0 22px;font-size:.96rem}
+.indicator{display:flex;align-items:center;gap:12px;border-radius:13px;background:#fff5e4;color:#76551d;padding:15px;margin-bottom:16px;font-weight:750}
+.indicator .dot{height:14px;width:14px;border-radius:50%;background:#dba04b;flex-shrink:0}
+.indicator.is-on{background:#e2f8ec;color:#08663a}.indicator.is-on .dot{background:#149457}
+.indicator.is-error{background:#fff0ef;color:#ad352d}.indicator.is-error .dot{background:#d6574d}
+button{width:100%;padding:15px;border:0;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+#start{background:#0c8750;color:white}#stop{background:#eef3f0;color:#204c35;margin-top:10px}
+#stop[hidden],#start[hidden]{display:none}#detail{color:#52675d;font-size:.91rem;line-height:1.5;margin:17px 0 10px;min-height:42px}
+.help{border-top:1px solid #dfe9e2;padding-top:15px;color:#54665b;font-size:.87rem;line-height:1.6}
+small{display:block;text-align:center;color:#76857c;margin:14px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>📱 KØL SMS-telefon</h1>
+<p class="sub">Kontroller nettforbindelsen til Android-telefonen som kjører Traccar SMS Gateway.</p>
+<div class="indicator" id="indicator" role="status" aria-live="polite"><span class="dot"></span><span id="status">Kontrollen er ikke startet</span></div>
+<button id="start" type="button">Start telefonkontroll</button>
+<button id="stop" type="button" hidden>Stopp telefonkontroll</button>
+<p id="detail">Åpne denne siden på selve SMS-telefonen og trykk Start.</p>
+<div class="help">
+<strong>Viktig:</strong> Denne siden sender en liten nettstatus til Firebase hvert 15. sekund når den er synlig.
+Hold denne siden åpen og skjermen på. Nettlesere kan stanse bakgrunnsoppgaver når skjermen låses.
+Ingen SMS, telefonnumre eller passord overføres. Grønt lys i restaurantpanelet bekrefter kun
+telefonens nettforbindelse og at SMS-automatiseringen kjører — ikke at Traccar-appen eller SIM-kortet har sendt en SMS.
+</div>
+<small>KØL Grill & Pizza · Firebase Realtime Database</small>
+</main>
+<script>
+(() => {
+'use strict';
+// This is an operational, not cryptographic, presence signal. The RTDB path
+// must eventually be protected by authenticated device-only write rules.
+const DB_URL = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
+const HEARTBEAT_URL = DB_URL + '/smsDeviceHeartbeat.json';
+const INTERVAL_MS = 15000;
+const KEY = 'kol_sms_phone_monitor_enabled_v1';
+const indicator = document.getElementById('indicator');
+const statusNode = document.getElementById('status');
+const detail = document.getElementById('detail');
+const start = document.getElementById('start');
+const stop = document.getElementById('stop');
+let enabled = false;
+let sending = false;
+let timer = null;
+let wakeLock = null;
+let lastOk = 0;
+const view = (state, text, explanation) => {
+  indicator.className = 'indicator' + (state === 'on' ? ' is-on' : state === 'error' ? ' is-error' : '');
+  statusNode.textContent = text;
+  detail.textContent = explanation;
+};
+const remember = value => { try { localStorage.setItem(KEY, value ? '1' : '0'); } catch (_) {} };
+const requestWakeLock = async () => {
+  if (!('wakeLock' in navigator) || document.hidden) return;
+  try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {}
+};
+const ping = async online => {
+  if (sending) return;
+  if (online && (!enabled || document.hidden)) return;
+  if (navigator.onLine === false && online) {
+    view('error', 'Ingen internettforbindelse', 'Telefonen er frakoblet. SMS kan bli stående i Traccar-køen.');
+    return;
+  }
+  sending = true;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8500);
+    let response;
+    try {
+      response = await fetch(HEARTBEAT_URL, {
+        method: 'PUT', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'kol-android-heartbeat',
+          checkedAt: { '.sv': 'timestamp' },
+          online: online === true
+        }),
+        signal: controller.signal
+      });
+    } finally { clearTimeout(timeout); }
+    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
+    if (online && enabled) {
+      lastOk = Date.now();
+      view('on','Telefon tilkoblet',
+        'Firebase mottok telefonens signal. Siste vellykkede kontroll: ' +
+        new Date(lastOk).toLocaleTimeString('nb-NO'));
+    } else if (!online) {
+      view('', 'Telefonkontroll stoppet', 'Start kontrollen for å oppdatere statusen igjen.');
+    }
+  } catch (error) {
+    if (online && enabled) view('error','Kan ikke bekrefte telefonen',
+      'Firebase svarte ikke: ' + (error?.message || 'nettverksfeil') + '. Sjekk nett og databaseregler.');
+  } finally { sending = false; }
+};
+const schedule = () => {
+  if (timer) clearInterval(timer);
+  timer = window.setInterval(() => {
+    if (enabled && !document.hidden) void ping(true);
+  }, INTERVAL_MS);
+};
+const begin = async () => {
+  enabled = true;
+  remember(true);
+  start.hidden = true;
+  stop.hidden = false;
+  view('', 'Kontrollerer...', 'Sender tilkoblingskontroll til Firebase.');
+  await requestWakeLock();
+  schedule();
+  void ping(true);
+};
+const halt = async () => {
+  enabled = false;
+  remember(false);
+  if (timer) clearInterval(timer);
+  timer = null;
+  if (wakeLock) { try { await wakeLock.release(); } catch (_) {} wakeLock = null; }
+  start.hidden = false;
+  stop.hidden = true;
+  void ping(false);
+};
+start.addEventListener('click', () => { void begin(); });
+stop.addEventListener('click', () => { void halt(); });
+document.addEventListener('visibilitychange', () => {
+  if (!enabled) return;
+  if (document.hidden) {
+    if (timer) clearInterval(timer);
+    timer = null;
+    view('', 'Venter – siden er i bakgrunnen', 'Telefonen må ha siden synlig for pålitelig oppdatering.');
+  } else {
+    void requestWakeLock();
+    schedule();
+    void ping(true);
+  }
+});
+window.addEventListener('online', () => { if (enabled && !document.hidden) void ping(true); });
+window.addEventListener('offline', () => {
+  if (enabled) view('error','Ingen internettforbindelse','Kontrollen blir rød i restaurantpanelet etter ca. 45 sekunder.');
+});
+if (localStorage.getItem(KEY) === '1') {
+  enabled = true;
+  start.hidden = true; stop.hidden = false;
+  schedule(); void ping(true);
+  view('', 'Kontrollerer...', 'Sjekker nettforbindelsen etter at siden ble åpnet.');
+}
+})();
+</script>
+</body>
+</html>
