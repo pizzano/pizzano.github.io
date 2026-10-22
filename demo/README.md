@@ -187,3 +187,42 @@ Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
   «Bestillingen er bekreftet», og at ordren ikke kommer tilbake som
   «Mottatt» når admin lastes på nytt. Ved rødt feilmeldingsvarsel,
   noter meldingen og kontroller Firebase RTDB-reglene.
+
+
+## SMS-telefonens nettstatus, uten Vercel (2026-10-22)
+
+- **Viktig skille:** `smsHealth` beviser bare at Google Apps Script sjekker
+  Firebase. At Traccar Cloud godtar en SMS-forespørsel beviser **ikke**
+  at Android-telefonen har mottatt forespørselen eller sendt SMS på mobilnettet.
+  Admin markerer derfor slike ordre som «SMS-forespørsel godtatt», ikke «SMS sendt».
+- Admin kontrollerer nå **to uavhengige opplysninger** fra RTDB hvert 10. sekund:
+  - `/smsHealth`: vellykket LIVE-poll fra Google Apps Script (maks 3 minutter).
+  - `/smsDeviceHeartbeat`: fersk tilkoblingsmelding fra selve Android-telefonen
+    (maks **45 sekunder**, kilde `kol-android-heartbeat`).
+- SMS-lampen blir grønn **bare** når begge kontrollene er ferske.
+  Ved manglende oppsett er den gul/ubekreftet; etter tidligere registrert
+  telefon som mister forbindelsen blir den rød. Dette er **nettstatus**,
+  ikke bekreftelse på at Traccar-appen er aktiv eller at SMS er levert.
+- Telefonen kan bruke `/demo/tools/sms-gateway-monitor.html` som en
+  **midlertidig synlig nett-kontrollside**. Åpne adressen i Chrome **på
+  SMS-telefonen**, trykk «Start telefonkontroll», og la skjermen være på.
+  Siden skriver hvert 15. sekund en anonym og minimal Firebase-oppdatering,
+  med **Firebase-serverens tidsstempel**. Den sender ingen SMS.
+  Når telefonens internett blir borte, går lampen fra grønt til rødt innen
+  ca. 45–55 sekunder så lenge adminpanelet er synlig og på nett.
+- Når telefonen låses eller nettleseren havner i bakgrunnen kan heartbeat stoppe.
+  **Dette er ikke en pålitelig 24/7 Android-overvåking i bakgrunnen**.
+  For slik drift trengs en Android-tjeneste/automatisering (for eksempel
+  Tasker/MacroDroid med sikkert autentisert heartbeat) eller en SMS-gateway
+  som tilbyr dokumentert enhetsstatus.
+- **Sikkerhet:** Denne enkle kontrollsiden sender i dag via REST til den
+  eksisterende databasen, uten egen innlogging. Oppdateringen inneholder
+  ingen telefonnumre/hemmeligheter, men en offentlig skrivbar RTDB
+  lar uvedkommende forfalske statusen. Lampen må derfor regnes som en
+  driftsindikator, **ikke en sikkerhetskontroll**. Før permanent drift må
+  heartbeat-skriving låses til en autentisert enhet/tjeneste, og
+  `smsHealth`/`smsReceipts` beskyttes av RTDB-regler.
+- Test: åpne kontrollsiden på SMS-telefonen, slå på overvåking, kontroller
+  grønne lys i admin, slå av både Wi-Fi og mobildata på telefonen. Vent opptil
+  ca. ett minutt. Lampen skal bli rød. Slå på internett igjen og bekreft at
+  tilkoblingsmeldingen oppdateres. **Ingen testordre eller SMS er nødvendig.**
