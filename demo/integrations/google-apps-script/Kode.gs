@@ -3,6 +3,7 @@
  * Trigger: ~every 1 minute, no shop PC required.
  * SMS via Traccar Cloud -> Android phone with ice SIM.
  * Free Apps Script quotas apply. Not a guaranteed real-time service.
+ * Sends via Traccar; a cloud acknowledgement does not prove handset delivery.
  *
  * PRIVATE script properties (Project Settings > Script properties):
  *   TRACCAR_TOKEN = <rotated Traccar Cloud token>
@@ -369,46 +370,6 @@ function setupLiveSms() {
   console.log('LIVE SMS: kun første bekreftelse med hentetid. Ingen ekstra SMS ved klar/Endre tid. Maks ' + KOL_SMS.maxPerDay + ' per dag.');
 }
 
-/** Optional ONE-TIME migration of previously confirmed SMS receipts.
- * Run manually after updating the live Apps Script source. Bounded to the
- * latest 100 orders and at most 50 receipt writes per invocation.
- * No SMS is sent by this function, and no attempted/failed events are copied.
- */
-function syncRecentSmsReceiptsToFirebase() {
-  const url = KOL_SMS.databaseUrl + '/orders.json?orderBy=' +
-    encodeURIComponent(JSON.stringify('$key')) + '&limitToLast=100';
-  const response = UrlFetchApp.fetch(url, {method:'get', muteHttpExceptions:true});
-  if (response.getResponseCode() !== 200) {
-    throw new Error('Firebase receipt migration read failed (HTTP ' + response.getResponseCode() + ')');
-  }
-  const orders = JSON.parse(response.getContentText() || 'null') || {};
-  const props = kolProps_();
-  const kinds = [
-    ['accepted', id => 'KOL_SENT_' + id + '_accepted'],
-    ['ready', id => 'KOL_SENT_' + id + '_ready'],
-    ['estimateUpdated', id => 'KOL_EST_NOTICE_' + id],
-  ];
-  let written = 0;
-  for (const id of Object.keys(orders)) {
-    if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) continue;
-    const order = orders[id];
-    if (!order || typeof order !== 'object') continue;
-    for (const [kind, getKey] of kinds) {
-      if (written >= 50) {
-        console.log('SMS receipt migration: wrote 50; run again if more remain.');
-        return;
-      }
-      if (order.smsReceipts && order.smsReceipts[kind]) continue;
-      const event = kolPropertyJson_(props, getKey(id));
-      const at = Number(event?.at);
-      if (event?.state !== 'sent' || !Number.isSafeInteger(at) || at < Number(order.createdAt || 0)) continue;
-      kolSmsReceipt_(id, kind, at);
-      written += 1;
-    }
-  }
-  console.log('SMS receipt migration completed; receipts written: ' + written);
-}
-
 /** One-click emergency stop. The token stays private. */
 function stopSms() {
   const props = kolProps_();
@@ -417,52 +378,6 @@ function stopSms() {
     if (trigger.getHandlerFunction() === 'pollOrdersForSms') ScriptApp.deleteTrigger(trigger);
   });
   console.log('SMS automation disabled.');
-}
-
-/** Read-only status. Does not send messages or reveal any phone/token.
- * An optional receiptIds query returns only already-confirmed SMS submits.
- * Receipt IDs are opaque order IDs, not telephone numbers. Never return
- * attempts/failures as successful. No messaging actions are exposed here.
- */
-function doGet(e) {
-  const props = kolProps_();
-  const ids = String(e?.parameter?.receiptIds || '').trim();
-  if (ids) {
-    const parsed = ids.split(',').slice(0, 40);
-    const receipts = {};
-    for (const id of new Set(parsed)) {
-      if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) continue;
-      const accepted = kolPropertyJson_(props, 'KOL_SENT_' + id + '_accepted');
-      const ready = kolPropertyJson_(props, 'KOL_SENT_' + id + '_ready');
-      const estimate = kolPropertyJson_(props, 'KOL_EST_NOTICE_' + id);
-      const at = event => event && event.state === 'sent' && Number.isSafeInteger(Number(event.at))
-        ? Number(event.at) : null;
-      receipts[id] = {
-        acceptedAt: at(accepted),
-        readyAt: at(ready),
-        estimateUpdatedAt: at(estimate),
-      };
-    }
-    return ContentService.createTextOutput(JSON.stringify({ receipts }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  const lastPoll = String(props.getProperty('KOL_LAST_POLL_OK') || '');
-  const lastSms = String(props.getProperty('KOL_LAST_SMS_OK') || '');
-  const mode = String(props.getProperty('KOL_MODE') || 'OFF');
-  const age = Date.now() - Date.parse(lastPoll);
-  const lastSmsAge = Date.now() - Date.parse(lastSms);
-  const data = {
-    // Green is reserved for a live, configured sender that has actually
-    // submitted SMS recently, not merely a working Google trigger.
-    smsEnabled: mode === 'LIVE' && KOL_SMS.allowLiveMode,
-    gatewayOnline: mode === 'LIVE' && KOL_SMS.allowLiveMode
-      && Number.isFinite(age) && age < 180000
-      && Number.isFinite(lastSmsAge) && lastSmsAge < 24 * 3600000,
-    lastGatewayCheckAt: lastPoll,
-    testMode: mode === 'TEST',
-  };
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function diagnoseSms() {
