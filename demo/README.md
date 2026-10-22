@@ -272,3 +272,28 @@ til grønn SMS-lampe:
   Den trengs ikke til daglig drift. Ikke start den på PC.
 - Sending, Traccar-token, Apps Script-utløsere, SMS-kvitteringer,
   e-post og Epson-utskrift er uendret av denne oppdateringen.
+
+
+## SMS-statushistorikk og forskjellen mellom Traccar og poller (2026-10-23)
+
+GitHub-versjonen fra før `fcf9426970d223d500a09a31fdb02905b9ca15b2`
+hadde SMS-grønnlogikk i admin som krevde `smsEnabled=true`,
+`gatewayOnline=true` og at `lastGatewayCheckAt` var under 90 sekunder gammel.
+Vercel `api/sms-status.js` videreformidlet disse feltene fra Apps Script.
+
+`gatewayOnline` i lagret `Kode.gs` er imidlertid beregnet ut fra LIVE,
+fersk *Apps Script-poll* og at `KOL_LAST_SMS_OK` er yngre enn 24 timer.
+Det er en kvittering for en tidligere godkjent Traccar-forespørsel, ikke
+et uavhengig sanntidssignal fra Android. Dette kan ikke sikkert bekrefte
+at telefonens internett ble slått av/på uten nye SMS-forsøk. Det faktiske
+live Apps Script-prosjektet kan tidligere ha vært annerledes enn koden
+i GitHub, og må sammenlignes før man hevder nøyaktig gammel oppførsel.
+
+**Nåværende sikker UI-regel:** Fersk Apps Script LIVE uten validert v2
+Android-nettsignal = GUL/ukjent, ikke grønn «SMS-telefon tilkoblet».
+Manglende/forsinket Android-signal etter at v2 har vært aktiv = RØD.
+Grønn krever både fersk poll og fersk Android-nettrapport. Den valgfri
+monitoren er en forgrunns-nettside og er ikke egnet for stabil, skjermlåst
+døgnkontroll. Permanent funksjon forutsetter autentisert enhets-heartbeat
+fra bakgrunnstjeneste eller et dokumentert status-API fra SMS Gateway,
+uten Vercel og uten falske leveringsløfter.
