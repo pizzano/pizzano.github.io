@@ -2387,14 +2387,13 @@ function renderOrderDetail(orderId) {
 }
 
 
-/* The SMS poller and the Android phone are independent.
- * A successful Apps Script/Traccar cloud response is NOT evidence that the
- * Android SMS Gateway app received, sent, or delivered a message.
- * The status dot may be green only with a recent phone-origin heartbeat.
+/* Vercel-free version of the original SMS automation status indicator.
+ * Google Apps Script writes /smsHealth after a successful Firebase order poll.
+ * Green proves only LIVE + recent poll (3 minutes), NOT phone connectivity,
+ * Traccar app operation, actual SMS submission or handset delivery.
+ * Admin can run on any computer/tablet; no phone browser page is required.
  */
 let smsStatusFetching = false;
-const SMS_PHONE_MAX_AGE_MS = 45000;
-
 function displaySmsStatus(mode, text, help) {
   const badge = document.getElementById('ordersSmsStatus');
   if (!badge) return;
@@ -2406,40 +2405,25 @@ function displaySmsStatus(mode, text, help) {
   badge.setAttribute('aria-label', 'SMS: ' + text);
 }
 
-function classifySmsHealth(health, phone, now = Date.now()) {
+function classifySmsHealth(health, now = Date.now()) {
   if (!health || health.source !== 'apps-script-sms-poller') {
-    return ['pending', 'SMS-automatisering ukjent',
-      'Ingen bekreftet kontroll fra Apps Script i Firebase.'];
+    return ['pending', 'SMS-status ubekreftet',
+      'Ingen kontroll fra Apps Script er registrert i Firebase ennå.'];
   }
   if (health.liveConfigured !== true) {
     return ['error', 'SMS ikke LIVE',
-      'SMS-polleren er slått av eller er i testmodus.'];
+      'SMS-automatiseringen er slått av eller står i TEST-modus.'];
   }
-  const pollAge = now - Number(health.checkedAt || 0);
-  if (health.status !== 'ok' || !Number.isFinite(pollAge) ||
-      pollAge < -60000 || pollAge > 180000) {
-    return ['error', 'SMS-poller frakoblet',
-      'Google Apps Script har ikke oppdatert Firebase de siste 3 minuttene.'];
+  const checkedAt = Number(health.checkedAt);
+  const age = now - checkedAt;
+  if (health.status === 'ok' && Number.isFinite(checkedAt) && checkedAt > 0
+      && age >= -60000 && age < 180000) {
+    return ['active', 'SMS aktiv',
+      'LIVE og siste vellykkede Firebase-kontroll innen 3 minutter. '
+      + 'Telefonens nettforbindelse og faktisk SMS-levering er ikke verifisert.'];
   }
-  if (!phone || phone.source !== 'kol-android-heartbeat' ||
-      phone.monitorVersion !== 2 || phone.platform !== 'android' ||
-      !Number.isFinite(Number(phone.checkedAt)) || Number(phone.checkedAt) <= 0) {
-    return ['pending', 'SMS-telefon ikke kontrollert',
-      'Apps Script er aktivt, men det finnes ikke et gyldig Android-signal. ' +
-      'En PC kan ikke bekrefte SMS-telefonen. Åpne /demo/tools/sms-gateway-monitor.html på Android-telefonen.'];
-  }
-  const phoneAge = now - Number(phone.checkedAt);
-  if (phone.online !== true || phoneAge > SMS_PHONE_MAX_AGE_MS ||
-      phoneAge < -10000) {
-    return ['error', 'SMS-telefon frakoblet',
-      'Ingen fersk tilkobling fra Android-telefonen (siste kontroll ' +
-      (phoneAge >= 0 ? Math.ceil(phoneAge / 1000) + ' sek siden' : 'ugyldig') +
-      '). SMS kan bli liggende i Traccar-køen.'];
-  }
-  return ['active', 'SMS-telefon på nett',
-    'Apps Script kjører og Android-telefonen svarte for ' +
-    Math.max(0, Math.floor(phoneAge / 1000)) + ' sek siden. ' +
-    'Kun Android-nettleserens nett er bekreftet. Traccar-appen, SIM-sending og SMS-levering er ikke kontrollert.'];
+  return ['error', 'SMS-kontroll frakoblet',
+    'Ingen vellykket LIVE-kontroll fra Apps Script de siste 3 minuttene.'];
 }
 
 async function refreshSmsStatus() {
@@ -2450,26 +2434,14 @@ async function refreshSmsStatus() {
   if (smsStatusFetching || document.hidden) return;
   smsStatusFetching = true;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
-    let responses;
-    try {
-      responses = await Promise.all(['smsHealth', 'smsDeviceHeartbeat'].map(
-        path => fetch(DB_URL + '/' + path + '.json?_=' + Date.now(), {
-          method: 'GET', cache: 'no-store', signal: controller.signal
-        })
-      ));
-      if (responses.some(response => !response.ok)) {
-        throw new Error('Firebase SMS health response failed');
-      }
-      const [health, phone] = await Promise.all(responses.map(r => r.json()));
-      displaySmsStatus(...classifySmsHealth(health, phone));
-    } finally {
-      clearTimeout(timeout);
-    }
+    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
+      method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7000)
+    });
+    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
+    displaySmsStatus(...classifySmsHealth(await response.json()));
   } catch (_) {
     displaySmsStatus('error', 'SMS-kontroll frakoblet',
-      'Kunne ikke lese SMS-status fra Firebase.');
+      'Kunne ikke hente SMS-kontrollstatus fra Firebase.');
   } finally {
     smsStatusFetching = false;
   }
