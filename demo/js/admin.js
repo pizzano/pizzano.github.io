@@ -2387,13 +2387,15 @@ function renderOrderDetail(orderId) {
 }
 
 
-/* Vercel-free version of the original SMS automation status indicator.
- * Google Apps Script writes /smsHealth after a successful Firebase order poll.
- * Green proves only LIVE + recent poll (3 minutes), NOT phone connectivity,
- * Traccar app operation, actual SMS submission or handset delivery.
- * Admin can run on any computer/tablet; no phone browser page is required.
+/* SMS health has two independent signals:
+ * (1) Apps Script LIVE + a recent successful Firebase poll.
+ * (2) An OPTIONAL recent heartbeat from the Android SMS phone.
+ * Neither proves Traccar SMS transmission or recipient delivery.
+ * Never turn the SMS indicator green based on Apps Script alone.
  */
 let smsStatusFetching = false;
+const SMS_PHONE_HEARTBEAT_MAX_AGE_MS = 45000;
+
 function displaySmsStatus(mode, text, help) {
   const badge = document.getElementById('ordersSmsStatus');
   if (!badge) return;
@@ -2405,25 +2407,40 @@ function displaySmsStatus(mode, text, help) {
   badge.setAttribute('aria-label', 'SMS: ' + text);
 }
 
-function classifySmsHealth(health, now = Date.now()) {
+function classifySmsHealth(health, phone, now = Date.now()) {
   if (!health || health.source !== 'apps-script-sms-poller') {
-    return ['pending', 'SMS-status ubekreftet',
-      'Ingen kontroll fra Apps Script er registrert i Firebase ennå.'];
+    return ['pending', 'SMS-status ukjent',
+      'Ingen bekreftet Apps Script-kontroll registrert i Firebase.'];
   }
   if (health.liveConfigured !== true) {
-    return ['error', 'SMS ikke LIVE',
-      'SMS-automatiseringen er slått av eller står i TEST-modus.'];
+    return ['error', 'SMS-automatisering ikke LIVE',
+      'Apps Script er stoppet eller kjører i TEST-modus.'];
   }
-  const checkedAt = Number(health.checkedAt);
-  const age = now - checkedAt;
-  if (health.status === 'ok' && Number.isFinite(checkedAt) && checkedAt > 0
-      && age >= -60000 && age < 180000) {
-    return ['active', 'SMS aktiv',
-      'LIVE og siste vellykkede Firebase-kontroll innen 3 minutter. '
-      + 'Telefonens nettforbindelse og faktisk SMS-levering er ikke verifisert.'];
+  const pollAge = now - Number(health.checkedAt || 0);
+  if (health.status !== 'ok' || !Number.isFinite(pollAge) ||
+      pollAge < -60000 || pollAge >= 180000) {
+    return ['error', 'SMS-automatisering frakoblet',
+      'Apps Script har ikke kontrollert Firebase de siste tre minuttene.'];
   }
-  return ['error', 'SMS-kontroll frakoblet',
-    'Ingen vellykket LIVE-kontroll fra Apps Script de siste 3 minuttene.'];
+  // This Android heartbeat is optional, not installed on every SMS handset.
+  // Ignore all legacy PC-generated records and malformed/future timestamps.
+  const validDevice = phone?.source === 'kol-android-heartbeat' &&
+    phone?.monitorVersion === 2 && phone?.platform === 'android' &&
+    Number.isFinite(Number(phone.checkedAt)) && Number(phone.checkedAt) > 0;
+  if (!validDevice) {
+    return ['pending', 'SMS-telefon ikke kontrollert',
+      'Apps Script er LIVE og leser Firebase, men vi vet ikke om '
+      + 'SMS-telefonen har internett eller om Traccar sender.'];
+  }
+  const phoneAge = now - Number(phone.checkedAt);
+  if (phone.online !== true || phoneAge < -10000 ||
+      phoneAge > SMS_PHONE_HEARTBEAT_MAX_AGE_MS) {
+    return ['error', 'SMS-telefon ikke tilkoblet',
+      'Apps Script er LIVE, men siste Android-nettsignal er for gammelt eller deaktivert.'];
+  }
+  return ['active', 'SMS-telefonens nett kontrollert',
+    'Apps Script er LIVE, og en Android-nettleser svarte nylig. '
+    + 'Traccar-appen, faktisk sending og SMS-levering er fortsatt ikke bekreftet.'];
 }
 
 async function refreshSmsStatus() {
@@ -2434,14 +2451,24 @@ async function refreshSmsStatus() {
   if (smsStatusFetching || document.hidden) return;
   smsStatusFetching = true;
   try {
-    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
-      method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7000)
-    });
-    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
-    displaySmsStatus(...classifySmsHealth(await response.json()));
+    const read = async path => {
+      const response = await fetch(DB_URL + '/' + path + '.json?_=' + Date.now(), {
+        method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7000)
+      });
+      if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
+      return response.json();
+    };
+    // Missing/unreadable optional handset monitoring must not conceal
+    // the valid Apps Script status. It simply means "unknown" (amber).
+    const [healthResult, phoneResult] = await Promise.allSettled([
+      read('smsHealth'), read('smsDeviceHeartbeat')
+    ]);
+    if (healthResult.status !== 'fulfilled') throw healthResult.reason;
+    const phone = phoneResult.status === 'fulfilled' ? phoneResult.value : null;
+    displaySmsStatus(...classifySmsHealth(healthResult.value, phone));
   } catch (_) {
     displaySmsStatus('error', 'SMS-kontroll frakoblet',
-      'Kunne ikke hente SMS-kontrollstatus fra Firebase.');
+      'Kunne ikke kontrollere SMS-automatiseringen via Firebase.');
   } finally {
     smsStatusFetching = false;
   }
