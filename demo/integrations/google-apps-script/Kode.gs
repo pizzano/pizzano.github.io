@@ -129,6 +129,92 @@ function kolApiSend_(to, message, token) {
   return true;
 }
 
+/**
+ * Write provider-accepted SMS evidence directly to the SAME RTDB as /demo/.
+ * Only the server-side Apps Script sends SMS; browser code never sends.
+ * If this write fails after sending, retain Script Properties 'sent' and
+ * backfill a missing receipt on a later poll; NEVER resend the SMS.
+ */
+function kolFirebasePut_(path, data) {
+  const url = KOL_SMS.databaseUrl + '/' + path + '.json';
+  const result = UrlFetchApp.fetch(url, {
+    method:'put', contentType:'application/json',
+    payload:JSON.stringify(data), muteHttpExceptions:true
+  });
+  if (result.getResponseCode() !== 200) {
+    throw new Error('Firebase receipt/status HTTP ' + result.getResponseCode());
+  }
+}
+
+function kolPublishSmsReceipt_(orderId, order, sentAt) {
+  const id = String(orderId || '');
+  const when = Number(sentAt) || 0;
+  if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !Number.isSafeInteger(when)
+      || when <= 0 || when < (Number(order.createdAt) || 0)) {
+    throw new Error('Invalid accepted SMS receipt');
+  }
+  kolFirebasePut_('orders/' + encodeURIComponent(id) + '/smsReceipts/accepted', {
+    provider:'Traccar', state:'accepted', sentAt:when,
+    statusUpdatedAt:Number(order.statusUpdatedAt) || 0
+  });
+}
+
+function kolPublishSmsHealth_(mode, at) {
+  kolFirebasePut_('smsHealth', {
+    source:'apps-script-sms-poller',
+    checkedAt:Number(at) || Date.now(),
+    lastSuccessfulPollAt:new Date(at).toISOString(),
+    liveConfigured:mode === 'LIVE' && KOL_SMS.allowLiveMode,
+    pollHealthy:true
+  });
+}
+
+/**
+ * One-time migration before turning off Vercel: migrate only the previous
+ * successful Traccar submission records. It never sends an SMS.
+ * Keep live Script Properties untouched so duplicate prevention is preserved.
+ * Preview first; then run the publish function in the SAME Apps Script project.
+ */
+function kolMigrateSmsReceipts_(write) {
+  const url = KOL_SMS.databaseUrl + '/orders.json?orderBy='
+    + encodeURIComponent(JSON.stringify('$key')) + '&limitToLast=' + KOL_SMS.recentOrders;
+  const response = UrlFetchApp.fetch(url, {method:'get', muteHttpExceptions:true});
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Cannot read orders for receipt migration: HTTP ' + response.getResponseCode());
+  }
+  const orders = JSON.parse(response.getContentText() || 'null') || {};
+  const props = kolProps_();
+  let eligible = 0;
+  let existing = 0;
+  let migrated = 0;
+  let failed = 0;
+  for (const [id, order] of Object.entries(orders)) {
+    if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !order || typeof order !== 'object') continue;
+    if (order.smsReceipts?.accepted) { existing++; continue; }
+    const receipt = kolPropertyJson_(props, 'KOL_SENT_' + id + '_accepted');
+    if (receipt?.state !== 'sent') continue;
+    const at = Number(receipt.at || 0);
+    if (!Number.isSafeInteger(at) || at <= 0 || at < (Number(order.createdAt) || 0)) continue;
+    eligible++;
+    if (!write) continue;
+    try {
+      kolPublishSmsReceipt_(id, order, at);
+      migrated++;
+    } catch (error) {
+      failed++;
+      console.error('Receipt migration failed for ' + kolShortCode_(id) + ': ' + error.message);
+    }
+  }
+  console.log('SMS receipt migration: write=' + Boolean(write)
+    + ', eligible=' + eligible + ', alreadyStored=' + existing
+    + ', migrated=' + migrated + ', failed=' + failed);
+  if (failed) throw new Error('Some SMS receipts could not be written to Firebase.');
+  return {eligible:eligible, existing:existing, migrated:migrated, failed:failed};
+}
+
+function previewSmsReceiptMigration() { return kolMigrateSmsReceipts_(false); }
+function publishSmsReceiptMigration() { return kolMigrateSmsReceipts_(true); }
+
 function kolFetchRecentOrders_() {
   // Firebase index: /orders .indexOn ["statusUpdatedAt"].
   // Read only orders with a recently modified status; do not download
@@ -204,10 +290,14 @@ function pollOrdersForSms() {
     const now = Date.now();
     const data = kolFetchRecentOrders_();
     props.setProperty('KOL_LAST_POLL_OK', new Date().toISOString());
+    // This is a sender heartbeat, NOT a promise of carrier delivery.
+    try { kolPublishSmsHealth_(mode, now); }
+    catch (healthErr) { console.error('SMS Firebase health write: ' + healthErr.message); }
     const today = Utilities.formatDate(new Date(now), 'Europe/Oslo', 'yyyyMMdd');
     kolPurgeOldCounters_(props, today);
     let todayCount = kolTodayCounter_(props, today);
     let sent = 0;
+    let receiptsBackfilled = 0;
 
     const orders = Object.keys(data).map(id => ({ id: id, order: data[id] }));
     orders.sort((x,y) => Number(x.order.statusUpdatedAt || 0) - Number(y.order.statusUpdatedAt || 0));
@@ -217,6 +307,18 @@ function pollOrdersForSms() {
       const kind = kolEvent_(order, activatedAt, now);
       // Historical state/ScriptProperties use _accepted; don't rename the key.
       const eventKey = 'KOL_SENT_' + item.id + '_accepted';
+      // Migrate accepted receipts from existing Script Properties with no
+      // network SMS call. Cap writes to avoid extra Firebase load.
+      const previousReceipt = kolPropertyJson_(props, eventKey);
+      if (previousReceipt && previousReceipt.state === 'sent'
+          && !order.smsReceipts?.accepted && receiptsBackfilled < 12) {
+        receiptsBackfilled++;
+        try { kolPublishSmsReceipt_(item.id, order, previousReceipt.at); }
+        catch (receiptErr) {
+          console.error('SMS receipt backfill for ' + kolShortCode_(item.id)
+            + ': ' + receiptErr.message);
+        }
+      }
       if (kind !== 'accepted' || props.getProperty(eventKey)) continue;
       const phone = kolPhone_(order.phone);
       if (!phone) continue;
@@ -233,6 +335,12 @@ function pollOrdersForSms() {
         kolApiSend_(phone, kolMessage_(order, kind, item.id), cloudToken);
         const completed = { state:'sent', at:Date.now() };
         props.setProperty(eventKey, JSON.stringify(completed));
+        // A receipt write failure must NEVER reclassify or resend an accepted SMS.
+        try { kolPublishSmsReceipt_(item.id, order, completed.at); }
+        catch (receiptErr) {
+          console.error('SMS was accepted but Firebase receipt was not saved: '
+            + kolShortCode_(item.id) + ' - ' + receiptErr.message);
+        }
         sent += 1;
         console.log('SMS accepted by Traccar: ' + kind + ' / ' + kolShortCode_(item.id));
       } catch (err) {

@@ -2,6 +2,26 @@
 
 Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/test`-mappen.
 
+## Vercel olmadan SMS, e-post og Firebase (2026-10-22)
+
+**Nytt system:** GitHub Pages leverer `/demo/` (HTML/CSS/JS), mens kunde- og adminappen leser/skriver ordreinformasjon direkte i Firebase Realtime Database. Ingen Vercel-API er nødvendig for `/demo/`.
+
+**SMS:** Den eksisterende Google Apps Script-jobben `pollOrdersForSms` leser Firebase, sender **én bekreftelses-SMS** ved `bekreftet` gjennom Traccar, og lagrer `/orders/{orderId}/smsReceipts/accepted` med `provider: "Traccar"`, `state: "accepted"`, `sentAt` **etter at Traccar godtok sendingen**. Den skriver også `/smsHealth` ved vellykket databasekontroll. Admin bruker Firebase-data til «SMS ble sendt · Bekreftelse» og SMS-indikatoren, ikke Vercel. Traccar-aksept er ikke garantert levering til telefonen.
+
+**E-post:** Den eksisterende, uendrede Google Apps Script-jobben `kontrollerEpostBestillinger` sender gjennom MailApp og skriver `/orders/{orderId}/emailReceipts/{accepted|ready}` og `/emailHealth`. «E-post sendt · Bekreftelse» vises kun når det finnes en godkjent MailApp-kvittering i Firebase. Aksept hos MailApp garanterer ikke at meldingen kom frem til innboksen.
+
+### Riktig utrullingsrekkefølge (ikke slå av Vercel for tidlig)
+
+1. **Ta sikkerhetskopi** av gjeldende aktive Google Apps Script-kode, Script Properties og Firebase Realtime Database-regler. Koden i denne mappen er kun en referansekopi, ikke automatisk synkronisert med det aktive Apps Script-prosjektet.
+2. Åpne det **allerede aktive SMS Apps Script-prosjektet**, oppdater `Kode.gs` med den nye kildekoden og lagre. **Ikke** opprett et nytt Apps Script-prosjekt, installer en ny trigger eller kjør `setupTestSms`/`setupLiveSms` hvis LIVE allerede fungerer. Behold eksisterende `KOL_SENT_...`-registreringer, `KOL_MODE`, token og autorisasjoner.
+3. Bekreft at dette Apps Script-prosjektet kan skrive både `/smsHealth` og `/orders/{id}/smsReceipts/accepted` i **samme** Firebase-instans som `demo/config.js`. Den faktiske Firebase RTDB-regelmodellen må tillate senderens autentiserte tilgang uten å tillate at uvedkommende kan opprette falske SMS-kvitteringer. Ingen gateway-token må legges i GitHub, HTML eller klient-JavaScript.
+4. Kjør `previewSmsReceiptMigration` i **samme aktive SMS-prosjekt**. Det viser antall eksisterende bekreftede SMS-er uten å sende eller skrive noe. Kjør så `publishSmsReceiptMigration` for å flytte bekreftelseskvitteringer for inntil de 80 nyeste ordrene. Det sender **ingen SMS**, endrer ikke `KOL_SENT_...` og er trygt å gjenta.
+5. Verifiser at `/smsHealth` oppdateres, og send **én kontrollert testbestilling med et nummer du eier/har tillatelse til å teste**. Godta bestillingen i admin. Kontroller faktisk SMS på testtelefonen og `/orders/{id}/smsReceipts/accepted` i Firebase. Test i tillegg e-post til en adresse du kontrollerer og se etter `/orders/{id}/emailReceipts/accepted`. Sørg for at kun en SMS ble sendt.
+6. **Først deretter:** Ta i bruk frontend-endringene i denne grenen. Bekreft at «SMS ble sendt · Bekreftelse» og «E-post sendt · Bekreftelse» blir synlige når gyldige kvitteringer finnes. Test kundevisningen, statusendringer og Epson-skriveren. Kontroller at ingen nettverkskall går til `*.vercel.app`.
+7. **Til slutt:** Koble fra Git-repoet i Vercel eller slett det aktuelle Vercel-prosjektet i Vercel-konsollen. En GitHub-endring sletter ikke den faktiske Vercel-distribusjonen, og GitHub-grener kan fremdeles utløse preview-deployments så lenge integrasjonen er aktiv.
+
+**Viktig begrensning:** Firebase RTDB med offentlig direkte REST-skrivetilgang og uten korrekt tilgangskontroll er ikke en sikker mekanisme for SMS-kvitteringer, ordrer eller kundedata. Selv om frontend sjekker `provider` og `state`, kan slike felt forfalskes når fremmede har skriveadgang. Sett opp trygge server-side/autentiserte regler før systemet brukes i produksjon. Ikke publiser hemmelige tokens i repoet for å løse dette.
+
 ## Kart over filene
 
 | Del | Plassering | Formål |
@@ -22,7 +42,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
 | Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
-| Apps Script-kopi | `integrations/google-apps-script/` | Referansekopi av e-post-poller (ikke automatisk utplassert) |
+| Apps Script-kilder | `integrations/google-apps-script/` | SMS-/e-post-poller kildekopier; aktive Apps Script-prosjekter må oppdateres separat |
 
 ## Ikke flytt eller slett ukritisk
 
@@ -32,7 +52,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - Epson: `js/order-printer.js` bruker HTTPS mot lokal IP `192.168.1.25`, enhets-ID `local_printer`.
 - Papiret er 80 mm, mens utskriftsbildet er 576 piksler bredt (ca. 72 mm skrivbart område).
 - Printerfontene kan settes i **Restaurantinnstillinger → Printer ayarları**; samme Canvas brukes til forhåndsvisning og utskrift.
-- SMS og e-post er koblet til eksterne prosesser. Kode i `functions/` og Google Apps Script påvirkes **ikke** ved å flytte referansekopier herfra.
+- SMS og e-post sendes av aktive Google Apps Script-jobber. Filene i GitHub er kildekopier og **oppdaterer ikke** kjørende Apps Script automatisk.
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
 - Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
 
@@ -55,7 +75,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
-`api/` forblir i roten for Vercel API-ruter, og `functions/` forblir i roten for Firebase-funksjoner. Ingen SMS-, e-post-, database- eller ordrelogikk er endret.
+De to gamle Vercel-rutene `api/sms-status.js` og `api/sms-receipts.js` er fjernet fra kildekoden. `functions/` er separate Firebase-funksjoner i roten; denne migreringen endrer eller stopper ikke dem.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
 
