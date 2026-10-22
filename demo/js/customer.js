@@ -432,7 +432,6 @@ function activeCustomerOrders() {
       const readyAt = Number(order.statusUpdatedAt) || Number(order.createdAt) || Date.now();
       if (Date.now() - readyAt >= 5 * 60 * 1000) return false;
     }
-    if (isEstimatedPickupTimeReached(order) && Date.now() - Number(order.estimatedReadyAt) >= 5 * 60 * 1000) return false;
     const createdAt = Number(order.createdAt) || 0;
     return !createdAt || createdAt >= cutoff;
   });
@@ -447,7 +446,7 @@ function customerOrderCountdown(order) {
   const readyAt = Number(order?.estimatedReadyAt) || 0;
   if (!readyAt) return '';
   const remainingMs = readyAt - Date.now();
-  if (remainingMs <= 0) return 'Maten er klar for henting';
+  if (remainingMs <= 0) return 'Estimert hentetid er passert';
   const seconds = Math.ceil(remainingMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -459,7 +458,8 @@ function activeOrderCardHtml(order) {
   const readyNow = order.status === 'klar';
   const estimatedReadyNow = !readyNow && isEstimatedPickupTimeReached(order);
   const confirmedNow = ['bekreftet', 'tilberedning'].includes(order.status);
-  const progressStatus = estimatedReadyNow ? 'klar' : (order.status === 'tilberedning' ? 'bekreftet' : order.status);
+  // A time estimate is NOT a kitchen-ready confirmation. Only status=klar is ready.
+  const progressStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === progressStatus);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
@@ -481,7 +481,7 @@ function activeOrderCardHtml(order) {
   const progress = CUSTOMER_STATUS_FLOW.map((step, stepIndex) => {
     const complete = stepIndex < index;
     const current = stepIndex === index;
-    const checked = complete || ((readyNow || estimatedReadyNow) && current);
+    const checked = complete || (readyNow && current);
     return `<div class="order-progress-step${complete ? ' is-complete' : ''}${current ? ' is-current' : ''}"><span class="order-progress-dot">${checked ? '✓' : ''}</span><small>${escapeHtml(step.short)}</small></div>`;
   }).join('');
 
@@ -497,7 +497,7 @@ function activeOrderCardHtml(order) {
           </div>
         </div>`;
     } else if (estimatedReadyNow) {
-      statusPanel = `<div class="active-order-status-box is-confirmed is-text"><strong>Maten er klar for henting</strong></div>`;
+      statusPanel = `<div class="active-order-status-box is-confirmed is-text"><div><strong>Estimert hentetid er passert.</strong><small>Vi venter på bekreftelse fra restauranten.</small></div></div>`;
     } else if (hasLiveEstimate) {
       statusPanel = `
         <div class="active-order-status-box is-confirmed">
@@ -1845,7 +1845,7 @@ function confirmationReadyLeftText(order) {
     return minutes > 0 ? `ca. ${minutes} min igjen` : 'Bekreftet';
   }
   const remaining = Math.max(0, readyAt - Date.now());
-  if (!remaining) return 'Klar nå';
+  if (!remaining) return 'Estimert hentetid er passert. Vi venter på bekreftelse fra restauranten.';
   const seconds = Math.ceil(remaining / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -3077,7 +3077,7 @@ setInterval(() => {
   renderOpenState();
 }, 5000);
 
-// Vis resttid sekund for sekund. Når tiden er ute, går ordren automatisk til Klar.
+// Vis estimert resttid sekund for sekund. Kun en ansatt kan markere ordren som Klar.
 setInterval(refreshCustomerOrderCountdowns, 1000);
 refreshCustomerOrderCountdowns();
 
