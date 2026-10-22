@@ -2244,7 +2244,7 @@ function orderListRowHtml(order, isNew = false) {
   const remainingTime = orderListRemainingTime(order);
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
-      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS ble sendt via Traccar" aria-label="SMS ble sendt via Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp" aria-label="E-post godtatt av MailApp" ${emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS-forespørsel godtatt av Traccar (ikke bekreftet sendt fra telefonen)" aria-label="SMS-forespørsel godtatt av Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp" aria-label="E-post godtatt av MailApp" ${emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span>${isNew ? '<b class="orders-new-pill">NY</b>' : ''}</span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-divider" aria-hidden="true"></span>
@@ -2387,40 +2387,58 @@ function renderOrderDetail(orderId) {
 }
 
 
-/* Read-only SMS health indicator. Green means LIVE + recent successful
-   Firebase poll; it does not claim gateway or Android handset delivery. */
+/* The SMS poller and the Android phone are independent.
+ * A successful Apps Script/Traccar cloud response is NOT evidence that the
+ * Android SMS Gateway app received, sent, or delivered a message.
+ * The status dot may be green only with a recent phone-origin heartbeat.
+ */
 let smsStatusFetching = false;
+const SMS_PHONE_MAX_AGE_MS = 45000;
 
 function displaySmsStatus(mode, text, help) {
   const badge = document.getElementById('ordersSmsStatus');
   if (!badge) return;
-  badge.classList.toggle('is-pending', mode === 'pending');
-  badge.classList.toggle('is-active', mode === 'active');
-  badge.classList.toggle('is-error', mode === 'error');
+  for (const state of ['pending', 'active', 'error']) {
+    badge.classList.toggle('is-' + state, mode === state);
+  }
   badge.querySelector('[data-sms-status-text]').textContent = text + ' · ' + help;
   badge.title = text + ': ' + help;
   badge.setAttribute('aria-label', 'SMS: ' + text);
 }
 
-// Firebase is the only SMS health source. The heartbeat is written by the
-// independent Apps Script sender after a successful Firebase poll.
-function classifySmsHealth(health, now = Date.now()) {
+function classifySmsHealth(health, phone, now = Date.now()) {
   if (!health || health.source !== 'apps-script-sms-poller') {
-    return ['pending', 'SMS-kontroll venter',
-      'Ingen SMS-kontroll er registrert i Firebase ennå. Oppdater Apps Script-koden.'];
+    return ['pending', 'SMS-automatisering ukjent',
+      'Ingen bekreftet kontroll fra Apps Script i Firebase.'];
   }
-  if (health.liveConfigured === false) {
+  if (health.liveConfigured !== true) {
     return ['error', 'SMS ikke LIVE',
-      'Automatisk SMS er deaktivert eller står i TEST-modus.'];
+      'SMS-polleren er slått av eller er i testmodus.'];
   }
-  const age = now - Number(health.checkedAt || 0);
-  if (health.status === 'ok' && health.liveConfigured === true
-      && Number.isFinite(age) && age >= -60000 && age < 180000) {
-    return ['active', 'SMS aktiv',
-      'LIVE og siste automatiske Firebase-kontroll OK. Faktisk levering til telefonen er ikke bekreftet.'];
+  const pollAge = now - Number(health.checkedAt || 0);
+  if (health.status !== 'ok' || !Number.isFinite(pollAge) ||
+      pollAge < -60000 || pollAge > 180000) {
+    return ['error', 'SMS-poller frakoblet',
+      'Google Apps Script har ikke oppdatert Firebase de siste 3 minuttene.'];
   }
-  return ['error', 'SMS-kontroll frakoblet',
-    'Ingen fersk SMS-kontroll i Firebase. Sjekk Apps Script-utløseren og skriveadgang.'];
+  if (!phone || phone.source !== 'kol-android-heartbeat' ||
+      !Number.isFinite(Number(phone.checkedAt)) || Number(phone.checkedAt) <= 0) {
+    return ['pending', 'SMS-telefon ikke kontrollert',
+      'Apps Script er aktivt, men mobilens tilkobling er ukjent. ' +
+      'Start /demo/tools/sms-gateway-monitor.html på SMS-telefonen.'];
+  }
+  const phoneAge = now - Number(phone.checkedAt);
+  if (phone.online !== true || phoneAge > SMS_PHONE_MAX_AGE_MS ||
+      phoneAge < -10000) {
+    return ['error', 'SMS-telefon frakoblet',
+      'Ingen fersk tilkobling fra Android-telefonen (siste kontroll ' +
+      (phoneAge >= 0 ? Math.ceil(phoneAge / 1000) + ' sek siden' : 'ugyldig') +
+      '). SMS kan bli liggende i Traccar-køen.'];
+  }
+  return ['active', 'SMS-telefon på nett',
+    'Apps Script kjører og Android-telefonen svarte for ' +
+    Math.max(0, Math.floor(phoneAge / 1000)) + ' sek siden. ' +
+    'Traccar-appen, SIM-sending og SMS-levering er ikke kontrollert.'];
 }
 
 async function refreshSmsStatus() {
@@ -2428,23 +2446,36 @@ async function refreshSmsStatus() {
     displaySmsStatus('error', 'SMS ikke konfigurert', 'Firebase-adresse mangler.');
     return;
   }
-  if (smsStatusFetching) return;
+  if (smsStatusFetching || document.hidden) return;
   smsStatusFetching = true;
   try {
-    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
-      method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7500)
-    });
-    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
-    displaySmsStatus(...classifySmsHealth(await response.json()));
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    let responses;
+    try {
+      responses = await Promise.all(['smsHealth', 'smsDeviceHeartbeat'].map(
+        path => fetch(DB_URL + '/' + path + '.json?_=' + Date.now(), {
+          method: 'GET', cache: 'no-store', signal: controller.signal
+        })
+      ));
+      if (responses.some(response => !response.ok)) {
+        throw new Error('Firebase SMS health response failed');
+      }
+      const [health, phone] = await Promise.all(responses.map(r => r.json()));
+      displaySmsStatus(...classifySmsHealth(health, phone));
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch (_) {
     displaySmsStatus('error', 'SMS-kontroll frakoblet',
-      'Kunne ikke lese SMS-kontrollstatus fra Firebase.');
-  } finally { smsStatusFetching = false; }
+      'Kunne ikke lese SMS-status fra Firebase.');
+  } finally {
+    smsStatusFetching = false;
+  }
 }
 
-
 void refreshSmsStatus();
-window.setInterval(refreshSmsStatus, 60000);
+window.setInterval(refreshSmsStatus, 10000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void refreshSmsStatus();
 });
@@ -2534,7 +2565,7 @@ function smsReceiptDetail(id) {
   if (receipts.accepted) kinds.push('Bekreftelse');
   if (receipts.estimateUpdated) kinds.push('Endret hentetid');
   if (receipts.ready) kinds.push('Klar for henting');
-  return kinds.length ? 'SMS ble sendt · ' + kinds.join(' · ') : '';
+  return kinds.length ? 'SMS-forespørsel godtatt · ' + kinds.join(' · ') : '';
 }
 
 
