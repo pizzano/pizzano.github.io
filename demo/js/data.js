@@ -1841,56 +1841,64 @@ export async function updateOrderEstimate(orderId, minutes) {
 }
 
 
-/** Godtar en ordre og starter ventetiden i én atomisk oppdatering. */
-export async function acceptOrderWithEstimate(orderId, minutes) {
-  const order = store.orders.find((entry) => entry.id === orderId);
-  if (!order) return false;
-  const value = Math.max(1, Math.min(180, Math.round(Number(minutes) || 0)));
-  const previous = {
-    status: order.status,
-    statusUpdatedAt: order.statusUpdatedAt,
-    estimatedMinutes: order.estimatedMinutes,
-    estimatedAt: order.estimatedAt,
-    estimatedReadyAt: order.estimatedReadyAt,
-  };
-  const now = Date.now();
-  const readyAt = now + value * 60 * 1000;
-  order.status = 'bekreftet';
-  order.statusUpdatedAt = now;
-  order.estimatedMinutes = value;
-  order.estimatedAt = now;
-  order.estimatedReadyAt = readyAt;
-  const writeGuard = beginOrderStatusWrite(order);
-  emitData('local');
+// Acceptance must be confirmed by Firebase before the restaurant UI reports
+// "Godtatt". A browser-only optimistic state can disappear on page reload.
+let latestAcceptError = '';
+export function lastAcceptErrorMessage() {
+  return latestAcceptError;
+}
+
+function applyVerifiedAcceptance(orderId, verified) {
+  // The SSE stream can update the same order while the confirmation request
+  // is pending. Never replace a newer customer/staff status with stale data.
+  const current = store.orders.find(entry => entry.id === orderId);
+  const normalized = normalizeOrders([verified])[0];
+  if (current && normalized &&
+      Number(current.statusUpdatedAt || 0) <= Number(normalized.statusUpdatedAt || 0)) {
+    Object.assign(current, normalized);
+  }
+  if (verified) ordersRaw[orderId] = verified;
+  emitData('remote');
+}
+
+async function confirmRestaurantOrder(order, changes) {
+  latestAcceptError = '';
   setSaveState('saving');
   try {
-    if (remoteEnabled) {
-      await patchConfirmedPizzaOrder(order, {
-        status: 'bekreftet',
-        statusUpdatedAt: now,
-        estimatedMinutes: value,
-        estimatedAt: now,
-        estimatedReadyAt: readyAt,
-      });
-      remoteOnline = true;
-    }
-    finishOrderStatusWrite(orderId, writeGuard, true);
+    const verified = await patchConfirmedPizzaOrder(order, changes);
+    remoteOnline = true;
+    applyVerifiedAcceptance(order.id, verified);
     setSaveState('saved');
     return true;
-  } catch (err) {
-    finishOrderStatusWrite(orderId, writeGuard, false);
-    Object.assign(order, previous);
-    emitData('local');
-    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+  } catch (error) {
+    latestAcceptError = String(error?.message || 'Ukjent Firebase-feil').slice(0, 220);
+    console.warn('Firebase kunne ikke bekrefte ordren:', latestAcceptError);
+    // No local status was changed; the order stays pending until we actually
+    // have a successful Firebase write. Staff may safely inspect/retry.
+    setSaveState('error', latestAcceptError);
     return false;
   }
 }
 
+/** Confirm an ASAP order with a kitchen estimate; Firebase is authoritative. */
+export async function acceptOrderWithEstimate(orderId, minutes) {
+  const order = store.orders.find(entry => entry.id === orderId);
+  if (!order || order.status !== 'mottatt') return false;
+  const value = Math.max(1, Math.min(180, Math.round(Number(minutes) || 0)));
+  const now = Date.now();
+  return confirmRestaurantOrder(order, {
+    status: 'bekreftet',
+    statusUpdatedAt: now,
+    estimatedMinutes: value,
+    estimatedAt: now,
+    estimatedReadyAt: now + value * 60 * 1000,
+  });
+}
 
-/** Godtar en tidsbestilt ordre og bruker kundens valgte hentetid som klar-tid. */
+/** Confirm a scheduled pickup; Firebase is authoritative. */
 export async function acceptScheduledOrder(orderId) {
-  const order = store.orders.find((entry) => entry.id === orderId);
-  if (!order) return false;
+  const order = store.orders.find(entry => entry.id === orderId);
+  if (!order || order.status !== 'mottatt') return false;
   const now = Date.now();
   let readyAt = Number(order.scheduledPickupAt) || 0;
   if (!readyAt) {
@@ -1901,51 +1909,16 @@ export async function acceptScheduledOrder(orderId) {
     if (target.getTime() <= now) target.setDate(target.getDate() + 1);
     readyAt = target.getTime();
   }
-  const previous = {
-    status: order.status,
-    statusUpdatedAt: order.statusUpdatedAt,
-    pickupMode: order.pickupMode,
-    scheduledPickupAt: order.scheduledPickupAt,
-    estimatedMinutes: order.estimatedMinutes,
-    estimatedAt: order.estimatedAt,
-    estimatedReadyAt: order.estimatedReadyAt,
-  };
-  const minutes = Math.max(1, Math.ceil((readyAt - now) / 60000));
-  order.status = 'bekreftet';
-  order.statusUpdatedAt = now;
-  order.pickupMode = 'scheduled';
-  order.scheduledPickupAt = readyAt;
-  order.estimatedMinutes = minutes;
-  order.estimatedAt = now;
-  order.estimatedReadyAt = readyAt;
-  const writeGuard = beginOrderStatusWrite(order);
-  emitData('local');
-  setSaveState('saving');
-  try {
-    if (remoteEnabled) {
-      await patchConfirmedPizzaOrder(order, {
-        status: 'bekreftet',
-        statusUpdatedAt: now,
-        pickupMode: 'scheduled',
-        scheduledPickupAt: readyAt,
-        estimatedMinutes: minutes,
-        estimatedAt: now,
-        estimatedReadyAt: readyAt,
-      });
-      remoteOnline = true;
-    }
-    finishOrderStatusWrite(orderId, writeGuard, true);
-    setSaveState('saved');
-    return true;
-  } catch (err) {
-    finishOrderStatusWrite(orderId, writeGuard, false);
-    Object.assign(order, previous);
-    emitData('local');
-    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
-    return false;
-  }
+  return confirmRestaurantOrder(order, {
+    status: 'bekreftet',
+    statusUpdatedAt: now,
+    pickupMode: 'scheduled',
+    scheduledPickupAt: readyAt,
+    estimatedMinutes: Math.max(1, Math.ceil((readyAt - now) / 60000)),
+    estimatedAt: now,
+    estimatedReadyAt: readyAt,
+  });
 }
-
 
 /** Avviser en ordre og lagrer årsaken. */
 export async function rejectOrder(orderId, reason = '', message = '') {
