@@ -46,6 +46,7 @@ import {
   updateOrderEstimate,
   acceptOrderWithEstimate,
   acceptScheduledOrder,
+  lastAcceptErrorMessage,
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
@@ -276,13 +277,13 @@ function escapeHtml(text) {
 }
 
 let toastTimer = null;
-function toast(message) {
+function toast(message, durationMs = 2200) {
   el.toast.textContent = message;
   el.toast.hidden = false;
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     el.toast.hidden = true;
-  }, 2200);
+  }, durationMs);
 }
 
 function selectedItem() {
@@ -2891,7 +2892,9 @@ async function confirmAcceptOrder() {
     : await acceptOrderWithEstimate(acceptedOrderId, minutes);
   el.btnAcceptConfirm.disabled = false;
   if (!ok) {
-    toast(scheduled ? 'Kunne ikke godta den planlagte hentetiden.' : 'Kunne ikke godta bestillingen.');
+    const reason = lastAcceptErrorMessage();
+    toast('Bestillingen ble IKKE lagret i Firebase. ' +
+      (reason || 'Kontroller internett og Firebase-tilgang.'), 10000);
     return;
   }
   acknowledgedOrders.add(acceptedOrderId);
