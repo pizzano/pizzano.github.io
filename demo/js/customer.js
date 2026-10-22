@@ -326,6 +326,15 @@ const stableCustomerOrderSnapshots = new Map();
 
 function mergeStableCustomerOrder(previous = {}, incoming = {}) {
   const next = { ...previous, ...incoming };
+  // Network reads and SSE messages can finish out of order. Never let an
+  // older "mottatt" snapshot replace an already confirmed order locally.
+  if (Number(previous.statusUpdatedAt || 0) > Number(incoming.statusUpdatedAt || 0)) {
+    for (const key of ['status', 'statusUpdatedAt', 'staffReadyAt', 'rejectionCode',
+      'rejectionReason', 'rejectionMessage', 'estimatedMinutes', 'estimatedAt',
+      'estimatedReadyAt', 'estimateUpdatedAt', 'loyaltyConfirmedAt']) {
+      if (Object.prototype.hasOwnProperty.call(previous, key)) next[key] = previous[key];
+    }
+  }
   for (const key of ['estimatedMinutes', 'estimatedAt', 'estimatedReadyAt', 'rejectionReason', 'rejectionMessage']) {
     const value = incoming ? incoming[key] : null;
     if ((value === undefined || value === null || value === '') && previous[key] !== undefined && previous[key] !== null && previous[key] !== '') {
@@ -536,6 +545,10 @@ const readyDismissTimers = new Map();
 
 function upsertLiveOrder(orderId, remote) {
   if (!remote || !orderId) return;
+  const latest = (store.orders || []).find(entry => entry?.id === orderId)
+    || stableCustomerOrderSnapshots.get(orderId);
+  // Discard an older REST response BEFORE touching the persistent snapshot.
+  if (latest && Number(latest.statusUpdatedAt || 0) > Number(remote.statusUpdatedAt || 0)) return;
   const normalized = rememberCustomerOrder({ ...remote, id: remote.id || orderId });
   persistCustomerOrderSnapshot(normalized);
   const orders = Array.isArray(store.orders) ? [...store.orders] : [];
@@ -566,6 +579,10 @@ async function fetchActiveOrderNow(orderId) {
     upsertLiveOrder(orderId, remote);
     renderActiveOrders();
     if (ui.view === 'profile') renderProfile();
+    // React as soon as Firebase confirms, not only on the one-second tick.
+    if (orderConfirmOrderId === orderId && !orderConfirmResolved && !el.confirmModal.hidden) {
+      checkOrderConfirmationWait();
+    }
   } catch (_) {
   } finally {
     activeOrderFetchBusy.delete(orderId);
@@ -1798,6 +1815,7 @@ let orderConfirmDeadline = 0;
 let orderConfirmTimedOut = false;
 let orderConfirmResolved = false;
 let orderConfirmAcceptedTimer = null;
+let orderConfirmLastRemoteCheckAt = 0;
 let orderConfirmRedirectTimer = null;function confirmationRestaurantPhone() {
   const settings = store.settings || {};
   const label = String(settings.phone || '').trim();
@@ -1936,6 +1954,15 @@ function renderConfirmationTimeout(order) {
 
 function checkOrderConfirmationWait() {
   if (!orderConfirmOrderId || el.confirmModal.hidden || orderConfirmResolved) return;
+  // A stream can look open yet miss the employee's approval. During the
+  // three-minute confirmation modal, verify THIS order via Firebase REST
+  // every four seconds; never download all customers' orders.
+  const now = Date.now();
+  if (!document.hidden && navigator.onLine !== false &&
+      now - orderConfirmLastRemoteCheckAt >= 4000) {
+    orderConfirmLastRemoteCheckAt = now;
+    void fetchActiveOrderNow(orderConfirmOrderId);
+  }
   const order = confirmationOrderSnapshot(orderConfirmOrderId);
   if (!order) return;
   persistCustomerOrderSnapshot(order);
@@ -1990,6 +2017,7 @@ function startOrderConfirmationWait(order, name) {
   orderConfirmAcceptedTimer = null;
   orderConfirmRedirectTimer = null;
   orderConfirmOrderId = order.id;
+  orderConfirmLastRemoteCheckAt = Date.now();
   orderConfirmDeadline = confirmationDeadline(order);
   orderConfirmTimedOut = false;
   orderConfirmResolved = false;
