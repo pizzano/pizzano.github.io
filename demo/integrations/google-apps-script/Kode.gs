@@ -129,6 +129,44 @@ function kolApiSend_(to, message, token) {
   return true;
 }
 
+/** Public, non-sensitive SMS diagnostics/receipts are stored in Firebase.
+ * Configure RTDB rules so only the trusted sender may WRITE these paths;
+ * the existing open REST writes are not an authentication boundary.
+ * A failed status/receipt write must never retry an already-submitted SMS.
+ */
+function kolFirebaseSmsPut_(path, value) {
+  if (!/^(smsHealth|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
+    throw new Error('Unexpected Firebase SMS path');
+  }
+  const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' + path + '.json', {
+    method: 'put',
+    contentType: 'application/json',
+    payload: JSON.stringify(value),
+    muteHttpExceptions: true,
+  });
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Firebase SMS write rejected (HTTP ' + response.getResponseCode() + ')');
+  }
+}
+
+function kolSmsHeartbeat_(mode, checkedAt) {
+  kolFirebaseSmsPut_('smsHealth', {
+    source: 'apps-script-sms-poller',
+    liveConfigured: mode === 'LIVE' && KOL_SMS.allowLiveMode,
+    checkedAt: checkedAt,
+    status: 'ok',
+  });
+}
+
+function kolSmsReceipt_(orderId, kind, sentAt) {
+  if (!Number.isSafeInteger(Number(sentAt)) || Number(sentAt) <= 0) return;
+  kolFirebaseSmsPut_('orders/' + orderId + '/smsReceipts/' + kind, {
+    state: 'accepted', // Traccar accepted the request; not handset delivery.
+    provider: 'Traccar',
+    sentAt: Number(sentAt),
+  });
+}
+
 function kolFetchRecentOrders_() {
   // Firebase index: /orders .indexOn ["statusUpdatedAt"].
   // Read only orders with a recently modified status; do not download
@@ -233,6 +271,13 @@ function pollOrdersForSms() {
         kolApiSend_(phone, kolMessage_(order, kind, item.id), cloudToken);
         const completed = { state:'sent', at:Date.now() };
         props.setProperty(eventKey, JSON.stringify(completed));
+        // The ScriptProperties receipt is authoritative if Firebase is down.
+        // Never resend SMS just because the UI receipt write failed.
+        try {
+          kolSmsReceipt_(item.id, 'accepted', completed.at);
+        } catch (writeError) {
+          console.error('SMS receipt could not be saved to Firebase: ' + writeError.message);
+        }
         sent += 1;
         console.log('SMS accepted by Traccar: ' + kind + ' / ' + kolShortCode_(item.id));
       } catch (err) {
@@ -242,6 +287,11 @@ function pollOrdersForSms() {
       }
     }
     props.setProperty('KOL_LAST_POLL_COUNT', String(sent));
+    try {
+      kolSmsHeartbeat_(mode, Date.now());
+    } catch (healthError) {
+      console.error('SMS heartbeat could not be saved to Firebase: ' + healthError.message);
+    }
   } finally {
     lock.releaseLock();
   }
@@ -317,6 +367,46 @@ function setupLiveSms() {
   props.setProperty('KOL_ACTIVE_SINCE', String(Date.now()));
   props.setProperty('KOL_MODE', 'LIVE');
   console.log('LIVE SMS: kun første bekreftelse med hentetid. Ingen ekstra SMS ved klar/Endre tid. Maks ' + KOL_SMS.maxPerDay + ' per dag.');
+}
+
+/** Optional ONE-TIME migration of previously confirmed SMS receipts.
+ * Run manually after updating the live Apps Script source. Bounded to the
+ * latest 100 orders and at most 50 receipt writes per invocation.
+ * No SMS is sent by this function, and no attempted/failed events are copied.
+ */
+function syncRecentSmsReceiptsToFirebase() {
+  const url = KOL_SMS.databaseUrl + '/orders.json?orderBy=' +
+    encodeURIComponent(JSON.stringify('$key')) + '&limitToLast=100';
+  const response = UrlFetchApp.fetch(url, {method:'get', muteHttpExceptions:true});
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Firebase receipt migration read failed (HTTP ' + response.getResponseCode() + ')');
+  }
+  const orders = JSON.parse(response.getContentText() || 'null') || {};
+  const props = kolProps_();
+  const kinds = [
+    ['accepted', id => 'KOL_SENT_' + id + '_accepted'],
+    ['ready', id => 'KOL_SENT_' + id + '_ready'],
+    ['estimateUpdated', id => 'KOL_EST_NOTICE_' + id],
+  ];
+  let written = 0;
+  for (const id of Object.keys(orders)) {
+    if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) continue;
+    const order = orders[id];
+    if (!order || typeof order !== 'object') continue;
+    for (const [kind, getKey] of kinds) {
+      if (written >= 50) {
+        console.log('SMS receipt migration: wrote 50; run again if more remain.');
+        return;
+      }
+      if (order.smsReceipts && order.smsReceipts[kind]) continue;
+      const event = kolPropertyJson_(props, getKey(id));
+      const at = Number(event?.at);
+      if (event?.state !== 'sent' || !Number.isSafeInteger(at) || at < Number(order.createdAt || 0)) continue;
+      kolSmsReceipt_(id, kind, at);
+      written += 1;
+    }
+  }
+  console.log('SMS receipt migration completed; receipts written: ' + written);
 }
 
 /** One-click emergency stop. The token stays private. */
