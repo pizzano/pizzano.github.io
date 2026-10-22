@@ -55,7 +55,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
-`api/` forblir i roten for Vercel API-ruter, og `functions/` forblir i roten for Firebase-funksjoner. Ingen SMS-, e-post-, database- eller ordrelogikk er endret.
+De to eldre SMS-Vercel-rutene i `api/` er nå slettet. `functions/` inneholder en eldre, separat Firebase Functions-variant, blant annet delt kode som også brukes av `functions/email.js`. Den er ikke del av den aktive Apps Script-SMS-polleren; distribusjonsstatus er ikke bekreftet, så filene er beholdt.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
 
@@ -108,192 +108,71 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
 - **Viktig:** Sletting fra Firebase er irreversibel. Bilag og salgsdokumentasjon som er nødvendig for bokføring må ivaretas i et separat godkjent regnskaps-/kassesystem.
 
 
-## SMS uten Vercel — Firebase RTDB (2026-10-22)
+## SMS — én aktiv løsning (opprydding 2026-10-23)
 
-- `/demo/` bruker ikke lenger Vercel for SMS-status eller sendingskvitteringer.
-  `config.js` inneholder bare Firebase-adressen.
-- **Sendingen er fortsatt uendret:** den aktive Google Apps Script-jobben
-  `pollOrdersForSms()` leser bekreftede ordre og sender **én bekreftelses-SMS**
-  via Traccar/Android. GitHub Pages og Firebase RTDB sender ikke SMS selv.
-- `admin.js` leser **`/smsHealth.json`** direkte fra Firebase. Den viser
-  grønt bare når `source=apps-script-sms-poller`, `liveConfigured=true`
-  og det finnes en vellykket kontroll de siste tre minuttene. Dette beviser
-  at polleren kjører, **ikke** at telefonen mottok SMS.
-- Etter vellykket Traccar-respons skriver SMS-polleren en kvittering til
-  `/orders/{orderId}/smsReceipts/accepted` med
-  `{state:"accepted",provider:"Traccar",sentAt:<millisekunder>}`.
-  Mislykket sending vises aldri som «SMS ble sendt».
-  Kjøkken/admin ser kvitteringen fra sin eksisterende Firebase-ordrestrøm.
-  Ingen separat receipt-API eller ny polling trengs.
-- De historiske `ready` og `estimateUpdated`-feltene beholdes i UI for
-  gammel dokumentasjon; **den gjeldende SMS-polleren sender kun bekreftelse**.
-- En Firebase-skrivefeil kan skjule UI-kvitteringen, men **starter ikke ny
-  SMS-sending**. Den opprinnelige dedupliseringsnøkkelen i Apps Script
-  ScriptProperties blir bevart.
+**Gjeldende flyt:** Google Apps Script (`integrations/google-apps-script/Kode.gs`)
+leser nye bekreftede bestillinger i Firebase Realtime Database og sender
+**én hentetid-bekreftelse** per ordre via Traccar Cloud og Android-SMS-gateway.
+`pollOrdersForSms()` kjører i Google Apps Script etter eksisterende tidsutløser,
+og `KOL_SENT_<id>_accepted` i ScriptProperties hindrer duplikatsendinger.
+`TRACCAR_TOKEN`, TEST/LIVE-tilstand, eksisterende triggere og historikk må
+ikke nullstilles. **GitHub-oppdateringer endrer ikke automatisk det levende
+Apps Script-prosjektet.** Ikke kjør `setupLiveSms()` eller `setupTestSms()`
+på nytt under oppryddingen.
 
-### Obligatorisk aktivering i Google Apps Script
+**Kun ett statuskall i admin:** `js/admin.js` leser bare
+`/smsHealth.json` via Firebase REST hvert 15. sekund når fanen er synlig.
+`smsHealth` skrives av samme Apps Script etter vellykket poll.
+Status betydning:
 
-1. Åpne det **faktiske, aktive SMS Apps Script-prosjektet** og erstatt
-   eksisterende `Kode.gs` med
-   `demo/integrations/google-apps-script/Kode.gs` fra GitHub.
-   **GitHub-commit endrer ikke kode som allerede kjører i Apps Script.**
-   La `TRACCAR_TOKEN`, `TEST_PHONE`, `KOL_MODE` og de eksisterende
-   utløserne/ScriptProperties være urørt. **Ikke kjør `setupLiveSms()` igjen**,
-   fordi den nullstiller aktiveringstidspunktet.
-2. Sjekk kjøreloggen for `pollOrdersForSms` etter neste vellykkede runde.
-   Bekreft at `smsHealth/checkedAt` oppdateres og
-   `liveConfigured` er `true` (LIVE). Hvis `smsHealth` forblir tom,
-   sjekk Firebase-skrivetilgang og Apps Script-loggene.
-3. Kjør **`syncRecentSmsReceiptsToFirebase()` manuelt** for å flytte
-   bekreftede gamle SMS-kvitteringer for de 100 nyeste ordrene fra
-   ScriptProperties til Firebase. Funksjonen **sender ingen SMS**.
-   Kjør på nytt ved behov hvis loggen melder om 50 kvitteringer per kjøring.
-4. Gjør en kontrollert ny testbestilling: godkjenn, verifiser én mottatt
-   SMS og bekreft at `orders/{id}/smsReceipts/accepted` vises i RTDB.
-   Kontroller at «SMS ble sendt» dukker opp i admin uten Vercel.
-5. Før gammel Vercel-deployment slettes: bekreft at ingen andre tjenester
-   fremdeles bruker dens `api/`-ruter. De eldre `api/sms-status.js` og
-   `api/sms-receipts.js` er ikke lenger referert av `/demo/`.
+- **Gul — SMS-automatisering LIVE:** Apps Script kontrollerte Firebase nylig
+  (under 3 minutter). Telefonens forbindelse og SMS-levering er **ukjent**.
+- **Rød — SMS-automatisering av/utilgjengelig:** LIVE er av,
+  kontrollen er over 3 minutter gammel eller Firebase kan ikke leses.
+- **Gul — status ukjent:** Ingen gyldig Apps Script-status er tilgjengelig.
+  **Ingen grønn telefonstatus** vises uten ekte verifisert telefonsignal.
 
-**Sikkerhet:** De eksisterende Apps Script-kallene bruker Firebase REST uten
-autentiseringsheader (også e-post-polleren). Bekreft RTDB-sikkerhetsregler
-før produksjonsbruk; offentlige klienter må **ikke** kunne forfalske
-`smsHealth`, `smsReceipts` eller ordrestatus. Sikre skriverettighetene
-med en pålitelig serveridentitet før reglene strammes inn; ellers får
-Apps Script HTTP 401/403 og UI-statusen forblir ubekreftet. Verken
-Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
+Kundens SMS-kvittering er lagret på selve bestillingen i
+`/orders/{orderId}/smsReceipts/accepted` med `state:accepted`,
+`provider:Traccar` og `sentAt`. Dette betyr **godtatt av Traccar Cloud**,
+ikke at Android faktisk sendte meldingen eller mottakeren fikk den.
+`js/data.js` bevarer og synkroniserer dette feltet i eksisterende
+ordrestrøm uten et ekstra SMS-receipts API. E-post og Epson er separate.
 
-## Bekreftelse som forsvant ved sideoppdatering (2026-10-22)
+**Fjernet fra GitHub-kilden:** `api/sms-status.js`,
+`api/sms-receipts.js`, `tools/sms-gateway-monitor.html`,
+Apps Script `doGet()` for den utgåtte Vercel-proxyen og det allerede
+utførte engangsverktøyet `syncRecentSmsReceiptsToFirebase()`.
+En eldre, distribuert Vercel-instans eller Apps Script-webapp slettes
+ikke automatisk når filer fjernes fra GitHub. Det tidligere
+`/smsDeviceHeartbeat`-feltet i Firebase påvirker ikke admin
+og kan gjennomgås separat i databasen — ikke slett levende data ukritisk.
 
-- Restaurantens «Godta»-handling er nå **server-first**: admin viser aldri
-  en lokal «bekreftet» ordre før Firebase har kvittert for lagringen.
-  Feil blir vist som en tydelig 10-sekunders toast med HTTP/konfliktårsak.
-- Standard bekreftelse bevarer den eksisterende ETag-beskyttede
-  ordreoppdateringen. Hvis sikkerhetsregler avviser hel-ordre-PUT med
-  400/401/403, prøver koden en forsiktig reservevei: hent ETag på
-  `orders/{id}/status`, lagre nødvendige hentetidfelter, og skriv
-  **kun status** med `if-match`. ETag-konflikter (412) medfører IKKE
-  blind statusoverskriving; personalet må kontrollere ordren.
-- Etter vellykket operasjon forsøker koden en ekstra ordrelesing for å
-  bekrefte `status=bekreftet`, og admin oppdaterer visningen med serverdata.
-  Det er ikke en garanti for at kunden mottok SMS/e-post.
-- Kundens bekreftelsesdialog leser allerede egen ordre direkte fra Firebase
-  opptil hvert 4. sekund i de tre minuttene den venter; ingen bred
-  databaseforespørsel eller Vercel-endepunkt er lagt til.
-- Alle aktive klient-/adminmoduler deler nå samme versjonerte import av
-  `js/data.js`, og service-worker-cachen er oppdatert.
-- **Test før full drift:** Legg inn én ny testordre og godta innen 3 minutter.
-  Bekreft `orders/{id}/status=bekreftet` i Firebase, at kunden får
-  «Bestillingen er bekreftet», og at ordren ikke kommer tilbake som
-  «Mottatt» når admin lastes på nytt. Ved rødt feilmeldingsvarsel,
-  noter meldingen og kontroller Firebase RTDB-reglene.
+**Eksperimentell Firebase Functions-variant:** `functions/index.js`
+har en separat SMS-trigger for Firebase-prosjektet `bestill-19`,
+mens denne `demo/` bruker `kol-grill-pizza` som database.
+Deploy/enable **ikke** begge senderne uten en særskilt gjennomgang.
+`functions/sms-core.cjs` brukes også av `functions/email.js` og må
+derfor ikke slettes som en «SMS-dublett». Vi har ikke bekreftet hva
+som eventuelt er deployet utenfor GitHub.
 
+**Driftstest:** Åpne `/demo/admin.html`, kontroller den gule
+SMS-automatisering LIVE-indikatoren, godta én ny testordre og sjekk
+Apps Script-loggen, Traccar-godkjenning og faktiske SMS på mottakertelefonen.
+En telefon som mister internett kan ikke registreres sikkert med
+**kun** Firebase og en Google Apps Script-poll; for automatisk
+telefon-online/offline kreves et autentisert signal fra SMS-telefonen
+eller dokumentert Traccar API. Målet er å unngå falskt grønt lys.
 
-## SMS-telefonens nettstatus, uten Vercel (2026-10-22)
+**RTDB-sikkerhet:** Offentlige REST-skrivinger kan forfalske
+`smsHealth` og `smsReceipts`. Tilgang bør sikres med pålitelig
+serveridentitet før full produksjonsbruk; ikke legg hemmeligheter på
+GitHub eller gjør `smsHealth` åpent skrivbart bare for å få grønt lys.
 
-- **Viktig skille:** `smsHealth` beviser bare at Google Apps Script sjekker
-  Firebase. At Traccar Cloud godtar en SMS-forespørsel beviser **ikke**
-  at Android-telefonen har mottatt forespørselen eller sendt SMS på mobilnettet.
-  Admin markerer derfor slike ordre som «SMS-forespørsel godtatt», ikke «SMS sendt».
-- Admin kontrollerer nå **to uavhengige opplysninger** fra RTDB hvert 10. sekund:
-  - `/smsHealth`: vellykket LIVE-poll fra Google Apps Script (maks 3 minutter).
-  - `/smsDeviceHeartbeat`: fersk tilkoblingsmelding fra selve Android-telefonen
-    (maks **45 sekunder**, kilde `kol-android-heartbeat`).
-- SMS-lampen blir grønn **bare** når begge kontrollene er ferske.
-  Ved manglende oppsett er den gul/ubekreftet; etter tidligere registrert
-  telefon som mister forbindelsen blir den rød. Dette er **nettstatus**,
-  ikke bekreftelse på at Traccar-appen er aktiv eller at SMS er levert.
-- Telefonen kan bruke `/demo/tools/sms-gateway-monitor.html` som en
-  **midlertidig synlig nett-kontrollside**. Åpne adressen i Chrome **på
-  SMS-telefonen**, trykk «Start telefonkontroll», og la skjermen være på.
-  Siden skriver hvert 15. sekund en anonym og minimal Firebase-oppdatering,
-  med **Firebase-serverens tidsstempel**. Den sender ingen SMS.
-  Når telefonens internett blir borte, går lampen fra grønt til rødt innen
-  ca. 45–55 sekunder så lenge adminpanelet er synlig og på nett.
-- Når telefonen låses eller nettleseren havner i bakgrunnen kan heartbeat stoppe.
-  **Dette er ikke en pålitelig 24/7 Android-overvåking i bakgrunnen**.
-  For slik drift trengs en Android-tjeneste/automatisering (for eksempel
-  Tasker/MacroDroid med sikkert autentisert heartbeat) eller en SMS-gateway
-  som tilbyr dokumentert enhetsstatus.
-- **Sikkerhet:** Denne enkle kontrollsiden sender i dag via REST til den
-  eksisterende databasen, uten egen innlogging. Oppdateringen inneholder
-  ingen telefonnumre/hemmeligheter, men en offentlig skrivbar RTDB
-  lar uvedkommende forfalske statusen. Lampen må derfor regnes som en
-  driftsindikator, **ikke en sikkerhetskontroll**. Før permanent drift må
-  heartbeat-skriving låses til en autentisert enhet/tjeneste, og
-  `smsHealth`/`smsReceipts` beskyttes av RTDB-regler.
-- Test: åpne kontrollsiden på SMS-telefonen, slå på overvåking, kontroller
-  grønne lys i admin, slå av både Wi-Fi og mobildata på telefonen. Vent opptil
-  ca. ett minutt. Lampen skal bli rød. Slå på internett igjen og bekreft at
-  tilkoblingsmeldingen oppdateres. **Ingen testordre eller SMS er nødvendig.**
+## Ordrebekreftelse og kundesynkronisering
 
-
-### PC ile feilaktig grønt lys — rettet (2026-10-23)
-
-- Den første telefonkontrollsiden lot **enhver nettleser**, også en PC,
-  skrive `smsDeviceHeartbeat` og gjøre SMS-lampen grønn. Dette var feil:
-  en PC med nett forteller ingenting om SMS-telefonens tilkobling.
-- `tools/sms-gateway-monitor.html` nekter nå oppstart på ikke-Android
-  nettlesere, også når gammel lokal «startet»-tilstand finnes.
-  Desktop viser forklaring og **sender ingen Firebase-heartbeat**.
-- Kun Android-nettleseren skriver nå `platform:"android"` og
-  `monitorVersion:2` sammen med serverklokkeslettet.
-  `admin.js` godtar bare slike v2-heartbeats, slik at **gamle PC-meldinger
-  aldri mer gir grønt lys**, selv når de ennå er ferske.
-- Dette er **fortsatt en nettleser-/plattformkontroll, ikke kryptografisk
-  identitetsbekreftelse**. En annen Android eller en forfalsket browser-UA
-  kan fremdeles produsere signal når Firebase-reglene tillater offentlig
-  skriving. Før produksjonsbruk trenger signalet autentisering og en
-  bakgrunnstjeneste på den faktiske SMS-telefonen.
-- Traccar SMS Gateway kan via Cloud-relé stå uten kontakt med telefonen,
-  selv om cloud-API har godtatt meldingen. Ingen av disse visningene
-  beviser app-tilstand eller fysisk SMS-levering.
-
-
-## Gjeldende SMS-lampe: kun Firebase-poller, uten telefonnettleser (2026-10-23)
-
-Denne delen **erstatter** den tidligere beskrivelsen av Android-heartbeat-krav
-til grønn SMS-lampe:
-
-- `demo/js/admin.js` leser nå kun `/smsHealth.json` via Firebase REST
-  direkte fra PC, nettbrett eller annen nettleser — ingen Vercel.
-- Google Apps Script `pollOrdersForSms()` skriver allerede til `smsHealth`
-  etter vellykket kontroll av Firebase. Sjekken kjører normalt hvert minutt.
-- Grønn «SMS aktiv»: `source === "apps-script-sms-poller"`,
-  `liveConfigured === true`, `status === "ok"` og
-  `checkedAt` innen 3 minutter.
-- Gul: ingen kjent heartbeat. Rød: TEST/OFF, for gammel heartbeat eller
-  Firebase utilgjengelig. Admin kontrollerer hvert 10. sekund når panelet er synlig.
-- **Viktig:** Grønn betyr bare at Apps Script poller ordre i LIVE-modus.
-  Det beviser verken Traccar Cloud → Android-forbindelse, nett på telefonen,
-  at gateway-appen faktisk sendte SMS, eller at mottakeren fikk SMS.
-- `/demo/tools/sms-gateway-monitor.html` er en separat, valgfri
-  nettverks-testside. Den påvirker **ikke** lenger SMS-statuslampen.
-  Den trengs ikke til daglig drift. Ikke start den på PC.
-- Sending, Traccar-token, Apps Script-utløsere, SMS-kvitteringer,
-  e-post og Epson-utskrift er uendret av denne oppdateringen.
-
-
-## SMS-statushistorikk og forskjellen mellom Traccar og poller (2026-10-23)
-
-GitHub-versjonen fra før `fcf9426970d223d500a09a31fdb02905b9ca15b2`
-hadde SMS-grønnlogikk i admin som krevde `smsEnabled=true`,
-`gatewayOnline=true` og at `lastGatewayCheckAt` var under 90 sekunder gammel.
-Vercel `api/sms-status.js` videreformidlet disse feltene fra Apps Script.
-
-`gatewayOnline` i lagret `Kode.gs` er imidlertid beregnet ut fra LIVE,
-fersk *Apps Script-poll* og at `KOL_LAST_SMS_OK` er yngre enn 24 timer.
-Det er en kvittering for en tidligere godkjent Traccar-forespørsel, ikke
-et uavhengig sanntidssignal fra Android. Dette kan ikke sikkert bekrefte
-at telefonens internett ble slått av/på uten nye SMS-forsøk. Det faktiske
-live Apps Script-prosjektet kan tidligere ha vært annerledes enn koden
-i GitHub, og må sammenlignes før man hevder nøyaktig gammel oppførsel.
-
-**Nåværende sikker UI-regel:** Fersk Apps Script LIVE uten validert v2
-Android-nettsignal = GUL/ukjent, ikke grønn «SMS-telefon tilkoblet».
-Manglende/forsinket Android-signal etter at v2 har vært aktiv = RØD.
-Grønn krever både fersk poll og fersk Android-nettrapport. Den valgfri
-monitoren er en forgrunns-nettside og er ikke egnet for stabil, skjermlåst
-døgnkontroll. Permanent funksjon forutsetter autentisert enhets-heartbeat
-fra bakgrunnstjeneste eller et dokumentert status-API fra SMS Gateway,
-uten Vercel og uten falske leveringsløfter.
+Restauranten viser først «Godtatt» når Firebase-bekreftelse er mottatt.
+Ved feil viser admin en melding og kunden forblir på ventestatus;
+kundens bekreftelsesdialog kontrollerer sin egen ordre, og et SSE-signal
+oppdaterer både kunde og admin. Ikke gjør disse kritiske skrive- og
+sync-funksjonene om som del av SMS-oppryddingen.
