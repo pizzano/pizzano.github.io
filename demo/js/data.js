@@ -562,6 +562,13 @@ function normalizeOrders(raw) {
             accepted: order.emailReceipts.accepted || null,
             ready: order.emailReceipts.ready || null,
           } : null,
+        // Preserve Traccar acknowledgements published by the SMS poller.
+        smsReceipts: order.smsReceipts && typeof order.smsReceipts === 'object'
+          ? {
+            accepted: order.smsReceipts.accepted || null,
+            ready: order.smsReceipts.ready || null,
+            estimateUpdated: order.smsReceipts.estimateUpdated || null,
+          } : null,
         pickup: String(order.pickup || ''),
         pickupMode: order.pickupMode === 'scheduled' || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '')) ? 'scheduled' : 'asap',
         scheduledPickupAt: Number(order.scheduledPickupAt) || null,
@@ -971,6 +978,7 @@ function applyRemoteOrders(value) {
     o.status,
     Number(o.statusUpdatedAt) || 0,
     JSON.stringify(o.emailReceipts || {}),
+    JSON.stringify(o.smsReceipts || {}),
     Number(o.estimatedMinutes) || 0,
     Number(o.estimatedAt) || 0,
     Number(o.estimatedReadyAt) || 0,
