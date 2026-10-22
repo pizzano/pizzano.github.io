@@ -2401,68 +2401,47 @@ function displaySmsStatus(mode, text, help) {
   badge.setAttribute('aria-label', 'SMS: ' + text);
 }
 
-// Interpret both the improved API and the old response during rollout.
-function classifySmsHealth(status, now = Date.now()) {
-  if (!status || status.statusReachable === false) {
-    return ['error', 'SMS-kontroll frakoblet',
-      'Kan ikke kontrollere Apps Script. En tidligere sendt SMS bekrefter ikke nåværende drift.'];
+// Firebase is the only SMS health source. The heartbeat is written by the
+// independent Apps Script sender after a successful Firebase poll.
+function classifySmsHealth(health, now = Date.now()) {
+  if (!health || health.source !== 'apps-script-sms-poller') {
+    return ['pending', 'SMS-kontroll venter',
+      'Ingen SMS-kontroll er registrert i Firebase ennå. Oppdater Apps Script-koden.'];
   }
-  const lastPoll = Date.parse(String(status.lastSuccessfulPollAt || status.lastGatewayCheckAt || ''));
-  const age = now - lastPoll;
-  const freshPoll = Number.isFinite(age) && age >= -60000 && age < 180000;
-  if (status.liveConfigured === true) {
-    if (status.pollHealthy === true && freshPoll) {
-      return ['active', 'SMS aktiv',
-        'LIVE og siste automatiske Firebase-kontroll OK. Traccar og mobilens forbindelse verifiseres først ved sending.'];
-    }
-    if (!Number.isFinite(lastPoll)) {
-      return ['pending', 'SMS-kontroll venter',
-        'LIVE er aktivert, men ingen vellykket automatisk kontroll er registrert ennå.'];
-    }
-    return ['error', 'SMS-kontroll frakoblet',
-      'LIVE er aktivert, men siste vellykkede kontroll er for gammel. Sjekk Apps Script-utløseren.'];
-  }
-  if (status.liveConfigured === false) {
+  if (health.liveConfigured === false) {
     return ['error', 'SMS ikke LIVE',
       'Automatisk SMS er deaktivert eller står i TEST-modus.'];
   }
-  // Legacy Vercel response: smsEnabled means LIVE and recent polling.
-  // Never depend on gatewayOnline, which requires a recent sent SMS.
-  if (status.smsEnabled === true && freshPoll) {
+  const age = now - Number(health.checkedAt || 0);
+  if (health.status === 'ok' && health.liveConfigured === true
+      && Number.isFinite(age) && age >= -60000 && age < 180000) {
     return ['active', 'SMS aktiv',
-      'LIVE og siste automatiske kontroll OK. En sendt SMS kreves ikke for grønt lys.'];
+      'LIVE og siste automatiske Firebase-kontroll OK. Faktisk levering til telefonen er ikke bekreftet.'];
   }
-  return ['pending', 'SMS-status ubekreftet',
-    'Venter på bekreftet LIVE-status fra kontrollserveren.'];
+  return ['error', 'SMS-kontroll frakoblet',
+    'Ingen fersk SMS-kontroll i Firebase. Sjekk Apps Script-utløseren og skriveadgang.'];
 }
 
 async function refreshSmsStatus() {
-  const configured = String(window.BESTILL_CONFIG?.smsStatusUrl || '').trim();
-  if (!configured) {
-    displaySmsStatus('error', 'SMS ikke konfigurert',
-      'Ingen SMS-statusadresse er konfigurert.');
+  if (!DB_URL) {
+    displaySmsStatus('error', 'SMS ikke konfigurert', 'Firebase-adresse mangler.');
     return;
   }
   if (smsStatusFetching) return;
   smsStatusFetching = true;
   try {
-    const endpoint = new URL(configured, location.href);
-    if (endpoint.protocol !== 'https:' && !(endpoint.protocol === 'http:' && endpoint.origin === location.origin)) {
-      throw new Error('Invalid SMS URL');
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    let response;
-    try {
-      response = await fetch(endpoint.href, {cache:'no-store',credentials:'omit',signal:controller.signal});
-    } finally { clearTimeout(timeout); }
-    if (!response.ok) throw new Error('SMS status failure');
+    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
+      method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7500)
+    });
+    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
     displaySmsStatus(...classifySmsHealth(await response.json()));
   } catch (_) {
     displaySmsStatus('error', 'SMS-kontroll frakoblet',
-      'Kunne ikke kontakte SMS-statusserveren.');
+      'Kunne ikke lese SMS-kontrollstatus fra Firebase.');
   } finally { smsStatusFetching = false; }
 }
+
+
 void refreshSmsStatus();
 window.setInterval(refreshSmsStatus, 60000);
 document.addEventListener('visibilitychange', () => {
@@ -2522,62 +2501,41 @@ document.addEventListener('visibilitychange', () => {
 });
 document.getElementById('ordersEmailStatus')?.addEventListener('click', () => { void refreshEmailStatus(); });
 
-/* The list shows actual successful gateway submissions, never guessed SMS status. */
-const smsReceiptCache = new Map();
-let smsReceiptFetching = false;
+/* SMS receipts are stored on their order by the trusted Apps Script poller.
+ * The existing orders SSE listener updates the list and detail automatically.
+ * No polling, proxy endpoint or Vercel call is needed.
+ */
+function smsReceiptKinds(order) {
+  const receipts = order?.smsReceipts || {};
+  const createdAt = Number(order?.createdAt) || 0;
+  const valid = kind => {
+    const receipt = receipts[kind];
+    const sentAt = Number(receipt?.sentAt);
+    return receipt?.state === 'accepted' && receipt?.provider === 'Traccar'
+      && Number.isSafeInteger(sentAt) && sentAt >= createdAt
+      && sentAt <= Date.now() + 300000;
+  };
+  return {
+    accepted: valid('accepted'),
+    ready: valid('ready'),
+    estimateUpdated: valid('estimateUpdated'),
+  };
+}
 function smsReceiptSent(id) {
-  const receipt = smsReceiptCache.get(String(id));
-  return Boolean(receipt && (receipt.acceptedAt || receipt.readyAt || receipt.estimateUpdatedAt));
+  const order = getOrders().find(entry => entry.id === String(id));
+  return order ? Object.values(smsReceiptKinds(order)).some(Boolean) : false;
 }
 function smsReceiptDetail(id) {
-  const r = smsReceiptCache.get(String(id));
-  if (!r) return '';
-  const types = [];
-  if (r.acceptedAt) types.push('Bekreftelse');
-  if (r.estimateUpdatedAt) types.push('Endret hentetid');
-  if (r.readyAt) types.push('Klar for henting');
-  return types.length ? 'SMS ble sendt · ' + types.join(' · ') : '';
+  const order = getOrders().find(entry => entry.id === String(id));
+  if (!order) return '';
+  const receipts = smsReceiptKinds(order);
+  const kinds = [];
+  if (receipts.accepted) kinds.push('Bekreftelse');
+  if (receipts.estimateUpdated) kinds.push('Endret hentetid');
+  if (receipts.ready) kinds.push('Klar for henting');
+  return kinds.length ? 'SMS ble sendt · ' + kinds.join(' · ') : '';
 }
-function updateSmsReceiptMarkers() {
-  document.querySelectorAll('[data-order-sms]').forEach(node => {
-    node.hidden = !smsReceiptSent(node.dataset.orderSms);
-  });
-  document.querySelectorAll('[data-detail-sms]').forEach(node => {
-    const id = node.dataset.detailSms;
-    node.hidden = !smsReceiptSent(id);
-    const label = node.querySelector('[data-detail-sms-label]');
-    if (label) label.textContent = smsReceiptDetail(id);
-  });
-}
-async function refreshSmsReceipts() {
-  if (document.hidden || smsReceiptFetching || ui.page !== 'orders') return;
-  const visible = filteredOrders()
-    .filter(o => o.status !== 'mottatt' && /^ord_[a-z0-9]{7,40}$/i.test(o.id))
-    .sort((a,b) => (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
-  const ids = visible.slice(0,39).map(o=>o.id);
-  if (selectedOrderId && /^ord_[a-z0-9]{7,40}$/i.test(selectedOrderId) && !ids.includes(selectedOrderId)) ids.push(selectedOrderId);
-  if (!ids.length) return;
-  smsReceiptFetching = true;
-  try {
-    const query = new URLSearchParams({ids:ids.join(',')});
-    const response = await fetch('https://pizzano-github-io.vercel.app/api/sms-receipts?' + query,
-      {cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(7500)});
-    if (!response.ok) return;
-    const payload = await response.json();
-    if (!payload || !payload.receipts || typeof payload.receipts !== 'object') return;
-    for (const id of ids) {
-      const info = payload.receipts[id];
-      if (!info || typeof info !== 'object') continue;
-      const time = key => Number.isSafeInteger(Number(info[key])) && Number(info[key]) > 0 ? Number(info[key]) : null;
-      smsReceiptCache.set(id, {acceptedAt:time('acceptedAt'),readyAt:time('readyAt'),estimateUpdatedAt:time('estimateUpdatedAt')});
-    }
-    updateSmsReceiptMarkers();
-  } catch (_) {
-    // Missing receipts must never be shown as successfully sent.
-  } finally { smsReceiptFetching = false; }
-}
-window.setInterval(() => { void refreshSmsReceipts(); }, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshSmsReceipts(); });
+
 
 function updateOrdersConnection() {
   const connection = document.getElementById('ordersConnection');
@@ -2614,7 +2572,6 @@ function renderOrders() {
     el.orderDetailLive.innerHTML = '';
   }
   syncOrdersWorkspaceLayout();
-  void refreshSmsReceipts();
 }
 
 el.orderFilterBtns.forEach((button) => {
