@@ -50,7 +50,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261017-email1';
+} from './data.js?v=20261022-orderconfirm2';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
