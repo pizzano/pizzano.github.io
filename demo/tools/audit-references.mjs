@@ -20,7 +20,7 @@ const check = (ref, from) => {
   if (!exists(base)) issues.add(from + ' → MISSING ' + base);
 };
 
-const html = ['demo/index.html','demo/admin.html','demo/test-printer.html','demo/tools/PrivatPrinter.html'];
+const html = ['demo/index.html','demo/admin.html','demo/tools/PrivatPrinter.html'];
 for (const file of html) {
   if (!exists(file)) { issues.add('Missing entry point ' + file); continue; }
   const text = read(file);
