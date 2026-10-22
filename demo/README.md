@@ -125,12 +125,12 @@ på nytt under oppryddingen.
 `smsHealth` skrives av samme Apps Script etter vellykket poll.
 Status betydning:
 
-- **Gul — SMS-automatisering LIVE:** Apps Script kontrollerte Firebase nylig
-  (under 3 minutter). Telefonens forbindelse og SMS-levering er **ukjent**.
+- **Grønn — SMS-automatisering LIVE:** Apps Script kontrollerte Firebase nylig
+  (under 3 minutter). Telefonens forbindelse og SMS-levering er **fortsatt ukjent**.
 - **Rød — SMS-automatisering av/utilgjengelig:** LIVE er av,
   kontrollen er over 3 minutter gammel eller Firebase kan ikke leses.
 - **Gul — status ukjent:** Ingen gyldig Apps Script-status er tilgjengelig.
-  **Ingen grønn telefonstatus** vises uten ekte verifisert telefonsignal.
+  Grønn betyr aktiv Apps Script-automatisering, **ikke** bekreftet Android-nett eller SMS-levering.
 
 Kundens SMS-kvittering er lagret på selve bestillingen i
 `/orders/{orderId}/smsReceipts/accepted` med `state:accepted`,
@@ -157,7 +157,7 @@ er distribuert til Firebase-prosjektet `bestill-19`, vil de fortsatt kunne
 kjøre og må kontrolleres/stoppes separat i Firebase-konsollen. Git-historikk
 kan brukes til å hente kildekoden tilbake ved behov.
 
-**Driftstest:** Åpne `/demo/admin.html`, kontroller den gule
+**Driftstest:** Åpne `/demo/admin.html`, kontroller den grønne
 SMS-automatisering LIVE-indikatoren, godta én ny testordre og sjekk
 Apps Script-loggen, Traccar-godkjenning og faktiske SMS på mottakertelefonen.
 En telefon som mister internett kan ikke registreres sikkert med
