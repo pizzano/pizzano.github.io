@@ -22,7 +22,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
 | Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
-| Apps Script-kopi | `integrations/google-apps-script/` | Referansekopi av e-post-poller (ikke automatisk utplassert) |
+| Apps Script-kopier | `integrations/google-apps-script/` | SMS- og e-post-pollere (GitHub-kode er ikke automatisk utplassert til Google) |
 
 ## Ikke flytt eller slett ukritisk
 
@@ -106,3 +106,59 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
 - Det kan midlertidig være **mer enn 100** ordrer dersom ingen kan slettes trygt eller restaurantens adminside er lukket.
 - Kundenes `Mine bestillinger` viser nå bare **aktive/relevante** bestillinger (inkludert statusvarsler som ennå ikke er lukket), ikke historisk ordreoversikt. Lokale ordresnapshots brukes fortsatt for aktiv ordresporing og bonus-fallback, men gammel historikk vises ikke.
 - **Viktig:** Sletting fra Firebase er irreversibel. Bilag og salgsdokumentasjon som er nødvendig for bokføring må ivaretas i et separat godkjent regnskaps-/kassesystem.
+
+
+## SMS uten Vercel — Firebase RTDB (2026-10-22)
+
+- `/demo/` bruker ikke lenger Vercel for SMS-status eller sendingskvitteringer.
+  `config.js` inneholder bare Firebase-adressen.
+- **Sendingen er fortsatt uendret:** den aktive Google Apps Script-jobben
+  `pollOrdersForSms()` leser bekreftede ordre og sender **én bekreftelses-SMS**
+  via Traccar/Android. GitHub Pages og Firebase RTDB sender ikke SMS selv.
+- `admin.js` leser **`/smsHealth.json`** direkte fra Firebase. Den viser
+  grønt bare når `source=apps-script-sms-poller`, `liveConfigured=true`
+  og det finnes en vellykket kontroll de siste tre minuttene. Dette beviser
+  at polleren kjører, **ikke** at telefonen mottok SMS.
+- Etter vellykket Traccar-respons skriver SMS-polleren en kvittering til
+  `/orders/{orderId}/smsReceipts/accepted` med
+  `{state:"accepted",provider:"Traccar",sentAt:<millisekunder>}`.
+  Mislykket sending vises aldri som «SMS ble sendt».
+  Kjøkken/admin ser kvitteringen fra sin eksisterende Firebase-ordrestrøm.
+  Ingen separat receipt-API eller ny polling trengs.
+- De historiske `ready` og `estimateUpdated`-feltene beholdes i UI for
+  gammel dokumentasjon; **den gjeldende SMS-polleren sender kun bekreftelse**.
+- En Firebase-skrivefeil kan skjule UI-kvitteringen, men **starter ikke ny
+  SMS-sending**. Den opprinnelige dedupliseringsnøkkelen i Apps Script
+  ScriptProperties blir bevart.
+
+### Obligatorisk aktivering i Google Apps Script
+
+1. Åpne det **faktiske, aktive SMS Apps Script-prosjektet** og erstatt
+   eksisterende `Kode.gs` med
+   `demo/integrations/google-apps-script/Kode.gs` fra GitHub.
+   **GitHub-commit endrer ikke kode som allerede kjører i Apps Script.**
+   La `TRACCAR_TOKEN`, `TEST_PHONE`, `KOL_MODE` og de eksisterende
+   utløserne/ScriptProperties være urørt. **Ikke kjør `setupLiveSms()` igjen**,
+   fordi den nullstiller aktiveringstidspunktet.
+2. Sjekk kjøreloggen for `pollOrdersForSms` etter neste vellykkede runde.
+   Bekreft at `smsHealth/checkedAt` oppdateres og
+   `liveConfigured` er `true` (LIVE). Hvis `smsHealth` forblir tom,
+   sjekk Firebase-skrivetilgang og Apps Script-loggene.
+3. Kjør **`syncRecentSmsReceiptsToFirebase()` manuelt** for å flytte
+   bekreftede gamle SMS-kvitteringer for de 100 nyeste ordrene fra
+   ScriptProperties til Firebase. Funksjonen **sender ingen SMS**.
+   Kjør på nytt ved behov hvis loggen melder om 50 kvitteringer per kjøring.
+4. Gjør en kontrollert ny testbestilling: godkjenn, verifiser én mottatt
+   SMS og bekreft at `orders/{id}/smsReceipts/accepted` vises i RTDB.
+   Kontroller at «SMS ble sendt» dukker opp i admin uten Vercel.
+5. Før gammel Vercel-deployment slettes: bekreft at ingen andre tjenester
+   fremdeles bruker dens `api/`-ruter. De eldre `api/sms-status.js` og
+   `api/sms-receipts.js` er ikke lenger referert av `/demo/`.
+
+**Sikkerhet:** De eksisterende Apps Script-kallene bruker Firebase REST uten
+autentiseringsheader (også e-post-polleren). Bekreft RTDB-sikkerhetsregler
+før produksjonsbruk; offentlige klienter må **ikke** kunne forfalske
+`smsHealth`, `smsReceipts` eller ordrestatus. Sikre skriverettighetene
+med en pålitelig serveridentitet før reglene strammes inn; ellers får
+Apps Script HTTP 401/403 og UI-statusen forblir ubekreftet. Verken
+Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
