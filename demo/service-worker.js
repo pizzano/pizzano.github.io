@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v224-smsclean1';
+const CACHE_NAME = 'kol-demo-v225-smslivegreen1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
