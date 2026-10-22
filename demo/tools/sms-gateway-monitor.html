@@ -30,10 +30,11 @@ small{display:block;text-align:center;color:#76857c;margin:14px 0 0}
 <button id="start" type="button">Start telefonkontroll</button>
 <button id="stop" type="button" hidden>Stopp telefonkontroll</button>
 <p id="detail">Åpne denne siden på selve SMS-telefonen og trykk Start.</p>
+<p class="sub">Denne kontrollen må kjøres på Android-telefonen, ikke på en PC.</p>
 <div class="help">
 <strong>Viktig:</strong> Denne siden sender en liten nettstatus til Firebase hvert 15. sekund når den er synlig.
 Hold denne siden åpen og skjermen på. Nettlesere kan stanse bakgrunnsoppgaver når skjermen låses.
-Ingen SMS, telefonnumre eller passord overføres. Grønt lys i restaurantpanelet bekrefter kun
+Ingen SMS, telefonnumre eller passord overføres. Dette tester Android-nettleserens nettforbindelse, ikke Traccar-appen. Grønt lys i restaurantpanelet bekrefter kun
 telefonens nettforbindelse og at SMS-automatiseringen kjører — ikke at Traccar-appen eller SIM-kortet har sendt en SMS.
 </div>
 <small>KØL Grill & Pizza · Firebase Realtime Database</small>
@@ -46,7 +47,11 @@ telefonens nettforbindelse og at SMS-automatiseringen kjører — ikke at Tracca
 const DB_URL = 'https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const HEARTBEAT_URL = DB_URL + '/smsDeviceHeartbeat.json';
 const INTERVAL_MS = 15000;
-const KEY = 'kol_sms_phone_monitor_enabled_v1';
+const KEY = 'kol_sms_phone_monitor_enabled_v2';
+// Desktop monitoring was a bug: it reported the PC connection as the gateway phone.
+// This is a platform guard, not a secure device attestation.
+const IS_ANDROID = /\bAndroid\b/i.test(navigator.userAgent || '') &&
+  (!navigator.userAgentData?.platform || navigator.userAgentData.platform === 'Android');
 const indicator = document.getElementById('indicator');
 const statusNode = document.getElementById('status');
 const detail = document.getElementById('detail');
@@ -68,7 +73,7 @@ const requestWakeLock = async () => {
   try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {}
 };
 const ping = async online => {
-  if (sending) return;
+  if (!IS_ANDROID || sending) return;
   if (online && (!enabled || document.hidden)) return;
   if (navigator.onLine === false && online) {
     view('error', 'Ingen internettforbindelse', 'Telefonen er frakoblet. SMS kan bli stående i Traccar-køen.');
@@ -85,6 +90,8 @@ const ping = async online => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source: 'kol-android-heartbeat',
+          monitorVersion: 2,
+          platform: 'android',
           checkedAt: { '.sv': 'timestamp' },
           online: online === true
         }),
@@ -112,6 +119,10 @@ const schedule = () => {
   }, INTERVAL_MS);
 };
 const begin = async () => {
+  if (!IS_ANDROID) {
+    view('error', 'Kun Android-telefon', 'En datamaskin kan ikke bekrefte SMS-telefonens nettforbindelse. Åpne denne siden på telefonen som kjører Traccar SMS Gateway.');
+    return;
+  }
   enabled = true;
   remember(true);
   start.hidden = true;
@@ -149,6 +160,18 @@ window.addEventListener('online', () => { if (enabled && !document.hidden) void 
 window.addEventListener('offline', () => {
   if (enabled) view('error','Ingen internettforbindelse','Kontrollen blir rød i restaurantpanelet etter ca. 45 sekunder.');
 });
+if (!IS_ANDROID) {
+  // No Firebase write from a PC, including on reload. The v2 marker in
+  // Firebase health checks also invalidates any older PC-generated signal.
+  enabled = false;
+  remember(false);
+  start.disabled = true;
+  start.hidden = false;
+  stop.hidden = true;
+  view('error', 'Dette er ikke en Android-telefon',
+    'Åpne denne siden på selve SMS-telefonen. Datamaskinens internett kan ikke brukes som bevis på at telefonen er tilkoblet.');
+  return;
+}
 if (localStorage.getItem(KEY) === '1') {
   enabled = true;
   start.hidden = true; stop.hidden = false;
