@@ -1,6 +1,6 @@
 /**
  * Epson TM-T20II / ePOS-Print, kun for /demo/Bestillinger.
- * Samme HTTPS SOAP-endepunkt som den fungerende test-printer.html.
+ * Bruker Epson ePOS SOAP direkte; uavhengig av en egen testsiden.
  * Dette modulet endrer aldri bestilling, SMS eller e-post.
  */
 
@@ -432,7 +432,7 @@ export async function printKitchenTicket(order, { reprint = false, typography = 
   const endpoint = config.scheme + '://' + config.host +
     '/cgi-bin/epos/service.cgi?devid=' + encodeURIComponent(config.deviceId) + '&timeout=10000';
   const content = await bitmapReceiptXml(order, reprint, typography);
-  // Epson TM-T20II ePOS-Print 5.0 uses the SOAP envelope proven by /demo/test-printer.html.
+  // Epson TM-T20II ePOS-Print 5.0: send SOAP directly to the configured printer.
   const body = '<?xml version="1.0" encoding="UTF-8"?>' +
     '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
     '<epos-print xmlns="' + EPOS_NS + '">' + content +
