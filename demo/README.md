@@ -248,3 +248,27 @@ Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
 - Traccar SMS Gateway kan via Cloud-relé stå uten kontakt med telefonen,
   selv om cloud-API har godtatt meldingen. Ingen av disse visningene
   beviser app-tilstand eller fysisk SMS-levering.
+
+
+## Gjeldende SMS-lampe: kun Firebase-poller, uten telefonnettleser (2026-10-23)
+
+Denne delen **erstatter** den tidligere beskrivelsen av Android-heartbeat-krav
+til grønn SMS-lampe:
+
+- `demo/js/admin.js` leser nå kun `/smsHealth.json` via Firebase REST
+  direkte fra PC, nettbrett eller annen nettleser — ingen Vercel.
+- Google Apps Script `pollOrdersForSms()` skriver allerede til `smsHealth`
+  etter vellykket kontroll av Firebase. Sjekken kjører normalt hvert minutt.
+- Grønn «SMS aktiv»: `source === "apps-script-sms-poller"`,
+  `liveConfigured === true`, `status === "ok"` og
+  `checkedAt` innen 3 minutter.
+- Gul: ingen kjent heartbeat. Rød: TEST/OFF, for gammel heartbeat eller
+  Firebase utilgjengelig. Admin kontrollerer hvert 10. sekund når panelet er synlig.
+- **Viktig:** Grønn betyr bare at Apps Script poller ordre i LIVE-modus.
+  Det beviser verken Traccar Cloud → Android-forbindelse, nett på telefonen,
+  at gateway-appen faktisk sendte SMS, eller at mottakeren fikk SMS.
+- `/demo/tools/sms-gateway-monitor.html` er en separat, valgfri
+  nettverks-testside. Den påvirker **ikke** lenger SMS-statuslampen.
+  Den trengs ikke til daglig drift. Ikke start den på PC.
+- Sending, Traccar-token, Apps Script-utløsere, SMS-kvitteringer,
+  e-post og Epson-utskrift er uendret av denne oppdateringen.
