@@ -75,7 +75,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
-`api/` inneholder eldre Vercel-ruter som ikke lenger kalles fra `/demo/`. `functions/` er separate Firebase-funksjoner i roten; denne migreringen endrer eller stopper ikke dem.
+De to gamle Vercel-rutene `api/sms-status.js` og `api/sms-receipts.js` er fjernet fra kildekoden. `functions/` er separate Firebase-funksjoner i roten; denne migreringen endrer eller stopper ikke dem.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
 
