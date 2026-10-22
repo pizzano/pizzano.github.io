@@ -2423,9 +2423,9 @@ function classifySmsHealth(health, now = Date.now()) {
     return ['error', 'SMS-poller frakoblet',
       'Ingen vellykket Firebase-kontroll fra Apps Script siste 3 minutter.'];
   }
-  return ['pending', 'SMS-automatisering LIVE',
-    'Apps Script kontrollerer bestillinger. SMS-telefonens nettilgang og '
-    + 'faktisk SMS-levering kan ikke bekreftes fra denne kontrollen.'];
+  return ['active', 'SMS-automatisering LIVE',
+    'Apps Script kontrollerer bestillinger via Firebase. '
+    + 'Telefonens forbindelse og faktisk SMS-levering er ikke verifisert.'];
 }
 
 async function refreshSmsStatus() {
