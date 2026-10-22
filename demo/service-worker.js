@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v221-androidmonitor2';
+const CACHE_NAME = 'kol-demo-v222-smsfirebasepoll1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
