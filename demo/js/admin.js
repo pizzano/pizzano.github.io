@@ -2422,10 +2422,11 @@ function classifySmsHealth(health, phone, now = Date.now()) {
       'Google Apps Script har ikke oppdatert Firebase de siste 3 minuttene.'];
   }
   if (!phone || phone.source !== 'kol-android-heartbeat' ||
+      phone.monitorVersion !== 2 || phone.platform !== 'android' ||
       !Number.isFinite(Number(phone.checkedAt)) || Number(phone.checkedAt) <= 0) {
     return ['pending', 'SMS-telefon ikke kontrollert',
-      'Apps Script er aktivt, men mobilens tilkobling er ukjent. ' +
-      'Start /demo/tools/sms-gateway-monitor.html på SMS-telefonen.'];
+      'Apps Script er aktivt, men det finnes ikke et gyldig Android-signal. ' +
+      'En PC kan ikke bekrefte SMS-telefonen. Åpne /demo/tools/sms-gateway-monitor.html på Android-telefonen.'];
   }
   const phoneAge = now - Number(phone.checkedAt);
   if (phone.online !== true || phoneAge > SMS_PHONE_MAX_AGE_MS ||
@@ -2438,7 +2439,7 @@ function classifySmsHealth(health, phone, now = Date.now()) {
   return ['active', 'SMS-telefon på nett',
     'Apps Script kjører og Android-telefonen svarte for ' +
     Math.max(0, Math.floor(phoneAge / 1000)) + ' sek siden. ' +
-    'Traccar-appen, SIM-sending og SMS-levering er ikke kontrollert.'];
+    'Kun Android-nettleserens nett er bekreftet. Traccar-appen, SIM-sending og SMS-levering er ikke kontrollert.'];
 }
 
 async function refreshSmsStatus() {
