@@ -1,30 +1,41 @@
 # KØL SMS + e-post – Google Apps Script kaynakları
 
-## SMS – **tek bildirim, Hentetid**
+## SMS – aktiv Google Apps Script-kilde
 
-**Bu klasördeki `Kode.gs` TAM SMS uygulamasıdır (427 satır).**
-Eskiden bulunan kısa `sms-query-patch.gs` sadece 63 satırlık bir fonksiyondu;
-tam dosyanın yerine yapıştırılırsa SMS fonksiyonları kayboluyordu. Bu dosya artık kaldırıldı.
+**Én full kildefil:** [Kode.gs](Kode.gs) inneholder
+`pollOrdersForSms()`, Traccar-sending, én bekreftelses-SMS med hentetid,
+Firebase-`smsHealth`, og et godkjent Traccar-kvitteringsfelt på ordren.
+Den samme koden inneholder `diagnoseSms()`, `checkSmsResults()` og
+`stopSms()` for sikker manuell diagnose/stans.
 
-1. [Kode.gs](Kode.gs) dosyasını aç ve içeriğini tamamen kopyala.
-2. Google Apps Script **KOL SMS Gateway → Kode.gs** sayfasındaki bütün kodu
-   önce yedekleyip bu **tam kod** ile değiştir ve **Kaydet**.
-3. Mevcut Script Properties, Traccar anahtarı, TEST/LIVE ayarları, gönderim
-   geçmişi ve dakikalık `pollOrdersForSms` tetikleyicisi aynı kalır.
-4. **`setupLiveSms()`, `setupTestSms()`, `sendTestSms()` tekrar çalıştırma.**
-   Bunlar sistemin modunu veya aktivasyonunu değiştirebilir veya test SMS'i yollar.
-5. `diagnoseSms()` güvenli okuma kontrolü için kullanılabilir.
-6. Yeni siparişi `bekreftet` yapınca **bir** SMS gönderilir. İçinde seçilen
-   **Hentetid** ya da **Forventet hentetid** bulunur.
-   `Endre tid`, `Marker klar for henting` ve süre bitişi için SMS gönderilmez.
+**Aldri bland gammel og ny versjon ved å lime inn et enkelt kodestykke.**
+Ta sikkerhetskopi av aktiv `KOL SMS Gateway → Kode.gs` i Google,
+og sammenlign den med denne GitHub-kilden før du eventuelt oppdaterer den.
+**En GitHub-endring oppdaterer ikke Googles kjørende Apps Script.**
+De eksisterende Script Properties (inkludert `TRACCAR_TOKEN`,
+`TEST_PHONE`, `KOL_MODE`, `KOL_ACTIVE_SINCE` og `KOL_SENT_...`)
+og minuttutløseren skal beholdes. `setupLiveSms()`,
+`setupTestSms()`, `sendTestSms()` må **ikke** kjøres igjen under
+opprydding — de kan endre aktivering eller sende en testmelding.
 
-Firebase RTDB `orders` indeksinde `statusUpdatedAt` gerekli. İndeks kurulamazsa
-kod yalnızca son 80 siparişi okuyan güvenli, sınırlı yedeğe geçer.
-SMS gönderiminde `KOL_SENT_<id>_accepted` koruması korunur;
-aynı siparişe birden fazla onay SMS'i gönderilmez.
+`api/sms-status.js` og `api/sms-receipts.js` (Vercel), en
+nettleserbasert telefonmonitor og tilhørende Apps Script `doGet()`
+for proxyen er slettet fra GitHub-kilden. Det allerede kjørte
+engangsverktøyet for å kopiere eldre SMS-kvitteringer er også fjernet
+fra kilden. Disse endringene **påvirker ikke** live Apps Script før
+det er bevisst oppdatert, og er ikke en forespørsel om å nullstille
+tidligere SMS-historikk.
 
-**Not:** GitHub yayını Google Apps Script kodunu otomatik değiştirmez.
-Canlı Apps Script projesine manuel yapıştırma gereklidir.
+Firebase RTDB `/orders` bør ha `.indexOn` for
+`statusUpdatedAt`; ellers leser SMS-polleren bare de 80 siste
+ordrene som reserve. `KOL_SENT_<ordre-id>_accepted` sikrer at en
+HTTP-timeout ikke automatisk utløser samme SMS igjen.
+
+**Merk:** Grønne statuslys kan ikke bevise mobilens internett.
+En Traccar Cloud-bekreftelse beviser kun at nettskyen godtok
+forespørselen, ikke at Android eller mobiloperatøren leverte SMS.
+Admin-panelet viser derfor vellykket LIVE Apps Script-poll
+som **gul/ikke verifisert** til en ekte enhetskontroll finnes.
 
 ## E-posta — iki ayrı HTML şablonu (Bekreftet + Klar)
 
