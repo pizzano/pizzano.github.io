@@ -226,3 +226,25 @@ Traccar-token eller private Apps Script-URL-er skal inn i GitHub.
   grønne lys i admin, slå av både Wi-Fi og mobildata på telefonen. Vent opptil
   ca. ett minutt. Lampen skal bli rød. Slå på internett igjen og bekreft at
   tilkoblingsmeldingen oppdateres. **Ingen testordre eller SMS er nødvendig.**
+
+
+### PC ile feilaktig grønt lys — rettet (2026-10-23)
+
+- Den første telefonkontrollsiden lot **enhver nettleser**, også en PC,
+  skrive `smsDeviceHeartbeat` og gjøre SMS-lampen grønn. Dette var feil:
+  en PC med nett forteller ingenting om SMS-telefonens tilkobling.
+- `tools/sms-gateway-monitor.html` nekter nå oppstart på ikke-Android
+  nettlesere, også når gammel lokal «startet»-tilstand finnes.
+  Desktop viser forklaring og **sender ingen Firebase-heartbeat**.
+- Kun Android-nettleseren skriver nå `platform:"android"` og
+  `monitorVersion:2` sammen med serverklokkeslettet.
+  `admin.js` godtar bare slike v2-heartbeats, slik at **gamle PC-meldinger
+  aldri mer gir grønt lys**, selv når de ennå er ferske.
+- Dette er **fortsatt en nettleser-/plattformkontroll, ikke kryptografisk
+  identitetsbekreftelse**. En annen Android eller en forfalsket browser-UA
+  kan fremdeles produsere signal når Firebase-reglene tillater offentlig
+  skriving. Før produksjonsbruk trenger signalet autentisering og en
+  bakgrunnstjeneste på den faktiske SMS-telefonen.
+- Traccar SMS Gateway kan via Cloud-relé stå uten kontakt med telefonen,
+  selv om cloud-API har godtatt meldingen. Ingen av disse visningene
+  beviser app-tilstand eller fysisk SMS-levering.
