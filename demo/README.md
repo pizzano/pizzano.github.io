@@ -32,7 +32,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - Epson: `js/order-printer.js` bruker HTTPS mot lokal IP `192.168.1.25`, enhets-ID `local_printer`.
 - Papiret er 80 mm, mens utskriftsbildet er 576 piksler bredt (ca. 72 mm skrivbart område).
 - Printerfontene kan settes i **Restaurantinnstillinger → Printer ayarları**; samme Canvas brukes til forhåndsvisning og utskrift.
-- SMS og e-post er koblet til eksterne prosesser. Kode i `functions/` og Google Apps Script påvirkes **ikke** ved å flytte referansekopier herfra.
+- SMS og e-post kjøres av separate Google Apps Script-prosesser. Å endre kildekopiene på GitHub oppdaterer **ikke** de aktive Google Apps Script-prosjektene.
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
 - Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
 
@@ -55,7 +55,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 **Gavekort er et separat prosjekt.** Både `/gavekort.html` og `/gavekort-admin.html` ligger i rotmappen med sine originale filer. Det finnes ingen `demo/gavekort/`-kopi.
 
-De to eldre SMS-Vercel-rutene i `api/` er nå slettet. `functions/` inneholder en eldre, separat Firebase Functions-variant, blant annet delt kode som også brukes av `functions/email.js`. Den er ikke del av den aktive Apps Script-SMS-polleren; distribusjonsstatus er ikke bekreftet, så filene er beholdt.
+Ubrukte Vercel SMS-ruter i `api/` og den separate eksperimentelle Firebase Functions-kildemappen `functions/` er fjernet fra GitHub. Rotfilen `firebase.json` ble også fjernet fordi den kun konfigurerte denne utdaterte `functions/`-mappen. Dette endrer **ikke** allerede deployede Firebase Functions utenfor GitHub.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Epson-skriverens manuelle testverktøy `test-printer.html` er beholdt fordi det fortsatt er nyttig ved feilsøking.
 
@@ -148,13 +148,14 @@ ikke automatisk når filer fjernes fra GitHub. Det tidligere
 `/smsDeviceHeartbeat`-feltet i Firebase påvirker ikke admin
 og kan gjennomgås separat i databasen — ikke slett levende data ukritisk.
 
-**Eksperimentell Firebase Functions-variant:** `functions/index.js`
-har en separat SMS-trigger for Firebase-prosjektet `bestill-19`,
-mens denne `demo/` bruker `kol-grill-pizza` som database.
-Deploy/enable **ikke** begge senderne uten en særskilt gjennomgang.
-`functions/sms-core.cjs` brukes også av `functions/email.js` og må
-derfor ikke slettes som en «SMS-dublett». Vi har ikke bekreftet hva
-som eventuelt er deployet utenfor GitHub.
+**Tidligere separat Firebase Functions-variant:** Kilden for prosjektet
+`bestill-19` (`functions/` og `firebase.json`) er nå slettet fra repoet,
+da `demo/` ikke importerte eller brukte disse filene. Dette omfatter
+både den gamle SMS-funksjonen og dens avhengige e-postmodul, **ikke**
+den aktive Apps Script-e-postpolleren. Hvis gamle Cloud Functions allerede
+er distribuert til Firebase-prosjektet `bestill-19`, vil de fortsatt kunne
+kjøre og må kontrolleres/stoppes separat i Firebase-konsollen. Git-historikk
+kan brukes til å hente kildekoden tilbake ved behov.
 
 **Driftstest:** Åpne `/demo/admin.html`, kontroller den gule
 SMS-automatisering LIVE-indikatoren, godta én ny testordre og sjekk
