@@ -169,6 +169,52 @@ function kolPublishSmsHealth_(mode, at) {
   });
 }
 
+/**
+ * One-time migration before turning off Vercel: migrate only the previous
+ * successful Traccar submission records. It never sends an SMS.
+ * Keep live Script Properties untouched so duplicate prevention is preserved.
+ * Preview first; then run the publish function in the SAME Apps Script project.
+ */
+function kolMigrateSmsReceipts_(write) {
+  const url = KOL_SMS.databaseUrl + '/orders.json?orderBy='
+    + encodeURIComponent(JSON.stringify('$key')) + '&limitToLast=' + KOL_SMS.recentOrders;
+  const response = UrlFetchApp.fetch(url, {method:'get', muteHttpExceptions:true});
+  if (response.getResponseCode() !== 200) {
+    throw new Error('Cannot read orders for receipt migration: HTTP ' + response.getResponseCode());
+  }
+  const orders = JSON.parse(response.getContentText() || 'null') || {};
+  const props = kolProps_();
+  let eligible = 0;
+  let existing = 0;
+  let migrated = 0;
+  let failed = 0;
+  for (const [id, order] of Object.entries(orders)) {
+    if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !order || typeof order !== 'object') continue;
+    if (order.smsReceipts?.accepted) { existing++; continue; }
+    const receipt = kolPropertyJson_(props, 'KOL_SENT_' + id + '_accepted');
+    if (receipt?.state !== 'sent') continue;
+    const at = Number(receipt.at || 0);
+    if (!Number.isSafeInteger(at) || at <= 0 || at < (Number(order.createdAt) || 0)) continue;
+    eligible++;
+    if (!write) continue;
+    try {
+      kolPublishSmsReceipt_(id, order, at);
+      migrated++;
+    } catch (error) {
+      failed++;
+      console.error('Receipt migration failed for ' + kolShortCode_(id) + ': ' + error.message);
+    }
+  }
+  console.log('SMS receipt migration: write=' + Boolean(write)
+    + ', eligible=' + eligible + ', alreadyStored=' + existing
+    + ', migrated=' + migrated + ', failed=' + failed);
+  if (failed) throw new Error('Some SMS receipts could not be written to Firebase.');
+  return {eligible:eligible, existing:existing, migrated:migrated, failed:failed};
+}
+
+function previewSmsReceiptMigration() { return kolMigrateSmsReceipts_(false); }
+function publishSmsReceiptMigration() { return kolMigrateSmsReceipts_(true); }
+
 function kolFetchRecentOrders_() {
   // Firebase index: /orders .indexOn ["statusUpdatedAt"].
   // Read only orders with a recently modified status; do not download
