@@ -587,7 +587,9 @@ function normalizeOrders(raw) {
         estimateUpdatedAt: Number(order.estimateUpdatedAt) || null,
         rejectionReason: String(order.rejectionReason || ''),
         rejectionMessage: String(order.rejectionMessage || ''),
-        subtotal: Number(order.subtotal) || 0,
+        // A new order stores only total if subtotal is identical.
+        // Read the missing subtotal as total for receipts and old UI.
+        subtotal: order.subtotal == null ? Number(order.total) || 0 : Number(order.subtotal) || 0,
         total: Number(order.total) || 0,
         lines: asArray(order.lines).map((line) => ({
           itemId: String(line.itemId || ''),
@@ -1709,17 +1711,69 @@ export async function expireUnconfirmedOrders() {
   }
 }
 
+/**
+ * Write a lean Firebase order without changing the working order model.
+ * Only omit values that are reproducible from other saved values or empty.
+ * Order IDs, status timestamps, message receipts, product snapshot/prices,
+ * pickup deadlines and loyalty checkpoints are intentionally retained.
+ * Older stored orders are never rewritten by this helper.
+ */
+function compactOrderForStorage(order) {
+  const compact = { ...order };
+  if (compact.type === 'henting') delete compact.type;
+  if (Number(compact.subtotal) === Number(compact.total)) delete compact.subtotal;
+  if ((compact.pickupMode === 'asap' && compact.pickup === 'Snarest') ||
+      (compact.pickupMode === 'scheduled' && /^\\d{1,2}:\\d{2}$/.test(String(compact.pickup || '')))) {
+    delete compact.pickupMode;
+  }
+  if (!compact.email) delete compact.email;
+  if (!compact.loyaltyReward) delete compact.loyaltyReward;
+  if (!compact.scheduledPickupAt) delete compact.scheduledPickupAt;
+  compact.lines = (Array.isArray(order.lines) ? order.lines : []).map(line => {
+    const item = { ...line };
+    // optionDetails includes label/group/price, while selections preserves
+    // choice IDs for "Bestill samme igjen". Other forms are duplicates.
+    if (Array.isArray(item.optionDetails) && item.optionDetails.length) {
+      delete item.options;
+    } else if (!Array.isArray(item.options) || !item.options.length) {
+      delete item.options;
+    }
+    if (item.selections && typeof item.selections === 'object' &&
+        Object.values(item.selections).some(v => Array.isArray(v) && v.length)) {
+      delete item.optionIds;
+    } else if (!Array.isArray(item.optionIds) || !item.optionIds.length) {
+      delete item.optionIds;
+    }
+    if (!item.selections || !Object.values(item.selections).some(v => Array.isArray(v) && v.length))
+      delete item.selections;
+    // Base unit price is derivable from saved line price, quantity and priced
+    // optionDetails; preserve it only for ambiguous/legacy representations.
+    const detailsPriced = Array.isArray(item.optionDetails) &&
+      item.optionDetails.every(d => d?.price != null && Number.isFinite(Number(d.price)));
+    if (detailsPriced && !item.loyaltyFree) delete item.unitPrice;
+    if (!Array.isArray(item.optionDetails) || !item.optionDetails.length)
+      delete item.optionDetails;
+    if (!Array.isArray(item.removedIngredients) || !item.removedIngredients.length)
+      delete item.removedIngredients;
+    if (!item.comment) delete item.comment;
+    if (!item.loyaltyFree) delete item.loyaltyFree;
+    if (!item.loyaltyEligible) delete item.loyaltyEligible;
+    return item;
+  });
+  return compact;
+}
+
 /** Lagrer en ordre. Returnerer ordren med ID. */
 export async function submitOrder(order) {
   const now = Date.now();
-  const record = {
+  const record = compactOrderForStorage({
     ...order,
     id: order && order.id ? String(order.id) : uid('ord'),
     createdAt: Number(order && order.createdAt) || now,
     status: 'mottatt',
     confirmationDeadline: (Number(order && order.createdAt) || now) + ORDER_CONFIRM_WAIT_MS,
     statusUpdatedAt: now,
-  };
+  });
 
   // Vis aldri ordren som mottatt før Firebase faktisk har bekreftet den.
   // Ved retry brukes samme ordre-ID, så et nytt trykk kan ikke lage en duplikat.
