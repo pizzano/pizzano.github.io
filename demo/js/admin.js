@@ -2646,7 +2646,8 @@ const printerStatusButton = document.getElementById('ordersPrinterStatus');
 const printerStatusTooltip = document.getElementById('ordersPrinterTooltip');
 const printerStatusPanel = document.getElementById('ordersPrinterPanel');
 const printerStatusText = document.getElementById('ordersPrinterMessage');
-const printerTestButton = document.getElementById('ordersPrinterCheck');
+const printerHelp = document.getElementById('ordersPrinterHelp');
+const EPSON_SETTINGS_URL = 'https://192.168.1.25/';
 let printerCheckRunning = false;
 let printerProbeEpoch = 0;
 let printerWarningShown = false;
@@ -2659,8 +2660,11 @@ function setEpsonPrinterStatus(status, message) {
     : status === 'error' ? 'Epson: tilkoblingsfeil' : 'Epson: sjekker tilkobling';
   printerStatusButton.title = shortStatus;
   printerStatusButton.setAttribute('aria-label', shortStatus);
-  printerStatusTooltip.textContent = shortStatus + ' · trykk for detaljer';
+  printerStatusTooltip.textContent = status === 'error'
+    ? 'Epson frakoblet · trykk for å åpne tilkoblingen'
+    : shortStatus;
   printerStatusText.textContent = message;
+  printerHelp.hidden = status !== 'error';
 
   if (status === 'ok') {
     printerWarningShown = false;
@@ -2677,18 +2681,17 @@ function setEpsonPrinterStatus(status, message) {
       printerWarningAutoOpened = true;
       printerStatusButton.setAttribute('aria-expanded', 'true');
     }
-    toast('Epson svarer ikke. Sjekk Wi-Fi og strøm. Tilkoblingen testes automatisk på nytt.');
+    toast('Epson frakoblet. Koble til restaurantens Wi-Fi.');
   }
 }
-async function testEpsonFromOrders({ manual = false } = {}) {
+async function testEpsonFromOrders() {
   if (document.hidden || printerCheckRunning) return;
   const epoch = ++printerProbeEpoch;
   printerCheckRunning = true;
-  printerTestButton.disabled = true;
   // Preserve the red outage indication during periodic retries instead of
   // flickering to gray every 10 seconds.
-  if (manual || (!printerStatusButton.classList.contains('is-offline') &&
-    !printerStatusButton.classList.contains('is-active'))) {
+  if (!printerStatusButton.classList.contains('is-offline') &&
+      !printerStatusButton.classList.contains('is-active')) {
     setEpsonPrinterStatus('pending', 'Kontrollerer Epson over lokalnettverket…');
   }
   try {
@@ -2697,22 +2700,25 @@ async function testEpsonFromOrders({ manual = false } = {}) {
     setEpsonPrinterStatus('ok', 'Tilkoblet · Epson svarte på ePOS-kontrollen. Klar for utskrift.');
   } catch (error) {
     if (epoch !== printerProbeEpoch) return;
-    setEpsonPrinterStatus('error', 'Ingen kontakt med Epson på 192.168.1.25. Sjekk at skriveren har strøm og er på samme lokale nett. Systemet prøver igjen automatisk.');
+    setEpsonPrinterStatus('error', 'Ingen kontakt med Epson. Koble til restaurantens Wi-Fi.');
     console.warn('Epson printer status:', error);
   } finally {
     if (epoch === printerProbeEpoch) {
       printerCheckRunning = false;
-      printerTestButton.disabled = false;
     }
   }
 }
 function invalidateEpsonConnection() {
   ++printerProbeEpoch;
   printerCheckRunning = false;
-  printerTestButton.disabled = false;
-  setEpsonPrinterStatus('error', 'Nettverket ble koblet fra. Epson kontrolleres automatisk når forbindelsen er tilbake.');
+  setEpsonPrinterStatus('error', 'Ingen kontakt med Epson. Koble til restaurantens Wi-Fi.');
 }
 printerStatusButton.addEventListener('click', () => {
+  if (printerStatusButton.classList.contains('is-offline')) {
+    // Only a direct user tap opens the local printer login, never a background probe.
+    window.open(EPSON_SETTINGS_URL, '_blank', 'noopener,noreferrer');
+    return;
+  }
   const opened = printerStatusPanel.hidden;
   printerStatusPanel.hidden = !opened;
   printerStatusButton.setAttribute('aria-expanded', String(opened));
@@ -2723,7 +2729,6 @@ document.getElementById('ordersPrinterClose').addEventListener('click', () => {
   printerWarningAutoOpened = false;
   printerStatusButton.setAttribute('aria-expanded', 'false');
 });
-printerTestButton.addEventListener('click', () => { void testEpsonFromOrders({ manual: true }); });
 document.addEventListener('click', (event) => {
   if (!printerStatusPanel.hidden && !printerStatusPanel.contains(event.target) && !printerStatusButton.contains(event.target)) {
     printerStatusPanel.hidden = true;
@@ -2761,7 +2766,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
-    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Sjekk strøm, nettverk og papir. Prøv «Skriv ut på nytt» når skriveren er tilkoblet.');
+    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Koble til restaurantens Wi-Fi og åpne Epson-lenken ved behov.');
     toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
   } finally {
     printingOrderIds.delete(orderId);
