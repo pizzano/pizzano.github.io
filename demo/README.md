@@ -226,3 +226,46 @@ er også fjernet fra `js/data.js`.
 `fullfort` blir fortsatt lest riktig i historikk, pizzabonus og
 opprydding. Ingen slike poster slettes eller endres av denne kodeoppdateringen.
 Dette er kun støtte for gamle data, ikke en aktiv kundehendelse eller knapp.
+
+## Bestillinger: nytt skjermoppsett og kundehistorikk (2026-10-23)
+
+`admin.html` / `css/order-taking.css` bruker kunde først i detaljhodet,
+mottattdato/klokkeslett, klikkbart telefonnummer, tydelig ny-bestilling-status
+og nummererte produktkort. Det eksisterende Godta/Avvis-panelet, hentetid,
+SSE/Firebase-oppdateringer, SMS/e-post og Epson er uendret.
+
+**Fast Kunde / Ny Kunde:** Norske mobilnumre normaliseres som før med
+`loyaltyPhone()`. Kundens første kjente ordrekode/dato lagres som
+`pizzaBonus/{phone}/customerFirstOrder` når en ordre er sendt. Admin har
+en ETag-sikret kunderegister-synkronisering i `js/loyalty-sync.js` som
+beholder den eldste kjente ordren fra registrert historikk.
+Tidligere godtatte bonus-hendelser med `quantity:0` teller også som
+tidligere bestilling. Lesefeil vises som **Kundestatus ukjent**, aldri
+automatisk Ny Kunde. Ordrer eldre enn 100-løsningen kan allerede være slettet
+fra før funksjonen ble aktivert, så "Ny Kunde" er *første kjente* ordre.
+
+**Lagrede opplysninger i `pizzaBonus/{phone}/customerProfile`:**
+`phone`, `name`, `email`, `lastOrderAt`, `confirmedOrderCount`,
+`largePizzaCountRecorded`, `largePizzaCountPartial`,
+`totalSpentRecorded` og `ordersMissingAmount`. Alle tall for antall og
+beløp bygger på *bekreftede* ordre. `events/{orderId}` utvides med
+`largePizzaTotal` og `totalPaid`; eksisterende kupongpoeng
+(`quantity`, `redeemed`) bevares. Et event med null store pizzaer blir
+også registrert. Identiske ordre-ID-er telles én gang, og gamle
+bonus-hendelser uten pris får ikke gjettet pris. Samlet beløp betyr summen
+av kjente, bekreftede **ordretotaler**, ikke verifiserte kortbetalinger.
+Historiske salg før denne registreringen kan gi ufullstendig sum.
+
+**Viktig før produksjonsbruk:** Denne kundeprofilen inneholder
+personopplysninger og beløp. Firebase RTDB Security Rules må sikre at
+kundeprofiler bare kan leses av autorisert personale (ikke av hvem som
+helst med telefonnummeret). Nåværende direkte REST-basert admin/kunde-arkitektur
+er **ikke** i seg selv en slik beskyttelse. Vurder egen beskyttet databasegren
+og Firebase Authentication + Rules før lagring av persondata i produksjon;
+dokumenter lovlig formål, lagringstid og personvernerklæring.
+
+**Bevaring:** `js/orders-archive.js` sletter ikke en gammel bekreftet
+ordre før tilhørende bonus-hendelse har registrert både ordrebeløpet
+og totalt store pizzaer. Ved første oppstart synkroniseres gjenværende
+eldre ordre i små bakgrunnsbunker. Kildeoppdateringen oppretter ikke
+opprinnelig manglende historiske beløp og endrer ikke tidligere slettede data.
