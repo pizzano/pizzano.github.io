@@ -1,6 +1,6 @@
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
-import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js';
+import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
 /**
  * data.js — Delt datalag for Restauranten.
  *
