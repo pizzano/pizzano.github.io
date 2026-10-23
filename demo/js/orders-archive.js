@@ -9,7 +9,7 @@
  *
  * Legacy filename kept so existing admin entrypoints continue to work.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261022-orderconfirm2';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261023-timeoutretry-clean1';
 import { loyaltyPhone } from './loyalty.js';
 
 const LIVE_LIMIT = 100;
