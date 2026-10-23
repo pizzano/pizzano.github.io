@@ -320,36 +320,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 #orderList .order-history-card[open] .order-history-compact {display:none;}
 #orderList .order-history-details {padding:0 9px 10px;}
 #orderList .order-history-lines {display:grid;gap:8px;}
-#orderList .order-history-cart-list .cart-product-card {
-  display:grid;grid-template-columns:minmax(0,1fr) auto;
-  column-gap:8px;row-gap:7px;padding:9px;
-  border:1px solid color-mix(in srgb,var(--palette-border) 40%,transparent);
-  border-radius:12px;background:var(--palette-surface);
-}
-#orderList .order-history-cart-list .cart-product-heading {
-  grid-column:1;grid-row:1;
-  display:grid;grid-template-columns:minmax(0,1fr) auto;
-  gap:5px;align-items:baseline;margin:0;min-width:0;
-}
-#orderList .order-history-cart-list .cart-product-name {font-size:13px;font-weight:800;line-height:1.2;}
-#orderList .order-history-cart-list .cart-product-quantity {
-  min-width:0;min-height:0;border:0;border-radius:0;
-  font-size:11px;font-weight:500;white-space:nowrap;
-}
-#orderList .order-history-cart-list .cart-product-totalrow {
-  grid-column:2;grid-row:1;align-self:baseline;margin:0;padding:0;border:0;
-}
-#orderList .order-history-cart-list .cart-product-totalrow>span {display:none;}
-#orderList .order-history-cart-list .cart-product-total {font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;}
-#orderList .order-history-cart-list .cart-product-detailcopy {grid-column:1/-1;grid-row:2;}
-#orderList .order-history-cart-list .cart-product-details {display:grid;gap:5px;}
-#orderList .order-history-cart-list .cart-detail-row {
-  min-height:28px;align-items:center;padding:5px 7px;
-  border-radius:8px;
-  background:color-mix(in srgb,var(--palette-accent) 5%,var(--palette-surface));
-  font-size:11px;line-height:1.4;
-}
-#orderList .order-history-cart-list .cart-product-size b {font-weight:800;color:var(--palette-ink);}
+/* Read-only order product rows now share the cart visual system in cart.css. */
 #orderList .order-history-grand-total {
   display:flex;align-items:center;justify-content:space-between;
   gap:10px;margin-top:11px;padding:12px 3px 0;
