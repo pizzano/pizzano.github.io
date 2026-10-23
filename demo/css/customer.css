@@ -1537,8 +1537,8 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
 .active-order-card.is-estimated-ready .order-progress-step.is-current .order-progress-dot,
 html[data-customer-palette] .active-order-card.is-estimated-ready .order-progress-step.is-current .order-progress-dot {
  border-color:var(--palette-accent) !important;
- background:color-mix(in srgb,var(--palette-accent) 24%,var(--palette-surface)) !important;
- color:var(--palette-accent) !important;
+ background:var(--palette-accent) !important;
+ color:var(--palette-on-accent) !important;
  animation:none !important;
  box-shadow:none !important;
 }
