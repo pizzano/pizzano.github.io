@@ -2,8 +2,8 @@
  * KØL — background pizza coupon counter (restaurant admin only).
  * Reuses the existing order listener. Never delays order acceptance.
  */
-import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261023-timeoutretry-clean1';
-import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js';
+import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261023-customerprofile1';
+import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
 
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
 const processed = new Map();
