@@ -2292,6 +2292,7 @@ function orderCustomerIndicator(order, orders = getOrders()) {
   };
 }
 
+// Retained for a possible future customer profile page; no longer rendered in Bestillinger.
 function orderCustomerSummary(account) {
   const p = account?.customerProfile;
   if (!p) return { label:'', detail:'' };
@@ -2330,13 +2331,6 @@ function loadOrderCustomerAccount(order) {
     badge.textContent = indicator.label;
     badge.className = 'order-customer-badge is-' + indicator.kind;
     badge.title = indicator.description;
-    const stats = el.orderDetailLive.querySelector('[data-customer-stats]');
-    if (stats) {
-      const summary = orderCustomerSummary(account);
-      stats.textContent = summary.label;
-      stats.title = summary.detail;
-      stats.hidden = !summary.label;
-    }
   }).catch(() => {
     orderCustomerAccountCache.set(phone, {pending:false,fetchedAt:Date.now(),account:null,failed:true});
     // A failed lookup is not proof of a first visit; keep a verified
@@ -2472,7 +2466,6 @@ function renderOrderDetail(orderId) {
               <div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div>
               <div class="order-customer-meta">
                 <span class="order-customer-badge is-${customerIndicator.kind}" title="${escapeHtml(customerIndicator.description)}">${escapeHtml(customerIndicator.label)}</span>
-                <span class="order-customer-stats" data-customer-stats title="Bekreftede bestillinger og registrert omsetning" ${orderCustomerSummary(orderCustomerAccountCache.get(loyaltyPhone(order.phone))?.account).label ? '' : 'hidden'}>${escapeHtml(orderCustomerSummary(orderCustomerAccountCache.get(loyaltyPhone(order.phone))?.account).label)}</span>
                 <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar mottok SMS-forespørselen; levering er ikke bekreftet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
                 ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
                   ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
@@ -2498,7 +2491,7 @@ function renderOrderDetail(orderId) {
 
         <section class="pos-items-block">
           <div class="pos-items-heading"><h3>Bestilte varer</h3><span>${sortedLines.reduce((sum, line) => sum + Math.max(1, Number(line.quantity) || 1), 0)} varer</span></div>
-          <div class="pos-order-lines order-product-list">${sortedLines.map((line, index) => `<div class="order-item-frame"><span class="order-item-number" aria-hidden="true">${index + 1}</span>${detailLineHtml(line)}</div>`).join('')}</div>
+          <div class="pos-order-lines order-product-list">${sortedLines.map(detailLineHtml).join('')}</div>
           ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
