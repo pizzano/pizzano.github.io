@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v238-orderrowbadges1';
+const CACHE_NAME = 'kol-demo-v239-localfour1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -12,7 +12,6 @@ const APP_SHELL = [
   '/demo/js/cart-order.js',
   '/demo/js/order-product-summary.js',
   '/demo/js/shop-info.js',
-  '/demo/js/install.js',
   '/demo/js/data.js',
   '/demo/js/order-confirmation.js',
   '/demo/js/ingredient-detection.js',
