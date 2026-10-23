@@ -2399,7 +2399,7 @@ function renderOrderDetail(orderId) {
 
         <section class="pos-items-block">
           <div class="pos-items-heading"><h3>Bestilte varer</h3><span>${sortedLines.reduce((sum, line) => sum + Math.max(1, Number(line.quantity) || 1), 0)} varer</span></div>
-          <div class="pos-order-lines order-product-list">${sortedLines.map(detailLineHtml).join('')}</div>
+          <div class="pos-order-lines order-product-list">${sortedLines.map((line, index) => `<div class="order-item-frame"><span class="order-item-number" aria-hidden="true">${index + 1}</span>${detailLineHtml(line)}</div>`).join('')}</div>
           ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
