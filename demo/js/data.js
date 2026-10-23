@@ -1685,6 +1685,43 @@ export async function expireUnconfirmedOrders() {
   }
 }
 
+/* Persist an immutable first-order marker under the existing pizzaBonus
+ * account, including customers who purchased ZERO large pizzas.
+ * A leaf-level Firebase ETag write avoids overwriting pizza rewards/events.
+ * Status of an actual order, not this optional index, remains authoritative.
+ */
+async function registerCustomerFirstOrder(record) {
+  const phone = loyaltyPhone(record.phone);
+  if (!phone || !remoteEnabled) return;
+  const url = `${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}/customerFirstOrder.json`;
+  const created = Number(record.createdAt) || Date.now();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const response = await fetch(url, {
+      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
+    });
+    if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
+    const etag = response.headers.get('ETag');
+    if (!etag) throw new Error('Kundeprofil ETag mangler.');
+    const existing = await response.json();
+    const firstAt = Number(existing?.at) || 0;
+    if (existing?.orderId && firstAt &&
+      (firstAt < created || (firstAt === created && String(existing.orderId) <= String(record.id)))) return;
+    const updated = {
+      orderId: String(record.id),
+      at: created,
+    };
+    const saved = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(updated),
+    });
+    if (saved.status === 412) continue;
+    if (!saved.ok) throw new Error('Kundeprofil lagring HTTP ' + saved.status);
+    return;
+  }
+  throw new Error('Kundeprofil ble endret samtidig.');
+}
+
 /** Lagrer en ordre. Returnerer ordren med ID. */
 export async function submitOrder(order) {
   const now = Date.now();
@@ -1711,6 +1748,15 @@ export async function submitOrder(order) {
   } catch (err) {
     remoteOnline = false;
     throw new Error(err?.message || 'Bestillingen kunne ikke sendes. Prøv igjen.');
+  }
+
+  // Keep customer recognition independent of the 100-order retention limit.
+  // It is non-blocking for an already saved order; restaurant admin also
+  // reconciles this marker if the client goes offline immediately afterward.
+  try {
+    await registerCustomerFirstOrder(record);
+  } catch (error) {
+    console.warn('Kundeprofil kan opprettes ved neste restaurantsynkronisering:', error?.message);
   }
 
   try {
