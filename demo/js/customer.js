@@ -1874,7 +1874,9 @@ let orderConfirmTimedOut = false;
 let orderConfirmResolved = false;
 let orderConfirmAcceptedTimer = null;
 let orderConfirmLastRemoteCheckAt = 0;
-let orderConfirmRedirectTimer = null;function confirmationRestaurantPhone() {
+let orderConfirmRedirectTimer = null;
+
+function confirmationRestaurantPhone() {
   const settings = store.settings || {};
   const label = String(settings.phone || '').trim();
   const tel = label.replace(/[^+\d]/g, '');
@@ -1992,22 +1994,33 @@ function startAcceptedConfirmationHold(order) {
   }, 3000);
 }
 
+function confirmationTimeoutActions(order, canRetry = false) {
+  const phone = confirmationRestaurantPhone();
+  const call = phone.tel
+    ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>`
+    : '<span class="confirm-phone-missing">Telefonnummer er ikke tilgjengelig akkurat nå.</span>';
+  const retry = `<button class="confirm-reorder-button" type="button" data-confirm-reorder="${escapeHtml(order.id)}"${canRetry ? '' : ' disabled aria-disabled="true"'}>Prøv å bestille på nytt</button>`;
+  return `<div class="confirm-timeout-status">
+    <div class="confirm-timeout-actions">${call}${retry}</div>
+    <small>${canRetry
+      ? 'Varene legges i handlekurven. Kontroller bestillingen og send den på nytt.'
+      : 'Ny bestilling blir mulig når avbruddet er bekreftet i Firebase.'}</small>
+  </div>`;
+}
+
+function isConfirmedTimeoutCancellation(order) {
+  return order?.status === 'avvist' &&
+    (order?.rejectionCode === 'confirmation_timeout' ||
+      order?.rejectionReason === 'Svarfristen er ute');
+}
+
 function renderConfirmationTimeout(order) {
   const title = el.confirmModal.querySelector('h2');
-  const phone = confirmationRestaurantPhone();
   if (title) title.textContent = 'Svarfristen er ute';
   el.confirmModal.dataset.waiting = 'true';
   el.confirmModal.dataset.state = 'timeout';
   el.confirmText.textContent = 'Det har gått 3 minutter uten bekreftelse. Vi kontrollerer at bestillingen blir avbrutt.';
-  const phoneAction = phone.tel
-    ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>`
-    : '<span class="confirm-phone-missing">Telefonnummer er ikke tilgjengelig akkurat nå.</span>';
-  el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
-    <div class="confirm-timeout-status">
-      <strong>Ikke bekreftet ennå</strong>
-      <small>Vent på avbruddsbekreftelsen før du sender en ny bestilling. Du kan også ringe restauranten.</small>
-      ${phoneAction}
-    </div>`;
+  el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}${confirmationTimeoutActions(order, false)}`;
 }
 
 function checkOrderConfirmationWait() {
@@ -2032,13 +2045,16 @@ function checkOrderConfirmationWait() {
       orderConfirmTimer = null;
     }
     const title = el.confirmModal.querySelector('h2');
-    const phone = confirmationRestaurantPhone();
-    if (title) title.textContent = order.rejectionCode === 'confirmation_timeout' ? 'Bestillingen er avbrutt' : 'Bestillingen ble ikke godkjent';
+    const timedOut = isConfirmedTimeoutCancellation(order);
+    if (title) title.textContent = timedOut ? 'Bestillingen er avbrutt' : 'Bestillingen ble ikke godkjent';
     el.confirmModal.dataset.waiting = 'false';
     el.confirmModal.dataset.state = 'rejected';
     el.confirmText.textContent = order.rejectionMessage || order.rejectionReason || 'Restauranten kunne dessverre ikke ta imot bestillingen.';
-    const phoneAction = phone.tel ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>` : '';
-    el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}<div class="confirm-timeout-status">${phoneAction}</div>`;
+    el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}${timedOut
+      ? confirmationTimeoutActions(order, true)
+      : `<div class="confirm-timeout-status">${(confirmationRestaurantPhone().tel
+          ? `<a class="confirm-call-button" href="tel:${escapeHtml(confirmationRestaurantPhone().tel)}">Ring ${escapeHtml(confirmationRestaurantPhone().label || confirmationRestaurantPhone().tel)}</a>`
+          : '')}</div>`}`;
     return;
   }
 
