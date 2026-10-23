@@ -13,13 +13,13 @@ function recentPhones() {
   const cutoff = Date.now() - LOOKBACK_MS;
   const groups = new Map();
   for (const order of getOrders()) {
-    if (!order?.id || !['bekreftet','tilberedning','klar','fullfort'].includes(order.status)) continue;
-    const at = Number(order.loyaltyConfirmedAt) || 0;
+    if (!order?.id) continue;
+    const at = Number(order.createdAt) || 0;
     if (at < cutoff) continue;
     const phone = loyaltyPhone(order.phone);
     if (!phone) continue;
     if (!groups.has(phone)) groups.set(phone, []);
-    groups.get(phone).push(order.id + ':' + at);
+    groups.get(phone).push(order.id + ':' + at + ':' + order.status);
   }
   // getOrders() is newest-first; prioritize new orders, never old history.
   return [...groups].map(([phone, ids]) => ({
@@ -42,12 +42,33 @@ async function syncPhone(phone) {
     const existingEvents = account.events && typeof account.events === 'object'
       ? account.events : {};
     const events = { ...history, ...existingEvents };
+    // Accepted pizza events (including quantity:0) survive order pruning.
+    // Recover the oldest known order from those events, from orders still
+    // present and from any first-order marker written by the customer.
+    const candidates = [
+      account.customerFirstOrder?.orderId && {
+        orderId: String(account.customerFirstOrder.orderId),
+        at: Number(account.customerFirstOrder.at) || 0,
+      },
+      ...Object.values(events).map(event => ({
+        orderId: String(event.id || ''), at: Number(event.at) || 0,
+      })),
+      ...getOrders().filter(order => loyaltyPhone(order.phone) === phone)
+        .map(order => ({ orderId: String(order.id || ''), at: Number(order.createdAt) || 0 })),
+    ].filter(entry => entry && entry.orderId && entry.at > 0);
+    candidates.sort((a,b) => a.at-b.at || a.orderId.localeCompare(b.orderId));
+    const firstOrder = candidates[0] || null;
+    const firstSaved = account.customerFirstOrder;
+    const firstNeedsSave = firstOrder && (
+      firstOrder.orderId !== firstSaved?.orderId ||
+      firstOrder.at !== Number(firstSaved?.at)
+    );
     const state = pizzaBonus(events);
     const eventCount = Object.keys(events).length;
     const consent = account.offersConsent === true;
     const missing = Object.keys(history).some(id =>
       !Object.prototype.hasOwnProperty.call(existingEvents, id));
-    if (!missing && account.pizzaCountSynced === true &&
+    if (!firstNeedsSave && !missing && account.pizzaCountSynced === true &&
         account.pizzaCount === state.count &&
         account.pizzaCycle === state.cycle &&
         account.pizzaReady === state.ready &&
@@ -55,6 +76,7 @@ async function syncPhone(phone) {
         account.offersConsent === consent) return;
     const next = {
       ...account, events,
+      ...(firstOrder ? { customerFirstOrder: firstOrder } : {}),
       pizzaCount: state.count,
       pizzaCycle: state.cycle,
       pizzaReady: state.ready,
