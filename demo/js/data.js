@@ -597,6 +597,15 @@ function normalizeOrders(raw) {
           loyaltyEligible: Boolean(line.loyaltyEligible),
           loyaltyFree: Boolean(line.loyaltyFree),
           size: String(line.size || ''),
+          sizeId: String(line.sizeId || ''),
+          // These IDs are needed for an exact "Bestill samme igjen" action
+          // after a refresh. Keep them in memory without adding DB fields.
+          selections: line.selections && typeof line.selections === 'object'
+            ? Object.fromEntries(Object.entries(line.selections)
+              .filter(([, ids]) => Array.isArray(ids) && ids.length)
+              .map(([group, ids]) => [group, ids.filter(id => typeof id === 'string')]))
+            : {},
+          unitPrice: line.unitPrice == null ? null : Number(line.unitPrice) || 0,
           comment: String(line.comment || ''),
           removedIngredients: asArray(line.removedIngredients)
             .map((name) => String(name || '').trim())
