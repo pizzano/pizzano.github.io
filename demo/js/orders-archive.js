@@ -75,8 +75,11 @@ async function deleteOldOrder(snapshot) {
     const account = await (await fetchChecked(accountUrl)).json();
     // Never prune an order before its data is committed to /customers.
     // Legacy /pizzaBonus-only accounts remain protected until migration.
-    if (account?.schemaVersion !== 3 ||
-        account?.countedOrders?.[current.id] !== 1 ||
+    const accounted = typeof account?.countedOrders === 'string'
+      ? account.countedOrders.split('|').includes(current.id)
+      : account?.countedOrders?.[current.id] === 1;
+    if (![3, 4].includes(account?.schemaVersion) ||
+        !accounted ||
         !Number.isFinite(Number(account.totalOrders)) ||
         !Number.isFinite(Number(account.totalLargePizzas)) ||
         !Number.isFinite(Number(account.totalSpent))) return false;
