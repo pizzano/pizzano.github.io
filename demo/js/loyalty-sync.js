@@ -8,9 +8,10 @@ import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js';
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
 const processed = new Map();
 let timer = null, running = false, rerun = false;
+let initialHistoryReconciliation = true;
 
 function recentPhones() {
-  const cutoff = Date.now() - LOOKBACK_MS;
+  const cutoff = initialHistoryReconciliation ? 0 : Date.now() - LOOKBACK_MS;
   const groups = new Map();
   for (const order of getOrders()) {
     if (!order?.id) continue;
@@ -24,7 +25,7 @@ function recentPhones() {
   // getOrders() is newest-first; prioritize new orders, never old history.
   return [...groups].map(([phone, ids]) => ({
     phone, signature: ids.sort().join('|'),
-  })).slice(0, 50);
+  })).filter(({phone,signature}) => processed.get(phone) !== signature).slice(0, 20);
 }
 
 async function syncPhone(phone) {
@@ -156,14 +157,20 @@ async function syncRecentlyAccepted() {
   if (!DB_URL || document.hidden || navigator.onLine === false) return;
   running = true;
   try {
-    for (const { phone, signature } of recentPhones()) {
-      if (processed.get(phone) === signature) continue;
+    const batch = recentPhones();
+    for (const { phone, signature } of batch) {
       try {
         await syncPhone(phone);
         processed.set(phone, signature);
       } catch (error) {
         console.warn('Pizzabonus synkronisering venter:', error.message);
       }
+    }
+    if (initialHistoryReconciliation) {
+      // Process all retained historical orders in small batches, not just
+      // the last 48h, before permitting the normal windowed poll.
+      if (recentPhones().length) rerun = true;
+      else initialHistoryReconciliation = false;
     }
   } finally {
     running = false;
