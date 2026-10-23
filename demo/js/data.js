@@ -1492,31 +1492,39 @@ const ORDERS_KEY = 'bestill_orders_v2';
 export async function setPizzaOffersConsent(phoneValue, enabled) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) throw new Error('Skriv inn et gyldig mobilnummer.');
-  // Consent is technical coupon state, not a separate customer-data field.
-  await restPatch(`pizzaBonus/${phone}/loyalty`, { offersConsent: enabled === true });
+  // Consent is a direct child of /customers/{phone}, not a nested loyalty node.
+  // A first-time customer can opt in before their first accepted order.
+  await restPatch(`customers/${phone}`, { bonusConsent: enabled === true });
 }
 
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
-  const account = await restGet(`pizzaBonus/${phone}`);
-  const compact = account?.loyalty?.version === 2;
+  const customer = await restGet(`customers/${phone}`);
+  const migrated = customer?.schemaVersion === 3;
   let state;
-  if (compact) {
-    const count = Math.max(0, Math.min(10, Number(account.loyalty.count) || 0));
-    state = { count, cycle: String(account.loyalty.cycle || 'start'), ready: count === 10 };
+  let old = null;
+  if (migrated) {
+    const count = Math.max(0, Math.min(10, Number(customer.bonusCount) || 0));
+    state = { count, cycle: String(customer.bonusCycle || 'start'), ready: count === 10 };
   } else {
-    // Backward-compatible read until the restaurant admin safely migrates
-    // an existing account with an ETag transaction; no customer-side migration.
-    const synced = account?.pizzaCountSynced === true &&
-      account.events && typeof account.events === 'object';
-    const historyOrders = synced ? [] : CUSTOMER_MODE
-      ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
-      : Object.values(await restGet(ORDERS_PATH) || {});
-    const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
-    state = pizzaBonus({ ...history, ...(account?.events || {}) });
+    // Read-only compatibility for accounts not yet copied by the admin
+    // migration worker. Do not create new data under /pizzaBonus.
+    old = await restGet(`pizzaBonus/${phone}`) || {};
+    if (old.loyalty?.version === 2) {
+      const count = Math.max(0, Math.min(10, Number(old.loyalty.count) || 0));
+      state = { count, cycle: String(old.loyalty.cycle || 'start'), ready: count === 10 };
+    } else {
+      const synced = old.pizzaCountSynced === true &&
+        old.events && typeof old.events === 'object';
+      const historyOrders = synced ? [] : CUSTOMER_MODE
+        ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
+        : Object.values(await restGet(ORDERS_PATH) || {});
+      const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
+      state = pizzaBonus({ ...history, ...(old.events || {}) });
+    }
   }
-  const reservations = compact ? account.loyalty.reservations : account?.reservations;
+  const reservations = customer?.bonusReservations || old?.loyalty?.reservations || old?.reservations;
   const reservation = reservations?.[state.cycle];
   const pendingOrder = reservation?.orderId
     ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`)
@@ -1524,10 +1532,8 @@ export async function getPizzaBonus(phoneValue) {
   return {
     ...state,
     phone,
-    compact,
-    consent: compact
-      ? account.loyalty.offersConsent === true
-      : (account?.loyalty?.offersConsent === true || account?.offersConsent === true),
+    consent: customer?.bonusConsent === true || (!migrated &&
+      (old?.loyalty?.offersConsent === true || old?.offersConsent === true)),
     pending: Boolean(reservation && (pendingOrder
       ? !['avvist','kansellert'].includes(pendingOrder.status)
       : Date.now() - Number(reservation.at) < 600000)),
@@ -1540,8 +1546,7 @@ async function reservePizzaReward(record) {
   const paidCount = (record.lines || []).reduce((sum,line) => sum + (line.loyaltyEligible ? Math.max(0, Number(line.quantity) - (line.loyaltyFree ? 1 : 0)) : 0), 0);
   const earnedInCart = record.loyaltyReward.automatic && state.consent && state.count + paidCount >= 10;
   if ((!state.ready && !earnedInCart) || state.cycle !== record.loyaltyReward.cycle) throw new Error('Pizzabonus er ikke tilgjengelig.');
-  const path = state.compact ? 'loyalty/reservations' : 'reservations';
-  const url = `${DB_URL}/pizzaBonus/${state.phone}/${path}/${state.cycle}.json`;
+  const url = `${DB_URL}/customers/${state.phone}/bonusReservations/${encodeURIComponent(state.cycle)}.json`;
   for (let attempt = 0; attempt < 4; attempt++) {
     const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
     if (!response.ok) throw new Error('Kunne ikke kontrollere pizzabonus.');
