@@ -10,7 +10,7 @@
     <script src="/demo/js/theme.js?v=20260923-theme1"></script>
     <link rel="stylesheet" href="/demo/css/admin.css?v=20261016-cleanall1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261016-clean1">
-    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261023-epsonquick1">
+    <link rel="stylesheet" href="/demo/css/order-taking.css?v=20261023-epsonshort1">
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
@@ -159,17 +159,12 @@
                         </button>
                         <div class="orders-printer-panel" id="ordersPrinterPanel" hidden role="region" aria-label="Epson TM-T20II">
                           <div class="orders-printer-panel-head"><strong>Epson TM-T20II</strong><button id="ordersPrinterClose" type="button" aria-label="Lukk skriverpanel">×</button></div>
-                          <p class="orders-printer-panel-status" id="ordersPrinterMessage" role="status" aria-live="polite">Kontrollerer skriveren automatisk…</p>
-                          <p class="orders-printer-panel-ip">192.168.1.25 · Epson ePOS-Print</p>
-                          <div class="orders-printer-panel-buttons">
-                            <button id="ordersPrinterCheck" type="button">Sjekk igjen</button>
+                          <p class="orders-printer-panel-status" id="ordersPrinterMessage" role="status" aria-live="polite">Kontrollerer Epson…</p>
+                          <div class="orders-printer-help" id="ordersPrinterHelp" hidden>
+                            <div><span>Brukernavn</span><strong>epson</strong></div>
+                            <div><span>Passord</span><strong>epson</strong></div>
+                            <a href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">https://192.168.1.25/ ↗</a>
                           </div>
-                          <p class="orders-printer-panel-hint">Skriveren kontrolleres automatisk hvert 10. sekund mens bestillingssiden er åpen. Grønt ikon betyr at Epson svarte. Du trenger ikke å logge inn i Epson for vanlig utskrift.</p>
-                          <details class="orders-printer-advanced">
-                            <summary>Avansert · skriverinnstillinger</summary>
-                            <p>Åpne bare hvis du må endre oppsettet på Epson-skriveren. Denne siden kan kreve eget brukernavn og passord.</p>
-                            <a href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">Åpne Epson-innstillinger ↗</a>
-                          </details>
                         </div>
                         <button class="orders-light orders-sms-indicator is-pending" id="ordersSmsStatus" type="button" aria-label="SMS-tjeneste – kontrollerer" title="SMS-tjenestens status">
                           <svg class="orders-sms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h8M8 13h5"/></svg>
@@ -802,7 +797,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261023-epsonquick1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261023-epsonshort1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261017-email1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261017-prune1"></script>
 </body>
