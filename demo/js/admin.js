@@ -51,7 +51,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261023-customerprofile1';
+} from './data.js?v=20261024-compact1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -2245,76 +2245,43 @@ function emailReceiptDetail(order) {
 }
 
 
-/* Durable customer identity under /pizzaBonus/{phone}.
- * Stored firstOrder is NOT deleted with the 100 newest order records.
- * Legacy quantity:0 pizza events are valid evidence of previous visits.
+/* Returning customers are identified by their phone-number account.
+ * Only the compact totals are used; order-event histories are unnecessary.
  */
 const orderCustomerAccountCache = new Map();
 const CUSTOMER_CACHE_AGE = 60 * 1000;
 
 function orderCustomerIndicator(order, orders = getOrders()) {
   const phone = loyaltyPhone(order?.phone);
-  if (!phone) return { label:'Kundestatus ukjent', kind:'unknown',
-    description:'Gyldig norsk mobilnummer mangler.' };
+  if (!phone) return {
+    label: 'Kundestatus ukjent', kind: 'unknown',
+    description: 'Gyldig norsk mobilnummer mangler.',
+  };
   const at = Number(order.createdAt) || 0;
-  const isBefore = (orderId, timestamp) => {
-    const time = Number(timestamp) || 0;
-    return Boolean(time && (time < at || (time === at && String(orderId) < String(order.id))));
-  };
-  const account = orderCustomerAccountCache.get(phone)?.account;
   const pastInOrders = orders.some(other =>
-    other?.id && other.id !== order.id && loyaltyPhone(other.phone) === phone &&
-    isBefore(other.id, other.createdAt)
+    other?.id && other.id !== order.id &&
+    loyaltyPhone(other.phone) === phone &&
+    Number(other.createdAt) > 0 && Number(other.createdAt) < at
   );
-  const first = account?.customerFirstOrder;
-  const savedEarlier = Boolean(first?.orderId && first.orderId !== order.id &&
-    isBefore(first.orderId, first.at));
-  const earlierEvent = Object.values(account?.events || {}).some(event =>
-    event?.id && event.id !== order.id &&
-    isBefore(event.id, event.at)
-  );
-  const legacyPizzaEvents = account?.events && typeof account.events === 'object'
-    ? Object.keys(account.events).length : 0;
-  const lookupFailed = orderCustomerAccountCache.get(phone)?.failed === true;
-  const knownReturning = pastInOrders || savedEarlier || earlierEvent;
-  if (knownReturning) return {
-    label:'Fast Kunde', kind:'returning',
-    description:'Tidligere bestilling registrert på dette mobilnummeret.',
+  const cached = orderCustomerAccountCache.get(phone);
+  const totalOrders = Math.max(0, Number(cached?.account?.totalOrders) || 0);
+  // This order may already be included in the compact lifetime counters.
+  const thisOrderCounted = ['bekreftet', 'tilberedning', 'klar', 'fullfort'].includes(order.status) ? 1 : 0;
+  if (pastInOrders || totalOrders > thisOrderCounted) return {
+    label: 'Fast Kunde', kind: 'returning',
+    description: 'Tidligere bekreftet bestilling registrert på dette mobilnummeret.',
   };
-  if (lookupFailed) return {
-    label:'Kundestatus ukjent',kind:'unknown',
-    description:'Kunne ikke hente registrert kundehistorikk fra Firebase.',
+  if (cached?.failed) return {
+    label: 'Kundestatus ukjent', kind: 'unknown',
+    description: 'Kunne ikke hente kunderegisteret fra Firebase.',
   };
-  if ((!orderCustomerAccountCache.has(phone) ||
-       orderCustomerAccountCache.get(phone)?.pending === true) && !pastInOrders) return {
-    label:'Sjekker kunde…',kind:'unknown',
-    description:'Henter tidligere kjøp fra kunderegisteret.',
+  if (!cached || cached.pending) return {
+    label: 'Sjekker kunde…', kind: 'unknown',
+    description: 'Henter kunderegisteret.',
   };
-  // Legacy accounts from before registration may have incomplete history.
   return {
-    label:'Ny Kunde',kind:'new',
-    description: legacyPizzaEvents || first?.orderId
-      ? 'Første registrerte bestilling på dette nummeret.'
-      : 'Ingen tidligere bestilling funnet i lagret historikk. Gamle slettede ordrer kan mangle.',
-  };
-}
-
-// Retained for a possible future customer profile page; no longer rendered in Bestillinger.
-function orderCustomerSummary(account) {
-  const p = account?.customerProfile;
-  if (!p) return { label:'', detail:'' };
-  const kr = new Intl.NumberFormat('nb-NO', { maximumFractionDigits:2 });
-  const ordered = Math.max(0, Number(p.confirmedOrderCount) || 0);
-  const pizzas = Math.max(0, Number(p.largePizzaCountRecorded) || 0);
-  const amount = Math.max(0, Number(p.totalSpentRecorded) || 0);
-  const missing = Math.max(0, Number(p.ordersMissingAmount) || 0);
-  return {
-    label:`${ordered} ordre · ${pizzas} store pizza · ${kr.format(amount)} kr registrert`,
-    detail: missing
-      ? `${missing} eldre ordre mangler pris. Har bare registrert faktisk kjent omsetning. ${p.largePizzaCountPartial ? 'Eldre pizzatall kan være ufullstendige.' : ''}`
-      : p.largePizzaCountPartial
-        ? 'Eldre pizzatall kan være ufullstendige.'
-        : 'Registrerte ordrehendelser i kundens bonuskonto.',
+    label: 'Ny Kunde', kind: 'new',
+    description: 'Ingen tidligere bekreftet bestilling funnet.',
   };
 }
 
@@ -2325,12 +2292,14 @@ function loadOrderCustomerAccount(order) {
   if (saved && (saved.pending || Date.now() - saved.fetchedAt < CUSTOMER_CACHE_AGE)) return;
   const pending = { pending: true, fetchedAt: Date.now(), account:saved?.account || null };
   orderCustomerAccountCache.set(phone, pending);
-  fetch(`${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}.json?_=${Date.now()}`, {
+  fetch(`${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}/totalOrders.json?_=${Date.now()}`, {
     cache:'no-store', signal:AbortSignal.timeout(7000)
   }).then(async response => {
     if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
-    const account = await response.json();
-    orderCustomerAccountCache.set(phone, {pending:false,fetchedAt:Date.now(),account:account || {}});
+    const totalOrders = await response.json();
+    orderCustomerAccountCache.set(phone, {
+      pending:false, fetchedAt:Date.now(), account:{totalOrders: Math.max(0, Number(totalOrders) || 0)}
+    });
     const badge = el.orderDetailLive.querySelector('.order-customer-badge');
     const current = getOrders().find(item => item.id === selectedOrderId);
     if (!badge || !current || loyaltyPhone(current.phone) !== phone) return;
