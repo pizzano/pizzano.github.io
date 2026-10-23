@@ -1723,7 +1723,7 @@ function compactOrderForStorage(order) {
   if (compact.type === 'henting') delete compact.type;
   if (Number(compact.subtotal) === Number(compact.total)) delete compact.subtotal;
   if ((compact.pickupMode === 'asap' && compact.pickup === 'Snarest') ||
-      (compact.pickupMode === 'scheduled' && /^\\d{1,2}:\\d{2}$/.test(String(compact.pickup || '')))) {
+      (compact.pickupMode === 'scheduled' && /^\d{1,2}:\d{2}$/.test(String(compact.pickup || '')))) {
     delete compact.pickupMode;
   }
   if (!compact.email) delete compact.email;
@@ -1749,8 +1749,12 @@ function compactOrderForStorage(order) {
     // Base unit price is derivable from saved line price, quantity and priced
     // optionDetails; preserve it only for ambiguous/legacy representations.
     const detailsPriced = Array.isArray(item.optionDetails) &&
+      item.optionDetails.length > 0 &&
       item.optionDetails.every(d => d?.price != null && Number.isFinite(Number(d.price)));
-    if (detailsPriced && !item.loyaltyFree) delete item.unitPrice;
+    const hasNoExtras = !item.optionDetails?.length &&
+      !item.options?.length && !item.optionIds?.length &&
+      !Object.values(item.selections || {}).some(v => Array.isArray(v) && v.length);
+    if ((detailsPriced || hasNoExtras) && !item.loyaltyFree) delete item.unitPrice;
     if (!Array.isArray(item.optionDetails) || !item.optionDetails.length)
       delete item.optionDetails;
     if (!Array.isArray(item.removedIngredients) || !item.removedIngredients.length)
