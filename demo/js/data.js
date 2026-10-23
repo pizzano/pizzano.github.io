@@ -35,7 +35,8 @@ const FALLBACK_ORDERS_INTERVAL = 15000;
 const FALLBACK_MENU_INTERVAL = 60000;
 const SCHEMA_VERSION = 6;
 
-const LOCAL_KEY = 'bestill_menu_state_v3';
+const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
+const LOCAL_ORDER_LIMIT = 4;
 const CHANNEL_NAME = 'kol_menu_sync';
 
 /* ------------------------------------------------------------------ *
@@ -865,26 +866,11 @@ export function ready() {
   return readyPromise;
 }
 
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (err) {
-    console.warn('Kunne ikke lese lokal lagring:', err);
-    return null;
-  }
-}
-
-function writeLocal() {
-  try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(menuPayload()));
-    if (channel) channel.postMessage({ type: 'state', updatedAt: store.updatedAt });
-    return true;
-  } catch (err) {
-    console.warn('Kunne ikke skrive til lokal lagring:', err);
-    return false;
-  }
+// Old versions stored a complete menu JSON snapshot on every visit.
+ // Firebase is now the only persisted menu source. Remove the old copy once.
+function removeRetiredMenuCache() {
+  try { localStorage.removeItem(RETIRED_MENU_KEY); }
+  catch (_) { /* storage can be disabled by browser privacy settings */ }
 }
 
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
@@ -1283,23 +1269,9 @@ async function readRemoteMenuSnapshot() {
   return Object.fromEntries(LEGACY_MENU_FIELDS.map((field, i) => [field, values[i]]));
 }
 
-// A cached menu requires only a tiny version read at startup. In particular,
-// neither customers nor staff need to re-download the whole menu every visit.
-async function readStartupMenu(local) {
-  if (local?.sections?.length && Number(local.updatedAt) > 0) {
-    try {
-      let revision = Number(await restGet('updatedAt')) || 0;
-      if (revision > 0) {
-        remoteMenuPath = '';
-      } else {
-        revision = Number(await restGet('menu/updatedAt')) || 0;
-        if (revision > 0) remoteMenuPath = 'menu';
-      }
-      if (revision > 0 && revision === Number(local.updatedAt)) return null;
-    } catch (_) {
-      // A version-check error must not strand a first-time or stale client.
-    }
-  }
+// No persistent menu copy: always obtain the current source on startup.
+// Firebase updatedAt/SSE still prevent unnecessary subsequent downloads.
+async function readStartupMenu() {
   const snapshot = await readRemoteMenuSnapshot();
   remoteMenuPath = snapshot?.menu ? 'menu' : '';
   return snapshot?.menu || snapshot || {};
@@ -1314,10 +1286,7 @@ async function reloadRemoteMenu() {
       ? { menu: await restGet('menu') } : await readRemoteMenuSnapshot();
     const updated = applyRemoteMenu(snapshot);
     remoteOnline = true;
-    if (updated) {
-      writeLocal();
-      emitData('remote');
-    }
+    if (updated) emitData('remote');
   })().catch(error => {
     console.warn('Kunne ikke oppdatere restaurantmenyen:', error);
   }).finally(() => { menuRefreshPromise = null; });
@@ -1344,7 +1313,6 @@ async function pullRemote() {
     const ordersChanged = revision === orderStreamRevision
       ? applyRemoteOrders(ordersRaw = orders || {})
       : false;
-    if (menuChanged) writeLocal();
     if (menuChanged || ordersChanged) emitData('remote');
   } catch (err) {
     remoteOnline = false;
@@ -1430,12 +1398,11 @@ async function persist() {
       await restPatch(remoteMenuPath, menuPayload());
       remoteOnline = true;
     }
-    writeLocal();
+    if (channel) channel.postMessage({ type: 'state', updatedAt: store.updatedAt });
     setSaveState('saved');
     return true;
   } catch (err) {
     remoteOnline = false;
-    writeLocal();
     console.error('Lagring feilet:', err);
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
     return false;
@@ -1822,7 +1789,9 @@ export async function submitOrder(order) {
       ? existing.filter((entry) => entry && entry.id !== record.id)
       : [];
     deduped.unshift(record);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(deduped.slice(0, 30)));
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(deduped
+      .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
+      .slice(0, LOCAL_ORDER_LIMIT)));
   } catch (err) {
     console.warn('Kunne ikke lagre ordre lokalt:', err);
   }
@@ -2065,10 +2034,22 @@ export function getStats() {
   };
 }
 
-/** Henter kundens tidligere ordre (lokalt lagret). */
+/** The last four orders are a small customer-device cache, not an archive. */
 export function getLocalOrders() {
   try {
-    return JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    const raw = localStorage.getItem(ORDERS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      localStorage.removeItem(ORDERS_KEY);
+      return [];
+    }
+    const recent = parsed.filter(entry => entry?.id && entry.createdAt)
+      .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
+      .slice(0, LOCAL_ORDER_LIMIT);
+    // Automatically shrink an older 30-order snapshot on the next visit.
+    if (parsed.length !== recent.length) localStorage.setItem(ORDERS_KEY, JSON.stringify(recent));
+    return recent;
   } catch (err) {
     return [];
   }
@@ -2079,12 +2060,10 @@ export function getLocalOrders() {
  * ------------------------------------------------------------------ */
 
 async function bootstrap() {
-  // Start med lokal kopi slik at siden vises umiddelbart.
-  const local = loadLocal();
-  if (local) replaceMenuState(local);
+  removeRetiredMenuCache();
 
   if (CUSTOMER_MODE) {
-    // Only the customer's own recent orders are ever placed in this snapshot.
+    // Follow only the last four recent orders stored on this device.
     ordersRaw = Object.fromEntries(getLocalOrders().filter(order =>
       order?.id && /^ord_[a-z0-9]{7,40}$/i.test(String(order.id)) &&
       Date.now() - (Number(order.createdAt) || 0) <= CUSTOMER_ORDER_MAX_AGE_MS
@@ -2094,43 +2073,31 @@ async function bootstrap() {
 
   if (remoteEnabled) {
     try {
-      const menu = await readStartupMenu(local);
+      const menu = await readStartupMenu();
       remoteOnline = true;
       if (menu) replaceMenuState(menu);
-      // Do not fetch /orders here: the restaurant SSE initial "put" supplies
-      // one current snapshot. Customer streams fetch only owned order IDs.
+      // /orders is not fetched on customer startup; Firebase SSE handles updates.
     } catch (err) {
       remoteOnline = false;
-      console.warn('Databasen er ikke tilgjengelig nå, bruker lokal kopi:', err);
+      console.warn('Resturantmenyen kunne ikke hentes fra Firebase:', err);
     }
     startPolling();
   }
 
-  writeLocal();
   setSaveState('saved');
 
-  // Live-sync mellom faner i samme nettleser.
+  // Cross-tab menu changes are re-fetched from Firebase, never localStorage.
   if (channel) {
     channel.addEventListener('message', (event) => {
-      if (!event.data || event.data.type !== 'state') return;
-      const next = loadLocal();
-      if (!next || Number(next.updatedAt) === Number(store.updatedAt)) return;
-      replaceMenuState(next);
-      emitData('remote');
+      if (event.data?.type !== 'state') return;
+      if (Number(event.data.updatedAt) === Number(store.updatedAt)) return;
+      void reloadRemoteMenu();
     });
   }
-  window.addEventListener('storage', (event) => {
-    if (event.key !== LOCAL_KEY) return;
-    const next = loadLocal();
-    if (!next || Number(next.updatedAt) === Number(store.updatedAt)) return;
-    replaceMenuState(next);
-    emitData('remote');
-  });
 
   emitData('init');
   readyResolve(store);
   void expireUnconfirmedOrders();
   window.setInterval(expireUnconfirmedOrders, 1000);
 }
-
 bootstrap();
