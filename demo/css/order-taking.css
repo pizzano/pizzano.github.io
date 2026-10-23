@@ -692,19 +692,18 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
 html[data-theme="dark"] .orders-page .orders-printer-indicator.is-offline{background:#492b2a!important;color:#ffc4c0!important}
 
 
-/* Reference-style single-line order cards: dot / customer / pickup / time / price / arrow.
-   SMS and email acknowledgements remain visible inside the opened order detail. */
+/* Compact full-width order cards: customer + receipts | centered price | pickup + time + arrow.
+   Icons reflect existing Firebase sender receipts, not assumed delivery. */
 .orders-page .orders-list-row{
  position:relative;display:grid;align-items:center;
- grid-template-columns:minmax(0,1fr) max-content max-content max-content 25px;
- grid-template-areas:"customer method time price arrow";
- column-gap:clamp(10px,1.6vw,25px);
- width:100%;min-height:94px;margin:0 0 12px;
- padding:15px 20px 15px 60px;
- border:1px solid #dce5ee;border-radius:23px;
- background:var(--ot-surface);color:var(--ot-ink);
- text-align:left;cursor:pointer;
- box-shadow:0 7px 23px rgba(13,31,51,.045);
+ grid-template-columns:minmax(0,33.5%) minmax(0,19%) minmax(0,1fr) 22px;
+ grid-template-areas:"customer price pickup arrow";
+ column-gap:14px;
+ width:100%;min-height:74px;margin:0 0 10px;
+ padding:8px 22px 8px 76px;
+ border:1px solid var(--ot-line);border-radius:23px;
+ background:var(--ot-surface);color:var(--ot-ink);text-align:left;cursor:pointer;
+ box-shadow:0 5px 16px rgba(13,31,51,.035);
  transition:background .14s,border-color .14s,box-shadow .14s;
 }
 .orders-page .orders-list-row:hover{
@@ -712,8 +711,8 @@ html[data-theme="dark"] .orders-page .orders-printer-indicator.is-offline{backgr
 }
 .orders-page .orders-list-row:active{transform:none}
 .orders-page .orders-list-row::before{
- content:'';position:absolute;left:22px;top:50%;transform:translateY(-50%);
- width:19px;height:19px;border-radius:50%;
+ content:'';position:absolute;left:28px;top:50%;transform:translateY(-50%);
+ width:23px;height:23px;border-radius:50%;
  background:linear-gradient(145deg,#a4b1c2,#66768e);
 }
 .orders-page .orders-list-row[data-order-status="mottatt"]::before{
@@ -725,31 +724,32 @@ html[data-theme="dark"] .orders-page .orders-printer-indicator.is-offline{backgr
 .orders-page .orders-list-row[data-order-status="avvist"]::before{background:#da6465}
 .orders-page .orders-list-row.is-scheduled::before{outline:1px solid #bad4f1;outline-offset:2px}
 .orders-page .orders-list-row.is-selected{
- background:var(--ot-selected);border-color:#c7e9d7;
- box-shadow:0 3px 13px rgba(8,108,68,.055);
+ background:var(--ot-selected);border-color:#c7e9d7;box-shadow:0 3px 13px rgba(8,108,68,.055);
 }
 .orders-page .orders-list-row.is-selected::after{
  content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
  border-radius:23px 0 0 23px;background:#08a96b;
 }
-.orders-page .orders-list-main,.orders-page .orders-list-meta{display:contents}
+html[data-theme="dark"] .orders-page .orders-list-row.is-selected{
+ background:#1b3a31;border-color:#397b5a;
+}
+.orders-page .orders-list-main{display:contents}
 .orders-page .orders-list-name-row{
- grid-area:customer;display:flex;align-items:center;min-width:0;gap:9px;
+ grid-area:customer;display:flex;align-items:center;gap:11px;min-width:0;
 }
 .orders-page .orders-list-name-row strong{
- display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;
- white-space:nowrap;font-size:clamp(16px,1.65vw,25px);
- font-weight:850;letter-spacing:-.026em;line-height:1.2;
+ display:block;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;font-size:clamp(16px,1.4vw,25px);
+ font-weight:850;letter-spacing:-.028em;line-height:1.15;
 }
 .orders-page .orders-new-pill{display:none}
-/* Green is shown only when Firebase records an accepted sender receipt. */
 .orders-page .orders-row-sms,.orders-page .orders-row-email{
  display:inline-flex;align-items:center;justify-content:center;flex:none;
- width:39px;height:37px;border-radius:11px;
+ width:50px;height:30px;border-radius:10px;
  border:1px solid #b8e3cd;background:#e6f8ef;color:#07885b;
 }
 .orders-page .orders-row-sms svg,.orders-page .orders-row-email svg{
- width:21px;height:21px;flex:none;
+ width:22px;height:22px;flex:none;
 }
 .orders-page .orders-row-sms[hidden],.orders-page .orders-row-email[hidden]{
  display:none!important;
@@ -758,89 +758,88 @@ html[data-theme="dark"] .orders-page .orders-row-sms,
 html[data-theme="dark"] .orders-page .orders-row-email{
  background:#164534;color:#b9f3d4;border-color:#367958;
 }
+.orders-page .orders-list-price{
+ grid-area:price;display:flex;align-items:center;justify-content:center;
+ min-height:32px;padding:0;border:0;color:var(--ot-ink);
+ font-size:clamp(17px,1.4vw,25px);font-weight:900;
+ white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.orders-page .orders-list-meta{
+ grid-area:pickup;display:flex;align-items:center;justify-content:flex-end;
+ min-width:0;gap:19px;margin:0;
+}
 .orders-page .orders-list-method{
- grid-area:method;display:inline-flex;align-items:center;justify-content:center;
- gap:10px;min-height:48px;padding:8px 22px;
- border-radius:999px;background:#e5f7ed;color:#078052;
- font-size:clamp(13px,1.06vw,17px);font-weight:850;
- line-height:1.2;white-space:nowrap;
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ gap:9px;min-height:40px;padding:7px 22px;border-radius:999px;
+ background:#e5f7ed;color:#078052;
+ font-size:clamp(13px,1vw,17px);font-weight:850;line-height:1.1;white-space:nowrap;
 }
 .orders-page .orders-list-row.is-scheduled .orders-list-method{
  background:#eaf0f9;color:#486888;
 }
 .orders-page .orders-list-time{
- grid-area:time;display:inline-flex;align-items:center;gap:11px;
- min-width:0;padding:3px 0;background:transparent;color:var(--ot-muted);
- font-size:clamp(14px,1.25vw,20px);font-weight:740;line-height:1.2;
+ display:inline-flex;align-items:center;gap:10px;min-width:0;padding:0;
+ background:transparent;color:var(--ot-muted);
+ font-size:clamp(15px,1.25vw,22px);font-weight:740;line-height:1.1;
  white-space:nowrap;font-variant-numeric:tabular-nums;
 }
-.orders-page .orders-list-method svg,.orders-page .orders-list-time svg{
- width:25px;height:25px;flex:none;
-}
+.orders-page .orders-list-method svg,
+.orders-page .orders-list-time svg{width:25px;height:25px;flex:none}
 .orders-page .orders-list-divider,.orders-page .orders-list-remaining{display:none!important}
-.orders-page .orders-list-price{
- grid-area:price;display:flex;align-items:center;justify-content:flex-end;
- min-height:54px;padding-left:clamp(12px,2.5vw,36px);
- border-left:1px solid var(--ot-line);
- font-size:clamp(17px,1.7vw,27px);font-weight:900;
- white-space:nowrap;font-variant-numeric:tabular-nums;
-}
 .orders-page .orders-list-arrow{
- grid-area:arrow;display:grid;place-items:center;
- width:25px;align-self:stretch;color:#667b99;
+ grid-area:arrow;display:grid;place-items:center;align-self:stretch;
+ width:22px;color:#667b99;
 }
-.orders-page .orders-list-arrow svg{width:24px;height:24px}
+.orders-page .orders-list-arrow svg{width:20px;height:20px}
 .orders-page .orders-list-center{
  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
  overflow:hidden;white-space:nowrap;clip-path:inset(50%);
 }
-html[data-theme="dark"] .orders-page .orders-list-row.is-selected{
- background:#1b3a31;border-color:#397b5a;
-}
-@container (max-width:900px){
+@container (max-width:1100px){
  .orders-page .orders-list-row{
-  min-height:82px;padding:12px 15px 12px 47px;
-  column-gap:clamp(7px,1.25vw,15px);border-radius:18px;
+  min-height:70px;padding:8px 13px 8px 48px;
+  grid-template-columns:minmax(0,36%) minmax(0,15%) minmax(0,1fr) 17px;
+  column-gap:9px;border-radius:17px;
  }
- .orders-page .orders-list-row::before{left:17px;width:15px;height:15px}
- .orders-page .orders-list-name-row strong{font-size:clamp(14px,2vw,18px)}
+ .orders-page .orders-list-row::before{left:15px;width:17px;height:17px}
  .orders-page .orders-list-name-row{gap:6px}
- .orders-page .orders-row-sms,.orders-page .orders-row-email{width:32px;height:30px;border-radius:9px}
+ .orders-page .orders-list-name-row strong{font-size:clamp(12px,1.7vw,18px)}
+ .orders-page .orders-row-sms,.orders-page .orders-row-email{
+  width:32px;height:27px;border-radius:8px;
+ }
  .orders-page .orders-row-sms svg,.orders-page .orders-row-email svg{width:17px;height:17px}
- .orders-page .orders-list-method{min-height:37px;gap:6px;padding:6px 13px;font-size:12px}
- .orders-page .orders-list-time{font-size:14px;gap:7px}
- .orders-page .orders-list-method svg,.orders-page .orders-list-time svg{width:19px;height:19px}
- .orders-page .orders-list-price{min-height:42px;padding-left:14px;font-size:18px}
- .orders-page .orders-list-arrow,.orders-page .orders-list-arrow svg{width:19px;height:19px}
+ .orders-page .orders-list-price{font-size:clamp(13px,1.5vw,19px)}
+ .orders-page .orders-list-meta{gap:9px}
+ .orders-page .orders-list-method{min-height:31px;padding:5px 11px;gap:6px;font-size:12px}
+ .orders-page .orders-list-time{font-size:clamp(12px,1.5vw,16px);gap:6px}
+ .orders-page .orders-list-method svg,.orders-page .orders-list-time svg{width:18px;height:18px}
+ .orders-page .orders-list-arrow,.orders-page .orders-list-arrow svg{width:17px;height:17px}
 }
-@container (max-width:520px){
+@container (max-width:740px){
  .orders-page .orders-list-row{
-  min-height:69px;margin-bottom:8px;padding:9px 10px 9px 30px;
-  grid-template-columns:minmax(0,1fr) max-content max-content max-content 15px;
-  column-gap:6px;border-radius:14px;
+  min-height:81px;padding:9px 10px 9px 32px;
+  grid-template-columns:minmax(0,1fr) max-content 17px;
+  grid-template-areas:"customer price arrow" "pickup pickup arrow";
+  gap:7px;border-radius:15px;
  }
  .orders-page .orders-list-row::before{left:10px;width:12px;height:12px}
- .orders-page .orders-list-name-row strong{font-size:clamp(11px,3vw,14px)}
- .orders-page .orders-list-name-row{gap:3px}
- .orders-page .orders-row-sms,.orders-page .orders-row-email{width:22px;height:22px;border-radius:6px}
- .orders-page .orders-row-sms svg,.orders-page .orders-row-email svg{width:14px;height:14px}
- .orders-page .orders-list-method{min-height:29px;padding:5px 8px;gap:4px;font-size:10px}
- .orders-page .orders-list-time{gap:4px;font-size:11px}
- .orders-page .orders-list-method svg,.orders-page .orders-list-time svg{width:15px;height:15px}
- .orders-page .orders-list-price{min-height:32px;padding-left:7px;font-size:13px}
- .orders-page .orders-list-arrow,.orders-page .orders-list-arrow svg{width:15px;height:15px}
+ .orders-page .orders-list-name-row strong{font-size:clamp(12px,2.8vw,16px)}
+ .orders-page .orders-row-sms,.orders-page .orders-row-email{width:26px;height:23px;border-radius:7px}
+ .orders-page .orders-row-sms svg,.orders-page .orders-row-email svg{width:15px;height:15px}
+ .orders-page .orders-list-price{justify-content:flex-end;font-size:clamp(13px,3vw,17px)}
+ .orders-page .orders-list-meta{justify-content:flex-start;gap:10px}
+ .orders-page .orders-list-method{min-height:25px;padding:4px 9px;font-size:10px}
+ .orders-page .orders-list-time{font-size:12px}
 }
 @container (max-width:360px){
- .orders-page .orders-list-row{padding-left:22px;padding-right:6px;column-gap:4px}
+ .orders-page .orders-list-row{padding-left:24px;padding-right:6px;column-gap:4px}
  .orders-page .orders-list-row::before{left:7px;width:9px;height:9px}
- .orders-page .orders-list-name-row strong{font-size:10.5px}
- .orders-page .orders-row-sms,.orders-page .orders-row-email{width:18px;height:18px}
+ .orders-page .orders-list-name-row{gap:3px}
+ .orders-page .orders-list-name-row strong{font-size:11px}
+ .orders-page .orders-row-sms,.orders-page .orders-row-email{width:20px;height:20px}
  .orders-page .orders-row-sms svg,.orders-page .orders-row-email svg{width:12px;height:12px}
- .orders-page .orders-list-method{font-size:9px;padding:5px 6px}
- .orders-page .orders-list-method svg,.orders-page .orders-list-time svg{width:12px;height:12px}
- .orders-page .orders-list-time{font-size:10px}
- .orders-page .orders-list-price{font-size:11px;padding-left:5px}
- .orders-page .orders-list-arrow,.orders-page .orders-list-arrow svg{width:12px;height:12px}
+ .orders-page .orders-list-price{font-size:12px}
+ .orders-page .orders-list-arrow,.orders-page .orders-list-arrow svg{width:14px;height:14px}
 }
 @media(prefers-reduced-motion:reduce){
  .orders-page .orders-list-row{transition:none!important}
