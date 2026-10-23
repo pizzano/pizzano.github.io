@@ -1322,6 +1322,39 @@ textarea.input {
 .confirm-accepted-check {width:28px!important;height:28px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:var(--palette-accent)!important;color:var(--palette-light)!important;font-size:16px!important;font-weight:900!important;}
 .confirm-timeout-status {grid-template-columns:1fr!important;border-color:var(--palette-border)!important;background:var(--palette-surface)!important;gap:7px!important;}
 .confirm-call-button {display:flex!important;align-items:center!important;justify-content:center!important;margin-top:6px!important;padding:0 16px!important;border-radius:12px!important;background:var(--palette-accent)!important;color:var(--palette-light)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 6px 14px color-mix(in srgb, var(--palette-deep) 17%, transparent)!important;}
+/* Confirmed timeout: call stays green; manual repeat-order action is orange. */
+#confirmModal .confirm-timeout-status .confirm-timeout-actions {
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:9px!important;width:100%;min-width:0;align-items:stretch!important;
+  padding:0!important;
+}
+#confirmModal .confirm-timeout-actions .confirm-call-button,
+#confirmModal .confirm-timeout-actions .confirm-reorder-button {
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:46px!important;
+  margin:0!important;padding:11px 12px!important;
+  border-radius:12px!important;font-size:13px!important;font-weight:800!important;
+  text-align:center!important;line-height:1.25!important;
+  box-sizing:border-box!important;
+}
+#confirmModal .confirm-reorder-button {
+  border:1px solid #b94f12!important;
+  background:#bf5616!important;color:#fff!important;
+  box-shadow:0 4px 12px color-mix(in srgb,#bf5616 18%,transparent)!important;
+  cursor:pointer;
+}
+#confirmModal .confirm-reorder-button:disabled {
+  border-color:var(--palette-border)!important;
+  background:var(--palette-surface)!important;
+  box-shadow:none!important;color:var(--palette-muted)!important;
+  cursor:not-allowed;
+}
+#confirmModal .confirm-reorder-button:focus-visible,
+#confirmModal .confirm-call-button:focus-visible {
+  outline:3px solid var(--palette-accent)!important;outline-offset:2px!important;
+}
+#confirmModal .confirm-timeout-status > small {display:block!important;line-height:1.5!important;}
+
 .confirm-phone-missing {display:block!important;color:var(--palette-accent)!important;font-size:12px!important;}
 .confirm-meta [data-confirm-countdown] {color:var(--palette-accent)!important;font-variant-numeric:tabular-nums!important;}
 .confirm-wait-status,
