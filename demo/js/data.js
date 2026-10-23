@@ -1492,29 +1492,46 @@ const ORDERS_KEY = 'bestill_orders_v2';
 export async function setPizzaOffersConsent(phoneValue, enabled) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) throw new Error('Skriv inn et gyldig mobilnummer.');
-  await restPatch(`pizzaBonus/${phone}`, { offersConsent: enabled === true, consentUpdatedAt: Date.now(), consentText: 'Varsle meg om gratis pizza og bruk pizzabonus automatisk.' });
+  // Consent is technical coupon state, not a separate customer-data field.
+  await restPatch(`pizzaBonus/${phone}/loyalty`, { offersConsent: enabled === true });
 }
 
 export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
   const account = await restGet(`pizzaBonus/${phone}`);
-  const synced = account?.pizzaCountSynced === true && account.events && typeof account.events === 'object';
-  // Never scan other customers' orders for a legacy unsynced bonus account.
-  // The admin's independent bonus worker persists accepted order events.
-  const historyOrders = synced ? [] : CUSTOMER_MODE
-    ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
-    : Object.values(await restGet(ORDERS_PATH) || {});
-  const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
-  const events = { ...history, ...(account?.events || {}) };
-  const state = pizzaBonus(events);
-  const reservation = account?.reservations?.[state.cycle];
+  const compact = account?.loyalty?.version === 2;
+  let state;
+  if (compact) {
+    const count = Math.max(0, Math.min(10, Number(account.loyalty.count) || 0));
+    state = { count, cycle: String(account.loyalty.cycle || 'start'), ready: count === 10 };
+  } else {
+    // Backward-compatible read until the restaurant admin safely migrates
+    // an existing account with an ETag transaction; no customer-side migration.
+    const synced = account?.pizzaCountSynced === true &&
+      account.events && typeof account.events === 'object';
+    const historyOrders = synced ? [] : CUSTOMER_MODE
+      ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
+      : Object.values(await restGet(ORDERS_PATH) || {});
+    const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
+    state = pizzaBonus({ ...history, ...(account?.events || {}) });
+  }
+  const reservations = compact ? account.loyalty.reservations : account?.reservations;
+  const reservation = reservations?.[state.cycle];
   const pendingOrder = reservation?.orderId
-    ? (CUSTOMER_MODE || synced
-      ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`)
-      : historyOrders.find(order => order.id === reservation.orderId))
+    ? await restGet(`${ORDERS_PATH}/${encodeURIComponent(reservation.orderId)}`)
     : null;
-  return { ...state, phone, consent: account?.offersConsent === true, pending: Boolean(reservation && (pendingOrder ? !['avvist','kansellert'].includes(pendingOrder.status) : Date.now() - Number(reservation.at) < 600000)) };
+  return {
+    ...state,
+    phone,
+    compact,
+    consent: compact
+      ? account.loyalty.offersConsent === true
+      : (account?.loyalty?.offersConsent === true || account?.offersConsent === true),
+    pending: Boolean(reservation && (pendingOrder
+      ? !['avvist','kansellert'].includes(pendingOrder.status)
+      : Date.now() - Number(reservation.at) < 600000)),
+  };
 }
 
 async function reservePizzaReward(record) {
@@ -1523,7 +1540,8 @@ async function reservePizzaReward(record) {
   const paidCount = (record.lines || []).reduce((sum,line) => sum + (line.loyaltyEligible ? Math.max(0, Number(line.quantity) - (line.loyaltyFree ? 1 : 0)) : 0), 0);
   const earnedInCart = record.loyaltyReward.automatic && state.consent && state.count + paidCount >= 10;
   if ((!state.ready && !earnedInCart) || state.cycle !== record.loyaltyReward.cycle) throw new Error('Pizzabonus er ikke tilgjengelig.');
-  const url = `${DB_URL}/pizzaBonus/${state.phone}/reservations/${state.cycle}.json`;
+  const path = state.compact ? 'loyalty/reservations' : 'reservations';
+  const url = `${DB_URL}/pizzaBonus/${state.phone}/${path}/${state.cycle}.json`;
   for (let attempt = 0; attempt < 4; attempt++) {
     const response = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store' });
     if (!response.ok) throw new Error('Kunne ikke kontrollere pizzabonus.');
@@ -1685,43 +1703,6 @@ export async function expireUnconfirmedOrders() {
   }
 }
 
-/* Persist an immutable first-order marker under the existing pizzaBonus
- * account, including customers who purchased ZERO large pizzas.
- * A leaf-level Firebase ETag write avoids overwriting pizza rewards/events.
- * Status of an actual order, not this optional index, remains authoritative.
- */
-async function registerCustomerFirstOrder(record) {
-  const phone = loyaltyPhone(record.phone);
-  if (!phone || !remoteEnabled) return;
-  const url = `${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}/customerFirstOrder.json`;
-  const created = Number(record.createdAt) || Date.now();
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const response = await fetch(url, {
-      headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
-    });
-    if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
-    const etag = response.headers.get('ETag');
-    if (!etag) throw new Error('Kundeprofil ETag mangler.');
-    const existing = await response.json();
-    const firstAt = Number(existing?.at) || 0;
-    if (existing?.orderId && firstAt &&
-      (firstAt < created || (firstAt === created && String(existing.orderId) <= String(record.id)))) return;
-    const updated = {
-      orderId: String(record.id),
-      at: created,
-    };
-    const saved = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'if-match': etag },
-      body: JSON.stringify(updated),
-    });
-    if (saved.status === 412) continue;
-    if (!saved.ok) throw new Error('Kundeprofil lagring HTTP ' + saved.status);
-    return;
-  }
-  throw new Error('Kundeprofil ble endret samtidig.');
-}
-
 /** Lagrer en ordre. Returnerer ordren med ID. */
 export async function submitOrder(order) {
   const now = Date.now();
@@ -1750,12 +1731,6 @@ export async function submitOrder(order) {
     throw new Error(err?.message || 'Bestillingen kunne ikke sendes. Prøv igjen.');
   }
 
-  // Keep customer recognition independent of the 100-order retention limit.
-  // It is non-blocking for an already saved order; restaurant admin also
-  // reconciles this marker if the client goes offline immediately afterward.
-  void registerCustomerFirstOrder(record).catch(error => {
-    console.warn('Kundeprofil kan opprettes ved neste restaurantsynkronisering:', error?.message);
-  });
 
   try {
     const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
