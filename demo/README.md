@@ -74,9 +74,10 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
   ekstra Firebase-lyttere.
 - `js/install.js` henter ikke menyen på nytt når den lagrede `updatedAt`-verdien
   fortsatt matcher Firebase. En ny menyversjon leses fortsatt som normalt.
-- `getPizzaBonus()` henter bare `pizzaBonus/{telefon}` for kontoer med
-  `pizzaCountSynced=true`; usynkroniserte kontoer beholder historikk-fallback.
-  En aktiv bonusreservasjon kontrollerer kun den reserverte ordren.
+- `getPizzaBonus()` leser `customers/{telefon}` med flate bonusfelt.
+  Før gamle telefonkontoer er overført, leses `pizzaBonus/{telefon}`
+  kun som en midlertidig, skrivebeskyttet historikk-fallback.
+  Gratispizza reserveres under `customers/{telefon}/bonusReservations`.
 - `service-worker.js` mellomlagrer bare offentlig app-skall og `/demo/`.
   API-svar og ukjente nettsider lagres ikke. Gamle cache-versjoner slettes
   ved aktivering av en ny service-worker.
@@ -97,7 +98,7 @@ Cache-busting versions on both entrypoints and the PWA service-worker must be ad
 - Oppryddingen ligger i `js/orders-archive.js` (eldre filnavn beholdt for kompatibilitet), og kjører **bare når restaurantens adminside er åpen/aktiv**, i bolker på inntil 12, samt ved oppstart og omtrent hvert femte minutt. Ingen 24/7-serverjobb er satt opp.
 - `/orderArchive` er en gammel arkivstruktur. Adminsiden forsøker å slette denne **én gang per sideøkt** når den er tilgjengelig. Ved nettverksfeil prøver den igjen senere. Det foretas ingen ny kopiering til arkivet.
 - Sikring: De 100 nyeste og alle åpne ordrer beholdes; bare `fullfort`, `avvist` eller `klar` (med `staffReadyAt`) som er minst **72 timer etter siste statusendring**, kan slettes. Dette beskytter pågående bestillinger og gir SMS-/e-postpollere tid til å lese statusendringer.
-- Slettingen sjekker ordren på nytt og benytter ETag-betinget DELETE; om en ordre endrer seg underveis, beholdes den. Bekreftede pizzabonuspoeng må være lagret under `pizzaBonus/{telefon}/events/{orderId}` før kilden fjernes.
+- Slettingen sjekker ordren på nytt og benytter ETag-betinget DELETE; om en ordre endrer seg underveis, beholdes den. Bekreftede kundetotaler må være registrert under `customers/{telefon}`, med gjeldende ordre-ID i `countedOrders`, før kilden fjernes.
 - Det kan midlertidig være **mer enn 100** ordrer dersom ingen kan slettes trygt eller restaurantens adminside er lukket.
 - Kundenes `Mine bestillinger` viser nå bare **aktive/relevante** bestillinger (inkludert statusvarsler som ennå ikke er lukket), ikke historisk ordreoversikt. Lokale ordresnapshots brukes fortsatt for aktiv ordresporing og bonus-fallback, men gammel historikk vises ikke.
 - **Viktig:** Sletting fra Firebase er irreversibel. Bilag og salgsdokumentasjon som er nødvendig for bokføring må ivaretas i et separat godkjent regnskaps-/kassesystem.
@@ -234,27 +235,36 @@ mottattdato/klokkeslett, klikkbart telefonnummer, tydelig ny-bestilling-status
 og nummererte produktkort. Det eksisterende Godta/Avvis-panelet, hentetid,
 SSE/Firebase-oppdateringer, SMS/e-post og Epson er uendret.
 
-**Fast Kunde / Ny Kunde:** Norske mobilnumre normaliseres som før med
-`loyaltyPhone()`. Kundens første kjente ordrekode/dato lagres som
-`pizzaBonus/{phone}/customerFirstOrder` når en ordre er sendt. Admin har
-en ETag-sikret kunderegister-synkronisering i `js/loyalty-sync.js` som
-beholder den eldste kjente ordren fra registrert historikk.
-Tidligere godtatte bonus-hendelser med `quantity:0` teller også som
-tidligere bestilling. Lesefeil vises som **Kundestatus ukjent**, aldri
-automatisk Ny Kunde. Ordrer eldre enn 100-løsningen kan allerede være slettet
-fra før funksjonen ble aktivert, så "Ny Kunde" er *første kjente* ordre.
+## Kunderegister — flat `customers/{phone}` (2026-10-24)
 
-**Lagrede opplysninger i `pizzaBonus/{phone}/customerProfile`:**
-`phone`, `name`, `email`, `lastOrderAt`, `confirmedOrderCount`,
-`largePizzaCountRecorded`, `largePizzaCountPartial`,
-`totalSpentRecorded` og `ordersMissingAmount`. Alle tall for antall og
-beløp bygger på *bekreftede* ordre. `events/{orderId}` utvides med
-`largePizzaTotal` og `totalPaid`; eksisterende kupongpoeng
-(`quantity`, `redeemed`) bevares. Et event med null store pizzaer blir
-også registrert. Identiske ordre-ID-er telles én gang, og gamle
-bonus-hendelser uten pris får ikke gjettet pris. Samlet beløp betyr summen
-av kjente, bekreftede **ordretotaler**, ikke verifiserte kortbetalinger.
-Historiske salg før denne registreringen kan gi ufullstendig sum.
+**Fast Kunde / Ny Kunde:** Norske mobilnumre normaliseres med
+`loyaltyPhone()`. Admin leser `customers/{phone}/totalOrders`.
+Under migrering kan en eldre `pizzaBonus/{phone}`-konto leses som
+fallback; manglende tilgang vises som **Kundestatus ukjent**.
+
+**Varige kundefelt direkte under telefonnummer:**
+`phone`, `name`, `email`, `totalOrders`,
+`totalLargePizzas`, `totalSpent`. Bare bekreftede bestillinger
+øker tellere. `totalSpent` er sum registrerte ordrebeløp, ikke en
+egen bekreftelse på kortbetaling. Gamle manglende beløp gjettes ikke.
+
+**Pizzabonus uten `loyalty`-mappe:** Samme telefonkonto har
+`bonusCount`, `bonusCycle`, `bonusConsent`,
+`bonusReservations`, `countedOrders` og `schemaVersion` som flate
+tekniske felt. `countedOrders` inneholder bare ID-ene til bekreftede
+ordrer som fortsatt finnes i `/orders`; det er ikke en permanent
+kjøpshistorikk. ETag-beskyttet oppdatering hindrer dobbeltelling ved
+samtidige adminsynkroniseringer. Gratispizza krever fortsatt
+reservering per syklus.
+
+**Migrering:** `js/loyalty-sync.js` leser eldre
+`pizzaBonus/{phone}`-opplysninger og skriver den sammenslåtte
+kundekontoen til `customers/{phone}`. Kildepostene blir ikke
+automatisk slettet før overføring og tilgangsregler er kontrollert.
+Når admin er åpen, forsøkes historiske telefonkontoer i små puljer
+hvis Firebase tillater nøkkeloppslag. Feilet migrering må prøves
+igjen; tidligere `events` og `loyalty` ligger bare i den gamle grenen
+og opprettes ikke i `customers`.
 
 **Viktig før produksjonsbruk:** Denne kundeprofilen inneholder
 personopplysninger og beløp. Firebase RTDB Security Rules må sikre at
@@ -265,7 +275,8 @@ og Firebase Authentication + Rules før lagring av persondata i produksjon;
 dokumenter lovlig formål, lagringstid og personvernerklæring.
 
 **Bevaring:** `js/orders-archive.js` sletter ikke en gammel bekreftet
-ordre før tilhørende bonus-hendelse har registrert både ordrebeløpet
-og totalt store pizzaer. Ved første oppstart synkroniseres gjenværende
-eldre ordre i små bakgrunnsbunker. Kildeoppdateringen oppretter ikke
-opprinnelig manglende historiske beløp og endrer ikke tidligere slettede data.
+ordre før `customers/{phone}` inneholder den flate kundetotalen og
+ordrens ID er kvittert i `countedOrders`. Den gamle `pizzaBonus`
+kan fjernes separat først etter kontrollert dataoverføring og backup.
+Verken manglende historiske beløp eller tidligere slettede ordrer
+rekonstrueres automatisk.
