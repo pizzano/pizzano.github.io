@@ -42,7 +42,6 @@ import {
   RESTAURANT_WEEKDAYS,
   getStats,
   getOrders,
-  updateOrderStatus,
   markOrderReadyManually,
   updateOrderEstimate,
   acceptOrderWithEstimate,
@@ -2328,7 +2327,7 @@ function renderOrderDetail(orderId) {
     : ['avvist', 'fullfort'].includes(order.status)
       ? `<div class="pos-closed-status">${escapeHtml(orderListStatus(order))}</div>`
       : `<div class="order-ready-summary"><span class="order-ready-clock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><strong>${order.status === 'klar' ? 'Klar for henting' : `${pickupModeLabel} ${readyTime}`}</strong>${order.status !== 'klar' && readinessCountdown ? `<span data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(readinessCountdown)}</span>` : ''}${!scheduledPickup && order.status !== 'klar' ? `<button data-edit-order-time type="button">Endre tid</button>` : ''}</div>
-        <div class="pos-progress-actions"><button data-detail-status="${order.status === 'klar' ? 'fullfort' : 'klar'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>${order.status === 'klar' ? 'Utlevert · fullfør bestilling' : 'Marker klar for henting'}</button></div>`;
+        ${order.status === 'klar' ? '' : `<div class="pos-progress-actions"><button data-detail-status="klar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>Marker klar for henting</button></div>`}`;
   el.orderDetailEmpty.hidden = true;
   el.orderDetailLive.hidden = false;
   el.orderDetailLive.innerHTML = `
@@ -2822,20 +2821,15 @@ el.orderDetailLive.addEventListener('click', async (event) => {
   const status = event.target.closest('[data-detail-status]');
   if (status && selectedOrderId) {
     const orderId = selectedOrderId;
-    const nextStatus = status.dataset.detailStatus;
     const currentOrder = getOrders().find((entry) => entry.id === orderId);
-    const currentStatus = currentOrder?.status === 'tilberedning' ? 'bekreftet' : currentOrder?.status;
-
-    if (!((currentStatus === 'bekreftet' && nextStatus === 'klar') || (currentStatus === 'klar' && nextStatus === 'fullfort'))) {
+    if (status.dataset.detailStatus !== 'klar' ||
+        !['bekreftet', 'tilberedning'].includes(currentOrder?.status)) {
       renderOrders(); return;
     }
     if (status.disabled) return;
     status.disabled = true;
-    // Explicit employee press is required for ready status and SMS.
-    const ok = nextStatus === 'klar'
-      ? await markOrderReadyManually(orderId)
-      : await updateOrderStatus(orderId, nextStatus);
-    if (ok && nextStatus === 'fullfort') selectedOrderId = null;
+    // The last manual action is "Klar for henting". There is no "Utlevert" step.
+    const ok = await markOrderReadyManually(orderId);
     renderOrders();
     renderStats();
     toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
