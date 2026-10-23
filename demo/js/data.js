@@ -598,6 +598,7 @@ function normalizeOrders(raw) {
           loyaltyFree: Boolean(line.loyaltyFree),
           size: String(line.size || ''),
           sizeId: String(line.sizeId || ''),
+          optionIds: asArray(line.optionIds).filter(id => typeof id === 'string'),
           // These IDs are needed for an exact "Bestill samme igjen" action
           // after a refresh. Keep them in memory without adding DB fields.
           selections: line.selections && typeof line.selections === 'object'
