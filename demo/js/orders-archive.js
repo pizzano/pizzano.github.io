@@ -71,23 +71,15 @@ async function deleteOldOrder(snapshot) {
   // Retain confirmed pizza points before deleting their source order.
   const phone = loyaltyPhone(current.phone);
   if (phone && ['bekreftet','tilberedning','klar','fullfort'].includes(current.status)) {
-    const accountUrl = DB_URL + '/pizzaBonus/' + phone + '.json';
+    const accountUrl = DB_URL + '/customers/' + phone + '.json';
     const account = await (await fetchChecked(accountUrl)).json();
-    if (account?.loyalty?.version === 2) {
-      // Never prune a confirmed source order until the compact lifetime
-      // totals have durably acknowledged this particular order ID.
-      if (account.loyalty.seen?.[current.id] !== 1 ||
-          !Number.isFinite(Number(account.totalOrders)) ||
-          !Number.isFinite(Number(account.totalLargePizzas)) ||
-          !Number.isFinite(Number(account.totalSpent))) return false;
-    } else {
-      // Older accounts must be completely reconciled or upgraded first.
-      const event = account?.events?.[current.id];
-      if (!event?.id || event.id !== current.id ||
-          event.totalPaid == null || !Number.isFinite(Number(event.totalPaid)) ||
-          event.largePizzaTotal == null ||
-          !Number.isFinite(Number(event.largePizzaTotal))) return false;
-    }
+    // Never prune an order before its data is committed to /customers.
+    // Legacy /pizzaBonus-only accounts remain protected until migration.
+    if (account?.schemaVersion !== 3 ||
+        account?.countedOrders?.[current.id] !== 1 ||
+        !Number.isFinite(Number(account.totalOrders)) ||
+        !Number.isFinite(Number(account.totalLargePizzas)) ||
+        !Number.isFinite(Number(account.totalSpent))) return false;
   }
 
   const deleted = await fetchChecked(sourceUrl, {
