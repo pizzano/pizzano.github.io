@@ -51,7 +51,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261024-compact1';
+} from './data.js?v=20261024-customersflat1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
