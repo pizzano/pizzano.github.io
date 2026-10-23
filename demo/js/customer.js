@@ -45,10 +45,14 @@ import {
 const PROFILE_KEY = 'bestill_profile_v2';
 const CART_KEY = 'bestill_cart_v2';
 const ALLERGEN_VISIBILITY_KEY = 'kol_show_allergens_v1';
-const READY_NOTIFIED_KEY = 'kol_ready_notified_v1';
-const READY_SEEN_KEY = 'kol_ready_seen_v1';
 const CUSTOMER_ORDERS_KEY = 'bestill_orders_v2';
-const REJECTED_SEEN_KEY = 'kol_rejected_seen_v1';
+const LEGACY_CHECKOUT_KEY = 'bestill_checkout_contact_v2';
+const LEGACY_NOTICE_KEYS = {
+  notified: 'kol_ready_notified_v1',
+  readySeen: 'kol_ready_seen_v1',
+  rejectedSeen: 'kol_rejected_seen_v1',
+};
+const LOCAL_ORDER_LIMIT = 4;
 
 function loadJSON(key, fallback) {
   try {
@@ -73,6 +77,51 @@ const profile = Object.assign(
 );
 profile.favorites = Array.isArray(profile.favorites) ? profile.favorites : [];
 profile.email = typeof profile.email === 'string' ? profile.email : '';
+profile.orderNotices = profile.orderNotices && typeof profile.orderNotices === 'object'
+  ? profile.orderNotices : {};
+
+/** One-time consolidation: keep checkout contact and notice state in profile. */
+function migrateOldCustomerStorage() {
+  let modified = false;
+  const draft = loadJSON(LEGACY_CHECKOUT_KEY, null);
+  if (draft && typeof draft === 'object') {
+    if (!profile.name && String(draft.name || '').trim()) {
+      profile.name = String(draft.name).trim().slice(0, 120);
+      modified = true;
+    }
+    if (!profile.phone && String(draft.phone || '').trim()) {
+      profile.phone = String(draft.phone).replace(/\D/g, '').slice(0, 8);
+      modified = true;
+    }
+  }
+  for (const [kind, key] of Object.entries(LEGACY_NOTICE_KEYS)) {
+    const old = loadJSON(key, []);
+    if (!Array.isArray(old) || !old.length) continue;
+    const original = Array.isArray(profile.orderNotices[kind])
+      ? profile.orderNotices[kind] : [];
+    profile.orderNotices[kind] = [...new Set([...original, ...old])]
+      .filter(id => typeof id === 'string').slice(-LOCAL_ORDER_LIMIT * 2);
+    modified = true;
+  }
+  if (modified) saveJSON(PROFILE_KEY, profile);
+  // Retire old names even if the profile already contains their values.
+  // No new writes to these old keys occur in this version.
+  try {
+    localStorage.removeItem(LEGACY_CHECKOUT_KEY);
+    for (const key of Object.values(LEGACY_NOTICE_KEYS)) localStorage.removeItem(key);
+  } catch (_) { /* browser storage may be disabled */ }
+}
+migrateOldCustomerStorage();
+
+function orderNoticeIds(kind) {
+  const saved = profile.orderNotices?.[kind];
+  return new Set(Array.isArray(saved) ? saved : []);
+}
+function saveOrderNoticeIds(kind, values) {
+  profile.orderNotices[kind] = [...values]
+    .filter(id => typeof id === 'string').slice(-LOCAL_ORDER_LIMIT * 2);
+  saveJSON(PROFILE_KEY, profile);
+}
 
 let cart = Array.isArray(loadJSON(CART_KEY, [])) ? loadJSON(CART_KEY, []) : [];
 
@@ -362,7 +411,9 @@ function persistCustomerOrderSnapshot(order) {
   const index = list.findIndex((entry) => entry?.id === remembered.id);
   if (index >= 0) list[index] = mergeStableCustomerOrder(list[index], remembered);
   else list.unshift(remembered);
-  saveJSON(CUSTOMER_ORDERS_KEY, list.slice(0, 30));
+  saveJSON(CUSTOMER_ORDERS_KEY, list
+    .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
+    .slice(0, LOCAL_ORDER_LIMIT));
 }
 
 function mergedCustomerOrders() {
@@ -395,25 +446,25 @@ function mergedCustomerOrders() {
 }
 
 function readySeenIds() {
-  return new Set(loadJSON(READY_SEEN_KEY, []));
+  return orderNoticeIds('readySeen');
 }
 
 function markReadySeen(orderId) {
   if (!orderId) return;
   const seen = readySeenIds();
   seen.add(orderId);
-  saveJSON(READY_SEEN_KEY, Array.from(seen).slice(-30));
+  saveOrderNoticeIds('readySeen', seen);
 }
 
 function rejectedSeenIds() {
-  return new Set(loadJSON(REJECTED_SEEN_KEY, []));
+  return orderNoticeIds('rejectedSeen');
 }
 
 function markRejectedSeen(orderId) {
   if (!orderId) return;
   const seen = rejectedSeenIds();
   seen.add(orderId);
-  saveJSON(REJECTED_SEEN_KEY, Array.from(seen).slice(-30));
+  saveOrderNoticeIds('rejectedSeen', seen);
 }
 
 
@@ -652,7 +703,7 @@ function scheduleReadyDismiss(order) {
 
 
 function notifyReadyOrders(orders) {
-  const notified = new Set(loadJSON(READY_NOTIFIED_KEY, []));
+  const notified = orderNoticeIds('notified');
   let changed = false;
   for (const order of orders) {
     if (order.status !== 'klar' || notified.has(order.id)) continue;
@@ -665,7 +716,7 @@ function notifyReadyOrders(orders) {
       } catch (_) {}
     }
   }
-  if (changed) saveJSON(READY_NOTIFIED_KEY, Array.from(notified).slice(-30));
+  if (changed) saveOrderNoticeIds('notified', notified);
 }
 
 function renderActiveOrders() {
@@ -2259,6 +2310,12 @@ async function placeOrder() {
   ui.orderSendFailed = false;
   ui.pendingOrderId = null;
   ui.pendingOrderFingerprint = '';
+  // The completed checkout is the sole persistent customer contact.
+  profile.name = name;
+  profile.phone = phone;
+  const checkoutEmail = (el.custEmail?.value || '').trim().toLowerCase();
+  if (checkoutEmail) profile.email = checkoutEmail;
+  persistProfile();
   cart = [];
   persistCart();
   ui.pickup = null;
@@ -2956,11 +3013,18 @@ if (el.allergenVisibilityToggle) {
 
 [el.custName, el.custPhone].forEach((input) => {
   input.addEventListener('input', () => {
-    if (input === el.custName && input.value.trim()) el.errName.hidden = true;
+    if (input === el.custName) {
+      profile.name = input.value.trim();
+      if (profile.name) el.errName.hidden = true;
+    }
     if (input === el.custPhone) {
       input.value = input.value.replace(/[^\d]/g, '').slice(0, 8);
+      profile.phone = input.value;
       if (validPhone(input.value)) el.errPhone.hidden = true;
     }
+    // Previously a second checkout-contact key was used for the same fields.
+    // Keeping them directly in the customer profile preserves drafts on reload.
+    persistProfile();
   });
 });
 
