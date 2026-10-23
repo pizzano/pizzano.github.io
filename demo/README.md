@@ -235,6 +235,34 @@ mottattdato/klokkeslett, klikkbart telefonnummer, tydelig ny-bestilling-status
 og nummererte produktkort. Det eksisterende Godta/Avvis-panelet, hentetid,
 SSE/Firebase-oppdateringer, SMS/e-post og Epson er uendret.
 
+## Smal ordre-JSON (2026-10-24)
+
+Nye bestillinger lagres slankere i `/orders/{id}`. Restaurantens
+ordreliste, kvittering, SMS og e-post bruker de samme ordreobjektene.
+`submitOrder()` fjerner bare overflødige felter ved **oppretting**
+av en ny ordre; allerede lagrede/aktive ordrer blir ikke endret.
+
+- `subtotal` sløyfes kun hvis det er identisk med `total`.
+  Lesekoden bruker `total` som delsumsverdi for nye, kompakte ordrer.
+- `type: henting` er standard og trenger ikke lagres.
+- `pickupMode` sløyfes når det kan utledes direkte av `pickup`
+  (`Snarest` eller `HH:mm`). Valgt hentevalg bevares.
+- På varelinjer beholdes `price`, `quantity`, `size`, `sizeId`,
+  `selections` og `optionDetails` når de trengs. Doble `options`,
+  `optionIds` og `unitPrice` utelates bare når samme informasjon
+  allerede kan gjenskapes trygt. Rabatt- og gratispizza-informasjon
+  bevares, og valg med pris 0 forblir synlige som inkludert.
+- Tom e-post, kommentar, uten-liste, bonusflag og tomme tilvalg lagres
+  ikke. `normalizeOrders()` kan fortsatt lese både gammel og ny form.
+- `id`, `createdAt`, `confirmationDeadline`, `status`,
+  `statusUpdatedAt`, hentetid, kundekontakt, pris, SMS-/e-postkvitteringer
+  og bonus-bekreftelse beholdes når de har funksjonell betydning.
+
+Forbedringen er på antall felter og JSON-størrelse; en Firebase JSON-gren
+som `lines` er fortsatt nødvendig for bestillingens produkter.
+Hvis historiske ordrer skal omformes må det vurderes separat med
+ETag-sikret migrering, backup og test av gamle åpne bestillinger.
+
 ## Kunderegister — flat `customers/{phone}` (2026-10-24)
 
 **Fast Kunde / Ny Kunde:** Norske mobilnumre normaliseres med
