@@ -464,8 +464,11 @@ function activeOrderCardHtml(order) {
   const readyNow = order.status === 'klar';
   const estimatedReadyNow = !readyNow && isEstimatedPickupTimeReached(order);
   const confirmedNow = ['bekreftet', 'tilberedning'].includes(order.status);
-  // A time estimate is NOT a kitchen-ready confirmation. Only status=klar is ready.
-  const progressStatus = order.status === 'tilberedning' ? 'bekreftet' : order.status;
+  // Visually reach "Klar" when estimated pickup time has passed, without
+  // changing the saved order status or implying staff confirmed readiness.
+  const progressStatus = estimatedReadyNow
+    ? 'klar'
+    : (order.status === 'tilberedning' ? 'bekreftet' : order.status);
   const foundIndex = CUSTOMER_STATUS_FLOW.findIndex((step) => step.id === progressStatus);
   const index = foundIndex < 0 ? 0 : foundIndex;
   const shortId = String(order.id || '').slice(-6).toUpperCase();
@@ -531,12 +534,12 @@ function activeOrderCardHtml(order) {
     }
   }
 
-  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
+  return `<section class="active-order-card${readyNow ? ' is-ready' : ''}${estimatedReadyNow ? ' is-estimated-ready' : ''}${rejectedNow ? ' is-rejected' : ''}" data-active-order-card="${escapeHtml(order.id)}" aria-label="Aktiv bestilling">
     <div class="active-order-head">
       <div><span class="active-order-kicker">${rejectedNow ? 'BESTILLING' : 'Aktiv bestilling'}</span>${rejectedNow ? `<strong class="active-order-live-status">${order.rejectionCode === 'confirmation_timeout' ? 'Avbrutt' : 'Avvist'}</strong>` : ''}</div>
       <div class="active-order-head-actions"><span class="active-order-number">#${escapeHtml(shortId)}</span>${readyNow ? `<button class="active-order-dismiss" data-ready-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk klar-meldingen">×</button>` : ''}${rejectedNow ? `<button class="active-order-dismiss" data-rejected-dismiss="${escapeHtml(order.id)}" type="button" aria-label="Lukk avvisningsmeldingen">×</button>` : ''}</div>
     </div>
-    ${!rejectedNow ? `<div class="order-progress" aria-label="Bestillingsstatus">${progress}</div>` : ''}
+    ${!rejectedNow ? `<div class="order-progress" aria-label="${estimatedReadyNow ? 'Estimert klar for henting, ikke bekreftet av restauranten' : 'Bestillingsstatus'}">${progress}</div>` : ''}
     ${statusPanel}
     ${rejectedNow ? `<div class="active-order-rejected-callout"><span class="rejected-mark">×</span><div><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionDetail ? `<small>${escapeHtml(rejectionDetail)}</small>` : ''}</div></div>` : ''}
     <button class="active-order-open" data-active-orders="${escapeHtml(order.id)}" type="button">Se bestillingen</button>
