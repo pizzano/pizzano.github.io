@@ -721,7 +721,7 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
  margin:12px 0 7px;font-weight:750;
 }
 .orders-page .orders-printer-panel-ip{margin:0 0 13px;color:var(--ot-muted)}
-.orders-page .orders-printer-panel-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.orders-page .orders-printer-panel-buttons{display:grid;grid-template-columns:1fr;gap:8px}
 .orders-page .orders-printer-panel-buttons :is(button,a){
  display:flex;align-items:center;justify-content:center;min-height:39px;padding:8px 10px;
  border:1px solid #a8cbb4;border-radius:9px;background:#e7f4ea;
@@ -739,15 +739,18 @@ html[data-theme="dark"] .orders-page .orders-top-actions.orders-lightbar .orders
  }
 }
 
-/* Live Epson diagnostic: clear warning and readable default-login hint. */
-.orders-page .orders-printer-credentials{
- margin:11px 0 12px;padding:11px 12px;border:1px solid var(--ot-line);
- border-radius:10px;background:var(--ot-selected);
- font-size:12px;color:var(--ot-ink);
+/* Printer settings are optional; printing/status checks use ePOS directly. */
+.orders-page .orders-printer-advanced {
+ margin-top:12px;padding-top:10px;border-top:1px solid var(--ot-line);
+ font-size:12px;color:var(--ot-muted);
 }
-.orders-page .orders-printer-credentials>strong{display:block;margin-bottom:7px;font-size:12px}
-.orders-page .orders-printer-credentials>div{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
-.orders-page .orders-printer-credentials b{font-size:13px;letter-spacing:.01em}
+.orders-page .orders-printer-advanced summary {cursor:pointer;font-weight:700;color:var(--ot-ink);}
+.orders-page .orders-printer-advanced p {margin:9px 0;line-height:1.5;}
+.orders-page .orders-printer-advanced a {
+ display:flex;align-items:center;justify-content:center;min-height:38px;
+ padding:8px 10px;border:1px solid var(--ot-line);border-radius:9px;
+ color:var(--ot-ink);background:var(--ot-surface);text-decoration:none;font-weight:700;
+}
 .orders-page .orders-printer-panel-status{line-height:1.5}
 .orders-page .orders-printer-indicator.is-offline{border-color:#e9b5ad!important;background:#fff2f0!important;color:#ba403b!important}
 .orders-page .orders-printer-indicator.is-active{border-color:#b5ddc3!important}
