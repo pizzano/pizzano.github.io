@@ -1623,7 +1623,10 @@ function cartLineHtml(line, editable = true) {
       ? [rawLabels[0].slice(singleRepeat[0].length).trim()]
       : rawLabels;
     const paid = group.price > 0;
-    const description = !paid && labels.length
+    const useOptionName = labels.length && (!paid ||
+      /^(tilvalg|ekstra|extras|annet|tilbehør)$/i.test(heading) ||
+      (labels.length === 1 && heading.toLocaleLowerCase('no') === labels[0].toLocaleLowerCase('no')));
+    const description = useOptionName
       ? `<b>${escapeHtml(labels.join(', '))}</b>`
       : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`;
     const multiple = paid && count > 1
