@@ -2466,11 +2466,12 @@ function renderOrderDetail(orderId) {
               <div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div>
               <div class="order-customer-meta">
                 <span class="order-customer-badge is-${customerIndicator.kind}" title="${escapeHtml(customerIndicator.description)}">${escapeHtml(customerIndicator.label)}</span>
-                <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar mottok SMS-forespørselen; levering er ikke bekreftet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
-                ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
-                  ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
-                      title="${emailReceiptSent(order) ? 'MailApp har godtatt sendingen; innbokslevering er ikke bekreftet.' : 'Ingen bekreftet e-postkvittering fra MailApp.'}">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>${escapeHtml(emailReceiptDetail(order))}</span></div>`
+                <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar har godtatt SMS-forespørselen. Sending fra telefonen og levering er ikke bekreftet" aria-label="SMS: Traccar har godtatt forespørselen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>SMS</span></div>
+                ${order.email && emailReceiptSent(order)
+                  ? `<div class="pos-detail-email-feedback is-sent"
+                      title="${escapeHtml(emailReceiptDetail(order))} · MailApp har godtatt sendingen. Levering til innboksen er ikke bekreftet."
+                      aria-label="E-post: MailApp har godtatt sendingen">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>E-post</span></div>`
                   : ''}
               </div>
             </div>
