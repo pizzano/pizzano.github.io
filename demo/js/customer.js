@@ -1994,11 +1994,15 @@ function startAcceptedConfirmationHold(order) {
   }, 3000);
 }
 
-function confirmationTimeoutActions(order, canRetry = false) {
+function confirmationRestaurantCallAction() {
   const phone = confirmationRestaurantPhone();
-  const call = phone.tel
+  return phone.tel
     ? `<a class="confirm-call-button" href="tel:${escapeHtml(phone.tel)}">Ring ${escapeHtml(phone.label || phone.tel)}</a>`
     : '<span class="confirm-phone-missing">Telefonnummer er ikke tilgjengelig akkurat nå.</span>';
+}
+
+function confirmationTimeoutActions(order, canRetry = false) {
+  const call = confirmationRestaurantCallAction();
   const retry = `<button class="confirm-reorder-button" type="button" data-confirm-reorder="${escapeHtml(order.id)}"${canRetry ? '' : ' disabled aria-disabled="true"'}>Prøv å bestille på nytt</button>`;
   return `<div class="confirm-timeout-status">
     <div class="confirm-timeout-actions">${call}${retry}</div>
@@ -2052,9 +2056,7 @@ function checkOrderConfirmationWait() {
     el.confirmText.textContent = order.rejectionMessage || order.rejectionReason || 'Restauranten kunne dessverre ikke ta imot bestillingen.';
     el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}${timedOut
       ? confirmationTimeoutActions(order, true)
-      : `<div class="confirm-timeout-status">${(confirmationRestaurantPhone().tel
-          ? `<a class="confirm-call-button" href="tel:${escapeHtml(confirmationRestaurantPhone().tel)}">Ring ${escapeHtml(confirmationRestaurantPhone().label || confirmationRestaurantPhone().tel)}</a>`
-          : '')}</div>`}`;
+      : `<div class="confirm-timeout-status">${confirmationRestaurantCallAction()}</div>`}`;
     return;
   }
 
