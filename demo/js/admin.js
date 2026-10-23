@@ -2292,7 +2292,7 @@ function loadOrderCustomerAccount(order) {
   if (saved && (saved.pending || Date.now() - saved.fetchedAt < CUSTOMER_CACHE_AGE)) return;
   const pending = { pending: true, fetchedAt: Date.now(), account:saved?.account || null };
   orderCustomerAccountCache.set(phone, pending);
-  fetch(`${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}/totalOrders.json?_=${Date.now()}`, {
+  fetch(`${DB_URL}/customers/${encodeURIComponent(phone)}/totalOrders.json?_=${Date.now()}`, {
     cache:'no-store', signal:AbortSignal.timeout(7000)
   }).then(async response => {
     if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
@@ -2307,6 +2307,7 @@ function loadOrderCustomerAccount(order) {
       if (!legacyResponse.ok) throw new Error('Eldre kundeprofil HTTP ' + legacyResponse.status);
       const legacy = await legacyResponse.json() || {};
       totalOrders = Math.max(
+        Number(legacy.totalOrders) || 0,
         Number(legacy.customerProfile?.confirmedOrderCount) || 0,
         Object.keys(legacy.events || {}).length,
         legacy.customerFirstOrder?.orderId ? 1 : 0
