@@ -497,7 +497,7 @@ function activeOrderCardHtml(order) {
           </div>
         </div>`;
     } else if (estimatedReadyNow) {
-      statusPanel = `<div class="active-order-status-box is-confirmed is-text"><div><strong>Estimert hentetid er passert.</strong><small>Vi venter på bekreftelse fra restauranten.</small></div></div>`;
+      statusPanel = `<div class="active-order-status-box is-confirmed is-text"><div><strong>Estimert hentetid er passert.</strong><small>Maten er sannsynligvis klar, men vi venter på bekreftelse fra restauranten.</small></div></div>`;
     } else if (hasLiveEstimate) {
       statusPanel = `
         <div class="active-order-status-box is-confirmed">
@@ -1845,7 +1845,7 @@ function confirmationReadyLeftText(order) {
     return minutes > 0 ? `ca. ${minutes} min igjen` : 'Bekreftet';
   }
   const remaining = Math.max(0, readyAt - Date.now());
-  if (!remaining) return 'Estimert hentetid er passert. Vi venter på bekreftelse fra restauranten.';
+  if (!remaining) return 'Estimert hentetid er passert. Maten er sannsynligvis klar, men vi venter på bekreftelse fra restauranten.';
   const seconds = Math.ceil(remaining / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
