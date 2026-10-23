@@ -2828,7 +2828,7 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     }
     if (status.disabled) return;
     status.disabled = true;
-    // The last manual action is "Klar for henting". There is no "Utlevert" step.
+    // The last manual action is marking ready; no later delivery/completion step.
     const ok = await markOrderReadyManually(orderId);
     renderOrders();
     renderStats();
