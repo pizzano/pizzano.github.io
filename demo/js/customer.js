@@ -66,8 +66,9 @@ function loadJSON(key, fallback) {
 function saveJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch (err) {
-    /* ignorer */
+    return false;
   }
 }
 
@@ -103,7 +104,9 @@ function migrateOldCustomerStorage() {
       .filter(id => typeof id === 'string').slice(-LOCAL_ORDER_LIMIT * 2);
     modified = true;
   }
-  if (modified) saveJSON(PROFILE_KEY, profile);
+  // Never delete the only existing copy of a draft/notification until
+  // it is safely stored under the profile key.
+  if (modified && !saveJSON(PROFILE_KEY, profile)) return;
   // Retire old names even if the profile already contains their values.
   // No new writes to these old keys occur in this version.
   try {
@@ -155,6 +158,11 @@ let spyLocked = false;
 let spyLockTimer = null;
 
 function persistProfile() {
+  // theme.js shares this key: retain the freshest UI theme even when the
+  // customer module was initialized before a dark-mode toggle.
+  const stored = loadJSON(PROFILE_KEY, {});
+  if (stored && (stored.theme === 'light' || stored.theme === 'dark'))
+    profile.theme = stored.theme;
   saveJSON(PROFILE_KEY, profile);
 }
 
