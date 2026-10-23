@@ -1,19 +1,36 @@
 (() => {
   'use strict';
 
-  const STORAGE_KEY = 'kol_theme_v1';
+  const PROFILE_KEY = 'bestill_profile_v2';
+  const LEGACY_THEME_KEY = 'kol_theme_v1';
   const root = document.documentElement;
 
   function normalizeTheme(value) {
     return value === 'dark' ? 'dark' : 'light';
   }
 
-  function readTheme() {
+  function readProfile() {
     try {
-      return normalizeTheme(localStorage.getItem(STORAGE_KEY));
-    } catch {
-      return 'light';
-    }
+      const parsed = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed : {};
+    } catch { return {}; }
+  }
+
+  function readTheme() {
+    const profile = readProfile();
+    try {
+      const legacy = localStorage.getItem(LEGACY_THEME_KEY);
+      const migrated = profile.theme || legacy;
+      if (legacy !== null) {
+        // Retire the old fifth key only after the merged profile is saved.
+        if (legacy === 'dark' || legacy === 'light') {
+          localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...profile, theme: normalizeTheme(migrated) }));
+        }
+        localStorage.removeItem(LEGACY_THEME_KEY);
+      }
+      return normalizeTheme(migrated);
+    } catch { return normalizeTheme(profile.theme); }
   }
 
   function updateThemeColor(theme) {
@@ -40,7 +57,9 @@
 
     if (persist) {
       try {
-        localStorage.setItem(STORAGE_KEY, theme);
+        // Read the current profile first: never overwrite the customer's
+        // name, contact details, order-notice flags or favorites.
+        localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...readProfile(), theme }));
       } catch {
         // Theme still works for the current page when storage is unavailable.
       }
@@ -68,8 +87,12 @@
   });
 
   window.addEventListener('storage', (event) => {
-    if (event.key !== STORAGE_KEY || !event.newValue) return;
-    applyTheme(event.newValue, { persist: false });
+    if (event.key !== PROFILE_KEY || !event.newValue) return;
+    try {
+      const profile = JSON.parse(event.newValue);
+      if (profile?.theme && profile.theme !== root.dataset.theme)
+        applyTheme(profile.theme, { persist: false });
+    } catch { /* ignore incomplete or invalid cross-tab storage changes */ }
   });
 
   window.KolTheme = {
