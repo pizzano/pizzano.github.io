@@ -451,12 +451,13 @@ export const ORDER_STATUSES = [
   { id: 'bekreftet', label: 'Bekreftet' },
   { id: 'tilberedning', label: 'Tilberedes' },
   { id: 'klar', label: 'Klar for henting' },
-  { id: 'fullfort', label: 'Ferdig' },
   { id: 'avvist', label: 'Avvist' },
 ];
 
 /** Etikett for en ordrestatus. */
 export function orderStatusLabel(status) {
+  // Old order records retain this status for history/bonus compatibility only.
+  if (status === 'fullfort') return 'Avsluttet (eldre ordre)';
   if (status === 'tilberedning') return 'Bekreftet';
   const found = ORDER_STATUSES.find((entry) => entry.id === status);
   return found ? found.label : 'Ny';
@@ -574,7 +575,8 @@ function normalizeOrders(raw) {
         scheduledPickupAt: Number(order.scheduledPickupAt) || null,
         comment: String(order.comment || ''),
         type: String(order.type || 'henting'),
-        status: ORDER_STATUSES.some((s) => s.id === order.status)
+        status: order.status === 'fullfort' ||
+          ORDER_STATUSES.some((s) => s.id === order.status)
           ? order.status
           : 'mottatt',
         statusUpdatedAt: Number(order.statusUpdatedAt) || 0,
@@ -1765,36 +1767,6 @@ export async function markOrderReadyManually(orderId) {
   } catch (err) {
     finishOrderStatusWrite(orderId, writeGuard, false);
     Object.assign(order, previous);
-    emitData('local');
-    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
-    return false;
-  }
-}
-export async function updateOrderStatus(orderId, status) {
-  // Generic status updates must never assert manual kitchen completion.
-  if (status === 'klar') return false;
-  const order = store.orders.find((entry) => entry.id === orderId);
-  if (!order) return false;
-  const previous = order.status;
-  const previousStatusUpdatedAt = order.statusUpdatedAt;
-  order.status = status;
-  order.statusUpdatedAt = Date.now();
-  const writeGuard = beginOrderStatusWrite(order);
-  emitData('local');
-  setSaveState('saving');
-  try {
-    if (remoteEnabled) {
-      if (status === 'bekreftet') await patchConfirmedPizzaOrder(order, { status, statusUpdatedAt: order.statusUpdatedAt });
-      else await restPatch(`${ORDERS_PATH}/${orderId}`, { status, statusUpdatedAt: order.statusUpdatedAt });
-      remoteOnline = true;
-    }
-    finishOrderStatusWrite(orderId, writeGuard, true);
-    setSaveState('saved');
-    return true;
-  } catch (err) {
-    finishOrderStatusWrite(orderId, writeGuard, false);
-    order.status = previous;
-    order.statusUpdatedAt = previousStatusUpdatedAt;
     emitData('local');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
     return false;
