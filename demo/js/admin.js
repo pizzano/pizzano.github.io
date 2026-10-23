@@ -2677,7 +2677,7 @@ function setEpsonPrinterStatus(status, message) {
       printerWarningAutoOpened = true;
       printerStatusButton.setAttribute('aria-expanded', 'true');
     }
-    toast('Epson-skriveren kan ikke nås. Trykk «Åpne Epson» og logg inn med epson / epson.');
+    toast('Epson svarer ikke. Sjekk Wi-Fi og strøm. Tilkoblingen testes automatisk på nytt.');
   }
 }
 async function testEpsonFromOrders({ manual = false } = {}) {
@@ -2694,10 +2694,10 @@ async function testEpsonFromOrders({ manual = false } = {}) {
   try {
     await checkEpsonConnection();
     if (epoch !== printerProbeEpoch) return;
-    setEpsonPrinterStatus('ok', 'Tilkobling OK · Epson bekreftet ePOS-forespørselen.');
+    setEpsonPrinterStatus('ok', 'Tilkoblet · Epson svarte på ePOS-kontrollen. Klar for utskrift.');
   } catch (error) {
     if (epoch !== printerProbeEpoch) return;
-    setEpsonPrinterStatus('error', 'Ingen kontakt med Epson på 192.168.1.25. Åpne Epson, logg inn med epson / epson ved behov, og prøv på nytt.');
+    setEpsonPrinterStatus('error', 'Ingen kontakt med Epson på 192.168.1.25. Sjekk at skriveren har strøm og er på samme lokale nett. Systemet prøver igjen automatisk.');
     console.warn('Epson printer status:', error);
   } finally {
     if (epoch === printerProbeEpoch) {
@@ -2710,7 +2710,7 @@ function invalidateEpsonConnection() {
   ++printerProbeEpoch;
   printerCheckRunning = false;
   printerTestButton.disabled = false;
-  setEpsonPrinterStatus('error', 'Nettverket ble koblet fra. Epson-skriveren kan ikke bekreftes. Etter tilkobling: test igjen. Brukernavn: epson · passord: epson.');
+  setEpsonPrinterStatus('error', 'Nettverket ble koblet fra. Epson kontrolleres automatisk når forbindelsen er tilbake.');
 }
 printerStatusButton.addEventListener('click', () => {
   const opened = printerStatusPanel.hidden;
@@ -2761,7 +2761,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
-    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Åpne Epson på 192.168.1.25 og logg inn med epson / epson ved behov.');
+    setEpsonPrinterStatus('error', 'Utskrift mislyktes. Sjekk strøm, nettverk og papir. Prøv «Skriv ut på nytt» når skriveren er tilkoblet.');
     toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
   } finally {
     printingOrderIds.delete(orderId);
