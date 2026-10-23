@@ -432,6 +432,11 @@ function activeCustomerOrders() {
       const readyAt = Number(order.statusUpdatedAt) || Number(order.createdAt) || Date.now();
       if (Date.now() - readyAt >= 5 * 60 * 1000) return false;
     }
+    // The likely-ready message is only a visual hint. Hide the customer card
+    // five minutes after the estimated pickup time, without changing Firebase
+    // order status or triggering any "ready" SMS/e-mail.
+    if (isEstimatedPickupTimeReached(order) &&
+        Date.now() - Number(order.estimatedReadyAt) >= 5 * 60 * 1000) return false;
     const createdAt = Number(order.createdAt) || 0;
     return !createdAt || createdAt >= cutoff;
   });
