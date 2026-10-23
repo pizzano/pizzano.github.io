@@ -2268,10 +2268,15 @@ function orderCustomerIndicator(order, orders = getOrders()) {
   );
   const legacyPizzaEvents = account?.events && typeof account.events === 'object'
     ? Object.keys(account.events).length : 0;
+  const lookupFailed = orderCustomerAccountCache.get(phone)?.failed === true;
   const knownReturning = pastInOrders || savedEarlier || earlierEvent;
   if (knownReturning) return {
     label:'Fast Kunde', kind:'returning',
     description:'Tidligere bestilling registrert på dette mobilnummeret.',
+  };
+  if (lookupFailed) return {
+    label:'Kundestatus ukjent',kind:'unknown',
+    description:'Kunne ikke hente registrert kundehistorikk fra Firebase.',
   };
   if (!orderCustomerAccountCache.has(phone) && !pastInOrders) return {
     label:'Sjekker kunde…',kind:'unknown',
