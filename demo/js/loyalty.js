@@ -18,11 +18,23 @@ export function historicalPizzaEvents(orders, phone, sections) {
   const events = {};
   for (const order of orders || []) {
     if (loyaltyPhone(order.phone) !== phone || !['bekreftet','tilberedning','klar','fullfort'].includes(order.status)) continue;
-    const quantity = (order.lines || []).reduce((sum,line) => {
+    const bigPizzaLines = (order.lines || []).filter(line => {
       const section = sections.find(s => s.items?.some(item => item.id === line.itemId));
-      return sum + ((line.loyaltyEligible || largePizza(section, line.size)) ? Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)) : 0);
-    },0);
-    events[order.id] = { id: order.id, at: order.loyaltyConfirmedAt || order.createdAt, quantity, redeemed: Boolean(order.loyaltyReward) };
+      return line.loyaltyEligible || largePizza(section, line.size);
+    });
+    const quantity = bigPizzaLines.reduce((sum,line) =>
+      sum + Math.max(0, (Number(line.quantity) || 0) - (line.loyaltyFree ? 1 : 0)), 0);
+    const largePizzaTotal = bigPizzaLines.reduce((sum,line) =>
+      sum + Math.max(0, Number(line.quantity) || 0), 0);
+    const amount = order.total;
+    const validTotal = amount !== '' && amount != null &&
+      Number.isFinite(Number(amount)) && Number(amount) >= 0;
+    events[order.id] = {
+      id: order.id, at: order.loyaltyConfirmedAt || order.createdAt,
+      quantity, redeemed: Boolean(order.loyaltyReward),
+      largePizzaTotal,
+      ...(validTotal ? { totalPaid: Number(amount) } : {}),
+    };
   }
   return events;
 }
