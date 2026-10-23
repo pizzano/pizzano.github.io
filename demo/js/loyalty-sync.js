@@ -11,7 +11,7 @@
  * It is NOT a historical list and does not grow with lifetime purchases.
  * ETag CAS makes migration and incremental totals atomic per phone.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261024-compact1';
+import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261024-compact1';
 import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
 
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
@@ -130,7 +130,7 @@ function migrateLegacy(account, phone, history, orders) {
     version: 2,
     count: hasEvents ? derived.count : Math.min(10, existingCount),
     cycle: hasEvents ? derived.cycle : String(account.pizzaCycle || 'start'),
-    offersConsent: account.offersConsent === true,
+    offersConsent: account.loyalty?.offersConsent === true || account.offersConsent === true,
     ...(account.reservations && typeof account.reservations === 'object'
       ? { reservations: account.reservations } : {}),
     seen: currentSeen(Object.fromEntries(entries.map(event => [event.id, 1])), phone),
@@ -140,7 +140,7 @@ function migrateLegacy(account, phone, history, orders) {
 
 async function syncPhone(phone) {
   const orders = verifiedOrders(phone);
-  const history = historicalPizzaEvents(orders, phone, window.__kolSectionsForLoyalty || []);
+  const history = historicalPizzaEvents(orders, phone, store.sections);
   // Sections are only needed as fallback when old orders lack loyaltyEligible.
   const url = DB_URL + '/pizzaBonus/' + encodeURIComponent(phone) + '.json';
   for (let attempt = 0; attempt < 5; attempt++) {
