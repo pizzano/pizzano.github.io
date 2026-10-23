@@ -2170,8 +2170,7 @@ async function placeOrder() {
       toast('Gratispizza er ikke tilgjengelig for dette mobilnummeret.', 'error'); return;
     }
   }
-  const subtotal = cartSubtotal();
-  const total = subtotal;
+  const total = cartSubtotal();
   // Persist the same category order the customer sees in Kurv and checkout.
   // Persist only a product snapshot, selected choices and the charged price.
   // Editable cart metadata (duplicate labels/option IDs, empty groups and
@@ -2200,7 +2199,7 @@ async function placeOrder() {
       ...(size?.label ? { size: size.label } : {}),
       quantity,
       price,
-      ...(Object.keys(selections).length ? { selections } : {}),
+      ...(optionIds.length ? { optionIds } : {}),
       ...(optionDetails.length ? { optionDetails } : {}),
       ...(line.comment?.trim() ? { comment: line.comment.trim() } : {}),
       ...(removed.length ? { removedIngredients: [...removed] } : {}),
@@ -2302,7 +2301,16 @@ async function placeOrder() {
         : [];
 
       if (!picked.length && savedIds.size) {
-        picked = options.filter((option) => savedIds.has(option.id)).map((option) => option.id);
+        // New compact orders keep optionIds in one list, including repeated
+        // choices (for example 2x saus). Do not reduce that list to a Set
+        // when reconstructing quantity-enabled option groups.
+        const rawIds = Array.isArray(line?.optionIds) ? line.optionIds : [];
+        if (group.allowQuantity) {
+          const allowed = new Set(options.map(option => option.id));
+          picked = rawIds.filter(id => allowed.has(id));
+        } else {
+          picked = options.filter(option => savedIds.has(option.id)).map(option => option.id);
+        }
       }
       if (!picked.length && savedLabels.size) {
         picked = options
