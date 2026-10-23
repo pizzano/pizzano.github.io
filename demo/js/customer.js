@@ -1532,18 +1532,54 @@ function cartCount() {
 
 function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineId = '', free = false}) {
   const id = escapeHtml(lineId);
-  const copyTag = lineId ? 'button' : 'div';
-  const editAttrs = lineId ? ` type="button" data-edit="${id}" aria-label="Endre ${escapeHtml(name)}"` : '';
-  const quantityHtml = lineId ? `<div class="cart-product-stepper" role="group" aria-label="Antall ${escapeHtml(name)}">
-    ${quantity > 1 ? `<button class="cart-stepper-minus" data-dec="${id}" type="button" aria-label="Færre">−</button>` : `<button class="cart-stepper-trash" data-remove="${id}" type="button" aria-label="Fjern ${escapeHtml(name)}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button>`}
+  const editable = Boolean(lineId);
+  const productName = escapeHtml(name);
+  const quantityHtml = editable ? `<div class="cart-product-stepper" role="group" aria-label="Antall ${productName}">
+    ${quantity > 1 ? `<button class="cart-stepper-minus" data-dec="${id}" type="button" aria-label="Færre">−</button>` : `<button class="cart-stepper-trash" data-remove="${id}" type="button" aria-label="Fjern ${productName}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg></button>`}
     <span>${quantity}</span><button class="cart-stepper-plus" data-inc="${id}" type="button" aria-label="Flere">+</button></div>`
     : `<span class="cart-product-quantity" aria-label="Antall: ${quantity}">${quantity}×</span>`;
-  const sizeRow = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${size ? `<b>Størrelse:</b> ${escapeHtml(size)}` : ''}</span><b class="cart-detail-price">${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</b></span>`;
-  return `<article class="cart-product-card"${lineId ? ` data-line="${id}"` : ''}>
-    <div class="cart-product-heading"><${copyTag} class="cart-product-copy"${editAttrs}>
-      <span class="cart-product-titleline"><strong class="cart-product-name">${escapeHtml(name)}</strong>${free ? `<span class="bonus-savings cart-product-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}</span>
-    </${copyTag}>${quantityHtml}</div>
-    <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${sizeRow}${rows.join('')}</span></${copyTag}>
+
+  // The gift is one free base pizza in the SAME grouped line; add-ons still
+  // cost their normal price. Render one size/price row per unit without
+  // altering cart totals, loyalty reservations or order payloads.
+  const quantityCount = Math.max(1, Math.floor(Number(quantity) || 1));
+  const sizeText = size ? `<b>Størrelse:</b> ${escapeHtml(size)}` : '';
+  const visibleUnits = editable ? Math.min(quantityCount, 30) : 1;
+  const sizeRows = Array.from({length: visibleUnits}, (_, index) => {
+    const isFreeUnit = editable && free && index === 0;
+    const price = isFreeUnit
+      ? `<del class="cart-free-original-price" aria-label="Gratis pizza, ordinær pris ${escapeHtml(formatPrice(basePrice))}">${formatPrice(basePrice)}</del>`
+      : `${formatPrice(basePrice)}${quantityCount > 1 ? ' / stk' : ''}`;
+    return `<span class="cart-detail-row cart-product-size${isFreeUnit ? ' is-free-unit' : ''}">
+      <span class="cart-detail-left">${sizeText}</span><b class="cart-detail-price">${price}</b>
+    </span>`;
+  });
+  if (editable && quantityCount > visibleUnits) {
+    sizeRows.push(`<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">+ ${quantityCount - visibleUnits} stk ${size ? escapeHtml(size) : ''}</span><b class="cart-detail-price">${formatPrice(basePrice)} / stk</b></span>`);
+  }
+  if (!editable) {
+    // Historic order details retain their original compact one-line summary.
+    sizeRows[0] = `<span class="cart-detail-row cart-product-size"><span class="cart-detail-left">${sizeText}</span><b class="cart-detail-price">${free ? '1 gratis pizza' : `${formatPrice(basePrice)}${quantity > 1 ? ' / stk' : ''}`}</b></span>`;
+  }
+
+  const editIcon = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 4 4 4-9.4 9.4-4.1 1.1 1.1-4.1L17 5a2.1 2.1 0 0 1 3 3"/></svg>`;
+  const heading = editable
+    ? `<div class="cart-product-copy cart-product-heading-copy">
+         <span class="cart-product-titleline"><strong class="cart-product-name">${productName}</strong></span>
+         <button class="cart-product-edit" type="button" data-edit="${id}" aria-label="Endre ${productName}" title="Endre produkt">${editIcon}</button>
+       </div>`
+    : `<div class="cart-product-copy"><span class="cart-product-titleline"><strong class="cart-product-name">${productName}</strong>${free ? `<span class="bonus-savings cart-product-savings">Du sparer ${formatPrice(basePrice)}</span>` : ''}</span></div>`;
+  const giftBanner = editable && free ? `<div class="cart-product-gift-banner">
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M2 9h20M12 9v12M12 9H7.7C4.3 9 4 4 7.4 4c2.6 0 4.6 5 4.6 5ZM12 9h4.3C19.7 9 20 4 16.6 4 14 4 12 9 12 9Z"/></svg>
+    <strong>Gratis pizza aktivert</strong><span class="cart-gift-divider" aria-hidden="true"></span>
+    <strong class="cart-gift-saving">Du sparer ${formatPrice(basePrice)}</strong>
+  </div>` : '';
+  const copyTag = editable ? 'button' : 'div';
+  const editAttrs = editable ? ` type="button" data-edit="${id}" aria-label="Endre detaljer for ${productName}"` : '';
+  return `<article class="cart-product-card${editable && free ? ' has-free-pizza' : ''}"${editable ? ` data-line="${id}"` : ''}>
+    ${giftBanner}
+    <div class="cart-product-heading">${heading}${quantityHtml}</div>
+    <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${sizeRows.join('')}${rows.join('')}</span></${copyTag}>
     <div class="cart-product-totalrow"><span>Sum</span><strong class="cart-product-total">${formatPrice(total)}</strong></div>
   </article>`;
 }
