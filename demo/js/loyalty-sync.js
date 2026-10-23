@@ -240,11 +240,69 @@ function scheduleSync() {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => { timer = null; void syncRecentlyAccepted(); }, 1400);
 }
+// One-time, rate-limited cleanup of historical phone accounts, including
+// customers whose orders have already been removed from /orders.
+// Firebase may deny shallow reads at /pizzaBonus; in that case ordinary
+// per-phone migration continues when a customer orders again.
+let historicalQueue = [];
+let historicalTimer = null;
+let historicalBusy = false;
+let historicalDiscovered = false;
+async function discoverHistoricalPhones() {
+  if (historicalDiscovered || !DB_URL || document.hidden || navigator.onLine === false) return;
+  try {
+    const response = await fetch(DB_URL + '/pizzaBonus.json?shallow=true', { cache: 'no-store' });
+    if (!response.ok) return;
+    const names = await response.json() || {};
+    historicalQueue = Object.keys(names).filter(phone => loyaltyPhone(phone) === phone);
+    historicalDiscovered = true;
+    scheduleHistoricalMigration();
+  } catch (error) {
+    console.warn('Historiske bonuskontoer kan ikke listes; migreres ved neste bestilling:', error?.message);
+  }
+}
+function scheduleHistoricalMigration() {
+  if (historicalTimer || !historicalQueue.length) return;
+  historicalTimer = setTimeout(() => {
+    historicalTimer = null;
+    void migrateHistoricalBatch();
+  }, 3500);
+}
+async function migrateHistoricalBatch() {
+  if (historicalBusy || document.hidden || navigator.onLine === false) return;
+  historicalBusy = true;
+  try {
+    // Four per batch: avoid spikes in Firebase traffic during restaurant service.
+    for (let i = 0; i < 4 && historicalQueue.length; i++) {
+      const phone = historicalQueue.shift();
+      try { await syncPhone(phone); }
+      catch (error) {
+        console.warn('Historisk kundekonto venter til neste pålogging:', error?.message);
+      }
+    }
+  } finally {
+    historicalBusy = false;
+    scheduleHistoricalMigration();
+  }
+}
+
 subscribe((_state, origin) => { if (origin === 'remote') scheduleSync(); });
-ready().then(scheduleSync);
-window.addEventListener('online', scheduleSync);
+ready().then(() => {
+  scheduleSync();
+  // Start after the live orders have had priority for acceptance/notifications.
+  setTimeout(() => { void discoverHistoricalPhones(); }, 30000);
+});
+window.addEventListener('online', () => {
+  scheduleSync();
+  if (!historicalDiscovered) void discoverHistoricalPhones();
+  else scheduleHistoricalMigration();
+});
 window.addEventListener('kol-order-confirmed', scheduleSync);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) scheduleSync();
+  if (!document.hidden) {
+    scheduleSync();
+    if (!historicalDiscovered) void discoverHistoricalPhones();
+    else scheduleHistoricalMigration();
+  }
 });
 setInterval(() => { void syncRecentlyAccepted(); }, 60 * 1000);
