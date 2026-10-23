@@ -2497,17 +2497,35 @@ return `
       : '<p class="hint">Ingen aktive bestillinger.</p>';
   }
 
-  function reorder(orderId) {
-    const order = getLocalOrders().find((entry) => entry.id === orderId);
-    if (!order) return;
+  function reorder(orderId, fallbackOrder = null) {
+    // The timeout modal may have a newer Firebase snapshot than localStorage.
+    // Reuse the same safe reorder logic as Mine bestillinger.
+    const order = (fallbackOrder?.id === orderId && fallbackOrder?.lines?.length)
+      ? fallbackOrder
+      : getLocalOrders().find((entry) => entry.id === orderId)
+        || mergedCustomerOrders().find((entry) => entry.id === orderId);
+    if (!order?.lines?.length) {
+      toast('Kunne ikke hente varene fra den tidligere bestillingen.', 'warning');
+      return 0;
+    }
     let added = 0;
-    for (const line of order.lines || []) {
+    let skipped = 0;
+    const hadReward = order.lines.some((line) => line.loyaltyFree);
+    for (const line of order.lines) {
+      const quantity = Math.max(1, Math.floor(Number(line.quantity) || 1));
       const { item } = findItem(line.itemId);
-      if (!item || item.hidden || item.soldOut) continue;
+      if (!item || item.hidden || item.soldOut) {
+        skipped += quantity;
+        continue;
+      }
       const size =
         (item.sizes || []).find((s) => s.id === line.sizeId) ||
         (item.sizes || []).find((s) => s.label === line.size) ||
         getDefaultSize(item);
+      if (!size) {
+        skipped += quantity;
+        continue;
+      }
       const selections = previousOrderSelections(item, line);
       const allowedRemovals = new Set(
         getItemIngredientRules(item)
@@ -2524,7 +2542,6 @@ return `
         removedIngredients
       );
       const existing = cart.find((entry) => entry.signature === signature && (!entry.loyaltyFree || entry.loyaltyAuto));
-      const quantity = Math.max(1, Number(line.quantity) || 1);
       if (existing) existing.quantity += quantity;
       else
         cart.push({
@@ -2539,15 +2556,24 @@ return `
         });
       added += quantity;
     }
+    if (!added) {
+      toast('Produktene er ikke tilgjengelige nå.', 'warning');
+      return 0;
+    }
     resetPendingOrderSubmission();
     persistCart();
     renderCartCount();
-      if (added) {
-      toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i kurven med samme valg.`);
-      setView('cart');
+    setView('cart');
+    if (skipped) {
+      toast(`${added} varer lagt i kurven. ${skipped} utilgjengelige varer ble utelatt. Kontroller kurven.`, 'warning');
+    } else if (hadReward) {
+      // A reward from a cancelled order must be revalidated separately.
+      // Reorder never blindly grants the old free pizza a second time.
+      toast('Varene er lagt i kurven. Kontroller priser og pizzabonus før du sender på nytt.', 'warning');
     } else {
-      toast('Produktene er ikke tilgjengelige nå.', 'warning');
+      toast(`${added} ${added === 1 ? 'vare' : 'varer'} lagt i kurven. Kontroller og send på nytt.`);
     }
+    return added;
   }
 
   /* ------------------------------------------------------------------ *
@@ -3011,6 +3037,30 @@ function closeConfirm() {
   setView('menu');
   renderMenu();
 }
+
+el.confirmMeta.addEventListener('click', (event) => {
+  const retryButton = event.target.closest('[data-confirm-reorder]');
+  if (!retryButton || retryButton.disabled) return;
+  const orderId = retryButton.dataset.confirmReorder;
+  // Allow resubmission only after the original order is definitely cancelled
+  // in Firebase. Never re-use its ID or automatically submit the new order.
+  const order = confirmationOrderSnapshot(orderId);
+  if (!order || order.id !== orderConfirmOrderId || !isConfirmedTimeoutCancellation(order)) {
+    toast('Vent til den forrige bestillingen er bekreftet avbrutt.', 'warning');
+    return;
+  }
+  const added = reorder(orderId, order);
+  if (!added) return;
+  if (orderConfirmTimer) clearInterval(orderConfirmTimer);
+  orderConfirmTimer = null;
+  orderConfirmResolved = true;
+  orderConfirmOrderId = '';
+  orderConfirmDeadline = 0;
+  el.confirmModal.hidden = true;
+  el.confirmBackdrop.hidden = true;
+  // reorder() already navigated to the cart. The customer selects a new
+  // pickup time and explicitly sends a fresh order with a new order ID.
+});
 
 el.btnConfirmDone.addEventListener('click', closeConfirm);
 el.confirmBackdrop.addEventListener('click', closeConfirm);
