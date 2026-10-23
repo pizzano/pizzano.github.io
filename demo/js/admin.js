@@ -3,6 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
+import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
 /**
  * admin.js — Adminpanel for Restauranten.
@@ -2285,24 +2286,12 @@ function renderOrderList() {
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
-  const options = Array.isArray(line.options) ? line.options : [];
-  const optionDetails = Array.isArray(line.optionDetails) ? line.optionDetails : [];
-  const optionText = optionDetails.length
-    ? optionDetails.map((item) => item && item.label).filter(Boolean)
-    : options;
-  return `
-    <div class="pos-order-line">
-      <span class="pos-order-qty">${Number(line.quantity) || 1}×</span>
-      <div class="pos-order-line-body">
-        <strong>${escapeHtml(line.name || 'Produkt')}</strong>
-        ${line.loyaltyFree ? '<small class="order-bonus-label">Gratis pizza</small>' : ''}
-        ${line.size ? `<small>${escapeHtml(line.size)}</small>` : ''}
-        ${optionText.length ? `<small>${optionText.map((item) => escapeHtml(item)).join(' · ')}</small>` : ''}
-        ${Array.isArray(line.removedIngredients) && line.removedIngredients.length ? `<small class="pos-order-removed">UTEN: ${line.removedIngredients.map((name) => escapeHtml(String(name).toLocaleUpperCase('no'))).join(', ')}</small>` : ''}
-        ${getDisplayComment(line) ? `<small class="pos-order-note">${escapeHtml(getDisplayComment(line))}</small>` : ''}
-      </div>
-      <b>${formatPrice(line.price)}</b>
-    </div>`;
+  const { item } = findItem(line.itemId);
+  const size = item?.sizes?.find(size => size.id === line.sizeId || size.label === line.size);
+  return renderSavedOrderProduct(line, {
+    fallbackBasePrice: size ? Number(size.price) : null,
+    comment: getDisplayComment(line),
+  });
 }
 
 function renderOrderDetail(orderId) {
@@ -2367,7 +2356,7 @@ function renderOrderDetail(orderId) {
 
         <section class="pos-items-block">
           <div class="pos-items-heading"><h3>Bestilte varer</h3><span>${sortedLines.reduce((sum, line) => sum + Math.max(1, Number(line.quantity) || 1), 0)} varer</span></div>
-          <div class="pos-order-lines">${sortedLines.map(detailLineHtml).join('')}</div>
+          <div class="pos-order-lines order-product-list">${sortedLines.map(detailLineHtml).join('')}</div>
           ${order.rejectionReason ? `<div class="pos-order-general-note">Avvist: ${escapeHtml(order.rejectionReason)}${order.rejectionMessage ? ` · ${escapeHtml(order.rejectionMessage)}` : ''}</div>` : ''}
           ${order.comment ? `<div class="pos-order-general-note">${escapeHtml(order.comment)}</div>` : ''}
         </section>
