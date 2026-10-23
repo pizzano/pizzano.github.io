@@ -1,5 +1,6 @@
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
+import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
@@ -2292,87 +2293,13 @@ async function placeOrder() {
     return selections;
   }
 
-  function previousOrderOptionDetails(line) {
-    if (Array.isArray(line.optionDetails) && line.optionDetails.length) {
-      return line.optionDetails
-        .filter((entry) => entry && entry.label)
-        .map((entry) => ({
-          groupTitle: entry.groupTitle || 'Tilvalg',
-          label: entry.label,
-          price: Number.isFinite(Number(entry.price)) ? Number(entry.price) : null,
-        }));
-    }
-
-    const labels = Array.isArray(line.options) ? line.options.filter(Boolean) : [];
-    if (!labels.length) return [];
-    const remaining = new Set(labels.map((label) => String(label)));
-    const details = [];
-    const { item } = findItem(line.itemId);
-
-    if (item) {
-      for (const group of getItemOptionGroups(item, '*')) {
-        for (const option of group.options || []) {
-          if (!remaining.has(option.label)) continue;
-          details.push({
-            groupTitle: group.title || 'Tilvalg',
-            label: option.label,
-            price: Number(option.price) || 0,
-          });
-          remaining.delete(option.label);
-        }
-      }
-    }
-
-    for (const label of remaining) {
-      details.push({ groupTitle: 'Tilvalg', label, price: null });
-    }
-    return details;
-  }
-
   function orderHistoryLineHtml(line) {
-    const quantity = Math.max(1, Number(line.quantity) || 1);
-    const details = previousOrderOptionDetails(line);
-    const grouped = new Map();
-
-    for (const detail of details) {
-      const key = detail.groupTitle || 'Tilvalg';
-      if (!grouped.has(key)) grouped.set(key, { labels: [], price: 0, hasKnownPrice: false });
-      const group = grouped.get(key);
-      group.labels.push(detail.label);
-      if (Number.isFinite(Number(detail.price))) {
-        group.price += Number(detail.price) || 0;
-        group.hasKnownPrice = true;
-      }
-    }
-
-    const paidExtrasPerUnit = details.reduce(
-      (sum, detail) => sum + (Number.isFinite(Number(detail.price)) ? Math.max(0, Number(detail.price) || 0) : 0),
-      0
-    );
-
-    const savedUnitPrice = Number(line.unitPrice);
-    const savedLineTotal = Number(line.price) || 0;
-    const resolvedUnitPrice = Number.isFinite(savedUnitPrice) && savedUnitPrice > 0
-      ? savedUnitPrice
-      : quantity > 0
-        ? savedLineTotal / quantity
-        : savedLineTotal;
-
-    const baseUnitPrice = Math.max(0, resolvedUnitPrice - paidExtrasPerUnit);
-    const lineTotal = savedLineTotal > 0 ? savedLineTotal : resolvedUnitPrice * quantity;
-
-    const detailRows = [];
-    for (const [title, group] of grouped.entries()) {
-      const heading = title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
-      const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
-      const copy = group.hasKnownPrice && group.price <= 0 && labels.length ? `<b>${escapeHtml(labels.join(', '))}</b>` : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`;
-      detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left">${copy}</span>${!group.hasKnownPrice ? '' : group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : `<b class="cart-detail-price">+ ${formatPrice(group.price * quantity)}</b>`}</span>`);
-    }
-    if (line.removedIngredients?.length) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Uten:</b> ${escapeHtml(line.removedIngredients.join(', '))}</span></span>`);
-    if (getDisplayComment(line)) detailRows.push(`<span class="cart-detail-row"><span class="cart-detail-left"><b>Kommentar:</b> ${escapeHtml(getDisplayComment(line))}</span></span>`);
     const { item } = findItem(line.itemId);
-    return productSummaryHtml({name: line.name || item?.name || 'Produkt', size: line.size,
-      quantity, basePrice: baseUnitPrice, total: lineTotal, rows: detailRows, free: line.loyaltyFree});
+    const size = item?.sizes?.find(size => size.id === line.sizeId || size.label === line.size);
+    return renderSavedOrderProduct(line, {
+      fallbackBasePrice: size ? Number(size.price) : null,
+      comment: getDisplayComment(line),
+    });
   }
 
   function orderStatusClass(status) {
@@ -2540,7 +2467,7 @@ return `
     </summary>
     <div class="order-history-details">
       ${displayOrder.status === 'avvist' ? `<div class="order-history-rejection"><strong>${escapeHtml(rejectionTitle)}</strong>${rejectionMessage ? `<span>${escapeHtml(rejectionMessage)}</span>` : ''}</div>` : ''}
-      <div class="order-history-lines order-history-cart-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
+      <div class="order-history-lines order-history-cart-list order-product-list">${details || '<p class="hint">Ingen varelinjer lagret.</p>'}</div>
       <div class="order-history-grand-total"><span>Totalt</span><strong>${formatPrice(total)}</strong></div>
       <div class="order-history-footer">
         <div class="order-history-meta-item"><small>Hentetid</small><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${escapeHtml(pickup)}</strong></div>
