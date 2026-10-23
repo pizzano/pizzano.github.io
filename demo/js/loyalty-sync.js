@@ -3,13 +3,14 @@
  * a bounded technical loyalty state for coupons and idempotency.
  * Written by the restaurant admin against the existing Firebase RTDB.
  *
- * /pizzaBonus/{phone}:
+ * /customers/{phone}:
  *   phone, name, email, totalOrders, totalLargePizzas, totalSpent,
- *   loyalty: { version, count, cycle, offersConsent, reservations, seen }
+ *   bonusCount, bonusCycle, bonusConsent, bonusReservations,
+ *   countedOrders, schemaVersion.
  *
- * seen stores only IDs of confirmed orders still retained in /orders.
- * It is NOT a historical list and does not grow with lifetime purchases.
- * ETag CAS makes migration and incremental totals atomic per phone.
+ * Old /pizzaBonus/{phone} records are read once for migration, never written.
+ * countedOrders only holds currently retained order IDs (not lifetime history).
+ * ETag transactions keep counted totals and coupon reservations consistent.
  */
 import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261024-compact1';
 import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
@@ -61,14 +62,14 @@ function normalizeName(value) {
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase().slice(0, 180);
 }
-function nextBonus(loyalty, event) {
+function nextBonus(customer, event) {
   const paidPizzas = integer(event.quantity);
-  const current = Math.min(10, integer(loyalty.count));
+  const current = Math.min(10, integer(customer.bonusCount));
   if (event.redeemed && current + paidPizzas >= 10) {
-    loyalty.count = 0;
-    loyalty.cycle = String(event.id);
+    customer.bonusCount = 0;
+    customer.bonusCycle = String(event.id);
   } else {
-    loyalty.count = Math.min(10, current + paidPizzas);
+    customer.bonusCount = Math.min(10, current + paidPizzas);
   }
 }
 function currentSeen(seen, phone) {
@@ -106,10 +107,25 @@ function contactInfo(account, phone, orders) {
 }
 
 function migrateLegacy(account, phone, history, orders) {
+  // Migrate the previous flat /pizzaBonus/{phone}/loyalty structure first,
+  // or older per-order events when no compact rollup exists.
+  if (account.loyalty?.version === 2) {
+    const cycle = String(account.loyalty.cycle || 'start');
+    return {
+      ...contactInfo(account, phone, orders),
+      totalOrders: integer(account.totalOrders),
+      totalLargePizzas: integer(account.totalLargePizzas),
+      totalSpent: amount(account.totalSpent),
+      bonusCount: Math.min(10, integer(account.loyalty.count)),
+      bonusCycle: cycle,
+      bonusConsent: account.loyalty.offersConsent === true,
+      bonusReservations: currentReservations(account.loyalty.reservations, cycle),
+      countedOrders: currentSeen(account.loyalty.seen, phone),
+      schemaVersion: 3,
+    };
+  }
   const savedEvents = account.events && typeof account.events === 'object'
     ? account.events : {};
-  // Recorded events take priority over re-discovered orders; do not count
-  // the same order twice. All older events are compacted before removal.
   const events = { ...history, ...savedEvents };
   for (const [id, recent] of Object.entries(history)) {
     const older = events[id];
@@ -122,95 +138,101 @@ function migrateLegacy(account, phone, history, orders) {
   }
   const entries = Object.values(events).filter(event => event?.id);
   const derived = pizzaBonus(events);
-  const legacy = account.customerProfile || {};
-  const totals = {
-    totalOrders: entries.length,
-    totalLargePizzas: entries.reduce((sum, item) =>
-      sum + integer(item.largePizzaTotal ?? item.quantity), 0),
-    totalSpent: Math.round(entries.reduce((sum, item) => sum + amount(item.totalPaid), 0) * 100) / 100,
+  const profile = account.customerProfile || {};
+  const totalOrders = Math.max(entries.length, integer(profile.confirmedOrderCount));
+  const totalLargePizzas = Math.max(
+    entries.reduce((sum, item) => sum + integer(item.largePizzaTotal ?? item.quantity), 0),
+    integer(profile.largePizzaCountRecorded)
+  );
+  const totalSpent = Math.max(
+    Math.round(entries.reduce((sum, item) => sum + amount(item.totalPaid), 0) * 100) / 100,
+    amount(profile.totalSpentRecorded)
+  );
+  const cycle = entries.length ? derived.cycle : String(account.pizzaCycle || 'start');
+  return {
+    ...contactInfo(account, phone, orders),
+    totalOrders,
+    totalLargePizzas,
+    totalSpent,
+    bonusCount: entries.length ? derived.count : Math.min(10, integer(account.pizzaCount)),
+    bonusCycle: cycle,
+    bonusConsent: account.loyalty?.offersConsent === true || account.offersConsent === true,
+    bonusReservations: currentReservations(account.loyalty?.reservations || account.reservations, cycle),
+    countedOrders: currentSeen(Object.fromEntries(entries.map(event => [event.id, 1])), phone),
+    schemaVersion: 3,
   };
-  // A profile can be the only remaining source of historical totals after
-  // earlier maintenance. Never reduce a previously recorded lifetime value.
-  totals.totalOrders = Math.max(totals.totalOrders, integer(legacy.confirmedOrderCount));
-  totals.totalLargePizzas = Math.max(totals.totalLargePizzas, integer(legacy.largePizzaCountRecorded));
-  totals.totalSpent = Math.max(totals.totalSpent, amount(legacy.totalSpentRecorded));
-  const existingCount = integer(account.pizzaCount);
-  const hasEvents = entries.length > 0;
-  const loyalty = {
-    version: 2,
-    count: hasEvents ? derived.count : Math.min(10, existingCount),
-    cycle: hasEvents ? derived.cycle : String(account.pizzaCycle || 'start'),
-    offersConsent: account.loyalty?.offersConsent === true || account.offersConsent === true,
-    reservations: currentReservations(account.reservations, hasEvents ? derived.cycle : String(account.pizzaCycle || 'start')),
-    seen: currentSeen(Object.fromEntries(entries.map(event => [event.id, 1])), phone),
-  };
-  return { ...contactInfo(account, phone, orders), ...totals, loyalty };
+}
+
+async function readOldCustomer(phone) {
+  // No deletion here: a legacy tab might still be open. A separate
+  // verified cleanup can retire /pizzaBonus after all users switch.
+  const response = await fetch(DB_URL + '/pizzaBonus/' + encodeURIComponent(phone) + '.json', {
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('Gammelt kunderegister HTTP ' + response.status);
+  return await response.json() || {};
 }
 
 async function syncPhone(phone) {
   const orders = verifiedOrders(phone);
   const history = historicalPizzaEvents(orders, phone, store.sections);
-  // Sections are only needed as fallback when old orders lack loyaltyEligible.
-  const url = DB_URL + '/pizzaBonus/' + encodeURIComponent(phone) + '.json';
+  const url = DB_URL + '/customers/' + encodeURIComponent(phone) + '.json';
   for (let attempt = 0; attempt < 5; attempt++) {
     const response = await fetch(url, {
       method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store',
     });
-    if (!response.ok) throw new Error('Bonus GET ' + response.status);
+    if (!response.ok) throw new Error('Customers GET ' + response.status);
     const etag = response.headers.get('ETag');
-    if (!etag) throw new Error('Bonus ETag mangler.');
-    const account = await response.json() || {};
-    const compact = account.loyalty?.version === 2;
-    const next = compact
-      ? {
-          phone,
-          name: normalizeName(account.name),
-          email: normalizeEmail(account.email),
-          totalOrders: integer(account.totalOrders),
-          totalLargePizzas: integer(account.totalLargePizzas),
-          totalSpent: amount(account.totalSpent),
-          loyalty: {
-            ...account.loyalty,
-            count: Math.min(10, integer(account.loyalty.count)),
-            cycle: String(account.loyalty.cycle || 'start'),
-            reservations: currentReservations(account.loyalty.reservations, String(account.loyalty.cycle || 'start')),
-            seen: currentSeen(account.loyalty.seen, phone),
-          },
-        }
-      : migrateLegacy(account, phone, history, orders);
-
-    // Do not lose the only existing name or e-mail if the latest order did
-    // not supply it (the email field is optional for customers).
+    if (!etag) throw new Error('Customers ETag mangler.');
+    const existing = await response.json() || {};
+    const compact = existing.schemaVersion === 3;
+    // Read old data only if this phone is not migrated yet.
+    const old = compact ? null : await readOldCustomer(phone);
+    const migrated = compact ? existing : migrateLegacy(old, phone, history, orders);
+    const next = {
+      phone,
+      name: normalizeName(migrated.name),
+      email: normalizeEmail(migrated.email),
+      totalOrders: integer(migrated.totalOrders),
+      totalLargePizzas: integer(migrated.totalLargePizzas),
+      totalSpent: amount(migrated.totalSpent),
+      bonusCount: Math.min(10, integer(migrated.bonusCount)),
+      bonusCycle: String(migrated.bonusCycle || 'start'),
+      bonusConsent: compact
+        ? existing.bonusConsent === true
+        : (existing.bonusConsent === true || migrated.bonusConsent === true),
+      bonusReservations: currentReservations(migrated.bonusReservations, String(migrated.bonusCycle || 'start')),
+      countedOrders: currentSeen(migrated.countedOrders, phone),
+      schemaVersion: 3,
+    };
     const contact = contactInfo(next, phone, orders);
     next.name = contact.name;
     next.email = contact.email;
-
     const fresh = Object.values(history).filter(event => event?.id &&
-      !Object.prototype.hasOwnProperty.call(next.loyalty.seen, event.id))
+      !Object.prototype.hasOwnProperty.call(next.countedOrders, event.id))
       .sort((a, b) => (Number(a.at) || 0) - (Number(b.at) || 0)
         || String(a.id).localeCompare(String(b.id)));
     for (const event of fresh) {
       next.totalOrders += 1;
       next.totalLargePizzas += integer(event.largePizzaTotal ?? event.quantity);
-      next.totalSpent = Math.round((cents(next.totalSpent) + cents(amount(event.totalPaid)))) / 100;
-      nextBonus(next.loyalty, event);
-      next.loyalty.seen[event.id] = 1;
+      next.totalSpent = Math.round(cents(next.totalSpent) + cents(amount(event.totalPaid))) / 100;
+      nextBonus(next, event);
+      next.countedOrders[event.id] = 1;
     }
-    next.loyalty.reservations = currentReservations(next.loyalty.reservations, next.loyalty.cycle);
-    // A clean v2 account with no newly confirmed orders needs no write.
-    // Any legacy account is migrated with its old events removed only
-    // after the complete ETag-protected snapshot is committed.
-    if (compact && JSON.stringify(next) === JSON.stringify(account)) return;
+    next.bonusReservations = currentReservations(next.bonusReservations, next.bonusCycle);
+    if (compact && JSON.stringify(next) === JSON.stringify(existing)) return;
+    // A short-lived placeholder written by a customer's consent toggle
+    // cannot override the lifetime totals from the old account.
     const saved = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'if-match': etag },
       body: JSON.stringify(next),
     });
     if (saved.status === 412) continue;
-    if (!saved.ok) throw new Error('Bonus PUT ' + saved.status);
+    if (!saved.ok) throw new Error('Customers PUT ' + saved.status);
     return;
   }
-  throw new Error('Kundekonto ble endret samtidig. Forsøk igjen.');
+  throw new Error('Kunderegisteret ble endret samtidig. Forsøk igjen.');
 }
 
 async function syncRecentlyAccepted() {
@@ -240,8 +262,8 @@ function scheduleSync() {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => { timer = null; void syncRecentlyAccepted(); }, 1400);
 }
-// One-time, rate-limited cleanup of historical phone accounts, including
-// customers whose orders have already been removed from /orders.
+// One-time, rate-limited migration of historical /pizzaBonus accounts,
+// including customers whose orders were already removed from /orders.
 // Firebase may deny shallow reads at /pizzaBonus; in that case ordinary
 // per-phone migration continues when a customer orders again.
 let historicalQueue = [];
