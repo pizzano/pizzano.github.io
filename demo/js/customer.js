@@ -1749,8 +1749,7 @@ function renderCheckout() {
     setView('cart');
     return;
   }
-  const subtotal = cartSubtotal();
-  const total = subtotal;
+  const total = cartSubtotal();
 
   el.custName.value = el.custName.value || profile.name || '';
   el.custPhone.value = el.custPhone.value || profile.phone || '';
@@ -2174,31 +2173,39 @@ async function placeOrder() {
   const subtotal = cartSubtotal();
   const total = subtotal;
   // Persist the same category order the customer sees in Kurv and checkout.
+  // Persist only a product snapshot, selected choices and the charged price.
+  // Editable cart metadata (duplicate labels/option IDs, empty groups and
+  // unitPrice) belongs in the cart, not in every Firebase order.
   const lines = sortCartByCategory(cart, store.sections).map((line) => {
-    const { item } = findItem(line.itemId);
-    const size = (item.sizes || []).find((s) => s.id === line.sizeId);
-    const optionIds = Object.values(line.selections || {}).flat();
-    const optionDetails = describeSelection(optionIds).map((addon) => ({
+    const { section, item } = findItem(line.itemId);
+    const size = (item?.sizes || []).find(s => s.id === line.sizeId);
+    const selections = Object.fromEntries(Object.entries(line.selections || {})
+      .filter(([, ids]) => Array.isArray(ids) && ids.length)
+      .map(([group, ids]) => [group, [...ids]]));
+    const optionIds = Object.values(selections).flat();
+    const optionDetails = describeSelection(optionIds).map(addon => ({
       groupTitle: addon.groupTitle || 'Tilvalg',
       label: addon.label,
       price: Number(addon.price) || 0,
     }));
+    const quantity = Math.max(1, Number(line.quantity) || 1);
+    const price = bonusLinePrice(item, line, optionIds, quantity);
+    const free = Boolean(line.loyaltyFree);
+    const large = largePizza(section, size);
+    const removed = (line.removedIngredients || []).filter(Boolean);
     return {
       itemId: line.itemId,
-      name: (item ? item.name : 'Ukjent') + (line.loyaltyFree ? ' · 1 gratis pizza' : ''),
-      loyaltyFree: Boolean(line.loyaltyFree),
-      loyaltyEligible: largePizza(findItem(line.itemId).section, size),
-      sizeId: size ? size.id : line.sizeId || null,
-      size: size ? size.label : '',
-      quantity: line.quantity,
-      selections: JSON.parse(JSON.stringify(line.selections || {})),
-      optionIds: [...optionIds],
-      options: optionDetails.map((addon) => addon.label),
-      optionDetails,
-      comment: line.comment || '',
-      removedIngredients: [...(line.removedIngredients || [])],
-      unitPrice: bonusLinePrice(item, line, optionIds, line.quantity) / line.quantity,
-      price: bonusLinePrice(item, line, optionIds, line.quantity),
+      name: (item?.name || 'Ukjent') + (free ? ' · 1 gratis pizza' : ''),
+      ...(size?.id ? { sizeId: size.id } : {}),
+      ...(size?.label ? { size: size.label } : {}),
+      quantity,
+      price,
+      ...(Object.keys(selections).length ? { selections } : {}),
+      ...(optionDetails.length ? { optionDetails } : {}),
+      ...(line.comment?.trim() ? { comment: line.comment.trim() } : {}),
+      ...(removed.length ? { removedIngredients: [...removed] } : {}),
+      ...(large ? { loyaltyEligible: true } : {}),
+      ...(free ? { loyaltyFree: true, unitPrice: price / quantity } : {}),
     };
   });
 
@@ -2235,11 +2242,10 @@ async function placeOrder() {
       phone: `+47${phone}`,
       email: (el.custEmail?.value || '').trim().toLowerCase(),
       pickup: ui.pickup === 'asap' ? 'Snarest' : ui.pickup,
-      pickupMode: ui.pickupMode === 'scheduled' ? 'scheduled' : 'asap',
-      scheduledPickupAt: ui.pickupMode === 'scheduled' ? resolveScheduledPickupAt(ui.pickup) : null,
-      type: 'henting',
+      ...(ui.pickupMode === 'scheduled'
+        ? { scheduledPickupAt: resolveScheduledPickupAt(ui.pickup) }
+        : {}),
       lines,
-      subtotal,
       total,
     });
   } catch (err) {
