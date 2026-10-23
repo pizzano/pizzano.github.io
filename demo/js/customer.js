@@ -1549,9 +1549,9 @@ function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineI
     const isFreeUnit = editable && free && index === 0;
     const price = isFreeUnit
       ? `<del class="cart-free-original-price" aria-label="Gratis pizza, ordinær pris ${escapeHtml(formatPrice(basePrice))}">${formatPrice(basePrice)}</del>`
-      : `${formatPrice(basePrice)}${quantityCount > 1 ? ' / stk' : ''}`;
+      : formatPrice(basePrice);
     return `<span class="cart-detail-row cart-product-size${isFreeUnit ? ' is-free-unit' : ''}">
-      <span class="cart-detail-left">${sizeText}</span><b class="cart-detail-price">${price}</b>
+      <span class="cart-detail-left">${sizeText}${isFreeUnit ? ' <span class="cart-gift-size-caption">(gratis pizza)</span>' : ''}</span><b class="cart-detail-price">${price}</b>
     </span>`;
   });
   if (editable && quantityCount > visibleUnits) {
@@ -1576,10 +1576,14 @@ function productSummaryHtml({name, size, quantity, basePrice, total, rows, lineI
   </div>` : '';
   const copyTag = editable ? 'button' : 'div';
   const editAttrs = editable ? ` type="button" data-edit="${id}" aria-label="Endre detaljer for ${productName}"` : '';
+  // A subtle separator mirrors the reference between unit prices and extras.
+  const detailsHtml = sizeRows.join('') +
+    (editable && rows.length ? '<span class="cart-detail-section-divider" aria-hidden="true"></span>' : '') +
+    rows.join('');
   return `<article class="cart-product-card${editable && free ? ' has-free-pizza' : ''}"${editable ? ` data-line="${id}"` : ''}>
     ${giftBanner}
     <div class="cart-product-heading">${heading}${quantityHtml}</div>
-    <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${sizeRows.join('')}${rows.join('')}</span></${copyTag}>
+    <${copyTag} class="cart-product-copy cart-product-detailcopy"${editAttrs}><span class="cart-product-details">${detailsHtml}</span></${copyTag}>
     <div class="cart-product-totalrow"><span>Sum</span><strong class="cart-product-total">${formatPrice(total)}</strong></div>
   </article>`;
 }
@@ -1605,23 +1609,32 @@ function cartLineHtml(line, editable = true) {
     return groups;
   }, []);
 
-  const quantityPriceHtml = (unitPrice, { included = false } = {}) => {
-    const price = Number(unitPrice) || 0;
-    return included || price <= 0
-      ? '<b class="cart-detail-price is-included">Inkludert</b>'
-      : `<b class="cart-detail-price">+ ${formatPrice(price * line.quantity)}</b>`;
-  };
   const detailRows = [];
   addonGroups.forEach((group) => {
     const title = group.title.replace(/^velg\s+/i, '').replace(/\?/g, '').trim();
     const heading = title.charAt(0).toLocaleUpperCase('no') + title.slice(1);
-    const labels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
-    detailRows.push(
-      `<span class="cart-detail-row">
-        <span class="cart-detail-left">${group.price <= 0 && labels.length ? `<b>${escapeHtml(labels.join(', '))}</b>` : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`}</span>
-        ${group.price <= 0 ? '<span class="cart-detail-included"> · inkludert</span>' : quantityPriceHtml(group.price)}
-      </span>`
-    );
+    const rawLabels = group.labels.filter(label => !/^ja,?\s*takk!?$/i.test(label.trim()));
+    // describeSelection() can prefix repeatable add-ons with "2 ×".
+    // Multiply by product quantity for the total number of extras shown.
+    const singleRepeat = rawLabels.length === 1 ? /^(\d+)\s*[×x]\s*/i.exec(rawLabels[0]) : null;
+    const count = Math.max(1, Math.round(Number(line.quantity) || 1)) *
+      (singleRepeat ? Math.max(1, Number(singleRepeat[1])) : 1);
+    const labels = singleRepeat
+      ? [rawLabels[0].slice(singleRepeat[0].length).trim()]
+      : rawLabels;
+    const paid = group.price > 0;
+    const description = !paid && labels.length
+      ? `<b>${escapeHtml(labels.join(', '))}</b>`
+      : `<b>${escapeHtml(heading)}${labels.length ? ':' : ''}</b>${labels.length ? ` ${escapeHtml(labels.join(', '))}` : ''}`;
+    const multiple = paid && count > 1
+      ? `<span class="cart-extra-count" aria-label="Antall tilvalg: ${count}">${count}x</span>`
+      : '';
+    const price = paid
+      ? `<b class="cart-detail-price">${formatPrice(group.price * line.quantity)}</b>`
+      : '<span class="cart-detail-included"><span aria-hidden="true">•</span> inkludert</span>';
+    detailRows.push(`<span class="cart-detail-row cart-extra-row">
+      <span class="cart-detail-left">${multiple}${description}</span>${price}
+    </span>`);
   });
 
   if (Array.isArray(line.removedIngredients) && line.removedIngredients.length) {
