@@ -243,17 +243,21 @@ Under migrering kan en eldre `pizzaBonus/{phone}`-konto leses som
 fallback; manglende tilgang vises som **Kundestatus ukjent**.
 
 **Varige kundefelt direkte under telefonnummer:**
-`phone`, `name`, `email`, `totalOrders`,
-`totalLargePizzas`, `totalSpent`. Bare bekreftede bestillinger
-øker tellere. `totalSpent` er sum registrerte ordrebeløp, ikke en
-egen bekreftelse på kortbetaling. Gamle manglende beløp gjettes ikke.
+`name`, `email`, `totalOrders`, `totalLargePizzas`, `totalSpent`.
+Telefonnummeret er allerede Firebase-nøkkelen, så `phone` er ikke
+lagret på nytt. Bare bekreftede bestillinger øker tellere.
+`totalSpent` er sum registrerte ordrebeløp, ikke en egen bekreftelse
+på kortbetaling. Gamle manglende beløp gjettes ikke.
 
 **Pizzabonus uten `loyalty`-mappe:** Samme telefonkonto har
 `bonusCount`, `bonusCycle`, `bonusConsent`,
 `bonusReservations`, `countedOrders` og `schemaVersion` som flate
-tekniske felt. `countedOrders` inneholder bare ID-ene til bekreftede
-ordrer som fortsatt finnes i `/orders`; det er ikke en permanent
-kjøpshistorikk. ETag-beskyttet oppdatering hindrer dobbeltelling ved
+tekniske felt, altså høyst 11 hovedfelt under hvert telefonnummer.
+`countedOrders` er én tekststreng med ID-er til bekreftede
+ordrer som fortsatt finnes i `/orders`, ikke en undermappe med
+én node per ordre eller en permanent kjøpshistorikk. Versjon 3-kontoer
+komprimeres trygt til versjon 4 ved neste synkronisering.
+ETag-beskyttet oppdatering hindrer dobbeltelling ved
 samtidige adminsynkroniseringer. Gratispizza krever fortsatt
 reservering per syklus.
 
