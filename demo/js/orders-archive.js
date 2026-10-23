@@ -9,8 +9,8 @@
  *
  * Legacy filename kept so existing admin entrypoints continue to work.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261023-timeoutretry-clean1';
-import { loyaltyPhone } from './loyalty.js';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261023-customerprofile1';
+import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 
 const LIVE_LIMIT = 100;
 const NOTIFICATION_GRACE_MS = 72 * 60 * 60 * 1000;
