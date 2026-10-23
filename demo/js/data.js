@@ -17,7 +17,8 @@ import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './l
  *   orders{}           — innkomne ordre (nøkkel = ordre-ID)
  *   updatedAt          — tidsstempel for siste menyendring
  *
- * localStorage brukes kun som lokal kopi hvis nettverket er nede.
+ * Menyen hentes fra Firebase, uten varig kopi i localStorage.
+ * Kundens siste fire bestillinger lagres separat på kundens enhet.
  */
 
 /* ------------------------------------------------------------------ *
@@ -823,14 +824,14 @@ function replaceMenuState(next) {
 const remoteEnabled = Boolean(DB_URL);
 let remoteOnline = false;
 
-/** Om appen er tilkoblet databasen eller kjører på lokal kopi. */
+/** Om appen har kontakt med Firebase. */
 export const backendInfo = {
   get mode() {
     return remoteOnline ? 'firebase' : 'local';
   },
   get label() {
-    if (!remoteEnabled) return 'Lokal kopi';
-    return remoteOnline ? 'Firebase Realtime Database (REST)' : 'Frakoblet — lokal kopi';
+    if (!remoteEnabled) return 'Firebase ikke konfigurert';
+    return remoteOnline ? 'Firebase Realtime Database (REST)' : 'Frakoblet — ingen lokalt lagret meny';
   },
 };
 
