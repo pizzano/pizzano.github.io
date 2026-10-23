@@ -205,7 +205,9 @@ async function syncPhone(phone) {
       bonusCycle: String(migrated.bonusCycle || 'start'),
       bonusConsent: compact
         ? existing.bonusConsent === true
-        : (existing.bonusConsent === true || migrated.bonusConsent === true),
+        : (Object.prototype.hasOwnProperty.call(existing, 'bonusConsent')
+          ? existing.bonusConsent === true
+          : migrated.bonusConsent === true),
       bonusReservations: currentReservations(reservations, String(migrated.bonusCycle || 'start')),
       countedOrders: currentSeen(migrated.countedOrders, phone),
       schemaVersion: 3,
