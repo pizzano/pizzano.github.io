@@ -194,3 +194,35 @@ JavaScript-importer, stilark, manifest, bilder, lyd og service-worker:
   ikke av kunden, men har fortsatt en vedlikeholdsfunksjon.
 - Ingen endringer i Firebase-bestillinger, SMS, e-post, Epson-kvitteringer,
   statusflyt eller CSS/HTML-layout inngikk i denne oppryddingen.
+
+## Tre minutter uten svar: ring eller prøv på nytt (2026-10-23)
+
+Når restauranten ikke bekrefter innen tre minutter, beholder
+kundens bekreftelsesdialog lenken `Ring <restaurantens telefon>`. Den
+viser også en **oransje** knapp `Prøv å bestille på nytt`.
+
+- Mens Firebase ennå **ikke** har bekreftet automatisk avbrudd,
+  er gjenta-knappen deaktivert. Kunden kan ringe med en gang.
+- Når den **samme ordren** har status `avvist` med
+  `confirmation_timeout` i Firebase, aktiveres knappen.
+- Knappen gjenbruker den eksisterende funksjonen fra `Mine bestillinger`:
+  varer, antall, størrelse, tilgjengelige tilvalg, `uten` og
+  kommentar legges i handlekurven etter dagens menydetaljer.
+  Utilgjengelige produkter utelates med varsel.
+- Eventuell gratis pizza blir **ikke** automatisk innvilget på nytt
+  fra en gammel ordre. Kunde kontrollerer bonus og oppdaterte priser.
+- Ny ordre sendes **aldri** automatisk; kunde går til handlekurven,
+  velger hentetid og sender en helt ny ordre med ny ID.
+
+## Fjernet manuell utleveringsstatus (2026-10-23)
+
+`Utlevert · fullfør bestilling`-knappen og handlingen som satte
+`fullfort` er fjernet fra adminpanelet. `Klar for henting` er nå
+siste manuelle kjøkkenstatus, og ingen ansatt trenger et eget utlevert-klikk.
+Den generelle statusendringsfunksjonen som kunne lagre denne statusen
+er også fjernet fra `js/data.js`.
+
+**Kompatibilitet med gamle bestillinger:** Gamle Firebase-poster med
+`fullfort` blir fortsatt lest riktig i historikk, pizzabonus og
+opprydding. Ingen slike poster slettes eller endres av denne kodeoppdateringen.
+Dette er kun støtte for gamle data, ikke en aktiv kundehendelse eller knapp.
