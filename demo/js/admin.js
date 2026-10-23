@@ -2236,6 +2236,37 @@ function emailReceiptDetail(order) {
   return 'E-post ikke bekreftet sendt';
 }
 
+
+/* Customer indicator is based on retained order history, not customer names.
+ * Historical orders older than the 100-order Firebase retention window may
+ * no longer be available; never describe this as a verified lifetime count.
+ */
+function orderCustomerIndicator(order, orders = getOrders()) {
+  const phone = String(order?.phone || '').replace(/\D/g, '').slice(-8);
+  if (phone.length !== 8) return { label:'Kundestatus ukjent', kind:'unknown',
+    description:'Ingen gyldig telefonnummer for sammenligning.' };
+  const at = Number(order.createdAt) || 0;
+  const previous = orders.some(other => {
+    if (!other || other.id === order.id ||
+        String(other.phone || '').replace(/\D/g, '').slice(-8) !== phone) return false;
+    const otherAt = Number(other.createdAt) || 0;
+    return otherAt < at || (otherAt === at && String(other.id) < String(order.id));
+  });
+  return previous
+    ? { label:'Fast Kunde', kind:'returning',
+      description:'Har en tidligere bestilling i tilgjengelig ordrehistorikk.' }
+    : { label:'Ny Kunde', kind:'new',
+      description:'Ingen eldre bestilling funnet i beholdt historikk (maks. 100 ordrer). Kan være tidligere kunde.' };
+}
+function receivedAgeText(order, now = Date.now()) {
+  const time = Number(order?.createdAt) || 0;
+  if (time <= 0) return 'Tid ukjent';
+  const seconds = Math.max(0, Math.floor((now - time) / 1000));
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2,'0')} siden`;
+  const hours = Math.floor(seconds / 3600);
+  return hours < 24 ? `${hours} t siden` : `${Math.floor(hours / 24)} d siden`;
+}
+
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
   const displayTime = orderListPickupTime(order);
@@ -2318,6 +2349,7 @@ function renderOrderDetail(orderId) {
   const readyTime = scheduledPickup ? String(order.pickup || '—') : compactOrderTime(order.estimatedReadyAt);
   const pickupModeLabel = scheduledPickup ? 'SENERE' : 'SNAREST';
   const readinessCountdown = orderSummaryCountdown(order);
+  const customerIndicator = orderCustomerIndicator(order);
   const actionHtml = isPending
     ? `<div class="order-preparation">${scheduledPickup
         ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
@@ -2333,22 +2365,34 @@ function renderOrderDetail(orderId) {
   el.orderDetailLive.innerHTML = `
     <article class="pos-order-detail" data-order-detail-id="${escapeHtml(order.id)}">
       <header class="pos-detail-top">
-        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Lukk bestillingsdetaljer" title="Lukk bestillingsdetaljer">×</button>
-        <section class="order-facts" aria-label="Bestillingsinformasjon">
-          <div class="order-fact-received"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span><div class="order-fact-copy"><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div></div>
-          ${phone ? `<a class="order-call" href="tel:${escapeHtml(tel)}" aria-label="Ring ${escapeHtml(phone)}"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span class="order-fact-copy"><span>Telefonnummer</span><strong>${escapeHtml(phone)}</strong></span></a>` : `<div><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><div class="order-fact-copy"><span>Telefonnummer</span><strong>Ikke oppgitt</strong></div></div>`}
-        </section>
-        <span class="order-status-badge pos-header-status" data-status="${escapeHtml(order.status)}">${isPending ? `<span data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingWait(order))}</span>` : escapeHtml(orderListStatus(order))}</span>
+        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingslisten" title="Tilbake til listen">×</button>
         <div class="pos-detail-heading">
           <div class="order-customer-heading order-customer-heading--centered">
-            <div class="order-customer-title"><h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2><div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div><div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
-              ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
-                ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
-                    title="${emailReceiptSent(order) ? 'MailApp har godtatt sendingen. Levering til innboks er ikke bekreftet.' : 'Ingen bekreftet e-postkvittering fra MailApp.'}"
-                    ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>${escapeHtml(emailReceiptDetail(order))}</span></div>`
-                : ''}</div>
-            <span class="order-header-divider" aria-hidden="true"></span>
+            <span class="order-customer-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 20v-2c0-4.6 15-4.6 15 0v2H4.5Z"/></svg></span>
+            <div class="order-customer-title">
+              <h2>${escapeHtml(order.customerName || 'Ukjent kunde')}</h2>
+              <div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div>
+              <div class="order-customer-meta">
+                <span class="order-customer-badge is-${customerIndicator.kind}" title="${escapeHtml(customerIndicator.description)}">${escapeHtml(customerIndicator.label)}</span>
+                <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar mottok SMS-forespørselen; levering er ikke bekreftet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
+                ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
+                  ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
+                      title="${emailReceiptSent(order) ? 'MailApp har godtatt sendingen; innbokslevering er ikke bekreftet.' : 'Ingen bekreftet e-postkvittering fra MailApp.'}">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>${escapeHtml(emailReceiptDetail(order))}</span></div>`
+                  : ''}
+              </div>
+            </div>
           </div>
+        </div>
+        <section class="order-facts" aria-label="Bestillingsinformasjon">
+          <div class="order-fact-received"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span><div class="order-fact-copy"><span>Mottatt</span><strong>${escapeHtml(timeStamp(order.createdAt))}</strong></div></div>
+          ${phone ? `<a class="order-call" href="tel:${escapeHtml(tel)}" aria-label="Ring ${escapeHtml(phone)}"><span class="order-fact-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.63 2.6a2 2 0 0 1-.45 2.11L8 9.91a16 16 0 0 0 6.09 6.09 6.09l1.48-1.29a2 2 0 0 1 2.11-.45c.83.3 1.7.51 2.6.63A2 2 0 0 1 22 16.92Z"/></svg></span><span class="order-fact-copy"><span>Telefonnummer</span><strong>${escapeHtml(phone)}</strong></span></a>`
+          : `<div class="order-fact-missing"><span class="order-fact-icon">☎</span><div class="order-fact-copy"><span>Telefonnummer</span><strong>Ikke oppgitt</strong></div></div>`}
+        </section>
+        <div class="order-status-badge pos-header-status" data-status="${escapeHtml(order.status)}">
+          ${isPending
+            ? `<span class="order-status-dot" aria-hidden="true"></span><span class="order-status-copy"><strong>Ny bestilling</strong><small data-pending-age="${escapeHtml(order.id)}">${escapeHtml(receivedAgeText(order))}</small></span>`
+            : `<span class="order-status-copy"><strong>${escapeHtml(orderListStatus(order))}</strong></span>`}
         </div>
       </header>
       <div class="pos-detail-scroll">
@@ -2952,6 +2996,10 @@ function refreshOrderClocks() {
   document.querySelectorAll('[data-pending-countdown]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
     if (order) node.textContent = pendingWait(order);
+  });
+  document.querySelectorAll('[data-pending-age]').forEach(node => {
+    const order = getOrders().find(entry => entry.id === node.dataset.pendingAge);
+    if (order) node.textContent = receivedAgeText(order);
   });
   document.querySelectorAll('[data-order-center]').forEach((node) => {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
