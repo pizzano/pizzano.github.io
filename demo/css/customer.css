@@ -1532,6 +1532,16 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   font-size: 16px;
   font-weight: 900;
 }
+/* Estimated pickup time has passed: the progress line reaches Klar, but
+   the final dot is intentionally not a checked, staff-confirmed ready state. */
+.active-order-card.is-estimated-ready .order-progress-step.is-current .order-progress-dot,
+html[data-customer-palette] .active-order-card.is-estimated-ready .order-progress-step.is-current .order-progress-dot {
+ border-color:var(--palette-accent) !important;
+ background:color-mix(in srgb,var(--palette-accent) 24%,var(--palette-surface)) !important;
+ color:var(--palette-accent) !important;
+ animation:none !important;
+ box-shadow:none !important;
+}
 .active-order-card.is-ready .order-progress-step.is-current .order-progress-dot {
   color: var(--palette-light) !important;
   background: var(--palette-accent) !important;
