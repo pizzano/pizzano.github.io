@@ -42,6 +42,22 @@ async function syncPhone(phone) {
     const existingEvents = account.events && typeof account.events === 'object'
       ? account.events : {};
     const events = { ...history, ...existingEvents };
+    // Keep the original coupon event (quantity, redeemed) authoritative.
+    // Enrich legacy events from retained confirmed orders when the historic
+    // event did not store totals, without double counting an order ID.
+    let financialEventsEnriched = false;
+    for (const [id, recent] of Object.entries(history)) {
+      const existing = events[id];
+      if (!existing) continue;
+      const update = {};
+      if (existing.totalPaid == null && recent.totalPaid != null) update.totalPaid = recent.totalPaid;
+      if (existing.largePizzaTotal == null && recent.largePizzaTotal != null)
+        update.largePizzaTotal = recent.largePizzaTotal;
+      if (Object.keys(update).length) {
+        events[id] = { ...existing, ...update };
+        financialEventsEnriched = true;
+      }
+    }
     // Accepted pizza events (including quantity:0) survive order pruning.
     // Recover the oldest known order from those events, from orders still
     // present and from any first-order marker written by the customer.
@@ -64,11 +80,49 @@ async function syncPhone(phone) {
       firstOrder.at !== Number(firstSaved?.at)
     );
     const state = pizzaBonus(events);
-    const eventCount = Object.keys(events).length;
+    const allEvents = Object.values(events).filter(event => event?.id);
+    const eventCount = allEvents.length;
+    const totalBig = allEvents.reduce((sum, event) => {
+      // Old events stored only paid large-pizza coupon quantity, so these
+      // counts are lower bounds when a historic free pizza is not tracked.
+      const quantity = event.largePizzaTotal ?? event.quantity ?? 0;
+      return sum + Math.max(0, Number(quantity) || 0);
+    }, 0);
+    const withoutBigDetail = allEvents.filter(event => event.largePizzaTotal == null).length;
+    const knownSpending = allEvents.filter(event =>
+      event.totalPaid != null && Number.isFinite(Number(event.totalPaid)) &&
+      Number(event.totalPaid) >= 0
+    );
+    const knownSpent = Math.round(knownSpending.reduce((sum, event) =>
+      sum + Number(event.totalPaid), 0) * 100) / 100;
+    const missingAmounts = eventCount - knownSpending.length;
+    const retained = getOrders().filter(order => loyaltyPhone(order.phone) === phone)
+      .sort((a,b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    const latest = retained[0];
+    const existingProfile = account.customerProfile || {};
+    const latestAt = Number(latest?.createdAt) || 0;
+    const profileUpdated = Number(existingProfile.lastOrderAt) || 0;
+    const customerProfile = {
+      phone,
+      name: latestAt >= profileUpdated
+        ? String(latest?.customerName || existingProfile.name || '').trim().slice(0,120)
+        : String(existingProfile.name || '').trim().slice(0,120),
+      email: latestAt >= profileUpdated
+        ? String(latest?.email || existingProfile.email || '').trim().slice(0,180)
+        : String(existingProfile.email || '').trim().slice(0,180),
+      lastOrderAt: Math.max(latestAt, profileUpdated),
+      confirmedOrderCount: eventCount,
+      largePizzaCountRecorded: totalBig,
+      largePizzaCountPartial: withoutBigDetail > 0,
+      totalSpentRecorded: knownSpent,
+      ordersMissingAmount: missingAmounts,
+    };
+    const profileChanged = JSON.stringify(customerProfile) !== JSON.stringify(existingProfile);
     const consent = account.offersConsent === true;
     const missing = Object.keys(history).some(id =>
       !Object.prototype.hasOwnProperty.call(existingEvents, id));
-    if (!firstNeedsSave && !missing && account.pizzaCountSynced === true &&
+    if (!firstNeedsSave && !missing && !financialEventsEnriched && !profileChanged &&
+        account.pizzaCountSynced === true &&
         account.pizzaCount === state.count &&
         account.pizzaCycle === state.cycle &&
         account.pizzaReady === state.ready &&
@@ -77,6 +131,7 @@ async function syncPhone(phone) {
     const next = {
       ...account, events,
       ...(firstOrder ? { customerFirstOrder: firstOrder } : {}),
+      customerProfile,
       pizzaCount: state.count,
       pizzaCycle: state.cycle,
       pizzaReady: state.ready,
