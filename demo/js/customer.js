@@ -1,7 +1,7 @@
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
-import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js';
+import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js?v=20261023-customerprofile1';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
 /**
@@ -36,7 +36,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261023-timeoutretry-clean1';
+} from './data.js?v=20261023-customerprofile1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
