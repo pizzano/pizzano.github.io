@@ -9,7 +9,7 @@
  *
  * Legacy filename kept so existing admin entrypoints continue to work.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261023-customerprofile1';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261024-compact1';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 
 const LIVE_LIMIT = 100;
@@ -71,15 +71,23 @@ async function deleteOldOrder(snapshot) {
   // Retain confirmed pizza points before deleting their source order.
   const phone = loyaltyPhone(current.phone);
   if (phone && ['bekreftet','tilberedning','klar','fullfort'].includes(current.status)) {
-    const bonusUrl = DB_URL + '/pizzaBonus/' + phone +
-      '/events/' + key + '.json';
-    const bonus = await (await fetchChecked(bonusUrl)).json();
-    // Don't permanently delete the only source of financial/large-pizza
-    // counts before the durable customer record has captured those facts.
-    if (!bonus?.id || bonus.id !== current.id ||
-        bonus.totalPaid == null || !Number.isFinite(Number(bonus.totalPaid)) ||
-        bonus.largePizzaTotal == null ||
-        !Number.isFinite(Number(bonus.largePizzaTotal))) return false;
+    const accountUrl = DB_URL + '/pizzaBonus/' + phone + '.json';
+    const account = await (await fetchChecked(accountUrl)).json();
+    if (account?.loyalty?.version === 2) {
+      // Never prune a confirmed source order until the compact lifetime
+      // totals have durably acknowledged this particular order ID.
+      if (account.loyalty.seen?.[current.id] !== 1 ||
+          !Number.isFinite(Number(account.totalOrders)) ||
+          !Number.isFinite(Number(account.totalLargePizzas)) ||
+          !Number.isFinite(Number(account.totalSpent))) return false;
+    } else {
+      // Older accounts must be completely reconciled or upgraded first.
+      const event = account?.events?.[current.id];
+      if (!event?.id || event.id !== current.id ||
+          event.totalPaid == null || !Number.isFinite(Number(event.totalPaid)) ||
+          event.largePizzaTotal == null ||
+          !Number.isFinite(Number(event.largePizzaTotal))) return false;
+    }
   }
 
   const deleted = await fetchChecked(sourceUrl, {
