@@ -74,7 +74,12 @@ async function deleteOldOrder(snapshot) {
     const bonusUrl = DB_URL + '/pizzaBonus/' + phone +
       '/events/' + key + '.json';
     const bonus = await (await fetchChecked(bonusUrl)).json();
-    if (!bonus?.id || bonus.id !== current.id) return false;
+    // Don't permanently delete the only source of financial/large-pizza
+    // counts before the durable customer record has captured those facts.
+    if (!bonus?.id || bonus.id !== current.id ||
+        bonus.totalPaid == null || !Number.isFinite(Number(bonus.totalPaid)) ||
+        bonus.largePizzaTotal == null ||
+        !Number.isFinite(Number(bonus.largePizzaTotal))) return false;
   }
 
   const deleted = await fetchChecked(sourceUrl, {
