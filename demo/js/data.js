@@ -1753,11 +1753,9 @@ export async function submitOrder(order) {
   // Keep customer recognition independent of the 100-order retention limit.
   // It is non-blocking for an already saved order; restaurant admin also
   // reconciles this marker if the client goes offline immediately afterward.
-  try {
-    await registerCustomerFirstOrder(record);
-  } catch (error) {
+  void registerCustomerFirstOrder(record).catch(error => {
     console.warn('Kundeprofil kan opprettes ved neste restaurantsynkronisering:', error?.message);
-  }
+  });
 
   try {
     const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
