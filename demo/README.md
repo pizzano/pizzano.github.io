@@ -17,7 +17,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | Små delte moduler | `js/cart-order.js`, `js/loyalty.js`, `js/palette.js` m.fl. | Aktiv logikk importert av kunde eller admin |
 | Design | `css/` | Aktive stilark. Ikke slett én CSS bare fordi den har få regler |
 | Ikoner | `icons/` | Brukt appikon (`kol-icon-192.png`) og restaurantikon (`restaurant.svg`) |
-| PWA | `manifest.webmanifest`, `service-worker.js`, `js/install.js` | Installering, mellomlagring og nettverksoppførsel |
+| PWA | `manifest.webmanifest`, `service-worker.js` | Installering, mellomlagring og nettverksoppførsel |
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
 | Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
@@ -56,6 +56,31 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 Ubrukte Vercel SMS-ruter i `api/` og den separate eksperimentelle Firebase Functions-kildemappen `functions/` er fjernet fra GitHub. Rotfilen `firebase.json` ble også fjernet fordi den kun konfigurerte denne utdaterte `functions/`-mappen. Dette endrer **ikke** allerede deployede Firebase Functions utenfor GitHub.
 
 Automatiske testskript som tidligere lå i `demo/tests/` er tatt ut av hovedgrenen for å rydde opp. De kan gjenopprettes fra `backup-before-removing-demo-tests-20261015`. Den gamle, separate `test-printer.html`-siden er allerede fjernet. Aktiv Epson-test/tilkoblingskontroll er i `js/order-printer.js` og restaurantpanelet.
+
+## Kundens lokale lagring — fire nøkler (2026-10-24)
+
+Kundesiden lagrer bare disse fire nøklene i LocalStorage:
+
+- `bestill_cart_v2`: uferdig handlekurv
+- `bestill_profile_v2`: navn, telefon, valgfri e-post, favoritter, tema,
+  kontaktutkast og et kortvarig sett med klare/avviste ordre-notiser
+- `bestill_orders_v2`: høyst **fire** nylige ordre for gjenfinning,
+  sanntidssporing og `Bestill samme igjen`
+- `kol_show_allergens_v1`: om allergener vises i menyen
+
+Menykatalogen (`sections`, `allergenCatalog`, `optionGroups` osv.) hentes fra
+Firebase. `bestill_menu_state_v3` slettes ved neste oppstart, og ingen ny
+menykopi skrives til LocalStorage. Uten nett og uten lastet meny må kunden
+koble seg til Firebase før menyen kan vises. Firebase er fortsatt kilde for
+alle ordre og menyoppdateringer.
+
+Første gang den nye kundeappen åpnes, flyttes eksisterende
+`bestill_checkout_contact_v2`, `kol_ready_seen_v1`,
+`kol_rejected_seen_v1` og `kol_ready_notified_v1` til profilen
+før nøklene slettes. `kol_theme_v1` flyttes til samme profil av `theme.js`.
+Den gamle kontaktlagrings-scriptfilen `js/install.js` er fjernet.
+Admin har egne lokale preferanser (liste-/rutenettvisning og lyd), som
+ikke er en del av kundesidens fire nøkler.
 
 ## Firebase bandwidth improvement (2026-10-15)
 
