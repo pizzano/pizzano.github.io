@@ -2055,7 +2055,14 @@ window.setInterval(() => {
   else stopOrderAlert();
 }, 2000);
 function syncOrdersWorkspaceLayout() {
-  document.querySelector('.orders-app')?.classList.toggle('has-selection', Boolean(selectedOrderId));
+  const hasSelection = Boolean(selectedOrderId);
+  document.querySelector('.orders-app')?.classList.toggle('has-selection', hasSelection);
+  const back = document.getElementById('ordersBackToList');
+  if (back) {
+    back.classList.toggle('is-detail-open', hasSelection);
+    back.setAttribute('aria-label', hasSelection ? 'Tilbake til bestillingslisten' : 'Bestillinger');
+    back.title = hasSelection ? 'Tilbake til bestillingslisten' : 'Bestillinger';
+  }
 }
 // Use the precise pickup timestamp saved with the order, falling back to
 // the creation date for older scheduled orders without scheduledPickupAt.
@@ -2363,10 +2370,10 @@ function orderListRowHtml(order, isNew = false) {
   const displayTime = orderListPickupTime(order);
   const timeTitle = pickupScheduled ? 'Valgt hentetid' : (displayTime === '—' ? 'Hentetid ikke satt ennå' : 'Estimert hentetid');
   const pickupLabel = pickupScheduled ? 'SENERE' : 'SNAREST';
-  // Receipt icons are intentionally kept in the order detail, not the list.
+  // Only show green badges when Firebase contains accepted sender receipts.
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
-      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong></span>
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS-forespørsel godtatt av Traccar (levering til telefon er ikke bekreftet)" aria-label="SMS godtatt av Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp (levering til innboks er ikke bekreftet)" aria-label="E-post godtatt av MailApp" ${order.email && emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span></span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span></span>
@@ -2456,7 +2463,7 @@ function renderOrderDetail(orderId) {
   el.orderDetailLive.innerHTML = `
     <article class="pos-order-detail" data-order-detail-id="${escapeHtml(order.id)}">
       <header class="pos-detail-top">
-        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingslisten" title="Tilbake til listen">×</button>
+        <button class="pos-detail-close" data-close-order-detail type="button" aria-label="Tilbake til bestillingslisten" title="Tilbake til bestillingslisten"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
         <div class="pos-detail-heading">
           <div class="order-customer-heading order-customer-heading--centered">
             <span class="order-customer-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 20v-2c0-4.6 15-4.6 15 0v2H4.5Z"/></svg></span>
@@ -2711,6 +2718,15 @@ el.orderFilterBtns.forEach((button) => {
     selectedOrderId = null;
     renderOrders();
   });
+});
+
+// The KØL / Grill & Pizza / Bestillinger header is the back target
+// in the full-screen order detail view (including on touch devices).
+document.getElementById('ordersBackToList')?.addEventListener('click', () => {
+  if (!selectedOrderId) return;
+  clearTimeout(acceptedDetailCloseTimer);
+  selectedOrderId = null;
+  renderOrders();
 });
 
 el.orderList.addEventListener('click', (event) => {
