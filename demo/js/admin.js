@@ -2296,7 +2296,22 @@ function loadOrderCustomerAccount(order) {
     cache:'no-store', signal:AbortSignal.timeout(7000)
   }).then(async response => {
     if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
-    const totalOrders = await response.json();
+    let totalOrders = await response.json();
+    if (totalOrders == null) {
+      // Existing customers may not have migrated yet; maintain Fast Kunde
+      // during the transition without retaining the old event list in memory.
+      const legacyResponse = await fetch(
+        `${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}.json`,
+        { cache:'no-store', signal:AbortSignal.timeout(7000) }
+      );
+      if (!legacyResponse.ok) throw new Error('Eldre kundeprofil HTTP ' + legacyResponse.status);
+      const legacy = await legacyResponse.json() || {};
+      totalOrders = Math.max(
+        Number(legacy.customerProfile?.confirmedOrderCount) || 0,
+        Object.keys(legacy.events || {}).length,
+        legacy.customerFirstOrder?.orderId ? 1 : 0
+      );
+    }
     orderCustomerAccountCache.set(phone, {
       pending:false, fetchedAt:Date.now(), account:{totalOrders: Math.max(0, Number(totalOrders) || 0)}
     });
