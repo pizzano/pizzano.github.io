@@ -259,7 +259,6 @@ html[data-theme="dark"] .orders-page .orders-brand-name{color:#9adbb7}
 }
 .orders-page .order-customer-badge.is-new{color:#245e88;background:#e6f2ff;border-color:#c4dced}
 .orders-page .order-customer-badge.is-unknown{color:var(--ot-muted);background:var(--ot-bg);border-color:var(--ot-line)}
-.orders-page .order-customer-stats{flex:1 1 100%;font-size:10.5px;line-height:1.35;font-weight:700;color:var(--ot-muted)}
 .orders-page .order-customer-meta :is(.pos-detail-email-feedback,.pos-detail-sms-feedback){margin:0;padding:4px 6px;font-size:10px}
 .orders-page .order-facts{
  grid-column:2;grid-row:1;display:grid;grid-template-columns:1fr 1.1fr;align-items:center;min-width:0;
@@ -301,14 +300,6 @@ html[data-theme="dark"] .orders-page .orders-brand-name{color:#9adbb7}
  color:var(--ot-muted);font-size:12px;font-weight:760;
 }
 .orders-page .pos-order-lines{display:grid;gap:9px}
-.orders-page .order-item-frame{position:relative;min-width:0}
-.orders-page .order-item-frame .cart-product-card{padding:12px 13px 11px}
-.orders-page .order-item-number{
- display:grid;place-items:center;position:absolute;left:15px;top:12px;z-index:1;
- width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,#36b57c,#048d59);
- color:white;font-size:12px;font-weight:850;
-}
-.orders-page .order-item-frame .cart-product-heading{padding-left:41px;min-height:29px}
 .orders-page .order-product-list .cart-product-name{color:var(--ot-ink);font-size:15px;font-weight:850}
 .orders-page .pos-order-line{
  display:grid;grid-template-columns:67px minmax(0,1fr) auto;
