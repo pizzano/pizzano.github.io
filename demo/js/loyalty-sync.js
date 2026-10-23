@@ -189,6 +189,11 @@ async function syncPhone(phone) {
     // Read old data only if this phone is not migrated yet.
     const old = compact ? null : await readOldCustomer(phone);
     const migrated = compact ? existing : migrateLegacy(old, phone, history, orders);
+    // A customer can reserve a free pizza before the restaurant has
+    // migrated their legacy counters. Preserve that newer reservation.
+    const reservations = compact
+      ? migrated.bonusReservations
+      : { ...(migrated.bonusReservations || {}), ...(existing.bonusReservations || {}) };
     const next = {
       phone,
       name: normalizeName(migrated.name),
@@ -201,7 +206,7 @@ async function syncPhone(phone) {
       bonusConsent: compact
         ? existing.bonusConsent === true
         : (existing.bonusConsent === true || migrated.bonusConsent === true),
-      bonusReservations: currentReservations(migrated.bonusReservations, String(migrated.bonusCycle || 'start')),
+      bonusReservations: currentReservations(reservations, String(migrated.bonusCycle || 'start')),
       countedOrders: currentSeen(migrated.countedOrders, phone),
       schemaVersion: 3,
     };
