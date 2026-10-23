@@ -145,13 +145,13 @@ button.cart-product-copy {cursor:pointer;}
 /* Product headings use the restaurant's existing confirmation/success colour, across light/dark palettes. */
 .view-cart .cart-product-name {font-size:15px;font-weight:780;line-height:1.18;letter-spacing:-.01em;color:var(--palette-success,#4CAF50);}
 .view-cart .cart-product-stepper {
-  grid-template-columns:30px 28px 30px;min-height:34px;overflow:hidden;
+  grid-template-columns:30px 28px 30px;min-height:30px;overflow:hidden;
   border:1px solid var(--palette-accent);border-radius:999px;
   background:var(--palette-surface);
   box-shadow:0 1px 4px color-mix(in srgb,var(--palette-deep) 5%,transparent);
 }
 .view-cart .cart-product-stepper button {
-  display:grid;place-items:center;width:30px;min-height:34px;
+  display:grid;place-items:center;width:30px;min-height:30px;
   padding:0;border:0;border-radius:0;
   background:var(--palette-accent);color:var(--palette-on-accent,#fff);
   font-size:16px;font-weight:400;line-height:1;cursor:pointer;
@@ -219,8 +219,8 @@ html[data-theme="dark"] .view-cart {
   .view-cart .cart-product-heading {gap:6px;margin-bottom:6px;}
   .view-cart .cart-product-name {font-size:14.5px;}
   .view-cart .cart-product-savings {font-size:11px;}
-  .view-cart .cart-product-stepper {grid-template-columns:28px 26px 28px;min-height:34px;border-radius:999px;}
-  .view-cart .cart-product-stepper button {width:28px;min-height:34px;font-size:15px;}
+  .view-cart .cart-product-stepper {grid-template-columns:28px 26px 28px;min-height:30px;border-radius:999px;}
+  .view-cart .cart-product-stepper button {width:28px;min-height:30px;font-size:15px;}
   .view-cart .cart-product-edit {width:27px;height:27px;}
   .view-cart .cart-product-edit svg {width:18px;height:18px;}
   .view-cart .cart-product-stepper>span {font-size:12px;}
