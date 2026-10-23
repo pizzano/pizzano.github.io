@@ -2278,7 +2278,8 @@ function orderCustomerIndicator(order, orders = getOrders()) {
     label:'Kundestatus ukjent',kind:'unknown',
     description:'Kunne ikke hente registrert kundehistorikk fra Firebase.',
   };
-  if (!orderCustomerAccountCache.has(phone) && !pastInOrders) return {
+  if ((!orderCustomerAccountCache.has(phone) ||
+       orderCustomerAccountCache.get(phone)?.pending === true) && !pastInOrders) return {
     label:'Sjekker kunde…',kind:'unknown',
     description:'Henter tidligere kjøp fra kunderegisteret.',
   };
