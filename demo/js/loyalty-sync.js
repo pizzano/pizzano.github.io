@@ -15,7 +15,6 @@ import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261024
 import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
 
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
-const LIVE_ORDER_LIMIT = 100;
 const processed = new Map();
 let timer = null;
 let running = false;
@@ -80,9 +79,20 @@ function currentSeen(seen, phone) {
     if (activeIds.has(id) && /^ord_[a-z0-9]{7,40}$/i.test(id))
       retained[id] = 1;
   }
-  // Because /orders is limited to 100 records, the seen set cannot grow
-  // without bound even after years of orders.
-  return Object.fromEntries(Object.entries(retained).slice(-LIVE_ORDER_LIMIT));
+  // Keep all IDs currently in /orders, including a temporary overflow
+  // above 100. Dropping a still-live ID would count it again next sync.
+  // IDs disappear naturally once the order is pruned from /orders.
+  return retained;
+}
+function currentReservations(reservations, cycle) {
+  const existing = reservations && typeof reservations === 'object'
+    ? reservations[cycle] : null;
+  // Reservations prevent concurrent redemption. Keep only the active cycle
+  // while it can still reserve an order; don't retain old coupon history.
+  const age = Date.now() - (Number(existing?.at) || 0);
+  return existing?.orderId && age >= -300000 && age < 15 * 60 * 1000
+    ? { [cycle]: existing }
+    : {};
 }
 function contactInfo(account, phone, orders) {
   const newest = [...orders].sort((a, b) =>
@@ -131,8 +141,7 @@ function migrateLegacy(account, phone, history, orders) {
     count: hasEvents ? derived.count : Math.min(10, existingCount),
     cycle: hasEvents ? derived.cycle : String(account.pizzaCycle || 'start'),
     offersConsent: account.loyalty?.offersConsent === true || account.offersConsent === true,
-    ...(account.reservations && typeof account.reservations === 'object'
-      ? { reservations: account.reservations } : {}),
+    reservations: currentReservations(account.reservations, hasEvents ? derived.cycle : String(account.pizzaCycle || 'start')),
     seen: currentSeen(Object.fromEntries(entries.map(event => [event.id, 1])), phone),
   };
   return { ...contactInfo(account, phone, orders), ...totals, loyalty };
@@ -164,6 +173,7 @@ async function syncPhone(phone) {
             ...account.loyalty,
             count: Math.min(10, integer(account.loyalty.count)),
             cycle: String(account.loyalty.cycle || 'start'),
+            reservations: currentReservations(account.loyalty.reservations, String(account.loyalty.cycle || 'start')),
             seen: currentSeen(account.loyalty.seen, phone),
           },
         }
@@ -186,6 +196,7 @@ async function syncPhone(phone) {
       nextBonus(next.loyalty, event);
       next.loyalty.seen[event.id] = 1;
     }
+    next.loyalty.reservations = currentReservations(next.loyalty.reservations, next.loyalty.cycle);
     // A clean v2 account with no newly confirmed orders needs no write.
     // Any legacy account is migrated with its old events removed only
     // after the complete ETag-protected snapshot is committed.
