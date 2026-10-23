@@ -70,7 +70,7 @@ async function deleteOldOrder(snapshot) {
 
   // Retain confirmed pizza points before deleting their source order.
   const phone = loyaltyPhone(current.phone);
-  if (phone && Number(current.loyaltyConfirmedAt) > 0) {
+  if (phone && ['bekreftet','tilberedning','klar','fullfort'].includes(current.status)) {
     const bonusUrl = DB_URL + '/pizzaBonus/' + phone +
       '/events/' + key + '.json';
     const bonus = await (await fetchChecked(bonusUrl)).json();
