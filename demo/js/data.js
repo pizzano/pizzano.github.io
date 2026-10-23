@@ -1501,7 +1501,7 @@ export async function getPizzaBonus(phoneValue) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
   const customer = await restGet(`customers/${phone}`);
-  const migrated = customer?.schemaVersion === 3;
+  const migrated = [3, 4].includes(customer?.schemaVersion);
   let state;
   let old = null;
   if (migrated) {
