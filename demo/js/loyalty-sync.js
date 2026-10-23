@@ -4,12 +4,14 @@
  * Written by the restaurant admin against the existing Firebase RTDB.
  *
  * /customers/{phone}:
- *   phone, name, email, totalOrders, totalLargePizzas, totalSpent,
+ *   name, email, totalOrders, totalLargePizzas, totalSpent,
  *   bonusCount, bonusCycle, bonusConsent, bonusReservations,
- *   countedOrders, schemaVersion.
+ *   countedOrders (compact string), schemaVersion.
+ * The phone is already the Firebase child key and is not duplicated.
  *
  * Old /pizzaBonus/{phone} records are read once for migration, never written.
- * countedOrders only holds currently retained order IDs (not lifetime history).
+ * countedOrders is a single pipe-separated string of still-live order IDs,
+ * not a growing Firebase subtree or lifetime history.
  * ETag transactions keep counted totals and coupon reservations consistent.
  */
 import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261024-customersflat1';
@@ -72,19 +74,30 @@ function nextBonus(customer, event) {
     customer.bonusCount = Math.min(10, current + paidPizzas);
   }
 }
+function seenIds(value) {
+  // Version 3 stored individual keys; version 4 is one compact text field.
+  if (typeof value === 'string') return value.split('|').filter(Boolean);
+  if (value && typeof value === 'object')
+    return Object.keys(value).filter(id => value[id]);
+  return [];
+}
+function hasSeen(value, orderId) {
+  return seenIds(value).includes(orderId);
+}
 function currentSeen(seen, phone) {
   const activeIds = new Set(getOrders().filter(order =>
     loyaltyPhone(order.phone) === phone && order?.id).map(order => order.id));
-  const retained = {};
-  for (const id of Object.keys(seen || {})) {
-    if (activeIds.has(id) && /^ord_[a-z0-9]{7,40}$/i.test(id))
-      retained[id] = 1;
-  }
-  // Keep all IDs currently in /orders, including a temporary overflow
-  // above 100. Dropping a still-live ID would count it again next sync.
-  // IDs disappear naturally once the order is pruned from /orders.
-  return retained;
+  const ids = new Set(seenIds(seen).filter(id =>
+    activeIds.has(id) && /^ord_[a-z0-9]{7,40}$/i.test(id)));
+  // At most the number of still-retained orders, normally around 100.
+  return [...ids].sort().join('|');
 }
+function addSeen(seen, orderId) {
+  const ids = new Set(seenIds(seen));
+  ids.add(orderId);
+  return [...ids].sort().join('|');
+}
+
 function currentReservations(reservations, cycle) {
   const existing = reservations && typeof reservations === 'object'
     ? reservations[cycle] : null;
@@ -112,7 +125,8 @@ function migrateLegacy(account, phone, history, orders) {
   if (account.loyalty?.version === 2) {
     const cycle = String(account.loyalty.cycle || 'start');
     return {
-      ...contactInfo(account, phone, orders),
+      name: normalizeName(account.name),
+      email: normalizeEmail(account.email),
       totalOrders: integer(account.totalOrders),
       totalLargePizzas: integer(account.totalLargePizzas),
       totalSpent: amount(account.totalSpent),
@@ -121,7 +135,7 @@ function migrateLegacy(account, phone, history, orders) {
       bonusConsent: account.loyalty.offersConsent === true,
       bonusReservations: currentReservations(account.loyalty.reservations, cycle),
       countedOrders: currentSeen(account.loyalty.seen, phone),
-      schemaVersion: 3,
+      schemaVersion: 4,
     };
   }
   const savedEvents = account.events && typeof account.events === 'object'
@@ -150,7 +164,8 @@ function migrateLegacy(account, phone, history, orders) {
   );
   const cycle = entries.length ? derived.cycle : String(account.pizzaCycle || 'start');
   return {
-    ...contactInfo(account, phone, orders),
+    name: normalizeName(account.name || profile.name),
+    email: normalizeEmail(account.email || profile.email),
     totalOrders,
     totalLargePizzas,
     totalSpent,
@@ -159,7 +174,7 @@ function migrateLegacy(account, phone, history, orders) {
     bonusConsent: account.loyalty?.offersConsent === true || account.offersConsent === true,
     bonusReservations: currentReservations(account.loyalty?.reservations || account.reservations, cycle),
     countedOrders: currentSeen(Object.fromEntries(entries.map(event => [event.id, 1])), phone),
-    schemaVersion: 3,
+    schemaVersion: 4,
   };
 }
 
@@ -185,17 +200,18 @@ async function syncPhone(phone) {
     const etag = response.headers.get('ETag');
     if (!etag) throw new Error('Customers ETag mangler.');
     const existing = await response.json() || {};
-    const compact = existing.schemaVersion === 3;
-    // Read old data only if this phone is not migrated yet.
-    const old = compact ? null : await readOldCustomer(phone);
-    const migrated = compact ? existing : migrateLegacy(old, phone, history, orders);
+    const compact = existing.schemaVersion === 4;
+    // A v3 customer already has authoritative lifetime totals. Upgrade it
+    // locally instead of re-importing stale data from old /pizzaBonus.
+    const fromV3 = existing.schemaVersion === 3;
+    const old = compact || fromV3 ? null : await readOldCustomer(phone);
+    const migrated = compact || fromV3 ? existing : migrateLegacy(old, phone, history, orders);
     // A customer can reserve a free pizza before the restaurant has
     // migrated their legacy counters. Preserve that newer reservation.
     const reservations = compact
       ? migrated.bonusReservations
       : { ...(migrated.bonusReservations || {}), ...(existing.bonusReservations || {}) };
     const next = {
-      phone,
       name: normalizeName(migrated.name),
       email: normalizeEmail(migrated.email),
       totalOrders: integer(migrated.totalOrders),
@@ -210,13 +226,13 @@ async function syncPhone(phone) {
           : migrated.bonusConsent === true),
       bonusReservations: currentReservations(reservations, String(migrated.bonusCycle || 'start')),
       countedOrders: currentSeen(migrated.countedOrders, phone),
-      schemaVersion: 3,
+      schemaVersion: 4,
     };
     const contact = contactInfo(next, phone, orders);
     next.name = contact.name;
     next.email = contact.email;
     const fresh = Object.values(history).filter(event => event?.id &&
-      !Object.prototype.hasOwnProperty.call(next.countedOrders, event.id))
+      !hasSeen(next.countedOrders, event.id))
       .sort((a, b) => (Number(a.at) || 0) - (Number(b.at) || 0)
         || String(a.id).localeCompare(String(b.id)));
     for (const event of fresh) {
@@ -224,7 +240,7 @@ async function syncPhone(phone) {
       next.totalLargePizzas += integer(event.largePizzaTotal ?? event.quantity);
       next.totalSpent = Math.round(cents(next.totalSpent) + cents(amount(event.totalPaid))) / 100;
       nextBonus(next, event);
-      next.countedOrders[event.id] = 1;
+      next.countedOrders = addSeen(next.countedOrders, event.id);
     }
     next.bonusReservations = currentReservations(next.bonusReservations, next.bonusCycle);
     if (compact && JSON.stringify(next) === JSON.stringify(existing)) return;
