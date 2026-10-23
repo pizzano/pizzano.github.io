@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v232-cartreference2';
+const CACHE_NAME = 'kol-demo-v233-sharedorders1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -10,6 +10,7 @@ const APP_SHELL = [
   '/demo/js/theme.js',
   '/demo/js/customer.js',
   '/demo/js/cart-order.js',
+  '/demo/js/order-product-summary.js',
   '/demo/js/shop-info.js',
   '/demo/js/install.js',
   '/demo/js/data.js',
