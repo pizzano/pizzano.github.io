@@ -1722,11 +1722,16 @@ function compactOrderForStorage(order) {
   const compact = { ...order };
   if (compact.type === 'henting') delete compact.type;
   if (Number(compact.subtotal) === Number(compact.total)) delete compact.subtotal;
+  // This deadline is always createdAt + ORDER_CONFIRM_WAIT_MS (3 minutes).
+  // order-confirmation.js reconstructs it for both customer and staff views.
+  if (Number(compact.confirmationDeadline) === Number(compact.createdAt) + ORDER_CONFIRM_WAIT_MS)
+    delete compact.confirmationDeadline;
   if ((compact.pickupMode === 'asap' && compact.pickup === 'Snarest') ||
       (compact.pickupMode === 'scheduled' && /^\d{1,2}:\d{2}$/.test(String(compact.pickup || '')))) {
     delete compact.pickupMode;
   }
   if (!compact.email) delete compact.email;
+  if (!compact.comment) delete compact.comment;
   if (!compact.loyaltyReward) delete compact.loyaltyReward;
   if (!compact.scheduledPickupAt) delete compact.scheduledPickupAt;
   compact.lines = (Array.isArray(order.lines) ? order.lines : []).map(line => {
@@ -1744,8 +1749,13 @@ function compactOrderForStorage(order) {
     } else if (!Array.isArray(item.optionIds) || !item.optionIds.length) {
       delete item.optionIds;
     }
-    if (!item.selections || !Object.values(item.selections).some(v => Array.isArray(v) && v.length))
-      delete item.selections;
+    if (item.selections && typeof item.selections === 'object') {
+      const picked = Object.fromEntries(Object.entries(item.selections)
+        .filter(([, values]) => Array.isArray(values) && values.length)
+        .map(([group, values]) => [group, values.filter(Boolean)]));
+      if (Object.keys(picked).length) item.selections = picked;
+      else delete item.selections;
+    } else delete item.selections;
     // Base unit price is derivable from saved line price, quantity and priced
     // optionDetails; preserve it only for ambiguous/legacy representations.
     const detailsPriced = Array.isArray(item.optionDetails) &&
