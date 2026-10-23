@@ -2291,6 +2291,24 @@ function orderCustomerIndicator(order, orders = getOrders()) {
   };
 }
 
+function orderCustomerSummary(account) {
+  const p = account?.customerProfile;
+  if (!p) return { label:'', detail:'' };
+  const kr = new Intl.NumberFormat('nb-NO', { maximumFractionDigits:2 });
+  const ordered = Math.max(0, Number(p.confirmedOrderCount) || 0);
+  const pizzas = Math.max(0, Number(p.largePizzaCountRecorded) || 0);
+  const amount = Math.max(0, Number(p.totalSpentRecorded) || 0);
+  const missing = Math.max(0, Number(p.ordersMissingAmount) || 0);
+  return {
+    label:`${ordered} ordre · ${pizzas} store pizza · ${kr.format(amount)} kr registrert`,
+    detail: missing
+      ? `${missing} eldre ordre mangler pris. Har bare registrert faktisk kjent omsetning. ${p.largePizzaCountPartial ? 'Eldre pizzatall kan være ufullstendige.' : ''}`
+      : p.largePizzaCountPartial
+        ? 'Eldre pizzatall kan være ufullstendige.'
+        : 'Registrerte ordrehendelser i kundens bonuskonto.',
+  };
+}
+
 function loadOrderCustomerAccount(order) {
   const phone = loyaltyPhone(order?.phone);
   if (!phone || !DB_URL) return;
@@ -2311,6 +2329,13 @@ function loadOrderCustomerAccount(order) {
     badge.textContent = indicator.label;
     badge.className = 'order-customer-badge is-' + indicator.kind;
     badge.title = indicator.description;
+    const stats = el.orderDetailLive.querySelector('[data-customer-stats]');
+    if (stats) {
+      const summary = orderCustomerSummary(account);
+      stats.textContent = summary.label;
+      stats.title = summary.detail;
+      stats.hidden = !summary.label;
+    }
   }).catch(() => {
     orderCustomerAccountCache.set(phone, {pending:false,fetchedAt:Date.now(),account:null,failed:true});
     // A failed lookup is not proof of a first visit; keep a verified
@@ -2446,6 +2471,7 @@ function renderOrderDetail(orderId) {
               <div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div>
               <div class="order-customer-meta">
                 <span class="order-customer-badge is-${customerIndicator.kind}" title="${escapeHtml(customerIndicator.description)}">${escapeHtml(customerIndicator.label)}</span>
+                <span class="order-customer-stats" data-customer-stats title="Bekreftede bestillinger og registrert omsetning" ${orderCustomerSummary(orderCustomerAccountCache.get(loyaltyPhone(order.phone))?.account).label ? '' : 'hidden'}>${escapeHtml(orderCustomerSummary(orderCustomerAccountCache.get(loyaltyPhone(order.phone))?.account).label)}</span>
                 <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar mottok SMS-forespørselen; levering er ikke bekreftet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>${escapeHtml(smsReceiptDetail(order.id))}</span></div>
                 ${order.email && (emailReceiptSent(order) || !['avvist','fullfort'].includes(order.status))
                   ? `<div class="pos-detail-email-feedback${emailReceiptSent(order) ? ' is-sent' : ' is-unverified'}"
