@@ -3,6 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
+import { loyaltyPhone } from './loyalty.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
 /**
@@ -2237,27 +2238,92 @@ function emailReceiptDetail(order) {
 }
 
 
-/* Customer indicator is based on retained order history, not customer names.
- * Historical orders older than the 100-order Firebase retention window may
- * no longer be available; never describe this as a verified lifetime count.
+/* Durable customer identity under /pizzaBonus/{phone}.
+ * Stored firstOrder is NOT deleted with the 100 newest order records.
+ * Legacy quantity:0 pizza events are valid evidence of previous visits.
  */
+const orderCustomerAccountCache = new Map();
+const CUSTOMER_CACHE_AGE = 60 * 1000;
+
 function orderCustomerIndicator(order, orders = getOrders()) {
-  const phone = String(order?.phone || '').replace(/\D/g, '').slice(-8);
-  if (phone.length !== 8) return { label:'Kundestatus ukjent', kind:'unknown',
-    description:'Ingen gyldig telefonnummer for sammenligning.' };
+  const phone = loyaltyPhone(order?.phone);
+  if (!phone) return { label:'Kundestatus ukjent', kind:'unknown',
+    description:'Gyldig norsk mobilnummer mangler.' };
   const at = Number(order.createdAt) || 0;
-  const previous = orders.some(other => {
-    if (!other || other.id === order.id ||
-        String(other.phone || '').replace(/\D/g, '').slice(-8) !== phone) return false;
-    const otherAt = Number(other.createdAt) || 0;
-    return otherAt < at || (otherAt === at && String(other.id) < String(order.id));
-  });
-  return previous
-    ? { label:'Fast Kunde', kind:'returning',
-      description:'Har en tidligere bestilling i tilgjengelig ordrehistorikk.' }
-    : { label:'Ny Kunde', kind:'new',
-      description:'Ingen eldre bestilling funnet i beholdt historikk (maks. 100 ordrer). Kan være tidligere kunde.' };
+  const isBefore = (orderId, timestamp) => {
+    const time = Number(timestamp) || 0;
+    return Boolean(time && (time < at || (time === at && String(orderId) < String(order.id))));
+  };
+  const account = orderCustomerAccountCache.get(phone)?.account;
+  const pastInOrders = orders.some(other =>
+    other?.id && other.id !== order.id && loyaltyPhone(other.phone) === phone &&
+    isBefore(other.id, other.createdAt)
+  );
+  const first = account?.customerFirstOrder;
+  const savedEarlier = Boolean(first?.orderId && first.orderId !== order.id &&
+    isBefore(first.orderId, first.at));
+  const earlierEvent = Object.values(account?.events || {}).some(event =>
+    event?.id && event.id !== order.id &&
+    isBefore(event.id, event.at)
+  );
+  const legacyPizzaEvents = account?.events && typeof account.events === 'object'
+    ? Object.keys(account.events).length : 0;
+  const knownReturning = pastInOrders || savedEarlier || earlierEvent;
+  if (knownReturning) return {
+    label:'Fast Kunde', kind:'returning',
+    description:'Tidligere bestilling registrert på dette mobilnummeret.',
+  };
+  if (!orderCustomerAccountCache.has(phone) && !pastInOrders) return {
+    label:'Sjekker kunde…',kind:'unknown',
+    description:'Henter tidligere kjøp fra kunderegisteret.',
+  };
+  // Legacy accounts from before registration may have incomplete history.
+  return {
+    label:'Ny Kunde',kind:'new',
+    description: legacyPizzaEvents || first?.orderId
+      ? 'Første registrerte bestilling på dette nummeret.'
+      : 'Ingen tidligere bestilling funnet i lagret historikk. Gamle slettede ordrer kan mangle.',
+  };
 }
+
+function loadOrderCustomerAccount(order) {
+  const phone = loyaltyPhone(order?.phone);
+  if (!phone || !DB_URL) return;
+  const saved = orderCustomerAccountCache.get(phone);
+  if (saved && (saved.pending || Date.now() - saved.fetchedAt < CUSTOMER_CACHE_AGE)) return;
+  const pending = { pending: true, fetchedAt: Date.now(), account:saved?.account || null };
+  orderCustomerAccountCache.set(phone, pending);
+  fetch(`${DB_URL}/pizzaBonus/${encodeURIComponent(phone)}.json?_=${Date.now()}`, {
+    cache:'no-store', signal:AbortSignal.timeout(7000)
+  }).then(async response => {
+    if (!response.ok) throw new Error('Kundeprofil HTTP ' + response.status);
+    const account = await response.json();
+    orderCustomerAccountCache.set(phone, {pending:false,fetchedAt:Date.now(),account:account || {}});
+    const badge = el.orderDetailLive.querySelector('.order-customer-badge');
+    const current = getOrders().find(item => item.id === selectedOrderId);
+    if (!badge || !current || loyaltyPhone(current.phone) !== phone) return;
+    const indicator = orderCustomerIndicator(current);
+    badge.textContent = indicator.label;
+    badge.className = 'order-customer-badge is-' + indicator.kind;
+    badge.title = indicator.description;
+  }).catch(() => {
+    orderCustomerAccountCache.set(phone, {pending:false,fetchedAt:Date.now(),account:null,failed:true});
+    // A failed lookup is not proof of a first visit; keep a verified
+    // current-order match only, otherwise show an unknown status.
+    const current = getOrders().find(item => item.id === selectedOrderId);
+    const badge = el.orderDetailLive.querySelector('.order-customer-badge');
+    if (badge && current && loyaltyPhone(current.phone) === phone) {
+      const other = getOrders().some(item => item.id !== current.id &&
+        loyaltyPhone(item.phone) === phone && Number(item.createdAt) < Number(current.createdAt));
+      if (!other) {
+        badge.textContent = 'Kundestatus ukjent';
+        badge.className = 'order-customer-badge is-unknown';
+        badge.title = 'Kan ikke kontrollere kunderegisteret i Firebase.';
+      }
+    }
+  });
+}
+
 function receivedAgeText(order, now = Date.now()) {
   const time = Number(order?.createdAt) || 0;
   if (time <= 0) return 'Tid ukjent';
@@ -2349,6 +2415,7 @@ function renderOrderDetail(orderId) {
   const readyTime = scheduledPickup ? String(order.pickup || '—') : compactOrderTime(order.estimatedReadyAt);
   const pickupModeLabel = scheduledPickup ? 'SENERE' : 'SNAREST';
   const readinessCountdown = orderSummaryCountdown(order);
+  loadOrderCustomerAccount(order);
   const customerIndicator = orderCustomerIndicator(order);
   const actionHtml = isPending
     ? `<div class="order-preparation">${scheduledPickup
