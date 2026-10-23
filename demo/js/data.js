@@ -1532,8 +1532,9 @@ export async function getPizzaBonus(phoneValue) {
   return {
     ...state,
     phone,
-    consent: customer?.bonusConsent === true || (!migrated &&
-      (old?.loyalty?.offersConsent === true || old?.offersConsent === true)),
+    consent: customer && Object.prototype.hasOwnProperty.call(customer, 'bonusConsent')
+      ? customer.bonusConsent === true
+      : (!migrated && (old?.loyalty?.offersConsent === true || old?.offersConsent === true)),
     pending: Boolean(reservation && (pendingOrder
       ? !['avvist','kansellert'].includes(pendingOrder.status)
       : Date.now() - Number(reservation.at) < 600000)),
