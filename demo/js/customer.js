@@ -3263,15 +3263,36 @@ function applyCustomerInterfaceSettings() {
 }
 
 function renderAll() {
-  const restaurantName = String(store.settings.restaurantName || '').trim() || 'KØL Grill & Pizza';
-  const brandName = el.brandHome.querySelector('strong');
-  if (brandName.textContent !== restaurantName) brandName.textContent = restaurantName;
-  el.brandHome.setAttribute('aria-label', `${restaurantName} — til menyen`);
-  const logo = el.brandHome.querySelector('img');
-  const logoSrc = String(store.settings.restaurantLogo || '').trim() || '/demo/icons/kol-icon-192.png';
-  if (logo.getAttribute('src') !== logoSrc) logo.src = logoSrc;
-  logo.alt = restaurantName;
-  document.title = `${restaurantName} — Bestill online`;
+  // Ikke gjett restaurantidentiteten før første Firebase-forsøk er fullført.
+  // Kundens første visning har kun en nøytral, ikke-merkevarebasert plassholder.
+  const brandLoading = document.getElementById('brandLoading');
+  if (brandLoading) brandLoading.hidden = customerMenuReady;
+  el.brandHome.hidden = !customerMenuReady;
+  if (customerMenuReady) {
+    const restaurantName = String(store.settings.restaurantName || '').trim();
+    const displayName = restaurantName || 'Online bestilling';
+    const brandName = el.brandHome.querySelector('strong');
+    if (brandName.textContent !== displayName) brandName.textContent = displayName;
+    el.brandHome.setAttribute('aria-label', `${displayName} — til menyen`);
+
+    const logo = el.brandHome.querySelector('img');
+    const logoSrc = String(store.settings.restaurantLogo || '').trim();
+    if (logoSrc) {
+      if (logo.getAttribute('src') !== logoSrc) logo.src = logoSrc;
+      logo.alt = restaurantName || 'Restaurantlogo';
+      logo.hidden = false;
+    } else {
+      logo.hidden = true;
+      logo.removeAttribute('src');
+      logo.alt = '';
+    }
+
+    const pageTitle = restaurantName ? `${restaurantName} — Bestill online` : 'Online bestilling';
+    document.title = pageTitle;
+    for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) {
+      document.querySelector(selector)?.setAttribute('content', pageTitle);
+    }
+  }
   applyCustomerPalette(store.settings?.customerPalette);
   applyCustomerInterfaceSettings();
   const changed = reconcileCart();
