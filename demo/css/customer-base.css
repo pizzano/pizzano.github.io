@@ -145,6 +145,9 @@ select {
     background: var(--ok);
     flex: none;
 }.dot-open.is-closed { background: var(--danger); }
+/* Firebase-verifisering er verken åpent eller stengt. */
+.dot-open.is-pending { background: color-mix(in srgb, var(--palette-ink) 30%, var(--palette-surface)); }
+
 
 /* Stengt-varsel over menyen */.closed-banner {
     display: flex;
