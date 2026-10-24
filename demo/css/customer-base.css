@@ -80,7 +80,30 @@ select {
     color: var(--palette-light);
 
     text-transform: uppercase;
-}.hdr-actions {
+}
+/* Merkefri oppstart: form gir plass til restaurantnavnet uten feil logo. */
+.brand-loading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 32px;
+    margin-right: auto;
+}
+.brand-loading-mark,
+.brand-loading-text {
+    display: block;
+    background: color-mix(in srgb, var(--palette-light) 27%, transparent);
+    animation: restaurant-placeholder-pulse 1.4s ease-in-out infinite alternate;
+}
+.brand-loading-mark { width: 31px; height: 31px; border-radius: 8px; flex: none; }
+.brand-loading-text { width: 112px; height: 14px; border-radius: 6px; }
+@keyframes restaurant-placeholder-pulse {
+    to { opacity: .45; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .brand-loading-mark, .brand-loading-text { animation: none; }
+}
+.hdr-actions {
     display: flex;
     align-items: center;
 }.hdr-btn {
