@@ -156,7 +156,8 @@ function kolMailTemplateText_(text,vars){
 function kolSafeMailTemplate_(template){
   if(!template||template.version!==1||typeof template.body!=='string')return null;
   if(!template.subject||!template.headline||template.body.length>2200||
-     String(template.subject).length>220||String(template.headline).length>160)return null;
+     String(template.subject).length>220||String(template.headline).length>160||
+     /[\r\n]/.test(String(template.subject))||/[\r\n]/.test(String(template.headline)))return null;
   return template;
 }
 
@@ -412,10 +413,10 @@ function forhåndsvisEpostEksempel() {
       optionDetails:[{groupTitle:'Ekstra topping',label:'Pepperoni',price:19}],
       removedIngredients:['Løk'],comment:'Godt stekt'}]
   };
-  Logger.log('BEKREFTET HTML: ' + kolBuildReceipt_(sample,'accepted').html);
+  Logger.log('BEKREFTET HTML: ' + kolBuildReceipt_(sample,'accepted',kolReadMailTemplates_()).html);
   sample.staffReadyAt = Date.now();
   sample.statusUpdatedAt = sample.staffReadyAt;
-  Logger.log('KLAR HTML: ' + kolBuildReceipt_(sample,'ready').html);
+  Logger.log('KLAR HTML: ' + kolBuildReceipt_(sample,'ready',kolReadMailTemplates_()).html);
 }
 
 /** Sends two sample template emails ONLY to this Apps Script account. */
@@ -434,8 +435,9 @@ function testBeggeEpostMalerTilMeg() {
       {name:'Hamburger Tallerken',quantity:1,price:209,size:'Standard'}
     ]
   };
-  kolSendMail_(sample,'accepted');
-  kolSendMail_(sample,'ready');
+  const templates = kolReadMailTemplates_();
+  kolSendMail_(sample,'accepted',templates);
+  kolSendMail_(sample,'ready',templates);
   Logger.log('Begge HTML-malene sendt til skripteieren: ' + to);
 }
 
