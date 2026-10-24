@@ -759,7 +759,37 @@ function openActiveOrderInProfile(orderId) {
   ui.focusedOrderId = orderId;
   setView('profile');
   setProfileTab('orders');
+}
 
+/** Open the exact order linked from the SMS, even on a different device
+ * with no previous customer LocalStorage. Full order IDs are bearer links.
+ */
+async function openOrderFromSmsLink() {
+  const raw = new URLSearchParams(window.location.search).get('order');
+  if (raw === null) return;
+  const orderId = String(raw).trim();
+  if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(orderId)) {
+    toast('Ugyldig bestillingslenke.', 'warning');
+    return;
+  }
+  try {
+    const response = await fetch(
+      DB_URL + '/orders/' + encodeURIComponent(orderId) + '.json',
+      { cache: 'no-store', headers: { Accept: 'application/json' } }
+    );
+    if (!response.ok) throw new Error('Kunne ikke hente bestillingen.');
+    const order = await response.json();
+    if (!order || (order.id && order.id !== orderId)) {
+      toast('Bestillingen finnes ikke lenger.', 'warning');
+      return;
+    }
+    // Reuse the existing order snapshot pipeline and live Firebase tracking.
+    upsertLiveOrder(orderId, { ...order, id: orderId });
+    openActiveOrderInProfile(orderId);
+  } catch (error) {
+    console.warn('SMS bestillingslenke kunne ikke åpnes:', error);
+    toast('Kunne ikke hente bestillingen. Sjekk tilkoblingen og prøv igjen.', 'warning');
+  }
 }
 
 function resetPendingOrderSubmission() {
@@ -2518,6 +2548,12 @@ function renderProfile() {
 
     const live = getOrders();
     const orders = activeCustomerOrders();
+    // Ready/completed orders may disappear from the active carousel, but an
+    // explicit SMS link must still show the requested order details.
+    const linked = ui.focusedOrderId
+      ? mergedCustomerOrders().find(entry => entry.id === ui.focusedOrderId)
+      : null;
+    if (linked && !orders.some(entry => entry.id === linked.id)) orders.unshift(linked);
     if (el.profileOrdersMeta) {
       el.profileOrdersMeta.textContent = orders.length
         ? `${orders.length} ${orders.length === 1 ? 'bestilling' : 'bestillinger'}`
@@ -3208,9 +3244,10 @@ subscribe((_state, origin) => {
   if (origin === 'remote' && changed) toast('Menyen er oppdatert av restauranten.');
 });
 
-ready().then(() => {
+ready().then(async () => {
   renderAll();
   setView('menu');
+  await openOrderFromSmsLink();
 });
 
 // Status og åpningstid holdes oppdatert mens siden er åpen.
