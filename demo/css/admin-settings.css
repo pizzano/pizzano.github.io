@@ -149,3 +149,7 @@ html[data-theme="dark"] #pageSettings .printer-settings-preview-head small{color
 #pageNotifications .notification-preview-content .notification-email-products{font-size:12px;padding:14px;margin:14px 0;border:1px solid #c9d8cb;border-radius:8px}
 html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{background:#173e2e;color:#aef3c8;border-color:#347a53}
 @media(max-width:900px){#pageNotifications .notification-layout{grid-template-columns:1fr;padding:12px 15px 26px}#pageNotifications .notification-preview{position:static}}
+
+#pageNotifications .notification-advanced{border:1px solid var(--line);border-radius:10px;padding:0 12px}
+#pageNotifications .notification-advanced summary{padding:12px 3px;cursor:pointer;font-size:13px;font-weight:800;color:var(--ink)}
+#pageNotifications .notification-advanced-fields{display:grid;gap:12px;padding:5px 0 14px}
