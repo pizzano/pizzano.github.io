@@ -3315,10 +3315,37 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Én startskjerm: kunden ser ikke delvis ferdig meny, feil logo eller
+// en foreløpig restaurantstatus mens Firebase og sidens visning lastes.
+let startupNavigationReady = false;
+let startupReleaseScheduled = false;
+
+function releaseStartupScreenIfReady() {
+  if (!startupNavigationReady || !customerMenuReady || backendInfo.mode !== 'firebase') return;
+  const screen = document.getElementById('appStartup');
+  if (!screen || screen.hidden || startupReleaseScheduled) return;
+  startupReleaseScheduled = true;
+
+  // Vent til meny, kategorier, header og ordresporing har fått en full
+  // nettleseropptegning før vi fjerner lasteskjermen.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    startupReleaseScheduled = false;
+    if (backendInfo.mode !== 'firebase') return;
+    window.clearTimeout(window.customerStartupTimeout);
+    screen.hidden = true;
+    screen.setAttribute('aria-busy', 'false');
+  }));
+}
+
 subscribe((_state, origin) => {
-  // 'init' is emitted only after the Firebase startup read completed.
+  // 'init' er ferdig Firebase-forsøk. Senere 'remote' kan gjenopprette
+  // forbindelsen, og samme gate åpner da kunden uten ny sideoppdatering.
   if (origin === 'init' || origin === 'remote') customerMenuReady = true;
   const changed = renderAll();
+  if (origin === 'init' && backendInfo.mode !== 'firebase') {
+    window.showCustomerStartupError?.();
+  }
+  releaseStartupScreenIfReady();
   if (origin === 'remote' && changed) toast('Menyen er oppdatert av restauranten.');
 });
 
@@ -3326,6 +3353,12 @@ ready().then(async () => {
   renderAll();
   setView('menu');
   await openOrderFromSmsLink();
+  startupNavigationReady = true;
+  if (backendInfo.mode !== 'firebase') window.showCustomerStartupError?.();
+  releaseStartupScreenIfReady();
+}).catch(error => {
+  console.error('Kunne ikke fullføre kundeoppstart:', error);
+  window.showCustomerStartupError?.();
 });
 
 // Status og åpningstid holdes oppdatert mens siden er åpen.
@@ -3337,8 +3370,8 @@ setInterval(() => {
 setInterval(refreshCustomerOrderCountdowns, 1000);
 refreshCustomerOrderCountdowns();
 
-// The initial UI deliberately stays in a neutral loading state until
-// Firebase menu/settings have been read (subscribe('init') above).
+// Forsiden frigis først etter vellykket Firebase-lesing og klargjort UI.
+// Feil eller timeout gir «Prøv igjen» i stedet for et uferdig grensesnitt.
 
 // live-order-visibility-refresh
 window.addEventListener('visibilitychange', () => {
