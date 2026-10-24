@@ -102,28 +102,44 @@ function kolHtmlEscape_(value) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
   });
 }
-/** Permit bold emphasis only. Every other HTML tag, attribute or entity
- * is escaped before placing customer/template content into an email.
- * The second <strong> closes the first for legacy unclosed drafts.
+/** Allow only simple, attribute-free HTML formatting tags in e-mail templates.
+ * All other tags/attributes are escaped; no href, style, script, img etc.
+ * A second opening of an active tag closes it (legacy <strong>x<strong>).
+ * Variables are substituted only in text nodes, so customer-supplied
+ * text can never turn into an active HTML tag.
  */
-function kolFormattedEmailHtml_(value) {
-  const tokens=String(value||'').split(/(<\/?strong>)/gi);
-  let bold=false,html='';
+function kolFormattedEmailHtml_(value,vars) {
+  const tokens=String(value||'').split(/(<\/?(?:strong|b|em|i|u|s|strike|del|br)\s*\/?>)/gi);
+  const active=[];
+  let html='';
   tokens.forEach(function(token){
-    if(/^<strong>$/i.test(token)){
-      html+=bold?'</strong>':'<strong>';
-      bold=!bold;
-    }else if(/^<\/strong>$/i.test(token)){
-      if(bold){html+='</strong>';bold=false;}
-    }else{
-      html+=kolHtmlEscape_(token).replace(/\r?\n/g,'<br>');
+    const match=/^<(\/?)(strong|b|em|i|u|s|strike|del|br)\s*\/?>$/i.exec(token);
+    if(!match){
+      const text=vars?kolMailTemplateText_(token,vars):token;
+      html+=kolHtmlEscape_(text).replace(/\r?\n/g,'<br>');
+      return;
     }
+    const tag=match[2].toLowerCase();
+    if(tag==='br'){
+      html+='<br>';return;
+    }
+    const openIndex=active.lastIndexOf(tag);
+    if(match[1] || openIndex!==-1){
+      if(openIndex<0)return; // Ignore unmatched closing marker.
+      while(active.length>openIndex)html+='</'+active.pop()+'>';
+      return;
+    }
+    active.push(tag);
+    html+='<'+tag+'>';
   });
-  return html+(bold?'</strong>':'');
+  while(active.length)html+='</'+active.pop()+'>';
+  return html;
 }
-/** HTML markers never appear in the plain-text email alternative. */
+/** Plain-text alternative contains formatting as readable text, not raw tags. */
 function kolPlainEmailMarkup_(value) {
-  return String(value||'').replace(/<\/?strong>/gi,'');
+  return String(value||'')
+    .replace(/<br\s*\/?>/gi,'\n')
+    .replace(/<\/?(?:strong|b|em|i|u|s|strike|del)\s*>/gi,'');
 }
 
 function kolKr_(value) {
@@ -254,6 +270,14 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     ? kolMailTemplateText_(selected.body,vars) : ('Hei '+firstName+'! '+intro);
   const footerLine=selected && selected.footer
     ? kolMailTemplateText_(String(selected.footer).slice(0,500),vars) : '';
+  // Render formatting BEFORE inserting variables, so a customer's name
+  // containing angle brackets cannot become active HTML.
+  const introHtml=selected
+    ? kolFormattedEmailHtml_(selected.body,vars)
+    : introHtml;
+  const footerHtml=selected && selected.footer
+    ? kolFormattedEmailHtml_(String(selected.footer).slice(0,500),vars)
+    : '';
   let detailsTitle='Bestillingsdetaljer';
   let itemsTitle='Bestilte varer';
   if(selected){
@@ -360,7 +384,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     '</table></td></tr>' +
 
     (kolPlain_(order.comment) ? '<tr><td style="padding:2px 26px 14px;font-size:12px;color:#536457;"><strong>Kommentar:</strong> ' + safe(order.comment) + '</td></tr>' : '') +
-    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + kolFormattedEmailHtml_(footerLine) + '</td></tr>' : '') +
+    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + footerHtml + '</td></tr>' : '') +
     '<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;line-height:20px;">' +
     'Takk for at du bestiller hos<br><strong style="color:#143623;font-size:13px;letter-spacing:1px;">KØL GRILL &amp; PIZZA</strong><br>' +
     '<a href="' + orderLink + '" style="color:#286844;">Se vår meny</a><br>' +
@@ -434,8 +458,9 @@ function kolEmailHeartbeat_(now, state) {
     source:'apps-script-email-poller',
     // Admin Varslinger uses this to detect whether the live sender supports
     // the editor's <strong> tags. Old workers do not publish this marker.
-    templateEngineVersion:2,
-    strongFormatting:true
+    templateEngineVersion:3,
+    strongFormatting:true,
+    safeInlineFormatting:true
   });
 }
 
