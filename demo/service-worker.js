@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bestill-demo-v243-tenant-neutral';
+const CACHE_NAME = 'bestill-demo-v244-neutral-loading';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
