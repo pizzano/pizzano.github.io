@@ -7,35 +7,35 @@ const ALLOWED_STYLES=new Set('background background-color color padding padding-
 const ALLOWED_ATTRS=new Set('style align valign width height colspan rowspan border cellpadding cellspacing role bgcolor href target title'.split(' '));
 const textEscape=(value)=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const SAMPLE={
-  navn:'FATIH',navnFullt:'FATIH Alemdar',kode:'I2SEA2',telefon:'+47 95557474',
+  navn:'Kunde',navnFullt:'Eksempel Kunde',kode:'ABC123',telefon:'+47 40000000',
   hentetid:'01:45',hovedtid:'01:45',hovedetikett:'Hentetid:',
   hentetype:'Snarest',tidsinfo:'Ca. 15 minutter',total:'588 kr',
   delsum:'588,00 kr',mva:'76,70 kr',bestilt:'24.10.2026, 01:30',
-  lenke:'https://bestill.online/demo/?order=ord_mv1ji63i2sea2',
-  adresse:'Øgardsvegen 44, 2100 Skarnes'
+  lenke:'https://example.org/bestilling',
+  adresse:'Eksempelveien 1, 0001 Oslo'
 };
 const SAMPLE_LINES=[
   {antall:'2',produkt:'Stor Classico',linjepris:'588 kr',valg:'Størrelse: Stor'}
 ];
 
-/** Existing KØL branded receipt as editable HTML (no locked sections).
- * Product item markup inside {{#each items}} is also fully editable.
+/** Restaurant-neutral default receipt, fully editable in the admin editor.
+ * Restaurant identity comes from settings, never from a hard-coded brand.
  */
-export function defaultOrderEmailHtml(kind='emailAccepted',existing={}) {
+export function defaultOrderEmailHtml(kind='emailAccepted',existing={},branding={}) {
+  const restaurantName=String(branding.name||'').trim()||'Restauranten';
+  const safeRestaurantName=textEscape(restaurantName);
   const ready=kind==='emailReady';
   const heading=String(existing.headline||(
     ready?'DIN BESTILLING ER KLAR TIL HENTING':'BESTILLINGEN DIN ER BEKREFTET'));
   const msg=String(existing.body||(
     ready?'Hei <strong>{navn}</strong>! Maten din er klar for henting. Velkommen!'
       :'Hei <strong>{navn}</strong>! Vi har bekreftet bestillingen din og forbereder maten.'));
-  const footer=String(existing.footer||'Takk for at du bestiller hos KØL Grill & Pizza!');
+  const footer=String(existing.footer||('Takk for at du bestiller hos '+restaurantName+'!'));
   const headline=ready?'{hovedetikett}':'{hovedetikett}';
   return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;max-width:620px;border-collapse:collapse;background:#fffefa;">\n'
     +'<tr><td align="center" style="padding:30px 15px 24px;background:#10291c;color:#fff8e8;border-bottom:4px solid #bda36b;">\n'
-    +'<div style="font-size:11px;line-height:18px;letter-spacing:3px;color:#d7bf8b;">✦ GOD MAT SAMLER FOLK ✦</div>\n'
-    +'<div style="font-size:46px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#fff9ec;">KØL</div>\n'
-    +'<div style="font-size:16px;line-height:24px;letter-spacing:5px;font-weight:bold;color:#fff9ec;">GRILL &amp; PIZZA</div>\n'
-    +'<div style="padding-top:8px;font-size:11px;line-height:16px;letter-spacing:2px;color:#dac89e;">PIZZA · GRILL · KVALITET</div>\n'
+    +'<div style="font-size:28px;line-height:1.25;font-weight:800;letter-spacing:.4px;color:#fff9ec;">'+safeRestaurantName+'</div>\n'
+    +'<div style="padding-top:8px;font-size:12px;line-height:20px;letter-spacing:2px;color:#dac89e;">BESTILLING · HENTING</div>\n'
     +'</td></tr>\n'
     +'<tr><td style="padding:16px 15px 8px;background:#fffefa;">\n'
     +'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4e7;border-radius:16px;">\n'
@@ -77,7 +77,7 @@ export function defaultOrderEmailHtml(kind='emailAccepted',existing={}) {
     +'<tr><td style="padding:0 25px 15px;color:#455c4b;font-size:13px;">'
     +footer.replace(/\r?\n/g,'<br>')+'</td></tr>\n'
     +'<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;">'
-    +'KØL GRILL &amp; PIZZA<br><a href="{lenke}" style="color:#286844;">Se bestillingen</a>'
+    +safeRestaurantName+'<br><a href="{lenke}" style="color:#286844;">Se bestillingen</a>'
     +'</td></tr></table>';
 }
 function safeStyle(raw){
