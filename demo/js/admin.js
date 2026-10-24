@@ -3849,11 +3849,18 @@ function noticeReadForm(){
 }
 function noticeSetEditorMode(mode){
   if(!noticeKindIsEmail())mode='simple';
-  noticeState.editorMode=mode==='html'?'html':'simple';
-  noticeEl.htmlPanel.hidden=noticeState.editorMode!=='html';
-  noticeEl.simplePanel.hidden=noticeState.editorMode==='html';
-  noticeEl.modeHtml.classList.toggle('is-active',noticeState.editorMode==='html');
-  noticeEl.modeSimple.classList.toggle('is-active',noticeState.editorMode==='simple');
+  const next=mode==='html'?'html':'simple';
+  if(noticeState.editorMode!==next && noticeKindIsEmail()){
+    // The subject is present in both editors. Preserve unsaved edits when
+    // moving between "Enkel" and "Full HTML".
+    if(next==='html')noticeEl.htmlSubject.value=noticeEl.subject.value;
+    else noticeEl.subject.value=noticeEl.htmlSubject.value;
+  }
+  noticeState.editorMode=next;
+  noticeEl.htmlPanel.hidden=next!=='html';
+  noticeEl.simplePanel.hidden=next==='html';
+  noticeEl.modeHtml.classList.toggle('is-active',next==='html');
+  noticeEl.modeSimple.classList.toggle('is-active',next==='simple');
   noticePreview();
 }
 function noticePreview(){
