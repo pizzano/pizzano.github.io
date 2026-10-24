@@ -726,9 +726,12 @@ function normalizeState(raw) {
       group.maxSelections = 1;
       group.defaultOptionIds = group.defaultOptionIds.slice(0, 1);
     } else {
+      // For repeatable add-ons, maxSelections is a cap on TOTAL servings,
+      // not on distinct option labels. The customer may take e.g. 3 garlic
+      // sauces even when the group contains only two kinds of sauce.
       group.maxSelections = Math.min(
         Math.max(group.maxSelections, 1),
-        Math.max(group.options.length, 1)
+        group.allowQuantity ? 30 : Math.max(group.options.length, 1)
       );
     }
   }
