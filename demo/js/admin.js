@@ -3940,9 +3940,6 @@ async function noticeSave(){
        !draft.html||draft.html.length<30||draft.html.length>45000){
       noticeFeedback('Oppgi emne og en fullstendig HTML-mal (30–45000 tegn).','error');return;
     }
-    if(!/<table\b/i.test(draft.html)){
-      noticeFeedback('HTML-malen bør inneholde en e-posttabell (<table>).','error');return;
-    }
   } else {
     if(!draft.body||draft.body.length>2200||(kind!=='smsAccepted'&&(!draft.subject||!draft.headline))){
       noticeFeedback('Skriv en gyldig melding, overskrift og emne.','error');return;
