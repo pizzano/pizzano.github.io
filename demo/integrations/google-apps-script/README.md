@@ -1,5 +1,60 @@
 # KØL SMS + e-post – Google Apps Script kaynakları
 
+## Varslinger — şablonlar artık Firebase'de (24.10.2026)
+
+Admin panelinde yeni **Varslinger** sayfası bulunuyor:
+
+- `SMS · Bekreftet`: Düzenlenebilir SMS metni
+- `E-post · Bekreftet`: Konu, büyük başlık, giriş mesajı ve kapanış metni
+- `E-post · Klar`: Ayrı e-posta metinleri
+- **Forhåndsvisning**: Örnek müşteri/ürün bilgileriyle gönderim yapmadan önizleme
+- **Lagre mal**: Firebase `notificationTemplates/{smsAccepted|emailAccepted|emailReady}`
+- **Send test**: Firebase `notificationTests/{kind}/request` (yalnızca komut kimliği/zamanı/türü)
+- **Kontroller teststatus**: `notificationTests/{kind}/result`, gönderen scriptin kayıt durumu
+
+Kullanılabilir değişkenler: `{navn}`, `{hentetid}`, `{lenke}`,
+`{kode}`, `{total}`, `{varer}`. Şablonun bütün varsayılan metinleri
+Firebase'de saklanır; e-postanın ürün/fiyat/KDV bölümü güvenli kodla otomatik
+üretilmeye devam eder. E-posta alanlarına ham HTML veya çalıştırılabilir kod
+konulmaz; kullanıcı verileri HTML-escape ile korunur.
+
+### İlk ve son Apps Script kurulumu
+
+Bu iki dosya GitHub'da güncellendi ancak **Google'ın çalışan projesine
+kendiliğinden yüklenmez.** Bir kere:
+
+1. Google Apps Script **KOL SMS Gateway** projesinde `Kode.gs` tamamını
+   [yeni kaynak](Kode.gs) ile değiştir, kaydet. Mevcut `TRACCAR_TOKEN`,
+   `TEST_PHONE`, `KOL_MODE` ve `pollOrdersForSms` tetikleyicisini koru.
+2. Google Apps Script **EPOST GONDERME KØL** projesinde `EmailPoller.gs`
+   tamamını [yeni kaynak](email-poller.gs) ile değiştir ve kaydet. Mevcut
+   `kontrollerEpostBestillinger` tetikleyicisini koru.
+3. Firebase Rules içinde adminin `notificationTemplates` ve
+   `notificationTests/.../request` yazma yetkisini; Apps Script'in bu
+   şablonları okuma ve `notificationTests/.../result` yazma yetkisini
+   doğrula. RTDB kimlik doğrulama/yetkilendirme üretim için zorunludur.
+4. Admin → Varslinger'de her şablonu kaydet, sonra **Send test** ve
+   **Kontroller teststatus** kullan. SMS testi yalnızca Apps Script özel
+   `TEST_PHONE` ayarına, e-posta testi yalnızca Apps Script'in çalıştığı
+   Google hesap sahibinin gelen kutusuna gönderilir. Test arayüzünden
+   alıcı numara/adres gönderilmez.
+
+**Güvenlik:** Test SMS en fazla 3/gün, e-posta 4/gün ve en az 3 dakika
+ara ile yapılır. Test ID'leri önce işlenmiş olarak saklanır; belirsiz bir
+gönderimi otomatik tekrarlamayız. Traccar/MailApp tarafından kabul
+edilmiş olması telefon/inbox teslimi kanıtı değildir. Admin sayfası
+ayrı bir sunucu oturum sistemi kullanmıyorsa yalnızca Firebase Rules
+ile koruma kurmadan herkese açık erişimi üretimde kullanmayın.
+Bu test komutları herkese açık/yetkisiz bir Firebase kurulumunda
+kötüye kullanılabilir. Alıcıyı komuttan okumamak riski azaltır fakat
+yetkilendirmenin yerine geçmez.
+
+Eğer şablon isteği Firebase tarafından reddedilirse gönderici **mevcut
+sabit metnine geri döner**, sipariş bildirimi durmaz. Yeni şablon yalnızca
+gönderimden önce okunur; çalışan trigger'ın tekrar kurulmasına gerek
+yoktur. Metin değiştirirken Apps Script dosyası artık tekrar
+kopyalanmaz.
+
 ## SMS – aktiv Google Apps Script-kilde
 
 **Én full kildefil:** [Kode.gs](Kode.gs) inneholder
