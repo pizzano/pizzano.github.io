@@ -1,7 +1,7 @@
 {
-  "name": "Bestill takeaway",
-  "short_name": "Bestill",
-  "description": "Bestill mat til henting.",
+  "name": "KØL Grill & Pizza — Bestill online",
+  "short_name": "KØL Grill & Pizza",
+  "description": "Bestill pizza, kebab og burger hos KØL Grill & Pizza i Skarnes.",
   "id": "/demo/",
   "start_url": "/demo/index.html",
   "scope": "/demo/",
@@ -14,9 +14,15 @@
   "theme_color": "#33251f",
   "icons": [
     {
-      "src": "/demo/icons/restaurant.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/demo/icons/kol-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/demo/icons/kol-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
