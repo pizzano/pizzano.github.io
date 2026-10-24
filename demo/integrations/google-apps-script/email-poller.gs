@@ -89,57 +89,11 @@ function kolEmail_(order) {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : '';
 }
 
-function kolPickup_(order) {
-  const value = Number(order.scheduledPickupAt || order.estimatedReadyAt || 0);
-  if (value > 0) return Utilities.formatDate(new Date(value), 'Europe/Oslo', 'dd.MM HH:mm');
-  if (/^\d{1,2}:\d{2}$/.test(String(order.pickup || ''))) return order.pickup;
-  return '';
-}
-
 
 function kolHtmlEscape_(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, function(char) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
   });
-}
-/** Allow only simple, attribute-free HTML formatting tags in e-mail templates.
- * All other tags/attributes are escaped; no href, style, script, img etc.
- * A second opening of an active tag closes it (legacy <strong>x<strong>).
- * Variables are substituted only in text nodes, so customer-supplied
- * text can never turn into an active HTML tag.
- */
-function kolFormattedEmailHtml_(value,vars) {
-  const tokens=String(value||'').split(/(<\/?(?:strong|b|em|i|u|s|strike|del|br)\s*\/?>)/gi);
-  const active=[];
-  let html='';
-  tokens.forEach(function(token){
-    const match=/^<(\/?)(strong|b|em|i|u|s|strike|del|br)\s*\/?>$/i.exec(token);
-    if(!match){
-      const text=vars?kolMailTemplateText_(token,vars):token;
-      html+=kolHtmlEscape_(text).replace(/\r?\n/g,'<br>');
-      return;
-    }
-    const tag=match[2].toLowerCase();
-    if(tag==='br'){
-      html+='<br>';return;
-    }
-    const openIndex=active.lastIndexOf(tag);
-    if(match[1] || openIndex!==-1){
-      if(openIndex<0)return; // Ignore unmatched closing marker.
-      while(active.length>openIndex)html+='</'+active.pop()+'>';
-      return;
-    }
-    active.push(tag);
-    html+='<'+tag+'>';
-  });
-  while(active.length)html+='</'+active.pop()+'>';
-  return html;
-}
-/** Plain-text alternative contains formatting as readable text, not raw tags. */
-function kolPlainEmailMarkup_(value) {
-  return String(value||'')
-    .replace(/<br\s*\/?>/gi,'\n')
-    .replace(/<\/?(?:strong|b|em|i|u|s|strike|del)\s*>/gi,'');
 }
 
 function kolKr_(value) {
@@ -182,6 +136,7 @@ function kolDetailRows_(line) {
 /** Reusable, strict HTML renderer for full Firebase email templates.
  * Bundled into email-poller.gs for the one-file Apps Script installation.
  */
+
 function kolSafeTemplateStyle_(raw){
   const allowed='background background-color color padding padding-top padding-right padding-bottom padding-left margin margin-top margin-right margin-bottom margin-left border border-top border-right border-bottom border-left border-radius border-collapse font-size font-family font-weight font-style text-align text-decoration line-height letter-spacing max-width min-width width height vertical-align white-space display'.split(' ');
   return String(raw||'').split(';').map(function(part){
@@ -299,228 +254,98 @@ function kolSafeMailTemplate_(template){
   return template;
 }
 
-/** Gmail-safe, mobile-first HTML e-mail templates.
- * Accepted and ready both use the same branded order summary and their OWN
- * heading. The ready e-mail never shows a countdown or asks the customer to
- * wait another N minutes.
+
+
+/** Fallback is used only when an HTML template has not yet been saved.
+ * The visual design itself belongs in Firebase, not in this script.
  */
-function kolBuildReceipt_(order, kind, mailTemplates) {
-  const safe = kolHtmlEscape_;
-  const accepted = kind === 'accepted';
-  if (!accepted && kind !== 'ready') throw new Error('Ukjent e-postvarsel: ' + kind);
-
-  const firstName = kolPlain_(order.customerName).split(/\s+/)[0] || 'kunde';
-  const ref = kolPlain_(order.id).slice(-6).toUpperCase() || 'ORDRE';
-  const total = Number(order.total) || 0;
-  const subtotal = Number(order.subtotal == null ? order.total : order.subtotal) || 0;
-  const numberFormat = function(amount, decimals) {
-    return Number(amount || 0).toLocaleString('nb-NO', {
-      minimumFractionDigits:decimals, maximumFractionDigits:decimals
-    });
+const KOL_FALLBACK_EMAIL_HTML = {"accepted":"<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;max-width:620px;border-collapse:collapse;background:#fffefa;\">\n<tr><td align=\"center\" style=\"padding:30px 15px 24px;background:#10291c;color:#fff8e8;border-bottom:4px solid #bda36b;\">\n<div style=\"font-size:11px;line-height:18px;letter-spacing:3px;color:#d7bf8b;\">✦ GOD MAT SAMLER FOLK ✦</div>\n<div style=\"font-size:46px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#fff9ec;\">KØL</div>\n<div style=\"font-size:16px;line-height:24px;letter-spacing:5px;font-weight:bold;color:#fff9ec;\">GRILL &amp; PIZZA</div>\n<div style=\"padding-top:8px;font-size:11px;line-height:16px;letter-spacing:2px;color:#dac89e;\">PIZZA · GRILL · KVALITET</div>\n</td></tr>\n<tr><td style=\"padding:16px 15px 8px;background:#fffefa;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#eef4e7;border-radius:16px;\">\n<tr><td align=\"center\" style=\"padding:20px 10px 8px;color:#20442b;font-size:12px;font-weight:800;letter-spacing:1px;\">{overskrift}</td></tr>\n<tr><td align=\"center\" style=\"padding:0 6px 23px;color:#10291c;\">\n<div style=\"font-size:20px;font-weight:800;\">{hovedetikett}</div>\n<div style=\"font-size:52px;line-height:1.15;font-weight:900;\">{hovedtid}</div>\n</td></tr></table></td></tr>\n<tr><td style=\"padding:0 15px 13px;background:#fffefa;\">\n<table role=\"presentation\" width=\"100%\" style=\"background:#f6f6f0;border-radius:13px;\"><tr><td width=\"48%\" align=\"center\" style=\"padding:15px 7px;color:#123c27;font-size:15px;font-weight:bold;\">{hentetype}</td><td width=\"52%\" align=\"center\" style=\"padding:15px 7px;border-left:1px solid #e3e6dd;color:#193b27;font-size:14px;font-weight:bold;\">{tidsinfo}</td></tr></table></td></tr>\n<tr><td style=\"padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;\">__KOL_INTRO__</td></tr>\n<tr><td style=\"padding:0 15px 14px;\">\n<table role=\"presentation\" width=\"100%\" style=\"border:1px solid #e2e7dd;border-radius:13px;background:#fff;\">\n<tr><td colspan=\"2\" style=\"padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;\">Bestillingsdetaljer</td></tr>\n{{#each details}}\n<tr><td style=\"padding:10px 12px;border-bottom:1px solid #e5e8e1;color:#68736c;font-size:13px;\">{etikett}</td><td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #e5e8e1;color:#15291d;font-size:13px;font-weight:bold;\">{verdi}</td></tr>\n{{/each}}\n<tr><td colspan=\"2\" style=\"padding:12px;font-size:12px;color:#65736a;\">Henting: {adresse}</td></tr></table></td></tr>\n<tr><td style=\"padding:0 15px 14px;\">\n<table role=\"presentation\" width=\"100%\" style=\"border:1px solid #e2e7dd;border-radius:13px;background:#fff;\">\n<tr><td colspan=\"2\" style=\"padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;\">Bestilte varer</td></tr>\n{{#each items}}\n<tr><td style=\"padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;\"><strong>{antall} × {produkt}</strong><div style=\"font-size:12px;color:#738077;\">{valg}</div></td><td align=\"right\" style=\"padding:14px 12px;border-bottom:1px solid #e5e8e1;font-weight:bold;\">{linjepris}</td></tr>\n{{/each}}\n<tr><td style=\"padding:12px;\">Delsum</td><td align=\"right\" style=\"padding:12px;\">{delsum}</td></tr><tr><td style=\"padding:0 12px 15px;\">Herav MVA (15 %)</td><td align=\"right\" style=\"padding:0 12px 15px;\">{mva}</td></tr><tr><td style=\"padding:17px 12px;background:#123c2b;color:#fff;font-size:23px;font-weight:800;\">Totalt</td><td align=\"right\" style=\"padding:17px 12px;background:#123c2b;color:#fff;font-size:23px;font-weight:800;\">{total}</td></tr></table></td></tr>\n<tr><td style=\"padding:0 25px 15px;color:#455c4b;font-size:13px;\">__KOL_FOOTER__</td></tr>\n<tr><td align=\"center\" style=\"padding:17px 15px 26px;color:#68756b;font-size:12px;\">KØL GRILL &amp; PIZZA<br><a href=\"{lenke}\" style=\"color:#286844;\">Se bestillingen</a></td></tr></table>","ready":"<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"width:100%;max-width:620px;border-collapse:collapse;background:#fffefa;\">\n<tr><td align=\"center\" style=\"padding:30px 15px 24px;background:#10291c;color:#fff8e8;border-bottom:4px solid #bda36b;\">\n<div style=\"font-size:11px;line-height:18px;letter-spacing:3px;color:#d7bf8b;\">✦ GOD MAT SAMLER FOLK ✦</div>\n<div style=\"font-size:46px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#fff9ec;\">KØL</div>\n<div style=\"font-size:16px;line-height:24px;letter-spacing:5px;font-weight:bold;color:#fff9ec;\">GRILL &amp; PIZZA</div>\n<div style=\"padding-top:8px;font-size:11px;line-height:16px;letter-spacing:2px;color:#dac89e;\">PIZZA · GRILL · KVALITET</div>\n</td></tr>\n<tr><td style=\"padding:16px 15px 8px;background:#fffefa;\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#eef4e7;border-radius:16px;\">\n<tr><td align=\"center\" style=\"padding:20px 10px 8px;color:#20442b;font-size:12px;font-weight:800;letter-spacing:1px;\">{overskrift}</td></tr>\n<tr><td align=\"center\" style=\"padding:0 6px 23px;color:#10291c;\">\n<div style=\"font-size:20px;font-weight:800;\">{hovedetikett}</div>\n<div style=\"font-size:52px;line-height:1.15;font-weight:900;\">{hovedtid}</div>\n</td></tr></table></td></tr>\n<tr><td style=\"padding:0 15px 13px;background:#fffefa;\">\n<table role=\"presentation\" width=\"100%\" style=\"background:#f6f6f0;border-radius:13px;\"><tr><td width=\"48%\" align=\"center\" style=\"padding:15px 7px;color:#123c27;font-size:15px;font-weight:bold;\">{hentetype}</td><td width=\"52%\" align=\"center\" style=\"padding:15px 7px;border-left:1px solid #e3e6dd;color:#193b27;font-size:14px;font-weight:bold;\">{tidsinfo}</td></tr></table></td></tr>\n<tr><td style=\"padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;\">__KOL_INTRO__</td></tr>\n<tr><td style=\"padding:0 15px 14px;\">\n<table role=\"presentation\" width=\"100%\" style=\"border:1px solid #e2e7dd;border-radius:13px;background:#fff;\">\n<tr><td colspan=\"2\" style=\"padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;\">Bestillingsdetaljer</td></tr>\n{{#each details}}\n<tr><td style=\"padding:10px 12px;border-bottom:1px solid #e5e8e1;color:#68736c;font-size:13px;\">{etikett}</td><td align=\"right\" style=\"padding:10px 12px;border-bottom:1px solid #e5e8e1;color:#15291d;font-size:13px;font-weight:bold;\">{verdi}</td></tr>\n{{/each}}\n<tr><td colspan=\"2\" style=\"padding:12px;font-size:12px;color:#65736a;\">Henting: {adresse}</td></tr></table></td></tr>\n<tr><td style=\"padding:0 15px 14px;\">\n<table role=\"presentation\" width=\"100%\" style=\"border:1px solid #e2e7dd;border-radius:13px;background:#fff;\">\n<tr><td colspan=\"2\" style=\"padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;\">Bestilte varer</td></tr>\n{{#each items}}\n<tr><td style=\"padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;\"><strong>{antall} × {produkt}</strong><div style=\"font-size:12px;color:#738077;\">{valg}</div></td><td align=\"right\" style=\"padding:14px 12px;border-bottom:1px solid #e5e8e1;font-weight:bold;\">{linjepris}</td></tr>\n{{/each}}\n<tr><td style=\"padding:12px;\">Delsum</td><td align=\"right\" style=\"padding:12px;\">{delsum}</td></tr><tr><td style=\"padding:0 12px 15px;\">Herav MVA (15 %)</td><td align=\"right\" style=\"padding:0 12px 15px;\">{mva}</td></tr><tr><td style=\"padding:17px 12px;background:#123c2b;color:#fff;font-size:23px;font-weight:800;\">Totalt</td><td align=\"right\" style=\"padding:17px 12px;background:#123c2b;color:#fff;font-size:23px;font-weight:800;\">{total}</td></tr></table></td></tr>\n<tr><td style=\"padding:0 25px 15px;color:#455c4b;font-size:13px;\">__KOL_FOOTER__</td></tr>\n<tr><td align=\"center\" style=\"padding:17px 15px 26px;color:#68756b;font-size:12px;\">KØL GRILL &amp; PIZZA<br><a href=\"{lenke}\" style=\"color:#286844;\">Se bestillingen</a></td></tr></table>"};
+function kolBuildReceipt_(order,kind,templates) {
+  if(kind!=='accepted'&&kind!=='ready')throw new Error('Ukjent e-postvarsel: '+kind);
+  const accepted=kind==='accepted';
+  const template=kolSafeMailTemplate_((templates||{})[accepted?'emailAccepted':'emailReady']);
+  const name=kolPlain_(order.customerName);
+  const first=name.split(/\s+/)[0]||'kunde';
+  const code=kolPlain_(order.id).slice(-6).toUpperCase()||'ORDRE';
+  const total=Number(order.total)||0;
+  const subtotal=Number(order.subtotal==null?order.total:order.subtotal)||0;
+  const fmt=(amount,decimals)=>{
+    const number=Number(amount)||0;
+    return number.toLocaleString('nb-NO',{
+      minimumFractionDigits:decimals,maximumFractionDigits:decimals
+    })+' kr';
   };
-  const money = function(amount) {
-    const value = Number(amount) || 0;
-    return numberFormat(value, Number.isInteger(value) ? 0 : 2) + ' kr';
-  };
-  const money2 = function(amount) { return numberFormat(amount, 2) + ' kr'; };
-  const hms = function(timeMs, pattern) {
-    return timeMs > 0 ? Utilities.formatDate(new Date(timeMs), 'Europe/Oslo', pattern) : '';
-  };
-  const scheduled = order.pickupMode === 'scheduled' ||
-    /^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup));
-  const plannedAt = Number(order.scheduledPickupAt) ||
-    Number(order.estimatedReadyAt) || 0;
-  const chosenTime = /^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup))
-    ? kolPlain_(order.pickup).padStart(5, '0') : '';
-  const clock = hms(plannedAt, 'HH:mm') || chosenTime;
-  const minutes = Number(order.estimatedMinutes) || 0;
-  const readyAt = Number(order.staffReadyAt) || Number(order.statusUpdatedAt) || 0;
-  const readyClock = hms(readyAt, 'HH:mm');
-  const createdAt = Number(order.createdAt) || 0;
-
-  let headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
-  const mainTime = accepted ? (clock || 'Snarest') : (readyClock || 'Nå');
-  let mainLabel = accepted ? 'Hentetid:' : 'Klar kl.';
-  let statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
-  let statusRight = accepted
-    ? (scheduled ? (hms(Number(order.scheduledPickupAt) || 0, 'dd.MM.yyyy') || 'Avtalt tid')
-      : (minutes > 0 ? 'Ca. ' + Math.ceil(minutes) + ' ' + (Math.ceil(minutes) === 1 ? 'minutt' : 'minutter') : 'Så snart som mulig'))
-    : 'Du kan hente maten nå';
-  const intro = accepted
-    ? 'Vi har bekreftet bestillingen din og forbereder maten. Du kan hente den på tidspunktet som er vist over.'
-    : 'Gode nyheter! Personalet har markert bestillingen din som klar. Du kan komme og hente maten.';
-  let subject = (accepted ? 'Bestillingen din er bekreftet' : 'Bestillingen din er klar for henting')
-    + ' #' + ref + ' – KØL Grill & Pizza';
-
-  const selected=kolSafeMailTemplate_((mailTemplates||{})[accepted?'emailAccepted':'emailReady']);
-  const orderLink=/^ord_[a-z0-9]{7,40}$/i.test(String(order.id||''))
-    ? 'https://bestill.online/demo/?order='+encodeURIComponent(String(order.id))
-    : 'https://bestill.online/demo/';
+  const money=value=>fmt(value,Number.isInteger(Number(value))?0:2);
+  const money2=value=>fmt(value,2);
+  const time=(stamp,pattern)=>Number(stamp)>0
+    ? Utilities.formatDate(new Date(Number(stamp)),'Europe/Oslo',pattern):'';
+  const scheduled=order.pickupMode==='scheduled'||/^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup));
+  const chosen=/^\d{1,2}:\d{2}$/.test(kolPlain_(order.pickup))
+    ?kolPlain_(order.pickup).padStart(5,'0'):'';
+  const pickup=time(Number(order.scheduledPickupAt)||Number(order.estimatedReadyAt),'HH:mm')||chosen;
+  const ready=time(Number(order.staffReadyAt)||Number(order.statusUpdatedAt),'HH:mm');
+  const clock=accepted?(pickup||'Snarest'):(ready||'Nå');
+  const label=accepted?'Hentetid:':'Klar kl.';
+  const pickupType=accepted?(scheduled?'Planlagt henting':'Snarest'):'Klar for henting';
+  const minutes=Math.max(0,Math.ceil(Number(order.estimatedMinutes)||0));
+  const statusInfo=accepted
+    ?(scheduled?(time(order.scheduledPickupAt,'dd.MM.yyyy')||'Avtalt tid'):
+      (minutes>0?'Ca. '+minutes+(minutes===1?' minutt':' minutter'):'Så snart som mulig'))
+    :'Du kan hente maten nå';
+  const heading=accepted?'BESTILLINGEN DIN ER BEKREFTET':'DIN BESTILLING ER KLAR TIL HENTING';
+  const intro=accepted
+    ?'Hei <strong>{navn}</strong>! Vi har bekreftet bestillingen din og forbereder maten.'
+    :'Hei <strong>{navn}</strong>! Maten din er klar for henting.';
+  const outro='Takk for at du bestiller hos KØL Grill & Pizza!';
+  const id=String(order.id||'');
+  const link=/^ord_[a-z0-9]{7,40}$/i.test(id)
+    ?'https://bestill.online/demo/?order='+encodeURIComponent(id)
+    :'https://bestill.online/demo/';
   const vars={
-    navn:firstName,kode:ref,lenke:orderLink,hentetid:clock||'snarest',
-    total:money(total),
-    hentetype:statusLeft,tidsinfo:statusRight,
-    varer:(Array.isArray(order.lines)?order.lines:[]).map(function(line){
-      return String(line.quantity||1)+' × '+String(line.name||'Produkt');
-    }).join(', ')
+    navn:first,navnFullt:name||first,kode:code,telefon:kolPlain_(order.phone),
+    hentetid:clock,hovedtid:clock,hovedetikett:template?.timeLabel||label,
+    hentetype:pickupType,tidsinfo:statusInfo,
+    bestilt:time(order.createdAt,'dd.MM.yyyy, HH:mm')||'—',
+    delsum:money2(subtotal),mva:money2(total*15/115),total:money(total),
+    lenke:link,adresse:'Øgardsvegen 44, 2100 Skarnes',
+    overskrift:template?.headline||heading
   };
-  const introLine=selected
-    ? kolMailTemplateText_(selected.body,vars) : ('Hei '+firstName+'! '+intro);
-  const footerLine=selected && selected.footer
-    ? kolMailTemplateText_(String(selected.footer).slice(0,500),vars) : '';
-  // Render formatting BEFORE inserting variables, so a customer's name
-  // containing angle brackets cannot become active HTML.
-  const introHtml=selected&&selected.version===1
-    ? kolFormattedEmailHtml_(selected.body,vars)
-    : kolFormattedEmailHtml_(introLine);
-  const footerHtml=selected && selected.footer
-    ? kolFormattedEmailHtml_(String(selected.footer).slice(0,500),vars)
-    : '';
-  let detailsTitle='Bestillingsdetaljer';
-  let itemsTitle='Bestilte varer';
-  if(selected){
-    if(selected.version===1)headline=kolMailTemplateText_(selected.headline,vars);
-    subject=kolMailTemplateText_(selected.subject,vars);
-    if(selected.timeLabel)mainLabel=kolMailTemplateText_(selected.timeLabel,vars);
-    if(selected.statusLeft)statusLeft=kolMailTemplateText_(selected.statusLeft,vars);
-    if(selected.statusRight)statusRight=kolMailTemplateText_(selected.statusRight,vars);
-    if(selected.detailsTitle)detailsTitle=kolMailTemplateText_(selected.detailsTitle,vars);
-    if(selected.itemsTitle)itemsTitle=kolMailTemplateText_(selected.itemsTitle,vars);
+  const htmlSource=template?.version===2 ?template.html:
+    KOL_FALLBACK_EMAIL_HTML[kind];
+  // Older v1 templates stay functional; HTML is still sanitized by the
+  // same renderer. They do not need any manual migration.
+  const body=template?.version===1?String(template.body||'').slice(0,2200):intro;
+  const footer=template?.version===1?String(template.footer||'').slice(0,500):outro;
+  const finalSource=template?.version===2?htmlSource:
+    htmlSource.replace('__KOL_INTRO__',body).replace('__KOL_FOOTER__',footer)
+      .replace('Bestillingsdetaljer',template?.detailsTitle||'Bestillingsdetaljer')
+      .replace('Bestilte varer',template?.itemsTitle||'Bestilte varer');
+  if(template?.version===1) {
+    if(template.statusLeft)vars.hentetype=kolMailTemplateText_(template.statusLeft,vars);
+    if(template.statusRight)vars.tidsinfo=kolMailTemplateText_(template.statusRight,vars);
   }
-
-  const info = [
-    ['Bestillingskode', '#' + ref],
-    ['Bestilt', createdAt ? hms(createdAt, 'dd.MM.yyyy, HH:mm') : '—'],
-    ['Navn', kolPlain_(order.customerName) || '—'],
-    ['Telefon', kolPlain_(order.phone) || '—']
-  ];
-  const infoRows = info.map(function(pair) {
-    return '<tr>' +
-      '<td style="padding:10px 12px;border-bottom:1px solid #e5e8e1;font-size:13px;color:#68736c;">' + safe(pair[0]) + '</td>' +
-      '<td align="right" style="padding:10px 12px;border-bottom:1px solid #e5e8e1;font-size:13px;font-weight:bold;color:#15291d;">' + safe(pair[1]) + '</td>' +
-      '</tr>';
-  }).join('');
-
-  const lines = Array.isArray(order.lines) ? order.lines : [];
-  const rows = lines.map(function(line) {
-    const qty = Math.max(1, Number(line.quantity) || 1);
-    const details = kolDetailRows_(line);
-    const detailsHtml = details.map(function(detail) {
-      return '<div style="font-size:12px;line-height:18px;color:#738077;margin-top:4px;">' +
-        '<strong style="color:#415449;">' + safe(detail.name) + ':</strong> ' + safe(detail.text) + '</div>';
-    }).join('');
-    return '<tr><td style="padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;">' +
-      '<div style="font-size:15px;line-height:21px;color:#142a1d;">' +
-      '<strong>' + safe(qty) + ' ×</strong> <strong>' + safe(line.name || 'Produkt') + '</strong></div>' +
-      detailsHtml + '</td>' +
-      '<td align="right" style="padding:14px 12px;border-bottom:1px solid #e5e8e1;vertical-align:top;white-space:nowrap;font-size:14px;font-weight:bold;color:#142a1d;">' +
-      safe(money(line.price)) + '</td></tr>';
-  }).join('');
-
-  const detailsPlain = lines.map(function(line) {
-    const row = [Math.max(1, Number(line.quantity)||1) + ' x ' +
-      kolPlain_(line.name) + ' — ' + money(line.price)];
-    kolDetailRows_(line).forEach(function(d) {row.push('  ' + d.name + ': ' + d.text);});
-    return row.join('\n');
-  }).join('\n\n');
-
-  const totalMva = total * 15 / 115; // Display as included (not added to total).
-  const classicHtml =
-    '<!doctype html><html lang="no"><head><meta charset="UTF-8">' +
-    '<meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#eef1eb;font-family:Arial,Helvetica,sans-serif;color:#15291d;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#eef1eb;border-collapse:collapse;">' +
-    '<tr><td align="center" style="padding:20px 10px 30px;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;max-width:620px;border-collapse:collapse;background:#fffefa;">' +
-
-    // Branded hero: avoids remotely loaded CSS or images, which Gmail can block.
-    '<tr><td align="center" style="padding:30px 15px 24px;background:#10291c;color:#fff8e8;border-bottom:4px solid #bda36b;">' +
-    '<div style="font-size:11px;line-height:18px;letter-spacing:3px;color:#d7bf8b;">✦ GOD MAT SAMLER FOLK ✦</div>' +
-    '<div style="font-size:46px;line-height:1.2;font-weight:800;letter-spacing:3px;color:#fff9ec;">KØL</div>' +
-    '<div style="font-size:16px;line-height:24px;letter-spacing:5px;font-weight:bold;color:#fff9ec;">GRILL &amp; PIZZA</div>' +
-    '<div style="padding-top:8px;font-size:11px;line-height:16px;letter-spacing:2px;color:#dac89e;">PIZZA &nbsp;·&nbsp; GRILL &nbsp;·&nbsp; KVALITET</div>' +
-    '</td></tr>' +
-
-    '<tr><td style="padding:16px 15px 8px;background:#fffefa;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;background:#eef4e7;border-radius:16px;">' +
-    '<tr><td align="center" style="padding:20px 10px 8px;color:#20442b;font-size:12px;line-height:20px;font-weight:800;letter-spacing:1px;">' +
-    safe(headline) + '</td></tr>' +
-    '<tr><td align="center" style="padding:0 6px 23px;color:#10291c;">' +
-    '<div style="font-size:20px;font-weight:800;line-height:26px;">' + safe(mainLabel) + '</div>' +
-    '<div style="font-size:52px;line-height:1.15;font-weight:900;letter-spacing:-1px;">' + safe(mainTime) + '</div>' +
-    '</td></tr></table></td></tr>' +
-
-    '<tr><td style="padding:0 15px 13px;background:#fffefa;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f6f6f0;border-collapse:separate;border-radius:13px;">' +
-    '<tr><td width="48%" align="center" style="padding:15px 7px;color:#123c27;font-size:15px;font-weight:bold;">' + safe(statusLeft) + '</td>' +
-    '<td width="52%" align="center" style="padding:15px 7px;border-left:1px solid #e3e6dd;color:#193b27;font-size:14px;font-weight:bold;">' +
-    safe(statusRight) + '</td></tr></table></td></tr>' +
-
-    '<tr><td style="padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;">' +
-    introHtml + '</td></tr>' +
-
-    '<tr><td style="padding:0 15px 14px;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
-    '<tr><td colspan="2" style="padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;">' + safe(detailsTitle) + '</td></tr>' +
-    infoRows +
-    '<tr><td colspan="2" style="padding:12px;font-size:12px;color:#65736a;line-height:19px;">' +
-    '<strong>Henting:</strong> Øgardsvegen 44, 2100 Skarnes<br>' +
-    '<a href="https://www.google.com/maps/search/?api=1&amp;query=%C3%98gardsvegen+44%2C+2100+Skarnes" style="color:#286844;text-decoration:underline;">Vis veibeskrivelse</a>' +
-    '</td></tr></table></td></tr>' +
-
-    '<tr><td style="padding:0 15px 14px;">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
-    '<tr><td colspan="2" style="padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;">' + safe(itemsTitle) + '</td></tr>' +
-    (rows || '<tr><td colspan="2" style="padding:15px;font-size:13px;">Ingen produktlinjer lagret.</td></tr>') +
-    '<tr><td style="padding:12px;color:#657369;font-size:13px;">Delsum</td><td align="right" style="padding:12px;color:#263c2e;font-size:13px;white-space:nowrap;">' +
-    safe(money2(subtotal)) + '</td></tr>' +
-    '<tr><td style="padding:0 12px 15px;color:#657369;font-size:13px;">Herav MVA (15 %)</td><td align="right" style="padding:0 12px 15px;color:#263c2e;font-size:13px;white-space:nowrap;">' +
-    safe(money2(totalMva)) + '</td></tr>' +
-    '<tr><td style="padding:17px 12px;background:#123c2b;color:white;font-size:23px;font-weight:800;">Totalt</td>' +
-    '<td align="right" style="padding:17px 12px;background:#123c2b;color:white;font-size:23px;font-weight:800;white-space:nowrap;">' +
-    safe(money(total)) + '</td></tr>' +
-    '</table></td></tr>' +
-
-    (kolPlain_(order.comment) ? '<tr><td style="padding:2px 26px 14px;font-size:12px;color:#536457;"><strong>Kommentar:</strong> ' + safe(order.comment) + '</td></tr>' : '') +
-    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + footerHtml + '</td></tr>' : '') +
-    '<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;line-height:20px;">' +
-    'Takk for at du bestiller hos<br><strong style="color:#143623;font-size:13px;letter-spacing:1px;">KØL GRILL &amp; PIZZA</strong><br>' +
-    '<a href="' + orderLink + '" style="color:#286844;">Se vår meny</a><br>' +
-    '<a href="mailto:skarnes.restaurant@gmail.com" style="color:#286844;">skarnes.restaurant@gmail.com</a>' +
-    '</td></tr></table></td></tr></table></body></html>';
-
-  const fullVars={
-    ...vars,
-    navnFullt:kolPlain_(order.customerName)||firstName,
-    telefon:kolPlain_(order.phone),
-    bestilt:createdAt?hms(createdAt,'dd.MM.yyyy, HH:mm'):'—',
-    hovedetikett:mainLabel,hovedtid:mainTime,
-    hentetid:mainTime,delsum:money2(subtotal),
-    mva:money2(totalMva),adresse:'Øgardsvegen 44, 2100 Skarnes'
-  };
-  const html=selected&&selected.version===2
-    ? kolRenderFullEmailTemplate_(selected.html,fullVars,order,money)
-    : classicHtml;
-  // HTML templates remain the source of visual layout. The independent
-  // plain-text fallback still includes the customer greeting and full order
-  // details if an email client cannot display HTML.
-  const plainIntro=selected&&selected.version===2
-    ? 'Hei '+firstName+'! Bestillingen din hos KØL Grill & Pizza.'
-    : kolPlainEmailMarkup_(introLine);
-  const text =
-    'KØL Grill & Pizza\n' +
-    (accepted ? 'Bestillingen din er bekreftet.' : 'Bestillingen din er klar for henting!') +
-    '\n' + mainLabel + ' ' + mainTime +
-    '\n' + statusLeft + ' – ' + statusRight +
-    '\n\n' + plainIntro +
-    '\n\n' + info.map(function(p) {return p[0] + ': ' + p[1];}).join('\n') +
-    '\nHenting: Øgardsvegen 44, 2100 Skarnes' +
-    '\n\nBestilte varer:\n' + detailsPlain +
-    '\n\nDelsum: ' + money2(subtotal) +
-    '\nHerav MVA (15 %): ' + money2(totalMva) +
-    '\nTotalt: ' + money(total) +
-    (footerLine ? '\n\n'+kolPlainEmailMarkup_(footerLine) : '')+'\n\nVennlig hilsen KØL Grill & Pizza';
-  return { subject:subject, html:html, text:text };
+  const subjectTemplate=template?.subject||
+    (accepted?'Bestillingen din er bekreftet':'Bestillingen din er klar for henting')+
+    ' #{kode} – KØL Grill & Pizza';
+  const subject=kolMailTemplateText_(subjectTemplate,vars);
+  const html=kolRenderFullEmailTemplate_(finalSource,vars,order,money);
+  const products=(Array.isArray(order.lines)?order.lines:[]).map(line=>
+    (Number(line.quantity)||1)+' × '+kolPlain_(line.name)+' — '+money(line.price)+
+    kolDetailRows_(line).map(d=>'\n  '+d.name+': '+d.text).join('')
+  ).join('\n');
+  const text='KØL Grill & Pizza\n'+heading+
+    '\n'+vars.hovedetikett+' '+clock+
+    '\n'+vars.hentetype+' – '+vars.tidsinfo+
+    '\n\n'+(template?.version===1
+      ?kolMailTemplateText_(template.body,vars).replace(/<[^>]*>/g,'')
+      :('Hei '+first+'! Bestillingen din hos KØL Grill & Pizza.'))+
+    '\n\nBestillingskode: #'+code+
+    '\nBestilt: '+vars.bestilt+'\nNavn: '+name+'\nTelefon: '+vars.telefon+
+    '\nHenting: '+vars.adresse+'\n\nBestilte varer:\n'+products+
+    '\n\nDelsum: '+vars.delsum+'\nHerav MVA (15 %): '+vars.mva+
+    '\nTotalt: '+vars.total+'\n\nSe bestillingen: '+link+
+    '\n\nKØL Grill & Pizza';
+  return {subject,html,text};
 }
 
 function kolSendMail_(order, kind, mailTemplates) {
