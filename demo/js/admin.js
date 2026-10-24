@@ -3787,28 +3787,31 @@ $('btnExportMenu').addEventListener('click',()=>{
  * test phone/account, never a browser-provided address.
  * ------------------------------------------------------------------ */
 const NOTICE_KINDS = ['smsAccepted','emailAccepted','emailReady'];
-const NOTICE_DEFAULTS = {
+function noticeDefaults() {
+  const restaurantName = String(store.settings.restaurantName || '').trim() || 'Restauranten';
+  return {
   smsAccepted:{
-    body:'Hei {navn}! Bestillingen din er bekreftet ✅\\n\\nForventet hentetid: kl. {hentetid}\\n\\nSe bestillingen: {lenke}\\n\\nKØL Grill & Pizza'
+    body:`Hei {navn}! Bestillingen din er bekreftet ✅\\n\\nForventet hentetid: kl. {hentetid}\\n\\nSe bestillingen: {lenke}\\n\\n${restaurantName}`
       .replaceAll('\\n','\n')
   },
   emailAccepted:{
-    subject:'Bestillingen din er bekreftet #{kode} – KØL Grill & Pizza',
+    subject:'Bestillingen din er bekreftet #{kode} – '+restaurantName,
     headline:'BESTILLINGEN DIN ER BEKREFTET',
     body:'Hei {navn}! Vi har bekreftet bestillingen din og forbereder maten. Forventet hentetid: kl. {hentetid}.',
-    footer:'Takk for at du bestiller hos KØL Grill & Pizza!',
+    footer:'Takk for at du bestiller hos '+restaurantName+'!',
     timeLabel:'Hentetid:',statusLeft:'{hentetype}',statusRight:'{tidsinfo}',
     detailsTitle:'Bestillingsdetaljer',itemsTitle:'Bestilte varer'
   },
   emailReady:{
-    subject:'Bestillingen din er klar for henting #{kode} – KØL Grill & Pizza',
+    subject:'Bestillingen din er klar for henting #{kode} – '+restaurantName,
     headline:'MATEN DIN ER KLAR!',
     body:'Hei {navn}! Maten din er klar for henting. Velkommen!',
-    footer:'Takk for at du bestiller hos KØL Grill & Pizza!',
+    footer:'Takk for at du bestiller hos '+restaurantName+'!',
     timeLabel:'Klar kl.',statusLeft:'Klar for henting',statusRight:'Du kan hente maten nå',
     detailsTitle:'Bestillingsdetaljer',itemsTitle:'Bestilte varer'
   }
-};
+  };
+}
 const noticeState={kind:'smsAccepted',editorMode:'simple',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
 const noticeEl={
   tab:[...document.querySelectorAll('[data-message-kind]')],
@@ -3910,7 +3913,7 @@ function noticePreview(){
     el.append(frame);
     return;
   }
-  const brand=document.createElement('div');brand.className='notification-email-brand';brand.textContent='KØL · GRILL & PIZZA';
+  const brand=document.createElement('div');brand.className='notification-email-brand';brand.textContent=String(store.settings.restaurantName || '').trim() || 'Restauranten';
   const subject=document.createElement('strong');subject.textContent='Emne: '+noticeSubstitute(draft.subject);
   const head=document.createElement('div');head.className='notification-email-heading';head.textContent=noticeSubstitute(draft.headline);
   const pickup=document.createElement('div');pickup.textContent=noticeSubstitute(draft.timeLabel||'Hentetid:')+' 01:45 · '+noticeSubstitute(draft.statusLeft||'Snarest')+' / '+noticeSubstitute(draft.statusRight||'');
@@ -3925,10 +3928,10 @@ function noticePreview(){
 function noticeSetKind(kind){
   if(!NOTICE_KINDS.includes(kind))return;
   noticeState.kind=kind;noticeState.dirty=false;
-  const saved={...NOTICE_DEFAULTS[kind],...(noticeState.templates[kind]||{})};
+  const saved={...noticeDefaults()[kind],...(noticeState.templates[kind]||{})};
   if(noticeKindIsEmail()){
     noticeEl.html.value=typeof saved.html==='string'
-      ? saved.html:defaultOrderEmailHtml(kind,saved);
+      ? saved.html:defaultOrderEmailHtml(kind,saved,{name:store.settings.restaurantName});
     noticeEl.htmlSubject.value=String(saved.subject||'');
     noticeEl.subject.value=String(saved.subject||'');
   }
@@ -3954,7 +3957,7 @@ async function noticeLoad(){
   try{
     for(const kind of NOTICE_KINDS){
       const r=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
-      noticeState.templates[kind]=(r.data&&typeof r.data==='object')?r.data:NOTICE_DEFAULTS[kind];
+      noticeState.templates[kind]=(r.data&&typeof r.data==='object')?r.data:noticeDefaults()[kind];
       noticeState.etag[kind]=r.etag;
     }
     noticeState.loaded=true;
@@ -4124,10 +4127,10 @@ noticeEl.modeHtml.addEventListener('click',()=>noticeSetEditorMode('html'));
 noticeEl.modeSimple.addEventListener('click',()=>noticeSetEditorMode('simple'));
 noticeEl.restoreHtml.addEventListener('click',()=>{
   if(!noticeKindIsEmail())return;
-  const saved=noticeState.templates[noticeState.kind]||NOTICE_DEFAULTS[noticeState.kind];
-  noticeEl.html.value=defaultOrderEmailHtml(noticeState.kind,saved);
+  const saved=noticeState.templates[noticeState.kind]||noticeDefaults()[noticeState.kind];
+  noticeEl.html.value=defaultOrderEmailHtml(noticeState.kind,saved,{name:store.settings.restaurantName});
   noticeState.dirty=true;noticePreview();
-  noticeFeedback('KØL-standarddesign er satt inn i redigeringsfeltet. Lagre for å bruke det.');
+  noticeFeedback('Standarddesign er satt inn i redigeringsfeltet. Lagre for å bruke det.');
 });
 noticeEl.copyHtml.addEventListener('click',async()=>{
   try{await navigator.clipboard.writeText(noticeEl.html.value);noticeFeedback('HTML-koden er kopiert.','saved')}
