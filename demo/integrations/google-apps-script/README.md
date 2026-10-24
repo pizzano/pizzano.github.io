@@ -16,7 +16,17 @@ Kullanılabilir değişkenler: `{navn}`, `{hentetid}`, `{lenke}`,
 `{kode}`, `{total}`, `{varer}`. Şablonun bütün varsayılan metinleri
 Firebase'de saklanır; e-postanın ürün/fiyat/KDV bölümü güvenli kodla otomatik
 üretilmeye devam eder. E-posta alanlarına ham HTML veya çalıştırılabilir kod
-konulmaz; kullanıcı verileri HTML-escape ile korunur.
+konulmaz; kullanıcı verileri HTML-escape ile korunur. **Tek istisna:**
+şablonun müşteri mesajı ve kapanış alanlarında `<strong>metin</strong>`
+kalın metin biçimlendirmesidir. Admin'deki **B Fet tekst** düğmesi bunu
+otomatik ekler. Diğer bütün HTML etiketleri düz, güvenli metin olarak
+gösterilir; HTML e-postada çalıştırılmaz. Düz metin alternatifinde
+`<strong>` etiketleri kaldırılır. Eskiden kapanış eğik çizgisini
+unutup `<strong>01:45<strong>` yazılmışsa da iki açılış
+etiketi baş/son olarak işlenerek e-postada kalın gösterilir.
+Bu biçimlendirme Apps Script tarafında işlendiğinden, bu özellik
+için güncel `email-poller.gs` dosyasını çalışan Google Apps Script'e
+bir defa kopyalamak gerekir.
 
 ### İlk ve son Apps Script kurulumu
 
