@@ -2720,7 +2720,7 @@ el.orderFilterBtns.forEach((button) => {
   });
 });
 
-// The KØL / Grill & Pizza / Bestillinger header is the back target
+// The restaurant name / Bestillinger header is the back target
 // in the full-screen order detail view (including on touch devices).
 document.getElementById('ordersBackToList')?.addEventListener('click', () => {
   if (!selectedOrderId) return;
@@ -3705,9 +3705,25 @@ el.btnConfirmOk.addEventListener('click', () => {
  * ------------------------------------------------------------------ */
 
 function renderAll() {
+  const restaurantName = String(store.settings.restaurantName || '').trim();
+  const restaurantLogo = String(store.settings.restaurantLogo || '').trim();
   const brandLogo = document.querySelector('.side-brand img');
-  if (brandLogo) brandLogo.src = store.settings.restaurantLogo || '/demo/icons/restaurant.svg';
-  document.querySelector('.side-brand strong')?.replaceChildren(document.createTextNode(store.settings.restaurantName ? store.settings.restaurantName + ' Admin' : 'Admin'));
+  if (brandLogo) {
+    brandLogo.hidden = !restaurantLogo;
+    if (restaurantLogo && brandLogo.getAttribute('src') !== restaurantLogo) brandLogo.src = restaurantLogo;
+    if (!restaurantLogo) brandLogo.removeAttribute('src');
+    brandLogo.alt = restaurantName || 'Restaurantlogo';
+  }
+  document.querySelector('.side-brand strong')?.replaceChildren(
+    document.createTextNode(restaurantName ? restaurantName + ' Admin' : 'Admin')
+  );
+  const ordersBrand = document.querySelector('.orders-brand');
+  if (ordersBrand) {
+    ordersBrand.hidden = !restaurantName;
+    ordersBrand.setAttribute('aria-label', restaurantName || 'Restaurant');
+    const title = ordersBrand.querySelector('.orders-brand-name');
+    if (title && title.textContent !== restaurantName) title.textContent = restaurantName;
+  }
   renderStats();
   if (ui.page === 'products') {
     renderCategories();
