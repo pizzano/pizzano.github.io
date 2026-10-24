@@ -3,6 +3,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
+import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261024-fullemail1';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
@@ -3779,11 +3780,16 @@ const NOTICE_DEFAULTS = {
     detailsTitle:'Bestillingsdetaljer',itemsTitle:'Bestilte varer'
   }
 };
-const noticeState={kind:'smsAccepted',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
+const noticeState={kind:'smsAccepted',editorMode:'simple',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
 const noticeEl={
   tab:[...document.querySelectorAll('[data-message-kind]')],
   subject:$('notificationSubject'),headline:$('notificationHeadline'),
   body:$('notificationBody'),footer:$('notificationFooter'),
+  html:$('notificationHtml'),htmlPanel:document.querySelector('[data-notification-full-html]'),
+  simplePanel:document.querySelector('[data-notification-simple]'),
+  modeHtml:$('notificationModeHtml'),modeSimple:$('notificationModeSimple'),
+  restoreHtml:$('notificationRestoreHtml'),copyHtml:$('notificationCopyHtml'),
+  engine:$('notificationEmailEngine'),
   timeLabel:$('notificationTimeLabel'),
   statusLeft:$('notificationStatusLeft'),statusRight:$('notificationStatusRight'),
   detailsTitle:$('notificationDetailsTitle'),itemsTitle:$('notificationItemsTitle'),
@@ -3830,13 +3836,24 @@ function noticeAppendBoldMarkup(host, value) {
   }
 }
 function noticeReadForm(){
-  return noticeKindIsEmail()
-    ? {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
-       body:noticeEl.body.value.trim(),footer:noticeEl.footer.value.trim(),
-       timeLabel:noticeEl.timeLabel.value.trim(),statusLeft:noticeEl.statusLeft.value.trim(),
-       statusRight:noticeEl.statusRight.value.trim(),detailsTitle:noticeEl.detailsTitle.value.trim(),
-       itemsTitle:noticeEl.itemsTitle.value.trim()}
-    : {body:noticeEl.body.value.trim()};
+  if(!noticeKindIsEmail())return {body:noticeEl.body.value.trim()};
+  if(noticeState.editorMode==='html')return {
+    subject:noticeEl.subject.value.trim(),html:noticeEl.html.value
+  };
+  return {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
+    body:noticeEl.body.value.trim(),footer:noticeEl.footer.value.trim(),
+    timeLabel:noticeEl.timeLabel.value.trim(),statusLeft:noticeEl.statusLeft.value.trim(),
+    statusRight:noticeEl.statusRight.value.trim(),detailsTitle:noticeEl.detailsTitle.value.trim(),
+    itemsTitle:noticeEl.itemsTitle.value.trim()};
+}
+function noticeSetEditorMode(mode){
+  if(!noticeKindIsEmail())mode='simple';
+  noticeState.editorMode=mode==='html'?'html':'simple';
+  noticeEl.htmlPanel.hidden=noticeState.editorMode!=='html';
+  noticeEl.simplePanel.hidden=noticeState.editorMode==='html';
+  noticeEl.modeHtml.classList.toggle('is-active',noticeState.editorMode==='html');
+  noticeEl.modeSimple.classList.toggle('is-active',noticeState.editorMode==='simple');
+  noticePreview();
 }
 function noticePreview(){
   const draft=noticeReadForm();
@@ -3844,6 +3861,16 @@ function noticePreview(){
   el.replaceChildren();el.classList.toggle('is-email',noticeKindIsEmail());
   if(!noticeKindIsEmail()){
     el.textContent=noticeSubstitute(draft.body);
+    return;
+  }
+  if(noticeState.editorMode==='html'){
+    const frame=document.createElement('iframe');
+    frame.className='notification-email-frame';
+    frame.setAttribute('sandbox','');
+    frame.setAttribute('referrerpolicy','no-referrer');
+    frame.setAttribute('title','E-post HTML forhåndsvisning');
+    frame.srcdoc=renderEmailPreviewHtml(draft.html);
+    el.append(frame);
     return;
   }
   const brand=document.createElement('div');brand.className='notification-email-brand';brand.textContent='KØL · GRILL & PIZZA';
@@ -3862,6 +3889,11 @@ function noticeSetKind(kind){
   if(!NOTICE_KINDS.includes(kind))return;
   noticeState.kind=kind;noticeState.dirty=false;
   const saved={...NOTICE_DEFAULTS[kind],...(noticeState.templates[kind]||{})};
+  if(noticeKindIsEmail()){
+    noticeEl.html.value=typeof saved.html==='string'
+      ? saved.html:defaultOrderEmailHtml(kind,saved);
+  }
+  noticeSetEditorMode(noticeKindIsEmail()?'html':'simple');
   for(const key of ['subject','headline','body','footer','timeLabel','statusLeft','statusRight','detailsTitle','itemsTitle']){
     if(noticeEl[key])noticeEl[key].value=String(saved[key]??'');
   }
@@ -3871,6 +3903,7 @@ function noticeSetKind(kind){
   noticeFeedback(noticeState.loaded?'Klar. Endringer må lagres før test.':'Henter maler…');
   noticePreview();
   void noticeCheckTestStatus();
+  void noticeCheckEmailEngine();
 }
 async function noticeGet(url,etag=false){
   const r=await fetch(url,{cache:'no-store',headers:etag?{'X-Firebase-ETag':'true'}:{}});
@@ -3892,42 +3925,78 @@ async function noticeLoad(){
 async function noticeSave(){
   if(noticeState.busy)return;
   const kind=noticeState.kind,draft=noticeReadForm();
-  if(!draft.body||draft.body.length>2200|| (kind!=='smsAccepted'&&(!draft.subject||!draft.headline))){
-    noticeFeedback('Skriv en gyldig melding, overskrift og emne.','error');return;
-  }
-  if(kind!=='smsAccepted'&&
-     [draft.timeLabel,draft.statusLeft,draft.statusRight,draft.detailsTitle,draft.itemsTitle]
+  const isFull=kind!=='smsAccepted'&&noticeState.editorMode==='html';
+  if(isFull){
+    if(!draft.subject||draft.subject.length>220||/[\r\n]/.test(draft.subject)||
+       !draft.html||draft.html.length<30||draft.html.length>45000){
+      noticeFeedback('Oppgi emne og en fullstendig HTML-mal (30–45000 tegn).','error');return;
+    }
+    if(!/<table\b/i.test(draft.html)){
+      noticeFeedback('HTML-malen bør inneholde en e-posttabell (<table>).','error');return;
+    }
+  } else {
+    if(!draft.body||draft.body.length>2200||(kind!=='smsAccepted'&&(!draft.subject||!draft.headline))){
+      noticeFeedback('Skriv en gyldig melding, overskrift og emne.','error');return;
+    }
+    if(kind!=='smsAccepted'&&
+       [draft.timeLabel,draft.statusLeft,draft.statusRight,draft.detailsTitle,draft.itemsTitle]
        .some(value=>!value||value.length>160)){
-    noticeFeedback('Fyll ut alle e-postetiketter.','error');return;
-  }
-  if(kind==='smsAccepted'&&draft.body.indexOf('{lenke}')<0){
-    noticeFeedback('SMS-malen må inneholde {lenke} slik at kunden kan åpne ordren.','error');return;
-  }
-  const unknown=Object.values(draft).join(' ').match(/\{([a-zA-Z]+)\}/g)||[];
-  if(unknown.some(t=>!['{navn}','{hentetid}','{kode}','{lenke}','{total}','{varer}','{hentetype}','{tidsinfo}'].includes(t))){
-    noticeFeedback('Ukjent variabel. Bruk variablene som er vist over.','error');return;
+      noticeFeedback('Fyll ut alle e-postetiketter.','error');return;
+    }
+    if(kind==='smsAccepted'&&!draft.body.includes('{lenke}')){
+      noticeFeedback('SMS-malen må inneholde {lenke}.','error');return;
+    }
   }
   noticeState.busy=true;noticeEl.save.disabled=true;
   try{
+    const stored={...draft,version:isFull?2:1,updatedAt:Date.now()};
     const response=await fetch(DB_URL+'/notificationTemplates/'+kind+'.json',{
       method:'PUT',
       headers:{'Content-Type':'application/json','if-match':noticeState.etag[kind]||'null_etag'},
-      body:JSON.stringify({...draft,version:1,updatedAt:Date.now()})
+      body:JSON.stringify(stored)
     });
     if(response.status===412){
-      noticeFeedback('Malen er endret et annet sted. Last siden på nytt før du lagrer.','error');return;
+      noticeFeedback('Malen er endret et annet sted. Oppdater siden før lagring.','error');return;
     }
     if(!response.ok)throw new Error('Firebase HTTP '+response.status);
-    noticeState.templates[kind]={...draft,version:1};
-    noticeState.etag[kind]=response.headers.get('ETag')||null;
-    // Firebase PUT may not return ETag; fetch fresh ETag for next edit.
+    noticeState.templates[kind]=stored;
     const reread=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
     noticeState.etag[kind]=reread.etag;
     noticeState.dirty=false;
-    noticeFeedback('Malen er lagret i Firebase. Neste varsling bruker denne teksten.','saved');
+    noticeFeedback(isFull
+      ? 'Hele HTML-malen er lagret i Firebase. Oppdatert Google Apps Script må være aktivt for at kunden får samme layout.'
+      : 'Malen er lagret i Firebase.','saved');
   }catch(error){noticeFeedback('Lagring mislyktes: '+error.message,'error')}
   finally{noticeState.busy=false;noticeEl.save.disabled=false}
 }
+/** Check the actual GAS sender version; the web UI version is not evidence
+ * that the running Apps Script was updated.
+ */
+async function noticeCheckEmailEngine(){
+  const node=noticeEl.engine;
+  if(!node)return;
+  node.hidden=!noticeKindIsEmail();
+  if(node.hidden||!DB_URL)return;
+  try{
+    const {data}=await noticeGet(DB_URL+'/emailHealth.json');
+    if(!noticeKindIsEmail())return;
+    const last=Number(data?.checkedAt)||0;
+    const stale=!last||Date.now()-last>15*60*1000;
+    if(data?.completeHtmlEditor===true&&Number(data?.templateEngineVersion)>=4){
+      node.textContent=stale
+        ? 'HTML-støtte er installert, men siste kjøring er eldre enn 15 minutter.'
+        : 'HTML-avsender v4 er aktiv: hele e-postmalen sendes som redigert HTML.';
+      node.dataset.state=stale?'warning':'saved';
+    }else{
+      node.textContent='HTML-senderen er ikke bekreftet oppdatert. Kopier ny EmailPoller.gs til Google Apps Script; den gamle senderen bruker fortsatt låst e-postdesign.';
+      node.dataset.state='warning';
+    }
+  }catch(error){
+    node.textContent='Kunne ikke bekrefte HTML-senderens versjon: '+error.message;
+    node.dataset.state='warning';
+  }
+}
+
 async function noticeSendTest(){
   if(noticeState.busy)return;
   if(!noticeState.loaded){noticeFeedback('Vent til malene er lastet.','error');return}
@@ -4015,6 +4084,22 @@ boldButton?.addEventListener('click',()=>{
   else input.setSelectionRange(from+8,from+8);
   input.dispatchEvent(new Event('input',{bubbles:true}));
 });
+noticeEl.modeHtml.addEventListener('click',()=>noticeSetEditorMode('html'));
+noticeEl.modeSimple.addEventListener('click',()=>noticeSetEditorMode('simple'));
+noticeEl.restoreHtml.addEventListener('click',()=>{
+  if(!noticeKindIsEmail())return;
+  const saved=noticeState.templates[noticeState.kind]||NOTICE_DEFAULTS[noticeState.kind];
+  noticeEl.html.value=defaultOrderEmailHtml(noticeState.kind,saved);
+  noticeState.dirty=true;noticePreview();
+  noticeFeedback('KØL-standarddesign er satt inn i redigeringsfeltet. Lagre for å bruke det.');
+});
+noticeEl.copyHtml.addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(noticeEl.html.value);noticeFeedback('HTML-koden er kopiert.','saved')}
+  catch(error){noticeFeedback('Kunne ikke kopiere HTML-koden: '+error.message,'error')}
+});
+noticeEl.html.addEventListener('input',()=>{
+  noticeState.dirty=true;noticePreview();noticeFeedback('HTML-endringer er ikke lagret.');
+});
 noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
 for(const input of [noticeEl.subject,noticeEl.headline,noticeEl.body,noticeEl.footer,
   noticeEl.timeLabel,noticeEl.statusLeft,noticeEl.statusRight,noticeEl.detailsTitle,noticeEl.itemsTitle]){
@@ -4025,4 +4110,5 @@ noticeEl.reset.addEventListener('click',()=>noticeSetKind(noticeState.kind));
 noticeEl.test.addEventListener('click',()=>void noticeSendTest());
 noticeEl.check.addEventListener('click',()=>void noticeCheckTestStatus());
 window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden)void noticeCheckTestStatus()},12000);
+window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden&&noticeKindIsEmail())void noticeCheckEmailEngine()},30000);
 void noticeLoad();
