@@ -569,8 +569,12 @@ function kontrollerEpostBestillinger() {
   if (!lock.tryLock(1000)) return;
   try {
     const props = PropertiesService.getScriptProperties();
-    const orders = kolReadOrders_();
     const mailTemplates = kolReadMailTemplates_();
+    // Handle admin email tests first, independently of the normal orders
+    // query. A missing/invalid Firebase order index must not block test mail.
+    try { kolProcessMailTests_(props,mailTemplates); }
+    catch (error) { Logger.log('E-posttest feilet: ' + error.message); }
+    const orders = kolReadOrders_();
     const now = Date.now();
     for (const id in orders) {
       const order = orders[id];
@@ -628,8 +632,6 @@ function kontrollerEpostBestillinger() {
         props.setProperty(key, JSON.stringify(checkpoint));
       }
     }
-    try{kolProcessMailTests_(props,mailTemplates)}
-    catch(error){Logger.log('E-post testkontroll feilet: '+error.message)}
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     props.setProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY, KOL_EMAIL_FIRST_SEEN_FIX_VERSION);
     try { kolEmailHeartbeat_(now, 'ok'); }
@@ -638,6 +640,21 @@ function kontrollerEpostBestillinger() {
     Logger.log('E-postpoller feilet: ' + err.message);
     try { kolEmailHeartbeat_(Date.now(), 'error'); } catch (_) {}
     throw err;
+  } finally { lock.releaseLock(); }
+}
+
+/** Run manually in Apps Script to diagnose/admin-test without touching
+ * customer orders. Respects the same fixed recipient and daily limits.
+ * Check Executions log and Admin > Varslinger > Kontroller teststatus.
+ */
+function kontrollerEpostTestNaa() {
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    Logger.log('Kontrollerer Varslinger-test: avsenderkonto='+
+      (Session.getEffectiveUser().getEmail()||'(ukjent)'));
+    kolProcessMailTests_(PropertiesService.getScriptProperties(),kolReadMailTemplates_());
+    Logger.log('Testkontroll ferdig. Hvis ingen test ble sendt: kontroller Firebase Rules, mottakerkonto, testbegrensning og siste request.id.');
   } finally { lock.releaseLock(); }
 }
 
