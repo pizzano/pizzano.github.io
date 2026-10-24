@@ -1239,7 +1239,8 @@ function validateDraft() {
       problems.add(group.id);
       if (!message) message = `Velg i «${group.title}» for å fortsette.`;
     }
-    if (group.selectionMode === 'multiple' && new Set(picked).size > group.maxSelections) {
+    if (group.selectionMode === 'multiple' &&
+        (group.allowQuantity ? picked.length : new Set(picked).size) > group.maxSelections) {
       problems.add(group.id);
       if (!message) message = `Du kan velge maks ${group.maxSelections} i «${group.title}».`;
     }
@@ -1257,24 +1258,32 @@ function draftTotal() {
 function optionGroupHtml(group, problems) {
   const picked = draft.selections[group.id] || [];
   const isMulti = group.selectionMode === 'multiple';
-  const atMax = isMulti && new Set(picked).size >= group.maxSelections;
-  const badges = `<span class="opt-guidance">${group.required ? 'Påkrevd' : 'Valgfritt'}</span>`;
+  const servingMode = isMulti && Boolean(group.allowQuantity);
+  const selectedCount = servingMode ? picked.length : new Set(picked).size;
+  const maxCount = Math.max(1,Math.min(30,Number(group.maxSelections)||1));
+  const atMax = isMulti && selectedCount >= maxCount;
+  const badges = `<span class="opt-guidance">${group.required ? 'Påkrevd' : 'Valgfritt'}</span>${
+    servingMode ? `<span class="opt-guidance opt-serving-limit">Maks ${maxCount} stk · ${selectedCount} valgt</span>` : ''
+  }`;
 
   const rows = (group.options || [])
     .filter((option) => option.label)
     .map((option) => {
-      const checked = picked.includes(option.id);
+      const count = picked.filter(id => id === option.id).length;
+      const checked = count > 0;
       const blocked = option.soldOut || (atMax && !checked);
       return `
-        <label class="opt-row${checked ? ' is-checked' : ''}${blocked ? ' is-blocked' : ''}">
+        <label class="opt-row${checked ? ' is-checked' : ''}${blocked ? ' is-blocked' : ''}${servingMode ? ' is-serving' : ''}">
           <input type="${isMulti ? 'checkbox' : 'radio'}" name="grp_${escapeHtml(group.id)}"
                  data-group="${escapeHtml(group.id)}" data-option="${escapeHtml(option.id)}"
                  ${checked ? 'checked' : ''} ${blocked ? 'disabled' : ''}>
           <span class="opt-label">${escapeHtml(option.label)}</span>
-          <span class="opt-price">${
-            option.price > 0 ? `+${formatPrice(option.price)}` : 'Inkludert'
-          }</span>
-          ${group.allowQuantity && checked ? `<span class="option-quantity"><button type="button" data-addon-quantity="-1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Færre ${escapeHtml(option.label)}">−</button><b>${picked.filter(id=>id===option.id).length}</b><button type="button" data-addon-quantity="1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Flere ${escapeHtml(option.label)}">+</button></span>` : ''}
+          <span class="opt-price">${option.price > 0 ? `+${formatPrice(option.price)} / stk` : 'Inkludert'}</span>
+          ${servingMode ? `<span class="option-quantity" role="group" aria-label="Antall ${escapeHtml(option.label)}">
+            <button type="button" data-addon-quantity="-1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Færre ${escapeHtml(option.label)}" ${count === 0 || option.soldOut ? 'disabled' : ''}>−</button>
+            <b aria-live="polite">${count}</b>
+            <button type="button" data-addon-quantity="1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Flere ${escapeHtml(option.label)}" ${atMax || option.soldOut ? 'disabled' : ''}>+</button>
+          </span>` : ''}
         </label>`;
     })
     .join('');
@@ -1575,8 +1584,10 @@ function reconcileCart() {
       const valid = new Set((group.options || []).filter(opt=>!opt.soldOut).map((opt) => opt.id));
       const before = line.selections[group.id] || [];
       let after = before.filter((id) => valid.has(id));
-      if (!group.allowQuantity) after = after.slice(0, group.selectionMode === 'single' ? 1 : group.maxSelections);
-      if (after.length !== before.length) changed = true;
+      if (group.allowQuantity && group.selectionMode === 'multiple')
+        after = after.slice(0,Math.max(1,Math.min(30,Number(group.maxSelections)||1)));
+      else after = [...new Set(after)].slice(0, group.selectionMode === 'single' ? 1 : group.maxSelections);
+      if (after.length !== before.length || after.some((id,i)=>id!==before[i])) changed = true;
       line.selections[group.id] = after;
     }
     const removableNames = new Set(
@@ -2431,7 +2442,9 @@ async function placeOrder() {
         picked = (group.defaultOptionIds || []).filter((id) => validIds.has(id));
       }
 
-      selections[group.id] = group.allowQuantity ? picked.slice(0,30) : group.selectionMode === 'single'
+      selections[group.id] = group.allowQuantity
+        ? picked.slice(0,Math.max(1,Math.min(30,Number(group.maxSelections)||1)))
+        : group.selectionMode === 'single'
         ? picked.slice(0, 1)
         : picked.slice(0, Math.max(Number(group.maxSelections) || picked.length, 1));
     }
@@ -2841,13 +2854,19 @@ el.sheetBody.addEventListener('click', (event) => {
     event.preventDefault();
     const {item} = findItem(draft.itemId);
     const group = getItemOptionGroups(item, draft.sizeId).find(group=>group.id===quantityButton.dataset.addonGroup);
-    if (!group?.allowQuantity) return;
+    if (!group?.allowQuantity || group.selectionMode !== 'multiple') return;
     const ids = [...(draft.selections[group.id] || [])], id = quantityButton.dataset.addonOption;
     if (!group.options.some(option=>option.id===id && !option.soldOut)) return;
-    const count = ids.filter(value=>value===id).length;
-    if (quantityButton.dataset.addonQuantity==='1') { if(count>=30)return;ids.push(id); }
-    else { const index=ids.indexOf(id);if(index>=0)ids.splice(index,1); }
-    draft.selections[group.id]=ids;renderSheet();return;
+    const max = Math.max(1,Math.min(30,Number(group.maxSelections)||1));
+    if (quantityButton.dataset.addonQuantity==='1') {
+      if (ids.length >= max) { toast(`Maks ${max} stk i «${group.title}».`, 'warning');return; }
+      ids.push(id);
+    } else {
+      const index = ids.indexOf(id);if (index >= 0) ids.splice(index,1);
+    }
+    draft.selections[group.id]=ids;
+    if(validateDraft().valid)draft.showErrors=false;
+    renderSheet();return;
   }
   const toggle = event.target.closest('[data-toggle-ingredients]');
   if (toggle) {
@@ -2902,6 +2921,22 @@ el.sheetBody.addEventListener('change', (event) => {
     const current = draft.selections[groupId] || [];
     if (!group.required && current[0] === optionId) draft.selections[groupId] = [];
     else draft.selections[groupId] = [optionId];
+  } else if (group.allowQuantity) {
+    // Checkbox toggles 0/1 while the adjacent +/- stepper allows repeats.
+    // Preserve duplicate IDs: each occurrence represents one paid serving.
+    const ids=[...(draft.selections[groupId]||[])];
+    const max=Math.max(1,Math.min(30,Number(group.maxSelections)||1));
+    if (target.checked) {
+      if(ids.length>=max){
+        target.checked=false;
+        toast(`Maks ${max} stk i «${group.title}».`,'warning');
+        return;
+      }
+      if(!ids.includes(optionId))ids.push(optionId);
+    }else{
+      draft.selections[groupId]=ids.filter(id=>id!==optionId);
+    }
+    if(target.checked)draft.selections[groupId]=ids;
   } else {
     const current = new Set(draft.selections[groupId] || []);
     if (target.checked) {
