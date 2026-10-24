@@ -243,6 +243,16 @@
                             <label class="notification-field" data-notification-email>
                                 <span>Avslutning</span><textarea id="notificationFooter" rows="2" maxlength="500"></textarea>
                             </label>
+                            <details class="notification-advanced" data-notification-email>
+                                <summary>Flere e-posttekster</summary>
+                                <div class="notification-advanced-fields">
+                                    <label class="notification-field"><span>Etikett over hentetid</span><input id="notificationTimeLabel" maxlength="80"></label>
+                                    <label class="notification-field"><span>Venstre statusfelt</span><input id="notificationStatusLeft" maxlength="120"></label>
+                                    <label class="notification-field"><span>Høyre statusfelt</span><input id="notificationStatusRight" maxlength="160"></label>
+                                    <label class="notification-field"><span>Overskrift for bestillingsinfo</span><input id="notificationDetailsTitle" maxlength="100"></label>
+                                    <label class="notification-field"><span>Overskrift for varer</span><input id="notificationItemsTitle" maxlength="100"></label>
+                                </div>
+                            </details>
                             <div class="notification-actions">
                                 <button id="notificationSave" class="btn btn-primary" type="button">Lagre mal</button>
                                 <button id="notificationReset" class="btn btn-outline" type="button">Tilbakestill utkast</button>
