@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-notify2">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-bold1">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -240,6 +240,10 @@
                                 <span id="notificationBodyLabel">SMS-melding</span>
                                 <textarea id="notificationBody" rows="8" maxlength="2200" spellcheck="true"></textarea>
                             </label>
+                            <div class="notification-format-tools" data-notification-email hidden>
+                                <button id="notificationBold" type="button" title="Gjør markert tekst fet"><strong>B</strong> Fet tekst</button>
+                                <small>Marker teksten og trykk B, eller bruk <code>&lt;strong&gt;tekst&lt;/strong&gt;</code>. Annen HTML vises bare som tekst.</small>
+                            </div>
                             <label class="notification-field" data-notification-email>
                                 <span>Avslutning</span><textarea id="notificationFooter" rows="2" maxlength="500"></textarea>
                             </label>
@@ -862,7 +866,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-notify2"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261024-bold1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
