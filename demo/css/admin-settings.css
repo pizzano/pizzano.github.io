@@ -161,3 +161,28 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 #pageNotifications .notification-format-tools small{color:var(--ink-2);font-size:11px;line-height:1.5}
 #pageNotifications .notification-format-tools code{font-family:monospace}
 #pageNotifications .notification-preview-content strong{font-weight:800}
+
+/* Varslinger has a fixed-height scrolling content pane inside the desktop
+ * admin shell, like Bestillinger and Restaurantinnstillinger. Applies to
+ * SMS, E-post Bekreftet and E-post Klar without touching the textareas. */
+#pageNotifications{min-height:0;overflow:hidden}
+#pageNotifications .notification-layout{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  align-content:start;
+  overscroll-behavior-y:contain;
+  scrollbar-width:auto;
+  scrollbar-color:#b2bac4 var(--surface-3);
+}
+#pageNotifications .notification-layout::-webkit-scrollbar{width:12px}
+#pageNotifications .notification-layout::-webkit-scrollbar-track{background:var(--surface-3)}
+#pageNotifications .notification-layout::-webkit-scrollbar-thumb{background:#b2bac4;border-radius:8px;border:2px solid var(--surface-3)}
+#pageNotifications .notification-layout::-webkit-scrollbar-thumb:hover{background:#8995a4}
+@media(max-width:900px){
+  /* On narrow screens the entire admin document scrolls naturally, as
+   * the other pages already do; do not create a nested height trap. */
+  #pageNotifications{height:auto;overflow:visible}
+  #pageNotifications .notification-layout{flex:0 0 auto;overflow:visible;max-height:none;overscroll-behavior-y:auto}
+}
