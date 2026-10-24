@@ -477,8 +477,6 @@ function installerEpostVarsler() {
     const existing = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'kontrollerEpostBestillinger');
     for (const trigger of existing) ScriptApp.deleteTrigger(trigger);
     ScriptApp.newTrigger('kontrollerEpostBestillinger').timeBased().everyMinutes(1).create();
-    try{kolProcessMailTests_(props,mailTemplates)}
-    catch(error){Logger.log('E-post testkontroll feilet: '+error.message)}
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     Logger.log('E-postovervåking aktivert. Eksisterende ordre registrert: ' + seeded + '. Ingen gamle meldinger sendt.');
   } finally { lock.releaseLock(); }
@@ -596,6 +594,8 @@ function kontrollerEpostBestillinger() {
         props.setProperty(key, JSON.stringify(checkpoint));
       }
     }
+    try{kolProcessMailTests_(props,mailTemplates)}
+    catch(error){Logger.log('E-post testkontroll feilet: '+error.message)}
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     props.setProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY, KOL_EMAIL_FIRST_SEEN_FIX_VERSION);
     try { kolEmailHeartbeat_(now, 'ok'); }
