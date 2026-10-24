@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-fullemail1">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-fullemail2">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -234,6 +234,10 @@
                                 <button id="notificationModeSimple" type="button">Enkel redigering</button>
                             </div>
                             <div class="notification-full-html" data-notification-full-html hidden>
+                                <label class="notification-field" for="notificationHtmlSubject">
+                                    <span>E-post emne</span>
+                                    <input id="notificationHtmlSubject" maxlength="220" autocomplete="off" spellcheck="true">
+                                </label>
                                 <p>Her kan du redigere <strong>hele e-postens HTML</strong> – også logo, farger, tabeller, hentetid og produktlinjer. Bruk variablene under. Den andre e-postfanen har sin egen HTML-mal.</p>
                                 <label class="notification-field" for="notificationHtml">
                                     <span>Hele HTML-malen</span>
@@ -886,7 +890,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-fullemail1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261024-fullemail2"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
