@@ -5,30 +5,27 @@
     <script src="/demo/config.js?v=20261022-smsfirebase1"></script>
     <script>window.BESTILL_CONFIG.customerOnly = true;</script>
     <meta charset="UTF-8">
-    <meta name="bestill-build" content="20261025-brandstart1">
+    <meta name="bestill-build" content="20261025-tenantbrand1">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#33251f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="KØL Grill & Pizza">
+    <meta name="apple-mobile-web-app-title" content="Online bestilling">
     <link rel="manifest" href="/demo/manifest.webmanifest">
-    <link rel="apple-touch-icon" href="/demo/icons/kol-icon-192.png">
-    <link rel="icon" type="image/png" href="/demo/icons/kol-icon-192.png" />
-    <title>KØL Grill & Pizza — Bestill online</title>
+    <link rel="icon" type="image/svg+xml" href="/demo/icons/restaurant.svg" />
+    <title>Online bestilling</title>
     <script src="/demo/js/theme.js?v=20261024-localfour2"></script>
-    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261025-brandstart1">
+    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261025-tenantbrand1">
     <link rel="stylesheet" href="/demo/css/customer.css?v=20261025-init-and-qty1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/shop-info.css?v=20261011-states4">
     <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261016-clean1">
-    <meta name="description" content="Bestill pizza, kebab og burger hos KØL Grill & Pizza i Skarnes. Enkel bestilling for henting." />
-    <meta property="og:title" content="KØL Grill & Pizza — Bestill online" />
-    <meta property="og:description" content="Bestill pizza, kebab og burger fra KØL Grill & Pizza i Skarnes." />
-    <meta property="og:image" content="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbbjicakga/pizza-pepperoni-stone-oven.png" />
-    <meta name="twitter:title" content="KØL Grill & Pizza — Bestill online" />
-    <meta name="twitter:description" content="Bestill pizza, kebab og burger fra KØL Grill & Pizza i Skarnes." />
-    <meta name="twitter:image" content="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbbjicakga/pizza-pepperoni-stone-oven.png" />
+    <meta name="description" content="Bestill mat til henting fra restauranten." />
+    <meta property="og:title" content="Online bestilling" />
+    <meta property="og:description" content="Bestill mat til henting fra restauranten." />
+    <meta name="twitter:title" content="Online bestilling" />
+    <meta name="twitter:description" content="Bestill mat til henting fra restauranten." />
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
 </head>
 
@@ -39,12 +36,16 @@
             <button class="hdr-btn hdr-back" id="btnBack" type="button" aria-label="Tilbake til meny" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
             </button>
-            <a class="brand" href="#" id="brandHome" aria-label="KØL Grill & Pizza — til menyen">
-                <img src="/demo/icons/kol-icon-192.png" alt="KØL Grill & Pizza" class="brand-mark" width="32" height="32">
-                <span class="brand-text">
-                    <strong>KØL Grill &amp; Pizza</strong>
-                </span>
+            <!-- Restaurantnavn og eventuell logo kommer fra innstillinger i Firebase.
+                 Ingen hardkodet butikkidentitet skal vises under oppstart. -->
+            <a class="brand" href="#" id="brandHome" aria-label="Til menyen" hidden>
+                <img alt="" class="brand-mark" width="32" height="32" hidden>
+                <span class="brand-text"><strong></strong></span>
             </a>
+            <div class="brand-loading" id="brandLoading" role="status" aria-label="Henter restaurantinformasjon">
+                <span class="brand-loading-mark" aria-hidden="true"></span>
+                <span class="brand-loading-text" aria-hidden="true"></span>
+            </div>
             <nav class="hdr-actions" aria-label="Hovedhandlinger">
                 <button class="hdr-btn header-theme-toggle" id="profileThemeToggle" data-theme-toggle type="button" aria-label="Bytt til mørk modus" aria-pressed="false">
                     <svg class="theme-toggle-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
@@ -331,7 +332,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/js/customer.js?v=20261025-brandstart1"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261025-tenantbrand1"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261024-localfour1"></script>
 </body>
 
