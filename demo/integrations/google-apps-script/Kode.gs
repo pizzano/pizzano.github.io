@@ -55,11 +55,16 @@ function kolShortCode_(orderId) {
 function kolTime_(order) {
   const timestamp = Number(order.scheduledPickupAt) || Number(order.estimatedReadyAt);
   if (Number.isFinite(timestamp) && timestamp > 0) {
-    return Utilities.formatDate(new Date(timestamp), 'Europe/Oslo', 'dd.MM HH:mm');
+    return Utilities.formatDate(new Date(timestamp), 'Europe/Oslo', 'HH:mm');
   }
+  // In the compact order schema, pickupMode may be absent; pickup is
+  // already either "Snarest" or a selected HH:mm slot.
   const manuallySelected = String(order.pickup || '').trim();
-  return order.pickupMode === 'scheduled' && /^\d{1,2}:\d{2}$/.test(manuallySelected)
-    ? manuallySelected : '';
+  const match = /^(\d{1,2}):(\d{2})$/.exec(manuallySelected);
+  if (!match) return '';
+  const hours = Number(match[1]), minutes = Number(match[2]);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59
+    ? String(hours).padStart(2, '0') + ':' + match[2] : '';
 }
 
 /** Norwegian clock time for an ASAP order's stored kitchen-ready estimate.
@@ -81,34 +86,29 @@ function kolAsapReadyClock_(order) {
     : '';
 }
 
-/** One message per order, sent only on confirmed status. */
+/** Direct order-detail URL (full ID, not the six-character display code).
+ * Treat this as a private bearer link: never include name/phone in the URL.
+ */
+function kolOrderLink_(orderId) {
+  const id = String(orderId || '').trim();
+  if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) throw new Error('Invalid order ID for SMS link');
+  return 'https://bestill.online/demo/?order=' + encodeURIComponent(id);
+}
+
+/** One confirmation SMS with Norwegian clock time, never a calendar date. */
 function kolMessage_(order, eventKind, orderId) {
   if (eventKind !== 'accepted') throw new Error('Only confirmation SMS is permitted');
   const firstName = String(order.customerName || '').trim().split(/\s+/)[0]
     .replace(/[^\p{L}\p{N}'-]/gu, '').slice(0, 20);
-  const greeting = firstName ? 'Hei ' + firstName + '! ' : 'Hei! ';
-  const signature = ' – KØL Grill & Pizza';
+  const greeting = firstName ? 'Hei ' + firstName + '!' : 'Hei!';
   const isScheduled = order.pickupMode === 'scheduled'
     || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '').trim());
-  if (isScheduled) {
-    const selectedTime = kolTime_(order);
-    return greeting + 'Bestillingen din er bekreftet. Hentetid: '
-      + (selectedTime || 'avtalt tidspunkt') + '.' + signature;
-  }
-  let minutes = Number(order.estimatedMinutes) || 0;
-  if (!(minutes > 0 && minutes <= 180)) {
-    const readyAt = Number(order.estimatedReadyAt) || 0;
-    if (readyAt > Date.now()) minutes = Math.ceil((readyAt - Date.now()) / 60000);
-  }
-  const readyClock = kolAsapReadyClock_(order);
-  if (Number.isFinite(minutes) && minutes > 0 && minutes <= 180) {
-    minutes = Math.ceil(minutes);
-    const unit = minutes === 1 ? 'minutt' : 'minutter';
-    return greeting + 'Bestillingen din er bekreftet. Forventet hentetid: '
-      + (readyClock ? 'kl. ' + readyClock + ' ' : '')
-      + '(ca. ' + minutes + ' ' + unit + ').' + signature;
-  }
-  return greeting + 'Bestillingen din er bekreftet. Hentetid: snarest.' + signature;
+  const clock = isScheduled ? kolTime_(order) : kolAsapReadyClock_(order);
+  const pickupText = clock ? 'kl. ' + clock : 'snarest';
+  return greeting + ' Bestillingen din er bekreftet ✅\n\n'
+    + 'Forventet hentetid: ' + pickupText + '\n\n'
+    + 'Se bestillingen: ' + kolOrderLink_(orderId) + '\n\n'
+    + 'KØL Grill & Pizza';
 }
 
 function kolApiSend_(to, message, token) {
