@@ -202,9 +202,9 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
 
   let headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
   const mainTime = accepted ? (clock || 'Snarest') : (readyClock || 'Nå');
-  const mainLabel = accepted ? 'Hentetid:' : 'Klar kl.';
-  const statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
-  const statusRight = accepted
+  let mainLabel = accepted ? 'Hentetid:' : 'Klar kl.';
+  let statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
+  let statusRight = accepted
     ? (scheduled ? (hms(Number(order.scheduledPickupAt) || 0, 'dd.MM.yyyy') || 'Avtalt tid')
       : (minutes > 0 ? 'Ca. ' + Math.ceil(minutes) + ' ' + (Math.ceil(minutes) === 1 ? 'minutt' : 'minutter') : 'Så snart som mulig'))
     : 'Du kan hente maten nå';
@@ -229,9 +229,16 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     ? kolMailTemplateText_(selected.body,vars) : ('Hei '+firstName+'! '+intro);
   const footerLine=selected && selected.footer
     ? kolMailTemplateText_(String(selected.footer).slice(0,500),vars) : '';
+  let detailsTitle='Bestillingsdetaljer';
+  let itemsTitle='Bestilte varer';
   if(selected){
     headline=kolMailTemplateText_(selected.headline,vars);
     subject=kolMailTemplateText_(selected.subject,vars);
+    if(selected.timeLabel)mainLabel=kolMailTemplateText_(selected.timeLabel,vars);
+    if(selected.statusLeft)statusLeft=kolMailTemplateText_(selected.statusLeft,vars);
+    if(selected.statusRight)statusRight=kolMailTemplateText_(selected.statusRight,vars);
+    if(selected.detailsTitle)detailsTitle=kolMailTemplateText_(selected.detailsTitle,vars);
+    if(selected.itemsTitle)itemsTitle=kolMailTemplateText_(selected.itemsTitle,vars);
   }
 
   const info = [
@@ -307,7 +314,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
 
     '<tr><td style="padding:0 15px 14px;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
-    '<tr><td colspan="2" style="padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;">Bestillingsdetaljer</td></tr>' +
+    '<tr><td colspan="2" style="padding:16px 13px 5px;font-size:17px;font-weight:bold;color:#153321;">' + safe(detailsTitle) + '</td></tr>' +
     infoRows +
     '<tr><td colspan="2" style="padding:12px;font-size:12px;color:#65736a;line-height:19px;">' +
     '<strong>Henting:</strong> Øgardsvegen 44, 2100 Skarnes<br>' +
@@ -316,7 +323,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
 
     '<tr><td style="padding:0 15px 14px;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
-    '<tr><td colspan="2" style="padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;">Bestilte varer</td></tr>' +
+    '<tr><td colspan="2" style="padding:16px 13px 7px;font-size:17px;font-weight:bold;color:#153321;">' + safe(itemsTitle) + '</td></tr>' +
     (rows || '<tr><td colspan="2" style="padding:15px;font-size:13px;">Ingen produktlinjer lagret.</td></tr>') +
     '<tr><td style="padding:12px;color:#657369;font-size:13px;">Delsum</td><td align="right" style="padding:12px;color:#263c2e;font-size:13px;white-space:nowrap;">' +
     safe(money2(subtotal)) + '</td></tr>' +
