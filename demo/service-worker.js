@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kol-demo-v240-smsdeeplink1';
+const CACHE_NAME = 'kol-demo-v241-startup-and-addonqty1';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
