@@ -135,12 +135,37 @@ function kolDetailRows_(line) {
   if (kolPlain_(line.comment)) details.push({name:'Kommentar',text:kolPlain_(line.comment)});
   return details;
 }
+
+/** Templates are plain text, not arbitrary HTML. Existing invoice and item
+ * rendering stays in script and continues to HTML-escape customer content.
+ */
+function kolReadMailTemplates_(){
+  try{
+    const response=UrlFetchApp.fetch(KOL_DB+'/notificationTemplates.json',
+      {method:'get',muteHttpExceptions:true});
+    if(response.getResponseCode()!==200)return {};
+    const all=JSON.parse(response.getContentText()||'null');
+    return all&&typeof all==='object'?all:{};
+  }catch(error){Logger.log('E-postmaler utilgjengelige: '+error.message);return {}}
+}
+function kolMailTemplateText_(text,vars){
+  return String(text||'').replace(/\{([a-zA-Z]+)\}/g,function(token,key){
+    return Object.prototype.hasOwnProperty.call(vars,key)?vars[key]:token;
+  });
+}
+function kolSafeMailTemplate_(template){
+  if(!template||template.version!==1||typeof template.body!=='string')return null;
+  if(!template.subject||!template.headline||template.body.length>2200||
+     String(template.subject).length>220||String(template.headline).length>160)return null;
+  return template;
+}
+
 /** Gmail-safe, mobile-first HTML e-mail templates.
  * Accepted and ready both use the same branded order summary and their OWN
  * heading. The ready e-mail never shows a countdown or asks the customer to
  * wait another N minutes.
  */
-function kolBuildReceipt_(order, kind) {
+function kolBuildReceipt_(order, kind, mailTemplates) {
   const safe = kolHtmlEscape_;
   const accepted = kind === 'accepted';
   if (!accepted && kind !== 'ready') throw new Error('Ukjent e-postvarsel: ' + kind);
@@ -174,7 +199,7 @@ function kolBuildReceipt_(order, kind) {
   const readyClock = hms(readyAt, 'HH:mm');
   const createdAt = Number(order.createdAt) || 0;
 
-  const headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
+  let headline = accepted ? 'BESTILLINGEN DIN ER BEKREFTET' : 'DIN BESTILLING ER KLAR TIL HENTING';
   const mainTime = accepted ? (clock || 'Snarest') : (readyClock || 'Nå');
   const mainLabel = accepted ? 'Hentetid:' : 'Klar kl.';
   const statusLeft = accepted ? (scheduled ? 'Planlagt henting' : 'Snarest') : 'Klar for henting';
@@ -185,8 +210,28 @@ function kolBuildReceipt_(order, kind) {
   const intro = accepted
     ? 'Vi har bekreftet bestillingen din og forbereder maten. Du kan hente den på tidspunktet som er vist over.'
     : 'Gode nyheter! Personalet har markert bestillingen din som klar. Du kan komme og hente maten.';
-  const subject = (accepted ? 'Bestillingen din er bekreftet' : 'Bestillingen din er klar for henting')
+  let subject = (accepted ? 'Bestillingen din er bekreftet' : 'Bestillingen din er klar for henting')
     + ' #' + ref + ' – KØL Grill & Pizza';
+
+  const selected=kolSafeMailTemplate_((mailTemplates||{})[accepted?'emailAccepted':'emailReady']);
+  const orderLink=/^ord_[a-z0-9]{7,40}$/i.test(String(order.id||''))
+    ? 'https://bestill.online/demo/?order='+encodeURIComponent(String(order.id))
+    : 'https://bestill.online/demo/';
+  const vars={
+    navn:firstName,kode:ref,lenke:orderLink,hentetid:clock||'snarest',
+    total:money(total),
+    varer:(Array.isArray(order.lines)?order.lines:[]).map(function(line){
+      return String(line.quantity||1)+' × '+String(line.name||'Produkt');
+    }).join(', ')
+  };
+  const introLine=selected
+    ? kolMailTemplateText_(selected.body,vars) : ('Hei '+firstName+'! '+intro);
+  const footerLine=selected && selected.footer
+    ? kolMailTemplateText_(String(selected.footer).slice(0,500),vars) : '';
+  if(selected){
+    headline=kolMailTemplateText_(selected.headline,vars);
+    subject=kolMailTemplateText_(selected.subject,vars);
+  }
 
   const info = [
     ['Bestillingskode', '#' + ref],
@@ -224,7 +269,6 @@ function kolBuildReceipt_(order, kind) {
     return row.join('\n');
   }).join('\n\n');
 
-  const orderLink = 'https://bestill.online/demo/index.html';
   const totalMva = total * 15 / 115; // Display as included (not added to total).
   const html =
     '<!doctype html><html lang="no"><head><meta charset="UTF-8">' +
@@ -258,7 +302,7 @@ function kolBuildReceipt_(order, kind) {
     safe(statusRight) + '</td></tr></table></td></tr>' +
 
     '<tr><td style="padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;">' +
-    'Hei ' + safe(firstName) + '!<br>' + safe(intro) + '</td></tr>' +
+    safe(introLine).replace(/\n/g,'<br>') + '</td></tr>' +
 
     '<tr><td style="padding:0 15px 14px;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
@@ -283,6 +327,7 @@ function kolBuildReceipt_(order, kind) {
     '</table></td></tr>' +
 
     (kolPlain_(order.comment) ? '<tr><td style="padding:2px 26px 14px;font-size:12px;color:#536457;"><strong>Kommentar:</strong> ' + safe(order.comment) + '</td></tr>' : '') +
+    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + safe(footerLine).replace(/\n/g,'<br>') + '</td></tr>' : '') +
     '<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;line-height:20px;">' +
     'Takk for at du bestiller hos<br><strong style="color:#143623;font-size:13px;letter-spacing:1px;">KØL GRILL &amp; PIZZA</strong><br>' +
     '<a href="' + orderLink + '" style="color:#286844;">Se vår meny</a><br>' +
@@ -294,21 +339,21 @@ function kolBuildReceipt_(order, kind) {
     (accepted ? 'Bestillingen din er bekreftet.' : 'Bestillingen din er klar for henting!') +
     '\n' + mainLabel + ' ' + mainTime +
     '\n' + statusLeft + ' – ' + statusRight +
-    '\n\nHei ' + firstName + '! ' + intro +
+    '\n\n' + introLine +
     '\n\n' + info.map(function(p) {return p[0] + ': ' + p[1];}).join('\n') +
     '\nHenting: Øgardsvegen 44, 2100 Skarnes' +
     '\n\nBestilte varer:\n' + detailsPlain +
     '\n\nDelsum: ' + money2(subtotal) +
     '\nHerav MVA (15 %): ' + money2(totalMva) +
     '\nTotalt: ' + money(total) +
-    '\n\nVennlig hilsen KØL Grill & Pizza';
+    (footerLine ? '\n\n'+footerLine : '')+'\n\nVennlig hilsen KØL Grill & Pizza';
   return { subject:subject, html:html, text:text };
 }
 
-function kolSendMail_(order, kind) {
+function kolSendMail_(order, kind, mailTemplates) {
   const address = kolEmail_(order);
   if (!address) return false;
-  const receipt = kolBuildReceipt_(order, kind);
+  const receipt = kolBuildReceipt_(order, kind, mailTemplates);
   MailApp.sendEmail({
     to:address,
     subject:receipt.subject,
@@ -432,9 +477,58 @@ function installerEpostVarsler() {
     const existing = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'kontrollerEpostBestillinger');
     for (const trigger of existing) ScriptApp.deleteTrigger(trigger);
     ScriptApp.newTrigger('kontrollerEpostBestillinger').timeBased().everyMinutes(1).create();
+    try{kolProcessMailTests_(props,mailTemplates)}
+    catch(error){Logger.log('E-post testkontroll feilet: '+error.message)}
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     Logger.log('E-postovervåking aktivert. Eksisterende ordre registrert: ' + seeded + '. Ingen gamle meldinger sendt.');
   } finally { lock.releaseLock(); }
+}
+
+
+/** Test to the authenticated Apps Script owner's own mailbox only.
+ * Browser requests cannot specify recipients. 4/day and 3-minute cooldown.
+ */
+function kolProcessMailTests_(props,mailTemplates){
+  for(const kind of ['emailAccepted','emailReady']){
+    const response=UrlFetchApp.fetch(KOL_DB+'/notificationTests/'+kind+'/request.json',
+      {method:'get',muteHttpExceptions:true});
+    if(response.getResponseCode()!==200)continue;
+    const request=JSON.parse(response.getContentText()||'null');
+    if(!request||request.kind!==kind||!/^nt_[a-z0-9_]{8,45}$/.test(String(request.id)))continue;
+    const id=String(request.id),key='KOL_MAIL_TEST_ID_'+kind;
+    if(props.getProperty(key)===id)continue;
+    props.setProperty(key,id);
+    const now=Date.now();
+    const result=(state,message)=>{
+      try{kolEmailPutJson_('notificationTests/'+kind+'/result',
+        {id,state,at:Date.now(),message})}
+      catch(error){Logger.log('Teststatus kunne ikke lagres: '+error.message)}
+    };
+    if(Math.abs(now-Number(request.requestedAt))>10*60000){
+      result('ignored','Testforespørselen er utløpt.');continue;
+    }
+    const day=Utilities.formatDate(new Date(now),'Europe/Oslo','yyyyMMdd');
+    const count=props.getProperty('KOL_MAIL_TEST_DAY')===day?
+      Number(props.getProperty('KOL_MAIL_TEST_COUNT')||0):0;
+    const since=now-Number(props.getProperty('KOL_MAIL_TEST_LAST_AT')||0);
+    if(count>=4||since<180000){result('rate_limited','Maks 4 e-posttester per dag og 3 minutter mellom dem.');continue}
+    const to=String(Session.getEffectiveUser().getEmail()||'').trim();
+    if(!kolEmail_({email:to})){result('failed','Fant ingen gyldig kontoeier-epost.');continue}
+    props.setProperty('KOL_MAIL_TEST_DAY',day);
+    props.setProperty('KOL_MAIL_TEST_COUNT',String(count+1));
+    props.setProperty('KOL_MAIL_TEST_LAST_AT',String(now));
+    result('attempted','Test godkjent for avsenderkontoens innboks.');
+    const sample={id:'ord_'+now.toString(36)+'test',customerName:'FATIH',
+      email:to,phone:'+47 40000000',createdAt:now-120000,
+      pickup:'Snarest',estimatedReadyAt:now+15*60000,
+      staffReadyAt:now,total:588,
+      lines:[{name:'Stor Classico',quantity:2,price:588,size:'Stor'}]};
+    try{
+      if(kolSendMail_(sample,kind==='emailReady'?'ready':'accepted',mailTemplates)){
+        result('sent','MailApp godtok test til avsenderkontoen (innbokslevering ikke bekreftet).');
+      }else result('failed','Ugyldig testmottaker.');
+    }catch(error){result('failed',String(error.message).slice(0,150))}
+  }
 }
 
 /** Scheduled, email-only order status check. */
@@ -444,6 +538,7 @@ function kontrollerEpostBestillinger() {
   try {
     const props = PropertiesService.getScriptProperties();
     const orders = kolReadOrders_();
+    const mailTemplates = kolReadMailTemplates_();
     const now = Date.now();
     for (const id in orders) {
       const order = orders[id];
@@ -472,7 +567,7 @@ function kontrollerEpostBestillinger() {
         checkpoint.updated = now;
         props.setProperty(key, JSON.stringify(checkpoint));
         try {
-          if (kolSendMail_(Object.assign({id:id},order), kind)) {
+          if (kolSendMail_(Object.assign({id:id},order), kind,mailTemplates)) {
             const sentAt = Date.now();
             checkpoint.sent[eventKey] = 'sent';
             props.setProperty(key, JSON.stringify(checkpoint));
