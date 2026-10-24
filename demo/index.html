@@ -5,29 +5,29 @@
     <script src="/demo/config.js?v=20261022-smsfirebase1"></script>
     <script>window.BESTILL_CONFIG.customerOnly = true;</script>
     <meta charset="UTF-8">
-    <meta name="bestill-build" content="20261024-smslink1">
+    <meta name="bestill-build" content="20261025-brandstart1">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#33251f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Bestill">
+    <meta name="apple-mobile-web-app-title" content="KØL Grill & Pizza">
     <link rel="manifest" href="/demo/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/demo/icons/kol-icon-192.png">
-    <link rel="icon" href="/demo/icons/restaurant.svg" />
-    <title>Restauranten — Bestill takeaway</title>
+    <link rel="icon" type="image/png" href="/demo/icons/kol-icon-192.png" />
+    <title>KØL Grill & Pizza — Bestill online</title>
     <script src="/demo/js/theme.js?v=20261024-localfour2"></script>
-    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261016-overrides2">
+    <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261025-brandstart1">
     <link rel="stylesheet" href="/demo/css/customer.css?v=20261025-init-and-qty1">
     <link rel="stylesheet" href="/demo/css/theme.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/shop-info.css?v=20261011-states4">
     <link rel="stylesheet" href="/demo/css/customer-theme.css?v=20261016-clean1">
-    <meta name="description" content="Bestill pizza, kebab og burger til henting fra restauranten. Enkel bestilling, klar til avtalt hentetid." />
-    <meta property="og:title" content="Restauranten — Bestill takeaway" />
-    <meta property="og:description" content="Bestill pizza, kebab og burger til henting fra restauranten." />
+    <meta name="description" content="Bestill pizza, kebab og burger hos KØL Grill & Pizza i Skarnes. Enkel bestilling for henting." />
+    <meta property="og:title" content="KØL Grill & Pizza — Bestill online" />
+    <meta property="og:description" content="Bestill pizza, kebab og burger fra KØL Grill & Pizza i Skarnes." />
     <meta property="og:image" content="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbbjicakga/pizza-pepperoni-stone-oven.png" />
-    <meta name="twitter:title" content="Restauranten — Bestill takeaway" />
-    <meta name="twitter:description" content="Bestill pizza, kebab og burger til henting fra restauranten." />
+    <meta name="twitter:title" content="KØL Grill & Pizza — Bestill online" />
+    <meta name="twitter:description" content="Bestill pizza, kebab og burger fra KØL Grill & Pizza i Skarnes." />
     <meta name="twitter:image" content="https://mgx-backend-cdn.metadl.com/generate/images/1555884/2026-08-25/vfnbbjicakga/pizza-pepperoni-stone-oven.png" />
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
 </head>
@@ -39,11 +39,10 @@
             <button class="hdr-btn hdr-back" id="btnBack" type="button" aria-label="Tilbake til meny" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
             </button>
-            <a class="brand" href="#" id="brandHome" aria-label="Restauranten — til menyen">
-                <img src="/demo/icons/restaurant.svg" alt="Restaurantlogo" class="brand-mark">
+            <a class="brand" href="#" id="brandHome" aria-label="KØL Grill & Pizza — til menyen">
+                <img src="/demo/icons/kol-icon-192.png" alt="KØL Grill & Pizza" class="brand-mark" width="32" height="32">
                 <span class="brand-text">
-                    <strong>Bestill</strong>
-                    <small>Bestill takeaway</small>
+                    <strong>KØL Grill &amp; Pizza</strong>
                 </span>
             </a>
             <nav class="hdr-actions" aria-label="Hovedhandlinger">
@@ -71,7 +70,7 @@
             <div class="menu-overview">
                 <div class="menu-overview-row">
                     <div class="pickup-note">
-                        <span class="dot-open" id="openDot" aria-hidden="true"></span>
+                        <span class="dot-open is-pending" id="openDot" aria-hidden="true"></span>
                         <div class="pickup-copy">
                             <strong id="openStatus">Henter åpningstider…</strong>
                             <span id="pickupDetails">Vennligst vent</span>
@@ -332,7 +331,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/js/customer.js?v=20261025-init-and-qty1"></script>
+    <script type="module" src="/demo/js/customer.js?v=20261025-brandstart1"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261024-localfour1"></script>
 </body>
 
