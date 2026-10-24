@@ -14,6 +14,7 @@ import { applyCustomerPalette } from './palette.js';
 
 import {
   store,
+  backendInfo,
   getPizzaBonus,
   setPizzaOffersConsent,
   DB_URL,
@@ -1130,7 +1131,21 @@ function renderMenu() {
 }
 
 /** Åpen/stengt-status øverst i menyen. */
+let customerMenuReady = false;
 function renderOpenState() {
+  // Until the first Firebase menu/settings response is resolved, default
+  // settings must never be presented as the restaurant's real opening hours.
+  if (!customerMenuReady || backendInfo.mode !== 'firebase') {
+    el.openStatus.textContent = customerMenuReady
+      ? 'Åpningstider utilgjengelige' : 'Henter åpningstider…';
+    document.getElementById('pickupDetails').textContent = customerMenuReady
+      ? 'Prøv igjen når forbindelsen er tilbake' : 'Vennligst vent';
+    el.openDot.classList.add('is-closed');
+    el.closedBanner.hidden = true;
+    el.btnToCheckout.disabled = true;
+    el.cartClosedHint.hidden = true;
+    return {open:false,pending:true};
+  }
   const state = getOpenState();
   const settings = store.settings || {};
   el.openStatus.textContent = state.label;
@@ -3240,6 +3255,8 @@ if ('serviceWorker' in navigator) {
 }
 
 subscribe((_state, origin) => {
+  // 'init' is emitted only after the Firebase startup read completed.
+  if (origin === 'init' || origin === 'remote') customerMenuReady = true;
   const changed = renderAll();
   if (origin === 'remote' && changed) toast('Menyen er oppdatert av restauranten.');
 });
@@ -3259,8 +3276,8 @@ setInterval(() => {
 setInterval(refreshCustomerOrderCountdowns, 1000);
 refreshCustomerOrderCountdowns();
 
-renderAll();
-
+// The initial UI deliberately stays in a neutral loading state until
+// Firebase menu/settings have been read (subscribe('init') above).
 
 // live-order-visibility-refresh
 window.addEventListener('visibilitychange', () => {
