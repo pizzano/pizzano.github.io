@@ -221,6 +221,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
   const vars={
     navn:firstName,kode:ref,lenke:orderLink,hentetid:clock||'snarest',
     total:money(total),
+    hentetype:statusLeft,tidsinfo:statusRight,
     varer:(Array.isArray(order.lines)?order.lines:[]).map(function(line){
       return String(line.quantity||1)+' × '+String(line.name||'Produkt');
     }).join(', ')
