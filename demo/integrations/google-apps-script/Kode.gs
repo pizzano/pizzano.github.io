@@ -96,19 +96,38 @@ function kolOrderLink_(orderId) {
 }
 
 /** One confirmation SMS with Norwegian clock time, never a calendar date. */
-function kolMessage_(order, eventKind, orderId) {
-  if (eventKind !== 'accepted') throw new Error('Only confirmation SMS is permitted');
-  const firstName = String(order.customerName || '').trim().split(/\s+/)[0]
-    .replace(/[^\p{L}\p{N}'-]/gu, '').slice(0, 20);
-  const greeting = firstName ? 'Hei ' + firstName + '!' : 'Hei!';
-  const isScheduled = order.pickupMode === 'scheduled'
-    || /^\d{1,2}:\d{2}$/.test(String(order.pickup || '').trim());
-  const clock = isScheduled ? kolTime_(order) : kolAsapReadyClock_(order);
-  const pickupText = clock ? 'kl. ' + clock : 'snarest';
-  return greeting + ' Bestillingen din er bekreftet ✅\n\n'
-    + 'Forventet hentetid: ' + pickupText + '\n\n'
-    + 'Se bestillingen: ' + kolOrderLink_(orderId) + '\n\n'
-    + 'KØL Grill & Pizza';
+
+/** Admin-controlled text, read fresh on each polling run. */
+function kolReadSmsTemplate_() {
+  try {
+    const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notificationTemplates/smsAccepted.json',
+      {method:'get',muteHttpExceptions:true});
+    if(response.getResponseCode()!==200)return null;
+    const value=JSON.parse(response.getContentText()||'null');
+    return value && value.version===1 && typeof value.body==='string'
+      && value.body.length>0 && value.body.length<=2200 && value.body.includes('{lenke}')
+      ? value.body : null;
+  }catch(error){console.warn('SMS-mal kunne ikke lastes: '+error.message);return null;}
+}
+/** Template variables are substituted server-side; the recipient is never a variable. */
+function kolMessage_(order,eventKind,orderId,template) {
+  if(eventKind!=='accepted')throw new Error('Only confirmation SMS is permitted');
+  const first=String(order.customerName||'').trim().split(/\s+/)[0]
+    .replace(/[^\p{L}\p{N}'-]/gu,'').slice(0,20);
+  const scheduled=order.pickupMode==='scheduled'||/^\d{1,2}:\d{2}$/.test(String(order.pickup||'').trim());
+  const clock=scheduled?kolTime_(order):kolAsapReadyClock_(order);
+  const code=kolShortCode_(orderId),link=kolOrderLink_(orderId);
+  const defaultBody='Hei '+(first||'kunde')+'! Bestillingen din er bekreftet ✅\n\n'
+   +'Forventet hentetid: '+(clock?'kl. '+clock:'snarest')+'\n\n'
+   +'Se bestillingen: '+link+'\n\nKØL Grill & Pizza';
+  if(typeof template!=='string'||!template.trim())return defaultBody;
+  const vars={navn:first||'kunde',kode:code,lenke:link,hentetid:clock||'snarest',
+    total:String(Number(order.total)||0)+' kr',
+    varer:(Array.isArray(order.lines)?order.lines:[]).map(x=>String(x.quantity||1)+' × '+String(x.name||'Produkt')).join(', ')};
+  const message=template.replace(/\{([a-zA-Z]+)\}/g,function(token,key){
+    return Object.prototype.hasOwnProperty.call(vars,key)?vars[key]:token;
+  }).replace(/kl\. snarest\b/gi,'snarest').trim();
+  return message.length<=2200 && message.length>0?message:defaultBody;
 }
 
 function kolApiSend_(to, message, token) {
@@ -136,7 +155,7 @@ function kolApiSend_(to, message, token) {
  * A failed status/receipt write must never retry an already-submitted SMS.
  */
 function kolFirebaseSmsPut_(path, value) {
-  if (!/^(smsHealth|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
+  if (!/^(smsHealth|notificationTests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
     throw new Error('Unexpected Firebase SMS path');
   }
   const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' + path + '.json', {
@@ -228,6 +247,43 @@ function kolPurgeOldCounters_(props, currentDay) {
   }
 }
 
+
+/** Admin test. Firebase request contains no recipient. Fixed TEST_PHONE only.
+ * Reserve ID and quota before gateway call to avoid accidental resend.
+ */
+function kolCheckSmsTest_(props, token, fixedPhone) {
+  const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notificationTests/smsAccepted/request.json',
+    {method:'get',muteHttpExceptions:true});
+  if(response.getResponseCode()!==200)return;
+  const request=JSON.parse(response.getContentText()||'null');
+  if(!request||request.kind!=='smsAccepted'||!/^nt_[a-z0-9_]{8,45}$/.test(String(request.id)))return;
+  const id=String(request.id);
+  if(id===props.getProperty('KOL_SMS_TEST_LAST_ID'))return;
+  props.setProperty('KOL_SMS_TEST_LAST_ID',id);
+  const now=Date.now();
+  const result=(state,message)=>{
+    try{kolFirebaseSmsPut_('notificationTests/smsAccepted/result',{id,state,at:Date.now(),message})}
+    catch(error){console.error('SMS teststatus kan ikke lagres: '+error.message)}
+  };
+  if(Math.abs(now-Number(request.requestedAt))>10*60000){result('ignored','Utløpt testforespørsel.');return}
+  const date=Utilities.formatDate(new Date(now),'Europe/Oslo','yyyyMMdd');
+  const count=props.getProperty('KOL_SMS_TEST_DAY')===date?Number(props.getProperty('KOL_SMS_TEST_COUNT')||0):0;
+  const since=now-Number(props.getProperty('KOL_SMS_TEST_LAST_AT')||0);
+  if(count>=3||since<180000){result('rate_limited','Maks 3 tester per dag og 3 minutter mellom dem.');return}
+  if(!fixedPhone){result('failed','TEST_PHONE mangler.');return}
+  props.setProperty('KOL_SMS_TEST_DAY',date);
+  props.setProperty('KOL_SMS_TEST_COUNT',String(count+1));
+  props.setProperty('KOL_SMS_TEST_LAST_AT',String(now));
+  result('attempted','Testforespørsel mottatt.');
+  const demo={customerName:'FATIH',pickup:'Snarest',estimatedReadyAt:now+15*60000,
+    total:588,lines:[{name:'Stor Classico',quantity:2}]};
+  try{
+    kolApiSend_(fixedPhone,kolMessage_(demo,'accepted','ord_'+now.toString(36)+'test',
+      kolReadSmsTemplate_()),token);
+    result('sent','Traccar godtok test-SMS. Levering er ikke bekreftet.');
+  }catch(error){result('failed',String(error.message).slice(0,150))}
+}
+
 function pollOrdersForSms() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return;
@@ -242,6 +298,7 @@ function pollOrdersForSms() {
 
     const now = Date.now();
     const data = kolFetchRecentOrders_();
+    const smsTemplate = kolReadSmsTemplate_();
     props.setProperty('KOL_LAST_POLL_OK', new Date().toISOString());
     const today = Utilities.formatDate(new Date(now), 'Europe/Oslo', 'yyyyMMdd');
     kolPurgeOldCounters_(props, today);
@@ -269,7 +326,7 @@ function pollOrdersForSms() {
       todayCount += 1;
       props.setProperty('KOL_COUNT_' + today, String(todayCount));
       try {
-        kolApiSend_(phone, kolMessage_(order, kind, item.id), cloudToken);
+        kolApiSend_(phone, kolMessage_(order, kind, item.id, smsTemplate), cloudToken);
         const completed = { state:'sent', at:Date.now() };
         props.setProperty(eventKey, JSON.stringify(completed));
         // The ScriptProperties receipt is authoritative if Firebase is down.
@@ -288,6 +345,8 @@ function pollOrdersForSms() {
       }
     }
     props.setProperty('KOL_LAST_POLL_COUNT', String(sent));
+    try { kolCheckSmsTest_(props,cloudToken,testNumber); }
+    catch(error){console.error('SMS test: '+error.message)}
     try {
       kolSmsHeartbeat_(mode, Date.now());
     } catch (healthError) {
