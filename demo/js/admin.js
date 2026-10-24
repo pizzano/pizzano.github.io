@@ -3838,7 +3838,7 @@ function noticePreview(){
 function noticeSetKind(kind){
   if(!NOTICE_KINDS.includes(kind))return;
   noticeState.kind=kind;noticeState.dirty=false;
-  const saved=noticeState.templates[kind]||NOTICE_DEFAULTS[kind];
+  const saved={...NOTICE_DEFAULTS[kind],...(noticeState.templates[kind]||{})};
   for(const key of ['subject','headline','body','footer','timeLabel','statusLeft','statusRight','detailsTitle','itemsTitle']){
     if(noticeEl[key])noticeEl[key].value=String(saved[key]??'');
   }
