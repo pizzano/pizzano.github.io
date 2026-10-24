@@ -12,21 +12,35 @@ Admin panelinde yeni **Varslinger** sayfası bulunuyor:
 - **Send test**: Firebase `notificationTests/{kind}/request` (yalnızca komut kimliği/zamanı/türü)
 - **Kontroller teststatus**: `notificationTests/{kind}/result`, gönderen scriptin kayıt durumu
 
-Kullanılabilir değişkenler: `{navn}`, `{hentetid}`, `{lenke}`,
-`{kode}`, `{total}`, `{varer}`. Şablonun bütün varsayılan metinleri
-Firebase'de saklanır; e-postanın ürün/fiyat/KDV bölümü güvenli kodla otomatik
-üretilmeye devam eder. E-posta alanlarına ham HTML veya çalıştırılabilir kod
-konulmaz; kullanıcı verileri HTML-escape ile korunur. **Tek istisna:**
-şablonun müşteri mesajı ve kapanış alanlarında `<strong>metin</strong>`
-kalın metin biçimlendirmesidir. Admin'deki **B Fet tekst** düğmesi bunu
-otomatik ekler. Diğer bütün HTML etiketleri düz, güvenli metin olarak
-gösterilir; HTML e-postada çalıştırılmaz. Düz metin alternatifinde
-`<strong>` etiketleri kaldırılır. Eskiden kapanış eğik çizgisini
-unutup `<strong>01:45<strong>` yazılmışsa da iki açılış
-etiketi baş/son olarak işlenerek e-postada kalın gösterilir.
-Bu biçimlendirme Apps Script tarafında işlendiğinden, bu özellik
-için güncel `email-poller.gs` dosyasını çalışan Google Apps Script'e
-bir defa kopyalamak gerekir.
+## E-post · Bekreftet / Klar — tam HTML (v2)
+
+Artık her iki e-posta türü için **Full HTML-kode** bölümü vardır. E-postanın
+üst logosu, renkleri, tabloları, ürün satırları ve alt kısmını değiştirebilirsin.
+Mevcut KØL tasarımı başlangıç HTML şablonu olarak sunulur.
+
+- Firebase'e ayrı `notificationTemplates/emailAccepted` ve `notificationTemplates/emailReady`
+  kayıtları `version:2`, `subject`, `html` alanlarıyla yazılır.
+- Değişkenler: `{navn}`, `{navnFullt}`, `{kode}`, `{hentetid}`,
+  `{hovedtid}`, `{hovedetikett}`, `{hentetype}`, `{tidsinfo}`,
+  `{telefon}`, `{bestilt}`, `{delsum}`, `{mva}`, `{total}`,
+  `{adresse}` ve `{lenke}`.
+- Ürünler: `{{#each items}} ... {antall} {produkt} {valg} {linjepris} ... {{/each}}`.
+- Sipariş bilgileri: `{{#each details}} ... {etikett} {verdi} ... {{/each}}`.
+- Admin önizleme korumalı iframe içinde görüntülenir. MailApp
+  gönderiminde de ayrıca HTML temizleme ve değişken kaçış işlemi yapılır.
+- Güvenli HTML: tablolar, metin, başlık, `b`, `strong`, `i`, `em`, `s`,
+  `del`, `u`, liste, `br`, güvenli HTTPS/mailto linkleri ve sınırlı CSS.
+  Script/iframe/form, takip görselleri, JS event handler ve tehlikeli
+  URL'ler kabul edilmez.
+- Eski `version:1` şablonlar `Enkel redigering` içinde kullanılabilir.
+  Varsayılan KØL HTML tasarımına dönmek için `Hent standard KØL-design`
+  seçilebilir; onaylanıp Firebase'e kaydedilene kadar yayın değişmez.
+
+**GAS kurulumu:** GitHub'daki güncel `email-poller.gs` dosyasının tamamını
+Google Apps Script'e bir kere kopyala. Sonrasında HTML'yi admin panelinden
+değiştir; GAS koduna yeniden dokunmana gerek yok.
+Firebase `emailHealth.templateEngineVersion=4` ve
+`completeHtmlEditor=true` güncel sender'ı doğrular.
 
 ### İlk ve son Apps Script kurulumu
 
