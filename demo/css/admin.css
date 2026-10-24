@@ -73,7 +73,7 @@ select { font-family: inherit; font-size: inherit; color: inherit; }button { cur
     padding: 0 4px 14px;
     border-bottom: 1px solid rgba(255, 255, 255, .1);
     margin-bottom: 12px;
-}.side-brand img { width: 30px; height: 30px; object-fit: contain; }.side-brand strong { display: block; font-size: 14.5px; letter-spacing: .03em; }.side-brand small { display: block; font-size: 10.5px; color: #97a1ab; text-transform: uppercase; letter-spacing: .05em; }.side-nav { display: grid; gap: 3px; }.side-link {
+}.side-brand img { width: 30px; height: 30px; object-fit: contain; }.side-brand img[hidden] { display:none!important; }.side-brand strong { display: block; font-size: 14.5px; letter-spacing: .03em; }.side-brand small { display: block; font-size: 10.5px; color: #97a1ab; text-transform: uppercase; letter-spacing: .05em; }.side-nav { display: grid; gap: 3px; }.side-link {
     display: flex;
     align-items: center;
     gap: 9px;
