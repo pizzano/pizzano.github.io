@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-fullemail2">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261025-addonqty1">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -755,7 +755,14 @@
                     <label class="mode-card"><input type="radio" name="gMode" value="single" id="gModeSingle"><span><strong>Ett valg</strong><small>Kunden velger ett alternativ, f.eks. én saus.</small></span></label>
                     <label class="mode-card"><input type="radio" name="gMode" value="multiple" id="gModeMultiple"><span><strong>Flere valg</strong><small>Kunden kan velge flere alternativer.</small></span></label>
                 </div>
-                <div class="set-field" id="gMaxWrap" hidden><label class="lbl" for="gMax">Maks antall kunden kan velge</label><input id="gMax" class="input input-narrow" type="number" min="1" step="1" placeholder="3"></div>
+                <div class="set-field" id="gMaxWrap" hidden>
+                    <label class="lbl" for="gMax">Maks antall kunden kan velge</label>
+                    <input id="gMax" class="input input-narrow" type="number" min="1" max="30" step="1" placeholder="3">
+                    <label class="toggle-row group-repeat-option">
+                        <span class="toggle-body"><strong>Tillat flere av samme alternativ</strong><small>F.eks. 3 × Hvitløksaus. Maks antall gjelder totalt, ikke per alternativ.</small></span>
+                        <input type="checkbox" id="gAllowQuantity" class="switch">
+                    </label>
+                </div>
             </section>
             <section class="group-editor-card">
                 <h3>Alternativer</h3>
@@ -890,7 +897,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-fullemail2"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261025-addonqty1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
