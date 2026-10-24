@@ -45,9 +45,30 @@ kendiliğinden yüklenmez.** Bir kere:
    doğrula. RTDB kimlik doğrulama/yetkilendirme üretim için zorunludur.
 4. Admin → Varslinger'de her şablonu kaydet, sonra **Send test** ve
    **Kontroller teststatus** kullan. SMS testi yalnızca Apps Script özel
-   `TEST_PHONE` ayarına, e-posta testi yalnızca Apps Script'in çalıştığı
-   Google hesap sahibinin gelen kutusuna gönderilir. Test arayüzünden
-   alıcı numara/adres gönderilmez.
+   `TEST_PHONE` ayarına, e-posta testi Apps Script'in özel `KOL_TEST_EMAIL` ayarına,
+   bu ayar boşsa script'i çalıştıran Google hesabının gelen kutusuna
+   gönderilir. Test arayüzünden alıcı numara/adres gönderilmez.
+
+### Test e-postası gönderilmediğinde
+
+1. Admin **Send test** yalnızca Firebase'e `notificationTests/emailAccepted/request`
+   veya `notificationTests/emailReady/request` kaydeder; kendisi e-posta
+   göndermez.
+2. Google Apps Script'in aktif `kontrollerEpostBestillinger` zaman
+   tetikleyicisi yeni `email-poller.gs` kodunu çalıştırmalıdır. Kod
+   güncel değilse istek hiç işlenmez.
+3. Script Properties içinden `KOL_TEST_EMAIL` oluşturup alıcı
+   e-posta adresini tanımlayabilirsin. Bu adres Firebase'de veya web
+   sayfasında tutulmaz. Boş bırakıldığında script sahibinin e-posta
+   adresi kullanılır.
+4. Apps Script içindeki `kontrollerEpostTestNaa()` fonksiyonunu
+   bir kere elle çalıştırabilirsin. Bu fonksiyon yalnızca mevcut test
+   taleplerini işler, müşteri siparişleri gönderimini tetiklemez.
+5. Admin **Kontroller teststatus** bölümünde `sent`, `failed`,
+   `rate_limited` veya `ignored` sonucu görülmeli. İki dakika
+   içinde hiçbir cevap yoksa Apps Script → Executions ve Firebase
+   Rules'taki `notificationTests` okuma/yazma izinleri kontrol
+   edilmeli. Test isteği 10 dakika sonra geçersizdir.
 
 **Güvenlik:** Test SMS en fazla 3/gün, e-posta 4/gün ve en az 3 dakika
 ara ile yapılır. Test ID'leri önce işlenmiş olarak saklanır; belirsiz bir
