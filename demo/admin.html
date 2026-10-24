@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-notifyscroll1">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-fullemail1">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -229,6 +229,24 @@
                             <button type="button" data-message-kind="emailReady">E-post · Klar</button>
                         </div>
                         <div class="notification-editor">
+                            <div class="notification-mode-tabs" data-notification-email hidden>
+                                <button id="notificationModeHtml" type="button" class="is-active">Full HTML-kode</button>
+                                <button id="notificationModeSimple" type="button">Enkel redigering</button>
+                            </div>
+                            <div class="notification-full-html" data-notification-full-html hidden>
+                                <p>Her kan du redigere <strong>hele e-postens HTML</strong> – også logo, farger, tabeller, hentetid og produktlinjer. Bruk variablene under. Den andre e-postfanen har sin egen HTML-mal.</p>
+                                <label class="notification-field" for="notificationHtml">
+                                    <span>Hele HTML-malen</span>
+                                    <textarea id="notificationHtml" rows="22" maxlength="45000" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+                                </label>
+                                <p><code>{navn}</code>, <code>{navnFullt}</code>, <code>{kode}</code>, <code>{hentetid}</code>, <code>{hovedtid}</code>, <code>{hovedetikett}</code>, <code>{hentetype}</code>, <code>{tidsinfo}</code>, <code>{bestilt}</code>, <code>{telefon}</code>, <code>{delsum}</code>, <code>{mva}</code>, <code>{total}</code>, <code>{adresse}</code>, <code>{lenke}</code>. Produktlinjer: <code>{{#each items}}...{{/each}}</code> med <code>{antall}</code>, <code>{produkt}</code>, <code>{valg}</code>, <code>{linjepris}</code>. Ordredetaljer: <code>{{#each details}}...{{/each}}</code> med <code>{etikett}</code>, <code>{verdi}</code>.</p>
+                                <div class="notification-html-actions">
+                                    <button id="notificationRestoreHtml" class="btn btn-outline" type="button">Hent standard KØL-design</button>
+                                    <button id="notificationCopyHtml" class="btn btn-outline" type="button">Kopier HTML</button>
+                                </div>
+                                <p class="notification-security-hint">E-poster støtter tabeller, lenker, farger, tekst og sikker inline CSS. Script, iframe, skjema, bilde-sporing og farlige HTML-attributter kjøres ikke.</p>
+                            </div>
+                            <div class="notification-simple-fields" data-notification-simple>
                             <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>, <code>{total}</code>, <code>{varer}</code>, <code>{hentetype}</code>, <code>{tidsinfo}</code>. Produktliste, priser og totalbeløp hentes automatisk fra ordren i e-postkvitteringen.</p>
                             <label class="notification-field" data-notification-email>
                                 <span>E-post emne</span><input id="notificationSubject" maxlength="220" autocomplete="off">
@@ -257,6 +275,7 @@
                                     <label class="notification-field"><span>Overskrift for varer</span><input id="notificationItemsTitle" maxlength="100"></label>
                                 </div>
                             </details>
+                            </div><!-- /notification-simple-fields -->
                             <div class="notification-actions">
                                 <button id="notificationSave" class="btn btn-primary" type="button">Lagre mal</button>
                                 <button id="notificationReset" class="btn btn-outline" type="button">Tilbakestill utkast</button>
@@ -867,7 +886,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-strongdiagnose1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261024-fullemail1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
