@@ -204,6 +204,7 @@ const el = {
   gRequired: $('gRequired'),
   gMaxWrap: $('gMaxWrap'),
   gMax: $('gMax'),
+  gAllowQuantity: $('gAllowQuantity'),
   editorErr: $('editorErr'),
   btnDeleteGroup: $('btnDeleteGroup'),
   btnSaveGroup: $('btnSaveGroup'),
@@ -1728,6 +1729,7 @@ function openEditor(groupId, attachToItemId = null) {
         title: '',
         selectionMode: 'single',
         required: false,
+        allowQuantity: false,
         maxSelections: 1,
         defaultOptionIds: [],
         options: [
@@ -1744,6 +1746,7 @@ function openEditor(groupId, attachToItemId = null) {
   el.gModeMultiple.checked = editorDraft.selectionMode === 'multiple';
   el.gRequired.checked = Boolean(editorDraft.required);
   el.gMax.value = editorDraft.maxSelections || 1;
+  el.gAllowQuantity.checked = Boolean(editorDraft.allowQuantity && editorDraft.selectionMode === 'multiple');
   el.btnDeleteGroup.hidden = Boolean(editorDraft.isNew);
   el.editorErr.hidden = true;
   renderEditorRows();
@@ -1754,6 +1757,7 @@ function openEditor(groupId, attachToItemId = null) {
 function renderEditorRows() {
   const isMulti = editorDraft.selectionMode === 'multiple';
   el.gMaxWrap.hidden = !isMulti;
+  el.gAllowQuantity.checked = isMulti && Boolean(editorDraft.allowQuantity);
   el.gOptionRows.innerHTML = editorDraft.options
     .map(
       (option) => `
@@ -1790,6 +1794,8 @@ el.gTitle.addEventListener('input', () => {
     editorDraft.selectionMode = el.gModeMultiple.checked ? 'multiple' : 'single';
     if (editorDraft.selectionMode === 'single') {
       editorDraft.maxSelections = 1;
+      editorDraft.allowQuantity = false;
+      el.gAllowQuantity.checked = false;
       editorDraft.defaultOptionIds = editorDraft.defaultOptionIds.slice(0, 1);
     } else {
       editorDraft.maxSelections = Math.max(
@@ -1807,7 +1813,12 @@ el.gRequired.addEventListener('change', () => {
 });
 
 el.gMax.addEventListener('input', () => {
-  editorDraft.maxSelections = Math.max(1, Number(el.gMax.value) || 1);
+  editorDraft.maxSelections = Math.max(1, Math.min(30, Number(el.gMax.value) || 1));
+});
+el.gAllowQuantity.addEventListener('change', () => {
+  editorDraft.allowQuantity = editorDraft.selectionMode === 'multiple' && el.gAllowQuantity.checked;
+  // Repeated servings share a *total unit* cap. No menu change until save.
+  renderEditorRows();
 });
 
 el.gOptionRows.addEventListener('input', (event) => {
@@ -1884,10 +1895,12 @@ el.btnSaveGroup.addEventListener('click', () => {
     title,
     selectionMode: editorDraft.selectionMode,
     required: Boolean(editorDraft.required),
+    allowQuantity: editorDraft.selectionMode === 'multiple' && Boolean(editorDraft.allowQuantity),
     maxSelections:
       editorDraft.selectionMode === 'single'
         ? 1
-        : Math.min(Math.max(Number(editorDraft.maxSelections) || 1, 1), options.length),
+        : Math.min(Math.max(Number(editorDraft.maxSelections) || 1, 1),
+          editorDraft.allowQuantity ? 30 : options.length),
     defaultOptionIds: defaults,
     options,
   };
