@@ -3913,6 +3913,10 @@ async function noticeCheckTestStatus(){
     const r=await noticeGet(DB_URL+'/notificationTests/'+kind+'/result.json');
     const data=r.data;
     if(!data){noticeEl.result.textContent='Ingen testresultater ennå.';return}
+    if(noticeState.lastTest?.kind===kind && noticeState.lastTest.id!==data.id){
+      noticeEl.result.textContent='Venter på resultat for din nye test. Det siste tilgjengelige resultatet er fra en eldre test.';
+      return;
+    }
     const labels={
       sent:'Godtatt av leverandør (ikke garantert levert)',
       failed:'Sending mislyktes',rate_limited:'Testgrensen er nådd',
