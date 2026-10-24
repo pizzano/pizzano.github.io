@@ -127,6 +127,7 @@ const el = {
     groups: $('pageGroups'),
     orders: $('pageOrders'),
     settings: $('pageSettings'),
+    notifications: $('pageNotifications'),
   },
   saveState: $('saveState'),
   saveText: $('saveText'),
@@ -3749,3 +3750,188 @@ $('btnExportMenu').addEventListener('click',()=>{
   const url=URL.createObjectURL(new Blob([JSON.stringify(exportMenuJSON(),null,2)],{type:'application/json'}));
   const link=document.createElement('a');link.href=url;link.download='menu.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
+
+/* ------------------------------------------------------------------ *
+ * Varslinger — Firebase templates shared by Apps Script SMS/email pollers.
+ * Test requests have no recipient fields: sender uses a fixed allowlisted
+ * test phone/account, never a browser-provided address.
+ * ------------------------------------------------------------------ */
+const NOTICE_KINDS = ['smsAccepted','emailAccepted','emailReady'];
+const NOTICE_DEFAULTS = {
+  smsAccepted:{
+    body:'Hei {navn}! Bestillingen din er bekreftet ✅\\n\\nForventet hentetid: kl. {hentetid}\\n\\nSe bestillingen: {lenke}\\n\\nKØL Grill & Pizza'
+      .replaceAll('\\n','\n')
+  },
+  emailAccepted:{
+    subject:'Bestillingen din er bekreftet #{kode} – KØL Grill & Pizza',
+    headline:'BESTILLINGEN DIN ER BEKREFTET',
+    body:'Hei {navn}! Vi har bekreftet bestillingen din og forbereder maten. Forventet hentetid: kl. {hentetid}.',
+    footer:'Takk for at du bestiller hos KØL Grill & Pizza!'
+  },
+  emailReady:{
+    subject:'Bestillingen din er klar for henting #{kode} – KØL Grill & Pizza',
+    headline:'MATEN DIN ER KLAR!',
+    body:'Hei {navn}! Maten din er klar for henting. Velkommen!',
+    footer:'Takk for at du bestiller hos KØL Grill & Pizza!'
+  }
+};
+const noticeState={kind:'smsAccepted',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
+const noticeEl={
+  tab:[...document.querySelectorAll('[data-message-kind]')],
+  subject:$('notificationSubject'),headline:$('notificationHeadline'),
+  body:$('notificationBody'),footer:$('notificationFooter'),
+  bodyLabel:$('notificationBodyLabel'),
+  save:$('notificationSave'),reset:$('notificationReset'),
+  test:$('notificationTest'),check:$('notificationCheckTest'),
+  feedback:$('notificationFeedback'),result:$('notificationTestStatus'),
+  preview:$('notificationPreview')
+};
+function noticeKindIsEmail(){return noticeState.kind!=='smsAccepted'}
+function noticeFeedback(text,state='neutral'){
+  noticeEl.feedback.textContent=text;noticeEl.feedback.dataset.state=state;
+}
+function noticeSubstitute(text){
+  const vars={
+    navn:'FATIH',hentetid:'01:45',kode:'I2SEA2',
+    lenke:'https://bestill.online/demo/?order=ord_mv1ji63i2sea2',
+    total:'588 kr',varer:'2 × Stor Classico'
+  };
+  return String(text||'').replace(/\{([a-zA-Z]+)\}/g,(token,key)=>
+    Object.hasOwn(vars,key)?vars[key]:token);
+}
+function noticeReadForm(){
+  return noticeKindIsEmail()
+    ? {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
+       body:noticeEl.body.value.trim(),footer:noticeEl.footer.value.trim()}
+    : {body:noticeEl.body.value.trim()};
+}
+function noticePreview(){
+  const draft=noticeReadForm();
+  const el=noticeEl.preview;
+  el.replaceChildren();el.classList.toggle('is-email',noticeKindIsEmail());
+  if(!noticeKindIsEmail()){
+    el.textContent=noticeSubstitute(draft.body);
+    return;
+  }
+  const brand=document.createElement('div');brand.className='notification-email-brand';brand.textContent='KØL · GRILL & PIZZA';
+  const subject=document.createElement('strong');subject.textContent='Emne: '+noticeSubstitute(draft.subject);
+  const head=document.createElement('div');head.className='notification-email-heading';head.textContent=noticeSubstitute(draft.headline);
+  const body=document.createElement('p');body.textContent=noticeSubstitute(draft.body);
+  const details=document.createElement('div');details.className='notification-email-products';
+  details.textContent='Bestillingsdetaljer · #I2SEA2\n2 × Stor Classico\nTotalt: 588 kr';
+  const foot=document.createElement('p');foot.textContent=noticeSubstitute(draft.footer);
+  el.append(brand,subject,head,body,details,foot);
+}
+function noticeSetKind(kind){
+  if(!NOTICE_KINDS.includes(kind))return;
+  noticeState.kind=kind;noticeState.dirty=false;
+  const saved=noticeState.templates[kind]||NOTICE_DEFAULTS[kind];
+  for(const key of ['subject','headline','body','footer']){
+    if(noticeEl[key])noticeEl[key].value=String(saved[key]??'');
+  }
+  document.querySelectorAll('[data-notification-email]').forEach(node=>node.hidden=!noticeKindIsEmail());
+  noticeEl.bodyLabel.textContent=noticeKindIsEmail()?'Melding til kunden':'SMS-melding';
+  noticeEl.tab.forEach(btn=>btn.classList.toggle('is-active',btn.dataset.messageKind===kind));
+  noticeFeedback(noticeState.loaded?'Klar. Endringer må lagres før test.':'Henter maler…');
+  noticePreview();
+  void noticeCheckTestStatus();
+}
+async function noticeGet(url,etag=false){
+  const r=await fetch(url,{cache:'no-store',headers:etag?{'X-Firebase-ETag':'true'}:{}});
+  if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+  return {data:await r.json(),etag:r.headers.get('ETag')};
+}
+async function noticeLoad(){
+  if(!DB_URL){noticeFeedback('Firebase er ikke konfigurert.','error');return}
+  try{
+    for(const kind of NOTICE_KINDS){
+      const r=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
+      noticeState.templates[kind]=(r.data&&typeof r.data==='object')?r.data:NOTICE_DEFAULTS[kind];
+      noticeState.etag[kind]=r.etag;
+    }
+    noticeState.loaded=true;
+    noticeSetKind(noticeState.kind);
+  }catch(error){noticeFeedback('Kunne ikke laste maler: '+error.message,'error')}
+}
+async function noticeSave(){
+  if(noticeState.busy)return;
+  const kind=noticeState.kind,draft=noticeReadForm();
+  if(!draft.body||draft.body.length>2200|| (kind!=='smsAccepted'&&(!draft.subject||!draft.headline))){
+    noticeFeedback('Skriv en gyldig melding, overskrift og emne.','error');return;
+  }
+  if(kind==='smsAccepted'&&draft.body.indexOf('{lenke}')<0){
+    noticeFeedback('SMS-malen må inneholde {lenke} slik at kunden kan åpne ordren.','error');return;
+  }
+  const unknown=Object.values(draft).join(' ').match(/\{([a-zA-Z]+)\}/g)||[];
+  if(unknown.some(t=>!['{navn}','{hentetid}','{kode}','{lenke}','{total}','{varer}'].includes(t))){
+    noticeFeedback('Ukjent variabel. Bruk variablene som er vist over.','error');return;
+  }
+  noticeState.busy=true;noticeEl.save.disabled=true;
+  try{
+    const response=await fetch(DB_URL+'/notificationTemplates/'+kind+'.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','if-match':noticeState.etag[kind]||'null_etag'},
+      body:JSON.stringify({...draft,version:1,updatedAt:Date.now()})
+    });
+    if(response.status===412){
+      noticeFeedback('Malen er endret et annet sted. Last siden på nytt før du lagrer.','error');return;
+    }
+    if(!response.ok)throw new Error('Firebase HTTP '+response.status);
+    noticeState.templates[kind]={...draft,version:1};
+    noticeState.etag[kind]=response.headers.get('ETag')||null;
+    // Firebase PUT may not return ETag; fetch fresh ETag for next edit.
+    const reread=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
+    noticeState.etag[kind]=reread.etag;
+    noticeState.dirty=false;
+    noticeFeedback('Malen er lagret i Firebase. Neste varsling bruker denne teksten.','saved');
+  }catch(error){noticeFeedback('Lagring mislyktes: '+error.message,'error')}
+  finally{noticeState.busy=false;noticeEl.save.disabled=false}
+}
+async function noticeSendTest(){
+  if(noticeState.busy)return;
+  if(!noticeState.loaded){noticeFeedback('Vent til malene er lastet.','error');return}
+  if(noticeState.dirty){noticeFeedback('Lagre meldingen før du sender test.','error');return}
+  const kind=noticeState.kind;
+  const id='nt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+  noticeState.busy=true;noticeEl.test.disabled=true;
+  try{
+    const response=await fetch(DB_URL+'/notificationTests/'+kind+'/request.json',{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id,requestedAt:Date.now(),kind})
+    });
+    if(!response.ok)throw new Error('Firebase HTTP '+response.status);
+    noticeState.lastTest={kind,id};
+    noticeEl.result.textContent='Testforespørsel registrert. Apps Script kontrollerer innen neste kjøring. Kun fast testmottaker.';
+    noticeFeedback('Testforespørsel lagret. Dette er ikke bekreftelse på sending.','saved');
+  }catch(error){noticeEl.result.textContent='Kunne ikke opprette test: '+error.message}
+  finally{noticeState.busy=false;noticeEl.test.disabled=false}
+}
+async function noticeCheckTestStatus(){
+  if(!DB_URL||!noticeState.loaded)return;
+  const kind=noticeState.kind;
+  try{
+    const r=await noticeGet(DB_URL+'/notificationTests/'+kind+'/result.json');
+    const data=r.data;
+    if(!data){noticeEl.result.textContent='Ingen testresultater ennå.';return}
+    const labels={
+      sent:'Godtatt av leverandør (ikke garantert levert)',
+      failed:'Sending mislyktes',rate_limited:'Testgrensen er nådd',
+      ignored:'Testforespørsel er utløpt eller ugyldig',
+      attempted:'Sender har mottatt forespørselen'
+    };
+    const date=Number(data.at)>0?new Date(data.at).toLocaleString('nb-NO'):'';
+    noticeEl.result.textContent=(labels[data.state]||'Status: '+data.state)
+      +' · '+date+(data.message?' · '+String(data.message).slice(0,150):'')
+      +(noticeState.lastTest?.kind===kind&&noticeState.lastTest.id===data.id?' · Din test':'');
+  }catch(error){noticeEl.result.textContent='Teststatus utilgjengelig: '+error.message}
+}
+noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
+for(const input of [noticeEl.subject,noticeEl.headline,noticeEl.body,noticeEl.footer]){
+ input.addEventListener('input',()=>{noticeState.dirty=true;noticePreview();noticeFeedback('Ulagrede endringer.')});
+}
+noticeEl.save.addEventListener('click',()=>void noticeSave());
+noticeEl.reset.addEventListener('click',()=>noticeSetKind(noticeState.kind));
+noticeEl.test.addEventListener('click',()=>void noticeSendTest());
+noticeEl.check.addEventListener('click',()=>void noticeCheckTestStatus());
+window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden)void noticeCheckTestStatus()},12000);
+void noticeLoad();
