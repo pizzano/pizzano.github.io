@@ -12,6 +12,30 @@ Admin panelinde yeni **Varslinger** sayfası bulunuyor:
 - **Send test**: Firebase `notificationTests/{kind}/request` (yalnızca komut kimliği/zamanı/türü)
 - **Kontroller teststatus**: `notificationTests/{kind}/result`, gönderen scriptin kayıt durumu
 
+### Temizlenmiş EmailPoller.gs (25.10.2026)
+
+`EmailPoller.gs` 824 satırdan **649 satıra** indirildi. Önceki
+200+ satırlık sabit HTML fiş oluşturucusu kaldırıldı.
+Artık Firebase'deki `version:2` `html` şablonu asıl e-posta kaynağıdır.
+Güvenli HTML filtreleme, gerçek sipariş değişkenleri ve ürün döngüsü
+işlenir; `MailApp.sendEmail` ile gönderilir.
+
+Önemli görevler korunmuştur: Firebase sipariş durum kontrolü,
+`accepted/ready` bildirimi, yinelenen gönderim önleme,
+`emailReceipts`/ `emailHealth`, test e-postaları,
+sabit test alıcısı, test kotası ve mevcut zaman tetikleyicisi.
+Şablon yoksa veya eski `version:1` kayıtları bulunuyorsa
+müşteriyi boş e-postayla bırakmayan **yedek KØL tasarımı** vardır.
+Yedek tasarım yalnızca uyumluluk içindir; yeni e-posta tasarımını
+Admin → Varslinger → Full HTML-kode'dan değiştir.
+
+Bu yenileme GitHub'a kaydedildi; Google Apps Script projesinde
+`EmailPoller.gs` dosyasının tamamını **bir kez** değiştirmen gerekir.
+Mevcut `kontrollerEpostBestillinger` tetikleyicisini,
+Script Properties değerlerini ve `KOL_EMAIL_...` checkpointlerini
+silme. `installerEpostVarsler()` fonksiyonunu yeniden çalıştırma:
+Bu yalnızca ilk kurulum içindir.
+
 ## E-post · Bekreftet / Klar — tam HTML (v2)
 
 Artık her iki e-posta türü için **Full HTML-kode** bölümü vardır. E-postanın
