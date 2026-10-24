@@ -3767,7 +3767,7 @@ const NOTICE_DEFAULTS = {
     headline:'BESTILLINGEN DIN ER BEKREFTET',
     body:'Hei {navn}! Vi har bekreftet bestillingen din og forbereder maten. Forventet hentetid: kl. {hentetid}.',
     footer:'Takk for at du bestiller hos KØL Grill & Pizza!',
-    timeLabel:'Hentetid:',statusLeft:'Snarest',statusRight:'Ca. 15 minutter',
+    timeLabel:'Hentetid:',statusLeft:'{hentetype}',statusRight:'{tidsinfo}',
     detailsTitle:'Bestillingsdetaljer',itemsTitle:'Bestilte varer'
   },
   emailReady:{
@@ -3801,7 +3801,8 @@ function noticeSubstitute(text){
   const vars={
     navn:'FATIH',hentetid:'01:45',kode:'I2SEA2',
     lenke:'https://bestill.online/demo/?order=ord_mv1ji63i2sea2',
-    total:'588 kr',varer:'2 × Stor Classico'
+    total:'588 kr',varer:'2 × Stor Classico',
+    hentetype:'Snarest',tidsinfo:'Ca. 15 minutter'
   };
   return String(text||'').replace(/\{([a-zA-Z]+)\}/g,(token,key)=>
     Object.hasOwn(vars,key)?vars[key]:token);
@@ -3881,7 +3882,7 @@ async function noticeSave(){
     noticeFeedback('SMS-malen må inneholde {lenke} slik at kunden kan åpne ordren.','error');return;
   }
   const unknown=Object.values(draft).join(' ').match(/\{([a-zA-Z]+)\}/g)||[];
-  if(unknown.some(t=>!['{navn}','{hentetid}','{kode}','{lenke}','{total}','{varer}'].includes(t))){
+  if(unknown.some(t=>!['{navn}','{hentetid}','{kode}','{lenke}','{total}','{varer}','{hentetype}','{tidsinfo}'].includes(t))){
     noticeFeedback('Ukjent variabel. Bruk variablene som er vist over.','error');return;
   }
   noticeState.busy=true;noticeEl.save.disabled=true;
