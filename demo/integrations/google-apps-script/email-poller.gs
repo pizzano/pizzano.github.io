@@ -431,7 +431,11 @@ function kolEmailHeartbeat_(now, state) {
   kolEmailPutJson_('emailHealth', {
     checkedAt:now, quotaRemaining:Number(quota) || 0,
     status:state === 'ok' && quota > 0 ? 'ok' : 'unavailable',
-    source:'apps-script-email-poller'
+    source:'apps-script-email-poller',
+    // Admin Varslinger uses this to detect whether the live sender supports
+    // the editor's <strong> tags. Old workers do not publish this marker.
+    templateEngineVersion:2,
+    strongFormatting:true
   });
 }
 
@@ -661,6 +665,9 @@ function kontrollerEpostTestNaa() {
       (PropertiesService.getScriptProperties().getProperty('KOL_TEST_EMAIL')||
        Session.getEffectiveUser().getEmail()||'(ukjent)'));
     kolProcessMailTests_(PropertiesService.getScriptProperties(),kolReadMailTemplates_());
+    // Publish the formatting engine version even when only a manual test was run.
+    try { kolEmailHeartbeat_(Date.now(),'ok'); }
+    catch(error){Logger.log('Versjonsstatus kan ikke publiseres: '+error.message)}
     Logger.log('Testkontroll ferdig. Hvis ingen test ble sendt: kontroller Firebase Rules, mottakerkonto, testbegrensning og siste request.id.');
   } finally { lock.releaseLock(); }
 }
