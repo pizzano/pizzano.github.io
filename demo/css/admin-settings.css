@@ -153,3 +153,11 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 #pageNotifications .notification-advanced{border:1px solid var(--line);border-radius:10px;padding:0 12px}
 #pageNotifications .notification-advanced summary{padding:12px 3px;cursor:pointer;font-size:13px;font-weight:800;color:var(--ink)}
 #pageNotifications .notification-advanced-fields{display:grid;gap:12px;padding:5px 0 14px}
+
+#pageNotifications .notification-format-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:-7px}
+#pageNotifications .notification-format-tools[hidden]{display:none}
+#pageNotifications .notification-format-tools button{padding:7px 13px;border:1px solid var(--line);background:var(--surface);border-radius:8px;color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+#pageNotifications .notification-format-tools button:hover{border-color:#5baa81}
+#pageNotifications .notification-format-tools small{color:var(--ink-2);font-size:11px;line-height:1.5}
+#pageNotifications .notification-format-tools code{font-family:monospace}
+#pageNotifications .notification-preview-content strong{font-weight:800}
