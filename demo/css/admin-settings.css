@@ -207,3 +207,14 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 #pageNotifications .notification-email-engine[data-state="warning"]{color:#bd631e}
 #pageNotifications .notification-email-engine[data-state="saved"]{color:#087848}
 @media(max-width:900px){#pageNotifications #notificationHtml{min-height:400px}#pageNotifications .notification-email-frame{height:640px}}
+
+/* Repeatable portions enabled per choice group. */
+.group-repeat-option{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;padding:12px 13px;border:1px solid var(--line);
+  border-radius:11px;background:var(--surface);
+  margin-top:10px;cursor:pointer;
+}
+.group-repeat-option .toggle-body{display:flex;flex-direction:column;gap:4px}
+.group-repeat-option .toggle-body strong{font-size:13px}
+.group-repeat-option .toggle-body small{font-size:12px;line-height:1.4;color:var(--ink-2)}
