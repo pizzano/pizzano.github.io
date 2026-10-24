@@ -1140,7 +1140,9 @@ function renderOpenState() {
       ? 'Åpningstider utilgjengelige' : 'Henter åpningstider…';
     document.getElementById('pickupDetails').textContent = customerMenuReady
       ? 'Prøv igjen når forbindelsen er tilbake' : 'Vennligst vent';
-    el.openDot.classList.add('is-closed');
+    // Ikke vis en rød «stengt»-indikator før åpningstidene er verifisert.
+    el.openDot.classList.remove('is-closed');
+    el.openDot.classList.add('is-pending');
     el.closedBanner.hidden = true;
     el.btnToCheckout.disabled = true;
     el.cartClosedHint.hidden = true;
@@ -1148,6 +1150,7 @@ function renderOpenState() {
   }
   const state = getOpenState();
   const settings = store.settings || {};
+  el.openDot.classList.remove('is-pending');
   el.openStatus.textContent = state.label;
   document.getElementById('pickupDetails').textContent = state.open
     ? `Kun henting · stenger ${state.closesAt}`
@@ -3260,13 +3263,15 @@ function applyCustomerInterfaceSettings() {
 }
 
 function renderAll() {
-  const restaurantName = store.settings.restaurantName || 'Bestill';
-  el.brandHome.querySelector('strong').textContent = restaurantName;
-  el.brandHome.querySelector('small').textContent = store.settings.restaurantName ? '' : 'Bestill takeaway';
+  const restaurantName = String(store.settings.restaurantName || '').trim() || 'KØL Grill & Pizza';
+  const brandName = el.brandHome.querySelector('strong');
+  if (brandName.textContent !== restaurantName) brandName.textContent = restaurantName;
+  el.brandHome.setAttribute('aria-label', `${restaurantName} — til menyen`);
   const logo = el.brandHome.querySelector('img');
-  logo.src = store.settings.restaurantLogo || '/demo/icons/restaurant.svg';
+  const logoSrc = String(store.settings.restaurantLogo || '').trim() || '/demo/icons/kol-icon-192.png';
+  if (logo.getAttribute('src') !== logoSrc) logo.src = logoSrc;
   logo.alt = restaurantName;
-  document.title = `${restaurantName} — Bestill takeaway`;
+  document.title = `${restaurantName} — Bestill online`;
   applyCustomerPalette(store.settings?.customerPalette);
   applyCustomerInterfaceSettings();
   const changed = reconcileCart();
