@@ -3942,7 +3942,7 @@ async function noticeSendTest(){
     });
     if(!response.ok)throw new Error('Firebase HTTP '+response.status);
     noticeState.lastTest={kind,id};
-    noticeEl.result.textContent='Testforespørsel registrert. Apps Script kontrollerer innen neste kjøring. Kun fast testmottaker.';
+    noticeEl.result.textContent='Testforespørsel lagret. Ikke sendt ennå: Google Apps Script må behandle den. E-posttesten går til kontoen som kjører Apps Script.';
     noticeFeedback('Testforespørsel lagret. Dette er ikke bekreftelse på sending.','saved');
   }catch(error){noticeEl.result.textContent='Kunne ikke opprette test: '+error.message}
   finally{noticeState.busy=false;noticeEl.test.disabled=false}
@@ -3951,11 +3951,31 @@ async function noticeCheckTestStatus(){
   if(!DB_URL||!noticeState.loaded)return;
   const kind=noticeState.kind;
   try{
-    const r=await noticeGet(DB_URL+'/notificationTests/'+kind+'/result.json');
-    const data=r.data;
-    if(!data){noticeEl.result.textContent='Ingen testresultater ennå.';return}
-    if(noticeState.lastTest?.kind===kind && noticeState.lastTest.id!==data.id){
-      noticeEl.result.textContent='Venter på resultat for din nye test. Det siste tilgjengelige resultatet er fra en eldre test.';
+    const [requestResponse,resultResponse]=await Promise.all([
+      noticeGet(DB_URL+'/notificationTests/'+kind+'/request.json'),
+      noticeGet(DB_URL+'/notificationTests/'+kind+'/result.json')
+    ]);
+    // Tab may change while we are awaiting remote reads.
+    if(noticeState.kind!==kind)return;
+    const request=requestResponse.data&&typeof requestResponse.data==='object'
+      ?requestResponse.data:null;
+    const result=resultResponse.data&&typeof resultResponse.data==='object'
+      ?resultResponse.data:null;
+    const activeId=noticeState.lastTest?.kind===kind
+      ?noticeState.lastTest.id:(request?.id||null);
+    if(!activeId){
+      noticeEl.result.textContent='Ingen test forespurt. Klikk Send test etter at malen er lagret.';
+      return;
+    }
+    if(result?.id!==activeId){
+      const elapsed=Date.now()-Number(request?.requestedAt||Date.now());
+      if(elapsed>10*60000){
+        noticeEl.result.textContent='Testen ble ikke behandlet innen 10 minutter. Kontroller at riktig Google Apps Script-kode og tidsutløser kjører, og at Firebase Rules gir tilgang.';
+      }else if(elapsed>2*60000){
+        noticeEl.result.textContent='Ingen svar fra Google Apps Script etter over 2 minutter. Sjekk Apps Script → Executions for kontrollerEpostBestillinger, eller kjør kontrollerEpostTestNaa manuelt.';
+      }else{
+        noticeEl.result.textContent='Testforespørselen ligger i Firebase. Venter på Google Apps Script (ikke bekreftet sendt).';
+      }
       return;
     }
     const labels={
@@ -3964,12 +3984,15 @@ async function noticeCheckTestStatus(){
       ignored:'Testforespørsel er utløpt eller ugyldig',
       attempted:'Sender har mottatt forespørselen'
     };
-    const date=Number(data.at)>0?new Date(data.at).toLocaleString('nb-NO'):'';
-    noticeEl.result.textContent=(labels[data.state]||'Status: '+data.state)
-      +' · '+date+(data.message?' · '+String(data.message).slice(0,150):'')
-      +(noticeState.lastTest?.kind===kind&&noticeState.lastTest.id===data.id?' · Din test':'');
-  }catch(error){noticeEl.result.textContent='Teststatus utilgjengelig: '+error.message}
+    const date=Number(result.at)>0?new Date(result.at).toLocaleString('nb-NO'):'';
+    noticeEl.result.textContent=(labels[result.state]||'Status: '+result.state)
+      +' · '+date+(result.message?' · '+String(result.message).slice(0,150):'')
+      +(noticeState.lastTest?.kind===kind&&noticeState.lastTest.id===result.id?' · Din test':'');
+  }catch(error){
+    noticeEl.result.textContent='Teststatus kunne ikke leses ('+error.message+'). Sjekk Firebase Rules for notificationTests.';
+  }
 }
+
 const boldButton=$('notificationBold');
 boldButton?.addEventListener('click',()=>{
   if(!noticeKindIsEmail())return;
