@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-notify1">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-notify2">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -229,7 +229,7 @@
                             <button type="button" data-message-kind="emailReady">E-post · Klar</button>
                         </div>
                         <div class="notification-editor">
-                            <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>. Produktliste, priser og totalbeløp hentes automatisk fra ordren i e-postkvitteringen.</p>
+                            <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>, <code>{total}</code>, <code>{varer}</code>, <code>{hentetype}</code>, <code>{tidsinfo}</code>. Produktliste, priser og totalbeløp hentes automatisk fra ordren i e-postkvitteringen.</p>
                             <label class="notification-field" data-notification-email>
                                 <span>E-post emne</span><input id="notificationSubject" maxlength="220" autocomplete="off">
                             </label>
@@ -862,7 +862,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-notify1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261024-notify2"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
