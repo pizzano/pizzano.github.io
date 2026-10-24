@@ -8,6 +8,41 @@ Firebase-`smsHealth`, og et godkjent Traccar-kvitteringsfelt på ordren.
 Den samme koden inneholder `diagnoseSms()`, `checkSmsResults()` og
 `stopSms()` for sikker manuell diagnose/stans.
 
+## SMS-tekst med lenke (24.10.2026)
+
+Bekreftelses-SMS sendes i dette formatet:
+
+```text
+Hei FATIH! Bestillingen din er bekreftet ✅
+
+Forventet hentetid: kl. 01:45
+
+Se bestillingen: https://bestill.online/demo/?order=ord_mv1ji63i2sea2
+
+KØL Grill & Pizza
+```
+
+Navn, klokkeslett og full ordre-ID settes fra **den aktuelle ordren**.
+Norgetid (`Europe/Oslo`) vises som `HH:mm`, uten dato og uten
+anslåtte minutter i parentes. Planlagte henteordrer bruker valgt
+klokkeslett, `Snarest` bruker kjøkkenets estimerte `estimatedReadyAt`.
+Hvis ingen gyldig klokkeslett er tilgjengelig, vises `snarest` (ikke
+et oppfunnet tidspunkt). Bare første bekreftelse får SMS.
+
+SMS-lenken bruker hele ordrenummeret som en privat tilgangslenke.
+`demo/js/customer.js` åpner `?order=ord_...` direkte til
+`Mine bestillinger` på også en ny enhet. Ikke del lenken offentlig,
+siden den gir tilgang til ordredetaljer. Ekstern referrer-sporing
+fra kundesiden er deaktivert.
+
+**Viktig ved publisering:** GitHub-kildekoden er oppdatert, men den
+kjørende Google Apps Script-installasjonen oppdateres **ikke** automatisk.
+I Google Apps Script-prosjektet `KOL SMS Gateway` må ny full
+`Kode.gs` kopieres inn og lagres. Behold eksisterende Script
+Properties og den aktive `pollOrdersForSms`-triggeren. Ikke kjør
+`setupTestSms()`, `setupLiveSms()` eller `sendTestSms()` for denne
+tekstendringen. Test deretter med én ny testordre. 
+
 **Aldri bland gammel og ny versjon ved å lime inn et enkelt kodestykke.**
 Ta sikkerhetskopi av aktiv `KOL SMS Gateway → Kode.gs` i Google,
 og sammenlign den med denne GitHub-kilden før du eventuelt oppdaterer den.
