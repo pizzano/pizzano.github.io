@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/demo/css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="/demo/css/admin-dashboard.css?v=20261016-clean1">
     <link rel="stylesheet" href="/demo/css/admin-choices.css?v=20261014-choices-accordion107">
-    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261016-cleanall1">
+    <link rel="stylesheet" href="/demo/css/admin-settings.css?v=20261024-notify1">
     <link rel="stylesheet" href="/demo/css/admin-product-modal.css?v=20261015-product-modal110">
     <link rel="stylesheet" href="/demo/css/group-editor-modal.css?v=20261015-choices-premium113">
 </head>
@@ -58,6 +58,10 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12l1 16H5L6 4z"/><path d="M9 9h6M9 13h6"/></svg>
                     Bestillinger
                     <span class="nav-badge" id="navOrderBadge" hidden>0</span>
+                </button>
+                <button class="side-link" data-nav="notifications" type="button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="m5 7 7 6 7-6"/></svg>
+                    Varslinger
                 </button>
             </nav>
 
@@ -212,6 +216,51 @@
                         </div>
                         <div class="order-detail-live" id="orderDetailLive" hidden></div>
                     </section>
+                </div>
+            </section>
+
+            <section class="page" id="pageNotifications" hidden>
+                <header class="page-head"><div class="page-title"><h1>Varslinger</h1><p>Rediger SMS og e-post uten å endre Google Apps Script.</p></div></header>
+                <div class="notification-layout">
+                    <div class="notification-controls">
+                        <div class="notification-tabs" role="group" aria-label="Meldingstype">
+                            <button class="is-active" type="button" data-message-kind="smsAccepted">SMS · Bekreftet</button>
+                            <button type="button" data-message-kind="emailAccepted">E-post · Bekreftet</button>
+                            <button type="button" data-message-kind="emailReady">E-post · Klar</button>
+                        </div>
+                        <div class="notification-editor">
+                            <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>. Produktliste, priser og totalbeløp hentes automatisk fra ordren i e-postkvitteringen.</p>
+                            <label class="notification-field" data-notification-email>
+                                <span>E-post emne</span><input id="notificationSubject" maxlength="220" autocomplete="off">
+                            </label>
+                            <label class="notification-field" data-notification-email>
+                                <span>Overskrift</span><input id="notificationHeadline" maxlength="160" autocomplete="off">
+                            </label>
+                            <label class="notification-field">
+                                <span id="notificationBodyLabel">SMS-melding</span>
+                                <textarea id="notificationBody" rows="8" maxlength="2200" spellcheck="true"></textarea>
+                            </label>
+                            <label class="notification-field" data-notification-email>
+                                <span>Avslutning</span><textarea id="notificationFooter" rows="2" maxlength="500"></textarea>
+                            </label>
+                            <div class="notification-actions">
+                                <button id="notificationSave" class="btn btn-primary" type="button">Lagre mal</button>
+                                <button id="notificationReset" class="btn btn-outline" type="button">Tilbakestill utkast</button>
+                            </div>
+                            <p class="notification-message" id="notificationFeedback" role="status" aria-live="polite">Henter maler fra Firebase…</p>
+                        </div>
+                        <div class="notification-test">
+                            <strong>Test av sending</strong>
+                            <p>Kun til TEST_PHONE i SMS-scriptet eller avsenderkontoen i e-post-scriptet. Ingen vilkårlige telefonnumre eller adresser kan brukes.</p>
+                            <button id="notificationTest" class="btn btn-outline" type="button">Send test</button>
+                            <button id="notificationCheckTest" class="btn btn-outline" type="button">Kontroller teststatus</button>
+                            <div id="notificationTestStatus" role="status" aria-live="polite">Tester krever at oppdatert Apps Script kjører og har tilgang til Firebase.</div>
+                        </div>
+                    </div>
+                    <div class="notification-preview">
+                        <div class="notification-preview-head"><strong>Forhåndsvisning</strong><small>Eksempeldata · ingen melding sendes</small></div>
+                        <div class="notification-preview-content" id="notificationPreview" aria-live="polite"></div>
+                    </div>
                 </div>
             </section>
 
@@ -803,7 +852,7 @@
 
     <div class="admin-toast" id="adminToast" hidden></div>
 
-    <script type="module" src="/demo/js/admin.js?v=20261024-localfour1"></script>
+    <script type="module" src="/demo/js/admin.js?v=20261024-notify1"></script>
     <script type="module" src="/demo/js/loyalty-sync.js?v=20261024-localfour1"></script>
     <script type="module" src="/demo/js/orders-archive.js?v=20261024-localfour1"></script>
 </body>
