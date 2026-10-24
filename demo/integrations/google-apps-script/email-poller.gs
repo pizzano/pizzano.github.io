@@ -194,6 +194,12 @@ function kolSafeTemplateStyle_(raw){
   }).filter(Boolean).join(';');
 }
 function kolSanitizeFullTemplateHtml_(source){
+  // Admin may paste a complete HTML document. We accept its visual body
+  // while stripping document wrappers and head-only declarations; only
+  // the safe email body layout is inserted in the MailApp HTML envelope.
+  source=String(source||'').replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi,'')
+    .replace(/<!doctype[^>]*>/gi,'')
+    .replace(/<\/?(?:html|body)\b[^>]*>/gi,'');
   const tags='table tbody thead tfoot tr td th div span p br b strong i em u s strike del a h1 h2 h3 h4 ul ol li hr center small'.split(' ');
   const attributes='style align valign width height colspan rowspan border cellpadding cellspacing role bgcolor href target title'.split(' ');
   const parts=String(source||'').replace(/<!doctype[^>]*>/gi,'').match(/<[^>]*>|[^<]+|</g)||[];
@@ -495,12 +501,18 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
   const html=selected&&selected.version===2
     ? kolRenderFullEmailTemplate_(selected.html,fullVars,order,money)
     : classicHtml;
+  // HTML templates remain the source of visual layout. The independent
+  // plain-text fallback still includes the customer greeting and full order
+  // details if an email client cannot display HTML.
+  const plainIntro=selected&&selected.version===2
+    ? 'Hei '+firstName+'! Bestillingen din hos KØL Grill & Pizza.'
+    : kolPlainEmailMarkup_(introLine);
   const text =
     'KØL Grill & Pizza\n' +
     (accepted ? 'Bestillingen din er bekreftet.' : 'Bestillingen din er klar for henting!') +
     '\n' + mainLabel + ' ' + mainTime +
     '\n' + statusLeft + ' – ' + statusRight +
-    '\n\n' + kolPlainEmailMarkup_(introLine) +
+    '\n\n' + plainIntro +
     '\n\n' + info.map(function(p) {return p[0] + ': ' + p[1];}).join('\n') +
     '\nHenting: Øgardsvegen 44, 2100 Skarnes' +
     '\n\nBestilte varer:\n' + detailsPlain +
