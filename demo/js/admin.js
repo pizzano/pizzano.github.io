@@ -3807,6 +3807,28 @@ function noticeSubstitute(text){
   return String(text||'').replace(/\{([a-zA-Z]+)\}/g,(token,key)=>
     Object.hasOwn(vars,key)?vars[key]:token);
 }
+/** Render only <strong> markup as real bold text. Other HTML stays
+ * inert text, including script tags, so preview cannot execute HTML.
+ * A second opening <strong> while bold is active closes it, tolerating
+ * older saved drafts that omitted the slash in </strong>.
+ */
+function noticeAppendBoldMarkup(host, value) {
+  const tokens=noticeSubstitute(value).split(/(<\/?strong>)/gi);
+  let active=null;
+  for(const token of tokens) {
+    if(/^<strong>$/i.test(token)) {
+      if(active) active=null;
+      else {
+        active=document.createElement('strong');
+        host.append(active);
+      }
+    } else if(/^<\/strong>$/i.test(token)) {
+      active=null;
+    } else if(token) {
+      (active||host).append(document.createTextNode(token));
+    }
+  }
+}
 function noticeReadForm(){
   return noticeKindIsEmail()
     ? {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
@@ -3829,11 +3851,11 @@ function noticePreview(){
   const head=document.createElement('div');head.className='notification-email-heading';head.textContent=noticeSubstitute(draft.headline);
   const pickup=document.createElement('div');pickup.textContent=noticeSubstitute(draft.timeLabel||'Hentetid:')+' 01:45 · '+noticeSubstitute(draft.statusLeft||'Snarest')+' / '+noticeSubstitute(draft.statusRight||'');
 
-  const body=document.createElement('p');body.textContent=noticeSubstitute(draft.body);
+  const body=document.createElement('p');noticeAppendBoldMarkup(body,draft.body);
   const details=document.createElement('div');details.className='notification-email-products';
   details.textContent=noticeSubstitute(draft.detailsTitle||'Bestillingsdetaljer')+' · #I2SEA2\n'+
     noticeSubstitute(draft.itemsTitle||'Bestilte varer')+'\n2 × Stor Classico\nTotalt: 588 kr';
-  const foot=document.createElement('p');foot.textContent=noticeSubstitute(draft.footer);
+  const foot=document.createElement('p');noticeAppendBoldMarkup(foot,draft.footer);
   el.append(brand,subject,head,pickup,body,details,foot);
 }
 function noticeSetKind(kind){
@@ -3948,6 +3970,22 @@ async function noticeCheckTestStatus(){
       +(noticeState.lastTest?.kind===kind&&noticeState.lastTest.id===data.id?' · Din test':'');
   }catch(error){noticeEl.result.textContent='Teststatus utilgjengelig: '+error.message}
 }
+const boldButton=$('notificationBold');
+boldButton?.addEventListener('click',()=>{
+  if(!noticeKindIsEmail())return;
+  const input=noticeEl.body;
+  const from=input.selectionStart??input.value.length;
+  const to=input.selectionEnd??from;
+  const content=input.value.slice(from,to)||'{hentetid}';
+  const markup='<strong>'+content+'</strong>';
+  if(input.value.length+markup.length-(to-from)>2200){
+    noticeFeedback('Meldingen er for lang for flere tegn.','error');return;
+  }
+  input.setRangeText(markup,from,to,'select');
+  input.focus();
+  input.setSelectionRange(from+8,from+8+content.length);
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+});
 noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
 for(const input of [noticeEl.subject,noticeEl.headline,noticeEl.body,noticeEl.footer,
   noticeEl.timeLabel,noticeEl.statusLeft,noticeEl.statusRight,noticeEl.detailsTitle,noticeEl.itemsTitle]){
