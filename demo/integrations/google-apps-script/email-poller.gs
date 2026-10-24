@@ -544,8 +544,14 @@ function kolProcessMailTests_(props,mailTemplates){
       Number(props.getProperty('KOL_MAIL_TEST_COUNT')||0):0;
     const since=now-Number(props.getProperty('KOL_MAIL_TEST_LAST_AT')||0);
     if(count>=4||since<180000){result('rate_limited','Maks 4 e-posttester per dag og 3 minutter mellom dem.');continue}
-    const to=String(Session.getEffectiveUser().getEmail()||'').trim();
-    if(!kolEmail_({email:to})){result('failed','Fant ingen gyldig kontoeier-epost.');continue}
+    // Fixed test mailbox set privately in Apps Script Properties; never
+    // accept a recipient from Firebase or the public admin browser.
+    // If unset, default to the account owning the time-driven trigger.
+    const to=String(props.getProperty('KOL_TEST_EMAIL')||
+      Session.getEffectiveUser().getEmail()||'').trim();
+    if(!kolEmail_({email:to})){
+      result('failed','Ingen gyldig testadresse. Angi KOL_TEST_EMAIL i Apps Script → Script Properties.');continue;
+    }
     props.setProperty('KOL_MAIL_TEST_DAY',day);
     props.setProperty('KOL_MAIL_TEST_COUNT',String(count+1));
     props.setProperty('KOL_MAIL_TEST_LAST_AT',String(now));
@@ -651,8 +657,9 @@ function kontrollerEpostTestNaa() {
   const lock=LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    Logger.log('Kontrollerer Varslinger-test: avsenderkonto='+
-      (Session.getEffectiveUser().getEmail()||'(ukjent)'));
+    Logger.log('Kontrollerer Varslinger-test: testmottaker='+
+      (PropertiesService.getScriptProperties().getProperty('KOL_TEST_EMAIL')||
+       Session.getEffectiveUser().getEmail()||'(ukjent)'));
     kolProcessMailTests_(PropertiesService.getScriptProperties(),kolReadMailTemplates_());
     Logger.log('Testkontroll ferdig. Hvis ingen test ble sendt: kontroller Firebase Rules, mottakerkonto, testbegrensning og siste request.id.');
   } finally { lock.releaseLock(); }
