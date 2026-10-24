@@ -3976,14 +3976,20 @@ boldButton?.addEventListener('click',()=>{
   const input=noticeEl.body;
   const from=input.selectionStart??input.value.length;
   const to=input.selectionEnd??from;
-  const content=input.value.slice(from,to)||'{hentetid}';
-  const markup='<strong>'+content+'</strong>';
+  const selected=input.value.slice(from,to);
+  // No selection: insert exactly <strong><strong> with the caret in
+  // the middle. The safe preview/e-mail parser treats the second tag
+  // as closing; the operator fills in their own text.
+  const markup=selected
+    ? '<strong>'+selected+'</strong>'
+    : '<strong><strong>';
   if(input.value.length+markup.length-(to-from)>2200){
     noticeFeedback('Meldingen er for lang for flere tegn.','error');return;
   }
-  input.setRangeText(markup,from,to,'select');
+  input.setRangeText(markup,from,to,'end');
   input.focus();
-  input.setSelectionRange(from+8,from+8+content.length);
+  if(selected)input.setSelectionRange(from+8,from+8+selected.length);
+  else input.setSelectionRange(from+8,from+8);
   input.dispatchEvent(new Event('input',{bubbles:true}));
 });
 noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
