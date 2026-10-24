@@ -115,3 +115,37 @@ html[data-theme="dark"] #pageSettings .printer-settings-preview-head{color:#dbe9
 html[data-theme="dark"] #pageSettings .printer-settings-preview-head small{color:#c4d1c8}
 @media(max-width:870px){#pageSettings .printer-settings-content{grid-template-columns:1fr}#pageSettings #printerTypographyPreview{width:min(100%,360px)}}
 @media(max-width:400px){#pageSettings .printer-settings-card{padding:15px 12px}#pageSettings .printer-settings-field{padding:11px 10px}}
+
+/* Firebase-controlled notification templates — dedicated admin page */
+#pageNotifications .notification-layout{display:grid;grid-template-columns:minmax(310px,1.1fr) minmax(290px,.9fr);gap:18px;padding:20px 26px 30px;align-items:start;max-width:1440px}
+#pageNotifications .notification-controls{min-width:0;display:grid;gap:16px}
+#pageNotifications .notification-tabs{display:flex;gap:6px;flex-wrap:wrap}
+#pageNotifications .notification-tabs button{font:inherit;font-size:13px;font-weight:750;padding:11px 14px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;cursor:pointer}
+#pageNotifications .notification-tabs button.is-active{background:#e4f6eb;color:#087848;border-color:#84cba8}
+#pageNotifications .notification-editor,#pageNotifications .notification-test,#pageNotifications .notification-preview{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px;min-width:0}
+#pageNotifications .notification-editor{display:grid;gap:15px}
+#pageNotifications .notification-note,#pageNotifications .notification-test p{margin:0;color:var(--ink-2);font-size:13px;line-height:1.6}
+#pageNotifications .notification-note code{padding:2px 3px;background:rgba(120,140,130,.12);border-radius:4px}
+#pageNotifications .notification-field{display:grid;gap:7px;font-size:13px;font-weight:750;color:var(--ink)}
+#pageNotifications .notification-field input,#pageNotifications .notification-field textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px 14px;font:inherit;font-weight:450;line-height:1.6;resize:vertical}
+#pageNotifications .notification-field input:focus,#pageNotifications .notification-field textarea:focus{outline:2px solid #5bbd89;outline-offset:1px}
+#pageNotifications .notification-field[hidden]{display:none}
+#pageNotifications .notification-actions{display:flex;gap:9px;flex-wrap:wrap}
+#pageNotifications .notification-actions button{min-height:41px}
+#pageNotifications .notification-message{font-size:12px;line-height:1.5;margin:0;color:var(--ink-2)}
+#pageNotifications .notification-message[data-state="error"]{color:#b73537}
+#pageNotifications .notification-message[data-state="saved"]{color:#13804c}
+#pageNotifications .notification-test{display:grid;gap:11px}
+#pageNotifications .notification-test strong{font-size:16px}
+#pageNotifications .notification-test button{justify-self:start;min-height:38px}
+#pageNotifications #notificationTestStatus{font-size:12px;line-height:1.6;color:var(--ink-2)}
+#pageNotifications .notification-preview{position:sticky;top:18px}
+#pageNotifications .notification-preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+#pageNotifications .notification-preview-head small{color:var(--ink-2);font-size:11px}
+#pageNotifications .notification-preview-content{min-height:140px;border:1px solid var(--line);border-radius:12px;padding:20px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);color:var(--ink);font-size:14px;line-height:1.8}
+#pageNotifications .notification-preview-content.is-email{background:#f6f6f0;color:#183323}
+#pageNotifications .notification-preview-content .notification-email-brand{background:#10291c;color:#fff;padding:20px;text-align:center;margin:-20px -20px 17px;font-size:24px;font-weight:850;letter-spacing:2px}
+#pageNotifications .notification-preview-content .notification-email-heading{font-size:17px;font-weight:850;color:#165233;margin:12px 0}
+#pageNotifications .notification-preview-content .notification-email-products{font-size:12px;padding:14px;margin:14px 0;border:1px solid #c9d8cb;border-radius:8px}
+html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{background:#173e2e;color:#aef3c8;border-color:#347a53}
+@media(max-width:900px){#pageNotifications .notification-layout{grid-template-columns:1fr;padding:12px 15px 26px}#pageNotifications .notification-preview{position:static}}
