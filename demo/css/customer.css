@@ -2508,3 +2508,33 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   #viewProfile .profile-contact-card .contact-form-control .input{min-height:48px;height:48px}
   #viewProfile .profile-contact-card .contact-form-phone .phone-prefix{min-height:48px;flex-basis:53px}
 }
+
+/* Repeatable add-ons: two-tap sauce portions with a stable compact stepper.
+ * One portion costs option.price; the overall group limit is set in admin. */
+#productSheet .opt-row.is-serving{flex-wrap:wrap;gap:7px 9px}
+#productSheet .opt-row.is-serving .opt-label{flex:1 1 46%}
+#productSheet .opt-row.is-serving .opt-price{font-size:10.5px}
+#productSheet .opt-row.is-serving .option-quantity{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;margin-left:auto;white-space:nowrap;
+  border:1px solid var(--palette-border);border-radius:10px;
+  padding:2px 4px;background:var(--palette-surface);
+}
+#productSheet .opt-row.is-serving .option-quantity button{
+  display:grid;place-items:center;width:30px;height:29px;
+  padding:0;border-radius:7px;border:1px solid var(--palette-border);
+  background:var(--palette-soft);color:var(--palette-ink);
+  font-size:19px;font-weight:750;line-height:1;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#productSheet .opt-row.is-serving .option-quantity button:disabled{opacity:.3;cursor:not-allowed}
+#productSheet .opt-row.is-serving .option-quantity b{
+  min-width:14px;text-align:center;color:var(--palette-ink);font-size:13px;
+  font-variant-numeric:tabular-nums;
+}
+#productSheet .opt-row.is-serving.is-blocked:has(.option-quantity) {opacity:1}
+#productSheet .opt-serving-limit{margin-left:auto}
+@media(max-width:370px) {
+  #productSheet .opt-row.is-serving .opt-label{flex-basis:37%}
+  #productSheet .opt-row.is-serving .option-quantity{gap:4px}
+}
