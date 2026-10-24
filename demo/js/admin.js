@@ -3785,7 +3785,8 @@ const noticeEl={
   tab:[...document.querySelectorAll('[data-message-kind]')],
   subject:$('notificationSubject'),headline:$('notificationHeadline'),
   body:$('notificationBody'),footer:$('notificationFooter'),
-  html:$('notificationHtml'),htmlPanel:document.querySelector('[data-notification-full-html]'),
+  html:$('notificationHtml'),htmlSubject:$('notificationHtmlSubject'),
+  htmlPanel:document.querySelector('[data-notification-full-html]'),
   simplePanel:document.querySelector('[data-notification-simple]'),
   modeHtml:$('notificationModeHtml'),modeSimple:$('notificationModeSimple'),
   restoreHtml:$('notificationRestoreHtml'),copyHtml:$('notificationCopyHtml'),
@@ -3838,7 +3839,7 @@ function noticeAppendBoldMarkup(host, value) {
 function noticeReadForm(){
   if(!noticeKindIsEmail())return {body:noticeEl.body.value.trim()};
   if(noticeState.editorMode==='html')return {
-    subject:noticeEl.subject.value.trim(),html:noticeEl.html.value
+    subject:noticeEl.htmlSubject.value.trim(),html:noticeEl.html.value
   };
   return {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
     body:noticeEl.body.value.trim(),footer:noticeEl.footer.value.trim(),
@@ -3892,6 +3893,7 @@ function noticeSetKind(kind){
   if(noticeKindIsEmail()){
     noticeEl.html.value=typeof saved.html==='string'
       ? saved.html:defaultOrderEmailHtml(kind,saved);
+    noticeEl.htmlSubject.value=String(saved.subject||'');
   }
   noticeSetEditorMode(noticeKindIsEmail()?'html':'simple');
   for(const key of ['subject','headline','body','footer','timeLabel','statusLeft','statusRight','detailsTitle','itemsTitle']){
@@ -4099,6 +4101,9 @@ noticeEl.copyHtml.addEventListener('click',async()=>{
 });
 noticeEl.html.addEventListener('input',()=>{
   noticeState.dirty=true;noticePreview();noticeFeedback('HTML-endringer er ikke lagret.');
+});
+noticeEl.htmlSubject.addEventListener('input',()=>{
+  noticeState.dirty=true;noticePreview();noticeFeedback('Emne-endringer er ikke lagret.');
 });
 noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
 for(const input of [noticeEl.subject,noticeEl.headline,noticeEl.body,noticeEl.footer,
