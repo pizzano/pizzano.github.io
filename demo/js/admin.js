@@ -3901,6 +3901,7 @@ function noticeSetKind(kind){
     noticeEl.html.value=typeof saved.html==='string'
       ? saved.html:defaultOrderEmailHtml(kind,saved);
     noticeEl.htmlSubject.value=String(saved.subject||'');
+    noticeEl.subject.value=String(saved.subject||'');
   }
   noticeSetEditorMode(noticeKindIsEmail()?'html':'simple');
   for(const key of ['subject','headline','body','footer','timeLabel','statusLeft','statusRight','detailsTitle','itemsTitle']){
