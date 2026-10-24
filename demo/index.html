@@ -5,7 +5,7 @@
     <script src="/demo/config.js?v=20261022-smsfirebase1"></script>
     <script>window.BESTILL_CONFIG.customerOnly = true;</script>
     <meta charset="UTF-8">
-    <meta name="bestill-build" content="20261025-tenantbrand1">
+    <meta name="bestill-build" content="20261025-neutral-loading1">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#33251f">
@@ -15,6 +15,38 @@
     <link rel="manifest" href="/demo/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/demo/icons/restaurant.svg" />
     <title>Online bestilling</title>
+    <!-- Første maling er alltid én merkefri lasteskjerm, aldri et uferdig restaurantgrensesnitt. -->
+    <style>
+      .app-startup {
+        position:fixed;inset:0;z-index:2147483640;
+        display:flex;align-items:center;justify-content:center;
+        box-sizing:border-box;padding:28px 22px env(safe-area-inset-bottom);
+        background:#f8f9fa;color:#252b32;
+        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        text-align:center;
+      }
+      .app-startup[hidden],.app-startup [hidden]{display:none!important}
+      html[data-theme="dark"] .app-startup{background:#15191c;color:#f0f2f4}
+      .app-startup-inner{width:min(100%,330px);display:flex;flex-direction:column;align-items:center}
+      .app-startup-ring{
+        display:block;width:57px;height:57px;box-sizing:border-box;
+        border:4px solid #e2e5e8;border-top-color:#cc6725;
+        border-right-color:#cc6725;border-radius:50%;
+        animation:app-startup-spin .85s linear infinite;
+      }
+      html[data-theme="dark"] .app-startup-ring{border-color:#383e43;border-top-color:#e89863;border-right-color:#e89863}
+      .app-startup-title{margin:24px 0 6px;font-size:20px;font-weight:750;letter-spacing:-.025em}
+      .app-startup-note{margin:0;font-size:13px;line-height:1.5;color:#727b84}
+      html[data-theme="dark"] .app-startup-note{color:#b1b9c0}
+      .app-startup-retry{
+        margin-top:21px;min-height:42px;padding:0 22px;border:0;border-radius:11px;
+        color:#fff;background:#915321;font:700 13px inherit;
+        font-family:inherit;cursor:pointer;
+      }
+      .app-startup-retry:focus-visible{outline:3px solid #c67b41;outline-offset:3px}
+      @keyframes app-startup-spin{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){.app-startup-ring{animation:none}}
+    </style>
     <script src="/demo/js/theme.js?v=20261024-localfour2"></script>
     <link rel="stylesheet" href="/demo/css/customer-base.css?v=20261025-tenantbrand1">
     <link rel="stylesheet" href="/demo/css/customer.css?v=20261025-init-and-qty1">
@@ -30,6 +62,15 @@
 </head>
 
 <body>
+    <!-- Kun denne lasteskjermen skal være synlig til Firebase og første menyrender er ferdige. -->
+    <div id="appStartup" class="app-startup" role="status" aria-live="polite" aria-busy="true">
+        <div class="app-startup-inner">
+            <span class="app-startup-ring" id="startupSpinner" aria-hidden="true"></span>
+            <strong class="app-startup-title" id="startupTitle">Loading...</strong>
+            <p class="app-startup-note" id="startupNote">Forbereder menyen</p>
+            <button class="app-startup-retry" id="startupRetry" type="button" hidden>Prøv igjen</button>
+        </div>
+    </div>
     <!-- ============ HEADER ============ -->
     <header class="app-header" id="appHeader">
         <div class="header-inner">
@@ -332,7 +373,21 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script type="module" src="/demo/js/customer.js?v=20261025-tenantbrand1"></script>
+    <script>
+      // Fungerer også hvis modulen feiler å laste: aldri en evig spinner.
+      window.showCustomerStartupError = function() {
+        const cover = document.getElementById('appStartup');
+        if (!cover || cover.hidden) return;
+        document.getElementById('startupSpinner').hidden = true;
+        document.getElementById('startupTitle').textContent = 'Kunne ikke laste menyen';
+        document.getElementById('startupNote').textContent = 'Sjekk internettforbindelsen og prøv igjen.';
+        document.getElementById('startupRetry').hidden = false;
+        cover.setAttribute('aria-busy', 'false');
+      };
+      document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
+      window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
+    </script>
+    <script type="module" src="/demo/js/customer.js?v=20261025-neutral-loading1"></script>
     <script type="module" src="/demo/js/shop-info.js?v=20261024-localfour1"></script>
 </body>
 
