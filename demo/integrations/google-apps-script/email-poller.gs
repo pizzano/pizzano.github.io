@@ -102,6 +102,30 @@ function kolHtmlEscape_(value) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];
   });
 }
+/** Permit bold emphasis only. Every other HTML tag, attribute or entity
+ * is escaped before placing customer/template content into an email.
+ * The second <strong> closes the first for legacy unclosed drafts.
+ */
+function kolFormattedEmailHtml_(value) {
+  const tokens=String(value||'').split(/(<\/?strong>)/gi);
+  let bold=false,html='';
+  tokens.forEach(function(token){
+    if(/^<strong>$/i.test(token)){
+      html+=bold?'</strong>':'<strong>';
+      bold=!bold;
+    }else if(/^<\/strong>$/i.test(token)){
+      if(bold){html+='</strong>';bold=false;}
+    }else{
+      html+=kolHtmlEscape_(token).replace(/\r?\n/g,'<br>');
+    }
+  });
+  return html+(bold?'</strong>':'');
+}
+/** HTML markers never appear in the plain-text email alternative. */
+function kolPlainEmailMarkup_(value) {
+  return String(value||'').replace(/<\/?strong>/gi,'');
+}
+
 function kolKr_(value) {
   const number = Number(value);
   return 'kr ' + (Number.isFinite(number) ? number : 0).toLocaleString('nb-NO', {
@@ -311,7 +335,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     safe(statusRight) + '</td></tr></table></td></tr>' +
 
     '<tr><td style="padding:8px 26px 18px;font-size:14px;line-height:22px;color:#546358;">' +
-    safe(introLine).replace(/\n/g,'<br>') + '</td></tr>' +
+    kolFormattedEmailHtml_(introLine) + '</td></tr>' +
 
     '<tr><td style="padding:0 15px 14px;">' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e2e7dd;border-radius:13px;border-collapse:separate;background:#ffffff;">' +
@@ -336,7 +360,7 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     '</table></td></tr>' +
 
     (kolPlain_(order.comment) ? '<tr><td style="padding:2px 26px 14px;font-size:12px;color:#536457;"><strong>Kommentar:</strong> ' + safe(order.comment) + '</td></tr>' : '') +
-    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + safe(footerLine).replace(/\n/g,'<br>') + '</td></tr>' : '') +
+    (footerLine ? '<tr><td style="padding:0 25px 15px;font-size:13px;line-height:21px;color:#455c4b;">' + kolFormattedEmailHtml_(footerLine) + '</td></tr>' : '') +
     '<tr><td align="center" style="padding:17px 15px 26px;color:#68756b;font-size:12px;line-height:20px;">' +
     'Takk for at du bestiller hos<br><strong style="color:#143623;font-size:13px;letter-spacing:1px;">KØL GRILL &amp; PIZZA</strong><br>' +
     '<a href="' + orderLink + '" style="color:#286844;">Se vår meny</a><br>' +
@@ -348,14 +372,14 @@ function kolBuildReceipt_(order, kind, mailTemplates) {
     (accepted ? 'Bestillingen din er bekreftet.' : 'Bestillingen din er klar for henting!') +
     '\n' + mainLabel + ' ' + mainTime +
     '\n' + statusLeft + ' – ' + statusRight +
-    '\n\n' + introLine +
+    '\n\n' + kolPlainEmailMarkup_(introLine) +
     '\n\n' + info.map(function(p) {return p[0] + ': ' + p[1];}).join('\n') +
     '\nHenting: Øgardsvegen 44, 2100 Skarnes' +
     '\n\nBestilte varer:\n' + detailsPlain +
     '\n\nDelsum: ' + money2(subtotal) +
     '\nHerav MVA (15 %): ' + money2(totalMva) +
     '\nTotalt: ' + money(total) +
-    (footerLine ? '\n\n'+footerLine : '')+'\n\nVennlig hilsen KØL Grill & Pizza';
+    (footerLine ? '\n\n'+kolPlainEmailMarkup_(footerLine) : '')+'\n\nVennlig hilsen KØL Grill & Pizza';
   return { subject:subject, html:html, text:text };
 }
 
