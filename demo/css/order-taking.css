@@ -93,6 +93,7 @@ body.orders-sidebar-collapsed .orders-sidebar-toggle{
  outline:2px solid var(--ot-accent);outline-offset:0;
 }
 .orders-page .orders-brand{display:flex;align-items:center;gap:20px}
+.orders-page .orders-brand[hidden]{display:none!important}
 .orders-page .orders-brand-name{display:block;max-width:min(40vw,320px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(17px,2.2vw,25px);line-height:1.2;letter-spacing:-.025em;font-weight:850;color:#075538}
 .orders-page .orders-brand-sub{font-size:10px;font-weight:900;letter-spacing:.4em;white-space:nowrap}
 .orders-page .orders-title-block .orders-screen-title{font-size:14px;font-weight:790;color:var(--ot-muted);margin:0}
