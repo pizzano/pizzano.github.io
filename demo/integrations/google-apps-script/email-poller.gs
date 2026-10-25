@@ -538,8 +538,16 @@ function kolProcessMailTests_(props,mailTemplates){
     const day=Utilities.formatDate(new Date(now),'Europe/Oslo','yyyyMMdd');
     const count=props.getProperty('KOL_MAIL_TEST_DAY')===day?
       Number(props.getProperty('KOL_MAIL_TEST_COUNT')||0):0;
-    const since=now-Number(props.getProperty('KOL_MAIL_TEST_LAST_AT')||0);
-    if(count>=4||since<180000){result('rate_limited','Maks 4 e-posttester per dag og 3 minutter mellom dem.');continue}
+    // Each email tab can be tested once without blocking the other tab.
+    // Keep the four-tests-per-day cap shared across both message types.
+    const cooldownKey='KOL_MAIL_TEST_LAST_AT_'+kind;
+    const since=now-Number(props.getProperty(cooldownKey)||0);
+    if(count>=4||since<180000){
+      result('rate_limited',count>=4
+        ? 'Maks 4 e-posttester per dag (begge malene til sammen).'
+        : 'Vent 3 minutter før du tester samme e-postmal igjen.');
+      continue;
+    }
     // Fixed test mailbox set privately in Apps Script Properties; never
     // accept a recipient from Firebase or the public admin browser.
     // If unset, default to the account owning the time-driven trigger.
@@ -550,11 +558,15 @@ function kolProcessMailTests_(props,mailTemplates){
     }
     props.setProperty('KOL_MAIL_TEST_DAY',day);
     props.setProperty('KOL_MAIL_TEST_COUNT',String(count+1));
-    props.setProperty('KOL_MAIL_TEST_LAST_AT',String(now));
+    props.setProperty(cooldownKey,String(now));
     result('attempted','Test godkjent for avsenderkontoens innboks.');
-    const sample={id:'ord_'+now.toString(36)+'test',customerName:'FATIH',
+    // Synthetic mail tests have no browser URL like real orders. Only the
+    // test mail uses an explicit example URL when ORDER_PAGE_URL is unset.
+    const testPageUrl=String(props.getProperty('ORDER_PAGE_URL')||'').trim()||'https://example.org/';
+    const sample={id:'ord_'+now.toString(36)+'test',customerName:'Testkunde',
       email:to,phone:'+47 40000000',createdAt:now-120000,
-      pickup:'Snarest',estimatedReadyAt:now+15*60000,
+      orderPageUrl:testPageUrl,pickup:'Snarest',estimatedAt:now,
+      estimatedMinutes:15,estimatedReadyAt:now+15*60000,
       staffReadyAt:now,total:588,
       lines:[{name:'Stor Classico',quantity:2,price:588,size:'Stor'}]};
     try{
