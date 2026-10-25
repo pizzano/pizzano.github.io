@@ -3833,7 +3833,7 @@ function noticeFeedback(text,state='neutral'){
 }
 function noticeSubstitute(text){
   const vars={
-    navn:'FATIH',hentetid:'01:45',kode:'I2SEA2',
+    navn:'Kunde',hentetid:'01:45',kode:'I2SEA2',
     lenke:customerOrderLink('ord_m8example',window.location.href),
     total:'588 kr',varer:'2 × Stor Classico',
     hentetype:'Snarest',tidsinfo:'Ca. 15 minutter'
