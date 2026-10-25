@@ -86,6 +86,30 @@ function kolAsapReadyClock_(order) {
     : '';
 }
 
+/** Human-readable preparation estimate for SMS {tidsinfo}.
+ * For Snarest, use the number of minutes chosen by staff.
+ * For selected pickup slots, express the remaining time when SMS is sent.
+ * This text follows "Bestillingen din er klar om {tidsinfo}" naturally.
+ */
+function kolTidsinfo_(order) {
+  const scheduled = order.pickupMode === 'scheduled' ||
+    /^\d{1,2}:\d{2}$/.test(String(order.pickup || '').trim());
+  let minutes = Number(order.estimatedMinutes) || 0;
+  if (scheduled) {
+    const time = Number(order.scheduledPickupAt) || Number(order.estimatedReadyAt);
+    if (Number.isFinite(time) && time > Date.now()) {
+      minutes = Math.ceil((time - Date.now()) / 60000);
+    }
+  }
+  minutes = Math.round(minutes);
+  if (!Number.isFinite(minutes) || minutes <= 0) return 'kort tid';
+  if (minutes < 60) return 'ca. ' + minutes + (minutes === 1 ? ' minutt' : ' minutter');
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  const hourLabel = hours + (hours === 1 ? ' time' : ' timer');
+  return 'ca. ' + hourLabel + (rest ? ' og ' + rest + (rest === 1 ? ' minutt' : ' minutter') : '');
+}
+
 /** Validate an absolute HTTPS customer-page URL. New orders record the
  * real site directory. Set Script Property ORDER_PAGE_URL for legacy orders.
  */
@@ -135,6 +159,8 @@ function kolMessage_(order,eventKind,orderId,template) {
    +'Se bestillingen: '+link+'\n\nKØL Grill & Pizza';
   if(typeof template!=='string'||!template.trim())return defaultBody;
   const vars={navn:first||'kunde',kode:code,lenke:link,hentetid:clock||'snarest',
+    tidsinfo:kolTidsinfo_(order),
+    hentetype:scheduled?'Planlagt henting':'Snarest',
     total:String(Number(order.total)||0)+' kr',
     varer:(Array.isArray(order.lines)?order.lines:[]).map(x=>String(x.quantity||1)+' × '+String(x.name||'Produkt')).join(', ')};
   const message=template.replace(/\{([a-zA-Z]+)\}/g,function(token,key){
