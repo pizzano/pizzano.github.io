@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-accept-diagnostics2';
+} from './data.js?v=20261026-profile-register1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
