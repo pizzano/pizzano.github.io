@@ -14,7 +14,7 @@
  * not a growing Firebase subtree or lifetime history.
  * ETag transactions keep counted totals and coupon reservations consistent.
  */
-import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261025-orderlinks1';
+import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261025-order-acceptance1';
 import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
 
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
