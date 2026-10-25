@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <title>GitHub-kilder · Varslinger</title>
+  <script src="../config.js"></script>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color-scheme:light}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f4f6f7;color:#1c2a2d;padding:25px 16px 70px}
+    main{max-width:690px;margin:auto}
+    h1{font-size:25px;margin:0 0 10px}
+    h2{font-size:16px;margin:3px 0 15px}
+    p{line-height:1.6;color:#52616a;font-size:13px}
+    .card{background:#fff;border:1px solid #dfe5e8;border-radius:15px;padding:22px;margin-top:14px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:grid;gap:6px;font-size:13px;font-weight:700;margin-bottom:13px}
+    input{width:100%;min-height:42px;border:1px solid #cdd6db;border-radius:8px;padding:10px 12px;font:14px inherit;font-family:inherit}
+    input:focus-visible{outline:2px solid #298052;outline-offset:2px}
+    button{cursor:pointer;border:0;border-radius:9px;background:#185b42;color:#fff;font-weight:750;font-size:13px;min-height:42px;padding:0 20px}
+    button:disabled{opacity:.6;cursor:wait}
+    button.secondary{background:#eaf2ee;color:#14513b}
+    .actions{display:flex;gap:9px;flex-wrap:wrap}
+    .preview{padding:12px;background:#f6f8f9;border:1px solid #e0e7e7;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font:12px/1.5 Consolas,Monaco,monospace}
+    .hint{font-size:12px;color:#6f7e84}
+    .status{margin-top:17px;white-space:pre-wrap;background:#eef3f1;border:1px solid #d0ded7;border-radius:9px;padding:13px;font-size:13px}
+    .status.error{background:#fff4f3;border-color:#f0c3bf;color:#9b2f25}
+    code{background:#f1f3f4;padding:2px 4px;border-radius:3px;overflow-wrap:anywhere}
+    @media(max-width:510px){.form-row{grid-template-columns:1fr}.card{padding:17px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>GitHub-kilder for SMS og e-post</h1>
+  <p>Endre GitHub-konto, repository, gren eller kodekatalog uten å åpne Google Apps Script. Dette er en <strong>signert</strong> kildeoversikt: selve passordet blir aldri lagret i Firebase.</p>
+  <section class="card">
+    <h2>1. GitHub-plassering</h2>
+    <div class="form-row">
+      <label>GitHub repository (eier/repo)
+        <input id="repo" placeholder="eier/repository" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Branch
+        <input id="branch" placeholder="main" value="main" spellcheck="false" autocomplete="off">
+      </label>
+    </div>
+    <label>Katalog for .gs-filene i GitHub
+      <input id="directory" placeholder="min-mappe/integrations/google-apps-script" spellcheck="false" autocomplete="off">
+    </label>
+    <div class="form-row">
+      <label>SMS-fil
+        <input id="smsFile" value="Kode.gs" spellcheck="false" autocomplete="off">
+      </label>
+      <label>E-post-fil
+        <input id="emailFile" value="email-poller.gs" spellcheck="false" autocomplete="off">
+      </label>
+    </div>
+    <div class="preview" id="preview">Fyll ut feltene for å se adressene.</div>
+  </section>
+  <section class="card">
+    <h2>2. Privat signeringsnøkkel</h2>
+    <p>Denne må være identisk med <code>CODE_FEED_HMAC_KEY</code> i begge Google Apps Script-prosjektene. Den brukes her bare når du trykker Lagre, og lagres aldri på enheten.</p>
+    <label>Hemmelig nøkkel (minst 32 tegn)
+      <input id="secret" type="password" autocomplete="new-password" spellcheck="false" placeholder="Privat nøkkel, aldri send den til andre">
+    </label>
+    <div class="actions">
+      <button id="generate" class="secondary" type="button">Generer ny nøkkel (kun første oppsett)</button>
+      <button id="save" type="button">Signer og lagre kildeoversikt</button>
+    </div>
+    <p class="hint">Har du allerede aktivert en nøkkel i Google Apps Script? Bruk den eksisterende. Generer ikke en ny uten å oppdatere begge prosjektene, ellers avvises kildeoversikten.</p>
+  </section>
+  <section class="card">
+    <h2>3. Oppsett og kontroll</h2>
+    <p>Google Apps Script leser fra denne Firebase-databasen. Adressen endres ikke når webdomenet eller GitHub-repositoryet flyttes.</p>
+    <div class="preview" id="firebaseUrl">Henter Firebase-adresse...</div>
+    <p id="status" class="status" role="status" aria-live="polite">Klar til å lese gjeldende kildeoversikt.</p>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const dbUrl = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/\/+$/, '');
+  const endpoint = dbUrl + '/integrations/runtimeScripts.json';
+  $('firebaseUrl').textContent = dbUrl || 'Firebase er ikke konfigurert.';
+  let existing = null;
+
+  function status(message,error=false) {
+    $('status').textContent=message;
+    $('status').classList.toggle('error',error);
+  }
+  function values() {
+    const repository = $('repo').value.trim();
+    const branch = $('branch').value.trim();
+    const directory = $('directory').value.trim().replace(/^\/+|\/+$/g,'');
+    const smsFile = $('smsFile').value.trim();
+    const emailFile = $('emailFile').value.trim();
+    if (!/^[a-zA-Z0-9-]{1,39}\/[a-zA-Z0-9_.-]{1,100}$/.test(repository))
+      throw new Error('Repository må ha formen eier/repository.');
+    if (!/^[a-zA-Z0-9_.-]{1,100}$/.test(branch) || branch==='.' || branch==='..')
+      throw new Error('Ugyldig branch. Bruk for eksempel main.');
+    if (directory && (!/^[a-zA-Z0-9_.\/-]+$/.test(directory) || directory.split('/').some(x=>!x||x==='.'||x==='..')))
+      throw new Error('Ugyldig katalogsti.');
+    if (![smsFile,emailFile].every(x=>/^[a-zA-Z0-9_.-]+\.gs$/.test(x) && !x.startsWith('..')))
+      throw new Error('Filnavn må slutte på .gs.');
+    const root='https://raw.githubusercontent.com/'+repository+'/'+branch+'/';
+    return {version:1,sms:root+(directory?directory+'/':'')+smsFile,
+      email:root+(directory?directory+'/':'')+emailFile};
+  }
+  function updatePreview(){
+    try {const v=values();$('preview').textContent='SMS:\n'+v.sms+'\n\nE-post:\n'+v.email;}
+    catch {$('preview').textContent='Fyll ut repository, branch og katalog.';}
+  }
+  function fromConfig(conf){
+    // Convenience only. Actual executed URLs are validated by the signature.
+    const match=String(conf?.sms||'').match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)\/([^/]+)$/);
+    if(!match)return;
+    $('repo').value=match[1]+'/'+match[2];
+    $('branch').value=match[3];
+    $('directory').value=match[4];
+    $('smsFile').value=match[5];
+    $('emailFile').value=String(conf.email||'').split('/').pop()||'email-poller.gs';
+    updatePreview();
+  }
+  const canonical = conf=>'v1\n'+conf.sms+'\n'+conf.email;
+  async function sign(conf,secret){
+    const bytes=new TextEncoder().encode(secret);
+    const key=await crypto.subtle.importKey('raw',bytes,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+    const digest=new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(canonical(conf))));
+    let binary='';for(const byte of digest)binary+=String.fromCharCode(byte);
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  async function load(){
+    if(!dbUrl){status('Firebase-URL mangler i config.js.',true);return;}
+    try{
+      const r=await fetch(endpoint,{cache:'no-store'});
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+      const value=await r.json();
+      existing=value&&typeof value==='object'?value:null;
+      if(existing?.version===1){fromConfig(existing);status('Lagret kildeoversikt er hentet. Endre ved behov, signér og lagre.');}
+      else status('Ingen signert kildeoversikt ennå. Fullfør oppsettet.');
+    }catch(e){status('Kunne ikke lese oppsettet: '+e.message,true);}
+  }
+  $('generate').addEventListener('click',()=>{
+    if($('secret').value && !confirm('Dette erstatter nøkkelen i feltet. Eksisterende Google Apps Script-nøkler endres IKKE. Fortsette?'))return;
+    const bytes=crypto.getRandomValues(new Uint8Array(32));
+    $('secret').value=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    $('secret').type='text';
+    status('Ny 64-tegns nøkkel ble generert lokalt. Kopier den til CODE_FEED_HMAC_KEY i begge Apps Script-prosjektene ved første installasjon. Nøkkelen lagres ikke på serveren.');
+  });
+  for(const id of ['repo','branch','directory','smsFile','emailFile'])
+    $(id).addEventListener('input',updatePreview);
+  $('save').addEventListener('click',async()=>{
+    const btn=$('save');
+    try{
+      if(!dbUrl)throw new Error('Firebase mangler.');
+      if(!window.crypto?.subtle)throw new Error('Åpne siden via HTTPS.');
+      const conf=values();
+      const secret=$('secret').value.trim();
+      if(secret.length<32)throw new Error('Signer med eksisterende nøkkel på minst 32 tegn.');
+      if(existing?.signature && await sign(existing,secret)!==existing.signature)
+        throw new Error('Nøkkelen stemmer ikke med lagret signatur. Ingen endringer er gjort.');
+      btn.disabled=true;
+      const payload={...conf,signature:await sign(conf,secret)};
+      // ETag protects another administrator's concurrent config update.
+      const current=await fetch(endpoint,{cache:'no-store',headers:{'X-Firebase-ETag':'true'}});
+      if(!current.ok)throw new Error('Kunne ikke kontrollere Firebase-versjon.');
+      const etag=current.headers.get('ETag');
+      if(!etag)throw new Error('Firebase ETag mangler.');
+      const stored=await fetch(endpoint,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(payload)});
+      if(!stored.ok)throw new Error(stored.status===412?'Konflikt: last siden på nytt.':'Firebase HTTP '+stored.status);
+      existing=payload;
+      status('Signert kildeoversikt lagret. SMS og e-post henter disse adressene ved neste kjøring. Nøkkelen er ikke lagret.');
+      $('secret').value='';$('secret').type='password';
+    }catch(e){status('Ikke lagret: '+e.message,true)}
+    finally{btn.disabled=false;}
+  });
+  updatePreview();void load();
+})();
+</script>
+</body>
+</html>
