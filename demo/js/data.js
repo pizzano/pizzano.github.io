@@ -1551,6 +1551,22 @@ async function reservePizzaReward(record) {
   throw new Error('Pizzabonus er opptatt. Prøv igjen.');
 }
 
+// Report the Firebase rejection reason for the exact order-accept action.
+// This is a read of an already failed HTTP response; it adds no DB requests.
+async function orderAcceptHttpError(response, action) {
+  let detail = '';
+  try {
+    const body = await response.text();
+    const parsed = JSON.parse(body);
+    detail = String(parsed?.error || parsed?.message || '').replace(/\\s+/g, ' ').slice(0, 130);
+  } catch { /* HTTP code still provides a usable diagnosis. */ }
+  const info = detail ? ' · ' + detail : '';
+  const rule = [401, 403].includes(response.status)
+    ? ' Sjekk Firebase Database Rules for skrivetilgang.'
+    : '';
+  return new Error(action + ' (HTTP ' + response.status + info + ').' + rule);
+}
+
 // Verify a restaurant acceptance against Firebase before claiming success.
 // The regular path keeps the order, pickup estimate and status atomic with ETag.
 // Some RTDB rules reject replacing an entire order with PUT (e.g. protected
@@ -1594,7 +1610,7 @@ async function patchConfirmedPizzaOrder(order, changes) {
       method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
     });
     if (!statusResponse.ok) {
-      throw new Error('Kunne ikke kontrollere ordrestatustransaksjonen (' + statusResponse.status + ').');
+      throw await orderAcceptHttpError(statusResponse, 'Kunne ikke kontrollere ordrestatusen');
     }
     const status = await statusResponse.json();
     const statusEtag = statusResponse.headers.get('ETag');
@@ -1633,7 +1649,7 @@ async function patchConfirmedPizzaOrder(order, changes) {
       throw new Error('Ordren ble endret samtidig. Oppdater siden og kontroller status.');
     }
     if (!committed.ok) {
-      throw new Error('Kunne ikke lagre bekreftet status i Firebase (' + committed.status + ').');
+      throw await orderAcceptHttpError(committed, 'Status kunne ikke lagres i Firebase');
     }
     return checkWrittenOrder({ ...current, ...fields, status: 'bekreftet' });
   }
@@ -1642,7 +1658,7 @@ async function patchConfirmedPizzaOrder(order, changes) {
     const response = await fetch(url, {
       method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
     });
-    if (!response.ok) throw new Error('Kunne ikke kontrollere bestillingen (' + response.status + ').');
+    if (!response.ok) throw await orderAcceptHttpError(response, 'Kunne ikke lese bestillingen for godkjenning');
     const current = await response.json();
     if (!current || current.status !== 'mottatt' || confirmationExpired(current)) {
       throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
@@ -1659,8 +1675,7 @@ async function patchConfirmedPizzaOrder(order, changes) {
     if ([400, 401, 403].includes(saved.status)) {
       return confirmWithProtectedFieldFallback(current);
     }
-    if (!saved.ok) throw new Error('Firebase nektet å lagre bestillingen (' + saved.status +
-      '). Kontroller Firebase Database Rules for ordrestatus.');
+    if (!saved.ok) throw await orderAcceptHttpError(saved, 'Firebase nektet å lagre bestillingen');
     const written = await saved.json().catch(() => accepted);
     return checkWrittenOrder(written || accepted);
   }
