@@ -1613,7 +1613,12 @@ async function patchConfirmedPizzaOrder(order, changes) {
       // In that case stage all required fields individually BEFORE status.
       if (!/\((400|401|403)\)/.test(String(error.message))) throw error;
       for (const [key, value] of Object.entries(fields)) {
-        await restPut(orderPath + '/' + encodeURIComponent(key), value);
+        try {
+          await restPut(orderPath + '/' + encodeURIComponent(key), value);
+        } catch (fieldError) {
+          throw new Error('Firebase Rules avviste feltet "' + key + '" (' +
+            String(fieldError?.message || 'ukjent feil') + ').');
+        }
       }
     }
 
@@ -1654,7 +1659,8 @@ async function patchConfirmedPizzaOrder(order, changes) {
     if ([400, 401, 403].includes(saved.status)) {
       return confirmWithProtectedFieldFallback(current);
     }
-    if (!saved.ok) throw new Error('Firebase nektet å lagre bestillingen (' + saved.status + ').');
+    if (!saved.ok) throw new Error('Firebase nektet å lagre bestillingen (' + saved.status +
+      '). Kontroller Firebase Database Rules for ordrestatus.');
     const written = await saved.json().catch(() => accepted);
     return checkWrittenOrder(written || accepted);
   }
