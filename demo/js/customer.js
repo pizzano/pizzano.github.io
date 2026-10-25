@@ -3175,7 +3175,7 @@ el.btnSaveProfile.addEventListener('click', async () => {
     return;
   }
   const nextName = el.profName.value.trim();
-  const nextPhone = el.profPhone.value.replace(/[^\\d]/g, '').slice(0, 8);
+  const nextPhone = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
   const nextEmail = el.profEmail.value.trim().toLowerCase();
   const saveButtonText = el.btnSaveProfile.textContent;
   el.btnSaveProfile.disabled = true;
