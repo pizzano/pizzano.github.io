@@ -2,9 +2,9 @@
   "name": "Online bestilling",
   "short_name": "Bestilling",
   "description": "Bestill mat til henting fra restauranten.",
-  "id": "/demo/",
-  "start_url": "/demo/index.html",
-  "scope": "/demo/",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "fullscreen",
   "display_override": [
     "fullscreen",
@@ -14,7 +14,7 @@
   "theme_color": "#33251f",
   "icons": [
     {
-      "src": "/demo/icons/restaurant.svg",
+      "src": "./icons/restaurant.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
