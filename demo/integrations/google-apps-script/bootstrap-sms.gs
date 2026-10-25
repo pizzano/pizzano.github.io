@@ -10,6 +10,26 @@
  * without changing this script; only the signed pointer needs updating.
  */
 function runtimeSource_(role, action) {
+  // Read both Firebase pointer and GitHub source only on cache misses.
+  // Cache is a performance optimization and may be evicted earlier by Google.
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'bestill-runtime-source-v2-' + role;
+  let source = cache.get(cacheKey);
+  if (!source) {
+    source = loadRuntimeSource_(role);
+    try { cache.put(cacheKey, source, 3600); }
+    catch (error) { console.warn('Kildecache utilgjengelig: ' + error.message); }
+  }
+  // "action" is a hard-coded function name defined in this bootstrap only.
+  // All referenced helper functions and constants share this local source.
+  const program = new Function(source + '\nreturn typeof ' + action +
+    ' === "function" ? ' + action + ' : null;')();
+  if (typeof program !== 'function')
+    throw new Error('Mangler funksjon i GitHub-koden: ' + action);
+  return program();
+}
+
+function loadRuntimeSource_(role) {
   const props = PropertiesService.getScriptProperties();
   const database = String(props.getProperty('CODE_FEED_DB_URL') || '').replace(/\/+$/, '');
   const signingKey = String(props.getProperty('CODE_FEED_HMAC_KEY') || '');
@@ -54,13 +74,7 @@ function runtimeSource_(role, action) {
   if (source.length < 200 || source.length > 120000)
     throw new Error('GitHub kildekode har uventet størrelse');
 
-  // "action" is a hard-coded function name defined in this bootstrap only.
-  // All referenced helper functions and constants share this local source.
-  const program = new Function(source + '\nreturn typeof ' + action +
-    ' === "function" ? ' + action + ' : null;')();
-  if (typeof program !== 'function')
-    throw new Error('Mangler funksjon i GitHub-koden: ' + action);
-  return program();
+  return source;
 }
 
 /* Keep exact trigger/test names from the existing SMS project. */
