@@ -150,17 +150,7 @@ html[data-theme="dark"] #pageSettings .printer-settings-preview-head small{color
 html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{background:#173e2e;color:#aef3c8;border-color:#347a53}
 @media(max-width:900px){#pageNotifications .notification-layout{grid-template-columns:1fr;padding:12px 15px 26px}#pageNotifications .notification-preview{position:static}}
 
-#pageNotifications .notification-advanced{border:1px solid var(--line);border-radius:10px;padding:0 12px}
-#pageNotifications .notification-advanced summary{padding:12px 3px;cursor:pointer;font-size:13px;font-weight:800;color:var(--ink)}
-#pageNotifications .notification-advanced-fields{display:grid;gap:12px;padding:5px 0 14px}
 
-#pageNotifications .notification-format-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:-7px}
-#pageNotifications .notification-format-tools[hidden]{display:none}
-#pageNotifications .notification-format-tools button{padding:7px 13px;border:1px solid var(--line);background:var(--surface);border-radius:8px;color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
-#pageNotifications .notification-format-tools button:hover{border-color:#5baa81}
-#pageNotifications .notification-format-tools small{color:var(--ink-2);font-size:11px;line-height:1.5}
-#pageNotifications .notification-format-tools code{font-family:monospace}
-#pageNotifications .notification-preview-content strong{font-weight:800}
 
 /* Varslinger has a fixed-height scrolling content pane inside the desktop
  * admin shell, like Bestillinger and Restaurantinnstillinger. Applies to
@@ -189,13 +179,9 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 
 /* Complete editable HTML templates for Bekreftet / Klar. Both tabs share
  * one safe source editor and a separate sandboxed full-width preview. */
-#pageNotifications .notification-mode-tabs{display:flex;gap:7px;flex-wrap:wrap}
-#pageNotifications .notification-mode-tabs[hidden],
 #pageNotifications .notification-full-html[hidden],
-#pageNotifications .notification-simple-fields[hidden]{display:none!important}
-#pageNotifications .notification-mode-tabs button{cursor:pointer;font:inherit;font-size:13px;font-weight:750;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 15px;border-radius:10px}
-#pageNotifications .notification-mode-tabs button.is-active{background:#e4f6eb;border-color:#84cba8;color:#087848}
-#pageNotifications .notification-simple-fields{display:grid;gap:15px;min-width:0}
+#pageNotifications .notification-sms-fields[hidden]{display:none!important}
+#pageNotifications .notification-sms-fields{display:grid;gap:15px;min-width:0}
 #pageNotifications .notification-full-html{display:grid;gap:15px;min-width:0}
 #pageNotifications .notification-full-html>p{margin:0;color:var(--ink-2);font-size:12px;line-height:1.65}
 #pageNotifications .notification-full-html code{font-family:monospace;background:rgba(120,140,130,.12);padding:1px 3px;border-radius:3px;overflow-wrap:anywhere}
