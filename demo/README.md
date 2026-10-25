@@ -35,14 +35,19 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
 - Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
 
-## Flyttbar kode / Google Apps Script (2026-10-25)
+## Flyttbar app og manuell Apps Script-oppdatering (2026-10-25)
 
-- Service-worker kan opprettes fra modulen sin relative katalog og cacher kun sin installasjon.
-- Varslinger > GitHub-kilder åpner `tools/Scriptkilde.html` for å angi ny GitHub-repository, branch, katalog eller kodenavn uten å gå inn i Google Apps Script.
-- SMS-/e-post-bootstrapene er `integrations/google-apps-script/bootstrap-sms.gs` og `bootstrap-email.gs`; disse må installeres **en gang** i hvert Google Apps Script-prosjekt. De bruker Firebase som fast oppdagelsespunkt med HMAC-signerte kildeadresser.
-- Google Apps Script henter oppdatert kode etter maks omtrent **5 minutter** når hurtigbufferen utløper. Ingen live Google Apps Script-prosjekter ble endret ved GitHub-oppdateringen.
-- [Les førstegangsoppsettet](integrations/google-apps-script/DYNAMIC_LOADER_README.md).
-- En virkelig ny Firebase DB krever fortsatt nytt stabilt oppdagelsespunkt eller at gammel DB forblir aktiv; flytting av bare domene eller GitHub-kode krever ingen Apps Script-oppdatering.
+- Kundesiden og adminpanelet bruker relative stier for JS, CSS og ikoner,
+  og Service Worker installeres i sidens egen katalog.
+- SMS-koden finnes i `integrations/google-apps-script/Kode.gs` og e-post
+  i `integrations/google-apps-script/email-poller.gs`.
+- **Oppdater kildefilene manuelt i de to eksisterende Apps Script-prosjektene.**
+  Verken Firebase eller GitHub brukes til å laste ned og kjøre kode i runtime.
+- Behold eksisterende Script Properties, triggere og sjekkpunkter.
+  Nye ordre inneholder `orderPageUrl`; gamle ordre kan bruke den valgfrie
+  Script Property `ORDER_PAGE_URL` som fallback for «Se bestillingen».
+- Firebase brukes fortsatt til bestillinger, varslingstekst, status og kvitteringer,
+  ikke til kodekildeoppslag. 
 
 ## Arbeidsrutine
 
