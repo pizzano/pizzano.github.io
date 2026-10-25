@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bestill-demo-v244-neutral-loading';
+const CACHE_NAME = 'bestill-demo-v245-htmlonly-dynamicurls';
 const APP_SHELL = [
   '/demo/index.html',
   '/demo/css/customer-base.css',
@@ -9,6 +9,7 @@ const APP_SHELL = [
   '/demo/css/customer-theme.css',
   '/demo/js/theme.js',
   '/demo/js/customer.js',
+  '/demo/js/order-links.js',
   '/demo/js/cart-order.js',
   '/demo/js/order-product-summary.js',
   '/demo/js/shop-info.js',
