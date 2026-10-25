@@ -1474,6 +1474,56 @@ export function hasUnsavedChanges() {
 
 const ORDERS_KEY = 'bestill_orders_v2';
 
+/**
+ * Save profile contact to /customers/{phone} even before the first order.
+ * A conditional whole-record update protects the lifetime order totals,
+ * pizza rewards, preferences and reservations from concurrent writes.
+ * Do not mark a new account schema v4 here: the legacy loyalty migrator may
+ * still need to import the customer's earlier totals on the first order.
+ */
+export async function saveCustomerContact({ name, phone, email = '' } = {}) {
+  const id = loyaltyPhone(phone);
+  const displayName = String(name || '').trim().slice(0, 120);
+  const address = String(email || '').trim().toLowerCase();
+  if (!id || !displayName || address.length > 254 ||
+      (address && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))) {
+    throw new Error('Skriv inn gyldig navn, mobilnummer og eventuelt e-post.');
+  }
+  if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
+  const url = `${DB_URL}/customers/${encodeURIComponent(id)}.json`;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const read = await fetch(url, {
+      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
+    });
+    if (!read.ok) throw new Error('Kunne ikke kontrollere kunderegisteret (HTTP ' + read.status + ').');
+    const etag = read.headers.get('ETag');
+    if (!etag) throw new Error('Firebase returnerte ikke en sikker kundeversjon.');
+    const existing = await read.json();
+    if (existing !== null && (typeof existing !== 'object' || Array.isArray(existing))) {
+      throw new Error('Kundeoppføringen har ugyldig format.');
+    }
+    // The phone is the node key; no duplicate customer is created.
+    // No counters are touched when the customer updates the contact details.
+    if (existing && existing.name === displayName &&
+        String(existing.email || '') === address) {
+      return { created: false, unchanged: true };
+    }
+    const next = { ...(existing || {}), name: displayName, email: address };
+    const written = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(next)
+    });
+    if (written.status === 412) continue;
+    if (!written.ok) {
+      throw new Error('Kundeopplysningene ble ikke lagret i Firebase (HTTP ' +
+        written.status + '). Kontroller Database Rules.');
+    }
+    return { created: existing === null, unchanged: false };
+  }
+  throw new Error('Kundeopplysningene ble endret samtidig. Prøv å lagre igjen.');
+}
+
 export async function setPizzaOffersConsent(phoneValue, enabled) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) throw new Error('Skriv inn et gyldig mobilnummer.');
