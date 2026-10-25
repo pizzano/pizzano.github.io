@@ -17,6 +17,7 @@ import {
   backendInfo,
   getPizzaBonus,
   setPizzaOffersConsent,
+  saveCustomerContact,
   DB_URL,
   subscribe,
   ready,
@@ -3164,7 +3165,8 @@ function updateProfileValidation({ showErrors = false } = {}) {
   return nameValid && phoneValid && emailValid;
 }
 
-el.btnSaveProfile.addEventListener('click', () => {
+el.btnSaveProfile.addEventListener('click', async () => {
+  if (el.btnSaveProfile.disabled) return;
   if (!updateProfileValidation({ showErrors: true })) {
     const invalidInput = !el.profName.value.trim() ? el.profName
       : !validPhone(el.profPhone.value) ? el.profPhone : el.profEmail;
@@ -3172,10 +3174,31 @@ el.btnSaveProfile.addEventListener('click', () => {
     invalidInput.focus();
     return;
   }
+  const nextName = el.profName.value.trim();
+  const nextPhone = el.profPhone.value.replace(/[^\\d]/g, '').slice(0, 8);
+  const nextEmail = el.profEmail.value.trim().toLowerCase();
+  const saveButtonText = el.btnSaveProfile.textContent;
+  el.btnSaveProfile.disabled = true;
+  el.btnSaveProfile.textContent = 'Lagrer…';
+  try {
+    // Save to /customers/{phone} now: do not wait for the first order.
+    // All existing purchase totals and pizza-reward fields are preserved.
+    await saveCustomerContact({
+      name: nextName, phone: nextPhone, email: nextEmail
+    });
+  } catch (error) {
+    console.warn('Kundeprofil ikke lagret i Firebase:', error);
+    toast(error?.message || 'Kunne ikke lagre kundeprofilen. Prøv igjen.', 'error');
+    return;
+  } finally {
+    el.btnSaveProfile.disabled = false;
+    el.btnSaveProfile.textContent = saveButtonText;
+  }
+
   const previousEmail = profile.email || '';
-  profile.name = el.profName.value.trim();
-  profile.phone = el.profPhone.value.replace(/[^\d]/g, '').slice(0, 8);
-  profile.email = el.profEmail.value.trim().toLowerCase();
+  profile.name = nextName;
+  profile.phone = nextPhone;
+  profile.email = nextEmail;
   persistProfile();
 
   // Saved profile details also populate the next checkout, without overwriting
@@ -3195,7 +3218,7 @@ el.btnSaveProfile.addEventListener('click', () => {
       ? 'Navn, mobilnummer og e-post lagret'
       : 'Navn og mobilnummer lagret';
   }
-  toast('✓ Profilopplysningene dine er lagret.');
+  toast('✓ Profilen er lagret i kunderegisteret.');
 });
 
 for (const input of [el.profName, el.profPhone, el.profEmail]) {
