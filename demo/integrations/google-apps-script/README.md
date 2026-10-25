@@ -38,9 +38,10 @@ Bu yalnızca ilk kurulum içindir.
 
 ## E-post · Bekreftet / Klar — tam HTML (v2)
 
-Artık her iki e-posta türü için **Full HTML-kode** bölümü vardır. E-postanın
-üst logosu, renkleri, tabloları, ürün satırları ve alt kısmını değiştirebilirsin.
-Mevcut KØL tasarımı başlangıç HTML şablonu olarak sunulur.
+Her iki e-posta türünde yalnızca **Full HTML-kode** ile emne/HTML düzenlenir.
+Enkel redigering kaldırılmıştır. Logo, renk, tablo, ürün satırları ve alt kısım
+tek HTML alanından değiştirilebilir. Standart tasarım restoran adını Firebase
+ayarlarından alır; hazır HTML şablonların içerikleri otomatik değiştirilmez.
 
 - Firebase'e ayrı `notificationTemplates/emailAccepted` ve `notificationTemplates/emailReady`
   kayıtları `version:2`, `subject`, `html` alanlarıyla yazılır.
@@ -56,9 +57,9 @@ Mevcut KØL tasarımı başlangıç HTML şablonu olarak sunulur.
   `del`, `u`, liste, `br`, güvenli HTTPS/mailto linkleri ve sınırlı CSS.
   Script/iframe/form, takip görselleri, JS event handler ve tehlikeli
   URL'ler kabul edilmez.
-- Eski `version:1` şablonlar `Enkel redigering` içinde kullanılabilir.
-  Varsayılan KØL HTML tasarımına dönmek için `Hent standard KØL-design`
-  seçilebilir; onaylanıp Firebase'e kaydedilene kadar yayın değişmez.
+- Eski `version:1` şablonlar, gerekirse HTML editöründe başlangıç
+  tasarımına dönüştürülür. `Hent standarddesign` bu şablonu düzenleme alanına
+  yükler; `Lagre mal` ile kaydedilmedikçe yayın değişmez.
 
 **GAS kurulumu:** GitHub'daki güncel `email-poller.gs` dosyasının tamamını
 Google Apps Script'e bir kere kopyala. Sonrasında HTML'yi admin panelinden
