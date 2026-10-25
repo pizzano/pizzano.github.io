@@ -17,7 +17,7 @@ function runtimeSource_(role, action) {
   let source = cache.get(cacheKey);
   if (!source) {
     source = loadRuntimeSource_(role);
-    try { cache.put(cacheKey, source, 3600); }
+    try { cache.put(cacheKey, source, 300); }
     catch (error) { console.warn('Kildecache utilgjengelig: ' + error.message); }
   }
   // "action" is a hard-coded function name defined in this bootstrap only.
