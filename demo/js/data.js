@@ -1617,119 +1617,38 @@ async function orderAcceptHttpError(response, action) {
   return new Error(action + ' (HTTP ' + response.status + info + ').' + rule);
 }
 
-// Verify a restaurant acceptance against Firebase before claiming success.
-// The regular path keeps the order, pickup estimate and status atomic with ETag.
-// Some RTDB rules reject replacing an entire order with PUT (e.g. protected
-// receipt children). Only in that case, use a guarded status-leaf transaction.
+// One staff click = one Firebase order update. Do not replace the entire
+// order: receipt data is written independently by SMS/e-post Apps Script and
+// must never be overwritten or blocked by full-record security rules.
+//
+// A GET checks that this order is still pending and within its response
+// deadline; a single PATCH changes status and pickup time together. Firebase
+// HTTP success is required before the admin/customer sees "Godtatt".
 async function patchConfirmedPizzaOrder(order, changes) {
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
-  const at = Number(order.loyaltyConfirmedAt) || Date.now();
   const orderPath = `${ORDERS_PATH}/${encodeURIComponent(order.id)}`;
-  const url = `${DB_URL}/${orderPath}.json`;
-  const statusUrl = `${DB_URL}/${orderPath}/status.json`;
-  const expectedTime = Number(changes.statusUpdatedAt) || 0;
+  const current = await restGet(orderPath);
+  if (!current) throw new Error('Bestillingen finnes ikke i Firebase. Oppdater bestillingene.');
+  if (current.status !== 'mottatt')
+    throw new Error('Bestillingen er allerede behandlet. Oppdater bestillingene.');
+  if (confirmationExpired(current))
+    throw new Error('Svarfristen er ute. Bestillingen kan ikke godtas.');
 
-  async function checkWrittenOrder(fallback) {
-    // An HTTP 200 from Firebase means the write committed. Check the stored
-    // status as well; a stale local success must not deceive staff or customers.
-    let result = fallback;
-    try {
-      const current = await restGet(orderPath);
-      if (current) result = current;
-    } catch (error) {
-      // Successful Firebase PUT response remains a trustworthy commit receipt
-      // if the follow-up diagnostic GET temporarily fails.
-      if (!fallback || fallback.status !== 'bekreftet') throw error;
-    }
-    if (!result || result.status !== 'bekreftet' ||
-        (expectedTime && Number(result.statusUpdatedAt) < expectedTime)) {
-      throw new Error('Firebase bekreftet ikke ordrestatusen. Oppdater bestillingene.');
-    }
-    order.loyaltyConfirmedAt = Number(result.loyaltyConfirmedAt) || at;
-    window.dispatchEvent(new Event('kol-order-confirmed'));
-    return result;
-  }
-
-  async function confirmWithProtectedFieldFallback(current) {
-    // Only run when an order-level PUT is denied; never downgrade an ETag
-    // conflict to an unconditional status overwrite.
-    if (confirmationExpired(current) || current.status !== 'mottatt') {
-      throw new Error('Svarfristen er ute eller ordren er allerede behandlet.');
-    }
-    const statusResponse = await fetch(statusUrl, {
-      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
-    });
-    if (!statusResponse.ok) {
-      throw await orderAcceptHttpError(statusResponse, 'Kunne ikke kontrollere ordrestatusen');
-    }
-    const status = await statusResponse.json();
-    const statusEtag = statusResponse.headers.get('ETag');
-    if (status !== 'mottatt' || !statusEtag) {
-      throw new Error('Ordren er allerede behandlet. Oppdater siden.');
-    }
-
-    const fields = { ...changes, loyaltyConfirmedAt: at };
-    delete fields.status;
-    // Stage pickup details before flipping status, so Apps Script reads the
-    // correct confirmed pickup time when it sees the status transition.
-    try {
-      await restPatch(orderPath, fields);
-    } catch (error) {
-      // Some rules only allow writes directly at a leaf, not a parent PATCH.
-      // In that case stage all required fields individually BEFORE status.
-      if (!/\((400|401|403)\)/.test(String(error.message))) throw error;
-      for (const [key, value] of Object.entries(fields)) {
-        try {
-          await restPut(orderPath + '/' + encodeURIComponent(key), value);
-        } catch (fieldError) {
-          throw new Error('Firebase Rules avviste feltet "' + key + '" (' +
-            String(fieldError?.message || 'ukjent feil') + ').');
-        }
-      }
-    }
-
-    // The status ETag is tied to the status leaf. A competing employee or the
-    // three-minute timeout wins safely: never overwrite that newer state.
-    const committed = await fetch(statusUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'if-match': statusEtag },
-      body: JSON.stringify('bekreftet')
-    });
-    if (committed.status === 412) {
-      throw new Error('Ordren ble endret samtidig. Oppdater siden og kontroller status.');
-    }
-    if (!committed.ok) {
-      throw await orderAcceptHttpError(committed, 'Status kunne ikke lagres i Firebase');
-    }
-    return checkWrittenOrder({ ...current, ...fields, status: 'bekreftet' });
-  }
-
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const response = await fetch(url, {
-      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
-    });
-    if (!response.ok) throw await orderAcceptHttpError(response, 'Kunne ikke lese bestillingen for godkjenning');
-    const current = await response.json();
-    if (!current || current.status !== 'mottatt' || confirmationExpired(current)) {
-      throw new Error('Bestillingen er allerede behandlet eller svarfristen er ute.');
-    }
-    const etag = response.headers.get('ETag');
-    if (!etag) throw new Error('Kunne ikke godta bestillingen sikkert.');
-    const accepted = { ...current, ...changes, loyaltyConfirmedAt: at };
-    const saved = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'if-match': etag },
-      body: JSON.stringify(accepted)
-    });
-    if (saved.status === 412) continue;
-    if ([400, 401, 403].includes(saved.status)) {
-      return confirmWithProtectedFieldFallback(current);
-    }
-    if (!saved.ok) throw await orderAcceptHttpError(saved, 'Firebase nektet å lagre bestillingen');
-    const written = await saved.json().catch(() => accepted);
-    return checkWrittenOrder(written || accepted);
-  }
-  throw new Error('Bestillingen ble endret samtidig flere ganger. Oppdater og prøv igjen.');
+  const update = { ...changes };
+  // Only status and pickup details are written. Do not touch SMS/e-post
+  // receipts, purchase counters or other independent customer fields.
+  const response = await fetch(`${DB_URL}/${orderPath}.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(update)
+  });
+  if (!response.ok)
+    throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
+  const confirmed = await response.json();
+  if (!confirmed || confirmed.status !== 'bekreftet')
+    throw new Error('Firebase returnerte ikke bekreftet ordrestatus.');
+  window.dispatchEvent(new Event('kol-order-confirmed'));
+  return { ...current, ...confirmed };
 }
 
 const expiringOrders = new Set();
