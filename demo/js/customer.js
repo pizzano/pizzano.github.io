@@ -3311,7 +3311,8 @@ function renderAll() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/demo/service-worker.js').catch(() => {});
+    const workerUrl = new URL('../service-worker.js', import.meta.url);
+    navigator.serviceWorker.register(workerUrl.href, { scope: new URL('../', import.meta.url).pathname }).catch(() => {});
   });
 }
 
