@@ -88,6 +88,28 @@ kendiliğinden yüklenmez.** Bir kere:
    bu ayar boşsa script'i çalıştıran Google hesabının gelen kutusuna
    gönderilir. Test arayüzünden alıcı numara/adres gönderilmez.
 
+### Admin panelindeki üç test için ortak düzeltme (26.10.2026)
+
+- **SMS · Bekreftet:** `Kode.gs` içindeki test siparişi artık geçerli
+  `orderPageUrl`, `estimatedMinutes` ve `estimatedAt` alanları içerir.
+  SMS test isteği normal sipariş listesinden **önce** işlenir: sipariş
+  indekslemesi/geçici okuma hatası testi engellemez.
+- **E-post · Bekreftet / E-post · Klar:** `email-poller.gs` test örnekleri
+  geçerli `orderPageUrl` ile oluşturulur. 3 dakikalık bekleme süresi artık
+  **her e-posta şablonu için ayrıdır**, ancak ortak **4 test/gün** limiti
+  korunur. SMS için **3 test/gün** ve **3 dakika** sınırı değişmez.
+- Yeni `orderPageUrl` testlerde Script Property `ORDER_PAGE_URL` üzerinden
+  alınır. Belirlenmemişse **yalnızca test e-postasında/SMS'inde**
+  `https://example.org/` kullanılır (gerçek müşteri siparişlerinde kullanılmaz).
+- Admin panelindeki `Send test`, **Firebase'de test isteği oluşturur**.
+  Teslimat doğrulaması değildir. `Kontroller teststatus` önce sonuç
+  kaydını gösterir. `sent`, sağlayıcının kabulünü ifade eder;
+  telefon/gelen kutusu teslimini ayrıca kontrol etmek gerekir.
+- Bu değişiklikler GitHub'a eklenmiş **kaynak dosyalardır**. Çalışan
+  iki Apps Script projesine kendi elinle `Kode.gs` ve
+  `email-poller.gs` dosyalarını kopyalamak gerekir. Mevcut tetikleyici,
+  Script Properties, token ve checkpoint kayıtlarını **silme**.
+
 ### Test e-postası gönderilmediğinde
 
 1. Admin **Send test** yalnızca Firebase'e `notificationTests/emailAccepted/request`
