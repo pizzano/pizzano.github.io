@@ -153,6 +153,9 @@ function kolSanitizeFullTemplateHtml_(source){
   // while stripping document wrappers and head-only declarations; only
   // the safe email body layout is inserted in the MailApp HTML envelope.
   source=String(source||'').replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi,'')
+    // Comments are design notes, never email content. Previously the strict
+    // sanitizer escaped them, so Gmail displayed "<!-- Brand -->" as text.
+    .replace(/<!--[\s\S]*?-->/g,'')
     .replace(/<!doctype[^>]*>/gi,'')
     .replace(/<\/?(?:html|body)\b[^>]*>/gi,'');
   const tags='table tbody thead tfoot tr td th div span p br b strong i em u s strike del a h1 h2 h3 h4 ul ol li hr center small'.split(' ');
@@ -163,6 +166,9 @@ function kolSanitizeFullTemplateHtml_(source){
     if(part[0]!=='<'){result+=part;return}
     const m=/^<\s*(\/?)\s*([a-z][a-z0-9]*)\b([^<>]*)>$/i.exec(part);
     if(!m||tags.indexOf(m[2].toLowerCase())<0){
+      // Drop all other markup declarations, including malformed comment
+      // fragments, rather than showing HTML source to email recipients.
+      if(/^<\s*!/.test(part))return;
       result+=kolHtmlEscape_(part);
       return;
     }
