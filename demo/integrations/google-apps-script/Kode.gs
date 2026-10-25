@@ -314,7 +314,13 @@ function kolCheckSmsTest_(props, token, fixedPhone) {
   props.setProperty('KOL_SMS_TEST_COUNT',String(count+1));
   props.setProperty('KOL_SMS_TEST_LAST_AT',String(now));
   result('attempted','Testforespørsel mottatt.');
-  const demo={customerName:'FATIH',pickup:'Snarest',estimatedReadyAt:now+15*60000,
+  // Admin tests are synthetic orders, so they have no originating browser
+  // URL. Use the configured restaurant URL when available, otherwise a safe
+  // explicit example URL that can never be mistaken for a live order.
+  const testPageUrl=String(props.getProperty('ORDER_PAGE_URL')||'').trim()||'https://example.org/';
+  const demo={customerName:'Testkunde',pickup:'Snarest',
+    orderPageUrl:testPageUrl,estimatedAt:now,estimatedMinutes:15,
+    estimatedReadyAt:now+15*60000,
     total:588,lines:[{name:'Stor Classico',quantity:2}]};
   try{
     kolApiSend_(fixedPhone,kolMessage_(demo,'accepted','ord_'+now.toString(36)+'test',
@@ -336,6 +342,10 @@ function pollOrdersForSms() {
     if (!cloudToken || !testNumber || !activatedAt) throw new Error('SMS configuration incomplete');
 
     const now = Date.now();
+    // Admin tests must work even when a regular order scan fails (index,
+    // Firebase Rules, or unrelated orders). Never send test to order numbers.
+    try { kolCheckSmsTest_(props, cloudToken, testNumber); }
+    catch (error) { console.error('SMS test: ' + error.message); }
     const data = kolFetchRecentOrders_();
     const smsTemplate = kolReadSmsTemplate_();
     props.setProperty('KOL_LAST_POLL_OK', new Date().toISOString());
@@ -384,8 +394,6 @@ function pollOrdersForSms() {
       }
     }
     props.setProperty('KOL_LAST_POLL_COUNT', String(sent));
-    try { kolCheckSmsTest_(props,cloudToken,testNumber); }
-    catch(error){console.error('SMS test: '+error.message)}
     try {
       kolSmsHeartbeat_(mode, Date.now());
     } catch (healthError) {
