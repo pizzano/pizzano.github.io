@@ -310,6 +310,22 @@ kundetotaler ligger separat under `customers`, og at gamle testdata
 fortsatt kan finnes under `pizzaBonus`; det nullstilles ikke ved å
 tømme bare `orders`.
 
+## Registrering direkte fra Min profil (2026-10-26)
+
+- Når kunden trykker `Lagre opplysninger` under `Min profil → Rediger profil`,
+  skrives navn og valgfri e-post direkte til `customers/{8-sifret telefon}`.
+  Ingen bestilling kreves. Telefon er nøkkelen og lagres ikke duplisert.
+- Ny kunde får en kontaktpost uten fiktive kjøp eller bonuspoeng. Den settes
+  **ikke** til `schemaVersion: 4` før eksisterende kjøpshistorikk er avstemt.
+- Ved eksisterende kunde oppdateres bare navn og e-post. ETag-beskyttet
+  transaksjon bevarer alle registrerte ordrer, totalsummer, bonuspoeng,
+  reservasjonsdata og samtykke; konflikt fører til nytt forsøk.
+- Kun eksplisitt Lagre gjør denne ekstra Firebase-lesingen og -skrivingen.
+  Et avvist lagringsforsøk viser feil og blir ikke presentert som lagret.
+- Profilopprettelse er foreløpig **ikke** telefonnummer-verifisering.
+  Før bruk på tvers av restauranter kreves passende Authentication og
+  Database Rules for å begrense hvem som kan lese og endre persondata.
+
 ## Kunderegister — flat `customers/{phone}` (2026-10-24)
 
 **Fast Kunde / Ny Kunde:** Norske mobilnumre normaliseres med
