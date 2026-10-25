@@ -426,8 +426,9 @@ function kolEmailHeartbeat_(now, state) {
 /** Preview without sending customer email. Run and inspect execution log. */
 function forhåndsvisEpostEksempel() {
   const sample = {
-    id:'TEST-ABCDE1',customerName:'Testkunde',phone:'+47 400 00 000',
-    email:'test@example.com',createdAt:Date.now(),estimatedMinutes:25,
+    id:'ord_previewabc123',customerName:'Testkunde',phone:'+47 400 00 000',
+    email:'test@example.com',orderPageUrl:'https://example.org/',
+    createdAt:Date.now(),estimatedMinutes:25,
     pickup:'Snarest',subtotal:227,total:227,
     lines:[{quantity:1,name:'Classico',size:'Medium',price:227,
       optionDetails:[{groupTitle:'Ekstra topping',label:'Pepperoni',price:19}],
@@ -445,8 +446,9 @@ function testBeggeEpostMalerTilMeg() {
   if (!to) throw new Error('Fant ingen e-postadresse til pålogget konto.');
   const now = Date.now();
   const sample = {
-    id:'TEST-5549NO', customerName:'Testkunde', phone:'+47 40000000',
-    email:to, createdAt:now-300000, pickup:'Snarest', pickupMode:'asap',
+    id:'ord_testemail123', customerName:'Testkunde', phone:'+47 40000000',
+    email:to, orderPageUrl:'https://example.org/',
+    createdAt:now-300000, pickup:'Snarest', pickupMode:'asap',
     estimatedMinutes:15, estimatedReadyAt:now+15*60000,
     staffReadyAt:now, statusUpdatedAt:now,
     subtotal:503, total:503,
