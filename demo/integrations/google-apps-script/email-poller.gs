@@ -433,7 +433,8 @@ function kolEmailHeartbeat_(now, state) {
 function forhåndsvisEpostEksempel() {
   const sample = {
     id:'ord_previewabc123',customerName:'Testkunde',phone:'+47 400 00 000',
-    email:'test@example.com',orderPageUrl:'https://example.org/',
+    email:'test@example.com',
+    orderPageUrl:String(PropertiesService.getScriptProperties().getProperty('ORDER_PAGE_URL')||'').trim()||'https://example.org/',
     createdAt:Date.now(),estimatedMinutes:25,
     pickup:'Snarest',subtotal:227,total:227,
     lines:[{quantity:1,name:'Classico',size:'Medium',price:227,
@@ -453,7 +454,8 @@ function testBeggeEpostMalerTilMeg() {
   const now = Date.now();
   const sample = {
     id:'ord_testemail123', customerName:'Testkunde', phone:'+47 40000000',
-    email:to, orderPageUrl:'https://example.org/',
+    email:to,
+    orderPageUrl:String(PropertiesService.getScriptProperties().getProperty('ORDER_PAGE_URL')||'').trim()||'https://example.org/',
     createdAt:now-300000, pickup:'Snarest', pickupMode:'asap',
     estimatedMinutes:15, estimatedReadyAt:now+15*60000,
     staffReadyAt:now, statusUpdatedAt:now,
