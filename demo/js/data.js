@@ -1558,7 +1558,7 @@ async function orderAcceptHttpError(response, action) {
   try {
     const body = await response.text();
     const parsed = JSON.parse(body);
-    detail = String(parsed?.error || parsed?.message || '').replace(/\\s+/g, ' ').slice(0, 130);
+    detail = String(parsed?.error || parsed?.message || '').replace(/\s+/g, ' ').slice(0, 130);
   } catch { /* HTTP code still provides a usable diagnosis. */ }
   const info = detail ? ' · ' + detail : '';
   const rule = [401, 403].includes(response.status)
