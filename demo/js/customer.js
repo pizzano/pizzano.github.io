@@ -38,7 +38,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261026-profile-register1';
+} from './data.js?v=20261026-godta-simple1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
