@@ -132,6 +132,39 @@ Firebase-`smsHealth`, og et godkjent Traccar-kvitteringsfelt på ordren.
 Den samme koden inneholder `diagnoseSms()`, `checkSmsResults()` og
 `stopSms()` for sikker manuell diagnose/stans.
 
+## Sipariş bağlantısı: alan adı ve klasör bağımsız (25.10.2026)
+
+Müşteri `index.html` dosyasında ya da admin `admin.html` dosyasında hangi
+HTTPS domain/klasör altındaysa tarayıcı ortak `js/order-links.js` modülünden
+müşteri ana dizinini bulur. Yeni siparişin `orders/{id}/orderPageUrl`
+alanına bu kök adres yazılır. Örnekler:
+
+- `https://bestill.online/demo/index.html` veya `/demo/admin.html`
+  → `https://bestill.online/demo/?order=ord_...`
+- `https://bestill.online/index.html` veya `/admin.html`
+  → `https://bestill.online/?order=ord_...`
+- `https://ornek.no/restaurant/admin.html`
+  → `https://ornek.no/restaurant/?order=ord_...`
+
+Google Apps Script sunucu tarafında çalışır; `window.location` bilgisine
+erişemez. Bu yüzden SMS ve e-posta göndericileri `orderPageUrl` alanını
+okur; kodda sabit domain ve klasör bulunmaz. **Eski siparişler** bu alanı
+taşımayabilir. Eski siparişlere de link gönderilecekse *her iki* Google Apps
+Script projesinin Script Properties bölümüne `ORDER_PAGE_URL`
+adında geçerli HTTPS müşteri dizini yaz (ör. `https://bestill.online/demo/`).
+Yeni siparişlerde kaydedilen URL önceliklidir; bu ayar yalnızca yedektir.
+Bu alan da yoksa bilinmeyen/eski adrese yanlış bir link göndermek yerine hata
+verilir. Taşınan eski alan adlarının daha önceki siparişler için çalışması
+ayrıca yönlendirme veya yeni link üretimi gerektirir.
+
+**GitHub'daki .gs kaynaklarının değişmesi canlı Apps Script'i güncellemez.**
+SMS ve e-posta projelerindeki ilgili bütün kaynak kodu manuel senkronize et.
+
+**Varslinger / E-post · Bekreftet ve E-post · Klar:** Yalnızca HTML kodu ve
+e-posta konusu düzenlenir; eski "Enkel redigering" arayüzü kaldırılmıştır.
+Firebase'de eski v1 tasarımlar kalabilir; bunlar görüntüleme için HTML'ye
+çevrilebilir, yeni kayıtlarda v2 kullanılır.
+
 ## SMS-tekst med lenke (24.10.2026)
 
 Bekreftelses-SMS sendes i dette formatet:
@@ -141,7 +174,7 @@ Hei FATIH! Bestillingen din er bekreftet ✅
 
 Forventet hentetid: kl. 01:45
 
-Se bestillingen: https://bestill.online/demo/?order=ord_mv1ji63i2sea2
+Se bestillingen: https://[restaurantens-domene]/[valgfri-katalog]/?order=ord_mv1ji63i2sea2
 
 KØL Grill & Pizza
 ```
