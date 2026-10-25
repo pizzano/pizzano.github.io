@@ -3,7 +3,8 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261025-tenantbrand1';
+import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261025-orderlinks1';
+import { customerOrderLink } from './order-links.js';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
@@ -3812,21 +3813,15 @@ function noticeDefaults() {
   }
   };
 }
-const noticeState={kind:'smsAccepted',editorMode:'simple',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
+const noticeState={kind:'smsAccepted',templates:{},etag:{},dirty:false,busy:false,lastTest:null,loaded:false};
 const noticeEl={
   tab:[...document.querySelectorAll('[data-message-kind]')],
-  subject:$('notificationSubject'),headline:$('notificationHeadline'),
-  body:$('notificationBody'),footer:$('notificationFooter'),
+  body:$('notificationBody'),
   html:$('notificationHtml'),htmlSubject:$('notificationHtmlSubject'),
   htmlPanel:document.querySelector('[data-notification-full-html]'),
-  simplePanel:document.querySelector('[data-notification-simple]'),
-  modeHtml:$('notificationModeHtml'),modeSimple:$('notificationModeSimple'),
+  smsPanel:document.querySelector('[data-notification-sms]'),
   restoreHtml:$('notificationRestoreHtml'),copyHtml:$('notificationCopyHtml'),
   engine:$('notificationEmailEngine'),
-  timeLabel:$('notificationTimeLabel'),
-  statusLeft:$('notificationStatusLeft'),statusRight:$('notificationStatusRight'),
-  detailsTitle:$('notificationDetailsTitle'),itemsTitle:$('notificationItemsTitle'),
-  bodyLabel:$('notificationBodyLabel'),
   save:$('notificationSave'),reset:$('notificationReset'),
   test:$('notificationTest'),check:$('notificationCheckTest'),
   feedback:$('notificationFeedback'),result:$('notificationTestStatus'),
@@ -3839,91 +3834,41 @@ function noticeFeedback(text,state='neutral'){
 function noticeSubstitute(text){
   const vars={
     navn:'FATIH',hentetid:'01:45',kode:'I2SEA2',
-    lenke:'https://bestill.online/demo/?order=ord_mv1ji63i2sea2',
+    lenke:customerOrderLink('ord_m8example',window.location.href),
     total:'588 kr',varer:'2 × Stor Classico',
     hentetype:'Snarest',tidsinfo:'Ca. 15 minutter'
   };
   return String(text||'').replace(/\{([a-zA-Z]+)\}/g,(token,key)=>
     Object.hasOwn(vars,key)?vars[key]:token);
 }
-/** Render only <strong> markup as real bold text. Other HTML stays
- * inert text, including script tags, so preview cannot execute HTML.
- * A second opening <strong> while bold is active closes it, tolerating
- * older saved drafts that omitted the slash in </strong>.
- */
-function noticeAppendBoldMarkup(host, value) {
-  const tokens=noticeSubstitute(value).split(/(<\/?strong>)/gi);
-  let active=null;
-  for(const token of tokens) {
-    if(/^<strong>$/i.test(token)) {
-      if(active) active=null;
-      else {
-        active=document.createElement('strong');
-        host.append(active);
-      }
-    } else if(/^<\/strong>$/i.test(token)) {
-      active=null;
-    } else if(token) {
-      (active||host).append(document.createTextNode(token));
-    }
-  }
-}
 function noticeReadForm(){
   if(!noticeKindIsEmail())return {body:noticeEl.body.value.trim()};
-  if(noticeState.editorMode==='html')return {
-    subject:noticeEl.htmlSubject.value.trim(),html:noticeEl.html.value
-  };
-  return {subject:noticeEl.subject.value.trim(),headline:noticeEl.headline.value.trim(),
-    body:noticeEl.body.value.trim(),footer:noticeEl.footer.value.trim(),
-    timeLabel:noticeEl.timeLabel.value.trim(),statusLeft:noticeEl.statusLeft.value.trim(),
-    statusRight:noticeEl.statusRight.value.trim(),detailsTitle:noticeEl.detailsTitle.value.trim(),
-    itemsTitle:noticeEl.itemsTitle.value.trim()};
-}
-function noticeSetEditorMode(mode){
-  if(!noticeKindIsEmail())mode='simple';
-  const next=mode==='html'?'html':'simple';
-  if(noticeState.editorMode!==next && noticeKindIsEmail()){
-    // The subject is present in both editors. Preserve unsaved edits when
-    // moving between "Enkel" and "Full HTML".
-    if(next==='html')noticeEl.htmlSubject.value=noticeEl.subject.value;
-    else noticeEl.subject.value=noticeEl.htmlSubject.value;
-  }
-  noticeState.editorMode=next;
-  noticeEl.htmlPanel.hidden=next!=='html';
-  noticeEl.simplePanel.hidden=next==='html';
-  noticeEl.modeHtml.classList.toggle('is-active',next==='html');
-  noticeEl.modeSimple.classList.toggle('is-active',next==='simple');
-  noticePreview();
+  return {subject:noticeEl.htmlSubject.value.trim(),html:noticeEl.html.value};
 }
 function noticePreview(){
   const draft=noticeReadForm();
   const el=noticeEl.preview;
-  el.replaceChildren();el.classList.toggle('is-email',noticeKindIsEmail());
+  el.replaceChildren();
+  el.classList.toggle('is-email',noticeKindIsEmail());
   if(!noticeKindIsEmail()){
     el.textContent=noticeSubstitute(draft.body);
     return;
   }
-  if(noticeState.editorMode==='html'){
-    const frame=document.createElement('iframe');
-    frame.className='notification-email-frame';
-    frame.setAttribute('sandbox','');
-    frame.setAttribute('referrerpolicy','no-referrer');
-    frame.setAttribute('title','E-post HTML forhåndsvisning');
-    frame.srcdoc=renderEmailPreviewHtml(draft.html);
-    el.append(frame);
-    return;
-  }
-  const brand=document.createElement('div');brand.className='notification-email-brand';brand.textContent=String(store.settings.restaurantName || '').trim() || 'Restauranten';
-  const subject=document.createElement('strong');subject.textContent='Emne: '+noticeSubstitute(draft.subject);
-  const head=document.createElement('div');head.className='notification-email-heading';head.textContent=noticeSubstitute(draft.headline);
-  const pickup=document.createElement('div');pickup.textContent=noticeSubstitute(draft.timeLabel||'Hentetid:')+' 01:45 · '+noticeSubstitute(draft.statusLeft||'Snarest')+' / '+noticeSubstitute(draft.statusRight||'');
-
-  const body=document.createElement('p');noticeAppendBoldMarkup(body,draft.body);
-  const details=document.createElement('div');details.className='notification-email-products';
-  details.textContent=noticeSubstitute(draft.detailsTitle||'Bestillingsdetaljer')+' · #I2SEA2\n'+
-    noticeSubstitute(draft.itemsTitle||'Bestilte varer')+'\n2 × Stor Classico\nTotalt: 588 kr';
-  const foot=document.createElement('p');noticeAppendBoldMarkup(foot,draft.footer);
-  el.append(brand,subject,head,pickup,body,details,foot);
+  const frame=document.createElement('iframe');
+  frame.className='notification-email-frame';
+  frame.setAttribute('sandbox','');
+  frame.setAttribute('referrerpolicy','no-referrer');
+  frame.setAttribute('title','E-post HTML forhåndsvisning');
+  // Den samme URL-byggeren brukes i SMS, ordresporing og e-post-preview.
+  const sample={...{
+    navn:'Kunde',navnFullt:'Eksempel Kunde',kode:'ABC123',telefon:'+47 40000000',
+    hentetid:'01:45',hovedtid:'01:45',hovedetikett:'Hentetid:',
+    hentetype:'Snarest',tidsinfo:'Ca. 15 minutter',total:'588 kr',
+    delsum:'588,00 kr',mva:'76,70 kr',bestilt:'24.10.2026, 01:30',
+    adresse:'Eksempelveien 1, 0001 Oslo'
+  },lenke:customerOrderLink('ord_m8example',window.location.href)};
+  frame.srcdoc=renderEmailPreviewHtml(draft.html,sample);
+  el.append(frame);
 }
 function noticeSetKind(kind){
   if(!NOTICE_KINDS.includes(kind))return;
@@ -3933,14 +3878,12 @@ function noticeSetKind(kind){
     noticeEl.html.value=typeof saved.html==='string'
       ? saved.html:defaultOrderEmailHtml(kind,saved,{name:store.settings.restaurantName});
     noticeEl.htmlSubject.value=String(saved.subject||'');
-    noticeEl.subject.value=String(saved.subject||'');
+  } else {
+    noticeEl.body.value=String(saved.body||'');
   }
-  noticeSetEditorMode(noticeKindIsEmail()?'html':'simple');
-  for(const key of ['subject','headline','body','footer','timeLabel','statusLeft','statusRight','detailsTitle','itemsTitle']){
-    if(noticeEl[key])noticeEl[key].value=String(saved[key]??'');
-  }
-  document.querySelectorAll('[data-notification-email]').forEach(node=>node.hidden=!noticeKindIsEmail());
-  noticeEl.bodyLabel.textContent=noticeKindIsEmail()?'Melding til kunden':'SMS-melding';
+  noticeEl.htmlPanel.hidden=!noticeKindIsEmail();
+  noticeEl.smsPanel.hidden=noticeKindIsEmail();
+  if(noticeEl.engine)noticeEl.engine.hidden=!noticeKindIsEmail();
   noticeEl.tab.forEach(btn=>btn.classList.toggle('is-active',btn.dataset.messageKind===kind));
   noticeFeedback(noticeState.loaded?'Klar. Endringer må lagres før test.':'Henter maler…');
   noticePreview();
@@ -3967,22 +3910,17 @@ async function noticeLoad(){
 async function noticeSave(){
   if(noticeState.busy)return;
   const kind=noticeState.kind,draft=noticeReadForm();
-  const isFull=kind!=='smsAccepted'&&noticeState.editorMode==='html';
+  const isFull=kind!=='smsAccepted';
   if(isFull){
     if(!draft.subject||draft.subject.length>220||/[\r\n]/.test(draft.subject)||
        !draft.html||draft.html.length<30||draft.html.length>45000){
       noticeFeedback('Oppgi emne og en fullstendig HTML-mal (30–45000 tegn).','error');return;
     }
   } else {
-    if(!draft.body||draft.body.length>2200||(kind!=='smsAccepted'&&(!draft.subject||!draft.headline))){
-      noticeFeedback('Skriv en gyldig melding, overskrift og emne.','error');return;
+    if(!draft.body||draft.body.length>2200){
+      noticeFeedback('Skriv en gyldig SMS-melding.','error');return;
     }
-    if(kind!=='smsAccepted'&&
-       [draft.timeLabel,draft.statusLeft,draft.statusRight,draft.detailsTitle,draft.itemsTitle]
-       .some(value=>!value||value.length>160)){
-      noticeFeedback('Fyll ut alle e-postetiketter.','error');return;
-    }
-    if(kind==='smsAccepted'&&!draft.body.includes('{lenke}')){
+    if(!draft.body.includes('{lenke}')){
       noticeFeedback('SMS-malen må inneholde {lenke}.','error');return;
     }
   }
@@ -4004,7 +3942,7 @@ async function noticeSave(){
     noticeState.dirty=false;
     noticeFeedback(isFull
       ? 'Hele HTML-malen er lagret i Firebase. Oppdatert Google Apps Script må være aktivt for at kunden får samme layout.'
-      : 'Malen er lagret i Firebase.','saved');
+      : 'SMS-malen er lagret i Firebase.','saved');
   }catch(error){noticeFeedback('Lagring mislyktes: '+error.message,'error')}
   finally{noticeState.busy=false;noticeEl.save.disabled=false}
 }
@@ -4101,30 +4039,6 @@ async function noticeCheckTestStatus(){
   }
 }
 
-const boldButton=$('notificationBold');
-boldButton?.addEventListener('click',()=>{
-  if(!noticeKindIsEmail())return;
-  const input=noticeEl.body;
-  const from=input.selectionStart??input.value.length;
-  const to=input.selectionEnd??from;
-  const selected=input.value.slice(from,to);
-  // No selection: insert exactly <strong><strong> with the caret in
-  // the middle. The safe preview/e-mail parser treats the second tag
-  // as closing; the operator fills in their own text.
-  const markup=selected
-    ? '<strong>'+selected+'</strong>'
-    : '<strong><strong>';
-  if(input.value.length+markup.length-(to-from)>2200){
-    noticeFeedback('Meldingen er for lang for flere tegn.','error');return;
-  }
-  input.setRangeText(markup,from,to,'end');
-  input.focus();
-  if(selected)input.setSelectionRange(from+8,from+8+selected.length);
-  else input.setSelectionRange(from+8,from+8);
-  input.dispatchEvent(new Event('input',{bubbles:true}));
-});
-noticeEl.modeHtml.addEventListener('click',()=>noticeSetEditorMode('html'));
-noticeEl.modeSimple.addEventListener('click',()=>noticeSetEditorMode('simple'));
 noticeEl.restoreHtml.addEventListener('click',()=>{
   if(!noticeKindIsEmail())return;
   const saved=noticeState.templates[noticeState.kind]||noticeDefaults()[noticeState.kind];
@@ -4143,10 +4057,9 @@ noticeEl.htmlSubject.addEventListener('input',()=>{
   noticeState.dirty=true;noticePreview();noticeFeedback('Emne-endringer er ikke lagret.');
 });
 noticeEl.tab.forEach(btn=>btn.addEventListener('click',()=>noticeSetKind(btn.dataset.messageKind)));
-for(const input of [noticeEl.subject,noticeEl.headline,noticeEl.body,noticeEl.footer,
-  noticeEl.timeLabel,noticeEl.statusLeft,noticeEl.statusRight,noticeEl.detailsTitle,noticeEl.itemsTitle]){
- input.addEventListener('input',()=>{noticeState.dirty=true;noticePreview();noticeFeedback('Ulagrede endringer.')});
-}
+noticeEl.body.addEventListener('input',()=>{
+  noticeState.dirty=true;noticePreview();noticeFeedback('Ulagrede endringer.');
+});
 noticeEl.save.addEventListener('click',()=>void noticeSave());
 noticeEl.reset.addEventListener('click',()=>noticeSetKind(noticeState.kind));
 noticeEl.test.addEventListener('click',()=>void noticeSendTest());
