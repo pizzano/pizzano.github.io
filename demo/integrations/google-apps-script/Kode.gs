@@ -86,13 +86,32 @@ function kolAsapReadyClock_(order) {
     : '';
 }
 
-/** Direct order-detail URL (full ID, not the six-character display code).
+/** Validate an absolute HTTPS customer-page URL. The order records its
+ * actual browser directory when created, regardless of domain or subfolder.
+ * Script Properties ORDER_PAGE_URL is only a legacy-order fallback.
+ */
+function kolCustomerPageUrl_(order) {
+  const props = PropertiesService.getScriptProperties();
+  const candidate = String(order && order.orderPageUrl || props.getProperty('ORDER_PAGE_URL') || '').trim();
+  if (candidate.length > 300 || /[?#\\\s]/.test(candidate)) throw new Error('Ugyldig kunde-URL');
+  const match = /^https:\/\/([a-z0-9.-]+)(?::[0-9]{1,5})?(\/[a-z0-9._~%!/** Direct order-detail URL (full ID, not the six-character display code).
  * Treat this as a private bearer link: never include name/phone in the URL.
  */
 function kolOrderLink_(orderId) {
   const id = String(orderId || '').trim();
   if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) throw new Error('Invalid order ID for SMS link');
   return 'https://bestill.online/demo/?order=' + encodeURIComponent(id);
+}'()*+,;=:@/-]*)?$/i.exec(candidate);
+  if (!match || !match[1].includes('.') || match[1].includes('..'))
+    throw new Error('Ordren mangler gyldig kunde-URL. Eldre ordre krever Script Property ORDER_PAGE_URL.');
+  return candidate.replace(/\/?(?:index|admin)\.html$/i, '/').replace(/\/+$/, '') + '/';
+}
+
+/** Full order ID is a private link; never put customer data in the URL. */
+function kolOrderLink_(order, orderId) {
+  const id = String(orderId || '').trim();
+  if (!/^ord_[a-zA-Z0-9]{7,40}$/.test(id)) throw new Error('Invalid order ID for SMS link');
+  return kolCustomerPageUrl_(order) + '?order=' + encodeURIComponent(id);
 }
 
 /** One confirmation SMS with Norwegian clock time, never a calendar date. */
@@ -116,7 +135,7 @@ function kolMessage_(order,eventKind,orderId,template) {
     .replace(/[^\p{L}\p{N}'-]/gu,'').slice(0,20);
   const scheduled=order.pickupMode==='scheduled'||/^\d{1,2}:\d{2}$/.test(String(order.pickup||'').trim());
   const clock=scheduled?kolTime_(order):kolAsapReadyClock_(order);
-  const code=kolShortCode_(orderId),link=kolOrderLink_(orderId);
+  const code=kolShortCode_(orderId),link=kolOrderLink_(order,orderId);
   const defaultBody='Hei '+(first||'kunde')+'! Bestillingen din er bekreftet ✅\n\n'
    +'Forventet hentetid: '+(clock?'kl. '+clock:'snarest')+'\n\n'
    +'Se bestillingen: '+link+'\n\nKØL Grill & Pizza';
