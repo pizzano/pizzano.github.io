@@ -2454,7 +2454,8 @@ function renderOrderDetail(orderId) {
         ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
         : `<span class="order-preparation-label"><span class="order-preparation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span>Klar om</span><div class="order-minute-buttons" aria-label="Forberedelsestid">${[10,15,20,30].map(minutes => `<button data-order-minutes="${minutes}" class="${proposedMinutes === minutes ? 'is-active' : ''}" aria-pressed="${proposedMinutes === minutes}" type="button">${minutes} min</button>`).join('')}<button data-open-accept="${escapeHtml(order.id)}" type="button">Annen tid</button></div>`}</div>
       <div class="order-decision-buttons"><button class="pos-reject-btn" data-open-reject="${escapeHtml(order.id)}" type="button">Avvis</button>
-      <button class="pos-accept-btn" data-accept-inline="${escapeHtml(order.id)}" type="button">Godta · ${scheduledPickup ? escapeHtml(order.pickup) : `${proposedMinutes} min`}</button></div>`
+      <button class="pos-accept-btn" data-accept-inline="${escapeHtml(order.id)}" type="button">Godta · ${scheduledPickup ? escapeHtml(order.pickup) : `${proposedMinutes} min`}</button></div>
+      ${acceptErrors.has(order.id) ? `<p class="order-accept-error" role="alert">${escapeHtml(acceptErrors.get(order.id))}</p>` : ''}`
     : ['avvist', 'fullfort'].includes(order.status)
       ? `<div class="pos-closed-status">${escapeHtml(orderListStatus(order))}</div>`
       : `<div class="order-ready-summary"><span class="order-ready-clock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><strong>${order.status === 'klar' ? 'Klar for henting' : `${pickupModeLabel} ${readyTime}`}</strong>${order.status !== 'klar' && readinessCountdown ? `<span data-detail-countdown="${escapeHtml(order.id)}">${escapeHtml(readinessCountdown)}</span>` : ''}${!scheduledPickup && order.status !== 'klar' ? `<button data-edit-order-time type="button">Endre tid</button>` : ''}</div>
@@ -2745,10 +2746,27 @@ function isScheduledPickupOrder(order) {
   return /^(\d{1,2}):(\d{2})$/.test(String(order.pickup || '').trim());
 }
 
+const acceptErrors = new Map();
+const acceptErrorNode = document.getElementById('acceptOrderError');
+function showAcceptError(orderId, message) {
+  const text = 'Bestillingen ble IKKE bekreftet i Firebase. ' + String(message || 'Ukjent feil.');
+  acceptErrors.set(orderId, text);
+  if (acceptErrorNode) {
+    acceptErrorNode.textContent = text;
+    acceptErrorNode.hidden = false;
+  }
+  console.warn('Godta bestilling feilet:', orderId, message);
+  return text;
+}
+
 function openAcceptOrder(orderId) {
   const order = getOrders().find((entry) => entry.id === orderId);
   if (!order || order.status !== 'mottatt') { toast('Bestillingen er allerede behandlet.'); return; }
   actionOrderId = order.id;
+  if (acceptErrorNode) {
+    acceptErrorNode.hidden = true;
+    acceptErrorNode.textContent = '';
+  }
   const shortId = String(order.id).slice(-6).toUpperCase();
   const scheduled = isScheduledPickupOrder(order);
   el.acceptOrderTitle.textContent = `Godta #${shortId}`;
@@ -3022,7 +3040,11 @@ async function confirmAcceptOrder() {
   if (!actionOrderId) return;
   const acceptedOrderId = actionOrderId;
   const order = getOrders().find((entry) => entry.id === acceptedOrderId);
-  if (!order || order.status !== 'mottatt' || el.btnAcceptConfirm.disabled) return;
+  if (!order || el.btnAcceptConfirm.disabled) return;
+  if (order.status !== 'mottatt') {
+    toast('Bestillingen har allerede status: ' + orderStatusLabel(order.status), 8000);
+    return;
+  }
   const scheduled = isScheduledPickupOrder(order);
   let minutes = 0;
   if (!scheduled) {
@@ -3040,9 +3062,16 @@ async function confirmAcceptOrder() {
   el.btnAcceptConfirm.disabled = false;
   if (!ok) {
     const reason = lastAcceptErrorMessage();
-    toast('Bestillingen ble IKKE lagret i Firebase. ' +
-      (reason || 'Kontroller internett og Firebase-tilgang.'), 10000);
+    const msg = showAcceptError(acceptedOrderId,
+      reason || 'Kontroller internett, Firebase Rules og svarfristen på 3 minutter.');
+    renderOrders();
+    toast(msg, 10000);
     return;
+  }
+  acceptErrors.delete(acceptedOrderId);
+  if (acceptErrorNode) {
+    acceptErrorNode.hidden = true;
+    acceptErrorNode.textContent = '';
   }
   acknowledgedOrders.add(acceptedOrderId);
   selectedOrderId = acceptedOrderId;
