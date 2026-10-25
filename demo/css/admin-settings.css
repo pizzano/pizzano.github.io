@@ -144,9 +144,6 @@ html[data-theme="dark"] #pageSettings .printer-settings-preview-head small{color
 #pageNotifications .notification-preview-head small{color:var(--ink-2);font-size:11px}
 #pageNotifications .notification-preview-content{min-height:140px;border:1px solid var(--line);border-radius:12px;padding:20px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);color:var(--ink);font-size:14px;line-height:1.8}
 #pageNotifications .notification-preview-content.is-email{background:#f6f6f0;color:#183323}
-#pageNotifications .notification-preview-content .notification-email-brand{background:#10291c;color:#fff;padding:20px;text-align:center;margin:-20px -20px 17px;font-size:24px;font-weight:850;letter-spacing:2px}
-#pageNotifications .notification-preview-content .notification-email-heading{font-size:17px;font-weight:850;color:#165233;margin:12px 0}
-#pageNotifications .notification-preview-content .notification-email-products{font-size:12px;padding:14px;margin:14px 0;border:1px solid #c9d8cb;border-radius:8px}
 html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{background:#173e2e;color:#aef3c8;border-color:#347a53}
 @media(max-width:900px){#pageNotifications .notification-layout{grid-template-columns:1fr;padding:12px 15px 26px}#pageNotifications .notification-preview{position:static}}
 
