@@ -872,3 +872,23 @@ html[data-theme="dark"] .orders-page .order-customer-meta .pos-detail-email-feed
   padding:4px 8px;min-height:26px;font-size:10.5px;
  }
 }
+
+/* Firebase acceptance failures stay visible at the decision controls. */
+.order-accept-error {
+  margin: 10px 0 0;
+  padding: 12px 13px;
+  border: 1px solid #e7a29d;
+  border-radius: 9px;
+  background: #fff1ef;
+  color: #8c211e;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.order-accept-error[hidden] { display: none !important; }
+html[data-theme="dark"] .order-accept-error {
+  background: #442a2a;
+  color: #ffd3ce;
+  border-color: #9a5753;
+}
