@@ -1,5 +1,6 @@
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
+import { customerPageBaseUrl } from './order-links.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
 /**
  * data.js — Delt datalag for Restauranten.
@@ -557,6 +558,7 @@ function normalizeOrders(raw) {
         loyaltyReward: order.loyaltyReward || null,
         loyaltyConfirmedAt: Number(order.loyaltyConfirmedAt) || null,
         phone: String(order.phone || ''),
+        orderPageUrl: String(order.orderPageUrl || ''),
         email: String(order.email || ''),
         // Only a MailApp success receipt saved by the email poller makes
         // admin show "E-post sendt". Missing receipts mean unverified.
@@ -1763,6 +1765,9 @@ export async function submitOrder(order) {
   const now = Date.now();
   const record = compactOrderForStorage({
     ...order,
+    // The order remembers the page that accepted it. Apps Script has no
+    // browser location and must not guess the domain or the /demo/ directory.
+    orderPageUrl: customerPageBaseUrl(window.location.href),
     id: order && order.id ? String(order.id) : uid('ord'),
     createdAt: Number(order && order.createdAt) || now,
     status: 'mottatt',
