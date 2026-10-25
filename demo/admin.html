@@ -228,10 +228,6 @@
                             <button type="button" data-message-kind="emailReady">E-post · Klar</button>
                         </div>
                         <div class="notification-editor">
-                            <div class="notification-mode-tabs" data-notification-email hidden>
-                                <button id="notificationModeHtml" type="button" class="is-active">Full HTML-kode</button>
-                                <button id="notificationModeSimple" type="button">Enkel redigering</button>
-                            </div>
                             <div class="notification-full-html" data-notification-full-html hidden>
                                 <label class="notification-field" for="notificationHtmlSubject">
                                     <span>E-post emne</span>
@@ -244,41 +240,18 @@
                                 </label>
                                 <p><code>{navn}</code>, <code>{navnFullt}</code>, <code>{kode}</code>, <code>{hentetid}</code>, <code>{hovedtid}</code>, <code>{hovedetikett}</code>, <code>{hentetype}</code>, <code>{tidsinfo}</code>, <code>{bestilt}</code>, <code>{telefon}</code>, <code>{delsum}</code>, <code>{mva}</code>, <code>{total}</code>, <code>{adresse}</code>, <code>{lenke}</code>. Produktlinjer: <code>{{#each items}}...{{/each}}</code> med <code>{antall}</code>, <code>{produkt}</code>, <code>{valg}</code>, <code>{linjepris}</code>. Ordredetaljer: <code>{{#each details}}...{{/each}}</code> med <code>{etikett}</code>, <code>{verdi}</code>.</p>
                                 <div class="notification-html-actions">
-                                    <button id="notificationRestoreHtml" class="btn btn-outline" type="button">Hent standard KØL-design</button>
+                                    <button id="notificationRestoreHtml" class="btn btn-outline" type="button">Hent standarddesign</button>
                                     <button id="notificationCopyHtml" class="btn btn-outline" type="button">Kopier HTML</button>
                                 </div>
                                 <p class="notification-security-hint">E-poster støtter tabeller, lenker, farger, tekst og sikker inline CSS. Script, iframe, skjema, bilde-sporing og farlige HTML-attributter kjøres ikke.</p>
                             </div>
-                            <div class="notification-simple-fields" data-notification-simple>
-                            <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>, <code>{total}</code>, <code>{varer}</code>, <code>{hentetype}</code>, <code>{tidsinfo}</code>. Produktliste, priser og totalbeløp hentes automatisk fra ordren i e-postkvitteringen.</p>
-                            <label class="notification-field" data-notification-email>
-                                <span>E-post emne</span><input id="notificationSubject" maxlength="220" autocomplete="off">
-                            </label>
-                            <label class="notification-field" data-notification-email>
-                                <span>Overskrift</span><input id="notificationHeadline" maxlength="160" autocomplete="off">
-                            </label>
-                            <label class="notification-field">
-                                <span id="notificationBodyLabel">SMS-melding</span>
-                                <textarea id="notificationBody" rows="8" maxlength="2200" spellcheck="true"></textarea>
-                            </label>
-                            <div class="notification-format-tools" data-notification-email hidden>
-                                <button id="notificationBold" type="button" title="Gjør markert tekst fet"><strong>B</strong> Fet tekst</button>
-                                <small>Trykk B for å sette inn <code>&lt;strong&gt;&lt;strong&gt;</code> der markøren står. Skriv teksten mellom taggene. Annen HTML vises som tekst.</small>
+                            <div class="notification-sms-fields" data-notification-sms>
+                                <p class="notification-note">Bruk variabler som <code>{navn}</code>, <code>{hentetid}</code>, <code>{kode}</code>, <code>{lenke}</code>, <code>{total}</code> og <code>{varer}</code>.</p>
+                                <label class="notification-field" for="notificationBody">
+                                    <span>SMS-melding</span>
+                                    <textarea id="notificationBody" rows="8" maxlength="2200" spellcheck="true"></textarea>
+                                </label>
                             </div>
-                            <label class="notification-field" data-notification-email>
-                                <span>Avslutning</span><textarea id="notificationFooter" rows="2" maxlength="500"></textarea>
-                            </label>
-                            <details class="notification-advanced" data-notification-email>
-                                <summary>Flere e-posttekster</summary>
-                                <div class="notification-advanced-fields">
-                                    <label class="notification-field"><span>Etikett over hentetid</span><input id="notificationTimeLabel" maxlength="80"></label>
-                                    <label class="notification-field"><span>Venstre statusfelt</span><input id="notificationStatusLeft" maxlength="120"></label>
-                                    <label class="notification-field"><span>Høyre statusfelt</span><input id="notificationStatusRight" maxlength="160"></label>
-                                    <label class="notification-field"><span>Overskrift for bestillingsinfo</span><input id="notificationDetailsTitle" maxlength="100"></label>
-                                    <label class="notification-field"><span>Overskrift for varer</span><input id="notificationItemsTitle" maxlength="100"></label>
-                                </div>
-                            </details>
-                            </div><!-- /notification-simple-fields -->
                             <div class="notification-actions">
                                 <button id="notificationSave" class="btn btn-primary" type="button">Lagre mal</button>
                                 <button id="notificationReset" class="btn btn-outline" type="button">Tilbakestill utkast</button>
