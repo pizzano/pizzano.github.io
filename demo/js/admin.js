@@ -4019,8 +4019,16 @@ async function noticeSendTest(){
     noticeState.lastTest={kind,id};
     noticeEl.result.textContent='Testforespørsel lagret. Ikke sendt ennå: Google Apps Script må behandle den. E-posttesten går til kontoen som kjører Apps Script.';
     noticeFeedback('Testforespørsel lagret. Dette er ikke bekreftelse på sending.','saved');
-  }catch(error){noticeEl.result.textContent='Kunne ikke opprette test: '+error.message}
-  finally{noticeState.busy=false;noticeEl.test.disabled=false}
+    // Show the first status immediately, then the existing short-interval
+    // polling updates it when the actual sender reports back.
+    void noticeCheckTestStatus();
+  }catch(error){
+    const why='Kunne ikke opprette test: '+error.message+
+      (String(error.message).includes('403')
+        ? ' · Firebase Database Rules nekter testforespørselen.' : '');
+    noticeEl.result.textContent=why;
+    noticeFeedback(why,'error');
+  }finally{noticeState.busy=false;noticeEl.test.disabled=false}
 }
 async function noticeCheckTestStatus(){
   if(!DB_URL||!noticeState.loaded)return;
@@ -4047,7 +4055,9 @@ async function noticeCheckTestStatus(){
       if(elapsed>10*60000){
         noticeEl.result.textContent='Testen ble ikke behandlet innen 10 minutter. Kontroller at riktig Google Apps Script-kode og tidsutløser kjører, og at Firebase Rules gir tilgang.';
       }else if(elapsed>2*60000){
-        noticeEl.result.textContent='Ingen svar fra Google Apps Script etter over 2 minutter. Sjekk Apps Script → Executions for kontrollerEpostBestillinger, eller kjør kontrollerEpostTestNaa manuelt.';
+        noticeEl.result.textContent=kind==='smsAccepted'
+          ? 'Ingen svar fra SMS Script etter over 2 minutter. Sjekk Apps Script → Executions for pollOrdersForSms, og kontroller KOL_MODE, TRACCAR_TOKEN og TEST_PHONE.'
+          : 'Ingen svar fra E-post Script etter over 2 minutter. Sjekk Apps Script → Executions for kontrollerEpostBestillinger, eller kjør kontrollerEpostTestNaa manuelt.';
       }else{
         noticeEl.result.textContent='Testforespørselen ligger i Firebase. Venter på Google Apps Script (ikke bekreftet sendt).';
       }
