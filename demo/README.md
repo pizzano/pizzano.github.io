@@ -25,7 +25,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 
 ## Ikke flytt eller slett ukritisk
 
-- `index.html` og `admin.html` laster stilark med **absolutte `/demo/...`-stier**.
+- `index.html`, `admin.html` og webmanifest laster kode, CSS og ikoner **relativt til installasjonsmappen**. Fungerer både i `/demo/`, `/` og andre kataloger.
 - `js/admin.js` og `js/customer.js` importerer `js/data.js` og små moduler.
 - `service-worker.js` viser til flere faste ressurser. Endres en sti må den oppdateres her også.
 - Epson: `js/order-printer.js` bruker HTTPS mot lokal IP `192.168.1.25`, enhets-ID `local_printer`.
@@ -34,6 +34,15 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 - SMS og e-post kjøres av separate Google Apps Script-prosesser. Å endre kildekopiene på GitHub oppdaterer **ikke** de aktive Google Apps Script-prosjektene.
 - `integrations/google-apps-script/email-poller.gs` er en lagret kildekopi; bekreft gjeldende databaseadresse i det faktiske Apps Script-prosjektet før kopiering.
 - Andre sider i rotmappen (`gavekort.html`, `gavekort-admin.html` osv.) er separate prosjekter og må ikke flyttes som en del av /demo.
+
+## Flyttbar kode / Google Apps Script (2026-10-25)
+
+- Service-worker kan opprettes fra modulen sin relative katalog og cacher kun sin installasjon.
+- Varslinger > GitHub-kilder åpner `tools/Scriptkilde.html` for å angi ny GitHub-repository, branch, katalog eller kodenavn uten å gå inn i Google Apps Script.
+- SMS-/e-post-bootstrapene er `integrations/google-apps-script/bootstrap-sms.gs` og `bootstrap-email.gs`; disse må installeres **en gang** i hvert Google Apps Script-prosjekt. De bruker Firebase som fast oppdagelsespunkt med HMAC-signerte kildeadresser.
+- Google Apps Script henter oppdatert kode etter maks omtrent **5 minutter** når hurtigbufferen utløper. Ingen live Google Apps Script-prosjekter ble endret ved GitHub-oppdateringen.
+- [Les førstegangsoppsettet](integrations/google-apps-script/DYNAMIC_LOADER_README.md).
+- En virkelig ny Firebase DB krever fortsatt nytt stabilt oppdagelsespunkt eller at gammel DB forblir aktiv; flytting av bare domene eller GitHub-kode krever ingen Apps Script-oppdatering.
 
 ## Arbeidsrutine
 
