@@ -322,3 +322,28 @@ Kullanılan RTDB `/orders` altında indeks:
 İndeks izni açmaz. Veritabanında `.read: true` / `.write: true` bulunması
 müşteri bilgilerinin herkesçe okunabilmesi ve değiştirilebilmesi anlamına gelir;
 canlıya geçmeden kimlik doğrulamalı ve kısıtlı kurallar kullanılmalı.
+
+## GitHub-kode med liten belastning på Firebase (25.10.2026)
+
+`bootstrap-sms.gs` og `bootstrap-email.gs` er **valgfrie, engangsoppsatte**
+Google Apps Script-oppstartere (ikke aktive før de er installert i de to
+Google-prosjektene). De leser en HMAC-signert oversikt fra
+`integrations/runtimeScripts` i en fast Firebase-database, og laster riktig
+GitHub-kode. Kildeoversikten kan oppdateres via
+`tools/Scriptkilde.html`. Oppsettet må ha privat
+`CODE_FEED_DB_URL` og `CODE_FEED_HMAC_KEY` i hver Apps Script-instans.
+
+**For å spare Firebase og GitHub trafikk:** Begge oppstartere lagrer den
+verifiserte GitHub-kilden i Apps Script `CacheService` i inntil 3600 sekunder
+(1 time). Vanlige kjøringer bruker bare cache. Ved cache-miss hentes først
+oversikten fra Firebase, så kildekoden fra GitHub. Cache er «best effort»;
+Google kan slette den før fristen. Oppdateringer i GitHub kan dermed bruke
+inntil en time på å nå aktive skript. Dette gjelder **kun kodekildeoppslag**:
+vanlig kontroll av nye ordre, sending og statusrapporter bruker fortsatt
+Firebase som før og er ikke forsinket av cache.
+
+Før dette settes i produksjon: sørg for at Firebase Rules beskytter
+`integrations/runtimeScripts` mot uautorisert skriving; signer med hemmelig
+nøkkel; la kun gjennomgåtte GitHub-kilder kjøres med MailApp/SMS-tillatelsene.
+Installering av bootstrap erstatter ikke automatisk kode i live Apps Script.
+
