@@ -4,9 +4,9 @@
 <style>body{font:16px system-ui,sans-serif;background:#f5f7f6;color:#162b22;margin:0;padding:28px 14px}.shell{max-width:740px;margin:auto;background:#fff;padding:24px;border:1px solid #d9e3dd;border-radius:16px}h1{font-size:25px;margin:0 0 8px}p{line-height:1.5}.warning{border-left:4px solid #b87820;padding:12px;background:#fff7e8}button{background:#133d2a;color:white;border:0;border-radius:10px;padding:14px 18px;font-weight:700;font-size:16px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3ef;padding:14px;border-radius:8px}small{color:#57685f}</style>
 <script src="./config.js"></script></head><body><main class="shell">
 <h1>KØL — Firebase flytteverktøy</h1>
-<p>Dette er et engangsverktøy som lager en lokal sikkerhetskopi og kopierer meny- og varslingsdata til en ryddigere struktur. Det endrer ikke eksisterende bestillinger eller kundedata.</p>
-<p class="warning"><strong>Viktig:</strong> Gamle Firebase-felt slettes <strong>ikke</strong>. KØL og Google Apps Script bruker fortsatt noen av disse feltene. Sletting nå kan stanse SMS, e-post og menyoppdateringer. Verktøyet stopper sikkert før sletting.</p>
-<p><button id="start" type="button">Ta sikkerhetskopi og kopier trygt</button></p>
+<p>Dette er et engangsverktøy som tar sikkerhetskopi, flytter meny- og varslingsdata og fjerner verifiserte gamle toppnivå-felt. Det endrer ikke eksisterende bestillinger eller kundedata.</p>
+<p class="warning"><strong>Viktig:</strong> <strong>OBS! Gamle felt slettes etter kontroll.</strong> Google Apps Script-koden i GitHub er oppdatert, men installerte Apps Script-versjoner oppdateres IKKE automatisk. SMS/e-post kan slutte å fungere til du oppdaterer installerte skript. Bruk bare på testdatabase eller når du godtar denne risikoen.</p>
+<p><button id="start" type="button">Ta backup, flytt og slett gamle felt</button></p>
 <p><small>En sikkerhetskopi lastes ned til datamaskinen. Behold filen privat — den kan inneholde kundedata. Ikke send den til andre.</small></p>
 <pre id="status" aria-live="polite">Klar. Ingen endringer er gjort.</pre>
 </main><script>
@@ -26,7 +26,7 @@ async function get(path,etag=false){
  return {value:await response.json(),etag:response.headers.get('ETag')};
 }
 const fields={
- menu:{sections:'sections',optionGroups:'optionGroups',allergenCatalog:'allergenCatalog',popularItemIds:'popularItemIds'},
+ menu:{sections:'sections',optionGroups:'optionGroups',allergenCatalog:'allergenCatalog',popularItemIds:'popularItemIds',schemaVersion:'schemaVersion',updatedAt:'updatedAt'},
  notifications:{notificationTemplates:'templates',notificationTests:'tests',smsHealth:'smsHealth',emailHealth:'emailHealth'}
 };
 btn.addEventListener('click',async()=>{
@@ -58,8 +58,27 @@ btn.addEventListener('click',async()=>{
    if(JSON.stringify(check)!==JSON.stringify(item.data))throw Error('Verifisering feilet for '+item.group);
    log('Kopiert og kontrollert: '+item.group);
   }
-  log('FERDIG MED KOPIERING. Ingen gamle felter ble slettet. SMS, e-post og meny leser fortsatt gamle stier; de må flyttes før opprydding.');
- }catch(e){log('STOPPET: '+String(e?.message||e));log('Ingen gamle felter ble slettet. Eventuelle kopier som allerede ble skrevet er beholdt.');}
+  // Only remove records verified at destination, with a fresh conditional ETag.
+  // A concurrent change aborts deletion instead of destroying it.
+  for(const item of planned){
+    for(const [from,to] of Object.entries(item.mapping)){
+      if(!Object.prototype.hasOwnProperty.call(source,from))continue;
+      const destination=(await get(item.group+'/'+to)).value;
+      const origin=await get(from,true);
+      if(!origin.etag)throw Error('ETag mangler for '+from+'. Sletting stoppet.');
+      if(JSON.stringify(origin.value)!==JSON.stringify(source[from]) ||
+         JSON.stringify(origin.value)!==JSON.stringify(destination))
+        throw Error('Data endret eller ulik for '+from+'. Sletting stoppet.');
+      const result=await fetch(db+'/'+from+'.json',{
+        method:'DELETE',headers:{'if-match':origin.etag}
+      });
+      if(!result.ok)throw Error('Sletting av '+from+' feilet (HTTP '+result.status+').');
+      if((await get(from)).value!==null)throw Error('Sletting av '+from+' ble ikke bekreftet.');
+      log('Flyttet og fjernet gammel sti: '+from);
+    }
+  }
+  log('FERDIG. Alle kopierte og verifiserte gamle felt ble fjernet. Behold backupfilen og oppdater Google Apps Script.');
+ }catch(e){log('STOPPET: '+String(e?.message||e));log('Backupen er tilgjengelig. Allerede bekreftede flyttinger beholdes; slettede felt gjenopprettes ikke automatisk.');}
  finally{btn.disabled=false}
 });
 })();
