@@ -2031,6 +2031,7 @@ function renderConfirmationWaiting(order, name) {
   if (title) title.textContent = 'Venter på bekreftelse';
   el.confirmModal.dataset.waiting = 'true';
   el.confirmModal.dataset.state = 'waiting';
+  el.confirmModal.dataset.confirmed = 'false';
   if (el.btnConfirmDone) el.btnConfirmDone.hidden = true;
   el.confirmText.textContent = `Takk, ${name}! Bestillingen er sendt. Vi venter nå på svar fra restauranten.`;
   el.confirmMeta.innerHTML = `${confirmationBaseRows(order)}
@@ -2050,7 +2051,10 @@ function renderConfirmationAccepted(order) {
   const readyNow = order.status === 'klar';
   if (title) title.textContent = readyNow ? 'Klar for henting' : 'Bestillingen er bekreftet';
   el.confirmModal.dataset.waiting = 'true';
-  el.confirmModal.dataset.state = readyNow ? 'ready' : 'accepted';
+  // Keep the original WAITING dialog's dimensions and position unchanged.
+  // Only swap its text/content; do not switch to the compact accepted-state CSS.
+  el.confirmModal.dataset.state = 'waiting';
+  el.confirmModal.dataset.confirmed = 'true';
   if (el.btnConfirmDone) el.btnConfirmDone.hidden = true;
 
   el.confirmText.textContent = readyNow
