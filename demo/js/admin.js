@@ -54,7 +54,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-cleanup2';
+} from './data.js?v=20261026-group1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
