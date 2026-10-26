@@ -938,8 +938,9 @@ async function restPatch(path, data) {
 function menuPayload() {
   return {
     schemaVersion: SCHEMA_VERSION,
-    siteSettings: clone(store.settings),
     settings: clone(store.settings),
+    // Remove the legacy duplicate in the same atomic Firebase PATCH.
+    siteSettings: null,
     allergenCatalog: clone(store.allergenCatalog),
     sections: clone(store.sections),
     optionGroups: clone(store.optionGroups),
