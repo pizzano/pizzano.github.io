@@ -13,7 +13,6 @@ const REASONS = Object.freeze({
   unknown:'İşlem başarısız; ayrıntılar uygulama kayıtlarında'
 });
 const pending = new Set();
-let reporting = false;
 const url = () => String(globalThis.window?.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/,'');
 export function diagnosticCode(category, reason) {
   return CATEGORY[category] && REASONS[reason] ? category + '_' + reason : 'firebase_unknown';
@@ -30,13 +29,12 @@ export function diagnosticEntry(category, reason, severity='warning', now=Date.n
     intentionalTest:Boolean(intentional)};
 }
 export async function reportSystemError(category, reason='unknown', severity='warning', options={}) {
-  if (reporting || !url() || options?.disabled) return false;
+  if (!url() || options?.disabled) return false;
   const entry=diagnosticEntry(category,reason,severity,Date.now(),options?.intentionalTest);
   // Separate intentional tests from real failures. Key contains no user data.
   const key=(entry.intentionalTest?'test_':'')+entry.code;
   if(pending.has(key))return false;
   pending.add(key);
-  reporting=true;
   try {
     const endpoint=url()+'/systemErrors/'+key+'.json';
     for(let attempt=0;attempt<2;attempt++){
@@ -55,7 +53,7 @@ export async function reportSystemError(category, reason='unknown', severity='wa
       if(saved.status!==412)return false;
     }
   } catch { /* Diagnostics may never stop checkout or re-report themselves. */ }
-  finally {reporting=false;pending.delete(key);}
+  finally {pending.delete(key);}
   return false;
 }
 // Read-only safe view; callers explicitly choose when to fetch.
