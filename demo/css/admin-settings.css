@@ -201,3 +201,11 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 .group-repeat-option .toggle-body{display:flex;flex-direction:column;gap:4px}
 .group-repeat-option .toggle-body strong{font-size:13px}
 .group-repeat-option .toggle-body small{font-size:12px;line-height:1.4;color:var(--ink-2)}
+
+/* Error notifications: scoped to the new settings tab, no existing layout overrides. */
+.system-errors-list{display:grid;gap:10px;margin-top:14px}
+.system-error-item{display:grid;gap:8px;padding:12px;border:1px solid var(--border,#d6d6d6);border-radius:10px;overflow-wrap:anywhere}
+.system-error-item p{margin:0;font-size:13px;line-height:1.45}
+.system-error-item small{opacity:.75;line-height:1.4}
+.system-error-actions{display:flex;gap:8px;flex-wrap:wrap}
+#systemErrorsUnread{display:inline-block;min-width:20px;text-align:center;border-radius:10px;padding:2px 5px;background:#a13c2c;color:white;font-size:11px}

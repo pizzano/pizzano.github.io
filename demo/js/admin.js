@@ -1,3 +1,4 @@
+import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
@@ -75,7 +76,7 @@ const initialSettingsView = (() => {
   }
 })();
 
-const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer']);
+const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer', 'alerts']);
 const initialSettingsSection = (() => {
   try {
     const saved = localStorage.getItem('kol-admin-settings-section');
@@ -4172,3 +4173,68 @@ noticeEl.check.addEventListener('click',()=>void noticeCheckTestStatus());
 window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden)void noticeCheckTestStatus()},12000);
 window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden&&noticeKindIsEmail())void noticeCheckEmailEngine()},30000);
 ready().then(() => { void noticeLoad(); });
+
+/* Restaurantinnstillinger / Varsler: independent of order rendering.
+ * Poll only while admin is visible, never on every data.js emit. */
+const systemAlertsList = document.getElementById('systemErrorsList');
+const systemAlertsStatus = document.getElementById('systemErrorsStatus');
+const systemAlertsUnread = document.getElementById('systemErrorsUnread');
+let systemAlertsLoading = false;
+const safeAlertTime = value => Number.isFinite(Number(value))
+  ? new Intl.DateTimeFormat('nb-NO',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Oslo'}).format(new Date(Number(value)))
+  : '—';
+async function refreshSystemAlerts(){
+  if(systemAlertsLoading || document.hidden || !systemAlertsList)return;
+  systemAlertsLoading=true;
+  try{
+    const raw=await readSystemErrors();
+    const records=Object.entries(raw||{}).filter(([,v])=>v&&typeof v==='object')
+      .sort(([,a],[,b])=>(Number(b.lastSeen)||0)-(Number(a.lastSeen)||0));
+    const unread=records.filter(([,v])=>!v.read && !v.resolved).length;
+    systemAlertsUnread.hidden=!unread;
+    systemAlertsUnread.textContent=unread ? String(unread) : '';
+    systemAlertsStatus.textContent=records.length ? records.length+' varsler · '+unread+' uleste' : 'Ingen registrerte feil.';
+    systemAlertsList.replaceChildren(...records.slice(0,100).map(([key,item])=>{
+      const card=document.createElement('div');card.className='system-error-item';
+      const title=document.createElement('strong');title.textContent=(item.severity==='critical'?'Kritisk':item.severity==='info'?'Info':'Advarsel')+' · '+String(item.operation||'Feil')+' · '+(item.resolved?'Løst':item.status==='recovered'?'Gjenopprettet':'Pågår');
+      const detail=document.createElement('p');detail.textContent=String(item.message||'Feil')+' · Mulig årsak: '+String(item.possibleCause||'Ukjent');
+      const meta=document.createElement('small');meta.textContent='Først: '+safeAlertTime(item.firstSeen)+' · Sist: '+safeAlertTime(item.lastSeen)+' · Gjentatt '+(Number(item.count)||1)+' ganger'+(item.intentionalTest?' · TEST':'');
+      card.append(title,detail,meta);
+      const actions=document.createElement('div');actions.className='system-error-actions';
+      for(const [label,field] of [['Lest','read'],['Løst','resolved']]){
+        const button=document.createElement('button');button.type='button';button.className='btn';
+        button.textContent=label;button.disabled=Boolean(item[field]);button.dataset.errorKey=key;button.dataset.errorField=field;
+        actions.append(button);
+      }
+      card.append(actions);return card;
+    }));
+  }catch{
+    systemAlertsStatus.textContent='Varsler kunne ikke hentes fra Firebase. Kontroller database-tilgang.';
+  }finally{systemAlertsLoading=false}
+}
+systemAlertsList?.addEventListener('click',async event=>{
+  const button=event.target.closest('button[data-error-key]');
+  if(!button||button.disabled)return;
+  button.disabled=true;
+  const field=button.dataset.errorField;
+  const ok=await setSystemErrorStatus(button.dataset.errorKey,
+    field==='resolved'?{resolved:true,read:true}:{read:true}).catch(()=>false);
+  if(!ok){button.disabled=false;toast('Kunne ikke oppdatere varslet.');}
+  else void refreshSystemAlerts();
+});
+window.setInterval(()=>{void refreshSystemAlerts();},12000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts();});
+void refreshSystemAlerts();
+
+document.getElementById('systemErrorsArchive')?.addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  if(button.disabled)return;
+  button.disabled=true;
+  try {
+    const count=await archiveResolvedSystemErrors();
+    toast(count+' løste varsler arkivert.');
+    await refreshSystemAlerts();
+  }catch{
+    toast('Arkivering mislyktes. Ingen ordredata ble endret.');
+  }finally{button.disabled=false;}
+});

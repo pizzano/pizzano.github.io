@@ -1,3 +1,4 @@
+import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
@@ -32,6 +33,10 @@ const CUSTOMER_ORDER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const CUSTOMER_ORDER_POLL_MS = 8 * 1000;
 
 const ORDERS_PATH = 'orders';
+// Retry local diagnostic events only on reconnection, never in the critical order path.
+window.addEventListener('online', () => { void flushSystemErrorQueue(); });
+// Restore failures from a previously offline tab after a fresh page load.
+window.setTimeout(() => { if (navigator.onLine !== false) void flushSystemErrorQueue(); }, 8000);
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
 const FALLBACK_MENU_INTERVAL = 30000;
@@ -1364,6 +1369,7 @@ async function persist() {
   } catch (err) {
     remoteOnline = false;
     console.error('Lagring feilet:', err);
+    void reportSystemError('firebase', /403|401|HTTP/.test(String(err?.message)) ? 'http' : 'network','warning');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
     return false;
   }
@@ -1607,12 +1613,12 @@ async function patchConfirmedPizzaOrder(order, changes) {
   try {
     // Yield once after closing SSE so the browser can release an HTTP slot.
     await new Promise(resolve => setTimeout(resolve, 80));
-    response = await fetch(path, {
+    response = await monitorCriticalOperation(fetch(path, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(changes),
       signal: AbortSignal.timeout(12000),
-    });
+    }), 'order_accept', 12500);
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
       throw new Error('Firebase svarte ikke innen 12 sekunder. Sjekk nettleserens Network-fane for PATCH/OPTIONS og eventuell VPN.');
@@ -1658,7 +1664,10 @@ export async function expireUnconfirmedOrders() {
         if (index >= 0) store.orders[index] = normalizeOrders([cancelled])[0];
         emitData('remote'); break;
       }
-    } catch { /* Retry on the next tick; never claim cancellation before it is saved. */ }
+    } catch { 
+      void reportSystemError('timeout','network','warning');
+      /* Retry on the next tick; never claim cancellation before it is saved. */
+    }
     finally { expiringOrders.delete(order.id); }
   }
 }
@@ -1754,10 +1763,11 @@ export async function submitOrder(order) {
       if (rewards.length !== 1 || (record.loyaltyReward.automatic ? rewards[0].quantity < 1 : rewards[0].quantity !== 1) || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
       await reservePizzaReward(record);
     }
-    await restPut(`${ORDERS_PATH}/${record.id}`, record);
+    await monitorCriticalOperation(restPut(`${ORDERS_PATH}/${record.id}`, record), 'order_create', 15000);
     remoteOnline = true;
   } catch (err) {
     remoteOnline = false;
+    void reportSystemError('order_create', /HTTP|403|401/.test(String(err?.message)) ? 'http' : 'network','critical');
     throw new Error(err?.message || 'Bestillingen kunne ikke sendes. Prøv igjen.');
   }
 
@@ -1886,6 +1896,7 @@ async function confirmRestaurantOrder(order, changes) {
     return true;
   } catch (error) {
     latestAcceptError = String(error?.message || 'Ukjent Firebase-feil').slice(0, 220);
+    void reportSystemError('order_accept', error?.name === 'TimeoutError' ? 'timeout' : /HTTP|rules/i.test(latestAcceptError) ? 'http' : 'network','critical');
     console.warn('Firebase kunne ikke bekrefte ordren:', latestAcceptError);
     // No local status was changed; the order stays pending until we actually
     // have a successful Firebase write. Staff may safely inspect/retry.
