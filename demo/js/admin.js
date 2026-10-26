@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-godta-simple1';
+} from './data.js?v=20261026-firebase-orders1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
