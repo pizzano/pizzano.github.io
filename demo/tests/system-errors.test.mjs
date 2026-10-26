@@ -28,7 +28,7 @@ test('deduplicates the same failure with conditional Firebase writes',async()=>{
       return {ok:true,status:200};
     }
     if(options.method==='PATCH')return {ok:true,status:200};
-    return {ok:true,status:200,headers:{get:()=>'\"mock-etag\"'},json:async()=>values.get(key)||null};
+    return {ok:true,status:200,headers:{get:()=>'\"mock-etag\"'},json:async()=>key==='systemErrors.json' ? Object.fromEntries(values) : (values.get(key)||null)};
   };
   try{
     assert.equal(await reportSystemError('order_accept','http','critical'),true);
