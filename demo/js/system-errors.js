@@ -43,9 +43,14 @@ export async function flushSystemErrorQueue() {
 export function monitorCriticalOperation(promise, category, maxMs=12000) {
   // Observation only: don't alter resolution or retry requests that might have succeeded.
   const timeout=Math.max(1000,Math.min(60000,maxMs));
-  let done=false;
-  const timer=setTimeout(()=>{if(!done)void reportSystemError(category,'timeout','critical');},timeout);
-  return Promise.resolve(promise).finally(()=>{done=true;clearTimeout(timer);});
+  let done=false, stalled=false;
+  const timer=setTimeout(()=>{
+    if(!done){stalled=true;void reportSystemError(category,'timeout','critical');}
+  },timeout);
+  return Promise.resolve(promise).then(
+    value=>{done=true;clearTimeout(timer);if(stalled)void markSystemErrorRecovered(category,'timeout');return value;},
+    error=>{done=true;clearTimeout(timer);throw error;}
+  );
 }
 const url = () => String(globalThis.window?.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/,'');
 export function diagnosticCode(category, reason) {
@@ -58,7 +63,7 @@ export function diagnosticEntry(category, reason, severity='warning', now=Date.n
   return {code, category:kind, operation:CATEGORY[kind], reason:reasonKey,
     severity:['critical','warning','info'].includes(severity)?severity:'warning',
     message:CATEGORY[kind]+' mislyktes', possibleCause:REASONS[reasonKey]||REASONS.unknown,
-    firstSeen:now,lastSeen:now,count:1,read:false,resolved:false,
+    firstSeen:now,lastSeen:now,count:1,read:false,resolved:false,status:'ongoing',
     intentionalTest:Boolean(intentional)};
 }
 export async function reportSystemError(category, reason='unknown', severity='warning', options={}) {
@@ -82,7 +87,7 @@ export async function reportSystemError(category, reason='unknown', severity='wa
       if(!etag)break;
       const record=old&&typeof old==='object'
         ? {...old,lastSeen:entry.lastSeen,count:Math.max(0,Number(old.count)||0)+1,
-           severity:entry.severity, read:false, resolved:false}
+           severity:entry.severity, read:false, resolved:false,status:'ongoing'}
         : entry;
       const saved=await fetch(endpoint,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
         body:JSON.stringify(record),signal:AbortSignal.timeout(4000)});
@@ -135,4 +140,18 @@ export async function archiveResolvedSystemErrors(now=Date.now()) {
     }catch{/* Continue safely; never report recorder's errors. */}
   }
   return archived;
+}
+
+/** Only mark known watchdog conditions recovered after the original action succeeds. */
+export async function markSystemErrorRecovered(category,reason){
+  const key=diagnosticCode(category,reason);
+  if(key==='firebase_unknown'||!url())return false;
+  try {
+    const response=await fetch(url()+'/systemErrors/'+key+'.json',{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:'recovered',recoveredAt:Date.now()}),
+      signal:AbortSignal.timeout(4000)
+    });
+    return response.ok;
+  }catch{return false;}
 }
