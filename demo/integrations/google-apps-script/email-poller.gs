@@ -238,7 +238,7 @@ function kolRenderFullEmailTemplate_(htmlTemplate,vars,order,money){
 
 function kolReadMailTemplates_(){
   try{
-    const response=UrlFetchApp.fetch(KOL_DB+'/notificationTemplates.json',
+    const response=UrlFetchApp.fetch(KOL_DB+'/notifications/templates.json',
       {method:'get',muteHttpExceptions:true});
     if(response.getResponseCode()!==200)return {};
     const all=JSON.parse(response.getContentText()||'null');
@@ -416,7 +416,7 @@ function kolEmailReceipt_(id, kind, order, sentAt) {
 /** Fresh proof of working polling and mail authorization, not mail delivery. */
 function kolEmailHeartbeat_(now, state) {
   const quota = MailApp.getRemainingDailyQuota();
-  kolEmailPutJson_('emailHealth', {
+  kolEmailPutJson_('notifications/emailHealth', {
     checkedAt:now, quotaRemaining:Number(quota) || 0,
     status:state === 'ok' && quota > 0 ? 'ok' : 'unavailable',
     source:'apps-script-email-poller',
@@ -520,7 +520,7 @@ function installerEpostVarsler() {
  */
 function kolProcessMailTests_(props,mailTemplates){
   for(const kind of ['emailAccepted','emailReady']){
-    const response=UrlFetchApp.fetch(KOL_DB+'/notificationTests/'+kind+'/request.json',
+    const response=UrlFetchApp.fetch(KOL_DB+'/notifications/tests/'+kind+'/request.json',
       {method:'get',muteHttpExceptions:true});
     if(response.getResponseCode()!==200)continue;
     const request=JSON.parse(response.getContentText()||'null');
@@ -530,7 +530,7 @@ function kolProcessMailTests_(props,mailTemplates){
     props.setProperty(key,id);
     const now=Date.now();
     const result=(state,message)=>{
-      try{kolEmailPutJson_('notificationTests/'+kind+'/result',
+      try{kolEmailPutJson_('notifications/tests/'+kind+'/result',
         {id,state,at:Date.now(),message})}
       catch(error){Logger.log('Teststatus kunne ikke lagres: '+error.message)}
     };
