@@ -31,7 +31,6 @@ import {
   describeSelection,
   findItem,
   submitOrder,
-  getLocalOrders,
   getOrders,
   getOpenState,
   getPickupSlots,
@@ -47,7 +46,6 @@ import {
 const PROFILE_KEY = 'bestill_profile_v2';
 const CART_KEY = 'bestill_cart_v2';
 const ALLERGEN_VISIBILITY_KEY = 'kol_show_allergens_v1';
-const CUSTOMER_ORDERS_KEY = 'bestill_orders_v2';
 const LEGACY_CHECKOUT_KEY = 'bestill_checkout_contact_v2';
 const LEGACY_NOTICE_KEYS = {
   notified: 'kol_ready_notified_v1',
@@ -413,46 +411,16 @@ function rememberCustomerOrder(order) {
   return next;
 }
 
-function persistCustomerOrderSnapshot(order) {
-  if (!order?.id) return;
-  const remembered = rememberCustomerOrder(order);
-  const current = loadJSON(CUSTOMER_ORDERS_KEY, []);
-  const list = Array.isArray(current) ? [...current] : [];
-  const index = list.findIndex((entry) => entry?.id === remembered.id);
-  if (index >= 0) list[index] = mergeStableCustomerOrder(list[index], remembered);
-  else list.unshift(remembered);
-  saveJSON(CUSTOMER_ORDERS_KEY, list
-    .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
-    .slice(0, LOCAL_ORDER_LIMIT));
-}
-
+// The order history shown here exists only when Firebase currently has it.
+// Memory protects status from out-of-order replies within this page session.
 function mergedCustomerOrders() {
-  const localOrders = getLocalOrders();
-  const liveOrders = getOrders();
-  const local = Array.isArray(localOrders) ? localOrders : [];
-  const live = Array.isArray(liveOrders) ? liveOrders : [];
-  const byId = new Map();
-
-  for (const order of local) {
-    if (!order?.id) continue;
-    byId.set(order.id, rememberCustomerOrder(order));
+  const active=getOrders().filter(order=>order?.id);
+  const activeIds=new Set(active.map(order=>order.id));
+  for(const id of stableCustomerOrderSnapshots.keys()){
+    if(!activeIds.has(id))stableCustomerOrderSnapshots.delete(id);
   }
-
-  for (const remote of live) {
-    if (!remote?.id) continue;
-    const previous = byId.get(remote.id) || stableCustomerOrderSnapshots.get(remote.id) || {};
-    const merged = rememberCustomerOrder(mergeStableCustomerOrder(previous, remote));
-    byId.set(remote.id, merged);
-  }
-
-  for (const [orderId, snapshot] of stableCustomerOrderSnapshots.entries()) {
-    if (!byId.has(orderId)) continue;
-    byId.set(orderId, mergeStableCustomerOrder(byId.get(orderId), snapshot));
-  }
-
-  return Array.from(byId.values()).sort(
-    (a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)
-  );
+  return active.map(order=>rememberCustomerOrder(order))
+    .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0));
 }
 
 function readySeenIds() {
@@ -620,7 +588,8 @@ function upsertLiveOrder(orderId, remote) {
   // Discard an older REST response BEFORE touching the persistent snapshot.
   if (latest && Number(latest.statusUpdatedAt || 0) > Number(remote.statusUpdatedAt || 0)) return;
   const normalized = rememberCustomerOrder({ ...remote, id: remote.id || orderId });
-  persistCustomerOrderSnapshot(normalized);
+
+
   const orders = Array.isArray(store.orders) ? [...store.orders] : [];
   const index = orders.findIndex((entry) => entry?.id === orderId);
   if (index >= 0) {
@@ -2161,7 +2130,7 @@ function checkOrderConfirmationWait() {
   }
   const order = confirmationOrderSnapshot(orderConfirmOrderId);
   if (!order) return;
-  persistCustomerOrderSnapshot(order);
+
 
   if (order.status === 'avvist') {
     orderConfirmResolved = true;
@@ -2220,7 +2189,7 @@ function startOrderConfirmationWait(order, name) {
   orderConfirmResolved = false;
   ui.focusedOrderId = order.id;
   rememberCustomerOrder(order);
-  persistCustomerOrderSnapshot(order);
+
 
   // Show the waiting screen FIRST. A watcher failure must never leave the customer on "Sender…".
   renderConfirmationWaiting(order, name);
@@ -2650,12 +2619,10 @@ return `
   }
 
   function reorder(orderId, fallbackOrder = null) {
-    // The timeout modal may have a newer Firebase snapshot than localStorage.
-    // Reuse the same safe reorder logic as Mine bestillinger.
+    // Reorder only items from Firebase or the order currently displayed.
     const order = (fallbackOrder?.id === orderId && fallbackOrder?.lines?.length)
       ? fallbackOrder
-      : getLocalOrders().find((entry) => entry.id === orderId)
-        || mergedCustomerOrders().find((entry) => entry.id === orderId);
+      : mergedCustomerOrders().find((entry) => entry.id === orderId);
     if (!order?.lines?.length) {
       toast('Kunne ikke hente varene fra den tidligere bestillingen.', 'warning');
       return 0;
