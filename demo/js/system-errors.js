@@ -71,27 +71,28 @@ export async function reportSystemError(category, reason='unknown', severity='wa
   if(pending.has(key))return false;
   if(!options?.fromQueue && Date.now()-(lastReports.get(key)||0)<COOLDOWN_MS)return false;
   pending.add(key);
+  let stored=false;
   try {
     const endpoint=url()+'/systemErrors/'+key+'.json';
     for(let attempt=0;attempt<2;attempt++){
       const response=await fetch(endpoint,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-      if(!response.ok)return false;
+      if(!response.ok)break;
       const old=await response.json();
       const etag=response.headers.get('ETag');
-      if(!etag)return false;
+      if(!etag)break;
       const record=old&&typeof old==='object'
         ? {...old,lastSeen:entry.lastSeen,count:Math.max(0,Number(old.count)||0)+1,
            severity:entry.severity, read:false, resolved:false}
         : entry;
       const saved=await fetch(endpoint,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
         body:JSON.stringify(record)});
-      if(saved.ok){lastReports.set(key,Date.now());return true;}
-      if(saved.status!==412)return false;
+      if(saved.ok){stored=true;lastReports.set(key,Date.now());break;}
+      if(saved.status!==412)break;
     }
   } catch { /* Diagnostics may never stop checkout or re-report themselves. */ }
   finally {pending.delete(key);}
-  if(!options?.fromQueue)queueError(key,entry);
-  return false;
+  if(!stored && !options?.fromQueue)queueError(key,entry);
+  return stored;
 }
 // Read-only safe view; callers explicitly choose when to fetch.
 export async function readSystemErrors() {
