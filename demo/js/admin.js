@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-single-settings1';
+} from './data.js?v=20261026-cleanup2';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
