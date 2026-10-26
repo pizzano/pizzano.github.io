@@ -855,9 +855,7 @@ if (typeof BroadcastChannel !== 'undefined') {
 let remoteMenuPath = '';
 let fallbackTimer = null;
 let ordersStream = null;
-let menuStream = null;
 let ordersStreamHealthy = false;
-let menuStreamHealthy = false;
 let ordersRaw = {};
 let orderStreamRevision = 0;
 let ordersFallbackBusy = false;
@@ -1239,49 +1237,9 @@ function beginOrdersStream() {
   }
 }
 
-function applyMenuVersionEvent(event) {
-  try {
-    const change = parseFirebaseEvent(event);
-    const version = Number(change.data);
-    if (change.path !== '/' || !Number.isFinite(version) || version <= 0) return;
-    menuStreamHealthy = true;
-    remoteOnline = true;
-    if (version !== Number(store.updatedAt)) void reloadRemoteMenu();
-  } catch (error) {
-    menuStreamHealthy = false;
-    console.warn('Firebase meny-stream feilet:', error);
-  }
-}
-
-function beginMenuStream() {
-  if (!('EventSource' in window)) return;
-  try {
-    const path = remoteMenuPath ? remoteMenuPath + '/updatedAt' : 'updatedAt';
-    const source = new EventSource(streamUrl(path));
-    menuStream = source;
-    source.addEventListener('put', applyMenuVersionEvent);
-    source.addEventListener('patch', applyMenuVersionEvent);
-    source.onerror = () => {
-      menuStreamHealthy = false;
-      if (source.readyState === 2) {
-        source.close();
-        if (menuStream === source) menuStream = null;
-        scheduleStreamReconnect();
-      }
-    };
-    for (const kind of ['cancel', 'auth_revoked']) {
-      source.addEventListener(kind, () => {
-        menuStreamHealthy = false;
-        source.close();
-        if (menuStream === source) menuStream = null;
-        scheduleStreamReconnect();
-      });
-    }
-  } catch (error) {
-    menuStreamHealthy = false;
-    console.warn('Firebase meny-stream kan ikke åpnes:', error);
-  }
-}
+// Menu changes are detected by a short updatedAt check every 30 seconds.
+// A permanent second EventSource connection is unnecessary and can block
+// order confirmations when the same browser has customer/admin tabs open.
 
 let reconnectTimer = null;
 function scheduleStreamReconnect() {
@@ -1379,14 +1337,14 @@ async function fallbackSync() {
         if (applyRemoteOrders(ordersRaw)) emitData('remote');
       }
     } catch (error) {
-      if (!menuStreamHealthy) remoteOnline = false;
+      remoteOnline = false;
     } finally {
       ordersFallbackBusy = false;
     }
   }
 
   const now = Date.now();
-  if (!menuStreamHealthy && !menuFallbackBusy &&
+  if (!menuFallbackBusy &&
       (now - lastMenuFallbackAt >= FALLBACK_MENU_INTERVAL)) {
     lastMenuFallbackAt = now;
     menuFallbackBusy = true;
@@ -1662,17 +1620,13 @@ async function orderAcceptHttpError(response, action) {
 function pauseAdminLiveStreamsForWrite() {
   if (CUSTOMER_MODE) return () => {};
   const hadOrders = Boolean(ordersStream);
-  const hadMenu = Boolean(menuStream);
   if (ordersStream) { ordersStream.close(); ordersStream = null; }
-  if (menuStream) { menuStream.close(); menuStream = null; }
   ordersStreamHealthy = false;
-  menuStreamHealthy = false;
   let resumed = false;
   return () => {
     if (resumed) return;
     resumed = true;
     if (hadOrders && !ordersStream) beginOrdersStream();
-    if (hadMenu && !menuStream) beginMenuStream();
   };
 }
 
