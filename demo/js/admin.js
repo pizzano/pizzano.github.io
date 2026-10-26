@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-firebase-orders1';
+} from './data.js?v=20261026-godta-direct2';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -3084,10 +3084,17 @@ async function confirmAcceptOrder() {
     }
   }
   el.btnAcceptConfirm.disabled = true;
-  const ok = scheduled
-    ? await acceptScheduledOrder(acceptedOrderId)
-    : await acceptOrderWithEstimate(acceptedOrderId, minutes);
-  el.btnAcceptConfirm.disabled = false;
+  let ok = false;
+  try {
+    ok = scheduled
+      ? await acceptScheduledOrder(acceptedOrderId)
+      : await acceptOrderWithEstimate(acceptedOrderId, minutes);
+  } catch (error) {
+    console.error('Godta feilet:', error);
+    showAcceptError(acceptedOrderId, String(error?.message || 'Uventet feil'));
+  } finally {
+    el.btnAcceptConfirm.disabled = false;
+  }
   if (!ok) {
     const reason = lastAcceptErrorMessage();
     const msg = showAcceptError(acceptedOrderId,
