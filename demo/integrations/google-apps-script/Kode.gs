@@ -194,7 +194,7 @@ function kolApiSend_(to, message, token) {
  * A failed status/receipt write must never retry an already-submitted SMS.
  */
 function kolFirebaseSmsPut_(path, value) {
-  if (!/^(notifications\\/smsHealth|notifications\/tests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
+  if (!/^(notifications\/smsHealth|notifications\/tests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
     throw new Error('Unexpected Firebase SMS path');
   }
   const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' + path + '.json', {
@@ -291,7 +291,7 @@ function kolPurgeOldCounters_(props, currentDay) {
  * Reserve ID and quota before gateway call to avoid accidental resend.
  */
 function kolCheckSmsTest_(props, token, fixedPhone) {
-  const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notificationTests/smsAccepted/request.json',
+  const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notifications/tests/smsAccepted/request.json',
     {method:'get',muteHttpExceptions:true});
   if(response.getResponseCode()!==200)return;
   const request=JSON.parse(response.getContentText()||'null');
