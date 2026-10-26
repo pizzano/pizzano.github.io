@@ -39,7 +39,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261026-single-settings1';
+} from './data.js?v=20261026-cleanup2';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
