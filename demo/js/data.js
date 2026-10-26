@@ -1654,30 +1654,35 @@ async function orderAcceptHttpError(response, action) {
 // HTTP success is required before the admin/customer sees "Godtatt".
 async function patchConfirmedPizzaOrder(order, changes) {
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
-  const orderPath = `${ORDERS_PATH}/${encodeURIComponent(order.id)}`;
-  const current = await restGet(orderPath, 10000);
-  if (!current) throw new Error('Bestillingen finnes ikke i Firebase. Oppdater bestillingene.');
-  if (current.status !== 'mottatt')
-    throw new Error('Bestillingen er allerede behandlet. Oppdater bestillingene.');
-  if (confirmationExpired(current))
-    throw new Error('Svarfristen er ute. Bestillingen kan ikke godtas.');
+  if (!order?.id || order.status !== 'mottatt')
+    throw new Error('Bestillingen er ikke lenger ny. Oppdater bestillingslisten.');
+  if (confirmationExpired(order))
+    throw new Error('Svarfristen er ute. Kunden må legge inn en ny bestilling.');
 
-  const update = { ...changes };
-  // Only status and pickup details are written. Do not touch SMS/e-post
-  // receipts, purchase counters or other independent customer fields.
-  const response = await fetch(`${DB_URL}/${orderPath}.json`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(update),
-    signal: AbortSignal.timeout(10000)
-  });
+  // One Firebase request. No extra GET, whole-order PUT, retries or
+  // SMS/e-post dependencies. Firebase keeps existing customer and receipt data.
+  const path = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
+  let response;
+  try {
+    response = await fetch(path, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(changes),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
+      throw new Error('Firebase svarte ikke innen 8 sekunder. Kontroller internett og prøv igjen.');
+    throw new Error('Kunne ikke kontakte Firebase: ' + (error?.message || 'nettverksfeil'));
+  }
   if (!response.ok)
     throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
   const confirmed = await response.json();
   if (!confirmed || confirmed.status !== 'bekreftet')
     throw new Error('Firebase returnerte ikke bekreftet ordrestatus.');
   window.dispatchEvent(new Event('kol-order-confirmed'));
-  return { ...current, ...confirmed };
+  // PATCH returns only the changed fields; keep the rest of the original order.
+  return { ...order, ...confirmed };
 }
 
 const expiringOrders = new Set();
