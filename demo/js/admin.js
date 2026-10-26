@@ -413,6 +413,8 @@ function renderStats() {
   if (productsHeading) productsHeading.textContent = `${stats.categoryCount} Kategorier | ${stats.itemCount} Produkter`;
   el.navOrderBadge.hidden = stats.newOrders === 0;
   el.navOrderBadge.textContent = String(stats.newOrders);
+  el.navOrderBadge.classList.toggle('has-unseen-orders',
+    getOrders().some(order => order.status === 'mottatt' && !acknowledgedOrders.has(order.id)));
 
   const cards = [
     { label: 'Kategorier', value: stats.categoryCount },
@@ -3001,9 +3003,18 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     status.disabled = true;
     // The last manual action is marking ready; no later delivery/completion step.
     const ok = await markOrderReadyManually(orderId);
+    if (ok) {
+      // Close the order detail only after Firebase confirms "klar".
+      clearTimeout(acceptedDetailCloseTimer);
+      acknowledgedOrders.add(orderId);
+      selectedOrderId = null;
+      ui.orderFilter = 'all';
+      toast('Bestillingen er klar for henting.');
+    } else {
+      toast('Kunne ikke oppdatere status i Firebase.', 'error');
+    }
     renderOrders();
     renderStats();
-    toast(ok ? 'Status er oppdatert.' : 'Kunne ikke oppdatere status.');
     return;
   }
   const saveEstimate = event.target.closest('[data-save-detail-estimate]');
