@@ -44,7 +44,7 @@ Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/tes
 | PWA | `manifest.webmanifest`, `service-worker.js` | Installering, mellomlagring og nettverksoppførsel |
 | Varsellyd | `soundreality-police-operation-siren-144229.mp3` | Brukes av ordrevarsel |
 
-| Utviklerverktøy | `tools/convert_globalfood.py`, `tools/audit-references.mjs` | Konvertering og filkontroll |
+| Utviklerverktøy | `tools/audit-references.mjs` | Kontroll av filreferanser og kodeintegritet |
 | Apps Script-kopier | `integrations/google-apps-script/` | SMS- og e-post-pollere (GitHub-kode er ikke automatisk utplassert til Google) |
 
 ## Ikke flytt eller slett ukritisk
@@ -253,9 +253,8 @@ JavaScript-importer, stilark, manifest, bilder, lyd og service-worker:
   som importeres, SMS-/e-postkildekopier, Epson-skriverlogikk, lydfil,
   PWA-filer og privat Epson-bildeverktøy med egen rotvideresending.
 - **Beholdt som bevisste manuelle verktøy, ikke runtime-avhengigheter:**
-  `tools/convert_globalfood.py` (framtidig meny-konvertering) og
-  `tools/audit-references.mjs` (integritetskontroll). Disse lastes
-  ikke av kunden, men har fortsatt en vedlikeholdsfunksjon.
+  `tools/audit-references.mjs` (integritetskontroll). Dette lastes
+  ikke av kunden, men brukes av automatiske kontroller.
 - Ingen endringer i Firebase-bestillinger, SMS, e-post, Epson-kvitteringer,
   statusflyt eller CSS/HTML-layout inngikk i denne oppryddingen.
 
