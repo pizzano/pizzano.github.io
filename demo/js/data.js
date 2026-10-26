@@ -1977,7 +1977,7 @@ export function getStats() {
     hiddenCount: items.filter((item) => item.hidden).length,
     soldOutCount: items.filter((item) => item.soldOut).length,
     groupCount: (store.optionGroups || []).length,
-    newOrders: (store.orders || []).filter((order) => order.status === 'mottatt').length,
+    newOrders: (store.orders || []).filter((order) => order.status === 'mottatt' && !confirmationExpired(order)).length,
     activeOrders: active.length,
     todayOrders: todays.length,
     todayRevenue: todays
