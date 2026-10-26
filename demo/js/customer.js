@@ -39,7 +39,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261026-one-firebase-stream3';
+} from './data.js?v=20261026-connection-limit4';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
