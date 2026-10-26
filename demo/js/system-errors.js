@@ -1,16 +1,16 @@
 // Privacy-safe, best-effort diagnostics. Does not depend on data.js so that
 // reporting failures cannot recursively invoke the main Firebase error path.
 const CATEGORY = Object.freeze({
-  order_create:'Sipariş oluşturma', order_accept:'Godta', firebase:'Firebase',
-  sms:'SMS', email:'E-post', loyalty:'Sadakat', timeout:'Zaman aşımı'
+  order_create:'Opprett bestilling', order_accept:'Godta', firebase:'Firebase',
+  sms:'SMS', email:'E-post', loyalty:'Sadakat', timeout:'Svarfrist'
 });
 const REASONS = Object.freeze({
-  network:'Bağlantı kesintisi veya erişilemeyen servis',
-  http:'Firebase erişimi veya veritabanı kuralları',
-  timeout:'İstek zaman sınırını aştı',
-  state:'Beklenmeyen işlem durumu',
-  provider:'Bildirim servisi veya gönderim hatası',
-  unknown:'İşlem başarısız; ayrıntılar uygulama kayıtlarında'
+  network:'Nettverksfeil eller utilgjengelig tjeneste',
+  http:'Firebase-tilgang eller databaseregler',
+  timeout:'Forespørselen brukte for lang tid',
+  state:'Uventet bestillingsstatus',
+  provider:'Feil hos varslingsleverandør',
+  unknown:'Operasjonen feilet; se tjenesteloggen'
 });
 const pending = new Set();
 const url = () => String(globalThis.window?.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/,'');
