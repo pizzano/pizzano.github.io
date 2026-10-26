@@ -1078,13 +1078,13 @@ function readSessionOrderIds() {
       : [];
   } catch (_) { sessionOrderIds=[]; }
 }
-function trackCustomerOrderId(orderId) {
+export function trackCustomerOrderId(orderId) {
   if (!CUSTOMER_MODE || !/^ord_[a-z0-9]{7,40}$/i.test(String(orderId||''))) return;
   sessionOrderIds=[...sessionOrderIds.filter(id=>id!==orderId),orderId].slice(-CUSTOMER_ORDER_LIMIT);
   saveSessionOrderIds();
   syncCustomerStreams();
 }
-function forgetCustomerOrderId(orderId) {
+export function forgetCustomerOrderId(orderId) {
   if (!CUSTOMER_MODE) return;
   const size=sessionOrderIds.length;
   sessionOrderIds=sessionOrderIds.filter(id=>id!==orderId);
