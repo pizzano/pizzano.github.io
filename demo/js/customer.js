@@ -39,7 +39,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261026-firebase-orders1';
+} from './data.js?v=20261026-godta-direct2';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
