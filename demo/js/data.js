@@ -38,7 +38,10 @@ const FALLBACK_MENU_INTERVAL = 60000;
 const SCHEMA_VERSION = 6;
 
 const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
-const LOCAL_ORDER_LIMIT = 4;
+// Only temporary opaque order IDs, never order data. Reopening the browser
+// requires a new link from the customer's email/SMS.
+const SESSION_ORDER_IDS_KEY = 'bestill_session_order_ids_v1';
+const RETIRED_ORDERS_KEY = 'bestill_orders_v2';
 const CHANNEL_NAME = 'kol_menu_sync';
 
 /* ------------------------------------------------------------------ *
@@ -1057,20 +1060,45 @@ const customerStreams = new Map();
 let customerPollBusy = false;
 let lastCustomerPollAt = 0;
 
+// No customer order snapshots are saved to localStorage. A short-lived
+// session-only list keeps live order tracking after an ordinary page reload.
+// It contains IDs only (never names, phones, items, prices or old statuses).
+let sessionOrderIds = [];
+function saveSessionOrderIds() {
+  if (!CUSTOMER_MODE) return;
+  try { sessionStorage.setItem(SESSION_ORDER_IDS_KEY, JSON.stringify(sessionOrderIds)); }
+  catch (_) { /* private browsing may disable session storage */ }
+}
+function readSessionOrderIds() {
+  if (!CUSTOMER_MODE) return;
+  try {
+    const ids=JSON.parse(sessionStorage.getItem(SESSION_ORDER_IDS_KEY)||'[]');
+    sessionOrderIds=Array.isArray(ids)
+      ? [...new Set(ids.filter(id=>typeof id==='string' && /^ord_[a-z0-9]{7,40}$/i.test(id)))].slice(-CUSTOMER_ORDER_LIMIT)
+      : [];
+  } catch (_) { sessionOrderIds=[]; }
+}
+function trackCustomerOrderId(orderId) {
+  if (!CUSTOMER_MODE || !/^ord_[a-z0-9]{7,40}$/i.test(String(orderId||''))) return;
+  sessionOrderIds=[...sessionOrderIds.filter(id=>id!==orderId),orderId].slice(-CUSTOMER_ORDER_LIMIT);
+  saveSessionOrderIds();
+  syncCustomerStreams();
+}
+function forgetCustomerOrderId(orderId) {
+  if (!CUSTOMER_MODE) return;
+  const size=sessionOrderIds.length;
+  sessionOrderIds=sessionOrderIds.filter(id=>id!==orderId);
+  if(size!==sessionOrderIds.length)saveSessionOrderIds();
+}
 function customerTrackedIds() {
-  const now = Date.now();
-  const ids = [];
-  for (const saved of getLocalOrders()) {
-    const id = String(saved?.id || '');
-    if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || ids.includes(id)) continue;
-    const createdAt = Number(saved.createdAt) || 0;
-    if (!createdAt || now - createdAt > CUSTOMER_ORDER_MAX_AGE_MS) continue;
-    const current = ordersRaw[id] || saved;
-    if (['avvist', 'fullfort'].includes(current.status)) continue;
-    ids.push(id);
-    if (ids.length >= CUSTOMER_ORDER_LIMIT) break;
-  }
-  return ids;
+  const now=Date.now();
+  return sessionOrderIds.filter(id=>{
+    const current=ordersRaw[id];
+    if (!current) return true; // Fetch from Firebase; never guess from cache.
+    const createdAt=Number(current.createdAt)||0;
+    return (!createdAt || now-createdAt<=CUSTOMER_ORDER_MAX_AGE_MS) &&
+      !['avvist','fullfort'].includes(current.status);
+  });
 }
 
 function syncCustomerStreams() {
@@ -1093,6 +1121,7 @@ function syncCustomerStreams() {
           const change = parseFirebaseEvent(event);
           if (change.path === '/' && change.data === null) {
             delete ordersRaw[id];
+            forgetCustomerOrderId(id);
           } else {
             ordersRaw[id] = applyStreamChange(ordersRaw[id] || {}, change.path, change.data, isPatch);
           }
@@ -1149,7 +1178,7 @@ async function pollCustomerOrders(force = false) {
     for (const [id, order] of responses) {
       if (order === undefined) continue;
       if (order) ordersRaw[id] = order;
-      else delete ordersRaw[id];
+      else { delete ordersRaw[id]; forgetCustomerOrderId(id); }
       changed = true;
     }
     if (changed && applyRemoteOrders(ordersRaw)) emitData('remote');
@@ -1472,8 +1501,6 @@ export function hasUnsavedChanges() {
  * 10. Ordre
  * ------------------------------------------------------------------ */
 
-const ORDERS_KEY = 'bestill_orders_v2';
-
 /**
  * Save profile contact to /customers/{phone} even before the first order.
  * A conditional whole-record update protects the lifetime order totals,
@@ -1553,7 +1580,7 @@ export async function getPizzaBonus(phoneValue) {
       const synced = old.pizzaCountSynced === true &&
         old.events && typeof old.events === 'object';
       const historyOrders = synced ? [] : CUSTOMER_MODE
-        ? [...getLocalOrders(), ...store.orders].filter(order => loyaltyPhone(order.phone) === phone)
+        ? store.orders.filter(order => loyaltyPhone(order.phone) === phone)
         : Object.values(await restGet(ORDERS_PATH) || {});
       const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
       state = pizzaBonus({ ...history, ...(old.events || {}) });
@@ -1782,18 +1809,9 @@ export async function submitOrder(order) {
   }
 
 
-  try {
-    const existing = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
-    const deduped = Array.isArray(existing)
-      ? existing.filter((entry) => entry && entry.id !== record.id)
-      : [];
-    deduped.unshift(record);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(deduped
-      .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
-      .slice(0, LOCAL_ORDER_LIMIT)));
-  } catch (err) {
-    console.warn('Kunne ikke lagre ordre lokalt:', err);
-  }
+  // Firebase is the ONLY persisted order record. Save the opaque ID for
+  // this tab session so the customer's live status survives a reload.
+  trackCustomerOrderId(record.id);
   store.orders = normalizeOrders([record, ...store.orders.filter((entry) => entry.id !== record.id)]);
   if (CUSTOMER_MODE) {
     ordersRaw[record.id] = record;
@@ -2033,25 +2051,9 @@ export function getStats() {
   };
 }
 
-/** The last four orders are a small customer-device cache, not an archive. */
+/** Legacy compatibility: orders are never read from localStorage. */
 export function getLocalOrders() {
-  try {
-    const raw = localStorage.getItem(ORDERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      localStorage.removeItem(ORDERS_KEY);
-      return [];
-    }
-    const recent = parsed.filter(entry => entry?.id && entry.createdAt)
-      .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
-      .slice(0, LOCAL_ORDER_LIMIT);
-    // Automatically shrink an older 30-order snapshot on the next visit.
-    if (parsed.length !== recent.length) localStorage.setItem(ORDERS_KEY, JSON.stringify(recent));
-    return recent;
-  } catch (err) {
-    return [];
-  }
+  return [];
 }
 
 /* ------------------------------------------------------------------ *
@@ -2062,11 +2064,10 @@ async function bootstrap() {
   removeRetiredMenuCache();
 
   if (CUSTOMER_MODE) {
-    // Follow only the last four recent orders stored on this device.
-    ordersRaw = Object.fromEntries(getLocalOrders().filter(order =>
-      order?.id && /^ord_[a-z0-9]{7,40}$/i.test(String(order.id)) &&
-      Date.now() - (Number(order.createdAt) || 0) <= CUSTOMER_ORDER_MAX_AGE_MS
-    ).slice(0, CUSTOMER_ORDER_LIMIT).map(order => [order.id, order]));
+    // Purge legacy full order snapshots. Do not import or show them again.
+    try { localStorage.removeItem(RETIRED_ORDERS_KEY); } catch (_) {}
+    readSessionOrderIds();
+    ordersRaw={}; // Only Firebase may populate customer orders.
     applyRemoteOrders(ordersRaw);
   }
 
