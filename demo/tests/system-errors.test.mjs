@@ -37,7 +37,7 @@ test('deduplicates the same failure with conditional Firebase writes',async()=>{
     assert.equal(await reportSystemError('order_accept','http','critical',{fromQueue:true}),true);
     const record=values.get('order_accept_http.json');
     assert.equal(record.count,2);
-    assert.equal(Object.keys(values).length,1);
+    assert.equal(values.size,1);
     assert.equal((await readSystemErrors()) instanceof Object,true);
     assert.equal(await setSystemErrorStatus('order_accept_http',{read:true}),true);
     assert.equal(await setSystemErrorStatus('../../orders',{read:true}),false);
