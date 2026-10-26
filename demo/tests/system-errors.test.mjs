@@ -32,7 +32,9 @@ test('deduplicates the same failure with conditional Firebase writes',async()=>{
   };
   try{
     assert.equal(await reportSystemError('order_accept','http','critical'),true);
-    assert.equal(await reportSystemError('order_accept','http','critical'),true);
+    // A quick duplicate is suppressed, while a later/queued recurrence increments.
+    assert.equal(await reportSystemError('order_accept','http','critical'),false);
+    assert.equal(await reportSystemError('order_accept','http','critical',{fromQueue:true}),true);
     const record=values.get('order_accept_http.json');
     assert.equal(record.count,2);
     assert.equal(Object.keys(values).length,1);
