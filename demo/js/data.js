@@ -35,6 +35,8 @@ const CUSTOMER_ORDER_POLL_MS = 8 * 1000;
 const ORDERS_PATH = 'orders';
 // Retry local diagnostic events only on reconnection, never in the critical order path.
 window.addEventListener('online', () => { void flushSystemErrorQueue(); });
+// Restore failures from a previously offline tab after a fresh page load.
+window.setTimeout(() => { if (navigator.onLine !== false) void flushSystemErrorQueue(); }, 8000);
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
 const FALLBACK_MENU_INTERVAL = 30000;
