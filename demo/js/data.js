@@ -1652,6 +1652,26 @@ async function orderAcceptHttpError(response, action) {
 // A GET checks that this order is still pending and within its response
 // deadline; a single PATCH changes status and pickup time together. Firebase
 // HTTP success is required before the admin/customer sees "Godtatt".
+// Free the admin's two long-lived Firebase HTTP connections while a staff
+// member sends a critical order confirmation. SSE reconnects with the latest
+// database snapshot afterwards, so no order updates are lost.
+function pauseAdminLiveStreamsForWrite() {
+  if (CUSTOMER_MODE) return () => {};
+  const hadOrders = Boolean(ordersStream);
+  const hadMenu = Boolean(menuStream);
+  if (ordersStream) { ordersStream.close(); ordersStream = null; }
+  if (menuStream) { menuStream.close(); menuStream = null; }
+  ordersStreamHealthy = false;
+  menuStreamHealthy = false;
+  let resumed = false;
+  return () => {
+    if (resumed) return;
+    resumed = true;
+    if (hadOrders && !ordersStream) beginOrdersStream();
+    if (hadMenu && !menuStream) beginMenuStream();
+  };
+}
+
 async function patchConfirmedPizzaOrder(order, changes) {
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
   if (!order?.id || order.status !== 'mottatt')
@@ -1662,18 +1682,23 @@ async function patchConfirmedPizzaOrder(order, changes) {
   // One Firebase request. No extra GET, whole-order PUT, retries or
   // SMS/e-post dependencies. Firebase keeps existing customer and receipt data.
   const path = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
+  const resumeStreams = pauseAdminLiveStreamsForWrite();
   let response;
   try {
+    // Yield once after closing SSE so the browser can release an HTTP slot.
+    await new Promise(resolve => setTimeout(resolve, 80));
     response = await fetch(path, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(changes),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(12000),
     });
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
-      throw new Error('Firebase svarte ikke innen 8 sekunder. Kontroller internett og prøv igjen.');
+      throw new Error('Firebase svarte ikke innen 12 sekunder. Sjekk nettleserens Network-fane for PATCH/OPTIONS og eventuell VPN.');
     throw new Error('Kunne ikke kontakte Firebase: ' + (error?.message || 'nettverksfeil'));
+  } finally {
+    resumeStreams();
   }
   if (!response.ok)
     throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
