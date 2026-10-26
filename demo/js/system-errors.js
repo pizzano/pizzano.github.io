@@ -75,7 +75,7 @@ export async function reportSystemError(category, reason='unknown', severity='wa
   try {
     const endpoint=url()+'/systemErrors/'+key+'.json';
     for(let attempt=0;attempt<2;attempt++){
-      const response=await fetch(endpoint,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+      const response=await fetch(endpoint,{headers:{'X-Firebase-ETag':'true'},cache:'no-store',signal:AbortSignal.timeout(4000)});
       if(!response.ok)break;
       const old=await response.json();
       const etag=response.headers.get('ETag');
@@ -85,7 +85,7 @@ export async function reportSystemError(category, reason='unknown', severity='wa
            severity:entry.severity, read:false, resolved:false}
         : entry;
       const saved=await fetch(endpoint,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
-        body:JSON.stringify(record)});
+        body:JSON.stringify(record),signal:AbortSignal.timeout(4000)});
       if(saved.ok){stored=true;lastReports.set(key,Date.now());break;}
       if(saved.status!==412)break;
     }
