@@ -2119,7 +2119,7 @@ function filteredOrders() {
 }
 document.getElementById('orderSearch').addEventListener('input', renderOrderList);
 function pendingWait(order) {
-  return confirmationExpired(order) ? 'Svarfristen er ute' : `Ny · ${confirmationRemaining(order)} igjen`;
+  return order.confirmationNoTimeout ? 'Ny · Forhåndsbestilling' : confirmationExpired(order) ? 'Svarfristen er ute' : `Ny · ${confirmationRemaining(order)} igjen`;
 }
 function compactOrderTime(value) {
   if (!value) return '—';
