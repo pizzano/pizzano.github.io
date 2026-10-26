@@ -14,6 +14,15 @@
 const btn=document.getElementById('start'),out=document.getElementById('status');
 const db=String(window.BESTILL_CONFIG?.databaseUrl||'').replace(/\/$/,'');
 function log(x){out.textContent+='\n'+x}
+function same(a,b){
+ if(a===b)return true;
+ if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return false;
+ if(Array.isArray(a)||Array.isArray(b)){
+   return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((v,i)=>same(v,b[i]));
+ }
+ const ak=Object.keys(a).sort(),bk=Object.keys(b).sort();
+ return ak.length===bk.length&&ak.every((k,i)=>k===bk[i]&&same(a[k],b[k]));
+}
 function save(data){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
  const link=document.createElement('a');link.href=URL.createObjectURL(blob);
@@ -43,7 +52,7 @@ btn.addEventListener('click',async()=>{
    const data={...(current.value||{})};let changed=false;
    for(const [from,to] of Object.entries(mapping)){
     if(!Object.prototype.hasOwnProperty.call(source,from))continue;
-    if(Object.prototype.hasOwnProperty.call(data,to)&&JSON.stringify(data[to])!==JSON.stringify(source[from]))throw Error('Ulikt innhold: '+from+' og '+group+'/'+to+'. Ingen overskriving.');
+    if(Object.prototype.hasOwnProperty.call(data,to)&&!same(data[to],source[from]))throw Error('Ulikt innhold: '+from+' og '+group+'/'+to+'. Ingen overskriving.');
     data[to]=source[from];changed=true;
    }
    if(changed)planned.push({group,data,etag:current.etag});
@@ -55,7 +64,7 @@ btn.addEventListener('click',async()=>{
    const response=await fetch(db+'/'+item.group+'.json',{method:'PUT',headers:{'Content-Type':'application/json','if-match':item.etag},body:JSON.stringify(item.data)});
    if(!response.ok)throw Error('Skriving stoppet ('+response.status+') for '+item.group+'. Gamle data er urørt.');
    const check=(await get(item.group)).value;
-   if(JSON.stringify(check)!==JSON.stringify(item.data))throw Error('Verifisering feilet for '+item.group);
+   if(!same(check,item.data))throw Error('Verifisering feilet for '+item.group+' (data er ulike, ingen sletting utført));
    log('Kopiert og kontrollert: '+item.group);
   }
   // Only remove records verified at destination, with a fresh conditional ETag.
@@ -66,8 +75,8 @@ btn.addEventListener('click',async()=>{
       const destination=(await get(item.group+'/'+to)).value;
       const origin=await get(from,true);
       if(!origin.etag)throw Error('ETag mangler for '+from+'. Sletting stoppet.');
-      if(JSON.stringify(origin.value)!==JSON.stringify(source[from]) ||
-         JSON.stringify(origin.value)!==JSON.stringify(destination))
+      if(!same(origin.value,source[from]) ||
+         !same(origin.value,destination))
         throw Error('Data endret eller ulik for '+from+'. Sletting stoppet.');
       const result=await fetch(db+'/'+from+'.json',{
         method:'DELETE',headers:{'if-match':origin.etag}
