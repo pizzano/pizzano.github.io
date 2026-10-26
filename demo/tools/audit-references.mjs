@@ -24,7 +24,7 @@ const html = ['demo/index.html','demo/admin.html','PrivatPrinter.html'];
 for (const file of html) {
   if (!exists(file)) { issues.add('Missing entry point ' + file); continue; }
   const text = read(file);
-  for (const m of text.matchAll(/\\b(?:src|href)=["']([^"']+)["']/g)) check(m[1], file);
+  for (const m of text.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)) check(m[1], file);
   const ids = new Set();
   for (const m of text.matchAll(/\bid=["']([^"']+)["']/g)) {
     if (ids.has(m[1])) issues.add(file + ' → duplicated id=' + m[1]);
@@ -46,7 +46,7 @@ const jsFolder = path.join(root, 'demo/js');
 for (const name of fs.readdirSync(jsFolder).filter(x=>x.endsWith('.js'))) {
   const file = 'demo/js/' + name;
   const code = read(file);
-  for (const m of code.matchAll(/\\bfrom\\s*["']([^"']+)["']/g)) {
+  for (const m of code.matchAll(/\bfrom\s*["']([^"']+)["']/g)) {
     check(m[1], file);
     inspectModuleURL(m[1], file);
   }
