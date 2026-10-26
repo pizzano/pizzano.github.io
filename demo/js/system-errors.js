@@ -73,3 +73,30 @@ export async function setSystemErrorStatus(key,patch) {
     body:JSON.stringify(patch)});
   return response.ok;
 }
+
+// Manual, conservative archive: only resolved entries older than 30 days.
+// Archive first; delete via ETag only if source was unchanged. No customer data.
+export async function archiveResolvedSystemErrors(now=Date.now()) {
+  const records=await readSystemErrors();
+  let archived=0;
+  const keys=Object.keys(records).filter(key=>
+    /^(test_)?(?:order_create|order_accept|firebase|sms|email|loyalty|timeout)_(?:network|http|timeout|state|provider|unknown)$/.test(key)
+    && records[key]?.resolved===true && Number(records[key].lastSeen)>0
+    && now-Number(records[key].lastSeen)>=30*86400000);
+  for(const key of keys.slice(0,25)){
+    try{
+      const source=url()+'/systemErrors/'+key+'.json';
+      const currentResponse=await fetch(source,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+      if(!currentResponse.ok)continue;
+      const current=await currentResponse.json(),etag=currentResponse.headers.get('ETag');
+      if(!etag||!current?.resolved||now-Number(current.lastSeen)<30*86400000)continue;
+      const archive=await fetch(url()+'/systemErrorsArchive/'+key+'.json',{
+        method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...current,archivedAt:now})});
+      if(!archive.ok)continue;
+      const deleted=await fetch(source,{method:'DELETE',headers:{'if-match':etag}});
+      if(deleted.ok)archived++;
+    }catch{/* Continue safely; never report recorder's errors. */}
+  }
+  return archived;
+}
