@@ -2455,7 +2455,7 @@ function renderOrderDetail(orderId) {
   loadOrderCustomerAccount(order);
   const customerIndicator = orderCustomerIndicator(order);
   const actionHtml = isExpiredPending
-    ? '<div class="pos-closed-status">Svarfristen på 3 minutter er ute. Kunden må sende en ny bestilling.</div>'
+    ? '<div class="pos-closed-status is-expired" role="alert">Svarfristen på 3 minutter er ute. Godta er ikke lenger tilgjengelig. Kunden må sende en ny bestilling.</div>'
     : isPending
     ? `<div class="order-preparation">${scheduledPickup
         ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
@@ -2770,6 +2770,11 @@ function showAcceptError(orderId, message) {
 function openAcceptOrder(orderId) {
   const order = getOrders().find((entry) => entry.id === orderId);
   if (!order || order.status !== 'mottatt') { toast('Bestillingen er allerede behandlet.'); return; }
+  if (confirmationExpired(order)) {
+    toast('Svarfristen på 3 minutter er ute. Kunden må bestille på nytt.', 8000);
+    if (selectedOrderId === order.id) renderOrderDetail(order.id);
+    return;
+  }
   actionOrderId = order.id;
   if (acceptErrorNode) {
     acceptErrorNode.hidden = true;
@@ -3153,8 +3158,32 @@ el.btnRefreshOrders.addEventListener('click', async () => {
   toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
 });
 
+// Expiration is a local clock event: the Firebase cancellation poll can run
+// later, but Godta must vanish the moment its 3-minute deadline is reached.
+const notifiedExpiredOrders = new Set();
 function refreshOrderClocks() {
   if (ui.page !== 'orders') return;
+  const all = getOrders();
+  const presentIds = new Set(all.map(order => order.id));
+  for (const id of notifiedExpiredOrders) {
+    if (!presentIds.has(id)) notifiedExpiredOrders.delete(id);
+  }
+  const newlyExpired = all.filter(order =>
+    confirmationExpired(order) && !notifiedExpiredOrders.has(order.id));
+  if (newlyExpired.length) {
+    for (const order of newlyExpired) notifiedExpiredOrders.add(order.id);
+    // Also dismiss an approval popup that was opened before its deadline.
+    if (!el.modalAcceptOrder.hidden &&
+        newlyExpired.some(order => order.id === actionOrderId)) closeModals();
+    renderOrders();
+    renderStats();
+    const message = newlyExpired.length === 1
+      ? 'Svarfristen er ute for bestilling #' +
+        String(newlyExpired[0].id || '').slice(-6).toUpperCase() +
+        '. Godta er fjernet. Kunden må bestille på nytt.'
+      : newlyExpired.length + ' bestillinger har passert svarfristen på 3 minutter. Godta er fjernet.';
+    toast(message, 10000);
+  }
   updateOrdersConnection();
   renderOrderTabs(getOrders());
   // When a pickup time passes, remove it immediately from Planlagte even
