@@ -2086,7 +2086,7 @@ function startAcceptedConfirmationHold(order) {
     if (node) node.textContent = confirmationReadyLeftText(current);
   }, 500);
 
-  // Show the compact confirmation briefly, then return to the main menu.
+  // Update the SAME waiting dialog in place; close after two seconds.
   orderConfirmRedirectTimer = window.setTimeout(() => {
     if (orderConfirmAcceptedTimer) {
       clearInterval(orderConfirmAcceptedTimer);
@@ -2097,8 +2097,9 @@ function startAcceptedConfirmationHold(order) {
     orderConfirmOrderId = '';
     orderConfirmDeadline = 0;
     closeConfirm();
+    ui.focusedOrderId = null;
     renderActiveOrders();
-  }, 3000);
+  }, 2000);
 }
 
 function confirmationRestaurantCallAction() {
@@ -2173,9 +2174,8 @@ function checkOrderConfirmationWait() {
       clearInterval(orderConfirmTimer);
       orderConfirmTimer = null;
     }
-    ui.focusedOrderId = order.id;
+    // Keep the original waiting popup on screen; don't open/focus a separate order detail.
     renderConfirmationAccepted(order);
-    renderActiveOrders();
     startAcceptedConfirmationHold(order);
     return;
   }

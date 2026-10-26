@@ -479,7 +479,7 @@ html[data-theme="dark"] .modal-order-action .scheduled-accept-card :is(span,smal
 :root .orders-page .orders-group-gap {height:8px;background:transparent;border:0;}
 /* Only pending, unread orders blink; opening a card stops the animation.
    Keep the text legible by pulsing the card tint and border, not opacity. */
-:root .orders-page .orders-list-row.is-new:not(.is-seen) {
+:root .orders-page .orders-list-row.is-new {
   animation:incoming-order-pulse 1.8s ease-in-out infinite;
 }
 @keyframes incoming-order-pulse {

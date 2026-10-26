@@ -2373,16 +2373,16 @@ function receivedAgeText(order, now = Date.now()) {
 
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
-  const displayTime = orderListPickupTime(order);
-  const timeTitle = pickupScheduled ? 'Valgt hentetid' : (displayTime === '—' ? 'Hentetid ikke satt ennå' : 'Estimert hentetid');
+  const displayTime = order.status === 'mottatt' && !order.confirmationNoTimeout && !confirmationExpired(order) ? confirmationRemaining(order) : orderListPickupTime(order);
+  const timeTitle = order.status === 'mottatt' && !order.confirmationNoTimeout ? 'Tid igjen til svarfrist (3 minutter)' : pickupScheduled ? 'Valgt hentetid' : (displayTime === '—' ? 'Hentetid ikke satt ennå' : 'Estimert hentetid');
   const pickupLabel = pickupScheduled ? 'SENERE' : 'SNAREST';
   // Only show green badges when Firebase contains accepted sender receipts.
-  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${acknowledgedOrders.has(order.id) ? ' is-seen' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
+  return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
       <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS-forespørsel godtatt av Traccar (levering til telefon er ikke bekreftet)" aria-label="SMS godtatt av Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp (levering til innboks er ikke bekreftet)" aria-label="E-post godtatt av MailApp" ${order.email && emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span></span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
-        <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>${escapeHtml(displayTime)}</span></span>
+        <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span${order.status === 'mottatt' && !order.confirmationNoTimeout ? ` data-order-pending-clock="${escapeHtml(order.id)}"` : ''}>${escapeHtml(displayTime)}</span></span>
       </span>
     </span>
     <span class="orders-list-price">${formatPrice(order.total)}</span>
@@ -2746,7 +2746,7 @@ el.orderList.addEventListener('click', (event) => {
   if (!row) return;
   clearTimeout(acceptedDetailCloseTimer);
   selectedOrderId = row.dataset.selectOrder;
-  acknowledgedOrders.add(selectedOrderId);
+  // Opening the order must not permanently stop its pending pulse.
   renderOrders();
 });
 
@@ -3209,6 +3209,11 @@ function refreshOrderClocks() {
     const order = getOrders().find((entry) => entry.id === node.dataset.orderCenter);
     if (!order) return;
     node.textContent = orderCenterText(order);
+  });
+  // Countdown visible on each pending order card, not a count-up age timer.
+  document.querySelectorAll('[data-order-pending-clock]').forEach(node => {
+    const order = getOrders().find(entry => entry.id === node.dataset.orderPendingClock);
+    if (order && order.status === 'mottatt') node.textContent = confirmationRemaining(order);
   });
   // Keep the small pickup countdown live without re-rendering the order cards.
   document.querySelectorAll('[data-order-remaining]').forEach((node) => {
