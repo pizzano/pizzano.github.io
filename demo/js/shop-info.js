@@ -4,7 +4,7 @@ import {
   subscribe,
   getOpenState,
   getPickupSlots,
-} from './data.js?v=20261026-cleanup2';
+} from './data.js?v=20261026-group1';
 
 const MODAL_ID = 'shopInfoModal';
 const TRIGGER_ID = 'profileShopInfo';
