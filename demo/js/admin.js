@@ -1,4 +1,4 @@
-import { readSystemErrors, setSystemErrorStatus } from './system-errors.js';
+import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
@@ -4225,3 +4225,16 @@ systemAlertsList?.addEventListener('click',async event=>{
 window.setInterval(()=>{void refreshSystemAlerts();},12000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts();});
 void refreshSystemAlerts();
+
+document.getElementById('systemErrorsArchive')?.addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  if(button.disabled)return;
+  button.disabled=true;
+  try {
+    const count=await archiveResolvedSystemErrors();
+    toast(count+' løste varsler arkivert.');
+    await refreshSystemAlerts();
+  }catch{
+    toast('Arkivering mislyktes. Ingen ordredata ble endret.');
+  }finally{button.disabled=false;}
+});
