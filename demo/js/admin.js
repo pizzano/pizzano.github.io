@@ -4196,7 +4196,7 @@ async function refreshSystemAlerts(){
     systemAlertsStatus.textContent=records.length ? records.length+' varsler · '+unread+' uleste' : 'Ingen registrerte feil.';
     systemAlertsList.replaceChildren(...records.slice(0,100).map(([key,item])=>{
       const card=document.createElement('div');card.className='system-error-item';
-      const title=document.createElement('strong');title.textContent=(item.severity==='critical'?'Kritisk':item.severity==='info'?'Info':'Advarsel')+' · '+String(item.operation||'Feil');
+      const title=document.createElement('strong');title.textContent=(item.severity==='critical'?'Kritisk':item.severity==='info'?'Info':'Advarsel')+' · '+String(item.operation||'Feil')+' · '+(item.resolved?'Løst':item.status==='recovered'?'Gjenopprettet':'Pågår');
       const detail=document.createElement('p');detail.textContent=String(item.message||'Feil')+' · Mulig årsak: '+String(item.possibleCause||'Ukjent');
       const meta=document.createElement('small');meta.textContent='Først: '+safeAlertTime(item.firstSeen)+' · Sist: '+safeAlertTime(item.lastSeen)+' · Gjentatt '+(Number(item.count)||1)+' ganger'+(item.intentionalTest?' · TEST':'');
       card.append(title,detail,meta);
