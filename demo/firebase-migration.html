@@ -64,7 +64,7 @@ btn.addEventListener('click',async()=>{
    const response=await fetch(db+'/'+item.group+'.json',{method:'PUT',headers:{'Content-Type':'application/json','if-match':item.etag},body:JSON.stringify(item.data)});
    if(!response.ok)throw Error('Skriving stoppet ('+response.status+') for '+item.group+'. Gamle data er urørt.');
    const check=(await get(item.group)).value;
-   if(!same(check,item.data))throw Error('Verifisering feilet for '+item.group+' (data er ulike, ingen sletting utført));
+   if(!same(check,item.data))throw Error('Verifisering feilet for '+item.group+' (data er ulike, ingen sletting utført)');
    log('Kopiert og kontrollert: '+item.group);
   }
   // Only remove records verified at destination, with a fresh conditional ETag.
