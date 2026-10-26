@@ -1,3 +1,27 @@
+## Ordrehistorikk og adminbetjening (2026-10-26)
+
+- `bestill_orders_v2` med fulle kundeordrer er **avviklet**. Ved første
+  kundestart slettes den gamle nøkkelen fra `localStorage`; nye ordre,
+  varer, priser og status lagres aldri der igjen.
+- **Firebase RTDB er eneste datakilde** for `Mine bestillinger`, `Godta`,
+  `Klar for henting` og ordresporing. Kundens nettleser streamer bare
+  kjente ordre-ID-er, ikke hele `orders`-samlingen.
+- Den åpne fanens `sessionStorage` oppbevarer inntil fire **ID-er alene**,
+  uten kundeopplysninger, slik at en sideoppdatering kan hente aktive
+  ordre på nytt. Ved ny nettleserøkt eller annen enhet må kunden følge
+  SMS-/e-postlenken; eksisterende fullførte ordre som er slettet i Firebase
+  blir ikke vist fra et gammelt lokalt arkiv.
+- `Klar for henting` lukker ordredetaljene og viser `Alle`-listen **kun
+  når Firebase har bekreftet statusoppdateringen**. Ved avvist skriving
+  beholdes detaljvisningen slik at den ansatte kan forsøke igjen.
+- Nye, uleste `mottatt`-ordrer pulserer med synlig farge/ramme i
+  bestillingslisten, og ordremerket pulserer hvis det finnes uleste
+  nye ordrer. Effekten stopper når medarbeideren åpner ordren eller
+  den ikke lenger er ny; redusert-bevegelse-innstillingen respekteres.
+- Kundeprofil og handlekurv lagres fortsatt lokalt etter tidligere
+  avtale. ID-er for avvisnings-/klar-varsel finnes i profilpreferanser,
+  men er **ikke** ordrehistorikk.
+
 # KØL Grill & Pizza — /demo
 
 Dette er **den gjeldende bestillingsappen**, ikke prototypen fra den gamle `/test`-mappen.
