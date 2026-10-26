@@ -278,6 +278,7 @@ const DEFAULT_SETTINGS = {
   city: '',
   country: '',
   phone: '',
+  email: '',
   timezone: 'Europe/Oslo',
   openingDays: '',
   openingTime: '',
