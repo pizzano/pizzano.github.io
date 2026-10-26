@@ -34,7 +34,7 @@ const CUSTOMER_ORDER_POLL_MS = 30 * 1000;
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const FALLBACK_ORDERS_INTERVAL = 15000;
-const FALLBACK_MENU_INTERVAL = 60000;
+const FALLBACK_MENU_INTERVAL = 30000;
 const SCHEMA_VERSION = 6;
 
 const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
@@ -1104,7 +1104,10 @@ function customerTrackedIds() {
 
 function syncCustomerStreams() {
   if (!CUSTOMER_MODE) return;
-  const ids = new Set(customerTrackedIds());
+  // Keep at most one customer SSE stream open. Otherwise each completed
+  // order retains a connection and later confirmations can stall in browsers.
+  // Older tracked orders are refreshed by the existing REST fallback.
+  const ids = new Set(customerTrackedIds().slice(-1));
   for (const [id, entry] of customerStreams) {
     if (ids.has(id)) continue;
     entry.source.close();
@@ -1288,7 +1291,7 @@ function scheduleStreamReconnect() {
     if (document.hidden || navigator.onLine === false) return;
     if (CUSTOMER_MODE) syncCustomerStreams();
     else if (!ordersStream) beginOrdersStream();
-    if (!menuStream) beginMenuStream();
+    // Menu version changes are checked by fallbackSync every 30s.
     void fallbackSync();
   }, CUSTOMER_MODE ? 30000 : 3000);
 }
@@ -1404,7 +1407,8 @@ function startPolling() {
   // small Firebase SSE patches. Menu is watched via a numeric version only.
   if (CUSTOMER_MODE) syncCustomerStreams();
   else beginOrdersStream();
-  beginMenuStream();
+  // At most one long-lived Firebase connection per browser tab.
+  // Menu changes use a small updatedAt REST request every 30 seconds.
   if (fallbackTimer) clearInterval(fallbackTimer);
   fallbackTimer = window.setInterval(() => { void fallbackSync(); }, FALLBACK_ORDERS_INTERVAL);
   window.addEventListener('focus', () => {
@@ -1414,13 +1418,13 @@ function startPolling() {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       if (CUSTOMER_MODE) syncCustomerStreams();
-      if (!menuStream || (!CUSTOMER_MODE && !ordersStream)) scheduleStreamReconnect();
+      if (!CUSTOMER_MODE && !ordersStream) scheduleStreamReconnect();
       void fallbackSync();
     }
   });
   window.addEventListener('online', () => {
     if (CUSTOMER_MODE) syncCustomerStreams();
-    if (!menuStream || (!CUSTOMER_MODE && !ordersStream)) scheduleStreamReconnect();
+    if (!CUSTOMER_MODE && !ordersStream) scheduleStreamReconnect();
     void fallbackSync();
   });
 }
