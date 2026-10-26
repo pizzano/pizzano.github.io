@@ -1375,10 +1375,11 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   display: none !important;
 }
 
+/* Confirmation stays in the original waiting dialog without a second popup layout. */
 .confirm-modal[data-state="accepted"],
 .confirm-modal[data-state="ready"] {
   width: calc(100% - 32px) !important;
-  max-width: 360px !important;
+  max-width: 500px !important;
   padding: 16px !important;
   border-radius: 18px !important;
 }
