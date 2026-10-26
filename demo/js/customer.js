@@ -18,6 +18,8 @@ import {
   getPizzaBonus,
   setPizzaOffersConsent,
   saveCustomerContact,
+  trackCustomerOrderId,
+  forgetCustomerOrderId,
   DB_URL,
   subscribe,
   ready,
@@ -583,6 +585,7 @@ const readyDismissTimers = new Map();
 
 function upsertLiveOrder(orderId, remote) {
   if (!remote || !orderId) return;
+  trackCustomerOrderId(orderId);
   const latest = (store.orders || []).find(entry => entry?.id === orderId)
     || stableCustomerOrderSnapshots.get(orderId);
   // Discard an older REST response BEFORE touching the persistent snapshot.
@@ -614,7 +617,16 @@ async function fetchActiveOrderNow(orderId) {
     });
     if (!response.ok) return;
     const remote = await response.json();
-    if (!remote) return;
+    if (!remote) {
+      // A deleted Firebase order must disappear immediately; the browser has
+      // no local order history to resurrect it from.
+      forgetCustomerOrderId(orderId);
+      stableCustomerOrderSnapshots.delete(orderId);
+      store.orders=(store.orders||[]).filter(entry=>entry.id!==orderId);
+      renderActiveOrders();
+      if(ui.view==='profile')renderProfile();
+      return;
+    }
     upsertLiveOrder(orderId, remote);
     renderActiveOrders();
     if (ui.view === 'profile') renderProfile();
