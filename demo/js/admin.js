@@ -414,7 +414,8 @@ function renderStats() {
   el.navOrderBadge.hidden = stats.newOrders === 0;
   el.navOrderBadge.textContent = String(stats.newOrders);
   el.navOrderBadge.classList.toggle('has-unseen-orders',
-    getOrders().some(order => order.status === 'mottatt' && !acknowledgedOrders.has(order.id)));
+    getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order) &&
+      !acknowledgedOrders.has(order.id)));
 
   const cards = [
     { label: 'Kategorier', value: stats.categoryCount },
@@ -2412,7 +2413,8 @@ function renderOrderList() {
       - (Number(a.createdAt) || Date.parse(a.createdAt) || 0)
       || String(b.id || '').localeCompare(String(a.id || ''));
   });
-  el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order, order.status === 'mottatt')).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
+  el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order,
+    order.status === 'mottatt' && !confirmationExpired(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
@@ -2442,6 +2444,7 @@ function renderOrderDetail(orderId) {
   const sortedLines = sortCartByCategory(order.lines || [], store.sections);
   const estimated = Math.max(0, Number(order.estimatedMinutes) || 0);
   const isPending = order.status === 'mottatt';
+  const isExpiredPending = isPending && confirmationExpired(order);
   const scheduledPickup = isScheduledPickupOrder(order);
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
@@ -2451,7 +2454,9 @@ function renderOrderDetail(orderId) {
   const readinessCountdown = orderSummaryCountdown(order);
   loadOrderCustomerAccount(order);
   const customerIndicator = orderCustomerIndicator(order);
-  const actionHtml = isPending
+  const actionHtml = isExpiredPending
+    ? '<div class="pos-closed-status">Svarfristen på 3 minutter er ute. Kunden må sende en ny bestilling.</div>'
+    : isPending
     ? `<div class="order-preparation">${scheduledPickup
         ? `<strong>Henting ${escapeHtml(order.pickup)}</strong>`
         : `<span class="order-preparation-label"><span class="order-preparation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg></span>Klar om</span><div class="order-minute-buttons" aria-label="Forberedelsestid">${[10,15,20,30].map(minutes => `<button data-order-minutes="${minutes}" class="${proposedMinutes === minutes ? 'is-active' : ''}" aria-pressed="${proposedMinutes === minutes}" type="button">${minutes} min</button>`).join('')}<button data-open-accept="${escapeHtml(order.id)}" type="button">Annen tid</button></div>`}</div>
@@ -2697,7 +2702,8 @@ function renderOrders() {
   else stopOrderAlert();
   updateOrdersConnection();
   renderOrderTabs(all);
-  el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) => order.status === 'mottatt').length} nye`;
+  el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) =>
+    order.status === 'mottatt' && !confirmationExpired(order)).length} nye`;
   const visible = filteredOrders();
 
   if (selectedOrderId && !visible.some((order) => order.id === selectedOrderId)) {
@@ -2969,6 +2975,11 @@ el.orderDetailLive.addEventListener('click', async (event) => {
     if (inlineAccept.disabled) return;
     const order = getOrders().find(entry => entry.id === inlineAccept.dataset.acceptInline);
     if (!order || order.status !== 'mottatt') { renderOrders(); return; }
+    if (confirmationExpired(order)) {
+      toast('Svarfristen på 3 minutter er ute. Kunden må bestille på nytt.', 8000);
+      renderOrders();
+      return;
+    }
     actionOrderId = order.id;
     el.acceptMinutes.value = String(pendingOrderMinutes.get(order.id) || 15);
     inlineAccept.disabled = true;
@@ -3054,6 +3065,12 @@ async function confirmAcceptOrder() {
   if (!order || el.btnAcceptConfirm.disabled) return;
   if (order.status !== 'mottatt') {
     toast('Bestillingen har allerede status: ' + orderStatusLabel(order.status), 8000);
+    return;
+  }
+  if (confirmationExpired(order)) {
+    toast('Svarfristen på 3 minutter er ute. Kunden må bestille på nytt.', 8000);
+    closeModals();
+    renderOrders();
     return;
   }
   const scheduled = isScheduledPickupOrder(order);
