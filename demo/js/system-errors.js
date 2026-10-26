@@ -2,7 +2,7 @@
 // reporting failures cannot recursively invoke the main Firebase error path.
 const CATEGORY = Object.freeze({
   order_create:'Opprett bestilling', order_accept:'Godta', firebase:'Firebase',
-  sms:'SMS', email:'E-post', loyalty:'Sadakat', timeout:'Svarfrist'
+  sms:'SMS', email:'E-post', loyalty:'Lojalitetsprogram', timeout:'Svarfrist'
 });
 const REASONS = Object.freeze({
   network:'Nettverksfeil eller utilgjengelig tjeneste',
@@ -19,7 +19,6 @@ export function diagnosticCode(category, reason) {
 }
 export function diagnosticEntry(category, reason, severity='warning', now=Date.now(), intentional=false) {
   const code=diagnosticCode(category,reason);
-  const c=code.split('_'); // category name may contain underscore: use explicit lookup.
   const kind=Object.keys(CATEGORY).find(k=>code.startsWith(k+'_')) || 'firebase';
   const reasonKey=code.slice(kind.length+1);
   return {code, category:kind, operation:CATEGORY[kind], reason:reasonKey,
@@ -30,6 +29,8 @@ export function diagnosticEntry(category, reason, severity='warning', now=Date.n
 }
 export async function reportSystemError(category, reason='unknown', severity='warning', options={}) {
   if (!url() || options?.disabled) return false;
+  // Only actionable failures are reported; ordinary UI/validation messages do not qualify.
+  if (severity === 'info' && !options?.intentionalTest) return false;
   const entry=diagnosticEntry(category,reason,severity,Date.now(),options?.intentionalTest);
   // Separate intentional tests from real failures. Key contains no user data.
   const key=(entry.intentionalTest?'test_':'')+entry.code;
