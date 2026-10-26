@@ -883,12 +883,13 @@ function removeRetiredMenuCache() {
 }
 
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
-async function restGet(path) {
+async function restGet(path, timeoutMs = 0) {
   const suffix = path ? `/${path}.json` : '/.json';
   const response = await fetch(`${DB_URL}${suffix}?_=${Date.now()}`, {
     method: 'GET',
     headers: { Accept: 'application/json' },
     cache: 'no-store',
+    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
   });
   if (!response.ok) throw new Error(`Kunne ikke hente data (${response.status})`);
   return response.json();
@@ -1654,7 +1655,7 @@ async function orderAcceptHttpError(response, action) {
 async function patchConfirmedPizzaOrder(order, changes) {
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
   const orderPath = `${ORDERS_PATH}/${encodeURIComponent(order.id)}`;
-  const current = await restGet(orderPath);
+  const current = await restGet(orderPath, 10000);
   if (!current) throw new Error('Bestillingen finnes ikke i Firebase. Oppdater bestillingene.');
   if (current.status !== 'mottatt')
     throw new Error('Bestillingen er allerede behandlet. Oppdater bestillingene.');
@@ -1667,7 +1668,8 @@ async function patchConfirmedPizzaOrder(order, changes) {
   const response = await fetch(`${DB_URL}/${orderPath}.json`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(update)
+    body: JSON.stringify(update),
+    signal: AbortSignal.timeout(10000)
   });
   if (!response.ok)
     throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
@@ -2117,6 +2119,8 @@ async function bootstrap() {
   emitData('init');
   readyResolve(store);
   void expireUnconfirmedOrders();
-  window.setInterval(expireUnconfirmedOrders, 1000);
+  // Do not hammer Firebase every second for a pending order whose automatic
+  // cancellation is refused by Database Rules. Countdown UI remains 1s.
+  window.setInterval(expireUnconfirmedOrders, 30000);
 }
 bootstrap();
