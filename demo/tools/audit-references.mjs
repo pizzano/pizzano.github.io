@@ -24,18 +24,32 @@ const html = ['demo/index.html','demo/admin.html','PrivatPrinter.html'];
 for (const file of html) {
   if (!exists(file)) { issues.add('Missing entry point ' + file); continue; }
   const text = read(file);
-  for (const m of text.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)) check(m[1], file);
+  for (const m of text.matchAll(/\\b(?:src|href)=["']([^"']+)["']/g)) check(m[1], file);
   const ids = new Set();
   for (const m of text.matchAll(/\bid=["']([^"']+)["']/g)) {
     if (ids.has(m[1])) issues.add(file + ' → duplicated id=' + m[1]);
     ids.add(m[1]);
   }
 }
+// Different query strings on the same stateful ES module create distinct module
+// instances in the browser. In particular, data.js must be a singleton.
+const moduleURLs = new Map();
+const inspectModuleURL = (url, from) => {
+  if (!url.startsWith('./') && !url.startsWith('../')) return;
+  const pathname = path.posix.normalize(path.posix.join(path.posix.dirname(from), url.split('?')[0]));
+  const previous = moduleURLs.get(pathname);
+  if (previous && previous.url !== url) {
+    issues.add('Multiple module URLs for ' + pathname + ': ' + previous.from + ' uses ' + previous.url + ', ' + from + ' uses ' + url);
+  } else if (!previous) moduleURLs.set(pathname, {url, from});
+};
 const jsFolder = path.join(root, 'demo/js');
 for (const name of fs.readdirSync(jsFolder).filter(x=>x.endsWith('.js'))) {
   const file = 'demo/js/' + name;
   const code = read(file);
-  for (const m of code.matchAll(/\bfrom\s*["']([^"']+)["']/g)) check(m[1], file);
+  for (const m of code.matchAll(/\\bfrom\\s*["']([^"']+)["']/g)) {
+    check(m[1], file);
+    inspectModuleURL(m[1], file);
+  }
   for (const m of code.matchAll(/\bimport\(\s*["']([^"']+)["']\s*\)/g)) check(m[1], file);
 }
 const sw = 'demo/service-worker.js';
