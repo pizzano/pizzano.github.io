@@ -2064,9 +2064,28 @@ async function bootstrap() {
   removeRetiredMenuCache();
 
   if (CUSTOMER_MODE) {
-    // Purge legacy full order snapshots. Do not import or show them again.
-    try { localStorage.removeItem(RETIRED_ORDERS_KEY); } catch (_) {}
     readSessionOrderIds();
+    // One-time migration: extract only the IDs of very recent orders so that
+    // someone mid-order doesn't lose tracking when we retire the full cache.
+    // Never trust/display the old order fields. Firebase must confirm each ID.
+    try {
+      const retired=JSON.parse(localStorage.getItem(RETIRED_ORDERS_KEY)||'[]');
+      if (Array.isArray(retired)) {
+        const now=Date.now();
+        const recentIds=retired.filter(order=>
+          order && /^ord_[a-z0-9]{7,40}$/i.test(String(order.id||'')) &&
+          Number(order.createdAt)>0 && now-Number(order.createdAt)<=CUSTOMER_ORDER_MAX_AGE_MS &&
+          now-Number(order.createdAt)>=-60000
+        ).map(order=>String(order.id));
+        if(recentIds.length){
+          sessionOrderIds=[...new Set([...recentIds,...sessionOrderIds])].slice(-CUSTOMER_ORDER_LIMIT);
+          saveSessionOrderIds();
+        }
+      }
+    } catch (_) { /* legacy data may be corrupt */ }
+    finally {
+      try { localStorage.removeItem(RETIRED_ORDERS_KEY); } catch (_) {}
+    }
     ordersRaw={}; // Only Firebase may populate customer orders.
     applyRemoteOrders(ordersRaw);
   }
