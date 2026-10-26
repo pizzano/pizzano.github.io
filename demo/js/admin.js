@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-godta-direct2';
+} from './data.js?v=20261026-connection-cap1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
