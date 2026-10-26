@@ -1,3 +1,4 @@
+import { reportSystemError } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
@@ -1758,6 +1759,7 @@ export async function submitOrder(order) {
     remoteOnline = true;
   } catch (err) {
     remoteOnline = false;
+    void reportSystemError('order_create', /HTTP|403|401/.test(String(err?.message)) ? 'http' : 'network','critical');
     throw new Error(err?.message || 'Bestillingen kunne ikke sendes. Prøv igjen.');
   }
 
@@ -1886,6 +1888,7 @@ async function confirmRestaurantOrder(order, changes) {
     return true;
   } catch (error) {
     latestAcceptError = String(error?.message || 'Ukjent Firebase-feil').slice(0, 220);
+    void reportSystemError('order_accept', error?.name === 'TimeoutError' ? 'timeout' : /HTTP|rules/i.test(latestAcceptError) ? 'http' : 'network','critical');
     console.warn('Firebase kunne ikke bekrefte ordren:', latestAcceptError);
     // No local status was changed; the order stays pending until we actually
     // have a successful Firebase write. Staff may safely inspect/retry.
