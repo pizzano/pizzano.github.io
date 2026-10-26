@@ -1,4 +1,4 @@
-import { readSystemErrors, setSystemErrorStatus, reportSystemError } from './system-errors.js';
+import { readSystemErrors, setSystemErrorStatus } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
