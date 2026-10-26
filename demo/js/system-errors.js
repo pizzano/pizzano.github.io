@@ -13,6 +13,40 @@ const REASONS = Object.freeze({
   unknown:'Operasjonen feilet; se tjenesteloggen'
 });
 const pending = new Set();
+const QUEUE_KEY = 'kol_safe_system_errors_v1';
+const QUEUE_LIMIT = 16;
+const COOLDOWN_MS = 5 * 60 * 1000;
+const lastReports = new Map();
+function queueError(key, entry) {
+  try {
+    const items = JSON.parse(localStorage.getItem(QUEUE_KEY) || '{}');
+    items[key] = { severity:entry.severity, lastSeen:entry.lastSeen, count:Math.min(9999,(items[key]?.count||0)+1) };
+    const keys=Object.keys(items).sort((a,b)=>(items[b].lastSeen||0)-(items[a].lastSeen||0));
+    for(const k of keys.slice(QUEUE_LIMIT))delete items[k];
+    localStorage.setItem(QUEUE_KEY,JSON.stringify(items));
+  }catch {/* storage unavailable; do not obstruct orders */}
+}
+export async function flushSystemErrorQueue() {
+  let items;
+  try { items=JSON.parse(localStorage.getItem(QUEUE_KEY)||'{}'); } catch {return 0;}
+  let sent=0;
+  for(const [key,item] of Object.entries(items).slice(0,QUEUE_LIMIT)){
+    const match=/^(test_)?(order_create|order_accept|firebase|sms|email|loyalty|timeout)_(network|http|timeout|state|provider|unknown)$/.exec(key);
+    if(!match)continue;
+    if(await reportSystemError(match[2],match[3],item.severity,{intentionalTest:Boolean(match[1]),fromQueue:true})){
+      delete items[key];sent++;
+    }else break;
+  }
+  try {localStorage.setItem(QUEUE_KEY,JSON.stringify(items));}catch{}
+  return sent;
+}
+export function monitorCriticalOperation(promise, category, maxMs=12000) {
+  // Observation only: don't alter resolution or retry requests that might have succeeded.
+  const timeout=Math.max(1000,Math.min(60000,maxMs));
+  let done=false;
+  const timer=setTimeout(()=>{if(!done)void reportSystemError(category,'timeout','critical');},timeout);
+  return Promise.resolve(promise).finally(()=>{done=true;clearTimeout(timer);});
+}
 const url = () => String(globalThis.window?.BESTILL_CONFIG?.databaseUrl || '').replace(/\/$/,'');
 export function diagnosticCode(category, reason) {
   return CATEGORY[category] && REASONS[reason] ? category + '_' + reason : 'firebase_unknown';
@@ -35,6 +69,7 @@ export async function reportSystemError(category, reason='unknown', severity='wa
   // Separate intentional tests from real failures. Key contains no user data.
   const key=(entry.intentionalTest?'test_':'')+entry.code;
   if(pending.has(key))return false;
+  if(!options?.fromQueue && Date.now()-(lastReports.get(key)||0)<COOLDOWN_MS)return false;
   pending.add(key);
   try {
     const endpoint=url()+'/systemErrors/'+key+'.json';
@@ -50,11 +85,12 @@ export async function reportSystemError(category, reason='unknown', severity='wa
         : entry;
       const saved=await fetch(endpoint,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
         body:JSON.stringify(record)});
-      if(saved.ok)return true;
+      if(saved.ok){lastReports.set(key,Date.now());return true;}
       if(saved.status!==412)return false;
     }
   } catch { /* Diagnostics may never stop checkout or re-report themselves. */ }
   finally {pending.delete(key);}
+  if(!options?.fromQueue)queueError(key,entry);
   return false;
 }
 // Read-only safe view; callers explicitly choose when to fetch.
