@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-connection-cap1';
+} from './data.js?v=20261026-one-firebase-stream3';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
