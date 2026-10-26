@@ -1230,7 +1230,11 @@ const LEGACY_MENU_FIELDS = [
 ];
 async function readRemoteMenuSnapshot() {
   const nested = await restGet('menu');
-  if (nested && typeof nested === 'object') return { menu: nested };
+  if (nested && typeof nested === 'object') {
+    // Keep restaurant settings at /settings; menu contains menu-only fields.
+    const settings = await restGet('settings');
+    return { menu: { ...nested, settings: settings || nested.settings || store.settings } };
+  }
   const values = await Promise.all(LEGACY_MENU_FIELDS.map(field => restGet(field)));
   return Object.fromEntries(LEGACY_MENU_FIELDS.map((field, i) => [field, values[i]]));
 }
@@ -1248,8 +1252,7 @@ async function reloadRemoteMenu() {
   if (saveState === 'dirty' || saveState === 'saving') return;
   if (menuRefreshPromise) return menuRefreshPromise;
   menuRefreshPromise = (async () => {
-    const snapshot = remoteMenuPath
-      ? { menu: await restGet('menu') } : await readRemoteMenuSnapshot();
+    const snapshot = await readRemoteMenuSnapshot();
     const updated = applyRemoteMenu(snapshot);
     remoteOnline = true;
     if (updated) emitData('remote');
@@ -1360,7 +1363,14 @@ async function persist() {
   try {
     store.updatedAt = Date.now();
     if (remoteEnabled) {
-      await restPatch(remoteMenuPath, menuPayload());
+      if (remoteMenuPath === 'menu') {
+        // Keep /settings authoritative; update root menu and settings atomically.
+        const menu = menuPayload();
+        delete menu.settings;
+        await restPatch('', { menu, settings: clone(store.settings) });
+      } else {
+        await restPatch(remoteMenuPath, menuPayload());
+      }
       remoteOnline = true;
     }
     if (channel) channel.postMessage({ type: 'state', updatedAt: store.updatedAt });
