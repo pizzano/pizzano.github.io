@@ -1133,19 +1133,20 @@ function renderOpenState() {
   const state = getOpenState();
   const settings = store.settings || {};
   el.openDot.classList.remove('is-pending');
-  el.openStatus.textContent = state.label;
-  document.getElementById('pickupDetails').textContent = state.open
-    ? `Kun henting · stenger ${state.closesAt}`
+  el.openStatus.textContent = state.preOpen ? `Åpner kl. ${state.todayOpensAt} · Bestill nå` : state.label;
+  document.getElementById('pickupDetails').textContent = state.preOpen
+    ? `Tidligste henting ${getPickupSlots()[0]?.value || '14:15'}`
+    : state.open ? `Kun henting · stenger ${state.closesAt}`
     : `Kun henting · åpner ${state.opensAt}`;
-  el.openDot.classList.toggle('is-closed', !state.open);
-  el.closedBanner.hidden = state.open || !settings.closedMessage;
+  el.openDot.classList.toggle('is-closed', !state.open && !state.preOpen);
+  el.closedBanner.hidden = state.orderable || !settings.closedMessage;
   if (!state.open) {
     el.closedTitle.textContent = 'Restauranten er stengt';
     el.closedText.textContent =
       settings.closedMessage || `Vi tar imot bestillinger fra ${state.opensAt}.`;
   }
-  el.btnToCheckout.disabled = !state.open;
-  el.cartClosedHint.hidden = state.open;
+  el.btnToCheckout.disabled = !state.orderable;
+  el.cartClosedHint.hidden = state.orderable;
   return state;
 }
 
@@ -1822,7 +1823,7 @@ function setStep(step) {
 }
 
 function hasValidPickup() {
-  return getOpenState().open && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
+  return getOpenState().orderable && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
     || ui.pickupMode === 'scheduled' && getPickupSlots().some((slot) => slot.value === ui.pickup));
 }
 
@@ -1865,19 +1866,23 @@ function renderCheckout() {
   const asapTitle = asapChoice?.querySelector('strong');
   if (asapTitle) asapTitle.textContent = 'Snarest';
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
-  if (!state.open) { ui.pickup = null; ui.pickupMode = null; }
-  el.pickupChoices.hidden = !state.open;
+  if (!state.orderable) { ui.pickup = null; ui.pickupMode = null; }
+  if (state.preOpen && ui.pickupMode === 'asap') { ui.pickup = null; ui.pickupMode = null; }
+  if (asapChoice) asapChoice.hidden = Boolean(state.preOpen);
+  el.pickupChoices.hidden = !state.orderable;
   el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
     const active = button.dataset.pickupMode === ui.pickupMode;
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
-  const showTimes = state.open && ui.pickupMode === 'scheduled';
+  const showTimes = state.orderable && ui.pickupMode === 'scheduled';
   el.timeGrid.hidden = !showTimes;
   el.timeGrid.innerHTML = showTimes
     ? slots.map((slot) => `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''}" aria-pressed="${ui.pickup === slot.value}" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`).join('')
     : '';
-  el.pickupHint.textContent = !state.open
+  el.pickupHint.textContent = state.preOpen
+    ? `Vi åpner kl. ${state.todayOpensAt}. Tidligste hentetid er ${slots[0]?.value || '15 minutter etter åpning'}. Velg tid.`
+    : !state.open
     ? `Vi åpner ${state.opensAt}.`
     : showTimes
       ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
@@ -2033,7 +2038,7 @@ function renderConfirmationWaiting(order, name) {
       <span class="confirm-live-dot" aria-hidden="true"></span>
       <div>
         <strong>Venter på restauranten</strong>
-        <small>Vi holder deg her i opptil 3 minutter · <b data-confirm-countdown>${confirmationTimeLeftText()}</b> igjen</small>
+        <small>${order.confirmationNoTimeout ? 'Forhåndsbestilling · Ingen tidsfrist for bekreftelse' : `Vi holder deg her i opptil 3 minutter · <b data-confirm-countdown>${confirmationTimeLeftText()}</b> igjen`}</small>
       </div>
     </div>`;
 }
@@ -2175,7 +2180,7 @@ function checkOrderConfirmationWait() {
     return;
   }
 
-  if (!orderConfirmTimedOut && Date.now() >= orderConfirmDeadline) {
+  if (!order.confirmationNoTimeout && !orderConfirmTimedOut && Date.now() >= orderConfirmDeadline) {
     orderConfirmTimedOut = true;
     renderConfirmationTimeout(order);
     return;
@@ -2219,7 +2224,7 @@ function startOrderConfirmationWait(order, name) {
 async function placeOrder() {
   if (ui.orderSubmitting) return;
   const state = getOpenState();
-  if (!state.open) {
+  if (!state.orderable) {
     toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
     return;
   }
@@ -2336,6 +2341,7 @@ async function placeOrder() {
   try {
     order = await submitOrder({
       id: ui.pendingOrderId,
+      confirmationNoTimeout: getOpenState().preOpen === true,
       loyaltyReward: rewardLine ? { cycle: rewardLine.loyaltyCycle, automatic: Boolean(rewardLine.loyaltyAuto) } : null,
       customerName: name,
       phone: `+47${phone}`,
