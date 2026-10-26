@@ -15,3 +15,11 @@
 **Editing map:** Checkout: `customer.js`; accepted orders: `admin.js` plus `data.js`; confirmation deadlines: `order-confirmation.js`; restaurant schedule: `data.js`; notifications: Apps Script + receipt renderers; CSS in `demo/css/`; loyalty: `loyalty.js`, `loyalty-sync.js`, `data.js`.
 
 **Checks:** `node demo/tools/audit-references.mjs`; `node --experimental-default-type=module --test demo/tests/*.test.mjs`. CI workflow: `.github/workflows/demo-audit.yml`. Finish with browser, emulator and controlled notification tests before release.
+
+## Diagnostic notifications (audit branch only)
+- `demo/js/system-errors.js` is an isolated, best-effort RTDB writer. `data.js` reports confirmed failures on order creation, Godta, settings persistence and timeout cancellation. It never reports successful operations.
+- RTDB nodes: `systemErrors/{category_reason}` and manually archived `systemErrorsArchive/{category_reason}`. The deterministic key groups repeats. ETag conditional PUT prevents lost repeat-count updates, with bounded retry. Names/phone/e-mail and arbitrary exception text are not stored.
+- Admin `Restaurantinnstillinger → Varsler` polls every 12 seconds while visible, and offers `Lest`, `Løst` and manually triggered archival of resolved records older than 30 days (max 25 per action).
+- `intentionalTest` uses separate `test_` keys. Browser mock tests do not send anything to production Firebase.
+- **Not fully covered:** Google Apps Script runs independently. SMS/EPOST failures inside those deployed scripts are NOT yet forwarded into `systemErrors`; current health/receipt fields remain authoritative. Separate GAS publishing/permissions must be verified before changing those flows. Browser errors that occur before JS starts or when the network is fully offline cannot be persisted until connectivity returns; this reporter currently does not queue them.
+- Access: verify dedicated RTDB read/write rules before enabling in production. These diagnostics endpoints currently use the same REST access mechanism as the frontend; do not rely on client-provided severity or read/resolved state for authorization.
