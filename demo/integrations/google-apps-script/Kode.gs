@@ -137,7 +137,7 @@ function kolOrderLink_(order, orderId) {
 /** Admin-controlled text, read fresh on each polling run. */
 function kolReadSmsTemplate_() {
   try {
-    const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notificationTemplates/smsAccepted.json',
+    const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notifications/templates/smsAccepted.json',
       {method:'get',muteHttpExceptions:true});
     if(response.getResponseCode()!==200)return null;
     const value=JSON.parse(response.getContentText()||'null');
@@ -194,7 +194,7 @@ function kolApiSend_(to, message, token) {
  * A failed status/receipt write must never retry an already-submitted SMS.
  */
 function kolFirebaseSmsPut_(path, value) {
-  if (!/^(smsHealth|notificationTests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
+  if (!/^(notifications\/smsHealth|notifications\/tests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
     throw new Error('Unexpected Firebase SMS path');
   }
   const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' + path + '.json', {
@@ -209,7 +209,7 @@ function kolFirebaseSmsPut_(path, value) {
 }
 
 function kolSmsHeartbeat_(mode, checkedAt) {
-  kolFirebaseSmsPut_('smsHealth', {
+  kolFirebaseSmsPut_('notifications/smsHealth', {
     source: 'apps-script-sms-poller',
     liveConfigured: mode === 'LIVE' && KOL_SMS.allowLiveMode,
     checkedAt: checkedAt,
@@ -291,7 +291,7 @@ function kolPurgeOldCounters_(props, currentDay) {
  * Reserve ID and quota before gateway call to avoid accidental resend.
  */
 function kolCheckSmsTest_(props, token, fixedPhone) {
-  const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notificationTests/smsAccepted/request.json',
+  const response=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/notifications/tests/smsAccepted/request.json',
     {method:'get',muteHttpExceptions:true});
   if(response.getResponseCode()!==200)return;
   const request=JSON.parse(response.getContentText()||'null');
@@ -301,7 +301,7 @@ function kolCheckSmsTest_(props, token, fixedPhone) {
   props.setProperty('KOL_SMS_TEST_LAST_ID',id);
   const now=Date.now();
   const result=(state,message)=>{
-    try{kolFirebaseSmsPut_('notificationTests/smsAccepted/result',{id,state,at:Date.now(),message})}
+    try{kolFirebaseSmsPut_('notifications/tests/smsAccepted/result',{id,state,at:Date.now(),message})}
     catch(error){console.error('SMS teststatus kan ikke lagres: '+error.message)}
   };
   if(Math.abs(now-Number(request.requestedAt))>10*60000){result('ignored','Utløpt testforespørsel.');return}

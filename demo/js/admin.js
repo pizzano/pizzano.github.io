@@ -54,7 +54,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-cleanup2';
+} from './data.js?v=20261026-group1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
@@ -2578,7 +2578,7 @@ async function refreshSmsStatus() {
   }
   smsStatusFetching = true;
   try {
-    const response = await fetch(DB_URL + '/smsHealth.json?_=' + Date.now(), {
+    const response = await fetch(DB_URL + '/notifications/smsHealth.json?_=' + Date.now(), {
       method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7000)
     });
     if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
@@ -2620,7 +2620,7 @@ async function refreshEmailStatus() {
   }
   emailStatusFetching = true;
   try {
-    const url = DB_URL + '/emailHealth.json?_=' + Date.now();
+    const url = DB_URL + '/notifications/emailHealth.json?_=' + Date.now();
     const response = await fetch(url, {
       method:'GET', cache:'no-store', signal:AbortSignal.timeout(7500)
     });
@@ -3995,7 +3995,7 @@ async function noticeLoad(){
   if(!DB_URL){noticeFeedback('Firebase er ikke konfigurert.','error');return}
   try{
     for(const kind of NOTICE_KINDS){
-      const r=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
+      const r=await noticeGet(DB_URL+'/notifications/templates/'+kind+'.json',true);
       noticeState.templates[kind]=(r.data&&typeof r.data==='object')?r.data:noticeDefaults()[kind];
       noticeState.etag[kind]=r.etag;
     }
@@ -4023,7 +4023,7 @@ async function noticeSave(){
   noticeState.busy=true;noticeEl.save.disabled=true;
   try{
     const stored={...draft,version:isFull?2:1,updatedAt:Date.now()};
-    const response=await fetch(DB_URL+'/notificationTemplates/'+kind+'.json',{
+    const response=await fetch(DB_URL+'/notifications/templates/'+kind+'.json',{
       method:'PUT',
       headers:{'Content-Type':'application/json','if-match':noticeState.etag[kind]||'null_etag'},
       body:JSON.stringify(stored)
@@ -4033,7 +4033,7 @@ async function noticeSave(){
     }
     if(!response.ok)throw new Error('Firebase HTTP '+response.status);
     noticeState.templates[kind]=stored;
-    const reread=await noticeGet(DB_URL+'/notificationTemplates/'+kind+'.json',true);
+    const reread=await noticeGet(DB_URL+'/notifications/templates/'+kind+'.json',true);
     noticeState.etag[kind]=reread.etag;
     noticeState.dirty=false;
     noticeFeedback(isFull
@@ -4051,7 +4051,7 @@ async function noticeCheckEmailEngine(){
   node.hidden=!noticeKindIsEmail();
   if(node.hidden||!DB_URL)return;
   try{
-    const {data}=await noticeGet(DB_URL+'/emailHealth.json');
+    const {data}=await noticeGet(DB_URL+'/notifications/emailHealth.json');
     if(!noticeKindIsEmail())return;
     const last=Number(data?.checkedAt)||0;
     const stale=!last||Date.now()-last>15*60*1000;
@@ -4078,7 +4078,7 @@ async function noticeSendTest(){
   const id='nt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
   noticeState.busy=true;noticeEl.test.disabled=true;
   try{
-    const response=await fetch(DB_URL+'/notificationTests/'+kind+'/request.json',{
+    const response=await fetch(DB_URL+'/notifications/tests/'+kind+'/request.json',{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id,requestedAt:Date.now(),kind})
     });
@@ -4102,8 +4102,8 @@ async function noticeCheckTestStatus(){
   const kind=noticeState.kind;
   try{
     const [requestResponse,resultResponse]=await Promise.all([
-      noticeGet(DB_URL+'/notificationTests/'+kind+'/request.json'),
-      noticeGet(DB_URL+'/notificationTests/'+kind+'/result.json')
+      noticeGet(DB_URL+'/notifications/tests/'+kind+'/request.json'),
+      noticeGet(DB_URL+'/notifications/tests/'+kind+'/result.json')
     ]);
     // Tab may change while we are awaiting remote reads.
     if(noticeState.kind!==kind)return;
@@ -4141,7 +4141,7 @@ async function noticeCheckTestStatus(){
       +' · '+date+(result.message?' · '+String(result.message).slice(0,150):'')
       +(noticeState.lastTest?.kind===kind&&noticeState.lastTest.id===result.id?' · Din test':'');
   }catch(error){
-    noticeEl.result.textContent='Teststatus kunne ikke leses ('+error.message+'). Sjekk Firebase Rules for notificationTests.';
+    noticeEl.result.textContent='Teststatus kunne ikke leses ('+error.message+'). Sjekk Firebase Rules for notifications/tests.';
   }
 }
 

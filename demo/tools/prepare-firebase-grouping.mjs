@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import { resolve } from 'node:path';
 
 export const GROUPS = Object.freeze({
-  menu: Object.freeze(['sections','optionGroups','allergenCatalog','popularItemIds']),
+  menu: Object.freeze(['sections','optionGroups','allergenCatalog','popularItemIds','schemaVersion','updatedAt']),
   notifications: Object.freeze(['notificationTemplates','notificationTests','smsHealth','emailHealth']),
 });
 export function prepareGrouping(root) {
