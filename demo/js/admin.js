@@ -53,7 +53,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261026-connection-limit4';
+} from './data.js?v=20261026-timeout-live1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
