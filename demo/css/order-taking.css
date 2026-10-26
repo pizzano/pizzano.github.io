@@ -470,9 +470,40 @@ html[data-theme="dark"] .modal-order-action :is(.accept-manual-time,.scheduled-a
 html[data-theme="dark"] .modal-order-action :is(.accept-manual-control input,.scheduled-accept-card strong) {background:transparent;color:var(--ink);}
 html[data-theme="dark"] .modal-order-action .scheduled-accept-card :is(span,small) {color:var(--ink-2);}
 :root .orders-page .orders-group-gap {height:8px;background:transparent;border:0;}
-:root .orders-page .orders-list-row.is-new:not(.is-seen) {animation:incoming-order-pulse 2.4s ease-in-out infinite;}
-@keyframes incoming-order-pulse {0%,100% {box-shadow:0 3px 10px rgba(17,45,67,.06);}50% {box-shadow:0 4px 20px rgba(231,116,5,.19);}}
-@media(prefers-reduced-motion:reduce) {:root .orders-page .orders-list-row.is-new:not(.is-seen) {animation:none;}}
+/* Only pending, unread orders blink; opening a card stops the animation.
+   Keep the text legible by pulsing the card tint and border, not opacity. */
+:root .orders-page .orders-list-row.is-new:not(.is-seen) {
+  animation:incoming-order-pulse 1.8s ease-in-out infinite;
+}
+@keyframes incoming-order-pulse {
+  0%,100% {
+    background:var(--ot-surface);border-color:var(--ot-line);
+    box-shadow:0 4px 12px rgba(17,45,67,.06);
+  }
+  50% {
+    background:#fff0d7;border-color:#e99b28;
+    box-shadow:0 0 0 3px rgba(244,153,37,.2),0 6px 23px rgba(231,116,5,.16);
+  }
+}
+@keyframes incoming-order-count-pulse {
+  0%,100% {background:#e65235;box-shadow:none;transform:scale(1);}
+  50% {background:#ff901b;box-shadow:0 0 0 4px rgba(255,144,27,.25);transform:scale(1.08);}
+}
+.nav-badge.has-unseen-orders {
+  animation:incoming-order-count-pulse 1.8s ease-in-out infinite;
+}
+html[data-theme="dark"] .orders-page .orders-list-row.is-new:not(.is-seen) {
+  animation-name:incoming-order-dark-pulse;
+}
+@keyframes incoming-order-dark-pulse {
+  0%,100% {background:var(--ot-surface);border-color:var(--ot-line);}
+  50% {background:#49351f;border-color:#d49334;box-shadow:0 0 0 3px rgba(244,153,37,.16);}
+}
+@media(prefers-reduced-motion:reduce) {
+  :root .orders-page .orders-list-row.is-new:not(.is-seen),
+  .nav-badge.has-unseen-orders {animation:none;}
+  :root .orders-page .orders-list-row.is-new:not(.is-seen) {border-color:#e99b28;}
+}
 
 /* Detail receipt pills remain separate from the inbox icons. */
 :root .orders-page .pos-detail-email-feedback {
