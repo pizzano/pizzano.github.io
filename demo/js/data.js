@@ -420,7 +420,18 @@ export function getOpenState(at=new Date()) {
       opensOnDay:reopening?.opensOnDay??scheduled.opensOnDay,
       minutesUntilOpen:reopening?.minutesUntilOpen??scheduled.minutesUntilOpen};
   }
+  // Forhåndsbestilling er kun tilgjengelig fra midnatt til dagens åpning,
+  // på en dag som faktisk har åpningstid. Manuell stenging overstyrer alltid.
+  const timezone=settings.timezone||'Europe/Oslo';
+  let clock;
+  try { clock=localClock(now,timezone); }
+  catch { const d=now.getDay();clock={minute:now.getHours()*60+now.getMinutes(),weekday:(d+6)%7}; }
+  const today=getWeeklyHours(settings)[clock.weekday];
+  const todayStart=parseTime(today.open);
+  const preOpen=!scheduled.open && today.enabled && todayStart!==null && clock.minute<todayStart;
   return {
+    preOpen,orderable:scheduled.open||preOpen,
+    todayOpensAt:today.open, todayClosesAt:today.close,
     open:scheduled.open,reason:scheduled.open?'':'utenfor_apningstid',
     label:scheduled.open?'Åpent nå':'Stengt nå',
     opensAt:scheduled.opensAt,closesAt:scheduled.closesAt,
@@ -433,17 +444,22 @@ export function getOpenState(at=new Date()) {
 export function getPickupSlots() {
   const settings=store.settings||DEFAULT_SETTINGS;
   const state=getOpenState();
-  if(!state.open)return [];
+  if(!state.open&&!state.preOpen)return [];
   const prep=Math.max(Number(settings.prepMinutes)||0,30);
   const interval=Math.min(Math.max(Number(settings.slotIntervalMinutes)||15,5),60);
   const remaining=Number(state.minutesToClose)||0;
-  if(remaining<=prep+10)return [];
+  if(state.open&&remaining<=prep+10)return [];
   let nowMinute;
   try{nowMinute=localClock(new Date(),settings.timezone||'Europe/Oslo').minute;}
   catch{const d=new Date();nowMinute=d.getHours()*60+d.getMinutes();}
-  const latest=nowMinute+remaining-10;
+  const openMinute=parseTime(state.todayOpensAt);
+  const closeMinute=parseTime(state.todayClosesAt);
+  const latest=state.preOpen
+    ? (closeMinute!==null ? closeMinute+(closeMinute<=openMinute?1440:0)-10 : 0)
+    : nowMinute+remaining-10;
+  const first=state.preOpen ? openMinute+15 : nowMinute+prep;
   const slots=[];
-  for(let m=Math.ceil((nowMinute+prep)/interval)*interval;m<=latest&&slots.length<25;m+=interval)
+  for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<25;m+=interval)
     slots.push({value:formatMinutes(m),label:formatMinutes(m)});
   return slots;
 }
@@ -556,6 +572,7 @@ function normalizeOrders(raw) {
         id: order.id || uid('ord'),
         createdAt: Number(order.createdAt) || 0,
         confirmationDeadline: confirmationDeadline(order),
+        confirmationNoTimeout: order.confirmationNoTimeout === true,
         rejectionCode: String(order.rejectionCode || ''),
         customerName: String(order.customerName || ''),
         loyaltyReward: order.loyaltyReward || null,
@@ -1723,7 +1740,8 @@ export async function submitOrder(order) {
     id: order && order.id ? String(order.id) : uid('ord'),
     createdAt: Number(order && order.createdAt) || now,
     status: 'mottatt',
-    confirmationDeadline: (Number(order && order.createdAt) || now) + ORDER_CONFIRM_WAIT_MS,
+    confirmationNoTimeout: Boolean(order?.confirmationNoTimeout),
+    confirmationDeadline: order?.confirmationNoTimeout ? 0 : (Number(order && order.createdAt) || now) + ORDER_CONFIRM_WAIT_MS,
     statusUpdatedAt: now,
   });
 
