@@ -1109,15 +1109,21 @@ async function pollCustomerOrders(force = false) {
   if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
   const now = Date.now();
   if (!force && now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
-  const ids = customerTrackedIds();
+  const ids = [...customerTrackedIds()].reverse();
   if (!ids.length) return;
   lastCustomerPollAt = now;
   customerPollBusy = true;
   try {
-    const responses = await Promise.all(ids.map(async id => {
-      try { return [id, await restGet(ORDERS_PATH + '/' + encodeURIComponent(id), 7500)]; }
-      catch { return [id, undefined]; }
-    }));
+    // Never occupy all of the browser's HTTP connections by reading four
+    // old orders at once. Fetch the newest first; at most two in parallel.
+    const responses = [];
+    for (let i = 0; i < ids.length; i += 2) {
+      const batch = await Promise.all(ids.slice(i, i + 2).map(async id => {
+        try { return [id, await restGet(ORDERS_PATH + '/' + encodeURIComponent(id), 7500)]; }
+        catch { return [id, undefined]; }
+      }));
+      responses.push(...batch);
+    }
     let changed = false;
     for (const [id, order] of responses) {
       if (order === undefined) continue;
