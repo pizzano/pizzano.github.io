@@ -3444,7 +3444,7 @@ function renderPalettePreview() {
   }));
 }
 
-/* Weekly opening times share siteSettings with the customer order page. */
+/* Weekly opening times use the same settings record as the customer order page. */
 const weeklyRowsEl=document.getElementById('weeklyHoursRows');
 const weeklyErrorEl=document.getElementById('weeklyHoursError');
 const temporaryClosePanel=document.getElementById('temporaryClosePanel');
