@@ -365,6 +365,13 @@ html[data-theme="dark"] .orders-page .orders-brand-name{color:#9adbb7}
 }
 .orders-page .pos-accept-btn{min-height:51px;font-size:14px}
 .orders-page .pos-closed-status{padding:12px;color:var(--ot-muted);font-size:13px}
+.orders-page .pos-closed-status.is-expired{
+  border:1px solid #f0afa9;border-radius:12px;background:#fff1ee;
+  color:#9f2927;font-size:14px;font-weight:800;line-height:1.5;
+}
+html[data-theme="dark"] .orders-page .pos-closed-status.is-expired{
+  background:#452a2a;color:#ffdad5;border-color:#a85b58;
+}
 .orders-page button:focus-visible,.orders-page #orderSearch:focus-visible{
  outline:2px solid var(--ot-accent);outline-offset:2px;
 }
