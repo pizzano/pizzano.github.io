@@ -1,4 +1,4 @@
-import { reportSystemError } from './system-errors.js';
+import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
@@ -33,6 +33,8 @@ const CUSTOMER_ORDER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const CUSTOMER_ORDER_POLL_MS = 8 * 1000;
 
 const ORDERS_PATH = 'orders';
+// Retry local diagnostic events only on reconnection, never in the critical order path.
+window.addEventListener('online', () => { void flushSystemErrorQueue(); });
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
 const FALLBACK_MENU_INTERVAL = 30000;
@@ -1609,12 +1611,12 @@ async function patchConfirmedPizzaOrder(order, changes) {
   try {
     // Yield once after closing SSE so the browser can release an HTTP slot.
     await new Promise(resolve => setTimeout(resolve, 80));
-    response = await fetch(path, {
+    response = await monitorCriticalOperation(fetch(path, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(changes),
       signal: AbortSignal.timeout(12000),
-    });
+    }), 'order_accept', 12500);
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
       throw new Error('Firebase svarte ikke innen 12 sekunder. Sjekk nettleserens Network-fane for PATCH/OPTIONS og eventuell VPN.');
@@ -1759,7 +1761,7 @@ export async function submitOrder(order) {
       if (rewards.length !== 1 || (record.loyaltyReward.automatic ? rewards[0].quantity < 1 : rewards[0].quantity !== 1) || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
       await reservePizzaReward(record);
     }
-    await restPut(`${ORDERS_PATH}/${record.id}`, record);
+    await monitorCriticalOperation(restPut(`${ORDERS_PATH}/${record.id}`, record), 'order_create', 15000);
     remoteOnline = true;
   } catch (err) {
     remoteOnline = false;
