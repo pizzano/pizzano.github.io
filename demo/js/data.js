@@ -29,11 +29,11 @@ export const DB_URL = String(window.BESTILL_CONFIG?.databaseUrl || '').replace(/
 const CUSTOMER_MODE = window.BESTILL_CONFIG?.customerOnly === true;
 const CUSTOMER_ORDER_LIMIT = 4;
 const CUSTOMER_ORDER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-const CUSTOMER_ORDER_POLL_MS = 30 * 1000;
+const CUSTOMER_ORDER_POLL_MS = 8 * 1000;
 
 const ORDERS_PATH = 'orders';
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
-const FALLBACK_ORDERS_INTERVAL = 15000;
+const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
 const FALLBACK_MENU_INTERVAL = 30000;
 const SCHEMA_VERSION = 6;
 
@@ -1055,7 +1055,6 @@ function streamUrl(path) {
 
 // Customer pages never open /orders.json. Each recent order is followed by
 // its own Firebase SSE listener, so other customers' details are not downloaded.
-const customerStreams = new Map();
 let customerPollBusy = false;
 let lastCustomerPollAt = 0;
 
@@ -1100,80 +1099,23 @@ function customerTrackedIds() {
   });
 }
 
+// Customers use short-lived REST reads for known order IDs, not one
+// persistent Firebase connection per order (which can block Godta).
 function syncCustomerStreams() {
-  if (!CUSTOMER_MODE) return;
-  // Keep at most one customer SSE stream open. Otherwise each completed
-  // order retains a connection and later confirmations can stall in browsers.
-  // Older tracked orders are refreshed by the existing REST fallback.
-  const ids = new Set(customerTrackedIds().slice(-1));
-  for (const [id, entry] of customerStreams) {
-    if (ids.has(id)) continue;
-    entry.source.close();
-    customerStreams.delete(id);
-  }
-  if (!('EventSource' in window) || navigator.onLine === false) return;
-  for (const id of ids) {
-    if (customerStreams.has(id)) continue;
-    try {
-      const source = new EventSource(streamUrl(ORDERS_PATH + '/' + encodeURIComponent(id)));
-      const entry = {source, healthy: false};
-      customerStreams.set(id, entry);
-      const update = (event, isPatch) => {
-        try {
-          const change = parseFirebaseEvent(event);
-          if (change.path === '/' && change.data === null) {
-            delete ordersRaw[id];
-            forgetCustomerOrderId(id);
-          } else {
-            ordersRaw[id] = applyStreamChange(ordersRaw[id] || {}, change.path, change.data, isPatch);
-          }
-          entry.healthy = true;
-          remoteOnline = true;
-          if (applyRemoteOrders(ordersRaw)) emitData('remote');
-          // A finished/rejected order no longer needs a permanent listener.
-          if (!customerTrackedIds().includes(id)) syncCustomerStreams();
-        } catch (error) {
-          entry.healthy = false;
-          source.close();
-          if (customerStreams.get(id) === entry) customerStreams.delete(id);
-          scheduleStreamReconnect();
-        }
-      };
-      source.addEventListener('put', event => update(event, false));
-      source.addEventListener('patch', event => update(event, true));
-      source.onerror = () => {
-        entry.healthy = false;
-        if (source.readyState === 2) {
-          source.close();
-          if (customerStreams.get(id) === entry) customerStreams.delete(id);
-          scheduleStreamReconnect();
-        }
-      };
-      for (const kind of ['cancel', 'auth_revoked']) {
-        source.addEventListener(kind, () => {
-          entry.healthy = false;
-          source.close();
-          if (customerStreams.get(id) === entry) customerStreams.delete(id);
-          scheduleStreamReconnect();
-        });
-      }
-    } catch (error) {
-      console.warn('Kundens ordrelytting er ikke tilgjengelig:', error);
-    }
-  }
+  if (CUSTOMER_MODE) void pollCustomerOrders(true);
 }
 
 async function pollCustomerOrders(force = false) {
   if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
   const now = Date.now();
   if (!force && now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
-  const ids = customerTrackedIds().filter(id => force || !customerStreams.get(id)?.healthy);
+  const ids = customerTrackedIds();
   if (!ids.length) return;
   lastCustomerPollAt = now;
   customerPollBusy = true;
   try {
     const responses = await Promise.all(ids.map(async id => {
-      try { return [id, await restGet(ORDERS_PATH + '/' + encodeURIComponent(id))]; }
+      try { return [id, await restGet(ORDERS_PATH + '/' + encodeURIComponent(id), 7500)]; }
       catch { return [id, undefined]; }
     }));
     let changed = false;
@@ -1184,7 +1126,6 @@ async function pollCustomerOrders(force = false) {
       changed = true;
     }
     if (changed && applyRemoteOrders(ordersRaw)) emitData('remote');
-    syncCustomerStreams();
   } finally {
     customerPollBusy = false;
   }
@@ -1361,12 +1302,10 @@ async function fallbackSync() {
 }
 
 function startPolling() {
-  // Separate streams: full orders only at first connect, subsequent changes are
-  // small Firebase SSE patches. Menu is watched via a numeric version only.
+  // Admin uses one live order SSE; customers use short REST reads only.
+  // Menu updates are already fetched by the updatedAt REST fallback.
   if (CUSTOMER_MODE) syncCustomerStreams();
   else beginOrdersStream();
-  // At most one long-lived Firebase connection per browser tab.
-  // Menu changes use a small updatedAt REST request every 30 seconds.
   if (fallbackTimer) clearInterval(fallbackTimer);
   fallbackTimer = window.setInterval(() => { void fallbackSync(); }, FALLBACK_ORDERS_INTERVAL);
   window.addEventListener('focus', () => {
