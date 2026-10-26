@@ -1365,6 +1365,7 @@ async function persist() {
   } catch (err) {
     remoteOnline = false;
     console.error('Lagring feilet:', err);
+    void reportSystemError('firebase', /403|401|HTTP/.test(String(err?.message)) ? 'http' : 'network','warning');
     setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
     return false;
   }
@@ -1659,7 +1660,10 @@ export async function expireUnconfirmedOrders() {
         if (index >= 0) store.orders[index] = normalizeOrders([cancelled])[0];
         emitData('remote'); break;
       }
-    } catch { /* Retry on the next tick; never claim cancellation before it is saved. */ }
+    } catch { 
+      void reportSystemError('timeout','network','warning');
+      /* Retry on the next tick; never claim cancellation before it is saved. */
+    }
     finally { expiringOrders.delete(order.id); }
   }
 }
