@@ -13,7 +13,7 @@ import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './l
  *   sections[]         — kategorier med produkter
  *   optionGroups[]     — gjenbrukbart valggruppe-bibliotek
  *   allergenCatalog[]  — {id,label} for avkryssing i admin
- *   siteSettings{}     — adresse, åpningstid, hentetid, stengt-bryter
+ *   settings{}         — adresse, åpningstid, hentetid, stengt-bryter
  *   popularItemIds[]   — produkter markert som populære
  *   orders{}           — innkomne ordre (nøkkel = ordre-ID)
  *   updatedAt          — tidsstempel for siste menyendring
@@ -765,7 +765,7 @@ function normalizeState(raw) {
 
   return {
     schemaVersion: SCHEMA_VERSION,
-    settings: normalizeSettings(base.settings || base.siteSettings),
+    settings: normalizeSettings(base.settings),
     allergenCatalog,
     sections,
     optionGroups,
@@ -939,8 +939,6 @@ function menuPayload() {
   return {
     schemaVersion: SCHEMA_VERSION,
     settings: clone(store.settings),
-    // Remove the legacy duplicate in the same atomic Firebase PATCH.
-    siteSettings: null,
     allergenCatalog: clone(store.allergenCatalog),
     sections: clone(store.sections),
     optionGroups: clone(store.optionGroups),
@@ -1222,7 +1220,7 @@ function scheduleStreamReconnect() {
 
 // Menu-only reads avoid downloading /orderArchive or /pizzaBonus.
 const LEGACY_MENU_FIELDS = [
-  'schemaVersion', 'settings', 'siteSettings', 'allergenCatalog',
+  'schemaVersion', 'settings', 'allergenCatalog',
   'sections', 'optionGroups', 'popularItemIds', 'updatedAt',
 ];
 async function readRemoteMenuSnapshot() {
@@ -1414,7 +1412,7 @@ export async function importMenuJSON(raw) {
     }
   }
   const before = exportMenuJSON();
-  replaceMenuState({ ...source, settings: source.settings || source.siteSettings || store.settings });
+  replaceMenuState({ ...source, settings: source.settings || store.settings });
   emitData('local');
   if (!await saveNow()) { replaceMenuState(before);emitData('local');throw new Error('Importen kunne ikke lagres. Prøv igjen.'); }
   return true;
