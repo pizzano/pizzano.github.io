@@ -25,6 +25,7 @@ function icon(kind) {
     pickup: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M8 8a4 4 0 0 1 8 0"/></svg>',
     address: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"/><circle cx="12" cy="10" r="2"/></svg>',
     phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.1 3.5 4.4 5.1c-.8.5-.9 1.5-.6 2.4 2 5.9 6.8 10.7 12.7 12.7.9.3 1.9.2 2.4-.6l1.6-2.7-4.3-2.1-1.5 2c-3.1-1.4-6.1-4.4-7.5-7.5l2-1.5-2.1-4.3Z"/></svg>',
+    email: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/></svg>',
     payment: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 15h4"/></svg>',
     order: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
     map: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg>',
@@ -88,6 +89,10 @@ function buildModal() {
               <div class="shop-info-card-head">${icon('phone')}<span>Telefon</span></div>
               <a class="shop-info-value" id="shopInfoPhone" href="#">—</a>
             </div>
+            <div class="shop-info-card" id="shopInfoEmailCard" hidden>
+              <div class="shop-info-card-head">${icon('email')}<span>E-post</span></div>
+              <a class="shop-info-value" id="shopInfoEmail" href="#">—</a>
+            </div>
             <div class="shop-info-card">
               <div class="shop-info-card-head">${icon('payment')}<span>Betaling</span></div>
               <span class="shop-info-value" id="shopInfoPayment">—</span>
@@ -149,6 +154,7 @@ function renderShopInfo() {
   const name = String(settings.restaurantName || 'Restauranten').trim();
   const address = addressText(settings);
   const phone = String(settings.phone || '').trim();
+  const email = String(settings.email || '').trim();
   const orderOpen = String(settings.orderOpenTime || '').trim();
   const orderClose = String(settings.orderCloseTime || '').trim();
   const days = String(settings.openingDays || '').trim();
@@ -170,6 +176,8 @@ function renderShopInfo() {
   const timesEl = document.getElementById('shopInfoTimes');
   const addressEl = document.getElementById('shopInfoAddress');
   const phoneEl = document.getElementById('shopInfoPhone');
+  const emailEl = document.getElementById('shopInfoEmail');
+  const emailCard = document.getElementById('shopInfoEmailCard');
   const paymentEl = document.getElementById('shopInfoPayment');
   const callEl = document.getElementById('shopInfoCall');
   const mapEl = document.getElementById('shopInfoMap');
@@ -216,6 +224,9 @@ function renderShopInfo() {
 
   const phoneHref = phone ? `tel:${cleanPhone(phone)}` : '';
   setLinkState(phoneEl, phoneHref, phone || 'Ikke registrert');
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (emailCard) emailCard.hidden = !validEmail;
+  if (validEmail) setLinkState(emailEl, `mailto:${email}`, email);
 
   if (callEl) {
     callEl.hidden = !phoneHref;
