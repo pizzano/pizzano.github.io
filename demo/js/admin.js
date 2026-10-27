@@ -416,7 +416,7 @@ function renderStats() {
   el.navOrderBadge.hidden = stats.newOrders === 0;
   el.navOrderBadge.textContent = String(stats.newOrders);
   el.navOrderBadge.classList.toggle('has-unseen-orders',
-    getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order) &&
+    getOrders().some(order => shouldSoundForOrder(order) &&
       !acknowledgedOrders.has(order.id)));
 
   const cards = [
@@ -1965,6 +1965,12 @@ function deleteGroup(groupId) {
  * Bestillinger
  * ------------------------------------------------------------------ */
 
+function shouldSoundForOrder(order) {
+  // Preopening orders are accepted silently until the restaurant opens.
+  // Existing pending preorders become audible automatically on opening.
+  if (order?.status !== 'mottatt' || confirmationExpired(order)) return false;
+  return !order.confirmationNoTimeout || getOpenState().open;
+}
 const pendingOrderMinutes = new Map();
 const acknowledgedOrders = new Set();
 const activeOrderSounds = new Set();
@@ -2006,7 +2012,7 @@ async function unlockOrderSound() {
   } catch {}
   orderSoundBlocked = false;
   renderOrderSoundPreference();
-  if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+  if (getOrders().some(order => shouldSoundForOrder(order))) playOrderAlert();
 }
 function unlockOrderSoundFromGesture(event) {
   if (event.target.closest?.('#btnOrderSound')) return;
@@ -2027,7 +2033,7 @@ function playOrderAlert() {
       const clip = orderMp3;
       orderMp3Starting = true;
       clip.play().then(() => {
-        if (!orderSoundEnabled || clip !== orderMp3 || !getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) clip.pause();
+        if (!orderSoundEnabled || clip !== orderMp3 || !getOrders().some(order => shouldSoundForOrder(order))) clip.pause();
         orderSoundBlocked = false;
         renderOrderSoundPreference();
       }).catch(error => {
@@ -2072,7 +2078,7 @@ function stopOrderAlert() {
   activeOrderSounds.clear();
 }
 window.setInterval(() => {
-  if (getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+  if (getOrders().some(order => shouldSoundForOrder(order))) playOrderAlert();
   else stopOrderAlert();
 }, 2000);
 function syncOrdersWorkspaceLayout() {
@@ -2416,7 +2422,7 @@ function renderOrderList() {
       || String(b.id || '').localeCompare(String(a.id || ''));
   });
   el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order,
-    order.status === 'mottatt' && !confirmationExpired(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
+    shouldSoundForOrder(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
@@ -2700,12 +2706,12 @@ function updateOrdersConnection() {
 }
 function renderOrders() {
   const all = getOrders();
-  if (all.some(order => order.status === 'mottatt' && !confirmationExpired(order))) playOrderAlert();
+  if (all.some(order => shouldSoundForOrder(order))) playOrderAlert();
   else stopOrderAlert();
   updateOrdersConnection();
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) =>
-    order.status === 'mottatt' && !confirmationExpired(order)).length} nye`;
+    shouldSoundForOrder(order)).length} nye`;
   const visible = filteredOrders();
 
   if (selectedOrderId && !visible.some((order) => order.id === selectedOrderId)) {
