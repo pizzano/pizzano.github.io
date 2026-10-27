@@ -525,6 +525,9 @@ function normalizeSettings(raw) {
       settings[key] = String(base[key]);
     }
   }
+  // A saved settings object without this optional flag is NOT a manual closure.
+  // DEFAULT_SETTINGS.manualClosed=true only protects startup before Firebase loads.
+  if (raw && typeof raw === 'object' && raw.manualClosed == null) settings.manualClosed = false;
   // Preserve legacy one-time schedule until an employee edits weekly hours.
   const rawWeek=base.weeklyHours;
   settings.weeklyHours=Array.isArray(rawWeek)&&rawWeek.length===7
