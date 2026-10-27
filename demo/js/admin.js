@@ -416,7 +416,7 @@ function renderStats() {
   el.navOrderBadge.hidden = stats.newOrders === 0;
   el.navOrderBadge.textContent = String(stats.newOrders);
   el.navOrderBadge.classList.toggle('has-unseen-orders',
-    getOrders().some(order => shouldSoundForOrder(order) &&
+    getOrders().some(order => order.status === 'mottatt' && !confirmationExpired(order) &&
       !acknowledgedOrders.has(order.id)));
 
   const cards = [
@@ -2422,7 +2422,7 @@ function renderOrderList() {
       || String(b.id || '').localeCompare(String(a.id || ''));
   });
   el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order,
-    shouldSoundForOrder(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
+    order.status === 'mottatt' && !confirmationExpired(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
   el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
@@ -2711,7 +2711,7 @@ function renderOrders() {
   updateOrdersConnection();
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) =>
-    shouldSoundForOrder(order)).length} nye`;
+    order.status === 'mottatt' && !confirmationExpired(order)).length} nye`;
   const visible = filteredOrders();
 
   if (selectedOrderId && !visible.some((order) => order.id === selectedOrderId)) {
