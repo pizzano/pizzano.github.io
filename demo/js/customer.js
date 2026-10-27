@@ -1827,7 +1827,7 @@ function setStep(step) {
 }
 
 function hasValidPickup() {
-  return getOpenState().orderable && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
+  return getOpenState().orderable && (!getOpenState().preOpen && ui.pickupMode === 'asap' && ui.pickup === 'asap'
     || ui.pickupMode === 'scheduled' && getPickupSlots().some((slot) => slot.value === ui.pickup));
 }
 
@@ -1871,7 +1871,10 @@ function renderCheckout() {
   if (asapTitle) asapTitle.textContent = 'Snarest';
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (!state.orderable) { ui.pickup = null; ui.pickupMode = null; }
-  if (state.preOpen && ui.pickupMode === 'asap') { ui.pickup = null; ui.pickupMode = null; }
+  if (state.preOpen) {
+    if (ui.pickupMode !== 'scheduled') ui.pickup = null;
+    ui.pickupMode = 'scheduled';
+  }
   if (asapChoice) asapChoice.hidden = Boolean(state.preOpen);
   el.pickupChoices.hidden = !state.orderable;
   el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
