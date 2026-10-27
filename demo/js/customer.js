@@ -1133,7 +1133,7 @@ function renderOpenState() {
   const state = getOpenState();
   const settings = store.settings || {};
   el.openDot.classList.remove('is-pending');
-  el.openStatus.textContent = state.preOpen ? `Åpner kl. ${state.todayOpensAt} · Bestill nå` : state.label;
+  el.openStatus.textContent = state.preOpen ? `Forhåndsbestill nå · Åpner kl. ${state.todayOpensAt}` : state.label;
   document.getElementById('pickupDetails').textContent = state.preOpen
     ? `Tidligste henting ${getPickupSlots()[0]?.value || '14:15'}`
     : state.open ? `Kun henting · stenger ${state.closesAt}`
@@ -1147,6 +1147,10 @@ function renderOpenState() {
   }
   el.btnToCheckout.disabled = !state.orderable;
   el.cartClosedHint.hidden = state.orderable;
+  if (state.preOpen) {
+    el.cartClosedHint.hidden = false;
+    el.cartClosedHint.textContent = `Vi åpner kl. ${state.todayOpensAt}. Du kan bestille nå og velge hentetid etter åpning.`;
+  }
   return state;
 }
 
@@ -3037,7 +3041,7 @@ el.btnKeepShopping.addEventListener('click', () => setView('menu'));
 el.btnToCheckout.addEventListener('click', () => {
   if (!cart.length) return;
   const state = getOpenState();
-  if (!state.open) {
+  if (!state.orderable) {
     toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'warning');
     return;
   }
