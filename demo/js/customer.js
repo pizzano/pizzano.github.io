@@ -1133,7 +1133,7 @@ function renderOpenState() {
   const state = getOpenState();
   const settings = store.settings || {};
   el.openDot.classList.remove('is-pending');
-  el.openStatus.textContent = state.preOpen ? `Åpner kl. ${state.todayOpensAt} · Bestill nå` : state.label;
+  el.openStatus.textContent = state.preOpen ? `Forhåndsbestill nå · Åpner kl. ${state.todayOpensAt}` : state.label;
   document.getElementById('pickupDetails').textContent = state.preOpen
     ? `Tidligste henting ${getPickupSlots()[0]?.value || '14:15'}`
     : state.open ? `Kun henting · stenger ${state.closesAt}`
@@ -1147,6 +1147,10 @@ function renderOpenState() {
   }
   el.btnToCheckout.disabled = !state.orderable;
   el.cartClosedHint.hidden = state.orderable;
+  if (state.preOpen) {
+    el.cartClosedHint.hidden = false;
+    el.cartClosedHint.textContent = `Vi åpner kl. ${state.todayOpensAt}. Du kan bestille nå og velge hentetid etter åpning.`;
+  }
   return state;
 }
 
@@ -1823,7 +1827,7 @@ function setStep(step) {
 }
 
 function hasValidPickup() {
-  return getOpenState().orderable && (ui.pickupMode === 'asap' && ui.pickup === 'asap'
+  return getOpenState().orderable && (!getOpenState().preOpen && ui.pickupMode === 'asap' && ui.pickup === 'asap'
     || ui.pickupMode === 'scheduled' && getPickupSlots().some((slot) => slot.value === ui.pickup));
 }
 
@@ -1867,7 +1871,10 @@ function renderCheckout() {
   if (asapTitle) asapTitle.textContent = 'Snarest';
   if (ui.pickupMode === 'scheduled' && !slots.some((slot) => slot.value === ui.pickup)) ui.pickup = null;
   if (!state.orderable) { ui.pickup = null; ui.pickupMode = null; }
-  if (state.preOpen && ui.pickupMode === 'asap') { ui.pickup = null; ui.pickupMode = null; }
+  if (state.preOpen) {
+    if (ui.pickupMode !== 'scheduled') ui.pickup = null;
+    ui.pickupMode = 'scheduled';
+  }
   if (asapChoice) asapChoice.hidden = Boolean(state.preOpen);
   el.pickupChoices.hidden = !state.orderable;
   el.pickupChoices.querySelectorAll('[data-pickup-mode]').forEach((button) => {
@@ -3037,7 +3044,7 @@ el.btnKeepShopping.addEventListener('click', () => setView('menu'));
 el.btnToCheckout.addEventListener('click', () => {
   if (!cart.length) return;
   const state = getOpenState();
-  if (!state.open) {
+  if (!state.orderable) {
     toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'warning');
     return;
   }
