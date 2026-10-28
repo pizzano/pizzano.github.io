@@ -1,362 +1,41 @@
-# KØL SMS + e-post – Google Apps Script kaynakları
+# SMS ve e-posta — Google Apps Script
 
-## Varslinger — şablonlar artık Firebase'de (24.10.2026)
+Bu klasördeki dosyalar **kaynak kopyalarıdır**. GitHub güncellemesi, çalışan Google Apps Script projelerine otomatik yüklenmez.
 
-Admin panelinde yeni **Varslinger** sayfası bulunuyor:
+## Dosyalar ve görevleri
 
-- `SMS · Bekreftet`: Düzenlenebilir SMS metni
-- `E-post · Bekreftet`: Konu, büyük başlık, giriş mesajı ve kapanış metni
-- `E-post · Klar`: Ayrı e-posta metinleri
-- **Forhåndsvisning**: Örnek müşteri/ürün bilgileriyle gönderim yapmadan önizleme
-- **Lagre mal**: Firebase `notificationTemplates/{smsAccepted|emailAccepted|emailReady}`
-- **Send test**: Firebase `notificationTests/{kind}/request` (yalnızca komut kimliği/zamanı/türü)
-- **Kontroller teststatus**: `notificationTests/{kind}/result`, gönderen scriptin kayıt durumu
+- `Kode.gs`: `pollOrdersForSms()`, Traccar üzerinden onay SMS'i, SMS testleri ve `notifications/smsHealth`.
+- `email-poller.gs`: `kontrollerEpostBestillinger()`, `MailApp` üzerinden `Bekreftet` / personelce `Klar` e-postaları, e-posta testleri ve `notifications/emailHealth`.
+- SMS ve e-posta şablonları Firebase `notifications/templates/{smsAccepted|emailAccepted|emailReady}` konumundadır. E-posta şablonlarında `version:2`, `subject` ve tam `html` bulunur.
+- Ürünler için e-posta HTML şablonunda `{{#each items}} ... {{/each}}` kullanılabilir. Müşteri adı, saat ve sipariş bağlantısı gibi değişkenler sipariş verilerinden doldurulur.
 
-### Temizlenmiş EmailPoller.gs (25.10.2026)
+## Mevcut kurulumu güncelleme
 
-`EmailPoller.gs` 824 satırdan **649 satıra** indirildi. Önceki
-200+ satırlık sabit HTML fiş oluşturucusu kaldırıldı.
-Artık Firebase'deki `version:2` `html` şablonu asıl e-posta kaynağıdır.
-Güvenli HTML filtreleme, gerçek sipariş değişkenleri ve ürün döngüsü
-işlenir; `MailApp.sendEmail` ile gönderilir.
+1. Önce **Google Apps Script'teki aktif dosyanın yedeğini al**; GitHub kopyasının canlıyla aynı sürüm olduğunu varsayma.
+2. SMS projesindeki `Kode.gs` ve e-posta projesindeki `EmailPoller.gs` dosyalarını, gerekirse bu klasördeki güncel **tam kaynakla** değiştir.
+3. Mevcut Script Properties, gönderim/checkpoint kayıtları ve `pollOrdersForSms` / `kontrollerEpostBestillinger` zaman tetikleyicilerini **koru**.
+4. Sadece kod güncellemesi için `setupLiveSms()`, `setupTestSms()` veya `installerEpostVarsler()` fonksiyonlarını yeniden çalıştırma.
+5. Apps Script **Executions** ekranından hataları kontrol et; kontrollü yeni siparişle `Godta` ve ardından `Klar for henting` akışını doğrula.
 
-Önemli görevler korunmuştur: Firebase sipariş durum kontrolü,
-`accepted/ready` bildirimi, yinelenen gönderim önleme,
-`emailReceipts`/ `emailHealth`, test e-postaları,
-sabit test alıcısı, test kotası ve mevcut zaman tetikleyicisi.
-Şablon yoksa veya eski `version:1` kayıtları bulunuyorsa
-müşteriyi boş e-postayla bırakmayan **yedek KØL tasarımı** vardır.
-Yedek tasarım yalnızca uyumluluk içindir; yeni e-posta tasarımını
-Admin → Varslinger → Full HTML-kode'dan değiştir.
+SMS için kullanılan Script Properties arasında `TRACCAR_TOKEN`, `TEST_PHONE`, `KOL_MODE` bulunur. E-posta test adresi `KOL_TEST_EMAIL` ile belirlenebilir. Bunları GitHub'a yazma. E-posta kaynağındaki `KOL_DB` ile müşteri/admin `config.js` veritabanının eşleştiğini doğrula.
 
-Bu yenileme GitHub'a kaydedildi; Google Apps Script projesinde
-`EmailPoller.gs` dosyasının tamamını **bir kez** değiştirmen gerekir.
-Mevcut `kontrollerEpostBestillinger` tetikleyicisini,
-Script Properties değerlerini ve `KOL_EMAIL_...` checkpointlerini
-silme. `installerEpostVarsler()` fonksiyonunu yeniden çalıştırma:
-Bu yalnızca ilk kurulum içindir.
+## Sipariş bağlantısı ve bildirim kayıtları
 
-## E-post · Bekreftet / Klar — tam HTML (v2)
+- Yeni siparişler `orderPageUrl` taşır; SMS/e-posta bu URL'yi kullanır. Eski siparişlerde URL yoksa, her iki Apps Script projesinde `ORDER_PAGE_URL` (gerçek müşteri HTTPS adresi) yedek olarak ayarlanabilir.
+- Siparişe gönderim sonucu `orders/{id}/smsReceipts` veya `orders/{id}/emailReceipts` altında yazılır.
+- `sent` veya yeşil gösterge, Traccar/MailApp tarafından kabulü ifade eder; müşterinin telefonuna ya da gelen kutusuna kesin teslim kanıtı değildir.
+- `Klar` e-postası yalnızca personelin gerçek hazır durumuyla gönderilir; tahmini hentetid geçmesi bunun yerine geçmez.
 
-Her iki e-posta türünde yalnızca **Full HTML-kode** ile emne/HTML düzenlenir.
-Enkel redigering kaldırılmıştır. Logo, renk, tablo, ürün satırları ve alt kısım
-tek HTML alanından değiştirilebilir. Standart tasarım restoran adını Firebase
-ayarlarından alır; hazır HTML şablonların içerikleri otomatik değiştirilmez.
+## Admin testleri
 
-- Firebase'e ayrı `notificationTemplates/emailAccepted` ve `notificationTemplates/emailReady`
-  kayıtları `version:2`, `subject`, `html` alanlarıyla yazılır.
-- Değişkenler: `{navn}`, `{navnFullt}`, `{kode}`, `{hentetid}`,
-  `{hovedtid}`, `{hovedetikett}`, `{hentetype}`, `{tidsinfo}`,
-  `{telefon}`, `{bestilt}`, `{delsum}`, `{mva}`, `{total}`,
-  `{adresse}` ve `{lenke}`.
-- Ürünler: `{{#each items}} ... {antall} {produkt} {valg} {linjepris} ... {{/each}}`.
-- Sipariş bilgileri: `{{#each details}} ... {etikett} {verdi} ... {{/each}}`.
-- Admin önizleme korumalı iframe içinde görüntülenir. MailApp
-  gönderiminde de ayrıca HTML temizleme ve değişken kaçış işlemi yapılır.
-- Güvenli HTML: tablolar, metin, başlık, `b`, `strong`, `i`, `em`, `s`,
-  `del`, `u`, liste, `br`, güvenli HTTPS/mailto linkleri ve sınırlı CSS.
-  Script/iframe/form, takip görselleri, JS event handler ve tehlikeli
-  URL'ler kabul edilmez.
-- Eski `version:1` şablonlar, gerekirse HTML editöründe başlangıç
-  tasarımına dönüştürülür. `Hent standarddesign` bu şablonu düzenleme alanına
-  yükler; `Lagre mal` ile kaydedilmedikçe yayın değişmez.
+- **Send test** yalnızca Firebase `notifications/tests/{kind}/request` yoluna istek bırakır. Gönderimi çalışan Apps Script yapar; yanıt `notifications/tests/{kind}/result` konumundadır.
+- SMS testi yalnızca özel `TEST_PHONE` numarasına gider: günde en fazla 3 test, aralarında en az 3 dakika.
+- E-posta testleri yalnızca `KOL_TEST_EMAIL` (yoksa Apps Script hesap adresi) için: iki şablon toplam günde en fazla 4; aynı şablonda en az 3 dakika ara.
+- Sonuç görünmüyorsa Apps Script tetikleyicisi, **Executions**, Firebase okuma/yazma izinleri ve `notifications/tests` yollarını kontrol et. Test isteğinin oluşturulması, bildirimin gönderildiği anlamına gelmez.
 
-**GAS kurulumu:** GitHub'daki güncel `email-poller.gs` dosyasının tamamını
-Google Apps Script'e bir kere kopyala. Sonrasında HTML'yi admin panelinden
-değiştir; GAS koduna yeniden dokunmana gerek yok.
-Firebase `emailHealth.templateEngineVersion=4` ve
-`completeHtmlEditor=true` güncel sender'ı doğrular.
+## Firebase ve dikkat edilmesi gerekenler
 
-### İlk ve son Apps Script kurulumu
-
-Bu iki dosya GitHub'da güncellendi ancak **Google'ın çalışan projesine
-kendiliğinden yüklenmez.** Bir kere:
-
-1. Google Apps Script **KOL SMS Gateway** projesinde `Kode.gs` tamamını
-   [yeni kaynak](Kode.gs) ile değiştir, kaydet. Mevcut `TRACCAR_TOKEN`,
-   `TEST_PHONE`, `KOL_MODE` ve `pollOrdersForSms` tetikleyicisini koru.
-2. Google Apps Script **EPOST GONDERME KØL** projesinde `EmailPoller.gs`
-   tamamını [yeni kaynak](email-poller.gs) ile değiştir ve kaydet. Mevcut
-   `kontrollerEpostBestillinger` tetikleyicisini koru.
-3. Firebase Rules içinde adminin `notificationTemplates` ve
-   `notificationTests/.../request` yazma yetkisini; Apps Script'in bu
-   şablonları okuma ve `notificationTests/.../result` yazma yetkisini
-   doğrula. RTDB kimlik doğrulama/yetkilendirme üretim için zorunludur.
-4. Admin → Varslinger'de her şablonu kaydet, sonra **Send test** ve
-   **Kontroller teststatus** kullan. SMS testi yalnızca Apps Script özel
-   `TEST_PHONE` ayarına, e-posta testi Apps Script'in özel `KOL_TEST_EMAIL` ayarına,
-   bu ayar boşsa script'i çalıştıran Google hesabının gelen kutusuna
-   gönderilir. Test arayüzünden alıcı numara/adres gönderilmez.
-
-### Admin panelindeki üç test için ortak düzeltme (26.10.2026)
-
-- **SMS · Bekreftet:** `Kode.gs` içindeki test siparişi artık geçerli
-  `orderPageUrl`, `estimatedMinutes` ve `estimatedAt` alanları içerir.
-  SMS test isteği normal sipariş listesinden **önce** işlenir: sipariş
-  indekslemesi/geçici okuma hatası testi engellemez.
-- **E-post · Bekreftet / E-post · Klar:** `email-poller.gs` test örnekleri
-  geçerli `orderPageUrl` ile oluşturulur. 3 dakikalık bekleme süresi artık
-  **her e-posta şablonu için ayrıdır**, ancak ortak **4 test/gün** limiti
-  korunur. SMS için **3 test/gün** ve **3 dakika** sınırı değişmez.
-- Yeni `orderPageUrl` testlerde Script Property `ORDER_PAGE_URL` üzerinden
-  alınır. Belirlenmemişse **yalnızca test e-postasında/SMS'inde**
-  `https://example.org/` kullanılır (gerçek müşteri siparişlerinde kullanılmaz).
-- Admin panelindeki `Send test`, **Firebase'de test isteği oluşturur**.
-  Teslimat doğrulaması değildir. `Kontroller teststatus` önce sonuç
-  kaydını gösterir. `sent`, sağlayıcının kabulünü ifade eder;
-  telefon/gelen kutusu teslimini ayrıca kontrol etmek gerekir.
-- Bu değişiklikler GitHub'a eklenmiş **kaynak dosyalardır**. Çalışan
-  iki Apps Script projesine kendi elinle `Kode.gs` ve
-  `email-poller.gs` dosyalarını kopyalamak gerekir. Mevcut tetikleyici,
-  Script Properties, token ve checkpoint kayıtlarını **silme**.
-
-### Test e-postası gönderilmediğinde
-
-1. Admin **Send test** yalnızca Firebase'e `notificationTests/emailAccepted/request`
-   veya `notificationTests/emailReady/request` kaydeder; kendisi e-posta
-   göndermez.
-2. Google Apps Script'in aktif `kontrollerEpostBestillinger` zaman
-   tetikleyicisi yeni `email-poller.gs` kodunu çalıştırmalıdır. Kod
-   güncel değilse istek hiç işlenmez.
-3. Script Properties içinden `KOL_TEST_EMAIL` oluşturup alıcı
-   e-posta adresini tanımlayabilirsin. Bu adres Firebase'de veya web
-   sayfasında tutulmaz. Boş bırakıldığında script sahibinin e-posta
-   adresi kullanılır.
-4. Apps Script içindeki `kontrollerEpostTestNaa()` fonksiyonunu
-   bir kere elle çalıştırabilirsin. Bu fonksiyon yalnızca mevcut test
-   taleplerini işler, müşteri siparişleri gönderimini tetiklemez.
-5. Admin **Kontroller teststatus** bölümünde `sent`, `failed`,
-   `rate_limited` veya `ignored` sonucu görülmeli. İki dakika
-   içinde hiçbir cevap yoksa Apps Script → Executions ve Firebase
-   Rules'taki `notificationTests` okuma/yazma izinleri kontrol
-   edilmeli. Test isteği 10 dakika sonra geçersizdir.
-
-**Güvenlik:** Test SMS en fazla 3/gün, e-posta 4/gün ve en az 3 dakika
-ara ile yapılır. Test ID'leri önce işlenmiş olarak saklanır; belirsiz bir
-gönderimi otomatik tekrarlamayız. Traccar/MailApp tarafından kabul
-edilmiş olması telefon/inbox teslimi kanıtı değildir. Admin sayfası
-ayrı bir sunucu oturum sistemi kullanmıyorsa yalnızca Firebase Rules
-ile koruma kurmadan herkese açık erişimi üretimde kullanmayın.
-Bu test komutları herkese açık/yetkisiz bir Firebase kurulumunda
-kötüye kullanılabilir. Alıcıyı komuttan okumamak riski azaltır fakat
-yetkilendirmenin yerine geçmez.
-
-Eğer şablon isteği Firebase tarafından reddedilirse gönderici **mevcut
-sabit metnine geri döner**, sipariş bildirimi durmaz. Yeni şablon yalnızca
-gönderimden önce okunur; çalışan trigger'ın tekrar kurulmasına gerek
-yoktur. Metin değiştirirken Apps Script dosyası artık tekrar
-kopyalanmaz.
-
-## SMS – aktiv Google Apps Script-kilde
-
-**Én full kildefil:** [Kode.gs](Kode.gs) inneholder
-`pollOrdersForSms()`, Traccar-sending, én bekreftelses-SMS med hentetid,
-Firebase-`smsHealth`, og et godkjent Traccar-kvitteringsfelt på ordren.
-Den samme koden inneholder `diagnoseSms()`, `checkSmsResults()` og
-`stopSms()` for sikker manuell diagnose/stans.
-
-## Sipariş bağlantısı: alan adı ve klasör bağımsız (25.10.2026)
-
-Müşteri `index.html` dosyasında ya da admin `admin.html` dosyasında hangi
-HTTPS domain/klasör altındaysa tarayıcı ortak `js/order-links.js` modülünden
-müşteri ana dizinini bulur. Yeni siparişin `orders/{id}/orderPageUrl`
-alanına bu kök adres yazılır. Örnekler:
-
-- `https://bestill.online/demo/index.html` veya `/demo/admin.html`
-  → `https://bestill.online/demo/?order=ord_...`
-- `https://bestill.online/index.html` veya `/admin.html`
-  → `https://bestill.online/?order=ord_...`
-- `https://ornek.no/restaurant/admin.html`
-  → `https://ornek.no/restaurant/?order=ord_...`
-
-Google Apps Script sunucu tarafında çalışır; `window.location` bilgisine
-erişemez. Bu yüzden SMS ve e-posta göndericileri `orderPageUrl` alanını
-okur; kodda sabit domain ve klasör bulunmaz. **Eski siparişler** bu alanı
-taşımayabilir. Eski siparişlere de link gönderilecekse *her iki* Google Apps
-Script projesinin Script Properties bölümüne `ORDER_PAGE_URL`
-adında geçerli HTTPS müşteri dizini yaz (ör. `https://bestill.online/demo/`).
-Yeni siparişlerde kaydedilen URL önceliklidir; bu ayar yalnızca yedektir.
-Bu alan da yoksa bilinmeyen/eski adrese yanlış bir link göndermek yerine hata
-verilir. Taşınan eski alan adlarının daha önceki siparişler için çalışması
-ayrıca yönlendirme veya yeni link üretimi gerektirir.
-
-**GitHub'daki .gs kaynaklarının değişmesi canlı Apps Script'i güncellemez.**
-SMS ve e-posta projelerindeki ilgili bütün kaynak kodu manuel senkronize et.
-
-**Varslinger / E-post · Bekreftet ve E-post · Klar:** Yalnızca HTML kodu ve
-e-posta konusu düzenlenir; eski "Enkel redigering" arayüzü kaldırılmıştır.
-Firebase'de eski v1 tasarımlar kalabilir; bunlar görüntüleme için HTML'ye
-çevrilebilir, yeni kayıtlarda v2 kullanılır.
-
-## SMS-tekst med lenke (24.10.2026)
-
-Bekreftelses-SMS sendes i dette formatet:
-
-```text
-Hei FATIH! Bestillingen din er bekreftet ✅
-
-Forventet hentetid: kl. 01:45
-
-Se bestillingen: https://[restaurantens-domene]/[valgfri-katalog]/?order=ord_mv1ji63i2sea2
-
-KØL Grill & Pizza
-```
-
-Navn, klokkeslett og full ordre-ID settes fra **den aktuelle ordren**.
-Norgetid (`Europe/Oslo`) vises som `HH:mm`, uten dato og uten
-anslåtte minutter i parentes. Planlagte henteordrer bruker valgt
-klokkeslett, `Snarest` bruker kjøkkenets estimerte `estimatedReadyAt`.
-Hvis ingen gyldig klokkeslett er tilgjengelig, vises `snarest` (ikke
-et oppfunnet tidspunkt). Bare første bekreftelse får SMS.
-
-SMS-lenken bruker hele ordrenummeret som en privat tilgangslenke.
-`demo/js/customer.js` åpner `?order=ord_...` direkte til
-`Mine bestillinger` på også en ny enhet. Ikke del lenken offentlig,
-siden den gir tilgang til ordredetaljer. Ekstern referrer-sporing
-fra kundesiden er deaktivert.
-
-**Viktig ved publisering:** GitHub-kildekoden er oppdatert, men den
-kjørende Google Apps Script-installasjonen oppdateres **ikke** automatisk.
-I Google Apps Script-prosjektet `KOL SMS Gateway` må ny full
-`Kode.gs` kopieres inn og lagres. Behold eksisterende Script
-Properties og den aktive `pollOrdersForSms`-triggeren. Ikke kjør
-`setupTestSms()`, `setupLiveSms()` eller `sendTestSms()` for denne
-tekstendringen. Test deretter med én ny testordre. 
-
-**Aldri bland gammel og ny versjon ved å lime inn et enkelt kodestykke.**
-Ta sikkerhetskopi av aktiv `KOL SMS Gateway → Kode.gs` i Google,
-og sammenlign den med denne GitHub-kilden før du eventuelt oppdaterer den.
-**En GitHub-endring oppdaterer ikke Googles kjørende Apps Script.**
-De eksisterende Script Properties (inkludert `TRACCAR_TOKEN`,
-`TEST_PHONE`, `KOL_MODE`, `KOL_ACTIVE_SINCE` og `KOL_SENT_...`)
-og minuttutløseren skal beholdes. `setupLiveSms()`,
-`setupTestSms()`, `sendTestSms()` må **ikke** kjøres igjen under
-opprydding — de kan endre aktivering eller sende en testmelding.
-
-`api/sms-status.js` og `api/sms-receipts.js` (Vercel), en
-nettleserbasert telefonmonitor og tilhørende Apps Script `doGet()`
-for proxyen er slettet fra GitHub-kilden. Det allerede kjørte
-engangsverktøyet for å kopiere eldre SMS-kvitteringer er også fjernet
-fra kilden. Disse endringene **påvirker ikke** live Apps Script før
-det er bevisst oppdatert, og er ikke en forespørsel om å nullstille
-tidligere SMS-historikk.
-
-Firebase RTDB `/orders` bør ha `.indexOn` for
-`statusUpdatedAt`; ellers leser SMS-polleren bare de 80 siste
-ordrene som reserve. `KOL_SENT_<ordre-id>_accepted` sikrer at en
-HTTP-timeout ikke automatisk utløser samme SMS igjen.
-
-**Merk:** Grønne statuslys kan ikke bevise mobilens internett.
-En Traccar Cloud-bekreftelse beviser kun at nettskyen godtok
-forespørselen, ikke at Android eller mobiloperatøren leverte SMS.
-Admin-panelet viser derfor vellykket LIVE Apps Script-poll
-som **gul/ikke verifisert** til en ekte enhetskontroll finnes.
-
-## E-posta — iki ayrı HTML şablonu (Bekreftet + Klar)
-
-**[email-poller.gs](email-poller.gs)** tam `EmailPoller.gs` kaynağıdır.
-
-- **İlk e-posta, Bekreftet:** seçilen/tahmin edilen saati büyük **Hentetid**
-  başlığıyla gösterir. "Snarest", tahmini dakika, ürünler, seçenekler, telefon,
-  vergi ve toplam tutar yer alır.
-- **İkinci e-posta, Klar for henting:** sipariş gerçekten **personel tarafından**
-  hazır işaretlenince oluşturulur. Büyük hazır bildirimi ve gerçek
-  `staffReadyAt` saati gösterilir. Sürenin dolması *e-posta göndermez*.
-- İki gönderim farklı **subject** ve HTML gövdeye sahiptir. Mevcut geçmiş
-  `kol_order_...` kayıtları ve kind-temelli tekrar önleme koruması korunur.
-- SMS tarafında değişiklik yoktur: sipariş başına tek Hentetid SMS'i gönderilir.
-- Gmail için harici görsel gerektirmeyen koyu yeşil, krem ve altın tonlarında
-  masaüstü/mobil uyumlu, inline CSS kullanan e-posta tasarımı kullanılır.
-
-### Mevcut Apps Script'e güncelleme
-
-1. Google Apps Script → **EPOST GONDERME KØL** → `EmailPoller.gs`.
-2. Var olan kodunun kopyasını al. [GitHub tam kodunu](email-poller.gs)
-   aç, içeriğini **tamamını** Apps Script'e yapıştır ve kaydet.
-3. Fonksiyon listesinden **`testBeggeEpostMalerTilMeg()`** seçip çalıştır.
-   İki **örnek** e-posta yalnızca Apps Script'i çalıştırdığın Gmail hesabına
-   gider; müşterilere gönderilmez. Gmail'deki görüntüyü kontrol et.
-4. Mevcut `kontrollerEpostBestillinger()` zaman tetikleyicisini **koru**.
-   Kurulumu sıfırlayan `installerEpostVarsler()` fonksiyonunu çalıştırma.
-5. Test siparişi oluştur, onayla, ardından restoran ekranındaki **Marker klar
-   for henting** butonuna bas. Gerçek müşteri e-postasına iki farklı mail
-   gitmeli. Bu süreçte yalnızca **ilk Hentetid SMS'i** gider.
-6. Firebase indirme optimizasyonu korunur: indeksli
-   `statusUpdatedAt` sorgusu ve son başarılı tarama zamanını kullanır.
-
-**Not:** GitHub'a yayınlama, Google Apps Script dosyasını **otomatik
-güncellemez**. Müşteri e-postalarını gönderen canlı proje ancak bu kaynak
-yapıştırılıp kaydedildiğinde yeni tasarımı kullanır.
-
-## E-posta gönderimi ve doğrulama (17.10.2026)
-
-- **Neden kayboluyordu:** Bir sipariş ilk dakika dolmadan `bekreftet`
-  olursa Apps Script ilk taramada durumunu kaydedip bildirim göndermiyordu.
-- **Düzeltme:** Yeni kod, son **60 dakika** içinde gerçekten `bekreftet`
-  olmuş siparişi ilk defa görse bile kabul e-postasını gönderir.
-  `klar` e-postası yalnızca gerçek `staffReadyAt` ile gönderilir.
-  Eski birikmiş siparişlere toplu e-posta göndermez. Kod ilk çalıştığında,
-  eski bug nedeniyle son bir saat içinde atlanan siparişleri bir kez kontrol eder.
-  Sonraki taramalarda yine iki dakikalık indeksli pencere kullanılır.
-- **Tekrar önleme:** `KOL_SENT` SMS geçmişine dokunulmaz. E-posta için
-  `kol_order_...` / `sent` checkpoint'leri korunur; başarısız veya belirsiz
-  `MailApp` gönderimi körlemesine tekrarlanmaz.
-- **Gerçek kayıt:** Ancak `MailApp.sendEmail` başarılı döndükten sonra,
-  `/orders/{id}/emailReceipts/{accepted|ready}` yazılır. Restoran ekranındaki
-  yeşil zarf bu kayıt yoksa **görünmez**. Bu kayıt e-posta servisinin gönderimi
-  kabul ettiğini gösterir; alıcının gelen kutusuna teslim garantisi değildir.
-- **Bağlantı kontrolü:** Her çalışan tetikleyici `/emailHealth` altına son
-  çalışma ve kalan MailApp günlük gönderim kotasını yazar.
-  Admin paneli yaklaşık 90 saniyede bir bu küçük kaydı okur.
-  Son 3 dakika içinde geçerli kontrol bulunmazsa e-posta göstergesi yeşil olmaz.
-  SMS / printer durumları bağımsızdır.
-- **Firebase izinleri:** Yeni kod `/orders/{id}/emailReceipts` ve
-  `/emailHealth` yollarına yazabilmelidir. Firebase erişim kurallarını sırf
-  bu işlem için **herkese açık yazma** haline getirmeyin. DEMO'nun açık kuralları
-  güvenilir gönderim kanıtı için yeterince güvenli değildir; gerçek müşteriler
-  öncesinde sunucu tarafında kimlik doğrulama ve yazma yetkileri gerekir.
-
-### Canlı Apps Script'e geçirmek için
-
-1. GitHub'daki güncel [email-poller.gs](email-poller.gs) dosyasını tamamen
-   kopyalayın; **EPOST GONDERME KØL → EmailPoller.gs** içinde eskisinin yerine
-   yapıştırın ve kaydedin. Önce mevcut kodu yedekleyin.
-2. `installerEpostVarsler()` **çalıştırmayın**; bu, eski siparişlerin
-   durum kayıtlarını ve tetikleyiciyi değiştirir. Mevcut dakikalık
-   `kontrollerEpostBestillinger` tetikleyicisi kalmalıdır.
-3. Apps Script **Yürütmeler** sekmesinde `kontrollerEpostBestillinger`
-   hatasız çalışıyor mu kontrol edin. Yeni kodu elle ilk kez çalıştırmak
-   son bir saatin gerçekten onaylanmış, ancak henüz e-posta almamış DEMO
-   siparişlerine bildirim gönderebilir.
-4. Yeni test siparişi verin, hemen `Bekreft` yapın, MailApp gönderim
-   kaydını ve admin ekranındaki yeşil e-posta işaretini kontrol edin.
-   `Marker klar for henting` sonrası ikinci e-posta için de tekrar edin.
-
-**Önemli:** GitHub'a commit/push yapmak Apps Script web arayüzündeki canlı
-`EmailPoller.gs` kaynağını otomatik olarak değiştirmez.
-
-## Firebase kuralları ve gizlilik
-
-Kullanılan RTDB `/orders` altında indeks:
-```json
-".indexOn": ["statusUpdatedAt", "estimateUpdatedAt"]
-```
-İndeks izni açmaz. Veritabanında `.read: true` / `.write: true` bulunması
-müşteri bilgilerinin herkesçe okunabilmesi ve değiştirilebilmesi anlamına gelir;
-canlıya geçmeden kimlik doğrulamalı ve kısıtlı kurallar kullanılmalı.
-
-## Manuell oppdatering av Apps Script (25.10.2026)
-
-- Google Apps Script laster **ikke** ned GitHub-kode ved kjøring.
-- Oppdater SMS-prosjektets eksisterende `Kode.gs` ved å kopiere hele innholdet
-  fra `Kode.gs` her. Behold Script Properties og triggeren `pollOrdersForSms`.
-- Oppdater e-postprosjektets eksisterende `EmailPoller.gs` ved å kopiere hele
-  innholdet fra `email-poller.gs` her. Behold Script Properties og
-  triggeren `kontrollerEpostBestillinger`.
-- Ikke bruk `installerEpostVarsler()` eller `setupLiveSms()` bare for en vanlig
-  kildekodeoppdatering. De er for førstegangsoppsett/modusbytte.
-- For lenker til eldre ordre uten `orderPageUrl`: Script Property
-  `ORDER_PAGE_URL` i begge prosjekter kan være restaurantens faktiske
-  kunde-URL (HTTPS, med avsluttende skråstrek).
-- Firebase brukes som før til bestillinger og e-post/SMS-maler, aldri som
-  en liste over GitHub-kildekoder.
+- SMS/e-posta taraması `orders` altında `statusUpdatedAt` indeksinden yararlanır. Kullanılan RTDB Rules ve indeksleri çalışan ortamda kontrol et.
+- `/orders`, `/notifications` ve `/customers` gibi yolları herkese açık okuma/yazmaya bırakmak müşteri verileri ve test komutları açısından risklidir.
+- Canlı Script Properties, tokenlar, tetikleyiciler, geçmiş gönderim işaretleri veya Firebase siparişleri temizlik amacıyla sıfırlanmaz.
+- Bu doküman kurulum kılavuzudur, aktif Google Apps Script'in şu anda sorunsuz çalıştığına dair test sonucu değildir.
