@@ -364,10 +364,14 @@
                         <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
                             <h2>Hentetid</h2>
                             <div class="set-field">
+                                <label class="lbl" for="sPrepMinutes">Estimert tilberedningstid (min)</label>
+                                <input id="sPrepMinutes" class="input" type="number" min="0" max="240" step="5">
+                            </div>
+                            <div class="set-field">
                                 <label class="lbl" for="sPickupLeadMinutes">Minimum ventetid før henting (min)</label>
                                 <input id="sPickupLeadMinutes" class="input" type="number" min="15" max="240" step="5">
                             </div>
-                            <p class="set-hint">Første hentetid blir minst valgt antall minutter frem i tid, avrundet opp til nærmeste kvarter. Deretter vises tider hvert 15. minutt, ikke etter stengetid.</p>
+                            <p class="set-hint">Første hentetid blir minst valgt antall minutter frem i tid, avrundet opp til nærmeste kvarter. Deretter vises tider hvert 15. minutt, ikke etter stengetid. Estimert tilberedningstid vises i restaurantinformasjonen.</p>
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
