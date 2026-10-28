@@ -95,7 +95,7 @@ export function addOrderTrackingToEmailHtml(source,kind='emailAccepted'){
     '<tr><td align="center" style="padding:9px 8px;color:#bc6419;font-size:13px;line-height:21px;font-weight:800;">&#10003; Mottatt &nbsp;&mdash;&nbsp; &#10003; Bekreftet &nbsp;&mdash;&nbsp; &#9675; Klar</td></tr>',
     '<tr><td align="center" style="padding:7px 10px 2px;font-size:12px;line-height:18px;color:#526e5b;">Estimert hentetid</td></tr>',
     '<tr><td align="center" style="padding:0 10px 11px;font-size:27px;line-height:33px;font-weight:800;color:#153f2b;">{hovedtid}</td></tr>',
-    '<tr><td align="center" style="padding:0 10px 14px;font-size:12px;line-height:19px;"><a href="{lenke}" style="color:#256044;font-weight:800;text-decoration:underline;">Se bestillingen – følg status live</a></td></tr>',
+    '<tr><td align="center" style="padding:0 10px 14px;font-size:11px;line-height:18px;color:#687a6e;">Bruk Se bestillingen-knappen under for live status.</td></tr>',
     '</table></td></tr>'
   ].join('');
   // Keep the supplied custom design: insert immediately before its existing
