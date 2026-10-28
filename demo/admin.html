@@ -291,7 +291,7 @@
                 </header>
                 <nav class="settings-section-nav" aria-label="Kategorier for restaurantinnstillinger">
                     <button class="settings-section-btn is-active" data-settings-section-tab="status" type="button">Åpen / stengt</button>
-                    <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Hentetid</button>
+                    <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Siste bestilling</button>
                     <button class="settings-section-btn" data-settings-section-tab="printer" type="button">Printer ayarları</button>
                     <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
@@ -362,12 +362,12 @@
                         </div>
 
                         <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
-                            <h2>Hentetid</h2>
+                            <h2>Siste bestilling</h2>
                             <div class="set-field">
                                 <label class="lbl" for="sLastOrderBeforeClose">Siste bestilling før stengetid (min)</label>
                                 <input id="sLastOrderBeforeClose" class="input" type="number" min="30" max="120" step="5">
                             </div>
-                            <p class="set-hint">Nettbestillinger stopper valgt antall minutter før stengetid (minimum 30). Hentetider vises hvert 15. minutt, tidligst 30 minutter etter bestilling.</p>
+                            <p class="set-hint">Nettbestillinger stopper valgt antall minutter før stengetid (minimum 30). Ledige hentetider vises i intervaller på 15 minutter.</p>
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
