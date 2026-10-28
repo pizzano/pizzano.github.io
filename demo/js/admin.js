@@ -247,8 +247,6 @@ const el = {
     manualClosed: $('sManualClosed'),
     closedMessage: $('sClosedMessage'),
     openStateLine: $('openStateLine'),
-    orderOpenTime: $('sOpenTime'),
-    orderCloseTime: $('sCloseTime'),
     openingDays: $('sOpeningDays'),
     pickupLeadMinutes: $('sPickupLeadMinutes'),
     prepMinutes: $('sPrepMinutes'),
@@ -3443,8 +3441,6 @@ const SETTING_FIELDS = [
   ['orderAlarmUrl', 'alarmUrl'],
   ['openingDays', 'text'],
   ['closedMessage', 'text'],
-  ['orderOpenTime', 'text'],
-  ['orderCloseTime', 'text'],
   ['pickupLeadMinutes', 'number'],
   ['prepMinutes', 'number'],
 ];
@@ -3660,7 +3656,6 @@ function bindSettingField(key, type) {
         } else {
           state.settings[key] = raw;
         }
-        state.settings.openingTime = `${state.settings.orderOpenTime} - ${state.settings.orderCloseTime}`;
       },
       { silent: false }
     );
