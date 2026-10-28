@@ -9,7 +9,7 @@
  *
  * Legacy filename kept so existing admin entrypoints continue to work.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261028-atomic1';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261028-firebase4';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 
 const LIVE_LIMIT = 100;
@@ -20,8 +20,6 @@ const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const deletedInPage = new Set();
 let scheduled = 0;
 let running = false;
-let legacyArchiveGone = false;
-let legacyArchiveCleanupRunning = false;
 
 function eligible(order, now) {
   if (!order?.id || !CLOSED_STATUSES.has(order.status)) return false;
@@ -93,29 +91,14 @@ async function deleteOldOrder(snapshot) {
   return true;
 }
 
-// Existing /orderArchive entries must not remain after retiring archiving.
-// This is one DELETE of the legacy subtree, never a copy or historical read.
-// Retry on a later admin maintenance tick if the network is unavailable.
-async function removeLegacyArchive() {
-  if (!DB_URL || legacyArchiveGone || legacyArchiveCleanupRunning ||
-      document.hidden || navigator.onLine === false) return;
-  legacyArchiveCleanupRunning = true;
-  try {
-    await fetchChecked(DB_URL + '/orderArchive.json', { method: 'DELETE' });
-    legacyArchiveGone = true;
-  } catch (error) {
-    console.warn('Gammelt ordrearkiv kunne ikke slettes ennå:', error.message);
-  } finally {
-    legacyArchiveCleanupRunning = false;
-  }
-}
+// Historical /orderArchive records are never deleted by routine maintenance.
+// Only individually eligible old /orders entries are pruned after safeguards.
 
 async function maintainOrders() {
   if (!DB_URL || running || document.hidden || navigator.onLine === false) return;
   running = true;
   let deleted = 0;
   try {
-    await removeLegacyArchive();
     for (const order of candidates()) {
       try {
         if (await deleteOldOrder(order)) deleted++;

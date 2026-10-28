@@ -1133,8 +1133,16 @@ function syncCustomerStreams() {
 async function pollCustomerOrders(force = false) {
   if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
   const now = Date.now();
-  if (!force && now - lastCustomerPollAt < CUSTOMER_ORDER_POLL_MS) return;
-  const ids = [...customerTrackedIds()].reverse();
+  // Fast updates for pending/preparing orders; reduce idle Firebase reads
+  // when all locally tracked orders have reached a terminal state.
+  const tracked = customerTrackedIds();
+  const needsLiveUpdates = tracked.some(id => {
+    const status = String(ordersRaw[id]?.status || '');
+    return !status || ['mottatt', 'bekreftet', 'tilberedning'].includes(status);
+  });
+  const interval = needsLiveUpdates ? CUSTOMER_ORDER_POLL_MS : 30000;
+  if (!force && now - lastCustomerPollAt < interval) return;
+  const ids = [...tracked].reverse();
   if (!ids.length) return;
   lastCustomerPollAt = now;
   customerPollBusy = true;

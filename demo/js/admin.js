@@ -55,7 +55,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261028-atomic1';
+} from './data.js?v=20261028-firebase4';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
