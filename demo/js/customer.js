@@ -139,6 +139,7 @@ const ui = {
   checkoutStep: 2,
   pickup: null,
   pickupMode: null,
+  showAllPickupTimes: false,
   editingLineId: null,
   expandedBlocks: new Set(),
   showAllergens: loadJSON(ALLERGEN_VISIBILITY_KEY, false) === true,
@@ -1884,9 +1885,14 @@ function renderCheckout() {
     button.setAttribute('aria-pressed', String(active));
   });
   const showTimes = state.orderable && ui.pickupMode === 'scheduled';
+  const visibleTimes = ui.showAllPickupTimes ? slots : slots.slice(0, 12);
+  const moreTimes = document.getElementById('btnMorePickupTimes');
+  moreTimes.hidden = !showTimes || slots.length <= 12;
+  moreTimes.textContent = ui.showAllPickupTimes ? 'Vis færre tider' : `Vis flere tider (${slots.length - 12})`;
+  moreTimes.setAttribute('aria-expanded', String(ui.showAllPickupTimes));
   el.timeGrid.hidden = !showTimes;
   el.timeGrid.innerHTML = showTimes
-    ? slots.map((slot) => `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''}" aria-pressed="${ui.pickup === slot.value}" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`).join('')
+    ? visibleTimes.map((slot) => `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''}" aria-pressed="${ui.pickup === slot.value}" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`).join('')
     : '';
   el.pickupHint.textContent = state.preOpen
     ? `Vi åpner kl. ${state.todayOpensAt}. Tidligste hentetid er ${slots[0]?.value || '15 minutter etter åpning'}. Velg tid.`
@@ -3080,6 +3086,7 @@ el.pickupChoices.addEventListener('click', (event) => {
   if (!getOpenState().open) return;
   ui.orderSendFailed = false;
   ui.pickupMode = button.dataset.pickupMode;
+  ui.showAllPickupTimes = false;
   ui.pickup = ui.pickupMode === 'asap' ? 'asap' : null;
   el.errTime.hidden = true;
   el.pickupChoices.classList.remove('pickup-needs-choice', 'pickup-choice-hint');
@@ -3087,6 +3094,10 @@ el.pickupChoices.addEventListener('click', (event) => {
   renderCheckout();
 });
 
+document.getElementById('btnMorePickupTimes').addEventListener('click', () => {
+  ui.showAllPickupTimes = !ui.showAllPickupTimes;
+  renderCheckout();
+});
 el.timeGrid.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-time]');
   if (!btn || ui.pickupMode !== 'scheduled' || !getPickupSlots().some((slot) => slot.value === btn.dataset.time)) return;
