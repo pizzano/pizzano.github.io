@@ -54,7 +54,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261027-preopen1';
+} from './data.js?v=20261028-atomic1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

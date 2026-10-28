@@ -2,7 +2,7 @@
 
 **Production:** GitHub Pages customer and admin frontend, Firebase Realtime Database, Google Apps Script SMS/e-mail. No Vercel.
 
-**Order flow:** Customer builds cart and submits order with a stable retry ID to Firebase. Admin listens for new orders and attempts `Godta` via Firebase PATCH. Customer watches status. Google Apps Script writes sending receipts; UI reflects actual receipt data. Archive/loyalty helpers process recorded orders.
+**Order flow:** Customer builds cart and submits order with a stable retry ID to Firebase. Admin listens for new orders and attempts `Godta` via Firebase conditional PUT (ETag). Customer watches status. Google Apps Script writes sending receipts; UI reflects actual receipt data. Archive/loyalty helpers process recorded orders.
 
 **Hours and confirmations:** Configured weekly operating days/hours in Firebase `settings` decide availability. Ordering before today's opening is permitted on enabled days, earliest collection 15 minutes after opening, with `confirmationNoTimeout: true`. Orders placed during open hours have a 180-second pending confirmation deadline. Manual close disables new orders.
 
@@ -10,7 +10,7 @@
 
 **Module identity:** Every browser import of `./data.js` must resolve to the same URL including its query string. Otherwise each URL instantiates separate Firebase stream/state logic. The reference audit checks this.
 
-**Safety/limitations:** Existing admin acknowledgement uses one PATCH; receipt fields are preserved, but simultaneous staff clients are not protected by a server-side conditional status transaction. Do not claim this race is solved. Test with emulator/stubs before changing. Offline checks cover syntax, references, and pure timeout rules, not browser delivery, Firebase auth/rules, concurrent actual transactions, SMS or email.
+**Order consistency:** New orders use create-only conditional PUT (`if-match: null_etag`), so a network retry cannot replace an already accepted record. Admin Godta reads the latest Firebase order + ETag and writes the merged record using conditional PUT; competing tablet approvals, timeout cancellations, or receipt writes cause HTTP 412 instead of silent overwrites. No automatic repeat writes for a conflict. These rules need real Firebase Rules and browser tests in addition to mocked tests. Offline checks cover syntax, references, and pure timeout rules, not browser delivery, Firebase auth/rules, concurrent actual transactions, SMS or email.
 
 **Editing map:** Checkout: `customer.js`; accepted orders: `admin.js` plus `data.js`; confirmation deadlines: `order-confirmation.js`; restaurant schedule: `data.js`; notifications: Apps Script + receipt renderers; CSS in `demo/css/`; loyalty: `loyalty.js`, `loyalty-sync.js`, `data.js`.
 
