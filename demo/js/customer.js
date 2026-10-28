@@ -39,7 +39,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261028-atomic1';
+} from './data.js?v=20261028-firebase4';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
