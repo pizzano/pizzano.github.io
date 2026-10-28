@@ -208,6 +208,7 @@
                     <button class="pickup-choice" data-pickup-mode="scheduled" aria-pressed="false" aria-controls="timeGrid" type="button"><strong>Velg tid</strong><small>Hent på et klokkeslett</small></button>
                 </div>
                 <div class="time-grid" id="timeGrid" hidden></div>
+                <button class="btn btn-outline" id="btnMorePickupTimes" type="button" hidden aria-expanded="false" aria-controls="timeGrid" style="width:100%;margin-top:10px">Vis flere tider</button>
                 <p class="err" id="errTime" role="alert" hidden>Velg Snarest eller Velg tid og et klokkeslett.</p>
                 <div class="pickup-review-host" id="reviewCard"></div>
             </div>
@@ -387,8 +388,8 @@
       document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
       window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
     </script>
-    <script type="module" src="./js/customer.js?v=20261028-pickuplead1"></script>
-    <script type="module" src="./js/shop-info.js?v=20261028-weekhours1"></script>
+    <script type="module" src="./js/customer.js?v=20261028-fullslots1"></script>
+    <script type="module" src="./js/shop-info.js?v=20261028-fullslots1"></script>
 </body>
 
 </html>

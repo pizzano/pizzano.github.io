@@ -462,7 +462,7 @@ export function getPickupSlots() {
     : nowMinute+remaining-10;
   const first=state.preOpen ? openMinute+prep : nowMinute+prep;
   const slots=[];
-  for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<25;m+=interval)
+  for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<96;m+=interval)
     slots.push({value:formatMinutes(m),label:formatMinutes(m)});
   return slots;
 }
