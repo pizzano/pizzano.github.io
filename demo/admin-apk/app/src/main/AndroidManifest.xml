@@ -3,6 +3,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Sipariş Admin"
+        android:icon="@drawable/ic_admin"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false"
         android:allowBackup="false">

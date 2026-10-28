@@ -1,25 +1,21 @@
 # Sipariş Admin — Android APK (yalnızca demo/)
 
-Bu klasör yalnızca **admin** paneli için Android Studio projesidir. Müşteri sistemi, Firebase verileri, SMS ve e-posta altyapısı değişmez.
+Bu klasör yalnızca admin panelinin Android uygulamasıdır. Müşteri sitesi, Firebase, SMS ve e-posta servisleri değişmez.
 
-## Çalışma biçimi
-Uygulama Android WebView ile **https://pizzano.github.io/demo/admin.html** adresini açar. Dolayısıyla:
-- İnternet gereklidir; uygulama çevrimdışı sipariş yönetimi sağlamaz.
-- Canlı sitedeki admin güncellemeleri uygulamaya da yansır (WebView önbelleği dikkate alınır).
-- Firebase ve Google Apps Script mevcut web uygulamasındaki gibi çalışmaya devam eder.
-- Ekran uygulama açıkken uykuya geçmez.
-- Yeni sipariş sesi Android WebView ses politikalarına ve cihaz ayarlarına bağlıdır; cihaz üzerinde test edilmelidir.
-- Uygulama kapalı veya arka plandayken güvenilir bildirim/push **henüz yoktur**.
-- Web sayfasındaki termal yazıcı / window.print akışının Android WebView üzerinde otomatik çalışması garanti değildir; ayrı yerel yazdırma entegrasyonu gerekebilir.
-- Bu ilk sürümde mağaza yayını/üretim kimlik doğrulaması veya yerel bildirim altyapısı kurulmamıştır.
+## Nasıl açılır?
+APK, Android WebView içinde `https://bestill.online/demo/admin.html` sayfasını açar. GitHub Pages deposunun CNAME kaydı `bestill.online` olduğundan eski `pizzano.github.io` adresi yönlenebilir. Önceki sürüm sadece eski alan adına izin verdiği için yönlendirmeyi Opera'da açıyordu. 1.1 sürümü her iki alan adını da aynı uygulama içinde tutar.
 
-## APK oluşturma (Windows / Android Studio)
-1. Android Studio'yu açın, **Open** ile `demo/admin-apk` klasörünü seçin.
-2. Gradle Sync tamamlanınca **Build → Build Bundle(s) / APK(s) → Build APK(s)** seçin.
-3. Debug APK: `demo/admin-apk/app/build/outputs/apk/debug/app-debug.apk`.
-4. Android telefona/tablete APK'yı kurup panel, bağlantı, sipariş alımı, ses, yazdırma ve ekran kilidini gerçek cihazda test edin.
+Uygulama kendi penceresinde çalışır; tarayıcı araç çubuğu göstermez. Web admin tasarımı ve Firebase işlevleri aynı kalır. İnternet gerekir. Ekran açık kalır; yükleme sırasında ince ilerleme çizgisi görünür.
 
-Android Studio Android SDK 35 ve JDK 17 gerektirir. Bu klasörde Gradle wrapper binary dosyaları yoktur; Android Studio Gradle kurulumunu/uygun sürümünü isteyebilir. Gerekirse Android Studio terminalinde yüklü Gradle ile `gradle wrapper --gradle-version 8.9` çalıştırın.
+**Sınırlar:** Android arka plan bildirimleri henüz kurulmadı. Uygulama kapalıyken yeni sipariş sesi garanti değildir. Termal yazıcı ve `window.print` gerçek Android cihazda ayrıca test edilmelidir.
 
-## Kapsam
-Yeni dosyalar yalnızca `demo/admin-apk/` altında tutulur. `demo/admin.html`, `demo/js/`, `demo/css/` ve depo dışındaki dosyalar değiştirilmez.
+## GitHub Actions ile APK
+`Build Admin APK` GitHub Actions çalıştırmasını açın; `Artifacts` altından `siparis-admin-apk` arşivini indirin ve içindeki `app-debug.apk` dosyasını yükleyin. Bu test APK'sıdır.
+
+**Önemli:** GitHub Actions her çalıştırmada yeni bir debug imzalama anahtarı oluşturabileceğinden Android, eski test sürümünün üzerine yüklemeyi reddedebilir. Bu durumda eski **Sipariş Admin** uygulamasını kaldırıp yenisini yükleyin. Uygulama kaldırmak Firebase siparişlerini silmez; yalnızca cihazda tutulmuş yerel uygulama verilerini sıfırlayabilir.
+
+## Android Studio ile derleme
+`demo/admin-apk` klasörünü açın, SDK 35 ve JDK 17 kurulu olduğundan emin olun, ardından `Build APK(s)` seçin.
+
+## Değişiklik sınırı
+Bu Android uygulama dosyaları yalnızca `demo/admin-apk/` altındadır. Mevcut `demo/admin.html`, `demo/js/`, `demo/css/` ve Firebase verileri değiştirilmez.
