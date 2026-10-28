@@ -3219,7 +3219,7 @@ function refreshOrderClocks() {
   }
   document.querySelectorAll('[data-pending-countdown]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
-    if (order) node.textContent = pendingWait(order);
+    if (order) node.textContent = pendingDetailCountdown(order);
   });
   document.querySelectorAll('[data-pending-age]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingAge);
