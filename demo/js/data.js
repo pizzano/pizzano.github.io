@@ -1176,8 +1176,8 @@ function customerTrackedIds() {
   });
 }
 
-// Customers use short-lived REST reads for known order IDs, not one
-// persistent Firebase connection per order (which can block Godta).
+// One live listener follows the newest customer order. Other tracked orders
+// and disconnected browsers use bounded REST fallback.
 function syncCustomerStreams() {
   if (!CUSTOMER_MODE) return;
   startCustomerOrderStream();
@@ -1363,6 +1363,7 @@ export async function refreshFromDatabase() {
 async function fallbackSync() {
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
   if (CUSTOMER_MODE) {
+    startCustomerOrderStream();
     await pollCustomerOrders();
   } else if (!ordersStreamHealthy && !ordersFallbackBusy) {
     ordersFallbackBusy = true;
