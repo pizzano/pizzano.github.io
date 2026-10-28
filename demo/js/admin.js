@@ -250,8 +250,7 @@ const el = {
     orderOpenTime: $('sOpenTime'),
     orderCloseTime: $('sCloseTime'),
     openingDays: $('sOpeningDays'),
-    prepMinutes: $('sPrepMinutes'),
-    slotIntervalMinutes: $('sSlotInterval'),
+    lastOrderBeforeCloseMinutes: $('sLastOrderBeforeClose'),
     slotPreview: $('slotPreview'),
     adminMobileEnabled: $('sAdminMobileEnabled'),
     adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
@@ -3445,8 +3444,7 @@ const SETTING_FIELDS = [
   ['closedMessage', 'text'],
   ['orderOpenTime', 'text'],
   ['orderCloseTime', 'text'],
-  ['prepMinutes', 'number'],
-  ['slotIntervalMinutes', 'number'],
+  ['lastOrderBeforeCloseMinutes', 'number'],
 ];
 
 el.settings.customerPalette.replaceChildren(...Object.entries(CUSTOMER_PALETTES).map(([key, palette]) => new Option(palette.label, key)));
@@ -3654,7 +3652,9 @@ function bindSettingField(key, type) {
     mutate(
       (state) => {
         if (type === 'number') {
-          state.settings[key] = Math.max(0, Number(raw) || 0);
+          state.settings[key] = key === 'lastOrderBeforeCloseMinutes'
+            ? Math.min(120, Math.max(30, Number(raw) || 30))
+            : Math.max(0, Number(raw) || 0);
         } else {
           state.settings[key] = raw;
         }
