@@ -1,32 +1,40 @@
-# KØL runtime and test boundaries (26 October 2026)
+# Teknik notlar — demo/
 
-**Production:** GitHub Pages customer and admin frontend, Firebase Realtime Database, Google Apps Script SMS/e-mail. No Vercel.
+Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları içerir. Geçmiş sürüm günlükleri ve artık geçerli olmayan "audit branch" açıklamaları kaldırılmıştır.
 
-**Order flow:** Customer builds cart and submits order with a stable retry ID to Firebase. Admin listens for new orders and attempts `Godta` via Firebase conditional PUT (ETag). Customer watches status. Google Apps Script writes sending receipts; UI reflects actual receipt data. Archive/loyalty helpers process recorded orders.
+## Çalışan mimari
 
-**Hours and confirmations:** Configured weekly operating days/hours in Firebase `settings` decide availability. Ordering before today's opening is permitted on enabled days, earliest collection 15 minutes after opening, with `confirmationNoTimeout: true`. Orders placed during open hours have a 180-second pending confirmation deadline. Manual close disables new orders.
+- Arayüz: GitHub Pages altında müşteri `index.html` ve admin `admin.html`. Vercel bağımlılığı kullanılmaz.
+- Veri: Firebase Realtime Database REST (`js/data.js`); kaynak URL `config.js`.
+- SMS: Google Apps Script `Kode.gs` + Traccar. E-posta: `email-poller.gs` + MailApp. GitHub'a commit yapmak bu iki çalışan projeyi değiştirmez.
+- Birbirini izleyen JS modüllerinde `data.js` import URL'lerini farklı sürüm parametreleriyle yüklememek gerekir: ayrı modül örnekleri senkronizasyonu bozabilir.
 
-**Firebase paths:** `settings` (single current settings node), order records, customer records, loyalty state and archive are managed in `data.js` and helper modules. Existing records must remain intact. Never wipe or reset the database during verification.
+## Sipariş güvenilirliği
 
-**Module identity:** Every browser import of `./data.js` must resolve to the same URL including its query string. Otherwise each URL instantiates separate Firebase stream/state logic. The reference audit checks this.
+- Yeni sipariş oluştururken Firebase `if-match: null_etag` kullanılır; aynı ID ile gelen tekrar mevcut siparişin üzerine yazmamalıdır.
+- Admin onayı güncel sipariş + Firebase ETag ile koşullu güncelleme yapar. Eşzamanlı değişiklikte HTTP 412 oluşabilir; başarısız onay başarılı olarak gösterilmemelidir.
+- Normal `mottatt` siparişlerinde onay için 180 saniye vardır. `confirmationNoTimeout: true` olan ön sipariş bu süreye tabi değildir.
+- `Klar for henting` personelin gerçek durum değişikliğidir. Tahmini hentetid dolması tek başına `klar` durumunu veya hazır e-postasını oluşturmamalıdır.
+- `orders` temizliğinde en yeni 100 sipariş korunur; daha eski kapalı siparişler yalnızca bildirimler için 72 saatlik güvenlik penceresi geçtikten sonra silinebilir. Aktif siparişler bu limit yüzünden silinmemelidir.
+- Kalıcı müşteri sayacı ve pizza bonus verileri `customers/{phone}` altında tutulur. Silinmiş siparişler geri yüklenmeden bu toplamların korunması önemlidir.
 
-**Order consistency:** New orders use create-only conditional PUT (`if-match: null_etag`), so a network retry cannot replace an already accepted record. Admin Godta reads the latest Firebase order + ETag and writes the merged record using conditional PUT; competing tablet approvals, timeout cancellations, or receipt writes cause HTTP 412 instead of silent overwrites. No automatic repeat writes for a conflict. These rules need real Firebase Rules and browser tests in addition to mocked tests. Offline checks cover syntax, references, and pure timeout rules, not browser delivery, Firebase auth/rules, concurrent actual transactions, SMS or email.
+## Çalışma saatleri
 
-**Editing map:** Checkout: `customer.js`; accepted orders: `admin.js` plus `data.js`; confirmation deadlines: `order-confirmation.js`; restaurant schedule: `data.js`; notifications: Apps Script + receipt renderers; CSS in `demo/css/`; loyalty: `loyalty.js`, `loyalty-sync.js`, `data.js`.
+- Haftalık saatlerin tek kaynağı `settings.weeklyHours` (7 gün). `openingTime`, `orderOpenTime` ve `orderCloseTime` kullanılmaz.
+- Haftalık program kurulmamışsa kodun varsayılanı 14:00–22:00'dır. Bu, Firebase'de kaydedilmiş gerçek restoran saatlerinin yerine geçmez.
+- `manualClosed` ve `manualClosedUntil` geçici kapamayı yönetir.
+- Hentetid hesabında `pickupLeadMinutes` ve `slotIntervalMinutes` kullanılır; varsayılanlar sırasıyla 30 ve 15 dakikadır. Kapanış sınırı ve planlı siparişler ayrıca tarayıcıda test edilmelidir.
 
-**Checks:** `node demo/tools/audit-references.mjs`; `node --experimental-default-type=module --test demo/tests/*.test.mjs`. CI workflow: `.github/workflows/demo-audit.yml`. Finish with browser, emulator and controlled notification tests before release.
+## Bildirimler ve hata takibi
 
-## Diagnostic notifications (audit branch only)
-- `demo/js/system-errors.js` is an isolated, best-effort RTDB writer. `data.js` reports confirmed failures on order creation, Godta, settings persistence and timeout cancellation. It never reports successful operations.
-- RTDB nodes: `systemErrors/{category_reason}` and manually archived `systemErrorsArchive/{category_reason}`. The deterministic key groups repeats. ETag conditional PUT prevents lost repeat-count updates, with bounded retry. Names/phone/e-mail and arbitrary exception text are not stored.
-- Admin `Restaurantinnstillinger → Varsler` polls every 12 seconds while visible, and offers `Lest`, `Løst` and manually triggered archival of resolved records older than 30 days (max 25 per action).
-- `intentionalTest` uses separate `test_` keys. Browser mock tests do not send anything to production Firebase.
-- **Not fully covered:** Google Apps Script runs independently. SMS/EPOST failures inside those deployed scripts are NOT yet forwarded into `systemErrors`; current health/receipt fields remain authoritative. Separate GAS publishing/permissions must be verified before changing those flows. Browser errors that occur before JS starts or when the network is fully offline cannot be persisted until connectivity returns; this reporter currently does not queue them.
-- Access: verify dedicated RTDB read/write rules before enabling in production. These diagnostics endpoints currently use the same REST access mechanism as the frontend; do not rely on client-provided severity or read/resolved state for authorization.
+- Şablonlar: `notifications/templates`; test istekleri ve sonuçları: `notifications/tests`.
+- `smsReceipts` / `emailReceipts` servis gönderim kabulünü kaydeder; gerçek alıcı teslimini kanıtlamaz. Servis durumları `notifications/smsHealth` ve `notifications/emailHealth` içindedir.
+- `js/system-errors.js` kritik işlemleri ve belirli Firebase hatalarını kaydetmek için kullanılır; kısa süreli çevrimdışı kayıt kuyruğu vardır. Tarayıcı kapalıyken sürekli izleme yapmaz.
+- Google Apps Script'teki tüm SMS/e-posta sorunlarının `systemErrors` içine aktarıldığı **varsayılmamalıdır**. Aktif Apps Script yürütmeleri, sağlık ve gönderim kayıtları ayrıca incelenmelidir.
 
-## Critical operation watchdog (audit branch; not in production)
-- `monitorCriticalOperation` observes the original order-create and Godta Firebase request without changing its Promise, retrying a write or modifying the three-minute order deadline.
-- A request still pending after 12.5 seconds (Godta) or 15 seconds (order creation) is logged as a potential stall. If it subsequently completes, its record is marked `recovered`; manual `resolved` remains separate.
-- The diagnostic writer uses ETag-based repeat counters, a 5-minute per-type cooldown, 4-second transport timeouts, and a maximum of 16 locally queued error types. Offline queue is retried on browser reconnect and once shortly after startup; it contains codes/counts/timestamps only.
-- The browser is NOT an independent always-on monitor. Closing all admin/customer tabs stops browser watchdogs. Deployed Google Apps Script SMS/e-mail server failures are still not connected to `systemErrors`. No unconditional global JS error handler is installed because it would flood staff with unrelated exceptions.
-- Mock tests do not establish browser compatibility, database rules or real end-to-end availability. All code remains on `audit-fixes-20261026` pending testing and review.
+## Doğrulama sınırları
+
+- Referans kontrolü: `node demo/tools/audit-references.mjs`.
+- Birim testleri: `node --experimental-default-type=module --test demo/tests/*.test.mjs`.
+- Bu testler gerçek Firebase Rules, aynı anda çalışan iki admin cihazı, SMS/e-posta teslimatı ve Epson bağlantısını doğrulamaz.
+- Test için üretim Firebase verilerini temizleme, tetikleyicileri yeniden kurma veya müşteri siparişlerini sıfırlama.
