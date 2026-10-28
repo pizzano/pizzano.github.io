@@ -296,7 +296,7 @@ const DEFAULT_SETTINGS = {
   orderAlarmUrl: new URL('../soundreality-police-operation-siren-144229.mp3', import.meta.url).pathname,
   minPreorderMinutes: 0,
   prepMinutes: 25,
-  lastOrderBeforeCloseMinutes: 30,
+  pickupLeadMinutes: 30,
   slotIntervalMinutes: 15,
   // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
   // stored alongside the restaurant settings and shared across tablets.
@@ -437,7 +437,7 @@ export function getOpenState(at=new Date()) {
   const todayStart=parseTime(today.open);
   const preOpen=!scheduled.open && today.enabled && todayStart!==null && clock.minute<todayStart;
   return {
-    preOpen,orderable:(scheduled.open && (scheduled.active?.minutesToClose || 0) > settings.lastOrderBeforeCloseMinutes)||preOpen,
+    preOpen,orderable:scheduled.open||preOpen,
     todayOpensAt:today.open, todayClosesAt:today.close,
     open:scheduled.open,reason:scheduled.open?'':'utenfor_apningstid',
     label:scheduled.open?'Åpent nå':'Stengt nå',
@@ -452,10 +452,10 @@ export function getPickupSlots() {
   const settings=store.settings||DEFAULT_SETTINGS;
   const state=getOpenState();
   if(!state.open&&!state.preOpen)return [];
-  const prep=30;
+  const prep=Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
   const interval=15;
   const remaining=Number(state.minutesToClose)||0;
-  if(state.open&&remaining<=settings.lastOrderBeforeCloseMinutes)return [];
+  if(state.open&&remaining<=0)return [];
   let nowMinute;
   try{nowMinute=localClock(new Date(),settings.timezone||'Europe/Oslo').minute;}
   catch{const d=new Date();nowMinute=d.getHours()*60+d.getMinutes();}
@@ -464,7 +464,7 @@ export function getPickupSlots() {
   const latest=state.preOpen
     ? (closeMinute!==null ? closeMinute+(closeMinute<=openMinute?1440:0)-10 : 0)
     : nowMinute+remaining-10;
-  const first=state.preOpen ? openMinute+15 : nowMinute+prep;
+  const first=state.preOpen ? openMinute+prep : nowMinute+prep;
   const slots=[];
   for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<25;m+=interval)
     slots.push({value:formatMinutes(m),label:formatMinutes(m)});
@@ -541,7 +541,7 @@ function normalizeSettings(raw) {
     ? Math.max(0,Number(base.manualClosedUntil)):0;
   if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
-  settings.lastOrderBeforeCloseMinutes = Math.min(Math.max(Number(settings.lastOrderBeforeCloseMinutes) || 30, 30), 120);
+  settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60

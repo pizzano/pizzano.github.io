@@ -40,7 +40,7 @@ import {
   allergenLabels,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261028-close30';
+} from './data.js?v=20261028-pickuplead1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
@@ -1890,8 +1890,6 @@ function renderCheckout() {
     : '';
   el.pickupHint.textContent = state.preOpen
     ? `Vi åpner kl. ${state.todayOpensAt}. Tidligste hentetid er ${slots[0]?.value || '15 minutter etter åpning'}. Velg tid.`
-    : state.open && !state.orderable
-    ? `Nettbestilling er stengt for i dag. Siste bestilling er ${store.settings?.lastOrderBeforeCloseMinutes || 30} minutter før stengetid.`
     : !state.open
     ? `Vi åpner ${state.opensAt}.`
     : showTimes
@@ -2240,7 +2238,7 @@ async function placeOrder() {
   if (ui.orderSubmitting) return;
   const state = getOpenState();
   if (!state.orderable) {
-    toast(state.open ? 'Nettbestilling er stengt for i dag. Siste bestilling er 30 minutter før stengetid eller tidligere, avhengig av innstillingene.' : `Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
+    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
     return;
   }
   const name = el.custName.value.trim();
@@ -3049,7 +3047,7 @@ el.btnToCheckout.addEventListener('click', () => {
   if (!cart.length) return;
   const state = getOpenState();
   if (!state.orderable) {
-    toast(state.open ? 'Nettbestilling er stengt for i dag. Siste bestilling er 30 minutter før stengetid eller tidligere, avhengig av innstillingene.' : `Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'warning');
+    toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'warning');
     return;
   }
   setView('checkout');

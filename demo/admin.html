@@ -291,7 +291,7 @@
                 </header>
                 <nav class="settings-section-nav" aria-label="Kategorier for restaurantinnstillinger">
                     <button class="settings-section-btn is-active" data-settings-section-tab="status" type="button">Åpen / stengt</button>
-                    <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Siste bestilling</button>
+                    <button class="settings-section-btn" data-settings-section-tab="pickup" type="button">Hentetid</button>
                     <button class="settings-section-btn" data-settings-section-tab="printer" type="button">Printer ayarları</button>
                     <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
@@ -362,12 +362,12 @@
                         </div>
 
                         <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
-                            <h2>Siste bestilling</h2>
+                            <h2>Hentetid</h2>
                             <div class="set-field">
-                                <label class="lbl" for="sLastOrderBeforeClose">Siste bestilling før stengetid (min)</label>
-                                <input id="sLastOrderBeforeClose" class="input" type="number" min="30" max="120" step="5">
+                                <label class="lbl" for="sPickupLeadMinutes">Minimum ventetid før henting (min)</label>
+                                <input id="sPickupLeadMinutes" class="input" type="number" min="15" max="240" step="5">
                             </div>
-                            <p class="set-hint">Nettbestillinger stopper valgt antall minutter før stengetid (minimum 30). Ledige hentetider vises i intervaller på 15 minutter.</p>
+                            <p class="set-hint">Første hentetid blir minst valgt antall minutter frem i tid, avrundet opp til nærmeste kvarter. Deretter vises tider hvert 15. minutt, ikke etter stengetid.</p>
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
@@ -876,9 +876,9 @@
 
     <div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/admin.js?v=20261028-close30"></script>
-    <script type="module" src="./js/loyalty-sync.js?v=20261028-close30"></script>
-    <script type="module" src="./js/orders-archive.js?v=20261028-close30"></script>
+    <script type="module" src="./js/admin.js?v=20261028-pickuplead1"></script>
+    <script type="module" src="./js/loyalty-sync.js?v=20261028-pickuplead1"></script>
+    <script type="module" src="./js/orders-archive.js?v=20261028-pickuplead1"></script>
 </body>
 
 </html>
