@@ -1087,6 +1087,9 @@ let customerOrderStreamHealthy = false;
 let customerPollBusy = false;
 let lastCustomerPollAt = 0;
 
+export function customerOrderHasLiveListener(orderId) {
+  return CUSTOMER_MODE && customerOrderStreamHealthy && customerOrderStreamId === orderId;
+}
 function closeCustomerOrderStream() {
   if (customerOrderStream) customerOrderStream.close();
   customerOrderStream = null;
