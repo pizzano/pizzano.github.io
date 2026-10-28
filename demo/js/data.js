@@ -452,8 +452,8 @@ export function getPickupSlots() {
   const settings=store.settings||DEFAULT_SETTINGS;
   const state=getOpenState();
   if(!state.open&&!state.preOpen)return [];
-  const prep=Math.max(Number(settings.prepMinutes)||0,30);
-  const interval=Math.min(Math.max(Number(settings.slotIntervalMinutes)||15,5),60);
+  const prep=30;
+  const interval=15;
   const remaining=Number(state.minutesToClose)||0;
   if(state.open&&remaining<=settings.lastOrderBeforeCloseMinutes)return [];
   let nowMinute;
@@ -541,7 +541,7 @@ function normalizeSettings(raw) {
     ? Math.max(0,Number(base.manualClosedUntil)):0;
   if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
-  settings.lastOrderBeforeCloseMinutes = Math.min(Math.max(Number(settings.lastOrderBeforeCloseMinutes) || 0, 0), 120);
+  settings.lastOrderBeforeCloseMinutes = Math.min(Math.max(Number(settings.lastOrderBeforeCloseMinutes) || 30, 30), 120);
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
