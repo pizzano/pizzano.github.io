@@ -1615,38 +1615,49 @@ async function patchConfirmedPizzaOrder(order, changes) {
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
   if (!order?.id || order.status !== 'mottatt')
     throw new Error('Bestillingen er ikke lenger ny. Oppdater bestillingslisten.');
-  if (confirmationExpired(order))
-    throw new Error('Svarfristen er ute. Kunden må legge inn en ny bestilling.');
 
-  // One Firebase request. No extra GET, whole-order PUT, retries or
-  // SMS/e-post dependencies. Firebase keeps existing customer and receipt data.
   const path = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(order.id)}.json`;
   const resumeStreams = pauseAdminLiveStreamsForWrite();
-  let response;
   try {
-    // Yield once after closing SSE so the browser can release an HTTP slot.
+    // Read the authoritative version. Two staff tablets must never overwrite
+    // one another or a simultaneous timeout/SMS/email update.
     await new Promise(resolve => setTimeout(resolve, 80));
-    response = await monitorCriticalOperation(fetch(path, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(changes),
+    const read = await fetch(path, {
+      headers: { 'X-Firebase-ETag': 'true' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!read.ok) throw await orderAcceptHttpError(read, 'Kunne ikke kontrollere bestillingen');
+    const etag = read.headers.get('ETag');
+    if (!etag) throw new Error('Firebase returnerte ikke versjonskontroll for bestillingen.');
+    const current = await read.json();
+    if (!current || current.status !== 'mottatt')
+      throw new Error('Bestillingen er allerede behandlet. Oppdater bestillingslisten.');
+    if (confirmationExpired(current))
+      throw new Error('Svarfristen er ute. Kunden må legge inn en ny bestilling.');
+    const updated = { ...current, ...changes };
+    const response = await monitorCriticalOperation(fetch(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': etag },
+      body: JSON.stringify(updated),
       signal: AbortSignal.timeout(12000),
     }), 'order_accept', 12500);
+    if (response.status === 412)
+      throw new Error('Bestillingen ble endret på en annen enhet. Oppdater listen før du prøver igjen.');
+    if (!response.ok)
+      throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
+    const confirmed = await response.json();
+    if (!confirmed || confirmed.status !== 'bekreftet')
+      throw new Error('Firebase returnerte ikke bekreftet ordrestatus.');
+    window.dispatchEvent(new Event('kol-order-confirmed'));
+    return { ...order, ...confirmed };
   } catch (error) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
-      throw new Error('Firebase svarte ikke innen 12 sekunder. Sjekk nettleserens Network-fane for PATCH/OPTIONS og eventuell VPN.');
-    throw new Error('Kunne ikke kontakte Firebase: ' + (error?.message || 'nettverksfeil'));
+      throw new Error('Firebase svarte ikke innen 12 sekunder. Kontroller forbindelsen og oppdater ordren før nytt forsøk.');
+    throw error;
   } finally {
     resumeStreams();
   }
-  if (!response.ok)
-    throw await orderAcceptHttpError(response, 'Godta ble avvist av Firebase');
-  const confirmed = await response.json();
-  if (!confirmed || confirmed.status !== 'bekreftet')
-    throw new Error('Firebase returnerte ikke bekreftet ordrestatus.');
-  window.dispatchEvent(new Event('kol-order-confirmed'));
-  // PATCH returns only the changed fields; keep the rest of the original order.
-  return { ...order, ...confirmed };
 }
 
 const expiringOrders = new Set();
@@ -1776,7 +1787,29 @@ export async function submitOrder(order) {
       if (rewards.length !== 1 || (record.loyaltyReward.automatic ? rewards[0].quantity < 1 : rewards[0].quantity !== 1) || !rewards[0].loyaltyEligible) throw new Error('Ugyldig gratispizza.');
       await reservePizzaReward(record);
     }
-    await monitorCriticalOperation(restPut(`${ORDERS_PATH}/${record.id}`, record), 'order_create', 15000);
+    // Create-only: retrying a request must never overwrite an existing order,
+    // including one that another tablet has already accepted.
+    const url = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(record.id)}.json`;
+    const response = await monitorCriticalOperation(fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': 'null_etag' },
+      body: JSON.stringify(record),
+      signal: AbortSignal.timeout(15000),
+    }), 'order_create', 15000);
+    if (response.status === 412) {
+      const read = await fetch(url, { cache: 'no-store' });
+      if (!read.ok) throw new Error('Bestillingen finnes allerede, men kunne ikke kontrolleres.');
+      const existing = await read.json();
+      if (!existing || String(existing.phone) !== String(record.phone) ||
+          Number(existing.total) !== Number(record.total) ||
+          String(existing.pickup) !== String(record.pickup) ||
+          JSON.stringify(existing.lines) !== JSON.stringify(record.lines))
+        throw new Error('Ordrenummeret er allerede brukt til en annen bestilling.');
+      // A previous attempt succeeded: retain its current status and receipts.
+      Object.assign(record, existing);
+    } else if (!response.ok) {
+      throw await orderAcceptHttpError(response, 'Bestillingen ble ikke lagret');
+    }
     remoteOnline = true;
   } catch (err) {
     remoteOnline = false;
