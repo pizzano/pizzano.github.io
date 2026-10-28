@@ -98,10 +98,14 @@ export function addOrderTrackingToEmailHtml(source,kind='emailAccepted'){
     '<tr><td align="center" style="padding:0 10px 14px;font-size:11px;line-height:18px;color:#687a6e;">Bruk Se bestillingen-knappen under for live status.</td></tr>',
     '</table></td></tr>'
   ].join('');
-  // Keep the supplied custom design: insert immediately before its existing
-  // tracking CTA, rather than replacing any header, order lines or footer.
+  // Insert before the existing Se bestillingen button; never duplicate it.
   const cta=/<tr>\s*<td\s+align="center"\s+class="main-pad"[^>]*>\s*<table[^>]*>\s*<tr>\s*<td[^>]*>\s*<a\s+href="\{lenke\}"/i;
-  if(cta.test(html))return html.replace(cta,block+'\nfunction safeStyle(raw){');
+  if(cta.test(html))return html.replace(cta,match=>block+'\n'+match);
+  const details=/<tr>\s*<td style="padding:0 15px 14px;">\s*<table role="presentation" width="100%" style="border:1px solid #e2e7dd/i;
+  if(details.test(html))return html.replace(details,match=>block+'\n'+match);
+  return html;
+}
+function safeStyle(raw){');
   // For the built-in compact design, insert before the order details.
   const details=/<tr><td style="padding:0 15px 14px;">\s*<table role="presentation" width="100%" style="border:1px solid #e2e7dd/;
   if(details.test(html))return html.replace(details,block+'\nfunction safeStyle(raw){');
