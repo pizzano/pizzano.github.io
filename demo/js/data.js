@@ -297,6 +297,7 @@ const DEFAULT_SETTINGS = {
   minPreorderMinutes: 0,
   prepMinutes: 25,
   lastOrderBeforeCloseMinutes: 30,
+  pickupLeadMinutes: 60,
   slotIntervalMinutes: 15,
   // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
   // stored alongside the restaurant settings and shared across tablets.
@@ -452,7 +453,7 @@ export function getPickupSlots() {
   const settings=store.settings||DEFAULT_SETTINGS;
   const state=getOpenState();
   if(!state.open&&!state.preOpen)return [];
-  const prep=30;
+  const prep=Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||60));
   const interval=15;
   const remaining=Number(state.minutesToClose)||0;
   if(state.open&&remaining<=settings.lastOrderBeforeCloseMinutes)return [];
@@ -464,7 +465,7 @@ export function getPickupSlots() {
   const latest=state.preOpen
     ? (closeMinute!==null ? closeMinute+(closeMinute<=openMinute?1440:0)-10 : 0)
     : nowMinute+remaining-10;
-  const first=state.preOpen ? openMinute+15 : nowMinute+prep;
+  const first=state.preOpen ? openMinute+prep : nowMinute+prep;
   const slots=[];
   for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<25;m+=interval)
     slots.push({value:formatMinutes(m),label:formatMinutes(m)});
@@ -542,6 +543,7 @@ function normalizeSettings(raw) {
   if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
   settings.lastOrderBeforeCloseMinutes = Math.min(Math.max(Number(settings.lastOrderBeforeCloseMinutes) || 30, 30), 120);
+  settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||60));
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
