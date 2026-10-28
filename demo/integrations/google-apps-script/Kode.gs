@@ -362,7 +362,21 @@ function pollOrdersForSms() {
       const kind = kolEvent_(order, activatedAt, now);
       // Historical state/ScriptProperties use _accepted; don't rename the key.
       const eventKey = 'KOL_SENT_' + item.id + '_accepted';
-      if (kind !== 'accepted' || props.getProperty(eventKey)) continue;
+      // Recover a missing Firebase receipt without ever sending the SMS again.
+      // The ScriptProperties completed marker remains authoritative.
+      const prior = props.getProperty(eventKey);
+      if (prior) {
+        try {
+          const completed = JSON.parse(prior);
+          if (completed.state === 'sent' && !order.smsReceipts?.accepted?.sentAt) {
+            kolSmsReceipt_(item.id, 'accepted', Number(completed.at) || now);
+          }
+        } catch (repairError) {
+          console.error('SMS receipt repair failed for ' + kolShortCode_(item.id) + ': ' + repairError.message);
+        }
+        continue;
+      }
+      if (kind !== 'accepted') continue;
       const phone = kolPhone_(order.phone);
       if (!phone) continue;
       // TEST mode does not send customer SMS to arbitrary numbers.
