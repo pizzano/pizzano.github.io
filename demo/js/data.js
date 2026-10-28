@@ -286,9 +286,6 @@ const DEFAULT_SETTINGS = {
   email: '',
   timezone: 'Europe/Oslo',
   openingDays: '',
-  openingTime: '',
-  orderOpenTime: '',
-  orderCloseTime: '',
   weeklyHours: null,
   manualClosedUntil: 0,
   pickupInfo: 'Henting i restauranten',
@@ -335,10 +332,9 @@ export function formatMinutes(total) {
 }
 
 
-/* Shared weekly-hours engine: the customer and admin use precisely this state.
- * weeklyHours=null means the legacy single time applies every day, untouched.
- * When weeklyHours is configured, it becomes the sole source for opening checks.
- * All day indices use Monday=0 ... Sunday=6 in Europe/Oslo. */
+/* Weekly opening hours are the sole schedule source for customer and admin.
+ * Unconfigured days use 14:00–22:00 until weeklyHours is saved.
+ * Day indices: Monday=0 ... Sunday=6 (Europe/Oslo). */
 export const RESTAURANT_WEEKDAYS = Object.freeze([
   { id:'mon', short:'Man', name:'Mandag' }, { id:'tue', short:'Tir', name:'Tirsdag' },
   { id:'wed', short:'Ons', name:'Onsdag' }, { id:'thu', short:'Tor', name:'Torsdag' },
@@ -348,8 +344,8 @@ export const RESTAURANT_WEEKDAYS = Object.freeze([
 const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
 function validClock(text) { return typeof text==='string' && HH_MM.test(text) ? text : null; }
 export function getWeeklyHours(settings=store.settings||DEFAULT_SETTINGS) {
-  const open = validClock(settings.orderOpenTime) || '14:00';
-  const close = validClock(settings.orderCloseTime) || '22:00';
+  const open = '14:00';
+  const close = '22:00';
   if (!Array.isArray(settings.weeklyHours) || settings.weeklyHours.length!==7)
     return RESTAURANT_WEEKDAYS.map(day=>({id:day.id,enabled:true,open,close}));
   return RESTAURANT_WEEKDAYS.map((day,i)=>{
@@ -529,13 +525,13 @@ function normalizeSettings(raw) {
   // A saved settings object without this optional flag is NOT a manual closure.
   // DEFAULT_SETTINGS.manualClosed=true only protects startup before Firebase loads.
   if (raw && typeof raw === 'object' && raw.manualClosed == null) settings.manualClosed = false;
-  // Preserve legacy one-time schedule until an employee edits weekly hours.
+  // Normalize the seven-day schedule without reintroducing removed legacy fields.
   const rawWeek=base.weeklyHours;
   settings.weeklyHours=Array.isArray(rawWeek)&&rawWeek.length===7
     ? RESTAURANT_WEEKDAYS.map((day,i)=>({
         id:day.id,enabled:rawWeek[i]?.enabled!==false,
-        open:validClock(rawWeek[i]?.open)||validClock(settings.orderOpenTime)||'14:00',
-        close:validClock(rawWeek[i]?.close)||validClock(settings.orderCloseTime)||'22:00',
+        open:validClock(rawWeek[i]?.open)||'14:00',
+        close:validClock(rawWeek[i]?.close)||'22:00',
       })) : null;
   settings.manualClosedUntil=Number.isFinite(Number(base.manualClosedUntil))
     ? Math.max(0,Number(base.manualClosedUntil)):0;
@@ -556,7 +552,6 @@ function normalizeSettings(raw) {
   ]) {
     settings[field] = Math.min(high, Math.max(low, Number(settings[field]) || DEFAULT_SETTINGS[field]));
   }
-  settings.openingTime = `${settings.orderOpenTime} - ${settings.orderCloseTime}`;
   return settings;
 }
 
