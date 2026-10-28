@@ -80,6 +80,35 @@ export function defaultOrderEmailHtml(kind='emailAccepted',existing={},branding=
     +safeRestaurantName+'<br><a href="{lenke}" style="color:#286844;">Se bestillingen</a>'
     +'</td></tr></table>';
 }
+
+/** Adds a static e-mail status snapshot without polling or extra Firebase reads.
+ * The existing order link opens the live tracking screen in the customer's browser.
+ * Existing customized HTML is preserved; adding the block is idempotent.
+ */
+export function addOrderTrackingToEmailHtml(source,kind='emailAccepted'){
+  const html=String(source||'');
+  if(kind!=='emailAccepted'||!html||html.includes('data-email-order-tracking="1"'))return html;
+  const block=[
+    '<tr data-email-order-tracking="1"><td align="center" class="main-pad" style="padding:9px 24px 14px;background:#ffffff;">',
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate;border-spacing:0;background:#f7f8f5;border:1px solid #e2e9e1;border-radius:12px;">',
+    '<tr><td style="padding:14px 12px 4px;color:#9b5218;font-size:11px;line-height:17px;font-weight:800;letter-spacing:1px;">AKTIV BESTILLING &nbsp;·&nbsp; #{kode}</td></tr>',
+    '<tr><td align="center" style="padding:9px 8px;color:#bc6419;font-size:13px;line-height:21px;font-weight:800;">&#10003; Mottatt &nbsp;&mdash;&nbsp; &#10003; Bekreftet &nbsp;&mdash;&nbsp; &#9675; Klar</td></tr>',
+    '<tr><td align="center" style="padding:7px 10px 2px;font-size:12px;line-height:18px;color:#526e5b;">Estimert hentetid</td></tr>',
+    '<tr><td align="center" style="padding:0 10px 11px;font-size:27px;line-height:33px;font-weight:800;color:#153f2b;">{hovedtid}</td></tr>',
+    '<tr><td align="center" style="padding:0 10px 14px;font-size:12px;line-height:19px;"><a href="{lenke}" style="color:#256044;font-weight:800;text-decoration:underline;">Se bestillingen – følg status live</a></td></tr>',
+    '</table></td></tr>'
+  ].join('');
+  // Keep the supplied custom design: insert immediately before its existing
+  // tracking CTA, rather than replacing any header, order lines or footer.
+  const cta=/<tr>\s*<td\s+align="center"\s+class="main-pad"[^>]*>\s*<table[^>]*>\s*<tr>\s*<td[^>]*>\s*<a\s+href="\{lenke\}"/i;
+  if(cta.test(html))return html.replace(cta,block+'\nfunction safeStyle(raw){');
+  // For the built-in compact design, insert before the order details.
+  const details=/<tr><td style="padding:0 15px 14px;">\s*<table role="presentation" width="100%" style="border:1px solid #e2e7dd/;
+  if(details.test(html))return html.replace(details,block+'\nfunction safeStyle(raw){');
+  // No recognized insertion point: never risk damaging a user-edited template.
+  return html;
+}
+
 function safeStyle(raw){
   return String(raw||'').split(';').map(part=>{
     const at=part.indexOf(':');if(at<1)return '';
