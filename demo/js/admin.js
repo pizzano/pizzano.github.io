@@ -2371,6 +2371,11 @@ function loadOrderCustomerAccount(order) {
   });
 }
 
+function pendingDetailCountdown(order) {
+  if (order?.confirmationNoTimeout) return 'Forhåndsbestilling · ingen svarfrist';
+  return confirmationExpired(order) ? 'Svarfristen er ute' : confirmationRemaining(order) + ' igjen';
+}
+
 function receivedAgeText(order, now = Date.now()) {
   const time = Number(order?.createdAt) || 0;
   if (time <= 0) return 'Tid ukjent';
@@ -2510,7 +2515,7 @@ function renderOrderDetail(orderId) {
         </section>
         <div class="order-status-badge pos-header-status" data-status="${escapeHtml(order.status)}">
           ${isPending
-            ? `<span class="order-status-dot" aria-hidden="true"></span><span class="order-status-copy"><strong>Ny bestilling</strong><small data-pending-age="${escapeHtml(order.id)}">${escapeHtml(receivedAgeText(order))}</small></span>`
+            ? `<span class="order-status-dot" aria-hidden="true"></span><span class="order-status-copy"><strong>Ny bestilling</strong><small data-pending-countdown="${escapeHtml(order.id)}">${escapeHtml(pendingDetailCountdown(order))}</small></span>`
             : `<span class="order-status-copy"><strong>${escapeHtml(orderListStatus(order))}</strong></span>`}
         </div>
       </header>
@@ -3214,7 +3219,7 @@ function refreshOrderClocks() {
   }
   document.querySelectorAll('[data-pending-countdown]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingCountdown);
-    if (order) node.textContent = pendingWait(order);
+    if (order) node.textContent = pendingDetailCountdown(order);
   });
   document.querySelectorAll('[data-pending-age]').forEach(node => {
     const order = getOrders().find(entry => entry.id === node.dataset.pendingAge);
