@@ -5,7 +5,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolstandard2';
+import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { customerOrderLink } from './order-links.js';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
