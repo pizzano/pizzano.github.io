@@ -250,7 +250,6 @@ const el = {
     orderOpenTime: $('sOpenTime'),
     orderCloseTime: $('sCloseTime'),
     openingDays: $('sOpeningDays'),
-    lastOrderBeforeCloseMinutes: $('sLastOrderBeforeClose'),
     pickupLeadMinutes: $('sPickupLeadMinutes'),
     slotPreview: $('slotPreview'),
     adminMobileEnabled: $('sAdminMobileEnabled'),
@@ -3445,7 +3444,6 @@ const SETTING_FIELDS = [
   ['closedMessage', 'text'],
   ['orderOpenTime', 'text'],
   ['orderCloseTime', 'text'],
-  ['lastOrderBeforeCloseMinutes', 'number'],
   ['pickupLeadMinutes', 'number'],
 ];
 
@@ -3654,8 +3652,8 @@ function bindSettingField(key, type) {
     mutate(
       (state) => {
         if (type === 'number') {
-          state.settings[key] = key === 'lastOrderBeforeCloseMinutes'
-            ? Math.min(120, Math.max(30, Number(raw) || 30))
+          state.settings[key] = key === 'pickupLeadMinutes'
+            ? Math.min(240, Math.max(15, Number(raw) || 30))
             : Math.max(0, Number(raw) || 0);
         } else {
           state.settings[key] = raw;
