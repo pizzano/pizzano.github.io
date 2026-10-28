@@ -1078,10 +1078,65 @@ function streamUrl(path) {
   return DB_URL + '/' + path + '.json';
 }
 
-// Customer pages never open /orders.json. Each recent order is followed by
-// its own Firebase SSE listener, so other customers' details are not downloaded.
+// Customer pages never open /orders.json. Keep at most ONE live Firebase
+// SSE listener for the newest tracked order, to avoid blocking order writes.
+// This is the REST-stream equivalent of onValue; failed streams use REST fallback.
+let customerOrderStream = null;
+let customerOrderStreamId = '';
+let customerOrderStreamHealthy = false;
 let customerPollBusy = false;
 let lastCustomerPollAt = 0;
+
+export function customerOrderHasLiveListener(orderId) {
+  return CUSTOMER_MODE && customerOrderStreamHealthy && customerOrderStreamId === orderId;
+}
+function closeCustomerOrderStream() {
+  if (customerOrderStream) customerOrderStream.close();
+  customerOrderStream = null;
+  customerOrderStreamId = '';
+  customerOrderStreamHealthy = false;
+}
+function startCustomerOrderStream() {
+  if (!CUSTOMER_MODE || !remoteEnabled || !('EventSource' in window) ||
+      document.hidden || navigator.onLine === false) return;
+  const id = [...customerTrackedIds()].at(-1);
+  if (!id) { closeCustomerOrderStream(); return; }
+  if (customerOrderStream && customerOrderStreamId === id) return;
+  closeCustomerOrderStream();
+  const source = new EventSource(streamUrl(ORDERS_PATH + '/' + encodeURIComponent(id)));
+  customerOrderStream = source;
+  customerOrderStreamId = id;
+  const update = (event, patch) => {
+    if (source !== customerOrderStream) return;
+    try {
+      const change = parseFirebaseEvent(event);
+      const previous = { [id]: ordersRaw[id] || null };
+      const changed = applyStreamChange(previous, '/' + id + change.path, change.data, patch);
+      const updated = changed?.[id];
+      if (updated) ordersRaw[id] = updated;
+      else { delete ordersRaw[id]; forgetCustomerOrderId(id); }
+      customerOrderStreamHealthy = true;
+      remoteOnline = true;
+      if (applyRemoteOrders(ordersRaw)) emitData('remote');
+      if (!updated) closeCustomerOrderStream();
+    } catch (error) {
+      console.warn('Kundeordre-strøm feilet:', error);
+      closeCustomerOrderStream();
+    }
+  };
+  source.addEventListener('put', event => update(event, false));
+  source.addEventListener('patch', event => update(event, true));
+  source.onerror = () => {
+    if (source !== customerOrderStream) return;
+    customerOrderStreamHealthy = false;
+    if (source.readyState === 2) closeCustomerOrderStream();
+  };
+  for (const kind of ['cancel','auth_revoked']) {
+    source.addEventListener(kind, () => {
+      if (source === customerOrderStream) closeCustomerOrderStream();
+    });
+  }
+}
 
 // No customer order snapshots are saved to localStorage. A short-lived
 // session-only list keeps live order tracking after an ordinary page reload.
@@ -1124,10 +1179,12 @@ function customerTrackedIds() {
   });
 }
 
-// Customers use short-lived REST reads for known order IDs, not one
-// persistent Firebase connection per order (which can block Godta).
+// One live listener follows the newest customer order. Other tracked orders
+// and disconnected browsers use bounded REST fallback.
 function syncCustomerStreams() {
-  if (CUSTOMER_MODE) void pollCustomerOrders(true);
+  if (!CUSTOMER_MODE) return;
+  startCustomerOrderStream();
+  void pollCustomerOrders(true);
 }
 
 async function pollCustomerOrders(force = false) {
@@ -1142,7 +1199,8 @@ async function pollCustomerOrders(force = false) {
   });
   const interval = needsLiveUpdates ? CUSTOMER_ORDER_POLL_MS : 30000;
   if (!force && now - lastCustomerPollAt < interval) return;
-  const ids = [...tracked].reverse();
+  const ids = [...tracked].reverse().filter(id =>
+    !(customerOrderStreamHealthy && customerOrderStreamId === id));
   if (!ids.length) return;
   lastCustomerPollAt = now;
   customerPollBusy = true;
@@ -1308,6 +1366,7 @@ export async function refreshFromDatabase() {
 async function fallbackSync() {
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
   if (CUSTOMER_MODE) {
+    startCustomerOrderStream();
     await pollCustomerOrders();
   } else if (!ordersStreamHealthy && !ordersFallbackBusy) {
     ordersFallbackBusy = true;

@@ -9,7 +9,7 @@
  *
  * Legacy filename kept so existing admin entrypoints continue to work.
  */
-import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261028-firebase4';
+import { DB_URL, getOrders, ready, subscribe } from './data.js?v=20261028-stream5';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 
 const LIVE_LIMIT = 100;
