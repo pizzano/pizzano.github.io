@@ -4,6 +4,8 @@ import {
   subscribe,
   getOpenState,
   getPickupSlots,
+  getWeeklyHours,
+  RESTAURANT_WEEKDAYS,
 } from './data.js?v=20261028-pickuplead1';
 
 const MODAL_ID = 'shopInfoModal';
@@ -155,9 +157,14 @@ function renderShopInfo() {
   const address = addressText(settings);
   const phone = String(settings.phone || '').trim();
   const email = String(settings.email || '').trim();
-  const orderOpen = String(settings.orderOpenTime || '').trim();
-  const orderClose = String(settings.orderCloseTime || '').trim();
-  const days = String(settings.openingDays || '').trim();
+  const week = getWeeklyHours(settings);
+  const todayHours = state.todayOpensAt && state.todayClosesAt
+    ? { open: state.todayOpensAt, close: state.todayClosesAt }
+    : week.find(day => day.enabled);
+  const hoursSummary = todayHours ? `${todayHours.open}–${todayHours.close}` : 'Stengt';
+  const weeklySummary = week.map((day, index) =>
+    `${RESTAURANT_WEEKDAYS[index].short}: ${day.enabled ? `${day.open}–${day.close}` : 'Stengt'}`
+  ).join(' · ');
   const prep = Math.max(0, Number(settings.prepMinutes) || 0);
   const pickupInfo = String(settings.pickupInfo || 'Henting i restauranten').trim();
   const payment = String(settings.paymentInfo || 'Betaling ved henting').trim();
@@ -191,8 +198,8 @@ function renderShopInfo() {
         ? 'Midlertidig stengt for bestilling'
         : `Stengt nå · åpner ${state.opensAt}`;
   }
-  if (hours) hours.textContent = orderOpen && orderClose ? `${orderOpen}–${orderClose}` : 'Ikke registrert';
-  if (daysEl) daysEl.textContent = days || 'Åpningsdager ikke registrert';
+  if (hours) hours.textContent = hoursSummary;
+  if (daysEl) daysEl.textContent = weeklySummary;
   if (prepEl) prepEl.textContent = prep ? `Ca. ${prep} min` : 'Snarest mulig';
   if (pickupEl) pickupEl.textContent = pickupInfo || 'Henting i restauranten';
   if (paymentEl) paymentEl.textContent = payment || 'Ikke registrert';
