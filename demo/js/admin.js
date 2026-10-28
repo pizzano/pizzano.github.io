@@ -1,3 +1,4 @@
+import { shouldSoundPendingOrder } from './order-alarm.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
@@ -1966,10 +1967,7 @@ function deleteGroup(groupId) {
  * ------------------------------------------------------------------ */
 
 function shouldSoundForOrder(order) {
-  // Preopening orders are accepted silently until the restaurant opens.
-  // Existing pending preorders become audible automatically on opening.
-  if (order?.status !== 'mottatt' || confirmationExpired(order)) return false;
-  return !order.confirmationNoTimeout || getOpenState().open;
+  return shouldSoundPendingOrder(order, getOpenState().open);
 }
 const pendingOrderMinutes = new Map();
 const acknowledgedOrders = new Set();
@@ -2021,7 +2019,10 @@ function unlockOrderSoundFromGesture(event) {
 document.addEventListener('pointerdown', unlockOrderSoundFromGesture);
 document.addEventListener('keydown', unlockOrderSoundFromGesture);
 function playOrderAlert() {
-  if (!orderSoundEnabled) return;
+  if (!orderSoundEnabled || !getOrders().some(shouldSoundForOrder)) {
+    stopOrderAlert();
+    return;
+  }
   const url = validOrderAlarmUrl(String(store.settings?.orderAlarmUrl || ''));
   if (url && url !== failedOrderMp3Url) {
     if (!orderMp3 || orderMp3Url !== url) {
@@ -2127,7 +2128,9 @@ function filteredOrders() {
 }
 document.getElementById('orderSearch').addEventListener('input', renderOrderList);
 function pendingWait(order) {
-  return order.confirmationNoTimeout ? 'Ny · Forhåndsbestilling' : confirmationExpired(order) ? 'Svarfristen er ute' : `Ny · ${confirmationRemaining(order)} igjen`;
+  return order.confirmationNoTimeout
+    ? (getOpenState().open ? 'Ny · Forhåndsbestilling · venter på Godta' : 'Ny · Forhåndsbestilling · stille til åpning')
+    : confirmationExpired(order) ? 'Svarfristen er ute' : `Ny · ${confirmationRemaining(order)} igjen`;
 }
 function compactOrderTime(value) {
   if (!value) return '—';
