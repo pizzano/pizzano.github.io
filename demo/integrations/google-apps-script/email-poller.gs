@@ -605,6 +605,20 @@ function kontrollerEpostBestillinger() {
         : {status:'', updated:now, sent:{}};
       if (!checkpoint.sent || typeof checkpoint.sent !== 'object') checkpoint.sent = {};
 
+      // MailApp may have accepted a message even when Firebase receipt storage
+      // failed. Repair only the receipt, never send the email a second time.
+      for (const completedKey in checkpoint.sent) {
+        if (checkpoint.sent[completedKey] !== 'sent') continue;
+        const completedKind = completedKey.split(':')[0];
+        if (!['accepted', 'ready'].includes(completedKind)) continue;
+        if (order.emailReceipts?.[completedKind]?.state === 'accepted') continue;
+        try {
+          kolEmailReceipt_(id, completedKind, order, Number(checkpoint.updated) || now);
+        } catch (repairError) {
+          Logger.log('E-postkvittering kunne ikke repareres for ordre '
+            + id.slice(-6) + ': ' + repairError.message);
+        }
+      }
       const kind = kolNotificationKind_(checkpoint.status, order, now);
       const stamp = String(order.statusUpdatedAt || '0');
       const eventKey = kind + ':' + stamp;
