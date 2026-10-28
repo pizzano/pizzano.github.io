@@ -5,7 +5,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES } from './palette.js';
 import { sortCartByCategory } from './cart-order.js';
-import { defaultOrderEmailHtml, renderEmailPreviewHtml, addOrderTrackingToEmailHtml } from './notification-html.js?v=20261028-emailtracking1';
+import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolstandard1';
 import { customerOrderLink } from './order-links.js';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
@@ -3993,9 +3993,8 @@ function noticeSetKind(kind){
   noticeState.kind=kind;noticeState.dirty=false;
   const saved={...noticeDefaults()[kind],...(noticeState.templates[kind]||{})};
   if(noticeKindIsEmail()){
-    const originalHtml=typeof saved.html==='string'
+    noticeEl.html.value=typeof saved.html==='string'
       ? saved.html:defaultOrderEmailHtml(kind,saved,{name:store.settings.restaurantName});
-    noticeEl.html.value=addOrderTrackingToEmailHtml(originalHtml,kind);
     noticeEl.htmlSubject.value=String(saved.subject||'');
   } else {
     noticeEl.body.value=String(saved.body||'');
