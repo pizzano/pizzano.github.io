@@ -84,14 +84,6 @@ export function defaultOrderEmailHtml(kind='emailAccepted',existing={},branding=
     +'</td></tr></table>';
 }
 
-function safeStyle(raw){');
-  // For the built-in compact design, insert before the order details.
-  const details=/<tr><td style="padding:0 15px 14px;">\s*<table role="presentation" width="100%" style="border:1px solid #e2e7dd/;
-  if(details.test(html))return html.replace(details,block+'\nfunction safeStyle(raw){');
-  // No recognized insertion point: never risk damaging a user-edited template.
-  return html;
-}
-
 function safeStyle(raw){
   return String(raw||'').split(';').map(part=>{
     const at=part.indexOf(':');if(at<1)return '';
