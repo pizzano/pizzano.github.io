@@ -251,6 +251,7 @@ const el = {
     orderCloseTime: $('sCloseTime'),
     openingDays: $('sOpeningDays'),
     pickupLeadMinutes: $('sPickupLeadMinutes'),
+    prepMinutes: $('sPrepMinutes'),
     slotPreview: $('slotPreview'),
     adminMobileEnabled: $('sAdminMobileEnabled'),
     adminDarkModeEnabled: $('sAdminDarkModeEnabled'),
@@ -3445,6 +3446,7 @@ const SETTING_FIELDS = [
   ['orderOpenTime', 'text'],
   ['orderCloseTime', 'text'],
   ['pickupLeadMinutes', 'number'],
+  ['prepMinutes', 'number'],
 ];
 
 el.settings.customerPalette.replaceChildren(...Object.entries(CUSTOMER_PALETTES).map(([key, palette]) => new Option(palette.label, key)));
