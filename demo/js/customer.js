@@ -19,6 +19,7 @@ import {
   setPizzaOffersConsent,
   saveCustomerContact,
   trackCustomerOrderId,
+  customerOrderHasLiveListener,
   forgetCustomerOrderId,
   DB_URL,
   subscribe,
@@ -2153,6 +2154,7 @@ function checkOrderConfirmationWait() {
   // every four seconds; never download all customers' orders.
   const now = Date.now();
   if (!document.hidden && navigator.onLine !== false &&
+      !customerOrderHasLiveListener(orderConfirmOrderId) &&
       now - orderConfirmLastRemoteCheckAt >= 4000) {
     orderConfirmLastRemoteCheckAt = now;
     void fetchActiveOrderNow(orderConfirmOrderId);
