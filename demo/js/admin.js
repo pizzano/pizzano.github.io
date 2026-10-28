@@ -55,7 +55,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261028-stream5';
+} from './data.js?v=20261028-close30';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
