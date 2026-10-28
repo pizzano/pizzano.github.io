@@ -296,6 +296,7 @@ const DEFAULT_SETTINGS = {
   orderAlarmUrl: new URL('../soundreality-police-operation-siren-144229.mp3', import.meta.url).pathname,
   minPreorderMinutes: 0,
   prepMinutes: 25,
+  lastOrderBeforeCloseMinutes: 30,
   slotIntervalMinutes: 15,
   // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
   // stored alongside the restaurant settings and shared across tablets.
@@ -436,7 +437,7 @@ export function getOpenState(at=new Date()) {
   const todayStart=parseTime(today.open);
   const preOpen=!scheduled.open && today.enabled && todayStart!==null && clock.minute<todayStart;
   return {
-    preOpen,orderable:scheduled.open||preOpen,
+    preOpen,orderable:(scheduled.open && (scheduled.active?.minutesToClose || 0) > settings.lastOrderBeforeCloseMinutes)||preOpen,
     todayOpensAt:today.open, todayClosesAt:today.close,
     open:scheduled.open,reason:scheduled.open?'':'utenfor_apningstid',
     label:scheduled.open?'Åpent nå':'Stengt nå',
@@ -454,7 +455,7 @@ export function getPickupSlots() {
   const prep=Math.max(Number(settings.prepMinutes)||0,30);
   const interval=Math.min(Math.max(Number(settings.slotIntervalMinutes)||15,5),60);
   const remaining=Number(state.minutesToClose)||0;
-  if(state.open&&remaining<=prep+10)return [];
+  if(state.open&&remaining<=settings.lastOrderBeforeCloseMinutes)return [];
   let nowMinute;
   try{nowMinute=localClock(new Date(),settings.timezone||'Europe/Oslo').minute;}
   catch{const d=new Date();nowMinute=d.getHours()*60+d.getMinutes();}
@@ -540,6 +541,7 @@ function normalizeSettings(raw) {
     ? Math.max(0,Number(base.manualClosedUntil)):0;
   if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
+  settings.lastOrderBeforeCloseMinutes = Math.min(Math.max(Number(settings.lastOrderBeforeCloseMinutes) || 0, 0), 120);
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
