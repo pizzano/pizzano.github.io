@@ -2961,7 +2961,13 @@ async function printOrderFromAdmin(orderId, reprint = false) {
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
     setEpsonPrinterStatus('error', 'Utskrift mislyktes. Koble til restaurantens Wi-Fi og åpne Epson-lenken ved behov.');
-    toast('Skriveren svarte ikke: ' + String(error?.message || 'Ukjent feil').slice(0,115) + '. Trykk «Skriv ut på nytt».');
+    // A network timeout can happen AFTER Epson has printed the ticket.
+    // Never automatically retry an uncertain print: a second ticket may appear.
+    const uncertain = /Tidsavbrudd|Ingen ePOS-bekreftelse|Ugyldig svar|nettverk|fetch/i.test(String(error?.message || ''));
+    toast((uncertain
+      ? 'Utskrift kunne ikke bekreftes. Sjekk om Epson allerede skrev ut før du velger «Skriv ut på nytt». '
+      : 'Skriveren svarte ikke: ') +
+      String(error?.message || 'Ukjent feil').slice(0,115));
   } finally {
     printingOrderIds.delete(orderId);
     if (selectedOrderId === orderId) renderOrderDetail(orderId);
