@@ -363,17 +363,11 @@
 
                         <article class="set-card settings-section-card" data-settings-section="pickup" hidden>
                             <h2>Hentetid</h2>
-                            <div class="field-grid">
-                                <div class="set-field">
-                                    <label class="lbl" for="sPrepMinutes">Tilberedningstid (min)</label>
-                                    <input id="sPrepMinutes" class="input" type="number" min="0" max="240" step="5">
-                                </div>
-                                <div class="set-field">
-                                    <label class="lbl" for="sSlotInterval">Intervall mellom tider (min)</label>
-                                    <input id="sSlotInterval" class="input" type="number" min="5" max="60" step="5">
-                                </div>
+                            <div class="set-field">
+                                <label class="lbl" for="sLastOrderBeforeClose">Siste bestilling før stengetid (min)</label>
+                                <input id="sLastOrderBeforeClose" class="input" type="number" min="30" max="120" step="5">
                             </div>
-                            <p class="set-hint">Kunden får «Snarest» pluss faste tider fram til stengetid.</p>
+                            <p class="set-hint">Nettbestillinger stopper valgt antall minutter før stengetid (minimum 30). Hentetider vises hvert 15. minutt, tidligst 30 minutter etter bestilling.</p>
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
