@@ -14,7 +14,38 @@ if(panel){
   for(const [value,label] of [['off','Ingen'],['light','Lett'],['medium','Synlig']]){const op=document.createElement('option');op.value=value;op.textContent=label;animation.append(op)}
   animationRow.append(animationLabel,animation);
   const list=document.createElement('div');list.className='holiday-list';
-  panel.append(title,hint,master,animationRow,list);
+  const preview=document.createElement('div');
+  preview.className='special-day-preview';
+  preview.hidden=true;
+  const previewHeading=document.createElement('div');
+  previewHeading.className='special-day-preview-head';
+  const previewLabel=document.createElement('strong');previewLabel.textContent='Forhåndsvisning – bare i admin';
+  const closePreview=document.createElement('button');closePreview.type='button';closePreview.textContent='Lukk ×';
+  closePreview.addEventListener('click',()=>{preview.hidden=true});
+  previewHeading.append(previewLabel,closePreview);
+  const previewBanner=document.createElement('section');
+  previewBanner.id='specialDayGreeting';
+  preview.append(previewHeading,previewBanner);
+  panel.append(title,hint,master,animationRow,preview,list);
+  function showPreview(day,message,color){
+    previewBanner.replaceChildren();
+    const mode=animation.value;
+    previewBanner.className='effect-'+mode;
+    previewBanner.style.setProperty('--holiday-color',color.value);
+    previewBanner.style.setProperty('--holiday-border',color.value);
+    previewBanner.style.setProperty('--holiday-soft','#f4eff9');
+    const icon=document.createElement('span');icon.className='special-day-icon';icon.textContent=day.emoji;
+    const copy=document.createElement('div');copy.className='special-day-copy';
+    const strong=document.createElement('strong');strong.textContent=message.value.trim()||day.message;
+    const subtitle=document.createElement('span');subtitle.textContent='Vi ønsker deg en fin dag!';
+    copy.append(strong,subtitle);
+    const decoration=document.createElement('span');decoration.className='special-day-deco';
+    decoration.setAttribute('aria-hidden','true');
+    decoration.textContent=day.effect==='bat'?'🦇':day.effect==='snow'?'❄️':day.effect==='heart'?'💕':day.emoji;
+    previewBanner.append(icon,copy,decoration);
+    preview.hidden=false;
+    preview.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
   const config=()=>parseSpecialDays(store.settings?.specialDaysConfig);
   function save(patch){
     const next=config();patch(next);
@@ -35,7 +66,9 @@ if(panel){
     const message=document.createElement('input');message.type='text';message.maxLength=90;message.placeholder='Hilsen...';message.title='Hilsen til kundene';
     const color=document.createElement('input');color.type='color';color.title='Temafarge';color.value=day.accent;
     const controlsBox=document.createElement('div');controlsBox.style.display='flex';controlsBox.style.alignItems='center';controlsBox.style.gap='7px';
-    controlsBox.append(color,message);
+    const show=document.createElement('button');show.type='button';show.className='holiday-preview-btn';show.textContent='Forhåndsvis';show.title='Forhåndsvis temaet uten å vise det til kunder';
+    show.addEventListener('click',()=>showPreview(day,message,color));
+    controlsBox.append(color,message,show);
     row.append(left,controlsBox);list.append(row);
     color.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),accent:color.value}}));
     check.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),enabled:check.checked}}));
