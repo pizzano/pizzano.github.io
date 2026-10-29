@@ -20,3 +20,12 @@ html[data-theme="dark"] #specialDayGreeting{background:#292433;color:#f8f6f5;bor
 .special-day-admin .holiday-row input[type=text]{max-width:240px;width:100%;padding:6px;border:1px solid #cdd5ce;border-radius:7px}
 .special-day-admin .holiday-row .holiday-date{font-size:12px;opacity:.7}
 .special-day-admin select{padding:7px;border-radius:7px}
+
+.special-day-preview{margin:14px 0 18px;padding:10px;border:1px solid #d8ded9;border-radius:14px;background:#fff}
+.special-day-preview[hidden]{display:none!important}
+.special-day-preview-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 8px 0}
+.special-day-preview-head button,.holiday-preview-btn{border:1px solid #cbd5ce;border-radius:8px;padding:7px 9px;background:#fff;color:#244334;cursor:pointer;font:inherit;font-size:12px}
+.special-day-preview #specialDayGreeting{display:flex!important}
+.special-day-admin .holiday-row>div:last-child{min-width:0;flex-wrap:wrap}
+.special-day-admin .holiday-row input[type=text]{width:160px;max-width:100%}
+@media(max-width:650px){.special-day-admin .holiday-list{grid-template-columns:1fr}.special-day-admin .holiday-row{flex-wrap:wrap}}
