@@ -29,3 +29,14 @@ html[data-theme="dark"] #specialDayGreeting{background:#292433;color:#f8f6f5;bor
 .special-day-admin .holiday-row>div:last-child{min-width:0;flex-wrap:wrap}
 .special-day-admin .holiday-row input[type=text]{width:160px;max-width:100%}
 @media(max-width:650px){.special-day-admin .holiday-list{grid-template-columns:1fr}.special-day-admin .holiday-row{flex-wrap:wrap}}
+
+/* Compact accordion for holiday settings. */
+.special-day-admin{padding:0!important;overflow:hidden}
+.special-day-toggle{width:100%;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 22px;text-align:left;background:transparent;border:0;color:inherit;font:inherit;cursor:pointer}
+.special-day-toggle strong{font-size:19px;font-weight:800}
+.special-day-toggle span{font-size:23px;transition:transform .18s ease}
+.special-day-toggle[aria-expanded="true"] span{transform:rotate(180deg)}
+.special-day-toggle:hover{background:rgba(125,135,125,.055)}
+.special-day-toggle:focus-visible{outline:3px solid #dd792d;outline-offset:-4px}
+.special-day-body{padding:0 20px 20px}
+.special-day-body[hidden]{display:none!important}
