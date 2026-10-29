@@ -33,20 +33,25 @@ if(panel){
     const date=document.createElement('small');date.className='holiday-date';
     left.append(label,date);
     const message=document.createElement('input');message.type='text';message.maxLength=90;message.placeholder='Hilsen...';message.title='Hilsen til kundene';
-    row.append(left,message);list.append(row);
+    const color=document.createElement('input');color.type='color';color.title='Temafarge';color.value=day.accent;
+    const controlsBox=document.createElement('div');controlsBox.style.display='flex';controlsBox.style.alignItems='center';controlsBox.style.gap='7px';
+    controlsBox.append(color,message);
+    row.append(left,controlsBox);list.append(row);
+    color.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),accent:color.value}}));
     check.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),enabled:check.checked}}));
     message.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),message:message.value.trim()||day.message}}));
-    controls.push({day,check,date,message});
+    controls.push({day,check,date,message,color});
   }
   let updating=false;
   function update(){
     if(updating)return;updating=true;
     const c=config();masterCheckbox.checked=c.enabled;animation.value=c.animation;
     const year=osloToday().year;
-    for(const {day,check,date,message} of controls){
+    for(const {day,check,date,message,color} of controls){
       const v=c.days[day.id]||{},d=dateForDay(day,year);
       if(document.activeElement!==check)check.checked=v.enabled!==false;
       if(document.activeElement!==message)message.value=v.message||day.message;
+      if(document.activeElement!==color)color.value=/^#[0-9a-f]{6}$/i.test(v.accent||'')?v.accent:day.accent;
       date.textContent=String(d.day).padStart(2,'0')+'.'+String(d.month).padStart(2,'0')+'.'+year;
     }
     updating=false;
