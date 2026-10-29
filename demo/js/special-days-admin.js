@@ -2,7 +2,6 @@ import {store,mutate,subscribe,ready} from './data.js?v=20261028-fullslots1';
 import {SPECIAL_DAYS,parseSpecialDays,dateForDay,osloToday} from './special-days.js';
 const panel=document.getElementById('specialDayAdmin');
 if(panel){
-  const title=document.createElement('h2');title.textContent='🎉 Spesielle dager';
   const hint=document.createElement('p');hint.textContent='Automatiske datoer. Hver aktiv merkedag kan slås av. Ved kollisjon velges et tilfeldig tema ved hver sideoppdatering.';
   const master=document.createElement('label');master.className='holiday-row';
   const masterText=document.createElement('strong');masterText.textContent='Vis spesielle dager på kundesiden';
@@ -26,7 +25,25 @@ if(panel){
   const previewBanner=document.createElement('section');
   previewBanner.id='specialDayGreeting';
   preview.append(previewHeading,previewBanner);
-  panel.append(title,hint,master,animationRow,preview,list);
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='special-day-toggle';
+  toggle.setAttribute('aria-expanded','false');
+  const toggleTitle=document.createElement('strong');
+  toggleTitle.textContent='🎉 Spesielle dager';
+  const chevron=document.createElement('span');
+  chevron.textContent='⌄';
+  chevron.setAttribute('aria-hidden','true');
+  toggle.append(toggleTitle,chevron);
+  const body=document.createElement('div');
+  body.className='special-day-body';
+  body.hidden=true;
+  body.append(hint,master,animationRow,preview,list);
+  panel.append(toggle,body);
+  toggle.addEventListener('click',()=>{
+    body.hidden=!body.hidden;
+    toggle.setAttribute('aria-expanded',String(!body.hidden));
+  });
   function showPreview(day,message,color){
     previewBanner.replaceChildren();
     const mode=animation.value;
