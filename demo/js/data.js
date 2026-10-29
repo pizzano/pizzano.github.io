@@ -307,6 +307,7 @@ const DEFAULT_SETTINGS = {
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
   customerPalette: 'reference',
+  specialDaysConfig: '', // Compact JSON: enabled, animation and per-day overrides.
   shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
   manualClosed: true,
