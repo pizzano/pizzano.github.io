@@ -1149,7 +1149,14 @@ function renderOpenState() {
   el.openDot.classList.toggle('is-closed',!state.orderable);
   el.closedBanner.hidden=Boolean(state.open);
   const shopIcon=document.querySelector('.menu-overview .status-shop-icon');
-  if(shopIcon)shopIcon.textContent=state.open?'▣':state.preOpen?'◷':'🔒';
+  if(shopIcon){
+    const paths=state.open
+      ? '<path d="M3 10h18l-1.5-6h-15L3 10Z"/><path d="M5 10v10h14V10"/><path d="M9 20v-7h6v7"/><path d="M3 10c0 2 3 3 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0"/>'
+      : state.preOpen
+        ? '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+        : '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+    shopIcon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths+'</svg>';
+  }
   const statusIcon=document.getElementById('statusMessageIcon');
   if(state.open){
     el.closedTitle.textContent='Kjøkkenet er åpent';
