@@ -4,6 +4,7 @@ import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-s
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js?v=20261023-customerprofile1';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js';
+import { todaysSpecialDays, parseSpecialDays } from './special-days.js';
 /**
  * customer.js — Kundelogikk for Restauranten.
  *
@@ -3379,11 +3380,43 @@ if ('serviceWorker' in navigator) {
 // en foreløpig restaurantstatus mens Firebase og sidens visning lastes.
 let startupNavigationReady = false;
 let startupReleaseScheduled = false;
+let startupHolidayDeadline = 0;
+let startupHolidayTimeout = null;
+let startupHolidayChosen = false;
+function configureHolidayStartup(screen) {
+  if (startupHolidayChosen) return;
+  startupHolidayChosen = true;
+  const days = todaysSpecialDays(store.settings?.specialDaysConfig);
+  if (!days.length) return;
+  const day = days[Math.floor(Math.random() * days.length)];
+  const config = parseSpecialDays(store.settings?.specialDaysConfig);
+  const content = document.createElement('div');
+  content.className = 'startup-holiday-decoration';
+  content.setAttribute('aria-hidden', 'true');
+  content.textContent = day.effect === 'bat' ? '🕸️  🦇  🕷️' :
+    day.effect === 'snow' ? '❄️  ✨  ❄️' :
+    day.effect === 'heart' ? '💕  💗  💕' : day.emoji + '  ✨  ' + day.emoji;
+  screen.prepend(content);
+  screen.classList.add('is-holiday', 'holiday-motion-' + config.animation);
+  screen.style.setProperty('--startup-holiday-color', /^#[0-9a-f]{6}$/i.test(day.accent) ? day.accent : '#8840a5');
+  document.getElementById('startupTitle').textContent = day.message || day.name;
+  document.getElementById('startupNote').textContent = 'Laster siden...';
+  startupHolidayDeadline = Date.now() + 1500;
+}
 
 function releaseStartupScreenIfReady() {
   if (!startupNavigationReady || !customerMenuReady || backendInfo.mode !== 'firebase') return;
   const screen = document.getElementById('appStartup');
   if (!screen || screen.hidden || startupReleaseScheduled) return;
+  configureHolidayStartup(screen);
+  const remaining = startupHolidayDeadline - Date.now();
+  if (remaining > 0) {
+    if (!startupHolidayTimeout) startupHolidayTimeout = window.setTimeout(() => {
+      startupHolidayTimeout = null;
+      releaseStartupScreenIfReady();
+    }, remaining);
+    return;
+  }
   startupReleaseScheduled = true;
 
   // Vent til meny, kategorier, header og ordresporing har fått en full
