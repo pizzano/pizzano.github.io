@@ -46,6 +46,17 @@
       .app-startup-retry:focus-visible{outline:3px solid #c67b41;outline-offset:3px}
       @keyframes app-startup-spin{to{transform:rotate(360deg)}}
       @media(prefers-reduced-motion:reduce){.app-startup-ring{animation:none}}
+
+      /* Holiday decoration only appears after the verified settings have loaded. */
+      .app-startup.is-holiday{--startup-holiday-color:#8840a5;background:radial-gradient(circle at 35% 40%,color-mix(in srgb,var(--startup-holiday-color) 13%,#fff),#fff 78%)}
+      .app-startup.is-holiday::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(var(--startup-holiday-color) 1.6px,transparent 2px);background-size:19px 19px;opacity:.19;mask-image:linear-gradient(125deg,#000,transparent 82%)}
+      .startup-holiday-decoration{position:absolute;top:12%;right:8%;max-width:78%;font-size:clamp(28px,6vw,50px);letter-spacing:12px;pointer-events:none;animation:holiday-splash-float 3s ease-in-out infinite}
+      .app-startup.holiday-motion-off .startup-holiday-decoration{animation:none}
+      .app-startup.holiday-motion-light .startup-holiday-decoration{animation-duration:5s}
+      .app-startup.is-holiday .app-startup-inner{position:relative;z-index:1}
+      .app-startup.is-holiday .app-startup-ring{border-top-color:var(--startup-holiday-color);border-right-color:var(--startup-holiday-color)}
+      @keyframes holiday-splash-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-17px) rotate(4deg)}}
+      @media(prefers-reduced-motion:reduce){.startup-holiday-decoration{animation:none!important}}
     </style>
     <script src="./js/theme.js?v=20261024-localfour2"></script>
     <link rel="stylesheet" href="./css/customer-base.css?v=20261025-tenantbrand1">
@@ -391,7 +402,7 @@
       document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
       window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
     </script>
-    <script type="module" src="./js/customer.js?v=20261030-storeicon4"></script>
+    <script type="module" src="./js/customer.js?v=20261030-holidaysplash1"></script>
     <script type="module" src="./js/shop-info.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261029-1"></script>
 </body>
