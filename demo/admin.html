@@ -297,11 +297,12 @@
                     <button class="settings-section-btn" data-settings-section-tab="menu" type="button">Menyvisning</button>
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
                     <button class="settings-section-btn" data-settings-section-tab="contact" type="button">Kontakt</button>
+                    <button class="settings-section-btn" data-settings-section-tab="holidays" type="button">Spesielle dager</button>
                     <button class="settings-section-btn" data-settings-section-tab="alerts" type="button">Varsler <span id="systemErrorsUnread" aria-live="polite" hidden></span></button>
                 </nav>
                 <div class="scroll-area settings-section-scroll">
-                    <section id="specialDayAdmin" class="special-day-admin"></section>
                     <div class="settings-grid is-list is-sectioned" id="settingsGrid">
+                        <section id="specialDayAdmin" class="settings-section-card special-day-admin" data-settings-section="holidays" hidden></section>
 
                         <article class="set-card settings-section-card restaurant-hours-card" data-settings-section="status">
                             <div class="restaurant-hours-header">
@@ -883,7 +884,7 @@
     <script type="module" src="./js/admin.js?v=20261028-kolready1"></script>
     <script type="module" src="./js/loyalty-sync.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/orders-archive.js?v=20261028-fullslots1"></script>
-    <script type="module" src="./js/special-days-admin.js?v=20261030-placement2"></script>
+    <script type="module" src="./js/special-days-admin.js?v=20261030-isolated3"></script>
 </body>
 
 </html>
