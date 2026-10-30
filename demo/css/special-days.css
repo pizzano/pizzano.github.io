@@ -40,3 +40,20 @@ html[data-theme="dark"] #specialDayGreeting{background:#292433;color:#f8f6f5;bor
 .special-day-toggle:focus-visible{outline:3px solid #dd792d;outline-offset:-4px}
 .special-day-body{padding:0 20px 20px}
 .special-day-body[hidden]{display:none!important}
+
+/* Isolated modal preview of the customer's special-day loading screen. */
+.special-day-preview-modal[hidden]{display:none!important}
+.special-day-preview-modal{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(13,21,28,.67)}
+.special-day-preview-window{width:min(100%,570px);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 20px 75px rgba(0,0,0,.25)}
+.special-day-preview-head{padding:14px 17px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.special-day-preview-head strong{font-size:15px;color:#18272a}
+.special-day-preview-stage{position:relative;min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;overflow:hidden;background:radial-gradient(circle at 35% 40%,color-mix(in srgb,var(--holiday-color,#c27934) 12%,white),white 75%);color:#222}
+.special-day-preview-stage:before{content:"";position:absolute;inset:22px;background-image:radial-gradient(var(--holiday-color,#c27934) 1.7px,transparent 2px);background-size:19px 19px;opacity:.25;mask-image:linear-gradient(120deg,#000 10%,transparent 90%)}
+.special-day-preview-decor{font-size:48px;letter-spacing:20px;position:relative;max-width:100%;white-space:nowrap;animation:holiday-preview-float 2.5s ease-in-out infinite}
+.special-day-preview-message{position:relative;text-align:center;font-size:23px;max-width:85%;line-height:1.3;color:#28382a}
+.special-day-preview-loading{position:relative;font-size:13px;color:#64716a}
+.special-day-preview-percent{position:absolute;bottom:21px;right:23px;background:#fff;border:1px solid #e2e4e7;padding:8px 15px;border-radius:999px;color:var(--holiday-color,#8840a5);font-weight:700}
+.special-day-preview-stage[data-effect="off"] .special-day-preview-decor{animation:none}
+.special-day-preview-stage[data-effect="light"] .special-day-preview-decor{animation-duration:5s}
+@keyframes holiday-preview-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-15px) rotate(4deg)}}
+@media(prefers-reduced-motion:reduce){.special-day-preview-decor{animation:none!important}}
