@@ -81,3 +81,8 @@ html[data-theme="dark"] #specialDayGreeting{background:#292433;color:#f8f6f5;bor
 .special-day-admin .holiday-list .holiday-preview-btn{white-space:nowrap;border:0;border-radius:8px;background:#ecf3ea;color:#2d6538;padding:8px;font-size:11px;font-weight:700}
 .special-day-admin .holiday-season-heading{position:sticky;top:34px;z-index:1;background:#f0f4ee;padding:8px 14px;font-size:12px;font-weight:800;min-width:890px;box-sizing:border-box}
 @media(max-width:780px){.special-day-admin .holiday-settings-bar{flex-wrap:wrap}.special-day-admin .holiday-table-scroll{max-height:440px}}
+
+/* Greeting belongs to the menu, immediately below its status card. */
+.view-menu #specialDayGreeting{margin:10px 0 12px;max-width:100%;box-sizing:border-box}
+.view-menu #specialDayGreeting .special-day-deco{right:12px;top:50%;transform:translateY(-50%)}
+@media(max-width:540px){.view-menu #specialDayGreeting{padding:11px 13px;gap:10px}.view-menu #specialDayGreeting .special-day-icon{font-size:25px}.view-menu #specialDayGreeting .special-day-copy strong{font-size:13px}}
