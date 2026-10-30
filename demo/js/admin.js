@@ -77,7 +77,7 @@ const initialSettingsView = (() => {
   }
 })();
 
-const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer', 'alerts']);
+const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer', 'holidays', 'alerts']);
 const initialSettingsSection = (() => {
   try {
     const saved = localStorage.getItem('kol-admin-settings-section');
