@@ -2,22 +2,6 @@ import {store,mutate,subscribe,ready} from './data.js?v=20261028-fullslots1';
 import {SPECIAL_DAYS,parseSpecialDays,dateForDay,osloToday} from './special-days.js';
 const panel=document.getElementById('specialDayAdmin');
 if(panel){
-  // Keep the accordion at the bottom of the active settings content.
-  const settingsGrid=document.getElementById('settingsGrid');
-  if(settingsGrid)settingsGrid.after(panel);
-  const closeSection=()=>{
-    const content=panel.querySelector('.special-day-body');
-    const trigger=panel.querySelector('.special-day-toggle');
-    if(content)content.hidden=true;
-    if(trigger)trigger.setAttribute('aria-expanded','false');
-  };
-  document.querySelectorAll('[data-settings-section-tab]').forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      closeSection();
-      const scroller=panel.closest('.settings-section-scroll');
-      if(scroller)scroller.scrollTo({top:0,behavior:'smooth'});
-    });
-  });
   const hint=document.createElement('p');hint.textContent='Automatiske datoer. Hver aktiv merkedag kan slås av. Ved kollisjon velges et tilfeldig tema ved hver sideoppdatering.';
   const master=document.createElement('label');master.className='holiday-row';
   const masterText=document.createElement('strong');masterText.textContent='Vis spesielle dager på kundesiden';
@@ -56,19 +40,8 @@ if(panel){
   previewWindow.append(previewHeading,previewStage);
   preview.append(previewWindow);
   document.body.append(preview);
-  const toggle=document.createElement('button');
-  toggle.type='button';
-  toggle.className='special-day-toggle';
-  toggle.setAttribute('aria-expanded','false');
-  const toggleTitle=document.createElement('strong');
-  toggleTitle.textContent='🎉 Spesielle dager';
-  const chevron=document.createElement('span');
-  chevron.textContent='⌄';
-  chevron.setAttribute('aria-hidden','true');
-  toggle.append(toggleTitle,chevron);
   const body=document.createElement('div');
   body.className='special-day-body';
-  body.hidden=true;
   const intro=document.createElement('div');intro.className='holiday-intro';
   const introIcon=document.createElement('span');introIcon.textContent='▦';introIcon.className='holiday-intro-icon';
   const introCopy=document.createElement('div');
@@ -83,15 +56,7 @@ if(panel){
   }
   tableScroll.append(columns,list);
   body.append(intro,settingsBar,tableScroll);
-  panel.append(toggle,body);
-  toggle.addEventListener('click',()=>{
-    body.hidden=!body.hidden;
-    toggle.setAttribute('aria-expanded',String(!body.hidden));
-    if(!body.hidden){
-      // Keep the focused section at the top of the settings scroll area.
-      requestAnimationFrame(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}));
-    }
-  });
+  panel.append(body);
   function showPreview(day,message,color){
     previewStage.style.setProperty('--holiday-color',color.value);
     previewStage.dataset.effect=animation.value;
