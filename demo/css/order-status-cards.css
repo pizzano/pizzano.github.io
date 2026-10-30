@@ -20,3 +20,18 @@
 .menu-overview .dot-open{display:none!important}
 html[data-theme="dark"] .menu-overview{background:#20272b;border-color:#3b464e}
 @media(max-width:540px){.menu-overview{padding:12px!important}.menu-overview .status-shop-icon{width:42px;height:42px;font-size:21px}.menu-overview .pickup-copy strong{font-size:17px}.menu-overview .closed-banner{padding:12px!important;gap:10px}.menu-overview .status-message-icon{width:42px;height:42px}.menu-overview .status-message-copy strong{font-size:16px}}
+
+/* Compact customer status: keep icon and copy on the same horizontal row. */
+.menu-overview{padding:10px 12px!important;border-radius:15px}
+.menu-overview .menu-overview-row{gap:8px!important;min-height:38px}
+.menu-overview .pickup-note{gap:9px!important;flex-direction:row!important}
+.menu-overview .status-shop-icon{width:36px;height:36px;font-size:18px}
+.menu-overview .pickup-copy{min-width:0}
+.menu-overview .pickup-copy strong{font-size:15px;line-height:1.2}
+.menu-overview .pickup-copy>span{font-size:11px;line-height:1.35}
+.menu-overview .closed-banner{flex-direction:row!important;justify-content:flex-start!important;text-align:left!important;min-height:0!important;gap:10px!important;margin-top:9px!important;padding:10px 12px!important;border-radius:12px}
+.menu-overview .status-message-icon{width:34px;height:34px;font-size:19px}
+.menu-overview .status-message-copy{align-items:flex-start!important;text-align:left!important;gap:2px!important}
+.menu-overview .status-message-copy strong{font-size:14px;line-height:1.3}
+.menu-overview .status-message-copy span{font-size:11px;line-height:1.35}
+@media(max-width:540px){.menu-overview{padding:9px 11px!important}.menu-overview .status-shop-icon{width:34px;height:34px;font-size:17px}.menu-overview .pickup-copy strong{font-size:14px}.menu-overview .closed-banner{padding:9px 10px!important;gap:9px!important}.menu-overview .status-message-icon{width:32px;height:32px;font-size:18px}.menu-overview .status-message-copy strong{font-size:13px}}
