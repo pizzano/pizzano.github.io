@@ -12,7 +12,11 @@ if(panel){
     if(trigger)trigger.setAttribute('aria-expanded','false');
   };
   document.querySelectorAll('[data-settings-section-tab]').forEach(tab=>{
-    tab.addEventListener('click',closeSection);
+    tab.addEventListener('click',()=>{
+      closeSection();
+      const scroller=panel.closest('.settings-section-scroll');
+      if(scroller)scroller.scrollTo({top:0,behavior:'smooth'});
+    });
   });
   const hint=document.createElement('p');hint.textContent='Automatiske datoer. Hver aktiv merkedag kan slås av. Ved kollisjon velges et tilfeldig tema ved hver sideoppdatering.';
   const master=document.createElement('label');master.className='holiday-row';
