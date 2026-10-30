@@ -1135,17 +1135,32 @@ function renderOpenState() {
   const state = getOpenState();
   const settings = store.settings || {};
   el.openDot.classList.remove('is-pending');
-  el.openStatus.textContent = state.preOpen ? `Forhåndsbestill nå · Åpner kl. ${state.todayOpensAt}` : state.label;
-  document.getElementById('pickupDetails').textContent = state.preOpen
-    ? `Tidligste henting ${getPickupSlots()[0]?.value || '14:15'}`
-    : state.open ? `Kun henting · stenger ${state.closesAt}`
-    : `Kun henting · åpner ${state.opensAt}`;
-  el.openDot.classList.toggle('is-closed', !state.open && !state.preOpen);
-  el.closedBanner.hidden = state.orderable || !settings.closedMessage;
-  if (!state.open) {
-    el.closedTitle.textContent = 'Restauranten er stengt';
-    el.closedText.textContent =
-      settings.closedMessage || `Vi tar imot bestillinger fra ${state.opensAt}.`;
+  const overview=document.querySelector('.menu-overview');
+  overview?.classList.toggle('status-is-open',state.open);
+  overview?.classList.toggle('status-is-preorder',Boolean(state.preOpen));
+  overview?.classList.toggle('status-is-closed',!state.open&&!state.preOpen);
+  const opening=state.todayOpensAt||state.opensAt||'';
+  el.openStatus.textContent=state.open?'Åpent nå':state.preOpen?'Stengt nå · Bestilling åpen':'Stengt nå';
+  document.getElementById('pickupDetails').textContent=state.open
+    ? `Bestilling tilgjengelig · stenger ${state.closesAt}`
+    : state.preOpen
+      ? `Forhåndsbestilling tilgjengelig · åpner ${opening}`
+      : `Bestilling ikke tilgjengelig · åpner ${state.opensAt}`;
+  el.openDot.classList.toggle('is-closed',!state.orderable);
+  el.closedBanner.hidden=false;
+  const statusIcon=document.getElementById('statusMessageIcon');
+  if(state.open){
+    el.closedTitle.textContent='Kjøkkenet er åpent';
+    el.closedText.textContent='Bestill nå eller velg ønsket hentetid.';
+    if(statusIcon)statusIcon.textContent='♨';
+  }else if(state.preOpen){
+    el.closedTitle.textContent='Forhåndsbestilling er åpen';
+    el.closedText.textContent=`Du kan bestille nå og velge hentetid etter kl. ${opening}.`;
+    if(statusIcon)statusIcon.textContent='◷';
+  }else{
+    el.closedTitle.textContent='Restauranten er stengt';
+    el.closedText.textContent=settings.closedMessage||'Du kan bestille når vi åpner igjen.';
+    if(statusIcon)statusIcon.textContent='◷';
   }
   el.btnToCheckout.disabled = !state.orderable;
   el.cartClosedHint.hidden = state.orderable;
