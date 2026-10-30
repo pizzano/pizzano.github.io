@@ -1140,27 +1140,32 @@ function renderOpenState() {
   overview?.classList.toggle('status-is-preorder',Boolean(state.preOpen));
   overview?.classList.toggle('status-is-closed',!state.open&&!state.preOpen);
   const opening=state.todayOpensAt||state.opensAt||'';
-  el.openStatus.textContent=state.open?'Åpent nå':state.preOpen?'Stengt nå · Bestilling åpen':'Stengt nå';
+  el.openStatus.textContent=state.open?'Åpent nå':'Stengt nå';
   document.getElementById('pickupDetails').textContent=state.open
-    ? `Bestilling tilgjengelig · stenger ${state.closesAt}`
+    ? `Bestilling tilgjengelig · stenger kl. ${state.closesAt}`
     : state.preOpen
-      ? `Forhåndsbestilling tilgjengelig · åpner ${opening}`
-      : `Bestilling ikke tilgjengelig · åpner ${state.opensAt}`;
+      ? `Åpner kl. ${opening} · Forhåndsbestilling er tilgjengelig`
+      : `Kun henting · Åpner kl. ${state.opensAt}`;
   el.openDot.classList.toggle('is-closed',!state.orderable);
-  el.closedBanner.hidden=false;
+  el.closedBanner.hidden=Boolean(state.open);
+  const shopIcon=document.querySelector('.menu-overview .status-shop-icon');
+  if(shopIcon)shopIcon.textContent=state.open?'▣':state.preOpen?'◷':'🔒';
   const statusIcon=document.getElementById('statusMessageIcon');
   if(state.open){
     el.closedTitle.textContent='Kjøkkenet er åpent';
     el.closedText.textContent='Bestill nå eller velg ønsket hentetid.';
     if(statusIcon)statusIcon.textContent='♨';
   }else if(state.preOpen){
-    el.closedTitle.textContent='Forhåndsbestilling er åpen';
-    el.closedText.textContent=`Du kan bestille nå og velge hentetid etter kl. ${opening}.`;
-    if(statusIcon)statusIcon.textContent='◷';
+    el.closedTitle.textContent='Du kan bestille på forhånd';
+    const firstSlot=getPickupSlots()[0]?.value;
+    el.closedText.textContent=firstSlot
+      ? `Velg ønsket hentetid fra kl. ${firstSlot} og utover.`
+      : `Velg ønsket hentetid etter at vi åpner kl. ${opening}.`;
+    if(statusIcon)statusIcon.textContent='▦';
   }else{
     el.closedTitle.textContent='Restauranten er stengt';
     el.closedText.textContent=settings.closedMessage||'Du kan bestille når vi åpner igjen.';
-    if(statusIcon)statusIcon.textContent='◷';
+    if(statusIcon)statusIcon.textContent='⊘';
   }
   el.btnToCheckout.disabled = !state.orderable;
   el.cartClosedHint.hidden = state.orderable;
