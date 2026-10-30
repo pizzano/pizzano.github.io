@@ -53,7 +53,20 @@ if(panel){
   const body=document.createElement('div');
   body.className='special-day-body';
   body.hidden=true;
-  body.append(hint,master,animationRow,list);
+  const intro=document.createElement('div');intro.className='holiday-intro';
+  const introIcon=document.createElement('span');introIcon.textContent='▦';introIcon.className='holiday-intro-icon';
+  const introCopy=document.createElement('div');
+  const introTitle=document.createElement('h2');introTitle.textContent='Automatiske datoer';
+  introCopy.append(introTitle,hint);intro.append(introIcon,introCopy);
+  const settingsBar=document.createElement('div');settingsBar.className='holiday-settings-bar';
+  settingsBar.append(master,animationRow);
+  const tableScroll=document.createElement('div');tableScroll.className='holiday-table-scroll';
+  const columns=document.createElement('div');columns.className='holiday-table-header';
+  for(const name of ['AKTIV','IKON','MERKEDAG','DATO','TEMA / FARGE','HILSEN (VIS PÅ KUNDESIDEN)','FORHÅNDSVIS']){
+    const cell=document.createElement('span');cell.textContent=name;columns.append(cell);
+  }
+  tableScroll.append(columns,list);
+  body.append(intro,settingsBar,tableScroll);
   panel.append(toggle,body);
   toggle.addEventListener('click',()=>{
     body.hidden=!body.hidden;
@@ -76,26 +89,32 @@ if(panel){
   masterCheckbox.addEventListener('change',()=>save(c=>{c.enabled=masterCheckbox.checked}));
   animation.addEventListener('change',()=>save(c=>{c.animation=animation.value}));
   const controls=[];
-  for(const day of SPECIAL_DAYS){
-    const row=document.createElement('div');row.className='holiday-row';
-    const left=document.createElement('div');
-    const label=document.createElement('label');
-    const check=document.createElement('input');check.type='checkbox';
-    const name=document.createElement('span');name.textContent=day.emoji+' '+day.name;
-    label.append(check,name);
-    const date=document.createElement('small');date.className='holiday-date';
-    left.append(label,date);
-    const message=document.createElement('input');message.type='text';message.maxLength=90;message.placeholder='Hilsen...';message.title='Hilsen til kundene';
-    const color=document.createElement('input');color.type='color';color.title='Temafarge';color.value=day.accent;
-    const controlsBox=document.createElement('div');controlsBox.style.display='flex';controlsBox.style.alignItems='center';controlsBox.style.gap='7px';
-    const show=document.createElement('button');show.type='button';show.className='holiday-preview-btn';show.textContent='Forhåndsvis';show.title='Forhåndsvis temaet uten å vise det til kunder';
-    show.addEventListener('click',()=>showPreview(day,message,color));
-    controlsBox.append(color,message,show);
-    row.append(left,controlsBox);list.append(row);
-    color.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),accent:color.value}}));
-    check.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),enabled:check.checked}}));
-    message.addEventListener('change',()=>save(c=>{c.days[day.id]={...(c.days[day.id]||{}),message:message.value.trim()||day.message}}));
-    controls.push({day,check,date,message,color});
+  const seasons=[
+    {label:'❄️  Vinter og tidlig vår',ids:['newyear','sami','mother','valentine','fastelavn']},
+    {label:'🌿  Vår og sommer',ids:['easter','mayday','ascension','constitution','pentecost','sankthans']},
+    {label:'🍂  Høst og vinter',ids:['halloween','father','blackfriday','advent','lucia','christmasEve','christmas','boxing','newyearEve']}
+  ];
+  for(const season of seasons){
+    const heading=document.createElement('div');heading.className='holiday-season-heading';heading.textContent=season.label;list.append(heading);
+    for(const id of season.ids){
+      const day=SPECIAL_DAYS.find(d=>d.id===id);
+      if(!day)continue;
+      const row=document.createElement('div');row.className='holiday-row';
+      const check=document.createElement('input');check.type='checkbox';check.setAttribute('aria-label',day.name+' aktiv');
+      const emoji=document.createElement('span');emoji.className='holiday-emoji';emoji.textContent=day.emoji;
+      const name=document.createElement('span');name.className='holiday-name';name.textContent=day.name;
+      const date=document.createElement('small');date.className='holiday-date';
+      const color=document.createElement('input');color.type='color';color.title='Temafarge for '+day.name;color.value=day.accent;
+      const message=document.createElement('input');message.type='text';message.maxLength=90;message.placeholder='Hilsen...';message.title='Hilsen til kundene';
+      const show=document.createElement('button');show.type='button';show.className='holiday-preview-btn';show.textContent='◉  Forhåndsvis';
+      show.addEventListener('click',()=>showPreview(day,message,color));
+      row.append(check,emoji,name,date,color,message,show);
+      list.append(row);
+      color.addEventListener('change',()=>save(config=>{config.days[day.id]={...(config.days[day.id]||{}),accent:color.value}}));
+      check.addEventListener('change',()=>save(config=>{config.days[day.id]={...(config.days[day.id]||{}),enabled:check.checked}}));
+      message.addEventListener('change',()=>save(config=>{config.days[day.id]={...(config.days[day.id]||{}),message:message.value.trim()||day.message}}));
+      controls.push({day,check,date,message,color});
+    }
   }
   let updating=false;
   function update(){
