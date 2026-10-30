@@ -70,12 +70,11 @@
     <meta name="twitter:title" content="Online bestilling" />
     <meta name="twitter:description" content="Bestill mat til henting fra restauranten." />
     <link rel="stylesheet" href="./css/cart.css?v=20261023-sharedorders1">
-    <link rel="stylesheet" href="./css/special-days.css?v=20261029-1">
+    <link rel="stylesheet" href="./css/special-days.css?v=20261031-location2">
     <link rel="stylesheet" href="./css/order-status-cards.css?v=20261030-states3">
 </head>
 
 <body>
-    <section id="specialDayGreeting" aria-label="Dagens merkedag" hidden></section>
     <!-- Kun denne lasteskjermen skal være synlig til Firebase og første menyrender er ferdige. -->
     <div id="appStartup" class="app-startup" role="status" aria-live="polite" aria-busy="true">
         <div class="app-startup-inner">
@@ -143,6 +142,7 @@
                     <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span></div>
                 </div>
             </div>
+            <section id="specialDayGreeting" aria-label="Dagens merkedag" hidden></section>
             <div id="activeOrderMenu" class="active-order-slot" hidden></div>
             <div id="menuList" class="menu-list"></div>
         </section>
