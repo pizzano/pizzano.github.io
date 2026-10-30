@@ -113,7 +113,7 @@
             <div class="menu-overview">
                 <div class="menu-overview-row">
                     <div class="pickup-note">
-                        <span class="dot-open is-pending" id="openDot" aria-hidden="true"></span>
+                        <span class="status-shop-icon" aria-hidden="true">▣</span><span class="dot-open is-pending" id="openDot" aria-hidden="true"></span>
                         <div class="pickup-copy">
                             <strong id="openStatus">Henter åpningstider…</strong>
                             <span id="pickupDetails">Vennligst vent</span>
@@ -125,9 +125,9 @@
                         <span class="allergen-visibility-switch" aria-hidden="true"></span>
                     </label>
                 </div>
-                <div class="closed-banner" id="closedBanner" hidden>
+                <div class="closed-banner" id="closedBanner" hidden><span class="status-message-icon" id="statusMessageIcon" aria-hidden="true">◷</span><div class="status-message-copy">
                     <strong id="closedTitle">Restauranten er stengt</strong>
-                    <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
+                    <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span></div>
                 </div>
             </div>
             <div id="activeOrderMenu" class="active-order-slot" hidden></div>
