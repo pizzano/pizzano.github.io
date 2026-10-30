@@ -35,3 +35,20 @@ html[data-theme="dark"] .menu-overview{background:#20272b;border-color:#3b464e}
 .menu-overview .status-message-copy strong{font-size:14px;line-height:1.3}
 .menu-overview .status-message-copy span{font-size:11px;line-height:1.35}
 @media(max-width:540px){.menu-overview{padding:9px 11px!important}.menu-overview .status-shop-icon{width:34px;height:34px;font-size:17px}.menu-overview .pickup-copy strong{font-size:14px}.menu-overview .closed-banner{padding:9px 10px!important;gap:9px!important}.menu-overview .status-message-icon{width:32px;height:32px;font-size:18px}.menu-overview .status-message-copy strong{font-size:13px}}
+
+/* Reference design: one slim row when open, two rows for preorder/closed. */
+.menu-overview{border-color:#c7ead7!important;box-shadow:0 5px 16px rgba(21,44,65,.045)!important}
+.menu-overview.status-is-preorder{border-color:#ffe0c5!important}
+.menu-overview.status-is-closed{border-color:#ffd0d0!important}
+.menu-overview.status-is-open .closed-banner{display:none!important}
+.menu-overview .pickup-note{flex:1}
+.menu-overview.status-is-open .pickup-copy strong{color:#083e2a}
+.menu-overview.status-is-preorder .status-shop-icon{background:#ffead9!important;color:#b64e0c!important}
+.menu-overview.status-is-closed .status-shop-icon{background:#ffdada!important;color:#ae1111!important}
+.menu-overview.status-is-preorder .closed-banner{background:#fff0e4!important;color:#a94a0b!important}
+.menu-overview.status-is-closed .closed-banner{background:#ffe8e8!important;color:#af1111!important}
+.menu-overview .status-message-copy{flex:1}
+.menu-overview .status-message-copy span{color:#5f6871}
+.menu-overview .closed-banner{box-shadow:none!important}
+.menu-overview .allergen-visibility-control{flex:none}
+@media(max-width:540px){.menu-overview .allergen-visibility-control{font-size:11px}.menu-overview .pickup-copy>span{font-size:10px}.menu-overview .status-message-copy span{font-size:11px}}
