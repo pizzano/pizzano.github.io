@@ -1,0 +1,22 @@
+/* Clear status cards, preserving existing orderability logic. */
+.menu-overview{border:1px solid #e5eaf0;border-radius:19px;background:#fff;padding:16px!important;box-shadow:0 7px 25px rgba(21,44,65,.055)}
+.menu-overview .menu-overview-row{display:flex;align-items:center;gap:12px}
+.menu-overview .pickup-note{display:flex;align-items:center;gap:12px;min-width:0}
+.menu-overview .status-shop-icon{width:48px;height:48px;display:grid;place-items:center;flex:none;border-radius:50%;font-size:24px;font-weight:700;background:#d8f8e5;color:#086639}
+.menu-overview .pickup-copy strong{font-size:19px;font-weight:800;line-height:1.25}
+.menu-overview .pickup-copy>span{font-size:13px;line-height:1.45}
+.menu-overview .closed-banner{display:flex;align-items:center;gap:14px;margin-top:14px!important;padding:15px!important;border-radius:15px;background:#e8f9ee!important;border:0!important;color:#075a2e!important}
+.menu-overview .closed-banner[hidden]{display:none!important}
+.menu-overview .status-message-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.menu-overview .status-message-copy strong{font-size:17px;font-weight:800}
+.menu-overview .status-message-copy span{font-size:13px;line-height:1.5}
+.menu-overview .status-message-icon{display:grid;place-items:center;flex:none;width:47px;height:47px;background:#d0f4dd;color:#086639;border-radius:50%;font-size:26px}
+.menu-overview.status-is-closed .status-shop-icon{background:#ffe2df;color:#af2b22}
+.menu-overview.status-is-closed .closed-banner{background:#ffeded!important;color:#a2211b!important}
+.menu-overview.status-is-closed .status-message-icon{background:#ffd9d6;color:#a2211b}
+.menu-overview.status-is-preorder .status-shop-icon{background:#fff1d7;color:#9a5a09}
+.menu-overview.status-is-preorder .closed-banner{background:#fff5e4!important;color:#895209!important}
+.menu-overview.status-is-preorder .status-message-icon{background:#ffe9bd;color:#895209}
+.menu-overview .dot-open{display:none!important}
+html[data-theme="dark"] .menu-overview{background:#20272b;border-color:#3b464e}
+@media(max-width:540px){.menu-overview{padding:12px!important}.menu-overview .status-shop-icon{width:42px;height:42px;font-size:21px}.menu-overview .pickup-copy strong{font-size:17px}.menu-overview .closed-banner{padding:12px!important;gap:10px}.menu-overview .status-message-icon{width:42px;height:42px}.menu-overview .status-message-copy strong{font-size:16px}}
