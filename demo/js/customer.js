@@ -42,7 +42,7 @@ import {
   allergenLabel,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261028-fullslots1';
+} from './data.js?v=20261101-optionallergens1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
