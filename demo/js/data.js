@@ -684,6 +684,14 @@ function normalizeState(raw) {
       label: typeof option.label === 'string' ? option.label : '',
       price: Number(option.price) || 0,
       soldOut: Boolean(option.soldOut),
+      // Per-choice allergen details are optional. Unknown is distinct from verified none.
+      allergensReviewed: option.allergensReviewed === true,
+      allergens: asArray(option.allergens)
+        .map((entry) => {
+          const value=String(entry||'').toLowerCase();
+          return allergenIds.has(value) ? value : (labelToId.get(value) || '');
+        })
+        .filter(Boolean),
     })),
   }));
 
