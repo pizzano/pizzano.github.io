@@ -55,7 +55,7 @@ import {
   rejectOrder,
   refreshFromDatabase,
   orderStatusLabel,
-} from './data.js?v=20261028-fullslots1';
+} from './data.js?v=20261101-optionallergens1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand
