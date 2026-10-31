@@ -39,6 +39,7 @@ import {
   getOpenState,
   getPickupSlots,
   allergenLabels,
+  allergenLabel,
   orderStatusLabel,
   uid,
 } from './data.js?v=20261028-fullslots1';
@@ -1277,46 +1278,45 @@ function draftTotal() {
 }
 
 function optionGroupHtml(group, problems) {
-  const picked = draft.selections[group.id] || [];
-  const isMulti = group.selectionMode === 'multiple';
-  const servingMode = isMulti && Boolean(group.allowQuantity);
-  const selectedCount = servingMode ? picked.length : new Set(picked).size;
-  const maxCount = Math.max(1,Math.min(30,Number(group.maxSelections)||1));
-  const atMax = isMulti && selectedCount >= maxCount;
-  const badges = `<span class="opt-guidance">${group.required ? 'Påkrevd' : 'Valgfritt'}</span>${
-    servingMode ? `<span class="opt-guidance opt-serving-limit">Maks ${maxCount} stk · ${selectedCount} valgt</span>` : ''
-  }`;
-
-  const rows = (group.options || [])
-    .filter((option) => option.label)
-    .map((option) => {
-      const count = picked.filter(id => id === option.id).length;
-      const checked = count > 0;
-      const blocked = option.soldOut || (atMax && !checked);
-      return `
-        <label class="opt-row${checked ? ' is-checked' : ''}${blocked ? ' is-blocked' : ''}${servingMode ? ' is-serving' : ''}">
-          <input type="${isMulti ? 'checkbox' : 'radio'}" name="grp_${escapeHtml(group.id)}"
-                 data-group="${escapeHtml(group.id)}" data-option="${escapeHtml(option.id)}"
-                 ${checked ? 'checked' : ''} ${blocked ? 'disabled' : ''}>
-          <span class="opt-label">${escapeHtml(option.label)}</span>
-          <span class="opt-price">${option.price > 0 ? `+${formatPrice(option.price)} / stk` : 'Inkludert'}</span>
-          ${servingMode ? `<span class="option-quantity" role="group" aria-label="Antall ${escapeHtml(option.label)}">
-            <button type="button" data-addon-quantity="-1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Færre ${escapeHtml(option.label)}" ${count === 0 || option.soldOut ? 'disabled' : ''}>−</button>
-            <b aria-live="polite">${count}</b>
-            <button type="button" data-addon-quantity="1" data-addon-group="${escapeHtml(group.id)}" data-addon-option="${escapeHtml(option.id)}" aria-label="Flere ${escapeHtml(option.label)}" ${atMax || option.soldOut ? 'disabled' : ''}>+</button>
-          </span>` : ''}
-        </label>`;
-    })
-    .join('');
-
-  return `
-    <div class="opt-group${servingMode ? ' opt-group--serving' : ''}${problems.has(group.id) && draft.showErrors ? ' opt-invalid' : ''}">
-      <div class="opt-head">
-        <h3 class="opt-title">${escapeHtml(group.title)}</h3>
-        ${badges}
-      </div>
-      <div class="opt-rows">${rows || '<p class="hint">Ingen alternativer.</p>'}</div>
-    </div>`;
+  // All original admin group names and option labels remain visible.
+  const picked=draft.selections[group.id] || [];
+  const multiple=group.selectionMode==='multiple';
+  const serving=multiple && Boolean(group.allowQuantity);
+  const countSelected=serving ? picked.length : new Set(picked).size;
+  const max=Math.max(1,Math.min(30,Number(group.maxSelections)||1));
+  const full=multiple && countSelected>=max;
+  const rows=(group.options||[]).filter(option=>option.label).map(option=>{
+    const count=picked.filter(id=>id===option.id).length;
+    const checked=count>0;
+    const disabled=Boolean(option.soldOut || (full && !checked));
+    const price=Number(option.price)||0;
+    return `
+      <label class="opt-row${checked?' is-checked':''}${serving?' is-serving':''}${disabled?' is-blocked':''}">
+        <input type="${multiple?'checkbox':'radio'}" name="grp_${escapeHtml(group.id)}"
+          data-group="${escapeHtml(group.id)}" data-option="${escapeHtml(option.id)}"
+          ${checked?'checked':''} ${disabled?'disabled':''}>
+        <span class="opt-label">${escapeHtml(option.label)}</span>
+        <span class="opt-price">${price>0? `+${formatPrice(price)} / stk` : 'Inkludert'}</span>
+        ${serving && count>1 && price>0 ? `<small class="opt-line-total">Totalt +${formatPrice(price*count)}</small>` : ''}
+        ${serving ? `<span class="option-quantity" role="group" aria-label="Antall ${escapeHtml(option.label)}">
+          <button type="button" data-addon-quantity="-1" data-addon-group="${escapeHtml(group.id)}"
+            data-addon-option="${escapeHtml(option.id)}" aria-label="Færre ${escapeHtml(option.label)}"
+            ${count===0||option.soldOut?'disabled':''}>−</button>
+          <b aria-live="polite">${count}</b>
+          <button type="button" data-addon-quantity="1" data-addon-group="${escapeHtml(group.id)}"
+            data-addon-option="${escapeHtml(option.id)}" aria-label="Flere ${escapeHtml(option.label)}"
+            ${full||option.soldOut?'disabled':''}>+</button>
+        </span>` : ''}
+      </label>`;
+  }).join('');
+  return `<div class="opt-group${serving?' opt-group--serving':''}${problems.has(group.id)&&draft.showErrors?' opt-invalid':''}">
+    <div class="opt-head">
+      ${group.title ? `<h3 class="opt-title">${escapeHtml(group.title)}</h3>` : ''}
+      <span class="opt-guidance">${group.required?'Påkrevd':'Valgfritt'}</span>
+      ${serving ? `<span class="opt-guidance opt-serving-limit">Maks ${max} stk · ${countSelected} valgt</span>`:''}
+    </div>
+    <div class="opt-rows">${rows||'<p class="hint">Ingen alternativer.</p>'}</div>
+  </div>`;
 }
 
 function renderSheet() {
@@ -1338,7 +1338,17 @@ function renderSheet() {
   for (const id of Object.keys(draft.selections)) if (!activeGroups.has(id)) delete draft.selections[id];
   for (const group of groups) if (!Array.isArray(draft.selections[group.id])) draft.selections[group.id] = [...(group.defaultOptionIds || [])];
   const { problems, message } = validateDraft();
-  const allergens = allergenLabels(item);
+  const selectedOptionIds = new Set(Object.values(draft.selections).flat());
+  const selectedOptions = groups.flatMap(group =>
+    (group.options || []).filter(option => selectedOptionIds.has(option.id))
+  );
+  const allergens = [...new Set([
+    ...allergenLabels(item),
+    ...selectedOptions.flatMap(option => Array.isArray(option.allergens)
+      ? option.allergens.map(allergenLabel) : [])
+  ])];
+  const allergenInfoIncomplete = selectedOptions.some(option => option.allergensReviewed !== true);
+  const missingBaseAllergens = !Array.isArray(item.allergens) || item.allergens.length === 0;
   const ingredientCustomizationEnabled =
     store.settings?.ingredientCustomizationEnabled !== false;
   const removableIngredients = ingredientCustomizationEnabled
@@ -1383,7 +1393,7 @@ function renderSheet() {
     : '';
 
   const sizeHtml =
-    (item.sizes || []).length > 0
+    (item.sizes || []).length > 1
       ? `
       <div class="opt-group opt-group--size">
         <div class="opt-head">
@@ -1426,21 +1436,7 @@ function renderSheet() {
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     ${ingredientCustomizeHtml}
     ${sizeHtml}
-    ${(() => {
-      // Presentation-only grouping of adjacent optional checkbox extras.
-      const output=[];
-      let extras=[];
-      const flush=()=>{if(!extras.length)return;output.push('<div class="pd-extras"><h3 class="pd-extras-title">Ekstra <em>(valgfritt)</em></h3>'+extras.join('')+'</div>');extras=[];};
-      for(const group of groups){
-        const singleExtra=group.selectionMode==='multiple'&&!group.allowQuantity&&!group.required&&group.options?.length===1;
-        if(singleExtra){
-          const option=group.options[0];
-          const checked=(draft.selections[group.id]||[]).includes(option.id);
-          extras.push('<label class="pd-extra-line"><input type="checkbox" name="grp_'+escapeHtml(group.id)+'" data-group="'+escapeHtml(group.id)+'" data-option="'+escapeHtml(option.id)+'" '+(checked?'checked ':'')+(option.soldOut?'disabled ':'')+'/><span>'+escapeHtml(group.title)+'</span><b>'+(option.price>0?'+'+formatPrice(option.price):'Inkludert')+'</b></label>');
-        }else{flush();output.push(optionGroupHtml(group,problems));}
-      }
-      flush();return output.join('');
-    })()}
+    ${groups.map(group => optionGroupHtml(group, problems)).join('')}
     <div class="opt-group opt-group--comment">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
@@ -1452,7 +1448,11 @@ function renderSheet() {
       <div class="sheet-allergen-chips">
         ${allergens.length
           ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
-          : '<span class="sheet-allergen-none">Ingen registrerte allergener</span>'}
+          : '<span class="sheet-allergen-none">Allergener ikke oppgitt</span>'}
+      </div>
+      ${allergenInfoIncomplete || missingBaseAllergens
+        ? '<p class="sheet-allergen-warning">Allergeninformasjonen er ikke fullstendig for dette produktet eller valgte tilvalg. Kontakt restauranten ved allergi.</p>' : ''}
+      <div class="sheet-allergen-chips-unused" hidden>
       </div>
     </div>
 `;
@@ -3012,29 +3012,6 @@ el.sheetBody.addEventListener('change', (event) => {
   const check = validateDraft();
   if (check.valid) draft.showErrors = false;
   renderSheet();
-});
-
-// Product-sheet choice feedback
-el.sheetBody.addEventListener('change', (event) => {
-  if (!draft) return;
-  const target = event.target;
-  const { item } = findItem(draft.itemId);
-  if (!item) return;
-
-  if (target.dataset.size) {
-    const size = (item.sizes || []).find((entry) => entry.id === target.dataset.size);
-    toast(size ? `Størrelse valgt: ${size.label}.` : 'Størrelse oppdatert.');
-    return;
-  }
-
-  const groupId = target.dataset.group;
-  const optionId = target.dataset.option;
-  if (!groupId || !optionId) return;
-  const group = getItemOptionGroups(item, draft.sizeId).find((entry) => entry.id === groupId);
-  const option = group?.options?.find((entry) => entry.id === optionId);
-  if (!option) return;
-  const selected = (draft.selections[groupId] || []).includes(optionId);
-  toast(`${option.label} ${selected ? 'valgt.' : 'fjernet.'}`);
 });
 
 el.sheetBody.addEventListener('input', (event) => {
