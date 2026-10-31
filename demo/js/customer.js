@@ -1234,7 +1234,8 @@ function openProduct(itemId, editLine = null) {
     if (large) { draft.loyaltyFree = true; draft.loyaltyCycle = bonusState.cycle; draft.sizeId = large.id; }
   }
   renderSheet();
-  el.sheetBody.scrollTop = 0;
+  const scrollRegion = el.sheet.querySelector('#sheetScroll');
+  if (scrollRegion) scrollRegion.scrollTop = 0;
 }
 
 function closeSheet() {
