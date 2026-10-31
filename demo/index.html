@@ -79,8 +79,8 @@
     <div id="appStartup" class="app-startup" role="status" aria-live="polite" aria-busy="true">
         <div class="app-startup-inner">
             <span class="app-startup-ring" id="startupSpinner" aria-hidden="true"></span>
-            <strong class="app-startup-title" id="startupTitle">Laster siden...</strong>
-            <p class="app-startup-note" id="startupNote">Forbereder menyen</p>
+            <strong class="app-startup-title" id="startupTitle"></strong>
+            <p class="app-startup-note" id="startupNote"></p>
             <button class="app-startup-retry" id="startupRetry" type="button" hidden>Prøv igjen</button>
         </div>
     </div>
@@ -402,7 +402,7 @@
       document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
       window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
     </script>
-    <script type="module" src="./js/customer.js?v=20261030-holidaysplash1"></script>
+    <script type="module" src="./js/customer.js?v=20261031-single-splash2"></script>
     <script type="module" src="./js/shop-info.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261029-1"></script>
 </body>
