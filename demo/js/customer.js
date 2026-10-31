@@ -3034,13 +3034,6 @@ el.qtyPlus.addEventListener('click', () => {
 el.btnAddToCart.addEventListener('click', addDraftToCart);
 el.sheetClose.addEventListener('click', closeSheet);
 el.sheetBackdrop.addEventListener('click', closeSheet);
-el.sheetTitle.addEventListener('click', closeSheet);
-el.sheetTitle.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    closeSheet();
-  }
-});
 
 el.sheetFav.addEventListener('click', () => {
   if (!draft) return;
