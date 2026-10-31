@@ -1738,8 +1738,8 @@ function openEditor(groupId, attachToItemId = null) {
         maxSelections: 1,
         defaultOptionIds: [],
         options: [
-          { id: uid('opt'), label: '', price: 0 },
-          { id: uid('opt'), label: '', price: 0 },
+          { id: uid('opt'), label: '', price: 0, allergens: [], allergensReviewed: false },
+          { id: uid('opt'), label: '', price: 0, allergens: [], allergensReviewed: false },
         ],
         isNew: true,
         attachToItemId,
@@ -1785,6 +1785,13 @@ function renderEditorRows() {
       )}" type="button" aria-label="Fjern alternativet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>
       </button>
+      <details class="editor-option-allergens">
+        <summary>Allergener – ${(option.allergens || []).length} valgt${option.allergensReviewed ? ' · kontrollert' : ' · ikke kontrollert'}</summary>
+        <div class="editor-allergen-grid">
+          ${getAllergenCatalog().map(a=>`<label><input type="checkbox" data-option-allergen="${escapeHtml(option.id)}" data-allergen-id="${escapeHtml(a.id)}" ${(option.allergens||[]).includes(a.id)?'checked':''}> ${escapeHtml(a.label)}</label>`).join('')}
+        </div>
+        <label class="editor-allergen-reviewed"><input type="checkbox" data-reviewed-option="${escapeHtml(option.id)}" ${option.allergensReviewed?'checked':''}> Allergeninformasjonen er kontrollert (også hvis ingen er valgt)</label>
+      </details>
     </div>`
     )
     .join('');
@@ -1839,6 +1846,25 @@ el.gOptionRows.addEventListener('input', (event) => {
 });
 
 el.gOptionRows.addEventListener('change', (event) => {
+  const allergenOption = event.target.dataset.optionAllergen;
+  const reviewOption = event.target.dataset.reviewedOption;
+  if (allergenOption || reviewOption) {
+    const opt=editorDraft.options.find(item=>item.id===(allergenOption||reviewOption));
+    if(!opt)return;
+    if (allergenOption) {
+      const id=event.target.dataset.allergenId;
+      const ids=new Set(opt.allergens||[]);
+      if(event.target.checked)ids.add(id);else ids.delete(id);
+      opt.allergens=[...ids];
+      opt.allergensReviewed=true;
+    } else opt.allergensReviewed=event.target.checked;
+    const details=event.target.closest('.editor-option-allergens');
+    const summary=details?.querySelector('summary');
+    if(summary)summary.textContent='Allergener – '+(opt.allergens||[]).length+' valgt'+(opt.allergensReviewed?' · kontrollert':' · ikke kontrollert');
+    const review=details?.querySelector('[data-reviewed-option]');
+    if(review)review.checked=Boolean(opt.allergensReviewed);
+    return;
+  }
   const defaultId = event.target.dataset.default;
   if (!defaultId) return;
   if (editorDraft.selectionMode === 'single') {
@@ -1867,7 +1893,7 @@ el.gOptionRows.addEventListener('click', (event) => {
 });
 
 el.btnAddOption.addEventListener('click', () => {
-  editorDraft.options.push({ id: uid('opt'), label: '', price: 0 });
+  editorDraft.options.push({ id: uid('opt'), label: '', price: 0, allergens: [], allergensReviewed: false });
   renderEditorRows();
 });
 
