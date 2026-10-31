@@ -144,3 +144,104 @@ html[data-customer-palette="lively"] #productSheet{--pd-accent:#b23608;--pd-tint
  #productSheet .sheet-head h2{font-size:25px!important}
  #productSheet .opt-group .opt-rows .opt-row.is-serving{grid-template-columns:20px minmax(0,1fr) auto}
 }
+
+/* Reference 2026-10-31: white, centered product photo and compact selections. */
+#productSheet{
+  --pd-accent:var(--palette-accent,#075629);
+  --pd-tint:var(--palette-soft,#e8f7e9);
+  background:#fff!important;color:#111!important;
+  border-radius:28px 28px 0 0!important;
+  width:min(100%,430px)!important;
+}
+#productSheet .sheet-head{
+  height:222px!important;min-height:222px!important;
+  background:#fff!important;overflow:visible!important;
+  position:relative!important;padding:0!important;
+  display:block!important;box-sizing:border-box!important;
+}
+#productSheet .sheet-head::after{display:none!important;content:none!important}
+#productSheet .pd-hero-photo{
+  position:absolute!important;top:13px!important;left:50%!important;
+  transform:translateX(-50%)!important;inset:auto!important;
+  width:165px!important;height:120px!important;object-fit:contain!important;
+  border-radius:0!important;z-index:1!important;
+  filter:drop-shadow(0 8px 7px rgba(0,0,0,.17));
+}
+#productSheet .sheet-close,#productSheet .sheet-fav{
+  position:absolute!important;top:13px!important;z-index:3!important;
+  width:43px!important;height:43px!important;background:#fff!important;
+  color:#142016!important;border:1px solid #e4e7e5!important;
+}
+#productSheet .sheet-close{left:17px!important}
+#productSheet .sheet-fav{right:17px!important;color:var(--pd-accent)!important}
+#productSheet .sheet-head h2{
+  position:absolute!important;top:137px!important;bottom:auto!important;
+  left:12px!important;right:12px!important;width:auto!important;
+  max-width:none!important;margin:0!important;text-align:center!important;
+  color:#111!important;text-shadow:none!important;
+  font-size:27px!important;font-weight:850!important;line-height:1.18!important;
+}
+#productSheet .pd-hero-description{
+  position:absolute!important;left:12px!important;right:12px!important;
+  top:178px!important;bottom:auto!important;text-align:center!important;
+  color:#5b5f65!important;font-size:15px!important;font-weight:550!important;
+  line-height:1.3!important;font-style:italic!important;letter-spacing:0!important;
+}
+#productSheet .sheet-body{
+  border-radius:0!important;margin-top:0!important;padding:0 18px 16px!important;
+  background:#fff!important;
+}
+#productSheet .opt-group{
+  margin:0!important;padding:10px 0 12px!important;
+  border:0!important;border-top:1px solid #f0f1f1!important;
+  border-radius:0!important;background:transparent!important;
+}
+#productSheet .opt-head{margin-bottom:8px!important;display:flex!important;gap:6px;align-items:center!important;flex-wrap:wrap}
+#productSheet .opt-title{color:#102d20!important;font-size:14px!important;font-weight:850!important}
+#productSheet .opt-guidance{font-size:10px!important;padding:3px 7px!important;border-radius:999px!important;background:#f0f2f5!important;color:#858c9a!important}
+#productSheet .opt-group--size .opt-rows,
+#productSheet .opt-rows:has(> .opt-row:first-child:nth-last-child(2)):not(:has(.is-serving)){
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;
+}
+#productSheet .opt-row{
+ min-height:43px!important;padding:8px 9px!important;
+ background:#fff!important;border:1px solid #e0e3e5!important;
+ border-radius:12px!important;box-shadow:none!important;
+}
+#productSheet .opt-row:has(input:checked),#productSheet .opt-row.is-checked{
+ background:var(--pd-tint)!important;border-color:var(--pd-accent)!important;
+}
+#productSheet .opt-rows .opt-row.is-serving{
+ display:grid!important;grid-template-columns:23px minmax(0,1fr) auto!important;
+ min-height:37px!important;border:0!important;border-bottom:1px solid #edf0ee!important;
+ border-radius:0!important;padding:5px 2px!important;
+}
+#productSheet .opt-row.is-serving .opt-label{grid-column:2!important;grid-row:1!important;font-size:12px!important}
+#productSheet .opt-row.is-serving .opt-price{grid-column:2!important;grid-row:2!important;font-size:11px!important}
+#productSheet .opt-row.is-serving .option-quantity{grid-column:3!important;grid-row:1 / span 2!important}
+#productSheet .option-quantity button{width:29px!important;height:29px!important;border-radius:10px!important}
+#productSheet .opt-group--comment{border-top:1px solid #edf0ee!important}
+#productSheet .opt-group--comment .opt-head{margin-bottom:5px!important}
+#productSheet .comment-area{min-height:52px!important;border:1px solid #dfe2e4!important;border-radius:12px!important;background:#fafafa!important}
+#productSheet .sheet-allergens{border:0!important;background:#fff!important;padding:7px 0!important;box-shadow:none!important}
+#productSheet .sheet-allergen-chips{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+#productSheet .sheet-allergen-chip{border:1px solid #e7eaed!important;background:#fff!important;border-radius:999px!important;padding:6px 11px!important;font-size:11px!important}
+#productSheet .sheet-foot{
+ padding:9px 13px max(10px,env(safe-area-inset-bottom))!important;
+ border-top:1px solid #eceeed!important;background:#fff!important;
+}
+#productSheet .sheet-foot-row{
+ background:var(--pd-accent)!important;border-radius:16px!important;
+ padding:6px!important;gap:9px!important;
+}
+#productSheet .sheet-foot .qty{border-radius:10px!important;background:#fff!important;color:#111!important}
+#productSheet .sheet-foot .qty button{background:var(--pd-tint)!important;color:var(--pd-accent)!important}
+#productSheet .sheet-foot #btnAddToCart{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:#fff!important;padding:8px 5px!important;border-radius:10px!important;
+}
+#productSheet .sheet-foot #sheetTotal{color:#fff!important}
+@media(max-width:520px){
+ #productSheet .sheet-head{height:215px!important;min-height:215px!important}
+ #productSheet .sheet-body{padding-left:16px!important;padding-right:16px!important}
+}
