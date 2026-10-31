@@ -1452,8 +1452,6 @@ function renderSheet() {
       </div>
       ${allergenInfoIncomplete || missingBaseAllergens
         ? '<p class="sheet-allergen-warning">Allergeninformasjonen er ikke fullstendig for dette produktet eller valgte tilvalg. Kontakt restauranten ved allergi.</p>' : ''}
-      <div class="sheet-allergen-chips-unused" hidden>
-      </div>
     </div>
 `;
 
