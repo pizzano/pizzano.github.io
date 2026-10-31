@@ -106,7 +106,7 @@
 }
 #productSheet .sheet-close {left:18px!important}
 #productSheet .sheet-fav {right:18px!important}
-#productSheet .sheet-close svg,#productSheet .sheet-fav svg {width:24px!important;height:24px!important}
+#productSheet .sheet-close svg,#productSheet .sheet-fav svg {width:24px!important;height:24px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}
 #productSheet .sheet-fav.is-on {color:#9e272e!important}
 #productSheet #sheetTitle {
   position:relative!important;
