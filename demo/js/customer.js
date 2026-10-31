@@ -1309,7 +1309,7 @@ function optionGroupHtml(group, problems) {
     .join('');
 
   return `
-    <div class="opt-group${problems.has(group.id) && draft.showErrors ? ' opt-invalid' : ''}">
+    <div class="opt-group${servingMode ? ' opt-group--serving' : ''}${problems.has(group.id) && draft.showErrors ? ' opt-invalid' : ''}">
       <div class="opt-head">
         <h3 class="opt-title">${escapeHtml(group.title)}</h3>
         ${badges}
@@ -1409,30 +1409,37 @@ function renderSheet() {
       </div>`
       : '';
 
-  // Hero resides behind the title and buttons, matching the reference design.
+  // Single image in the centered hero; option and price handlers stay unchanged.
   const heroHeader=el.sheet.querySelector('.sheet-head');
-  heroHeader.querySelector('.pd-hero-photo')?.remove();
+  let photo=heroHeader.querySelector('.pd-hero-photo');
+  if(item.imageUrl){
+    if(!photo){photo=document.createElement('img');photo.className='pd-hero-photo';photo.alt='';heroHeader.prepend(photo);}
+    if(photo.getAttribute('src')!==item.imageUrl)photo.src=item.imageUrl;
+  }else photo?.remove();
   let heroDescription=heroHeader.querySelector('.pd-hero-description');
-  if(!heroDescription){
-    heroDescription=document.createElement('p');
-    heroDescription.className='pd-hero-description';
-    heroHeader.append(heroDescription);
-  }
+  if(!heroDescription){heroDescription=document.createElement('p');heroDescription.className='pd-hero-description';heroHeader.append(heroDescription);}
   heroDescription.textContent=item.description||item.ingredients||'';
   heroDescription.hidden=!heroDescription.textContent;
-  if(item.imageUrl){
-    const photo=document.createElement('img');
-    photo.className='pd-hero-photo';
-    photo.src=item.imageUrl;
-    photo.alt='';
-    heroHeader.prepend(photo);
-  }
 
   el.sheetBody.innerHTML = `
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     ${ingredientCustomizeHtml}
     ${sizeHtml}
-    ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
+    ${(() => {
+      // Presentation-only grouping of adjacent optional checkbox extras.
+      const output=[];
+      let extras=[];
+      const flush=()=>{if(!extras.length)return;output.push('<div class="pd-extras"><h3 class="pd-extras-title">Ekstra <em>(valgfritt)</em></h3>'+extras.join('')+'</div>');extras=[];};
+      for(const group of groups){
+        const singleExtra=group.selectionMode==='multiple'&&!group.allowQuantity&&!group.required&&group.options?.length===1;
+        if(singleExtra){
+          const option=group.options[0];
+          const checked=(draft.selections[group.id]||[]).includes(option.id);
+          extras.push('<label class="pd-extra-line"><input type="checkbox" name="grp_'+escapeHtml(group.id)+'" data-group="'+escapeHtml(group.id)+'" data-option="'+escapeHtml(option.id)+'" '+(checked?'checked ':'')+(option.soldOut?'disabled ':'')+'/><span>'+escapeHtml(group.title)+'</span><b>'+(option.price>0?'+'+formatPrice(option.price):'Inkludert')+'</b></label>');
+        }else{flush();output.push(optionGroupHtml(group,problems));}
+      }
+      flush();return output.join('');
+    })()}
     <div class="opt-group opt-group--comment">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
       <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
