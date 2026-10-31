@@ -3387,6 +3387,10 @@ function configureHolidayStartup(screen) {
   if (startupHolidayChosen) return;
   startupHolidayChosen = true;
   const days = todaysSpecialDays(store.settings?.specialDaysConfig);
+  // Remove the provisional greeting once the verified settings arrive.
+  screen.querySelectorAll('.startup-holiday-decoration').forEach(node=>node.remove());
+  screen.classList.remove('is-holiday','holiday-motion-light','holiday-motion-medium','holiday-motion-off');
+  delete screen.dataset.provisionalHoliday;
   if (!days.length) {
     document.getElementById('startupTitle').textContent = 'Laster siden...';
     document.getElementById('startupNote').textContent = 'Forbereder menyen';
