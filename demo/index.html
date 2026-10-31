@@ -72,7 +72,7 @@
     <link rel="stylesheet" href="./css/cart.css?v=20261023-sharedorders1">
     <link rel="stylesheet" href="./css/special-days.css?v=20261031-location2">
     <link rel="stylesheet" href="./css/order-status-cards.css?v=20261030-states3">
-    <link rel="stylesheet" href="./css/product-detail-redesign.css?v=20261031-scrollhero7">
+    <link rel="stylesheet" href="./css/product-detail-redesign.css?v=20261101-rebuild1">
 </head>
 
 <body>
@@ -390,17 +390,16 @@
     <!-- ============ PRODUKTDETALJ ============ -->
     <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
     <section class="sheet" id="productSheet" aria-label="Produktdetaljer" aria-modal="true" role="dialog" hidden>
-        <div class="sheet-actions">
-            <button class="sheet-close" id="sheetClose" type="button" aria-label="Lukk">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-            <button class="sheet-fav" id="sheetFav" type="button" aria-label="Legg til i favoritter">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.8C19 15.6 12 20 12 20z"/></svg>
-            </button>
-        </div>
         <div class="sheet-scroll" id="sheetScroll">
             <header class="sheet-head">
-                <h2 id="sheetTitle" role="button" tabindex="0" aria-label="Lukk produktdetaljer">Produkt</h2>
+                <button class="sheet-close" id="sheetClose" type="button" aria-label="Lukk">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+                <button class="sheet-fav" id="sheetFav" type="button" aria-label="Legg til i favoritter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2A3.8 3.8 0 0112 8a3.8 3.8 0 017 2.8C19 15.6 12 20 12 20z"/></svg>
+                </button>
+                <h2 id="sheetTitle">Produkt</h2>
+                <p class="pd-hero-description" hidden></p>
             </header>
             <div class="sheet-body" id="sheetBody"></div>
         </div>
@@ -448,7 +447,7 @@
       document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
       window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
     </script>
-    <script type="module" src="./js/customer.js?v=20261031-scrollhero7"></script>
+    <script type="module" src="./js/customer.js?v=20261101-rebuild1"></script>
     <script type="module" src="./js/shop-info.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261029-1"></script>
 </body>
