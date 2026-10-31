@@ -1,10 +1,10 @@
 /** Restaurant themes: seven roles: accent, page, surface, text, border, confirmation and removal/warning. */
 const theme = (label, light, dark) => ({ label, colors: light, light, dark });
 export const CUSTOMER_PALETTES = {
-  reference: theme('Modern café · varm oransje', ['#BE570C','#F7F8FA','#FFFFFF','#24272C','#D8DDE3','#276B65','#765181'], ['#FFAD66','#15181D','#20252D','#F3F5F7','#444C58','#82D3C4','#D6B5E5']),
-  lively: theme('Bistro · terrakotta og sand', ['#AE402D','#FAF4ED','#FFFCF8','#352821','#CDBBAE','#31675D','#80521B'], ['#F5A08A','#201917','#302420','#FAF0E7','#675148','#91CEBE','#E9C283']),
-  fresh: theme('Hage · salvie og oliven', ['#416747','#F4F6EF','#FEFFF9','#28352A','#BDCCB6','#246B70','#81543B'], ['#ABD19B','#181E17','#263025','#F0F5E9','#52664C','#8ED0D5','#E8B899']),
-  gourmet: theme('Gourmet · burgunder og krem', ['#833B50','#FAF5EE','#FFFCF7','#382831','#CCBCAF','#496940','#7B5C21'], ['#EAA1B5','#21191D','#30242A','#FAF0EB','#67535C','#AFD29E','#E4C680']),
+  reference: theme('2. Moderne Blå', ['#0752A2','#F6F8FC','#FFFFFF','#17253B','#CCD9ED','#0752A2','#9F3B24'], ['#75B6FF','#101928','#1A2B42','#F2F7FF','#405A76','#80C6FF','#EDB38E']),
+  lively: theme('4. Varm & Matvennlig', ['#B23608','#FCF8F4','#FFFFFF','#321E17','#F1D6C5','#B23608','#8B460F'], ['#FFAB79','#241713','#39241B','#FFF3EA','#80513B','#FFD0A2','#E3B58F']),
+  fresh: theme('1. Klassisk Grønn', ['#075629','#F5FAF6','#FFFFFF','#152D20','#C8E1CD','#075629','#A24B29'], ['#85DAAC','#101E16','#1E3325','#F0FFF4','#3D6E4C','#9AEBB6','#E7BD98']),
+  gourmet: theme('3. Elegant Lilla', ['#65228B','#FAF7FC','#FFFFFF','#2D1A35','#E0CEE9','#65228B','#954A70'], ['#CF9BED','#201527','#31213B','#FBF1FF','#715083','#DEADEB','#E5B0CB']),
 };
 export function applyCustomerPalette(value) {
   const key = Object.hasOwn(CUSTOMER_PALETTES, value) ? value : 'reference';
