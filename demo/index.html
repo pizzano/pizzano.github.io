@@ -84,6 +84,47 @@
             <button class="app-startup-retry" id="startupRetry" type="button" hidden>Prøv igjen</button>
         </div>
     </div>
+    <script>
+    // Immediate visual while Firebase settings load. The verified admin settings
+    // are applied by customer.js; this makes no database request.
+    (() => {
+      const cover=document.getElementById('appStartup');
+      if(!cover)return;
+      const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+      const get=k=>Number(parts.find(p=>p.type===k)?.value);
+      const md=get('month')*100+get('day');
+      const dates={
+        101:['🎆','Godt nytt år!','#315b9c','sparkle'],
+        206:['🌈','Lihkku beivviin!','#386c98','sparkle'],
+        214:['❤️','God valentinsdag!','#ca3975','heart'],
+        501:['🌷','God 1. mai!','#bc4145','petal'],
+        517:['🇳🇴','Gratulerer med dagen!','#b92b43','flag'],
+        623:['☀️','God sankthans!','#c47729','sparkle'],
+        1031:['🎃','Ha en skremmende fin Halloween!','#8840a5','bat'],
+        1213:['🕯️','God luciadag!','#a07b3b','sparkle'],
+        1224:['🎄','God jul!','#aa3037','snow'],
+        1225:['🎁','God jul!','#aa3037','snow'],
+        1226:['🎄','Fortsatt god jul!','#aa3037','snow'],
+        1231:['🎇','Godt nytt år!','#315b9c','sparkle']
+      };
+      const entry=dates[md];
+      if(!entry){
+        document.getElementById('startupTitle').textContent='Laster siden...';
+        document.getElementById('startupNote').textContent='Forbereder menyen';
+        return;
+      }
+      cover.classList.add('is-holiday','holiday-motion-light');
+      cover.style.setProperty('--startup-holiday-color',entry[2]);
+      const deco=document.createElement('div');
+      deco.className='startup-holiday-decoration';
+      deco.setAttribute('aria-hidden','true');
+      deco.textContent=entry[3]==='bat'?'🕸️  🦇  🕷️':entry[3]==='snow'?'❄️  ✨  ❄️':entry[3]==='heart'?'💕  💗  💕':entry[0]+'  ✨  '+entry[0];
+      cover.prepend(deco);
+      document.getElementById('startupTitle').textContent=entry[1];
+      document.getElementById('startupNote').textContent='';
+      cover.dataset.provisionalHoliday='1';
+    })();
+    </script>
     <!-- ============ HEADER ============ -->
     <header class="app-header" id="appHeader">
         <div class="header-inner">
