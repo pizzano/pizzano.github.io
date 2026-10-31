@@ -3,7 +3,7 @@ import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js?v=20261023-customerprofile1';
 import { getDisplayComment } from './order-comments.js';
-import { applyCustomerPalette } from './palette.js';
+import { applyCustomerPalette } from './palette.js?v=20261031-productdesign1';
 import { todaysSpecialDays, parseSpecialDays } from './special-days.js';
 /**
  * customer.js — Kundelogikk for Restauranten.
