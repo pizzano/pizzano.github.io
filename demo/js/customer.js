@@ -1409,14 +1409,27 @@ function renderSheet() {
       </div>`
       : '';
 
+  // Hero resides behind the title and buttons, matching the reference design.
+  const heroHeader=el.sheet.querySelector('.sheet-head');
+  heroHeader.querySelector('.pd-hero-photo')?.remove();
+  let heroDescription=heroHeader.querySelector('.pd-hero-description');
+  if(!heroDescription){
+    heroDescription=document.createElement('p');
+    heroDescription.className='pd-hero-description';
+    heroHeader.append(heroDescription);
+  }
+  heroDescription.textContent=item.description||item.ingredients||'';
+  heroDescription.hidden=!heroDescription.textContent;
+  if(item.imageUrl){
+    const photo=document.createElement('img');
+    photo.className='pd-hero-photo';
+    photo.src=item.imageUrl;
+    photo.alt='';
+    heroHeader.prepend(photo);
+  }
+
   el.sheetBody.innerHTML = `
-    ${
-      item.imageUrl
-        ? `<img class="sheet-hero" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}">`
-        : ''
-    }
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
-    ${item.description || item.ingredients ? `<p class="sheet-desc">${escapeHtml(item.description || item.ingredients)}</p>` : ''}
     ${ingredientCustomizeHtml}
     ${sizeHtml}
     ${groups.map((group) => optionGroupHtml(group, problems)).join('')}
