@@ -3387,7 +3387,11 @@ function configureHolidayStartup(screen) {
   if (startupHolidayChosen) return;
   startupHolidayChosen = true;
   const days = todaysSpecialDays(store.settings?.specialDaysConfig);
-  if (!days.length) return;
+  if (!days.length) {
+    document.getElementById('startupTitle').textContent = 'Laster siden...';
+    document.getElementById('startupNote').textContent = 'Forbereder menyen';
+    return;
+  }
   const day = days[Math.floor(Math.random() * days.length)];
   const config = parseSpecialDays(store.settings?.specialDaysConfig);
   const content = document.createElement('div');
@@ -3400,7 +3404,7 @@ function configureHolidayStartup(screen) {
   screen.classList.add('is-holiday', 'holiday-motion-' + config.animation);
   screen.style.setProperty('--startup-holiday-color', /^#[0-9a-f]{6}$/i.test(day.accent) ? day.accent : '#8840a5');
   document.getElementById('startupTitle').textContent = day.message || day.name;
-  document.getElementById('startupNote').textContent = 'Laster siden...';
+  document.getElementById('startupNote').textContent = '';
   startupHolidayDeadline = Date.now() + 1500;
 }
 
@@ -3433,7 +3437,13 @@ function releaseStartupScreenIfReady() {
 subscribe((_state, origin) => {
   // 'init' er ferdig Firebase-forsøk. Senere 'remote' kan gjenopprette
   // forbindelsen, og samme gate åpner da kunden uten ny sideoppdatering.
-  if (origin === 'init' || origin === 'remote') customerMenuReady = true;
+  if (origin === 'init' || origin === 'remote') {
+    customerMenuReady = true;
+    if (backendInfo.mode === 'firebase') {
+      const startup = document.getElementById('appStartup');
+      if (startup && !startup.hidden) configureHolidayStartup(startup);
+    }
+  }
   const changed = renderAll();
   if (origin === 'init' && backendInfo.mode !== 'firebase') {
     window.showCustomerStartupError?.();
@@ -3443,6 +3453,10 @@ subscribe((_state, origin) => {
 });
 
 ready().then(async () => {
+  if (backendInfo.mode === 'firebase') {
+    const startup = document.getElementById('appStartup');
+    if (startup && !startup.hidden) configureHolidayStartup(startup);
+  }
   renderAll();
   setView('menu');
   await openOrderFromSmsLink();
