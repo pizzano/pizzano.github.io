@@ -2,10 +2,10 @@
    Only these four font sizes are used for interface text.
    Keep icon art and SVGs out of the text scale. */
 :root {
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 20px;
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 18px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-heading: 600;
