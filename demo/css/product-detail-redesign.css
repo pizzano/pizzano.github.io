@@ -61,6 +61,7 @@
   stroke-linecap:round!important;stroke-linejoin:round!important;
 }
 #productSheet .sheet-fav.is-on{color:var(--pd-orange)!important}
+#productSheet .sheet-fav.is-on svg{fill:var(--pd-orange)!important;stroke:var(--pd-orange)!important}
 #productSheet .sheet-hero-caption{
   position:relative!important;z-index:2!important;isolation:isolate!important;
   box-sizing:border-box!important;
