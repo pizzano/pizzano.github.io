@@ -898,15 +898,15 @@ function setView(view) {
 
   if (view === 'menu' && isChangingView) {
     // Restore synchronously before paint; never animate the restoration itself.
-    scrollPage({ top: menuScrollPosition, behavior: 'instant' });
+    scrollPage({ top: menuScrollPosition, behavior: 'auto' });
     // Some mobile browsers recalculate height after the hidden-state change.
     requestAnimationFrame(() => {
-      if (ui.view === 'menu') scrollPage({ top: menuScrollPosition, behavior: 'instant' });
+      if (ui.view === 'menu') scrollPage({ top: menuScrollPosition, behavior: 'auto' });
     });
   } else {
     // Non-menu views start at the beginning, as before. Clicking Home while
     // already on the menu intentionally returns to the top.
-    scrollPage({ top: 0, behavior: 'instant' });
+    scrollPage({ top: 0, behavior: 'auto' });
     if (view === 'menu') menuScrollPosition = 0;
   }
 }
