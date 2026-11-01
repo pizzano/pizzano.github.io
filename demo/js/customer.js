@@ -1447,7 +1447,7 @@ function renderSheet() {
       <span class="sheet-allergens-label">Allergener</span>
       <div class="sheet-allergen-chips">
         ${allergens.length
-          ? allergens.map((label) => `<span class="sheet-allergen-chip">${ALLERGEN_ICONS[label] || '•'} ${escapeHtml(label)}</span>`).join('')
+          ? allergens.map((label) => `<span class="sheet-allergen-chip">${escapeHtml(label)}</span>`).join('')
           : '<span class="sheet-allergen-none">Allergener ikke oppgitt</span>'}
       </div>
       ${allergenInfoIncomplete || missingBaseAllergens
