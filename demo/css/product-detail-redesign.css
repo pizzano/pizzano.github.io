@@ -4,7 +4,8 @@
   driven by customer.js and data.js, not by visual styling.
 */
 #productSheet{
-  --pd-accent:#A24B29; /* Shared product-option emphasis across all customer themes */
+  --pd-accent:var(--palette-accent,#0752A2);
+  --pd-warning:var(--palette-warning,#A24B29); /* Admin: Uten / varsel for the current theme */
   --pd-ink:var(--palette-ink,#17253b);
   --pd-muted:var(--palette-muted,#667585);
   --pd-page:var(--palette-bg,#f6f8fc);
@@ -14,7 +15,7 @@
   --pd-selected:color-mix(in srgb,var(--pd-accent) 15%,var(--pd-card));
   --pd-selected-edge:color-mix(in srgb,var(--pd-accent) 34%,var(--pd-card));
   --pd-soft:color-mix(in srgb,var(--pd-accent) 5%,var(--pd-page));
-  --pd-on:#fff;
+  --pd-on:var(--palette-on-accent,#fff);
   --pd-fs-title:21px;
   --pd-fs-heading:14px;
   --pd-fs-option:13px;
@@ -133,14 +134,14 @@
   box-shadow:var(--pd-shadow)!important;
 }
 #productSheet .ingredient-customize{padding:9px!important}
-#productSheet .ingredient-customize-toggle strong{font-size:var(--pd-fs-option)!important;font-weight:600!important}
+#productSheet .ingredient-customize-toggle strong{font-size:var(--pd-fs-option)!important;font-weight:600!important;color:var(--pd-warning)!important}
 #productSheet .ingredient-customize-toggle small{font-size:var(--pd-fs-micro)!important;font-weight:400!important}
 #productSheet .ingredient-customize-icon{color:var(--pd-accent)!important;background:var(--pd-tint)!important}
 #productSheet .ingredient-customize.is-open{border-color:var(--pd-selected-edge)!important}
 #productSheet .opt-head{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important;margin:0 0 6px!important}
 #productSheet .opt-title{
   margin:0!important;padding:0!important;
-  color:var(--pd-accent)!important;font-size:var(--pd-fs-heading)!important;
+  color:var(--pd-warning)!important;font-size:var(--pd-fs-heading)!important;
   line-height:1.25!important;font-weight:700!important;letter-spacing:0!important;
 }
 #productSheet .opt-guidance{
@@ -240,7 +241,7 @@
 #productSheet .sheet-allergens{padding:11px 12px 17px!important}
 #productSheet .sheet-allergens-label{
   display:block!important;margin:0 0 6px!important;
-  color:var(--pd-accent)!important;font-size:var(--pd-fs-heading)!important;font-weight:700!important;line-height:1.25!important;
+  color:var(--pd-warning)!important;font-size:var(--pd-fs-heading)!important;font-weight:700!important;line-height:1.25!important;
 }
 #productSheet .sheet-allergen-chips{display:flex!important;flex-wrap:wrap!important;gap:4px 7px!important;align-items:center!important}
 #productSheet .sheet-allergen-chip{
