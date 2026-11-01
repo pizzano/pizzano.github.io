@@ -297,6 +297,10 @@ const DEFAULT_SETTINGS = {
   slotIntervalMinutes: 15,
   // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
   // stored alongside the restaurant settings and shared across tablets.
+  uiFontXs: 10,
+  uiFontSm: 12,
+  uiFontMd: 14,
+  uiFontLg: 18,
   printerQtySize: 39,
   printerItemNameSize: 35,
   printerSizeTextSize: 28,
