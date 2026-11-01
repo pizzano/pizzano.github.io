@@ -136,23 +136,6 @@ html[data-customer-palette] .hdr-cart .cart-count {
   box-shadow: 0 0 0 2px var(--palette-deep);
 }
 
-/* Product selections share the theme's light accent tint and one check style. */
-html[data-customer-palette] #productSheet .opt-row:has(input:checked) {
-  background: var(--palette-soft) !important;
-  border-color: var(--palette-accent) !important;
-  box-shadow: 0 3px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent),
-    inset 0 0 0 1px color-mix(in srgb,var(--palette-accent) 15%,transparent);
-}
-html[data-customer-palette] #productSheet .opt-row:has(input:checked) :is(.opt-label, .opt-price) { color: var(--palette-ink) !important; }
-
-
-
-
-html[data-customer-palette] #productSheet .opt-row input:checked { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
-html[data-customer-palette][data-theme="dark"] #productSheet .opt-row input:checked { background:var(--palette-accent) !important; border-color:var(--palette-accent) !important; }
-
-
-
 @media (forced-colors: active) {
 
 
