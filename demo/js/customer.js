@@ -1197,6 +1197,12 @@ function defaultSelectionFor(item) {
   return selections;
 }
 
+// The product dialog has one temporary browser-history entry so the phone's
+// Back button closes the product instead of navigating away from the menu.
+let productHistoryEntryActive = false;
+let productExitTimer = null;
+let productPreviousFocus = null;
+
 function openProduct(itemId, editLine = null) {
   const { item } = findItem(itemId);
   if (!item || item.hidden) return;
@@ -1224,10 +1230,17 @@ function openProduct(itemId, editLine = null) {
     showErrors: false,
   };
   ui.editingLineId = draft.editingLineId;
+  productPreviousFocus = document.activeElement;
+  if (productExitTimer !== null) {
+    clearTimeout(productExitTimer);
+    productExitTimer = null;
+  }
   el.sheetTitle.textContent = item.name;
   el.sheetFav.classList.toggle('is-on', isFavorite(item.id));
   el.sheetBackdrop.hidden = false;
   el.sheet.hidden = false;
+  el.sheet.dataset.motion = 'opening';
+  el.sheetBackdrop.dataset.motion = 'opening';
   document.body.style.overflow = 'hidden';
   if (choosingBonus && !editLine && bonusState?.ready && !bonusState.pending && !cart.some(line => line.loyaltyFree)) {
     const { section } = findItem(itemId);
@@ -1237,15 +1250,54 @@ function openProduct(itemId, editLine = null) {
   renderSheet();
   const scrollRegion = el.sheet.querySelector('#sheetScroll');
   if (scrollRegion) scrollRegion.scrollTop = 0;
+  // Avoid a duplicate entry when an existing product dialog is replaced.
+  if (!productHistoryEntryActive && !el.sheet.hidden) {
+    try {
+      const previous = history.state && typeof history.state === 'object' ? history.state : {};
+      history.pushState({ ...previous, __productDialog: true }, '', location.href);
+      productHistoryEntryActive = true;
+    } catch {
+      productHistoryEntryActive = false; // X, swipe, backdrop and Escape still work.
+    }
+  }
+  el.sheetClose.focus({ preventScroll: true });
 }
 
-function closeSheet() {
+function finishProductClose() {
+  if (productExitTimer !== null) {
+    clearTimeout(productExitTimer);
+    productExitTimer = null;
+  }
   draft = null;
   ui.editingLineId = null;
   el.sheet.hidden = true;
   el.sheetBackdrop.hidden = true;
   el.sheetErr.hidden = true;
+  delete el.sheet.dataset.motion;
+  delete el.sheetBackdrop.dataset.motion;
   document.body.style.overflow = '';
+  if (productPreviousFocus?.isConnected) {
+    productPreviousFocus.focus({ preventScroll: true });
+  }
+  productPreviousFocus = null;
+}
+
+function closeSheet({ fromHistory = false } = {}) {
+  if (el.sheet.hidden || el.sheet.dataset.motion === 'closing') return;
+  if (productHistoryEntryActive && !fromHistory && history.state?.__productDialog) {
+    productHistoryEntryActive = false;
+    history.back();
+  } else {
+    productHistoryEntryActive = false;
+  }
+  el.sheet.dataset.motion = 'closing';
+  el.sheetBackdrop.dataset.motion = 'closing';
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    finishProductClose();
+  } else {
+    // Keep the backdrop until the closing animation finishes.
+    productExitTimer = setTimeout(finishProductClose, 235);
+  }
 }
 
 /** Validerer valggrupper. Returnerer { valid, problems: Set<groupId>, message }. */
@@ -3032,8 +3084,34 @@ el.qtyPlus.addEventListener('click', () => {
 });
 
 el.btnAddToCart.addEventListener('click', addDraftToCart);
-el.sheetClose.addEventListener('click', closeSheet);
-el.sheetBackdrop.addEventListener('click', closeSheet);
+el.sheetClose.addEventListener('click', () => closeSheet());
+el.sheetBackdrop.addEventListener('click', () => closeSheet());
+
+// On touch screens the whole photo header can be swiped down to dismiss.
+// Starting on a control or scrolling the option list never closes the sheet.
+const productScroll = el.sheet.querySelector('#sheetScroll');
+const productHeader = el.sheet.querySelector('.sheet-head');
+let productSwipeStart = null;
+productHeader.addEventListener('touchstart', (event) => {
+  productSwipeStart = null;
+  if (event.touches.length !== 1 || el.sheet.dataset.motion === 'closing') return;
+  if (productScroll.scrollTop > 2 || event.target.closest('button')) return;
+  productSwipeStart = { y: event.touches[0].clientY, x: event.touches[0].clientX };
+}, { passive: true });
+productHeader.addEventListener('touchend', (event) => {
+  if (!productSwipeStart || !event.changedTouches.length) return;
+  const dy = event.changedTouches[0].clientY - productSwipeStart.y;
+  const dx = Math.abs(event.changedTouches[0].clientX - productSwipeStart.x);
+  productSwipeStart = null;
+  if (dy >= 95 && dy > dx * 1.2 && productScroll.scrollTop <= 2) {
+    closeSheet();
+  }
+}, { passive: true });
+productHeader.addEventListener('touchcancel', () => { productSwipeStart = null; });
+window.addEventListener('popstate', () => {
+  if (productHistoryEntryActive && !el.sheet.hidden) closeSheet({ fromHistory: true });
+  productHistoryEntryActive = false;
+});
 
 el.sheetFav.addEventListener('click', () => {
   if (!draft) return;
