@@ -282,14 +282,29 @@ function escapeHtml(text) {
 }
 
 let toastTimer = null;
-function toast(message, tone = 'success') {
+function toast(message, tone = 'success', durationMs = 2000) {
   el.toast.textContent = message;
   el.toast.dataset.tone = tone;
   el.toast.hidden = false;
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     el.toast.hidden = true;
-  }, 2000);
+  }, durationMs);
+}
+
+// Brief visual acknowledgment after a successful cart write. No server reads,
+// extra notifications or delays to the order workflow.
+let cartFeedbackTimer = null;
+function signalCartAdded() {
+  if (!el.btnCart) return;
+  el.btnCart.classList.remove('cart-added-feedback');
+  void el.btnCart.offsetWidth;
+  el.btnCart.classList.add('cart-added-feedback');
+  if (cartFeedbackTimer) clearTimeout(cartFeedbackTimer);
+  cartFeedbackTimer = setTimeout(() => {
+    el.btnCart.classList.remove('cart-added-feedback');
+    cartFeedbackTimer = null;
+  }, 240);
 }
 
 function isFavorite(itemId) {
@@ -846,10 +861,22 @@ function scrollPage(options) {
   pageScrollTarget().scrollTo(options);
 }
 
+// Menu scroll memory belongs to this tab's navigation, not localStorage.
+let menuScrollPosition = 0;
+
 function setView(view) {
+  const previousView = ui.view;
+  const isChangingView = previousView !== view;
+  // Save position *before* hiding the menu: the page height changes in cart.
+  if (previousView === 'menu' && isChangingView) {
+    const target = pageScrollTarget();
+    menuScrollPosition = Math.max(0, target === window ? window.scrollY : target.scrollTop);
+  }
+
   ui.view = view;
   for (const [name, node] of Object.entries(el.views)) {
     node.hidden = name !== view;
+    node.classList.toggle('customer-view-enter', isChangingView && name === view);
   }
   el.catBar.hidden = view !== 'menu';
   el.btnBack.hidden = view === 'menu';
@@ -860,13 +887,27 @@ function setView(view) {
   }
   if (view === 'menu') el.brandHome.setAttribute('aria-current', 'page');
   else el.brandHome.removeAttribute('aria-current');
-  scrollPage({ top: 0 });
+
   renderActiveOrders();
   if (view === 'cart') renderCart();
   if (view === 'checkout') renderCheckout();
   if (view === 'profile') {
     showProfileHome();
     renderProfile();
+  }
+
+  if (view === 'menu' && isChangingView) {
+    // Restore synchronously before paint; never animate the restoration itself.
+    scrollPage({ top: menuScrollPosition, behavior: 'instant' });
+    // Some mobile browsers recalculate height after the hidden-state change.
+    requestAnimationFrame(() => {
+      if (ui.view === 'menu') scrollPage({ top: menuScrollPosition, behavior: 'instant' });
+    });
+  } else {
+    // Non-menu views start at the beginning, as before. Clicking Home while
+    // already on the menu intentionally returns to the top.
+    scrollPage({ top: 0, behavior: 'instant' });
+    if (view === 'menu') menuScrollPosition = 0;
   }
 }
 
@@ -1591,11 +1632,13 @@ function addDraftToCart() {
   if (draft.loyaltyFree) choosingBonus = false;
   resetPendingOrderSubmission();
   persistCart();
+  renderCartCount();
+  signalCartAdded();
   toast(
-    draft.editingLineId ? 'Handlekurven er oppdatert.' : `${item.name} lagt i kurven.`
+    draft.editingLineId ? 'Handlekurven er oppdatert.' : `${item.name} lagt i kurven.`,
+    'success', 1400
   );
   closeSheet();
-  renderCartCount();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
 }
@@ -1637,7 +1680,8 @@ function quickAddProduct(itemId) {
   renderCartCount();
   if (ui.view === 'cart') renderCart();
   if (ui.view === 'checkout') renderCheckout();
-  toast(`${item.name} lagt i kurven.`);
+  signalCartAdded();
+  toast(`${item.name} lagt i kurven.`, 'success', 1400);
 }
 
 /** Fjerner kurvlinjer som ikke lenger er gyldige (skjult/utsolgt/slettet). */
