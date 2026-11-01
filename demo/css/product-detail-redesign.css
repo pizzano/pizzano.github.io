@@ -314,3 +314,63 @@
   #productSheet #btnAddToCart{border-radius:16px!important}
 }
 @media(prefers-reduced-motion:reduce){#productSheet .sheet-scroll{scroll-behavior:auto!important}}
+
+/* Product dialog motion and gesture affordance (separate from appearance). */
+#productSheet .sheet-drag-handle {
+  position:absolute;top:8px;left:50%;translate:-50% 0;
+  z-index:6;width:38px;height:5px;border-radius:999px;
+  background:rgba(255,255,255,.94);box-shadow:0 1px 5px rgba(0,0,0,.26);
+  pointer-events:none;
+}
+#productSheet .sheet-head {touch-action:pan-y}
+@keyframes pd-sheet-enter-mobile {
+  from {translate:0 100%;opacity:.88}
+  to   {translate:0 0;opacity:1}
+}
+@keyframes pd-sheet-exit-mobile {
+  from {translate:0 0;opacity:1}
+  to   {translate:0 100%;opacity:.88}
+}
+@keyframes pd-sheet-enter-desktop {
+  from {scale:.97;opacity:0}
+  to   {scale:1;opacity:1}
+}
+@keyframes pd-sheet-exit-desktop {
+  from {scale:1;opacity:1}
+  to   {scale:.97;opacity:0}
+}
+@keyframes pd-backdrop-in {
+  from {opacity:0}
+  to {opacity:1}
+}
+@keyframes pd-backdrop-out {
+  from {opacity:1}
+  to {opacity:0}
+}
+#productSheet[data-motion="opening"]{
+  animation:pd-sheet-enter-mobile 250ms cubic-bezier(.2,.78,.22,1) both!important;
+}
+#productSheet[data-motion="closing"]{
+  pointer-events:none!important;
+  animation:pd-sheet-exit-mobile 200ms ease-in both!important;
+}
+#sheetBackdrop[data-motion="opening"]{
+  animation:pd-backdrop-in 250ms ease-out both!important;
+}
+#sheetBackdrop[data-motion="closing"]{
+  pointer-events:none!important;
+  animation:pd-backdrop-out 200ms ease-in both!important;
+}
+@media(min-width:700px){
+  #productSheet .sheet-drag-handle{display:none}
+  #productSheet[data-motion="opening"]{
+    animation:pd-sheet-enter-desktop 200ms ease-out both!important;
+  }
+  #productSheet[data-motion="closing"]{
+    animation:pd-sheet-exit-desktop 160ms ease-in both!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #productSheet[data-motion],
+  #sheetBackdrop[data-motion] {animation:none!important}
+}
