@@ -1,0 +1,58 @@
+/* Shared four-size typography for customer and admin.
+   Only these four font sizes are used for interface text.
+   Keep icon art and SVGs out of the text scale. */
+:root {
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-heading: 600;
+}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-size: var(--text-sm) !important; font-weight: var(--weight-regular); }
+/* Default: all standard written content and form elements. */
+body :is(h1,h2,h3,h4,h5,h6,p,small,label,legend,button,input,textarea,select,option,summary,
+  li,dt,dd,td,th,span,strong,b,em,a,blockquote,time,output) {
+  font-size: var(--text-sm) !important;
+}
+/* Compact metadata and secondary explanatory text. */
+body :is(small,.caption,.hint,.helper,.helper-text,.help-text,.muted,.text-muted,
+  .product-allergens,.sheet-allergens,.allergens,.allergen-text,.item-allergens,
+  .cat-meta,.side-brand small,.side-hint,.brand-text small,.order-meta,
+  .product-meta,.item-meta,.form-hint,.field-hint,.validation-hint,
+  .settings-hint,.status-note,.cart-item-note,.sheet-option-note,
+  .product-card-allergens,.menu-item-allergens,.product-subtitle) {
+  font-size: var(--text-xs) !important;
+  font-weight: var(--weight-regular);
+}
+/* Product names, totals, meaningful price labels, and compact headings. */
+body :is(h3,h4,h5,h6,.product-name,.product-title,.product-card-title,
+  .product-item-name,.menu-product-title,.menu-item-title,.item-title,
+  .sheet-title,.sheet-product-name,.cart-product-name,.cart-product-total,
+  .sum-total,.sum-total strong,.cart-total,.price-total,.total-price,
+  .product-price,.item-price,.menu-price,.price,.cat-name,
+  .card-title,.modal-head h2,.modal-title,.opt-title,.opt-group-title,
+  .section-subtitle,.order-title,.order-customer-name,.brand-text strong,
+  .side-brand strong,.order-card-title,.order-item-title) {
+  font-size: var(--text-md) !important;
+  font-weight: var(--weight-heading);
+}
+/* Section and page headings. */
+body :is(h1,h2,.sec-title,.section-title,.view-title,.page-title h1,
+  .page-title h2,.dashboard-title,.category-title,.menu-section-title,
+  .category-heading,.section-heading,.view-heading) {
+  font-size: var(--text-lg) !important;
+  font-weight: var(--weight-heading);
+  line-height: 1.25;
+}
+/* Preserve visual icon glyphs provided by icon fonts. */
+body :is(.material-icons,.material-symbols-outlined,.material-symbols-rounded,
+  .fa,.fas,.far,.fab,[data-icon],[class^="icon-"],[class*=" icon-"]) {
+  font-size: inherit;
+}
+/* Stable input font size prevents unwanted mobile browser zoom. */
+@media (max-width: 767px) {
+  body :is(input,textarea,select) { font-size: var(--text-md) !important; }
+}
