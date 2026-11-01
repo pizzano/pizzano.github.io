@@ -314,11 +314,11 @@
   #productSheet .opt-row{column-gap:7px!important;padding-left:9px!important;padding-right:9px!important}
   #productSheet .opt-row.is-serving{grid-template-columns:25px minmax(0,1fr) auto!important}
   #productSheet .option-quantity{gap:2px!important}
-  #productSheet .option-quantity button{width:30px!important;height:31px!important;font-size:20px!important}
-  #productSheet .option-quantity b{min-width:15px!important;font-size:15px!important}
+  #productSheet .option-quantity button{width:30px!important;height:31px!important;font-size:18px!important}
+  #productSheet .option-quantity b{min-width:15px!important;font-size:13px!important}
   #productSheet .qty button{width:32px!important;height:38px!important}
   #productSheet .qty{gap:2px!important;padding:4px!important}
-  #productSheet .qty span{min-width:18px!important;font-size:18px!important}
+  #productSheet .qty span{min-width:18px!important;font-size:14px!important}
   #productSheet .sheet-foot-row{gap:7px!important}
   #productSheet #btnAddToCart{border-radius:16px!important}
 }
