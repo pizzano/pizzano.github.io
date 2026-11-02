@@ -311,6 +311,7 @@ const DEFAULT_SETTINGS = {
   adminDarkModeEnabled: true,
   customerDarkModeEnabled: true,
   customerPalette: 'reference',
+  customCustomerPalette: '', // JSON string: custom seven-color light and dark themes.
   specialDaysConfig: '', // Compact JSON: enabled, animation and per-day overrides.
   shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
@@ -540,7 +541,7 @@ function normalizeSettings(raw) {
       })) : null;
   settings.manualClosedUntil=Number.isFinite(Number(base.manualClosedUntil))
     ? Math.max(0,Number(base.manualClosedUntil)):0;
-  if (!['reference', 'lively', 'fresh', 'gourmet'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
+  if (!['reference', 'lively', 'fresh', 'gourmet', 'custom'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
   settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
   settings.slotIntervalMinutes = Math.min(
