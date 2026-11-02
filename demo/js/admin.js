@@ -3,7 +3,7 @@ import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } f
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
-import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-custom1';
+import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-roles2';
 import { sortCartByCategory } from './cart-order.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { customerOrderLink } from './order-links.js';
@@ -3472,212 +3472,241 @@ const SETTING_FIELDS = [
 ];
 
 const paletteSelectOptions = Object.entries(CUSTOMER_PALETTES)
-  .map(([key, palette]) => new Option(palette.label, key));
-paletteSelectOptions.push(new Option('5. Egendefinert – mitt tema', 'custom'));
+  .map(([key,palette]) => new Option(palette.label,key));
+paletteSelectOptions.push(new Option('5. Egendefinert – mitt tema','custom'));
 el.settings.customerPalette.replaceChildren(...paletteSelectOptions);
 
-// The color picker is a local draft. Avoid Firebase writes for every color-drag.
-// One explicit save writes the 14 colors as a compact JSON settings field.
+// Changes are held as a local draft. Only the explicit save writes to Firebase.
 let customPaletteDraft = null;
 let customPaletteDirty = false;
-const customPaletteDetails = $('customPaletteEditor');
+let activePaletteMode = 'light';
 const customPaletteFields = $('customPaletteFields');
+const customPaletteAdvancedFields = $('customPaletteAdvancedFields');
 const customPaletteName = $('customPaletteName');
 const customPaletteStatus = $('customPaletteStatus');
 const customPaletteDraftPreview = $('customPaletteDraftPreview');
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
-function paletteSwatchGroups(parent, palette) {
-  parent.replaceChildren(...['light', 'dark'].map(mode => {
-    const group = document.createElement('div');
-    group.className = 'palette-mode-preview';
-    const title = document.createElement('strong');
-    title.textContent = mode === 'light' ? 'Lys modus' : 'Mørk modus';
-    group.append(title);
-    palette[mode].forEach((color, index) => {
-      const swatch = document.createElement('span');
-      swatch.style.backgroundColor = color;
-      // Determine readable label color from the actual swatch, not an index.
-      const red = parseInt(color.slice(1,3),16) / 255;
-      const green = parseInt(color.slice(3,5),16) / 255;
-      const blue = parseInt(color.slice(5,7),16) / 255;
-      const luminance = [red,green,blue].map(ch => ch <= .04045 ? ch / 12.92 : ((ch + .055) / 1.055)**2.4);
-      swatch.style.color = .2126*luminance[0]+.7152*luminance[1]+.0722*luminance[2] > .18 ? '#18202B' : '#FFFFFF';
-      swatch.textContent = PALETTE_COLOR_LABELS[index] + ' ' + color;
-      group.append(swatch);
+function smallPalettePreview(parent,palette,mode) {
+  parent.replaceChildren();
+  const renderMode=(key)=>{
+    const line=document.createElement('div');
+    line.className='palette-mini-row';
+    const label=document.createElement('span');
+    label.className='palette-mini-mode';
+    label.textContent=key==='light'?'Lys':'Mørk';
+    line.append(label);
+    palette[key].forEach((color,index)=>{
+      const swatch=document.createElement('span');
+      swatch.className='palette-mini-swatch';
+      swatch.style.backgroundColor=color;
+      swatch.title=PALETTE_COLOR_LABELS[index]+': '+color;
+      swatch.setAttribute('aria-label',swatch.title);
+      line.append(swatch);
     });
-    return group;
-  }));
+    parent.append(line);
+  };
+  if(mode) renderMode(mode);
+  else {renderMode('light');renderMode('dark');}
 }
-
 function renderPalettePreview() {
-  const palette = getCustomerPalette(
-    store.settings?.customerPalette, store.settings?.customCustomerPalette
+  smallPalettePreview(
+    $('customerPalettePreview'),
+    getCustomerPalette(store.settings?.customerPalette,store.settings?.customCustomerPalette)
   );
-  paletteSwatchGroups($('customerPalettePreview'), palette);
 }
-
 function renderCustomPaletteDraftPreview() {
-  if (customPaletteDraft) paletteSwatchGroups(customPaletteDraftPreview, customPaletteDraft);
+  if(customPaletteDraft)smallPalettePreview(customPaletteDraftPreview,customPaletteDraft,activePaletteMode);
 }
-
 function markCustomPaletteDirty() {
-  customPaletteDirty = true;
-  customPaletteStatus.textContent = 'Ulagrede farger – trykk «Bruk og lagre temaet».';
+  customPaletteDirty=true;
+  customPaletteStatus.textContent='Ulagrede endringer – trykk «Bruk og lagre».';
   renderCustomPaletteDraftPreview();
 }
-
+function makeColorRow(label,id,prefix,note) {
+  const row=document.createElement('div');
+  row.className='custom-palette-color-row';
+  const name=document.createElement('label');
+  name.textContent=label;
+  name.setAttribute('for','cp-'+prefix+'-'+id);
+  const controls=document.createElement('div');
+  controls.className='custom-palette-color-controls';
+  if(prefix==='detail') {
+    const lock=document.createElement('label');
+    lock.className='custom-palette-override';
+    const toggle=document.createElement('input');
+    toggle.type='checkbox';
+    toggle.dataset.paletteOverride=id;
+    toggle.setAttribute('aria-label','Egen farge for '+label);
+    const text=document.createElement('span');
+    text.textContent='Egen';
+    lock.append(toggle,text);
+    controls.append(lock);
+  }
+  const picker=document.createElement('input');
+  picker.type='color';
+  picker.id='cp-'+prefix+'-'+id;
+  picker.dataset.paletteColor=prefix;
+  picker.dataset.paletteId=String(id);
+  picker.setAttribute('aria-label',label+' farge');
+  const hex=document.createElement('input');
+  hex.type='text';
+  hex.maxLength=7;
+  hex.spellcheck=false;
+  hex.autocomplete='off';
+  hex.className='input custom-palette-hex';
+  hex.dataset.paletteHex=prefix;
+  hex.dataset.paletteId=String(id);
+  hex.setAttribute('aria-label',label+' HEX');
+  controls.append(picker,hex);
+  row.append(name,controls);
+  if(note) row.title=note;
+  return row;
+}
 function buildCustomPaletteFields() {
-  customPaletteFields.replaceChildren(...['light','dark'].map(mode => {
-    const group = document.createElement('fieldset');
-    group.className = 'custom-palette-mode';
-    const legend = document.createElement('legend');
-    legend.textContent = mode === 'light' ? '☀️ Lys modus' : '🌙 Mørk modus';
-    group.append(legend);
-    PALETTE_COLOR_LABELS.forEach((label,index) => {
-      const row = document.createElement('div');
-      row.className = 'custom-palette-color-row';
-      const id = 'cp-' + mode + '-' + index;
-      const labelNode = document.createElement('label');
-      labelNode.setAttribute('for', id);
-      labelNode.textContent = label;
-      const controls = document.createElement('div');
-      controls.className = 'custom-palette-color-controls';
-      const picker = document.createElement('input');
-      picker.type = 'color';
-      picker.id = id;
-      picker.dataset.paletteMode = mode;
-      picker.dataset.paletteIndex = String(index);
-      picker.setAttribute('aria-label', label + ', ' + (mode === 'light' ? 'lys' : 'mørk') + ' modus');
-      const hex = document.createElement('input');
-      hex.type = 'text';
-      hex.maxLength = 7;
-      hex.spellcheck = false;
-      hex.autocomplete = 'off';
-      hex.className = 'input custom-palette-hex';
-      hex.dataset.paletteHexMode = mode;
-      hex.dataset.paletteHexIndex = String(index);
-      hex.setAttribute('aria-label', 'HEX ' + label + ', ' + (mode === 'light' ? 'lys' : 'mørk') + ' modus');
-      controls.append(picker, hex);
-      row.append(labelNode, controls);
-      group.append(row);
-    });
-    return group;
-  }));
+  customPaletteFields.replaceChildren(
+    ...PALETTE_COLOR_LABELS.map((label,index)=>makeColorRow(label,index,'base'))
+  );
+  customPaletteAdvancedFields.replaceChildren(
+    ...PALETTE_DETAIL_ROLES.map(role=>makeColorRow(role.label,role.id,'detail',role.note))
+  );
 }
-
-function syncCustomPaletteEditor() {
-  if (customPaletteDirty) return;
-  customPaletteDraft = normalizeCustomPalette(store.settings?.customCustomerPalette);
-  customPaletteName.value = customPaletteDraft.label;
-  customPaletteFields.querySelectorAll('[data-palette-mode]').forEach(input => {
-    const color = customPaletteDraft[input.dataset.paletteMode][Number(input.dataset.paletteIndex)];
-    input.value = color;
-    const hex = customPaletteFields.querySelector(
-      '[data-palette-hex-mode="' + input.dataset.paletteMode + '"][data-palette-hex-index="' + input.dataset.paletteIndex + '"]'
-    );
-    if (hex) { hex.value = color; hex.setCustomValidity(''); }
+function syncCustomPaletteEditorFromDraft() {
+  if(!customPaletteDraft)return;
+  customPaletteName.value=customPaletteDraft.label;
+  const inherited=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
+  for(const [index,value] of customPaletteDraft[activePaletteMode].entries()) {
+    const picker=customPaletteFields.querySelector('[data-palette-color="base"][data-palette-id="'+index+'"]');
+    const hex=customPaletteFields.querySelector('[data-palette-hex="base"][data-palette-id="'+index+'"]');
+    if(picker)picker.value=value;
+    if(hex){hex.value=value;hex.setCustomValidity('');}
+  }
+  for(const role of PALETTE_DETAIL_ROLES) {
+    const own=customPaletteDraft.advanced?.[activePaletteMode]?.[role.id];
+    const picker=customPaletteAdvancedFields.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
+    const hex=customPaletteAdvancedFields.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
+    const toggle=customPaletteAdvancedFields.querySelector('[data-palette-override="'+role.id+'"]');
+    if(toggle)toggle.checked=Boolean(own);
+    if(picker){picker.value=own||inherited[role.id];picker.disabled=!own;}
+    if(hex){hex.value=own||inherited[role.id];hex.disabled=!own;hex.setCustomValidity('');}
+  }
+  $('customPaletteModeTabs').querySelectorAll('[data-color-mode]').forEach(btn=>{
+    const active=btn.dataset.colorMode===activePaletteMode;
+    btn.classList.toggle('is-active',active);
+    btn.setAttribute('aria-pressed',String(active));
   });
-  customPaletteStatus.textContent = store.settings?.customerPalette === 'custom'
-    ? 'Ditt eget tema er aktivt i kundemenyen.'
-    : 'Endringer påvirker ikke kundemenyen før du lagrer.';
   renderCustomPaletteDraftPreview();
 }
-
+function syncCustomPaletteEditor() {
+  if(customPaletteDirty)return;
+  customPaletteDraft=normalizeCustomPalette(store.settings?.customCustomerPalette);
+  syncCustomPaletteEditorFromDraft();
+  customPaletteStatus.textContent=store.settings?.customerPalette==='custom'
+    ? 'Egendefinert tema er aktivt.' : 'Endringene publiseres når du lagrer.';
+}
 buildCustomPaletteFields();
 syncCustomPaletteEditor();
-customPaletteName.addEventListener('input', () => {
-  customPaletteDraft.label = customPaletteName.value.slice(0,48) || 'Mitt tema';
-  markCustomPaletteDirty();
-});
-customPaletteFields.addEventListener('input', event => {
-  const picker = event.target.closest('[data-palette-mode]');
-  const hex = event.target.closest('[data-palette-hex-mode]');
-  if (picker) {
-    const mode = picker.dataset.paletteMode;
-    const index = Number(picker.dataset.paletteIndex);
-    customPaletteDraft[mode][index] = picker.value.toUpperCase();
-    const textInput = customPaletteFields.querySelector(
-      '[data-palette-hex-mode="' + mode + '"][data-palette-hex-index="' + index + '"]'
-    );
-    if (textInput) {textInput.value = customPaletteDraft[mode][index];textInput.setCustomValidity('');}
-    markCustomPaletteDirty();
-  } else if (hex) {
-    const value = hex.value.trim();
-    const valid = HEX_COLOR.test(value);
-    hex.setCustomValidity(valid ? '' : 'Bruk en fargekode som #A24B29.');
-    if (!valid) return;
-    const mode = hex.dataset.paletteHexMode;
-    const index = Number(hex.dataset.paletteHexIndex);
-    customPaletteDraft[mode][index] = value.toUpperCase();
-    const colorInput = customPaletteFields.querySelector(
-      '[data-palette-mode="' + mode + '"][data-palette-index="' + index + '"]'
-    );
-    if (colorInput) colorInput.value = value;
-    markCustomPaletteDirty();
-  }
-});
-customPaletteFields.addEventListener('change', event => {
-  const input = event.target.closest('[data-palette-hex-mode]');
-  if (!input) return;
-  const correct = customPaletteDraft[input.dataset.paletteHexMode][Number(input.dataset.paletteHexIndex)];
-  input.value = correct;
-  input.setCustomValidity('');
-});
-$('btnCopyPalette').addEventListener('click', () => {
-  const current = getCustomerPalette(store.settings?.customerPalette, store.settings?.customCustomerPalette);
-  customPaletteDraft = normalizeCustomPalette({
-    label: store.settings?.customerPalette === 'custom' ? current.label : 'Mitt tema',
-    light: [...current.light], dark: [...current.dark]
-  });
-  customPaletteDirty = false;
+
+$('customPaletteModeTabs').addEventListener('click',event=>{
+  const button=event.target.closest('[data-color-mode]');
+  if(!button||!customPaletteDraft||button.dataset.colorMode===activePaletteMode)return;
+  activePaletteMode=button.dataset.colorMode;
   syncCustomPaletteEditorFromDraft();
+});
+customPaletteName.addEventListener('input',()=>{
+  customPaletteDraft.label=customPaletteName.value.slice(0,48)||'Mitt tema';
   markCustomPaletteDirty();
 });
-function syncCustomPaletteEditorFromDraft() {
-  customPaletteName.value = customPaletteDraft.label;
-  customPaletteFields.querySelectorAll('[data-palette-mode]').forEach(input => {
-    const value = customPaletteDraft[input.dataset.paletteMode][Number(input.dataset.paletteIndex)];
-    input.value = value;
-    const hex = customPaletteFields.querySelector(
-      '[data-palette-hex-mode="' + input.dataset.paletteMode + '"][data-palette-hex-index="' + input.dataset.paletteIndex + '"]'
-    );
-    if (hex) {hex.value=value;hex.setCustomValidity('');}
-  });
-  renderCustomPaletteDraftPreview();
-}
-$('btnResetCustomPalette').addEventListener('click', () => {
-  customPaletteDraft = normalizeCustomPalette(null);
-  syncCustomPaletteEditorFromDraft();
-  markCustomPaletteDirty();
-});
-$('btnSaveCustomPalette').addEventListener('click', async () => {
-  const button = $('btnSaveCustomPalette');
-  if (button.disabled) return;
-  const invalid = customPaletteFields.querySelector('input:invalid');
-  if (invalid) {
-    invalid.reportValidity();
+function updatePaletteColor(event) {
+  const element=event.target;
+  const kind=element.dataset.paletteColor||element.dataset.paletteHex;
+  if(kind!=='base'&&kind!=='detail')return;
+  const value=element.value.trim();
+  if(!HEX_COLOR.test(value)){
+    if(element.type==='text')element.setCustomValidity('Bruk en HEX-farge som #A24B29.');
     return;
   }
-  button.disabled = true;
-  const data = normalizeCustomPalette({
-    ...customPaletteDraft, label: customPaletteName.value
+  element.setCustomValidity('');
+  const color=value.toUpperCase();
+  const id=element.dataset.paletteId;
+  if(kind==='base'){
+    customPaletteDraft[activePaletteMode][Number(id)]=color;
+  }else{
+    customPaletteDraft.advanced[activePaletteMode][id]=color;
+  }
+  // Reflect both color input and HEX input without reconstructing the page.
+  const region=kind==='base'?customPaletteFields:customPaletteAdvancedFields;
+  const picker=region.querySelector('[data-palette-color="'+kind+'"][data-palette-id="'+id+'"]');
+  const hex=region.querySelector('[data-palette-hex="'+kind+'"][data-palette-id="'+id+'"]');
+  if(picker)picker.value=color;
+  if(hex){hex.value=color;hex.setCustomValidity('');}
+  // A main color change also updates every non-overridden advanced color.
+  if(kind==='base') {
+    const inherited=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
+    for(const role of PALETTE_DETAIL_ROLES){
+      if(customPaletteDraft.advanced[activePaletteMode][role.id])continue;
+      const advancedPicker=customPaletteAdvancedFields.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
+      const advancedHex=customPaletteAdvancedFields.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
+      if(advancedPicker)advancedPicker.value=inherited[role.id];
+      if(advancedHex)advancedHex.value=inherited[role.id];
+    }
+  }
+  markCustomPaletteDirty();
+}
+for(const region of [customPaletteFields,customPaletteAdvancedFields]){
+  region.addEventListener('input',event=>{
+    if(event.target.matches('[data-palette-color],[data-palette-hex]'))updatePaletteColor(event);
   });
-  customPaletteDraft = data;
-  // Persist via existing Firebase settings path; customers already subscribe.
-  mutate(state => {
-    state.settings.customCustomerPalette = JSON.stringify(data);
-    state.settings.customerPalette = 'custom';
+  region.addEventListener('change',event=>{
+    const toggle=event.target.closest('[data-palette-override]');
+    if(toggle){
+      const role=toggle.dataset.paletteOverride;
+      if(toggle.checked){
+        customPaletteDraft.advanced[activePaletteMode][role]=resolvePaletteDetails(customPaletteDraft,activePaletteMode)[role];
+      }else{
+        delete customPaletteDraft.advanced[activePaletteMode][role];
+      }
+      syncCustomPaletteEditorFromDraft();
+      markCustomPaletteDirty();
+    }
   });
-  customPaletteDirty = false;
-  el.settings.customerPalette.value = 'custom';
+}
+$('btnCopyPalette').addEventListener('click',()=>{
+  const current=getCustomerPalette(store.settings?.customerPalette,store.settings?.customCustomerPalette);
+  customPaletteDraft=normalizeCustomPalette({
+    label:store.settings?.customerPalette==='custom'?current.label:'Mitt tema',
+    light:[...current.light],dark:[...current.dark],
+    advanced:current.advanced
+  });
+  syncCustomPaletteEditorFromDraft();
+  markCustomPaletteDirty();
+});
+$('btnResetCustomPalette').addEventListener('click',()=>{
+  customPaletteDraft=normalizeCustomPalette(null);
+  syncCustomPaletteEditorFromDraft();
+  markCustomPaletteDirty();
+});
+$('btnSaveCustomPalette').addEventListener('click',async()=>{
+  const button=$('btnSaveCustomPalette');
+  if(button.disabled)return;
+  const invalid=$('customPaletteEditor').querySelector('input:invalid:not(:disabled)');
+  if(invalid){invalid.reportValidity();return;}
+  button.disabled=true;
+  const next=normalizeCustomPalette({...customPaletteDraft,label:customPaletteName.value});
+  customPaletteDraft=next;
+  mutate(state=>{
+    state.settings.customCustomerPalette=JSON.stringify(next);
+    state.settings.customerPalette='custom';
+  });
+  el.settings.customerPalette.value='custom';
   renderPalettePreview();
-  const saved = await saveNow();
-  customPaletteStatus.textContent = saved
-    ? 'Temaet er lagret og vises nå på kundesiden.'
-    : 'Kunne ikke lagre i Firebase. Prøv igjen med Lagre endringer.';
-  button.disabled = false;
-  if (saved) toast('Ditt eget tema er lagret.');
+  const saved=await saveNow();
+  customPaletteDirty=!saved;
+  customPaletteStatus.textContent=saved
+    ? 'Temaet er lagret og aktivt på kundesiden.'
+    : 'Kunne ikke lagre. Prøv på nytt.';
+  button.disabled=false;
+  if(saved)toast('Ditt tema er lagret.');
 });
 
 /* Weekly opening times use the same settings record as the customer order page. */
