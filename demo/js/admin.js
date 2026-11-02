@@ -3,7 +3,7 @@ import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } f
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
-import { CUSTOMER_PALETTES } from './palette.js';
+import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-custom1';
 import { sortCartByCategory } from './cart-order.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { customerOrderLink } from './order-links.js';
@@ -3471,26 +3471,214 @@ const SETTING_FIELDS = [
   ['prepMinutes', 'number'],
 ];
 
-el.settings.customerPalette.replaceChildren(...Object.entries(CUSTOMER_PALETTES).map(([key, palette]) => new Option(palette.label, key)));
-function renderPalettePreview() {
-  const palette = CUSTOMER_PALETTES[store.settings?.customerPalette] || CUSTOMER_PALETTES.reference;
-  $('customerPalettePreview').replaceChildren(...['light', 'dark'].map(mode => {
+const paletteSelectOptions = Object.entries(CUSTOMER_PALETTES)
+  .map(([key, palette]) => new Option(palette.label, key));
+paletteSelectOptions.push(new Option('5. Egendefinert – mitt tema', 'custom'));
+el.settings.customerPalette.replaceChildren(...paletteSelectOptions);
+
+// The color picker is a local draft. Avoid Firebase writes for every color-drag.
+// One explicit save writes the 14 colors as a compact JSON settings field.
+let customPaletteDraft = null;
+let customPaletteDirty = false;
+const customPaletteDetails = $('customPaletteEditor');
+const customPaletteFields = $('customPaletteFields');
+const customPaletteName = $('customPaletteName');
+const customPaletteStatus = $('customPaletteStatus');
+const customPaletteDraftPreview = $('customPaletteDraftPreview');
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function paletteSwatchGroups(parent, palette) {
+  parent.replaceChildren(...['light', 'dark'].map(mode => {
     const group = document.createElement('div');
     group.className = 'palette-mode-preview';
     const title = document.createElement('strong');
     title.textContent = mode === 'light' ? 'Lys modus' : 'Mørk modus';
     group.append(title);
-    const labels = ['Hovedfarge', 'Bakgrunn', 'Kort', 'Tekst', 'Kantlinje', 'Bekreftelse', 'Uten / varsel'];
     palette[mode].forEach((color, index) => {
       const swatch = document.createElement('span');
       swatch.style.backgroundColor = color;
-      swatch.style.color = [0, 3, 5, 6].includes(index) && mode === 'light' || mode === 'dark' && [1, 2, 4].includes(index) ? '#FFFFFF' : '#212226';
-      swatch.textContent = labels[index] + ' ' + color;
+      // Determine readable label color from the actual swatch, not an index.
+      const red = parseInt(color.slice(1,3),16) / 255;
+      const green = parseInt(color.slice(3,5),16) / 255;
+      const blue = parseInt(color.slice(5,7),16) / 255;
+      const luminance = [red,green,blue].map(ch => ch <= .04045 ? ch / 12.92 : ((ch + .055) / 1.055)**2.4);
+      swatch.style.color = .2126*luminance[0]+.7152*luminance[1]+.0722*luminance[2] > .18 ? '#18202B' : '#FFFFFF';
+      swatch.textContent = PALETTE_COLOR_LABELS[index] + ' ' + color;
       group.append(swatch);
     });
     return group;
   }));
 }
+
+function renderPalettePreview() {
+  const palette = getCustomerPalette(
+    store.settings?.customerPalette, store.settings?.customCustomerPalette
+  );
+  paletteSwatchGroups($('customerPalettePreview'), palette);
+}
+
+function renderCustomPaletteDraftPreview() {
+  if (customPaletteDraft) paletteSwatchGroups(customPaletteDraftPreview, customPaletteDraft);
+}
+
+function markCustomPaletteDirty() {
+  customPaletteDirty = true;
+  customPaletteStatus.textContent = 'Ulagrede farger – trykk «Bruk og lagre temaet».';
+  renderCustomPaletteDraftPreview();
+}
+
+function buildCustomPaletteFields() {
+  customPaletteFields.replaceChildren(...['light','dark'].map(mode => {
+    const group = document.createElement('fieldset');
+    group.className = 'custom-palette-mode';
+    const legend = document.createElement('legend');
+    legend.textContent = mode === 'light' ? '☀️ Lys modus' : '🌙 Mørk modus';
+    group.append(legend);
+    PALETTE_COLOR_LABELS.forEach((label,index) => {
+      const row = document.createElement('div');
+      row.className = 'custom-palette-color-row';
+      const id = 'cp-' + mode + '-' + index;
+      const labelNode = document.createElement('label');
+      labelNode.setAttribute('for', id);
+      labelNode.textContent = label;
+      const controls = document.createElement('div');
+      controls.className = 'custom-palette-color-controls';
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.id = id;
+      picker.dataset.paletteMode = mode;
+      picker.dataset.paletteIndex = String(index);
+      picker.setAttribute('aria-label', label + ', ' + (mode === 'light' ? 'lys' : 'mørk') + ' modus');
+      const hex = document.createElement('input');
+      hex.type = 'text';
+      hex.maxLength = 7;
+      hex.spellcheck = false;
+      hex.autocomplete = 'off';
+      hex.className = 'input custom-palette-hex';
+      hex.dataset.paletteHexMode = mode;
+      hex.dataset.paletteHexIndex = String(index);
+      hex.setAttribute('aria-label', 'HEX ' + label + ', ' + (mode === 'light' ? 'lys' : 'mørk') + ' modus');
+      controls.append(picker, hex);
+      row.append(labelNode, controls);
+      group.append(row);
+    });
+    return group;
+  }));
+}
+
+function syncCustomPaletteEditor() {
+  if (customPaletteDirty) return;
+  customPaletteDraft = normalizeCustomPalette(store.settings?.customCustomerPalette);
+  customPaletteName.value = customPaletteDraft.label;
+  customPaletteFields.querySelectorAll('[data-palette-mode]').forEach(input => {
+    const color = customPaletteDraft[input.dataset.paletteMode][Number(input.dataset.paletteIndex)];
+    input.value = color;
+    const hex = customPaletteFields.querySelector(
+      '[data-palette-hex-mode="' + input.dataset.paletteMode + '"][data-palette-hex-index="' + input.dataset.paletteIndex + '"]'
+    );
+    if (hex) { hex.value = color; hex.setCustomValidity(''); }
+  });
+  customPaletteStatus.textContent = store.settings?.customerPalette === 'custom'
+    ? 'Ditt eget tema er aktivt i kundemenyen.'
+    : 'Endringer påvirker ikke kundemenyen før du lagrer.';
+  renderCustomPaletteDraftPreview();
+}
+
+buildCustomPaletteFields();
+syncCustomPaletteEditor();
+customPaletteName.addEventListener('input', () => {
+  customPaletteDraft.label = customPaletteName.value.slice(0,48) || 'Mitt tema';
+  markCustomPaletteDirty();
+});
+customPaletteFields.addEventListener('input', event => {
+  const picker = event.target.closest('[data-palette-mode]');
+  const hex = event.target.closest('[data-palette-hex-mode]');
+  if (picker) {
+    const mode = picker.dataset.paletteMode;
+    const index = Number(picker.dataset.paletteIndex);
+    customPaletteDraft[mode][index] = picker.value.toUpperCase();
+    const textInput = customPaletteFields.querySelector(
+      '[data-palette-hex-mode="' + mode + '"][data-palette-hex-index="' + index + '"]'
+    );
+    if (textInput) {textInput.value = customPaletteDraft[mode][index];textInput.setCustomValidity('');}
+    markCustomPaletteDirty();
+  } else if (hex) {
+    const value = hex.value.trim();
+    const valid = HEX_COLOR.test(value);
+    hex.setCustomValidity(valid ? '' : 'Bruk en fargekode som #A24B29.');
+    if (!valid) return;
+    const mode = hex.dataset.paletteHexMode;
+    const index = Number(hex.dataset.paletteHexIndex);
+    customPaletteDraft[mode][index] = value.toUpperCase();
+    const colorInput = customPaletteFields.querySelector(
+      '[data-palette-mode="' + mode + '"][data-palette-index="' + index + '"]'
+    );
+    if (colorInput) colorInput.value = value;
+    markCustomPaletteDirty();
+  }
+});
+customPaletteFields.addEventListener('change', event => {
+  const input = event.target.closest('[data-palette-hex-mode]');
+  if (!input) return;
+  const correct = customPaletteDraft[input.dataset.paletteHexMode][Number(input.dataset.paletteHexIndex)];
+  input.value = correct;
+  input.setCustomValidity('');
+});
+$('btnCopyPalette').addEventListener('click', () => {
+  const current = getCustomerPalette(store.settings?.customerPalette, store.settings?.customCustomerPalette);
+  customPaletteDraft = normalizeCustomPalette({
+    label: store.settings?.customerPalette === 'custom' ? current.label : 'Mitt tema',
+    light: [...current.light], dark: [...current.dark]
+  });
+  customPaletteDirty = false;
+  syncCustomPaletteEditorFromDraft();
+  markCustomPaletteDirty();
+});
+function syncCustomPaletteEditorFromDraft() {
+  customPaletteName.value = customPaletteDraft.label;
+  customPaletteFields.querySelectorAll('[data-palette-mode]').forEach(input => {
+    const value = customPaletteDraft[input.dataset.paletteMode][Number(input.dataset.paletteIndex)];
+    input.value = value;
+    const hex = customPaletteFields.querySelector(
+      '[data-palette-hex-mode="' + input.dataset.paletteMode + '"][data-palette-hex-index="' + input.dataset.paletteIndex + '"]'
+    );
+    if (hex) {hex.value=value;hex.setCustomValidity('');}
+  });
+  renderCustomPaletteDraftPreview();
+}
+$('btnResetCustomPalette').addEventListener('click', () => {
+  customPaletteDraft = normalizeCustomPalette(null);
+  syncCustomPaletteEditorFromDraft();
+  markCustomPaletteDirty();
+});
+$('btnSaveCustomPalette').addEventListener('click', async () => {
+  const button = $('btnSaveCustomPalette');
+  if (button.disabled) return;
+  const invalid = customPaletteFields.querySelector('input:invalid');
+  if (invalid) {
+    invalid.reportValidity();
+    return;
+  }
+  button.disabled = true;
+  const data = normalizeCustomPalette({
+    ...customPaletteDraft, label: customPaletteName.value
+  });
+  customPaletteDraft = data;
+  // Persist via existing Firebase settings path; customers already subscribe.
+  mutate(state => {
+    state.settings.customCustomerPalette = JSON.stringify(data);
+    state.settings.customerPalette = 'custom';
+  });
+  customPaletteDirty = false;
+  el.settings.customerPalette.value = 'custom';
+  renderPalettePreview();
+  const saved = await saveNow();
+  customPaletteStatus.textContent = saved
+    ? 'Temaet er lagret og vises nå på kundesiden.'
+    : 'Kunne ikke lagre i Firebase. Prøv igjen med Lagre endringer.';
+  button.disabled = false;
+  if (saved) toast('Ditt eget tema er lagret.');
+});
 
 /* Weekly opening times use the same settings record as the customer order page. */
 const weeklyRowsEl=document.getElementById('weeklyHoursRows');
