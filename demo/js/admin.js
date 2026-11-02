@@ -3802,6 +3802,7 @@ window.setInterval(()=>{
 
 function renderSettings() {
   renderPalettePreview();
+  syncCustomPaletteEditor();
   const settings = store.settings || {};
   renderSettingsLayout();
   applyAdminInterfaceSettings(settings);
