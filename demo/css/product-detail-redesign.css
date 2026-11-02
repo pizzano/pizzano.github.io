@@ -7,15 +7,16 @@
   --pd-accent:var(--palette-accent,#0752A2);
   --pd-warning:var(--palette-warning,#A24B29); /* Admin: Uten / varsel for the current theme */
   --pd-ink:var(--palette-ink,#17253b);
-  --pd-muted:var(--palette-muted,#667585);
+  --pd-muted:var(--palette-secondary-text,var(--palette-muted,#667585));
   --pd-page:var(--palette-bg,#f6f8fc);
   --pd-card:var(--palette-surface,#fff);
   --pd-border:var(--palette-border,#d8e0ea);
   --pd-tint:color-mix(in srgb,var(--pd-accent) 7%,var(--pd-card));
-  --pd-selected:color-mix(in srgb,var(--pd-accent) 15%,var(--pd-card));
+  --pd-selected:var(--palette-selection-bg,color-mix(in srgb,var(--pd-accent) 15%,var(--pd-card)));
   --pd-selected-edge:color-mix(in srgb,var(--pd-accent) 34%,var(--pd-card));
   --pd-soft:color-mix(in srgb,var(--pd-accent) 5%,var(--pd-page));
-  --pd-on:var(--palette-on-accent,#fff);
+  --pd-on:var(--palette-button-text,var(--palette-on-accent,#fff));
+  --pd-button:var(--palette-button,var(--pd-accent));
   --pd-fs-title:21px;
   --pd-fs-heading:14px;
   --pd-fs-option:13px;
@@ -234,7 +235,7 @@
 #productSheet .comment-area{
   width:100%!important;min-height:46px!important;height:46px!important;box-sizing:border-box!important;
   padding:11px 12px!important;border:1px solid var(--pd-border)!important;border-radius:12px!important;
-  background:var(--pd-card)!important;box-shadow:none!important;
+  background:var(--palette-input-bg,var(--pd-card))!important;box-shadow:none!important;
   color:var(--pd-ink)!important;font-size:12px!important;line-height:1.4!important;resize:vertical!important;
 }
 #productSheet .comment-area:focus{min-height:96px!important;height:96px!important;outline:2px solid var(--pd-selected-edge)!important;outline-offset:1px!important}
@@ -288,8 +289,8 @@
   align-items:center!important;justify-content:center!important;gap:7px!important;
   margin:0!important;padding:7px 9px!important;
   border:0!important;border-radius:13px!important;
-  background:var(--pd-accent)!important;
-  box-shadow:0 7px 16px color-mix(in srgb,var(--pd-accent) 23%,transparent)!important;
+  background:var(--pd-button)!important;
+  box-shadow:0 7px 16px color-mix(in srgb,var(--pd-button) 23%,transparent)!important;
   color:var(--pd-on)!important;
 }
 #productSheet #btnAddToCart:disabled{opacity:.5!important;cursor:not-allowed!important}
