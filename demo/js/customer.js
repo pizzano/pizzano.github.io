@@ -3,7 +3,7 @@ import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js?v=20261023-customerprofile1';
 import { getDisplayComment } from './order-comments.js';
-import { applyCustomerPalette } from './palette.js?v=20261031-productdesign1';
+import { applyCustomerPalette } from './palette.js?v=20261103-custom1';
 import { todaysSpecialDays, parseSpecialDays } from './special-days.js';
 /**
  * customer.js — Kundelogikk for Restauranten.
@@ -3464,7 +3464,7 @@ function renderAll() {
       document.querySelector(selector)?.setAttribute('content', pageTitle);
     }
   }
-  applyCustomerPalette(store.settings?.customerPalette);
+  applyCustomerPalette(store.settings?.customerPalette, store.settings?.customCustomerPalette);
   applyCustomerInterfaceSettings();
   const changed = reconcileCart();
   renderCategories();
@@ -3605,4 +3605,4 @@ window.addEventListener('visibilitychange', () => {
   }
 });
 
-document.addEventListener('kolthemechange', () => applyCustomerPalette(store.settings?.customerPalette));
+document.addEventListener('kolthemechange', () => applyCustomerPalette(store.settings?.customerPalette, store.settings?.customCustomerPalette));
