@@ -996,3 +996,62 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
 .attached-row.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
 .group-move-buttons { display: flex; flex-direction: column; gap: 2px; }
 .group-move-buttons .icon-btn { width: 24px; height: 24px; font-size: 14px; }
+
+/* Editable light/dark customer palette — scoped to Grensesnitt og funksjoner. */
+.custom-palette-editor {
+  margin-top:16px;
+  border:1px solid var(--line,#dfe4e8);
+  border-radius:14px;
+  background:var(--surface,#fff);
+  overflow:hidden;
+}
+.custom-palette-editor > summary {
+  list-style:none;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:15px 17px;
+  cursor:pointer;font-weight:700;font-size:14px;
+}
+.custom-palette-editor > summary::-webkit-details-marker {display:none}
+.custom-palette-editor > summary::after {content:"⌄";font-size:18px;font-weight:400}
+.custom-palette-editor[open] > summary::after {content:"⌃"}
+.custom-palette-summary-hint {
+  margin-left:auto;font-size:11px;font-weight:400;color:var(--muted,#7b8490);
+}
+.custom-palette-content {padding:0 16px 17px;display:grid;gap:13px}
+.custom-palette-name {display:grid;gap:6px;font-size:12px;font-weight:650;max-width:360px}
+.custom-palette-actions {display:flex;flex-wrap:wrap;gap:8px}
+.custom-palette-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.custom-palette-mode {
+  min-width:0;padding:10px;border:1px solid var(--line,#dfe4e8);
+  border-radius:12px;display:grid;gap:7px;
+}
+.custom-palette-mode legend {padding:0 6px;font-weight:700;font-size:13px}
+.custom-palette-color-row {
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  min-width:0;font-size:12px;padding:5px 0;
+  border-bottom:1px solid var(--line,#eef0f3);
+}
+.custom-palette-color-row:last-child {border-bottom:none}
+.custom-palette-color-row > label {min-width:0;overflow-wrap:anywhere}
+.custom-palette-color-controls {display:flex;align-items:center;gap:8px;flex-shrink:0}
+.custom-palette-color-controls input[type=color] {
+  width:46px;height:34px;padding:3px;border-radius:9px;
+  border:1px solid var(--line,#dfe4e8);background:transparent;cursor:pointer;
+}
+.custom-palette-hex.input {
+  width:94px;min-width:0;height:34px;padding:6px 8px;
+  font-size:12px;font-family:ui-monospace,monospace;
+}
+.custom-palette-hex:invalid {border-color:#b9342b}
+.custom-palette-preview-title {font-size:14px;font-weight:700;margin:2px 0 -8px}
+.custom-palette-save-row {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.custom-palette-save-row .set-hint {margin:0}
+@media(max-width:950px){
+  .custom-palette-grid {grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:490px){
+  .custom-palette-content {padding:0 11px 14px}
+  .custom-palette-editor > summary {padding:13px}
+  .custom-palette-color-controls {gap:5px}
+  .custom-palette-hex.input {width:85px}
+}
