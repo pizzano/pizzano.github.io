@@ -10,7 +10,49 @@ export const CUSTOMER_PALETTES = {
 export const PALETTE_COLOR_LABELS = [
   'Hovedfarge', 'Bakgrunn', 'Kort', 'Tekst', 'Kantlinje', 'Bekreftelse', 'Uten / varsel'
 ];
+export const PALETTE_DETAIL_ROLES = [
+  { id:'button', label:'Alle hovedknapper', note:'Samme farge på Legg til, Neste, Lagre og andre handlingsknapper' },
+  { id:'buttonText', label:'Tekst på knapper', note:'Felles tekstfarge på hovedknapper' },
+  { id:'selected', label:'Valgte alternativer', note:'Bakgrunn på avkryssede valg og aktiv hentetid' },
+  { id:'field', label:'Inputfelt', note:'Bakgrunn i telefon-, e-post- og kommentarfelt' },
+  { id:'header', label:'Toppfelt', note:'Menyens toppområde og navigasjon' },
+  { id:'muted', label:'Sekundærtekst', note:'Beskrivelser og små hjelpetekster' }
+];
+const PALETTE_DETAIL_IDS = new Set(PALETTE_DETAIL_ROLES.map(role => role.id));
 const COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+/** Compact HEX helpers used only to calculate optional defaults and contrast. */
+function blendHex(first, second, weight) {
+  const a=first.match(/[0-9a-f]{2}/gi).map(part=>parseInt(part,16));
+  const b=second.match(/[0-9a-f]{2}/gi).map(part=>parseInt(part,16));
+  return '#'+a.map((v,i)=>Math.round(v*weight+b[i]*(1-weight)).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function contrastText(background) {
+  const hex=background.slice(1);
+  const values=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)/255)
+    .map(v=>v<=.04045 ? v/12.92 : ((v+.055)/1.055)**2.4);
+  const l=.2126*values[0]+.7152*values[1]+.0722*values[2];
+  return (l+.05)/.05 >= 1.05/(l+.05) ? '#000000' : '#FFFFFF';
+}
+/** Effective details. Unchecked overrides inherit the base palette. */
+export function resolvePaletteDetails(palette, mode) {
+  const colors=palette[mode];
+  const [accent,,surface,ink]=colors;
+  const base={
+    button:accent,
+    buttonText:contrastText(accent),
+    selected:blendHex(accent,surface,mode==='dark'?.24:.13),
+    field:surface,
+    header:mode==='dark'?palette.dark[1]:palette.light[3],
+    muted:blendHex(ink,surface,.74)
+  };
+  const overrides=palette.advanced?.[mode]||{};
+  for(const id of PALETTE_DETAIL_IDS) {
+    if(typeof overrides[id]==='string'&&COLOR_PATTERN.test(overrides[id]))base[id]=overrides[id].toUpperCase();
+  }
+  return base;
+}
+
 const DEFAULT_CUSTOM = CUSTOMER_PALETTES.fresh;
 
 /**
@@ -30,12 +72,25 @@ export function normalizeCustomPalette(raw) {
     return typeof candidate === 'string' && COLOR_PATTERN.test(candidate)
       ? candidate.toUpperCase() : DEFAULT_CUSTOM[mode][index];
   });
+  const advanced={};
+  for(const mode of ['light','dark']) {
+    advanced[mode]={};
+    const colors=base.advanced?.[mode];
+    if(colors && typeof colors==='object' && !Array.isArray(colors)) {
+      for(const id of PALETTE_DETAIL_IDS) {
+        if(typeof colors[id]==='string' && COLOR_PATTERN.test(colors[id])) {
+          advanced[mode][id]=colors[id].toUpperCase();
+        }
+      }
+    }
+  }
   return {
     label: typeof base.label === 'string'
       ? (base.label.trim().slice(0, 48) || 'Mitt tema')
       : 'Mitt tema',
     light: safeColors('light'),
-    dark: safeColors('dark')
+    dark: safeColors('dark'),
+    advanced
   };
 }
 
@@ -54,6 +109,7 @@ export function applyCustomerPalette(value, customValue) {
   const dark = root.dataset.theme === 'dark';
   const palette = getCustomerPalette(key, customValue);
   const [accent, bg, surface, ink, border, success, warning] = dark ? palette.dark : palette.light;
+  const details=resolvePaletteDetails(palette,dark?'dark':'light');
   root.dataset.customerPalette = key;
   const values = {
     accent, bg, surface, ink, border,
@@ -63,6 +119,12 @@ export function applyCustomerPalette(value, customValue) {
     soft: `color-mix(in srgb, ${accent} ${dark ? 16 : 9}%, ${surface})`,
     'on-accent': dark ? palette.dark[1] : '#FFFFFF',
     success, warning,
+    button:details.button,
+    'button-text':details.buttonText,
+    'selection-bg':details.selected,
+    'input-bg':details.field,
+    'header-bg':details.header,
+    'secondary-text':details.muted,
     'success-soft': `color-mix(in srgb, ${success} ${dark ? 18 : 10}%, ${surface})`,
     'warning-soft': `color-mix(in srgb, ${warning} ${dark ? 18 : 10}%, ${surface})`,
     'removed-soft': `color-mix(in srgb, ${warning} ${dark ? 22 : 12}%, ${surface})`,
