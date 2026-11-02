@@ -50,6 +50,11 @@ export function resolvePaletteDetails(palette, mode) {
   for(const id of PALETTE_DETAIL_IDS) {
     if(typeof overrides[id]==='string'&&COLOR_PATTERN.test(overrides[id]))base[id]=overrides[id].toUpperCase();
   }
+  // If the shared button color is customized, adapt its text contrast automatically
+  // unless the user explicitly selected a separate button-text color.
+  if (!overrides.buttonText && overrides.button) {
+    base.buttonText=contrastText(base.button);
+  }
   return base;
 }
 
