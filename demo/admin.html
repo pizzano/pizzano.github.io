@@ -8,7 +8,7 @@
     <link rel="icon" href="./icons/restaurant.svg" />
     <title>Admin — Meny, bestillinger &amp; innstillinger</title>
     <script src="./js/theme.js?v=20261024-localfour2"></script>
-    <link rel="stylesheet" href="./css/admin.css?v=20261016-cleanall1">
+    <link rel="stylesheet" href="./css/admin.css?v=20261103-custom1">
     <link rel="stylesheet" href="./css/theme.css?v=20261016-clean1">
     <link rel="stylesheet" href="./css/order-taking.css?v=20261026-order-ui2">
     <link rel="stylesheet" href="./css/cart.css?v=20261023-sharedorders1">
@@ -410,6 +410,26 @@
                                 <p class="set-hint">Sju temafarger, tydelige bekreftelser og varsler med egne toner for lys og mørk modus. Valget lagres automatisk.</p>
                                 <select id="sCustomerPalette" class="input"></select>
                                 <div id="customerPalettePreview" class="customer-palette-preview" aria-label="Valgt tema: lys og mørk modus"></div>
+                                <details class="custom-palette-editor" id="customPaletteEditor">
+                                    <summary>🎨 Lag ditt eget tema <span class="custom-palette-summary-hint">Rediger alle 7 fargene</span></summary>
+                                    <div class="custom-palette-content">
+                                        <p class="set-hint">Velg egne farger for lys og mørk modus. Bruk fargevelgeren eller skriv en HEX-kode. Forhåndsvisningen oppdateres før du lagrer.</p>
+                                        <label class="custom-palette-name">Navn på temaet
+                                            <input class="input" type="text" id="customPaletteName" maxlength="48" autocomplete="off" value="Mitt tema">
+                                        </label>
+                                        <div class="custom-palette-actions">
+                                            <button type="button" class="btn btn-outline btn-sm" id="btnCopyPalette">Kopier valgt tema</button>
+                                            <button type="button" class="btn btn-outline btn-sm" id="btnResetCustomPalette">Standardfarger</button>
+                                        </div>
+                                        <div class="custom-palette-grid" id="customPaletteFields"></div>
+                                        <h3 class="custom-palette-preview-title">Forhåndsvisning av dine farger</h3>
+                                        <div class="customer-palette-preview" id="customPaletteDraftPreview" aria-label="Forhåndsvisning av mitt tema"></div>
+                                        <div class="custom-palette-save-row">
+                                            <button type="button" class="btn btn-primary" id="btnSaveCustomPalette">Bruk og lagre temaet</button>
+                                            <span class="set-hint" id="customPaletteStatus" role="status" aria-live="polite">Endringer påvirker ikke kundemenyen før du lagrer.</span>
+                                        </div>
+                                    </div>
+                                </details>
                             </div>
                             <div class="feature-setting-group" id="uiTypographySettings">
                                 <div class="feature-setting-head"><strong>Skriftstørrelser</strong><small>Fire felles størrelser for kundemeny og adminpanel. Lagres i Firebase.</small></div>
@@ -893,7 +913,7 @@
 
     <div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/admin.js?v=20261101-allergens1"></script>
+    <script type="module" src="./js/admin.js?v=20261103-custom1"></script>
     <script type="module" src="./js/loyalty-sync.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/orders-archive.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/special-days-admin.js?v=20261030-isolated3"></script>
