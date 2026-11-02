@@ -24,7 +24,7 @@ button.cart-product-copy {cursor:pointer;}
 .cart-product-stepper button {
   display:grid;place-items:center;width:36px;min-height:36px;
   padding:0;border:0;border-radius:0;
-  background:var(--palette-accent);color:var(--palette-on-accent,#fff);
+  background:var(--palette-button,var(--palette-accent));color:var(--palette-button-text,var(--palette-on-accent,#fff));
   font-size:23px;line-height:1;cursor:pointer;
 }
 .cart-product-stepper>span {
@@ -153,7 +153,7 @@ button.cart-product-copy {cursor:pointer;}
 .view-cart .cart-product-stepper button {
   display:grid;place-items:center;width:30px;min-height:30px;
   padding:0;border:0;border-radius:0;
-  background:var(--palette-accent);color:var(--palette-on-accent,#fff);
+  background:var(--palette-button,var(--palette-accent));color:var(--palette-button-text,var(--palette-on-accent,#fff));
   font-size:16px;font-weight:400;line-height:1;cursor:pointer;
   transition:filter .14s ease;
 }
