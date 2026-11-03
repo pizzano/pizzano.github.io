@@ -3544,6 +3544,20 @@ function renderCustomPaletteDraftPreview() {
   knob.setAttribute('aria-hidden','true');
   switchTrack.append(knob);
   customPaletteButtonPreview.append(switchTrack);
+  const luminance = (hex) => {
+    const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);
+    const channels=rgb.map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+    return .2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+  };
+  const lighter=Math.max(luminance(d.button),luminance(d.buttonText));
+  const darker=Math.min(luminance(d.button),luminance(d.buttonText));
+  const ratio=(lighter+.05)/(darker+.05);
+  if(ratio<4.5){
+    const warning=document.createElement('span');
+    warning.className='custom-action-contrast-warning';
+    warning.textContent='Lav tekstkontrast ('+ratio.toFixed(1)+':1). Velg en tydeligere knappefarge eller tekstfarge.';
+    customPaletteButtonPreview.append(warning);
+  }
 }
 function markCustomPaletteDirty() {
   customPaletteDirty=true;
