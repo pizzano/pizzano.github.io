@@ -56,6 +56,18 @@ export function simulateAction(order, action, { at = Date.now(), minutes = 15 } 
     if (order.status !== 'mottatt') throw new Error('Bare nye bestillinger kan avvises.');
     return change(order, { status:'avvist' }, 'Simulert Avvis', now);
   }
+  if (action === 'notification-fail') {
+    if (!['bekreftet','klar'].includes(order.status))
+      throw new Error('Godta bestillingen før varselfeil kan simuleres.');
+    return change(order, { sms:'mock-error', email:'mock-error' },
+      'Simulert feil i SMS/e-post (kun lokal test)', now);
+  }
+  if (action === 'print-fail') {
+    if (!['bekreftet','klar'].includes(order.status))
+      throw new Error('Godta bestillingen før skriverfeil kan simuleres.');
+    return change(order, { print:'mock-error' },
+      'Simulert Epson-feil (ingen skriverkontakt)', now);
+  }
   if (action === 'notifications') {
     if (!['bekreftet','klar'].includes(order.status))
       throw new Error('Godta bestillingen før varsel kan simuleres.');
