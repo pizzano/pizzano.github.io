@@ -1097,6 +1097,20 @@ let customerOrderStreamId = '';
 let customerOrderStreamHealthy = false;
 let customerPollBusy = false;
 let lastCustomerPollAt = 0;
+// A closed/rejected EventSource must not be reopened every 5-second poll.
+// REST fallback remains active during the bounded retry delay.
+let customerStreamFailures = 0;
+let customerStreamRetryAfter = 0;
+function backoffCustomerOrderStream() {
+  customerStreamFailures = Math.min(customerStreamFailures + 1, 5);
+  customerStreamRetryAfter = Date.now() + Math.min(30000, 2000 * (2 ** (customerStreamFailures - 1)));
+  closeCustomerOrderStream();
+}
+function markCustomerStreamHealthy() {
+  customerStreamFailures = 0;
+  customerStreamRetryAfter = 0;
+  customerOrderStreamHealthy = true;
+}
 
 export function customerOrderHasLiveListener(orderId) {
   return CUSTOMER_MODE && customerOrderStreamHealthy && customerOrderStreamId === orderId;
@@ -1113,6 +1127,7 @@ function startCustomerOrderStream() {
   const id = [...customerTrackedIds()].at(-1);
   if (!id) { closeCustomerOrderStream(); return; }
   if (customerOrderStream && customerOrderStreamId === id) return;
+  if (Date.now() < customerStreamRetryAfter) return;
   closeCustomerOrderStream();
   const source = new EventSource(streamUrl(ORDERS_PATH + '/' + encodeURIComponent(id)));
   customerOrderStream = source;
@@ -1126,7 +1141,7 @@ function startCustomerOrderStream() {
       const updated = changed?.[id];
       if (updated) ordersRaw[id] = updated;
       else { delete ordersRaw[id]; forgetCustomerOrderId(id); }
-      customerOrderStreamHealthy = true;
+      markCustomerStreamHealthy();
       remoteOnline = true;
       if (applyRemoteOrders(ordersRaw)) emitData('remote');
       if (!updated) closeCustomerOrderStream();
@@ -1140,11 +1155,11 @@ function startCustomerOrderStream() {
   source.onerror = () => {
     if (source !== customerOrderStream) return;
     customerOrderStreamHealthy = false;
-    if (source.readyState === 2) closeCustomerOrderStream();
+    if (source.readyState === 2) backoffCustomerOrderStream();
   };
   for (const kind of ['cancel','auth_revoked']) {
     source.addEventListener(kind, () => {
-      if (source === customerOrderStream) closeCustomerOrderStream();
+      if (source === customerOrderStream) backoffCustomerOrderStream();
     });
   }
 }
@@ -1201,6 +1216,9 @@ function syncCustomerStreams() {
 async function pollCustomerOrders(force = false) {
   if (!CUSTOMER_MODE || customerPollBusy || document.hidden || navigator.onLine === false) return;
   const now = Date.now();
+  // Focus, visibility and reconnect may all fire within one second.
+  // Coalesce forced refreshes while keeping explicit order-detail checks separate.
+  if (force && now - lastCustomerPollAt < 2500) return;
   // Fast updates for pending/preparing orders; reduce idle Firebase reads
   // when all locally tracked orders have reached a terminal state.
   const tracked = customerTrackedIds();
@@ -1432,6 +1450,9 @@ function startPolling() {
     }
   });
   window.addEventListener('online', () => {
+    // The network changed: allow an immediate SSE attempt and REST refresh.
+    customerStreamRetryAfter = 0;
+    customerStreamFailures = 0;
     if (CUSTOMER_MODE) syncCustomerStreams();
     if (!CUSTOMER_MODE && !ordersStream) scheduleStreamReconnect();
     void fallbackSync();
