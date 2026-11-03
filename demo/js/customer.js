@@ -1106,6 +1106,10 @@ function renderOpenState() {
     el.openDot.classList.add('is-pending');
     el.statusTimePill.hidden = true;
     el.statusTimeText.textContent = '';
+    if (el.statusShopIcon.dataset.iconState !== 'pending') {
+      el.statusShopIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+      el.statusShopIcon.dataset.iconState = 'pending';
+    }
     el.btnToCheckout.disabled = true;
     el.cartClosedHint.hidden = true;
     return { open:false, pending:true };
