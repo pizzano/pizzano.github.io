@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check js/data.js && node --check js/customer.js && node --check js/admin.js && node --check js/order-printer.js && node --check js/pickup-slots.js && node --check js/dialog-focus.js"
+    "check": "node --check js/data.js && node --check js/customer.js && node --check js/admin.js && node --check js/order-printer.js && node --check js/pickup-slots.js && node --check js/dialog-focus.js && node --check js/test-simulator.js && node --check js/test-lab.js && node --check js/admin-health.js && node --check js/admin-health-policy.js"
   }
 }
