@@ -405,7 +405,7 @@ html[data-theme="dark"] .allergen-visibility-switch {
 }
 
 html[data-theme="dark"] .allergen-visibility-control input:checked + .allergen-visibility-switch {
-  background: var(--palette-accent, #35a760) !important;
+  background: var(--palette-button, #35a760) !important;
 }
 
 html[data-theme="dark"] .prod-list-allergens {
