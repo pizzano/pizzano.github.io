@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="./css/group-editor-modal.css?v=20261101-allergens1">
     <link rel="stylesheet" href="./css/typography.css?v=20261101-four-sizes1">
     <link rel="stylesheet" href="./css/admin-touch.css?v=20261103-admin-touch1">
+    <link rel="stylesheet" href="./css/admin-health.css?v=20261103-health1">
     <script type="module" src="./js/typography-settings.js?v=20261103-slot-focus1"></script>
 </head>
 
@@ -201,6 +202,10 @@
                         </button>
                     </div>
                 </header>
+                <div id="criticalSystemBanner" class="critical-system-banner" role="alert" hidden>
+                    <span id="criticalSystemMessage">Kritisk systemfeil registrert.</span>
+                    <button id="criticalSystemOpenAlerts" type="button">Vis varsler</button>
+                </div>
                 <div id="orderStatRow" hidden></div>
                 <div class="orders-app">
                     <aside class="orders-inbox" aria-label="Bestillingsliste">
@@ -301,6 +306,7 @@
                     <button class="settings-section-btn" data-settings-section-tab="interface" type="button">Grensesnitt</button>
                     <button class="settings-section-btn" data-settings-section-tab="contact" type="button">Kontakt</button>
                     <button class="settings-section-btn" data-settings-section-tab="holidays" type="button">Spesielle dager</button>
+                    <button class="settings-section-btn" data-settings-section-tab="health" type="button">Systemhelse</button>
                     <button class="settings-section-btn" data-settings-section-tab="alerts" type="button">Varsler <span id="systemErrorsUnread" aria-live="polite" hidden></span></button>
                 </nav>
                 <div class="scroll-area settings-section-scroll">
@@ -609,6 +615,24 @@
                             </div>
                         </article>
 
+                        <article class="set-card settings-section-card" data-settings-section="health" hidden>
+                            <h2>Systemhelse</h2>
+                            <p class="set-hint">Lesekontroll av Firebase og tjenestenes siste hjerteslag. Grønt beviser ikke at kunden faktisk mottok SMS/e-post. Ingen testordre eller utskrift sendes.</p>
+                            <div class="health-panel-actions">
+                                <button id="healthRefresh" class="btn btn-primary" type="button">Kontroller nå (kun lesing)</button>
+                                <button id="healthPrinterProbe" class="btn btn-outline" type="button">Sjekk Epson (uten papir)</button>
+                                <a class="btn btn-outline" href="./test-lab.html" target="_blank" rel="noopener noreferrer">Åpne isolert testlaboratorium</a>
+                            </div>
+                            <p id="healthLastChecked" role="status" aria-live="polite">Ingen egen helsekontroll kjørt ennå.</p>
+                            <div class="health-panel-grid" aria-label="Tjenestestatus">
+                                <div class="health-service" data-health-item="network"><strong>Internett</strong><output id="healthNetwork">Venter</output><small id="healthNetworkDetail">Nettleserens tilkoblingssignal</small></div>
+                                <div class="health-service" data-health-item="firebase"><strong>Firebase</strong><output id="healthFirebase">Ikke kontrollert</output><small id="healthFirebaseDetail">Kun lesing av ordre-nøkler</small></div>
+                                <div class="health-service" data-health-item="sms"><strong>SMS-poller</strong><output id="healthSms">Ikke kontrollert</output><small id="healthSmsDetail">Faktisk SMS-levering kan ikke måles her</small></div>
+                                <div class="health-service" data-health-item="email"><strong>E-postsender</strong><output id="healthEmail">Ikke kontrollert</output><small id="healthEmailDetail">Innbokslevering kan ikke måles her</small></div>
+                                <div class="health-service" data-health-item="printer"><strong>Epson</strong><output id="healthPrinter">Ikke kontrollert</output><small id="healthPrinterDetail">Kun lokal ePOS-kontroll, ingen kvittering</small></div>
+                                <div class="health-service" data-health-item="alerts"><strong>Kritiske varsler</strong><output id="healthAlerts">Venter</output><small id="healthAlertsDetail">Fra eksisterende feilsystem · siste 30 minutter</small></div>
+                            </div>
+                        </article>
                         <article class="set-card settings-section-card" data-settings-section="alerts" hidden>
                             <h2>Systemvarsler</h2>
                             <p class="set-hint">Kun feil. Ingen kundeopplysninger lagres i denne listen.</p>
@@ -932,7 +956,8 @@
 
     <div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/admin.js?v=20261103-selective-render1"></script>
+    <script type="module" src="./js/admin.js?v=20261103-health1"></script>
+    <script type="module" src="./js/admin-health.js?v=20261103-health1"></script>
     <script type="module" src="./js/loyalty-sync.js?v=20261103-slot-focus1"></script>
     <script type="module" src="./js/orders-archive.js?v=20261103-slot-focus1"></script>
     <script type="module" src="./js/special-days-admin.js?v=20261103-slot-focus1"></script>
