@@ -53,7 +53,6 @@
   flex: 0 0 clamp(66px, 1vw, 98px);
   width: clamp(66px, 1vw, 98px);
   min-height: 82px;
-  border-radius: 16px 42% 42% 16px / 16px 49% 52% 16px;
   background: linear-gradient(145deg,
     color-mix(in srgb, var(--status-accent) 80%, #fff),
     var(--status-accent) 62%,
@@ -176,10 +175,6 @@
   .menu-overview { border-radius: 16px; }
   .menu-overview .menu-overview-row { min-height: 80px; }
   .menu-overview .pickup-note { gap: 7px; }
-  .menu-overview .status-shop-icon {
-    min-height: 80px;
-    border-radius: 15px 42% 42% 15px / 15px 50% 52% 15px;
-  }
   .menu-overview .status-shop-icon svg { width: 27px; height: 27px; }
   .menu-overview .pickup-copy { gap: 2px; padding-block: 5px; }
   .menu-overview .status-title { font-size: var(--text-md, 14px) !important; }
