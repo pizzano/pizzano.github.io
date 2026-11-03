@@ -17,6 +17,7 @@
   --pd-soft:color-mix(in srgb,var(--pd-accent) 5%,var(--pd-page));
   --pd-on:var(--palette-button-text,var(--palette-on-accent,#fff));
   --pd-button:var(--palette-button,var(--pd-accent));
+  --pd-action-soft:var(--palette-action-soft,color-mix(in srgb,var(--pd-button) 9%,var(--pd-card)));
   --pd-fs-title:21px;
   --pd-fs-heading:14px;
   --pd-fs-option:13px;
@@ -222,9 +223,9 @@
   flex:none!important;width:30px!important;height:30px!important;
   display:grid!important;place-items:center!important;
   border:1px solid var(--pd-border)!important;border-radius:50%!important;
-  background:var(--pd-tint)!important;
+  background:var(--pd-action-soft)!important;
   box-shadow:0 2px 7px color-mix(in srgb,var(--pd-ink) 10%,transparent)!important;
-  color:var(--pd-accent)!important;font-size:19px!important;line-height:1!important;font-weight:500!important;
+  color:var(--pd-button)!important;font-size:19px!important;line-height:1!important;font-weight:500!important;
 }
 #productSheet .option-quantity button:disabled{opacity:.36!important}
 #productSheet .option-quantity b{
@@ -277,7 +278,7 @@
   display:grid!important;place-items:center!important;
   width:32px!important;height:36px!important;
   border:0!important;border-radius:15px!important;
-  background:var(--pd-tint)!important;color:var(--pd-accent)!important;
+  background:var(--pd-action-soft)!important;color:var(--pd-button)!important;
   font-size:20px!important;font-weight:500!important;box-shadow:none!important;
 }
 #productSheet .qty span{
