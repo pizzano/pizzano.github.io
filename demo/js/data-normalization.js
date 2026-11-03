@@ -51,6 +51,13 @@ export function createDataNormalizers({
       Math.max(settings.slotIntervalMinutes || 15, 5),
       60
     );
+    // Shared customer/admin text sizes are bounded and integer-valued.
+    // Old Firebase settings without uiFontXl get the new default automatically.
+    for (const key of ['uiFontXs', 'uiFontSm', 'uiFontMd', 'uiFontLg', 'uiFontXl']) {
+      const numeric = Number(settings[key]);
+      settings[key] = Number.isFinite(numeric)
+        ? Math.max(8, Math.min(36, Math.round(numeric))) : DEFAULT_SETTINGS[key];
+    }
     for (const [field, low, high] of [
       ['printerQtySize', 28, 52],
       ['printerItemNameSize', 25, 45],
