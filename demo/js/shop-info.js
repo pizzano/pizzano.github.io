@@ -6,7 +6,7 @@ import {
   getPickupSlots,
   getWeeklyHours,
   RESTAURANT_WEEKDAYS,
-} from './data.js?v=20261103-polling-optim1';
+} from './data.js?v=20261103-slot-ci1';
 
 const MODAL_ID = 'shopInfoModal';
 const TRIGGER_ID = 'profileShopInfo';
