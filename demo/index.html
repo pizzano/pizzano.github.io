@@ -2,10 +2,7 @@
 <html lang="no">
 
 <head>
-    <script src="./config.js?v=20261022-smsfirebase1"></script>
-    <script>window.BESTILL_CONFIG.customerOnly = true;</script>
     <meta charset="UTF-8">
-    <meta name="bestill-build" content="20261026-preopen1">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#33251f">
@@ -15,60 +12,22 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="./icons/restaurant.svg" />
     <title>Online bestilling</title>
-    <!-- Første maling er alltid én merkefri lasteskjerm, aldri et uferdig restaurantgrensesnitt. -->
-    <style>
-      .app-startup {
-        position:fixed;inset:0;z-index:2147483640;
-        display:flex;align-items:center;justify-content:center;
-        box-sizing:border-box;padding:28px 22px env(safe-area-inset-bottom);
-        background:#f8f9fa;color:#252b32;
-        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-        text-align:center;
-      }
-      .app-startup[hidden],.app-startup [hidden]{display:none!important}
-      html[data-theme="dark"] .app-startup{background:#15191c;color:#f0f2f4}
-      .app-startup-inner{width:min(100%,330px);display:flex;flex-direction:column;align-items:center}
-      .app-startup-ring{
-        display:block;width:57px;height:57px;box-sizing:border-box;
-        border:4px solid #e2e5e8;border-top-color:#cc6725;
-        border-right-color:#cc6725;border-radius:50%;
-        animation:app-startup-spin .85s linear infinite;
-      }
-      html[data-theme="dark"] .app-startup-ring{border-color:#383e43;border-top-color:#e89863;border-right-color:#e89863}
-      .app-startup-title{margin:24px 0 6px;font-size:20px;font-weight:750;letter-spacing:-.025em}
-      .app-startup-note{margin:0;font-size:13px;line-height:1.5;color:#727b84}
-      html[data-theme="dark"] .app-startup-note{color:#b1b9c0}
-      .app-startup-retry{
-        margin-top:21px;min-height:42px;padding:0 22px;border:0;border-radius:11px;
-        color:#fff;background:#915321;font-size:13px;font-weight:700;
-        font-family:inherit;cursor:pointer;
-      }
-      .app-startup-retry:focus-visible{outline:3px solid #c67b41;outline-offset:3px}
-      @keyframes app-startup-spin{to{transform:rotate(360deg)}}
-      @media(prefers-reduced-motion:reduce){.app-startup-ring{animation:none}}
+    <meta name="description" content="Bestill mat til henting fra restauranten.">
+    <meta property="og:title" content="Online bestilling">
+    <meta property="og:description" content="Bestill mat til henting fra restauranten.">
+    <meta name="twitter:title" content="Online bestilling">
+    <meta name="twitter:description" content="Bestill mat til henting fra restauranten.">
 
-      /* Holiday decoration only appears after the verified settings have loaded. */
-      .app-startup.is-holiday{--startup-holiday-color:#8840a5;background:radial-gradient(circle at 35% 40%,color-mix(in srgb,var(--startup-holiday-color) 13%,#fff),#fff 78%)}
-      .app-startup.is-holiday::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(var(--startup-holiday-color) 1.6px,transparent 2px);background-size:19px 19px;opacity:.19;mask-image:linear-gradient(125deg,#000,transparent 82%)}
-      .startup-holiday-decoration{position:absolute;top:calc(50% - 160px);left:50%;transform:translateX(-50%);width:max-content;max-width:90%;text-align:center;font-size:clamp(26px,5vw,44px);letter-spacing:9px;pointer-events:none;animation:holiday-splash-float 3s ease-in-out infinite}
-      .app-startup.holiday-motion-off .startup-holiday-decoration{animation:none}
-      .app-startup.holiday-motion-light .startup-holiday-decoration{animation-duration:5s}
-      .app-startup.is-holiday .app-startup-inner{position:relative;z-index:1}
-      .app-startup.is-holiday .app-startup-ring{border-top-color:var(--startup-holiday-color);border-right-color:var(--startup-holiday-color)}
-      @keyframes holiday-splash-float{0%,100%{transform:translate(-50%,0) rotate(-4deg)}50%{transform:translate(-50%,-12px) rotate(4deg)}}
-      @media(prefers-reduced-motion:reduce){.startup-holiday-decoration{animation:none!important}}
-    </style>
+    <script src="./config.js?v=20261022-smsfirebase1"></script>
+    <script>window.BESTILL_CONFIG.customerOnly = true;</script>
+    <!-- Load startup styles before the app to prevent a partial first paint. -->
+    <link rel="stylesheet" href="./css/startup.css?v=20261103-index-clean1">
     <script src="./js/theme.js?v=20261024-localfour2"></script>
     <link rel="stylesheet" href="./css/customer-base.css?v=20261025-tenantbrand1">
-    <link rel="stylesheet" href="./css/customer.css?v=20261103-color-system3">
+    <link rel="stylesheet" href="./css/customer.css?v=20261103-index-clean1">
     <link rel="stylesheet" href="./css/theme.css?v=20261103-color-system3">
     <link rel="stylesheet" href="./css/shop-info.css?v=20261103-color-system3">
     <link rel="stylesheet" href="./css/customer-theme.css?v=20261103-sheet-clean3">
-    <meta name="description" content="Bestill mat til henting fra restauranten." />
-    <meta property="og:title" content="Online bestilling" />
-    <meta property="og:description" content="Bestill mat til henting fra restauranten." />
-    <meta name="twitter:title" content="Online bestilling" />
-    <meta name="twitter:description" content="Bestill mat til henting fra restauranten." />
     <link rel="stylesheet" href="./css/cart.css?v=20261103-semantic2">
     <link rel="stylesheet" href="./css/special-days.css?v=20261031-location2">
     <link rel="stylesheet" href="./css/order-status-cards.css?v=20261030-states3">
@@ -82,53 +41,14 @@
     <div id="appStartup" class="app-startup" role="status" aria-live="polite" aria-busy="true">
         <div class="app-startup-inner">
             <span class="app-startup-ring" id="startupSpinner" aria-hidden="true"></span>
-            <strong class="app-startup-title" id="startupTitle"></strong>
-            <p class="app-startup-note" id="startupNote"></p>
+            <strong class="app-startup-title" id="startupTitle">Laster siden...</strong>
+            <p class="app-startup-note" id="startupNote">Forbereder menyen</p>
             <button class="app-startup-retry" id="startupRetry" type="button" hidden>Prøv igjen</button>
         </div>
     </div>
-    <script>
-    // Immediate visual while Firebase settings load. The verified admin settings
-    // are applied by customer.js; this makes no database request.
-    (() => {
-      const cover=document.getElementById('appStartup');
-      if(!cover)return;
-      const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
-      const get=k=>Number(parts.find(p=>p.type===k)?.value);
-      const md=get('month')*100+get('day');
-      const dates={
-        101:['🎆','Godt nytt år!','#315b9c','sparkle'],
-        206:['🌈','Lihkku beivviin!','#386c98','sparkle'],
-        214:['❤️','God valentinsdag!','#ca3975','heart'],
-        501:['🌷','God 1. mai!','#bc4145','petal'],
-        517:['🇳🇴','Gratulerer med dagen!','#b92b43','flag'],
-        623:['☀️','God sankthans!','#c47729','sparkle'],
-        1031:['🎃','Ha en skremmende fin Halloween!','#8840a5','bat'],
-        1213:['🕯️','God luciadag!','#a07b3b','sparkle'],
-        1224:['🎄','God jul!','#aa3037','snow'],
-        1225:['🎁','God jul!','#aa3037','snow'],
-        1226:['🎄','Fortsatt god jul!','#aa3037','snow'],
-        1231:['🎇','Godt nytt år!','#315b9c','sparkle']
-      };
-      const entry=dates[md];
-      if(!entry){
-        document.getElementById('startupTitle').textContent='Laster siden...';
-        document.getElementById('startupNote').textContent='Forbereder menyen';
-        return;
-      }
-      cover.classList.add('is-holiday','holiday-motion-light');
-      cover.style.setProperty('--startup-holiday-color',entry[2]);
-      const deco=document.createElement('div');
-      deco.className='startup-holiday-decoration';
-      deco.setAttribute('aria-hidden','true');
-      deco.textContent=entry[3]==='bat'?'🕸️  🦇  🕷️':entry[3]==='snow'?'❄️  ✨  ❄️':entry[3]==='heart'?'💕  💗  💕':entry[0]+'  ✨  '+entry[0];
-      cover.prepend(deco);
-      document.getElementById('startupTitle').textContent=entry[1];
-      document.getElementById('startupNote').textContent='';
-      cover.dataset.provisionalHoliday='1';
-    })();
-    </script>
-    <!-- ============ HEADER ============ -->
+    <!-- Customer.js displays special days only after confirming Firebase settings. -->
+    <script src="./js/customer-startup.js?v=20261103-index-clean1"></script>
+    <!-- HEADER -->
     <header class="app-header" id="appHeader">
         <div class="header-inner">
             <button class="hdr-btn hdr-back" id="btnBack" type="button" aria-label="Tilbake til meny" hidden>
@@ -164,7 +84,7 @@
     </header>
 
     <main id="main">
-        <!-- ============ MENYVISNING ============ -->
+        <!-- MENYVISNING -->
         <section class="view view-menu is-active" id="viewMenu" aria-label="Meny">
             <div class="menu-overview">
                 <div class="menu-overview-row">
@@ -181,9 +101,12 @@
                         <span class="allergen-visibility-switch" aria-hidden="true"></span>
                     </label>
                 </div>
-                <div class="closed-banner" id="closedBanner" hidden><span class="status-message-icon" id="statusMessageIcon" aria-hidden="true">◷</span><div class="status-message-copy">
-                    <strong id="closedTitle">Restauranten er stengt</strong>
-                    <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span></div>
+                <div class="closed-banner" id="closedBanner" hidden>
+                    <span class="status-message-icon" id="statusMessageIcon" aria-hidden="true">◷</span>
+                    <div class="status-message-copy">
+                        <strong id="closedTitle">Restauranten er stengt</strong>
+                        <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
+                    </div>
                 </div>
             </div>
             <section id="specialDayGreeting" aria-label="Dagens merkedag" hidden></section>
@@ -191,7 +114,7 @@
             <div id="menuList" class="menu-list"></div>
         </section>
 
-        <!-- ============ HANDLEKURV ============ -->
+        <!-- HANDLEKURV -->
         <section class="view view-cart" id="viewCart" aria-label="Handlekurv" hidden>
             <ol class="steps" aria-label="Bestillingssteg">
                 <li class="step is-active" aria-current="step"><span class="step-num">1</span>Kurv</li>
@@ -213,7 +136,7 @@
             </div>
         </section>
 
-        <!-- ============ CHECKOUT ============ -->
+        <!-- CHECKOUT -->
         <section class="view view-checkout" id="viewCheckout" aria-label="Bestilling" hidden>
             <ol class="steps" id="stepper" aria-label="Bestillingssteg">
                 <li class="step" data-step="1"><span class="step-num">1</span>Kurv</li>
@@ -266,7 +189,7 @@
                     <button class="pickup-choice" data-pickup-mode="scheduled" aria-pressed="false" aria-controls="timeGrid" type="button"><strong>Velg tid</strong><small>Hent på et klokkeslett</small></button>
                 </div>
                 <div class="time-grid" id="timeGrid" hidden></div>
-                <button class="btn btn-outline" id="btnMorePickupTimes" type="button" hidden aria-expanded="false" aria-controls="timeGrid" style="width:100%;margin-top:10px">Vis flere tider</button>
+                <button class="btn btn-outline" id="btnMorePickupTimes" type="button" hidden aria-expanded="false" aria-controls="timeGrid">Vis flere tider</button>
                 <p class="err" id="errTime" role="alert" hidden>Velg Snarest eller Velg tid og et klokkeslett.</p>
                 <div class="pickup-review-host" id="reviewCard"></div>
             </div>
@@ -277,7 +200,7 @@
             </div>
         </section>
 
-        <!-- ============ PROFIL ============ -->
+        <!-- PROFIL -->
         <section class="view view-profile" id="viewProfile" aria-label="Min profil" hidden>
             <div class="profile-home" id="profileHome">
                 <div class="profile-hero">
@@ -298,7 +221,6 @@
                         </span>
                         <span class="profile-menu-chevron" aria-hidden="true">›</span>
                     </button>
-
 
                     <button class="profile-menu-row" data-profile-tab="orders" type="button">
                         <span class="profile-menu-icon" aria-hidden="true">
@@ -389,7 +311,7 @@
 
     </main>
 
-    <!-- ============ PRODUKTDETALJ ============ -->
+    <!-- PRODUKTDETALJ -->
     <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
     <section class="sheet" id="productSheet" aria-label="Produktdetaljer" aria-modal="true" role="dialog" hidden>
         <div class="sheet-scroll" id="sheetScroll">
@@ -426,7 +348,7 @@
         </footer>
     </section>
 
-    <!-- ============ ORDREBEKREFTELSE ============ -->
+    <!-- ORDREBEKREFTELSE -->
     <div class="modal-backdrop" id="confirmBackdrop" hidden></div>
     <div class="confirm-modal" id="confirmModal" role="dialog" aria-modal="true" aria-label="Bestilling mottatt" hidden>
         <div class="confirm-icon" aria-hidden="true">
@@ -440,20 +362,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <script>
-      // Fungerer også hvis modulen feiler å laste: aldri en evig spinner.
-      window.showCustomerStartupError = function() {
-        const cover = document.getElementById('appStartup');
-        if (!cover || cover.hidden) return;
-        document.getElementById('startupSpinner').hidden = true;
-        document.getElementById('startupTitle').textContent = 'Kunne ikke laste menyen';
-        document.getElementById('startupNote').textContent = 'Sjekk internettforbindelsen og prøv igjen.';
-        document.getElementById('startupRetry').hidden = false;
-        cover.setAttribute('aria-busy', 'false');
-      };
-      document.getElementById('startupRetry').addEventListener('click', () => window.location.reload());
-      window.customerStartupTimeout = window.setTimeout(window.showCustomerStartupError, 16000);
-    </script>
     <script type="module" src="./js/customer.js?v=20261103-premium-dark1"></script>
     <script type="module" src="./js/shop-info.js?v=20261028-fullslots1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261029-1"></script>
