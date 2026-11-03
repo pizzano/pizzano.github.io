@@ -1,0 +1,9 @@
+{
+  "name": "kol-ordering-demo-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check js/data.js && node --check js/customer.js && node --check js/admin.js && node --check js/order-printer.js && node --check js/pickup-slots.js && node --check js/dialog-focus.js"
+  }
+}
