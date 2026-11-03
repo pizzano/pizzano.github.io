@@ -105,13 +105,43 @@ test('menu product card has one reference layout without cascade overrides', asy
   assert.doesNotMatch(block,/!important|@import|\.add-btn::(?:before|after)/);
   assert.doesNotMatch(theme,/\.prod-(?:grid|card|desc|price|side)/,'customer palette must not override product layout');
   assert.doesNotMatch(dark,/\.prod-(?:grid|card|desc|price|side|name)/,'dark mode must use palette variables');
-  assert.match(typography,/:not\(:is\(\.prod-name/,'global text normalization must exclude menu text');
+  assert.match(typography,/--text-xl: 22px/,'fifth typography tier must exist');
+  assert.match(typography,/\.prod-name,.prod-price/,'menu text must use semantic font tiers');
+  assert.doesNotMatch(typography,/body \*:not\(/,'old blanket font-size override must not return');
   assert.match(renderer, /class="prod-side"/);
   assert.match(renderer, /data-open="/);
   assert.match(renderer, /data-quick-add="/);
   const side=renderer.slice(renderer.indexOf('<div class="prod-side">'));
   assert.ok(side.indexOf('class="prod-price"') < side.indexOf('data-open="'));
   assert.match(side, /<svg viewBox="0 0 24 24"/);
+});
+
+test('all five typography tiers are editable and shared by customer and admin', async () => {
+  const admin=await text('admin.html');
+  const customer=await text('index.html');
+  const typography=await text('css/typography.css');
+  const settings=await text('js/typography-settings.js');
+  const data=await text('js/data.js');
+  const normalization=await text('js/data-normalization.js');
+  const keys=['uiFontXs','uiFontSm','uiFontMd','uiFontLg','uiFontXl'];
+  const vars=['--text-xs','--text-sm','--text-md','--text-lg','--text-xl'];
+  for (let i=0; i<5; i++) {
+    assert.match(admin,new RegExp('data-ui-font="' + keys[i] + '"'));
+    assert.match(admin,new RegExp('data-ui-preview="' + keys[i] + '"'));
+    assert.ok(typography.includes(vars[i] + ':'),vars[i]);
+    assert.ok(settings.includes("key: '" + keys[i] + "'"),keys[i]);
+    assert.ok(settings.includes("css: '" + vars[i] + "'"),vars[i]);
+    assert.ok(data.includes(keys[i] + ':'),keys[i]+' must survive Firebase normalization');
+  }
+  assert.match(admin,/id="btnSaveUiTypography"/);
+  assert.match(settings,/mutate\(state =>/);
+  assert.match(settings,/await saveNow\(\)/);
+  assert.match(settings,/subscribe\(\(\) =>/);
+  assert.match(normalization,/\\['uiFontXs', 'uiFontSm', 'uiFontMd', 'uiFontLg', 'uiFontXl'\\]/);
+  for(const page of [admin,customer]){
+    assert.match(page,/css\/typography\\.css\\?v=/);
+    assert.match(page,/js\/typography-settings\\.js\\?v=/);
+  }
 });
 
 test('four customer palettes keep cart ribbon text readable in light and dark modes', () => {
