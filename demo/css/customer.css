@@ -2147,7 +2147,9 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   box-shadow:0 4px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent);
 }
 #viewProfile #profileSaved:not([hidden]) {display:inline-flex;margin-top:8px;}
-#viewCheckout .checkout-contact-card .err {margin-top:5px;font-size:11px;line-height:1.35;}
+/* Shared validation hints for Kontakt and Rediger profil. */
+#viewCheckout .checkout-contact-card .err,
+#viewProfile .profile-contact-card .err {margin-top:5px;font-size:11px;line-height:1.35;}
 @media (max-width:370px) {
   #viewProfile .profile-tab-panel.profile-contact-card {padding:11px;}
   #viewCheckout #step2.checkout-contact-card {padding:11px;}
@@ -2175,8 +2177,9 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   visibility:hidden!important;pointer-events:none!important;
 }
 
-/* Reference Kontakt layout — scoped to checkout, preserving all behavior. */
-#viewCheckout #step2.checkout-contact-card {
+/* Reference Kontakt: shared values with profile; responsive overrides stay in place. */
+#viewCheckout #step2.checkout-contact-card,
+#viewProfile .profile-contact-card.profile-tab-panel {
   padding: clamp(15px, 3.2vw, 21px);
   border-radius: 19px;
   box-shadow: 0 5px 20px color-mix(in srgb, var(--palette-deep) 4%, transparent);
@@ -2188,31 +2191,38 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 }
 #viewCheckout .checkout-contact-card .contact-form-field { margin-bottom: 17px; }
 #viewCheckout .checkout-contact-card .contact-form-field:last-child { margin-bottom: 0; }
-#viewCheckout .checkout-contact-card .contact-form-label {
+#viewCheckout .checkout-contact-card .contact-form-label,
+#viewProfile .profile-contact-card .contact-form-label {
   font-size: clamp(14px, 3vw, 16px);
   gap: 10px;
   margin-bottom: 8px;
 }
-#viewCheckout .checkout-contact-card .contact-form-label .contact-requirement {
+#viewCheckout .checkout-contact-card .contact-form-label .contact-requirement,
+#viewProfile .profile-contact-card .contact-form-label .contact-requirement {
   color: var(--palette-muted);
   font-size: .9em;
   font-weight: 400;
 }
-#viewCheckout .checkout-contact-card .contact-form-icon {
+#viewCheckout .checkout-contact-card .contact-form-icon,
+#viewProfile .profile-contact-card .contact-form-icon {
   width: 35px;
   height: 35px;
   border-radius: 11px;
 }
-#viewCheckout .checkout-contact-card .contact-form-icon svg { width: 19px; height: 19px; }
-#viewCheckout .checkout-contact-card .contact-form-control {
+#viewCheckout .checkout-contact-card .contact-form-icon svg,
+#viewProfile .profile-contact-card .contact-form-icon svg { width: 19px; height: 19px; }
+#viewCheckout .checkout-contact-card .contact-form-control,
+#viewProfile .profile-contact-card .contact-form-control {
   border-radius: 12px;
 }
-#viewCheckout .checkout-contact-card .contact-form-control .input {
+#viewCheckout .checkout-contact-card .contact-form-control .input,
+#viewProfile .profile-contact-card .contact-form-control .input {
   min-height: 52px;
   height: 52px;
   padding-left: 14px;
 }
-#viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix {
+#viewCheckout .checkout-contact-card .contact-form-phone .phone-prefix,
+#viewProfile .profile-contact-card .contact-form-phone .phone-prefix {
   min-height: 52px;
   flex-basis: 60px;
   font-size: 16px;
@@ -2225,7 +2235,8 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 #viewCheckout .checkout-contact-card .contact-form-control:has(input:valid:not(:placeholder-shown)) {
   background: color-mix(in srgb, var(--palette-accent) 7%, var(--palette-surface));
 }
-#viewCheckout .checkout-contact-card .contact-email-help {
+#viewCheckout .checkout-contact-card .contact-email-help,
+#viewProfile .profile-contact-card .contact-email-help {
   margin: 9px 1px 0;
   color: var(--palette-muted);
   font-size: 12px;
@@ -2242,11 +2253,6 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 
 /* Rediger profil: same compact Kontaktinformasjon card as the checkout.
    The green checks are driven by the profile validation logic. */
-#viewProfile .profile-contact-card.profile-tab-panel {
-  padding:clamp(15px,3.2vw,21px);
-  border-radius:19px;
-  box-shadow:0 5px 20px color-mix(in srgb,var(--palette-deep) 4%,transparent);
-}
 #viewProfile .profile-contact-card .sec-title {
   color:var(--palette-ink);
   font-size:clamp(17px,3.6vw,21px);
@@ -2256,31 +2262,6 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
   margin:0 0 18px;
 }
 #viewProfile .profile-contact-card .contact-form-field {margin-bottom:17px;}
-#viewProfile .profile-contact-card .contact-form-label {
-  font-size:clamp(14px,3vw,16px);
-  gap:10px;
-  margin-bottom:8px;
-}
-#viewProfile .profile-contact-card .contact-form-label .contact-requirement {
-  color:var(--palette-muted);
-  font-size:.9em;
-  font-weight:400;
-}
-#viewProfile .profile-contact-card .contact-form-icon {
-  width:35px;height:35px;border-radius:11px;
-}
-#viewProfile .profile-contact-card .contact-form-icon svg {
-  width:19px;height:19px;
-}
-#viewProfile .profile-contact-card .contact-form-control {
-  border-radius:12px;
-}
-#viewProfile .profile-contact-card .contact-form-control .input {
-  min-height:52px;height:52px;padding-left:14px;
-}
-#viewProfile .profile-contact-card .contact-form-phone .phone-prefix {
-  min-height:52px;flex-basis:60px;font-size:16px;
-}
 #viewProfile .profile-contact-card .contact-form-phone .contact-form-control,
 #viewProfile .profile-contact-card .contact-form-phone .contact-form-control .input {
   border-radius:0 12px 12px 0;
@@ -2292,16 +2273,7 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 #viewProfile .profile-contact-card .validated-input.is-valid .input {
   background:transparent;
 }
-#viewProfile .profile-contact-card .contact-email-help {
-  margin:9px 1px 0;
-  color:var(--palette-muted);
-  font-size:12px;
-  line-height:1.5;
-  font-weight:400;
-}
-#viewProfile .profile-contact-card .err {
-  margin-top:5px;font-size:11px;line-height:1.35;
-}
+
 #viewProfile #btnSaveProfile {margin-top:15px;}
 @media(max-width:370px) {
   #viewProfile .profile-contact-card.profile-tab-panel{padding:13px}
