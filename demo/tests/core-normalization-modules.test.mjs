@@ -17,6 +17,7 @@ function fixtureNormalizers() {
       weeklyHours:null, manualClosed:true, manualClosedUntil:0,
       customerPalette:'reference', prepMinutes:25, pickupLeadMinutes:30,
       busyExtraMinutes:15, pickupCapacityMax:4, slotIntervalMinutes:15,
+      uiFontXs:10,uiFontSm:12,uiFontMd:14,uiFontLg:18,uiFontXl:22,
       printerQtySize:39, printerItemNameSize:35, printerSizeTextSize:28,
       printerExtraTextSize:22, printerPriceSize:24, printerSidePadding:5,
     },
@@ -79,6 +80,18 @@ test('restaurant settings still normalize weekly schedule, limits and manual clo
   assert.equal(settings.customerPalette,'reference');
   assert.equal(settings.weeklyHours.length,7);
   assert.equal(settings.weeklyHours[0].open,'14:00');
+});
+
+test('font-size normalization preserves older four-key settings and adds XL', () => {
+  const { normalizeSettings }=fixtureNormalizers();
+  const old=normalizeSettings({uiFontXs:10,uiFontSm:11,uiFontMd:12,uiFontLg:13});
+  assert.deepEqual(
+    [old.uiFontXs,old.uiFontSm,old.uiFontMd,old.uiFontLg,old.uiFontXl],
+    [10,11,12,13,22]
+  );
+  const updated=normalizeSettings({uiFontXs:8,uiFontSm:12,uiFontMd:18,uiFontLg:24,uiFontXl:50});
+  assert.equal(updated.uiFontXl,36,'out-of-range values are clamped');
+  assert.equal(updated.uiFontMd,18);
 });
 
 test('menu state normalizer keeps repeatable sauce cap and valid references', () => {
