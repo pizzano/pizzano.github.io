@@ -1,3 +1,6 @@
+import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from './customer-format.js';
+import { validPhone, resolveScheduledPickupAt } from './customer-pickup-utils.js';
+import { visibleMenuItems } from './customer-menu-search.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
@@ -273,14 +276,6 @@ const el = {
  * Hjelpere
  * ------------------------------------------------------------------ */
 
-function escapeHtml(text) {
-  return String(text == null ? '' : text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 let toastTimer = null;
 function toast(message, tone = 'success', durationMs = 2000) {
   el.toast.textContent = message;
@@ -319,26 +314,7 @@ function toggleFavorite(itemId) {
 }
 
 function visibleItems(section) {
-  const query = ui.search.trim().toLocaleLowerCase('no');
-  return (section.items || []).filter((item) => {
-    if (item.hidden) return false;
-    if (!query) return true;
-    const sizeLabels = (item.sizes || []).map((size) => size.label).join(' ');
-    const optionLabels = getItemOptionGroups(item, '*')
-      .flatMap((group) => [group.title, ...(group.options || []).map((option) => option.label)])
-      .join(' ');
-    const searchText = [
-      item.name,
-      item.description,
-      item.ingredients,
-      section.title,
-      section.note,
-      sizeLabels,
-      optionLabels,
-      allergenLabels(item).join(' '),
-    ].filter(Boolean).join(' ').toLocaleLowerCase('no');
-    return searchText.includes(query);
-  });
+  return visibleMenuItems(section, ui.search, getItemOptionGroups, allergenLabels);
 }
 
 const ALLERGEN_ICONS = { 'Hvete / gluten': '🌾', Melk: '🥛', Egg: '🥚', Soya: '🌱', Selleri: '🌿', Sennep: '🟡', Sesam: '⚪', Fisk: '🐟', Skalldyr: '🦐', Peanøtter: '🥜', Nøtter: '🌰', Sulfitter: '🍷' };
@@ -2122,22 +2098,6 @@ function validOptionalEmail(value) {
   return probe.validity.valid && email.includes('.');
 }
 
-function validPhone(value) {
-  return /^[49]\d{7}$/.test(String(value).replace(/\s/g, ''));
-}
-
-
-function resolveScheduledPickupAt(value) {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
-  if (!match) return null;
-  const now = new Date();
-  const target = new Date(now);
-  target.setHours(Number(match[1]), Number(match[2]), 0, 0);
-  if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
-  return target.getTime();
-}
-
-
 /* Order confirmation wait flow 2026-09-15 */
 let orderConfirmTimer = null;
 let orderConfirmOrderId = '';
@@ -2627,28 +2587,6 @@ async function placeOrder() {
       comment: getDisplayComment(line),
     });
   }
-
-  function orderStatusClass(status) {
-    const value = String(status || '').toLocaleLowerCase('no');
-    if (value.includes('avvist')) return 'is-rejected';
-    if (value.includes('klar')) return 'is-ready';
-    if (value.includes('ferdig') || value.includes('fullført')) return 'is-done';
-    if (value.includes('bekreftet') || value.includes('tilbered')) return 'is-active';
-    return 'is-new';
-  }
-
-function profileInitials(name) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '';
-  if (parts.length === 1) return parts[0].slice(0, 1).toLocaleUpperCase('no');
-  return (parts[0][0] + parts[parts.length - 1][0]).toLocaleUpperCase('no');
-}
-
-function formatProfilePhone(phone) {
-  const digits = String(phone || '').replace(/\D/g, '').slice(0, 8);
-  if (!digits) return 'Kundeprofil';
-  return '+47 ' + digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
-}
 
 function showProfileHome() {
   if (el.profileHome) el.profileHome.hidden = false;
