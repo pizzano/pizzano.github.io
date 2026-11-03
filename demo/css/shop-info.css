@@ -258,7 +258,7 @@ html[data-theme="dark"] .shop-info-value,
 html[data-theme="dark"] .shop-info-value:visited {
   color: var(--palette-ink);
 }
-html[data-theme="dark"] .shop-info-action {
+html[data-theme="dark"] .shop-info-action:not(.is-primary) {
   border-color: var(--palette-border);
   background: var(--palette-surface);
   color: var(--palette-ink);
