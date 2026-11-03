@@ -33,7 +33,7 @@
   transform: translateX(18px);
 }
 .allergen-visibility-control:has(input:focus-visible) {
-  outline: 2px solid color-mix(in srgb, var(--palette-accent) 24%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--palette-button) 35%, transparent);
   outline-offset: 2px;
 }
 
@@ -1157,7 +1157,7 @@ textarea.input {
 }
 #confirmModal .confirm-reorder-button:focus-visible,
 #confirmModal .confirm-call-button:focus-visible {
-  outline:3px solid var(--palette-accent)!important;outline-offset:2px!important;
+  outline:3px solid var(--palette-button)!important;outline-offset:2px!important;
 }
 #confirmModal .confirm-timeout-status > small {display:block!important;line-height:1.5!important;}
 
@@ -1867,7 +1867,7 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
     0 1px 3px color-mix(in srgb,var(--palette-deep) 13%,transparent);
 }
 .view-menu .prod-grid .add-btn:focus-visible {
-  outline:2px solid var(--palette-accent);outline-offset:1px;
+  outline:2px solid var(--palette-button);outline-offset:1px;
 }
 @media (hover:hover) {
   .view-menu .prod-grid .prod-card:hover {
