@@ -1,69 +1,158 @@
-/* Shared four-size typography for customer and admin.
-   Only these four font sizes are used for interface text.
-   Keep icon art and SVGs out of the text scale. */
+/* Shared typography system — exactly five administrator-controlled text tiers.
+   One file and five Firebase keys for customer AND admin. Component colors,
+   icons and layouts remain owned by their original feature stylesheets. */
 :root {
   --text-xs: 10px;
   --text-sm: 12px;
   --text-md: 14px;
   --text-lg: 18px;
+  --text-xl: 22px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-heading: 600;
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { font-size: var(--text-sm) !important; font-weight: var(--weight-regular); }
-/* Normalize text-bearing containers too: old page-specific declarations
-   may no longer introduce fifth, sixth or fractional font sizes. */
-body *:not(svg):not(svg *):not(i):not([aria-hidden="true"]):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.fa):not(.fas):not(.far):not(.fab):not([data-icon]):not([class^="icon-"]):not([class*=" icon-"]):not(:is(.prod-name,.prod-desc,.prod-price,.prod-cart-badge,.prod-cart-label,.prod-list-allergens,.prod-soldout-badge,.prod-price small,.status-title,.status-subtitle,.status-time-text)) {
-  font-size: var(--text-sm) !important;
+
+/* Normal body text. Do NOT reset every descendant to one font size; that
+   defeated the old controls and overrode all title / badge / price styles. */
+body { font-size: var(--text-md) !important; font-weight: var(--weight-regular); }
+body :is(p,a,button,input,textarea,select,option,label,summary,li,dt,dd,td,th,time,output,blockquote) {
+  font-size: var(--text-md) !important;
 }
-/* Default: all standard written content and form elements. */
-body :is(h1,h2,h3,h4,h5,h6,p,small,label,legend,button,input,textarea,select,option,summary,
-  li,dt,dd,td,th,span,strong,b,em,a,blockquote,time,output):not(:is(.prod-name,.prod-desc,.prod-price,.prod-cart-badge,.prod-cart-label,.prod-list-allergens,.prod-soldout-badge,.prod-price small)) {
-  font-size: var(--text-sm) !important;
-}
-/* Compact metadata and secondary explanatory text. */
-body :is(small,.caption,.hint,.helper,.helper-text,.help-text,.muted,.text-muted,
-  .product-allergens,.sheet-allergens,.allergens,.allergen-text,.item-allergens,
-  .cat-meta,.side-brand small,.side-hint,.brand-text small,.order-meta,
-  .product-meta,.item-meta,.form-hint,.field-hint,.validation-hint,
-  .settings-hint,.status-note,.cart-item-note,.sheet-option-note,
-  .product-card-allergens,.menu-item-allergens,.product-subtitle):not(.prod-price small) {
+
+/* Tier 1 — tiny metadata and counters. */
+body :is(
+  small,.caption,.cat-meta,.product-meta,.item-meta,.order-meta,
+  .cart-item-note,.status-note,.settings-hint,.product-subtitle,
+  .profile-menu-meta,.side-brand small,.brand-text small,
+  .prod-cart-label,.prod-soldout-badge,.cart-extra-count,
+  .cart-product-quantity,.notification-note small
+) {
   font-size: var(--text-xs) !important;
-  font-weight: var(--weight-regular);
 }
-/* Product names, totals, meaningful price labels, and compact headings. */
-body :is(h3,h4,h5,h6,.product-name,.product-title,.product-card-title,
+
+/* Tier 2 — descriptions, allergens, time/status notes and hints. */
+body :is(
+  .hint,.helper,.helper-text,.help-text,.muted,.text-muted,
+  .set-hint,.settings-hint,.field-hint,.form-hint,.validation-hint,
+  .feature-setting-head small,.prod-list-allergens,.prod-price small,
+  .status-subtitle,.status-time-text,.cat-description,
+  .product-allergens,.sheet-allergens,.allergens,.allergen-text,
+  .item-allergens,.sheet-option-note,.opt-guidance,.opt-price,
+  .cart-detail-included,.cart-product-details,.order-history-compact,
+  .side-hint,.profile-contact-help,.product-card-allergens,
+  .menu-item-allergens,.order-card-meta
+) {
+  font-size: var(--text-sm) !important;
+}
+
+/* Tier 3 — standard menu/admin text, controls, prices in option lists. */
+body :is(
+  .prod-desc,.cat-tab,.search-tab,.side-link,.btn,
+  .input,.comment-area,.opt-label,.opt-row,.order-item,
+  .order-card,.product-card,.menu-item,.checkout-contact-card,
+  .profile-menu-row,.sheet-body,.cart-detail-row,
+  .pickup-choice,.time-btn,.settings-section-btn,
+  .feature-setting-head strong,.ui-typography-fields label
+) {
+  font-size: var(--text-md) !important;
+}
+
+/* Tier 4 — product names, important prices and section headings. */
+body :is(
+  h2,h3,h4,h5,h6,.sec-title,.section-title,.section-heading,
+  .category-heading,.category-title,.menu-section-title,
+  .cat-head h2,.prod-name,.prod-price,.status-title,
+  .product-name,.product-title,.product-card-title,
   .product-item-name,.menu-product-title,.menu-item-title,.item-title,
   .sheet-title,.sheet-product-name,.cart-product-name,.cart-product-total,
   .sum-total,.sum-total strong,.cart-total,.price-total,.total-price,
   .product-price,.item-price,.menu-price,.price,.cat-name,
   .card-title,.modal-head h2,.modal-title,.opt-title,.opt-group-title,
   .section-subtitle,.order-title,.order-customer-name,.brand-text strong,
-  .side-brand strong,.order-card-title,.order-item-title) {
-  font-size: var(--text-md) !important;
-  font-weight: var(--weight-heading);
-}
-/* Section and page headings. */
-body :is(h1,h2,.sec-title,.section-title,.view-title,.page-title h1,
-  .page-title h2,.dashboard-title,.category-title,.menu-section-title,
-  .category-heading,.section-heading,.view-heading) {
+  .side-brand strong,.order-card-title,.order-item-title
+) {
   font-size: var(--text-lg) !important;
   font-weight: var(--weight-heading);
-  line-height: 1.25;
-}
-/* Preserve visual icon glyphs provided by icon fonts. */
-body :is(.material-icons,.material-symbols-outlined,.material-symbols-rounded,
-  .fa,.fas,.far,.fab,[data-icon],[class^="icon-"],[class*=" icon-"]) {
-  font-size: inherit;
-}
-/* Stable input font size prevents unwanted mobile browser zoom. */
-@media (max-width: 767px) {
-  body :is(input,textarea,select) { font-size: var(--text-md) !important; }
 }
 
-/* Compact typography manager inside Restaurantinnstillinger > Grensesnitt. */
-.ui-typography-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0;}
-.ui-typography-fields label{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-weight:500;}
-.ui-typography-fields input{width:75px;min-width:0;text-align:center;padding:8px;}
-@media(max-width:420px){.ui-typography-fields{grid-template-columns:1fr;}}
+/* Tier 5 — primary page/dialog titles. */
+body :is(
+  h1,.view-title,.page-title h1,.page-title h2,
+  .dashboard-title,.view-heading,.page-heading,
+  .settings-title h2,.sheet-hero-caption h2
+) {
+  font-size: var(--text-xl) !important;
+  font-weight: var(--weight-heading);
+}
+
+/* Price qualifiers must stay small, even inside a large price. */
+body .view-menu .prod-grid .prod-price small { font-size: var(--text-sm) !important; }
+/* SVGs and icons are NOT text: their sizes stay in the feature stylesheet. */
+
+/* Five compact settings. Each field adjusts an independent Firebase key. */
+#uiTypographySettings .ui-typography-fields {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 9px;
+  max-width: 900px;
+  margin: 12px 0 9px;
+}
+#uiTypographySettings .ui-typography-fields label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 650;
+}
+#uiTypographySettings .ui-font-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+#uiTypographySettings .ui-font-control input {
+  width: 100%;
+  max-width: 88px;
+  min-width: 0;
+  height: 40px;
+  padding: 7px 8px;
+  text-align: center;
+  font-size: var(--text-md) !important;
+  font-variant-numeric: tabular-nums;
+}
+#uiTypographySettings .ui-font-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 16px;
+  max-width: 900px;
+  margin: 8px 0 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--line, #e3e5e8);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--ink, #222);
+}
+#uiTypographySettings [data-ui-preview="uiFontXs"] { font-size: var(--text-xs) !important; }
+#uiTypographySettings [data-ui-preview="uiFontSm"] { font-size: var(--text-sm) !important; }
+#uiTypographySettings [data-ui-preview="uiFontMd"] { font-size: var(--text-md) !important; }
+#uiTypographySettings [data-ui-preview="uiFontLg"] { font-size: var(--text-lg) !important; }
+#uiTypographySettings [data-ui-preview="uiFontXl"] { font-size: var(--text-xl) !important; }
+#uiTypographySettings .ui-font-save-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+#uiTypographySettings .ui-font-save-row .set-hint { margin: 0; }
+#uiTypographySettings #uiFontStatus[data-status="error"] { color: var(--danger, #a92c24); }
+#uiTypographySettings #uiFontStatus[data-status="saved"] { color: var(--ok, #17794d); }
+
+@media (max-width: 800px) {
+  #uiTypographySettings .ui-typography-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 450px) {
+  #uiTypographySettings .ui-typography-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
