@@ -28,3 +28,9 @@ export function orderStatusClass(status) {
   if (value.includes('bekreftet') || value.includes('tilbered')) return 'is-active';
   return 'is-new';
 }
+
+
+/** Valid 8-digit Norwegian customer phone, allowing spaces. */
+export function validPhone(value) {
+  return /^[49]\d{7}$/.test(String(value).replace(/\s/g, ''));
+}

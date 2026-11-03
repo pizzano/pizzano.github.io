@@ -35,3 +35,14 @@ export function calculatePickupSlots({
   }
   return slots;
 }
+
+
+/** Resolve a future pickup timestamp, rolling late selections to next day. */
+export function resolveScheduledPickupAt(value, now = new Date()) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+  if (!match) return null;
+  const target = new Date(now);
+  target.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
+  return target.getTime();
+}
