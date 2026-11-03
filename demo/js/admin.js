@@ -3481,6 +3481,10 @@ let customPaletteDraft = null;
 let customPaletteDirty = false;
 let activePaletteMode = 'light';
 const customPaletteFields = $('customPaletteFields');
+const customPaletteButtonFields = $('customPaletteButtonFields');
+const customPaletteButtonPreview = $('customPaletteButtonPreview');
+const buttonRoleIds = new Set(['button','buttonText']);
+function colorFieldRegion(id) { return buttonRoleIds.has(id) ? customPaletteButtonFields : customPaletteAdvancedFields; }
 const customPaletteAdvancedFields = $('customPaletteAdvancedFields');
 const customPaletteName = $('customPaletteName');
 const customPaletteStatus = $('customPaletteStatus');
@@ -3516,7 +3520,30 @@ function renderPalettePreview() {
   );
 }
 function renderCustomPaletteDraftPreview() {
-  if(customPaletteDraft)smallPalettePreview(customPaletteDraftPreview,customPaletteDraft,activePaletteMode);
+  if(!customPaletteDraft)return;
+  smallPalettePreview(customPaletteDraftPreview,customPaletteDraft,activePaletteMode);
+  // Real component examples all consume the SAME button and text tokens.
+  const d=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
+  customPaletteButtonPreview.style.setProperty('--demo-action',d.button);
+  customPaletteButtonPreview.style.setProperty('--demo-on-action',d.buttonText);
+  customPaletteButtonPreview.style.setProperty('--demo-surface',customPaletteDraft[activePaletteMode][2]);
+  customPaletteButtonPreview.replaceChildren();
+  for(const [className,label] of [
+    ['is-add','+'],['is-call','Ring restauranten'],['is-send','Send bestilling']
+  ]){
+    const sample=document.createElement('span');
+    sample.className='custom-action-sample '+className;
+    sample.textContent=label;
+    customPaletteButtonPreview.append(sample);
+  }
+  const switchTrack=document.createElement('span');
+  switchTrack.className='custom-action-switch';
+  switchTrack.title='På / allergenvisning';
+  switchTrack.setAttribute('aria-label','På: samme handlingsfarge');
+  const knob=document.createElement('i');
+  knob.setAttribute('aria-hidden','true');
+  switchTrack.append(knob);
+  customPaletteButtonPreview.append(switchTrack);
 }
 function markCustomPaletteDirty() {
   customPaletteDirty=true;
@@ -3567,8 +3594,13 @@ function buildCustomPaletteFields() {
   customPaletteFields.replaceChildren(
     ...PALETTE_COLOR_LABELS.map((label,index)=>makeColorRow(label,index,'base'))
   );
+  customPaletteButtonFields.replaceChildren(
+    ...PALETTE_DETAIL_ROLES.filter(role=>buttonRoleIds.has(role.id))
+      .map(role=>makeColorRow(role.label,role.id,'detail',role.note))
+  );
   customPaletteAdvancedFields.replaceChildren(
-    ...PALETTE_DETAIL_ROLES.map(role=>makeColorRow(role.label,role.id,'detail',role.note))
+    ...PALETTE_DETAIL_ROLES.filter(role=>!buttonRoleIds.has(role.id))
+      .map(role=>makeColorRow(role.label,role.id,'detail',role.note))
   );
 }
 function syncCustomPaletteEditorFromDraft() {
@@ -3583,9 +3615,10 @@ function syncCustomPaletteEditorFromDraft() {
   }
   for(const role of PALETTE_DETAIL_ROLES) {
     const own=customPaletteDraft.advanced?.[activePaletteMode]?.[role.id];
-    const picker=customPaletteAdvancedFields.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
-    const hex=customPaletteAdvancedFields.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
-    const toggle=customPaletteAdvancedFields.querySelector('[data-palette-override="'+role.id+'"]');
+    const region=colorFieldRegion(role.id);
+    const picker=region.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
+    const hex=region.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
+    const toggle=region.querySelector('[data-palette-override="'+role.id+'"]');
     if(toggle)toggle.checked=Boolean(own);
     if(picker){picker.value=own||inherited[role.id];picker.disabled=!own;}
     if(hex){hex.value=own||inherited[role.id];hex.disabled=!own;hex.setCustomValidity('');}
@@ -3635,7 +3668,7 @@ function updatePaletteColor(event) {
     customPaletteDraft.advanced[activePaletteMode][id]=color;
   }
   // Reflect both color input and HEX input without reconstructing the page.
-  const region=kind==='base'?customPaletteFields:customPaletteAdvancedFields;
+  const region=kind==='base'?customPaletteFields:colorFieldRegion(id);
   const picker=region.querySelector('[data-palette-color="'+kind+'"][data-palette-id="'+id+'"]');
   const hex=region.querySelector('[data-palette-hex="'+kind+'"][data-palette-id="'+id+'"]');
   if(picker)picker.value=color;
@@ -3645,15 +3678,16 @@ function updatePaletteColor(event) {
     const inherited=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
     for(const role of PALETTE_DETAIL_ROLES){
       if(customPaletteDraft.advanced[activePaletteMode][role.id])continue;
-      const advancedPicker=customPaletteAdvancedFields.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
-      const advancedHex=customPaletteAdvancedFields.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
+      const advancedRegion=colorFieldRegion(role.id);
+      const advancedPicker=advancedRegion.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
+      const advancedHex=advancedRegion.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
       if(advancedPicker)advancedPicker.value=inherited[role.id];
       if(advancedHex)advancedHex.value=inherited[role.id];
     }
   }
   markCustomPaletteDirty();
 }
-for(const region of [customPaletteFields,customPaletteAdvancedFields]){
+for(const region of [customPaletteFields,customPaletteButtonFields,customPaletteAdvancedFields]){
   region.addEventListener('input',event=>{
     if(event.target.matches('[data-palette-color],[data-palette-hex]'))updatePaletteColor(event);
   });
@@ -3676,7 +3710,9 @@ $('btnCopyPalette').addEventListener('click',()=>{
   customPaletteDraft=normalizeCustomPalette({
     label:store.settings?.customerPalette==='custom'?current.label:'Mitt tema',
     light:[...current.light],dark:[...current.dark],
-    advanced:current.advanced
+    advanced:store.settings?.customerPalette==='custom' ? current.advanced : {
+      light:{button:current.light[0]}, dark:{button:current.dark[0]}
+    }
   });
   syncCustomPaletteEditorFromDraft();
   markCustomPaletteDirty();
