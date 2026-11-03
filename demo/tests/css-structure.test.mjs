@@ -64,7 +64,7 @@ test('original product sheet design and its responsive modes remain loaded',asyn
 test('customer base and main styles are co-located without changing their order', async()=> {
   const html = await text('index.html');
   const css = await text('css/customer.css');
-  assert.doesNotMatch(html,/customer-base\\.css/);
+  assert.ok(!html.includes('customer-base.css'), 'retired customer base stylesheet is still linked');
   assert.match(css,/Restaurant — kundeside/);
   assert.match(css,/Restaurant customer interface — shared mobile layout/);
   assert.ok(css.indexOf('Restaurant — kundeside') < css.indexOf('Restaurant customer interface'));
@@ -76,9 +76,9 @@ test('customer base and main styles are co-located without changing their order'
 test('merged admin product editor retains both settings and modal layers', async()=> {
   const html = await text('admin.html');
   const css = await text('css/admin-settings.css');
-  assert.doesNotMatch(html,/admin-product-modal\\.css/);
+  assert.ok(!html.includes('admin-product-modal.css'), 'retired admin editor stylesheet is still linked');
   assert.match(css,/Restaurantinnstillinger — dedicated Soft UI layer/);
-  assert.match(css,/\\.product-editor-backdrop/);
-  assert.match(css,/#modalEditor\\.modal-editor/);
+  assert.ok(css.includes('.product-editor-backdrop'), 'product editor backdrop lost');
+  assert.ok(css.includes('#modalEditor.modal-editor'), 'modal editor selector lost');
   assert.ok(css.indexOf('Restaurantinnstillinger') < css.indexOf('.product-editor-backdrop'));
 });
