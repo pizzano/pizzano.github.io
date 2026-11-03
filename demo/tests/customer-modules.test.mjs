@@ -64,7 +64,7 @@ test('order-status updates cannot needlessly recreate unchanged menu cards', asy
   assert.match(js, /updateMenuMarkup\(markup\)/);
   assert.match(js, /ui\.searchOpen && el\.menuSearch\?\.isConnected/);
   const menuView = await readFile(new URL('../js/customer-menu-view.js', import.meta.url), 'utf8');
-  assert.match(menuView, /loading="lazy" decoding="async" width="126" height="126"/);
+  assert.match(menuView, /loading="lazy" decoding="async" width="108" height="108"/);
 });
 
 test('customer and admin modules use one canonical Firebase data URL', async () => {
@@ -125,7 +125,7 @@ test('product card renderer keeps price, cart action and lazy image hints', () =
   const item = { id: 'p1', name: 'Margherita', imageUrl: '/pizza.webp', sizes: [], description: 'Tomatsaus' };
   const html = renderProductCard(item, { title: 'Pizza' }, deps);
   assert.match(html, /data-quick-add="p1"/);
-  assert.match(html, /loading="lazy" decoding="async" width="126" height="126"/);
+  assert.match(html, /loading="lazy" decoding="async" width="108" height="108"/);
   assert.match(html, /210 kr/);
   const withOptions = renderProductCard(item, { title: 'Pizza' }, {
     ...deps, getItemOptionGroups: () => [{ id: 'sauce' }],
@@ -146,7 +146,7 @@ test('reference menu card keeps image ribbon, actual cart action and sold-out st
   assert.ok(card.indexOf('class="prod-cart-badge"')<card.indexOf('class="prod-info"'));
   assert.match(card,/data-quick-add="biff"/);
   assert.match(card,/259 kr/);
-  assert.match(card,/width="126" height="126"/);
+  assert.match(card,/width="108" height="108"/);
   const soldOut=renderProductCard({...item,soldOut:true},{title:'Snadder'},deps);
   assert.match(soldOut,/is-soldout/);
   assert.doesNotMatch(soldOut,/data-quick-add=|data-open=/);

@@ -100,6 +100,13 @@ test('menu product row is rebuilt in place for all four palette modes', async ()
   assert.match(block,/var\(--palette-surface/);
   assert.match(block,/var\(--palette-button/);
   assert.match(block,/var\(--text-lg/);
+  // The compact variant changes the original rules rather than adding overrides.
+  assert.ok(block.includes('--menu-photo:clamp(84px,21vw,108px)'));
+  assert.ok(block.includes('min-height:calc(var(--menu-photo) + 16px)'));
+  assert.ok(block.includes('padding:clamp(7px,1.7vw,10px)'));
+  assert.ok(block.includes('--menu-action:clamp(44px,9.5vw,52px)'));
+  assert.ok(block.includes('min-height:26px'), 'green ribbon must remain readable');
+  assert.ok(block.includes('font-size:var(--text-xs,10px)!important'));
   assert.ok(!block.includes('Single mobile product list for every device'));
   assert.ok(!theme.includes(':is(.saved-flash, .ingredient-chip, .prod-cart-badge)'));
   assert.ok(!dark.includes('html[data-theme="dark"] .prod-cart-badge {'));
