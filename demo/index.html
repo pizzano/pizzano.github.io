@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="./css/startup.css?v=20261103-index-clean1">
     <script src="./js/theme.js?v=20261024-localfour2"></script>
     <link rel="stylesheet" href="./css/customer-base.css?v=20261025-tenantbrand1">
-    <link rel="stylesheet" href="./css/customer.css?v=20261103-index-clean1">
+    <link rel="stylesheet" href="./css/customer.css?v=20261103-semantics2">
     <link rel="stylesheet" href="./css/theme.css?v=20261103-color-system3">
     <link rel="stylesheet" href="./css/shop-info.css?v=20261103-color-system3">
     <link rel="stylesheet" href="./css/customer-theme.css?v=20261103-sheet-clean3">
@@ -154,7 +154,7 @@
                         <input id="custName" class="input" type="text" maxlength="120" required aria-describedby="errName" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
                         <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                     </div>
-                    <p class="err" id="errName" hidden>Skriv inn navnet ditt.</p>
+                    <p class="err" id="errName" role="alert" hidden>Skriv inn navnet ditt.</p>
                 </div>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custPhone">
@@ -167,7 +167,7 @@
                             <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                         </div>
                     </div>
-                    <p class="err" id="errPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
+                    <p class="err" id="errPhone" role="alert" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
                 </div>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custEmail">
@@ -177,7 +177,7 @@
                         <input id="custEmail" class="input" type="email" maxlength="254" aria-describedby="custEmailHelp errEmail" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
                     </div>
                     <p class="contact-email-help" id="custEmailHelp">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
-                    <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
+                    <p class="err" id="errEmail" role="alert" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                 </div>
             </div>
 
@@ -270,7 +270,7 @@
                                 <input id="profName" class="input" type="text" maxlength="120" required aria-describedby="errProfName" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
                                 <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                             </div>
-                            <p class="err" id="errProfName" hidden>Skriv inn navnet ditt.</p>
+                            <p class="err" id="errProfName" role="alert" hidden>Skriv inn navnet ditt.</p>
                         </div>
                         <div class="field contact-form-field">
                             <label class="field-label contact-form-label" for="profPhone">
@@ -284,7 +284,7 @@
                                     <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                                 </div>
                             </div>
-                            <p class="err" id="errProfPhone" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
+                            <p class="err" id="errProfPhone" role="alert" hidden>Norsk mobilnummer må ha 8 siffer og starte på 4 eller 9.</p>
                         </div>
                         <div class="field contact-form-field">
                             <label class="field-label contact-form-label" for="profEmail">
@@ -296,7 +296,7 @@
                                 <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                             </div>
                             <p class="contact-email-help" id="profEmailHelp">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
-                            <p class="err" id="errProfEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
+                            <p class="err" id="errProfEmail" role="alert" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                         </div>
                         <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
                     </section>
@@ -362,7 +362,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/customer.js?v=20261103-ux-stability1"></script>
+    <script type="module" src="./js/customer.js?v=20261103-semantics2"></script>
     <script type="module" src="./js/typography-settings.js?v=20261101-settings1"></script>
     <script type="module" src="./js/shop-info.js?v=20261103-ux-stability1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261103-ux-stability1"></script>
