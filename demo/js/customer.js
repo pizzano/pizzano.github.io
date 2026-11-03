@@ -2,6 +2,7 @@ import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } fro
 import { validPhone, resolveScheduledPickupAt } from './customer-pickup-utils.js';
 import { visibleMenuItems } from './customer-menu-search.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard } from './customer-menu-view.js';
+import { trapDialogTab } from './dialog-focus.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
@@ -2295,6 +2296,8 @@ function startOrderConfirmationWait(order, name) {
   renderConfirmationWaiting(order, name);
   el.confirmBackdrop.hidden = false;
   el.confirmModal.hidden = false;
+  // Keep keyboard focus inside the waiting screen until staff responds.
+  el.confirmModal.focus({ preventScroll: true });
 
   // Current live-order implementation uses the multi-order watcher API.
   syncActiveOrderWatchers([order.id]);
@@ -3075,21 +3078,15 @@ el.sheetFav.addEventListener('click', () => {
 /* Keep keyboard navigation inside the product dialog while it is open.
    The existing Escape, browser Back and focus-return behavior is preserved. */
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Tab' && !el.sheet.hidden && el.sheet.dataset.motion !== 'closing') {
-    const candidates = [...el.sheet.querySelectorAll(
-      'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
-    )].filter(node => !node.closest('[hidden]') && node.getClientRects().length > 0);
-    const first = candidates[0] || el.sheetClose;
-    const last = candidates[candidates.length - 1] || first;
-    const outside = !el.sheet.contains(document.activeElement);
-    if (event.shiftKey && (outside || document.activeElement === first)) {
-      event.preventDefault();
-      last.focus({ preventScroll: true });
-    } else if (!event.shiftKey && (outside || document.activeElement === last)) {
-      event.preventDefault();
-      first.focus({ preventScroll: true });
+  if (event.key === 'Tab') {
+    if (!el.sheet.hidden && el.sheet.dataset.motion !== 'closing') {
+      trapDialogTab(event, el.sheet);
+      return;
     }
-    return;
+    if (!el.confirmModal.hidden) {
+      trapDialogTab(event, el.confirmModal);
+      return;
+    }
   }
   if (event.key !== 'Escape') return;
   if (!el.sheet.hidden) closeSheet();
