@@ -1,4 +1,5 @@
 import { shouldSoundPendingOrder } from './order-alarm.js';
+import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-monitor-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
@@ -344,6 +345,8 @@ function setPage(page) {
 
   setOrdersSidebarCollapsed(page === 'orders');
   renderAll();
+  // Health badges refresh when their own screen opens, not on every data update.
+  window.dispatchEvent(new Event('kol-admin-page-change'));
 }
 
 el.sideLinks.forEach((link) => {
@@ -2576,6 +2579,7 @@ function renderOrderDetail(orderId) {
  * Real SMS acknowledgement per order is handled by smsReceipts below.
  */
 let smsStatusFetching = false;
+let smsStatusLastCheckedAt = 0;
 
 function displaySmsStatus(mode, label, detail) {
   const badge = document.getElementById('ordersSmsStatus');
@@ -2609,8 +2613,16 @@ function classifySmsHealth(health, now = Date.now()) {
     + 'Telefonens forbindelse og faktisk SMS-levering er ikke verifisert.'];
 }
 
-async function refreshSmsStatus() {
-  if (smsStatusFetching || document.hidden) return;
+async function refreshSmsStatus({ force = false } = {}) {
+  if (smsStatusFetching) return;
+  const now = Date.now();
+  if (!smsStatusShouldPoll({
+    page: ui.page,
+    visible: !document.hidden,
+    sinceLastCheckMs: now - smsStatusLastCheckedAt,
+    force,
+  })) return;
+  smsStatusLastCheckedAt = now;
   if (!DB_URL) {
     displaySmsStatus('error', 'SMS ikke konfigurert', 'Firebase-adresse mangler.');
     return;
@@ -2631,12 +2643,17 @@ async function refreshSmsStatus() {
 }
 
 void refreshSmsStatus();
+// An open order screen needs only one status check every 45s.
+// Actual order/SMS receipts continue over the existing live order connection.
 window.setInterval(refreshSmsStatus, 15000);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void refreshSmsStatus();
+  if (!document.hidden) void refreshSmsStatus({ force: true });
+});
+window.addEventListener('kol-admin-page-change', () => {
+  if (ui.page === 'orders') void refreshSmsStatus({ force: true });
 });
 document.getElementById('ordersSmsStatus')?.addEventListener('click', () => {
-  void refreshSmsStatus();
+  void refreshSmsStatus({ force: true });
 });
 
 /* E-mail sender health is independent of SMS and printer connectivity.
@@ -3992,6 +4009,7 @@ el.settingsSectionBtns.forEach((button) => {
 
     renderSettingsLayout();
     if (section === 'printer') syncPrinterTypographySettings();
+    if (section === 'alerts') void refreshSystemAlerts({ force: true });
 
     const scroller = el.settingsGrid?.closest('.settings-section-scroll');
     if (scroller) {
@@ -4511,11 +4529,21 @@ const systemAlertsList = document.getElementById('systemErrorsList');
 const systemAlertsStatus = document.getElementById('systemErrorsStatus');
 const systemAlertsUnread = document.getElementById('systemErrorsUnread');
 let systemAlertsLoading = false;
+let systemAlertsLastCheckedAt = 0;
 const safeAlertTime = value => Number.isFinite(Number(value))
   ? new Intl.DateTimeFormat('nb-NO',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Oslo'}).format(new Date(Number(value)))
   : '—';
-async function refreshSystemAlerts(){
-  if(systemAlertsLoading || document.hidden || !systemAlertsList)return;
+async function refreshSystemAlerts({ force = false } = {}){
+  if (systemAlertsLoading || !systemAlertsList) return;
+  const now = Date.now();
+  if (!systemAlertsShouldPoll({
+    visible: !document.hidden,
+    page: ui.page,
+    settingsSection: ui.settingsSection,
+    sinceLastCheckMs: now - systemAlertsLastCheckedAt,
+    force,
+  })) return;
+  systemAlertsLastCheckedAt = now;
   systemAlertsLoading=true;
   try{
     const raw=await readSystemErrors();
@@ -4551,10 +4579,14 @@ systemAlertsList?.addEventListener('click',async event=>{
   const ok=await setSystemErrorStatus(button.dataset.errorKey,
     field==='resolved'?{resolved:true,read:true}:{read:true}).catch(()=>false);
   if(!ok){button.disabled=false;toast('Kunne ikke oppdatere varslet.');}
-  else void refreshSystemAlerts();
+  else void refreshSystemAlerts({ force: true });
 });
+// Alerts stay at 12s while their settings tab is open, about 36s elsewhere.
 window.setInterval(()=>{void refreshSystemAlerts();},12000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts({ force: true });});
+window.addEventListener('kol-admin-page-change',()=>{
+  if(ui.page==='settings' && ui.settingsSection==='alerts') void refreshSystemAlerts({ force: true });
+});
 void refreshSystemAlerts();
 
 document.getElementById('systemErrorsArchive')?.addEventListener('click',async event=>{
@@ -4564,7 +4596,7 @@ document.getElementById('systemErrorsArchive')?.addEventListener('click',async e
   try {
     const count=await archiveResolvedSystemErrors();
     toast(count+' løste varsler arkivert.');
-    await refreshSystemAlerts();
+    await refreshSystemAlerts({ force: true });
   }catch{
     toast('Arkivering mislyktes. Ingen ordredata ble endret.');
   }finally{button.disabled=false;}
