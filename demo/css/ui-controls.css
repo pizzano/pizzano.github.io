@@ -1,0 +1,35 @@
+/* Shared customer control measurements. Keep theme colors in palette.js.
+   The same tokens are reused by menu, checkout and the product dialog. */
+:root {
+  --ui-control-height: 46px;
+  --ui-touch-target: 44px;
+  --ui-icon-size: 20px;
+  --ui-sheet-action-size: 46px;
+  --ui-sheet-action-icon: 24px;
+  --ui-choice-indicator-size: 23px;
+  --ui-quantity-button-size: 34px;
+  --ui-card-radius: 19px;
+  --ui-control-radius: 13px;
+  --ui-motion-fast: 180ms;
+}
+html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn) {
+  min-height: var(--ui-touch-target);
+}
+html[data-customer-palette] :is(.btn, .pickup-choice, .time-btn, .hdr-btn, .profile-menu-row) {
+  transition-duration: var(--ui-motion-fast);
+}
+html[data-customer-palette] :is(.input, textarea.input) {
+  border-radius: var(--ui-control-radius);
+}
+html[data-customer-palette] :is(input[type="radio"], input[type="checkbox"]) {
+  accent-color: var(--palette-accent);
+}
+html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-btn, .profile-menu-row):focus-visible {
+  outline: 2px solid var(--palette-accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-customer-palette] :is(.btn, .pickup-choice, .time-btn, .hdr-btn, .profile-menu-row) {
+    transition-duration: 0ms;
+  }
+}
