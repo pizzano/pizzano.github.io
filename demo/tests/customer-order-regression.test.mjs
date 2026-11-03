@@ -115,7 +115,7 @@ test('pickup intervals and staff acceptance/notifications/printing remain wired'
 });
 
 test('saved order comments hide duplicated automatic ingredient removals', () => {
-  assert.equal(getDisplayComment({ removedIngredients:['Løk'], comment:'Uten løk\\nEkstra sterk' }), 'Ekstra sterk');
+  assert.equal(getDisplayComment({ removedIngredients:['Løk'], comment:'Uten løk\nEkstra sterk' }), 'Ekstra sterk');
   assert.equal(getDisplayComment({ removedIngredients:['Ost'], comment:'Uten ost' }), '');
   assert.equal(getDisplayComment({ removedIngredients:[], comment:'Lite salt' }), 'Lite salt');
 });
