@@ -2393,6 +2393,13 @@ function startOrderConfirmationWait(order, name) {
 
 async function placeOrder() {
   if (ui.orderSubmitting) return;
+  // Never begin bonus lookups or an order write while the browser is offline.
+  // The cart and pending order ID remain unchanged for a deliberate retry.
+  if (navigator.onLine === false) {
+    updateConnectionNotice();
+    toast('Ingen internettforbindelse. Bestillingen ble ikke sendt. Prøv igjen når nettet er tilbake.', 'warning');
+    return;
+  }
   const state = getOpenState();
   if (!state.orderable) {
     toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
@@ -3611,6 +3618,16 @@ ready().then(async () => {
   console.error('Kunne ikke fullføre kundeoppstart:', error);
   window.showCustomerStartupError?.();
 });
+
+// The browser offline signal does not confirm Firebase availability, but is
+// reliable enough to prevent futile writes while disconnected. Never auto-send.
+function updateConnectionNotice() {
+  const banner = document.getElementById('connectionStatus');
+  if (banner) banner.hidden = navigator.onLine !== false;
+}
+window.addEventListener('online', updateConnectionNotice);
+window.addEventListener('offline', updateConnectionNotice);
+updateConnectionNotice();
 
 // Status og åpningstid holdes oppdatert mens siden er åpen.
 setInterval(() => {
