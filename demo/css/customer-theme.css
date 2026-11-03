@@ -9,11 +9,7 @@
 }
 html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
 html[data-customer-palette] body::before { background: none; }
-html[data-customer-palette] .view-menu .prod-grid { background: transparent; border-color: transparent; }
-html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
-html[data-customer-palette] .view-menu .prod-grid .add-btn { background: transparent; color: transparent; }
-/* A single semantic primary action contract; the item + shape is painted by
-   customer.css::before but uses these same role tokens. Keep neutral controls neutral. */
+/* Primary actions share the palette button tokens; menu card buttons own their styles in customer.css. */
 html[data-customer-palette] :is(.btn-primary,.btn-add,.shop-info-action.is-primary),
 html[data-customer-palette] :is(.btn-primary,.btn-add,.shop-info-action.is-primary):visited {
   background:var(--palette-button)!important;
@@ -27,7 +23,7 @@ html[data-customer-palette] :is(.btn-primary,.btn-add):disabled {
   box-shadow:none!important;
 }
 html[data-customer-palette] :is(input.input,textarea.input,textarea.comment-area,.validated-input .input){background:var(--palette-input-bg)!important}
-html[data-customer-palette] :is(.view-menu .prod-desc,.hint,.view-cart .cart-detail-included){color:var(--palette-secondary-text)}
+html[data-customer-palette] :is(.hint,.view-cart .cart-detail-included){color:var(--palette-secondary-text)}
 
 /* Keep shared legacy dark overrides aligned with the customer theme. */
 html[data-customer-palette] main { background: var(--palette-bg) !important; }
@@ -36,8 +32,6 @@ html[data-customer-palette] .app-header :is(.brand,.brand-text strong,.brand-tex
 
 html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; box-shadow: 0 5px 13px color-mix(in srgb,var(--palette-deep) 10%,transparent); }
 html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; box-shadow: 0 6px 15px color-mix(in srgb,var(--palette-deep) 14%,transparent); }
-html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: center; align-items: flex-end; }
-html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
 html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
 
 /* Visible boundaries for customer cards, choices and controls. */
