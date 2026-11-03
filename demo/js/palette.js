@@ -126,6 +126,8 @@ export function applyCustomerPalette(value, customValue) {
     'header-text': contrastText(details.header),
     'action-soft': blendHex(details.button, surface, dark ? .19 : .09),
     success, warning,
+    'success-text': contrastText(success),
+    'danger-text': contrastText(dark ? '#FFACA4' : '#B9342B'),
     button:details.button,
     'button-text':details.buttonText,
     'selection-bg':details.selected,
