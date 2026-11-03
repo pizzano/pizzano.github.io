@@ -161,6 +161,10 @@ const ui = {
 
 /** Åpent produkt i sheet. */
 let draft = null;
+// Dialog lifecycle state must exist before a menu card can be opened.
+let productPreviousFocus = null;
+let productExitTimer = null;
+let productHistoryEntryActive = false;
 let bonusState = null;
 let bonusLoading = false;
 let choosingBonus = false;
