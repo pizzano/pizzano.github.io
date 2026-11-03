@@ -1142,6 +1142,7 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
   padding:7px 2px 2px;
 }
+.custom-palette-button-tip{display:block;font-size:10.5px;line-height:1.3;color:var(--ink-2,#6d7580);}
 .custom-action-sample{
   display:inline-flex;align-items:center;justify-content:center;
   min-height:30px;box-sizing:border-box;padding:6px 9px;
