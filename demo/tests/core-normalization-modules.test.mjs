@@ -28,7 +28,7 @@ function fixtureNormalizers() {
       : value && typeof value==='object' ? Object.values(value) : [],
     clone:value=>JSON.parse(JSON.stringify(value)),
     uid:prefix=>prefix+'_'+(++counter),
-    validClock:value=>/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(String(value)) ? value : '',
+    validClock:value=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(value)) ? value : '',
     confirmationDeadline:order=>Number(order.confirmationDeadline)||0,
     buildIngredientRules:()=>[],
     detectIngredientRules:()=>[],
@@ -146,8 +146,8 @@ test('SMS badge requires Traccar acknowledgement on matching order', () => {
 test('extracted modules remain pure and core entry points call them', () => {
   const root=name=>readFileSync(new URL('../js/'+name,import.meta.url),'utf8');
   const extracted=root('data-normalization.js');
-  assert.doesNotMatch(extracted,/\\bfetch\\s*\\(|window\\.|localStorage\\.|DB_URL/);
-  assert.match(root('data.js'),/createDataNormalizers\\(\\{/);
-  assert.match(root('customer.js'),/restorePreviousOrderSelections\\(item, line, getItemOptionGroups\\)/);
-  assert.match(root('admin.js'),/smsReceiptSentForOrders\\(id, getOrders\\(\\)\\)/);
+  assert.doesNotMatch(extracted, /\bfetch\s*\(|window\.|localStorage\.|DB_URL/);
+  assert.match(root('data.js'), /createDataNormalizers\(\{/);
+  assert.match(root('customer.js'), /restorePreviousOrderSelections\(item, line, getItemOptionGroups\)/);
+  assert.match(root('admin.js'), /smsReceiptSentForOrders\(id, getOrders\(\)\)/);
 });
