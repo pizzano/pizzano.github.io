@@ -743,12 +743,12 @@ body::before {
 .hdr-btn {
 
   border-radius: 50%;
-  color: var(--palette-light);
-  background: color-mix(in srgb, var(--palette-light) 12%, var(--palette-deep));
-  border: 1px solid color-mix(in srgb, var(--palette-light) 35%, var(--palette-deep));
+  color: var(--palette-header-text);
+  background: color-mix(in srgb, var(--palette-header-text) 10%, var(--palette-header-bg));
+  border: 1px solid color-mix(in srgb, var(--palette-header-text) 30%, var(--palette-header-bg));
   transition: transform .15s ease, background .15s ease;
 }
-.hdr-btn:hover { background: color-mix(in srgb, var(--palette-light) 22%, var(--palette-deep)); }
+.hdr-btn:hover { background: color-mix(in srgb, var(--palette-header-text) 18%, var(--palette-header-bg)); }
 .hdr-btn:active { transform: scale(.96); }
 .hdr-btn.is-on { color: var(--palette-button-text); background: var(--palette-button); border-color: var(--palette-button); }
 .hdr-btn.is-on:hover { background: var(--palette-button); }
