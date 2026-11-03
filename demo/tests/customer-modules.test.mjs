@@ -8,6 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from '../js/customer-format.js';
 import { validPhone, resolveScheduledPickupAt } from '../js/customer-pickup-utils.js';
 import { visibleMenuItems } from '../js/customer-menu-search.js';
+import { buildMenuBlocks, categoryIcon, renderProductCard } from '../js/customer-menu-view.js';
 
 test('HTML escaping handles special characters without altering ordinary names', () => {
   assert.equal(escapeHtml('<b title="&">Pizza</b>'), '&lt;b title=&quot;&amp;&quot;&gt;Pizza&lt;/b&gt;');
@@ -79,4 +80,41 @@ test('SSE retry backs off and polling retains per-order REST fallback', async ()
   assert.match(js, /if \(force && now - lastCustomerPollAt < 2500\) return;/);
   assert.match(js, /customerOrderStreamHealthy && customerOrderStreamId === id/);
   assert.match(js, /restGet\(ORDERS_PATH \+ '\/' \+ encodeURIComponent\(id\), 7500\)/);
+});
+
+test('menu groups favorites, popular picks and categories without DOM access', () => {
+  const item = { id: 'pizza1', name: 'Pizza' };
+  const section = { id: 'pizza', title: 'Pizza', items: [item] };
+  const groups = buildMenuBlocks({
+    favorites: ['pizza1'],
+    popularItemIds: ['pizza1'],
+    sections: [section],
+    findItem: id => ({ item: id === 'pizza1' ? item : null, section }),
+    visibleItems: value => value.items.filter(Boolean),
+  });
+  assert.deepEqual(groups.map(group=>group.key), ['favorites','popular','pizza']);
+  assert.match(categoryIcon({ key: 'favorites', title: 'Favoritter' }), /<svg/);
+  assert.match(categoryIcon({ key: 'pizza', title: 'Pizza' }), /<svg/);
+});
+
+test('product card renderer keeps price, cart action and lazy image hints', () => {
+  const deps = {
+    getItemBasePrice: () => 210,
+    getItemOptionGroups: () => [],
+    getItemIngredientRules: () => [],
+    allergenLabels: () => [],
+    formatPrice: value => value + ' kr',
+    productCartBadgeHtml: () => '',
+    ingredientCustomizationEnabled: true,
+    showAllergens: false,
+  };
+  const item = { id: 'p1', name: 'Margherita', imageUrl: '/pizza.webp', sizes: [], description: 'Tomatsaus' };
+  const html = renderProductCard(item, { title: 'Pizza' }, deps);
+  assert.match(html, /data-quick-add="p1"/);
+  assert.match(html, /loading="lazy" decoding="async" width="76" height="76"/);
+  assert.match(html, /210 kr/);
+  const withOptions = renderProductCard(item, { title: 'Pizza' }, {
+    ...deps, getItemOptionGroups: () => [{ id: 'sauce' }],
+  });
+  assert.match(withOptions, /data-open="p1"/);
 });
