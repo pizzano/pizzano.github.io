@@ -3,7 +3,7 @@
  */
 const APP_BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'bestill-app-shell-';
-const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v279';
+const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v280';
 const FILES = [
   'index.html',
   'css/startup.css',
@@ -18,6 +18,10 @@ const FILES = [
   'js/customer-startup.js',
   'js/theme.js',
   'js/customer.js',
+  'js/typography-settings.js',
+  'js/special-days-customer.js',
+  'js/special-days.js',
+  'js/system-errors.js',
   'js/order-links.js',
   'js/cart-order.js',
   'js/order-product-summary.js',
@@ -36,8 +40,21 @@ const APP_SHELL = FILES.map(file => new URL(file, APP_BASE).pathname);
 const INDEX_PATH = new URL('index.html', APP_BASE).pathname;
 const CACHEABLE_PATHS = new Set([...APP_SHELL, APP_BASE.pathname]);
 
+// Only the minimal startup shell is downloaded during installation.
+// Remaining module/CSS requests are cached as the page loads, avoiding
+// dozens of redundant downloads competing with the first menu load.
+const PRELOAD = [
+  'index.html',
+  'css/startup.css',
+  'js/customer-startup.js',
+  'js/theme.js',
+  'config.js',
+].map(file => new URL(file, APP_BASE).pathname);
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache =>
+    cache.addAll(PRELOAD.map(path => new Request(path, { cache: 'reload' })))
+  ));
   self.skipWaiting();
 });
 
@@ -73,7 +90,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(async () => {
-        const cached = await caches.match(key);
+        const cached = await (await caches.open(CACHE_NAME)).match(key);
         if (cached) return cached;
         if (url.pathname === APP_BASE.pathname || url.pathname === INDEX_PATH) {
           return (await caches.match(new URL('index.html', APP_BASE).href)) ||
