@@ -1,0 +1,27 @@
+/* Focused admin touch refinements. Do not modify ticket layout or Firebase. */
+@media (pointer: coarse) {
+  :is(.pos-accept-btn, .pos-reject-btn, .order-reprint-btn,
+      .order-minute-buttons button, .order-action-back, .pos-detail-close,
+      #btnAcceptConfirm, .orders-printer-indicator, [data-detail-status]) {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}
+@media (max-width: 640px) {
+  .modal-order-action {
+    max-height: calc(100dvh - 18px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .modal-order-action .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .order-action-foot {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+:is(.pos-accept-btn, .pos-reject-btn, .order-reprint-btn,
+    .order-action-back, .pos-detail-close, #btnAcceptConfirm):focus-visible {
+  outline: 2px solid var(--palette-accent, #2478e8);
+  outline-offset: 2px;
+}
