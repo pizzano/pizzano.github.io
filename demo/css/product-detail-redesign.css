@@ -43,9 +43,11 @@
   display:block!important;flex:1 1 auto!important;min-height:0!important;min-width:0!important;
   width:100%!important;overflow-y:auto!important;overflow-x:hidden!important;
   overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  scrollbar-width:thin;scrollbar-color:var(--pd-border) transparent;
+  scrollbar-width:none!important;
   background:var(--pd-page)!important;
 }
+/* Hide the colored desktop scrollbar rail without disabling mouse-wheel or touch scrolling. */
+#productSheet .sheet-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 /* Full-bleed pizza photograph; curved paper transition is tied to the theme, never white. */
 #productSheet .sheet-head{
   position:relative!important;display:block!important;width:100%!important;
