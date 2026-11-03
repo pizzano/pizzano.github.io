@@ -33,3 +33,25 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
     transition-duration: 0ms;
   }
 }
+
+/* Network loss is visible without suggesting that an unconfirmed order was sent. */
+.connection-status {
+  position: relative;
+  z-index: 90;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--palette-warning, #ab733b);
+  background: var(--palette-warning-soft, #fff0d7);
+  color: var(--palette-ink, #262322);
+  text-align: center;
+  font-size: var(--text-sm, 12px);
+  line-height: 1.35;
+}
+.connection-status[hidden] { display: none; }
+@media (max-width: 430px) {
+  html[data-customer-palette] :is(.btn, .pickup-choice, .time-btn) {
+    touch-action: manipulation;
+  }
+  html[data-customer-palette] :is(.input, .comment-area) {
+    max-width: 100%;
+  }
+}
