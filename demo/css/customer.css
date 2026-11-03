@@ -398,6 +398,18 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
   letter-spacing: -.04em;
   box-shadow: 0 8px 26px color-mix(in srgb, var(--palette-deep) 16%, transparent);
 }
+/* No saved name yet: show a neutral person glyph, never a hardcoded initial. */
+.profile-avatar:empty::before {
+  content: "";
+  display: block;
+  width: 40%;
+  height: 40%;
+  min-width: 28px;
+  min-height: 28px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 21c.4-5.2 3.4-7.5 7.5-7.5s7.1 2.3 7.5 7.5H4.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 21c.4-5.2 3.4-7.5 7.5-7.5s7.1 2.3 7.5 7.5H4.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .profile-avatar::after {
   content: "♥";
   position: absolute;
@@ -417,6 +429,7 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 .profile-hero-name {
   grid-column: 2;
   align-self: end;
+  margin: 0;
   overflow-wrap: anywhere;
   color: var(--ink);
 
@@ -2374,3 +2387,17 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 
 /* Pickup time disclosure: the layout no longer lives in inline HTML styles. */
 #btnMorePickupTimes { width: 100%; margin-top: 10px; }
+
+/* Screen-reader-only headings maintain a clear document outline
+   without disturbing the existing compact menu layout. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
