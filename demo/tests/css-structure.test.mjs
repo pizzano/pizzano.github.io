@@ -137,10 +137,10 @@ test('all five typography tiers are editable and shared by customer and admin', 
   assert.match(settings,/mutate\(state =>/);
   assert.match(settings,/await saveNow\(\)/);
   assert.match(settings,/subscribe\(\(\) =>/);
-  assert.match(normalization,/\\['uiFontXs', 'uiFontSm', 'uiFontMd', 'uiFontLg', 'uiFontXl'\\]/);
+  assert.match(normalization,/\['uiFontXs', 'uiFontSm', 'uiFontMd', 'uiFontLg', 'uiFontXl'\]/);
   for(const page of [admin,customer]){
-    assert.match(page,/css\/typography\\.css\\?v=/);
-    assert.match(page,/js\/typography-settings\\.js\\?v=/);
+    assert.match(page,/css\/typography\.css\?v=/);
+    assert.match(page,/js\/typography-settings\.js\?v=/);
   }
 });
 
