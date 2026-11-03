@@ -3,7 +3,7 @@
  */
 const APP_BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'bestill-app-shell-';
-const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v289';
+const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v290';
 const FILES = [
   'index.html',
   'css/startup.css',
@@ -43,6 +43,7 @@ const FILES = [
   'js/order-product-summary.js',
   'js/shop-info.js',
   'js/data.js',
+  'js/data-normalization.js',
   'js/order-confirmation.js',
   'js/ingredient-detection.js',
   'js/palette.js',

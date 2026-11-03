@@ -1,3 +1,5 @@
+import { emailReceiptKinds, emailReceiptSent, emailReceiptDetail,
+  smsReceiptKinds, smsReceiptSentForOrders, smsReceiptDetailForOrders } from './admin-health-policy.js';
 import { escapeHtml } from './display-format.js';
 import { shouldSoundPendingOrder } from './order-alarm.js';
 import { adminDataSignatures, adminRenderChanges, createMarkupUpdater } from './admin-render-policy.js';
@@ -2285,34 +2287,6 @@ function orderListRemainingTime(order) {
   return days + ' d' + (hours ? ' ' + hours + ' t' : '');
 }
 
-// A green e-mail badge requires an actual MailApp success acknowledgement
-// persisted by the independent Apps Script poller. A confirmed order alone
-// is NEVER proof of an email being sent.
-function emailReceiptKinds(order) {
-  const receipts = order?.emailReceipts || {};
-  const valid = (kind) => {
-    const entry = receipts[kind];
-    const at = Number(entry?.sentAt) || 0;
-    return entry?.state === 'accepted' && entry?.provider === 'MailApp'
-      && at > 0 && at >= (Number(order?.createdAt) || 0);
-  };
-  return { accepted: valid('accepted'), ready: valid('ready') };
-}
-function emailReceiptSent(order) {
-  const kinds = emailReceiptKinds(order);
-  return kinds.accepted || kinds.ready;
-}
-function emailReceiptDetail(order) {
-  const kinds = emailReceiptKinds(order);
-  const labels = [];
-  if (kinds.accepted) labels.push('Bekreftelse');
-  if (kinds.ready) labels.push('Klar for henting');
-  if (labels.length) return 'E-post sendt · ' + labels.join(' · ');
-  if (order.status === 'mottatt') return 'E-post venter på bekreftelse';
-  return 'E-post ikke bekreftet sendt';
-}
-
-
 /* Returning customers are identified by their phone-number account.
  * Only the compact totals are used; order-event histories are unnecessary.
  */
@@ -2721,41 +2695,9 @@ window.addEventListener('kol-admin-page-change', () => {
 });
 document.getElementById('ordersEmailStatus')?.addEventListener('click', () => { void refreshEmailStatus(); });
 
-/* SMS receipts are stored on their order by the trusted Apps Script poller.
- * The existing orders SSE listener updates the list and detail automatically.
- * No polling, proxy endpoint or Vercel call is needed.
- */
-function smsReceiptKinds(order) {
-  const receipts = order?.smsReceipts || {};
-  const createdAt = Number(order?.createdAt) || 0;
-  const valid = kind => {
-    const receipt = receipts[kind];
-    const sentAt = Number(receipt?.sentAt);
-    return receipt?.state === 'accepted' && receipt?.provider === 'Traccar'
-      && Number.isSafeInteger(sentAt) && sentAt >= createdAt
-      && sentAt <= Date.now() + 300000;
-  };
-  return {
-    accepted: valid('accepted'),
-    ready: valid('ready'),
-    estimateUpdated: valid('estimateUpdated'),
-  };
-}
-function smsReceiptSent(id) {
-  const order = getOrders().find(entry => entry.id === String(id));
-  return order ? Object.values(smsReceiptKinds(order)).some(Boolean) : false;
-}
-function smsReceiptDetail(id) {
-  const order = getOrders().find(entry => entry.id === String(id));
-  if (!order) return '';
-  const receipts = smsReceiptKinds(order);
-  const kinds = [];
-  if (receipts.accepted) kinds.push('Bekreftelse');
-  if (receipts.estimateUpdated) kinds.push('Endret hentetid');
-  if (receipts.ready) kinds.push('Klar for henting');
-  return kinds.length ? 'SMS-forespørsel godtatt · ' + kinds.join(' · ') : '';
-}
-
+/* Receipt classification is pure; the admin supplies current order snapshots. */
+function smsReceiptSent(id) { return smsReceiptSentForOrders(id, getOrders()); }
+function smsReceiptDetail(id) { return smsReceiptDetailForOrders(id, getOrders()); }
 
 function updateOrdersConnection() {
   const connection = document.getElementById('ordersConnection');
