@@ -650,6 +650,15 @@
                                 <div class="health-service" data-health-item="printer"><strong>Epson</strong><output id="healthPrinter">Ikke kontrollert</output><small id="healthPrinterDetail">Kun lokal ePOS-kontroll, ingen kvittering</small></div>
                                 <div class="health-service" data-health-item="alerts"><strong>Kritiske varsler</strong><output id="healthAlerts">Venter</output><small id="healthAlertsDetail">Fra eksisterende feilsystem · siste 30 minutter</small></div>
                             </div>
+                            <div class="health-performance" style="margin-top:18px">
+                                <h3>Ytelse på denne enheten</h3>
+                                <p class="set-hint">Lokale målinger fra denne nettleseren (gjennomsnitt / 95-persentil). Ingen personopplysninger sendes.</p>
+                                <div class="health-panel-actions">
+                                    <button class="btn btn-outline" type="button" id="perfRefresh">Oppdater målinger</button>
+                                    <button class="btn btn-outline" type="button" id="perfClear">Nullstill denne enheten</button>
+                                </div>
+                                <div id="perfSummary" class="health-performance-grid" role="status" aria-live="polite">Ingen målinger registrert.</div>
+                            </div>
                         </article>
                         <article class="set-card settings-section-card" data-settings-section="alerts" hidden>
                             <h2>Systemvarsler</h2>
