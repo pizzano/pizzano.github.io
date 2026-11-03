@@ -1,5 +1,6 @@
 import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
+import { calculatePickupSlots } from './pickup-slots.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
@@ -449,28 +450,25 @@ export function getOpenState(at=new Date()) {
     opensOnDay:scheduled.opensOnDay,minutesUntilOpen:scheduled.minutesUntilOpen,
   };
 }
-/** Pickup options calculated from the active window, including after midnight. */
+/** Pickup options calculated from the active window, including after midnight.
+ * Clock conversion stays local to data.js; slot arithmetic is independently tested. */
 export function getPickupSlots() {
-  const settings=store.settings||DEFAULT_SETTINGS;
-  const state=getOpenState();
-  if(!state.open&&!state.preOpen)return [];
-  const prep=Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
-  const interval=15;
-  const remaining=Number(state.minutesToClose)||0;
-  if(state.open&&remaining<=0)return [];
+  const settings = store.settings || DEFAULT_SETTINGS;
+  const state = getOpenState();
+  if (!state.open && !state.preOpen) return [];
+  const now = new Date();
   let nowMinute;
-  try{nowMinute=localClock(new Date(),settings.timezone||'Europe/Oslo').minute;}
-  catch{const d=new Date();nowMinute=d.getHours()*60+d.getMinutes();}
-  const openMinute=parseTime(state.todayOpensAt);
-  const closeMinute=parseTime(state.todayClosesAt);
-  const latest=state.preOpen
-    ? (closeMinute!==null ? closeMinute+(closeMinute<=openMinute?1440:0)-10 : 0)
-    : nowMinute+remaining-10;
-  const first=state.preOpen ? openMinute+prep : nowMinute+prep;
-  const slots=[];
-  for(let m=Math.ceil(first/interval)*interval;m<=latest&&slots.length<96;m+=interval)
-    slots.push({value:formatMinutes(m),label:formatMinutes(m)});
-  return slots;
+  try { nowMinute = localClock(now, settings.timezone || 'Europe/Oslo').minute; }
+  catch { nowMinute = now.getHours() * 60 + now.getMinutes(); }
+  return calculatePickupSlots({
+    open: state.open,
+    preOpen: state.preOpen,
+    minutesToClose: state.minutesToClose,
+    nowMinute,
+    openMinute: parseTime(state.todayOpensAt),
+    closeMinute: parseTime(state.todayClosesAt),
+    pickupLeadMinutes: settings.pickupLeadMinutes,
+  });
 }
 
 /* ------------------------------------------------------------------ *
