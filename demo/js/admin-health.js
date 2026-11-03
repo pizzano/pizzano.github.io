@@ -133,6 +133,13 @@ async function runChecks(force = false) {
     }
     $('healthLastChecked').textContent = 'Lesekontroller utført kl. ' + statusTime() +
       ' · Ingen ordre eller varsler sendt.';
+  } catch (error) {
+    // An unexpected UI/probe failure must never leave the health screen
+    // permanently busy or pretend that a service is confirmed healthy.
+    setService('Firebase','unknown','Firebase: Kontroll avbrutt',
+      'Kontrollen kunne ikke fullføres. Prøv igjen.');
+    $('healthLastChecked').textContent = 'Helsekontrollen ble avbrutt. Prøv igjen.';
+    console.warn('Systemhelse: lesekontroll avbrutt', error);
   } finally {
     running = false;
     refreshButton.disabled = false;
