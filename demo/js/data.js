@@ -2,6 +2,7 @@ import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } fr
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { calculatePickupSlots } from './pickup-slots.js';
 import { effectivePickupLead, capacityFilteredSlots, pickupLoadFresh } from './pickup-capacity.js';
+import { metricClock, recordDuration } from './performance-metrics.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
@@ -962,15 +963,20 @@ function removeRetiredMenuCache() {
 
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
 async function restGet(path, timeoutMs = 0) {
-  const suffix = path ? `/${path}.json` : '/.json';
-  const response = await fetch(`${DB_URL}${suffix}?_=${Date.now()}`, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    cache: 'no-store',
-    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
-  });
-  if (!response.ok) throw new Error(`Kunne ikke hente data (${response.status})`);
-  return response.json();
+  const timing = metricClock();
+  try {
+    const suffix = path ? `/${path}.json` : '/.json';
+    const response = await fetch(`${DB_URL}${suffix}?_=${Date.now()}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
+    });
+    if (!response.ok) throw new Error(`Kunne ikke hente data (${response.status})`);
+    return await response.json();
+  } finally {
+    recordDuration('firebase_read', timing);
+  }
 }
 
 /** Skriver til databasen: PUT <DB_URL>/<path>.json */
