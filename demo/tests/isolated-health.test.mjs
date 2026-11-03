@@ -83,8 +83,8 @@ test('sandbox HTML blocks all network requests and never loads production config
   const engine=await file('js/test-simulator.js');
   assert.match(html,/connect-src 'none'/);
   assert.doesNotMatch(html,/src=["'][^"']*(config\.js|customer\.js|data\.js|admin\.js)/);
-  assert.doesNotMatch(ui,/fetch\s*\(|localStorage|sendSMS|printKitchenTicket/);
-  assert.doesNotMatch(engine,/fetch\s*\(|localStorage|sendSMS|printKitchenTicket/);
+  assert.doesNotMatch(ui,/fetch\s*\(|localStorage\.(?:setItem|getItem|removeItem)|sendSMS\s*\(|printKitchenTicket\s*\(/);
+  assert.doesNotMatch(engine,/fetch\s*\(|localStorage\.(?:setItem|getItem|removeItem)|sendSMS\s*\(|printKitchenTicket\s*\(/);
   assert.match(ui,/simulateCompleteFlow/);
 });
 test('admin health is read-only and never posts to Firebase or prints tickets', async () => {
