@@ -87,7 +87,7 @@ export function renderProductCard(item, section, { getItemBasePrice, getItemOpti
       <div class="prod-media">
         ${
           item.imageUrl
-            ? `<img class="prod-thumb" src="${escapeHtml(thumbnail.src)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="126" height="126" fetchpriority="low"${responsiveAttrs}>`
+            ? `<img class="prod-thumb" src="${escapeHtml(thumbnail.src)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="108" height="108" fetchpriority="low"${responsiveAttrs}>`
             : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
         }
         ${productCartBadgeHtml(item.id)}

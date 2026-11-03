@@ -9,13 +9,13 @@ const unsplash = 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?i
 
 test('Unsplash menu thumbnails use compact sources with responsive 1x, 2x, 3x widths', () => {
   const image = productImageSources(unsplash, 'menu');
-  assert.equal(new URL(image.src).searchParams.get('w'), '240');
-  assert.equal(new URL(image.src).searchParams.get('h'), '240');
+  assert.equal(new URL(image.src).searchParams.get('w'), '216');
+  assert.equal(new URL(image.src).searchParams.get('h'), '216');
   assert.equal(new URL(image.src).searchParams.get('q'), '72');
   assert.equal(new URL(image.src).searchParams.get('auto'), 'format');
   assert.equal(new URL(image.src).searchParams.get('ixid'), 'example');
-  assert.deepEqual([...image.srcset.matchAll(/ (\d+)w(?:,|$)/g)].map(m => Number(m[1])), [120,240,360]);
-  assert.equal(image.sizes, '(max-width: 360px) 94px, (max-width: 400px) 100px, 126px');
+  assert.deepEqual([...image.srcset.matchAll(/ (\d+)w(?:,|$)/g)].map(m => Number(m[1])), [108,216,324]);
+  assert.equal(image.sizes, '(max-width: 360px) 84px, (max-width: 400px) 84px, 108px');
 });
 
 test('hero photo requests larger images only when the dialog is opened', () => {
@@ -62,7 +62,7 @@ test('unsupported image URLs remain untouched in rendered menu markup', () => {
   });
   assert.match(markup, /src="https:\/\/example\.com\/a\.jpg\?x=1&amp;y=2"/);
   assert.doesNotMatch(markup, /srcset=/);
-  assert.match(markup, /loading="lazy" decoding="async" width="126" height="126" fetchpriority="low"/);
+  assert.match(markup, /loading="lazy" decoding="async" width="108" height="108" fetchpriority="low"/);
 });
 
 test('Unsplash image URLs are HTML-escaped and have responsive source candidates', () => {
@@ -78,7 +78,7 @@ test('Unsplash image URLs are HTML-escaped and have responsive source candidates
     showAllergens:false,
   });
   assert.match(markup, /srcset="/);
-  assert.match(markup, /sizes="\(max-width: 360px\) 94px, \(max-width: 400px\) 100px, 126px"/);
+  assert.match(markup, /sizes="\(max-width: 360px\) 84px, \(max-width: 400px\) 84px, 108px"/);
   assert.match(markup, /&amp;q=72/);
 });
 
