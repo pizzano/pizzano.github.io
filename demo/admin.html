@@ -407,11 +407,11 @@
                             <h2>Grensesnitt og funksjoner</h2>
                             <div class="feature-setting-group">
                                 <label for="sCustomerPalette"><strong>Farger i kundemenyen</strong></label>
-                                <p class="set-hint">Sju temafarger, tydelige bekreftelser og varsler med egne toner for lys og mørk modus. Valget lagres automatisk.</p>
+                                <p class="set-hint">Velg et tema eller lag ditt eget. Handlingsknapper deler én farge; varsler, valg og andre elementer kan styres separat.</p>
                                 <select id="sCustomerPalette" class="input"></select>
                                 <div id="customerPalettePreview" class="customer-palette-preview" aria-label="Valgt tema: lys og mørk modus"></div>
                                 <details class="custom-palette-editor" id="customPaletteEditor">
-                                    <summary><span>Lag ditt eget tema</span><span class="custom-palette-summary-hint">Tilpass farger</span></summary>
+                                    <summary><span>Lag ditt eget tema</span><span class="custom-palette-summary-hint">Felles farger · enkle valg</span></summary>
                                     <div class="custom-palette-content">
                                         <div class="custom-palette-topline">
                                             <label class="custom-palette-name" for="customPaletteName">Temanavn
@@ -426,9 +426,15 @@
                                             <button type="button" data-color-mode="light" class="is-active" aria-pressed="true">Lys</button>
                                             <button type="button" data-color-mode="dark" aria-pressed="false">Mørk</button>
                                         </div>
+                                        <section class="custom-palette-button-section" aria-labelledby="commonButtonColorTitle">
+                                            <div class="custom-palette-group-title"><strong id="commonButtonColorTitle">Felles knappefarge</strong><small>Pluss, Ring restauranten, Legg til og Send bestilling</small></div>
+                                            <div class="custom-palette-grid" id="customPaletteButtonFields"></div>
+                                            <div class="custom-palette-button-preview" id="customPaletteButtonPreview" aria-label="Knappefarge – forhåndsvisning"></div>
+                                        </section>
+                                        <div class="custom-palette-group-title"><strong>Øvrige temafarger</strong><small>Bakgrunn, kort, tekst, valg og varsler</small></div>
                                         <div class="custom-palette-grid" id="customPaletteFields"></div>
                                         <details class="custom-palette-advanced" id="customPaletteAdvanced">
-                                            <summary>Flere farger <span>Valgfritt · arver normalt hovedfargene</span></summary>
+                                            <summary>Flere komponentfarger <span>Valg, felt, toppfelt og hjelpetekst</span></summary>
                                             <div class="custom-palette-advanced-fields" id="customPaletteAdvancedFields"></div>
                                         </details>
                                         <div class="custom-palette-preview-line">
