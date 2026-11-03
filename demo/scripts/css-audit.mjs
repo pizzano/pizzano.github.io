@@ -67,6 +67,28 @@ const reports = await Promise.all(names.map(async name=>{
     important:(css.match(/!important\b/g)||[]).length,
     pages:[...references.get(name)]};
 }));
+/* A conservative collision inventory: selectors may legitimately repeat in
+ * responsive or theme layers. Report them; never delete automatically. */
+const selectorOwners = new Map();
+for (const name of names) {
+  const css = (await readFile(new URL(name, cssDir), 'utf8'))
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const match of css.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+    const selector=match[1].trim().replace(/\s+/g,' ');
+    if (!/^[.#:\[*a-zA-Z]/.test(selector) || selector.startsWith('@')) continue;
+    if (!selectorOwners.has(selector)) selectorOwners.set(selector,new Set());
+    selectorOwners.get(selector).add(name);
+  }
+}
+const collisions=[...selectorOwners.entries()]
+  .filter(([,owners])=>owners.size>1)
+  .sort((a,b)=>b[1].size-a[1].size)
+  .slice(0,12);
+if (collisions.length) {
+  console.log('Shared/colliding selector groups (review, not auto-delete):');
+  for (const [selector,owners] of collisions)
+    console.log('   ' + selector.slice(0,90) + ' => ' + [...owners].join(', '));
+}
 const linked=names.filter(name=>references.get(name).size);
 console.log('CSS audit: '+names.length+' files, '+linked.length+' directly linked, '+
   pages.length+' page entrypoints.');
