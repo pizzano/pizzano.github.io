@@ -911,6 +911,7 @@ function categoryIcon(block) {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[key]}</svg>`;
 }
 
+let lastCategoryMarkup = null;
 function renderCategories() {
   const blocks = menuBlocks();
   if (!blocks.some((block) => block.key === ui.activeCategory)) {
@@ -927,7 +928,11 @@ function renderCategories() {
         }" data-cat="${escapeHtml(block.key)}" type="button"><span class="cat-icon" aria-hidden="true">${categoryIcon(block)}</span><span class="cat-label">${escapeHtml(block.title)}</span></button>`
     )
     .join('');
-  el.catScroll.innerHTML = searchControl + categoryTabs;
+  const nextMarkup = searchControl + categoryTabs;
+  // Reusing unchanged category controls preserves the search input's focus.
+  if (nextMarkup === lastCategoryMarkup) return;
+  el.catScroll.innerHTML = nextMarkup;
+  lastCategoryMarkup = nextMarkup;
   el.menuSearch = $('menuSearch');
   const openSearch = $('openMenuSearch');
   const closeSearch = $('closeMenuSearch');
@@ -1036,6 +1041,13 @@ function productCartBadgeHtml(itemId) {
     : '';
 }
 
+let lastMenuMarkup = null;
+function updateMenuMarkup(nextMarkup) {
+  if (nextMarkup === lastMenuMarkup) return;
+  el.menuList.innerHTML = nextMarkup;
+  lastMenuMarkup = nextMarkup;
+}
+
 function refreshProductCartBadges() {
   if (!el.menuList) return;
   el.menuList.querySelectorAll('.prod-card[data-item]').forEach((card) => {
@@ -1044,16 +1056,24 @@ function refreshProductCartBadges() {
     const quantity = productCartQuantity(card.dataset.item);
     let badge = media.querySelector('.prod-cart-badge');
     if (quantity <= 0) {
-      if (badge) badge.remove();
+      if (badge) {
+        badge.remove();
+        lastMenuMarkup = null;
+      }
       return;
     }
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'prod-cart-badge';
       media.appendChild(badge);
+      lastMenuMarkup = null;
     }
-    badge.setAttribute('aria-label', `${quantity} i kurven`);
-    badge.innerHTML = `<span aria-hidden="true">✓</span> ${quantity} i kurven`;
+    const label = `${quantity} i kurven`;
+    if (badge.getAttribute('aria-label') !== label) {
+      badge.setAttribute('aria-label', label);
+      badge.innerHTML = `<span aria-hidden="true">✓</span> ${label}`;
+      lastMenuMarkup = null;
+    }
   });
 }
 
@@ -1074,7 +1094,7 @@ function productCardHtml(item, section) {
       <div class="prod-media">
         ${
           item.imageUrl
-            ? `<img class="prod-thumb" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+            ? `<img class="prod-thumb" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="76" height="76">`
             : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
         }
         ${productCartBadgeHtml(item.id)}
@@ -1102,12 +1122,12 @@ function renderMenu() {
   const blocks = menuBlocks();
   const specialBlockLimit = 4;
   if (!blocks.length) {
-    el.menuList.innerHTML = ui.search.trim()
+    updateMenuMarkup(ui.search.trim()
       ? '<div class="empty-note"><strong>Ingen treff</strong>Prøv et annet søkeord.</div>'
-      : '<div class="empty-note"><strong>Menyen er tom</strong>Kom tilbake litt senere.</div>';
+      : '<div class="empty-note"><strong>Menyen er tom</strong>Kom tilbake litt senere.</div>');
     return;
   }
-  el.menuList.innerHTML = blocks
+  const markup = blocks
     .map(
       (block) => {
       const collapsible = block.key === 'favorites' || block.key === 'popular';
@@ -1131,6 +1151,7 @@ function renderMenu() {
       }
     )
     .join('');
+  updateMenuMarkup(markup);
 }
 
 /** Åpen/stengt-status øverst i menyen. */
@@ -1501,7 +1522,14 @@ function renderSheet() {
   const heroHeader=el.sheet.querySelector('.sheet-head');
   let photo=heroHeader.querySelector('.pd-hero-photo');
   if(item.imageUrl){
-    if(!photo){photo=document.createElement('img');photo.className='pd-hero-photo';photo.alt='';heroHeader.prepend(photo);}
+    if(!photo){
+      photo=document.createElement('img');
+      photo.className='pd-hero-photo';
+      photo.alt='';
+      photo.decoding='async';
+      photo.loading='eager';
+      heroHeader.prepend(photo);
+    }
     if(photo.getAttribute('src')!==item.imageUrl)photo.src=item.imageUrl;
   }else photo?.remove();
   let heroDescription=heroHeader.querySelector('.pd-hero-description');
