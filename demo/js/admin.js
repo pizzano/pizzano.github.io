@@ -3576,11 +3576,14 @@ function smallPalettePreview(parent,palette,mode) {
   if(mode) renderMode(mode);
   else {renderMode('light');renderMode('dark');}
 }
+let lastPalettePreviewKey = null;
 function renderPalettePreview() {
-  smallPalettePreview(
-    $('customerPalettePreview'),
-    getCustomerPalette(store.settings?.customerPalette,store.settings?.customCustomerPalette)
-  );
+  const node = $('customerPalettePreview');
+  const palette = getCustomerPalette(store.settings?.customerPalette,store.settings?.customCustomerPalette);
+  const key = JSON.stringify(palette);
+  if (key === lastPalettePreviewKey && node.childElementCount) return;
+  smallPalettePreview(node, palette);
+  lastPalettePreviewKey = key;
 }
 function renderCustomPaletteDraftPreview() {
   if(!customPaletteDraft)return;
@@ -3941,6 +3944,19 @@ window.setInterval(()=>{
   if(ui.page==='settings'){renderRestaurantStatus();renderStats();}
 },60000);
 
+function renderSlotPreview() {
+  const slots = getPickupSlots();
+  const markup = slots.length
+    ? `<span class="preview-title">Kundens hentetider nå:</span>${slots
+        .slice(0, 8)
+        .map((slot) => `<span class="slot-chip">${escapeHtml(slot.label)}</span>`)
+        .join('')}${
+        slots.length > 8 ? `<span class="slot-chip is-more">+${slots.length - 8}</span>` : ''
+      }`
+    : '<span class="preview-title">Ingen hentetider — restauranten er stengt nå.</span>';
+  updateAdminMarkup(el.settings.slotPreview, markup);
+}
+
 function renderSettings() {
   renderPalettePreview();
   syncCustomPaletteEditor();
@@ -3966,15 +3982,7 @@ function renderSettings() {
 
   renderWeeklyHours(settings);
   renderRestaurantStatus();
-  const slots = getPickupSlots();
-  el.settings.slotPreview.innerHTML = slots.length
-    ? `<span class="preview-title">Kundens hentetider nå:</span>${slots
-        .slice(0, 8)
-        .map((slot) => `<span class="slot-chip">${escapeHtml(slot.label)}</span>`)
-        .join('')}${
-        slots.length > 8 ? `<span class="slot-chip is-more">+${slots.length - 8}</span>` : ''
-      }`
-    : '<span class="preview-title">Ingen hentetider — restauranten er stengt nå.</span>';
+  renderSlotPreview();
 }
 
 $('btnTestOrderAlarm').addEventListener('click', async event => {
@@ -4026,15 +4034,7 @@ function bindSettingField(key, type) {
 function renderSettingsPreviewOnly() {
   renderPalettePreview();
   renderRestaurantStatus();
-  const slots = getPickupSlots();
-  el.settings.slotPreview.innerHTML = slots.length
-    ? `<span class="preview-title">Kundens hentetider nå:</span>${slots
-        .slice(0, 8)
-        .map((slot) => `<span class="slot-chip">${escapeHtml(slot.label)}</span>`)
-        .join('')}${
-        slots.length > 8 ? `<span class="slot-chip is-more">+${slots.length - 8}</span>` : ''
-      }`
-    : '<span class="preview-title">Ingen hentetider — restauranten er stengt nå.</span>';
+  renderSlotPreview();
 }
 
 SETTING_FIELDS.forEach(([key, type]) => bindSettingField(key, type));
