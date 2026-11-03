@@ -1,7 +1,7 @@
 /* Admin-only aggregate load publisher. No customer data or order IDs leave
  * this module. Customers never read the private /orders collection.
  * Best-effort guidance, not atomic capacity reservations. */
-import { DB_URL, ready, subscribe, store, getOrders } from './data.js?v=20261103-capacity1';
+import { DB_URL, ready, subscribe, store, getOrders } from './data.js?v=20261104-type5-1';
 import { publicPickupLoad } from './pickup-capacity.js';
 
 const status = document.getElementById('pickupLoadPublishStatus');
