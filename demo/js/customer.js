@@ -45,6 +45,8 @@ import {
   getOrders,
   getOpenState,
   getPickupSlots,
+  refreshPublicPickupLoad,
+  pickupLoadIsFresh,
   allergenLabels,
   allergenLabel,
   orderStatusLabel,
@@ -1964,6 +1966,12 @@ function renderCheckout() {
   updateContactValidation();
 
   const state = getOpenState();
+  // Only fetch aggregate capacity while the customer is actually choosing a time.
+  if (ui.checkoutStep === 3 && store.settings?.pickupCapacityEnabled === true) {
+    void refreshPublicPickupLoad().then(changed => {
+      if (changed && ui.view === 'checkout' && ui.checkoutStep === 3) renderCheckout();
+    });
+  }
   const slots = getPickupSlots();
   const asapChoice = el.pickupChoices.querySelector('[data-pickup-mode="asap"]');
   const asapTitle = asapChoice?.querySelector('strong');
@@ -1992,11 +2000,17 @@ function renderCheckout() {
     ? visibleTimes.map((slot) => `<button class="time-btn${ui.pickup === slot.value ? ' is-active' : ''}" aria-pressed="${ui.pickup === slot.value}" data-time="${escapeHtml(slot.value)}" type="button">${escapeHtml(slot.label)}</button>`).join('')
     : '';
   el.pickupHint.textContent = state.preOpen
-    ? `Vi åpner kl. ${state.todayOpensAt}. Tidligste hentetid er ${slots[0]?.value || '15 minutter etter åpning'}. Velg tid.`
+    ? slots.length
+      ? `Vi åpner kl. ${state.todayOpensAt}. Tidligste hentetid er ${slots[0].value}. Velg tid.`
+      : `Vi åpner kl. ${state.todayOpensAt}. Ingen ledige tider er tilgjengelige.`
     : !state.open
     ? `Vi åpner ${state.opensAt}.`
     : showTimes
-      ? slots.length ? 'Velg et ledig klokkeslett nedenfor.' : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
+      ? slots.length
+        ? store.settings?.pickupCapacityEnabled && pickupLoadIsFresh()
+          ? 'Velg en ledig hentetid. Fullbookede kvarter vises ikke.'
+          : 'Velg et ledig klokkeslett nedenfor.'
+        : 'Ingen ledige klokkeslett. Velg Snarest mulig.'
       : ui.pickupMode === 'asap' ? 'Estimert tid – restauranten bekrefter endelig tid.' : 'Velg når du vil hente bestillingen.';
 
   const reviewCount = cartCount();
@@ -2347,6 +2361,11 @@ async function placeOrder() {
     el.errName.hidden = Boolean(name);
     el.errPhone.hidden = validPhone(phone);
     return;
+  }
+  // Recheck fresh anonymous capacity before an explicit scheduled submission.
+  // Missing/stale feed never blocks a valid order; it is advisory, not a lock.
+  if (ui.pickupMode === 'scheduled' && store.settings?.pickupCapacityEnabled === true) {
+    await refreshPublicPickupLoad(true);
   }
   if (!hasValidPickup()) {
     ui.pickup = null;
@@ -3185,6 +3204,16 @@ document.getElementById('btnMorePickupTimes').addEventListener('click', () => {
   ui.showAllPickupTimes = !ui.showAllPickupTimes;
   renderCheckout();
 });
+// Refresh only the small anonymized capacity feed while checkout is visible.
+window.setInterval(() => {
+  if (!document.hidden && ui.view === 'checkout' && ui.checkoutStep === 3 &&
+      store.settings?.pickupCapacityEnabled === true) {
+    void refreshPublicPickupLoad(true).then(() => {
+      if (ui.view === 'checkout' && ui.checkoutStep === 3) renderCheckout();
+    });
+  }
+}, 30000);
+
 el.timeGrid.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-time]');
   if (!btn || ui.pickupMode !== 'scheduled' || !getPickupSlots().some((slot) => slot.value === btn.dataset.time)) return;
