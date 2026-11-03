@@ -1,0 +1,82 @@
+/* Pure customer helpers + non-destructive performance regression tests.
+ * Run: node --test demo/tests/*.test.mjs
+ * No Firebase writes, SMS, email or printer access.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from '../js/customer-format.js';
+import { validPhone, resolveScheduledPickupAt } from '../js/customer-pickup-utils.js';
+import { visibleMenuItems } from '../js/customer-menu-search.js';
+
+test('HTML escaping handles special characters without altering ordinary names', () => {
+  assert.equal(escapeHtml('<b title="&">Pizza</b>'), '&lt;b title=&quot;&amp;&quot;&gt;Pizza&lt;/b&gt;');
+  assert.equal(escapeHtml(null), '');
+  assert.equal(escapeHtml('Margherita'), 'Margherita');
+});
+
+test('profile helpers handle empty names, Norwegian initials and 8-digit phone formatting', () => {
+  assert.equal(profileInitials(''), '');
+  assert.equal(profileInitials('Kübra Alemdar'), 'KA');
+  assert.equal(profileInitials('Fatih'), 'F');
+  assert.equal(formatProfilePhone('41223344'), '+47 41 22 33 44');
+  assert.equal(formatProfilePhone(''), 'Kundeprofil');
+});
+
+test('order status styles classify rejection, ready, confirmed and new', () => {
+  assert.equal(orderStatusClass('avvist'), 'is-rejected');
+  assert.equal(orderStatusClass('klar'), 'is-ready');
+  assert.equal(orderStatusClass('bekreftet'), 'is-active');
+  assert.equal(orderStatusClass('fullført'), 'is-done');
+  assert.equal(orderStatusClass('mottatt'), 'is-new');
+});
+
+test('phone validator accepts 4/9-starting Norwegian numbers and rejects incomplete entries', () => {
+  assert.equal(validPhone('41223344'), true);
+  assert.equal(validPhone('91 22 33 44'), true);
+  assert.equal(validPhone('51223344'), false);
+  assert.equal(validPhone('4122334'), false);
+});
+
+test('scheduled pickup rolls into the next day when the selected clock is earlier', () => {
+  const now = new Date(2026, 10, 3, 23, 50);
+  assert.equal(resolveScheduledPickupAt('00:15', now), new Date(2026, 10, 4, 0, 15).getTime());
+  assert.equal(resolveScheduledPickupAt('23:55', now), new Date(2026, 10, 3, 23, 55).getTime());
+  assert.equal(resolveScheduledPickupAt('hello', now), null);
+});
+
+test('menu search still covers names, descriptions, options and allergens', () => {
+  const section = { title: 'Pizza', items: [
+    { id: '1', name: 'Margherita', description: 'Tomat', sizes: [{label:'Stor'}] },
+    { id: '2', name: 'Vegetar', hidden: true },
+  ] };
+  const group = () => [{ title: 'Saus', options: [{ label: 'Béarnaisesaus' }] }];
+  const allergens = () => ['Melk'];
+  assert.deepEqual(visibleMenuItems(section, 'margherita', group, allergens).map(i=>i.id), ['1']);
+  assert.deepEqual(visibleMenuItems(section, 'BÉARNAISE', group, allergens).map(i=>i.id), ['1']);
+  assert.deepEqual(visibleMenuItems(section, 'melk', group, allergens).map(i=>i.id), ['1']);
+  assert.deepEqual(visibleMenuItems(section, '', group, allergens).map(i=>i.id), ['1']);
+});
+
+test('order-status updates cannot needlessly recreate unchanged menu cards', async () => {
+  const js = await readFile(new URL('../js/customer.js', import.meta.url), 'utf8');
+  assert.match(js, /if \(nextMarkup === lastMenuMarkup\) return;/);
+  assert.match(js, /updateMenuMarkup\(markup\)/);
+  assert.match(js, /ui\.searchOpen && el\.menuSearch\?\.isConnected/);
+  assert.match(js, /loading="lazy" decoding="async" width="76" height="76"/);
+});
+
+test('customer and related modules share one Firebase module URL', async () => {
+  const names = ['customer.js', 'shop-info.js', 'special-days-customer.js', 'typography-settings.js'];
+  const src = await Promise.all(names.map(name=>readFile(new URL('../js/'+name, import.meta.url),'utf8')));
+  for(const js of src) assert.match(js, /from ['"]\.\/data\.js\?v=20261103-polling-optim1['"]/);
+});
+
+test('SSE retry backs off and polling retains per-order REST fallback', async () => {
+  const js = await readFile(new URL('../js/data.js', import.meta.url), 'utf8');
+  assert.match(js, /customerStreamRetryAfter/);
+  assert.match(js, /Math\.min\(30000, 2000 \* \(2 \*\* \(customerStreamFailures - 1\)\)\)/);
+  assert.match(js, /if \(force && now - lastCustomerPollAt < 2500\) return;/);
+  assert.match(js, /customerOrderStreamHealthy && customerOrderStreamId === id/);
+  assert.match(js, /restGet\(ORDERS_PATH \+ '\/' \+ encodeURIComponent\(id\), 7500\)/);
+});
