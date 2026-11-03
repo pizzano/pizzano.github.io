@@ -25,18 +25,25 @@ for (const page of pages) {
     else references.get(name).add(page);
   }
   if (page === 'index.html') {
-    const controls = used.indexOf('ui-controls.css');
     const product = used.indexOf('product-detail-redesign.css');
-    if (controls < 0 || product < controls) {
-      console.error('Customer product dialog cascade order was changed.');
+    const stateCards = used.indexOf('order-status-cards.css');
+    if (product < 0 || product <= stateCards || used.includes('ui-controls.css')) {
+      console.error('Customer product dialog/control layer has wrong cascade order.');
       failed = true;
+    } else {
+      const joined = await readFile(new URL('product-detail-redesign.css', cssDir), 'utf8');
+      if (joined.indexOf('Shared customer control measurements') < 0 ||
+          joined.indexOf('PRODUCT DETAIL') < joined.indexOf('Shared customer control measurements')) {
+        console.error('Customer controls must precede product dialog styles in one file.');
+        failed = true;
+      }
     }
   }
   if (page === 'admin.html') {
-    for (const name of ['admin-dashboard.css', 'admin-product-modal.css']) {
+    for (const name of ['admin-dashboard.css', 'admin-settings.css']) {
       if (!used.includes(name)) { console.error('Required admin module missing: '+name);failed=true; }
     }
-    for (const retired of ['admin-choices.css', 'group-editor-modal.css']) {
+    for (const retired of ['admin-choices.css', 'group-editor-modal.css', 'admin-product-modal.css']) {
       if (used.includes(retired)) { console.error('Retired CSS still linked: '+retired);failed=true; }
     }
   }

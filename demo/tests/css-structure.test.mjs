@@ -27,8 +27,8 @@ test('adjacent admin category and choices CSS live in one original-order stylesh
 
 test('group option editor and product editor styles are co-located',async()=>{
   const html=await text('admin.html');
-  const css=await text('css/admin-product-modal.css');
-  assert.doesNotMatch(html,/group-editor-modal\.css/);
+  const css=await text('css/admin-settings.css');
+  assert.doesNotMatch(html,/group-editor-modal\.css|admin-product-modal\.css/);
   assert.match(css,/\.product-editor-backdrop/);
   assert.match(css,/#modalEditor\.modal-editor/);
   assert.ok(css.indexOf('.product-editor-backdrop')<css.indexOf('#modalEditor.modal-editor'));
@@ -50,10 +50,35 @@ test('original product sheet design and its responsive modes remain loaded',asyn
   const html=await text('index.html');
   const css=await text('css/product-detail-redesign.css');
   const items=links(html);
-  assert.ok(items.indexOf('product-detail-redesign.css')>items.indexOf('ui-controls.css'));
+  assert.ok(items.indexOf('product-detail-redesign.css')>items.indexOf('order-status-cards.css'));
+  assert.ok(!items.includes('ui-controls.css'));
+  assert.ok(css.indexOf('Shared customer control measurements') < css.indexOf('PRODUCT DETAIL'));
   for(const selector of ['#productSheet .sheet-body','#productSheet .sheet-scroll',
     '#productSheet .sheet-foot-row','#productSheet #btnAddToCart']) {
     assert.ok(css.includes(selector),selector+' disappeared');
   }
   assert.match(css,/@media\s*\(max-width:\s*360px\)/);
+});
+
+
+test('customer base and main styles are co-located without changing their order', async()=> {
+  const html = await text('index.html');
+  const css = await text('css/customer.css');
+  assert.doesNotMatch(html,/customer-base\\.css/);
+  assert.match(css,/Restaurant — kundeside/);
+  assert.match(css,/Restaurant customer interface — shared mobile layout/);
+  assert.ok(css.indexOf('Restaurant — kundeside') < css.indexOf('Restaurant customer interface'));
+  for (const selector of [':root','[hidden]', '.app-header', '.allergen-visibility-control']) {
+    assert.ok(css.includes(selector), selector + ' missing in merged customer style');
+  }
+});
+
+test('merged admin product editor retains both settings and modal layers', async()=> {
+  const html = await text('admin.html');
+  const css = await text('css/admin-settings.css');
+  assert.doesNotMatch(html,/admin-product-modal\\.css/);
+  assert.match(css,/Restaurantinnstillinger — dedicated Soft UI layer/);
+  assert.match(css,/\\.product-editor-backdrop/);
+  assert.match(css,/#modalEditor\\.modal-editor/);
+  assert.ok(css.indexOf('Restaurantinnstillinger') < css.indexOf('.product-editor-backdrop'));
 });
