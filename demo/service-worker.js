@@ -3,7 +3,7 @@
  */
 const APP_BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = 'bestill-app-shell-';
-const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v284';
+const CACHE_NAME = CACHE_PREFIX + encodeURIComponent(APP_BASE.pathname) + '-v285';
 const FILES = [
   'index.html',
   'css/startup.css',
@@ -23,6 +23,8 @@ const FILES = [
   'js/customer-pickup-utils.js',
   'js/customer-menu-search.js',
   'js/customer-menu-view.js',
+  'js/dialog-focus.js',
+  'js/pickup-slots.js',
   'js/typography-settings.js',
   'js/special-days-customer.js',
   'js/special-days.js',
