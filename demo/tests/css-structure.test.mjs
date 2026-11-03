@@ -139,3 +139,32 @@ test('four customer palettes keep cart ribbon text readable in light and dark mo
     }
   }
 });
+
+test('one themed status banner replaces the legacy double open/closed card', async () => {
+  const html=await text('index.html');
+  const customer=await text('js/customer.js');
+  const status=await text('css/order-status-cards.css');
+  const base=await text('css/customer.css');
+  const theme=await text('css/theme.css');
+  assert.match(html,/class="menu-overview status-is-pending"/);
+  for(const id of ['statusShopIcon','openStatus','pickupDetails','openDot',
+    'statusTimePill','statusTimeText','allergenVisibilityToggle']) {
+    assert.ok(html.includes('id="'+id+'"'),id+' missing');
+  }
+  assert.ok(!html.includes('id="closedBanner"'));
+  assert.ok(!customer.includes('closedBanner'));
+  assert.ok(!status.includes('.closed-banner'));
+  assert.ok(!base.includes('.menu-overview'));
+  assert.ok(!theme.includes('html[data-theme="dark"] .menu-overview'));
+  for(const token of ['--palette-success','--palette-danger',
+    '--palette-surface','--palette-ink']) {
+    assert.ok(status.includes(token),token+' missing');
+  }
+  assert.match(customer,/Forhåndsbestilling mulig · hent etter åpning/);
+  assert.match(customer,/indefiniteManualClose/);
+  assert.match(customer,/lastRestaurantWindowKey/);
+  assert.ok(base.includes('--palette-button'), 'allergen toggle still uses chosen theme button color');
+  assert.ok(customer.includes('statusShopIcon.dataset.iconState'), 'avoid repainting icon every five seconds');
+  assert.ok(customer.includes("el.statusShopIcon.dataset.iconState = 'pending'"), 'connection loss must restore neutral icon');
+  assert.match(customer,/hasVerifiedTime = \/\^\(\?:\[01\]\\d\|2\[0-3\]\):\[0-5\]\\d\$\//);
+});

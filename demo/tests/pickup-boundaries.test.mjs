@@ -59,3 +59,20 @@ test('limit never generates more than 96 entries', () => {
 test('pre-opening without valid weekly hours cannot invent pickup times', () => {
   assert.deepEqual(values({preOpen:true,openMinute:null,closeMinute:null}), []);
 });
+
+test('00:00–opening permits advance orders, but first pickup follows opening + minimum lead', () => {
+  const midnight = values({
+    open:false, preOpen:true, nowMinute:0,
+    openMinute:minutes('12:00'), closeMinute:minutes('22:00'),
+    pickupLeadMinutes:30
+  });
+  const afterMidnight = values({
+    open:false, preOpen:true, nowMinute:minutes('00:05'),
+    openMinute:minutes('12:00'), closeMinute:minutes('22:00'),
+    pickupLeadMinutes:30
+  });
+  assert.equal(midnight[0], '12:30');
+  assert.deepEqual(afterMidnight, midnight);
+  assert.equal(midnight.at(-1), '21:45');
+  assert.ok(midnight.every(clock => minutes(clock) >= minutes('12:30')));
+});

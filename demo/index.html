@@ -23,15 +23,15 @@
     <!-- Load startup styles before the app to prevent a partial first paint. -->
     <link rel="stylesheet" href="./css/startup.css?v=20261103-index-clean1">
     <script src="./js/theme.js?v=20261024-localfour2"></script>
-    <link rel="stylesheet" href="./css/customer.css?v=20261103-menu-card-compact1">
-    <link rel="stylesheet" href="./css/theme.css?v=20261103-menu-card-rebuild1">
+    <link rel="stylesheet" href="./css/customer.css?v=20261103-status-banner1">
+    <link rel="stylesheet" href="./css/theme.css?v=20261103-status-banner1">
     <link rel="stylesheet" href="./css/shop-info.css?v=20261103-color-system3">
-    <link rel="stylesheet" href="./css/customer-theme.css?v=20261103-menu-card-rebuild1">
+    <link rel="stylesheet" href="./css/customer-theme.css?v=20261103-status-banner1">
     <link rel="stylesheet" href="./css/cart.css?v=20261103-semantic2">
     <link rel="stylesheet" href="./css/special-days.css?v=20261031-location2">
-    <link rel="stylesheet" href="./css/order-status-cards.css?v=20261030-states3">
+    <link rel="stylesheet" href="./css/order-status-cards.css?v=20261103-status-banner1">
     <link rel="stylesheet" href="./css/product-detail-redesign.css?v=20261103-css-featuremerge1">
-    <link rel="stylesheet" href="./css/typography.css?v=20261103-menu-card-rebuild1">
+    <link rel="stylesheet" href="./css/typography.css?v=20261103-status-banner1">
     </head>
 
 <body>
@@ -87,27 +87,29 @@
         <!-- MENYVISNING -->
         <section class="view view-menu is-active" id="viewMenu" aria-label="Meny">
             <h1 class="visually-hidden">Meny</h1>
-            <div class="menu-overview">
+            <div class="menu-overview status-is-pending">
                 <div class="menu-overview-row">
                     <div class="pickup-note">
-                        <span class="status-shop-icon" aria-hidden="true">▣</span><span class="dot-open is-pending" id="openDot" aria-hidden="true"></span>
+                        <span class="status-shop-icon" id="statusShopIcon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                        </span>
                         <div class="pickup-copy">
-                            <strong id="openStatus">Henter åpningstider…</strong>
-                            <span id="pickupDetails">Vennligst vent</span>
+                            <div class="pickup-heading">
+                                <strong class="status-title" id="openStatus">Henter åpningstider…</strong>
+                                <span class="dot-open is-pending" id="openDot" aria-hidden="true"></span>
+                            </div>
+                            <span class="status-subtitle" id="pickupDetails">Vennligst vent</span>
+                            <span class="status-time-pill" id="statusTimePill" hidden>
+                                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                                <span class="status-time-text" id="statusTimeText"></span>
+                            </span>
                         </div>
                     </div>
-                    <label class="allergen-visibility-control" for="allergenVisibilityToggle">
+                    <label class="allergen-visibility-control status-allergen-control" for="allergenVisibilityToggle">
                         <span>Vis allergener</span>
                         <input id="allergenVisibilityToggle" type="checkbox" aria-label="Vis allergener i menyen">
                         <span class="allergen-visibility-switch" aria-hidden="true"></span>
                     </label>
-                </div>
-                <div class="closed-banner" id="closedBanner" hidden>
-                    <span class="status-message-icon" id="statusMessageIcon" aria-hidden="true">◷</span>
-                    <div class="status-message-copy">
-                        <strong id="closedTitle">Restauranten er stengt</strong>
-                        <span id="closedText">Vi tar ikke imot bestillinger akkurat nå.</span>
-                    </div>
                 </div>
             </div>
             <section id="specialDayGreeting" aria-label="Dagens merkedag" hidden></section>
@@ -363,7 +365,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/customer.js?v=20261103-menu-card-rebuild1"></script>
+    <script type="module" src="./js/customer.js?v=20261103-status-banner1"></script>
     <script type="module" src="./js/typography-settings.js?v=20261103-recovery-capacity-perf1"></script>
     <script type="module" src="./js/shop-info.js?v=20261103-recovery-capacity-perf1"></script>
     <script type="module" src="./js/special-days-customer.js?v=20261103-recovery-capacity-perf1"></script>

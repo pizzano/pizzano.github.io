@@ -198,9 +198,10 @@ const el = {
   allergenVisibilityToggle: $('allergenVisibilityToggle'),
   openStatus: $('openStatus'),
   openDot: $('openDot'),
-  closedBanner: $('closedBanner'),
-  closedTitle: $('closedTitle'),
-  closedText: $('closedText'),
+  pickupDetails: $('pickupDetails'),
+  statusTimePill: $('statusTimePill'),
+  statusTimeText: $('statusTimeText'),
+  statusShopIcon: $('statusShopIcon'),
   btnBack: $('btnBack'),
   profileThemeToggle: $('profileThemeToggle'),
   btnProfile: $('btnProfile'),
@@ -1089,92 +1090,76 @@ function renderMenu() {
   recordDuration('menu_render', timing);
 }
 
-/** Åpen/stengt-status øverst i menyen. */
+/** Åpen/stengt-status øverst i menyen. Ingen foreløpig "stengt" før Firebase er klar. */
 let customerMenuReady = false;
 function renderOpenState() {
-  // Until the first Firebase menu/settings response is resolved, default
-  // settings must never be presented as the restaurant's real opening hours.
+  const overview = document.querySelector('.menu-overview');
+  // Until Firebase has actually resolved settings, don't show fabricated hours.
   if (!customerMenuReady || backendInfo.mode !== 'firebase') {
     el.openStatus.textContent = customerMenuReady
       ? 'Åpningstider utilgjengelige' : 'Henter åpningstider…';
-    document.getElementById('pickupDetails').textContent = customerMenuReady
+    el.pickupDetails.textContent = customerMenuReady
       ? 'Prøv igjen når forbindelsen er tilbake' : 'Vennligst vent';
-    // Ikke vis en rød «stengt»-indikator før åpningstidene er verifisert.
-    el.openDot.classList.remove('is-closed');
+    overview?.classList.remove('status-is-open', 'status-is-closed', 'status-is-preorder');
+    overview?.classList.add('status-is-pending');
+    el.openDot.classList.remove('is-closed', 'is-open');
     el.openDot.classList.add('is-pending');
-    el.closedBanner.hidden = true;
+    el.statusTimePill.hidden = true;
+    el.statusTimeText.textContent = '';
+    if (el.statusShopIcon.dataset.iconState !== 'pending') {
+      el.statusShopIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+      el.statusShopIcon.dataset.iconState = 'pending';
+    }
     el.btnToCheckout.disabled = true;
     el.cartClosedHint.hidden = true;
-    return {open:false,pending:true};
+    return { open:false, pending:true };
   }
   const state = getOpenState();
   const settings = store.settings || {};
+  const preOpen = state.preOpen === true;
+  const isOpen = state.open === true;
+  overview?.classList.remove('status-is-pending');
+  overview?.classList.toggle('status-is-open', isOpen);
+  overview?.classList.toggle('status-is-preorder', preOpen);
+  overview?.classList.toggle('status-is-closed', !isOpen && !preOpen);
+
+  el.openStatus.textContent = isOpen ? 'Åpent nå' : 'Stengt nå';
+  el.pickupDetails.textContent = isOpen
+    ? 'Bestilling tilgjengelig'
+    : preOpen
+      ? 'Forhåndsbestilling mulig · hent etter åpning'
+      : settings.closedMessage || 'Vi tar ikke imot bestillinger';
+
   el.openDot.classList.remove('is-pending');
-  const overview=document.querySelector('.menu-overview');
-  overview?.classList.toggle('status-is-open',state.open);
-  overview?.classList.toggle('status-is-preorder',Boolean(state.preOpen));
-  overview?.classList.toggle('status-is-closed',!state.open&&!state.preOpen);
-  const opening=state.todayOpensAt||state.opensAt||'';
-  el.openStatus.textContent=state.open?'Åpent nå':'Stengt nå';
-  document.getElementById('pickupDetails').textContent=state.open
-    ? `Bestilling tilgjengelig · stenger kl. ${state.closesAt}`
-    : state.preOpen
-      ? `Åpner kl. ${opening} · Forhåndsbestilling er tilgjengelig`
-      : `Kun henting · Åpner kl. ${state.opensAt}`;
-  el.openDot.classList.toggle('is-closed',!state.orderable);
-  el.closedBanner.hidden=Boolean(state.open);
-  const shopIcon=document.querySelector('.menu-overview .status-shop-icon');
-  if(shopIcon){
-    const paths=state.open
-      ? '<path d="M3 10h18l-1.5-6h-15L3 10Z"/><path d="M5 10v10h14V10"/><path d="M9 20v-7h6v7"/><path d="M3 10c0 2 3 3 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0"/>'
-      : state.preOpen
-        ? '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
-        : '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
-    shopIcon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths+'</svg>';
+  el.openDot.classList.toggle('is-open', isOpen);
+  el.openDot.classList.toggle('is-closed', !isOpen);
+
+  const time = isOpen ? state.closesAt : preOpen ? state.todayOpensAt : state.opensAt;
+  const hasVerifiedTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(time || ''));
+  // Manual closure without a known reopening must not promise a false time.
+  const indefiniteManualClose = state.reason === 'manuelt' && !state.manualClosedUntil;
+  el.statusTimePill.hidden = !hasVerifiedTime || indefiniteManualClose;
+  el.statusTimeText.textContent = !hasVerifiedTime || indefiniteManualClose
+    ? '' : `${isOpen ? 'Stenger' : 'Åpner'} kl. ${time}`;
+
+  const paths = isOpen
+    ? '<path d="M3 10h18l-1.5-6h-15L3 10Z"/><path d="M5 10v10h14V10"/><path d="M9 20v-7h6v7"/><path d="M3 10c0 2 3 3 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0"/>'
+    : '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+  const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+  const iconState = isOpen ? 'open' : 'closed';
+  if (el.statusShopIcon.dataset.iconState !== iconState) {
+    el.statusShopIcon.innerHTML = icon;
+    el.statusShopIcon.dataset.iconState = iconState;
   }
-  const statusIcon=document.getElementById('statusMessageIcon');
-  if(state.open){
-    el.closedTitle.textContent='Kjøkkenet er åpent';
-    el.closedText.textContent='Bestill nå eller velg ønsket hentetid.';
-    if(statusIcon)statusIcon.textContent='♨';
-  }else if(state.preOpen){
-    el.closedTitle.textContent='Du kan bestille på forhånd';
-    const firstSlot=getPickupSlots()[0]?.value;
-    el.closedText.textContent=firstSlot
-      ? `Velg ønsket hentetid fra kl. ${firstSlot} og utover.`
-      : `Velg ønsket hentetid etter at vi åpner kl. ${opening}.`;
-    if(statusIcon)statusIcon.textContent='▦';
-  }else{
-    el.closedTitle.textContent='Restauranten er stengt';
-    el.closedText.textContent=settings.closedMessage||'Du kan bestille når vi åpner igjen.';
-    if(statusIcon)statusIcon.textContent='⊘';
-  }
+
   el.btnToCheckout.disabled = !state.orderable;
-  el.cartClosedHint.hidden = state.orderable;
-  if (state.preOpen) {
+  el.cartClosedHint.hidden = state.orderable === true;
+  if (preOpen) {
     el.cartClosedHint.hidden = false;
     el.cartClosedHint.textContent = `Vi åpner kl. ${state.todayOpensAt}. Du kan bestille nå og velge hentetid etter åpning.`;
   }
   return state;
 }
-
-function defaultSelectionFor(item) {
-  const selections = {};
-  for (const group of getItemOptionGroups(item)) {
-    const valid = new Set((group.options || []).filter(opt=>!opt.soldOut).map((opt) => opt.id));
-    let defaults = (group.defaultOptionIds || []).filter((id) => valid.has(id));
-    if (group.selectionMode === 'single') defaults = defaults.slice(0, 1);
-    else defaults = defaults.slice(0, group.maxSelections);
-    selections[group.id] = defaults;
-  }
-  return selections;
-}
-
-// The product dialog has one temporary browser-history entry so the phone's
-// Back button closes the product instead of navigating away from the menu.
-let productHistoryEntryActive = false;
-let productExitTimer = null;
-let productPreviousFocus = null;
 
 /* Update visual, accessible label and toggle state together. */
 function updateProductFavoriteButton(itemId) {
@@ -3532,9 +3517,17 @@ window.addEventListener('online', updateConnectionNotice);
 window.addEventListener('offline', updateConnectionNotice);
 updateConnectionNotice();
 
-// Status og åpningstid holdes oppdatert mens siden er åpen.
+// Midnight and opening/closing transitions refresh the visible checkout too.
+let lastRestaurantWindowKey = null;
 setInterval(() => {
-  renderOpenState();
+  const state = renderOpenState();
+  if (state.pending) { lastRestaurantWindowKey = null; return; }
+  const key = `${state.open === true}:${state.preOpen === true}:${state.orderable === true}`;
+  if (lastRestaurantWindowKey !== null && key !== lastRestaurantWindowKey) {
+    if (ui.view === 'cart') renderCart();
+    if (ui.view === 'checkout') renderCheckout();
+  }
+  lastRestaurantWindowKey = key;
 }, 5000);
 
 // Vis estimert resttid sekund for sekund. Kun en ansatt kan markere ordren som Klar.
