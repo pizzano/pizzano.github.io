@@ -1859,6 +1859,10 @@ export async function submitOrder(order) {
   // Vis aldri ordren som mottatt før Firebase faktisk har bekreftet den.
   // Ved retry brukes samme ordre-ID, så et nytt trykk kan ikke lage en duplikat.
   if (!remoteEnabled) throw new Error('Bestillingstjenesten er ikke tilgjengelig.');
+  // No speculative write or bonus reservation while the device has no network.
+  // A retry after reconnect uses the same order ID and the existing create-only ETag.
+  if (navigator.onLine === false)
+    throw new Error('Ingen internettforbindelse. Bestillingen er ikke sendt.');
   try {
     if (record.loyaltyReward) {
       const rewards = (record.lines || []).filter(line => line.loyaltyFree);
