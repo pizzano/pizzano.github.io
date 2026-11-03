@@ -2335,7 +2335,7 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
   min-width:0;min-height:31px;margin:0;padding:1px 9px 1px 8px;
   border:0;border-radius:0;
   background:linear-gradient(145deg,
-    color-mix(in srgb,var(--palette-success,#168668) 88%,var(--palette-surface,#fff)),
+    color-mix(in srgb,var(--palette-success,#168668) 97%,var(--palette-surface,#fff)),
     var(--palette-success,#168668));
   color:var(--palette-success-text,#fff);box-shadow:0 -2px 7px #001b111f;
   clip-path:polygon(0 0,85% 0,100% 100%,0 100%);
