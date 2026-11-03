@@ -302,13 +302,13 @@ const DEFAULT_SETTINGS = {
   busyExtraMinutes: 15,
   pickupCapacityEnabled: false,
   pickupCapacityMax: 4,
-  // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
-  // stored alongside the restaurant settings and shared across tablets.
+  // Five UI text tiers shared by customer and admin; editable in restaurant settings.
   uiFontXs: 10,
   uiFontSm: 12,
   uiFontMd: 14,
   uiFontLg: 18,
   uiFontXl: 22,
+  // Epson 80 mm thermal slip settings are independent of on-screen typography.
   printerQtySize: 39,
   printerItemNameSize: 35,
   printerSizeTextSize: 28,
