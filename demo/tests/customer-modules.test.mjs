@@ -64,7 +64,8 @@ test('order-status updates cannot needlessly recreate unchanged menu cards', asy
   assert.match(js, /if \(nextMarkup === lastMenuMarkup\) return;/);
   assert.match(js, /updateMenuMarkup\(markup\)/);
   assert.match(js, /ui\.searchOpen && el\.menuSearch\?\.isConnected/);
-  assert.match(js, /loading="lazy" decoding="async" width="76" height="76"/);
+  const menuView = await readFile(new URL('../js/customer-menu-view.js', import.meta.url), 'utf8');
+  assert.match(menuView, /loading="lazy" decoding="async" width="76" height="76"/);
 });
 
 test('customer and related modules share one Firebase module URL', async () => {
