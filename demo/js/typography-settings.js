@@ -1,5 +1,5 @@
 /* Shared live typography: Firebase menu.settings is the single source. */
-import { store, subscribe, ready, mutate } from './data.js?v=20261101-optionallergens1';
+import { store, subscribe, ready, mutate } from './data.js?v=20261103-polling-optim1';
 
 const fields = [
   ['uiFontXs', '--text-xs', 10],
