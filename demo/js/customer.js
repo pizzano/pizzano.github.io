@@ -4,6 +4,7 @@ import { visibleMenuItems } from './customer-menu-search.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard } from './customer-menu-view.js';
 import { productImageSources } from './product-images.js';
 import { trapDialogTab } from './dialog-focus.js';
+import { pendingOrderIdFor, clearPendingIntent } from './order-recovery.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
@@ -2322,8 +2323,11 @@ function startOrderConfirmationWait(order, name) {
 }
 
 
+let placeOrderLocked = false;
 async function placeOrder() {
-  if (ui.orderSubmitting) return;
+  if (ui.orderSubmitting || placeOrderLocked) return;
+  placeOrderLocked = true;
+  try {
   // Never begin bonus lookups or an order write while the browser is offline.
   // The cart and pending order ID remain unchanged for a deliberate retry.
   if (navigator.onLine === false) {
@@ -2428,10 +2432,14 @@ async function placeOrder() {
     pickup: ui.pickup,
     cart: cart.map((line) => [line.itemId, line.sizeId, line.quantity, line.selections, line.removedIngredients || [], line.comment, line.loyaltyFree, line.loyaltyCycle]),
   });
-  if (!ui.pendingOrderId || ui.pendingOrderFingerprint !== fingerprint) {
-    ui.pendingOrderId = uid('ord');
-    ui.pendingOrderFingerprint = fingerprint;
-  }
+  // Reuse the same create-only order ID after reload or uncertain network reply.
+  // Only a digest of the basket/contact intent is persisted, never personal data.
+  ui.pendingOrderId = await pendingOrderIdFor(
+    fingerprint,
+    () => ui.pendingOrderId && ui.pendingOrderFingerprint === fingerprint
+      ? ui.pendingOrderId : uid('ord')
+  );
+  ui.pendingOrderFingerprint = fingerprint;
 
   if (!validOptionalEmail(el.custEmail?.value)) {
     ui.checkoutStep = 2;
@@ -2471,6 +2479,7 @@ async function placeOrder() {
 
   ui.orderSubmitting = false;
   ui.orderSendFailed = false;
+  clearPendingIntent(order.id);
   ui.pendingOrderId = null;
   ui.pendingOrderFingerprint = '';
   // The completed checkout is the sole persistent customer contact.
@@ -2487,6 +2496,9 @@ async function placeOrder() {
   startOrderConfirmationWait(order, name);
   renderCartCount();
   renderActiveOrders();
+  } finally {
+    placeOrderLocked = false;
+  }
 }
 
 /* ------------------------------------------------------------------ *
