@@ -60,7 +60,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 /*
  * PRODUCT DETAIL — FOUR PREMIUM THEMES / SINGLE SOURCE OF TRUTH
  * All colors inherit the customer's light/dark palette and optional admin overrides.
- * Text uses the shared 4-size typography manager; content and pricing remain in customer.js.
+ * Text uses the shared 5-tier typography manager; content and pricing remain in customer.js.
  */
 #productSheet {
   --pd-accent:var(--palette-accent,#6CB5FF);
