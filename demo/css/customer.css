@@ -1125,7 +1125,7 @@ textarea.input {
 .confirm-live-dot {width:12px!important;height:12px!important;border-radius:50%!important;background:var(--palette-accent)!important;box-shadow:0 0 0 0 color-mix(in srgb, var(--palette-deep) 35%, transparent);animation:confirmLiveDot 1.35s ease-out infinite;}
 @keyframes confirmLiveDot{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--palette-deep) 36%, transparent)}70%{box-shadow:0 0 0 8px color-mix(in srgb, var(--palette-deep) 0%, transparent)}100%{box-shadow:0 0 0 0 color-mix(in srgb, var(--palette-deep) 0%, transparent)}}
 .confirm-accepted-status {border-color:var(--palette-border)!important;background:var(--palette-surface)!important;}
-.confirm-accepted-check {width:28px!important;height:28px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:var(--palette-accent)!important;color:var(--palette-light)!important;font-size:16px!important;font-weight:900!important;}
+.confirm-accepted-check {width:28px!important;height:28px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:var(--palette-success)!important;color:var(--palette-success-text)!important;font-size:16px!important;font-weight:900!important;}
 .confirm-timeout-status {grid-template-columns:1fr!important;border-color:var(--palette-border)!important;background:var(--palette-surface)!important;gap:7px!important;}
 .confirm-call-button {display:flex!important;align-items:center!important;justify-content:center!important;margin-top:6px!important;padding:0 16px!important;border-radius:12px!important;background:var(--palette-button)!important;color:var(--palette-button-text)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 6px 14px color-mix(in srgb, var(--palette-deep) 17%, transparent)!important;}
 /* Timeout recovery actions share the restaurant's configured primary button color. */
@@ -1334,8 +1334,8 @@ body:has(#confirmModal:not([hidden])) .view-checkout > .checkout-actions,
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--palette-accent);
-  color: var(--palette-light);
+  background: var(--palette-success);
+  color: var(--palette-success-text);
   font-size: 16px;
   font-weight: 900;
 }
