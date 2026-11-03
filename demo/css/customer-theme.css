@@ -80,7 +80,8 @@ html[data-customer-palette] .ingredient-chip.is-removed {
 /* Text must follow the selected background, including pale selected controls. */
 html[data-customer-palette] .time-btn.is-active,
 html[data-customer-palette] .time-btn[aria-pressed="true"] { color: var(--palette-ink) !important; background: var(--palette-soft) !important; }
-html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .active-order-status-check, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
+html[data-customer-palette] :is(.step.is-active .step-num, .step.is-done .step-num, .cart-count, .active-order-rejected-callout .rejected-mark, .profile-avatar) { color: #fff !important; }
+html[data-customer-palette] .active-order-status-check { color: var(--palette-success-text) !important; }
 html[data-customer-palette] .order-progress-dot { color: var(--palette-muted); }
 html[data-customer-palette] :is(.order-progress-step.is-complete, .order-progress-step.is-current) .order-progress-dot {
   color: var(--palette-on-accent) !important;
