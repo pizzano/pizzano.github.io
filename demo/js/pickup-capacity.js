@@ -34,6 +34,8 @@ export function publicPickupLoad(orders, at=Date.now(),timezone='Europe/Oslo') {
   const slots={};
   for(const order of orders || []) {
     if (!order || !statuses.has(order.status)) continue;
+    if (order.status === 'mottatt' && !order.confirmationNoTimeout &&
+        Number(order.confirmationDeadline) > 0 && Number(order.confirmationDeadline) <= at) continue;
     const when=Number(order.scheduledPickupAt)||0;
     // Exclude older or implausibly far-out orders; do not infer missing timestamps.
     if (!when || when < at - 900000 || when > at + 2*86400000) continue;
