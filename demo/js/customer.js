@@ -8,7 +8,7 @@ import { pendingOrderIdFor, clearPendingIntent } from './order-recovery.js';
 import { metricClock, recordDuration } from './performance-metrics.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
-import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
+import { renderSavedOrderProduct, restorePreviousOrderSelections } from './order-product-summary.js?v=20261023-sharedorders1';
 import { loyaltyPhone, largePizza, automaticPizzaIndex } from './loyalty.js?v=20261023-customerprofile1';
 import { getDisplayComment } from './order-comments.js';
 import { applyCustomerPalette } from './palette.js?v=20261103-premium-dark1';
@@ -2535,62 +2535,9 @@ async function placeOrder() {
  * Profil
  * ------------------------------------------------------------------ */
 
-  function previousOrderSelections(item, line) {
-    const groups = getItemOptionGroups(item, item.sizes?.find(size=>size.label===line.size)?.id);
-    const savedSelections =
-      line && line.selections && typeof line.selections === 'object'
-        ? line.selections
-        : {};
-    const savedIds = new Set([
-      ...(Array.isArray(line.optionIds) ? line.optionIds : []),
-      ...Object.values(savedSelections)
-        .flat()
-        .filter((id) => typeof id === 'string'),
-    ]);
-    const savedLabels = new Set([
-      ...(Array.isArray(line.options) ? line.options : []),
-      ...(Array.isArray(line.optionDetails)
-        ? line.optionDetails.map((entry) => entry && entry.label)
-        : []),
-    ].filter(Boolean).map((label) => String(label)));
-
-    const selections = {};
-    for (const group of groups) {
-      const options = group.options || [];
-      const validIds = new Set(options.map((option) => option.id));
-      let picked = Array.isArray(savedSelections[group.id])
-        ? savedSelections[group.id].filter((id) => validIds.has(id))
-        : [];
-
-      if (!picked.length && savedIds.size) {
-        // New compact orders keep optionIds in one list, including repeated
-        // choices (for example 2x saus). Do not reduce that list to a Set
-        // when reconstructing quantity-enabled option groups.
-        const rawIds = Array.isArray(line?.optionIds) ? line.optionIds : [];
-        if (group.allowQuantity) {
-          const allowed = new Set(options.map(option => option.id));
-          picked = rawIds.filter(id => allowed.has(id));
-        } else {
-          picked = options.filter(option => savedIds.has(option.id)).map(option => option.id);
-        }
-      }
-      if (!picked.length && savedLabels.size) {
-        picked = options
-          .filter((option) => savedLabels.has(option.label))
-          .map((option) => option.id);
-      }
-      if (!picked.length && group.required) {
-        picked = (group.defaultOptionIds || []).filter((id) => validIds.has(id));
-      }
-
-      selections[group.id] = group.allowQuantity
-        ? picked.slice(0,Math.max(1,Math.min(30,Number(group.maxSelections)||1)))
-        : group.selectionMode === 'single'
-        ? picked.slice(0, 1)
-        : picked.slice(0, Math.max(Number(group.maxSelections) || picked.length, 1));
-    }
-    return selections;
-  }
+function previousOrderSelections(item, line) {
+  return restorePreviousOrderSelections(item, line, getItemOptionGroups);
+}
 
   function orderHistoryLineHtml(line) {
     const { item } = findItem(line.itemId);

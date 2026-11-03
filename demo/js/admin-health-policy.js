@@ -54,3 +54,67 @@ export function systemAlertsShouldPoll({
   const interval = activeAlerts ? ALERTS_VISIBLE_INTERVAL_MS : ALERTS_BACKGROUND_INTERVAL_MS;
   return force || sinceLastCheckMs >= interval;
 }
+
+
+/* Only verified provider acknowledgements may produce a green receipt badge. */
+// A green e-mail badge requires an actual MailApp success acknowledgement
+// persisted by the independent Apps Script poller. A confirmed order alone
+// is NEVER proof of an email being sent.
+export function emailReceiptKinds(order) {
+  const receipts = order?.emailReceipts || {};
+  const valid = (kind) => {
+    const entry = receipts[kind];
+    const at = Number(entry?.sentAt) || 0;
+    return entry?.state === 'accepted' && entry?.provider === 'MailApp'
+      && at > 0 && at >= (Number(order?.createdAt) || 0);
+  };
+  return { accepted: valid('accepted'), ready: valid('ready') };
+}
+export function emailReceiptSent(order) {
+  const kinds = emailReceiptKinds(order);
+  return kinds.accepted || kinds.ready;
+}
+export function emailReceiptDetail(order) {
+  const kinds = emailReceiptKinds(order);
+  const labels = [];
+  if (kinds.accepted) labels.push('Bekreftelse');
+  if (kinds.ready) labels.push('Klar for henting');
+  if (labels.length) return 'E-post sendt · ' + labels.join(' · ');
+  if (order.status === 'mottatt') return 'E-post venter på bekreftelse';
+  return 'E-post ikke bekreftet sendt';
+}
+
+/* SMS receipts are stored on their order by the trusted Apps Script poller.
+ * The existing orders SSE listener updates the list and detail automatically.
+ * No polling, proxy endpoint or Vercel call is needed.
+ */
+export function smsReceiptKinds(order) {
+  const receipts = order?.smsReceipts || {};
+  const createdAt = Number(order?.createdAt) || 0;
+  const valid = kind => {
+    const receipt = receipts[kind];
+    const sentAt = Number(receipt?.sentAt);
+    return receipt?.state === 'accepted' && receipt?.provider === 'Traccar'
+      && Number.isSafeInteger(sentAt) && sentAt >= createdAt
+      && sentAt <= Date.now() + 300000;
+  };
+  return {
+    accepted: valid('accepted'),
+    ready: valid('ready'),
+    estimateUpdated: valid('estimateUpdated'),
+  };
+}
+export function smsReceiptSentForOrders(id, orders) {
+  const order = orders.find(entry => entry.id === String(id));
+  return order ? Object.values(smsReceiptKinds(order)).some(Boolean) : false;
+}
+export function smsReceiptDetailForOrders(id, orders) {
+  const order = orders.find(entry => entry.id === String(id));
+  if (!order) return '';
+  const receipts = smsReceiptKinds(order);
+  const kinds = [];
+  if (receipts.accepted) kinds.push('Bekreftelse');
+  if (receipts.estimateUpdated) kinds.push('Endret hentetid');
+  if (receipts.ready) kinds.push('Klar for henting');
+  return kinds.length ? 'SMS-forespørsel godtatt · ' + kinds.join(' · ') : '';
+}
