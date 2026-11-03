@@ -9,14 +9,12 @@ import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired, shouldSoundPendingOrder, customerOrderLink } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
-import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-premium-dark1';
-import { sortCartByCategory } from './cart-order.js';
 import { busyAcceptMinutes } from './pickup-capacity.js';
 import { metricClock, recordDuration } from './performance-metrics.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
-import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
+import { renderSavedOrderProduct, sortCartByCategory, getDisplayComment } from './order-product-summary.js?v=20261023-sharedorders1';
 import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography } from './order-printer.js?v=20261016-cleanall1';
 /**
  * admin.js — Adminpanel for Restauranten.
