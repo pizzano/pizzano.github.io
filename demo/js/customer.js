@@ -1244,6 +1244,14 @@ let productHistoryEntryActive = false;
 let productExitTimer = null;
 let productPreviousFocus = null;
 
+/* Update visual, accessible label and toggle state together. */
+function updateProductFavoriteButton(itemId) {
+  const active = isFavorite(itemId);
+  el.sheetFav.classList.toggle('is-on', active);
+  el.sheetFav.setAttribute('aria-pressed', String(active));
+  el.sheetFav.setAttribute('aria-label', active ? 'Fjern fra favoritter' : 'Legg til i favoritter');
+}
+
 function openProduct(itemId, editLine = null) {
   const { item } = findItem(itemId);
   if (!item || item.hidden) return;
@@ -1277,7 +1285,7 @@ function openProduct(itemId, editLine = null) {
     productExitTimer = null;
   }
   el.sheetTitle.textContent = item.name;
-  el.sheetFav.classList.toggle('is-on', isFavorite(item.id));
+  updateProductFavoriteButton(item.id);
   el.sheetBackdrop.hidden = false;
   el.sheet.hidden = false;
   el.sheet.dataset.motion = 'opening';
@@ -3160,13 +3168,31 @@ window.addEventListener('popstate', () => {
 el.sheetFav.addEventListener('click', () => {
   if (!draft) return;
   toggleFavorite(draft.itemId);
-  el.sheetFav.classList.toggle('is-on', isFavorite(draft.itemId));
+  updateProductFavoriteButton(draft.itemId);
   renderCategories();
   renderMenu();
   toast(isFavorite(draft.itemId) ? 'Lagt til i favoritter.' : 'Fjernet fra favoritter.');
 });
 
+/* Keep keyboard navigation inside the product dialog while it is open.
+   The existing Escape, browser Back and focus-return behavior is preserved. */
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Tab' && !el.sheet.hidden && el.sheet.dataset.motion !== 'closing') {
+    const candidates = [...el.sheet.querySelectorAll(
+      'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
+    )].filter(node => !node.closest('[hidden]') && node.getClientRects().length > 0);
+    const first = candidates[0] || el.sheetClose;
+    const last = candidates[candidates.length - 1] || first;
+    const outside = !el.sheet.contains(document.activeElement);
+    if (event.shiftKey && (outside || document.activeElement === first)) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+    } else if (!event.shiftKey && (outside || document.activeElement === last)) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    }
+    return;
+  }
   if (event.key !== 'Escape') return;
   if (!el.sheet.hidden) closeSheet();
   else if (!el.confirmModal.hidden) closeConfirm();
@@ -3483,7 +3509,10 @@ function renderAll() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const workerUrl = new URL('../service-worker.js', import.meta.url);
-    navigator.serviceWorker.register(workerUrl.href, { scope: new URL('../', import.meta.url).pathname }).catch(() => {});
+    navigator.serviceWorker.register(workerUrl.href, {
+      scope: new URL('../', import.meta.url).pathname,
+      updateViaCache: 'none',
+    }).catch(() => {});
   });
 }
 
