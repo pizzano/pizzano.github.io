@@ -2669,7 +2669,8 @@ function displayEmailStatus(mode, label, explanation) {
   el.title = label + ': ' + explanation;
 }
 async function refreshEmailStatus() {
-  if (emailStatusFetching || document.hidden) return;
+  // Email health is displayed on Bestillinger; hidden pages need no status reads.
+  if (emailStatusFetching || document.hidden || ui.page !== 'orders') return;
   if (!DB_URL) {
     displayEmailStatus('error', 'E-post utilgjengelig', 'Firebase-adresse mangler.');
     return;
@@ -2703,6 +2704,9 @@ void refreshEmailStatus();
 window.setInterval(() => { void refreshEmailStatus(); }, 90000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) void refreshEmailStatus();
+});
+window.addEventListener('kol-admin-page-change', () => {
+  if (ui.page === 'orders') void refreshEmailStatus();
 });
 document.getElementById('ordersEmailStatus')?.addEventListener('click', () => { void refreshEmailStatus(); });
 
