@@ -101,12 +101,12 @@ export function renderProductCard(item, section, { getItemBasePrice, getItemOpti
         ${cardAllergens.length ? `<p class="prod-list-allergens">Inneholder ${escapeHtml(cardAllergens.join(', '))}</p>` : ''}
       </div>
       <div class="prod-side">
+        <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
         ${soldOut
           ? '<span class="prod-soldout-badge">Utsolgt</span>'
           : needsChoice
-            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg og legg til ${escapeHtml(item.name)}">+</button>`
-            : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven">+</button>`}
-        <p class="prod-price">${multi ? '<small>fra </small>' : ''}${formatPrice(price)}</p>
+            ? `<button class="add-btn is-select" data-open="${escapeHtml(item.id)}" type="button" aria-label="Velg og legg til ${escapeHtml(item.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>`
+            : `<button class="add-btn" data-quick-add="${escapeHtml(item.id)}" type="button" aria-label="Legg ${escapeHtml(item.name)} i kurven"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>`}
       </div>
     </div>`;
 }
