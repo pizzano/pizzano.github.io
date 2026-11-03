@@ -174,12 +174,6 @@ html[data-theme="dark"] .show-more[aria-expanded="true"] {
   color: var(--palette-accent, #ff8a43) !important;
 }
 
-html[data-theme="dark"] .prod-cart-badge {
-  border-color: var(--palette-accent, #2f6b47) !important;
-  background: color-mix(in srgb, var(--palette-surface, rgb(20,29,24)) 94%, transparent) !important;
-  color: var(--palette-accent, #72db98) !important;
-}
-
 /* Product-sheet appearance is owned by product-detail-redesign.css;
    avoid duplicate legacy dark-mode overrides for the same controls. */
 html[data-theme="dark"] .ingredient-chip {
