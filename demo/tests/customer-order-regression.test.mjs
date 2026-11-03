@@ -84,7 +84,7 @@ test('create-only Firebase write and unknown-response retry contract still exist
   assert.match(data, /response\.status === 412/);
   assert.match(data, /JSON\.stringify\(existing\.lines\) !== JSON\.stringify\(record\.lines\)/);
   assert.match(customer, /id: ui\.pendingOrderId/);
-  const retry = customer.slice(customer.indexOf('let order;\n  try {\n    order = await submitOrder('));
+  const retry = customer.slice(customer.indexOf('  try {\n    order = await submitOrder('));
   assert.match(retry, /catch \(err\) \{[\s\S]*?ui\.orderSendFailed = true/);
   assert.match(retry, /ui\.pendingOrderId = null/);
   assert.ok(retry.indexOf('ui.pendingOrderId = null') > retry.indexOf('catch (err)'));
