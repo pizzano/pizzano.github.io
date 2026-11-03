@@ -41,7 +41,6 @@ const FILES = [
   'js/data.js',
   'js/data-normalization.js',
   'js/order-confirmation.js',
-  'js/ingredient-detection.js',
   'js/palette.js',
   'js/loyalty.js',
   'manifest.webmanifest',

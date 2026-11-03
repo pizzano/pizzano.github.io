@@ -7,7 +7,7 @@ import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-health-poli
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired, shouldSoundPendingOrder, customerOrderLink } from './order-confirmation.js';
-import { detectIngredientRules } from './ingredient-detection.js';
+import { detectIngredientRules } from './data-normalization.js';
 import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-premium-dark1';
 import { busyAcceptMinutes } from './pickup-capacity.js';
 import { metricClock, recordDuration } from './performance-metrics.js';
