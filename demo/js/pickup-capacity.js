@@ -69,3 +69,9 @@ export function effectivePickupLead(settings={}) {
     ? Math.max(0,Math.min(90,Math.round(Number(settings.busyExtraMinutes)||0))) : 0;
   return Math.min(240,base+extra);
 }
+
+export function busyAcceptMinutes(settings={}) {
+  const extra=settings.busyModeEnabled===true
+    ? Math.max(0,Math.min(90,Math.round(Number(settings.busyExtraMinutes)||0))) : 0;
+  return Math.min(180,15+extra);
+}
