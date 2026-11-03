@@ -23,8 +23,9 @@ export async function fingerprintHash(text, cryptoSource = globalThis.crypto) {
   return [...new Uint8Array(digest)].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
-export async function pendingOrderIdFor(fingerprint, makeId, storage = globalThis.localStorage,
+export async function pendingOrderIdFor(fingerprint, makeId, storage = null,
   now = Date.now(), cryptoSource = globalThis.crypto) {
+  if (!storage) { try { storage = globalThis.localStorage; } catch { /* disabled */ } }
   const hash = await fingerprintHash(fingerprint, cryptoSource).catch(() => null);
   const stored = readPendingIntent(storage, now);
   if (hash && stored?.hash === hash) return stored.id;
@@ -36,8 +37,9 @@ export async function pendingOrderIdFor(fingerprint, makeId, storage = globalThi
   return id;
 }
 
-export function clearPendingIntent(id, storage = globalThis.localStorage) {
+export function clearPendingIntent(id, storage = null) {
   try {
+    if (!storage) storage = globalThis.localStorage;
     const entry = readPendingIntent(storage);
     if (entry?.id === id) storage?.removeItem(KEY);
   } catch { /* Non-blocking cleanup. */ }
