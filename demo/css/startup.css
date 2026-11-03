@@ -1,0 +1,42 @@
+/* Startup screen stays render-blocking to avoid an unfinished menu flash.
+   Holiday visuals are activated only by verified Firebase settings in customer.js. */
+.app-startup {
+  position:fixed;inset:0;z-index:2147483640;
+  display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;padding:28px 22px env(safe-area-inset-bottom);
+  background:#f8f9fa;color:#252b32;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  text-align:center;
+}
+.app-startup[hidden],.app-startup [hidden]{display:none!important}
+html[data-theme="dark"] .app-startup{background:#15191c;color:#f0f2f4}
+.app-startup-inner{width:min(100%,330px);display:flex;flex-direction:column;align-items:center}
+.app-startup-ring{
+  display:block;width:57px;height:57px;box-sizing:border-box;
+  border:4px solid #e2e5e8;border-top-color:#cc6725;
+  border-right-color:#cc6725;border-radius:50%;
+  animation:app-startup-spin .85s linear infinite;
+}
+html[data-theme="dark"] .app-startup-ring{border-color:#383e43;border-top-color:#e89863;border-right-color:#e89863}
+.app-startup-title{margin:24px 0 6px;font-size:20px;font-weight:750;letter-spacing:-.025em}
+.app-startup-note{margin:0;font-size:13px;line-height:1.5;color:#727b84}
+html[data-theme="dark"] .app-startup-note{color:#b1b9c0}
+.app-startup-retry{
+  margin-top:21px;min-height:42px;padding:0 22px;border:0;border-radius:11px;
+  color:#fff;background:#915321;font-size:13px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.app-startup-retry:focus-visible{outline:3px solid #c67b41;outline-offset:3px}
+@keyframes app-startup-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.app-startup-ring{animation:none}}
+
+/* Holiday decoration only appears after the verified settings have loaded. */
+.app-startup.is-holiday{--startup-holiday-color:#8840a5;background:radial-gradient(circle at 35% 40%,color-mix(in srgb,var(--startup-holiday-color) 13%,#fff),#fff 78%)}
+.app-startup.is-holiday::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(var(--startup-holiday-color) 1.6px,transparent 2px);background-size:19px 19px;opacity:.19;mask-image:linear-gradient(125deg,#000,transparent 82%)}
+.startup-holiday-decoration{position:absolute;top:calc(50% - 160px);left:50%;transform:translateX(-50%);width:max-content;max-width:90%;text-align:center;font-size:clamp(26px,5vw,44px);letter-spacing:9px;pointer-events:none;animation:holiday-splash-float 3s ease-in-out infinite}
+.app-startup.holiday-motion-off .startup-holiday-decoration{animation:none}
+.app-startup.holiday-motion-light .startup-holiday-decoration{animation-duration:5s}
+.app-startup.is-holiday .app-startup-inner{position:relative;z-index:1}
+.app-startup.is-holiday .app-startup-ring{border-top-color:var(--startup-holiday-color);border-right-color:var(--startup-holiday-color)}
+@keyframes holiday-splash-float{0%,100%{transform:translate(-50%,0) rotate(-4deg)}50%{transform:translate(-50%,-12px) rotate(4deg)}}
+@media(prefers-reduced-motion:reduce){.startup-holiday-decoration{animation:none!important}}
