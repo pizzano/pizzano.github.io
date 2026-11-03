@@ -29,7 +29,6 @@ html[data-customer-palette] :is(.btn-primary,.btn-add):disabled {
 html[data-customer-palette] :is(input.input,textarea.input,textarea.comment-area,.validated-input .input){background:var(--palette-input-bg)!important}
 html[data-customer-palette] :is(.view-menu .prod-desc,.hint,.view-cart .cart-detail-included){color:var(--palette-secondary-text)}
 
-
 /* Keep shared legacy dark overrides aligned with the customer theme. */
 html[data-customer-palette] main { background: var(--palette-bg) !important; }
 html[data-customer-palette] .app-header { background: var(--palette-header-bg) !important; }
@@ -43,7 +42,7 @@ html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: righ
 html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }
 
 /* Visible boundaries for customer cards, choices and controls. */
-html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .opt-group, .pickup-choice, .time-btn, .input, .ingredient-customize, .ingredient-customize-toggle, .shop-info-card, .order-history-card, .active-order-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .sheet-err, .empty-state) {
+html[data-customer-palette] :is(.card, .profile-menu-row, .profile-menu-icon, .pickup-choice, .time-btn, .input, .shop-info-card, .order-history-card, .active-order-card, .pickup-review, .pickup-review-info, .pickup-review-summary, .order-history-cart-row, .profile-detail-back, .empty-state) {
   border: 1px solid var(--palette-border) !important;
 }
 html[data-customer-palette] .profile-menu-row { background: var(--palette-surface); border-radius: 14px; }
@@ -61,12 +60,10 @@ html[data-customer-palette] .prod-cart-badge > span { color: var(--palette-succe
 html[data-customer-palette] .valid-check { background: var(--palette-success); color: var(--palette-bg); }
 
 /* Strong, consistent boundaries and distinct control states. */
-html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
+html[data-customer-palette] :is(.profile-menu-row, .card, .input, .pickup-choice, .time-btn, .shop-info-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
 html[data-customer-palette] .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
 html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-button) !important; border-color: var(--palette-button) !important; }
 html[data-customer-palette] :is(.time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-selection-bg) !important; border-color: var(--palette-accent) !important; }
-html[data-customer-palette] .ingredient-customize.is-open { border-color: var(--palette-accent) !important; }
-html[data-customer-palette] .ingredient-customize.is-open .ingredient-customize-toggle { background: var(--palette-soft) !important; color: var(--palette-accent); border-color: var(--palette-accent) !important; }
 
 html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
 
@@ -173,8 +170,6 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
 
 html[data-customer-palette] .cat-tab .cat-icon svg { width: 19px; height: 19px; color: var(--palette-muted); }
 html[data-customer-palette] .cat-tab:is(.is-active, :hover) .cat-icon svg { color: var(--palette-accent); }
-
-
 
 /* Checkout action stays neutral until a valid pickup choice is complete. */
 html[data-customer-palette] #btnStepNext:disabled,
