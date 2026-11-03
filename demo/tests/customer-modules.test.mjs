@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
 import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass, validPhone } from '../js/display-format.js';
 import { resolveScheduledPickupAt } from '../js/pickup-slots.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard, visibleMenuItems } from '../js/customer-menu-view.js';
@@ -122,6 +123,45 @@ test('product taps initialize a draft without a missing helper and restore optio
   assert.match(render, /draft\.selections\[group\.id\] = \[\.\.\.\(group\.defaultOptionIds \|\| \[\]\)\]/);
   assert.match(source, /const card = event\.target\.closest\('\.prod-card'\)/);
   assert.match(source, /openProduct\(card\.dataset\.item\)/);
+});
+
+test('product popup actually opens and closes without undefined dialog state', async () => {
+  const source = await readFile(new URL('../js/customer.js', import.meta.url), 'utf8');
+  const stateStart = source.indexOf('/** Åpent produkt i sheet. */');
+  const openStart = source.indexOf('function openProduct(');
+  const lifecycleEnd = source.indexOf('/** Validerer valggrupper.', openStart);
+  assert.ok(stateStart >= 0 && openStart > stateStart && lifecycleEnd > openStart);
+  for (const name of ['productPreviousFocus', 'productExitTimer', 'productHistoryEntryActive']) {
+    assert.match(source.slice(stateStart, openStart), new RegExp('\\blet ' + name + ' = (?:null|false);'));
+  }
+  const active = { isConnected: true, focusCount: 0, focus() { this.focusCount++; } };
+  const item = { id: 'p1', name: 'Testpizza', sizes: [{id: 'm'}] };
+  const el = {
+    sheetTitle: {textContent: ''}, sheetBackdrop: {hidden: true, dataset: {}},
+    sheet: {hidden: true, dataset: {}, querySelector: () => ({scrollTop: 0})},
+    sheetClose: {focus() {}}, sheetErr: {hidden: true},
+  };
+  const history = {state: {}, pushState(next) {this.state = next}, back() {}};
+  let rendered = 0;
+  const context = {
+    el, history, ui: {}, cart: [], choosingBonus: false, bonusState: null,
+    document: {activeElement: active, body: {style: {}}},
+    location: {href: 'https://example.invalid/demo/'},
+    window: {matchMedia: () => ({matches: true})},
+    metricClock: () => 0, recordDuration() {}, findItem: () => ({item}),
+    getDefaultSize: value => value.sizes[0], updateProductFavoriteButton() {},
+    renderSheet() {rendered++}, clearTimeout() {}, toast() {},
+  };
+  const lifecycle = source.slice(stateStart, source.indexOf('let bonusState = null;', stateStart)) +
+    source.slice(openStart, lifecycleEnd);
+  const result = runInNewContext(lifecycle + '\n' +
+    'openProduct("p1"); const wasOpen = !el.sheet.hidden && !el.sheetBackdrop.hidden;' +
+    'closeSheet(); ({wasOpen, isClosed: el.sheet.hidden && el.sheetBackdrop.hidden})',
+    context, {timeout: 1500});
+  assert.equal(result.wasOpen, true);
+  assert.equal(result.isClosed, true);
+  assert.equal(rendered, 1);
+  assert.equal(active.focusCount, 1);
 });
 
 test('product card renderer keeps price, cart action and lazy image hints', () => {
