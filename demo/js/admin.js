@@ -1,4 +1,5 @@
 import { shouldSoundPendingOrder } from './order-alarm.js';
+import { shouldProbeEpson } from './printer-monitor-policy.js';
 import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-monitor-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
@@ -2895,10 +2896,14 @@ const printerHelp = document.getElementById('ordersPrinterHelp');
 const EPSON_SETTINGS_URL = 'https://192.168.1.25/';
 let printerCheckRunning = false;
 let printerProbeEpoch = 0;
+let printerLastProbeAt = 0;
+let printerProbeFailures = 0;
+let printerCurrentStatus = 'pending';
 let printerWarningShown = false;
 let printerWarningAutoOpened = false;
 
 function setEpsonPrinterStatus(status, message) {
+  printerCurrentStatus = status;
   printerStatusButton.classList.remove('is-pending', 'is-active', 'is-offline');
   printerStatusButton.classList.add(status === 'ok' ? 'is-active' : status === 'error' ? 'is-offline' : 'is-pending');
   const shortStatus = status === 'ok' ? 'Epson tilkoblet'
@@ -2929,8 +2934,17 @@ function setEpsonPrinterStatus(status, message) {
     toast('Epson frakoblet. Koble til restaurantens Wi-Fi.');
   }
 }
-async function testEpsonFromOrders() {
-  if (document.hidden || printerCheckRunning || printingOrderIds.size) return;
+async function testEpsonFromOrders({ force = false } = {}) {
+  // A busy printer or an inactive tab must not generate background probes.
+  if (!shouldProbeEpson({
+    page: ui.page,
+    visible: !document.hidden,
+    busy: printerCheckRunning || printingOrderIds.size > 0,
+    status: printerCurrentStatus,
+    failures: printerProbeFailures,
+    lastCheckedAt: printerLastProbeAt,
+    force,
+  })) return;
   const epoch = ++printerProbeEpoch;
   printerCheckRunning = true;
   // Preserve the red outage indication during periodic retries instead of
@@ -2942,13 +2956,16 @@ async function testEpsonFromOrders() {
   try {
     await checkEpsonConnection();
     if (epoch !== printerProbeEpoch) return;
+    printerProbeFailures = 0;
     setEpsonPrinterStatus('ok', 'Tilkoblet · Epson svarte på ePOS-kontrollen. Klar for utskrift.');
   } catch (error) {
     if (epoch !== printerProbeEpoch) return;
+    printerProbeFailures = Math.min(printerProbeFailures + 1, 4);
     setEpsonPrinterStatus('error', 'Ingen kontakt med Epson. Koble til restaurantens Wi-Fi.');
     console.warn('Epson printer status:', error);
   } finally {
     if (epoch === printerProbeEpoch) {
+      printerLastProbeAt = Date.now();
       printerCheckRunning = false;
     }
   }
@@ -2956,6 +2973,8 @@ async function testEpsonFromOrders() {
 function invalidateEpsonConnection() {
   ++printerProbeEpoch;
   printerCheckRunning = false;
+  printerProbeFailures = Math.max(1, printerProbeFailures);
+  printerLastProbeAt = Date.now();
   setEpsonPrinterStatus('error', 'Ingen kontakt med Epson. Koble til restaurantens Wi-Fi.');
 }
 printerStatusButton.addEventListener('click', () => {
@@ -2983,17 +3002,21 @@ document.addEventListener('click', (event) => {
 });
 // An ePOS probe sends NO receipt and consumes NO paper.
 // Detect disconnects even while the wider internet/Firebase remains online.
-window.setTimeout(() => { if (!document.hidden) void testEpsonFromOrders(); }, 1600);
-window.setInterval(() => {
-  if (!document.hidden && ui.page === 'orders') void testEpsonFromOrders();
-}, 10000);
+// A lightweight timer checks whether a probe is due; it does NOT send a
+// request every five seconds. Healthy: 30s. Errors: 10/20/40/60s backoff.
+// Entering Bestillinger, foregrounding, and reconnecting check immediately.
+window.setTimeout(() => { void testEpsonFromOrders({ force: true }); }, 1600);
+window.setInterval(() => { void testEpsonFromOrders(); }, 5000);
+window.addEventListener('kol-admin-page-change', () => {
+  if (ui.page === 'orders') void testEpsonFromOrders({ force: true });
+});
 window.addEventListener('offline', invalidateEpsonConnection);
 window.addEventListener('online', () => {
-  // Going online is not proof that the printer is reachable.
-  window.setTimeout(() => { if (!document.hidden) void testEpsonFromOrders(); }, 1000);
+  // Online does not imply the local Wi-Fi printer is reachable.
+  window.setTimeout(() => { void testEpsonFromOrders({ force: true }); }, 1000);
 });
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void testEpsonFromOrders();
+  if (!document.hidden) void testEpsonFromOrders({ force: true });
 });
 
 async function printOrderFromAdmin(orderId, reprint = false) {
@@ -3004,14 +3027,20 @@ async function printOrderFromAdmin(orderId, reprint = false) {
     return;
   }
   printingOrderIds.add(orderId);
+  // Cancel stale health-probe UI results so they cannot overwrite the
+  // result of an actual kitchen ticket. No print retries are introduced.
+  ++printerProbeEpoch;
+  printerCheckRunning = false;
   if (selectedOrderId === orderId) renderOrderDetail(orderId);
   setEpsonPrinterStatus('pending', reprint ? 'Skriver ut kopi av bestillingen…' : 'Sender kjøkkenkvittering til Epson…');
   try {
     await printKitchenTicket(order, { reprint, typography: store.settings });
+    printerProbeFailures = 0;
     setEpsonPrinterStatus('ok', 'Siste utskrift bekreftet av Epson.');
     toast(reprint ? 'Kvitteringen ble sendt til Epson på nytt.' : 'Kjøkkenkvittering sendt til Epson.');
   } catch (error) {
     console.error('Epson kvittering kunne ikke skrives ut', error);
+    printerProbeFailures = Math.max(1, printerProbeFailures);
     setEpsonPrinterStatus('error', 'Utskrift mislyktes. Koble til restaurantens Wi-Fi og åpne Epson-lenken ved behov.');
     // A network timeout can happen AFTER Epson has printed the ticket.
     // Never automatically retry an uncertain print: a second ticket may appear.
@@ -3021,6 +3050,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
       : 'Skriveren svarte ikke: ') +
       String(error?.message || 'Ukjent feil').slice(0,115));
   } finally {
+    printerLastProbeAt = Date.now();
     printingOrderIds.delete(orderId);
     if (selectedOrderId === orderId) renderOrderDetail(orderId);
   }
