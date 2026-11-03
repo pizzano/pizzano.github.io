@@ -82,7 +82,7 @@ const initialSettingsView = (() => {
   }
 })();
 
-const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer', 'holidays', 'alerts']);
+const SETTINGS_SECTIONS = new Set(['status', 'pickup', 'menu', 'interface', 'contact', 'printer', 'holidays', 'health', 'alerts']);
 const initialSettingsSection = (() => {
   try {
     const saved = localStorage.getItem('kol-admin-settings-section');
@@ -4054,6 +4054,7 @@ el.settingsSectionBtns.forEach((button) => {
     renderSettingsLayout();
     if (section === 'printer') syncPrinterTypographySettings();
     if (section === 'alerts') void refreshSystemAlerts({ force: true });
+    window.dispatchEvent(new Event('kol-admin-settings-change'));
 
     const scroller = el.settingsGrid?.closest('.settings-section-scroll');
     if (scroller) {
@@ -4599,6 +4600,7 @@ async function refreshSystemAlerts({ force = false } = {}){
   systemAlertsLoading=true;
   try{
     const raw=await readSystemErrors();
+    window.dispatchEvent(new CustomEvent('kol-alert-snapshot', { detail: { records: raw || {} } }));
     const records=Object.entries(raw||{}).filter(([,v])=>v&&typeof v==='object')
       .sort(([,a],[,b])=>(Number(b.lastSeen)||0)-(Number(a.lastSeen)||0));
     const unread=records.filter(([,v])=>!v.read && !v.resolved).length;
@@ -4620,6 +4622,7 @@ async function refreshSystemAlerts({ force = false } = {}){
       card.append(actions);return card;
     }));
   }catch{
+    window.dispatchEvent(new Event('kol-alert-fetch-error'));
     systemAlertsStatus.textContent='Varsler kunne ikke hentes fra Firebase. Kontroller database-tilgang.';
   }finally{systemAlertsLoading=false}
 }
