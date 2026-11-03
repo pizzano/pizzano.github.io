@@ -382,6 +382,24 @@
                                 <input id="sPickupLeadMinutes" class="input" type="number" min="15" max="240" step="5">
                             </div>
                             <p class="set-hint">Første hentetid blir minst valgt antall minutter frem i tid, avrundet opp til nærmeste kvarter. Deretter vises tider hvert 15. minutt, ikke etter stengetid. Estimert tilberedningstid vises i restaurantinformasjonen.</p>
+                            <div class="set-field">
+                                <label class="toggle-row">
+                                    <span class="toggle-body"><strong>Travelt på kjøkkenet</strong><small>Legger ekstra ventetid til hentetider og foreslått Godta-tid. Av som standard.</small></span>
+                                    <input id="sBusyModeEnabled" type="checkbox" class="switch">
+                                </label>
+                                <label class="lbl" for="sBusyExtraMinutes">Ekstra ventetid ved stor pågang (min)</label>
+                                <input id="sBusyExtraMinutes" class="input input-narrow" type="number" min="0" max="90" step="5" value="15">
+                            </div>
+                            <div class="set-field">
+                                <label class="toggle-row">
+                                    <span class="toggle-body"><strong>Veiledende kapasitet per kvarter</strong><small>Skjul fulle klokkeslett når anonym belastning er oppdatert. Av som standard.</small></span>
+                                    <input id="sPickupCapacityEnabled" type="checkbox" class="switch">
+                                </label>
+                                <label class="lbl" for="sPickupCapacityMax">Maks planlagte hentinger per 15 minutter</label>
+                                <input id="sPickupCapacityMax" class="input input-narrow" type="number" min="1" max="30" step="1" value="4">
+                                <p class="set-hint">Veiledende, ikke en garantert reservasjon. Admin må være åpen for oppdateringer. Ved manglende/utdatert kapasitetsinformasjon vises vanlige hentetider, slik at bestilling ikke låses.</p>
+                                <p id="pickupLoadPublishStatus" class="set-hint" role="status" aria-live="polite">Kapasitetsgrense er av.</p>
+                            </div>
                             <div class="slot-preview" id="slotPreview"></div>
                         </article>
 
@@ -960,6 +978,7 @@
     <script type="module" src="./js/admin-health.js?v=20261103-health2"></script>
     <script type="module" src="./js/loyalty-sync.js?v=20261103-slot-focus1"></script>
     <script type="module" src="./js/orders-archive.js?v=20261103-slot-focus1"></script>
+    <script type="module" src="./js/pickup-load-admin.js?v=20261103-capacity1"></script>
     <script type="module" src="./js/special-days-admin.js?v=20261103-slot-focus1"></script>
 </body>
 
