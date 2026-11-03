@@ -3,6 +3,7 @@
  * These render helpers accept explicit dependencies to avoid hidden listeners.
  */
 import { escapeHtml } from './customer-format.js';
+import { productImageSources } from './product-images.js';
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */
 export function buildMenuBlocks({ favorites, popularItemIds, sections, findItem, visibleItems }) {
@@ -77,12 +78,16 @@ export function renderProductCard(item, section, { getItemBasePrice, getItemOpti
       getItemIngredientRules(item).some((rule) => rule.removable));
   const desc = item.description || item.ingredients || section.note || '';
   const cardAllergens = showAllergens ? allergenLabels(item) : [];
+  const thumbnail = productImageSources(item.imageUrl, 'menu');
+  const responsiveAttrs = thumbnail.srcset
+    ? ` srcset="${escapeHtml(thumbnail.srcset)}" sizes="${escapeHtml(thumbnail.sizes)}"`
+    : '';
   return `
     <div class="prod-card${soldOut ? ' is-soldout' : ''}" data-item="${escapeHtml(item.id)}">
       <div class="prod-media">
         ${
           item.imageUrl
-            ? `<img class="prod-thumb" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="76" height="76">`
+            ? `<img class="prod-thumb" src="${escapeHtml(thumbnail.src)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="76" height="76" fetchpriority="low"${responsiveAttrs}>`
             : '<span class="prod-thumb prod-thumb-empty" aria-hidden="true"></span>'
         }
         ${productCartBadgeHtml(item.id)}
