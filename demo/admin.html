@@ -472,14 +472,25 @@
                                 </details>
                             </div>
                             <div class="feature-setting-group" id="uiTypographySettings">
-                                <div class="feature-setting-head"><strong>Skriftstørrelser</strong><small>Fire felles størrelser for kundemeny og adminpanel. Lagres i Firebase.</small></div>
-                                <div class="ui-typography-fields">
-                                    <label>Ekstra liten <input type="number" min="8" max="30" step="1" data-ui-font="uiFontXs" value="10" class="input"> px</label>
-                                    <label>Liten <input type="number" min="8" max="30" step="1" data-ui-font="uiFontSm" value="12" class="input"> px</label>
-                                    <label>Normal <input type="number" min="8" max="30" step="1" data-ui-font="uiFontMd" value="14" class="input"> px</label>
-                                    <label>Stor <input type="number" min="8" max="30" step="1" data-ui-font="uiFontLg" value="18" class="input"> px</label>
+                                <div class="feature-setting-head"><strong>Skriftstørrelser</strong><small>Fem felles størrelser for kundemeny og adminpanel. Juster 8–36 px; verdiene lagres i Firebase.</small></div>
+                                <div class="ui-typography-fields" aria-label="Fem felles skriftstørrelser">
+                                    <label>Ekstra liten <span class="ui-font-control"><input type="number" min="8" max="36" step="1" data-ui-font="uiFontXs" value="10" class="input" aria-label="Ekstra liten skriftstørrelse"> px</span></label>
+                                    <label>Liten <span class="ui-font-control"><input type="number" min="8" max="36" step="1" data-ui-font="uiFontSm" value="12" class="input" aria-label="Liten skriftstørrelse"> px</span></label>
+                                    <label>Normal <span class="ui-font-control"><input type="number" min="8" max="36" step="1" data-ui-font="uiFontMd" value="14" class="input" aria-label="Normal skriftstørrelse"> px</span></label>
+                                    <label>Stor <span class="ui-font-control"><input type="number" min="8" max="36" step="1" data-ui-font="uiFontLg" value="18" class="input" aria-label="Stor skriftstørrelse"> px</span></label>
+                                    <label>Ekstra stor <span class="ui-font-control"><input type="number" min="8" max="36" step="1" data-ui-font="uiFontXl" value="22" class="input" aria-label="Ekstra stor skriftstørrelse"> px</span></label>
                                 </div>
-                                <p class="set-hint" id="uiFontStatus">Bruk «Lagre endringer» for å lagre størrelsene for alle enheter.</p>
+                                <div class="ui-font-preview" aria-label="Forhåndsvisning av de fem skriftstørrelsene">
+                                    <span style="font-size:var(--text-xs)" data-ui-preview="uiFontXs">Detaljer</span>
+                                    <span style="font-size:var(--text-sm)" data-ui-preview="uiFontSm">Hjelpetekst</span>
+                                    <span style="font-size:var(--text-md)" data-ui-preview="uiFontMd">Vanlig tekst</span>
+                                    <span style="font-size:var(--text-lg)" data-ui-preview="uiFontLg">Produktnavn</span>
+                                    <span style="font-size:var(--text-xl)" data-ui-preview="uiFontXl">Overskrift</span>
+                                </div>
+                                <div class="ui-font-save-row">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveUiTypography">Lagre skriftstørrelser</button>
+                                    <p class="set-hint" id="uiFontStatus" role="status" aria-live="polite">Endre en størrelse for forhåndsvisning; den lagres automatisk når feltet endres.</p>
+                                </div>
                             </div>
                             <p class="set-hint">Slå funksjoner av og på uten å slette dem. Kundeinnstillinger oppdateres automatisk i kundemenyen.</p>
 
