@@ -2,6 +2,7 @@ import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } fro
 import { validPhone, resolveScheduledPickupAt } from './customer-pickup-utils.js';
 import { visibleMenuItems } from './customer-menu-search.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard } from './customer-menu-view.js';
+import { productImageSources } from './product-images.js';
 import { trapDialogTab } from './dialog-focus.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
@@ -1454,9 +1455,23 @@ function renderSheet() {
       photo.alt='';
       photo.decoding='async';
       photo.loading='eager';
+      photo.fetchPriority='high';
       heroHeader.prepend(photo);
     }
-    if(photo.getAttribute('src')!==item.imageUrl)photo.src=item.imageUrl;
+    // Prefer a larger responsive hero variant; thumbnails stay small.
+    // Switching from a supported CDN to another host removes old srcset.
+    if(photo.dataset.originalImage !== item.imageUrl){
+      const sources=productImageSources(item.imageUrl, 'hero');
+      photo.dataset.originalImage=item.imageUrl;
+      if(sources.srcset){
+        photo.sizes=sources.sizes;
+        photo.srcset=sources.srcset;
+      }else{
+        photo.removeAttribute('srcset');
+        photo.removeAttribute('sizes');
+      }
+      photo.src=sources.src;
+    }
   }else photo?.remove();
   let heroDescription=heroHeader.querySelector('.pd-hero-description');
   if(!heroDescription){heroDescription=document.createElement('p');heroDescription.className='pd-hero-description';heroHeader.append(heroDescription);}
