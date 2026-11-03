@@ -10,6 +10,7 @@ import { detectIngredientRules } from './ingredient-detection.js';
 import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-premium-dark1';
 import { sortCartByCategory } from './cart-order.js';
+import { busyAcceptMinutes } from './pickup-capacity.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { customerOrderLink } from './order-links.js';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
@@ -254,6 +255,10 @@ const el = {
     openStateLine: $('openStateLine'),
     openingDays: $('sOpeningDays'),
     pickupLeadMinutes: $('sPickupLeadMinutes'),
+    busyModeEnabled: $('sBusyModeEnabled'),
+    busyExtraMinutes: $('sBusyExtraMinutes'),
+    pickupCapacityEnabled: $('sPickupCapacityEnabled'),
+    pickupCapacityMax: $('sPickupCapacityMax'),
     prepMinutes: $('sPrepMinutes'),
     slotPreview: $('slotPreview'),
     adminMobileEnabled: $('sAdminMobileEnabled'),
@@ -2503,7 +2508,7 @@ function renderOrderDetail(orderId) {
   const scheduledPickup = isScheduledPickupOrder(order);
   const phone = String(order.phone || '').trim();
   const tel = phone.replace(/[^+\d]/g, '');
-  const proposedMinutes = pendingOrderMinutes.get(order.id) || 15;
+  const proposedMinutes = pendingOrderMinutes.get(order.id) || busyAcceptMinutes(store.settings);
   const readyTime = scheduledPickup ? String(order.pickup || '—') : compactOrderTime(order.estimatedReadyAt);
   const pickupModeLabel = scheduledPickup ? 'SENERE' : 'SNAREST';
   const readinessCountdown = orderSummaryCountdown(order);
@@ -2869,7 +2874,7 @@ function openAcceptOrder(orderId) {
     el.acceptTimeEyebrow.textContent = 'FORVENTET TID';
     el.acceptTimeLead.textContent = 'Velg hvor mange minutter kunden skal se.';
     el.btnAcceptConfirm.textContent = 'Godta bestilling';
-    const minutes = Math.max(1, Number(order.estimatedMinutes) || 15);
+    const minutes = Math.max(1, Number(order.estimatedMinutes) || busyAcceptMinutes(store.settings));
     el.acceptMinutes.value = String(minutes);
     el.acceptQuickTimes.querySelectorAll('[data-accept-minutes]').forEach((button) => {
       button.classList.toggle('is-active', Number(button.dataset.acceptMinutes) === minutes);
@@ -3095,7 +3100,7 @@ el.orderDetailLive.addEventListener('click', async (event) => {
       return;
     }
     actionOrderId = order.id;
-    el.acceptMinutes.value = String(pendingOrderMinutes.get(order.id) || 15);
+    el.acceptMinutes.value = String(pendingOrderMinutes.get(order.id) || busyAcceptMinutes(store.settings));
     inlineAccept.disabled = true;
     await confirmAcceptOrder();
     if (inlineAccept.isConnected) inlineAccept.disabled = false;
@@ -3514,6 +3519,8 @@ const BOOLEAN_SETTING_FIELDS = [
   'customerDarkModeEnabled',
   'shopInfoEnabled',
   'ingredientCustomizationEnabled',
+  'busyModeEnabled',
+  'pickupCapacityEnabled',
 ];
 
 const SETTING_FIELDS = [
@@ -3532,6 +3539,8 @@ const SETTING_FIELDS = [
   ['closedMessage', 'text'],
   ['pickupLeadMinutes', 'number'],
   ['prepMinutes', 'number'],
+  ['busyExtraMinutes', 'number'],
+  ['pickupCapacityMax', 'number'],
 ];
 
 const paletteSelectOptions = Object.entries(CUSTOMER_PALETTES)
@@ -4016,6 +4025,8 @@ function bindSettingField(key, type) {
         if (type === 'number') {
           state.settings[key] = key === 'pickupLeadMinutes'
             ? Math.min(240, Math.max(15, Number(raw) || 30))
+            : key === 'busyExtraMinutes' ? Math.min(90, Math.max(0, Number(raw) || 0))
+            : key === 'pickupCapacityMax' ? Math.min(30, Math.max(1, Math.round(Number(raw) || 4)))
             : Math.max(0, Number(raw) || 0);
         } else {
           state.settings[key] = raw;
