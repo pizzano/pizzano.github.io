@@ -990,10 +990,14 @@ function productCartQuantity(itemId) {
   );
 }
 
+const MENU_CART_ICON = '<svg class="prod-cart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h9.5a2 2 0 0 0 1.9-1.5l1.2-6.4H6"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="18.5" cy="20" r="1.2"/></svg>';
+function productCartBadgeContent(quantity) {
+  return `${MENU_CART_ICON}<span class="prod-cart-label" aria-hidden="true">${quantity} i kurven</span>`;
+}
 function productCartBadgeHtml(itemId) {
   const quantity = productCartQuantity(itemId);
   return quantity > 0
-    ? `<span class="prod-cart-badge" aria-label="${quantity} i kurven"><span aria-hidden="true">✓</span> ${quantity} i kurven</span>`
+    ? `<span class="prod-cart-badge" aria-label="${quantity} i kurven">${productCartBadgeContent(quantity)}</span>`
     : '';
 }
 
@@ -1027,7 +1031,7 @@ function refreshProductCartBadges() {
     const label = `${quantity} i kurven`;
     if (badge.getAttribute('aria-label') !== label) {
       badge.setAttribute('aria-label', label);
-      badge.innerHTML = `<span aria-hidden="true">✓</span> ${label}`;
+      badge.innerHTML = productCartBadgeContent(quantity);
       lastMenuMarkup = null;
     }
   });

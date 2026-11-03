@@ -82,3 +82,25 @@ test('merged admin product editor retains both settings and modal layers', async
   assert.ok(css.includes('#modalEditor.modal-editor'), 'modal editor selector lost');
   assert.ok(css.indexOf('Restaurantinnstillinger') < css.indexOf('.product-editor-backdrop'));
 });
+
+test('menu product row is rebuilt in place for all four palette modes', async () => {
+  const css=await text('css/customer.css');
+  const theme=await text('css/customer-theme.css');
+  const dark=await text('css/theme.css');
+  const typography=await text('css/typography.css');
+  const from=css.indexOf('MENU PRODUCT CARDS — reference design rebuilt in place');
+  const to=css.indexOf('Keep the mobile application and its fixed controls');
+  assert.ok(from>=0 && to>from);
+  const block=css.slice(from,to);
+  assert.match(block,/grid-template-columns:var\(--menu-photo\) minmax\(0,1fr\)/);
+  assert.match(block,/clip-path:polygon\(0 0,85% 0,100% 100%,0 100%\)/);
+  assert.match(block,/var\(--palette-success/);
+  assert.match(block,/var\(--palette-success-text/);
+  assert.match(block,/var\(--palette-surface/);
+  assert.match(block,/var\(--palette-button/);
+  assert.match(block,/var\(--text-lg/);
+  assert.ok(!block.includes('Single mobile product list for every device'));
+  assert.ok(!theme.includes(':is(.saved-flash, .ingredient-chip, .prod-cart-badge)'));
+  assert.ok(!dark.includes('html[data-theme="dark"] .prod-cart-badge {'));
+  assert.ok(typography.includes('.prod-cart-label'));
+});

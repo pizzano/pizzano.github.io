@@ -64,7 +64,7 @@ test('order-status updates cannot needlessly recreate unchanged menu cards', asy
   assert.match(js, /updateMenuMarkup\(markup\)/);
   assert.match(js, /ui\.searchOpen && el\.menuSearch\?\.isConnected/);
   const menuView = await readFile(new URL('../js/customer-menu-view.js', import.meta.url), 'utf8');
-  assert.match(menuView, /loading="lazy" decoding="async" width="76" height="76"/);
+  assert.match(menuView, /loading="lazy" decoding="async" width="126" height="126"/);
 });
 
 test('customer and admin modules use one canonical Firebase data URL', async () => {
@@ -125,10 +125,38 @@ test('product card renderer keeps price, cart action and lazy image hints', () =
   const item = { id: 'p1', name: 'Margherita', imageUrl: '/pizza.webp', sizes: [], description: 'Tomatsaus' };
   const html = renderProductCard(item, { title: 'Pizza' }, deps);
   assert.match(html, /data-quick-add="p1"/);
-  assert.match(html, /loading="lazy" decoding="async" width="76" height="76"/);
+  assert.match(html, /loading="lazy" decoding="async" width="126" height="126"/);
   assert.match(html, /210 kr/);
   const withOptions = renderProductCard(item, { title: 'Pizza' }, {
     ...deps, getItemOptionGroups: () => [{ id: 'sauce' }],
   });
   assert.match(withOptions, /data-open="p1"/);
+});
+
+test('reference menu card keeps image ribbon, actual cart action and sold-out state', () => {
+  const item={id:'biff',name:'Biffsnadder',description:'Biffkjøtt og pommes frites',imageUrl:'/biff.webp'};
+  const deps={
+    getItemBasePrice:()=>259,getItemOptionGroups:()=>[],
+    getItemIngredientRules:()=>[],allergenLabels:()=>[],
+    formatPrice:price=>price+' kr',productCartBadgeHtml:()=>'<span class="prod-cart-badge">1 i kurven</span>',
+    ingredientCustomizationEnabled:false,showAllergens:false
+  };
+  const card=renderProductCard(item,{title:'Snadder'},deps);
+  assert.ok(card.indexOf('class="prod-media"')<card.indexOf('class="prod-info"'));
+  assert.ok(card.indexOf('class="prod-cart-badge"')<card.indexOf('class="prod-info"'));
+  assert.match(card,/data-quick-add="biff"/);
+  assert.match(card,/259 kr/);
+  assert.match(card,/width="126" height="126"/);
+  const soldOut=renderProductCard({...item,soldOut:true},{title:'Snadder'},deps);
+  assert.match(soldOut,/is-soldout/);
+  assert.doesNotMatch(soldOut,/data-quick-add=|data-open=/);
+});
+test('cart badge creation and updates reuse one SVG label renderer', async () => {
+  const source=await readFile(new URL('../js/customer.js',import.meta.url),'utf8');
+  assert.match(source,/const MENU_CART_ICON =/);
+  assert.match(source,/prod-cart-icon/);
+  assert.match(source,/prod-cart-label/);
+  assert.match(source,/productCartBadgeContent\(quantity\)/);
+  assert.match(source,/badge\.innerHTML = productCartBadgeContent\(quantity\)/);
+  assert.doesNotMatch(source,/aria-hidden="true">✓<\/span>/);
 });
