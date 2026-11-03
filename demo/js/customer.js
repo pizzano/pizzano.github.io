@@ -5,6 +5,7 @@ import { buildMenuBlocks, categoryIcon, renderProductCard } from './customer-men
 import { productImageSources } from './product-images.js';
 import { trapDialogTab } from './dialog-focus.js';
 import { pendingOrderIdFor, clearPendingIntent } from './order-recovery.js';
+import { metricClock, recordDuration } from './performance-metrics.js';
 import { confirmationDeadline } from './order-confirmation.js';
 import { sortCartByCategory } from './cart-order.js';
 import { renderSavedOrderProduct } from './order-product-summary.js?v=20261023-sharedorders1';
@@ -1049,12 +1050,14 @@ function productCardHtml(item, section) {
 }
 
 function renderMenu() {
+  const timing = metricClock();
   const blocks = menuBlocks();
   const specialBlockLimit = 4;
   if (!blocks.length) {
     updateMenuMarkup(ui.search.trim()
       ? '<div class="empty-note"><strong>Ingen treff</strong>Prøv et annet søkeord.</div>'
       : '<div class="empty-note"><strong>Menyen er tom</strong>Kom tilbake litt senere.</div>');
+    recordDuration('menu_render', timing);
     return;
   }
   const markup = blocks
@@ -1082,6 +1085,7 @@ function renderMenu() {
     )
     .join('');
   updateMenuMarkup(markup);
+  recordDuration('menu_render', timing);
 }
 
 /** Åpen/stengt-status øverst i menyen. */
@@ -1180,6 +1184,7 @@ function updateProductFavoriteButton(itemId) {
 }
 
 function openProduct(itemId, editLine = null) {
+  const timing = metricClock();
   const { item } = findItem(itemId);
   if (!item || item.hidden) return;
   if (item.soldOut && !editLine) {
@@ -1237,6 +1242,7 @@ function openProduct(itemId, editLine = null) {
     }
   }
   el.sheetClose.focus({ preventScroll: true });
+  recordDuration('product_open', timing);
 }
 
 function finishProductClose() {
@@ -1948,6 +1954,7 @@ function showPickupFeedback(showError = true) {
 }
 
 function renderCheckout() {
+  const timing = metricClock();
   applyAutomaticPizzaBonus();
   refreshCartPizzaBonus();
 
@@ -2055,6 +2062,7 @@ function renderCheckout() {
     el.btnStepNext.setAttribute('aria-disabled', String(ui.orderSubmitting || !hasValidPickup()));
     el.btnStepNext.textContent = ui.orderSubmitting ? 'Sender…' : ui.orderSendFailed ? 'Prøv igjen' : 'Send bestilling';
   }
+  recordDuration('checkout_render', timing);
 }
 
 function updateContactValidation() {
@@ -2473,6 +2481,7 @@ async function placeOrder() {
   renderCheckout();
 
   let order;
+  const submitTiming = metricClock();
   try {
     order = await submitOrder({
       id: ui.pendingOrderId,
@@ -2489,6 +2498,7 @@ async function placeOrder() {
       total,
     });
   } catch (err) {
+    recordDuration('order_submit', submitTiming);
     ui.orderSubmitting = false;
     ui.orderSendFailed = true;
     renderCheckout();
@@ -2496,6 +2506,7 @@ async function placeOrder() {
     return;
   }
 
+  recordDuration('order_submit', submitTiming);
   ui.orderSubmitting = false;
   ui.orderSendFailed = false;
   clearPendingIntent(order.id);
