@@ -36,7 +36,6 @@ const FILES = [
   'js/special-days-customer.js',
   'js/special-days.js',
   'js/system-errors.js',
-  'js/order-links.js',
   'js/cart-order.js',
   'js/order-product-summary.js',
   'js/shop-info.js',
