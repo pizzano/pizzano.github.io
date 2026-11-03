@@ -31,6 +31,18 @@ test('simulated accept cannot be duplicated and rejected orders cannot notify', 
   assert.throws(()=>simulateAction(rejected,'notifications',{at:at+1000}));
   assert.equal(incoming.status,'mottatt');
 });
+test('mock sender and Epson failures can be retried without side effects', () => {
+  const accepted=simulateAction(createSimulation({at,id:'SIM-RETRY'}),'accept',{at:at+1});
+  const failed=simulateAction(accepted,'notification-fail',{at:at+2});
+  assert.equal(failed.sms,'mock-error');
+  const retry=simulateAction(failed,'notifications',{at:at+3});
+  assert.equal(retry.sms,'mock-ok');
+  const printerFailed=simulateAction(retry,'print-fail',{at:at+4});
+  assert.equal(printerFailed.print,'mock-error');
+  const printerRecovered=simulateAction(printerFailed,'print',{at:at+5});
+  assert.equal(printerRecovered.print,'mock-ok');
+  assert.equal(accepted.print,'not-run');
+});
 test('simulated 3-minute deadline and pre-order exemption', () => {
   const incoming=createSimulation({at,id:'SIM-003'});
   assert.throws(()=>simulateAction(incoming,'expire',{at:at+179999}));
