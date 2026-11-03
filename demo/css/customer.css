@@ -289,12 +289,12 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
   flex:none;border-radius:50%;color:var(--palette-accent);
 }
 #orderList .order-status-icon svg {width:14px;height:14px;}
-#orderList .order-status-pill.is-rejected {color:#a34d20;background:#faece2;}
-#orderList .order-status-pill.is-rejected .order-status-icon {color:#fff;background:#ab4a22;}
+#orderList .order-status-pill.is-rejected {color:var(--palette-danger);background:var(--palette-danger-soft);}
+#orderList .order-status-pill.is-rejected .order-status-icon {color:var(--palette-danger-text);background:var(--palette-danger);}
 #orderList .order-status-pill.is-rejected svg {width:11px;height:11px;}
-#orderList .order-status-pill.is-done {color:#24613a;background:#e4f3e7;}
-#orderList .order-status-pill.is-done .order-status-icon {color:#fff;background:#28633d;}
-#orderList .order-status-pill.is-ready {color:#195633;background:#e4f4e9;}
+#orderList .order-status-pill.is-done {color:var(--palette-success);background:var(--palette-success-soft);}
+#orderList .order-status-pill.is-done .order-status-icon {color:var(--palette-success-text);background:var(--palette-success);}
+#orderList .order-status-pill.is-ready {color:var(--palette-success);background:var(--palette-success-soft);}
 #orderList .order-history-chevron {
   grid-column:4;grid-row:1;
   width:12px;height:22px;display:grid;
@@ -1127,8 +1127,8 @@ textarea.input {
 .confirm-accepted-status {border-color:var(--palette-border)!important;background:var(--palette-surface)!important;}
 .confirm-accepted-check {width:28px!important;height:28px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:var(--palette-accent)!important;color:var(--palette-light)!important;font-size:16px!important;font-weight:900!important;}
 .confirm-timeout-status {grid-template-columns:1fr!important;border-color:var(--palette-border)!important;background:var(--palette-surface)!important;gap:7px!important;}
-.confirm-call-button {display:flex!important;align-items:center!important;justify-content:center!important;margin-top:6px!important;padding:0 16px!important;border-radius:12px!important;background:var(--palette-accent)!important;color:var(--palette-light)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 6px 14px color-mix(in srgb, var(--palette-deep) 17%, transparent)!important;}
-/* Confirmed timeout: call stays green; manual repeat-order action is orange. */
+.confirm-call-button {display:flex!important;align-items:center!important;justify-content:center!important;margin-top:6px!important;padding:0 16px!important;border-radius:12px!important;background:var(--palette-button)!important;color:var(--palette-button-text)!important;font-size:13px!important;font-weight:800!important;text-decoration:none!important;box-shadow:0 6px 14px color-mix(in srgb, var(--palette-deep) 17%, transparent)!important;}
+/* Timeout recovery actions share the restaurant's configured primary button color. */
 #confirmModal .confirm-timeout-status .confirm-timeout-actions {
   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
   gap:9px!important;width:100%;min-width:0;align-items:stretch!important;
@@ -1144,9 +1144,9 @@ textarea.input {
   box-sizing:border-box!important;
 }
 #confirmModal .confirm-reorder-button {
-  border:1px solid #b94f12!important;
-  background:#bf5616!important;color:#fff!important;
-  box-shadow:0 4px 12px color-mix(in srgb,#bf5616 18%,transparent)!important;
+  border:1px solid var(--palette-button)!important;
+  background:var(--palette-button)!important;color:var(--palette-button-text)!important;
+  box-shadow:0 4px 12px color-mix(in srgb,var(--palette-button) 18%,transparent)!important;
   cursor:pointer;
 }
 #confirmModal .confirm-reorder-button:disabled {
@@ -2129,7 +2129,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
   display:block;width:100%;
   min-height:51px;margin:5px 0 0;
   padding:9px 13px;border-radius:12px;
-  background:var(--palette-accent);color:var(--palette-light);
+  background:var(--palette-button);color:var(--palette-button-text);
   font-size:15px;font-weight:800;
   box-shadow:0 4px 12px color-mix(in srgb,var(--palette-deep) 9%,transparent);
 }
