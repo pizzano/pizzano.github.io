@@ -18,16 +18,16 @@ export function smsHealthState(record, now = Date.now()) {
 export function emailHealthState(record, now = Date.now()) {
   if (!record || record.source !== 'apps-script-email-poller')
     return { state:'unknown', label:'E-post: Ingen gyldig status', detail:'Ingen fersk Apps Script-kontroll' };
-  if (record.status === 'unavailable' || Number(record.quotaRemaining) <= 0)
+  if (record.status === 'unavailable' || (record.quotaRemaining != null && Number(record.quotaRemaining) <= 0))
     return { state:'error', label:'E-post: Sender ikke tilgjengelig', detail:'Sjekk MailApp og kvote' };
-  if (record.status !== 'ok' || !isFreshHeartbeat(record, now))
+  if (record.status !== 'ok' || !isFreshHeartbeat(record, now) || !(Number(record.quotaRemaining) > 0))
     return { state:'warning', label:'E-post: Poller ikke bekreftet', detail:'Ingen fersk vellykket kontroll' };
   return { state:'warning', label:'E-post: Sender aktiv', detail:'Innbokslevering ikke bekreftet' };
 }
 export function activeCriticalAlerts(records, now = Date.now(), maxAgeMs = 30 * 60 * 1000) {
   return Object.entries(records && typeof records === 'object' ? records : {})
-    .filter(([, value]) => {
-      if (!value || typeof value !== 'object' || value.intentionalTest ||
+    .filter(([key, value]) => {
+      if (String(key).startsWith('test_') || !value || typeof value !== 'object' || value.intentionalTest ||
           value.resolved || value.status === 'recovered' || value.severity !== 'critical') return false;
       const stamp = Number(value.lastSeen);
       return Number.isFinite(stamp) && stamp > 0 && now >= stamp - 60000 &&
