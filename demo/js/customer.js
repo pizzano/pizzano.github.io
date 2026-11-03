@@ -1,4 +1,4 @@
-import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from './customer-format.js';
+import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from './display-format.js';
 import { validPhone, resolveScheduledPickupAt } from './customer-pickup-utils.js';
 import { visibleMenuItems } from './customer-menu-search.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard } from './customer-menu-view.js';

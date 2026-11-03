@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 import {
   SMS_STATUS_INTERVAL_MS, ALERTS_BACKGROUND_INTERVAL_MS, ALERTS_VISIBLE_INTERVAL_MS,
   smsStatusShouldPoll, systemAlertsShouldPoll,
-} from '../js/admin-monitor-policy.js';
+} from '../js/admin-health-policy.js';
 
 test('SMS health never polls when the tab is hidden or admin is not on orders', () => {
   assert.equal(smsStatusShouldPoll({ page:'products',visible:true,sinceLastCheckMs:60000 }),false);

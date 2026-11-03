@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from '../js/customer-format.js';
+import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from '../js/display-format.js';
 import { validPhone, resolveScheduledPickupAt } from '../js/customer-pickup-utils.js';
 import { visibleMenuItems } from '../js/customer-menu-search.js';
 import { buildMenuBlocks, categoryIcon, renderProductCard } from '../js/customer-menu-view.js';
@@ -68,10 +68,24 @@ test('order-status updates cannot needlessly recreate unchanged menu cards', asy
   assert.match(menuView, /loading="lazy" decoding="async" width="76" height="76"/);
 });
 
-test('customer and related modules share one Firebase module URL', async () => {
-  const names = ['customer.js', 'shop-info.js', 'special-days-customer.js', 'typography-settings.js'];
-  const src = await Promise.all(names.map(name=>readFile(new URL('../js/'+name, import.meta.url),'utf8')));
-  for(const js of src) assert.match(js, /from ['"]\.\/data\.js\?v=20261103-capacity1['"]/);
+test('customer and admin modules use one canonical Firebase data URL', async () => {
+  const names = ['customer.js', 'shop-info.js', 'special-days-customer.js',
+    'typography-settings.js', 'admin.js', 'admin-health.js',
+    'loyalty-sync.js', 'orders-archive.js', 'pickup-load-admin.js',
+    'special-days-admin.js'];
+  const imports = await Promise.all(names.map(async name => {
+    const code = await readFile(new URL('../js/' + name, import.meta.url), 'utf8');
+    const match = code.match(/from ['"](\\.\\/data\\.js\\?v=[^'"]+)['"]/);
+    assert.ok(match, name + ' must import the versioned Firebase data module');
+    return match[1];
+  }));
+  assert.equal(new Set(imports).size, 1, 'different module URLs duplicate Firebase state/listeners');
+});
+
+test('customer and admin share one HTML escaping implementation', async () => {
+  const admin = await readFile(new URL('../js/admin.js', import.meta.url), 'utf8');
+  assert.match(admin, /import \\{ escapeHtml \\} from '\\.\\/display-format\\.js'/);
+  assert.doesNotMatch(admin, /function escapeHtml\\(/);
 });
 
 test('SSE retry backs off and polling retains per-order REST fallback', async () => {
@@ -118,13 +132,4 @@ test('product card renderer keeps price, cart action and lazy image hints', () =
     ...deps, getItemOptionGroups: () => [{ id: 'sauce' }],
   });
   assert.match(withOptions, /data-open="p1"/);
-});
-
-test('admin feature modules share the same singleton Firebase data instance', async () => {
-  const names = ['admin.js', 'loyalty-sync.js', 'orders-archive.js',
-    'special-days-admin.js', 'typography-settings.js'];
-  for (const name of names) {
-    const js = await readFile(new URL('../js/' + name, import.meta.url), 'utf8');
-    assert.match(js, /from ['"]\.\/data\.js\?v=20261103-slot-ci1['"]/);
-  }
 });

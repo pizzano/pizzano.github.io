@@ -1,8 +1,9 @@
+import { escapeHtml } from './display-format.js';
 import { shouldSoundPendingOrder } from './order-alarm.js';
 import { adminDataSignatures, adminRenderChanges, createMarkupUpdater } from './admin-render-policy.js';
 import { productImageSources } from './product-images.js';
 import { shouldProbeEpson } from './printer-monitor-policy.js';
-import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-monitor-policy.js';
+import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-health-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
@@ -285,13 +286,6 @@ const el = {
  * Hjelpere
  * ------------------------------------------------------------------ */
 
-function escapeHtml(text) {
-  return String(text == null ? '' : text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 let toastTimer = null;
 function toast(message, durationMs = 2200) {
