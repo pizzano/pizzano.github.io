@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; object-src 'none'; base-uri 'none'">
+  <title>KØL – isolert testlaboratorium</title>
+  <style>
+    :root{color-scheme:light;font-family:system-ui,-apple-system,Segoe UI,sans-serif;--accent:#245f43;--muted:#53645b}
+    *{box-sizing:border-box}
+    body{background:#f4f6f2;color:#182b20;margin:0;padding:20px}
+    main{max-width:850px;margin:auto}
+    header{margin-bottom:16px}
+    h1{margin:7px 0;font-size:clamp(24px,4vw,34px)}
+    h2{font-size:18px;margin:0 0 10px}
+    p{line-height:1.5;margin:8px 0;color:var(--muted)}
+    .banner{background:#fff0da;border:1px solid #dfbf89;border-radius:13px;padding:14px;color:#6b3d0f;font-weight:650}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-top:14px}
+    section{background:white;border:1px solid #d9e3da;border-radius:16px;padding:18px}
+    label{font-size:13px;display:block;color:#35463d;margin:12px 0 4px}
+    input,select{width:100%;padding:12px;border:1px solid #acbfad;border-radius:9px;font:inherit;background:white;color:inherit}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+    button{background:var(--accent);color:white;border:0;border-radius:10px;padding:11px 14px;min-height:44px;font:inherit;font-weight:650;cursor:pointer}
+    button.secondary{background:#e6ede7;color:#183d2b}
+    button:disabled{cursor:not-allowed;opacity:.42}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #cc985d;outline-offset:2px}
+    .summary{font-size:16px;font-weight:700;margin-bottom:12px}
+    .indicators{display:flex;flex-wrap:wrap;gap:6px}
+    .pill{background:#ecf0eb;border-radius:7px;padding:7px 9px;font-size:12px;font-weight:650}
+    ol{margin:10px 0 0;padding-left:24px}
+    li{padding:6px 0;border-bottom:1px solid #edf0ed;line-height:1.4}
+    small{font-size:12px;color:#637368}
+    #feedback{min-height:1.5em;font-weight:700}
+    footer{margin:18px 0;font-size:12px}
+  </style>
+  <script type="module" src="./js/test-lab.js"></script>
+</head>
+<body>
+<main>
+  <header>
+    <small>KØL · Offline utviklingstest</small>
+    <h1>Isolert testlaboratorium</h1>
+    <div class="banner" role="note">SIMULERING – INGEN VIRKELIGE BESTILLINGER. Ingen tilgang til Firebase, kundeopplysninger, SMS, e-post eller Epson. Testene finnes kun i denne åpne fanen og slettes ved oppdatering.</div>
+    <p>Kontroller rekkefølgen fra kundeordre til Godta, varsler, utskrift og Klar, uten å påvirke restauranten.</p>
+  </header>
+  <div class="grid">
+    <section>
+      <h2>1. Testdata</h2>
+      <label for="simName">Testkundenavn</label>
+      <input id="simName" maxlength="50" value="Testkunde" autocomplete="off">
+      <label for="simMinutes">Forventet tilberedningstid</label>
+      <select id="simMinutes"><option value="10">10 min</option><option value="15" selected>15 min</option><option value="20">20 min</option><option value="30">30 min</option></select>
+      <div class="actions">
+        <button id="startSim" type="button">Ny simulert ordre</button>
+        <button id="startPreorder" class="secondary" type="button">Forhåndsbestilling</button>
+        <button id="runAll" class="secondary" type="button">Kjør hele testløpet</button>
+      </div>
+    </section>
+    <section>
+      <h2>2. Simulert admin</h2>
+      <div id="simStatus" role="status" aria-live="polite" class="summary">Ingen test startet</div>
+      <div class="indicators">
+        <span class="pill" id="simSms">SMS: Ikke testet</span>
+        <span class="pill" id="simEmail">E-post: Ikke testet</span>
+        <span class="pill" id="simPrinter">Epson: Ikke testet</span>
+      </div>
+      <div class="actions">
+        <button data-action="accept" type="button" disabled>Godta</button>
+        <button data-action="notifications" class="secondary" type="button" disabled>Simuler SMS/e-post</button>
+        <button data-action="print" class="secondary" type="button" disabled>Simuler utskrift</button>
+        <button data-action="ready" type="button" disabled>Marker klar</button>
+        <button data-action="reject" class="secondary" type="button" disabled>Avvis</button>
+        <button data-action="expire" class="secondary" type="button" disabled>Test 3-min frist</button>
+      </div>
+    </section>
+  </div>
+  <section style="margin-top:14px">
+    <h2>Simulert hendelseslogg</h2>
+    <p id="feedback" role="status" aria-live="polite"></p>
+    <ol id="simEvents"></ol>
+  </section>
+  <footer>Ingen ordredata skrives til nettleserlagring. Siden har en sikkerhetsregel som blokkerer nettverksforespørsler.</footer>
+</main>
+</body>
+</html>
