@@ -7,7 +7,9 @@ let sequence = 0;
 
 const actionLabels = {
   accept: 'Godta', notifications: 'Simuler SMS/e-post',
-  print: 'Simuler utskrift', ready: 'Marker klar',
+  'notification-fail': 'Simuler varselfeil',
+  print: 'Simuler utskrift', 'print-fail': 'Simuler Epson-feil',
+  ready: 'Marker klar',
   reject: 'Avvis', expire: 'Test 3-min frist',
 };
 function render() {
@@ -15,15 +17,17 @@ function render() {
   $('simStatus').textContent = simulation
     ? simulation.id + ' · ' + state + ' · ' + simulation.total + ' kr'
     : 'Ingen test startet';
-  $('simSms').textContent = 'SMS: ' + (simulation?.sms === 'mock-ok' ? 'Kun simulert' : 'Ikke testet');
-  $('simEmail').textContent = 'E-post: ' + (simulation?.email === 'mock-ok' ? 'Kun simulert' : 'Ikke testet');
-  $('simPrinter').textContent = 'Epson: ' + (simulation?.print === 'mock-ok' ? 'Kun simulert' : 'Ikke testet');
+  const stateLabel = state => state === 'mock-ok' ? 'Simulert OK' :
+    state === 'mock-error' ? 'Simulert feil' : 'Ikke testet';
+  $('simSms').textContent = 'SMS: ' + stateLabel(simulation?.sms);
+  $('simEmail').textContent = 'E-post: ' + stateLabel(simulation?.email);
+  $('simPrinter').textContent = 'Epson: ' + stateLabel(simulation?.print);
   for (const button of document.querySelectorAll('[data-action]')) {
     const action = button.dataset.action;
     button.disabled = !simulation || (
       ['accept', 'reject'].includes(action) ? state !== 'mottatt' :
       action === 'expire' ? state !== 'mottatt' || simulation.confirmationNoTimeout :
-      ['notifications','print'].includes(action) ? !['bekreftet','klar'].includes(state) :
+      ['notifications','notification-fail','print','print-fail'].includes(action) ? !['bekreftet','klar'].includes(state) :
       state !== 'bekreftet'
     );
   }
