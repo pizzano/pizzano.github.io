@@ -308,6 +308,7 @@ const DEFAULT_SETTINGS = {
   uiFontSm: 12,
   uiFontMd: 14,
   uiFontLg: 18,
+  uiFontXl: 22,
   printerQtySize: 39,
   printerItemNameSize: 35,
   printerSizeTextSize: 28,
