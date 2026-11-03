@@ -1121,3 +1121,43 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
   .custom-palette-color-controls{gap:4px}
   .custom-palette-hex.input{width:76px}
 }
+
+
+/* Shared-theme action controls — uses one token for add, phone, send and switches. */
+.custom-palette-group-title{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;
+  font-size:12px;margin:5px 0 0;
+}
+.custom-palette-group-title strong{font-size:12px;font-weight:700}
+.custom-palette-group-title small{font-size:10.5px;color:var(--ink-2,#6d7580)}
+.custom-palette-button-section{
+  display:grid;gap:6px;max-width:550px;
+  padding:9px;border:1px solid var(--line,#dfe4e8);
+  border-radius:11px;background:var(--surface-2,#f8f9fa);
+}
+.custom-palette-button-section .custom-palette-grid{
+  border-color:var(--line,#dfe4e8);
+}
+.custom-palette-button-preview{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:7px 2px 2px;
+}
+.custom-action-sample{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:30px;box-sizing:border-box;padding:6px 9px;
+  background:var(--demo-action);color:var(--demo-on-action);
+  border:1px solid var(--demo-action);
+  border-radius:8px;font-size:10.5px;font-weight:600;
+  line-height:1.2;white-space:nowrap;
+}
+.custom-action-sample.is-add{width:30px;padding:0;font-size:20px;font-weight:400}
+.custom-action-switch{
+  display:inline-flex;align-items:center;
+  width:37px;height:22px;padding:3px;box-sizing:border-box;
+  border-radius:20px;background:var(--demo-action);
+}
+.custom-action-switch i{
+  width:16px;height:16px;border-radius:50%;
+  background:var(--demo-surface,#fff);margin-left:auto;
+  box-shadow:0 1px 3px #0002;
+}
