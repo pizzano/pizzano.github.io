@@ -55,7 +55,7 @@
             </button>
             <!-- Restaurantnavn og eventuell logo kommer fra innstillinger i Firebase.
                  Ingen hardkodet butikkidentitet skal vises under oppstart. -->
-            <a class="brand" href="#" id="brandHome" aria-label="Til menyen" hidden>
+            <a class="brand" href="./index.html" id="brandHome" aria-label="Til menyen" hidden>
                 <img alt="" class="brand-mark" width="32" height="32" hidden>
                 <span class="brand-text"><strong></strong></span>
             </a>
@@ -85,6 +85,7 @@
     <main id="main">
         <!-- MENYVISNING -->
         <section class="view view-menu is-active" id="viewMenu" aria-label="Meny">
+            <h1 class="visually-hidden">Meny</h1>
             <div class="menu-overview">
                 <div class="menu-overview-row">
                     <div class="pickup-note">
@@ -144,13 +145,13 @@
             </ol>
 
             <div class="step-panel checkout-contact-card" id="step2" hidden>
-                <h2 class="sec-title">Kontaktinformasjon</h2>
+                <h1 class="sec-title">Kontaktinformasjon</h1>
                 <div class="field contact-form-field">
                     <label class="field-label contact-form-label" for="custName">
                         <span class="contact-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2Z"/></svg></span><span>Hele navn <small class="contact-requirement">(påkrevd)</small></span>
                     </label>
                     <div class="validated-input contact-form-control">
-                        <input id="custName" class="input" type="text" maxlength="120" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
+                        <input id="custName" class="input" type="text" maxlength="120" required aria-describedby="errName" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
                         <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                     </div>
                     <p class="err" id="errName" hidden>Skriv inn navnet ditt.</p>
@@ -162,7 +163,7 @@
                     <div class="phone-row contact-form-phone">
                         <span class="phone-prefix">+47</span>
                         <div class="validated-input contact-form-control">
-                            <input id="custPhone" class="input" type="tel" minlength="8" maxlength="8" pattern="[49][0-9]{7}" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="done">
+                            <input id="custPhone" class="input" type="tel" required aria-describedby="errPhone" minlength="8" maxlength="8" pattern="[49][0-9]{7}" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="done">
                             <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                         </div>
                     </div>
@@ -173,15 +174,15 @@
                         <span class="contact-form-icon" aria-hidden="true">✉</span><span>E-postadresse <small class="contact-requirement">(valgfri)</small></span>
                     </label>
                     <div class="contact-form-control">
-                        <input id="custEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
+                        <input id="custEmail" class="input" type="email" maxlength="254" aria-describedby="custEmailHelp errEmail" placeholder="navn@epost.no" autocomplete="email" inputmode="email">
                     </div>
-                    <p class="contact-email-help">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
+                    <p class="contact-email-help" id="custEmailHelp">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
                     <p class="err" id="errEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                 </div>
             </div>
 
             <div class="step-panel" id="step3" hidden>
-                <h2 class="sec-title">Når vil du hente?</h2>
+                <h1 class="sec-title">Når vil du hente?</h1>
                 <p class="hint" id="pickupHint">Velg hvordan du vil hente bestillingen.</p>
                 <div class="pickup-choices" id="pickupChoices">
                     <button class="pickup-choice" data-pickup-mode="asap" aria-pressed="false" type="button"><strong>Snarest</strong></button>
@@ -203,8 +204,8 @@
         <section class="view view-profile" id="viewProfile" aria-label="Min profil" hidden>
             <div class="profile-home" id="profileHome">
                 <div class="profile-hero">
-                    <div class="profile-avatar" id="profileHeroAvatar" aria-hidden="true">K</div>
-                    <strong class="profile-hero-name" id="profileHeroName">Min profil</strong>
+                    <div class="profile-avatar" id="profileHeroAvatar" aria-hidden="true"></div>
+                    <h1 class="profile-hero-name" id="profileHeroName">Min profil</h1>
                     <span class="profile-hero-sub" id="profileHeroPhone">Kundeprofil</span>
                 </div>
 
@@ -266,7 +267,7 @@
                                 <span>Hele navn <small class="contact-requirement">(påkrevd)</small></span>
                             </label>
                             <div class="validated-input contact-form-control">
-                                <input id="profName" class="input" type="text" maxlength="120" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
+                                <input id="profName" class="input" type="text" maxlength="120" required aria-describedby="errProfName" placeholder="Fornavn og etternavn" autocomplete="name" autocapitalize="words" enterkeyhint="next">
                                 <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                             </div>
                             <p class="err" id="errProfName" hidden>Skriv inn navnet ditt.</p>
@@ -279,7 +280,7 @@
                             <div class="phone-row contact-form-phone">
                                 <span class="phone-prefix">+47</span>
                                 <div class="validated-input contact-form-control">
-                                    <input id="profPhone" class="input" type="tel" minlength="8" pattern="[49][0-9]{7}" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="next" maxlength="8">
+                                    <input id="profPhone" class="input" type="tel" required aria-describedby="errProfPhone" minlength="8" pattern="[49][0-9]{7}" inputmode="numeric" placeholder="8 siffer" autocomplete="tel-national" enterkeyhint="next" maxlength="8">
                                     <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                                 </div>
                             </div>
@@ -291,10 +292,10 @@
                                 <span>E-postadresse <small class="contact-requirement">(valgfri)</small></span>
                             </label>
                             <div class="validated-input contact-form-control">
-                                <input id="profEmail" class="input" type="email" maxlength="254" placeholder="navn@epost.no" autocomplete="email" inputmode="email" enterkeyhint="done">
+                                <input id="profEmail" class="input" type="email" maxlength="254" aria-describedby="profEmailHelp errProfEmail" placeholder="navn@epost.no" autocomplete="email" inputmode="email" enterkeyhint="done">
                                 <span class="valid-check" hidden aria-label="Gyldig">✓</span>
                             </div>
-                            <p class="contact-email-help">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
+                            <p class="contact-email-help" id="profEmailHelp">Hvis du skriver inn e-post, sender vi kvittering og informasjon om når bestillingen kan hentes.</p>
                             <p class="err" id="errProfEmail" hidden>Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.</p>
                         </div>
                         <button class="btn btn-primary" id="btnSaveProfile" type="button">Lagre opplysninger</button>
@@ -349,11 +350,11 @@
 
     <!-- ORDREBEKREFTELSE -->
     <div class="modal-backdrop" id="confirmBackdrop" hidden></div>
-    <div class="confirm-modal" id="confirmModal" role="dialog" aria-modal="true" aria-label="Bestilling mottatt" hidden>
+    <div class="confirm-modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
         <div class="confirm-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
         </div>
-        <h2>Bestilling mottatt</h2>
+        <h2 id="confirmTitle">Bestilling mottatt</h2>
         <p id="confirmText"></p>
         <div class="confirm-meta" id="confirmMeta"></div>
         <button class="btn btn-primary btn-block" id="btnConfirmDone" type="button">Tilbake til menyen</button>
