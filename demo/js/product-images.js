@@ -3,7 +3,7 @@
  * Never append ?w= to Firebase/Google/other origins that do not support it.
  * This utility does not upload or recompress images stored in Firebase. */
 const IMAGE_PRESETS = Object.freeze({
-  menu: Object.freeze({ widths: [80, 160, 240], sizes: '(max-width: 400px) 72px, 76px', ratio: 1, quality: 72 }),
+  menu: Object.freeze({ widths: [120, 240, 360], sizes: '(max-width: 360px) 94px, (max-width: 400px) 100px, 126px', ratio: 1, quality: 72 }),
   hero: Object.freeze({ widths: [480, 800, 1200], sizes: '(max-width: 520px) 100vw, 520px', ratio: 0.6, quality: 78 }),
   admin: Object.freeze({ widths: [56, 112, 168], sizes: '46px', ratio: 1, quality: 68 }),
   category: Object.freeze({ widths: [80, 160, 240], sizes: '76px', ratio: 1, quality: 68 }),

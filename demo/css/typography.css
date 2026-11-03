@@ -14,7 +14,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { font-size: var(--text-sm) !important; font-weight: var(--weight-regular); }
 /* Normalize text-bearing containers too: old page-specific declarations
    may no longer introduce fifth, sixth or fractional font sizes. */
-body *:not(svg):not(svg *):not(i):not([aria-hidden="true"]):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.fa):not(.fas):not(.far):not(.fab):not([data-icon]):not([class^="icon-"]):not([class*=" icon-"]) {
+body *:not(svg):not(svg *):not(i):not([aria-hidden="true"]):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.fa):not(.fas):not(.far):not(.fab):not([data-icon]):not([class^="icon-"]):not([class*=" icon-"]):not(:is(.prod-name,.prod-desc,.prod-price,.prod-cart-badge,.prod-cart-label,.prod-list-allergens,.prod-soldout-badge)) {
   font-size: var(--text-sm) !important;
 }
 /* Default: all standard written content and form elements. */

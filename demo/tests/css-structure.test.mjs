@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
+import { CUSTOMER_PALETTES } from '../js/palette.js';
 
 const root = new URL('../', import.meta.url);
 const text = name => readFile(new URL(name,root),'utf8');
@@ -81,4 +82,53 @@ test('merged admin product editor retains both settings and modal layers', async
   assert.ok(css.includes('.product-editor-backdrop'), 'product editor backdrop lost');
   assert.ok(css.includes('#modalEditor.modal-editor'), 'modal editor selector lost');
   assert.ok(css.indexOf('Restaurantinnstillinger') < css.indexOf('.product-editor-backdrop'));
+});
+
+test('menu product row is rebuilt in place for all four palette modes', async () => {
+  const css=await text('css/customer.css');
+  const theme=await text('css/customer-theme.css');
+  const dark=await text('css/theme.css');
+  const typography=await text('css/typography.css');
+  const from=css.indexOf('MENU PRODUCT CARDS — reference design rebuilt in place');
+  const to=css.indexOf('Keep the mobile application and its fixed controls');
+  assert.ok(from>=0 && to>from);
+  const block=css.slice(from,to);
+  assert.match(block,/grid-template-columns:var\(--menu-photo\) minmax\(0,1fr\)/);
+  assert.match(block,/clip-path:polygon\(0 0,85% 0,100% 100%,0 100%\)/);
+  assert.match(block,/var\(--palette-success/);
+  assert.match(block,/var\(--palette-success-text/);
+  assert.match(block,/var\(--palette-surface/);
+  assert.match(block,/var\(--palette-button/);
+  assert.match(block,/var\(--text-lg/);
+  assert.ok(!block.includes('Single mobile product list for every device'));
+  assert.ok(!theme.includes(':is(.saved-flash, .ingredient-chip, .prod-cart-badge)'));
+  assert.ok(!dark.includes('html[data-theme="dark"] .prod-cart-badge {'));
+  assert.ok(typography.includes('.prod-cart-label'));
+});
+
+test('four customer palettes keep cart ribbon text readable in light and dark modes', () => {
+  const luminance = hex => {
+    const rgb=[1,3,5].map(i=>Number.parseInt(hex.slice(i,i+2),16)/255)
+      .map(value=>value<=0.04045?value/12.92:((value+0.055)/1.055)**2.4);
+    return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;
+  };
+  const contrast=(a,b)=>{
+    const x=luminance(a), y=luminance(b);
+    return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);
+  };
+  const mix=(a,b,weight)=>'#'+[1,3,5].map(i=>
+    Math.round(Number.parseInt(a.slice(i,i+2),16)*weight+
+      Number.parseInt(b.slice(i,i+2),16)*(1-weight))
+      .toString(16).padStart(2,'0')).join('');
+  assert.equal(Object.keys(CUSTOMER_PALETTES).length,4);
+  for(const [key,palette] of Object.entries(CUSTOMER_PALETTES)){
+    for(const mode of ['light','dark']){
+      const [,,surface,,,success]=palette[mode];
+      const foreground=contrast(success,'#000000')>=contrast(success,'#FFFFFF')
+        ?'#000000':'#FFFFFF';
+      const gradientStart=mix(success,surface,0.97);
+      assert.ok(contrast(success,foreground)>=4.5,key+' '+mode+' solid label contrast');
+      assert.ok(contrast(gradientStart,foreground)>=4.5,key+' '+mode+' gradient label contrast');
+    }
+  }
 });
