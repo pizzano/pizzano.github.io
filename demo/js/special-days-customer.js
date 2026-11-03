@@ -1,4 +1,4 @@
-import {store,subscribe,ready} from './data.js?v=20261103-polling-optim1';
+import {store,subscribe,ready} from './data.js?v=20261103-slot-ci1';
 import {todaysSpecialDays,parseSpecialDays,osloToday} from './special-days.js';
 const banner=document.getElementById('specialDayGreeting');
 let selectedDay=null,selectionKey='';
