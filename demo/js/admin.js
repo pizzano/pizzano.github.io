@@ -1,4 +1,5 @@
 import { shouldSoundPendingOrder } from './order-alarm.js';
+import { productImageSources } from './product-images.js';
 import { shouldProbeEpson } from './printer-monitor-policy.js';
 import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-monitor-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
@@ -488,6 +489,13 @@ function dashboardCategoryImage(section) {
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
   } catch { return ''; }
 }
+function adminImageAttributes(imageUrl, variant) {
+  const image = productImageSources(imageUrl, variant);
+  return 'src="' + escapeHtml(image.src) + '"' +
+    (image.srcset
+      ? ' srcset="' + escapeHtml(image.srcset) + '" sizes="' + escapeHtml(image.sizes) + '"'
+      : '');
+}
 function dashboardCategoryEmoji(title) {
   const t = String(title || '').toLowerCase();
   if (t.includes('pizza')) return '🍕';
@@ -537,7 +545,7 @@ function renderCategories() {
           <button class="cat-toggle" data-toggle="${escapeHtml(section.id)}" type="button" aria-expanded="${isOpen}" aria-label="Vis produkter i ${escapeHtml(section.title || 'Uten navn')}">
             <span class="cat-category-thumb cat-category-thumb--${index % 6}" aria-hidden="true">
               <span class="cat-category-fallback">${categoryEmoji}</span>
-              ${categoryImage ? `<img src="${escapeHtml(categoryImage)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+              ${categoryImage ? `<img ${adminImageAttributes(categoryImage, 'category')} alt="" loading="lazy" decoding="async" fetchpriority="low" width="76" height="76" referrerpolicy="no-referrer">` : ''}
             </span>
             <span class="cat-labels">
               <span class="cat-name">${escapeHtml(section.title || 'Uten navn')}</span>
@@ -581,9 +589,7 @@ function renderCategories() {
               )}" draggable="true" title="Dra for å flytte produktet" aria-hidden="true">⋮⋮</span>
               ${
                 item.imageUrl
-                  ? `<img class="item-thumb" src="${escapeHtml(
-                      item.imageUrl
-                    )}" alt="" loading="lazy">`
+                  ? `<img class="item-thumb" ${adminImageAttributes(item.imageUrl, 'admin')} alt="" loading="lazy" decoding="async" fetchpriority="low" width="46" height="46">`
                   : '<span class="item-thumb item-thumb-empty" aria-hidden="true"></span>'
               }
               <span class="item-main">
