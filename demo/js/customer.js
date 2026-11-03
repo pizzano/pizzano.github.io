@@ -929,7 +929,9 @@ function renderCategories() {
     )
     .join('');
   const nextMarkup = searchControl + categoryTabs;
-  // Reusing unchanged category controls preserves the search input's focus.
+  // Search input value changes on every keystroke; keep the live node (and
+  // its focus/caret) when unrelated Firebase order updates arrive.
+  if (ui.searchOpen && el.menuSearch?.isConnected) return;
   if (nextMarkup === lastCategoryMarkup) return;
   el.catScroll.innerHTML = nextMarkup;
   lastCategoryMarkup = nextMarkup;
