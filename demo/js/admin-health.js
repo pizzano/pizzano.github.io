@@ -4,6 +4,7 @@
 import { DB_URL, backendInfo } from './data.js?v=20261103-slot-ci1';
 import { checkEpsonConnection } from './order-printer.js?v=20261016-cleanall1';
 import { smsHealthState, emailHealthState, activeCriticalAlerts } from './admin-health-policy.js';
+import { metricSummary, clearMetrics } from './performance-metrics.js';
 
 const $ = id => document.getElementById(id);
 const healthTab = document.querySelector('[data-settings-section="health"]');
@@ -14,6 +15,27 @@ let running = false;
 let lastRun = 0;
 let lastAlerts = null;
 
+function renderPerformance() {
+  const panel = $('perfSummary');
+  if (!panel) return;
+  const values = metricSummary().filter(row => row.samples > 0);
+  if (!values.length) {
+    panel.textContent = 'Ingen målinger registrert på denne enheten.';
+    return;
+  }
+  panel.replaceChildren(...values.map(row => {
+    const item = document.createElement('p');
+    item.className = 'set-hint';
+    item.textContent = row.label + ': ' + row.avg + ' ms i snitt · p95 ' +
+      row.p95 + ' ms (' + row.samples + ' målinger)';
+    return item;
+  }));
+}
+$('perfRefresh')?.addEventListener('click', renderPerformance);
+$('perfClear')?.addEventListener('click', () => {
+  clearMetrics();
+  renderPerformance();
+});
 function visible() {
   return !document.hidden && !document.getElementById('pageSettings')?.hidden &&
     !!healthTab && !healthTab.hidden;
@@ -163,7 +185,10 @@ printerButton?.addEventListener('click', async () => {
 });
 function onChange() {
   networkStatus();
-  if (visible()) void runChecks();
+  if (visible()) {
+    renderPerformance();
+    void runChecks();
+  }
 }
 window.addEventListener('kol-admin-page-change',onChange);
 window.addEventListener('kol-admin-settings-change',onChange);
@@ -175,3 +200,4 @@ window.setInterval(() => {
 },60000);
 networkStatus();
 printerLastStatus();
+renderPerformance();
