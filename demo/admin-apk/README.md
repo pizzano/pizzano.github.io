@@ -3,7 +3,7 @@
 Bu klasör yalnızca admin panelinin Android uygulamasıdır. Müşteri sitesi, Firebase, SMS ve e-posta servisleri değişmez.
 
 ## Nasıl açılır?
-APK, Android WebView içinde `https://bestill.online/demo/admin.html` sayfasını açar. GitHub Pages deposunun CNAME kaydı `bestill.online` olduğundan eski `pizzano.github.io` adresi yönlenebilir. Önceki sürüm sadece eski alan adına izin verdiği için yönlendirmeyi Opera'da açıyordu. 1.1 sürümü her iki alan adını da aynı uygulama içinde tutar.
+APK, Android WebView içinde `https://bestill.online/demo/admin.html` sayfasını açar. GitHub Pages deposunun CNAME kaydı `bestill.online` olduğundan eski `pizzano.github.io` adresi yönlenebilir. Önceki sürüm sadece eski alan adına izin verdiği için yönlendirmeyi Opera'da açıyordu. Version2 her iki alan adını da aynı uygulama içinde tutar. İnternet kesilip ana sayfa yüklenemezse uygulama içinde «Prøv igjen» ile yeniden bağlanma ekranı gösterilir.
 
 Uygulama kendi penceresinde çalışır; tarayıcı araç çubuğu göstermez. Web admin tasarımı ve Firebase işlevleri aynı kalır. İnternet gerekir. Ekran açık kalır; yükleme sırasında ince ilerleme çizgisi görünür.
 
