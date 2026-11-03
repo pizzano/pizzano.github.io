@@ -217,10 +217,11 @@ a.shop-info-value:hover { text-decoration: underline; text-underline-offset: 3px
   font-weight: 800;
   text-decoration: none;
 }
-.shop-info-action.is-primary {
-  border-color: var(--palette-accent);
-  background: var(--palette-accent);
-  color: var(--palette-light);
+.shop-info-action.is-primary,
+.shop-info-action.is-primary:visited {
+  border-color: var(--palette-button);
+  background: var(--palette-button);
+  color: var(--palette-button-text);
 }
 .shop-info-action[hidden] { display: none !important; }
 .shop-info-action svg { width: 16px; height: 16px; }
