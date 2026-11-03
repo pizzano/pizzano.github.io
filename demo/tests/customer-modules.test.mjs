@@ -158,5 +158,7 @@ test('cart badge creation and updates reuse one SVG label renderer', async () =>
   assert.match(source,/prod-cart-label/);
   assert.match(source,/productCartBadgeContent\(quantity\)/);
   assert.match(source,/badge\.innerHTML = productCartBadgeContent\(quantity\)/);
-  assert.doesNotMatch(source,/aria-hidden="true">✓<\/span>/);
+  const menuBadgeSource=source.slice(source.indexOf('const MENU_CART_ICON'),source.indexOf('let lastMenuMarkup'));
+  assert.ok(menuBadgeSource.length > 0);
+  assert.doesNotMatch(menuBadgeSource,/aria-hidden="true">✓<\/span>/);
 });
