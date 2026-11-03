@@ -45,7 +45,7 @@ import {
   allergenLabel,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261101-optionallergens1';
+} from './data.js?v=20261103-polling-optim1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand
