@@ -1,10 +1,29 @@
 /** Customer palette roles: main, background, card, text, border, confirmation, Uten / varsel. */
-const theme = (label, light, dark) => ({ label, colors: light, light, dark });
+const theme = (label, light, dark, advanced = {}) => ({ label, colors:light, light, dark, advanced });
+/* Four restrained restaurant palettes. Each has true dark surface, readable ink,
+   restrained card borders, separate selection, and accessible CTA contrast.
+   The existing stable palette IDs preserve Firebase selections. */
 export const CUSTOMER_PALETTES = {
-  reference: theme('2. Moderne Blå', ['#0752A2','#F6F8FC','#FFFFFF','#17253B','#CCD9ED','#0752A2','#9F3B24'], ['#75B6FF','#101928','#1A2B42','#F2F7FF','#405A76','#80C6FF','#EDB38E']),
-  lively: theme('4. Varm & Matvennlig', ['#B23608','#FCF8F4','#FFFFFF','#321E17','#F1D6C5','#B23608','#8B460F'], ['#FFAB79','#241713','#39241B','#FFF3EA','#80513B','#FFD0A2','#E3B58F']),
-  fresh: theme('1. Klassisk Grønn', ['#075629','#F5FAF6','#FFFFFF','#152D20','#C8E1CD','#075629','#A24B29'], ['#85DAAC','#101E16','#1E3325','#F0FFF4','#3D6E4C','#9AEBB6','#E7BD98']),
-  gourmet: theme('3. Elegant Lilla', ['#65228B','#FAF7FC','#FFFFFF','#2D1A35','#E0CEE9','#65228B','#954A70'], ['#CF9BED','#201527','#31213B','#FBF1FF','#715083','#DEADEB','#E5B0CB']),
+  reference: theme('1. Midnatt Blå',
+    ['#2768BF','#F5F7FC','#FFFFFF','#17243B','#D1DBEB','#168668','#A75B39'],
+    ['#6CB5FF','#0D1423','#1B2941','#F5F7FD','#405473','#5DD6B1','#F1AB78'],
+    { light:{button:'#2367CC',buttonText:'#FFFFFF',selected:'#DFEAFB',field:'#F8FAFF',header:'#17263F',muted:'#64748B'},
+      dark:{button:'#2478E8',buttonText:'#FFFFFF',selected:'#193C67',field:'#263753',header:'#111B30',muted:'#BFCBDD'} }),
+  lively: theme('2. Obsidian Kobber',
+    ['#9B5831','#FAF7F3','#FFFFFF','#2C2420','#E2D3C6','#23856B','#A35C37'],
+    ['#EFA46D','#12110F','#282521','#F8F0E6','#655247','#5DD2A3','#F1B080'],
+    { light:{button:'#A75D31',buttonText:'#FFFFFF',selected:'#F4DFCC',field:'#FFFCF7',header:'#29201C',muted:'#74675D'},
+      dark:{button:'#AA5A2A',buttonText:'#FFFFFF',selected:'#503522',field:'#35312E',header:'#181613',muted:'#C6B6A9'} }),
+  gourmet: theme('3. Skifer Orkidé',
+    ['#8058BB','#F8F6FC','#FFFFFF','#292139','#DED3EE','#26856C','#A2606A'],
+    ['#C59BFA','#141321','#2A243A','#F7F2FC','#615475','#71D7B8','#E9A6BA'],
+    { light:{button:'#7950B3',buttonText:'#FFFFFF',selected:'#EEE1FA',field:'#FCFAFF',header:'#27213A',muted:'#776C86'},
+      dark:{button:'#8653C9',buttonText:'#FFFFFF',selected:'#44305F',field:'#352D46',header:'#191525',muted:'#C8BED5'} }),
+  fresh: theme('4. Grafitt Smaragd',
+    ['#14795D','#F4F9F7','#FFFFFF','#142D29','#C6DFD5','#14795D','#A76442'],
+    ['#65E5B7','#0B1B19','#16302A','#F1F9F5','#365D52','#69D9B0','#E9B68C'],
+    { light:{button:'#087A5C',buttonText:'#FFFFFF',selected:'#D9F2E8',field:'#FAFDFB',header:'#15352C',muted:'#5B776E'},
+      dark:{button:'#058861',buttonText:'#FFFFFF',selected:'#074E39',field:'#203F37',header:'#10251F',muted:'#B8D3C8'} })
 };
 
 export const PALETTE_COLOR_LABELS = [
