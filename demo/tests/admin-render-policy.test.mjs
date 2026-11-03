@@ -88,6 +88,8 @@ test('admin wires partial render to Firebase origin without changing critical or
   assert.match(admin,/updateAdminMarkup\(el\.statRow, cards/);
   assert.match(admin,/updateAdminMarkup\(el\.orderStatRow, \[/);
   assert.match(admin,/updateAdminMarkup\(el\.orderList, listMarkup\)/);
+  assert.match(admin,/updateAdminMarkup\(el\.settings\.slotPreview, markup\)/);
+  assert.match(admin,/if \(key === lastPalettePreviewKey && node\.childElementCount\) return;/);
   assert.match(admin,/confirmationExpired\(order\)/);
   assert.match(admin,/acceptOrderWithEstimate/);
   assert.match(admin,/await printKitchenTicket\(order, \{ reprint, typography: store\.settings \}\)/);
