@@ -164,6 +164,71 @@ test('product popup actually opens and closes without undefined dialog state', a
   assert.equal(active.focusCount, 1);
 });
 
+test('five Firebase font tiers preview, save, reload and sync across admin/customer', async () => {
+  const original = await readFile(new URL('../js/typography-settings.js', import.meta.url), 'utf8');
+  const code = original.replace(/^import \{[^\n]+\} from '[^']+';\n/m, '');
+  assert.ok(!code.includes("import {"),'typography module import should be removable for isolated test');
+
+  function setup(settings, admin) {
+    const keys=['uiFontXs','uiFontSm','uiFontMd','uiFontLg','uiFontXl'];
+    const controls=Object.fromEntries(keys.map(key => [key, {
+      dataset:{uiFont:key},value:'',handlers:{},addEventListener(name,handler){this.handlers[name]=handler},
+      setCustomValidity(value){this.error=value}
+    }]));
+    const savedStatus={textContent:'',dataset:{}};
+    const button={disabled:false,handlers:{},addEventListener(name,handler){this.handlers[name]=handler}};
+    const css={};
+    const document={
+      activeElement:null,
+      documentElement:{style:{setProperty(name,value){css[name]=value}}},
+      querySelectorAll:()=>admin?Object.values(controls):[],
+      getElementById:id=>id==='uiFontStatus'?savedStatus:id==='btnSaveUiTypography'?button:null,
+    };
+    const store={settings:{...settings}};
+    let listener=null,saveObserver=null,mutationCount=0,saveCount=0;
+    runInNewContext(code,{
+      document,store,
+      subscribe:handler=>{listener=handler},
+      ready:()=>Promise.resolve(),
+      mutate:fn=>{mutationCount++;fn(store);listener?.('local')},
+      saveNow:async()=>{saveCount++;return true},
+      onStatus:handler=>{saveObserver=handler},
+    },{timeout:1500});
+    return {
+      store,controls,css,button,savedStatus,
+      emitRemote:()=>listener?.('remote'),
+      saved:()=>saveObserver?.({state:'saved'}),
+      counts:()=>({mutationCount,saveCount}),
+    };
+  }
+
+  const admin=setup({uiFontXs:10,uiFontSm:11,uiFontMd:12,uiFontLg:13},true);
+  assert.equal(admin.controls.uiFontXl.value,'22','old four-size settings get an XL default');
+  assert.equal(admin.css['--text-sm'],'11px','existing Firebase custom sizes survive');
+
+  admin.controls.uiFontMd.value='15';
+  admin.controls.uiFontMd.handlers.input();
+  assert.equal(admin.css['--text-md'],'15px','changes must preview immediately');
+  admin.controls.uiFontMd.handlers.change();
+  assert.equal(admin.store.settings.uiFontMd,15,'change must reach shared Firebase settings');
+  admin.saved();
+  assert.match(admin.savedStatus.textContent,/lagret i Firebase/);
+
+  admin.controls.uiFontXl.value='25';
+  admin.controls.uiFontXl.handlers.input();
+  admin.controls.uiFontXl.handlers.change();
+  await admin.button.handlers.click();
+  assert.equal(admin.store.settings.uiFontXl,25);
+  assert.equal(admin.counts().saveCount,1,'explicit Save writes through shared saveNow');
+
+  const customer=setup(admin.store.settings,false);
+  assert.equal(customer.css['--text-md'],'15px');
+  assert.equal(customer.css['--text-xl'],'25px');
+  customer.store.settings.uiFontXl=27;
+  customer.emitRemote();
+  assert.equal(customer.css['--text-xl'],'27px','customer must reflect subsequent Firebase updates');
+});
+
 test('product card renderer keeps price, cart action and lazy image hints', () => {
   const deps = {
     getItemBasePrice: () => 210,
