@@ -71,7 +71,7 @@ test('order-status updates cannot needlessly recreate unchanged menu cards', asy
 test('customer and related modules share one Firebase module URL', async () => {
   const names = ['customer.js', 'shop-info.js', 'special-days-customer.js', 'typography-settings.js'];
   const src = await Promise.all(names.map(name=>readFile(new URL('../js/'+name, import.meta.url),'utf8')));
-  for(const js of src) assert.match(js, /from ['"]\.\/data\.js\?v=20261103-slot-ci1['"]/);
+  for(const js of src) assert.match(js, /from ['"]\.\/data\.js\?v=20261103-capacity1['"]/);
 });
 
 test('SSE retry backs off and polling retains per-order REST fallback', async () => {
