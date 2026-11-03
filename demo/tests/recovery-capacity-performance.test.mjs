@@ -25,7 +25,7 @@ const mockCrypto={
     return result.buffer;
   }},
 };
-const at=1800000000000;
+const at=Date.now(); // Keep mock IDs within the real 24-hour retry window.
 
 test('25: same intent after reload keeps the same opaque Firebase order ID',async()=>{
   const storage=memoryStorage();

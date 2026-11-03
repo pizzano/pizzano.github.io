@@ -2,7 +2,7 @@
  * Firebase state, category events and cart mutation remain in customer.js.
  * These render helpers accept explicit dependencies to avoid hidden listeners.
  */
-import { escapeHtml } from './customer-format.js';
+import { escapeHtml } from './display-format.js';
 import { productImageSources } from './product-images.js';
 
 /** Alle blokker som vises i menylisten, i rekkefølge. */

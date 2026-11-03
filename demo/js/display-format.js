@@ -1,4 +1,4 @@
-/* Reusable, side-effect-free customer display formatting. */
+/* Shared, side-effect-free customer and admin display formatting. */
 export function escapeHtml(text) {
   return String(text == null ? '' : text)
     .replace(/&/g, '&amp;')
