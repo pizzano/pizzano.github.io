@@ -2371,3 +2371,6 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
     animation:none!important;
   }
 }
+
+/* Pickup time disclosure: the layout no longer lives in inline HTML styles. */
+#btnMorePickupTimes { width: 100%; margin-top: 10px; }
