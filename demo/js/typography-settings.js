@@ -1,5 +1,5 @@
 /* Shared live typography: Firebase menu.settings is the single source. */
-import { store, subscribe, ready, mutate } from './data.js?v=20261103-slot-ci1';
+import { store, subscribe, ready, mutate } from './data.js?v=20261103-capacity1';
 
 const fields = [
   ['uiFontXs', '--text-xs', 10],
