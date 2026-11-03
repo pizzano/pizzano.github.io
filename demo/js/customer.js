@@ -1184,9 +1184,10 @@ function openProduct(itemId, editLine = null) {
     loyaltyFree: Boolean(editLine?.loyaltyFree),
     loyaltyCycle: editLine?.loyaltyCycle || null,
     sizeId: editLine ? editLine.sizeId : defaultSize ? defaultSize.id : null,
+    // renderSheet initializes each size-specific group from defaultOptionIds.
     selections: editLine
       ? JSON.parse(JSON.stringify(editLine.selections))
-      : defaultSelectionFor(item),
+      : {},
     comment: editLine ? getDisplayComment(editLine) : '',
     removedIngredients: editLine && Array.isArray(editLine.removedIngredients)
       ? [...editLine.removedIngredients]
