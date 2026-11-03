@@ -2632,7 +2632,7 @@ async function placeOrder() {
 
 function profileInitials(name) {
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return 'K';
+  if (!parts.length) return '';
   if (parts.length === 1) return parts[0].slice(0, 1).toLocaleUpperCase('no');
   return (parts[0][0] + parts[parts.length - 1][0]).toLocaleUpperCase('no');
 }
