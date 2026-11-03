@@ -457,3 +457,27 @@
   #productSheet[data-motion],
   #sheetBackdrop[data-motion] {animation:none!important}
 }
+
+
+/* Narrow phones, virtual keyboard and safe touch hit areas. */
+#productSheet .sheet-scroll { scroll-padding-bottom: 100px; }
+#productSheet :is(.comment-area, .opt-row):focus-within { scroll-margin-bottom: 110px; }
+@media (max-width: 360px) {
+  #productSheet .sheet-foot-row { gap: 6px; }
+  #productSheet .qty button { min-height: 44px; }
+  #productSheet .option-quantity button { min-height: 40px; }
+  #productSheet #btnAddToCart { gap: 4px; }
+  #productSheet #btnAddToCart span {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  #productSheet #sheetTotal { flex: 0 0 auto; }
+}
+@media (max-width: 699px) and (max-height: 620px) {
+  #productSheet .sheet-hero-caption { margin-top: 148px; }
+  #productSheet .pd-hero-photo { height: 192px; }
+}
