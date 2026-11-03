@@ -11,11 +11,21 @@ html[data-customer-palette], html[data-customer-palette] body, html[data-custome
 html[data-customer-palette] body::before { background: none; }
 html[data-customer-palette] .view-menu .prod-grid { background: transparent; border-color: transparent; }
 html[data-customer-palette] .view-menu .prod-grid .prod-card { background: var(--palette-surface); border-bottom-color: var(--palette-border); }
-html[data-customer-palette] .btn-primary, html[data-customer-palette] .add-btn, html[data-customer-palette] .btn-add { background: var(--palette-button); color: var(--palette-button-text); border-color: var(--palette-button); }
 html[data-customer-palette] .view-menu .prod-grid .add-btn { background: transparent; color: transparent; }
-/* Unified customer actions; one shared color across menu, product, cart and checkout. */
-html[data-customer-palette] :is(.btn-primary,.btn-add,.checkout-actions .btn-primary,#btnToCheckout,#btnStepNext,#btnSaveProfile,#usePizzaBonus){background:var(--palette-button)!important;color:var(--palette-button-text)!important;border-color:var(--palette-button)!important}
-html[data-customer-palette] :is(.btn-primary,.btn-add):disabled{background:var(--palette-border)!important;color:var(--palette-muted)!important;border-color:var(--palette-border)!important}
+/* A single semantic primary action contract; the item + shape is painted by
+   customer.css::before but uses these same role tokens. Keep neutral controls neutral. */
+html[data-customer-palette] :is(.btn-primary,.btn-add,.shop-info-action.is-primary),
+html[data-customer-palette] :is(.btn-primary,.btn-add,.shop-info-action.is-primary):visited {
+  background:var(--palette-button)!important;
+  border-color:var(--palette-button)!important;
+  color:var(--palette-button-text)!important;
+}
+html[data-customer-palette] :is(.btn-primary,.btn-add):disabled {
+  background:var(--palette-border)!important;
+  border-color:var(--palette-border)!important;
+  color:var(--palette-muted)!important;
+  box-shadow:none!important;
+}
 html[data-customer-palette] :is(input.input,textarea.input,textarea.comment-area,.validated-input .input){background:var(--palette-input-bg)!important}
 html[data-customer-palette] :is(.view-menu .prod-desc,.hint,.view-cart .cart-detail-included){color:var(--palette-secondary-text)}
 
@@ -23,6 +33,8 @@ html[data-customer-palette] :is(.view-menu .prod-desc,.hint,.view-cart .cart-det
 /* Keep shared legacy dark overrides aligned with the customer theme. */
 html[data-customer-palette] main { background: var(--palette-bg) !important; }
 html[data-customer-palette] .app-header { background: var(--palette-header-bg) !important; }
+html[data-customer-palette] .app-header :is(.brand,.brand-text strong,.brand-text small,.hdr-btn:not(.is-on)) { color:var(--palette-header-text)!important; }
+
 html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; box-shadow: 0 5px 13px color-mix(in srgb,var(--palette-deep) 10%,transparent); }
 html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; box-shadow: 0 6px 15px color-mix(in srgb,var(--palette-deep) 14%,transparent); }
 html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
@@ -51,7 +63,7 @@ html[data-customer-palette] .valid-check { background: var(--palette-success); c
 /* Strong, consistent boundaries and distinct control states. */
 html[data-customer-palette] :is(.profile-menu-row, .card, .opt-group, .input, .pickup-choice, .time-btn, .shop-info-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
 html[data-customer-palette] .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
-html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-accent) !important; border-color: var(--palette-accent) !important; }
+html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-button) !important; border-color: var(--palette-button) !important; }
 html[data-customer-palette] :is(.opt-row.is-checked, .opt-row:has(input:checked), .time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-selection-bg) !important; border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open { border-color: var(--palette-accent) !important; }
 html[data-customer-palette] .ingredient-customize.is-open .ingredient-customize-toggle { background: var(--palette-soft) !important; color: var(--palette-accent); border-color: var(--palette-accent) !important; }
@@ -127,7 +139,7 @@ html[data-customer-palette] .sheet-fav.is-on {
 }
 html[data-customer-palette] .hdr-btn:focus-visible { outline: 2px solid var(--palette-accent); outline-offset: 3px; }
 
-/* Active header navigation uses a solid, readable theme accent. */
+/* Active header navigation uses the same primary action color as other buttons. */
 html[data-customer-palette] .hdr-btn.is-on,
 html[data-customer-palette] .hdr-btn.is-on:hover {
   background: var(--palette-button) !important;
@@ -140,17 +152,6 @@ html[data-customer-palette] .hdr-cart .cart-count {
   background: #ff1000 !important;
   color: #ffffff !important;
   box-shadow: 0 0 0 2px var(--palette-deep);
-}
-
-@media (forced-colors: active) {
-
-
-}
-
-/* Remove and decrease actions match the add action{
-  background: var(--palette-accent) !important;
-  color: #fff !important;
-  box-shadow: none !important;
 }
 
 /* Gentle theme tint for the pickup contact summary. */
