@@ -165,5 +165,6 @@ test('one themed status banner replaces the legacy double open/closed card', asy
   assert.match(customer,/lastRestaurantWindowKey/);
   assert.ok(base.includes('--palette-button'), 'allergen toggle still uses chosen theme button color');
   assert.ok(customer.includes('statusShopIcon.dataset.iconState'), 'avoid repainting icon every five seconds');
+  assert.ok(customer.includes("el.statusShopIcon.dataset.iconState = 'pending'"), 'connection loss must restore neutral icon');
   assert.match(customer,/hasVerifiedTime = \/\^\(\?:\[01\]\\d\|2\[0-3\]\):\[0-5\]\\d\$\//);
 });
