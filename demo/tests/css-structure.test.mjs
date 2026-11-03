@@ -157,10 +157,13 @@ test('one themed status banner replaces the legacy double open/closed card', asy
   assert.ok(!base.includes('.menu-overview'));
   assert.ok(!theme.includes('html[data-theme="dark"] .menu-overview'));
   for(const token of ['--palette-success','--palette-danger',
-    '--palette-surface','--palette-ink','--palette-button']) {
+    '--palette-surface','--palette-ink']) {
     assert.ok(status.includes(token),token+' missing');
   }
   assert.match(customer,/Forhåndsbestilling mulig · hent etter åpning/);
   assert.match(customer,/indefiniteManualClose/);
   assert.match(customer,/lastRestaurantWindowKey/);
+  assert.ok(base.includes('--palette-button'), 'allergen toggle still uses chosen theme button color');
+  assert.ok(customer.includes('statusShopIcon.dataset.iconState'), 'avoid repainting icon every five seconds');
+  assert.match(customer,/hasVerifiedTime = \/\^\(\?:\[01\]\\d\|2\[0-3\]\):\[0-5\]\\d\$\//);
 });

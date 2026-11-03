@@ -1131,7 +1131,7 @@ function renderOpenState() {
   el.openDot.classList.toggle('is-closed', !isOpen);
 
   const time = isOpen ? state.closesAt : preOpen ? state.todayOpensAt : state.opensAt;
-  const hasVerifiedTime = /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(String(time || ''));
+  const hasVerifiedTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(time || ''));
   // Manual closure without a known reopening must not promise a false time.
   const indefiniteManualClose = state.reason === 'manuelt' && !state.manualClosedUntil;
   el.statusTimePill.hidden = !hasVerifiedTime || indefiniteManualClose;
@@ -1142,7 +1142,11 @@ function renderOpenState() {
     ? '<path d="M3 10h18l-1.5-6h-15L3 10Z"/><path d="M5 10v10h14V10"/><path d="M9 20v-7h6v7"/><path d="M3 10c0 2 3 3 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0 1.5 3 4.5 2 4.5 0"/>'
     : '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
   const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
-  if (el.statusShopIcon.innerHTML !== icon) el.statusShopIcon.innerHTML = icon;
+  const iconState = isOpen ? 'open' : 'closed';
+  if (el.statusShopIcon.dataset.iconState !== iconState) {
+    el.statusShopIcon.innerHTML = icon;
+    el.statusShopIcon.dataset.iconState = iconState;
+  }
 
   el.btnToCheckout.disabled = !state.orderable;
   el.cartClosedHint.hidden = state.orderable === true;
