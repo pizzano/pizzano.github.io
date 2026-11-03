@@ -1,11 +1,9 @@
-import { createDataNormalizers } from './data-normalization.js';
+import { createDataNormalizers, detectIngredientRules } from './data-normalization.js';
 import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
-import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
+import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS, customerPageBaseUrl } from './order-confirmation.js';
 import { calculatePickupSlots } from './pickup-slots.js';
 import { effectivePickupLead, capacityFilteredSlots, pickupLoadFresh } from './pickup-capacity.js';
 import { metricClock, recordDuration } from './performance-metrics.js';
-import { detectIngredientRules } from './ingredient-detection.js';
-import { customerPageBaseUrl } from './order-links.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
 /**
  * data.js — Delt datalag for Restauranten.

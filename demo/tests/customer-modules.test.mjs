@@ -5,10 +5,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass } from '../js/display-format.js';
-import { validPhone, resolveScheduledPickupAt } from '../js/customer-pickup-utils.js';
-import { visibleMenuItems } from '../js/customer-menu-search.js';
-import { buildMenuBlocks, categoryIcon, renderProductCard } from '../js/customer-menu-view.js';
+import { escapeHtml, profileInitials, formatProfilePhone, orderStatusClass, validPhone } from '../js/display-format.js';
+import { resolveScheduledPickupAt } from '../js/pickup-slots.js';
+import { buildMenuBlocks, categoryIcon, renderProductCard, visibleMenuItems } from '../js/customer-menu-view.js';
 
 test('HTML escaping handles special characters without altering ordinary names', () => {
   assert.equal(escapeHtml('<b title="&">Pizza</b>'), '&lt;b title=&quot;&amp;&quot;&gt;Pizza&lt;/b&gt;');

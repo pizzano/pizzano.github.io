@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { confirmationDeadline, confirmationExpired, confirmationRemaining, ORDER_CONFIRM_WAIT_MS } from '../js/order-confirmation.js';
+import { confirmationDeadline, confirmationExpired, confirmationRemaining, ORDER_CONFIRM_WAIT_MS, customerPageBaseUrl, customerOrderLink } from '../js/order-confirmation.js';
 
 test('normal order expires exactly after three minutes', () => {
   const order = { id:'test-1', status:'mottatt', createdAt: 1000000 };
@@ -25,4 +25,13 @@ test('explicit deadline is respected for ordinary orders', () => {
   const order={status:'mottatt',createdAt:1000000,confirmationDeadline:1250000};
   assert.equal(confirmationExpired(order,1190000),false);
   assert.equal(confirmationExpired(order,1250000),true);
+});
+
+test('order links follow the real shop directory without hardcoded /demo/ paths', () => {
+  assert.equal(customerPageBaseUrl('https://example.test/shop/admin.html?tab=orders'), 'https://example.test/shop/');
+  assert.equal(customerPageBaseUrl('https://example.test/demo/'), 'https://example.test/demo/');
+  assert.equal(customerOrderLink('ord_abcdefg', 'https://example.test/shop/admin.html'),
+    'https://example.test/shop/?order=ord_abcdefg');
+  assert.throws(() => customerOrderLink('other', 'https://example.test/shop/'));
+  assert.throws(() => customerPageBaseUrl('file:///tmp/index.html'));
 });

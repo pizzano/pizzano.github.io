@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { shouldSoundPendingOrder } from '../js/order-alarm.js';
+import { shouldSoundPendingOrder } from '../js/order-confirmation.js';
 const at = 1_000_000;
 test('preopening order stays silent before opening and becomes audible at opening', () => {
   const order = { status:'mottatt', confirmationNoTimeout:true, createdAt:at-3600000 };

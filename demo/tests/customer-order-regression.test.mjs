@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { confirmationDeadline, confirmationExpired, confirmationRemaining, ORDER_CONFIRM_WAIT_MS } from '../js/order-confirmation.js';
-import { sortCartByCategory } from '../js/cart-order.js';
+import { sortCartByCategory, getDisplayComment } from '../js/order-product-summary.js';
 import { loyaltyPhone, pizzaBonus, largePizza, automaticPizzaIndex, historicalPizzaEvents } from '../js/loyalty.js';
 
 const src = name => readFile(new URL('../' + name, import.meta.url), 'utf8');
@@ -112,4 +112,10 @@ test('pickup intervals and staff acceptance/notifications/printing remain wired'
   assert.match(admin, /printOrderFromAdmin/);
   assert.match(admin, /smsReceiptSent/);
   assert.match(admin, /emailReceiptSent/);
+});
+
+test('saved order comments hide duplicated automatic ingredient removals', () => {
+  assert.equal(getDisplayComment({ removedIngredients:['Løk'], comment:'Uten løk\nEkstra sterk' }), 'Ekstra sterk');
+  assert.equal(getDisplayComment({ removedIngredients:['Ost'], comment:'Uten ost' }), '');
+  assert.equal(getDisplayComment({ removedIngredients:[], comment:'Lite salt' }), 'Lite salt');
 });

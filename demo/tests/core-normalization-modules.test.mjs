@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createDataNormalizers } from '../js/data-normalization.js';
+import { createDataNormalizers, detectIngredientRules } from '../js/data-normalization.js';
 import { restorePreviousOrderSelections } from '../js/order-product-summary.js';
 import {
   emailReceiptKinds, emailReceiptSent, emailReceiptDetail,
@@ -150,4 +150,13 @@ test('extracted modules remain pure and core entry points call them', () => {
   assert.match(root('data.js'), /createDataNormalizers\(\{/);
   assert.match(root('customer.js'), /restorePreviousOrderSelections\(item, line, getItemOptionGroups\)/);
   assert.match(root('admin.js'), /smsReceiptSentForOrders\(id, getOrders\(\)\)/);
+});
+
+test('ingredient detection stays conservative after consolidation', () => {
+  const names = detectIngredientRules('Pizza med pepperoni, rødløk og ost').map(item => item.name.toLocaleLowerCase('no'));
+  assert.ok(names.includes('pepperoni'));
+  assert.ok(names.includes('rødløk'));
+  assert.ok(names.includes('ost'));
+  assert.ok(!names.includes('løk'), 'Overlapping rødløk must not generate a second løk removal');
+  assert.deepEqual(detectIngredientRules('Biff eller kylling'), []);
 });
