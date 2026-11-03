@@ -1,0 +1,17 @@
+/* Read-only service health section. Reuses the admin theme's core colors. */
+.health-panel-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0}
+.health-panel-actions .btn{min-height:42px;text-decoration:none}
+.health-panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.health-service{display:flex;flex-direction:column;gap:7px;padding:13px;border:1px solid var(--line,#dce3dc);border-radius:13px;background:var(--surface,#fff);min-width:0}
+.health-service strong{font-size:var(--font-size-3,14px);font-weight:700}
+.health-service output{display:block;padding:5px 0;font-size:var(--font-size-3,14px);font-weight:700;color:var(--ink,#26332c);overflow-wrap:anywhere}
+.health-service small{color:var(--ink-2,#69756c);font-size:var(--font-size-4,12px);line-height:1.5;overflow-wrap:anywhere}
+.health-service[data-state="ok"] output{color:#19804a}
+.health-service[data-state="warning"] output{color:#a26a1b}
+.health-service[data-state="error"] output{color:#c24239}
+.health-service[data-state="unknown"] output{color:var(--ink-2,#69756c)}
+.critical-system-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 14px;padding:10px 14px;border:1px solid #cf554f;border-radius:11px;background:#fff1ec;color:#77231e;font-weight:700;font-size:13px}
+.critical-system-banner[hidden]{display:none}
+.critical-system-banner button{min-height:40px;flex-shrink:0;padding:7px 11px;border:1px solid #ad4641;border-radius:9px;background:#fff;color:#782721;font:inherit;cursor:pointer}
+.critical-system-banner button:focus-visible,.health-panel-actions :focus-visible{outline:2px solid #ba8427;outline-offset:2px}
+@media(max-width:500px){.health-panel-grid{grid-template-columns:1fr}.critical-system-banner{margin:8px;flex-wrap:wrap}.critical-system-banner button{width:100%}}
