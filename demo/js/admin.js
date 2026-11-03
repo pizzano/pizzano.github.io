@@ -1,4 +1,5 @@
 import { shouldSoundPendingOrder } from './order-alarm.js';
+import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired } from './order-confirmation.js';
 import { detectIngredientRules } from './ingredient-detection.js';
@@ -2908,7 +2909,7 @@ function setEpsonPrinterStatus(status, message) {
   }
 }
 async function testEpsonFromOrders() {
-  if (document.hidden || printerCheckRunning) return;
+  if (document.hidden || printerCheckRunning || printingOrderIds.size) return;
   const epoch = ++printerProbeEpoch;
   printerCheckRunning = true;
   // Preserve the red outage indication during periodic retries instead of
@@ -2983,6 +2984,7 @@ async function printOrderFromAdmin(orderId, reprint = false) {
   }
   printingOrderIds.add(orderId);
   if (selectedOrderId === orderId) renderOrderDetail(orderId);
+  setEpsonPrinterStatus('pending', reprint ? 'Skriver ut kopi av bestillingen…' : 'Sender kjøkkenkvittering til Epson…');
   try {
     await printKitchenTicket(order, { reprint, typography: store.settings });
     setEpsonPrinterStatus('ok', 'Siste utskrift bekreftet av Epson.');
@@ -4053,10 +4055,14 @@ el.filterBtns.forEach((btn) => {
  * Modaler
  * ------------------------------------------------------------------ */
 
+let modalPreviousFocus = null;
 function openModal(node) {
+  if (el.modalBackdrop.hidden) modalPreviousFocus = document.activeElement;
   el.modalBackdrop.hidden = false;
   node.hidden = false;
+  node.setAttribute('tabindex', '-1');
   document.body.style.overflow = 'hidden';
+  focusDialog(node);
 }
 
 function closeModals() {
@@ -4076,6 +4082,8 @@ function closeModals() {
   attachTargetItemId = null;
   openOrderId = null;
   actionOrderId = null;
+  if (modalPreviousFocus?.isConnected) modalPreviousFocus.focus({ preventScroll: true });
+  modalPreviousFocus = null;
 }
 
 document.addEventListener('click', (event) => {
@@ -4085,6 +4093,14 @@ document.addEventListener('click', (event) => {
 el.modalBackdrop.addEventListener('click', closeModals);
 
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Tab' && !el.modalBackdrop.hidden) {
+    const active = [
+      el.modalLibrary, el.modalEditor, el.modalCategory, el.modalOrder,
+      el.modalAcceptOrder, el.modalRejectOrder, el.modalConfirm,
+    ].find(node => !node.hidden);
+    if (active) trapDialogTab(event, active);
+    return;
+  }
   if (event.key !== 'Escape') return;
   if (!el.modalBackdrop.hidden) {
     closeModals();
