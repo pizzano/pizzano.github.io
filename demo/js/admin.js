@@ -11,6 +11,7 @@ import { getDisplayComment } from './order-comments.js';
 import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261103-premium-dark1';
 import { sortCartByCategory } from './cart-order.js';
 import { busyAcceptMinutes } from './pickup-capacity.js';
+import { metricClock, recordDuration } from './performance-metrics.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { customerOrderLink } from './order-links.js';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
@@ -2775,6 +2776,7 @@ function updateOrdersConnection() {
   connection.setAttribute('aria-label',connected ? 'Nett: tilkoblet' : 'Nett: frakoblet');
 }
 function renderOrders() {
+  const timing = metricClock();
   const all = getOrders();
   if (all.some(order => shouldSoundForOrder(order))) playOrderAlert();
   else stopOrderAlert();
@@ -2798,6 +2800,7 @@ function renderOrders() {
     el.orderDetailLive.innerHTML = '';
   }
   syncOrdersWorkspaceLayout();
+  recordDuration('admin_orders_render', timing);
 }
 
 el.orderFilterBtns.forEach((button) => {
@@ -3203,6 +3206,7 @@ async function confirmAcceptOrder() {
     }
   }
   el.btnAcceptConfirm.disabled = true;
+  const acceptTiming = metricClock();
   let ok = false;
   try {
     ok = scheduled
@@ -3212,6 +3216,7 @@ async function confirmAcceptOrder() {
     console.error('Godta feilet:', error);
     showAcceptError(acceptedOrderId, String(error?.message || 'Uventet feil'));
   } finally {
+    recordDuration('admin_accept', acceptTiming);
     el.btnAcceptConfirm.disabled = false;
   }
   if (!ok) {
