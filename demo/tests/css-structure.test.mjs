@@ -84,33 +84,34 @@ test('merged admin product editor retains both settings and modal layers', async
   assert.ok(css.indexOf('Restaurantinnstillinger') < css.indexOf('.product-editor-backdrop'));
 });
 
-test('menu product row is rebuilt in place for all four palette modes', async () => {
+test('menu product card has one reference layout without cascade overrides', async () => {
   const css=await text('css/customer.css');
   const theme=await text('css/customer-theme.css');
   const dark=await text('css/theme.css');
   const typography=await text('css/typography.css');
-  const from=css.indexOf('MENU PRODUCT CARDS — reference design rebuilt in place');
-  const to=css.indexOf('Keep the mobile application and its fixed controls');
-  assert.ok(from>=0 && to>from);
-  const block=css.slice(from,to);
-  assert.match(block,/grid-template-columns:var\(--menu-photo\) minmax\(0,1fr\)/);
-  assert.match(block,/clip-path:polygon\(0 0,85% 0,100% 100%,0 100%\)/);
-  assert.match(block,/var\(--palette-success/);
-  assert.match(block,/var\(--palette-success-text/);
-  assert.match(block,/var\(--palette-surface/);
-  assert.match(block,/var\(--palette-button/);
-  assert.match(block,/var\(--text-lg/);
-  // The compact variant changes the original rules rather than adding overrides.
-  assert.ok(block.includes('--menu-photo:clamp(84px,21vw,108px)'));
-  assert.ok(block.includes('min-height:calc(var(--menu-photo) + 16px)'));
-  assert.ok(block.includes('padding:clamp(7px,1.7vw,10px)'));
-  assert.ok(block.includes('--menu-action:clamp(44px,9.5vw,52px)'));
-  assert.ok(block.includes('min-height:26px'), 'green ribbon must remain readable');
-  assert.ok(block.includes('font-size:var(--text-xs,10px)!important'));
-  assert.ok(!block.includes('Single mobile product list for every device'));
-  assert.ok(!theme.includes(':is(.saved-flash, .ingredient-chip, .prod-cart-badge)'));
-  assert.ok(!dark.includes('html[data-theme="dark"] .prod-cart-badge {'));
-  assert.ok(typography.includes('.prod-cart-label'));
+  const renderer=await text('js/customer-menu-view.js');
+  const start=css.indexOf('MENU PRODUCT CARDS — sole layout owner');
+  const end=css.indexOf('Keep the mobile application and its fixed controls');
+  assert.ok(start>=0 && end>start);
+  const block=css.slice(start,end);
+  assert.equal((block.match(/\.prod-card \{/g)||[]).length,1,'only one base card definition');
+  assert.match(block,/grid-template-columns:var\(--menu-photo\) minmax\(0,1fr\) var\(--menu-side\)/);
+  assert.match(block,/grid-template-areas:"photo details actions"/);
+  assert.match(block,/justify-content:space-between/);
+  assert.match(block,/border-radius:100%/);
+  for(const token of ['--palette-success','--palette-success-text','--palette-surface','--palette-button','--palette-ink','--text-lg']){
+    assert.ok(block.includes('var('+token),token+' should inherit the theme');
+  }
+  assert.doesNotMatch(block,/!important|@import|\.add-btn::(?:before|after)/);
+  assert.doesNotMatch(theme,/\.prod-(?:grid|card|desc|price|side)/,'customer palette must not override product layout');
+  assert.doesNotMatch(dark,/\.prod-(?:grid|card|desc|price|side|name)/,'dark mode must use palette variables');
+  assert.match(typography,/:not\(:is\(\.prod-name/,'global text normalization must exclude menu text');
+  assert.match(renderer, /class="prod-side"/);
+  assert.match(renderer, /data-open="/);
+  assert.match(renderer, /data-quick-add="/);
+  const side=renderer.slice(renderer.indexOf('<div class="prod-side">'));
+  assert.ok(side.indexOf('class="prod-price"') < side.indexOf('data-open="'));
+  assert.match(side, /<svg viewBox="0 0 24 24"/);
 });
 
 test('four customer palettes keep cart ribbon text readable in light and dark modes', () => {
