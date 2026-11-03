@@ -1,4 +1,5 @@
 import { shouldSoundPendingOrder } from './order-alarm.js';
+import { adminDataSignatures, adminRenderChanges, createMarkupUpdater } from './admin-render-policy.js';
 import { productImageSources } from './product-images.js';
 import { shouldProbeEpson } from './printer-monitor-policy.js';
 import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-monitor-policy.js';
@@ -407,6 +408,8 @@ function dashboardStatIcon(label) {
   const tones = {"Kategorier":"orange","Produkter":"blue","Utsolgt":"red","Skjult":"slate","Valggrupper":"purple","Nye bestillinger":"green"};
   return `<span class="stat-card-icon stat-card-icon--${tones[label] || 'slate'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[label] || icons.Kategorier}</svg></span>`;
 }
+const updateAdminMarkup = createMarkupUpdater();
+
 function renderStats() {
   const stats = getStats();
   const state = getOpenState();
@@ -436,16 +439,16 @@ function renderStats() {
       tone: stats.newOrders ? 'accent' : '',
     },
   ];
-  el.statRow.innerHTML = cards
+  updateAdminMarkup(el.statRow, cards
     .map(
       (card) =>
         `<div class="stat-card${card.tone ? ` is-${card.tone}` : ''}">${dashboardStatIcon(card.label)}<span class="stat-card-info"><strong>${escapeHtml(
           String(card.value)
         )}</strong><span>${escapeHtml(card.label)}</span></span></div>`
     )
-    .join('');
+    .join(''));
 
-  el.orderStatRow.innerHTML = [
+  updateAdminMarkup(el.orderStatRow, [
     { label: 'Nye', value: stats.newOrders, tone: stats.newOrders ? 'accent' : '' },
     { label: 'Aktive nå', value: stats.activeOrders },
     { label: 'Bestillinger i dag', value: stats.todayOrders },
@@ -457,7 +460,7 @@ function renderStats() {
           String(card.value)
         )}</strong><span>${escapeHtml(card.label)}</span></div>`
     )
-    .join('');
+    .join(''));
 }
 
 /* ------------------------------------------------------------------ *
@@ -2464,9 +2467,10 @@ function renderOrderList() {
       - (Number(a.createdAt) || Date.parse(a.createdAt) || 0)
       || String(b.id || '').localeCompare(String(a.id || ''));
   });
-  el.orderList.innerHTML = orders.map((order) => orderListRowHtml(order,
+  const listMarkup = orders.map((order) => orderListRowHtml(order,
     order.status === 'mottatt' && !confirmationExpired(order))).join('') || '<div class="orders-list-empty"><strong>Ingen bestillinger</strong><span>' + (ui.orderFilter === 'scheduled' ? 'Ingen aktive planlagte hentinger.' : 'Ingen bestillinger å vise.') + '</span></div>';
-  el.orderList.scrollTop = previousScrollTop;
+  // Do not destroy existing order rows when their markup is unchanged.
+  if (updateAdminMarkup(el.orderList, listMarkup)) el.orderList.scrollTop = previousScrollTop;
 }
 function detailLineHtml(line) {
   const { item } = findItem(line.itemId);
@@ -4190,7 +4194,13 @@ el.btnConfirmOk.addEventListener('click', () => {
  * Oppstart
  * ------------------------------------------------------------------ */
 
-function renderAll() {
+let lastAdminSignatures = null;
+function renderAll(origin = 'manual') {
+  const nextSignatures = adminDataSignatures(store);
+  const dirty = adminRenderChanges(lastAdminSignatures, nextSignatures, origin);
+  lastAdminSignatures = nextSignatures;
+
+  if (dirty.menu) {
   const restaurantName = String(store.settings.restaurantName || '').trim();
   const restaurantLogo = String(store.settings.restaurantLogo || '').trim();
   const brandLogo = document.querySelector('.side-brand img');
@@ -4210,22 +4220,24 @@ function renderAll() {
     const title = ordersBrand.querySelector('.orders-brand-name');
     if (title && title.textContent !== restaurantName) title.textContent = restaurantName;
   }
-  renderStats();
-  if (ui.page === 'products') {
+  }
+  if (dirty.stats) renderStats();
+  if (ui.page === 'products' && dirty.menu) {
     renderCategories();
     if (skipPanelRender) skipPanelRender = false;
     else renderPanel();
-  } else if (ui.page === 'groups') {
+  } else if (ui.page === 'groups' && dirty.menu) {
     renderGroupLibrary();
-  } else if (ui.page === 'orders') {
+  } else if (ui.page === 'orders' && (dirty.orders || dirty.menu)) {
     renderOrders();
-  } else if (ui.page === 'settings') {
+  } else if (ui.page === 'settings' && dirty.menu) {
     renderSettings();
   }
-  el.backendHint.textContent = `Lagring: ${backendInfo.label}`;
+  const backendLabel = `Lagring: ${backendInfo.label}`;
+  if (el.backendHint.textContent !== backendLabel) el.backendHint.textContent = backendLabel;
 }
 
-subscribe(() => renderAll());
+subscribe((_state, origin) => renderAll(origin));
 
 ready().then(() => {
   renderAll();
