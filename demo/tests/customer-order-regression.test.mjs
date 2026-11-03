@@ -102,9 +102,11 @@ test('offline protection stops sending before bonus reservation', async () => {
 test('pickup intervals and staff acceptance/notifications/printing remain wired', async () => {
   const data = await src('js/data.js');
   const admin = await src('js/admin.js');
-  assert.match(data, /const interval=15;/);
-  assert.match(data, /Number\(settings\.pickupLeadMinutes\)\|\|30/);
-  assert.match(data, /latest=state\.preOpen/);
+  const slots = await src('js/pickup-slots.js');
+  assert.match(data, /calculatePickupSlots\(\{/);
+  assert.match(slots, /interval = 15/);
+  assert.match(slots, /pickupLeadMinutes = 30/);
+  assert.match(slots, /closeMinute <= openMinute/);
   assert.match(admin, /data-accept-inline/);
   assert.match(admin, /acceptOrderWithEstimate/);
   assert.match(admin, /printOrderFromAdmin/);
