@@ -123,17 +123,6 @@ html[data-theme="dark"] main {
   box-shadow: 0 0 42px color-mix(in srgb, var(--palette-deep, rgb(0,0,0)) 18%, transparent) !important;
 }
 
-html[data-theme="dark"] .menu-overview {
-  border-color: var(--palette-accent, #294735) !important;
-  background: linear-gradient(135deg, var(--palette-surface, #17261d) 0%, var(--palette-surface, #161d19) 100%) !important;
-}
-
-html[data-theme="dark"] .closed-banner {
-  border-color: var(--palette-accent, #61462a) !important;
-  background: var(--palette-surface, #2c2117) !important;
-  color: var(--palette-accent, #f0c38d) !important;
-}
-
 html[data-theme="dark"] .prod-card,
 html[data-theme="dark"] .prod-grid,
 html[data-theme="dark"] .prod-grid .prod-card {
@@ -325,7 +314,7 @@ html[data-theme="dark"] .confirm-modal {
   color: var(--ink) !important;
 }
 
-html[data-theme="dark"] .allergen-visibility-control {
+html[data-theme="dark"] .allergen-visibility-control:not(.status-allergen-control) {
   border-color: var(--line) !important;
   background: var(--palette-surface, #1e2226) !important;
   color: var(--ink-2) !important;

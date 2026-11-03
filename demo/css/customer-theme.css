@@ -36,7 +36,6 @@ html[data-customer-palette] .app-header :is(.brand,.brand-text strong,.brand-tex
 
 html[data-customer-palette] .cat-tab { background: var(--palette-surface) !important; color: var(--palette-ink) !important; border-color: var(--palette-border) !important; box-shadow: 0 5px 13px color-mix(in srgb,var(--palette-deep) 10%,transparent); }
 html[data-customer-palette] .cat-tab.is-active, html[data-customer-palette] .cat-tab:hover { background: var(--palette-soft) !important; color: var(--palette-accent) !important; border-color: var(--palette-accent) !important; box-shadow: 0 6px 15px color-mix(in srgb,var(--palette-deep) 14%,transparent); }
-html[data-customer-palette] .menu-overview { background: var(--palette-surface) !important; border-color: var(--palette-border) !important; }
 html[data-customer-palette] .view-menu .prod-grid .prod-side { justify-content: center; align-items: flex-end; }
 html[data-customer-palette] .view-menu .prod-grid .prod-price { text-align: right; }
 html[data-customer-palette] .allergen-visibility-switch::after { background: var(--palette-light); }

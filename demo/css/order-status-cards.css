@@ -1,54 +1,231 @@
-/* Clear status cards, preserving existing orderability logic. */
-.menu-overview{border:1px solid #e5eaf0;border-radius:19px;background:#fff;padding:16px!important;box-shadow:0 7px 25px rgba(21,44,65,.055)}
-.menu-overview .menu-overview-row{display:flex;align-items:center;gap:12px}
-.menu-overview .pickup-note{display:flex;align-items:center;gap:12px;min-width:0}
-.menu-overview .status-shop-icon{width:48px;height:48px;display:grid;place-items:center;flex:none;border-radius:50%;font-size:24px;font-weight:700;background:#d8f8e5;color:#086639}
-.menu-overview .pickup-copy strong{font-size:19px;font-weight:800;line-height:1.25}
-.menu-overview .pickup-copy>span{font-size:13px;line-height:1.45}
-.menu-overview .closed-banner{display:flex;align-items:center;gap:14px;margin-top:14px!important;padding:15px!important;border-radius:15px;background:#e8f9ee!important;border:0!important;color:#075a2e!important}
-.menu-overview .closed-banner[hidden]{display:none!important}
-.menu-overview .status-message-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
-.menu-overview .status-message-copy strong{font-size:17px;font-weight:800}
-.menu-overview .status-message-copy span{font-size:13px;line-height:1.5}
-.menu-overview .status-message-icon{display:grid;place-items:center;flex:none;width:47px;height:47px;background:#d0f4dd;color:#086639;border-radius:50%;font-size:26px}
-.menu-overview.status-is-closed .status-shop-icon{background:#ffe2df;color:#af2b22}
-.menu-overview.status-is-closed .closed-banner{background:#ffeded!important;color:#a2211b!important}
-.menu-overview.status-is-closed .status-message-icon{background:#ffd9d6;color:#a2211b}
-.menu-overview.status-is-preorder .status-shop-icon{background:#fff1d7;color:#9a5a09}
-.menu-overview.status-is-preorder .closed-banner{background:#fff5e4!important;color:#895209!important}
-.menu-overview.status-is-preorder .status-message-icon{background:#ffe9bd;color:#895209}
-.menu-overview .dot-open{display:none!important}
-html[data-theme="dark"] .menu-overview{background:#20272b;border-color:#3b464e}
-@media(max-width:540px){.menu-overview{padding:12px!important}.menu-overview .status-shop-icon{width:42px;height:42px;font-size:21px}.menu-overview .pickup-copy strong{font-size:17px}.menu-overview .closed-banner{padding:12px!important;gap:10px}.menu-overview .status-message-icon{width:42px;height:42px}.menu-overview .status-message-copy strong{font-size:16px}}
-
-/* Compact customer status: keep icon and copy on the same horizontal row. */
-.menu-overview{padding:10px 12px!important;border-radius:15px}
-.menu-overview .menu-overview-row{gap:8px!important;min-height:38px}
-.menu-overview .pickup-note{gap:9px!important;flex-direction:row!important}
-.menu-overview .status-shop-icon{width:36px;height:36px;font-size:18px}
-.menu-overview .pickup-copy{min-width:0}
-.menu-overview .pickup-copy strong{font-size:15px;line-height:1.2}
-.menu-overview .pickup-copy>span{font-size:11px;line-height:1.35}
-.menu-overview .closed-banner{flex-direction:row!important;justify-content:flex-start!important;text-align:left!important;min-height:0!important;gap:10px!important;margin-top:9px!important;padding:10px 12px!important;border-radius:12px}
-.menu-overview .status-message-icon{width:34px;height:34px;font-size:19px}
-.menu-overview .status-message-copy{align-items:flex-start!important;text-align:left!important;gap:2px!important}
-.menu-overview .status-message-copy strong{font-size:14px;line-height:1.3}
-.menu-overview .status-message-copy span{font-size:11px;line-height:1.35}
-@media(max-width:540px){.menu-overview{padding:9px 11px!important}.menu-overview .status-shop-icon{width:34px;height:34px;font-size:17px}.menu-overview .pickup-copy strong{font-size:14px}.menu-overview .closed-banner{padding:9px 10px!important;gap:9px!important}.menu-overview .status-message-icon{width:32px;height:32px;font-size:18px}.menu-overview .status-message-copy strong{font-size:13px}}
-
-/* Reference design: one slim row when open, two rows for preorder/closed. */
-.menu-overview{border-color:#c7ead7!important;box-shadow:0 5px 16px rgba(21,44,65,.045)!important}
-.menu-overview.status-is-preorder{border-color:#ffe0c5!important}
-.menu-overview.status-is-closed{border-color:#ffd0d0!important}
-.menu-overview.status-is-open .closed-banner{display:none!important}
-.menu-overview .pickup-note{flex:1}
-.menu-overview.status-is-open .pickup-copy strong{color:#083e2a}
-.menu-overview.status-is-preorder .status-shop-icon{background:#ffead9!important;color:#b64e0c!important}
-.menu-overview.status-is-closed .status-shop-icon{background:#ffdada!important;color:#ae1111!important}
-.menu-overview.status-is-preorder .closed-banner{background:#fff0e4!important;color:#a94a0b!important}
-.menu-overview.status-is-closed .closed-banner{background:#ffe8e8!important;color:#af1111!important}
-.menu-overview .status-message-copy{flex:1}
-.menu-overview .status-message-copy span{color:#5f6871}
-.menu-overview .closed-banner{box-shadow:none!important}
-.menu-overview .allergen-visibility-control{flex:none}
-@media(max-width:540px){.menu-overview .allergen-visibility-control{font-size:11px}.menu-overview .pickup-copy>span{font-size:10px}.menu-overview .status-message-copy span{font-size:11px}}
+/* Open / closed / preordering status. Single source of truth for the menu banner.
+   Theme colors come from palette.js; never infer state before Firebase is ready. */
+.menu-overview {
+  --status-accent: var(--palette-success, #168668);
+  --status-label: var(--palette-success, #168668);
+  --status-text-on-accent: var(--palette-success-text, #fff);
+  position: relative;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--status-accent) 28%, var(--palette-border));
+  border-radius: 19px;
+  background:
+    radial-gradient(ellipse 55% 55% at 74% 116%, color-mix(in srgb, var(--status-accent) 17%, transparent) 0%, transparent 95%),
+    var(--palette-surface);
+  color: var(--palette-ink);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--palette-deep) 10%, transparent);
+  overflow: hidden;
+  isolation: isolate;
+}
+.menu-overview.status-is-closed,
+.menu-overview.status-is-preorder {
+  --status-accent: var(--palette-danger, #b92b2b);
+  --status-label: var(--palette-danger, #b92b2b);
+  --status-text-on-accent: var(--palette-danger-text, #fff);
+}
+.menu-overview.status-is-pending {
+  --status-accent: var(--palette-muted, #78818a);
+  --status-label: var(--palette-ink);
+  --status-text-on-accent: var(--palette-surface);
+}
+.menu-overview .menu-overview-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 5px;
+  min-height: 90px;
+}
+.menu-overview .pickup-note {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: clamp(9px, 2.7vw, 14px);
+  min-width: 0;
+}
+.menu-overview .status-shop-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  flex: 0 0 clamp(65px, 17vw, 88px);
+  width: clamp(65px, 17vw, 88px);
+  min-height: 90px;
+  color: var(--status-text-on-accent);
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--status-accent) 82%, #fff),
+    var(--status-accent) 64%,
+    color-mix(in srgb, var(--status-accent) 84%, #000));
+  border-radius: 17px 30px 30px 17px;
+  box-shadow: 5px 0 16px color-mix(in srgb, var(--status-accent) 19%, transparent);
+  overflow: hidden;
+}
+.menu-overview .status-shop-icon::before {
+  content: "";
+  position: absolute;
+  width: 62%;
+  height: 145%;
+  top: -25%;
+  right: -29%;
+  border: 10px solid color-mix(in srgb, var(--palette-surface) 26%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.menu-overview .status-shop-icon svg {
+  position: relative;
+  z-index: 1;
+  width: 35px;
+  height: 35px;
+  flex: none;
+}
+.menu-overview .pickup-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 1px 9px 0;
+}
+.menu-overview .pickup-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 7px;
+  row-gap: 2px;
+  max-width: 100%;
+}
+.menu-overview .status-title {
+  margin: 0;
+  color: var(--status-label);
+  font-size: var(--text-lg, 18px) !important;
+  font-weight: 800;
+  line-height: 1.13;
+  letter-spacing: -.025em;
+}
+.menu-overview .status-subtitle {
+  display: block;
+  max-width: 100%;
+  color: var(--palette-muted);
+  font-size: var(--text-sm, 12px) !important;
+  font-weight: 400;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.menu-overview .dot-open { display: none; }
+.menu-overview.status-is-open .dot-open {
+  display: grid;
+  place-items: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--palette-success);
+  color: var(--palette-success-text, #fff);
+}
+.menu-overview.status-is-open .dot-open::after {
+  content: "✓";
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+.menu-overview .status-time-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 4px 9px 4px 7px;
+  border-radius: 999px;
+  color: var(--status-label);
+  background: color-mix(in srgb, var(--status-accent) 13%, var(--palette-surface));
+  white-space: nowrap;
+}
+.menu-overview .status-time-pill[hidden] { display: none; }
+.menu-overview .status-time-pill svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.menu-overview .status-time-text {
+  color: inherit;
+  font-size: var(--text-sm, 12px) !important;
+  font-weight: 700;
+  line-height: 1;
+}
+.menu-overview .status-allergen-control {
+  align-self: center;
+  flex: 0 0 auto;
+  justify-content: center;
+  min-height: 54px;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--status-accent) 24%, var(--palette-border));
+  border-radius: 0;
+  background: transparent;
+  color: var(--palette-ink);
+  font-size: var(--text-sm, 12px) !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.menu-overview .status-allergen-control .allergen-visibility-switch {
+  width: 40px;
+  height: 24px;
+  flex: 0 0 40px;
+}
+.menu-overview .status-allergen-control input:checked + .allergen-visibility-switch::after {
+  transform: translateX(16px);
+}
+@media (max-width: 420px) {
+  .menu-overview { border-radius: 17px; }
+  .menu-overview .menu-overview-row { min-height: 86px; gap: 3px; }
+  .menu-overview .pickup-note { gap: 8px; }
+  .menu-overview .status-shop-icon {
+    flex-basis: 66px;
+    width: 66px;
+    min-height: 86px;
+    border-radius: 15px 26px 26px 15px;
+  }
+  .menu-overview .status-shop-icon svg { width: 29px; height: 29px; }
+  .menu-overview .pickup-copy { padding-block: 7px; gap: 2px; }
+  .menu-overview .status-title { font-size: var(--text-md, 14px) !important; }
+  .menu-overview .status-subtitle { font-size: var(--text-xs, 10px) !important; }
+  .menu-overview .status-time-pill { padding: 3px 6px; gap: 4px; }
+  .menu-overview .status-time-text { font-size: var(--text-xs, 10px) !important; }
+  .menu-overview .status-time-pill svg { width: 12px; height: 12px; }
+  .menu-overview .status-allergen-control {
+    padding-inline: 7px;
+    gap: 5px;
+    font-size: var(--text-xs, 10px) !important;
+    min-height: 50px;
+  }
+  .menu-overview .status-allergen-control .allergen-visibility-switch {
+    width: 36px;
+    height: 22px;
+    flex-basis: 36px;
+  }
+  .menu-overview .status-allergen-control .allergen-visibility-switch::after {
+    width: 16px;
+    height: 16px;
+  }
+  .menu-overview .status-allergen-control input:checked + .allergen-visibility-switch::after {
+    transform: translateX(14px);
+  }
+}
+@media (max-width: 355px) {
+  .menu-overview .status-allergen-control {
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding-inline: 6px;
+  }
+  .menu-overview .status-shop-icon { flex-basis: 59px; width: 59px; }
+  .menu-overview .pickup-note { gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-overview .status-shop-icon,
+  .menu-overview .status-time-pill { transition: none; }
+}

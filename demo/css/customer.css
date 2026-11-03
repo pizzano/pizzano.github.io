@@ -162,29 +162,8 @@ select {
     border: 1px solid var(--line);
 
     box-shadow: var(--shadow-sm);
-}.menu-overview-row { display: flex;  justify-content: space-between;  }.pickup-note { display: flex;   min-width: 0; }.pickup-copy { display: flex; flex-direction: column;  min-width: 0; }.pickup-copy strong {  line-height: 1.35; }.pickup-copy > span {  line-height: 1.4; color: var(--ink-2); }.menu-overview .closed-banner { margin: 12px 0 0; }.dot-open {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--ok);
-    flex: none;
-}.dot-open.is-closed { background: var(--danger); }
-/* Firebase-verifisering er verken åpent eller stengt. */
-.dot-open.is-pending { background: color-mix(in srgb, var(--palette-ink) 30%, var(--palette-surface)); }
-
-
-/* Stengt-varsel over menyen */.closed-banner {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: var(--danger-soft);
-    border: 1px solid var(--palette-border);
-    border-radius: var(--r-md);
-    padding: 9px 11px;
-    margin-bottom: 10px;
-    font-size: 13px;
-    color: var(--palette-accent);
-}.closed-banner[hidden] { display: none; }.closed-banner strong { font-size: 13.5px; }.closed-hint {
+}
+.closed-hint {
     margin: 0 0 8px;
     font-size: 12.5px;
     color: var(--danger);
@@ -652,24 +631,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout::-webkit-scrollbar {
   .sec-title { margin-bottom: 7px;  }
   .card { padding: 10px; margin-bottom: 8px; border-radius: 11px; }
   .hint { font-size: 12.5px; }
-
-  .menu-overview-row { gap: 8px; }
-
-  .pickup-copy { gap: 1px; }
-
-  .menu-overview .allergen-visibility-control {
-  min-height:36px;gap:8px;padding:0 4px;font-size:11.5px;
-  border:0;border-radius:10px;background:transparent;
-}
-  .menu-overview .allergen-visibility-switch {
-  width:38px;height:22px;
-}
-  .menu-overview .allergen-visibility-switch::after {
-  width:16px;height:16px;
-}
-  .menu-overview .allergen-visibility-control input:checked + .allergen-visibility-switch::after {
-    transform: translateX(16px);
-  }
 
   .btn { min-height: 42px; padding: 9px 13px; border-radius: 9px; font-size: 13px; }
   .field { margin-bottom: 10px; }
@@ -1336,16 +1297,6 @@ main {
   box-shadow: 0 0 40px color-mix(in srgb, var(--palette-deep) 4%, transparent);
 }
 
-.menu-overview {
-  margin:0 0 16px;border:1px solid var(--palette-border);
-  background:var(--palette-surface);
-  box-shadow:0 7px 18px color-mix(in srgb,var(--palette-deep) 11%,transparent),
-  inset 0 1px 0 color-mix(in srgb,var(--palette-light) 19%,transparent);
-}
-.menu-overview-row { align-items: center; }
-.pickup-note { align-items: center; gap: 10px; }
-.pickup-note .dot-open { margin: 0; width: 11px; height: 11px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--palette-deep) 10%, transparent); }
-.pickup-copy strong {  font-weight: 800; }
 
 .cat-head {
   margin-bottom: 10px;
@@ -1513,12 +1464,6 @@ textarea.input {
   flex-basis:42px;width:42px;height:54px;border-radius:16px;
 }
   main { padding: 10px 9px 26px; }
-  .menu-overview {
-  margin-bottom:15px;padding:11px 12px;border-radius:18px;
-}
-  .pickup-copy strong { font-size: 14px; }
-  .pickup-copy > span { font-size: 10.5px; }
-
   .cat-block { margin-bottom: 22px; }
   .cat-head h2 { font-size: 17px; }
 
