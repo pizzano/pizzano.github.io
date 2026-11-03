@@ -4637,6 +4637,7 @@ systemAlertsList?.addEventListener('click',async event=>{
   else void refreshSystemAlerts({ force: true });
 });
 // Alerts stay at 12s while their settings tab is open, about 36s elsewhere.
+window.addEventListener('kol-health-refresh-request', () => { void refreshSystemAlerts({ force: true }); });
 window.setInterval(()=>{void refreshSystemAlerts();},12000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts({ force: true });});
 window.addEventListener('kol-admin-page-change',()=>{
