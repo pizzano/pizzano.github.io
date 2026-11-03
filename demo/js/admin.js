@@ -3673,17 +3673,16 @@ function updatePaletteColor(event) {
   const hex=region.querySelector('[data-palette-hex="'+kind+'"][data-palette-id="'+id+'"]');
   if(picker)picker.value=color;
   if(hex){hex.value=color;hex.setCustomValidity('');}
-  // A main color change also updates every non-overridden advanced color.
-  if(kind==='base') {
-    const inherited=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
-    for(const role of PALETTE_DETAIL_ROLES){
-      if(customPaletteDraft.advanced[activePaletteMode][role.id])continue;
-      const advancedRegion=colorFieldRegion(role.id);
-      const advancedPicker=advancedRegion.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
-      const advancedHex=advancedRegion.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
-      if(advancedPicker)advancedPicker.value=inherited[role.id];
-      if(advancedHex)advancedHex.value=inherited[role.id];
-    }
+  // Main and custom button colors both affect inherited advanced fields.
+  // Update their read-only previews without rewriting the user's active input.
+  const inherited=resolvePaletteDetails(customPaletteDraft,activePaletteMode);
+  for(const role of PALETTE_DETAIL_ROLES){
+    if(customPaletteDraft.advanced[activePaletteMode][role.id])continue;
+    const advancedRegion=colorFieldRegion(role.id);
+    const advancedPicker=advancedRegion.querySelector('[data-palette-color="detail"][data-palette-id="'+role.id+'"]');
+    const advancedHex=advancedRegion.querySelector('[data-palette-hex="detail"][data-palette-id="'+role.id+'"]');
+    if(advancedPicker)advancedPicker.value=inherited[role.id];
+    if(advancedHex)advancedHex.value=inherited[role.id];
   }
   markCustomPaletteDirty();
 }
