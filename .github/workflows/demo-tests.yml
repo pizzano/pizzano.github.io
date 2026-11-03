@@ -1,0 +1,36 @@
+name: Demo ordering checks
+
+on:
+  push:
+    paths:
+      - 'demo/**'
+      - '.github/workflows/demo-tests.yml'
+  pull_request:
+    paths:
+      - 'demo/**'
+      - '.github/workflows/demo-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Order regression and syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run deterministic order, pickup, UI and APK contract tests
+        run: npm --prefix demo test
+      - name: Check customer, admin and printer JavaScript syntax
+        run: npm --prefix demo run check
