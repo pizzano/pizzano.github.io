@@ -75,7 +75,7 @@ test('customer and admin modules use one canonical Firebase data URL', async () 
     'special-days-admin.js'];
   const imports = await Promise.all(names.map(async name => {
     const code = await readFile(new URL('../js/' + name, import.meta.url), 'utf8');
-    const match = code.match(/from ['"](\\.\\/data\\.js\\?v=[^'"]+)['"]/);
+    const match = code.match(/from ['"](\.\/data\.js\?v=[^'"]+)['"]/);
     assert.ok(match, name + ' must import the versioned Firebase data module');
     return match[1];
   }));
@@ -84,8 +84,8 @@ test('customer and admin modules use one canonical Firebase data URL', async () 
 
 test('customer and admin share one HTML escaping implementation', async () => {
   const admin = await readFile(new URL('../js/admin.js', import.meta.url), 'utf8');
-  assert.match(admin, /import \\{ escapeHtml \\} from '\\.\\/display-format\\.js'/);
-  assert.doesNotMatch(admin, /function escapeHtml\\(/);
+  assert.match(admin, /import \{ escapeHtml \} from '\.\/display-format\.js'/);
+  assert.doesNotMatch(admin, /function escapeHtml\(/);
 });
 
 test('SSE retry backs off and polling retains per-order REST fallback', async () => {
