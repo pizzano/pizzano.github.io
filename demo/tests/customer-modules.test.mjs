@@ -111,6 +111,19 @@ test('menu groups favorites, popular picks and categories without DOM access', (
   assert.match(categoryIcon({ key: 'pizza', title: 'Pizza' }), /<svg/);
 });
 
+test('product taps initialize a draft without a missing helper and restore option defaults', async () => {
+  const source = await readFile(new URL('../js/customer.js', import.meta.url), 'utf8');
+  const open = source.slice(source.indexOf('function openProduct('), source.indexOf('function finishProductClose('));
+  const render = source.slice(source.indexOf('function renderSheet()'), source.indexOf('/* ------------------------------------------------------------------ *\n * Handlekurv'));
+  assert.ok(open.length > 0 && render.length > 0);
+  assert.doesNotMatch(open, /defaultSelectionFor\(/, 'removed helper must never be called');
+  assert.match(open, /selections:\s*editLine\s*\?\s*JSON\.parse\(JSON\.stringify\(editLine\.selections\)\)\s*:\s*\{\}/);
+  assert.match(open, /renderSheet\(\)/);
+  assert.match(render, /draft\.selections\[group\.id\] = \[\.\.\.\(group\.defaultOptionIds \|\| \[\]\)\]/);
+  assert.match(source, /const card = event\.target\.closest\('\.prod-card'\)/);
+  assert.match(source, /openProduct\(card\.dataset\.item\)/);
+});
+
 test('product card renderer keeps price, cart action and lazy image hints', () => {
   const deps = {
     getItemBasePrice: () => 210,
