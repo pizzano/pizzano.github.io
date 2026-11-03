@@ -1,6 +1,7 @@
 import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS } from './order-confirmation.js';
 import { calculatePickupSlots } from './pickup-slots.js';
+import { effectivePickupLead, capacityFilteredSlots, pickupLoadFresh } from './pickup-capacity.js';
 import { detectIngredientRules } from './ingredient-detection.js';
 import { customerPageBaseUrl } from './order-links.js';
 import { loyaltyPhone, pizzaBonus, historicalPizzaEvents, largePizza } from './loyalty.js?v=20261023-customerprofile1';
@@ -296,6 +297,11 @@ const DEFAULT_SETTINGS = {
   prepMinutes: 25,
   pickupLeadMinutes: 30,
   slotIntervalMinutes: 15,
+  // Opt-in operational controls. Existing restaurants keep the same pickup flow.
+  busyModeEnabled: false,
+  busyExtraMinutes: 15,
+  pickupCapacityEnabled: false,
+  pickupCapacityMax: 4,
   // Epson 80 mm thermal slip (576 printable dots). Per-field typography is
   // stored alongside the restaurant settings and shared across tablets.
   uiFontXs: 10,
@@ -450,6 +456,38 @@ export function getOpenState(at=new Date()) {
     opensOnDay:scheduled.opensOnDay,minutesUntilOpen:scheduled.minutesUntilOpen,
   };
 }
+/* The customer only reads public, aggregate 15-minute counts.
+ * This is advisory and never reads another customer's order or phone. */
+let pickupLoadSnapshot = null;
+let pickupLoadLastFetchAt = 0;
+let pickupLoadRequest = null;
+export function pickupLoadIsFresh() {
+  return pickupLoadFresh(pickupLoadSnapshot);
+}
+export async function refreshPublicPickupLoad(force = false) {
+  if (store.settings?.pickupCapacityEnabled !== true || !DB_URL) return false;
+  if (pickupLoadRequest) return pickupLoadRequest;
+  if (!force && Date.now() - pickupLoadLastFetchAt < 20000) return false;
+  pickupLoadLastFetchAt = Date.now();
+  pickupLoadRequest = (async () => {
+    try {
+      const response = await fetch(DB_URL + '/publicPickupLoad.json', {
+        cache: 'no-store', signal: AbortSignal.timeout(6000),
+      });
+      if (!response.ok) throw new Error('Kapasitet kunne ikke hentes');
+      const value = await response.json();
+      pickupLoadSnapshot = value && typeof value === 'object' ? value : null;
+      return true;
+    } catch {
+      pickupLoadSnapshot = null; // stale counts must never block valid orders
+      return false;
+    } finally {
+      pickupLoadRequest = null;
+    }
+  })();
+  return pickupLoadRequest;
+}
+
 /** Pickup options calculated from the active window, including after midnight.
  * Clock conversion stays local to data.js; slot arithmetic is independently tested. */
 export function getPickupSlots() {
@@ -460,14 +498,19 @@ export function getPickupSlots() {
   let nowMinute;
   try { nowMinute = localClock(now, settings.timezone || 'Europe/Oslo').minute; }
   catch { nowMinute = now.getHours() * 60 + now.getMinutes(); }
-  return calculatePickupSlots({
+  const openMinute = parseTime(state.todayOpensAt);
+  const slots = calculatePickupSlots({
     open: state.open,
     preOpen: state.preOpen,
     minutesToClose: state.minutesToClose,
     nowMinute,
-    openMinute: parseTime(state.todayOpensAt),
+    openMinute,
     closeMinute: parseTime(state.todayClosesAt),
-    pickupLeadMinutes: settings.pickupLeadMinutes,
+    pickupLeadMinutes: effectivePickupLead(settings),
+  });
+  return capacityFilteredSlots(slots, settings, pickupLoadSnapshot, {
+    at: now.getTime(), preOpen: state.preOpen, openMinute,
+    timezone: settings.timezone || 'Europe/Oslo',
   });
 }
 
@@ -542,6 +585,8 @@ function normalizeSettings(raw) {
   if (!['reference', 'lively', 'fresh', 'gourmet', 'custom'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
   settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
   settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
+  settings.busyExtraMinutes = Math.min(90,Math.max(0,Math.round(Number(settings.busyExtraMinutes)||0)));
+  settings.pickupCapacityMax = Math.min(30,Math.max(1,Math.round(Number(settings.pickupCapacityMax)||4)));
   settings.slotIntervalMinutes = Math.min(
     Math.max(settings.slotIntervalMinutes || 15, 5),
     60
