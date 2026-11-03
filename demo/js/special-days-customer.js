@@ -1,4 +1,4 @@
-import {store,subscribe,ready} from './data.js?v=20261028-fullslots1';
+import {store,subscribe,ready} from './data.js?v=20261101-optionallergens1';
 import {todaysSpecialDays,parseSpecialDays,osloToday} from './special-days.js';
 const banner=document.getElementById('specialDayGreeting');
 let selectedDay=null,selectionKey='';
@@ -27,6 +27,6 @@ function renderSpecialDay(){
   banner.append(icon,copy,decoration);
 }
 subscribe(renderSpecialDay);
-ready.then(renderSpecialDay).catch(()=>{});
+ready().then(renderSpecialDay).catch(()=>{});
 renderSpecialDay();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){selectionKey='';renderSpecialDay()}});
