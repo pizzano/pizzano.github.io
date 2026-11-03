@@ -50,8 +50,8 @@
   display: grid;
   place-items: center;
   align-self: stretch;
-  flex: 0 0 clamp(82px, 18vw, 98px);
-  width: clamp(82px, 18vw, 98px);
+  flex: 0 0 clamp(66px, 1vw, 98px);
+  width: clamp(66px, 1vw, 98px);
   min-height: 82px;
   border-radius: 16px 42% 42% 16px / 16px 49% 52% 16px;
   background: linear-gradient(145deg,
@@ -61,26 +61,12 @@
   color: var(--status-text-on-accent);
   overflow: hidden;
 }
-/* Soft curved accent ribbon: no rigid square block or extra markup. */
-.menu-overview .status-shop-icon::before {
-  content: "";
-  position: absolute;
-  top: -30%;
-  right: -15px;
-  width: 48px;
-  height: 160%;
-  border-left: 9px solid color-mix(in srgb, var(--palette-surface) 58%, transparent);
-  border-radius: 50%;
-  transform: rotate(9deg);
-  pointer-events: none;
-}
 .menu-overview .status-shop-icon svg {
   position: relative;
   z-index: 1;
   width: 31px;
   height: 31px;
   flex: none;
-  transform: translateX(-5px);
 }
 .menu-overview .pickup-copy {
   display: flex;
@@ -191,8 +177,6 @@
   .menu-overview .menu-overview-row { min-height: 80px; }
   .menu-overview .pickup-note { gap: 7px; }
   .menu-overview .status-shop-icon {
-    flex-basis: 72px;
-    width: 72px;
     min-height: 80px;
     border-radius: 15px 42% 42% 15px / 15px 50% 52% 15px;
   }
@@ -229,7 +213,6 @@
     gap: 3px;
     padding-inline: 5px;
   }
-  .menu-overview .status-shop-icon { flex-basis: 62px; width: 62px; }
   .menu-overview .pickup-note { gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
