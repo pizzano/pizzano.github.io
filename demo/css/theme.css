@@ -123,34 +123,12 @@ html[data-theme="dark"] main {
   box-shadow: 0 0 42px color-mix(in srgb, var(--palette-deep, rgb(0,0,0)) 18%, transparent) !important;
 }
 
-html[data-theme="dark"] .prod-card,
-html[data-theme="dark"] .prod-grid,
-html[data-theme="dark"] .prod-grid .prod-card {
-  border-color: var(--line) !important;
-  background: var(--palette-surface, #191c20) !important;
-  box-shadow: var(--shadow-soft) !important;
-}
-
-html[data-theme="dark"] .prod-card:hover,
-html[data-theme="dark"] .prod-grid .prod-card:hover {
-  border-color: var(--palette-accent, #68422c) !important;
-  background: var(--palette-surface, #1f2022) !important;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--palette-deep, rgb(0,0,0)) 28%, transparent) !important;
-}
-
-html[data-theme="dark"] .prod-grid .prod-card {
-  border-bottom-color: var(--line) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="dark"] .prod-name,
 html[data-theme="dark"] .cat-head h2,
 html[data-theme="dark"] .view-title,
 html[data-theme="dark"] .sec-title {
   color: var(--ink) !important;
 }
 
-html[data-theme="dark"] .prod-desc,
 html[data-theme="dark"] .cat-description,
 html[data-theme="dark"] .hint{
   color: var(--ink-2) !important;
@@ -326,10 +304,6 @@ html[data-theme="dark"] .allergen-visibility-switch {
 
 html[data-theme="dark"] .allergen-visibility-control input:checked + .allergen-visibility-switch {
   background: var(--palette-button, #35a760) !important;
-}
-
-html[data-theme="dark"] .prod-list-allergens {
-  color: var(--palette-accent, #ff746b) !important;
 }
 
 html[data-theme="dark"] .toast {
@@ -524,48 +498,3 @@ html[data-theme="dark"] #reviewCard .pickup-review-summary-action {
 html[data-theme="dark"] #reviewCard .pickup-review-info-head span {
   color: var(--palette-accent, #70d494) !important;
 }
-
-  html[data-theme="dark"] .view-menu .prod-grid {
-    border-color: transparent !important;
-    background: transparent !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-card {
-    border-bottom-color: var(--line) !important;
-    background: var(--palette-surface, #191d21) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-card:hover,
-html[data-theme="dark"] .view-menu .prod-card:active {
-    background: var(--palette-surface, #1d2226) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-media,
-html[data-theme="dark"] .view-menu .prod-thumb,
-html[data-theme="dark"] .view-menu .prod-thumb.prod-thumb-empty {
-    background: var(--palette-surface, #24292e) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-name,
-html[data-theme="dark"] .view-menu .prod-price {
-    color: var(--ink) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-desc,
-html[data-theme="dark"] .view-menu .prod-price small {
-    color: var(--ink-3) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-list-allergens {
-    color: var(--palette-accent, #ff746b) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .prod-soldout-badge {
-    background: var(--palette-surface, #2a3036) !important;
-    color: var(--palette-ink, #a7afb8) !important;
-  }
-
-  html[data-theme="dark"] .view-menu .tag.tag-soldout {
-    background: var(--palette-surface, #3a2323) !important;
-    color: var(--palette-accent, #ff8c84) !important;
-  }
