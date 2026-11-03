@@ -18,7 +18,7 @@
   --pd-hover:color-mix(in srgb,var(--pd-accent) 13%,var(--pd-card));
   --pd-muted-button:color-mix(in srgb,var(--pd-card) 76%,var(--pd-border));
   --pd-action-shadow:0 7px 20px color-mix(in srgb,var(--pd-button) 21%,transparent);
-  --pd-fs-title:calc(var(--text-lg,18px) + 3px);
+  --pd-fs-title:var(--text-lg,18px);
   --pd-fs-heading:var(--text-md,14px);
   --pd-fs-option:var(--text-md,14px);
   --pd-fs-subtext:var(--text-sm,12px);
@@ -104,7 +104,7 @@
   display:block!important;width:100%!important;max-width:none!important;
   margin:0!important;padding:0!important;
   color:var(--pd-ink)!important;text-shadow:none!important;
-  text-align:center!important;font-size:var(--pd-fs-title)!important;
+  text-align:center!important;font-size:calc(var(--pd-fs-title) + 3px)!important;
   font-weight:650!important;line-height:1.22!important;letter-spacing:-.025em!important;
   white-space:normal!important;overflow-wrap:anywhere!important;
 }
