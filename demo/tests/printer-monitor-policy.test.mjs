@@ -6,7 +6,7 @@ import {
   EPSON_HEALTHY_INTERVAL_MS, EPSON_INITIAL_INTERVAL_MS,
   EPSON_ERROR_INITIAL_INTERVAL_MS, EPSON_ERROR_MAX_INTERVAL_MS,
   epsonProbeInterval, shouldProbeEpson,
-} from '../js/printer-monitor-policy.js';
+} from '../js/order-printer.js';
 
 const onOrders = { page: 'orders', visible: true };
 const now = 200000;
