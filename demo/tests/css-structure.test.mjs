@@ -171,6 +171,30 @@ test('four customer palettes keep cart ribbon text readable in light and dark mo
   }
 });
 
+test('product dialog footer is one rounded quantity and checkout bar',async()=>{
+  const html=await text('index.html');
+  const css=await text('css/product-detail-redesign.css');
+  const js=await text('js/customer.js');
+  const start=css.indexOf('Product footer: one rounded pill');
+  const end=css.indexOf('#productSheet .opt-invalid .opt-rows',start);
+  assert.ok(start>=0&&end>start,'product footer must be rebuilt in place');
+  const rules=css.slice(start,end);
+  assert.match(rules,/border-radius:999px/);
+  assert.match(rules,/flex:0 0 33%/);
+  assert.match(rules,/background:var\(--pd-button\)!important/);
+  assert.match(rules,/background:var\(--pd-card\)/);
+  assert.match(rules,/font-size:var\(--text-lg,18px\)!important/);
+  assert.doesNotMatch(rules,/gap:10px|border-radius:28px/,'old separated controls must be absent');
+  assert.match(html,/<span id="sheetAddLabel">Legg til<\/span>/);
+  assert.match(html,/<strong id="sheetTotal" aria-live="polite">0 kr<\/strong>/);
+  assert.match(js,/sheetAddLabel: \$\('sheetAddLabel'\)/);
+  assert.match(js,/el\.sheetAddLabel\.textContent = draft\.editingLineId/);
+  assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
+  assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
+  assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-cart-pill1/);
+});
+
 test('one themed status banner replaces the legacy double open/closed card', async () => {
   const html=await text('index.html');
   const customer=await text('js/customer.js');
