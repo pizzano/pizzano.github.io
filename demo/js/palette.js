@@ -27,7 +27,7 @@ export const CUSTOMER_PALETTES = {
   emeraldGold: theme('5. Premium Emerald & Gold',
     ['#AC822C','#F5F7F1','#FFFFFF','#172B24','#CFDACF','#147A5A','#9A563D'],
     ['#F3D477','#062D25','#123B32','#F7F8F3','#45695A','#71D9B4','#F1B18F'],
-    { light:{button:'#D9B661',buttonText:'#1B2922',selected:'#F1E8CB',field:'#FFFFFF',header:'#123B32',muted:'#61756B'},
+    { light:{button:'#D9B661',buttonText:'#1B2922',selected:'#F1E8CB',field:'#FFFFFF',header:'#765522',muted:'#61756B'},
       dark:{button:'#F3D477',buttonText:'#172820',selected:'#405339',field:'#103A30',header:'#05251F',muted:'#CED8D2'} })
 };
 
@@ -147,6 +147,9 @@ export function applyCustomerPalette(value, customValue) {
     muted: details.muted,
     soft: `color-mix(in srgb, ${accent} ${dark ? 16 : 9}%, ${surface})`,
     'on-accent': contrastText(accent),
+    // Non-status emphasis (product names, prices, allergens) follows the
+    // palette accent with enough ink mixed in to stay readable on cards.
+    'accent-text': blendHex(accent, ink, dark ? .84 : .69),
     'header-text': contrastText(details.header),
     'action-soft': blendHex(details.button, surface, dark ? .19 : .09),
     success, warning,
