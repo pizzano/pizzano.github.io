@@ -1345,6 +1345,46 @@ function optionGroupHtml(group, problems) {
   </div>`;
 }
 
+function renderProductHeroImage(heroHeader, imageUrl) {
+  const previous=heroHeader.querySelector('.pd-hero-photo');
+  if (!imageUrl) {
+    previous?.remove();
+    return;
+  }
+  // Keep the loaded image for rerenders of the same product (size, sauce, quantity).
+  if (previous?.dataset.originalImage === imageUrl) return;
+
+  // Never reuse the same image node for a different product: the browser could
+  // paint the old bitmap while a different src/srcset is downloading.
+  previous?.remove();
+  const photo=document.createElement('img');
+  photo.className='pd-hero-photo';
+  photo.alt='';
+  photo.decoding='async';
+  photo.loading='eager';
+  photo.fetchPriority='high';
+  photo.dataset.originalImage=imageUrl;
+  photo.style.visibility='hidden';
+
+  photo.addEventListener('load', () => {
+    // A late event from an already replaced image cannot reveal old content.
+    if (photo.isConnected) photo.style.visibility='visible';
+  }, { once:true });
+  photo.addEventListener('error', () => {
+    if (photo.isConnected) photo.remove();
+  }, { once:true });
+
+  heroHeader.prepend(photo);
+  const sources=productImageSources(imageUrl,'hero');
+  if (sources.srcset) {
+    photo.sizes=sources.sizes;
+    photo.srcset=sources.srcset;
+  }
+  photo.src=sources.src;
+  // Cached images can already be decoded by the time src is assigned.
+  if (photo.complete && photo.naturalWidth > 0) photo.style.visibility='visible';
+}
+
 function renderSheet() {
   if (!draft) return;
   const { item } = findItem(draft.itemId);
@@ -1446,34 +1486,10 @@ function renderSheet() {
       </div>`
       : '';
 
-  // Single image in the centered hero; option and price handlers stay unchanged.
+  // Clear the previous product photo before the next one loads.
+  // A reused <img> can briefly display the previous image after changing src.
   const heroHeader=el.sheet.querySelector('.sheet-head');
-  let photo=heroHeader.querySelector('.pd-hero-photo');
-  if(item.imageUrl){
-    if(!photo){
-      photo=document.createElement('img');
-      photo.className='pd-hero-photo';
-      photo.alt='';
-      photo.decoding='async';
-      photo.loading='eager';
-      photo.fetchPriority='high';
-      heroHeader.prepend(photo);
-    }
-    // Prefer a larger responsive hero variant; thumbnails stay small.
-    // Switching from a supported CDN to another host removes old srcset.
-    if(photo.dataset.originalImage !== item.imageUrl){
-      const sources=productImageSources(item.imageUrl, 'hero');
-      photo.dataset.originalImage=item.imageUrl;
-      if(sources.srcset){
-        photo.sizes=sources.sizes;
-        photo.srcset=sources.srcset;
-      }else{
-        photo.removeAttribute('srcset');
-        photo.removeAttribute('sizes');
-      }
-      photo.src=sources.src;
-    }
-  }else photo?.remove();
+  renderProductHeroImage(heroHeader, item.imageUrl);
   let heroDescription=heroHeader.querySelector('.pd-hero-description');
   if(!heroDescription){heroDescription=document.createElement('p');heroDescription.className='pd-hero-description';heroHeader.append(heroDescription);}
   heroDescription.textContent=item.description||item.ingredients||'';
