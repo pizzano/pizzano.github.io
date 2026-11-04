@@ -316,7 +316,7 @@ test('Premium Emerald & Gold is selectable in admin and scoped to the customer p
   assert.match(cart,/data-customer-palette="emeraldGold"/);
   assert.match(base,/var\(--premium-card-bg/);
   assert.match(customer,/customer-theme\.css\?v=20261104-theme-unify4/);
-  assert.match(customer,/product-detail-redesign\.css\?v=20261104-theme-unify4/);
+  assert.match(customer,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
   assert.match(admin,/admin\.css\?v=20261104-premium-emerald2/);
 });
 
