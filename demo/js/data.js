@@ -1921,6 +1921,59 @@ export async function rejectOrder(orderId, reason = '', message = '') {
   }
 }
 
+/* Customer feedback is separate from orders; never rewrite an accepted order.
+   Firebase rules must restrict these paths before enabling the admin feature. */
+const FEEDBACK_TAGS = new Set(['God smak','Rask henting','Riktig bestilling','Lang ventetid','Noe manglet']);
+const feedbackOrderId = value => /^ord_[A-Za-z0-9]{7,40}$/.test(String(value||''));
+
+export async function getOrderFeedback(orderId) {
+  if (!remoteEnabled || !feedbackOrderId(orderId)) return null;
+  const value=await restGet('orderFeedback/'+encodeURIComponent(orderId),10000);
+  return value && typeof value==='object' ? value : null;
+}
+
+export async function listOrderFeedback() {
+  if (CUSTOMER_MODE || !remoteEnabled) return [];
+  const all=await restGet('orderFeedback',10000);
+  return Object.entries(all && typeof all==='object' ? all : {})
+    .filter(([id,entry])=>feedbackOrderId(id) && entry && Number.isInteger(Number(entry.score)) && Number(entry.score)>=1 && Number(entry.score)<=5)
+    .map(([orderId,entry])=>({
+      orderId, score:Number(entry.score),
+      tags:Array.isArray(entry.tags)?entry.tags.filter(v=>FEEDBACK_TAGS.has(v)).slice(0,5):[],
+      comment:String(entry.comment||'').slice(0,500),
+      createdAt:Number(entry.createdAt)||0,
+    })).sort((a,b)=>b.createdAt-a.createdAt).slice(0,100);
+}
+
+export async function submitOrderFeedback({orderId, score, tags=[], comment=''}={}) {
+  if (!remoteEnabled || !feedbackOrderId(orderId)) throw new Error('Ugyldig bestillingsnummer.');
+  if (store.settings.orderFeedbackEnabled !== true) throw new Error('Kundevurderinger er ikke aktivert.');
+  if (navigator.onLine === false) throw new Error('Du må være tilkoblet internett.');
+  const value=Number(score);
+  if (!Number.isInteger(value) || value<1 || value>5) throw new Error('Velg 1 til 5 stjerner.');
+  // The client checks the real order, not a local cached status. Security
+  // still depends on Firebase rules: client-side validation is not authorization.
+  const order=await restGet('orders/'+encodeURIComponent(orderId),10000);
+  const now=Date.now();
+  const anchor=Math.max(Number(order?.staffReadyAt)||0,Number(order?.statusUpdatedAt)||0,
+    Number(order?.scheduledPickupAt)||0,Number(order?.estimatedReadyAt)||0);
+  if (!order || order.status!=='klar' || !anchor || now-anchor<30*60*1000)
+    throw new Error('Du kan vurdere maten tidligst 30 minutter etter at den er klar.');
+  const record={
+    score:value,
+    tags:[...new Set((Array.isArray(tags)?tags:[]).filter(t=>FEEDBACK_TAGS.has(t)))].slice(0,5),
+    comment:String(comment||'').trim().slice(0,500),
+    createdAt:now,
+  };
+  const response=await fetch(DB_URL+'/orderFeedback/'+encodeURIComponent(orderId)+'.json',{
+    method:'PUT',headers:{'Content-Type':'application/json','if-match':'null_etag'},
+    body:JSON.stringify(record),signal:AbortSignal.timeout(12000),
+  });
+  if (response.status===412) return {already:true};
+  if (!response.ok) throw new Error('Vurderingen kunne ikke lagres ('+response.status+').');
+  return {already:false};
+}
+
 /** Alle ordre, nyeste først. */
 export function getOrders() {
   return store.orders || [];
