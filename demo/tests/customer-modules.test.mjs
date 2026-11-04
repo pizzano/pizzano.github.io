@@ -229,6 +229,69 @@ test('five Firebase font tiers preview, save, reload and sync across admin/custo
   assert.equal(customer.css['--text-xl'],'27px','customer must reflect subsequent Firebase updates');
 });
 
+test('product hero never flashes the previous photo during fast product changes', async () => {
+  const source=await readFile(new URL('../js/customer.js',import.meta.url),'utf8');
+  const start=source.indexOf('function renderProductHeroImage(');
+  const end=source.indexOf('function renderSheet() {',start);
+  assert.ok(start>=0 && end>start,'hero-image lifecycle helper is present');
+  assert.match(source.slice(end),/renderProductHeroImage\(heroHeader, item\.imageUrl\)/);
+  const created=[];
+  const document={
+    createElement(tag) {
+      assert.equal(tag,'img');
+      const photo={
+        dataset:{},style:{},handlers:{},isConnected:false,
+        complete:false,naturalWidth:0,
+        addEventListener(type,callback){this.handlers[type]=callback},
+        remove(){if(this.parent?.photo===this)this.parent.photo=null;this.isConnected=false}
+      };
+      created.push(photo);
+      return photo;
+    }
+  };
+  const hero={
+    photo:null,
+    querySelector(selector){assert.equal(selector,'.pd-hero-photo');return this.photo},
+    prepend(photo){this.photo=photo;photo.parent=this;photo.isConnected=true}
+  };
+  const sources=(url,variant)=>{
+    assert.equal(variant,'hero');
+    return url==='vegetar.webp'
+      ? {src:'/vegetar-hero.webp',srcset:'/vegetar-480.webp 480w',sizes:'100vw'}
+      : {src:'/pommes-hero.webp',srcset:'',sizes:''};
+  };
+  const update=runInNewContext(source.slice(start,end)+'\nrenderProductHeroImage;',
+    {document,productImageSources:sources},{timeout:1500});
+
+  update(hero,'vegetar.webp');
+  const vegetarian=hero.photo;
+  assert.equal(vegetarian.style.visibility,'hidden','wait for first image before showing');
+  assert.equal(vegetarian.srcset,'/vegetar-480.webp 480w');
+  update(hero,'vegetar.webp');
+  assert.equal(hero.photo,vegetarian,'same product preserves its already loading image');
+  update(hero,'pommes.webp');
+  const fries=hero.photo;
+  assert.notEqual(fries,vegetarian,'a new product gets a new image element');
+  assert.equal(vegetarian.isConnected,false,'old product bitmap is detached immediately');
+  assert.equal(fries.style.visibility,'hidden','new bitmap must not show before loading');
+  assert.equal(fries.src,'/pommes-hero.webp');
+  assert.equal(fries.srcset,undefined,'old CDN srcset does not leak into another product');
+  vegetarian.handlers.load();
+  assert.equal(vegetarian.style.visibility,'hidden','late old load cannot restore stale bitmap');
+  assert.equal(hero.photo,fries,'late load cannot replace the current image');
+  fries.handlers.load();
+  assert.equal(fries.style.visibility,'visible','correct photo appears on load');
+  update(hero,'pommes.webp');
+  assert.equal(hero.photo,fries,'size/option updates preserve the loaded photo');
+  update(hero,'');
+  assert.equal(hero.photo,null,'products without a photo remove the old one');
+
+  update(hero,'pommes.webp');
+  hero.photo.handlers.error();
+  assert.equal(hero.photo,null,'failed image leaves no stale bitmap');
+  assert.equal(created.length,3,'repeated renders do not create redundant images');
+});
+
 test('product card renderer keeps price, cart action and lazy image hints', () => {
   const deps = {
     getItemBasePrice: () => 210,
