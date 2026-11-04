@@ -323,6 +323,13 @@ const DEFAULT_SETTINGS = {
   specialDaysConfig: '', // Compact JSON: enabled, animation and per-day overrides.
   shopInfoEnabled: true,
   ingredientCustomizationEnabled: true,
+  // Optional customer extras: all settings live alongside the existing menu.
+  cartSuggestionsEnabled: true,
+  cartSuggestionsMax: 3,
+  cartSuggestionRules: '', // JSON: pizza/burger/kebab/tallerken/other -> up to three item IDs.
+  quickKitchenNotesEnabled: true,
+  quickKitchenNotesConfig: '', // JSON: category -> permitted short kitchen requests.
+  orderFeedbackEnabled: false, // Enable only after Firebase feedback write rules are verified.
   manualClosed: true,
   closedMessage: 'Vi tar ikke imot bestillinger akkurat nå.',
 };
