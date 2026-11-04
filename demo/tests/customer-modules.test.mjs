@@ -59,6 +59,28 @@ test('menu search still covers names, descriptions, options and allergens', () =
   assert.deepEqual(visibleMenuItems(section, '', group, allergens).map(i=>i.id), ['1']);
 });
 
+test('product kitchen notes inherit category defaults, accept custom edits and obey visibility', async () => {
+  const source=await readFile(new URL('../js/customer.js',import.meta.url),'utf8');
+  const start=source.indexOf('const KITCHEN_NOTE_DEFAULTS=');
+  const end=source.indexOf('function splitKitchenComment(',start);
+  assert.ok(start>=0 && end>start,'product-specific kitchen note helper exists');
+  const store={settings:{quickKitchenNotesEnabled:true,quickKitchenNotesConfig:''}};
+  const helper=runInNewContext(source.slice(start,end)+'\nkitchenNotesFor;',{
+    store,
+    findItem:()=>({section:{title:'Pizza'}}),
+    customerItemKind:()=> 'pizza',
+    parseCustomerExtraJSON:raw=>JSON.parse(raw||'{}'),
+  },{timeout:1500});
+  assert.deepEqual(Array.from(helper({id:'p1'})),['Godt stekt','Ikke skjær','Del i to']);
+  const custom={id:'p1',quickKitchenNotes:['Godt stekt','godt stekt','Del i to','Uten løk']};
+  assert.deepEqual(Array.from(helper(custom)),['godt stekt','Del i to'],
+    'custom product list is preferred, duplicates and Uten commands are excluded');
+  assert.deepEqual(Array.from(helper({...custom,quickKitchenNotes:[]})),[]);
+  assert.deepEqual(Array.from(helper({...custom,quickKitchenNotesEnabled:false})),[]);
+  store.settings.quickKitchenNotesEnabled=false;
+  assert.deepEqual(Array.from(helper(custom)),[],'global switch also hides product notes');
+});
+
 test('order-status updates cannot needlessly recreate unchanged menu cards', async () => {
   const js = await readFile(new URL('../js/customer.js', import.meta.url), 'utf8');
   assert.match(js, /if \(nextMarkup === lastMenuMarkup\) return;/);
