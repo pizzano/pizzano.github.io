@@ -99,7 +99,7 @@ test('menu product card has one reference layout without cascade overrides', asy
   assert.match(block,/grid-template-areas:"photo details actions"/);
   assert.match(block,/justify-content:space-between/);
   assert.match(block,/border-radius:100%/);
-  for(const token of ['--palette-success','--palette-button-text','--palette-surface','--palette-button','--palette-ink','--text-lg']){
+  for(const token of ['--palette-accent','--palette-button-text','--palette-surface','--palette-button','--palette-ink','--text-lg']){
     assert.ok(block.includes('var('+token),token+' should inherit the theme');
   }
   assert.doesNotMatch(block,/!important|@import|\.add-btn::(?:before|after)/);
@@ -296,7 +296,7 @@ test('Premium Emerald & Gold is selectable in admin and scoped to the customer p
   assert.match(base,/var\(--premium-card-bg/);
   assert.match(customer,/customer-theme\.css\?v=20261104-theme-unify4/);
   assert.match(customer,/product-detail-redesign\.css\?v=20261104-theme-unify4/);
-  assert.match(admin,/admin\.css\?v=20261104-theme-unify4/);
+  assert.match(admin,/admin\.css\?v=20261104-premium-emerald2/);
 });
 
 test('product footer uses two separate rounded pills, theme-aware and compact',async()=>{
