@@ -185,6 +185,10 @@ button.cart-product-copy {cursor:pointer;}
   background:var(--cart-strip);color:var(--palette-ink);
   font-size:12px;line-height:1.25;
 }
+/* Kitchen instructions and removals: label and value share one alert color. */
+.view-cart .cart-detail-row.is-note {
+  color:var(--palette-danger,#d32f2f);
+}
 .view-cart .cart-detail-left {flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-weight:400;}
 .view-cart .cart-product-details .cart-detail-left b {font-weight:650;color:inherit;}
 .view-cart .cart-detail-price {
@@ -299,6 +303,9 @@ html[data-theme="dark"] .orders-page .order-product-list {--palette-success:#82c
   display:flex;align-items:center;gap:6px;min-height:28px;padding:6px 8px;
   border-radius:9px;background:var(--cart-strip);color:var(--palette-ink);
   font-size:12px;line-height:1.25;
+}
+.order-product-list .cart-detail-row.is-note {
+  color:var(--palette-danger,#d32f2f);
 }
 .order-product-list .cart-detail-left {flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-weight:400;}
 .order-product-list .cart-detail-left b {font-weight:650;color:inherit;}
