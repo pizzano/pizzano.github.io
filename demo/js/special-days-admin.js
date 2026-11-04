@@ -1,4 +1,4 @@
-import {store,mutate,subscribe,ready} from './data.js?v=20261104-type5-1';
+import {store,mutate,subscribe,ready} from './data.js?v=20261104-emerald-gold2';
 import {SPECIAL_DAYS,parseSpecialDays,dateForDay,osloToday} from './special-days.js';
 const panel=document.getElementById('specialDayAdmin');
 if(panel){
