@@ -3524,12 +3524,72 @@ function smallPalettePreview(parent,palette,mode) {
 let lastPalettePreviewKey = null;
 function renderPalettePreview() {
   const node = $('customerPalettePreview');
-  const palette = getCustomerPalette(store.settings?.customerPalette,store.settings?.customCustomerPalette);
-  const key = JSON.stringify(palette);
+  const activeKey = store.settings?.customerPalette || 'reference';
+  const palette = getCustomerPalette(activeKey,store.settings?.customCustomerPalette);
+  const key = JSON.stringify([activeKey,palette]);
   if (key === lastPalettePreviewKey && node.childElementCount) return;
-  smallPalettePreview(node, palette);
+  node.replaceChildren();
+  const intro = document.createElement('p');
+  intro.className = 'palette-choices-hint';
+  intro.textContent = 'Velg et fargekort eller bruk menyen over. Begge modusene vises for hver stil.';
+  node.append(intro);
+  const grid = document.createElement('div');
+  grid.className = 'palette-choice-grid';
+  const choices = [...Object.entries(CUSTOMER_PALETTES),
+    ['custom',getCustomerPalette('custom',store.settings?.customCustomerPalette)]];
+  for (const [id,option] of choices) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'palette-choice' + (activeKey===id?' is-selected':'');
+    button.dataset.paletteChoice = id;
+    button.setAttribute('aria-pressed',String(activeKey===id));
+    button.setAttribute('aria-label',option.label + (activeKey===id?', valgt':''));
+    const title=document.createElement('strong');
+    title.className='palette-choice-name';
+    title.textContent=id==='custom'?'6. Egendefinert – mitt tema':option.label;
+    button.append(title);
+    for (const mode of ['light','dark']) {
+      const [accent,bg,surface,ink,border,success] = option[mode];
+      const details = resolvePaletteDetails(option,mode);
+      const sample=document.createElement('span');
+      sample.className='palette-choice-sample';
+      sample.style.setProperty('--sample-bg',bg);
+      sample.style.setProperty('--sample-surface',surface);
+      sample.style.setProperty('--sample-accent',accent);
+      sample.style.setProperty('--sample-ink',ink);
+      sample.style.setProperty('--sample-border',border);
+      sample.style.setProperty('--sample-success',success);
+      sample.style.setProperty('--sample-button',details.button);
+      sample.style.setProperty('--sample-button-text',details.buttonText);
+      sample.setAttribute('aria-label',mode==='light'?'Lys modus':'Mørk modus');
+      const modeName=document.createElement('span');
+      modeName.className='palette-choice-mode';
+      modeName.textContent=mode==='light'?'Lys':'Mørk';
+      const surfaceTile=document.createElement('span');
+      surfaceTile.className='palette-choice-surface';
+      const dot=document.createElement('span');
+      dot.className='palette-choice-dot';
+      const line=document.createElement('span');
+      line.className='palette-choice-line';
+      const action=document.createElement('span');
+      action.className='palette-choice-action';
+      action.textContent='+';
+      surfaceTile.append(dot,line,action);
+      sample.append(modeName,surfaceTile);
+      button.append(sample);
+    }
+    grid.append(button);
+  }
+  node.append(grid);
   lastPalettePreviewKey = key;
 }
+$('customerPalettePreview').addEventListener('click',event => {
+  const button=event.target.closest('[data-palette-choice]');
+  if(!button || button.dataset.paletteChoice===el.settings.customerPalette.value)return;
+  el.settings.customerPalette.value=button.dataset.paletteChoice;
+  // Reuse the existing Firebase mutation path. No separate theme save handler.
+  el.settings.customerPalette.dispatchEvent(new Event('change',{bubbles:true}));
+});
 function renderCustomPaletteDraftPreview() {
   if(!customPaletteDraft)return;
   smallPalettePreview(customPaletteDraftPreview,customPaletteDraft,activePaletteMode);
