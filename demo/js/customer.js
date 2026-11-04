@@ -1386,6 +1386,34 @@ function renderProductHeroImage(heroHeader, imageUrl) {
   if (photo.complete && photo.naturalWidth > 0) photo.style.visibility='visible';
 }
 
+const KITCHEN_NOTE_DEFAULTS={
+  pizza:['Godt stekt','Ikke skjær','Del i to'],
+  burger:['Godt stekt','Saus ved siden av'],
+  kebab:['Saus ved siden av','Del i to'],
+  tallerken:['Saus ved siden av'],
+  other:['Ekstra servietter'],
+};
+function kitchenNotesFor(item){
+  if(store.settings.quickKitchenNotesEnabled === false)return [];
+  const found=findItem(item.id);
+  const kind=customerItemKind(found.section,item);
+  const defined=parseCustomerExtraJSON(store.settings.quickKitchenNotesConfig);
+  const list=Array.isArray(defined[kind])?defined[kind]:KITCHEN_NOTE_DEFAULTS[kind];
+  // Only plain short notes can become chips. Ingredient removal stays separate.
+  return [...new Set(list.map(label=>String(label||'').trim()).filter(Boolean))]
+    .filter(label=>!/^uten[\s:]/i.test(label)).slice(0,8);
+}
+function splitKitchenComment(comment,notes){
+  const lines=String(comment||'').split(/\r?\n/);
+  const selected=notes.filter(note=>lines.some(line=>line.trim().toLocaleLowerCase('no')===note.toLocaleLowerCase('no')));
+  const selectedSet=new Set(selected.map(note=>note.toLocaleLowerCase('no')));
+  const own=lines.filter(line=>!selectedSet.has(line.trim().toLocaleLowerCase('no'))).join('\n').trim();
+  return {selected,own};
+}
+function joinKitchenComment(selected,own){
+  return [...new Set(selected),String(own||'').trim()].filter(Boolean).join('\n').slice(0,1000);
+}
+
 function renderSheet() {
   if (!draft) return;
   const { item } = findItem(draft.itemId);
@@ -1496,6 +1524,8 @@ function renderSheet() {
   heroDescription.textContent=item.description||item.ingredients||'';
   heroDescription.hidden=!heroDescription.textContent;
 
+  const quickNotes=kitchenNotesFor(item);
+  const kitchenNoteParts=splitKitchenComment(draft.comment,quickNotes);
   el.sheetBody.innerHTML = `
     ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
     ${ingredientCustomizeHtml}
@@ -1503,9 +1533,12 @@ function renderSheet() {
     ${groups.map(group => optionGroupHtml(group, problems)).join('')}
     <div class="opt-group opt-group--comment">
       <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
-      <textarea class="comment-area" id="draftComment" placeholder="F.eks. godt stekt, saus ved siden av…">${escapeHtml(
-        draft.comment
-      )}</textarea>
+      ${quickNotes.length?`<div class="quick-kitchen-notes" role="group" aria-label="Raske beskjeder til kjøkkenet">
+        <span class="quick-kitchen-notes-label">Raske beskjeder (valgfritt)</span>
+        <div class="quick-kitchen-note-chips">${quickNotes.map(note=>`<button type="button" class="quick-kitchen-note${kitchenNoteParts.selected.includes(note)?' is-selected':''}"
+          data-quick-kitchen-note="${escapeHtml(note)}" aria-pressed="${kitchenNoteParts.selected.includes(note)}">${escapeHtml(note)}</button>`).join('')}</div>
+      </div>`:''}
+      <textarea class="comment-area" id="draftComment" maxlength="1000" placeholder="Egen kommentar (valgfritt)…">${escapeHtml(kitchenNoteParts.own)}</textarea>
     </div>
     <div class="sheet-allergens" aria-label="Allergener">
       <span class="sheet-allergens-label">Allergener</span>
@@ -1559,7 +1592,10 @@ function addDraftToCart() {
   const { item } = findItem(draft.itemId);
   if (!item) return;
   const commentField = document.getElementById('draftComment');
-  if (commentField) draft.comment = commentField.value.trim();
+  if (commentField) {
+    const selected=splitKitchenComment(draft.comment,kitchenNotesFor(item)).selected;
+    draft.comment=joinKitchenComment(selected,commentField.value);
+  }
 
   if (draft.loyaltyFree && cart.some(line => line.loyaltyFree && line.lineId !== draft.editingLineId)) { toast('Du har allerede en gratis pizza i kurven.', 'warning'); return; }
   const check = validateDraft();
@@ -2997,6 +3033,19 @@ el.cartLines.addEventListener('click', (event) => {
 
 el.sheetBody.addEventListener('click', (event) => {
   if (!draft) return;
+  const quickNote=event.target.closest('[data-quick-kitchen-note]');
+  if(quickNote){
+    const note=quickNote.dataset.quickKitchenNote;
+    const {item}=findItem(draft.itemId);
+    const available=kitchenNotesFor(item);
+    if(!available.includes(note))return;
+    const previous=splitKitchenComment(draft.comment,available);
+    const selected=previous.selected.includes(note)
+      ? previous.selected.filter(value=>value!==note) : [...previous.selected,note];
+    draft.comment=joinKitchenComment(selected,previous.own);
+    renderSheet();
+    return;
+  }
   const quantityButton = event.target.closest('[data-addon-quantity]');
   if (quantityButton) {
     event.preventDefault();
@@ -3106,7 +3155,11 @@ el.sheetBody.addEventListener('change', (event) => {
 });
 
 el.sheetBody.addEventListener('input', (event) => {
-  if (draft && event.target.id === 'draftComment') draft.comment = event.target.value;
+  if (draft && event.target.id === 'draftComment') {
+    const {item}=findItem(draft.itemId);
+    const previous=splitKitchenComment(draft.comment,kitchenNotesFor(item));
+    draft.comment=joinKitchenComment(previous.selected,event.target.value);
+  }
 });
 
 el.qtyMinus.addEventListener('click', () => {
