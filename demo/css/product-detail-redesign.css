@@ -83,12 +83,11 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   --pd-fs-subtext:var(--text-sm,12px);
   --pd-fs-micro:var(--text-xs,10px);
   --pd-fs-description:calc(var(--text-md,14px) + 2px);
-  /* Consistent top reveal on both short and long product descriptions. */
-  --pd-top-gap:14px;
-  position:fixed;top:var(--pd-top-gap);right:0;bottom:0;left:0;z-index:9999;
+  /* Product sheet reaches the top edge on every screen size. */
+  position:fixed;inset:0;z-index:9999;
   display:flex;flex-direction:column;
   width:100%;max-width:none;
-  height:calc(100dvh - var(--pd-top-gap));max-height:calc(100dvh - var(--pd-top-gap));
+  height:100dvh;max-height:100dvh;
   box-sizing:border-box;margin:0;padding:0;
   border:0;border-radius:20px 20px 0 0;overflow:hidden;
   background:var(--premium-sheet-bg,var(--pd-page));color:var(--pd-ink);
@@ -462,7 +461,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 }
 @media(min-width:700px){
   #productSheet{
-    inset:14px auto auto 50%;transform:translateX(-50%);
+    inset:0 auto auto 50%;transform:translateX(-50%);
     width:min(610px,calc(100vw - 30px));max-width:610px;
     height:min(920px,calc(100dvh - 28px));max-height:calc(100dvh - 28px);
     border-radius:29px;box-shadow:0 24px 74px rgba(0,0,0,.35);
