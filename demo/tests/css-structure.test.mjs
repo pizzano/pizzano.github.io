@@ -131,7 +131,9 @@ test('popup header actions, cart badge and selected option borders stay consiste
   // No 3px accent bar: all selected rows have the same inset edge on 4 sides.
   const checked=sheet.slice(sheet.indexOf('#productSheet .opt-row.is-checked,'),
     sheet.indexOf('#productSheet .opt-row.is-checked::after'));
-  assert.match(checked,/box-shadow:inset 0 0 0 2px var\(--pd-selected-edge\)/);
+  assert.match(checked,/border:2px solid var\(--pd-selected-edge\)/);
+  assert.match(checked,/border-radius:14px/);
+  assert.match(checked,/box-shadow:none/);
   assert.doesNotMatch(checked,/inset [1-9]px 0 0|premium-row-line/);
 
   // A menu cart-count badge uses the theme's button background & text contrast.
@@ -144,6 +146,25 @@ test('popup header actions, cart badge and selected option borders stay consiste
   for(const css of ['customer.css','customer-theme.css','product-detail-redesign.css']){
     assert.match(index,new RegExp('css/'+css.replaceAll('.','\\.')+'\\?v=20261104-product-fixes1'));
   }
+});
+
+test('product popup keeps fixed top reveal, glass backdrop, curved photo divider and even CTA spacing',async()=>{
+  const css=await text('css/product-detail-redesign.css');
+  const html=await text('index.html');
+  const customer=await text('js/customer.js');
+
+  assert.match(css,/--pd-top-gap:14px/);
+  assert.match(css,/top:var\(--pd-top-gap\);right:0;bottom:0;left:0/);
+  assert.match(css,/height:calc\(100dvh - var\(--pd-top-gap\)\)/);
+  assert.match(css,/inset:14px auto auto 50%;transform:translateX\(-50%\)/);
+  assert.match(css,/backdrop-filter:blur\(10px\)/);
+  assert.match(css,/-webkit-backdrop-filter:blur\(10px\)/);
+  assert.match(css,/border-top:5px solid var\(--premium-photo-edge,var\(--pd-accent\)\)/);
+  assert.match(css,/#productSheet \.opt-row\.is-checked,#productSheet \.opt-row:has\(>input:checked\)\{\s*background:var\(--pd-selected\);\s*border:2px solid var\(--pd-selected-edge\);\s*border-radius:14px;/);
+  assert.match(css,/#productSheet #btnAddToCart\{\s*display:flex;flex:1 1 auto;align-items:center;justify-content:space-evenly/);
+  assert.doesNotMatch(css,/box-shadow:inset 0 0 0 2px var\(--pd-selected-edge\)/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-product-gap-curve2/);
+  assert.match(customer,/el\.btnAddToCart\.addEventListener\('click', addDraftToCart\)/);
 });
 
 test('all five typography tiers are editable and shared by customer and admin', async () => {
