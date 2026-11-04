@@ -11,6 +11,14 @@
    Both variants retain their own contrast-safe light and dark color roles. */
 :root[data-customer-palette="emeraldGold"] {
   --premium-metal: var(--palette-accent);
+  --premium-sheet-bg: radial-gradient(ellipse at 90% 14%,
+                        color-mix(in srgb,var(--palette-success) 8%,transparent),transparent 58%),
+                       var(--palette-bg);
+  --premium-photo-edge: var(--palette-accent);
+  --premium-row-line: color-mix(in srgb,var(--palette-accent) 62%,transparent);
+  --premium-minus-bg: color-mix(in srgb,var(--palette-bg) 65%,var(--palette-surface));
+  --premium-icon-bg: color-mix(in srgb,#04241E 88%,#153B31);
+  --premium-fav-color: #F3D477;
   --premium-edge: color-mix(in srgb,var(--palette-accent) 37%,var(--palette-border));
   --premium-card-bg: linear-gradient(145deg,
     color-mix(in srgb,var(--palette-accent) 6%,var(--palette-surface)),
