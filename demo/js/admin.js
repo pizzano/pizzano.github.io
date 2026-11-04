@@ -181,6 +181,13 @@ const el = {
   settingsScroll: $('settingsScroll'),
   fName: $('fName'),
   fDesc: $('fDesc'),
+  fQuickKitchenNotesEnabled: $('fQuickKitchenNotesEnabled'),
+  productQuickKitchenNotesEditor: $('productQuickKitchenNotesEditor'),
+  productQuickKitchenNotesList: $('productQuickKitchenNotesList'),
+  productQuickKitchenNotesSource: $('productQuickKitchenNotesSource'),
+  fQuickKitchenNoteNew: $('fQuickKitchenNoteNew'),
+  btnAddProductKitchenNote: $('btnAddProductKitchenNote'),
+  btnResetProductKitchenNotes: $('btnResetProductKitchenNotes'),
   fIngredientNew: $('fIngredientNew'),
   btnAddIngredient: $('btnAddIngredient'),
   btnDetectIngredients: $('btnDetectIngredients'),
@@ -836,6 +843,8 @@ function createProduct(sectionId) {
       defaultSizeIndex: 0,
       allergens: [],
       optionGroupIds: [],
+      quickKitchenNotesEnabled: true,
+      quickKitchenNotes: null,
       hidden: true,
       soldOut: false,
     });
@@ -915,6 +924,57 @@ el.btnSaveCategory.addEventListener('click', () => {
  * Produktpanel
  * ------------------------------------------------------------------ */
 
+function kitchenNoteCategory(section,item) {
+  const name=((section?.title||section?.name||'')+' '+(item?.name||'')).toLocaleLowerCase('no');
+  if(/pizza/.test(name))return 'pizza';
+  if(/hamburger|burger/.test(name))return 'burger';
+  if(/kebab|rull/.test(name))return 'kebab';
+  if(/tallerken|snadder/.test(name))return 'tallerken';
+  return 'other';
+}
+function cleanProductKitchenNotes(values) {
+  const unique=new Map();
+  for(const raw of Array.isArray(values)?values:[]){
+    const label=String(raw||'').trim().replace(/\s+/g,' ').slice(0,60);
+    if(label && !/^uten[\s:]/i.test(label))unique.set(label.toLocaleLowerCase('no'),label);
+    if(unique.size>=8)break;
+  }
+  return [...unique.values()];
+}
+function kitchenNoteListForAdmin(item,section) {
+  if(Array.isArray(item?.quickKitchenNotes))return cleanProductKitchenNotes(item.quickKitchenNotes);
+  let configured={};
+  try{configured=JSON.parse(String(store.settings?.quickKitchenNotesConfig||'{}'))||{}}catch{}
+  const kind=kitchenNoteCategory(section,item);
+  const defaults={
+    pizza:['Godt stekt','Ikke skjær','Del i to'],
+    burger:['Godt stekt','Saus ved siden av'],
+    kebab:['Saus ved siden av','Del i to'],
+    tallerken:['Saus ved siden av'],
+    other:['Ekstra servietter'],
+  };
+  return cleanProductKitchenNotes(Array.isArray(configured[kind])?configured[kind]:defaults[kind]);
+}
+function renderProductKitchenNotes(item,section) {
+  if(!item || !el.productQuickKitchenNotesList)return;
+  const visible=item.quickKitchenNotesEnabled!==false;
+  const customized=Array.isArray(item.quickKitchenNotes);
+  const values=kitchenNoteListForAdmin(item,section);
+  el.fQuickKitchenNotesEnabled.checked=visible;
+  el.productQuickKitchenNotesEditor.hidden=!visible;
+  el.productQuickKitchenNotesSource.textContent=customized
+    ? 'Egne valg for dette produktet' : 'Viser kategoristandard';
+  el.btnResetProductKitchenNotes.disabled=!customized;
+  el.btnAddProductKitchenNote.disabled=values.length>=8;
+  el.productQuickKitchenNotesList.innerHTML=values.length
+    ? values.map((note,index)=>`<div class="product-kitchen-note-row">
+        <span>${escapeHtml(note)}</span>
+        <button type="button" data-remove-product-kitchen-note="${index}" class="icon-btn is-danger"
+          aria-label="Fjern ${escapeHtml(note)} fra produktet" title="Fjern fra produktet">×</button>
+      </div>`).join('')
+    : '<p class="set-hint">Ingen raske beskjeder for dette produktet.</p>';
+}
+
 function renderPanel() {
   const { item, section } = selectedItem();
   if (!item) {
@@ -935,6 +995,7 @@ function renderPanel() {
 
   el.fName.value = item.name || '';
   el.fDesc.value = item.description || '';
+  renderProductKitchenNotes(item,section);
   renderIngredientRules(item);
   el.fImage.value = item.imageUrl || '';
   el.fImagePreview.src = item.imageUrl || '';
@@ -1230,6 +1291,52 @@ el.fPopular.addEventListener('change', () => {
     }
   });
   toast(el.fPopular.checked ? 'Lagt i «Mest bestilt».' : 'Fjernet fra «Mest bestilt».');
+});
+
+el.fQuickKitchenNotesEnabled.addEventListener('change',()=>{
+  updateItem(item=>{item.quickKitchenNotesEnabled=el.fQuickKitchenNotesEnabled.checked});
+  const {item,section}=selectedItem();
+  renderProductKitchenNotes(item,section);
+});
+function addProductKitchenNote(){
+  const raw=el.fQuickKitchenNoteNew.value.trim().replace(/\s+/g,' ').slice(0,60);
+  if(!raw)return el.fQuickKitchenNoteNew.focus();
+  if(/^uten[\s:]/i.test(raw)){toast('Bruk Ingredienser for å fjerne en ingrediens.');return}
+  const {item,section}=selectedItem();
+  if(!item)return;
+  const values=kitchenNoteListForAdmin(item,section);
+  if(values.some(label=>label.toLocaleLowerCase('no')===raw.toLocaleLowerCase('no'))){
+    toast('Beskjeden finnes allerede for dette produktet.');return;
+  }
+  if(values.length>=8){toast('Maks 8 raske beskjeder per produkt.');return}
+  updateItem(item=>{item.quickKitchenNotes=cleanProductKitchenNotes([...values,raw])});
+  el.fQuickKitchenNoteNew.value='';
+  const selected=selectedItem();
+  renderProductKitchenNotes(selected.item,selected.section);
+  el.fQuickKitchenNoteNew.focus();
+}
+el.btnAddProductKitchenNote.addEventListener('click',addProductKitchenNote);
+el.fQuickKitchenNoteNew.addEventListener('keydown',event=>{
+  if(event.key==='Enter'){event.preventDefault();addProductKitchenNote()}
+});
+el.productQuickKitchenNotesList.addEventListener('click',event=>{
+  const btn=event.target.closest('[data-remove-product-kitchen-note]');
+  if(!btn)return;
+  const {item,section}=selectedItem();
+  if(!item)return;
+  const values=kitchenNoteListForAdmin(item,section);
+  const index=Number(btn.dataset.removeProductKitchenNote);
+  if(!Number.isInteger(index)||index<0||index>=values.length)return;
+  values.splice(index,1);
+  updateItem(item=>{item.quickKitchenNotes=values});
+  const updated=selectedItem();
+  renderProductKitchenNotes(updated.item,updated.section);
+});
+el.btnResetProductKitchenNotes.addEventListener('click',()=>{
+  updateItem(item=>{item.quickKitchenNotes=null});
+  const {item,section}=selectedItem();
+  renderProductKitchenNotes(item,section);
+  toast('Kategoristandard er gjenopprettet for produktet.');
 });
 
 el.fVisible.addEventListener('change', () => {
