@@ -218,7 +218,7 @@ test('customer theme colors are consistent in header, profile and cart; sheet ha
   assert.match(sheet,/position:fixed;inset:0;z-index:9999/);
   for(const page of [index,admin])assert.match(page,/css\/cart\.css\?v=20261104-theme-unify4/);
   assert.match(index,/css\/customer-theme\.css\?v=20261104-theme-unify4/);
-  assert.match(index,/js\/customer\.js\?v=20261104-theme-unify4/);
+  assert.match(index,/js\/customer\.js\?v=20261104-hero-image-fix1/);
   assert.match(admin,/js\/admin\.js\?v=20261104-theme-unify4/);
 });
 
