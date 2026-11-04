@@ -3481,7 +3481,7 @@ const SETTING_FIELDS = [
 
 const paletteSelectOptions = Object.entries(CUSTOMER_PALETTES)
   .map(([key,palette]) => new Option(palette.label,key));
-paletteSelectOptions.push(new Option('5. Egendefinert – mitt tema','custom'));
+paletteSelectOptions.push(new Option('6. Egendefinert – mitt tema','custom'));
 el.settings.customerPalette.replaceChildren(...paletteSelectOptions);
 
 // Changes are held as a local draft. Only the explicit save writes to Firebase.
