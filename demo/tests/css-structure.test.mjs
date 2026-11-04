@@ -47,6 +47,30 @@ test('shared contact/profile declarations preserve both selectors and mobile ove
   assert.match(css,/#viewProfile \.profile-contact-card \.err/);
 });
 
+test('admin product editor controls exactly which quick kitchen notes appear',async()=>{
+  const admin=await text('admin.html');
+  const js=await text('js/admin.js');
+  const customer=await text('js/customer.js');
+  const css=await text('css/admin.css');
+  const normalizer=await text('js/data-normalization.js');
+  for(const id of ['fQuickKitchenNotesEnabled','productQuickKitchenNotesList',
+    'fQuickKitchenNoteNew','btnAddProductKitchenNote','btnResetProductKitchenNotes']){
+    assert.match(admin,new RegExp('id="'+id+'"'));
+    assert.ok(js.includes("'"+id+"'"),'admin must bind '+id);
+  }
+  assert.match(admin,/data-section="produkt"[\s\S]*?id="fQuickKitchenNotesEnabled"/);
+  assert.match(js,/function renderProductKitchenNotes\(item,section\)/);
+  assert.match(js,/data-remove-product-kitchen-note/);
+  assert.match(js,/item\.quickKitchenNotes=cleanProductKitchenNotes/);
+  assert.match(js,/item\.quickKitchenNotes=null/);
+  assert.match(js,/item\.quickKitchenNotesEnabled=el\.fQuickKitchenNotesEnabled\.checked/);
+  assert.match(customer,/item\?\.quickKitchenNotesEnabled === false/);
+  assert.match(customer,/Array\.isArray\(item\.quickKitchenNotes\)/);
+  assert.match(normalizer,/quickKitchenNotesEnabled: item\.quickKitchenNotesEnabled !== false/);
+  assert.match(normalizer,/quickKitchenNotes: Array\.isArray\(item\.quickKitchenNotes\)/);
+  assert.match(css,/\.product-kitchen-note-row\{/);
+});
+
 test('original product sheet design and its responsive modes remain loaded',async()=>{
   const html=await text('index.html');
   const css=await text('css/product-detail-redesign.css');
