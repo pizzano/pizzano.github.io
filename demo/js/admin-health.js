@@ -1,7 +1,7 @@
 /* Read-only Systemhelse panel. Only probes when the health tab is visible
  * or staff explicitly clicks "Kontroller nå". No order mutation, SMS send,
  * email send, printer receipt or background polling on other pages. */
-import { DB_URL, backendInfo } from './data.js?v=20261105-customer-extras1';
+import { DB_URL, backendInfo } from './data.js?v=20261105-product-notes2';
 import { checkEpsonConnection } from './order-printer.js?v=20261016-cleanall1';
 import { smsHealthState, emailHealthState, activeCriticalAlerts } from './admin-health-policy.js';
 import { metricSummary, clearMetrics } from './performance-metrics.js';
