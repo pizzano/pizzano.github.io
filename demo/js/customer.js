@@ -269,6 +269,7 @@ const el = {
   sheetFav: $('sheetFav'),
   sheetErr: $('sheetErr'),
   sheetTotal: $('sheetTotal'),
+  sheetAddLabel: $('sheetAddLabel'),
   btnAddToCart: $('btnAddToCart'),
   qtyMinus: $('qtyMinus'),
   qtyPlus: $('qtyPlus'),
@@ -1509,7 +1510,7 @@ function renderSheet() {
   el.qtyMinus.disabled = Boolean(draft.loyaltyFree && !draft.loyaltyAuto);
   el.qtyValue.textContent = String(draft.quantity);
   el.sheetTotal.textContent = formatPrice(draftTotal());
-  el.btnAddToCart.querySelector('span').textContent = draft.editingLineId
+  el.sheetAddLabel.textContent = draft.editingLineId
     ? 'Oppdater handlekurven'
     : 'Legg til';
   el.btnAddToCart.disabled = item.soldOut;
