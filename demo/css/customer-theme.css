@@ -11,6 +11,7 @@
    Both variants retain their own contrast-safe light and dark color roles. */
 :root[data-customer-palette="emeraldGold"] {
   --premium-metal: var(--palette-accent);
+  --menu-price-color:var(--palette-accent);
   --premium-sheet-bg: radial-gradient(ellipse at 90% 14%,
                         color-mix(in srgb,var(--palette-success) 8%,transparent),transparent 58%),
                        var(--palette-bg);
