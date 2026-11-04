@@ -143,8 +143,13 @@ test('popup header actions, cart badge and selected option borders stay consiste
   assert.match(badge,/color:var\(--palette-button-text,var\(--palette-on-accent,#fff\)\)/);
   assert.match(customer,/\.view-menu \.prod-grid \.prod-cart-label \{[^}]*color:inherit/s);
 
-  for(const css of ['customer.css','customer-theme.css','product-detail-redesign.css']){
-    assert.match(index,new RegExp('css/'+css.replaceAll('.','\\.')+'\\?v=20261104-product-fixes1'));
+  const expectedVersions={
+    'customer.css':'20261104-product-fixes1',
+    'customer-theme.css':'20261104-product-fixes1',
+    'product-detail-redesign.css':'20261104-product-gap-curve2',
+  };
+  for(const [css,version] of Object.entries(expectedVersions)){
+    assert.match(index,new RegExp('css/'+css.replaceAll('.','\\.')+'\\?v='+version));
   }
 });
 
@@ -261,7 +266,7 @@ test('Premium Emerald & Gold is selectable in admin and scoped to the customer p
   assert.match(cart,/data-customer-palette="emeraldGold"/);
   assert.match(base,/var\(--premium-card-bg/);
   assert.match(customer,/customer-theme\.css\?v=20261104-product-fixes1/);
-  assert.match(customer,/product-detail-redesign\.css\?v=20261104-product-fixes1/);
+  assert.match(customer,/product-detail-redesign\.css\?v=20261104-product-gap-curve2/);
   assert.match(admin,/admin\.css\?v=20261104-premium-emerald2/);
 });
 
@@ -289,7 +294,7 @@ test('product footer uses two separate rounded pills, theme-aware and compact',a
   assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
   assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
   assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-product-fixes1/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-product-gap-curve2/);
 });
 
 test('cart and saved order instruction rows share theme red without changing prices',async()=>{
