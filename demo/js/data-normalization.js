@@ -47,6 +47,7 @@ export function createDataNormalizers({
     settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
     settings.busyExtraMinutes = Math.min(90,Math.max(0,Math.round(Number(settings.busyExtraMinutes)||0)));
     settings.pickupCapacityMax = Math.min(30,Math.max(1,Math.round(Number(settings.pickupCapacityMax)||4)));
+    settings.cartSuggestionsMax = Math.min(3,Math.max(1,Math.round(Number(settings.cartSuggestionsMax)||3)));
     settings.slotIntervalMinutes = Math.min(
       Math.max(settings.slotIntervalMinutes || 15, 5),
       60
