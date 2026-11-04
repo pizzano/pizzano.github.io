@@ -229,7 +229,7 @@ test('product footer uses two separate rounded pills, theme-aware and compact',a
   assert.match(rules,/background:var\(--pd-card\)/);
   assert.match(rules,/border:0;border-radius:999px/);
   assert.match(rules,/color:var\(--pd-button\)/);
-  assert.match(rules,/background:linear-gradient\(165deg/);
+  assert.match(rules,/background:var\(--premium-action-bg,linear-gradient\(165deg/);
   assert.match(rules,/text-overflow: ellipsis/);
   assert.doesNotMatch(rules,/background:linear-gradient\(to right|border:3px/,'old joined footer must not return');
   assert.match(html,/<span id="sheetAddLabel">Legg til<\/span>/);
