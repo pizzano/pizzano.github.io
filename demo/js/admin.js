@@ -52,6 +52,7 @@ import {
   RESTAURANT_WEEKDAYS,
   getStats,
   getOrders,
+  listOrderFeedback,
   markOrderReadyManually,
   updateOrderEstimate,
   acceptOrderWithEstimate,
@@ -266,6 +267,10 @@ const el = {
     customerPalette: $('sCustomerPalette'),
     shopInfoEnabled: $('sShopInfoEnabled'),
     ingredientCustomizationEnabled: $('sIngredientCustomizationEnabled'),
+    cartSuggestionsEnabled: $('sCartSuggestionsEnabled'),
+    cartSuggestionsMax: $('sCartSuggestionsMax'),
+    quickKitchenNotesEnabled: $('sQuickKitchenNotesEnabled'),
+    orderFeedbackEnabled: $('sOrderFeedbackEnabled'),
     restaurantName: $('sRestaurantName'),
     restaurantLogo: $('sRestaurantLogo'),
     streetAddress: $('sStreetAddress'),
@@ -3455,12 +3460,16 @@ const BOOLEAN_SETTING_FIELDS = [
   'customerDarkModeEnabled',
   'shopInfoEnabled',
   'ingredientCustomizationEnabled',
+  'cartSuggestionsEnabled',
+  'quickKitchenNotesEnabled',
+  'orderFeedbackEnabled',
   'busyModeEnabled',
   'pickupCapacityEnabled',
 ];
 
 const SETTING_FIELDS = [
   ['customerPalette', 'text'],
+  ['cartSuggestionsMax', 'number'],
   ['restaurantName', 'text'],
   ['restaurantLogo', 'text'],
   ['streetAddress', 'text'],
@@ -4023,6 +4032,7 @@ function bindSettingField(key, type) {
             ? Math.min(240, Math.max(15, Number(raw) || 30))
             : key === 'busyExtraMinutes' ? Math.min(90, Math.max(0, Number(raw) || 0))
             : key === 'pickupCapacityMax' ? Math.min(30, Math.max(1, Math.round(Number(raw) || 4)))
+            : key === 'cartSuggestionsMax' ? Math.min(3, Math.max(1, Math.round(Number(raw) || 3)))
             : Math.max(0, Number(raw) || 0);
         } else {
           state.settings[key] = raw;
