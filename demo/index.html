@@ -364,6 +364,35 @@
         <button class="btn btn-primary btn-block" id="btnConfirmDone" type="button">Tilbake til menyen</button>
     </div>
 
+    <!-- VALGFRI KUNDEVURDERING (ÅPNES FRA BESTILLINGSHISTORIKK) -->
+    <div class="customer-feedback-backdrop" id="customerFeedbackBackdrop" hidden></div>
+    <section class="customer-feedback-modal" id="customerFeedbackModal" role="dialog" aria-modal="true"
+             aria-labelledby="customerFeedbackTitle" tabindex="-1" hidden>
+        <div class="customer-feedback-head">
+            <h2 id="customerFeedbackTitle">Hvordan var maten?</h2>
+            <button id="customerFeedbackClose" type="button" aria-label="Lukk vurdering">×</button>
+        </div>
+        <p>Fortell oss hvordan du opplevde bestillingen.</p>
+        <div id="customerFeedbackStars" class="customer-feedback-stars" role="group" aria-label="Velg antall stjerner">
+            <button type="button" data-feedback-score="1" aria-label="1 av 5 stjerner" aria-pressed="false">☆</button>
+            <button type="button" data-feedback-score="2" aria-label="2 av 5 stjerner" aria-pressed="false">☆</button>
+            <button type="button" data-feedback-score="3" aria-label="3 av 5 stjerner" aria-pressed="false">☆</button>
+            <button type="button" data-feedback-score="4" aria-label="4 av 5 stjerner" aria-pressed="false">☆</button>
+            <button type="button" data-feedback-score="5" aria-label="5 av 5 stjerner" aria-pressed="false">☆</button>
+        </div>
+        <div id="customerFeedbackTags" class="customer-feedback-tags" aria-label="Velg tilbakemeldinger">
+            <button type="button" data-feedback-tag="God smak" aria-pressed="false">God smak</button>
+            <button type="button" data-feedback-tag="Rask henting" aria-pressed="false">Rask henting</button>
+            <button type="button" data-feedback-tag="Riktig bestilling" aria-pressed="false">Riktig bestilling</button>
+            <button type="button" data-feedback-tag="Lang ventetid" aria-pressed="false">Lang ventetid</button>
+            <button type="button" data-feedback-tag="Noe manglet" aria-pressed="false">Noe manglet</button>
+        </div>
+        <label for="customerFeedbackComment">Kommentar (valgfritt)</label>
+        <textarea id="customerFeedbackComment" class="input" rows="3" maxlength="500" placeholder="Din tilbakemelding…"></textarea>
+        <button class="btn btn-primary" id="customerFeedbackSubmit" type="button">Send vurdering</button>
+        <p id="customerFeedbackMessage" class="hint" role="status" aria-live="polite"></p>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script type="module" src="./js/customer.js?v=20261104-hero-image-fix1"></script>
