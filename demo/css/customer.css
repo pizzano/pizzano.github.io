@@ -2261,7 +2261,7 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
   width:100%;
   margin:0;
   padding:8px;
-  border:1px solid var(--premium-edge,color-mix(in srgb,var(--palette-success) 32%,var(--palette-border)));
+  border:1px solid var(--premium-edge,color-mix(in srgb,var(--palette-accent) 32%,var(--palette-border)));
   border-radius:19px;
   background:var(--premium-card-bg,var(--palette-surface));
   color:var(--palette-ink);
@@ -2438,7 +2438,7 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
 }
 @media (hover:hover) {
   .view-menu .prod-grid .prod-card:hover {
-    border-color:color-mix(in srgb,var(--palette-success) 52%,var(--palette-border));
+    border-color:color-mix(in srgb,var(--palette-accent) 52%,var(--palette-border));
   }
 }
 @media (prefers-reduced-motion:reduce) {
