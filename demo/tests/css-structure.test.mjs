@@ -242,8 +242,8 @@ test('customer theme colors are consistent in header, profile and cart; sheet ha
   assert.match(sheet,/position:fixed;inset:0;z-index:9999/);
   for(const page of [index,admin])assert.match(page,/css\/cart\.css\?v=20261105-customer-extras1/);
   assert.match(index,/css\/customer-theme\.css\?v=20261104-theme-unify4/);
-  assert.match(index,/js\/customer\.js\?v=20261105-customer-extras1/);
-  assert.match(admin,/js\/admin\.js\?v=20261105-customer-extras1/);
+  assert.match(index,/js\/customer\.js\?v=20261105-product-notes2/);
+  assert.match(admin,/js\/admin\.js\?v=20261105-product-notes2/);
 });
 
 test('all five typography tiers are editable and shared by customer and admin', async () => {
@@ -341,7 +341,7 @@ test('Premium Emerald & Gold is selectable in admin and scoped to the customer p
   assert.match(base,/var\(--premium-card-bg/);
   assert.match(customer,/customer-theme\.css\?v=20261104-theme-unify4/);
   assert.match(customer,/product-detail-redesign\.css\?v=20261105-customer-extras1/);
-  assert.match(admin,/admin\.css\?v=20261105-customer-extras1/);
+  assert.match(admin,/admin\.css\?v=20261105-product-notes2/);
 });
 
 test('product footer uses two separate rounded pills, theme-aware and compact',async()=>{
