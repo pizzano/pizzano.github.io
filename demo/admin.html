@@ -750,6 +750,24 @@
                                     <div class="product-edit-field-heading"><span class="product-edit-icon">▤</span><div><label class="lbl" for="fDesc">Beskrivelse</label><p>En kort beskrivelse av produktet som vises i menyen.</p></div></div>
                                     <textarea id="fDesc" class="textarea" placeholder="Kort tekst kunden ser under produktnavnet"></textarea>
                                 </div>
+                                <div class="product-edit-card product-kitchen-notes">
+                                    <div class="product-edit-field-heading"><span class="product-edit-icon">✎</span><div><strong>Raske kjøkkenbeskjeder</strong><p>Velg hvilke ferdige beskjeder kunden ser for akkurat dette produktet.</p></div></div>
+                                    <label class="toggle-row">
+                                        <span class="toggle-body"><strong>Vis raske kjøkkenbeskjeder</strong><small>Skjul eller vis kun for dette produktet.</small></span>
+                                        <input type="checkbox" id="fQuickKitchenNotesEnabled" class="switch">
+                                    </label>
+                                    <div id="productQuickKitchenNotesEditor">
+                                        <div class="product-kitchen-notes-head">
+                                            <small id="productQuickKitchenNotesSource">Kategoristandard</small>
+                                            <button class="btn btn-outline btn-xs" id="btnResetProductKitchenNotes" type="button">Bruk kategoristandard</button>
+                                        </div>
+                                        <div id="productQuickKitchenNotesList" class="product-kitchen-notes-list" aria-live="polite"></div>
+                                        <div class="product-kitchen-notes-add">
+                                            <input id="fQuickKitchenNoteNew" class="input" type="text" maxlength="60" placeholder="F.eks. Godt stekt" autocomplete="off" aria-label="Ny kjøkkenbeskjed">
+                                            <button id="btnAddProductKitchenNote" class="btn btn-primary btn-sm" type="button">+ Legg til</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="product-edit-column">
                                 <div class="product-edit-card">
