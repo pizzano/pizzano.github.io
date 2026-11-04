@@ -89,7 +89,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   width:100%;max-width:none;
   height:100dvh;max-height:100dvh;
   box-sizing:border-box;margin:0;padding:0;
-  border:0;border-radius:20px 20px 0 0;overflow:hidden;
+  border:0;border-radius:0;overflow:hidden;
   background:var(--premium-sheet-bg,var(--pd-page));color:var(--pd-ink);
   box-shadow:none;
   color-scheme:inherit;
@@ -153,7 +153,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   display:flex;flex-direction:column;align-items:center;
   width:100%;min-height:0;
   margin-top:clamp(174px,39vw,222px);
-  padding:23px 16px 18px;
+  padding:11px 16px 10px;
   background:var(--premium-sheet-bg,var(--pd-page));
   border-radius:46% 46% 0 0 / 24px 24px 0 0;
   box-shadow:0 -12px 27px rgba(0,0,0,.09);
@@ -176,7 +176,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 }
 #productSheet .pd-hero-description{
   display:block;position:relative;inset:auto;
-  width:100%;max-height:none;margin:9px 0 0;padding:0;
+  width:100%;max-height:none;margin:5px 0 0;padding:0;
   background:none;backdrop-filter:none;
   color:var(--pd-muted);text-shadow:none;
   font-size:var(--pd-fs-description)!important;font-style:italic;
@@ -186,7 +186,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 #productSheet .pd-hero-description[hidden]{display:none}
 #productSheet .sheet-hero-accent{
   display:block;flex:none;width:43px;height:4px;
-  border-radius:99px;margin:14px auto 0;
+  border-radius:99px;margin:9px auto 0;
   background:var(--pd-accent);
   box-shadow:0 2px 11px color-mix(in srgb,var(--pd-accent) 23%,transparent);
 }
