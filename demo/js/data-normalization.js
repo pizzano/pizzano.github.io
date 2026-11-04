@@ -42,7 +42,7 @@ export function createDataNormalizers({
         })) : null;
     settings.manualClosedUntil=Number.isFinite(Number(base.manualClosedUntil))
       ? Math.max(0,Number(base.manualClosedUntil)):0;
-    if (!['reference', 'lively', 'fresh', 'gourmet', 'custom'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
+    if (!['reference', 'lively', 'fresh', 'gourmet', 'emeraldGold', 'custom'].includes(settings.customerPalette)) settings.customerPalette = 'reference';
     settings.prepMinutes = Math.min(Math.max(settings.prepMinutes, 0), 240);
     settings.pickupLeadMinutes = Math.min(240,Math.max(15,Number(settings.pickupLeadMinutes)||30));
     settings.busyExtraMinutes = Math.min(90,Math.max(0,Math.round(Number(settings.busyExtraMinutes)||0)));
