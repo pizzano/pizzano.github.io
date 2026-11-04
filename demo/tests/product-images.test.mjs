@@ -86,8 +86,10 @@ test('product hero and admin use image helper without changing the order or prin
   const [customer, admin] = await Promise.all(
     ['customer.js', 'admin.js'].map(name =>
       readFile(new URL('../js/' + name, import.meta.url), 'utf8')));
-  assert.match(customer, /productImageSources\(item\.imageUrl, 'hero'\)/);
-  assert.match(customer, /photo\.removeAttribute\('srcset'\)/);
+  assert.match(customer, /renderProductHeroImage\(heroHeader, item\.imageUrl\)/);
+  assert.match(customer, /productImageSources\(imageUrl,'hero'\)/);
+  assert.match(customer, /previous\?\.remove\(\)/);
+  assert.match(customer, /photo\.style\.visibility='hidden'/);
   assert.match(customer, /photo\.fetchPriority='high'/);
   assert.match(admin, /adminImageAttributes\(item\.imageUrl, 'admin'\)/);
   assert.match(admin, /adminImageAttributes\(categoryImage, 'category'\)/);
