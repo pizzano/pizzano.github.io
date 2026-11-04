@@ -876,8 +876,8 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
 
   border: 5px solid var(--palette-border);
   border-radius: 50%;
-  background: linear-gradient(145deg, var(--palette-accent), var(--palette-accent));
-  color: var(--palette-light);
+  background: var(--palette-button);
+  color: var(--palette-button-text);
 
   font-weight: 850;
   letter-spacing: -.04em;
@@ -906,8 +906,8 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
   place-items: center;
   border: 3px solid var(--palette-border);
   border-radius: 50%;
-  background: var(--palette-accent);
-  color: var(--palette-light);
+  background: var(--palette-button);
+  color: var(--palette-button-text);
   font-size: 10px;
   line-height: 1;
 }
@@ -1194,8 +1194,6 @@ main:has(> .view-checkout:not([hidden])) > .view-checkout {
   --accent-soft: var(--palette-surface);
   --ok: var(--palette-accent);
   --ok-soft: var(--palette-surface);
-  --brown: var(--palette-ink);
-  --brown-2: var(--palette-accent);
   --app-width: 520px;
   --r-card: 20px;
   --shadow-food: 0 8px 26px color-mix(in srgb, var(--palette-deep) 8%, transparent);
@@ -1224,7 +1222,7 @@ body::before {
   top: 0;
   z-index: 50;
   border: 0;
-  background: linear-gradient(135deg, var(--brown) 0%, var(--brown-2) 100%);
+  background: var(--palette-header-bg);
   box-shadow: 0 5px 22px color-mix(in srgb, var(--palette-deep) 19%, transparent);
 }
 .header-inner {
@@ -1251,7 +1249,7 @@ body::before {
 .hdr-btn.is-on { color: var(--palette-button-text); background: var(--palette-button); border-color: var(--palette-button); }
 .hdr-btn.is-on:hover { background: var(--palette-button); }
 .hdr-btn svg { width: 20px; height: 20px; stroke-width: 1.75; }
-.cart-count { top: -1px; right: -1px; min-width: 18px; height: 18px; line-height: 18px; font-size: 10px; box-shadow: 0 0 0 2px var(--brown); }
+.cart-count { top: -1px; right: -1px; min-width: 18px; height: 18px; line-height: 18px; font-size: 10px; box-shadow: 0 0 0 2px var(--palette-header-bg); }
 
 .cat-bar {
   border:0;background:var(--palette-bg);
@@ -1393,10 +1391,10 @@ textarea.input {
 }
 .step { color: var(--palette-muted); font-size: 11.5px; border-bottom: 2px solid var(--palette-border); }
 .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--palette-surface); color: var(--palette-muted); }
-.step.is-active { color: var(--accent); border-color: var(--accent); }
-.step.is-active .step-num { background: var(--accent); color: var(--palette-light); }
-.step.is-done { color: var(--palette-accent); border-color: var(--palette-accent); }
-.step.is-done .step-num { background: var(--palette-accent); color: var(--palette-light); }
+.step.is-active { color: var(--palette-accent-text,var(--palette-accent)); border-color: var(--palette-accent); }
+.step.is-active .step-num { background: var(--palette-button); color: var(--palette-button-text); }
+.step.is-done { color: var(--palette-accent-text,var(--palette-accent)); border-color: var(--palette-accent); }
+.step.is-done .step-num { background: var(--palette-button); color: var(--palette-button-text); }
 .view-title { margin: 2px 0 12px;  font-weight: 850; letter-spacing: -.025em; }
 .sum-total { font-size: 16px; font-weight: 850; }
 .step-panel {
@@ -2532,10 +2530,10 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #viewProfile .profile-contact-help[hidden] {display:none!important;}
 #viewProfile .profile-tab-panel.profile-contact-card,
 #viewCheckout #step2.checkout-contact-card {
-  border:1px solid var(--palette-border);
+  border:1px solid var(--premium-edge,var(--palette-border));
   border-radius:15px;
-  background:var(--palette-surface);
-  box-shadow:0 3px 12px color-mix(in srgb,var(--palette-deep) 4%,transparent);
+  background:var(--premium-card-bg,var(--palette-surface));
+  box-shadow:var(--premium-card-shadow,0 3px 12px color-mix(in srgb,var(--palette-deep) 4%,transparent));
 }
 #viewProfile .profile-tab-panel.profile-contact-card {padding:13px 12px 12px;}
 
@@ -2567,7 +2565,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #viewCheckout .checkout-contact-card .contact-form-control {
   display:block;position:relative;min-width:0;
   border:1px solid var(--palette-border);border-radius:12px;
-  background:var(--palette-surface);
+  background:var(--palette-input-bg,var(--palette-surface));
   box-shadow:none;
 }
 #viewProfile .profile-contact-card .contact-form-control:focus-within,
@@ -2614,7 +2612,7 @@ main:has(> .view-checkout:not([hidden])) { overflow: hidden; }
 #viewProfile .profile-contact-card .valid-check,
 #viewCheckout .checkout-contact-card .valid-check {
   right:9px;width:22px;height:22px;border-radius:50%;
-  background:var(--palette-accent);color:var(--palette-light);
+  background:var(--palette-button);color:var(--palette-button-text);
   font-size:14px;font-weight:800;line-height:1;
 }
 #viewProfile .profile-contact-card .valid-check[hidden],
@@ -2749,7 +2747,7 @@ html.ios-contact-keyboard-open .view-checkout > .checkout-actions {
 }
 #viewProfile .profile-contact-card .validated-input.is-valid {
   border-color:var(--palette-accent);
-  background:color-mix(in srgb,var(--palette-accent) 7%,var(--palette-surface));
+  background:var(--palette-selection-bg);
 }
 #viewProfile .profile-contact-card .validated-input.is-valid .input {
   background:transparent;
