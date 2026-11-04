@@ -131,8 +131,8 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   box-shadow:0 7px 20px rgba(0,0,0,.28);
   color:#FFFFFF;
 }
-#productSheet .sheet-close{left:16px}
-#productSheet .sheet-fav{right:16px;color:var(--premium-fav-color,color-mix(in srgb,var(--pd-accent) 35%,#FFFFFF))}
+#productSheet .sheet-close{left:var(--premium-close-left,16px);right:var(--premium-close-right,auto)}
+#productSheet .sheet-fav{right:var(--premium-fav-right,16px);left:var(--premium-fav-left,auto);color:var(--premium-fav-color,color-mix(in srgb,var(--pd-accent) 35%,#FFFFFF))}
 #productSheet .sheet-close svg,#productSheet .sheet-fav svg{
   display:block;width:var(--ui-sheet-action-icon,24px);height:var(--ui-sheet-action-icon,24px);
   fill:none;stroke:currentColor;stroke-width:2.4;opacity:1;
