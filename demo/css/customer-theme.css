@@ -53,8 +53,8 @@ html[data-customer-palette] .valid-check { background: var(--palette-success); c
 
 /* Strong, consistent boundaries and distinct control states. */
 html[data-customer-palette] :is(.profile-menu-row, .card, .input, .pickup-choice, .time-btn, .shop-info-card, .pickup-review, .order-history-card) { border-color: color-mix(in srgb, var(--palette-border) 70%, var(--palette-ink)) !important; }
-html[data-customer-palette] .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
-html[data-customer-palette] .allergen-visibility-control input:checked + .allergen-visibility-switch { background: var(--palette-button) !important; border-color: var(--palette-button) !important; }
+html[data-customer-palette] .allergen-visibility-control:not(.status-allergen-control) .allergen-visibility-switch { border: 1px solid var(--palette-muted) !important; background: var(--palette-border) !important; }
+html[data-customer-palette] .allergen-visibility-control:not(.status-allergen-control) input:checked + .allergen-visibility-switch { background: var(--palette-button) !important; border-color: var(--palette-button) !important; }
 html[data-customer-palette] :is(.time-btn.is-active, .pickup-choice:has(input:checked)) { background: var(--palette-selection-bg) !important; border-color: var(--palette-accent) !important; }
 
 html[data-customer-palette] .validated-input.is-valid .input { background: var(--palette-success-soft) !important; border-color: var(--palette-success) !important; }
