@@ -1,4 +1,4 @@
-import { createDataNormalizers, detectIngredientRules } from './data-normalization.js?v=20261105-customer-extras1';
+import { createDataNormalizers, detectIngredientRules } from './data-normalization.js?v=20261105-product-notes2';
 import { reportSystemError, monitorCriticalOperation, flushSystemErrorQueue } from './system-errors.js';
 import { confirmationDeadline, confirmationExpired, ORDER_CONFIRM_WAIT_MS, customerPageBaseUrl } from './order-confirmation.js';
 import { calculatePickupSlots } from './pickup-slots.js';
