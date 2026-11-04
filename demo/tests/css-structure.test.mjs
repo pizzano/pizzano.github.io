@@ -197,6 +197,26 @@ test('product footer is edge-to-edge, compact, theme-aware and anchored to the s
   assert.match(html,/product-detail-redesign\.css\?v=20261104-cart-edge2/);
 });
 
+test('cart and saved order instruction rows share theme red without changing prices',async()=>{
+  const css=await text('css/cart.css');
+  const index=await text('index.html');
+  const admin=await text('admin.html');
+  const customer=await text('js/customer.js');
+  const orders=await text('js/order-product-summary.js');
+  for(const selector of ['.view-cart .cart-detail-row.is-note','.order-product-list .cart-detail-row.is-note']){
+    const start=css.indexOf(selector+' {');
+    assert.ok(start>=0,selector+' must have a semantic color rule');
+    const rule=css.slice(start,css.indexOf('}',start));
+    assert.match(rule,/color:var\(--palette-danger,#d32f2f\)/);
+  }
+  assert.match(customer,/class=\"cart-detail-row is-note\"/);
+  assert.match(customer,/<b>Uten:<\/b>/);
+  assert.match(customer,/<b>Kommentar:<\/b>/);
+  assert.match(orders,/class=\"cart-detail-row is-note\"/);
+  assert.match(index,/css\/cart\.css\?v=20261104-notes-red1/);
+  assert.match(admin,/css\/cart\.css\?v=20261104-notes-red1/);
+});
+
 test('one themed status banner replaces the legacy double open/closed card', async () => {
   const html=await text('index.html');
   const customer=await text('js/customer.js');
