@@ -8,7 +8,7 @@ import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired, shouldSoundPendingOrder, customerOrderLink } from './order-confirmation.js';
 import { detectIngredientRules } from './data-normalization.js?v=20261104-emerald1';
-import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261104-emerald-gold2';
+import { CUSTOMER_PALETTES, PALETTE_COLOR_LABELS, PALETTE_DETAIL_ROLES, resolvePaletteDetails, getCustomerPalette, normalizeCustomPalette } from './palette.js?v=20261104-theme-unify4';
 import { busyAcceptMinutes } from './pickup-capacity.js';
 import { metricClock, recordDuration } from './performance-metrics.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
