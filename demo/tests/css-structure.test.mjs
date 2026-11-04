@@ -146,7 +146,7 @@ test('popup header actions, cart badge and selected option borders stay consiste
   const expectedVersions={
     'customer.css':'20261104-theme-unify4',
     'customer-theme.css':'20261104-theme-unify4',
-    'product-detail-redesign.css':'20261104-theme-unify4',
+    'product-detail-redesign.css':'20261104-compact-hero5',
   };
   for(const [css,version] of Object.entries(expectedVersions)){
     assert.match(index,new RegExp('css/'+css.replaceAll('.','\\.')+'\\?v='+version));
@@ -168,8 +168,29 @@ test('product popup reaches the screen top and retains blur, curved photo divide
   assert.match(css,/#productSheet \.opt-row\.is-checked,#productSheet \.opt-row:has\(>input:checked\)\{\s*background:var\(--pd-selected\);\s*border:2px solid var\(--pd-selected-edge\);\s*border-radius:14px;/);
   assert.match(css,/#productSheet #btnAddToCart\{\s*display:flex;flex:1 1 auto;align-items:center;justify-content:space-evenly/);
   assert.doesNotMatch(css,/box-shadow:inset 0 0 0 2px var\(--pd-selected-edge\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-theme-unify4/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
   assert.match(customer,/el\.btnAddToCart\.addEventListener\('click', addDraftToCart\)/);
+});
+
+test('product photo fills mobile top corners and caption spacing stays compact',async()=>{
+  const css=await text('css/product-detail-redesign.css');
+  const start=css.indexOf('#productSheet {');
+  const end=css.indexOf('#productSheet[hidden]');
+  const popup=css.slice(start,end);
+  assert.match(popup,/border:0;border-radius:0;overflow:hidden/);
+  assert.doesNotMatch(popup,/border-radius:20px 20px 0 0/);
+  const caption=css.slice(css.indexOf('#productSheet .sheet-hero-caption{'),
+    css.indexOf('#productSheet .sheet-hero-caption::before{'));
+  assert.match(caption,/padding:11px 16px 10px/);
+  const description=css.slice(css.indexOf('#productSheet .pd-hero-description{'),
+    css.indexOf('#productSheet .pd-hero-description[hidden]'));
+  assert.match(description,/margin:5px 0 0/);
+  const accent=css.slice(css.indexOf('#productSheet .sheet-hero-accent{'),
+    css.indexOf('/* One layered card system'));
+  assert.match(accent,/margin:9px auto 0/);
+  assert.match(css,/#productSheet \.pd-hero-photo\{[^}]*width:100%;max-width:none/s);
+  const html=await text('index.html');
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
 });
 
 test('customer theme colors are consistent in header, profile and cart; sheet has no top gap',async()=>{
@@ -323,7 +344,7 @@ test('product footer uses two separate rounded pills, theme-aware and compact',a
   assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
   assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
   assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-theme-unify4/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
 });
 
 test('cart and saved order instruction rows share theme red without changing prices',async()=>{
