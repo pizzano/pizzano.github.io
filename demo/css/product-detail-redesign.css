@@ -419,7 +419,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   color:var(--pd-on)!important;font-size:var(--text-lg,18px)!important;
   font-weight:700;line-height:1.15;white-space:nowrap;
 }
-#productSheet #btnAddToCart span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#productSheet #btnAddToCart span{min-width:0;overflow:hidden;text-overflow: ellipsis}
 #productSheet #sheetTotal{flex:0 0 auto;font-variant-numeric:tabular-nums}
 #productSheet .qty button:focus-visible,#productSheet #btnAddToCart:focus-visible{
   outline:2px solid var(--pd-accent);outline-offset:-4px;
