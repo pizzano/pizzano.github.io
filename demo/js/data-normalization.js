@@ -265,6 +265,14 @@ export function createDataNormalizers({
             .filter(Boolean),
           optionGroupIds: asArray(item.optionGroupIds).filter((id) => groupIds.has(id)),
           optionGroupOrder: [...new Set(asArray(item.optionGroupOrder))].filter(id => groupIds.has(id) && [...asArray(item.optionGroupIds), ...sizes.flatMap(size => size.optionGroupIds)].includes(id)),
+          // null inherits the category; [] explicitly hides all preset note chips.
+          quickKitchenNotesEnabled: item.quickKitchenNotesEnabled !== false,
+          quickKitchenNotes: Array.isArray(item.quickKitchenNotes)
+            ? [...new Map(item.quickKitchenNotes
+                .map(label => String(label||'').trim().replace(/\s+/g,' ').slice(0,60))
+                .filter(label => label && !/^uten[\s:]/i.test(label))
+                .map(label => [label.toLocaleLowerCase('no'),label])).values()].slice(0,8)
+            : null,
           hidden: Boolean(item.hidden),
           soldOut: Boolean(item.soldOut),
         };
