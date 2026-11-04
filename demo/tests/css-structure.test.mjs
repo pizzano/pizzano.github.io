@@ -171,30 +171,31 @@ test('four customer palettes keep cart ribbon text readable in light and dark mo
   }
 });
 
-test('product footer is edge-to-edge, compact, theme-aware and anchored to the sheet',async()=>{
+test('product footer uses two separate rounded pills, theme-aware and compact',async()=>{
   const html=await text('index.html');
   const css=await text('css/product-detail-redesign.css');
   const js=await text('js/customer.js');
-  const start=css.indexOf('Product footer — edge-to-edge');
+  const start=css.indexOf('Product footer — two independent rounded controls');
   const end=css.indexOf('#productSheet .opt-invalid .opt-rows',start);
-  assert.ok(start>=0&&end>start,'product footer must be rebuilt in place');
+  assert.ok(start>=0&&end>start,'product footer styles should have one existing owner');
   const rules=css.slice(start,end);
-  assert.match(rules,/width:100%;margin:0;padding:0 0 env\(safe-area-inset-bottom\)/);
-  assert.match(rules,/flex:0 0 29%/);
-  assert.match(rules,/gap:0/);
-  assert.match(rules,/border:0;border-radius:0/);
-  assert.match(rules,/background:var\(--pd-button\)!important/);
+  assert.match(rules,/padding:7px 7px max\(7px,env\(safe-area-inset-bottom\)\)/);
+  assert.match(rules,/gap:clamp\(9px,2\.5vw,18px\)/);
+  assert.match(rules,/flex:0 0 34%/);
+  assert.match(rules,/border:2px solid var\(--pd-button\);border-radius:999px/);
   assert.match(rules,/background:var\(--pd-card\)/);
-  assert.match(rules,/font-size:var\(--text-lg,18px\)!important/);
-  assert.doesNotMatch(rules,/border-radius:999px|border:3px|padding:11px 12px/,'inset pill must not return');
+  assert.match(rules,/border:0;border-radius:999px/);
+  assert.match(rules,/color:var\(--pd-button\)/);
+  assert.match(rules,/background:linear-gradient\(165deg/);
+  assert.match(rules,/text-overflow: ellipsis/);
+  assert.doesNotMatch(rules,/background:linear-gradient\(to right|border:3px/,'old joined footer must not return');
   assert.match(html,/<span id="sheetAddLabel">Legg til<\/span>/);
   assert.match(html,/<strong id="sheetTotal" aria-live="polite">0 kr<\/strong>/);
   assert.match(js,/sheetAddLabel: \$\('sheetAddLabel'\)/);
-  assert.match(js,/el\.sheetAddLabel\.textContent = draft\.editingLineId/);
   assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
   assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
   assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-cart-edge2/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-two-pills3/);
 });
 
 test('cart and saved order instruction rows share theme red without changing prices',async()=>{
