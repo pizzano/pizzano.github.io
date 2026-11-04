@@ -114,6 +114,26 @@ test('menu state normalizer keeps repeatable sauce cap and valid references', ()
   assert.deepEqual(state.sections[0].items[0].allergens,['melk']);
 });
 
+test('per-product kitchen note visibility and custom note list persist through normalization', () => {
+  const {normalizeState}=fixtureNormalizers();
+  const result=normalizeState({
+    settings:{quickKitchenNotesEnabled:true},
+    sections:[{id:'pizza',title:'Pizza',items:[
+      {id:'inherit',name:'Parma',sizes:[],quickKitchenNotesEnabled:true},
+      {id:'custom',name:'Vegetar',sizes:[],quickKitchenNotesEnabled:false,
+        quickKitchenNotes:['Godt stekt','Godt stekt',' uten løk','Saus ved siden av']},
+      {id:'empty',name:'Pommes',sizes:[],quickKitchenNotes:[]},
+    ]}],
+  });
+  const items=result.sections[0].items;
+  assert.equal(items[0].quickKitchenNotesEnabled,true);
+  assert.equal(items[0].quickKitchenNotes,null,'old products keep inherited notes');
+  assert.equal(items[1].quickKitchenNotesEnabled,false,'per-product hiding survives Firebase normalization');
+  assert.deepEqual(items[1].quickKitchenNotes,['Godt stekt','Saus ved siden av'],
+    'duplicate labels and ingredient-removal instructions are excluded');
+  assert.deepEqual(items[2].quickKitchenNotes,[],'empty override hides all quick-note choices');
+});
+
 test('repeatable sauce servings survive reordering from compact order history', () => {
   const item={sizes:[{id:'big',label:'Stor'}]};
   const group={id:'sauce',allowQuantity:true,selectionMode:'multiple',maxSelections:4,
