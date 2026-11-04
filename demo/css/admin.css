@@ -886,6 +886,22 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
     }
 }
 
+/* Product-specific quick kitchen notes: compact list inside existing product editor. */
+.product-kitchen-notes{display:grid;gap:9px;min-width:0}
+.product-kitchen-notes .toggle-row{margin:0}
+.product-kitchen-notes #productQuickKitchenNotesEditor{display:grid;gap:8px;min-width:0}
+.product-kitchen-notes #productQuickKitchenNotesEditor[hidden]{display:none}
+.product-kitchen-notes-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.product-kitchen-notes-head small{color:var(--ink-3);font-size:var(--text-xs,10px)}
+.product-kitchen-notes-list{display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
+.product-kitchen-note-row{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 4px 3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink)}
+.product-kitchen-note-row span{font-size:var(--text-sm,12px);overflow-wrap:anywhere}
+.product-kitchen-note-row button{display:grid;place-items:center;flex:none;width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;font-size:var(--text-md,14px)}
+.product-kitchen-notes-add{display:flex;align-items:center;gap:7px;min-width:0}
+.product-kitchen-notes-add .input{flex:1 1 auto;min-width:0}
+.product-kitchen-notes-add .btn{flex:0 0 auto;min-height:36px}
+@media(max-width:420px){.product-kitchen-notes-add{gap:5px}.product-kitchen-notes-add .btn{padding-inline:9px}}
+
 /* ---------------- Restaurantinnstillinger: funksjonskontroll ---------------- */
 .interface-control-card .set-hint {
     margin-bottom: 12px;
