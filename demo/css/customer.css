@@ -2355,7 +2355,7 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
   width:100%;
   margin:0;
   overflow:hidden;
-  color:var(--palette-success);
+  color:var(--palette-accent-text,var(--palette-accent));
   font-size:var(--text-sm,12px);
   font-weight:500;
   line-height:1.2;
