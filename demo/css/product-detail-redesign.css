@@ -131,8 +131,8 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   box-shadow:0 7px 20px rgba(0,0,0,.28);
   color:#FFFFFF;
 }
-#productSheet .sheet-close{left:var(--premium-close-left,16px);right:var(--premium-close-right,auto)}
-#productSheet .sheet-fav{right:var(--premium-fav-right,16px);left:var(--premium-fav-left,auto);color:var(--premium-fav-color,color-mix(in srgb,var(--pd-accent) 35%,#FFFFFF))}
+#productSheet .sheet-close{left:auto;right:16px}
+#productSheet .sheet-fav{left:16px;right:auto;color:var(--premium-fav-color,color-mix(in srgb,var(--pd-accent) 35%,#FFFFFF))}
 #productSheet .sheet-close svg,#productSheet .sheet-fav svg{
   display:block;width:var(--ui-sheet-action-icon,24px);height:var(--ui-sheet-action-icon,24px);
   fill:none;stroke:currentColor;stroke-width:2.4;opacity:1;
@@ -276,13 +276,13 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   border-bottom:1px solid color-mix(in srgb,var(--pd-border) 78%,transparent);
   border-radius:0;background:transparent;box-shadow:none;color:var(--pd-ink);
 }
-/* One continuous rounded outline belongs to .opt-rows, not each row.
-   A selected row gets a subtle left inset accent that cannot cut or double the corners. */
+/* Shared group outline stays on .opt-rows. Checked rows get a uniform
+   2px inset outline on all four sides, with no asymmetric accent strip. */
 #productSheet .opt-row:first-child{border-radius:0}
 #productSheet .opt-row:last-child{border-radius:0;border-bottom:0}
 #productSheet .opt-row.is-checked,#productSheet .opt-row:has(>input:checked){
   background:var(--pd-selected);
-  box-shadow:inset 3px 0 0 var(--pd-selected-edge),inset 0 0 0 1px var(--premium-row-line,transparent);
+  box-shadow:inset 0 0 0 2px var(--pd-selected-edge);
 }
 #productSheet .opt-row.is-checked::after,#productSheet .opt-row:has(>input:checked)::after{content:none;display:none}
 #productSheet .opt-row.is-blocked{opacity:.56}
