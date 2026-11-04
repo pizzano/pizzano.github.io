@@ -2299,8 +2299,8 @@ html[data-customer-palette] .active-order-card.is-estimated-ready .order-progres
   gap:4px;
   min-height:22px;
   padding:2px 5px;
-  background:var(--palette-success);
-  color:var(--palette-success-text,#fff);
+  background:var(--palette-button,var(--palette-accent));
+  color:var(--palette-button-text,var(--palette-on-accent,#fff));
   white-space:nowrap;
   pointer-events:none;
 }
