@@ -220,6 +220,7 @@ const el = {
   },
   cartHeaderActions: $('cartHeaderActions'),
   cartLines: $('cartLines'),
+  cartRecommendations: $('cartRecommendations'),
   cartSummary: $('cartSummary'),
   cartTotal: $('cartTotal'),
   cartClosedHint: $('cartClosedHint'),
@@ -1885,6 +1886,72 @@ function cartLineHtml(line, editable = true) {
     lineId: editable ? line.lineId : '', free: line.loyaltyFree});
 }
 
+/* Optional cart recommendations: configured menu IDs first, then conservative
+   side/drink matches. No extra cart pathway or duplicate item pricing. */
+const dismissedCartSuggestions = new Set();
+function parseCustomerExtraJSON(raw) {
+  try {const value=JSON.parse(String(raw||''));return value && typeof value==='object' && !Array.isArray(value)?value:{}}
+  catch{return {}}
+}
+function customerItemKind(section,item) {
+  const name=((section?.name||section?.title||'')+' '+(item?.name||'')).toLocaleLowerCase('no');
+  if (/pizza/.test(name))return 'pizza';
+  if (/hamburger|burger/.test(name))return 'burger';
+  if (/kebab|rull/.test(name))return 'kebab';
+  if (/tallerken|snadder/.test(name))return 'tallerken';
+  return 'other';
+}
+function productSuggestionTarget(item,section){
+  const name=((section?.name||section?.title||'')+' '+(item.name||'')).toLocaleLowerCase('no');
+  if(/brus|cola|pepsi|fanta|sprite|drikke|drikkevare|vann|iste|energidrikk/.test(name))return 'drink';
+  if(/pommes|fries|søtpotet/.test(name))return 'fries';
+  if(/saus|dipp|dip|dressing/.test(name))return 'sauce';
+  return '';
+}
+function suggestedCartItems(){
+  if(store.settings.cartSuggestionsEnabled === false || !cart.length)return [];
+  const max=Math.min(3,Math.max(1,Number(store.settings.cartSuggestionsMax)||3));
+  const sourceKinds=[...new Set(cart.map(line=>{
+    const found=findItem(line.itemId);return customerItemKind(found.section,found.item);
+  }))];
+  const configured=parseCustomerExtraJSON(store.settings.cartSuggestionRules);
+  const already=new Set([...cart.map(line=>line.itemId),...dismissedCartSuggestions]);
+  const all=(store.sections||[]).flatMap(section=>(section.items||[]).map(item=>({item,section})))
+    .filter(({item})=>item?.id && !item.hidden && !item.soldOut && !already.has(item.id));
+  const selected=[], used=new Set();
+  const add=entry=>{if(entry && !used.has(entry.item.id) && selected.length<max){selected.push(entry);used.add(entry.item.id)}};
+  for(const kind of sourceKinds){
+    for(const id of (Array.isArray(configured[kind])?configured[kind]:[])){
+      add(all.find(entry=>entry.item.id===id));
+    }
+  }
+  const preferred=sourceKinds.some(kind=>kind==='burger'||kind==='kebab')
+    ? ['fries','drink','sauce'] : sourceKinds.includes('pizza')
+    ? ['sauce','drink','fries'] : ['drink','fries','sauce'];
+  for(const type of preferred){
+    for(const entry of all){
+      if(productSuggestionTarget(entry.item,entry.section)===type)add(entry);
+      if(selected.length>=max)break;
+    }
+  }
+  return selected;
+}
+function renderCartRecommendations(){
+  const host=el.cartRecommendations;
+  if(!host)return;
+  const suggested=suggestedCartItems();
+  host.hidden=!suggested.length;
+  if(!suggested.length){host.replaceChildren();return}
+  host.innerHTML=`<div class="cart-recommendations-head"><strong>Vil du ha noe ved siden av?</strong><small>Passer til bestillingen din</small></div>
+    <div class="cart-recommendations-items">${suggested.map(({item})=>`
+      <article class="cart-recommendation">
+        ${item.imageUrl?`<img loading="lazy" decoding="async" alt="" src="${escapeHtml(item.imageUrl)}">`:''}
+        <div class="cart-recommendation-copy"><strong>${escapeHtml(item.name)}</strong><span>${formatPrice(getItemBasePrice(item))}</span></div>
+        <button type="button" data-suggest-add="${escapeHtml(item.id)}" aria-label="Legg til ${escapeHtml(item.name)}">+</button>
+        <button class="cart-suggest-dismiss" type="button" data-suggest-dismiss="${escapeHtml(item.id)}" aria-label="Skjul ${escapeHtml(item.name)}">×</button>
+      </article>`).join('')}</div>`;
+}
+
 function renderCart() {
   applyAutomaticPizzaBonus();
   refreshCartPizzaBonus();
@@ -1892,6 +1959,7 @@ function renderCart() {
     if (el.cartHeaderActions) el.cartHeaderActions.innerHTML = '';
     el.cartLines.innerHTML =
       '<div class="empty-note"><strong>Handlekurven er tom</strong>Legg til noe godt fra menyen.</div>';
+    if (el.cartRecommendations) { el.cartRecommendations.hidden=true; el.cartRecommendations.replaceChildren(); }
     el.cartSummary.hidden = true;
     el.cartActions.hidden = true;
     return;
@@ -1906,6 +1974,7 @@ function renderCart() {
   }
 
   el.cartLines.innerHTML = sortCartByCategory(cart, store.sections).map((line) => cartLineHtml(line)).join('');
+  renderCartRecommendations();
   const subtotal = cartSubtotal();
   el.cartTotal.textContent = formatPrice(subtotal);
   el.cartSummary.hidden = false;
@@ -2886,6 +2955,13 @@ el.cartHeaderActions?.addEventListener('click', (event) => {
   persistCart();
   renderCart();
   renderCartCount();
+});
+
+el.cartRecommendations?.addEventListener('click',event=>{
+  const dismiss=event.target.closest('[data-suggest-dismiss]');
+  if(dismiss){dismissedCartSuggestions.add(dismiss.dataset.suggestDismiss);renderCartRecommendations();return}
+  const add=event.target.closest('[data-suggest-add]');
+  if(add)quickAddProduct(add.dataset.suggestAdd);
 });
 
 el.cartLines.addEventListener('click', (event) => {
