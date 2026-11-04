@@ -144,9 +144,9 @@ test('popup header actions, cart badge and selected option borders stay consiste
   assert.match(customer,/\.view-menu \.prod-grid \.prod-cart-label \{[^}]*color:inherit/s);
 
   const expectedVersions={
-    'customer.css':'20261104-theme-unify4',
+    'customer.css':'20261105-customer-extras1',
     'customer-theme.css':'20261104-theme-unify4',
-    'product-detail-redesign.css':'20261104-compact-hero5',
+    'product-detail-redesign.css':'20261105-customer-extras1',
   };
   for(const [css,version] of Object.entries(expectedVersions)){
     assert.match(index,new RegExp('css/'+css.replaceAll('.','\\.')+'\\?v='+version));
@@ -168,7 +168,7 @@ test('product popup reaches the screen top and retains blur, curved photo divide
   assert.match(css,/#productSheet \.opt-row\.is-checked,#productSheet \.opt-row:has\(>input:checked\)\{\s*background:var\(--pd-selected\);\s*border:2px solid var\(--pd-selected-edge\);\s*border-radius:14px;/);
   assert.match(css,/#productSheet #btnAddToCart\{\s*display:flex;flex:1 1 auto;align-items:center;justify-content:space-evenly/);
   assert.doesNotMatch(css,/box-shadow:inset 0 0 0 2px var\(--pd-selected-edge\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261105-customer-extras1/);
   assert.match(customer,/el\.btnAddToCart\.addEventListener\('click', addDraftToCart\)/);
 });
 
@@ -190,7 +190,7 @@ test('product photo fills mobile top corners and caption spacing stays compact',
   assert.match(accent,/margin:9px auto 0/);
   assert.match(css,/#productSheet \.pd-hero-photo\{[^}]*width:100%;max-width:none/s);
   const html=await text('index.html');
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261105-customer-extras1/);
 });
 
 test('customer theme colors are consistent in header, profile and cart; sheet has no top gap',async()=>{
@@ -216,10 +216,10 @@ test('customer theme colors are consistent in header, profile and cart; sheet ha
   assert.match(palette,/'accent-text': blendHex\(accent, ink, dark \? \.84 : \.69\)/);
   assert.match(palette,/header:'#765522'/);
   assert.match(sheet,/position:fixed;inset:0;z-index:9999/);
-  for(const page of [index,admin])assert.match(page,/css\/cart\.css\?v=20261104-theme-unify4/);
+  for(const page of [index,admin])assert.match(page,/css\/cart\.css\?v=20261105-customer-extras1/);
   assert.match(index,/css\/customer-theme\.css\?v=20261104-theme-unify4/);
-  assert.match(index,/js\/customer\.js\?v=20261104-hero-image-fix1/);
-  assert.match(admin,/js\/admin\.js\?v=20261104-theme-unify4/);
+  assert.match(index,/js\/customer\.js\?v=20261105-customer-extras1/);
+  assert.match(admin,/js\/admin\.js\?v=20261105-customer-extras1/);
 });
 
 test('all five typography tiers are editable and shared by customer and admin', async () => {
@@ -316,8 +316,8 @@ test('Premium Emerald & Gold is selectable in admin and scoped to the customer p
   assert.match(cart,/data-customer-palette="emeraldGold"/);
   assert.match(base,/var\(--premium-card-bg/);
   assert.match(customer,/customer-theme\.css\?v=20261104-theme-unify4/);
-  assert.match(customer,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
-  assert.match(admin,/admin\.css\?v=20261104-premium-emerald2/);
+  assert.match(customer,/product-detail-redesign\.css\?v=20261105-customer-extras1/);
+  assert.match(admin,/admin\.css\?v=20261105-customer-extras1/);
 });
 
 test('product footer uses two separate rounded pills, theme-aware and compact',async()=>{
@@ -344,7 +344,7 @@ test('product footer uses two separate rounded pills, theme-aware and compact',a
   assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
   assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
   assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-compact-hero5/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261105-customer-extras1/);
 });
 
 test('cart and saved order instruction rows share theme red without changing prices',async()=>{
@@ -363,8 +363,8 @@ test('cart and saved order instruction rows share theme red without changing pri
   assert.match(customer,/<b>Uten:<\/b>/);
   assert.match(customer,/<b>Kommentar:<\/b>/);
   assert.match(orders,/class=\"cart-detail-row is-note\"/);
-  assert.match(index,/css\/cart\.css\?v=20261104-theme-unify4/);
-  assert.match(admin,/css\/cart\.css\?v=20261104-theme-unify4/);
+  assert.match(index,/css\/cart\.css\?v=20261105-customer-extras1/);
+  assert.match(admin,/css\/cart\.css\?v=20261105-customer-extras1/);
 });
 
 test('compact reference status card keeps solid icon panel, clock badge and working allergen switch',async()=>{
