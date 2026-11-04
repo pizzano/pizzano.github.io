@@ -144,7 +144,7 @@ test('all five typography tiers are editable and shared by customer and admin', 
   }
 });
 
-test('four customer palettes keep cart ribbon text readable in light and dark modes', () => {
+test('five customer palettes keep cart ribbon text readable in light and dark modes', () => {
   const luminance = hex => {
     const rgb=[1,3,5].map(i=>Number.parseInt(hex.slice(i,i+2),16)/255)
       .map(value=>value<=0.04045?value/12.92:((value+0.055)/1.055)**2.4);
@@ -158,7 +158,7 @@ test('four customer palettes keep cart ribbon text readable in light and dark mo
     Math.round(Number.parseInt(a.slice(i,i+2),16)*weight+
       Number.parseInt(b.slice(i,i+2),16)*(1-weight))
       .toString(16).padStart(2,'0')).join('');
-  assert.equal(Object.keys(CUSTOMER_PALETTES).length,4);
+  assert.equal(Object.keys(CUSTOMER_PALETTES).length,5);
   for(const [key,palette] of Object.entries(CUSTOMER_PALETTES)){
     for(const mode of ['light','dark']){
       const [,,surface,,,success]=palette[mode];
