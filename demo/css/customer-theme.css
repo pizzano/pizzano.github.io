@@ -190,6 +190,10 @@ html[data-customer-palette] #btnStepNext[aria-disabled="true"] {
   --premium-minus-bg: color-mix(in srgb,var(--palette-bg) 65%,var(--palette-surface));
   --premium-icon-bg: color-mix(in srgb,#04241E 88%,#153B31);
   --premium-fav-color: #F3D477;
+  --premium-fav-left:16px;
+  --premium-fav-right:auto;
+  --premium-close-left:auto;
+  --premium-close-right:16px;
   --premium-edge: color-mix(in srgb,var(--palette-accent) 37%,var(--palette-border));
   --premium-card-bg: linear-gradient(145deg,
     color-mix(in srgb,var(--palette-accent) 6%,var(--palette-surface)),
