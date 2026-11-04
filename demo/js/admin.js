@@ -3971,6 +3971,92 @@ function renderSlotPreview() {
   updateAdminMarkup(el.settings.slotPreview, markup);
 }
 
+/* Customer extras use the existing settings object and menu IDs.
+   No separate Firebase menu branch or additional settings module. */
+const EXTRA_CATEGORIES=[
+  ['pizza','Pizza'],['burger','Burger'],['kebab','Kebab'],
+  ['tallerken','Tallerken'],['other','Andre retter'],
+];
+const DEFAULT_KITCHEN_NOTES={
+  pizza:['Godt stekt','Ikke skjær','Del i to'],
+  burger:['Godt stekt','Saus ved siden av'],
+  kebab:['Saus ved siden av','Del i to'],
+  tallerken:['Saus ved siden av'],
+  other:['Ekstra servietter'],
+};
+function customerExtraObject(raw) {
+  try { const value=JSON.parse(String(raw||'')); return value&&typeof value==='object'&&!Array.isArray(value)?value:{}; }
+  catch { return {}; }
+}
+function renderCustomerExtraSettings(settings) {
+  const options=(store.sections||[]).flatMap(section=>(section.items||[])
+    .filter(item=>item?.id).map(item=>({id:item.id,name:item.name||item.id,section:section.name||section.title||''})));
+  const current=customerExtraObject(settings.cartSuggestionRules);
+  const root=$('cartSuggestionRuleFields');
+  const signature=JSON.stringify([options,current]);
+  if(root.dataset.signature!==signature && !root.contains(document.activeElement)){
+    root.replaceChildren();
+    for(const [kind,title] of EXTRA_CATEGORIES){
+      const line=document.createElement('div');line.className='customer-extra-rule-row';
+      const label=document.createElement('strong');label.textContent=title;line.append(label);
+      for(let slot=0;slot<3;slot++){
+        const select=document.createElement('select');
+        select.className='input';select.dataset.suggestionKind=kind;
+        select.dataset.suggestionSlot=String(slot);select.setAttribute('aria-label',title+' forslag '+(slot+1));
+        select.add(new Option('Automatisk / ingen', ''));
+        for(const item of options)select.add(new Option((item.section?item.section+' · ':'')+item.name,item.id));
+        const choice=Array.isArray(current[kind])?current[kind][slot]:'';
+        if(choice && options.some(item=>item.id===choice))select.value=choice;
+        line.append(select);
+      }
+      root.append(line);
+    }
+    root.dataset.signature=signature;
+  }
+  const notes=customerExtraObject(settings.quickKitchenNotesConfig);
+  document.querySelectorAll('[data-kitchen-note-category]').forEach(input=>{
+    if(document.activeElement===input)return;
+    const kind=input.dataset.kitchenNoteCategory;
+    const values=Array.isArray(notes[kind])?notes[kind]:DEFAULT_KITCHEN_NOTES[kind];
+    const text=values.join(', ');
+    if(input.value!==text)input.value=text;
+  });
+}
+$('cartSuggestionRuleFields').addEventListener('change',()=>{
+  const root=$('cartSuggestionRuleFields'),rules={};
+  for(const [kind] of EXTRA_CATEGORIES){
+    const values=[...root.querySelectorAll('[data-suggestion-kind="'+kind+'"]')]
+      .map(field=>field.value).filter(Boolean);
+    rules[kind]=[...new Set(values)].slice(0,3);
+  }
+  root.dataset.signature='';
+  mutate(state=>{state.settings.cartSuggestionRules=JSON.stringify(rules)});
+});
+document.querySelectorAll('[data-kitchen-note-category]').forEach(field=>{
+  field.addEventListener('change',()=>{
+    const result={};
+    document.querySelectorAll('[data-kitchen-note-category]').forEach(input=>{
+      result[input.dataset.kitchenNoteCategory]=[...new Set(input.value.split(',')
+        .map(label=>label.trim().slice(0,60)).filter(Boolean))].slice(0,8);
+    });
+    mutate(state=>{state.settings.quickKitchenNotesConfig=JSON.stringify(result)});
+  });
+});
+$('refreshCustomerFeedback').addEventListener('click',async()=>{
+  const button=$('refreshCustomerFeedback'),target=$('customerFeedbackList');
+  button.disabled=true;target.textContent='Henter kundevurderinger…';
+  try{
+    const entries=await listOrderFeedback();
+    target.innerHTML=entries.length
+      ? entries.map(entry=>'<article class="customer-feedback-entry"><strong>★ '+entry.score+'/5 · #'+escapeHtml(entry.orderId.slice(-6).toUpperCase())+
+        '</strong><span>'+escapeHtml(new Date(entry.createdAt).toLocaleString('nb-NO'))+'</span>'+
+        (entry.tags.length?'<p>'+entry.tags.map(escapeHtml).join(' · ')+'</p>':'')+
+        (entry.comment?'<p>'+escapeHtml(entry.comment)+'</p>':'')+'</article>').join('')
+      : '<p class="set-hint">Ingen kundevurderinger funnet.</p>';
+  }catch(error){target.textContent='Kunne ikke hente vurderinger: '+String(error.message||error)}
+  finally{button.disabled=false}
+});
+
 function renderSettings() {
   renderPalettePreview();
   syncCustomPaletteEditor();
@@ -3997,6 +4083,7 @@ function renderSettings() {
   renderWeeklyHours(settings);
   renderRestaurantStatus();
   renderSlotPreview();
+  renderCustomerExtraSettings(settings);
 }
 
 $('btnTestOrderAlarm').addEventListener('click', async event => {
