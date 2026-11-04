@@ -171,6 +171,49 @@ test('five customer palettes keep cart ribbon text readable in light and dark mo
   }
 });
 
+test('Premium Emerald & Gold is selectable in admin and scoped to the customer palette',async()=>{
+  const palette=CUSTOMER_PALETTES.emeraldGold;
+  assert.ok(palette,'fifth premium palette must be registered');
+  assert.equal(palette.dark[0],'#F3D477','champagne gold heading and radio color');
+  assert.equal(palette.dark[1],'#062D25','dark emerald background');
+  assert.equal(palette.dark[3],'#F7F8F3','light text');
+  assert.equal(palette.advanced.dark.button,'#F3D477');
+  assert.equal(palette.advanced.dark.buttonText,'#172820');
+  assert.equal(palette.light[1],'#F5F7F1','light-mode variant must be usable');
+
+  const customer=await text('index.html');
+  const admin=await text('admin.html');
+  const adminJs=await text('js/admin.js');
+  const normalizer=await text('js/data-normalization.js');
+  const base=await text('css/customer.css');
+  const theme=await text('css/customer-theme.css');
+  const sheet=await text('css/product-detail-redesign.css');
+  const cart=await text('css/cart.css');
+  const adminCss=await text('css/admin.css');
+
+  assert.match(normalizer,/['"]emeraldGold['"]/);
+  assert.match(adminJs,/Object\.entries\(CUSTOMER_PALETTES\)/);
+  assert.match(adminJs,/dataset\.paletteChoice = id/);
+  assert.match(adminJs,/customerPalette\.dispatchEvent\(new Event\('change'/);
+  assert.match(adminJs,/new Option\('6\. Egendefinert/);
+  assert.match(admin,/id="sCustomerPalette"/);
+  assert.match(admin,/id="customerPalettePreview"/);
+  assert.match(adminCss,/\.palette-choice-grid/);
+  assert.match(adminCss,/\.palette-choice-sample/);
+  assert.match(theme,/data-customer-palette="emeraldGold"/);
+  for (const property of ['--premium-main-bg','--premium-action-bg','--premium-card-bg','--premium-card-shadow','--premium-row-line']) {
+    assert.ok(theme.includes(property), property+' must be theme-controlled');
+  }
+  assert.match(sheet,/var\(--premium-action-bg/);
+  assert.match(sheet,/var\(--premium-photo-edge/);
+  assert.match(sheet,/var\(--premium-minus-bg/);
+  assert.match(cart,/data-customer-palette="emeraldGold"/);
+  assert.match(base,/var\(--premium-card-bg/);
+  assert.match(customer,/customer-theme\.css\?v=20261104-premium-emerald2/);
+  assert.match(customer,/product-detail-redesign\.css\?v=20261104-premium-emerald2/);
+  assert.match(admin,/admin\.css\?v=20261104-premium-emerald2/);
+});
+
 test('product footer uses two separate rounded pills, theme-aware and compact',async()=>{
   const html=await text('index.html');
   const css=await text('css/product-detail-redesign.css');
@@ -195,7 +238,7 @@ test('product footer uses two separate rounded pills, theme-aware and compact',a
   assert.match(js,/el\.qtyMinus\.addEventListener\('click'/);
   assert.match(js,/el\.qtyPlus\.addEventListener\('click'/);
   assert.match(js,/el\.sheetTotal\.textContent = formatPrice\(draftTotal\(\)\)/);
-  assert.match(html,/product-detail-redesign\.css\?v=20261104-two-pills3/);
+  assert.match(html,/product-detail-redesign\.css\?v=20261104-premium-emerald2/);
 });
 
 test('cart and saved order instruction rows share theme red without changing prices',async()=>{
@@ -214,8 +257,8 @@ test('cart and saved order instruction rows share theme red without changing pri
   assert.match(customer,/<b>Uten:<\/b>/);
   assert.match(customer,/<b>Kommentar:<\/b>/);
   assert.match(orders,/class=\"cart-detail-row is-note\"/);
-  assert.match(index,/css\/cart\.css\?v=20261104-notes-red1/);
-  assert.match(admin,/css\/cart\.css\?v=20261104-notes-red1/);
+  assert.match(index,/css\/cart\.css\?v=20261104-premium-emerald2/);
+  assert.match(admin,/css\/cart\.css\?v=20261104-premium-emerald2/);
 });
 
 test('compact reference status card keeps solid icon panel, clock badge and working allergen switch',async()=>{
