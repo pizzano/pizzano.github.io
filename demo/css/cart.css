@@ -118,8 +118,8 @@ button.cart-product-copy {cursor:pointer;}
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   min-height:41px;margin-bottom:10px;padding:8px 10px;
   border-radius:10px;
-  background:color-mix(in srgb,var(--palette-success,#278451) 10%,var(--palette-surface));
-  color:var(--palette-success,var(--palette-accent));
+  background:color-mix(in srgb,var(--palette-accent) 10%,var(--palette-surface));
+  color:var(--palette-accent-text,var(--palette-accent));
   font-size:12.5px;font-weight:800;line-height:1.25;
 }
 .view-cart .cart-product-gift-banner svg {width:20px;height:20px;flex:none;}
@@ -139,11 +139,11 @@ button.cart-product-copy {cursor:pointer;}
 }
 .view-cart .cart-product-savings {
   font-size:11.5px;font-weight:800;line-height:1.2;
-  color:var(--palette-success,var(--palette-accent));
+  color:var(--palette-accent-text,var(--palette-accent));
   white-space:nowrap;
 }
-/* Product headings use the restaurant's existing confirmation/success colour, across light/dark palettes. */
-.view-cart .cart-product-name {font-size:16px;font-weight:780;line-height:1.18;letter-spacing:-.01em;color:var(--palette-success,#4CAF50);}
+/* Product headings use the brand accent; order confirmations keep semantic success. */
+.view-cart .cart-product-name {font-size:16px;font-weight:780;line-height:1.18;letter-spacing:-.01em;color:var(--palette-accent-text,var(--palette-accent));}
 .view-cart .cart-product-stepper {
   grid-template-columns:30px 28px 30px;min-height:30px;overflow:hidden;
   border:1px solid var(--palette-accent);border-radius:999px;
@@ -185,8 +185,8 @@ html[data-customer-palette="emeraldGold"] .view-cart .cart-product-stepper .cart
 .view-cart .cart-extra-count {
   display:inline-flex;align-items:center;justify-content:center;flex:none;
   min-width:24px;min-height:22px;padding:2px 5px;border-radius:6px;
-  background:color-mix(in srgb,var(--palette-success,var(--palette-accent)) 12%,var(--palette-surface));
-  color:var(--palette-success,var(--palette-accent));
+  background:color-mix(in srgb,var(--palette-accent) 12%,var(--palette-surface));
+  color:var(--palette-accent-text,var(--palette-accent));
   font-size:12px;font-weight:850;line-height:1.1;
 }
 .view-cart .cart-detail-row {
