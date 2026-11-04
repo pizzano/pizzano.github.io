@@ -298,11 +298,11 @@ html[data-theme="dark"] .allergen-visibility-control:not(.status-allergen-contro
   color: var(--ink-2) !important;
 }
 
-html[data-theme="dark"] .allergen-visibility-switch {
+html[data-theme="dark"] .allergen-visibility-control:not(.status-allergen-control) .allergen-visibility-switch {
   background: var(--palette-surface, #4a5158) !important;
 }
 
-html[data-theme="dark"] .allergen-visibility-control input:checked + .allergen-visibility-switch {
+html[data-theme="dark"] .allergen-visibility-control:not(.status-allergen-control) input:checked + .allergen-visibility-switch {
   background: var(--palette-button, #35a760) !important;
 }
 
