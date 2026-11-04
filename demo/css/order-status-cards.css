@@ -1,165 +1,183 @@
-/* Compact open/closed/preorder menu banner.
-   Reuses palette roles, existing status classes and Firebase-driven content. */
+/* Menu opening status — one compact, reference-matched component.
+   Status and pickup hours still come exclusively from customer.js/Firebase.
+   The five typography tiers and each palette remain administrator controlled. */
 .menu-overview {
-  --status-accent: var(--palette-success, #168668);
-  --status-label: var(--palette-success, #168668);
-  --status-text-on-accent: var(--palette-success-text, #fff);
+  --status-accent: var(--palette-success,#087d41);
+  --status-panel: #087c3d;
+  --status-icon: #fff;
   position: relative;
-  margin: 0 0 14px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--status-accent) 24%, var(--palette-border));
-  border-radius: 18px;
-  background:
-    radial-gradient(ellipse 27% 55% at 69% 132%,
-      color-mix(in srgb, var(--status-accent) 13%, var(--palette-surface)) 0 97%, transparent 100%),
-    radial-gradient(ellipse 24% 64% at 104% 126%,
-      color-mix(in srgb, var(--status-accent) 10%, var(--palette-surface)) 0 97%, transparent 100%),
-    var(--palette-surface);
-  color: var(--palette-ink);
-  box-shadow: 0 3px 11px color-mix(in srgb, var(--palette-deep) 8%, transparent);
-  overflow: hidden;
   isolation: isolate;
+  width: 100%;
+  margin: 0 0 13px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb,var(--status-panel) 26%,var(--palette-border));
+  border-radius: 18px;
+  background: var(--palette-surface);
+  color: var(--palette-ink);
+  box-shadow: 0 3px 12px color-mix(in srgb,var(--palette-deep) 8%,transparent);
 }
 .menu-overview.status-is-closed,
 .menu-overview.status-is-preorder {
-  --status-accent: var(--palette-danger, #b92b2b);
-  --status-label: var(--palette-danger, #b92b2b);
-  --status-text-on-accent: var(--palette-danger-text, #fff);
+  --status-accent: var(--palette-danger,#b51b22);
+  --status-panel: #b8171d;
 }
 .menu-overview.status-is-pending {
-  --status-accent: var(--palette-muted, #78818a);
-  --status-label: var(--palette-ink);
-  --status-text-on-accent: var(--palette-surface);
+  --status-accent: var(--palette-muted,#7a8488);
+  --status-panel: #79848a;
+}
+/* Two very light curved waves at the bottom, always behind the controls. */
+.menu-overview::before,
+.menu-overview::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  background: color-mix(in srgb,var(--status-panel) 8%,transparent);
+}
+.menu-overview::before {
+  left: 36%;
+  right: -8%;
+  bottom: -39px;
+  height: 60px;
+  border-radius: 68% 32% 0 0 / 88% 65% 0 0;
+  transform: rotate(-5deg);
+}
+.menu-overview::after {
+  left: 77%;
+  right: -10%;
+  bottom: -34px;
+  height: 54px;
+  border-radius: 75% 25% 0 0 / 85% 65% 0 0;
+  opacity: .7;
+  transform: rotate(-9deg);
 }
 .menu-overview .menu-overview-row {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: stretch;
+  min-height: 88px;
   gap: 0;
-  min-height: 82px;
 }
 .menu-overview .pickup-note {
   display: flex;
+  align-items: stretch;
   flex: 1 1 auto;
-  align-items: center;
-  gap: clamp(7px, 1.7vw, 11px);
+  gap: 10px;
   min-width: 0;
 }
 .menu-overview .status-shop-icon {
-  position: relative;
   display: grid;
   place-items: center;
   align-self: stretch;
-  flex: 0 0 clamp(66px, 1vw, 98px);
-  width: clamp(66px, 1vw, 98px);
-  min-height: 82px;
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--status-accent) 80%, #fff),
-    var(--status-accent) 62%,
-    color-mix(in srgb, var(--status-accent) 83%, #000));
-  color: var(--status-text-on-accent);
-  overflow: hidden;
+  flex: 0 0 82px;
+  width: 82px;
+  min-height: 88px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(153deg,
+    color-mix(in srgb,var(--status-panel) 90%,#fff),
+    var(--status-panel) 62%,
+    color-mix(in srgb,var(--status-panel) 90%,#000));
+  color: var(--status-icon);
 }
 .menu-overview .status-shop-icon svg {
-  position: relative;
-  z-index: 1;
-  width: 31px;
-  height: 31px;
+  display: block;
+  width: 32px;
+  height: 32px;
   flex: none;
+  stroke: currentColor;
+  stroke-width: 2;
 }
 .menu-overview .pickup-copy {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-start;
-  gap: 2px;
+  justify-content: center;
+  gap: 3px;
   min-width: 0;
-  padding: 6px 1px 6px 0;
+  padding: 8px 0;
 }
 .menu-overview .pickup-heading {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  column-gap: 7px;
-  row-gap: 2px;
-  max-width: 100%;
+  gap: 4px;
+  min-width: 0;
 }
 .menu-overview .status-title {
+  display: block;
   margin: 0;
-  color: var(--status-label);
-  font-size: var(--text-lg, 18px) !important;
+  color: var(--status-accent);
+  font-size: var(--text-lg,18px) !important;
   font-weight: 800;
-  line-height: 1.15;
   letter-spacing: -.025em;
+  line-height: 1.12;
 }
+.menu-overview .dot-open { display: none; }
 .menu-overview .status-subtitle {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   max-width: 100%;
-  color: var(--palette-muted);
-  font-size: var(--text-sm, 12px) !important;
-  font-weight: 400;
-  line-height: 1.22;
+  margin: 0;
   overflow: hidden;
   overflow-wrap: anywhere;
-}
-.menu-overview .dot-open { display: none; }
-.menu-overview.status-is-open .dot-open {
-  display: grid;
-  place-items: center;
-  flex: 0 0 20px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--palette-success);
-  color: var(--palette-success-text, #fff);
-}
-.menu-overview.status-is-open .dot-open::after {
-  content: "✓";
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1;
+  color: var(--palette-secondary-text,var(--palette-muted));
+  font-size: var(--text-sm,12px) !important;
+  font-weight: 400;
+  line-height: 1.22;
 }
 .menu-overview .status-time-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 5px;
   max-width: 100%;
+  min-height: 23px;
   margin-top: 2px;
-  padding: 3px 8px;
+  padding: 3px 9px;
+  border: 0;
   border-radius: 100px;
-  color: var(--status-label);
-  background: color-mix(in srgb, var(--status-accent) 12%, var(--palette-surface));
+  background: color-mix(in srgb,var(--status-panel) 11%,var(--palette-surface));
+  color: var(--status-accent);
   white-space: nowrap;
 }
 .menu-overview .status-time-pill[hidden] { display: none; }
 .menu-overview .status-time-pill svg {
-  width: 13px;
-  height: 13px;
-  flex: none;
+  display: block;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: inherit;
+  stroke: currentColor;
 }
 .menu-overview .status-time-text {
   color: inherit;
-  font-size: var(--text-sm, 12px) !important;
-  font-weight: 700;
-  line-height: 1;
+  font-size: var(--text-sm,12px) !important;
+  font-weight: 750;
+  line-height: 1.1;
 }
 .menu-overview .status-allergen-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   align-self: center;
   flex: 0 0 auto;
-  justify-content: center;
-  min-height: 45px;
   gap: 7px;
-  margin: 0;
+  min-height: 47px;
+  margin: 0 0 0 10px;
   padding: 0 12px;
   border: 0;
-  border-left: 1px solid color-mix(in srgb, var(--status-accent) 21%, var(--palette-border));
+  border-left: 1px solid color-mix(in srgb,var(--status-accent) 28%,var(--palette-border));
   border-radius: 0;
   background: transparent;
   color: var(--palette-ink);
-  font-size: var(--text-sm, 12px) !important;
+  font-size: var(--text-sm,12px) !important;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -167,26 +185,38 @@
   width: 40px;
   height: 24px;
   flex: 0 0 40px;
+  border: 1px solid color-mix(in srgb,var(--palette-success) 38%,var(--palette-border));
+  background: var(--palette-border);
+}
+.menu-overview .status-allergen-control input:checked + .allergen-visibility-switch {
+  border-color: var(--palette-success);
+  background: var(--palette-success);
 }
 .menu-overview .status-allergen-control input:checked + .allergen-visibility-switch::after {
   transform: translateX(16px);
 }
 @media (max-width: 420px) {
-  .menu-overview { border-radius: 16px; }
-  .menu-overview .menu-overview-row { min-height: 80px; }
-  .menu-overview .pickup-note { gap: 7px; }
+  .menu-overview { border-radius: 16px; margin-bottom: 12px; }
+  .menu-overview .menu-overview-row { min-height: 84px; }
+  .menu-overview .pickup-note { gap: 8px; }
+  .menu-overview .status-shop-icon {
+    flex-basis: 68px;
+    width: 68px;
+    min-height: 84px;
+  }
   .menu-overview .status-shop-icon svg { width: 27px; height: 27px; }
-  .menu-overview .pickup-copy { gap: 2px; padding-block: 5px; }
-  .menu-overview .status-title { font-size: var(--text-md, 14px) !important; }
-  .menu-overview .status-subtitle { font-size: var(--text-xs, 10px) !important; }
-  .menu-overview .status-time-pill { padding: 3px 6px; gap: 4px; }
-  .menu-overview .status-time-text { font-size: var(--text-xs, 10px) !important; }
+  .menu-overview .pickup-copy { gap: 3px; padding-block: 6px; }
+  .menu-overview .status-title { font-size: var(--text-lg,18px) !important; }
+  .menu-overview .status-subtitle { font-size: var(--text-sm,12px) !important; }
+  .menu-overview .status-time-pill { min-height: 21px; padding: 3px 7px; gap: 4px; }
+  .menu-overview .status-time-text { font-size: var(--text-sm,12px) !important; }
   .menu-overview .status-time-pill svg { width: 12px; height: 12px; }
   .menu-overview .status-allergen-control {
-    padding-inline: 7px;
     gap: 5px;
     min-height: 42px;
-    font-size: var(--text-xs, 10px) !important;
+    margin-left: 7px;
+    padding-inline: 7px;
+    font-size: var(--text-xs,10px) !important;
   }
   .menu-overview .status-allergen-control .allergen-visibility-switch {
     width: 36px;
@@ -202,14 +232,21 @@
   }
 }
 @media (max-width: 355px) {
+  .menu-overview .pickup-note { gap: 6px; }
+  .menu-overview .status-shop-icon { flex-basis: 59px; width: 59px; }
+  .menu-overview .status-title { font-size: var(--text-md,14px) !important; }
+  .menu-overview .status-subtitle,
+  .menu-overview .status-time-text { font-size: var(--text-xs,10px) !important; }
   .menu-overview .status-allergen-control {
     flex-direction: column;
-    align-items: center;
     gap: 3px;
+    margin-left: 4px;
     padding-inline: 5px;
   }
-  .menu-overview .pickup-note { gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .menu-overview .status-time-pill { transition: none; }
+  .menu-overview .status-allergen-control .allergen-visibility-switch,
+  .menu-overview .status-allergen-control .allergen-visibility-switch::after {
+    transition: none;
+  }
 }
