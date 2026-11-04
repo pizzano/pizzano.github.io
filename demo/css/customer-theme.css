@@ -48,7 +48,8 @@ html[data-customer-palette] .toast { background: var(--palette-success-soft) !im
 html[data-customer-palette] .toast::before { color: var(--palette-success); }
 html[data-customer-palette] .toast[data-tone="error"] { background: var(--palette-danger-soft) !important; color: var(--palette-danger) !important; border-color: var(--palette-danger) !important; }
 html[data-customer-palette] .toast[data-tone="error"]::before { content: "!"; color: var(--palette-danger); }
-html[data-customer-palette] :is(.saved-flash, .ingredient-chip) { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
+html[data-customer-palette] .saved-flash { background: var(--palette-success-soft) !important; color: var(--palette-success) !important; border: 1px solid var(--palette-success) !important; }
+html[data-customer-palette] .ingredient-chip { background: var(--palette-selection-bg) !important; color: var(--palette-accent-text,var(--palette-accent)) !important; border: 1px solid var(--palette-accent) !important; }
 html[data-customer-palette] .valid-check { background: var(--palette-button); color: var(--palette-button-text); }
 
 /* Strong, consistent boundaries and distinct control states. */
@@ -154,7 +155,7 @@ html[data-customer-palette] #reviewCard .pickup-review-info-grid > div {
 .bonus-ring .bonus-caption { font-size: 13px; font-weight: 650; }
 .pizza-bonus .btn { width: 100%; }
 
-.bonus-savings { display: block; margin-top: 3px; color: var(--palette-success); font-size: 12px; font-weight: 700; }
+.bonus-savings { display: block; margin-top: 3px; color: var(--palette-accent-text,var(--palette-accent)); font-size: 12px; font-weight: 700; }
 
 .pizza-offers-consent { text-align: left; display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-top: 14px; border: 1px solid var(--palette-border); border-radius: 18px !important; background: var(--palette-soft); color: var(--palette-ink); font-size: 13px; }
 .pizza-offers-consent input { width: 18px; height: 18px; flex: none; margin: 0; accent-color: var(--palette-accent); }
