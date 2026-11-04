@@ -557,6 +557,40 @@
                                     <input type="checkbox" id="sIngredientCustomizationEnabled" class="switch">
                                 </label>
                             </div>
+                            <div class="feature-setting-group customer-extras-settings">
+                                <div class="feature-setting-head">
+                                    <strong>Kundefunksjoner</strong>
+                                    <small>Valgfrie forbedringer i handlekurv, produktdialog og bestillingshistorikk.</small>
+                                </div>
+                                <label class="toggle-row">
+                                    <span class="toggle-body"><strong>Produktforslag i handlekurven</strong><small>Vis relevante tillegg uten å endre bestillingsflyten.</small></span>
+                                    <input id="sCartSuggestionsEnabled" type="checkbox" class="switch">
+                                </label>
+                                <label class="lbl" for="sCartSuggestionsMax">Maks forslag</label>
+                                <input id="sCartSuggestionsMax" type="number" class="input" min="1" max="3" step="1" value="3">
+                                <p class="set-hint">Velg opptil tre produkter for hver hovedgruppe. Tomme felt bruker automatisk relevante tilbehør.</p>
+                                <div id="cartSuggestionRuleFields" class="customer-extra-rule-grid"></div>
+                                <label class="toggle-row">
+                                    <span class="toggle-body"><strong>Raske beskjeder til kjøkkenet</strong><small>Korte valg legges i det eksisterende kommentarfeltet.</small></span>
+                                    <input id="sQuickKitchenNotesEnabled" type="checkbox" class="switch">
+                                </label>
+                                <div class="customer-kitchen-note-settings">
+                                    <label>Pizza <input class="input" data-kitchen-note-category="pizza" maxlength="240" placeholder="Godt stekt, Ikke skjær, Del i to"></label>
+                                    <label>Burger <input class="input" data-kitchen-note-category="burger" maxlength="240" placeholder="Godt stekt, Saus ved siden av"></label>
+                                    <label>Kebab <input class="input" data-kitchen-note-category="kebab" maxlength="240" placeholder="Saus ved siden av, Del i to"></label>
+                                    <label>Tallerken <input class="input" data-kitchen-note-category="tallerken" maxlength="240" placeholder="Saus ved siden av"></label>
+                                    <label>Andre retter <input class="input" data-kitchen-note-category="other" maxlength="240" placeholder="Ekstra servietter"></label>
+                                </div>
+                                <label class="toggle-row">
+                                    <span class="toggle-body"><strong>Kundevurderinger etter henting</strong><small>Av som standard. Krever passende Firebase-regler før aktivering.</small></span>
+                                    <input id="sOrderFeedbackEnabled" type="checkbox" class="switch">
+                                </label>
+                                <details class="customer-feedback-admin">
+                                    <summary>Innkomne kundevurderinger</summary>
+                                    <button type="button" id="refreshCustomerFeedback" class="btn btn-outline btn-sm">Hent vurderinger</button>
+                                    <div id="customerFeedbackList" role="status" aria-live="polite"><p class="set-hint">Ingen vurderinger hentet ennå.</p></div>
+                                </details>
+                            </div>
                         </article>
 
 
