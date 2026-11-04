@@ -924,6 +924,13 @@ el.btnSaveCategory.addEventListener('click', () => {
  * Produktpanel
  * ------------------------------------------------------------------ */
 
+const DEFAULT_KITCHEN_NOTES={
+  pizza:['Godt stekt','Ikke skjær','Del i to'],
+  burger:['Godt stekt','Saus ved siden av'],
+  kebab:['Saus ved siden av','Del i to'],
+  tallerken:['Saus ved siden av'],
+  other:['Ekstra servietter'],
+};
 function kitchenNoteCategory(section,item) {
   const name=((section?.title||section?.name||'')+' '+(item?.name||'')).toLocaleLowerCase('no');
   if(/pizza/.test(name))return 'pizza';
@@ -946,14 +953,7 @@ function kitchenNoteListForAdmin(item,section) {
   let configured={};
   try{configured=JSON.parse(String(store.settings?.quickKitchenNotesConfig||'{}'))||{}}catch{}
   const kind=kitchenNoteCategory(section,item);
-  const defaults={
-    pizza:['Godt stekt','Ikke skjær','Del i to'],
-    burger:['Godt stekt','Saus ved siden av'],
-    kebab:['Saus ved siden av','Del i to'],
-    tallerken:['Saus ved siden av'],
-    other:['Ekstra servietter'],
-  };
-  return cleanProductKitchenNotes(Array.isArray(configured[kind])?configured[kind]:defaults[kind]);
+  return cleanProductKitchenNotes(Array.isArray(configured[kind])?configured[kind]:DEFAULT_KITCHEN_NOTES[kind]);
 }
 function renderProductKitchenNotes(item,section) {
   if(!item || !el.productQuickKitchenNotesList)return;
@@ -4084,13 +4084,6 @@ const EXTRA_CATEGORIES=[
   ['pizza','Pizza'],['burger','Burger'],['kebab','Kebab'],
   ['tallerken','Tallerken'],['other','Andre retter'],
 ];
-const DEFAULT_KITCHEN_NOTES={
-  pizza:['Godt stekt','Ikke skjær','Del i to'],
-  burger:['Godt stekt','Saus ved siden av'],
-  kebab:['Saus ved siden av','Del i to'],
-  tallerken:['Saus ved siden av'],
-  other:['Ekstra servietter'],
-};
 function customerExtraObject(raw) {
   try { const value=JSON.parse(String(raw||'')); return value&&typeof value==='object'&&!Array.isArray(value)?value:{}; }
   catch { return {}; }
