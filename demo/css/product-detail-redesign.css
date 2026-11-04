@@ -368,50 +368,62 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   display:block;margin:7px 0 0;color:var(--pd-muted);
   font-size:var(--pd-fs-micro)!important;line-height:1.45;
 }
-/* Product footer — edge-to-edge like checkout-actions, with the reference two-tone split.
-   Footer stays a flex child of the sheet (no fixed overlay or extra CSS layer). */
+/* Product footer — two independent rounded controls, aligned like checkout-actions.
+   One source for desktop/mobile, with palette colors and live price unchanged. */
 #productSheet .sheet-foot{
   position:relative;z-index:3;flex:0 0 auto;
-  width:100%;margin:0;padding:0 0 env(safe-area-inset-bottom);
+  width:100%;margin:0;
+  padding:7px 7px max(7px,env(safe-area-inset-bottom));
   border:0;border-radius:0;
-  background:linear-gradient(to right,var(--pd-card) 0 29%,var(--pd-button) 29% 100%);
-  box-shadow:none;
+  background:var(--pd-page);box-shadow:none;
 }
 #productSheet .sheet-foot-row{
-  display:flex;align-items:stretch;gap:0;
+  display:flex;align-items:stretch;gap:clamp(9px,2.5vw,18px);
   width:100%;min-width:0;min-height:54px;
-  margin:0;padding:0;overflow:hidden;
-  border:0;border-radius:0;background:var(--pd-card);
-  box-shadow:none;
+  margin:0;padding:0;
+  border:0;border-radius:0;background:transparent;box-shadow:none;
 }
 #productSheet .qty{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(22px,.65fr) minmax(0,1fr);
-  flex:0 0 29%;align-items:center;gap:0;
-  min-width:0;height:auto;margin:0;padding:0;
-  border:0;border-radius:0;background:var(--pd-card);box-shadow:none;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(20px,.68fr) minmax(0,1fr);
+  flex:0 0 34%;align-items:center;gap:0;
+  min-width:0;height:auto;margin:0;padding:0 3px;
+  border:2px solid var(--pd-button);border-radius:999px;
+  background:var(--pd-card);
+  box-shadow:0 3px 9px color-mix(in srgb,var(--palette-deep,#000) 9%,transparent);
+  overflow:hidden;
 }
 #productSheet .qty button{
-  display:grid;place-items:center;width:100%;min-width:0;
-  height:100%;min-height:54px;margin:0;padding:0;border:0;
-  border-radius:0;background:transparent;color:var(--pd-ink);
-  font-size:var(--text-xl,22px)!important;font-weight:450;
+  display:grid;place-items:center;
+  width:100%;min-width:0;height:100%;min-height:52px;
+  margin:0;padding:0;border:0;border-radius:0;
+  background:transparent;color:var(--pd-button);
+  font-size:var(--text-xl,22px)!important;font-weight:600;
   box-shadow:none;touch-action:manipulation;
 }
-#productSheet .qty button:last-of-type{background:transparent;color:var(--pd-ink)}
+#productSheet .qty button:last-of-type{
+  background:transparent;color:var(--pd-button);
+}
 #productSheet .qty button:disabled{opacity:.35;cursor:not-allowed}
 #productSheet .qty span{
   min-width:0;color:var(--pd-ink);text-align:center;
-  font-size:var(--text-lg,18px)!important;font-weight:700;
+  font-size:var(--text-lg,18px)!important;font-weight:750;
   font-variant-numeric:tabular-nums;
 }
 #productSheet #btnAddToCart{
   display:flex;flex:1 1 auto;align-items:center;justify-content:center;
-  gap:7px;min-width:0;min-height:54px;height:auto;margin:0;padding:4px 10px;
-  border:0;border-radius:0;background:var(--pd-button)!important;
-  color:var(--pd-on)!important;box-shadow:none;touch-action:manipulation;
+  gap:7px;min-width:0;min-height:56px;height:auto;
+  margin:0;padding:6px 11px;
+  border:0;border-radius:999px;
+  background:linear-gradient(165deg,
+    color-mix(in srgb,var(--pd-button) 88%,white) 0%,
+    var(--pd-button) 55%,
+    color-mix(in srgb,var(--pd-button) 85%,#002318) 100%)!important;
+  color:var(--pd-on)!important;
+  box-shadow:0 4px 11px color-mix(in srgb,var(--pd-button) 19%,transparent);
+  touch-action:manipulation;
 }
 #productSheet #btnAddToCart svg{
-  display:block;flex:0 0 auto;width:24px;height:24px;
+  display:block;flex:0 0 auto;width:23px;height:23px;
   fill:none;stroke:currentColor;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round;
 }
@@ -420,14 +432,16 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   color:var(--pd-on)!important;font-size:var(--text-lg,18px)!important;
   font-weight:700;line-height:1.15;white-space:nowrap;
 }
-#productSheet #btnAddToCart span{min-width:0;overflow:hidden;text-overflow: ellipsis}
+#productSheet #btnAddToCart span{
+  min-width:0;overflow:hidden;text-overflow: ellipsis;
+}
 #productSheet #sheetTotal{flex:0 0 auto;font-variant-numeric:tabular-nums}
 #productSheet .qty button:focus-visible,#productSheet #btnAddToCart:focus-visible{
   outline:2px solid var(--pd-accent);outline-offset:-4px;
 }
 @media(hover:hover){
   #productSheet .qty button:not(:disabled):hover{
-    background:color-mix(in srgb,var(--pd-ink) 7%,transparent);
+    background:color-mix(in srgb,var(--pd-button) 7%,transparent);
   }
   #productSheet #btnAddToCart:not(:disabled):hover{filter:brightness(1.06)}
 }
@@ -456,9 +470,11 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
   #productSheet .opt-row.is-serving .option-quantity{gap:3px}
   #productSheet .option-quantity button{width:31px;height:31px}
   #productSheet .option-quantity b{min-width:14px}
-  #productSheet .sheet-foot-row{min-height:54px}
-  #productSheet .qty button{min-height:54px}
-  #productSheet #btnAddToCart{min-height:54px;gap:5px;padding-inline:7px}
+  #productSheet .sheet-foot{padding-inline:6px}
+  #productSheet .sheet-foot-row{gap:9px;min-height:52px}
+  #productSheet .qty{flex-basis:35%;padding-inline:1px}
+  #productSheet .qty button{min-height:48px}
+  #productSheet #btnAddToCart{min-height:52px;gap:5px;padding-inline:7px}
   #productSheet #btnAddToCart svg{width:21px;height:21px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -530,10 +546,11 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 #productSheet .sheet-scroll { scroll-padding-bottom: 100px; }
 #productSheet :is(.comment-area, .opt-row):focus-within { scroll-margin-bottom: 110px; }
 @media (max-width: 360px) {
-  #productSheet .sheet-foot-row { min-height:52px; }
-  #productSheet .qty button { min-height:52px;font-size:var(--text-lg,18px)!important; }
+  #productSheet .sheet-foot-row { gap:7px;min-height:50px; }
+  #productSheet .qty { flex-basis:35%; }
+  #productSheet .qty button { min-height:46px;font-size:var(--text-lg,18px)!important; }
   #productSheet .option-quantity button { min-height:40px; }
-  #productSheet #btnAddToCart { min-height:52px;gap:4px; }
+  #productSheet #btnAddToCart { min-height:50px;gap:4px; }
   #productSheet #btnAddToCart span,#productSheet #sheetTotal {
     font-size:var(--text-md,14px)!important;
   }
