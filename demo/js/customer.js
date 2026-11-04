@@ -1403,14 +1403,22 @@ const KITCHEN_NOTE_DEFAULTS={
   other:['Ekstra servietter'],
 };
 function kitchenNotesFor(item){
-  if(store.settings.quickKitchenNotesEnabled === false)return [];
+  // Master switch plus a per-product switch; custom [] hides every chip.
+  if(store.settings.quickKitchenNotesEnabled === false || item?.quickKitchenNotesEnabled === false)return [];
   const found=findItem(item.id);
   const kind=customerItemKind(found.section,item);
   const defined=parseCustomerExtraJSON(store.settings.quickKitchenNotesConfig);
-  const list=Array.isArray(defined[kind])?defined[kind]:KITCHEN_NOTE_DEFAULTS[kind];
+  const list=Array.isArray(item.quickKitchenNotes)
+    ? item.quickKitchenNotes
+    : (Array.isArray(defined[kind])?defined[kind]:KITCHEN_NOTE_DEFAULTS[kind]);
   // Only plain short notes can become chips. Ingredient removal stays separate.
-  return [...new Set(list.map(label=>String(label||'').trim()).filter(Boolean))]
-    .filter(label=>!/^uten[\s:]/i.test(label)).slice(0,8);
+  const unique=new Map();
+  for(const note of list){
+    const label=String(note||'').trim().replace(/\s+/g,' ').slice(0,60);
+    if(label && !/^uten[\s:]/i.test(label)) unique.set(label.toLocaleLowerCase('no'),label);
+    if(unique.size>=8)break;
+  }
+  return [...unique.values()];
 }
 function splitKitchenComment(comment,notes){
   const lines=String(comment||'').split(/\r?\n/);
