@@ -6,7 +6,7 @@ import {
   getPickupSlots,
   getWeeklyHours,
   RESTAURANT_WEEKDAYS,
-} from './data.js?v=20261104-type5-1';
+} from './data.js?v=20261104-emerald-gold2';
 
 const MODAL_ID = 'shopInfoModal';
 const TRIGGER_ID = 'profileShopInfo';
