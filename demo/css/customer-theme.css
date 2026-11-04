@@ -7,7 +7,96 @@
   --ok: var(--palette-success); --danger: var(--palette-danger);
   --ok-soft: var(--palette-success-soft); --danger-soft: var(--palette-danger-soft);
 }
-html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--palette-bg); }
+/* Premium Emerald & Gold: opt-in fifth palette. Other themes keep their CSS.
+   Both variants retain their own contrast-safe light and dark color roles. */
+:root[data-customer-palette="emeraldGold"] {
+  --premium-metal: var(--palette-accent);
+  --premium-edge: color-mix(in srgb,var(--palette-accent) 37%,var(--palette-border));
+  --premium-card-bg: linear-gradient(145deg,
+    color-mix(in srgb,var(--palette-accent) 6%,var(--palette-surface)),
+    var(--palette-surface) 64%,
+    color-mix(in srgb,var(--palette-bg) 27%,var(--palette-surface)));
+  --premium-card-shadow: 0 4px 14px color-mix(in srgb,var(--palette-deep) 17%,transparent),
+                         inset 0 1px 0 color-mix(in srgb,var(--palette-light) 13%,transparent);
+  --premium-action-bg: linear-gradient(154deg,#FFE8A1 0%,#F3D477 57%,#D5A749 100%);
+  --premium-action-shadow: 0 4px 11px color-mix(in srgb,#A27A2D 26%,transparent),
+                           inset 0 1px 0 color-mix(in srgb,#FFFFFF 57%,transparent);
+  --premium-main-bg: radial-gradient(ellipse at 88% -12%,
+                      color-mix(in srgb,var(--palette-success) 12%,transparent) 0%,transparent 52%),
+                     linear-gradient(160deg,var(--palette-bg),
+                      color-mix(in srgb,var(--palette-surface) 15%,var(--palette-bg)));
+}
+:root[data-customer-palette="emeraldGold"][data-theme="dark"] {
+  --premium-card-shadow: 0 4px 15px rgba(0,13,10,.25),
+                         inset 0 1px 0 rgba(255,238,190,.09);
+  --premium-main-bg: radial-gradient(ellipse at 83% -8%,rgba(28,107,81,.26),transparent 56%),
+                     linear-gradient(154deg,#062D25,#092F27 50%,#05251F);
+}
+html[data-customer-palette="emeraldGold"] :is(.app-header,.cat-bar) {
+  box-shadow: 0 4px 14px color-mix(in srgb,var(--palette-deep) 19%,transparent);
+}
+html[data-customer-palette="emeraldGold"] .cat-tab {
+  border-radius:15px;
+  box-shadow:0 2px 7px color-mix(in srgb,var(--palette-deep) 12%,transparent);
+}
+html[data-customer-palette="emeraldGold"] .cat-tab.is-active {
+  background:var(--palette-selection-bg)!important;
+  color:var(--palette-ink)!important;
+  border-color:var(--palette-accent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--palette-accent) 35%,transparent);
+}
+html[data-customer-palette="emeraldGold"] :is(
+  .view-checkout .step-panel,.view-cart .cart-summary,
+  #pickupChoices .pickup-choice,#timeGrid .time-btn,
+  .pickup-review,.pickup-review-info,.pickup-review-summary,
+  .view-checkout .checkout-contact-card,.view-checkout .contact-form-field,
+  .profile-menu-row,.profile-contact-card
+) {
+  border-radius:15px;
+  border-color:var(--premium-edge)!important;
+  background:var(--premium-card-bg);
+  box-shadow:var(--premium-card-shadow);
+}
+html[data-customer-palette="emeraldGold"] :is(
+  .view-checkout .input,.view-cart .input,.view-checkout .comment-area
+) {
+  color:var(--palette-ink);
+  border-color:var(--premium-edge)!important;
+  background:var(--palette-input-bg)!important;
+}
+html[data-customer-palette="emeraldGold"] :is(
+  .view-checkout .input,.view-cart .input,.view-checkout .comment-area
+):focus-visible {
+  border-color:var(--palette-accent)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--palette-accent) 17%,transparent);
+}
+html[data-customer-palette="emeraldGold"] :is(
+  .btn-primary:not(:disabled),.view-menu .add-btn:not(:disabled),
+  .view-checkout .checkout-actions .btn-primary:not(:disabled),
+  .view-cart .checkout-actions .btn-primary:not(:disabled)
+) {
+  background:var(--premium-action-bg)!important;
+  border-color:color-mix(in srgb,var(--palette-accent) 79%,#956724)!important;
+  color:#172820!important;
+  box-shadow:var(--premium-action-shadow);
+  text-shadow:0 1px 0 rgba(255,255,255,.15);
+}
+html[data-customer-palette="emeraldGold"] :is(
+  .view-cart .checkout-actions,.view-checkout .checkout-actions
+) {
+  background:var(--palette-surface)!important;
+  border-color:var(--premium-edge)!important;
+}
+html[data-customer-palette="emeraldGold"] :is(.sec-title,.cat-head h2,.view-cart .cart-header-title) {
+  color:var(--palette-ink);
+}
+html[data-customer-palette="emeraldGold"] :is(.step.is-active,.step.is-done) {
+  color:var(--palette-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-customer-palette="emeraldGold"] :is(.btn-primary,.add-btn) { transition:none; }
+}
+html[data-customer-palette], html[data-customer-palette] body, html[data-customer-palette] main { background: var(--premium-main-bg,var(--palette-bg)); }
 html[data-customer-palette] body::before { background: none; }
 /* Primary actions share the palette button tokens; menu card buttons own their styles in customer.css. */
 html[data-customer-palette] :is(.btn-primary,.btn-add,.shop-info-action.is-primary),
@@ -26,7 +115,7 @@ html[data-customer-palette] :is(input.input,textarea.input,textarea.comment-area
 html[data-customer-palette] :is(.hint,.view-cart .cart-detail-included){color:var(--palette-secondary-text)}
 
 /* Keep shared legacy dark overrides aligned with the customer theme. */
-html[data-customer-palette] main { background: var(--palette-bg) !important; }
+html[data-customer-palette] main { background: var(--premium-main-bg,var(--palette-bg)) !important; }
 html[data-customer-palette] .app-header { background: var(--palette-header-bg) !important; }
 html[data-customer-palette] .app-header :is(.brand,.brand-text strong,.brand-text small,.hdr-btn:not(.is-on)) { color:var(--palette-header-text)!important; }
 
