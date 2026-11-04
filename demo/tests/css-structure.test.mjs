@@ -284,7 +284,7 @@ test('compact reference status card keeps solid icon panel, clock badge and work
   assert.match(customerTheme,/\.allergen-visibility-control:not\(\.status-allergen-control\) input:checked/);
   assert.match(theme,/\.allergen-visibility-control:not\(\.status-allergen-control\) input:checked/);
   assert.match(html,/order-status-cards\.css\?v=20261104-status-reference5/);
-  assert.match(html,/customer-theme\.css\?v=20261104-status-reference5/);
+  assert.match(html,/customer-theme\.css\?v=20261104-premium-emerald2/);
   assert.match(html,/theme\.css\?v=20261104-status-reference5/);
   assert.match(html,/for="allergenVisibilityToggle"/);
   assert.match(customer,/el\.statusTimeText\.textContent/);
