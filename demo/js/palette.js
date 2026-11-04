@@ -1,6 +1,6 @@
 /** Customer palette roles: main, background, card, text, border, confirmation, Uten / varsel. */
 const theme = (label, light, dark, advanced = {}) => ({ label, colors:light, light, dark, advanced });
-/* Four restrained restaurant palettes. Each has true dark surface, readable ink,
+/* Five restaurant palettes, including an opt-in emerald and champagne-gold theme.
    restrained card borders, separate selection, and accessible CTA contrast.
    The existing stable palette IDs preserve Firebase selections. */
 export const CUSTOMER_PALETTES = {
@@ -23,7 +23,12 @@ export const CUSTOMER_PALETTES = {
     ['#14795D','#F4F9F7','#FFFFFF','#142D29','#C6DFD5','#14795D','#A76442'],
     ['#65E5B7','#0B1B19','#16302A','#F1F9F5','#365D52','#69D9B0','#E9B68C'],
     { light:{button:'#087A5C',buttonText:'#FFFFFF',selected:'#D9F2E8',field:'#FAFDFB',header:'#15352C',muted:'#5B776E'},
-      dark:{button:'#058861',buttonText:'#FFFFFF',selected:'#074E39',field:'#203F37',header:'#10251F',muted:'#B8D3C8'} })
+      dark:{button:'#058861',buttonText:'#FFFFFF',selected:'#074E39',field:'#203F37',header:'#10251F',muted:'#B8D3C8'} }),
+  emeraldGold: theme('5. Premium Emerald & Gold',
+    ['#AC822C','#F5F7F1','#FFFFFF','#172B24','#CFDACF','#147A5A','#9A563D'],
+    ['#F3D477','#062D25','#123B32','#F7F8F3','#45695A','#71D9B4','#F1B18F'],
+    { light:{button:'#D9B661',buttonText:'#1B2922',selected:'#F1E8CB',field:'#FFFFFF',header:'#123B32',muted:'#61756B'},
+      dark:{button:'#F3D477',buttonText:'#172820',selected:'#405339',field:'#103A30',header:'#05251F',muted:'#CED8D2'} })
 };
 
 export const PALETTE_COLOR_LABELS = [
