@@ -218,6 +218,35 @@ test('cart and saved order instruction rows share theme red without changing pri
   assert.match(admin,/css\/cart\.css\?v=20261104-notes-red1/);
 });
 
+test('compact reference status card keeps solid icon panel, clock badge and working allergen switch',async()=>{
+  const html=await text('index.html');
+  const css=await text('css/order-status-cards.css');
+  const theme=await text('css/theme.css');
+  const customerTheme=await text('css/customer-theme.css');
+  const customer=await text('js/customer.js');
+  const states=['status-is-open','status-is-closed','status-is-preorder','status-is-pending'];
+  for(const state of states)assert.ok(css.includes(state),'missing '+state+' style');
+  assert.match(css,/--status-panel: #087c3d/);
+  assert.match(css,/--status-panel: #b8171d/);
+  assert.match(css,/border-radius: 18px/);
+  assert.match(css,/\.menu-overview::before,\s*\.menu-overview::after/);
+  assert.match(css,/\.menu-overview \.status-shop-icon/);
+  assert.match(css,/border-radius: 0;\s*background: linear-gradient\(153deg/);
+  assert.match(css,/\.menu-overview \.status-time-pill\[hidden\] \{ display: none; \}/);
+  assert.match(css,/\.menu-overview \.status-allergen-control input:checked \+ \.allergen-visibility-switch/);
+  assert.match(css,/@media \(max-width: 420px\)/);
+  assert.match(css,/min-height: 84px/);
+  assert.doesNotMatch(css,/border-radius: 16px 42%|border-radius:999px|!important.*background/);
+  assert.match(customerTheme,/\.allergen-visibility-control:not\(\.status-allergen-control\) input:checked/);
+  assert.match(theme,/\.allergen-visibility-control:not\(\.status-allergen-control\) input:checked/);
+  assert.match(html,/order-status-cards\.css\?v=20261104-status-reference5/);
+  assert.match(html,/customer-theme\.css\?v=20261104-status-reference5/);
+  assert.match(html,/theme\.css\?v=20261104-status-reference5/);
+  assert.match(html,/for="allergenVisibilityToggle"/);
+  assert.match(customer,/el\.statusTimeText\.textContent/);
+  assert.match(customer,/el\.statusShopIcon\.dataset\.iconState/);
+});
+
 test('one themed status banner replaces the legacy double open/closed card', async () => {
   const html=await text('index.html');
   const customer=await text('js/customer.js');
