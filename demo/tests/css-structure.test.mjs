@@ -224,8 +224,9 @@ test('compact reference status card keeps solid icon panel, clock badge and work
   const theme=await text('css/theme.css');
   const customerTheme=await text('css/customer-theme.css');
   const customer=await text('js/customer.js');
-  const states=['status-is-open','status-is-closed','status-is-preorder','status-is-pending'];
+  const states=['status-is-closed','status-is-preorder','status-is-pending'];
   for(const state of states)assert.ok(css.includes(state),'missing '+state+' style');
+  assert.match(customer,/classList\.toggle\('status-is-open', isOpen\)/);
   assert.match(css,/--status-panel: #087c3d/);
   assert.match(css,/--status-panel: #b8171d/);
   assert.match(css,/border-radius: 18px/);
