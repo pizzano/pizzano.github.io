@@ -52,7 +52,6 @@ import {
   RESTAURANT_WEEKDAYS,
   getStats,
   getOrders,
-  listOrderFeedback,
   markOrderReadyManually,
   updateOrderEstimate,
   acceptOrderWithEstimate,
@@ -277,7 +276,6 @@ const el = {
     cartSuggestionsEnabled: $('sCartSuggestionsEnabled'),
     cartSuggestionsMax: $('sCartSuggestionsMax'),
     quickKitchenNotesEnabled: $('sQuickKitchenNotesEnabled'),
-    orderFeedbackEnabled: $('sOrderFeedbackEnabled'),
     restaurantName: $('sRestaurantName'),
     restaurantLogo: $('sRestaurantLogo'),
     streetAddress: $('sStreetAddress'),
@@ -3569,7 +3567,6 @@ const BOOLEAN_SETTING_FIELDS = [
   'ingredientCustomizationEnabled',
   'cartSuggestionsEnabled',
   'quickKitchenNotesEnabled',
-  'orderFeedbackEnabled',
   'busyModeEnabled',
   'pickupCapacityEnabled',
 ];
@@ -4141,20 +4138,6 @@ document.querySelectorAll('[data-kitchen-note-category]').forEach(field=>{
     });
     mutate(state=>{state.settings.quickKitchenNotesConfig=JSON.stringify(result)});
   });
-});
-$('refreshCustomerFeedback').addEventListener('click',async()=>{
-  const button=$('refreshCustomerFeedback'),target=$('customerFeedbackList');
-  button.disabled=true;target.textContent='Henter kundevurderinger…';
-  try{
-    const entries=await listOrderFeedback();
-    target.innerHTML=entries.length
-      ? entries.map(entry=>'<article class="customer-feedback-entry"><strong>★ '+entry.score+'/5 · #'+escapeHtml(entry.orderId.slice(-6).toUpperCase())+
-        '</strong><span>'+escapeHtml(new Date(entry.createdAt).toLocaleString('nb-NO'))+'</span>'+
-        (entry.tags.length?'<p>'+entry.tags.map(escapeHtml).join(' · ')+'</p>':'')+
-        (entry.comment?'<p>'+escapeHtml(entry.comment)+'</p>':'')+'</article>').join('')
-      : '<p class="set-hint">Ingen kundevurderinger funnet.</p>';
-  }catch(error){target.textContent='Kunne ikke hente vurderinger: '+String(error.message||error)}
-  finally{button.disabled=false}
 });
 
 function renderSettings() {
