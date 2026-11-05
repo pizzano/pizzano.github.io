@@ -1022,12 +1022,6 @@ html[data-theme="dark"] .view-toggle-btn.is-active {
 .customer-kitchen-note-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 12px}
 .customer-kitchen-note-settings label{display:grid;gap:4px;font-size:var(--text-sm,12px);font-weight:650}
 .customer-kitchen-note-settings input{width:100%;min-width:0;font-weight:400}
-.customer-feedback-admin{border-top:1px solid var(--line,#dfe4e8);padding:10px 0}
-.customer-feedback-admin summary{font-size:var(--text-md,14px);font-weight:700;cursor:pointer}
-.customer-feedback-admin button{margin:10px 0}
-.customer-feedback-entry{display:grid;gap:5px;padding:10px;margin:7px 0;border:1px solid var(--line,#dfe4e8);border-radius:10px;background:var(--surface,#fff);overflow-wrap:anywhere}
-.customer-feedback-entry strong{font-size:var(--text-md,14px)}
-.customer-feedback-entry span,.customer-feedback-entry p{margin:0;font-size:var(--text-sm,12px)}
 @media(max-width:680px){
   .customer-extras-settings .customer-extra-rule-row{grid-template-columns:1fr;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--line,#dfe4e8)}
   .customer-kitchen-note-settings{grid-template-columns:1fr}
