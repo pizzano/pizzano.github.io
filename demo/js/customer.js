@@ -40,8 +40,6 @@ import {
   describeSelection,
   findItem,
   submitOrder,
-  getOrderFeedback,
-  submitOrderFeedback,
   getOrders,
   getOpenState,
   getPickupSlots,
@@ -262,13 +260,6 @@ const el = {
   errProfEmail: $('errProfEmail'),
   btnSaveProfile: $('btnSaveProfile'),
   orderList: $('orderList'),
-  customerFeedbackModal: $('customerFeedbackModal'),
-  customerFeedbackBackdrop: $('customerFeedbackBackdrop'),
-  customerFeedbackStars: $('customerFeedbackStars'),
-  customerFeedbackTags: $('customerFeedbackTags'),
-  customerFeedbackComment: $('customerFeedbackComment'),
-  customerFeedbackSubmit: $('customerFeedbackSubmit'),
-  customerFeedbackMessage: $('customerFeedbackMessage'),
   activeOrderMenu: $('activeOrderMenu'),
   activeOrderProfile: $('activeOrderProfile'),
   sheet: $('productSheet'),
@@ -2669,102 +2660,6 @@ function previousOrderSelections(item, line) {
   return restorePreviousOrderSelections(item, line, getItemOptionGroups);
 }
 
-/* Single, optional review for an actual staff-ready order; always rechecked
-   against Firebase when the dialog opens and again before saving. */
-let reviewingOrderId='';
-let reviewScore=0;
-let reviewTags=new Set();
-let feedbackPreviousFocus=null;
-let feedbackSubmitBusy=false;
-function customerFeedbackEligible(order) {
-  if(store.settings.orderFeedbackEnabled!==true || order?.status!=='klar')return false;
-  const readyAt=Math.max(Number(order.staffReadyAt)||0,Number(order.statusUpdatedAt)||0,
-    Number(order.scheduledPickupAt)||0,Number(order.estimatedReadyAt)||0);
-  return readyAt>0 && Date.now()-readyAt>=30*60*1000 &&
-    Date.now()-(Number(order.createdAt)||0)<24*60*60*1000 &&
-    !orderNoticeIds('reviewed').has(order.id);
-}
-function renderReviewControls(){
-  el.customerFeedbackStars.querySelectorAll('[data-feedback-score]').forEach(button=>{
-    const n=Number(button.dataset.feedbackScore);
-    button.textContent=n<=reviewScore?'★':'☆';
-    button.setAttribute('aria-pressed',String(n===reviewScore));
-  });
-  el.customerFeedbackTags.querySelectorAll('[data-feedback-tag]').forEach(button=>{
-    const selected=reviewTags.has(button.dataset.feedbackTag);
-    button.classList.toggle('is-selected',selected);
-    button.setAttribute('aria-pressed',String(selected));
-  });
-}
-function closeCustomerFeedback(){
-  if(feedbackSubmitBusy)return;
-  reviewingOrderId='';
-  el.customerFeedbackModal.hidden=true;
-  el.customerFeedbackBackdrop.hidden=true;
-  document.body.style.overflow='';
-  if(feedbackPreviousFocus?.isConnected)feedbackPreviousFocus.focus({preventScroll:true});
-  feedbackPreviousFocus=null;
-}
-async function openCustomerFeedback(orderId){
-  if(el.customerFeedbackModal.hidden===false || feedbackSubmitBusy)return;
-  const order=mergedCustomerOrders().find(entry=>entry.id===orderId);
-  if(!customerFeedbackEligible(order)){toast('Denne bestillingen er ikke klar for vurdering.','warning');return}
-  try{
-    const existing=await getOrderFeedback(orderId);
-    if(existing){
-      const marked=orderNoticeIds('reviewed');marked.add(orderId);
-      saveOrderNoticeIds('reviewed',marked);
-      toast('Denne bestillingen har allerede en vurdering.');
-      renderProfile();return;
-    }
-  }catch(error){toast('Kunne ikke kontrollere vurderingen. Prøv igjen senere.','warning');return}
-  reviewingOrderId=orderId;reviewScore=0;reviewTags=new Set();
-  feedbackPreviousFocus=document.activeElement;
-  el.customerFeedbackComment.value='';
-  el.customerFeedbackMessage.textContent='';
-  el.customerFeedbackSubmit.disabled=false;
-  el.customerFeedbackModal.hidden=false;el.customerFeedbackBackdrop.hidden=false;
-  document.body.style.overflow='hidden';
-  renderReviewControls();
-  el.customerFeedbackModal.focus({preventScroll:true});
-}
-el.customerFeedbackStars.addEventListener('click',event=>{
-  const button=event.target.closest('[data-feedback-score]');if(!button)return;
-  reviewScore=Number(button.dataset.feedbackScore);renderReviewControls();
-});
-el.customerFeedbackTags.addEventListener('click',event=>{
-  const button=event.target.closest('[data-feedback-tag]');if(!button)return;
-  const tag=button.dataset.feedbackTag;
-  if(reviewTags.has(tag))reviewTags.delete(tag);else reviewTags.add(tag);
-  renderReviewControls();
-});
-$('customerFeedbackClose').addEventListener('click',closeCustomerFeedback);
-el.customerFeedbackBackdrop.addEventListener('click',closeCustomerFeedback);
-document.addEventListener('keydown',event=>{
-  if(el.customerFeedbackModal.hidden)return;
-  if(event.key==='Escape'){event.preventDefault();closeCustomerFeedback()}
-  if(event.key==='Tab')trapDialogTab(event,el.customerFeedbackModal);
-});
-el.customerFeedbackSubmit.addEventListener('click',async()=>{
-  if(feedbackSubmitBusy || !reviewingOrderId)return;
-  if(!reviewScore){el.customerFeedbackMessage.textContent='Velg først antall stjerner.';return}
-  feedbackSubmitBusy=true;el.customerFeedbackSubmit.disabled=true;
-  el.customerFeedbackMessage.textContent='Lagrer vurderingen…';
-  try{
-    const id=reviewingOrderId;
-    const saved=await submitOrderFeedback({orderId:id,score:reviewScore,
-      tags:[...reviewTags],comment:el.customerFeedbackComment.value});
-    const marked=orderNoticeIds('reviewed');marked.add(id);
-    saveOrderNoticeIds('reviewed',marked);
-    feedbackSubmitBusy=false;closeCustomerFeedback();
-    renderProfile();
-    toast(saved.already?'Bestillingen er allerede vurdert.':'Takk for tilbakemeldingen!');
-  }catch(error){
-    el.customerFeedbackMessage.textContent=String(error?.message||'Vurderingen kunne ikke lagres.');
-    feedbackSubmitBusy=false;el.customerFeedbackSubmit.disabled=false;
-  }
-});
-
   function orderHistoryLineHtml(line) {
     const { item } = findItem(line.itemId);
     const size = item?.sizes?.find(size => size.id === line.sizeId || size.label === line.size);
@@ -2928,7 +2823,6 @@ return `
       <div class="order-history-footer">
         <div class="order-history-meta-item"><small>Hentetid</small><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${escapeHtml(pickup)}</strong></div>
         <div class="order-history-meta-item"><small>Ordrenummer</small><strong>#${escapeHtml(shortId || '—')}</strong></div>
-        ${customerFeedbackEligible(displayOrder)?`<button class="btn btn-outline order-rating-btn" data-rate-order="${escapeHtml(order.id)}" type="button">Gi en vurdering</button>`:''}
         <button class="btn btn-primary order-reorder-btn" data-reorder="${escapeHtml(order.id)}" type="button">Bestill samme igjen</button>
       </div>
     </div>
@@ -3092,8 +2986,6 @@ document.addEventListener('click', (event) => {
     openProduct(card.dataset.item);
     return;
   }
-  const rateButton=event.target.closest('[data-rate-order]');
-  if(rateButton){void openCustomerFeedback(rateButton.dataset.rateOrder);return}
   const reorderBtn = event.target.closest('[data-reorder]');
   if (reorderBtn) reorder(reorderBtn.dataset.reorder);
 });
