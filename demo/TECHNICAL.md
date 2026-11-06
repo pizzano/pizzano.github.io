@@ -48,3 +48,11 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Birim testleri: `node --experimental-default-type=module --test demo/tests/*.test.mjs`.
 - Bu testler gerçek Firebase Rules, aynı anda çalışan iki admin cihazı, SMS/e-posta teslimatı ve Epson bağlantısını doğrulamaz.
 - Test için üretim Firebase verilerini temizleme, tetikleyicileri yeniden kurma veya müşteri siparişlerini sıfırlama.
+
+## Trafik tasarrufu — SMS/profil/bonus/admin (2026-11-06)
+
+- Müşteri menüsü sayfasında arka plan `updatedAt` kontrolü iki dakikada bir çalışır; ödeme öncesinde canlı güncellik kontrolü **her zaman** yapılır. Admin tarafında 30 saniye korunur.
+- Kısa süreli bağlantı yeniden kurulurken adminin mevcut SSE bağlantısından ilk sipariş anlık görüntüsü beklenecek şekilde 9 saniyelik tam `/orders` okuma duplikasyonu engellenir. SSE başarısızsa 15 saniyelik normal REST kurtarması sürer; 3 dakikalık onay beklentisi korunur.
+- Bonus sayacı sadece JS belleğinde 45 saniye saklanır, aynı telefon için eşzamanlı istekler birleştirilir. `fresh: true` parametresi ve ödül rezervasyonu Firebase'i yeniden okumak zorundadır; hiçbir fiziksel kupon hakkı tarayıcı önbelleğine güvenmez.
+- Profilde ad/e-posta kaydetme, özel müşteri istatistiklerini okumak ve tam müşteri kaydını PUT etmek yerine iki alana Firebase PATCH yapar. Yeni müşteri kabul mantığı ve bonus sayaçları ayrı kalır. **RTDB Rules PATCH yetkisi canlı ortamda doğrulanmalıdır.**
+- Adminin yeni/eski müşteri etiketi için kısa toplam sayaç değeri 5 dakika bellekte saklanır; sipariş listesi kontrolü değişmez. Tam sipariş listesi SSE'si ve mutasyon/print akışı korunmuştur; bunun daha da küçültülmesi sunucu tarafında kalıcı bir özet feed gerektirir.

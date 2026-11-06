@@ -2396,7 +2396,9 @@ function orderListRemainingTime(order) {
  * Only the compact totals are used; order-event histories are unnecessary.
  */
 const orderCustomerAccountCache = new Map();
-const CUSTOMER_CACHE_AGE = 60 * 1000;
+// A new-order indicator already checks the current order queue, so repeat
+// customer counter lookups can safely use a longer in-memory lifetime.
+const CUSTOMER_CACHE_AGE = 5 * 60 * 1000;
 
 function orderCustomerIndicator(order, orders = getOrders()) {
   const phone = loyaltyPhone(order?.phone);

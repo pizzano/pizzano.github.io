@@ -365,3 +365,14 @@ test('cart badge creation and updates reuse one SVG label renderer', async () =>
   assert.ok(menuBadgeSource.length > 0);
   assert.doesNotMatch(menuBadgeSource,/aria-hidden="true">✓<\/span>/);
 });
+
+test('checkout obtains one fresh bonus state and does not repeat it for reward line', async () => {
+  const s = await readFile(new URL('../js/customer.js',import.meta.url),'utf8');
+  const begin = s.indexOf('async function placeOrder(');
+  const end = s.indexOf('const total = cartSubtotal();',begin);
+  const block=s.slice(begin,end);
+  assert.ok(begin>0 && end>begin);
+  assert.match(block,/getPizzaBonus\(phone, \{ fresh: true \}\)/);
+  assert.match(block,/const state = bonusState;/);
+  assert.doesNotMatch(block,/const state = await getPizzaBonus\(phone\)/);
+});

@@ -41,7 +41,9 @@ window.addEventListener('online', () => { void flushSystemErrorQueue(); });
 window.setTimeout(() => { if (navigator.onLine !== false) void flushSystemErrorQueue(); }, 8000);
 /** Hvor ofte kundesiden/admin ser etter endringer fra databasen (ms). */
 const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
-const FALLBACK_MENU_INTERVAL = 30000;
+// Ordering always verifies the current menu. A browsing customer needs only
+// a low-frequency background version check; staff edits stay at 30 seconds.
+const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE ? 120000 : 30000;
 const SCHEMA_VERSION = 6;
 
 const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
@@ -697,6 +699,7 @@ let remoteMenuPath = '';
 let fallbackTimer = null;
 let ordersStream = null;
 let ordersStreamHealthy = false;
+let ordersStreamStartedAt = 0;
 let ordersRaw = {};
 let orderStreamRevision = 0;
 let ordersFallbackBusy = false;
@@ -1071,6 +1074,7 @@ function beginOrdersStream() {
   try {
     const source = new EventSource(streamUrl(ORDERS_PATH));
     ordersStream = source;
+    ordersStreamStartedAt = Date.now();
     const update = (event, patch) => {
       try {
         const change = parseFirebaseEvent(event);
@@ -1353,7 +1357,10 @@ async function fallbackSync() {
   if (CUSTOMER_MODE) {
     startCustomerOrderStream();
     await pollCustomerOrders();
-  } else if (!ordersStreamHealthy && !ordersFallbackBusy) {
+  } else if (!ordersStreamHealthy && !ordersFallbackBusy &&
+             // A newly connected SSE sends its full initial snapshot. Do
+             // not simultaneously fetch /orders.json on every reconnect.
+             (!ordersStream || Date.now() - ordersStreamStartedAt >= 9000)) {
     ordersFallbackBusy = true;
     const revision = orderStreamRevision;
     try {
@@ -1516,42 +1523,25 @@ export async function saveCustomerContact({ name, phone, email = '' } = {}) {
   const displayName = String(name || '').trim().slice(0, 120);
   const address = String(email || '').trim().toLowerCase();
   if (!id || !displayName || address.length > 254 ||
-      (address && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))) {
+      (address && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(address))) {
     throw new Error('Skriv inn gyldig navn, mobilnummer og eventuelt e-post.');
   }
   if (!remoteEnabled) throw new Error('Firebase er ikke konfigurert.');
-  const url = `${DB_URL}/customers/${encodeURIComponent(id)}.json`;
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const read = await fetch(url, {
-      method: 'GET', headers: { 'X-Firebase-ETag': 'true' }, cache: 'no-store'
-    });
-    if (!read.ok) throw new Error('Kunne ikke kontrollere kunderegisteret (HTTP ' + read.status + ').');
-    const etag = read.headers.get('ETag');
-    if (!etag) throw new Error('Firebase returnerte ikke en sikker kundeversjon.');
-    const existing = await read.json();
-    if (existing !== null && (typeof existing !== 'object' || Array.isArray(existing))) {
-      throw new Error('Kundeoppføringen har ugyldig format.');
-    }
-    // The phone is the node key; no duplicate customer is created.
-    // No counters are touched when the customer updates the contact details.
-    if (existing && existing.name === displayName &&
-        String(existing.email || '') === address) {
-      return { created: false, unchanged: true };
-    }
-    const next = { ...(existing || {}), name: displayName, email: address };
-    const written = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'if-match': etag },
-      body: JSON.stringify(next)
-    });
-    if (written.status === 412) continue;
-    if (!written.ok) {
-      throw new Error('Kundeopplysningene ble ikke lagret i Firebase (HTTP ' +
-        written.status + '). Kontroller Database Rules.');
-    }
-    return { created: existing === null, unchanged: false };
+  // A narrow PATCH leaves loyalty counters, consent and reservations
+  // untouched even if the staff rollup updates those fields concurrently.
+  // Unlike the previous ETag/whole-record PUT it never downloads the entire
+  // private customer record just to save two contact fields.
+  const response = await fetch(`${DB_URL}/customers/${encodeURIComponent(id)}.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: displayName, email: address }),
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!response.ok) {
+    throw new Error('Kundeopplysningene ble ikke lagret i Firebase (HTTP ' +
+      response.status + '). Kontroller Database Rules.');
   }
-  throw new Error('Kundeopplysningene ble endret samtidig. Prøv å lagre igjen.');
+  return { created: false, unchanged: false };
 }
 
 export async function setPizzaOffersConsent(phoneValue, enabled) {
@@ -1560,11 +1550,36 @@ export async function setPizzaOffersConsent(phoneValue, enabled) {
   // Consent is a direct child of /customers/{phone}, not a nested loyalty node.
   // A first-time customer can opt in before their first accepted order.
   await restPatch(`customers/${phone}`, { bonusConsent: enabled === true });
+  bonusStateCache.delete(phone);
 }
 
-export async function getPizzaBonus(phoneValue) {
+// Bonus figures are display hints, not spendable entitlements. Cache a
+// sanitized compact state in JS memory only (never localStorage/IndexedDB).
+// Explicit fresh:true bypasses the cache before checkout and reward redemption.
+const BONUS_STATE_TTL_MS = 45 * 1000;
+const bonusStateCache = new Map();
+const bonusStateInFlight = new Map();
+export async function getPizzaBonus(phoneValue, { fresh = false } = {}) {
   const phone = loyaltyPhone(phoneValue);
   if (!phone) return { count: 0, ready: false, cycle: 'start', phone: '', pending: false };
+  const old = bonusStateCache.get(phone);
+  if (!fresh && old && Date.now() - old.fetchedAt < BONUS_STATE_TTL_MS) {
+    return { ...old.state };
+  }
+  if (!fresh && bonusStateInFlight.has(phone)) {
+    return { ...(await bonusStateInFlight.get(phone)) };
+  }
+  const request = readPizzaBonusFromFirebase(phone).then(state => {
+    bonusStateCache.set(phone, { state, fetchedAt: Date.now() });
+    return state;
+  }).finally(() => {
+    if (bonusStateInFlight.get(phone) === request) bonusStateInFlight.delete(phone);
+  });
+  bonusStateInFlight.set(phone, request);
+  return { ...(await request) };
+}
+
+async function readPizzaBonusFromFirebase(phone) {
   const customer = await restGet(`customers/${phone}`);
   const migrated = [3, 4].includes(customer?.schemaVersion);
   let state;
@@ -1607,7 +1622,7 @@ export async function getPizzaBonus(phoneValue) {
 }
 
 async function reservePizzaReward(record) {
-  const state = await getPizzaBonus(record.phone);
+  const state = await getPizzaBonus(record.phone, { fresh: true });
   if (record.loyaltyReward.automatic && !state.consent) throw new Error('Aktiver valget for automatisk pizzabonus.');
   const paidCount = (record.lines || []).reduce((sum,line) => sum + (line.loyaltyEligible ? Math.max(0, Number(line.quantity) - (line.loyaltyFree ? 1 : 0)) : 0), 0);
   const earnedInCart = record.loyaltyReward.automatic && state.consent && state.count + paidCount >= 10;
@@ -1625,7 +1640,10 @@ async function reservePizzaReward(record) {
     const etag = response.headers.get('ETag');
     if (!etag) throw new Error('Kunne ikke reservere pizzabonus sikkert.');
     const result = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'if-match': etag }, body: JSON.stringify({ orderId: record.id, at: Date.now() }) });
-    if (result.ok) return;
+    if (result.ok) {
+      bonusStateCache.delete(state.phone);
+      return;
+    }
     if (result.status !== 412) throw new Error('Kunne ikke reservere pizzabonus.');
   }
   throw new Error('Pizzabonus er opptatt. Prøv igjen.');

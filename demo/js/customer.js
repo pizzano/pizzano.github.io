@@ -2538,7 +2538,8 @@ async function placeOrder() {
   }
 
   const hadAutomaticReward = cart.some(line => line.loyaltyAuto);
-  bonusState = await getPizzaBonus(phone).catch(() => null);
+  // A displayed bonus can be cached, but checkout must re-read Firebase.
+  bonusState = await getPizzaBonus(phone, { fresh: true }).catch(() => null);
   if (!cart.length || ui.orderSubmitting) return;
   applyAutomaticPizzaBonus();
   if (hadAutomaticReward && !cart.some(line => line.loyaltyAuto)) {
@@ -2548,7 +2549,9 @@ async function placeOrder() {
   }
   const rewardLine = cart.find(line => line.loyaltyFree);
   if (rewardLine) {
-    const state = await getPizzaBonus(phone).catch(() => null);
+    // Reuse the *fresh* result from the immediately preceding checkout read.
+    // reservePizzaReward() performs its own final conditional Firebase check.
+    const state = bonusState;
     const { section, item } = findItem(rewardLine.itemId);
     const size = item?.sizes?.find(size => size.id === rewardLine.sizeId);
     const paidCount = cart.reduce((sum,line)=>{const found=findItem(line.itemId);return sum+(largePizza(found.section,found.item?.sizes?.find(size=>size.id===line.sizeId)) ? line.quantity-(line.loyaltyFree?1:0) : 0)},0);

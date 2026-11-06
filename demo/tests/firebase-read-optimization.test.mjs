@@ -71,3 +71,28 @@ test('public menu cache invalidates automatically when schema version changes', 
     fs.readFile(new URL('../js/data.js', import.meta.url), 'utf8'));
   assert.match(data, /Number\(record\.menu\?\.schemaVersion\) !== SCHEMA_VERSION/);
 });
+
+test('admin reconnect waits for initial SSE snapshot before duplicating full order GET', () => {
+  assert.match(data, /ordersStreamStartedAt = Date\.now\(\)/);
+  assert.match(data, /\(!ordersStream \|\| Date\.now\(\) - ordersStreamStartedAt >= 9000\)/);
+  assert.match(data, /const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE \? 120000 : 30000/);
+  assert.match(data, /if \(!ordersStreamHealthy && !ordersFallbackBusy/);
+});
+test('customer contact saves only name/email without downloading private account totals', () => {
+  const start = data.indexOf('export async function saveCustomerContact(');
+  const end = data.indexOf('export async function setPizzaOffersConsent(',start);
+  const section = data.slice(start,end);
+  assert.match(section, /method: 'PATCH'/);
+  assert.match(section, /JSON\.stringify\(\{ name: displayName, email: address \}\)/);
+  assert.doesNotMatch(section, /await read\.json\(|X-Firebase-ETag|method: 'PUT'/);
+});
+test('bonus cache is memory-only and monetary redemptions force authoritative reads', () => {
+  assert.match(data, /const BONUS_STATE_TTL_MS = 45 \* 1000/);
+  assert.match(data, /const bonusStateCache = new Map\(\)/);
+  assert.match(data, /if \(!fresh && bonusStateInFlight\.has\(phone\)\)/);
+  assert.match(data, /const state = await getPizzaBonus\(record\.phone, \{ fresh: true \}\)/);
+  assert.match(data, /bonusStateCache\.delete\(phone\)/);
+  const from = data.indexOf('const BONUS_STATE_TTL_MS');
+  const to = data.indexOf('async function reservePizzaReward(', from);
+  assert.doesNotMatch(data.slice(from,to), /localStorage|sessionStorage|indexedDB/);
+});
