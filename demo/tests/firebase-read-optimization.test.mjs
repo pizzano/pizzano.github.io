@@ -44,7 +44,7 @@ test('cached customer menu excludes other customers, orders and admin settings',
   const data = await import('node:fs/promises').then(fs =>
     fs.readFile(new URL('../js/data.js', import.meta.url), 'utf8'));
   const start = data.indexOf('const CUSTOMER_MENU_CACHE_KEYS');
-  const end = data.indexOf('const CUSTOMER_ORDER_LIMIT', start);
+  const end = data.indexOf('];', start) + 2;
   assert.ok(start > 0 && end > start);
   const cacheKeys = data.slice(start, end);
   assert.doesNotMatch(cacheKeys, /'orders'|'customers'|'smsReceipts'|'emailReceipts'|'orderAlarmUrl'|'printerQtySize'/);
@@ -52,4 +52,16 @@ test('cached customer menu excludes other customers, orders and admin settings',
   assert.match(data, /menu: publicCustomerMenuSnapshot\(\)/);
   assert.match(data, /return \{ menu: cached\.menu, verified: false \}/);
   assert.match(data, /throw new Error\('Kunne ikke kontrollere oppdatert meny/);
+});
+
+test('strict checkout refresh cannot inherit a swallowed background fetch error', async () => {
+  const data = await import('node:fs/promises').then(fs =>
+    fs.readFile(new URL('../js/data.js', import.meta.url), 'utf8'));
+  assert.match(data, /if \(!menuRefreshPromise\) \{/);
+  assert.match(data, /if \(strict\) return menuRefreshPromise/);
+  assert.match(data, /return menuRefreshPromise\.catch\(error =>/);
+  const customer = await import('node:fs/promises').then(fs =>
+    fs.readFile(new URL('../js/customer.js', import.meta.url), 'utf8'));
+  assert.match(customer, /const previousCart = JSON\.stringify\(cart\)/);
+  assert.match(customer, /JSON\.stringify\(cart\) !== previousCart/);
 });

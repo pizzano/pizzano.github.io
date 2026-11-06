@@ -1271,22 +1271,25 @@ async function reloadRemoteMenu({ strict = false } = {}) {
     if (strict) throw new Error('Menyoppdateringen er ikke ferdig.');
     return;
   }
-  if (menuRefreshPromise) return menuRefreshPromise;
-  menuRefreshPromise = (async () => {
-    const snapshot = await readRemoteMenuSnapshot();
-    const source = snapshot?.menu || snapshot || {};
-    if (!Array.isArray(source.sections) || !Array.isArray(source.optionGroups)) {
-      throw new Error('Restaurantmenyen har ugyldig format.');
-    }
-    const updated = applyRemoteMenu(snapshot);
-    await saveCustomerMenuCache();
-    remoteOnline = true;
-    if (updated) emitData('remote');
-  })().catch(error => {
+  if (!menuRefreshPromise) {
+    // Share one underlying promise, but never hide a failed fetch from an
+    // in-flight checkout just because a background refresh started first.
+    menuRefreshPromise = (async () => {
+      const snapshot = await readRemoteMenuSnapshot();
+      const source = snapshot?.menu || snapshot || {};
+      if (!Array.isArray(source.sections) || !Array.isArray(source.optionGroups)) {
+        throw new Error('Restaurantmenyen har ugyldig format.');
+      }
+      const updated = applyRemoteMenu(snapshot);
+      await saveCustomerMenuCache();
+      remoteOnline = true;
+      if (updated) emitData('remote');
+    })().finally(() => { menuRefreshPromise = null; });
+  }
+  if (strict) return menuRefreshPromise;
+  return menuRefreshPromise.catch(error => {
     console.warn('Kunne ikke oppdatere restaurantmenyen:', error);
-    if (strict) throw error;
-  }).finally(() => { menuRefreshPromise = null; });
-  return menuRefreshPromise;
+  });
 }
 
 // Checkout must verify live menu revision; cache is never an authority for

@@ -2482,6 +2482,7 @@ async function placeOrder() {
   // A cached menu is for browsing only. Confirm the current Firebase version
   // before computing order price, options, availability and pickup rules.
   const previousTotal = cartSubtotal();
+  const previousCart = JSON.stringify(cart);
   try {
     await ensureCustomerMenuCurrent();
   } catch (error) {
@@ -2490,7 +2491,8 @@ async function placeOrder() {
     return;
   }
   const cartAdjusted = reconcileCart();
-  if (cartAdjusted || cartSubtotal() !== previousTotal) {
+  if (cartAdjusted || cartSubtotal() !== previousTotal ||
+      JSON.stringify(cart) !== previousCart) {
     resetPendingOrderSubmission();
     renderCartCount();
     renderCheckout();
