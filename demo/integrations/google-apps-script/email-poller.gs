@@ -572,7 +572,9 @@ function kolProcessMailTests_(props,mailTemplates){
       staffReadyAt:now,total:588,
       lines:[{name:'Stor Classico',quantity:2,price:588,size:'Stor'}]};
     try{
-      if(kolSendMail_(sample,kind==='emailReady'?'ready':'accepted',mailTemplates)){
+      const chosenTemplates = typeof mailTemplates === 'function'
+        ? mailTemplates() : mailTemplates;
+      if(kolSendMail_(sample,kind==='emailReady'?'ready':'accepted',chosenTemplates)){
         result('sent','MailApp godtok test til avsenderkontoen (innbokslevering ikke bekreftet).');
       }else result('failed','Ugyldig testmottaker.');
     }catch(error){result('failed',String(error.message).slice(0,150))}
@@ -585,10 +587,17 @@ function kontrollerEpostBestillinger() {
   if (!lock.tryLock(1000)) return;
   try {
     const props = PropertiesService.getScriptProperties();
-    const mailTemplates = kolReadMailTemplates_();
+    // Fetch templates only for an actual email or a new admin test. An
+    // empty polling minute should read only the small indexed order change
+    // window, test requests and the existing health heartbeat.
+    let mailTemplates = null;
+    const templatesForSend = () => {
+      if (mailTemplates === null) mailTemplates = kolReadMailTemplates_();
+      return mailTemplates;
+    };
     // Handle admin email tests first, independently of the normal orders
     // query. A missing/invalid Firebase order index must not block test mail.
-    try { kolProcessMailTests_(props,mailTemplates); }
+    try { kolProcessMailTests_(props,templatesForSend); }
     catch (error) { Logger.log('E-posttest feilet: ' + error.message); }
     const orders = kolReadOrders_();
     const now = Date.now();
@@ -633,7 +642,7 @@ function kontrollerEpostBestillinger() {
         checkpoint.updated = now;
         props.setProperty(key, JSON.stringify(checkpoint));
         try {
-          if (kolSendMail_(Object.assign({id:id},order), kind,mailTemplates)) {
+          if (kolSendMail_(Object.assign({id:id},order), kind,templatesForSend())) {
             const sentAt = Date.now();
             checkpoint.sent[eventKey] = 'sent';
             props.setProperty(key, JSON.stringify(checkpoint));

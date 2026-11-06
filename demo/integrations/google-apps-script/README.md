@@ -39,3 +39,10 @@ SMS için kullanılan Script Properties arasında `TRACCAR_TOKEN`, `TEST_PHONE`,
 - `/orders`, `/notifications` ve `/customers` gibi yolları herkese açık okuma/yazmaya bırakmak müşteri verileri ve test komutları açısından risklidir.
 - Canlı Script Properties, tokenlar, tetikleyiciler, geçmiş gönderim işaretleri veya Firebase siparişleri temizlik amacıyla sıfırlanmaz.
 - Bu doküman kurulum kılavuzudur, aktif Google Apps Script'in şu anda sorunsuz çalıştığına dair test sonucu değildir.
+
+## 2026-11-06: Düşük trafik, bildirim güvenliği
+
+- SMS tetikleyicisi **dakikada bir** kalır. Google Apps Script tek başına Firebase RTDB değişikliğiyle kendiliğinden çalışamaz. Sadece sipariş geldiğinde çalışacak gerçek olay-tabanlı sistem, ayrıca yetkilendirilmiş Cloud Functions/başka sunucu kurulumu gerektirir. Bunu kurmadan tetikleyiciyi durdurma: bildirimler kaybolur.
+- SMS tarayıcısı `statusUpdatedAt` indeksli sorguda başarılı son taramadan itibaren **5 dakikalık örtüşmeyle** okur. Başarısız tarama ve eksik günlük kota nedeniyle kesilen tarama checkpoint'i ilerletmez; böylece kayıp sipariş riski azaltılır. Canlı `.indexOn` kuralını kontrol et.
+- SMS ve e-posta şablonları yalnızca gönderim/gerçek admin testi gerektiğinde çekilir; boş dakikada tekrar indirilmez. Test ve sağlık mekanizması korunur.
+- Bu repodaki `Kode.gs` ve `email-poller.gs` dosyalarını değiştirmek **çalışan Google Apps Script projelerini güncellemez**. Canlı editöre aynı kodu taşımadan bu SMS/e-posta tasarrufları etkin olmaz. Mevcut Script Properties, tetikleyiciler, gönderim işaretleri ve güvenlik ayarları korunmalı.

@@ -16,6 +16,12 @@
  * No timer-based SMS is ever sent.
  */
 
+let kolSmsIndexedQueryOk_ = false;
+const KOL_SMS_SCAN_CURSOR_KEY = 'KOL_SMS_LAST_SUCCESSFUL_SCAN_MS';
+const KOL_SMS_SCAN_OVERLAP_MS = 5 * 60 * 1000;
+
+// The one-minute timer is retained: Apps Script cannot receive native RTDB
+// change notifications without deploying an authenticated backend trigger.
 const KOL_SMS = Object.freeze({
   databaseUrl: 'https://kol-grill-pizza-default-rtdb.firebaseio.com',
   gatewayUrl: 'https://www.traccar.org/sms/',
@@ -230,16 +236,27 @@ function kolFetchRecentOrders_() {
   // Firebase index: /orders .indexOn ["statusUpdatedAt"].
   // Read only orders with a recently modified status; do not download
   // historical orders or query estimateUpdatedAt (no second SMS).
-  const since = Date.now() - Math.min(KOL_SMS.orderAgeLimitMs,
+  const now = Date.now();
+  const props = kolProps_();
+  const successfulAt = Number(props.getProperty(KOL_SMS_SCAN_CURSOR_KEY)) || 0;
+  const fullWindow = Math.min(KOL_SMS.orderAgeLimitMs,
     KOL_SMS.eventAgeLimitMs + 5 * 60 * 1000);
+  // On the first run read the bounded event window. Later runs scan only
+  // changes since the last *successful* poll, with a five-minute overlap.
+  // Failed scans never advance the checkpoint, so outages do not drop events.
+  const since = Math.max(now - KOL_SMS.orderAgeLimitMs,
+    successfulAt > 0 && successfulAt <= now
+      ? successfulAt - KOL_SMS_SCAN_OVERLAP_MS : now - fullWindow);
   const url = KOL_SMS.databaseUrl + '/orders.json?orderBy=' +
     encodeURIComponent(JSON.stringify('statusUpdatedAt')) +
     '&startAt=' + encodeURIComponent(String(since));
   const resp = UrlFetchApp.fetch(url, { method: 'get', muteHttpExceptions: true });
   if (resp.getResponseCode() === 200) {
+    kolSmsIndexedQueryOk_ = true;
     const orders = JSON.parse(resp.getContentText() || 'null');
     return orders && typeof orders === 'object' ? orders : {};
   }
+  kolSmsIndexedQueryOk_ = false;
   // Only temporary fallback if the index isn't configured yet.
   // Never make an unlimited request to /orders.json.
   console.warn('SMS statusUpdatedAt indeks lesefeil (HTTP ' +
@@ -347,17 +364,28 @@ function pollOrdersForSms() {
     try { kolCheckSmsTest_(props, cloudToken, testNumber); }
     catch (error) { console.error('SMS test: ' + error.message); }
     const data = kolFetchRecentOrders_();
-    const smsTemplate = kolReadSmsTemplate_();
+    // Most minutes have no eligible new SMS. Read the editable template only
+    // when an actual confirmation is about to be sent.
+    let smsTemplate;
+    const templateForSend = () => {
+      if (smsTemplate === undefined) smsTemplate = kolReadSmsTemplate_();
+      return smsTemplate;
+    };
     props.setProperty('KOL_LAST_POLL_OK', new Date().toISOString());
     const today = Utilities.formatDate(new Date(now), 'Europe/Oslo', 'yyyyMMdd');
     kolPurgeOldCounters_(props, today);
     let todayCount = kolTodayCounter_(props, today);
     let sent = 0;
+    let scanHasMore = false;
 
     const orders = Object.keys(data).map(id => ({ id: id, order: data[id] }));
     orders.sort((x,y) => Number(x.order.statusUpdatedAt || 0) - Number(y.order.statusUpdatedAt || 0));
     for (const item of orders) {
-      if (sent >= KOL_SMS.maxPerRun || todayCount >= KOL_SMS.maxPerDay) break;
+      if (sent >= KOL_SMS.maxPerRun || todayCount >= KOL_SMS.maxPerDay) {
+        // Do not advance the durable cursor when a batch was cut short.
+        scanHasMore = true;
+        break;
+      }
       const order = item.order;
       const kind = kolEvent_(order, activatedAt, now);
       // Historical state/ScriptProperties use _accepted; don't rename the key.
@@ -389,7 +417,7 @@ function pollOrdersForSms() {
       todayCount += 1;
       props.setProperty('KOL_COUNT_' + today, String(todayCount));
       try {
-        kolApiSend_(phone, kolMessage_(order, kind, item.id, smsTemplate), cloudToken);
+        kolApiSend_(phone, kolMessage_(order, kind, item.id, templateForSend()), cloudToken);
         const completed = { state:'sent', at:Date.now() };
         props.setProperty(eventKey, JSON.stringify(completed));
         // The ScriptProperties receipt is authoritative if Firebase is down.
@@ -408,6 +436,9 @@ function pollOrdersForSms() {
       }
     }
     props.setProperty('KOL_LAST_POLL_COUNT', String(sent));
+    if (kolSmsIndexedQueryOk_ && !scanHasMore) {
+      props.setProperty(KOL_SMS_SCAN_CURSOR_KEY, String(now));
+    }
     try {
       kolSmsHeartbeat_(mode, Date.now());
     } catch (healthError) {
