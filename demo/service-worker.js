@@ -107,7 +107,7 @@ function publicImageIdentity(value) {
     // Unsplash's responsive srcset variants differ only by resize parameters.
     // Keep any other query parameters as part of the image identity.
     if (url.hostname === 'images.unsplash.com' &&
-        /^\/photo-[\\w-]+$/.test(url.pathname)) {
+        /^\/photo-[\w-]+$/.test(url.pathname)) {
       for (const key of ['w','h','q','auto','fit']) url.searchParams.delete(key);
     }
     url.hash = '';
