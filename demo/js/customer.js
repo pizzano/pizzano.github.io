@@ -43,6 +43,7 @@ import {
   getOrders,
   getOpenState,
   getPickupSlots,
+  ensureCustomerMenuCurrent,
   refreshPublicPickupLoad,
   pickupLoadIsFresh,
   allergenLabels,
@@ -2478,6 +2479,24 @@ async function placeOrder() {
     toast('Ingen internettforbindelse. Bestillingen ble ikke sendt. Prøv igjen når nettet er tilbake.', 'warning');
     return;
   }
+  // A cached menu is for browsing only. Confirm the current Firebase version
+  // before computing order price, options, availability and pickup rules.
+  const previousTotal = cartSubtotal();
+  try {
+    await ensureCustomerMenuCurrent();
+  } catch (error) {
+    updateConnectionNotice();
+    toast(error?.message || 'Menyen kunne ikke bekreftes. Prøv igjen.', 'error');
+    return;
+  }
+  const cartAdjusted = reconcileCart();
+  if (cartAdjusted || cartSubtotal() !== previousTotal) {
+    resetPendingOrderSubmission();
+    renderCartCount();
+    renderCheckout();
+    toast('Menyen eller prisen er oppdatert. Kontroller kurven før du sender.', 'warning');
+    return;
+  }
   const state = getOpenState();
   if (!state.orderable) {
     toast(`Restauranten er stengt. Vi åpner ${state.opensAt}.`, 'error');
@@ -3607,7 +3626,8 @@ function configureHolidayStartup(screen) {
 }
 
 function releaseStartupScreenIfReady() {
-  if (!startupNavigationReady || !customerMenuReady || backendInfo.mode !== 'firebase') return;
+  if (!startupNavigationReady || !customerMenuReady ||
+      (backendInfo.mode !== 'firebase' && !backendInfo.hasOfflineMenu)) return;
   const screen = document.getElementById('appStartup');
   if (!screen || screen.hidden || startupReleaseScheduled) return;
   configureHolidayStartup(screen);
@@ -3625,7 +3645,7 @@ function releaseStartupScreenIfReady() {
   // nettleseropptegning før vi fjerner lasteskjermen.
   requestAnimationFrame(() => requestAnimationFrame(() => {
     startupReleaseScheduled = false;
-    if (backendInfo.mode !== 'firebase') return;
+    if (backendInfo.mode !== 'firebase' && !backendInfo.hasOfflineMenu) return;
     window.clearTimeout(window.customerStartupTimeout);
     screen.hidden = true;
     screen.setAttribute('aria-busy', 'false');
@@ -3643,9 +3663,10 @@ subscribe((_state, origin) => {
     }
   }
   const changed = renderAll();
-  if (origin === 'init' && backendInfo.mode !== 'firebase') {
+  if (origin === 'init' && backendInfo.mode !== 'firebase' && !backendInfo.hasOfflineMenu) {
     window.showCustomerStartupError?.();
   }
+  updateConnectionNotice();
   releaseStartupScreenIfReady();
   if (origin === 'remote' && changed) toast('Menyen er oppdatert av restauranten.');
 });
@@ -3659,7 +3680,8 @@ ready().then(async () => {
   setView('menu');
   await openOrderFromSmsLink();
   startupNavigationReady = true;
-  if (backendInfo.mode !== 'firebase') window.showCustomerStartupError?.();
+  if (backendInfo.mode !== 'firebase' && !backendInfo.hasOfflineMenu) window.showCustomerStartupError?.();
+  updateConnectionNotice();
   releaseStartupScreenIfReady();
 }).catch(error => {
   console.error('Kunne ikke fullføre kundeoppstart:', error);
@@ -3670,7 +3692,13 @@ ready().then(async () => {
 // reliable enough to prevent futile writes while disconnected. Never auto-send.
 function updateConnectionNotice() {
   const banner = document.getElementById('connectionStatus');
-  if (banner) banner.hidden = navigator.onLine !== false;
+  if (!banner) return;
+  const offline = navigator.onLine === false;
+  const cachedButUnverified = backendInfo.hasOfflineMenu && backendInfo.mode !== 'firebase';
+  banner.hidden = !offline && !cachedButUnverified;
+  banner.textContent = offline
+    ? 'Ingen internettforbindelse. Du kan se lagret meny, men ikke sende bestillinger.'
+    : 'Viser lagret meny. Venter på Firebase før bestillinger kan sendes.';
 }
 window.addEventListener('online', updateConnectionNotice);
 window.addEventListener('offline', updateConnectionNotice);

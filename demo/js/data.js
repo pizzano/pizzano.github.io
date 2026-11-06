@@ -45,6 +45,21 @@ const FALLBACK_MENU_INTERVAL = 30000;
 const SCHEMA_VERSION = 6;
 
 const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
+// IndexedDB contains only the public customer menu. Never cache /orders,
+// /customers, SMS/email receipts, or customer contact data here.
+const CUSTOMER_MENU_CACHE_DB = 'kol-customer-public-menu-v1';
+const CUSTOMER_MENU_CACHE_KEYS = [
+  'restaurantName','restaurantLogo','streetAddress','postalCode','city','country',
+  'phone','email','timezone','openingDays','weeklyHours','manualClosedUntil',
+  'pickupInfo','paymentInfo','minPreorderMinutes','prepMinutes',
+  'pickupLeadMinutes','slotIntervalMinutes','busyModeEnabled','busyExtraMinutes',
+  'pickupCapacityEnabled','pickupCapacityMax','uiFontXs','uiFontSm','uiFontMd',
+  'uiFontLg','uiFontXl','customerDarkModeEnabled','customerPalette',
+  'customCustomerPalette','specialDaysConfig','shopInfoEnabled',
+  'ingredientCustomizationEnabled','cartSuggestionsEnabled','cartSuggestionsMax',
+  'cartSuggestionRules','quickKitchenNotesEnabled','quickKitchenNotesConfig',
+  'manualClosed','closedMessage'
+];
 // Only temporary opaque order IDs, never order data. Reopening the browser
 // requires a new link from the customer's email/SMS.
 const SESSION_ORDER_IDS_KEY = 'bestill_session_order_ids_v1';
@@ -650,15 +665,22 @@ function replaceMenuState(next) {
 
 const remoteEnabled = Boolean(DB_URL);
 let remoteOnline = false;
+let customerOfflineMenuAvailable = false;
 
 /** Om appen har kontakt med Firebase. */
 export const backendInfo = {
   get mode() {
     return remoteOnline ? 'firebase' : 'local';
   },
+  get hasOfflineMenu() {
+    return CUSTOMER_MODE && customerOfflineMenuAvailable;
+  },
   get label() {
     if (!remoteEnabled) return 'Firebase ikke konfigurert';
-    return remoteOnline ? 'Firebase Realtime Database (REST)' : 'Frakoblet — ingen lokalt lagret meny';
+    if (remoteOnline) return 'Firebase Realtime Database (REST)';
+    return this.hasOfflineMenu
+      ? 'Frakoblet — lagret meny (bestilling krever Firebase)'
+      : 'Frakoblet — ingen lokalt lagret meny';
   },
 };
 
@@ -1108,6 +1130,81 @@ function scheduleStreamReconnect() {
   }, CUSTOMER_MODE ? 30000 : 3000);
 }
 
+// Persistent, public-only menu cache. An IndexedDB failure is harmless and
+// falls back to the existing Firebase fetch. The database is per origin and
+// the key includes both restaurant database and deployed directory.
+function customerMenuCacheKey() {
+  return DB_URL + '|' + new URL('./', window.location.href).pathname;
+}
+
+function openCustomerMenuCache() {
+  if (!CUSTOMER_MODE || !('indexedDB' in window)) return Promise.resolve(null);
+  return new Promise(resolve => {
+    let request;
+    try { request = indexedDB.open(CUSTOMER_MENU_CACHE_DB, 1); }
+    catch { resolve(null); return; }
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('menu')) {
+        request.result.createObjectStore('menu');
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
+  });
+}
+
+async function loadCustomerMenuCache() {
+  const db = await openCustomerMenuCache();
+  if (!db) return null;
+  try {
+    const record = await new Promise((resolve, reject) => {
+      const request = db.transaction('menu', 'readonly')
+        .objectStore('menu').get(customerMenuCacheKey());
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    if (!record || record.format !== 1 ||
+        !['', 'menu'].includes(record.path) ||
+        !record.menu || !Array.isArray(record.menu.sections) ||
+        !Array.isArray(record.menu.optionGroups) ||
+        !Number.isFinite(Number(record.menu.updatedAt)) ||
+        Number(record.menu.updatedAt) <= 0 ||
+        !record.menu.settings || typeof record.menu.settings !== 'object') return null;
+    return record;
+  } catch { return null; }
+  finally { db.close(); }
+}
+
+function publicCustomerMenuSnapshot() {
+  const menu = menuPayload();
+  menu.settings = Object.fromEntries(CUSTOMER_MENU_CACHE_KEYS
+    .filter(key => Object.prototype.hasOwnProperty.call(menu.settings, key))
+    .map(key => [key, menu.settings[key]]));
+  // Deliberately no orders, customers, phone-specific loyalty or admin data.
+  return menu;
+}
+
+async function saveCustomerMenuCache() {
+  if (!CUSTOMER_MODE || !Number(store.updatedAt)) return;
+  const db = await openCustomerMenuCache();
+  if (!db) return;
+  const record = {
+    format: 1, path: remoteMenuPath, savedAt: Date.now(),
+    menu: publicCustomerMenuSnapshot()
+  };
+  try {
+    await new Promise((resolve, reject) => {
+      const request = db.transaction('menu', 'readwrite')
+        .objectStore('menu').put(record, customerMenuCacheKey());
+      request.onsuccess = resolve;
+      request.onerror = () => reject(request.error);
+    });
+    customerOfflineMenuAvailable = true;
+  } catch { /* storage quota/private mode: online ordering still works */ }
+  finally { db.close(); }
+}
+
 // Menu-only reads avoid downloading /orderArchive or /pizzaBonus.
 const LEGACY_MENU_FIELDS = [
   'schemaVersion', 'settings', 'allergenCatalog',
@@ -1124,27 +1221,95 @@ async function readRemoteMenuSnapshot() {
   return Object.fromEntries(LEGACY_MENU_FIELDS.map((field, i) => [field, values[i]]));
 }
 
-// No persistent menu copy: always obtain the current source on startup.
-// Firebase updatedAt/SSE still prevent unnecessary subsequent downloads.
+// A returning customer downloads only the tiny updatedAt value. The full
+// menu is downloaded only on the first visit or when its version has changed.
+// Admin never uses the customer cache. Offline fallback is display-only.
 async function readStartupMenu() {
-  const snapshot = await readRemoteMenuSnapshot();
-  remoteMenuPath = snapshot?.menu ? 'menu' : '';
-  return snapshot?.menu || snapshot || {};
+  if (!CUSTOMER_MODE) {
+    const snapshot = await readRemoteMenuSnapshot();
+    remoteMenuPath = snapshot?.menu ? 'menu' : '';
+    return { menu: snapshot?.menu || snapshot || {}, verified: true };
+  }
+  const cached = await loadCustomerMenuCache();
+  if (cached) {
+    remoteMenuPath = cached.path;
+    customerOfflineMenuAvailable = true;
+  }
+  try {
+    if (cached) {
+      const version = Number(await restGet(
+        cached.path ? 'menu/updatedAt' : 'updatedAt', 6500
+      ));
+      if (version > 0 && version === Number(cached.menu.updatedAt)) {
+        lastMenuFallbackAt = Date.now();
+        return { menu: cached.menu, verified: true };
+      }
+    }
+    const snapshot = await readRemoteMenuSnapshot();
+    const menu = snapshot?.menu || snapshot || {};
+    if (!Array.isArray(menu.sections) || !Array.isArray(menu.optionGroups)) {
+      throw new Error('Restaurantmenyen har ugyldig format.');
+    }
+    remoteMenuPath = snapshot?.menu ? 'menu' : '';
+    replaceMenuState(menu);
+    await saveCustomerMenuCache();
+    lastMenuFallbackAt = Date.now();
+    return { menu, verified: true };
+  } catch (error) {
+    if (cached) {
+      // A previous menu may be viewed, but orders require a successful fresh
+      // Firebase version check and cannot be submitted on this stale snapshot.
+      return { menu: cached.menu, verified: false };
+    }
+    throw error;
+  }
 }
 
-/** Menu is refreshed only if updatedAt changes, not for every order. */
-async function reloadRemoteMenu() {
-  if (saveState === 'dirty' || saveState === 'saving') return;
+/** Menu refresh keeps the public cache synchronized after successful reads. */
+async function reloadRemoteMenu({ strict = false } = {}) {
+  if (saveState === 'dirty' || saveState === 'saving') {
+    if (strict) throw new Error('Menyoppdateringen er ikke ferdig.');
+    return;
+  }
   if (menuRefreshPromise) return menuRefreshPromise;
   menuRefreshPromise = (async () => {
     const snapshot = await readRemoteMenuSnapshot();
+    const source = snapshot?.menu || snapshot || {};
+    if (!Array.isArray(source.sections) || !Array.isArray(source.optionGroups)) {
+      throw new Error('Restaurantmenyen har ugyldig format.');
+    }
     const updated = applyRemoteMenu(snapshot);
+    await saveCustomerMenuCache();
     remoteOnline = true;
     if (updated) emitData('remote');
   })().catch(error => {
     console.warn('Kunne ikke oppdatere restaurantmenyen:', error);
+    if (strict) throw error;
   }).finally(() => { menuRefreshPromise = null; });
   return menuRefreshPromise;
+}
+
+// Checkout must verify live menu revision; cache is never an authority for
+// prices, availability, pickup times or restaurant opening/closing status.
+export async function ensureCustomerMenuCurrent() {
+  if (!CUSTOMER_MODE) return;
+  if (!remoteEnabled || navigator.onLine === false) {
+    throw new Error('Ingen internettforbindelse. Bestillingen ble ikke sendt.');
+  }
+  try {
+    const version = Number(await restGet(
+      remoteMenuPath ? 'menu/updatedAt' : 'updatedAt', 6500
+    ));
+    if (!version || version !== Number(store.updatedAt)) {
+      await reloadRemoteMenu({ strict: true });
+    }
+    const wasOffline = !remoteOnline;
+    remoteOnline = true;
+    if (wasOffline) emitData('remote');
+  } catch {
+    remoteOnline = false;
+    throw new Error('Kunne ikke kontrollere oppdatert meny hos restauranten. Prøv igjen.');
+  }
 }
 
 /** Manual full refresh. Only called by a user action, never by a timer. */
@@ -1208,10 +1373,14 @@ async function fallbackSync() {
     menuFallbackBusy = true;
     try {
       const version = Number(await restGet(remoteMenuPath ? remoteMenuPath + '/updatedAt' : 'updatedAt'));
-      if (version > 0 && version !== Number(store.updatedAt)) await reloadRemoteMenu();
+      if (version > 0 && version !== Number(store.updatedAt)) {
+        await reloadRemoteMenu({ strict: CUSTOMER_MODE });
+      }
+      const wasOffline = !remoteOnline;
       remoteOnline = true;
+      if (CUSTOMER_MODE && wasOffline) emitData('remote');
     } catch (error) {
-      if (!CUSTOMER_MODE && !ordersStreamHealthy) remoteOnline = false;
+      if (CUSTOMER_MODE || !ordersStreamHealthy) remoteOnline = false;
     } finally {
       menuFallbackBusy = false;
     }
@@ -1992,9 +2161,9 @@ async function bootstrap() {
 
   if (remoteEnabled) {
     try {
-      const menu = await readStartupMenu();
-      remoteOnline = true;
-      if (menu) replaceMenuState(menu);
+      const startup = await readStartupMenu();
+      remoteOnline = startup.verified;
+      if (startup.menu) replaceMenuState(startup.menu);
       // /orders is not fetched on customer startup; Firebase SSE handles updates.
     } catch (err) {
       remoteOnline = false;
