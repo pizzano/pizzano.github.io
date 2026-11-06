@@ -1165,6 +1165,7 @@ async function loadCustomerMenuCache() {
       request.onerror = () => reject(request.error);
     });
     if (!record || record.format !== 1 ||
+        Number(record.menu?.schemaVersion) !== SCHEMA_VERSION ||
         !['', 'menu'].includes(record.path) ||
         !record.menu || !Array.isArray(record.menu.sections) ||
         !Array.isArray(record.menu.optionGroups) ||

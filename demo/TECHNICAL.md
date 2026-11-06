@@ -9,6 +9,14 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - SMS: Google Apps Script `Kode.gs` + Traccar. E-posta: `email-poller.gs` + MailApp. GitHub'a commit yapmak bu iki çalışan projeyi değiştirmez.
 - Birbirini izleyen JS modüllerinde `data.js` import URL'lerini farklı sürüm parametreleriyle yüklememek gerekir: ayrı modül örnekleri senkronizasyonu bozabilir.
 
+## Müşteri menüsü ve Firebase trafiği
+
+- `js/data.js` yalnızca müşteri modunda menü ve herkese açık, müşterinin ihtiyacı olan ayarları `IndexedDB` içindeki `kol-customer-public-menu-v1` önbelleğinde tutar. Admin arayüzü bu önbelleği kullanmaz. Profil/sepet/favoriler mevcut `localStorage` modelinde, geçici sipariş ID'leri `sessionStorage` içindedir.
+- İlk ziyarette tam menü Firebase'den indirilir. Sonraki ziyaretler yalnızca ilgili `updatedAt` alanını okur; sürüm değişmediğinde tam menü tekrar indirilmez. Açık sayfadaki düşük hacimli sürüm kontrolleri devam eder.
+- Firebase erişimi kesilmişse yerel menü yalnızca gösterilir. Sipariş öncesi **mutlaka** canlı sürüm kontrolü vardır; sepetin içeriği veya tutarı güncellenmişse müşteri incelemeden sipariş gönderilmez. Doğrudan Firebase REST'e yazan müşteri kodu sunucu doğrulaması yerine geçmez.
+- Ön bellekteki veriyi ürün/sipariş fiyatı veya Firebase erişim izni için güvenilir kaynak sayma. Veri formatı sürümü değiştiğinde cache geçersizleşir; IndexedDB açılamazsa eski tam yükleme akışı çalışır.
+- Tasarruf, öncelikle tekrar açılışlarda menü aktarımını azaltır. Admin SSE, SMS/e-posta tetikleyicileri ve Firebase konsolundaki bütün indirilen MB bu değişiklikle ortadan kalkmaz.
+
 ## Sipariş güvenilirliği
 
 - Yeni sipariş oluştururken Firebase `if-match: null_etag` kullanılır; aynı ID ile gelen tekrar mevcut siparişin üzerine yazmamalıdır.

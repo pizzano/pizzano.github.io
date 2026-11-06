@@ -14,6 +14,8 @@ Bu klasör müşteri sipariş ekranı ve restoran yönetim panelinin güncel kay
 - Yazıcı: `js/order-printer.js` (Epson ePOS); cihazın yerel ağ erişimi ve yazdırma ayrıca test edilir.
 - SMS/e-posta: `integrations/google-apps-script/README.md`; Google Apps Script kaynakları GitHub üzerinden otomatik güncellenmez.
 - Hata kayıtları: `js/system-errors.js`; tüm dış servis hatalarını kapsamaz.
+- Müşteri menüsü: başarılı ilk yüklemeden sonra yalnızca **genel menü**, seçilmiş müşteriye uygun ayarlar ve `updatedAt` sürümü tarayıcının **IndexedDB** önbelleğinde tutulur. Tekrar açılışta sürüm eşitse büyük menü tekrar indirilmez; değiştiyse yenilenir. `orders` ve `customers` bu önbelleğe yazılmaz. Firebase doğrulanamazsa kayıtlı menü yalnızca okunabilir; sipariş gönderilemez.
+- Sipariş öncesi: müşteri yeniden Firebase menü sürümünü doğrular; fiyat veya sepet değişmişse sipariş otomatik gönderilmez, müşterinin tekrar kontrol etmesi istenir. Bu **sunucu tarafı fiyat doğrulaması değildir**; güvenli sipariş/fiyat yetkilendirmesi ayrıca backend/RTDB Rules ile sağlanmalıdır.
 - PWA/önbellek: `service-worker.js`, `manifest.webmanifest`; tasarım dosyaları `css/` altında.
 - Android admin paketi: `admin-apk/README.md`.
 

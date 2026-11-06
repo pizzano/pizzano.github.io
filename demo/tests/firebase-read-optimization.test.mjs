@@ -65,3 +65,9 @@ test('strict checkout refresh cannot inherit a swallowed background fetch error'
   assert.match(customer, /const previousCart = JSON\.stringify\(cart\)/);
   assert.match(customer, /JSON\.stringify\(cart\) !== previousCart/);
 });
+
+test('public menu cache invalidates automatically when schema version changes', async () => {
+  const data = await import('node:fs/promises').then(fs =>
+    fs.readFile(new URL('../js/data.js', import.meta.url), 'utf8'));
+  assert.match(data, /Number\(record\.menu\?\.schemaVersion\) !== SCHEMA_VERSION/);
+});
