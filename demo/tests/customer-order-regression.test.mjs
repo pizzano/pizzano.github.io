@@ -95,7 +95,7 @@ test('offline protection stops sending before bonus reservation', async () => {
   const customer = await src('js/customer.js');
   assert.ok(data.indexOf('if (navigator.onLine === false)') < data.indexOf('await reservePizzaReward(record)'));
   const submit = customer.slice(customer.indexOf('async function placeOrder() {'));
-  assert.ok(submit.indexOf('if (navigator.onLine === false)') < submit.indexOf('bonusState = await getPizzaBonus(phone)'));
+  assert.ok(submit.indexOf('if (navigator.onLine === false)') < submit.indexOf('bonusState = await getPizzaBonus(phone, { fresh: true })'));
   assert.match(customer, /window\.addEventListener\('offline', updateConnectionNotice\)/);
 });
 
