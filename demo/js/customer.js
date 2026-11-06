@@ -3581,15 +3581,51 @@ function renderAll() {
   return changed;
 }
 
+// Register early so image requests can be cached from the first visit where
+// the browser has installed/activated the service worker.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const workerUrl = new URL('../service-worker.js', import.meta.url);
-    navigator.serviceWorker.register(workerUrl.href, {
-      scope: new URL('../', import.meta.url).pathname,
-      updateViaCache: 'none',
-    }).catch(() => {});
-  });
+  const workerUrl = new URL('../service-worker.js', import.meta.url);
+  navigator.serviceWorker.register(workerUrl.href, {
+    scope: new URL('../', import.meta.url).pathname,
+    updateViaCache: 'none',
+  }).catch(() => {});
 }
+
+let lastPublicImageManifestVersion = 0;
+function sharePublicMenuImagesWithWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  const version = Number(store.updatedAt);
+  if (!Number.isSafeInteger(version) || version <= 0 ||
+      version === lastPublicImageManifestVersion) return;
+  lastPublicImageManifestVersion = version;
+  const urls = [
+    store.settings?.restaurantLogo,
+    ...(store.sections || []).flatMap(section => [
+      section.imageUrl,
+      ...(section.items || []).map(item => item.imageUrl)
+    ])
+  ].filter(url => typeof url === 'string' && url.trim());
+  // The worker receives only public image URLs and the menu version, never
+  // customer names, phone numbers, orders, cart contents or loyalty data.
+  navigator.serviceWorker.ready.then(registration => {
+    registration.active?.postMessage({
+      type: 'KOL_CUSTOMER_IMAGES_V1', version, urls
+    });
+  }).catch(() => { lastPublicImageManifestVersion = 0; });
+}
+
+// If an opaque CDN response contains a broken image, clear that cache entry.
+document.addEventListener('error', event => {
+  const element = event.target;
+  if (!(element instanceof HTMLImageElement) || !('serviceWorker' in navigator)) return;
+  const url = element.currentSrc || element.src;
+  if (!url) return;
+  navigator.serviceWorker.ready.then(registration => {
+    registration.active?.postMessage({
+      type: 'KOL_CUSTOMER_IMAGE_FAILED_V1', url
+    });
+  }).catch(() => {});
+}, true);
 
 // Én startskjerm: kunden ser ikke delvis ferdig meny, feil logo eller
 // en foreløpig restaurantstatus mens Firebase og sidens visning lastes.
@@ -3664,6 +3700,7 @@ subscribe((_state, origin) => {
       if (startup && !startup.hidden) configureHolidayStartup(startup);
     }
   }
+  sharePublicMenuImagesWithWorker();
   const changed = renderAll();
   if (origin === 'init' && backendInfo.mode !== 'firebase' && !backendInfo.hasOfflineMenu) {
     window.showCustomerStartupError?.();

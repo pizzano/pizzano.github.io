@@ -16,6 +16,7 @@ Bu klasör müşteri sipariş ekranı ve restoran yönetim panelinin güncel kay
 - Hata kayıtları: `js/system-errors.js`; tüm dış servis hatalarını kapsamaz.
 - Müşteri menüsü: başarılı ilk yüklemeden sonra yalnızca **genel menü**, seçilmiş müşteriye uygun ayarlar ve `updatedAt` sürümü tarayıcının **IndexedDB** önbelleğinde tutulur. Tekrar açılışta sürüm eşitse büyük menü tekrar indirilmez; değiştiyse yenilenir. `orders` ve `customers` bu önbelleğe yazılmaz. Firebase doğrulanamazsa kayıtlı menü yalnızca okunabilir; sipariş gönderilemez.
 - Sipariş öncesi: müşteri yeniden Firebase menü sürümünü doğrular; fiyat veya sepet değişmişse sipariş otomatik gönderilmez, müşterinin tekrar kontrol etmesi istenir. Bu **sunucu tarafı fiyat doğrulaması değildir**; güvenli sipariş/fiyat yetkilendirmesi ayrıca backend/RTDB Rules ile sağlanmalıdır.
+- Ürün fotoğrafları: `service-worker.js` yalnızca müşteri menüsünde bulunan `imageUrl` adreslerinin gerçek resim yanıtlarını `Cache Storage` içinde saklar. Görselleri bir kere indirdikten sonra tekrar kullanır. `updatedAt` değişse bile görsel URL'si aynıysa yeniden indirilmez; URL değişirse eski görüntü silinir ve yeni URL indirilir. Önbellek en fazla 120 görsel kopyası tutar; tarayıcı önbellek silinirse veya kota dolarsa tekrar indirme olabilir. **Aynı URL'deki görsel dosyası değiştirilecekse URL'yi de değiştir (ör. sürüm parametresi)**.
 - PWA/önbellek: `service-worker.js`, `manifest.webmanifest`; tasarım dosyaları `css/` altında.
 - Android admin paketi: `admin-apk/README.md`.
 
