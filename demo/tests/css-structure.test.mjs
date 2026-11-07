@@ -243,7 +243,7 @@ test('customer theme colors are consistent in header, profile and cart; sheet ha
   for(const page of [index,admin])assert.match(page,/css\/cart\.css\?v=20261105-customer-extras1/);
   assert.match(index,/css\/customer-theme\.css\?v=20261104-theme-unify4/);
   assert.match(index,/js\/customer\.js\?v=20261106-customer-cache1/);
-  assert.match(admin,/js\/admin\.js\?v=20261107-manual-health2/);
+  assert.match(admin,/js\/admin\.js\?v=20261107-admin-startup1/);
 });
 
 test('all five typography tiers are editable and shared by customer and admin', async () => {
