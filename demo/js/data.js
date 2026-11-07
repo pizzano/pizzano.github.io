@@ -732,8 +732,8 @@ function removeRetiredMenuCache() {
 }
 
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
-// Never let an Opera/desktop blocked REST request freeze admin startup.
-// The 9-second default applies to every REST GET, including manual retries.
+// Bound REST reads to avoid hanging when a connection is blocked.
+// Keep the timeout independent of any admin retry UI.
 async function restGet(path, timeoutMs = 9000) {
   const timing = metricClock();
   try {
@@ -1368,27 +1368,6 @@ async function pullRemote({ ordersOnly = false } = {}) {
 export async function refreshFromDatabase(options = {}) {
   await pullRemote(options);
   return remoteOnline;
-}
-
-/** Explicit staff retry after a failed admin startup. No writes or cache copies. */
-export async function retryAdminMenuLoad() {
-  if (CUSTOMER_MODE || !remoteEnabled) return false;
-  try {
-    const startup = await readStartupMenu();
-    replaceMenuState(startup.menu);
-    adminMenuVerified = true;
-    remoteOnline = true;
-    setSaveState('saved');
-    emitData('remote');
-    return true;
-  } catch (error) {
-    adminMenuVerified = false;
-    remoteOnline = false;
-    console.warn('Manuell innlasting av adminmeny feilet:', error);
-    setSaveState('error', 'Kunne ikke hente restaurantmenyen fra Firebase.');
-    emitData('remote');
-    return false;
-  }
 }
 
 /** REST fallback while a stream is unavailable; never download the whole DB. */

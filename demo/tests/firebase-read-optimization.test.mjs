@@ -106,7 +106,7 @@ test('manual admin refresh requests orders without re-downloading complete menu'
   assert.match(code,/export async function refreshFromDatabase\(options = \{\}\)/);
 });
 
-test('admin bootstrap has bounded Firebase GETs and never allows saving blank menu', async () => {
+test('admin retains Firebase startup safety with no orphaned retry button code', async () => {
   const fs=await import('node:fs/promises');
   const data=await fs.readFile(new URL('../js/data.js',import.meta.url),'utf8');
   const admin=await fs.readFile(new URL('../js/admin.js',import.meta.url),'utf8');
@@ -114,12 +114,12 @@ test('admin bootstrap has bounded Firebase GETs and never allows saving blank me
   assert.match(data,/async function restGet\(path, timeoutMs = 9000\)/);
   assert.match(data,/let adminMenuVerified = CUSTOMER_MODE/);
   assert.match(data,/if \(!CUSTOMER_MODE && !adminMenuVerified\) \{/);
-  assert.match(data,/export async function retryAdminMenuLoad\(\)/);
   assert.match(data,/setSaveState\(startupError \? 'error' : 'saved'/);
-  assert.match(admin,/retryAdminMenuLoad\(\)/);
-  assert.match(admin,/retryAdminButton\.hidden = backendInfo\.menuLoaded/);
-  assert.match(html,/id="btnRetryAdminLoad"/);
-  assert.match(html,/Admin-JavaScript kunne ikke starte/);
+  assert.match(admin,/el\.btnSaveNow\.disabled = !backendInfo\.menuLoaded/);
+  assert.doesNotMatch(data,/retryAdminMenuLoad|Manuell innlasting av adminmeny feilet/);
+  assert.doesNotMatch(admin,/retryAdminMenuLoad|retryAdminButton|btnRetryAdminLoad/);
+  assert.doesNotMatch(html,/btnRetryAdminLoad|Prøv å hente menyen på nytt|Admin-JavaScript kunne ikke starte|Admin svarte ikke/);
+  assert.match(html,/id="backendHint">Lagring: —<\/p>/);
 });
 
 test('all admin entry modules import exactly one fresh shared data module', async () => {

@@ -59,7 +59,6 @@ import {
   lastAcceptErrorMessage,
   rejectOrder,
   refreshFromDatabase,
-  retryAdminMenuLoad,
   orderStatusLabel,
 } from './data.js?v=20261107-admin-startup1';
 
@@ -400,21 +399,6 @@ async function saveRestaurantChanges(){
 }
 el.btnSaveNow.addEventListener('click',saveRestaurantChanges);
 document.getElementById('btnSaveSettings').addEventListener('click',saveRestaurantChanges);
-
-// A failed desktop startup is recoverable without reloading or replacing
-// any Firebase data. This overrides the static HTML retry fallback.
-const retryAdminButton = document.getElementById('btnRetryAdminLoad');
-if (retryAdminButton) retryAdminButton.onclick = async () => {
-  if (retryAdminButton.disabled) return;
-  retryAdminButton.disabled = true;
-  const restored = await retryAdminMenuLoad();
-  retryAdminButton.disabled = false;
-  renderAll();
-  toast(restored
-    ? 'Restaurantmenyen er hentet fra Firebase.'
-    : 'Kunne ikke hente menyen. Kontroller Opera-nettverket og prøv igjen.',
-    restored ? 'success' : 'error');
-};
 
 window.addEventListener('beforeunload', (event) => {
   if (!hasUnsavedChanges()) return;
@@ -4456,7 +4440,6 @@ function renderAll(origin = 'manual') {
   }
   const backendLabel = `Lagring: ${backendInfo.label}`;
   if (el.backendHint.textContent !== backendLabel) el.backendHint.textContent = backendLabel;
-  if (retryAdminButton) retryAdminButton.hidden = backendInfo.menuLoaded;
   el.btnSaveNow.disabled = !backendInfo.menuLoaded;
   const newCategoryButton = document.getElementById('btnNewCategory');
   if (newCategoryButton) newCategoryButton.disabled = !backendInfo.menuLoaded;
