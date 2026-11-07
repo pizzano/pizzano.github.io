@@ -38,8 +38,8 @@ export function activeCriticalAlerts(records, now = Date.now(), maxAgeMs = 30 * 
 
 
 export const SMS_STATUS_INTERVAL_MS = 45000;
-export const ALERTS_BACKGROUND_INTERVAL_MS = 30000;
-export const ALERTS_VISIBLE_INTERVAL_MS = 12000;
+export const ALERTS_BACKGROUND_INTERVAL_MS = 180000;
+export const ALERTS_VISIBLE_INTERVAL_MS = 60000;
 
 export function smsStatusShouldPoll({ page, visible, force = false } = {}) {
   // No automatic sender-status reads, no matter how old the last check was.

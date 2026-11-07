@@ -1,7 +1,7 @@
 import { emailReceiptKinds, emailReceiptSent, emailReceiptDetail,
   smsReceiptKinds, smsReceiptSentForOrders, smsReceiptDetailForOrders } from './admin-health-policy.js';
 import { escapeHtml } from './display-format.js';
-import { adminDataSignatures, adminRenderChanges, createMarkupUpdater } from './admin-render-policy.js';
+import { adminDataSignatures, adminRenderChanges, createMarkupUpdater, applyAlertStreamDelta } from './admin-render-policy.js';
 import { productImageSources } from './product-images.js';
 import { systemAlertsShouldPoll } from './admin-health-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
@@ -4781,32 +4781,27 @@ noticeEl.check.addEventListener('click',()=>void noticeCheckTestStatus());
 // Admin notification test results are fetched only after deliberate actions.
 ready().then(() => { void noticeLoad(); });
 
-/* Restaurantinnstillinger / Varsler: independent of order rendering.
- * Poll only while admin is visible, never on every data.js emit. */
+/* Restaurantinnstillinger / Varsler: one live diagnostics stream while
+ * the admin tab is visible. Only a slow REST fallback when SSE fails.
+ * Order streams, alarms and the actual notification senders are independent. */
 const systemAlertsList = document.getElementById('systemErrorsList');
 const systemAlertsStatus = document.getElementById('systemErrorsStatus');
 const systemAlertsUnread = document.getElementById('systemErrorsUnread');
 let systemAlertsLoading = false;
 let systemAlertsLastCheckedAt = 0;
+let systemAlertsRaw = {};
+let systemAlertsStream = null;
+let systemAlertsStreamHealthy = false;
+let systemAlertsStreamAttemptAt = 0;
+let systemAlertsStreamRevision = 0;
+const SYSTEM_ALERT_STREAM_RETRY_MS = 120000;
 const safeAlertTime = value => Number.isFinite(Number(value))
   ? new Intl.DateTimeFormat('nb-NO',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Oslo'}).format(new Date(Number(value)))
   : '—';
-async function refreshSystemAlerts({ force = false } = {}){
-  if (systemAlertsLoading || !systemAlertsList) return;
-  const now = Date.now();
-  if (!systemAlertsShouldPoll({
-    visible: !document.hidden,
-    page: ui.page,
-    settingsSection: ui.settingsSection,
-    sinceLastCheckMs: now - systemAlertsLastCheckedAt,
-    force,
-  })) return;
-  systemAlertsLastCheckedAt = now;
-  systemAlertsLoading=true;
-  try{
-    const raw=await readSystemErrors();
+function renderSystemAlertsSnapshot(raw) {
+  systemAlertsRaw=raw && typeof raw==='object' && !Array.isArray(raw) ? raw : {};
     window.dispatchEvent(new CustomEvent('kol-alert-snapshot', { detail: { records: raw || {} } }));
-    const records=Object.entries(raw||{}).filter(([,v])=>v&&typeof v==='object')
+    const records=Object.entries(systemAlertsRaw).filter(([,v])=>v&&typeof v==='object')
       .sort(([,a],[,b])=>(Number(b.lastSeen)||0)-(Number(a.lastSeen)||0));
     const unread=records.filter(([,v])=>!v.read && !v.resolved).length;
     systemAlertsUnread.hidden=!unread;
@@ -4826,6 +4821,27 @@ async function refreshSystemAlerts({ force = false } = {}){
       }
       card.append(actions);return card;
     }));
+
+}
+
+async function refreshSystemAlerts({ force = false } = {}){
+  if (systemAlertsLoading || !systemAlertsList) return;
+  if (!force && systemAlertsStreamHealthy) return;
+  const now = Date.now();
+  if (!systemAlertsShouldPoll({
+    visible: !document.hidden,
+    page: ui.page,
+    settingsSection: ui.settingsSection,
+    sinceLastCheckMs: now - systemAlertsLastCheckedAt,
+    force,
+  })) return;
+  systemAlertsLastCheckedAt = now;
+  systemAlertsLoading=true;
+  const revision = systemAlertsStreamRevision;
+  try{
+    const raw=await readSystemErrors();
+    // Prefer newer SSE events over an older parallel REST response.
+    if (revision === systemAlertsStreamRevision) renderSystemAlertsSnapshot(raw);
   }catch{
     window.dispatchEvent(new Event('kol-alert-fetch-error'));
     systemAlertsStatus.textContent='Varsler kunne ikke hentes fra Firebase. Kontroller database-tilgang.';
@@ -4841,14 +4857,80 @@ systemAlertsList?.addEventListener('click',async event=>{
   if(!ok){button.disabled=false;toast('Kunne ikke oppdatere varslet.');}
   else void refreshSystemAlerts({ force: true });
 });
-// Alerts stay at 12s while their settings tab is open, about 36s elsewhere.
-window.addEventListener('kol-health-refresh-request', () => { void refreshSystemAlerts({ force: true }); });
-window.setInterval(()=>{void refreshSystemAlerts();},12000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSystemAlerts({ force: true });});
-window.addEventListener('kol-admin-page-change',()=>{
-  if(ui.page==='settings' && ui.settingsSection==='alerts') void refreshSystemAlerts({ force: true });
+// One read on each SSE connect (the server's initial event), then only changed
+// alerts. No repeated full /systemErrors downloads during an idle shift.
+function stopSystemAlertsStream() {
+  if (systemAlertsStream) systemAlertsStream.close();
+  systemAlertsStream = null;
+  systemAlertsStreamHealthy = false;
+}
+function startSystemAlertsStream() {
+  if (systemAlertsStream || !DB_URL || document.hidden ||
+      navigator.onLine === false || !('EventSource' in window) ||
+      Date.now() - systemAlertsStreamAttemptAt < SYSTEM_ALERT_STREAM_RETRY_MS) return;
+  systemAlertsStreamAttemptAt = Date.now();
+  let source;
+  try {
+    source = new EventSource(DB_URL + '/systemErrors.json');
+  } catch {
+    return;
+  }
+  systemAlertsStream = source;
+  const incoming = isPatch => event => {
+    if (systemAlertsStream !== source) return;
+    try {
+      const change=JSON.parse(event.data);
+      if (!change || typeof change.path !== 'string') throw new Error('invalid event');
+      systemAlertsStreamHealthy = true;
+      systemAlertsStreamRevision++;
+      renderSystemAlertsSnapshot(
+        applyAlertStreamDelta(systemAlertsRaw,change,isPatch));
+    } catch {
+      stopSystemAlertsStream();
+      window.dispatchEvent(new Event('kol-alert-fetch-error'));
+    }
+  };
+  source.addEventListener('put', incoming(false));
+  source.addEventListener('patch', incoming(true));
+  source.onerror = () => {
+    if (systemAlertsStream !== source) return;
+    stopSystemAlertsStream();
+    // Immediate one-time GET after an SSE failure, then at most one per
+    // fallback interval. Do not disable critical error visibility.
+    if (!document.hidden) void refreshSystemAlerts({ force: true });
+  };
+}
+// The health screen's explicit check still gets fresh data on demand.
+window.addEventListener('kol-health-refresh-request', () => {
+  void refreshSystemAlerts({ force: true });
 });
-void refreshSystemAlerts();
+window.setInterval(() => {
+  if (document.hidden) return;
+  if (!systemAlertsStream) {
+    startSystemAlertsStream();
+    void refreshSystemAlerts();
+  }
+},60000);
+document.addEventListener('visibilitychange',()=>{
+  if (document.hidden) {
+    stopSystemAlertsStream();
+    systemAlertsStreamAttemptAt = 0;
+  } else {
+    startSystemAlertsStream();
+    if (!systemAlertsStream) void refreshSystemAlerts();
+  }
+});
+window.addEventListener('online',()=>{
+  systemAlertsStreamAttemptAt = 0;
+  startSystemAlertsStream();
+  if (!systemAlertsStream) void refreshSystemAlerts({ force: true });
+});
+window.addEventListener('kol-admin-page-change',()=>{
+  if(ui.page==='settings' && ui.settingsSection==='alerts' &&
+      !systemAlertsStreamHealthy) void refreshSystemAlerts({ force: true });
+});
+startSystemAlertsStream();
+if (!systemAlertsStream) void refreshSystemAlerts({ force: true });
 
 document.getElementById('systemErrorsArchive')?.addEventListener('click',async event=>{
   const button=event.currentTarget;

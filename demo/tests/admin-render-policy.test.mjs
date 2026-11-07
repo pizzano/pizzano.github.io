@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  adminDataSignatures, adminRenderChanges, createMarkupUpdater,
+  adminDataSignatures, adminRenderChanges, createMarkupUpdater, applyAlertStreamDelta,
 } from '../js/admin-render-policy.js';
 
 const base = () => ({
@@ -93,4 +93,21 @@ test('admin wires partial render to Firebase origin without changing critical or
   assert.match(admin,/confirmationExpired\(order\)/);
   assert.match(admin,/acceptOrderWithEstimate/);
   assert.match(admin,/await printKitchenTicket\(order, \{ reprint, typography: store\.settings \}\)/);
+});
+
+test('alert SSE patches preserve existing fields and delete only matching alert', () => {
+  const original={firebase_timeout:{severity:'critical',lastSeen:123,read:false,other:2},
+    sms_provider:{severity:'warning',read:false}};
+  const changed=applyAlertStreamDelta(original,{path:'/firebase_timeout',data:{read:true}},true);
+  assert.equal(original.firebase_timeout.read,false);
+  assert.deepEqual(changed.firebase_timeout,
+    {severity:'critical',lastSeen:123,read:true,other:2});
+  const deleted=applyAlertStreamDelta(changed,{path:'/sms_provider',data:null},false);
+  assert.equal(deleted.sms_provider,undefined);
+  assert.equal(original.sms_provider.read,false);
+  const reset=applyAlertStreamDelta(deleted,{path:'/',data:{email_http:{severity:'critical'}}},false);
+  assert.deepEqual(reset,{email_http:{severity:'critical'}});
+  const nested=applyAlertStreamDelta(changed,{path:'/',data:{'firebase_timeout/resolved':true}},true);
+  assert.equal(nested.firebase_timeout.resolved,true);
+  assert.equal(nested.firebase_timeout.other,2);
 });

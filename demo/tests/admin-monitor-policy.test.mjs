@@ -21,20 +21,20 @@ test('SMS health is manual-only even after hours of inactivity', () => {
   assert.equal(smsStatusShouldPoll({ page:'orders',visible:true,sinceLastCheckMs:1,force:true }),true);
 });
 
-test('system-error status remains fast while the Varsler tab is open', () => {
-  assert.equal(ALERTS_VISIBLE_INTERVAL_MS, 12000);
+test('alerts fallback is slower because live SSE carries critical changes', () => {
+  assert.equal(ALERTS_VISIBLE_INTERVAL_MS, 60000);
   assert.equal(systemAlertsShouldPoll({ visible:true,page:'settings',
-    settingsSection:'alerts',sinceLastCheckMs:11999 }),false);
+    settingsSection:'alerts',sinceLastCheckMs:59999 }),false);
   assert.equal(systemAlertsShouldPoll({ visible:true,page:'settings',
-    settingsSection:'alerts',sinceLastCheckMs:12000 }),true);
+    settingsSection:'alerts',sinceLastCheckMs:60000 }),true);
 });
 
 test('background status scans are throttled but cannot run in hidden tabs', () => {
-  assert.equal(ALERTS_BACKGROUND_INTERVAL_MS, 30000);
+  assert.equal(ALERTS_BACKGROUND_INTERVAL_MS, 180000);
   assert.equal(systemAlertsShouldPoll({ visible:true,page:'orders',
-    settingsSection:'status',sinceLastCheckMs:29999 }),false);
+    settingsSection:'status',sinceLastCheckMs:179999 }),false);
   assert.equal(systemAlertsShouldPoll({ visible:true,page:'orders',
-    settingsSection:'status',sinceLastCheckMs:30000 }),true);
+    settingsSection:'status',sinceLastCheckMs:180000 }),true);
   assert.equal(systemAlertsShouldPoll({ visible:false,page:'orders',
     settingsSection:'alerts',sinceLastCheckMs:100000,force:true }),false);
   assert.equal(systemAlertsShouldPoll({ visible:true,page:'settings',
@@ -90,4 +90,15 @@ test('manual check writes one request and listens for matching ephemeral status'
   assert.match(admin,/MANUAL_HEALTH_WAIT_MS = 160000/);
   assert.doesNotMatch(admin,/window\.setInterval\(refreshSmsStatus/);
   assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void refreshEmailStatus/);
+});
+
+test('system errors use a live SSE feed and sparse REST fallback', async () => {
+  const admin=await readFile(new URL('../js/admin.js',import.meta.url),'utf8');
+  assert.match(admin,/new EventSource\(DB_URL \+ '\/systemErrors\.json'\)/);
+  assert.match(admin,/applyAlertStreamDelta\(systemAlertsRaw,change,isPatch\)/);
+  assert.match(admin,/if \(!force && systemAlertsStreamHealthy\) return/);
+  assert.match(admin,/SYSTEM_ALERT_STREAM_RETRY_MS = 120000/);
+  assert.match(admin,/stopSystemAlertsStream\(\)/);
+  assert.match(admin,/if \(document\.hidden\) \{/);
+  assert.doesNotMatch(admin,/window\.setInterval\(\(\)=>\{void refreshSystemAlerts\(\);\},12000\)/);
 });

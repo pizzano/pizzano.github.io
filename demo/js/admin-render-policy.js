@@ -33,3 +33,41 @@ export function createMarkupUpdater() {
     return true;
   };
 }
+
+
+/** Apply RTDB Server-Sent Events for diagnostics without re-reading the whole
+ * /systemErrors subtree on every timer. Keeps the old snapshot immutable.
+ */
+export function applyAlertStreamDelta(previous, change, isPatch = false) {
+  const base=previous && typeof previous === 'object' && !Array.isArray(previous)
+    ? previous : {};
+  const path=String(change?.path || '/');
+  if (!path.startsWith('/')) return base;
+  const isObject=value=>value && typeof value === 'object' && !Array.isArray(value);
+  const put=(snapshot, at, value)=>{
+    const segments=at.split('/').filter(Boolean);
+    if (!segments.length) return isObject(value) ? value : {};
+    const result={...snapshot};
+    let node=result;
+    for (const name of segments.slice(0,-1)) {
+      node[name]=isObject(node[name]) ? {...node[name]} : {};
+      node=node[name];
+    }
+    const last=segments.at(-1);
+    if (value === null) delete node[last];
+    else node[last]=value;
+    return result;
+  };
+  if (!isPatch || !isObject(change?.data)) return put(base,path,change?.data);
+  // RTDB patch objects update children, including nested /read and /resolved
+  // fields, without replacing other information about the alert.
+  const patchField=(snapshot, at, value)=>{
+    if (!isObject(value)) return put(snapshot,at,value);
+    let updated=snapshot;
+    for (const [key,child] of Object.entries(value)) {
+      updated=patchField(updated,at.replace(/\/$/,'') + '/' + key,child);
+    }
+    return updated;
+  };
+  return patchField(base,path,change.data);
+}

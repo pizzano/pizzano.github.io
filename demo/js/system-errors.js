@@ -102,7 +102,9 @@ export async function reportSystemError(category, reason='unknown', severity='wa
 // Read-only safe view; callers explicitly choose when to fetch.
 export async function readSystemErrors() {
   if(!url())return {};
-  const response=await fetch(url()+'/systemErrors.json',{cache:'no-store'});
+  const response=await fetch(url()+'/systemErrors.json',{
+    cache:'no-store', signal:AbortSignal.timeout(8000)
+  });
   if(!response.ok)throw new Error('diagnostics_read_failed');
   return await response.json() || {};
 }
