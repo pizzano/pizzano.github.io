@@ -178,3 +178,32 @@ test('compact order feed is strictly opt-in and retains legacy SSE fallback', as
   assert.match(loyalty,/if \(isTrustedCompactOrderFeedActive\(\)\) return/);
   assert.match(archive,/if \(isTrustedCompactOrderFeedActive\(\)\) return/);
 });
+
+test('compact order feed rejects stale/partial backend snapshots before any UI adoption', async () => {
+  const vm=await import('node:vm');
+  const script = data.slice(data.indexOf('function validatedCompactOrderFeed('),
+    data.indexOf('\nlet menuFallbackBusy',data.indexOf('function validatedCompactOrderFeed(')));
+  assert.ok(script.startsWith('function validatedCompactOrderFeed('));
+  const inspect=vm.runInNewContext(
+    'const COMPACT_ORDER_MAX_AGE_MS=45000;\n'+script+'\nvalidatedCompactOrderFeed;');
+  const now=1800000000000;
+  const id='ord_abcdefgh12345';
+  const order={id,phone:'41145353',createdAt:now-1000,status:'mottatt',
+    total:210,lines:[{itemId:'pizza',quantity:1}]};
+  const meta={schemaVersion:1,publisher:'trusted-firebase-order-worker-v1',
+    ready:true,completeOpenOrders:true,backendMaintainsLoyalty:true,
+    backendMaintainsRetention:true,backendMaintainsLegacyMigration:true,
+    generatedAt:now-1000,includedOrderCount:1,openOrderCount:1};
+  const feed={meta,orders:{[id]:order}};
+  assert.ok(inspect(feed,now));
+  assert.equal(inspect({...feed,meta:{...meta,generatedAt:now-45000}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,ready:false}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,completeOpenOrders:false}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,backendMaintainsLoyalty:false}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,backendMaintainsRetention:false}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,openOrderCount:0}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,includedOrderCount:2}},now),null);
+  assert.equal(inspect({...feed,orders:{[id]:{...order,lines:undefined}}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,publisher:'browser'}},now),null);
+  assert.equal(inspect({...feed,meta:{...meta,generatedAt:now+16000}},now),null);
+});
