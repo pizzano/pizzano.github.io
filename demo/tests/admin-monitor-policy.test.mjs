@@ -45,15 +45,15 @@ test('order stream and acceptance remain independent of health badges', async ()
   const admin = await readFile(new URL('../js/admin.js', import.meta.url),'utf8');
   assert.doesNotMatch(admin,/window\.setInterval\(refreshSmsStatus/);
   assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void refreshEmailStatus/);
-  assert.match(admin,/smsStatusShouldPoll\(\{/);
+  assert.match(admin,/requestManualNotificationHealth\(\)/);
   assert.match(admin,/systemAlertsShouldPoll\(\{/);
-  assert.match(admin,/refreshSmsStatus\(\{ force: true \}\)/);
-  assert.match(admin,/refreshEmailStatus\(\)/);
+  assert.match(admin,/awaitManualHealthResponse\('smsHealth',requestId\)/);
+  assert.match(admin,/awaitManualHealthResponse\('emailHealth',requestId\)/);
   assert.match(admin,/testEpsonFromOrders\(\{ force: true \}\)/);
   assert.match(admin,/refreshFromDatabase\(\{ ordersOnly: true \}\)/);
   assert.match(admin,/updateOrdersConnection\(\)/);
   assert.match(admin,/if \(section === 'alerts'\) void refreshSystemAlerts\(\{ force: true \}\)/);
-  assert.match(admin,/if \(emailStatusFetching \|\| document\.hidden \|\| ui\.page !== 'orders'\) return;/);
+  assert.match(admin,/manualHealthPending = true/);
   assert.match(admin,/acceptOrderWithEstimate/);
   assert.match(admin,/printOrderFromAdmin/);
 });
@@ -69,8 +69,7 @@ test('status badges only request Firebase when an explicit refresh is pressed', 
   assert.match(handler,/Promise\.allSettled\(\[/);
   for(const call of [
     'refreshFromDatabase({ ordersOnly: true })',
-    'refreshSmsStatus({ force: true })',
-    'refreshEmailStatus()',
+    'requestManualNotificationHealth()',
     'testEpsonFromOrders({ force: true })'
   ]) assert.ok(handler.includes(call),'manual check missing: '+call);
   assert.doesNotMatch(admin,/window\.setTimeout\(\(\) => \{ void testEpsonFromOrders/);
@@ -79,4 +78,16 @@ test('status badges only request Firebase when an explicit refresh is pressed', 
   assert.doesNotMatch(health,/window\.setInterval\(\(\) => \{\s*if \(visible\(\)\) void runChecks/);
   assert.match(html,/id="btnRefreshOrders"/);
   assert.match(html,/Oppdater bestillinger, nett, Epson, SMS og e-post/);
+});
+
+test('manual check writes one request and listens for matching ephemeral status', async () => {
+  const admin=await readFile(new URL('../js/admin.js',import.meta.url),'utf8');
+  assert.match(admin,/healthCheckRequest\.json/);
+  assert.match(admin,/method:'PUT'/);
+  assert.match(admin,/body:JSON\.stringify\(\{id:requestId,requestedAt:Date\.now\(\)\}\)/);
+  assert.match(admin,/payload\.data\?\.requestId !== requestId/);
+  assert.match(admin,/source\.close\(\)/);
+  assert.match(admin,/MANUAL_HEALTH_WAIT_MS = 160000/);
+  assert.doesNotMatch(admin,/window\.setInterval\(refreshSmsStatus/);
+  assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void refreshEmailStatus/);
 });
