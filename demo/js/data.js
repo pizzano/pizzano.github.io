@@ -1321,7 +1321,7 @@ export async function ensureCustomerMenuCurrent() {
 }
 
 /** Manual full refresh. Only called by a user action, never by a timer. */
-async function pullRemote() {
+async function pullRemote({ ordersOnly = false } = {}) {
   if (!remoteEnabled) return;
   if (CUSTOMER_MODE) {
     await reloadRemoteMenu();
@@ -1331,11 +1331,12 @@ async function pullRemote() {
   const revision = orderStreamRevision;
   try {
     const [menu, orders] = await Promise.all([
-      readRemoteMenuSnapshot(), restGet(ORDERS_PATH),
+      ordersOnly ? Promise.resolve(null) : readRemoteMenuSnapshot(),
+      restGet(ORDERS_PATH),
     ]);
     remoteOnline = true;
-    const menuChanged = saveState === 'dirty' || saveState === 'saving'
-      ? false : applyRemoteMenu(menu);
+    const menuChanged = !ordersOnly && saveState !== 'dirty' && saveState !== 'saving'
+      ? applyRemoteMenu(menu) : false;
     // A live SSE delta may have arrived while these GETs were in flight.
     const ordersChanged = revision === orderStreamRevision
       ? applyRemoteOrders(ordersRaw = orders || {})
@@ -1346,8 +1347,8 @@ async function pullRemote() {
   }
 }
 
-export async function refreshFromDatabase() {
-  await pullRemote();
+export async function refreshFromDatabase(options = {}) {
+  await pullRemote(options);
   return remoteOnline;
 }
 

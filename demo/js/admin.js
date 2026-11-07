@@ -2734,19 +2734,8 @@ async function refreshSmsStatus({ force = false } = {}) {
   }
 }
 
-void refreshSmsStatus();
-// An open order screen needs only one status check every 45s.
-// Actual order/SMS receipts continue over the existing live order connection.
-window.setInterval(refreshSmsStatus, 15000);
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void refreshSmsStatus({ force: true });
-});
-window.addEventListener('kol-admin-page-change', () => {
-  if (ui.page === 'orders') void refreshSmsStatus({ force: true });
-});
-document.getElementById('ordersSmsStatus')?.addEventListener('click', () => {
-  void refreshSmsStatus({ force: true });
-});
+// SMS health is read only after the manual btnRefreshOrders action.
+// Independent Apps Script delivery and order streams continue.
 
 /* E-mail sender health is independent of SMS and printer connectivity.
    Green only after a RECENT poller heartbeat plus MailApp authorization/quota.
@@ -2792,15 +2781,7 @@ async function refreshEmailStatus() {
     displayEmailStatus('error', 'E-post frakoblet', 'Kunne ikke hente senderens kontrollstatus.');
   } finally { emailStatusFetching = false; }
 }
-void refreshEmailStatus();
-window.setInterval(() => { void refreshEmailStatus(); }, 90000);
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void refreshEmailStatus();
-});
-window.addEventListener('kol-admin-page-change', () => {
-  if (ui.page === 'orders') void refreshEmailStatus();
-});
-document.getElementById('ordersEmailStatus')?.addEventListener('click', () => { void refreshEmailStatus(); });
+// Email health is read only by btnRefreshOrders; no timer or tab-focus read.
 
 /* Receipt classification is pure; the admin supplies current order snapshots. */
 function smsReceiptSent(id) { return smsReceiptSentForOrders(id, getOrders()); }
@@ -2823,7 +2804,7 @@ function renderOrders() {
   const all = getOrders();
   if (all.some(order => shouldSoundForOrder(order))) playOrderAlert();
   else stopOrderAlert();
-  updateOrdersConnection();
+  // Connectivity indicator updates only on a deliberate manual refresh.
   renderOrderTabs(all);
   el.ordersSummary.textContent = `${all.length} bestillinger · ${all.filter((order) =>
     order.status === 'mottatt' && !confirmationExpired(order)).length} nye`;
@@ -3061,24 +3042,8 @@ document.addEventListener('click', (event) => {
     printerStatusButton.setAttribute('aria-expanded', 'false');
   }
 });
-// An ePOS probe sends NO receipt and consumes NO paper.
-// Detect disconnects even while the wider internet/Firebase remains online.
-// A lightweight timer checks whether a probe is due; it does NOT send a
-// request every five seconds. Healthy: 30s. Errors: 10/20/40/60s backoff.
-// Entering Bestillinger, foregrounding, and reconnecting check immediately.
-window.setTimeout(() => { void testEpsonFromOrders({ force: true }); }, 1600);
-window.setInterval(() => { void testEpsonFromOrders(); }, 5000);
-window.addEventListener('kol-admin-page-change', () => {
-  if (ui.page === 'orders') void testEpsonFromOrders({ force: true });
-});
-window.addEventListener('offline', invalidateEpsonConnection);
-window.addEventListener('online', () => {
-  // Online does not imply the local Wi-Fi printer is reachable.
-  window.setTimeout(() => { void testEpsonFromOrders({ force: true }); }, 1000);
-});
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void testEpsonFromOrders({ force: true });
-});
+// Epson ePOS connection probes are manual-only. Printing itself still
+// reports success/failure and can update the same status indicator.
 
 async function printOrderFromAdmin(orderId, reprint = false) {
   if (!orderId || printingOrderIds.has(orderId)) return;
@@ -3313,11 +3278,26 @@ el.btnRejectConfirm.addEventListener('click', async () => {
 });
 
 el.btnRefreshOrders.addEventListener('click', async () => {
+  if (el.btnRefreshOrders.disabled) return;
   el.btnRefreshOrders.disabled = true;
-  const online = await refreshFromDatabase();
-  el.btnRefreshOrders.disabled = false;
-  renderAll();
-  toast(online ? 'Bestillingene er oppdatert.' : 'Kunne ikke nå databasen.');
+  try {
+    // Only this user gesture runs the explicit connectivity checks.
+    // Live order SSE, alarm, Godta, printing and Apps Script stay automatic.
+    const checks = await Promise.allSettled([
+      refreshFromDatabase({ ordersOnly: true }),
+      refreshSmsStatus({ force: true }),
+      refreshEmailStatus(),
+      testEpsonFromOrders({ force: true }),
+    ]);
+    renderAll();
+    updateOrdersConnection();
+    const connected = checks[0].status === 'fulfilled' && checks[0].value === true;
+    toast(connected
+      ? 'Bestillinger, nett, SMS, e-post og Epson er kontrollert.'
+      : 'Kunne ikke bekrefte bestillingstilkoblingen. Sjekk statuslysene.');
+  } finally {
+    el.btnRefreshOrders.disabled = false;
+  }
 });
 
 // Expiration is a local clock event: the Firebase cancellation poll can run
@@ -3346,7 +3326,7 @@ function refreshOrderClocks() {
       : newlyExpired.length + ' bestillinger har passert svarfristen på 3 minutter. Godta er fjernet.';
     toast(message, 10000);
   }
-  updateOrdersConnection();
+  // Keep local order countdowns independent of manual health indicators.
   renderOrderTabs(getOrders());
   // When a pickup time passes, remove it immediately from Planlagte even
   // when no Firebase update occurs. Avoid rerendering if the list is current.
@@ -4574,8 +4554,7 @@ function noticeSetKind(kind){
   noticeEl.tab.forEach(btn=>btn.classList.toggle('is-active',btn.dataset.messageKind===kind));
   noticeFeedback(noticeState.loaded?'Klar. Endringer må lagres før test.':'Henter maler…');
   noticePreview();
-  void noticeCheckTestStatus();
-  void noticeCheckEmailEngine();
+  // Sender status does not poll when opening notification editor tabs.
 }
 async function noticeGet(url,etag=false){
   const r=await fetch(url,{cache:'no-store',headers:etag?{'X-Firebase-ETag':'true'}:{}});
@@ -4761,8 +4740,7 @@ noticeEl.save.addEventListener('click',()=>void noticeSave());
 noticeEl.reset.addEventListener('click',()=>noticeSetKind(noticeState.kind));
 noticeEl.test.addEventListener('click',()=>void noticeSendTest());
 noticeEl.check.addEventListener('click',()=>void noticeCheckTestStatus());
-window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden)void noticeCheckTestStatus()},12000);
-window.setInterval(()=>{if(ui.page==='notifications'&&!document.hidden&&noticeKindIsEmail())void noticeCheckEmailEngine()},30000);
+// Admin notification test results are fetched only after deliberate actions.
 ready().then(() => { void noticeLoad(); });
 
 /* Restaurantinnstillinger / Varsler: independent of order rendering.
