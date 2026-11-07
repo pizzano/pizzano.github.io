@@ -48,8 +48,9 @@ test('real ticket printing and uncertain-print no-retry safeguards remain unchan
   const printer = await readFile(new URL('../js/order-printer.js', import.meta.url), 'utf8');
   assert.match(js, /shouldProbeEpson\(\{/);
   assert.match(js, /busy: printerCheckRunning \|\| printingOrderIds\.size > 0/);
-  assert.match(js, /window\.setInterval\(\(\) => \{ void testEpsonFromOrders\(\); \}, 5000\)/);
-  assert.match(js, /if \(ui\.page === 'orders'\) void testEpsonFromOrders\(\{ force: true \}\)/);
+  assert.doesNotMatch(js, /window\.setInterval\(\(\) => \{ void testEpsonFromOrders/);
+  assert.doesNotMatch(js, /window\.setTimeout\(\(\) => \{ void testEpsonFromOrders/);
+  assert.match(js, /testEpsonFromOrders\(\{ force: true \}\)/);
   assert.match(js, /\+\+printerProbeEpoch;\s*printerCheckRunning = false;\s*if \(selectedOrderId === orderId\)/);
   assert.match(js, /await printKitchenTicket\(order, \{ reprint, typography: store\.settings \}\)/);
   assert.match(js, /Never automatically retry an uncertain print/);
