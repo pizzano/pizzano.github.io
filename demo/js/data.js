@@ -35,6 +35,12 @@ const CUSTOMER_ORDER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const CUSTOMER_ORDER_POLL_MS = 8 * 1000;
 
 const ORDERS_PATH = 'orders';
+// Large order feed migration is opt-in. Firebase Rules and a trusted worker
+// must first guarantee a complete and fresh staff-only materialized view.
+const COMPACT_ORDERS_PATH = 'adminOrderFeed';
+const COMPACT_ORDER_MAX_AGE_MS = 45000;
+const COMPACT_ORDER_FEED_REQUESTED =
+  !CUSTOMER_MODE && window.BESTILL_CONFIG?.trustedCompactOrderFeed === true;
 // Retry local diagnostic events only on reconnection, never in the critical order path.
 window.addEventListener('online', () => { void flushSystemErrorQueue(); });
 // Restore failures from a previously offline tab after a fresh page load.
@@ -712,6 +718,45 @@ let ordersStreamStartedAt = 0;
 let ordersRaw = {};
 let orderStreamRevision = 0;
 let ordersFallbackBusy = false;
+let compactFeedActive = false;
+let compactFeedDisabledForSession = false;
+let compactFeedRaw = {};
+let compactFeedGeneratedAt = 0;
+export function isTrustedCompactOrderFeedActive() {
+  return !CUSTOMER_MODE && compactFeedActive;
+}
+// Data from the public page (or a forged publisher label) is not proof of
+// authorization. This contract is usable only after backend + Rules review.
+function validatedCompactOrderFeed(snapshot, now = Date.now()) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+  const meta=snapshot.meta, orders=snapshot.orders;
+  if (!meta || meta.schemaVersion !== 1 ||
+      meta.publisher !== 'trusted-firebase-order-worker-v1' ||
+      meta.ready !== true || meta.completeOpenOrders !== true ||
+      meta.backendMaintainsLoyalty !== true ||
+      meta.backendMaintainsRetention !== true ||
+      meta.backendMaintainsLegacyMigration !== true ||
+      !orders || typeof orders !== 'object' || Array.isArray(orders)) return null;
+  const stamp=Number(meta.generatedAt);
+  if (!Number.isSafeInteger(stamp) || stamp <= 0 ||
+      stamp > now + 15000 || now - stamp >= COMPACT_ORDER_MAX_AGE_MS) return null;
+  const keys=Object.keys(orders);
+  if (keys.length > 250 || Number(meta.includedOrderCount) !== keys.length) return null;
+  let active=0;
+  const open=new Set(['mottatt','bekreftet','tilberedning','klar']);
+  for (const id of keys) {
+    const o=orders[id];
+    if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !o || typeof o !== 'object' ||
+        o.id !== id || typeof o.status !== 'string' ||
+        !Number.isSafeInteger(Number(o.createdAt)) ||
+        !Number.isFinite(Number(o.total)) || !Array.isArray(o.lines) ||
+        !String(o.phone || '').trim()) return null;
+    if (open.has(o.status)) active++;
+  }
+  if (Number(meta.openOrderCount) !== active) return null;
+  return {orders,generatedAt:stamp};
+}
+
 let menuFallbackBusy = false;
 let lastMenuFallbackAt = 0;
 let menuRefreshPromise = null;
@@ -1085,7 +1130,68 @@ async function pollCustomerOrders(force = false) {
   }
 }
 
+function recoverFullOrdersStream(reason) {
+  compactFeedDisabledForSession = true;
+  compactFeedActive = false;
+  compactFeedRaw = {};
+  compactFeedGeneratedAt = 0;
+  if (ordersStream) ordersStream.close();
+  ordersStream = null;
+  ordersStreamHealthy = false;
+  console.warn('Kompakt ordreakse ikke verifisert. Standard /orders benyttes:', reason);
+  beginOrdersStream();
+}
+function beginTrustedCompactOrdersStream() {
+  if (!COMPACT_ORDER_FEED_REQUESTED || compactFeedDisabledForSession ||
+      !('EventSource' in window)) return false;
+  try {
+    const source = new EventSource(streamUrl(COMPACT_ORDERS_PATH));
+    ordersStream = source;
+    ordersStreamStartedAt = Date.now();
+    let initialized = false;
+    const handle = (event, patch) => {
+      if (ordersStream !== source) return;
+      try {
+        const eventData = parseFirebaseEvent(event);
+        if (!initialized && (patch || eventData.path !== '/'))
+          throw new Error('Krever komplett første snapshot');
+        const next = applyStreamChange(compactFeedRaw,
+          eventData.path,eventData.data,patch);
+        const state = validatedCompactOrderFeed(next);
+        if (!state) throw new Error('Ugyldig / utløpt backendindeks');
+        compactFeedRaw = next;
+        compactFeedGeneratedAt = state.generatedAt;
+        compactFeedActive = true;
+        initialized = true;
+        ordersRaw = {...state.orders};
+        orderStreamRevision++;
+        ordersStreamHealthy = true;
+        remoteOnline = true;
+        if (applyRemoteOrders(ordersRaw)) emitData('remote');
+      } catch (error) {
+        recoverFullOrdersStream(error?.message || 'ugyldig melding');
+      }
+    };
+    source.addEventListener('put',event => handle(event,false));
+    source.addEventListener('patch',event => handle(event,true));
+    source.onerror = () => {
+      if (ordersStream === source) recoverFullOrdersStream('SSE-feil');
+    };
+    for (const kind of ['cancel','auth_revoked']) {
+      source.addEventListener(kind,() => {
+        if (ordersStream === source) recoverFullOrdersStream(kind);
+      });
+    }
+    return true;
+  } catch(error) {
+    compactFeedDisabledForSession = true;
+    console.warn('Kompakt ordreakse kunne ikke startes:',error);
+    return false;
+  }
+}
+
 function beginOrdersStream() {
+  if (beginTrustedCompactOrdersStream()) return;
   if (!('EventSource' in window)) return;
   try {
     const source = new EventSource(streamUrl(ORDERS_PATH));
@@ -1344,6 +1450,9 @@ export async function ensureCustomerMenuCurrent() {
 /** Manual full refresh. Only called by a user action, never by a timer. */
 async function pullRemote({ ordersOnly = false } = {}) {
   if (!remoteEnabled) return;
+  // Staff refresh is an explicit authoritative audit of canonical orders.
+  if (!CUSTOMER_MODE && compactFeedActive)
+    recoverFullOrdersStream('Manuell kontroll av alle ordre');
   if (CUSTOMER_MODE) {
     await reloadRemoteMenu();
     await pollCustomerOrders(true);
@@ -1376,6 +1485,10 @@ export async function refreshFromDatabase(options = {}) {
 /** REST fallback while a stream is unavailable; never download the whole DB. */
 async function fallbackSync() {
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
+  // Guard against an SSE that remains open while the trusted server stalls.
+  if (!CUSTOMER_MODE && compactFeedActive &&
+      Date.now() - compactFeedGeneratedAt >= COMPACT_ORDER_MAX_AGE_MS)
+    recoverFullOrdersStream('Utdatert backendindeks');
   if (CUSTOMER_MODE) {
     startCustomerOrderStream();
     await pollCustomerOrders();
