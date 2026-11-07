@@ -78,7 +78,9 @@
                     <span class="save-text" id="saveText">Lagret</span>
                 </div>
                 <button class="btn btn-outline btn-sm btn-block" id="btnSaveNow" type="button">Lagre nå</button>
-                <p class="side-hint" id="backendHint">Lagring: —</p>
+                <p class="side-hint" id="backendHint">Lagring: Kobler til Firebase…</p>
+                <button class="btn btn-outline btn-sm btn-block" id="btnRetryAdminLoad"
+                  type="button" hidden>Prøv å hente menyen på nytt</button>
             </div>
         </aside>
 
@@ -1034,12 +1036,33 @@
 
     <div class="admin-toast" id="adminToast" role="status" aria-live="polite" hidden></div>
 
-    <script type="module" src="./js/admin.js?v=20261107-manual-health2"></script>
+    <script type="module" src="./js/admin.js?v=20261107-admin-startup1"></script>
     <script type="module" src="./js/admin-health.js?v=20261107-manual-health2"></script>
     <script type="module" src="./js/loyalty-sync.js?v=20261105-product-notes2"></script>
     <script type="module" src="./js/orders-archive.js?v=20261105-product-notes2"></script>
     <script type="module" src="./js/pickup-load-admin.js?v=20261105-product-notes2"></script>
     <script type="module" src="./js/special-days-admin.js?v=20261105-product-notes2"></script>
+    <script>
+    // Runs independently of ES modules. If Opera blocks a module or its
+    // dependencies, the admin no longer remains an unexplained blank page.
+    (() => {
+      const hint = document.getElementById('backendHint');
+      const retry = document.getElementById('btnRetryAdminLoad');
+      let moduleError = false;
+      window.addEventListener('error', event => {
+        if (event.target?.tagName === 'SCRIPT' || event.target === window) moduleError = true;
+      }, true);
+      window.setTimeout(() => {
+        if (!hint || !retry ||
+            !hint.textContent.includes('Kobler til Firebase')) return;
+        hint.textContent = moduleError
+          ? 'Lagring: Admin-JavaScript kunne ikke starte. Kontroller Opera-konsollen.'
+          : 'Lagring: Admin svarte ikke. Sjekk nettverk og nettleserutvidelser.';
+        retry.hidden = false;
+        retry.onclick = () => window.location.reload();
+      }, 12000);
+    })();
+    </script>
 </body>
 
 </html>

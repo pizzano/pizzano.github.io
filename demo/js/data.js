@@ -668,6 +668,8 @@ function replaceMenuState(next) {
 const remoteEnabled = Boolean(DB_URL);
 let remoteOnline = false;
 let customerOfflineMenuAvailable = false;
+// Admin must never save an empty menu if its initial Firebase fetch failed.
+let adminMenuVerified = CUSTOMER_MODE;
 
 /** Om appen har kontakt med Firebase. */
 export const backendInfo = {
@@ -677,8 +679,13 @@ export const backendInfo = {
   get hasOfflineMenu() {
     return CUSTOMER_MODE && customerOfflineMenuAvailable;
   },
+  get menuLoaded() {
+    return CUSTOMER_MODE || adminMenuVerified;
+  },
   get label() {
     if (!remoteEnabled) return 'Firebase ikke konfigurert';
+    if (!CUSTOMER_MODE && !adminMenuVerified)
+      return 'Menyen er ikke lastet. Kontroller Firebase og prøv igjen.';
     if (remoteOnline) return 'Firebase Realtime Database (REST)';
     return this.hasOfflineMenu
       ? 'Frakoblet — lagret meny (bestilling krever Firebase)'
@@ -725,7 +732,9 @@ function removeRetiredMenuCache() {
 }
 
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
-async function restGet(path, timeoutMs = 0) {
+// Never let an Opera/desktop blocked REST request freeze admin startup.
+// The 9-second default applies to every REST GET, including manual retries.
+async function restGet(path, timeoutMs = 9000) {
   const timing = metricClock();
   try {
     const suffix = path ? `/${path}.json` : '/.json';
@@ -780,11 +789,16 @@ function menuPayload() {
 
 /** Tar imot menydata fra databasen. Returnerer true hvis noe endret seg. */
 function applyRemoteMenu(value) {
-  remoteMenuPath = value?.menu ? 'menu' : '';
   const source = value?.menu || value || {};
+  if (!CUSTOMER_MODE && (!Array.isArray(source.sections) ||
+      !Array.isArray(source.optionGroups))) {
+    throw new Error('Firebase returnerte ingen gyldig restaurantmeny. Ikke lagre tomme data.');
+  }
+  remoteMenuPath = value?.menu ? 'menu' : '';
   const normalized = normalizeState(source);
   const before = JSON.stringify(menuPayload());
   replaceMenuState(normalized);
+  if (!CUSTOMER_MODE) adminMenuVerified = true;
   return before !== JSON.stringify(menuPayload());
 }
 
@@ -1232,8 +1246,12 @@ async function readRemoteMenuSnapshot() {
 async function readStartupMenu() {
   if (!CUSTOMER_MODE) {
     const snapshot = await readRemoteMenuSnapshot();
+    const menu = snapshot?.menu || snapshot || {};
+    if (!Array.isArray(menu.sections) || !Array.isArray(menu.optionGroups)) {
+      throw new Error('Firebase svarte uten gyldige kategorier og valggrupper.');
+    }
     remoteMenuPath = snapshot?.menu ? 'menu' : '';
-    return { menu: snapshot?.menu || snapshot || {}, verified: true };
+    return { menu, verified: true };
   }
   const cached = await loadCustomerMenuCache();
   if (cached) {
@@ -1352,6 +1370,27 @@ export async function refreshFromDatabase(options = {}) {
   return remoteOnline;
 }
 
+/** Explicit staff retry after a failed admin startup. No writes or cache copies. */
+export async function retryAdminMenuLoad() {
+  if (CUSTOMER_MODE || !remoteEnabled) return false;
+  try {
+    const startup = await readStartupMenu();
+    replaceMenuState(startup.menu);
+    adminMenuVerified = true;
+    remoteOnline = true;
+    setSaveState('saved');
+    emitData('remote');
+    return true;
+  } catch (error) {
+    adminMenuVerified = false;
+    remoteOnline = false;
+    console.warn('Manuell innlasting av adminmeny feilet:', error);
+    setSaveState('error', 'Kunne ikke hente restaurantmenyen fra Firebase.');
+    emitData('remote');
+    return false;
+  }
+}
+
 /** REST fallback while a stream is unavailable; never download the whole DB. */
 async function fallbackSync() {
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
@@ -1429,6 +1468,10 @@ function startPolling() {
 
 
 async function persist() {
+  if (!CUSTOMER_MODE && !adminMenuVerified) {
+    setSaveState('error', 'Menyen er ikke lastet fra Firebase. Lagring er blokkert for å beskytte restaurantdata.');
+    return false;
+  }
   setSaveState('saving');
   try {
     store.updatedAt = Date.now();
@@ -1469,6 +1512,10 @@ export async function saveNow() {
  * Markerer «Endringer ikke lagret» og planlegger autolagring etter ~1 sekund.
  */
 export function mutate(updater, options = {}) {
+  if (!CUSTOMER_MODE && !adminMenuVerified) {
+    setSaveState('error', 'Menyen er ikke lastet fra Firebase. Oppdater før du endrer produkter.');
+    return undefined;
+  }
   const result = typeof updater === 'function' ? updater(store) : undefined;
   emitData('local');
   if (options.silent) return result;
@@ -2154,6 +2201,7 @@ export function getLocalOrders() {
 
 async function bootstrap() {
   removeRetiredMenuCache();
+  let startupError = null;
 
   if (CUSTOMER_MODE) {
     readSessionOrderIds();
@@ -2187,15 +2235,19 @@ async function bootstrap() {
       const startup = await readStartupMenu();
       remoteOnline = startup.verified;
       if (startup.menu) replaceMenuState(startup.menu);
+      if (!CUSTOMER_MODE) adminMenuVerified = true;
       // /orders is not fetched on customer startup; Firebase SSE handles updates.
     } catch (err) {
       remoteOnline = false;
-      console.warn('Resturantmenyen kunne ikke hentes fra Firebase:', err);
+      startupError = String(err?.message || 'Ukjent tilkoblingsfeil').slice(0,180);
+      console.warn('Restaurantmenyen kunne ikke hentes fra Firebase:', err);
     }
     startPolling();
+  } else if (!CUSTOMER_MODE) {
+    startupError = 'Firebase er ikke konfigurert.';
   }
 
-  setSaveState('saved');
+  setSaveState(startupError ? 'error' : 'saved', startupError || '');
 
   // Cross-tab menu changes are re-fetched from Firebase, never localStorage.
   if (channel) {

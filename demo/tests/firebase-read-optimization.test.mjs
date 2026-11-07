@@ -105,3 +105,19 @@ test('manual admin refresh requests orders without re-downloading complete menu'
   assert.match(code,/restGet\(ORDERS_PATH\)/);
   assert.match(code,/export async function refreshFromDatabase\(options = \{\}\)/);
 });
+
+test('admin bootstrap has bounded Firebase GETs and never allows saving blank menu', async () => {
+  const fs=await import('node:fs/promises');
+  const data=await fs.readFile(new URL('../js/data.js',import.meta.url),'utf8');
+  const admin=await fs.readFile(new URL('../js/admin.js',import.meta.url),'utf8');
+  const html=await fs.readFile(new URL('../admin.html',import.meta.url),'utf8');
+  assert.match(data,/async function restGet\(path, timeoutMs = 9000\)/);
+  assert.match(data,/let adminMenuVerified = CUSTOMER_MODE/);
+  assert.match(data,/if \(!CUSTOMER_MODE && !adminMenuVerified\) \{/);
+  assert.match(data,/export async function retryAdminMenuLoad\(\)/);
+  assert.match(data,/setSaveState\(startupError \? 'error' : 'saved'/);
+  assert.match(admin,/retryAdminMenuLoad\(\)/);
+  assert.match(admin,/retryAdminButton\.hidden = backendInfo\.menuLoaded/);
+  assert.match(html,/id="btnRetryAdminLoad"/);
+  assert.match(html,/Admin-JavaScript kunne ikke starte/);
+});
