@@ -47,3 +47,11 @@ Müşteri tarayıcısında tam sipariş geçmişinin kalıcı bir kopyası tutul
 - Yayından sonra müşteri + admin tarayıcısı, Firebase sipariş/onay, SMS/e-posta, saat seçimi ve gerekiyorsa Epson yazıcı üzerinde gerçek test yap. Kod testleri bu doğrulamanın yerine geçmez.
 
 Detaylı teknik sınırlar için `TECHNICAL.md` dosyasına bak. Eski sürüm notları, tarihli değişiklik günlükleri ve tekrarlanan kurulum açıklamaları bu dosyadan çıkarılmıştır.
+
+## Firebase lesebudsjett, november 2026
+
+- Kunde: `IndexedDB`-meny, lagrede bilder, 10-minutters versjonskontroll på åpen side, samt kontroll ved retur og **alltid** før checkout.
+- Admin Varsler: SSE for `systemErrors`-differanser, ikke nedlasting av hele varslingslisten hvert 12./30. sekund. Fallback brukes når SSE feiler.
+- Veiledende hentekapasitet: Endringer varsles med en gang, uendret heartbeat hvert 150–180. sekund, og kundens oversikt utløper etter 240 sekunder.
+- Gamle `pizzaBonus`-kontoer: Etter vellykket historisk gjennomgang kun et lokalt tidsstempel, med neste full kontroll tidligst etter 7 dager. Pågående ordre-/bonusoppdateringer fortsetter.
+- Admins hovedstrøm `/orders` er beholdt. Det er ikke trygt å redusere start-snapshot med `limitToLast` før nye/planlagte ordre er dekket av en autorisert backend-oversikt.

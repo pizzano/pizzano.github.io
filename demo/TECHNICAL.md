@@ -51,7 +51,7 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 
 ## Trafik tasarrufu — SMS/profil/bonus/admin (2026-11-06)
 
-- Müşteri menüsü sayfasında arka plan `updatedAt` kontrolü iki dakikada bir çalışır; ödeme öncesinde canlı güncellik kontrolü **her zaman** yapılır. Admin tarafında 30 saniye korunur.
+- Müşteri menüsünde arka plan `updatedAt` kontrolü, sayfa kesintisiz açık kaldığında en sık 10 dakikada bir yapılır; sayfaya geri dönüldüğünde en az 60 saniye geçmişse kısa sürüm kontrolü yapılır. Ödeme öncesi canlı güncellik doğrulaması **her zaman** korunur. Admin menüsü 30 saniyede bir kontrol edilir.
 - Kısa süreli bağlantı yeniden kurulurken adminin mevcut SSE bağlantısından ilk sipariş anlık görüntüsü beklenecek şekilde 9 saniyelik tam `/orders` okuma duplikasyonu engellenir. SSE başarısızsa 15 saniyelik normal REST kurtarması sürer; 3 dakikalık onay beklentisi korunur.
 - Bonus sayacı sadece JS belleğinde 45 saniye saklanır, aynı telefon için eşzamanlı istekler birleştirilir. `fresh: true` parametresi ve ödül rezervasyonu Firebase'i yeniden okumak zorundadır; hiçbir fiziksel kupon hakkı tarayıcı önbelleğine güvenmez.
 - Profilde ad/e-posta kaydetme, özel müşteri istatistiklerini okumak ve tam müşteri kaydını PUT etmek yerine iki alana Firebase PATCH yapar. Yeni müşteri kabul mantığı ve bonus sayaçları ayrı kalır. **RTDB Rules PATCH yetkisi canlı ortamda doğrulanmalıdır.**
@@ -80,3 +80,17 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Når **hele** historikkgjennomgangen er gjennomført uten feil, skrives bare et tidsstempel (ingen telefonnumre/kundeinfo) i lokal `localStorage`. Nye adminbesøk i samme nettleser gjentar ikke full `/pizzaBonus.json?shallow=true`-gjennomgang før etter syv dager.
 - Ufullført eller mislykket migrering blir ikke markert ferdig; neste innlogging forsøker igjen. Nye bestillinger fortsetter å synkroniseres umiddelbart, og kundens `getPizzaBonus` beholder legacy fallback før opptjente gratispizzaer brukes.
 - Flere uavhengige adminenheter kan fortsatt gjennomføre separate kontroller. Kunderegisteret og gamle bonusdata slettes ikke.
+
+## Firebase trafikkontroll — fase 1 og 2 (2026-11-07)
+
+**1. Systemfeil / Varsler:** Adminens `systemErrors`-leser bruker én Firebase REST SSE-tilkobling mens fanen er synlig. Første hendelse er én full oversikt; etterpå blir bare `put`/`patch`-endringer sendt og flettet inn lokalt. Varselmerke og kritiske alarmer oppdateres ved eventet. Ved SSE-brudd gjøres én REST-sikkerhetslesing og deretter lavfrekvent fallback (60 sek i aktiv Varsler-fane, 180 sek utenfor). Hvis fanen skjules, lukkes ekstra tilkoblingen; den etableres på nytt når admin er synlig. Manuell systemhelsekontroll beholder en eksplisitt oppfriskning. Ingen nye Firebase-skjemafelt eller lagring av persondata lokalt.
+
+**2. Meny:** Kundens `IndexedDB`-meny og `Cache Storage`-bilder beholdes. `updatedAt` kontrolleres automatisk hvert 10. minutt under aktiv bruk, ved gjenfokusering tidligst etter 60 sek, og alltid før en kunde sender ordren. Full meny lastes bare når versjonen er endret. Admin bruker 30 sek. Ingen lagring av andre kunders informasjon i nettleseren.
+
+**5. Pickup-kapasitet:** Den allerede anonyme `publicPickupLoad`-oversikten publiseres umiddelbart etter ordre-/innstillingsendringer, men uendret publisering begrenses til ca. hvert 150. sekund (med 60-sekunders vedlikeholdstimer). Gyldighetstiden på kundens veiledende oversikt er 240 sekunder; er den eldre, filtreres **ingen** hentetider bort på grunn av gammel kapasitetsinformasjon. Kundens hentetidsskjerm leser veiledende oversikt omtrent hvert 60. sekund mens tidvelgeren er åpen. Når adminfanen lukkes stopper oppdateringen og gamle data blir ugyldige. Dette er fremdeles ikke en backend-atomisk reservasjon.
+
+**4. Historiske bonuskontoer:** Etter vellykket full migreringskontroll lagres kun et tidsstempel i adminnettleserens `localStorage`. Den store gamle `pizzaBonus`-nøkkeloversikten kontrolleres normalt bare ukentlig per enhet. Avbrutt migrering markeres aldri fullført; løpende bonusoppdateringer og fallback for kundens opptjente gratispizzaer fungerer som før.
+
+**3. Admin ordretrafikk — arkitektur avventes:** Nåværende `/orders` SSE-løp gir én komplett startoversikt og deretter bare inkrementelle status-/ordrehendelser. REST fallback henter hele ordreliste hvis SSE er utilgjengelig for at nye ordre fortsatt skal nå admin og 3-minutters godkjenningsfrist. Videre reduksjon av **første overføring** krever en server-vedlikeholdt, indeksert ordreoversikt med tydelige RTDB Rules og sikker migrering. Ikke bytt til `limitToLast` eller datofiltre uten å kunne bevise at gamle, men fortsatt aktive/planlagte ordre aldri skjules. Ikke lagre kundeordre i offentlig nettlesercache. Denne fasen har derfor **ikke** endret ordre-feed eller Godta/varsel/print.
+
+Ingen besparelsesprosent er målt. Mål Firebase Downloads før og etter under samme type bestillingstrafikk og antall adminfaner.

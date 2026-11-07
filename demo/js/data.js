@@ -1133,9 +1133,10 @@ function beginOrdersStream() {
   }
 }
 
-// Menu changes are detected by a short updatedAt check every 30 seconds.
-// A permanent second EventSource connection is unnecessary and can block
-// order confirmations when the same browser has customer/admin tabs open.
+// Admin checks the small updatedAt value every 30 seconds; customers check
+// at most every ten minutes during an uninterrupted visit, with a throttled
+// foreground check and a mandatory fresh validation before order submission.
+// No extra permanent menu EventSource competes with order confirmations.
 
 let reconnectTimer = null;
 function scheduleStreamReconnect() {
@@ -1145,7 +1146,7 @@ function scheduleStreamReconnect() {
     if (document.hidden || navigator.onLine === false) return;
     if (CUSTOMER_MODE) syncCustomerStreams();
     else if (!ordersStream) beginOrdersStream();
-    // Menu version changes are checked by fallbackSync every 30s.
+    // Menu versions are checked by fallbackSync's role-specific interval.
     void fallbackSync();
   }, CUSTOMER_MODE ? 30000 : 3000);
 }
