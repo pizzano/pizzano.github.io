@@ -3,7 +3,7 @@
  * email send, printer receipt or background polling on other pages. */
 import { DB_URL, backendInfo } from './data.js?v=20261105-product-notes2';
 import { checkEpsonConnection } from './order-printer.js?v=20261016-cleanall1';
-import { smsHealthState, emailHealthState, activeCriticalAlerts } from './admin-health-policy.js';
+import { activeCriticalAlerts } from './admin-health-policy.js';
 import { metricSummary, clearMetrics } from './performance-metrics.js';
 
 const $ = id => document.getElementById(id);
@@ -128,10 +128,8 @@ async function runChecks(force = false) {
   try {
     const results = await Promise.allSettled([
       readOnly('orders',true),
-      readOnly('notifications/smsHealth'),
-      readOnly('notifications/emailHealth'),
     ]);
-    const [firebase,sms,email] = results;
+    const [firebase] = results;
     if (firebase.status === 'fulfilled') {
       setService('Firebase','ok','Firebase: Lesing bekreftet',
         'Ordre-nøkler ble lest uten å laste kundeopplysninger; dette garanterer ikke ny ordreskriving');
@@ -139,20 +137,12 @@ async function runChecks(force = false) {
       setService('Firebase','error','Firebase: Lesing mislyktes',
         'Kunne ikke lese ordrenøkler fra Firebase');
     }
-    if (sms.status === 'fulfilled') {
-      const result = smsHealthState(sms.value);
-      setService('Sms',result.state,result.label,result.detail);
-    } else {
-      setService('Sms','unknown','SMS: Kontroll utilgjengelig',
-        'Kunne ikke lese eksisterende Apps Script-hjerteslag');
-    }
-    if (email.status === 'fulfilled') {
-      const result = emailHealthState(email.value);
-      setService('Email',result.state,result.label,result.detail);
-    } else {
-      setService('Email','unknown','E-post: Kontroll utilgjengelig',
-        'Kunne ikke lese eksisterende Apps Script-hjerteslag');
-    }
+    // Do NOT read smsHealth/emailHealth here. The order-screen ↻ button
+    // is the single manual request source for both sender-health records.
+    setService('Sms','unknown','SMS: Bruk Bestillinger',
+      'Trykk ↻ i Bestillinger for en ny kontroll fra SMS Script.');
+    setService('Email','unknown','E-post: Bruk Bestillinger',
+      'Trykk ↻ i Bestillinger for en ny kontroll fra E-post Script.');
     $('healthLastChecked').textContent = 'Lesekontroller utført kl. ' + statusTime() +
       ' · Ingen ordre eller varsler sendt.';
   } catch (error) {
