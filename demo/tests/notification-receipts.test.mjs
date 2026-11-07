@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 const load = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
 
 test('SMS: completed send repairs only Firebase receipt, without gateway call', () => {
@@ -66,4 +67,57 @@ test('sender health writes require a fresh nonduplicate request from admin', () 
   assert.doesNotMatch(emailPoll,/kolEmailHeartbeat_\(now,/);
   assert.match(sms,/everyMinutes\(1\)/);
   assert.match(email,/everyMinutes\(1\)/);
+});
+
+test('on-demand GAS health responder is idempotent and rejects stale requests', () => {
+  const now=1800000000000;
+  for (const source of ['Kode.gs','email-poller.gs']) {
+    const code=load('../integrations/google-apps-script/'+source);
+    const isSms=source==='Kode.gs';
+    const start=code.indexOf(isSms
+      ? 'function kolSmsRespondToManualHealth_(' : 'function kolEmailRespondToManualHealth_(');
+    const end=code.indexOf(isSms
+      ? 'function kolSmsReceipt_(' : '/** Preview without sending customer email.',start);
+    assert.ok(start>0 && end>start,'manual health function missing '+source);
+    let request={id:'hc_abcdefghi_1234567',requestedAt:now-5000};
+    const states=new Map(),writes=[];
+    const props={
+      getProperty:key=>states.get(key)||null,
+      setProperty:(key,value)=>states.set(key,value)
+    };
+    const sandbox={
+      Date:class extends Date {static now(){return now;}},
+      KOL_HEALTH_REQUEST_PATH:'notifications/healthCheckRequest',
+      KOL_SMS_LAST_HEALTH_REQUEST_KEY:'SMS_LAST_HEALTH',
+      KOL_EMAIL_LAST_HEALTH_REQUEST_KEY:'EMAIL_LAST_HEALTH',
+      KOL_SMS:{databaseUrl:'https://example.invalid'},
+      KOL_DB:'https://example.invalid',
+      UrlFetchApp:{fetch:(url,opts)=>{
+        assert.match(url,/notifications\/healthCheckRequest\.json$/);
+        assert.equal(opts.method,'get');
+        return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(request)};
+      }},
+      PropertiesService:{getScriptProperties:()=>props},
+      kolSmsHeartbeat_:(...args)=>writes.push(args),
+      kolEmailHeartbeat_:(...args)=>writes.push(args),
+    };
+    runInNewContext(code.slice(start,end),sandbox,{timeout:1000});
+    const poll=()=>isSms
+      ?sandbox.kolSmsRespondToManualHealth_(props,'LIVE','ok')
+      :sandbox.kolEmailRespondToManualHealth_('ok');
+    poll();
+    assert.equal(writes.length,1,'fresh request answered exactly once');
+    assert.equal(writes[0].at(-1),request.id,'response must include request ID');
+    poll();
+    assert.equal(writes.length,1,'duplicate poll must not write again');
+    request={...request,id:'hc_abcdefghi_1234568',requestedAt:now-400000};
+    poll();
+    assert.equal(writes.length,1,'expired request ignored');
+    request={id:'bad',requestedAt:now};
+    poll();
+    assert.equal(writes.length,1,'malformed request ignored');
+    request=null;
+    poll();
+    assert.equal(writes.length,1,'idle minute never writes a heartbeat');
+  }
 });
