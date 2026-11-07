@@ -146,3 +146,14 @@ test('integration: customer/admin and helper modules retain safe order protectio
   assert.match(worker,/publicPickupLoad\(getOrders\(\)/);
   assert.match(worker,/publicPickupLoad\.json/);
 });
+
+test('pickup load heartbeat sends only sparse unchanged updates', async () => {
+  const source=await readFile(new URL('../js/pickup-load-admin.js',import.meta.url),'utf8');
+  assert.match(source,/CAPACITY_HEARTBEAT_MS = 150 \* 1000/);
+  assert.match(source,/CAPACITY_TIMER_MS = 60 \* 1000/);
+  assert.match(source,/slots === lastSlots && Date\.now\(\) - lastSuccess < CAPACITY_HEARTBEAT_MS/);
+  assert.match(source,/subscribe\(queue\)/);
+  assert.match(source,/window\.setInterval\(queue, CAPACITY_TIMER_MS\)/);
+  assert.equal(pickupLoadFresh({updatedAt:100000,slots:{}},100000+235000),true);
+  assert.equal(pickupLoadFresh({updatedAt:100000,slots:{}},100000+240000),false);
+});

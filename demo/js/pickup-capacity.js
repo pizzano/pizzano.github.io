@@ -1,6 +1,7 @@
 /* Privacy-safe pickup load: aggregate counts only; never customer details.
  * Advisory until a backend-enforced atomic reservation service exists. */
-export const LOAD_FRESH_MS = 90000;
+// Fail open if admin closes and this advisory snapshot goes stale.
+export const LOAD_FRESH_MS = 240000;
 const statuses = new Set(['mottatt','bekreftet','tilberedning']);
 
 function osloParts(time, timezone = 'Europe/Oslo') {

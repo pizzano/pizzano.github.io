@@ -75,7 +75,7 @@ test('public menu cache invalidates automatically when schema version changes', 
 test('admin reconnect waits for initial SSE snapshot before duplicating full order GET', () => {
   assert.match(data, /ordersStreamStartedAt = Date\.now\(\)/);
   assert.match(data, /\(!ordersStream \|\| Date\.now\(\) - ordersStreamStartedAt >= 9000\)/);
-  assert.match(data, /const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE \? 120000 : 30000/);
+  assert.match(data, /const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE \? 10 \* 60 \* 1000 : 30000/);
   assert.match(data, /if \(!ordersStreamHealthy && !ordersFallbackBusy/);
 });
 test('customer contact saves only name/email without downloading private account totals', () => {
@@ -132,4 +132,11 @@ test('all admin entry modules import exactly one fresh shared data module', asyn
     assert.match(html,new RegExp('./js/'+name+'\\.js\\?v='+
       (name === 'admin' ? '20261107-admin-cleanup1' : '20261107-admin-startup1')));
   }
+});
+
+test('cache-first menu checks on return and always revalidates before purchase', () => {
+  assert.match(data,/const CUSTOMER_MENU_RETURN_MIN_MS = 60 \* 1000/);
+  assert.match(data,/if \(CUSTOMER_MODE && Date\.now\(\) - lastMenuFallbackAt >= CUSTOMER_MENU_RETURN_MIN_MS\)/);
+  assert.match(data,/lastMenuFallbackAt = 0; \/\/ force a small updatedAt read/);
+  assert.match(data,/export async function ensureCustomerMenuCurrent\(\)/);
 });

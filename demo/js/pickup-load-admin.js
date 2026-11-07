@@ -9,6 +9,10 @@ let pendingTimer = null;
 let sending = false;
 let lastSlots = '';
 let lastSuccess = 0;
+// Order changes publish quickly. Unchanged slot counts get a sparse heartbeat
+// to preserve a bounded freshness timeout when the restaurant is quiet.
+const CAPACITY_HEARTBEAT_MS = 150 * 1000;
+const CAPACITY_TIMER_MS = 60 * 1000;
 function setStatus(message) { if (status) status.textContent = message; }
 
 async function publish() {
@@ -21,7 +25,7 @@ async function publish() {
   const snapshot = publicPickupLoad(getOrders(), Date.now(),
     store.settings?.timezone || 'Europe/Oslo');
   const slots = JSON.stringify(snapshot.slots);
-  if (slots === lastSlots && Date.now() - lastSuccess < 45000) return;
+  if (slots === lastSlots && Date.now() - lastSuccess < CAPACITY_HEARTBEAT_MS) return;
   sending = true;
   try {
     const response = await fetch(DB_URL + '/publicPickupLoad.json', {
@@ -52,4 +56,4 @@ subscribe(queue);
 ready().then(queue).catch(() => setStatus('Firebase er ikke tilgjengelig.'));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) queue(); });
 window.addEventListener('online', queue);
-window.setInterval(queue, 25000);
+window.setInterval(queue, CAPACITY_TIMER_MS);

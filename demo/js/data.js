@@ -43,7 +43,9 @@ window.setTimeout(() => { if (navigator.onLine !== false) void flushSystemErrorQ
 const FALLBACK_ORDERS_INTERVAL = CUSTOMER_MODE ? 5000 : 15000;
 // Ordering always verifies the current menu. A browsing customer needs only
 // a low-frequency background version check; staff edits stay at 30 seconds.
-const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE ? 120000 : 30000;
+const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE ? 10 * 60 * 1000 : 30000;
+// A focus event can trigger a small version read only after one minute.
+const CUSTOMER_MENU_RETURN_MIN_MS = 60 * 1000;
 const SCHEMA_VERSION = 6;
 
 const RETIRED_MENU_KEY = 'bestill_menu_state_v3';
@@ -1417,6 +1419,13 @@ async function fallbackSync() {
   }
 }
 
+function refreshAfterReturn() {
+  if (CUSTOMER_MODE && Date.now() - lastMenuFallbackAt >= CUSTOMER_MENU_RETURN_MIN_MS) {
+    lastMenuFallbackAt = 0; // force a small updatedAt read, not a full menu
+  }
+  void fallbackSync();
+}
+
 function startPolling() {
   // Admin uses one live order SSE; customers use short REST reads only.
   // Menu updates are already fetched by the updatedAt REST fallback.
@@ -1426,13 +1435,13 @@ function startPolling() {
   fallbackTimer = window.setInterval(() => { void fallbackSync(); }, FALLBACK_ORDERS_INTERVAL);
   window.addEventListener('focus', () => {
     if (CUSTOMER_MODE) syncCustomerStreams();
-    void fallbackSync();
+    refreshAfterReturn();
   });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       if (CUSTOMER_MODE) syncCustomerStreams();
       if (!CUSTOMER_MODE && !ordersStream) scheduleStreamReconnect();
-      void fallbackSync();
+      refreshAfterReturn();
     }
   });
   window.addEventListener('online', () => {
@@ -1441,7 +1450,7 @@ function startPolling() {
     customerStreamFailures = 0;
     if (CUSTOMER_MODE) syncCustomerStreams();
     if (!CUSTOMER_MODE && !ordersStream) scheduleStreamReconnect();
-    void fallbackSync();
+    refreshAfterReturn();
   });
 }
 

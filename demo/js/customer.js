@@ -3331,7 +3331,8 @@ document.getElementById('btnMorePickupTimes').addEventListener('click', () => {
   ui.showAllPickupTimes = !ui.showAllPickupTimes;
   renderCheckout();
 });
-// Refresh only the small anonymized capacity feed while checkout is visible.
+// Refresh anonymized pickup capacity only while the time picker is visible.
+// The feed is advisory; live checkout menu verification stays mandatory.
 window.setInterval(() => {
   if (!document.hidden && ui.view === 'checkout' && ui.checkoutStep === 3 &&
       store.settings?.pickupCapacityEnabled === true) {
@@ -3339,7 +3340,7 @@ window.setInterval(() => {
       if (ui.view === 'checkout' && ui.checkoutStep === 3) renderCheckout();
     });
   }
-}, 30000);
+}, 60000);
 
 el.timeGrid.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-time]');
