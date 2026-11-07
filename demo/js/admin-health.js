@@ -184,20 +184,16 @@ printerButton?.addEventListener('click', async () => {
   }
 });
 function onChange() {
+  // Opening this page only updates local display. Status probes are triggered
+  // by the explicit Systemhelse 'Kontroller nå' button, never by a timer.
   networkStatus();
-  if (visible()) {
-    renderPerformance();
-    void runChecks();
-  }
+  if (visible()) renderPerformance();
 }
 window.addEventListener('kol-admin-page-change',onChange);
 window.addEventListener('kol-admin-settings-change',onChange);
 window.addEventListener('online',onChange);
 window.addEventListener('offline',onChange);
 document.addEventListener('visibilitychange',onChange);
-window.setInterval(() => {
-  if (visible()) void runChecks();
-},60000);
 networkStatus();
 printerLastStatus();
 renderPerformance();

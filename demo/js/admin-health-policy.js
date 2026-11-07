@@ -41,9 +41,9 @@ export const SMS_STATUS_INTERVAL_MS = 45000;
 export const ALERTS_BACKGROUND_INTERVAL_MS = 30000;
 export const ALERTS_VISIBLE_INTERVAL_MS = 12000;
 
-export function smsStatusShouldPoll({ page, visible, sinceLastCheckMs, force = false } = {}) {
-  return visible === true && page === 'orders' &&
-    (force || sinceLastCheckMs >= SMS_STATUS_INTERVAL_MS);
+export function smsStatusShouldPoll({ page, visible, force = false } = {}) {
+  // No automatic sender-status reads, no matter how old the last check was.
+  return force === true && visible === true && page === 'orders';
 }
 
 export function systemAlertsShouldPoll({
