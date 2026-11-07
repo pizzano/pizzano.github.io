@@ -129,6 +129,7 @@ test('all admin entry modules import exactly one fresh shared data module', asyn
     'pickup-load-admin','special-days-admin']) {
     const code=await fs.readFile(new URL('../js/'+name+'.js',import.meta.url),'utf8');
     assert.match(code,/\.\/data\.js\?v=20261107-admin-startup1/);
-    assert.match(html,new RegExp('./js/'+name+'\\.js\\?v=20261107-admin-startup1'));
+    assert.match(html,new RegExp('./js/'+name+'\\.js\\?v='+
+      (name === 'admin' ? '20261107-admin-cleanup1' : '20261107-admin-startup1')));
   }
 });
