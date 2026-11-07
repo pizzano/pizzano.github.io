@@ -14,6 +14,8 @@ const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 // Firebase RTDB /orders requires ".indexOn": ["statusUpdatedAt"].
 const KOL_EMAIL_SCAN_CURSOR_KEY = 'KOL_EMAIL_LAST_SUCCESSFUL_SCAN_MS';
 const KOL_EMAIL_SCAN_OVERLAP_MS = 2 * 60 * 1000;
+const KOL_EMAIL_LAST_HEALTH_REQUEST_KEY = 'KOL_EMAIL_LAST_MANUAL_HEALTH_ID';
+const KOL_HEALTH_REQUEST_PATH = 'notifications/healthCheckRequest';
 // Only notify for recent staff status events. Prevents a new installation
 // from suddenly emailing old test orders after first start.
 const KOL_EMAIL_EVENT_MAX_AGE_MS = 60 * 60 * 1000;
@@ -414,11 +416,12 @@ function kolEmailReceipt_(id, kind, order, sentAt) {
 }
 
 /** Fresh proof of working polling and mail authorization, not mail delivery. */
-function kolEmailHeartbeat_(now, state) {
+function kolEmailHeartbeat_(now, state, requestId) {
   const quota = MailApp.getRemainingDailyQuota();
   kolEmailPutJson_('notifications/emailHealth', {
     checkedAt:now, quotaRemaining:Number(quota) || 0,
     status:state === 'ok' && quota > 0 ? 'ok' : 'unavailable',
+    requestId:requestId,
     source:'apps-script-email-poller',
     // Admin Varslinger uses this to detect whether the live sender supports
     // the editor's <strong> tags. Old workers do not publish this marker.
@@ -427,6 +430,27 @@ function kolEmailHeartbeat_(now, state) {
     strongFormatting:true,
     safeInlineFormatting:true
   });
+}
+
+/** Respond only when a person tapped the admin's manual refresh button.
+ * The independent minute-based sender must keep running for real orders.
+ */
+function kolEmailRespondToManualHealth_(state) {
+  const response = UrlFetchApp.fetch(KOL_DB + '/' +
+    KOL_HEALTH_REQUEST_PATH + '.json', {
+      method:'get', muteHttpExceptions:true
+    });
+  if (response.getResponseCode() !== 200) return;
+  const request = JSON.parse(response.getContentText() || 'null');
+  if (!request || typeof request !== 'object' ||
+      !/^hc_[a-z0-9_]{8,45}$/.test(String(request.id || ''))) return;
+  const requestId = String(request.id);
+  const age = Date.now() - Number(request.requestedAt);
+  const props = PropertiesService.getScriptProperties();
+  if (!Number.isFinite(age) || age < -60000 || age > 5 * 60 * 1000 ||
+      requestId === props.getProperty(KOL_EMAIL_LAST_HEALTH_REQUEST_KEY)) return;
+  kolEmailHeartbeat_(Date.now(),state,requestId);
+  props.setProperty(KOL_EMAIL_LAST_HEALTH_REQUEST_KEY,requestId);
 }
 
 /** Preview without sending customer email. Run and inspect execution log. */
@@ -673,11 +697,11 @@ function kontrollerEpostBestillinger() {
     }
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     props.setProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY, KOL_EMAIL_FIRST_SEEN_FIX_VERSION);
-    try { kolEmailHeartbeat_(now, 'ok'); }
-    catch (err) { Logger.log('E-postkontroll kunne ikke publiseres: ' + err.message); }
+    try { kolEmailRespondToManualHealth_('ok'); }
+    catch (err) { Logger.log('Manuell e-postkontroll kunne ikke publiseres: ' + err.message); }
   } catch (err) {
     Logger.log('E-postpoller feilet: ' + err.message);
-    try { kolEmailHeartbeat_(Date.now(), 'error'); } catch (_) {}
+    try { kolEmailRespondToManualHealth_('error'); } catch (_) {}
     throw err;
   } finally { lock.releaseLock(); }
 }
@@ -694,9 +718,8 @@ function kontrollerEpostTestNaa() {
       (PropertiesService.getScriptProperties().getProperty('KOL_TEST_EMAIL')||
        Session.getEffectiveUser().getEmail()||'(ukjent)'));
     kolProcessMailTests_(PropertiesService.getScriptProperties(),kolReadMailTemplates_());
-    // Publish the formatting engine version even when only a manual test was run.
-    try { kolEmailHeartbeat_(Date.now(),'ok'); }
-    catch(error){Logger.log('Versjonsstatus kan ikke publiseres: '+error.message)}
+    // An email test does not write health; only the admin refresh button
+    // can request a sender-health status update.
     Logger.log('Testkontroll ferdig. Hvis ingen test ble sendt: kontroller Firebase Rules, mottakerkonto, testbegrensning og siste request.id.');
   } finally { lock.releaseLock(); }
 }
