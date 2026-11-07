@@ -1,4 +1,4 @@
-import {store,mutate,subscribe,ready} from './data.js?v=20261105-product-notes2';
+import {store,mutate,subscribe,ready} from './data.js?v=20261107-admin-startup1';
 import {SPECIAL_DAYS,parseSpecialDays,dateForDay,osloToday} from './special-days.js';
 const panel=document.getElementById('specialDayAdmin');
 if(panel){

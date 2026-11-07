@@ -61,7 +61,7 @@ import {
   refreshFromDatabase,
   retryAdminMenuLoad,
   orderStatusLabel,
-} from './data.js?v=20261105-product-notes2';
+} from './data.js?v=20261107-admin-startup1';
 
 /* ------------------------------------------------------------------ *
  * UI-tilstand

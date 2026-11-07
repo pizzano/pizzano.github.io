@@ -121,3 +121,14 @@ test('admin bootstrap has bounded Firebase GETs and never allows saving blank me
   assert.match(html,/id="btnRetryAdminLoad"/);
   assert.match(html,/Admin-JavaScript kunne ikke starte/);
 });
+
+test('all admin entry modules import exactly one fresh shared data module', async () => {
+  const fs=await import('node:fs/promises');
+  const html=await fs.readFile(new URL('../admin.html',import.meta.url),'utf8');
+  for (const name of ['admin','admin-health','loyalty-sync','orders-archive',
+    'pickup-load-admin','special-days-admin']) {
+    const code=await fs.readFile(new URL('../js/'+name+'.js',import.meta.url),'utf8');
+    assert.match(code,/\.\/data\.js\?v=20261107-admin-startup1/);
+    assert.match(html,new RegExp('./js/'+name+'\\.js\\?v=20261107-admin-startup1'));
+  }
+});
