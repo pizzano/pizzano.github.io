@@ -140,3 +140,18 @@ test('cache-first menu checks on return and always revalidates before purchase',
   assert.match(data,/lastMenuFallbackAt = 0; \/\/ force a small updatedAt read/);
   assert.match(data,/export async function ensureCustomerMenuCurrent\(\)/);
 });
+
+test('historical pizza migration is audited at most weekly after full success', async () => {
+  const fs=await import('node:fs/promises');
+  const code=await fs.readFile(new URL('../js/loyalty-sync.js',import.meta.url),'utf8');
+  assert.match(code,/LEGACY_AUDIT_INTERVAL_MS = 7 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(code,/localStorage\.getItem\(LEGACY_AUDIT_KEY\)/);
+  assert.match(code,/localStorage\.setItem\(LEGACY_AUDIT_KEY,String\(Date\.now\(\)\)\)/);
+  assert.match(code,/if \(legacyAuditRecentlyCompleted\(\)\) \{/);
+  assert.match(code,/historicalAuditFailed = true/);
+  assert.match(code,/historicalDiscovered && !historicalQueue\.length && !historicalAuditFailed/);
+  assert.match(code,/window\.addEventListener\('kol-order-confirmed', scheduleSync\)/);
+  assert.match(code,/const old = compact \|\| fromV3 \? null : await readOldCustomer\(phone\)/);
+  const marked=code.match(/localStorage\.setItem\([^)]*\)/g) || [];
+  assert.equal(marked.length,1,'never write phone numbers or loyalty snapshots to local storage');
+});

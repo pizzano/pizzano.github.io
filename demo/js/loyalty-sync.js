@@ -293,15 +293,39 @@ let historicalQueue = [];
 let historicalTimer = null;
 let historicalBusy = false;
 let historicalDiscovered = false;
+let historicalAuditFailed = false;
+// Avoid re-reading and ETag-checking every historical account whenever the
+// restaurant reopens its admin browser. No personal details are stored here.
+const LEGACY_AUDIT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+const LEGACY_AUDIT_KEY = 'kol_pizza_legacy_audit_v1';
+function legacyAuditRecentlyCompleted(now = Date.now()) {
+  try {
+    const checkedAt = Number(localStorage.getItem(LEGACY_AUDIT_KEY));
+    return Number.isSafeInteger(checkedAt) && checkedAt > 0 &&
+      now >= checkedAt && now - checkedAt < LEGACY_AUDIT_INTERVAL_MS;
+  } catch { return false; }
+}
+function markLegacyAuditCompleted() {
+  try { localStorage.setItem(LEGACY_AUDIT_KEY,String(Date.now())); }
+  catch { /* Restricted storage: the safe, slower migration still works. */ }
+}
 async function discoverHistoricalPhones() {
   if (historicalDiscovered || !DB_URL || document.hidden || navigator.onLine === false) return;
+  if (legacyAuditRecentlyCompleted()) {
+    // An old customer is still migrated on their next order, and the customer
+    // browser can read legacy bonus rights until the next scheduled audit.
+    historicalDiscovered = true;
+    return;
+  }
   try {
     const response = await fetch(DB_URL + '/pizzaBonus.json?shallow=true', { cache: 'no-store' });
     if (!response.ok) return;
     const names = await response.json() || {};
     historicalQueue = Object.keys(names).filter(phone => loyaltyPhone(phone) === phone);
     historicalDiscovered = true;
-    scheduleHistoricalMigration();
+    historicalAuditFailed = false;
+    if (!historicalQueue.length) markLegacyAuditCompleted();
+    else scheduleHistoricalMigration();
   } catch (error) {
     console.warn('Historiske bonuskontoer kan ikke listes; migreres ved neste bestilling:', error?.message);
   }
@@ -322,11 +346,17 @@ async function migrateHistoricalBatch() {
       const phone = historicalQueue.shift();
       try { await syncPhone(phone); }
       catch (error) {
+        historicalAuditFailed = true;
         console.warn('Historisk kundekonto venter til neste pålogging:', error?.message);
       }
     }
   } finally {
     historicalBusy = false;
+    // Never mark a partial/failed migration complete. A later admin visit
+    // must retry missing legacy accounts before any can be forgotten.
+    if (historicalDiscovered && !historicalQueue.length && !historicalAuditFailed) {
+      markLegacyAuditCompleted();
+    }
     scheduleHistoricalMigration();
   }
 }

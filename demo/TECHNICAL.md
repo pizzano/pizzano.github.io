@@ -73,3 +73,10 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Minutt-triggerne må **ikke** deaktiveres: de sender ekte ordre-SMS/e-post, oppdaterer ordre-spesifikke kvitteringer og utfører eksisterende tester. Med nytt script oppstår ingen **tomme helse-skrivinger**, men det er fortsatt **to små forespørselslesinger** per minutt og normale ordresøk. Nettobesparelsen må måles.
 - **GitHub er kun kilde:** de aktive to Google Apps Script-prosjektene oppdateres IKKE automatisk ved repo-commit eller GitHub Pages deploy. Før begge LIVE-prosjektene har fått den nye kildekoden, vil gamle triggere fortsatt skrive `smsHealth` og `emailHealth` hvert minutt. Slett ikke triggere eller Script Properties.
 - Firebase Database Rules må sikre `healthCheckRequest` mot uautoriserte skriv, og sikre at helsedata kun kan skrives av betrodde avsendere. Selv om koden begrenser alder/id, er dette **ikke** autorisasjon.
+
+## Legacy pizza bonus scan budget (2026-11-07)
+
+- `loyalty-sync.js` migrerer fortsatt historiske `/pizzaBonus` kontoer med ETag-transaksjoner og uten tap av opptjent gratispizza.
+- Når **hele** historikkgjennomgangen er gjennomført uten feil, skrives bare et tidsstempel (ingen telefonnumre/kundeinfo) i lokal `localStorage`. Nye adminbesøk i samme nettleser gjentar ikke full `/pizzaBonus.json?shallow=true`-gjennomgang før etter syv dager.
+- Ufullført eller mislykket migrering blir ikke markert ferdig; neste innlogging forsøker igjen. Nye bestillinger fortsetter å synkroniseres umiddelbart, og kundens `getPizzaBonus` beholder legacy fallback før opptjente gratispizzaer brukes.
+- Flere uavhengige adminenheter kan fortsatt gjennomføre separate kontroller. Kunderegisteret og gamle bonusdata slettes ikke.
