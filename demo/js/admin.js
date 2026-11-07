@@ -3,7 +3,7 @@ import { emailReceiptKinds, emailReceiptSent, emailReceiptDetail,
 import { escapeHtml } from './display-format.js';
 import { adminDataSignatures, adminRenderChanges, createMarkupUpdater } from './admin-render-policy.js';
 import { productImageSources } from './product-images.js';
-import { smsStatusShouldPoll, systemAlertsShouldPoll } from './admin-health-policy.js';
+import { systemAlertsShouldPoll } from './admin-health-policy.js';
 import { focusDialog, trapDialogTab } from './dialog-focus.js';
 import { readSystemErrors, setSystemErrorStatus, archiveResolvedSystemErrors } from './system-errors.js';
 import { confirmationRemaining, confirmationExpired, shouldSoundPendingOrder, customerOrderLink } from './order-confirmation.js';
@@ -2663,15 +2663,14 @@ function renderOrderDetail(orderId) {
 }
 
 
-/* SMS operational status: exactly ONE small Firebase check, with no
- * Vercel proxy, additional phone tab, browser-agent heartbeat or SMS send.
- *
- * Apps Script LIVE + fresh SMS poll is not a phone connection test.
- * Keep the indicator amber when automation works but Android is unverified.
- * Real SMS acknowledgement per order is handled by smsReceipts below.
+/* Admin manual health checks: Firebase records are written by Apps Script
+ * ONLY when btnRefreshOrders creates a fresh healthCheckRequest.
+ * Real SMS/email sending, its minute trigger and order SSE never depend on
+ * this interface. Each manual check opens two temporary SSE connections and
+ * closes both on a matching request ID or timeout.
  */
-let smsStatusFetching = false;
-let smsStatusLastCheckedAt = 0;
+let manualHealthPending = false;
+const MANUAL_HEALTH_WAIT_MS = 160000;
 
 function displaySmsStatus(mode, label, detail) {
   const badge = document.getElementById('ordersSmsStatus');
@@ -2686,102 +2685,136 @@ function displaySmsStatus(mode, label, detail) {
 
 function classifySmsHealth(health, now = Date.now()) {
   if (!health || health.source !== 'apps-script-sms-poller') {
-    return ['pending', 'SMS-status ukjent',
-      'Ingen gyldig kontroll fra Google Apps Script i Firebase.'];
+    return ['pending', 'SMS-status ukjent', 'Ingen gyldig SMS-poll fra Apps Script.'];
   }
   if (health.liveConfigured !== true) {
-    return ['error', 'SMS-automatisering av',
-      'SMS-polleren står ikke i LIVE-modus.'];
+    return ['error', 'SMS-automatisering av', 'SMS-polleren står ikke i LIVE-modus.'];
   }
   const at = Number(health.checkedAt);
-  const age = now - at;
-  if (health.status !== 'ok' || !Number.isFinite(at) || at <= 0
-      || age < -60000 || age >= 180000) {
-    return ['error', 'SMS-poller frakoblet',
-      'Ingen vellykket Firebase-kontroll fra Apps Script siste 3 minutter.'];
+  if (health.status !== 'ok' || !Number.isFinite(at) || at <= 0 ||
+      now - at < -60000 || now - at > MANUAL_HEALTH_WAIT_MS + 60000) {
+    return ['error', 'SMS-poller utilgjengelig', 'Siste manuelle kontroll feilet.'];
   }
   return ['active', 'SMS-automatisering LIVE',
-    'Apps Script kontrollerer bestillinger via Firebase. '
-    + 'Telefonens forbindelse og faktisk SMS-levering er ikke verifisert.'];
+    'Siste manuelle kontroll godkjent av Apps Script. '
+    + 'Faktisk SMS-levering til kundens telefon er ikke verifisert.'];
 }
 
-async function refreshSmsStatus({ force = false } = {}) {
-  if (smsStatusFetching) return;
-  const now = Date.now();
-  if (!smsStatusShouldPoll({
-    page: ui.page,
-    visible: !document.hidden,
-    sinceLastCheckMs: now - smsStatusLastCheckedAt,
-    force,
-  })) return;
-  smsStatusLastCheckedAt = now;
-  if (!DB_URL) {
-    displaySmsStatus('error', 'SMS ikke konfigurert', 'Firebase-adresse mangler.');
-    return;
-  }
-  smsStatusFetching = true;
-  try {
-    const response = await fetch(DB_URL + '/notifications/smsHealth.json?_=' + Date.now(), {
-      method: 'GET', cache: 'no-store', signal: AbortSignal.timeout(7000)
-    });
-    if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
-    displaySmsStatus(...classifySmsHealth(await response.json()));
-  } catch (_) {
-    displaySmsStatus('error', 'SMS-status utilgjengelig',
-      'Kunne ikke lese SMS-status fra Firebase.');
-  } finally {
-    smsStatusFetching = false;
-  }
-}
-
-// SMS health is read only after the manual btnRefreshOrders action.
-// Independent Apps Script delivery and order streams continue.
-
-/* E-mail sender health is independent of SMS and printer connectivity.
-   Green only after a RECENT poller heartbeat plus MailApp authorization/quota.
-   It does not claim successful delivery of each customer message. */
-let emailStatusFetching = false;
 function displayEmailStatus(mode, label, explanation) {
   const el = document.getElementById('ordersEmailStatus');
   if (!el) return;
-  for (const state of ['pending','active','error']) el.classList.toggle('is-' + state, mode === state);
+  for (const state of ['pending','active','error']) {
+    el.classList.toggle('is-' + state, mode === state);
+  }
   el.querySelector('[data-email-status-text]').textContent = label + ' · ' + explanation;
   el.setAttribute('aria-label', 'E-post: ' + label);
   el.title = label + ': ' + explanation;
 }
-async function refreshEmailStatus() {
-  // Email health is displayed on Bestillinger; hidden pages need no status reads.
-  if (emailStatusFetching || document.hidden || ui.page !== 'orders') return;
-  if (!DB_URL) {
-    displayEmailStatus('error', 'E-post utilgjengelig', 'Firebase-adresse mangler.');
-    return;
+
+function classifyEmailHealth(health) {
+  const age = Date.now() - Number(health?.checkedAt || 0);
+  if (health?.source !== 'apps-script-email-poller' ||
+      !Number.isFinite(age) || age < -60000 || age > MANUAL_HEALTH_WAIT_MS + 60000) {
+    return ['pending', 'E-post ikke bekreftet', 'Ingen gyldig manuell kontroll fra Apps Script.'];
   }
-  emailStatusFetching = true;
+  if (health.status === 'ok' && Number(health.quotaRemaining) > 0) {
+    return ['active', 'E-post aktiv',
+      'Siste manuelle kontroll ble godkjent av MailApp. '
+      + 'Levering til kundens innboks er ikke garantert.'];
+  }
+  return ['error', 'E-post utilgjengelig',
+    'Apps Script eller MailApp har feil, eller sendekvoten er oppbrukt.'];
+}
+
+function awaitManualHealthResponse(path, requestId) {
+  return new Promise((resolve, reject) => {
+    if (!DB_URL || typeof EventSource !== 'function') {
+      reject(new Error('Sanntidskontroll støttes ikke i denne nettleseren.'));
+      return;
+    }
+    const endpoint = DB_URL + '/notifications/' + path + '.json';
+    const source = new EventSource(endpoint);
+    let finished = false;
+    const finish = (error, value) => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(timer);
+      source.close();
+      if (error) reject(error);
+      else resolve(value);
+    };
+    const timer = window.setTimeout(() => {
+      finish(new Error('Ingen svar fra Google Apps Script. Kontroller at nyeste script er installert.'));
+    }, MANUAL_HEALTH_WAIT_MS);
+    const onMessage = event => {
+      try {
+        const payload = JSON.parse(event.data);
+        // A full Firebase REST PUT to this node produces SSE path '/'.
+        if (payload.path !== '/' || payload.data?.requestId !== requestId) return;
+        finish(null, payload.data);
+      } catch { /* Ignore unrecognized/stale updates. */ }
+    };
+    source.addEventListener('put', onMessage);
+    source.addEventListener('patch', onMessage);
+    source.onerror = () => {
+      if (navigator.onLine === false) {
+        finish(new Error('Internettforbindelsen er brutt.'));
+      }
+      // Otherwise EventSource retries within this one user-requested window.
+    };
+  });
+}
+
+async function requestManualNotificationHealth() {
+  if (manualHealthPending) return false;
+  if (!DB_URL) {
+    displaySmsStatus('error','SMS ikke konfigurert','Firebase-adresse mangler.');
+    displayEmailStatus('error','E-post utilgjengelig','Firebase-adresse mangler.');
+    return false;
+  }
+  manualHealthPending = true;
+  const requestId = 'hc_' + Date.now().toString(36) + '_' +
+    Math.random().toString(36).slice(2, 11);
+  displaySmsStatus('pending','SMS kontrolleres',
+    'Venter på svar fra SMS Script (ca. ett minutt).');
+  displayEmailStatus('pending','E-post kontrolleres',
+    'Venter på svar fra E-post Script (ca. ett minutt).');
   try {
-    const url = DB_URL + '/notifications/emailHealth.json?_=' + Date.now();
-    const response = await fetch(url, {
-      method:'GET', cache:'no-store', signal:AbortSignal.timeout(7500)
+    const response = await fetch(DB_URL + '/notifications/healthCheckRequest.json', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:requestId,requestedAt:Date.now()}),
+      signal:AbortSignal.timeout(8000)
     });
     if (!response.ok) throw new Error('Firebase HTTP ' + response.status);
-    const health = await response.json();
-    const age = Date.now() - Number(health?.checkedAt || 0);
-    const active = health?.source === 'apps-script-email-poller'
-      && health?.status === 'ok' && Number(health?.quotaRemaining) > 0
-      && age >= -60000 && age <= 180000;
-    if (active) {
-      displayEmailStatus('active', 'E-post aktiv',
-        'Apps Script kontrollerte Firebase og MailApp nylig. Innbokslevering kan ikke garanteres.');
-    } else if (health?.status === 'unavailable') {
-      displayEmailStatus('error', 'E-post utilgjengelig', 'MailApp-kvoten er oppbrukt eller senderen feilet.');
-    } else {
-      displayEmailStatus('pending', 'E-post ikke bekreftet',
-        'Ingen fersk kontroll fra Apps Script. Sjekk utløseren og loggene.');
-    }
   } catch (error) {
-    displayEmailStatus('error', 'E-post frakoblet', 'Kunne ikke hente senderens kontrollstatus.');
-  } finally { emailStatusFetching = false; }
+    manualHealthPending = false;
+    displaySmsStatus('error','SMS-kontroll ikke startet',
+      'Kontrollforespørselen kunne ikke lagres i Firebase.');
+    displayEmailStatus('error','E-postkontroll ikke startet',
+      'Kontrollforespørselen kunne ikke lagres i Firebase.');
+    return false;
+  }
+
+  // The button itself returns immediately; neither sender needs the admin
+  // tab kept open to deliver customer notifications.
+  void Promise.allSettled([
+    awaitManualHealthResponse('smsHealth',requestId).then(value => {
+      displaySmsStatus(...classifySmsHealth(value));
+    }).catch(error => {
+      displaySmsStatus('error','SMS-kontroll uten svar',error.message);
+    }),
+    awaitManualHealthResponse('emailHealth',requestId).then(value => {
+      displayEmailStatus(...classifyEmailHealth(value));
+    }).catch(error => {
+      displayEmailStatus('error','E-postkontroll uten svar',error.message);
+    }),
+  ]).finally(() => { manualHealthPending = false; });
+  return true;
 }
-// Email health is read only by btnRefreshOrders; no timer or tab-focus read.
+
+// The status records are never fetched automatically on startup, tab focus,
+// page changes, or intervals. The workers only publish status after a request.
 
 /* Receipt classification is pure; the admin supplies current order snapshots. */
 function smsReceiptSent(id) { return smsReceiptSentForOrders(id, getOrders()); }
@@ -3281,19 +3314,21 @@ el.btnRefreshOrders.addEventListener('click', async () => {
   if (el.btnRefreshOrders.disabled) return;
   el.btnRefreshOrders.disabled = true;
   try {
-    // Only this user gesture runs the explicit connectivity checks.
-    // Live order SSE, alarm, Godta, printing and Apps Script stay automatic.
+    // The health request is tiny. Independent SMS/email workers will respond
+    // on their next scheduled run; sending never waits for this admin button.
     const checks = await Promise.allSettled([
       refreshFromDatabase({ ordersOnly: true }),
-      refreshSmsStatus({ force: true }),
-      refreshEmailStatus(),
       testEpsonFromOrders({ force: true }),
+      requestManualNotificationHealth(),
     ]);
     renderAll();
     updateOrdersConnection();
     const connected = checks[0].status === 'fulfilled' && checks[0].value === true;
+    const requested = checks[2].status === 'fulfilled' && checks[2].value === true;
     toast(connected
-      ? 'Bestillinger, nett, SMS, e-post og Epson er kontrollert.'
+      ? (requested
+        ? 'Bestillinger og nett oppdatert. SMS/e-post kontrolleres ved neste kjøring.'
+        : 'Bestillinger oppdatert. SMS/e-postkontroll pågår eller kunne ikke startes.')
       : 'Kunne ikke bekrefte bestillingstilkoblingen. Sjekk statuslysene.');
   } finally {
     el.btnRefreshOrders.disabled = false;
