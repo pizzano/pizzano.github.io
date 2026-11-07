@@ -14,7 +14,8 @@
  * not a growing Firebase subtree or lifetime history.
  * ETag transactions keep counted totals and coupon reservations consistent.
  */
-import { DB_URL, getOrders, ready, store, subscribe } from './data.js?v=20261107-admin-startup1';
+import { DB_URL, getOrders, ready, store, subscribe,
+  isTrustedCompactOrderFeedActive } from './data.js?v=20261107-admin-startup1';
 import { historicalPizzaEvents, loyaltyPhone, pizzaBonus } from './loyalty.js?v=20261023-customerprofile1';
 
 const LOOKBACK_MS = 48 * 60 * 60 * 1000;
@@ -189,6 +190,9 @@ async function readOldCustomer(phone) {
 }
 
 async function syncPhone(phone) {
+  // A compact browser feed cannot rebuild lifetime loyalty totals. The
+  // trusted backend contract takes over this worker only after opt-in.
+  if (isTrustedCompactOrderFeedActive()) return;
   const orders = verifiedOrders(phone);
   const history = historicalPizzaEvents(orders, phone, store.sections);
   const url = DB_URL + '/customers/' + encodeURIComponent(phone) + '.json';
@@ -259,6 +263,7 @@ async function syncPhone(phone) {
 }
 
 async function syncRecentlyAccepted() {
+  if (isTrustedCompactOrderFeedActive()) return;
   if (running) { rerun = true; return; }
   if (!DB_URL || document.hidden || navigator.onLine === false) return;
   running = true;
@@ -310,6 +315,7 @@ function markLegacyAuditCompleted() {
   catch { /* Restricted storage: the safe, slower migration still works. */ }
 }
 async function discoverHistoricalPhones() {
+  if (isTrustedCompactOrderFeedActive()) return;
   if (historicalDiscovered || !DB_URL || document.hidden || navigator.onLine === false) return;
   if (legacyAuditRecentlyCompleted()) {
     // An old customer is still migrated on their next order, and the customer
@@ -338,6 +344,7 @@ function scheduleHistoricalMigration() {
   }, 3500);
 }
 async function migrateHistoricalBatch() {
+  if (isTrustedCompactOrderFeedActive()) return;
   if (historicalBusy || document.hidden || navigator.onLine === false) return;
   historicalBusy = true;
   try {

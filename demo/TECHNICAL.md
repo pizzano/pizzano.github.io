@@ -94,3 +94,18 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 **3. Admin ordretrafikk — arkitektur avventes:** Nåværende `/orders` SSE-løp gir én komplett startoversikt og deretter bare inkrementelle status-/ordrehendelser. REST fallback henter hele ordreliste hvis SSE er utilgjengelig for at nye ordre fortsatt skal nå admin og 3-minutters godkjenningsfrist. Videre reduksjon av **første overføring** krever en server-vedlikeholdt, indeksert ordreoversikt med tydelige RTDB Rules og sikker migrering. Ikke bytt til `limitToLast` eller datofiltre uten å kunne bevise at gamle, men fortsatt aktive/planlagte ordre aldri skjules. Ikke lagre kundeordre i offentlig nettlesercache. Denne fasen har derfor **ikke** endret ordre-feed eller Godta/varsel/print.
 
 Ingen besparelsesprosent er målt. Mål Firebase Downloads før og etter under samme type bestillingstrafikk og antall adminfaner.
+
+## Admin kompakt ordrestrøm — klargjort, IKKE aktivert (2026-11-07)
+
+En større optimalisering er kodeklargjort og lagt bak `window.BESTILL_CONFIG.trustedCompactOrderFeed === true`. **Flagget er IKKE aktivert i `demo/config.js`**, da ingen verifisert og autorisert server-side indeksbygger eller Firebase Rules for den nye banen er installert. Dermed fortsetter eksisterende `/orders` SSE med alle ordre, alarm, Godta, SMS/e-post, printer, lojalitet og arkiv uten endringer.
+
+Klargjort kontrakt for en trygg fremtidig backend:
+- Backend vedlikeholder `/adminOrderFeed/meta` og `/adminOrderFeed/orders` i sanntid med en **komplett liste over alle åpne, også eldre planlagte** ordre pluss begrenset nylig historikk.
+- `meta` må ha `schemaVersion:1`, `publisher:"trusted-firebase-order-worker-v1"`, `ready:true`, `completeOpenOrders:true`, `backendMaintainsLoyalty:true`, `backendMaintainsRetention:true`, `backendMaintainsLegacyMigration:true`, `generatedAt`, `includedOrderCount` og `openOrderCount`. Ikke sett disse til true uten at en autentisert server faktisk oppfyller dem.
+- Inkluderte ordre må være **hele** ordre med `id`, `phone`, `createdAt`, `status`, `total`, `lines[]` slik at kjøkken, aksept og henting ikke mangler detaljer. Maks 250; flere aktive krever vanlig full strøm i stedet for å miste en ordre.
+- Backend oppdaterer `generatedAt` før 45 sekunder er gått. Feil/utdatert/ufullstendig index, SSE-feil, eller manuelt Refresh fører til full, autoritativ `/orders` SSE/REST for resten av fanesesjonen.
+- Ved aktiv kompakt strøm er det serveren som **må** utføre lojalitetssynk, historisk migrering og 72-timers beholdnings- og kvitteringsvern. Nettleserens arbeidere står da av for å unngå å regne på manglende historikk.
+- **Sikkerhet:** Firebase Rules skal tillate kun autentisert restaurantpersonell å lese `adminOrderFeed`, og kun en autorisert server å skrive. Feltnavnet `publisher` er ingen signatur eller tilgangskontroll. Verifiser Rules og autentisering før flagget skrus på, og test samtidig skift fra gammel kunde-side, gammel planlagt ordre, nye mottatt, annullering, SMS/e-postkvitteringer og feilmeldinger.
+- Ved dagens nullbackend ville opt-in alene være **farlig**. Koden er derfor kun et failback-klart integrasjonspunkt og **gir ikke målbar trafikkbesparelse ennå**. Backenden må bygges/deployes separat med sikker tilgang og kostnadsvurdering.
+
+Merk: Den aktuelle restaurantløsningen bruker REST-klientkall uten Firebase SDK eller påvisbar adminauth i repoet. Ikke åpne en ny privat ordreindeks for anonym lesing, og ikke eksponer persondata i offentlig cache.

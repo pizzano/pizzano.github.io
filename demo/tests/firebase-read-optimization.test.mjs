@@ -155,3 +155,26 @@ test('historical pizza migration is audited at most weekly after full success', 
   const marked=code.match(/localStorage\.setItem\([^)]*\)/g) || [];
   assert.equal(marked.length,1,'never write phone numbers or loyalty snapshots to local storage');
 });
+
+test('compact order feed is strictly opt-in and retains legacy SSE fallback', async () => {
+  const fs=await import('node:fs/promises');
+  const data=await fs.readFile(new URL('../js/data.js',import.meta.url),'utf8');
+  const config=await fs.readFile(new URL('../config.js',import.meta.url),'utf8');
+  const loyalty=await fs.readFile(new URL('../js/loyalty-sync.js',import.meta.url),'utf8');
+  const archive=await fs.readFile(new URL('../js/orders-archive.js',import.meta.url),'utf8');
+  assert.doesNotMatch(config,/trustedCompactOrderFeed\s*:\s*true/);
+  assert.match(data,/trustedCompactOrderFeed === true/);
+  assert.match(data,/function validatedCompactOrderFeed\(/);
+  assert.match(data,/meta\.completeOpenOrders !== true/);
+  assert.match(data,/meta\.backendMaintainsLoyalty !== true/);
+  assert.match(data,/meta\.backendMaintainsRetention !== true/);
+  assert.match(data,/meta\.backendMaintainsLegacyMigration !== true/);
+  assert.match(data,/Number\(meta\.openOrderCount\) !== active/);
+  assert.match(data,/COMPACT_ORDER_MAX_AGE_MS = 45000/);
+  assert.match(data,/if \(beginTrustedCompactOrdersStream\(\)\) return/);
+  assert.match(data,/recoverFullOrdersStream\('Utdatert backendindeks'\)/);
+  assert.match(data,/recoverFullOrdersStream\('Manuell kontroll av alle ordre'\)/);
+  assert.match(data,/new EventSource\(streamUrl\(ORDERS_PATH\)\)/);
+  assert.match(loyalty,/if \(isTrustedCompactOrderFeedActive\(\)\) return/);
+  assert.match(archive,/if \(isTrustedCompactOrderFeedActive\(\)\) return/);
+});
