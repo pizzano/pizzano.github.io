@@ -1,6 +1,6 @@
 /* Five semantic type sizes for both customer and admin, stored in Firebase.
    One implementation owns loading, live preview, validation and saving. */
-import { store, subscribe, ready, mutate, saveNow, onStatus } from './data.js?v=20261105-product-notes2';
+import { store, subscribe, ready, mutate, saveNow, onStatus } from './data.js?v=20261107-admin-startup1';
 
 const FONTS = [
   { key: 'uiFontXs', css: '--text-xs', fallback: 10 },

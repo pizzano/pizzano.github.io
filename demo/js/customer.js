@@ -50,7 +50,7 @@ import {
   allergenLabel,
   orderStatusLabel,
   uid,
-} from './data.js?v=20261105-product-notes2';
+} from './data.js?v=20261107-admin-startup1';
 
 /* ------------------------------------------------------------------ *
  * Lokal kundetilstand

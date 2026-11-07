@@ -1,4 +1,4 @@
-import {store,subscribe,ready} from './data.js?v=20261105-product-notes2';
+import {store,subscribe,ready} from './data.js?v=20261107-admin-startup1';
 import {todaysSpecialDays,parseSpecialDays,osloToday} from './special-days.js';
 const banner=document.getElementById('specialDayGreeting');
 let selectedDay=null,selectionKey='';
