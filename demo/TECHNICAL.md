@@ -56,3 +56,11 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Bonus sayacı sadece JS belleğinde 45 saniye saklanır, aynı telefon için eşzamanlı istekler birleştirilir. `fresh: true` parametresi ve ödül rezervasyonu Firebase'i yeniden okumak zorundadır; hiçbir fiziksel kupon hakkı tarayıcı önbelleğine güvenmez.
 - Profilde ad/e-posta kaydetme, özel müşteri istatistiklerini okumak ve tam müşteri kaydını PUT etmek yerine iki alana Firebase PATCH yapar. Yeni müşteri kabul mantığı ve bonus sayaçları ayrı kalır. **RTDB Rules PATCH yetkisi canlı ortamda doğrulanmalıdır.**
 - Adminin yeni/eski müşteri etiketi için kısa toplam sayaç değeri 5 dakika bellekte saklanır; sipariş listesi kontrolü değişmez. Tam sipariş listesi SSE'si ve mutasyon/print akışı korunmuştur; bunun daha da küçültülmesi sunucu tarafında kalıcı bir özet feed gerektirir.
+
+## Statuslys og manuell oppdatering (2026-11-07)
+
+- I `Bestillinger` starter bare det eksisterende `btnRefreshOrders` en ny statuskontroll av nett/Firebase, `notifications/smsHealth`, `notifications/emailHealth` og Epson (papirfri ePOS). Den henter også ordredata, men **ikke** hele menyen.
+- Statuslys starter som `ikke kontrollert`. Åpning av faner, automatisk rendering, fokusbytte og tidsintervaller utløser ingen nye statusforespørsler fra disse lysene. Et tidligere grønt lys viser **siste manuelle kontroll**, ikke en kontinuerlig friskhetstest.
+- `Systemhelse`-fanen kan fortsatt kjøres ved et separat, uttrykkelig `Kontroller nå`-klikk. Den kjører ikke automatisk ved åpning eller hvert minutt. `Varsler` har fortsatt eget sikkerhetsvarsel.
+- Viktig: Dette stopper **kun adminens statuskontroller**. Firebase SSE/REST ordreoppdateringer, alarmer, Godta, trykk, og uavhengige Google Apps Script-jobber for SMS/e-post går videre som før. Levende Apps Script kan fremdeles skrive `notifications/smsHealth` og `notifications/emailHealth` regelmessig for å rapportere jobbenes status. Endringer i admin kan ikke stoppe disse skriptenes hjerteslag uten å endre det aktive Apps Script-prosjektet.
+- Manuell Epson-test er ikke utskrift og forbruker ikke papir. Resultat fra **ekte** kjøkkenutskrift oppdaterer naturligvis skriverikonet når utskriften skjer. Avvik mellom ikonets siste tilstand og dagens faktiske status er forventet frem til neste manuelt klikk.
