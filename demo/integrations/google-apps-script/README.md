@@ -46,3 +46,17 @@ SMS için kullanılan Script Properties arasında `TRACCAR_TOKEN`, `TEST_PHONE`,
 - SMS tarayıcısı `statusUpdatedAt` indeksli sorguda başarılı son taramadan itibaren **5 dakikalık örtüşmeyle** okur. Başarısız tarama ve eksik günlük kota nedeniyle kesilen tarama checkpoint'i ilerletmez; böylece kayıp sipariş riski azaltılır. Canlı `.indexOn` kuralını kontrol et.
 - SMS ve e-posta şablonları yalnızca gönderim/gerçek admin testi gerektiğinde çekilir; boş dakikada tekrar indirilmez. Test ve sağlık mekanizması korunur.
 - Bu repodaki `Kode.gs` ve `email-poller.gs` dosyalarını değiştirmek **çalışan Google Apps Script projelerini güncellemez**. Canlı editöre aynı kodu taşımadan bu SMS/e-posta tasarrufları etkin olmaz. Mevcut Script Properties, tetikleyiciler, gönderim işaretleri ve güvenlik ayarları korunmalı.
+
+## Manuell helseforespørsel — oppdater aktive Google Apps Script-prosjekter (2026-11-07)
+
+**OBS:** Å oppdatere GitHub stopper ikke automatisk skriving fra tidligere publiserte Apps Script-koder. Gjør følgende for at Firebase-konsollen skal slutte å vise `checkedAt`-endring hver minutt:
+
+1. Ta sikkerhetskopi av begge **aktive** Apps Script-prosjektene.
+2. Erstatt den aktive SMS-prosjektkoden med hele nyeste `Kode.gs`, og den aktive e-postprosjektkoden med hele nyeste `email-poller.gs`. Ta med funksjonsendringer som sender `requestId` i helsepostene.
+3. **Behold** eksisterende minutt-triggere `pollOrdersForSms` og `kontrollerEpostBestillinger`, Script Properties, historiske sendemarkører og alle ordre. Ikke kjør `setupTestSms`, `setupLiveSms` eller `installerEpostVarsler` på nytt kun for å bytte kode.
+4. Sjekk RTDB Rules: den autentiserte adminen må kunne skrive en kort forespørsel til `notifications/healthCheckRequest`; utenforstående må ikke kunne skrive slike kommandoer. Statusresponsene `notifications/smsHealth` og `notifications/emailHealth` må kun kunne skrives av betrodde avsendere.
+5. Trykk ↻ i Bestillinger én gang. Firebase får `notifications/healthCheckRequest` med `hc_...` ID, og hvert script svarer etter neste tidsutløser. Admin venter med en kortvarig SSE på samme `requestId` (inntil 160 sekunder). Dersom ny versjon ikke er aktiv, blir status «ingen svar».
+6. Ingen trykk: `smsHealth` / `emailHealth` skal ikke få nytt `checkedAt`. Kunders SMS/e-post fortsetter uavhengig av admin-knappen og lagrer egne ordrekvitteringer ved reelle send.
+7. Verifiser manuelt at en bestilling fortsatt kommer til admin og utløser korrekt SMS/e-post. Dette kan ikke bevises av statiske GitHub-tester alene.
+
+Hver worker leser den ene lille helseforespørselen omtrent én gang i minuttet. Manuell status eliminerer tomme status-skrivinger, **ikke** den nødvendige ordre-pollingen eller all Firebase-trafikk.
