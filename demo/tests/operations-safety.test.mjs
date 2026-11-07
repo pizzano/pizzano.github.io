@@ -95,7 +95,8 @@ test('health checks never issue writes or automatic printer receipts', async () 
   assert.match(js,/method:'GET'/);
   assert.match(js,/Promise\.allSettled/);
   assert.doesNotMatch(js,/submitOrder\s*\(|printKitchenTicket\s*\(/);
-  assert.match(js,/if \(visible\(\)\) void runChecks\(\)/);
+  assert.match(js,/refreshButton\?\.addEventListener\('click', \(\) => \{ void runChecks\(true\); \}\)/);
+  assert.doesNotMatch(js,/if \(visible\(\)\) void runChecks\(\)/);
   assert.match(js,/catch \(error\) \{[\s\S]*?Firebase: Kontroll avbrutt/);
   assert.match(js,/finally \{\s*running = false;\s*refreshButton.disabled = false;/);
 });

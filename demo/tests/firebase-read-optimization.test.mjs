@@ -96,3 +96,12 @@ test('bonus cache is memory-only and monetary redemptions force authoritative re
   const to = data.indexOf('async function reservePizzaReward(', from);
   assert.doesNotMatch(data.slice(from,to), /localStorage|sessionStorage|indexedDB/);
 });
+
+test('manual admin refresh requests orders without re-downloading complete menu', async () => {
+  const code=await import('node:fs/promises').then(fs =>
+    fs.readFile(new URL('../js/data.js',import.meta.url),'utf8'));
+  assert.match(code,/async function pullRemote\(\{ ordersOnly = false \} = \{\}\)/);
+  assert.match(code,/ordersOnly \? Promise\.resolve\(null\) : readRemoteMenuSnapshot\(\)/);
+  assert.match(code,/restGet\(ORDERS_PATH\)/);
+  assert.match(code,/export async function refreshFromDatabase\(options = \{\}\)/);
+});
