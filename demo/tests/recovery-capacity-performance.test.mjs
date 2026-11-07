@@ -109,7 +109,7 @@ test('27: fresh full quarter-hour hidden only if opted in',()=>{
   assert.deepEqual(capacityFilteredSlots(slots,{pickupCapacityEnabled:false,pickupCapacityMax:4},
     snapshot,{at}),slots);
   assert.deepEqual(capacityFilteredSlots(slots,{pickupCapacityEnabled:true,pickupCapacityMax:4},
-    snapshot,{at:at+180000}),slots);
+    snapshot,{at:at+240000}),slots);
 });
 
 test('27: a pickup after midnight belongs to the next Oslo-local date',()=>{
