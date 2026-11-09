@@ -58,6 +58,7 @@ import {
   lastAcceptErrorMessage,
   rejectOrder,
   refreshFromDatabase,
+  dispatchNotificationTest,
   orderStatusLabel,
 } from './data.js?v=20261107-admin-startup1';
 
@@ -4551,7 +4552,10 @@ async function noticeSendTest(){
     });
     if(!response.ok)throw new Error('Firebase HTTP '+response.status);
     noticeState.lastTest={kind,id};
-    noticeEl.result.textContent='Testforespørsel lagret. Ikke sendt ennå: Google Apps Script må behandle den. E-posttesten går til kontoen som kjører Apps Script.';
+    const started=dispatchNotificationTest(kind);
+    noticeEl.result.textContent=started
+      ? 'Testforespørsel sendt til Apps Script. Venter på leverandørkvittering.'
+      : 'Testforespørsel lagret, men Web App URL er ikke konfigurert i demo/config.js.';
     noticeFeedback('Testforespørsel lagret. Dette er ikke bekreftelse på sending.','saved');
     // Show the first status immediately, then the existing short-interval
     // polling updates it when the actual sender reports back.

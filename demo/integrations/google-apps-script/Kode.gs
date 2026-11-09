@@ -624,6 +624,20 @@ function doPost(e) {
   let req={};
   try { req=JSON.parse(String(e && e.postData && e.postData.contents || '{}')); }
   catch (_) { return result('invalid'); }
+  if (req.kind==='test' && req.testKind==='smsAccepted') {
+    const lock=LockService.getScriptLock();
+    if (!lock.tryLock(10000)) return result('busy');
+    try {
+      const props=kolProps_();
+      const token=String(props.getProperty('TRACCAR_TOKEN')||'').trim();
+      if (!token) return result('not_configured');
+      kolCheckSmsTest_(props,token,kolPhone_(props.getProperty('TEST_PHONE')));
+      return result('test_checked');
+    } catch(error) {
+      console.error('SMS Web App test: '+error.message);
+      return result('test_error');
+    } finally { lock.releaseLock(); }
+  }
   const id=String(req && req.orderId || '');
   if (req.kind!=='accepted' || !/^ord_[a-z0-9]{7,40}$/i.test(id))
     return result('ignored');
@@ -641,7 +655,13 @@ function doPost(e) {
     if (get.getResponseCode()!==200) return result('firebase_error');
     const order=JSON.parse(get.getContentText()||'null');
     const now=Date.now();
-    if (kolEvent_(order,activated,now)!=='accepted') return result('not_eligible');
+    // The kitchen may mark Klar before the webhook runs. The original
+    // acceptedAt/estimatedAt still proves staff approval in that case.
+    const approvalAt=Number(order?.estimatedAt)||Number(order?.statusUpdatedAt)||0;
+    if (!order || !['bekreftet','tilberedning','klar','fullfort'].includes(order.status) ||
+        !approvalAt || approvalAt < activated || approvalAt > now+10000 ||
+        now-approvalAt > KOL_SMS.eventAgeLimitMs)
+      return result('not_eligible');
     const phone=kolPhone_(order.phone);
     if (!phone || (mode==='TEST' && phone!==kolPhone_(props.getProperty('TEST_PHONE'))))
       return result('recipient_not_allowed');

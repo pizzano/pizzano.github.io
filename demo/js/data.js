@@ -2146,25 +2146,36 @@ export async function updateOrderEstimate(orderId, minutes) {
 // Trigger Apps Script only after a verified staff status write.
 // POST carries order ID only. Apps Script reads the authoritative order.
 // Browser no-cors responses are opaque: Firebase order receipts prove sending.
+function postAppsScriptWebhook(endpoint, payload) {
+  if (!endpoint) return false;
+  try {
+    const url=new URL(String(endpoint));
+    if (url.protocol!=='https:' || url.hostname!=='script.google.com' ||
+        !/^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) return false;
+    void fetch(url.href,{
+      method:'POST',mode:'no-cors',keepalive:true,
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:JSON.stringify(payload),
+    }).catch(error=>console.warn('Apps Script webhook could not be reached:',error));
+    return true;
+  } catch(error) {
+    console.warn('Invalid Apps Script webhook URL:',error);
+    return false;
+  }
+}
 function notifyOrderSenders(orderId, kind) {
   if (!/^ord_[a-z0-9]{7,40}$/i.test(String(orderId))) return;
   const config=window.BESTILL_CONFIG || {};
-  const endpoints=[
-    kind==='accepted' ? config.smsWebhookUrl : '',
-    config.emailWebhookUrl,
-  ].filter(Boolean);
-  for (const endpoint of endpoints) {
-    try {
-      const url=new URL(String(endpoint));
-      if (url.protocol!=='https:' || url.hostname!=='script.google.com' ||
-          !/^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) continue;
-      void fetch(url.href,{
-        method:'POST',mode:'no-cors',keepalive:true,
-        headers:{'Content-Type':'text/plain;charset=UTF-8'},
-        body:JSON.stringify({orderId,kind}),
-      }).catch(error=>console.warn('Apps Script webhook could not be reached:',error));
-    } catch(error) { console.warn('Invalid Apps Script webhook URL:',error); }
-  }
+  if (kind==='accepted')
+    postAppsScriptWebhook(config.smsWebhookUrl,{orderId,kind});
+  postAppsScriptWebhook(config.emailWebhookUrl,{orderId,kind});
+}
+/** Send only when staff deliberately requests a test in Varslinger. */
+export function dispatchNotificationTest(kind) {
+  if (!['smsAccepted','emailAccepted','emailReady'].includes(kind)) return false;
+  const config=window.BESTILL_CONFIG || {};
+  const endpoint=kind==='smsAccepted' ? config.smsWebhookUrl : config.emailWebhookUrl;
+  return postAppsScriptWebhook(endpoint,{kind:'test',testKind:kind});
 }
 
 // Acceptance must be confirmed by Firebase before the restaurant UI reports

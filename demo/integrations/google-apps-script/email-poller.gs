@@ -745,6 +745,19 @@ function doPost(e) {
   let req={};
   try { req=JSON.parse(String(e && e.postData && e.postData.contents || '{}')); }
   catch (_) { return result('invalid'); }
+  if (req.kind==='test' && ['emailAccepted','emailReady'].includes(req.testKind)) {
+    const lock=LockService.getScriptLock();
+    if (!lock.tryLock(10000)) return result('busy');
+    try {
+      const props=PropertiesService.getScriptProperties();
+      let templates=null;
+      kolProcessMailTests_(props,()=>templates||(templates=kolReadMailTemplates_()));
+      return result('test_checked');
+    } catch(error) {
+      Logger.log('Email Web App test: '+error.message);
+      return result('test_error');
+    } finally { lock.releaseLock(); }
+  }
   const id=String(req && req.orderId || '');
   const kind=String(req && req.kind || '');
   if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !['accepted','ready'].includes(kind))
