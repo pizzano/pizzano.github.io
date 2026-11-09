@@ -930,3 +930,24 @@ html[data-theme="dark"] .order-accept-error {
   color: #ffd3ce;
   border-color: #9a5753;
 }
+
+/* Sender outcomes on the existing order cards; no new polling or CSS files. */
+.orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback)
+ .sender-result-mark{font-weight:900;font-size:13px;line-height:1;flex:none}
+.orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-error{
+ background:#ffebeb;color:#b52e35;border-color:#e9a6a8}
+.orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-pending{
+ background:#fff4dd;color:#9b6a15;border-color:#e5cb96}
+.orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-muted{
+ background:#eef1f4;color:#6d7580;border-color:#d2d8dd}
+:root .orders-page .order-customer-meta :is(.pos-detail-sms-feedback,.pos-detail-email-feedback).is-error,
+:root .orders-page .order-customer-meta :is(.pos-detail-sms-feedback,.pos-detail-email-feedback).is-pending,
+:root .orders-page .order-customer-meta :is(.pos-detail-sms-feedback,.pos-detail-email-feedback).is-muted{
+ display:inline-flex;align-items:center;gap:5px;padding:5px 10px;
+ border:1px solid;border-radius:999px;font-size:11px;font-weight:850}
+html[data-theme="dark"] .orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-error{
+ background:#57292c;color:#ffc4c7;border-color:#934247}
+html[data-theme="dark"] .orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-pending{
+ background:#483a20;color:#f2d39a;border-color:#73603d}
+html[data-theme="dark"] .orders-page :is(.orders-row-sms,.orders-row-email,.pos-detail-sms-feedback,.pos-detail-email-feedback).is-muted{
+ background:#303842;color:#c0cad6;border-color:#525c68}

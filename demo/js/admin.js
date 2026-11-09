@@ -1,5 +1,4 @@
-import { emailReceiptKinds, emailReceiptSent, emailReceiptDetail,
-  smsReceiptKinds, smsReceiptSentForOrders, smsReceiptDetailForOrders } from './admin-health-policy.js';
+import { orderSenderState } from './admin-health-policy.js';
 import { escapeHtml } from './display-format.js';
 import { adminDataSignatures, adminRenderChanges, createMarkupUpdater, applyAlertStreamDelta } from './admin-render-policy.js';
 import { productImageSources } from './product-images.js';
@@ -2504,6 +2503,24 @@ function receivedAgeText(order, now = Date.now()) {
   return hours < 24 ? `${hours} t siden` : `${Math.floor(hours / 24)} d siden`;
 }
 
+function senderBadgeHtml(order, channel, detail = false) {
+  const state=orderSenderState(order,channel);
+  if (state.state==='hidden') return '';
+  const name=channel==='sms'?'SMS':'E-post';
+  const mark=state.state==='active'?'✓':state.state==='error'?'×':
+    state.state==='pending'?'…':'?';
+  const cls=detail
+    ? (channel==='sms'?'pos-detail-sms-feedback':'pos-detail-email-feedback')
+    : (channel==='sms'?'orders-row-sms':'orders-row-email');
+  const icon=channel==='sms'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg>';
+  return `<span class="${cls} is-${state.state}${state.state==='active'?' is-sent':''}"
+    title="${escapeHtml(name+': '+state.detail)}"
+    aria-label="${escapeHtml(name+': '+state.label)}">${icon}<span class="sender-result-mark"
+    aria-hidden="true">${mark}</span>${detail?'<span>'+name+'</span>':''}</span>`;
+}
+
 function orderListRowHtml(order, isNew = false) {
   const pickupScheduled = isScheduledPickupOrder(order);
   const displayTime = order.status === 'mottatt' && !order.confirmationNoTimeout && !confirmationExpired(order) ? confirmationRemaining(order) : orderListPickupTime(order);
@@ -2512,7 +2529,7 @@ function orderListRowHtml(order, isNew = false) {
   // Only show green badges when Firebase contains accepted sender receipts.
   return `<button data-order-status="${escapeHtml(order.status)}" class="orders-list-row${isNew ? ' is-new' : ''}${order.id === selectedOrderId ? ' is-selected' : ''}${isUpcomingScheduledOrder(order) ? ' is-scheduled' : ''}" data-select-order="${escapeHtml(order.id)}" type="button" aria-pressed="${order.id === selectedOrderId}">
     <span class="orders-list-main">
-      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong><span class="orders-row-sms" data-order-sms="${escapeHtml(order.id)}" title="SMS-forespørsel godtatt av Traccar (levering til telefon er ikke bekreftet)" aria-label="SMS godtatt av Traccar" ${smsReceiptSent(order.id) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M7 9h10M7 13h6"/><path d="m15 17 2 2 4-4"/></svg></span><span class="orders-row-email" title="E-post godtatt av MailApp (levering til innboks er ikke bekreftet)" aria-label="E-post godtatt av MailApp" ${order.email && emailReceiptSent(order) ? '' : 'hidden'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/><path d="m15 16 2 2 4-4"/></svg></span></span>
+      <span class="orders-list-name-row"><strong>${escapeHtml(order.customerName || 'Ukjent kunde')}</strong>${senderBadgeHtml(order,'sms')}${senderBadgeHtml(order,'email')}</span>
       <span class="orders-list-meta">
         <span class="orders-list-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V7a5 5 0 0 1 10 0v2"/><path d="M5 9h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 9Z"/></svg><span>${pickupLabel}</span></span>
         <span class="orders-list-time" title="${escapeHtml(timeTitle)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span${order.status === 'mottatt' && !order.confirmationNoTimeout ? ` data-order-pending-clock="${escapeHtml(order.id)}"` : ''}>${escapeHtml(displayTime)}</span></span>
@@ -2617,13 +2634,8 @@ function renderOrderDetail(orderId) {
               <div class="order-detail-code">Bestillingskode <strong>${escapeHtml(shortOrderCode(order))}</strong></div>
               <div class="order-customer-meta">
                 <span class="order-customer-badge is-${customerIndicator.kind}" title="${escapeHtml(customerIndicator.description)}">${escapeHtml(customerIndicator.label)}</span>
-                <div class="pos-detail-sms-feedback" data-detail-sms="${escapeHtml(order.id)}" ${smsReceiptSent(order.id) ? '' : 'hidden'} title="Traccar har godtatt SMS-forespørselen. Sending fra telefonen og levering er ikke bekreftet" aria-label="SMS: Traccar har godtatt forespørselen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2l4 3v-3"/><path d="m14 17 2 2 5-5"/></svg><span data-detail-sms-label>SMS</span></div>
-                ${order.email && emailReceiptSent(order)
-                  ? `<div class="pos-detail-email-feedback is-sent"
-                      title="${escapeHtml(emailReceiptDetail(order))} · MailApp har godtatt sendingen. Levering til innboksen er ikke bekreftet."
-                      aria-label="E-post: MailApp har godtatt sendingen">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 7 8 6 8-6"/></svg><span>E-post</span></div>`
-                  : ''}
+                ${senderBadgeHtml(order,'sms',true)}
+                ${senderBadgeHtml(order,'email',true)}
               </div>
             </div>
           </div>
