@@ -245,14 +245,14 @@ function updateOrderingControls(){
  const state=getOrderingState();
  const add=$('add'),notice=$('sheetOrderNotice');
  if(add){
-  add.disabled=!state.orderable||!current||current.soldOut;
+  add.disabled=!current||current.soldOut;
   add.setAttribute('aria-disabled',String(add.disabled));
-  if(notice){notice.hidden=state.orderable;notice.textContent=state.subtitle+' · '+state.pill}
+  if(notice){notice.hidden=true;notice.textContent=''}
  }
  // Existing cart entries are preserved, but cannot be increased while closed.
  const cartPanel=$('cartSheet');
  if(cartPanel&&!cartPanel.hidden){
-  cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=!state.orderable);
+  cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
  }
 }
 function updateHoursStatus(){
@@ -614,10 +614,6 @@ function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCar
 function addToCart(){
  if(!current)return;
  const availability=getOrderingState();
- if(!availability.orderable){
-  const el=$('sheetOrderNotice');el.hidden=false;el.textContent='Bestilling er ikke tilgjengelig nå. '+availability.subtitle;
-  updateOrderingControls();return;
- }
  const error=optionValidation();
  if(error){
   const notice=$('sheetOrderNotice');notice.hidden=false;notice.textContent=error;return;
@@ -642,7 +638,7 @@ function addToCart(){
  if(editingCartIndex!==null&&cart[editingCartIndex])cart[editingCartIndex]=entry;
  else if(existing)existing.qty+=qty;else cart.push(entry);
  const edited=editingCartIndex!==null;editingCartIndex=null;
- saveCart();hideAll();if(edited)showCart();
+ saveCart();hideAll();if(edited||!availability.orderable)showCart();
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
 function cartChoiceRows(line){
@@ -766,8 +762,8 @@ function renderCartContents(){
  renderCartRecommendations();
  const availability=getOrderingState();
  $('cartAvailabilityNotice').hidden=availability.orderable||!cart.length;
- $('cartAvailabilityNotice').textContent=availability.orderable?'':availability.subtitle;
- $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=!availability.orderable);
+ $('cartAvailabilityNotice').textContent=availability.orderable?'':'Restauranten er stengt for bestilling nå. Du kan legge varer i handlekurven, men kan ikke gå videre før restauranten tar imot bestillinger. '+availability.pill+'.';
+ $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
 function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
@@ -891,7 +887,7 @@ $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEven
  const index=Number((minus||plus||remove).dataset.cartMinus??plus?.dataset.cartPlus??remove?.dataset.remove);
  if(!Number.isInteger(index)||index<0||index>=cart.length)return;
  if(remove)cart.splice(index,1);
- else if(plus){if(!getOrderingState().orderable)return;cart[index].qty=Math.min(99,Number(cart[index].qty||0)+1)}
+ else if(plus){cart[index].qty=Math.min(99,Number(cart[index].qty||0)+1)}
  else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
  saveCart();renderCartContents();
 });
@@ -904,7 +900,6 @@ $('cartRecommendationsItems').addEventListener('click',event=>{
  }
  const add=event.target.closest('[data-suggest-add]');
  if(!add)return;
- if(!getOrderingState().orderable)return;
  const item=productById(add.dataset.suggestAdd);if(!item||item.soldOut)return;
  // Use the configured default size and default selections, without opening the product sheet.
  // Optional sauces/extras stay unselected; mandatory groups require valid defaults.
