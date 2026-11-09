@@ -405,7 +405,31 @@ function show(id){$('overlay').hidden=false;$(id).hidden=false;document.body.sty
 function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.body.style.overflow=''}
 function addToCart(){if(!current)return;const size=list(current.sizes).find(s=>String(s.id)===String(selection.size));const choices=groupsFor(current,size).map(g=>{const selected=selection['group:'+g.id],opts=list(g.options).filter(o=>Array.isArray(selected)?selected.map(String).includes(String(o.id)):String(selected)===String(o.id));return {groupId:g.id,group:g.title||g.name||'',options:opts.map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}))}}).filter(g=>g.options.length);const entry={id:current.id,name:current.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,comment:$('comment').value.trim().slice(0,500),qty,unitPrice:currentPrice()};const key=JSON.stringify([entry.id,entry.size?.id,entry.choices,entry.comment]);const old=cart.find(x=>JSON.stringify([x.id,x.size?.id,x.choices,x.comment])===key);if(old)old.qty+=qty;else cart.push(entry);saveCart();hideAll()}
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
-function showCart(){$('cartItems').innerHTML=cart.length?cart.map((x,i)=>'<div class="cart-item"><div><strong>'+esc(x.qty+' × '+x.name)+'</strong><small>'+esc([x.size?.label,...(x.choices||[]).flatMap(g=>g.options.map(o=>o.label)),x.comment].filter(Boolean).join(' · '))+'</small><button data-remove="'+i+'">Fjern</button></div><b>'+money(x.qty*x.unitPrice)+'</b></div>').join(''):'<p>Handlekurven er tom.</p>';$('cartTotal').textContent=money(cart.reduce((sum,x)=>sum+x.qty*x.unitPrice,0));show('cartSheet')}
+function cartChoiceRows(line){
+ const rows=[];
+ if(line.size?.label)rows.push('<div class="cart-choice"><span>Størrelse: <b>'+esc(line.size.label)+'</b></span></div>');
+ for(const group of line.choices||[]){
+  for(const opt of group.options||[]){
+   rows.push('<div class="cart-choice"><span>'+esc(group.group||'Valg')+': <b>'+esc(opt.label)+'</b></span>'+(opt.price?'<strong>+'+money(opt.price)+'</strong>':'<small>Inkludert</small>')+'</div>');
+  }
+ }
+ if(line.comment)rows.push('<div class="cart-choice is-note"><span>Merknad: <b>'+esc(line.comment)+'</b></span></div>');
+ return rows.join('');
+}
+function renderCartContents(){
+ const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
+ $('cartTotal').textContent=money(total);
+ $('cartClear').hidden=cart.length===0;
+ $('cartItems').innerHTML=cart.length?cart.map((line,index)=>{
+   return '<article class="cart-product-card" data-cart-line="'+index+'">'+
+     '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong><small>'+esc(line.size?.label||'')+'</small></div>'+
+     '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="Reduser antall">−</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
+     '<div class="cart-product-details">'+cartChoiceRows(line)+'</div>'+
+     '<div class="cart-product-totalrow"><button class="cart-remove" data-remove="'+index+'" aria-label="Fjern '+esc(line.name)+'">🗑 Fjern</button><strong>'+money(line.qty*line.unitPrice)+'</strong></div>'+
+   '</article>';
+ }).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe fra menyen for å komme i gang.</p></div>';
+}
+function showCart(){renderCartContents();show('cartSheet')}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
 $('categories').addEventListener('scroll',categoryProgress,{passive:true});
@@ -470,4 +494,17 @@ $('menu').addEventListener('keydown',e=>{
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
 $('options').addEventListener('change',e=>{const i=e.target;if(!i.matches('input'))return;if(i.type==='checkbox')selection[i.name]=[...$('options').querySelectorAll('input[name="'+CSS.escape(i.name)+'"]:checked')].map(x=>x.value);else selection[i.name]=i.value;if(i.name==='size'){for(const k of Object.keys(selection))if(k.startsWith('group:'))delete selection[k];renderOptions()}else updatePrice()});
 $('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
-$('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;cart.splice(Number(b.dataset.remove),1);saveCart();showCart()});for(const id of ['overlay','sheetClose','cartClose','continue'])$(id).onclick=hideAll;document.addEventListener('keydown',e=>{if(e.key==='Escape')hideAll()});document.addEventListener('DOMContentLoaded',init);
+$('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{
+ const minus=e.target.closest('[data-cart-minus]'),plus=e.target.closest('[data-cart-plus]'),remove=e.target.closest('[data-remove]');
+ if(!minus&&!plus&&!remove)return;
+ const index=Number((minus||plus||remove).dataset.cartMinus??plus?.dataset.cartPlus??remove?.dataset.remove);
+ if(!Number.isInteger(index)||index<0||index>=cart.length)return;
+ if(remove)cart.splice(index,1);
+ else if(plus)cart[index].qty=Math.min(99,Number(cart[index].qty||0)+1);
+ else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
+ saveCart();renderCartContents();
+});
+$('cartClear').addEventListener('click',()=>{
+ if(!cart.length)return;
+ cart=[];saveCart();renderCartContents();
+});for(const id of ['overlay','sheetClose','cartClose','continue'])$(id).onclick=hideAll;document.addEventListener('keydown',e=>{if(e.key==='Escape')hideAll()});document.addEventListener('DOMContentLoaded',init);
