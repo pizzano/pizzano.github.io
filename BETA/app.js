@@ -376,7 +376,28 @@ function render(){
  hydrateImages($('menu'));renderCartIndicators();updateHoursStatus();
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
-function showSheet(id){const item=productById(id);if(!item||item.soldOut)return;current=item;qty=1;selection={};$('quantity').textContent=qty;$('comment').value='';$('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());if(item.imageUrl){const im=document.createElement('img');im.alt=item.name;hero.prepend(im);setCachedImage(im,item.imageUrl)}renderOptions();updateSheetFavorite();show('productSheet')}
+function showSheet(id){
+ const item=productById(id);if(!item||item.soldOut)return;
+ current=item;qty=1;selection={};$('quantity').textContent=qty;$('comment').value='';
+ $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
+ const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
+ hero.classList.remove('has-image');
+ const url=item.imageUrl;
+ if(url){
+   const img=document.createElement('img');img.alt=item.name;img.dataset.image=url;
+   img.decoding='async';img.loading='eager';img.className='hero-photo';
+   // Use the already displayed menu thumbnail immediately without a second request.
+   const card=[...$('menu').querySelectorAll('[data-product-card]')].find(n=>n.dataset.productCard===String(id));
+   const thumbnail=card?.querySelector('img[data-image]');
+   img.src=thumbnail?.currentSrc||imageURLs.get(url)||url;
+   img.onload=()=>{if(img.isConnected)hero.classList.add('has-image')};
+   img.onerror=()=>{if(img.isConnected&&img.src!==url){img.src=url}else{img.remove();hero.classList.remove('has-image')}};
+   hero.prepend(img);
+   if(img.complete&&img.naturalWidth)hero.classList.add('has-image');
+   void setCachedImage(img,url);
+ }
+ renderOptions();updateSheetFavorite();show('productSheet');
+}
 function renderOptions(){if(!current)return;const sizes=list(current.sizes),size=sizes.find(s=>String(s.id)===String(selection.size))||sizes[Math.min(Math.max(Number(current.defaultSizeIndex)||0,0),sizes.length-1)];if(size)selection.size=size.id;const groupHTML=(title,choices,key,type,required=false)=>'<fieldset class="option-group"><div class="option-head"><span>'+esc(title)+'</span>'+(required?'<span class="required">Påkrevd</span>':'')+'</div>'+choices.map((o,i)=>'<label class="option-choice"><input type="'+type+'" name="'+esc(key)+'" value="'+esc(o.id)+'" '+(type==='radio'?(String(selection[key])===String(o.id)?'checked':''):(Array.isArray(selection[key])&&selection[key].includes(o.id)?'checked':''))+'><span>'+esc(o.label||o.name||'')+'</span><span class="opt-price">'+(o.price?'+'+money(o.price):o.caption||'')+'</span></label>').join('')+'</fieldset>';let html='';if(sizes.length){html+=groupHTML('Størrelse',sizes.map(s=>({id:s.id,label:s.label||s.name,price:0,caption:money(s.price)})),'size','radio',true)}const groups=groupsFor(current,size);for(const g of groups){const key='group:'+g.id,opts=list(g.options).map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}));if(!opts.length)continue;const multi=g.multiple===true||g.type==='multiple'||g.selectionType==='multiple'||Number(g.maxSelections)>1; if(!multi && selection[key]===undefined)selection[key]=(opts.find(o=>o.id===g.defaultOptionId)||opts[0]).id;html+=groupHTML(g.title||g.name||'Velg',opts,key,multi?'checkbox':'radio',!multi)}$('options').innerHTML=html;updatePrice()}
 function currentPrice(){if(!current)return 0;const sizes=list(current.sizes),size=sizes.find(s=>String(s.id)===String(selection.size));let n=Number(size?.price??current.price)||0;for(const group of groupsFor(current,size)){const value=selection['group:'+group.id];for(const o of list(group.options))if(Array.isArray(value)?value.map(String).includes(String(o.id)):String(value)===String(o.id))n+=Number(o.price)||Number(o.priceDelta)||0}return n}
 function updatePrice(){$('addPrice').textContent=money(currentPrice()*qty)}
@@ -418,7 +439,22 @@ $('categories').addEventListener('scroll',categoryProgress,{passive:true});
 }
 $('catPrev').onclick=()=>$('categories').scrollBy({left:-Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
 $('catNext').onclick=()=>$('categories').scrollBy({left:Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
-window.addEventListener('resize',categoryProgress);$('searchToggle').addEventListener('click',()=>{$('searchArea').hidden=!$('searchArea').hidden;if(!$('searchArea').hidden)$('search').focus()});$('search').addEventListener('input',render);
+window.addEventListener('resize',categoryProgress);function setSearchOpen(open){
+ $('searchArea').hidden=!open;
+ $('searchToggle').textContent=open?'×':'⌕';
+ $('searchToggle').setAttribute('aria-label',open?'Lukk søk':'Søk');
+ $('searchToggle').setAttribute('aria-expanded',String(open));
+ if(!open&&$('search').value){$('search').value='';render()}
+ if(open)$('search').focus();
+}
+$('searchToggle').addEventListener('click',()=>setSearchOpen($('searchArea').hidden));
+$('search').addEventListener('input',()=>{
+ $('searchClear').hidden=!$('search').value;
+ render();
+});
+$('searchClear').addEventListener('click',()=>{
+ $('search').value='';$('searchClear').hidden=true;render();$('search').focus();
+});
 $('categories').addEventListener('click',e=>{if(draggedCategories){draggedCategories=false;return}const b=e.target.closest('[data-scroll]');if(!b)return;$('categories').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));(()=>{const section=document.getElementById('category-'+b.dataset.scroll),viewport=$('appViewport');if(!section||!viewport)return;const target=section.getBoundingClientRect().top-viewport.getBoundingClientRect().top+viewport.scrollTop-195;viewport.scrollTo({top:target,behavior:'smooth'});activeCategory=b.dataset.scroll;moveCategoryButtonIntoView(b)})()});
 $('menu').addEventListener('click',e=>{
  const card=e.target.closest('[data-product-card]');
