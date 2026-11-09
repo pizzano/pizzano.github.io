@@ -611,6 +611,7 @@ function updatePrice(){
 }
 function show(id){$('overlay').hidden=false;$(id).hidden=false;document.body.style.overflow='hidden'}
 function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.body.style.overflow=''}
+function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
 function addToCart(){
  if(!current)return;
  const availability=getOrderingState();
@@ -919,4 +920,7 @@ $('cartRecommendationsItems').addEventListener('click',event=>{
 $('cartClear').addEventListener('click',()=>{
  if(!cart.length)return;
  cart=[];saveCart();renderCartContents();
-});for(const id of ['overlay','sheetClose','cartClose','continue'])$(id).onclick=hideAll;document.addEventListener('keydown',e=>{if(e.key==='Escape')hideAll()});document.addEventListener('DOMContentLoaded',init);
+});for(const id of ['cartClose','continue'])$(id).onclick=hideAll;
+$('sheetClose').onclick=closeProductSheet;
+$('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else hideAll()}});document.addEventListener('DOMContentLoaded',init);
