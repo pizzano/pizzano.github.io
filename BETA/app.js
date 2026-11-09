@@ -149,7 +149,7 @@ function watchSections(){
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.scroll===id));
    const target=buttons.find(b=>b.dataset.scroll===id);
    if(target)moveCategoryButtonIntoView(target);
- },{rootMargin:'-215px 0px -55% 0px'});
+ },{root:$('appViewport'),rootMargin:'-190px 0px -55% 0px'});
  $('menu').querySelectorAll('.menu-section').forEach(el=>scrollObserver.observe(el));
 }
 
