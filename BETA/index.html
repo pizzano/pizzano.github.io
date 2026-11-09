@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#103d32">
+  <title>KØL Grill & Pizza · BETA</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="brand" href="./" aria-label="Til menyen"><span class="brand-icon">🔥</span><span id="brandName">KØL Grill & Pizza</span><small>BETA</small></a>
+      <div class="header-actions"><button id="refresh" class="icon-button" title="Oppdater menyen fra serveren" aria-label="Oppdater menyen">↻</button><button id="cartOpen" class="icon-button cart-top" aria-label="Åpne handlekurv">🛒 <span id="cartCount" class="count" hidden>0</span></button></div>
+    </header>
+    <div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk">⌕</button><nav id="categories" aria-label="Meny kategorier"></nav></div>
+    <div class="search-area" id="searchArea" hidden><input id="search" type="search" placeholder="Søk etter mat…" aria-label="Søk etter mat"></div>
+    <main>
+      <div class="status-banner"><div class="status-icon">♨</div><div class="status-copy"><strong id="statusTitle">Menyen er klar</strong><span id="statusSubtitle">Velg det du har lyst på</span></div><span class="cache-status" id="cacheStatus">Laster…</span></div>
+      <div id="notice" role="status" aria-live="polite"></div>
+      <div id="menu"></div>
+    </main>
+    <button id="cartBar" class="cart-bar" hidden><span>🛒 <b id="barQty">0</b> i kurven</span><strong id="barTotal">0 kr</strong><span>Se kurv →</span></button>
+  </div>
+  <div class="overlay" id="overlay" hidden></div>
+  <section id="productSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+    <div class="sheet-scroll"><div class="hero" id="sheetHero"><button id="sheetClose" class="close" aria-label="Lukk">×</button><div class="hero-fallback">🍕</div></div><div class="sheet-intro"><h2 id="sheetTitle"></h2><p id="sheetDesc"></p></div><div id="options"></div><label class="comment-label">Kommentar til kjøkkenet <textarea id="comment" rows="2" placeholder="Valgfritt"></textarea></label></div>
+    <footer class="sheet-footer"><div class="qty"><button id="minus" aria-label="Reduser antall">−</button><b id="quantity">1</b><button id="plus" aria-label="Øk antall">+</button></div><button id="add" class="primary">🛒 Legg til <strong id="addPrice"></strong></button></footer>
+  </section>
+  <section id="cartSheet" class="sheet cart-sheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden><div class="cart-head"><h2 id="cartTitle">Handlekurv</h2><button id="cartClose" class="close" aria-label="Lukk">×</button></div><div id="cartItems" class="cart-items"></div><footer class="cart-footer"><div class="cart-sum">Totalt <strong id="cartTotal">0 kr</strong></div><p>Dette er BETA. Ingen bestilling sendes ennå.</p><button id="continue" class="primary">Fortsett å handle</button></footer></section>
+</body>
+</html>
