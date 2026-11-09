@@ -118,3 +118,40 @@ export function smsReceiptDetailForOrders(id, orders) {
   if (receipts.ready) kinds.push('Klar for henting');
   return kinds.length ? 'SMS-forespørsel godtatt · ' + kinds.join(' · ') : '';
 }
+
+
+/** Per-order send status. No health polling, service heartbeat or extra reads.
+ * Accepted = provider took the request, NOT verified delivery to phone/inbox.
+ */
+export function orderSenderState(order, channel, now = Date.now()) {
+  if (!order || !['sms','email'].includes(channel))
+    return {state:'hidden',label:'',detail:''};
+  if (channel==='email' && !String(order.email || '').trim())
+    return {state:'hidden',label:'',detail:'Kunden oppga ikke e-post'};
+  if (['mottatt','avvist','kansellert'].includes(String(order.status)))
+    return {state:'hidden',label:'',detail:'Ingen sending før godkjenning'};
+  const provider=channel==='sms' ? 'Traccar' : 'MailApp';
+  const ready=channel==='email' &&
+    (order.status==='klar' || (order.status==='fullfort' && order.emailReceipts?.ready));
+  const kind=ready ? 'ready' : 'accepted';
+  const entry=channel==='sms' ? order.smsReceipts?.accepted : order.emailReceipts?.[kind];
+  const createdAt=Number(order.createdAt)||0;
+  const timestamp=Number(entry?.sentAt || entry?.attemptedAt || 0);
+  if (entry && entry.provider===provider && Number.isSafeInteger(timestamp) &&
+      timestamp >= createdAt && timestamp <= now + 300000) {
+    if (entry.state==='accepted')
+      return {state:'active',label:'Godtatt',detail:provider+
+        ' godtok '+(ready?'klar-meldingen':'bekreftelsen')+
+        '. Levering til kunden er ikke bekreftet.'};
+    if (entry.state==='failed')
+      return {state:'error',label:'Feilet',detail:provider+
+        ' avviste '+(ready?'klar-meldingen':'bekreftelsen')+'.'};
+    if (entry.state==='uncertain')
+      return {state:'pending',label:'Uavklart',detail:provider+
+        ' kan ha godtatt sendingen. Ikke send automatisk en gang til.'};
+  }
+  const changed=Number(order.statusUpdatedAt)||createdAt;
+  if (now-changed <= 3*60*1000)
+    return {state:'pending',label:'Venter',detail:'Venter på '+provider+'-kvittering.'};
+  return {state:'muted',label:'Ukjent',detail:'Ingen kvittering. Det betyr ikke at sendingen feilet.'};
+}
