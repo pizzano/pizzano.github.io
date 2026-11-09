@@ -147,7 +147,9 @@ async function checkSettingsFallback(force=false){
   if(!settingsStream||settingsStream.readyState===2)startSettingsStream();
  }catch{/* cached hours remain visible */ }
 }
+window.addEventListener('pageshow',event=>{if(event.persisted)startSettingsStream()});
 window.addEventListener('pagehide',()=>{
+ settingsStreamHealthy=false;
  if(settingsStream){settingsStream.close();settingsStream=null}
  if(settingsCacheTimer){clearTimeout(settingsCacheTimer);settingsCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
 });
