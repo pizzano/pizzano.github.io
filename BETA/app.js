@@ -220,33 +220,59 @@ function calculateHoursStatus(settings,now){
  const until=Number(settings?.manualClosedUntil)||0;
  const manuallyClosed=settings?.manualClosed===true&&(until<=0||until>Date.now());
  const open=Boolean(closesAt)&&!manuallyClosed;
+ // Preorders start at 00:00 on the same day of opening, NEVER the previous evening.
  const preOpen=!open&&!manuallyClosed&&today.enabled&&start!==null&&t<start;
  let upcoming=null;
  for(let offset=0;offset<=7;offset++){
   const next=days[(now.day+offset)%7],minute=clockMinutes(next.open);
   if(!next.enabled||minute===null||offset*1440+minute<=t)continue;
-  upcoming={offset,day:(now.day+offset)%7,time:next.open};
-  break;
+  upcoming={offset,day:(now.day+offset)%7,time:next.open};break;
  }
- let subtitle=open?'Bestilling tilgjengelig':preOpen?'Forhåndsbestilling tilgjengelig':
-  manuallyClosed?'Midlertidig stengt':!today.enabled?'Stengt hele '+WEEKDAY_NAMES[now.day]:'Se neste åpningstid';
- // If tomorrow is closed, never display its opening clock as the next opening.
+ const title=open?'Åpent nå':preOpen?'Forhåndsbestilling':!today.enabled?'Stengt i dag':'Stengt nå';
+ let subtitle=open?'Vi tar imot bestillinger nå':preOpen?'Bestill nå · hent etter åpning':
+  manuallyClosed?'Vi tar ikke imot bestillinger akkurat nå':!today.enabled?'Restauranten er stengt '+WEEKDAY_NAMES[now.day]:'Vi tar ikke imot bestillinger akkurat nå';
  if(!open&&!preOpen&&!manuallyClosed&&upcoming?.offset>1&&days[(now.day+1)%7].enabled===false)
   subtitle=WEEKDAY_NAMES[(now.day+1)%7].replace(/^./,c=>c.toUpperCase())+' er stengt';
  const nextLabel=upcoming?(upcoming.offset===0?'Åpner i dag kl. ':
-  upcoming.offset===1?'Åpner i morgen kl. ':'Åpner '+WEEKDAY_NAMES[upcoming.day]+' kl. ')+upcoming.time:'Ingen åpningstid';
- return {
-  open,title:open?'Åpent nå':preOpen?'Åpner senere i dag':!today.enabled?'Stengt i dag':'Stengt nå',
-  subtitle,pill:open?'Stenger kl. '+closesAt:nextLabel
- };
+  upcoming.offset===1?'Åpner i morgen kl. ':'Åpner '+WEEKDAY_NAMES[upcoming.day]+' kl. ')+upcoming.time:'Ingen planlagt åpningstid';
+ const pill=open?'Stenger kl. '+closesAt:preOpen?'Åpner kl. '+today.open:nextLabel;
+ return {open,preOpen,orderable:open||preOpen,mode:open?'open':preOpen?'preorder':'closed',
+  title,subtitle,pill,upcoming};
+}
+function getOrderingState(){
+ return menu?calculateHoursStatus(menu.settings||{},osloTime()):{open:false,preOpen:false,orderable:false,mode:'closed',title:'Stengt',subtitle:'Meny utilgjengelig'};
+}
+function updateOrderingControls(){
+ const state=getOrderingState();
+ const add=$('add'),notice=$('sheetOrderNotice');
+ if(add){
+  add.disabled=!state.orderable||!current||current.soldOut;
+  add.setAttribute('aria-disabled',String(add.disabled));
+  if(notice){notice.hidden=state.orderable;notice.textContent=state.subtitle+' · '+state.pill}
+ }
+ // Existing cart entries are preserved, but cannot be increased while closed.
+ const cartPanel=$('cartSheet');
+ if(cartPanel&&!cartPanel.hidden){
+  cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=!state.orderable);
+ }
 }
 function updateHoursStatus(){
  if(!menu)return;
- const status=calculateHoursStatus(menu.settings||{},osloTime());
- $('statusBanner').classList.toggle('is-closed',!status.open);
+ const status=getOrderingState(),banner=$('statusBanner');
+ banner.classList.toggle('is-closed',status.mode==='closed');
+ banner.classList.toggle('is-preorder',status.mode==='preorder');
+ banner.classList.toggle('is-open',status.mode==='open');
+ banner.dataset.state=status.mode;
  $('statusTitle').textContent=status.title;
  $('statusSubtitle').textContent=status.subtitle;
  const pill=$('hoursPill');pill.hidden=false;pill.textContent='◷ '+status.pill;
+ const mark=banner.querySelector('.status-icon');
+ if(mark){
+  mark.innerHTML=status.mode==='closed'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-7h6v7M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg>';
+ }
+ updateOrderingControls();
 }
 function categoryProgress(){
  const nav=$('categories'),max=Math.max(0,nav.scrollWidth-nav.clientWidth),track=$('catProgress');
