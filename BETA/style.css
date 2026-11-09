@@ -63,3 +63,9 @@ html,body{height:100%;overflow:hidden}
 
 /* The only card heart is the filled favorite badge, inside its image. */
 .product-photo .card-favorite.is-favorite{position:absolute;right:5px;top:5px;left:auto;bottom:auto;display:grid;place-items:center;width:27px;height:27px;border:1px solid #e9b9c0;border-radius:50%;background:#fff2f4;color:#d3485a;pointer-events:none;font-size:19px;line-height:1;box-shadow:0 2px 7px #0002}
+
+/* Make the whole menu item an obvious interactive target. */
+.product-card[data-product-card]{cursor:pointer;transition:background-color .15s,border-color .15s}
+.product-card[data-product-card]:hover{background:#f9fdfb;border-color:#70baa0}
+.product-card[data-product-card]:focus-visible{outline:3px solid #e7bc48;outline-offset:2px}
+.product-card.is-soldout{cursor:default;opacity:.65}
