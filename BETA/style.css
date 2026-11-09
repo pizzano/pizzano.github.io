@@ -40,7 +40,7 @@
 .product-side{position:relative;min-width:78px}
 .product-side .add-round{margin-bottom:0}
 .product-card{position:relative}
-.card-favorite{position:absolute;left:78px;top:4px;width:25px;height:25px;border:1px solid #b9d9c9;background:#fff;color:#2a6854;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 1px 4px #0002}
+.card-favorite{position:absolute;right:5px;top:5px;width:27px;height:27px;border:1px solid #b9d9c9;background:#fff;color:#2a6854;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 1px 4px #0002;z-index:2}
 .card-favorite.is-favorite{color:#d3485a;background:#fff2f4;border-color:#e9b9c0}
 .sheet-favorite{position:absolute;top:13px;left:13px;z-index:2;background:#10352f;border:0;color:white;width:42px;height:42px;border-radius:50%;font-size:29px;display:grid;place-items:center}
 .sheet-favorite.is-favorite{color:#ff8498}
