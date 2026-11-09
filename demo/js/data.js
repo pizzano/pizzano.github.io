@@ -822,6 +822,50 @@ async function restPatch(path, data) {
 }
 
 /** Menydelen som lagres til databasen (ordre røres ikke). */
+/* Admin-only incremental public menu writes. No change to order/customer writes.
+ * Firebase REST accepts atomic multi-location PATCH keys with slash paths.
+ * A compact live delta is published with the very same atomic write.
+ */
+let lastSavedPublicSnapshot=null;
+const LIVE_DELTA_MAX_BYTES=12000;
+function publicMenuForDiff(payload){
+ const {settings,...fields}=payload;
+ return {menu:fields,settings};
+}
+function publicMenuChanges(before,after){
+ const changes=[];
+ const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ function walk(oldValue,newValue,path){
+  if(equal(oldValue,newValue))return;
+  if(Array.isArray(newValue)&&Array.isArray(oldValue)){
+   // Stable arrays allow precise item-field updates. Structural changes
+   // replace only the affected array to avoid Firebase array index drift.
+   const stable=newValue.length===oldValue.length&&newValue.every((v,i)=>{
+    const old=oldValue[i];
+    if(v&&old&&typeof v==='object'&&typeof old==='object'&&!Array.isArray(v)&&!Array.isArray(old))
+      return (v.id===undefined&&old.id===undefined)||String(v.id)===String(old.id);
+    return true;
+   });
+   if(!stable){changes.push({path,value:newValue});return}
+   for(let i=0;i<newValue.length;i++)walk(oldValue[i],newValue[i],path+'/'+i);
+   return;
+  }
+  if(newValue&&oldValue&&typeof newValue==='object'&&typeof oldValue==='object'&&!Array.isArray(newValue)&&!Array.isArray(oldValue)){
+   for(const key of new Set([...Object.keys(oldValue),...Object.keys(newValue)])){
+    if(key.includes('/')||key==='__proto__'||key==='constructor'||key==='prototype')throw Error('Invalid menu key');
+    walk(oldValue[key],newValue[key],path+'/'+key);
+   }
+   return;
+  }
+  changes.push({path,value:newValue===undefined?null:newValue});
+ }
+ for(const field of ['settings','menu']){
+  const old=before?.[field],now=after[field];
+  if(old===undefined)continue;
+  walk(old,now,field);
+ }
+ return changes;
+}
 function menuPayload() {
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -845,7 +889,10 @@ function applyRemoteMenu(value) {
   const normalized = normalizeState(source);
   const before = JSON.stringify(menuPayload());
   replaceMenuState(normalized);
-  if (!CUSTOMER_MODE) adminMenuVerified = true;
+  if (!CUSTOMER_MODE) {
+    adminMenuVerified = true;
+    lastSavedPublicSnapshot = publicMenuForDiff(menuPayload());
+  }
   return before !== JSON.stringify(menuPayload());
 }
 
@@ -1576,26 +1623,44 @@ async function persist() {
   }
   setSaveState('saving');
   try {
-    store.updatedAt = Date.now();
-    if (remoteEnabled) {
-      if (remoteMenuPath === 'menu') {
-        // Keep /settings authoritative; update root menu and settings atomically.
-        const menu = menuPayload();
-        delete menu.settings;
-        await restPatch('', { menu, settings: clone(store.settings) });
-      } else {
-        await restPatch(remoteMenuPath, menuPayload());
+    const previous=lastSavedPublicSnapshot;
+    store.updatedAt=Math.max(Date.now(),Number(store.updatedAt||0)+1);
+    const payload=menuPayload();
+    const next=publicMenuForDiff(payload);
+    if(remoteEnabled){
+      if(remoteMenuPath==='menu'&&previous){
+        // Each key updates an individual field, e.g. menu/sections/0/items/2/sizes/0/price.
+        // The latest delta is committed atomically, so the BETA SSE client sees
+        // the exact same revision as the canonical menu and opening hours.
+        const changes=publicMenuChanges(previous,next).filter(change=>change.path!=='menu/updatedAt');
+        const patch={};
+        for(const change of changes)patch[change.path]=change.value;
+        const revision=payload.updatedAt,prior=Number(previous.menu.updatedAt)||0;
+        patch['menu/updatedAt']=revision;
+        const delta= {version:revision,previousVersion:prior,changes};
+        const bytes=JSON.stringify(delta).length;
+        patch['menuChangeFeed/latest']= bytes<=LIVE_DELTA_MAX_BYTES
+          ?delta:{version:revision,previousVersion:prior,requiresRefresh:true};
+        await restPatch('',patch);
+      }else if(remoteMenuPath==='menu'){
+        // First save after an unverified snapshot uses the legacy safe write.
+        await restPatch('',{menu:next.menu,settings:next.settings,
+          'menuChangeFeed/latest':{version:payload.updatedAt,requiresRefresh:true}});
+      }else{
+        // Legacy layout: retain its existing write path to avoid corrupting root fields.
+        await restPatch(remoteMenuPath,payload);
       }
-      remoteOnline = true;
+      remoteOnline=true;
     }
-    if (channel) channel.postMessage({ type: 'state', updatedAt: store.updatedAt });
+    lastSavedPublicSnapshot=next;
+    if(channel)channel.postMessage({type:'state',updatedAt:store.updatedAt});
     setSaveState('saved');
     return true;
-  } catch (err) {
-    remoteOnline = false;
-    console.error('Lagring feilet:', err);
-    void reportSystemError('firebase', /403|401|HTTP/.test(String(err?.message)) ? 'http' : 'network','warning');
-    setSaveState('error', err && err.message ? err.message : 'Ukjent feil');
+  }catch(err){
+    remoteOnline=false;
+    console.error('Lagring feilet:',err);
+    void reportSystemError('firebase', /403|401|HTTP/.test(String(err?.message))?'http':'network','warning');
+    setSaveState('error',err?.message||'Ukjent feil');
     return false;
   }
 }
