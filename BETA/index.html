@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
-  <title>KØL Grill & Pizza · BETA</title>
+  <title>KØL Grill & Pizza · Bestilling</title>
   <link rel="stylesheet" href="./style.css?v=20261110-cart18">
   <script src="./app.js?v=20261110-cart-closed21" defer></script>
 </head>
 <body>
   <div class="app" id="appViewport">
     <header class="header">
-      <a class="brand" href="./" aria-label="Til menyen"><span class="brand-icon">🔥</span><span id="brandName">KØL Grill & Pizza</span><small>BETA</small></a>
+      <a class="brand" href="./" aria-label="Til menyen"><span class="brand-icon">🔥</span><span id="brandName">KØL Grill & Pizza</span></a>
       <div class="header-actions"><button id="refresh" class="icon-button" title="Oppdater menyen fra serveren" aria-label="Oppdater menyen">↻</button><button id="cartOpen" class="icon-button cart-top" aria-label="Åpne handlekurv">🛒 <span id="cartCount" class="count" hidden>0</span></button></div>
     </header>
     <div class="category-wrap"><div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk" aria-expanded="false"><svg viewBox="0 0 24 24" width="29" height="29" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.5 15.5 5 5"/></svg></button><nav id="categories" aria-label="Meny kategorier"></nav></div><div class="category-track"><button id="catPrev" aria-label="Forrige kategorier">‹</button><div class="track-window"><span id="catProgress"></span></div><button id="catNext" aria-label="Neste kategorier">›</button></div></div>
@@ -37,7 +37,7 @@
       <section id="cartRecommendations" class="cart-recommendations" aria-label="Anbefalt til handlekurven" hidden><div class="cart-recommendations-head"><strong>Vil du ha noe ved siden av?</strong><small>Passer til bestillingen din</small></div><div id="cartRecommendationsItems" class="cart-recommendations-items"></div></section>
       <p id="cartAvailabilityNotice" class="cart-availability-notice" hidden></p>
     </div>
-    <footer class="cart-footer"><div class="cart-buttons"><button id="continue" class="cart-outline" type="button">Fortsett å handle</button><button id="cartNext" class="primary" type="button" disabled title="Bestilling er ikke aktivert i BETA">Neste: Kontakt</button></div></footer>
+    <footer class="cart-footer"><div class="cart-buttons"><button id="continue" class="cart-outline" type="button">Fortsett å handle</button><button id="cartNext" class="primary" type="button" disabled title="Kontaktsteget er ikke tilgjengelig ennå">Neste: Kontakt</button></div></footer>
   </section>
 </body>
 </html>
