@@ -230,11 +230,10 @@ function calculateHoursStatus(settings,now){
  }
  const title=open?'Åpent nå':preOpen?'Forhåndsbestilling':!today.enabled?'Stengt i dag':'Stengt nå';
  let subtitle=open?'Vi tar imot bestillinger nå':preOpen?'Bestill nå · hent etter åpning':
-  manuallyClosed?'Vi tar ikke imot bestillinger akkurat nå':!today.enabled?'Restauranten er stengt '+WEEKDAY_NAMES[now.day]:'Vi tar ikke imot bestillinger akkurat nå';
+  manuallyClosed?'Vi tar ikke imot bestillinger akkurat nå':!today.enabled?'Stengt hele '+WEEKDAY_NAMES[now.day]:'Vi tar ikke imot bestillinger akkurat nå';
  if(!open&&!preOpen&&!manuallyClosed&&upcoming?.offset>1&&days[(now.day+1)%7].enabled===false)
   subtitle=WEEKDAY_NAMES[(now.day+1)%7].replace(/^./,c=>c.toUpperCase())+' er stengt';
- const nextLabel=upcoming?(upcoming.offset===0?'Åpner i dag kl. ':
-  upcoming.offset===1?'Åpner i morgen kl. ':'Åpner '+WEEKDAY_NAMES[upcoming.day]+' kl. ')+upcoming.time:'Ingen planlagt åpningstid';
+ const nextLabel=upcoming?(upcoming.offset===0?'Åpner i dag kl. ':'Åpner '+WEEKDAY_NAMES[upcoming.day]+' kl. ')+upcoming.time:'Ingen planlagt åpningstid';
  const pill=open?'Stenger kl. '+closesAt:preOpen?'Åpner kl. '+today.open:nextLabel;
  return {open,preOpen,orderable:open||preOpen,mode:open?'open':preOpen?'preorder':'closed',
   title,subtitle,pill,upcoming};
