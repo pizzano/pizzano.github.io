@@ -1639,7 +1639,7 @@ async function persist() {
         patch['menu/updatedAt']=revision;
         const delta= {version:revision,previousVersion:prior,changes};
         const bytes=JSON.stringify(delta).length;
-        patch['menuChangeFeed/latest']= bytes<=LIVE_DELTA_MAX_BYTES
+        patch['menu/changeFeed/latest']= bytes<=LIVE_DELTA_MAX_BYTES
           ?delta:{version:revision,previousVersion:prior,requiresRefresh:true};
         try {
           await restPatch('',patch);
@@ -1652,7 +1652,7 @@ async function persist() {
       }else if(remoteMenuPath==='menu'){
         // First save after an unverified snapshot uses the legacy safe write.
         await restPatch('',{menu:next.menu,settings:next.settings,
-          'menuChangeFeed/latest':{version:payload.updatedAt,requiresRefresh:true}});
+          'menu/changeFeed/latest':{version:payload.updatedAt,requiresRefresh:true}});
       }else{
         // Legacy layout: retain its existing write path to avoid corrupting root fields.
         await restPatch(remoteMenuPath,payload);
