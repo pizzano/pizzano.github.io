@@ -3,7 +3,8 @@
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
-let changeStream=null,changeCacheTimer=null,liveRevision=0,liveReloadInFlight=false;
+let changeStream=null,changeCacheTimer=null,liveRevision=0;
+let sharedChannel=null,sharedLeader=false,sharedLockPending=false,sharedLockController=null,sharedLockRelease=null;
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
@@ -55,12 +56,12 @@ async function init(){
    menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
    // Never re-download a cached menu automatically. Manual refresh stays available.
  }else await refreshMenu(false);
- startChangeStream();
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)startChangeStream()});
- window.addEventListener('online',startChangeStream);
+ startSharedChangeStream();
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)startSharedChangeStream()});
+ window.addEventListener('online',startSharedChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
  * The initial snapshot is only the latest compact change notification.
@@ -119,11 +120,12 @@ async function resyncAfterGap(){
  if(menu){
    $('cacheStatus').textContent='Endringer tilgjengelig';
    $('notice').textContent='Menyen er endret. Trykk ↻ for å oppdatere hvis du ønsker den nyeste versjonen.';
+   askPeerForCurrentMenu();
    return;
  }
  await refreshMenu(false);
 }
-async function receiveLiveAnnouncement(value){
+async function receiveLiveAnnouncement(value,relay=false){
  if(!menu||!value||typeof value!=='object')return;
  const version=Number(value.version)||0;
  if(!version||version<=Number(menu.updatedAt))return;
@@ -146,6 +148,7 @@ async function receiveLiveAnnouncement(value){
      $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
    }
    saveLiveCacheSoon();
+   if(relay)broadcastLiveMessage({type:'delta',value});
    $('notice').textContent='';
    $('cacheStatus').textContent='Oppdatert automatisk';
  }catch(error){
@@ -163,8 +166,8 @@ function startChangeStream(){
    try{
      const update=JSON.parse(event.data);
      // An initial SSE "put" also carries the latest revision.
-     if(update.path==='/')void receiveLiveAnnouncement(update.data);
-     else if(update.path==='/latest')void receiveLiveAnnouncement(update.data);
+     if(update.path==='/')void receiveLiveAnnouncement(update.data,true);
+     else if(update.path==='/latest')void receiveLiveAnnouncement(update.data,true);
      else{
        // Nested patch at a feed path: treat it as an unknown revision.
        void resyncAfterGap();
@@ -184,9 +187,85 @@ function startChangeStream(){
    if(changeStream===source)changeStream=null;
  });
 }
-window.addEventListener('pageshow',event=>{if(event.persisted)startChangeStream()});
-window.addEventListener('pagehide',()=>{
+/* Use one Firebase SSE stream across same-origin tabs when Web Locks and
+ * BroadcastChannel are supported. Other tabs receive lightweight deltas
+ * locally, not through separate Firebase listeners. On a gap they can copy
+ * an up-to-date snapshot from another tab without a network download.
+ */
+const SHARED_STREAM_LOCK='kol-public-menu-stream-v1';
+const SHARED_STREAM_CHANNEL='kol-public-menu-updates-v1';
+function broadcastLiveMessage(value){
+ try{sharedChannel?.postMessage(value)}catch{}
+}
+function askPeerForCurrentMenu(){
+ broadcastLiveMessage({type:'snapshot-request',since:Number(menu?.updatedAt)||0});
+}
+function setupSharedChannel(){
+ if(sharedChannel||!('BroadcastChannel' in window))return;
+ try{
+  const channel=new BroadcastChannel(SHARED_STREAM_CHANNEL);
+  sharedChannel=channel;
+  channel.onmessage=event=>{
+   const message=event.data;
+   if(!menu||!message||typeof message!=='object')return;
+   if(message.type==='snapshot-request'){
+    if(sharedLeader&&Number(menu.updatedAt)>Number(message.since||0))
+     broadcastLiveMessage({type:'snapshot',value:menu});
+    return;
+   }
+   if(message.type==='snapshot'){
+    const newer=message.value;
+    if(!newer||!Array.isArray(newer.sections)||!Array.isArray(newer.optionGroups)||
+       !newer.settings||Number(newer.updatedAt)<=Number(menu.updatedAt))return;
+    menu=newer;
+    liveRevision++;
+    saveLiveCacheSoon();
+    render();
+    $('notice').textContent='';
+    $('cacheStatus').textContent='Oppdatert automatisk';
+    return;
+   }
+   if(message.type==='delta')void receiveLiveAnnouncement(message.value);
+  };
+ }catch(error){sharedChannel=null;console.warn('Local tab sync unavailable',error)}
+}
+function startSharedChangeStream(){
+ if(!menu||navigator.onLine===false)return;
+ setupSharedChannel();
+ askPeerForCurrentMenu();
+ // Fallback keeps the original single-tab behavior in older browsers.
+ if(!sharedChannel||!navigator.locks||typeof navigator.locks.request!=='function'){
+  startChangeStream();return;
+ }
+ if(sharedLockPending)return;
+ sharedLockPending=true;
+ const controller=new AbortController();
+ sharedLockController=controller;
+ void navigator.locks.request(SHARED_STREAM_LOCK,{mode:'exclusive',signal:controller.signal},async()=>{
+  if(controller.signal.aborted)return;
+  sharedLeader=true;
+  startChangeStream();
+  await new Promise(resolve=>{sharedLockRelease=resolve});
+  sharedLeader=false;
+  if(changeStream){changeStream.close();changeStream=null}
+ }).catch(error=>{
+  if(error?.name!=='AbortError')console.warn('Shared stream lock unavailable',error);
+ }).finally(()=>{
+  if(sharedLockController===controller)sharedLockController=null;
+  sharedLockRelease=null;
+  sharedLockPending=false;
+ });
+}
+function stopSharedChangeStream(){
+ if(sharedLockController)sharedLockController.abort();
+ if(sharedLockRelease)sharedLockRelease();
  if(changeStream){changeStream.close();changeStream=null}
+ sharedLeader=false;
+ if(sharedChannel){sharedChannel.close();sharedChannel=null}
+}
+window.addEventListener('pageshow',event=>{if(event.persisted)startSharedChangeStream()});
+window.addEventListener('pagehide',()=>{
+ stopSharedChangeStream();
  if(changeCacheTimer){clearTimeout(changeCacheTimer);changeCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
 });
 const clockMinutes=time=>{
