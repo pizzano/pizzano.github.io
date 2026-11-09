@@ -178,47 +178,64 @@ window.addEventListener('pagehide',()=>{
  if(changeStream){changeStream.close();changeStream=null}
  if(changeCacheTimer){clearTimeout(changeCacheTimer);changeCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
 });
-const clockMinutes=time=>{const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(time||''));return m?Number(m[1])*60+Number(m[2]):null};
+const clockMinutes=time=>{
+ const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(time||''));
+ return m?Number(m[1])*60+Number(m[2]):null;
+};
+const WEEKDAY_NAMES=['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
 function openingDays(settings){
- const days=Array.isArray(settings?.weeklyHours)&&settings.weeklyHours.length===7?settings.weeklyHours:null;
- return Array.from({length:7},(_,i)=>({enabled:days?days[i]?.enabled!==false:true,open:days?.[i]?.open||'14:00',close:days?.[i]?.close||'22:00'}));
+ const raw=Array.isArray(settings?.weeklyHours)&&settings.weeklyHours.length===7?settings.weeklyHours:null;
+ return Array.from({length:7},(_,i)=>({
+  enabled:raw?raw[i]?.enabled!==false:true,
+  open:clockMinutes(raw?.[i]?.open)!==null?raw[i].open:'14:00',
+  close:clockMinutes(raw?.[i]?.close)!==null?raw[i].close:'22:00'
+ }));
 }
 function osloTime(){
- const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+ const parts=new Intl.DateTimeFormat('en-GB',{
+  timeZone:'Europe/Oslo',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false
+ }).formatToParts(new Date());
  const get=k=>parts.find(p=>p.type===k)?.value||'';
  const day=['mon','tue','wed','thu','fri','sat','sun'].indexOf(get('weekday').toLowerCase().slice(0,3));
  return {day:day<0?0:day,minute:(Number(get('hour'))%24)*60+Number(get('minute'))};
 }
+function calculateHoursStatus(settings,now){
+ const days=openingDays(settings),today=days[now.day],yesterday=days[(now.day+6)%7];
+ const t=now.minute,start=clockMinutes(today.open),end=clockMinutes(today.close);
+ const priorStart=clockMinutes(yesterday.open),priorEnd=clockMinutes(yesterday.close);
+ let closesAt=null;
+ if(yesterday.enabled&&priorStart!==null&&priorEnd!==null&&priorEnd<=priorStart&&t<priorEnd)closesAt=yesterday.close;
+ if(!closesAt&&today.enabled&&start!==null&&end!==null&&t>=start&&(end<=start||t<end))closesAt=today.close;
+ const until=Number(settings?.manualClosedUntil)||0;
+ const manuallyClosed=settings?.manualClosed===true&&(until<=0||until>Date.now());
+ const open=Boolean(closesAt)&&!manuallyClosed;
+ const preOpen=!open&&!manuallyClosed&&today.enabled&&start!==null&&t<start;
+ let upcoming=null;
+ for(let offset=0;offset<=7;offset++){
+  const next=days[(now.day+offset)%7],minute=clockMinutes(next.open);
+  if(!next.enabled||minute===null||offset*1440+minute<=t)continue;
+  upcoming={offset,day:(now.day+offset)%7,time:next.open};
+  break;
+ }
+ let subtitle=open?'Bestilling tilgjengelig':preOpen?'Forhåndsbestilling tilgjengelig':
+  manuallyClosed?'Midlertidig stengt':!today.enabled?'Stengt hele '+WEEKDAY_NAMES[now.day]:'Se neste åpningstid';
+ // If tomorrow is closed, never display its opening clock as the next opening.
+ if(!open&&!preOpen&&!manuallyClosed&&upcoming?.offset>1&&days[(now.day+1)%7].enabled===false)
+  subtitle=WEEKDAY_NAMES[(now.day+1)%7].replace(/^./,c=>c.toUpperCase())+' er stengt';
+ const nextLabel=upcoming?(upcoming.offset===0?'Åpner i dag kl. ':
+  upcoming.offset===1?'Åpner i morgen kl. ':'Åpner '+WEEKDAY_NAMES[upcoming.day]+' kl. ')+upcoming.time:'Ingen åpningstid';
+ return {
+  open,title:open?'Åpent nå':preOpen?'Åpner senere i dag':!today.enabled?'Stengt i dag':'Stengt nå',
+  subtitle,pill:open?'Stenger kl. '+closesAt:nextLabel
+ };
+}
 function updateHoursStatus(){
  if(!menu)return;
- const settings=menu.settings||{},now=osloTime(),days=openingDays(settings);
- const today=days[now.day],yesterday=days[(now.day+6)%7],openTime=clockMinutes(today.open),closeTime=clockMinutes(today.close);
- const yStart=clockMinutes(yesterday.open),yEnd=clockMinutes(yesterday.close);
- let closesAt=null;
- if(yesterday.enabled&&yStart!==null&&yEnd!==null&&yEnd<=yStart&&now.minute<yEnd)closesAt=yesterday.close;
- if(!closesAt&&today.enabled&&openTime!==null&&closeTime!==null&&now.minute>=openTime&&(closeTime<=openTime||now.minute<closeTime))closesAt=today.close;
- const until=Number(settings.manualClosedUntil)||0;
- const manual=settings.manualClosed===true&&(until<=0||until>Date.now());
- const open=!!closesAt&&!manual;
- let nextOpen=null,nextOffset=0;
- if(!open){
-   for(let offset=0;offset<8;offset++){
-     const day=days[(now.day+offset)%7],start=clockMinutes(day.open);
-     if(!day.enabled||start===null)continue;
-     if(offset===0&&start<=now.minute)continue;
-     if(until>Date.now()){
-       const daysUntil=Math.floor((until-Date.now())/86400000);
-       if(offset<daysUntil)continue;
-     }
-     nextOpen=day.open;nextOffset=offset;break;
-   }
- }
- const preOpen=!open&&!manual&&today.enabled&&openTime!==null&&now.minute<openTime;
- $('statusBanner').classList.toggle('is-closed',!open);
- $('statusTitle').textContent=open?'Åpent nå':preOpen?'Åpner senere i dag':'Stengt nå';
- $('statusSubtitle').textContent=open?'Bestilling tilgjengelig':preOpen?'Forhåndsbestilling tilgjengelig':manual?'Midlertidig stengt':'Se neste åpningstid';
- const pill=$('hoursPill');pill.hidden=false;
- pill.textContent=open?'◷ Stenger kl. '+closesAt:nextOpen?'◷ '+(nextOffset===0?'Åpner kl. ':'Neste åpning: ')+nextOpen:'Ingen åpningstid';
+ const status=calculateHoursStatus(menu.settings||{},osloTime());
+ $('statusBanner').classList.toggle('is-closed',!status.open);
+ $('statusTitle').textContent=status.title;
+ $('statusSubtitle').textContent=status.subtitle;
+ const pill=$('hoursPill');pill.hidden=false;pill.textContent='◷ '+status.pill;
 }
 function categoryProgress(){
  const nav=$('categories'),max=Math.max(0,nav.scrollWidth-nav.clientWidth),track=$('catProgress');
