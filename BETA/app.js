@@ -631,18 +631,116 @@ function cartChoiceRows(line){
  if(line.comment)rows.push('<div class="cart-choice is-note"><span>Merknad: <b>'+esc(line.comment)+'</b></span></div>');
  return rows.join('');
 }
+const CART_SUGGESTIONS_CACHE_KEY='kol-beta-cart-suggestions-once-v1';
+const CART_SUGGESTIONS_DISMISS_KEY='kol-beta-cart-dismissed-v1';
+let dismissedSuggestions=new Set((()=>{try{return JSON.parse(localStorage.getItem(CART_SUGGESTIONS_DISMISS_KEY)||'[]')}catch{return []}})());
+let frozenSuggestionSettings=null;
+function frozenSuggestions(){
+ if(frozenSuggestionSettings)return frozenSuggestionSettings;
+ try{
+  const saved=JSON.parse(localStorage.getItem(CART_SUGGESTIONS_CACHE_KEY)||'null');
+  if(saved&&typeof saved==='object'&&saved.schema===1){frozenSuggestionSettings=saved;return saved}
+ }catch{}
+ let rules={};
+ try{rules=JSON.parse(String(menu?.settings?.cartSuggestionRules||'{}'))||{}}catch{}
+ const snapshot={schema:1,enabled:menu?.settings?.cartSuggestionsEnabled!==false,
+  rules,max:4,createdAt:Date.now()};
+ frozenSuggestionSettings=snapshot;
+ try{localStorage.setItem(CART_SUGGESTIONS_CACHE_KEY,JSON.stringify(snapshot))}catch{}
+ return snapshot;
+}
+function suggestionKind(section,item){
+ const text=(String(section?.title||'')+' '+String(item?.name||'')).toLocaleLowerCase('no');
+ if(/pizza/.test(text))return 'pizza';
+ if(/hamburger|burger/.test(text))return 'burger';
+ if(/kebab|rull/.test(text))return 'kebab';
+ if(/tallerken|snadder/.test(text))return 'tallerken';
+ return 'other';
+}
+function suggestionType(section,item){
+ const text=(String(section?.title||'')+' '+String(item?.name||'')).toLocaleLowerCase('no');
+ if(/brus|cola|pepsi|fanta|sprite|drikke|vann|iste|energidrikk/.test(text))return 'drink';
+ if(/pommes|fries|søtpotet/.test(text))return 'fries';
+ if(/saus|dipp|dip|dressing/.test(text))return 'sauce';
+ return '';
+}
+function suggestedCartItems(){
+ if(!menu||!cart.length)return [];
+ const prefs=frozenSuggestions();
+ if(!prefs.enabled)return [];
+ const included=new Set([...cart.map(x=>String(x.id)),...dismissedSuggestions]);
+ const all=menu.sections.flatMap(section=>(section.items||[]).map(item=>({item,section})))
+  .filter(({item})=>item&&item.id&&!item.hidden&&!item.soldOut&&!included.has(String(item.id)));
+ const sourceKinds=[...new Set(cart.map(line=>{
+  const section=menu.sections.find(s=>(s.items||[]).some(item=>String(item.id)===String(line.id)));
+  return suggestionKind(section,productById(line.id)||{});
+ }))];
+ const selected=[],used=new Set();
+ function add(entry){if(entry&&!used.has(String(entry.item.id))&&selected.length<4){selected.push(entry);used.add(String(entry.item.id))}}
+ for(const kind of sourceKinds){
+  const ids=Array.isArray(prefs.rules?.[kind])?prefs.rules[kind]:[];
+  for(const id of ids)add(all.find(x=>String(x.item.id)===String(id)));
+ }
+ const preferred=sourceKinds.some(k=>k==='burger'||k==='kebab')?['fries','drink','sauce']:
+  sourceKinds.includes('pizza')?['sauce','drink','fries']:['drink','fries','sauce'];
+ for(const type of preferred)
+  for(const entry of all)if(suggestionType(entry.section,entry.item)===type)add(entry);
+ return selected.slice(0,4);
+}
+function renderCartRecommendations(){
+ const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
+ const suggestions=suggestedCartItems();
+ host.hidden=!suggestions.length;
+ if(!suggestions.length){items.replaceChildren();return}
+ items.innerHTML=suggestions.map(({item})=>'<article class="cart-recommendation">'+
+  '<div class="cart-suggestion-image">'+imgEl(item.imageUrl,'','suggestion-photo')+'</div>'+
+  '<div class="cart-recommendation-copy"><strong>'+esc(item.name)+'</strong><span>'+money(basePrice(item))+'</span></div>'+
+  '<button type="button" class="cart-suggest-add" data-suggest-add="'+esc(item.id)+'" aria-label="Legg til '+esc(item.name)+'">+</button>'+
+  '<button type="button" class="cart-suggest-dismiss" data-suggest-dismiss="'+esc(item.id)+'" aria-label="Skjul '+esc(item.name)+'">×</button>'+
+  '</article>').join('');
+ items.querySelectorAll('img[data-image]').forEach(im=>void setCachedImage(im,im.dataset.image));
+}
+const cartTrashIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>';
+const cartEditIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 4 4 4-9.4 9.4-4.1 1.1 1.1-4.1L17 5a2.1 2.1 0 0 1 3 3"/></svg>';
+function cartLineDetails(line){
+ let rows=[];
+ const count=Math.max(1,Number(line.qty)||1);
+ const price=Number(line.unitPrice)||0;
+ const size=line.size?.label||'Standard';
+ // Per-item size display follows the original cart's line-by-line layout.
+ for(let i=0;i<count;i++)
+  rows.push('<div class="cart-line-detail"><span><b>Størrelse:</b> '+esc(size)+'</span><strong>'+money(price)+'</strong></div>');
+ for(const group of line.choices||[]){
+  for(const option of group.options||[]){
+   const qty=Math.max(1,Number(option.count)||1);
+   rows.push('<div class="cart-line-detail"><span><b>'+esc(group.group||'Valg')+':</b> '+esc((qty>1?qty+'× ':'')+option.label)+'</span>'+
+    (Number(option.price)?'<small>+'+money(option.price)+' / stk</small>':'<small>Inkludert</small>')+'</div>');
+  }
+ }
+ if((line.removedIngredients||[]).length)
+  rows.push('<div class="cart-line-detail is-alert"><span>Uten: '+esc(line.removedIngredients.join(', '))+'</span></div>');
+ if(line.comment)rows.push('<div class="cart-line-detail is-alert"><span>'+esc(line.comment)+'</span></div>');
+ return rows.join('');
+}
 function renderCartContents(){
  const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
  $('cartTotal').textContent=money(total);
- $('cartClear').hidden=cart.length===0;
- $('cartItems').innerHTML=cart.length?cart.map((line,index)=>{
-   return '<article class="cart-product-card" data-cart-line="'+index+'">'+
-     '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong><small>'+esc(line.size?.label||'')+'</small></div>'+
-     '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="Reduser antall">−</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
-     '<div class="cart-product-details">'+cartChoiceRows(line)+'</div>'+
-     '<div class="cart-product-totalrow"><button class="cart-remove" data-remove="'+index+'" aria-label="Fjern '+esc(line.name)+'">🗑 Fjern</button><strong>'+money(line.qty*line.unitPrice)+'</strong></div>'+
-   '</article>';
- }).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe fra menyen for å komme i gang.</p></div>';
+ $('cartTopCount').textContent=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);
+ $('cartClear').hidden=!cart.length;
+ $('cartSummary').hidden=!cart.length;
+ $('cartItems').innerHTML=cart.length?cart.map((line,index)=>
+  '<article class="cart-product-card" data-cart-line="'+index+'">'+
+  '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong>'+
+  '<button type="button" class="cart-product-edit" data-edit="'+index+'" aria-label="Endre '+esc(line.name)+'" title="Endre produkt">'+cartEditIcon+'</button></div>'+
+  '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="'+(Number(line.qty)>1?'Reduser antall':'Fjern produkt')+'">'+(Number(line.qty)>1?'−':cartTrashIcon)+'</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
+  '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
+  '<div class="cart-product-totalrow"><span>Sum</span><strong>'+money(line.qty*line.unitPrice)+'</strong></div></article>'
+ ).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
+ renderCartRecommendations();
+ const availability=getOrderingState();
+ $('cartAvailabilityNotice').hidden=availability.orderable||!cart.length;
+ $('cartAvailabilityNotice').textContent=availability.orderable?'':availability.subtitle;
+ $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=!availability.orderable);
 }
 function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
