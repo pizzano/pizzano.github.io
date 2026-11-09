@@ -47,3 +47,16 @@
 .status-banner{position:relative}
 .status-copy{min-width:0}
 @media(max-width:390px){.status-copy strong{font-size:12px}.hours-pill{font-size:9px!important}}
+
+/* Internal app scrollbar: keeps header/category visible and shows a clear drag handle. */
+html,body{height:100%;overflow:hidden}
+.app{height:100dvh;min-height:0;overflow-x:hidden;overflow-y:scroll;overscroll-behavior-y:contain;scrollbar-gutter:stable;scrollbar-width:auto;scrollbar-color:#078463 #dfeae4}
+.app::-webkit-scrollbar{width:11px}
+.app::-webkit-scrollbar-track{background:#e0ece6;border-radius:10px}
+.app::-webkit-scrollbar-thumb{background:#078463;border-radius:10px;border:2px solid #e0ece6;min-height:42px}
+.header{top:0}
+.category-wrap{top:65px}
+.product-photo{position:relative}
+.product-photo>.card-favorite{position:absolute;top:5px;right:5px;left:auto;bottom:auto;z-index:3;flex:none;width:27px;height:27px;margin:0;border:1px solid #b9d9c9;background:#fff;color:#236751;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 2px 7px #0003}
+.product-photo>.card-favorite.is-favorite{background:#fff2f4;color:#d3485a;border-color:#e9b9c0}
+@media(max-width:600px){.app{height:100dvh;scrollbar-gutter:auto;scrollbar-width:thin}.app::-webkit-scrollbar{width:6px}}
