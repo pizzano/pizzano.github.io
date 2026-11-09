@@ -15,7 +15,7 @@ function toggleFavorite(id){
  id=String(id);favorites=isFavorite(id)?favorites.filter(x=>x!==id):[...favorites,id];
  try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites))}catch{}
  if(current&&String(current.id)===id)updateSheetFavorite();
- render();
+ updateCardFavorite(id);
 }
 function updateSheetFavorite(){
  const b=$('sheetFavorite');
@@ -26,7 +26,7 @@ function updateSheetFavorite(){
  b.textContent=isFavorite(current.id)?'♥':'♡';
 }
 function loadCart(){try{const c=JSON.parse(localStorage.getItem(CART_KEY));return Array.isArray(c)?c:[]}catch{return []}}
-function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catch{}renderCartIndicators()}
+function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catch{}renderCartIndicators();updateCartBadges()}
 function openDB(){return new Promise((resolve,reject)=>{if(!indexedDB){reject(Error('IndexedDB unavailable'));return}const r=indexedDB.open(CACHE_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('public');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
 async function localGet(){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readonly'),r=t.objectStore('public').get('menu');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);t.oncomplete=()=>db.close()})}
 async function localPut(value){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readwrite');t.objectStore('public').put(value,'menu');t.oncomplete=()=>{db.close();resolve()};t.onerror=()=>reject(t.error)})}
@@ -157,27 +157,96 @@ function getGroup(id){return menu.optionGroups.find(g=>String(g.id)===String(id)
 function groupsFor(item,size){const ids=[...(item.optionGroupIds||[]),...(size?.optionGroupIds||[])];return [...new Set(ids)].map(getGroup).filter(Boolean)}
 function basePrice(item){const prices=list(item.sizes).map(s=>Number(s.price)||0);return prices.length?Math.min(...prices):Number(item.price)||0}
 function productById(id){for(const s of menu.sections)for(const item of s.items)if(String(item.id)===String(id))return item;return null}
-function imgEl(url,alt,cls){if(!url)return '';return '<img class="'+cls+'" data-image="'+esc(url)+'" alt="'+esc(alt)+'" loading="lazy" decoding="async">'}
-/* Cache Storage holds image responses where image CORS permits it; HTTP cache is fallback. */
-async function setCachedImage(img,url){
-  if(!url)return;
-  if(imageURLs.has(url)){img.src=imageURLs.get(url);return}
-  try{
-    if(!('caches' in window))throw Error('CacheStorage unsupported');
-    const cache=await caches.open('kol-beta-images-v1');
-    let response=await cache.match(url);
-    if(!response){
-      response=await fetch(url,{mode:'cors',cache:'force-cache'});
-      if(!response.ok||response.type==='opaque')throw Error('Image not cacheable');
-      try{await cache.put(url,response.clone())}catch{}
-    }
-    const blob=await response.blob();
-    if(!blob.size)throw Error('Empty image');
-    const objectURL=URL.createObjectURL(blob);imageURLs.set(url,objectURL);img.src=objectURL;
-  }catch{img.src=url}
+function imgEl(url,alt,cls){
+ if(!url)return '';
+ const cached=imageURLs.get(url);
+ return '<img class="'+cls+'" data-image="'+esc(url)+'"'+(cached?' src="'+esc(cached)+'"':'')+' alt="'+esc(alt)+'" loading="'+(cached?'eager':'lazy')+'" decoding="async">';
 }
-const imageObserver='IntersectionObserver' in window?new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;imageObserver.unobserve(entry.target);setCachedImage(entry.target,entry.target.dataset.image)}},{rootMargin:'180px'}):null;
-function hydrateImages(root){root.querySelectorAll('img[data-image]').forEach(img=>{if(imageObserver)imageObserver.observe(img);else setCachedImage(img,img.dataset.image)})}
+/* Share each image download, reuse object URLs and cache responses once. */
+const imagePromises=new Map();
+async function resolveImage(url){
+ if(imageURLs.has(url))return imageURLs.get(url);
+ if(imagePromises.has(url))return imagePromises.get(url);
+ const task=(async()=>{
+  try{
+   if(!('caches' in window))throw Error('Cache Storage unsupported');
+   const cache=await caches.open('kol-beta-images-v1');
+   let response=await cache.match(url);
+   if(!response){
+     response=await fetch(url,{mode:'cors',cache:'force-cache'});
+     if(!response.ok||response.type==='opaque')throw Error('No cacheable image');
+     try{await cache.put(url,response.clone())}catch{}
+   }
+   const blob=await response.blob();
+   if(!blob.size)throw Error('Empty image');
+   const objectURL=URL.createObjectURL(blob);
+   imageURLs.set(url,objectURL);
+   return objectURL;
+  }catch{
+   // The browser still reuses its normal HTTP image cache for CORS-restricted images.
+   return url;
+  }
+ })();
+ imagePromises.set(url,task);
+ return task;
+}
+async function setCachedImage(img,url){
+ if(!url||!img.isConnected)return;
+ const resolved=await resolveImage(url);
+ if(img.isConnected&&img.dataset.image===url&&img.getAttribute('src')!==resolved)img.src=resolved;
+}
+let imageObserver=null;
+function hydrateImages(root){
+ const images=[...root.querySelectorAll('img[data-image]')];
+ if(imageObserver)imageObserver.disconnect();
+ imageObserver='IntersectionObserver' in window?new IntersectionObserver(entries=>{
+   for(const entry of entries){
+     if(!entry.isIntersecting)continue;
+     imageObserver.unobserve(entry.target);
+     void setCachedImage(entry.target,entry.target.dataset.image);
+   }
+ },{root:$('appViewport'),rootMargin:'1200px 0px'}):null;
+ const uniqueURLs=[...new Set(images.map(img=>img.dataset.image).filter(Boolean))];
+ // The first 15 images begin resolving immediately; later images resolve ahead of scroll.
+ for(const url of uniqueURLs.slice(0,15))void resolveImage(url).then(resolved=>{
+  for(const img of images)if(img.isConnected&&img.dataset.image===url)img.src=resolved;
+ });
+ images.forEach((img,index)=>{
+   const cached=imageURLs.get(img.dataset.image);
+   if(cached){img.src=cached;return}
+   if(index<15){img.loading='eager';void setCachedImage(img,img.dataset.image)}
+   else if(imageObserver)imageObserver.observe(img);
+   else void setCachedImage(img,img.dataset.image);
+ });
+}
+function updateCardFavorite(id){
+ for(const card of $('menu').querySelectorAll('[data-product-card]')){
+  if(String(card.dataset.productCard)!==String(id))continue;
+  const image=card.querySelector('.product-photo');
+  if(!image)continue;
+  const heart=image.querySelector('.card-favorite');
+  if(isFavorite(id)&&!heart){
+   const badge=document.createElement('span');
+   badge.className='card-favorite is-favorite';badge.textContent='♥';
+   badge.title='Favoritt';badge.setAttribute('aria-label','Favoritt');
+   image.appendChild(badge);
+  }else if(!isFavorite(id)&&heart)heart.remove();
+ }
+}
+function updateCartBadges(){
+ if(!menu)return;
+ const totals=new Map();
+ for(const line of cart)totals.set(String(line.id),(totals.get(String(line.id))||0)+Number(line.qty||0));
+ for(const card of $('menu').querySelectorAll('[data-product-card]')){
+  const count=totals.get(String(card.dataset.productCard))||0;
+  const media=card.querySelector('.product-photo');
+  if(!media)continue;
+  let badge=media.querySelector('.in-cart');
+  if(!count){if(badge)badge.remove();continue}
+  if(!badge){badge=document.createElement('span');badge.className='in-cart';media.appendChild(badge)}
+  badge.textContent='🛒 '+count+' i kurven';
+ }
+}
 function menuBlocks(){
  const blocks=[],visible=item=>item&&!item.hidden&&!item.soldOut;
  const popularItems=(menu.popularItemIds||[]).map(id=>productById(id)).filter(visible);
@@ -221,34 +290,38 @@ function currentPrice(){if(!current)return 0;const sizes=list(current.sizes),siz
 function updatePrice(){$('addPrice').textContent=money(currentPrice()*qty)}
 function show(id){$('overlay').hidden=false;$(id).hidden=false;document.body.style.overflow='hidden'}
 function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.body.style.overflow=''}
-function addToCart(){if(!current)return;const size=list(current.sizes).find(s=>String(s.id)===String(selection.size));const choices=groupsFor(current,size).map(g=>{const selected=selection['group:'+g.id],opts=list(g.options).filter(o=>Array.isArray(selected)?selected.map(String).includes(String(o.id)):String(selected)===String(o.id));return {groupId:g.id,group:g.title||g.name||'',options:opts.map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}))}}).filter(g=>g.options.length);const entry={id:current.id,name:current.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,comment:$('comment').value.trim().slice(0,500),qty,unitPrice:currentPrice()};const key=JSON.stringify([entry.id,entry.size?.id,entry.choices,entry.comment]);const old=cart.find(x=>JSON.stringify([x.id,x.size?.id,x.choices,x.comment])===key);if(old)old.qty+=qty;else cart.push(entry);saveCart();hideAll();render()}
+function addToCart(){if(!current)return;const size=list(current.sizes).find(s=>String(s.id)===String(selection.size));const choices=groupsFor(current,size).map(g=>{const selected=selection['group:'+g.id],opts=list(g.options).filter(o=>Array.isArray(selected)?selected.map(String).includes(String(o.id)):String(selected)===String(o.id));return {groupId:g.id,group:g.title||g.name||'',options:opts.map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}))}}).filter(g=>g.options.length);const entry={id:current.id,name:current.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,comment:$('comment').value.trim().slice(0,500),qty,unitPrice:currentPrice()};const key=JSON.stringify([entry.id,entry.size?.id,entry.choices,entry.comment]);const old=cart.find(x=>JSON.stringify([x.id,x.size?.id,x.choices,x.comment])===key);if(old)old.qty+=qty;else cart.push(entry);saveCart();hideAll()}
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
 function showCart(){$('cartItems').innerHTML=cart.length?cart.map((x,i)=>'<div class="cart-item"><div><strong>'+esc(x.qty+' × '+x.name)+'</strong><small>'+esc([x.size?.label,...(x.choices||[]).flatMap(g=>g.options.map(o=>o.label)),x.comment].filter(Boolean).join(' · '))+'</small><button data-remove="'+i+'">Fjern</button></div><b>'+money(x.qty*x.unitPrice)+'</b></div>').join(''):'<p>Handlekurven er tom.</p>';$('cartTotal').textContent=money(cart.reduce((sum,x)=>sum+x.qty*x.unitPrice,0));show('cartSheet')}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
 $('categories').addEventListener('scroll',categoryProgress,{passive:true});
-/* Mouse drag without pointer capture: normal category button clicks remain intact. */
+/* Mouse dragging works alongside normal tab clicks. */
 {
- const nav=$('categories');let dragging=false,moved=false,startX=0,startScroll=0;
+ const nav=$('categories');
+ let pointer=null,origin=0,initialScroll=0,wasDragged=false;
  nav.addEventListener('pointerdown',e=>{
-   if(e.pointerType==='touch'||e.button!==0)return;
-   dragging=true;moved=false;startX=e.clientX;startScroll=nav.scrollLeft;
+  if(e.pointerType==='touch'||e.button!==0)return;
+  pointer=e.pointerId;origin=e.clientX;initialScroll=nav.scrollLeft;wasDragged=false;
  });
- window.addEventListener('pointermove',e=>{
-   if(!dragging)return;
-   if(Math.abs(e.clientX-startX)>6){moved=true;nav.classList.add('is-grabbing');nav.scrollLeft=startScroll-(e.clientX-startX)}
+ nav.addEventListener('pointermove',e=>{
+  if(pointer!==e.pointerId)return;
+  const delta=e.clientX-origin;
+  if(Math.abs(delta)>12)wasDragged=true;
+  if(wasDragged){nav.classList.add('is-grabbing');nav.scrollLeft=initialScroll-delta}
  });
- window.addEventListener('pointerup',()=>{
-   if(!dragging)return;
-   dragging=false;nav.classList.remove('is-grabbing');
-   draggedCategories=moved;
-   if(moved)setTimeout(()=>{draggedCategories=false},220);
- });
- window.addEventListener('pointercancel',()=>{dragging=false;nav.classList.remove('is-grabbing')});
+ const end=e=>{
+  if(pointer===null||e.pointerId!==pointer)return;
+  pointer=null;nav.classList.remove('is-grabbing');
+  draggedCategories=wasDragged;
+  if(wasDragged)window.setTimeout(()=>{draggedCategories=false},60);
+ };
+ nav.addEventListener('pointerup',end);
+ nav.addEventListener('pointercancel',end);
  nav.addEventListener('wheel',e=>{
-   if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&nav.scrollWidth>nav.clientWidth){
-     e.preventDefault();nav.scrollLeft+=e.deltaY;
-   }
+  if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&nav.scrollWidth>nav.clientWidth){
+   e.preventDefault();nav.scrollLeft+=e.deltaY;
+  }
  },{passive:false});
 }
 $('catPrev').onclick=()=>$('categories').scrollBy({left:-Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
@@ -269,4 +342,4 @@ $('menu').addEventListener('keydown',e=>{
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
 $('options').addEventListener('change',e=>{const i=e.target;if(!i.matches('input'))return;if(i.type==='checkbox')selection[i.name]=[...$('options').querySelectorAll('input[name="'+CSS.escape(i.name)+'"]:checked')].map(x=>x.value);else selection[i.name]=i.value;if(i.name==='size'){for(const k of Object.keys(selection))if(k.startsWith('group:'))delete selection[k];renderOptions()}else updatePrice()});
 $('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
-$('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;cart.splice(Number(b.dataset.remove),1);saveCart();showCart();render()});for(const id of ['overlay','sheetClose','cartClose','continue'])$(id).onclick=hideAll;document.addEventListener('keydown',e=>{if(e.key==='Escape')hideAll()});document.addEventListener('DOMContentLoaded',init);
+$('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;cart.splice(Number(b.dataset.remove),1);saveCart();showCart()});for(const id of ['overlay','sheetClose','cartClose','continue'])$(id).onclick=hideAll;document.addEventListener('keydown',e=>{if(e.key==='Escape')hideAll()});document.addEventListener('DOMContentLoaded',init);
