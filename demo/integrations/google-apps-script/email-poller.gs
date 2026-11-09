@@ -731,3 +731,97 @@ function stoppEpostVarsler() {
     .forEach(t => ScriptApp.deleteTrigger(t));
   Logger.log('E-postovervåking stoppet.');
 }
+
+
+/**
+ * EMAIL WEB APP: invoked directly after Godta / Marker klar, with an order ID.
+ * The sender re-reads status/email from Firebase; no customer address is
+ * trusted from the browser. Idempotency is the existing Script Properties
+ * checkpoint used by the previous polling implementation.
+ */
+function doPost(e) {
+  const result=state => ContentService.createTextOutput(JSON.stringify({state}))
+    .setMimeType(ContentService.MimeType.JSON);
+  let req={};
+  try { req=JSON.parse(String(e && e.postData && e.postData.contents || '{}')); }
+  catch (_) { return result('invalid'); }
+  const id=String(req && req.orderId || '');
+  const kind=String(req && req.kind || '');
+  if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !['accepted','ready'].includes(kind))
+    return result('ignored');
+  const lock=LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return result('busy');
+  try {
+    const response=UrlFetchApp.fetch(KOL_DB+'/orders/'+encodeURIComponent(id)+'.json',
+      {method:'get',muteHttpExceptions:true});
+    if (response.getResponseCode()!==200) return result('firebase_error');
+    const order=JSON.parse(response.getContentText()||'null');
+    if (!order || !kolEmail_(order)) return result('no_email');
+    const now=Date.now();
+    const eligible=kind==='accepted'
+      ? kolNotificationKind_('mottatt',order,now)==='accepted'
+      : kolNotificationKind_('bekreftet',order,now)==='ready';
+    if (!eligible) return result('not_eligible');
+    const props=PropertiesService.getScriptProperties();
+    const key=kolOrderKey_(id);
+    const previous=props.getProperty(key);
+    const checkpoint=previous?JSON.parse(previous):
+      {status:'',updated:now,sent:{}};
+    if (!checkpoint.sent || typeof checkpoint.sent!=='object') checkpoint.sent={};
+    const priorKey=Object.keys(checkpoint.sent).find(x=>x.indexOf(kind+':')===0);
+    if (priorKey) {
+      // Provider might already have accepted the email. Repair only the
+      // receipt, without sending a duplicate message.
+      if (checkpoint.sent[priorKey]==='sent' &&
+          order.emailReceipts?.[kind]?.state!=='accepted') {
+        try { kolEmailReceipt_(id,kind,order,Number(checkpoint.updated)||now); }
+        catch(error) { Logger.log('E-postkvittering ikke lagret: '+error.message); }
+      }
+      return result('already_processed');
+    }
+    const eventKey=kind+':'+String(order.statusUpdatedAt || 0);
+    checkpoint.sent[eventKey]='attempted';
+    checkpoint.status=String(order.status);
+    checkpoint.updated=now;
+    props.setProperty(key,JSON.stringify(checkpoint));
+    try {
+      if (!kolSendMail_(Object.assign({id},order),kind,kolReadMailTemplates_())) {
+        checkpoint.sent[eventKey]='skipped_no_email';
+        props.setProperty(key,JSON.stringify(checkpoint));
+        return result('no_email');
+      }
+      const at=Date.now();
+      checkpoint.sent[eventKey]='sent';
+      checkpoint.updated=at;
+      props.setProperty(key,JSON.stringify(checkpoint));
+      try { kolEmailReceipt_(id,kind,order,at); }
+      catch(error) { Logger.log('E-postkvittering ikke lagret: '+error.message); }
+      return result('accepted');
+    } catch(error) {
+      const at=Date.now();
+      const state=/time.?out|network/i.test(String(error.message))?'uncertain':'failed';
+      checkpoint.sent[eventKey]=state;
+      checkpoint.updated=at;
+      props.setProperty(key,JSON.stringify(checkpoint));
+      try {
+        kolEmailPutJson_('orders/'+encodeURIComponent(id)+'/emailReceipts/'+kind,{
+          state,provider:'MailApp',attemptedAt:at,
+          statusUpdatedAt:Number(order.statusUpdatedAt)||0
+        });
+      } catch(writeError) { Logger.log('E-postfeilstatus ikke lagret: '+writeError.message); }
+      return result(state);
+    }
+  } catch(error) {
+    Logger.log('E-post Web App-feil: '+error.message);
+    return result('error');
+  } finally { lock.releaseLock(); }
+}
+
+/** Run ONCE after deploying the email Web App to stop every-minute queries. */
+function stoppEpostMinuttSjekk() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction()==='kontrollerEpostBestillinger')
+      ScriptApp.deleteTrigger(trigger);
+  });
+  Logger.log('E-post minuttskanning avsluttet. Web App doPost er aktiv.');
+}
