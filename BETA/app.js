@@ -457,9 +457,133 @@ function showSheet(id){
  }
  renderOptions();updateSheetFavorite();show('productSheet');
 }
-function renderOptions(){if(!current)return;const sizes=list(current.sizes),size=sizes.find(s=>String(s.id)===String(selection.size))||sizes[Math.min(Math.max(Number(current.defaultSizeIndex)||0,0),sizes.length-1)];if(size)selection.size=size.id;const groupHTML=(title,choices,key,type,required=false)=>'<fieldset class="option-group"><div class="option-head"><span>'+esc(title)+'</span>'+(required?'<span class="required">Påkrevd</span>':'')+'</div>'+choices.map((o,i)=>'<label class="option-choice"><input type="'+type+'" name="'+esc(key)+'" value="'+esc(o.id)+'" '+(type==='radio'?(String(selection[key])===String(o.id)?'checked':''):(Array.isArray(selection[key])&&selection[key].includes(o.id)?'checked':''))+'><span>'+esc(o.label||o.name||'')+'</span><span class="opt-price">'+(o.price?'+'+money(o.price):o.caption||'')+'</span></label>').join('')+'</fieldset>';let html='';if(sizes.length){html+=groupHTML('Størrelse',sizes.map(s=>({id:s.id,label:s.label||s.name,price:0,caption:money(s.price)})),'size','radio',true)}const groups=groupsFor(current,size);for(const g of groups){const key='group:'+g.id,opts=list(g.options).map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}));if(!opts.length)continue;const multi=g.multiple===true||g.type==='multiple'||g.selectionType==='multiple'||Number(g.maxSelections)>1; if(!multi && selection[key]===undefined)selection[key]=(opts.find(o=>o.id===g.defaultOptionId)||opts[0]).id;html+=groupHTML(g.title||g.name||'Velg',opts,key,multi?'checkbox':'radio',!multi)}$('options').innerHTML=html;updatePrice()}
-function currentPrice(){if(!current)return 0;const sizes=list(current.sizes),size=sizes.find(s=>String(s.id)===String(selection.size));let n=Number(size?.price??current.price)||0;for(const group of groupsFor(current,size)){const value=selection['group:'+group.id];for(const o of list(group.options))if(Array.isArray(value)?value.map(String).includes(String(o.id)):String(value)===String(o.id))n+=Number(o.price)||Number(o.priceDelta)||0}return n}
-function updatePrice(){$('addPrice').textContent=money(currentPrice()*qty)}
+const KITCHEN_NOTE_DEFAULTS={
+ pizza:['Godt stekt','Ikke skjær','Del i to'],
+ burger:['Godt stekt','Saus ved siden av'],
+ kebab:['Saus ved siden av','Del i to'],
+ tallerken:['Saus ved siden av'],
+ other:['Ekstra servietter']
+};
+let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set();
+function kitchenNotesFor(item){
+ if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
+ const section=menu.sections.find(s=>(s.items||[]).some(x=>String(x.id)===String(item.id)));
+ const label=(String(section?.title||'')+' '+String(item.name||'')).toLocaleLowerCase('no');
+ const kind=/pizza/.test(label)?'pizza':/burger|hamburger/.test(label)?'burger':/kebab|rull/.test(label)?'kebab':/tallerken|snadder/.test(label)?'tallerken':'other';
+ let custom={};
+ try{custom=JSON.parse(String(menu.settings?.quickKitchenNotesConfig||'{}'))||{}}catch{}
+ const source=Array.isArray(item.quickKitchenNotes)?item.quickKitchenNotes:Array.isArray(custom[kind])?custom[kind]:KITCHEN_NOTE_DEFAULTS[kind];
+ return [...new Set(source.map(n=>String(n||'').trim().replace(/\s+/g,' ').slice(0,60)).filter(n=>n&&!/^uten[\s:]/i.test(n)))].slice(0,8);
+}
+function removableIngredientRules(item){
+ if(menu?.settings?.ingredientCustomizationEnabled===false)return [];
+ const fallback=String(item.ingredients||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);
+ const raw=Array.isArray(item.ingredientRules)&&item.ingredientRules.length?item.ingredientRules:
+  Array.isArray(item.ingredientDefaults)&&item.ingredientDefaults.length?item.ingredientDefaults:fallback;
+ const seen=new Set();
+ return raw.map(x=>typeof x==='string'?{name:x,removable:true}:x).filter(x=>{
+  if(!x||x.removable===false||!String(x.name||'').trim())return false;
+  const key=x.name.trim().toLocaleLowerCase('no');
+  if(seen.has(key))return false;seen.add(key);return true;
+ }).map(x=>String(x.name).trim());
+}
+function ingredientEditor(){
+ const names=removableIngredientRules(current),host=$('sheetIngredients');
+ if(!names.length){host.innerHTML='';return}
+ host.innerHTML='<section class="ingredient-editor detail-panel'+(ingredientsOpen?' is-expanded':'')+'">'+
+  '<button type="button" id="ingredientToggle" aria-expanded="'+ingredientsOpen+'" class="ingredient-toggle">'+
+    '<span class="ingredient-symbol" aria-hidden="true">☷</span><span><strong>Tilpass ingredienser</strong><small>'+
+    (removedIngredients.size?'Uten: '+esc([...removedIngredients].join(', ')):'Ingen endringer')+
+    '</small></span><b aria-hidden="true">'+(ingredientsOpen?'⌄':'›')+'</b></button>'+
+  '<div class="ingredient-editor-body" '+(ingredientsOpen?'':'hidden')+'><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
+  '<div class="ingredient-chips">'+names.map(name=>'<button type="button" class="ingredient-chip'+(removedIngredients.has(name)?' is-removed':'')+
+   '" data-ingredient="'+esc(name)+'" aria-pressed="'+removedIngredients.has(name)+'">'+(removedIngredients.has(name)?'−':'✓')+' '+esc(name)+'</button>').join('')+
+  '</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></section>';
+}
+function chosenSize(){
+ const sizes=list(current?.sizes);
+ return sizes.find(s=>String(s.id)===String(selection.size))||sizes[Math.min(Math.max(Number(current?.defaultSizeIndex)||0,0),sizes.length-1)];
+}
+function selectedIds(group){
+ const val=selection['group:'+group.id];
+ return Array.isArray(val)?val:[];
+}
+function initializeOptions(){
+ const size=chosenSize();
+ if(size)selection.size=size.id;
+ for(const group of groupsFor(current,size)){
+  const key='group:'+group.id;
+  if(Array.isArray(selection[key]))continue;
+  const valid=new Set(list(group.options).filter(o=>!o.soldOut).map(o=>String(o.id)));
+  const defaults=list(group.defaultOptionIds).map(String).filter(id=>valid.has(id));
+  selection[key]=group.selectionMode==='multiple'?defaults.slice(0,Math.max(1,Number(group.maxSelections)||1)):defaults.slice(0,1);
+ }
+}
+function optionGroupMarkup(group){
+ const options=list(group.options),multiple=group.selectionMode==='multiple',serving=multiple&&group.allowQuantity===true;
+ const ids=selectedIds(group),max=Math.max(1,Math.min(30,Number(group.maxSelections)||1));
+ const entries=options.map(opt=>{
+  const count=ids.filter(id=>String(id)===String(opt.id)).length;
+  const price=Number(opt.price)||0,blocked=Boolean(opt.soldOut)||(multiple&&ids.length>=max&&!count);
+  if(serving)return '<div class="option-choice is-quantity'+(count?' is-chosen':'')+'"><span class="option-label-text">'+esc(opt.label||'')+
+   '<small>'+(price?'+'+money(price)+' / stk':'Inkludert')+'</small></span>'+
+   (count>1&&price?'<small class="option-line-total">Totalt +'+money(price*count)+'</small>':'')+
+   '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div></div>';
+  return '<label class="option-choice'+(count?' is-chosen':'')+'"><input type="'+(multiple?'checkbox':'radio')+'" name="group:'+esc(group.id)+'" value="'+esc(opt.id)+'" '+(count?'checked':'')+' '+(blocked?'disabled':'')+'><span class="option-label-text">'+esc(opt.label||'')+'</span><span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span></label>';
+ }).join('');
+ const guidance=group.required?'Påkrevd':'Valgfritt';
+ return '<fieldset class="option-group"><div class="option-head"><strong>'+esc(group.title||'Velg')+'</strong><span class="required">'+guidance+'</span>'+
+  (multiple?'<small>Maks '+max+' stk · '+ids.length+' valgt</small>':'')+'</div><div class="option-rows">'+entries+'</div></fieldset>';
+}
+function renderOptions(){
+ if(!current)return;
+ initializeOptions();
+ const sizes=list(current.sizes),size=chosenSize();
+ let html='';
+ if(sizes.length>1){
+  html+='<fieldset class="option-group"><div class="option-head"><strong>Størrelse</strong><span class="required">Påkrevd</span></div><div class="option-rows">';
+  html+=sizes.map(entry=>'<label class="option-choice'+(String(entry.id)===String(size?.id)?' is-chosen':'')+'"><input type="radio" name="size" value="'+esc(entry.id)+'" '+(String(entry.id)===String(size?.id)?'checked':'')+'><span class="option-label-text">'+esc(entry.label||entry.name||'')+'</span><span class="opt-price">'+money(entry.price)+'</span></label>').join('');
+  html+='</div></fieldset>';
+ }
+ for(const group of groupsFor(current,size))html+=optionGroupMarkup(group);
+ $('options').innerHTML=html;
+ renderSheetExtras();
+ updatePrice();
+}
+function renderSheetExtras(){
+ ingredientEditor();
+ const notes=kitchenNotesFor(current);
+ $('quickNotes').innerHTML=notes.length?notes.map(note=>'<button type="button" class="quick-note'+(selectedKitchenNotes.has(note)?' is-selected':'')+'" data-kitchen-note="'+esc(note)+'" aria-pressed="'+selectedKitchenNotes.has(note)+'">'+esc(note)+'</button>').join(''):'<span class="empty-notes">Ingen raske beskjeder</span>';
+ const selected=groupsFor(current,chosenSize()).flatMap(group=>list(group.options).filter(opt=>selectedIds(group).some(id=>String(id)===String(opt.id))));
+ const allergenIds=new Set([...list(current.allergens),...selected.flatMap(opt=>list(opt.allergens))].map(String));
+ const labels=[...allergenIds].map(id=>menu.allergenCatalog.find(a=>String(a.id)===id)?.label||id);
+ $('allergenInfo').innerHTML=labels.length?labels.map(label=>'<span class="allergen-chip">'+esc(label)+'</span>').join(''):'<span class="allergen-empty">Allergener ikke oppgitt</span>';
+ if(removedIngredients.size)$('allergenInfo').innerHTML+='<p class="allergen-caution">Allergeninformasjon kan være ufullstendig selv om du fjerner ingredienser.</p>';
+}
+function currentPrice(){
+ if(!current)return 0;
+ let price=Number(chosenSize()?.price??current.price)||0;
+ for(const group of groupsFor(current,chosenSize())){
+  for(const id of selectedIds(group)){
+   const opt=list(group.options).find(o=>String(o.id)===String(id));
+   if(opt)price+=Number(opt.price)||0;
+  }
+ }
+ return price;
+}
+function optionValidation(){
+ for(const group of groupsFor(current,chosenSize())){
+  const ids=selectedIds(group),min=group.required?Math.max(1,Number(group.minSelections)||1):0;
+  const max=Math.max(1,Number(group.maxSelections)||1);
+  if(ids.length<min)return 'Velg minst '+min+' i «'+(group.title||'valg')+'».';
+  if(ids.length>max)return 'Maks '+max+' valg i «'+(group.title||'valg')+'».';
+ }
+ return '';
+}
+function updatePrice(){
+ $('addPrice').textContent=money(currentPrice()*qty);
+ updateOrderingControls();
+}
 function show(id){$('overlay').hidden=false;$(id).hidden=false;document.body.style.overflow='hidden'}
 function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.body.style.overflow=''}
 function addToCart(){if(!current)return;const size=list(current.sizes).find(s=>String(s.id)===String(selection.size));const choices=groupsFor(current,size).map(g=>{const selected=selection['group:'+g.id],opts=list(g.options).filter(o=>Array.isArray(selected)?selected.map(String).includes(String(o.id)):String(selected)===String(o.id));return {groupId:g.id,group:g.title||g.name||'',options:opts.map(o=>({id:o.id,label:o.label||o.name,price:Number(o.price)||Number(o.priceDelta)||0}))}}).filter(g=>g.options.length);const entry={id:current.id,name:current.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,comment:$('comment').value.trim().slice(0,500),qty,unitPrice:currentPrice()};const key=JSON.stringify([entry.id,entry.size?.id,entry.choices,entry.comment]);const old=cart.find(x=>JSON.stringify([x.id,x.size?.id,x.choices,x.comment])===key);if(old)old.qty+=qty;else cart.push(entry);saveCart();hideAll()}
