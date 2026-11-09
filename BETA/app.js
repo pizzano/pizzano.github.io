@@ -814,23 +814,26 @@ function renderCartRecommendations(){
 const cartTrashIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>';
 const cartEditIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 4 4 4-9.4 9.4-4.1 1.1 1.1-4.1L17 5a2.1 2.1 0 0 1 3 3"/></svg>';
 function cartLineDetails(line){
- let rows=[];
- const count=Math.max(1,Number(line.qty)||1);
- const price=Number(line.unitPrice)||0;
+ const rows=[],price=Number(line.unitPrice)||0;
  const size=line.size?.label||'Standard';
- // Per-item size display follows the original cart's line-by-line layout.
- for(let i=0;i<count;i++)
-  rows.push('<div class="cart-line-detail"><span><b>Størrelse:</b> '+esc(size)+'</span><strong>'+money(price)+'</strong></div>');
+ // One size row per cart line, irrespective of quantity. The Sum row
+ // already multiplies the item price by the quantity.
+ rows.push('<div class="cart-line-detail"><span><b>Størrelse:</b> '+esc(size)+'</span><strong>'+money(price)+'</strong></div>');
  for(const group of line.choices||[]){
   for(const option of group.options||[]){
-   const qty=Math.max(1,Number(option.count)||1);
-   rows.push('<div class="cart-line-detail"><span><b>'+esc(group.group||'Valg')+':</b> '+esc((qty>1?qty+'× ':'')+option.label)+'</span>'+
-    (Number(option.price)?'<small>+'+money(option.price)+' / stk</small>':'<small>Inkludert</small>')+'</div>');
+   const count=Math.max(1,Number(option.count)||1);
+   const label=(count>1?count+'× ':'')+String(option.label||'');
+   const optionPrice=Number(option.price)||0;
+   const priceText=optionPrice>0?'+ '+money(optionPrice)+(count>1?' / stk':''):optionPrice<0?money(optionPrice):'Inkludert';
+   rows.push('<div class="cart-line-detail"><span><b>'+esc(group.group||'Valg')+':</b> '+esc(label)+'</span><small>'+priceText+'</small></div>');
   }
  }
  if((line.removedIngredients||[]).length)
-  rows.push('<div class="cart-line-detail is-alert"><span>Uten: '+esc(line.removedIngredients.join(', '))+'</span></div>');
- if(line.comment)rows.push('<div class="cart-line-detail is-alert"><span>'+esc(line.comment)+'</span></div>');
+  rows.push('<div class="cart-line-detail is-alert"><span><b>Uten:</b> '+esc(line.removedIngredients.join(', '))+'</span></div>');
+ if(line.comment){
+  const comment=String(line.comment).split(/\r?\n/).map(note=>note.trim()).filter(Boolean).join(' · ');
+  if(comment)rows.push('<div class="cart-line-detail is-alert"><span><b>Kommentar:</b> '+esc(comment)+'</span></div>');
+ }
  return rows.join('');
 }
 function renderCartContents(){
