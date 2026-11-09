@@ -1641,7 +1641,14 @@ async function persist() {
         const bytes=JSON.stringify(delta).length;
         patch['menuChangeFeed/latest']= bytes<=LIVE_DELTA_MAX_BYTES
           ?delta:{version:revision,previousVersion:prior,requiresRefresh:true};
-        await restPatch('',patch);
+        try {
+          await restPatch('',patch);
+        } catch (incrementalError) {
+          // Preserve existing admin save behavior until Firebase Rules allow
+          // writes to the compact live feed. This is a safe compatibility fallback.
+          console.warn('Kompakt menylagring ikke tillatt; bruker trygg full lagring.',incrementalError);
+          await restPatch('',{menu:next.menu,settings:next.settings});
+        }
       }else if(remoteMenuPath==='menu'){
         // First save after an unverified snapshot uses the legacy safe write.
         await restPatch('',{menu:next.menu,settings:next.settings,
