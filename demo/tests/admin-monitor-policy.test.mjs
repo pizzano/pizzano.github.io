@@ -41,55 +41,24 @@ test('background status scans are throttled but cannot run in hidden tabs', () =
     settingsSection:'alerts',sinceLastCheckMs:1000,force:true }),true);
 });
 
-test('order stream and acceptance remain independent of health badges', async () => {
-  const admin = await readFile(new URL('../js/admin.js', import.meta.url),'utf8');
-  assert.doesNotMatch(admin,/window\.setInterval\(refreshSmsStatus/);
-  assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void refreshEmailStatus/);
-  assert.match(admin,/requestManualNotificationHealth\(\)/);
-  assert.match(admin,/systemAlertsShouldPoll\(\{/);
-  assert.match(admin,/awaitManualHealthResponse\('smsHealth',requestId\)/);
-  assert.match(admin,/awaitManualHealthResponse\('emailHealth',requestId\)/);
-  assert.match(admin,/testEpsonFromOrders\(\{ force: true \}\)/);
-  assert.match(admin,/refreshFromDatabase\(\{ ordersOnly: true \}\)/);
-  assert.match(admin,/updateOrdersConnection\(\)/);
-  assert.match(admin,/if \(section === 'alerts'\) void refreshSystemAlerts\(\{ force: true \}\)/);
-  assert.match(admin,/manualHealthPending = true/);
-  assert.match(admin,/acceptOrderWithEstimate/);
-  assert.match(admin,/printOrderFromAdmin/);
-});
 
-test('status badges only request Firebase when an explicit refresh is pressed', async () => {
+test('admin never asks SMS/email Apps Script for idle health status', async () => {
   const admin=await readFile(new URL('../js/admin.js',import.meta.url),'utf8');
-  const health=await readFile(new URL('../js/admin-health.js',import.meta.url),'utf8');
   const html=await readFile(new URL('../admin.html',import.meta.url),'utf8');
-  const start=admin.indexOf("el.btnRefreshOrders.addEventListener('click'");
-  const end=admin.indexOf('// Expiration is a local clock event',start);
-  assert.ok(start>0 && end>start);
-  const handler=admin.slice(start,end);
-  assert.match(handler,/Promise\.allSettled\(\[/);
-  for(const call of [
-    'refreshFromDatabase({ ordersOnly: true })',
-    'requestManualNotificationHealth()',
-    'testEpsonFromOrders({ force: true })'
-  ]) assert.ok(handler.includes(call),'manual check missing: '+call);
-  assert.doesNotMatch(admin,/window\.setTimeout\(\(\) => \{ void testEpsonFromOrders/);
-  assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void testEpsonFromOrders/);
-  assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{if\(ui\.page==='notifications'/);
-  assert.doesNotMatch(health,/window\.setInterval\(\(\) => \{\s*if \(visible\(\)\) void runChecks/);
-  assert.match(html,/id="btnRefreshOrders"/);
-  assert.match(html,/Oppdater bestillinger, nett, Epson, SMS og e-post/);
-});
-
-test('manual check writes one request and listens for matching ephemeral status', async () => {
-  const admin=await readFile(new URL('../js/admin.js',import.meta.url),'utf8');
-  assert.match(admin,/healthCheckRequest\.json/);
-  assert.match(admin,/method:'PUT'/);
-  assert.match(admin,/body:JSON\.stringify\(\{id:requestId,requestedAt:Date\.now\(\)\}\)/);
-  assert.match(admin,/payload\.data\?\.requestId !== requestId/);
-  assert.match(admin,/source\.close\(\)/);
-  assert.match(admin,/MANUAL_HEALTH_WAIT_MS = 160000/);
-  assert.doesNotMatch(admin,/window\.setInterval\(refreshSmsStatus/);
-  assert.doesNotMatch(admin,/window\.setInterval\(\(\) => \{ void refreshEmailStatus/);
+  const health=await readFile(new URL('../js/admin-health.js',import.meta.url),'utf8');
+  assert.doesNotMatch(admin,/requestManualNotificationHealth|awaitManualHealthResponse|healthCheckRequest\\.json/);
+  assert.doesNotMatch(admin,/\/notifications\/emailHealth\\.json/);
+  assert.match(admin,/updateOrderSenderIndicators\\(all\\)/);
+  assert.match(admin,/orderSenderState\\(order,channel\\)/);
+  assert.match(admin,/senderBadgeHtml\\(order,'sms'\\)/);
+  assert.match(admin,/senderBadgeHtml\\(order,'email'\\)/);
+  assert.match(admin,/refreshFromDatabase\\(\\{ ordersOnly: true \\}\\)/);
+  assert.match(admin,/testEpsonFromOrders\\(\\{ force: true \\}\\)/);
+  assert.match(admin,/acceptOrderWithEstimate|acceptScheduledOrder/);
+  assert.match(admin,/printOrderFromAdmin/);
+  assert.doesNotMatch(health,/window\\.setInterval\\(\\(\\) => \\{\\s*if \\(visible\\(\\)\\) void runChecks/);
+  assert.match(html,/SMS: ingen sending ennå/);
+  assert.match(html,/E-post: ingen sending ennå/);
 });
 
 test('system errors use a live SSE feed and sparse REST fallback', async () => {

@@ -121,3 +121,28 @@ test('on-demand GAS health responder is idempotent and rejects stale requests', 
     assert.equal(writes.length,1,'idle minute never writes a heartbeat');
   }
 });
+
+test('SMS/email webhook handlers validate only an ID, fetch one stored order and deduplicate', () => {
+  const data=load('../js/data.js'),config=load('../config.js');
+  const sms=load('../integrations/google-apps-script/Kode.gs');
+  const email=load('../integrations/google-apps-script/email-poller.gs');
+  assert.match(data,/notifyOrderSenders\\(order\\.id,'accepted'\\)/);
+  assert.match(data,/notifyOrderSenders\\(orderId,'ready'\\)/);
+  assert.match(data,/mode:'no-cors',keepalive:true/);
+  assert.match(data,/body:JSON\\.stringify\\(\\{orderId,kind\\}\\)/);
+  assert.match(config,/smsWebhookUrl:\\s*''/);
+  assert.match(config,/emailWebhookUrl:\\s*''/);
+  for(const script of [sms,email]) {
+    const handler=script.slice(script.lastIndexOf('function doPost(e)'));
+    assert.match(handler,/\/orders\/.*encodeURIComponent\\(id\\)/);
+    assert.match(handler,/getResponseCode\\(\\)!==200/);
+    assert.match(handler,/already_processed/);
+    assert.match(handler,/LockService\\.getScriptLock\\(\\)/);
+    assert.doesNotMatch(handler,/kolFetchRecentOrders_\\(|kolReadOrders_\\(/);
+  }
+  assert.match(sms,/function stoppSmsMinuttSjekk\\(\\)/);
+  assert.match(email,/function stoppEpostMinuttSjekk\\(\\)/);
+  assert.match(sms,/kolFirebaseSmsPut_\\('orders\\/'\\+id\\+'\\/smsReceipts\\/accepted'/);
+  assert.match(email,/kolEmailPutJson_\\('orders\\/'\\+encodeURIComponent\\(id\\)\\+'\\/emailReceipts\\/'\\+kind/);
+});
+

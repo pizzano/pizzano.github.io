@@ -182,7 +182,7 @@ test('extracted modules remain pure and core entry points call them', () => {
   assert.doesNotMatch(extracted, /\bfetch\s*\(|window\.|localStorage\.|DB_URL/);
   assert.match(root('data.js'), /createDataNormalizers\(\{/);
   assert.match(root('customer.js'), /restorePreviousOrderSelections\(item, line, getItemOptionGroups\)/);
-  assert.match(root('admin.js'), /smsReceiptSentForOrders\(id, getOrders\(\)\)/);
+  assert.match(root('admin.js'), /orderSenderState\(order,channel\)/);
 });
 
 test('ingredient detection stays conservative after consolidation', () => {

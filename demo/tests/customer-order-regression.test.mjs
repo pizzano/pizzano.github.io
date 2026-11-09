@@ -110,8 +110,8 @@ test('pickup intervals and staff acceptance/notifications/printing remain wired'
   assert.match(admin, /data-accept-inline/);
   assert.match(admin, /acceptOrderWithEstimate/);
   assert.match(admin, /printOrderFromAdmin/);
-  assert.match(admin, /smsReceiptSent/);
-  assert.match(admin, /emailReceiptSent/);
+  assert.match(admin, /senderBadgeHtml\(order,'sms'\)/);
+  assert.match(admin, /senderBadgeHtml\(order,'email'\)/);
 });
 
 test('saved order comments hide duplicated automatic ingredient removals', () => {
