@@ -12,7 +12,21 @@ function openDB(){return new Promise((resolve,reject)=>{if(!indexedDB){reject(Er
 async function localGet(){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readonly'),r=t.objectStore('public').get('menu');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);t.oncomplete=()=>db.close()})}
 async function localPut(value){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readwrite');t.objectStore('public').put(value,'menu');t.oncomplete=()=>{db.close();resolve()};t.onerror=()=>reject(t.error)})}
 function normalize(data){return {sections:list(data.sections).map(s=>({...s,items:list(s.items)})),optionGroups:list(data.optionGroups),allergenCatalog:list(data.allergenCatalog),settings:data.settings||{}}}
-async function fromFirebase(){const paths=['sections','optionGroups','allergenCatalog','settings'];const result=await Promise.all(paths.map(async p=>{const r=await fetch(BASE+'/'+p+'.json',{cache:'no-store'});if(!r.ok)throw Error('Firebase HTTP '+r.status+' ('+p+')');return r.json()}));if(!result[0])throw Error('Ingen meny i databasen');return normalize(Object.fromEntries(paths.map((p,i)=>[p,result[i]])))}
+async function fromFirebase(){
+  const read=async path=>{
+    const r=await fetch(BASE+'/'+path+'.json',{cache:'no-store'});
+    if(!r.ok)throw Error('Firebase HTTP '+r.status+' ('+path+')');
+    return r.json();
+  };
+  // Production stores the public catalogue at /menu. Settings live at /settings.
+  // Two parallel reads only; never read the Firebase root or private order nodes.
+  const [payload,settings]=await Promise.all([read('menu'),read('settings')]);
+  if(!payload || !payload.sections || !payload.optionGroups)
+    throw Error('Meny mangler på /menu eller har ugyldig format');
+  const data=normalize({...payload,settings:settings||payload.settings||{}});
+  if(!data.sections.length)throw Error('Ingen kategorier i /menu');
+  return data;
+}
 async function init(){let cached=null;try{cached=await localGet()}catch{}if(cached?.sections?.length){menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';$('statusSubtitle').textContent='Meny fra denne enheten'}else{await refreshMenu(false)}}
 async function refreshMenu(manual=true){$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const fresh=await fromFirebase();menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';$('statusSubtitle').textContent='Meny lagret på denne enheten'}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{$('refresh').disabled=false}}
 function getGroup(id){return menu.optionGroups.find(g=>String(g.id)===String(id))}
