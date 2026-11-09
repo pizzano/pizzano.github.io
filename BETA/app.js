@@ -4,6 +4,7 @@ const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0,liveReloadInFlight=false;
+let weeklyHoursStream=null,weeklyHoursRevision=0;
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
@@ -56,8 +57,9 @@ async function init(){
    // Never re-download a cached menu automatically. Manual refresh stays available.
  }else await refreshMenu(false);
  startChangeStream();
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)startChangeStream()});
- window.addEventListener('online',startChangeStream);
+ startWeeklyHoursStream();
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){startChangeStream();startWeeklyHoursStream()}});
+ window.addEventListener('online',()=>{startChangeStream();startWeeklyHoursStream()});
  window.setInterval(updateHoursStatus,60000);
 }
 async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
@@ -173,9 +175,79 @@ function startChangeStream(){
    if(changeStream===source)changeStream=null;
  });
 }
-window.addEventListener('pageshow',event=>{if(event.persisted)startChangeStream()});
+/* Listen only to the seven weekly opening-hour entries, not the whole menu.
+ * Initial SSE put is a small current-hours snapshot, then admin edits arrive as
+ * tiny leaf updates. This repairs stale local hours without any periodic GET.
+ */
+function normaliseWeeklyHoursPayload(value){
+ if(Array.isArray(value))return value.slice(0,7);
+ if(value&&typeof value==='object')
+  return Array.from({length:7},(_,i)=>value[i]??value[String(i)]??{});
+ return null;
+}
+function receiveWeeklyHoursEvent(event,type){
+ if(!menu)return;
+ try{
+  const update=JSON.parse(event.data);
+  if(!update||typeof update.path!=='string')return;
+  const path=update.path;
+  const old=Array.isArray(menu.settings?.weeklyHours)?menu.settings.weeklyHours:null;
+  let next;
+  if(path==='/'){
+   if(type==='put')next=normaliseWeeklyHoursPayload(update.data);
+   else if(type==='patch'&&update.data&&typeof update.data==='object'){
+    next=(old||Array.from({length:7},()=>({}))).map(x=>({...x}));
+    for(const [key,value] of Object.entries(update.data)){
+     if(!/^[0-6]$/.test(key))return;
+     next[Number(key)]=value===null?{}:{...next[Number(key)],...value};
+    }
+   }
+  }else{
+   const segments=path.slice(1).split('/').filter(Boolean);
+   if(!/^[0-6]$/.test(segments[0])||segments.length>3)return;
+   next=(old||Array.from({length:7},()=>({}))).map(x=>({...x}));
+   const index=Number(segments[0]),key=segments[1];
+   if(segments.length===1){
+    if(type==='patch'&&update.data&&typeof update.data==='object')
+     next[index]={...next[index],...update.data};
+    else next[index]=update.data??{};
+   }else if(segments.length===2&&['open','close','enabled','id'].includes(key)){
+    if(update.data===null)delete next[index][key];
+    else next[index][key]=update.data;
+   }else return;
+  }
+  if(!next||next.length!==7)return;
+  if(JSON.stringify(next)===JSON.stringify(old))return;
+  menu.settings={...(menu.settings||{}),weeklyHours:next};
+  weeklyHoursRevision++;
+  updateHoursStatus();
+  saveLiveCacheSoon();
+  $('cacheStatus').textContent='Åpningstider oppdatert';
+ }catch(error){console.warn('BETA weekly hours event ignored:',error)}
+}
+function startWeeklyHoursStream(){
+ if(!('EventSource' in window)||navigator.onLine===false)return;
+ if(weeklyHoursStream&&weeklyHoursStream.readyState!==2)return;
+ if(weeklyHoursStream){weeklyHoursStream.close();weeklyHoursStream=null}
+ const source=new EventSource(BASE+'/settings/weeklyHours.json');
+ weeklyHoursStream=source;
+ source.addEventListener('put',event=>receiveWeeklyHoursEvent(event,'put'));
+ source.addEventListener('patch',event=>receiveWeeklyHoursEvent(event,'patch'));
+ source.onerror=()=>{
+  // EventSource reconnects automatically after transient connection errors.
+  if(source.readyState===2&&weeklyHoursStream===source){
+   source.close();weeklyHoursStream=null;
+  }
+ };
+ for(const type of ['cancel','auth_revoked'])
+  source.addEventListener(type,()=>{
+   source.close();if(weeklyHoursStream===source)weeklyHoursStream=null;
+  });
+}
+window.addEventListener('pageshow',event=>{if(event.persisted){startChangeStream();startWeeklyHoursStream()}});
 window.addEventListener('pagehide',()=>{
  if(changeStream){changeStream.close();changeStream=null}
+ if(weeklyHoursStream){weeklyHoursStream.close();weeklyHoursStream=null}
  if(changeCacheTimer){clearTimeout(changeCacheTimer);changeCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
 });
 const clockMinutes=time=>{
