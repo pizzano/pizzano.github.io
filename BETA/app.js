@@ -68,7 +68,7 @@ async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=
  * Every notification contains the same version as the atomic admin update.
  * Gap/missed update/oversize delta => one full resync, never polling.
  */
-const LIVE_FEED_URL=BASE+'/menuChangeFeed/latest.json';
+const LIVE_FEED_URL=BASE+'/menu/changeFeed/latest.json';
 const LIVE_RECONNECT_DELAY=5000;
 const unsafeSegment=part=>!part||part==='__proto__'||part==='constructor'||part==='prototype';
 function applyLiveChanges(snapshot,changes){
