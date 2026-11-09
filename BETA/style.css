@@ -26,3 +26,24 @@
 .cache-line{font-size:10px;color:#779087;text-align:right;min-height:15px;padding:0 5px 6px}
 .menu-section{scroll-margin-top:205px}
 @media(max-width:410px){.status-icon{width:70px}.status-copy{padding:7px}.allergen-switch{padding:0 8px;gap:4px;flex-direction:column}.allergen-switch span{font-size:9px}}
+
+/* BETA category and favorites refinement */
+.category-wrap{top:65px;position:sticky;z-index:12}
+.category-bar nav{cursor:grab;user-select:none;-webkit-user-select:none;scrollbar-width:none}
+.category-bar nav.is-grabbing{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
+.category-bar nav button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-height:61px;font-weight:750}
+.category-glyph{display:block;color:#47786d;font-size:21px;line-height:1}
+.category-bar nav button.active .category-glyph{color:#087b57}
+.category-track{height:22px;padding-bottom:6px}
+.track-window{height:8px}
+.track-window span{transition:width .12s}
+.product-side{position:relative;min-width:78px}
+.product-side .add-round{margin-bottom:0}
+.product-card{position:relative}
+.card-favorite{position:absolute;left:78px;top:4px;width:25px;height:25px;border:1px solid #b9d9c9;background:#fff;color:#2a6854;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 1px 4px #0002}
+.card-favorite.is-favorite{color:#d3485a;background:#fff2f4;border-color:#e9b9c0}
+.sheet-favorite{position:absolute;top:13px;left:13px;z-index:2;background:#10352f;border:0;color:white;width:42px;height:42px;border-radius:50%;font-size:29px;display:grid;place-items:center}
+.sheet-favorite.is-favorite{color:#ff8498}
+.status-banner{position:relative}
+.status-copy{min-width:0}
+@media(max-width:390px){.status-copy strong{font-size:12px}.hours-pill{font-size:9px!important}}
