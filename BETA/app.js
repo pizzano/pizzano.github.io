@@ -30,7 +30,7 @@ function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catc
 function openDB(){return new Promise((resolve,reject)=>{if(!indexedDB){reject(Error('IndexedDB unavailable'));return}const r=indexedDB.open(CACHE_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('public');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
 async function localGet(){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readonly'),r=t.objectStore('public').get('menu');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);t.oncomplete=()=>db.close()})}
 async function localPut(value){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readwrite');t.objectStore('public').put(value,'menu');t.oncomplete=()=>{db.close();resolve()};t.onerror=()=>reject(t.error)})}
-function normalize(data){return {sections:list(data.sections).map(s=>({...s,items:list(s.items)})),optionGroups:list(data.optionGroups),allergenCatalog:list(data.allergenCatalog),settings:data.settings||{},popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),updatedAt:Number(data.updatedAt)||0}}
+function normalize(data){return {cacheFormat:2,sections:list(data.sections).map(s=>({...s,items:list(s.items)})),optionGroups:list(data.optionGroups),allergenCatalog:list(data.allergenCatalog),settings:data.settings||{},popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),updatedAt:Number(data.updatedAt)||0}}
 async function fromFirebase(){
   const read=async path=>{
     const r=await fetch(BASE+'/'+path+'.json',{cache:'no-store'});
@@ -50,7 +50,13 @@ async function init(){
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
- if(cached?.sections?.length){menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';checkMenuVersion(true)}
+ if(cached?.sections?.length){
+   menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
+   // One-time upgrade: earlier BETA caches did not store popularItemIds.
+   // Refresh once to repair them, not on every page opening.
+   if(cached.cacheFormat!==2)await refreshMenu(false);
+   else checkMenuVersion(true);
+ }
  else await refreshMenu(false);
  if(!window.__betaVersionTimer)window.__betaVersionTimer=window.setInterval(()=>checkMenuVersion(false),VERSION_INTERVAL);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkMenuVersion(false)});
