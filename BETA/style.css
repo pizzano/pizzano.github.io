@@ -69,3 +69,11 @@ html,body{height:100%;overflow:hidden}
 .product-card[data-product-card]:hover{background:#f9fdfb;border-color:#70baa0}
 .product-card[data-product-card]:focus-visible{outline:3px solid #e7bc48;outline-offset:2px}
 .product-card.is-soldout{cursor:default;opacity:.65}
+
+/* Keep the original menu compact without the removed bottom cart overlay. */
+.app main{padding-bottom:22px}
+.product-photo{background:#e8f1ec;isolation:isolate}
+.product-photo img{display:block;object-fit:cover;opacity:1}
+.product-photo>.card-favorite{pointer-events:none}
+.category-bar nav button{cursor:pointer;touch-action:pan-x}
+.category-bar nav.is-grabbing button{cursor:grabbing}
