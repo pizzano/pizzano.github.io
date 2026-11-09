@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>KØL Grill & Pizza · BETA</title>
-  <link rel="stylesheet" href="./style.css?v=20261109-visualfix7">
-  <script src="./app.js?v=20261109-delta10" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261109-beta-cart11">
+  <script src="./app.js?v=20261109-beta-cart11" defer></script>
 </head>
 <body>
   <div class="app" id="appViewport">
@@ -15,7 +15,7 @@
       <div class="header-actions"><button id="refresh" class="icon-button" title="Oppdater menyen fra serveren" aria-label="Oppdater menyen">↻</button><button id="cartOpen" class="icon-button cart-top" aria-label="Åpne handlekurv">🛒 <span id="cartCount" class="count" hidden>0</span></button></div>
     </header>
     <div class="category-wrap"><div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk">⌕</button><nav id="categories" aria-label="Meny kategorier"></nav></div><div class="category-track"><button id="catPrev" aria-label="Forrige kategorier">‹</button><div class="track-window"><span id="catProgress"></span></div><button id="catNext" aria-label="Neste kategorier">›</button></div></div>
-    <div class="search-area" id="searchArea" hidden><input id="search" type="search" placeholder="Søk etter mat…" aria-label="Søk etter mat"></div>
+    <div class="search-area" id="searchArea" hidden><div class="search-field"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Søk etter mat eller ingredienser…" aria-label="Søk etter mat" autocomplete="off"><button id="searchClear" type="button" aria-label="Tøm søket" hidden>×</button></div></div>
     <main>
       <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div>
       <div id="notice" role="status" aria-live="polite"></div>
@@ -27,6 +27,10 @@
     <div class="sheet-scroll"><div class="hero" id="sheetHero"><button id="sheetFavorite" class="sheet-favorite" type="button" aria-label="Legg til favoritter" aria-pressed="false">♡</button><button id="sheetClose" class="close" aria-label="Lukk">×</button><div class="hero-fallback">🍕</div></div><div class="sheet-intro"><h2 id="sheetTitle"></h2><p id="sheetDesc"></p></div><div id="options"></div><label class="comment-label">Kommentar til kjøkkenet <textarea id="comment" rows="2" placeholder="Valgfritt"></textarea></label></div>
     <footer class="sheet-footer"><div class="qty"><button id="minus" aria-label="Reduser antall">−</button><b id="quantity">1</b><button id="plus" aria-label="Øk antall">+</button></div><button id="add" class="primary">🛒 Legg til <strong id="addPrice"></strong></button></footer>
   </section>
-  <section id="cartSheet" class="sheet cart-sheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden><div class="cart-head"><h2 id="cartTitle">Handlekurv</h2><button id="cartClose" class="close" aria-label="Lukk">×</button></div><div id="cartItems" class="cart-items"></div><footer class="cart-footer"><div class="cart-sum">Totalt <strong id="cartTotal">0 kr</strong></div><p>Dette er BETA. Ingen bestilling sendes ennå.</p><button id="continue" class="primary">Fortsett å handle</button></footer></section>
+  <section id="cartSheet" class="sheet cart-sheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
+  <header class="cart-head"><div class="cart-steps" aria-label="Bestillingssteg"><span class="is-current"><b>1</b> Kurv</span><span><b>2</b> Kontakt</span><span><b>3</b> Hentetid</span></div><div class="cart-header-line"><h2 id="cartTitle">Handlekurv</h2><div class="cart-top-actions"><button id="cartClear" class="cart-clear-all" type="button">Tøm kurv</button><button id="cartClose" class="close" aria-label="Lukk">×</button></div></div></header>
+  <div id="cartItems" class="cart-items"></div>
+  <footer class="cart-footer"><div class="cart-sum">Totalt <strong id="cartTotal">0 kr</strong></div><p>Dette er BETA – ingen bestilling sendes ennå.</p><div class="cart-buttons"><button id="continue" class="cart-outline" type="button">Fortsett å handle</button><button id="cartNext" class="primary" type="button" disabled title="Bestilling er ikke aktivert i BETA">Neste: Kontakt</button></div></footer>
+</section>
 </body>
 </html>
