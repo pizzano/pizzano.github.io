@@ -907,13 +907,35 @@ $('cartRecommendationsItems').addEventListener('click',event=>{
  if(!add)return;
  if(!getOrderingState().orderable)return;
  const item=productById(add.dataset.suggestAdd);if(!item||item.soldOut)return;
- // Products with required choices open the product sheet rather than adding an incomplete line.
- const hasOptions=groupsFor(item,list(item.sizes)[0]).length>0;
- if(hasOptions){hideAll();showSheet(item.id);return}
- const size=list(item.sizes)[Math.min(Math.max(Number(item.defaultSizeIndex)||0,0),Math.max(0,list(item.sizes).length-1))];
- const price=Number(size?.price??item.price)||0;
- const line={id:item.id,name:item.name,size:size?{id:size.id,label:size.label||size.name}:null,choices:[],removedIngredients:[],quickNotes:[],comment:'',qty:1,unitPrice:price};
- const existing=cart.find(x=>String(x.id)===String(item.id)&&String(x.size?.id)===String(size?.id)&&!(x.choices||[]).length&&!x.comment);
+ // Use the configured default size and default selections, without opening the product sheet.
+ // Optional sauces/extras stay unselected; mandatory groups require valid defaults.
+ const sizes=list(item.sizes);
+ const size=sizes[Math.min(Math.max(Number(item.defaultSizeIndex)||0,0),Math.max(0,sizes.length-1))];
+ const groups=groupsFor(item,size);
+ const choices=[];
+ let price=Number(size?.price??item.price)||0;
+ for(const group of groups){
+  const available=list(group.options).filter(opt=>!opt.soldOut);
+  const allowed=new Set(available.map(opt=>String(opt.id)));
+  const max=Math.max(1,Number(group.maxSelections)||1);
+  const min=group.required?Math.max(1,Number(group.minSelections)||1):0;
+  const defaults=list(group.defaultOptionIds).map(String).filter(id=>allowed.has(id));
+  const selected=group.selectionMode==='multiple'?defaults.slice(0,max):defaults.slice(0,1);
+  if(selected.length<min){
+   // No valid required default: product detail is necessary before adding.
+   hideAll();showSheet(item.id);return;
+  }
+  const options=available.filter(opt=>selected.includes(String(opt.id))).map(opt=>{
+   const count=selected.filter(id=>id===String(opt.id)).length;
+   const unit=Number(opt.price)||0;
+   price+=unit*count;
+   return {id:opt.id,label:opt.label||opt.name,price:unit,count};
+  });
+  if(options.length)choices.push({groupId:group.id,group:group.title||'',options});
+ }
+ const line={id:item.id,name:item.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,removedIngredients:[],quickNotes:[],comment:'',qty:1,unitPrice:price};
+ const signature=entry=>JSON.stringify([String(entry.id),String(entry.size?.id),entry.choices||[],entry.removedIngredients||[],entry.comment||'']);
+ const existing=cart.find(x=>signature(x)===signature(line));
  if(existing)existing.qty++;else cart.push(line);
  saveCart();renderCartContents();
 });
