@@ -129,7 +129,8 @@ test('SMS/email webhook handlers validate only an ID, fetch one stored order and
   assert.match(data,/notifyOrderSenders\(order\.id,'accepted'\)/);
   assert.match(data,/notifyOrderSenders\(orderId,'ready'\)/);
   assert.match(data,/mode:'no-cors',keepalive:true/);
-  assert.match(data,/body:JSON\.stringify\(\{orderId,kind\}\)/);
+  assert.match(data,/body:JSON\.stringify\(payload\)/);
+  assert.match(data,/dispatchNotificationTest\(kind\)/);
   assert.match(config,/smsWebhookUrl:\s*''/);
   assert.match(config,/emailWebhookUrl:\s*''/);
   for(const script of [sms,email]) {
@@ -146,3 +147,14 @@ test('SMS/email webhook handlers validate only an ID, fetch one stored order and
   assert.match(email,/kolEmailPutJson_\('orders\/'\+encodeURIComponent\(id\)\+'\/emailReceipts\/'\+kind/);
 });
 
+
+test('event-mode manual tests call the Web Apps only on user action', () => {
+  const admin=load('../js/admin.js');
+  const sms=load('../integrations/google-apps-script/Kode.gs');
+  const mail=load('../integrations/google-apps-script/email-poller.gs');
+  assert.match(admin,/const started=dispatchNotificationTest\(kind\)/);
+  assert.match(sms,/if \(req\.kind==='test' && req\.testKind==='smsAccepted'\)/);
+  assert.match(mail,/if \(req\.kind==='test' && \['emailAccepted','emailReady'\]\.includes\(req\.testKind\)\)/);
+  assert.match(sms,/function stoppSmsMinuttSjekk\(\)/);
+  assert.match(mail,/function stoppEpostMinuttSjekk\(\)/);
+});

@@ -17,7 +17,7 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Ürün görselleri, Realtime Database JSON içinden **dosya** olarak değil `imageUrl` olarak gelir. Müşteri menüsü görsel URL'lerini Service Worker'a bildirir; yalnızca bu URL'lerin resim isteği cache-first ile saklanır. Unsplash responsive ölçüleri aynı görselin farklı boyutu olarak tanınır, fakat boyutlara göre istekler ayrı cache girdileridir. Dosya URL'si değişirse eski görüntü temizlenir. Eş URL'deki sunucu dosyasının değiştiği teknik olarak anlaşılamaz; URL değiştirilmeli veya sürümlenmeli. İlk ziyaret Service Worker henüz kontrol etmiyorsa o sıradaki resimler normal tarayıcı HTTP önbelleğinden gelir; sonraki ziyaretlerde SW kontrolü ile kalıcı fotoğraf cache çalışır.
 - Görsel cache en çok 120 istek ve bilinen (opaque olmayan) yanıtlarda 2 MB/görsel sınırındadır. Kota/private mode nedeniyle önbellek yazma başarısızlığı siparişi etkilemez; tarayıcı verisi temizlenirse resimler tekrar iner.
 - Ön bellekteki veriyi ürün/sipariş fiyatı veya Firebase erişim izni için güvenilir kaynak sayma. Veri formatı sürümü değiştiğinde cache geçersizleşir; IndexedDB açılamazsa eski tam yükleme akışı çalışır.
-- Tasarruf, öncelikle tekrar açılışlarda menü aktarımını azaltır. Admin SSE, SMS/e-posta tetikleyicileri ve Firebase konsolundaki bütün indirilen MB bu değişiklikle ortadan kalkmaz.
+- Tasarruf, öncelikle tekrar açılışlarda menü aktarımını azaltır. Admin SSE ve diğer Firebase bağlantılarının indirme trafiği devam eder.
 
 ## Sipariş güvenilirliği
 
@@ -38,9 +38,9 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 ## Bildirimler ve hata takibi
 
 - Şablonlar: `notifications/templates`; test istekleri ve sonuçları: `notifications/tests`.
-- `smsReceipts` / `emailReceipts` servis gönderim kabulünü kaydeder; gerçek alıcı teslimini kanıtlamaz. Servis durumları `notifications/smsHealth` ve `notifications/emailHealth` içindedir.
+- `smsReceipts` / `emailReceipts` servis gönderim kabulünü kaydeder; gerçek alıcı teslimini kanıtlamaz. Aktif sender-resultater vises fra hver ordres egne kvitteringer, ikke fra en global helseforespørsel.
 - `js/system-errors.js` kritik işlemleri ve belirli Firebase hatalarını kaydetmek için kullanılır; kısa süreli çevrimdışı kayıt kuyruğu vardır. Tarayıcı kapalıyken sürekli izleme yapmaz.
-- Google Apps Script'teki tüm SMS/e-posta sorunlarının `systemErrors` içine aktarıldığı **varsayılmamalıdır**. Aktif Apps Script yürütmeleri, sağlık ve gönderim kayıtları ayrıca incelenmelidir.
+- Google Apps Script'teki tüm SMS/e-posta sorunlarının `systemErrors` içine aktarıldığı **varsayılmamalıdır**. Aktif Apps Script Web App-kjøringer og ordrenes sendekvitteringer må undersøkes direkte.
 
 ## Doğrulama sınırları
 
@@ -57,22 +57,16 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - Profilde ad/e-posta kaydetme, özel müşteri istatistiklerini okumak ve tam müşteri kaydını PUT etmek yerine iki alana Firebase PATCH yapar. Yeni müşteri kabul mantığı ve bonus sayaçları ayrı kalır. **RTDB Rules PATCH yetkisi canlı ortamda doğrulanmalıdır.**
 - Adminin yeni/eski müşteri etiketi için kısa toplam sayaç değeri 5 dakika bellekte saklanır; sipariş listesi kontrolü değişmez. Tam sipariş listesi SSE'si ve mutasyon/print akışı korunmuştur; bunun daha da küçültülmesi sunucu tarafında kalıcı bir özet feed gerektirir.
 
-## Statuslys og manuell oppdatering (2026-11-07)
+## SMS/e-post: hendelsesstyrt Web App (2026-11-09)
 
-- I `Bestillinger` starter bare det eksisterende `btnRefreshOrders` en ny statuskontroll av nett/Firebase, `notifications/smsHealth`, `notifications/emailHealth` og Epson (papirfri ePOS). Den henter også ordredata, men **ikke** hele menyen.
-- Statuslys starter som `ikke kontrollert`. Åpning av faner, automatisk rendering, fokusbytte og tidsintervaller utløser ingen nye statusforespørsler fra disse lysene. Et tidligere grønt lys viser **siste manuelle kontroll**, ikke en kontinuerlig friskhetstest.
-- `Systemhelse`-fanen kan fortsatt kjøres ved et separat, uttrykkelig `Kontroller nå`-klikk. Den kjører ikke automatisk ved åpning eller hvert minutt. `Varsler` har fortsatt eget sikkerhetsvarsel.
-- Viktig: Dette stopper **kun adminens statuskontroller**. Firebase SSE/REST ordreoppdateringer, alarmer, Godta, trykk, og uavhengige Google Apps Script-jobber for SMS/e-post går videre som før. Levende Apps Script kan fremdeles skrive `notifications/smsHealth` og `notifications/emailHealth` regelmessig for å rapportere jobbenes status. Endringer i admin kan ikke stoppe disse skriptenes hjerteslag uten å endre det aktive Apps Script-prosjektet.
-- Manuell Epson-test er ikke utskrift og forbruker ikke papir. Resultat fra **ekte** kjøkkenutskrift oppdaterer naturligvis skriverikonet når utskriften skjer. Avvik mellom ikonets siste tilstand og dagens faktiske status er forventet frem til neste manuelt klikk.
-
-## Manuell kontroll av SMS og e-post — 2026-11-07
-
-- Tidl. ble `notifications/smsHealth` og `notifications/emailHealth` overskrevet av Apps Script hver minutt. Dette skjedde **selv når admin ikke sjekket status**. Det var feil å tolke frontendens manuelle refresh som at Firebase-skrivingene hadde stoppet.
-- Nå oppretter `btnRefreshOrders` **én** liten `notifications/healthCheckRequest` med `id` og `requestedAt` per bevisst klikk. SMS og e-post-senderne leser denne forespørselen med sine eksisterende minutt-triggere og skriver hver sin helsepost **bare** dersom forespørselen er fersk, gyldig og ikke tidligere behandlet.
-- Admin lytter på to tidsbegrensede Firebase SSE-strømmer (maks 160 sekunder), og godtar kun svar som inneholder **samme `requestId`**. Svaret vises når den aktuelle Apps Script-tidstriggeren har kjørt; gamle grønne indikatorer tas ikke for gyldige.
-- Minutt-triggerne må **ikke** deaktiveres: de sender ekte ordre-SMS/e-post, oppdaterer ordre-spesifikke kvitteringer og utfører eksisterende tester. Med nytt script oppstår ingen **tomme helse-skrivinger**, men det er fortsatt **to små forespørselslesinger** per minutt og normale ordresøk. Nettobesparelsen må måles.
-- **GitHub er kun kilde:** de aktive to Google Apps Script-prosjektene oppdateres IKKE automatisk ved repo-commit eller GitHub Pages deploy. Før begge LIVE-prosjektene har fått den nye kildekoden, vil gamle triggere fortsatt skrive `smsHealth` og `emailHealth` hvert minutt. Slett ikke triggere eller Script Properties.
-- Firebase Database Rules må sikre `healthCheckRequest` mot uautoriserte skriv, og sikre at helsedata kun kan skrives av betrodde avsendere. Selv om koden begrenser alder/id, er dette **ikke** autorisasjon.
+- Den gamle manuelle `healthCheckRequest`-knappen og SMS/e-post-statusstrømmene er fjernet fra admin. Den vanlige oppdateringsknappen sjekker fortsatt ordre, nett og Epson.
+- Etter at Firebase har bekreftet `Godta`, sender nettleseren en `text/plain` POST med kun `{orderId,kind:'accepted'}` til SMS og e-post Web Apps. `Marker klar` sender `kind:'ready'` kun til e-post.
+- SMS og e-post Web Apps (`integrations/google-apps-script/Kode.gs` og `email-poller.gs`) leser bare `orders/{id}` og bruker de eksisterende dedupliseringsmarkørene i Script Properties. Vellykket eller avvist sending lagres som ordrespesifikke `smsReceipts` / `emailReceipts`; uavklart gatewaystatus er aldri automatisk grønn eller rød.
+- Admin viser senderresultat på hver ordre via den allerede åpne Firebase `/orders` SSE. Ingen nye per-ordre pollere opprettes.
+- Eksisterende SMS/e-post-utløsere i de **aktive** Google Apps Script-prosjektene må deaktiveres eksplisitt: `stoppSmsMinuttSjekk()` og `stoppEpostMinuttSjekk()`. Oppdatert kode på GitHub **deployer ikke** disse prosjektene.
+- Sett først ekte `smsWebhookUrl` og `emailWebhookUrl` i `demo/config.js` etter to separate Web App-deployments. Begge er tomme i repoet inntil URL-er er kjent. Webhook-mottak krever `doPost` og tilgang som passer testmiljøet.
+- Sende tester i Varslinger behandles nå ved en direkte Web App-kall etter bevisst `Send test`-klikk, ikke gjennom en hvert-minutt-worker.
+- Dette fjerner **tomgangspolling fra disse to Apps Script-prosjektene først når levende triggere faktisk er deaktivert**. Adminens ordre- og systemfeil-SSE er uavhengige av dem. Web App-responsen fra `no-cors` kan ikke brukes som sendebevis; kvitteringen fra Firebase er autoritativ.
 
 ## Legacy pizza bonus scan budget (2026-11-07)
 
