@@ -27,7 +27,7 @@
 .menu-section{scroll-margin-top:205px}
 @media(max-width:410px){.status-icon{width:70px}.status-copy{padding:7px}.allergen-switch{padding:0 8px;gap:4px;flex-direction:column}.allergen-switch span{font-size:9px}}
 
-/* BETA category and favorites refinement */
+/* Category and favorites */
 .category-wrap{top:65px;position:sticky;z-index:12}
 .category-bar nav{cursor:grab;user-select:none;-webkit-user-select:none;scrollbar-width:none}
 .category-bar nav.is-grabbing{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
@@ -78,7 +78,7 @@ html,body{height:100%;overflow:hidden}
 .category-bar nav button{cursor:pointer;touch-action:pan-x}
 .category-bar nav.is-grabbing button{cursor:grabbing}
 
-/* BETA search: generous single-line control and clear close action. */
+/* Search control */
 .search-area{padding:13px 14px 15px;background:#f7fbf9;border-bottom:1px solid var(--line)}
 .search-field{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:0 12px;background:white;border:1px solid #b8d9ca;border-radius:16px;box-shadow:0 2px 8px #123d3010}
 .search-field:focus-within{border-color:var(--green);box-shadow:0 0 0 3px #07836212}
@@ -93,7 +93,7 @@ html,body{height:100%;overflow:hidden}
 .hero.has-image .hero-fallback{display:none}
 .hero .sheet-favorite,.hero .close{z-index:3}
 
-/* BETA cart: same compact card hierarchy as demo/ with the existing BETA palette. */
+/* Cart controls */
 .cart-sheet{background:#f7fbf9}
 .cart-head{flex:none;padding:17px 18px 13px;border-bottom:1px solid #d6e6dd;background:#f7fbf9}
 .cart-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:15px}
@@ -145,7 +145,7 @@ html,body{height:100%;overflow:hidden}
 .status-copy{min-width:0}
 .status-copy .hours-pill{white-space:normal;line-height:1.4;max-width:100%}
 
-/* BETA status — compact premium open, preorder and closed states */
+/* Open, preorder and closed states */
 .status-banner{position:relative;isolation:isolate;min-height:106px;overflow:hidden;border-radius:19px;background:linear-gradient(125deg,#fff 67%,#e8f5ed 100%);border:1px solid #aed5c2;box-shadow:0 6px 20px #0d503214;margin-bottom:12px}
 .status-banner:after{content:"";pointer-events:none;position:absolute;right:-50px;bottom:-78px;width:290px;height:100px;transform:rotate(-12deg);border-radius:50%;background:#07845a0b;z-index:-1}
 .status-icon{width:91px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(160deg,#098b57,#006d47);color:#fff}
@@ -167,7 +167,7 @@ html,body{height:100%;overflow:hidden}
 .status-banner.is-closed .allergen-switch{border-color:#eedddd}
 @media(max-width:410px){.status-icon{width:70px}.status-copy{padding:10px 8px}.status-copy strong{font-size:13px}.status-copy>span:not(.hours-pill){font-size:10px}.hours-pill{font-size:10px!important;padding:5px 7px}}
 
-/* BETA product details — rebuilt visual hierarchy */
+/* Product detail controls */
 .sheet{border:1px solid #d0e7db;background:#f6fbf8}
 .hero{height:240px;flex-shrink:0;background:#e0eae3}
 .hero .hero-photo{object-fit:cover}
@@ -229,7 +229,7 @@ html,body{height:100%;overflow:hidden}
 .sheet-footer .primary:disabled{background:#a9c1b6;cursor:not-allowed;box-shadow:none}
 @media(max-width:600px){.hero{height:205px}.detail-panel,.option-group{margin-left:12px;margin-right:12px}.sheet-intro{padding-top:18px}}
 
-/* BETA cart full-screen view, following the demo cart visual hierarchy. */
+/* Full-screen cart */
 .cart-sheet{position:fixed;z-index:30;left:50%;right:auto;top:0;bottom:0;transform:translateX(-50%);width:min(640px,100vw);max-width:none;height:100dvh;max-height:none;border:0;border-radius:0;display:flex;flex-direction:column;background:#f5faf8;box-shadow:0 8px 38px #0002;overflow:hidden}
 .cart-topbar{height:73px;min-height:73px;display:flex;align-items:center;gap:9px;padding:0 13px;background:#133b30;color:white}
 .cart-back{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:50%;background:#ffffff12;border:1px solid #ffffff40;color:white;font-size:34px;font-weight:300;line-height:1}
