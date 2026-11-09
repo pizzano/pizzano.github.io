@@ -2439,7 +2439,10 @@ async function bootstrap() {
       const startup = await readStartupMenu();
       remoteOnline = startup.verified;
       if (startup.menu) replaceMenuState(startup.menu);
-      if (!CUSTOMER_MODE) adminMenuVerified = true;
+      if (!CUSTOMER_MODE) {
+        adminMenuVerified = true;
+        lastSavedPublicSnapshot = publicMenuForDiff(menuPayload());
+      }
       // /orders is not fetched on customer startup; Firebase SSE handles updates.
     } catch (err) {
       remoteOnline = false;
