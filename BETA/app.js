@@ -237,7 +237,11 @@ function startSharedChangeStream(){
  if(!sharedChannel||!navigator.locks||typeof navigator.locks.request!=='function'){
   startChangeStream();return;
  }
- if(sharedLockPending)return;
+ if(sharedLockPending){
+  // A tab already holding the lock may need to restart SSE after going offline.
+  if(sharedLeader)startChangeStream();
+  return;
+ }
  sharedLockPending=true;
  const controller=new AbortController();
  sharedLockController=controller;
@@ -249,7 +253,10 @@ function startSharedChangeStream(){
   sharedLeader=false;
   if(changeStream){changeStream.close();changeStream=null}
  }).catch(error=>{
-  if(error?.name!=='AbortError')console.warn('Shared stream lock unavailable',error);
+  if(error?.name!=='AbortError'){
+   console.warn('Shared stream lock unavailable',error);
+   if(!controller.signal.aborted)startChangeStream();
+  }
  }).finally(()=>{
   if(sharedLockController===controller)sharedLockController=null;
   sharedLockRelease=null;
@@ -263,7 +270,9 @@ function stopSharedChangeStream(){
  sharedLeader=false;
  if(sharedChannel){sharedChannel.close();sharedChannel=null}
 }
-window.addEventListener('pageshow',event=>{if(event.persisted)startSharedChangeStream()});
+window.addEventListener('pageshow',event=>{
+ if(event.persisted)requestAnimationFrame(startSharedChangeStream);
+});
 window.addEventListener('pagehide',()=>{
  stopSharedChangeStream();
  if(changeCacheTimer){clearTimeout(changeCacheTimer);changeCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
