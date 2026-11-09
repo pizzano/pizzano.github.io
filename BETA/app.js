@@ -559,7 +559,7 @@ $('catPrev').onclick=()=>$('categories').scrollBy({left:-Math.max(130,$('categor
 $('catNext').onclick=()=>$('categories').scrollBy({left:Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
 window.addEventListener('resize',categoryProgress);function setSearchOpen(open){
  $('searchArea').hidden=!open;
- $('searchToggle').textContent=open?'×':'⌕';
+ $('searchToggle').innerHTML=open?'×':'<svg viewBox="0 0 24 24" width="29" height="29" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.5 15.5 5 5"/></svg>';
  $('searchToggle').setAttribute('aria-label',open?'Lukk søk':'Søk');
  $('searchToggle').setAttribute('aria-expanded',String(open));
  if(!open&&$('search').value){$('search').value='';render()}
