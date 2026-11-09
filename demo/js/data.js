@@ -2092,6 +2092,7 @@ export async function markOrderReadyManually(orderId) {
     }
     finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
+    notifyOrderSenders(orderId,'ready');
     return true;
   } catch (err) {
     finishOrderStatusWrite(orderId, writeGuard, false);
@@ -2142,6 +2143,30 @@ export async function updateOrderEstimate(orderId, minutes) {
 }
 
 
+// Trigger Apps Script only after a verified staff status write.
+// POST carries order ID only. Apps Script reads the authoritative order.
+// Browser no-cors responses are opaque: Firebase order receipts prove sending.
+function notifyOrderSenders(orderId, kind) {
+  if (!/^ord_[a-z0-9]{7,40}$/i.test(String(orderId))) return;
+  const config=window.BESTILL_CONFIG || {};
+  const endpoints=[
+    kind==='accepted' ? config.smsWebhookUrl : '',
+    config.emailWebhookUrl,
+  ].filter(Boolean);
+  for (const endpoint of endpoints) {
+    try {
+      const url=new URL(String(endpoint));
+      if (url.protocol!=='https:' || url.hostname!=='script.google.com' ||
+          !/^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) continue;
+      void fetch(url.href,{
+        method:'POST',mode:'no-cors',keepalive:true,
+        headers:{'Content-Type':'text/plain;charset=UTF-8'},
+        body:JSON.stringify({orderId,kind}),
+      }).catch(error=>console.warn('Apps Script webhook could not be reached:',error));
+    } catch(error) { console.warn('Invalid Apps Script webhook URL:',error); }
+  }
+}
+
 // Acceptance must be confirmed by Firebase before the restaurant UI reports
 // "Godtatt". A browser-only optimistic state can disappear on page reload.
 let latestAcceptError = '';
@@ -2170,6 +2195,7 @@ async function confirmRestaurantOrder(order, changes) {
     remoteOnline = true;
     applyVerifiedAcceptance(order.id, verified);
     setSaveState('saved');
+    notifyOrderSenders(order.id,'accepted');
     return true;
   } catch (error) {
     latestAcceptError = String(error?.message || 'Ukjent Firebase-feil').slice(0, 220);
