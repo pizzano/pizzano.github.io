@@ -14,6 +14,8 @@ const KOL_CHECKPOINT_PREFIX = 'kol_order_';
 // Firebase RTDB /orders requires ".indexOn": ["statusUpdatedAt"].
 const KOL_EMAIL_SCAN_CURSOR_KEY = 'KOL_EMAIL_LAST_SUCCESSFUL_SCAN_MS';
 const KOL_EMAIL_SCAN_OVERLAP_MS = 2 * 60 * 1000;
+const KOL_EMAIL_LAST_HEALTH_REQUEST_KEY = 'KOL_EMAIL_LAST_MANUAL_HEALTH_ID';
+const KOL_HEALTH_REQUEST_PATH = 'notifications/healthCheckRequest';
 // Only notify for recent staff status events. Prevents a new installation
 // from suddenly emailing old test orders after first start.
 const KOL_EMAIL_EVENT_MAX_AGE_MS = 60 * 60 * 1000;
@@ -412,16 +414,45 @@ function kolEmailReceipt_(id, kind, order, sentAt) {
       provider: 'MailApp', state:'accepted'
     });
 }
-function kolEmailFailureReceipt_(id, kind, order, at) {
-  if (!/^ord_[a-z0-9]{7,40}$/i.test(String(id)) || !['accepted','ready'].includes(kind)) return;
-  kolEmailPutJson_('orders/' + encodeURIComponent(id) +
-    '/emailReceipts/' + kind, {
-      attemptedAt:at, provider:'MailApp', state:'failed',
-      statusUpdatedAt:Number(order.statusUpdatedAt)||0
-    });
-}
 
 /** Fresh proof of working polling and mail authorization, not mail delivery. */
+function kolEmailHeartbeat_(now, state, requestId) {
+  const quota = MailApp.getRemainingDailyQuota();
+  kolEmailPutJson_('notifications/emailHealth', {
+    checkedAt:now, quotaRemaining:Number(quota) || 0,
+    status:state === 'ok' && quota > 0 ? 'ok' : 'unavailable',
+    requestId:requestId,
+    source:'apps-script-email-poller',
+    // Admin Varslinger uses this to detect whether the live sender supports
+    // the editor's <strong> tags. Old workers do not publish this marker.
+    templateEngineVersion:4,
+    completeHtmlEditor:true,
+    strongFormatting:true,
+    safeInlineFormatting:true
+  });
+}
+
+/** Respond only when a person tapped the admin's manual refresh button.
+ * The independent minute-based sender must keep running for real orders.
+ */
+function kolEmailRespondToManualHealth_(state) {
+  const response = UrlFetchApp.fetch(KOL_DB + '/' +
+    KOL_HEALTH_REQUEST_PATH + '.json', {
+      method:'get', muteHttpExceptions:true
+    });
+  if (response.getResponseCode() !== 200) return;
+  const request = JSON.parse(response.getContentText() || 'null');
+  if (!request || typeof request !== 'object' ||
+      !/^hc_[a-z0-9_]{8,45}$/.test(String(request.id || ''))) return;
+  const requestId = String(request.id);
+  const age = Date.now() - Number(request.requestedAt);
+  const props = PropertiesService.getScriptProperties();
+  if (!Number.isFinite(age) || age < -60000 || age > 5 * 60 * 1000 ||
+      requestId === props.getProperty(KOL_EMAIL_LAST_HEALTH_REQUEST_KEY)) return;
+  kolEmailHeartbeat_(Date.now(),state,requestId);
+  props.setProperty(KOL_EMAIL_LAST_HEALTH_REQUEST_KEY,requestId);
+}
+
 /** Preview without sending customer email. Run and inspect execution log. */
 function forhåndsvisEpostEksempel() {
   const sample = {
@@ -588,9 +619,10 @@ function kontrollerEpostBestillinger() {
       if (mailTemplates === null) mailTemplates = kolReadMailTemplates_();
       return mailTemplates;
     };
-    // Routine scans are for actual order notifications only.
-    // Admin test requests can be processed manually via
-    // kontrollerEpostTestNaa() in the Apps Script editor.
+    // Handle admin email tests first, independently of the normal orders
+    // query. A missing/invalid Firebase order index must not block test mail.
+    try { kolProcessMailTests_(props,templatesForSend); }
+    catch (error) { Logger.log('E-posttest feilet: ' + error.message); }
     const orders = kolReadOrders_();
     const now = Date.now();
     for (const id in orders) {
@@ -655,12 +687,6 @@ function kontrollerEpostBestillinger() {
         } catch (err) {
           checkpoint.sent[eventKey] = 'failed';
           props.setProperty(key, JSON.stringify(checkpoint));
-          // The sender failed, but an SMTP/inbox delivery guarantee cannot
-          // be inferred from the Apps Script error message.
-          try { kolEmailFailureReceipt_(id,kind,order,Date.now()); }
-          catch (writeError) {
-            Logger.log('E-postfeilstatus kunne ikke lagres: '+writeError.message);
-          }
           Logger.log('E-postfeil på ordre ' + id.slice(-6) + ': ' + err.message);
         }
       } else if (!previousJson || checkpoint.status !== status) {
@@ -671,8 +697,11 @@ function kontrollerEpostBestillinger() {
     }
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     props.setProperty(KOL_EMAIL_FIRST_SEEN_FIX_KEY, KOL_EMAIL_FIRST_SEEN_FIX_VERSION);
+    try { kolEmailRespondToManualHealth_('ok'); }
+    catch (err) { Logger.log('Manuell e-postkontroll kunne ikke publiseres: ' + err.message); }
   } catch (err) {
     Logger.log('E-postpoller feilet: ' + err.message);
+    try { kolEmailRespondToManualHealth_('error'); } catch (_) {}
     throw err;
   } finally { lock.releaseLock(); }
 }

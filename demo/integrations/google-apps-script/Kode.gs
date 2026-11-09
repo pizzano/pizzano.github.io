@@ -19,6 +19,9 @@
 let kolSmsIndexedQueryOk_ = false;
 const KOL_SMS_SCAN_CURSOR_KEY = 'KOL_SMS_LAST_SUCCESSFUL_SCAN_MS';
 const KOL_SMS_SCAN_OVERLAP_MS = 5 * 60 * 1000;
+const KOL_SMS_LAST_HEALTH_REQUEST_KEY = 'KOL_SMS_LAST_MANUAL_HEALTH_ID';
+const KOL_HEALTH_REQUEST_PATH = 'notifications/healthCheckRequest';
+
 // The one-minute timer is retained: Apps Script cannot receive native RTDB
 // change notifications without deploying an authenticated backend trigger.
 const KOL_SMS = Object.freeze({
@@ -199,7 +202,7 @@ function kolApiSend_(to, message, token) {
  * A failed status/receipt write must never retry an already-submitted SMS.
  */
 function kolFirebaseSmsPut_(path, value) {
-  if (!/^(notifications\/tests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
+  if (!/^(notifications\/smsHealth|notifications\/tests\/smsAccepted\/result|orders\/ord_[a-zA-Z0-9]{7,40}\/smsReceipts\/(accepted|ready|estimateUpdated))$/.test(path)) {
     throw new Error('Unexpected Firebase SMS path');
   }
   const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' + path + '.json', {
@@ -213,19 +216,42 @@ function kolFirebaseSmsPut_(path, value) {
   }
 }
 
+function kolSmsHeartbeat_(mode, checkedAt, status, requestId) {
+  // Called ONLY for a recent explicit admin request, never for idle polls.
+  kolFirebaseSmsPut_('notifications/smsHealth', {
+    source: 'apps-script-sms-poller',
+    liveConfigured: mode === 'LIVE' && KOL_SMS.allowLiveMode,
+    checkedAt: checkedAt,
+    status: status,
+    requestId: requestId,
+  });
+}
+
+/** A tiny read on the existing minute trigger; never sends customer SMS. */
+function kolSmsRespondToManualHealth_(props, mode, status) {
+  const response = UrlFetchApp.fetch(KOL_SMS.databaseUrl + '/' +
+    KOL_HEALTH_REQUEST_PATH + '.json', {
+      method: 'get', muteHttpExceptions: true
+    });
+  if (response.getResponseCode() !== 200) return;
+  const request = JSON.parse(response.getContentText() || 'null');
+  if (!request || typeof request !== 'object' ||
+      !/^hc_[a-z0-9_]{8,45}$/.test(String(request.id || ''))) return;
+  const requestId = String(request.id);
+  const age = Date.now() - Number(request.requestedAt);
+  if (!Number.isFinite(age) || age < -60000 || age > 5 * 60 * 1000 ||
+      requestId === props.getProperty(KOL_SMS_LAST_HEALTH_REQUEST_KEY)) return;
+  // A stale or repeated button press can never trigger extra gateway sends.
+  kolSmsHeartbeat_(mode, Date.now(), status, requestId);
+  props.setProperty(KOL_SMS_LAST_HEALTH_REQUEST_KEY, requestId);
+}
+
 function kolSmsReceipt_(orderId, kind, sentAt) {
   if (!Number.isSafeInteger(Number(sentAt)) || Number(sentAt) <= 0) return;
   kolFirebaseSmsPut_('orders/' + orderId + '/smsReceipts/' + kind, {
     state: 'accepted', // Traccar accepted the request; not handset delivery.
     provider: 'Traccar',
     sentAt: Number(sentAt),
-  });
-}
-function kolSmsFailureReceipt_(orderId, state, at) {
-  // Explicit provider rejection is red. A network timeout is uncertain,
-  // because the gateway may have accepted the request before disconnecting.
-  kolFirebaseSmsPut_('orders/' + orderId + '/smsReceipts/accepted', {
-    state: state, provider:'Traccar', attemptedAt:at,
   });
 }
 
@@ -346,9 +372,12 @@ function kolCheckSmsTest_(props, token, fixedPhone) {
 function pollOrdersForSms() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return;
+  let healthMode = '';
+  let scanStatus = 'error';
   try {
     const props = kolProps_();
     const mode = props.getProperty('KOL_MODE');
+    healthMode = mode;
     if (mode !== 'TEST' && !(mode === 'LIVE' && KOL_SMS.allowLiveMode)) return;
     const cloudToken = String(props.getProperty('TRACCAR_TOKEN') || '').trim();
     const testNumber = kolPhone_(props.getProperty('TEST_PHONE'));
@@ -358,8 +387,8 @@ function pollOrdersForSms() {
     const now = Date.now();
     // Admin tests must work even when a regular order scan fails (index,
     // Firebase Rules, or unrelated orders). Never send test to order numbers.
-    // Routine sender scans perform order delivery only. The manual
-    // sendTestSms() function remains available in Apps Script.
+    try { kolCheckSmsTest_(props, cloudToken, testNumber); }
+    catch (error) { console.error('SMS test: ' + error.message); }
     const data = kolFetchRecentOrders_();
     // Most minutes have no eligible new SMS. Read the editable template only
     // when an actual confirmation is about to be sent.
@@ -427,14 +456,8 @@ function pollOrdersForSms() {
         sent += 1;
         console.log('SMS accepted by Traccar: ' + kind + ' / ' + kolShortCode_(item.id));
       } catch (err) {
-        const at=Date.now();
-        const state=/Traccar SMS rejected the request/.test(String(err?.message))
-          ? 'failed' : 'uncertain';
-        props.setProperty(eventKey, JSON.stringify({ state, at }));
-        try { kolSmsFailureReceipt_(item.id,state,at); }
-        catch (writeError) {
-          console.error('SMS feilstatus kunne ikke lagres: '+writeError.message);
-        }
+        const failed = { state:'failed', at:Date.now() };
+        props.setProperty(eventKey, JSON.stringify(failed));
         console.error('SMS gateway error: ' + kind + ' / ' + kolShortCode_(item.id) + ' - ' + err.message);
       }
     }
@@ -442,7 +465,15 @@ function pollOrdersForSms() {
     if (kolSmsIndexedQueryOk_ && !scanHasMore) {
       props.setProperty(KOL_SMS_SCAN_CURSOR_KEY, String(now));
     }
+    scanStatus = 'ok';
   } finally {
+    // No automatic status writes. An explicit admin request is answered by
+    // the next normal sender scan, whether it succeeded or failed.
+    try {
+      kolSmsRespondToManualHealth_(kolProps_(), healthMode, scanStatus);
+    } catch (healthError) {
+      console.error('Manual SMS health response failed: ' + healthError.message);
+    }
     lock.releaseLock();
   }
 }
