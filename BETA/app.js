@@ -3,7 +3,7 @@
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
-let changeStream=null,changeCacheTimer=null,liveRevision=0,liveReloadInFlight=false,liveRetryTimer=null;
+let changeStream=null,changeCacheTimer=null,liveRevision=0,liveReloadInFlight=false;
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
@@ -69,7 +69,6 @@ async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=
  * Gap/missed update/oversize delta => one full resync, never polling.
  */
 const LIVE_FEED_URL=BASE+'/menu/changeFeed/latest.json';
-const LIVE_RECONNECT_DELAY=5000;
 const unsafeSegment=part=>!part||part==='__proto__'||part==='constructor'||part==='prototype';
 function applyLiveChanges(snapshot,changes){
  const next=structuredClone(snapshot);
@@ -142,7 +141,6 @@ function startChangeStream(){
  if(!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
  if(changeStream){changeStream.close();changeStream=null}
- if(liveRetryTimer){clearTimeout(liveRetryTimer);liveRetryTimer=null}
  const source=new EventSource(LIVE_FEED_URL);
  changeStream=source;
  const onChange=event=>{
@@ -163,10 +161,7 @@ function startChangeStream(){
    if(source.readyState!==2)return; // Browser reconnects automatically.
    source.close();
    if(changeStream===source)changeStream=null;
-   if(!liveRetryTimer)liveRetryTimer=setTimeout(()=>{
-     liveRetryTimer=null;
-     if(!document.hidden)startChangeStream();
-   },LIVE_RECONNECT_DELAY);
+   // No periodic reconnect requests. Online/visibility events can restart it.
  };
  for(const kind of ['cancel','auth_revoked'])source.addEventListener(kind,()=>{
    source.close();
