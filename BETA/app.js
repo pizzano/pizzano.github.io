@@ -396,7 +396,7 @@ function showSheet(id){
    const thumbnail=card?.querySelector('img[data-image]');
    img.src=thumbnail?.currentSrc||imageURLs.get(url)||url;
    img.onload=()=>{if(img.isConnected)hero.classList.add('has-image')};
-   img.onerror=()=>{if(img.isConnected&&img.src!==url){img.src=url}else{img.remove();hero.classList.remove('has-image')}};
+   img.onerror=()=>{if(!img.isConnected)return;if(!img.dataset.fallbackUsed){img.dataset.fallbackUsed='1';img.src=url}else{img.remove();hero.classList.remove('has-image')}};
    hero.prepend(img);
    if(img.complete&&img.naturalWidth)hero.classList.add('has-image');
    void setCachedImage(img,url);
