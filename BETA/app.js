@@ -57,7 +57,7 @@ async function checkMenuVersion(force=false){
    $('cacheStatus').textContent='Lagret lokalt';
  }finally{versionCheckPending=false}
 }
-const clockMinutes=time=>{const m=/^([01]\\d|2[0-3]):([0-5]\\d)$/.exec(String(time||''));return m?Number(m[1])*60+Number(m[2]):null};
+const clockMinutes=time=>{const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(time||''));return m?Number(m[1])*60+Number(m[2]):null};
 function openingDays(settings){
  const days=Array.isArray(settings?.weeklyHours)&&settings.weeklyHours.length===7?settings.weeklyHours:null;
  return Array.from({length:7},(_,i)=>({enabled:days?days[i]?.enabled!==false:true,open:days?.[i]?.open||'14:00',close:days?.[i]?.close||'22:00'}));
