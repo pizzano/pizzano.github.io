@@ -53,15 +53,14 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  if(cached?.sections?.length){
    menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
-   // Old BETA versions did not include popularItemIds. Upgrade once.
-   if(cached.cacheFormat!==2)await refreshMenu(false);
+   // Never re-download a cached menu automatically. Manual refresh stays available.
  }else await refreshMenu(false);
  startChangeStream();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)startChangeStream()});
  window.addEventListener('online',startChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();lastVersionCheck=Date.now();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
  * The initial snapshot is only the latest compact change notification.
@@ -104,9 +103,14 @@ function saveLiveCacheSoon(){
  },300);
 }
 async function resyncAfterGap(){
- if(liveReloadInFlight)return;
- liveReloadInFlight=true;
- try{await refreshMenu(false)}finally{liveReloadInFlight=false}
+ // No automatic GET once this browser already has a menu.
+ // A missed or oversized delta must not silently trigger a full download.
+ if(menu){
+   $('cacheStatus').textContent='Endringer tilgjengelig';
+   $('notice').textContent='Menyen er endret. Trykk ↻ for å oppdatere hvis du ønsker den nyeste versjonen.';
+   return;
+ }
+ await refreshMenu(false);
 }
 async function receiveLiveAnnouncement(value){
  if(!menu||!value||typeof value!=='object')return;
@@ -131,6 +135,7 @@ async function receiveLiveAnnouncement(value){
      $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
    }
    saveLiveCacheSoon();
+   $('notice').textContent='';
    $('cacheStatus').textContent='Oppdatert automatisk';
  }catch(error){
    console.warn('BETA: could not apply live delta, resyncing once',error);
