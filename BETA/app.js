@@ -2,8 +2,8 @@
 'use strict';
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
-const VERSION_INTERVAL=3*60*1000;let lastVersionCheck=0,versionCheckPending=false,refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
-let settingsStream=null,settingsStreamHealthy=false,settingsCacheTimer=null,lastSettingsFallback=0,remoteSettingsRevision=0;
+let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
+let changeStream=null,changeCacheTimer=null,liveRevision=0,liveReloadInFlight=false,liveRetryTimer=null;
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
@@ -53,122 +53,131 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  if(cached?.sections?.length){
    menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
-   // One-time upgrade: earlier BETA caches did not store popularItemIds.
-   // Refresh once to repair them, not on every page opening.
+   // Old BETA versions did not include popularItemIds. Upgrade once.
    if(cached.cacheFormat!==2)await refreshMenu(false);
-   else checkMenuVersion(true);
- }
- else await refreshMenu(false);
- startSettingsStream();
- if(!window.__betaVersionTimer)window.__betaVersionTimer=window.setInterval(()=>{checkMenuVersion(false);checkSettingsFallback()},VERSION_INTERVAL);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkMenuVersion(false);if(!settingsStreamHealthy)checkSettingsFallback(true)}});
- window.addEventListener('focus',()=>{checkMenuVersion(false);if(!settingsStreamHealthy)checkSettingsFallback(true)});
- window.addEventListener('online',()=>{checkMenuVersion(true);if(!settingsStream||settingsStream.readyState===2)startSettingsStream()});
+ }else await refreshMenu(false);
+ startChangeStream();
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)startChangeStream()});
+ window.addEventListener('online',startChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const initialSettingsRevision=remoteSettingsRevision;const fresh=await fromFirebase();if(menu&&initialSettingsRevision!==remoteSettingsRevision)fresh.settings=menu.settings;menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();lastVersionCheck=Date.now();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(menu&&startingRevision!==liveRevision)fresh.settings=menu.settings;menu=fresh;try{await localPut(fresh)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();lastVersionCheck=Date.now();$('cacheStatus').textContent='Oppdatert';}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
 
-/* A single narrow Firebase stream gets settings changes without loading menu
-   images/products. Only public settings are listened to; never orders/customers.
-   Firebase REST SSE push delivers put/patch events even for parent-path writes. */
-function applySettingsEvent(current,change,isPatch){
- const path=String(change?.path||'/');
- if(!path.startsWith('/'))throw Error('Invalid Firebase event path');
- if(path==='/'){
-  if(!isPatch)return change.data&&typeof change.data==='object'&&!Array.isArray(change.data)?change.data:{};
-  return {...current,...(change.data&&typeof change.data==='object'?change.data:{})};
+/* One tiny Firebase SSE subscription replaces all periodic GETs.
+ * The initial snapshot is only the latest compact change notification.
+ * Every notification contains the same version as the atomic admin update.
+ * Gap/missed update/oversize delta => one full resync, never polling.
+ */
+const LIVE_FEED_URL=BASE+'/menuChangeFeed/latest.json';
+const LIVE_RECONNECT_DELAY=5000;
+const unsafeSegment=part=>!part||part==='__proto__'||part==='constructor'||part==='prototype';
+function applyLiveChanges(snapshot,changes){
+ const next=structuredClone(snapshot);
+ for(const change of changes){
+   if(!change||typeof change.path!=='string')throw Error('Invalid change');
+   const parts=change.path.split('/');
+   if(parts.some(unsafeSegment)||!['menu','settings'].includes(parts[0])||parts.length<2)
+     throw Error('Unsupported change path');
+   // Top-level menu payload in BETA has no "menu" wrapper.
+   let target=parts[0]==='menu'?next:next.settings;
+   const rest=parts[0]==='menu'?parts.slice(1):parts.slice(1);
+   if(rest[0]==='updatedAt'||rest[0]==='cacheFormat')continue;
+   for(let i=0;i<rest.length-1;i++){
+     const key=rest[i];
+     if(!target||typeof target!=='object'||!Object.hasOwn(target,key))
+       throw Error('Change path not present');
+     target=target[key];
+   }
+   const last=rest[rest.length-1];
+   if(!target||typeof target!=='object')throw Error('Invalid change target');
+   if(change.value===null){
+     if(Array.isArray(target))throw Error('Array deletion requires full refresh');
+     delete target[last];
+   }else target[last]=change.value;
  }
- const segments=path.slice(1).split('/').filter(Boolean);
- if(!segments.length||segments.some(p=>p==='__proto__'||p==='constructor'||p==='prototype'))throw Error('Invalid Firebase key');
- const root=structuredClone(current||{});
- let pointer=root;
- for(let i=0;i<segments.length-1;i++){
-  const k=segments[i];if(!pointer[k]||typeof pointer[k]!=='object')pointer[k]={};
-  pointer=pointer[k];
+ return next;
+}
+function saveLiveCacheSoon(){
+ if(changeCacheTimer)clearTimeout(changeCacheTimer);
+ changeCacheTimer=setTimeout(()=>{
+   changeCacheTimer=null;
+   if(menu)localPut(menu).catch(()=>{});
+ },300);
+}
+async function resyncAfterGap(){
+ if(liveReloadInFlight)return;
+ liveReloadInFlight=true;
+ try{await refreshMenu(false)}finally{liveReloadInFlight=false}
+}
+async function receiveLiveAnnouncement(value){
+ if(!menu||!value||typeof value!=='object')return;
+ const version=Number(value.version)||0;
+ if(!version||version<=Number(menu.updatedAt))return;
+ if(Number(value.previousVersion)!==Number(menu.updatedAt)||
+    value.requiresRefresh===true||!Array.isArray(value.changes)){
+   await resyncAfterGap();
+   return;
  }
- const finalKey=segments.at(-1);
- if(change.data===null)delete pointer[finalKey];
- else if(isPatch&&change.data&&typeof change.data==='object'&&!Array.isArray(change.data)){
-  pointer[finalKey]={...(pointer[finalKey]||{}),...change.data};
- }else pointer[finalKey]=change.data;
- return root;
-}
-function persistSettingsSoon(){
- if(settingsCacheTimer)clearTimeout(settingsCacheTimer);
- settingsCacheTimer=setTimeout(()=>{
-  settingsCacheTimer=null;
-  if(menu)localPut(menu).catch(()=>{});
- },250);
-}
-function receiveSettingsEvent(event,isPatch){
- if(!menu)return;
  try{
-  const change=JSON.parse(event.data);
-  if(!change||typeof change.path!=='string')return;
-  const next=applySettingsEvent(menu.settings||{},change,isPatch);
-  if(JSON.stringify(next)===JSON.stringify(menu.settings||{}))return;
-  menu.settings=next;
-  remoteSettingsRevision++;
-  updateHoursStatus();
-  if(next.restaurantName)$('brandName').textContent=next.restaurantName;
-  persistSettingsSoon();
-  $('cacheStatus').textContent='Åpningstider oppdatert';
- }catch(error){console.warn('BETA settings event ignored:',error)}
+   const next=applyLiveChanges(menu,value.changes);
+   next.updatedAt=version;
+   next.cacheFormat=2;
+   const changePaths=value.changes.map(x=>String(x.path));
+   const menuChanged=changePaths.some(x=>x.startsWith('menu/')&&x!=='menu/updatedAt');
+   menu=next;
+   liveRevision++;
+   if(menuChanged)render();
+   else{
+     updateHoursStatus();
+     $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
+   }
+   saveLiveCacheSoon();
+   $('cacheStatus').textContent='Oppdatert automatisk';
+ }catch(error){
+   console.warn('BETA: could not apply live delta, resyncing once',error);
+   await resyncAfterGap();
+ }
 }
-function startSettingsStream(){
+function startChangeStream(){
  if(!('EventSource' in window)||navigator.onLine===false)return;
- if(settingsStream&&settingsStream.readyState!==2)return;
- if(settingsStream){settingsStream.close();settingsStream=null}
- const source=new EventSource(BASE+'/settings.json');
- settingsStream=source;
- source.onopen=()=>{settingsStreamHealthy=true};
- source.addEventListener('put',event=>receiveSettingsEvent(event,false));
- source.addEventListener('patch',event=>receiveSettingsEvent(event,true));
- source.onerror=()=>{
-  settingsStreamHealthy=false;
-  if(source.readyState===2&&settingsStream===source){source.close();settingsStream=null}
+ if(changeStream&&changeStream.readyState!==2)return;
+ if(changeStream){changeStream.close();changeStream=null}
+ if(liveRetryTimer){clearTimeout(liveRetryTimer);liveRetryTimer=null}
+ const source=new EventSource(LIVE_FEED_URL);
+ changeStream=source;
+ const onChange=event=>{
+   try{
+     const update=JSON.parse(event.data);
+     // An initial SSE "put" also carries the latest revision.
+     if(update.path==='/')void receiveLiveAnnouncement(update.data);
+     else if(update.path==='/latest')void receiveLiveAnnouncement(update.data);
+     else{
+       // Nested patch at a feed path: treat it as an unknown revision.
+       void resyncAfterGap();
+     }
+   }catch(error){console.warn('BETA live update parse failed',error)}
  };
- for(const type of ['cancel','auth_revoked'])source.addEventListener(type,()=>{
-  settingsStreamHealthy=false;
-  if(settingsStream===source){source.close();settingsStream=null}
+ source.addEventListener('put',onChange);
+ source.addEventListener('patch',onChange);
+ source.onerror=()=>{
+   if(source.readyState!==2)return; // Browser reconnects automatically.
+   source.close();
+   if(changeStream===source)changeStream=null;
+   if(!liveRetryTimer)liveRetryTimer=setTimeout(()=>{
+     liveRetryTimer=null;
+     if(!document.hidden)startChangeStream();
+   },LIVE_RECONNECT_DELAY);
+ };
+ for(const kind of ['cancel','auth_revoked'])source.addEventListener(kind,()=>{
+   source.close();
+   if(changeStream===source)changeStream=null;
  });
 }
-async function checkSettingsFallback(force=false){
- if(!menu||settingsStreamHealthy||document.hidden||navigator.onLine===false||refreshPending)return;
- if(!force&&Date.now()-lastSettingsFallback<VERSION_INTERVAL)return;
- lastSettingsFallback=Date.now();
- try{
-  const result=await fetch(BASE+'/settings.json',{cache:'no-store'});
-  if(!result.ok)throw Error('Settings HTTP '+result.status);
-  const settings=await result.json();
-  if(settings&&typeof settings==='object'){
-   receiveSettingsEvent({data:JSON.stringify({path:'/',data:settings})},false);
-  }
-  if(!settingsStream||settingsStream.readyState===2)startSettingsStream();
- }catch{/* cached hours remain visible */ }
-}
-window.addEventListener('pageshow',event=>{if(event.persisted)startSettingsStream()});
+window.addEventListener('pageshow',event=>{if(event.persisted)startChangeStream()});
 window.addEventListener('pagehide',()=>{
- settingsStreamHealthy=false;
- if(settingsStream){settingsStream.close();settingsStream=null}
- if(settingsCacheTimer){clearTimeout(settingsCacheTimer);settingsCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
+ if(changeStream){changeStream.close();changeStream=null}
+ if(changeCacheTimer){clearTimeout(changeCacheTimer);changeCacheTimer=null;if(menu)localPut(menu).catch(()=>{})}
 });
-
-/* The existing admin saves one /menu/updatedAt revision on ALL menu and settings edits.
-   A single tiny version read detects changes; complete data is fetched only if newer. */
-async function checkMenuVersion(force=false){
- if(!menu||versionCheckPending||refreshPending||document.hidden||navigator.onLine===false)return;
- if(!force&&Date.now()-lastVersionCheck<VERSION_INTERVAL)return;
- versionCheckPending=true;lastVersionCheck=Date.now();
- try{
-   const response=await fetch(BASE+'/menu/updatedAt.json',{cache:'no-store'});
-   if(!response.ok)throw Error('Versjon '+response.status);
-   const version=Number(await response.json())||0;
-   if(version&&version!==Number(menu.updatedAt))await refreshMenu(false);
- }catch{
-   $('cacheStatus').textContent='Lagret lokalt';
- }finally{versionCheckPending=false}
-}
 const clockMinutes=time=>{const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(time||''));return m?Number(m[1])*60+Number(m[2]):null};
 function openingDays(settings){
  const days=Array.isArray(settings?.weeklyHours)&&settings.weeklyHours.length===7?settings.weeklyHours:null;
