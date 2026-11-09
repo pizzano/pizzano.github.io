@@ -180,8 +180,6 @@ const imageObserver='IntersectionObserver' in window?new IntersectionObserver(en
 function hydrateImages(root){root.querySelectorAll('img[data-image]').forEach(img=>{if(imageObserver)imageObserver.observe(img);else setCachedImage(img,img.dataset.image)})}
 function menuBlocks(){
  const blocks=[],visible=item=>item&&!item.hidden&&!item.soldOut;
- const favoriteItems=favorites.map(id=>productById(id)).filter(visible);
- if(favoriteItems.length)blocks.push({id:'favorites',title:'Mine favoritter',note:'Produktene du har markert',items:favoriteItems});
  const popularItems=(menu.popularItemIds||[]).map(id=>productById(id)).filter(visible);
  if(popularItems.length)blocks.push({id:'popular',title:'Mest bestilt',note:'Gjestenes favoritter',items:popularItems});
  for(const section of menu.sections){
@@ -191,7 +189,6 @@ function menuBlocks(){
  return blocks;
 }
 function categoryGlyph(block){
- if(block.id==='favorites')return '♡';
  if(block.id==='popular')return '☆';
  const t=String(block.title||'').toLocaleLowerCase('no');
  if(t.includes('pizza'))return '♧';
@@ -204,7 +201,7 @@ function productCard(i){
  const sizeCount=list(i.sizes).length;
  const amount=cart.filter(x=>String(x.id)===String(i.id)).reduce((a,x)=>a+x.qty,0);
  const allergens=list(i.allergens).map(a=>{const match=menu.allergenCatalog.find(x=>String(x.id)===String(a));return match?.label||a}).join(', ');
- return '<article class="product-card"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||i.ingredients||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" data-product="'+esc(i.id)+'" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'">+</button><button class="card-favorite'+(isFavorite(i.id)?' is-favorite':'')+'" data-favorite="'+esc(i.id)+'" aria-label="'+(isFavorite(i.id)?'Fjern fra favoritter':'Legg til favoritter')+'" aria-pressed="'+isFavorite(i.id)+'">'+(isFavorite(i.id)?'♥':'♡')+'</button></div></article>';
+ return '<article class="product-card"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+'<button class="card-favorite'+(isFavorite(i.id)?' is-favorite':'')+'" data-favorite="'+esc(i.id)+'" aria-label="'+(isFavorite(i.id)?'Fjern fra favoritter':'Legg til favoritter')+'" aria-pressed="'+isFavorite(i.id)+'">'+(isFavorite(i.id)?'♥':'♡')+'</button></div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||i.ingredients||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" data-product="'+esc(i.id)+'" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'">+</button></div></article>';
 }
 function render(){
  if(!menu)return;
