@@ -1,4 +1,4 @@
-/* BETA: public menu only. No listeners, analytics or order writes. */
+/* Customer menu, browser caching and one live public update stream. */
 'use strict';
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
@@ -87,7 +87,7 @@ function applyLiveChanges(snapshot,changes){
      handler(next,parts.slice(1),change.value);
      continue;
    }
-   // Top-level menu payload in BETA has no "menu" wrapper.
+   // Locally cached menu has no "menu" wrapper.
    let target=parts[0]==='menu'?next:next.settings;
    const rest=parts.slice(1);
    if(rest[0]==='updatedAt'||rest[0]==='cacheFormat')continue;
@@ -149,7 +149,7 @@ async function receiveLiveAnnouncement(value){
    $('notice').textContent='';
    $('cacheStatus').textContent='Oppdatert automatisk';
  }catch(error){
-   console.warn('BETA: could not apply live delta, resyncing once',error);
+   console.warn('Could not apply live menu update',error);
    await resyncAfterGap();
  }
 }
@@ -169,7 +169,7 @@ function startChangeStream(){
        // Nested patch at a feed path: treat it as an unknown revision.
        void resyncAfterGap();
      }
-   }catch(error){console.warn('BETA live update parse failed',error)}
+   }catch(error){console.warn('Live menu update parse failed',error)}
  };
  source.addEventListener('put',onChange);
  source.addEventListener('patch',onChange);
