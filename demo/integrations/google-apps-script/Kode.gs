@@ -496,7 +496,7 @@ function setupTestSms() {
   });
   props.setProperty('KOL_ACTIVE_SINCE', String(Date.now()));
   props.setProperty('KOL_MODE', 'TEST');
-  ScriptApp.newTrigger('pollOrdersForSms').timeBased().everyMinutes(1).create();
+  // Event-driven doPost replaces minute-based trigger creation.
   console.log('Test-only SMS automation enabled. No customer SMS can be sent in TEST mode.');
 }
 
@@ -544,7 +544,7 @@ function setupLiveSms() {
   all.forEach(trigger => {
     if (trigger.getHandlerFunction() === 'pollOrdersForSms') ScriptApp.deleteTrigger(trigger);
   });
-  ScriptApp.newTrigger('pollOrdersForSms').timeBased().everyMinutes(1).create();
+  // Event-driven doPost replaces minute-based trigger creation.
   props.setProperty('KOL_ACTIVE_SINCE', String(Date.now()));
   props.setProperty('KOL_MODE', 'LIVE');
   console.log('LIVE SMS: kun første bekreftelse med hentetid. Ingen ekstra SMS ved klar/Endre tid. Maks ' + KOL_SMS.maxPerDay + ' per dag.');

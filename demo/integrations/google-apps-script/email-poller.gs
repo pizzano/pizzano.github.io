@@ -532,7 +532,7 @@ function installerEpostVarsler() {
     }
     const existing = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'kontrollerEpostBestillinger');
     for (const trigger of existing) ScriptApp.deleteTrigger(trigger);
-    ScriptApp.newTrigger('kontrollerEpostBestillinger').timeBased().everyMinutes(1).create();
+    // Event-driven doPost replaces minute-based trigger creation.
     if (kolEmailIndexedQueryOk_) props.setProperty(KOL_EMAIL_SCAN_CURSOR_KEY, String(now));
     Logger.log('E-postovervåking aktivert. Eksisterende ordre registrert: ' + seeded + '. Ingen gamle meldinger sendt.');
   } finally { lock.releaseLock(); }

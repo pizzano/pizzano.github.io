@@ -32,7 +32,7 @@ test('SMS scans only changes since last successful poll with bounded overlap', (
   assert.match(code, /if \(kolSmsIndexedQueryOk_ && !scanHasMore\)/);
   assert.match(code, /if \(sent >= KOL_SMS.maxPerRun \|\| todayCount >= KOL_SMS.maxPerDay\)/);
   assert.match(code, /kolSmsRespondToManualHealth_\(kolProps_\(\), healthMode, scanStatus\)/);
-  assert.match(code, /everyMinutes\(1\)/, 'independent Apps Script trigger must keep running');
+  assert.doesNotMatch(code, /newTrigger\('pollOrdersForSms'\)\.timeBased\(\)\.everyMinutes\(1\)/);
 });
 test('Email and SMS load large templates only when sending, not every idle minute', () => {
   const sms = load('../integrations/google-apps-script/Kode.gs');
@@ -65,8 +65,8 @@ test('sender health writes require a fresh nonduplicate request from admin', () 
   const emailPoll=email.slice(email.indexOf('function kontrollerEpostBestillinger()'),email.indexOf('function kontrollerEpostTestNaa()'));
   assert.doesNotMatch(smsPoll,/kolSmsHeartbeat_\(mode,/);
   assert.doesNotMatch(emailPoll,/kolEmailHeartbeat_\(now,/);
-  assert.match(sms,/everyMinutes\(1\)/);
-  assert.match(email,/everyMinutes\(1\)/);
+  assert.doesNotMatch(sms,/newTrigger\('pollOrdersForSms'\)\.timeBased\(\)\.everyMinutes\(1\)/);
+  assert.doesNotMatch(email,/newTrigger\('kontrollerEpostBestillinger'\)\.timeBased\(\)\.everyMinutes\(1\)/);
 });
 
 test('on-demand GAS health responder is idempotent and rejects stale requests', () => {
