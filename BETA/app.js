@@ -435,9 +435,10 @@ function render(){
  hydrateImages($('menu'));renderCartIndicators();updateHoursStatus();
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
-function showSheet(id){
+function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
- current=item;qty=1;selection={};removedIngredients=new Set();ingredientsOpen=false;selectedKitchenNotes=new Set();$('quantity').textContent=qty;$('comment').value='';
+ current=item;qty=1;selection={};removedIngredients=new Set();ingredientsOpen=false;selectedKitchenNotes=new Set();editingCartIndex=null;
+ $('add').firstChild.textContent='🛒 Legg til ';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
  hero.classList.remove('has-image');
@@ -455,7 +456,9 @@ function showSheet(id){
    if(img.complete&&img.naturalWidth)hero.classList.add('has-image');
    void setCachedImage(img,url);
  }
- renderOptions();updateSheetFavorite();show('productSheet');
+ renderOptions();
+ if(editIndex!==null&&cart[editIndex])restoreCartLineForEdit(cart[editIndex],editIndex);
+ updateSheetFavorite();show('productSheet');
 }
 const KITCHEN_NOTE_DEFAULTS={
  pizza:['Godt stekt','Ikke skjær','Del i to'],
@@ -464,7 +467,7 @@ const KITCHEN_NOTE_DEFAULTS={
  tallerken:['Saus ved siden av'],
  other:['Ekstra servietter']
 };
-let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set();
+let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set(),editingCartIndex=null;
 function kitchenNotesFor(item){
  if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
  const section=menu.sections.find(s=>(s.items||[]).some(x=>String(x.id)===String(item.id)));
@@ -535,6 +538,28 @@ function optionGroupMarkup(group){
  return '<fieldset class="option-group"><div class="option-head"><strong>'+esc(group.title||'Velg')+'</strong><span class="required">'+guidance+'</span>'+
   (multiple?'<small>Maks '+max+' stk · '+ids.length+' valgt</small>':'')+'</div><div class="option-rows">'+entries+'</div></fieldset>';
 }
+function restoreCartLineForEdit(line,index){
+ if(String(line.id)!==String(current?.id))return;
+ editingCartIndex=index;
+ qty=Math.max(1,Math.min(99,Number(line.qty)||1));
+ $('quantity').textContent=qty;
+ if(line.size?.id!==undefined)selection.size=line.size.id;
+ for(const group of groupsFor(current,chosenSize())){
+  const found=(line.choices||[]).find(x=>String(x.groupId)===String(group.id));
+  if(found){
+   selection['group:'+group.id]=found.options.flatMap(opt=>Array.from(
+    {length:Math.max(1,Number(opt.count)||1)},()=>String(opt.id)));
+  }
+ }
+ removedIngredients=new Set(line.removedIngredients||[]);
+ const allowed=kitchenNotesFor(current);
+ selectedKitchenNotes=new Set((line.quickNotes||[]).filter(n=>allowed.includes(n)));
+ const raw=String(line.comment||'');
+ $('comment').value=raw.split('\n').filter(x=>!selectedKitchenNotes.has(x)).join('\n');
+ renderOptions();
+ $('add').firstChild.textContent='Oppdater kurven ';
+}
+
 function renderOptions(){
  if(!current)return;
  initializeOptions();
@@ -614,8 +639,10 @@ function addToCart(){
   choices,removedIngredients:removed,quickNotes:notes,comment,qty,unitPrice:currentPrice()};
  const key=line=>JSON.stringify([line.id,line.size?.id,line.choices,line.removedIngredients||[],line.comment]);
  const existing=cart.find(line=>key(line)===key(entry));
- if(existing)existing.qty+=qty;else cart.push(entry);
- saveCart();hideAll();
+ if(editingCartIndex!==null&&cart[editingCartIndex])cart[editingCartIndex]=entry;
+ else if(existing)existing.qty+=qty;else cart.push(entry);
+ const edited=editingCartIndex!==null;editingCartIndex=null;
+ saveCart();hideAll();if(edited)showCart();
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
 function cartChoiceRows(line){
@@ -851,6 +878,14 @@ $('quickNotes').addEventListener('click',e=>{
 });
 $('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
 $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{
+ const edit=e.target.closest('[data-edit]');
+ if(edit){
+  const index=Number(edit.dataset.edit);
+  if(Number.isInteger(index)&&cart[index]){
+   const id=cart[index].id;hideAll();showSheet(id,index);
+  }
+  return;
+ }
  const minus=e.target.closest('[data-cart-minus]'),plus=e.target.closest('[data-cart-plus]'),remove=e.target.closest('[data-remove]');
  if(!minus&&!plus&&!remove)return;
  const index=Number((minus||plus||remove).dataset.cartMinus??plus?.dataset.cartPlus??remove?.dataset.remove);
@@ -858,6 +893,27 @@ $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEven
  if(remove)cart.splice(index,1);
  else if(plus){if(!getOrderingState().orderable)return;cart[index].qty=Math.min(99,Number(cart[index].qty||0)+1)}
  else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
+ saveCart();renderCartContents();
+});
+$('cartRecommendationsItems').addEventListener('click',event=>{
+ const dismiss=event.target.closest('[data-suggest-dismiss]');
+ if(dismiss){
+  dismissedSuggestions.add(String(dismiss.dataset.suggestDismiss));
+  try{localStorage.setItem(CART_SUGGESTIONS_DISMISS_KEY,JSON.stringify([...dismissedSuggestions]))}catch{}
+  renderCartRecommendations();return;
+ }
+ const add=event.target.closest('[data-suggest-add]');
+ if(!add)return;
+ if(!getOrderingState().orderable)return;
+ const item=productById(add.dataset.suggestAdd);if(!item||item.soldOut)return;
+ // Products with required choices open the product sheet rather than adding an incomplete line.
+ const hasOptions=groupsFor(item,list(item.sizes)[0]).length>0;
+ if(hasOptions){hideAll();showSheet(item.id);return}
+ const size=list(item.sizes)[Math.min(Math.max(Number(item.defaultSizeIndex)||0,0),Math.max(0,list(item.sizes).length-1))];
+ const price=Number(size?.price??item.price)||0;
+ const line={id:item.id,name:item.name,size:size?{id:size.id,label:size.label||size.name}:null,choices:[],removedIngredients:[],quickNotes:[],comment:'',qty:1,unitPrice:price};
+ const existing=cart.find(x=>String(x.id)===String(item.id)&&String(x.size?.id)===String(size?.id)&&!(x.choices||[]).length&&!x.comment);
+ if(existing)existing.qty++;else cart.push(line);
  saveCart();renderCartContents();
 });
 $('cartClear').addEventListener('click',()=>{
