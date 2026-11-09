@@ -144,3 +144,87 @@ html,body{height:100%;overflow:hidden}
 .category-bar>.search-toggle[aria-expanded="true"]{font-size:29px;font-weight:500}
 .status-copy{min-width:0}
 .status-copy .hours-pill{white-space:normal;line-height:1.4;max-width:100%}
+
+/* BETA status — compact premium open, preorder and closed states */
+.status-banner{position:relative;isolation:isolate;min-height:106px;overflow:hidden;border-radius:19px;background:linear-gradient(125deg,#fff 67%,#e8f5ed 100%);border:1px solid #aed5c2;box-shadow:0 6px 20px #0d503214;margin-bottom:12px}
+.status-banner:after{content:"";pointer-events:none;position:absolute;right:-50px;bottom:-78px;width:290px;height:100px;transform:rotate(-12deg);border-radius:50%;background:#07845a0b;z-index:-1}
+.status-icon{width:91px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(160deg,#098b57,#006d47);color:#fff}
+.status-icon svg{width:34px;height:34px;stroke-width:1.8}
+.status-copy{flex:1;gap:5px;padding:13px 12px}
+.status-copy strong{font-size:15px;color:#076e4e;line-height:1.2}
+.status-copy>span:not(.hours-pill){font-size:11px;line-height:1.4;color:#5b7970}
+.hours-pill{background:#e0f3e9;border-radius:99px;padding:6px 11px;color:#076c4d!important;font-size:11px!important;font-weight:750!important}
+.status-banner.is-closed{border-color:#e7c8c8;background:linear-gradient(125deg,#fff 69%,#fff3f3 100%)}
+.status-banner.is-closed:after{background:#cb2d2d10}
+.status-banner.is-closed .status-icon{background:linear-gradient(150deg,#c52e36,#9c1928)}
+.status-banner.is-closed .status-copy strong{color:#b32432}
+.status-banner.is-closed .hours-pill{background:#ffebed;color:#ac2133!important}
+.status-banner.is-preorder{border-color:#ebd6a7;background:linear-gradient(125deg,#fff 69%,#fff9e9 100%)}
+.status-banner.is-preorder .status-icon{background:linear-gradient(160deg,#c18b33,#946123)}
+.status-banner.is-preorder .status-copy strong{color:#92651b}
+.status-banner.is-preorder .hours-pill{background:#fff0ca;color:#8e5f12!important}
+.allergen-switch{position:relative;z-index:1;border-left:1px solid #d9e9e0}
+.status-banner.is-closed .allergen-switch{border-color:#eedddd}
+@media(max-width:410px){.status-icon{width:70px}.status-copy{padding:10px 8px}.status-copy strong{font-size:13px}.status-copy>span:not(.hours-pill){font-size:10px}.hours-pill{font-size:10px!important;padding:5px 7px}}
+
+/* BETA product details — rebuilt visual hierarchy */
+.sheet{border:1px solid #d0e7db;background:#f6fbf8}
+.hero{height:240px;flex-shrink:0;background:#e0eae3}
+.hero .hero-photo{object-fit:cover}
+.sheet-intro{padding:22px 18px 15px;text-align:center}
+.sheet-intro h2{font-size:21px;line-height:1.2;color:#113b31;margin:0 0 7px;font-weight:800}
+.sheet-intro p{font-size:13px;font-style:italic;color:#638278;line-height:1.5;margin:0}
+.sheet-intro-mark{display:block;width:48px;height:4px;margin:13px auto 0;background:#03855d;border-radius:9px}
+.detail-panel,.option-group{display:block;margin:0 17px 11px;padding:15px 14px;border:1px solid #c5e1d2;border-radius:19px;background:#fff;box-shadow:0 3px 14px #0b58390c}
+.option-group{min-width:0}
+.option-head{display:flex;align-items:center;gap:9px;justify-content:space-between;margin-bottom:11px;font-size:12px}
+.option-head strong{font-size:13px;color:#143d32}
+.option-head small{font-size:10px;color:#728b7e;font-weight:600;text-align:right;margin-left:auto}
+.option-head .required{margin-left:auto;font-size:10px;font-weight:650;padding:4px 9px}
+.option-head small+.required{margin-left:0}
+.option-rows{overflow:hidden;border-radius:14px;border:1px solid #d2e6da;background:#f5faf7}
+.option-choice{min-height:55px;display:flex;align-items:center;gap:11px;margin:0;padding:12px 12px;border:0;border-bottom:1px solid #d8e9df;border-radius:0;background:#f6faf8;cursor:pointer;font-size:12px;transition:background-color .15s}
+.option-choice:last-child{border-bottom:0}
+.option-choice.is-chosen,.option-choice:has(input:checked){background:#d9f3e7;box-shadow:inset 0 0 0 1.5px #0b875f;border-radius:11px}
+.option-choice input{width:20px;height:20px;accent-color:#087e5c;flex:none}
+.option-label-text{flex:1;min-width:0;font-weight:600;color:#214d3d}
+.option-label-text small{display:block;margin-top:3px;color:#678478;font-size:10px;font-weight:500}
+.option-choice .opt-price{margin-left:auto;color:#456456;font-size:11px}
+.option-choice.is-quantity{min-height:66px;cursor:default}
+.option-line-total{color:#178360;font-size:10px;font-weight:750}
+.option-quantity{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
+.option-quantity button{display:grid;place-items:center;width:32px;height:32px;border:1px solid #0c825a;border-radius:50%;background:#0b8058;color:white;font-size:19px}
+.option-quantity button:disabled{background:#f4f9f6;color:#b2c5b9;border-color:#e4eee9;cursor:not-allowed}
+.option-quantity b{min-width:15px;text-align:center;font-size:12px;color:#184634}
+.ingredient-editor{padding:0;overflow:hidden}
+.ingredient-toggle{display:flex;align-items:center;width:100%;gap:13px;border:0;background:transparent;padding:13px 15px;color:#143a30;text-align:left;cursor:pointer}
+.ingredient-symbol{width:44px;height:44px;display:grid;place-items:center;background:#dcefe6;color:#138362;border-radius:13px;font-size:25px;flex:none}
+.ingredient-toggle>span:nth-child(2){display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.ingredient-toggle strong{font-size:12px;font-weight:750}
+.ingredient-toggle small{font-size:10px;color:#789084;overflow-wrap:anywhere}
+.ingredient-toggle>b{color:#578b78;font-size:24px}
+.ingredient-editor-body{margin:0 15px;padding:17px 0 14px;border-top:1px solid #d6e7dd}
+.ingredient-heading{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:11px}
+.ingredient-heading strong{font-size:13px}
+.ingredient-heading small{font-size:10px;color:#698177}
+.ingredient-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ingredient-chip{border:1px solid #0e8a63;border-radius:99px;background:#dbf2e7;color:#076d4e;padding:9px 12px;font-size:12px;font-weight:750}
+.ingredient-chip.is-removed{color:#a73736;background:#fff0ed;border-color:#d9a7a4;text-decoration:line-through}
+.ingredient-editor-body p{font-size:11px;color:#21805f;margin:12px 0 0}
+.detail-panel h3{font-size:13px;color:#123c30;margin:0 0 10px}
+.panel-caption{font-size:11px;color:#688679;margin:0 0 9px}
+.quick-notes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
+.quick-note{background:#fff;border:1px solid #c7dfd1;color:#345b4b;padding:9px 12px;border-radius:99px;font-size:11px}
+.quick-note.is-selected{background:#d8f2e5;color:#087556;border-color:#0c9162;font-weight:750}
+.empty-notes{font-size:11px;color:#87988d}
+.kitchen-panel textarea{width:100%;display:block;margin:0;padding:13px 14px;min-height:67px;border:1px solid #c9e1d3;border-radius:13px;background:#f8fcf9;resize:vertical;color:#194335;font-size:12px}
+.allergen-chip{display:inline-block;margin:0 8px 6px 0;padding:5px 9px;background:#f2f9f5;border:1px solid #d6e9df;border-radius:9px;font-size:11px;color:#357762}
+.allergen-empty,.allergen-caution{font-size:11px;color:#768a7e}
+.allergen-caution{margin:8px 0 0;color:#a6652b}
+.sheet-order-notice{margin:8px 17px 18px;padding:12px 14px;border-radius:12px;border:1px solid #eababa;background:#fff1f1;color:#a92b36;font-size:12px;font-weight:650}
+.sheet-footer{background:#fff;padding:11px;border-top:1px solid #cddfd5;gap:11px}
+.sheet-footer .qty{min-width:32%;border-width:1.5px}
+.sheet-footer .primary{min-height:51px;border-radius:99px;background:linear-gradient(130deg,#148b6c,#007653);font-size:12px;align-items:center}
+.sheet-footer .primary strong{font-size:13px}
+.sheet-footer .primary:disabled{background:#a9c1b6;cursor:not-allowed;box-shadow:none}
+@media(max-width:600px){.hero{height:205px}.detail-panel,.option-group{margin-left:12px;margin-right:12px}.sheet-intro{padding-top:18px}}
