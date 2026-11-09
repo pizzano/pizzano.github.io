@@ -610,3 +610,90 @@ function checkSmsResults() {
       'hentetidSms=' + (confirmation?.state || 'none'));
   }
 }
+
+
+/**
+ * SMS WEB APP: event-driven notification from the admin after Godta.
+ * Deploy this project as a Google Apps Script Web App and configure its /exec
+ * URL in demo/config.js. Never pass customer numbers or gateway credentials
+ * in the webhook request; read the verified order from Firebase instead.
+ */
+function doPost(e) {
+  const result = state => ContentService.createTextOutput(JSON.stringify({state}))
+    .setMimeType(ContentService.MimeType.JSON);
+  let req={};
+  try { req=JSON.parse(String(e && e.postData && e.postData.contents || '{}')); }
+  catch (_) { return result('invalid'); }
+  const id=String(req && req.orderId || '');
+  if (req.kind!=='accepted' || !/^ord_[a-z0-9]{7,40}$/i.test(id))
+    return result('ignored');
+  const lock=LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return result('busy');
+  try {
+    const props=kolProps_();
+    const mode=props.getProperty('KOL_MODE');
+    if (!['LIVE','TEST'].includes(mode)) return result('off');
+    const token=String(props.getProperty('TRACCAR_TOKEN')||'').trim();
+    const activated=Number(props.getProperty('KOL_ACTIVE_SINCE'))||0;
+    if (!token || !activated) return result('not_configured');
+    const get=UrlFetchApp.fetch(KOL_SMS.databaseUrl+'/orders/'+encodeURIComponent(id)+'.json',
+      {method:'get',muteHttpExceptions:true});
+    if (get.getResponseCode()!==200) return result('firebase_error');
+    const order=JSON.parse(get.getContentText()||'null');
+    const now=Date.now();
+    if (kolEvent_(order,activated,now)!=='accepted') return result('not_eligible');
+    const phone=kolPhone_(order.phone);
+    if (!phone || (mode==='TEST' && phone!==kolPhone_(props.getProperty('TEST_PHONE'))))
+      return result('recipient_not_allowed');
+    const eventKey='KOL_SENT_'+id+'_accepted';
+    const existing=props.getProperty(eventKey);
+    if (existing) {
+      // The previous gateway call may already have sent the message. Only
+      // reconcile a missing Firebase receipt, never resend.
+      try {
+        const previous=JSON.parse(existing);
+        if (previous.state==='sent' && !order.smsReceipts?.accepted?.sentAt)
+          kolSmsReceipt_(id,'accepted',Number(previous.at)||now);
+      } catch(error) { console.warn('SMS receipt repair: '+error.message); }
+      return result('already_processed');
+    }
+    const day=Utilities.formatDate(new Date(now),'Europe/Oslo','yyyyMMdd');
+    const todayCount=Number(props.getProperty('KOL_COUNT_'+day))||0;
+    if (todayCount>=KOL_SMS.maxPerDay) return result('daily_limit');
+    props.setProperty(eventKey,JSON.stringify({state:'attempted',at:now}));
+    props.setProperty('KOL_COUNT_'+day,String(todayCount+1));
+    try {
+      kolApiSend_(phone,
+        kolMessage_(order,'accepted',id,kolReadSmsTemplate_()),token);
+      const at=Date.now();
+      props.setProperty(eventKey,JSON.stringify({state:'sent',at}));
+      try { kolSmsReceipt_(id,'accepted',at); }
+      catch(error) { console.error('SMS success receipt write failed: '+error.message); }
+      return result('accepted');
+    } catch(error) {
+      const at=Date.now();
+      const state=/Traccar SMS rejected the request/.test(String(error.message))
+        ? 'failed' : 'uncertain';
+      props.setProperty(eventKey,JSON.stringify({state,at}));
+      try {
+        kolFirebaseSmsPut_('orders/'+id+'/smsReceipts/accepted',
+          {state,provider:'Traccar',attemptedAt:at});
+      } catch(writeError) { console.error('SMS failure receipt write failed: '+writeError.message); }
+      return result(state);
+    }
+  } catch(error) {
+    console.error('SMS Web App error: '+error.message);
+    return result('error');
+  } finally { lock.releaseLock(); }
+}
+
+/** Run ONCE in the live Apps Script editor after deploying the Web App.
+ * Removes the previous one-minute order/health/test polling trigger.
+ */
+function stoppSmsMinuttSjekk() {
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction()==='pollOrdersForSms')
+      ScriptApp.deleteTrigger(trigger);
+  });
+  console.log('SMS periodisk skanning avsluttet. Web App doPost er aktiv.');
+}
