@@ -623,7 +623,8 @@ function cartChoiceRows(line){
  if(line.size?.label)rows.push('<div class="cart-choice"><span>Størrelse: <b>'+esc(line.size.label)+'</b></span></div>');
  for(const group of line.choices||[]){
   for(const opt of group.options||[]){
-   rows.push('<div class="cart-choice"><span>'+esc(group.group||'Valg')+': <b>'+esc(opt.label)+'</b></span>'+(opt.price?'<strong>+'+money(opt.price)+'</strong>':'<small>Inkludert</small>')+'</div>');
+   const count=Math.max(1,Number(opt.count)||1);
+   rows.push('<div class="cart-choice"><span>'+esc(group.group||'Valg')+': <b>'+esc((count>1?count+'× ':'')+opt.label)+'</b></span>'+(opt.price?'<strong>+'+money(opt.price)+(count>1?' / stk · Totalt +'+money(opt.price*count):'')+'</strong>':'<small>Inkludert</small>')+'</div>');
   }
  }
  if((line.removedIngredients||[]).length)rows.push('<div class="cart-choice is-note"><span>Uten: <b>'+esc(line.removedIngredients.join(', '))+'</b></span></div>');
