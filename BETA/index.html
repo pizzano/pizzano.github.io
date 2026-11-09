@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>KØL Grill & Pizza · BETA</title>
-  <link rel="stylesheet" href="./style.css">
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261109-hours1">
+  <script src="./app.js?v=20261109-hours1" defer></script>
 </head>
 <body>
   <div class="app">
@@ -14,10 +14,10 @@
       <a class="brand" href="./" aria-label="Til menyen"><span class="brand-icon">🔥</span><span id="brandName">KØL Grill & Pizza</span><small>BETA</small></a>
       <div class="header-actions"><button id="refresh" class="icon-button" title="Oppdater menyen fra serveren" aria-label="Oppdater menyen">↻</button><button id="cartOpen" class="icon-button cart-top" aria-label="Åpne handlekurv">🛒 <span id="cartCount" class="count" hidden>0</span></button></div>
     </header>
-    <div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk">⌕</button><nav id="categories" aria-label="Meny kategorier"></nav></div>
+    <div class="category-wrap"><div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk">⌕</button><nav id="categories" aria-label="Meny kategorier"></nav></div><div class="category-track"><button id="catPrev" aria-label="Forrige kategorier">‹</button><div class="track-window"><span id="catProgress"></span></div><button id="catNext" aria-label="Neste kategorier">›</button></div></div>
     <div class="search-area" id="searchArea" hidden><input id="search" type="search" placeholder="Søk etter mat…" aria-label="Søk etter mat"></div>
     <main>
-      <div class="status-banner"><div class="status-icon">♨</div><div class="status-copy"><strong id="statusTitle">Menyen er klar</strong><span id="statusSubtitle">Velg det du har lyst på</span></div><span class="cache-status" id="cacheStatus">Laster…</span></div>
+      <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div>
       <div id="notice" role="status" aria-live="polite"></div>
       <div id="menu"></div>
     </main>
