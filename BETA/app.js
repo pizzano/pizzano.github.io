@@ -731,8 +731,8 @@ function updatePrice(){
  $('addPrice').textContent=money(currentPrice()*qty);
  updateOrderingControls();
 }
-function show(id){$('overlay').hidden=false;$(id).hidden=false;document.body.style.overflow='hidden'}
-function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.body.style.overflow=''}
+function show(id){$('overlay').hidden=false;$(id).hidden=false;document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden'}
+function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.documentElement.style.overflow='';document.body.style.overflow=''}
 function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
 function addToCart(){
  if(!current)return;
