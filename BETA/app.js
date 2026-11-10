@@ -1178,4 +1178,5 @@ document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault()
 for(const id of ['cartClose','continue'])$(id).onclick=hideAll;
 $('sheetClose').onclick=closeProductSheet;
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
+$('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else hideAll()}});document.addEventListener('DOMContentLoaded',init);
