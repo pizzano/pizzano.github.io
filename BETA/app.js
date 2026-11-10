@@ -982,7 +982,7 @@ function demoRead(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
 }
-function demoStore(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch{}}
+function demoStore(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
 let demoContact=demoRead(DEMO_CONTACT_KEY,{name:'',phone:'',email:''});
 let demoPickup=demoRead(DEMO_PICKUP_KEY,{mode:'asap',time:'',label:''});
 let demoOrder=demoRead(DEMO_ORDER_KEY,null);
@@ -1158,13 +1158,21 @@ function submitDemoOrder(){
  const timestamp=Date.now();
  // Future admin connection point: send this versioned shape to the order API.
  // For the demo the ONLY side effect is localStorage; no network requests.
- demoOrder={
-  schema:1,source:'BETA_LOCAL_DEMO',id:demoOrderId(),status:'pending',
+ const newOrder={
+  schema:1,source:'BETA_LOCAL_DEMO',channel:'web',fulfillment:'pickup',
+  id:demoOrderId(),status:'pending',
   createdAt:new Date(timestamp).toISOString(),expiresAt:timestamp+180000,
   customer:{fullName:demoContact.name,phone:'+47'+demoContact.phone,email:demoContact.email||null},
-  pickup,items:JSON.parse(JSON.stringify(cart)),total:demoTotal(cart),currency:'NOK'
+  pickup:{...pickup,timeZone:'Europe/Oslo'},
+  items:JSON.parse(JSON.stringify(cart)),total:demoTotal(cart),currency:'NOK'
  };
- demoStore(DEMO_ORDER_KEY,demoOrder);
+ // Single integration seam: later replace this local persistence with an
+ // explicit admin-order submission, without changing the form or prices.
+ if(!demoStore(DEMO_ORDER_KEY,newOrder)){
+  showCheckoutError('Kunne ikke lagre testbestillingen lokalt. Kontroller nettleserens lagring.');
+  return;
+ }
+ demoOrder=newOrder;
  cart=[];saveCart();
  renderDemoActiveOrder();
  showDemoConfirmation();
