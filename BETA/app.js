@@ -684,6 +684,7 @@ function restoreCartLineForEdit(line,index){
   if(found){
    selection['group:'+group.id]=found.options.flatMap(opt=>Array.from(
     {length:Math.max(1,Number(opt.count)||1)},()=>String(opt.id)));
+   if(selection['group:'+group.id].length)productPanels['group:'+group.id]=true;
   }
  }
  removedIngredients=new Set(line.removedIngredients||[]);
@@ -691,6 +692,7 @@ function restoreCartLineForEdit(line,index){
  selectedKitchenNotes=new Set((line.quickNotes||[]).filter(n=>allowed.includes(n)));
  const raw=String(line.comment||'');
  $('comment').value=raw.split('\n').filter(x=>!selectedKitchenNotes.has(x)).join('\n');
+ if($('comment').value.trim()||selectedKitchenNotes.size)productPanels.comment=true;
  renderOptions();
  $('add').firstChild.textContent='Oppdater kurven ';
 }
@@ -747,7 +749,7 @@ function optionValidation(){
  for(const group of groupsFor(current,chosenSize())){
   const ids=selectedIds(group),min=group.required?Math.max(1,Number(group.minSelections)||1):0;
   const max=Math.max(1,Number(group.maxSelections)||1);
-  if(ids.length<min)return 'Velg minst '+min+' i «'+(group.title||'valg')+'».';
+  if(ids.length<min){productPanels['group:'+group.id]=true;return 'Velg minst '+min+' i «'+(group.title||'valg')+'».';}
   if(ids.length>max)return 'Maks '+max+' valg i «'+(group.title||'valg')+'».';
  }
  return '';
@@ -764,6 +766,7 @@ function addToCart(){
  const availability=getOrderingState();
  const error=optionValidation();
  if(error){
+  renderOptions();
   const notice=$('sheetOrderNotice');notice.hidden=false;notice.textContent=error;return;
  }
  const size=chosenSize();
@@ -1042,10 +1045,12 @@ $('menu').addEventListener('keydown',e=>{
  e.preventDefault();showSheet(card.dataset.productCard);
 });
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
+$('productSheet').addEventListener('click',e=>{const toggle=e.target.closest('summary[data-panel-toggle]');if(!toggle)return;const panel=toggle.closest('details');if(!panel)return;const key=toggle.dataset.panelToggle;productPanels[key]=!panel.open;if(key==='ingredients')ingredientsOpen=!panel.open;});
+$('comment').addEventListener('input',updateKitchenPanelSummary);
 $('options').addEventListener('change',e=>{
  const input=e.target;if(!input.matches('input'))return;
  if(input.name==='size'){
-  selection.size=input.value;
+  selection.size=input.value;productPanels.size=true;
   for(const key of Object.keys(selection))if(key.startsWith('group:'))delete selection[key];
   renderOptions();return;
  }
@@ -1057,6 +1062,7 @@ $('options').addEventListener('change',e=>{
   if(next.length>max){input.checked=false;return}
   selection[key]=next;
  }else selection[key]=[input.value];
+ productPanels[key]=true;
  renderOptions();
 });
 $('options').addEventListener('click',e=>{
@@ -1070,20 +1076,19 @@ $('options').addEventListener('click',e=>{
  }else{
   const index=ids.findIndex(v=>String(v)===String(id));if(index>=0)ids.splice(index,1);
  }
- selection[key]=ids;renderOptions();
+ selection[key]=ids;productPanels[key]=true;renderOptions();
 });
 $('sheetIngredients').addEventListener('click',e=>{
- const toggle=e.target.closest('#ingredientToggle');
- if(toggle){ingredientsOpen=!ingredientsOpen;ingredientEditor();return}
  const button=e.target.closest('[data-ingredient]');if(!button)return;
  const name=button.dataset.ingredient;
  if(removedIngredients.has(name))removedIngredients.delete(name);else removedIngredients.add(name);
- ingredientEditor();renderSheetExtras();
+ ingredientsOpen=true;productPanels.ingredients=true;ingredientEditor();renderSheetExtras();
 });
 $('quickNotes').addEventListener('click',e=>{
  const btn=e.target.closest('[data-kitchen-note]');if(!btn)return;
  const note=btn.dataset.kitchenNote;
  if(selectedKitchenNotes.has(note))selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
+ productPanels.comment=true;$('sheetKitchenPanel').open=true;
  renderSheetExtras();
 });
 $('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
