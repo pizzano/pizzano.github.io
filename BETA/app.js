@@ -1,7 +1,7 @@
 /* Customer menu, browser caching and one live public update stream. */
 'use strict';
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
-const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
+const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1';
 const MENU_FALLBACK_KEY='kol-beta-menu-fallback-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0;
@@ -121,7 +121,7 @@ async function init(){
  window.addEventListener('online',startSharedChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}try{localStorage.setItem(META_KEY,JSON.stringify({lastSync:Date.now()}))}catch{}render();$('cacheStatus').textContent='Oppdatert';if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}render();$('cacheStatus').textContent='Oppdatert';if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
  * The initial snapshot is only the latest compact change notification.
@@ -129,13 +129,6 @@ async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=
  * Missing/oversize delta => manual refresh prompt, never automatic full download.
  */
 const LIVE_FEED_URL=BASE+'/menu/changeFeed/latest.json';
-// Add future public data domains here; share this same EventSource, never create a second listener.
-const liveDomainHandlers=new Map();
-// Extension point for future small public change-feed domains.
-function registerLiveDomain(name,apply){
- if(!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)||name==='menu'||name==='settings'||typeof apply!=='function')throw Error('Invalid live domain');
- liveDomainHandlers.set(name,apply);
-}
 const unsafeSegment=part=>!part||part==='__proto__'||part==='constructor'||part==='prototype';
 function applyLiveChanges(snapshot,changes){
  const next=structuredClone(snapshot);
@@ -143,12 +136,7 @@ function applyLiveChanges(snapshot,changes){
    if(!change||typeof change.path!=='string')throw Error('Invalid change');
    const parts=change.path.split('/');
    if(parts.some(unsafeSegment)||parts.length<2)throw Error('Unsupported change path');
-   if(!['menu','settings'].includes(parts[0])){
-     const handler=liveDomainHandlers.get(parts[0]);
-     if(!handler)throw Error('Unregistered live domain');
-     handler(next,parts.slice(1),change.value);
-     continue;
-   }
+   if(!['menu','settings'].includes(parts[0]))throw Error('Unknown public data domain');
    // Locally cached menu has no "menu" wrapper.
    let target=parts[0]==='menu'?next:next.settings;
    const rest=parts.slice(1);
@@ -781,12 +769,6 @@ function renderOptions(){
  renderSheetExtras();
  updatePrice();
 }
-function updateKitchenPanelSummary(){
- const notes=[...selectedKitchenNotes],own=$('comment').value.trim().replace(/\s+/g,' ');
- const preview=[...notes,own].filter(Boolean).join(', ');
- $('kitchenSummary').textContent=preview?preview.slice(0,112):'Ingen kommentar';
- $('sheetKitchenPanel').classList.toggle('is-selected',Boolean(preview));
-}
 function renderSheetExtras(){
  ingredientEditor();
  const notes=kitchenNotesFor(current);
@@ -795,8 +777,6 @@ function renderSheetExtras(){
  const allergenIds=new Set([...list(current.allergens),...selected.flatMap(opt=>list(opt.allergens))].map(String));
  const labels=[...allergenIds].map(id=>menu.allergenCatalog.find(a=>String(a.id)===id)?.label||id);
  $('allergenInfo').innerHTML=labels.length?labels.map(label=>'<span class="allergen-chip">'+esc(label)+'</span>').join(''):'<span class="allergen-empty">Allergener ikke oppgitt</span>';
- $('allergenSummary').textContent=labels.join(', ')||'Allergener ikke oppgitt';
- updateKitchenPanelSummary();
  if(removedIngredients.size)$('allergenInfo').innerHTML+='<p class="allergen-caution">Allergeninformasjon kan være ufullstendig selv om du fjerner ingredienser.</p>';
 }
 function currentPrice(){
@@ -1096,7 +1076,6 @@ $('menu').addEventListener('keydown',e=>{
  e.preventDefault();showSheet(card.dataset.productCard);
 });
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
-$('comment').addEventListener('input',updateKitchenPanelSummary);
 $('options').addEventListener('change',e=>{
  const input=e.target;if(!input.matches('input'))return;
  if(input.name==='size'){
