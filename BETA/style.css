@@ -122,8 +122,11 @@ html,body{min-height:100%;overflow-x:clip}
 .status-banner.is-closed .status-icon{background:linear-gradient(150deg,#c52e36,#9c1928)}
 .status-banner.is-closed .status-copy strong{color:#b32432}
 .status-banner.is-closed .hours-pill{background:#ffebed;color:#ac2133!important}
-.status-banner.is-preorder{border-color:#ebd6a7;background:linear-gradient(125deg,#fff 69%,#fff9e9 100%)}
+.status-banner.is-preorder{height:96px;min-height:96px;border-color:#ebd6a7;background:linear-gradient(125deg,#fff 69%,#fff9e9 100%)}
 .status-banner.is-preorder .status-icon{background:linear-gradient(160deg,#c18b33,#946123)}
+.status-banner.is-preorder .status-copy{padding:7px 9px;gap:3px}
+.status-banner.is-preorder .hours-pill{padding:4px 8px}
+@media(max-width:360px){.status-banner.is-preorder{height:auto;min-height:96px}}
 .status-banner.is-preorder .status-copy strong{color:#92651b}
 .status-banner.is-preorder .hours-pill{background:#fff0ca;color:#8e5f12!important}
 .allergen-switch{position:relative;z-index:1;border-left:1px solid #d9e9e0}
