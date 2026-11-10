@@ -98,9 +98,22 @@ async function init(){
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
- if(cached?.sections?.length){
-   menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
-   // Never re-download a cached menu automatically. Manual refresh stays available.
+ const useCached=value=>{
+  menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
+ };
+ if(cached?.sections?.length)useCached(cached);
+ else if(navigator.locks&&typeof navigator.locks.request==='function'){
+  // On a first visit, other tabs wait for the first tab's cached menu
+  // instead of each downloading /menu and /settings from Firebase.
+  try{
+   await navigator.locks.request('kol-beta-initial-menu-v1',async()=>{
+    const shared=await localGet();
+    if(shared?.sections?.length)useCached(shared);
+    else await refreshMenu(false);
+   });
+  }catch(error){
+   if(!menu)await refreshMenu(false);
+  }
  }else await refreshMenu(false);
  attemptStartupBrowserScroll();
  startSharedChangeStream();
