@@ -146,7 +146,7 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet #options,#productSheet #sheetIngredients{display:contents}
 #productSheet .product-section{
  display:block;margin:0 10px 9px;padding:10px 11px;
- border:1px solid #d2ddd7;border-radius:13px;background:#fff;box-shadow:none;
+ border:1px solid #F44336;border-radius:13px;background:#fff;box-shadow:none;
 }
 #productSheet .product-section-heading{
  display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;
@@ -158,10 +158,6 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .product-section-flag{
  display:inline-block;padding:3px 7px;border-radius:99px;
  background:#edf3ef;color:#577367;font-size:var(--text-sm);font-weight:700;
-}
-#productSheet .product-section-meta{
- flex:1 1 auto;color:#71867c;text-align:right;
- font-size:var(--text-sm);line-height:1.25;
 }
 #productSheet .option-rows{display:grid;gap:6px;margin:0;padding:0;border:0;background:transparent;overflow:visible}
 #productSheet .option-choice{
