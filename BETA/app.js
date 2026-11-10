@@ -543,9 +543,14 @@ function showSheet(id,editIndex=null){
    if(img.complete&&img.naturalWidth)hero.classList.add('has-image');
    void setCachedImage(img,url);
  }
+ // The product sheet is reused: never inherit another product's scroll position.
+ const sheetScroll=$('productSheet').querySelector('.sheet-scroll');
+ if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
  renderOptions();
  if(editIndex!==null&&cart[editIndex])restoreCartLineForEdit(cart[editIndex],editIndex);
  updateSheetFavorite();show('productSheet');
+ // Reset again after showing, when the browser has laid out the new product.
+ if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
 }
 const KITCHEN_NOTE_DEFAULTS={
  pizza:['Godt stekt','Ikke skjær','Del i to'],
