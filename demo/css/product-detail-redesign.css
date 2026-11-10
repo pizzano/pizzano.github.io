@@ -240,6 +240,7 @@ html[data-customer-palette] :is(.btn, .input, .pickup-choice, .time-btn, .hdr-bt
 #productSheet .pd-accordion-content.opt-rows{
  display:flex;flex-direction:column;gap:6px;
 }
+#productSheet .pd-accordion:not([open])>.pd-accordion-content{display:none}
 #productSheet .opt-row{
  position:relative;display:grid;grid-template-columns:25px minmax(0,1fr) auto;
  grid-template-rows:auto auto auto;align-items:center;align-content:center;
