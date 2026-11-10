@@ -544,7 +544,7 @@ function productCard(i){
  const sizeCount=list(i.sizes).length;
  const amount=cart.filter(x=>String(x.id)===String(i.id)).reduce((a,x)=>a+x.qty,0);
  const allergens=list(i.allergens).map(a=>{const match=menu.allergenCatalog.find(x=>String(x.id)===String(a));return match?.label||a}).join(', ');
- return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||i.ingredients||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" data-product="'+esc(i.id)+'" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'">+</button></div></article>';
+ return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||i.ingredients||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" data-product="'+esc(i.id)+'" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
 }
 function render(){
  if(!menu)return;
@@ -1164,7 +1164,16 @@ $('cartRecommendationsItems').addEventListener('click',event=>{
 $('cartClear').addEventListener('click',()=>{
  if(!cart.length)return;
  cart=[];saveCart();renderCartContents();
-});for(const id of ['cartClose','continue'])$(id).onclick=hideAll;
+});
+function returnToMenu(){
+ hideAll();
+ $('appViewport').scrollTo({top:0,behavior:'instant'});
+ window.scrollTo({top:0,behavior:'instant'});
+ $('appViewport').classList.remove('nav-hidden');
+}
+$('cartBrandHome').addEventListener('click',returnToMenu);
+document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
+for(const id of ['cartClose','continue'])$(id).onclick=hideAll;
 $('sheetClose').onclick=closeProductSheet;
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else hideAll()}});document.addEventListener('DOMContentLoaded',init);
