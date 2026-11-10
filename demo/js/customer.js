@@ -1200,6 +1200,7 @@ function openProduct(itemId, editLine = null) {
       ? [...editLine.removedIngredients]
       : [],
     ingredientsOpen: Boolean(editLine && Array.isArray(editLine.removedIngredients) && editLine.removedIngredients.length),
+    openPanels: {size:true},
     quantity: editLine ? editLine.quantity : 1,
     editingLineId: editLine ? editLine.lineId : null,
     showErrors: false,
@@ -1305,6 +1306,38 @@ function draftTotal() {
   return bonusLinePrice(item, draft, optionIds, draft.quantity);
 }
 
+// Product accordion UI state. Selection and price calculation stay in the existing draft.
+const PD_SECTION_ICONS={
+ size:'<path d="M3 18 18 3l3 18-18-3Z"/><path d="m10 11 2 2m2-6 2 2"/>',
+ ingredients:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/>',
+ alternatives:'<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M18 3v18M18 3c-4 1-4 7 0 8"/>',
+ sauce:'<path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="m8 9 3-5M13 9l3-5"/>',
+ fries:'<path d="M5 9h14l-2 12H7L5 9Z"/><path d="M8 9V3m4 6V2m4 7V4"/>',
+ extra:'<path d="m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/>',
+ comment:'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5A9 9 0 1 1 21 11.5Z"/>',
+ allergens:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'
+};
+function pdCategoryIcon(name){
+ const t=String(name||'').toLocaleLowerCase('no');
+ return /saus|dressing|dip/.test(t)?'sauce':/pommes|fries|søtpotet/.test(t)?'fries':/bunn|deig|brød/.test(t)?'extra':'alternatives';
+}
+function pdSectionTitle(key,label,required,summary,icon){
+ return '<summary class="pd-accordion-head" data-pd-toggle="'+escapeHtml(key)+'">'+
+  '<span class="pd-accordion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+    (PD_SECTION_ICONS[icon]||PD_SECTION_ICONS.alternatives)+'</svg></span>'+
+  '<span class="pd-accordion-copy"><span class="pd-accordion-titleline"><strong>'+escapeHtml(label)+'</strong>'+
+  '<span class="pd-accordion-badge">'+(required?'Påkrevd':'Valgfritt')+'</span></span>'+
+  '<small class="pd-accordion-summary">'+escapeHtml(summary||'Ingen valg')+'</small></span>'+
+  '<span class="pd-accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
+  '</summary>';
+}
+function pdSelectedSummary(group,picked){
+ const labels=(group.options||[]).filter(option=>picked.includes(option.id)).map(option=>{
+  const qty=picked.filter(id=>id===option.id).length;
+  return (qty>1?qty+'× ':'')+option.label;
+ });
+ return labels.length>2?labels.slice(0,2).join(', ')+' +'+(labels.length-2):labels.join(', ')||'Ingen valg';
+}
 function optionGroupHtml(group, problems) {
   // All original admin group names and option labels remain visible.
   const picked=draft.selections[group.id] || [];
@@ -1337,14 +1370,14 @@ function optionGroupHtml(group, problems) {
         </span>` : ''}
       </label>`;
   }).join('');
-  return `<div class="opt-group${serving?' opt-group--serving':''}${problems.has(group.id)&&draft.showErrors?' opt-invalid':''}">
-    <div class="opt-head">
-      ${group.title ? `<h3 class="opt-title">${escapeHtml(group.title)}</h3>` : ''}
-      <span class="opt-guidance">${group.required?'Påkrevd':'Valgfritt'}</span>
-      ${serving ? `<span class="opt-guidance opt-serving-limit">Maks ${max} stk · ${countSelected} valgt</span>`:''}
-    </div>
-    <div class="opt-rows">${rows||'<p class="hint">Ingen alternativer.</p>'}</div>
-  </div>`;
+  const key='group:'+group.id,expanded=draft.openPanels?.[key]===true;
+  const info=pdSelectedSummary(group,picked)+(serving?' · '+countSelected+'/'+max+' valgt':'');
+  return '<details class="opt-group pd-accordion'+(serving?' opt-group--serving':'')+
+    (countSelected?' is-selected':'')+
+    (problems.has(group.id)&&draft.showErrors?' opt-invalid':'')+'" data-pd-panel="'+escapeHtml(key)+'"'+(expanded?' open':'')+'>'+
+    pdSectionTitle(key,group.title||'Alternativer',group.required,info,pdCategoryIcon(group.title))+
+    '<div class="pd-accordion-content opt-rows">'+(rows||'<p class="hint">Ingen alternativer.</p>')+'</div></details>';
+
 }
 
 function renderProductHeroImage(heroHeader, imageUrl) {
@@ -1468,61 +1501,34 @@ function renderSheet() {
     .map((rule) => rule.name);
   draft.removedIngredients = removedNames;
   const ingredientCustomizeHtml = removableIngredients.length
-    ? `
-      <div class="ingredient-customize${draft.ingredientsOpen ? ' is-open' : ''}">
-        <button class="ingredient-customize-toggle" data-toggle-ingredients type="button" aria-expanded="${draft.ingredientsOpen}">
-          <span class="ingredient-customize-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5" fill="var(--palette-surface)"/><circle cx="15" cy="17" r="2.5" fill="var(--palette-surface)"/></svg></span>
-          <span class="ingredient-customize-copy">
-            <strong>Tilpass ingredienser</strong>
-            <small>${removedNames.length ? `Uten: ${escapeHtml(removedNames.join(', '))}` : 'Ingen endringer'}</small>
-          </span>
-          <i aria-hidden="true">›</i>
-        </button>
-        <div class="ingredient-customize-body"${draft.ingredientsOpen ? '' : ' hidden'}>
-          <div class="ingredient-customize-head">
-            <strong>Ingredienser</strong>
-            <span>Trykk for å fjerne</span>
-          </div>
-          <div class="ingredient-chip-list">
-            ${removableIngredients.map((rule) => {
-              const removed = removedSet.has(rule.name.toLocaleLowerCase('no'));
-              return `<button class="ingredient-chip${removed ? ' is-removed' : ''}" data-remove-ingredient="${escapeHtml(rule.name)}" type="button" aria-pressed="${removed}">
-                <span aria-hidden="true">${removed ? '−' : '✓'}</span>${escapeHtml(rule.name)}
-              </button>`;
-            }).join('')}
-          </div>
-          <p class="ingredient-customize-help">Fjernede ingredienser kan legges tilbake med ett trykk.</p>
-        </div>
-      </div>`
+    ? '<details class="ingredient-customize pd-accordion'+(removedNames.length?' is-selected':'')+
+      '" data-pd-panel="ingredients"'+(draft.ingredientsOpen?' open':'')+'>'+
+      pdSectionTitle('ingredients','Tilpass ingredienser',false,
+        removedNames.length?'Uten: '+removedNames.join(', '):'Ingen endringer','ingredients')+
+      '<div class="ingredient-customize-body pd-accordion-content">'+
+        '<div class="ingredient-customize-head"><strong>Ingredienser</strong><span>Trykk for å fjerne</span></div>'+
+        '<div class="ingredient-chip-list">'+removableIngredients.map(rule=>{
+          const removed=removedSet.has(rule.name.toLocaleLowerCase('no'));
+          return '<button class="ingredient-chip'+(removed?' is-removed':'')+
+            '" data-remove-ingredient="'+escapeHtml(rule.name)+'" type="button" aria-pressed="'+removed+'">'+
+            '<span aria-hidden="true">'+(removed?'−':'✓')+'</span>'+escapeHtml(rule.name)+'</button>';
+        }).join('')+'</div>'+
+        '<p class="ingredient-customize-help">Fjernede ingredienser kan legges tilbake med ett trykk.</p>'+
+      '</div></details>'
     : '';
 
-  const sizeHtml =
-    (item.sizes || []).length > 1
-      ? `
-      <div class="opt-group opt-group--size">
-        <div class="opt-head">
-          <h3 class="opt-title">Størrelse</h3>
-          <span class="opt-guidance">Påkrevd</span>
-          ${(item.sizes || []).find(size => size.id === draft.sizeId)
-            ? `<span class="opt-selected-size"><span class="opt-selected-check" aria-hidden="true">✓</span>${escapeHtml((item.sizes || []).find(size => size.id === draft.sizeId).label)}</span>`
-            : ''}
-        </div>
-        <div class="opt-rows">
-          ${item.sizes
-            .map(
-              (size) => `
-            <label class="opt-row${size.id === draft.sizeId ? ' is-checked' : ''}">
-              <input type="radio" name="size" data-size="${escapeHtml(size.id)}" ${
-                size.id === draft.sizeId ? 'checked' : ''
-              }>
-              <span class="opt-label">${escapeHtml(size.label)}</span>
-              <span class="opt-price">${formatPrice(size.price)}</span>
-            </label>`
-            )
-            .join('')}
-        </div>
-      </div>`
-      : '';
+  const selectedSize=(item.sizes||[]).find(size=>size.id===draft.sizeId);
+  const sizeHtml=(item.sizes||[]).length>1
+    ? '<details class="opt-group opt-group--size pd-accordion is-selected" data-pd-panel="size"'+
+      (draft.openPanels?.size?' open':'')+'>'+
+      pdSectionTitle('size','Størrelse',true,selectedSize?.label||'Velg én størrelse for pizzaen.','size')+
+      '<div class="pd-accordion-content opt-rows">'+
+      item.sizes.map(size=>'<label class="opt-row'+(size.id===draft.sizeId?' is-checked':'')+'">'+
+        '<input type="radio" name="size" data-size="'+escapeHtml(size.id)+'"'+(size.id===draft.sizeId?' checked':'')+'>'+
+        '<span class="opt-label">'+escapeHtml(size.label)+'</span>'+
+        '<span class="opt-price">'+formatPrice(size.price)+'</span></label>').join('')+
+      '</div></details>'
+    : '';
 
   // Clear the previous product photo before the next one loads.
   // A reused <img> can briefly display the previous image after changing src.
@@ -1535,31 +1541,35 @@ function renderSheet() {
 
   const quickNotes=kitchenNotesFor(item);
   const kitchenNoteParts=splitKitchenComment(draft.comment,quickNotes);
-  el.sheetBody.innerHTML = `
-    ${item.soldOut ? '<p class="tag tag-soldout">Utsolgt</p>' : ''}
-    ${ingredientCustomizeHtml}
-    ${sizeHtml}
-    ${groups.map(group => optionGroupHtml(group, problems)).join('')}
-    <div class="opt-group opt-group--comment">
-      <div class="opt-head"><h3 class="opt-title">Kommentar til kjøkkenet</h3></div>
-      ${quickNotes.length?`<div class="quick-kitchen-notes" role="group" aria-label="Raske beskjeder til kjøkkenet">
-        <span class="quick-kitchen-notes-label">Raske beskjeder (valgfritt)</span>
-        <div class="quick-kitchen-note-chips">${quickNotes.map(note=>`<button type="button" class="quick-kitchen-note${kitchenNoteParts.selected.includes(note)?' is-selected':''}"
-          data-quick-kitchen-note="${escapeHtml(note)}" aria-pressed="${kitchenNoteParts.selected.includes(note)}">${escapeHtml(note)}</button>`).join('')}</div>
-      </div>`:''}
-      <textarea class="comment-area" id="draftComment" maxlength="1000" placeholder="Egen kommentar (valgfritt)…">${escapeHtml(kitchenNoteParts.own)}</textarea>
-    </div>
-    <div class="sheet-allergens" aria-label="Allergener">
-      <span class="sheet-allergens-label">Allergener</span>
-      <div class="sheet-allergen-chips">
-        ${allergens.length
-          ? allergens.map((label) => `<span class="sheet-allergen-chip">${escapeHtml(label)}</span>`).join('')
-          : '<span class="sheet-allergen-none">Allergener ikke oppgitt</span>'}
-      </div>
-      ${allergenInfoIncomplete || missingBaseAllergens
-        ? '<p class="sheet-allergen-warning">Allergeninformasjonen er ikke fullstendig for dette produktet eller valgte tilvalg. Kontakt restauranten ved allergi.</p>' : ''}
-    </div>
-`;
+  const commentOpen=draft.openPanels?.comment===true;
+  const allergenOpen=draft.openPanels?.allergens===true;
+  const notePreview=String(draft.comment||'').trim().replace(/\s+/g,' ').slice(0,100);
+  el.sheetBody.innerHTML = '<div class="pd-sections">'+
+    (item.soldOut?'<p class="tag tag-soldout">Utsolgt</p>':'')+
+    sizeHtml+ingredientCustomizeHtml+
+    groups.map(group=>optionGroupHtml(group,problems)).join('')+
+    '<details class="opt-group opt-group--comment pd-accordion'+(notePreview?' is-selected':'')+
+      '" data-pd-panel="comment"'+(commentOpen?' open':'')+'>'+
+      pdSectionTitle('comment','Kommentar til kjøkkenet',false,notePreview||'Ingen kommentar','comment')+
+      '<div class="pd-accordion-content pd-comment-body">'+
+       (quickNotes.length?'<div class="quick-kitchen-notes" role="group" aria-label="Raske beskjeder til kjøkkenet">'+
+         '<span class="quick-kitchen-notes-label">Raske beskjeder (valgfritt)</span>'+
+         '<div class="quick-kitchen-note-chips">'+quickNotes.map(note=>
+          '<button type="button" class="quick-kitchen-note'+(kitchenNoteParts.selected.includes(note)?' is-selected':'')+
+          '" data-quick-kitchen-note="'+escapeHtml(note)+'" aria-pressed="'+kitchenNoteParts.selected.includes(note)+'">'+
+           escapeHtml(note)+'</button>').join('')+'</div></div>':'')+
+       '<textarea class="comment-area" id="draftComment" maxlength="1000" placeholder="Egen kommentar (valgfritt)…">'+escapeHtml(kitchenNoteParts.own)+'</textarea>'+
+      '</div></details>'+
+    '<details class="sheet-allergens pd-accordion" data-pd-panel="allergens"'+(allergenOpen?' open':'')+' aria-label="Allergener">'+
+      pdSectionTitle('allergens','Allergener',false,allergens.join(', ')||'Allergener ikke oppgitt','allergens')+
+      '<div class="pd-accordion-content pd-allergens-body">'+
+        '<div class="sheet-allergen-chips">'+(allergens.length?
+          allergens.map(label=>'<span class="sheet-allergen-chip">'+escapeHtml(label)+'</span>').join(''):
+          '<span class="sheet-allergen-none">Allergener ikke oppgitt</span>')+'</div>'+
+        (allergenInfoIncomplete||missingBaseAllergens?
+         '<p class="sheet-allergen-warning">Allergeninformasjonen er ikke fullstendig for dette produktet eller valgte tilvalg. Kontakt restauranten ved allergi.</p>':'')+
+      '</div></details></div>';
+
 
   if (draft.loyaltyFree && !draft.loyaltyAuto) {
     draft.quantity = 1;
@@ -1610,6 +1620,7 @@ function addDraftToCart() {
   const check = validateDraft();
   if (!check.valid) {
     draft.showErrors = true;
+    for(const id of check.problems)draft.openPanels['group:'+id]=true;
     renderSheet();
     return;
   }
@@ -3065,6 +3076,13 @@ el.cartLines.addEventListener('click', (event) => {
 
 el.sheetBody.addEventListener('click', (event) => {
   if (!draft) return;
+  const panel=event.target.closest('summary[data-pd-toggle]');
+  if(panel){
+    const key=panel.dataset.pdToggle,expanded=!panel.parentElement.open;
+    draft.openPanels[key]=expanded;
+    if(key==='ingredients')draft.ingredientsOpen=expanded;
+    return;
+  }
   const quickNote=event.target.closest('[data-quick-kitchen-note]');
   if(quickNote){
     const note=quickNote.dataset.quickKitchenNote;
@@ -3075,6 +3093,7 @@ el.sheetBody.addEventListener('click', (event) => {
     const selected=previous.selected.includes(note)
       ? previous.selected.filter(value=>value!==note) : [...previous.selected,note];
     draft.comment=joinKitchenComment(selected,previous.own);
+    draft.openPanels.comment=true;
     renderSheet();
     return;
   }
@@ -3094,16 +3113,10 @@ el.sheetBody.addEventListener('click', (event) => {
       const index = ids.indexOf(id);if (index >= 0) ids.splice(index,1);
     }
     draft.selections[group.id]=ids;
+    draft.openPanels['group:'+group.id]=true;
     if(validateDraft().valid)draft.showErrors=false;
     renderSheet();return;
   }
-  const toggle = event.target.closest('[data-toggle-ingredients]');
-  if (toggle) {
-    draft.ingredientsOpen = !draft.ingredientsOpen;
-    renderSheet();
-    return;
-  }
-
   const ingredientBtn = event.target.closest('[data-remove-ingredient]');
   if (!ingredientBtn) return;
   const { item } = findItem(draft.itemId);
@@ -3133,6 +3146,7 @@ el.sheetBody.addEventListener('change', (event) => {
 
   if (target.dataset.size) {
     draft.sizeId = target.dataset.size;
+    draft.openPanels.size=true;
     renderSheet();
     return;
   }
@@ -3181,6 +3195,7 @@ el.sheetBody.addEventListener('change', (event) => {
     draft.selections[groupId] = Array.from(current);
   }
 
+  draft.openPanels['group:'+groupId]=true;
   const check = validateDraft();
   if (check.valid) draft.showErrors = false;
   renderSheet();
@@ -3191,6 +3206,10 @@ el.sheetBody.addEventListener('input', (event) => {
     const {item}=findItem(draft.itemId);
     const previous=splitKitchenComment(draft.comment,kitchenNotesFor(item));
     draft.comment=joinKitchenComment(previous.selected,event.target.value);
+    const panel=event.target.closest('.pd-accordion');
+    panel?.classList.toggle('is-selected',Boolean(draft.comment.trim()));
+    const summary=panel?.querySelector('.pd-accordion-summary');
+    if(summary)summary.textContent=draft.comment.trim().replace(/\s+/g,' ').slice(0,100)||'Ingen kommentar';
   }
 });
 
