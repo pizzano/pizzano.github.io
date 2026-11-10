@@ -815,10 +815,13 @@ const cartTrashIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" str
 const cartEditIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 4 4 4-9.4 9.4-4.1 1.1 1.1-4.1L17 5a2.1 2.1 0 0 1 3 3"/></svg>';
 function cartLineDetails(line){
  const rows=[],price=Number(line.unitPrice)||0;
+ // The size line shows the base price; paid extras are listed separately.
+ const extras=(line.choices||[]).reduce((sum,group)=>sum+(group.options||[]).reduce((n,opt)=>n+(Number(opt.price)||0)*Math.max(1,Number(opt.count)||1),0),0);
+ const sizePrice=price-extras;
  const size=line.size?.label||'Standard';
  // One size row per cart line, irrespective of quantity. The Sum row
  // already multiplies the item price by the quantity.
- rows.push('<div class="cart-line-detail"><span><b>Størrelse:</b> '+esc(size)+'</span><strong>'+money(price)+'</strong></div>');
+ rows.push('<div class="cart-line-detail"><span><b>Størrelse:</b> '+esc(size)+'</span><strong>'+money(sizePrice)+'</strong></div>');
  for(const group of line.choices||[]){
   for(const option of group.options||[]){
    const count=Math.max(1,Number(option.count)||1);
