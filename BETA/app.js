@@ -118,7 +118,11 @@ async function init(){
  }else await refreshMenu(false);
  attemptStartupBrowserScroll();
  startSharedChangeStream();
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)startSharedChangeStream()});
+ document.addEventListener('visibilitychange',()=>{
+  // Visible customers stay live. Hidden tabs release Firebase streams and locks.
+  if(document.hidden)stopSharedChangeStream();
+  else startSharedChangeStream();
+ });
  window.addEventListener('online',startSharedChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
@@ -207,7 +211,7 @@ async function receiveLiveAnnouncement(value,relay=false){
  }
 }
 function startChangeStream(){
- if(!('EventSource' in window)||navigator.onLine===false)return;
+ if(document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
  if(changeStream){changeStream.close();changeStream=null}
  const source=new EventSource(LIVE_FEED_URL);
@@ -280,7 +284,7 @@ function setupSharedChannel(){
  }catch(error){sharedChannel=null;console.warn('Local tab sync unavailable',error)}
 }
 function startSharedChangeStream(){
- if(!menu||navigator.onLine===false)return;
+ if(!menu||document.hidden||navigator.onLine===false)return;
  setupSharedChannel();
  askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
