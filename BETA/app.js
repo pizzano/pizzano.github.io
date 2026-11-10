@@ -1160,7 +1160,26 @@ $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEven
  else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
  saveCart();renderCartContents();
 });
-$('cartSuggestionsDisclosure').addEventListener('toggle',renderCartRecommendations);
+$('cartSuggestionsDisclosure').addEventListener('toggle',()=>{
+ renderCartRecommendations();
+ const panel=$('cartSuggestionsDisclosure');
+ if(!panel.open)return;
+ // Scroll the cart's own viewport after the expanded choices have been laid out.
+ // Keep the preview heading visible at the top so the guest sees the new options.
+ requestAnimationFrame(()=>{
+  if(!panel.open||$('cartSheet').hidden)return;
+  const viewport=$('cartScroll');
+  const offset=panel.getBoundingClientRect().top-viewport.getBoundingClientRect().top;
+  const target=Math.max(0,Math.min(
+   viewport.scrollHeight-viewport.clientHeight,
+   viewport.scrollTop+offset-12
+  ));
+  viewport.scrollTo({
+   top:target,
+   behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'
+  });
+ });
+});
 $('cartRecommendationsItems').addEventListener('click',event=>{
  const dismiss=event.target.closest('[data-suggest-dismiss]');
  if(dismiss){
