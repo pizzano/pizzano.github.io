@@ -11,22 +11,9 @@
 .track-window{height:6px;background:#e3ede8;border-radius:9px;flex:1;position:relative;overflow:hidden}
 .track-window span{position:absolute;top:0;left:0;height:100%;width:25%;background:#078362;border-radius:9px}
 
-
-
-
-.status-banner.is-closed 
-.status-banner.is-closed 
-
-
-
-
-
-
-
-
 .cache-line{font-size:var(--text-sm);color:#779087;text-align:right;min-height:15px;padding:0 5px 6px}
 .menu-section{scroll-margin-top:170px}
-@media(max-width:410px){.allergen-switch span{font-size:var(--text-sm)}}
+
 
 /* Category and favorites */
 
@@ -41,15 +28,12 @@
 
 .track-window span{transition:width .12s}
 .product-side{position:relative;min-width:78px}
-.product-side .add-round{margin-bottom:0}
+
 .product-card{position:relative}
 .card-favorite{position:absolute;right:5px;top:5px;width:27px;height:27px;border:1px solid #b9d9c9;background:#fff;color:#2a6854;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 1px 4px #0002;z-index:2}
 .card-favorite.is-favorite{color:#d3485a;background:#fff2f4;border-color:#e9b9c0}
 .sheet-favorite{position:absolute;top:9px;left:9px;z-index:2;background:#10352f;border:0;color:white;width:34px;height:34px;border-radius:50%;font-size:22px;display:grid;place-items:center}
 .sheet-favorite.is-favorite{color:#ff8498}
-
-
-
 
 /* Desktop: restore the green, thick scrollbar inside the menu, keeping mobile native scroll. */
 @media(min-width:601px) and (pointer:fine){
@@ -106,7 +90,6 @@ html,body{min-height:100%;overflow-x:clip}
 .category-bar>.search-toggle svg{display:block;width:22px;height:22px;stroke-width:2}
 .category-bar>.search-toggle[aria-expanded="true"]{font-size:22px;font-weight:500}
 
-.status-copy 
 
 /* Restaurant status uses the same 96px height as the menu cards in every mode. */
 .status-banner{position:relative;isolation:isolate;display:flex;align-items:center;gap:0;width:100%;height:var(--menu-card-height);min-height:var(--menu-card-height);max-height:var(--menu-card-height);margin:0 0 12px;overflow:hidden;border:1px solid #aed5c2;border-radius:19px;background:linear-gradient(125deg,#fff 67%,#e8f5ed 100%);box-shadow:0 6px 20px #0d503214}
