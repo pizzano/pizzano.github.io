@@ -75,6 +75,7 @@ async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=
 const LIVE_FEED_URL=BASE+'/menu/changeFeed/latest.json';
 // Add future public data domains here; share this same EventSource, never create a second listener.
 const liveDomainHandlers=new Map();
+// Extension point for future small public change-feed domains.
 function registerLiveDomain(name,apply){
  if(!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)||name==='menu'||name==='settings'||typeof apply!=='function')throw Error('Invalid live domain');
  liveDomainHandlers.set(name,apply);
@@ -803,19 +804,6 @@ function addToCart(){
  saveCart();hideAll();if(edited||!availability.orderable)showCart();
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
-function cartChoiceRows(line){
- const rows=[];
- if(line.size?.label)rows.push('<div class="cart-choice"><span>Størrelse: <b>'+esc(line.size.label)+'</b></span></div>');
- for(const group of line.choices||[]){
-  for(const opt of group.options||[]){
-   const count=Math.max(1,Number(opt.count)||1);
-   rows.push('<div class="cart-choice"><span>'+esc(group.group||'Valg')+': <b>'+esc((count>1?count+'× ':'')+opt.label)+'</b></span>'+(opt.price?'<strong>+'+money(opt.price)+(count>1?' / stk · Totalt +'+money(opt.price*count):'')+'</strong>':'<small>Inkludert</small>')+'</div>');
-  }
- }
- if((line.removedIngredients||[]).length)rows.push('<div class="cart-choice is-note"><span>Uten: <b>'+esc(line.removedIngredients.join(', '))+'</b></span></div>');
- if(line.comment)rows.push('<div class="cart-choice is-note"><span>Merknad: <b>'+esc(line.comment)+'</b></span></div>');
- return rows.join('');
-}
 const CART_SUGGESTIONS_CACHE_KEY='kol-beta-cart-suggestions-once-v1';
 const CART_SUGGESTIONS_DISMISS_KEY='kol-beta-cart-dismissed-v1';
 let dismissedSuggestions=new Set((()=>{try{return JSON.parse(localStorage.getItem(CART_SUGGESTIONS_DISMISS_KEY)||'[]')}catch{return []}})());
