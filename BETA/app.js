@@ -560,7 +560,7 @@ function render(){
 }
 function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
- current=item;qty=1;selection={};removedIngredients=new Set();ingredientsOpen=false;selectedKitchenNotes=new Set();editingCartIndex=null;
+ current=item;qty=1;selection={};removedIngredients=new Set();ingredientsOpen=false;selectedKitchenNotes=new Set();editingCartIndex=null;productPanels={size:true};
  $('add').firstChild.textContent='🛒 Legg til ';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
@@ -595,7 +595,14 @@ const KITCHEN_NOTE_DEFAULTS={
  tallerken:['Saus ved siden av'],
  other:['Ekstra servietter']
 };
-let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set(),editingCartIndex=null;
+let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set(),editingCartIndex=null,productPanels={size:true};
+const productIcons={size:'◺',option:'⚙',sauce:'♨',fries:'▥',extra:'▱',ingredient:'☷'};
+function productPanelIcon(name){const t=String(name||'').toLocaleLowerCase('no');return /saus|dressing|dip/.test(t)?'sauce':/pommes|fries|søtpotet/.test(t)?'fries':/bunn|deig|brød/.test(t)?'extra':'option'}
+function productPanelHead(key,label,required,summary,kind){
+ return '<summary class="accordion-head" data-panel-toggle="'+esc(key)+'"><span class="accordion-symbol" aria-hidden="true">'+(productIcons[kind]||productIcons.option)+'</span><span class="accordion-label"><span><strong>'+esc(label)+'</strong><em>'+(required?'Påkrevd':'Valgfritt')+'</em></span><small>'+esc(summary||'Ingen valg')+'</small></span><span class="accordion-chevron" aria-hidden="true">⌄</span></summary>'
+}
+function optionSummary(group,ids){const labels=list(group.options).filter(opt=>ids.some(id=>String(id)===String(opt.id))).map(opt=>{const count=ids.filter(id=>String(id)===String(opt.id)).length;return (count>1?count+'× ':'')+(opt.label||opt.name||'')});return labels.length>2?labels.slice(0,2).join(', ')+' +'+(labels.length-2):labels.join(', ')||'Ingen valg'}
+
 function kitchenNotesFor(item){
  if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
  const section=menu.sections.find(s=>(s.items||[]).some(x=>String(x.id)===String(item.id)));
@@ -621,15 +628,14 @@ function removableIngredientRules(item){
 function ingredientEditor(){
  const names=removableIngredientRules(current),host=$('sheetIngredients');
  if(!names.length){host.innerHTML='';return}
- host.innerHTML='<section class="ingredient-editor detail-panel'+(ingredientsOpen?' is-expanded':'')+'">'+
-  '<button type="button" id="ingredientToggle" aria-expanded="'+ingredientsOpen+'" class="ingredient-toggle">'+
-    '<span class="ingredient-symbol" aria-hidden="true">☷</span><span><strong>Tilpass ingredienser</strong><small>'+
+ host.innerHTML='<details class="ingredient-editor detail-panel product-accordion'+(removedIngredients.size?' is-selected':'')+'" data-panel="ingredients"'+(ingredientsOpen?' open':'')+'>'+
+  '<summary class="accordion-head" data-panel-toggle="ingredients"><span class="accordion-symbol" aria-hidden="true">'+productIcons.ingredient+'</span><span class="accordion-label"><span><strong>Tilpass ingredienser</strong><em>Valgfritt</em></span><small>'+
     (removedIngredients.size?'Uten: '+esc([...removedIngredients].join(', ')):'Ingen endringer')+
-    '</small></span><b aria-hidden="true">'+(ingredientsOpen?'⌄':'›')+'</b></button>'+
-  '<div class="ingredient-editor-body" '+(ingredientsOpen?'':'hidden')+'><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
+    '</small></span><span class="accordion-chevron" aria-hidden="true">⌄</span></summary>'+
+  '<div class="ingredient-editor-body accordion-body"><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
   '<div class="ingredient-chips">'+names.map(name=>'<button type="button" class="ingredient-chip'+(removedIngredients.has(name)?' is-removed':'')+
    '" data-ingredient="'+esc(name)+'" aria-pressed="'+removedIngredients.has(name)+'">'+(removedIngredients.has(name)?'−':'✓')+' '+esc(name)+'</button>').join('')+
-  '</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></section>';
+  '</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></details>';
 }
 function chosenSize(){
  const sizes=list(current?.sizes);
@@ -662,9 +668,10 @@ function optionGroupMarkup(group){
    '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div></div>';
   return '<label class="option-choice'+(count?' is-chosen':'')+'"><input type="'+(multiple?'checkbox':'radio')+'" name="group:'+esc(group.id)+'" value="'+esc(opt.id)+'" '+(count?'checked':'')+' '+(blocked?'disabled':'')+'><span class="option-label-text">'+esc(opt.label||'')+'</span><span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span></label>';
  }).join('');
- const guidance=group.required?'Påkrevd':'Valgfritt';
- return '<fieldset class="option-group"><div class="option-head"><strong>'+esc(group.title||'Velg')+'</strong><span class="required">'+guidance+'</span>'+
-  (multiple?'<small>Maks '+max+' stk · '+ids.length+' valgt</small>':'')+'</div><div class="option-rows">'+entries+'</div></fieldset>';
+ const key='group:'+group.id;
+ return '<details class="option-group product-accordion'+(ids.length?' is-selected':'')+'" data-panel="'+esc(key)+'"'+(productPanels[key]?' open':'')+'>'+
+  productPanelHead(key,group.title||'Velg',Boolean(group.required),optionSummary(group,ids)+(multiple?' · '+ids.length+'/'+max+' valgt':''),productPanelIcon(group.title))+
+  '<div class="option-rows accordion-body">'+entries+'</div></details>';
 }
 function restoreCartLineForEdit(line,index){
  if(String(line.id)!==String(current?.id))return;
@@ -694,14 +701,24 @@ function renderOptions(){
  const sizes=list(current.sizes),size=chosenSize();
  let html='';
  if(sizes.length>1){
-  html+='<fieldset class="option-group"><div class="option-head"><strong>Størrelse</strong><span class="required">Påkrevd</span></div><div class="option-rows">';
+  html+='<details class="option-group product-accordion is-selected" data-panel="size"'+(productPanels.size?' open':'')+'>'+
+   productPanelHead('size','Størrelse',true,size?.label||size?.name||'Velg størrelse','size')+
+   '<div class="option-rows accordion-body">';
   html+=sizes.map(entry=>'<label class="option-choice'+(String(entry.id)===String(size?.id)?' is-chosen':'')+'"><input type="radio" name="size" value="'+esc(entry.id)+'" '+(String(entry.id)===String(size?.id)?'checked':'')+'><span class="option-label-text">'+esc(entry.label||entry.name||'')+'</span><span class="opt-price">'+money(entry.price)+'</span></label>').join('');
-  html+='</div></fieldset>';
+  html+='</div></details>';
  }
  for(const group of groupsFor(current,size))html+=optionGroupMarkup(group);
  $('options').innerHTML=html;
+ $('sheetKitchenPanel').open=Boolean(productPanels.comment);
+ $('sheetAllergens').open=Boolean(productPanels.allergens);
  renderSheetExtras();
  updatePrice();
+}
+function updateKitchenPanelSummary(){
+ const notes=[...selectedKitchenNotes],own=$('comment').value.trim().replace(/\s+/g,' ');
+ const preview=[...notes,own].filter(Boolean).join(', ');
+ $('kitchenSummary').textContent=preview?preview.slice(0,112):'Ingen kommentar';
+ $('sheetKitchenPanel').classList.toggle('is-selected',Boolean(preview));
 }
 function renderSheetExtras(){
  ingredientEditor();
@@ -711,6 +728,8 @@ function renderSheetExtras(){
  const allergenIds=new Set([...list(current.allergens),...selected.flatMap(opt=>list(opt.allergens))].map(String));
  const labels=[...allergenIds].map(id=>menu.allergenCatalog.find(a=>String(a.id)===id)?.label||id);
  $('allergenInfo').innerHTML=labels.length?labels.map(label=>'<span class="allergen-chip">'+esc(label)+'</span>').join(''):'<span class="allergen-empty">Allergener ikke oppgitt</span>';
+ $('allergenSummary').textContent=labels.join(', ')||'Allergener ikke oppgitt';
+ updateKitchenPanelSummary();
  if(removedIngredients.size)$('allergenInfo').innerHTML+='<p class="allergen-caution">Allergeninformasjon kan være ufullstendig selv om du fjerner ingredienser.</p>';
 }
 function currentPrice(){
