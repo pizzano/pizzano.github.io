@@ -596,7 +596,16 @@ const KITCHEN_NOTE_DEFAULTS={
  other:['Ekstra servietter']
 };
 let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set(),editingCartIndex=null,productPanels={size:true};
-const productIcons={size:'◺',option:'⚙',sauce:'♨',fries:'▥',extra:'▱',ingredient:'☷'};
+const productIconPaths={
+ size:'<path d="M3 18 18 3l3 18-18-3Z"/><path d="m10 11 2 2m2-6 2 2"/>',
+ option:'<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M18 3v18M18 3c-4 1-4 7 0 8"/>',
+ sauce:'<path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="m8 9 3-5M13 9l3-5"/>',
+ fries:'<path d="M5 9h14l-2 12H7L5 9Z"/><path d="M8 9V3m4 6V2m4 7V4"/>',
+ extra:'<path d="m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/>',
+ ingredient:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/>'
+};
+const productIcons=Object.fromEntries(Object.entries(productIconPaths).map(([key,paths])=>[key,
+ '<svg viewBox="0 0 24 24" aria-hidden="true">'+paths+'</svg>']));
 function productPanelIcon(name){const t=String(name||'').toLocaleLowerCase('no');return /saus|dressing|dip/.test(t)?'sauce':/pommes|fries|søtpotet/.test(t)?'fries':/bunn|deig|brød/.test(t)?'extra':'option'}
 function productPanelHead(key,label,required,summary,kind){
  return '<summary class="accordion-head" data-panel-toggle="'+esc(key)+'"><span class="accordion-symbol" aria-hidden="true">'+(productIcons[kind]||productIcons.option)+'</span><span class="accordion-label"><span><strong>'+esc(label)+'</strong><em>'+(required?'Påkrevd':'Valgfritt')+'</em></span><small>'+esc(summary||'Ingen valg')+'</small></span><span class="accordion-chevron" aria-hidden="true">⌄</span></summary>'
