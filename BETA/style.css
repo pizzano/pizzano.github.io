@@ -167,6 +167,7 @@ html,body{min-height:100%;overflow-x:clip}
  display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;
  font-size:21px;color:#087b57;
 }
+#productSheet .accordion-symbol svg{display:block;width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 #productSheet .product-accordion.is-selected[open] .accordion-symbol{color:#fff}
 #productSheet .accordion-label{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
 #productSheet .accordion-label>span{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
