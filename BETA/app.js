@@ -1083,10 +1083,10 @@ function saveDemoContact(){
 let customerSaveTimer=null,customerSaveRevision=0,customerSavedSignature='';
 async function syncBetaCustomer(){
  const revision=++customerSaveRevision;
- const name=demoContact.name.trim().replace(/\\s+/g,' ').slice(0,120);
+ const name=demoContact.name.trim().replace(/\s+/g,' ').slice(0,120);
  const phone=demoContact.phone;
  const email=demoContact.email.trim().toLowerCase().slice(0,254);
- if(name.length<2||!/^\\d{8}$/.test(phone)||(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)))return false;
+ if(name.length<2||!/^\d{8}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
  const signature=JSON.stringify([name,phone,email]);
  if(signature===customerSavedSignature)return true;
  const customerId='+47'+phone;
