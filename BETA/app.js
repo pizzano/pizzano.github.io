@@ -2,6 +2,7 @@
 'use strict';
 const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1', META_KEY='kol-beta-meta-v1';
+const MENU_FALLBACK_KEY='kol-beta-menu-fallback-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0;
 let sharedChannel=null,sharedLeader=false,sharedLockPending=false,sharedLockController=null,sharedLockRelease=null;
@@ -29,9 +30,51 @@ function updateSheetFavorite(){
 }
 function loadCart(){try{const c=JSON.parse(localStorage.getItem(CART_KEY));return Array.isArray(c)?c:[]}catch{return []}}
 function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catch{}renderCartIndicators();updateCartBadges()}
-function openDB(){return new Promise((resolve,reject)=>{if(!indexedDB){reject(Error('IndexedDB unavailable'));return}const r=indexedDB.open(CACHE_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('public');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
-async function localGet(){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readonly'),r=t.objectStore('public').get('menu');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);t.oncomplete=()=>db.close()})}
-async function localPut(value){const db=await openDB();return new Promise((resolve,reject)=>{const t=db.transaction('public','readwrite');t.objectStore('public').put(value,'menu');t.oncomplete=()=>{db.close();resolve()};t.onerror=()=>reject(t.error)})}
+function openDB(){
+ return new Promise((resolve,reject)=>{
+  if(typeof indexedDB==='undefined'){reject(Error('IndexedDB unavailable'));return}
+  const r=indexedDB.open(CACHE_DB,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('public');
+  r.onsuccess=()=>resolve(r.result);
+  r.onerror=()=>reject(r.error);
+ });
+}
+// IndexedDB is preferred. Backup small menus locally when it is unavailable,
+// so reopening the page does not trigger another full Firebase download.
+function readMenuFallback(){
+ try{const data=JSON.parse(localStorage.getItem(MENU_FALLBACK_KEY)||'null');return data?.sections?.length?data:null}
+ catch{return null}
+}
+async function localGet(){
+ try{
+  const db=await openDB();
+  const value=await new Promise((resolve,reject)=>{
+   const t=db.transaction('public','readonly'),r=t.objectStore('public').get('menu');
+   r.onsuccess=()=>resolve(r.result||null);
+   r.onerror=()=>reject(r.error);
+   t.oncomplete=()=>db.close();
+  });
+  return value||readMenuFallback();
+ }catch{return readMenuFallback()}
+}
+async function localPut(value){
+ try{
+  const db=await openDB();
+  await new Promise((resolve,reject)=>{
+   const t=db.transaction('public','readwrite');
+   t.objectStore('public').put(value,'menu');
+   t.oncomplete=()=>{db.close();resolve()};
+   t.onerror=()=>{db.close();reject(t.error)};
+  });
+  try{localStorage.removeItem(MENU_FALLBACK_KEY)}catch{}
+ }catch(error){
+  try{
+   const json=JSON.stringify(value);
+   if(json.length>1_500_000)throw Error('Menu too large for fallback');
+   localStorage.setItem(MENU_FALLBACK_KEY,json);
+  }catch{throw error}
+ }
+}
 function normalize(data){return {cacheFormat:2,sections:list(data.sections).map(s=>({...s,items:list(s.items)})),optionGroups:list(data.optionGroups),allergenCatalog:list(data.allergenCatalog),settings:data.settings||{},popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),updatedAt:Number(data.updatedAt)||0}}
 async function fromFirebase(){
   const read=async path=>{
@@ -449,16 +492,16 @@ function hydrateImages(root){
      imageObserver.unobserve(entry.target);
      void setCachedImage(entry.target,entry.target.dataset.image);
    }
- },{root:null,rootMargin:'1200px 0px'}):null;
+ },{root:null,rootMargin:'400px 0px'}):null;
  const uniqueURLs=[...new Set(images.map(img=>img.dataset.image).filter(Boolean))];
- // The first 15 images begin resolving immediately; later images resolve ahead of scroll.
- for(const url of uniqueURLs.slice(0,15))void resolveImage(url).then(resolved=>{
+ // Load only the first visible cards initially; defer the rest until scrolling.
+ for(const url of uniqueURLs.slice(0,IMAGE_PRELOAD_COUNT))void resolveImage(url).then(resolved=>{
   for(const img of images)if(img.isConnected&&img.dataset.image===url)img.src=resolved;
  });
  images.forEach((img,index)=>{
    const cached=imageURLs.get(img.dataset.image);
    if(cached){img.src=cached;return}
-   if(index<15){img.loading='eager';void setCachedImage(img,img.dataset.image)}
+   if(index<IMAGE_PRELOAD_COUNT){img.loading='eager';void setCachedImage(img,img.dataset.image)}
    else if(imageObserver)imageObserver.observe(img);
    else void setCachedImage(img,img.dataset.image);
  });
