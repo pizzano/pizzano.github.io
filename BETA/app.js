@@ -915,9 +915,6 @@ function renderCartContents(){
   '<div class="cart-product-totalrow"><span>Sum</span><strong>'+money(line.qty*line.unitPrice)+'</strong></div></article>'
  ).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
  renderCartRecommendations();
- const availability=getOrderingState();
- $('cartAvailabilityNotice').hidden=availability.orderable||!cart.length;
- $('cartAvailabilityNotice').textContent=availability.orderable?'':'Restauranten er stengt for bestilling nå. Du kan legge varer i handlekurven, men kan ikke gå videre før restauranten tar imot bestillinger. '+availability.pill+'.';
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
 function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
