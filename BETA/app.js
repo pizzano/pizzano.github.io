@@ -500,23 +500,24 @@ function menuBlocks(){
  return blocks;
 }
 // Consistent local SVG icons: no image downloads, icon fonts, or extra CSS files.
+/* Food icons adapted from Lucide (ISC), https://lucide.dev/ */
 const CATEGORY_ICON_PATHS={
- star:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>',
- pizza:'<path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z"/><path d="M5.7 17.1A17 17 0 0 1 17.1 5.7"/><circle cx="11" cy="15" r="1"/><circle cx="15" cy="11" r="1"/>',
- kebab:'<path d="m3 21 18-18"/><path d="m7 17-3-3 4-4 3 3"/><path d="m13 11-3-3 4-4 3 3"/><path d="m16 14 3 3"/><path d="m4 8 2-2"/>',
- burger:'<path d="M4 11c0-4.5 3.5-7 8-7s8 2.5 8 7H4Z"/><path d="M3 14h18"/><path d="M5 17h14"/><path d="M5 20h14"/><path d="M9 8h.01M15 8h.01"/>',
- fries:'<path d="M5 9h14l-2 12H7L5 9Z"/><path d="M8 9V3M12 9V2M16 9V4"/>',
- drink:'<path d="M5 5h14l-2 16H7L5 5Z"/><path d="M4 5h16M12 5l5-4"/><path d="M9 11h6"/>',
- salad:'<path d="M3 13h18a9 9 0 0 1-18 0Z"/><path d="M5 13c-2-3 0-6 3-5 0-4 5-4 6-1 3-2 6 0 5 4"/><path d="M12 13V6"/>',
- chicken:'<path d="M14 3c4-2 8 1 7 5-.5 2-2 4-4 6l-7-7c1-2 2-3 4-4Z"/><path d="m10 7-5 5a3 3 0 1 0-2 5 3 3 0 1 0 5 2l5-5"/>',
- pasta:'<path d="M3 14h18a9 9 0 0 1-18 0Z"/><path d="M6 4c-2 3 3 4 1 8M12 3c-2 4 3 5 1 9M18 4c-2 3 3 4 1 8"/>',
- dessert:'<path d="M3 12h18v9H3zM3 12c0-3 3-4 9-4s9 1 9 4"/><path d="M12 8V4M12 4c-2-1 0-3 0-3s2 2 0 3Z"/>',
- coffee:'<path d="M4 7h14v7a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6V7Z"/><path d="M18 8h2a3 3 0 0 1 0 6h-2"/>',
- sauce:'<path d="M4 10h16l-2 10H6L4 10Z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9 15h6"/>',
- grill:'<path d="M3 9h18M5 9a7 7 0 0 0 14 0M12 16v5M8 21h8"/><path d="M8 6c-2-2 2-2 0-4M12 6c-2-2 2-2 0-4M16 6c-2-2 2-2 0-4"/>',
- kids:'<circle cx="12" cy="13" r="7"/><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><path d="M9 12h.01M15 12h.01M10 16c1 1 3 1 4 0"/>',
- fish:'<path d="M3 12c5-7 12-8 18 0-6 8-13 7-18 0Z"/><path d="M3 12 1 8v8zM15 9l-2 3 2 3"/><circle cx="18" cy="11" r=".7"/>',
- utensils:'<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M18 3v18M18 3c-4 1-4 7 0 8"/>'
+ star:"<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />",
+ pizza:"<path d=\"m12 14-1 1\" /><path d=\"m13.75 18.25-1.25 1.42\" /><path d=\"M17.775 5.654a15.68 15.68 0 0 0-12.121 12.12\" /><path d=\"M18.8 9.3a1 1 0 0 0 2.1 7.7\" /><path d=\"M21.964 20.732a1 1 0 0 1-1.232 1.232l-18-5a1 1 0 0 1-.695-1.232A19.68 19.68 0 0 1 15.732 2.037a1 1 0 0 1 1.232.695z\" />",
+ kebab:"<path d=\"M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4\" />",
+ burger:"<path d=\"M12 16H4a2 2 0 1 1 0-4h16a2 2 0 1 1 0 4h-4.25\" /><path d=\"M5 12a2 2 0 0 1-2-2 9 7 0 0 1 18 0 2 2 0 0 1-2 2\" /><path d=\"M5 16a2 2 0 0 0-2 2 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 2 2 0 0 0-2-2q0 0 0 0\" /><path d=\"m6.67 12 6.13 4.6a2 2 0 0 0 2.8-.4l3.15-4.2\" />",
+ drink:"<path d=\"m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8\" /><path d=\"M5 8h14\" /><path d=\"M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0\" /><path d=\"m12 8 1-6h2\" />",
+ salad:"<path d=\"M19.496 12a2.5 2.5 0 00.399-2.214A2 2 0 0020.32 6.5 2 2 0 0019 3a2 2 0 00-1.5.68 2 2 0 00-3.287.424 2.5 2.5 0 00-3.189 2.06A3 3 0 0012 12l4-4\" /><path d=\"M4 12a1 1 0 00-.99 1.133A9 9 0 0012 21a9 9 0 008.99-7.867A1 1 0 0020 12z\" /><path d=\"M7 21h10\" /><path d=\"M9.85 6.907A3.5 3.5 0 005.05 12\" />",
+ chicken:"<path d=\"M15.4 15.63a7.875 6 135 1 1 6.23-6.23 4.5 3.43 135 0 0-6.23 6.23\" /><path d=\"m8.29 12.71-2.6 2.6a2.5 2.5 0 1 0-1.65 4.65A2.5 2.5 0 1 0 8.7 18.3l2.59-2.59\" />",
+ pasta:"<path d=\"M11.248 3c.273.1.808.53.747 1.36-.05.83-.938 1.2-.989 2.02-.06.78.333 1.24.727 1.62\" /><path d=\"M16.252 3c.268.1.794.53.745 1.36-.06.83-.923 1.2-.993 2.02-.05.78.338 1.24.725 1.62\" /><path d=\"M19.5 12 22 6\" /><path d=\"M4 12a1 1 0 00-.99 1.133A9 9 0 0012 21a9 9 0 008.99-7.867A1 1 0 0020 12z\" /><path d=\"M6.252 3c.268.1.794.53.745 1.36-.06.83-.923 1.2-.993 2.02-.05.78.338 1.24.735 1.62\" /><path d=\"M7 21h10\" />",
+ dessert:"<path d=\"m7 11 4.08 10.35a1 1 0 0 0 1.84 0L17 11\" /><path d=\"M17 7A5 5 0 0 0 7 7\" /><path d=\"M17 7a2 2 0 0 1 0 4H7a2 2 0 0 1 0-4\" />",
+ coffee:"<path d=\"M10 2v2\" /><path d=\"M14 2v2\" /><path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /><path d=\"M6 2v2\" />",
+ sauce:"<path d=\"M2 12h20\" /><path d=\"M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8\" /><path d=\"m4 8 16-4\" /><path d=\"m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8\" />",
+ grill:"<path d=\"M16.4 13.7A6.5 6.5 0 1 0 6.28 6.6c-1.1 3.13-.78 3.9-3.18 6.08A3 3 0 0 0 5 18c4 0 8.4-1.8 11.4-4.3\" /><path d=\"m18.5 6 1.754 3.5a6.48 6.48 0 0 1-1.854 8.2C15.4 20.2 11 22 7 22a3 3 0 0 1-2.68-1.66L2.4 16.5\" /><circle cx=\"12.5\" cy=\"8.5\" r=\"2.5\" />",
+ kids:"<path d=\"M18 8a2 2 0 0 0 0-4 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0 0 4\" /><path d=\"M10 22 9 8\" /><path d=\"m14 22 1-14\" /><path d=\"M20 8c.5 0 .9.4.8 1l-2.6 12c-.1.5-.7 1-1.2 1H7c-.6 0-1.1-.4-1.2-1L3.2 9c-.1-.6.3-1 .8-1Z\" />",
+ fish:"<path d=\"M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z\" /><path d=\"M18 12v.5\" /><path d=\"M16 17.93a9.77 9.77 0 0 1 0-11.86\" /><path d=\"M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33\" /><path d=\"M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4\" /><path d=\"m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98\" />",
+ utensils:"<path d=\"m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8\" /><path d=\"M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7\" /><path d=\"m2.1 21.8 6.4-6.3\" /><path d=\"m19 5-7 7\" />",
+ fries:"<path d=\"M4 9h16l-2 12H6L4 9Z\"/><path d=\"M7 9 6 3M10 9V2M14 9l1-6M18 9l1-5\"/>"
 };
 function categoryGlyph(block){
  const t=String(block.title||'').toLocaleLowerCase('no');
@@ -536,7 +537,7 @@ function categoryGlyph(block){
  else if(/barn|kids/.test(t))kind='kids';
  else if(/fisk|fish/.test(t))kind='fish';
  else if(/grill|biff|tallerken|rett/.test(t))kind='grill';
- return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+CATEGORY_ICON_PATHS[kind]+'</svg>';
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+CATEGORY_ICON_PATHS[kind]+'</svg>';
 }
 function productCard(i){
  const sizeCount=list(i.sizes).length;
