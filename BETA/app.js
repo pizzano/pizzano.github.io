@@ -495,14 +495,44 @@ function menuBlocks(){
  }
  return blocks;
 }
+// Consistent local SVG icons: no image downloads, icon fonts, or extra CSS files.
+const CATEGORY_ICON_PATHS={
+ star:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3 1.2-6.8-5-4.9 6.9-1z"/>',
+ pizza:'<path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z"/><path d="M5.7 17.1A17 17 0 0 1 17.1 5.7"/><circle cx="11" cy="15" r="1"/><circle cx="15" cy="11" r="1"/>',
+ kebab:'<path d="m3 21 18-18"/><path d="m7 17-3-3 4-4 3 3"/><path d="m13 11-3-3 4-4 3 3"/><path d="m16 14 3 3"/><path d="m4 8 2-2"/>',
+ burger:'<path d="M4 11c0-4.5 3.5-7 8-7s8 2.5 8 7H4Z"/><path d="M3 14h18"/><path d="M5 17h14"/><path d="M5 20h14"/><path d="M9 8h.01M15 8h.01"/>',
+ fries:'<path d="M5 9h14l-2 12H7L5 9Z"/><path d="M8 9V3M12 9V2M16 9V4"/>',
+ drink:'<path d="M5 5h14l-2 16H7L5 5Z"/><path d="M4 5h16M12 5l5-4"/><path d="M9 11h6"/>',
+ salad:'<path d="M3 13h18a9 9 0 0 1-18 0Z"/><path d="M5 13c-2-3 0-6 3-5 0-4 5-4 6-1 3-2 6 0 5 4"/><path d="M12 13V6"/>',
+ chicken:'<path d="M14 3c4-2 8 1 7 5-.5 2-2 4-4 6l-7-7c1-2 2-3 4-4Z"/><path d="m10 7-5 5a3 3 0 1 0-2 5 3 3 0 1 0 5 2l5-5"/>',
+ pasta:'<path d="M3 14h18a9 9 0 0 1-18 0Z"/><path d="M6 4c-2 3 3 4 1 8M12 3c-2 4 3 5 1 9M18 4c-2 3 3 4 1 8"/>',
+ dessert:'<path d="M3 12h18v9H3zM3 12c0-3 3-4 9-4s9 1 9 4"/><path d="M12 8V4M12 4c-2-1 0-3 0-3s2 2 0 3Z"/>',
+ coffee:'<path d="M4 7h14v7a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6V7Z"/><path d="M18 8h2a3 3 0 0 1 0 6h-2"/>',
+ sauce:'<path d="M4 10h16l-2 10H6L4 10Z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M9 15h6"/>',
+ grill:'<path d="M3 9h18M5 9a7 7 0 0 0 14 0M12 16v5M8 21h8"/><path d="M8 6c-2-2 2-2 0-4M12 6c-2-2 2-2 0-4M16 6c-2-2 2-2 0-4"/>',
+ kids:'<circle cx="12" cy="13" r="7"/><circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><path d="M9 12h.01M15 12h.01M10 16c1 1 3 1 4 0"/>',
+ fish:'<path d="M3 12c5-7 12-8 18 0-6 8-13 7-18 0Z"/><path d="M3 12 1 8v8zM15 9l-2 3 2 3"/><circle cx="18" cy="11" r=".7"/>',
+ utensils:'<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M18 3v18M18 3c-4 1-4 7 0 8"/>'
+};
 function categoryGlyph(block){
- if(block.id==='popular')return '☆';
  const t=String(block.title||'').toLocaleLowerCase('no');
- if(t.includes('pizza'))return '♧';
- if(t.includes('kebab'))return '♢';
- if(t.includes('burger'))return '▤';
- if(t.includes('drikk'))return '◉';
- return '♨';
+ let kind='utensils';
+ if(block.id==='popular')kind='star';
+ else if(/pizza/.test(t))kind='pizza';
+ else if(/kebab|rull|wrap|lefse/.test(t))kind='kebab';
+ else if(/burger/.test(t))kind='burger';
+ else if(/pommes|fries|søtpotet/.test(t))kind='fries';
+ else if(/drikk|brus|vann|juice|milkshake/.test(t))kind='drink';
+ else if(/salat|vegetar/.test(t))kind='salad';
+ else if(/kylling|chicken|snadder/.test(t))kind='chicken';
+ else if(/pasta|spaghetti/.test(t))kind='pasta';
+ else if(/dessert|kake|is\b|søt/.test(t))kind='dessert';
+ else if(/kaffe|coffee|varm drikk/.test(t))kind='coffee';
+ else if(/saus|dressing|dip|tilbehør|ekstra/.test(t))kind='sauce';
+ else if(/barn|kids/.test(t))kind='kids';
+ else if(/fisk|fish/.test(t))kind='fish';
+ else if(/grill|biff|tallerken|rett/.test(t))kind='grill';
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+CATEGORY_ICON_PATHS[kind]+'</svg>';
 }
 function productCard(i){
  const sizeCount=list(i.sizes).length;
