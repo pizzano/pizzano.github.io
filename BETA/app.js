@@ -387,7 +387,7 @@ function watchSections(){
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.scroll===id));
    const target=buttons.find(b=>b.dataset.scroll===id);
    if(target)moveCategoryButtonIntoView(target);
- },{root:$('appViewport'),rootMargin:'-190px 0px -55% 0px'});
+ },{root:null,rootMargin:'-110px 0px -55% 0px'});
  $('menu').querySelectorAll('.menu-section').forEach(el=>scrollObserver.observe(el));
 }
 
@@ -443,7 +443,7 @@ function hydrateImages(root){
      imageObserver.unobserve(entry.target);
      void setCachedImage(entry.target,entry.target.dataset.image);
    }
- },{root:$('appViewport'),rootMargin:'1200px 0px'}):null;
+ },{root:null,rootMargin:'1200px 0px'}):null;
  const uniqueURLs=[...new Set(images.map(img=>img.dataset.image).filter(Boolean))];
  // The first 15 images begin resolving immediately; later images resolve ahead of scroll.
  for(const url of uniqueURLs.slice(0,15))void resolveImage(url).then(resolved=>{
@@ -897,6 +897,24 @@ function renderCartContents(){
 function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
+// Scroll the page itself so mobile browsers can collapse their URL bars.
+// The compact header and category row hide when scrolling down and reappear up.
+let autoNavLastY=Math.max(0,window.scrollY),autoNavAccum=0,autoNavDirection=0,autoNavScrollUntil=0;
+function updateAutoHideNav(){
+ const y=Math.max(0,window.scrollY),delta=y-autoNavLastY;
+ autoNavLastY=y;
+ const app=$('appViewport');
+ if(y<45){app.classList.remove('nav-hidden');autoNavAccum=0;return}
+ if(document.body.style.overflow==='hidden'||Date.now()<autoNavScrollUntil)return;
+ const dir=Math.sign(delta);
+ if(!dir)return;
+ if(dir!==autoNavDirection){autoNavDirection=dir;autoNavAccum=0}
+ autoNavAccum+=Math.abs(delta);
+ if(autoNavAccum<18)return;
+ app.classList.toggle('nav-hidden',dir>0);
+ autoNavAccum=0;
+}
+window.addEventListener('scroll',updateAutoHideNav,{passive:true});
 $('categories').addEventListener('scroll',categoryProgress,{passive:true});
 /* Mouse dragging works alongside normal tab clicks. */
 {
@@ -944,7 +962,7 @@ $('search').addEventListener('input',()=>{
 $('searchClear').addEventListener('click',()=>{
  $('search').value='';$('searchClear').hidden=true;render();$('search').focus();
 });
-$('categories').addEventListener('click',e=>{if(draggedCategories){draggedCategories=false;return}const b=e.target.closest('[data-scroll]');if(!b)return;$('categories').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));(()=>{const section=document.getElementById('category-'+b.dataset.scroll),viewport=$('appViewport');if(!section||!viewport)return;const target=section.getBoundingClientRect().top-viewport.getBoundingClientRect().top+viewport.scrollTop-195;viewport.scrollTo({top:target,behavior:'smooth'});activeCategory=b.dataset.scroll;moveCategoryButtonIntoView(b)})()});
+$('categories').addEventListener('click',e=>{if(draggedCategories){draggedCategories=false;return}const b=e.target.closest('[data-scroll]');if(!b)return;$('categories').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));const section=document.getElementById('category-'+b.dataset.scroll);if(!section)return;const app=$('appViewport');app.classList.remove('nav-hidden');autoNavScrollUntil=Date.now()+900;const offset=document.querySelector('.header').offsetHeight+document.querySelector('.category-wrap').offsetHeight+10;const target=Math.max(0,section.getBoundingClientRect().top+window.scrollY-offset);window.scrollTo({top:target,behavior:'smooth'});activeCategory=b.dataset.scroll;moveCategoryButtonIntoView(b)});
 $('menu').addEventListener('click',e=>{
  const card=e.target.closest('[data-product-card]');
  if(!card||card.getAttribute('aria-disabled')==='true')return;
