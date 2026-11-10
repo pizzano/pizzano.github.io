@@ -767,8 +767,10 @@ function updatePrice(){
  $('addPrice').textContent=money(currentPrice()*qty);
  updateOrderingControls();
 }
-function show(id){$('overlay').hidden=false;$(id).hidden=false;document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden'}
-function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;document.documentElement.style.overflow='';document.body.style.overflow=''}
+// Keep the document's scroll container intact: changing html/body overflow
+// while a dialog is open can make the sticky restaurant header disappear.
+function show(id){$('overlay').hidden=false;$(id).hidden=false}
+function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true}
 function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
 function addToCart(){
  if(!current)return;
@@ -961,7 +963,7 @@ function attemptStartupBrowserScroll(){
  if(available<180){finishStartupScroll();return}
  window.setTimeout(()=>{
   if(startupScrollInterrupted||window.scrollY>2||document.visibilityState!=='visible'||
-     document.body.style.overflow==='hidden'){finishStartupScroll();return}
+     !$('overlay').hidden){finishStartupScroll();return}
   const distance=Math.min(240,document.documentElement.scrollHeight-window.innerHeight);
   if(distance<180){finishStartupScroll();return}
   autoNavScrollUntil=Date.now()+1100;
@@ -984,7 +986,7 @@ function updateAutoHideNav(){
  autoNavLastY=y;
  const app=$('appViewport');
  if(y<45){app.classList.remove('nav-hidden');autoNavAccum=0;return}
- if(document.body.style.overflow==='hidden'||Date.now()<autoNavScrollUntil)return;
+ if(!$('overlay').hidden||Date.now()<autoNavScrollUntil)return;
  const dir=Math.sign(delta);
  if(!dir)return;
  if(dir!==autoNavDirection){autoNavDirection=dir;autoNavAccum=0}
