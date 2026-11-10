@@ -49,6 +49,9 @@ async function fromFirebase(){
   return data;
 }
 async function init(){
+ // A single best-effort down/up scroll after first menu render on small touch screens.
+ // Chrome may ignore scripted scrolling for browser toolbar visibility.
+ watchStartupScrollIntent();
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
@@ -56,6 +59,7 @@ async function init(){
    menu=cached;render();$('cacheStatus').textContent='Lagret lokalt';
    // Never re-download a cached menu automatically. Manual refresh stays available.
  }else await refreshMenu(false);
+ attemptStartupBrowserScroll();
  startSharedChangeStream();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)startSharedChangeStream()});
  window.addEventListener('online',startSharedChangeStream);
@@ -897,6 +901,48 @@ function renderCartContents(){
 function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
+// Only one unobtrusive attempt per page load. Scripted scroll may not
+// collapse Chrome's address bar: browser UI visibility is browser-controlled.
+// Cancel immediately when a person interacts, so navigation is never hijacked.
+let startupScrollInterrupted=false,startupScrollArmed=false,startupScrollFinished=false;
+const startupScrollEvents=['touchstart','pointerdown','wheel','keydown'];
+function interruptStartupScroll(){startupScrollInterrupted=true}
+function watchStartupScrollIntent(){
+ if(startupScrollArmed)return;
+ startupScrollArmed=true;
+ for(const name of startupScrollEvents)
+  window.addEventListener(name,interruptStartupScroll,{passive:true});
+}
+function finishStartupScroll(){
+ startupScrollFinished=true;
+ for(const name of startupScrollEvents)
+  window.removeEventListener(name,interruptStartupScroll);
+}
+function attemptStartupBrowserScroll(){
+ if(startupScrollFinished)return;
+ const mobile=window.matchMedia?.('(max-width:600px) and (pointer:coarse)').matches;
+ const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ if(!mobile||reducedMotion||startupScrollInterrupted||document.visibilityState!=='visible'||
+    window.scrollY>2||!menu){finishStartupScroll();return}
+ const available=document.documentElement.scrollHeight-window.innerHeight;
+ if(available<180){finishStartupScroll();return}
+ window.setTimeout(()=>{
+  if(startupScrollInterrupted||window.scrollY>2||document.visibilityState!=='visible'||
+     document.body.style.overflow==='hidden'){finishStartupScroll();return}
+  const distance=Math.min(240,document.documentElement.scrollHeight-window.innerHeight);
+  if(distance<180){finishStartupScroll();return}
+  autoNavScrollUntil=Date.now()+1100;
+  window.scrollTo({top:distance,behavior:'instant'});
+  window.setTimeout(()=>{
+   if(!startupScrollInterrupted&&document.visibilityState==='visible'){
+    window.scrollTo({top:0,behavior:'instant'});
+    $('appViewport').classList.remove('nav-hidden');
+    autoNavLastY=0;autoNavAccum=0;
+   }
+   finishStartupScroll();
+  },160);
+ },180);
+}
 // Scroll the page itself so mobile browsers can collapse their URL bars.
 // The compact header and category row hide when scrolling down and reappear up.
 let autoNavLastY=Math.max(0,window.scrollY),autoNavAccum=0,autoNavDirection=0,autoNavScrollUntil=0;
