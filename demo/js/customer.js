@@ -1326,7 +1326,7 @@ function pdSectionTitle(key,label,required,summary,icon){
   '<span class="pd-accordion-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
     (PD_SECTION_ICONS[icon]||PD_SECTION_ICONS.alternatives)+'</svg></span>'+
   '<span class="pd-accordion-copy"><span class="pd-accordion-titleline"><strong>'+escapeHtml(label)+'</strong>'+
-  '<span class="pd-accordion-badge">'+(required?'Påkrevd':'Valgfritt')+'</span></span>'+
+  (required===null?'':'<span class="pd-accordion-badge">'+(required?'Påkrevd':'Valgfritt')+'</span>')+'</span>'+
   '<small class="pd-accordion-summary">'+escapeHtml(summary||'Ingen valg')+'</small></span>'+
   '<span class="pd-accordion-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
   '</summary>';
@@ -1561,7 +1561,7 @@ function renderSheet() {
        '<textarea class="comment-area" id="draftComment" maxlength="1000" placeholder="Egen kommentar (valgfritt)…">'+escapeHtml(kitchenNoteParts.own)+'</textarea>'+
       '</div></details>'+
     '<details class="sheet-allergens pd-accordion" data-pd-panel="allergens"'+(allergenOpen?' open':'')+' aria-label="Allergener">'+
-      pdSectionTitle('allergens','Allergener',false,allergens.join(', ')||'Allergener ikke oppgitt','allergens')+
+      pdSectionTitle('allergens','Allergener',null,allergens.join(', ')||'Allergener ikke oppgitt','allergens')+
       '<div class="pd-accordion-content pd-allergens-body">'+
         '<div class="sheet-allergen-chips">'+(allergens.length?
           allergens.map(label=>'<span class="sheet-allergen-chip">'+escapeHtml(label)+'</span>').join(''):
