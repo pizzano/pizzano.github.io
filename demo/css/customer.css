@@ -34,8 +34,6 @@ body {
 input,
 textarea,
 select {
-    font-family: inherit;
-    font-size: inherit;
     color: inherit;
 }button { cursor: pointer; }svg {
     width: 20px;
