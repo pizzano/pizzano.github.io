@@ -19,6 +19,13 @@
     <main>
       <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div>
       <div id="notice" role="status" aria-live="polite"></div>
+      <section id="demoActiveOrder" class="demo-active-order" aria-label="Aktiv testbestilling" hidden>
+        <div class="demo-active-heading"><strong>AKTIV BESTILLING <small>DEMO</small></strong><span id="demoActiveNumber"></span></div>
+        <div class="demo-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
+        <div class="demo-active-message"><span class="demo-status-dot" aria-hidden="true"></span><div><strong id="demoActiveTitle">Venter på bekreftelse</strong><small id="demoActiveSubtitle">Testbestillingen er lagret lokalt, ikke sendt.</small></div></div>
+        <button id="demoViewOrder" type="button" class="demo-view-order">Se bestillingen</button>
+        <button id="demoClearOrder" type="button" class="demo-clear-order">Avslutt demo</button>
+      </section>
       <div id="menu"></div>
     </main>
   </div>
@@ -30,13 +37,39 @@
   <section id="cartSheet" class="sheet cart-sheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
     <header class="cart-topbar"><button id="cartClose" class="cart-back" type="button" aria-label="Tilbake til menyen">‹</button><button id="cartBrandHome" class="cart-brand" type="button" aria-label="Til menyen"><span aria-hidden="true">🔥</span> KØL Grill & Pizza</button><span class="cart-header-icon cart-header-bag" aria-label="Handlekurv">🛒 <b id="cartTopCount">0</b></span></header>
     <div class="cart-content-scroll" id="cartScroll">
-      <nav class="cart-steps" aria-label="Bestillingssteg"><span class="is-current"><b>1</b> Kurv</span><span><b>2</b> Kontakt</span><span><b>3</b> Hentetid</span></nav>
+      <nav class="cart-steps" aria-label="Bestillingssteg"><span data-checkout-step="cart" class="is-current"><b>1</b> Kurv</span><span data-checkout-step="contact"><b>2</b> Kontakt</span><span data-checkout-step="pickup"><b>3</b> Hentetid</span></nav>
+      <div id="cartCartStep" class="checkout-step">
       <div class="cart-header-line"><h2 id="cartTitle">Handlekurv</h2><button id="cartClear" class="cart-clear-btn" type="button" aria-label="Tøm handlekurv"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg><span>Tøm handlekurv</span></button></div>
       <div id="cartItems" class="cart-items"></div>
       <div class="cart-summary" id="cartSummary"><span>Totalt</span><strong id="cartTotal">0 kr</strong></div>
       <section id="cartRecommendations" class="cart-recommendations" aria-label="Anbefalt til handlekurven" hidden><div class="cart-recommendations-head"><strong>Vil du ha noe ved siden av?</strong><small>Passer til bestillingen din</small></div><details id="cartSuggestionsDisclosure" class="cart-suggestions-disclosure"><summary class="cart-suggestions-preview"><span id="cartSuggestionsThumbnails" class="cart-suggestions-thumbnails" aria-hidden="true"></span><span id="cartSuggestionsCount" class="cart-suggestions-count"></span><svg class="cart-suggestions-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div id="cartRecommendationsItems" class="cart-recommendations-items"></div></details></section>
+      </div>
+      <form id="cartContactStep" class="checkout-step checkout-contact checkout-card" novalidate hidden>
+        <h2>Kontaktinformasjon</h2>
+        <p class="demo-checkout-label">DEMO · Ingen SMS eller e-post blir sendt</p>
+        <label class="checkout-field" for="demoFullName"><span class="checkout-field-caption"><span class="checkout-field-icon">♙</span><strong>Hele navn <small>(påkrevd)</small></strong></span><input id="demoFullName" type="text" autocomplete="name" maxlength="120" placeholder="Fornavn og etternavn" required></label>
+        <label class="checkout-field" for="demoPhone"><span class="checkout-field-caption"><span class="checkout-field-icon">☎</span><strong>Mobilnummer <small>(påkrevd)</small></strong></span><span class="checkout-phone-input"><span>+47</span><input id="demoPhone" type="tel" inputmode="numeric" maxlength="15" autocomplete="tel-national" placeholder="8 siffer" required></span></label>
+        <label class="checkout-field" for="demoEmail"><span class="checkout-field-caption"><span class="checkout-field-icon">✉</span><strong>E-postadresse <small>(valgfri)</small></strong></span><input id="demoEmail" type="email" maxlength="200" autocomplete="email" placeholder="navn@epost.no"></label>
+        <p class="checkout-help">E-post er valgfritt. Dette er kun en lokal testbestilling, og ingen kvittering sendes.</p>
+      </form>
+      <section id="cartPickupStep" class="checkout-step checkout-pickup checkout-card" hidden>
+        <h2>Når vil du hente?</h2><p class="checkout-help">Estimert tid – restauranten bekrefter endelig tid ved ekte bestillinger.</p>
+        <div class="checkout-pickup-choices"><label class="checkout-pickup-option is-selected" id="demoAsapOption"><input type="radio" name="demoPickupMode" value="asap" checked><strong>Snarest</strong></label><label class="checkout-pickup-option" id="demoScheduledOption"><input type="radio" name="demoPickupMode" value="scheduled"><strong>Velg tid</strong><small>Hent på et klokkeslett</small></label></div>
+        <label id="demoPickupTimeBox" class="checkout-time-select" for="demoPickupTime" hidden><strong>Velg hentetid</strong><select id="demoPickupTime"></select></label>
+        <details class="checkout-order-preview"><summary><strong id="demoPickupItemCount">0 varer</strong><small>Se innhold og detaljer</small><span>Vis mer</span></summary><div id="demoPickupOrderItems"></div></details>
+        <p class="demo-checkout-label">Testmodus: bestillingen lagres kun i denne nettleseren. Ingen kontakt med administrasjonen.</p>
+      </section>
     </div>
-    <footer class="cart-footer"><div class="cart-buttons"><button id="continue" class="cart-outline" type="button">Fortsett å handle</button><button id="cartNext" class="primary" type="button" disabled title="Kontaktsteget er ikke tilgjengelig ennå">Neste: Kontakt</button></div></footer>
+    <footer class="cart-footer"><p id="checkoutError" class="checkout-error" role="alert" hidden></p><div class="cart-buttons"><button id="continue" class="cart-outline" type="button">Fortsett å handle</button><button id="cartNext" class="primary" type="button" disabled>Neste: Kontakt</button></div></footer>
+  </section>
+  <section id="demoConfirmation" class="demo-confirmation" role="dialog" aria-modal="true" aria-labelledby="demoConfirmationTitle" hidden>
+    <div class="demo-confirmation-mark" aria-hidden="true">✓</div>
+    <h2 id="demoConfirmationTitle">Venter på bekreftelse</h2>
+    <p id="demoConfirmationIntro">Testbestillingen er lagret på denne enheten.</p>
+    <p class="demo-not-sent">DEMO · Ikke sendt til restauranten eller admin</p>
+    <dl class="demo-order-facts"><div><dt>Ordrenummer</dt><dd id="demoConfirmationNumber"></dd></div><div><dt>Hentetid</dt><dd id="demoConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="demoConfirmationTotal"></dd></div></dl>
+    <div class="demo-waiting"><i class="demo-status-dot" aria-hidden="true"></i><div><strong id="demoConfirmationStatus">Venter på restauranten (demo)</strong><small id="demoConfirmationTimer">3:00 igjen</small></div></div>
+    <button id="demoConfirmationClose" type="button" class="demo-view-order">Til menyen</button>
   </section>
 </body>
 </html>
