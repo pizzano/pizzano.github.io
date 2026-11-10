@@ -597,10 +597,9 @@ const KITCHEN_NOTE_DEFAULTS={
  other:['Ekstra servietter']
 };
 let removedIngredients=new Set(),selectedKitchenNotes=new Set(),editingCartIndex=null;
-function productSectionHeading(title,required,meta=''){
+function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
-  '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span>'+
-  (meta?'<small class="product-section-meta">'+esc(meta)+'</small>':'')+'</div>';
+  '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span></div>';
 }
 // Reorder presentation only: keep group and price calculations untouched.
 function productDisplayRank(group){
@@ -680,7 +679,7 @@ function optionGroupMarkup(group){
   return '<label class="option-choice'+(count?' is-chosen':'')+'"><input type="'+(multiple?'checkbox':'radio')+'" name="group:'+esc(group.id)+'" value="'+esc(opt.id)+'" '+(count?'checked':'')+' '+(blocked?'disabled':'')+'><span class="option-label-text">'+esc(opt.label||'')+'</span><span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span></label>';
  }).join('');
  return '<section class="option-group product-section">'+
-  productSectionHeading(group.title||'Velg',Boolean(group.required),multiple?'Maks '+max+' stk · '+ids.length+' valgt':'')+
+  productSectionHeading(group.title||'Velg',Boolean(group.required))+
   '<div class="option-rows">'+entries+'</div></section>';
 }
 function restoreCartLineForEdit(line,index){
