@@ -561,8 +561,8 @@ function render(){
 }
 function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
- current=item;qty=1;selection={};removedIngredients=new Set();ingredientsOpen=false;selectedKitchenNotes=new Set();editingCartIndex=null;productPanels={size:true};
- $('add').firstChild.textContent='🛒 Legg til ';$('quantity').textContent=qty;$('comment').value='';
+ current=item;qty=1;selection={};removedIngredients=new Set();selectedKitchenNotes=new Set();editingCartIndex=null;
+ $('add').firstChild.textContent='Legg til ';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
  hero.classList.remove('has-image');
@@ -596,23 +596,24 @@ const KITCHEN_NOTE_DEFAULTS={
  tallerken:['Saus ved siden av'],
  other:['Ekstra servietter']
 };
-let removedIngredients=new Set(),ingredientsOpen=false,selectedKitchenNotes=new Set(),editingCartIndex=null,productPanels={size:true};
-const productIconPaths={
- size:'<path d="M3 18 18 3l3 18-18-3Z"/><path d="m10 11 2 2m2-6 2 2"/>',
- option:'<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M18 3v18M18 3c-4 1-4 7 0 8"/>',
- sauce:'<path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="m8 9 3-5M13 9l3-5"/>',
- fries:'<path d="M5 9h14l-2 12H7L5 9Z"/><path d="M8 9V3m4 6V2m4 7V4"/>',
- extra:'<path d="m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/>',
- ingredient:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/>'
-};
-const productIcons=Object.fromEntries(Object.entries(productIconPaths).map(([key,paths])=>[key,
- '<svg viewBox="0 0 24 24" aria-hidden="true">'+paths+'</svg>']));
-function productPanelIcon(name){const t=String(name||'').toLocaleLowerCase('no');return /saus|dressing|dip/.test(t)?'sauce':/pommes|fries|søtpotet/.test(t)?'fries':/bunn|deig|brød/.test(t)?'extra':'option'}
-function productPanelHead(key,label,required,summary,kind){
- return '<summary class="accordion-head" data-panel-toggle="'+esc(key)+'"><span class="accordion-symbol" aria-hidden="true">'+(productIcons[kind]||productIcons.option)+'</span><span class="accordion-label"><span><strong>'+esc(label)+'</strong><em>'+(required?'Påkrevd':'Valgfritt')+'</em></span><small>'+esc(summary||'Ingen valg')+'</small></span><span class="accordion-chevron" aria-hidden="true">⌄</span></summary>'
+let removedIngredients=new Set(),selectedKitchenNotes=new Set(),editingCartIndex=null;
+function productSectionHeading(title,required,meta=''){
+ return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
+  '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span>'+
+  (meta?'<small class="product-section-meta">'+esc(meta)+'</small>':'')+'</div>';
 }
-function optionSummary(group,ids){const labels=list(group.options).filter(opt=>ids.some(id=>String(id)===String(opt.id))).map(opt=>{const count=ids.filter(id=>String(id)===String(opt.id)).length;return (count>1?count+'× ':'')+(opt.label||opt.name||'')});return labels.length>2?labels.slice(0,2).join(', ')+' +'+(labels.length-2):labels.join(', ')||'Ingen valg'}
-
+// Reorder presentation only: keep group and price calculations untouched.
+function productDisplayRank(group){
+ const title=String(group.title||'').toLocaleLowerCase('no');
+ if(/pommes|fries|søtpotet/.test(title))return 0;
+ if(/ekstra bunn|deig|bunn/.test(title))return 1;
+ if(/alternativ/.test(title))return 2;
+ if(/saus|dressing|dip/.test(title))return 3;
+ return 4;
+}
+function productDisplayGroups(){
+ return groupsFor(current,chosenSize()).slice().sort((a,b)=>productDisplayRank(a)-productDisplayRank(b));
+}
 function kitchenNotesFor(item){
  if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
  const section=menu.sections.find(s=>(s.items||[]).some(x=>String(x.id)===String(item.id)));
@@ -638,14 +639,14 @@ function removableIngredientRules(item){
 function ingredientEditor(){
  const names=removableIngredientRules(current),host=$('sheetIngredients');
  if(!names.length){host.innerHTML='';return}
- host.innerHTML='<details class="ingredient-editor detail-panel product-accordion'+(removedIngredients.size?' is-selected':'')+'" data-panel="ingredients"'+(ingredientsOpen?' open':'')+'>'+
-  '<summary class="accordion-head" data-panel-toggle="ingredients"><span class="accordion-symbol" aria-hidden="true">'+productIcons.ingredient+'</span><span class="accordion-label"><span><strong>Tilpass ingredienser</strong><em>Valgfritt</em></span><small>'+
-    (removedIngredients.size?'Uten: '+esc([...removedIngredients].join(', ')):'Ingen endringer')+
-    '</small></span><span class="accordion-chevron" aria-hidden="true">⌄</span></summary>'+
-  '<div class="ingredient-editor-body accordion-body"><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
-  '<div class="ingredient-chips">'+names.map(name=>'<button type="button" class="ingredient-chip'+(removedIngredients.has(name)?' is-removed':'')+
-   '" data-ingredient="'+esc(name)+'" aria-pressed="'+removedIngredients.has(name)+'">'+(removedIngredients.has(name)?'−':'✓')+' '+esc(name)+'</button>').join('')+
-  '</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></details>';
+ host.innerHTML='<section class="ingredient-editor detail-panel product-section">'+
+  productSectionHeading('Tilpass ingredienser',false)+
+  '<div class="ingredient-editor-body"><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
+  '<div class="ingredient-chips">'+names.map(name=>
+   '<button type="button" class="ingredient-chip'+(removedIngredients.has(name)?' is-removed':'')+
+   '" data-ingredient="'+esc(name)+'" aria-pressed="'+removedIngredients.has(name)+'">'+
+   (removedIngredients.has(name)?'−':'✓')+' '+esc(name)+'</button>'
+  ).join('')+'</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></section>';
 }
 function chosenSize(){
  const sizes=list(current?.sizes);
@@ -678,10 +679,9 @@ function optionGroupMarkup(group){
    '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div></div>';
   return '<label class="option-choice'+(count?' is-chosen':'')+'"><input type="'+(multiple?'checkbox':'radio')+'" name="group:'+esc(group.id)+'" value="'+esc(opt.id)+'" '+(count?'checked':'')+' '+(blocked?'disabled':'')+'><span class="option-label-text">'+esc(opt.label||'')+'</span><span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span></label>';
  }).join('');
- const key='group:'+group.id;
- return '<details class="option-group product-accordion'+(ids.length?' is-selected':'')+'" data-panel="'+esc(key)+'"'+(productPanels[key]?' open':'')+'>'+
-  productPanelHead(key,group.title||'Velg',Boolean(group.required),optionSummary(group,ids)+(multiple?' · '+ids.length+'/'+max+' valgt':''),productPanelIcon(group.title))+
-  '<div class="option-rows accordion-body">'+entries+'</div></details>';
+ return '<section class="option-group product-section">'+
+  productSectionHeading(group.title||'Velg',Boolean(group.required),multiple?'Maks '+max+' stk · '+ids.length+' valgt':'')+
+  '<div class="option-rows">'+entries+'</div></section>';
 }
 function restoreCartLineForEdit(line,index){
  if(String(line.id)!==String(current?.id))return;
@@ -694,7 +694,6 @@ function restoreCartLineForEdit(line,index){
   if(found){
    selection['group:'+group.id]=found.options.flatMap(opt=>Array.from(
     {length:Math.max(1,Number(opt.count)||1)},()=>String(opt.id)));
-   if(selection['group:'+group.id].length)productPanels['group:'+group.id]=true;
   }
  }
  removedIngredients=new Set(line.removedIngredients||[]);
@@ -702,7 +701,6 @@ function restoreCartLineForEdit(line,index){
  selectedKitchenNotes=new Set((line.quickNotes||[]).filter(n=>allowed.includes(n)));
  const raw=String(line.comment||'');
  $('comment').value=raw.split('\n').filter(x=>!selectedKitchenNotes.has(x)).join('\n');
- if($('comment').value.trim()||selectedKitchenNotes.size)productPanels.comment=true;
  renderOptions();
  $('add').firstChild.textContent='Oppdater kurven ';
 }
@@ -713,16 +711,13 @@ function renderOptions(){
  const sizes=list(current.sizes),size=chosenSize();
  let html='';
  if(sizes.length>1){
-  html+='<details class="option-group product-accordion is-selected" data-panel="size"'+(productPanels.size?' open':'')+'>'+
-   productPanelHead('size','Størrelse',true,size?.label||size?.name||'Velg størrelse','size')+
-   '<div class="option-rows accordion-body">';
+  html+='<section class="option-group product-section">'+productSectionHeading('Størrelse',true)+
+   '<div class="option-rows">';
   html+=sizes.map(entry=>'<label class="option-choice'+(String(entry.id)===String(size?.id)?' is-chosen':'')+'"><input type="radio" name="size" value="'+esc(entry.id)+'" '+(String(entry.id)===String(size?.id)?'checked':'')+'><span class="option-label-text">'+esc(entry.label||entry.name||'')+'</span><span class="opt-price">'+money(entry.price)+'</span></label>').join('');
-  html+='</div></details>';
+  html+='</div></section>';
  }
- for(const group of groupsFor(current,size))html+=optionGroupMarkup(group);
+ for(const group of productDisplayGroups())html+=optionGroupMarkup(group);
  $('options').innerHTML=html;
- $('sheetKitchenPanel').open=Boolean(productPanels.comment);
- $('sheetAllergens').open=Boolean(productPanels.allergens);
  renderSheetExtras();
  updatePrice();
 }
@@ -759,7 +754,7 @@ function optionValidation(){
  for(const group of groupsFor(current,chosenSize())){
   const ids=selectedIds(group),min=group.required?Math.max(1,Number(group.minSelections)||1):0;
   const max=Math.max(1,Number(group.maxSelections)||1);
-  if(ids.length<min){productPanels['group:'+group.id]=true;return 'Velg minst '+min+' i «'+(group.title||'valg')+'».';}
+  if(ids.length<min)return 'Velg minst '+min+' i «'+(group.title||'valg')+'».';
   if(ids.length>max)return 'Maks '+max+' valg i «'+(group.title||'valg')+'».';
  }
  return '';
@@ -1044,12 +1039,11 @@ $('menu').addEventListener('keydown',e=>{
  e.preventDefault();showSheet(card.dataset.productCard);
 });
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
-$('productSheet').addEventListener('click',e=>{const toggle=e.target.closest('summary[data-panel-toggle]');if(!toggle)return;const panel=toggle.closest('details');if(!panel)return;const key=toggle.dataset.panelToggle;productPanels[key]=!panel.open;if(key==='ingredients')ingredientsOpen=!panel.open;});
 $('comment').addEventListener('input',updateKitchenPanelSummary);
 $('options').addEventListener('change',e=>{
  const input=e.target;if(!input.matches('input'))return;
  if(input.name==='size'){
-  selection.size=input.value;productPanels.size=true;
+  selection.size=input.value;
   for(const key of Object.keys(selection))if(key.startsWith('group:'))delete selection[key];
   renderOptions();return;
  }
@@ -1061,7 +1055,6 @@ $('options').addEventListener('change',e=>{
   if(next.length>max){input.checked=false;return}
   selection[key]=next;
  }else selection[key]=[input.value];
- productPanels[key]=true;
  renderOptions();
 });
 $('options').addEventListener('click',e=>{
@@ -1075,19 +1068,18 @@ $('options').addEventListener('click',e=>{
  }else{
   const index=ids.findIndex(v=>String(v)===String(id));if(index>=0)ids.splice(index,1);
  }
- selection[key]=ids;productPanels[key]=true;renderOptions();
+ selection[key]=ids;renderOptions();
 });
 $('sheetIngredients').addEventListener('click',e=>{
  const button=e.target.closest('[data-ingredient]');if(!button)return;
  const name=button.dataset.ingredient;
  if(removedIngredients.has(name))removedIngredients.delete(name);else removedIngredients.add(name);
- ingredientsOpen=true;productPanels.ingredients=true;ingredientEditor();renderSheetExtras();
+ ingredientEditor();renderSheetExtras();
 });
 $('quickNotes').addEventListener('click',e=>{
  const btn=e.target.closest('[data-kitchen-note]');if(!btn)return;
  const note=btn.dataset.kitchenNote;
  if(selectedKitchenNotes.has(note))selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
- productPanels.comment=true;$('sheetKitchenPanel').open=true;
  renderSheetExtras();
 });
 $('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
