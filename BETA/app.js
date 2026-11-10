@@ -897,16 +897,32 @@ function suggestedCartItems(){
 }
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
+ const disclosure=$('cartSuggestionsDisclosure');
+ const thumbnails=$('cartSuggestionsThumbnails'),count=$('cartSuggestionsCount');
  const suggestions=suggestedCartItems();
  host.hidden=!suggestions.length;
- if(!suggestions.length){items.replaceChildren();return}
+ if(!suggestions.length){
+  disclosure.open=false;
+  thumbnails.replaceChildren();
+  items.replaceChildren();
+  count.textContent='';
+  return;
+ }
+ const preview=suggestions.slice(0,3);
+ thumbnails.innerHTML=preview.map(({item})=>
+  '<span class="cart-suggestion-thumb">'+imgEl(item.imageUrl,item.name,'suggestion-photo')+'</span>'
+ ).join('');
+ count.textContent=suggestions.length+' forslag';
+ thumbnails.querySelectorAll('img[data-image]').forEach(img=>void setCachedImage(img,img.dataset.image));
+ // Do not build or fetch full-size suggestions until the guest asks to see them.
+ if(!disclosure.open){items.replaceChildren();return}
  items.innerHTML=suggestions.map(({item})=>'<article class="cart-recommendation">'+
   '<div class="cart-suggestion-image">'+imgEl(item.imageUrl,'','suggestion-photo')+'</div>'+
   '<div class="cart-recommendation-copy"><strong>'+esc(item.name)+'</strong><span>'+money(basePrice(item))+'</span></div>'+
   '<button type="button" class="cart-suggest-add" data-suggest-add="'+esc(item.id)+'" aria-label="Legg til '+esc(item.name)+'">+</button>'+
   '<button type="button" class="cart-suggest-dismiss" data-suggest-dismiss="'+esc(item.id)+'" aria-label="Skjul '+esc(item.name)+'">×</button>'+
   '</article>').join('');
- items.querySelectorAll('img[data-image]').forEach(im=>void setCachedImage(im,im.dataset.image));
+ items.querySelectorAll('img[data-image]').forEach(img=>void setCachedImage(img,img.dataset.image));
 }
 const cartTrashIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg>';
 const cartEditIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 4 4 4-9.4 9.4-4.1 1.1 1.1-4.1L17 5a2.1 2.1 0 0 1 3 3"/></svg>';
@@ -953,7 +969,7 @@ function renderCartContents(){
  renderCartRecommendations();
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
-function showCart(){renderCartContents();show('cartSheet');updateOrderingControls()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
@@ -1144,6 +1160,7 @@ $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEven
  else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
  saveCart();renderCartContents();
 });
+$('cartSuggestionsDisclosure').addEventListener('toggle',renderCartRecommendations);
 $('cartRecommendationsItems').addEventListener('click',event=>{
  const dismiss=event.target.closest('[data-suggest-dismiss]');
  if(dismiss){
