@@ -433,6 +433,7 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-field-caption strong{font-size:var(--text-md);font-weight:800}
 .checkout-field-caption small{font-size:var(--text-sm);font-weight:450;color:#648076}
 .checkout-field-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#eef5f1;color:#244c3e;font-size:20px}
+.checkout-field-icon svg{display:block;width:21px;height:21px}
 .checkout-field>input,.checkout-phone-input,.checkout-time-select select{
  display:block;width:100%;min-height:49px;border:1px solid #a5c8b6;border-radius:12px;
  background:#fbfdfc;color:#173b31;font-size:var(--text-md);font-weight:450;
@@ -446,7 +447,7 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-contact .checkout-help{margin:0}
 .checkout-pickup-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
 .checkout-pickup-option{
- display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:89px;
+ position:relative;display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:89px;
  padding:12px;border:1px solid #adcabc;border-radius:15px;background:#fff;color:#173a31;cursor:pointer;
 }
 .checkout-pickup-option.is-selected{border-color:#087b57;background:#daf3e7}
