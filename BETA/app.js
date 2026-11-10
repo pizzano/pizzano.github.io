@@ -382,6 +382,7 @@ function moveCategoryButtonIntoView(target){
 function watchSections(){
  if(scrollObserver)scrollObserver.disconnect();
  if(!('IntersectionObserver' in window))return;
+ const scrollRoot=window.matchMedia('(min-width:601px) and (pointer:fine)').matches?$('appViewport'):null;
  scrollObserver=new IntersectionObserver(entries=>{
    const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);
    if(!visible.length)return;
@@ -391,7 +392,7 @@ function watchSections(){
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.scroll===id));
    const target=buttons.find(b=>b.dataset.scroll===id);
    if(target)moveCategoryButtonIntoView(target);
- },{root:null,rootMargin:'-110px 0px -55% 0px'});
+ },{root:scrollRoot,rootMargin:'-115px 0px -55% 0px'});
  $('menu').querySelectorAll('.menu-section').forEach(el=>scrollObserver.observe(el));
 }
 
@@ -993,7 +994,7 @@ $('categories').addEventListener('scroll',categoryProgress,{passive:true});
 }
 $('catPrev').onclick=()=>$('categories').scrollBy({left:-Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
 $('catNext').onclick=()=>$('categories').scrollBy({left:Math.max(130,$('categories').clientWidth*.7),behavior:'smooth'});
-window.addEventListener('resize',categoryProgress);function setSearchOpen(open){
+window.addEventListener('resize',()=>{categoryProgress();watchSections()});function setSearchOpen(open){
  $('searchArea').hidden=!open;
  $('searchToggle').innerHTML=open?'×':'<svg viewBox="0 0 24 24" width="29" height="29" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.5 15.5 5 5"/></svg>';
  $('searchToggle').setAttribute('aria-label',open?'Lukk søk':'Søk');
@@ -1009,7 +1010,7 @@ $('search').addEventListener('input',()=>{
 $('searchClear').addEventListener('click',()=>{
  $('search').value='';$('searchClear').hidden=true;render();$('search').focus();
 });
-$('categories').addEventListener('click',e=>{if(draggedCategories){draggedCategories=false;return}const b=e.target.closest('[data-scroll]');if(!b)return;$('categories').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));const section=document.getElementById('category-'+b.dataset.scroll);if(!section)return;const app=$('appViewport');app.classList.remove('nav-hidden');autoNavScrollUntil=Date.now()+900;const offset=document.querySelector('.header').offsetHeight+document.querySelector('.category-wrap').offsetHeight+10;const target=Math.max(0,section.getBoundingClientRect().top+window.scrollY-offset);window.scrollTo({top:target,behavior:'smooth'});activeCategory=b.dataset.scroll;moveCategoryButtonIntoView(b)});
+$('categories').addEventListener('click',e=>{if(draggedCategories){draggedCategories=false;return}const b=e.target.closest('[data-scroll]');if(!b)return;$('categories').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));const section=document.getElementById('category-'+b.dataset.scroll);if(!section)return;const app=$('appViewport');app.classList.remove('nav-hidden');autoNavScrollUntil=Date.now()+900;const offset=document.querySelector('.header').offsetHeight+document.querySelector('.category-wrap').offsetHeight+10;const desktop=window.matchMedia('(min-width:601px) and (pointer:fine)').matches;const target=desktop?Math.max(0,section.getBoundingClientRect().top-app.getBoundingClientRect().top+app.scrollTop-offset):Math.max(0,section.getBoundingClientRect().top+window.scrollY-offset);if(desktop)app.scrollTo({top:target,behavior:'smooth'});else window.scrollTo({top:target,behavior:'smooth'});activeCategory=b.dataset.scroll;moveCategoryButtonIntoView(b)});
 $('menu').addEventListener('click',e=>{
  const card=e.target.closest('[data-product-card]');
  if(!card||card.getAttribute('aria-disabled')==='true')return;
