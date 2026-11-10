@@ -24,7 +24,7 @@
 .allergen-switch input:checked+i:after{transform:translateX(17px)}
 .allergen-switch input:focus-visible+i{outline:2px solid #e7bc48;outline-offset:2px}
 .cache-line{font-size:var(--text-sm);color:#779087;text-align:right;min-height:15px;padding:0 5px 6px}
-.menu-section{scroll-margin-top:205px}
+.menu-section{scroll-margin-top:170px}
 @media(max-width:410px){.status-icon{width:70px}.status-copy{padding:7px}.allergen-switch{padding:0 8px;gap:4px;flex-direction:column}.allergen-switch span{font-size:var(--text-sm)}}
 
 /* Category and favorites */
@@ -49,18 +49,15 @@
 .status-copy{min-width:0}
 @media(max-width:390px){.status-copy strong{font-size:var(--text-md)}.hours-pill{font-size:var(--text-sm)!important}}
 
-/* Internal app scrollbar: keeps header/category visible and shows a clear drag handle. */
-html,body{height:100%;overflow:hidden}
-.app{height:100dvh;min-height:0;overflow-x:hidden;overflow-y:scroll;overscroll-behavior-y:contain;scrollbar-gutter:stable;scrollbar-width:auto;scrollbar-color:#078463 #dfeae4}
-.app::-webkit-scrollbar{width:11px}
-.app::-webkit-scrollbar-track{background:#e0ece6;border-radius:10px}
-.app::-webkit-scrollbar-thumb{background:#078463;border-radius:10px;border:2px solid #e0ece6;min-height:42px}
-.header{top:0}
-.category-wrap{top:65px}
+/* Native page scrolling allows mobile browsers to collapse their browser chrome. */
+html,body{min-height:100%;overflow-x:clip}
+.header,.category-wrap{transition:transform .2s ease}
+.app.nav-hidden .header{transform:translate3d(0,-110%,0);pointer-events:none}
+.app.nav-hidden .category-wrap{transform:translate3d(0,calc(-110% - 65px),0);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.header,.category-wrap{transition:none}}
 .product-photo{position:relative}
 .product-photo>.card-favorite{position:absolute;top:5px;right:5px;left:auto;bottom:auto;z-index:3;flex:none;width:27px;height:27px;margin:0;border:1px solid #b9d9c9;background:#fff;color:#236751;border-radius:50%;font-size:19px;line-height:1;display:grid;place-items:center;box-shadow:0 2px 7px #0003}
 .product-photo>.card-favorite.is-favorite{background:#fff2f4;color:#d3485a;border-color:#e9b9c0}
-@media(max-width:600px){.app{height:100dvh;scrollbar-gutter:auto;scrollbar-width:thin}.app::-webkit-scrollbar{width:6px}}
 
 /* The only card heart is the filled favorite badge, inside its image. */
 .product-photo .card-favorite.is-favorite{position:absolute;right:5px;top:5px;left:auto;bottom:auto;display:grid;place-items:center;width:27px;height:27px;border:1px solid #e9b9c0;border-radius:50%;background:#fff2f4;color:#d3485a;pointer-events:none;font-size:19px;line-height:1;box-shadow:0 2px 7px #0002}
