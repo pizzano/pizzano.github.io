@@ -207,6 +207,24 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .option-quantity b{
  min-width:16px;color:#173a31;text-align:center;font-size:var(--text-md);
 }
+#productSheet .ingredient-editor-toggle{
+ display:flex;align-items:center;gap:9px;min-height:36px;
+ margin:0;padding:0;list-style:none;cursor:pointer;color:#173a31;
+}
+#productSheet .ingredient-editor-toggle::-webkit-details-marker{display:none}
+#productSheet .ingredient-editor-toggle::marker{content:""}
+#productSheet .ingredient-editor-title{flex:1;min-width:0;font-size:var(--text-md);font-weight:800}
+#productSheet .ingredient-editor-toggle svg{
+ display:block;flex:none;width:21px;height:21px;fill:none;stroke:currentColor;
+ stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+#productSheet .ingredient-settings-icon{color:#087b57}
+#productSheet .ingredient-editor-chevron{color:#638075;transition:transform .18s ease}
+#productSheet .ingredient-editor[open] .ingredient-editor-chevron{transform:rotate(180deg)}
+#productSheet .ingredient-editor[open]>.ingredient-editor-body{
+ padding-top:10px;margin-top:7px;border-top:1px solid #e1e8e4;
+}
+@media(prefers-reduced-motion:reduce){#productSheet .ingredient-editor-chevron{transition:none}}
 #productSheet .ingredient-editor-body{padding:0;margin:0;border:0;background:transparent}
 #productSheet .ingredient-heading{
  display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 7px;
