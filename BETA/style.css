@@ -165,7 +165,7 @@ html,body{min-height:100%;overflow-x:clip}
 }
 #productSheet .option-rows{display:grid;gap:6px;margin:0;padding:0;border:0;background:transparent;overflow:visible}
 #productSheet .option-choice{
- display:flex;align-items:center;gap:9px;min-height:44px;
+ display:flex;align-items:center;gap:9px;min-height:46px;
  margin:0;padding:8px 10px;border:1px solid #d8e2dc;border-radius:9px;
  background:#fbfdfc;color:#1e4537;cursor:pointer;font-size:var(--text-md);
 }
@@ -188,7 +188,7 @@ html,body{min-height:100%;overflow-x:clip}
 }
 #productSheet .option-choice.is-quantity{
  display:grid;grid-template-columns:minmax(0,1fr) auto;
- column-gap:8px;row-gap:3px;min-height:48px;cursor:default;
+ column-gap:8px;row-gap:3px;min-height:46px;cursor:default;
 }
 #productSheet .option-choice.is-quantity .option-label-text{grid-column:1;grid-row:1}
 #productSheet .option-line-total{
