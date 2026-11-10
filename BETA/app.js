@@ -561,7 +561,7 @@ function render(){
 }
 function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
- current=item;qty=1;selection={};removedIngredients=new Set();selectedKitchenNotes=new Set();editingCartIndex=null;
+ current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();editingCartIndex=null;
  $('add').firstChild.textContent='Legg til ';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
@@ -596,7 +596,7 @@ const KITCHEN_NOTE_DEFAULTS={
  tallerken:['Saus ved siden av'],
  other:['Ekstra servietter']
 };
-let removedIngredients=new Set(),selectedKitchenNotes=new Set(),editingCartIndex=null;
+let removedIngredients=new Set(),ingredientEditorExpanded=false,selectedKitchenNotes=new Set(),editingCartIndex=null;
 function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
   '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span></div>';
@@ -638,14 +638,19 @@ function removableIngredientRules(item){
 function ingredientEditor(){
  const names=removableIngredientRules(current),host=$('sheetIngredients');
  if(!names.length){host.innerHTML='';return}
- host.innerHTML='<section class="ingredient-editor detail-panel product-section">'+
-  productSectionHeading('Tilpass ingredienser',false)+
+ host.innerHTML='<details class="ingredient-editor detail-panel product-section"'+(ingredientEditorExpanded?' open':'')+'>'+
+  '<summary class="ingredient-editor-toggle">'+
+    '<svg class="ingredient-settings-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>'+
+    '<span class="ingredient-editor-title">Tilpass ingredienser</span>'+
+    '<span class="product-section-flag">Valgfritt</span>'+
+    '<svg class="ingredient-editor-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'+
+  '</summary>'+
   '<div class="ingredient-editor-body"><div class="ingredient-heading"><strong>Ingredienser</strong><small>Trykk for å fjerne</small></div>'+
   '<div class="ingredient-chips">'+names.map(name=>
    '<button type="button" class="ingredient-chip'+(removedIngredients.has(name)?' is-removed':'')+
    '" data-ingredient="'+esc(name)+'" aria-pressed="'+removedIngredients.has(name)+'">'+
    (removedIngredients.has(name)?'−':'✓')+' '+esc(name)+'</button>'
-  ).join('')+'</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></section>';
+  ).join('')+'</div><p>Fjernede ingredienser kan legges tilbake med ett trykk.</p></div></details>';
 }
 function chosenSize(){
  const sizes=list(current?.sizes);
@@ -1070,9 +1075,16 @@ $('options').addEventListener('click',e=>{
  selection[key]=ids;renderOptions();
 });
 $('sheetIngredients').addEventListener('click',e=>{
+ const summary=e.target.closest('.ingredient-editor-toggle');
+ if(summary){
+  // Native <details> toggles immediately after this click event.
+  ingredientEditorExpanded=!summary.parentElement.open;
+  return;
+ }
  const button=e.target.closest('[data-ingredient]');if(!button)return;
  const name=button.dataset.ingredient;
  if(removedIngredients.has(name))removedIngredients.delete(name);else removedIngredients.add(name);
+ ingredientEditorExpanded=true;
  ingredientEditor();renderSheetExtras();
 });
 $('quickNotes').addEventListener('click',e=>{
