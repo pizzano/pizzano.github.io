@@ -350,7 +350,6 @@ html,body{min-height:100%;overflow-x:clip}
 .cart-recommendation-copy span{color:#1a7658;font-size:var(--text-sm)}
 .cart-suggest-add{display:grid;place-items:center;width:39px;height:39px;flex:none;border:0;border-radius:50%;background:var(--green);color:white;font-size:21px}
 .cart-suggest-dismiss{position:absolute;right:6px;top:4px;padding:2px 4px;border:0;background:transparent;color:#6c8f80;font-size:16px}
-.cart-availability-notice{padding:10px 12px;border:1px solid #edbcbc;border-radius:10px;background:#fff1f1;color:#a93636;font-size:var(--text-sm)}
 .cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:170px;padding:25px 0;text-align:center;color:#526e5f}
 .cart-empty span{font-size:32px}
 .cart-empty strong{font-size:var(--text-md)}
