@@ -95,6 +95,7 @@ async function init(){
  // A single best-effort down/up scroll after first menu render on small touch screens.
  // Chrome may ignore scripted scrolling for browser toolbar visibility.
  watchStartupScrollIntent();
+ renderDemoActiveOrder();
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
@@ -806,7 +807,7 @@ function updatePrice(){
 // Keep the document's scroll container intact: changing html/body overflow
 // while a dialog is open can make the sticky restaurant header disappear.
 function show(id){$('overlay').hidden=false;$(id).hidden=false}
-function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true}
+function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true}
 function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
 function addToCart(){
  if(!current)return;
@@ -969,7 +970,218 @@ function renderCartContents(){
  renderCartRecommendations();
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');updateOrderingControls()}
+
+/* LOCAL DEMO CHECKOUT: no Firebase write, notification, admin or payment call.
+ * The single versioned order payload is intentionally shaped for a future
+ * admin API adapter. Only submitDemoOrder() is replaced when connecting it.
+ */
+const DEMO_CONTACT_KEY='kol-beta-demo-contact-v1';
+const DEMO_PICKUP_KEY='kol-beta-demo-pickup-v1';
+const DEMO_ORDER_KEY='kol-beta-demo-order-v1';
+function demoRead(key,fallback){
+ try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
+ catch{return fallback}
+}
+function demoStore(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch{}}
+let demoContact=demoRead(DEMO_CONTACT_KEY,{name:'',phone:'',email:''});
+let demoPickup=demoRead(DEMO_PICKUP_KEY,{mode:'asap',time:'',label:''});
+let demoOrder=demoRead(DEMO_ORDER_KEY,null);
+let checkoutStep='cart',demoClock=null;
+const demoTotal=items=>items.reduce((sum,line)=>sum+(Number(line.qty)||0)*(Number(line.unitPrice)||0),0);
+function formatDemoClock(ms){
+ const seconds=Math.max(0,Math.ceil(ms/1000));
+ return Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+}
+function demoStatus(){
+ if(!demoOrder)return 'none';
+ if(demoOrder.status==='pending'&&Number(demoOrder.expiresAt)<=Date.now()){
+  demoOrder.status='expired';
+  demoStore(DEMO_ORDER_KEY,demoOrder);
+ }
+ return demoOrder.status;
+}
+function renderDemoActiveOrder(){
+ const card=$('demoActiveOrder');
+ if(!card)return;
+ card.hidden=!demoOrder;
+ if(!demoOrder)return;
+ const pending=demoStatus()==='pending';
+ $('demoActiveNumber').textContent='#'+demoOrder.id;
+ $('demoActiveTitle').textContent=pending?'Venter på bekreftelse':'Ingen bekreftelse (demo)';
+ $('demoActiveSubtitle').textContent=pending?
+  'Testbestilling lagret lokalt · '+formatDemoClock(demoOrder.expiresAt-Date.now())+' igjen':
+  '3-minutters demoperiode er ferdig. Ingen bestilling ble sendt.';
+ if(!$('demoConfirmation').hidden)renderDemoConfirmation();
+ if(pending&&!demoClock){
+  demoClock=window.setInterval(()=>{
+   if(!demoOrder){clearInterval(demoClock);demoClock=null;return}
+   renderDemoActiveOrder();
+   if(demoStatus()!=='pending'){clearInterval(demoClock);demoClock=null}
+  },1000);
+ }
+}
+function renderDemoConfirmation(){
+ if(!demoOrder)return;
+ const pending=demoStatus()==='pending';
+ $('demoConfirmationTitle').textContent=pending?'Venter på bekreftelse':'Demoen er avsluttet';
+ $('demoConfirmationIntro').textContent='Takk, '+(demoOrder.customer?.fullName||'')+'! Bestillingen er lagret på denne enheten.';
+ $('demoConfirmationNumber').textContent=demoOrder.id;
+ $('demoConfirmationPickup').textContent=demoOrder.pickup?.label||'Snarest';
+ $('demoConfirmationTotal').textContent=money(demoOrder.total);
+ $('demoConfirmationStatus').textContent=pending?'Venter på bekreftelse (demo)':'Ingen bekreftelse mottatt';
+ $('demoConfirmationTimer').textContent=pending?
+  'Ingen restaurant varsles · '+formatDemoClock(demoOrder.expiresAt-Date.now())+' igjen':
+  'Demo-tidsfristen er utløpt. Ingen ekte ordre ble sendt.';
+}
+function showDemoConfirmation(){
+ if(!demoOrder)return;
+ hideAll();
+ renderDemoConfirmation();
+ show('demoConfirmation');
+}
+function showCheckoutError(message,field){
+ const error=$('checkoutError');
+ error.textContent=message;
+ error.hidden=!message;
+ if(field)$(field).focus();
+}
+function saveDemoContact(){
+ demoContact={
+  name:$('demoFullName').value.trim(),
+  phone:$('demoPhone').value.replace(/\D/g,'').slice(0,8),
+  email:$('demoEmail').value.trim()
+ };
+ demoStore(DEMO_CONTACT_KEY,demoContact);
+}
+function validateDemoContact(){
+ saveDemoContact();
+ if(demoContact.name.length<2){showCheckoutError('Skriv inn hele navnet ditt.','demoFullName');return false}
+ if(!/^\d{8}$/.test(demoContact.phone)){showCheckoutError('Mobilnummer må ha 8 siffer.','demoPhone');return false}
+ if(demoContact.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(demoContact.email)){
+  showCheckoutError('Kontroller e-postadressen, eller la feltet stå tomt.','demoEmail');return false
+ }
+ showCheckoutError('');
+ return true;
+}
+function osloCalendar(){
+ const parts=new Intl.DateTimeFormat('en-GB',{
+  timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit',
+  hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+ }).formatToParts(new Date());
+ const get=k=>Number(parts.find(x=>x.type===k)?.value||0);
+ return {year:get('year'),month:get('month'),day:get('day'),minute:get('hour')*60+get('minute')};
+}
+function demoPickupSlots(){
+ const now=osloCalendar(),mondayIndex=osloTime().day,days=openingDays(menu?.settings||{});
+ const startDay=Date.UTC(now.year,now.month-1,now.day),slots=[];
+ for(let offset=0;offset<8&&slots.length<120;offset++){
+  const cfg=days[(mondayIndex+offset)%7];
+  if(!cfg.enabled)continue;
+  const open=clockMinutes(cfg.open),close=clockMinutes(cfg.close);
+  if(open===null||close===null)continue;
+  const end=close<=open?close+1440:close;
+  for(let min=Math.ceil(open/15)*15;min<end&&slots.length<120;min+=15){
+   if(offset===0&&min<now.minute+30)continue;
+   const shift=Math.floor(min/1440),date=new Date(startDay+(offset+shift)*86400000);
+   const day=date.toISOString().slice(0,10),time=String(Math.floor(min%1440/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+   const dayLabel=offset+shift===0?'I dag':offset+shift===1?'I morgen':
+    new Intl.DateTimeFormat('nb-NO',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'}).format(date);
+   slots.push({value:day+'T'+time,label:dayLabel+' kl. '+time});
+  }
+ }
+ return slots;
+}
+function renderDemoPickupChoices(){
+ const asap=demoPickup.mode!=='scheduled';
+ $('demoAsapOption').classList.toggle('is-selected',asap);
+ $('demoScheduledOption').classList.toggle('is-selected',!asap);
+ document.querySelectorAll('input[name="demoPickupMode"]').forEach(x=>x.checked=x.value===(asap?'asap':'scheduled'));
+ $('demoPickupTimeBox').hidden=asap;
+ const slots=demoPickupSlots(),select=$('demoPickupTime');
+ select.replaceChildren(...slots.map(slot=>new Option(slot.label,slot.value)));
+ if(slots.some(x=>x.value===demoPickup.time))select.value=demoPickup.time;
+ else{
+  demoPickup.time=slots[0]?.value||'';
+  demoPickup.label=slots[0]?.label||'';
+ }
+ select.disabled=!slots.length;
+ if(!asap)demoStore(DEMO_PICKUP_KEY,demoPickup);
+}
+function pickupSummary(){
+ $('demoPickupItemCount').textContent=cart.reduce((count,x)=>count+(Number(x.qty)||0),0)+' varer';
+ $('demoPickupOrderItems').innerHTML=cart.map(line=>
+  '<div class="demo-pickup-line"><strong>'+esc(line.name)+' × '+Number(line.qty||0)+'</strong><span>'+money((Number(line.qty)||0)*(Number(line.unitPrice)||0))+'</span></div>'
+ ).join('')+'<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
+}
+function checkoutNavigate(step){
+ checkoutStep=step;
+ $('cartCartStep').hidden=step!=='cart';
+ $('cartContactStep').hidden=step!=='contact';
+ $('cartPickupStep').hidden=step!=='pickup';
+ const rank={cart:0,contact:1,pickup:2};
+ document.querySelectorAll('.cart-steps [data-checkout-step]').forEach(el=>{
+  const index=rank[el.dataset.checkoutStep];
+  el.classList.toggle('is-current',index===rank[step]);
+  el.classList.toggle('is-done',index<rank[step]);
+ });
+ $('continue').textContent=step==='cart'?'Fortsett å handle':step==='contact'?'Tilbake: Kurv':'Tilbake: Kontakt';
+ $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre testbestilling';
+ $('cartNext').disabled=step==='cart'&&!cart.length;
+ showCheckoutError('');
+ if(step==='contact'){
+  $('demoFullName').value=demoContact.name||'';
+  $('demoPhone').value=demoContact.phone||'';
+  $('demoEmail').value=demoContact.email||'';
+ }
+ if(step==='pickup'){
+  renderDemoPickupChoices();
+  pickupSummary();
+ }
+ $('cartScroll').scrollTo({top:0,behavior:'instant'});
+}
+function demoOrderId(){
+ const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+ const bytes=new Uint8Array(6);
+ if(window.crypto?.getRandomValues)window.crypto.getRandomValues(bytes);
+ else for(let i=0;i<6;i++)bytes[i]=Math.floor(Math.random()*256);
+ return Array.from(bytes,x=>alphabet[x%alphabet.length]).join('');
+}
+function submitDemoOrder(){
+ if(!cart.length){checkoutNavigate('cart');return}
+ if(!validateDemoContact()){checkoutNavigate('contact');showCheckoutError('Kontroller kontaktinformasjonen.');return}
+ const pickup=demoPickup.mode==='scheduled'?
+  {mode:'scheduled',time:demoPickup.time,label:$('demoPickupTime').selectedOptions[0]?.textContent||demoPickup.label}:
+  {mode:'asap',time:null,label:'Snarest'};
+ if(pickup.mode==='scheduled'&&!demoPickupSlots().some(x=>x.value===pickup.time)){
+  showCheckoutError('Velg en gyldig hentetid.','demoPickupTime');return;
+ }
+ const timestamp=Date.now();
+ // Future admin connection point: send this versioned shape to the order API.
+ // For the demo the ONLY side effect is localStorage; no network requests.
+ demoOrder={
+  schema:1,source:'BETA_LOCAL_DEMO',id:demoOrderId(),status:'pending',
+  createdAt:new Date(timestamp).toISOString(),expiresAt:timestamp+180000,
+  customer:{fullName:demoContact.name,phone:'+47'+demoContact.phone,email:demoContact.email||null},
+  pickup,items:JSON.parse(JSON.stringify(cart)),total:demoTotal(cart),currency:'NOK'
+ };
+ demoStore(DEMO_ORDER_KEY,demoOrder);
+ cart=[];saveCart();
+ renderDemoActiveOrder();
+ showDemoConfirmation();
+}
+function demoNext(){
+ if(checkoutStep==='cart'){
+  if(cart.length)checkoutNavigate('contact');
+ }else if(checkoutStep==='contact'){
+  if(validateDemoContact())checkoutNavigate('pickup');
+ }else submitDemoOrder();
+}
+function demoBack(){
+ if(checkoutStep==='cart')hideAll();
+ else checkoutNavigate(checkoutStep==='pickup'?'contact':'cart');
+}
+
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
@@ -1234,7 +1446,16 @@ function returnToMenu(){
 }
 $('cartBrandHome').addEventListener('click',returnToMenu);
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
-for(const id of ['cartClose','continue'])$(id).onclick=hideAll;
+$('cartClose').onclick=hideAll;
+$('continue').onclick=demoBack;
+$('cartNext').onclick=demoNext;
+['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();showCheckoutError('')}));
+$('cartContactStep').addEventListener('submit',event=>{event.preventDefault();demoNext()});
+document.querySelectorAll('input[name="demoPickupMode"]').forEach(input=>input.addEventListener('change',event=>{demoPickup.mode=event.target.value;renderDemoPickupChoices();demoStore(DEMO_PICKUP_KEY,demoPickup)}));
+$('demoPickupTime').addEventListener('change',event=>{demoPickup.time=event.target.value;demoPickup.label=event.target.selectedOptions[0]?.textContent||'';demoStore(DEMO_PICKUP_KEY,demoPickup)});
+$('demoViewOrder').onclick=showDemoConfirmation;
+$('demoConfirmationClose').onclick=returnToMenu;
+$('demoClearOrder').onclick=()=>{demoOrder=null;demoStore(DEMO_ORDER_KEY,null);if(demoClock){clearInterval(demoClock);demoClock=null}renderDemoActiveOrder()};
 $('sheetClose').onclick=closeProductSheet;
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
