@@ -1,8 +1,8 @@
 /* Customer menu, browser caching and one live public update stream. */
 'use strict';
-const BASE='https://kol-grill-pizza-default-rtdb.firebaseio.com';
-const CACHE_DB='kol-beta-public-v1', CART_KEY='kol-beta-cart-v1';
-const MENU_FALLBACK_KEY='kol-beta-menu-fallback-v1', IMAGE_PRELOAD_COUNT=6;
+const BASE='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
+const CACHE_DB='kol-beta-public-kol1-v1', CART_KEY='kol-beta-cart-v1';
+const MENU_FALLBACK_KEY='kol-beta-menu-fallback-kol1-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0;
 let sharedChannel=null,sharedLeader=false,sharedLockPending=false,sharedLockController=null,sharedLockRelease=null;
@@ -75,7 +75,28 @@ async function localPut(value){
   }catch{throw error}
  }
 }
-function normalize(data){return {cacheFormat:2,sections:list(data.sections).map(s=>({...s,items:list(s.items)})),optionGroups:list(data.optionGroups),allergenCatalog:list(data.allergenCatalog),settings:data.settings||{},popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),updatedAt:Number(data.updatedAt)||0}}
+// Expand shared image URLs, allergen combinations and size names only after the
+// compact public JSON has arrived. The Firebase download contains each once.
+function normalize(data){
+ const images=Array.isArray(data.images)?data.images:[];
+ const sizeLabels=Array.isArray(data.sizeLabels)?data.sizeLabels:[];
+ const allergenSets=Array.isArray(data.allergenSets)?data.allergenSets:[];
+ const sections=list(data.sections).map(section=>({...section,
+  items:list(section.items).map(item=>{
+   const imageUrl=Number.isInteger(item.imageId)?images[item.imageId]||'':item.imageUrl||'';
+   const allergens=Number.isInteger(item.allergenSet)?list(allergenSets[item.allergenSet]):list(item.allergens);
+   const sizes=list(item.sizes).map(size=>({
+    ...size,label:Number.isInteger(size.labelId)?sizeLabels[size.labelId]||size.label||size.name||'':size.label
+   }));
+   return {...item,imageUrl,allergens,sizes};
+  })
+ }));
+ return {cacheFormat:3,sections,optionGroups:list(data.optionGroups),
+  allergenCatalog:list(data.allergenCatalog),images,sizeLabels,allergenSets,
+  settings:data.settings||{},
+  popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
+  updatedAt:Number(data.updatedAt)||0};
+}
 async function fromFirebase(){
   const read=async path=>{
     const r=await fetch(BASE+'/'+path+'.json',{cache:'no-store'});
@@ -107,7 +128,7 @@ async function init(){
   // On a first visit, other tabs wait for the first tab's cached menu
   // instead of each downloading /menu and /settings from Firebase.
   try{
-   await navigator.locks.request('kol-beta-initial-menu-v1',async()=>{
+   await navigator.locks.request('kol-beta-initial-menu-kol1-v1',async()=>{
     const shared=await localGet();
     if(shared?.sections?.length)useCached(shared);
     else await refreshMenu(false);
@@ -189,9 +210,9 @@ async function receiveLiveAnnouncement(value,relay=false){
    return;
  }
  try{
-   const next=applyLiveChanges(menu,value.changes);
+   const next=normalize({...applyLiveChanges(menu,value.changes),updatedAt:version});
    next.updatedAt=version;
-   next.cacheFormat=2;
+   next.cacheFormat=3;
    const changePaths=value.changes.map(x=>String(x.path));
    const menuChanged=changePaths.some(x=>x.startsWith('menu/')&&x!=='menu/updatedAt');
    menu=next;
@@ -246,8 +267,8 @@ function startChangeStream(){
  * locally, not through separate Firebase listeners. On a gap they can copy
  * an up-to-date snapshot from another tab without a network download.
  */
-const SHARED_STREAM_LOCK='kol-public-menu-stream-v1';
-const SHARED_STREAM_CHANNEL='kol-public-menu-updates-v1';
+const SHARED_STREAM_LOCK='kol1-public-menu-stream-v1';
+const SHARED_STREAM_CHANNEL='kol1-public-menu-updates-v1';
 function broadcastLiveMessage(value){
  try{sharedChannel?.postMessage(value)}catch{}
 }
