@@ -445,79 +445,71 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-phone-input input{flex:1;min-width:0;min-height:47px;padding:12px;border:0;background:transparent;color:inherit;font-size:var(--text-md)}
 .checkout-help{margin:0 0 13px;color:#678277;font-size:var(--text-sm);line-height:1.55}
 .checkout-contact .checkout-help{margin:0}
-/* BETA contact panel: compact, responsive interpretation of the emerald reference. */
+/* BETA Kontaktinformasjon: white reference card, compact on phones. */
 .checkout-contact{
- position:relative;isolation:isolate;overflow:hidden;
- padding:0 20px 22px;margin:0 0 12px;
- border:1px solid #b5d5c7;border-radius:25px;background:#fff;
- box-shadow:0 8px 26px #073f2b16;
+ position:relative;overflow:hidden;margin:0 0 12px;padding:22px 20px 22px;
+ border:1px solid #deeee6;border-radius:25px;background:#fff;
+ box-shadow:0 9px 28px #06432d17;
 }
 .checkout-contact h2{
- position:relative;isolation:isolate;overflow:hidden;
- display:flex;align-items:center;min-height:94px;
- margin:0 -20px 22px;padding:19px 22px 25px;
- color:#fff;font-size:clamp(21px,4.5vw,28px);font-weight:850;letter-spacing:-.02em;
- background:linear-gradient(120deg,#075235 0%,#064c33 63%,#167c56 100%);
+ display:block;margin:0 0 21px;padding:0 0 19px;min-height:0;
+ border-bottom:1px solid #a8dcc2;background:none;color:#082e23;
+ font-size:clamp(23px,4.5vw,29px);font-weight:900;letter-spacing:-.025em;line-height:1.25;
 }
-.checkout-contact h2:after{
- content:"";position:absolute;z-index:-1;
- width:58%;height:120%;right:-9%;top:37%;
- background:linear-gradient(120deg,#ffffff12,#a0e8c034);
- transform:rotate(-19deg);border-radius:55% 0 0 0;
-}
-.checkout-contact .checkout-field{gap:10px;margin-bottom:21px}
-.checkout-contact .checkout-field-caption{
- display:flex;align-items:center;flex-wrap:wrap;gap:9px;
- color:#092c22;
-}
-.checkout-contact .checkout-field-caption strong{
- font-size:var(--text-md);font-weight:850;letter-spacing:-.01em;
-}
+.checkout-contact .checkout-field{position:relative;display:grid;gap:9px;margin:0 0 22px}
+.checkout-contact .checkout-field-caption{display:flex;align-items:center;flex-wrap:wrap;gap:9px;color:#092e23}
+.checkout-contact .checkout-field-caption strong{font-size:var(--text-md);font-weight:850;letter-spacing:-.015em}
 .checkout-contact .checkout-field-icon{
- width:43px;height:43px;flex:none;border-radius:13px;
- background:#eaf6ee;color:#064d36;
+ display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:13px;
+ background:linear-gradient(140deg,#ecf9f2,#d6f0e2);color:#065036;
 }
 .checkout-contact .checkout-field-icon svg{width:24px;height:24px}
 .checkout-contact .contact-required,.checkout-contact .contact-optional{
- display:inline-flex;align-items:center;justify-content:center;
- padding:4px 11px;border-radius:999px;font-size:var(--text-sm);
- line-height:1.2;font-weight:650;white-space:nowrap;
+ display:inline-flex;align-items:center;justify-content:center;padding:4px 11px;
+ border-radius:99px;background:#def4e8;color:#163e2e;font-size:var(--text-sm);
+ font-weight:600;line-height:1.2;white-space:nowrap;
 }
-.checkout-contact .contact-required{background:#e0f2e8;color:#0b5037}
-.checkout-contact .contact-optional{background:#ebf0ed;color:#4d6a5f}
 .checkout-contact .checkout-field>input,.checkout-contact .checkout-phone-input{
- min-height:54px;border:1.5px solid #4d9a78;border-radius:13px;
- background:linear-gradient(120deg,#fff,#fbfdfc);
- color:#122e25;font-size:var(--text-md);
- box-shadow:0 2px 6px #153e2b07;
+ box-sizing:border-box;width:100%;min-height:54px;border:1.5px solid #2da966;
+ border-radius:12px;background:#fff;color:#092d22;font-size:var(--text-md);
+ box-shadow:0 2px 8px #0d563006;
 }
-.checkout-contact .checkout-field>input{padding:13px 15px}
+.checkout-contact .checkout-field>input{padding:13px 48px 13px 15px}
+.checkout-contact .checkout-phone-input{display:flex;align-items:center;overflow:hidden}
 .checkout-contact .checkout-phone-input>span{
- width:69px;border-right:1px solid #70ac8f;
- color:#0a5138;font-weight:850;font-size:var(--text-md);
+ align-self:stretch;display:grid;place-items:center;flex:none;width:69px;
+ border-right:1px solid #58b787;background:linear-gradient(90deg,#f8fdfa,#eaf8f0);
+ color:#064b34;font-size:var(--text-md);font-weight:850;
 }
 .checkout-contact .checkout-phone-input input{
- min-height:51px;padding:13px 15px;color:#122e25;font-size:var(--text-md);
+ box-sizing:border-box;flex:1;min-width:0;min-height:51px;padding:13px 48px 13px 15px;
+ border:0;background:transparent;color:inherit;font-size:var(--text-md);
 }
-.checkout-contact .checkout-field>input:focus,
-.checkout-contact .checkout-phone-input:focus-within{
- outline:2px solid #17885c;outline-offset:2px;
+.checkout-contact .checkout-field>input:focus,.checkout-contact .checkout-phone-input:focus-within{
+ outline:2px solid #138d55;outline-offset:2px;
 }
+.checkout-contact .contact-valid-icon{
+ position:absolute;right:15px;bottom:14px;width:27px;height:27px;
+ display:none;place-items:center;pointer-events:none;border-radius:50%;
+ background:linear-gradient(145deg,#49c575,#168e4f);color:white;
+ box-shadow:0 2px 5px #09683829;
+}
+.checkout-contact .contact-valid-icon svg{width:18px;height:18px;stroke-width:3}
+.checkout-contact .checkout-field.is-valid .contact-valid-icon{display:grid}
 .checkout-contact .contact-info-note{
- display:flex;align-items:center;gap:9px;
- margin:5px 0 1px;color:#617c71;
- font-size:var(--text-sm);
+ display:flex;align-items:center;gap:9px;margin:6px 0 1px;
+ color:#5d806e;font-size:var(--text-sm);
 }
-.checkout-contact .contact-info-note svg{
- width:19px;height:19px;flex:none;color:#55796b;
-}
+.checkout-contact .contact-info-note svg{width:19px;height:19px;flex:none;color:#5d806e}
 @media(max-width:480px){
- .checkout-contact{padding:0 15px 19px;border-radius:21px}
- .checkout-contact h2{min-height:78px;margin:0 -15px 19px;padding:17px 19px 20px}
- .checkout-contact .checkout-field{margin-bottom:17px}
+ .checkout-contact{padding:18px 15px 19px;border-radius:21px}
+ .checkout-contact h2{font-size:22px;padding-bottom:17px;margin-bottom:18px}
+ .checkout-contact .checkout-field{margin-bottom:18px}
  .checkout-contact .checkout-field-caption{gap:8px}
  .checkout-contact .checkout-field-icon{width:39px;height:39px;border-radius:12px}
  .checkout-contact .checkout-field-icon svg{width:21px;height:21px}
+ .checkout-contact .contact-valid-icon{right:12px;bottom:14px;width:24px;height:24px}
+ .checkout-contact .contact-valid-icon svg{width:16px;height:16px}
 }
 .checkout-pickup-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
 .checkout-pickup-option{
