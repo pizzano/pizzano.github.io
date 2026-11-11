@@ -1032,10 +1032,10 @@ function renderDemoActiveOrder(){
  if(!demoOrder)return;
  const pending=demoStatus()==='pending';
  $('demoActiveNumber').textContent='#'+demoOrder.id;
- $('demoActiveTitle').textContent=pending?'Venter på bekreftelse':'Ingen bekreftelse (demo)';
+ $('demoActiveTitle').textContent=pending?'Bestillingsoversikt':'Bestillingsoversikt';
  $('demoActiveSubtitle').textContent=pending?
-  'Testbestilling lagret lokalt · '+formatDemoClock(demoOrder.expiresAt-Date.now())+' igjen':
-  '3-minutters demoperiode er ferdig. Ingen bestilling ble sendt.';
+  'Lagret på denne enheten · Ikke sendt til restauranten':
+  'Lagret på denne enheten · Ikke sendt til restauranten';
  if(!$('demoConfirmation').hidden)renderDemoConfirmation();
  if(pending&&!demoClock){
   demoClock=window.setInterval(()=>{
@@ -1048,15 +1048,15 @@ function renderDemoActiveOrder(){
 function renderDemoConfirmation(){
  if(!demoOrder)return;
  const pending=demoStatus()==='pending';
- $('demoConfirmationTitle').textContent=pending?'Venter på bekreftelse':'Demoen er avsluttet';
- $('demoConfirmationIntro').textContent='Takk, '+(demoOrder.customer?.fullName||'')+'! Bestillingen er lagret på denne enheten.';
+ $('demoConfirmationTitle').textContent='Bestillingsoversikt';
+ $('demoConfirmationIntro').textContent='Takk, '+(demoOrder.customer?.fullName||'')+'! Her er bestillingsoversikten din.';
  $('demoConfirmationNumber').textContent=demoOrder.id;
  $('demoConfirmationPickup').textContent=demoOrder.pickup?.label||'Snarest';
  $('demoConfirmationTotal').textContent=money(demoOrder.total);
- $('demoConfirmationStatus').textContent=pending?'Venter på bekreftelse (demo)':'Ingen bekreftelse mottatt';
+ $('demoConfirmationStatus').textContent='Ikke sendt til restauranten';
  $('demoConfirmationTimer').textContent=pending?
-  'Ingen restaurant varsles · '+formatDemoClock(demoOrder.expiresAt-Date.now())+' igjen':
-  'Demo-tidsfristen er utløpt. Ingen ekte ordre ble sendt.';
+  'Oversikten er lagret på denne enheten':
+  'Oversikten er lagret på denne enheten';
 }
 function showDemoConfirmation(){
  if(!demoOrder)return;
@@ -1180,7 +1180,7 @@ function checkoutNavigate(step){
   el.classList.toggle('is-done',index<rank[step]);
  });
  $('continue').textContent=step==='cart'?'Fortsett å handle':step==='contact'?'Tilbake: Kurv':'Tilbake: Kontakt';
- $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre testbestilling';
+ $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre bestillingsoversikt';
  $('cartNext').disabled=step==='cart'&&!cart.length;
  showCheckoutError('');
  if(step==='contact'){
