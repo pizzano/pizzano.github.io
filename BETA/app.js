@@ -1073,8 +1073,8 @@ function showCheckoutError(message,field){
 function updateContactValidation(){
  const fields=[
   ['demoFullName',v=>v.trim().length>=2],
-  ['demoPhone',v=>/^[49]\\d{7}$/.test(v.replace(/\\D/g,''))],
-  ['demoEmail',v=>v.trim().length>0&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v.trim())]
+  ['demoPhone',v=>/^[49]\d{7}$/.test(v.replace(/\D/g,''))],
+  ['demoEmail',v=>v.trim().length>0&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())]
  ];
  for(const [id,check] of fields){
   const input=$(id);
