@@ -445,6 +445,80 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-phone-input input{flex:1;min-width:0;min-height:47px;padding:12px;border:0;background:transparent;color:inherit;font-size:var(--text-md)}
 .checkout-help{margin:0 0 13px;color:#678277;font-size:var(--text-sm);line-height:1.55}
 .checkout-contact .checkout-help{margin:0}
+/* BETA contact panel: compact, responsive interpretation of the emerald reference. */
+.checkout-contact{
+ position:relative;isolation:isolate;overflow:hidden;
+ padding:0 20px 22px;margin:0 0 12px;
+ border:1px solid #b5d5c7;border-radius:25px;background:#fff;
+ box-shadow:0 8px 26px #073f2b16;
+}
+.checkout-contact h2{
+ position:relative;isolation:isolate;overflow:hidden;
+ display:flex;align-items:center;min-height:94px;
+ margin:0 -20px 22px;padding:19px 22px 25px;
+ color:#fff;font-size:clamp(21px,4.5vw,28px);font-weight:850;letter-spacing:-.02em;
+ background:linear-gradient(120deg,#075235 0%,#064c33 63%,#167c56 100%);
+}
+.checkout-contact h2:after{
+ content:"";position:absolute;z-index:-1;
+ width:58%;height:120%;right:-9%;top:37%;
+ background:linear-gradient(120deg,#ffffff12,#a0e8c034);
+ transform:rotate(-19deg);border-radius:55% 0 0 0;
+}
+.checkout-contact .checkout-field{gap:10px;margin-bottom:21px}
+.checkout-contact .checkout-field-caption{
+ display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+ color:#092c22;
+}
+.checkout-contact .checkout-field-caption strong{
+ font-size:var(--text-md);font-weight:850;letter-spacing:-.01em;
+}
+.checkout-contact .checkout-field-icon{
+ width:43px;height:43px;flex:none;border-radius:13px;
+ background:#eaf6ee;color:#064d36;
+}
+.checkout-contact .checkout-field-icon svg{width:24px;height:24px}
+.checkout-contact .contact-required,.checkout-contact .contact-optional{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:4px 11px;border-radius:999px;font-size:var(--text-sm);
+ line-height:1.2;font-weight:650;white-space:nowrap;
+}
+.checkout-contact .contact-required{background:#e0f2e8;color:#0b5037}
+.checkout-contact .contact-optional{background:#ebf0ed;color:#4d6a5f}
+.checkout-contact .checkout-field>input,.checkout-contact .checkout-phone-input{
+ min-height:54px;border:1.5px solid #4d9a78;border-radius:13px;
+ background:linear-gradient(120deg,#fff,#fbfdfc);
+ color:#122e25;font-size:var(--text-md);
+ box-shadow:0 2px 6px #153e2b07;
+}
+.checkout-contact .checkout-field>input{padding:13px 15px}
+.checkout-contact .checkout-phone-input>span{
+ width:69px;border-right:1px solid #70ac8f;
+ color:#0a5138;font-weight:850;font-size:var(--text-md);
+}
+.checkout-contact .checkout-phone-input input{
+ min-height:51px;padding:13px 15px;color:#122e25;font-size:var(--text-md);
+}
+.checkout-contact .checkout-field>input:focus,
+.checkout-contact .checkout-phone-input:focus-within{
+ outline:2px solid #17885c;outline-offset:2px;
+}
+.checkout-contact .contact-info-note{
+ display:flex;align-items:center;gap:9px;
+ margin:5px 0 1px;color:#617c71;
+ font-size:var(--text-sm);
+}
+.checkout-contact .contact-info-note svg{
+ width:19px;height:19px;flex:none;color:#55796b;
+}
+@media(max-width:480px){
+ .checkout-contact{padding:0 15px 19px;border-radius:21px}
+ .checkout-contact h2{min-height:78px;margin:0 -15px 19px;padding:17px 19px 20px}
+ .checkout-contact .checkout-field{margin-bottom:17px}
+ .checkout-contact .checkout-field-caption{gap:8px}
+ .checkout-contact .checkout-field-icon{width:39px;height:39px;border-radius:12px}
+ .checkout-contact .checkout-field-icon svg{width:21px;height:21px}
+}
 .checkout-pickup-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
 .checkout-pickup-option{
  position:relative;display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:89px;
