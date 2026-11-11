@@ -1070,6 +1070,17 @@ function showCheckoutError(message,field){
  error.hidden=!message;
  if(field)$(field).focus();
 }
+function updateContactValidation(){
+ const fields=[
+  ['demoFullName',v=>v.trim().length>=2],
+  ['demoPhone',v=>/^[49]\\d{7}$/.test(v.replace(/\\D/g,''))],
+  ['demoEmail',v=>v.trim().length>0&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v.trim())]
+ ];
+ for(const [id,check] of fields){
+  const input=$(id);
+  input?.closest('.checkout-field')?.classList.toggle('is-valid',check(input?.value||''));
+ }
+}
 function saveDemoContact(){
  demoContact={
   name:$('demoFullName').value.trim(),
@@ -1187,6 +1198,7 @@ function checkoutNavigate(step){
   $('demoFullName').value=demoContact.name||'';
   $('demoPhone').value=demoContact.phone||'';
   $('demoEmail').value=demoContact.email||'';
+  updateContactValidation();
  }
  if(step==='pickup'){
   renderDemoPickupChoices();
@@ -1518,7 +1530,7 @@ document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault()
 $('cartClose').onclick=hideAll;
 $('continue').onclick=demoBack;
 $('cartNext').onclick=demoNext;
-['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();showCheckoutError('')}));
+['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();updateContactValidation();showCheckoutError('')}));
 $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();demoNext()});
 document.querySelectorAll('input[name="demoPickupMode"]').forEach(input=>input.addEventListener('change',event=>{demoPickup.mode=event.target.value;renderDemoPickupChoices();demoStore(DEMO_PICKUP_KEY,demoPickup)}));
 $('demoPickupTime').addEventListener('change',event=>{demoPickup.time=event.target.value;demoPickup.label=event.target.selectedOptions[0]?.textContent||'';demoStore(DEMO_PICKUP_KEY,demoPickup)});
