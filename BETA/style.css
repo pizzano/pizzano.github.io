@@ -503,7 +503,7 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-contact .contact-info-note svg{width:16px;height:16px;flex:none;color:#5d806e}
 @media(max-width:480px){
  .checkout-contact{padding:14px 13px 15px;border-radius:18px}
- .checkout-contact h2{font-size:21px;padding-bottom:12px;margin-bottom:13px}
+ .checkout-contact h2{font-size:16px;padding-bottom:16px;margin-bottom:16px}
  .checkout-contact .checkout-field{margin-bottom:13px}
  .checkout-contact .checkout-field-caption{gap:6px}
  .checkout-contact .checkout-field-icon{width:33px;height:33px;border-radius:9px}
