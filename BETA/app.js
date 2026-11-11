@@ -1078,40 +1078,40 @@ function saveDemoContact(){
  };
  demoStore(DEMO_CONTACT_KEY,demoContact);
 }
-// Contact sync is independent of the local demo order flow. Never read the
-// customers collection from a public client and never overwrite loyalty totals.
-let customerSaveTimer=null,customerSaveRevision=0,customerSavedSignature='';
+// BETA contact is saved only when the customer proceeds from the contact step.
+// Use the same 8-digit customer key as the existing loyalty rollup.
+let customerSavedSignature='',customerSavePending=null;
 async function syncBetaCustomer(){
- const revision=++customerSaveRevision;
  const name=demoContact.name.trim().replace(/\s+/g,' ').slice(0,120);
  const phone=demoContact.phone;
- const email=demoContact.email.trim().toLowerCase().slice(0,254);
- if(name.length<2||!/^\d{8}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
+ const email=demoContact.email.trim().toLowerCase().slice(0,200);
+ if(name.length<2||!/^[49]\d{7}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
  const signature=JSON.stringify([name,phone,email]);
  if(signature===customerSavedSignature)return true;
- const customerId='+47'+phone;
- try{
-  const response=await fetch(BASE+'/customers/'+encodeURIComponent(customerId)+'.json',{
-   method:'PATCH',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({name,phone:customerId,email:email||null,lastContactAt:Date.now()})
-  });
-  if(!response.ok)throw new Error('Firebase HTTP '+response.status);
-  if(revision===customerSaveRevision)customerSavedSignature=signature;
-  return true;
- }catch(error){
-  console.warn('BETA customer sync failed:',error);
-  return false;
- }
-}
-function scheduleBetaCustomerSync(){
- clearTimeout(customerSaveTimer);
- // Do not save incomplete fields or send a request for every keystroke.
- customerSaveTimer=setTimeout(()=>{void syncBetaCustomer()},1200);
+ if(customerSavePending)await customerSavePending;
+ if(signature===customerSavedSignature)return true;
+ customerSavePending=(async()=>{
+  try{
+   // PATCH touches contact fields only; loyalty totals remain untouched.
+   const response=await fetch(BASE+'/customers/'+phone+'.json',{
+    method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,email})
+   });
+   if(!response.ok)throw new Error('Firebase HTTP '+response.status);
+   customerSavedSignature=signature;
+   return true;
+  }catch(error){
+   console.warn('BETA customer sync failed:',error);
+   return false;
+  }
+ })();
+ try{return await customerSavePending}
+ finally{customerSavePending=null}
 }
 function validateDemoContact(){
  saveDemoContact();
  if(demoContact.name.length<2){showCheckoutError('Skriv inn hele navnet ditt.','demoFullName');return false}
- if(!/^\d{8}$/.test(demoContact.phone)){showCheckoutError('Mobilnummer må ha 8 siffer.','demoPhone');return false}
+ if(!/^[49]\d{7}$/.test(demoContact.phone)){showCheckoutError('Mobilnummer må ha 8 siffer.','demoPhone');return false}
  if(demoContact.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(demoContact.email)){
   showCheckoutError('Kontroller e-postadressen, eller la feltet stå tomt.','demoEmail');return false
  }
@@ -1232,11 +1232,17 @@ function submitDemoOrder(){
  renderDemoActiveOrder();
  showDemoConfirmation();
 }
-function demoNext(){
+async function demoNext(){
  if(checkoutStep==='cart'){
   if(cart.length)checkoutNavigate('contact');
  }else if(checkoutStep==='contact'){
-  if(validateDemoContact()){void syncBetaCustomer();checkoutNavigate('pickup')}
+  if(validateDemoContact()){
+   $('cartNext').disabled=true;
+   try{
+    if(await syncBetaCustomer())checkoutNavigate('pickup');
+    else showCheckoutError('Kundeopplysningene kunne ikke lagres. Prøv igjen, eller kontakt restauranten.');
+   }finally{$('cartNext').disabled=false}
+  }
  }else submitDemoOrder();
 }
 function demoBack(){
@@ -1512,7 +1518,7 @@ document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault()
 $('cartClose').onclick=hideAll;
 $('continue').onclick=demoBack;
 $('cartNext').onclick=demoNext;
-['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();scheduleBetaCustomerSync();showCheckoutError('')}));
+['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();showCheckoutError('')}));
 $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();demoNext()});
 document.querySelectorAll('input[name="demoPickupMode"]').forEach(input=>input.addEventListener('change',event=>{demoPickup.mode=event.target.value;renderDemoPickupChoices();demoStore(DEMO_PICKUP_KEY,demoPickup)}));
 $('demoPickupTime').addEventListener('change',event=>{demoPickup.time=event.target.value;demoPickup.label=event.target.selectedOptions[0]?.textContent||'';demoStore(DEMO_PICKUP_KEY,demoPickup)});
