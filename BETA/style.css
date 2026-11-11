@@ -476,7 +476,7 @@ html,body{min-height:100%;overflow-x:clip}
 }
 .checkout-contact .checkout-field>input{padding:13px 48px 13px 15px}
 .checkout-contact .checkout-phone-input{display:flex;align-items:center;overflow:hidden}
-.checkout-contact .checkout-phone-input>span{
+.checkout-contact .checkout-phone-input>span:first-child{
  align-self:stretch;display:grid;place-items:center;flex:none;width:69px;
  border-right:1px solid #58b787;background:linear-gradient(90deg,#f8fdfa,#eaf8f0);
  color:#064b34;font-size:var(--text-md);font-weight:850;
