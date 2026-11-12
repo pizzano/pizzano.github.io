@@ -207,3 +207,29 @@ test('compact order feed rejects stale/partial backend snapshots before any UI a
   assert.equal(inspect({...feed,meta:{...meta,publisher:'browser'}},now),null);
   assert.equal(inspect({...feed,meta:{...meta,generatedAt:now+16000}},now),null);
 });
+
+test('phase 2: overlapping REST reads are shared without stale order caching', () => {
+  assert.match(data,/const pendingRestReads = new Map\(\)/);
+  assert.match(data,/pendingRestReads\.has\(key\)/);
+  assert.match(data,/pendingRestReads\.delete\(key\)/);
+  assert.doesNotMatch(data,/\?_=\$\{Date\.now\(\)\}/);
+  assert.match(data,/cache: 'no-store'/);
+});
+
+test('phase 2: SSE checks one order for a leaf update and all orders on root', () => {
+  assert.match(data,/function orderDisplaySignature\(o\)/);
+  assert.match(data,/function applyRemoteOrders\(value, changedOrderId = ''\)/);
+  assert.match(data,/const changedId = change\.path\.split\('\/'\)/);
+  assert.match(data,/lastOrderDisplaySignatures\.set\(changedOrderId, newSignature\)/);
+});
+
+test('phase 2: legacy bonus reuses a loaded admin snapshot', () => {
+  assert.match(data,/adminOrdersSnapshotLoaded && !compactFeedActive/);
+  assert.match(data,/Object\.values\(ordersRaw\)\.filter/);
+  assert.match(data,/Object\.values\(await restGet\(ORDERS_PATH\)/);
+});
+
+test('phase 2: unrelated remote receipt changes do not reschedule loyalty rollups', () => {
+  assert.match(loyalty,/function orderSyncFingerprint\(\)/);
+  assert.match(loyalty,/if \(nextFingerprint === lastOrderSyncFingerprint\) return/);
+});
