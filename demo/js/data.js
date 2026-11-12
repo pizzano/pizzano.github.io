@@ -1076,7 +1076,9 @@ function startCustomerOrderStream() {
       markCustomerStreamHealthy();
       remoteOnline = true;
       if (applyRemoteOrders(ordersRaw)) emitData('remote');
-      if (!updated) closeCustomerOrderStream();
+      // No further reads or long-lived SSE connection after a terminal status.
+      if (!updated || ['klar', 'avvist', 'fullfort'].includes(updated.status))
+        closeCustomerOrderStream();
     } catch (error) {
       console.warn('Kundeordre-strøm feilet:', error);
       closeCustomerOrderStream();
