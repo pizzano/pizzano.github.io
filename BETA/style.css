@@ -211,7 +211,7 @@ html,body{min-height:100%;overflow-x:clip}
  background:#d8e2dc36;color:#1e4537;cursor:pointer;font-size:var(--text-md);
 }
 #productSheet .option-choice.is-chosen,#productSheet .option-choice:has(input:checked){
- background:#d8e2dc36;
+ background:#d9f5e5;
 }
 #productSheet .option-choice input{
  width:18px;height:18px;flex:none;margin:0;accent-color:#087b57;
