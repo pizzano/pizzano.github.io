@@ -158,3 +158,13 @@ test('event-mode manual tests call the Web Apps only on user action', () => {
   assert.match(sms,/function stoppSmsMinuttSjekk\(\)/);
   assert.match(mail,/function stoppEpostMinuttSjekk\(\)/);
 });
+
+test('webhook retries are bounded and keep Firebase receipts authoritative', () => {
+  const data=load('../js/data.js');
+  assert.match(data,/const pendingWebhookRetries = new Map\(\)/);
+  assert.match(data,/pendingWebhookRetries\.has\(key\)/);
+  assert.match(data,/request\.tries >= 3/);
+  assert.match(data,/request\.tries\*1500/);
+  assert.match(data,/mode:'no-cors',keepalive:true/);
+  assert.match(data,/notifyOrderSenders\(order\.id,'accepted'\)/);
+});

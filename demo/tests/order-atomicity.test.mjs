@@ -124,3 +124,4 @@ test('Avvis returns false and rolls back when another device wins ETag race', as
   assert.equal(await fn('o4', 'Stengt'), false);
   assert.equal(store.orders[0].status, 'mottatt');
 });
+

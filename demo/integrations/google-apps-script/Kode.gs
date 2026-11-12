@@ -717,3 +717,73 @@ function stoppSmsMinuttSjekk() {
   });
   console.log('SMS periodisk skanning avsluttet. Web App doPost er aktiv.');
 }
+
+
+/**
+ * Optional browser-independent three-minute expiry worker.
+ * DEPLOYMENT: paste this revision into the existing SMS Apps Script project,
+ * run kolInstallExpiryTrigger() once with the project owner account.
+ * It does not send SMS and does not enable the old SMS minute poller.
+ * One /orders REST read per minute while enabled; disable via
+ * kolRemoveExpiryTrigger() if Firebase bandwidth is a concern.
+ */
+function kolExpirePendingOrders() {
+  const lock=LockService.getScriptLock();
+  if (!lock.tryLock(1000)) return;
+  try {
+    const url=KOL_SMS.databaseUrl+'/orders.json';
+    const response=UrlFetchApp.fetch(url,{method:'get',muteHttpExceptions:true});
+    if (response.getResponseCode()!==200) throw new Error('Expiry read HTTP '+response.getResponseCode());
+    const orders=JSON.parse(response.getContentText()||'{}')||{};
+    const now=Date.now();
+    let processed=0;
+    for (const [id,initial] of Object.entries(orders)) {
+      if (processed>=20) break;
+      if (!/^ord_[a-z0-9]{7,40}$/i.test(id) || !initial || initial.status!=='mottatt' ||
+          initial.confirmationNoTimeout===true) continue;
+      const created=Number(initial.createdAt)||0;
+      const deadline=Number(initial.confirmationDeadline)||created+180000;
+      if (!created || deadline<=created || deadline>now || created>now) continue;
+      const orderUrl=KOL_SMS.databaseUrl+'/orders/'+encodeURIComponent(id)+'.json';
+      // Re-read the specific order and its ETag, as the admin may approve now.
+      const fresh=UrlFetchApp.fetch(orderUrl,{method:'get',headers:{'X-Firebase-ETag':'true'},muteHttpExceptions:true});
+      if (fresh.getResponseCode()!==200) continue;
+      const etag=fresh.getHeaders().ETag || fresh.getHeaders().Etag || fresh.getHeaders().etag;
+      const current=JSON.parse(fresh.getContentText()||'null');
+      if (!etag || !current || current.status!=='mottatt' ||
+          current.confirmationNoTimeout===true) continue;
+      const started=Number(current.createdAt)||0;
+      const due=Number(current.confirmationDeadline)||started+180000;
+      if (!started || due<=started || due>Date.now()) continue;
+      const at=Date.now();
+      const rejected={
+        ...current,status:'avvist',statusUpdatedAt:at,
+        rejectionCode:'confirmation_timeout',
+        rejectionReason:'Svarfristen er ute',
+        rejectionMessage:'Bestillingen ble automatisk avbrutt fordi restauranten ikke bekreftet den innen 3 minutter.'
+      };
+      // Conditional whole-record PUT preserves independently stored receipts.
+      // A concurrent admin acceptance changes the ETag and yields HTTP 412.
+      const update=UrlFetchApp.fetch(orderUrl,{
+        method:'put',contentType:'application/json',
+        headers:{'if-match':String(etag)},
+        payload:JSON.stringify(rejected),muteHttpExceptions:true
+      });
+      if (update.getResponseCode()!==200 && update.getResponseCode()!==412)
+        console.error('Expiry write '+id+' HTTP '+update.getResponseCode());
+      processed++;
+    }
+  } catch(error) {
+    console.error('Expiry worker failed: '+String(error));
+  } finally { lock.releaseLock(); }
+}
+function kolInstallExpiryTrigger() {
+  kolRemoveExpiryTrigger();
+  ScriptApp.newTrigger('kolExpirePendingOrders').timeBased().everyMinutes(1).create();
+  console.log('Order expiry worker enabled: one Firebase /orders scan per minute.');
+}
+function kolRemoveExpiryTrigger() {
+  ScriptApp.getProjectTriggers().forEach(trigger=>{
+    if (trigger.getHandlerFunction()==='kolExpirePendingOrders') ScriptApp.deleteTrigger(trigger);
+  });
+}

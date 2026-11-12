@@ -114,3 +114,8 @@ Merk: Den aktuelle restaurantløsningen bruker REST-klientkall uten Firebase SDK
 - Den kompakte adminordrestrømmen er fortsatt **deaktivert**. Ikke aktiver `trustedCompactOrderFeed` før autorisert backend, fullstendighetskontroller og egen arkiv-/lojalitetsvedlikehold er på plass.
 
 Verifikasjon: Kildekodekontroller er lagt til i `tests/firebase-read-optimization.test.mjs`. Full Node-testkjøring og fysisk Firebase-/skriver-/SMS-testing må utføres før sammenslåing til main.
+
+
+## November 2026 — DEMO fase 3 (skriver beholdes uendret)
+
+Epson skriverkonfigurasjonen er uendret fordi den eksisterende skriveren fungerer. SMS/e-post får avgrenset nettverks-retry; serverens eksisterende sendemarkører hindrer duplikater. Den valgfrie Apps Script-jobben for uavhengig 3-minutters utløp må deployes/aktiveres separat og vil lese /orders minst én gang i minuttet. Den er IKKE aktivert.
