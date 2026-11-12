@@ -34,7 +34,10 @@ function eligible(order, now) {
 }
 
 function candidates(now = Date.now()) {
-  const ordered = [...getOrders()].filter(order => order?.id)
+  // Most periods have <=100 orders: avoid sorting the whole list every 5 min.
+  const live = getOrders();
+  if (live.length <= LIVE_LIMIT) return [];
+  const ordered = live.filter(order => order?.id)
     .sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0)
       || String(b.id).localeCompare(String(a.id)));
   if (ordered.length <= LIVE_LIMIT) return [];
