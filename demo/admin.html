@@ -174,7 +174,7 @@
                           <div class="orders-printer-help" id="ordersPrinterHelp" hidden>
                             <div><span>Brukernavn</span><strong>epson</strong></div>
                             <div><span>Passord</span><strong>epson</strong></div>
-                            <a href="https://192.168.1.25/" id="ordersPrinterLogin" target="_blank" rel="noopener noreferrer">Åpne Epson-innstillinger ↗</a>
+                            <a href="https://192.168.1.25/" target="_blank" rel="noopener noreferrer">https://192.168.1.25/ ↗</a>
                           </div>
                         </div>
                         <button class="orders-light orders-sms-indicator is-pending" id="ordersSmsStatus" type="button" aria-label="SMS – siste bestillingsresultat" title="Siste SMS-resultat fra en bestilling">
@@ -590,12 +590,6 @@
                             <p class="set-hint">Juster skrifttypestørrelsene for kjøkkenkvitteringen. Forhåndsvisningen bruker nøyaktig samme bitmap-renderer som Epson TM-T20II.</p>
                             <div class="printer-settings-content">
                                 <div class="printer-settings-controls">
-                                    <div class="printer-settings-field">
-                                        <label for="adminPrinterIp">Epson IP-adresse (denne enheten)</label>
-                                        <div><input class="input" id="adminPrinterIp" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="192.168.1.25" maxlength="15"><button type="button" class="btn btn-outline" id="saveAdminPrinterIp">Lagre IP</button></div>
-                                        <small>Lagres bare på denne enheten. Bruk fast IP / DHCP-reservasjon i ruteren. For HTTPS må skriversertifikatet godtas på enheten.</small>
-                                        <p id="adminPrinterIpFeedback" role="status" aria-live="polite"></p>
-                                    </div>
                                     <div class="printer-settings-field">
                                         <label for="printerQtySize">Antall (1x, 2x)</label>
                                         <div><input type="range" id="printerQtySize" data-printer-typography="printerQtySize" min="28" max="52" step="1" value="39"><output for="printerQtySize" data-printer-output="printerQtySize">39 px</output></div>
