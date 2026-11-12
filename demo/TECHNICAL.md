@@ -64,7 +64,7 @@ Bu belge yalnızca sistemin güvenli şekilde bakımını etkileyen noktaları i
 - SMS og e-post Web Apps (`integrations/google-apps-script/Kode.gs` og `email-poller.gs`) leser bare `orders/{id}` og bruker de eksisterende dedupliseringsmarkørene i Script Properties. Vellykket eller avvist sending lagres som ordrespesifikke `smsReceipts` / `emailReceipts`; uavklart gatewaystatus er aldri automatisk grønn eller rød.
 - Admin viser senderresultat på hver ordre via den allerede åpne Firebase `/orders` SSE. Ingen nye per-ordre pollere opprettes.
 - Eksisterende SMS/e-post-utløsere i de **aktive** Google Apps Script-prosjektene må deaktiveres eksplisitt: `stoppSmsMinuttSjekk()` og `stoppEpostMinuttSjekk()`. Oppdatert kode på GitHub **deployer ikke** disse prosjektene.
-- Sett først ekte `smsWebhookUrl` og `emailWebhookUrl` i `demo/config.js` etter to separate Web App-deployments. Begge er tomme i repoet inntil URL-er er kjent. Webhook-mottak krever `doPost` og tilgang som passer testmiljøet.
+- Sett først ekte `smsWebhookUrl` og `emailWebhookUrl` i `demo/config.js` etter to separate Web App-deployments. Begge Web App-adressene er nå konfigurert i demo/config.js; sjekk deploy ved endring. Webhook-mottak krever `doPost` og tilgang som passer testmiljøet.
 - Sende tester i Varslinger behandles nå ved en direkte Web App-kall etter bevisst `Send test`-klikk, ikke gjennom en hvert-minutt-worker.
 - Dette fjerner **tomgangspolling fra disse to Apps Script-prosjektene først når levende triggere faktisk er deaktivert**. Adminens ordre- og systemfeil-SSE er uavhengige av dem. Web App-responsen fra `no-cors` kan ikke brukes som sendebevis; kvitteringen fra Firebase er autoritativ.
 

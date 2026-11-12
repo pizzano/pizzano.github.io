@@ -131,8 +131,8 @@ test('SMS/email webhook handlers validate only an ID, fetch one stored order and
   assert.match(data,/mode:'no-cors',keepalive:true/);
   assert.match(data,/body:JSON\.stringify\(payload\)/);
   assert.match(data,/dispatchNotificationTest\(kind\)/);
-  assert.match(config,/smsWebhookUrl:\s*''/);
-  assert.match(config,/emailWebhookUrl:\s*''/);
+  assert.match(config,/smsWebhookUrl:\s*'https:\/\/script\.google\.com\/macros\/s\/[^']+\/exec'/);
+  assert.match(config,/emailWebhookUrl:\s*'https:\/\/script\.google\.com\/macros\/s\/[^']+\/exec'/);
   for(const script of [sms,email]) {
     const handler=script.slice(script.lastIndexOf('function doPost(e)'));
     assert.match(handler,/\/orders\/.*encodeURIComponent\(id\)/);

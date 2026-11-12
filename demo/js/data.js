@@ -562,7 +562,6 @@ export const ORDER_STATUSES = [
 export function orderStatusLabel(status) {
   // Old order records retain this status for history/bonus compatibility only.
   if (status === 'fullfort') return 'Avsluttet (eldre ordre)';
-  if (status === 'tilberedning') return 'Bekreftet';
   const found = ORDER_STATUSES.find((entry) => entry.id === status);
   return found ? found.label : 'Ny';
 }
@@ -1121,7 +1120,7 @@ function customerTrackedIds() {
     if (!current) return true; // Fetch from Firebase; never guess from cache.
     const createdAt=Number(current.createdAt)||0;
     return (!createdAt || now-createdAt<=CUSTOMER_ORDER_MAX_AGE_MS) &&
-      !['avvist','fullfort'].includes(current.status);
+      !['avvist','fullfort','klar'].includes(current.status);
   });
 }
 
@@ -2350,13 +2349,44 @@ export async function rejectOrder(orderId, reason = '', message = '') {
   setSaveState('saving');
   try {
     if (remoteEnabled) {
-      await restPatch(`${ORDERS_PATH}/${orderId}`, {
-        status: order.status,
-        statusUpdatedAt: order.statusUpdatedAt,
-        rejectionReason: order.rejectionReason,
-        rejectionMessage: order.rejectionMessage,
-      });
-      remoteOnline = true;
+      // Compare against the authoritative Firebase version. A stale tablet
+      // must not reject an order already accepted or changed elsewhere.
+      const path = `${DB_URL}/${ORDERS_PATH}/${encodeURIComponent(orderId)}.json`;
+      const resumeStreams = pauseAdminLiveStreamsForWrite();
+      try {
+        const read = await fetch(path, {
+          headers: { 'X-Firebase-ETag': 'true' },
+          cache: 'no-store',
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!read.ok) throw await orderAcceptHttpError(read, 'Kunne ikke kontrollere bestillingen');
+        const etag = read.headers.get('ETag');
+        if (!etag) throw new Error('Firebase returnerte ikke versjonskontroll for bestillingen.');
+        const current = await read.json();
+        if (!current || current.status !== previous.status ||
+            Number(current.statusUpdatedAt || 0) !== Number(previous.statusUpdatedAt || 0)) {
+          throw new Error('Bestillingen er endret på en annen enhet. Oppdater listen før du prøver igjen.');
+        }
+        const response = await fetch(path, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'if-match': etag },
+          // Keep all remote fields including independent SMS/email receipts.
+          body: JSON.stringify({
+            ...current,
+            status: order.status,
+            statusUpdatedAt: order.statusUpdatedAt,
+            rejectionReason: order.rejectionReason,
+            rejectionMessage: order.rejectionMessage,
+          }),
+          signal: AbortSignal.timeout(12000),
+        });
+        if (response.status === 412)
+          throw new Error('Bestillingen ble endret på en annen enhet. Oppdater listen før du prøver igjen.');
+        if (!response.ok) throw await orderAcceptHttpError(response, 'Avvisning ble avvist av Firebase');
+        remoteOnline = true;
+      } finally {
+        resumeStreams();
+      }
     }
     finishOrderStatusWrite(orderId, writeGuard, true);
     setSaveState('saved');
