@@ -114,3 +114,11 @@ Merk: Den aktuelle restaurantløsningen bruker REST-klientkall uten Firebase SDK
 - Den kompakte adminordrestrømmen er fortsatt **deaktivert**. Ikke aktiver `trustedCompactOrderFeed` før autorisert backend, fullstendighetskontroller og egen arkiv-/lojalitetsvedlikehold er på plass.
 
 Verifikasjon: Kildekodekontroller er lagt til i `tests/firebase-read-optimization.test.mjs`. Full Node-testkjøring og fysisk Firebase-/skriver-/SMS-testing må utføres før sammenslåing til main.
+
+## November 2026 — DEMO fase 3: skriver, varsling og timeout
+
+- **Skriveradresse:** Restaurantinnstillinger → Printer har nå et IPv4-felt og en «Lagre IP»-knapp. Verdien `kol_admin_printer_ip` lagres kun i nettleserens localStorage på kjøkkenenheten, ikke i publikumsdata/Firebase. Standard 192.168.1.25, gammel `kol_test_printer_ip` som fallback. Epson-statuslenken bruker den valgte adressen. Sikrest er DHCP-reservasjon og å godta Epson HTTPS-sertifikatet på enheten.
+- **Webhook-retry:** En avvist nettverksforespørsel til Apps Script kan sendes på nytt to ganger med kort forsinkelse, kun mens adminfanen eksisterer. `no-cors` gir ingen leveringsbekreftelse. Firebase `smsReceipts` og `emailReceipts` er fortsatt autoritative. Apps Script har idempotente sendemarkører og må oppdateres separat hvis scriptimplementasjonen endres.
+- **Tremintuttersfrist:** Klientens eksisterende ETag-baserte utløp er uendret. I eksisterende SMS Apps Script-kilde `Kode.gs` er `kolExpirePendingOrders()` og `kolInstallExpiryTrigger()` forberedt som valgfri serverstyrt minuttjobb. Den er **ikke aktiv før Apps Script-koden faktisk deployes og installasjonsfunksjonen kjøres manuelt**. Den leser `/orders` en gang per minutt, men sjekker ETag og ordrestatus igjen før hver avvisning. En kjøring kan dermed avvise opptil ca. ett minutt etter kundens 3-minuttersfrist. Kjør `kolRemoveExpiryTrigger()` for å fjerne triggeren.
+- **Ressurskonsekvens:** Den valgfrie servertriggeren kan koste opptil 1440 ekstra `/orders`-lesinger per døgn og er derfor ikke automatisk aktivert; vurder Cloud Function/backend-indeks før produksjonsaktivering. Ingen SMS sendes fra den nye utløpsjobben.
+- Den faktiske Epson-enheten, Web App-deployments og nettleser-uavhengig utløp må integrasjonstestes. GitHub CI sjekker kildekodekontrakter og regresjoner, ikke fysisk levering.
