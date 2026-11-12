@@ -715,6 +715,7 @@ let ordersStream = null;
 let ordersStreamHealthy = false;
 let ordersStreamStartedAt = 0;
 let ordersRaw = {};
+let adminOrdersSnapshotLoaded = false;
 let orderStreamRevision = 0;
 let ordersFallbackBusy = false;
 let compactFeedActive = false;
@@ -780,21 +781,28 @@ function removeRetiredMenuCache() {
 /** Leser fra databasen: GET <DB_URL>/<path>.json */
 // Bound REST reads to avoid hanging when a connection is blocked.
 // Keep the timeout independent of any admin retry UI.
+const pendingRestReads = new Map();
 async function restGet(path, timeoutMs = 9000) {
-  const timing = metricClock();
-  try {
-    const suffix = path ? `/${path}.json` : '/.json';
-    const response = await fetch(`${DB_URL}${suffix}?_=${Date.now()}`, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-      ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
-    });
-    if (!response.ok) throw new Error(`Kunne ikke hente data (${response.status})`);
-    return await response.json();
-  } finally {
-    recordDuration('firebase_read', timing);
-  }
+  // Coalesce only overlapping identical reads; mutable records are never cached.
+  const key = String(path || '') + '|' + timeoutMs;
+  if (pendingRestReads.has(key)) return pendingRestReads.get(key);
+  const request = (async () => {
+    const timing = metricClock();
+    try {
+      const suffix = path ? `/${path}.json` : '/.json';
+      const response = await fetch(`${DB_URL}${suffix}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
+      });
+      if (!response.ok) throw new Error(`Kunne ikke hente data (${response.status})`);
+      return await response.json();
+    } finally { recordDuration('firebase_read', timing); }
+  })();
+  pendingRestReads.set(key, request);
+  try { return await request; }
+  finally { if (pendingRestReads.get(key) === request) pendingRestReads.delete(key); }
 }
 
 /** Skriver til databasen: PUT <DB_URL>/<path>.json */
@@ -933,37 +941,42 @@ function mergePendingOrderStatuses(next) {
   });
 }
 
-/** Tar imot ordre fra databasen. Returnerer true hvis noe endret seg. */
-function applyRemoteOrders(value) {
-  const next = mergePendingOrderStatuses(normalizeOrders(value));
-  const snapshot = (orders) => JSON.stringify((orders || []).map((o) => [
-    o.id,
-    o.status,
-    Number(o.statusUpdatedAt) || 0,
-    JSON.stringify(o.emailReceipts || {}),
-    JSON.stringify(o.smsReceipts || {}),
-    Number(o.estimatedMinutes) || 0,
-    Number(o.estimatedAt) || 0,
+/** Fingerprint the fields used by the order list and notifications. */
+function orderDisplaySignature(o) {
+  return JSON.stringify([
+    o.id, o.status, Number(o.statusUpdatedAt) || 0,
+    o.emailReceipts || {}, o.smsReceipts || {},
+    Number(o.estimatedMinutes) || 0, Number(o.estimatedAt) || 0,
     Number(o.estimatedReadyAt) || 0,
-    o.rejectionReason || '',
-    o.rejectionMessage || '',
-    o.pickup || '',
-    Number(o.total) || 0,
-    Array.isArray(o.lines)
-      ? o.lines.map((line) => [
-          line.itemId || '',
-          Number(line.quantity) || 1,
-          line.comment || '',
-          Array.isArray(line.removedIngredients) ? line.removedIngredients.join('|') : '',
-        ])
-      : [],
-  ]));
-  const before = snapshot(store.orders);
-  const after = snapshot(next);
-  store.orders = next;
-  return before !== after;
+    o.rejectionReason || '', o.rejectionMessage || '',
+    o.pickup || '', Number(o.total) || 0,
+    Array.isArray(o.lines) ? o.lines.map(line => [
+      line.itemId || '', Number(line.quantity) || 1,
+      line.comment || '',
+      Array.isArray(line.removedIngredients) ? line.removedIngredients.join('|') : '',
+    ]) : [],
+  ]);
 }
-
+let lastOrderDisplaySignatures = new Map();
+function applyRemoteOrders(value, changedOrderId = '') {
+  const next = mergePendingOrderStatuses(normalizeOrders(value));
+  if (changedOrderId && lastOrderDisplaySignatures.size && !orderWriteGuards.size) {
+    const changed = next.find(order => order.id === changedOrderId);
+    const oldSignature = lastOrderDisplaySignatures.get(changedOrderId);
+    const newSignature = changed ? orderDisplaySignature(changed) : undefined;
+    if (newSignature === undefined) lastOrderDisplaySignatures.delete(changedOrderId);
+    else lastOrderDisplaySignatures.set(changedOrderId, newSignature);
+    store.orders = next;
+    return oldSignature !== newSignature;
+  }
+  // Root snapshots, reconnects and pending local writes require a full check.
+  const signatures = new Map(next.map(order => [order.id, orderDisplaySignature(order)]));
+  const changed = signatures.size !== lastOrderDisplaySignatures.size ||
+    [...signatures].some(([id, signature]) => lastOrderDisplaySignatures.get(id) !== signature);
+  lastOrderDisplaySignatures = signatures;
+  store.orders = next;
+  return changed;
+}
 
 /** Apply Firebase Realtime Database SSE put/patch deltas to the local orders
  * snapshot. Firebase paths are relative to /orders.json. No root re-download
@@ -1063,7 +1076,9 @@ function startCustomerOrderStream() {
       markCustomerStreamHealthy();
       remoteOnline = true;
       if (applyRemoteOrders(ordersRaw)) emitData('remote');
-      if (!updated) closeCustomerOrderStream();
+      // No further reads or long-lived SSE connection after a terminal status.
+      if (!updated || ['klar', 'avvist', 'fullfort'].includes(updated.status))
+        closeCustomerOrderStream();
     } catch (error) {
       console.warn('Kundeordre-strøm feilet:', error);
       closeCustomerOrderStream();
@@ -1247,10 +1262,12 @@ function beginOrdersStream() {
       try {
         const change = parseFirebaseEvent(event);
         ordersRaw = applyStreamChange(ordersRaw, change.path, change.data, patch);
+        if (change.path === '/' && !patch) adminOrdersSnapshotLoaded = true;
         orderStreamRevision += 1;
         ordersStreamHealthy = true;
         remoteOnline = true;
-        if (applyRemoteOrders(ordersRaw)) emitData('remote');
+        const changedId = change.path.split('/').filter(Boolean)[0] || '';
+        if (applyRemoteOrders(ordersRaw, changedId)) emitData('remote');
       } catch (error) {
         ordersStreamHealthy = false;
         console.warn('Kunne ikke bruke Firebase ordreoppdatering:', error);
@@ -1515,7 +1532,7 @@ async function pullRemote({ ordersOnly = false } = {}) {
       ? applyRemoteMenu(menu) : false;
     // A live SSE delta may have arrived while these GETs were in flight.
     const ordersChanged = revision === orderStreamRevision
-      ? applyRemoteOrders(ordersRaw = orders || {})
+      ? (adminOrdersSnapshotLoaded = true, applyRemoteOrders(ordersRaw = orders || {}))
       : false;
     if (menuChanged || ordersChanged) emitData('remote');
   } catch (err) {
@@ -1549,6 +1566,7 @@ async function fallbackSync() {
       remoteOnline = true;
       if (revision === orderStreamRevision) {
         ordersRaw = orders || {};
+        adminOrdersSnapshotLoaded = true;
         if (applyRemoteOrders(ordersRaw)) emitData('remote');
       }
     } catch (error) {
@@ -1818,9 +1836,12 @@ async function readPizzaBonusFromFirebase(phone) {
     } else {
       const synced = old.pizzaCountSynced === true &&
         old.events && typeof old.events === 'object';
+      // Reuse the authoritative admin snapshot instead of fetching /orders.
       const historyOrders = synced ? [] : CUSTOMER_MODE
         ? store.orders.filter(order => loyaltyPhone(order.phone) === phone)
-        : Object.values(await restGet(ORDERS_PATH) || {});
+        : adminOrdersSnapshotLoaded && !compactFeedActive
+          ? Object.values(ordersRaw).filter(order => loyaltyPhone(order?.phone) === phone)
+          : Object.values(await restGet(ORDERS_PATH) || {}).filter(order => loyaltyPhone(order?.phone) === phone);
       const history = synced ? {} : historicalPizzaEvents(historyOrders, phone, store.sections);
       state = pizzaBonus({ ...history, ...(old.events || {}) });
     }

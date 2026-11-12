@@ -4,12 +4,19 @@ import { readFileSync } from 'node:fs';
 
 const data = readFileSync(new URL('../js/data.js', import.meta.url), 'utf8');
 const archive = readFileSync(new URL('../js/orders-archive.js', import.meta.url), 'utf8');
+const loyalty = readFileSync(new URL('../js/loyalty-sync.js', import.meta.url), 'utf8');
 
 test('customer order polling remains fast while there are pending orders', () => {
   assert.match(data, /const needsLiveUpdates = tracked\.some\(/);
   assert.match(data, /\['mottatt', 'bekreftet', 'tilberedning'\]/);
   assert.match(data, /needsLiveUpdates \? CUSTOMER_ORDER_POLL_MS : 30000/);
 });
+test('customer releases the active SSE stream once order is ready', () => {
+  assert.match(data, /!\['avvist','fullfort','klar'\]\.includes\(current\.status\)/);
+  assert.match(data, /\['klar', 'avvist', 'fullfort'\]\.includes\(updated\.status\)/);
+  assert.match(data, /closeCustomerOrderStream\(\)/);
+});
+
 test('customer polls only tracked order IDs, never whole orders collection', () => {
   const start = data.indexOf('async function pollCustomerOrders(');
   const end = data.indexOf('\nfunction beginOrdersStream()', start);
@@ -206,4 +213,30 @@ test('compact order feed rejects stale/partial backend snapshots before any UI a
   assert.equal(inspect({...feed,orders:{[id]:{...order,lines:undefined}}},now),null);
   assert.equal(inspect({...feed,meta:{...meta,publisher:'browser'}},now),null);
   assert.equal(inspect({...feed,meta:{...meta,generatedAt:now+16000}},now),null);
+});
+
+test('phase 2: overlapping REST reads are shared without stale order caching', () => {
+  assert.match(data,/const pendingRestReads = new Map\(\)/);
+  assert.match(data,/pendingRestReads\.has\(key\)/);
+  assert.match(data,/pendingRestReads\.delete\(key\)/);
+  assert.doesNotMatch(data,/\?_=\$\{Date\.now\(\)\}/);
+  assert.match(data,/cache: 'no-store'/);
+});
+
+test('phase 2: SSE checks one order for a leaf update and all orders on root', () => {
+  assert.match(data,/function orderDisplaySignature\(o\)/);
+  assert.match(data,/function applyRemoteOrders\(value, changedOrderId = ''\)/);
+  assert.match(data,/const changedId = change\.path\.split\('\/'\)/);
+  assert.match(data,/lastOrderDisplaySignatures\.set\(changedOrderId, newSignature\)/);
+});
+
+test('phase 2: legacy bonus reuses a loaded admin snapshot', () => {
+  assert.match(data,/adminOrdersSnapshotLoaded && !compactFeedActive/);
+  assert.match(data,/Object\.values\(ordersRaw\)\.filter/);
+  assert.match(data,/Object\.values\(await restGet\(ORDERS_PATH\)/);
+});
+
+test('phase 2: unrelated remote receipt changes do not reschedule loyalty rollups', () => {
+  assert.match(loyalty,/function orderSyncFingerprint\(\)/);
+  assert.match(loyalty,/if \(nextFingerprint === lastOrderSyncFingerprint\) return/);
 });

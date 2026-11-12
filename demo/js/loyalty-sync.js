@@ -368,7 +368,25 @@ async function migrateHistoricalBatch() {
   }
 }
 
-subscribe((_state, origin) => { if (origin === 'remote') scheduleSync(); });
+// Firebase also emits receipt/notification updates. They do not change
+// customer counters; avoid rerunning the full phone reconciliation for them.
+let lastOrderSyncFingerprint = '';
+function orderSyncFingerprint() {
+  return getOrders().map(order => [
+    order.id, order.status, Number(order.createdAt) || 0,
+    loyaltyPhone(order.phone), Number(order.total) || 0,
+    (order.lines || []).map(line => [
+      line.itemId, line.quantity, line.loyaltyEligible, line.loyaltyFree
+    ].join(':')).join(','),
+  ].join(':')).sort().join('|');
+}
+subscribe((_state, origin) => {
+  if (origin !== 'remote') return;
+  const nextFingerprint = orderSyncFingerprint();
+  if (nextFingerprint === lastOrderSyncFingerprint) return;
+  lastOrderSyncFingerprint = nextFingerprint;
+  scheduleSync();
+});
 ready().then(() => {
   scheduleSync();
   // Start after the live orders have had priority for acceptance/notifications.
