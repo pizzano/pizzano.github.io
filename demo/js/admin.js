@@ -13,7 +13,7 @@ import { metricClock, recordDuration } from './performance-metrics.js';
 import { defaultOrderEmailHtml, renderEmailPreviewHtml } from './notification-html.js?v=20261028-kolready1';
 import { loyaltyPhone } from './loyalty.js?v=20261023-customerprofile1';
 import { renderSavedOrderProduct, sortCartByCategory, getDisplayComment } from './order-product-summary.js?v=20261023-sharedorders1';
-import { printKitchenTicket, checkEpsonConnection, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography, shouldProbeEpson } from './order-printer.js?v=20261016-cleanall1';
+import { printKitchenTicket, checkEpsonConnection, printerSettings, renderKitchenReceiptCanvas, DEFAULT_PRINTER_TYPOGRAPHY, normalizePrinterTypography, shouldProbeEpson } from './order-printer.js?v=20261016-cleanall1';
 /**
  * admin.js — Adminpanel for Restauranten.
  *
@@ -2849,7 +2849,12 @@ const printerStatusTooltip = document.getElementById('ordersPrinterTooltip');
 const printerStatusPanel = document.getElementById('ordersPrinterPanel');
 const printerStatusText = document.getElementById('ordersPrinterMessage');
 const printerHelp = document.getElementById('ordersPrinterHelp');
-const EPSON_SETTINGS_URL = 'https://192.168.1.25/';
+const printerLoginLink = document.getElementById('ordersPrinterLogin');
+if (printerLoginLink) printerLoginLink.href = epsonSettingsUrl();
+function epsonSettingsUrl() {
+  try { const cfg = printerSettings(); return cfg.scheme + '://' + cfg.host + '/'; }
+  catch { return 'https://192.168.1.25/'; }
+}
 let printerCheckRunning = false;
 let printerProbeEpoch = 0;
 let printerLastProbeAt = 0;
@@ -2936,7 +2941,7 @@ function invalidateEpsonConnection() {
 printerStatusButton.addEventListener('click', () => {
   if (printerStatusButton.classList.contains('is-offline')) {
     // Only a direct user tap opens the local printer login, never a background probe.
-    window.open(EPSON_SETTINGS_URL, '_blank', 'noopener,noreferrer');
+    window.open(epsonSettingsUrl(), '_blank', 'noopener,noreferrer');
     return;
   }
   const opened = printerStatusPanel.hidden;
@@ -3285,6 +3290,35 @@ function refreshOrderClocks() {
  * Restaurantinnstillinger
  * ------------------------------------------------------------------ */
 
+const printerIpInput = $('adminPrinterIp');
+const printerIpFeedback = $('adminPrinterIpFeedback');
+function showSavedPrinterIp() {
+  if (!printerIpInput) return;
+  try { printerIpInput.value = printerSettings().host; }
+  catch { printerIpInput.value = localStorage.getItem('kol_admin_printer_ip') || ''; }
+}
+showSavedPrinterIp();
+$('saveAdminPrinterIp')?.addEventListener('click', () => {
+  const host = String(printerIpInput?.value || '').trim();
+  const parts = host.split('.');
+  const valid = parts.length === 4 && parts.every(part =>
+    /^\d{1,3}$/.test(part) && Number(part) <= 255);
+  if (!valid) {
+    printerIpFeedback.textContent = 'Ugyldig IPv4-adresse. Eksempel: 192.168.1.25';
+    return;
+  }
+  try {
+    localStorage.setItem('kol_admin_printer_ip', host);
+    printerIpFeedback.textContent = 'IP lagret på denne enheten. Kontroller Epson-tilkoblingen.';
+    const link = $('ordersPrinterLogin');
+    if (link) link.href = epsonSettingsUrl();
+    printerLastProbeAt = 0;
+    printerProbeFailures = 0;
+    void testEpsonFromOrders({ force: true });
+  } catch {
+    printerIpFeedback.textContent = 'Kunne ikke lagre IP lokalt på enheten.';
+  }
+});
 const printerTypographyFields = [...document.querySelectorAll('[data-printer-typography]')];
 const printerPreviewImage = $('printerTypographyPreview');
 const printerSaveState = $('printerTypographySaveStatus');
