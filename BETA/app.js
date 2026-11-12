@@ -934,7 +934,7 @@ function renderCartRecommendations(){
   count.textContent='';
   return;
  }
- const preview=suggestions.slice(0,3);
+ const preview=suggestions.slice(0,4);
  thumbnails.innerHTML=preview.map(({item})=>
   '<span class="cart-suggestion-thumb">'+imgEl(item.imageUrl,item.name,'suggestion-photo')+'</span>'
  ).join('');
