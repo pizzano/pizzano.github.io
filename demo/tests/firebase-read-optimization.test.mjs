@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const data = readFileSync(new URL('../js/data.js', import.meta.url), 'utf8');
 const archive = readFileSync(new URL('../js/orders-archive.js', import.meta.url), 'utf8');
+const loyalty = readFileSync(new URL('../js/loyalty-sync.js', import.meta.url), 'utf8');
 
 test('customer order polling remains fast while there are pending orders', () => {
   assert.match(data, /const needsLiveUpdates = tracked\.some\(/);
