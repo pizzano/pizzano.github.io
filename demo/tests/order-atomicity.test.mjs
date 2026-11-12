@@ -124,3 +124,15 @@ test('Avvis returns false and rolls back when another device wins ETag race', as
   assert.equal(await fn('o4', 'Stengt'), false);
   assert.equal(store.orders[0].status, 'mottatt');
 });
+
+test('printer IP is local, configurable and validated before ePOS requests', () => {
+  const printer = readFileSync(new URL('../js/order-printer.js', import.meta.url), 'utf8');
+  const admin = readFileSync(new URL('../js/admin.js', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../admin.html', import.meta.url), 'utf8');
+  assert.match(printer,/export function printerSettings\(\)/);
+  assert.match(printer,/localStorage\.getItem\('kol_admin_printer_ip'\)/);
+  assert.match(admin,/localStorage\.setItem\('kol_admin_printer_ip', host\)/);
+  assert.match(admin,/function epsonSettingsUrl\(\)/);
+  assert.match(html,/id="adminPrinterIp"/);
+  assert.match(html,/id="saveAdminPrinterIp"/);
+});
