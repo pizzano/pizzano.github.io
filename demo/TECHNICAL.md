@@ -103,3 +103,14 @@ Klargjort kontrakt for en trygg fremtidig backend:
 - Ved dagens nullbackend ville opt-in alene være **farlig**. Koden er derfor kun et failback-klart integrasjonspunkt og **gir ikke målbar trafikkbesparelse ennå**. Backenden må bygges/deployes separat med sikker tilgang og kostnadsvurdering.
 
 Merk: Den aktuelle restaurantløsningen bruker REST-klientkall uten Firebase SDK eller påvisbar adminauth i repoet. Ikke åpne en ny privat ordreindeks for anonym lesing, og ikke eksponer persondata i offentlig cache.
+
+## November 2026 — DEMO fase 2, lavrisiko-optimalisering
+
+- Samtidige identiske REST GET-forespørsler deler ett nettverkskall. Resultater lagres ikke etter at forespørselen er ferdig; `cache: 'no-store'` beholdes for ordre- og timekritiske verdier. Unødvendig timestamp-parameter fjernes, men dette er **ikke** en vedvarende HTTP-cache.
+- Et enkelt ordre-SSE-delta sjekker fingeravtrykket til bare berørt ordre. Root-snapshots, gjenoppkobling og ventende lokale statusendringer kontrollerer fortsatt alle ordre.
+- Lojalitets-synkronisering planlegges ikke på nytt når bare kvitterings-/varslingsstatus endres. Den eksisterende minuttvise gjenopprettingsrunden er beholdt.
+- Eldre bonuskontoer bruker det allerede innlastede fullstendige admin-snapshotet når tilgjengelig; uten slikt snapshot brukes den opprinnelige Firebase-lesingen for korrekthet.
+- Arkivrydding unngår sortering ved høyst 100 ordre, men arkivering er fortsatt avhengig av åpen adminfane. Dette kan ikke gjøres uavhengig av nettleseren uten backend.
+- Den kompakte adminordrestrømmen er fortsatt **deaktivert**. Ikke aktiver `trustedCompactOrderFeed` før autorisert backend, fullstendighetskontroller og egen arkiv-/lojalitetsvedlikehold er på plass.
+
+Verifikasjon: Kildekodekontroller er lagt til i `tests/firebase-read-optimization.test.mjs`. Full Node-testkjøring og fysisk Firebase-/skriver-/SMS-testing må utføres før sammenslåing til main.
