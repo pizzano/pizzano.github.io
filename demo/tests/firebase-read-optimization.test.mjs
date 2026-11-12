@@ -11,6 +11,12 @@ test('customer order polling remains fast while there are pending orders', () =>
   assert.match(data, /\['mottatt', 'bekreftet', 'tilberedning'\]/);
   assert.match(data, /needsLiveUpdates \? CUSTOMER_ORDER_POLL_MS : 30000/);
 });
+test('customer releases the active SSE stream once order is ready', () => {
+  assert.match(data, /!\['avvist','fullfort','klar'\]\.includes\(current\.status\)/);
+  assert.match(data, /\['klar', 'avvist', 'fullfort'\]\.includes\(updated\.status\)/);
+  assert.match(data, /closeCustomerOrderStream\(\)/);
+});
+
 test('customer polls only tracked order IDs, never whole orders collection', () => {
   const start = data.indexOf('async function pollCustomerOrders(');
   const end = data.indexOf('\nfunction beginOrdersStream()', start);
