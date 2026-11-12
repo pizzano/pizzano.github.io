@@ -2238,17 +2238,39 @@ export async function updateOrderEstimate(orderId, minutes) {
 // Trigger Apps Script only after a verified staff status write.
 // POST carries order ID only. Apps Script reads the authoritative order.
 // Browser no-cors responses are opaque: Firebase order receipts prove sending.
+// An opaque no-cors response cannot confirm delivery. Retry ONLY a rejected
+// network request, at most twice; server-side order keys prevent double sends.
+// All receipt/health indicators still come from Firebase, not this function.
+const pendingWebhookRetries = new Map();
 function postAppsScriptWebhook(endpoint, payload) {
   if (!endpoint) return false;
   try {
     const url=new URL(String(endpoint));
     if (url.protocol!=='https:' || url.hostname!=='script.google.com' ||
         !/^\/macros\/s\/[^/]+\/exec$/.test(url.pathname)) return false;
-    void fetch(url.href,{
-      method:'POST',mode:'no-cors',keepalive:true,
-      headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify(payload),
-    }).catch(error=>console.warn('Apps Script webhook could not be reached:',error));
+    const key=url.href+'|'+JSON.stringify(payload);
+    if (pendingWebhookRetries.has(key)) return true;
+    const request={tries:0,timer:null};
+    pendingWebhookRetries.set(key,request);
+    const attempt=()=>{
+      request.tries++;
+      void fetch(url.href,{
+        method:'POST',mode:'no-cors',keepalive:true,
+        headers:{'Content-Type':'text/plain;charset=UTF-8'},
+        body:JSON.stringify(payload),
+      }).then(()=>{
+        // "opaque" means only that the request was submitted.
+        pendingWebhookRetries.delete(key);
+      }).catch(error=>{
+        if (request.tries >= 3 || navigator.onLine === false) {
+          pendingWebhookRetries.delete(key);
+          console.warn('Apps Script webhook network retries exhausted:',error);
+          return;
+        }
+        request.timer=window.setTimeout(attempt,request.tries*1500);
+      });
+    };
+    attempt();
     return true;
   } catch(error) {
     console.warn('Invalid Apps Script webhook URL:',error);
