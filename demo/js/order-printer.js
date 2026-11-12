@@ -378,13 +378,14 @@ async function bitmapReceiptXml(order, reprint = false, typography = {}) {
   return packed1BitRaster(canvas);
 }
 
-function printerSettings() {
+export function printerSettings() {
   let host = EPSON_DEFAULT.host;
   let scheme = EPSON_DEFAULT.scheme;
   let deviceId = EPSON_DEFAULT.deviceId;
-  // Reuse values set on the independent demo printer test page when available.
+  // Keep settings local to the kitchen device, never in public Firebase menu.
+  // New admin field takes precedence; old test-page keys remain compatible.
   try {
-    host = localStorage.getItem('kol_test_printer_ip') || host;
+    host = localStorage.getItem('kol_admin_printer_ip') || localStorage.getItem('kol_test_printer_ip') || host;
     scheme = localStorage.getItem('kol_test_printer_scheme') || scheme;
     deviceId = localStorage.getItem('kol_test_printer_device') || deviceId;
   } catch {}
