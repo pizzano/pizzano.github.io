@@ -35,3 +35,19 @@ test('order links follow the real shop directory without hardcoded /demo/ paths'
   assert.throws(() => customerOrderLink('other', 'https://example.test/shop/'));
   assert.throws(() => customerPageBaseUrl('file:///tmp/index.html'));
 });
+
+test('optional server expiry worker validates deadlines and uses conditional Firebase writes', async () => {
+  const {readFileSync}=await import('node:fs');
+  const script=readFileSync(new URL('../integrations/google-apps-script/Kode.gs',import.meta.url),'utf8');
+  const start=script.indexOf('function kolExpirePendingOrders()');
+  const body=script.slice(start);
+  assert.ok(start>0);
+  assert.match(body,/function kolInstallExpiryTrigger\(\)/);
+  assert.match(body,/function kolRemoveExpiryTrigger\(\)/);
+  assert.match(body,/confirmationNoTimeout===true/);
+  assert.match(body,/current\.status!=='mottatt'/);
+  assert.match(body,/'X-Firebase-ETag':'true'/);
+  assert.match(body,/'if-match':String\(etag\)/);
+  assert.match(body,/update\.getResponseCode\(\)!==412/);
+  assert.match(body,/everyMinutes\(1\)/);
+});
