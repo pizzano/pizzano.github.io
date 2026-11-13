@@ -119,3 +119,10 @@ Verifikasjon: Kildekodekontroller er lagt til i `tests/firebase-read-optimizatio
 ## November 2026 — DEMO fase 3 (skriver beholdes uendret)
 
 Epson skriverkonfigurasjonen er uendret fordi den eksisterende skriveren fungerer. SMS/e-post får avgrenset nettverks-retry; serverens eksisterende sendemarkører hindrer duplikater. Den valgfrie Apps Script-jobben for uavhengig 3-minutters utløp må deployes/aktiveres separat og vil lese /orders minst én gang i minuttet. Den er IKKE aktivert.
+
+## November 2026 — DEMO fase 4: kontrollert opprydding
+
+- Fjernet ubrukt `confirmWaitPulse`-animasjon fra kundens CSS. En ny CSS-regresjonstest varsler om nøkkelrammer uten referanser.
+- Fjernet den ubrukte `noticeCheckEmailEngine`-funksjonen fra adminens varslingsvisning; ingen fungerende varslingsfunksjoner ble fjernet.
+- `fullfort` og `pizzaBonus` er historiske kompatibilitetsbaner, ikke dokumentert dødkode. De er beholdt for ordre- og bonusmigrasjon, slik at eksisterende gratispizzaopptjening ikke risikeres.
+- Større endringer i overlappende `customer.css`, `theme.css` og `admin.css` krever skjermbilde-/nettleser-regresjonstester før sammenslåing. Den eksisterende bestillings- og skriverflyten er beholdt.
