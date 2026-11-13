@@ -139,7 +139,7 @@ Epson skriverkonfigurasjonen er uendret fordi den eksisterende skriveren fungere
 
 ## November 2026 — Admin /orders only when needed
 
-- On the DEMO admin page, the /orders SSE channel is suspended while the restaurant is closed, cannot take new orders, and has no recent pending or preparing orders.
+- On the DEMO admin page, the /orders SSE channel is suspended while the restaurant is closed, cannot take new orders, and has no recent pending or preparing orders. On a fresh admin startup while closed, ONE initial authoritative snapshot is allowed to identify any outstanding orders, then SSE stops when none need attention.
 - At midnight, when pre-ordering becomes possible for the coming opening day, the existing local 15-second fallback timer resumes the order channel without a Firebase time probe. Pre-orders are still collected; pickup remains after opening.
 - Live /orders stays available for open hours and for outstanding received/confirmed/preparing orders created in the last 24 hours. Explicit staff refresh still loads authoritative orders.
 - The closed-hours gate applies only to admin order SSE and its REST fallback. Public menu version checks, customer order updates, and the separately installed Apps Script 3-minute expiry trigger are not disabled.
