@@ -155,7 +155,9 @@ function cartLineDetails(line){
 function renderCartContents(){
  const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
  $('cartTotal').textContent=money(total);
- $('cartTopCount').textContent=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);
+ const cartTopQuantity=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);
+ $('cartTopCount').textContent=cartTopQuantity;
+ $('cartTopCount').hidden=cartTopQuantity===0;
  $('cartClear').hidden=!cart.length;
  $('cartSummary').hidden=!cart.length;
  $('cartItems').innerHTML=cart.length?cart.map((line,index)=>

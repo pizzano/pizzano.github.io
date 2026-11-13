@@ -7,7 +7,7 @@ function betaReadTheme(){
 function betaApplyTheme(theme,persist=true){
  const dark=theme==='dark';
  document.documentElement.dataset.betaTheme=dark?'dark':'light';
- for(const id of ['betaThemeToggle','betaProfileThemeToggle']){
+ for(const id of ['betaThemeToggle','betaProfileThemeToggle','betaCartThemeToggle']){
   const button=$(id);
   if(!button)continue;
   button.setAttribute('aria-pressed',String(dark));
@@ -233,6 +233,9 @@ function betaProfileInit(){
  betaApplyTheme(betaReadTheme(),false);
  $('betaThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
  $('betaProfileThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
+ $('betaCartThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
+ $('betaCartProfile').addEventListener('click',betaProfileOpen);
+ $('betaCartCart').addEventListener('click',()=>checkoutNavigate('cart'));
  $('betaProfileNav').addEventListener('click',()=>betaProfileShowTab('home'));
  $('betaProfileCart').addEventListener('click',()=>{hideAll();showCart()});
  $('betaBonusRefresh').addEventListener('click',()=>{void betaBonusLoad(true)});
