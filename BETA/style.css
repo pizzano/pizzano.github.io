@@ -533,7 +533,10 @@ html,body{min-height:100%;overflow-x:clip}
 .checkout-order-preview>summary span{color:var(--green);font-size:var(--text-sm);font-weight:750;white-space:nowrap}
 .checkout-order-preview[open]>summary span{font-size:0}
 .checkout-order-preview[open]>summary span:after{content:"Vis mindre";font-size:var(--text-sm)}
-#demoPickupOrderItems{padding:3px 12px 11px;border-top:1px solid #e0e9e4}
+#demoPickupOrderItems{display:grid;gap:10px;padding:11px 12px 12px;border-top:1px solid #e0e9e4}
+#demoPickupOrderItems .demo-pickup-product{margin:0}
+#demoPickupOrderItems .demo-pickup-line.is-total{margin-top:2px;padding:11px 3px 2px;border-top:1px solid #d4e5da;font-size:var(--text-md)}
+#demoPickupOrderItems .demo-pickup-line.is-total strong:last-child{font-size:var(--text-lg)}
 .demo-pickup-line{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid #edf3ef;font-size:var(--text-sm);color:#426354}
 .demo-pickup-line strong{font-size:var(--text-sm);font-weight:750}
 .demo-pickup-line.is-total{border:0;color:#163d32}
