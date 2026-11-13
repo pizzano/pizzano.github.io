@@ -450,8 +450,8 @@ test('one themed status banner replaces the legacy double open/closed card', asy
   assert.match(customer,/hasVerifiedTime = \/\^\(\?:\[01\]\\d\|2\[0-3\]\):\[0-5\]\\d\$\//);
 });
 
-test('customer CSS does not carry unreferenced animation keyframes', () => {
-  const css = readFileSync(new URL('../css/customer.css', import.meta.url), 'utf8');
+test('customer CSS does not carry unreferenced animation keyframes', async () => {
+  const css = await readFile(new URL('../css/customer.css', import.meta.url), 'utf8');
   const names = [...css.matchAll(/@keyframes\s+([A-Za-z0-9_-]+)/g)].map(match => match[1]);
   const unused = names.filter(name => {
     const occurrences = css.split(name).length - 1;
