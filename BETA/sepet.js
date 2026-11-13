@@ -170,18 +170,18 @@ function renderCartContents(){
 
 // One shared source of details for the basket and final pickup review.
 function pickupSummary(){
- const host=$('demoPickupOrderItems');
- const totalQuantity=cart.reduce((count,line)=>count+(Number(line.qty)||0),0);
- $('demoPickupItemCount').textContent=totalQuantity+' '+(totalQuantity===1?'vare':'varer');
- host.innerHTML=cart.map(line=>{
-  const count=Math.max(1,Number(line.qty)||1);
-  const unitPrice=Number(line.unitPrice)||0;
-  const linePrice=count*unitPrice;
-  return '<article class="demo-pickup-product">'+
-   '<div class="demo-pickup-product-heading"><strong>'+esc(line.name)+' × '+count+'</strong>'+
-   '<strong>'+money(linePrice)+'</strong></div>'+
-   '<div class="demo-pickup-product-details">'+cartLineDetails(line)+'</div>'+
-   (count>1?'<div class="demo-pickup-unit-price">'+money(unitPrice)+' / stk · '+count+' stk</div>':'')+
+ // Same cart product card and detail renderer as the basket, read-only here.
+ const count=cart.reduce((sum,line)=>sum+(Number(line.qty)||0),0);
+ $('demoPickupItemCount').textContent=count+' '+(count===1?'vare':'varer');
+ $('demoPickupOrderItems').innerHTML=cart.map(line=>{
+  const qty=Number(line.qty)||0;
+  return '<article class="cart-product-card demo-pickup-product">'+
+   '<div class="cart-product-heading"><div class="cart-product-copy">'+
+   '<strong class="cart-product-name">'+esc(line.name)+' × '+qty+'</strong>'+
+   '</div></div>'+
+   '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
+   '<div class="cart-product-totalrow"><span>Sum'+(qty>1?' ('+qty+' × '+money(line.unitPrice)+')':'')+
+   '</span><strong>'+money(qty*(Number(line.unitPrice)||0))+'</strong></div>'+
    '</article>';
  }).join('')+
  '<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
