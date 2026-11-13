@@ -4528,17 +4528,7 @@ async function noticeSave(){
 /** Check the actual GAS sender version; the web UI version is not evidence
  * that the running Apps Script was updated.
  */
-async function noticeCheckEmailEngine(){
-  const node=noticeEl.engine;
-  if (!node) return;
-  node.hidden=!noticeKindIsEmail();
-  if (!node.hidden) {
-    node.textContent='Avsenderresultatet vises på bestillingen etter sending. Ingen bakgrunnskontroll.';
-    node.dataset.state='saved';
-  }
-}
-
-async function noticeSendTest(){
+async async function noticeSendTest(){
   if(noticeState.busy)return;
   if(!noticeState.loaded){noticeFeedback('Vent til malene er lastet.','error');return}
   if(noticeState.dirty){noticeFeedback('Lagre meldingen før du sender test.','error');return}
