@@ -784,7 +784,7 @@ function updatePrice(){
 // Keep the document's scroll container intact: changing html/body overflow
 // while a dialog is open can make the sticky restaurant header disappear.
 function show(id){$('overlay').hidden=false;$(id).hidden=false}
-function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true}
+function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true;$('betaProfileSheet').hidden=true;$('btnProfile').setAttribute('aria-expanded','false')}
 $('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
