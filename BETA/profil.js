@@ -39,14 +39,15 @@ function betaProfilePhoneNumber(phone){
  const d=String(phone||'').replace(/\D/g,'');
  return /^[49]\d{7}$/.test(d)?'+47 '+d.slice(0,2)+' '+d.slice(2,4)+' '+d.slice(4,6)+' '+d.slice(6):'Kundeprofil';
 }
-/* Pizzabonus: one small GET per stored phone on first view.
- * Local cache is reused indefinitely until the customer presses Oppdater.
- * Never download the whole /customers node or read personal contact fields.
+/* Pizzabonus: a single tiny RTDB REST/EventSource listener on the bonusCount leaf
+ * ONLY while the profile bonus is visible. No Firebase SDK, no polling.
+ * EventSource sends the initial value and any later change over one connection.
+ * Local cache supplies immediate display during connection; manual refresh reconnects.
  */
 const BETA_BONUS_CACHE_KEY='kol-beta-bonus-cache-v1';
 const BETA_BONUS_CONSENT_KEY='kol-beta-bonus-consent-v1';
-const betaBonusRequested=new Set();
-let betaBonusPending=null;
+let betaBonusSource=null,betaBonusSourcePhone='',betaBonusStreamId=0;
+let betaBonusGetPending=null;
 function betaBonusPhone(){
  const phone=String(betaProfileContact().phone||'').replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');
  return /^[49]\d{7}$/.test(phone)?phone:'';
@@ -97,45 +98,103 @@ function betaBonusConsentShow(){
  try{$('betaBonusConsent').checked=localStorage.getItem(betaBonusConsentKey())==='true'}
  catch{$('betaBonusConsent').checked=false}
 }
-async function betaBonusLoad(force=false){
- const phone=betaBonusPhone();
- if(!phone){
-  betaBonusRender(0);
-  betaBonusStatus('Lagre et mobilnummer for å hente pizzabonus.');
-  return;
+function betaBonusStop(){
+ betaBonusStreamId++;
+ if(betaBonusSource){betaBonusSource.close();betaBonusSource=null}
+ betaBonusSourcePhone='';
+}
+function betaBonusVisible(){
+ return !$('betaProfileSheet').hidden&&!$('betaProfileHome').hidden&&!document.hidden;
+}
+function betaBonusStore(phone,count){
+ const amount=betaBonusValue(count);
+ try{localStorage.setItem(BETA_BONUS_CACHE_KEY,JSON.stringify({phone,count:amount,savedAt:Date.now()}))}catch{}
+ if(betaBonusVisible()&&betaBonusPhone()===phone){
+  betaBonusRender(amount);
+  betaBonusStatus('Oppdatert automatisk');
  }
- const cached=betaBonusCached(phone);
- if(cached)betaBonusRender(cached.count);
- if(betaBonusPending)return betaBonusPending;
- if(!force&&(cached||betaBonusRequested.has(phone)))return;
- betaBonusRequested.add(phone);
- $('betaBonusRefresh').disabled=true;
- betaBonusStatus('Oppdaterer pizzabonus…');
- betaBonusPending=(async()=>{
+}
+async function betaBonusGetOnce(phone){
+ // Fallback for browsers without SSE support or if establishing the stream fails.
+ if(betaBonusGetPending)return betaBonusGetPending;
+ const task=(async()=>{
   try{
    const response=await fetch(BASE+'/customers/'+phone+'/bonusCount.json',{cache:'no-store'});
    if(!response.ok)throw Error('HTTP '+response.status);
-   const amount=betaBonusValue(await response.json());
-   try{localStorage.setItem(BETA_BONUS_CACHE_KEY,JSON.stringify({phone,count:amount,savedAt:Date.now()}))}catch{}
+   const value=await response.json();
+   if(value!==null&&(!Number.isFinite(Number(value))||typeof value==='object'))throw Error('Invalid bonus data');
    if(betaBonusPhone()===phone){
-    betaBonusRender(amount);
+    betaBonusStore(phone,value);
     betaBonusStatus('Oppdatert');
    }
-  }catch(err){
-   console.warn('BETA bonus read failed:',err);
-   if(betaBonusPhone()===phone)betaBonusStatus('Kunne ikke hente pizzabonus. Prøv Oppdater.');
-  }finally{
-   $('betaBonusRefresh').disabled=false;
-   betaBonusPending=null;
+  }catch(error){
+   console.warn('BETA bonus read failed:',error);
+   if(betaBonusPhone()===phone&&betaBonusVisible())betaBonusStatus('Kunne ikke oppdatere pizzabonus. Trykk Oppdater.');
   }
  })();
- return betaBonusPending;
+ betaBonusGetPending=task;
+ try{await task}finally{if(betaBonusGetPending===task)betaBonusGetPending=null}
+}
+function betaBonusStart(force=false){
+ const phone=betaBonusPhone();
+ if(!phone){
+  betaBonusStop();
+  betaBonusRender(0);
+  betaBonusStatus('Lagre mobilnummer for å hente pizzabonus.');
+  return;
+ }
+ if(!betaBonusVisible())return;
+ if(!force&&betaBonusSource&&betaBonusSourcePhone===phone)return;
+ betaBonusStop();
+ if(typeof EventSource==='undefined'){
+  betaBonusStatus('Henter pizzabonus…');
+  void betaBonusGetOnce(phone);
+  return;
+ }
+ const token=betaBonusStreamId,source=new EventSource(BASE+'/customers/'+phone+'/bonusCount.json');
+ betaBonusSource=source;
+ betaBonusSourcePhone=phone;
+ betaBonusStatus('Kobler til pizzabonus…');
+ const onData=event=>{
+  if(betaBonusSource!==source||betaBonusStreamId!==token||betaBonusPhone()!==phone||!betaBonusVisible())return;
+  try{
+   const payload=JSON.parse(event.data);
+   // bonusCount itself is a number; parent customer fields are never streamed.
+   if(payload.path!=='/'&&payload.path!=='')return;
+   const value=payload.data;
+   if(value!==null&&(typeof value==='object'||!Number.isFinite(Number(value))))return;
+   betaBonusStore(phone,value);
+  }catch(error){console.warn('BETA bonus stream event ignored:',error)}
+ };
+ source.addEventListener('put',onData);
+ source.addEventListener('patch',onData);
+ const denied=()=>{
+  if(betaBonusSource!==source)return;
+  betaBonusStop();
+  betaBonusStatus('Tilgang til pizzabonus ble avvist.');
+ };
+ source.addEventListener('cancel',denied);
+ source.addEventListener('auth_revoked',denied);
+ source.addEventListener('error',()=>{
+  if(betaBonusSource!==source)return;
+  // EventSource normally reconnects on short network interruptions.
+  // Do not create duplicate streams or periodic REST requests.
+  if(source.readyState===2){
+   betaBonusStop();
+   betaBonusStatus('Live-tilkobling brutt. Trykk Oppdater.');
+  }else{
+   betaBonusStatus('Prøver å koble til pizzabonus igjen…');
+  }
+ });
+}
+function betaBonusLoad(force=false){
+ betaBonusStart(force);
 }
 function betaBonusDisplayHome(){
  const phone=betaBonusPhone(),cache=betaBonusCached(phone);
  betaBonusRender(cache?.count??0);
  betaBonusConsentShow();
- betaBonusStatus(phone?(cache?'Lokalt lagret · Oppdater for ny status':''):'Lagre mobilnummer for å hente pizzabonus.');
+ betaBonusStatus(phone?(cache?'Lokalt lagret · kobler til live status':''):'Lagre mobilnummer for å hente pizzabonus.');
 }
 function betaProfileRenderHome(){
  const c=betaProfileContact(),name=String(c.name||'').trim(),avatar=betaProfileInitials(name);
@@ -170,8 +229,9 @@ function betaProfileShowTab(tab){
  const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',restaurant:'Restaurantinformasjon'};
  $('betaProfileHome').hidden=!home;$('betaProfileDetail').hidden=home;
  for(const name of Object.keys(names))$('betaProfile'+name[0].toUpperCase()+name.slice(1)+'Panel').hidden=tab!==name;
- if(home){betaProfileRenderHome();void betaBonusLoad(false)}
+ if(home){betaProfileRenderHome();betaBonusStart(false)}
  else{
+  betaBonusStop();
   $('betaProfileDetailTitle').textContent=names[tab]||'Min profil';
   if(tab==='contact'){
    const c=betaProfileContact();
@@ -225,6 +285,7 @@ async function betaProfileSaveContact(event){
   status.textContent='✓ Opplysningene er lagret.';
   status.hidden=false;status.dataset.kind='success';
   betaProfileRenderHome();
+  if(betaBonusVisible())betaBonusStart(true);
  }catch(e){
   demoContact=before;error('Kunne ikke lagre opplysningene. Prøv igjen.');
  }finally{save.disabled=false;save.textContent='Lagre opplysninger'}
@@ -253,7 +314,14 @@ function betaProfileInit(){
  });
  window.addEventListener('storage',event=>{
   if(event.key===BETA_THEME_KEY)betaApplyTheme(betaReadTheme(),false);
-  if(event.key===DEMO_CONTACT_KEY&&!$('betaProfileSheet').hidden)betaProfileRenderHome();
+  if(event.key===DEMO_CONTACT_KEY&&!$('betaProfileSheet').hidden){
+   betaProfileRenderHome();
+   betaBonusStart(true);
+  }
+ });
+ document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)betaBonusStop();
+  else if(betaBonusVisible())betaBonusStart(false);
  });
 }
 betaProfileInit();
