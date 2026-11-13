@@ -83,7 +83,7 @@ test('admin reconnect waits for initial SSE snapshot before duplicating full ord
   assert.match(data, /ordersStreamStartedAt = Date\.now\(\)/);
   assert.match(data, /\(!ordersStream \|\| Date\.now\(\) - ordersStreamStartedAt >= 9000\)/);
   assert.match(data, /const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE \? 10 \* 60 \* 1000 : 30000/);
-  assert.match(data, /if \(!ordersStreamHealthy && !ordersFallbackBusy/);
+  assert.match(data, /adminOrdersShouldBeLive\(\) && !ordersStreamHealthy && !ordersFallbackBusy/);
 });
 test('customer contact saves only name/email without downloading private account totals', () => {
   const start = data.indexOf('export async function saveCustomerContact(');
