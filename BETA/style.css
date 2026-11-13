@@ -949,3 +949,90 @@ html[data-beta-theme="dark"] .demo-pickup-line{border-color:#3a6653}
 html[data-beta-theme="dark"] :is(.cart-buttons .primary,.beta-profile-primary){background:#0b8864;color:#fff}
 html[data-beta-theme="dark"] :is(.cart-steps span.is-done,.cart-steps span.is-current){color:#d6f8e5}
 html[data-beta-theme="dark"] .beta-profile-phone{border-color:#467c65}
+
+
+/* BETA / Min profil / Restaurantinformasjon – compact premium information layout */
+#betaProfileRestaurantPanel{padding:0;border:0;background:transparent;box-shadow:none}
+#betaProfileRestaurantInfo{display:grid;gap:12px;color:#183c30}
+.beta-restaurant-hero{display:flex;align-items:center;gap:13px;min-width:0;padding:18px 15px;border:1px solid #d3e7db;border-radius:19px;background:linear-gradient(125deg,#e7f5ed,#f9fcfa)}
+.beta-restaurant-logo{display:grid;place-items:center;flex:none;width:58px;height:58px;border-radius:17px;background:#087e60;color:white;box-shadow:0 6px 15px #087b5726}
+.beta-restaurant-logo svg{width:29px;height:29px}
+.beta-restaurant-hero-copy{min-width:0}
+.beta-restaurant-hero-copy small{display:block;margin-bottom:5px;color:#59836e;font-size:10px;letter-spacing:.105em;font-weight:800}
+.beta-restaurant-hero-copy h3{margin:0;font-size:18px;line-height:1.3;color:#103e2e;font-weight:900;overflow-wrap:anywhere}
+.beta-restaurant-hero-copy p{margin:4px 0 0;color:#6a8678;font-size:var(--text-sm)}
+.beta-restaurant-description{margin:0;padding:0 3px;color:#638174;line-height:1.5;font-size:var(--text-md)}
+.beta-restaurant-status{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid #cfe6d9;border-radius:14px;background:#eff9f3}
+.beta-restaurant-status-dot{width:10px;height:10px;flex:none;border-radius:50%;background:#7f9b8b;box-shadow:0 0 0 4px #dcece3}
+.beta-restaurant-status.is-open .beta-restaurant-status-dot{background:#0d9b6e;box-shadow:0 0 0 4px #d1f0df}
+.beta-restaurant-status.is-preorder .beta-restaurant-status-dot{background:#c3912d;box-shadow:0 0 0 4px #f7edce}
+.beta-restaurant-status.is-closed .beta-restaurant-status-dot{background:#b46d60;box-shadow:0 0 0 4px #f8dfda}
+.beta-restaurant-status>div{display:grid;gap:2px}
+.beta-restaurant-status strong{font-size:var(--text-md);color:#154635}
+.beta-restaurant-status small{font-size:var(--text-sm);color:#6b8578}
+.beta-restaurant-card{min-width:0;overflow:hidden;border:1px solid #d4e7dc;border-radius:17px;background:#fff;padding:15px}
+.beta-restaurant-card h3{margin:0 0 12px;color:#183e31;font-size:16px;font-weight:850}
+.beta-restaurant-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.beta-restaurant-section-title h3{margin-bottom:11px}
+.beta-restaurant-section-title>span{color:#708c7e;font-size:var(--text-sm)}
+.beta-restaurant-fact{display:flex;align-items:center;gap:11px;min-height:58px;padding:10px 0;border-top:1px solid #eaf2ec}
+.beta-restaurant-fact:first-of-type{border-top:0;padding-top:2px}
+.beta-restaurant-icon{display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:12px;background:#eaf7ef;color:#087b56}
+.beta-restaurant-icon svg{width:19px;height:19px}
+.beta-restaurant-fact-copy{display:grid;gap:4px;min-width:0;flex:1}
+.beta-restaurant-fact-copy>span{font-size:var(--text-sm);color:#688476}
+.beta-restaurant-fact-copy strong{font-size:var(--text-md);line-height:1.35;color:#1c4334;font-weight:750;overflow-wrap:anywhere}
+.beta-restaurant-row-action{display:inline-flex;align-items:center;gap:3px;flex:none;padding:7px 9px;border:1px solid #cce4d7;border-radius:10px;background:#f2faf5;color:#087954;font-size:var(--text-sm);font-weight:800;text-decoration:none}
+.beta-restaurant-hours-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 9px;border-top:1px solid #e6eee8;color:#3e6551;font-size:var(--text-md)}
+.beta-restaurant-hours-row:first-child{border-top:0}
+.beta-restaurant-hours-row strong{color:#214839;font-weight:750;text-align:right}
+.beta-restaurant-hours-row.is-today{background:#e8f7ee;border-radius:10px;color:#08774f;font-weight:800}
+.beta-restaurant-hours-row.is-today strong{color:#086e4b}
+.beta-restaurant-hours-row small{display:inline-block;margin-left:8px;padding:2px 6px;border-radius:99px;background:#d2efdf;color:#147b54;font-size:10px}
+.beta-restaurant-empty{margin:4px 0 0;color:#789384;font-size:var(--text-md);line-height:1.55}
+.beta-restaurant-links{display:flex;flex-wrap:wrap;gap:7px;padding:0 3px}
+.beta-restaurant-links a{display:inline-flex;align-items:center;gap:6px;padding:10px 12px;border:1px solid #cce6d7;border-radius:12px;background:#f7fcf9;color:#167b55;text-decoration:none;font-size:var(--text-sm);font-weight:800}
+.beta-restaurant-links svg{width:16px;height:16px}
+.beta-restaurant-sync{display:grid;gap:9px;margin:1px 0 13px}
+.beta-restaurant-sync p{margin:0;text-align:center;color:#708b7d;font-size:var(--text-sm);line-height:1.45}
+.beta-restaurant-sync button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border:1px solid #b6d8c5;border-radius:12px;background:#fff;color:#087651;font-size:var(--text-md);font-weight:850;cursor:pointer}
+.beta-restaurant-sync button svg{width:17px;height:17px}
+.beta-restaurant-sync button:hover,.beta-restaurant-row-action:hover{background:#e4f6eb}
+@media(max-width:380px){
+ .beta-restaurant-hero{padding:13px 11px;gap:10px}
+ .beta-restaurant-logo{width:49px;height:49px}
+ .beta-restaurant-hero-copy h3{font-size:16px}
+ .beta-restaurant-card{padding:12px}
+ .beta-restaurant-fact{gap:8px}
+ .beta-restaurant-icon{width:34px;height:34px}
+ .beta-restaurant-row-action{padding:7px}
+}
+/* Dark theme matches the customer's premium emerald palette. */
+html[data-beta-theme="dark"] #betaProfileRestaurantPanel{background:transparent}
+html[data-beta-theme="dark"] #betaProfileRestaurantInfo{color:#e5f5ea}
+html[data-beta-theme="dark"] .beta-restaurant-hero{background:linear-gradient(125deg,#1d4b39,#15372d);border-color:#3e7158}
+html[data-beta-theme="dark"] .beta-restaurant-hero-copy h3,
+html[data-beta-theme="dark"] .beta-restaurant-card h3{color:#eaf8ef}
+html[data-beta-theme="dark"] .beta-restaurant-hero-copy small,
+html[data-beta-theme="dark"] .beta-restaurant-hero-copy p,
+html[data-beta-theme="dark"] .beta-restaurant-description,
+html[data-beta-theme="dark"] .beta-restaurant-section-title>span{color:#a8cebb}
+html[data-beta-theme="dark"] .beta-restaurant-status{background:#214534;border-color:#3d6a51}
+html[data-beta-theme="dark"] .beta-restaurant-status strong{color:#e7f6ed}
+html[data-beta-theme="dark"] .beta-restaurant-status small{color:#b3d3c1}
+html[data-beta-theme="dark"] .beta-restaurant-card{background:#19392e;border-color:#3b6954}
+html[data-beta-theme="dark"] .beta-restaurant-fact,
+html[data-beta-theme="dark"] .beta-restaurant-hours-row{border-color:#315a47}
+html[data-beta-theme="dark"] .beta-restaurant-icon{background:#29533e;color:#a7edc8}
+html[data-beta-theme="dark"] .beta-restaurant-fact-copy>span{color:#b3cdbc}
+html[data-beta-theme="dark"] .beta-restaurant-fact-copy strong,
+html[data-beta-theme="dark"] .beta-restaurant-hours-row,
+html[data-beta-theme="dark"] .beta-restaurant-hours-row strong{color:#e8f7ed}
+html[data-beta-theme="dark"] .beta-restaurant-hours-row.is-today{background:#285642}
+html[data-beta-theme="dark"] .beta-restaurant-hours-row.is-today strong{color:#beefd3}
+html[data-beta-theme="dark"] .beta-restaurant-hours-row small{background:#377656;color:#e5ffed}
+html[data-beta-theme="dark"] .beta-restaurant-row-action,
+html[data-beta-theme="dark"] .beta-restaurant-links a,
+html[data-beta-theme="dark"] .beta-restaurant-sync button{background:#214837;color:#b8f0d1;border-color:#40735a}
+html[data-beta-theme="dark"] .beta-restaurant-sync p{color:#a9c8b7}
+html[data-beta-theme="dark"] .beta-restaurant-empty{color:#a5c6b4}

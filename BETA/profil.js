@@ -215,15 +215,118 @@ function betaProfileRenderOrders(){
  '<div><span>'+esc(order.pickup?.label||'Snarest')+'</span><strong>'+money(order.total)+'</strong></div></article>';
 }
 
+/* Restaurantinformasjon: ONLY menu.settings, already fetched from /settings.
+ * Opening profile performs no Firebase requests. Manual refresh reads only
+ * /settings.json and updates the existing menu cache (no duplicate settings).
+ */
+let betaRestaurantLoading=null,betaRestaurantMessage='';
+function betaRestaurantText(value){
+ return String(value||'').trim();
+}
+function betaRestaurantCleanHref(raw){
+ try{
+  const u=new URL(String(raw||'').trim());
+  if(u.protocol==='https:'||u.protocol==='http:')return u.href;
+ }catch{}
+ return '';
+}
+function betaRestaurantIcons(name){
+ const paths={
+  pin:'<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+  phone:'<path d="M22 16.9V20a2 2 0 0 1-2.2 2A19.5 19.5 0 0 1 2 4.2 2 2 0 0 1 4 2h3.1a2 2 0 0 1 2 1.7l.5 3.1a2 2 0 0 1-.6 1.8L7 10.4a16 16 0 0 0 6.6 6.6l1.8-2a2 2 0 0 1 1.8-.6l3.1.5a2 2 0 0 1 1.7 2Z"/>',
+  mail:'<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 7 9-7"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  bag:'<path d="M4 8h16l-1 13H5L4 8Z M9 9V6a3 3 0 0 1 6 0v3"/>',
+  card:'<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19 M6 15h4"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18 M12 3c-5 5-5 13 0 18 M12 3c5 5 5 13 0 18"/>',
+  shop:'<path d="M4 10 6 4h12l2 6 M6 10v11h12V10M9 21v-7h6v7M4 10c1 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0"/>',
+  refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 9a8 8 0 0 1 14-2l1 1M4 16l1 1a8 8 0 0 0 14-2"/>'
+ };
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.shop)+'</svg>';
+}
+function betaRestaurantRow(icon,label,value,href='',action=''){
+ if(!value)return '';
+ const a=href?'<a href="'+esc(href)+'" target="'+(href.startsWith('http')?'_blank':'_self')+'"'+(href.startsWith('http')?' rel="noopener noreferrer"':'')+' class="beta-restaurant-row-action">'+esc(action||'Åpne')+' <span aria-hidden="true">↗</span></a>':'';
+ return '<div class="beta-restaurant-fact"><span class="beta-restaurant-icon">'+betaRestaurantIcons(icon)+'</span>'+
+ '<div class="beta-restaurant-fact-copy"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>'+a+'</div>';
+}
 function betaProfileRenderRestaurant(){
  const settings=menu?.settings||{};
- const names=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
- const days=Array.isArray(settings.weeklyHours)&&settings.weeklyHours.length===7?openingDays(settings):null;
- const rows=days?days.map((d,i)=>'<div class="beta-profile-hours-row"><span>'+names[i]+'</span><strong>'+(d.enabled?esc(d.open)+'–'+esc(d.close):'Stengt')+'</strong></div>').join(''):'<p>Åpningstidene vises når menyen er lastet.</p>';
- const address=String(settings.address||settings.restaurantAddress||'').trim();
- const phone=String(settings.phone||settings.restaurantPhone||'').trim();
- $('betaProfileRestaurantInfo').innerHTML='<div class="beta-profile-info-card"><h3>'+esc(settings.restaurantName||'KØL Grill & Pizza')+'</h3>'+
- (address?'<p>'+esc(address)+'</p>':'')+(phone?'<p>'+esc(phone)+'</p>':'')+'<h4>Åpningstider</h4>'+rows+'</div>';
+ const restaurant=betaRestaurantText(settings.restaurantName)||'KØL Grill & Pizza';
+ const addressParts=[settings.streetAddress||settings.address,settings.postalCode,settings.city].map(betaRestaurantText).filter(Boolean);
+ const address=addressParts.join(', '),phone=betaRestaurantText(settings.phone).replace(/[^\d+ ]/g,'');
+ const phoneDigits=phone.replace(/\D/g,'');
+ const tel=phoneDigits.length===8?'+47'+phoneDigits:phoneDigits.length===10&&phoneDigits.startsWith('47')?'+'+phoneDigits:'';
+ const email=betaRestaurantText(settings.email);
+ const validEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?email:'';
+ const hourList=Array.isArray(settings.weeklyHours)&&settings.weeklyHours.length===7?openingDays(settings):null;
+ const weekdays=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+ const current=typeof osloTime==='function'?osloTime():{day:-1};
+ const state=hourList&&typeof calculateHoursStatus==='function'?calculateHoursStatus(settings,current):null;
+ const hours=hourList?hourList.map((day,index)=>{
+  const hoursText=day.enabled?esc(day.open)+' – '+esc(day.close):'Stengt';
+  return '<div class="beta-restaurant-hours-row'+(index===current.day?' is-today':'')+'"><span>'+weekdays[index]+(index===current.day?'<small>I dag</small>':'')+'</span><strong>'+hoursText+'</strong></div>';
+ }).join(''):'<p class="beta-restaurant-empty">Åpningstider er ikke registrert.</p>';
+ const status=state?(state.open?'Åpent nå':state.preOpen?'Forhåndsbestilling':'Stengt nå'):'Åpningstider';
+ const statusCls=state?(state.open?' is-open':state.preOpen?' is-preorder':' is-closed'):'';
+ const statusNote=state?state.pill:'Se åpningstider nedenfor';
+ const map=address?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address):'';
+ const website=betaRestaurantCleanHref(settings.website);
+ const insta=betaRestaurantCleanHref(settings.instagram);
+ const facebook=betaRestaurantCleanHref(settings.facebook);
+ const pickup=betaRestaurantText(settings.pickupInfo)||'Henting i restauranten';
+ const payment=betaRestaurantText(settings.paymentInfo);
+ const description=betaRestaurantText(settings.description);
+ const meta=[betaRestaurantText(settings.city),'Takeaway'].filter(Boolean).join(' · ');
+ const facts=[
+  betaRestaurantRow('pin','Adresse',address,map,'Kart'),
+  betaRestaurantRow('phone','Telefon',phone,tel?'tel:'+tel:'','Ring'),
+  betaRestaurantRow('mail','E-post',validEmail,validEmail?'mailto:'+validEmail:'','Skriv'),
+ ].filter(Boolean).join('');
+ const other=betaRestaurantRow('bag','Henting',pickup)+betaRestaurantRow('card','Betaling',payment);
+ const links=[
+  website?'<a target="_blank" rel="noopener noreferrer" href="'+esc(website)+'">'+betaRestaurantIcons('globe')+' Nettside</a>':'',
+  insta?'<a target="_blank" rel="noopener noreferrer" href="'+esc(insta)+'">Instagram ↗</a>':'',
+  facebook?'<a target="_blank" rel="noopener noreferrer" href="'+esc(facebook)+'">Facebook ↗</a>':''
+ ].filter(Boolean).join('');
+ const host=$('betaProfileRestaurantInfo');
+ host.innerHTML='<div class="beta-restaurant-hero"><div class="beta-restaurant-logo">'+betaRestaurantIcons('shop')+'</div>'+
+ '<div class="beta-restaurant-hero-copy"><small>RESTAURANTINFORMASJON</small><h3>'+esc(restaurant)+'</h3><p>'+esc(meta)+'</p></div></div>'+
+ (description?'<p class="beta-restaurant-description">'+esc(description)+'</p>':'')+
+ '<div class="beta-restaurant-status'+statusCls+'"><span class="beta-restaurant-status-dot" aria-hidden="true"></span><div><strong>'+esc(status)+'</strong><small>'+esc(statusNote)+'</small></div></div>'+
+ '<section class="beta-restaurant-card"><h3>Kontakt og adresse</h3>'+
+ (facts||'<p class="beta-restaurant-empty">Kontaktinformasjon er ikke registrert ennå.</p>')+'</section>'+
+ '<section class="beta-restaurant-card"><div class="beta-restaurant-section-title"><h3>Åpningstider</h3><span>Europe/Oslo</span></div><div class="beta-restaurant-hours">'+hours+'</div></section>'+
+ '<section class="beta-restaurant-card"><h3>Bestilling og henting</h3>'+other+'</section>'+
+ (links?'<div class="beta-restaurant-links">'+links+'</div>':'')+
+ '<div class="beta-restaurant-sync"><p id="betaRestaurantStatus" role="status">'+esc(betaRestaurantMessage||'Viser lagret restaurantinformasjon')+'</p>'+
+ '<button id="betaRestaurantRefresh" type="button" data-beta-restaurant-refresh>'+betaRestaurantIcons('refresh')+' Oppdater informasjon</button></div>';
+}
+async function betaRestaurantRefresh(){
+ if(betaRestaurantLoading)return betaRestaurantLoading;
+ const task=(async()=>{
+  betaRestaurantMessage='Oppdaterer fra settings…';
+  betaProfileRenderRestaurant();
+  try{
+   const response=await fetch(BASE+'/settings.json',{cache:'no-store'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const data=await response.json();
+   if(!data||typeof data!=='object'||Array.isArray(data))throw Error('Ugyldig settings-format');
+   if(!menu)throw Error('Menyen er ikke lastet');
+   menu.settings=data;
+   await localPut(menu);
+   $('brandName').textContent=betaRestaurantText(menu.settings.restaurantName)||'KØL Grill & Pizza';
+   updateHoursStatus();
+   betaRestaurantMessage='Oppdatert fra settings · lagret på enheten';
+  }catch(error){
+   console.warn('BETA restaurant settings refresh failed:',error);
+   betaRestaurantMessage='Kunne ikke oppdatere. Viser lagret informasjon.';
+  }finally{
+   if(!$('betaProfileRestaurantPanel').hidden)betaProfileRenderRestaurant();
+  }
+ })();
+ betaRestaurantLoading=task;
+ try{return await task}finally{betaRestaurantLoading=null}
 }
 function betaProfileShowTab(tab){
  const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',restaurant:'Restaurantinformasjon'};
@@ -308,6 +411,9 @@ function betaProfileInit(){
  $('betaProfileClose').addEventListener('click',betaProfileClose);
  $('betaProfileHomeButton').addEventListener('click',()=>betaProfileShowTab('home'));
  $('betaProfileForm').addEventListener('submit',event=>{void betaProfileSaveContact(event)});
+ $('betaProfileRestaurantInfo').addEventListener('click',event=>{
+  if(event.target.closest('[data-beta-restaurant-refresh]'))void betaRestaurantRefresh();
+ });
  $('betaProfileHome').addEventListener('click',event=>{
   const trigger=event.target.closest('[data-beta-profile-tab]');
   if(trigger)betaProfileShowTab(trigger.dataset.betaProfileTab);
