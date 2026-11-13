@@ -1009,12 +1009,6 @@ function renderDemoPickupChoices(){
  select.disabled=!slots.length;
  if(!asap)demoStore(DEMO_PICKUP_KEY,demoPickup);
 }
-function pickupSummary(){
- $('demoPickupItemCount').textContent=cart.reduce((count,x)=>count+(Number(x.qty)||0),0)+' varer';
- $('demoPickupOrderItems').innerHTML=cart.map(line=>
-  '<div class="demo-pickup-line"><strong>'+esc(line.name)+' × '+Number(line.qty||0)+'</strong><span>'+money((Number(line.qty)||0)*(Number(line.unitPrice)||0))+'</span></div>'
- ).join('')+'<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
-}
 function checkoutNavigate(step){
  checkoutStep=step;
  $('cartCartStep').hidden=step!=='cart';
