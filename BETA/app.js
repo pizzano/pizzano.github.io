@@ -1031,6 +1031,7 @@ function checkoutNavigate(step){
   updateContactValidation();
  }
  if(step==='pickup'){
+  $('cartPickupStep').querySelector('.checkout-order-preview').open=false;
   renderDemoPickupChoices();
   pickupSummary();
  }
