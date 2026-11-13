@@ -1258,6 +1258,10 @@ function adminOrdersShouldBeLive(now = Date.now()) {
   if (CUSTOMER_MODE) return false;
   const state = getOpenState(new Date(now));
   if (state.open || state.orderable) return true;
+  // When admin starts after closing, take ONE authoritative initial snapshot:
+  // without it we cannot know whether an earlier order is still awaiting staff.
+  // The channel is closed after that snapshot if there is nothing active.
+  if (!adminOrdersSnapshotLoaded) return true;
   return store.orders.some(order =>
     ['mottatt', 'bekreftet', 'tilberedning'].includes(String(order.status || '')) &&
     Number(order.createdAt) > 0 &&
