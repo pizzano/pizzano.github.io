@@ -7,8 +7,9 @@ function betaReadTheme(){
 function betaApplyTheme(theme,persist=true){
  const dark=theme==='dark';
  document.documentElement.dataset.betaTheme=dark?'dark':'light';
- const button=$('betaThemeToggle');
- if(button){
+ for(const id of ['betaThemeToggle','betaProfileThemeToggle']){
+  const button=$(id);
+  if(!button)continue;
   button.setAttribute('aria-pressed',String(dark));
   button.setAttribute('aria-label',dark?'Bytt til lys modus':'Bytt til mørk modus');
   button.querySelector('.beta-theme-sun').hidden=dark;
@@ -38,14 +39,112 @@ function betaProfilePhoneNumber(phone){
  const d=String(phone||'').replace(/\D/g,'');
  return /^[49]\d{7}$/.test(d)?'+47 '+d.slice(0,2)+' '+d.slice(2,4)+' '+d.slice(4,6)+' '+d.slice(6):'Kundeprofil';
 }
+/* Pizzabonus: one small GET per stored phone on first view.
+ * Local cache is reused indefinitely until the customer presses Oppdater.
+ * Never download the whole /customers node or read personal contact fields.
+ */
+const BETA_BONUS_CACHE_KEY='kol-beta-bonus-cache-v1';
+const BETA_BONUS_CONSENT_KEY='kol-beta-bonus-consent-v1';
+const betaBonusRequested=new Set();
+let betaBonusPending=null;
+function betaBonusPhone(){
+ const phone=String(betaProfileContact().phone||'').replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');
+ return /^[49]\d{7}$/.test(phone)?phone:'';
+}
+function betaBonusValue(value){
+ return Math.min(10,Math.max(0,Math.floor(Number(value)||0)));
+}
+function betaBonusCached(phone){
+ if(!phone)return null;
+ try{
+  const entry=JSON.parse(localStorage.getItem(BETA_BONUS_CACHE_KEY)||'null');
+  return entry&&entry.phone===phone&&Number.isInteger(entry.count)&&entry.count>=0?
+   entry:null;
+ }catch{return null}
+}
+function betaBonusRender(count){
+ const earned=betaBonusValue(count);
+ const pts=(radius,angle)=>[
+  120+radius*Math.cos(angle*Math.PI/180),
+  120+radius*Math.sin(angle*Math.PI/180)
+ ];
+ const segments=Array.from({length:10},(_,i)=>{
+  const start=i*36-90+1.5,end=start+33;
+  const a=pts(104,start),b=pts(104,end),c=pts(72,end),d=pts(72,start),pos=pts(88,start+16.5);
+  return '<g class="beta-bonus-piece'+(i<earned?' earned':'')+'">'+
+   '<path class="beta-bonus-wedge" d="M'+a.join(' ')+' A104 104 0 0 1 '+b.join(' ')+
+   ' L'+c.join(' ')+' A72 72 0 0 0 '+d.join(' ')+'Z"/>'+
+   '<g class="beta-bonus-pizza" transform="translate('+(pos[0]-10)+' '+(pos[1]-10)+')">'+
+   '<path d="M4 3Q10-1 17 5L5 19Z M4 3Q10 1 16 6"/>'+
+   '<circle cx="8" cy="7" r="1.2"/><circle cx="11" cy="10" r="1.2"/>'+
+   '<circle cx="6.5" cy="13" r="1"/></g></g>';
+ }).join('');
+ $('betaBonusSegments').innerHTML=segments;
+ $('betaBonusCount').textContent=earned;
+ $('betaBonusRing').setAttribute('aria-label',earned+' av 10 pizzaer registrert');
+ const remaining=10-earned;
+ $('betaBonusRemaining').textContent=remaining?
+  remaining+' '+(remaining===1?'pizza igjen':'pizzaer igjen')+' til din gratis pizza':
+  'Du har opptjent en gratis pizza!';
+}
+function betaBonusStatus(message){
+ $('betaBonusStatus').textContent=message||'';
+}
+function betaBonusConsentKey(){
+ return BETA_BONUS_CONSENT_KEY+':'+(betaBonusPhone()||'local');
+}
+function betaBonusConsentShow(){
+ try{$('betaBonusConsent').checked=localStorage.getItem(betaBonusConsentKey())==='true'}
+ catch{$('betaBonusConsent').checked=false}
+}
+async function betaBonusLoad(force=false){
+ const phone=betaBonusPhone();
+ if(!phone){
+  betaBonusRender(0);
+  betaBonusStatus('Lagre et mobilnummer for å hente pizzabonus.');
+  return;
+ }
+ const cached=betaBonusCached(phone);
+ if(cached)betaBonusRender(cached.count);
+ if(betaBonusPending)return betaBonusPending;
+ if(!force&&(cached||betaBonusRequested.has(phone)))return;
+ betaBonusRequested.add(phone);
+ $('betaBonusRefresh').disabled=true;
+ betaBonusStatus('Oppdaterer pizzabonus…');
+ betaBonusPending=(async()=>{
+  try{
+   const response=await fetch(BASE+'/customers/'+phone+'/bonusCount.json',{cache:'no-store'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const amount=betaBonusValue(await response.json());
+   try{localStorage.setItem(BETA_BONUS_CACHE_KEY,JSON.stringify({phone,count:amount,savedAt:Date.now()}))}catch{}
+   if(betaBonusPhone()===phone){
+    betaBonusRender(amount);
+    betaBonusStatus('Oppdatert');
+   }
+  }catch(err){
+   console.warn('BETA bonus read failed:',err);
+   if(betaBonusPhone()===phone)betaBonusStatus('Kunne ikke hente pizzabonus. Prøv Oppdater.');
+  }finally{
+   $('betaBonusRefresh').disabled=false;
+   betaBonusPending=null;
+  }
+ })();
+ return betaBonusPending;
+}
+function betaBonusDisplayHome(){
+ const phone=betaBonusPhone(),cache=betaBonusCached(phone);
+ betaBonusRender(cache?.count??0);
+ betaBonusConsentShow();
+ betaBonusStatus(phone?(cache?'Lokalt lagret · Oppdater for ny status':''):'Lagre mobilnummer for å hente pizzabonus.');
+}
 function betaProfileRenderHome(){
  const c=betaProfileContact(),name=String(c.name||'').trim(),avatar=betaProfileInitials(name);
  $('betaProfileName').textContent=name||'Min profil';
  $('betaProfilePhone').textContent=betaProfilePhoneNumber(c.phone);
- $('betaProfileAvatar').textContent=avatar||'👤';
+ $('betaProfileInitials').textContent=avatar||'👤';
  $('betaProfileContactMeta').textContent=(name||c.phone)?(c.email?'Navn, mobilnummer og e-post lagret':'Navn og mobilnummer lagret'):'Navn, mobilnummer og e-post';
  $('betaProfileOrdersMeta').textContent=demoOrder?'1 lokalt lagret bestillingsoversikt':'Ingen lagrede bestillinger';
- $('betaProfileFavoritesMeta').textContent=favorites.length+' '+(favorites.length===1?'favoritt':'favoritter')+' på denne enheten';
+ betaBonusDisplayHome();
 }
 function betaProfileRenderOrders(){
  const host=$('betaProfileOrders');
@@ -56,12 +155,7 @@ function betaProfileRenderOrders(){
  '<p>Ikke sendt til restauranten</p><p>'+items.map(item=>esc((Number(item.qty)||1)+' × '+String(item.name||''))).join(' · ')+'</p>'+
  '<div><span>'+esc(order.pickup?.label||'Snarest')+'</span><strong>'+money(order.total)+'</strong></div></article>';
 }
-function betaProfileRenderFavorites(){
- const host=$('betaProfileFavorites');
- if(!favorites.length){host.innerHTML='<p class="beta-profile-empty">Trykk på hjertet ved et produkt for å lagre det som favoritt.</p>';return}
- const items=(menu?.sections||[]).flatMap(s=>s.items||[]).filter(item=>isFavorite(item.id)&&!item.hidden);
- host.innerHTML=items.length?items.map(item=>'<button class="beta-profile-favorite-row" type="button" data-beta-fav-id="'+esc(item.id)+'"><strong>'+esc(item.name)+'</strong><span>'+money(basePrice(item))+' ›</span></button>').join(''):'<p class="beta-profile-empty">Favorittene dine vises når menyen er lastet.</p>';
-}
+
 function betaProfileRenderRestaurant(){
  const settings=menu?.settings||{};
  const names=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
@@ -73,10 +167,10 @@ function betaProfileRenderRestaurant(){
  (address?'<p>'+esc(address)+'</p>':'')+(phone?'<p>'+esc(phone)+'</p>':'')+'<h4>Åpningstider</h4>'+rows+'</div>';
 }
 function betaProfileShowTab(tab){
- const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',favorites:'Mine favoritter',restaurant:'Restaurantinformasjon'};
+ const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',restaurant:'Restaurantinformasjon'};
  $('betaProfileHome').hidden=!home;$('betaProfileDetail').hidden=home;
  for(const name of Object.keys(names))$('betaProfile'+name[0].toUpperCase()+name.slice(1)+'Panel').hidden=tab!==name;
- if(home)betaProfileRenderHome();
+ if(home){betaProfileRenderHome();void betaBonusLoad(false)}
  else{
   $('betaProfileDetailTitle').textContent=names[tab]||'Min profil';
   if(tab==='contact'){
@@ -86,7 +180,6 @@ function betaProfileShowTab(tab){
    $('betaProfEmail').value=c.email||'';
    $('betaProfileSaveStatus').hidden=true;
   }else if(tab==='orders')betaProfileRenderOrders();
-  else if(tab==='favorites')betaProfileRenderFavorites();
   else if(tab==='restaurant')betaProfileRenderRestaurant();
  }
  $('betaProfileScroll').scrollTop=0;
@@ -96,6 +189,9 @@ function betaProfileOpen(){
  show('betaProfileSheet');
  $('btnProfile').setAttribute('aria-expanded','true');
  betaProfileShowTab('home');
+ const count=cart.reduce((n,line)=>n+(Number(line.qty)||0),0);
+ $('betaProfileCartCount').hidden=!count;
+ $('betaProfileCartCount').textContent=count;
  $('betaProfileClose').focus();
 }
 function betaProfileClose(){
@@ -136,6 +232,14 @@ async function betaProfileSaveContact(event){
 function betaProfileInit(){
  betaApplyTheme(betaReadTheme(),false);
  $('betaThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
+ $('betaProfileThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
+ $('betaProfileNav').addEventListener('click',()=>betaProfileShowTab('home'));
+ $('betaProfileCart').addEventListener('click',()=>{hideAll();showCart()});
+ $('betaBonusRefresh').addEventListener('click',()=>{void betaBonusLoad(true)});
+ $('betaBonusConsent').addEventListener('change',event=>{
+  try{localStorage.setItem(betaBonusConsentKey(),String(event.target.checked))}catch{}
+  betaBonusStatus('Valget er lagret lokalt. Varslinger er ikke aktivert i BETA ennå.');
+ });
  $('btnProfile').addEventListener('click',()=>{$('betaProfileSheet').hidden?betaProfileOpen():betaProfileClose()});
  $('betaProfileClose').addEventListener('click',betaProfileClose);
  $('betaProfileHomeButton').addEventListener('click',()=>betaProfileShowTab('home'));
@@ -143,10 +247,6 @@ function betaProfileInit(){
  $('betaProfileHome').addEventListener('click',event=>{
   const trigger=event.target.closest('[data-beta-profile-tab]');
   if(trigger)betaProfileShowTab(trigger.dataset.betaProfileTab);
- });
- $('betaProfileFavorites').addEventListener('click',event=>{
-  const target=event.target.closest('[data-beta-fav-id]');
-  if(target){hideAll();showSheet(target.dataset.betaFavId)}
  });
  window.addEventListener('storage',event=>{
   if(event.key===BETA_THEME_KEY)betaApplyTheme(betaReadTheme(),false);

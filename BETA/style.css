@@ -714,3 +714,76 @@ html[data-beta-theme="dark"] .cart-recommendations-head :is(strong,small){color:
 html[data-beta-theme="dark"] .beta-profile-hours-row,
 html[data-beta-theme="dark"] .beta-profile-favorite-row{border-color:#355f4d}
 html[data-beta-theme="dark"] :is(.beta-profile-menu-row,.beta-profile-favorite-row){color:#e6f7eb}
+
+/* Profile header remains consistent with the menu: three actionable SVG buttons. */
+.beta-profile-topbar{gap:9px;padding:9px 10px}
+.beta-profile-brand{display:flex;align-items:center;gap:6px;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.beta-profile-brand>span{font-size:22px;flex:none}
+.beta-profile-brand strong{font-size:var(--text-md);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.beta-profile-header-icons{gap:5px}
+.beta-profile-header-icons .header-icon-round{width:38px;min-width:38px;height:38px}
+.beta-profile-header-icons .header-icon-round svg{width:20px;height:20px}
+.beta-profile-header-icons .header-icon-round.is-active{background:#087d5d;border-color:#087d5d}
+.beta-profile-header-icons .header-icon-round.cart-top{background:#ffffff14;border-color:#ffffff55}
+.beta-profile-header-icons .header-icon-round.cart-top:hover{background:#ffffff30}
+@media(max-width:370px){
+ .beta-profile-topbar{gap:6px;padding:8px 8px}
+ .beta-profile-brand{gap:3px}
+ .beta-profile-brand strong{font-size:11px}
+ .beta-profile-brand>span{font-size:18px}
+ .beta-profile-back{width:33px;height:33px}
+ .beta-profile-header-icons{gap:4px}
+ .beta-profile-header-icons .header-icon-round{width:33px;min-width:33px;height:33px}
+}
+
+/* Profile identity: portrait-style initials with a small heart ornament. */
+.beta-profile-hero{display:flex;align-items:center;gap:17px;text-align:left;padding:18px 15px;border:0;background:#f1f8f5}
+.beta-profile-avatar{position:relative;display:grid;place-items:center;flex:none;width:90px;height:90px;margin:0;border:5px solid #d5e9e2;box-shadow:0 5px 18px #174b331d;background:#087f5f;font-size:29px;color:#fff}
+.beta-profile-avatar #betaProfileInitials{font-weight:900;line-height:1}
+.beta-profile-heart{position:absolute;right:-6px;bottom:2px;display:grid;place-items:center;width:29px;height:29px;border:3px solid #f1f8f5;border-radius:50%;background:#087f5f;color:#fff;font-style:normal;font-size:12px}
+.beta-profile-id{min-width:0}
+.beta-profile-id h2{margin:0 0 5px;font-size:19px;color:#16372e;overflow-wrap:anywhere}
+.beta-profile-id p{font-size:var(--text-md);color:#6c877c;letter-spacing:.01em}
+@media(max-width:370px){.beta-profile-hero{gap:11px;padding:16px 9px}.beta-profile-avatar{width:75px;height:75px;font-size:24px}.beta-profile-id h2{font-size:17px}}
+
+/* Ten-piece SVG pizza loyalty ring: zero is a full pale ring. */
+.beta-profile-bonus{display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 17px 18px}
+.beta-profile-bonus>h3{margin:0 0 9px;font-size:16px;font-weight:800}
+.beta-profile-bonus>.beta-bonus-intro{font-size:var(--text-md);color:#758e83}
+.beta-bonus-ring{display:block;width:min(100%,306px);height:auto;margin:19px auto 22px;overflow:visible}
+.beta-bonus-wedge{fill:#dcece7}
+.beta-bonus-piece.earned .beta-bonus-wedge{fill:#087e60}
+.beta-bonus-pizza{fill:none;stroke:#6b9284;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.beta-bonus-pizza circle{fill:#6b9284;stroke:none}
+.beta-bonus-piece.earned .beta-bonus-pizza{stroke:#fff}
+.beta-bonus-piece.earned .beta-bonus-pizza circle{fill:#fff}
+.beta-bonus-count{font-size:49px;font-weight:900;fill:#133a2f;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.beta-bonus-ring-caption{font-size:14px;font-weight:850;fill:#153d32;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.beta-bonus-remaining{font-size:var(--text-md);font-weight:850;color:#153d32;margin:0 0 12px}
+.beta-profile-bonus>.beta-bonus-terms{font-size:var(--text-sm);color:#779086;line-height:1.5}
+.beta-bonus-consent{display:flex;align-items:center;gap:10px;text-align:left;width:100%;margin:22px 0 0;padding:12px 13px;border:1px solid #c6e1d4;border-radius:15px;background:#e9f5ef;color:#244338;font-size:var(--text-md);font-weight:500;cursor:pointer}
+.beta-bonus-consent input{width:18px;height:18px;flex:none;accent-color:#087f5f}
+.beta-bonus-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;width:100%;padding:10px 0 0}
+.beta-bonus-refresh{padding:6px 10px;border:1px solid #c4dccc;border-radius:10px;background:#fff;color:#087b57;font-size:var(--text-sm);font-weight:750}
+.beta-bonus-refresh:disabled{opacity:.6;cursor:wait}
+#betaBonusStatus{font-size:var(--text-sm);color:#718f81;text-align:right;line-height:1.4}
+@media(max-width:480px){.beta-bonus-ring{width:min(100%,270px);margin:17px auto 20px}.beta-profile-bonus{padding:19px 12px 15px}}
+
+/* Dark-theme profile ring and identity contrast. */
+html[data-beta-theme="dark"] .beta-profile-hero{background:#16392f}
+html[data-beta-theme="dark"] .beta-profile-avatar{border-color:#305c4c}
+html[data-beta-theme="dark"] .beta-profile-heart{border-color:#17372f}
+html[data-beta-theme="dark"] .beta-profile-id :is(h2,p),
+html[data-beta-theme="dark"] :is(.beta-profile-bonus>h3,.beta-bonus-remaining){color:#e8f7ee}
+html[data-beta-theme="dark"] .beta-profile-bonus>.beta-bonus-intro,
+html[data-beta-theme="dark"] .beta-profile-bonus>.beta-bonus-terms{color:#abc7b8}
+html[data-beta-theme="dark"] .beta-bonus-wedge{fill:#31544a}
+html[data-beta-theme="dark"] .beta-bonus-piece.earned .beta-bonus-wedge{fill:#13a278}
+html[data-beta-theme="dark"] .beta-bonus-pizza{stroke:#a8c9b7}
+html[data-beta-theme="dark"] .beta-bonus-pizza circle{fill:#a8c9b7}
+html[data-beta-theme="dark"] .beta-bonus-piece.earned .beta-bonus-pizza{stroke:#fff}
+html[data-beta-theme="dark"] .beta-bonus-piece.earned .beta-bonus-pizza circle{fill:#fff}
+html[data-beta-theme="dark"] :is(.beta-bonus-count,.beta-bonus-ring-caption){fill:#e9f7ef}
+html[data-beta-theme="dark"] .beta-bonus-consent{background:#214a3b;border-color:#3b7156;color:#e6f9ee}
+html[data-beta-theme="dark"] .beta-bonus-refresh{background:#173c2f;border-color:#3a7557;color:#a7efc9}
+html[data-beta-theme="dark"] #betaBonusStatus{color:#a6cdbb}

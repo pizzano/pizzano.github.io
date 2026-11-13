@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>KØL Grill & Pizza · Bestilling</title>
-  <link rel="stylesheet" href="./style.css?v=20261113-profile-dark7">
+  <link rel="stylesheet" href="./style.css?v=20261113-bonus-ring8">
   <script src="./sepet.js?v=20261113-basket-all-steps5" defer></script>
   <script src="./app.js?v=20261113-profile-dark7" defer></script>
-  <script src="./profil.js?v=20261113-profile-dark7" defer></script>
+  <script src="./profil.js?v=20261113-bonus-ring8" defer></script>
 </head>
 <body>
   <div class="app" id="appViewport">
@@ -65,15 +65,34 @@
   </section>
 
 <section id="betaProfileSheet" class="sheet beta-profile-sheet" role="dialog" aria-modal="true" aria-labelledby="betaProfileTitle" hidden>
- <header class="beta-profile-topbar"><button id="betaProfileClose" class="beta-profile-back" type="button" aria-label="Til menyen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><strong id="betaProfileTitle">Min profil</strong><span class="beta-profile-topmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></span></header>
+ <header class="beta-profile-topbar">
+ <button id="betaProfileClose" class="beta-profile-back" type="button" aria-label="Til menyen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+ <div class="beta-profile-brand"><span aria-hidden="true">🔥</span><strong>KØL Grill &amp; Pizza</strong></div>
+ <nav class="header-actions header-icon-actions beta-profile-header-icons" aria-label="Hovedhandlinger">
+  <button id="betaProfileThemeToggle" class="icon-button header-icon-round" type="button" aria-label="Bytt til mørk modus" aria-pressed="false"><span class="beta-theme-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></svg></span><span class="beta-theme-moon" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14A8.5 8.5 0 0 1 10 4a8.6 8.6 0 1 0 10 10Z"/></svg></span></button>
+  <button id="betaProfileNav" class="icon-button header-icon-round is-active" type="button" aria-label="Min profil" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></button>
+  <button id="betaProfileCart" class="icon-button header-icon-round cart-top" type="button" aria-label="Åpne handlekurv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.7 4h3l2.6 11h10.2l2.3-8H6.5"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg><span id="betaProfileCartCount" class="count" hidden>0</span></button>
+ </nav>
+</header>
  <div id="betaProfileScroll" class="beta-profile-scroll">
   <div id="betaProfileHome">
-   <div class="beta-profile-hero"><span id="betaProfileAvatar" class="beta-profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></span><h2 id="betaProfileName">Min profil</h2><p id="betaProfilePhone">Kundeprofil</p></div>
-   <section class="beta-profile-bonus" aria-label="Din pizzabonus"><div class="beta-profile-bonus-title"><span aria-hidden="true">🍕</span><div><h3>Din pizzabonus</h3><p>Kjøp 10 store pizzaer, få den 11. gratis</p></div></div><div class="beta-bonus-progress"><span>Bonusstatus</span><strong>— / 10</strong></div><p class="beta-bonus-help">Pizzaantallet vises når kontoen kan verifiseres. Ingen private kundedata hentes uten sikker innlogging.</p></section>
+   <div class="beta-profile-hero"><span id="betaProfileAvatar" class="beta-profile-avatar" aria-hidden="true"><span id="betaProfileInitials">👤</span><i class="beta-profile-heart" aria-hidden="true">♥</i></span><div class="beta-profile-id"><h2 id="betaProfileName">Min profil</h2><p id="betaProfilePhone">Kundeprofil</p></div></div>
+   <section class="beta-profile-bonus" aria-label="Din pizzabonus">
+ <h3>Din pizzabonus</h3><p class="beta-bonus-intro">Kjøp 10 store pizzaer, få den 11. gratis</p>
+ <svg id="betaBonusRing" class="beta-bonus-ring" viewBox="0 0 240 240" role="img" aria-label="0 av 10 pizzaer registrert">
+  <g id="betaBonusSegments"></g>
+  <text id="betaBonusCount" class="beta-bonus-count" x="120" y="124" text-anchor="middle">0</text>
+  <text class="beta-bonus-ring-caption" x="120" y="145" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="17">registrert</tspan></text>
+ </svg>
+ <strong id="betaBonusRemaining" class="beta-bonus-remaining">10 pizzaer igjen til din gratis pizza</strong>
+ <small class="beta-bonus-terms">Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small>
+ <label class="beta-bonus-consent"><input type="checkbox" id="betaBonusConsent"><span>Varsle meg om gratis pizza og bruk pizzabonus automatisk.</span></label>
+ <div class="beta-bonus-tools"><button id="betaBonusRefresh" type="button" class="beta-bonus-refresh">Oppdater pizzabonus</button><small id="betaBonusStatus" role="status" aria-live="polite"></small></div>
+</section>
    <nav class="beta-profile-menu" aria-label="Profilmeny">
     <button type="button" data-beta-profile-tab="contact" class="beta-profile-menu-row"><span class="beta-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></span><span class="beta-profile-menu-copy"><strong>Rediger profil</strong><small id="betaProfileContactMeta">Navn, mobilnummer og e-post</small></span><span class="beta-profile-chevron">›</span></button>
     <button type="button" data-beta-profile-tab="orders" class="beta-profile-menu-row"><span class="beta-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="beta-profile-menu-copy"><strong>Mine bestillinger</strong><small id="betaProfileOrdersMeta">Bestillinger på denne enheten</small></span><span class="beta-profile-chevron">›</span></button>
-    <button type="button" data-beta-profile-tab="favorites" class="beta-profile-menu-row"><span class="beta-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 9.4c0 4.1-8.8 10-8.8 10S3.2 13.5 3.2 9.4A4.7 4.7 0 0 1 12 7.2a4.7 4.7 0 0 1 8.8 2.2Z"/></svg></span><span class="beta-profile-menu-copy"><strong>Mine favoritter</strong><small id="betaProfileFavoritesMeta">Lagrede favoritter</small></span><span class="beta-profile-chevron">›</span></button>
+    
     <button type="button" data-beta-profile-tab="restaurant" class="beta-profile-menu-row"><span class="beta-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 5 4h14l2 6M5 10v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0"/></svg></span><span class="beta-profile-menu-copy"><strong>Restaurantinformasjon</strong><small>Åpningstider og kontakt</small></span><span class="beta-profile-chevron">›</span></button>
    </nav>
   </div>
@@ -92,7 +111,7 @@
     </form>
    </section>
    <section id="betaProfileOrdersPanel" class="beta-profile-panel" hidden><div id="betaProfileOrders"></div></section>
-   <section id="betaProfileFavoritesPanel" class="beta-profile-panel" hidden><div id="betaProfileFavorites"></div></section>
+   
    <section id="betaProfileRestaurantPanel" class="beta-profile-panel" hidden><div id="betaProfileRestaurantInfo"></div></section>
   </div>
  </div>
