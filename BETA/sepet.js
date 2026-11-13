@@ -168,4 +168,22 @@ function renderCartContents(){
 }
 
 
+// One shared source of details for the basket and final pickup review.
+function pickupSummary(){
+ const host=$('demoPickupOrderItems');
+ const totalQuantity=cart.reduce((count,line)=>count+(Number(line.qty)||0),0);
+ $('demoPickupItemCount').textContent=totalQuantity+' '+(totalQuantity===1?'vare':'varer');
+ host.innerHTML=cart.map(line=>{
+  const count=Math.max(1,Number(line.qty)||1);
+  const unitPrice=Number(line.unitPrice)||0;
+  const linePrice=count*unitPrice;
+  return '<article class="demo-pickup-product">'+
+   '<div class="demo-pickup-product-heading"><strong>'+esc(line.name)+' × '+count+'</strong>'+
+   '<strong>'+money(linePrice)+'</strong></div>'+
+   '<div class="demo-pickup-product-details">'+cartLineDetails(line)+'</div>'+
+   (count>1?'<div class="demo-pickup-unit-price">'+money(unitPrice)+' / stk · '+count+' stk</div>':'')+
+   '</article>';
+ }).join('')+
+ '<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
+}
 function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
