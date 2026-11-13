@@ -83,7 +83,7 @@ test('admin reconnect waits for initial SSE snapshot before duplicating full ord
   assert.match(data, /ordersStreamStartedAt = Date\.now\(\)/);
   assert.match(data, /\(!ordersStream \|\| Date\.now\(\) - ordersStreamStartedAt >= 9000\)/);
   assert.match(data, /const FALLBACK_MENU_INTERVAL = CUSTOMER_MODE \? 10 \* 60 \* 1000 : 30000/);
-  assert.match(data, /if \(!ordersStreamHealthy && !ordersFallbackBusy/);
+  assert.match(data, /adminOrdersShouldBeLive\(\) && !ordersStreamHealthy && !ordersFallbackBusy/);
 });
 test('customer contact saves only name/email without downloading private account totals', () => {
   const start = data.indexOf('export async function saveCustomerContact(');
@@ -239,4 +239,44 @@ test('phase 2: legacy bonus reuses a loaded admin snapshot', () => {
 test('phase 2: unrelated remote receipt changes do not reschedule loyalty rollups', () => {
   assert.match(loyalty,/function orderSyncFingerprint\(\)/);
   assert.match(loyalty,/if \(nextFingerprint === lastOrderSyncFingerprint\) return/);
+});
+
+
+test('admin orders channel pauses outside orderable hours but resumes after midnight', () => {
+  const begin=data.indexOf('function adminOrdersShouldBeLive(');
+  const end=data.indexOf('\nfunction reconcileAdminOrdersChannel()',begin);
+  assert.ok(begin>0 && end>begin);
+  const fnCode=data.slice(begin,end);
+  const now=Date.now();
+  const make=(openState,orders=[])=>new Function('deps',
+    'const {CUSTOMER_MODE,getOpenState,store,adminOrdersSnapshotLoaded}=deps;\n'+fnCode+
+    '\nreturn adminOrdersShouldBeLive;')({
+      CUSTOMER_MODE:false,getOpenState:()=>openState,
+      adminOrdersSnapshotLoaded:true,store:{orders}
+    });
+  assert.equal(make({open:false,orderable:false})(),false);
+  // A newly opened admin during closing must first detect pending orders.
+  const firstSnapshot = new Function('deps',
+    'const {CUSTOMER_MODE,getOpenState,store,adminOrdersSnapshotLoaded}=deps;\n'+fnCode+
+    '\nreturn adminOrdersShouldBeLive;')({
+      CUSTOMER_MODE:false,getOpenState:()=>({open:false,orderable:false}),
+      adminOrdersSnapshotLoaded:false,store:{orders:[]}
+    });
+  assert.equal(firstSnapshot(),true);
+  assert.equal(make({open:true,orderable:true})(),true);
+  assert.equal(make({open:false,preOpen:true,orderable:true})(),true);
+  assert.equal(make({open:false,orderable:false},[{status:'mottatt',createdAt:now-60000}])(),true);
+  assert.equal(make({open:false,orderable:false},[{status:'tilberedning',createdAt:now-60000}])(),true);
+  assert.equal(make({open:false,orderable:false},[{status:'avvist',createdAt:now-60000}])(),false);
+  assert.equal(make({open:false,orderable:false},[{status:'mottatt',createdAt:now-3*86400000}])(),false);
+});
+
+test('admin SSE and REST fallback honor the same hours gate without blocking manual refresh', () => {
+  assert.match(data,/function beginOrdersStream\(\) \{\s*if \(!adminOrdersShouldBeLive\(\)\) return;/);
+  assert.match(data,/if \(!CUSTOMER_MODE\) reconcileAdminOrdersChannel\(\);/);
+  assert.match(data,/adminOrdersShouldBeLive\(\) && !ordersStreamHealthy && !ordersFallbackBusy/);
+  assert.match(data,/if \(!ordersStream && !document\.hidden && navigator\.onLine !== false\)\s*beginOrdersStream\(\)/);
+  assert.match(data,/if \(hadOrders && !ordersStream\) reconcileAdminOrdersChannel\(\)/);
+  assert.match(data,/async function pullRemote\(\{ ordersOnly = false \} = \{\}\)/);
+  assert.match(data,/restGet\(ORDERS_PATH\)/);
 });

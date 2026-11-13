@@ -1251,7 +1251,36 @@ function beginTrustedCompactOrdersStream() {
   }
 }
 
+// Avoid idle admin /orders SSE traffic when the shop cannot accept orders.
+// Pre-opening orders (after midnight), and orders still awaiting kitchen action,
+// keep the channel live. A local timer re-evaluates hours without Firebase reads.
+function adminOrdersShouldBeLive(now = Date.now()) {
+  if (CUSTOMER_MODE) return false;
+  const state = getOpenState(new Date(now));
+  if (state.open || state.orderable) return true;
+  // When admin starts after closing, take ONE authoritative initial snapshot:
+  // without it we cannot know whether an earlier order is still awaiting staff.
+  // The channel is closed after that snapshot if there is nothing active.
+  if (!adminOrdersSnapshotLoaded) return true;
+  return store.orders.some(order =>
+    ['mottatt', 'bekreftet', 'tilberedning'].includes(String(order.status || '')) &&
+    Number(order.createdAt) > 0 &&
+    now - Number(order.createdAt) < 24 * 60 * 60 * 1000);
+}
+function reconcileAdminOrdersChannel() {
+  if (CUSTOMER_MODE || !remoteEnabled) return;
+  if (!adminOrdersShouldBeLive()) {
+    if (ordersStream) ordersStream.close();
+    ordersStream = null;
+    ordersStreamHealthy = false;
+    return;
+  }
+  if (!ordersStream && !document.hidden && navigator.onLine !== false)
+    beginOrdersStream();
+}
+
 function beginOrdersStream() {
+  if (!adminOrdersShouldBeLive()) return;
   if (beginTrustedCompactOrdersStream()) return;
   if (!('EventSource' in window)) return;
   try {
@@ -1309,12 +1338,12 @@ function beginOrdersStream() {
 
 let reconnectTimer = null;
 function scheduleStreamReconnect() {
-  if (reconnectTimer || !remoteEnabled) return;
+  if (reconnectTimer || !remoteEnabled || (!CUSTOMER_MODE && !adminOrdersShouldBeLive())) return;
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null;
     if (document.hidden || navigator.onLine === false) return;
     if (CUSTOMER_MODE) syncCustomerStreams();
-    else if (!ordersStream) beginOrdersStream();
+    else reconcileAdminOrdersChannel();
     // Menu versions are checked by fallbackSync's role-specific interval.
     void fallbackSync();
   }, CUSTOMER_MODE ? 30000 : 3000);
@@ -1547,6 +1576,8 @@ export async function refreshFromDatabase(options = {}) {
 
 /** REST fallback while a stream is unavailable; never download the whole DB. */
 async function fallbackSync() {
+  // Re-evaluate open/closed at midnight even without any Firebase request.
+  if (!CUSTOMER_MODE) reconcileAdminOrdersChannel();
   if (!remoteEnabled || document.hidden || navigator.onLine === false) return;
   // Guard against an SSE that remains open while the trusted server stalls.
   if (!CUSTOMER_MODE && compactFeedActive &&
@@ -1555,7 +1586,7 @@ async function fallbackSync() {
   if (CUSTOMER_MODE) {
     startCustomerOrderStream();
     await pollCustomerOrders();
-  } else if (!ordersStreamHealthy && !ordersFallbackBusy &&
+  } else if (adminOrdersShouldBeLive() && !ordersStreamHealthy && !ordersFallbackBusy &&
              // A newly connected SSE sends its full initial snapshot. Do
              // not simultaneously fetch /orders.json on every reconnect.
              (!ordersStream || Date.now() - ordersStreamStartedAt >= 9000)) {
@@ -1926,7 +1957,7 @@ function pauseAdminLiveStreamsForWrite() {
   return () => {
     if (resumed) return;
     resumed = true;
-    if (hadOrders && !ordersStream) beginOrdersStream();
+    if (hadOrders && !ordersStream) reconcileAdminOrdersChannel();
   };
 }
 
