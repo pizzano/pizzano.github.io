@@ -459,3 +459,24 @@ test('customer CSS does not carry unreferenced animation keyframes', async () =>
   });
   assert.deepEqual(unused, []);
 });
+
+test('restaurant quick actions keep their layout and spacing in one declaration', async () => {
+  const css = await text('css/admin-settings.css');
+  const selector = '#pageSettings .restaurant-inline-actions';
+  const declarations = [...css.matchAll(/#pageSettings \.restaurant-inline-actions\\{([^}]*)\\}/g)];
+  assert.equal(declarations.length, 1, 'consolidate duplicated adjacent selector');
+  const block = declarations[0][1];
+  for (const property of ['display:flex', 'align-items:center', 'gap:10px', 'flex-wrap:wrap', 'margin-top:13px']) {
+    assert.ok(block.includes(property), 'preserve '+property);
+  }
+});
+
+test('product choices use the final card style without redundant earlier overrides', async () => {
+  const css = await text('css/admin-settings.css');
+  const selector = '.product-editor-modal [data-section="valg"]';
+  const occurrences = [...css.matchAll(/\\.product-editor-modal \\[data-section="valg"\\]\\{([^}]*)\\}/g)];
+  assert.equal(occurrences.length, 2, 'one desktop card rule plus mobile responsive override');
+  assert.match(occurrences[0][1], /background:#f1faf5!important/);
+  assert.match(occurrences[0][1], /border:1px solid #e3f0e9!important/);
+  assert.match(occurrences[1][1], /padding:0 9px 12px!important/);
+});
