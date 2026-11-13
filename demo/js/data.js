@@ -805,17 +805,6 @@ async function restGet(path, timeoutMs = 9000) {
   finally { if (pendingRestReads.get(key) === request) pendingRestReads.delete(key); }
 }
 
-/** Skriver til databasen: PUT <DB_URL>/<path>.json */
-async function restPut(path, data) {
-  const response = await fetch(`${DB_URL}/${path}.json`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error(`Kunne ikke lagre (${response.status})`);
-  return response.json();
-}
-
 /** Oppdaterer utvalgte felt: PATCH <DB_URL>/<path>.json */
 async function restPatch(path, data) {
   const suffix = path ? `/${path}.json` : '/.json';

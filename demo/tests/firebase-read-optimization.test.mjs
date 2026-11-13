@@ -280,3 +280,12 @@ test('admin SSE and REST fallback honor the same hours gate without blocking man
   assert.match(data,/async function pullRemote\(\{ ordersOnly = false \} = \{\}\)/);
   assert.match(data,/restGet\(ORDERS_PATH\)/);
 });
+
+
+test('legacy unused generic REST PUT helper is removed without changing critical writes', () => {
+  assert.doesNotMatch(data, /\bfunction restPut\(/);
+  assert.match(data, /async function restPatch\(path, data\)/);
+  assert.match(data, /async function patchConfirmedPizzaOrder\(order, changes\)/);
+  assert.match(data, /'if-match': etag/);
+  assert.match(data, /method: 'PUT'/);
+});

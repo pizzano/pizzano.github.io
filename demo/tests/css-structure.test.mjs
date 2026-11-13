@@ -459,3 +459,22 @@ test('customer CSS does not carry unreferenced animation keyframes', async () =>
   });
   assert.deepEqual(unused, []);
 });
+
+test('restaurant quick actions keep layout and spacing in one declaration', async () => {
+  const css = await text('css/admin-settings.css');
+  const selector = '#pageSettings .restaurant-inline-actions';
+  const blocks = [...css.matchAll(/#pageSettings \.restaurant-inline-actions\{([^}]*)\}/g)];
+  assert.equal(blocks.length, 1, 'adjacent duplicate selector was consolidated');
+  for (const property of ['display:flex','align-items:center','gap:10px','flex-wrap:wrap','margin-top:13px']) {
+    assert.ok(blocks[0][1].includes(property), 'retained '+property);
+  }
+});
+
+test('product choices keep final desktop and mobile layouts without overwritten declarations', async () => {
+  const css = await text('css/admin-settings.css');
+  const blocks = [...css.matchAll(/\.product-editor-modal \[data-section="valg"\]\{([^}]*)\}/g)];
+  assert.equal(blocks.length, 2, 'one desktop card rule and one mobile override');
+  assert.match(blocks[0][1], /background:#f1faf5!important/);
+  assert.match(blocks[0][1], /border:1px solid #e3f0e9!important/);
+  assert.match(blocks[1][1], /padding:0 9px 12px!important/);
+});

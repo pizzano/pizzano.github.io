@@ -144,3 +144,11 @@ Epson skriverkonfigurasjonen er uendret fordi den eksisterende skriveren fungere
 - Live /orders stays available for open hours and for outstanding received/confirmed/preparing orders created in the last 24 hours. Explicit staff refresh still loads authoritative orders.
 - The closed-hours gate applies only to admin order SSE and its REST fallback. Public menu version checks, customer order updates, and the separately installed Apps Script 3-minute expiry trigger are not disabled.
 - There is no new timer or CSS/JS file. All changes are confined to existing DEMO files. Epson and BETA are unchanged.
+
+## November 2026 — Phase 4 safe CSS/JS cleanup (follow-up)
+
+- Removed unreachable non-exported `restPut` helper from shared `demo/js/data.js`; critical order acceptance and bonus reservation retain their independent conditional HTTP writes.
+- Consolidated two adjacent `#pageSettings .restaurant-inline-actions` declarations into a single rule without changing their properties.
+- Removed an early `[data-section="valg"]` rule fully overridden by the later, same-specificity product-choice card rule. Desktop/card and mobile declarations are unchanged.
+- Added regression checks in existing test files; no new JS/CSS files created. Avoid wholesale flattening of intentionally layered responsive/theme selectors until browser visual comparison is available.
+- Epson print code and BETA are untouched.
