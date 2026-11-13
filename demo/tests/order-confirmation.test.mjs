@@ -51,3 +51,90 @@ test('optional server expiry worker validates deadlines and uses conditional Fir
   assert.match(body,/update\.getResponseCode\(\)!==412/);
   assert.match(body,/everyMinutes\(1\)/);
 });
+
+
+test('expiry worker uses indexed pending-only query and never a full orders fallback', async () => {
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../integrations/google-apps-script/Kode.gs',import.meta.url),'utf8');
+  const start=src.indexOf('function kolExpirePendingOrders()');
+  const end=src.indexOf('\nfunction kolInstallExpiryTrigger()',start);
+  assert.ok(start>=0 && end>start);
+  const worker=src.slice(start,end);
+  assert.match(worker,/encodeURIComponent\('"status"'\)/);
+  assert.match(worker,/encodeURIComponent\('"mottatt"'\)/);
+  assert.doesNotMatch(worker,/databaseUrl\+'\/orders\.json';/);
+  assert.match(worker,/if \(!etag \|\| !current \|\| current\.status!=='mottatt'/);
+});
+
+test('server expiry worker only rejects overdue pending orders with Firebase ETag', async () => {
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../integrations/google-apps-script/Kode.gs',import.meta.url),'utf8');
+  const start=src.indexOf('function kolExpirePendingOrders()');
+  const end=src.indexOf('\nfunction kolInstallExpiryTrigger()',start);
+  const worker=src.slice(start,end);
+  const now=Date.now();
+  const orderId='ord_abcdefg';
+  const expired={status:'mottatt',createdAt:now-240000,phone:'12345678'};
+  const calls=[];
+  const makeResponse=(code,data,headers={})=>({
+    getResponseCode:()=>code,
+    getContentText:()=>JSON.stringify(data),
+    getHeaders:()=>headers
+  });
+  const fakeFetch=(url,options)=>{
+    calls.push({url,options});
+    if(url.includes('?orderBy=')) {
+      assert.match(url,/orderBy=%22status%22/);
+      assert.match(url,/equalTo=%22mottatt%22/);
+      return makeResponse(200,{
+        [orderId]:expired,
+        ord_bbbbbbb:{status:'mottatt',createdAt:now-240000,confirmationNoTimeout:true},
+        ord_ccccccc:{status:'mottatt',createdAt:now-10000}
+      });
+    }
+    if(options.method==='get')return makeResponse(200,expired,{ETag:'"v1"'});
+    assert.equal(options.method,'put');
+    assert.equal(options.headers['if-match'],'"v1"');
+    assert.equal(JSON.parse(options.payload).status,'avvist');
+    assert.equal(JSON.parse(options.payload).phone,'12345678');
+    return makeResponse(200,{});
+  };
+  let released=0;
+  const deps={
+    LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>released++})},
+    UrlFetchApp:{fetch:fakeFetch},
+    KOL_SMS:{databaseUrl:'https://db.example'},
+    console:{error:message=>{throw new Error(String(message));}}
+  };
+  const fn=new Function('deps',
+    'const {LockService,UrlFetchApp,KOL_SMS,console}=deps;\n'+worker+
+    '\nreturn kolExpirePendingOrders;')(deps);
+  fn();
+  assert.equal(calls.length,3);
+  assert.equal(calls[0].url,'https://db.example/orders.json?orderBy=%22status%22&equalTo=%22mottatt%22');
+  assert.equal(released,1);
+});
+
+test('server expiry worker fails closed when pending-only query fails', async () => {
+  const {readFileSync}=await import('node:fs');
+  const src=readFileSync(new URL('../integrations/google-apps-script/Kode.gs',import.meta.url),'utf8');
+  const worker=src.slice(src.indexOf('function kolExpirePendingOrders()'),
+    src.indexOf('\nfunction kolInstallExpiryTrigger()'));
+  const calls=[],errors=[];
+  let released=0;
+  const deps={
+    LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>released++})},
+    UrlFetchApp:{fetch:(url,options)=>{
+      calls.push({url,options});
+      return {getResponseCode:()=>400,getContentText:()=>'',getHeaders:()=>({})};
+    }},
+    KOL_SMS:{databaseUrl:'https://db.example'},
+    console:{error:message=>errors.push(String(message))}
+  };
+  new Function('deps','const {LockService,UrlFetchApp,KOL_SMS,console}=deps;\n'+worker+
+    '\nreturn kolExpirePendingOrders;')(deps)();
+  assert.equal(calls.length,1);
+  assert.match(calls[0].url,/orderBy=%22status%22/);
+  assert.match(errors.join('\n'),/indexOn/);
+  assert.equal(released,1);
+});

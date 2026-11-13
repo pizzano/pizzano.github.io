@@ -724,16 +724,25 @@ function stoppSmsMinuttSjekk() {
  * DEPLOYMENT: paste this revision into the existing SMS Apps Script project,
  * run kolInstallExpiryTrigger() once with the project owner account.
  * It does not send SMS and does not enable the old SMS minute poller.
- * One /orders REST read per minute while enabled; disable via
- * kolRemoveExpiryTrigger() if Firebase bandwidth is a concern.
+ * One FILTERED /orders REST query per minute while enabled: only
+ * status=mottatt orders are downloaded, not historic/accepted orders.
+ * REQUIRES Firebase RTDB security rules /orders .indexOn includes "status".
+ * No full /orders fallback on an index/query error: fail closed and log it.
+ * Disable via kolRemoveExpiryTrigger() if needed.
  */
 function kolExpirePendingOrders() {
   const lock=LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;
   try {
-    const url=KOL_SMS.databaseUrl+'/orders.json';
+    // Firebase REST queries need the /orders ".indexOn": ["status"] rule.
+    // Query ONLY waiting orders, including any overdue from an earlier outage.
+    // Never re-download the entire order history on query/index errors.
+    const url=KOL_SMS.databaseUrl+'/orders.json?orderBy='+
+      encodeURIComponent('"status"')+'&equalTo='+encodeURIComponent('"mottatt"');
     const response=UrlFetchApp.fetch(url,{method:'get',muteHttpExceptions:true});
-    if (response.getResponseCode()!==200) throw new Error('Expiry read HTTP '+response.getResponseCode());
+    if (response.getResponseCode()!==200)
+      throw new Error('Expiry pending-only query HTTP '+response.getResponseCode()+
+        ' (verify /orders .indexOn contains status and read permissions)');
     const orders=JSON.parse(response.getContentText()||'{}')||{};
     const now=Date.now();
     let processed=0;
@@ -780,7 +789,7 @@ function kolExpirePendingOrders() {
 function kolInstallExpiryTrigger() {
   kolRemoveExpiryTrigger();
   ScriptApp.newTrigger('kolExpirePendingOrders').timeBased().everyMinutes(1).create();
-  console.log('Order expiry worker enabled: one Firebase /orders scan per minute.');
+  console.log('Order expiry worker enabled: one FILTERED Firebase /orders query per minute (status=mottatt).');
 }
 function kolRemoveExpiryTrigger() {
   ScriptApp.getProjectTriggers().forEach(trigger=>{
