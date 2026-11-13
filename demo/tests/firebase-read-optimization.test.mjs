@@ -249,12 +249,20 @@ test('admin orders channel pauses outside orderable hours but resumes after midn
   const fnCode=data.slice(begin,end);
   const now=Date.now();
   const make=(openState,orders=[])=>new Function('deps',
-    'const {CUSTOMER_MODE,getOpenState,store}=deps;\n'+fnCode+
+    'const {CUSTOMER_MODE,getOpenState,store,adminOrdersSnapshotLoaded}=deps;\n'+fnCode+
     '\nreturn adminOrdersShouldBeLive;')({
       CUSTOMER_MODE:false,getOpenState:()=>openState,
-      store:{orders}
+      adminOrdersSnapshotLoaded:true,store:{orders}
     });
   assert.equal(make({open:false,orderable:false})(),false);
+  // A newly opened admin during closing must first detect pending orders.
+  const firstSnapshot = new Function('deps',
+    'const {CUSTOMER_MODE,getOpenState,store,adminOrdersSnapshotLoaded}=deps;\n'+fnCode+
+    '\nreturn adminOrdersShouldBeLive;')({
+      CUSTOMER_MODE:false,getOpenState:()=>({open:false,orderable:false}),
+      adminOrdersSnapshotLoaded:false,store:{orders:[]}
+    });
+  assert.equal(firstSnapshot(),true);
   assert.equal(make({open:true,orderable:true})(),true);
   assert.equal(make({open:false,preOpen:true,orderable:true})(),true);
   assert.equal(make({open:false,orderable:false},[{status:'mottatt',createdAt:now-60000}])(),true);
