@@ -1,7 +1,7 @@
 /* Customer menu, browser caching and one live public update stream. */
 'use strict';
 const BASE='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
-const CACHE_DB='kol-beta-public-kol1-v1', CART_KEY='kol-beta-cart-v1';
+const CACHE_DB='kol-beta-public-kol1-v1';
 const MENU_FALLBACK_KEY='kol-beta-menu-fallback-kol1-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0;
@@ -9,7 +9,7 @@ let sharedChannel=null,sharedLeader=false,sharedLockPending=false,sharedLockCont
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
-let menu=null,current=null,qty=1,selection={},cart=loadCart(),imageURLs=new Map();
+let menu=null,current=null,qty=1,selection={},imageURLs=new Map();
 const FAVORITES_KEY='kol-beta-favorites-v1';
 function readFavorites(){try{const a=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');return Array.isArray(a)?a.map(String):[]}catch{return []}}
 let favorites=readFavorites();
@@ -411,10 +411,7 @@ function updateOrderingControls(){
   if(notice){notice.hidden=true;notice.textContent=''}
  }
  // Existing cart entries are preserved, but cannot be increased while closed.
- const cartPanel=$('cartSheet');
- if(cartPanel&&!cartPanel.hidden){
-  cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
- }
+ updateCartQuantityControls();
 }
 function updateHoursStatus(){
  if(!menu)return;
@@ -545,20 +542,6 @@ function updateCardFavorite(id){
   }else if(!isFavorite(id)&&heart)heart.remove();
  }
 }
-function updateCartBadges(){
- if(!menu)return;
- const totals=new Map();
- for(const line of cart)totals.set(String(line.id),(totals.get(String(line.id))||0)+Number(line.qty||0));
- for(const card of $('menu').querySelectorAll('[data-product-card]')){
-  const count=totals.get(String(card.dataset.productCard))||0;
-  const media=card.querySelector('.product-photo');
-  if(!media)continue;
-  let badge=media.querySelector('.in-cart');
-  if(!count){if(badge)badge.remove();continue}
-  if(!badge){badge=document.createElement('span');badge.className='in-cart';media.appendChild(badge)}
-  badge.textContent='🛒 '+count+' i kurven';
- }
-}
 function menuBlocks(){
  const blocks=[],visible=item=>item&&!item.hidden&&!item.soldOut;
  const popularItems=(menu.popularItemIds||[]).map(id=>productById(id)).filter(visible);
@@ -611,7 +594,7 @@ function categoryGlyph(block){
 }
 function productCard(i){
  const sizeCount=list(i.sizes).length;
- const amount=cart.filter(x=>String(x.id)===String(i.id)).reduce((a,x)=>a+x.qty,0);
+ const amount=cartQuantityForProduct(i.id);
  const allergens=list(i.allergens).map(a=>{const match=menu.allergenCatalog.find(x=>String(x.id)===String(a));return match?.label||a}).join(', ');
  return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||i.ingredients||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" type="button" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
 }
@@ -664,7 +647,7 @@ const KITCHEN_NOTE_DEFAULTS={
  tallerken:['Saus ved siden av'],
  other:['Ekstra servietter']
 };
-let removedIngredients=new Set(),ingredientEditorExpanded=false,selectedKitchenNotes=new Set(),editingCartIndex=null;
+let removedIngredients=new Set(),ingredientEditorExpanded=false,selectedKitchenNotes=new Set();
 function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
   '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span></div>';
@@ -755,28 +738,6 @@ function optionGroupMarkup(group){
   productSectionHeading(group.title||'Velg',Boolean(group.required))+
   '<div class="option-rows">'+entries+'</div></section>';
 }
-function restoreCartLineForEdit(line,index){
- if(String(line.id)!==String(current?.id))return;
- editingCartIndex=index;
- qty=Math.max(1,Math.min(99,Number(line.qty)||1));
- $('quantity').textContent=qty;
- if(line.size?.id!==undefined)selection.size=line.size.id;
- for(const group of groupsFor(current,chosenSize())){
-  const found=(line.choices||[]).find(x=>String(x.groupId)===String(group.id));
-  if(found){
-   selection['group:'+group.id]=found.options.flatMap(opt=>Array.from(
-    {length:Math.max(1,Number(opt.count)||1)},()=>String(opt.id)));
-  }
- }
- removedIngredients=new Set(line.removedIngredients||[]);
- const allowed=kitchenNotesFor(current);
- selectedKitchenNotes=new Set((line.quickNotes||[]).filter(n=>allowed.includes(n)));
- const raw=String(line.comment||'');
- $('comment').value=raw.split('\n').filter(x=>!selectedKitchenNotes.has(x)).join('\n');
- renderOptions();
- $('add').firstChild.textContent='Oppdater kurven ';
-}
-
 function renderOptions(){
  if(!current)return;
  initializeOptions();
@@ -831,7 +792,6 @@ function updatePrice(){
 // while a dialog is open can make the sticky restaurant header disappear.
 function show(id){$('overlay').hidden=false;$(id).hidden=false}
 function hideAll(){$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true}
-function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
 /* LOCAL DEMO CHECKOUT: no Firebase write, notification, admin or payment call.
  * The single versioned order payload is intentionally shaped for a future
  * admin API adapter. Only submitDemoOrder() is replaced when connecting it.
@@ -848,7 +808,6 @@ let demoContact=demoRead(DEMO_CONTACT_KEY,{name:'',phone:'',email:''});
 let demoPickup=demoRead(DEMO_PICKUP_KEY,{mode:'asap',time:'',label:''});
 let demoOrder=demoRead(DEMO_ORDER_KEY,null);
 let checkoutStep='cart',demoClock=null;
-const demoTotal=items=>items.reduce((sum,line)=>sum+(Number(line.qty)||0)*(Number(line.unitPrice)||0),0);
 function formatDemoClock(ms){
  const seconds=Math.max(0,Math.ceil(ms/1000));
  return Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
@@ -1264,100 +1223,14 @@ $('quickNotes').addEventListener('click',e=>{
  if(selectedKitchenNotes.has(note))selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
  renderSheetExtras();
 });
-$('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
-$('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{
- const edit=e.target.closest('[data-edit]');
- if(edit){
-  const index=Number(edit.dataset.edit);
-  if(Number.isInteger(index)&&cart[index]){
-   const id=cart[index].id;hideAll();showSheet(id,index);
-  }
-  return;
- }
- const minus=e.target.closest('[data-cart-minus]'),plus=e.target.closest('[data-cart-plus]'),remove=e.target.closest('[data-remove]');
- if(!minus&&!plus&&!remove)return;
- const index=Number((minus||plus||remove).dataset.cartMinus??plus?.dataset.cartPlus??remove?.dataset.remove);
- if(!Number.isInteger(index)||index<0||index>=cart.length)return;
- if(remove)cart.splice(index,1);
- else if(plus){cart[index].qty=Math.min(99,Number(cart[index].qty||0)+1)}
- else if(minus){cart[index].qty=Number(cart[index].qty||0)-1;if(cart[index].qty<=0)cart.splice(index,1)}
- saveCart();renderCartContents();
-});
-$('cartSuggestionsDisclosure').addEventListener('toggle',()=>{
- renderCartRecommendations();
- const panel=$('cartSuggestionsDisclosure');
- if(!panel.open)return;
- // Scroll the cart's own viewport after the expanded choices have been laid out.
- // Keep the preview heading visible at the top so the guest sees the new options.
- requestAnimationFrame(()=>{
-  if(!panel.open||$('cartSheet').hidden)return;
-  const viewport=$('cartScroll');
-  const offset=panel.getBoundingClientRect().top-viewport.getBoundingClientRect().top;
-  const target=Math.max(0,Math.min(
-   viewport.scrollHeight-viewport.clientHeight,
-   viewport.scrollTop+offset-12
-  ));
-  viewport.scrollTo({
-   top:target,
-   behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'
-  });
- });
-});
-$('cartRecommendationsItems').addEventListener('click',event=>{
- const dismiss=event.target.closest('[data-suggest-dismiss]');
- if(dismiss){
-  dismissedSuggestions.add(String(dismiss.dataset.suggestDismiss));
-  try{localStorage.setItem(CART_SUGGESTIONS_DISMISS_KEY,JSON.stringify([...dismissedSuggestions]))}catch{}
-  renderCartRecommendations();return;
- }
- const add=event.target.closest('[data-suggest-add]');
- if(!add)return;
- const item=productById(add.dataset.suggestAdd);if(!item||item.soldOut)return;
- // Use the configured default size and default selections, without opening the product sheet.
- // Optional sauces/extras stay unselected; mandatory groups require valid defaults.
- const sizes=list(item.sizes);
- const size=sizes[Math.min(Math.max(Number(item.defaultSizeIndex)||0,0),Math.max(0,sizes.length-1))];
- const groups=groupsFor(item,size);
- const choices=[];
- let price=Number(size?.price??item.price)||0;
- for(const group of groups){
-  const available=list(group.options).filter(opt=>!opt.soldOut);
-  const allowed=new Set(available.map(opt=>String(opt.id)));
-  const max=Math.max(1,Number(group.maxSelections)||1);
-  const min=group.required?Math.max(1,Number(group.minSelections)||1):0;
-  const defaults=list(group.defaultOptionIds).map(String).filter(id=>allowed.has(id));
-  const selected=group.selectionMode==='multiple'?defaults.slice(0,max):defaults.slice(0,1);
-  if(selected.length<min){
-   // No valid required default: product detail is necessary before adding.
-   hideAll();showSheet(item.id);return;
-  }
-  const options=available.filter(opt=>selected.includes(String(opt.id))).map(opt=>{
-   const count=selected.filter(id=>id===String(opt.id)).length;
-   const unit=Number(opt.price)||0;
-   price+=unit*count;
-   return {id:opt.id,label:opt.label||opt.name,price:unit,count};
-  });
-  if(options.length)choices.push({groupId:group.id,group:group.title||'',options});
- }
- const line={id:item.id,name:item.name,size:size?{id:size.id,label:size.label||size.name}:null,choices,removedIngredients:[],quickNotes:[],comment:'',qty:1,unitPrice:price};
- const signature=entry=>JSON.stringify([String(entry.id),String(entry.size?.id),entry.choices||[],entry.removedIngredients||[],entry.comment||'']);
- const existing=cart.find(x=>signature(x)===signature(line));
- if(existing)existing.qty++;else cart.push(line);
- saveCart();renderCartContents();
-});
-$('cartClear').addEventListener('click',()=>{
- if(!cart.length)return;
- cart=[];saveCart();renderCartContents();
-});
 function returnToMenu(){
  hideAll();
  $('appViewport').scrollTo({top:0,behavior:'instant'});
  window.scrollTo({top:0,behavior:'instant'});
  $('appViewport').classList.remove('nav-hidden');
 }
-$('cartBrandHome').addEventListener('click',returnToMenu);
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
-$('cartClose').onclick=hideAll;
+initCartEvents();
 $('continue').onclick=demoBack;
 $('cartNext').onclick=demoNext;
 ['demoFullName','demoPhone','demoEmail'].forEach(id=>$(id).addEventListener('input',()=>{saveDemoContact();updateContactValidation();showCheckoutError('')}));
@@ -1367,7 +1240,6 @@ $('demoPickupTime').addEventListener('change',event=>{demoPickup.time=event.targ
 $('demoViewOrder').onclick=showDemoConfirmation;
 $('demoConfirmationClose').onclick=returnToMenu;
 $('demoClearOrder').onclick=()=>{demoOrder=null;demoStore(DEMO_ORDER_KEY,null);if(demoClock){clearInterval(demoClock);demoClock=null}renderDemoActiveOrder()};
-$('sheetClose').onclick=closeProductSheet;
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else hideAll()}});document.addEventListener('DOMContentLoaded',init);
