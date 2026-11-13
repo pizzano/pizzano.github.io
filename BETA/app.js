@@ -652,17 +652,10 @@ function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
   '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span></div>';
 }
-// Reorder presentation only: keep group and price calculations untouched.
-function productDisplayRank(group){
- const title=String(group.title||'').toLocaleLowerCase('no');
- if(/pommes|fries|søtpotet/.test(title))return 0;
- if(/ekstra bunn|deig|bunn/.test(title))return 1;
- if(/alternativ/.test(title))return 2;
- if(/saus|dressing|dip/.test(title))return 3;
- return 4;
-}
+// Use the exact group order saved by the DEMO admin (item.optionGroupOrder).
+// groupsFor also filters groups by the selected product size.
 function productDisplayGroups(){
- return groupsFor(current,chosenSize()).slice().sort((a,b)=>productDisplayRank(a)-productDisplayRank(b));
+ return groupsFor(current,chosenSize());
 }
 function kitchenNotesFor(item){
  if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
