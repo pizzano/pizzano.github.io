@@ -449,3 +449,13 @@ test('one themed status banner replaces the legacy double open/closed card', asy
   assert.ok(customer.includes("el.statusShopIcon.dataset.iconState = 'pending'"), 'connection loss must restore neutral icon');
   assert.match(customer,/hasVerifiedTime = \/\^\(\?:\[01\]\\d\|2\[0-3\]\):\[0-5\]\\d\$\//);
 });
+
+test('customer CSS does not carry unreferenced animation keyframes', () => {
+  const css = readFileSync(new URL('../css/customer.css', import.meta.url), 'utf8');
+  const names = [...css.matchAll(/@keyframes\s+([A-Za-z0-9_-]+)/g)].map(match => match[1]);
+  const unused = names.filter(name => {
+    const occurrences = css.split(name).length - 1;
+    return occurrences < 2;
+  });
+  assert.deepEqual(unused, []);
+});
