@@ -63,8 +63,7 @@
 #pageSettings .restaurant-closed-message .input{width:100%}
 #pageSettings .restaurant-inline-panel{margin:0 20px 16px;padding:15px 17px;border:1px solid #f2dbc8;border-radius:12px;background:#fff9f3;font-size:12px}
 #pageSettings .restaurant-inline-panel[hidden]{display:none!important}
-#pageSettings .restaurant-inline-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#pageSettings .restaurant-inline-actions{margin-top:13px}
+#pageSettings .restaurant-inline-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:13px}
 #pageSettings .restaurant-form-error{margin:9px 0 0;color:#d4423d;font-size:12px;font-weight:650}
 #pageSettings .restaurant-form-error[hidden]{display:none!important}
 #pageSettings .restaurant-inline-panel p{margin:8px 0;color:#6f6f73}
@@ -276,7 +275,6 @@ html[data-theme="dark"] #pageNotifications .notification-tabs button.is-active{b
 @media(max-width:600px){#modalEditor.modal-editor{width:100vw;max-height:100dvh;border-radius:0}#modalEditor .group-editor-body{padding:12px}#modalEditor .group-editor-card{padding:12px}#modalEditor .mode-row{grid-template-columns:1fr}#modalEditor .mode-card{min-height:65px}#modalEditor .modal-foot{gap:8px;flex-wrap:wrap}#modalEditor .modal-foot .foot-right{display:flex;gap:6px}}
 
 /* Choices & addons: single responsive horizontal card layout */
-.product-editor-modal [data-section="valg"]{padding:0!important;border:0!important;background:transparent!important}
 .product-editor-modal [data-section="valg"]>.set-title,.product-editor-modal [data-section="valg"]>.set-hint{display:none}
 .product-editor-modal [data-section="valg"]::before{content:"Choices & addons";display:block;padding:20px 20px 2px;font-size:15px;font-weight:800;color:#1a2739}
 .product-editor-modal [data-section="valg"]{background:#f1faf5!important;border:1px solid #e3f0e9!important;border-radius:15px!important;padding:0 15px 17px!important}
