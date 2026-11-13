@@ -4528,7 +4528,7 @@ async function noticeSave(){
 /** Check the actual GAS sender version; the web UI version is not evidence
  * that the running Apps Script was updated.
  */
-async async function noticeSendTest(){
+async function noticeSendTest(){
   if(noticeState.busy)return;
   if(!noticeState.loaded){noticeFeedback('Vent til malene er lastet.','error');return}
   if(noticeState.dirty){noticeFeedback('Lagre meldingen før du sender test.','error');return}
