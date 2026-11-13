@@ -126,3 +126,13 @@ Epson skriverkonfigurasjonen er uendret fordi den eksisterende skriveren fungere
 - Fjernet den ubrukte `noticeCheckEmailEngine`-funksjonen fra adminens varslingsvisning; ingen fungerende varslingsfunksjoner ble fjernet.
 - `fullfort` og `pizzaBonus` er historiske kompatibilitetsbaner, ikke dokumentert dødkode. De er beholdt for ordre- og bonusmigrasjon, slik at eksisterende gratispizzaopptjening ikke risikeres.
 - Større endringer i overlappende `customer.css`, `theme.css` og `admin.css` krever skjermbilde-/nettleser-regresjonstester før sammenslåing. Den eksisterende bestillings- og skriverflyten er beholdt.
+
+## November 2026 — 3-minute timeout: Firebase traffic reduction
+
+- In demo/integrations/google-apps-script/Kode.gs, kolExpirePendingOrders now queries only orders with status=mottatt, instead of downloading the entire order history every minute. It still runs one query per minute; only transferred bytes decrease, not query count.
+- Pending preorders with confirmationNoTimeout remain exempt. Per-order ETag reads, conditional PUT writes and 412 race safety are unchanged.
+- REQUIRED Firebase RTDB security rules index: under rules.orders, add "status" to the existing .indexOn array, preserving all other rules/indices. For example: ".indexOn": ["statusUpdatedAt", "status"]. Do not replace the complete production Rules with this example. Filtered REST queries require indexes.
+- DEPLOYMENT: GitHub changes do not update the running Google Apps Script editor. After the index is configured, copy the updated Kode.gs to the EXISTING SMS Apps Script project, then save. The current installed time trigger uses the newly saved code; no need to run kolInstallExpiryTrigger again. Web App release versions are separate from time triggers.
+- VERIFICATION: inspect Apps Script Executions for query/index/permissions errors. Place a controlled normal test order without accepting it and confirm the timeout after ~3–4 minutes; accepted orders must never expire.
+- On a query/index error this worker logs a failure and does not fall back to downloading all /orders, but automated cancellation will be unavailable until the index/rules issue is corrected.
+- This does NOT eliminate the one-minute schedule. Truly event-based expiry needs server-side scheduling and separate infrastructure.
