@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#062d25">
+<title>KØL · Menyadministrasjon (BETA)</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#182e27;background:#f3f7f4;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.48}
+[hidden]{display:none!important}a{color:inherit}
+:focus-visible{outline:3px solid #caad5a;outline-offset:2px}
+.top{display:flex;align-items:center;gap:14px;background:#062d25;color:white;min-height:72px;padding:13px clamp(16px,3vw,34px);position:sticky;top:0;z-index:8;box-shadow:0 6px 18px #0a33251f}
+.brand{font-size:23px;font-weight:900;letter-spacing:.015em}.brand small{display:block;font-size:10px;letter-spacing:.15em;color:#c6dcca;font-weight:650;margin-top:3px}
+.top-end{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #cbded2;background:white;color:#144633;padding:10px 14px;border-radius:11px;font-size:13px;font-weight:750;text-decoration:none;min-height:40px}
+.btn:hover{background:#e7f3ea}.btn.primary{background:#087f59;border-color:#087f59;color:white}.btn.primary:hover{background:#076f4e}
+.btn.gold{background:#efcc77;border-color:#efcc77;color:#192b23}.btn.danger{border-color:#efd0cd;color:#ab342d;background:#fff5f4}
+.btn.ghost{background:#ffffff13;border-color:#ffffff45;color:white}.btn.small{min-height:32px;padding:7px 10px;font-size:12px}
+.status{display:inline-flex;align-items:center;gap:7px;color:#d7eadd;font-size:12px}.status::before{content:"";width:8px;height:8px;background:#8faaa0;border-radius:50%}.status.ok::before{background:#57d5a0}.status.dirty::before{background:#eec679}
+.wrap{max-width:1440px;margin:auto;padding:22px clamp(12px,2.5vw,32px) 40px}
+.intro{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.intro h1{font-size:clamp(22px,3vw,31px);margin:0 0 5px}.muted{color:#6e8377;font-size:13px;line-height:1.5;margin:0}
+.tabs{display:flex;gap:7px;margin-bottom:18px;overflow-x:auto}.tab{border:1px solid #d0e4d7;background:white;color:#285944;border-radius:12px;padding:10px 18px;font-weight:800;white-space:nowrap}.tab.active{background:#087f59;color:white;border-color:#087f59}
+.panel{background:white;border:1px solid #d7e5dc;box-shadow:0 4px 18px #1034270b;border-radius:17px;padding:17px}
+.layout{display:grid;grid-template-columns:minmax(250px,310px) minmax(260px,1fr) minmax(310px,400px);gap:14px;align-items:start}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}.section-head h2{font-size:16px;margin:0}
+.stack{display:grid;gap:9px}.stack.compact{gap:5px}.scroll{max-height:calc(100vh - 258px);overflow:auto;overscroll-behavior:contain;padding:2px}
+.item{display:flex;align-items:center;gap:10px;width:100%;min-width:0;border:1px solid #e1eae3;border-radius:12px;background:white;padding:10px;text-align:left;color:#1a3729}
+.item.active{border-color:#149c6c;background:#ecf8f0}.item:hover{border-color:#92cbb0}
+.item-copy{display:grid;min-width:0;flex:1;gap:4px}.item-copy strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-copy small{font-size:11px;color:#789083}
+.item-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#e5f3e9;color:#087f59;font-weight:900;flex:none}
+.item img{width:43px;height:43px;border-radius:9px;object-fit:cover;background:#edf2ef;flex:none}
+.row-actions{display:flex;align-items:center;gap:5px}.mini{display:grid;place-items:center;width:27px;height:27px;border:1px solid #dce8df;border-radius:8px;background:white;color:#4c725f;font-size:12px}
+.item.dim{opacity:.56}.badge{display:inline-block;border-radius:7px;background:#fff2d2;padding:2px 6px;color:#8d621c;font-size:10px;font-weight:800}
+.search{width:100%;padding:10px 12px;border:1px solid #d3e5d9;border-radius:10px;margin-bottom:10px;background:#f9fcfa}
+.empty{padding:22px;text-align:center;color:#819588;background:#f8fbf9;border:1px dashed #c7dacf;border-radius:13px;font-size:13px}
+.editor{position:sticky;top:93px;max-height:calc(100vh - 111px);overflow:auto}
+.editor h2{font-size:17px;margin:0 0 3px}.editor p.sub{font-size:12px;color:#738678;margin:0 0 16px}
+.field{display:grid;gap:6px;margin-bottom:13px}.field label,.label{font-size:12px;font-weight:800;color:#355544}
+.field input:not([type=checkbox]),.field textarea,.field select,.ctrl{width:100%;border:1px solid #d0e2d6;border-radius:10px;padding:10px 12px;background:#fbfdfc;color:#1b4030;min-height:41px}
+.field textarea{min-height:77px;resize:vertical}.field small{color:#7c9183;font-size:11px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two-thirds{display:grid;grid-template-columns:2fr 1fr;gap:9px}
+.rule{border-top:1px solid #e4eee8;padding-top:14px;margin-top:10px}.rule h3{font-size:13px;margin:0 0 11px}
+.checkbox{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:650;color:#294d3a;min-height:35px}
+.checkbox input{accent-color:#087f59;width:17px;height:17px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pill-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px;border:1px solid #dfebe3;border-radius:10px;background:#f9fcfa;margin-bottom:6px;font-size:12px}
+.pill-row strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pill-row .mini{width:29px;height:29px}
+.group-card{display:grid;gap:5px;padding:12px;border:1px solid #dae8dd;border-radius:12px;background:#fcfefd}
+.group-card .head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.group-card strong{font-size:13px}
+.group-card small{font-size:11px;color:#708678}
+.option-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 28px;gap:7px;align-items:center;margin:7px 0}
+.option-row input{width:100%;min-width:0;border:1px solid #d3e2d7;border-radius:9px;padding:9px 10px}
+.size-row{display:grid;grid-template-columns:1fr 90px 29px;gap:7px;margin-bottom:7px}
+.size-row input{width:100%;min-width:0;border:1px solid #d3e2d7;border-radius:9px;padding:10px}
+.size-row button,.option-row button{border:1px solid #e5cecc;border-radius:8px;background:#fff6f5;color:#ae423a}
+.preview{display:flex;align-items:center;gap:13px;border:1px solid #dfebe2;border-radius:12px;padding:9px;margin-bottom:12px;background:#f8fbf9}
+.preview img{width:82px;height:75px;object-fit:cover;border-radius:9px;background:#e3ece7}
+.preview strong{font-size:12px;word-break:break-word}.preview small{font-size:11px;color:#768b7f}
+.note{font-size:12px;line-height:1.55;color:#5e806c;border:1px solid #d6e8da;background:#f2faf5;border-radius:11px;padding:12px}
+#loginCard{max-width:485px;margin:6vh auto 0;padding:25px}
+#loginCard h1{font-size:23px;margin:0 0 7px}
+#loginCard .field{margin-top:14px}
+.banner{border-radius:10px;padding:11px 13px;margin:10px 0;font-size:12px;border:1px solid #e1e9e3;color:#36664e;background:#f0f8f2}
+.banner.error{border-color:#f0c7c7;color:#a33b3b;background:#fff3f3}
+.banner.warn{border-color:#e9dfbb;color:#745a20;background:#fff9e8}
+#toast{position:fixed;z-index:100;top:82px;left:50%;transform:translate(-50%,-20px);opacity:0;pointer-events:none;transition:.2s;background:#0d7856;color:white;padding:13px 17px;border-radius:12px;box-shadow:0 9px 28px #123b2750;max-width:calc(100vw - 20px);font-size:13px;font-weight:750}
+#toast.show{transform:translate(-50%,0);opacity:1}#toast.error{background:#a23535}
+@media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}.editor{grid-column:1/-1;position:static;max-height:none}}
+@media(max-width:680px){.top{gap:7px;padding:12px}.top .brand{font-size:18px}.top-end .status{display:none}.top-end .btn{padding:8px}.wrap{padding:12px}.layout{display:block}.layout>.panel{margin-bottom:12px}.scroll{max-height:270px}.editor{max-height:none}.cols{grid-template-columns:1fr}.intro{margin-top:7px}.intro h1{font-size:23px}}
+</style>
+<script src="./admin.js?v=20261114-menu-admin1" defer></script>
+</head>
+<body>
+<header class="top">
+ <div class="brand">🔥 KØL <small>BETA · MENYADMIN</small></div>
+ <div class="top-end">
+  <span class="status" id="saveStatus">Ikke innlogget</span>
+  <a class="btn ghost small" href="./" target="_blank" rel="noopener noreferrer">Se kundemenyen ↗</a>
+  <button id="btnLogout" class="btn ghost small" type="button" hidden>Logg ut</button>
+  <button id="btnSave" class="btn gold" type="button" disabled>Lagre endringer</button>
+ </div>
+</header>
+<main class="wrap">
+ <section id="loginCard" class="panel">
+  <h1>Logg inn for menyredigering</h1>
+  <p class="muted">Denne siden styrer kun produkter, kategorier og valggrupper i <b>kol-grill-pizza-1</b>. Ingen ordre eller kundedata lastes.</p>
+  <form id="loginForm" autocomplete="on">
+   <div class="field"><label for="apiKey">Firebase Web API-nøkkel</label><input id="apiKey" required autocomplete="off" placeholder="AIza…"><small>Finn nøkkelen under Firebase → Prosjektinnstillinger → Generelt → Nettapp.</small></div>
+   <div class="field"><label for="email">Admin e-post</label><input id="email" type="email" autocomplete="username" required placeholder="admin@eksempel.no"></div>
+   <div class="field"><label for="password">Passord</label><input id="password" type="password" autocomplete="current-password" required></div>
+   <button class="btn primary" id="btnLogin" type="submit">Logg inn og hent meny</button>
+   <p id="loginError" class="banner error" role="alert" hidden></p>
+  </form>
+  <p class="note">Bruk en eksisterende konto i Firebase Authentication (E-post/passord). Tilgang til å skrive i <code>/menu</code> må være begrenset til godkjente administratorer i Firebase Rules. API-nøkkelen er ikke et passord. Ingen passord eller ID-token lagres lokalt.</p>
+ </section>
+ <section id="adminRoot" hidden>
+  <div class="intro">
+   <div><h1>Produkter &amp; valggrupper</h1><p class="muted">Kun BETA-data · /menu · Endringer sendes automatisk til kundesiden</p></div>
+   <div class="actions"><button id="btnReload" class="btn" type="button">Hent siste meny</button><button id="btnUndo" class="btn" type="button">Forkast lokale endringer</button></div>
+  </div>
+  <div class="tabs" role="tablist">
+   <button class="tab active" type="button" data-tab="products" aria-selected="true">Produkter og kategorier</button>
+   <button class="tab" type="button" data-tab="groups" aria-selected="false">Choices &amp; addons</button>
+  </div>
+  <div class="layout" id="productsPage">
+   <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><div class="stack scroll" id="categoryList"></div><div class="actions"><button class="btn small" id="renameCategory">Rediger kategori</button><button class="btn small" id="moveCategoryUp">↑</button><button class="btn small" id="moveCategoryDown">↓</button><button class="btn small danger" id="removeCategory">Slett kategori</button></div></section>
+   <section class="panel"><div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div><input id="productSearch" class="search" type="search" placeholder="Søk etter produkt…" aria-label="Søk produkter"><div class="stack scroll" id="productList"></div><div class="actions"><button class="btn small" id="moveProductUp">↑ Opp</button><button class="btn small" id="moveProductDown">↓ Ned</button><button class="btn small" id="duplicateProduct">Dupliser</button><button class="btn danger small" id="removeProduct">Slett</button></div></section>
+   <section class="panel editor" id="productEditor">
+    <h2 id="productEditorTitle">Rediger produkt</h2><p class="sub">Velg et produkt fra listen.</p>
+    <div id="productFields" hidden>
+     <div class="field"><label for="pName">Produktnavn</label><input id="pName" maxlength="120"></div>
+     <div class="field"><label for="pDescription">Beskrivelse</label><textarea id="pDescription" maxlength="1500"></textarea></div>
+     <div class="field"><label for="pIngredients">Ingredienser (kommaseparert)</label><textarea id="pIngredients"></textarea></div>
+     <div class="field"><label for="pKitchenNotes">Raske kjøkkenbeskjeder (en per linje)</label><textarea id="pKitchenNotes" placeholder="Ekstra stekt&#10;Del i 8 biter"></textarea></div>
+     <div class="rule"><h3>Allergener</h3><div id="allergenChoices" class="stack compact"></div></div>
+     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
+     <div class="field"><label for="pImage">Bilde-URL</label><input id="pImage" type="url" placeholder="https://images.pexels.com/…"><small>Ved endring får produktet sin egen bilde-ID, uten å endre andre produkters bilder.</small></div>
+     <div class="rule"><h3>Størrelser og priser</h3><div id="sizeRows"></div><button class="btn small" id="addSize" type="button">+ Størrelse</button></div>
+     <div class="rule"><h3>Choices &amp; addons for produktet</h3><p class="muted">Velg grupper som skal vises. Rekkefølgen er lik i kundemenyen.</p><div id="assignedGroups" class="stack compact" style="margin-top:10px"></div></div>
+     <div class="rule"><h3>Øvrig</h3>
+      <label class="checkbox"><input type="checkbox" id="pSoldOut"> Utsolgt</label>
+      <label class="checkbox"><input type="checkbox" id="pHidden"> Skjult fra kundemenyen</label>
+      <label class="checkbox"><input type="checkbox" id="pPopular"> Mest solgt</label>
+     </div>
+     <p class="note">Endringene holdes lokalt til du trykker <b>Lagre endringer</b> øverst. Lagret meny sendes til Firebase med versjonskontroll.</p>
+    </div>
+   </section>
+  </div>
+  <div class="layout" id="groupsPage" hidden>
+   <section class="panel"><div class="section-head"><h2>Valggrupper</h2><button class="btn primary small" id="addGroup">+ Gruppe</button></div><input id="groupSearch" class="search" type="search" placeholder="Søk valggrupper…" aria-label="Søk valggrupper"><div class="stack scroll" id="groupList"></div></section>
+   <section class="panel editor" style="grid-column:span 2" id="groupEditor">
+    <h2 id="groupEditorTitle">Rediger valggruppe</h2><p class="sub">Opprett eller velg en valggruppe.</p>
+    <div id="groupFields" hidden>
+     <div class="cols">
+      <div class="field"><label for="gTitle">Navn på gruppen</label><input id="gTitle" maxlength="140"></div>
+      <div class="field"><label for="gMode">Valgtype</label><select id="gMode"><option value="single">Ett valg</option><option value="multiple">Flere valg</option></select></div>
+      <div class="field"><label for="gMax">Maks antall</label><input id="gMax" type="number" min="1" max="30"></div>
+      <div class="field"><label for="gRequired">Obligatorisk</label><label class="checkbox"><input id="gRequired" type="checkbox"> Kunden må velge</label></div>
+     </div>
+     <label class="checkbox"><input id="gQuantity" type="checkbox"> Tillat flere av samme alternativ (+/−)</label>
+     <div class="rule"><div class="section-head"><h3>Alternativer og tilleggspriser</h3><button class="btn small" id="addOption">+ Alternativ</button></div>
+      <div id="optionRows"></div><p class="muted">Stjerne markerer standardvalg. Pilene flytter alternativer opp eller ned.</p>
+     </div>
+     <div class="actions"><button class="btn danger" type="button" id="deleteGroup">Slett valggruppe</button></div>
+    </div>
+   </section>
+  </div>
+  <div id="adminMessage" class="banner" role="status" aria-live="polite">Last inn menyen for å begynne.</div>
+ </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

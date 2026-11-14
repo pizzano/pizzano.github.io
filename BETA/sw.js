@@ -1,6 +1,6 @@
 /* KØL BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='kol-beta-static-v20261114-03';
+const CACHE_NAME='kol-beta-static-v20261114-menu-admin2';
 const CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
@@ -8,7 +8,7 @@ const STATIC_URLS=[
   'index.html',
   'style.css?v=20261114-images-fallback13',
   'sepet.js?v=20261114-toast12',
-  'app.js?v=20261114-images-fallback13',
+  'app.js?v=20261114-menu-admin2',
   'profil.js?v=20261114-toast12',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{

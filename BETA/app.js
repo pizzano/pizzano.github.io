@@ -160,6 +160,7 @@ async function init(){
   }
  }else await refreshMenu(false);
  attemptStartupBrowserScroll();
+ if(!('EventSource' in window))void checkMenuVersionOnce();
  startSharedChangeStream();
  document.addEventListener('visibilitychange',()=>{
   // Visible customers stay live. Hidden tabs release Firebase streams and locks.
@@ -169,7 +170,35 @@ async function init(){
  window.addEventListener('online',startSharedChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}render();$('cacheStatus').textContent='Oppdatert';if(manual)showBetaToast('Menyen er oppdatert');if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}if(manual)showBetaToast('Kunne ikke oppdatere menyen','error')}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=false){
+ if(refreshPending)return;
+ refreshPending=true;
+ $('cacheStatus').textContent='Henter…';
+ try{
+  const startingRevision=liveRevision,fresh=await fromFirebase();
+  if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;
+  try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}
+  render();
+  $('cacheStatus').textContent='Oppdatert';
+  $('notice').textContent='';
+  if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});
+ }catch(error){
+  if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller internett og Firebase-tilgang.';$('cacheStatus').textContent='Ingen data'}
+  else{$('notice').textContent='Kunne ikke oppdatere automatisk. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}
+  console.warn('BETA menu refresh:',error);
+ }finally{refreshPending=false}
+}
+
+async function checkMenuVersionOnce(){
+ // Old browsers without EventSource still get current prices on each new visit.
+ if(!menu||navigator.onLine===false)return;
+ try{
+  const res=await fetch(BASE+'/menu/updatedAt.json',{cache:'no-store'});
+  if(!res.ok)return;
+  const remote=Number(await res.json())||0;
+  if(remote>Number(menu.updatedAt||0))await refreshMenu(false);
+ }catch(error){console.warn('BETA version check:',error)}
+}
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
  * The initial snapshot is only the latest compact change notification.
@@ -212,14 +241,10 @@ function saveLiveCacheSoon(){
  },300);
 }
 async function resyncAfterGap(){
- // No automatic GET once this browser already has a menu.
- // A missed or oversized delta must not silently trigger a full download.
- if(menu){
-   $('cacheStatus').textContent='Endringer tilgjengelig';
-   $('notice').textContent='Menyen er endret. Trykk ↻ for å oppdatere hvis du ønsker den nyeste versjonen.';
-   askPeerForCurrentMenu();
-   return;
- }
+ // One full download ONLY when the change feed can't be applied safely.
+ // Prevent stale prices or photos on returning customers without manual refresh.
+ $('cacheStatus').textContent='Oppdaterer menyen automatisk…';
+ askPeerForCurrentMenu();
  await refreshMenu(false);
 }
 async function receiveLiveAnnouncement(value,relay=false){
@@ -277,7 +302,8 @@ function startChangeStream(){
    if(source.readyState!==2)return; // Browser reconnects automatically.
    source.close();
    if(changeStream===source)changeStream=null;
-   // No periodic reconnect requests. Online/visibility events can restart it.
+   // If the live signal is blocked, do one tiny revision check (not polling).
+   void checkMenuVersionOnce();
  };
  for(const kind of ['cancel','auth_revoked'])source.addEventListener(kind,()=>{
    source.close();
@@ -829,7 +855,6 @@ function updatePrice(){
 // while a dialog is open can make the sticky restaurant header disappear.
 function show(id){$('overlay').hidden=false;$(id).hidden=false}
 function hideAll(){if(typeof betaBonusStop==='function')betaBonusStop();$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true;$('betaProfileSheet').hidden=true;$('btnProfile').setAttribute('aria-expanded','false')}
-$('refresh').addEventListener('click',()=>refreshMenu());
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showBetaToast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
 // collapse Chrome's address bar: browser UI visibility is browser-controlled.
