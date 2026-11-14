@@ -436,7 +436,7 @@ function saveDemoContact(){
 }
 // BETA contact is saved only when the customer proceeds from the contact step.
 // Use the same 8-digit customer key as the existing loyalty rollup.
-let customerSavedSignature='',customerSavePending=null;
+
 // BETA currently sends LOCAL_DEMO orders only. Keep contact data local
 // until a verified backend endpoint can safely write /customers/{phone}.
 // Never allow anonymous PATCH access to private customer records.
