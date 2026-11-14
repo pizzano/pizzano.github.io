@@ -385,14 +385,14 @@ async function betaProfileSaveContact(event){
  save.disabled=true;save.textContent='Lagrer…';
  demoContact={name,phone,email};
  try{
-  const ok=await syncBetaCustomer(); // One existing PATCH on explicit save, no customer GET.
-  if(!ok){demoContact=before;error('Kunne ikke lagre i Firebase. Prøv igjen.');return}
+  const ok=await syncBetaCustomer(); // Local BETA demo only; no anonymous customer PATCH.
+  if(!ok){demoContact=before;error('Kunne ikke lagre på denne enheten. Prøv igjen.');return}
   demoStore(DEMO_CONTACT_KEY,demoContact);
   $('demoFullName').value=name;$('demoPhone').value=phone;$('demoEmail').value=email;
   updateContactValidation();
-  status.textContent='✓ Opplysningene er lagret.';
+  status.textContent='✓ Opplysningene er lagret på denne enheten (ikke i Firebase).';
   status.hidden=false;status.dataset.kind='success';
-  showBetaToast('Profilen er oppdatert');
+  showBetaToast('Profilen er lagret på denne enheten');
   betaProfileRenderHome();
   if(betaBonusVisible())betaBonusStart(true);
  }catch(e){
