@@ -437,32 +437,16 @@ function saveDemoContact(){
 // BETA contact is saved only when the customer proceeds from the contact step.
 // Use the same 8-digit customer key as the existing loyalty rollup.
 let customerSavedSignature='',customerSavePending=null;
+// BETA currently sends LOCAL_DEMO orders only. Keep contact data local
+// until a verified backend endpoint can safely write /customers/{phone}.
+// Never allow anonymous PATCH access to private customer records.
 async function syncBetaCustomer(){
  const name=demoContact.name.trim().replace(/\s+/g,' ').slice(0,120);
  const phone=demoContact.phone;
  const email=demoContact.email.trim().toLowerCase().slice(0,200);
  if(name.length<2||!/^[49]\d{7}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
- const signature=JSON.stringify([name,phone,email]);
- if(signature===customerSavedSignature)return true;
- if(customerSavePending)await customerSavePending;
- if(signature===customerSavedSignature)return true;
- customerSavePending=(async()=>{
-  try{
-   // PATCH touches contact fields only; loyalty totals remain untouched.
-   const response=await fetch(BASE+'/customers/'+phone+'.json',{
-    method:'PATCH',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name,email})
-   });
-   if(!response.ok)throw new Error('Firebase HTTP '+response.status);
-   customerSavedSignature=signature;
-   return true;
-  }catch(error){
-   console.warn('BETA customer sync failed:',error);
-   return false;
-  }
- })();
- try{return await customerSavePending}
- finally{customerSavePending=null}
+ const ok=demoStore(DEMO_CONTACT_KEY,{name,phone,email});
+ return !!ok;
 }
 function validateDemoContact(){
  saveDemoContact();
@@ -592,8 +576,8 @@ async function demoNext(){
   if(validateDemoContact()){
    $('cartNext').disabled=true;
    try{
-    if(await syncBetaCustomer()){checkoutNavigate('pickup');showBetaToast('Kontaktinformasjonen er lagret')}
-    else{showCheckoutError('Kundeopplysningene kunne ikke lagres. Prøv igjen, eller kontakt restauranten.');showBetaToast('Kunne ikke lagre kontaktinformasjonen','error')}
+    if(await syncBetaCustomer()){checkoutNavigate('pickup');showBetaToast('Kontaktinformasjonen er lagret på denne enheten')}
+    else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen på denne enheten. Kontroller nettleserens lagring.');showBetaToast('Kunne ikke lagre kontaktinformasjonen','error')}
    }finally{$('cartNext').disabled=false}
   }
  }else submitDemoOrder();
