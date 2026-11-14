@@ -133,5 +133,14 @@
     <div class="demo-waiting"><i class="demo-status-dot" aria-hidden="true"></i><div><strong id="demoConfirmationStatus">Ikke sendt til restauranten</strong><small id="demoConfirmationTimer">Oversikten er lagret</small></div></div>
     <button id="demoConfirmationClose" type="button" class="demo-view-order">Til menyen</button>
   </section>
+  <script>
+    // Only BETA/ is controlled. Static HTML/CSS/JS are cached; dynamic data is untouched.
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', {scope: './', updateViaCache: 'none'})
+          .catch(error => console.warn('BETA Service Worker:', error));
+      }, {once: true});
+    }
+  </script>
 </body>
 </html>
