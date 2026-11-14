@@ -129,6 +129,68 @@ function getProductAllergens(p){
    const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
   }
  }
+
+ let activeAdminModal=null,adminModalReturnFocus=null;
+ function setAdminModalTab(kind,tab){
+  const modal=$(kind==='product'?'productEditor':'groupEditor');
+  const tabAttr=kind==='product'?'data-product-tab':'data-group-tab';
+  const paneAttr=kind==='product'?'data-product-section':'data-group-section';
+  for(const button of modal.querySelectorAll('['+tabAttr+']')){
+   const selected=button.getAttribute(tabAttr)===tab;
+   button.classList.toggle('active',selected);
+   button.setAttribute('aria-selected',String(selected));
+   button.tabIndex=selected?0:-1;
+  }
+  for(const panel of modal.querySelectorAll('['+paneAttr+']')){
+   panel.hidden=panel.getAttribute(paneAttr)!==tab;
+  }
+  modal.querySelector('.admin-modal-body').scrollTop=0;
+ }
+ function openAdminModal(kind){
+  const target=kind==='product'?'productEditor':'groupEditor';
+  if(kind==='product'&&!product())return;
+  if(kind==='group'&&!group())return;
+  if(activeAdminModal&&activeAdminModal!==kind)closeAdminModal();
+  if(!activeAdminModal)adminModalReturnFocus=document.activeElement;
+  activeAdminModal=kind;
+  $(target).hidden=false;
+  $(kind==='product'?'productModalBackdrop':'groupModalBackdrop').hidden=false;
+  document.body.classList.add('admin-modal-open');
+  setAdminModalTab(kind,kind==='product'?'produkt':'gruppe');
+  $(kind==='product'?'btnCloseProductModal':'btnCloseGroupModal').focus();
+ }
+ function closeAdminModal(){
+  if(!activeAdminModal)return;
+  const kind=activeAdminModal;
+  activeAdminModal=null;
+  $(kind==='product'?'productEditor':'groupEditor').hidden=true;
+  $(kind==='product'?'productModalBackdrop':'groupModalBackdrop').hidden=true;
+  document.body.classList.remove('admin-modal-open');
+  const toFocus=adminModalReturnFocus;
+  adminModalReturnFocus=null;
+  if(toFocus?.isConnected&&typeof toFocus.focus==='function')toFocus.focus();
+ }
+ async function saveAdminModal(kind){
+  // Ensure the image URL is committed even if the user clicks Save before blurring.
+  if(kind==='product'&&product()&&$('pImage').value!==productImage(product()))readAndSetImage();
+  if(!state.dirty){closeAdminModal();return}
+  await save();
+  if(!state.dirty)closeAdminModal();
+ }
+ function modalKeyboard(event){
+  if(!activeAdminModal)return;
+  if(event.key==='Escape'){event.preventDefault();closeAdminModal();return}
+  if(event.key!=='Tab')return;
+  const modal=$(activeAdminModal==='product'?'productEditor':'groupEditor');
+  const all=[...modal.querySelectorAll('button,input,textarea,select,a[href],[tabindex]')].filter(el=>
+   !el.disabled&&!el.hidden&&!el.closest('[hidden]')&&el.tabIndex!==-1
+  );
+  if(!all.length)return;
+  const first=all[0],last=all[all.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+ }
+
  function renderAll(){
   renderCategories();renderProducts();renderProductEditor();
   renderGroups();renderGroupEditor();setTab(state.tab);
@@ -158,7 +220,7 @@ function getProductAllergens(p){
  function renderSizes(){
   const p=product(),sizes=arr(p.sizes),groups=state.menu.optionGroups;
   $('sizeRows').innerHTML=sizes.map((size,i)=>{
-   const html='<div class="size-row"><input aria-label="Størrelsesnavn" data-size-name="'+i+'" value="'+esc(sizeLabel(size))+'"><input type="number" min="0" max="99999" step="1" aria-label="Pris i kroner" data-size-price="'+i+'" value="'+esc(size.price??0)+'"><button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>';
+   const html='<div class="size-row"><input aria-label="Størrelsesnavn" data-size-name="'+i+'" value="'+esc(sizeLabel(size))+'"><input type="number" min="0" max="99999" step="1" aria-label="Pris i kroner" data-size-price="'+i+'" value="'+esc(Number(size.price)||0)+'"><button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>';
    const assigned=arr(size.optionGroupIds).map(String);
    return '<div class="group-card">'+html+'<details><summary style="font-size:12px;cursor:pointer">Valggrupper bare for denne størrelsen</summary><div class="stack compact">'+groups.map(g=>'<label class="checkbox"><input type="checkbox" data-size-group="'+i+'" value="'+esc(g.id)+'"'+(assigned.includes(String(g.id))?' checked':'')+'> '+esc(g.title||g.id)+'</label>').join('')+'</div></details></div>';
   }).join('')||'<p class="empty">Ingen størrelser. Legg til en størrelse.</p>';
@@ -199,7 +261,7 @@ function getProductAllergens(p){
    const selected=arr(g.defaultOptionIds).map(String).includes(String(o.id));
    return '<div class="group-card" data-option-row="'+i+'"><div class="option-row">'+
     '<input aria-label="Alternativnavn" data-option-label="'+i+'" value="'+esc(o.label||'')+'" placeholder="Alternativ">'+
-    '<input type="number" min="0" max="99999" aria-label="Tilleggspris" data-option-price="'+i+'" value="'+esc(o.price??0)+'">'+
+    '<input type="number" min="0" max="99999" aria-label="Tilleggspris" data-option-price="'+i+'" value="'+esc(Number(o.price)||0)+'">'+
     '<button type="button" data-option-delete="'+i+'" aria-label="Slett">×</button></div>'+
     '<div class="actions"><label class="checkbox"><input type="checkbox" data-option-default="'+i+'"'+(selected?' checked':'')+'> Startvalg</label>'+
     '<label class="checkbox"><input type="checkbox" data-option-soldout="'+i+'"'+(o.soldOut?' checked':'')+'> Utsolgt</label>'+
@@ -281,17 +343,18 @@ function getProductAllergens(p){
   const s=category();if(!s)return;
   const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredients:'',sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
-  $('pName').focus();
+  openAdminModal('product');$('pName').focus();
  }
  function duplicateProduct(){
   const s=category(),p=product();if(!s||!p)return;
   const duplicated=clone(p);duplicated.id=uid('product');duplicated.name=(p.name||'Produkt')+' (kopi)';
   s.items.splice(state.product+1,0,duplicated);state.product++;renderProducts();renderProductEditor();setDirty();
+  openAdminModal('product');
  }
  function removeProduct(){
   const s=category(),p=product();if(!s||!p)return;
   if(!confirm('Slette produktet '+p.name+'? Endringen lagres først når du trykker Lagre.'))return;
-  s.items.splice(state.product,1);state.product=Math.min(state.product,s.items.length-1);
+  closeAdminModal();s.items.splice(state.product,1);state.product=Math.min(state.product,s.items.length-1);
   if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>String(id)!==String(p.id));
   renderProducts();renderProductEditor();setDirty();
  }
@@ -304,12 +367,12 @@ function getProductAllergens(p){
  }
  function addGroup(){
   const g={id:uid('group'),title:'Ny valggruppe',selectionMode:'single',required:false,maxSelections:1,allowQuantity:false,defaultOptionIds:[],options:[]};
-  state.menu.optionGroups.push(g);state.group=state.menu.optionGroups.length-1;renderGroups();renderGroupEditor();setDirty();$('gTitle').focus();
+  state.menu.optionGroups.push(g);state.group=state.menu.optionGroups.length-1;renderGroups();renderGroupEditor();setDirty();openAdminModal('group');$('gTitle').focus();
  }
  function deleteGroup(){
   const g=group();if(!g||!confirm('Slette valggruppen '+g.title+' fra alle produkter?'))return;
   const id=String(g.id);
-  state.menu.optionGroups.splice(state.group,1);
+  closeAdminModal();state.menu.optionGroups.splice(state.group,1);
   for(const section of state.menu.sections)for(const p of section.items){
    p.optionGroupIds=arr(p.optionGroupIds).filter(v=>String(v)!==id);
    p.optionGroupOrder=arr(p.optionGroupOrder).filter(v=>String(v)!==id);
@@ -336,6 +399,25 @@ function getProductAllergens(p){
   else ids=checked?[String(option.id)]:[];
   g.defaultOptionIds=ids;setDirty();renderOptionRows();
  }
+ // DEMO normalizer treats missing/non-numeric menu prices as zero. BETA may
+ // inherit these legacy values. An unrelated photo/name edit must never fail
+ // because of an untouched old extra price. Do not rewrite legacy values:
+ // only freshly edited fields are validated on save.
+ function originalProduct(p){
+  for(const sec of arr(state.original?.sections)){
+   const found=arr(sec.items).find(item=>String(item?.id)===String(p?.id));
+   if(found)return found;
+  }
+  return null;
+ }
+ function originalOption(g,option){
+  const old=arr(state.original?.optionGroups).find(x=>String(x?.id)===String(g?.id));
+  return arr(old?.options).find(x=>String(x?.id)===String(option?.id))||null;
+ }
+ function menuPriceIsValid(raw){
+  const n=Number(raw);
+  return Number.isFinite(n)&&n>=0;
+ }
  function sanitize(){
   const menu=state.menu;
   if(!menu.sections.length)throw Error('Menyen må ha minst én kategori.');
@@ -346,7 +428,11 @@ function getProductAllergens(p){
    for(const p of section.items){
     if(!String(p.name||'').trim())throw Error('Et produkt mangler navn.');
     if(prodIds.has(String(p.id)))throw Error('Duplisert produkt-ID.');prodIds.add(String(p.id));
-    for(const size of arr(p.sizes)){if(!Number.isFinite(Number(size.price))||Number(size.price)<0)throw Error('Ugyldig pris: '+p.name)}
+    for(const size of arr(p.sizes)){
+     if(menuPriceIsValid(size.price))continue;
+     const previous=arr(originalProduct(p)?.sizes).find(entry=>String(entry?.id)===String(size?.id));
+     if(!previous||!Object.is(previous.price,size.price))throw Error('Ugyldig pris: '+p.name);
+    }
    }
   }
   for(const g of menu.optionGroups){
@@ -354,10 +440,13 @@ function getProductAllergens(p){
    if(groupIds.has(String(g.id)))throw Error('Duplisert valggruppe-ID.');groupIds.add(String(g.id));
    const ids=new Set();
    for(const o of arr(g.options)){
-    if(!String(o.label||'').trim())throw Error('Et alternativ mangler navn i '+g.title);
+    const previous=originalOption(g,o);
+    if(!String(o.label||'').trim()&&(!previous||!Object.is(previous.label,o.label)))
+     throw Error('Et alternativ mangler navn i '+g.title);
     if(ids.has(String(o.id)))throw Error('Duplisert alternativ-ID i '+g.title);
     ids.add(String(o.id));
-    if(!Number.isFinite(Number(o.price))||Number(o.price)<0)throw Error('Ugyldig alternativpris i '+g.title);
+    if(!menuPriceIsValid(o.price)&&(!previous||!Object.is(previous.price,o.price)))
+     throw Error('Ugyldig alternativpris i '+g.title+' · '+(o.label||o.id));
    }
   }
  }
@@ -419,6 +508,19 @@ function getProductAllergens(p){
  }
  function handleEvents(){
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
+  for(const [id,kind] of [['btnCloseProductModal','product'],['btnCloseProductBottom','product'],['productModalBackdrop','product'],['btnCloseGroupModal','group'],['btnCloseGroupBottom','group'],['groupModalBackdrop','group']]){
+   $(id).addEventListener('click',()=>{if(activeAdminModal===kind)closeAdminModal()});
+  }
+  $('btnSaveProductModal').addEventListener('click',()=>{void saveAdminModal('product')});
+  $('btnSaveGroupModal').addEventListener('click',()=>{void saveAdminModal('group')});
+  $('btnDuplicateProductModal').addEventListener('click',duplicateProduct);
+  $('btnRemoveProductModal').addEventListener('click',removeProduct);
+  $('productEditor').querySelectorAll('[data-product-tab]').forEach(button=>
+   button.addEventListener('click',()=>setAdminModalTab('product',button.dataset.productTab)));
+  $('groupEditor').querySelectorAll('[data-group-tab]').forEach(button=>
+   button.addEventListener('click',()=>setAdminModalTab('group',button.dataset.groupTab)));
+  document.addEventListener('keydown',modalKeyboard);
+
   $('btnSave').addEventListener('click',save);
   $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
@@ -432,11 +534,11 @@ function getProductAllergens(p){
   });
   $('productList').addEventListener('click',event=>{
    const button=event.target.closest('[data-product]');if(!button)return;
-   state.product=Number(button.dataset.product);renderProducts();renderProductEditor();
+   state.product=Number(button.dataset.product);renderProducts();renderProductEditor();openAdminModal('product');
   });
   $('groupList').addEventListener('click',event=>{
    const button=event.target.closest('[data-group]');if(!button)return;
-   state.group=Number(button.dataset.group);renderGroups();renderGroupEditor();
+   state.group=Number(button.dataset.group);renderGroups();renderGroupEditor();openAdminModal('group');
   });
   $('productSearch').addEventListener('input',renderProducts);
   $('groupSearch').addEventListener('input',renderGroups);

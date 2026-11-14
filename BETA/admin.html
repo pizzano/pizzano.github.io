@@ -70,8 +70,51 @@
 #toast.show{transform:translate(-50%,0);opacity:1}#toast.error{background:#a23535}
 @media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}.editor{grid-column:1/-1;position:static;max-height:none}}
 @media(max-width:680px){.top{gap:7px;padding:12px}.top .brand{font-size:18px}.top-end .status{display:none}.top-end .btn{padding:8px}.wrap{padding:12px}.layout{display:block}.layout>.panel{margin-bottom:12px}.scroll{max-height:270px}.editor{max-height:none}.cols{grid-template-columns:1fr}.intro{margin-top:7px}.intro h1{font-size:23px}}
+
+/* Overlay editors – product and choice group, matching DEMO's easy modal workflow. */
+#productsPage{grid-template-columns:minmax(240px,330px) minmax(340px,1fr)}
+#groupsPage{grid-template-columns:minmax(280px,380px) minmax(0,1fr)}
+.admin-modal-backdrop{position:fixed;z-index:30;inset:0;background:rgba(4,25,18,.64);backdrop-filter:blur(4px)}
+.admin-modal-backdrop[hidden],.admin-modal[hidden]{display:none!important}
+.admin-modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(920px,calc(100vw - 30px));max-height:calc(100dvh - 36px);border:1px solid #cbe2d3;border-radius:19px;background:#f6faf7;color:#1c3e2e;box-shadow:0 32px 100px #041e16a8;overflow:hidden}
+.admin-group-modal{width:min(780px,calc(100vw - 30px))}
+.admin-modal-header{display:flex;align-items:flex-start;gap:18px;justify-content:space-between;padding:20px 24px 15px;background:#fff}
+.admin-modal-heading{min-width:0}.admin-modal-heading small{display:block;color:#087b5a;letter-spacing:.11em;font-size:10px;font-weight:900;margin-bottom:6px}
+.admin-modal-heading h2{margin:0 0 4px;font-size:22px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+.admin-modal-heading p{margin:0;color:#6b8577;font-size:12px}
+.admin-modal-close{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;border:1px solid #d9e9df;background:#f4faf6;color:#295441;font-size:27px;line-height:1}
+.admin-modal-close:hover{background:#e4f2e8}
+.admin-modal-tabs{display:flex;gap:4px;flex:none;padding:0 16px 10px;background:#fff;border-bottom:1px solid #dce9df;overflow-x:auto;scrollbar-width:thin}
+.admin-modal-tab{flex:none;border:1px solid transparent;border-radius:10px;padding:10px 12px;background:transparent;color:#5f7769;font-size:12px;font-weight:750;white-space:nowrap}
+.admin-modal-tab:hover{background:#ecf5ee;color:#187755}
+.admin-modal-tab.active{border-color:#9bd0af;background:#e4f5ea;color:#076a4c}
+.admin-modal-body{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;padding:18px 24px;scrollbar-width:thin}
+.admin-modal-pane{display:grid;gap:13px}.admin-modal-pane[hidden]{display:none!important}
+.admin-form-card{background:#fff;border:1px solid #dce9df;border-radius:15px;padding:19px}
+.admin-form-card h3{margin:0 0 14px;font-size:15px;font-weight:850}
+.admin-form-card .rule{margin-top:0;border-top:0;padding-top:0}
+.admin-form-card .rule h3{margin-top:0}
+.admin-form-card .field{margin-bottom:14px}
+.admin-form-card .field:last-child{margin-bottom:0}
+.admin-form-card .preview{gap:15px}
+.admin-form-card .preview img{width:112px;height:95px}
+.admin-modal-footer{display:flex;align-items:center;gap:10px;padding:13px 22px;background:#fff;border-top:1px solid #dce9df;flex:none}
+.admin-modal-footer .btn.primary{min-width:157px}
+.admin-modal-footer-note{margin-left:auto;color:#70877a;font-size:11px}
+body.admin-modal-open{overflow:hidden}
+@media(max-width:680px){
+ #productsPage,#groupsPage{display:block}
+ .admin-modal{width:100vw;max-height:100dvh;height:100dvh;left:0;top:0;transform:none;border-radius:0;border:0}
+ .admin-modal-header{padding:14px 15px}.admin-modal-heading h2{font-size:20px}
+ .admin-modal-body{padding:12px}
+ .admin-form-card{padding:14px}
+ .admin-modal-footer{padding:11px 12px;flex-wrap:wrap}
+ .admin-modal-footer-note{display:none}
+ .admin-modal-footer .btn.primary{flex:1;min-width:0}
+ .admin-group-modal .admin-modal-footer{gap:7px}
+}
 </style>
-<script src="./admin.js?v=20261114-direct-admin2" defer></script>
+<script src="./admin.js?v=20261114-modal-prices4" defer></script>
 </head>
 <body>
 <header class="top">
@@ -101,46 +144,79 @@
   <div class="layout" id="productsPage">
    <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><div class="stack scroll" id="categoryList"></div><div class="actions"><button class="btn small" id="renameCategory">Rediger kategori</button><button class="btn small" id="moveCategoryUp">↑</button><button class="btn small" id="moveCategoryDown">↓</button><button class="btn small danger" id="removeCategory">Slett kategori</button></div></section>
    <section class="panel"><div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div><input id="productSearch" class="search" type="search" placeholder="Søk etter produkt…" aria-label="Søk produkter"><div class="stack scroll" id="productList"></div><div class="actions"><button class="btn small" id="moveProductUp">↑ Opp</button><button class="btn small" id="moveProductDown">↓ Ned</button><button class="btn small" id="duplicateProduct">Dupliser</button><button class="btn danger small" id="removeProduct">Slett</button></div></section>
-   <section class="panel editor" id="productEditor">
-    <h2 id="productEditorTitle">Rediger produkt</h2><p class="sub">Velg et produkt fra listen.</p>
-    <div id="productFields" hidden>
-     <div class="field"><label for="pName">Produktnavn</label><input id="pName" maxlength="120"></div>
+   
+  </div>
+  <div class="layout" id="groupsPage" hidden>
+   <section class="panel"><div class="section-head"><h2>Valggrupper</h2><button class="btn primary small" id="addGroup">+ Gruppe</button></div><input id="groupSearch" class="search" type="search" placeholder="Søk valggrupper…" aria-label="Søk valggrupper"><div class="stack scroll" id="groupList"></div></section>
+   
+  </div>
+  <div class="admin-modal-backdrop" id="productModalBackdrop" hidden></div>
+  <section class="admin-modal" id="productEditor" role="dialog" aria-modal="true" aria-labelledby="productEditorTitle" hidden>
+   <header class="admin-modal-header">
+    <div class="admin-modal-heading"><small>PRODUKTREDAKTØR</small><h2 id="productEditorTitle">Rediger produkt</h2><p>Endre produktets opplysninger, størrelse og tilvalg.</p></div>
+    <button id="btnCloseProductModal" class="admin-modal-close" type="button" aria-label="Lukk produktredigering">×</button>
+   </header>
+   <nav class="admin-modal-tabs" role="tablist" aria-label="Produktseksjoner">
+    <button type="button" class="admin-modal-tab active" data-product-tab="produkt" role="tab" aria-selected="true">Produkt</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="ingredienser" role="tab" aria-selected="false">Ingredienser</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="storrelser" role="tab" aria-selected="false">Størrelser & priser</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="allergener" role="tab" aria-selected="false">Allergener</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="valg" role="tab" aria-selected="false">Choices & addons</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="tilgjengelighet" role="tab" aria-selected="false">Tilgjengelighet</button>
+    <button type="button" class="admin-modal-tab" data-product-tab="handlinger" role="tab" aria-selected="false">Handlinger</button>
+   </nav>
+   <div class="admin-modal-body" id="productFields">
+    <div class="admin-modal-pane" data-product-section="produkt">
+     <div class="admin-form-card"><h3>Produktinformasjon</h3>     <div class="field"><label for="pName">Produktnavn</label><input id="pName" maxlength="120"></div>
      <div class="field"><label for="pDescription">Beskrivelse</label><textarea id="pDescription" maxlength="1500"></textarea></div>
-     <div class="field"><label for="pIngredients">Ingredienser (kommaseparert)</label><textarea id="pIngredients"></textarea></div>
-     <div class="field"><label for="pKitchenNotes">Raske kjøkkenbeskjeder (en per linje)</label><textarea id="pKitchenNotes" placeholder="Ekstra stekt&#10;Del i 8 biter"></textarea></div>
-     <div class="rule"><h3>Allergener</h3><div id="allergenChoices" class="stack compact"></div></div>
-     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
+</div>
+     <div class="admin-form-card"><h3>Produktbilde</h3>     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
      <div class="field"><label for="pImage">Bilde-URL</label><input id="pImage" type="url" placeholder="https://images.pexels.com/…"><small>Ved endring får produktet sin egen bilde-ID, uten å endre andre produkters bilder.</small></div>
-     <div class="rule"><h3>Størrelser og priser</h3><div id="sizeRows"></div><button class="btn small" id="addSize" type="button">+ Størrelse</button></div>
-     <div class="rule"><h3>Choices &amp; addons for produktet</h3><p class="muted">Velg grupper som skal vises. Rekkefølgen er lik i kundemenyen.</p><div id="assignedGroups" class="stack compact" style="margin-top:10px"></div></div>
-     <div class="rule"><h3>Øvrig</h3>
+</div>
+    </div>
+    <div class="admin-modal-pane" data-product-section="ingredienser" hidden><div class="admin-form-card"><h3>Ingredienser og kjøkkenbeskjeder</h3>     <div class="field"><label for="pIngredients">Ingredienser (kommaseparert)</label><textarea id="pIngredients"></textarea></div>
+     <div class="field"><label for="pKitchenNotes">Raske kjøkkenbeskjeder (en per linje)</label><textarea id="pKitchenNotes" placeholder="Ekstra stekt&#10;Del i 8 biter"></textarea></div>
+</div></div>
+    <div class="admin-modal-pane" data-product-section="storrelser" hidden><div class="admin-form-card">     <div class="rule"><h3>Størrelser og priser</h3><div id="sizeRows"></div><button class="btn small" id="addSize" type="button">+ Størrelse</button></div>
+</div></div>
+    <div class="admin-modal-pane" data-product-section="allergener" hidden><div class="admin-form-card">     <div class="rule"><h3>Allergener</h3><div id="allergenChoices" class="stack compact"></div></div>
+</div></div>
+    <div class="admin-modal-pane" data-product-section="valg" hidden><div class="admin-form-card">     <div class="rule"><h3>Choices &amp; addons for produktet</h3><p class="muted">Velg grupper som skal vises. Rekkefølgen er lik i kundemenyen.</p><div id="assignedGroups" class="stack compact" style="margin-top:10px"></div></div>
+</div></div>
+    <div class="admin-modal-pane" data-product-section="tilgjengelighet" hidden><div class="admin-form-card">     <div class="rule"><h3>Øvrig</h3>
       <label class="checkbox"><input type="checkbox" id="pSoldOut"> Utsolgt</label>
       <label class="checkbox"><input type="checkbox" id="pHidden"> Skjult fra kundemenyen</label>
       <label class="checkbox"><input type="checkbox" id="pPopular"> Mest solgt</label>
      </div>
-     <p class="note">Endringene holdes lokalt til du trykker <b>Lagre endringer</b> øverst. Lagret meny sendes til Firebase med versjonskontroll.</p>
-    </div>
-   </section>
-  </div>
-  <div class="layout" id="groupsPage" hidden>
-   <section class="panel"><div class="section-head"><h2>Valggrupper</h2><button class="btn primary small" id="addGroup">+ Gruppe</button></div><input id="groupSearch" class="search" type="search" placeholder="Søk valggrupper…" aria-label="Søk valggrupper"><div class="stack scroll" id="groupList"></div></section>
-   <section class="panel editor" style="grid-column:span 2" id="groupEditor">
-    <h2 id="groupEditorTitle">Rediger valggruppe</h2><p class="sub">Opprett eller velg en valggruppe.</p>
-    <div id="groupFields" hidden>
-     <div class="cols">
-      <div class="field"><label for="gTitle">Navn på gruppen</label><input id="gTitle" maxlength="140"></div>
-      <div class="field"><label for="gMode">Valgtype</label><select id="gMode"><option value="single">Ett valg</option><option value="multiple">Flere valg</option></select></div>
-      <div class="field"><label for="gMax">Maks antall</label><input id="gMax" type="number" min="1" max="30"></div>
-      <div class="field"><label for="gRequired">Obligatorisk</label><label class="checkbox"><input id="gRequired" type="checkbox"> Kunden må velge</label></div>
-     </div>
+</div></div>
+    <div class="admin-modal-pane" data-product-section="handlinger" hidden><div class="admin-form-card"><h3>Produkthandlinger</h3><p class="muted">Du kan duplisere eller slette produktet. Lagring skjer først når du trykker Lagre endringer.</p><div class="actions">
+     <button type="button" id="btnDuplicateProductModal" class="btn">Dupliser produkt</button>
+     <button type="button" id="btnRemoveProductModal" class="btn danger">Slett produkt</button>
+    </div></div></div>
+   </div>
+   <footer class="admin-modal-footer"><button id="btnCloseProductBottom" class="btn" type="button">Lukk</button><span class="admin-modal-footer-note">Ulagrede endringer beholdes som utkast.</span><button id="btnSaveProductModal" class="btn primary" type="button">Lagre endringer</button></footer>
+  </section>
+  <div class="admin-modal-backdrop" id="groupModalBackdrop" hidden></div>
+  <section class="admin-modal admin-group-modal" id="groupEditor" role="dialog" aria-modal="true" aria-labelledby="groupEditorTitle" hidden>
+   <header class="admin-modal-header"><div class="admin-modal-heading"><small>VALGGRUPPER & TILVALG</small><h2 id="groupEditorTitle">Rediger valggruppe</h2><p>Rediger alternativer, tilleggspriser og valgbegrensninger.</p></div><button id="btnCloseGroupModal" class="admin-modal-close" type="button" aria-label="Lukk valggruppe">×</button></header>
+   <nav class="admin-modal-tabs" role="tablist" aria-label="Valggruppeseksjoner">
+     <button class="admin-modal-tab active" data-group-tab="gruppe" type="button" aria-selected="true" role="tab">Valggruppe</button>
+     <button class="admin-modal-tab" data-group-tab="alternativer" type="button" aria-selected="false" role="tab">Alternativer og priser</button>
+   </nav>
+   <div class="admin-modal-body" id="groupFields">
+    <div class="admin-modal-pane" data-group-section="gruppe"><div class="admin-form-card"><h3>Oppsett og regler</h3>
+     <div class="cols"><div class="field"><label for="gTitle">Navn på gruppen</label><input id="gTitle" maxlength="140"></div>
+     <div class="field"><label for="gMode">Valgtype</label><select id="gMode"><option value="single">Ett valg</option><option value="multiple">Flere valg</option></select></div>
+     <div class="field"><label for="gMax">Maks antall</label><input id="gMax" type="number" min="1" max="30"></div>
+     <div class="field"><label for="gRequired">Obligatorisk</label><label class="checkbox"><input id="gRequired" type="checkbox"> Kunden må velge</label></div></div>
      <label class="checkbox"><input id="gQuantity" type="checkbox"> Tillat flere av samme alternativ (+/−)</label>
-     <div class="rule"><div class="section-head"><h3>Alternativer og tilleggspriser</h3><button class="btn small" id="addOption">+ Alternativ</button></div>
-      <div id="optionRows"></div><p class="muted">Stjerne markerer standardvalg. Pilene flytter alternativer opp eller ned.</p>
-     </div>
-     <div class="actions"><button class="btn danger" type="button" id="deleteGroup">Slett valggruppe</button></div>
-    </div>
-   </section>
-  </div>
+    </div></div>
+    <div class="admin-modal-pane" data-group-section="alternativer" hidden><div class="admin-form-card"><div class="section-head"><h3>Alternativer og tilleggspriser</h3><button class="btn small" id="addOption" type="button">+ Alternativ</button></div>
+     <div id="optionRows"></div><p class="muted">Standardvalg velges med avkryssing; bruk pilene til å sortere.</p>
+    </div></div>
+   </div>
+   <footer class="admin-modal-footer"><button id="deleteGroup" class="btn danger" type="button">Slett valggruppe</button><button id="btnCloseGroupBottom" class="btn" type="button">Lukk</button><span class="admin-modal-footer-note">Ulagrede endringer beholdes som utkast.</span><button id="btnSaveGroupModal" class="btn primary" type="button">Lagre endringer</button></footer>
+  </section>
   <div id="adminMessage" class="banner" role="status" aria-live="polite">Last inn menyen for å begynne.</div>
  </section>
 </main>
