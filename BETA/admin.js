@@ -9,12 +9,10 @@
 const ADMIN_UID='CkvfzzzQ9MaPD8lZWKx10RB6iX22';
 const ADMIN_EMAIL='fatihsemb@gmail.com';
 // Public Firebase Web API key is required by Firebase Authentication, not a password.
-// Set from Firebase Console > Project settings > General; never store admin passwords here.
-const FIREBASE_WEB_API_KEY='';
-const AUTH_STORE='kol-beta-admin-auth-v1';
+// Firebase Web app config is public; never store admin passwords here.
+const FIREBASE_WEB_API_KEY='AIzaSyDanHMWBBN260CS9S9IVpFPnb2BfnWXF-0';
 let auth=null;
-function storedKey(){try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')?.apiKey||''}catch{return ''}}
-function apiKey(){return FIREBASE_WEB_API_KEY||storedKey()}
+function apiKey(){return FIREBASE_WEB_API_KEY}
 function showLogin(err=''){
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
  $('authError').textContent=err;$('authError').hidden=!err;
