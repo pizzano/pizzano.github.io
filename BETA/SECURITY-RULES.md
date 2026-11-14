@@ -8,7 +8,8 @@ Behavior:
 - Authenticated admin UID gets full read/write via root rules.
 - Public GET of /menu, /settings, /publicPickupLoad.
 - Anonymous customers can create one /orders/{ord_ID}, with basic field validation, but cannot update/delete existing orders or read orders.
-- Anonymous writes to /customers/{8-digit-phone}/name and /email are allowed with type/length checks. Anonymous /customers reads and all other customer writes remain denied. Knowing a phone number permits changing those two fields; this is an accepted trade-off for the no-login design.
+- Anonymous writes to /customers/{8-digit-phone}/name and /email are allowed with type/length checks.
+- Anonymous READ is permitted only on /customers/{8-digit-phone}/bonusCount (for the existing BETA bonus display). Parent /customers and other fields remain unreadable. Anyone knowing a phone number may view its bonus count. Anonymous /customers reads and all other customer writes remain denied. Knowing a phone number permits changing those two fields; this is an accepted trade-off for the no-login design.
 - No anonymous access to /notifications, /pizzaBonus, /systemErrors or other private paths.
 - Admin must use Firebase Authentication ID token. BETA admin PR #115 adds this only to /menu operations.
 - Note /settings is fully public here: split public/private settings before deployment if any secrets are stored there.
