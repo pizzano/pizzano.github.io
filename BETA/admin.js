@@ -1,17 +1,16 @@
 /* KØL BETA menu administrator. Inspired by DEMO product/choices editors.
  * Only kol-grill-pizza-1 RTDB /menu is read/written. No customers/orders/settings.
- * Authentication: Firebase Auth email/password, token held in memory only.
+ * Direct REST connection (no login); Firebase Rules determine write permissions.
  */
 'use strict';
 (()=>{
  const DB='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
- const AUTH='https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=';
  const $=id=>document.getElementById(id);
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const clone=value=>JSON.parse(JSON.stringify(value));
  const arr=value=>Array.isArray(value)?value:[];
  const uid=prefix=>prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
- const state={token:'',expiry:0,menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
+ const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
  let toastTimer=0;
  function notify(message,error=false){
   const node=$('toast');node.textContent=message;node.classList.toggle('error',error);node.classList.add('show');
@@ -23,7 +22,7 @@
  function setDirty(){
   if(!state.menu)return;
   state.dirty=true;
-  $('btnSave').disabled=!state.token||state.saving||!state.etag;
+  $('btnSave').disabled=state.saving||!state.etag;
   const node=$('saveStatus');node.className='status dirty';node.textContent='Ikke lagret';
  }
  function setClean(){
@@ -90,39 +89,29 @@ function getProductAllergens(p){
   const n=state.menu?.sections.reduce((sum,s)=>sum+arr(s.items).length,0)||0;
   message(state.menu?'Menyversjon: '+(state.menu.updatedAt||'ukjent')+' · '+n+' produkter · '+state.menu.optionGroups.length+' valggrupper':'Ingen meny lastet inn');
  }
- async function login(event){
-  event.preventDefault();
-  $('loginError').hidden=true;
-  const key=$('apiKey').value.trim(),email=$('email').value.trim(),password=$('password').value;
-  if(!/^[A-Za-z0-9_-]{15,}$/.test(key)){$('loginError').textContent='Oppgi Web API-nøkkelen til prosjektet.';$('loginError').hidden=false;return}
-  $('btnLogin').disabled=true;
+ // Direct menu connection, with no login request or authentication token.
+ function menuURL(){return DB+'/menu.json'}
+ async function startAdmin(){
+  $('loadingCard').hidden=false;
+  $('adminRoot').hidden=true;
+  $('loadError').hidden=true;
+  $('btnRetry').disabled=true;
+  $('saveStatus').className='status';
+  $('saveStatus').textContent='Kobler til Firebase…';
   try{
-   const response=await fetch(AUTH+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,returnSecureToken:true})});
-   const json=await response.json();
-   if(!response.ok||!json.idToken)throw Error('Innlogging avvist. Sjekk Firebase Authentication og påloggingsopplysningene.');
-   state.token=json.idToken;state.expiry=Date.now()+Math.max(120,Number(json.expiresIn||3600)-90)*1000;
-   $('password').value='';
    await loadMenu(false);
-   $('loginCard').hidden=true;$('adminRoot').hidden=false;$('btnLogout').hidden=false;
-   notify('Logget inn · menykatalogen er lastet');
+   $('loadingCard').hidden=true;
+   $('adminRoot').hidden=false;
+   notify('Menyen er lastet fra Firebase');
   }catch(error){
-   state.token='';$('loginError').textContent=error.message||'Innlogging feilet';$('loginError').hidden=false;
-  }finally{$('btnLogin').disabled=false}
- }
- function logout(){
-  if(state.dirty&&!confirm('Du har ulagrede endringer. Logge ut likevel?'))return;
-  state.token='';state.expiry=0;state.menu=null;state.etag=null;state.original=null;state.dirty=false;
-  $('loginCard').hidden=false;$('adminRoot').hidden=true;$('btnLogout').hidden=true;$('btnSave').disabled=true;
-  $('saveStatus').className='status';$('saveStatus').textContent='Ikke innlogget';
-  notify('Logget ut');
- }
- function menuURL(){return DB+'/menu.json?auth='+encodeURIComponent(state.token)}
- function assertSession(){
-  if(!state.token||Date.now()>=state.expiry)throw Error('Innloggingen er utløpt. Logg ut og inn igjen.');
+   console.warn('BETA menu admin load failed:',error);
+   $('loadError').textContent=error.message||'Kunne ikke laste menyen.';
+   $('loadError').hidden=false;
+   $('saveStatus').textContent='Kunne ikke koble til';
+  }finally{$('btnRetry').disabled=false}
  }
  async function loadMenu(confirmDiscard=true){
   if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
-  assertSession();
   const response=await fetch(menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
   if(!response.ok)throw Error('Firebase avviste menylesing ('+response.status+'). Kontroller database Rules.');
   const payload=await response.json();
@@ -400,7 +389,7 @@ function getProductAllergens(p){
  async function save(){
   if(!state.dirty||state.saving)return;
   if(!state.etag){notify('Hent siste meny før du lagrer.','error');return}
-  try{assertSession();sanitize()}catch(error){notify(error.message,true);return}
+  try{sanitize()}catch(error){notify(error.message,true);return}
   const version=Math.max(Date.now(),Number(state.original.updatedAt||0)+1);
   const delta=buildDelta(state.original,state.menu);
   const previousVersion=Number(state.original.updatedAt)||0;
@@ -413,7 +402,7 @@ function getProductAllergens(p){
   try{
    const response=await fetch(menuURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
    if(response.status===412)throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
-   if(response.status===401||response.status===403)throw Error('Ingen skrivetilgang. Sjekk Firebase Rules for administratoren.');
+   if(response.status===401||response.status===403)throw Error('Firebase avviste skriving. /menu må tillate skriving uten innlogging i Database Rules.');
    if(!response.ok)throw Error('Kunne ikke lagre til Firebase: HTTP '+response.status);
    state.menu=next;state.original=clone(next);
    // New ETag is usually included, otherwise safely GET a fresh ETag before another save.
@@ -429,8 +418,7 @@ function getProductAllergens(p){
   finally{state.saving=false;$('btnSave').disabled=!state.dirty||!state.etag}
  }
  function handleEvents(){
-  $('loginForm').addEventListener('submit',login);
-  $('btnLogout').addEventListener('click',logout);
+  $('btnRetry').addEventListener('click',()=>{void startAdmin()});
   $('btnSave').addEventListener('click',save);
   $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
@@ -545,4 +533,5 @@ function getProductAllergens(p){
   });
  }
  handleEvents();
+ void startAdmin();
 })();

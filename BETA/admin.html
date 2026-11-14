@@ -62,9 +62,7 @@
 .preview img{width:82px;height:75px;object-fit:cover;border-radius:9px;background:#e3ece7}
 .preview strong{font-size:12px;word-break:break-word}.preview small{font-size:11px;color:#768b7f}
 .note{font-size:12px;line-height:1.55;color:#5e806c;border:1px solid #d6e8da;background:#f2faf5;border-radius:11px;padding:12px}
-#loginCard{max-width:485px;margin:6vh auto 0;padding:25px}
-#loginCard h1{font-size:23px;margin:0 0 7px}
-#loginCard .field{margin-top:14px}
+#loadingCard{border-color:#bddcc9}
 .banner{border-radius:10px;padding:11px 13px;margin:10px 0;font-size:12px;border:1px solid #e1e9e3;color:#36664e;background:#f0f8f2}
 .banner.error{border-color:#f0c7c7;color:#a33b3b;background:#fff3f3}
 .banner.warn{border-color:#e9dfbb;color:#745a20;background:#fff9e8}
@@ -73,30 +71,23 @@
 @media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}.editor{grid-column:1/-1;position:static;max-height:none}}
 @media(max-width:680px){.top{gap:7px;padding:12px}.top .brand{font-size:18px}.top-end .status{display:none}.top-end .btn{padding:8px}.wrap{padding:12px}.layout{display:block}.layout>.panel{margin-bottom:12px}.scroll{max-height:270px}.editor{max-height:none}.cols{grid-template-columns:1fr}.intro{margin-top:7px}.intro h1{font-size:23px}}
 </style>
-<script src="./admin.js?v=20261114-menu-admin1" defer></script>
+<script src="./admin.js?v=20261114-direct-admin2" defer></script>
 </head>
 <body>
 <header class="top">
  <div class="brand">🔥 KØL <small>BETA · MENYADMIN</small></div>
  <div class="top-end">
-  <span class="status" id="saveStatus">Ikke innlogget</span>
+  <span class="status" id="saveStatus">Kobler til Firebase…</span>
   <a class="btn ghost small" href="./" target="_blank" rel="noopener noreferrer">Se kundemenyen ↗</a>
-  <button id="btnLogout" class="btn ghost small" type="button" hidden>Logg ut</button>
   <button id="btnSave" class="btn gold" type="button" disabled>Lagre endringer</button>
  </div>
 </header>
 <main class="wrap">
- <section id="loginCard" class="panel">
-  <h1>Logg inn for menyredigering</h1>
-  <p class="muted">Denne siden styrer kun produkter, kategorier og valggrupper i <b>kol-grill-pizza-1</b>. Ingen ordre eller kundedata lastes.</p>
-  <form id="loginForm" autocomplete="on">
-   <div class="field"><label for="apiKey">Firebase Web API-nøkkel</label><input id="apiKey" required autocomplete="off" placeholder="AIza…"><small>Finn nøkkelen under Firebase → Prosjektinnstillinger → Generelt → Nettapp.</small></div>
-   <div class="field"><label for="email">Admin e-post</label><input id="email" type="email" autocomplete="username" required placeholder="admin@eksempel.no"></div>
-   <div class="field"><label for="password">Passord</label><input id="password" type="password" autocomplete="current-password" required></div>
-   <button class="btn primary" id="btnLogin" type="submit">Logg inn og hent meny</button>
-   <p id="loginError" class="banner error" role="alert" hidden></p>
-  </form>
-  <p class="note">Bruk en eksisterende konto i Firebase Authentication (E-post/passord). Tilgang til å skrive i <code>/menu</code> må være begrenset til godkjente administratorer i Firebase Rules. API-nøkkelen er ikke et passord. Ingen passord eller ID-token lagres lokalt.</p>
+ <section id="loadingCard" class="panel" style="max-width:540px;margin:6vh auto 0;padding:24px">
+  <h1 style="font-size:23px;margin:0 0 9px">Kobler til Firebase…</h1>
+  <p class="muted">Menyen lastes direkte fra <strong>kol-grill-pizza-1</strong>, uten innlogging.</p>
+  <p id="loadError" class="banner error" role="alert" hidden></p>
+  <button class="btn primary" id="btnRetry" type="button" style="margin-top:16px" disabled>Prøv på nytt</button>
  </section>
  <section id="adminRoot" hidden>
   <div class="intro">
