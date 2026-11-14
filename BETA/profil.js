@@ -17,7 +17,10 @@ function betaApplyTheme(theme,persist=true){
  }
  const meta=document.querySelector('meta[name="theme-color"]');
  if(meta)meta.content=dark?'#091f1b':'#133d32';
- if(persist)try{localStorage.setItem(BETA_THEME_KEY,dark?'dark':'light')}catch{}
+ if(persist){
+  try{localStorage.setItem(BETA_THEME_KEY,dark?'dark':'light')}catch{}
+  showBetaToast(dark?'Mørk modus er aktivert':'Lys modus er aktivert','info');
+ }
 }
 function betaProfileContact(){
  const current=demoContact||{};
@@ -318,9 +321,11 @@ async function betaRestaurantRefresh(){
    $('brandName').textContent=betaRestaurantText(menu.settings.restaurantName)||'KØL Grill & Pizza';
    updateHoursStatus();
    betaRestaurantMessage='Oppdatert fra settings · lagret på enheten';
+   showBetaToast('Restaurantinformasjonen er oppdatert');
   }catch(error){
    console.warn('BETA restaurant settings refresh failed:',error);
    betaRestaurantMessage='Kunne ikke oppdatere. Viser lagret informasjon.';
+   showBetaToast('Kunne ikke oppdatere restaurantinformasjonen','error');
   }finally{
    if(!$('betaProfileRestaurantPanel').hidden)betaProfileRenderRestaurant();
   }
@@ -387,6 +392,7 @@ async function betaProfileSaveContact(event){
   updateContactValidation();
   status.textContent='✓ Opplysningene er lagret.';
   status.hidden=false;status.dataset.kind='success';
+  showBetaToast('Profilen er oppdatert');
   betaProfileRenderHome();
   if(betaBonusVisible())betaBonusStart(true);
  }catch(e){
@@ -402,13 +408,15 @@ function betaProfileInit(){
  $('betaCartCart').addEventListener('click',()=>checkoutNavigate('cart'));
  $('betaProfileNav').addEventListener('click',()=>betaProfileShowTab('home'));
  $('betaProfileCart').addEventListener('click',()=>{hideAll();showCart()});
- $('betaBonusRefresh').addEventListener('click',()=>{void betaBonusLoad(true)});
+ $('betaBonusRefresh').addEventListener('click',()=>{void betaBonusLoad(true);showBetaToast('Oppdaterer pizzabonus…','info')});
  $('betaBonusConsent').addEventListener('change',event=>{
   try{localStorage.setItem(betaBonusConsentKey(),String(event.target.checked))}catch{}
   betaBonusStatus('Valget er lagret lokalt. Varslinger er ikke aktivert i BETA ennå.');
+  showBetaToast('Valget er lagret på denne enheten','info');
  });
  $('btnProfile').addEventListener('click',()=>{$('betaProfileSheet').hidden?betaProfileOpen():betaProfileClose()});
  $('betaProfileClose').addEventListener('click',betaProfileClose);
+ $('betaProfileBrandHome').addEventListener('click',returnToMenu);
  $('betaProfileHomeButton').addEventListener('click',()=>betaProfileShowTab('home'));
  $('betaProfileForm').addEventListener('submit',event=>{void betaProfileSaveContact(event)});
  $('betaProfileRestaurantInfo').addEventListener('click',event=>{

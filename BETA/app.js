@@ -10,6 +10,28 @@ const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr'
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
 let menu=null,current=null,qty=1,selection={},imageURLs=new Map();
+// One lightweight toast for meaningful BETA actions; no network, audio or extra library.
+let betaToastTimer=null,betaToastFadeTimer=null;
+function showBetaToast(message,type='success'){
+ const toast=$('betaToast');
+ if(!toast||!message)return;
+ clearTimeout(betaToastTimer);clearTimeout(betaToastFadeTimer);
+ $('betaToastText').textContent=String(message).slice(0,180);
+ $('betaToastSymbol').textContent=type==='error'?'!':type==='info'?'i':'✓';
+ toast.dataset.type=type==='error'?'error':type==='info'?'info':'success';
+ toast.hidden=false;
+ toast.classList.remove('is-visible','is-leaving');
+ void toast.offsetWidth;
+ toast.classList.add('is-visible');
+ betaToastTimer=window.setTimeout(()=>{
+  toast.classList.remove('is-visible');
+  toast.classList.add('is-leaving');
+  betaToastFadeTimer=window.setTimeout(()=>{
+   toast.hidden=true;
+   toast.classList.remove('is-leaving');
+  },260);
+ },1000);
+}
 const FAVORITES_KEY='kol-beta-favorites-v1';
 function readFavorites(){try{const a=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');return Array.isArray(a)?a.map(String):[]}catch{return []}}
 let favorites=readFavorites();
@@ -19,6 +41,8 @@ function toggleFavorite(id){
  try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(favorites))}catch{}
  if(current&&String(current.id)===id)updateSheetFavorite();
  updateCardFavorite(id);
+ const label=menu?productById(id)?.name||'Produkt':'Produkt';
+ showBetaToast(label+(isFavorite(id)?' lagt til i favoritter':' fjernet fra favoritter'));
 }
 function updateSheetFavorite(){
  const b=$('sheetFavorite');
@@ -145,7 +169,7 @@ async function init(){
  window.addEventListener('online',startSharedChangeStream);
  window.setInterval(updateHoursStatus,60000);
 }
-async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}render();$('cacheStatus').textContent='Oppdatert';if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}}finally{refreshPending=false;$('refresh').disabled=false}}
+async function refreshMenu(manual=true){if(refreshPending)return;refreshPending=true;$('refresh').disabled=true;$('cacheStatus').textContent='Henter…';try{const startingRevision=liveRevision;const fresh=await fromFirebase();if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}render();$('cacheStatus').textContent='Oppdatert';if(manual)showBetaToast('Menyen er oppdatert');if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});}catch(e){if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller Firebase-lesetilgang og nettverk. '+e.message;$('cacheStatus').textContent='Ingen data'}else{$('notice').textContent='Kunne ikke oppdatere. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}if(manual)showBetaToast('Kunne ikke oppdatere menyen','error')}finally{refreshPending=false;$('refresh').disabled=false}}
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
  * The initial snapshot is only the latest compact change notification.
@@ -786,7 +810,7 @@ function updatePrice(){
 function show(id){$('overlay').hidden=false;$(id).hidden=false}
 function hideAll(){if(typeof betaBonusStop==='function')betaBonusStop();$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true;$('betaProfileSheet').hidden=true;$('btnProfile').setAttribute('aria-expanded','false')}
 $('refresh').addEventListener('click',()=>refreshMenu());
-$('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render()});
+$('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showBetaToast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
 // collapse Chrome's address bar: browser UI visibility is browser-controlled.
 // Cancel immediately when a person interacts, so navigation is never hijacked.

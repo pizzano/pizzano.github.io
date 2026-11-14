@@ -1036,3 +1036,28 @@ html[data-beta-theme="dark"] .beta-restaurant-links a,
 html[data-beta-theme="dark"] .beta-restaurant-sync button{background:#214837;color:#b8f0d1;border-color:#40735a}
 html[data-beta-theme="dark"] .beta-restaurant-sync p{color:#a9c8b7}
 html[data-beta-theme="dark"] .beta-restaurant-empty{color:#a5c6b4}
+
+
+/* One lightweight status toast for meaningful customer actions. */
+.beta-toast[hidden]{display:none!important}
+.beta-toast{
+ position:fixed;z-index:200;top:calc(env(safe-area-inset-top, 0px) + 12px);left:50%;
+ display:flex;align-items:center;gap:10px;box-sizing:border-box;
+ width:max-content;max-width:min(520px,calc(100vw - 24px));min-height:48px;
+ padding:11px 15px;border:1px solid #70caa4;border-radius:13px;
+ background:#0b7856;color:#fff;box-shadow:0 12px 30px #032d2390;
+ font-size:var(--text-md);font-weight:750;line-height:1.35;
+ opacity:0;transform:translate(-50%,-19px);pointer-events:none;
+ transition:opacity 260ms ease,transform 260ms ease;
+}
+.beta-toast.is-visible{opacity:1;transform:translate(-50%,0)}
+.beta-toast.is-leaving{opacity:0;transform:translate(-50%,-10px)}
+.beta-toast[data-type="info"]{background:#1c6653;border-color:#6bb79b}
+.beta-toast[data-type="error"]{background:#a3383b;border-color:#ee8b8d}
+.beta-toast-symbol{display:grid;place-items:center;flex:none;width:24px;height:24px;
+ border:1.7px solid currentColor;border-radius:50%;font-weight:900;font-size:15px}
+.beta-toast-text{min-width:0;overflow-wrap:anywhere}
+.beta-profile-brand{border:0;padding:0;background:transparent;color:inherit;text-align:left;
+ font-family:inherit;cursor:pointer}
+.beta-profile-brand:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:5px}
+@media(prefers-reduced-motion:reduce){.beta-toast{transition:none}}

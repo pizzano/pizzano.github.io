@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>KØL Grill & Pizza · Bestilling</title>
-  <link rel="stylesheet" href="./style.css?v=20261114-restaurant-settings11">
-  <script src="./sepet.js?v=20261113-cart-dark9" defer></script>
-  <script src="./app.js?v=20261114-bonus-live10" defer></script>
-  <script src="./profil.js?v=20261114-restaurant-settings11" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261114-toast12">
+  <script src="./sepet.js?v=20261114-toast12" defer></script>
+  <script src="./app.js?v=20261114-toast12" defer></script>
+  <script src="./profil.js?v=20261114-toast12" defer></script>
 </head>
 <body>
   <div class="app" id="appViewport">
@@ -75,7 +75,7 @@
 <section id="betaProfileSheet" class="sheet beta-profile-sheet" role="dialog" aria-modal="true" aria-labelledby="betaProfileTitle" hidden>
  <header class="beta-profile-topbar">
  <button id="betaProfileClose" class="beta-profile-back" type="button" aria-label="Til menyen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
- <div class="beta-profile-brand"><span aria-hidden="true">🔥</span><strong>KØL Grill &amp; Pizza</strong></div>
+ <button id="betaProfileBrandHome" class="beta-profile-brand" type="button" aria-label="Til menyen"><span aria-hidden="true">🔥</span><strong>KØL Grill &amp; Pizza</strong></button>
  <nav class="header-actions header-icon-actions beta-profile-header-icons" aria-label="Hovedhandlinger">
   <button id="betaProfileThemeToggle" class="icon-button header-icon-round" type="button" aria-label="Bytt til mørk modus" aria-pressed="false"><span class="beta-theme-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></svg></span><span class="beta-theme-moon" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14A8.5 8.5 0 0 1 10 4a8.6 8.6 0 1 0 10 10Z"/></svg></span></button>
   <button id="betaProfileNav" class="icon-button header-icon-round is-active" type="button" aria-label="Min profil" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></button>
@@ -133,6 +133,9 @@
     <div class="demo-waiting"><i class="demo-status-dot" aria-hidden="true"></i><div><strong id="demoConfirmationStatus">Ikke sendt til restauranten</strong><small id="demoConfirmationTimer">Oversikten er lagret</small></div></div>
     <button id="demoConfirmationClose" type="button" class="demo-view-order">Til menyen</button>
   </section>
+  <div id="betaToast" class="beta-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <span id="betaToastSymbol" class="beta-toast-symbol" aria-hidden="true">✓</span><span id="betaToastText" class="beta-toast-text"></span>
+  </div>
   <script>
     // Only BETA/ is controlled. Static HTML/CSS/JS are cached; dynamic data is untouched.
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
