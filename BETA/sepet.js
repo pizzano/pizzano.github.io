@@ -440,13 +440,39 @@ let customerSavedSignature='',customerSavePending=null;
 // BETA currently sends LOCAL_DEMO orders only. Keep contact data local
 // until a verified backend endpoint can safely write /customers/{phone}.
 // Never allow anonymous PATCH access to private customer records.
+// Contact-only customer updates: Firebase Rules allow anonymous PUT to
+// /customers/{phone}/name and /email, but not GET of /customers or writes to
+// bonus counters, order history or other protected children.
+let customerSavedSignature='',customerSavePending=null;
 async function syncBetaCustomer(){
  const name=demoContact.name.trim().replace(/\s+/g,' ').slice(0,120);
  const phone=demoContact.phone;
  const email=demoContact.email.trim().toLowerCase().slice(0,200);
  if(name.length<2||!/^[49]\d{7}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
- const ok=demoStore(DEMO_CONTACT_KEY,{name,phone,email});
- return !!ok;
+ const signature=JSON.stringify([name,phone,email]);
+ if(signature===customerSavedSignature)return true;
+ if(customerSavePending)await customerSavePending;
+ if(signature===customerSavedSignature)return true;
+ customerSavePending=(async()=>{
+  try{
+   // No customer GET and no parent-level PATCH: each write is limited by
+   // Firebase Rules to the two explicitly permitted contact leaves.
+   for(const [field,value] of [['name',name],['email',email]]){
+    const response=await fetch(BASE+'/customers/'+phone+'/'+field+'.json',{
+     method:'PUT',headers:{'Content-Type':'application/json'},
+     body:JSON.stringify(value),cache:'no-store'
+    });
+    if(!response.ok)throw new Error('Firebase '+field+' HTTP '+response.status);
+   }
+   if(!demoStore(DEMO_CONTACT_KEY,{name,phone,email}))throw Error('Local storage unavailable');
+   customerSavedSignature=signature;
+   return true;
+  }catch(error){
+   console.warn('BETA customer contact sync failed:',error);
+   return false;
+  }
+ })();
+ try{return await customerSavePending}finally{customerSavePending=null}
 }
 function validateDemoContact(){
  saveDemoContact();
@@ -576,8 +602,8 @@ async function demoNext(){
   if(validateDemoContact()){
    $('cartNext').disabled=true;
    try{
-    if(await syncBetaCustomer()){checkoutNavigate('pickup');showBetaToast('Kontaktinformasjonen er lagret på denne enheten')}
-    else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen på denne enheten. Kontroller nettleserens lagring.');showBetaToast('Kunne ikke lagre kontaktinformasjonen','error')}
+    if(await syncBetaCustomer()){checkoutNavigate('pickup');showBetaToast('Kontaktinformasjonen er lagret i Firebase')}
+    else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen i Firebase. Kontroller tilgang og prøv igjen.');showBetaToast('Kunne ikke lagre kontaktinformasjonen','error')}
    }finally{$('cartNext').disabled=false}
   }
  }else submitDemoOrder();
