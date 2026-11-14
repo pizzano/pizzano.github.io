@@ -6,21 +6,26 @@
 (()=>{
  const DB='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
  const $=id=>document.getElementById(id);
-const ADMIN_UID='CkvfzzzQ9MaPD8lZWKx10RB6iX22',AUTH_STORE='kol-beta-admin-auth-v1';
+const ADMIN_UID='CkvfzzzQ9MaPD8lZWKx10RB6iX22';
+const ADMIN_EMAIL='fatihsemb@gmail.com';
+// Public Firebase Web API key is required by Firebase Authentication, not a password.
+// Set from Firebase Console > Project settings > General; never store admin passwords here.
+const FIREBASE_WEB_API_KEY='';
+const AUTH_STORE='kol-beta-admin-auth-v1';
 let auth=null;
-function stored(){try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')}catch{return null}}
+function storedKey(){try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')?.apiKey||''}catch{return ''}}
+function apiKey(){return FIREBASE_WEB_API_KEY||storedKey()}
 function showLogin(err=''){
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
  $('authError').textContent=err;$('authError').hidden=!err;
- const c=stored();$('authSetup').hidden=!!(c?.email&&c?.apiKey);
- $('authHint').textContent=$('authSetup').hidden?'Skriv inn administratorpassordet.':'Første gang: skriv e-post og Firebase Web API Key én gang.';
  $('authPassword').value='';
 }
-async function configure(c){
+async function configure(){
  if(!window.firebase?.auth)throw Error('Firebase Authentication kunne ikke lastes.');
- if(auth)await auth.signOut();
- for(const app of [...firebase.apps])await app.delete();
- firebase.initializeApp({apiKey:c.apiKey,authDomain:'kol-grill-pizza-1.firebaseapp.com',projectId:'kol-grill-pizza-1'});
+ const key=apiKey();
+ if(!key)throw Error('Firebase Web API Key mangler i konfigurasjonen. Administratoren må legge den inn én gang i admin.js.');
+ if(auth)return;
+ firebase.initializeApp({apiKey:key,authDomain:'kol-grill-pizza-1.firebaseapp.com',projectId:'kol-grill-pizza-1'});
  auth=firebase.auth();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 }
 async function menuAuthURL(){
@@ -29,24 +34,23 @@ async function menuAuthURL(){
 }
 async function login(e){
  e.preventDefault();
- const old=stored(),c=old?.email&&old?.apiKey?old:{email:$('authEmail').value.trim(),apiKey:$('authApiKey').value.trim()};
- if(!c.email||!c.apiKey||!$('authPassword').value){showLogin('Fyll inn alle feltene.');return}
+ if(!$('authPassword').value)return;
  $('authSubmit').disabled=true;
  try{
-  if(!auth||!old||old.apiKey!==c.apiKey)await configure(c);
-  const result=await auth.signInWithEmailAndPassword(c.email,$('authPassword').value);
+  await configure();
+  const result=await auth.signInWithEmailAndPassword(ADMIN_EMAIL,$('authPassword').value);
   if(result.user.uid!==ADMIN_UID){await auth.signOut();throw Error('Kontoen har ikke administratorrettigheter.')}
-  localStorage.setItem(AUTH_STORE,JSON.stringify(c));
   $('authScreen').hidden=true;$('adminMain').hidden=false;$('btnSignOut').hidden=false;$('authPassword').value='';
   await startAdmin();
- }catch(x){showLogin(x.code?.startsWith('auth/')?'Feil innlogging. Kontroller passord og Firebase-prosjekt.':x.message)}
+ }catch(x){showLogin(x.code?.startsWith('auth/')?'Feil passord eller innlogging. Prøv igjen.':x.message)}
  finally{$('authSubmit').disabled=false}
 }
 async function bootAuth(){
- showLogin();const c=stored();if(!c?.email||!c?.apiKey)return;
+ showLogin();
  try{
-  await configure(c);
-  const u=await new Promise(resolve=>{let stop=auth.onAuthStateChanged(v=>{stop();resolve(v)},()=>resolve(null))});
+  if(!apiKey())return;
+  await configure();
+  const u=await new Promise(resolve=>{const stop=auth.onAuthStateChanged(v=>{stop();resolve(v)},()=>resolve(null))});
   if(u?.uid===ADMIN_UID){$('authScreen').hidden=true;$('adminMain').hidden=false;$('btnSignOut').hidden=false;await startAdmin()}
  }catch(e){showLogin(e.message)}
 }
@@ -553,7 +557,6 @@ function getProductAllergens(p){
  }
  function handleEvents(){
  $('authForm').addEventListener('submit',login);
- $('authReset').addEventListener('click',async()=>{await auth?.signOut();localStorage.removeItem(AUTH_STORE);showLogin()});
  $('btnSignOut').addEventListener('click',async()=>{
   if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
   await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
