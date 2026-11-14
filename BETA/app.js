@@ -490,8 +490,16 @@ function getGroup(id){return menu.optionGroups.find(g=>String(g.id)===String(id)
 function groupsFor(item,size){const ids=[...(item.optionGroupIds||[]),...(size?.optionGroupIds||[])];const sorted=[...(item.optionGroupOrder||[]).filter(id=>ids.includes(id)),...ids];return [...new Set(sorted)].map(getGroup).filter(Boolean)}
 function basePrice(item){const prices=list(item.sizes).map(s=>Number(s.price)||0);return prices.length?Math.min(...prices):Number(item.price)||0}
 function productById(id){for(const s of menu.sections)for(const item of s.items)if(String(item.id)===String(id))return item;return null}
+function missingPhotoMarkup(){
+ // Display a legible local placeholder, never a broken image or oversized alt text.
+ return '<span class="image-fallback" role="img" aria-label="Bilde er ikke tilgjengelig">'+
+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+ '<path d="M3 11.5a14 14 0 0 1 16-8L21 21 3 16.5a16 16 0 0 1 0-5Z"/>'+
+ '<path d="M3.4 16.6A19 19 0 0 1 19 3.5"/><circle cx="11.5" cy="12.5" r="1.3"/>'+
+ '<circle cx="15.8" cy="16.7" r="1.3"/></svg><small>Bilde mangler</small></span>';
+}
 function imgEl(url,alt,cls){
- if(!url)return '';
+ if(!url)return missingPhotoMarkup();
  const cached=imageURLs.get(url);
  return '<img class="'+cls+'" data-image="'+esc(url)+'"'+(cached?' src="'+esc(cached)+'"':'')+' alt="'+esc(alt)+'" loading="'+(cached?'eager':'lazy')+'" decoding="async">';
 }
@@ -531,6 +539,18 @@ async function setCachedImage(img,url){
 let imageObserver=null;
 function hydrateImages(root){
  const images=[...root.querySelectorAll('img[data-image]')];
+ // An invalid URL must not show the broken image icon or huge alternative text.
+ // The real image continues to be controlled exclusively by BETA's /menu/images.
+ for(const img of images){
+  img.addEventListener('error',()=>{
+   const holder=img.closest('.product-photo');
+   if(!holder||!img.isConnected)return;
+   img.hidden=true;
+   if(!holder.querySelector('.image-fallback')){
+    holder.insertAdjacentHTML('afterbegin',missingPhotoMarkup());
+   }
+  },{once:true});
+ }
  if(imageObserver)imageObserver.disconnect();
  imageObserver='IntersectionObserver' in window?new IntersectionObserver(entries=>{
    for(const entry of entries){

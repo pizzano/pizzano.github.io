@@ -1061,3 +1061,11 @@ html[data-beta-theme="dark"] .beta-restaurant-empty{color:#a5c6b4}
  font-family:inherit;cursor:pointer}
 .beta-profile-brand:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:5px}
 @media(prefers-reduced-motion:reduce){.beta-toast{transition:none}}
+
+/* Missing external photo: compact fallback, no broken-image icon or oversized alt. */
+.product-photo img[hidden]{display:none!important}
+.product-photo .image-fallback{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:3px;max-width:100%;height:100%;padding:6px;box-sizing:border-box;color:#628678;text-align:center}
+.product-photo .image-fallback svg{width:33px;height:33px;flex:none}
+.product-photo .image-fallback small{font-size:10px;font-weight:700;line-height:1.15}
+html[data-beta-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
