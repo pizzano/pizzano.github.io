@@ -1,0 +1,21 @@
+{
+  "rules": {
+    ".read": "auth != null && auth.uid === 'CkvfzzzQ9MaPD8lZWKx10RB6iX22'",
+    ".write": "auth != null && auth.uid === 'CkvfzzzQ9MaPD8lZWKx10RB6iX22'",
+    "menu": {
+      ".read": true
+    },
+    "settings": {
+      ".read": true
+    },
+    "publicPickupLoad": {
+      ".read": true
+    },
+    "orders": {
+      "$orderId": {
+        ".write": "!data.exists() && newData.exists() && $orderId.matches(/^ord_[a-zA-Z0-9]{7,40}$/)",
+        ".validate": "newData.hasChildren(['id','phone','name','status','lines','total','createdAt']) && newData.child('id').val() === $orderId && newData.child('status').val() === 'mottatt' && newData.child('phone').isString() && newData.child('phone').val().length >= 8 && newData.child('phone').val().length <= 20 && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && newData.child('total').isNumber() && newData.child('total').val() >= 0 && newData.child('createdAt').isNumber() && newData.child('createdAt').val() <= now + 300000 && newData.child('createdAt').val() >= now - 3600000"
+      }
+    }
+  }
+}
