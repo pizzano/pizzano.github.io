@@ -24,6 +24,9 @@
         },
         "email": {
           ".write": "$phone.matches(/^[49][0-9]{7}$/) && newData.isString() && newData.val().length <= 200"
+        },
+        "bonusCount": {
+          ".read": "$phone.matches(/^[49][0-9]{7}$/)"
         }
       }
     }
