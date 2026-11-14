@@ -113,22 +113,23 @@ body.admin-modal-open{overflow:hidden}
  .admin-modal-footer .btn.primary{flex:1;min-width:0}
  .admin-group-modal .admin-modal-footer{gap:7px}
 }
+.auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="./admin.js?v=20261114-modal-prices4" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261114-auth1" defer></script>
 </head>
 <body>
 <header class="top">
  <div class="brand">🔥 KØL <small>BETA · MENYADMIN</small></div>
  <div class="top-end">
-  <span class="status" id="saveStatus">Kobler til Firebase…</span>
+  <span class="status" id="saveStatus">Innlogging kreves</span><button id="btnSignOut" class="btn ghost small" type="button" hidden>Logg ut</button>
   <a class="btn ghost small" href="./" target="_blank" rel="noopener noreferrer">Se kundemenyen ↗</a>
   <button id="btnSave" class="btn gold" type="button" disabled>Lagre endringer</button>
  </div>
 </header>
-<main class="wrap">
+<section id="authScreen" class="auth-screen"><div class="auth-card"><h1>🔐 KØL Admin</h1><p id="authHint">Logg inn med passord.</p><form id="authForm"><div id="authSetup" hidden><label for="authEmail">E-post (bare første gang)</label><input id="authEmail" type="email" autocomplete="username"><label for="authApiKey">Firebase Web API Key (bare første gang)</label><input id="authApiKey" autocomplete="off"><p>Finn Web API Key i Firebase Console → Project settings → General. Nøkkelen er ikke hemmelig.</p></div><label for="authPassword">Passord</label><input type="password" id="authPassword" autocomplete="current-password" required><button id="authSubmit" class="btn primary" type="submit">Logg inn</button><p id="authError" class="banner error" role="alert" hidden></p></form><button type="button" id="authReset" class="btn small" style="background:transparent;border:0">Endre e-post / API key</button></div></section><main class="wrap" id="adminMain" hidden>
  <section id="loadingCard" class="panel" style="max-width:540px;margin:6vh auto 0;padding:24px">
   <h1 style="font-size:23px;margin:0 0 9px">Kobler til Firebase…</h1>
-  <p class="muted">Menyen lastes direkte fra <strong>kol-grill-pizza-1</strong>, uten innlogging.</p>
+  <p class="muted">Menyen lastes direkte fra <strong>kol-grill-pizza-1</strong>, med administratorinnlogging.</p>
   <p id="loadError" class="banner error" role="alert" hidden></p>
   <button class="btn primary" id="btnRetry" type="button" style="margin-top:16px" disabled>Prøv på nytt</button>
  </section>

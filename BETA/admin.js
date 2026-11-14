@@ -6,6 +6,51 @@
 (()=>{
  const DB='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
  const $=id=>document.getElementById(id);
+const ADMIN_UID='CkvfzzzQ9MaPD8lZWKx10RB6iX22',AUTH_STORE='kol-beta-admin-auth-v1';
+let auth=null;
+function stored(){try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')}catch{return null}}
+function showLogin(err=''){
+ $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
+ $('authError').textContent=err;$('authError').hidden=!err;
+ const c=stored();$('authSetup').hidden=!!(c?.email&&c?.apiKey);
+ $('authHint').textContent=$('authSetup').hidden?'Skriv inn administratorpassordet.':'Første gang: skriv e-post og Firebase Web API Key én gang.';
+ $('authPassword').value='';
+}
+async function configure(c){
+ if(!window.firebase?.auth)throw Error('Firebase Authentication kunne ikke lastes.');
+ if(auth)await auth.signOut();
+ for(const app of [...firebase.apps])await app.delete();
+ firebase.initializeApp({apiKey:c.apiKey,authDomain:'kol-grill-pizza-1.firebaseapp.com',projectId:'kol-grill-pizza-1'});
+ auth=firebase.auth();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+}
+async function menuAuthURL(){
+ const u=auth?.currentUser;if(!u||u.uid!==ADMIN_UID)throw Error('Ingen administratortilgang.');
+ return DB+'/menu.json?auth='+encodeURIComponent(await u.getIdToken());
+}
+async function login(e){
+ e.preventDefault();
+ const old=stored(),c=old?.email&&old?.apiKey?old:{email:$('authEmail').value.trim(),apiKey:$('authApiKey').value.trim()};
+ if(!c.email||!c.apiKey||!$('authPassword').value){showLogin('Fyll inn alle feltene.');return}
+ $('authSubmit').disabled=true;
+ try{
+  if(!auth||!old||old.apiKey!==c.apiKey)await configure(c);
+  const result=await auth.signInWithEmailAndPassword(c.email,$('authPassword').value);
+  if(result.user.uid!==ADMIN_UID){await auth.signOut();throw Error('Kontoen har ikke administratorrettigheter.')}
+  localStorage.setItem(AUTH_STORE,JSON.stringify(c));
+  $('authScreen').hidden=true;$('adminMain').hidden=false;$('btnSignOut').hidden=false;$('authPassword').value='';
+  await startAdmin();
+ }catch(x){showLogin(x.code?.startsWith('auth/')?'Feil innlogging. Kontroller passord og Firebase-prosjekt.':x.message)}
+ finally{$('authSubmit').disabled=false}
+}
+async function bootAuth(){
+ showLogin();const c=stored();if(!c?.email||!c?.apiKey)return;
+ try{
+  await configure(c);
+  const u=await new Promise(resolve=>{let stop=auth.onAuthStateChanged(v=>{stop();resolve(v)},()=>resolve(null))});
+  if(u?.uid===ADMIN_UID){$('authScreen').hidden=true;$('adminMain').hidden=false;$('btnSignOut').hidden=false;await startAdmin()}
+ }catch(e){showLogin(e.message)}
+}
+
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const clone=value=>JSON.parse(JSON.stringify(value));
  const arr=value=>Array.isArray(value)?value:[];
@@ -90,7 +135,7 @@ function getProductAllergens(p){
   message(state.menu?'Menyversjon: '+(state.menu.updatedAt||'ukjent')+' · '+n+' produkter · '+state.menu.optionGroups.length+' valggrupper':'Ingen meny lastet inn');
  }
  // Direct menu connection, with no login request or authentication token.
- function menuURL(){return DB+'/menu.json'}
+ async function menuURL(){return menuAuthURL()}
  async function startAdmin(){
   $('loadingCard').hidden=false;
   $('adminRoot').hidden=true;
@@ -112,7 +157,7 @@ function getProductAllergens(p){
  }
  async function loadMenu(confirmDiscard=true){
   if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
-  const response=await fetch(menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+  const response=await fetch(await menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
   if(!response.ok)throw Error('Firebase avviste menylesing ('+response.status+'). Kontroller database Rules.');
   const payload=await response.json();
   assertMenu(payload);
@@ -489,15 +534,15 @@ function getProductAllergens(p){
   next.changeFeed.latest={version,previousVersion,changes:delta.changes,requiresRefresh:delta.requiresRefresh};
   state.saving=true;$('btnSave').disabled=true;
   try{
-   const response=await fetch(menuURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
+   const response=await fetch(await menuURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
    if(response.status===412)throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
-   if(response.status===401||response.status===403)throw Error('Firebase avviste skriving. /menu må tillate skriving uten innlogging i Database Rules.');
+   if(response.status===401||response.status===403)throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
    if(!response.ok)throw Error('Kunne ikke lagre til Firebase: HTTP '+response.status);
    state.menu=next;state.original=clone(next);
    // New ETag is usually included, otherwise safely GET a fresh ETag before another save.
    let etag=response.headers.get('ETag');
    if(!etag){
-    const fresh=await fetch(menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+    const fresh=await fetch(await menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
     if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
    }
    state.etag=etag||null;setClean();renderAll();refreshHeader();
@@ -507,6 +552,12 @@ function getProductAllergens(p){
   finally{state.saving=false;$('btnSave').disabled=!state.dirty||!state.etag}
  }
  function handleEvents(){
+ $('authForm').addEventListener('submit',login);
+ $('authReset').addEventListener('click',async()=>{await auth?.signOut();localStorage.removeItem(AUTH_STORE);showLogin()});
+ $('btnSignOut').addEventListener('click',async()=>{
+  if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
+  await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
+ });
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
   for(const [id,kind] of [['btnCloseProductModal','product'],['btnCloseProductBottom','product'],['productModalBackdrop','product'],['btnCloseGroupModal','group'],['btnCloseGroupBottom','group'],['groupModalBackdrop','group']]){
    $(id).addEventListener('click',()=>{if(activeAdminModal===kind)closeAdminModal()});
@@ -635,5 +686,5 @@ function getProductAllergens(p){
   });
  }
  handleEvents();
- void startAdmin();
+ void bootAuth();
 })();
