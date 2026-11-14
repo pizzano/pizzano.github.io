@@ -8,10 +8,11 @@ Behavior:
 - Authenticated admin UID gets full read/write via root rules.
 - Public GET of /menu, /settings, /publicPickupLoad.
 - Anonymous customers can create one /orders/{ord_ID}, with basic field validation, but cannot update/delete existing orders or read orders.
-- No anonymous access to /customers, /notifications, /pizzaBonus, /systemErrors or other paths.
+- Anonymous writes to /customers/{8-digit-phone}/name and /email are allowed with type/length checks. Anonymous /customers reads and all other customer writes remain denied. Knowing a phone number permits changing those two fields; this is an accepted trade-off for the no-login design.
+- No anonymous access to /notifications, /pizzaBonus, /systemErrors or other private paths.
 - Admin must use Firebase Authentication ID token. BETA admin PR #115 adds this only to /menu operations.
 - Note /settings is fully public here: split public/private settings before deployment if any secrets are stored there.
-- New checkout and profile flows WILL FAIL under these rules: BETA/sepet.js PATCH /customers/{phone}, bonus reads, and DEMO/customer tracking via /orders/{id} are not permitted. Those need authenticated/backend API redesign first.
+- BETA customer contact now issues two leaf-level PUT requests, not a parent PATCH. Bonus reads and DEMO/customer order tracking remain blocked without a secure API; BETA order checkout currently only creates a local demo order.
 - The open create-only /orders rule still permits spam, spoofed totals, and arbitrary order contents. For a production system prefer an API to validate menu prices, order inputs and abuse limits before trusted writes.
 - Server-side Google Apps Script or other services must use their own trusted credentials; do not copy admin password/token into public JS.
 - Tests required: anonymous create valid order succeeds, anonymous PUT overwrite/PATCH/DELETE existing order denied, anonymous GET orders/customers denied, anonymous GET public menu succeeds, admin menu PUT and approval works, profile and loyalty flow updated and tested, notification services work.
