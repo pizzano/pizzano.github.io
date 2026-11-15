@@ -116,9 +116,55 @@ body.admin-modal-open{overflow:hidden}
  .admin-modal-footer .btn.primary{flex:1;min-width:0}
  .admin-group-modal .admin-modal-footer{gap:7px}
 }
+/* Sizes and choices are edited together. Each size carries its own
+   optionGroupOrder; the visible numbers match the customer product sheet. */
+.size-management-intro{margin:-5px 0 14px;font-size:12px;line-height:1.5;color:#71897b}
+.size-common-panel,.size-product-card{border:1px solid #dbeae1;border-radius:14px;background:#fbfdfb}
+.size-common-panel{margin-bottom:16px;overflow:hidden}
+.size-common-panel>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;cursor:pointer;list-style:none;color:#174e38;font-size:13px;font-weight:750}
+.size-common-panel>summary::-webkit-details-marker,.size-product-options>summary::-webkit-details-marker{display:none}
+.size-common-panel[open]>summary{background:#edf7f0}
+.size-common-summary{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.size-common-summary small{font-size:11px;color:#6b8b79;font-weight:500}
+.size-common-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 11px;padding:10px 14px 14px}
+.size-common-list .checkbox{padding:5px 0;font-weight:500}
+.size-management-list{display:grid;gap:12px;margin-bottom:14px}
+.size-product-card{overflow:hidden;background:#fff}
+.size-product-header{display:grid;grid-template-columns:minmax(0,1fr) 112px 36px;gap:9px;align-items:center;padding:13px}
+.size-product-header input{width:100%;min-width:0;min-height:41px;border:1px solid #cee0d5;border-radius:9px;padding:9px 11px;background:#fff}
+.size-product-header input[type=number]{font-variant-numeric:tabular-nums}
+.size-product-header button{height:38px;border:1px solid #e5cecc;border-radius:9px;background:#fff6f5;color:#ad403a}
+.size-product-options{border-top:1px solid #e2eee7;background:#fbfdfb}
+.size-product-options>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px;list-style:none;cursor:pointer;color:#1e654a;font-size:13px;font-weight:700}
+.size-product-options>summary:hover{background:#f0f9f3}
+.size-option-count{margin-left:auto;font-size:11px;color:#628674;font-weight:600}
+.size-product-options[open]>summary{background:#eaf7ee;border-bottom:1px solid #deeadf}
+.size-option-body{padding:12px}
+.size-option-help{font-size:11px;color:#719082;margin:0 0 12px;line-height:1.5}
+.size-option-list{display:grid;gap:6px}
+.size-option-item{display:flex;align-items:center;gap:9px;min-height:43px;padding:7px 10px;border:1px solid #e0e9e2;border-radius:10px;background:#fff}
+.size-option-item.is-selected{background:#ecf7ef;border-color:#b6ddc3}
+.size-option-item .checkbox{flex:1;min-width:0;font-size:12px;font-weight:500;line-height:1.3}
+.size-option-item .checkbox input{flex:none}
+.size-option-item .checkbox.is-inherited{color:#32684e}
+.size-option-number{width:24px;flex:none;text-align:center;font-size:11px;font-weight:750;color:#167755}
+.size-option-number.is-unused{color:#bdcbc2}
+.size-option-type{font-size:10px;font-weight:500;color:#698f77;white-space:nowrap}
+.size-order-actions{display:flex;gap:4px;margin-left:auto}
+.size-order-actions .mini{width:28px;height:28px;font-size:14px;color:#1b7654}
+.size-add{margin-top:2px}
+@media(max-width:680px){
+ .size-common-list{grid-template-columns:1fr}
+ .size-product-header{grid-template-columns:minmax(0,1fr) 86px 32px;gap:6px;padding:10px}
+ .size-product-header input{padding:8px;min-height:39px}
+ .size-option-body{padding:9px}
+ .size-option-item{gap:5px;padding:7px}
+ .size-option-type{display:none}
+ .size-order-actions .mini{width:27px;height:28px}
+}
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261115-suggestions16" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261115-size-options18" defer></script>
 </head>
 <body>
 <header class="top">
@@ -165,7 +211,6 @@ body.admin-modal-open{overflow:hidden}
     <button type="button" class="admin-modal-tab" data-product-tab="ingredienser" role="tab" aria-selected="false">Ingredienser</button>
     <button type="button" class="admin-modal-tab" data-product-tab="storrelser" role="tab" aria-selected="false">Størrelser & priser</button>
     <button type="button" class="admin-modal-tab" data-product-tab="allergener" role="tab" aria-selected="false">Allergener</button>
-    <button type="button" class="admin-modal-tab" data-product-tab="valg" role="tab" aria-selected="false">Choices & addons</button>
     <button type="button" class="admin-modal-tab" data-product-tab="tilgjengelighet" role="tab" aria-selected="false">Tilgjengelighet</button>
     <button type="button" class="admin-modal-tab" data-product-tab="handlinger" role="tab" aria-selected="false">Handlinger</button>
    </nav>
@@ -177,27 +222,36 @@ body.admin-modal-open{overflow:hidden}
      <div class="admin-form-card"><h3>Produktbilde</h3>     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
      <div class="field"><label for="pImage">Bilde-URL</label><input id="pImage" type="url" placeholder="https://images.pexels.com/…"><small>Ved endring får produktet sin egen bilde-ID, uten å endre andre produkters bilder.</small></div>
 </div>
-     <div class="admin-form-card">
-      <h3>Forslag i handlekurven</h3>
-      <label class="checkbox cart-suggestion-control" for="pCartSuggestion"><input type="checkbox" id="pCartSuggestion"> Vis produktet under «Vil du ha noe ved siden av?»</label>
-      <p class="muted" id="cartSuggestionLimit">Velg opptil 4 produkter. Lagres under /menu/cartSuggestionRules med menyen.</p>
-     </div>
     </div>
     <div class="admin-modal-pane" data-product-section="ingredienser" hidden><div class="admin-form-card"><h3>Ingredienser og kjøkkenbeskjeder</h3>     <div class="field"><label for="pIngredients">Ingredienser (kommaseparert)</label><textarea id="pIngredients"></textarea></div>
      <div class="field"><label for="pKitchenNotes">Raske kjøkkenbeskjeder (en per linje)</label><textarea id="pKitchenNotes" placeholder="Ekstra stekt&#10;Del i 8 biter"></textarea></div>
 </div></div>
-    <div class="admin-modal-pane" data-product-section="storrelser" hidden><div class="admin-form-card">     <div class="rule"><h3>Størrelser og priser</h3><div id="sizeRows"></div><button class="btn small" id="addSize" type="button">+ Størrelse</button></div>
-</div></div>
+    <div class="admin-modal-pane" data-product-section="storrelser" hidden>
+     <div class="admin-form-card size-management">
+      <h3>Størrelser, priser og tilvalg</h3>
+      <p class="muted size-management-intro">Velg tilvalg for hver størrelse og bruk pilene for å styre rekkefølgen kunden ser.</p>
+      <details class="size-common-panel">
+       <summary><span class="size-common-summary">Felles valggrupper <small>Gjelder alle størrelser</small></span><span aria-hidden="true">⌄</span></summary>
+       <div class="size-common-list" id="commonGroupList"></div>
+      </details>
+      <div id="sizeRows" class="size-management-list"></div>
+      <button class="btn small size-add" id="addSize" type="button">+ Legg til størrelse</button>
+     </div>
+    </div>
     <div class="admin-modal-pane" data-product-section="allergener" hidden><div class="admin-form-card">     <div class="rule"><h3>Allergener</h3><div id="allergenChoices" class="stack compact"></div></div>
-</div></div>
-    <div class="admin-modal-pane" data-product-section="valg" hidden><div class="admin-form-card">     <div class="rule"><h3>Choices &amp; addons for produktet</h3><p class="muted">Velg grupper som skal vises. Rekkefølgen er lik i kundemenyen.</p><div id="assignedGroups" class="stack compact" style="margin-top:10px"></div></div>
 </div></div>
     <div class="admin-modal-pane" data-product-section="tilgjengelighet" hidden><div class="admin-form-card">     <div class="rule"><h3>Øvrig</h3>
       <label class="checkbox"><input type="checkbox" id="pSoldOut"> Utsolgt</label>
       <label class="checkbox"><input type="checkbox" id="pHidden"> Skjult fra kundemenyen</label>
       <label class="checkbox"><input type="checkbox" id="pPopular"> Mest solgt</label>
      </div>
-</div></div>
+</div>
+     <div class="admin-form-card">
+      <h3>Forslag i handlekurven</h3>
+      <label class="checkbox cart-suggestion-control" for="pCartSuggestion"><input type="checkbox" id="pCartSuggestion"> Vis produktet under «Vil du ha noe ved siden av?»</label>
+      <p class="muted" id="cartSuggestionLimit">Velg opptil 4 produkter. Lagres under /menu/cartSuggestionRules med menyen.</p>
+     </div>
+</div>
     <div class="admin-modal-pane" data-product-section="handlinger" hidden><div class="admin-form-card"><h3>Produkthandlinger</h3><p class="muted">Du kan duplisere eller slette produktet. Lagring skjer først når du trykker Lagre endringer.</p><div class="actions">
      <button type="button" id="btnDuplicateProductModal" class="btn">Dupliser produkt</button>
      <button type="button" id="btnRemoveProductModal" class="btn danger">Slett produkt</button>
