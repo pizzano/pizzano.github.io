@@ -295,7 +295,6 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .quick-note.is-selected{
  border-color:#168663;background:#e0f5e9;color:#176948;font-weight:750;
 }
-#productSheet .empty-notes{font-size:var(--text-sm);color:#87988d}
 #productSheet .kitchen-panel textarea{
  display:block;width:100%;min-height:57px;margin:0;padding:10px;
  border:1px solid #d4dfd9;border-radius:9px;background:#fff;color:#194335;
@@ -1099,7 +1098,6 @@ html[data-beta-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .option-choice .opt-price{margin-left:auto;font-size:12.5px;font-weight:500;color:#193b30;white-space:nowrap}
 #productSheet .option-choice.is-quantity{display:grid;grid-template-columns:21px minmax(0,1fr) auto minmax(65px,max-content);grid-template-rows:auto;column-gap:8px;min-height:46px;padding:6px 10px;cursor:pointer}
 #productSheet .option-choice.is-quantity .option-tick{grid-column:1;grid-row:1;width:21px;height:21px;display:grid;place-items:center;border:1.5px solid #84919b;border-radius:6px;background:#fff;color:#fff;font-weight:700;font-size:15px}
-#productSheet .option-choice.is-quantity.is-chosen .option-tick{background:#118553;border-color:#118553}
 #productSheet .option-choice.is-quantity .option-label-text{grid-column:2;grid-row:1;align-self:center;overflow-wrap:anywhere}
 #productSheet .option-choice.is-quantity .option-quantity{grid-column:3;grid-row:1;display:grid;grid-template-columns:26px 20px 26px;align-items:center;gap:0;margin:0;padding:2px 1px;border:1.3px solid #b9c9d5;border-radius:10px;background:#fff}
 #productSheet .option-choice.is-quantity.is-chosen .option-quantity{border-color:#0a9b4a}
