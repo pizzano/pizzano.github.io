@@ -45,76 +45,22 @@ function addToCart(){
  showBetaToast(entry.name+(edited?' oppdatert i handlekurven':' lagt i handlekurven'));
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
-// Recommendations are controlled by the CURRENT /settings values, not a
-// one-time localStorage snapshot. The old cache key must never override Firebase.
-const CART_SUGGESTIONS_DISMISS_KEY='kol-beta-cart-dismissed-v1';
-let dismissedSuggestions=new Set((()=>{try{return JSON.parse(localStorage.getItem(CART_SUGGESTIONS_DISMISS_KEY)||'[]')}catch{return []}})());
-let cartSuggestionSettingsChecked=false,cartSuggestionSettingsPending=null;
-try{localStorage.removeItem('kol-beta-cart-suggestions-once-v1')}catch{}
-function cartSuggestionRules(){
- const value=menu?.settings?.cartSuggestionRules;
- if(value&&typeof value==='object'&&!Array.isArray(value))return value;
- if(typeof value==='string'){
-  try{const parsed=JSON.parse(value);return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{}}catch{}
- }
- return {};
-}
-// One request only when the cart is first opened in this page session.
-// This detects direct Firebase Console changes without polling or refetching /menu.
-async function refreshCartSuggestionSettingsOnce(){
- if(cartSuggestionSettingsChecked||cartSuggestionSettingsPending||!menu||navigator.onLine===false)return cartSuggestionSettingsPending;
- cartSuggestionSettingsPending=(async()=>{
-  try{
-   const response=await fetch(BASE+'/settings.json',{cache:'no-store'});
-   if(!response.ok)throw Error('Firebase settings HTTP '+response.status);
-   const fresh=await response.json();
-   if(!fresh||typeof fresh!=='object')throw Error('Invalid Firebase settings');
-   menu.settings={...menu.settings,
-    cartSuggestionsEnabled:fresh.cartSuggestionsEnabled,
-    cartSuggestionRules:fresh.cartSuggestionRules??{}};
-   cartSuggestionSettingsChecked=true;
-   try{await localPut(menu)}catch{}
-   if(!$('cartSheet').hidden)renderCartRecommendations();
-  }catch(error){console.warn('BETA cart suggestions settings:',error)}
-  finally{cartSuggestionSettingsPending=null}
- })();
- return cartSuggestionSettingsPending;
-}
-function suggestionKind(section,item){
- const text=(String(section?.title||'')+' '+String(item?.name||'')).toLocaleLowerCase('no');
- if(/pizza/.test(text))return 'pizza';
- if(/hamburger|burger/.test(text))return 'burger';
- if(/kebab|rull/.test(text))return 'kebab';
- if(/tallerken|snadder/.test(text))return 'tallerken';
- return 'other';
-}
-function suggestionType(section,item){
- const text=(String(section?.title||'')+' '+String(item?.name||'')).toLocaleLowerCase('no');
- if(/brus|cola|pepsi|fanta|sprite|drikke|vann|iste|energidrikk/.test(text))return 'drink';
- if(/pommes|fries|søtpotet/.test(text))return 'fries';
- if(/saus|dipp|dip|dressing/.test(text))return 'sauce';
- return '';
-}
+// The admin selects up to four products, stored directly under
+// /menu/cartSuggestionRules. No unrelated extras, stale settings or extra GETs.
+let dismissedSuggestions=new Set();
 function suggestedCartItems(){
- if(!menu||!cart.length)return [];
- if(menu.settings?.cartSuggestionsEnabled===false)return [];
- const rules=cartSuggestionRules();
- const included=new Set([...cart.map(x=>String(x.id)),...dismissedSuggestions]);
- const all=menu.sections.flatMap(section=>(section.items||[]).map(item=>({item,section})))
-  .filter(({item})=>item&&item.id&&!item.hidden&&!item.soldOut&&!included.has(String(item.id)));
- const sourceKinds=[...new Set(cart.map(line=>{
-  const section=menu.sections.find(s=>(s.items||[]).some(item=>String(item.id)===String(line.id)));
-  return suggestionKind(section,productById(line.id)||{});
- }))];
- const selected=[],used=new Set();
- function add(entry){if(entry&&!used.has(String(entry.item.id))&&selected.length<4){selected.push(entry);used.add(String(entry.item.id))}}
- for(const kind of sourceKinds){
-  const ids=Array.isArray(rules[kind])?rules[kind]:[];
-  for(const id of ids)add(all.find(x=>String(x.item.id)===String(id)));
+ if(!menu||!cart.length||menu.settings?.cartSuggestionsEnabled===false)return [];
+ const ids=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules:[];
+ const included=new Set(cart.map(line=>String(line.id)));
+ const products=new Map(menu.sections.flatMap(section=>(section.items||[]).map(item=>[String(item.id),item])));
+ const selected=[],seen=new Set();
+ for(const raw of ids){
+  const id=String(raw),item=products.get(id);
+  if(!item||seen.has(id)||included.has(id)||dismissedSuggestions.has(id)||item.hidden||item.soldOut)continue;
+  selected.push({item});seen.add(id);
+  if(selected.length===4)break;
  }
- // Never invent extra suggestions: removed IDs, empty lists and deleted
- // categories must immediately mean no recommendation for that source kind.
- return selected.slice(0,4);
+ return selected;
 }
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
@@ -213,7 +159,7 @@ function pickupSummary(){
  }).join('')+
  '<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionSettingsOnce()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
 
 function updateCartBadges(){
  if(!menu)return;
@@ -313,7 +259,6 @@ $('cartRecommendationsItems').addEventListener('click',event=>{
  const dismiss=event.target.closest('[data-suggest-dismiss]');
  if(dismiss){
   dismissedSuggestions.add(String(dismiss.dataset.suggestDismiss));
-  try{localStorage.setItem(CART_SUGGESTIONS_DISMISS_KEY,JSON.stringify([...dismissedSuggestions]))}catch{}
   renderCartRecommendations();showBetaToast('Forslaget er skjult','info');return;
  }
  const add=event.target.closest('[data-suggest-add]');
