@@ -10,23 +10,23 @@ const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr'
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const list=v=>Array.isArray(v)?v:Object.entries(v||{}).map(([id,x])=>x&&typeof x==='object'?{id,...x}:x).filter(Boolean);
 let menu=null,current=null,qty=1,selection={},imageURLs=new Map();
-// One lightweight toast for meaningful BETA actions; no network, audio or extra library.
-let betaToastTimer=null,betaToastFadeTimer=null;
-function showBetaToast(message,type='success'){
- const toast=$('betaToast');
+// One lightweight toast for meaningful FATIH1 actions; no network, audio or extra library.
+let fatih1ToastTimer=null,fatih1ToastFadeTimer=null;
+function showFatih1Toast(message,type='success'){
+ const toast=$('fatih1Toast');
  if(!toast||!message)return;
- clearTimeout(betaToastTimer);clearTimeout(betaToastFadeTimer);
- $('betaToastText').textContent=String(message).slice(0,180);
- $('betaToastSymbol').textContent=type==='error'?'!':type==='info'?'i':'✓';
+ clearTimeout(fatih1ToastTimer);clearTimeout(fatih1ToastFadeTimer);
+ $('fatih1ToastText').textContent=String(message).slice(0,180);
+ $('fatih1ToastSymbol').textContent=type==='error'?'!':type==='info'?'i':'✓';
  toast.dataset.type=type==='error'?'error':type==='info'?'info':'success';
  toast.hidden=false;
  toast.classList.remove('is-visible','is-leaving');
  void toast.offsetWidth;
  toast.classList.add('is-visible');
- betaToastTimer=window.setTimeout(()=>{
+ fatih1ToastTimer=window.setTimeout(()=>{
   toast.classList.remove('is-visible');
   toast.classList.add('is-leaving');
-  betaToastFadeTimer=window.setTimeout(()=>{
+  fatih1ToastFadeTimer=window.setTimeout(()=>{
    toast.hidden=true;
    toast.classList.remove('is-leaving');
   },260);
@@ -42,7 +42,7 @@ function toggleFavorite(id){
  if(current&&String(current.id)===id)updateSheetFavorite();
  updateCardFavorite(id);
  const label=menu?productById(id)?.name||'Produkt':'Produkt';
- showBetaToast(label+(isFavorite(id)?' lagt til i favoritter':' fjernet fra favoritter'));
+ showFatih1Toast(label+(isFavorite(id)?' lagt til i favoritter':' fjernet fra favoritter'));
 }
 function updateSheetFavorite(){
  const b=$('sheetFavorite');
@@ -138,7 +138,7 @@ async function fromFirebase(){
   if(!data.sections.length)throw Error('Ingen kategorier i /menu');
   return data;
 }
-function cleanupRetiredBetaStorage(){
+function cleanupRetiredFatih1Storage(){
  try{
   for(const key of ['kol-beta-cart-suggestions-once-v1','kol-beta-cart-dismissed-v1']){
    if(localStorage.getItem(key)!==null)localStorage.removeItem(key);
@@ -146,11 +146,11 @@ function cleanupRetiredBetaStorage(){
  }catch{}
 }
 async function init(){
- cleanupRetiredBetaStorage();
+ cleanupRetiredFatih1Storage();
  // A single best-effort down/up scroll after first menu render on small touch screens.
  // Chrome may ignore scripted scrolling for browser toolbar visibility.
  watchStartupScrollIntent();
- renderDemoActiveOrder();
+ renderDraftActiveOrder();
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
@@ -198,7 +198,7 @@ async function refreshMenu(manual=false){
  }catch(error){
   if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller internett og Firebase-tilgang.';$('cacheStatus').textContent='Ingen data'}
   else{$('notice').textContent='Kunne ikke oppdatere automatisk. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}
-  console.warn('BETA menu refresh:',error);
+  console.warn('FATIH1 menu refresh:',error);
  }finally{refreshPending=false}
 }
 
@@ -210,7 +210,7 @@ async function checkMenuVersionOnce(){
   if(!res.ok)return;
   const remote=Number(await res.json())||0;
   if(remote>Number(menu.updatedAt||0))await refreshMenu(false);
- }catch(error){console.warn('BETA version check:',error)}
+ }catch(error){console.warn('FATIH1 version check:',error)}
 }
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
@@ -280,7 +280,7 @@ async function receiveLiveAnnouncement(value,relay=false){
    if(menuChanged)render();
    else{
      updateHoursStatus();
-     $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
+     updateRestaurantBrand();
    }
    if(!$('cartSheet').hidden)renderCartRecommendations();
    saveLiveCacheSoon();
@@ -585,7 +585,7 @@ let imageObserver=null;
 function hydrateImages(root){
  const images=[...root.querySelectorAll('img[data-image]')];
  // An invalid URL must not show the broken image icon or huge alternative text.
- // The real image continues to be controlled exclusively by BETA's /menu/images.
+ // The real image continues to be controlled exclusively by FATIH1's /menu/images.
  for(const img of images){
   img.addEventListener('error',()=>{
    const holder=img.closest('.product-photo');
@@ -687,9 +687,16 @@ function productCard(i){
  const allergens=list(i.allergens).map(a=>{const match=menu.allergenCatalog.find(x=>String(x.id)===String(a));return match?.label||a}).join(', ');
  return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" type="button" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
 }
+function updateRestaurantBrand(){
+ const name=String(menu?.settings?.restaurantName||'FATIH1').trim()||'FATIH1';
+ for(const id of ['brandName','cartRestaurantName','fatih1ProfileRestaurantName']){
+  const node=$(id);if(node)node.textContent=name;
+ }
+ document.title=name+' · Bestilling | FATIH1';
+}
 function render(){
  if(!menu)return;
- $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
+ updateRestaurantBrand();
  const blocks=menuBlocks(),q=$('search').value.trim().toLocaleLowerCase('no');
  const visibleBlocks=blocks.map(block=>({...block,items:block.items.filter(i=>!q||(String(i.name)+' '+(i.description||'')).toLocaleLowerCase('no').includes(q))})).filter(b=>b.items.length);
  const nav=$('categories'),savedX=nav.scrollLeft;
@@ -700,7 +707,7 @@ function render(){
  if(typeof reconcileCartWithMenu==='function'){
   const review=reconcileCartWithMenu();
   if(!$('cartSheet').hidden)renderCartContents();
-  if(review.repriced&&!$('cartSheet').hidden)showBetaToast('Prisene i handlekurven er oppdatert','info');
+  if(review.repriced&&!$('cartSheet').hidden)showFatih1Toast('Prisene i handlekurven er oppdatert','info');
  }
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
@@ -739,7 +746,7 @@ function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
   '<span class="product-section-flag">'+(required?'Påkrevd':'Valgfritt')+'</span></div>';
 }
-// Use the exact group order saved by the DEMO admin (item.optionGroupOrder).
+// Use the exact group order saved by the DRAFT admin (item.optionGroupOrder).
 // groupsFor also filters groups by the selected product size.
 function productDisplayGroups(){
  return groupsFor(current,chosenSize());
@@ -868,122 +875,122 @@ function updatePrice(){
 // Lock the underlying menu while any dialog is open. Mobile Chrome can
 // scroll the document behind a fixed cart on horizontal/edge gestures.
 // Save the exact page position so returning to the menu does not jump.
-let betaBackgroundLock=null;
-function betaLockBackground(){
- if(betaBackgroundLock)return;
+let fatih1BackgroundLock=null;
+function fatih1LockBackground(){
+ if(fatih1BackgroundLock)return;
  const body=document.body;
- betaBackgroundLock={
+ fatih1BackgroundLock={
   x:window.scrollX,y:window.scrollY,
   position:body.style.position,top:body.style.top,left:body.style.left,
   right:body.style.right,width:body.style.width
  };
  body.style.position='fixed';
- body.style.top='-'+betaBackgroundLock.y+'px';
- body.style.left='-'+betaBackgroundLock.x+'px';
+ body.style.top='-'+fatih1BackgroundLock.y+'px';
+ body.style.left='-'+fatih1BackgroundLock.x+'px';
  body.style.right='0';
  body.style.width='100%';
- document.documentElement.classList.add('beta-modal-open');
+ document.documentElement.classList.add('fatih1-modal-open');
 }
-function betaUnlockBackground(){
- if(!betaBackgroundLock)return;
- const saved=betaBackgroundLock;
- betaBackgroundLock=null;
+function fatih1UnlockBackground(){
+ if(!fatih1BackgroundLock)return;
+ const saved=fatih1BackgroundLock;
+ fatih1BackgroundLock=null;
  const body=document.body;
  body.style.position=saved.position;
  body.style.top=saved.top;
  body.style.left=saved.left;
  body.style.right=saved.right;
  body.style.width=saved.width;
- document.documentElement.classList.remove('beta-modal-open');
+ document.documentElement.classList.remove('fatih1-modal-open');
  window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
 }
 // Browser/app history: Android system Back, browser Back and iOS Safari's
 // native edge-swipe all return through the same UI states.
-const betaHistorySession=Math.random().toString(36).slice(2);
-let betaHistoryRestoring=false;
-function betaHistoryState(){
- const value=history.state?.kolBetaView;
- return value&&value.session===betaHistorySession?value:null;
+const fatih1HistorySession=Math.random().toString(36).slice(2);
+let fatih1HistoryRestoring=false;
+function fatih1HistoryState(){
+ const value=history.state?.kolFatih1View;
+ return value&&value.session===fatih1HistorySession?value:null;
 }
-function betaHistoryPayload(view,details={}){
- return {session:betaHistorySession,view,depth:0,...details};
+function fatih1HistoryPayload(view,details={}){
+ return {session:fatih1HistorySession,view,depth:0,...details};
 }
-function betaHistoryWrite(next,replace=false){
- if(betaHistoryRestoring)return;
- const prev=betaHistoryState();
+function fatih1HistoryWrite(next,replace=false){
+ if(fatih1HistoryRestoring)return;
+ const prev=fatih1HistoryState();
  if(prev&&prev.view===next.view&&prev.step===next.step&&
     prev.tab===next.tab&&String(prev.id||'')===String(next.id||'')&&
     prev.editIndex===next.editIndex)return;
  const state={...(history.state&&typeof history.state==='object'?history.state:{}),
-  kolBetaView:{...next,session:betaHistorySession,depth:replace?(prev?.depth||0):(prev?.depth||0)+1}};
+  kolFatih1View:{...next,session:fatih1HistorySession,depth:replace?(prev?.depth||0):(prev?.depth||0)+1}};
  if(replace)history.replaceState(state,'',location.href);
  else history.pushState(state,'',location.href);
 }
-function betaHistoryToMenu(){
- const state=betaHistoryState();
+function fatih1HistoryToMenu(){
+ const state=fatih1HistoryState();
  hideAll();
  if(state?.depth>0)history.go(-state.depth);
 }
-function betaHistoryBack(){
- const state=betaHistoryState();
+function fatih1HistoryBack(){
+ const state=fatih1HistoryState();
  if(state?.depth>0)history.back();
  else hideAll();
 }
-function betaHistoryView(id){
+function fatih1HistoryView(id){
  if(id==='productSheet')return {view:'product',id:current?.id,editIndex:editingCartIndex};
  if(id==='cartSheet')return {view:'cart',step:'cart'};
- if(id==='betaProfileSheet')return {view:'profile',tab:'home'};
- if(id==='demoConfirmation')return {view:'confirmation'};
+ if(id==='fatih1ProfileSheet')return {view:'profile',tab:'home'};
+ if(id==='draftConfirmation')return {view:'confirmation'};
  return null;
 }
 // Each fresh page session starts on the menu, without adding a fake
 // browser-history entry or altering the URL.
 history.replaceState({
  ...(history.state&&typeof history.state==='object'?history.state:{}),
- kolBetaView:betaHistoryPayload('menu')
+ kolFatih1View:fatih1HistoryPayload('menu')
 },'',location.href);
 // iOS Safari restores documents from its back-forward cache. A fixed body
 // scroll lock must be released on pagehide and re-applied if a dialog survives.
 window.addEventListener('pagehide',()=>{
- betaUnlockBackground();
+ fatih1UnlockBackground();
 });
 window.addEventListener('pageshow',event=>{
- if(event.persisted&&!$('overlay').hidden)betaLockBackground();
+ if(event.persisted&&!$('overlay').hidden)fatih1LockBackground();
 });
 window.addEventListener('popstate',event=>{
- const state=event.state?.kolBetaView;
- betaHistoryRestoring=true;
+ const state=event.state?.kolFatih1View;
+ fatih1HistoryRestoring=true;
  try{
   hideAll();
-  if(!state||state.session!==betaHistorySession)return;
+  if(!state||state.session!==fatih1HistorySession)return;
   if(state.view==='product'&&state.id)showSheet(state.id,state.editIndex??null);
   else if(state.view==='cart'){
    showCart();
    if(state.step&&state.step!=='cart')checkoutNavigate(state.step);
   }else if(state.view==='profile'){
-   betaProfileOpen();
-   if(state.tab&&state.tab!=='home')betaProfileShowTab(state.tab);
-  }else if(state.view==='confirmation'&&demoOrder)showDemoConfirmation();
- }finally{betaHistoryRestoring=false}
+   fatih1ProfileOpen();
+   if(state.tab&&state.tab!=='home')fatih1ProfileShowTab(state.tab);
+  }else if(state.view==='confirmation'&&localOrder)showDraftConfirmation();
+ }finally{fatih1HistoryRestoring=false}
 });
 function show(id){
- betaLockBackground();
+ fatih1LockBackground();
  $('overlay').hidden=false;
  $(id).hidden=false;
- const route=betaHistoryView(id);
- if(route)betaHistoryWrite(route);
+ const route=fatih1HistoryView(id);
+ if(route)fatih1HistoryWrite(route);
 }
 function hideAll(){
- if(typeof betaBonusStop==='function')betaBonusStop();
+ if(typeof fatih1BonusStop==='function')fatih1BonusStop();
  $('overlay').hidden=true;
  $('productSheet').hidden=true;
  $('cartSheet').hidden=true;
- $('demoConfirmation').hidden=true;
- $('betaProfileSheet').hidden=true;
+ $('draftConfirmation').hidden=true;
+ $('fatih1ProfileSheet').hidden=true;
  $('btnProfile').setAttribute('aria-expanded','false');
- betaUnlockBackground();
+ fatih1UnlockBackground();
 }
-$('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showBetaToast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
+$('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showFatih1Toast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
 // collapse Chrome's address bar: browser UI visibility is browser-controlled.
 // Cancel immediately when a person interacts, so navigation is never hijacked.
@@ -1168,7 +1175,7 @@ $('options').addEventListener('change',e=>{
   selection.size=input.value;
   for(const key of Object.keys(selection))if(key.startsWith('group:'))delete selection[key];
   renderOptions();
-  showBetaToast((size?.label||size?.name||'Størrelse')+' valgt');
+  showFatih1Toast((size?.label||size?.name||'Størrelse')+' valgt');
   return;
  }
  const id=input.name.slice(6),group=getGroup(id);if(!group)return;
@@ -1177,14 +1184,14 @@ $('options').addEventListener('change',e=>{
  if(group.selectionMode==='multiple'){
   const next=input.checked?[...old.filter(v=>String(v)!==input.value),input.value]:old.filter(v=>String(v)!==input.value);
   const max=Math.max(1,Number(group.maxSelections)||1);
-  if(next.length>max){input.checked=false;showBetaToast('Maks '+max+' valg','info');return}
+  if(next.length>max){input.checked=false;showFatih1Toast('Maks '+max+' valg','info');return}
   selection[key]=next;
  }else{
   if(old.length===1&&String(old[0])===String(input.value))return;
   selection[key]=[input.value];
  }
  renderOptions();
- showBetaToast((option?.label||'Valg')+(input.checked?' lagt til':' fjernet'));
+ showFatih1Toast((option?.label||'Valg')+(input.checked?' lagt til':' fjernet'));
 });
 function changeServingOption(groupId,optionId,step){
  const group=getGroup(groupId);
@@ -1197,7 +1204,7 @@ function changeServingOption(groupId,optionId,step){
  // Tapping the row reduces 2 -> 1 -> 0, never clears all at once.
  const adding=step==='1'||(step==='toggle'&&!count);
  if(adding){
-  if(ids.length>=max){showBetaToast('Maks '+max+' valg','info');return}
+  if(ids.length>=max){showFatih1Toast('Maks '+max+' valg','info');return}
   ids.push(id);
  }else{
   if(!count)return;
@@ -1207,7 +1214,7 @@ function changeServingOption(groupId,optionId,step){
  selection[key]=ids;
  const newCount=ids.filter(v=>String(v)===id).length;
  renderOptions();
- showBetaToast((option.label||'Dressing')+(adding?' lagt til':' fjernet')+' · '+newCount+' stk');
+ showFatih1Toast((option.label||'Dressing')+(adding?' lagt til':' fjernet')+' · '+newCount+' stk');
 }
 $('options').addEventListener('click',e=>{
  const button=e.target.closest('[data-qty-group]');
@@ -1239,7 +1246,7 @@ $('sheetIngredients').addEventListener('click',e=>{
  if(wasRemoved)removedIngredients.delete(name);else removedIngredients.add(name);
  ingredientEditorExpanded=true;
  ingredientEditor();renderSheetExtras();
- showBetaToast(name+(wasRemoved?' lagt tilbake':' fjernet'));
+ showFatih1Toast(name+(wasRemoved?' lagt tilbake':' fjernet'));
 });
 $('quickNotes').addEventListener('click',e=>{
  const btn=e.target.closest('[data-kitchen-note]');if(!btn)return;
@@ -1247,10 +1254,10 @@ $('quickNotes').addEventListener('click',e=>{
  const removed=selectedKitchenNotes.has(note);
  if(removed)selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
  renderSheetExtras();
- showBetaToast(note+(removed?' fjernet':' lagt til'));
+ showFatih1Toast(note+(removed?' fjernet':' lagt til'));
 });
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
 initCartEvents();
-$('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else betaHistoryToMenu()};
+$('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else fatih1HistoryToMenu()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('betaProfileSheet').hidden&&$('betaProfileHome').hidden)betaHistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')betaHistoryBack();else betaHistoryToMenu()}});document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('fatih1ProfileSheet').hidden&&$('fatih1ProfileHome').hidden)fatih1HistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')fatih1HistoryBack();else fatih1HistoryToMenu()}});document.addEventListener('DOMContentLoaded',init);
