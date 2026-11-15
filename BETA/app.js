@@ -883,10 +883,73 @@ function betaUnlockBackground(){
  document.documentElement.classList.remove('beta-modal-open');
  window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
 }
+// Browser/app history: Android system Back, browser Back and iOS Safari's
+// native edge-swipe all return through the same UI states.
+const betaHistorySession=Math.random().toString(36).slice(2);
+let betaHistoryRestoring=false;
+function betaHistoryState(){
+ const value=history.state?.kolBetaView;
+ return value&&value.session===betaHistorySession?value:null;
+}
+function betaHistoryPayload(view,details={}){
+ return {session:betaHistorySession,view,depth:0,...details};
+}
+function betaHistoryWrite(next,replace=false){
+ if(betaHistoryRestoring)return;
+ const prev=betaHistoryState();
+ if(prev&&prev.view===next.view&&prev.step===next.step&&
+    prev.tab===next.tab&&String(prev.id||'')===String(next.id||'')&&
+    prev.editIndex===next.editIndex)return;
+ const state={...(history.state&&typeof history.state==='object'?history.state:{}),
+  kolBetaView:{...next,session:betaHistorySession,depth:replace?(prev?.depth||0):(prev?.depth||0)+1}};
+ if(replace)history.replaceState(state,'',location.href);
+ else history.pushState(state,'',location.href);
+}
+function betaHistoryToMenu(){
+ const state=betaHistoryState();
+ hideAll();
+ if(state?.depth>0)history.go(-state.depth);
+}
+function betaHistoryBack(){
+ const state=betaHistoryState();
+ if(state?.depth>0)history.back();
+ else hideAll();
+}
+function betaHistoryView(id){
+ if(id==='productSheet')return {view:'product',id:current?.id,editIndex:editingCartIndex};
+ if(id==='cartSheet')return {view:'cart',step:'cart'};
+ if(id==='betaProfileSheet')return {view:'profile',tab:'home'};
+ if(id==='demoConfirmation')return {view:'confirmation'};
+ return null;
+}
+// Each fresh page session starts on the menu, without adding a fake
+// browser-history entry or altering the URL.
+history.replaceState({
+ ...(history.state&&typeof history.state==='object'?history.state:{}),
+ kolBetaView:betaHistoryPayload('menu')
+},'',location.href);
+window.addEventListener('popstate',event=>{
+ const state=event.state?.kolBetaView;
+ betaHistoryRestoring=true;
+ try{
+  hideAll();
+  if(!state||state.session!==betaHistorySession)return;
+  if(state.view==='product'&&state.id)showSheet(state.id,state.editIndex??null);
+  else if(state.view==='cart'){
+   showCart();
+   if(state.step&&state.step!=='cart')checkoutNavigate(state.step);
+  }else if(state.view==='profile'){
+   betaProfileOpen();
+   if(state.tab&&state.tab!=='home')betaProfileShowTab(state.tab);
+  }else if(state.view==='confirmation'&&demoOrder)showDemoConfirmation();
+ }finally{betaHistoryRestoring=false}
+});
 function show(id){
  betaLockBackground();
  $('overlay').hidden=false;
  $(id).hidden=false;
+ const route=betaHistoryView(id);
+ if(route)betaHistoryWrite(route);
 }
 function hideAll(){
  if(typeof betaBonusStop==='function')betaBonusStop();
@@ -1166,6 +1229,6 @@ $('quickNotes').addEventListener('click',e=>{
 });
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
 initCartEvents();
-$('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else hideAll()};
+$('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else betaHistoryToMenu()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else hideAll()}});document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('betaProfileSheet').hidden&&$('betaProfileHome').hidden)betaHistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')betaHistoryBack();else betaHistoryToMenu()}});document.addEventListener('DOMContentLoaded',init);
