@@ -138,7 +138,15 @@ async function fromFirebase(){
   if(!data.sections.length)throw Error('Ingen kategorier i /menu');
   return data;
 }
+function cleanupRetiredBetaStorage(){
+ try{
+  for(const key of ['kol-beta-cart-suggestions-once-v1','kol-beta-cart-dismissed-v1']){
+   if(localStorage.getItem(key)!==null)localStorage.removeItem(key);
+  }
+ }catch{}
+}
 async function init(){
+ cleanupRetiredBetaStorage();
  // A single best-effort down/up scroll after first menu render on small touch screens.
  // Chrome may ignore scripted scrolling for browser toolbar visibility.
  watchStartupScrollIntent();
