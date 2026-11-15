@@ -1240,3 +1240,8 @@ html[data-beta-theme="dark"] #productSheet .product-topbar .sheet-favorite.is-fa
  #productSheet .option-choice.is-quantity .option-quantity button{width:30px;min-width:30px}
  #productSheet .option-choice.is-quantity .option-quantity b{min-width:24px}
 }
+
+/* Ingredient adjustment belongs directly below the product description. */
+#productSheet #sheetIngredients{display:contents}
+#productSheet #sheetIngredients>.ingredient-editor{margin:0 0 19px}
+#productSheet .sheet-intro:has(+ #sheetIngredients .ingredient-editor){padding-bottom:9px}
