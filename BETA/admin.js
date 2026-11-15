@@ -82,6 +82,17 @@ async function bootAuth(){
   if(!payload.sections.every(s=>s&&Array.isArray(s.items)))throw Error('Kategorier mangler items-lister.');
   if(!payload.optionGroups.every(g=>g&&Array.isArray(g.options)))throw Error('Valggrupper har et eldre format som må migreres før redigering. Ingen data ble endret.');
  }
+ function removeLegacyIngredients(menuData){
+  let removed=0;
+  for(const section of arr(menuData?.sections)){
+   for(const item of arr(section.items)){
+    if(Object.prototype.hasOwnProperty.call(item,'ingredients')){
+     delete item.ingredients;removed++;
+    }
+   }
+  }
+  return removed;
+ }
  function category(){return state.menu?.sections?.[state.category]||null}
  function product(){return category()?.items?.[state.product]||null}
  function recommendationIds(){
@@ -185,8 +196,16 @@ function getProductAllergens(p){
   assertMenu(payload);
   const etag=response.headers.get('ETag');
   if(!etag)throw Error('ETag mangler. Lagring stoppet for å beskytte eksisterende meny.');
-  state.menu=payload;state.original=clone(payload);state.etag=etag;state.category=0;state.product=0;state.group=0;
+  // Keep the Firebase snapshot intact for ETag-safe change tracking, then
+  // stage deletion of redundant ingredients fields (never modify ingredientRules).
+  state.original=clone(payload);
+  const legacyFields=removeLegacyIngredients(payload);
+  state.menu=payload;state.etag=etag;state.category=0;state.product=0;state.group=0;
   setClean();renderAll();refreshHeader();
+  if(legacyFields){
+   setDirty();
+   message(legacyFields+' gamle ingredients-felt er klargjort for sletting. Trykk «Lagre endringer» for å fjerne dem fra Firebase.','warn');
+  }
   return true;
  }
  function setTab(tab){
@@ -459,7 +478,7 @@ function getProductAllergens(p){
  }
  function addProduct(){
   const s=category();if(!s)return;
-  const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredients:'',sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
+  const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
  }
@@ -614,6 +633,7 @@ function getProductAllergens(p){
   const previousVersion=Number(state.original.updatedAt)||0;
   // No menu data is lost: the original complete menu is preserved and mutated.
   const next=clone(state.menu);
+  removeLegacyIngredients(next);
   next.updatedAt=version;
   next.changeFeed=next.changeFeed&&typeof next.changeFeed==='object'?next.changeFeed:{};
   next.changeFeed.latest={version,previousVersion,changes:delta.changes,requiresRefresh:delta.requiresRefresh};
@@ -689,6 +709,17 @@ function getProductAllergens(p){
   $('removeProduct').addEventListener('click',removeProduct);
   for(const [id,key]of [['pName','name'],['pDescription','description']])
    $(id).addEventListener('input',event=>updateItemField(key,event.target.value));
+  $('pIngredientsFromDescription').addEventListener('click',()=>{
+   const p=product();if(!p)return;
+   const description=String(p.description||'').trim();
+   if(!description){notify('Beskrivelsen er tom. Skriv en beskrivelse først.',true);return}
+   const target=$('pIngredientRules');
+   if(target.value.trim()&&!confirm('Erstatte nåværende ingrediensliste med innhold fra beskrivelsen?'))return;
+   const names=description.split(/[,;\n]+/).map(text=>text.trim().replace(/[.!?]+$/,'').trim()).filter(Boolean);
+   target.value=names.join(', ').slice(0,1800);
+   target.dispatchEvent(new Event('input',{bubbles:true}));
+   notify('Hentet fra beskrivelse · kontroller og lagre');
+  });
   $('pIngredientRules').addEventListener('input',event=>{
    const p=product();if(!p)return;
    const previous=arr(p.ingredientRules);
