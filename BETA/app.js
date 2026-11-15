@@ -909,7 +909,7 @@ function fatih1UnlockBackground(){
 const fatih1HistorySession=Math.random().toString(36).slice(2);
 let fatih1HistoryRestoring=false;
 function fatih1HistoryState(){
- const value=history.state?.kolFatih1View;
+ const value=history.state?.fatih1View;
  return value&&value.session===fatih1HistorySession?value:null;
 }
 function fatih1HistoryPayload(view,details={}){
@@ -922,7 +922,7 @@ function fatih1HistoryWrite(next,replace=false){
     prev.tab===next.tab&&String(prev.id||'')===String(next.id||'')&&
     prev.editIndex===next.editIndex)return;
  const state={...(history.state&&typeof history.state==='object'?history.state:{}),
-  kolFatih1View:{...next,session:fatih1HistorySession,depth:replace?(prev?.depth||0):(prev?.depth||0)+1}};
+  fatih1View:{...next,session:fatih1HistorySession,depth:replace?(prev?.depth||0):(prev?.depth||0)+1}};
  if(replace)history.replaceState(state,'',location.href);
  else history.pushState(state,'',location.href);
 }
@@ -947,7 +947,7 @@ function fatih1HistoryView(id){
 // browser-history entry or altering the URL.
 history.replaceState({
  ...(history.state&&typeof history.state==='object'?history.state:{}),
- kolFatih1View:fatih1HistoryPayload('menu')
+ fatih1View:fatih1HistoryPayload('menu')
 },'',location.href);
 // iOS Safari restores documents from its back-forward cache. A fixed body
 // scroll lock must be released on pagehide and re-applied if a dialog survives.
@@ -958,7 +958,7 @@ window.addEventListener('pageshow',event=>{
  if(event.persisted&&!$('overlay').hidden)fatih1LockBackground();
 });
 window.addEventListener('popstate',event=>{
- const state=event.state?.kolFatih1View;
+ const state=event.state?.fatih1View;
  fatih1HistoryRestoring=true;
  try{
   hideAll();
