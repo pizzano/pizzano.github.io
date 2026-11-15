@@ -110,7 +110,10 @@ function normalize(data){
    const sizes=list(item.sizes).map(size=>({
     ...size,label:Number.isInteger(size.labelId)?sizeLabels[size.labelId]||size.label||size.name||'':size.label
    }));
-   return {...item,imageUrl,allergens,sizes};
+   // Historical Firebase data can still contain ingredients until the next
+   // admin save. Do not retain it in the cached customer menu.
+   const cleanItem={...item};delete cleanItem.ingredients;
+   return {...cleanItem,imageUrl,allergens,sizes};
   })
  }));
  return {cacheFormat:3,sections,optionGroups:list(data.optionGroups),
@@ -680,7 +683,7 @@ function render(){
  if(!menu)return;
  $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
  const blocks=menuBlocks(),q=$('search').value.trim().toLocaleLowerCase('no');
- const visibleBlocks=blocks.map(block=>({...block,items:block.items.filter(i=>!q||(String(i.name)+' '+(i.description||'')+' '+(i.ingredients||'')).toLocaleLowerCase('no').includes(q))})).filter(b=>b.items.length);
+ const visibleBlocks=blocks.map(block=>({...block,items:block.items.filter(i=>!q||(String(i.name)+' '+(i.description||'')).toLocaleLowerCase('no').includes(q))})).filter(b=>b.items.length);
  const nav=$('categories'),savedX=nav.scrollLeft;
  nav.innerHTML=visibleBlocks.map((block,i)=>'<button type="button" data-scroll="'+esc(block.id)+'" class="'+(activeCategory===block.id||!activeCategory&&i===0?'active':'')+'"><span class="category-glyph" aria-hidden="true">'+categoryGlyph(block)+'</span><span>'+esc(block.title)+'</span></button>').join('');
  $('menu').innerHTML=visibleBlocks.map(block=>'<section class="menu-section" id="category-'+esc(block.id)+'"><h2 class="section-title">'+esc(block.title)+'</h2><p class="section-note">'+esc(block.note)+'</p>'+block.items.map(productCard).join('')+'</section>').join('')||'<p>Ingen produkter funnet.</p>';
@@ -692,7 +695,7 @@ function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
  current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();editingCartIndex=null;
  $('add').textContent='Legg til';$('quantity').textContent=qty;$('comment').value='';
- $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
+ $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
  hero.classList.remove('has-image');
  const url=item.imageUrl;
