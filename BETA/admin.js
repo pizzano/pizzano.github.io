@@ -285,22 +285,59 @@ function getProductAllergens(p){
  function sizeLabel(size){
   return size.label||state.menu.sizeLabels?.[size.labelId]||size.name||String(size.id||'Størrelse');
  }
- function renderSizes(){
-  const p=product(),sizes=arr(p.sizes),groups=state.menu.optionGroups;
-  $('sizeRows').innerHTML=sizes.map((size,i)=>{
-   const html='<div class="size-row"><input aria-label="Størrelsesnavn" data-size-name="'+i+'" value="'+esc(sizeLabel(size))+'"><input type="number" min="0" max="99999" step="1" aria-label="Pris i kroner" data-size-price="'+i+'" value="'+esc(Number(size.price)||0)+'"><button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>';
-   const assigned=arr(size.optionGroupIds).map(String);
-   return '<div class="group-card">'+html+'<details><summary style="font-size:12px;cursor:pointer">Valggrupper bare for denne størrelsen</summary><div class="stack compact">'+groups.map(g=>'<label class="checkbox"><input type="checkbox" data-size-group="'+i+'" value="'+esc(g.id)+'"'+(assigned.includes(String(g.id))?' checked':'')+'> '+esc(g.title||g.id)+'</label>').join('')+'</div></details></div>';
-  }).join('')||'<p class="empty">Ingen størrelser. Legg til en størrelse.</p>';
+ // Global groups are inherited by every size. Optional size-specific groups
+ // are stored as size.optionGroupIds. Ordering is per size, not global.
+ function selectedGroupIdsForSize(p,size){
+  return [...new Set([...arr(p.optionGroupIds),...arr(size.optionGroupIds)].map(String))];
  }
- function renderAssignedGroups(){
-  const p=product(),selected=arr(p.optionGroupIds).map(String),ids=usedGroupIds(p),order=[...new Set([...arr(p.optionGroupOrder).map(String).filter(id=>ids.includes(id)),...ids])];
-  const library=state.menu.optionGroups;
-  $('assignedGroups').innerHTML=library.map(g=>{
-   const id=String(g.id),orderIdx=order.indexOf(id),inSizes=arr(p.sizes).some(s=>arr(s.optionGroupIds).map(String).includes(id));
-   return '<div class="pill-row"><label class="checkbox" style="flex:1"><input type="checkbox" data-product-group="'+esc(id)+'"'+(selected.includes(id)?' checked':'')+'>'+esc(g.title||g.id)+(inSizes?' <small>(størrelse)</small>':'')+'</label>'+
-    (orderIdx>=0?'<span style="font-size:11px;color:#728979">'+(orderIdx+1)+'</span><button type="button" class="mini" data-order-id="'+esc(id)+'" data-order-step="-1" aria-label="Flytt opp">↑</button><button type="button" class="mini" data-order-id="'+esc(id)+'" data-order-step="1" aria-label="Flytt ned">↓</button>':'')+'</div>';
-  }).join('');
+ function orderedGroupIdsForSize(p,size){
+  const ids=selectedGroupIdsForSize(p,size),allowed=new Set(ids);
+  return [...new Set([...arr(size.optionGroupOrder),...arr(p.optionGroupOrder),...ids]
+   .map(String).filter(id=>allowed.has(id)))];
+ }
+ function renderCommonGroups(){
+  const p=product();if(!p)return;
+  const checked=new Set(arr(p.optionGroupIds).map(String));
+  $('commonGroupList').innerHTML=state.menu.optionGroups.map(group=>{
+   const id=String(group.id);
+   return '<label class="checkbox"><input type="checkbox" data-common-group="'+esc(id)+'"'+(checked.has(id)?' checked':'')+'><span>'+esc(group.title||id)+'</span></label>';
+  }).join('')||'<p class="muted">Ingen valggrupper tilgjengelig.</p>';
+ }
+ function renderSizes(resetOpen=false){
+  const p=product();if(!p)return;
+  const host=$('sizeRows'),sizes=arr(p.sizes),groups=state.menu.optionGroups;
+  const expanded=resetOpen?new Set([0]):
+   new Set([...host.querySelectorAll('details[data-size-options][open]')].map(node=>Number(node.dataset.sizeOptions)));
+  renderCommonGroups();
+  host.innerHTML=sizes.map((size,i)=>{
+   const shared=new Set(arr(p.optionGroupIds).map(String));
+   const selected=new Set(selectedGroupIdsForSize(p,size));
+   const sorted=orderedGroupIdsForSize(p,size);
+   const order=new Map(sorted.map((id,n)=>[id,n]));
+   const byId=new Map(groups.map(g=>[String(g.id),g]));
+   const all=[...sorted.map(id=>byId.get(id)).filter(Boolean),
+    ...groups.filter(g=>!selected.has(String(g.id)))];
+   const options=all.map(g=>{
+    const id=String(g.id),isOn=selected.has(id),inherited=shared.has(id),place=order.get(id);
+    const controls=isOn?
+     '<span class="size-order-actions">'+
+     '<button class="mini" type="button" data-size-move="'+i+'" data-group-id="'+esc(id)+'" data-group-step="-1" aria-label="Flytt '+esc(g.title||id)+' opp"'+(place===0?' disabled':'')+'>↑</button>'+
+     '<button class="mini" type="button" data-size-move="'+i+'" data-group-id="'+esc(id)+'" data-group-step="1" aria-label="Flytt '+esc(g.title||id)+' ned"'+(place===sorted.length-1?' disabled':'')+'>↓</button></span>':'';
+    return '<div class="size-option-item'+(isOn?' is-selected':'')+'">'+
+     '<span class="size-option-number'+(isOn?'':' is-unused')+'">'+(isOn?place+1:'—')+'</span>'+
+     '<label class="checkbox'+(inherited?' is-inherited':'')+'"><input type="checkbox" data-size-group="'+i+'" value="'+esc(id)+'"'+(isOn?' checked':'')+(inherited?' disabled':'')+'><span>'+esc(g.title||id)+'</span></label>'+
+     (inherited?'<span class="size-option-type">Felles</span>':'')+controls+'</div>';
+   }).join('');
+   return '<div class="size-product-card">'+
+    '<div class="size-product-header">'+
+    '<input data-size-name="'+i+'" aria-label="Størrelsesnavn" value="'+esc(sizeLabel(size))+'">'+
+    '<input type="number" min="0" max="99999" step="1" data-size-price="'+i+'" aria-label="Pris i kroner" value="'+esc(Number(size.price)||0)+'">'+
+    '<button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>'+
+    '<details class="size-product-options" data-size-options="'+i+'"'+(expanded.has(i)?' open':'')+'>'+
+    '<summary><span>Tilvalg for '+esc(sizeLabel(size))+'</span><span class="size-option-count">'+sorted.length+' valgt</span><span aria-hidden="true">⌄</span></summary>'+
+    '<div class="size-option-body"><p class="size-option-help">Huk av tilvalg og bruk pilene for å bestemme rekkefølgen. Felles grupper endres i seksjonen øverst.</p>'+
+    '<div class="size-option-list">'+options+'</div></div></details></div>';
+  }).join('')||'<p class="empty">Ingen størrelser. Legg til en størrelse.</p>';
  }
  function renderProductEditor(){
   const p=product();$('productFields').hidden=!p;
@@ -315,7 +352,7 @@ function getProductAllergens(p){
   $('pPopular').checked=arr(state.menu.popularItemIds).some(id=>String(id)===String(p.id));
   $('pCartSuggestion').checked=recommendationIds().includes(String(p.id));
   $('cartSuggestionLimit').textContent=recommendationIds().length+' av 4 valgt · Lagres under /menu/cartSuggestionRules';
-  renderSizes();renderAssignedGroups();
+  renderSizes(true);
  }
  function renderGroups(){
   const query=$('groupSearch').value.trim().toLocaleLowerCase('no');
@@ -369,23 +406,33 @@ function getProductAllergens(p){
  function changeProduct(step){
   const s=category();if(s&&moveIn(s.items,state.product,step)){state.product+=step;renderProducts();renderProductEditor();setDirty()}
  }
- function productGroupIds(){
-  const p=product();return [...new Set([...arr(p.optionGroupIds),...arr(p.sizes).flatMap(size=>arr(size.optionGroupIds))].map(String))];
- }
- function normalizeProductOrder(){
-  const p=product(),allowed=productGroupIds();
-  p.optionGroupOrder=[...new Set([...arr(p.optionGroupOrder).map(String).filter(id=>allowed.includes(id)),...allowed])];
- }
- function selectProductGroup(id,checked){
+ function updateCommonGroup(id,checked){
   const p=product();if(!p)return;
-  const selected=arr(p.optionGroupIds).map(String);
-  p.optionGroupIds=checked?[...new Set([...selected,id])]:selected.filter(x=>x!==id);
-  normalizeProductOrder();renderAssignedGroups();setDirty();
+  const old=arr(p.optionGroupIds).map(String);
+  p.optionGroupIds=checked?[...new Set([...old,id])]:old.filter(x=>x!==id);
+  const visible=new Set([...p.optionGroupIds,...arr(p.sizes).flatMap(x=>arr(x.optionGroupIds))].map(String));
+  p.optionGroupOrder=[...new Set([...arr(p.optionGroupOrder),...p.optionGroupIds]
+   .map(String).filter(x=>visible.has(x)))];
+  for(const size of arr(p.sizes)){
+   if(Array.isArray(size.optionGroupOrder))size.optionGroupOrder=orderedGroupIdsForSize(p,size);
+  }
+  renderSizes();setDirty();
  }
- function moveProductGroup(id,step){
-  const p=product();if(!p)return;
-  normalizeProductOrder();let index=p.optionGroupOrder.indexOf(id);
-  if(moveIn(p.optionGroupOrder,index,step)){renderAssignedGroups();setDirty()}
+ function updateSizeGroup(index,id,checked){
+  const p=product(),size=arr(p?.sizes)[index];if(!size)return;
+  if(arr(p.optionGroupIds).map(String).includes(id))return; // Inherited from all sizes.
+  const before=arr(size.optionGroupIds).map(String);
+  size.optionGroupIds=checked?[...new Set([...before,id])]:before.filter(x=>x!==id);
+  size.optionGroupOrder=orderedGroupIdsForSize(p,size);
+  renderSizes();setDirty();
+ }
+ function moveSizeGroup(index,id,step){
+  const p=product(),size=arr(p?.sizes)[index];if(!size)return;
+  const order=orderedGroupIdsForSize(p,size),at=order.indexOf(id);
+  if(moveIn(order,at,step)){
+   size.optionGroupOrder=order;
+   renderSizes();setDirty();
+  }
  }
  function readAndSetImage(){
   const p=product();if(!p)return;
@@ -448,12 +495,15 @@ function getProductAllergens(p){
   for(const section of state.menu.sections)for(const p of section.items){
    p.optionGroupIds=arr(p.optionGroupIds).filter(v=>String(v)!==id);
    p.optionGroupOrder=arr(p.optionGroupOrder).filter(v=>String(v)!==id);
-   for(const size of arr(p.sizes))size.optionGroupIds=arr(size.optionGroupIds).filter(v=>String(v)!==id);
+   for(const size of arr(p.sizes)){
+    size.optionGroupIds=arr(size.optionGroupIds).filter(v=>String(v)!==id);
+    if(Array.isArray(size.optionGroupOrder))size.optionGroupOrder=size.optionGroupOrder.filter(v=>String(v)!==id);
+   }
   }
   state.group=Math.min(state.group,state.menu.optionGroups.length-1);
   renderGroups();renderGroupEditor();renderAssignedGroupsIfVisible();setDirty();
  }
- function renderAssignedGroupsIfVisible(){if(product())renderAssignedGroups()}
+ function renderAssignedGroupsIfVisible(){if(product())renderSizes()}
  function addOption(){
   const g=group();if(!g)return;
   g.options=arr(g.options);
@@ -661,29 +711,30 @@ function getProductAllergens(p){
    if(t.matches('[data-size-name]')){const size=p.sizes[Number(t.dataset.sizeName)];size.label=t.value;delete size.labelId;setDirty()}
    if(t.matches('[data-size-price]')){p.sizes[Number(t.dataset.sizePrice)].price=Number(t.value);setDirty();renderProducts()}
   });
+  $('commonGroupList').addEventListener('change',event=>{
+   const input=event.target.closest('[data-common-group]');
+   if(input)updateCommonGroup(input.dataset.commonGroup,input.checked);
+  });
   $('sizeRows').addEventListener('change',event=>{
-   const t=event.target;
-   if(!t.matches('[data-size-group]'))return;
-   const size=product()?.sizes?.[Number(t.dataset.sizeGroup)];if(!size)return;
-   let ids=arr(size.optionGroupIds).map(String);
-   size.optionGroupIds=t.checked?[...new Set([...ids,t.value])]:ids.filter(x=>x!==t.value);
-   normalizeProductOrder();renderAssignedGroups();setDirty();
+   const input=event.target.closest('[data-size-group]');
+   if(input)updateSizeGroup(Number(input.dataset.sizeGroup),input.value,input.checked);
   });
   $('sizeRows').addEventListener('click',event=>{
-   const t=event.target.closest('[data-size-remove]');if(!t)return;
-   const p=product();p.sizes.splice(Number(t.dataset.sizeRemove),1);
-   normalizeProductOrder();renderSizes();renderAssignedGroups();setDirty();
+   const move=event.target.closest('[data-size-move]');
+   if(move){
+    moveSizeGroup(Number(move.dataset.sizeMove),move.dataset.groupId,Number(move.dataset.groupStep));
+    return;
+   }
+   const del=event.target.closest('[data-size-remove]');
+   if(!del)return;
+   const p=product();p.sizes.splice(Number(del.dataset.sizeRemove),1);
+   renderSizes(true);setDirty();
   });
   $('addSize').addEventListener('click',()=>{
    const p=product();if(!p)return;
-   p.sizes=arr(p.sizes);p.sizes.push({id:uid('size'),label:'Ny størrelse',price:0,optionGroupIds:[]});
+   p.sizes=arr(p.sizes);
+   p.sizes.push({id:uid('size'),label:'Ny størrelse',price:0,optionGroupIds:[]});
    renderSizes();setDirty();
-  });
-  $('assignedGroups').addEventListener('change',event=>{
-   const input=event.target.closest('[data-product-group]');if(input)selectProductGroup(input.dataset.productGroup,input.checked);
-  });
-  $('assignedGroups').addEventListener('click',event=>{
-   const button=event.target.closest('[data-order-id]');if(button)moveProductGroup(button.dataset.orderId,Number(button.dataset.orderStep));
   });
   $('addGroup').addEventListener('click',addGroup);
   $('deleteGroup').addEventListener('click',deleteGroup);
