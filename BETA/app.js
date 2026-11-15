@@ -851,10 +851,53 @@ function updatePrice(){
  $('addPrice').textContent=money(currentPrice()*qty);
  updateOrderingControls();
 }
-// Keep the document's scroll container intact: changing html/body overflow
-// while a dialog is open can make the sticky restaurant header disappear.
-function show(id){$('overlay').hidden=false;$(id).hidden=false}
-function hideAll(){if(typeof betaBonusStop==='function')betaBonusStop();$('overlay').hidden=true;$('productSheet').hidden=true;$('cartSheet').hidden=true;$('demoConfirmation').hidden=true;$('betaProfileSheet').hidden=true;$('btnProfile').setAttribute('aria-expanded','false')}
+// Lock the underlying menu while any dialog is open. Mobile Chrome can
+// scroll the document behind a fixed cart on horizontal/edge gestures.
+// Save the exact page position so returning to the menu does not jump.
+let betaBackgroundLock=null;
+function betaLockBackground(){
+ if(betaBackgroundLock)return;
+ const body=document.body;
+ betaBackgroundLock={
+  x:window.scrollX,y:window.scrollY,
+  position:body.style.position,top:body.style.top,left:body.style.left,
+  right:body.style.right,width:body.style.width
+ };
+ body.style.position='fixed';
+ body.style.top='-'+betaBackgroundLock.y+'px';
+ body.style.left='-'+betaBackgroundLock.x+'px';
+ body.style.right='0';
+ body.style.width='100%';
+ document.documentElement.classList.add('beta-modal-open');
+}
+function betaUnlockBackground(){
+ if(!betaBackgroundLock)return;
+ const saved=betaBackgroundLock;
+ betaBackgroundLock=null;
+ const body=document.body;
+ body.style.position=saved.position;
+ body.style.top=saved.top;
+ body.style.left=saved.left;
+ body.style.right=saved.right;
+ body.style.width=saved.width;
+ document.documentElement.classList.remove('beta-modal-open');
+ window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});
+}
+function show(id){
+ betaLockBackground();
+ $('overlay').hidden=false;
+ $(id).hidden=false;
+}
+function hideAll(){
+ if(typeof betaBonusStop==='function')betaBonusStop();
+ $('overlay').hidden=true;
+ $('productSheet').hidden=true;
+ $('cartSheet').hidden=true;
+ $('demoConfirmation').hidden=true;
+ $('betaProfileSheet').hidden=true;
+ $('btnProfile').setAttribute('aria-expanded','false');
+ betaUnlockBackground();
+}
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showBetaToast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
 // collapse Chrome's address bar: browser UI visibility is browser-controlled.
