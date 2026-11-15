@@ -45,6 +45,9 @@
 .rule{border-top:1px solid #e4eee8;padding-top:14px;margin-top:10px}.rule h3{font-size:13px;margin:0 0 11px}
 .checkbox{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:650;color:#294d3a;min-height:35px}
 .checkbox input{accent-color:#087f59;width:17px;height:17px}
+.cart-suggestion-control{font-weight:650;gap:10px;padding:6px 0;line-height:1.4}
+.cart-suggestion-control input{flex:none}
+#cartSuggestionLimit{font-size:11px;line-height:1.45;margin:5px 0 0;color:#657d70}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .pill-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px;border:1px solid #dfebe3;border-radius:10px;background:#f9fcfa;margin-bottom:6px;font-size:12px}
 .pill-row strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -115,7 +118,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261114-auth3" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261115-suggestions16" defer></script>
 </head>
 <body>
 <header class="top">
@@ -174,6 +177,11 @@ body.admin-modal-open{overflow:hidden}
      <div class="admin-form-card"><h3>Produktbilde</h3>     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
      <div class="field"><label for="pImage">Bilde-URL</label><input id="pImage" type="url" placeholder="https://images.pexels.com/…"><small>Ved endring får produktet sin egen bilde-ID, uten å endre andre produkters bilder.</small></div>
 </div>
+     <div class="admin-form-card">
+      <h3>Forslag i handlekurven</h3>
+      <label class="checkbox cart-suggestion-control" for="pCartSuggestion"><input type="checkbox" id="pCartSuggestion"> Vis produktet under «Vil du ha noe ved siden av?»</label>
+      <p class="muted" id="cartSuggestionLimit">Velg opptil 4 produkter. Lagres under /menu/cartSuggestionRules med menyen.</p>
+     </div>
     </div>
     <div class="admin-modal-pane" data-product-section="ingredienser" hidden><div class="admin-form-card"><h3>Ingredienser og kjøkkenbeskjeder</h3>     <div class="field"><label for="pIngredients">Ingredienser (kommaseparert)</label><textarea id="pIngredients"></textarea></div>
      <div class="field"><label for="pKitchenNotes">Raske kjøkkenbeskjeder (en per linje)</label><textarea id="pKitchenNotes" placeholder="Ekstra stekt&#10;Del i 8 biter"></textarea></div>
