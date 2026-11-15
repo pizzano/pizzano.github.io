@@ -1164,3 +1164,32 @@ html[data-beta-theme="dark"] #productSheet .sheet-footer .primary{background:#08
 }
 
 #productSheet .option-choice.is-quantity:focus-visible{outline:2px solid #0a9560;outline-offset:2px}
+
+/* One coherent choice indicator across size, alternatives, sauces and extras. */
+#productSheet .option-choice input:is([type="radio"],[type="checkbox"]){
+ appearance:none;-webkit-appearance:none;display:grid;place-items:center;
+ width:21px;height:21px;min-width:21px;flex:none;margin:0;
+ border:1.5px solid #94a8a0;border-radius:5px;background:#fff;
+ cursor:pointer;transition:border-color .12s ease,background-color .12s ease;
+}
+#productSheet .option-choice input:is([type="radio"],[type="checkbox"])::after{
+ content:"✓";font-family:system-ui,sans-serif;font-size:15px;line-height:1;
+ font-weight:700;color:white;opacity:0;
+}
+#productSheet .option-choice input:is([type="radio"],[type="checkbox"]):checked{
+ border-color:#118553;background:#118553;
+}
+#productSheet .option-choice input:is([type="radio"],[type="checkbox"]):checked::after{opacity:1}
+#productSheet .option-choice input:is([type="radio"],[type="checkbox"]):focus-visible{outline:2px solid #118553;outline-offset:3px}
+#productSheet .option-choice input:disabled{cursor:not-allowed;opacity:.5}
+#productSheet .option-choice.is-quantity .option-tick{
+ width:21px;height:21px;border:1.5px solid #94a8a0;border-radius:5px;
+}
+#productSheet .option-choice.is-quantity.is-chosen .option-tick{background:#118553;border-color:#118553}
+html[data-beta-theme="dark"] #productSheet .option-choice input:is([type="radio"],[type="checkbox"]){
+ background:#183d30;border-color:#87a99a;
+}
+html[data-beta-theme="dark"] #productSheet .option-choice input:is([type="radio"],[type="checkbox"]):checked{background:#118553;border-color:#40c28a}
+@media(max-width:390px){
+ #productSheet .option-choice input:is([type="radio"],[type="checkbox"]){width:20px;height:20px;min-width:20px}
+}
