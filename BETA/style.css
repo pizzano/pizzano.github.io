@@ -1310,3 +1310,8 @@ html[data-beta-theme="dark"] .cart-buttons .cart-footer-total{border-color:#4679
 html[data-beta-theme="dark"] .cart-footer-total span{color:#bfd7cb}
 html[data-beta-theme="dark"] .cart-footer-total strong{color:#e9fff1}
 @media(max-width:390px){.cart-footer-total strong{font-size:19px}}
+
+/* FATIH1: menu-based cart price validation. */
+.cart-price-notice,.cart-line-warning{color:#86581b;background:#fff8e8;border:1px solid #ecd7ae;border-radius:9px;padding:10px 12px;font-size:12px;line-height:1.5}
+.cart-price-notice{margin:8px 0 12px}.cart-line-warning{margin:8px 0 0}
+html[data-beta-theme="dark"] .cart-price-notice,html[data-beta-theme="dark"] .cart-line-warning{background:#483c23;color:#ffe8af;border-color:#826b3b}
