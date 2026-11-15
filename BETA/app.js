@@ -995,7 +995,7 @@ $('menu').addEventListener('keydown',e=>{
  }
  function move(e){
   if(!tracking||!mobile()||e.touches.length!==1)return;
-  const dy=e.touches[0].clientY-startY,dx=Math.abs(e.touches[0].clientX-(e.touches[0].clientX||0));
+  const dy=e.touches[0].clientY-startY;
   if(!dragging){
    if(dy<=9)return;
    if(!fromHeader&&scroll.scrollTop>1){reset();return}
