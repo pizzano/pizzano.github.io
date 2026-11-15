@@ -791,7 +791,7 @@ function optionGroupMarkup(group){
  const entries=options.map(opt=>{
   const count=ids.filter(id=>String(id)===String(opt.id)).length;
   const price=Number(opt.price)||0,blocked=Boolean(opt.soldOut)||(multiple&&ids.length>=max&&!count);
-  if(serving)return '<div class="option-choice is-quantity'+(count?' is-chosen':'')+'"><span class="option-tick" aria-hidden="true">'+(count?'✓':'')+'</span><span class="option-label-text">'+esc(opt.label||'')+'</span>'+
+  if(serving)return '<div class="option-choice is-quantity'+(count?' is-chosen':'')+'" role="checkbox" tabindex="'+(opt.soldOut?'-1':'0')+'" aria-checked="'+Boolean(count)+'" aria-disabled="'+Boolean(opt.soldOut)+'" data-select-group="'+esc(group.id)+'" data-select-option="'+esc(opt.id)+'"><span class="option-tick" aria-hidden="true">'+(count?'✓':'')+'</span><span class="option-label-text">'+esc(opt.label||'')+'</span>'+
    '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div>'+
    '<span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span>'+
    (count>1&&price?'<small class="option-line-total">Totalt +'+money(price*count)+'</small>':'')+'</div>';
@@ -993,18 +993,44 @@ $('options').addEventListener('change',e=>{
  }else selection[key]=[input.value];
  renderOptions();
 });
-$('options').addEventListener('click',e=>{
- const button=e.target.closest('[data-qty-group]');if(!button)return;
- e.preventDefault();
- const group=getGroup(button.dataset.qtyGroup);if(!group||group.selectionMode!=='multiple'||!group.allowQuantity)return;
- const key='group:'+group.id,ids=[...selectedIds(group)],id=button.dataset.qtyOption;
- if(button.dataset.qtyStep==='1'){
-  if(ids.length>=Math.max(1,Number(group.maxSelections)||1))return;
+function changeServingOption(groupId,optionId,step){
+ const group=getGroup(groupId);
+ if(!group||group.selectionMode!=='multiple'||!group.allowQuantity)return;
+ const option=list(group.options).find(opt=>String(opt.id)===String(optionId));
+ if(!option||option.soldOut)return;
+ const key='group:'+group.id,ids=[...selectedIds(group)],id=String(optionId);
+ const count=ids.filter(v=>String(v)===id).length;
+ const max=Math.max(1,Number(group.maxSelections)||1);
+ if(step==='1'){
+  if(ids.length>=max)return;
   ids.push(id);
+ }else if(step==='-1'){
+  const index=ids.findIndex(v=>String(v)===id);if(index>=0)ids.splice(index,1);
+ }else if(count){
+  selection[key]=ids.filter(v=>String(v)!==id);
+  renderOptions();return;
  }else{
-  const index=ids.findIndex(v=>String(v)===String(id));if(index>=0)ids.splice(index,1);
+  if(ids.length>=max)return;
+  ids.push(id);
  }
  selection[key]=ids;renderOptions();
+}
+$('options').addEventListener('click',e=>{
+ const button=e.target.closest('[data-qty-group]');
+ if(button){
+  e.preventDefault();e.stopPropagation();
+  changeServingOption(button.dataset.qtyGroup,button.dataset.qtyOption,button.dataset.qtyStep);
+  return;
+ }
+ const row=e.target.closest('[data-select-group]');
+ if(!row||row.getAttribute('aria-disabled')==='true')return;
+ changeServingOption(row.dataset.selectGroup,row.dataset.selectOption,'toggle');
+});
+$('options').addEventListener('keydown',e=>{
+ if(e.key!==' '&&e.key!=='Enter')return;
+ const row=e.target.closest('[data-select-group]');
+ if(!row||e.target!==row||row.getAttribute('aria-disabled')==='true')return;
+ e.preventDefault();changeServingOption(row.dataset.selectGroup,row.dataset.selectOption,'toggle');
 });
 $('sheetIngredients').addEventListener('click',e=>{
  const summary=e.target.closest('.ingredient-editor-toggle');
