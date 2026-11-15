@@ -116,6 +116,7 @@ function normalize(data){
  return {cacheFormat:3,sections,optionGroups:list(data.optionGroups),
   allergenCatalog:list(data.allergenCatalog),images,sizeLabels,allergenSets,
   settings:data.settings||{},
+  cartSuggestionRules:list(data.cartSuggestionRules).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
   popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
   updatedAt:Number(data.updatedAt)||0};
 }
