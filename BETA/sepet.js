@@ -45,19 +45,34 @@ function addToCart(){
  showBetaToast(entry.name+(edited?' oppdatert i handlekurven':' lagt i handlekurven'));
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
-// The admin selects up to four products, stored directly under
-// /menu/cartSuggestionRules. No unrelated extras, stale settings or extra GETs.
+// Admin selects up to ten products in /menu/cartSuggestionRules.
+// A stable per-opening shuffle shows four at a time. Dismissing one reveals
+// the next eligible entry, without reordering every time the cart rerenders.
 let dismissedSuggestions=new Set();
+let suggestionRandomOrder=[],suggestionRandomKey='';
+function randomizedCartSuggestionIds(){
+ const ids=Array.isArray(menu?.cartSuggestionRules)?
+  [...new Set(menu.cartSuggestionRules.filter(v=>v!==null&&v!==undefined).map(String))].slice(0,10):[];
+ const key=JSON.stringify(ids);
+ if(key!==suggestionRandomKey){
+  suggestionRandomKey=key;
+  suggestionRandomOrder=ids.slice();
+  for(let n=suggestionRandomOrder.length-1;n>0;n--){
+   const j=Math.floor(Math.random()*(n+1));
+   [suggestionRandomOrder[n],suggestionRandomOrder[j]]=[suggestionRandomOrder[j],suggestionRandomOrder[n]];
+  }
+ }
+ return suggestionRandomOrder;
+}
 function suggestedCartItems(){
  if(!menu||!cart.length)return [];
- const ids=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules:[];
  const included=new Set(cart.map(line=>String(line.id)));
  const products=new Map(menu.sections.flatMap(section=>(section.items||[]).map(item=>[String(item.id),item])));
- const selected=[],seen=new Set();
- for(const raw of ids){
-  const id=String(raw),item=products.get(id);
-  if(!item||seen.has(id)||included.has(id)||dismissedSuggestions.has(id)||item.hidden||item.soldOut)continue;
-  selected.push({item});seen.add(id);
+ const selected=[];
+ for(const id of randomizedCartSuggestionIds()){
+  const item=products.get(id);
+  if(!item||included.has(id)||dismissedSuggestions.has(id)||item.hidden||item.soldOut)continue;
+  selected.push({item});
   if(selected.length===4)break;
  }
  return selected;
@@ -74,7 +89,7 @@ async function refreshCartSuggestionIdsOnce(){
    const data=await response.json();
    const ids=Array.isArray(data)?data:data&&typeof data==='object'?
     Object.keys(data).sort((a,b)=>Number(a)-Number(b)).map(key=>data[key]):[];
-   const unique=[...new Set(ids.filter(id=>id!==null&&id!==undefined).map(String))].slice(0,4);
+   const unique=[...new Set(ids.filter(id=>id!==null&&id!==undefined).map(String))].slice(0,10);
    const previous=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules.map(String):[];
    if(JSON.stringify(previous)!==JSON.stringify(unique)){
     menu.cartSuggestionRules=unique;
@@ -184,7 +199,7 @@ function pickupSummary(){
  }).join('')+
  '<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
+function showCart(){suggestionRandomKey='';$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
 
 function updateCartBadges(){
  if(!menu)return;
