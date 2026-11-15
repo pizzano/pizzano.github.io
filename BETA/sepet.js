@@ -359,15 +359,18 @@ function demoRead(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
 }
-function demoStore(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
+function demoStore(key,value){
+ try{
+  const encoded=JSON.stringify(value);
+  // Avoid unnecessary localStorage writes when checkout data is unchanged.
+  if(localStorage.getItem(key)!==encoded)localStorage.setItem(key,encoded);
+  return true;
+ }catch{return false}
+}
 let demoContact=demoRead(DEMO_CONTACT_KEY,{name:'',phone:'',email:''});
 let demoPickup=demoRead(DEMO_PICKUP_KEY,{mode:'asap',time:'',label:''});
 let demoOrder=demoRead(DEMO_ORDER_KEY,null);
 let checkoutStep='cart',demoClock=null;
-function formatDemoClock(ms){
- const seconds=Math.max(0,Math.ceil(ms/1000));
- return Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
-}
 function demoStatus(){
  if(!demoOrder)return 'none';
  if(demoOrder.status==='pending'&&Number(demoOrder.expiresAt)<=Date.now()){
@@ -383,31 +386,28 @@ function renderDemoActiveOrder(){
  if(!demoOrder)return;
  const pending=demoStatus()==='pending';
  $('demoActiveNumber').textContent='#'+demoOrder.id;
- $('demoActiveTitle').textContent=pending?'Bestillingsoversikt':'Bestillingsoversikt';
- $('demoActiveSubtitle').textContent=pending?
-  'Lagret på denne enheten · Ikke sendt til restauranten':
-  'Lagret på denne enheten · Ikke sendt til restauranten';
+ $('demoActiveTitle').textContent='Bestillingsoversikt';
+ $('demoActiveSubtitle').textContent='Lagret på denne enheten · Ikke sendt til restauranten';
  if(!$('demoConfirmation').hidden)renderDemoConfirmation();
  if(pending&&!demoClock){
-  demoClock=window.setInterval(()=>{
-   if(!demoOrder){clearInterval(demoClock);demoClock=null;return}
-   renderDemoActiveOrder();
-   if(demoStatus()!=='pending'){clearInterval(demoClock);demoClock=null}
-  },1000);
+  // Only one local expiry callback is needed; there is no live countdown.
+  const remaining=Math.max(1,Number(demoOrder.expiresAt)-Date.now()+1);
+  demoClock=window.setTimeout(()=>{
+   demoClock=null;
+   if(demoOrder)renderDemoActiveOrder();
+  },Math.min(remaining,2147483647));
  }
 }
 function renderDemoConfirmation(){
  if(!demoOrder)return;
- const pending=demoStatus()==='pending';
+ demoStatus();
  $('demoConfirmationTitle').textContent='Bestillingsoversikt';
  $('demoConfirmationIntro').textContent='Takk, '+(demoOrder.customer?.fullName||'')+'! Her er bestillingsoversikten din.';
  $('demoConfirmationNumber').textContent=demoOrder.id;
  $('demoConfirmationPickup').textContent=demoOrder.pickup?.label||'Snarest';
  $('demoConfirmationTotal').textContent=money(demoOrder.total);
  $('demoConfirmationStatus').textContent='Ikke sendt til restauranten';
- $('demoConfirmationTimer').textContent=pending?
-  'Oversikten er lagret på denne enheten':
-  'Oversikten er lagret på denne enheten';
+ $('demoConfirmationTimer').textContent='Oversikten er lagret på denne enheten';
 }
 function showDemoConfirmation(){
  if(!demoOrder)return;
@@ -661,5 +661,5 @@ document.querySelectorAll('input[name="demoPickupMode"]').forEach(input=>input.a
 $('demoPickupTime').addEventListener('change',event=>{demoPickup.time=event.target.value;demoPickup.label=event.target.selectedOptions[0]?.textContent||'';demoStore(DEMO_PICKUP_KEY,demoPickup);showBetaToast('Hentetid: '+demoPickup.label,'info')});
 $('demoViewOrder').onclick=showDemoConfirmation;
 $('demoConfirmationClose').onclick=returnToMenu;
-$('demoClearOrder').onclick=()=>{demoOrder=null;demoStore(DEMO_ORDER_KEY,null);if(demoClock){clearInterval(demoClock);demoClock=null}renderDemoActiveOrder();showBetaToast('Bestillingsoversikten er fjernet')};
+$('demoClearOrder').onclick=()=>{demoOrder=null;demoStore(DEMO_ORDER_KEY,null);if(demoClock){clearTimeout(demoClock);demoClock=null}renderDemoActiveOrder();showBetaToast('Bestillingsoversikten er fjernet')};
 }
