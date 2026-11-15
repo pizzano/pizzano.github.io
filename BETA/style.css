@@ -1245,3 +1245,51 @@ html[data-beta-theme="dark"] #productSheet .product-topbar .sheet-favorite.is-fa
 #productSheet #sheetIngredients{display:contents}
 #productSheet #sheetIngredients>.ingredient-editor{margin:0 0 19px}
 #productSheet .sheet-intro:has(+ #sheetIngredients .ingredient-editor){padding-bottom:9px}
+
+
+/* BETA modal scroll containment. Body stays at its original scroll
+   position while an overlay is open; only the active dialog scrolls. */
+html.beta-modal-open,
+html.beta-modal-open body{
+ overscroll-behavior-x:none;
+ overscroll-behavior-y:none;
+}
+html.beta-modal-open #appViewport{
+ pointer-events:none;
+ touch-action:none;
+}
+html.beta-modal-open .overlay{
+ touch-action:none;
+ overscroll-behavior:none;
+}
+#cartSheet,#betaProfileSheet{
+ position:fixed;
+ top:0;
+ bottom:0;
+ height:auto;
+ min-height:0;
+ max-height:none;
+ overflow:hidden;
+ overscroll-behavior:contain;
+}
+#cartSheet .cart-content-scroll,
+#betaProfileSheet .beta-profile-scroll,
+#productSheet .sheet-scroll{
+ overflow-x:hidden;
+ overflow-y:auto;
+ overscroll-behavior-x:none;
+ overscroll-behavior-y:contain;
+}
+#demoConfirmation{
+ overscroll-behavior:contain;
+ overflow-x:hidden;
+}
+@media(max-width:600px){
+ #cartSheet,#betaProfileSheet{
+  top:0;
+  bottom:0;
+  height:auto;
+  max-height:none;
+  border-radius:0;
+ }
+}
