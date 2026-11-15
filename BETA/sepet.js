@@ -161,6 +161,7 @@ function cartLineDetails(line){
 function renderCartContents(){
  const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
  $('cartTotal').textContent=money(total);
+ $('cartFooterAmount').textContent=money(total);
  const cartTopQuantity=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);
  $('cartTopCount').textContent=cartTopQuantity;
  $('cartTopCount').hidden=cartTopQuantity===0;
@@ -547,7 +548,9 @@ function checkoutNavigate(step){
   el.classList.toggle('is-current',index===rank[step]);
   el.classList.toggle('is-done',index<rank[step]);
  });
- $('continue').textContent=step==='cart'?'Fortsett å handle':step==='contact'?'Tilbake: Kurv':'Tilbake: Kontakt';
+ $('cartFooterTotal').hidden=step!=='cart';
+ $('continue').hidden=step==='cart';
+ $('continue').textContent=step==='pickup'?'Tilbake: Kontakt':'Tilbake: Kurv';
  $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre bestillingsoversikt';
  $('cartNext').disabled=step==='cart'&&!cart.length;
  showCheckoutError('');
