@@ -975,6 +975,62 @@ $('menu').addEventListener('keydown',e=>{
  if(!card||card.getAttribute('aria-disabled')==='true')return;
  e.preventDefault();showSheet(card.dataset.productCard);
 });
+// Mobile bottom-sheet gesture. Only downward drags from the header or the
+// very top of the scroll content dismiss the product; ordinary scrolls remain native.
+(function initProductSwipeDismiss(){
+ const sheet=$('productSheet'),scroll=sheet.querySelector('.sheet-scroll'),header=sheet.querySelector('.product-topbar');
+ let startY=0,lastY=0,startTime=0,dragging=false,tracking=false,fromHeader=false;
+ const mobile=()=>window.matchMedia('(max-width:600px) and (pointer:coarse)').matches;
+ const reset=()=>{
+  dragging=false;tracking=false;
+  sheet.style.removeProperty('--product-drag-y');
+  sheet.classList.remove('is-dragging','is-drag-settling');
+ };
+ function start(e,headerTouch){
+  if(sheet.hidden||!mobile()||e.touches.length!==1)return;
+  if(e.target.closest('button,input,textarea,select,[contenteditable]'))return;
+  if(!headerTouch&&scroll.scrollTop>1)return;
+  tracking=true;dragging=false;fromHeader=headerTouch;
+  startY=e.touches[0].clientY;lastY=startY;startTime=performance.now();
+ }
+ function move(e){
+  if(!tracking||!mobile()||e.touches.length!==1)return;
+  const dy=e.touches[0].clientY-startY,dx=Math.abs(e.touches[0].clientX-(e.touches[0].clientX||0));
+  if(!dragging){
+   if(dy<=9)return;
+   if(!fromHeader&&scroll.scrollTop>1){reset();return}
+   dragging=true;sheet.classList.add('is-dragging');
+  }
+  if(dy<0){sheet.style.setProperty('--product-drag-y','0px');return}
+  lastY=e.touches[0].clientY;
+  sheet.style.setProperty('--product-drag-y',Math.min(dy,window.innerHeight)+'px');
+  if(e.cancelable)e.preventDefault();
+ }
+ function end(e){
+  if(!tracking)return;
+  const dy=Math.max(0,lastY-startY),elapsed=Math.max(1,performance.now()-startTime);
+  const shouldClose=dragging&&(dy>110||(dy>65&&dy/elapsed>.7));
+  tracking=false;
+  if(!dragging){reset();return}
+  sheet.classList.remove('is-dragging');
+  if(shouldClose){
+   reset();
+   closeProductSheet();
+  }else{
+   sheet.classList.add('is-drag-settling');
+   sheet.style.setProperty('--product-drag-y','0px');
+   window.setTimeout(()=>{sheet.classList.remove('is-drag-settling');sheet.style.removeProperty('--product-drag-y')},200);
+  }
+ }
+ header.addEventListener('touchstart',e=>start(e,true),{passive:true});
+ scroll.addEventListener('touchstart',e=>start(e,false),{passive:true});
+ header.addEventListener('touchmove',move,{passive:false});
+ scroll.addEventListener('touchmove',move,{passive:false});
+ header.addEventListener('touchend',end,{passive:true});
+ scroll.addEventListener('touchend',end,{passive:true});
+ header.addEventListener('touchcancel',reset,{passive:true});
+ scroll.addEventListener('touchcancel',reset,{passive:true});
+})();
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
 $('options').addEventListener('change',e=>{
  const input=e.target;if(!input.matches('input'))return;
