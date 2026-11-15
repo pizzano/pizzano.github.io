@@ -718,13 +718,6 @@ function showSheet(id,editIndex=null){
  // Reset again after showing, when the browser has laid out the new product.
  if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
 }
-const KITCHEN_NOTE_DEFAULTS={
- pizza:['Godt stekt','Ikke skjær','Del i to'],
- burger:['Godt stekt','Saus ved siden av'],
- kebab:['Saus ved siden av','Del i to'],
- tallerken:['Saus ved siden av'],
- other:['Ekstra servietter']
-};
 let removedIngredients=new Set(),ingredientEditorExpanded=false,selectedKitchenNotes=new Set();
 function productSectionHeading(title,required){
  return '<div class="product-section-heading"><strong>'+esc(title)+'</strong>'+
@@ -736,13 +729,9 @@ function productDisplayGroups(){
  return groupsFor(current,chosenSize());
 }
 function kitchenNotesFor(item){
+ // No fallback notes: only product-specific quick kitchen notes from admin.
  if(menu.settings?.quickKitchenNotesEnabled===false||item?.quickKitchenNotesEnabled===false)return [];
- const section=menu.sections.find(s=>(s.items||[]).some(x=>String(x.id)===String(item.id)));
- const label=(String(section?.title||'')+' '+String(item.name||'')).toLocaleLowerCase('no');
- const kind=/pizza/.test(label)?'pizza':/burger|hamburger/.test(label)?'burger':/kebab|rull/.test(label)?'kebab':/tallerken|snadder/.test(label)?'tallerken':'other';
- let custom={};
- try{custom=JSON.parse(String(menu.settings?.quickKitchenNotesConfig||'{}'))||{}}catch{}
- const source=Array.isArray(item.quickKitchenNotes)?item.quickKitchenNotes:Array.isArray(custom[kind])?custom[kind]:KITCHEN_NOTE_DEFAULTS[kind];
+ const source=Array.isArray(item?.quickKitchenNotes)?item.quickKitchenNotes:[];
  return [...new Set(source.map(n=>String(n||'').trim().replace(/\s+/g,' ').slice(0,60)).filter(n=>n&&!/^uten[\s:]/i.test(n)))].slice(0,8);
 }
 function removableIngredientRules(item){
@@ -828,7 +817,8 @@ function renderOptions(){
 function renderSheetExtras(){
  ingredientEditor();
  const notes=kitchenNotesFor(current);
- $('quickNotes').innerHTML=notes.length?notes.map(note=>'<button type="button" class="quick-note'+(selectedKitchenNotes.has(note)?' is-selected':'')+'" data-kitchen-note="'+esc(note)+'" aria-pressed="'+selectedKitchenNotes.has(note)+'">'+esc(note)+'</button>').join(''):'<span class="empty-notes">Ingen raske beskjeder</span>';
+ $('quickNotesPanel').hidden=notes.length===0;
+ $('quickNotes').innerHTML=notes.map(note=>'<button type="button" class="quick-note'+(selectedKitchenNotes.has(note)?' is-selected':'')+'" data-kitchen-note="'+esc(note)+'" aria-pressed="'+selectedKitchenNotes.has(note)+'">'+esc(note)+'</button>').join('');
  const selected=groupsFor(current,chosenSize()).flatMap(group=>list(group.options).filter(opt=>selectedIds(group).some(id=>String(id)===String(opt.id))));
  const allergenIds=new Set([...list(current.allergens),...selected.flatMap(opt=>list(opt.allergens))].map(String));
  const labels=[...allergenIds].map(id=>menu.allergenCatalog.find(a=>String(a.id)===id)?.label||id);
