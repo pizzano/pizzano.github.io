@@ -516,7 +516,12 @@ function watchSections(){
 }
 
 function getGroup(id){return menu.optionGroups.find(g=>String(g.id)===String(id))}
-function groupsFor(item,size){const ids=[...(item.optionGroupIds||[]),...(size?.optionGroupIds||[])];const sorted=[...(item.optionGroupOrder||[]).filter(id=>ids.includes(id)),...ids];return [...new Set(sorted)].map(getGroup).filter(Boolean)}
+function groupsFor(item,size){
+ const ids=[...(item.optionGroupIds||[]),...(size?.optionGroupIds||[])].map(String),allowed=new Set(ids);
+ const sorted=[...(size?.optionGroupOrder||[]),...(item.optionGroupOrder||[]),...ids]
+  .map(String).filter(id=>allowed.has(id));
+ return [...new Set(sorted)].map(getGroup).filter(Boolean);
+}
 function basePrice(item){const prices=list(item.sizes).map(s=>Number(s.price)||0);return prices.length?Math.min(...prices):Number(item.price)||0}
 function productById(id){for(const s of menu.sections)for(const item of s.items)if(String(item.id)===String(id))return item;return null}
 function missingPhotoMarkup(){
