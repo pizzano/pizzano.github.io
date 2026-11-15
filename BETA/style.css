@@ -1293,3 +1293,7 @@ html.beta-modal-open .overlay{
   border-radius:0;
  }
 }
+
+/* Horizontal gestures in cart/profile must not pan the underlying menu. */
+#cartSheet,#betaProfileSheet{touch-action:pan-y}
+#cartSheet .cart-content-scroll,#betaProfileSheet .beta-profile-scroll{touch-action:pan-y}
