@@ -159,10 +159,83 @@ function cartLineDetails(line){
  }
  return rows.join('');
 }
+// FATIH1: recalculate local cart prices from the current menu. Never discard
+// existing selections: removed products/options must be corrected by the guest.
+let cartMenuIssues=[],cartPricesChanged=false;
+function reconcileCartWithMenu(){
+ if(!menu||!Array.isArray(menu.sections))return {issues:[],repriced:false};
+ let changed=false,repriced=false;
+ const issues=[];
+ const write=(obj,key,value)=>{if(obj[key]!==value){obj[key]=value;changed=true}};
+ for(let index=0;index<cart.length;index++){
+  const line=cart[index];
+  const issue=reason=>issues.push({index,reason});
+  if(!line||typeof line!=='object'){issue('Ugyldig vare i handlekurven');continue}
+  const item=productById(line.id);
+  if(!item||item.hidden||item.soldOut){issue('Produktet er ikke lenger tilgjengelig');continue}
+  const sizes=list(item.sizes),size=sizes.find(x=>String(x.id)===String(line.size?.id));
+  if(sizes.length&&!size){issue('Størrelsen er endret eller fjernet');continue}
+  let price=Number(size?.price??item.price),invalid='';
+  if(!Number.isFinite(price)||price<0){issue('Produktprisen må kontrolleres');continue}
+  const groups=groupsFor(item,size),allowed=new Map(groups.map(g=>[String(g.id),g]));
+  const chosen=Array.isArray(line.choices)?line.choices:[];
+  const seen=new Set(),updates=[];
+  for(const cg of chosen){
+   const group=allowed.get(String(cg.groupId));
+   if(!group||seen.has(String(group.id))){invalid='Et tidligere tilvalg finnes ikke lenger';break}
+   seen.add(String(group.id));
+   let countTotal=0;
+   const optionUpdates=[];
+   for(const co of (Array.isArray(cg.options)?cg.options:[])){
+    const option=list(group.options).find(o=>String(o.id)===String(co.id));
+    const n=Number(co.count??1),p=Number(option?.price??0);
+    if(!option||option.soldOut||!Number.isInteger(n)||n<1||(!group.allowQuantity&&n>1)){
+     invalid='Et valgt tillegg er endret eller utsolgt';break;
+    }
+    if(!Number.isFinite(p)){invalid='Tilleggsprisen må kontrolleres';break}
+    price+=p*n;countTotal+=n;
+    optionUpdates.push({target:co,label:option.label||option.name||'',price:p});
+   }
+   if(invalid)break;
+   if(countTotal>Math.max(1,Number(group.maxSelections)||1)||
+      (group.selectionMode!=='multiple'&&countTotal>1)){
+    invalid='Antall tilvalg er ikke lenger gyldig';break;
+   }
+   updates.push({target:cg,label:group.title||'',options:optionUpdates});
+  }
+  if(!invalid)for(const group of groups){
+   if(!group.required)continue;
+   const cg=chosen.find(x=>String(x.groupId)===String(group.id));
+   const n=(cg?.options||[]).reduce((sum,x)=>sum+(Number(x.count)||1),0);
+   if(n<Math.max(1,Number(group.minSelections)||1)){invalid='Et påkrevd tilvalg mangler';break}
+  }
+  if(!invalid&&(!Number.isFinite(price)||price<0))invalid='Prisen må kontrolleres';
+  if(invalid){issue(invalid);continue}
+  if(Number(line.unitPrice)!==price){repriced=true;write(line,'unitPrice',price)}
+  write(line,'name',item.name);
+  if(size&&line.size)write(line.size,'label',size.label||size.name||'');
+  for(const group of updates){
+   write(group.target,'group',group.label);
+   for(const option of group.options){
+    write(option.target,'label',option.label);write(option.target,'price',option.price);
+   }
+  }
+ }
+ cartMenuIssues=issues;
+ if(repriced)cartPricesChanged=true;
+ if(changed)saveCart();
+ return {issues,repriced};
+}
 function renderCartContents(){
+ const review=reconcileCartWithMenu();
  const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
- $('cartTotal').textContent=money(total);
- $('cartFooterAmount').textContent=money(total);
+ $('cartTotal').textContent=review.issues.length?'Kontroller varer':money(total);
+ $('cartFooterAmount').textContent=review.issues.length?'Kontroller':money(total);
+ const warning=$('cartPriceNotice');
+ warning.hidden=!review.issues.length&&!cartPricesChanged;
+ warning.textContent=review.issues.length?'Varer er endret eller ikke tilgjengelige. Rediger eller fjern dem før du fortsetter.':
+  cartPricesChanged?'Prisene er oppdatert etter endringer i menyen.':'';
+ $('cartNext').disabled=!cart.length||!!review.issues.length;
  const cartTopQuantity=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);
  $('cartTopCount').textContent=cartTopQuantity;
  $('cartTopCount').hidden=cartTopQuantity===0;
@@ -174,7 +247,11 @@ function renderCartContents(){
   '<button type="button" class="cart-product-edit" data-edit="'+index+'" aria-label="Endre '+esc(line.name)+'" title="Endre produkt">'+cartEditIcon+'</button></div>'+
   '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="'+(Number(line.qty)>1?'Reduser antall':'Fjern produkt')+'">'+(Number(line.qty)>1?'−':cartTrashIcon)+'</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
   '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
-  '<div class="cart-product-totalrow"><span>Sum</span><strong>'+money(line.qty*line.unitPrice)+'</strong></div></article>'
+  (cartMenuIssues.some(issue=>issue.index===index)?'<p class="cart-line-warning" role="alert">'+
+  esc(cartMenuIssues.find(issue=>issue.index===index).reason)+' · Endre eller fjern varen.</p>':'')+
+  '<div class="cart-product-totalrow"><span>Sum</span><strong>'+
+  (cartMenuIssues.some(issue=>issue.index===index)?'Må kontrolleres':money(line.qty*line.unitPrice))+
+  '</strong></div></article>'
  ).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
  renderCartRecommendations();
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
@@ -571,7 +648,10 @@ function checkoutNavigate(step){
  $('continue').hidden=step==='cart';
  $('continue').textContent=step==='pickup'?'Tilbake: Kontakt':'Tilbake: Kurv';
  $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre bestillingsoversikt';
- $('cartNext').disabled=step==='cart'&&!cart.length;
+ if(step==='cart'){
+  const review=reconcileCartWithMenu();
+  $('cartNext').disabled=!cart.length||!!review.issues.length;
+ }
  showCheckoutError('');
  if(step==='contact'){
   $('demoFullName').value=demoContact.name||'';
@@ -595,6 +675,11 @@ function demoOrderId(){
 }
 function submitDemoOrder(){
  if(!cart.length){checkoutNavigate('cart');return}
+ const currentReview=reconcileCartWithMenu();
+ if(currentReview.issues.length||currentReview.repriced){
+  checkoutNavigate('cart');renderCartContents();
+  showCheckoutError('Menyen er endret. Kontroller varer og priser.');return;
+ }
  if(!validateDemoContact()){checkoutNavigate('contact');showCheckoutError('Kontroller kontaktinformasjonen.');return}
  const pickup=demoPickup.mode==='scheduled'?
   {mode:'scheduled',time:demoPickup.time,label:$('demoPickupTime').selectedOptions[0]?.textContent||demoPickup.label}:
@@ -627,6 +712,10 @@ function submitDemoOrder(){
 }
 async function demoNext(){
  if(checkoutStep==='cart'){
+  const review=reconcileCartWithMenu();
+  if(review.issues.length){
+   renderCartContents();showCheckoutError('Kontroller varer som er endret i menyen.');return;
+  }
   if(cart.length)checkoutNavigate('contact');
  }else if(checkoutStep==='contact'){
   if(validateDemoContact()){
