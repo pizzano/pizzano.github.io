@@ -1197,9 +1197,9 @@ html[data-beta-theme="dark"] #productSheet .option-choice input:is([type="radio"
 /* Mobile app-like product sheet: breathing room and swipe-down dismissal. */
 @media(max-width:600px){
  #productSheet{
-  top:calc(env(safe-area-inset-top,0px) + 14px);
+  top:calc(env(safe-area-inset-top,0px) + 28px);
   bottom:0;
-  height:calc(100dvh - env(safe-area-inset-top,0px) - 14px);
+  height:calc(100dvh - env(safe-area-inset-top,0px) - 28px);
   max-height:none;
   border-radius:22px 22px 0 0;
   transform:translate(-50%,var(--product-drag-y,0px));
