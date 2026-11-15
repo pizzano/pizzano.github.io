@@ -179,6 +179,7 @@ async function refreshMenu(manual=false){
   if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;
   try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}
   render();
+  if(!$('cartSheet').hidden)renderCartRecommendations();
   $('cacheStatus').textContent='Oppdatert';
   $('notice').textContent='';
   if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});
@@ -269,6 +270,7 @@ async function receiveLiveAnnouncement(value,relay=false){
      updateHoursStatus();
      $('brandName').textContent=menu.settings?.restaurantName||'KØL Grill & Pizza';
    }
+   if(!$('cartSheet').hidden)renderCartRecommendations();
    saveLiveCacheSoon();
    if(relay)broadcastLiveMessage({type:'delta',value});
    $('notice').textContent='';
