@@ -378,7 +378,7 @@ async function betaProfileSaveContact(event){
  if(!/^[49]\d{7}$/.test(phone)){error('Mobilnummer må ha 8 siffer og starte på 4 eller 9.','betaProfPhone');return}
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error('Skriv inn en gyldig e-postadresse.','betaProfEmail');return}
  const current=demoContact||{};
- if(current.name===name&&current.phone===phone&&String(current.email||'').toLowerCase()===email){
+ if(current.name===name&&current.phone===phone&&String(current.email||'').toLowerCase()===email&&betaContactIsSynced({name,phone,email})){
   status.textContent='Opplysningene er allerede lagret på denne enheten.';
   status.hidden=false;status.dataset.kind='success';return;
  }
@@ -386,14 +386,13 @@ async function betaProfileSaveContact(event){
  save.disabled=true;save.textContent='Lagrer…';
  demoContact={name,phone,email};
  try{
-  const ok=await syncBetaCustomer(); // Narrow contact-only PUT under /customers/{phone}.
-  if(!ok){demoContact=before;error('Kunne ikke lagre i Firebase. Prøv igjen.');return}
-  demoStore(DEMO_CONTACT_KEY,demoContact);
+  const result=await syncBetaCustomer(); // Only changed contact fields go to Firebase.
+  if(!result){demoContact=before;error('Kunne ikke lagre i Firebase. Prøv igjen.');return}
   $('demoFullName').value=name;$('demoPhone').value=phone;$('demoEmail').value=email;
   updateContactValidation();
-  status.textContent='✓ Opplysningene er lagret i Firebase.';
+  status.textContent=result==='saved'?'✓ Opplysningene er lagret i Firebase.':'Opplysningene er allerede lagret.';
   status.hidden=false;status.dataset.kind='success';
-  showBetaToast('Profilen er oppdatert i Firebase');
+  if(result==='saved')showBetaToast('Profilen er oppdatert i Firebase');
   betaProfileRenderHome();
   if(betaBonusVisible())betaBonusStart(true);
  }catch(e){
