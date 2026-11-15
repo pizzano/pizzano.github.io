@@ -334,6 +334,7 @@ async function betaRestaurantRefresh(){
  try{return await task}finally{betaRestaurantLoading=null}
 }
 function betaProfileShowTab(tab){
+ if(!$('betaProfileSheet').hidden)betaHistoryWrite({view:'profile',tab});
  const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',restaurant:'Restaurantinformasjon'};
  $('betaProfileHome').hidden=!home;$('betaProfileDetail').hidden=home;
  for(const name of Object.keys(names))$('betaProfile'+name[0].toUpperCase()+name.slice(1)+'Panel').hidden=tab!==name;
@@ -363,7 +364,7 @@ function betaProfileOpen(){
  $('betaProfileClose').focus();
 }
 function betaProfileClose(){
- hideAll();
+ betaHistoryToMenu();
  $('btnProfile').focus();
 }
 async function betaProfileSaveContact(event){
@@ -406,7 +407,7 @@ function betaProfileInit(){
  $('betaCartThemeToggle').addEventListener('click',()=>betaApplyTheme(document.documentElement.dataset.betaTheme==='dark'?'light':'dark'));
  $('betaCartProfile').addEventListener('click',betaProfileOpen);
  $('betaCartCart').addEventListener('click',()=>checkoutNavigate('cart'));
- $('betaProfileNav').addEventListener('click',()=>betaProfileShowTab('home'));
+ $('betaProfileNav').addEventListener('click',()=>betaHistoryBack());
  $('betaProfileCart').addEventListener('click',()=>{hideAll();showCart()});
  $('betaBonusRefresh').addEventListener('click',()=>{void betaBonusLoad(true);showBetaToast('Oppdaterer pizzabonus…','info')});
  $('betaBonusConsent').addEventListener('change',event=>{
@@ -417,7 +418,7 @@ function betaProfileInit(){
  $('btnProfile').addEventListener('click',()=>{$('betaProfileSheet').hidden?betaProfileOpen():betaProfileClose()});
  $('betaProfileClose').addEventListener('click',betaProfileClose);
  $('betaProfileBrandHome').addEventListener('click',returnToMenu);
- $('betaProfileHomeButton').addEventListener('click',()=>betaProfileShowTab('home'));
+ $('betaProfileHomeButton').addEventListener('click',()=>betaHistoryBack());
  $('betaProfileForm').addEventListener('submit',event=>{void betaProfileSaveContact(event)});
  $('betaProfileRestaurantInfo').addEventListener('click',event=>{
   if(event.target.closest('[data-beta-restaurant-refresh]'))void betaRestaurantRefresh();
