@@ -101,14 +101,14 @@ async function bootAuth(){
  function toggleCartSuggestion(checked){
   const p=product();if(!p)return;
   const id=String(p.id),ids=recommendationIds();
-  if(checked&&!ids.includes(id)&&ids.length>=4){
+  if(checked&&!ids.includes(id)&&ids.length>=10){
    $('pCartSuggestion').checked=false;
-   notify('Maks 4 produkter kan anbefales i handlekurven.',true);
+   notify('Maks 10 produkter kan anbefales i handlekurven.',true);
    return;
   }
   const next=checked?[...new Set([...ids,id])]:ids.filter(value=>value!==id);
   state.menu.cartSuggestionRules=next;
-  $('cartSuggestionLimit').textContent=next.length+' av 4 valgt · Lagres under /menu/cartSuggestionRules';
+  $('cartSuggestionLimit').textContent=next.length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
   renderProducts();setDirty();
  }
  function removeRecommendationIds(ids){
@@ -371,7 +371,7 @@ function getProductAllergens(p){
   $('pSoldOut').checked=p.soldOut===true;$('pHidden').checked=p.hidden===true;
   $('pPopular').checked=arr(state.menu.popularItemIds).some(id=>String(id)===String(p.id));
   $('pCartSuggestion').checked=recommendationIds().includes(String(p.id));
-  $('cartSuggestionLimit').textContent=recommendationIds().length+' av 4 valgt · Lagres under /menu/cartSuggestionRules';
+  $('cartSuggestionLimit').textContent=recommendationIds().length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
   renderSizes(true);
  }
  function renderGroups(){
@@ -580,9 +580,9 @@ function getProductAllergens(p){
   if(menu.cartSuggestionRules!==undefined){
    if(!Array.isArray(menu.cartSuggestionRules))throw Error('cartSuggestionRules må være en liste med produkt-ID-er.');
    const suggested=menu.cartSuggestionRules.map(String);
-   if(suggested.length>4||new Set(suggested).size!==suggested.length||
+   if(suggested.length>10||new Set(suggested).size!==suggested.length||
       suggested.some(id=>!prodIds.has(id)))
-    throw Error('Handlekurvforslag må ha opptil 4 gyldige, forskjellige produkter.');
+    throw Error('Handlekurvforslag må ha opptil 10 gyldige, forskjellige produkter.');
   }
   for(const g of menu.optionGroups){
    if(!String(g.title||'').trim())throw Error('En valggruppe mangler navn.');
