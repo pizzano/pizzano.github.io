@@ -1,6 +1,5 @@
-/* KØL BETA menu administrator. Inspired by DEMO product/choices editors.
- * Only kol-grill-pizza-1 RTDB /menu is read/written. No customers/orders/settings.
- * Direct REST connection (no login); Firebase Rules determine write permissions.
+/* KØL BETA menu administrator. Only /menu is read/written. Admin access
+ * is protected by Firebase Authentication and Realtime Database Rules.
  */
 'use strict';
 (()=>{
@@ -85,6 +84,27 @@ async function bootAuth(){
  }
  function category(){return state.menu?.sections?.[state.category]||null}
  function product(){return category()?.items?.[state.product]||null}
+ function recommendationIds(){
+  return arr(state.menu?.cartSuggestionRules).map(String).filter(Boolean);
+ }
+ function toggleCartSuggestion(checked){
+  const p=product();if(!p)return;
+  const id=String(p.id),ids=recommendationIds();
+  if(checked&&!ids.includes(id)&&ids.length>=4){
+   $('pCartSuggestion').checked=false;
+   notify('Maks 4 produkter kan anbefales i handlekurven.',true);
+   return;
+  }
+  const next=checked?[...new Set([...ids,id])]:ids.filter(value=>value!==id);
+  state.menu.cartSuggestionRules=next;
+  $('cartSuggestionLimit').textContent=next.length+' av 4 valgt · Lagres under /menu/cartSuggestionRules';
+  renderProducts();setDirty();
+ }
+ function removeRecommendationIds(ids){
+  const blocked=new Set([...ids].map(String)),prev=recommendationIds();
+  const next=prev.filter(id=>!blocked.has(id));
+  if(next.length!==prev.length)state.menu.cartSuggestionRules=next;
+ }
  function group(){return state.menu?.optionGroups?.[state.group]||null}
  function productImage(p){
   if(!p)return '';
@@ -258,6 +278,7 @@ function getProductAllergens(p){
    const img=url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.hidden=true">':'<span class="item-icon">🍕</span>';
    return '<button class="item'+(i===state.product?' active':'')+(p.hidden?' dim':'')+'" type="button" data-product="'+i+'">'+img+'<span class="item-copy"><strong>'+esc(p.name||'Nytt produkt')+'</strong><small>'+
     esc(arr(p.sizes).map(v=>Math.round(Number(v.price)||0)+' kr').join(' · ')||String(p.price||0)+' kr')+
+    (recommendationIds().includes(String(p.id))?' · Anbefales i kurven':'')+
     (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span><span aria-hidden="true">›</span></button>';
   }).join(''):'<p class="empty">Velg en kategori</p>';
  }
@@ -292,6 +313,8 @@ function getProductAllergens(p){
   const img=$('pPreview');img.src=productImage(p)||'';img.hidden=!productImage(p);
   $('pSoldOut').checked=p.soldOut===true;$('pHidden').checked=p.hidden===true;
   $('pPopular').checked=arr(state.menu.popularItemIds).some(id=>String(id)===String(p.id));
+  $('pCartSuggestion').checked=recommendationIds().includes(String(p.id));
+  $('cartSuggestionLimit').textContent=recommendationIds().length+' av 4 valgt · Lagres under /menu/cartSuggestionRules';
   renderSizes();renderAssignedGroups();
  }
  function renderGroups(){
@@ -403,12 +426,14 @@ function getProductAllergens(p){
   if(!confirm('Slette produktet '+p.name+'? Endringen lagres først når du trykker Lagre.'))return;
   closeAdminModal();s.items.splice(state.product,1);state.product=Math.min(state.product,s.items.length-1);
   if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>String(id)!==String(p.id));
+  removeRecommendationIds([p.id]);
   renderProducts();renderProductEditor();setDirty();
  }
  function removeCategory(){
   const s=category();if(!s||!confirm('Slette hele '+s.title+' og alle produktene?'))return;
   const ids=new Set(s.items.map(p=>String(p.id)));state.menu.sections.splice(state.category,1);
   if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>!ids.has(String(id)));
+  removeRecommendationIds(ids);
   state.category=Math.max(0,Math.min(state.category,state.menu.sections.length-1));state.product=0;
   renderAll();setDirty();
  }
@@ -481,6 +506,13 @@ function getProductAllergens(p){
      if(!previous||!Object.is(previous.price,size.price))throw Error('Ugyldig pris: '+p.name);
     }
    }
+  }
+  if(menu.cartSuggestionRules!==undefined){
+   if(!Array.isArray(menu.cartSuggestionRules))throw Error('cartSuggestionRules må være en liste med produkt-ID-er.');
+   const suggested=menu.cartSuggestionRules.map(String);
+   if(suggested.length>4||new Set(suggested).size!==suggested.length||
+      suggested.some(id=>!prodIds.has(id)))
+    throw Error('Handlekurvforslag må ha opptil 4 gyldige, forskjellige produkter.');
   }
   for(const g of menu.optionGroups){
    if(!String(g.title||'').trim())throw Error('En valggruppe mangler navn.');
@@ -623,6 +655,7 @@ function getProductAllergens(p){
    state.menu.popularItemIds=event.target.checked?[...new Set([...ids,id])]:ids.filter(x=>x!==id);
    setDirty();
   });
+  $('pCartSuggestion').addEventListener('change',event=>toggleCartSuggestion(event.target.checked));
   $('sizeRows').addEventListener('input',event=>{
    const p=product(),t=event.target;if(!p)return;
    if(t.matches('[data-size-name]')){const size=p.sizes[Number(t.dataset.sizeName)];size.label=t.value;delete size.labelId;setDirty()}
