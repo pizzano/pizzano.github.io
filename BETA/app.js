@@ -697,6 +697,11 @@ function render(){
  $('menu').innerHTML=visibleBlocks.map(block=>'<section class="menu-section" id="category-'+esc(block.id)+'"><h2 class="section-title">'+esc(block.title)+'</h2><p class="section-note">'+esc(block.note)+'</p>'+block.items.map(productCard).join('')+'</section>').join('')||'<p>Ingen produkter funnet.</p>';
  nav.scrollLeft=savedX;
  hydrateImages($('menu'));renderCartIndicators();updateHoursStatus();
+ if(typeof reconcileCartWithMenu==='function'){
+  const review=reconcileCartWithMenu();
+  if(!$('cartSheet').hidden)renderCartContents();
+  if(review.repriced&&!$('cartSheet').hidden)showBetaToast('Prisene i handlekurven er oppdatert','info');
+ }
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
 function showSheet(id,editIndex=null){
