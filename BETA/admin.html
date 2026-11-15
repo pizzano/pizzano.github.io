@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#062d25">
-<title>KØL · Menyadministrasjon (BETA)</title>
+<title>FATIH1 · Menyadministrasjon</title>
 <style>
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#182e27;background:#f3f7f4;font-synthesis:none}
 *{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.48}
@@ -69,7 +69,7 @@
 @media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}.editor{grid-column:1/-1;position:static;max-height:none}}
 @media(max-width:680px){.top{gap:7px;padding:12px}.top .brand{font-size:18px}.top-end .status{display:none}.top-end .btn{padding:8px}.wrap{padding:12px}.layout{display:block}.layout>.panel{margin-bottom:12px}.scroll{max-height:270px}.editor{max-height:none}.cols{grid-template-columns:1fr}.intro{margin-top:7px}.intro h1{font-size:23px}}
 
-/* Overlay editors – product and choice group, matching DEMO's easy modal workflow. */
+/* Overlay editors – product and choice group, matching DRAFT's easy modal workflow. */
 #productsPage{grid-template-columns:minmax(240px,330px) minmax(340px,1fr)}
 #groupsPage{grid-template-columns:minmax(280px,380px) minmax(0,1fr)}
 .admin-modal-backdrop{position:fixed;z-index:30;inset:0;background:rgba(4,25,18,.64);backdrop-filter:blur(4px)}
@@ -159,18 +159,18 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261116-cleanup24" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261116-fatih1-brand27" defer></script>
 </head>
 <body>
 <header class="top">
- <div class="brand">🔥 KØL <small>BETA · MENYADMIN</small></div>
+ <div class="brand">🔥 FATIH1 <small>MENYADMIN</small></div>
  <div class="top-end">
   <span class="status" id="saveStatus">Innlogging kreves</span><button id="btnSignOut" class="btn ghost small" type="button" hidden>Logg ut</button>
   <a class="btn ghost small" href="./" target="_blank" rel="noopener noreferrer">Se kundemenyen ↗</a>
   <button id="btnSave" class="btn gold" type="button" disabled>Lagre endringer</button>
  </div>
 </header>
-<section id="authScreen" class="auth-screen"><div class="auth-card"><h1>🔐 KØL Admin</h1><p id="authHint">Skriv inn passordet for å fortsette.</p><form id="authForm"><label for="authPassword">Passord</label><input type="password" id="authPassword" autocomplete="current-password" required autofocus><button id="authSubmit" class="btn primary" type="submit">Logg inn</button><p id="authError" class="banner error" role="alert" hidden></p></form></div></section><main class="wrap" id="adminMain" hidden>
+<section id="authScreen" class="auth-screen"><div class="auth-card"><h1>🔐 FATIH1 Admin</h1><p id="authHint">Skriv inn passordet for å fortsette.</p><form id="authForm"><label for="authPassword">Passord</label><input type="password" id="authPassword" autocomplete="current-password" required autofocus><button id="authSubmit" class="btn primary" type="submit">Logg inn</button><p id="authError" class="banner error" role="alert" hidden></p></form></div></section><main class="wrap" id="adminMain" hidden>
  <section id="loadingCard" class="panel" style="max-width:540px;margin:6vh auto 0;padding:24px">
   <h1 style="font-size:23px;margin:0 0 9px">Kobler til Firebase…</h1>
   <p class="muted">Menyen lastes direkte fra <strong>kol-grill-pizza-1</strong>, med administratorinnlogging.</p>
@@ -179,7 +179,7 @@ body.admin-modal-open{overflow:hidden}
  </section>
  <section id="adminRoot" hidden>
   <div class="intro">
-   <div><h1>Produkter &amp; valggrupper</h1><p class="muted">Kun BETA-data · /menu · Endringer sendes automatisk til kundesiden</p></div>
+   <div><h1>Produkter &amp; valggrupper</h1><p class="muted">FATIH1-systemet · /menu · Endringer sendes automatisk til kundesiden</p></div>
    <div class="actions"><button id="btnReload" class="btn" type="button">Hent siste meny</button><button id="btnExportMenuBackup" class="btn" type="button" title="Last ned siste hentede originale meny før opprydding">Last ned menybackup</button><button id="btnUndo" class="btn" type="button">Forkast lokale endringer</button></div>
   </div>
   <div class="tabs" role="tablist">
