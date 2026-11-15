@@ -290,7 +290,7 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .quick-notes{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 9px}
 #productSheet .quick-note{
  min-height:30px;padding:6px 9px;border:1px solid #d4dfd9;border-radius:99px;
- background:#fff;color:#4a675a;font-size:var(--text-sm);
+ background:#EEEEEE;color:#4a675a;font-size:var(--text-sm);
 }
 #productSheet .quick-note.is-selected{
  border-color:#168663;background:#e0f5e9;color:#176948;font-weight:750;
@@ -1091,7 +1091,7 @@ html[data-beta-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .product-section-heading{margin:0 0 8px;display:flex;align-items:center;gap:8px}
 #productSheet .product-section-heading strong{font-size:16px;font-weight:650;line-height:1.35;color:#103d31;letter-spacing:-.012em}
 #productSheet .option-rows{gap:4px}
-#productSheet .option-choice{position:relative;display:flex;align-items:center;gap:9px;min-height:43px;padding:6px 10px;border:1px solid #d6e0e3;border-radius:11px;background:#fff;color:#09241e}
+#productSheet .option-choice{position:relative;display:flex;align-items:center;gap:9px;min-height:43px;padding:6px 10px;border:1px solid #d6e0e3;border-radius:11px;background:#EEEEEE;color:#09241e}
 #productSheet .option-choice.is-chosen,#productSheet .option-choice:has(input:checked){background:#e6f5eb;border-color:#7ccaa1;color:#09241e}
 #productSheet .option-choice input{width:19px;height:19px;margin:0;accent-color:#118553;flex:none}
 #productSheet .option-choice input[type="checkbox"]{border-radius:6px}
