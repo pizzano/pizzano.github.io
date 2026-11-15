@@ -979,19 +979,28 @@ $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(curre
 $('options').addEventListener('change',e=>{
  const input=e.target;if(!input.matches('input'))return;
  if(input.name==='size'){
+  const size=list(current.sizes).find(item=>String(item.id)===String(input.value));
+  if(String(selection.size)===String(input.value))return;
   selection.size=input.value;
   for(const key of Object.keys(selection))if(key.startsWith('group:'))delete selection[key];
-  renderOptions();return;
+  renderOptions();
+  showBetaToast((size?.label||size?.name||'Størrelse')+' valgt');
+  return;
  }
  const id=input.name.slice(6),group=getGroup(id);if(!group)return;
  const key='group:'+id,old=selectedIds(group);
+ const option=list(group.options).find(opt=>String(opt.id)===String(input.value));
  if(group.selectionMode==='multiple'){
   const next=input.checked?[...old.filter(v=>String(v)!==input.value),input.value]:old.filter(v=>String(v)!==input.value);
   const max=Math.max(1,Number(group.maxSelections)||1);
-  if(next.length>max){input.checked=false;return}
+  if(next.length>max){input.checked=false;showBetaToast('Maks '+max+' valg','info');return}
   selection[key]=next;
- }else selection[key]=[input.value];
+ }else{
+  if(old.length===1&&String(old[0])===String(input.value))return;
+  selection[key]=[input.value];
+ }
  renderOptions();
+ showBetaToast((option?.label||'Valg')+(input.checked?' lagt til':' fjernet'));
 });
 function changeServingOption(groupId,optionId,step){
  const group=getGroup(groupId);
@@ -1001,19 +1010,20 @@ function changeServingOption(groupId,optionId,step){
  const key='group:'+group.id,ids=[...selectedIds(group)],id=String(optionId);
  const count=ids.filter(v=>String(v)===id).length;
  const max=Math.max(1,Number(group.maxSelections)||1);
- if(step==='1'){
-  if(ids.length>=max)return;
+ // Tapping the row reduces 2 -> 1 -> 0, never clears all at once.
+ const adding=step==='1'||(step==='toggle'&&!count);
+ if(adding){
+  if(ids.length>=max){showBetaToast('Maks '+max+' valg','info');return}
   ids.push(id);
- }else if(step==='-1'){
-  const index=ids.findIndex(v=>String(v)===id);if(index>=0)ids.splice(index,1);
- }else if(count){
-  selection[key]=ids.filter(v=>String(v)!==id);
-  renderOptions();return;
  }else{
-  if(ids.length>=max)return;
-  ids.push(id);
+  if(!count)return;
+  const index=ids.findIndex(v=>String(v)===id);
+  if(index>=0)ids.splice(index,1);
  }
- selection[key]=ids;renderOptions();
+ selection[key]=ids;
+ const newCount=ids.filter(v=>String(v)===id).length;
+ renderOptions();
+ showBetaToast((option.label||'Dressing')+(adding?' lagt til':' fjernet')+' · '+newCount+' stk');
 }
 $('options').addEventListener('click',e=>{
  const button=e.target.closest('[data-qty-group]');
@@ -1041,15 +1051,19 @@ $('sheetIngredients').addEventListener('click',e=>{
  }
  const button=e.target.closest('[data-ingredient]');if(!button)return;
  const name=button.dataset.ingredient;
- if(removedIngredients.has(name))removedIngredients.delete(name);else removedIngredients.add(name);
+ const wasRemoved=removedIngredients.has(name);
+ if(wasRemoved)removedIngredients.delete(name);else removedIngredients.add(name);
  ingredientEditorExpanded=true;
  ingredientEditor();renderSheetExtras();
+ showBetaToast(name+(wasRemoved?' lagt tilbake':' fjernet'));
 });
 $('quickNotes').addEventListener('click',e=>{
  const btn=e.target.closest('[data-kitchen-note]');if(!btn)return;
  const note=btn.dataset.kitchenNote;
- if(selectedKitchenNotes.has(note))selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
+ const removed=selectedKitchenNotes.has(note);
+ if(removed)selectedKitchenNotes.delete(note);else selectedKitchenNotes.add(note);
  renderSheetExtras();
+ showBetaToast(note+(removed?' fjernet':' lagt til'));
 });
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
 initCartEvents();
