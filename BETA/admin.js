@@ -82,16 +82,38 @@ async function bootAuth(){
   if(!payload.sections.every(s=>s&&Array.isArray(s.items)))throw Error('Kategorier mangler items-lister.');
   if(!payload.optionGroups.every(g=>g&&Array.isArray(g.options)))throw Error('Valggrupper har et eldre format som må migreres før redigering. Ingen data ble endret.');
  }
+ // Only fields not used anywhere in BETA. Keep ingredientRules and
+ // description intact. Deletion is staged locally until explicit admin save.
  function removeLegacyIngredients(menuData){
   let removed=0;
   for(const section of arr(menuData?.sections)){
    for(const item of arr(section.items)){
-    if(Object.prototype.hasOwnProperty.call(item,'ingredients')){
-     delete item.ingredients;removed++;
+    for(const key of ['ingredients','ingredientDefaults']){
+     if(Object.prototype.hasOwnProperty.call(item,key)){
+      delete item[key];removed++;
+     }
     }
    }
   }
   return removed;
+ }
+ function exportOriginalMenuBackup(){
+  if(!state.original){notify('Ingen meny er lastet fra Firebase.',true);return}
+  try{
+   const json=JSON.stringify(state.original,null,2);
+   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+   const url=URL.createObjectURL(blob);
+   const date=new Date().toISOString().replace(/[:.]/g,'-');
+   const link=document.createElement('a');
+   link.href=url;link.download='kol-beta-menu-backup-'+date+'.json';
+   document.body.appendChild(link);
+   link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   notify('Menybackup er klargjort for nedlasting');
+  }catch(error){
+   console.warn('BETA menu backup export failed',error);
+   notify('Kunne ikke opprette menybackup. Prøv igjen.',true);
+  }
  }
  function category(){return state.menu?.sections?.[state.category]||null}
  function product(){return category()?.items?.[state.product]||null}
@@ -204,7 +226,7 @@ function getProductAllergens(p){
   setClean();renderAll();refreshHeader();
   if(legacyFields){
    setDirty();
-   message(legacyFields+' gamle ingredients-felt er klargjort for sletting. Trykk «Lagre endringer» for å fjerne dem fra Firebase.','warn');
+   message(legacyFields+' gamle ingredients/ingredientDefaults-felt er klare for sletting. Last ned menybackup først, og trykk deretter «Lagre endringer».','warn');
   }
   return true;
  }
@@ -678,6 +700,7 @@ function getProductAllergens(p){
 
   $('btnSave').addEventListener('click',save);
   $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
+  $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
    state.menu=clone(state.original);state.category=0;state.product=0;state.group=0;renderAll();setClean()});
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
