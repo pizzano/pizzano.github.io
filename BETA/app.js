@@ -942,6 +942,14 @@ history.replaceState({
  ...(history.state&&typeof history.state==='object'?history.state:{}),
  kolBetaView:betaHistoryPayload('menu')
 },'',location.href);
+// iOS Safari restores documents from its back-forward cache. A fixed body
+// scroll lock must be released on pagehide and re-applied if a dialog survives.
+window.addEventListener('pagehide',()=>{
+ betaUnlockBackground();
+});
+window.addEventListener('pageshow',event=>{
+ if(event.persisted&&!$('overlay').hidden)betaLockBackground();
+});
 window.addEventListener('popstate',event=>{
  const state=event.state?.kolBetaView;
  betaHistoryRestoring=true;
