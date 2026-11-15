@@ -164,7 +164,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261116-random-cart10-23" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261116-cleanup24" defer></script>
 </head>
 <body>
 <header class="top">
@@ -185,7 +185,7 @@ body.admin-modal-open{overflow:hidden}
  <section id="adminRoot" hidden>
   <div class="intro">
    <div><h1>Produkter &amp; valggrupper</h1><p class="muted">Kun BETA-data · /menu · Endringer sendes automatisk til kundesiden</p></div>
-   <div class="actions"><button id="btnReload" class="btn" type="button">Hent siste meny</button><button id="btnUndo" class="btn" type="button">Forkast lokale endringer</button></div>
+   <div class="actions"><button id="btnReload" class="btn" type="button">Hent siste meny</button><button id="btnExportMenuBackup" class="btn" type="button" title="Last ned siste hentede originale meny før opprydding">Last ned menybackup</button><button id="btnUndo" class="btn" type="button">Forkast lokale endringer</button></div>
   </div>
   <div class="tabs" role="tablist">
    <button class="tab active" type="button" data-tab="products" aria-selected="true">Produkter og kategorier</button>
