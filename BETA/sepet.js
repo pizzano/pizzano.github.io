@@ -239,7 +239,7 @@ function cartQuantityForProduct(id){
  return cart.reduce((sum,line)=>sum+(String(line.id)===String(id)?Number(line.qty||0):0),0);
 }
 function initCartEvents(){
-$('plus').onclick=()=>{$('quantity').textContent=++qty;updatePrice()};$('minus').onclick=()=>{$('quantity').textContent=qty=Math.max(1,qty-1);updatePrice()};
+$('plus').onclick=()=>{qty++;$('quantity').textContent=qty;updatePrice();showBetaToast('Antall økt til '+qty)};$('minus').onclick=()=>{if(qty<=1)return;qty--;$('quantity').textContent=qty;updatePrice();showBetaToast('Antall redusert til '+qty)};
 $('add').onclick=addToCart;$('cartOpen').onclick=showCart;$('cartItems').addEventListener('click',e=>{
  const edit=e.target.closest('[data-edit]');
  if(edit){
