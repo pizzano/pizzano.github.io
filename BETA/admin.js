@@ -1,4 +1,4 @@
-/* KØL BETA menu administrator. Only /menu is read/written. Admin access
+/* FATIH1 FATIH1 menu administrator. Only /menu is read/written. Admin access
  * is protected by Firebase Authentication and Realtime Database Rules.
  */
 'use strict';
@@ -82,7 +82,7 @@ async function bootAuth(){
   if(!payload.sections.every(s=>s&&Array.isArray(s.items)))throw Error('Kategorier mangler items-lister.');
   if(!payload.optionGroups.every(g=>g&&Array.isArray(g.options)))throw Error('Valggrupper har et eldre format som må migreres før redigering. Ingen data ble endret.');
  }
- // Only fields not used anywhere in BETA. Keep ingredientRules and
+ // Only fields not used anywhere in FATIH1. Keep ingredientRules and
  // description intact. Deletion is staged locally until explicit admin save.
  function removeLegacyIngredients(menuData){
   let removed=0;
@@ -105,13 +105,13 @@ async function bootAuth(){
    const url=URL.createObjectURL(blob);
    const date=new Date().toISOString().replace(/[:.]/g,'-');
    const link=document.createElement('a');
-   link.href=url;link.download='kol-beta-menu-backup-'+date+'.json';
+   link.href=url;link.download='fatih1-menu-backup-'+date+'.json';
    document.body.appendChild(link);
    link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),1000);
    notify('Menybackup er klargjort for nedlasting');
   }catch(error){
-   console.warn('BETA menu backup export failed',error);
+   console.warn('FATIH1 menu backup export failed',error);
    notify('Kunne ikke opprette menybackup. Prøv igjen.',true);
   }
  }
@@ -204,7 +204,7 @@ function getProductAllergens(p){
    $('adminRoot').hidden=false;
    notify('Menyen er lastet fra Firebase');
   }catch(error){
-   console.warn('BETA menu admin load failed:',error);
+   console.warn('FATIH1 menu admin load failed:',error);
    $('loadError').textContent=error.message||'Kunne ikke laste menyen.';
    $('loadError').hidden=false;
    $('saveStatus').textContent='Kunne ikke koble til';
@@ -563,7 +563,7 @@ function getProductAllergens(p){
   else ids=checked?[String(option.id)]:[];
   g.defaultOptionIds=ids;setDirty();renderOptionRows();
  }
- // DEMO normalizer treats missing/non-numeric menu prices as zero. BETA may
+ // DRAFT normalizer treats missing/non-numeric menu prices as zero. FATIH1 may
  // inherit these legacy values. An unrelated photo/name edit must never fail
  // because of an untouched old extra price. Do not rewrite legacy values:
  // only freshly edited fields are validated on save.
@@ -673,7 +673,7 @@ function getProductAllergens(p){
     if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
    }
    state.etag=etag||null;setClean();renderAll();refreshHeader();
-   notify('Lagret i Firebase · BETA varsles automatisk');
+   notify('Lagret i Firebase · FATIH1 varsles automatisk');
    if(!etag)message('Lagret, men ETag kunne ikke leses. Hent siste meny før neste endring.','warn');
   }catch(error){message(error.message||'Lagring feilet','error');notify(error.message||'Lagring feilet',true)}
   finally{state.saving=false;$('btnSave').disabled=!state.dirty||!state.etag}
