@@ -1297,3 +1297,18 @@ html.beta-modal-open .overlay{
 /* Horizontal gestures in cart/profile must not pan the underlying menu. */
 #cartSheet,#betaProfileSheet{touch-action:pan-y}
 #cartSheet .cart-content-scroll,#betaProfileSheet .beta-profile-scroll{touch-action:pan-y}
+
+
+/* Fixed checkout footer: dynamic total replaces the redundant continue-shopping
+   button on Kurv; step-back button remains available on Kontakt/Hentetid. */
+.cart-buttons .cart-footer-total{
+ display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ min-width:0;min-height:48px;padding:3px 10px;gap:2px;
+ border-left:2px solid #bcded0;color:#173d32;
+}
+.cart-footer-total span{font-size:12px;line-height:1.2;color:#70877e;font-weight:450}
+.cart-footer-total strong{font-size:22px;line-height:1.15;font-weight:750;color:#123d30;white-space:nowrap;font-variant-numeric:tabular-nums}
+html[data-beta-theme="dark"] .cart-buttons .cart-footer-total{border-color:#467966}
+html[data-beta-theme="dark"] .cart-footer-total span{color:#bfd7cb}
+html[data-beta-theme="dark"] .cart-footer-total strong{color:#e9fff1}
+@media(max-width:390px){.cart-footer-total strong{font-size:19px}}
