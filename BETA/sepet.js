@@ -49,7 +49,7 @@ function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)|
 // /menu/cartSuggestionRules. No unrelated extras, stale settings or extra GETs.
 let dismissedSuggestions=new Set();
 function suggestedCartItems(){
- if(!menu||!cart.length||menu.settings?.cartSuggestionsEnabled===false)return [];
+ if(!menu||!cart.length)return [];
  const ids=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules:[];
  const included=new Set(cart.map(line=>String(line.id)));
  const products=new Map(menu.sections.flatMap(section=>(section.items||[]).map(item=>[String(item.id),item])));
@@ -61,6 +61,31 @@ function suggestedCartItems(){
   if(selected.length===4)break;
  }
  return selected;
+}
+// Only one tiny Firebase GET per page session, on first cart opening.
+// Reconcile any outdated IndexedDB menu cache without fetching /menu again.
+let betaSuggestionChecked=false,betaSuggestionPending=null;
+async function refreshCartSuggestionIdsOnce(){
+ if(betaSuggestionChecked||betaSuggestionPending||!menu||navigator.onLine===false)return betaSuggestionPending;
+ betaSuggestionPending=(async()=>{
+  try{
+   const response=await fetch(BASE+'/menu/cartSuggestionRules.json',{cache:'no-store'});
+   if(!response.ok)throw Error('Firebase recommendations HTTP '+response.status);
+   const data=await response.json();
+   const ids=Array.isArray(data)?data:data&&typeof data==='object'?
+    Object.keys(data).sort((a,b)=>Number(a)-Number(b)).map(key=>data[key]):[];
+   const unique=[...new Set(ids.filter(id=>id!==null&&id!==undefined).map(String))].slice(0,4);
+   const previous=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules.map(String):[];
+   if(JSON.stringify(previous)!==JSON.stringify(unique)){
+    menu.cartSuggestionRules=unique;
+    try{await localPut(menu)}catch{}
+    if(!$('cartSheet').hidden)renderCartRecommendations();
+   }
+   betaSuggestionChecked=true;
+  }catch(error){console.warn('BETA cart recommendation refresh:',error)}
+  finally{betaSuggestionPending=null}
+ })();
+ return betaSuggestionPending;
 }
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
@@ -159,7 +184,7 @@ function pickupSummary(){
  }).join('')+
  '<div class="demo-pickup-line is-total"><strong>Totalt</strong><strong>'+money(demoTotal(cart))+'</strong></div>';
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
 
 function updateCartBadges(){
  if(!menu)return;
@@ -393,47 +418,66 @@ function updateContactValidation(){
   input?.closest('.checkout-field')?.classList.toggle('is-valid',check(input?.value||''));
  }
 }
+const CONTACT_SYNC_KEY='kol-beta-contact-synced-v1';
+// Keep one local contact record and avoid rewriting it on unchanged input.
+let betaLastContactLocal=JSON.stringify(demoContact);
+function persistDemoContactIfChanged(value){
+ const snapshot=JSON.stringify(value);
+ if(snapshot===betaLastContactLocal)return true;
+ if(!demoStore(DEMO_CONTACT_KEY,value))return false;
+ betaLastContactLocal=snapshot;
+ return true;
+}
 function saveDemoContact(){
- demoContact={
+ const updated={
   name:$('demoFullName').value.trim(),
   phone:$('demoPhone').value.replace(/\D/g,'').slice(0,8),
   email:$('demoEmail').value.trim()
  };
- demoStore(DEMO_CONTACT_KEY,demoContact);
+ if(JSON.stringify(demoContact)!==JSON.stringify(updated))demoContact=updated;
+ persistDemoContactIfChanged(demoContact);
 }
-// BETA contact is saved only when the customer proceeds from the contact step.
-// Use the same 8-digit customer key as the existing loyalty rollup.
-
-// BETA currently sends LOCAL_DEMO orders only. Keep contact data local
-// until a verified backend endpoint can safely write /customers/{phone}.
-// Never allow anonymous PATCH access to private customer records.
-// Contact-only customer updates: Firebase Rules allow anonymous PUT to
-// /customers/{phone}/name and /email, but not GET of /customers or writes to
-// bonus counters, order history or other protected children.
+function betaContactSignature(contact){
+ return JSON.stringify([
+  String(contact?.name||'').trim().replace(/\s+/g,' ').slice(0,120),
+  String(contact?.phone||'').replace(/\D/g,'').slice(0,8),
+  String(contact?.email||'').trim().toLowerCase().slice(0,200)
+ ]);
+}
 let customerSavedSignature='',customerSavePending=null;
+function betaContactIsSynced(contact=demoContact){
+ const signature=betaContactSignature(contact);
+ if(customerSavedSignature===signature)return true;
+ try{return localStorage.getItem(CONTACT_SYNC_KEY)===signature}catch{return false}
+}
+// 'saved': new Firebase update; 'unchanged': already synchronized; false: failed.
 async function syncBetaCustomer(){
- const name=demoContact.name.trim().replace(/\s+/g,' ').slice(0,120);
- const phone=demoContact.phone;
- const email=demoContact.email.trim().toLowerCase().slice(0,200);
- if(name.length<2||!/^[49]\d{7}$/.test(phone)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
- const signature=JSON.stringify([name,phone,email]);
- if(signature===customerSavedSignature)return true;
+ const [name,phone,email]=JSON.parse(betaContactSignature(demoContact));
+ if(name.length<2||!/^[49]\d{7}$/.test(phone)||
+    (email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return false;
+ const normalized={name,phone,email},signature=betaContactSignature(normalized);
+ if(betaContactIsSynced(normalized))return 'unchanged';
  if(customerSavePending)await customerSavePending;
- if(signature===customerSavedSignature)return true;
+ if(betaContactIsSynced(normalized))return 'unchanged';
  customerSavePending=(async()=>{
   try{
-   // No customer GET and no parent-level PATCH: each write is limited by
-   // Firebase Rules to the two explicitly permitted contact leaves.
-   for(const [field,value] of [['name',name],['email',email]]){
+   let previous=null;
+   try{previous=JSON.parse(localStorage.getItem(CONTACT_SYNC_KEY)||'null')}catch{}
+   const changed=Array.isArray(previous)&&previous[1]===phone?
+    [['name',name,previous[0]],['email',email,previous[2]]]:
+    [['name',name,null],['email',email,null]];
+   for(const [field,value,last] of changed){
+    if(last===value)continue;
     const response=await fetch(BASE+'/customers/'+phone+'/'+field+'.json',{
      method:'PUT',headers:{'Content-Type':'application/json'},
      body:JSON.stringify(value),cache:'no-store'
     });
     if(!response.ok)throw new Error('Firebase '+field+' HTTP '+response.status);
    }
-   if(!demoStore(DEMO_CONTACT_KEY,{name,phone,email}))throw Error('Local storage unavailable');
+   if(!persistDemoContactIfChanged(normalized))throw Error('Local contact storage unavailable');
    customerSavedSignature=signature;
-   return true;
+   try{localStorage.setItem(CONTACT_SYNC_KEY,signature)}catch{}
+   return 'saved';
   }catch(error){
    console.warn('BETA customer contact sync failed:',error);
    return false;
@@ -573,7 +617,8 @@ async function demoNext(){
   if(validateDemoContact()){
    $('cartNext').disabled=true;
    try{
-    if(await syncBetaCustomer()){checkoutNavigate('pickup');showBetaToast('Kontaktinformasjonen er lagret i Firebase')}
+    const syncResult=await syncBetaCustomer();
+    if(syncResult){checkoutNavigate('pickup');if(syncResult==='saved')showBetaToast('Kontaktinformasjonen er lagret i Firebase')}
     else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen i Firebase. Kontroller tilgang og prøv igjen.');showBetaToast('Kunne ikke lagre kontaktinformasjonen','error')}
    }finally{$('cartNext').disabled=false}
   }
