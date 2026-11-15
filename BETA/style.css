@@ -1224,3 +1224,19 @@ html[data-beta-theme="dark"] #productSheet .option-choice input:is([type="radio"
 @media(prefers-reduced-motion:reduce){
  #productSheet.is-drag-settling{transition:none}
 }
+
+/* Product controls: comfortable dressing stepper and consistent SVG favorite. */
+#productSheet .option-choice.is-quantity .option-quantity{grid-template-columns:34px 27px 34px;min-width:99px;padding:2px 0}
+#productSheet .option-choice.is-quantity .option-quantity button{width:34px;min-width:34px;height:33px}
+#productSheet .option-choice.is-quantity .option-quantity b{min-width:27px}
+#productSheet .product-topbar .sheet-favorite{color:#087d57;font-size:inherit}
+#productSheet .product-topbar .sheet-favorite svg{display:block;width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;transition:fill .16s ease,stroke .16s ease}
+#productSheet .product-topbar .sheet-favorite.is-favorite{color:#d3485a}
+#productSheet .product-topbar .sheet-favorite.is-favorite svg{fill:currentColor}
+html[data-beta-theme="dark"] #productSheet .product-topbar .sheet-favorite{color:#8ee0b9}
+html[data-beta-theme="dark"] #productSheet .product-topbar .sheet-favorite.is-favorite{color:#f18193}
+@media(max-width:390px){
+ #productSheet .option-choice.is-quantity .option-quantity{grid-template-columns:30px 24px 30px;min-width:84px}
+ #productSheet .option-choice.is-quantity .option-quantity button{width:30px;min-width:30px}
+ #productSheet .option-choice.is-quantity .option-quantity b{min-width:24px}
+}
