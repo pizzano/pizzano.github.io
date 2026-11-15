@@ -343,7 +343,8 @@ function getProductAllergens(p){
   const p=product();$('productFields').hidden=!p;
   if(!p){$('productEditorTitle').textContent='Velg et produkt';return}
   $('productEditorTitle').textContent=p.name||'Nytt produkt';
-  $('pName').value=p.name||'';$('pDescription').value=p.description||'';$('pIngredients').value=p.ingredients||'';
+  $('pName').value=p.name||'';$('pDescription').value=p.description||'';
+  $('pIngredientRules').value=arr(p.ingredientRules).map(entry=>typeof entry==='string'?entry:String(entry?.name||'')).filter(Boolean).join(', ');
   $('pKitchenNotes').value=arr(p.quickKitchenNotes).join('\n');
   renderAllergenChoices();
   $('pImage').value=productImage(p);$('pPreviewName').textContent=p.name||'Produktbilde';
@@ -686,8 +687,24 @@ function getProductAllergens(p){
   $('moveProductDown').addEventListener('click',()=>changeProduct(1));
   $('duplicateProduct').addEventListener('click',duplicateProduct);
   $('removeProduct').addEventListener('click',removeProduct);
-  for(const [id,key]of [['pName','name'],['pDescription','description'],['pIngredients','ingredients']])
+  for(const [id,key]of [['pName','name'],['pDescription','description']])
    $(id).addEventListener('input',event=>updateItemField(key,event.target.value));
+  $('pIngredientRules').addEventListener('input',event=>{
+   const p=product();if(!p)return;
+   const previous=arr(p.ingredientRules);
+   const seen=new Set();
+   const names=event.target.value.split(/[,;\n]+/).map(name=>name.trim().replace(/\s+/g,' ').slice(0,100))
+    .filter(name=>{const key=name.toLocaleLowerCase('no');if(!key||seen.has(key))return false;seen.add(key);return true});
+   // Keep any existing object metadata for matching ingredients; do not
+   // silently alter the configuration of unaffected ingredient rules.
+   const updated=names.map(name=>{
+    const old=previous.find(entry=>String(typeof entry==='string'?entry:entry?.name||'').trim().toLocaleLowerCase('no')===name.toLocaleLowerCase('no'));
+    return old&&typeof old==='object'?{...old,name}:name;
+   });
+   if(JSON.stringify(previous)===JSON.stringify(updated))return;
+   p.ingredientRules=updated;
+   setDirty();
+  });
   $('pImage').addEventListener('change',readAndSetImage);
   $('pKitchenNotes').addEventListener('input',e=>{
    const p=product();if(!p)return;
