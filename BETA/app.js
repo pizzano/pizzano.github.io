@@ -736,9 +736,9 @@ function kitchenNotesFor(item){
 }
 function removableIngredientRules(item){
  if(menu?.settings?.ingredientCustomizationEnabled===false)return [];
- const fallback=String(item.ingredients||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);
- const raw=Array.isArray(item.ingredientRules)&&item.ingredientRules.length?item.ingredientRules:
-  Array.isArray(item.ingredientDefaults)&&item.ingredientDefaults.length?item.ingredientDefaults:fallback;
+ // ingredientRules is the sole source for customer-removable ingredients.
+ // An empty or missing list intentionally hides the customization panel.
+ const raw=Array.isArray(item?.ingredientRules)?item.ingredientRules:[];
  const seen=new Set();
  return raw.map(x=>typeof x==='string'?{name:x,removable:true}:x).filter(x=>{
   if(!x||x.removable===false||!String(x.name||'').trim())return false;
