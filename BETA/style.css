@@ -342,7 +342,7 @@ html,body{min-height:100%;overflow-x:clip}
 .cart-topbar{height:65px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--dark);color:#fff}
 .cart-back{display:grid;place-items:center;width:39px;height:39px;flex:none;border:1px solid #ffffff44;border-radius:50%;background:#ffffff0d;color:white;font-size:29px;line-height:1}
 .cart-brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding:0;border:0;background:transparent;color:inherit;text-align:left;font-family:inherit;font-size:var(--text-md);font-weight:800;cursor:pointer}
-.cart-brand>span{font-size:24px}
+.cart-brand>span[aria-hidden="true"]{font-size:24px}
 .cart-content-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:15px 12px 18px}
 .cart-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 14px}
 .cart-steps span{display:flex;align-items:center;gap:7px;min-width:0;padding:0 2px 10px;border-bottom:2px solid #c9e0d5;color:#678277;font-size:var(--text-sm);font-weight:700}
@@ -764,7 +764,7 @@ html[data-fatih1-theme="dark"] #fatih1BonusStatus{color:#a6cdbb}
 .cart-topbar .cart-back{display:grid;place-items:center;width:39px;height:39px;padding:0;font-size:0}
 .cart-topbar .cart-back svg{width:22px;height:22px}
 .cart-topbar .cart-brand{flex:1;min-width:0;gap:7px;font-size:clamp(10px,2.6vw,13px);text-overflow:ellipsis}
-.cart-topbar .cart-brand>span{font-size:21px}
+.cart-topbar .cart-brand>span[aria-hidden="true"]{font-size:21px}
 .cart-header-actions{gap:5px}
 .cart-header-actions .header-icon-round{width:38px;min-width:38px;height:38px}
 .cart-header-actions .header-icon-round svg{width:20px;height:20px}
@@ -775,7 +775,7 @@ html[data-fatih1-theme="dark"] #fatih1BonusStatus{color:#a6cdbb}
  .cart-topbar{gap:5px;padding:0 7px}
  .cart-topbar .cart-back{width:34px;height:34px}
  .cart-topbar .cart-brand{gap:3px;font-size:11px}
- .cart-topbar .cart-brand>span{font-size:17px}
+ .cart-topbar .cart-brand>span[aria-hidden="true"]{font-size:17px}
  .cart-header-actions{gap:4px}
  .cart-header-actions .header-icon-round{width:33px;min-width:33px;height:33px}
  .cart-header-actions .header-icon-round svg{width:18px;height:18px}
