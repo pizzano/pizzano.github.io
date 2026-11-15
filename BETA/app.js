@@ -683,7 +683,7 @@ function render(){
 function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
  current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();editingCartIndex=null;
- $('add').firstChild.textContent='Legg til ';$('quantity').textContent=qty;$('comment').value='';
+ $('add').textContent='Legg til';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||item.ingredients||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
  hero.classList.remove('has-image');
@@ -791,10 +791,10 @@ function optionGroupMarkup(group){
  const entries=options.map(opt=>{
   const count=ids.filter(id=>String(id)===String(opt.id)).length;
   const price=Number(opt.price)||0,blocked=Boolean(opt.soldOut)||(multiple&&ids.length>=max&&!count);
-  if(serving)return '<div class="option-choice is-quantity'+(count?' is-chosen':'')+'"><span class="option-label-text">'+esc(opt.label||'')+
-   '<small>'+(price?'+'+money(price)+' / stk':'Inkludert')+'</small></span>'+
-   (count>1&&price?'<small class="option-line-total">Totalt +'+money(price*count)+'</small>':'')+
-   '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div></div>';
+  if(serving)return '<div class="option-choice is-quantity'+(count?' is-chosen':'')+'"><span class="option-tick" aria-hidden="true">'+(count?'✓':'')+'</span><span class="option-label-text">'+esc(opt.label||'')+'</span>'+
+   '<div class="option-quantity"><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="-1" '+(!count?'disabled':'')+' aria-label="Færre '+esc(opt.label)+'">−</button><b>'+count+'</b><button type="button" data-qty-group="'+esc(group.id)+'" data-qty-option="'+esc(opt.id)+'" data-qty-step="1" '+(blocked?'disabled':'')+' aria-label="Flere '+esc(opt.label)+'">+</button></div>'+
+   '<span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span>'+
+   (count>1&&price?'<small class="option-line-total">Totalt +'+money(price*count)+'</small>':'')+'</div>';
   return '<label class="option-choice'+(count?' is-chosen':'')+'"><input type="'+(multiple?'checkbox':'radio')+'" name="group:'+esc(group.id)+'" value="'+esc(opt.id)+'" '+(count?'checked':'')+' '+(blocked?'disabled':'')+'><span class="option-label-text">'+esc(opt.label||'')+'</span><span class="opt-price">'+(price?'+'+money(price):'Inkludert')+'</span></label>';
  }).join('');
  return '<section class="option-group product-section">'+
