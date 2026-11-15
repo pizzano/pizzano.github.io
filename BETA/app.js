@@ -50,7 +50,7 @@ function updateSheetFavorite(){
  b.classList.toggle('is-favorite',isFavorite(current.id));
  b.setAttribute('aria-pressed',String(isFavorite(current.id)));
  b.setAttribute('aria-label',isFavorite(current.id)?'Fjern fra favoritter':'Legg til favoritter');
- b.textContent=isFavorite(current.id)?'♥':'♡';
+ // Preserve the single SVG heart: CSS fills it for favorited products.
 }
 function openDB(){
  return new Promise((resolve,reject)=>{
