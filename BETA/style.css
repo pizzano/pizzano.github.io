@@ -1193,3 +1193,34 @@ html[data-beta-theme="dark"] #productSheet .option-choice input:is([type="radio"
 @media(max-width:390px){
  #productSheet .option-choice input:is([type="radio"],[type="checkbox"]){width:20px;height:20px;min-width:20px}
 }
+
+/* Mobile app-like product sheet: breathing room and swipe-down dismissal. */
+@media(max-width:600px){
+ #productSheet{
+  top:calc(env(safe-area-inset-top,0px) + 14px);
+  bottom:0;
+  height:calc(100dvh - env(safe-area-inset-top,0px) - 14px);
+  max-height:none;
+  border-radius:22px 22px 0 0;
+  transform:translate(-50%,var(--product-drag-y,0px));
+  will-change:transform;
+ }
+ #productSheet .product-topbar{
+  position:relative;
+  padding-top:13px;
+  height:62px;
+  min-height:62px;
+  touch-action:pan-y;
+ }
+ #productSheet .product-topbar::before{
+  content:"";position:absolute;top:5px;left:50%;transform:translateX(-50%);
+  width:34px;height:4px;border-radius:8px;background:#cad9d2;
+  pointer-events:none;
+ }
+ #productSheet.is-dragging{transition:none}
+ #productSheet.is-drag-settling{transition:transform .2s ease-out}
+ html[data-beta-theme="dark"] #productSheet .product-topbar::before{background:#5d8371}
+}
+@media(prefers-reduced-motion:reduce){
+ #productSheet.is-drag-settling{transition:none}
+}
