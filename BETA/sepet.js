@@ -36,7 +36,12 @@ function addToCart(){
  if(editingCartIndex!==null&&cart[editingCartIndex])cart[editingCartIndex]=entry;
  else if(existing)existing.qty+=qty;else cart.push(entry);
  const edited=editingCartIndex!==null;editingCartIndex=null;
- saveCart();hideAll();if(edited||!availability.orderable)showCart();
+ saveCart();
+ if(edited&&betaHistoryState()?.view==='product')betaHistoryBack();
+ else if(!availability.orderable){
+  betaHistoryWrite({view:'cart',step:'cart'},true);
+  hideAll();showCart();
+ }else betaHistoryToMenu();
  showBetaToast(entry.name+(edited?' oppdatert i handlekurven':' lagt i handlekurven'));
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
@@ -230,7 +235,7 @@ function restoreCartLineForEdit(line,index){
  $('add').firstChild.textContent='Oppdater kurven ';
 }
 
-function closeProductSheet(){const wasEditing=editingCartIndex!==null;editingCartIndex=null;hideAll();if(wasEditing)showCart()}
+function closeProductSheet(){editingCartIndex=null;betaHistoryBack()}
 function updateCartQuantityControls(){
  const cartPanel=$('cartSheet');
  if(cartPanel&&!cartPanel.hidden)cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
@@ -338,7 +343,7 @@ $('cartClear').addEventListener('click',()=>{
 });
 
 $('cartBrandHome').addEventListener('click',returnToMenu);
-$('cartClose').onclick=hideAll;
+$('cartClose').onclick=betaHistoryToMenu;
 $('sheetClose').onclick=closeProductSheet;
  initCheckoutEvents();
 }
@@ -405,6 +410,7 @@ function renderDemoConfirmation(){
 }
 function showDemoConfirmation(){
  if(!demoOrder)return;
+ betaHistoryWrite({view:'confirmation'},true);
  hideAll();
  renderDemoConfirmation();
  show('demoConfirmation');
@@ -529,7 +535,9 @@ function renderDemoPickupChoices(){
  if(!asap)demoStore(DEMO_PICKUP_KEY,demoPickup);
 }
 function checkoutNavigate(step){
+ const prevStep=checkoutStep;
  checkoutStep=step;
+ if(!$('cartSheet').hidden&&step!==prevStep)betaHistoryWrite({view:'cart',step});
  $('cartCartStep').hidden=step!=='cart';
  $('cartContactStep').hidden=step!=='contact';
  $('cartPickupStep').hidden=step!=='pickup';
@@ -609,13 +617,13 @@ async function demoNext(){
  }else submitDemoOrder();
 }
 function demoBack(){
- if(checkoutStep==='cart')hideAll();
- else checkoutNavigate(checkoutStep==='pickup'?'contact':'cart');
+ if(checkoutStep==='cart')betaHistoryToMenu();
+ else betaHistoryBack();
 }
 
 
 function returnToMenu(){
- hideAll();
+ betaHistoryToMenu();
  $('appViewport').scrollTo({top:0,behavior:'instant'});
  window.scrollTo({top:0,behavior:'instant'});
  $('appViewport').classList.remove('nav-hidden');
