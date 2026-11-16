@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>FATIH1 · Bestilling</title>
-  <link rel="stylesheet" href="./style.css?v=20261116-fatih1-edit-ingredients37">
-  <script src="./sepet.js?v=20261116-fatih1-edit-ingredients37" defer></script>
-  <script src="./app.js?v=20261116-fatih1-edit-ingredients37" defer></script>
-  <script src="./profil.js?v=20261116-fatih1-edit-ingredients37" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261116-fatih1-ingredient-sync38">
+  <script src="./sepet.js?v=20261116-fatih1-ingredient-sync38" defer></script>
+  <script src="./app.js?v=20261116-fatih1-ingredient-sync38" defer></script>
+  <script src="./profil.js?v=20261116-fatih1-ingredient-sync38" defer></script>
 </head>
 <body>
   <div class="app" id="appViewport">
@@ -19,7 +19,7 @@
     <div class="category-wrap"><div class="category-bar"><button class="search-toggle" id="searchToggle" aria-label="Søk" aria-expanded="false"><svg viewBox="0 0 24 24" width="29" height="29" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m15.5 15.5 5 5"/></svg></button><nav id="categories" aria-label="Meny kategorier"></nav></div><div class="category-track"><button id="catPrev" aria-label="Forrige kategorier">‹</button><div class="track-window"><span id="catProgress"></span></div><button id="catNext" aria-label="Neste kategorier">›</button></div></div>
     <div class="search-area" id="searchArea" hidden><div class="search-field"><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Søk etter mat eller ingredienser…" aria-label="Søk etter mat" autocomplete="off"><button id="searchClear" type="button" aria-label="Tøm søket" hidden>×</button></div></div>
     <main>
-      <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div class="cache-actions"><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div></div>
+      <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div class="cache-actions"><button id="menuRefresh" class="menu-refresh" type="button" aria-label="Oppdater menyen fra Firebase">Oppdater meny</button><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div></div>
       <div id="notice" role="status" aria-live="polite"></div>
       <section id="draftActiveOrder" class="draft-active-order" aria-label="Bestillingsoversikt" hidden>
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
