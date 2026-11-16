@@ -1,9 +1,9 @@
-:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#173a31;background:#eff5f2;font-size:var(--text-md);--text-sm:11px;--text-md:13px;--text-lg:18px;--dark:#133d32;--green:#087b57;--line:#d2e5dc;--pale:#e0f4e9;--app-width:510px;--menu-card-height:96px}
+:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#173a31;background:var(--fatih1-page-bg);font-size:var(--text-md);--text-sm:11px;--text-md:13px;--text-lg:18px;--dark:#133d32;--green:#087b57;--line:#d2e5dc;--pale:#e0f4e9;--app-width:510px;--menu-card-height:96px;--fatih1-page-bg:#f5f5f5}
 *{box-sizing:border-box}
 body{margin:0}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #e7bc48;outline-offset:2px}[hidden]{display:none!important}
-.app{max-width:var(--app-width);min-height:100dvh;margin:auto;background:#f7fbf9;box-shadow:0 8px 36px #1c4e3620}
+.app{max-width:var(--app-width);min-height:100dvh;margin:auto;background:var(--fatih1-page-bg);box-shadow:0 8px 36px #1c4e3620}
 .header{background:var(--dark);color:white;display:flex;align-items:center;justify-content:space-between;padding:13px 15px;position:sticky;top:0;z-index:20}
 .brand{text-decoration:none;color:white;display:flex;align-items:center;gap:7px;font-weight:750}
 .brand-icon{font-size:22px}
@@ -38,7 +38,7 @@ main{padding:10px 12px 100px}
 .add-round:disabled{background:#9ba8a2}
 #notice{font-size:var(--text-md);color:#986b22;margin:0 3px 10px}
 .overlay{position:fixed;inset:0;background:#0008;z-index:20;touch-action:none;overscroll-behavior:contain}
-.sheet{position:fixed;z-index:21;left:50%;top:50%;transform:translate(-50%,-50%);width:min(100%,var(--app-width));height:min(685px,calc(100dvh - 20px));background:#f7fbf9;border-radius:24px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 45px #0004}
+.sheet{position:fixed;z-index:21;left:50%;top:50%;transform:translate(-50%,-50%);width:min(100%,var(--app-width));height:min(685px,calc(100dvh - 20px));background:var(--fatih1-page-bg);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 45px #0004}
 .sheet-scroll{overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain}
 .hero{height:124px;background:#e2eae4;position:relative;overflow:hidden;display:grid;place-items:center}
 .hero-fallback{font-size:40px}
@@ -53,7 +53,7 @@ main{padding:10px 12px 100px}
 .app{box-shadow:none}
 
 /* Horizontal category carousel and store-hours card */
-.category-wrap{position:sticky;top:66px;z-index:12;height:66px;background:#f7fbf9;border-bottom:1px solid var(--line);box-shadow:0 3px 12px #173a310d}
+.category-wrap{position:sticky;top:66px;z-index:12;height:66px;background:var(--fatih1-page-bg);border-bottom:1px solid var(--line);box-shadow:0 3px 12px #173a310d}
 
 .category-bar nav{flex:1;min-width:0;scroll-behavior:smooth;overscroll-behavior-x:contain;scroll-snap-type:x proximity;touch-action:pan-x;align-items:stretch}
 .category-bar nav button{flex:0 0 auto;min-height:45px;padding:3px 11px;scroll-snap-align:start;font-size:var(--text-sm)}
@@ -119,7 +119,7 @@ html,body{min-height:100%;overflow-x:clip}
 .category-bar nav.is-grabbing button{cursor:grabbing}
 
 /* Search control */
-.search-area{padding:13px 14px 15px;background:#f7fbf9;border-bottom:1px solid var(--line)}
+.search-area{padding:13px 14px 15px;background:var(--fatih1-page-bg);border-bottom:1px solid var(--line)}
 .search-field{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:0 12px;background:white;border:1px solid #b8d9ca;border-radius:16px;box-shadow:0 2px 8px #123d3010}
 .search-field:focus-within{border-color:var(--green);box-shadow:0 0 0 3px #07836212}
 .search-icon{font-size:26px;line-height:1;color:#167958;flex:none}
@@ -346,7 +346,7 @@ html,body{min-height:100%;overflow-x:clip}
 
 
 /* Cart: shared 510px app width, compact Scandinavian layout */
-.cart-sheet{z-index:30;top:0;bottom:0;transform:translateX(-50%);width:min(100%,var(--app-width));height:100dvh;max-height:none;border:0;border-radius:0;background:#EEEEEE;box-shadow:0 8px 38px #0002}
+.cart-sheet{z-index:30;top:0;bottom:0;transform:translateX(-50%);width:min(100%,var(--app-width));height:100dvh;max-height:none;border:0;border-radius:0;background:var(--fatih1-page-bg);box-shadow:0 8px 38px #0002}
 .cart-topbar{height:65px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--dark);color:#fff}
 .cart-back{display:grid;place-items:center;width:39px;height:39px;flex:none;border:1px solid #ffffff44;border-radius:50%;background:#ffffff0d;color:white;font-size:29px;line-height:1}
 .cart-brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding:0;border:0;background:transparent;color:inherit;text-align:left;font-family:inherit;font-size:var(--text-md);font-weight:800;cursor:pointer}
@@ -598,7 +598,7 @@ html,body{min-height:100%;overflow-x:clip}
 
 
 /* FATIH1 profile: one local-first feature panel */
-.fatih1-profile-sheet{z-index:36;top:0;bottom:0;transform:translateX(-50%);height:100dvh;max-height:none;border-radius:0;background:#f7fbf9;color:#153d30;box-shadow:0 8px 38px #0003}
+.fatih1-profile-sheet{z-index:36;top:0;bottom:0;transform:translateX(-50%);height:100dvh;max-height:none;border-radius:0;background:var(--fatih1-page-bg);color:#153d30;box-shadow:0 8px 38px #0003}
 .fatih1-profile-topbar{display:flex;align-items:center;gap:12px;flex:none;min-height:64px;padding:9px 14px;background:var(--dark);color:#fff}
 .fatih1-profile-topbar>strong{flex:1;font-size:var(--text-lg);font-weight:850}
 .fatih1-profile-back,.fatih1-profile-topmark{display:grid;place-items:center;width:39px;height:39px;flex:none;border:1px solid #ffffff55;border-radius:50%;background:#ffffff12;color:#fff}
@@ -1065,8 +1065,8 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 
 
 /* FATIH1 product details / reference layout. Scoped to the product sheet only. */
-#productSheet{height:min(920px,calc(100dvh - 20px));border-radius:22px;background:#fff;color:#09241e}
-#productSheet .product-topbar{height:54px;min-height:54px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 12px;background:#fff;flex:none}
+#productSheet{height:min(920px,calc(100dvh - 20px));border-radius:22px;background:var(--fatih1-page-bg);color:#09241e}
+#productSheet .product-topbar{height:54px;min-height:54px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 12px;background:var(--fatih1-page-bg);flex:none}
 #productSheet .product-topbar h2{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:19px;font-weight:600;line-height:1.25;color:#0a2822}
 #productSheet .product-topbar .close,#productSheet .product-topbar .sheet-favorite{position:static;display:grid;place-items:center;width:40px;height:40px;line-height:1;padding:0;border:0;border-radius:12px;background:transparent;box-shadow:none;cursor:pointer}
 #productSheet .product-topbar .close{color:#081f1b}
@@ -1074,7 +1074,7 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .product-topbar .sheet-favorite{font-family:inherit;color:#007a29;font-size:40px;font-weight:400;transition:transform .18s ease}
 #productSheet .product-topbar .sheet-favorite.is-favorite{color:#c93c52}
 #productSheet .product-topbar .sheet-favorite:active{transform:scale(.92)}
-#productSheet .sheet-scroll{background:#fff;padding:0 12px 16px}
+#productSheet .sheet-scroll{background:var(--fatih1-page-bg);padding:0 12px 16px}
 #productSheet .hero{height:137px;min-height:137px;margin:3px 0 0;border-radius:16px;background:#e9f3ed;overflow:hidden}
 #productSheet .hero-photo{height:100%;width:100%;object-fit:cover;object-position:center}
 #productSheet .hero-fallback{font-size:48px}
@@ -1377,7 +1377,7 @@ html[data-fatih1-theme="dark"] .cart-price-notice,html[data-fatih1-theme="dark"]
 
 
 /* FATIH1 universal cart surface: identical on PC and mobile. */
-#cartSheet.cart-sheet{background:#EEEEEE;width:min(100%,var(--app-width));max-width:var(--app-width)}
+#cartSheet.cart-sheet{background:var(--fatih1-page-bg);width:min(100%,var(--app-width));max-width:var(--app-width)}
 #cartSheet .cart-content-scroll{background:transparent}
 html[data-fatih1-theme="dark"] #cartSheet.cart-sheet{background:#102923}
 html[data-fatih1-theme="dark"] #cartSheet .cart-content-scroll{background:transparent}
