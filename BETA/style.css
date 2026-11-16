@@ -1451,3 +1451,18 @@ html[data-fatih1-theme="dark"] .cart-price-notice,html[data-fatih1-theme="dark"]
 #cartSheet .cart-content-scroll{background:transparent}
 html[data-fatih1-theme="dark"] #cartSheet.cart-sheet{background:#102923}
 html[data-fatih1-theme="dark"] #cartSheet .cart-content-scroll{background:transparent}
+
+
+/* FATIH1 manual refresh: only user-initiated full menu reads, no polling. */
+.cache-actions .menu-refresh{
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ min-height:27px;padding:4px 9px;
+ border:1px solid #d5e5dc;border-radius:9px;
+ background:#fff;color:#1c775b;
+ font:inherit;font-size:11px;font-weight:700;line-height:1.2;
+}
+.cache-actions .menu-refresh:hover{background:#edf7f1}
+.cache-actions .menu-refresh:disabled{opacity:.55;cursor:wait}
+html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
+ background:#193d31;border-color:#426f59;color:#c2efd8;
+}
