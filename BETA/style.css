@@ -1154,12 +1154,20 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
  letter-spacing:-.025em;font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 #productSheet .sheet-footer .primary{
- display:flex;align-items:center;justify-content:center;
- flex:initial;padding:0 7px;
- border:1px solid #087651;
- background:#087b57;color:#fff;
- font-family:inherit;font-size:clamp(12px,3vw,15px);
- font-weight:800;line-height:1.15;text-align:center;white-space:nowrap;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex:initial;
+ padding:0 7px;
+ border:1px solid #009688;
+ background:#087b57;
+ color:#fff;
+ font-family:inherit;
+ font-size:16px;
+ font-weight:800;
+ line-height:1.15;
+ text-align:center;
+ white-space:nowrap;
  box-shadow:0 3px 9px #075c3d26;
 }
 #productSheet .sheet-footer .primary:not(:disabled):active{
