@@ -342,7 +342,6 @@ html,body{min-height:100%;overflow-x:clip}
 .cart-topbar{height:65px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--dark);color:#fff}
 .cart-back{display:grid;place-items:center;width:39px;height:39px;flex:none;border:1px solid #ffffff44;border-radius:50%;background:#ffffff0d;color:white;font-size:29px;line-height:1}
 .cart-brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;padding:0;border:0;background:transparent;color:inherit;text-align:left;font-family:inherit;font-size:var(--text-md);font-weight:800;cursor:pointer}
-.cart-brand>span[aria-hidden="true"]{font-size:24px}
 .cart-content-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:15px 12px 18px}
 .cart-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 14px}
 .cart-steps span{display:flex;align-items:center;gap:7px;min-width:0;padding:0 2px 10px;border-bottom:2px solid #c9e0d5;color:#678277;font-size:var(--text-sm);font-weight:700}
@@ -578,7 +577,7 @@ html,body{min-height:100%;overflow-x:clip}
 .header-icon-actions [hidden]{display:none!important}
 .cache-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-right:10px}
 .cache-actions .cache-line{min-width:0;flex:1}
-@media(max-width:370px){.header-icon-actions{gap:5px}.header-icon-actions .header-icon-round{width:37px;min-width:37px;height:37px}.brand{font-size:12px}}
+@media(max-width:370px){.header-icon-actions{gap:5px}.header-icon-actions .header-icon-round{width:37px;min-width:37px;height:37px}}
 
 /* FATIH1 profile: one local-first feature panel */
 .fatih1-profile-sheet{z-index:36;top:0;bottom:0;transform:translateX(-50%);height:100dvh;max-height:none;border-radius:0;background:#f7fbf9;color:#153d30;box-shadow:0 8px 38px #0003}
@@ -688,8 +687,8 @@ html[data-fatih1-theme="dark"] :is(.fatih1-profile-menu-row,.fatih1-profile-favo
 /* Profile header remains consistent with the menu: three actionable SVG buttons. */
 .fatih1-profile-topbar{gap:9px;padding:9px 10px}
 .fatih1-profile-brand{display:flex;align-items:center;gap:6px;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
-.fatih1-profile-brand>span{font-size:22px;flex:none}
-.fatih1-profile-brand strong{font-size:var(--text-md);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fatih1-profile-brand>span{flex:none}
+.fatih1-profile-brand strong{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fatih1-profile-header-icons{gap:5px}
 .fatih1-profile-header-icons .header-icon-round{width:38px;min-width:38px;height:38px}
 .fatih1-profile-header-icons .header-icon-round svg{width:20px;height:20px}
@@ -699,8 +698,6 @@ html[data-fatih1-theme="dark"] :is(.fatih1-profile-menu-row,.fatih1-profile-favo
 @media(max-width:370px){
  .fatih1-profile-topbar{gap:6px;padding:8px 8px}
  .fatih1-profile-brand{gap:3px}
- .fatih1-profile-brand strong{font-size:11px}
- .fatih1-profile-brand>span{font-size:18px}
  .fatih1-profile-back{width:33px;height:33px}
  .fatih1-profile-header-icons{gap:4px}
  .fatih1-profile-header-icons .header-icon-round{width:33px;min-width:33px;height:33px}
@@ -763,8 +760,7 @@ html[data-fatih1-theme="dark"] #fatih1BonusStatus{color:#a6cdbb}
 .cart-topbar{gap:8px;padding:0 10px}
 .cart-topbar .cart-back{display:grid;place-items:center;width:39px;height:39px;padding:0;font-size:0}
 .cart-topbar .cart-back svg{width:22px;height:22px}
-.cart-topbar .cart-brand{flex:1;min-width:0;gap:7px;font-size:clamp(10px,2.6vw,13px);text-overflow:ellipsis}
-.cart-topbar .cart-brand>span[aria-hidden="true"]{font-size:21px}
+.cart-topbar .cart-brand{flex:1;min-width:0;gap:7px;text-overflow:ellipsis}
 .cart-header-actions{gap:5px}
 .cart-header-actions .header-icon-round{width:38px;min-width:38px;height:38px}
 .cart-header-actions .header-icon-round svg{width:20px;height:20px}
@@ -774,8 +770,7 @@ html[data-fatih1-theme="dark"] #fatih1BonusStatus{color:#a6cdbb}
 @media(max-width:370px){
  .cart-topbar{gap:5px;padding:0 7px}
  .cart-topbar .cart-back{width:34px;height:34px}
- .cart-topbar .cart-brand{gap:3px;font-size:11px}
- .cart-topbar .cart-brand>span[aria-hidden="true"]{font-size:17px}
+ .cart-topbar .cart-brand{gap:3px}
  .cart-header-actions{gap:4px}
  .cart-header-actions .header-icon-round{width:33px;min-width:33px;height:33px}
  .cart-header-actions .header-icon-round svg{width:18px;height:18px}
@@ -1286,3 +1281,55 @@ html[data-fatih1-theme="dark"] .cart-footer-total strong{color:#e9fff1}
 .cart-price-notice,.cart-line-warning{color:#86581b;background:#fff8e8;border:1px solid #ecd7ae;border-radius:9px;padding:10px 12px;font-size:12px;line-height:1.5}
 .cart-price-notice{margin:8px 0 12px}.cart-line-warning{margin:8px 0 0}
 html[data-fatih1-theme="dark"] .cart-price-notice,html[data-fatih1-theme="dark"] .cart-line-warning{background:#483c23;color:#ffe8af;border-color:#826b3b}
+
+
+/* FATIH1 common top bars: one readable brand scale on every screen. */
+:root{
+ --fatih1-topbar-height:65px;
+ --fatih1-brand-font:13px;
+ --fatih1-brand-flame:20px;
+ --fatih1-action-size:40px;
+ --fatih1-topbar-gap:8px;
+}
+:is(.header,.cart-topbar,.fatih1-profile-topbar){
+ height:var(--fatih1-topbar-height);min-height:var(--fatih1-topbar-height);
+ padding:0 10px;gap:var(--fatih1-topbar-gap);align-items:center;
+}
+:is(.header .brand,.cart-topbar .cart-brand,.fatih1-profile-topbar .fatih1-profile-brand){
+ display:flex;align-items:center;flex:1 1 auto;min-width:0;
+ gap:7px;overflow:hidden;white-space:nowrap;
+ font-family:inherit;font-size:var(--fatih1-brand-font);font-weight:800;
+ line-height:1.2;letter-spacing:0;
+}
+:is(.header #brandName,.cart-topbar #cartRestaurantName,.fatih1-profile-topbar #fatih1ProfileRestaurantName){
+ display:block;flex:1 1 auto;min-width:0;max-width:100%;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font-size:inherit;font-weight:inherit;line-height:inherit;
+}
+:is(.header .brand-icon,.cart-topbar .cart-brand>span[aria-hidden="true"],.fatih1-profile-topbar .fatih1-profile-brand>span[aria-hidden="true"]){
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ width:22px;font-size:var(--fatih1-brand-flame);line-height:1;
+}
+:is(.header .header-icon-actions,.cart-header-actions,.fatih1-profile-header-icons){flex:none;gap:6px}
+:is(.header-icon-actions .header-icon-round,.cart-header-actions .header-icon-round,.fatih1-profile-header-icons .header-icon-round){
+ width:var(--fatih1-action-size);min-width:var(--fatih1-action-size);height:var(--fatih1-action-size);
+}
+:is(.header-icon-actions .header-icon-round,.cart-header-actions .header-icon-round,.fatih1-profile-header-icons .header-icon-round) svg{
+ width:20px;height:20px;
+}
+:is(.cart-topbar .cart-back,.fatih1-profile-topbar .fatih1-profile-back){
+ width:var(--fatih1-action-size);min-width:var(--fatih1-action-size);height:var(--fatih1-action-size);
+}
+:is(.header-icon-actions,.cart-header-actions,.fatih1-profile-header-icons) .count{
+ min-width:18px;font-size:11px;line-height:14px;
+}
+@media(max-width:370px){
+ :root{
+  --fatih1-brand-font:12px;--fatih1-brand-flame:18px;
+  --fatih1-action-size:34px;--fatih1-topbar-gap:5px;
+ }
+ :is(.header,.cart-topbar,.fatih1-profile-topbar){padding:0 7px}
+ :is(.header .brand,.cart-topbar .cart-brand,.fatih1-profile-topbar .fatih1-profile-brand){gap:4px}
+ :is(.header .header-icon-actions,.cart-header-actions,.fatih1-profile-header-icons){gap:4px}
+ :is(.header .brand-icon,.cart-topbar .cart-brand>span[aria-hidden="true"],.fatih1-profile-topbar .fatih1-profile-brand>span[aria-hidden="true"]){width:19px}
+}
