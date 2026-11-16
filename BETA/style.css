@@ -1106,7 +1106,7 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .sheet-footer .qty{display:grid;grid-template-columns:1fr 34px 1fr;align-items:center;justify-content:center;min-width:0;min-height:49px;border:1px solid #c8d4df;border-radius:14px}
 #productSheet .sheet-footer .qty button{font-size:25px;color:#273b43;font-weight:350;padding:0;height:44px}
 #productSheet .sheet-footer .qty b{padding:6px 0;border-left:1px solid #d2dde4;border-right:1px solid #d2dde4;text-align:center;font-size:18px;color:#0d2923}
-#productSheet .sheet-footer .product-total{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0;padding-left:10px;border-left:1px solid #c8d4df}
+#productSheet .sheet-footer .product-total{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;border:1px solid #c8d4df;border-radius:10px;background:#c5e1a591;text-align:center}
 #productSheet .sheet-footer .product-total span{font-size:13px;color:#637080}
 #productSheet .sheet-footer .product-total strong{font-size:19px;font-weight:600;color:#08231d;white-space:nowrap}
 #productSheet .sheet-footer .primary{height:48px;min-height:48px;padding:7px 10px;border-radius:12px;background:#008020;color:#fff;font-size:16px;font-weight:600;box-shadow:0 3px 0 #005e21}
@@ -1128,6 +1128,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity .option-
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty{border-color:#477763}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty b,html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total strong{color:#f1fff7}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total span{color:#bbd3c6}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total{background:#294a38;border-color:#477763}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .primary{background:#087f41}
 
 
@@ -1153,7 +1154,6 @@ html[data-fatih1-theme="dark"] #productSheet .sheet-footer .primary{background:#
  #productSheet .sheet-footer{grid-template-columns:minmax(88px,1fr) minmax(75px,.9fr) minmax(105px,1.3fr)}
  #productSheet .sheet-footer .qty{grid-template-columns:1fr 28px 1fr}
  #productSheet .sheet-footer .qty b{font-size:17px}
- #productSheet .sheet-footer .product-total{padding-left:7px}
  #productSheet .sheet-footer .product-total strong{font-size:18px}
  #productSheet .sheet-footer .primary{font-size:16px}
 
