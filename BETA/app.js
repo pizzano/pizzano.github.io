@@ -701,7 +701,7 @@ function productCard(i){
 }
 function updateRestaurantBrand(){
  const name=String(menu?.settings?.restaurantName||'FATIH1').trim()||'FATIH1';
- for(const id of ['brandName','cartRestaurantName','fatih1ProfileRestaurantName','sheetRestaurantName']){
+ for(const id of ['brandName','cartRestaurantName','fatih1ProfileRestaurantName']){
   const node=$(id);if(node)node.textContent=name;
  }
  document.title=name+' · Bestilling | FATIH1';
