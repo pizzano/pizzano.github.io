@@ -1055,7 +1055,7 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 
 /* FATIH1 product details / reference layout. Scoped to the product sheet only. */
 #productSheet{height:min(920px,calc(100dvh - 20px));border-radius:22px;background:var(--fatih1-page-bg);color:#09241e}
-#productSheet .product-topbar{height:54px;min-height:54px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 12px;background:var(--fatih1-page-bg);flex:none}
+#productSheet .product-topbar{height:54px;min-height:54px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:6px 12px;background-color:#ffffff;flex:none}
 #productSheet .product-topbar h2{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:19px;font-weight:600;line-height:1.25;color:#0a2822}
 #productSheet .product-topbar .close,#productSheet .product-topbar .sheet-favorite{position:static;display:grid;place-items:center;width:40px;height:40px;line-height:1;padding:0;border:0;border-radius:12px;background:transparent;box-shadow:none;cursor:pointer}
 #productSheet .product-topbar .close{color:#081f1b}
