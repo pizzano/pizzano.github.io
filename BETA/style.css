@@ -212,7 +212,7 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .option-choice{
  display:flex;align-items:center;gap:9px;min-height:46px;
  margin:0;padding:8px 10px;border:0;border-radius:9px;
- background:#d8e2dc36;color:#1e4537;cursor:pointer;font-size:var(--text-md);
+ background:#ffffff;color:#1e4537;cursor:pointer;font-size:var(--text-md);
 }
 #productSheet .option-choice.is-chosen,#productSheet .option-choice:has(input:checked){
  background:#d9f5e5;
@@ -1084,7 +1084,7 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .product-section-heading{margin:0 0 8px;display:flex;align-items:center;gap:8px}
 #productSheet .product-section-heading strong{font-size:16px;font-weight:650;line-height:1.35;color:#103d31;letter-spacing:-.012em}
 #productSheet .option-rows{gap:4px}
-#productSheet .option-choice{position:relative;display:flex;align-items:center;gap:9px;min-height:43px;padding:6px 10px;border:1px solid #d6e0e3;border-radius:11px;background:#EEEEEE;color:#09241e}
+#productSheet .option-choice{position:relative;display:flex;align-items:center;gap:9px;min-height:43px;padding:6px 10px;border:1px solid #d6e0e3;border-radius:11px;background:#ffffff;color:#09241e}
 #productSheet .option-choice.is-chosen,#productSheet .option-choice:has(input:checked){background:#e6f5eb;border-color:#7ccaa1;color:#09241e}
 #productSheet .option-choice input{width:19px;height:19px;margin:0;accent-color:#118553;flex:none}
 #productSheet .option-choice input[type="checkbox"]{border-radius:6px}
@@ -1111,7 +1111,7 @@ html[data-fatih1-theme="dark"] .product-photo .image-fallback{color:#b0d6c2}
 #productSheet .sheet-footer .product-total strong{font-size:19px;font-weight:600;color:#08231d;white-space:nowrap}
 #productSheet .sheet-footer .primary{height:48px;min-height:48px;padding:7px 10px;border-radius:12px;background:#008020;color:#fff;font-size:16px;font-weight:600;box-shadow:0 3px 0 #005e21}
 #productSheet .sheet-footer .primary:disabled{background:#91b69b;box-shadow:none}
-#productSheet .ingredient-editor{border:1px solid #dce7e2;border-radius:12px;padding:12px}
+#productSheet .ingredient-editor{background:#ffffff;border:1px solid #dce7e2;border-radius:12px;padding:12px}
 #productSheet .ingredient-editor-title{font-size:14px}
 #productSheet .kitchen-panel,#productSheet .allergens-panel{padding-top:1px;margin-bottom:18px}
 #productSheet .kitchen-panel .product-section-heading strong,#productSheet .allergens-panel .product-section-heading strong{font-size:16px;font-weight:650}
