@@ -306,6 +306,9 @@ function restoreCartLineForEdit(line,index){
   }
  }
  removedIngredients=new Set(line.removedIngredients||[]);
+ // Reopen ingredient customization when editing a cart item with removals.
+ // Fresh product sheets still start with this section collapsed.
+ ingredientEditorExpanded=removedIngredients.size>0;
  const allowed=kitchenNotesFor(current);
  selectedKitchenNotes=new Set((line.quickNotes||[]).filter(n=>allowed.includes(n)));
  const raw=String(line.comment||'');
