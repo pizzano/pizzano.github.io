@@ -1695,6 +1695,11 @@ html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
  padding:7px 10px;
  background:linear-gradient(180deg,#f1f2ef,#e8ece8);
 }
+#productSheet .option-choice.is-quantity.is-chosen,
+#productSheet .option-choice.is-quantity:has(input:checked){
+ border-color:transparent;
+ background:linear-gradient(100deg,#d9e9df,#cddfd6);
+}
 #productSheet .option-choice.is-quantity .option-tick{
  display:grid;
  place-items:center;
@@ -1996,3 +2001,10 @@ html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty{border-color:#49
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty b{background:#305946;color:#f1fff7}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total{background:#2d5746}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total :is(span,strong){color:#e9fff2}
+#productSheet .sheet-scroll::-webkit-scrollbar{display:none}
+#productSheet .sheet-scroll{scrollbar-width:none}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity.is-chosen,
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(input:checked){
+ background:linear-gradient(110deg,#30614c,#275c48);
+ border-color:#418b6b;
+}
