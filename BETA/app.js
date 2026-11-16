@@ -761,6 +761,8 @@ function showSheet(id,editIndex=null){
  updateSheetFavorite();show('productSheet');
  // Reset again after showing, when the browser has laid out the new product.
  if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
+ // Fetch only the current item's rules when an old local menu has none.
+ void recheckMissingIngredientRules(id);
 }
 let removedIngredients=new Set(),ingredientEditorExpanded=false,selectedKitchenNotes=new Set();
 function productSectionHeading(title,required){
@@ -789,6 +791,47 @@ function removableIngredientRules(item){
   const key=x.name.trim().toLocaleLowerCase('no');
   if(seen.has(key))return false;seen.add(key);return true;
  }).map(x=>String(x.name).trim());
+}
+// A manually edited Firebase product may have new ingredientRules while a
+// previously visited customer's full menu is still cached. Check just the
+// opened product, once per page session, only if its customization is missing.
+// Never infer removable ingredients from descriptions or other products.
+const ingredientRulesChecked=new Set();
+async function recheckMissingIngredientRules(productId){
+ const key=String(productId);
+ const item=productById(productId);
+ if(!item||removableIngredientRules(item).length||ingredientRulesChecked.has(key))return;
+ ingredientRulesChecked.add(key);
+ const sectionIndex=menu.sections.findIndex(section=>list(section.items).some(product=>String(product?.id)===key));
+ if(sectionIndex<0)return;
+ const itemIndex=list(menu.sections[sectionIndex].items).findIndex(product=>String(product?.id)===key);
+ if(itemIndex<0)return;
+ try{
+  // One small Firebase read. Check the id before merging so a reordered
+  // section cannot accidentally copy another pizza's ingredients.
+  const response=await fetch(BASE+'/menu/sections/'+sectionIndex+'/items/'+itemIndex+'.json',{cache:'no-store'});
+  if(!response.ok)throw Error('Firebase HTTP '+response.status);
+  const remote=await response.json();
+  if(!remote||String(remote.id)!==key){
+   // An obsolete index means the local catalogue needs its normal refresh.
+   await refreshMenu(false);
+   return;
+  }
+  const names=removableIngredientRules(remote);
+  if(!names.length)return;
+  const updated=productById(productId);
+  if(!updated||removableIngredientRules(updated).length)return;
+  updated.ingredientRules=remote.ingredientRules;
+  saveLiveCacheSoon();
+  if(current&&String(current.id)===key&&!$('productSheet').hidden){
+   current=updated;
+   if(removedIngredients.size)ingredientEditorExpanded=true;
+   ingredientEditor();
+   showFatih1Toast('Tilpass ingredienser er oppdatert','info');
+  }
+ }catch(error){
+  console.warn('FATIH1: kunne ikke kontrollere ingrediensvalg for produktet',error);
+ }
 }
 function ingredientEditor(){
  const names=removableIngredientRules(current),host=$('sheetIngredients');
