@@ -1115,21 +1115,21 @@ $('menu').addEventListener('keydown',e=>{
 (function initProductSwipeDismiss(){
  const sheet=$('productSheet'),scroll=sheet.querySelector('.sheet-scroll'),header=sheet.querySelector('.product-topbar');
  let startY=0,lastY=0,startTime=0,dragging=false,tracking=false,fromHeader=false;
- const mobile=()=>window.matchMedia('(max-width:600px) and (pointer:coarse)').matches;
+ const touchDevice=()=>window.matchMedia('(pointer:coarse)').matches;
  const reset=()=>{
   dragging=false;tracking=false;
   sheet.style.removeProperty('--product-drag-y');
   sheet.classList.remove('is-dragging','is-drag-settling');
  };
  function start(e,headerTouch){
-  if(sheet.hidden||!mobile()||e.touches.length!==1)return;
+  if(sheet.hidden||!touchDevice()||e.touches.length!==1)return;
   if(e.target.closest('button,input,textarea,select,[contenteditable]'))return;
   if(!headerTouch&&scroll.scrollTop>1)return;
   tracking=true;dragging=false;fromHeader=headerTouch;
   startY=e.touches[0].clientY;lastY=startY;startTime=performance.now();
  }
  function move(e){
-  if(!tracking||!mobile()||e.touches.length!==1)return;
+  if(!tracking||!touchDevice()||e.touches.length!==1)return;
   const dy=e.touches[0].clientY-startY;
   if(!dragging){
    if(dy<=9)return;
