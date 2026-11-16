@@ -279,7 +279,7 @@ html,body{min-height:100%;overflow-x:clip}
  display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 7px;
 }
 #productSheet .ingredient-heading strong{font-size:var(--text-md)}
-#productSheet .ingredient-heading small{font-size:var(--text-sm);color:#71877b}
+#productSheet .ingredient-heading small{font-size:var(--text-sm);color:#F44336}
 #productSheet .ingredient-chips{display:flex;flex-wrap:wrap;gap:6px}
 #productSheet .ingredient-chip{
  display:inline-flex;align-items:center;min-height:31px;
@@ -289,7 +289,7 @@ html,body{min-height:100%;overflow-x:clip}
 #productSheet .ingredient-chip.is-removed{
  border-color:#d9a7a4;background:#fff0ed;color:#a73736;text-decoration:line-through;
 }
-#productSheet .ingredient-editor-body p{margin:7px 0 0;color:#71867b;font-size:var(--text-sm)}
+#productSheet .ingredient-editor-body p{margin:5px;padding:5px;color:#F44336;font-size:var(--text-sm)}
 #productSheet .panel-caption{margin:0 0 8px;color:#71867b;font-size:var(--text-sm)}
 #productSheet .quick-notes{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 9px}
 #productSheet .quick-note{
@@ -1501,7 +1501,7 @@ html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
  color:#164c42;
  touch-action:pan-y;
 }
-#productSheet .product-topbar::before{content:none;display:none}
+#productSheet .product-topbar::before{content:"";display:block;position:absolute;z-index:1;top:5px;left:50%;transform:translateX(-50%);width:38px;height:4px;border-radius:999px;background:#c7d6cf;pointer-events:none}
 #productSheet .product-topbar h2{
  grid-column:2;
  grid-row:1;
@@ -1614,7 +1614,6 @@ html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
 #productSheet .product-section-flag{display:none}
 #productSheet :is(.kitchen-panel,.allergens-panel) .product-section-heading strong{font-size:15px;font-weight:750}
 #productSheet .ingredient-heading strong{font-size:13px;font-weight:750}
-#productSheet .ingredient-heading small{font-size:11px}
 #productSheet .ingredient-chip{font-size:11px;font-weight:700;min-height:28px;padding:4px 7px}
 #productSheet .quick-note{font-size:11px;min-height:27px;padding:4px 7px}
 #productSheet .kitchen-panel textarea{font-size:13px;line-height:1.35}
@@ -1902,7 +1901,7 @@ html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
  border-radius:11px;
  background:#dce8e1;
  color:#125344;
- font-size:18px;
+ font-size:16px;
  font-weight:750;
  font-variant-numeric:tabular-nums;
 }
