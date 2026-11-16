@@ -1466,3 +1466,300 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-content-scroll{background:transp
 html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
  background:#193d31;border-color:#426f59;color:#c2efd8;
 }
+
+
+/* FATIH1 PRODUCT DETAIL — same visual language as the cart reference.
+   One layout for both desktop and phone; no viewport width breakpoints.
+   Only the product sheet is affected. */
+#productSheet{
+ top:0;
+ bottom:0;
+ width:min(100%,var(--app-width));
+ height:100dvh;
+ min-height:0;
+ max-height:none;
+ border:0;
+ border-radius:0;
+ background:var(--fatih1-page-bg);
+ transform:translate(-50%,var(--product-drag-y,0px));
+ box-shadow:0 8px 38px #0002;
+}
+#productSheet .product-topbar{
+ display:grid;
+ grid-template-columns:42px minmax(0,1fr) 42px;
+ align-items:center;
+ gap:10px;
+ flex:none;
+ width:100%;
+ height:65px;
+ min-height:65px;
+ padding:0 12px;
+ border:0;
+ background:#133d32;
+ color:#fff;
+ touch-action:pan-y;
+}
+#productSheet .product-topbar::before{content:none}
+#productSheet .sheet-header-brand{
+ display:flex;
+ align-items:center;
+ gap:9px;
+ min-width:0;
+ color:#fff;
+ line-height:1.2;
+}
+#productSheet .sheet-header-brand .sheet-brand-flame{display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:22px;width:24px}
+#productSheet .sheet-header-brand strong{
+ display:block;
+ min-width:0;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+ font-size:13px;
+ font-weight:850;
+}
+#productSheet .product-topbar :is(.product-back,.sheet-favorite){
+ position:static;
+ display:grid;
+ place-items:center;
+ width:42px;
+ height:42px;
+ padding:0;
+ border:1px solid #ffffff55;
+ border-radius:50%;
+ background:#ffffff0d;
+ color:#fff;
+ box-shadow:none;
+}
+#productSheet .product-topbar :is(.product-back,.sheet-favorite) svg{width:23px;height:23px;stroke:currentColor}
+#productSheet .product-topbar .sheet-favorite.is-favorite{color:#ffd3df;border-color:#f2b7c5;background:#ffffff16}
+#productSheet .product-topbar :is(.product-back,.sheet-favorite):focus-visible{outline:2px solid #f3d477;outline-offset:2px}
+#productSheet .sheet-scroll{
+ flex:1;
+ min-height:0;
+ overflow-x:hidden;
+ overflow-y:auto;
+ padding:12px 12px 22px;
+ background:var(--fatih1-page-bg);
+}
+#productSheet .sheet-product-overview{
+ display:block;
+ margin:0 0 14px;
+ padding:12px;
+ border:1px solid #2196f3;
+ border-radius:16px;
+ background:#fff;
+ box-shadow:0 2px 8px #174c3309;
+}
+#productSheet .sheet-product-overview h2{
+ margin:0 0 10px;
+ color:#155d47;
+ font-size:18px;
+ font-weight:850;
+ line-height:1.3;
+ letter-spacing:-.015em;
+ overflow-wrap:anywhere;
+}
+#productSheet .sheet-product-overview .hero{
+ height:168px;
+ min-height:168px;
+ margin:0;
+ border-radius:11px;
+ background:#e8f1ec;
+ overflow:hidden;
+}
+#productSheet .sheet-product-overview .hero-photo{display:block;width:100%;height:100%;object-fit:cover}
+#productSheet .sheet-product-overview .sheet-intro{
+ margin:10px 0 0;
+ padding:9px 11px;
+ border:0;
+ border-radius:9px;
+ background:#f4f7f5;
+ text-align:left;
+}
+#productSheet .sheet-product-overview .sheet-intro p{
+ margin:0;
+ color:#647f72;
+ font-size:13px;
+ line-height:1.45;
+}
+#productSheet .product-section,
+#productSheet #sheetIngredients>.ingredient-editor{
+ display:block;
+ margin:0 0 13px;
+ padding:12px;
+ border:1px solid #2196f3;
+ border-radius:16px;
+ background:#fff;
+ box-shadow:0 2px 8px #174c3309;
+}
+#productSheet .product-section-heading{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:7px;
+ margin:0 0 11px;
+ color:#173d32;
+}
+#productSheet .product-section-heading strong{
+ color:#173d32;
+ font-size:17px;
+ font-weight:850;
+ line-height:1.25;
+ letter-spacing:-.015em;
+}
+#productSheet .option-rows{display:grid;gap:6px}
+#productSheet .option-choice{
+ display:flex;
+ align-items:center;
+ gap:9px;
+ min-height:46px;
+ padding:9px 10px;
+ border:1px solid transparent;
+ border-radius:9px;
+ background:#f4f7f5;
+ color:#173d32;
+}
+#productSheet .option-choice.is-chosen,
+#productSheet .option-choice:has(input:checked){
+ border-color:#b5dcc7;
+ background:#e5f5ed;
+}
+#productSheet .option-choice .option-label-text{color:#234b3b;font-size:13px;font-weight:650}
+#productSheet .option-choice .opt-price{color:#173d32;font-size:13px;font-weight:800;white-space:nowrap}
+#productSheet .option-choice.is-quantity{
+ display:grid;
+ grid-template-columns:21px minmax(0,1fr) auto minmax(48px,max-content);
+ column-gap:6px;
+ min-height:48px;
+ padding:7px 9px;
+}
+#productSheet .option-choice.is-quantity .option-quantity{
+ display:grid;
+ grid-template-columns:27px 23px 27px;
+ min-width:0;
+ height:34px;
+ padding:0;
+ gap:0;
+ overflow:hidden;
+ border:1px solid #b6d8c7;
+ border-radius:99px;
+ background:#fff;
+}
+#productSheet .option-choice.is-quantity .option-quantity button{
+ width:27px;
+ min-width:27px;
+ height:33px;
+ padding:0;
+ border:0;
+ border-radius:0;
+ background:#087e5d;
+ color:#fff;
+ font-size:19px;
+}
+#productSheet .option-choice.is-quantity .option-quantity button:disabled{background:#dcebe3;color:#6e9984}
+#productSheet .option-choice.is-quantity .option-quantity b{
+ display:grid;
+ place-items:center;
+ min-width:23px;
+ height:33px;
+ padding:0;
+ border:0;
+ background:#fff;
+ color:#173d32;
+ font-size:12px;
+ font-weight:800;
+}
+#productSheet .ingredient-editor-toggle{min-height:40px;color:#173d32}
+#productSheet .ingredient-editor-title{font-size:16px;font-weight:850}
+#productSheet .ingredient-chip{min-height:32px;border-radius:9px;background:#f4f7f5}
+#productSheet .ingredient-chip.is-removed{background:#ffebea;border-color:#eab7b7;color:#b63539}
+#productSheet .kitchen-panel textarea{
+ min-height:74px;
+ padding:12px;
+ border:1px solid #cee0d5;
+ border-radius:9px;
+ background:#f8faf9;
+}
+#productSheet .allergen-chip{background:#f4f7f5;border-color:#dce7e2}
+#productSheet .sheet-footer{
+ grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr) minmax(0,1.35fr);
+ gap:9px;
+ padding:10px 12px max(10px,env(safe-area-inset-bottom));
+ border-top:1px solid #d3e8db;
+ background:#fff;
+ box-shadow:0 -3px 12px #133d3210;
+}
+#productSheet .sheet-footer .qty{
+ grid-template-columns:minmax(0,1fr) minmax(28px,.76fr) minmax(0,1fr);
+ overflow:hidden;
+ padding:0;
+ border:1px solid #b6d8c7;
+ border-radius:14px;
+ background:#087e5d;
+}
+#productSheet .sheet-footer .qty button{
+ width:100%;
+ height:100%;
+ min-height:0;
+ border-radius:0;
+ background:#087e5d;
+ color:#fff;
+ font-weight:650;
+}
+#productSheet .sheet-footer .qty button:active{background:#076948}
+#productSheet .sheet-footer .qty b{
+ width:100%;
+ height:100%;
+ border-radius:0;
+ background:#fff;
+ color:#173d32;
+}
+#productSheet .sheet-footer .product-total{
+ gap:3px;
+ border:1px solid #b6d8c7;
+ border-radius:14px;
+ background:#f4f8f6;
+}
+#productSheet .sheet-footer .product-total strong{color:#173d32}
+#productSheet .sheet-footer .primary{
+ border:1px solid #009688;
+ border-radius:14px;
+ background:#087b57;
+ color:#fff;
+ font-size:16px;
+ font-weight:850;
+ box-shadow:0 3px 9px #075c3d26;
+}
+/* Dark theme preserves the same layout, with appropriate contrast. */
+html[data-fatih1-theme="dark"] #productSheet{background:#102923;color:#e8f4ee}
+html[data-fatih1-theme="dark"] #productSheet .product-topbar{background:#082a23;color:#fff}
+html[data-fatih1-theme="dark"] #productSheet .sheet-scroll{background:#102923}
+html[data-fatih1-theme="dark"] #productSheet :is(.sheet-product-overview,.product-section,#sheetIngredients>.ingredient-editor){
+ background:#17372f;
+ border-color:#319cf1;
+ box-shadow:none;
+}
+html[data-fatih1-theme="dark"] #productSheet .sheet-product-overview h2,
+html[data-fatih1-theme="dark"] #productSheet .product-section-heading strong{color:#ebf8f1}
+html[data-fatih1-theme="dark"] #productSheet .sheet-product-overview .sheet-intro{background:#203f35}
+html[data-fatih1-theme="dark"] #productSheet .sheet-product-overview .sheet-intro p{color:#b7d7c5}
+html[data-fatih1-theme="dark"] #productSheet .option-choice{background:#203f35;border-color:#396b59;color:#ecf8f1}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-chosen,
+html[data-fatih1-theme="dark"] #productSheet .option-choice:has(input:checked){background:#275e44;border-color:#36aa75}
+html[data-fatih1-theme="dark"] #productSheet .option-choice .option-label-text,
+html[data-fatih1-theme="dark"] #productSheet .option-choice .opt-price{color:#f1fff7}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity .option-quantity{background:#1c4034;border-color:#416d59}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity .option-quantity button{background:#087e5d;color:#fff}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity .option-quantity button:disabled{background:#315845;color:#a9c6b9}
+html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity .option-quantity b{background:#244d3b;color:#f1fff7}
+html[data-fatih1-theme="dark"] #productSheet .ingredient-editor-toggle{color:#f1fff7}
+html[data-fatih1-theme="dark"] #productSheet .ingredient-chip{background:#24483a;color:#c7f1dc;border-color:#3e6b57}
+html[data-fatih1-theme="dark"] #productSheet .ingredient-chip.is-removed{background:#4e3031;color:#ffcbcb;border-color:#865559}
+html[data-fatih1-theme="dark"] #productSheet .kitchen-panel textarea{background:#1c4034;color:#f1fff7;border-color:#416d59}
+html[data-fatih1-theme="dark"] #productSheet .allergen-chip{background:#24483a;color:#c7f1dc;border-color:#3e6b57}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer{background:#122f27;border-color:#3c6756}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty{background:#087e5d;border-color:#416d59}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty button{color:#fff}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty b{background:#244d3b;color:#fff}
+html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total{background:#1a4033;border-color:#416d59}
