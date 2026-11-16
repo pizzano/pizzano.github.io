@@ -2,6 +2,7 @@
 'use strict';
 const BASE='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
 const CACHE_DB='kol-beta-public-kol1-v1';
+const MENU_CACHE_FORMAT=4;
 const MENU_FALLBACK_KEY='kol-beta-menu-fallback-kol1-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
 let changeStream=null,changeCacheTimer=null,liveRevision=0;
@@ -116,7 +117,7 @@ function normalize(data){
    return {...cleanItem,imageUrl,allergens,sizes};
   })
  }));
- return {cacheFormat:3,sections,optionGroups:list(data.optionGroups),
+ return {cacheFormat:MENU_CACHE_FORMAT,sections,optionGroups:list(data.optionGroups),
   allergenCatalog:list(data.allergenCatalog),images,sizeLabels,allergenSets,
   settings:data.settings||{},
   cartSuggestionRules:list(data.cartSuggestionRules).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
@@ -157,7 +158,12 @@ async function init(){
  const useCached=value=>{
   menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
  };
- if(cached?.sections?.length)useCached(cached);
+ if(cached?.sections?.length){
+  useCached(cached);
+  // One-time refresh for old menu caches: direct Firebase Console edits do
+  // not update the change-feed revision and otherwise remain invisible.
+  if(Number(cached.cacheFormat)!==MENU_CACHE_FORMAT)await refreshMenu(false);
+ }
  else if(navigator.locks&&typeof navigator.locks.request==='function'){
   // On a first visit, other tabs wait for the first tab's cached menu
   // instead of each downloading /menu and /settings from Firebase.
@@ -183,8 +189,10 @@ async function init(){
  window.setInterval(updateHoursStatus,60000);
 }
 async function refreshMenu(manual=false){
- if(refreshPending)return;
+ if(refreshPending)return false;
  refreshPending=true;
+ const button=$('menuRefresh');
+ if(button)button.disabled=true;
  $('cacheStatus').textContent='Henter…';
  try{
   const startingRevision=liveRevision,fresh=await fromFirebase();
@@ -195,11 +203,15 @@ async function refreshMenu(manual=false){
   $('cacheStatus').textContent='Oppdatert';
   $('notice').textContent='';
   if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});
+  if(manual)showFatih1Toast('Menyen er oppdatert fra Firebase','info');
+  return true;
  }catch(error){
   if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller internett og Firebase-tilgang.';$('cacheStatus').textContent='Ingen data'}
-  else{$('notice').textContent='Kunne ikke oppdatere automatisk. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}
+  else{$('notice').textContent=manual?'Kunne ikke hente nye menydata. Prøv igjen.':'Kunne ikke oppdatere automatisk. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}
+  if(manual)showFatih1Toast('Menyoppdatering mislyktes','error');
   console.warn('FATIH1 menu refresh:',error);
- }finally{refreshPending=false}
+  return false;
+ }finally{refreshPending=false;if(button)button.disabled=false}
 }
 
 async function checkMenuVersionOnce(){
@@ -272,7 +284,7 @@ async function receiveLiveAnnouncement(value,relay=false){
  try{
    const next=normalize({...applyLiveChanges(menu,value.changes),updatedAt:version});
    next.updatedAt=version;
-   next.cacheFormat=3;
+   next.cacheFormat=MENU_CACHE_FORMAT;
    const changePaths=value.changes.map(x=>String(x.path));
    const menuChanged=changePaths.some(x=>x.startsWith('menu/')&&x!=='menu/updatedAt');
    menu=next;
@@ -704,6 +716,15 @@ function render(){
  $('menu').innerHTML=visibleBlocks.map(block=>'<section class="menu-section" id="category-'+esc(block.id)+'"><h2 class="section-title">'+esc(block.title)+'</h2><p class="section-note">'+esc(block.note)+'</p>'+block.items.map(productCard).join('')+'</section>').join('')||'<p>Ingen produkter funnet.</p>';
  nav.scrollLeft=savedX;
  hydrateImages($('menu'));renderCartIndicators();updateHoursStatus();
+ // A refreshed menu also updates an already-open product sheet.
+ if(current&&!$('productSheet').hidden){
+  const latest=productById(current.id);
+  if(latest){
+   current=latest;
+   $('sheetDesc').textContent=latest.description||'';
+   renderOptions();
+  }
+ }
  if(typeof reconcileCartWithMenu==='function'){
   const review=reconcileCartWithMenu();
   if(!$('cartSheet').hidden)renderCartContents();
@@ -758,10 +779,10 @@ function kitchenNotesFor(item){
  return [...new Set(source.map(n=>String(n||'').trim().replace(/\s+/g,' ').slice(0,60)).filter(n=>n&&!/^uten[\s:]/i.test(n)))].slice(0,8);
 }
 function removableIngredientRules(item){
- if(menu?.settings?.ingredientCustomizationEnabled===false)return [];
- // ingredientRules is the sole source for customer-removable ingredients.
- // An empty or missing list intentionally hides the customization panel.
- const raw=Array.isArray(item?.ingredientRules)?item.ingredientRules:[];
+ // Explicit product ingredientRules are authoritative. The old global
+ // ingredientCustomizationEnabled flag must not hide a configured product.
+ // Firebase can deliver 0/1-keyed objects as well as arrays.
+ const raw=list(item?.ingredientRules);
  const seen=new Set();
  return raw.map(x=>typeof x==='string'?{name:x,removable:true}:x).filter(x=>{
   if(!x||x.removable===false||!String(x.name||'').trim())return false;
@@ -990,6 +1011,7 @@ function hideAll(){
  $('btnProfile').setAttribute('aria-expanded','false');
  fatih1UnlockBackground();
 }
+$('menuRefresh').addEventListener('click',()=>{void refreshMenu(true)});
 $('showAllergens').addEventListener('change',e=>{allergensVisible=e.target.checked;try{localStorage.setItem('kol-beta-allergens',String(allergensVisible))}catch{}render();showFatih1Toast(allergensVisible?'Allergener vises':'Allergener er skjult','info')});
 // Only one unobtrusive attempt per page load. Scripted scroll may not
 // collapse Chrome's address bar: browser UI visibility is browser-controlled.
