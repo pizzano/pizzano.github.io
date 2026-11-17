@@ -1,5 +1,5 @@
-/* FATIH1 FATIH1 menu administrator. Only /menu is read/written. Admin access
- * is protected by Firebase Authentication and Realtime Database Rules.
+/* BestillOnline menu administrator. Only /menu is read/written.
+ * Access is protected by Firebase Authentication and Database Rules.
  */
 'use strict';
 (()=>{
@@ -11,7 +11,6 @@ const ADMIN_EMAIL='fatihsemb@gmail.com';
 // Firebase Web app config is public; never store admin passwords here.
 const FIREBASE_WEB_API_KEY='AIzaSyDanHMWBBN260CS9S9IVpFPnb2BfnWXF-0';
 let auth=null;
-function apiKey(){return FIREBASE_WEB_API_KEY}
 function showLogin(err=''){
  $('adminNav').hidden=true;$('adminToolsMenu').open=false;
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
@@ -20,7 +19,7 @@ function showLogin(err=''){
 }
 async function configure(){
  if(!window.firebase?.auth)throw Error('Firebase Authentication kunne ikke lastes.');
- const key=apiKey();
+ const key=FIREBASE_WEB_API_KEY;
  if(!key)throw Error('Firebase Web API Key mangler i konfigurasjonen. Administratoren må legge den inn én gang i admin.js.');
  if(auth)return;
  firebase.initializeApp({apiKey:key,authDomain:'kol-grill-pizza-1.firebaseapp.com',projectId:'kol-grill-pizza-1'});
@@ -46,7 +45,7 @@ async function login(e){
 async function bootAuth(){
  showLogin();
  try{
-  if(!apiKey())return;
+  if(!FIREBASE_WEB_API_KEY)return;
   await configure();
   const u=await new Promise(resolve=>{const stop=auth.onAuthStateChanged(v=>{stop();resolve(v)},()=>resolve(null))});
   if(u?.uid===ADMIN_UID){$('authScreen').hidden=true;$('adminMain').hidden=false;$('btnSignOut').hidden=false;await startAdmin()}
@@ -83,8 +82,8 @@ async function bootAuth(){
   if(!payload.sections.every(s=>s&&Array.isArray(s.items)))throw Error('Kategorier mangler items-lister.');
   if(!payload.optionGroups.every(g=>g&&Array.isArray(g.options)))throw Error('Valggrupper har et eldre format som må migreres før redigering. Ingen data ble endret.');
  }
- // Only fields not used anywhere in FATIH1. Keep ingredientRules and
- // description intact. Deletion is staged locally until explicit admin save.
+ // Only fields retired from the BestillOnline menu schema. Keep ingredientRules
+ // and description intact. Deletion is staged until explicit admin save.
  function removeLegacyIngredients(menuData){
   let removed=0;
   for(const section of arr(menuData?.sections)){
@@ -183,14 +182,27 @@ function getProductAllergens(p){
   setDirty();
  }
  
- function usedGroupIds(p){
-  return [...new Set([...arr(p.optionGroupIds),...arr(p.sizes).flatMap(s=>arr(s.optionGroupIds))].map(String))];
- }
- function refreshHeader(){
+function refreshHeader(){
   const n=state.menu?.sections.reduce((sum,s)=>sum+arr(s.items).length,0)||0;
   message(state.menu?'Menyversjon: '+(state.menu.updatedAt||'ukjent')+' · '+n+' produkter · '+state.menu.optionGroups.length+' valggrupper':'Ingen meny lastet inn');
  }
- // Direct menu connection, with no login request or authentication token.
+ // Every network request is authorized; never cache Firebase ID tokens.
+ const ADMIN_MENU_CACHE_KEY='bestillonline-admin-menu-v1:'+encodeURIComponent(DB)+':'+ADMIN_UID;
+ function readAdminMenuCache(){
+  try{
+   const saved=JSON.parse(localStorage.getItem(ADMIN_MENU_CACHE_KEY)||'null');
+   if(saved?.format!==1||typeof saved.etag!=='string'||!saved.etag)return null;
+   assertMenu(saved.menu);
+   return saved;
+  }catch{return null}
+ }
+ function storeAdminMenuCache(snapshot,etag){
+  if(!etag)return;
+  try{localStorage.setItem(ADMIN_MENU_CACHE_KEY,JSON.stringify({format:1,etag,menu:snapshot}))}catch{}
+ }
+ function clearAdminMenuCache(){
+  try{localStorage.removeItem(ADMIN_MENU_CACHE_KEY)}catch{}
+ }
  async function menuURL(){return menuAuthURL()}
  async function startAdmin(){
   $('adminNav').hidden=true;
@@ -201,7 +213,7 @@ function getProductAllergens(p){
   $('saveStatus').className='status';
   $('saveStatus').textContent='Kobler til Firebase…';
   try{
-   await loadMenu(false);
+   await loadMenu(false,{preferCache:true});
    $('loadingCard').hidden=true;
    $('adminRoot').hidden=false;
    $('adminNav').hidden=false;
@@ -215,24 +227,49 @@ function getProductAllergens(p){
    $('saveStatus').textContent='Kunne ikke koble til';
   }finally{$('btnRetry').disabled=false}
  }
- async function loadMenu(confirmDiscard=true){
-  if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
-  const response=await fetch(await menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-  if(!response.ok)throw Error('Firebase avviste menylesing ('+response.status+'). Kontroller database Rules.');
-  const payload=await response.json();
-  assertMenu(payload);
-  const etag=response.headers.get('ETag');
+ function applyAdminMenu(snapshot,etag){
+  // Keep the exact Firebase snapshot for conflict detection and menu backups.
+  // Legacy cleanup is staged in a separate editable copy, never in the cache.
+  assertMenu(snapshot);
   if(!etag)throw Error('ETag mangler. Lagring stoppet for å beskytte eksisterende meny.');
-  // Keep the Firebase snapshot intact for ETag-safe change tracking, then
-  // stage deletion of redundant ingredients fields (never modify ingredientRules).
-  state.original=clone(payload);
-  const legacyFields=removeLegacyIngredients(payload);
-  state.menu=payload;state.etag=etag;state.category=0;state.product=0;state.group=0;
+  state.original=clone(snapshot);
+  state.menu=clone(snapshot);
+  const legacyFields=removeLegacyIngredients(state.menu);
+  state.etag=etag;state.category=0;state.product=0;state.group=0;
   setClean();renderAll();refreshHeader();
   if(legacyFields){
    setDirty();
    message(legacyFields+' gamle ingredients/ingredientDefaults-felt er klare for sletting. Last ned menybackup først, og trykk deretter «Lagre endringer».','warn');
   }
+ }
+ async function loadMenu(confirmDiscard=true,{preferCache=false}={}){
+  if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
+  const url=await menuURL();
+  if(preferCache){
+   const saved=readAdminMenuCache();
+   if(saved){
+    // HEAD requests only the current /menu ETag, not its JSON body. If the
+    // endpoint/browser does not support HEAD+ETag, use the safe full GET.
+    try{
+     const head=await fetch(url,{method:'HEAD',headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+     const remoteETag=head.ok?head.headers.get('ETag'):null;
+     if(remoteETag&&remoteETag===saved.etag){
+      applyAdminMenu(saved.menu,remoteETag);
+      return true;
+     }
+    }catch(error){
+     console.warn('BestillOnline ETag-only check unavailable; loading full menu:',error);
+    }
+   }
+  }
+  // A first login, changed ETag, unsupported HEAD, or a manual reload reads
+  // the actual menu and obtains a fresh ETag from the same response.
+  const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+  if(!response.ok)throw Error('Firebase avviste menylesing ('+response.status+'). Kontroller database Rules.');
+  const payload=await response.json();
+  const etag=response.headers.get('ETag');
+  applyAdminMenu(payload,etag);
+  storeAdminMenuCache(payload,etag);
   return true;
  }
  function updateAdminNavArrows(){
@@ -582,9 +619,8 @@ function getProductAllergens(p){
   else ids=checked?[String(option.id)]:[];
   g.defaultOptionIds=ids;setDirty();renderOptionRows();
  }
- // DRAFT normalizer treats missing/non-numeric menu prices as zero. FATIH1 may
- // inherit these legacy values. An unrelated photo/name edit must never fail
- // because of an untouched old extra price. Do not rewrite legacy values:
+ // The customer normalizer treats missing/non-numeric prices as zero. Older
+ // menus may retain legacy prices. Unrelated edits must not rewrite them:
  // only freshly edited fields are validated on save.
  function originalProduct(p){
   for(const sec of arr(state.original?.sections)){
@@ -681,7 +717,10 @@ function getProductAllergens(p){
   state.saving=true;$('btnSave').disabled=true;
   try{
    const response=await fetch(await menuURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
-   if(response.status===412)throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
+   if(response.status===412){
+    clearAdminMenuCache();
+    throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
+   }
    if(response.status===401||response.status===403)throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
    if(!response.ok)throw Error('Kunne ikke lagre til Firebase: HTTP '+response.status);
    state.menu=next;state.original=clone(next);
@@ -691,7 +730,10 @@ function getProductAllergens(p){
     const fresh=await fetch(await menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
     if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
    }
-   state.etag=etag||null;setClean();renderAll();refreshHeader();
+   state.etag=etag||null;
+   if(etag)storeAdminMenuCache(state.original,etag);
+   else clearAdminMenuCache();
+   setClean();renderAll();refreshHeader();
    notify('Lagret i Firebase · BestillOnline oppdateres automatisk');
    if(!etag)message('Lagret, men ETag kunne ikke leses. Hent siste meny før neste endring.','warn');
   }catch(error){message(error.message||'Lagring feilet','error');notify(error.message||'Lagring feilet',true)}
