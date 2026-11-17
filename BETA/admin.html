@@ -12,7 +12,7 @@
 [hidden]{display:none!important}a{color:inherit}
 :focus-visible{outline:3px solid #caad5a;outline-offset:2px}
 .top{display:block;background:#062d25;color:white;position:sticky;top:0;z-index:8;box-shadow:0 6px 18px #0a33251f}
-.brand{font-size:22px;font-weight:900;letter-spacing:.012em;white-space:nowrap}.brand small{display:block;font-size:9px;letter-spacing:.15em;color:#c6dcca;font-weight:650;margin-top:2px}
+.brand{font-size:22px;font-weight:900;letter-spacing:.012em;white-space:nowrap;min-width:0}.brand #adminRestaurantName{display:inline-block;vertical-align:bottom;max-width:min(44vw,520px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.brand small{display:block;font-size:9px;letter-spacing:.15em;color:#c6dcca;font-weight:650;margin-top:2px}
 .admin-top-main{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:61px;padding:9px clamp(12px,2.5vw,32px)}
 .admin-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:13px;min-width:0}
 .admin-main-save{min-height:39px!important;padding:8px 14px!important;white-space:nowrap;border-radius:11px!important;font-size:12.5px!important;background:#efd18b!important;border-color:#efd18b!important;color:#123b2b!important;box-shadow:0 2px 8px #020e0a18;transition:background .18s,border-color .18s}
@@ -58,7 +58,7 @@
 .admin-tools-items strong{font-size:12.5px}
 .admin-tools-items small{font-size:10.5px;color:#6d8c79;line-height:1.35}
 @media(max-width:680px){.admin-top-main{min-height:57px;padding:9px 12px}.top .brand{font-size:17px}.admin-header-actions{gap:7px}.admin-header-actions .status{font-size:11px;max-width:95px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-main-save{min-height:35px!important;padding:7px 10px!important;font-size:11px!important}.admin-nav-shell{padding:5px 8px 8px}.admin-nav-track{gap:5px}.admin-nav-arrow{display:grid;width:24px;height:32px}.admin-nav-tab{min-height:35px;padding:6px 10px;font-size:11.5px;gap:6px}.admin-nav-icon{width:18px;height:18px}.admin-nav-icon svg{width:17px;height:17px}.admin-tools-menu>summary{min-height:35px;padding:6px 10px;font-size:11px;gap:5px}.admin-tools-panel{right:0}}
-@media(max-width:560px){.admin-top-main{flex-wrap:wrap;gap:6px;padding:9px 11px}.admin-header-actions{width:100%;gap:7px;justify-content:flex-end}.admin-header-actions .status{margin-right:auto;white-space:nowrap}.admin-main-save{flex:none}.admin-tools-panel{max-height:calc(100dvh - 135px)}}
+@media(max-width:560px){.brand #adminRestaurantName{max-width:calc(100vw - 85px)}.admin-top-main{flex-wrap:wrap;gap:6px;padding:9px 11px}.admin-header-actions{width:100%;gap:7px;justify-content:flex-end}.admin-header-actions .status{margin-right:auto;white-space:nowrap}.admin-main-save{flex:none}.admin-tools-panel{max-height:calc(100dvh - 135px)}}
 @media(max-width:395px){.admin-header-actions .status{width:9px;min-width:9px;font-size:0;gap:0}.admin-header-actions .status::before{width:9px;height:9px;flex:none}.admin-nav-arrow{width:21px}}
 @media(prefers-reduced-motion:reduce){.admin-nav-tab,.admin-tools-menu>summary,.admin-tools-chevron,.admin-tools-items :is(button,a){transition:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #cbded2;background:white;color:#144633;padding:10px 14px;border-radius:11px;font-size:13px;font-weight:750;text-decoration:none;min-height:40px}
@@ -273,12 +273,12 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-tools-header14" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-dynamicbrand15" defer></script>
 </head>
 <body>
 <header class="top">
  <div class="admin-top-main">
-  <div class="brand">🔥 BestillOnline <small>MENYADMIN</small></div>
+  <div class="brand">🔥 <span id="adminRestaurantName">BestillOnline</span><small>MENYADMIN</small></div>
   <div class="admin-header-actions">
    <span class="status" id="saveStatus" role="status" aria-live="polite">Innlogging kreves</span>
    <button id="btnSave" class="btn gold admin-main-save" type="button" disabled>Lagre endringer</button>
