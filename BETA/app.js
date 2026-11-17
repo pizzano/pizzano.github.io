@@ -1343,4 +1343,11 @@ document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault()
 initCartEvents();
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else fatih1HistoryToMenu()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('fatih1ProfileSheet').hidden&&$('fatih1ProfileHome').hidden)fatih1HistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')fatih1HistoryBack();else fatih1HistoryToMenu()}});document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('fatih1ProfileSheet').hidden&&$('fatih1ProfileHome').hidden)fatih1HistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')fatih1HistoryBack();else fatih1HistoryToMenu()}});// Register only the BETA/ service worker. Dynamic menu/orders are never cached.
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+ window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'})
+   .catch(error=>console.warn('FATIH1 Service Worker:',error));
+ },{once:true});
+}
+document.addEventListener('DOMContentLoaded',init);
