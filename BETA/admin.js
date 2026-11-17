@@ -340,7 +340,7 @@ function refreshHeader(){
   updateAdminNavArrows();
  }
 
- let activeAdminModal=null,adminModalReturnFocus=null;
+ let activeAdminModal=null,adminModalReturnFocus=null,categoryModalTarget=null;
  function setAdminModalTab(kind,tab){
   const modal=$(kind==='product'?'productEditor':'groupEditor');
   const tabAttr=kind==='product'?'data-product-tab':'data-group-tab';
@@ -385,8 +385,9 @@ function refreshHeader(){
    }
   }
   activeAdminModal=null;
-  $(kind==='product'?'productEditor':'groupEditor').hidden=true;
-  $(kind==='product'?'productModalBackdrop':'groupModalBackdrop').hidden=true;
+  $(kind==='product'?'productEditor':kind==='group'?'groupEditor':'categoryEditor').hidden=true;
+  $(kind==='product'?'productModalBackdrop':kind==='group'?'groupModalBackdrop':'categoryModalBackdrop').hidden=true;
+  if(kind==='category')categoryModalTarget=null;
   document.body.classList.remove('admin-modal-open');
   const toFocus=adminModalReturnFocus;
   adminModalReturnFocus=null;
@@ -408,7 +409,7 @@ function refreshHeader(){
   if(!activeAdminModal)return;
   if(event.key==='Escape'){event.preventDefault();closeAdminModal();return}
   if(event.key!=='Tab')return;
-  const modal=$(activeAdminModal==='product'?'productEditor':'groupEditor');
+  const modal=$(activeAdminModal==='product'?'productEditor':activeAdminModal==='group'?'groupEditor':'categoryEditor');
   const all=[...modal.querySelectorAll('button,input,textarea,select,a[href],[tabindex]')].filter(el=>
    !el.disabled&&!el.hidden&&!el.closest('[hidden]')&&el.tabIndex!==-1
   );
@@ -736,24 +737,64 @@ function refreshHeader(){
    const url=productImage(p);$('pPreview').src=url;$('pPreview').hidden=!url;
   }catch(e){notify(e.message,true);$('pImage').value=productImage(p)}
  }
- function addCategory(){
-  const title=prompt('Navn på ny kategori:','');
-  if(!title?.trim())return;
-  state.menu.sections.push({id:uid('cat'),title:title.trim(),note:'',items:[]});
-  state.category=state.menu.sections.length-1;state.product=0;renderAll();setDirty();
-  notify('Tom kategori er et lokalt utkast. Den lagres når du legger til et produkt.');
+ // Reuse the product editor's modal styles/field components; category edits
+ // are applied only after Submit. Cancel/Escape never creates a menu change.
+ function openCategoryModal(index=null){
+  if(!state.menu)return;
+  const editing=index!==null;
+  const section=editing?state.menu.sections[index]:null;
+  if(editing&&!section)return;
+  if(activeAdminModal)closeAdminModal();
+  adminModalReturnFocus=document.activeElement;
+  categoryModalTarget=editing?String(section.id):null;
+  $('categoryEditorTitle').textContent=editing?'Rediger kategori':'Ny kategori';
+  $('categoryEditorDescription').textContent=editing?'Endre navn, beskrivelse og type.':'Fyll ut kategorien og legg til produkter.';
+  $('categoryTitle').value=String(section?.title||'');
+  $('categoryNote').value=String(section?.note||'');
+  $('categoryType').value=String(section?.type||'');
+  $('categoryIdHint').textContent=editing?'Kategori-ID: '+String(section.id):'Ny kategori får automatisk en unik ID.';
+  $('btnSaveCategoryModal').textContent=editing?'Lagre kategori':'Opprett kategori';
+  $('btnCategorySaveAddProduct').hidden=editing;
+  $('categoryEditor').hidden=false;
+  $('categoryModalBackdrop').hidden=false;
+  activeAdminModal='category';
+  document.body.classList.add('admin-modal-open');
+  $('categoryTitle').focus();
  }
- function editCategory(){
-  const s=category();if(!s)return;
-  const title=prompt('Kategorinavn:',s.title||'');
-  if(title===null)return;
-  if(!title.trim()){notify('Kategorinavn kan ikke være tomt',true);return}
-  const note=prompt('Kort kategoribeskrivelse:',s.note||'');
-  if(note===null)return;
-  if(s.title===title.trim()&&String(s.note||'')===note.trim())return;
-  s.title=title.trim();s.note=note.trim();
-  renderCategories();renderProducts();setDirty();
+ function commitCategoryForm(withProduct=false){
+  if(activeAdminModal!=='category'||!state.menu)return;
+  if(!$('categoryForm').reportValidity())return;
+  const title=$('categoryTitle').value.trim(),
+   note=$('categoryNote').value.trim(),
+   type=$('categoryType').value.trim();
+  if(!title){$('categoryTitle').focus();return}
+  if(categoryModalTarget===null){
+   const section={id:uid('cat'),title,note,items:[]};
+   if(type)section.type=type;
+   state.menu.sections.push(section);
+   state.category=state.menu.sections.length-1;
+   state.product=0;
+   closeAdminModal();renderAll();setDirty();
+   if(withProduct)addProduct();
+   else notify('Tom kategori er et lokalt utkast. Legg til et produkt for å lagre den.');
+   return;
+  }
+  const index=state.menu.sections.findIndex(section=>String(section.id)===categoryModalTarget);
+  if(index<0){notify('Kategorien finnes ikke lenger. Hent siste meny.',true);return}
+  const section=state.menu.sections[index];
+  const previousType=String(section.type||'');
+  const changed=String(section.title||'')!==title||String(section.note||'')!==note||previousType!==type;
+  if(changed){
+   section.title=title;section.note=note;
+   if(type)section.type=type;else delete section.type;
+  }
+  closeAdminModal();
+  if(changed){
+   state.category=index;renderCategories();renderProducts();setDirty();
+  }
  }
+ function addCategory(){openCategoryModal()}
+ function editCategory(){openCategoryModal(state.category)}
  function addProduct(){
   const s=category();if(!s)return;
   const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
@@ -991,9 +1032,11 @@ function refreshHeader(){
   await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
  });
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
-  for(const [id,kind] of [['btnCloseProductModal','product'],['btnCloseProductBottom','product'],['productModalBackdrop','product'],['btnCloseGroupModal','group'],['btnCloseGroupBottom','group'],['groupModalBackdrop','group']]){
+  for(const [id,kind] of [['btnCloseCategoryModal','category'],['btnCancelCategoryModal','category'],['categoryModalBackdrop','category'],['btnCloseProductModal','product'],['btnCloseProductBottom','product'],['productModalBackdrop','product'],['btnCloseGroupModal','group'],['btnCloseGroupBottom','group'],['groupModalBackdrop','group']]){
    $(id).addEventListener('click',()=>{if(activeAdminModal===kind)closeAdminModal()});
   }
+  $('categoryForm').addEventListener('submit',event=>{event.preventDefault();commitCategoryForm()});
+  $('btnCategorySaveAddProduct').addEventListener('click',()=>commitCategoryForm(true));
   $('btnSaveProductModal').addEventListener('click',()=>{void saveAdminModal('product')});
   $('btnSaveGroupModal').addEventListener('click',()=>{void saveAdminModal('group')});
   $('productEditor').querySelectorAll('[data-product-tab]').forEach(button=>
