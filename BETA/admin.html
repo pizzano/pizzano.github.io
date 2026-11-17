@@ -65,6 +65,17 @@
 .item img{width:43px;height:43px;border-radius:9px;object-fit:cover;background:#edf2ef;flex:none}
 .mini{display:grid;place-items:center;width:27px;height:27px;border:1px solid #dce8df;border-radius:8px;background:white;color:#4c725f;font-size:12px}
 .item.dim{opacity:.56}
+.reorder-hint{margin:-4px 1px 11px;color:#718c7c;font-size:11px;line-height:1.4}
+.item[draggable="true"]{cursor:grab;user-select:none}
+.item[draggable="true"]:active{cursor:grabbing}
+.admin-drag-handle{display:grid;place-items:center;flex:none;margin-left:auto;width:29px;height:32px;color:#608a74;border-radius:8px;font-size:23px;line-height:1;touch-action:none;user-select:none}
+.item[draggable="true"]:hover .admin-drag-handle{color:#087f59;background:#e5f4e9}
+.item.is-dragging{opacity:.4;border-style:dashed}
+.item.drag-before{box-shadow:inset 0 3px 0 #079c67}
+.item.drag-after{box-shadow:inset 0 -3px 0 #079c67}
+.item.is-touch-dragging{opacity:.55;outline:2px dashed #079c67;outline-offset:-2px}
+.item.drag-locked{cursor:default}.item.drag-locked .admin-drag-handle{opacity:.35}
+
 .search{width:100%;padding:10px 12px;border:1px solid #d3e5d9;border-radius:10px;margin-bottom:10px;background:#f9fcfa}
 .empty{padding:22px;text-align:center;color:#819588;background:#f8fbf9;border:1px dashed #c7dacf;border-radius:13px;font-size:13px}
 
@@ -240,8 +251,8 @@ body.admin-modal-open{overflow:hidden}
  </section>
  <section id="adminRoot" hidden>
   <div class="layout" id="productsPage">
-   <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><div class="stack scroll" id="categoryList"></div><div class="actions"><button class="btn small" id="renameCategory">Rediger kategori</button><button class="btn small" id="moveCategoryUp">↑</button><button class="btn small" id="moveCategoryDown">↓</button><button class="btn small danger" id="removeCategory">Slett kategori</button></div></section>
-   <section class="panel"><div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div><input id="productSearch" class="search" type="search" placeholder="Søk etter produkt…" aria-label="Søk produkter"><div class="stack scroll" id="productList"></div><div class="actions"><button class="btn small" id="moveProductUp">↑ Opp</button><button class="btn small" id="moveProductDown">↓ Ned</button><button class="btn small" id="duplicateProduct">Dupliser</button><button class="btn danger small" id="removeProduct">Slett</button></div></section>
+   <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><p class="reorder-hint">⠿ Dra kategoriene for å endre rekkefølgen</p><div class="stack scroll" id="categoryList"></div><div class="actions"><button class="btn small" id="renameCategory">Rediger kategori</button><button class="btn small danger" id="removeCategory">Slett kategori</button></div></section>
+   <section class="panel"><div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div><p class="reorder-hint">⠿ Dra produktene for å endre rekkefølgen</p><input id="productSearch" class="search" type="search" placeholder="Søk etter produkt…" aria-label="Søk produkter"><div class="stack scroll" id="productList"></div></section>
    
   </div>
   <div class="layout" id="groupsPage" hidden>
