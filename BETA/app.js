@@ -199,7 +199,7 @@ async function refreshMenu(manual=false){
   if(!menu){$('notice').textContent='Kunne ikke hente menyen. Kontroller internett og Firebase-tilgang.';$('cacheStatus').textContent='Ingen data'}
   else{$('notice').textContent=manual?'Kunne ikke hente nye menydata. Prøv igjen.':'Kunne ikke oppdatere automatisk. Lokal meny vises.';$('cacheStatus').textContent='Lagret lokalt'}
   if(manual)showFatih1Toast('Menyoppdatering mislyktes','error');
-  console.warn('FATIH1 menu refresh:',error);
+  console.warn('BestillOnline menu refresh:',error);
   return false;
  }finally{refreshPending=false;if(button)button.disabled=false}
 }
@@ -212,7 +212,7 @@ async function checkMenuVersionOnce(){
   if(!res.ok)return;
   const remote=Number(await res.json())||0;
   if(remote>Number(menu.updatedAt||0))await refreshMenu(false);
- }catch(error){console.warn('FATIH1 version check:',error)}
+ }catch(error){console.warn('BestillOnline version check:',error)}
 }
 
 /* One tiny Firebase SSE subscription replaces all periodic GETs.
@@ -816,7 +816,7 @@ async function recheckMissingIngredientRules(productId){
    showFatih1Toast('Tilpass ingredienser er oppdatert','info');
   }
  }catch(error){
-  console.warn('FATIH1: kunne ikke kontrollere ingrediensvalg for produktet',error);
+  console.warn('BestillOnline: kunne ikke kontrollere ingrediensvalg for produktet',error);
  }
 }
 function ingredientEditor(){
@@ -1332,7 +1332,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet
 if('serviceWorker' in navigator&&location.protocol==='https:'){
  window.addEventListener('load',()=>{
   navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'})
-   .catch(error=>console.warn('FATIH1 Service Worker:',error));
+   .catch(error=>console.warn('BestillOnline Service Worker:',error));
  },{once:true});
 }
 document.addEventListener('DOMContentLoaded',init);
