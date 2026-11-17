@@ -132,7 +132,10 @@ async function fromFirebase(){
   };
   // Production stores the public catalogue at /menu. Settings live at /settings.
   // Two parallel reads only; never read the Firebase root or private order nodes.
-  const [payload,settings]=await Promise.all([read('menu'),read('settings')]);
+  const [payload,settings]=await Promise.all([
+   read('menu'),
+   read('settings').then(value=>{boShowStartupBrand(value?.restaurantName);return value})
+  ]);
   if(!payload || !payload.sections || !payload.optionGroups)
     throw Error('Meny mangler på /menu eller har ugyldig format');
   const data=normalize({...payload,settings:settings||payload.settings||{}});
@@ -141,9 +144,45 @@ async function fromFirebase(){
 }
 // Keep the initial shell covered until the restaurant name, menu cards and
 // first visible product images are ready. Images farther down remain lazy.
-const BO_STARTUP_MIN_MS=430,BO_STARTUP_IMAGE_TIMEOUT_MS=8000;
+const BO_STARTUP_MIN_MS=430,BO_STARTUP_BRAND_MIN_MS=550,BO_STARTUP_IMAGE_TIMEOUT_MS=8000;
 const boStartupStartedAt=Date.now();
-let boStartupFinished=false,boStartupFinishing=null;
+let boStartupFinished=false,boStartupFinishing=null,boStartupBrandShownAt=0,boBrandRefreshPending=null;
+function boShowStartupBrand(value){
+ if(boStartupFinished)return;
+ const container=$('boStartupBrand'),label=$('boStartupBrandName');
+ if(!container||!label)return;
+ const name=String(value??'').trim()||'BestillOnline';
+ label.textContent=name.slice(0,120);
+ container.hidden=false;
+ if(!boStartupBrandShownAt)boStartupBrandShownAt=Date.now();
+}
+// When the menu is already cached, verify only the tiny restaurant-name leaf.
+// First visits already read /settings as part of the normal menu download.
+function boRefreshStartupBrandFromFirebase(){
+ if(!menu?.sections?.length||navigator.onLine===false)return Promise.resolve();
+ if(boBrandRefreshPending)return boBrandRefreshPending;
+ const controller=new AbortController();
+ const timeout=window.setTimeout(()=>controller.abort(),2200);
+ const task=(async()=>{
+  try{
+   const response=await fetch(BASE+'/settings/restaurantName.json',{cache:'no-store',signal:controller.signal});
+   if(!response.ok)return;
+   const value=await response.json();
+   if(value!==null&&typeof value!=='string')return;
+   const latest=String(value||'').trim();
+   if(latest!==String(menu.settings?.restaurantName||'').trim()){
+    menu.settings={...(menu.settings||{}),restaurantName:latest};
+    updateRestaurantBrand();
+    // Only persist if the name actually changed; no repeated full menu read.
+    void localPut(menu).catch(()=>{});
+   }else boShowStartupBrand(latest);
+  }catch(error){
+   if(error.name!=='AbortError')console.warn('BestillOnline restaurant name refresh:',error);
+  }finally{window.clearTimeout(timeout)}
+ })();
+ boBrandRefreshPending=task;
+ return task;
+}
 function boStartupError(){
  const host=$('boStartup');
  if(!host)return;
@@ -201,8 +240,13 @@ async function boFinishStartup(){
  boStartupFinishing=(async()=>{
   await Promise.all([
    boWaitForInitialMenuImages(),
+   boBrandRefreshPending||Promise.resolve(),
    new Promise(resolve=>window.setTimeout(resolve,Math.max(0,BO_STARTUP_MIN_MS-(Date.now()-boStartupStartedAt))))
   ]);
+  // The real restaurant name and flame should remain visible long enough to
+  // read, even when the menu and cached product photos load almost instantly.
+  if(!boStartupBrandShownAt)boShowStartupBrand(menu.settings?.restaurantName);
+  await new Promise(resolve=>window.setTimeout(resolve,Math.max(0,BO_STARTUP_BRAND_MIN_MS-(Date.now()-boStartupBrandShownAt))));
   // Allow the menu, images and header to finish their layout before reveal.
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const host=$('boStartup');
@@ -236,6 +280,7 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  const useCached=value=>{
   menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
+  void boRefreshStartupBrandFromFirebase();
  };
  if(cached?.sections?.length){
   useCached(cached);
@@ -779,6 +824,7 @@ function productCard(i){
 }
 function updateRestaurantBrand(){
  const name=String(menu?.settings?.restaurantName||'BestillOnline').trim()||'BestillOnline';
+ boShowStartupBrand(name);
  for(const id of ['brandName','fatih1ProfileRestaurantName']){
   const node=$(id);if(node)node.textContent=name;
  }
