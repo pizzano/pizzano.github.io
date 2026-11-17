@@ -131,7 +131,7 @@ async function fatih1BonusGetOnce(phone){
     fatih1BonusStatus('Oppdatert');
    }
   }catch(error){
-   console.warn('FATIH1 bonus read failed:',error);
+   console.warn('BestillOnline bonus read failed:',error);
    if(fatih1BonusPhone()===phone&&fatih1BonusVisible())fatih1BonusStatus('Kunne ikke oppdatere pizzabonus. Trykk Oppdater.');
   }
  })();
@@ -167,7 +167,7 @@ function fatih1BonusStart(force=false){
    const value=payload.data;
    if(value!==null&&(typeof value==='object'||!Number.isFinite(Number(value))))return;
    fatih1BonusStore(phone,value);
-  }catch(error){console.warn('FATIH1 bonus stream event ignored:',error)}
+  }catch(error){console.warn('BestillOnline bonus stream event ignored:',error)}
  };
  source.addEventListener('put',onData);
  source.addEventListener('patch',onData);
@@ -255,7 +255,7 @@ function fatih1RestaurantRow(icon,label,value,href='',action=''){
 }
 function fatih1ProfileRenderRestaurant(){
  const settings=menu?.settings||{};
- const restaurant=fatih1RestaurantText(settings.restaurantName)||'FATIH1 Grill & Pizza';
+ const restaurant=fatih1RestaurantText(settings.restaurantName)||'BestillOnline';
  const addressParts=[settings.streetAddress||settings.address,settings.postalCode,settings.city].map(fatih1RestaurantText).filter(Boolean);
  const address=addressParts.join(', '),phone=fatih1RestaurantText(settings.phone).replace(/[^\d+ ]/g,'');
  const phoneDigits=phone.replace(/\D/g,'');
@@ -286,7 +286,7 @@ function fatih1ProfileRenderRestaurant(){
   fatih1RestaurantRow('phone','Telefon',phone,tel?'tel:'+tel:'','Ring'),
   fatih1RestaurantRow('mail','E-post',validEmail,validEmail?'mailto:'+validEmail:'','Skriv'),
  ].filter(Boolean).join('');
- const other=fatih1RestaurantRow('bag','Henting',pickup)+fatih1RestaurantRow('card','Fatih1ling',payment);
+ const other=fatih1RestaurantRow('bag','Henting',pickup)+fatih1RestaurantRow('card','Betaling',payment);
  const links=[
   website?'<a target="_blank" rel="noopener noreferrer" href="'+esc(website)+'">'+fatih1RestaurantIcons('globe')+' Nettside</a>':'',
   insta?'<a target="_blank" rel="noopener noreferrer" href="'+esc(insta)+'">Instagram ↗</a>':'',
@@ -323,7 +323,7 @@ async function fatih1RestaurantRefresh(){
    fatih1RestaurantMessage='Oppdatert fra settings · lagret på enheten';
    showFatih1Toast('Restaurantinformasjonen er oppdatert');
   }catch(error){
-   console.warn('FATIH1 restaurant settings refresh failed:',error);
+   console.warn('BestillOnline restaurant settings refresh failed:',error);
    fatih1RestaurantMessage='Kunne ikke oppdatere. Viser lagret informasjon.';
    showFatih1Toast('Kunne ikke oppdatere restaurantinformasjonen','error');
   }finally{
