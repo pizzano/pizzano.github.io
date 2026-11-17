@@ -2623,3 +2623,25 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-footer-total{backg
 html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-footer-total span{color:#b6dcc4}
 html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-footer-total strong{color:#eefbf1}
 html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background:#214b37;border-color:#4a8061;color:#e7fbed}
+
+/* BETA product bottom-sheet motion: rise on open, follow the swipe, fall on close. */
+@keyframes fatih1SheetRise{
+ from{transform:translate(-50%,100%)}
+ to{transform:translate(-50%,var(--product-drag-y,0px))}
+}
+@keyframes fatih1SheetFall{
+ from{transform:translate(-50%,var(--product-drag-y,0px))}
+ to{transform:translate(-50%,100%)}
+}
+#productSheet.is-sheet-opening{
+ animation:fatih1SheetRise 310ms cubic-bezier(.18,.82,.3,1) both;
+ pointer-events:none;
+}
+#productSheet.is-sheet-closing{
+ animation:fatih1SheetFall 260ms cubic-bezier(.35,.06,.84,.55) both;
+ pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){
+ #productSheet.is-sheet-opening,
+ #productSheet.is-sheet-closing{animation:none}
+}
