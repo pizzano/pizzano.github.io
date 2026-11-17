@@ -673,7 +673,7 @@ function getProductAllergens(p){
     if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
    }
    state.etag=etag||null;setClean();renderAll();refreshHeader();
-   notify('Lagret i Firebase · FATIH1 varsles automatisk');
+   notify('Lagret i Firebase · BestillOnline oppdateres automatisk');
    if(!etag)message('Lagret, men ETag kunne ikke leses. Hent siste meny før neste endring.','warn');
   }catch(error){message(error.message||'Lagring feilet','error');notify(error.message||'Lagring feilet',true)}
   finally{state.saving=false;$('btnSave').disabled=!state.dirty||!state.etag}
