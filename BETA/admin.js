@@ -12,6 +12,7 @@ const ADMIN_EMAIL='fatihsemb@gmail.com';
 const FIREBASE_WEB_API_KEY='AIzaSyDanHMWBBN260CS9S9IVpFPnb2BfnWXF-0';
 let auth=null;
 function showLogin(err=''){
+ setAdminRestaurantBrand(null);
  $('adminNav').hidden=true;$('adminToolsMenu').open=false;$('adminToolsMenu').hidden=true;
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
  $('authError').textContent=err;$('authError').hidden=!err;
@@ -25,9 +26,34 @@ async function configure(){
  firebase.initializeApp({apiKey:key,authDomain:'kol-grill-pizza-1.firebaseapp.com',projectId:'kol-grill-pizza-1'});
  auth=firebase.auth();await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 }
-async function menuAuthURL(){
+async function databaseAuthURL(node){
  const u=auth?.currentUser;if(!u||u.uid!==ADMIN_UID)throw Error('Ingen administratortilgang.');
- return DB+'/menu.json?auth='+encodeURIComponent(await u.getIdToken());
+ return DB+'/'+node+'.json?auth='+encodeURIComponent(await u.getIdToken());
+}
+async function menuAuthURL(){return databaseAuthURL('menu')}
+function setAdminRestaurantBrand(value){
+ const name=typeof value==='string'&&value.trim()?value.trim():'BestillOnline';
+ const heading=$('adminRestaurantName');
+ heading.textContent=name;
+ heading.title=name;
+ document.title=name+' · Menyadministrasjon';
+}
+async function refreshAdminRestaurantBrand(){
+ // This small field is the same Firebase name source as the customer site.
+ // Read once on admin opening and manually requested reload, never per tab.
+ const controller=new AbortController();
+ const timeout=window.setTimeout(()=>controller.abort(),3500);
+ try{
+  const response=await fetch(await databaseAuthURL('settings/restaurantName'),{
+   cache:'no-store',signal:controller.signal
+  });
+  if(!response.ok)throw Error('Firebase restaurantName HTTP '+response.status);
+  setAdminRestaurantBrand(await response.json());
+ }catch(error){
+  // A missing/unavailable settings field must never prevent menu editing.
+  console.warn('BestillOnline restaurant name unavailable:',error);
+  setAdminRestaurantBrand(state.menu?.settings?.restaurantName);
+ }finally{window.clearTimeout(timeout)}
 }
 async function login(e){
  e.preventDefault();
@@ -292,7 +318,10 @@ function refreshHeader(){
   $('saveStatus').className='status';
   $('saveStatus').textContent='Kobler til Firebase…';
   try{
-   await loadMenu(false,{preferCache:true});
+   await Promise.all([
+    loadMenu(false,{preferCache:true}),
+    refreshAdminRestaurantBrand()
+   ]);
    $('loadingCard').hidden=true;
    $('adminRoot').hidden=false;
    $('adminNav').hidden=false;
@@ -1136,7 +1165,11 @@ function refreshHeader(){
   document.addEventListener('keydown',modalKeyboard);
 
   $('btnSave').addEventListener('click',save);
-  $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
+  $('btnReload').addEventListener('click',()=>loadMenu().then(async ok=>{
+   if(!ok)return;
+   await refreshAdminRestaurantBrand();
+   notify('Siste meny er hentet');
+  }).catch(e=>notify(e.message,true)));
   $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
    draftProductSnapshots.clear();draftGroupSnapshots.clear();
