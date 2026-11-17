@@ -1,16 +1,16 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261117-bestillonline-categoryhide23';
+const CACHE_NAME='fatih1-static-v20261118-layout1';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'style.css?v=20261117-bestillonline-suggestscroll21',
-  'sepet.js?v=20261117-bestillonline-categoryhide23',
-  'app.js?v=20261117-bestillonline-categoryhide23',
-  'profil.js?v=20261117-bestillonline-brand4',
+  'index/style.css?v=20261118-layout1',
+  'index/sepet.js?v=20261118-layout1',
+  'index/app.js?v=20261118-layout1',
+  'index/profil.js?v=20261118-layout1',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
@@ -53,7 +53,7 @@ self.addEventListener('fetch',event=>{
  // Only the precise local CSS/JS asset URLs listed above may use Cache Storage.
  // No images, remote origins, Firebase REST/SSE, order APIs or uploads are handled.
  const asset=url.pathname.slice(ROOT.pathname.length);
- if(!['style.css','app.js','sepet.js','profil.js'].includes(asset)||!url.searchParams.has('v'))return;
+ if(!['index/style.css','index/app.js','index/sepet.js','index/profil.js'].includes(asset)||!url.searchParams.has('v'))return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE_NAME);
   const saved=await cache.match(request);
