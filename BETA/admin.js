@@ -532,13 +532,41 @@ function refreshHeader(){
   $('cartSuggestionLimit').textContent=recommendationIds().length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
   renderSizes(true);
  }
+ const GROUP_VIEW_KEY='bestillonline-admin-group-view-v1';
+ let groupViewMode=(()=>{
+  try{return localStorage.getItem(GROUP_VIEW_KEY)==='list'?'list':'grid'}catch{return 'grid'}
+ })();
+ function setGroupView(mode){
+  if(mode!=='grid'&&mode!=='list')return;
+  groupViewMode=mode;
+  const list=$('groupList');
+  list.classList.toggle('admin-group-grid',mode==='grid');
+  list.classList.toggle('admin-group-list',mode==='list');
+  for(const button of document.querySelectorAll('[data-group-view]')){
+   const selected=button.dataset.groupView===mode;
+   button.classList.toggle('active',selected);
+   button.setAttribute('aria-pressed',String(selected));
+  }
+  try{localStorage.setItem(GROUP_VIEW_KEY,mode)}catch{}
+ }
+ const groupOneIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+ const groupManyIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7.5 12 3 3 6-6"/></svg>';
  function renderGroups(){
   const query=$('groupSearch').value.trim().toLocaleLowerCase('no');
-  $('groupList').innerHTML=state.menu.optionGroups.map((g,i)=>{
-   if(query&&!String(g.title||'').toLocaleLowerCase('no').includes(query))return '';
-   const count=arr(g.options).length;
-   return '<button type="button" data-group="'+i+'" class="item'+(state.group===i?' active':'')+'"><span class="item-icon">＋</span><span class="item-copy"><strong>'+esc(g.title||'Valggruppe')+'</strong><small>'+count+' alternativer · '+(g.selectionMode==='multiple'?'Flere valg':'Ett valg')+'</small></span><span>›</span></button>';
-  }).join('')||'<p class="empty">Ingen valggrupper</p>';
+  const matching=arr(state.menu?.optionGroups).map((g,i)=>({g,i}))
+   .filter(({g})=>String(g.title||'').toLocaleLowerCase('no').includes(query));
+  $('groupList').innerHTML=matching.map(({g,i})=>{
+   const count=arr(g.options).length,number=count+' '+(count===1?'alternativ':'alternativer');
+   const multiple=g.selectionMode==='multiple',name=esc(g.title||'Valggruppe');
+   return '<div class="item admin-group-item'+(state.group===i?' active':'')+'" data-group="'+i+'">'+
+    '<button type="button" class="admin-row-main" data-group-select aria-label="Rediger valggruppe: '+name+'">'+
+    '<span class="item-icon">'+(multiple?groupManyIcon:groupOneIcon)+'</span>'+
+    '<span class="item-copy"><strong>'+name+'</strong><small>'+number+' · '+(multiple?'Flere valg':'Ett valg')+'</small></span></button>'+
+    '<div class="admin-row-actions">'+
+    '<button class="admin-row-action" data-group-edit type="button" title="Rediger valggruppe" aria-label="Rediger valggruppe: '+name+'">'+adminEditSvg+'</button>'+
+    '<button class="admin-row-action is-delete" data-group-delete type="button" title="Slett valggruppe" aria-label="Slett valggruppe: '+name+'">'+adminDeleteSvg+'</button></div></div>';
+  }).join('')||'<p class="empty">'+(query?'Ingen valggrupper passer søket.':'Ingen valggrupper ennå.')+'</p>';
+  $('groupResultCount').textContent=query?matching.length+' av '+arr(state.menu?.optionGroups).length+' valggrupper':matching.length+' valggrupper';
  }
  function renderOptionRows(){
   const g=group();
@@ -833,11 +861,15 @@ function refreshHeader(){
   const g={id:uid('group'),title:'Ny valggruppe',selectionMode:'single',required:false,maxSelections:1,allowQuantity:false,defaultOptionIds:[],options:[]};
   state.menu.optionGroups.push(g);state.group=state.menu.optionGroups.length-1;renderGroups();renderGroupEditor();setDirty();openAdminModal('group');$('gTitle').focus();
  }
- function deleteGroup(){
-  const g=group();if(!g||!confirm('Slette valggruppen '+g.title+' fra alle produkter?'))return;
-  const id=String(g.id);
-  closeAdminModal();state.menu.optionGroups.splice(state.group,1);
-  for(const section of state.menu.sections)for(const p of section.items){
+ function deleteGroup(index=state.group){
+  const groups=state.menu?.optionGroups;
+  const g=groups?.[index];if(!g)return;
+  if(!confirm('Slette valggruppen «'+g.title+'» og fjerne den fra alle produkter? Endringen lagres automatisk.'))return;
+  const id=String(g.id),selected=groups[state.group];
+  if(activeAdminModal==='group')closeAdminModal();
+  groups.splice(index,1);
+  // Keep the menu consistent: remove every reference from products/sizes.
+  for(const section of arr(state.menu.sections))for(const p of arr(section.items)){
    p.optionGroupIds=arr(p.optionGroupIds).filter(v=>String(v)!==id);
    p.optionGroupOrder=arr(p.optionGroupOrder).filter(v=>String(v)!==id);
    for(const size of arr(p.sizes)){
@@ -845,7 +877,8 @@ function refreshHeader(){
     if(Array.isArray(size.optionGroupOrder))size.optionGroupOrder=size.optionGroupOrder.filter(v=>String(v)!==id);
    }
   }
-  state.group=Math.min(state.group,state.menu.optionGroups.length-1);
+  state.group=groups.indexOf(selected);
+  if(state.group<0)state.group=Math.max(0,Math.min(index,groups.length-1));
   renderGroups();renderGroupEditor();renderAssignedGroupsIfVisible();setDirty();
  }
  function renderAssignedGroupsIfVisible(){if(product())renderSizes()}
@@ -1112,9 +1145,15 @@ function refreshHeader(){
   initAdminDragReorder('category');
   initAdminDragReorder('product');
   $('groupList').addEventListener('click',event=>{
-   const button=event.target.closest('[data-group]');if(!button)return;
-   state.group=Number(button.dataset.group);renderGroups();renderGroupEditor();openAdminModal('group');
+   const row=event.target.closest('[data-group]');if(!row)return;
+   const index=Number(row.dataset.group);
+   if(event.target.closest('[data-group-delete]')){deleteGroup(index);return}
+   if(!event.target.closest('[data-group-edit]')&&!event.target.closest('[data-group-select]'))return;
+   state.group=index;renderGroups();renderGroupEditor();openAdminModal('group');
   });
+  document.querySelectorAll('[data-group-view]').forEach(button=>
+   button.addEventListener('click',()=>setGroupView(button.dataset.groupView)));
+  setGroupView(groupViewMode);
   $('productSearch').addEventListener('input',renderProducts);
   $('groupSearch').addEventListener('input',renderGroups);
   $('addCategory').addEventListener('click',addCategory);
@@ -1197,7 +1236,6 @@ function refreshHeader(){
    renderSizes();setDirty();
   });
   $('addGroup').addEventListener('click',addGroup);
-  $('deleteGroup').addEventListener('click',deleteGroup);
   for(const [id,key]of [['gTitle','title'],['gMode','selectionMode']])
    $(id).addEventListener('change',event=>{
     updateGroupField(key,event.target.value);
