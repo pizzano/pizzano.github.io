@@ -270,7 +270,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-groupviews12" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-draftfields13" defer></script>
 </head>
 <body>
 <header class="top">
@@ -379,7 +379,7 @@ body.admin-modal-open{overflow:hidden}
    </nav>
    <div class="admin-modal-body" id="productFields">
     <div class="admin-modal-pane" data-product-section="produkt">
-     <div class="admin-form-card"><h3>Produktinformasjon</h3>     <div class="field"><label for="pName">Produktnavn</label><input id="pName" maxlength="120"></div>
+     <div class="admin-form-card"><h3>Produktinformasjon</h3>     <div class="field"><label for="pName">Produktnavn</label><input id="pName" maxlength="120" placeholder="Produktnavn" autocomplete="off"></div>
      <div class="field"><label for="pDescription">Beskrivelse</label><textarea id="pDescription" maxlength="1500"></textarea></div>
 </div>
      <div class="admin-form-card"><h3>Produktbilde</h3>     <div class="preview"><img id="pPreview" alt="" referrerpolicy="no-referrer"><div><strong id="pPreviewName">Produktbilde</strong><small>URL-en lagres i den delte bildelisten</small></div></div>
@@ -427,7 +427,7 @@ body.admin-modal-open{overflow:hidden}
    </nav>
    <div class="admin-modal-body" id="groupFields">
     <div class="admin-modal-pane" data-group-section="gruppe"><div class="admin-form-card"><h3>Oppsett og regler</h3>
-     <div class="cols"><div class="field"><label for="gTitle">Navn på gruppen</label><input id="gTitle" maxlength="140"></div>
+     <div class="cols"><div class="field"><label for="gTitle">Navn på gruppen</label><input id="gTitle" maxlength="140" placeholder="Navn på valggruppe" autocomplete="off"></div>
      <div class="field"><label for="gMode">Valgtype</label><select id="gMode"><option value="single">Ett valg</option><option value="multiple">Flere valg</option></select></div>
      <div class="field"><label for="gMax">Maks antall</label><input id="gMax" type="number" min="1" max="30"></div>
      <div class="field"><label for="gRequired">Obligatorisk</label><label class="checkbox"><input id="gRequired" type="checkbox"> Kunden må velge</label></div></div>
