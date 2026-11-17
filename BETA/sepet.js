@@ -245,22 +245,21 @@ function renderCartContents(){
  $('cartTopCount').hidden=cartTopQuantity===0;
  $('cartClear').hidden=!cart.length;
  $('cartSummary').hidden=!cart.length;
- $('cartItems').innerHTML=cart.length?cart.map((line,index)=>
-  '<article class="cart-product-card" data-cart-line="'+index+'">'+
-  '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong>'+
-  '<button type="button" class="cart-product-edit" data-edit="'+index+'" aria-label="Endre '+esc(line.name)+'" title="Endre produkt">'+cartEditIcon+'</button></div>'+
-  '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="'+(Number(line.qty)>1?'Reduser antall':'Fjern produkt')+'">'+(Number(line.qty)>1?'−':cartTrashIcon)+'</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
-  '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
-  (cartMenuIssues.some(issue=>issue.index===index)?'<p class="cart-line-warning" role="alert">'+
-  esc(cartMenuIssues.find(issue=>issue.index===index).reason)+' · Endre eller fjern varen.</p>':'')+
-  '<div class="cart-product-totalrow"><span>Sum</span><strong>'+
-  (cartMenuIssues.some(issue=>issue.index===index)?'Må kontrolleres':money(line.qty*line.unitPrice))+
-  '</strong></div></article>'
- ).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
+ $('cartItems').innerHTML=cart.length?cart.map((line,index)=>{
+  const issue=cartMenuIssues.find(entry=>entry.index===index);
+  return '<article class="cart-product-card" data-cart-line="'+index+'">'+
+   '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong>'+
+   '<button type="button" class="cart-product-edit" data-edit="'+index+'" aria-label="Endre '+esc(line.name)+'" title="Endre produkt">'+cartEditIcon+'</button></div>'+
+   '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="'+(Number(line.qty)>1?'Reduser antall':'Fjern produkt')+'">'+(Number(line.qty)>1?'−':cartTrashIcon)+'</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
+   '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
+   (issue?'<p class="cart-line-warning" role="alert">'+esc(issue.reason)+' · Endre eller fjern varen.</p>':'')+
+   '<div class="cart-product-totalrow"><span>Sum</span><strong>'+
+   (issue?'Må kontrolleres':money(line.qty*line.unitPrice))+
+   '</strong></div></article>';
+ }).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
  renderCartRecommendations();
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
-
 
 // One shared source of details for the basket and final pickup review.
 function pickupSummary(){
@@ -766,7 +765,6 @@ function checkoutBack(){
  if(checkoutStep==='cart')fatih1HistoryToMenu();
  else fatih1HistoryBack();
 }
-
 
 function returnToMenu(){
  fatih1HistoryToMenu();
