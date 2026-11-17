@@ -15,7 +15,9 @@
 .brand{font-size:22px;font-weight:900;letter-spacing:.012em;white-space:nowrap}.brand small{display:block;font-size:9px;letter-spacing:.15em;color:#c6dcca;font-weight:650;margin-top:2px}
 .admin-top-main{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:61px;padding:9px clamp(12px,2.5vw,32px)}
 .admin-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:13px;min-width:0}
-.admin-main-save{min-height:35px!important;padding:7px 13px!important;white-space:nowrap}
+.admin-main-save{min-height:39px!important;padding:8px 14px!important;white-space:nowrap;border-radius:11px!important;font-size:12.5px!important;background:#efd18b!important;border-color:#efd18b!important;color:#123b2b!important;box-shadow:0 2px 8px #020e0a18;transition:background .18s,border-color .18s}
+.admin-main-save:hover:not(:disabled){background:#f8dea2!important;border-color:#f8dea2!important}
+.admin-main-save:disabled{opacity:.65;box-shadow:none}
 .admin-nav-shell{padding:6px clamp(10px,2.5vw,32px) 9px;border-top:1px solid #ffffff1d;position:relative}
 .admin-nav-track{display:flex;align-items:center;gap:8px;min-width:0;position:relative}
 .admin-nav-scroll{display:flex;gap:7px;align-items:center;min-width:0;flex:0 1 auto;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 1px}
@@ -31,14 +33,14 @@
 .admin-nav-arrow svg{width:16px;height:16px}
 .admin-nav-arrow:disabled{opacity:.24}
 .admin-tools-menu{flex:none;position:relative}
-.admin-tools-menu>summary{display:inline-flex;align-items:center;gap:8px;min-height:39px;padding:7px 12px;list-style:none;cursor:pointer;border:1px solid #ffffff35;border-radius:11px;color:#f3f8f3;background:#ffffff12;font-size:12.5px;font-weight:750;white-space:nowrap;user-select:none;transition:background .18s,border-color .18s}
-.admin-tools-menu>summary:hover{background:#ffffff25;border-color:#ffffff55}
+.admin-tools-menu>summary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:39px;padding:7px 13px;list-style:none;cursor:pointer;border:1px solid #a8d5b9;border-radius:11px;color:#0c5039;background:#dff0e5;font-size:12.5px;font-weight:750;white-space:nowrap;user-select:none;transition:background .18s,border-color .18s;box-shadow:0 2px 8px #020e0a14}
+.admin-tools-menu>summary:hover{background:#eff9f1;border-color:#78bb97}
 .admin-tools-menu>summary::-webkit-details-marker,.admin-tools-accordion>summary::-webkit-details-marker{display:none}
-.admin-tools-menu[open]>summary{background:#e4f5e9;border-color:#b7e6c5;color:#086447}
+.admin-tools-menu[open]>summary{background:#c6e9d3;border-color:#8bc5a1;color:#07583e}
 .admin-tools-chevron{display:grid;place-items:center;flex:none;margin-left:auto;transition:transform .18s}
 .admin-tools-chevron svg{width:15px;height:15px}
 .admin-tools-menu[open]>summary>.admin-tools-chevron{transform:rotate(180deg)}
-.admin-tools-panel{position:absolute;right:0;top:calc(100% + 9px);width:min(380px,calc(100vw - 20px));max-height:calc(100dvh - 132px);overflow-y:auto;border:1px solid #c9e1d3;border-radius:17px;background:#f7fbf8;color:#183f2e;box-shadow:0 20px 48px #001f1677;padding:12px;z-index:40;overscroll-behavior:contain}
+.admin-tools-panel{position:absolute;right:0;top:calc(100% + 9px);width:min(380px,calc(100vw - 20px));max-height:calc(100dvh - 96px);overflow-y:auto;border:1px solid #c9e1d3;border-radius:17px;background:#f7fbf8;color:#183f2e;box-shadow:0 20px 48px #001f1677;padding:12px;z-index:40;overscroll-behavior:contain}
 .admin-tools-heading{margin:4px 6px 11px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#678676;font-weight:850}
 .admin-tools-accordion{border:1px solid #d9e9df;border-radius:12px;overflow:hidden;background:white;margin:7px 0}
 .admin-tools-accordion>summary{display:flex;align-items:center;gap:9px;padding:12px;cursor:pointer;font-size:13px;font-weight:800;list-style:none}
@@ -55,7 +57,8 @@
 .admin-tools-items :is(button,a)>span:last-child{display:grid;gap:2px;min-width:0}
 .admin-tools-items strong{font-size:12.5px}
 .admin-tools-items small{font-size:10.5px;color:#6d8c79;line-height:1.35}
-@media(max-width:680px){.admin-top-main{min-height:57px;padding:9px 12px}.top .brand{font-size:17px}.admin-header-actions{gap:7px}.admin-header-actions .status{font-size:11px;max-width:95px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-main-save{min-height:32px!important;padding:6px 9px!important;font-size:11px!important}.admin-nav-shell{padding:5px 8px 8px}.admin-nav-track{gap:5px}.admin-nav-arrow{display:grid;width:24px;height:32px}.admin-nav-tab{min-height:35px;padding:6px 10px;font-size:11.5px;gap:6px}.admin-nav-icon{width:18px;height:18px}.admin-nav-icon svg{width:17px;height:17px}.admin-tools-menu>summary{min-height:35px;padding:6px 9px;font-size:11.5px;gap:5px}.admin-tools-panel{right:0}}
+@media(max-width:680px){.admin-top-main{min-height:57px;padding:9px 12px}.top .brand{font-size:17px}.admin-header-actions{gap:7px}.admin-header-actions .status{font-size:11px;max-width:95px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-main-save{min-height:35px!important;padding:7px 10px!important;font-size:11px!important}.admin-nav-shell{padding:5px 8px 8px}.admin-nav-track{gap:5px}.admin-nav-arrow{display:grid;width:24px;height:32px}.admin-nav-tab{min-height:35px;padding:6px 10px;font-size:11.5px;gap:6px}.admin-nav-icon{width:18px;height:18px}.admin-nav-icon svg{width:17px;height:17px}.admin-tools-menu>summary{min-height:35px;padding:6px 10px;font-size:11px;gap:5px}.admin-tools-panel{right:0}}
+@media(max-width:560px){.admin-top-main{flex-wrap:wrap;gap:6px;padding:9px 11px}.admin-header-actions{width:100%;gap:7px;justify-content:flex-end}.admin-header-actions .status{margin-right:auto;white-space:nowrap}.admin-main-save{flex:none}.admin-tools-panel{max-height:calc(100dvh - 135px)}}
 @media(max-width:395px){.admin-header-actions .status{width:9px;min-width:9px;font-size:0;gap:0}.admin-header-actions .status::before{width:9px;height:9px;flex:none}.admin-nav-arrow{width:21px}}
 @media(prefers-reduced-motion:reduce){.admin-nav-tab,.admin-tools-menu>summary,.admin-tools-chevron,.admin-tools-items :is(button,a){transition:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #cbded2;background:white;color:#144633;padding:10px 14px;border-radius:11px;font-size:13px;font-weight:750;text-decoration:none;min-height:40px}
@@ -270,7 +273,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-draftfields13" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-tools-header14" defer></script>
 </head>
 <body>
 <header class="top">
@@ -279,17 +282,7 @@ body.admin-modal-open{overflow:hidden}
   <div class="admin-header-actions">
    <span class="status" id="saveStatus" role="status" aria-live="polite">Innlogging kreves</span>
    <button id="btnSave" class="btn gold admin-main-save" type="button" disabled>Lagre endringer</button>
-  </div>
- </div>
- <div class="admin-nav-shell" id="adminNav" hidden>
-  <nav id="adminNavTrack" class="admin-nav-track" aria-label="Administrasjonskategorier">
-   <button id="adminNavPrev" class="admin-nav-arrow" type="button" aria-label="Forrige administrasjonskategori"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
-   <button id="adminNavNext" class="admin-nav-arrow" type="button" aria-label="Neste administrasjonskategori"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
-   <div id="adminNavScroll" class="admin-nav-scroll" role="tablist" aria-label="Redigeringsområder">
-    <button id="adminTabProducts" class="admin-nav-tab active" type="button" role="tab" data-tab="products" aria-controls="productsPage" aria-selected="true"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><span>Kategorier og produkter</span></button>
-    <button id="adminTabGroups" class="admin-nav-tab" type="button" role="tab" data-tab="groups" aria-controls="groupsPage" aria-selected="false"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11m4 0h1M4 12h3m4 0h9M4 17h11m4 0h1"/><circle cx="17" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg></span><span>Valggrupper og tilvalg</span></button>
-   </div>
-   <details class="admin-tools-menu" id="adminToolsMenu">
+   <details class="admin-tools-menu" id="adminToolsMenu" hidden>
     <summary aria-label="Åpne administrasjonsverktøy"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5a5.5 5.5 0 0 0-7 7L3 18l3 3 4.5-4.5a5.5 5.5 0 0 0 7-7l-3.5 3.5-3-3z"/></svg></span><span>Verktøy</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
     <div class="admin-tools-panel">
      <p class="admin-tools-heading">Administrasjon</p>
@@ -310,6 +303,17 @@ body.admin-modal-open{overflow:hidden}
      </details>
     </div>
    </details>
+  </div>
+ </div>
+ <div class="admin-nav-shell" id="adminNav" hidden>
+  <nav id="adminNavTrack" class="admin-nav-track" aria-label="Administrasjonskategorier">
+   <button id="adminNavPrev" class="admin-nav-arrow" type="button" aria-label="Forrige administrasjonskategori"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+   <button id="adminNavNext" class="admin-nav-arrow" type="button" aria-label="Neste administrasjonskategori"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+   <div id="adminNavScroll" class="admin-nav-scroll" role="tablist" aria-label="Redigeringsområder">
+    <button id="adminTabProducts" class="admin-nav-tab active" type="button" role="tab" data-tab="products" aria-controls="productsPage" aria-selected="true"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><span>Kategorier og produkter</span></button>
+    <button id="adminTabGroups" class="admin-nav-tab" type="button" role="tab" data-tab="groups" aria-controls="groupsPage" aria-selected="false"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11m4 0h1M4 12h3m4 0h9M4 17h11m4 0h1"/><circle cx="17" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg></span><span>Valggrupper og tilvalg</span></button>
+   </div>
+
   </nav>
  </div>
 </header>
