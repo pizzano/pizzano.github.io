@@ -2160,8 +2160,8 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 #cartSheet #cartCartStep .cart-header-line h2{
  margin:0;
  font-family:Georgia,"Times New Roman",serif;
- font-size:clamp(23px,6.2vw,30px);
- font-weight:800;
+ font-size:22px;
+ font-weight:750;
  letter-spacing:-.045em;
  line-height:1.08;
  color:#073e30;
@@ -2179,7 +2179,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  border-radius:99px;
  color:#0b4936;
  font-size:12px;
- font-weight:780;
+ font-weight:700;
  box-shadow:0 2px 6px #0d744d0a;
 }
 #cartSheet #cartCartStep .cart-clear-btn svg{
@@ -2194,7 +2194,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 #cartSheet #cartCartStep .cart-product-card{
  min-width:0;
  padding:14px 12px 12px;
- border:1px solid #ffffff;
+ border:1px solid #000000;
  border-radius:17px;
  background:linear-gradient(140deg,#ffffff 0%,#ffffff 62%,#fbfefa 100%);
  box-shadow:0 7px 19px #20593c13;
@@ -2216,7 +2216,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 #cartSheet #cartCartStep .cart-product-name{
  color:#073d2f;
  font-size:16px;
- font-weight:850;
+ font-weight:750;
  letter-spacing:-.025em;
  line-height:1.2;
  overflow-wrap:anywhere;
@@ -2296,7 +2296,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  padding:7px 11px;
  border:0;
  border-radius:11px;
- background:#e9f4ed;
+ background:#FAFAFA;
  color:#214c3b;
  font-size:12px;
  font-weight:450;
@@ -2342,7 +2342,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  padding:7px 10px;
  border:0;
  border-radius:11px;
- background:#e8f4ec;
+ background:#FAFAFA;
 }
 #cartSheet #cartCartStep .cart-product-totalrow::before{
  content:"";
@@ -2360,8 +2360,8 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 }
 #cartSheet #cartCartStep .cart-product-totalrow strong{
  color:#0a4534;
- font-size:16px;
- font-weight:900;
+ font-size:15px;
+ font-weight:750;
  white-space:nowrap;
 }
 #cartSheet #cartCartStep .cart-summary{
@@ -2381,13 +2381,13 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  box-shadow:0 4px 13px #17664716;
 }
 #cartSheet #cartCartStep .cart-summary span{
- font-size:21px;
- font-weight:850;
+ font-size:18px;
+ font-weight:750;
 }
 #cartSheet #cartCartStep .cart-summary strong{
  color:#fff;
- font-size:23px;
- font-weight:900;
+ font-size:18px;
+ font-weight:750;
  font-variant-numeric:tabular-nums;
  white-space:nowrap;
 }
@@ -2403,7 +2403,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 }
 #cartSheet #cartCartStep .cart-recommendations-head strong{
  color:#093d2e;
- font:800 21px/1.16 Georgia,"Times New Roman",serif;
+ font:750 18px/1.16 Georgia,"Times New Roman",serif;
  letter-spacing:-.03em;
 }
 #cartSheet #cartCartStep .cart-recommendations-head small{
@@ -2510,10 +2510,10 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  font-weight:600;
 }
 #cartSheet .cart-buttons .cart-footer-total strong{
- font-size:20px;
+ font-size:18px;
  line-height:1.15;
  color:#083e30;
- font-weight:900;
+ font-weight:750;
 }
 #cartSheet .cart-buttons .primary{
  display:flex;
@@ -2528,8 +2528,8 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  background:linear-gradient(110deg,#00865d,#006449);
  box-shadow:none;
  color:#fff;
- font-size:16px;
- font-weight:850;
+ font-size:15px;
+ font-weight:750;
  line-height:1.15;
  text-align:center;
 }
@@ -2569,7 +2569,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  #cartSheet .cart-steps{gap:7px;margin-inline:3px}
  #cartSheet .cart-steps span{font-size:12px;gap:5px}
  #cartSheet .cart-steps span b{width:26px;height:26px;font-size:13px}
- #cartSheet #cartCartStep .cart-header-line h2{font-size:24px}
+ #cartSheet #cartCartStep .cart-header-line h2{font-size:22px}
  #cartSheet #cartCartStep .cart-clear-btn{font-size:10px;padding:7px 9px}
  #cartSheet #cartCartStep .cart-product-name{font-size:14px}
  #cartSheet #cartCartStep .cart-product-card{padding:12px 9px 10px}
