@@ -59,6 +59,7 @@ async function bootAuth(){
  const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
  let toastTimer=0,autosaveTimer=0,editRevision=0;
  const draftProductSnapshots=new Map();
+ const draftGroupSnapshots=new Map();
  const AUTO_SAVE_DELAY_MS=1400;
  function cancelScheduledSave(){window.clearTimeout(autosaveTimer);autosaveTimer=0}
  function scheduleAutoSave(){
@@ -93,19 +94,46 @@ async function bootAuth(){
   const baseline=draftProductSnapshots.get(String(item.id));
   return baseline!==undefined&&JSON.stringify(item)===baseline;
  }
- // New empty categories and genuinely untouched products stay local.
+ function isUntouchedNewGroup(item){
+  if(!item)return false;
+  const baseline=draftGroupSnapshots.get(String(item.id));
+  return baseline!==undefined&&JSON.stringify(item)===baseline;
+ }
+ // New empty categories and genuinely untouched products/groups stay local.
  // A product with a changed field may be saved even if its name is unchanged.
  function menuWithoutIncompleteDrafts(){
   const next=clone(state.menu);
   const existingSections=new Set(arr(state.original?.sections).map(section=>String(section.id)));
   const existingProducts=new Set(arr(state.original?.sections).flatMap(section=>
    arr(section.items).map(item=>String(item.id))));
+  const originalSizes=new Set(arr(state.original?.sections).flatMap(section=>
+   arr(section.items).flatMap(item=>arr(item.sizes).map(size=>String(size.id)))));
+  const originalOptions=new Set(arr(state.original?.optionGroups).flatMap(group=>
+   arr(group.options).map(option=>String(option.id))));
+  const originalGroups=new Set(arr(state.original?.optionGroups).map(group=>String(group.id)));
+  const validNewSize=size=>String(size.label||size.name||'').trim().length>0;
   for(const section of next.sections){
    section.items=arr(section.items).filter(item=>
-    existingProducts.has(String(item.id))||!isUntouchedNewProduct(item));
+    existingProducts.has(String(item.id))||
+    (String(item.name||'').trim()!==''&&!isUntouchedNewProduct(item)&&
+     arr(item.sizes).every(size=>originalSizes.has(String(size.id))||validNewSize(size))));
+   for(const item of section.items){
+    item.sizes=arr(item.sizes).filter(size=>
+     originalSizes.has(String(size.id))||validNewSize(size));
+   }
   }
   next.sections=next.sections.filter(section=>
    existingSections.has(String(section.id))||section.items.length>0);
+  next.optionGroups=arr(next.optionGroups).filter(group=>
+   originalGroups.has(String(group.id))||
+   (String(group.title||'').trim()!==''&&!isUntouchedNewGroup(group)));
+  for(const group of next.optionGroups){
+   group.options=arr(group.options).filter(option=>
+    originalOptions.has(String(option.id))||String(option.label||'').trim()!=='');
+   const retained=new Set(group.options.map(option=>String(option.id)));
+   if(Array.isArray(group.defaultOptionIds))
+    group.defaultOptionIds=group.defaultOptionIds.filter(id=>retained.has(String(id)));
+  }
   return next;
  }
  function persistableSignature(value){
@@ -282,7 +310,7 @@ function refreshHeader(){
   // auto-save must never silently remove unrelated data.
   assertMenu(snapshot);
   if(!etag)throw Error('ETag mangler. Lagring stoppet for å beskytte eksisterende meny.');
-  draftProductSnapshots.clear();
+  draftProductSnapshots.clear();draftGroupSnapshots.clear();
   state.original=clone(snapshot);
   state.menu=clone(snapshot);
   state.etag=etag;state.category=0;state.product=0;state.group=0;
@@ -387,6 +415,15 @@ function refreshHeader(){
     syncSaveStatus();
    }
   }
+  if(kind==='group'){
+   const item=group(),groups=state.menu?.optionGroups;
+   if(item&&groups&&isUntouchedNewGroup(item)){
+    draftGroupSnapshots.delete(String(item.id));
+    groups.splice(state.group,1);
+    state.group=Math.max(0,Math.min(state.group,groups.length-1));
+    renderGroups();renderGroupEditor();syncSaveStatus();
+   }
+  }
   activeAdminModal=null;
   $(kind==='product'?'productEditor':kind==='group'?'groupEditor':'categoryEditor').hidden=true;
   $(kind==='product'?'productModalBackdrop':kind==='group'?'groupModalBackdrop':'categoryModalBackdrop').hidden=true;
@@ -403,6 +440,14 @@ function refreshHeader(){
   if(kind==='product'&&isUntouchedNewProduct(product())){
    closeAdminModal();
    return;
+  }
+  if(kind==='group'&&isUntouchedNewGroup(group())){
+   closeAdminModal();
+   return;
+  }
+  if(kind==='group'&&draftGroupSnapshots.has(String(group()?.id))&&!String(group()?.title||'').trim()){
+   notify('Skriv inn et navn på valggruppen før du lagrer.',true);
+   $('gTitle').focus();return;
   }
   if(!state.dirty){closeAdminModal();return}
   await save();
@@ -507,7 +552,7 @@ function refreshHeader(){
    }).join('');
    return '<div class="size-product-card">'+
     '<div class="size-product-header">'+
-    '<input data-size-name="'+i+'" aria-label="Størrelsesnavn" value="'+esc(sizeLabel(size))+'">'+
+    '<input data-size-name="'+i+'" aria-label="Størrelsesnavn" placeholder="Størrelse" value="'+esc(size.label||state.menu.sizeLabels?.[size.labelId]||size.name||'')+'">'+
     '<input type="number" min="0" max="99999" step="1" data-size-price="'+i+'" aria-label="Pris i kroner" value="'+esc(Number(size.price)||0)+'">'+
     '<button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>'+
     '<details class="size-product-options" data-size-options="'+i+'"'+(expanded.has(i)?' open':'')+'>'+
@@ -828,7 +873,7 @@ function refreshHeader(){
  function editCategory(){openCategoryModal(state.category)}
  function addProduct(){
   const s=category();if(!s)return;
-  const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
+  const newItem={id:uid('product'),name:'',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'',price:0}],optionGroupIds:[],optionGroupOrder:[]};
   draftProductSnapshots.set(String(newItem.id),JSON.stringify(newItem));
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
@@ -858,8 +903,10 @@ function refreshHeader(){
   renderAll();setDirty();
  }
  function addGroup(){
-  const g={id:uid('group'),title:'Ny valggruppe',selectionMode:'single',required:false,maxSelections:1,allowQuantity:false,defaultOptionIds:[],options:[]};
-  state.menu.optionGroups.push(g);state.group=state.menu.optionGroups.length-1;renderGroups();renderGroupEditor();setDirty();openAdminModal('group');$('gTitle').focus();
+  const g={id:uid('group'),title:'',selectionMode:'single',required:false,maxSelections:1,allowQuantity:false,defaultOptionIds:[],options:[]};
+  draftGroupSnapshots.set(String(g.id),JSON.stringify(g));
+  state.menu.optionGroups.push(g);state.group=state.menu.optionGroups.length-1;
+  renderGroups();renderGroupEditor();setDirty();openAdminModal('group');$('gTitle').focus();
  }
  function deleteGroup(index=state.group){
   const groups=state.menu?.optionGroups;
@@ -867,6 +914,7 @@ function refreshHeader(){
   if(!confirm('Slette valggruppen «'+g.title+'» og fjerne den fra alle produkter? Endringen lagres automatisk.'))return;
   const id=String(g.id),selected=groups[state.group];
   if(activeAdminModal==='group')closeAdminModal();
+  draftGroupSnapshots.delete(id);
   groups.splice(index,1);
   // Keep the menu consistent: remove every reference from products/sizes.
   for(const section of arr(state.menu.sections))for(const p of arr(section.items)){
@@ -885,7 +933,7 @@ function refreshHeader(){
  function addOption(){
   const g=group();if(!g)return;
   g.options=arr(g.options);
-  g.options.push({id:uid('option'),label:'Nytt alternativ',price:0});
+  g.options.push({id:uid('option'),label:'',price:0});
   renderOptionRows();setDirty();
  }
  function moveOption(index,step){
@@ -993,7 +1041,7 @@ function refreshHeader(){
   if(persistableSignature(prepared)===persistableSignature(state.original)){
    syncSaveStatus();
    if(!auto&&hasUnfinishedDrafts())
-    notify('Urørte nye produkter og tomme kategorier lagres ikke.');
+    notify('Ufullstendige produkter, størrelser, valggrupper og tomme kategorier lagres ikke.');
    return;
   }
   try{sanitize(prepared)}catch(error){
@@ -1028,6 +1076,7 @@ function refreshHeader(){
    state.original=clone(next);
    for(const section of arr(next.sections))for(const item of arr(section.items))
     draftProductSnapshots.delete(String(item.id));
+   for(const item of arr(next.optionGroups))draftGroupSnapshots.delete(String(item.id));
    state.menu.updatedAt=version;
    state.menu.changeFeed=clone(next.changeFeed);
    let etag=response.headers.get('ETag');
@@ -1064,7 +1113,7 @@ function refreshHeader(){
  $('authForm').addEventListener('submit',login);
  $('btnSignOut').addEventListener('click',async()=>{
   if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
-  cancelScheduledSave();draftProductSnapshots.clear();
+  cancelScheduledSave();draftProductSnapshots.clear();draftGroupSnapshots.clear();
   await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
  });
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
@@ -1085,7 +1134,7 @@ function refreshHeader(){
   $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
   $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
-   draftProductSnapshots.clear();
+   draftProductSnapshots.clear();draftGroupSnapshots.clear();
    state.menu=clone(state.original);state.category=0;state.product=0;state.group=0;renderAll();setClean()});
   document.querySelectorAll('#adminNavTrack [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
   const navTrack=$('adminNavScroll');
@@ -1232,7 +1281,7 @@ function refreshHeader(){
   $('addSize').addEventListener('click',()=>{
    const p=product();if(!p)return;
    p.sizes=arr(p.sizes);
-   p.sizes.push({id:uid('size'),label:'Ny størrelse',price:0,optionGroupIds:[]});
+   p.sizes.push({id:uid('size'),label:'',price:0,optionGroupIds:[]});
    renderSizes();setDirty();
   });
   $('addGroup').addEventListener('click',addGroup);
