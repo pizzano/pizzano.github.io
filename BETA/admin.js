@@ -1232,11 +1232,10 @@ function refreshHeader(){
   try{
    const url=await menuAuthURL();
    const plan=narrowWritePlan(state.original,next,delta);
-   let etag=null,postWriteSnapshot=null,partialUsed=false;
+   let etag=null,postWriteSnapshot=null;
    if(plan){
     const result=await narrowConditionalMenuWrite(url,plan,next);
-    if(result.supported)partialUsed=true;
-    else etag=await fullConditionalMenuWrite(url,next);
+    if(!result.supported)etag=await fullConditionalMenuWrite(url,next);
    }else etag=await fullConditionalMenuWrite(url,next);
    // A full menu is only sent for structural/complex changes or when the
    // browser cannot safely use conditional narrow writes.
@@ -1256,7 +1255,6 @@ function refreshHeader(){
    state.etag=etag||null;
    if(etag)storeAdminMenuCache(state.original,etag);
    else clearAdminMenuCache();
-   if(partialUsed)console.debug('BestillOnline: liten menyendring lagret ('+plan.bytes+' byte felt)');
    // No renderAll here: it would replace focused text fields during autosave.
    refreshHeader();
    const more=syncSaveStatus();
