@@ -105,13 +105,13 @@ async function bootAuth(){
    const url=URL.createObjectURL(blob);
    const date=new Date().toISOString().replace(/[:.]/g,'-');
    const link=document.createElement('a');
-   link.href=url;link.download='fatih1-menu-backup-'+date+'.json';
+   link.href=url;link.download='BestillOnline-menu-backup-'+date+'.json';
    document.body.appendChild(link);
    link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),1000);
    notify('Menybackup er klargjort for nedlasting');
   }catch(error){
-   console.warn('FATIH1 menu backup export failed',error);
+   console.warn('BestillOnline menu backup export failed',error);
    notify('Kunne ikke opprette menybackup. Prøv igjen.',true);
   }
  }
@@ -204,7 +204,7 @@ function getProductAllergens(p){
    $('adminRoot').hidden=false;
    notify('Menyen er lastet fra Firebase');
   }catch(error){
-   console.warn('FATIH1 menu admin load failed:',error);
+   console.warn('BestillOnline menu admin load failed:',error);
    $('loadError').textContent=error.message||'Kunne ikke laste menyen.';
    $('loadError').hidden=false;
    $('saveStatus').textContent='Kunne ikke koble til';
