@@ -601,7 +601,7 @@ function refreshHeader(){
     (ids.suggested.has(String(p.id))?' · Forslag i handlekurven':'')+
     (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small>'+categoryBadge+'</span></button>'+
     '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="'+(productFilterMode!=='all'?'Rediger tilgjengelighet':'Rediger produkt')+'" aria-label="'+(productFilterMode!=='all'?'Rediger tilgjengelighet: ':'Rediger produkt: ')+name+'">'+adminEditSvg+'</button>'+
-    (global?'':'<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt permanent" aria-label="Slett produkt permanent: '+name+'">'+adminDeleteSvg+'</button>')+'</div>'+
+    (productFilterMode==='all'?'<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt permanent" aria-label="Slett produkt permanent: '+name+'">'+adminDeleteSvg+'</button>':'')+'</div>'+
     (global?'':'<span class="admin-drag-handle" aria-hidden="true">⠿</span>')+'</div>';
   }).join('')||'<p class="empty">'+(global?'Ingen produkter passer filteret.':'Ingen produkter i kategorien.')+'</p>';
  }
