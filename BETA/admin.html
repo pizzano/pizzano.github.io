@@ -104,6 +104,27 @@
 
 
 .search{width:100%;padding:10px 12px;border:1px solid #d3e5d9;border-radius:10px;margin-bottom:10px;background:#f9fcfa}
+
+/* Local catalogue filters; no Firebase reads or writes for status browsing. */
+.admin-products-panel{min-width:0}
+.admin-product-filters{display:flex;align-items:center;gap:5px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#afdac2 transparent;padding:5px;border-radius:13px;background:#eef5f0;border:1px solid #d7e9dd;margin:0 0 10px}
+.admin-product-filter{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:none;min-height:32px;white-space:nowrap;padding:6px 11px;background:transparent;border:1px solid transparent;border-radius:9px;color:#476855;font-size:12px;font-weight:750;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.admin-product-filter:hover{color:#086a4b;background:#ffffffae}
+.admin-product-filter.is-active{background:#087f59;border-color:#087f59;color:#fff;box-shadow:0 2px 8px #0c6a4318}
+.admin-product-filter:focus-visible{outline:2px solid #0a9468;outline-offset:2px}
+.admin-product-filter-count{font-size:10px;line-height:1.6;padding:0px 6px;border-radius:7px;color:#54806a;background:#e0efe5;min-width:20px;text-align:center;font-variant-numeric:tabular-nums}
+.admin-product-filter.is-active .admin-product-filter-count{color:#085d41;background:#e9f8ee}
+.admin-product-filter-count.is-zero{opacity:.57}
+.admin-product-search-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 7px}
+.admin-product-search-row .search{flex:1 1 240px;min-width:0;margin:0;min-height:39px}
+.admin-product-filter-result{margin-left:auto;color:#658473;font-size:11px;font-weight:650;white-space:nowrap}
+.admin-product-category{display:inline-flex;align-items:center;vertical-align:middle;margin-top:3px;font-size:10px;font-weight:650;color:#087354;background:#eaf6ee;border-radius:5px;padding:2px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-product-filtered .admin-drag-handle{display:none}
+#productReorderHint{margin:0 0 9px;font-size:10px}
+#productReorderHint.is-filtered{color:#8a947c}
+#productList.scroll{max-height:calc(100dvh - 300px)}
+@media(max-width:680px){.admin-product-filters{margin-bottom:9px;padding:4px}.admin-product-filter{font-size:11px;min-height:32px;padding:6px 9px}.admin-product-search-row{gap:6px}#productList.scroll{max-height:360px}}
+@media(prefers-reduced-motion:reduce){.admin-product-filter{transition:none}}
 .empty{padding:22px;text-align:center;color:#819588;background:#f8fbf9;border:1px dashed #c7dacf;border-radius:13px;font-size:13px}
 
 
@@ -273,7 +294,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-safe-delta16" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-productfilters17" defer></script>
 </head>
 <body>
 <header class="top">
@@ -327,7 +348,23 @@ body.admin-modal-open{overflow:hidden}
  <section id="adminRoot" hidden>
   <div class="layout" id="productsPage" role="tabpanel" aria-labelledby="adminTabProducts">
    <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><p class="reorder-hint">⠿ Dra kategoriene for å endre rekkefølgen</p><div class="stack scroll" id="categoryList"></div></section>
-   <section class="panel"><div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div><p class="reorder-hint">⠿ Dra produktene for å endre rekkefølgen</p><input id="productSearch" class="search" type="search" placeholder="Søk etter produkt…" aria-label="Søk produkter"><div class="stack scroll" id="productList"></div></section>
+   <section class="panel admin-products-panel">
+    <div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div>
+    <div class="admin-product-filters" id="productStatusFilters" role="group" aria-label="Filtrer produkter etter status">
+     <button class="admin-product-filter is-active" type="button" data-product-filter="all" aria-pressed="true">Alle</button>
+     <button class="admin-product-filter" type="button" data-product-filter="soldout" aria-pressed="false">Utsolgt <span class="admin-product-filter-count" data-product-filter-count="soldout">0</span></button>
+     <button class="admin-product-filter" type="button" data-product-filter="hidden" aria-pressed="false">Skjult <span class="admin-product-filter-count" data-product-filter-count="hidden">0</span></button>
+     <button class="admin-product-filter" type="button" data-product-filter="popular" aria-pressed="false">Mest solgt <span class="admin-product-filter-count" data-product-filter-count="popular">0</span></button>
+     <button class="admin-product-filter" type="button" data-product-filter="suggested" aria-pressed="false">Forslag i handlekurven <span class="admin-product-filter-count" data-product-filter-count="suggested">0</span></button>
+     <button class="admin-product-filter" type="button" data-product-filter="noimage" aria-pressed="false">Uten bilde <span class="admin-product-filter-count" data-product-filter-count="noimage">0</span></button>
+    </div>
+    <div class="admin-product-search-row">
+     <input id="productSearch" class="search" type="search" placeholder="Søk etter produkt i alle kategorier…" aria-label="Søk produkter">
+     <span id="productFilterResult" class="admin-product-filter-result" role="status" aria-live="polite"></span>
+    </div>
+    <p class="reorder-hint" id="productReorderHint">⠿ Dra produktene for å endre rekkefølgen</p>
+    <div class="stack scroll" id="productList"></div>
+   </section>
    
   </div>
   <div class="layout" id="groupsPage" role="tabpanel" aria-labelledby="adminTabGroups" hidden>
