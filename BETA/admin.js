@@ -86,7 +86,7 @@ async function bootAuth(){
  let toastTimer=0,autosaveTimer=0,editRevision=0;
  const draftProductSnapshots=new Map();
  const draftGroupSnapshots=new Map();
- const AUTO_SAVE_DELAY_MS=1400;
+ const AUTO_SAVE_DELAY_MS=2400;
  function cancelScheduledSave(){window.clearTimeout(autosaveTimer);autosaveTimer=0}
  function scheduleAutoSave(){
   cancelScheduledSave();
@@ -1062,6 +1062,135 @@ function refreshHeader(){
   walk(oldValue,newValue,'',0);
   return {changes:full?[]:list,requiresRefresh:full};
  }
+ // The RTDB REST API does not support if-match for PATCH.
+ // Use a conditional PUT on a small, unchanged leaf/subtree, then publish
+ // a compact change-feed notification. Structural/multi-object edits retain
+ // the original atomic conditional PUT on /menu.
+ let adminEtagHeadAvailable=true;
+ const conflicts=detail=>Object.assign(new Error(
+  detail||'Menyen ble endret et annet sted. Hent siste meny før du lagrer igjen.'
+ ),{code:'MENU_CONFLICT'});
+ function menuPathValue(object,path){
+  let current=object;
+  for(const part of path){
+   if(current===null||current===undefined||!Object.hasOwn(Object(current),part))return undefined;
+   current=current[part];
+  }
+  return current;
+ }
+ function equivalentJSON(left,right){
+  if(Object.is(left,right))return true;
+  if(!left||!right||typeof left!=='object'||typeof right!=='object')return false;
+  if(Array.isArray(left)!==Array.isArray(right))return false;
+  const a=Object.keys(left).sort(),b=Object.keys(right).sort();
+  return a.length===b.length&&a.every((key,i)=>key===b[i]&&equivalentJSON(left[key],right[key]));
+ }
+ function narrowWritePlan(original,next,delta){
+  if(delta.requiresRefresh||!arr(delta.changes).length||arr(delta.changes).length>18)return null;
+  const paths=delta.changes.map(change=>{
+   if(!change||typeof change.path!=='string'||!change.path.startsWith('menu/')||
+      change.value===null||change.value===undefined)return null;
+   const path=change.path.split('/').slice(1);
+   if(path.some(part=>!part||part==='__proto__'||part==='constructor'||part==='prototype'))return null;
+   return path;
+  });
+  if(paths.some(path=>!path))return null;
+  let target=paths[0];
+  // A single changed scalar is the cheapest safe operation (e.g. one price).
+  if(paths.length!==1||typeof menuPathValue(next,target)==='object'){
+   // Several edits to one product/group can use one conditional subtree PUT.
+   const item=paths[0][0]==='sections'&&paths[0][2]==='items'
+    &&/^\d+$/.test(paths[0][1])&&/^\d+$/.test(paths[0][3])
+     ?paths[0].slice(0,4):null;
+   const group=paths[0][0]==='optionGroups'&&/^\d+$/.test(paths[0][1])
+     ?paths[0].slice(0,2):null;
+   target=item||group;
+   if(!target||paths.some(path=>target.some((part,i)=>path[i]!==part)))return null;
+  }
+  const previous=menuPathValue(original,target),value=menuPathValue(next,target);
+  if(previous===undefined||value===undefined||value===null)return null;
+  const smallBytes=JSON.stringify(value).length,wholeBytes=JSON.stringify(next).length;
+  if(smallBytes>=wholeBytes*.65||smallBytes>14000)return null;
+  return {path:target,previous,value,bytes:smallBytes};
+ }
+ async function adminRootETag(url){
+  if(!adminEtagHeadAvailable)return null;
+  try{
+   const res=await fetch(url,{method:'HEAD',headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+   const tag=res.ok?res.headers.get('ETag'):null;
+   if(!tag){
+    if(res.status===400||res.status===405||res.status===501||res.ok)adminEtagHeadAvailable=false;
+    return null;
+   }
+   return tag;
+  }catch(error){
+   console.warn('BestillOnline ETag HEAD unavailable:',error);
+   return null;
+  }
+ }
+ function silentFirebaseURL(url){return url+(url.includes('?')?'&':'?')+'print=silent'}
+ async function fullConditionalMenuWrite(url,next){
+  // Avoid Firebase echoing the entire menu back after a successful PUT.
+  const response=await fetch(silentFirebaseURL(url),{method:'PUT',
+   headers:{'Content-Type':'application/json','if-match':state.etag},
+   body:JSON.stringify(next),cache:'no-store'});
+  if(response.status===412)throw conflicts();
+  if(!response.ok)throw Error('Firebase avviste menylagring (HTTP '+response.status+').');
+  return response.headers.get('ETag');
+ }
+ async function narrowConditionalMenuWrite(url,plan,next){
+  // Verify the whole menu has not changed since the admin loaded it.
+  // If HEAD is unavailable, fall back to the original root-level ETag PUT.
+  const rootETag=await adminRootETag(url);
+  if(!rootETag)return {supported:false};
+  if(rootETag!==state.etag)throw conflicts();
+  const leafURL=await databaseAuthURL('menu/'+plan.path.join('/'));
+  const read=await fetch(leafURL,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+  if(!read.ok)throw Error('Firebase avviste kontroll av feltet (HTTP '+read.status+').');
+  const leafETag=read.headers.get('ETag');
+  if(!leafETag)return {supported:false};
+  const remote=await read.json();
+  if(!equivalentJSON(remote,plan.previous))throw conflicts();
+  // Only the targeted node can be changed by this conditional request.
+  const write=await fetch(silentFirebaseURL(leafURL),{method:'PUT',
+   headers:{'Content-Type':'application/json','if-match':leafETag},
+   body:JSON.stringify(plan.value),cache:'no-store'});
+  if(write.status===412)throw conflicts();
+  if(!write.ok)throw Error('Firebase avviste feltlagring (HTTP '+write.status+').');
+  // The leaf is now saved. A failed notification must NOT cause a retry of the
+  // whole old menu; fail closed and require a fresh Firebase read instead.
+  const metadata={'updatedAt':next.updatedAt,
+   'changeFeed/latest':next.changeFeed.latest};
+  try{
+   const metadataURL=silentFirebaseURL(url);
+   let lastError=null;
+   for(let attempt=0;attempt<2;attempt++){
+    try{
+     const result=await fetch(metadataURL,{method:'PATCH',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(metadata),cache:'no-store'});
+     if(result.ok){lastError=null;break}
+     lastError=Error('Firebase oppdateringssignal HTTP '+result.status);
+     if(result.status<500)break;
+    }catch(error){lastError=error}
+   }
+   if(lastError)throw lastError;
+  }catch(error){
+   throw Object.assign(new Error(
+    'Feltet kan være lagret, men oppdateringssignalet feilet. Hent siste meny før du endrer mer.'
+   ),{code:'PARTIAL_SAVE_UNCERTAIN',cause:error});
+  }
+  return {supported:true};
+ }
+ async function currentMenuETag(url){
+  const head=await adminRootETag(url);
+  if(head)return {etag:head};
+  // HEAD may be disabled by a proxy/browser; only then read the full
+  // snapshot. Never assume a guessed ETag or allow an unguarded next save.
+  const res=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+  if(!res.ok)return {etag:null};
+  const etag=res.headers.get('ETag');
+  return {etag,menu:etag?await res.json():null};
+ }
  async function save(options={}){
   const auto=options?.auto===true;
   if(!state.menu||state.saving)return;
@@ -1095,35 +1224,33 @@ function refreshHeader(){
   state.saving=true;$('btnSave').disabled=true;
   $('saveStatus').className='status dirty';$('saveStatus').textContent='Lagrer…';
   try{
-   const response=await fetch(await menuAuthURL(),{method:'PUT',
-    headers:{'Content-Type':'application/json','if-match':state.etag},
-    body:JSON.stringify(next),cache:'no-store'});
-   if(response.status===412){
-    clearAdminMenuCache();state.etag=null;
-    throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
+   const url=await menuAuthURL();
+   const plan=narrowWritePlan(state.original,next,delta);
+   let etag=null,postWriteSnapshot=null,partialUsed=false;
+   if(plan){
+    const result=await narrowConditionalMenuWrite(url,plan,next);
+    if(result.supported)partialUsed=true;
+    else etag=await fullConditionalMenuWrite(url,next);
+   }else etag=await fullConditionalMenuWrite(url,next);
+   // A full menu is only sent for structural/complex changes or when the
+   // browser cannot safely use conditional narrow writes.
+   // Refresh root ETag without downloading the menu when possible.
+   if(!etag){
+    const latest=await currentMenuETag(url);
+    etag=latest.etag;
+    postWriteSnapshot=latest.menu;
    }
-   if(response.status===401||response.status===403)
-    throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
-   if(!response.ok)throw Error('Kunne ikke lagre til Firebase: HTTP '+response.status);
-   // Keep the unsaved editor state intact even if the user changes a field
-   // while this PUT is in flight; the next run will save those later edits.
-   state.original=clone(next);
+   // Keep the unsaved editor state intact if fields changed during network I/O.
+   state.original=postWriteSnapshot?clone(postWriteSnapshot):clone(next);
    for(const section of arr(next.sections))for(const item of arr(section.items))
     draftProductSnapshots.delete(String(item.id));
    for(const item of arr(next.optionGroups))draftGroupSnapshots.delete(String(item.id));
    state.menu.updatedAt=version;
    state.menu.changeFeed=clone(next.changeFeed);
-   let etag=response.headers.get('ETag');
-   if(!etag){
-    const fresh=await fetch(await menuAuthURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-    if(fresh.ok){
-     etag=fresh.headers.get('ETag');
-     if(etag)state.original=await fresh.json();
-    }
-   }
    state.etag=etag||null;
    if(etag)storeAdminMenuCache(state.original,etag);
    else clearAdminMenuCache();
+   if(partialUsed)console.debug('BestillOnline: liten menyendring lagret ('+plan.bytes+' byte felt)');
    // No renderAll here: it would replace focused text fields during autosave.
    refreshHeader();
    const more=syncSaveStatus();
@@ -1132,6 +1259,9 @@ function refreshHeader(){
    // A change made during a network request must be persisted separately.
    if(etag&&more&&editRevision!==revision)scheduleAutoSave();
   }catch(error){
+   if(error.code==='MENU_CONFLICT'||error.code==='PARTIAL_SAVE_UNCERTAIN'){
+    state.etag=null;clearAdminMenuCache();
+   }
    message(error.message||'Lagring feilet','error');
    $('saveStatus').className='status dirty';
    $('saveStatus').textContent='Lagring feilet';
