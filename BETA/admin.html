@@ -131,6 +131,14 @@
 .admin-modal-backdrop[hidden],.admin-modal[hidden]{display:none!important}
 .admin-modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(920px,calc(100vw - 30px));max-height:calc(100dvh - 36px);border:1px solid #cbe2d3;border-radius:19px;background:#f6faf7;color:#1c3e2e;box-shadow:0 32px 100px #041e16a8;overflow:hidden}
 .admin-group-modal{width:min(780px,calc(100vw - 30px))}
+.admin-category-modal{width:min(470px,calc(100vw - 28px))}
+.admin-category-form{display:flex;flex-direction:column;min-height:0;flex:1}
+.admin-category-modal .admin-form-card{padding:16px}
+.admin-category-modal .admin-form-card .field{margin-bottom:12px}
+.admin-category-modal .admin-modal-body{padding:15px}
+.admin-category-modal .admin-modal-footer{justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.admin-category-modal .admin-modal-footer .btn.primary{min-width:100px}
+#categoryIdHint{margin:0;word-break:break-word}
 .admin-modal-header{display:flex;align-items:flex-start;gap:18px;justify-content:space-between;padding:20px 24px 15px;background:#fff}
 .admin-modal-heading{min-width:0}.admin-modal-heading small{display:block;color:#087b5a;letter-spacing:.11em;font-size:10px;font-weight:900;margin-bottom:6px}
 .admin-modal-heading h2{margin:0 0 4px;font-size:22px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}
@@ -165,6 +173,8 @@ body.admin-modal-open{overflow:hidden}
  .admin-modal-footer-note{display:none}
  .admin-modal-footer .btn.primary{flex:1;min-width:0}
  .admin-group-modal .admin-modal-footer{gap:7px}
+ .admin-category-modal{left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100vw - 24px);height:auto;max-height:calc(100dvh - 32px);border:1px solid #cbe2d3;border-radius:17px}
+ .admin-category-modal .admin-modal-footer .btn.primary{flex:0 0 auto;min-width:95px}
 }
 /* Sizes and choices are edited together. Each size carries its own
    optionGroupOrder; the visible numbers match the customer product sheet. */
@@ -214,7 +224,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-autodraft6" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-categorymodal8" defer></script>
 </head>
 <body>
 <header class="top">
@@ -272,6 +282,28 @@ body.admin-modal-open{overflow:hidden}
    <section class="panel"><div class="section-head"><h2>Valggrupper</h2><button class="btn primary small" id="addGroup">+ Gruppe</button></div><input id="groupSearch" class="search" type="search" placeholder="Søk valggrupper…" aria-label="Søk valggrupper"><div class="stack scroll" id="groupList"></div></section>
    
   </div>
+  <div class="admin-modal-backdrop" id="categoryModalBackdrop" hidden></div>
+  <section class="admin-modal admin-category-modal" id="categoryEditor" role="dialog" aria-modal="true" aria-labelledby="categoryEditorTitle" hidden>
+   <form id="categoryForm" class="admin-category-form">
+    <header class="admin-modal-header">
+     <div class="admin-modal-heading"><small>KATEGORIER</small><h2 id="categoryEditorTitle">Ny kategori</h2><p id="categoryEditorDescription">Rediger kategoriens informasjon.</p></div>
+     <button class="admin-modal-close" id="btnCloseCategoryModal" type="button" aria-label="Lukk kategoriredigering">×</button>
+    </header>
+    <div class="admin-modal-body">
+     <div class="admin-form-card">
+      <div class="field"><label for="categoryTitle">Kategorinavn</label><input id="categoryTitle" maxlength="120" placeholder="F.eks. Pizza" autocomplete="off" required></div>
+      <div class="field"><label for="categoryNote">Beskrivelse (note)</label><textarea id="categoryNote" maxlength="600" rows="3" placeholder="Informasjon om kategorien"></textarea></div>
+      <div class="field"><label for="categoryType">Type</label><input id="categoryType" maxlength="64" placeholder="F.eks. pizza, kebab, burger" autocomplete="off"><small>Valgfritt. Eksisterende type beholdes til du endrer den.</small></div>
+      <p class="muted" id="categoryIdHint"></p>
+     </div>
+    </div>
+    <footer class="admin-modal-footer">
+     <button class="btn" id="btnCancelCategoryModal" type="button">Avbryt</button>
+     <button class="btn" id="btnCategorySaveAddProduct" type="button" hidden>Opprett + produkt</button>
+     <button class="btn primary" id="btnSaveCategoryModal" type="submit">Lagre kategori</button>
+    </footer>
+   </form>
+  </section>
   <div class="admin-modal-backdrop" id="productModalBackdrop" hidden></div>
   <section class="admin-modal" id="productEditor" role="dialog" aria-modal="true" aria-labelledby="productEditorTitle" hidden>
    <header class="admin-modal-header">
