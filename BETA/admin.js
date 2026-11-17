@@ -56,7 +56,7 @@ async function bootAuth(){
  const clone=value=>JSON.parse(JSON.stringify(value));
  const arr=value=>Array.isArray(value)?value:[];
  const uid=prefix=>prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
- const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
+ const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'groups',saving:false};
  let toastTimer=0,autosaveTimer=0,editRevision=0;
  const draftProductSnapshots=new Map();
  const AUTO_SAVE_DELAY_MS=1400;
@@ -319,7 +319,7 @@ function refreshHeader(){
   return true;
  }
  function updateAdminNavArrows(){
-  const track=$('adminNavTrack');
+  const track=$('adminNavScroll');
   if(!track)return;
   const max=Math.max(0,track.scrollWidth-track.clientWidth);
   $('adminNavPrev').disabled=track.scrollLeft<=3;
@@ -331,10 +331,13 @@ function refreshHeader(){
   state.tab=tab;
   $('productsPage').hidden=tab!=='products';$('groupsPage').hidden=tab!=='groups';
   for(const b of document.querySelectorAll('[data-tab]')){
-   const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
+   const active=b.dataset.tab===tab;
+   b.classList.toggle('active',active);
+   b.setAttribute('aria-selected',String(active));
+   b.tabIndex=active?0:-1;
   }
   if(tab!==previous&&!$('adminNav').hidden){
-   const current=$('adminNavTrack').querySelector('[data-tab="'+tab+'"]');
+   const current=$('adminNavScroll').querySelector('[data-tab="'+tab+'"]');
    if(current)current.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   }
   updateAdminNavArrows();
@@ -1052,8 +1055,19 @@ function refreshHeader(){
    draftProductSnapshots.clear();
    state.menu=clone(state.original);state.category=0;state.product=0;state.group=0;renderAll();setClean()});
   document.querySelectorAll('#adminNavTrack [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
-  const navTrack=$('adminNavTrack');
+  const navTrack=$('adminNavScroll');
   navTrack.addEventListener('scroll',updateAdminNavArrows,{passive:true});
+  // Arrow keys navigate only the two tab choices; Verktøy stays accessible.
+  navTrack.addEventListener('keydown',event=>{
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+   const tabs=[...navTrack.querySelectorAll('[data-tab]')];
+   if(!tabs.includes(document.activeElement))return;
+   event.preventDefault();
+   const at=tabs.indexOf(document.activeElement);
+   const to=event.key==='Home'?0:event.key==='End'?tabs.length-1:
+    (at+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+   tabs[to].focus();setTab(tabs[to].dataset.tab);
+  });
   for(const [id,direction] of [['adminNavPrev',-1],['adminNavNext',1]]){
    $(id).addEventListener('click',()=>navTrack.scrollBy({left:direction*220,behavior:'smooth'}));
   }
