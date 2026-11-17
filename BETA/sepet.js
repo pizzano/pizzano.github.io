@@ -10,6 +10,11 @@ function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catc
 
 function addToCart(){
  if(!current||$('productSheet').classList.contains('is-sheet-closing'))return;
+ if(!productById(current.id)){
+  showFatih1Toast('Produktet er ikke lenger tilgjengelig','error');
+  closeProductSheet();
+  return;
+ }
  const availability=getOrderingState();
  const error=optionValidation();
  if(error){
@@ -100,7 +105,8 @@ function shouldCartGoBackOnEscape(){
 function suggestedCartItems(){
  if(!menu||!cart.length)return [];
  const included=new Set(cart.map(line=>String(line.id)));
- const products=new Map(list(menu.sections).flatMap(section=>list(section.items).map(item=>[String(item.id),item])));
+ const products=new Map(list(menu.sections).filter(section=>section.hidden!==true)
+  .flatMap(section=>list(section.items).map(item=>[String(item.id),item])));
  const ids=normalizeCartSuggestionRules(menu.cartSuggestionRules);
  const selected=[],seen=new Set();
  for(const rawId of ids){
