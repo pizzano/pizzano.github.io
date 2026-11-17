@@ -57,7 +57,14 @@ async function bootAuth(){
  const arr=value=>Array.isArray(value)?value:[];
  const uid=prefix=>prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
  const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
- let toastTimer=0;
+ let toastTimer=0,autosaveTimer=0,editRevision=0;
+ const AUTO_SAVE_DELAY_MS=1400;
+ function cancelScheduledSave(){window.clearTimeout(autosaveTimer);autosaveTimer=0}
+ function scheduleAutoSave(){
+  cancelScheduledSave();
+  if(state.menu&&state.etag)
+   autosaveTimer=window.setTimeout(()=>{autosaveTimer=0;void save({auto:true})},AUTO_SAVE_DELAY_MS);
+ }
  function notify(message,error=false){
   const node=$('toast');node.textContent=message;node.classList.toggle('error',error);node.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('show'),2300);
@@ -67,14 +74,51 @@ async function bootAuth(){
  }
  function setDirty(){
   if(!state.menu)return;
-  state.dirty=true;
+  state.dirty=true;editRevision++;
   $('btnSave').disabled=state.saving||!state.etag;
-  const node=$('saveStatus');node.className='status dirty';node.textContent='Ikke lagret';
+  const node=$('saveStatus');node.className='status dirty';node.textContent='Lagrer automatisk…';
+  scheduleAutoSave();
  }
  function setClean(){
+  cancelScheduledSave();
   state.dirty=false;
   $('btnSave').disabled=true;
   const node=$('saveStatus');node.className='status ok';node.textContent='Menyen er synkronisert';
+ }
+ // Newly created, empty categories and untouched placeholder products remain
+ // local drafts. The rest of the menu can still be saved without including them.
+ function menuWithoutIncompleteDrafts(){
+  const next=clone(state.menu);
+  const existingSections=new Set(arr(state.original?.sections).map(section=>String(section.id)));
+  const existingProducts=new Set(arr(state.original?.sections).flatMap(section=>
+   arr(section.items).map(item=>String(item.id))));
+  for(const section of next.sections){
+   section.items=arr(section.items).filter(item=>
+    existingProducts.has(String(item.id))||
+    (String(item.name||'').trim()!==''&&String(item.name).trim()!=='Nytt produkt'));
+  }
+  next.sections=next.sections.filter(section=>
+   existingSections.has(String(section.id))||section.items.length>0);
+  return next;
+ }
+ function persistableSignature(value){
+  const copy=clone(value);
+  delete copy.updatedAt;
+  delete copy.changeFeed;
+  return JSON.stringify(copy);
+ }
+ function hasUnfinishedDrafts(){
+  return state.menu&&persistableSignature(state.menu)!==persistableSignature(menuWithoutIncompleteDrafts());
+ }
+ function syncSaveStatus(){
+  const ready=persistableSignature(menuWithoutIncompleteDrafts())!==persistableSignature(state.original);
+  const draft=hasUnfinishedDrafts();
+  state.dirty=ready||draft;
+  $('btnSave').disabled=state.saving||!state.etag||!ready;
+  const node=$('saveStatus');
+  node.className=ready||draft?'status dirty':'status ok';
+  node.textContent=ready?'Lagrer automatisk…':draft?'Utkast · ikke lagret':'Menyen er synkronisert';
+  return ready;
  }
  function assertMenu(payload){
   if(!payload||!Array.isArray(payload.sections)||!Array.isArray(payload.optionGroups)||!Array.isArray(payload.images))
@@ -227,19 +271,14 @@ function refreshHeader(){
   }finally{$('btnRetry').disabled=false}
  }
  function applyAdminMenu(snapshot,etag){
-  // Keep the exact Firebase snapshot for conflict detection and menu backups.
-  // Legacy cleanup is staged in a separate editable copy, never in the cache.
+  // Keep the exact Firebase snapshot. No automatic legacy-field deletion:
+  // auto-save must never silently remove unrelated data.
   assertMenu(snapshot);
   if(!etag)throw Error('ETag mangler. Lagring stoppet for å beskytte eksisterende meny.');
   state.original=clone(snapshot);
   state.menu=clone(snapshot);
-  const legacyFields=removeLegacyIngredients(state.menu);
   state.etag=etag;state.category=0;state.product=0;state.group=0;
   setClean();renderAll();refreshHeader();
-  if(legacyFields){
-   setDirty();
-   message(legacyFields+' gamle ingredients/ingredientDefaults-felt er klare for sletting. Last ned menybackup først, og trykk deretter «Lagre endringer».','warn');
-  }
  }
  async function loadMenu(confirmDiscard=true,{preferCache=false}={}){
   if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
@@ -673,10 +712,11 @@ function refreshHeader(){
   }catch(e){notify(e.message,true);$('pImage').value=productImage(p)}
  }
  function addCategory(){
-  const title=prompt('Navn på ny kategori:','Ny kategori');
+  const title=prompt('Navn på ny kategori:','');
   if(!title?.trim())return;
   state.menu.sections.push({id:uid('cat'),title:title.trim(),note:'',items:[]});
   state.category=state.menu.sections.length-1;state.product=0;renderAll();setDirty();
+  notify('Tom kategori er et lokalt utkast. Den lagres når du legger til et produkt.');
  }
  function editCategory(){
   const s=category();if(!s)return;
@@ -684,7 +724,9 @@ function refreshHeader(){
   if(title===null)return;
   if(!title.trim()){notify('Kategorinavn kan ikke være tomt',true);return}
   const note=prompt('Kort kategoribeskrivelse:',s.note||'');
-  s.title=title.trim();if(note!==null)s.note=note.trim();
+  if(note===null)return;
+  if(s.title===title.trim()&&String(s.note||'')===note.trim())return;
+  s.title=title.trim();s.note=note.trim();
   renderCategories();renderProducts();setDirty();
  }
  function addProduct(){
@@ -770,8 +812,7 @@ function refreshHeader(){
   const n=Number(raw);
   return Number.isFinite(n)&&n>=0;
  }
- function sanitize(){
-  const menu=state.menu;
+ function sanitize(menu=state.menu){
   if(!menu.sections.length)throw Error('Menyen må ha minst én kategori.');
   const catIds=new Set(),prodIds=new Set(),groupIds=new Set();
   for(const section of menu.sections){
@@ -834,48 +875,89 @@ function refreshHeader(){
   walk(oldValue,newValue,'',0);
   return {changes:full?[]:list,requiresRefresh:full};
  }
- async function save(){
-  if(!state.dirty||state.saving)return;
-  if(!state.etag){notify('Hent siste meny før du lagrer.','error');return}
-  try{sanitize()}catch(error){notify(error.message,true);return}
+ async function save(options={}){
+  const auto=options?.auto===true;
+  if(!state.menu||state.saving)return;
+  cancelScheduledSave();
+  if(!state.etag){
+   if(!auto)notify('Hent siste meny før du lagrer.','error');
+   return;
+  }
+  // Skip empty new categories and products that still have their default name.
+  const prepared=menuWithoutIncompleteDrafts();
+  if(persistableSignature(prepared)===persistableSignature(state.original)){
+   syncSaveStatus();
+   if(!auto&&hasUnfinishedDrafts())
+    notify('Ufullstendig utkast lagres ikke. Legg til et navngitt produkt først.');
+   return;
+  }
+  try{sanitize(prepared)}catch(error){
+   message(error.message,'error');
+   if(!auto)notify(error.message,true);
+   syncSaveStatus();
+   return;
+  }
+  const revision=editRevision;
   const version=Math.max(Date.now(),Number(state.original.updatedAt||0)+1);
-  const delta=buildDelta(state.original,state.menu);
+  const delta=buildDelta(state.original,prepared);
   const previousVersion=Number(state.original.updatedAt)||0;
-  // No menu data is lost: the original complete menu is preserved and mutated.
-  const next=clone(state.menu);
-  removeLegacyIngredients(next);
+  const next=prepared;
   next.updatedAt=version;
   next.changeFeed=next.changeFeed&&typeof next.changeFeed==='object'?next.changeFeed:{};
   next.changeFeed.latest={version,previousVersion,changes:delta.changes,requiresRefresh:delta.requiresRefresh};
   state.saving=true;$('btnSave').disabled=true;
+  $('saveStatus').className='status dirty';$('saveStatus').textContent='Lagrer…';
   try{
-   const response=await fetch(await menuAuthURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
+   const response=await fetch(await menuAuthURL(),{method:'PUT',
+    headers:{'Content-Type':'application/json','if-match':state.etag},
+    body:JSON.stringify(next),cache:'no-store'});
    if(response.status===412){
-    clearAdminMenuCache();
+    clearAdminMenuCache();state.etag=null;
     throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
    }
-   if(response.status===401||response.status===403)throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
+   if(response.status===401||response.status===403)
+    throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
    if(!response.ok)throw Error('Kunne ikke lagre til Firebase: HTTP '+response.status);
-   state.menu=next;state.original=clone(next);
-   // New ETag is usually included, otherwise safely GET a fresh ETag before another save.
+   // Keep the unsaved editor state intact even if the user changes a field
+   // while this PUT is in flight; the next run will save those later edits.
+   state.original=clone(next);
+   state.menu.updatedAt=version;
+   state.menu.changeFeed=clone(next.changeFeed);
    let etag=response.headers.get('ETag');
    if(!etag){
     const fresh=await fetch(await menuAuthURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-    if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
+    if(fresh.ok){
+     etag=fresh.headers.get('ETag');
+     if(etag)state.original=await fresh.json();
+    }
    }
    state.etag=etag||null;
    if(etag)storeAdminMenuCache(state.original,etag);
    else clearAdminMenuCache();
-   setClean();renderAll();refreshHeader();
-   notify('Lagret i Firebase · BestillOnline oppdateres automatisk');
+   // No renderAll here: it would replace focused text fields during autosave.
+   refreshHeader();
+   const more=syncSaveStatus();
+   if(!auto)notify('Lagret i Firebase');
    if(!etag)message('Lagret, men ETag kunne ikke leses. Hent siste meny før neste endring.','warn');
-  }catch(error){message(error.message||'Lagring feilet','error');notify(error.message||'Lagring feilet',true)}
-  finally{state.saving=false;$('btnSave').disabled=!state.dirty||!state.etag}
+   // A change made during a network request must be persisted separately.
+   if(etag&&more&&editRevision!==revision)scheduleAutoSave();
+  }catch(error){
+   message(error.message||'Lagring feilet','error');
+   $('saveStatus').className='status dirty';
+   $('saveStatus').textContent='Lagring feilet';
+   if(!auto)notify(error.message||'Lagring feilet',true);
+  }finally{
+   state.saving=false;
+   const nextPrepared=menuWithoutIncompleteDrafts();
+   $('btnSave').disabled=!state.etag||
+    persistableSignature(nextPrepared)===persistableSignature(state.original);
+  }
  }
  function handleEvents(){
  $('authForm').addEventListener('submit',login);
  $('btnSignOut').addEventListener('click',async()=>{
   if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
+  cancelScheduledSave();
   await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
  });
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
