@@ -670,7 +670,15 @@ function groupsFor(item,size){
  return [...new Set(sorted)].map(getGroup).filter(Boolean);
 }
 function basePrice(item){const prices=list(item.sizes).map(s=>Number(s.price)||0);return prices.length?Math.min(...prices):Number(item.price)||0}
-function productById(id){for(const s of menu.sections)for(const item of s.items)if(String(item.id)===String(id))return item;return null}
+function productById(id){
+ if(!menu?.sections)return null;
+ for(const section of menu.sections){
+  if(section.hidden===true)continue;
+  for(const item of list(section.items))
+   if(String(item.id)===String(id))return item;
+ }
+ return null;
+}
 function missingPhotoMarkup(){
  // Display a legible local placeholder, never a broken image or oversized alt text.
  return '<span class="image-fallback" role="img" aria-label="Bilde er ikke tilgjengelig">'+
@@ -772,6 +780,7 @@ function menuBlocks(){
  const popularItems=(menu.popularItemIds||[]).map(id=>productById(id)).filter(visible);
  if(popularItems.length)blocks.push({id:'popular',title:'Mest bestilt',note:'Gjestenes favoritter',items:popularItems});
  for(const section of menu.sections){
+   if(section.hidden===true)continue;
    const items=(section.items||[]).filter(item=>!item.hidden);
    if(items.length)blocks.push({id:String(section.id),title:section.title,note:section.note||'',items});
  }
