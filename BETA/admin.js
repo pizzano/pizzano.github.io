@@ -519,23 +519,89 @@ function refreshHeader(){
  function renderCategories(){
   $('categoryList').innerHTML=state.menu.sections.map(categoryButton).join('')||'<p class="empty">Ingen kategorier</p>';
  }
+ const ADMIN_PRODUCT_FILTERS={
+  all:{label:'Alle'},
+  soldout:{label:'Utsolgt',match:p=>p.soldOut===true},
+  hidden:{label:'Skjult',match:p=>p.hidden===true},
+  popular:{label:'Mest solgt',match:(p,ids)=>ids.popular.has(String(p.id))},
+  suggested:{label:'Forslag i handlekurven',match:(p,ids)=>ids.suggested.has(String(p.id))},
+  noimage:{label:'Uten bilde',match:p=>!productImage(p)}
+ };
+ let productFilterMode='all';
+ function productStatusIndex(){
+  const popular=new Set(arr(state.menu?.popularItemIds).map(value=>
+   String(value&&typeof value==='object'?(value.id??value.value):value)));
+  const suggested=new Set(recommendationIds());
+  return {popular,suggested};
+ }
+ function productEntries(){
+  return arr(state.menu?.sections).flatMap((section,categoryIndex)=>
+   arr(section.items).map((p,index)=>({p,index,categoryIndex,categoryTitle:String(section.title||'Kategori')})));
+ }
+ function setProductFilter(mode){
+  if(!Object.hasOwn(ADMIN_PRODUCT_FILTERS,mode))return;
+  productFilterMode=mode;
+  renderProducts();
+ }
+ function resetProductFilterForCategory(){
+  productFilterMode='all';
+  $('productSearch').value='';
+ }
  function renderProducts(){
-  const s=category();$('productsTitle').textContent=s?(s.title||'Produkter'):'Produkter';
-  const query=$('productSearch').value.trim().toLocaleLowerCase('no');
-  $('productList').innerHTML=s?arr(s.items).map((p,i)=>{
-   if(query&&!String(p.name||'').toLocaleLowerCase('no').includes(query))return '';
+  const current=category(),query=$('productSearch').value.trim().toLocaleLowerCase('no');
+  const global=productFilterMode!=='all'||Boolean(query);
+  const ids=productStatusIndex(),all=productEntries();
+  const counts={all:all.length};
+  for(const [key,filter] of Object.entries(ADMIN_PRODUCT_FILTERS)){
+   if(key!=='all')counts[key]=all.filter(({p})=>filter.match(p,ids)).length;
+  }
+  for(const button of $('productStatusFilters').querySelectorAll('[data-product-filter]')){
+   const active=button.dataset.productFilter===productFilterMode;
+   button.classList.toggle('is-active',active);
+   button.setAttribute('aria-pressed',String(active));
+  }
+  for(const badge of $('productStatusFilters').querySelectorAll('[data-product-filter-count]')){
+   const count=counts[badge.dataset.productFilterCount]||0;
+   badge.textContent=String(count);
+   badge.classList.toggle('is-zero',count===0);
+  }
+  let entries=global?all:all.filter(entry=>entry.categoryIndex===state.category);
+  if(productFilterMode!=='all'){
+   const match=ADMIN_PRODUCT_FILTERS[productFilterMode].match;
+   entries=entries.filter(({p})=>match(p,ids));
+  }
+  if(query)entries=entries.filter(({p,categoryTitle})=>
+   String(p.name||'').toLocaleLowerCase('no').includes(query)||
+   categoryTitle.toLocaleLowerCase('no').includes(query));
+  $('productsTitle').textContent=productFilterMode!=='all'
+   ?ADMIN_PRODUCT_FILTERS[productFilterMode].label
+   :global?'Alle kategorier':current?.title||'Produkter';
+  $('productFilterResult').textContent=entries.length+' '+(entries.length===1?'produkt':'produkter')+
+   (global?' · alle kategorier':'');
+  const hint=$('productReorderHint');
+  hint.classList.toggle('is-filtered',global);
+  hint.textContent=global
+   ?'Viser resultater fra alle kategorier · velg en kategori for å sortere'
+   :'⠿ Dra produktene for å endre rekkefølgen';
+  $('productList').innerHTML=entries.map(({p,index,categoryIndex,categoryTitle})=>{
    const url=productImage(p);
    const img=url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.hidden=true">':'<span class="item-icon">🍕</span>';
    const name=esc(p.name||'Nytt produkt');
-   return '<div class="item admin-sort-row'+(i===state.product?' active':'')+(p.hidden?' dim':'')+(query?' drag-locked':'')+'" data-product="'+i+'"'+(query?'':' draggable="true" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"')+' tabindex="0" title="'+(query?'Tøm søket før du sorterer':'Dra for å sortere · Alt + ↑ / ↓')+'">'+
-    '<button type="button" class="admin-row-main" data-product-select aria-label="Åpne produkt: '+name+'">'+img+'<span class="item-copy"><strong>'+name+'</strong><small>'+
+   const selected=categoryIndex===state.category&&index===state.product;
+   const categoryBadge=global?'<span class="admin-product-category">'+esc(categoryTitle)+'</span>':'';
+   return '<div class="item admin-sort-row'+(selected?' active':'')+(p.hidden?' dim':'')+(global?' admin-product-filtered drag-locked':'')+
+    '" data-category-index="'+categoryIndex+'" data-product="'+index+'"'+(global?'':' draggable="true" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"')+
+    ' tabindex="0" title="'+(global?'Åpne for å redigere':'Dra for å sortere · Alt + ↑ / ↓')+'">'+
+    '<button type="button" class="admin-row-main" data-product-select aria-label="Åpne produkt: '+name+'">'+img+
+    '<span class="item-copy"><strong>'+name+'</strong><small>'+
     esc(arr(p.sizes).map(v=>Math.round(Number(v.price)||0)+' kr').join(' · ')||String(p.price||0)+' kr')+
-    (recommendationIds().includes(String(p.id))?' · Anbefales i kurven':'')+
-    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span></button>'+
+    (ids.popular.has(String(p.id))?' · Mest solgt':'')+
+    (ids.suggested.has(String(p.id))?' · Forslag i handlekurven':'')+
+    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small>'+categoryBadge+'</span></button>'+
     '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="Rediger produkt" aria-label="Rediger produkt: '+name+'">'+adminEditSvg+'</button>'+
     '<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt" aria-label="Slett produkt: '+name+'">'+adminDeleteSvg+'</button></div>'+
-    '<span class="admin-drag-handle" aria-hidden="true">⠿</span></div>';
-  }).join(''):'<p class="empty">Velg en kategori</p>';
+    (global?'':'<span class="admin-drag-handle" aria-hidden="true">⠿</span>')+'</div>';
+  }).join('')||'<p class="empty">'+(global?'Ingen produkter passer filteret.':'Ingen produkter i kategorien.')+'</p>';
  }
  function sizeLabel(size){
   return size.label||state.menu.sizeLabels?.[size.labelId]||size.name||'Størrelse';
