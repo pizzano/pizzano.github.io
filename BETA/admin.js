@@ -56,7 +56,7 @@ async function bootAuth(){
  const clone=value=>JSON.parse(JSON.stringify(value));
  const arr=value=>Array.isArray(value)?value:[];
  const uid=prefix=>prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
- const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'groups',saving:false};
+ const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
  let toastTimer=0,autosaveTimer=0,editRevision=0;
  const draftProductSnapshots=new Map();
  const AUTO_SAVE_DELAY_MS=1400;
