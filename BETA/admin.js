@@ -1158,9 +1158,11 @@ function refreshHeader(){
   const remote=await read.json();
   if(!equivalentJSON(remote,plan.previous))throw conflicts();
   // Only the targeted node can be changed by this conditional request.
-  const write=await fetch(silentFirebaseURL(leafURL),{method:'PUT',
+  const writeOptions={method:'PUT',
    headers:{'Content-Type':'application/json','if-match':leafETag},
-   body:JSON.stringify(plan.value),cache:'no-store'});
+   body:JSON.stringify(plan.value),cache:'no-store'};
+  let write=await fetch(silentFirebaseURL(leafURL),writeOptions);
+  if(write.status===400)write=await fetch(leafURL,writeOptions);
   if(write.status===412)throw conflicts();
   if(!write.ok)throw Error('Firebase avviste feltlagring (HTTP '+write.status+').');
   // The leaf is now saved. A failed notification must NOT cause a retry of the
