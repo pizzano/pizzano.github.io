@@ -9,7 +9,7 @@ function loadCart(){try{const c=JSON.parse(localStorage.getItem(CART_KEY));retur
 function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catch{}renderCartIndicators();updateCartBadges()}
 
 function addToCart(){
- if(!current)return;
+ if(!current||$('productSheet').classList.contains('is-sheet-closing'))return;
  const availability=getOrderingState();
  const error=optionValidation();
  if(error){
@@ -37,11 +37,15 @@ function addToCart(){
  else if(existing)existing.qty+=qty;else cart.push(entry);
  const edited=editingCartIndex!==null;editingCartIndex=null;
  saveCart();
- if(edited&&fatih1HistoryState()?.view==='product')fatih1HistoryBack();
- else if(!availability.orderable){
-  fatih1HistoryWrite({view:'cart',step:'cart'},true);
-  hideAll();showCart();
- }else fatih1HistoryToMenu();
+ // Keep the sheet visible until the same 260 ms downward close finishes.
+ // Editing returns to the basket; regular adds return to menu, or basket if closed.
+ closeProductSheet(()=>{
+  if(edited&&fatih1HistoryState()?.view==='product')fatih1HistoryBack();
+  else if(!availability.orderable){
+   fatih1HistoryWrite({view:'cart',step:'cart'},true);
+   hideAll();showCart();
+  }else fatih1HistoryToMenu();
+ });
  showFatih1Toast(entry.name+(edited?' oppdatert i handlekurven':' lagt i handlekurven'));
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
@@ -317,14 +321,15 @@ function restoreCartLineForEdit(line,index){
  $('add').firstChild.textContent='Oppdater kurven ';
 }
 
-function closeProductSheet(){
+function closeProductSheet(onClosed=null){
  editingCartIndex=null;
  const sheet=$('productSheet');
  if(!sheet||sheet.hidden||sheet.classList.contains('is-sheet-closing'))return;
+ const finishNavigation=()=>{if(typeof onClosed==='function')onClosed();else fatih1HistoryBack()};
  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
   sheet.classList.remove('is-sheet-opening','is-dragging','is-drag-settling');
   sheet.style.removeProperty('--product-drag-y');
-  fatih1HistoryBack();
+  finishNavigation();
   return;
  }
  sheet.classList.remove('is-sheet-opening','is-dragging','is-drag-settling');
@@ -334,8 +339,8 @@ function closeProductSheet(){
   if(finished)return;
   finished=true;
   sheet.removeEventListener('animationend',onEnd);
-  // Browser Back or a different screen may already have dismissed this sheet.
-  if(!sheet.hidden&&sheet.classList.contains('is-sheet-closing'))fatih1HistoryBack();
+  // Only navigate if this is still the closing sheet, not a later screen.
+  if(!sheet.hidden&&sheet.classList.contains('is-sheet-closing'))finishNavigation();
  };
  const onEnd=event=>{
   if(event.target===sheet&&event.animationName==='fatih1SheetFall')finish();
