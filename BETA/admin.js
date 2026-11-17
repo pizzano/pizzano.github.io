@@ -203,7 +203,6 @@ function refreshHeader(){
  function clearAdminMenuCache(){
   try{localStorage.removeItem(ADMIN_MENU_CACHE_KEY)}catch{}
  }
- async function menuURL(){return menuAuthURL()}
  async function startAdmin(){
   $('adminNav').hidden=true;
   $('loadingCard').hidden=false;
@@ -218,7 +217,7 @@ function refreshHeader(){
    $('adminRoot').hidden=false;
    $('adminNav').hidden=false;
    requestAnimationFrame(updateAdminNavArrows);
-   notify('Menyen er lastet fra Firebase');
+   notify('Menyen er kontrollert mot Firebase');
   }catch(error){
    $('adminNav').hidden=true;
    console.warn('BestillOnline menu admin load failed:',error);
@@ -244,7 +243,7 @@ function refreshHeader(){
  }
  async function loadMenu(confirmDiscard=true,{preferCache=false}={}){
   if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
-  const url=await menuURL();
+  const url=await menuAuthURL();
   if(preferCache){
    const saved=readAdminMenuCache();
    if(saved){
@@ -716,7 +715,7 @@ function refreshHeader(){
   next.changeFeed.latest={version,previousVersion,changes:delta.changes,requiresRefresh:delta.requiresRefresh};
   state.saving=true;$('btnSave').disabled=true;
   try{
-   const response=await fetch(await menuURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
+   const response=await fetch(await menuAuthURL(),{method:'PUT',headers:{'Content-Type':'application/json','if-match':state.etag},body:JSON.stringify(next),cache:'no-store'});
    if(response.status===412){
     clearAdminMenuCache();
     throw Error('En annen administrator endret menyen. Ingen data ble overskrevet. Hent siste meny og legg inn endringene på nytt.');
@@ -727,7 +726,7 @@ function refreshHeader(){
    // New ETag is usually included, otherwise safely GET a fresh ETag before another save.
    let etag=response.headers.get('ETag');
    if(!etag){
-    const fresh=await fetch(await menuURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+    const fresh=await fetch(await menuAuthURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
     if(fresh.ok){etag=fresh.headers.get('ETag');if(etag){const latest=await fresh.json();state.original=clone(latest);state.menu=latest}}
    }
    state.etag=etag||null;
