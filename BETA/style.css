@@ -2284,9 +2284,9 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  align-items:center;
  justify-content:space-between;
  gap:10px;
- min-height:46px;
+ min-height:35px;
  margin-top:10px;
- padding:9px 14px;
+ padding:0px 14px;
  border:0;
  border-radius:15px;
  background:
@@ -2296,18 +2296,19 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  box-shadow:0 4px 13px #17664716;
 }
 #cartSheet #cartCartStep .cart-summary span{
- font-size:18px;
+ font-size:16px;
  font-weight:750;
 }
 #cartSheet #cartCartStep .cart-summary strong{
  color:#fff;
- font-size:18px;
+ font-size:16px;
  font-weight:750;
  font-variant-numeric:tabular-nums;
  white-space:nowrap;
 }
 #cartSheet #cartCartStep .cart-recommendations{
- margin-top:14px;
+ /* Visually separate the upsell section without inserting visible <br> text. */
+ margin-top:34px;
  background:transparent;
 }
 #cartSheet #cartCartStep .cart-recommendations-head{
