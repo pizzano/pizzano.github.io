@@ -420,7 +420,7 @@ function refreshHeader(){
   }
   modal.querySelector('.admin-modal-body').scrollTop=0;
  }
- function openAdminModal(kind){
+ function openAdminModal(kind,productTab='produkt'){
   const target=kind==='product'?'productEditor':'groupEditor';
   if(kind==='product'&&!product())return;
   if(kind==='group'&&!group())return;
@@ -430,7 +430,7 @@ function refreshHeader(){
   $(target).hidden=false;
   $(kind==='product'?'productModalBackdrop':'groupModalBackdrop').hidden=false;
   document.body.classList.add('admin-modal-open');
-  setAdminModalTab(kind,kind==='product'?'produkt':'gruppe');
+  setAdminModalTab(kind,kind==='product'?productTab:'gruppe');
   $(kind==='product'?'btnCloseProductModal':'btnCloseGroupModal').focus();
  }
  function closeAdminModal(){
@@ -600,8 +600,8 @@ function refreshHeader(){
     (ids.popular.has(String(p.id))?' · Mest solgt':'')+
     (ids.suggested.has(String(p.id))?' · Forslag i handlekurven':'')+
     (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small>'+categoryBadge+'</span></button>'+
-    '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="Rediger produkt" aria-label="Rediger produkt: '+name+'">'+adminEditSvg+'</button>'+
-    '<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt" aria-label="Slett produkt: '+name+'">'+adminDeleteSvg+'</button></div>'+
+    '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="'+(productFilterMode!=='all'?'Rediger tilgjengelighet':'Rediger produkt')+'" aria-label="'+(productFilterMode!=='all'?'Rediger tilgjengelighet: ':'Rediger produkt: ')+name+'">'+adminEditSvg+'</button>'+
+    (global?'':'<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt permanent" aria-label="Slett produkt permanent: '+name+'">'+adminDeleteSvg+'</button>')+'</div>'+
     (global?'':'<span class="admin-drag-handle" aria-hidden="true">⠿</span>')+'</div>';
   }).join('')||'<p class="empty">'+(global?'Ingen produkter passer filteret.':'Ingen produkter i kategorien.')+'</p>';
  }
@@ -1440,7 +1440,8 @@ function refreshHeader(){
    if(event.target.closest('[data-product-delete]')){removeProduct(index,categoryIndex);return}
    if(!event.target.closest('[data-product-edit]')&&!event.target.closest('[data-product-select]'))return;
    state.category=categoryIndex;state.product=index;
-   renderCategories();renderProducts();renderProductEditor();openAdminModal('product');
+   renderCategories();renderProducts();renderProductEditor();
+   openAdminModal('product',productFilterMode!=='all'?'tilgjengelighet':'produkt');
   });
   initAdminDragReorder('category');
   initAdminDragReorder('product');
