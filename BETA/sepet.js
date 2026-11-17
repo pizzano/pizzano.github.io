@@ -276,6 +276,21 @@ function reconcileCartWithMenu(){
  if(changed)saveCart();
  return {issues,repriced};
 }
+// The menu's real category order determines display order; the saved cart
+// remains untouched so edit, plus/minus and remove still use original indices.
+function sortedCartEntries(){
+ const categoryRank=new Map();
+ const sections=Array.isArray(menu?.sections)?menu.sections:[];
+ sections.forEach((section,rank)=>{
+  for(const item of list(section?.items)){
+   const id=String(item?.id);
+   if(!categoryRank.has(id))categoryRank.set(id,rank);
+  }
+ });
+ const afterCategories=sections.length;
+ return cart.map((line,index)=>({line,index,rank:categoryRank.get(String(line?.id))??afterCategories}))
+  .sort((a,b)=>a.rank-b.rank||a.index-b.index);
+}
 function renderCartContents(){
  const review=reconcileCartWithMenu();
  const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
@@ -291,7 +306,7 @@ function renderCartContents(){
  $('cartTopCount').hidden=cartTopQuantity===0;
  $('cartClear').hidden=!cart.length;
  $('cartSummary').hidden=!cart.length;
- $('cartItems').innerHTML=cart.length?cart.map((line,index)=>{
+ $('cartItems').innerHTML=cart.length?sortedCartEntries().map(({line,index})=>{
   const issue=cartMenuIssues.find(entry=>entry.index===index);
   return '<article class="cart-product-card" data-cart-line="'+index+'">'+
    '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong>'+
@@ -312,7 +327,7 @@ function pickupSummary(){
  // Same cart product card and detail renderer as the basket, read-only here.
  const count=cart.reduce((sum,line)=>sum+(Number(line.qty)||0),0);
  $('draftPickupItemCount').textContent=count+' '+(count===1?'vare':'varer');
- $('draftPickupOrderItems').innerHTML=cart.map(line=>{
+ $('draftPickupOrderItems').innerHTML=sortedCartEntries().map(({line})=>{
   const qty=Number(line.qty)||0;
   return '<article class="cart-product-card draft-pickup-product">'+
    '<div class="cart-product-heading"><div class="cart-product-copy">'+
