@@ -50,7 +50,7 @@
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #cbded2;background:white;color:#144633;padding:10px 14px;border-radius:11px;font-size:13px;font-weight:750;text-decoration:none;min-height:40px}
 .btn:hover{background:#e7f3ea}.btn.primary{background:#087f59;border-color:#087f59;color:white}.btn.primary:hover{background:#076f4e}
 .btn.gold{background:#efcc77;border-color:#efcc77;color:#192b23}.btn.danger{border-color:#efd0cd;color:#ab342d;background:#fff5f4}
-.btn.ghost{background:#ffffff13;border-color:#ffffff45;color:white}.btn.small{min-height:32px;padding:7px 10px;font-size:12px}
+.btn.small{min-height:32px;padding:7px 10px;font-size:12px}
 .status{display:inline-flex;align-items:center;gap:7px;color:#d7eadd;font-size:12px}.status::before{content:"";width:8px;height:8px;background:#8faaa0;border-radius:50%}.status.ok::before{background:#57d5a0}.status.dirty::before{background:#eec679}
 .wrap{max-width:1440px;margin:auto;padding:13px clamp(12px,2.5vw,32px) 36px}
 .muted{color:#6e8377;font-size:13px;line-height:1.5;margin:0}
@@ -63,16 +63,16 @@
 .item-copy{display:grid;min-width:0;flex:1;gap:4px}.item-copy strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-copy small{font-size:11px;color:#789083}
 .item-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#e5f3e9;color:#087f59;font-weight:900;flex:none}
 .item img{width:43px;height:43px;border-radius:9px;object-fit:cover;background:#edf2ef;flex:none}
-.row-actions{display:flex;align-items:center;gap:5px}.mini{display:grid;place-items:center;width:27px;height:27px;border:1px solid #dce8df;border-radius:8px;background:white;color:#4c725f;font-size:12px}
-.item.dim{opacity:.56}.badge{display:inline-block;border-radius:7px;background:#fff2d2;padding:2px 6px;color:#8d621c;font-size:10px;font-weight:800}
+.mini{display:grid;place-items:center;width:27px;height:27px;border:1px solid #dce8df;border-radius:8px;background:white;color:#4c725f;font-size:12px}
+.item.dim{opacity:.56}
 .search{width:100%;padding:10px 12px;border:1px solid #d3e5d9;border-radius:10px;margin-bottom:10px;background:#f9fcfa}
 .empty{padding:22px;text-align:center;color:#819588;background:#f8fbf9;border:1px dashed #c7dacf;border-radius:13px;font-size:13px}
-.editor{position:sticky;top:93px;max-height:calc(100vh - 111px);overflow:auto}
-.editor h2{font-size:17px;margin:0 0 3px}.editor p.sub{font-size:12px;color:#738678;margin:0 0 16px}
+
+
 .field{display:grid;gap:6px;margin-bottom:13px}.field label,.label{font-size:12px;font-weight:800;color:#355544}
-.field input:not([type=checkbox]),.field textarea,.field select,.ctrl{width:100%;border:1px solid #d0e2d6;border-radius:10px;padding:10px 12px;background:#fbfdfc;color:#1b4030;min-height:41px}
+.field input:not([type=checkbox]),.field textarea,.field select{width:100%;border:1px solid #d0e2d6;border-radius:10px;padding:10px 12px;background:#fbfdfc;color:#1b4030;min-height:41px}
 .field textarea{min-height:77px;resize:vertical}.field small{color:#7c9183;font-size:11px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two-thirds{display:grid;grid-template-columns:2fr 1fr;gap:9px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .rule{border-top:1px solid #e4eee8;padding-top:14px;margin-top:10px}.rule h3{font-size:13px;margin:0 0 11px}
 .checkbox{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:650;color:#294d3a;min-height:35px}
 .checkbox input{accent-color:#087f59;width:17px;height:17px}
@@ -97,8 +97,8 @@
 .banner.warn{border-color:#e9dfbb;color:#745a20;background:#fff9e8}
 #toast{position:fixed;z-index:100;top:82px;left:50%;transform:translate(-50%,-20px);opacity:0;pointer-events:none;transition:.2s;background:#0d7856;color:white;padding:13px 17px;border-radius:12px;box-shadow:0 9px 28px #123b2750;max-width:calc(100vw - 20px);font-size:13px;font-weight:750}
 #toast.show{transform:translate(-50%,0);opacity:1}#toast.error{background:#a23535}
-@media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}.editor{grid-column:1/-1;position:static;max-height:none}}
-@media(max-width:680px){.wrap{padding:10px}.layout{display:block}.layout>.panel{margin-bottom:10px}.scroll{max-height:310px}.editor{max-height:none}.cols{grid-template-columns:1fr}}
+@media(max-width:1120px){.layout{grid-template-columns:minmax(200px,270px) 1fr}}
+@media(max-width:680px){.wrap{padding:10px}.layout{display:block}.layout>.panel{margin-bottom:10px}.scroll{max-height:310px}.cols{grid-template-columns:1fr}}
 
 /* Overlay editors – product and choice group, matching DRAFT's easy modal workflow. */
 #productsPage{grid-template-columns:minmax(240px,330px) minmax(340px,1fr)}
@@ -190,7 +190,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-headernav1" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-admincache2" defer></script>
 </head>
 <body>
 <header class="top">
