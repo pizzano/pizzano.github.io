@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261117-fatih1-cart-sortcompact3';
+const CACHE_NAME='fatih1-static-v20261117-bestillonline-brand4';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -8,9 +8,9 @@ const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
   'style.css?v=20261117-fatih1-cart-sortcompact3',
-  'sepet.js?v=20261117-fatih1-cart-sortcompact3',
-  'app.js?v=20261117-fatih1-cart-modular2',
-  'profil.js?v=20261117-fatih1-swipe-ingredients45',
+  'sepet.js?v=20261117-bestillonline-brand4',
+  'app.js?v=20261117-bestillonline-brand4',
+  'profil.js?v=20261117-bestillonline-brand4',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
