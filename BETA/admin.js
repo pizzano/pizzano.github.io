@@ -358,9 +358,17 @@ function refreshHeader(){
   renderCategories();renderProducts();renderProductEditor();
   renderGroups();renderGroupEditor();setTab(state.tab);
  }
+ // Compact SVG actions remain visible and are separate from drag targets.
+ const adminEditSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+ const adminDeleteSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6l1 14h12l1-14"/><path d="M10 10v7M14 10v7"/></svg>';
  function categoryButton(s,i){
-  const count=arr(s.items).length;
-  return '<button class="item'+(i===state.category?' active':'')+'" type="button" draggable="true" data-category="'+i+'" title="Dra for å sortere · Alt + ↑ / ↓" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><span class="item-icon">'+esc(String(s.title||'?').slice(0,1).toUpperCase())+'</span><span class="item-copy"><strong>'+esc(s.title||'Kategori')+'</strong><small>'+count+' produkter</small></span><span class="admin-drag-handle" aria-hidden="true">⠿</span></button>';
+  const count=arr(s.items).length,name=esc(s.title||'Kategori');
+  return '<div class="item admin-sort-row'+(i===state.category?' active':'')+'" draggable="true" data-category="'+i+'" title="Dra for å sortere · Alt + ↑ / ↓" tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown">'+
+   '<button class="admin-row-main" type="button" data-category-select aria-label="Velg kategori: '+name+'"><span class="item-icon">'+esc(String(s.title||'?').slice(0,1).toUpperCase())+'</span>'+
+   '<span class="item-copy"><strong>'+name+'</strong><small>'+count+' produkter</small></span></button>'+
+   '<div class="admin-row-actions"><button class="admin-row-action" type="button" data-category-edit title="Rediger kategori" aria-label="Rediger kategori: '+name+'">'+adminEditSvg+'</button>'+
+   '<button class="admin-row-action is-delete" type="button" data-category-delete title="Slett kategori" aria-label="Slett kategori: '+name+'">'+adminDeleteSvg+'</button></div>'+
+   '<span class="admin-drag-handle" aria-hidden="true">⠿</span></div>';
  }
  function renderCategories(){
   $('categoryList').innerHTML=state.menu.sections.map(categoryButton).join('')||'<p class="empty">Ingen kategorier</p>';
@@ -372,10 +380,15 @@ function refreshHeader(){
    if(query&&!String(p.name||'').toLocaleLowerCase('no').includes(query))return '';
    const url=productImage(p);
    const img=url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.hidden=true">':'<span class="item-icon">🍕</span>';
-   return '<button class="item'+(i===state.product?' active':'')+(p.hidden?' dim':'')+(query?' drag-locked':'')+'" type="button" data-product="'+i+'"'+(query?'':' draggable="true" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"')+' title="'+(query?'Tøm søket før du sorterer':'Dra for å sortere · Alt + ↑ / ↓')+'">'+img+'<span class="item-copy"><strong>'+esc(p.name||'Nytt produkt')+'</strong><small>'+
+   const name=esc(p.name||'Nytt produkt');
+   return '<div class="item admin-sort-row'+(i===state.product?' active':'')+(p.hidden?' dim':'')+(query?' drag-locked':'')+'" data-product="'+i+'"'+(query?'':' draggable="true" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"')+' tabindex="0" title="'+(query?'Tøm søket før du sorterer':'Dra for å sortere · Alt + ↑ / ↓')+'">'+
+    '<button type="button" class="admin-row-main" data-product-select aria-label="Åpne produkt: '+name+'">'+img+'<span class="item-copy"><strong>'+name+'</strong><small>'+
     esc(arr(p.sizes).map(v=>Math.round(Number(v.price)||0)+' kr').join(' · ')||String(p.price||0)+' kr')+
     (recommendationIds().includes(String(p.id))?' · Anbefales i kurven':'')+
-    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span><span class="admin-drag-handle" aria-hidden="true">⠿</span></button>';
+    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span></button>'+
+    '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="Rediger produkt" aria-label="Rediger produkt: '+name+'">'+adminEditSvg+'</button>'+
+    '<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt" aria-label="Slett produkt: '+name+'">'+adminDeleteSvg+'</button></div>'+
+    '<span class="admin-drag-handle" aria-hidden="true">⠿</span></div>';
   }).join(''):'<p class="empty">Velg en kategori</p>';
  }
  function sizeLabel(size){
@@ -550,7 +563,8 @@ function refreshHeader(){
   };
   list.addEventListener('dragstart',event=>{
    const row=event.target.closest(selector);
-   if(!row||row.draggable!==true||state.saving||activeAdminModal){event.preventDefault();return}
+   if(!row||row.draggable!==true||state.saving||activeAdminModal||
+      event.target.closest('.admin-row-action')){event.preventDefault();return}
    drag={source:Number(row.dataset[key])};
    row.classList.add('is-dragging');
    event.dataTransfer.effectAllowed='move';
@@ -679,12 +693,26 @@ function refreshHeader(){
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
  }
- function removeCategory(){
-  const s=category();if(!s||!confirm('Slette hele '+s.title+' og alle produktene?'))return;
-  const ids=new Set(s.items.map(p=>String(p.id)));state.menu.sections.splice(state.category,1);
+ function removeProduct(index=state.product){
+  const s=category(),p=s?.items?.[index];if(!p)return;
+  if(!confirm('Slette produktet «'+p.name+'»? Endringen lagres automatisk.'))return;
+  const wasSelected=index===state.product;
+  s.items.splice(index,1);
+  if(wasSelected)state.product=Math.max(0,Math.min(index,s.items.length-1));
+  else if(index<state.product)state.product--;
+  if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>String(id)!==String(p.id));
+  removeRecommendationIds([p.id]);renderProducts();renderProductEditor();setDirty();
+ }
+ function removeCategory(index=state.category){
+  const s=state.menu?.sections?.[index];if(!s)return;
+  if(state.menu.sections.length<=1){notify('Menyen må ha minst én kategori.',true);return}
+  if(!confirm('Slette hele «'+s.title+'» og alle '+arr(s.items).length+' produktene? Endringen lagres automatisk.'))return;
+  const current=category(),ids=new Set(arr(s.items).map(p=>String(p.id)));
+  state.menu.sections.splice(index,1);
   if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>!ids.has(String(id)));
   removeRecommendationIds(ids);
-  state.category=Math.max(0,Math.min(state.category,state.menu.sections.length-1));state.product=0;
+  state.category=state.menu.sections.indexOf(current);
+  if(state.category<0){state.category=Math.min(index,state.menu.sections.length-1);state.product=0}
   renderAll();setDirty();
  }
  function addGroup(){
@@ -888,14 +916,22 @@ function refreshHeader(){
    }
   });
   $('categoryList').addEventListener('click',event=>{
-   const button=event.target.closest('[data-category]');if(!button)return;
-   const i=Number(button.dataset.category);
-   if(i===state.category){editCategory();return}
-   state.category=i;state.product=0;renderCategories();renderProducts();renderProductEditor();
+   const row=event.target.closest('[data-category]');if(!row)return;
+   const index=Number(row.dataset.category);
+   if(event.target.closest('[data-category-delete]')){removeCategory(index);return}
+   if(event.target.closest('[data-category-edit]')){
+    state.category=index;state.product=0;renderCategories();renderProducts();renderProductEditor();
+    editCategory();return;
+   }
+   if(!event.target.closest('[data-category-select]')&&!event.target.closest('.admin-row-main'))return;
+   state.category=index;state.product=0;renderCategories();renderProducts();renderProductEditor();
   });
   $('productList').addEventListener('click',event=>{
-   const button=event.target.closest('[data-product]');if(!button)return;
-   state.product=Number(button.dataset.product);renderProducts();renderProductEditor();openAdminModal('product');
+   const row=event.target.closest('[data-product]');if(!row)return;
+   const index=Number(row.dataset.product);
+   if(event.target.closest('[data-product-delete]')){removeProduct(index);return}
+   if(!event.target.closest('[data-product-edit]')&&!event.target.closest('[data-product-select]'))return;
+   state.product=index;renderProducts();renderProductEditor();openAdminModal('product');
   });
   initAdminDragReorder('category');
   initAdminDragReorder('product');
@@ -906,8 +942,6 @@ function refreshHeader(){
   $('productSearch').addEventListener('input',renderProducts);
   $('groupSearch').addEventListener('input',renderGroups);
   $('addCategory').addEventListener('click',addCategory);
-  $('renameCategory').addEventListener('click',editCategory);
-  $('removeCategory').addEventListener('click',removeCategory);
   $('addProduct').addEventListener('click',addProduct);
   for(const [id,key]of [['pName','name'],['pDescription','description']])
    $(id).addEventListener('input',event=>updateItemField(key,event.target.value));
