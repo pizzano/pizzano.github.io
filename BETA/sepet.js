@@ -317,7 +317,33 @@ function restoreCartLineForEdit(line,index){
  $('add').firstChild.textContent='Oppdater kurven ';
 }
 
-function closeProductSheet(){editingCartIndex=null;fatih1HistoryBack()}
+function closeProductSheet(){
+ editingCartIndex=null;
+ const sheet=$('productSheet');
+ if(!sheet||sheet.hidden||sheet.classList.contains('is-sheet-closing'))return;
+ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  sheet.classList.remove('is-sheet-opening','is-dragging','is-drag-settling');
+  sheet.style.removeProperty('--product-drag-y');
+  fatih1HistoryBack();
+  return;
+ }
+ sheet.classList.remove('is-sheet-opening','is-dragging','is-drag-settling');
+ sheet.classList.add('is-sheet-closing');
+ let finished=false;
+ const finish=()=>{
+  if(finished)return;
+  finished=true;
+  sheet.removeEventListener('animationend',onEnd);
+  // Browser Back or a different screen may already have dismissed this sheet.
+  if(!sheet.hidden&&sheet.classList.contains('is-sheet-closing'))fatih1HistoryBack();
+ };
+ const onEnd=event=>{
+  if(event.target===sheet&&event.animationName==='fatih1SheetFall')finish();
+ };
+ sheet.addEventListener('animationend',onEnd);
+ // Animation events can be dropped when a browser suspends or backgrounds a tab.
+ window.setTimeout(finish,370);
+}
 function updateCartQuantityControls(){
  const cartPanel=$('cartSheet');
  if(cartPanel&&!cartPanel.hidden)cartPanel.querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
