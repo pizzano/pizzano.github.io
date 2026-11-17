@@ -360,7 +360,7 @@ function refreshHeader(){
  }
  function categoryButton(s,i){
   const count=arr(s.items).length;
-  return '<button class="item'+(i===state.category?' active':'')+'" type="button" data-category="'+i+'"><span class="item-icon">'+esc(String(s.title||'?').slice(0,1).toUpperCase())+'</span><span class="item-copy"><strong>'+esc(s.title||'Kategori')+'</strong><small>'+count+' produkter</small></span><span aria-hidden="true">›</span></button>';
+  return '<button class="item'+(i===state.category?' active':'')+'" type="button" draggable="true" data-category="'+i+'" title="Dra for å sortere · Alt + ↑ / ↓" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"><span class="item-icon">'+esc(String(s.title||'?').slice(0,1).toUpperCase())+'</span><span class="item-copy"><strong>'+esc(s.title||'Kategori')+'</strong><small>'+count+' produkter</small></span><span class="admin-drag-handle" aria-hidden="true">⠿</span></button>';
  }
  function renderCategories(){
   $('categoryList').innerHTML=state.menu.sections.map(categoryButton).join('')||'<p class="empty">Ingen kategorier</p>';
@@ -372,10 +372,10 @@ function refreshHeader(){
    if(query&&!String(p.name||'').toLocaleLowerCase('no').includes(query))return '';
    const url=productImage(p);
    const img=url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.hidden=true">':'<span class="item-icon">🍕</span>';
-   return '<button class="item'+(i===state.product?' active':'')+(p.hidden?' dim':'')+'" type="button" data-product="'+i+'">'+img+'<span class="item-copy"><strong>'+esc(p.name||'Nytt produkt')+'</strong><small>'+
+   return '<button class="item'+(i===state.product?' active':'')+(p.hidden?' dim':'')+(query?' drag-locked':'')+'" type="button" data-product="'+i+'"'+(query?'':' draggable="true" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"')+' title="'+(query?'Tøm søket før du sorterer':'Dra for å sortere · Alt + ↑ / ↓')+'">'+img+'<span class="item-copy"><strong>'+esc(p.name||'Nytt produkt')+'</strong><small>'+
     esc(arr(p.sizes).map(v=>Math.round(Number(v.price)||0)+' kr').join(' · ')||String(p.price||0)+' kr')+
     (recommendationIds().includes(String(p.id))?' · Anbefales i kurven':'')+
-    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span><span aria-hidden="true">›</span></button>';
+    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small></span><span class="admin-drag-handle" aria-hidden="true">⠿</span></button>';
   }).join(''):'<p class="empty">Velg en kategori</p>';
  }
  function sizeLabel(size){
@@ -497,11 +497,131 @@ function refreshHeader(){
   if(!array||index<0||index>=array.length||index+step<0||index+step>=array.length)return false;
   const target=index+step;[array[index],array[target]]=[array[target],array[index]];return true;
  }
- function changeCategory(step){
-  if(moveIn(state.menu.sections,state.category,step)){state.category+=step;renderCategories();renderProducts();renderProductEditor();setDirty()}
+ // Sort only the local draft. The existing explicit Save action writes the
+ // reordered /menu with ETag concurrency protection and its normal change feed.
+ function commitAdminReorder(kind,sourceIndex,targetIndex,after=false){
+  const array=kind==='category'?state.menu?.sections:category()?.items;
+  if(!Array.isArray(array)||state.saving||activeAdminModal)return null;
+  if(kind==='product'&&$('productSearch').value.trim())return null;
+  if(!Number.isInteger(sourceIndex)||!Number.isInteger(targetIndex)||
+     sourceIndex<0||sourceIndex>=array.length||targetIndex<0||targetIndex>=array.length)return null;
+  let destination=targetIndex+(after?1:0);
+  if(destination>sourceIndex)destination--;
+  if(destination===sourceIndex)return null;
+  const selected=array[kind==='category'?state.category:state.product];
+  const [moved]=array.splice(sourceIndex,1);
+  array.splice(destination,0,moved);
+  if(kind==='category'){
+   state.category=array.indexOf(selected);
+   renderCategories();renderProducts();renderProductEditor();
+  }else{
+   state.product=array.indexOf(selected);
+   renderProducts();renderProductEditor();
+  }
+  setDirty();
+  return destination;
  }
- function changeProduct(step){
-  const s=category();if(s&&moveIn(s.items,state.product,step)){state.product+=step;renderProducts();renderProductEditor();setDirty()}
+ function initAdminDragReorder(kind){
+  const list=$((kind==='category'?'categoryList':'productList'));
+  const key=kind==='category'?'category':'product';
+  const selector='[data-'+key+']';
+  let drag=null,touchDrag=null,suppressClickUntil=0;
+  const clearMarks=()=>{
+   for(const row of list.querySelectorAll('.drag-before,.drag-after,.is-dragging,.is-touch-dragging'))
+    row.classList.remove('drag-before','drag-after','is-dragging','is-touch-dragging');
+  };
+  const pointAt=(row,y)=>{
+   if(!row||!list.contains(row))return null;
+   const rect=row.getBoundingClientRect();
+   return {index:Number(row.dataset[key]),after:y>rect.top+rect.height/2};
+  };
+  const mark=(row,y)=>{
+   for(const previous of list.querySelectorAll('.drag-before,.drag-after'))
+    previous.classList.remove('drag-before','drag-after');
+   const point=pointAt(row,y);
+   if(point)row.classList.add(point.after?'drag-after':'drag-before');
+   return point;
+  };
+  const autoScroll=y=>{
+   const rect=list.getBoundingClientRect();
+   const zone=38;
+   if(y<rect.top+zone)list.scrollTop-=18;
+   else if(y>rect.bottom-zone)list.scrollTop+=18;
+  };
+  list.addEventListener('dragstart',event=>{
+   const row=event.target.closest(selector);
+   if(!row||row.draggable!==true||state.saving||activeAdminModal){event.preventDefault();return}
+   drag={source:Number(row.dataset[key])};
+   row.classList.add('is-dragging');
+   event.dataTransfer.effectAllowed='move';
+   event.dataTransfer.setData('text/plain','BestillOnline '+kind+' sort');
+  });
+  list.addEventListener('dragover',event=>{
+   if(!drag)return;
+   const row=event.target.closest(selector);
+   if(!row)return;
+   event.preventDefault();
+   event.dataTransfer.dropEffect='move';
+   autoScroll(event.clientY);
+   mark(row,event.clientY);
+  });
+  list.addEventListener('drop',event=>{
+   if(!drag)return;
+   event.preventDefault();
+   const row=event.target.closest(selector),point=pointAt(row,event.clientY);
+   const source=drag.source;
+   drag=null;clearMarks();
+   suppressClickUntil=Date.now()+350;
+   if(point)commitAdminReorder(kind,source,point.index,point.after);
+  });
+  list.addEventListener('dragend',()=>{
+   if(drag)suppressClickUntil=Date.now()+350;
+   drag=null;clearMarks();
+  });
+  // HTML Drag and Drop supports mouse/trackpad. Touch needs a pointer-driven
+  // grip because mobile browsers do not reliably support native HTML DnD.
+  list.addEventListener('pointerdown',event=>{
+   if(event.pointerType==='mouse'||touchDrag)return;
+   const grip=event.target.closest('.admin-drag-handle');
+   const row=grip?.closest(selector);
+   if(!row||!row.draggable||state.saving||activeAdminModal)return;
+   event.preventDefault();
+   touchDrag={pointerId:event.pointerId,source:Number(row.dataset[key]),grip,last:null};
+   grip.setPointerCapture?.(event.pointerId);
+   row.classList.add('is-touch-dragging');
+  });
+  list.addEventListener('pointermove',event=>{
+   if(!touchDrag||touchDrag.pointerId!==event.pointerId)return;
+   event.preventDefault();
+   autoScroll(event.clientY);
+   const row=document.elementFromPoint(event.clientX,event.clientY)?.closest(selector);
+   touchDrag.last=mark(row,event.clientY);
+  });
+  const stopTouch=(event,cancel=false)=>{
+   if(!touchDrag||touchDrag.pointerId!==event.pointerId)return;
+   const {source,last,grip}=touchDrag;
+   touchDrag=null;
+   if(grip.hasPointerCapture?.(event.pointerId))grip.releasePointerCapture(event.pointerId);
+   clearMarks();suppressClickUntil=Date.now()+350;
+   if(!cancel&&last)commitAdminReorder(kind,source,last.index,last.after);
+  };
+  list.addEventListener('pointerup',event=>stopTouch(event));
+  list.addEventListener('pointercancel',event=>stopTouch(event,true));
+  list.addEventListener('click',event=>{
+   if(Date.now()>suppressClickUntil)return;
+   event.preventDefault();event.stopImmediatePropagation();
+  },true);
+  // Keyboard alternative to dragging, without sending any Firebase request.
+  list.addEventListener('keydown',event=>{
+   if(!event.altKey||event.ctrlKey||event.metaKey||
+      !['ArrowUp','ArrowDown'].includes(event.key))return;
+   const row=event.target.closest(selector);
+   if(!row||!row.draggable)return;
+   event.preventDefault();
+   const at=Number(row.dataset[key]),step=event.key==='ArrowUp'?-1:1;
+   const next=commitAdminReorder(kind,at,at+step,step===1);
+   if(next!==null)list.querySelector('[data-'+key+'="'+next+'"]')?.focus();
+  });
  }
  function updateCommonGroup(id,checked){
   const p=product();if(!p)return;
@@ -793,6 +913,8 @@ function refreshHeader(){
    const button=event.target.closest('[data-product]');if(!button)return;
    state.product=Number(button.dataset.product);renderProducts();renderProductEditor();openAdminModal('product');
   });
+  initAdminDragReorder('category');
+  initAdminDragReorder('product');
   $('groupList').addEventListener('click',event=>{
    const button=event.target.closest('[data-group]');if(!button)return;
    state.group=Number(button.dataset.group);renderGroups();renderGroupEditor();openAdminModal('group');
@@ -801,14 +923,8 @@ function refreshHeader(){
   $('groupSearch').addEventListener('input',renderGroups);
   $('addCategory').addEventListener('click',addCategory);
   $('renameCategory').addEventListener('click',editCategory);
-  $('moveCategoryUp').addEventListener('click',()=>changeCategory(-1));
-  $('moveCategoryDown').addEventListener('click',()=>changeCategory(1));
   $('removeCategory').addEventListener('click',removeCategory);
   $('addProduct').addEventListener('click',addProduct);
-  $('moveProductUp').addEventListener('click',()=>changeProduct(-1));
-  $('moveProductDown').addEventListener('click',()=>changeProduct(1));
-  $('duplicateProduct').addEventListener('click',duplicateProduct);
-  $('removeProduct').addEventListener('click',removeProduct);
   for(const [id,key]of [['pName','name'],['pDescription','description']])
    $(id).addEventListener('input',event=>updateItemField(key,event.target.value));
   $('pIngredientsFromDescription').addEventListener('click',()=>{
