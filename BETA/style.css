@@ -1473,13 +1473,13 @@ html[data-fatih1-theme="dark"] .cache-actions .menu-refresh{
    soft footer controls. Single shared layout for desktop and phone. */
 #productSheet{
  position:fixed;
- top:0;
+ top:60px;
  bottom:0;
  width:min(100%,var(--app-width));
- height:100dvh;
- max-height:100dvh;
+ height:calc(100dvh - 60px);
+ max-height:none;
  border:0;
- border-radius:0;
+ border-radius:20px 20px 0 0;
  background:#faf9f7;
  color:#17493e;
  font-size:13px;
