@@ -509,9 +509,9 @@ function refreshHeader(){
  const adminDeleteSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6l1 14h12l1-14"/><path d="M10 10v7M14 10v7"/></svg>';
  function categoryButton(s,i){
   const count=arr(s.items).length,name=esc(s.title||'Kategori');
-  return '<div class="item admin-sort-row'+(i===state.category?' active':'')+'" draggable="true" data-category="'+i+'" title="Dra for å sortere · Alt + ↑ / ↓" tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown">'+
+  return '<div class="item admin-sort-row'+(i===state.category?' active':'')+(s.hidden===true?' is-category-hidden':'')+'" draggable="true" data-category="'+i+'" title="Dra for å sortere · Alt + ↑ / ↓" tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown">'+
    '<button class="admin-row-main" type="button" data-category-select aria-label="Velg kategori: '+name+'"><span class="item-icon">'+esc(String(s.title||'?').slice(0,1).toUpperCase())+'</span>'+
-   '<span class="item-copy"><strong>'+name+'</strong><small>'+count+' produkter</small></span></button>'+
+   '<span class="item-copy"><strong>'+name+'</strong><small>'+count+' produkter'+(s.hidden===true?'<span class="admin-category-hidden-tag"> · Skjult</span>':'')+'</small></span></button>'+
    '<div class="admin-row-actions"><button class="admin-row-action" type="button" data-category-edit title="Rediger kategori" aria-label="Rediger kategori: '+name+'">'+adminEditSvg+'</button>'+
    '<button class="admin-row-action is-delete" type="button" data-category-delete title="Slett kategori" aria-label="Slett kategori: '+name+'">'+adminDeleteSvg+'</button></div>'+
    '<span class="admin-drag-handle" aria-hidden="true">⠿</span></div>';
@@ -522,7 +522,7 @@ function refreshHeader(){
  const ADMIN_PRODUCT_FILTERS={
   all:{label:'Alle'},
   soldout:{label:'Utsolgt',match:p=>p.soldOut===true},
-  hidden:{label:'Skjult fra kundemenyen',match:p=>p.hidden===true},
+  hidden:{label:'Skjult fra kundemenyen',match:(p,ids,entry)=>p.hidden===true||entry.categoryHidden===true},
   popular:{label:'Mest solgt',match:(p,ids)=>ids.popular.has(String(p.id))},
   suggested:{label:'Forslag i handlekurven',match:(p,ids)=>ids.suggested.has(String(p.id))},
   noimage:{label:'Uten bilde',match:p=>!productImage(p)}
@@ -536,7 +536,7 @@ function refreshHeader(){
  }
  function productEntries(){
   return arr(state.menu?.sections).flatMap((section,categoryIndex)=>
-   arr(section.items).map((p,index)=>({p,index,categoryIndex,categoryTitle:String(section.title||'Kategori')})));
+   arr(section.items).map((p,index)=>({p,index,categoryIndex,categoryTitle:String(section.title||'Kategori'),categoryHidden:section.hidden===true})));
  }
  function setProductFilter(mode){
   if(!Object.hasOwn(ADMIN_PRODUCT_FILTERS,mode))return;
@@ -555,7 +555,7 @@ function refreshHeader(){
   const ids=productStatusIndex(),all=productEntries();
   const counts={all:all.length};
   for(const [key,filter] of Object.entries(ADMIN_PRODUCT_FILTERS)){
-   if(key!=='all')counts[key]=all.filter(({p})=>filter.match(p,ids)).length;
+   if(key!=='all')counts[key]=all.filter(entry=>filter.match(entry.p,ids,entry)).length;
   }
   for(const button of $('productStatusFilters').querySelectorAll('[data-product-filter]')){
    const active=button.dataset.productFilter===productFilterMode;
@@ -570,7 +570,7 @@ function refreshHeader(){
   let entries=global?all:all.filter(entry=>entry.categoryIndex===state.category);
   if(productFilterMode!=='all'){
    const match=ADMIN_PRODUCT_FILTERS[productFilterMode].match;
-   entries=entries.filter(({p})=>match(p,ids));
+   entries=entries.filter(entry=>match(entry.p,ids,entry));
   }
   if(query)entries=entries.filter(({p,categoryTitle})=>
    String(p.name||'').toLocaleLowerCase('no').includes(query)||
@@ -585,7 +585,7 @@ function refreshHeader(){
   hint.textContent=global
    ?'Viser resultater fra alle kategorier · velg en kategori for å sortere'
    :'⠿ Dra produktene for å endre rekkefølgen';
-  $('productList').innerHTML=entries.map(({p,index,categoryIndex,categoryTitle})=>{
+  $('productList').innerHTML=entries.map(({p,index,categoryIndex,categoryTitle,categoryHidden})=>{
    const url=productImage(p);
    const img=url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.hidden=true">':'<span class="item-icon">🍕</span>';
    const name=esc(p.name||'Nytt produkt');
@@ -599,7 +599,7 @@ function refreshHeader(){
     esc(arr(p.sizes).map(v=>Math.round(Number(v.price)||0)+' kr').join(' · ')||String(p.price||0)+' kr')+
     (ids.popular.has(String(p.id))?' · Mest solgt':'')+
     (ids.suggested.has(String(p.id))?' · Forslag i handlekurven':'')+
-    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':'')+'</small>'+categoryBadge+'</span></button>'+
+    (p.soldOut?' · Utsolgt':'')+(p.hidden?' · Skjult':categoryHidden?' · Skjult kategori':'')+'</small>'+categoryBadge+'</span></button>'+
     '<div class="admin-row-actions"><button type="button" class="admin-row-action" data-product-edit title="'+(productFilterMode!=='all'?'Rediger tilgjengelighet':'Rediger produkt')+'" aria-label="'+(productFilterMode!=='all'?'Rediger tilgjengelighet: ':'Rediger produkt: ')+name+'">'+adminEditSvg+'</button>'+
     (productFilterMode==='all'?'<button type="button" class="admin-row-action is-delete" data-product-delete title="Slett produkt permanent" aria-label="Slett produkt permanent: '+name+'">'+adminDeleteSvg+'</button>':'')+'</div>'+
     (global?'':'<span class="admin-drag-handle" aria-hidden="true">⠿</span>')+'</div>';
@@ -926,10 +926,11 @@ function refreshHeader(){
   adminModalReturnFocus=document.activeElement;
   categoryModalTarget=editing?String(section.id):null;
   $('categoryEditorTitle').textContent=editing?'Rediger kategori':'Ny kategori';
-  $('categoryEditorDescription').textContent=editing?'Endre navn, beskrivelse og type.':'Fyll ut kategorien og legg til produkter.';
+  $('categoryEditorDescription').textContent=editing?'Endre navn, beskrivelse, type og synlighet.':'Fyll ut kategorien og legg til produkter.';
   $('categoryTitle').value=String(section?.title||'');
   $('categoryNote').value=String(section?.note||'');
   $('categoryType').value=String(section?.type||'');
+  $('categoryHidden').checked=section?.hidden===true;
   $('categoryIdHint').textContent=editing?'Kategori-ID: '+String(section.id):'Ny kategori får automatisk en unik ID.';
   $('btnSaveCategoryModal').textContent=editing?'Lagre kategori':'Opprett kategori';
   $('btnCategorySaveAddProduct').hidden=editing;
@@ -944,11 +945,13 @@ function refreshHeader(){
   if(!$('categoryForm').reportValidity())return;
   const title=$('categoryTitle').value.trim(),
    note=$('categoryNote').value.trim(),
-   type=$('categoryType').value.trim();
+   type=$('categoryType').value.trim(),
+   hidden=$('categoryHidden').checked;
   if(!title){$('categoryTitle').focus();return}
   if(categoryModalTarget===null){
    const section={id:uid('cat'),title,note,items:[]};
    if(type)section.type=type;
+   if(hidden)section.hidden=true;
    state.menu.sections.push(section);
    state.category=state.menu.sections.length-1;
    state.product=0;
@@ -961,10 +964,14 @@ function refreshHeader(){
   if(index<0){notify('Kategorien finnes ikke lenger. Hent siste meny.',true);return}
   const section=state.menu.sections[index];
   const previousType=String(section.type||'');
-  const changed=String(section.title||'')!==title||String(section.note||'')!==note||previousType!==type;
+  const changed=String(section.title||'')!==title||String(section.note||'')!==note||previousType!==type||
+   (section.hidden===true)!==hidden;
   if(changed){
    section.title=title;section.note=note;
    if(type)section.type=type;else delete section.type;
+   // Keep false explicit on previously hidden categories for a compact
+   // conditional Firebase write instead of deleting the visibility field.
+   if(hidden||Object.hasOwn(section,'hidden'))section.hidden=hidden;
   }
   closeAdminModal();
   if(changed){
