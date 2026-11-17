@@ -685,8 +685,8 @@ function refreshHeader(){
   if(!array||index<0||index>=array.length||index+step<0||index+step>=array.length)return false;
   const target=index+step;[array[index],array[target]]=[array[target],array[index]];return true;
  }
- // Sort only the local draft. The existing explicit Save action writes the
- // reordered /menu with ETag concurrency protection and its normal change feed.
+ // Reorder only the local draft; autosave persists it with ETag protection
+ // and notifies the customer menu through the existing change feed.
  function commitAdminReorder(kind,sourceIndex,targetIndex,after=false){
   const array=kind==='category'?state.menu?.sections:category()?.items;
   if(!Array.isArray(array)||state.saving||activeAdminModal)return null;
@@ -1207,7 +1207,7 @@ function refreshHeader(){
    if(!auto)notify('Hent siste meny før du lagrer.','error');
    return;
   }
-  // Exclude empty new categories and only genuinely untouched new products.
+  // Exclude incomplete categories, products, sizes, options and groups.
   const prepared=menuWithoutIncompleteDrafts();
   if(persistableSignature(prepared)===persistableSignature(state.original)){
    syncSaveStatus();
