@@ -13,6 +13,7 @@ const FIREBASE_WEB_API_KEY='AIzaSyDanHMWBBN260CS9S9IVpFPnb2BfnWXF-0';
 let auth=null;
 function apiKey(){return FIREBASE_WEB_API_KEY}
 function showLogin(err=''){
+ $('adminNav').hidden=true;$('adminToolsMenu').open=false;
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
  $('authError').textContent=err;$('authError').hidden=!err;
  $('authPassword').value='';
@@ -192,6 +193,7 @@ function getProductAllergens(p){
  // Direct menu connection, with no login request or authentication token.
  async function menuURL(){return menuAuthURL()}
  async function startAdmin(){
+  $('adminNav').hidden=true;
   $('loadingCard').hidden=false;
   $('adminRoot').hidden=true;
   $('loadError').hidden=true;
@@ -202,8 +204,11 @@ function getProductAllergens(p){
    await loadMenu(false);
    $('loadingCard').hidden=true;
    $('adminRoot').hidden=false;
+   $('adminNav').hidden=false;
+   requestAnimationFrame(updateAdminNavArrows);
    notify('Menyen er lastet fra Firebase');
   }catch(error){
+   $('adminNav').hidden=true;
    console.warn('BestillOnline menu admin load failed:',error);
    $('loadError').textContent=error.message||'Kunne ikke laste menyen.';
    $('loadError').hidden=false;
@@ -230,12 +235,26 @@ function getProductAllergens(p){
   }
   return true;
  }
+ function updateAdminNavArrows(){
+  const track=$('adminNavTrack');
+  if(!track)return;
+  const max=Math.max(0,track.scrollWidth-track.clientWidth);
+  $('adminNavPrev').disabled=track.scrollLeft<=3;
+  $('adminNavNext').disabled=track.scrollLeft>=max-3;
+ }
  function setTab(tab){
+  if(tab!=='products'&&tab!=='groups')return;
+  const previous=state.tab;
   state.tab=tab;
   $('productsPage').hidden=tab!=='products';$('groupsPage').hidden=tab!=='groups';
   for(const b of document.querySelectorAll('[data-tab]')){
    const active=b.dataset.tab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));
   }
+  if(tab!==previous&&!$('adminNav').hidden){
+   const current=$('adminNavTrack').querySelector('[data-tab="'+tab+'"]');
+   if(current)current.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
+  updateAdminNavArrows();
  }
 
  let activeAdminModal=null,adminModalReturnFocus=null;
@@ -703,7 +722,26 @@ function getProductAllergens(p){
   $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
    state.menu=clone(state.original);state.category=0;state.product=0;state.group=0;renderAll();setClean()});
-  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  document.querySelectorAll('#adminNavTrack [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  const navTrack=$('adminNavTrack');
+  navTrack.addEventListener('scroll',updateAdminNavArrows,{passive:true});
+  for(const [id,direction] of [['adminNavPrev',-1],['adminNavNext',1]]){
+   $(id).addEventListener('click',()=>navTrack.scrollBy({left:direction*220,behavior:'smooth'}));
+  }
+  window.addEventListener('resize',updateAdminNavArrows);
+  const tools=$('adminToolsMenu');
+  tools.addEventListener('click',event=>{
+   if(event.target.closest('.admin-tools-items button,.admin-tools-items a'))tools.open=false;
+  });
+  document.addEventListener('pointerdown',event=>{
+   if(tools.open&&!tools.contains(event.target))tools.open=false;
+  });
+  document.addEventListener('keydown',event=>{
+   if(event.key==='Escape'&&tools.open){
+    event.preventDefault();tools.open=false;
+    tools.querySelector('summary').focus();
+   }
+  });
   $('categoryList').addEventListener('click',event=>{
    const button=event.target.closest('[data-category]');if(!button)return;
    const i=Number(button.dataset.category);
