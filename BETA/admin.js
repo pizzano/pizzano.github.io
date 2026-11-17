@@ -12,7 +12,7 @@ const ADMIN_EMAIL='fatihsemb@gmail.com';
 const FIREBASE_WEB_API_KEY='AIzaSyDanHMWBBN260CS9S9IVpFPnb2BfnWXF-0';
 let auth=null;
 function showLogin(err=''){
- $('adminNav').hidden=true;$('adminToolsMenu').open=false;
+ $('adminNav').hidden=true;$('adminToolsMenu').open=false;$('adminToolsMenu').hidden=true;
  $('adminMain').hidden=true;$('authScreen').hidden=false;$('btnSignOut').hidden=true;
  $('authError').textContent=err;$('authError').hidden=!err;
  $('authPassword').value='';
@@ -284,6 +284,7 @@ function refreshHeader(){
  }
  async function startAdmin(){
   $('adminNav').hidden=true;
+  $('adminToolsMenu').hidden=true;
   $('loadingCard').hidden=false;
   $('adminRoot').hidden=true;
   $('loadError').hidden=true;
@@ -295,10 +296,13 @@ function refreshHeader(){
    $('loadingCard').hidden=true;
    $('adminRoot').hidden=false;
    $('adminNav').hidden=false;
+   $('adminToolsMenu').hidden=false;
    requestAnimationFrame(updateAdminNavArrows);
    notify('Menyen er kontrollert mot Firebase');
   }catch(error){
    $('adminNav').hidden=true;
+   $('adminToolsMenu').hidden=true;
+   $('adminToolsMenu').open=false;
    console.warn('BestillOnline menu admin load failed:',error);
    $('loadError').textContent=error.message||'Kunne ikke laste menyen.';
    $('loadError').hidden=false;
