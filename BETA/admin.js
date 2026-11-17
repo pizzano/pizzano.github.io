@@ -673,7 +673,7 @@ function refreshHeader(){
   $('pImage').value=productImage(p);$('pPreviewName').textContent=p.name||'Produktbilde';
   const img=$('pPreview');img.src=productImage(p)||'';img.hidden=!productImage(p);
   $('pSoldOut').checked=p.soldOut===true;$('pHidden').checked=p.hidden===true;
-  $('pPopular').checked=arr(state.menu.popularItemIds).some(id=>String(id)===String(p.id));
+  $('pPopular').checked=productStatusIndex().popular.has(String(p.id));
   $('pCartSuggestion').checked=recommendationIds().includes(String(p.id));
   $('cartSuggestionLimit').textContent=recommendationIds().length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
   renderSizes(true);
@@ -1003,7 +1003,8 @@ function refreshHeader(){
   const current=category(),ids=new Set(arr(s.items).map(p=>String(p.id)));
   for(const id of ids)draftProductSnapshots.delete(id);
   state.menu.sections.splice(index,1);
-  if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>!ids.has(String(id)));
+  if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>
+   !ids.has(String(id&&typeof id==='object'?(id.id??id.value):id)));
   removeRecommendationIds(ids);
   state.category=state.menu.sections.indexOf(current);
   if(state.category<0){state.category=Math.min(index,state.menu.sections.length-1);state.product=0}
@@ -1503,7 +1504,7 @@ function refreshHeader(){
    $(id).addEventListener('change',event=>{updateItemField(key,event.target.checked);renderProducts()});
   $('pPopular').addEventListener('change',event=>{
    const p=product();if(!p)return;
-   const ids=arr(state.menu.popularItemIds).map(String),id=String(p.id);
+   const ids=[...productStatusIndex().popular],id=String(p.id);
    state.menu.popularItemIds=event.target.checked?[...new Set([...ids,id])]:ids.filter(x=>x!==id);
    renderProducts();setDirty();
   });
