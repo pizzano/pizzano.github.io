@@ -756,7 +756,7 @@ function refreshHeader(){
  function commitAdminReorder(kind,sourceIndex,targetIndex,after=false){
   const array=kind==='category'?state.menu?.sections:category()?.items;
   if(!Array.isArray(array)||state.saving||activeAdminModal)return null;
-  if(kind==='product'&&$('productSearch').value.trim())return null;
+  if(kind==='product'&&(productFilterMode!=='all'||$('productSearch').value.trim()))return null;
   if(!Number.isInteger(sourceIndex)||!Number.isInteger(targetIndex)||
      sourceIndex<0||sourceIndex>=array.length||targetIndex<0||targetIndex>=array.length)return null;
   let destination=targetIndex+(after?1:0);
@@ -973,21 +973,26 @@ function refreshHeader(){
  function editCategory(){openCategoryModal(state.category)}
  function addProduct(){
   const s=category();if(!s)return;
+  resetProductFilterForCategory();
   const newItem={id:uid('product'),name:'',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'',price:0}],optionGroupIds:[],optionGroupOrder:[]};
   draftProductSnapshots.set(String(newItem.id),JSON.stringify(newItem));
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
  }
- function removeProduct(index=state.product){
-  const s=category(),p=s?.items?.[index];if(!p)return;
-  if(!confirm('Slette produktet «'+p.name+'»? Endringen lagres automatisk.'))return;
-  const wasSelected=index===state.product;
+ function removeProduct(index=state.product,categoryIndex=state.category){
+  const s=state.menu?.sections?.[categoryIndex],p=s?.items?.[index];if(!p)return;
+  if(!confirm('Slette produktet «'+p.name+'» fra «'+s.title+'»? Endringen lagres automatisk.'))return;
+  const inSelectedCategory=categoryIndex===state.category;
+  const wasSelected=inSelectedCategory&&index===state.product;
   draftProductSnapshots.delete(String(p.id));
   s.items.splice(index,1);
   if(wasSelected)state.product=Math.max(0,Math.min(index,s.items.length-1));
-  else if(index<state.product)state.product--;
-  if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>String(id)!==String(p.id));
-  removeRecommendationIds([p.id]);renderProducts();renderProductEditor();setDirty();
+  else if(inSelectedCategory&&index<state.product)state.product--;
+  if(Array.isArray(state.menu.popularItemIds))
+   state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>
+    String(id&&typeof id==='object'?(id.id??id.value):id)!==String(p.id));
+  removeRecommendationIds([p.id]);
+  renderCategories();renderProducts();renderProductEditor();setDirty();
  }
  function removeCategory(index=state.category){
   const s=state.menu?.sections?.[index];if(!s)return;
@@ -1422,14 +1427,17 @@ function refreshHeader(){
     editCategory();return;
    }
    if(!event.target.closest('[data-category-select]')&&!event.target.closest('.admin-row-main'))return;
+   resetProductFilterForCategory();
    state.category=index;state.product=0;renderCategories();renderProducts();renderProductEditor();
   });
   $('productList').addEventListener('click',event=>{
    const row=event.target.closest('[data-product]');if(!row)return;
-   const index=Number(row.dataset.product);
-   if(event.target.closest('[data-product-delete]')){removeProduct(index);return}
+   const index=Number(row.dataset.product),categoryIndex=Number(row.dataset.categoryIndex);
+   if(!Number.isInteger(index)||!Number.isInteger(categoryIndex))return;
+   if(event.target.closest('[data-product-delete]')){removeProduct(index,categoryIndex);return}
    if(!event.target.closest('[data-product-edit]')&&!event.target.closest('[data-product-select]'))return;
-   state.product=index;renderProducts();renderProductEditor();openAdminModal('product');
+   state.category=categoryIndex;state.product=index;
+   renderCategories();renderProducts();renderProductEditor();openAdminModal('product');
   });
   initAdminDragReorder('category');
   initAdminDragReorder('product');
@@ -1443,6 +1451,10 @@ function refreshHeader(){
   document.querySelectorAll('[data-group-view]').forEach(button=>
    button.addEventListener('click',()=>setGroupView(button.dataset.groupView)));
   setGroupView(groupViewMode);
+  $('productStatusFilters').addEventListener('click',event=>{
+   const button=event.target.closest('[data-product-filter]');
+   if(button)setProductFilter(button.dataset.productFilter);
+  });
   $('productSearch').addEventListener('input',renderProducts);
   $('groupSearch').addEventListener('input',renderGroups);
   $('addCategory').addEventListener('click',addCategory);
@@ -1491,7 +1503,7 @@ function refreshHeader(){
    const p=product();if(!p)return;
    const ids=arr(state.menu.popularItemIds).map(String),id=String(p.id);
    state.menu.popularItemIds=event.target.checked?[...new Set([...ids,id])]:ids.filter(x=>x!==id);
-   setDirty();
+   renderProducts();setDirty();
   });
   $('pCartSuggestion').addEventListener('change',event=>toggleCartSuggestion(event.target.checked));
   $('sizeRows').addEventListener('input',event=>{
