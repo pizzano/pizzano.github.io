@@ -7,7 +7,7 @@ const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'style.css?v=20261117-fatih1-cart-sortcompact3',
+  'style.css?v=20261117-bestillonline-brand4',
   'sepet.js?v=20261117-bestillonline-brand4',
   'app.js?v=20261117-bestillonline-brand4',
   'profil.js?v=20261117-bestillonline-brand4',
