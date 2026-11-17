@@ -522,12 +522,12 @@ function refreshHeader(){
  const ADMIN_PRODUCT_FILTERS={
   all:{label:'Alle'},
   soldout:{label:'Utsolgt',match:p=>p.soldOut===true},
-  hidden:{label:'Skjult',match:p=>p.hidden===true},
+  hidden:{label:'Skjult fra kundemenyen',match:p=>p.hidden===true},
   popular:{label:'Mest solgt',match:(p,ids)=>ids.popular.has(String(p.id))},
   suggested:{label:'Forslag i handlekurven',match:(p,ids)=>ids.suggested.has(String(p.id))},
   noimage:{label:'Uten bilde',match:p=>!productImage(p)}
  };
- let productFilterMode='all';
+ let productFilterMode='all',productFilterScope='category';
  function productStatusIndex(){
   const popular=new Set(arr(state.menu?.popularItemIds).map(value=>
    String(value&&typeof value==='object'?(value.id??value.value):value)));
@@ -541,15 +541,17 @@ function refreshHeader(){
  function setProductFilter(mode){
   if(!Object.hasOwn(ADMIN_PRODUCT_FILTERS,mode))return;
   productFilterMode=mode;
+  productFilterScope='all';
   renderProducts();
  }
  function resetProductFilterForCategory(){
   productFilterMode='all';
+  productFilterScope='category';
   $('productSearch').value='';
  }
  function renderProducts(){
   const current=category(),query=$('productSearch').value.trim().toLocaleLowerCase('no');
-  const global=productFilterMode!=='all'||Boolean(query);
+  const global=productFilterScope==='all'||productFilterMode!=='all'||Boolean(query);
   const ids=productStatusIndex(),all=productEntries();
   const counts={all:all.length};
   for(const [key,filter] of Object.entries(ADMIN_PRODUCT_FILTERS)){
