@@ -201,7 +201,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-dragreorder3" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-dragreorder4" defer></script>
 </head>
 <body>
 <header class="top">
@@ -271,7 +271,6 @@ body.admin-modal-open{overflow:hidden}
     <button type="button" class="admin-modal-tab" data-product-tab="storrelser" role="tab" aria-selected="false">Størrelser & priser</button>
     <button type="button" class="admin-modal-tab" data-product-tab="allergener" role="tab" aria-selected="false">Allergener</button>
     <button type="button" class="admin-modal-tab" data-product-tab="tilgjengelighet" role="tab" aria-selected="false">Tilgjengelighet</button>
-    <button type="button" class="admin-modal-tab" data-product-tab="handlinger" role="tab" aria-selected="false">Handlinger</button>
    </nav>
    <div class="admin-modal-body" id="productFields">
     <div class="admin-modal-pane" data-product-section="produkt">
@@ -311,10 +310,6 @@ body.admin-modal-open{overflow:hidden}
       <p class="muted" id="cartSuggestionLimit">Velg opptil 10 produkter. Kunden ser 4 tilfeldige forslag om gangen. Lagres i /menu/cartSuggestionRules.</p>
      </div>
 </div>
-    <div class="admin-modal-pane" data-product-section="handlinger" hidden><div class="admin-form-card"><h3>Produkthandlinger</h3><p class="muted">Du kan duplisere eller slette produktet. Lagring skjer først når du trykker Lagre endringer.</p><div class="actions">
-     <button type="button" id="btnDuplicateProductModal" class="btn">Dupliser produkt</button>
-     <button type="button" id="btnRemoveProductModal" class="btn danger">Slett produkt</button>
-    </div></div></div>
    </div>
    <footer class="admin-modal-footer"><button id="btnCloseProductBottom" class="btn" type="button">Lukk</button><span class="admin-modal-footer-note">Ulagrede endringer beholdes som utkast.</span><button id="btnSaveProductModal" class="btn primary" type="button">Lagre endringer</button></footer>
   </section>
