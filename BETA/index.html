@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>FATIH1 · Bestilling</title>
-  <link rel="stylesheet" href="./style.css?v=20261117-fatih1-sheet-motion1">
-  <script src="./sepet.js?v=20261117-fatih1-add-down260" defer></script>
-  <script src="./app.js?v=20261117-fatih1-sheet-motion1" defer></script>
+  <link rel="stylesheet" href="./style.css?v=20261117-fatih1-cleanup1">
+  <script src="./sepet.js?v=20261117-fatih1-cleanup1" defer></script>
+  <script src="./app.js?v=20261117-fatih1-cleanup1" defer></script>
   <script src="./profil.js?v=20261117-fatih1-swipe-ingredients45" defer></script>
 </head>
 <body>
@@ -66,7 +66,7 @@
         <div class="checkout-pickup-choices"><label class="checkout-pickup-option is-selected" id="draftAsapOption"><input type="radio" name="draftPickupMode" value="asap" checked><strong>Snarest</strong></label><label class="checkout-pickup-option" id="draftScheduledOption"><input type="radio" name="draftPickupMode" value="scheduled"><strong>Velg tid</strong><small>Hent på et klokkeslett</small></label></div>
         <label id="draftPickupTimeBox" class="checkout-time-select" for="draftPickupTime" hidden><strong>Velg hentetid</strong><select id="draftPickupTime"></select></label>
         <details class="checkout-order-preview"><summary><strong id="draftPickupItemCount">0 varer</strong><small>Se innhold og detaljer</small><span>Vis mer</span></summary><div id="draftPickupOrderItems"></div></details>
-        
+
       </section>
     </div>
     <footer class="cart-footer"><p id="checkoutError" class="checkout-error" role="alert" hidden></p><div class="cart-buttons"><div id="cartFooterTotal" class="cart-footer-total" aria-live="polite"><span>Totalt</span><strong id="cartFooterAmount">0 kr</strong></div><button id="continue" class="cart-outline" type="button" hidden>Tilbake: Kurv</button><button id="cartNext" class="primary" type="button" disabled>Neste: Kontakt</button></div></footer>
@@ -100,7 +100,7 @@
    <nav class="fatih1-profile-menu" aria-label="Profilmeny">
     <button type="button" data-fatih1-profile-tab="contact" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Rediger profil</strong><small id="fatih1ProfileContactMeta">Navn, mobilnummer og e-post</small></span><span class="fatih1-profile-chevron">›</span></button>
     <button type="button" data-fatih1-profile-tab="orders" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Mine bestillinger</strong><small id="fatih1ProfileOrdersMeta">Bestillinger på denne enheten</small></span><span class="fatih1-profile-chevron">›</span></button>
-    
+
     <button type="button" data-fatih1-profile-tab="restaurant" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 5 4h14l2 6M5 10v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Restaurantinformasjon</strong><small>Åpningstider og kontakt</small></span><span class="fatih1-profile-chevron">›</span></button>
    </nav>
   </div>
@@ -119,7 +119,7 @@
     </form>
    </section>
    <section id="fatih1ProfileOrdersPanel" class="fatih1-profile-panel" hidden><div id="fatih1ProfileOrders"></div></section>
-   
+
    <section id="fatih1ProfileRestaurantPanel" class="fatih1-profile-panel" hidden><div id="fatih1ProfileRestaurantInfo"></div></section>
   </div>
  </div>
@@ -136,14 +136,5 @@
   <div id="fatih1Toast" class="fatih1-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span id="fatih1ToastSymbol" class="fatih1-toast-symbol" aria-hidden="true">✓</span><span id="fatih1ToastText" class="fatih1-toast-text"></span>
   </div>
-  <script>
-    // Only FATIH1/ is controlled. Static HTML/CSS/JS are cached; dynamic data is untouched.
-    if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', {scope: './', updateViaCache: 'none'})
-          .catch(error => console.warn('FATIH1 Service Worker:', error));
-      }, {once: true});
-    }
-  </script>
 </body>
 </html>
