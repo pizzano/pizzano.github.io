@@ -137,7 +137,42 @@
 
 /* Overlay editors – product and choice group, matching DRAFT's easy modal workflow. */
 #productsPage{grid-template-columns:minmax(240px,330px) minmax(340px,1fr)}
-#groupsPage{grid-template-columns:minmax(280px,380px) minmax(0,1fr)}
+#groupsPage{display:block}
+#groupsPage>.admin-groups-panel{width:100%;min-width:0}
+.admin-groups-head{align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:13px}
+.admin-groups-head h2{font-size:19px}
+.admin-groups-subtitle{font-size:11px;color:#728b7b;margin:4px 0 0}
+.admin-groups-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.admin-group-view-switch{display:flex;align-items:center;padding:3px;gap:3px;background:#eef5f0;border:1px solid #d5e7db;border-radius:11px}
+.admin-group-view{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 11px;border:1px solid transparent;border-radius:8px;background:transparent;color:#547564;font-size:12px;font-weight:750;cursor:pointer;transition:background .15s,color .15s}
+.admin-group-view:hover{color:#086a4e;background:#ffffffa8}
+.admin-group-view.active{background:#fff;border-color:#bddac8;color:#066e4f;box-shadow:0 2px 7px #0b3a2210}
+.admin-group-view svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.admin-group-view:focus-visible{outline:2px solid #087f59;outline-offset:2px}
+.admin-groups-search{display:flex;align-items:center;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+.admin-groups-search .search{flex:1;min-width:min(270px,100%);margin:0;min-height:41px}
+.admin-group-result-count{font-size:12px;color:#6c8777;white-space:nowrap}
+#groupList.admin-group-results{max-height:none;overflow:visible;display:grid;gap:11px}
+#groupList.admin-group-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,255px),1fr))}
+#groupList.admin-group-list{grid-template-columns:minmax(0,1fr);gap:7px}
+.admin-group-item{display:flex;align-items:center;gap:5px;width:100%;min-width:0;min-height:82px;padding:10px;background:#fff;border:1px solid #dce9e0;border-radius:13px;transition:border-color .15s,box-shadow .15s}
+.admin-group-item:hover{border-color:#86c6a5;box-shadow:0 4px 12px #0736230b}
+.admin-group-item.active{background:#eff9f2;border-color:#31ad78}
+.admin-group-item .admin-row-main{min-width:0;gap:10px;min-height:48px}
+.admin-group-item .item-copy{min-width:0;gap:5px}
+.admin-group-item .item-copy strong{font-size:13px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.admin-group-item .item-icon{width:37px;height:37px;border-radius:10px}
+.admin-group-item .item-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.admin-group-item .item-copy small{font-size:11px;line-height:1.35}
+.admin-group-item .admin-row-actions{gap:1px;align-self:center}
+.admin-group-item .admin-row-action{width:29px;height:31px}
+#groupList.admin-group-list .admin-group-item{min-height:59px;padding:6px 10px}
+#groupList.admin-group-list .admin-group-item .admin-row-main{min-height:40px}
+#groupList.admin-group-list .admin-group-item .item-copy strong{-webkit-line-clamp:1}
+#groupList.admin-group-grid .admin-group-item{align-items:stretch}
+#groupList.admin-group-grid .admin-group-item .admin-row-main{align-items:center}
+@media(max-width:680px){.admin-groups-panel{padding:12px}.admin-groups-head{align-items:flex-start}.admin-groups-controls{width:100%;justify-content:space-between;margin-left:0}.admin-group-view{padding:6px 9px;min-height:32px;font-size:11px}.admin-groups-search .search{min-width:160px}.admin-group-result-count{margin-left:auto}#groupList.admin-group-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr))}.admin-group-item{padding:7px;min-height:70px}.admin-group-item .admin-row-action{width:29px;height:31px}}
+@media(prefers-reduced-motion:reduce){.admin-group-view,.admin-group-item{transition:none}}
 .admin-modal-backdrop{position:fixed;z-index:30;inset:0;background:rgba(4,25,18,.64);backdrop-filter:blur(4px)}
 .admin-modal-backdrop[hidden],.admin-modal[hidden]{display:none!important}
 .admin-modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(920px,calc(100vw - 30px));max-height:calc(100dvh - 36px);border:1px solid #cbe2d3;border-radius:19px;background:#f6faf7;color:#1c3e2e;box-shadow:0 32px 100px #041e16a8;overflow:hidden}
@@ -235,7 +270,7 @@ body.admin-modal-open{overflow:hidden}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-nav-order11" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin.js?v=20261117-bestillonline-groupviews12" defer></script>
 </head>
 <body>
 <header class="top">
@@ -292,8 +327,20 @@ body.admin-modal-open{overflow:hidden}
    
   </div>
   <div class="layout" id="groupsPage" role="tabpanel" aria-labelledby="adminTabGroups" hidden>
-   <section class="panel"><div class="section-head"><h2>Valggrupper</h2><button class="btn primary small" id="addGroup">+ Gruppe</button></div><input id="groupSearch" class="search" type="search" placeholder="Søk valggrupper…" aria-label="Søk valggrupper"><div class="stack scroll" id="groupList"></div></section>
-   
+   <section class="panel admin-groups-panel">
+    <div class="section-head admin-groups-head">
+     <div><h2>Valggrupper</h2><p class="admin-groups-subtitle">Administrer valg, alternativer og tilleggspriser</p></div>
+     <div class="admin-groups-controls">
+      <div class="admin-group-view-switch" role="group" aria-label="Vis valggrupper som rutenett eller liste">
+       <button id="groupsViewGrid" class="admin-group-view active" type="button" data-group-view="grid" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Rutenett</button>
+       <button id="groupsViewList" class="admin-group-view" type="button" data-group-view="list" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6h2M3 12h2M3 18h2"/></svg>Liste</button>
+      </div>
+      <button class="btn primary small" id="addGroup" type="button">+ Gruppe</button>
+     </div>
+    </div>
+    <div class="admin-groups-search"><input id="groupSearch" class="search" type="search" placeholder="Søk etter valggruppe…" aria-label="Søk valggrupper"><span id="groupResultCount" class="admin-group-result-count" aria-live="polite"></span></div>
+    <div class="admin-group-results admin-group-grid" id="groupList"></div>
+   </section>
   </div>
   <div class="admin-modal-backdrop" id="categoryModalBackdrop" hidden></div>
   <section class="admin-modal admin-category-modal" id="categoryEditor" role="dialog" aria-modal="true" aria-labelledby="categoryEditorTitle" hidden>
@@ -390,7 +437,7 @@ body.admin-modal-open{overflow:hidden}
      <div id="optionRows"></div><p class="muted">Standardvalg velges med avkryssing; bruk pilene til å sortere.</p>
     </div></div>
    </div>
-   <footer class="admin-modal-footer"><button id="deleteGroup" class="btn danger" type="button">Slett valggruppe</button><button id="btnCloseGroupBottom" class="btn" type="button">Lukk</button><span class="admin-modal-footer-note">Ulagrede endringer beholdes som utkast.</span><button id="btnSaveGroupModal" class="btn primary" type="button">Lagre endringer</button></footer>
+   <footer class="admin-modal-footer"><button id="btnCloseGroupBottom" class="btn" type="button">Lukk</button><span class="admin-modal-footer-note">Ulagrede endringer beholdes som utkast.</span><button id="btnSaveGroupModal" class="btn primary" type="button">Lagre endringer</button></footer>
   </section>
   <div id="adminMessage" class="banner" role="status" aria-live="polite">Last inn menyen for å begynne.</div>
  </section>
