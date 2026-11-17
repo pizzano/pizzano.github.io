@@ -393,12 +393,13 @@ function refreshHeader(){
   if(toFocus?.isConnected&&typeof toFocus.focus==='function')toFocus.focus();
  }
  async function saveAdminModal(kind){
+  // Commit a typed image URL before checking whether a new product was edited.
+  // The user may click Save without blurring the image input first.
+  if(kind==='product'&&product()&&$('pImage').value!==productImage(product()))readAndSetImage();
   if(kind==='product'&&isUntouchedNewProduct(product())){
    closeAdminModal();
    return;
   }
-  // Ensure the image URL is committed even if the user clicks Save before blurring.
-  if(kind==='product'&&product()&&$('pImage').value!==productImage(product()))readAndSetImage();
   if(!state.dirty){closeAdminModal();return}
   await save();
   if(!state.dirty)closeAdminModal();
