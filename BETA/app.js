@@ -1038,16 +1038,29 @@ window.addEventListener('popstate',event=>{
  }finally{fatih1HistoryRestoring=false}
 });
 function show(id){
+ const panel=$(id);
+ const openingProduct=id==='productSheet'&&panel.hidden;
+ if(openingProduct){
+  // Each opening starts at rest, even after an interrupted swipe or history jump.
+  panel.classList.remove('is-sheet-opening','is-sheet-closing','is-dragging','is-drag-settling');
+  panel.style.removeProperty('--product-drag-y');
+ }
  fatih1LockBackground();
  $('overlay').hidden=false;
- $(id).hidden=false;
+ panel.hidden=false;
+ if(openingProduct&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  panel.classList.add('is-sheet-opening');
+ }
  const route=fatih1HistoryView(id);
  if(route)fatih1HistoryWrite(route);
 }
 function hideAll(){
  if(typeof fatih1BonusStop==='function')fatih1BonusStop();
  $('overlay').hidden=true;
- $('productSheet').hidden=true;
+ const product=$('productSheet');
+ product.hidden=true;
+ product.classList.remove('is-sheet-opening','is-sheet-closing','is-dragging','is-drag-settling');
+ product.style.removeProperty('--product-drag-y');
  $('cartSheet').hidden=true;
  $('draftConfirmation').hidden=true;
  $('fatih1ProfileSheet').hidden=true;
@@ -1183,11 +1196,11 @@ $('menu').addEventListener('keydown',e=>{
  const touchDevice=()=>window.matchMedia('(pointer:coarse)').matches;
  const reset=()=>{
   dragging=false;tracking=false;
-  sheet.style.removeProperty('--product-drag-y');
+  if(!sheet.classList.contains('is-sheet-closing'))sheet.style.removeProperty('--product-drag-y');
   sheet.classList.remove('is-dragging','is-drag-settling');
  };
  function start(e,headerTouch){
-  if(sheet.hidden||!touchDevice()||e.touches.length!==1)return;
+  if(sheet.hidden||sheet.classList.contains('is-sheet-opening')||sheet.classList.contains('is-sheet-closing')||!touchDevice()||e.touches.length!==1)return;
   if(e.target.closest('button,input,textarea,select,[contenteditable]'))return;
   if(!headerTouch&&scroll.scrollTop>1)return;
   tracking=true;dragging=false;fromHeader=headerTouch;
@@ -1214,7 +1227,8 @@ $('menu').addEventListener('keydown',e=>{
   if(!dragging){reset();return}
   sheet.classList.remove('is-dragging');
   if(shouldClose){
-   reset();
+   // Preserve the finger's last drag offset, then glide down from that point.
+   dragging=false;
    closeProductSheet();
   }else{
    sheet.classList.add('is-drag-settling');
@@ -1230,6 +1244,10 @@ $('menu').addEventListener('keydown',e=>{
  scroll.addEventListener('touchend',end,{passive:true});
  header.addEventListener('touchcancel',reset,{passive:true});
  scroll.addEventListener('touchcancel',reset,{passive:true});
+ // Only the opening animation owns this class; never restart it after a drag.
+ sheet.addEventListener('animationend',event=>{
+  if(event.target===sheet&&event.animationName==='fatih1SheetRise')sheet.classList.remove('is-sheet-opening');
+ });
 })();
 $('sheetFavorite').addEventListener('click',()=>{if(current)toggleFavorite(current.id)});
 $('options').addEventListener('change',e=>{
