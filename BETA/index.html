@@ -1,16 +1,38 @@
 <!doctype html>
-<html lang="no">
+<html lang="no" class="bo-preparing">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
-  <title>BestillOnline · Bestilling</title>
+  <title>Bestilling · Laster meny</title>
+  <style id="bo-startup-style">
+    html.bo-preparing #appViewport{visibility:hidden}
+    #boStartup{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;
+      padding:24px;background:radial-gradient(ellipse at 50% 36%,#174d3c 0%,#062d25 68%,#04231d 100%);
+      color:#f4f9f4;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+      text-align:center;transition:opacity .25s ease,visibility 0s linear .25s}
+    #boStartup.is-finished{opacity:0;visibility:hidden;pointer-events:none}
+    #boStartupInner{display:flex;align-items:center;flex-direction:column;gap:12px;width:min(310px,100%)}
+    #boStartupSpinner{display:block;width:42px;height:42px;margin-bottom:14px;border:3px solid #ffffff30;
+      border-top-color:#f3d477;border-right-color:#f3d477;border-radius:50%;
+      animation:boSpin .8s linear infinite}
+    #boStartupTitle{font-size:21px;line-height:1.2;font-weight:750;letter-spacing:-.02em}
+    #boStartupDescription{font-size:13px;line-height:1.5;color:#d0e2d9}
+    #boStartupRetry{margin-top:10px;padding:11px 24px;border:1px solid #e6c86f;border-radius:12px;
+      background:#f3d477;color:#17382c;font:700 14px Inter,system-ui,sans-serif;cursor:pointer}
+    #boStartupRetry:disabled{opacity:.65;cursor:wait}
+    #boStartup [hidden]{display:none!important}
+    @keyframes boSpin{to{transform:rotate(360deg)}}
+    @media(prefers-reduced-motion:reduce){#boStartupSpinner{animation:none;border-color:#f3d477}
+      #boStartup{transition:none}}
+  </style>
   <link rel="stylesheet" href="./style.css?v=20261117-bestillonline-cart-spacing5">
   <script src="./sepet.js?v=20261117-bestillonline-brand4" defer></script>
   <script src="./app.js?v=20261117-bestillonline-brand4" defer></script>
   <script src="./profil.js?v=20261117-bestillonline-brand4" defer></script>
 </head>
 <body>
+  <div id="boStartup" role="status" aria-live="polite" aria-label="Menyen lastes"><div id="boStartupInner"><span id="boStartupSpinner" aria-hidden="true"></span><strong id="boStartupTitle">Menyen klargjøres</strong><span id="boStartupDescription">Henter meny og bilder…</span><button id="boStartupRetry" type="button" hidden>Prøv igjen</button></div></div>
   <div class="app" id="appViewport">
     <header class="header">
       <a class="brand" href="./" aria-label="Til menyen"><span class="brand-icon" aria-hidden="true">🔥</span><span id="brandName">BestillOnline</span></a>
