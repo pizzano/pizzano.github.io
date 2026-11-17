@@ -1059,6 +1059,12 @@ function refreshHeader(){
   }
   window.addEventListener('resize',updateAdminNavArrows);
   const tools=$('adminToolsMenu');
+  // Each time Verktøy opens, show both groups and all their actions.
+  // Individual sections can still be collapsed during that open session.
+  tools.addEventListener('toggle',()=>{
+   if(!tools.open)return;
+   tools.querySelectorAll('.admin-tools-accordion').forEach(section=>{section.open=true});
+  });
   tools.addEventListener('click',event=>{
    if(event.target.closest('.admin-tools-items button,.admin-tools-items a'))tools.open=false;
   });
