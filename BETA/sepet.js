@@ -147,7 +147,7 @@ async function refreshCartSuggestionIdsOnce(){
     if(!$('cartSheet').hidden)renderCartRecommendations();
    }
    fatih1SuggestionChecked=true;
-  }catch(error){console.warn('FATIH1 cart recommendation refresh:',error)}
+  }catch(error){console.warn('BestillOnline cart recommendation refresh:',error)}
   finally{fatih1SuggestionPending=null}
  })();
  return fatih1SuggestionPending;
@@ -665,7 +665,7 @@ async function syncFatih1Customer(){
    try{localStorage.setItem(CONTACT_SYNC_KEY,signature)}catch{}
    return 'saved';
   }catch(error){
-   console.warn('FATIH1 customer contact sync failed:',error);
+   console.warn('BestillOnline customer contact sync failed:',error);
    return false;
   }
  })();
@@ -785,7 +785,7 @@ function submitDraftOrder(){
  // Future admin connection point: send this versioned shape to the order API.
  // For the draft the ONLY side effect is localStorage; no network requests.
  const newOrder={
-  schema:1,source:'FATIH1_LOCAL_DEMO',channel:'web',fulfillment:'pickup',
+  schema:1,source:'BESTILLONLINE_LOCAL',channel:'web',fulfillment:'pickup',
   id:localOrderId(),status:'pending',
   createdAt:new Date(timestamp).toISOString(),expiresAt:timestamp+180000,
   customer:{fullName:customerContact.name,phone:'+47'+customerContact.phone,email:customerContact.email||null},
@@ -795,7 +795,7 @@ function submitDraftOrder(){
  // Single integration seam: later replace this local persistence with an
  // explicit admin-order submission, without changing the form or prices.
  if(!writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,newOrder)){
-  showCheckoutError('Kunne ikke lagre testbestillingen lokalt. Kontroller nettleserens lagring.');
+  showCheckoutError('Kunne ikke lagre bestillingsoversikten lokalt. Kontroller nettleserens lagring.');
   return;
  }
  localOrder=newOrder;
