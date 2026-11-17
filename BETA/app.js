@@ -139,6 +139,94 @@ async function fromFirebase(){
   if(!data.sections.length)throw Error('Ingen kategorier i /menu');
   return data;
 }
+// Keep the initial shell covered until the restaurant name, menu cards and
+// first visible product images are ready. Images farther down remain lazy.
+const BO_STARTUP_MIN_MS=430,BO_STARTUP_IMAGE_TIMEOUT_MS=8000;
+const boStartupStartedAt=Date.now();
+let boStartupFinished=false,boStartupFinishing=null;
+function boStartupError(){
+ const host=$('boStartup');
+ if(!host)return;
+ $('boStartupSpinner').hidden=true;
+ $('boStartupTitle').textContent='Kunne ikke laste menyen';
+ $('boStartupDescription').textContent='Kontroller internettforbindelsen og prøv igjen.';
+ $('boStartupRetry').hidden=false;
+ $('boStartupRetry').disabled=false;
+}
+async function boWaitForInitialMenuImages(){
+ const images=[...$('menu').querySelectorAll('.product-card .product-photo img[data-image]')]
+  .slice(0,IMAGE_PRELOAD_COUNT);
+ const waitImage=async img=>{
+  if(!img.isConnected)return;
+  const url=img.dataset.image;
+  try{
+   const resolved=await resolveImage(url);
+   if(!img.isConnected||img.dataset.image!==url)return;
+   if(img.getAttribute('src')!==resolved)img.src=resolved;
+   if(typeof img.decode==='function')await img.decode();
+   else if(!img.complete)await new Promise(resolve=>{
+    img.addEventListener('load',resolve,{once:true});
+    img.addEventListener('error',resolve,{once:true});
+   });
+  }catch{/* An unavailable image is shown with the existing placeholder. */}
+ };
+ const completed=await Promise.race([
+  Promise.allSettled(images.map(waitImage)).then(()=>true),
+  new Promise(resolve=>window.setTimeout(()=>resolve(false),BO_STARTUP_IMAGE_TIMEOUT_MS))
+ ]);
+ // On a very slow or broken image, show a proper placeholder, not a blank
+ // card. If the original image arrives later it can still replace it.
+ if(!completed){
+  for(const img of images){
+   if(!img.isConnected||img.naturalWidth>0)continue;
+   const photo=img.closest('.product-photo');
+   if(!photo)continue;
+   if(!photo.querySelector('.image-fallback'))
+    photo.insertAdjacentHTML('afterbegin',missingPhotoMarkup());
+   img.style.visibility='hidden';
+   img.addEventListener('load',()=>{
+    if(img.naturalWidth>0){
+     img.hidden=false;
+     img.style.removeProperty('visibility');
+     photo.querySelector('.image-fallback')?.remove();
+    }
+   },{once:true});
+  }
+ }
+}
+async function boFinishStartup(){
+ if(boStartupFinished)return;
+ if(boStartupFinishing)return boStartupFinishing;
+ if(!menu?.sections?.length){boStartupError();return}
+ boStartupFinishing=(async()=>{
+  await Promise.all([
+   boWaitForInitialMenuImages(),
+   new Promise(resolve=>window.setTimeout(resolve,Math.max(0,BO_STARTUP_MIN_MS-(Date.now()-boStartupStartedAt))))
+  ]);
+  // Allow the menu, images and header to finish their layout before reveal.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const host=$('boStartup');
+  boStartupFinished=true;
+  document.documentElement.classList.remove('bo-preparing');
+  if(host){
+   host.classList.add('is-finished');
+   window.setTimeout(()=>host.remove(),300);
+  }
+ })();
+ try{await boStartupFinishing}finally{boStartupFinishing=null}
+}
+async function boRetryStartup(){
+ const button=$('boStartupRetry');
+ if(button){button.disabled=true;button.hidden=true}
+ $('boStartupSpinner').hidden=false;
+ $('boStartupTitle').textContent='Menyen klargjøres';
+ $('boStartupDescription').textContent='Henter meny og bilder…';
+ await refreshMenu(false);
+ if(menu?.sections?.length){
+  await boFinishStartup();
+  startSharedChangeStream();
+ }else boStartupError();
+}
 async function init(){
  // A single best-effort down/up scroll after first menu render on small touch screens.
  // Chrome may ignore scripted scrolling for browser toolbar visibility.
@@ -169,6 +257,7 @@ async function init(){
   }
  }else await refreshMenu(false);
  attemptStartupBrowserScroll();
+ await boFinishStartup();
  if(!('EventSource' in window))void checkMenuVersionOnce();
  startSharedChangeStream();
  document.addEventListener('visibilitychange',()=>{
@@ -1335,4 +1424,11 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
    .catch(error=>console.warn('BestillOnline Service Worker:',error));
  },{once:true});
 }
-document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('DOMContentLoaded',()=>{
+ const retry=$('boStartupRetry');
+ if(retry)retry.addEventListener('click',()=>{void boRetryStartup()});
+ void init().catch(error=>{
+  console.warn('BestillOnline initial page load failed:',error);
+  boStartupError();
+ });
+});
