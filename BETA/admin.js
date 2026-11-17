@@ -1131,10 +1131,16 @@ function refreshHeader(){
  function silentFirebaseURL(url){return url+(url.includes('?')?'&':'?')+'print=silent'}
  async function fullConditionalMenuWrite(url,next){
   // Avoid Firebase echoing the entire menu back after a successful PUT.
-  const response=await fetch(silentFirebaseURL(url),{method:'PUT',
+  const options={method:'PUT',
    headers:{'Content-Type':'application/json','if-match':state.etag},
-   body:JSON.stringify(next),cache:'no-store'});
+   body:JSON.stringify(next),cache:'no-store'};
+  let response=await fetch(silentFirebaseURL(url),options);
+  // Older proxies can reject the print=silent query parameter. HTTP 400
+  // means it was not written, so retry the SAME conditional PUT normally.
+  if(response.status===400)response=await fetch(url,options);
   if(response.status===412)throw conflicts();
+  if(response.status===401||response.status===403)
+   throw Error('Firebase avviste skriving. Kontroller admin UID og Database Rules.');
   if(!response.ok)throw Error('Firebase avviste menylagring (HTTP '+response.status+').');
   return response.headers.get('ETag');
  }
