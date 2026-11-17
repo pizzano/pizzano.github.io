@@ -689,12 +689,12 @@ function productCard(i){
  return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+cartBadgeMarkup(i.id)+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" type="button" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
 }
 function updateRestaurantBrand(){
- const name=String(menu?.settings?.restaurantName||'FATIH1').trim()||'FATIH1';
+ const name=String(menu?.settings?.restaurantName||'BestillOnline').trim()||'BestillOnline';
  for(const id of ['brandName','fatih1ProfileRestaurantName']){
   const node=$(id);if(node)node.textContent=name;
  }
  updateCartRestaurantBrand(name);
- document.title=name+' · Bestilling | FATIH1';
+ document.title=name+' · Bestilling | BestillOnline';
 }
 function render(){
  if(!menu)return;
