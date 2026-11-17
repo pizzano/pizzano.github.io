@@ -49,6 +49,52 @@ function addToCart(){
  showFatih1Toast(entry.name+(edited?' oppdatert i handlekurven':' lagt i handlekurven'));
 }
 function renderCartIndicators(){const n=cart.reduce((sum,x)=>sum+(Number(x.qty)||0),0);$('cartCount').hidden=!n;$('cartCount').textContent=n}
+// Cart-specific menu data and screen integration live in sepet.js.
+function normalizeCartSuggestionRules(value){
+ return list(value).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean);
+}
+function cleanupRetiredCartStorage(){
+ try{
+  for(const key of ['kol-beta-cart-suggestions-once-v1','kol-beta-cart-dismissed-v1']){
+   if(localStorage.getItem(key)!==null)localStorage.removeItem(key);
+  }
+ }catch{}
+}
+function cartBadgeMarkup(id){
+ const amount=cartQuantityForProduct(id);
+ return amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'';
+}
+function refreshCartRecommendationsIfOpen(){
+ if(!$('cartSheet').hidden)renderCartRecommendations();
+}
+function refreshCartAfterMenuRender(){
+ renderCartIndicators();
+ const review=reconcileCartWithMenu();
+ if(!$('cartSheet').hidden){
+  renderCartContents();
+  if(review.repriced)showFatih1Toast('Prisene i handlekurven er oppdatert','info');
+ }
+}
+function updateCartRestaurantBrand(name){
+ const node=$('cartRestaurantName');
+ if(node)node.textContent=name;
+}
+function resetCartEditState(){editingCartIndex=null}
+function restoreCartEditFromIndex(index){
+ if(index!==null&&cart[index])restoreCartLineForEdit(cart[index],index);
+}
+function cartProductHistoryEditIndex(){return editingCartIndex}
+function cartHistoryView(id){
+ return id==='cartSheet'?{view:'cart',step:'cart'}:null;
+}
+function restoreCartHistoryState(state){
+ showCart();
+ if(state.step&&state.step!=='cart')checkoutNavigate(state.step);
+}
+function hideCartSheet(){$('cartSheet').hidden=true}
+function shouldCartGoBackOnEscape(){
+ return !$('cartSheet').hidden&&checkoutStep!=='cart';
+}
 // Admin selects up to ten products in /menu/cartSuggestionRules.
 // A stable per-opening shuffle shows four at a time. Dismissing one reveals
 // the next eligible entry, without reordering every time the cart rerenders.
@@ -784,3 +830,10 @@ $('draftViewOrder').onclick=showDraftConfirmation;
 $('draftConfirmationClose').onclick=returnToMenu;
 $('draftClearOrder').onclick=()=>{localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Bestillingsoversikten er fjernet')};
 }
+
+// Cart owns its own initialization and stored draft order display.
+document.addEventListener('DOMContentLoaded',()=>{
+ cleanupRetiredCartStorage();
+ renderDraftActiveOrder();
+ initCartEvents();
+});
