@@ -2019,7 +2019,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 #cartSheet .cart-steps{
  grid-template-columns:repeat(3,minmax(0,1fr));
  gap:11px;
- margin:0 7px 21px;
+ margin:0 7px 16px;
 }
 #cartSheet .cart-steps span{
  display:flex;
@@ -2070,7 +2070,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  align-items:center;
  justify-content:space-between;
  gap:10px;
- margin:0 6px 14px;
+ margin:0 6px 10px;
 }
 #cartSheet #cartCartStep .cart-header-line h2{
  margin:0;
@@ -2104,34 +2104,34 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 }
 #cartSheet #cartCartStep .cart-items{
  display:grid;
- gap:11px;
+ gap:7px;
 }
 #cartSheet #cartCartStep .cart-product-card{
  min-width:0;
- padding:14px 12px 12px;
+ padding:9px 10px 8px;
  border:1px solid #000000;
- border-radius:17px;
+ border-radius:13px;
  background:linear-gradient(140deg,#ffffff 0%,#ffffff 62%,#fbfefa 100%);
- box-shadow:0 7px 19px #20593c13;
+ box-shadow:0 3px 10px #20593c0d;
 }
 #cartSheet #cartCartStep .cart-product-heading{
  display:flex;
  align-items:center;
  justify-content:space-between;
- gap:7px;
- margin-bottom:12px;
+ gap:6px;
+ margin-bottom:7px;
 }
 #cartSheet #cartCartStep .cart-product-copy{
  display:flex;
  align-items:center;
- gap:7px;
+ gap:5px;
  min-width:0;
  flex:1;
 }
 #cartSheet #cartCartStep .cart-product-name{
  color:#073d2f;
- font-size:16px;
- font-weight:750;
+ font-size:14px;
+ font-weight:700;
  letter-spacing:-.025em;
  line-height:1.2;
  overflow-wrap:anywhere;
@@ -2140,25 +2140,25 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  flex:none;
  display:grid;
  place-items:center;
- width:27px;
- height:27px;
- padding:3px;
+ width:24px;
+ height:24px;
+ padding:2px;
  border:1px solid #afdec5;
- border-radius:9px;
+ border-radius:7px;
  background:#fff;
  color:#0a654a;
  box-shadow:0 2px 5px #18493412;
 }
 #cartSheet #cartCartStep .cart-product-edit svg{
- width:19px;
- height:19px;
+ width:16px;
+ height:16px;
 }
 #cartSheet #cartCartStep .cart-product-stepper{
  display:grid;
- grid-template-columns:32px 30px 32px;
+ grid-template-columns:27px 25px 27px;
  flex:none;
  align-items:stretch;
- min-height:33px;
+ min-height:27px;
  border:1px solid #007d57;
  border-radius:99px;
  background:#fff;
@@ -2167,53 +2167,53 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 #cartSheet #cartCartStep .cart-product-stepper button{
  display:grid;
  place-items:center;
- width:32px;
- min-width:32px;
+ width:27px;
+ min-width:27px;
  padding:0;
  border:0;
  border-radius:0;
  background:linear-gradient(120deg,#008b60,#006c4b);
  color:#fff;
- font-size:24px;
- font-weight:600;
+ font-size:19px;
+ font-weight:500;
  line-height:1;
 }
 #cartSheet #cartCartStep .cart-product-stepper button:disabled{
  background:#8fae9e;
 }
 #cartSheet #cartCartStep .cart-product-stepper button svg{
- width:17px;
- height:17px;
+ width:15px;
+ height:15px;
 }
 #cartSheet #cartCartStep .cart-product-stepper b{
  display:grid;
  place-items:center;
- min-width:30px;
+ min-width:25px;
  padding:0;
  border:0;
  border-inline:1px solid #b8d8c8;
  background:#fff;
  color:#063a2d;
- font-size:17px;
- font-weight:850;
+ font-size:13px;
+ font-weight:700;
  line-height:1;
 }
 #cartSheet #cartCartStep .cart-product-details{
  display:grid;
- gap:4px;
+ gap:3px;
 }
 #cartSheet #cartCartStep .cart-line-detail{
  display:flex;
  align-items:baseline;
  justify-content:space-between;
- gap:9px;
- min-height:25px;
- padding:7px 11px;
+ gap:7px;
+ min-height:22px;
+ padding:5px 8px;
  border:0;
- border-radius:11px;
+ border-radius:8px;
  background:#FAFAFA;
  color:#214c3b;
- font-size:12px;
+ font-size:11.5px;
  font-weight:450;
  line-height:1.28;
 }
@@ -2252,11 +2252,11 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  align-items:center;
  justify-content:space-between;
  gap:8px;
- min-height:30px;
- margin-top:15px;
- padding:7px 10px;
+ min-height:25px;
+ margin-top:10px;
+ padding:5px 8px;
  border:0;
- border-radius:11px;
+ border-radius:8px;
  background:#FAFAFA;
 }
 #cartSheet #cartCartStep .cart-product-totalrow::before{
@@ -2264,7 +2264,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  position:absolute;
  left:0;
  right:0;
- top:-8px;
+ top:-5px;
  height:1px;
  background:#cadfd3;
 }
@@ -2275,7 +2275,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
 }
 #cartSheet #cartCartStep .cart-product-totalrow strong{
  color:#0a4534;
- font-size:15px;
+ font-size:14px;
  font-weight:750;
  white-space:nowrap;
 }
@@ -2284,9 +2284,9 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  align-items:center;
  justify-content:space-between;
  gap:10px;
- min-height:52px;
- margin-top:13px;
- padding:11px 17px;
+ min-height:46px;
+ margin-top:10px;
+ padding:9px 14px;
  border:0;
  border-radius:15px;
  background:
@@ -2307,7 +2307,7 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  white-space:nowrap;
 }
 #cartSheet #cartCartStep .cart-recommendations{
- margin-top:18px;
+ margin-top:14px;
  background:transparent;
 }
 #cartSheet #cartCartStep .cart-recommendations-head{
@@ -2486,8 +2486,8 @@ html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(inpu
  #cartSheet .cart-steps span b{width:26px;height:26px;font-size:13px}
  #cartSheet #cartCartStep .cart-header-line h2{font-size:22px}
  #cartSheet #cartCartStep .cart-clear-btn{font-size:10px;padding:7px 9px}
- #cartSheet #cartCartStep .cart-product-name{font-size:14px}
- #cartSheet #cartCartStep .cart-product-card{padding:12px 9px 10px}
+ #cartSheet #cartCartStep .cart-product-name{font-size:13.5px}
+ #cartSheet #cartCartStep .cart-product-card{padding:8px 8px 7px}
  #cartSheet #cartCartStep .cart-suggestion-thumb{width:35px;height:37px}
  #cartSheet #cartCartStep .cart-suggestions-count{padding-left:7px;font-size:11px}
  #cartSheet #cartCartStep .cart-suggestions-preview{gap:6px;padding:8px}
