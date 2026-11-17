@@ -95,35 +95,22 @@ function hideCartSheet(){$('cartSheet').hidden=true}
 function shouldCartGoBackOnEscape(){
  return !$('cartSheet').hidden&&checkoutStep!=='cart';
 }
-// Admin selects up to ten products in /menu/cartSuggestionRules.
-// A stable per-opening shuffle shows four at a time. Dismissing one reveals
-// the next eligible entry, without reordering every time the cart rerenders.
-let dismissedSuggestions=new Set();
-let suggestionRandomOrder=[],suggestionRandomKey='';
-function randomizedCartSuggestionIds(){
- const ids=Array.isArray(menu?.cartSuggestionRules)?
-  [...new Set(menu.cartSuggestionRules.filter(v=>v!==null&&v!==undefined).map(String))].slice(0,10):[];
- const key=JSON.stringify(ids);
- if(key!==suggestionRandomKey){
-  suggestionRandomKey=key;
-  suggestionRandomOrder=ids.slice();
-  for(let n=suggestionRandomOrder.length-1;n>0;n--){
-   const j=Math.floor(Math.random()*(n+1));
-   [suggestionRandomOrder[n],suggestionRandomOrder[j]]=[suggestionRandomOrder[j],suggestionRandomOrder[n]];
-  }
- }
- return suggestionRandomOrder;
-}
+// Show all eligible products selected by the administrator (maximum ten).
+// Preserve the admin's configured order and omit unavailable/already-added items.
 function suggestedCartItems(){
  if(!menu||!cart.length)return [];
  const included=new Set(cart.map(line=>String(line.id)));
- const products=new Map(menu.sections.flatMap(section=>(section.items||[]).map(item=>[String(item.id),item])));
- const selected=[];
- for(const id of randomizedCartSuggestionIds()){
+ const products=new Map(list(menu.sections).flatMap(section=>list(section.items).map(item=>[String(item.id),item])));
+ const ids=normalizeCartSuggestionRules(menu.cartSuggestionRules);
+ const selected=[],seen=new Set();
+ for(const rawId of ids){
+  const id=String(rawId);
+  if(seen.has(id))continue;
+  seen.add(id);
   const item=products.get(id);
-  if(!item||included.has(id)||dismissedSuggestions.has(id)||item.hidden||item.soldOut)continue;
+  if(!item||included.has(id)||item.hidden||item.soldOut)continue;
   selected.push({item});
-  if(selected.length===4)break;
+  if(selected.length>=10)break;
  }
  return selected;
 }
@@ -155,7 +142,7 @@ async function refreshCartSuggestionIdsOnce(){
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
  const disclosure=$('cartSuggestionsDisclosure');
- const thumbnails=$('cartSuggestionsThumbnails'),count=$('cartSuggestionsCount');
+ const thumbnails=$('cartSuggestionsThumbnails'),count=$('cartSuggestionsCount'),action=$('cartSuggestionsAction');
  const suggestions=suggestedCartItems();
  host.hidden=!suggestions.length;
  if(!suggestions.length){
@@ -163,6 +150,7 @@ function renderCartRecommendations(){
   thumbnails.replaceChildren();
   items.replaceChildren();
   count.textContent='';
+  action.textContent='Vis alle';
   return;
  }
  const preview=suggestions.slice(0,4);
@@ -170,6 +158,7 @@ function renderCartRecommendations(){
   '<span class="cart-suggestion-thumb">'+imgEl(item.imageUrl,item.name,'suggestion-photo')+'</span>'
  ).join('');
  count.textContent=suggestions.length+' forslag';
+ action.textContent=disclosure.open?(suggestions.length>4?'Bla i listen':'Vis mindre'):'Vis alle';
  thumbnails.querySelectorAll('img[data-image]').forEach(img=>void setCachedImage(img,img.dataset.image));
  // Do not build or fetch full-size suggestions until the guest asks to see them.
  if(!disclosure.open){items.replaceChildren();return}
@@ -177,7 +166,6 @@ function renderCartRecommendations(){
   '<div class="cart-suggestion-image">'+imgEl(item.imageUrl,'','suggestion-photo')+'</div>'+
   '<div class="cart-recommendation-copy"><strong>'+esc(item.name)+'</strong><span>'+money(basePrice(item))+'</span></div>'+
   '<button type="button" class="cart-suggest-add" data-suggest-add="'+esc(item.id)+'" aria-label="Legg til '+esc(item.name)+'">+</button>'+
-  '<button type="button" class="cart-suggest-dismiss" data-suggest-dismiss="'+esc(item.id)+'" aria-label="Skjul '+esc(item.name)+'">×</button>'+
   '</article>').join('');
  items.querySelectorAll('img[data-image]').forEach(img=>void setCachedImage(img,img.dataset.image));
 }
@@ -340,7 +328,7 @@ function pickupSummary(){
  }).join('')+
  '<div class="draft-pickup-line is-total"><strong>Totalt</strong><strong>'+money(calculateCartTotal(cart))+'</strong></div>';
 }
-function showCart(){suggestionRandomKey='';$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
 
 function updateCartBadges(){
  if(!menu)return;
@@ -467,11 +455,6 @@ $('cartSuggestionsDisclosure').addEventListener('toggle',()=>{
  });
 });
 $('cartRecommendationsItems').addEventListener('click',event=>{
- const dismiss=event.target.closest('[data-suggest-dismiss]');
- if(dismiss){
-  dismissedSuggestions.add(String(dismiss.dataset.suggestDismiss));
-  renderCartRecommendations();showFatih1Toast('Forslaget er skjult','info');return;
- }
  const add=event.target.closest('[data-suggest-add]');
  if(!add)return;
  const item=productById(add.dataset.suggestAdd);if(!item||item.soldOut)return;
