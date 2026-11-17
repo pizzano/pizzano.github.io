@@ -235,7 +235,7 @@ async function bootAuth(){
   }
   const next=checked?[...new Set([...ids,id])]:ids.filter(value=>value!==id);
   state.menu.cartSuggestionRules=next;
-  $('cartSuggestionLimit').textContent=next.length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
+  $('cartSuggestionLimit').textContent=next.length+' av 10 valgt · Kunden kan bla gjennom alle tilgjengelige forslag';
   renderProducts();setDirty();
  }
  function removeRecommendationIds(ids){
@@ -675,7 +675,7 @@ function refreshHeader(){
   $('pSoldOut').checked=p.soldOut===true;$('pHidden').checked=p.hidden===true;
   $('pPopular').checked=productStatusIndex().popular.has(String(p.id));
   $('pCartSuggestion').checked=recommendationIds().includes(String(p.id));
-  $('cartSuggestionLimit').textContent=recommendationIds().length+' av 10 valgt · Kunden ser 4 tilfeldige om gangen';
+  $('cartSuggestionLimit').textContent=recommendationIds().length+' av 10 valgt · Kunden kan bla gjennom alle tilgjengelige forslag';
   renderSizes(true);
  }
  const GROUP_VIEW_KEY='bestillonline-admin-group-view-v1';
