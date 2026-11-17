@@ -120,7 +120,7 @@ function normalize(data){
  return {cacheFormat:MENU_CACHE_FORMAT,sections,optionGroups:list(data.optionGroups),
   allergenCatalog:list(data.allergenCatalog),images,sizeLabels,allergenSets,
   settings:data.settings||{},
-  cartSuggestionRules:list(data.cartSuggestionRules).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
+  cartSuggestionRules:normalizeCartSuggestionRules(data.cartSuggestionRules),
   popularItemIds:list(data.popularItemIds).map(x=>typeof x==='object'?(x.id??x.value):x).filter(Boolean),
   updatedAt:Number(data.updatedAt)||0};
 }
@@ -139,19 +139,10 @@ async function fromFirebase(){
   if(!data.sections.length)throw Error('Ingen kategorier i /menu');
   return data;
 }
-function cleanupRetiredFatih1Storage(){
- try{
-  for(const key of ['kol-beta-cart-suggestions-once-v1','kol-beta-cart-dismissed-v1']){
-   if(localStorage.getItem(key)!==null)localStorage.removeItem(key);
-  }
- }catch{}
-}
 async function init(){
- cleanupRetiredFatih1Storage();
  // A single best-effort down/up scroll after first menu render on small touch screens.
  // Chrome may ignore scripted scrolling for browser toolbar visibility.
  watchStartupScrollIntent();
- renderDraftActiveOrder();
  let cached=null;try{cached=await localGet()}catch{}
  try{const state=localStorage.getItem('kol-beta-allergens');if(state!==null)allergensVisible=state==='true'}catch{}
  $('showAllergens').checked=allergensVisible;
@@ -199,7 +190,6 @@ async function refreshMenu(manual=false){
   if(!(menu&&startingRevision!==liveRevision&&Number(menu.updatedAt)>Number(fresh.updatedAt)))menu=fresh;
   try{await localPut(menu)}catch(e){$('notice').textContent='Nettleseren kunne ikke lagre menyen lokalt.'}
   render();
-  if(!$('cartSheet').hidden)renderCartRecommendations();
   $('cacheStatus').textContent='Oppdatert';
   $('notice').textContent='';
   if(sharedChannel)broadcastLiveMessage({type:'snapshot',value:menu});
@@ -294,7 +284,7 @@ async function receiveLiveAnnouncement(value,relay=false){
      updateHoursStatus();
      updateRestaurantBrand();
    }
-   if(!$('cartSheet').hidden)renderCartRecommendations();
+   if(!menuChanged)refreshCartRecommendationsIfOpen();
    saveLiveCacheSoon();
    if(relay)broadcastLiveMessage({type:'delta',value});
    $('notice').textContent='';
@@ -695,15 +685,15 @@ function categoryGlyph(block){
 }
 function productCard(i){
  const sizeCount=list(i.sizes).length;
- const amount=cartQuantityForProduct(i.id);
  const allergens=list(i.allergens).map(a=>{const match=menu.allergenCatalog.find(x=>String(x.id)===String(a));return match?.label||a}).join(', ');
- return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+(amount?'<span class="in-cart">🛒 '+amount+' i kurven</span>':'')+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" type="button" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
+ return '<article class="product-card'+(i.soldOut?' is-soldout':'')+'" data-product-card="'+esc(i.id)+'" role="button" tabindex="'+(i.soldOut?'-1':'0')+'" aria-label="Velg '+esc(i.name)+'" aria-disabled="'+Boolean(i.soldOut)+'"><div class="product-photo">'+imgEl(i.imageUrl,i.name,'photo')+cartBadgeMarkup(i.id)+(isFavorite(i.id)?'<span class="card-favorite is-favorite" aria-label="Favoritt" title="Favoritt">♥</span>':'')+'</div><div class="product-info"><h3>'+esc(i.name)+'</h3><p>'+esc(i.description||'')+'</p>'+(allergens&&allergensVisible?'<p class="allergens">Inneholder '+esc(allergens)+'</p>':'')+'</div><div class="product-side"><span class="price">'+(sizeCount>1?'<small>fra </small>':'')+money(basePrice(i))+'</span><button class="add-round" type="button" '+(i.soldOut?'disabled':'')+' aria-label="Velg '+esc(i.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button></div></article>';
 }
 function updateRestaurantBrand(){
  const name=String(menu?.settings?.restaurantName||'FATIH1').trim()||'FATIH1';
- for(const id of ['brandName','cartRestaurantName','fatih1ProfileRestaurantName']){
+ for(const id of ['brandName','fatih1ProfileRestaurantName']){
   const node=$(id);if(node)node.textContent=name;
  }
+ updateCartRestaurantBrand(name);
  document.title=name+' · Bestilling | FATIH1';
 }
 function render(){
@@ -715,7 +705,7 @@ function render(){
  nav.innerHTML=visibleBlocks.map((block,i)=>'<button type="button" data-scroll="'+esc(block.id)+'" class="'+(activeCategory===block.id||!activeCategory&&i===0?'active':'')+'"><span class="category-glyph" aria-hidden="true">'+categoryGlyph(block)+'</span><span>'+esc(block.title)+'</span></button>').join('');
  $('menu').innerHTML=visibleBlocks.map(block=>'<section class="menu-section" id="category-'+esc(block.id)+'"><h2 class="section-title">'+esc(block.title)+'</h2><p class="section-note">'+esc(block.note)+'</p>'+block.items.map(productCard).join('')+'</section>').join('')||'<p>Ingen produkter funnet.</p>';
  nav.scrollLeft=savedX;
- hydrateImages($('menu'));renderCartIndicators();updateHoursStatus();
+ hydrateImages($('menu'));updateHoursStatus();
  // A refreshed menu also updates an already-open product sheet.
  if(current&&!$('productSheet').hidden){
   const latest=productById(current.id);
@@ -725,16 +715,12 @@ function render(){
    renderOptions();
   }
  }
- if(typeof reconcileCartWithMenu==='function'){
-  const review=reconcileCartWithMenu();
-  if(!$('cartSheet').hidden)renderCartContents();
-  if(review.repriced&&!$('cartSheet').hidden)showFatih1Toast('Prisene i handlekurven er oppdatert','info');
- }
+ refreshCartAfterMenuRender();
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
 function showSheet(id,editIndex=null){
  const item=productById(id);if(!item||item.soldOut)return;
- current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();editingCartIndex=null;
+ current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();resetCartEditState();
  $('add').textContent='Legg til';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||'';
  const hero=$('sheetHero');hero.querySelectorAll('img').forEach(n=>n.remove());
@@ -757,7 +743,7 @@ function showSheet(id,editIndex=null){
  const sheetScroll=$('productSheet').querySelector('.sheet-scroll');
  if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
  renderOptions();
- if(editIndex!==null&&cart[editIndex])restoreCartLineForEdit(cart[editIndex],editIndex);
+ restoreCartEditFromIndex(editIndex);
  updateSheetFavorite();show('productSheet');
  // Reset again after showing, when the browser has laid out the new product.
  if(sheetScroll){sheetScroll.scrollTop=0;sheetScroll.scrollLeft=0}
@@ -1001,8 +987,9 @@ function fatih1HistoryBack(){
  else hideAll();
 }
 function fatih1HistoryView(id){
- if(id==='productSheet')return {view:'product',id:current?.id,editIndex:editingCartIndex};
- if(id==='cartSheet')return {view:'cart',step:'cart'};
+ if(id==='productSheet')return {view:'product',id:current?.id,editIndex:cartProductHistoryEditIndex()};
+ const cartRoute=cartHistoryView(id);
+ if(cartRoute)return cartRoute;
  if(id==='fatih1ProfileSheet')return {view:'profile',tab:'home'};
  if(id==='draftConfirmation')return {view:'confirmation'};
  return null;
@@ -1028,10 +1015,8 @@ window.addEventListener('popstate',event=>{
   hideAll();
   if(!state||state.session!==fatih1HistorySession)return;
   if(state.view==='product'&&state.id)showSheet(state.id,state.editIndex??null);
-  else if(state.view==='cart'){
-   showCart();
-   if(state.step&&state.step!=='cart')checkoutNavigate(state.step);
-  }else if(state.view==='profile'){
+  else if(state.view==='cart')restoreCartHistoryState(state);
+  else if(state.view==='profile'){
    fatih1ProfileOpen();
    if(state.tab&&state.tab!=='home')fatih1ProfileShowTab(state.tab);
   }else if(state.view==='confirmation'&&localOrder)showDraftConfirmation();
@@ -1061,7 +1046,7 @@ function hideAll(){
  product.hidden=true;
  product.classList.remove('is-sheet-opening','is-sheet-closing','is-dragging','is-drag-settling');
  product.style.removeProperty('--product-drag-y');
- $('cartSheet').hidden=true;
+ hideCartSheet();
  $('draftConfirmation').hidden=true;
  $('fatih1ProfileSheet').hidden=true;
  $('btnProfile').setAttribute('aria-expanded','false');
@@ -1340,10 +1325,10 @@ $('quickNotes').addEventListener('click',e=>{
  showFatih1Toast(note+(removed?' fjernet':' lagt til'));
 });
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();returnToMenu()});
-initCartEvents();
 $('overlay').onclick=()=>{if(!$('productSheet').hidden)closeProductSheet();else fatih1HistoryToMenu()};
 $('overlay').addEventListener('wheel',e=>e.preventDefault(),{passive:false});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('fatih1ProfileSheet').hidden&&$('fatih1ProfileHome').hidden)fatih1HistoryBack();else if(!$('cartSheet').hidden&&checkoutStep!=='cart')fatih1HistoryBack();else fatih1HistoryToMenu()}});// Register only the BETA/ service worker. Dynamic menu/orders are never cached.
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('productSheet').hidden)closeProductSheet();else if(!$('fatih1ProfileSheet').hidden&&$('fatih1ProfileHome').hidden)fatih1HistoryBack();else if(shouldCartGoBackOnEscape())fatih1HistoryBack();else fatih1HistoryToMenu()}});
+// Register only the BETA/ service worker. Dynamic menu/orders are never cached.
 if('serviceWorker' in navigator&&location.protocol==='https:'){
  window.addEventListener('load',()=>{
   navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'})
