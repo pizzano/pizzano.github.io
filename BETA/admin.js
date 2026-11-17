@@ -679,20 +679,6 @@ function refreshHeader(){
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
  }
- function duplicateProduct(){
-  const s=category(),p=product();if(!s||!p)return;
-  const duplicated=clone(p);duplicated.id=uid('product');duplicated.name=(p.name||'Produkt')+' (kopi)';
-  s.items.splice(state.product+1,0,duplicated);state.product++;renderProducts();renderProductEditor();setDirty();
-  openAdminModal('product');
- }
- function removeProduct(){
-  const s=category(),p=product();if(!s||!p)return;
-  if(!confirm('Slette produktet '+p.name+'? Endringen lagres først når du trykker Lagre.'))return;
-  closeAdminModal();s.items.splice(state.product,1);state.product=Math.min(state.product,s.items.length-1);
-  if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>String(id)!==String(p.id));
-  removeRecommendationIds([p.id]);
-  renderProducts();renderProductEditor();setDirty();
- }
  function removeCategory(){
   const s=category();if(!s||!confirm('Slette hele '+s.title+' og alle produktene?'))return;
   const ids=new Set(s.items.map(p=>String(p.id)));state.menu.sections.splice(state.category,1);
@@ -870,8 +856,6 @@ function refreshHeader(){
   }
   $('btnSaveProductModal').addEventListener('click',()=>{void saveAdminModal('product')});
   $('btnSaveGroupModal').addEventListener('click',()=>{void saveAdminModal('group')});
-  $('btnDuplicateProductModal').addEventListener('click',duplicateProduct);
-  $('btnRemoveProductModal').addEventListener('click',removeProduct);
   $('productEditor').querySelectorAll('[data-product-tab]').forEach(button=>
    button.addEventListener('click',()=>setAdminModalTab('product',button.dataset.productTab)));
   $('groupEditor').querySelectorAll('[data-group-tab]').forEach(button=>
