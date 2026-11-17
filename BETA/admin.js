@@ -505,7 +505,7 @@ function refreshHeader(){
   }).join(''):'<p class="empty">Velg en kategori</p>';
  }
  function sizeLabel(size){
-  return size.label||state.menu.sizeLabels?.[size.labelId]||size.name||String(size.id||'Størrelse');
+  return size.label||state.menu.sizeLabels?.[size.labelId]||size.name||'Størrelse';
  }
  // Global groups are inherited by every size. Optional size-specific groups
  // are stored as size.optionGroupIds. Ordering is per size, not global.
@@ -553,7 +553,7 @@ function refreshHeader(){
    return '<div class="size-product-card">'+
     '<div class="size-product-header">'+
     '<input data-size-name="'+i+'" aria-label="Størrelsesnavn" placeholder="Størrelse" value="'+esc(size.label||state.menu.sizeLabels?.[size.labelId]||size.name||'')+'">'+
-    '<input type="number" min="0" max="99999" step="1" data-size-price="'+i+'" aria-label="Pris i kroner" value="'+esc(Number(size.price)||0)+'">'+
+    '<input type="number" min="0" max="99999" step="1" data-size-price="'+i+'" aria-label="Pris i kroner" placeholder="Pris (kr)" value="'+(!size.label&&!size.name&&!size.labelId&&Number(size.price)===0?'':esc(Number(size.price)||0))+'">'+
     '<button type="button" data-size-remove="'+i+'" aria-label="Slett størrelse">×</button></div>'+
     '<details class="size-product-options" data-size-options="'+i+'"'+(expanded.has(i)?' open':'')+'>'+
     '<summary><span>Tilvalg for '+esc(sizeLabel(size))+'</span><span class="size-option-count">'+sorted.length+' valgt</span><span aria-hidden="true">⌄</span></summary>'+
@@ -617,9 +617,10 @@ function refreshHeader(){
   const g=group();
   $('optionRows').innerHTML=arr(g.options).map((o,i)=>{
    const selected=arr(g.defaultOptionIds).map(String).includes(String(o.id));
+   const pendingNewOption=!originalOption(g,o)&&!String(o.label||'').trim()&&Number(o.price)===0;
    return '<div class="group-card" data-option-row="'+i+'"><div class="option-row">'+
-    '<input aria-label="Alternativnavn" data-option-label="'+i+'" value="'+esc(o.label||'')+'" placeholder="Alternativ">'+
-    '<input type="number" min="0" max="99999" aria-label="Tilleggspris" data-option-price="'+i+'" value="'+esc(Number(o.price)||0)+'">'+
+    '<input aria-label="Alternativnavn" data-option-label="'+i+'" value="'+esc(o.label||'')+'" placeholder="Alternativnavn">'+
+    '<input type="number" min="0" max="99999" aria-label="Tilleggspris" placeholder="Tilleggspris (kr)" data-option-price="'+i+'" value="'+(pendingNewOption?'':esc(Number(o.price)||0))+'">'+
     '<button type="button" data-option-delete="'+i+'" aria-label="Slett">×</button></div>'+
     '<div class="actions"><label class="checkbox"><input type="checkbox" data-option-default="'+i+'"'+(selected?' checked':'')+'> Startvalg</label>'+
     '<label class="checkbox"><input type="checkbox" data-option-soldout="'+i+'"'+(o.soldOut?' checked':'')+'> Utsolgt</label>'+
