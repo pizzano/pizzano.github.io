@@ -58,6 +58,7 @@ async function bootAuth(){
  const uid=prefix=>prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
  const state={menu:null,original:null,etag:null,category:0,product:0,group:0,dirty:false,tab:'products',saving:false};
  let toastTimer=0,autosaveTimer=0,editRevision=0;
+ const draftProductSnapshots=new Map();
  const AUTO_SAVE_DELAY_MS=1400;
  function cancelScheduledSave(){window.clearTimeout(autosaveTimer);autosaveTimer=0}
  function scheduleAutoSave(){
@@ -74,10 +75,10 @@ async function bootAuth(){
  }
  function setDirty(){
   if(!state.menu)return;
-  state.dirty=true;editRevision++;
-  $('btnSave').disabled=state.saving||!state.etag;
-  const node=$('saveStatus');node.className='status dirty';node.textContent='Lagrer automatisk…';
-  scheduleAutoSave();
+  editRevision++;
+  // No request or timer when the only change is an empty/untouched draft.
+  if(syncSaveStatus())scheduleAutoSave();
+  else cancelScheduledSave();
  }
  function setClean(){
   cancelScheduledSave();
@@ -85,8 +86,15 @@ async function bootAuth(){
   $('btnSave').disabled=true;
   const node=$('saveStatus');node.className='status ok';node.textContent='Menyen er synkronisert';
  }
- // Newly created, empty categories and untouched placeholder products remain
- // local drafts. The rest of the menu can still be saved without including them.
+ // Record the initial product, not merely its placeholder name. Changing the
+ // price, image, ingredients or any other field makes it a real edit.
+ function isUntouchedNewProduct(item){
+  if(!item)return false;
+  const baseline=draftProductSnapshots.get(String(item.id));
+  return baseline!==undefined&&JSON.stringify(item)===baseline;
+ }
+ // New empty categories and genuinely untouched products stay local.
+ // A product with a changed field may be saved even if its name is unchanged.
  function menuWithoutIncompleteDrafts(){
   const next=clone(state.menu);
   const existingSections=new Set(arr(state.original?.sections).map(section=>String(section.id)));
@@ -94,8 +102,7 @@ async function bootAuth(){
    arr(section.items).map(item=>String(item.id))));
   for(const section of next.sections){
    section.items=arr(section.items).filter(item=>
-    existingProducts.has(String(item.id))||
-    (String(item.name||'').trim()!==''&&String(item.name).trim()!=='Nytt produkt'));
+    existingProducts.has(String(item.id))||!isUntouchedNewProduct(item));
   }
   next.sections=next.sections.filter(section=>
    existingSections.has(String(section.id))||section.items.length>0);
@@ -275,6 +282,7 @@ function refreshHeader(){
   // auto-save must never silently remove unrelated data.
   assertMenu(snapshot);
   if(!etag)throw Error('ETag mangler. Lagring stoppet for å beskytte eksisterende meny.');
+  draftProductSnapshots.clear();
   state.original=clone(snapshot);
   state.menu=clone(snapshot);
   state.etag=etag;state.category=0;state.product=0;state.group=0;
@@ -364,6 +372,18 @@ function refreshHeader(){
  function closeAdminModal(){
   if(!activeAdminModal)return;
   const kind=activeAdminModal;
+  // Abandon a never-edited new product on close instead of leaving a phantom
+  // row that could accidentally become part of a later saved menu.
+  if(kind==='product'){
+   const item=product(),section=category();
+   if(item&&section&&isUntouchedNewProduct(item)){
+    draftProductSnapshots.delete(String(item.id));
+    section.items.splice(state.product,1);
+    state.product=Math.max(0,Math.min(state.product,section.items.length-1));
+    renderProducts();renderProductEditor();
+    syncSaveStatus();
+   }
+  }
   activeAdminModal=null;
   $(kind==='product'?'productEditor':'groupEditor').hidden=true;
   $(kind==='product'?'productModalBackdrop':'groupModalBackdrop').hidden=true;
@@ -373,6 +393,10 @@ function refreshHeader(){
   if(toFocus?.isConnected&&typeof toFocus.focus==='function')toFocus.focus();
  }
  async function saveAdminModal(kind){
+  if(kind==='product'&&isUntouchedNewProduct(product())){
+   closeAdminModal();
+   return;
+  }
   // Ensure the image URL is committed even if the user clicks Save before blurring.
   if(kind==='product'&&product()&&$('pImage').value!==productImage(product()))readAndSetImage();
   if(!state.dirty){closeAdminModal();return}
@@ -732,6 +756,7 @@ function refreshHeader(){
  function addProduct(){
   const s=category();if(!s)return;
   const newItem={id:uid('product'),name:'Nytt produkt',description:'',ingredientRules:[],sizes:[{id:uid('size'),label:'Stor',price:0}],optionGroupIds:[],optionGroupOrder:[]};
+  draftProductSnapshots.set(String(newItem.id),JSON.stringify(newItem));
   s.items.push(newItem);state.product=s.items.length-1;renderProducts();renderProductEditor();setDirty();
   openAdminModal('product');$('pName').focus();
  }
@@ -739,6 +764,7 @@ function refreshHeader(){
   const s=category(),p=s?.items?.[index];if(!p)return;
   if(!confirm('Slette produktet «'+p.name+'»? Endringen lagres automatisk.'))return;
   const wasSelected=index===state.product;
+  draftProductSnapshots.delete(String(p.id));
   s.items.splice(index,1);
   if(wasSelected)state.product=Math.max(0,Math.min(index,s.items.length-1));
   else if(index<state.product)state.product--;
@@ -750,6 +776,7 @@ function refreshHeader(){
   if(state.menu.sections.length<=1){notify('Menyen må ha minst én kategori.',true);return}
   if(!confirm('Slette hele «'+s.title+'» og alle '+arr(s.items).length+' produktene? Endringen lagres automatisk.'))return;
   const current=category(),ids=new Set(arr(s.items).map(p=>String(p.id)));
+  for(const id of ids)draftProductSnapshots.delete(id);
   state.menu.sections.splice(index,1);
   if(Array.isArray(state.menu.popularItemIds))state.menu.popularItemIds=state.menu.popularItemIds.filter(id=>!ids.has(String(id)));
   removeRecommendationIds(ids);
@@ -883,12 +910,12 @@ function refreshHeader(){
    if(!auto)notify('Hent siste meny før du lagrer.','error');
    return;
   }
-  // Skip empty new categories and products that still have their default name.
+  // Exclude empty new categories and only genuinely untouched new products.
   const prepared=menuWithoutIncompleteDrafts();
   if(persistableSignature(prepared)===persistableSignature(state.original)){
    syncSaveStatus();
    if(!auto&&hasUnfinishedDrafts())
-    notify('Ufullstendig utkast lagres ikke. Legg til et navngitt produkt først.');
+    notify('Urørte nye produkter og tomme kategorier lagres ikke.');
    return;
   }
   try{sanitize(prepared)}catch(error){
@@ -921,6 +948,8 @@ function refreshHeader(){
    // Keep the unsaved editor state intact even if the user changes a field
    // while this PUT is in flight; the next run will save those later edits.
    state.original=clone(next);
+   for(const section of arr(next.sections))for(const item of arr(section.items))
+    draftProductSnapshots.delete(String(item.id));
    state.menu.updatedAt=version;
    state.menu.changeFeed=clone(next.changeFeed);
    let etag=response.headers.get('ETag');
@@ -957,7 +986,7 @@ function refreshHeader(){
  $('authForm').addEventListener('submit',login);
  $('btnSignOut').addEventListener('click',async()=>{
   if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
-  cancelScheduledSave();
+  cancelScheduledSave();draftProductSnapshots.clear();
   await auth?.signOut();state.menu=null;state.etag=null;state.original=null;state.dirty=false;showLogin();
  });
   $('btnRetry').addEventListener('click',()=>{void startAdmin()});
@@ -976,6 +1005,7 @@ function refreshHeader(){
   $('btnReload').addEventListener('click',()=>loadMenu().then(ok=>{if(ok)notify('Siste meny er hentet')}).catch(e=>notify(e.message,true)));
   $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
   $('btnUndo').addEventListener('click',()=>{if(!state.original||!confirm('Forkast alle ulagrede endringer?'))return;
+   draftProductSnapshots.clear();
    state.menu=clone(state.original);state.category=0;state.product=0;state.group=0;renderAll();setClean()});
   document.querySelectorAll('#adminNavTrack [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
   const navTrack=$('adminNavTrack');
