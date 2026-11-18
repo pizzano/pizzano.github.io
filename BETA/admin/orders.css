@@ -276,3 +276,8 @@ body{background:#f7f9fc;color:#172838}
 }
 @media print{body{background:#fff}.orders-list,.orders-tabs{display:none!important}}
 @media(prefers-reduced-motion:reduce){.order-row{transition:none}.order-row:hover{transform:none}}
+
+/* Keep the reference grid intact for accepted orders. */
+.order-row[data-status="godkjent"] .order-row-body{gap:0}
+@media(min-width:821px){.orders-tabs{top:59px}}
+@media(max-width:820px){.orders-tabs{top:54px}}
