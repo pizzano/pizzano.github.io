@@ -370,6 +370,8 @@
    const order=orders.get(id);
    const later=order?.pickup?.mode==='scheduled';
    $('ordersPrep').value='';
+   $('ordersPrep').disabled=later;
+   $('ordersPrep').required=!later;
    $('ordersAcceptPrepBlock').hidden=later;
    $('ordersAcceptScheduled').hidden=!later;
    $('ordersAcceptScheduledTime').textContent=later?(order.pickup.label||''):'';
