@@ -581,12 +581,25 @@ function onCustomerStatusUpdate(value){
   ...(Number(value.expectedReadyAt)>0?{expectedReadyAt:Number(value.expectedReadyAt)}:{}),
   ...(value.rejectReason?{rejectReason:String(value.rejectReason).slice(0,180)}:{})
  };
- if(JSON.stringify(localOrder.statusPublic)!==JSON.stringify(statusPublic)){
+ const previousStatus=localPublicStatus().status;
+ const changed=JSON.stringify(localOrder.statusPublic)!==JSON.stringify(statusPublic);
+ if(changed){
   localOrder.statusPublic=statusPublic;
   localOrder.status=statusPublic.status;
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
  }
  displayLiveOrderStatus();
+ if(changed&&previousStatus!==statusPublic.status&&statusPublic.status!=='mottatt'){
+  const message=statusPublic.status==='godkjent'
+   ?'Bestillingen er godkjent'+(statusPublic.expectedReadyAt?' · Klar ca. kl. '+pickupClock(statusPublic.expectedReadyAt):'')
+   :statusPublic.status==='klar'?'Bestillingen er klar til henting'
+   :'Bestillingen er avvist';
+  showFatih1Toast(message,statusPublic.status==='avvist'?'error':'info');
+  if(!document.hidden&&'Notification' in window&&Notification.permission==='granted'){
+   try{new Notification('KØL Grill & Pizza',{body:message,tag:'kol-order-'+localOrder.id})}catch{}
+  }
+ }
+ if(changed&&statusPublic.status!=='mottatt')renderDraftActiveOrder();
  if(value.status==='klar'||value.status==='avvist')stopCustomerStatus();
 }
 function beginCustomerStatus(){
