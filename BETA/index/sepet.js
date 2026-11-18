@@ -515,7 +515,6 @@ $('sheetClose').onclick=closeProductSheet;
 const FATIH1_CONTACT_STORAGE_KEY='kol-beta-demo-contact-v1';
 const FATIH1_PICKUP_STORAGE_KEY='kol-beta-demo-pickup-v1';
 const FATIH1_LOCAL_ORDER_STORAGE_KEY='bestillonline-last-sent-order-v1';
-const FATIH1_ORDER_HISTORY_KEY='bestillonline-orders-history-v1';
 function readLocalData(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
@@ -569,38 +568,13 @@ function localOrderExpiresAt(order){
  const base=Math.max(expected,ready);
  return base>0?base+ORDER_CARD_GRACE_MS:0;
 }
-function archiveLocalOrder(order){
- if(!order?.id)return;
- try{
-  const old=JSON.parse(localStorage.getItem(FATIH1_ORDER_HISTORY_KEY)||'[]');
-  const history=Array.isArray(old)?old.filter(o=>o?.id!==order.id):[];
-  const compact={
-   id:order.id,createdAt:Number(order.createdAt)||Date.now(),
-   status:order.statusPublic?.status||order.status||'mottatt',
-   expectedReadyAt:visiblePickupAt(order),
-   updatedAt:Number(order.statusPublic?.updatedAt)||Number(order.createdAt)||Date.now(),
-   pickupLabel:String(order.pickup?.label||'Snarest').slice(0,100),
-   pickupMode:order.pickup?.mode==='scheduled'?'scheduled':'asap',
-   pickupTime:order.pickup?.mode==='scheduled'?String(order.pickup.time||'').slice(0,16):'',
-   total:Number(order.total)||0,
-   items:(Array.isArray(order.items)?order.items:[]).slice(0,60).map(item=>({
-    name:String(item.name||'Produkt').slice(0,120),qty:Number(item.qty)||1
-   }))
-  };
-  history.unshift(compact);
-  history.sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0));
-  const next=JSON.stringify(history.slice(0,30));
-  if(localStorage.getItem(FATIH1_ORDER_HISTORY_KEY)!==next)localStorage.setItem(FATIH1_ORDER_HISTORY_KEY,next);
- }catch(error){console.warn('Kunne ikke lagre lokal ordrehistorikk',error)}
-}
 function clearActiveOrder(showNotice=false){
- if(localOrder)archiveLocalOrder(localOrder);
  stopCustomerStatus();
  localOrder=null;
  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
- if(showNotice)showFatih1Toast('Bestillingsoversikten er fjernet. Ordren er lagret i Mine bestillinger.');
+ if(showNotice)showFatih1Toast('Bestillingsoversikten er fjernet fra denne enheten.');
 }
 function scheduleActiveOrderExpiry(){
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
@@ -699,7 +673,6 @@ function onCustomerStatusUpdate(value){
   localOrder.statusPublic=statusPublic;
   localOrder.status=statusPublic.status;
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
-  archiveLocalOrder(localOrder);
  }
  displayLiveOrderStatus();
  if(changed&&previousStatus!==statusPublic.status&&statusPublic.status!=='mottatt'){
@@ -763,24 +736,45 @@ function renderDraftActiveOrder(){
  const card=$('draftActiveOrder');
  if(!card)return;
  if(!localOrder){card.hidden=true;return}
- archiveLocalOrder(localOrder);
  if(scheduleActiveOrderExpiry())return;
  card.hidden=false;
  $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
  displayLiveOrderStatus();
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
 }
+function renderDraftConfirmationItems(){
+ const panel=$('draftConfirmationItems'),host=$('draftConfirmationItemsList');
+ if(!panel||!host||!localOrder)return;
+ const items=Array.isArray(localOrder.items)?localOrder.items:[];
+ const count=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
+ $('draftConfirmationItemsCount').textContent=count+' '+(count===1?'vare':'varer');
+ host.innerHTML=items.length?items.map(line=>{
+  const quantity=Math.max(1,Number(line.qty)||1);
+  const price=Number(line.unitPrice)||0;
+  const quickNotes=Array.isArray(line.quickNotes)?line.quickNotes.filter(Boolean):[];
+  return '<article class="cart-product-card draft-confirmation-product">'+
+   '<div class="cart-product-heading"><strong class="cart-product-name">'+quantity+' × '+esc(String(line.name||'Produkt'))+'</strong></div>'+
+   '<div class="cart-product-details">'+cartLineDetails(line)+
+    (quickNotes.length?'<div class="cart-line-detail is-alert"><span><b>Beskjed:</b> '+esc(quickNotes.join(', '))+'</span></div>':'')+
+   '</div>'+
+   '<div class="cart-product-totalrow"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(price)+')':'')+'</span><strong>'+money(quantity*price)+'</strong></div>'+
+   '</article>';
+ }).join('')+'<div class="draft-confirmation-total"><strong>Totalt</strong><strong>'+money(localOrder.total)+'</strong></div>':
+ '<p class="draft-confirmation-empty">Ingen produktdetaljer tilgjengelig.</p>';
+}
 function renderDraftConfirmation(){
  if(!localOrder)return;
  localOrderStatus();
  $('draftConfirmationNumber').textContent=String(localOrder.id||'').slice(-6).toUpperCase();
  $('draftConfirmationTotal').textContent=money(localOrder.total);
+ renderDraftConfirmationItems();
  displayLiveOrderStatus();
 }
 function showDraftConfirmation(){
  if(!localOrder)return;
  fatih1HistoryWrite({view:'confirmation'},true);
  hideAll();
+ const itemPanel=$('draftConfirmationItems');if(itemPanel)itemPanel.open=false;
  renderDraftConfirmation();
  show('draftConfirmation');
  beginCustomerStatus();
@@ -1027,7 +1021,6 @@ async function submitDraftOrder(){
   localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
 
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
-  archiveLocalOrder(localOrder);
   cart=[];saveCart();
   renderDraftActiveOrder();showDraftConfirmation();
   showFatih1Toast('Bestillingen er sendt til restauranten');
