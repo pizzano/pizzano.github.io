@@ -515,6 +515,7 @@ $('sheetClose').onclick=closeProductSheet;
 const FATIH1_CONTACT_STORAGE_KEY='kol-beta-demo-contact-v1';
 const FATIH1_PICKUP_STORAGE_KEY='kol-beta-demo-pickup-v1';
 const FATIH1_LOCAL_ORDER_STORAGE_KEY='bestillonline-last-sent-order-v1';
+const FATIH1_ORDER_HISTORY_KEY='bestillonline-orders-history-v1';
 function readLocalData(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
@@ -531,6 +532,63 @@ let customerContact=readLocalData(FATIH1_CONTACT_STORAGE_KEY,{name:'',phone:'',e
 let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:'',label:''});
 let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
 let checkoutStep='cart',localOrderExpiryTimer=null;
+const ORDER_CARD_GRACE_MS=15*60*1000;
+function localOrderExpiresAt(order){
+ if(!order)return 0;
+ const status=order.statusPublic?.status||order.status;
+ // Do not hide a pending or rejected order automatically.
+ if(status!=='godkjent'&&status!=='klar')return 0;
+ const expected=Number(order.statusPublic?.expectedReadyAt)||0;
+ const ready=status==='klar'?Number(order.statusPublic?.updatedAt)||0:0;
+ const base=Math.max(expected,ready);
+ return base>0?base+ORDER_CARD_GRACE_MS:0;
+}
+function archiveLocalOrder(order){
+ if(!order?.id)return;
+ try{
+  const old=JSON.parse(localStorage.getItem(FATIH1_ORDER_HISTORY_KEY)||'[]');
+  const history=Array.isArray(old)?old.filter(o=>o?.id!==order.id):[];
+  const compact={
+   id:order.id,createdAt:Number(order.createdAt)||Date.now(),
+   status:order.statusPublic?.status||order.status||'mottatt',
+   expectedReadyAt:Number(order.statusPublic?.expectedReadyAt)||0,
+   updatedAt:Number(order.statusPublic?.updatedAt)||Number(order.createdAt)||Date.now(),
+   pickupLabel:String(order.pickup?.label||'Snarest').slice(0,100),
+   total:Number(order.total)||0,
+   items:(Array.isArray(order.items)?order.items:[]).slice(0,60).map(item=>({
+    name:String(item.name||'Produkt').slice(0,120),qty:Number(item.qty)||1
+   }))
+  };
+  history.unshift(compact);
+  history.sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0));
+  const next=JSON.stringify(history.slice(0,30));
+  if(localStorage.getItem(FATIH1_ORDER_HISTORY_KEY)!==next)localStorage.setItem(FATIH1_ORDER_HISTORY_KEY,next);
+ }catch(error){console.warn('Kunne ikke lagre lokal ordrehistorikk',error)}
+}
+function clearActiveOrder(showNotice=false){
+ if(localOrder)archiveLocalOrder(localOrder);
+ stopCustomerStatus();
+ localOrder=null;
+ writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
+ if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
+ const card=$('draftActiveOrder');if(card)card.hidden=true;
+ if(showNotice)showFatih1Toast('Bestillingsoversikten er fjernet. Ordren er lagret i Mine bestillinger.');
+}
+function scheduleActiveOrderExpiry(){
+ if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
+ if(!localOrder)return false;
+ const expiresAt=localOrderExpiresAt(localOrder);
+ if(!expiresAt)return false;
+ const remaining=expiresAt-Date.now();
+ if(remaining<=0){clearActiveOrder();return true}
+ localOrderExpiryTimer=setTimeout(()=>{
+  localOrderExpiryTimer=null;
+  if(localOrder&&localOrderExpiresAt(localOrder)<=Date.now()){
+   clearActiveOrder();
+  }else scheduleActiveOrderExpiry();
+ },Math.min(remaining,2147483647));
+ return false;
+}
 const ORDER_STATUS_LABELS={
  mottatt:'Venter på godkjenning',
  godkjent:'Bestillingen er godkjent',
@@ -608,6 +666,7 @@ function onCustomerStatusUpdate(value){
   localOrder.statusPublic=statusPublic;
   localOrder.status=statusPublic.status;
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  archiveLocalOrder(localOrder);
  }
  displayLiveOrderStatus();
  if(changed&&previousStatus!==statusPublic.status&&statusPublic.status!=='mottatt'){
@@ -670,20 +729,13 @@ function localOrderStatus(){
 function renderDraftActiveOrder(){
  const card=$('draftActiveOrder');
  if(!card)return;
- card.hidden=!localOrder;
- if(!localOrder)return;
- const pending=localOrderStatus()==='pending';
+ if(!localOrder){card.hidden=true;return}
+ archiveLocalOrder(localOrder);
+ if(scheduleActiveOrderExpiry())return;
+ card.hidden=false;
  $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
  displayLiveOrderStatus();
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
- if(pending&&!localOrderExpiryTimer){
-  // Only one local expiry callback is needed; there is no live countdown.
-  const remaining=Math.max(1,Number(localOrder.expiresAt)-Date.now()+1);
-  localOrderExpiryTimer=window.setTimeout(()=>{
-   localOrderExpiryTimer=null;
-   if(localOrder)renderDraftActiveOrder();
-  },Math.min(remaining,2147483647));
- }
 }
 function renderDraftConfirmation(){
  if(!localOrder)return;
@@ -942,6 +994,7 @@ async function submitDraftOrder(){
   localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
 
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  archiveLocalOrder(localOrder);
   cart=[];saveCart();
   renderDraftActiveOrder();showDraftConfirmation();
   showFatih1Toast('Bestillingen er sendt til restauranten');
@@ -991,7 +1044,7 @@ document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftViewOrder').onclick=showDraftConfirmation;
 $('draftConfirmationClose').onclick=returnToMenu;
-$('draftClearOrder').onclick=()=>{stopCustomerStatus();localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Lokal bestillingsoversikt er fjernet')};
+$('draftClearOrder').onclick=()=>clearActiveOrder(true);
 }
 
 // Cart owns its own initialization and stored draft order display.
@@ -1001,7 +1054,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  beginCustomerStatus();
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden)stopCustomerStatus();
-  else beginCustomerStatus();
+  else {renderDraftActiveOrder();beginCustomerStatus()}
  });
  window.addEventListener('pagehide',stopCustomerStatus);
  initCartEvents();
