@@ -11,6 +11,29 @@
  const fmtTime=value=>value?new Intl.DateTimeFormat('nb-NO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const fmtDate=value=>value?new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const statusNames={mottatt:'Ny bestilling',godkjent:'✓ Godkjent og under tilberedning',klar:'✓ Klar til henting',avvist:'✕ Avvist'};
+ // Pickup slots arrive as Norwegian local wall time, e.g. 2026-11-18T12:15.
+ // Convert with Europe/Oslo explicitly; Date.parse(localTime) uses the viewer's timezone.
+ function scheduledPickupTimestamp(pickup){
+  if(pickup?.mode!=='scheduled'||typeof pickup.time!=='string')return null;
+  const match=/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})$/.exec(pickup.time);
+  if(!match)return null;
+  const [year,month,day,hour,minute]=match.slice(1).map(Number);
+  const wall=Date.UTC(year,month-1,day,hour,minute);
+  const valid=new Date(wall);
+  if(valid.getUTCFullYear()!==year||valid.getUTCMonth()!==month-1||valid.getUTCDate()!==day||valid.getUTCHours()!==hour||valid.getUTCMinutes()!==minute)return null;
+  const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+  const desired=pickup.time.replace('T',' ');
+  // Both CET and CEST candidates are checked, including the DST transition.
+  for(const hours of [2,1]){
+   const timestamp=wall-hours*3600000;
+   const parts=fmt.formatToParts(new Date(timestamp));
+   const field=type=>parts.find(part=>part.type===type)?.value||'';
+   const result=field('year')+'-'+field('month')+'-'+field('day')+' '+field('hour')+':'+field('minute');
+   if(result===desired)return timestamp;
+  }
+  return null;
+ }
+
  let auth=null,stream=null,orders=new Map(),filter='all',activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
  const streamQuery='orderBy=%22%24key%22&limitToLast=101';
@@ -277,13 +300,24 @@
    if(!current||current.status!==old.status)throw Error('Bestillingen ble endret av en annen administrator. Oppdater siden.');
    const changedAt=Date.now();
    const next={...current,...extra,status,updatedAt:changedAt};
-   if(status==='godkjent'){next.acceptedAt=changedAt;next.expectedReadyAt=changedAt+Number(extra.prepMinutes)*60000}
+   if(status==='godkjent'){
+    next.acceptedAt=changedAt;
+    const earliestReady=changedAt+Number(extra.prepMinutes)*60000;
+    const scheduled=current.pickup?.mode==='scheduled'?scheduledPickupTimestamp(current.pickup):null;
+    // Keep the requested slot when possible; never promise a past/impossible time.
+    next.expectedReadyAt=Math.max(earliestReady,scheduled||0);
+    next.pickupTimeAdjusted=scheduled!==null&&earliestReady>scheduled;
+   }
    if(status==='klar')next.readyAt=changedAt;
    if(status==='avvist')next.rejectedAt=changedAt;
    // Update the customer's non-personal status at the same time and under
    // the same ETag as the private order; no additional Firebase write.
    next.statusPublic={status,updatedAt:changedAt,
-    ...(status==='godkjent'?{expectedReadyAt:next.expectedReadyAt}:{}),
+    ...(status==='godkjent'?{expectedReadyAt:next.expectedReadyAt,...(next.pickupTimeAdjusted?{pickupTimeAdjusted:true}:{})}:{}),
+    ...(status==='klar'&&Number(current.statusPublic?.expectedReadyAt)>0?{
+     expectedReadyAt:Number(current.statusPublic.expectedReadyAt),
+     ...(current.statusPublic.pickupTimeAdjusted?{pickupTimeAdjusted:true}:{})
+    }:{}),
     ...(status==='avvist'?{rejectReason:String(extra.rejectReason||'').slice(0,180)}:{})
    };
    const options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
