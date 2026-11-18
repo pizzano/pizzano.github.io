@@ -648,7 +648,10 @@ function displayLiveOrderStatus(){
  const activeTitle=$('draftActiveTitle');
  if(activeTitle)activeTitle.textContent=accepted?'Bestillingen er godkjent':ready?'Klar til henting':rejected?'Bestillingen er avvist':'Bestilling sendt';
  const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
- if(tracker)tracker.forEach((step,index)=>step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready)));
+ if(tracker)tracker.forEach((step,index)=>{
+  step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
+  step.classList.toggle('is-preparing',index===2&&accepted);
+ });
 }
 function onCustomerStatusUpdate(value){
  if(!localOrder||!value||typeof value!=='object'||
