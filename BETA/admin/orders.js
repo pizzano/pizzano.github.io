@@ -445,7 +445,8 @@
     if(!deleted.ok){feedback('Gamle bestillinger kunne ikke ryddes (Firebase HTTP '+deleted.status+').',true);break}
     for(const id of excess)orders.delete(id);
     render();
-    if(excess.length>0)pruneWanted=true;
+    // The keys response already proves that trimming this batch reaches 100.
+    // Re-check only if new orders arrived during pruning.
    }while(pruneWanted&&authReady());
   }catch(error){console.warn('BestillOnline: pruning failed',error);feedback('Opprydding av gamle bestillinger feilet.',true)}
   finally{pruning=false}
