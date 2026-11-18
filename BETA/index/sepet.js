@@ -533,12 +533,38 @@ let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:''
 let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
 let checkoutStep='cart',localOrderExpiryTimer=null;
 const ORDER_CARD_GRACE_MS=15*60*1000;
+function osloScheduledPickupAt(order){
+ const raw=order?.pickup?.mode==='scheduled'?order.pickup.time:null;
+ if(typeof raw!=='string')return 0;
+ const match=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(raw);
+ if(!match)return 0;
+ const [year,month,day,hour,minute]=match.slice(1).map(Number);
+ const wall=Date.UTC(year,month-1,day,hour,minute);
+ const valid=new Date(wall);
+ if(valid.getUTCFullYear()!==year||valid.getUTCMonth()!==month-1||valid.getUTCDate()!==day||valid.getUTCHours()!==hour||valid.getUTCMinutes()!==minute)return 0;
+ const formatter=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+ for(const hours of [2,1]){
+  const candidate=wall-hours*3600000;
+  const parts=formatter.formatToParts(new Date(candidate));
+  const part=type=>parts.find(p=>p.type===type)?.value||'';
+  if(part('year')+'-'+part('month')+'-'+part('day')+'T'+part('hour')+':'+part('minute')===raw)return candidate;
+ }
+ return 0;
+}
+// Older accepted orders may contain a prep-time estimate earlier than the
+// customer's pre-order slot. Keep the promised slot unless a later time was confirmed.
+function visiblePickupAt(order){
+ const scheduled=osloScheduledPickupAt(order);
+ const confirmed=Number(order?.statusPublic?.expectedReadyAt)||0;
+ return Math.max(scheduled,confirmed);
+}
+
 function localOrderExpiresAt(order){
  if(!order)return 0;
  const status=order.statusPublic?.status||order.status;
  // Do not hide a pending or rejected order automatically.
  if(status!=='godkjent'&&status!=='klar')return 0;
- const expected=Number(order.statusPublic?.expectedReadyAt)||0;
+ const expected=visiblePickupAt(order);
  const ready=status==='klar'?Number(order.statusPublic?.updatedAt)||0:0;
  const base=Math.max(expected,ready);
  return base>0?base+ORDER_CARD_GRACE_MS:0;
@@ -551,9 +577,11 @@ function archiveLocalOrder(order){
   const compact={
    id:order.id,createdAt:Number(order.createdAt)||Date.now(),
    status:order.statusPublic?.status||order.status||'mottatt',
-   expectedReadyAt:Number(order.statusPublic?.expectedReadyAt)||0,
+   expectedReadyAt:visiblePickupAt(order),
    updatedAt:Number(order.statusPublic?.updatedAt)||Number(order.createdAt)||Date.now(),
    pickupLabel:String(order.pickup?.label||'Snarest').slice(0,100),
+   pickupMode:order.pickup?.mode==='scheduled'?'scheduled':'asap',
+   pickupTime:order.pickup?.mode==='scheduled'?String(order.pickup.time||'').slice(0,16):'',
    total:Number(order.total)||0,
    items:(Array.isArray(order.items)?order.items:[]).slice(0,60).map(item=>({
     name:String(item.name||'Produkt').slice(0,120),qty:Number(item.qty)||1
@@ -615,30 +643,31 @@ function localPublicStatus(){
 }
 function displayLiveOrderStatus(){
  if(!localOrder)return;
- const state=localPublicStatus();
+ const state=localPublicStatus(),confirmedAt=visiblePickupAt(localOrder);
  const label=ORDER_STATUS_LABELS[state.status]||ORDER_STATUS_LABELS.mottatt;
- const supplement=state.status==='godkjent'&&state.expectedReadyAt?' · Klar ca. kl. '+pickupClock(state.expectedReadyAt):'';
+ const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
+ const pickupDate=confirmedAt?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(confirmedAt)):'';
+ const adjusted=!!state.pickupTimeAdjusted;
+ const supplement=accepted&&confirmedAt?' · Henting '+pickupDate:'';
  const subtitle=$('draftActiveSubtitle');
- if(subtitle)subtitle.textContent=label+supplement;
+ if(subtitle)subtitle.textContent=(accepted?'Bekreftet av restauranten':label)+supplement;
  const status=$('draftConfirmationStatus');
  if(status)status.textContent=label;
  const info=$('draftConfirmationTimer');
- if(info)info.textContent=state.status==='godkjent'&&state.expectedReadyAt?
-  'Forventet klar kl. '+pickupClock(state.expectedReadyAt):
-  state.status==='klar'?'Du kan hente bestillingen din nå.':
-  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'): 
+ if(info)info.textContent=accepted&&confirmedAt?
+  (adjusted?'Hentetiden er endret til ':'Bekreftet hentetid: ')+pickupDate:
+  ready?'Bestillingen er klar til henting nå.':
+  rejected?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):
   'Restauranten bekrefter hentetid når bestillingen godtas.';
- const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
  const title=$('draftConfirmationTitle');
  if(title)title.textContent=accepted?'Bestillingen er godkjent!':ready?'Bestillingen er klar til henting!':rejected?'Bestillingen er avvist':'Bestillingen er sendt';
  const intro=$('draftConfirmationIntro');
  if(intro)intro.textContent=accepted?'Restauranten har godkjent bestillingen din.':ready?'Du kan hente bestillingen din nå.':rejected?'Restauranten kunne ikke godta bestillingen din.':'Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
  const sent=$('draftConfirmationSent');
  if(sent)sent.textContent=accepted?'✓ Bekreftet av restauranten':ready?'✓ Klar til henting':rejected?'Bestillingen ble avvist':'Sendt til restauranten · Avventer godkjenning';
- const pickup=$('draftConfirmationPickup');
- const pickupLabel=$('draftConfirmationPickupLabel');
- if(pickupLabel)pickupLabel.textContent=accepted&&state.expectedReadyAt?'Forventet klar':'Hentetid';
- if(pickup)pickup.textContent=accepted&&state.expectedReadyAt?'Kl. '+pickupClock(state.expectedReadyAt):localOrder.pickup?.label||'Snarest';
+ const pickup=$('draftConfirmationPickup'),pickupLabel=$('draftConfirmationPickupLabel');
+ if(pickupLabel)pickupLabel.textContent=adjusted&&accepted?'Endret hentetid':'Hentetid';
+ if(pickup)pickup.textContent=confirmedAt&&(!rejected)?pickupDate:(localOrder.pickup?.label||'Snarest');
  const confirmation=$('draftConfirmation');
  if(confirmation){
   confirmation.dataset.orderStatus=state.status;
@@ -661,6 +690,7 @@ function onCustomerStatusUpdate(value){
  const statusPublic={
   status:value.status,updatedAt:incoming,
   ...(Number(value.expectedReadyAt)>0?{expectedReadyAt:Number(value.expectedReadyAt)}:{}),
+  ...(value.pickupTimeAdjusted?{pickupTimeAdjusted:true}:{}),
   ...(value.rejectReason?{rejectReason:String(value.rejectReason).slice(0,180)}:{})
  };
  const previousStatus=localPublicStatus().status;
@@ -674,7 +704,7 @@ function onCustomerStatusUpdate(value){
  displayLiveOrderStatus();
  if(changed&&previousStatus!==statusPublic.status&&statusPublic.status!=='mottatt'){
   const message=statusPublic.status==='godkjent'
-   ?'Bestillingen er godkjent'+(statusPublic.expectedReadyAt?' · Klar ca. kl. '+pickupClock(statusPublic.expectedReadyAt):'')
+   ?'Bestillingen er godkjent'+(visiblePickupAt(localOrder)?' · Henting kl. '+pickupClock(visiblePickupAt(localOrder)):'')
    :statusPublic.status==='klar'?'Bestillingen er klar til henting'
    :'Bestillingen er avvist';
   showFatih1Toast(message,statusPublic.status==='avvist'?'error':'info');
