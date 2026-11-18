@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#062d25">
 <title>BestillOnline · Menyadministrasjon</title>
-<link rel="stylesheet" href="./admin/admin.css?v=20261118-orders1">
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin/admin.js?v=20261118-layout1" defer></script>
+<link rel="stylesheet" href="./admin/admin.css?v=20261118-restaurant1">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script><script src="./admin/admin.js?v=20261118-restaurant1" defer></script>
 </head>
 <body>
 <header class="top">
@@ -46,6 +46,7 @@
    <div id="adminNavScroll" class="admin-nav-scroll" role="tablist" aria-label="Redigeringsområder">
     <button id="adminTabProducts" class="admin-nav-tab active" type="button" role="tab" data-tab="products" aria-controls="productsPage" aria-selected="true"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><span>Kategorier og produkter</span></button>
     <button id="adminTabGroups" class="admin-nav-tab" type="button" role="tab" data-tab="groups" aria-controls="groupsPage" aria-selected="false"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11m4 0h1M4 12h3m4 0h9M4 17h11m4 0h1"/><circle cx="17" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg></span><span>Valggrupper og tilvalg</span></button>
+    <button id="adminTabRestaurant" class="admin-nav-tab" type="button" role="tab" data-tab="restaurant" aria-controls="restaurantPage" aria-selected="false"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10V4h14v6M5 10v11h14V10M9 21v-7h6v7"/></svg></span><span>Restaurantinnstillinger</span></button>
    <a class="admin-nav-tab admin-nav-orders" href="./orders.html" aria-label="Åpne bestillinger"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span>Bestillinger</span></a>
 </div>
 
@@ -97,6 +98,45 @@
     <div class="admin-group-results admin-group-grid" id="groupList"></div>
    </section>
   </div>
+  <section id="restaurantPage" class="restaurant-page" role="tabpanel" aria-labelledby="adminTabRestaurant" hidden>
+   <div class="restaurant-page-header">
+    <div><span class="restaurant-overline">RESTAURANT</span><h1>Restaurantinnstillinger</h1><p>Åpningstider og kontaktinformasjon på ett sted.</p></div>
+    <div class="restaurant-save-tools"><span id="restaurantSaveStatus" role="status" aria-live="polite">Åpne fanen for å hente innstillinger</span><button id="restaurantSave" class="restaurant-save" type="button" disabled>Lagre innstillinger</button></div>
+   </div>
+   <nav class="restaurant-subtabs" aria-label="Restaurantinnstillinger" role="tablist">
+    <button type="button" class="active" data-restaurant-tab="hours" role="tab" aria-selected="true">Åpen / stengt</button>
+    <button type="button" data-restaurant-tab="contact" role="tab" aria-selected="false">Kontakt</button>
+   </nav>
+   <section class="restaurant-view" id="restaurantHoursView">
+    <div class="restaurant-setting-card">
+     <header class="restaurant-card-head"><div class="restaurant-card-icon">◷</div><div><h2>Åpningstider</h2><p>Bestem hvilke dager og tider kundene kan bestille.</p></div>
+      <button type="button" id="restaurantTemporaryClose" class="restaurant-temporary-button" disabled>Steng midlertidig</button></header>
+     <div class="restaurant-state-bar"><span class="restaurant-state-dot"></span><span id="restaurantOpenStatus">Åpne fanen for å laste åpningstidene.</span></div>
+     <div class="restaurant-schedule" role="table" aria-label="Ukentlige åpningstider">
+      <div class="restaurant-schedule-head" role="row"><span>Dag</span><span>Åpen</span><span>Åpner (bestilling)</span><span>Stenger (bestilling)</span></div>
+      <div id="restaurantWeeklyRows"></div>
+     </div>
+     <div class="restaurant-closed-text"><label for="restaurantClosedMessage">Melding når det er stengt</label><input id="restaurantClosedMessage" type="text" maxlength="250" placeholder="Vi tar ikke imot bestillinger akkurat nå." disabled></div>
+    </div>
+   </section>
+   <section class="restaurant-view" id="restaurantContactView" hidden>
+    <div class="restaurant-setting-card">
+     <header class="restaurant-card-head"><div class="restaurant-card-icon">⌂</div><div><h2>Kontakt og henting</h2><p>Informasjon kundene trenger for å finne og kontakte restauranten.</p></div></header>
+     <div class="restaurant-contact-grid">
+      <label class="restaurant-field"><span>Restaurantnavn</span><input data-setting="restaurantName" maxlength="120" placeholder="KØL Grill & Pizza" disabled></label>
+      <label class="restaurant-field"><span>Logo-URL</span><input data-setting="restaurantLogo" type="url" placeholder="https://..." disabled></label>
+      <label class="restaurant-field is-wide"><span>Gateadresse</span><input data-setting="streetAddress" maxlength="200" placeholder="Gateadresse" disabled></label>
+      <label class="restaurant-field"><span>Postnummer</span><input data-setting="postalCode" maxlength="20" placeholder="2100" disabled></label>
+      <label class="restaurant-field"><span>Sted</span><input data-setting="city" maxlength="90" placeholder="Skarnes" disabled></label>
+      <label class="restaurant-field"><span>Telefon</span><input data-setting="phone" type="tel" maxlength="30" placeholder="41145353" disabled></label>
+      <label class="restaurant-field"><span>E-postadresse</span><input data-setting="email" type="email" maxlength="200" placeholder="restaurant@example.no" disabled></label>
+      <label class="restaurant-field"><span>Hentetekst</span><input data-setting="pickupInfo" maxlength="180" placeholder="Henting i restauranten" disabled></label>
+      <label class="restaurant-field"><span>Betalingstekst</span><input data-setting="paymentInfo" maxlength="180" placeholder="Betaling ved henting" disabled></label>
+     </div>
+    </div>
+   </section>
+   <p class="restaurant-form-message" id="restaurantFormMessage" role="status" aria-live="polite"></p>
+  </section>
   <div class="admin-modal-backdrop" id="categoryModalBackdrop" hidden></div>
   <section class="admin-modal admin-category-modal" id="categoryEditor" role="dialog" aria-modal="true" aria-labelledby="categoryEditorTitle" hidden>
    <form id="categoryForm" class="admin-category-form">
