@@ -210,6 +210,8 @@ function fatih1ReadLocalOrders(){
    status:localOrder.statusPublic?.status||localOrder.status,
    expectedReadyAt:localOrder.statusPublic?.expectedReadyAt||0,
    pickupLabel:localOrder.pickup?.label||'Snarest',
+   pickupMode:localOrder.pickup?.mode||'asap',
+   pickupTime:localOrder.pickup?.time||'',
    total:localOrder.total,
    items:localOrder.items
   });
@@ -238,8 +240,10 @@ function fatih1ProfileRenderOrders(){
   const created=new Date(Number(current.createdAt)||0);
   const day=Number.isFinite(created.getTime())&&created.getTime()>0?
    new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',year:'numeric'}).format(created):'';
-  const ready=Number(current.statusPublic?.expectedReadyAt||current.expectedReadyAt)||0;
-  const readyLabel=ready&&state==='godkjent'?'Forventet klar kl. '+new Intl.DateTimeFormat('nb-NO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(ready)):'';
+  const pickupRecord=current.pickup||{mode:current.pickupMode,time:current.pickupTime};
+  const statusRecord=current.statusPublic||{expectedReadyAt:current.expectedReadyAt};
+  const ready=typeof visiblePickupAt==='function'?visiblePickupAt({pickup:pickupRecord,statusPublic:statusRecord}):Number(statusRecord.expectedReadyAt)||0;
+  const readyLabel=ready&&state==='godkjent'?'Henting kl. '+new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(ready)):'';
   return '<article class="fatih1-profile-order-card">'+
    '<div class="fatih1-profile-order-head"><strong>#'+esc(String(order.id).slice(-6).toUpperCase())+'</strong><span>'+esc(day)+'</span></div>'+
    '<p><strong>'+esc(labels[state]||state)+'</strong>'+(readyLabel?' · '+esc(readyLabel):'')+'</p>'+
