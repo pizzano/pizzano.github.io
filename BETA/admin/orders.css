@@ -199,3 +199,80 @@ body.is-dialog-open{overflow:hidden}
 .orders-scheduled-accept p{margin:0 0 8px;color:#546b60;font-size:12px;line-height:1.45}
 .orders-scheduled-accept span{display:block;color:#174e3a;font-size:15px;font-weight:800}
 @media(max-width:600px){.order-product-card{padding:10px}.order-product-option{padding:6px 7px}.order-pickup-badge{font-size:9px}}
+
+
+/* Reference-aligned order inbox, November 2026. Visual-only; no Firebase calls. */
+body{background:#f7f9fc;color:#172838}
+.orders-head{background:#fff;border-bottom-color:#e6ebf0;box-shadow:0 2px 12px #102d4b08}
+.orders-main{max-width:1510px;padding:22px clamp(12px,2.6vw,40px) 38px}
+.orders-tabs{position:sticky;top:75px;z-index:9;height:74px;gap:0;margin:0 0 26px;padding:3px;border:1px solid #d8e0e9;border-radius:20px;background:#fcfdff;box-shadow:0 5px 18px #172d490a;overflow:hidden}
+.orders-tabs button{border:0;border-radius:16px 16px 12px 12px;font-size:clamp(15px,1.45vw,23px);font-weight:750;color:#6e7e91;background:transparent;position:relative;padding:12px 5px}
+.orders-tabs button.active{color:#f36b0b;background:linear-gradient(110deg,#fff9f6,#fff1ec 60%,#fff9f6);border:0}
+.orders-tabs button.active::after{content:"";position:absolute;bottom:0;left:2%;right:2%;height:5px;background:#ff6b0b;border-radius:6px}
+.orders-tabs button:hover{color:#e96c17}
+.orders-list{display:grid;gap:16px;background:transparent}
+.order-row{--order-stripe:#59c35b;min-height:124px;margin:0;border:1px solid #dce4ee;border-left:9px solid var(--order-stripe);border-radius:20px;background:#fff;box-shadow:0 6px 22px #20334d0b;overflow:hidden;transition:box-shadow .17s,border-color .17s,transform .17s}
+.order-row[data-visual-status="scheduled"]{--order-stripe:#ffb456}
+.order-row[data-visual-status="rejected"]{--order-stripe:#f04c4c;background:#fff5f7}
+.order-row[data-status="mottatt"]{--order-stripe:#ff9b3c;background:#fffaf4;border-color:#f5d3ac;border-left-color:var(--order-stripe);animation:orders-new-soft-pulse 2.4s ease-in-out infinite}
+.order-row[data-status="mottatt"] .order-row-body{background:transparent}
+.order-row:hover{transform:translateY(-1px);box-shadow:0 9px 24px #20334d16}
+.order-row-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(118px,230px) minmax(126px,175px);align-items:center;gap:0;min-height:123px;padding:12px 20px;background:transparent;will-change:transform}
+.order-open{display:flex;align-items:center;gap:20px;min-width:0;height:100%;padding:0 8px 0 0}
+.order-initial{width:65px;height:65px;border-radius:50%;background:#f0f2f5;color:#788899}
+.order-initial svg{width:33px;height:33px;stroke-width:1.75}
+.order-row[data-status="mottatt"] .order-initial{background:#ffead5;color:#bb771e}
+.order-meta{gap:5px}
+.order-name{color:#142533;font-size:clamp(16px,1.5vw,24px);font-weight:800;line-height:1.15}
+.order-status{display:block;color:#00822c;font-size:clamp(13px,1.05vw,18px);font-weight:750;line-height:1.2}
+.order-status[data-status="godkjent"],.order-status[data-status="klar"]{color:#008b37}
+.order-status[data-status="avvist"]{color:#ec4147}
+.order-sub{color:#708095;font-size:clamp(11px,.95vw,16px)}
+.order-center{display:flex;align-items:center;justify-content:center;min-width:0;min-height:70px;padding:0 12px;border-right:1px solid #d6deea}
+.order-countdown{display:inline-flex;align-items:center;justify-content:center;min-width:unset;max-width:100%;min-height:49px;padding:7px 13px;border-radius:14px;background:linear-gradient(115deg,#eaf9ee,#d6f1de);color:#064f29;font-size:clamp(15px,1.45vw,25px);font-weight:850;white-space:nowrap;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.order-countdown.is-due{background:#d6f2de;color:#05602d}
+.order-pickup-badge{margin:0;padding:9px 23px;border-radius:99px;background:linear-gradient(90deg,#e5f8eb,#d1efdc);color:#006433;font-size:clamp(13px,1.1vw,19px);font-weight:850}
+.order-pickup-badge[data-kind="SENERE"]{background:linear-gradient(90deg,#fff3df,#ffe7cf);color:#ad5a09}
+.order-end{min-width:0;min-height:70px;justify-content:center;gap:7px;padding-left:22px}
+.order-price{font-size:clamp(17px,1.4vw,23px);font-weight:800;color:#122736}
+.order-time{font-size:clamp(13px,1.03vw,18px);font-weight:500;color:#71829a}
+.orders-group-divider{margin:9px 7px 3px;font-size:11px}
+.order-swipe-action{border-radius:0 14px 14px 0}
+@media(max-width:820px){
+ .orders-main{padding:13px 10px 25px}
+ .orders-tabs{top:66px;height:57px;margin-bottom:14px;border-radius:15px}
+ .orders-tabs button{font-size:16px;border-radius:12px}
+ .orders-tabs button.active::after{height:4px}
+ .orders-list{gap:10px}
+ .order-row{min-height:94px;border-left-width:6px;border-radius:15px}
+ .order-row-body{grid-template-columns:minmax(0,1fr) minmax(85px,115px) minmax(83px,104px);min-height:93px;padding:9px 10px}
+ .order-open{gap:9px;padding-right:4px}
+ .order-initial{width:39px;height:39px}
+ .order-initial svg{width:22px;height:22px}
+ .order-name{font-size:14px}
+ .order-status{font-size:11px}
+ .order-sub{font-size:10px}
+ .order-center{min-height:50px;padding:0 5px}
+ .order-countdown{font-size:13px;min-height:35px;padding:6px}
+ .order-pickup-badge{font-size:11px;padding:6px 9px}
+ .order-end{min-height:50px;padding-left:9px}
+ .order-price{font-size:15px}
+ .order-time{font-size:12px}
+}
+@media(max-width:430px){
+ .order-row-body{grid-template-columns:minmax(0,1fr) 76px 66px;gap:0;padding:8px 5px}
+ .order-open{gap:6px}
+ .order-initial{width:31px;height:31px}
+ .order-initial svg{width:18px;height:18px}
+ .order-name{font-size:12px}
+ .order-status{font-size:10px}
+ .order-sub{font-size:9px}
+ .order-center{padding:0 3px}
+ .order-countdown{font-size:10px;border-radius:8px;padding:5px 3px;letter-spacing:-.05em}
+ .order-pickup-badge{font-size:9px;padding:5px}
+ .order-end{padding-left:5px}
+ .order-price{font-size:12px}
+ .order-time{font-size:10px}
+}
+@media print{body{background:#fff}.orders-list,.orders-tabs{display:none!important}}
+@media(prefers-reduced-motion:reduce){.order-row{transition:none}.order-row:hover{transform:none}}
