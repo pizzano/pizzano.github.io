@@ -107,3 +107,46 @@ body.is-dialog-open{overflow:hidden}
 @media(max-width:600px){.orders-head{padding:8px 13px;height:54px}.orders-tabs{top:54px}.orders-main{padding:0 6px}.orders-connection span{display:none}.order-row-body{padding:10px 6px}.order-initial{width:31px;height:31px}.order-initial svg{width:19px;height:19px}.order-open{gap:8px}.order-name{font-size:12px}.orders-sheet-header{min-height:64px;padding:8px 11px}.orders-detail{padding:0 13px 16px}.orders-action-bar{padding:11px}.detail-facts{gap:11px}}
 @media print{.orders-head,.orders-main,.orders-sheet-overlay,.orders-sheet-header,.orders-action-bar,.orders-dialog-overlay{display:none!important}.orders-sheet{position:static;max-width:none;display:block;box-shadow:none}.orders-detail{overflow:visible!important}.detail-items,.detail-facts{break-inside:avoid}}
 @media(prefers-reduced-motion:reduce){.order-row-body,.orders-tabs button{transition:none}}
+
+
+/* Reception polish — gentle contrast, a clear new-order signal, and spacing. */
+:root{--orange:#e87f1e;--green:#36a95a;--line:#e8eceb}
+.orders-head{box-shadow:0 2px 12px #14392808}
+.orders-main{max-width:1000px}
+.orders-tabs button{font-weight:600;letter-spacing:.01em}
+.orders-tabs button.active{font-weight:750}
+.orders-feedback{border-radius:10px;box-shadow:0 2px 8px #11261a08}
+.order-row{border:1px solid transparent;border-bottom-color:#e8eeec;border-radius:12px;margin:4px 3px;background:#fff;transition:background-color .2s,border-color .2s,box-shadow .2s}
+.order-row:hover{background:#fcfefd;border-color:#d8e9df;box-shadow:0 3px 12px #162f2010}
+.order-row[data-status="mottatt"]{border-color:#f6d4a7;background:#fff9f1;box-shadow:0 3px 15px #e59c4a12;animation:orders-new-soft-pulse 2.4s ease-in-out infinite}
+.order-row[data-status="mottatt"] .order-row-body{background:transparent}
+.order-row[data-status="mottatt"] .order-initial{background:#ffead0;color:#c77716}
+.order-row[data-status="mottatt"] .order-status{color:#bd6f16;font-weight:750}
+.order-new-indicator{display:inline-block;width:8px;height:8px;margin-right:7px;vertical-align:middle;border-radius:50%;background:#e88820;box-shadow:0 0 0 3px #ffddae;animation:orders-new-dot 1.3s ease-in-out infinite}
+.orders-group-divider{display:flex;align-items:center;gap:13px;margin:20px 9px 12px;color:#86948d;font-size:10px;font-weight:750;letter-spacing:.055em;text-transform:uppercase}
+.orders-group-divider::before,.orders-group-divider::after{content:"";height:1px;background:#e3eae6;flex:1}
+.order-row-body{padding:13px 13px}
+.order-name{font-size:13px}
+.order-price{font-size:12px;font-weight:700;color:#394b43}
+.order-status[data-status="godkjent"],.order-status[data-status="klar"]{color:#218b53}
+.orders-sheet{box-shadow:0 10px 45px #0c2a201e}
+.orders-sheet-header{background:#fcfefd}
+.orders-detail{background:#fff}
+.detail-facts{column-gap:20px}
+.orders-dialog{width:min(340px,100%);border:1px solid #e6ede7;border-radius:15px;box-shadow:0 24px 70px #051b1640;padding:22px}
+.orders-dialog h3{font-size:17px;font-weight:750;color:#273e33}
+.orders-dialog .orders-primary,.orders-dialog .orders-danger{border-radius:9px;min-height:45px}
+.orders-minute-field input{width:155px;max-width:calc(100% - 110px);border:1px solid #c8dcd0;border-radius:12px;min-height:42px;font-size:15px;font-weight:650}
+.orders-minute-field input::placeholder{color:#929e98;font-size:12px;font-weight:500;opacity:1}
+.orders-minute-field button{flex:none;width:34px;height:34px;border-color:#e8a45e;transition:background .15s}
+.orders-minute-field button:hover{background:#fff0df}
+@keyframes orders-new-soft-pulse{
+  0%,100%{border-color:#f3d6b0;box-shadow:0 2px 8px #dc933610}
+  50%{border-color:#e69c42;box-shadow:0 2px 15px #e89d4433}
+}
+@keyframes orders-new-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+@media(max-width:600px){.order-row{margin:4px 1px}.order-row-body{padding:11px 9px}.orders-group-divider{margin-top:18px}}
+@media(prefers-reduced-motion:reduce){
+ .order-row[data-status="mottatt"],.order-new-indicator{animation:none}
+ .order-row{transition:none}
+}
