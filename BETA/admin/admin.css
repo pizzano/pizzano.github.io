@@ -300,3 +300,83 @@ body.admin-modal-open{overflow:hidden}
 /* Navigation link to the dedicated order-taking screen. */
 a.admin-nav-orders{text-decoration:none;white-space:nowrap}
 a.admin-nav-orders:hover{background:#214c3c;color:#fff;border-color:#4a9c70}
+
+
+/* Restaurantinnstillinger: compact cards, modern weekly hours and contact editor */
+.restaurant-page{display:grid;gap:17px;max-width:1320px;margin:0 auto;padding-bottom:45px}
+.restaurant-page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:8px 4px 3px}
+.restaurant-overline{display:block;color:#087e60;font-size:10px;font-weight:850;letter-spacing:.15em}
+.restaurant-page-header h1{margin:4px 0;font-size:clamp(22px,2.3vw,30px);line-height:1.2;color:#153d30}
+.restaurant-page-header p{margin:4px 0;color:#6d847b;font-size:12px}
+.restaurant-save-tools{display:flex;align-items:center;gap:12px}
+#restaurantSaveStatus{font-size:11px;color:#778b7e;white-space:nowrap}
+.restaurant-save{border:0;border-radius:11px;padding:11px 17px;min-height:39px;background:#07835f;color:#fff;font-size:12px;font-weight:800;box-shadow:0 5px 14px #0a6c4a23;white-space:nowrap}
+.restaurant-save:hover:not(:disabled){background:#006b4c}
+.restaurant-save:disabled{background:#c7d8d0;color:#628070;box-shadow:none;opacity:1;cursor:default}
+.restaurant-subtabs{display:flex;gap:7px;background:#e7efea;border:1px solid #d8e6dd;border-radius:14px;padding:5px;width:fit-content;max-width:100%}
+.restaurant-subtabs button{min-width:140px;padding:10px 17px;border:0;border-radius:10px;background:transparent;color:#597367;font-size:13px;font-weight:800}
+.restaurant-subtabs button.active{background:#fff;box-shadow:0 2px 9px #16452a15;color:#087c5d}
+.restaurant-setting-card{background:#fff;border:1px solid #dce9e2;border-radius:18px;padding:22px 24px;box-shadow:0 7px 24px #163b2909}
+.restaurant-card-head{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.restaurant-card-head>div:nth-child(2){flex:1;min-width:0}
+.restaurant-card-head h2{margin:0;font-size:18px;color:#183d30;font-weight:850}
+.restaurant-card-head p{margin:4px 0 0;color:#778c80;font-size:12px}
+.restaurant-card-icon{display:grid;place-items:center;width:44px;height:44px;flex:none;border-radius:13px;background:#ecf8f0;color:#08835f;font-size:24px;font-weight:800}
+.restaurant-temporary-button{flex:none;border:1px solid #f4c8c7;border-radius:11px;padding:10px 14px;background:#fff3f3;color:#df3e37;font-weight:800;font-size:12px}
+.restaurant-temporary-button.is-closed{background:#eaf6ed;border-color:#bce0c8;color:#147d50}
+.restaurant-temporary-button:disabled{opacity:.5;cursor:default}
+.restaurant-state-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 13px;border:1px solid #f1ddd3;border-radius:10px;background:#fffaf6;color:#986236;font-size:12px;font-weight:750}
+.restaurant-state-bar.is-open{border-color:#c9e9d4;background:#f0faf3;color:#09804d}
+.restaurant-state-dot{width:9px;height:9px;flex:none;border-radius:99px;background:currentColor}
+.restaurant-schedule{overflow:hidden;border:1px solid #e1ebe6;border-radius:14px}
+.restaurant-schedule-head,.restaurant-schedule-row{display:grid;grid-template-columns:minmax(180px,1.1fr) minmax(65px,.35fr) minmax(125px,.9fr) minmax(125px,.9fr);gap:14px;align-items:center;padding:9px 15px}
+.restaurant-schedule-head{background:#f2f7f4;color:#6b8476;font-size:11px;font-weight:800;letter-spacing:.02em}
+.restaurant-schedule-row{min-height:63px;background:#fff;border-top:1px solid #e9f0ec}
+.restaurant-schedule-row:nth-child(even){background:#fcfefd}
+.restaurant-schedule-row.is-closed{background:#f9fbfa}
+.restaurant-week-day{display:flex;align-items:center;gap:12px;min-width:0}
+.restaurant-week-day b{display:grid;place-items:center;width:41px;height:35px;flex:none;border-radius:9px;background:#eaf5ed;color:#0a8259;font-size:11px}
+.restaurant-week-day strong{color:#253d32;font-size:13px}
+.restaurant-switch{display:flex;align-items:center;cursor:pointer;width:52px}
+.restaurant-switch input{position:absolute;opacity:0;width:1px;height:1px}
+.restaurant-switch span{display:block;position:relative;width:48px;height:26px;border-radius:40px;background:#b9c9c2;transition:background .15s}
+.restaurant-switch span:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px #183b291e;transition:transform .15s}
+.restaurant-switch input:checked+span{background:#078c62}
+.restaurant-switch input:checked+span:after{transform:translateX(22px)}
+.restaurant-switch input:focus-visible+span{outline:3px solid #e0bf68;outline-offset:2px}
+.restaurant-week-time input{width:100%;min-height:39px;border:1px solid #d4e3dc;border-radius:10px;background:#fff;padding:6px 11px;color:#213b30;font-size:13px;font-weight:650}
+.restaurant-week-time input:focus{border-color:#25a779;outline:2px solid #daf1e6}
+.restaurant-week-time .restaurant-closed-hint{display:none;font-size:11px;font-weight:750;color:#8d9d93}
+.restaurant-schedule-row.is-closed .restaurant-week-time input{display:none}
+.restaurant-schedule-row.is-closed .restaurant-closed-hint{display:block}
+.restaurant-closed-text{display:grid;gap:7px;margin-top:18px}
+.restaurant-closed-text label,.restaurant-field>span{font-size:12px;color:#60766c;font-weight:700}
+.restaurant-closed-text input,.restaurant-field input{width:100%;height:43px;border:1px solid #dbe7df;border-radius:10px;background:#fff;padding:10px 13px;color:#223b30;font-size:13px}
+.restaurant-closed-text input:focus,.restaurant-field input:focus{outline:2px solid #d2eedf;border-color:#19a073}
+.restaurant-contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.restaurant-field{display:grid;align-content:start;gap:7px;min-width:0}
+.restaurant-field.is-wide{grid-column:1/-1}
+.restaurant-form-message{margin:0;color:#087c53;font-size:12px;font-weight:650;min-height:16px}
+.restaurant-form-message.error{color:#bf3535}
+@media(max-width:700px){
+ .restaurant-page{gap:12px}
+ .restaurant-page-header{align-items:flex-start;flex-direction:column}
+ .restaurant-save-tools{justify-content:space-between;width:100%}
+ .restaurant-setting-card{padding:14px 11px;border-radius:14px}
+ .restaurant-card-head{flex-wrap:wrap;gap:9px}
+ .restaurant-card-head h2{font-size:16px}
+ .restaurant-card-head .restaurant-temporary-button{margin-left:auto}
+ .restaurant-schedule-head,.restaurant-schedule-row{grid-template-columns:minmax(90px,1fr) 48px minmax(68px,1fr) minmax(68px,1fr);gap:6px;padding:9px 6px}
+ .restaurant-schedule-head{font-size:9px}
+ .restaurant-week-day{gap:5px}
+ .restaurant-week-day b{width:27px;height:29px;font-size:9px}
+ .restaurant-week-day strong{font-size:11px}
+ .restaurant-switch{width:35px}
+ .restaurant-switch span{width:34px;height:21px}
+ .restaurant-switch span:after{width:15px;height:15px}
+ .restaurant-switch input:checked+span:after{transform:translateX(13px)}
+ .restaurant-week-time input{min-height:34px;padding:5px 3px;font-size:11px}
+ .restaurant-contact-grid{grid-template-columns:1fr;gap:12px}
+ .restaurant-subtabs{width:100%}
+ .restaurant-subtabs button{flex:1;min-width:0}
+}
