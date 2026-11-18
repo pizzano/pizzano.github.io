@@ -314,6 +314,19 @@
   if(notes.length)details.push('<div class="order-product-option is-alert"><span><b>Kommentar:</b> '+safe([...new Set(notes)].join(' · '))+'</span></div>');
   return details.join('');
  }
+ function scheduledPickupLabel(order){
+  const stamp=scheduledPickupTimestamp(order?.pickup);
+  if(!stamp)return String(order?.pickup?.label||'Velg tid');
+  const osloDate=(value)=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
+  const today=osloDate(Date.now());
+  const target=osloDate(stamp);
+  const tomorrow=osloDate(Date.now()+86400000);
+  const clock=new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit'}).format(new Date(stamp));
+  if(target===today)return 'I dag kl. '+clock;
+  if(target===tomorrow)return 'I morgen kl. '+clock;
+  const date=new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',day:'numeric',month:'short'}).format(new Date(stamp));
+  return date+' kl. '+clock;
+ }
  function renderDetails(){
   const o=orders.get(activeId);
   if(!o)return;
@@ -336,7 +349,9 @@
    '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+' <span class="order-pickup-badge" data-kind="'+pickupKind(o)+'">'+pickupKind(o)+'</span></div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
    '<details class="detail-customer-accordion" data-detail-accordion="'+safe(o.id)+'"'+(wasExpanded?' open':'')+'>'+
    '<summary><span class="detail-accordion-customer"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
-   '<span class="detail-accordion-prep"><small>Tilberedning</small><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong></span>'+
+   '<span class="detail-accordion-prep">'+(pickupKind(o)==='SENERE'?
+    '<small>SENERE</small><strong>SENERE · '+safe(scheduledPickupLabel(o))+'</strong>':
+    '<small>Tilberedning</small><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong>')+'</span>'+
    '<span class="detail-accordion-chevron" aria-hidden="true">⌄</span></summary>'+
    '<div class="detail-facts"><div><label>Bestillings-ID</label><strong>#'+safe(o.id.slice(-8).toUpperCase())+'</strong></div>'+
    '<div><label>Bestilt</label><strong>'+fmtDate(o.createdAt)+'</strong></div>'+
