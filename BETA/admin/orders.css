@@ -339,3 +339,12 @@ body{background:#f7f9fc;color:#172838}
  .order-price{font-size:11px}
  .order-time{font-size:9px}
 }
+
+
+/* Fix: opaque card layer hides the swipe-to-ready button until a swipe reveals it. */
+.order-row-body{position:relative;z-index:1;width:100%;background:#fff}
+.order-row[data-status="mottatt"] .order-row-body{background:#fffaf4}
+.order-row[data-visual-status="rejected"] .order-row-body{background:#fff5f7}
+.order-row.is-swiped .order-row-body{transform:translateX(-90px)}
+.order-row:not(.is-swiped) .order-swipe-action{pointer-events:none}
+.order-swipe-action{z-index:0;width:90px}
