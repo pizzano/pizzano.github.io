@@ -36,6 +36,51 @@
 
  let auth=null,stream=null,orders=new Map(),filter='all',activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
+ let countdownTicker=null,automaticReadyBusy=false;
+ const autoReadyAttempts=new Map();
+ function remainingCountdown(time,now=Date.now()){
+  const left=Math.max(0,Math.ceil((Number(time)-now)/1000));
+  const minutes=Math.floor(left/60),seconds=left%60;
+  return String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
+ }
+ function updateCountdowns(){
+  const now=Date.now();
+  for(const node of document.querySelectorAll('[data-countdown-id]')){
+   const order=orders.get(node.dataset.countdownId);
+   if(!order||order.status!=='godkjent'||!Number.isFinite(Number(order.expectedReadyAt))){
+    node.textContent='';continue;
+   }
+   const time=Number(order.expectedReadyAt);
+   node.textContent=time>now?remainingCountdown(time,now)+' igjen':'00:00 · Klar nå';
+   node.classList.toggle('is-due',time<=now);
+  }
+ }
+ function stopCountdowns(){
+  if(countdownTicker!==null){clearInterval(countdownTicker);countdownTicker=null}
+ }
+ function startCountdowns(){
+  stopCountdowns();
+  if(!authReady())return;
+  updateCountdowns();
+  countdownTicker=setInterval(()=>{
+   if(document.hidden||!authReady()||!initialLoaded)return;
+   updateCountdowns();
+   void finalizeDueOrder();
+  },1000);
+ }
+ async function finalizeDueOrder(){
+  if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
+  const now=Date.now();
+  const due=[...orders.values()].filter(o=>o.status==='godkjent'&&Number.isFinite(Number(o.expectedReadyAt))&&Number(o.expectedReadyAt)>0&&Number(o.expectedReadyAt)<=now)
+   .sort((a,b)=>Number(a.expectedReadyAt)-Number(b.expectedReadyAt));
+  const order=due.find(o=>now-(autoReadyAttempts.get(o.id)||0)>60000);
+  if(!order)return;
+  autoReadyAttempts.set(order.id,now);
+  automaticReadyBusy=true;
+  try{await changeStatus(order.id,'klar',{},true)}
+  catch(error){console.warn('BestillOnline: automatisk klar feilet',error);feedback('Automatisk klar kunne ikke lagres. Prøv Klar manuelt.',true)}
+  finally{automaticReadyBusy=false}
+ }
  const streamQuery='orderBy=%22%24key%22&limitToLast=101';
  const show=(id,visible)=>{$(id).hidden=!visible};
  const text=(id,value)=>{$(id).textContent=value};
@@ -64,6 +109,7 @@
   await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
  }
  function logoutView(message=''){
+  stopCountdowns();
   closeStream();orders.clear();renderedIds='';activeId=null;
   show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);
   closeSheet();closeDialog();
@@ -114,6 +160,7 @@
    }catch{}
   })();
   await connectOrders();
+  startCountdowns();
  }
  function closeStream(){if(stream){stream.close();stream=null}initialLoaded=false}
  function isOrder(value,id){
@@ -158,6 +205,8 @@
    receivedPatch(payload.path,payload.data,patch);
    initialLoaded=true;lastEventAt=Date.now();connection('Tilkoblet',true);
    render();
+   updateCountdowns();
+   void finalizeDueOrder();
    if(orders.size>=101)void requestPrune();
    if(activeId&&!orders.has(activeId))closeSheet();
   }catch(error){console.warn('BestillOnline: ugyldig ordreoppdatering',error)}
@@ -218,10 +267,12 @@
     '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
     '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
     '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
+    (order.status==='godkjent'?'<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':'')+
     '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
     '</div></article>';
   }).join('');
   if(activeId&&orders.has(activeId))renderDetails();
+  updateCountdowns();
  }
  function itemSummary(line){
   const pieces=[];
@@ -238,6 +289,8 @@
  function renderDetails(){
   const o=orders.get(activeId);
   if(!o)return;
+  const previous=$('ordersDetail').querySelector('.detail-customer-accordion');
+  const wasExpanded=previous?.open&&previous.dataset.detailAccordion===o.id;
   text('detailTitle',money(o.total));
   const pickup=o.pickup||{},items=Array.isArray(o.items)?o.items:[];
   const phone=String(o.phone||o.customer?.phone||'').replace(/[^+\d]/g,'');
@@ -253,14 +306,17 @@
   }).join('');
   $('ordersDetail').innerHTML=
    '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+'</div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
+   '<details class="detail-customer-accordion" data-detail-accordion="'+safe(o.id)+'"'+(wasExpanded?' open':'')+'>'+
+   '<summary><span class="detail-accordion-customer"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
+   '<span class="detail-accordion-prep"><small>Tilberedning</small><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong></span>'+
+   '<span class="detail-accordion-chevron" aria-hidden="true">⌄</span></summary>'+
    '<div class="detail-facts"><div><label>Bestillings-ID</label><strong>#'+safe(o.id.slice(-8).toUpperCase())+'</strong></div>'+
    '<div><label>Bestilt</label><strong>'+fmtDate(o.createdAt)+'</strong></div>'+
    '<div><label>Godkjent</label><strong>'+fmtDate(o.acceptedAt)+'</strong></div>'+
    '<div><label>Henting</label><strong>'+safe(pickup.label||'Snarest')+'</strong></div>'+
-   '<div><label>Kunde</label><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></div>'+
    '<div><label>Telefon</label>'+phoneLink+'</div>'+
    (mail?'<div><label>E-post</label><strong>'+safe(mail)+'</strong></div>':'')+
-   '<div><label>Tilberedning</label><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong></div></div>'+
+   '</div></details>'+
    '<section class="detail-items"><h3>Produkter</h3>'+lines+'</section>'+
    (o.rejectReason?'<p class="orders-feedback error">Avvist: '+safe(o.rejectReason)+'</p>':'')+
    '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>';
@@ -291,7 +347,7 @@
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
- async function changeStatus(id,status,extra={}){
+ async function changeStatus(id,status,extra={},automatic=false){
   if(pendingAction)return;
   const old=orders.get(id);
   if(!old)throw Error('Bestillingen finnes ikke lenger.');
@@ -307,6 +363,9 @@
    if(!etag)throw Error('Firebase returnerte ikke ETag. Bestillingen ble ikke endret.');
    const current=await response.json();
    if(!current||current.status!==old.status)throw Error('Bestillingen ble endret av en annen administrator. Oppdater siden.');
+   if(automatic&&(status!=='klar'||current.status!=='godkjent'||!Number.isFinite(Number(current.expectedReadyAt))||Number(current.expectedReadyAt)<=0||Number(current.expectedReadyAt)>Date.now())){
+    return;
+   }
    const changedAt=Date.now();
    const next={...current,...extra,status,updatedAt:changedAt};
    if(status==='godkjent'){
@@ -338,9 +397,10 @@
    orders.set(id,next);
    render();
    closeDialog();
-   feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
+   if(!automatic)feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
+   if(status==='godkjent')void finalizeDueOrder();
    // Leave the successful result visible briefly, then return to the order inbox.
-   if(activeId===id&&!$('ordersSheet').hidden){
+   if(!automatic&&activeId===id&&!$('ordersSheet').hidden){
     const completedId=id;
     window.setTimeout(()=>{
      if(activeId===completedId){
@@ -444,6 +504,10 @@
    try{await changeStatus(activeId,'avvist',{rejectReason:reason.slice(0,180)})}
    catch(error){feedback(error.message,true)}
    finally{$('ordersConfirmReject').disabled=false}
+  });
+  document.addEventListener('visibilitychange',()=>{
+   if(document.hidden)stopCountdowns();
+   else{startCountdowns();void finalizeDueOrder()}
   });
   document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;
    if(!$('ordersAcceptOverlay').hidden||!$('ordersRejectOverlay').hidden)closeDialog();
