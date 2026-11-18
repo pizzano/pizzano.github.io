@@ -548,7 +548,7 @@ html,body{min-height:100%;overflow-x:clip}
 .draft-tracking{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .draft-tracking>span{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;color:#6e8a7f;font-size:var(--text-sm)}
 .draft-tracking>span:not(:last-child)::after{content:"";position:absolute;top:8px;left:calc(50% + 13px);width:calc(100% - 18px);height:4px;border-radius:10px;background:#c7ddd3}
-.draft-tracking>span.is-done:not(:last-child)::after{background:#07855f}
+.draft-tracking>span.is-done:has(+ .is-done)::after{background:#07855f}
 .draft-tracking>span:nth-child(2).is-done:has(+ .is-preparing)::after{background:#e0b23d}
 .draft-tracking i{display:block;width:20px;height:20px;border:2px solid #bedbd0;border-radius:50%;background:#fff}
 .draft-tracking .is-done{color:#087b57;font-weight:750}
