@@ -531,6 +531,100 @@ let customerContact=readLocalData(FATIH1_CONTACT_STORAGE_KEY,{name:'',phone:'',e
 let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:'',label:''});
 let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
 let checkoutStep='cart',localOrderExpiryTimer=null;
+const ORDER_STATUS_LABELS={
+ mottatt:'Venter på godkjenning',
+ godkjent:'Bestillingen er godkjent',
+ klar:'Klar til henting',
+ avvist:'Bestillingen er avvist'
+};
+// The customer's own order: one EventSource stream (Firebase REST onValue
+// equivalent). The server sends the first state and subsequent changes.
+// No timer or repeated GET; the stream closes when the tab is hidden, order
+// is cleared or the status becomes final.
+let customerStatusStream=null,customerStatusId='';
+function stopCustomerStatus(){
+ if(customerStatusStream){customerStatusStream.close();customerStatusStream=null}
+ customerStatusId='';
+}
+function pickupClock(timestamp){
+ const date=new Date(Number(timestamp));
+ if(!Number.isFinite(date.getTime()))return '';
+ return new Intl.DateTimeFormat('nb-NO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(date);
+}
+function localPublicStatus(){
+ const value=localOrder?.statusPublic;
+ return value&&Object.hasOwn(ORDER_STATUS_LABELS,value.status)?value:{status:'mottatt'};
+}
+function displayLiveOrderStatus(){
+ if(!localOrder)return;
+ const state=localPublicStatus();
+ const label=ORDER_STATUS_LABELS[state.status]||ORDER_STATUS_LABELS.mottatt;
+ const supplement=state.status==='godkjent'&&state.expectedReadyAt?' · Klar ca. kl. '+pickupClock(state.expectedReadyAt):'';
+ const subtitle=$('draftActiveSubtitle');
+ if(subtitle)subtitle.textContent=label+supplement;
+ const status=$('draftConfirmationStatus');
+ if(status)status.textContent=label;
+ const info=$('draftConfirmationTimer');
+ if(info)info.textContent=state.status==='godkjent'&&state.expectedReadyAt?
+  'Forventet klar kl. '+pickupClock(state.expectedReadyAt):
+  state.status==='klar'?'Du kan hente bestillingen din nå.':
+  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):
+  'Restauranten bekrefter hentetid når bestillingen godtas.';
+}
+function onCustomerStatusUpdate(value){
+ if(!localOrder||!value||typeof value!=='object'||
+    !Object.hasOwn(ORDER_STATUS_LABELS,value.status))return;
+ const incoming=Number(value.updatedAt)||0;
+ if(incoming<(Number(localOrder.statusPublic?.updatedAt)||0))return;
+ const statusPublic={
+  status:value.status,updatedAt:incoming,
+  ...(Number(value.expectedReadyAt)>0?{expectedReadyAt:Number(value.expectedReadyAt)}:{}),
+  ...(value.rejectReason?{rejectReason:String(value.rejectReason).slice(0,180)}:{})
+ };
+ if(JSON.stringify(localOrder.statusPublic)!==JSON.stringify(statusPublic)){
+  localOrder.statusPublic=statusPublic;
+  localOrder.status=statusPublic.status;
+  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+ }
+ displayLiveOrderStatus();
+ if(value.status==='klar'||value.status==='avvist')stopCustomerStatus();
+}
+function beginCustomerStatus(){
+ if(document.hidden||!localOrder?.id)return;
+ const id=String(localOrder.id);
+ if(!/^ord_[0-9]{13}_[a-f0-9]{12}$/.test(id))return;
+ if(customerStatusStream&&customerStatusId===id)return;
+ stopCustomerStatus();
+ if(['klar','avvist'].includes(localPublicStatus().status))return;
+ customerStatusId=id;
+ const stream=new EventSource(BASE+'/ORDERS/'+encodeURIComponent(id)+'/statusPublic.json');
+ customerStatusStream=stream;
+ let snapshot=null;
+ const update=(event,patch)=>{
+  if(customerStatusStream!==stream||localOrder?.id!==id)return;
+  try{
+   const data=JSON.parse(event.data),path=String(data.path||'/');
+   if(!patch||path==='/')snapshot=data.data&&typeof data.data==='object'?data.data:null;
+   else if(snapshot&&path.startsWith('/')){
+    const keys=path.split('/').filter(Boolean);
+    let target=snapshot;
+    for(const key of keys.slice(0,-1)){
+     if(typeof target[key]!=='object'||target[key]===null)target[key]={};
+     target=target[key];
+    }
+    if(data.data===null)delete target[keys.at(-1)];
+    else target[keys.at(-1)]=data.data;
+   }
+   onCustomerStatusUpdate(snapshot);
+  }catch(error){console.warn('BestillOnline: statusoppdatering kunne ikke leses',error)}
+ };
+ stream.addEventListener('put',event=>update(event,false));
+ stream.addEventListener('patch',event=>update(event,true));
+ stream.addEventListener('cancel',()=>{if(customerStatusStream===stream)stopCustomerStatus()});
+ stream.addEventListener('auth_revoked',()=>{if(customerStatusStream===stream)stopCustomerStatus()});
+ // Native EventSource reconnects on temporary connection loss.
+}
+
 function localOrderStatus(){
  if(!localOrder)return 'none';
  if(localOrder.status==='pending'&&Number(localOrder.expiresAt)<=Date.now()){
@@ -547,7 +641,7 @@ function renderDraftActiveOrder(){
  const pending=localOrderStatus()==='pending';
  $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
  $('draftActiveTitle').textContent='Bestilling sendt';
- $('draftActiveSubtitle').textContent='Sendt til restauranten · Venter på godkjenning';
+ displayLiveOrderStatus();
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
  if(pending&&!localOrderExpiryTimer){
   // Only one local expiry callback is needed; there is no live countdown.
@@ -566,8 +660,7 @@ function renderDraftConfirmation(){
  $('draftConfirmationNumber').textContent=String(localOrder.id||'').slice(-6).toUpperCase();
  $('draftConfirmationPickup').textContent=localOrder.pickup?.label||'Snarest';
  $('draftConfirmationTotal').textContent=money(localOrder.total);
- $('draftConfirmationStatus').textContent='Venter på godkjenning';
- $('draftConfirmationTimer').textContent='Bestillingen er sendt til restauranten';
+ displayLiveOrderStatus();
 }
 function showDraftConfirmation(){
  if(!localOrder)return;
@@ -575,6 +668,7 @@ function showDraftConfirmation(){
  hideAll();
  renderDraftConfirmation();
  show('draftConfirmation');
+ beginCustomerStatus();
 }
 function showCheckoutError(message,field){
  const error=$('checkoutError');
@@ -798,7 +892,7 @@ async function submitDraftOrder(){
  }));
  const order={
   schema:1,id,source:'BestillOnline',channel:'web',fulfillment:'pickup',
-  status:'mottatt',createdAt:now,currency:'NOK',
+  status:'mottatt',statusPublic:{status:'mottatt',updatedAt:now},createdAt:now,currency:'NOK',
   name:customerContact.name.slice(0,120),phone:'+47'+customerContact.phone,
   ...(customerContact.email?{email:customerContact.email.slice(0,200)}:{}),
   pickup:{...pickup,timeZone:'Europe/Oslo'},items,total:calculateCartTotal(cart)
@@ -814,7 +908,9 @@ async function submitDraftOrder(){
     throw Error('Restauranten kan ikke motta bestillinger ennå (Firebase-regler mangler).');
    throw Error('Kunne ikke sende bestillingen (HTTP '+result.status+').');
   }
+  stopCustomerStatus();
   localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
+
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
   cart=[];saveCart();
   renderDraftActiveOrder();showDraftConfirmation();
@@ -865,12 +961,18 @@ document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftViewOrder').onclick=showDraftConfirmation;
 $('draftConfirmationClose').onclick=returnToMenu;
-$('draftClearOrder').onclick=()=>{localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Lokal bestillingsoversikt er fjernet')};
+$('draftClearOrder').onclick=()=>{stopCustomerStatus();localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Lokal bestillingsoversikt er fjernet')};
 }
 
 // Cart owns its own initialization and stored draft order display.
 document.addEventListener('DOMContentLoaded',()=>{
  cleanupRetiredCartStorage();
  renderDraftActiveOrder();
+ beginCustomerStatus();
+ document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)stopCustomerStatus();
+  else beginCustomerStatus();
+ });
+ window.addEventListener('pagehide',stopCustomerStatus);
  initCartEvents();
 });

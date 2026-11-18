@@ -10,7 +10,7 @@
  const money=value=>Math.round(Number(value)||0).toLocaleString('nb-NO')+' kr';
  const fmtTime=value=>value?new Intl.DateTimeFormat('nb-NO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const fmtDate=value=>value?new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
- const statusNames={mottatt:'Venter på godkjenning',godkjent:'Godkjent · under tilberedning',klar:'Klar til henting',avvist:'Avvist'};
+ const statusNames={mottatt:'Ny bestilling',godkjent:'✓ Godkjent og under tilberedning',klar:'✓ Klar til henting',avvist:'✕ Avvist'};
  let auth=null,stream=null,orders=new Map(),filter='all',activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
  const streamQuery='orderBy=%22%24key%22&limitToLast=101';
@@ -162,33 +162,32 @@
    .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)||String(b.id).localeCompare(String(a.id)))
    .slice(0,100);
  }
+ const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  const count=status=>all.filter(o=>o.status===status).length;
-  text('countAll',all.length);text('countNew',count('mottatt'));
-  text('countProgress',count('godkjent'));text('countReady',count('klar'));text('countRejected',count('avvist'));
-  text('ordersNewBadge',count('mottatt')+' nye');
   const filtered=filter==='all'?all:all.filter(o=>o.status===filter);
   document.querySelectorAll('.orders-tabs button').forEach(button=>{
    const active=button.dataset.filter===filter;
    button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
   });
   $('ordersEmpty').hidden=filtered.length>0;
-  $('ordersEmpty').querySelector('strong').textContent=filter==='all'?'Ingen bestillinger ennå':'Ingen bestillinger med denne statusen';
+  $('ordersEmpty').querySelector('strong').textContent=filter==='all'?'Ingen bestillinger':'Ingen bestillinger her';
   $('ordersList').innerHTML=filtered.map(order=>{
-   const name=safe(order.name||order.customer?.fullName||'Kunde');
    const id=safe(String(order.id).slice(-6).toUpperCase());
+   const name=safe(order.name||order.customer?.fullName||'Kunde');
    const items=Array.isArray(order.items)?order.items:[];
    const qty=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
    const showReady=order.status==='godkjent';
+   const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):fmtTime(order.createdAt);
    return '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'">'+
-    '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
-    '<span class="order-initial">'+safe(name.trim().charAt(0).toUpperCase()||'B')+'</span>'+
-    '<span class="order-meta"><strong class="order-name">'+name+'</strong>'+
-    '<span class="order-sub">#'+id+' · '+qty+' varer · Henting</span>'+
-    '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span></span></button>'+
-    '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+fmtDate(order.createdAt)+'</small></span>'+
-    (showReady?'<button class="order-quick-ready" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker som klar: '+name+'">✓ Klar</button>':'')+'</article>';
+    (showReady?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
+    '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
+    '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
+    '<strong class="order-name">'+name+'</strong>'+
+    '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
+    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
+    '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
+    '</div></article>';
   }).join('');
   if(activeId&&orders.has(activeId))renderDetails();
  }
@@ -207,30 +206,35 @@
  function renderDetails(){
   const o=orders.get(activeId);
   if(!o)return;
-  text('detailTitle','#'+o.id.slice(-6).toUpperCase());
+  text('detailTitle',money(o.total));
   const pickup=o.pickup||{},items=Array.isArray(o.items)?o.items:[];
   const phone=String(o.phone||o.customer?.phone||'').replace(/[^+\d]/g,'');
   const mail=String(o.email||o.customer?.email||'');
-  const link=phone?'<a href="tel:'+safe(phone)+'">'+safe(phone)+'</a>':'—';
-  const accept=o.acceptedAt?'Klar kl. '+fmtTime(o.expectedReadyAt):'Venter på bekreftelse';
-  const lines=items.map(line=>'<div class="detail-item"><div class="detail-item-main"><strong>'+
-   Math.max(1,Number(line.qty)||1)+' × '+safe(line.name||'Produkt')+'</strong>'+
-   (itemSummary(line)?'<small>'+itemSummary(line)+'</small>':'')+'</div>'+
-   '<span class="detail-item-price">'+money((Number(line.unitPrice)||0)*Math.max(1,Number(line.qty)||1))+'</span></div>').join('');
+  const phoneLink=phone?'<a href="tel:'+safe(phone)+'">'+safe(phone)+'</a>':'—';
+  const when=o.expectedReadyAt?'Forventet klar: '+fmtDate(o.expectedReadyAt):'Hentetid bekreftes ved godkjenning';
+  const lines=items.map(line=>{
+   const quantity=Math.max(1,Number(line.qty)||1);
+   const detail=itemSummary(line);
+   return '<div class="detail-item"><div class="detail-item-main"><strong>'+quantity+' × '+safe(line.name||'Produkt')+
+    '</strong>'+(detail?'<small>'+detail+'</small>':'')+'</div>'+
+    '<span class="detail-item-price">'+money((Number(line.unitPrice)||0)*quantity)+'</span></div>';
+  }).join('');
   $('ordersDetail').innerHTML=
-   '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+'</div><small>'+safe(accept)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
-   '<div class="detail-facts"><div><label>Kunde</label><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></div>'+
+   '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+'</div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
+   '<div class="detail-facts"><div><label>Bestillings-ID</label><strong>#'+safe(o.id.slice(-8).toUpperCase())+'</strong></div>'+
    '<div><label>Bestilt</label><strong>'+fmtDate(o.createdAt)+'</strong></div>'+
-   '<div><label>Telefon</label>'+link+'</div><div><label>E-post</label><strong>'+safe(mail||'—')+'</strong></div>'+
+   '<div><label>Godkjent</label><strong>'+fmtDate(o.acceptedAt)+'</strong></div>'+
    '<div><label>Henting</label><strong>'+safe(pickup.label||'Snarest')+'</strong></div>'+
+   '<div><label>Kunde</label><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></div>'+
+   '<div><label>Telefon</label>'+phoneLink+'</div>'+
+   (mail?'<div><label>E-post</label><strong>'+safe(mail)+'</strong></div>':'')+
    '<div><label>Tilberedning</label><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong></div></div>'+
    '<section class="detail-items"><h3>Produkter</h3>'+lines+'</section>'+
    (o.rejectReason?'<p class="orders-feedback error">Avvist: '+safe(o.rejectReason)+'</p>':'')+
    '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>';
-  const bar=$('ordersActionBar');
-  bar.innerHTML=o.status==='mottatt'?
-   '<button class="orders-danger" type="button" data-action="reject">Avvis</button><button class="orders-primary" type="button" data-action="accept">Godta bestilling</button>':
-   o.status==='godkjent'?'<button class="orders-primary" type="button" data-action="ready">Marker som klar til henting</button>':
+  $('ordersActionBar').innerHTML=o.status==='mottatt'?
+   '<button class="orders-danger" type="button" data-action="reject">Avvis</button><button class="orders-primary" type="button" data-action="accept">Godta</button>':
+   o.status==='godkjent'?'<button class="orders-primary" type="button" data-action="ready">Klar til henting</button>':
    '<button class="orders-secondary" type="button" data-action="close">Lukk</button>';
  }
  function openSheet(id){
@@ -271,20 +275,29 @@
    if(!etag)throw Error('Firebase returnerte ikke ETag. Bestillingen ble ikke endret.');
    const current=await response.json();
    if(!current||current.status!==old.status)throw Error('Bestillingen ble endret av en annen administrator. Oppdater siden.');
-   const next={...current,...extra,status,updatedAt:Date.now()};
-   if(status==='godkjent'){next.acceptedAt=Date.now();next.expectedReadyAt=next.acceptedAt+Number(extra.prepMinutes)*60000}
-   if(status==='klar')next.readyAt=Date.now();
-   if(status==='avvist')next.rejectedAt=Date.now();
-   const saved=await fetch(url+'&print=silent',{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
-    body:JSON.stringify(next),cache:'no-store'});
+   const changedAt=Date.now();
+   const next={...current,...extra,status,updatedAt:changedAt};
+   if(status==='godkjent'){next.acceptedAt=changedAt;next.expectedReadyAt=changedAt+Number(extra.prepMinutes)*60000}
+   if(status==='klar')next.readyAt=changedAt;
+   if(status==='avvist')next.rejectedAt=changedAt;
+   // Update the customer's non-personal status at the same time and under
+   // the same ETag as the private order; no additional Firebase write.
+   next.statusPublic={status,updatedAt:changedAt,
+    ...(status==='godkjent'?{expectedReadyAt:next.expectedReadyAt}:{}),
+    ...(status==='avvist'?{rejectReason:String(extra.rejectReason||'').slice(0,180)}:{})
+   };
+   const options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
+    body:JSON.stringify(next),cache:'no-store'};
+   let saved=await fetch(url+'&print=silent',options);
+   if(saved.status===400)saved=await fetch(url,options);
    if(saved.status===412)throw Error('Bestillingen ble endret samtidig. Hent oppdaterte opplysninger.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    orders.set(id,next);render();closeDialog();
    feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
   }finally{pendingAction=false}
  }
- // Admin-side cleanup when a receiver is online. Production hard cap needs
- // the server-side onCreate function shipped with this feature to be deployed.
+ // No Cloud Functions: prune while the order receiver is open.
+ // Any overflow created while closed is cleaned the next time it opens.
  async function requestPrune(){
   if(pruning){pruneWanted=true;return}
   if(!authReady())return;
@@ -295,18 +308,18 @@
     const url=await authorizedURL('ORDERS');
     // shallow=true returns order IDs only, never customer details.
     const r=await fetch(url+'&shallow=true',{cache:'no-store'});
-    if(!r.ok)break;
+    if(!r.ok){feedback('Kan ikke kontrollere ordregrensen (Firebase HTTP '+r.status+').',true);break}
     const keys=Object.keys(await r.json()||{}).sort();
     if(keys.length<=100)break;
     const excess=keys.slice(0,keys.length-100);
     const removals=Object.fromEntries(excess.map(id=>[id,null]));
     const deleted=await fetch(url+'&print=silent',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(removals)});
-    if(!deleted.ok)break;
+    if(!deleted.ok){feedback('Gamle bestillinger kunne ikke ryddes (Firebase HTTP '+deleted.status+').',true);break}
     for(const id of excess)orders.delete(id);
     render();
     if(excess.length>0)pruneWanted=true;
    }while(pruneWanted&&authReady());
-  }catch(error){console.warn('BestillOnline: pruning failed',error)}
+  }catch(error){console.warn('BestillOnline: pruning failed',error);feedback('Opprydding av gamle bestillinger feilet.',true)}
   finally{pruning=false}
  }
  let swipe=null;
@@ -326,11 +339,16 @@
    if(!row||!orders.get(row.dataset.orderRow)||orders.get(row.dataset.orderRow).status!=='godkjent')return;
    swipe={id:row.dataset.orderRow,x:event.changedTouches[0].clientX,y:event.changedTouches[0].clientY};
   },{passive:true});
-  $('ordersList').addEventListener('touchend',async event=>{
+  $('ordersList').addEventListener('touchend',event=>{
    if(!swipe)return;
-   const start=swipe;swipe=null;const dx=event.changedTouches[0].clientX-start.x,dy=event.changedTouches[0].clientY-start.y;
-   if(dx>90&&Math.abs(dx)>Math.abs(dy)*1.5){
-    try{await changeStatus(start.id,'klar')}catch(error){feedback(error.message,true)}
+   const start=swipe;swipe=null;
+   const dx=event.changedTouches[0].clientX-start.x,dy=event.changedTouches[0].clientY-start.y;
+   if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.4){
+    const row=$('ordersList').querySelector('[data-order-row="'+start.id+'"]');
+    if(row){
+     $('ordersList').querySelectorAll('.order-row.is-swiped').forEach(other=>{if(other!==row)other.classList.remove('is-swiped')});
+     row.classList.toggle('is-swiped',dx<0);
+    }
    }
   },{passive:true});
   $('ordersBack').onclick=closeSheet;$('ordersSheetOverlay').onclick=closeSheet;
