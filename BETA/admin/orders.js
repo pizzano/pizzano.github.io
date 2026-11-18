@@ -37,6 +37,7 @@
  let auth=null,stream=null,orders=new Map(),filter='all',activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
  let countdownTicker=null,automaticReadyBusy=false;
+ let pruneCheckedKeySignature='',authStreamRenewing=false;
  const autoReadyAttempts=new Map();
  function remainingCountdown(time,now=Date.now()){
   const left=Math.max(0,Math.ceil((Number(time)-now)/1000));
@@ -140,25 +141,16 @@
    });
    if(user?.uid===ADMIN_UID)await enterOrders();
    else logoutView();
-   auth.onIdTokenChanged(user=>{
-    if(user?.uid===ADMIN_UID&&stream&&initialLoaded){
-     // Renew the token for long-running tablets; do not poll the database.
-     closeStream();void connectOrders();
-    }
-   });
+   // Firebase Auth refreshes tokens automatically. Do not restart the order
+   // stream on each refresh; each restart downloads the complete 101-order snapshot.
+   // If the existing stream is actually revoked, reconnect just once below.
   }catch(error){logoutView(error.message)}
  }
  async function enterOrders(){
   show('ordersLogin',false);show('ordersApp',true);show('ordersSignOut',true);
   connection('Kobler til…');
   render();
-  // One small restaurant-name read on opening only.
-  void (async()=>{
-   try{
-    const r=await fetch(await authorizedURL('settings/restaurantName'),{cache:'no-store'});
-    if(r.ok){const name=await r.json();if(typeof name==='string'&&name.trim())text('ordersBrand',name.trim())}
-   }catch{}
-  })();
+  // Brand is part of the static HTML: no extra /settings read.
   await connectOrders();
   startCountdowns();
  }
@@ -207,7 +199,14 @@
    render();
    updateCountdowns();
    void finalizeDueOrder();
-   if(orders.size>=101)void requestPrune();
+   // Avoid repeated shallow reads for the same 101 keys when a status changes.
+   if(orders.size>=101){
+    const signature=[...orders.keys()].sort().join('|');
+    if(signature!==pruneCheckedKeySignature){
+     pruneCheckedKeySignature=signature;
+     void requestPrune();
+    }
+   }else pruneCheckedKeySignature='';
    if(activeId&&!orders.has(activeId))closeSheet();
   }catch(error){console.warn('BestillOnline: ugyldig ordreoppdatering',error)}
  }
@@ -223,7 +222,20 @@
   source.addEventListener('put',e=>{if(stream===source)onStreamEvent(e,false)});
   source.addEventListener('patch',e=>{if(stream===source)onStreamEvent(e,true)});
   source.addEventListener('cancel',e=>{if(stream!==source)return;connection('Ingen tilgang',false,true);feedback('Firebase-regler tillater ikke å lese /ORDERS. Publiser database.rules.json.',true);source.close()});
-  source.addEventListener('auth_revoked',()=>{if(stream===source){source.close();connection('Innlogging utløpt',false,true)}});
+  source.addEventListener('auth_revoked',()=>{
+   if(stream!==source||authStreamRenewing)return;
+   source.close();stream=null;
+   connection('Fornyer tilkobling…',false,true);
+   authStreamRenewing=true;
+   void (async()=>{
+    try{
+     if(!authReady())return;
+     await auth.currentUser.getIdToken(true);
+     await connectOrders();
+    }catch(error){connection('Innlogging utløpt',false,true);feedback('Klarte ikke å fornye ordretilkoblingen.',true)}
+    finally{authStreamRenewing=false}
+   })();
+  });
   source.onerror=()=>{
    if(stream===source)connection('Prøver å koble til…',false,true);
    // EventSource handles reconnect automatically. No timer or GET loop.
