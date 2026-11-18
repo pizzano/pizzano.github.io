@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#062d25">
 <meta name="robots" content="noindex,nofollow">
 <title>BestillOnline · Bestillinger</title>
-<link rel="stylesheet" href="./admin/orders.css?v=20261118-senere13">
+<link rel="stylesheet" href="./admin/orders.css?v=20261118-singlelist14">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
-<script src="./admin/orders.js?v=20261118-senere13" defer></script>
+<script src="./admin/orders.js?v=20261118-singlelist14" defer></script>
 </head>
 <body>
 <header class="orders-head">
@@ -26,11 +26,6 @@
   </div>
  </section>
  <div id="ordersApp" hidden>
-  <nav class="orders-tabs" role="tablist" aria-label="Bestillingsstatus">
-   <button type="button" role="tab" class="active" data-filter="all" aria-selected="true">Alle</button>
-   <button type="button" role="tab" data-filter="godkjent" aria-selected="false">Pågår</button>
-   <button type="button" role="tab" data-filter="klar" aria-selected="false">Klar</button>
-  </nav>
   <p id="ordersFeedback" class="orders-feedback" role="status" aria-live="polite" hidden></p>
   <div id="ordersEmpty" class="orders-empty"><strong>Ingen bestillinger</strong><small>Nye bestillinger vises automatisk.</small></div>
   <div id="ordersList" class="orders-list" aria-label="Bestillingsliste"></div>
