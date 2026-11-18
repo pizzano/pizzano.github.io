@@ -1,4 +1,4 @@
-/* BestillOnline menu administrator. Only /menu is read/written.
+/* BestillOnline admin: /menu and /settings are edited separately.
  * Access is protected by Firebase Authentication and Database Rules.
  */
 'use strict';
@@ -1579,7 +1579,7 @@ function refreshHeader(){
   document.querySelectorAll('#adminNavTrack [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
   const navTrack=$('adminNavScroll');
   navTrack.addEventListener('scroll',updateAdminNavArrows,{passive:true});
-  // Arrow keys navigate only the two tab choices; Verktøy stays accessible.
+  // Arrow keys navigate the editor tabs; Verktøy stays accessible.
   navTrack.addEventListener('keydown',event=>{
    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
    const tabs=[...navTrack.querySelectorAll('[data-tab]')];
