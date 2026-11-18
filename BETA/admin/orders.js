@@ -95,7 +95,7 @@
   const available=navigator.onLine!==false;
   const node=$('ordersConnection');
   const label=available?'Nettverk: tilgjengelig (ikke verifisert)':'Nettverk: frakoblet';
-  node.className='orders-light orders-light-net '+(available?'is-pending':'is-error');
+  node.className='orders-light orders-light-net '+(available?'is-active':'is-error');
   node.setAttribute('aria-label',label);
   node.title=label;
   $('ordersNetTooltip').textContent=label;
