@@ -188,14 +188,19 @@
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  const filtered=filter==='all'?all:all.filter(o=>o.status===filter);
+  // Pending orders are always shown first on the all-orders tab.
+  const filtered=filter==='all'?
+   [...all].sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
+    (Number(b.createdAt)||0)-(Number(a.createdAt)||0)):
+   all.filter(o=>o.status===filter);
   document.querySelectorAll('.orders-tabs button').forEach(button=>{
    const active=button.dataset.filter===filter;
    button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
   });
   $('ordersEmpty').hidden=filtered.length>0;
   $('ordersEmpty').querySelector('strong').textContent=filter==='all'?'Ingen bestillinger':'Ingen bestillinger her';
-  $('ordersList').innerHTML=filtered.map(order=>{
+  const hasPending=filter==='all'&&filtered.some(order=>order.status==='mottatt');
+  $('ordersList').innerHTML=filtered.map((order,index)=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
    const name=safe(order.name||order.customer?.fullName||'Kunde');
    const items=Array.isArray(order.items)?order.items:[];
@@ -203,11 +208,14 @@
    const showReady=order.status==='godkjent';
    const scheduled=scheduledPickupTimestamp(order.pickup);
    const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):scheduled?fmtTime(scheduled):fmtTime(order.createdAt);
-   return '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'">'+
+   const groupBreak=filter==='all'&&hasPending&&order.status!=='mottatt'&&
+    (index===0||filtered[index-1].status==='mottatt');
+   return (groupBreak?'<div class="orders-group-divider" role="separator"><span>Tidligere bestillinger</span></div>':'')+
+    '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'">'+
     (showReady?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
     '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
-    '<strong class="order-name">'+name+'</strong>'+
+    '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
     '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
     '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
     '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
@@ -279,7 +287,7 @@
   if(!id||!orders.has(id))return;
   activeId=id;show('ordersAcceptOverlay',type==='accept');show('ordersRejectOverlay',type==='reject');
   document.body.classList.add('is-dialog-open');
-  if(type==='accept'){$('ordersPrep').value=20;$('ordersPrep').focus()}
+  if(type==='accept'){$('ordersPrep').value='';$('ordersPrep').focus()}
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
@@ -327,8 +335,21 @@
    if(saved.status===400)saved=await fetch(url,options);
    if(saved.status===412)throw Error('Bestillingen ble endret samtidig. Hent oppdaterte opplysninger.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
-   orders.set(id,next);render();closeDialog();
+   orders.set(id,next);
+   render();
+   closeDialog();
    feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
+   // Leave the successful result visible briefly, then return to the order inbox.
+   if(activeId===id&&!$('ordersSheet').hidden){
+    const completedId=id;
+    window.setTimeout(()=>{
+     if(activeId===completedId){
+      closeSheet();
+      filter='all';
+      render();
+     }
+    },1000);
+   }
   }finally{pendingAction=false}
  }
  // No Cloud Functions: prune while the order receiver is open.
@@ -399,8 +420,14 @@
   $('ordersCancelAccept').onclick=closeDialog;$('ordersCancelReject').onclick=closeDialog;
   $('ordersAcceptOverlay').addEventListener('click',event=>{if(event.target.id==='ordersAcceptOverlay')closeDialog()});
   $('ordersRejectOverlay').addEventListener('click',event=>{if(event.target.id==='ordersRejectOverlay')closeDialog()});
-  $('ordersPrepMinus').onclick=()=>{$('ordersPrep').value=Math.max(1,Number($('ordersPrep').value||20)-1)};
-  $('ordersPrepPlus').onclick=()=>{$('ordersPrep').value=Math.min(99,Number($('ordersPrep').value||20)+1)};
+  $('ordersPrepMinus').onclick=()=>{
+   const field=$('ordersPrep');
+   field.value=String(Math.max(1,(Number(field.value)||1)-1));
+  };
+  $('ordersPrepPlus').onclick=()=>{
+   const field=$('ordersPrep');
+   field.value=String(Math.min(99,(Number(field.value)||0)+1));
+  };
   $('ordersAcceptForm').addEventListener('submit',async event=>{
    event.preventDefault();
    const value=Number($('ordersPrep').value);
