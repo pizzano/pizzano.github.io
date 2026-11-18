@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#062d25">
 <meta name="robots" content="noindex,nofollow">
 <title>BestillOnline · Bestillinger</title>
-<link rel="stylesheet" href="./admin/orders.css?v=20261118-countdown7">
+<link rel="stylesheet" href="./admin/orders.css?v=20261118-pickup9">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
-<script src="./admin/orders.js?v=20261118-lowread8" defer></script>
+<script src="./admin/orders.js?v=20261118-pickup9" defer></script>
 </head>
 <body>
 <header class="orders-head">
@@ -49,9 +49,15 @@
 <div id="ordersAcceptOverlay" class="orders-dialog-overlay" hidden>
  <form id="ordersAcceptForm" class="orders-dialog">
   <button type="button" id="ordersCancelAccept" class="orders-dialog-close" aria-label="Tilbake">←</button>
-  <h3>Godta bestilling</h3><p>Forventet hentetid</p>
+  <h3>Godta bestilling</h3>
+  <div id="ordersAcceptPrepBlock"><p>Forventet hentetid</p>
   <label for="ordersPrep">Klar om</label>
-  <div class="orders-minute-field"><button type="button" id="ordersPrepMinus" aria-label="Færre minutter">−</button><input id="ordersPrep" type="number" min="1" max="99" placeholder="Skriv inn minutter" inputmode="numeric" required aria-label="Skriv inn minutter"><span class="orders-minute-unit">min</span><button type="button" id="ordersPrepPlus" aria-label="Flere minutter">+</button></div>
+  <div class="orders-minute-field"><button type="button" id="ordersPrepMinus" aria-label="Færre minutter">−</button><input id="ordersPrep" type="number" min="1" max="99" placeholder="Skriv inn minutter" inputmode="numeric" required aria-label="Skriv inn minutter"><span class="orders-minute-unit">min</span><button type="button" id="ordersPrepPlus" aria-label="Flere minutter">+</button></div></div>
+  <div id="ordersAcceptScheduled" class="orders-scheduled-accept" hidden>
+   <strong>SENERE · Velg tid</strong>
+   <p>Hentetiden er valgt av kunden. Ingen tilberedningsminutter skal angis.</p>
+   <span id="ordersAcceptScheduledTime"></span>
+  </div>
   <button id="ordersConfirmAccept" class="orders-primary" type="submit">GODTA</button>
  </form>
 </div>
