@@ -7,7 +7,7 @@
   <title>Bestilling · Laster meny</title>
   
   <link rel="stylesheet" href="./index/style.css?v=20261118-orders1">
-  <script src="./index/sepet.js?v=20261118-statusnotice1" defer></script>
+  <script src="./index/sepet.js?v=20261118-confirmation2" defer></script>
   <script src="./index/app.js?v=20261118-layout1" defer></script>
   <script src="./index/profil.js?v=20261118-layout1" defer></script>
 </head>
@@ -130,8 +130,8 @@
     <div class="draft-confirmation-mark" aria-hidden="true">✓</div>
     <h2 id="draftConfirmationTitle">Bestillingen er sendt</h2>
     <p id="draftConfirmationIntro">Bestillingen er sendt til restauranten.</p>
-    <p class="draft-sent">Sendt til restauranten · Avventer godkjenning</p>
-    <dl class="draft-order-facts"><div><dt>Ordrenummer</dt><dd id="draftConfirmationNumber"></dd></div><div><dt>Hentetid</dt><dd id="draftConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="draftConfirmationTotal"></dd></div></dl>
+    <p class="draft-sent" id="draftConfirmationSent">Sendt til restauranten · Avventer godkjenning</p>
+    <dl class="draft-order-facts"><div><dt>Ordrenummer</dt><dd id="draftConfirmationNumber"></dd></div><div><dt id="draftConfirmationPickupLabel">Hentetid</dt><dd id="draftConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="draftConfirmationTotal"></dd></div></dl>
     <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Venter på godkjenning</strong><small id="draftConfirmationTimer">Bestillingen er sendt</small></div></div>
     <button id="draftConfirmationClose" type="button" class="draft-view-order">Til menyen</button>
   </section>
