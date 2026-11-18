@@ -34,7 +34,7 @@
   return null;
  }
 
- let auth=null,stream=null,orders=new Map(),filter='all',activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
+ let auth=null,stream=null,orders=new Map(),activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
  let countdownTicker=null,automaticReadyBusy=false;
  let pruneCheckedKeySignature='',authStreamRenewing=false;
@@ -237,8 +237,16 @@
    })();
   });
   source.onerror=()=>{
-   if(stream===source)connection('Prøver å koble til…',false,true);
-   // EventSource handles reconnect automatically. No timer or GET loop.
+   if(stream!==source)return;
+   // A sleeping/locked screen can suspend the SSE connection; the browser
+   // normally reconnects itself. This is not necessarily lost Internet access.
+   if(document.hidden)return;
+   connection('Kobler til igjen…');
+   // EventSource handles reconnect automatically; no polling or extra GET loop.
+  };
+  source.onopen=()=>{
+   if(stream!==source)return;
+   connection('Tilkoblet',true);
   };
  }
  function newest(){
@@ -249,18 +257,12 @@
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  // Pending orders are always shown first on the all-orders tab.
-  const filtered=filter==='all'?
-   [...all].sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
-    (Number(b.createdAt)||0)-(Number(a.createdAt)||0)):
-   all.filter(o=>o.status===filter);
-  document.querySelectorAll('.orders-tabs button').forEach(button=>{
-   const active=button.dataset.filter===filter;
-   button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
-  });
+  // Single inbox: new orders first, then all previously processed orders.
+  const filtered=[...all].sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
+    (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
   $('ordersEmpty').hidden=filtered.length>0;
-  $('ordersEmpty').querySelector('strong').textContent=filter==='all'?'Ingen bestillinger':'Ingen bestillinger her';
-  const hasPending=filter==='all'&&filtered.some(order=>order.status==='mottatt');
+  $('ordersEmpty').querySelector('strong').textContent='Ingen bestillinger';
+  const hasPending=filtered.some(order=>order.status==='mottatt');
   $('ordersList').innerHTML=filtered.map((order,index)=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
    const name=safe(order.name||order.customer?.fullName||'Kunde');
@@ -269,7 +271,7 @@
    const showReady=order.status==='godkjent';
    const scheduled=scheduledPickupTimestamp(order.pickup);
    const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):scheduled?fmtTime(scheduled):fmtTime(order.createdAt);
-   const groupBreak=filter==='all'&&hasPending&&order.status!=='mottatt'&&
+   const groupBreak=hasPending&&order.status!=='mottatt'&&
     (index===0||filtered[index-1].status==='mottatt');
    const kind=pickupKind(order);
    const center=order.status==='godkjent'?
@@ -465,7 +467,6 @@
     window.setTimeout(()=>{
      if(activeId===completedId){
       closeSheet();
-      filter='all';
       render();
      }
     },1000);
@@ -503,7 +504,6 @@
  function events(){
   $('ordersLoginForm').addEventListener('submit',login);
   $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
-  document.querySelectorAll('.orders-tabs button').forEach(button=>button.addEventListener('click',()=>{filter=button.dataset.filter;render()}));
   $('ordersList').addEventListener('click',async event=>{
    const ready=event.target.closest('[data-order-ready]');
    if(ready){
@@ -572,8 +572,18 @@
    finally{$('ordersConfirmReject').disabled=false}
   });
   document.addEventListener('visibilitychange',()=>{
-   if(document.hidden)stopCountdowns();
-   else{startCountdowns();void finalizeDueOrder()}
+   if(document.hidden){
+    stopCountdowns();
+    // Keep cached orders on screen; do not deliberately terminate SSE.
+   }else{
+    startCountdowns();
+    if(authReady()){
+     if(!stream||stream.readyState===EventSource.CLOSED)void connectOrders();
+     else if(stream.readyState===EventSource.CONNECTING)connection('Kobler til igjen…');
+     else connection('Tilkoblet',true);
+    }
+    void finalizeDueOrder();
+   }
   });
   document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;
    if(!$('ordersAcceptOverlay').hidden||!$('ordersRejectOverlay').hidden)closeDialog();
