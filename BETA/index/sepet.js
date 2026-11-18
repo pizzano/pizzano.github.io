@@ -514,7 +514,7 @@ $('sheetClose').onclick=closeProductSheet;
  */
 const FATIH1_CONTACT_STORAGE_KEY='kol-beta-demo-contact-v1';
 const FATIH1_PICKUP_STORAGE_KEY='kol-beta-demo-pickup-v1';
-const FATIH1_LOCAL_ORDER_STORAGE_KEY='kol-beta-demo-order-v1';
+const FATIH1_LOCAL_ORDER_STORAGE_KEY='bestillonline-last-sent-order-v1';
 function readLocalData(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
@@ -545,9 +545,9 @@ function renderDraftActiveOrder(){
  card.hidden=!localOrder;
  if(!localOrder)return;
  const pending=localOrderStatus()==='pending';
- $('draftActiveNumber').textContent='#'+localOrder.id;
- $('draftActiveTitle').textContent='Bestillingsoversikt';
- $('draftActiveSubtitle').textContent='Lagret på denne enheten · Ikke sendt til restauranten';
+ $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
+ $('draftActiveTitle').textContent='Bestilling sendt';
+ $('draftActiveSubtitle').textContent='Sendt til restauranten · Venter på godkjenning';
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
  if(pending&&!localOrderExpiryTimer){
   // Only one local expiry callback is needed; there is no live countdown.
@@ -561,13 +561,13 @@ function renderDraftActiveOrder(){
 function renderDraftConfirmation(){
  if(!localOrder)return;
  localOrderStatus();
- $('draftConfirmationTitle').textContent='Bestillingsoversikt';
- $('draftConfirmationIntro').textContent='Takk, '+(localOrder.customer?.fullName||'')+'! Her er bestillingsoversikten din.';
- $('draftConfirmationNumber').textContent=localOrder.id;
+ $('draftConfirmationTitle').textContent='Bestillingen er sendt';
+ $('draftConfirmationIntro').textContent='Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
+ $('draftConfirmationNumber').textContent=String(localOrder.id||'').slice(-6).toUpperCase();
  $('draftConfirmationPickup').textContent=localOrder.pickup?.label||'Snarest';
  $('draftConfirmationTotal').textContent=money(localOrder.total);
- $('draftConfirmationStatus').textContent='Ikke sendt til restauranten';
- $('draftConfirmationTimer').textContent='Oversikten er lagret på denne enheten';
+ $('draftConfirmationStatus').textContent='Venter på godkjenning';
+ $('draftConfirmationTimer').textContent='Bestillingen er sendt til restauranten';
 }
 function showDraftConfirmation(){
  if(!localOrder)return;
@@ -730,7 +730,7 @@ function checkoutNavigate(step){
  $('cartFooterTotal').hidden=step!=='cart';
  $('continue').hidden=step==='cart';
  $('continue').textContent=step==='pickup'?'Tilbake: Kontakt':'Tilbake: Kurv';
- $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Lagre bestillingsoversikt';
+ $('cartNext').textContent=step==='cart'?'Neste: Kontakt':step==='contact'?'Neste: Hentetid':'Send bestilling';
  if(step==='cart'){
   const review=reconcileCartWithMenu();
   $('cartNext').disabled=!cart.length||!!review.issues.length;
@@ -756,42 +756,75 @@ function localOrderId(){
  else for(let i=0;i<6;i++)bytes[i]=Math.floor(Math.random()*256);
  return Array.from(bytes,x=>alphabet[x%alphabet.length]).join('');
 }
-function submitDraftOrder(){
+let orderSubmissionBusy=false;
+function createFirebaseOrderId(now){
+ const random=new Uint8Array(6);window.crypto.getRandomValues(random);
+ return 'ord_'+String(now).padStart(13,'0')+'_'+[...random].map(n=>n.toString(16).padStart(2,'0')).join('');
+}
+async function submitDraftOrder(){
+ if(orderSubmissionBusy)return;
  if(!cart.length){checkoutNavigate('cart');return}
- const currentReview=reconcileCartWithMenu();
- if(currentReview.issues.length||currentReview.repriced){
-  checkoutNavigate('cart');renderCartContents();
-  showCheckoutError('Menyen er endret. Kontroller varer og priser.');return;
+ if(!menu){showCheckoutError('Menyen er ikke lastet. Prøv igjen.');return}
+ if(cart.length>60||cart.some(line=>!Number.isInteger(Number(line.qty))||Number(line.qty)<1||Number(line.qty)>99)){
+  showCheckoutError('Kontroller antall varer i handlekurven (maks 60 produktlinjer og 99 per linje).');
+  checkoutNavigate('cart');return;
  }
- if(!validateDraftContact()){checkoutNavigate('contact');showCheckoutError('Kontroller kontaktinformasjonen.');return}
+ const review=reconcileCartWithMenu();
+ if(review.issues.length||review.repriced){
+  checkoutNavigate('cart');renderCartContents();showCheckoutError('Menyen er endret. Kontroller varer og priser.');return;
+ }
+ if(!validateDraftContact()){checkoutNavigate('contact');return}
  const pickup=pickupSelection.mode==='scheduled'?
   {mode:'scheduled',time:pickupSelection.time,label:$('draftPickupTime').selectedOptions[0]?.textContent||pickupSelection.label}:
   {mode:'asap',time:null,label:'Snarest'};
  if(pickup.mode==='scheduled'&&!draftPickupSlots().some(x=>x.value===pickup.time)){
   showCheckoutError('Velg en gyldig hentetid.','draftPickupTime');return;
  }
- const timestamp=Date.now();
- // Future admin connection point: send this versioned shape to the order API.
- // For the draft the ONLY side effect is localStorage; no network requests.
- const newOrder={
-  schema:1,source:'BESTILLONLINE_LOCAL',channel:'web',fulfillment:'pickup',
-  id:localOrderId(),status:'pending',
-  createdAt:new Date(timestamp).toISOString(),expiresAt:timestamp+180000,
-  customer:{fullName:customerContact.name,phone:'+47'+customerContact.phone,email:customerContact.email||null},
-  pickup:{...pickup,timeZone:'Europe/Oslo'},
-  items:JSON.parse(JSON.stringify(cart)),total:calculateCartTotal(cart),currency:'NOK'
- };
- // Single integration seam: later replace this local persistence with an
- // explicit admin-order submission, without changing the form or prices.
- if(!writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,newOrder)){
-  showCheckoutError('Kunne ikke lagre bestillingsoversikten lokalt. Kontroller nettleserens lagring.');
-  return;
+ if(pickup.mode==='asap'&&!getOrderingState().open){
+  showCheckoutError('Restauranten er stengt. Velg hentetid ved forhåndsbestilling.');return;
  }
- localOrder=newOrder;
- cart=[];saveCart();
- renderDraftActiveOrder();
- showDraftConfirmation();
- showFatih1Toast('Bestillingsoversikten er lagret lokalt');
+ if(!window.crypto?.getRandomValues){
+  showCheckoutError('Sikker tilkobling kreves for å sende bestillingen.');return;
+ }
+ const now=Date.now(),id=createFirebaseOrderId(now);
+ const items=cart.map(line=>({
+  id:String(line.id||'').slice(0,100),name:String(line.name||'Produkt').slice(0,120),
+  qty:Math.max(1,Math.min(99,Number(line.qty)||1)),
+  unitPrice:Number(line.unitPrice)||0,size:line.size||null,
+  choices:Array.isArray(line.choices)?line.choices:[],
+  removedIngredients:Array.isArray(line.removedIngredients)?line.removedIngredients:[],
+  quickNotes:Array.isArray(line.quickNotes)?line.quickNotes:[],
+  comment:String(line.comment||'').slice(0,500)
+ }));
+ const order={
+  schema:1,id,source:'BestillOnline',channel:'web',fulfillment:'pickup',
+  status:'mottatt',createdAt:now,currency:'NOK',
+  name:customerContact.name.slice(0,120),phone:'+47'+customerContact.phone,
+  ...(customerContact.email?{email:customerContact.email.slice(0,200)}:{}),
+  pickup:{...pickup,timeZone:'Europe/Oslo'},items,total:calculateCartTotal(cart)
+ };
+ orderSubmissionBusy=true;$('cartNext').disabled=true;
+ $('cartNext').textContent='Sender bestilling…';showCheckoutError('');
+ try{
+  const result=await fetch(BASE+'/ORDERS/'+encodeURIComponent(id)+'.json?print=silent',{
+   method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),cache:'no-store'
+  });
+  if(!result.ok){
+   if(result.status===401||result.status===403)
+    throw Error('Restauranten kan ikke motta bestillinger ennå (Firebase-regler mangler).');
+   throw Error('Kunne ikke sende bestillingen (HTTP '+result.status+').');
+  }
+  localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
+  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  cart=[];saveCart();
+  renderDraftActiveOrder();showDraftConfirmation();
+  showFatih1Toast('Bestillingen er sendt til restauranten');
+ }catch(error){
+  console.warn('BestillOnline order submission failed:',error);
+  showCheckoutError(error.message+' Handlekurven er beholdt. Kontroller med restauranten før du prøver igjen.');
+ }finally{
+  orderSubmissionBusy=false;$('cartNext').disabled=false;$('cartNext').textContent='Send bestilling';
+ }
 }
 async function checkoutNext(){
  if(checkoutStep==='cart'){
@@ -809,7 +842,7 @@ async function checkoutNext(){
     else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen i Firebase. Kontroller tilgang og prøv igjen.');showFatih1Toast('Kunne ikke lagre kontaktinformasjonen','error')}
    }finally{$('cartNext').disabled=false}
   }
- }else submitDraftOrder();
+ }else await submitDraftOrder();
 }
 function checkoutBack(){
  if(checkoutStep==='cart')fatih1HistoryToMenu();
@@ -832,7 +865,7 @@ document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftViewOrder').onclick=showDraftConfirmation;
 $('draftConfirmationClose').onclick=returnToMenu;
-$('draftClearOrder').onclick=()=>{localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Bestillingsoversikten er fjernet')};
+$('draftClearOrder').onclick=()=>{localOrder=null;writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}renderDraftActiveOrder();showFatih1Toast('Lokal bestillingsoversikt er fjernet')};
 }
 
 // Cart owns its own initialization and stored draft order display.

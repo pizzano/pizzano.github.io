@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
   
-  <link rel="stylesheet" href="./index/style.css?v=20261118-layout1">
-  <script src="./index/sepet.js?v=20261118-layout1" defer></script>
+  <link rel="stylesheet" href="./index/style.css?v=20261118-orders1">
+  <script src="./index/sepet.js?v=20261118-orders1" defer></script>
   <script src="./index/app.js?v=20261118-layout1" defer></script>
   <script src="./index/profil.js?v=20261118-layout1" defer></script>
 </head>
@@ -26,7 +26,7 @@
       <section id="draftActiveOrder" class="draft-active-order" aria-label="Bestillingsoversikt" hidden>
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
         <div class="draft-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
-        <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Bestillingen er ikke sendt til restauranten.</small></div></div>
+        <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small></div></div>
         <button id="draftViewOrder" type="button" class="draft-view-order">Se bestillingen</button>
         <button id="draftClearOrder" type="button" class="draft-clear-order">Fjern oversikt</button>
       </section>
@@ -128,11 +128,11 @@
 </section>
   <section id="draftConfirmation" class="draft-confirmation" role="dialog" aria-modal="true" aria-labelledby="draftConfirmationTitle" hidden>
     <div class="draft-confirmation-mark" aria-hidden="true">✓</div>
-    <h2 id="draftConfirmationTitle">Venter på bekreftelse</h2>
-    <p id="draftConfirmationIntro">Bestillingsoversikten er lagret på denne enheten.</p>
-    <p class="draft-not-sent">Ikke sendt til restauranten</p>
+    <h2 id="draftConfirmationTitle">Bestillingen er sendt</h2>
+    <p id="draftConfirmationIntro">Bestillingen er sendt til restauranten.</p>
+    <p class="draft-sent">Sendt til restauranten · Avventer godkjenning</p>
     <dl class="draft-order-facts"><div><dt>Ordrenummer</dt><dd id="draftConfirmationNumber"></dd></div><div><dt>Hentetid</dt><dd id="draftConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="draftConfirmationTotal"></dd></div></dl>
-    <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Ikke sendt til restauranten</strong><small id="draftConfirmationTimer">Oversikten er lagret</small></div></div>
+    <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Venter på godkjenning</strong><small id="draftConfirmationTimer">Bestillingen er sendt</small></div></div>
     <button id="draftConfirmationClose" type="button" class="draft-view-order">Til menyen</button>
   </section>
   <div id="fatih1Toast" class="fatih1-toast" role="status" aria-live="polite" aria-atomic="true" hidden>

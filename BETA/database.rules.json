@@ -29,6 +29,12 @@
           ".read": "$phone.matches(/^[49][0-9]{7}$/)"
         }
       }
+    },
+    "ORDERS": {
+      "$orderId": {
+        ".write": "auth != null && auth.uid === 'CkvfzzzQ9MaPD8lZWKx10RB6iX22' || (!data.exists() && newData.exists() && $orderId.matches(/^ord_[0-9]{13}_[a-f0-9]{12}$/))",
+        ".validate": "newData.hasChildren(['id','name','phone','status','items','total','createdAt','pickup']) && newData.child('id').val() === $orderId && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && newData.child('phone').isString() && newData.child('phone').val().length >= 8 && newData.child('phone').val().length <= 20 && newData.child('total').isNumber() && newData.child('total').val() >= 0 && newData.child('createdAt').isNumber() && (data.exists() || (newData.child('createdAt').val() <= now + 300000 && newData.child('createdAt').val() >= now - 3600000)) && (newData.child('status').val() === 'mottatt' || newData.child('status').val() === 'godkjent' || newData.child('status').val() === 'klar' || newData.child('status').val() === 'avvist') && (data.exists() || newData.child('status').val() === 'mottatt')"
+      }
     }
   }
 }

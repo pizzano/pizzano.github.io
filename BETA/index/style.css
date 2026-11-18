@@ -2619,3 +2619,6 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  #productSheet.is-sheet-opening,
  #productSheet.is-sheet-closing{animation:none}
 }
+
+/* Successful remote order submission (not a local-only draft). */
+.draft-confirmation .draft-sent{color:#087f59;font-weight:800;font-size:var(--text-sm);margin:6px 0 12px}

@@ -296,3 +296,7 @@ body.admin-modal-open{overflow:hidden}
  .size-order-actions .mini{width:27px;height:28px}
 }
 .auth-screen{min-height:calc(100dvh - 72px);display:grid;place-items:center;padding:20px}.auth-card{width:min(420px,100%);padding:28px;background:white;border:1px solid #d7e5dc;border-radius:18px}.auth-card h1{margin:0 0 7px}.auth-card label{display:block;font-size:12px;font-weight:800;margin:16px 0 7px}.auth-card input{width:100%;padding:12px;border:1px solid #b6d3c3;border-radius:10px}.auth-card p{font-size:13px;color:#63796e}.auth-card button{width:100%;margin-top:16px}
+
+/* Navigation link to the dedicated order-taking screen. */
+a.admin-nav-orders{text-decoration:none;white-space:nowrap}
+a.admin-nav-orders:hover{background:#214c3c;color:#fff;border-color:#4a9c70}

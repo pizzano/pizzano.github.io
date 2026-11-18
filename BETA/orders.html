@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#062d25">
+<meta name="robots" content="noindex,nofollow">
+<title>BestillOnline · Bestillinger</title>
+<link rel="stylesheet" href="./admin/orders.css?v=20261118-orders1">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
+<script src="./admin/orders.js?v=20261118-orders1" defer></script>
+</head>
+<body>
+<header class="orders-head">
+ <div class="orders-brand"><span class="orders-logo">🔥</span><div><strong id="ordersBrand">BestillOnline</strong><small>BESTILLINGER</small></div></div>
+ <div class="orders-top-actions"><span class="orders-connection" id="ordersConnection"><i></i><span>Kobler til…</span></span><a class="orders-admin-link" href="./admin.html" aria-label="Gå til menyadministrasjon">Menyadmin</a><button type="button" id="ordersSignOut" class="orders-outline" hidden>Logg ut</button></div>
+</header>
+<main class="orders-main">
+ <section id="ordersLogin" class="orders-login">
+  <div class="orders-login-card"><div class="orders-logo-large">◫</div><h1>Bestillinger</h1><p>Logg inn med administratorpassordet for å se og håndtere bestillinger.</p>
+   <form id="ordersLoginForm"><label for="ordersPassword">Passord</label><input id="ordersPassword" type="password" autocomplete="current-password" required placeholder="Administratorpassord"><button type="submit" id="ordersLoginSubmit" class="orders-primary">Logg inn</button></form><p id="ordersLoginError" class="orders-error" role="alert" hidden></p>
+  </div>
+ </section>
+ <div id="ordersApp" hidden>
+  <div class="orders-title-row"><div><h1>Bestillinger</h1><p id="ordersSubtitle">Nye bestillinger vises automatisk.</p></div><div class="orders-badges"><span class="orders-new-count" id="ordersNewBadge">0 nye</span><span class="orders-limit">Siste 100</span></div></div>
+  <nav class="orders-tabs" role="tablist" aria-label="Filtrer bestillinger">
+   <button type="button" role="tab" data-filter="all" aria-selected="true" class="active">Alle <span id="countAll">0</span></button>
+   <button type="button" role="tab" data-filter="mottatt" aria-selected="false">Nye <span id="countNew">0</span></button>
+   <button type="button" role="tab" data-filter="godkjent" aria-selected="false">Pågår <span id="countProgress">0</span></button>
+   <button type="button" role="tab" data-filter="klar" aria-selected="false">Klar <span id="countReady">0</span></button>
+   <button type="button" role="tab" data-filter="avvist" aria-selected="false">Avvist <span id="countRejected">0</span></button>
+  </nav>
+  <p id="ordersFeedback" class="orders-feedback" role="status" aria-live="polite" hidden></p>
+  <div id="ordersEmpty" class="orders-empty"><span aria-hidden="true">▤</span><strong>Ingen bestillinger ennå</strong><small>Nye bestillinger vises her så snart de kommer inn.</small></div>
+  <div id="ordersList" class="orders-list" aria-label="Bestillingsliste"></div>
+ </div>
+</main>
+<div id="ordersSheetOverlay" class="orders-sheet-overlay" hidden></div>
+<aside id="ordersSheet" class="orders-sheet" role="dialog" aria-modal="true" aria-labelledby="detailTitle" hidden>
+ <div class="orders-sheet-header"><button class="orders-icon-button" type="button" id="ordersBack" aria-label="Tilbake til bestillinger">←</button><div><small>BESTILLINGSDETALJER</small><h2 id="detailTitle">Bestilling</h2></div><button id="ordersPrint" type="button" class="orders-icon-button" title="Skriv ut" aria-label="Skriv ut bestillingen">▤</button></div>
+ <div id="ordersDetail" class="orders-detail"></div>
+ <div id="ordersActionBar" class="orders-action-bar"></div>
+</aside>
+<div id="ordersAcceptOverlay" class="orders-dialog-overlay" hidden>
+ <form id="ordersAcceptForm" class="orders-dialog"><h3>Godta bestilling</h3><p>Velg forventet hentetid fra nå.</p><label for="ordersPrep">Klar om (minutter)</label><div class="orders-minute-field"><button type="button" id="ordersPrepMinus" aria-label="Reduser minutter">−</button><input id="ordersPrep" inputmode="numeric" type="number" min="1" max="99" value="20" required><button type="button" id="ordersPrepPlus" aria-label="Øk minutter">+</button></div><div class="orders-dialog-actions"><button type="button" id="ordersCancelAccept" class="orders-secondary">Avbryt</button><button id="ordersConfirmAccept" class="orders-primary" type="submit">Godta bestilling</button></div></form>
+</div>
+<div id="ordersRejectOverlay" class="orders-dialog-overlay" hidden>
+ <form id="ordersRejectForm" class="orders-dialog"><h3>Avvis bestilling</h3><p>Oppgi grunnen for avvisningen.</p><textarea id="ordersRejectReason" maxlength="180" rows="3" required placeholder="F.eks. utsolgt, kjøkkenet stenger…"></textarea><div class="orders-dialog-actions"><button type="button" id="ordersCancelReject" class="orders-secondary">Avbryt</button><button id="ordersConfirmReject" class="orders-danger" type="submit">Avvis</button></div></form>
+</div>
+</body>
+</html>
