@@ -27,7 +27,7 @@
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
         <div class="draft-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
         <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small></div></div>
-        <button id="draftViewOrder" type="button" class="draft-view-order">Se bestillingen</button>
+        <button id="draftViewOrder" type="button" class="draft-view-order">Vis bestillingen</button>
         <button id="draftClearOrder" type="button" class="draft-clear-order">Fjern oversikt</button>
       </section>
       <div id="menu"></div>
@@ -101,8 +101,6 @@
 </section>
    <nav class="fatih1-profile-menu" aria-label="Profilmeny">
     <button type="button" data-fatih1-profile-tab="contact" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.4 3.5-5 7-5s5.8 1.6 7 5"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Rediger profil</strong><small id="fatih1ProfileContactMeta">Navn, mobilnummer og e-post</small></span><span class="fatih1-profile-chevron">›</span></button>
-    <button type="button" data-fatih1-profile-tab="orders" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Mine bestillinger</strong><small id="fatih1ProfileOrdersMeta">Bestillinger på denne enheten</small></span><span class="fatih1-profile-chevron">›</span></button>
-
     <button type="button" data-fatih1-profile-tab="restaurant" class="fatih1-profile-menu-row"><span class="fatih1-profile-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10 5 4h14l2 6M5 10v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0"/></svg></span><span class="fatih1-profile-menu-copy"><strong>Restaurantinformasjon</strong><small>Åpningstider og kontakt</small></span><span class="fatih1-profile-chevron">›</span></button>
    </nav>
   </div>
@@ -120,8 +118,6 @@
      <button id="fatih1ProfileSave" class="fatih1-profile-primary" type="submit">Lagre opplysninger</button>
     </form>
    </section>
-   <section id="fatih1ProfileOrdersPanel" class="fatih1-profile-panel" hidden><div id="fatih1ProfileOrders"></div></section>
-
    <section id="fatih1ProfileRestaurantPanel" class="fatih1-profile-panel" hidden><div id="fatih1ProfileRestaurantInfo"></div></section>
   </div>
  </div>
@@ -133,6 +129,10 @@
     <p class="draft-sent" id="draftConfirmationSent">Sendt til restauranten · Avventer godkjenning</p>
     <dl class="draft-order-facts"><div><dt>Ordrenummer</dt><dd id="draftConfirmationNumber"></dd></div><div><dt id="draftConfirmationPickupLabel">Hentetid</dt><dd id="draftConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="draftConfirmationTotal"></dd></div></dl>
     <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Venter på godkjenning</strong><small id="draftConfirmationTimer">Bestillingen er sendt</small></div></div>
+    <details id="draftConfirmationItems" class="draft-confirmation-items">
+      <summary><strong>Vis bestillingen</strong><span id="draftConfirmationItemsCount"></span><span class="draft-confirmation-chevron" aria-hidden="true">⌄</span></summary>
+      <div id="draftConfirmationItemsList" class="draft-confirmation-items-list"></div>
+    </details>
     <button id="draftConfirmationClose" type="button" class="draft-view-order">Til menyen</button>
   </section>
   <div id="fatih1Toast" class="fatih1-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
