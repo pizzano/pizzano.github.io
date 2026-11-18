@@ -387,10 +387,12 @@ function refreshHeader(){
   $('adminNavNext').disabled=track.scrollLeft>=max-3;
  }
  function setTab(tab){
-  if(tab!=='products'&&tab!=='groups')return;
+  if(tab!=='products'&&tab!=='groups'&&tab!=='restaurant')return;
   const previous=state.tab;
   state.tab=tab;
   $('productsPage').hidden=tab!=='products';$('groupsPage').hidden=tab!=='groups';
+  $('restaurantPage').hidden=tab!=='restaurant';
+  if(tab==='restaurant')void loadRestaurantSettings();
   for(const b of document.querySelectorAll('[data-tab]')){
    const active=b.dataset.tab===tab;
    b.classList.toggle('active',active);
@@ -403,6 +405,189 @@ function refreshHeader(){
   }
   updateAdminNavArrows();
  }
+
+
+ const restaurantDays=[
+  ['mandag','Man','Mandag'],['tirsdag','Tir','Tirsdag'],['onsdag','Ons','Onsdag'],
+  ['torsdag','Tor','Torsdag'],['fredag','Fre','Fredag'],['lørdag','Lør','Lørdag'],['søndag','Søn','Søndag']
+ ];
+ const restaurantEditableFields=['restaurantName','restaurantLogo','streetAddress','postalCode','city','phone','email','pickupInfo','paymentInfo'];
+ const restaurantState={loaded:false,loading:false,saving:false,original:null,draft:null,dirty:new Set()};
+ const restaurantTimePattern=/^([01]\d|2[0-3]):[0-5]\d$/;
+ function restaurantSetMessage(text,error=false){
+  const node=$('restaurantFormMessage');node.textContent=text;
+  node.classList.toggle('error',error);
+ }
+ function restaurantSetSaving(){
+  const state=restaurantState;
+  $('restaurantSave').disabled=!state.loaded||state.loading||state.saving||!state.dirty.size;
+  $('restaurantSaveStatus').textContent=state.saving?'Lagrer…':state.loading?'Henter innstillinger…':
+   state.dirty.size?'Ulagrede endringer':'Alle endringer lagret';
+ }
+ function restaurantMarkDirty(key){
+  if(!restaurantState.loaded)return;
+  const original=restaurantState.original?.[key],value=restaurantState.draft?.[key];
+  if(JSON.stringify(original)===JSON.stringify(value))restaurantState.dirty.delete(key);
+  else restaurantState.dirty.add(key);
+  restaurantSetSaving();
+ }
+ function restaurantWeeklyHours(settings){
+  const source=Array.isArray(settings?.weeklyHours)&&settings.weeklyHours.length===7?settings.weeklyHours:[];
+  return restaurantDays.map(([id],index)=>{
+   const raw=source[index]||{};
+   return {...raw,id,enabled:raw.enabled!==false,
+    open:restaurantTimePattern.test(raw.open)?raw.open:'14:00',
+    close:restaurantTimePattern.test(raw.close)?raw.close:'22:00'};
+  });
+ }
+ function restaurantDrawRows(){
+  $('restaurantWeeklyRows').innerHTML=restaurantWeeklyHours(restaurantState.draft).map((day,index)=>{
+   const [id,short,name]=restaurantDays[index];
+   const checked=day.enabled?' checked':'';
+   return '<div class="restaurant-schedule-row'+(day.enabled?'':' is-closed')+'" role="row" data-week-index="'+index+'">'+
+    '<span class="restaurant-week-day"><b>'+short+'</b><strong>'+name+'</strong></span>'+
+    '<label class="restaurant-switch"><input type="checkbox" data-week-enabled '+checked+' aria-label="'+name+' åpen"><span></span></label>'+
+    '<label class="restaurant-week-time"><span class="restaurant-closed-hint">Stengt</span><input type="time" data-week-time="open" value="'+day.open+'"'+(day.enabled?'':' disabled')+' aria-label="Åpner '+name+'"></label>'+
+    '<label class="restaurant-week-time"><span class="restaurant-closed-hint">Stengt</span><input type="time" data-week-time="close" value="'+day.close+'"'+(day.enabled?'':' disabled')+' aria-label="Stenger '+name+'"></label>'+
+    '</div>';
+  }).join('');
+ }
+ function restaurantDateOslo(now=new Date()){
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);
+  const part=type=>parts.find(item=>item.type===type)?.value||'';
+  const day=['mon','tue','wed','thu','fri','sat','sun'].indexOf(part('weekday').toLowerCase().slice(0,3));
+  return {day:day<0?0:day,minute:Number(part('hour'))*60+Number(part('minute'))};
+ }
+ function restaurantShowStatus(){
+  const s=restaurantState.draft||{},week=restaurantWeeklyHours(s);
+  const {day,minute}=restaurantDateOslo();
+  const current=week[day],prior=week[(day+6)%7];
+  const minutes=value=>{const [h,m]=value.split(':').map(Number);return h*60+m};
+  const active=entry=>{
+   const from=minutes(entry.open),to=minutes(entry.close);
+   return entry.enabled&&(to>from?minute>=from&&minute<to:minute>=from||minute<to);
+  };
+  const effectiveClose=s.manualClosed===true&&(!Number(s.manualClosedUntil)||Number(s.manualClosedUntil)>Date.now());
+  const open=(active(current)||(prior.enabled&&minutes(prior.close)<=minutes(prior.open)&&minute<minutes(prior.close)))&&!effectiveClose;
+  const badge=$('restaurantOpenStatus');
+  badge.textContent=effectiveClose?'Midlertidig stengt for bestilling':
+   open?'Åpent for bestilling':'Stengt nå · følger ukeplanen';
+  badge.parentElement.classList.toggle('is-open',open);
+  $('restaurantTemporaryClose').textContent=effectiveClose?'Åpne igjen':'Steng midlertidig';
+  $('restaurantTemporaryClose').classList.toggle('is-closed',effectiveClose);
+ }
+ function restaurantRender(){
+  const s=restaurantState.draft;
+  if(!s)return;
+  restaurantDrawRows();
+  for(const key of restaurantEditableFields){
+   const input=document.querySelector('#restaurantContactView [data-setting="'+key+'"]');
+   if(input){input.value=String(s[key]??'');input.disabled=false}
+  }
+  $('restaurantClosedMessage').value=String(s.closedMessage??'');
+  $('restaurantClosedMessage').disabled=false;
+  $('restaurantTemporaryClose').disabled=false;
+  restaurantShowStatus();
+  restaurantSetSaving();
+ }
+ async function loadRestaurantSettings(force=false){
+  const state=restaurantState;
+  if(state.loading||(!force&&state.loaded))return;
+  if(!auth?.currentUser||auth.currentUser.uid!==ADMIN_UID)return;
+  if(state.dirty.size&&!window.confirm('Ulagrede restaurantinnstillinger vil gå tapt. Fortsette?'))return;
+  state.loading=true;restaurantSetSaving();restaurantSetMessage('');
+  try{
+   const response=await fetch(await databaseAuthURL('settings'),{cache:'no-store'});
+   if(!response.ok)throw Error('Kunne ikke hente /settings ('+response.status+').');
+   const settings=await response.json()||{};
+   if(typeof settings!=='object'||Array.isArray(settings))throw Error('Ugyldig /settings.');
+   state.original=clone(settings);state.draft=clone(settings);
+   state.loaded=true;state.dirty.clear();restaurantRender();
+  }catch(error){restaurantSetMessage(error.message||'Kunne ikke hente innstillinger.',true)}
+  finally{state.loading=false;restaurantSetSaving()}
+ }
+ async function restaurantPatch(values){
+  const response=await fetch(await databaseAuthURL('settings'),{
+   method:'PATCH',headers:{'Content-Type':'application/json'},
+   cache:'no-store',body:JSON.stringify(values)
+  });
+  if(!response.ok)throw Error('Firebase avviste lagring ('+response.status+').');
+ }
+ async function saveRestaurantSettings(){
+  const state=restaurantState;
+  if(!state.loaded||state.saving||!state.dirty.size)return;
+  const changes={};
+  for(const key of state.dirty)changes[key]=clone(state.draft[key]);
+  const rows=restaurantWeeklyHours(state.draft);
+  if('weeklyHours' in changes){
+   for(const [index,day] of rows.entries()){
+    if(!day.enabled)continue;
+    if(!restaurantTimePattern.test(day.open)||!restaurantTimePattern.test(day.close)||day.open===day.close){
+     restaurantSetMessage('Kontroller åpne- og stengetid for '+restaurantDays[index][2]+'.',true);return;
+    }
+   }
+  }
+  const invalid=[...document.querySelectorAll('#restaurantContactView input')].find(input=>!input.checkValidity());
+  if(invalid){restaurantSetMessage('Sjekk kontaktinformasjonen.',true);invalid.focus();return}
+  state.saving=true;restaurantSetSaving();restaurantSetMessage('');
+  try{
+   await restaurantPatch(changes);
+   Object.assign(state.original,clone(changes));state.dirty.clear();
+   if(changes.restaurantName!==undefined)setAdminRestaurantBrand(changes.restaurantName);
+   restaurantSetMessage('Restaurantinnstillingene er lagret.');
+  }catch(error){restaurantSetMessage(error.message||'Kunne ikke lagre.',true)}
+  finally{state.saving=false;restaurantSetSaving()}
+ }
+ async function restaurantToggleClose(){
+  const state=restaurantState;
+  if(!state.loaded||state.saving)return;
+  const closed=state.draft.manualClosed===true&&
+   (!Number(state.draft.manualClosedUntil)||Number(state.draft.manualClosedUntil)>Date.now());
+  if(!window.confirm(closed?'Åpne nettbestilling igjen?':'Stenge nettbestilling midlertidig til du åpner igjen?'))return;
+  $('restaurantTemporaryClose').disabled=true;
+  try{
+   const change={manualClosed:!closed,manualClosedUntil:null};
+   await restaurantPatch(change);
+   Object.assign(state.draft,change);Object.assign(state.original,change);
+   state.dirty.delete('manualClosed');state.dirty.delete('manualClosedUntil');
+   restaurantShowStatus();restaurantSetMessage(closed?'Nettbestilling er åpnet igjen.':'Nettbestilling er midlertidig stengt.');
+  }catch(error){restaurantSetMessage(error.message||'Kunne ikke endre status.',true)}
+  finally{$('restaurantTemporaryClose').disabled=false;restaurantSetSaving()}
+ }
+ function restaurantWireEvents(){
+  document.querySelectorAll('[data-restaurant-tab]').forEach(button=>button.addEventListener('click',()=>{
+   for(const node of document.querySelectorAll('[data-restaurant-tab]')){
+    const selected=node===button;node.classList.toggle('active',selected);node.setAttribute('aria-selected',String(selected));
+   }
+   $('restaurantHoursView').hidden=button.dataset.restaurantTab!=='hours';
+   $('restaurantContactView').hidden=button.dataset.restaurantTab!=='contact';
+  }));
+  $('restaurantWeeklyRows').addEventListener('change',event=>{
+   if(!restaurantState.loaded)return;
+   const row=event.target.closest('[data-week-index]');
+   if(!row)return;
+   const index=Number(row.dataset.weekIndex);
+   const week=restaurantWeeklyHours(restaurantState.draft);
+   const input=event.target;
+   if(input.matches('[data-week-enabled]'))week[index].enabled=input.checked;
+   else if(input.matches('[data-week-time]'))week[index][input.dataset.weekTime]=input.value;
+   else return;
+   restaurantState.draft.weeklyHours=week;
+   restaurantMarkDirty('weeklyHours');restaurantDrawRows();restaurantShowStatus();
+  });
+  $('restaurantClosedMessage').addEventListener('input',event=>{
+   if(!restaurantState.loaded)return;
+   restaurantState.draft.closedMessage=event.target.value;
+   restaurantMarkDirty('closedMessage');
+  });
+  document.querySelectorAll('#restaurantContactView [data-setting]').forEach(input=>input.addEventListener('input',()=>{
+   if(!restaurantState.loaded)return;
+   const key=input.dataset.setting;restaurantState.draft[key]=input.value;restaurantMarkDirty(key);
+  }));
+  $('restaurantTemporaryClose').addEventListener('click',restaurantToggleClose);
+  $('restaurantSave').addEventListener('click',saveRestaurantSettings);
+ }
+ restaurantWireEvents();
 
  let activeAdminModal=null,adminModalReturnFocus=null,categoryModalTarget=null;
  function setAdminModalTab(kind,tab){
