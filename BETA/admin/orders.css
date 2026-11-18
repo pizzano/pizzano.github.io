@@ -363,3 +363,34 @@ body{background:#f7f9fc;color:#172838}
  .detail-accordion-prep strong{font-size:11px}
  .order-time{font-size:11px}
 }
+
+
+/* Orders lightbar: network and Firebase active; future integrations disabled. */
+.orders-top-actions.orders-lightbar{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex:none;min-width:0;flex-wrap:nowrap}
+.orders-light{position:relative;display:grid;place-items:center;flex:none;width:33px;height:33px;border:1px solid #dae4df;border-radius:10px;background:#f9fbfa;color:#74847b;padding:6px;cursor:default}
+.orders-light svg{display:block;width:19px;height:19px}
+.orders-light.is-active{color:#087e4f;border-color:#b1dcca;background:#eaf8f0}
+.orders-light.is-pending{color:#a67a27;background:#fff8e8;border-color:#edddb6}
+.orders-light.is-error{color:#cf4c43;background:#fff0ef;border-color:#efc0b9}
+.orders-light.is-upcoming{opacity:.34;filter:grayscale(1);background:#f5f6f6;border-style:dashed;pointer-events:none;cursor:not-allowed}
+.orders-light:disabled{opacity:.34}
+.orders-light-refresh{cursor:pointer;color:#087e61;border-color:#b9dfd1;background:#f1faf5}
+.orders-light-refresh:hover{background:#def3e7}
+.orders-light-tooltip{display:none;position:absolute;bottom:-37px;right:0;z-index:35;max-width:min(300px,85vw);width:max-content;border-radius:7px;padding:7px 9px;background:#163c31;color:#fff;box-shadow:0 6px 20px #0002;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:left;pointer-events:none}
+.orders-light:not(:disabled):hover .orders-light-tooltip,.orders-light:not(:disabled):focus-visible .orders-light-tooltip{display:block}
+.orders-menu{margin-left:3px;flex:none}
+@media(max-width:600px){
+ .orders-head{padding:7px 9px;gap:5px}
+ .orders-headline h1{font-size:14px}
+ .orders-headline small{font-size:9px}
+ .orders-top-actions.orders-lightbar{gap:3px}
+ .orders-light{width:27px;height:29px;padding:5px;border-radius:8px}
+ .orders-light svg{width:16px;height:16px}
+ .orders-menu{margin-left:0}
+ .orders-menu summary{min-width:24px;width:24px}
+}
+@media(max-width:390px){
+ .orders-light{width:24px;height:27px;padding:4px}
+ .orders-light svg{width:14px;height:14px}
+ .orders-headline h1{font-size:12px}
+}
