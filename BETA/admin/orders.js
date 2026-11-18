@@ -201,7 +201,8 @@
    const items=Array.isArray(order.items)?order.items:[];
    const qty=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
    const showReady=order.status==='godkjent';
-   const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):fmtTime(order.createdAt);
+   const scheduled=scheduledPickupTimestamp(order.pickup);
+   const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):scheduled?fmtTime(scheduled):fmtTime(order.createdAt);
    return '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'">'+
     (showReady?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
@@ -234,7 +235,7 @@
   const phone=String(o.phone||o.customer?.phone||'').replace(/[^+\d]/g,'');
   const mail=String(o.email||o.customer?.email||'');
   const phoneLink=phone?'<a href="tel:'+safe(phone)+'">'+safe(phone)+'</a>':'—';
-  const when=o.expectedReadyAt?'Forventet klar: '+fmtDate(o.expectedReadyAt):'Hentetid bekreftes ved godkjenning';
+  const when=o.expectedReadyAt?'Bekreftet hentetid: '+fmtDate(o.expectedReadyAt):scheduledPickupTimestamp(o.pickup)?'Ønsket hentetid: '+fmtDate(scheduledPickupTimestamp(o.pickup)):'Hentetid bekreftes ved godkjenning';
   const lines=items.map(line=>{
    const quantity=Math.max(1,Number(line.qty)||1);
    const detail=itemSummary(line);
