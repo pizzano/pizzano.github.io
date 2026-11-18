@@ -199,57 +199,13 @@ function fatih1BonusDisplayHome(){
  fatih1BonusConsentShow();
  fatih1BonusStatus(phone?(cache?'Lokalt lagret · kobler til live status':''):'Lagre mobilnummer for å hente pizzabonus.');
 }
-function fatih1ReadLocalOrders(){
- const key='bestillonline-orders-history-v1';
- let history=[];
- try{const stored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(stored))history=stored}catch{}
- // Older customer sessions only saved the latest order.
- if(localOrder?.id&&!history.some(item=>item?.id===localOrder.id)){
-  history.unshift({
-   id:localOrder.id,createdAt:localOrder.createdAt,
-   status:localOrder.statusPublic?.status||localOrder.status,
-   expectedReadyAt:localOrder.statusPublic?.expectedReadyAt||0,
-   pickupLabel:localOrder.pickup?.label||'Snarest',
-   pickupMode:localOrder.pickup?.mode||'asap',
-   pickupTime:localOrder.pickup?.time||'',
-   total:localOrder.total,
-   items:localOrder.items
-  });
- }
- return history.filter(item=>item&&typeof item.id==='string').sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)).slice(0,30);
-}
 function fatih1ProfileRenderHome(){
  const c=fatih1ProfileContact(),name=String(c.name||'').trim(),avatar=fatih1ProfileInitials(name);
  $('fatih1ProfileName').textContent=name||'Min profil';
  $('fatih1ProfilePhone').textContent=fatih1ProfilePhoneNumber(c.phone);
  $('fatih1ProfileInitials').textContent=avatar||'👤';
  $('fatih1ProfileContactMeta').textContent=(name||c.phone)?(c.email?'Navn, mobilnummer og e-post lagret':'Navn og mobilnummer lagret'):'Navn, mobilnummer og e-post';
- const count=fatih1ReadLocalOrders().length;
- $('fatih1ProfileOrdersMeta').textContent=count?count+' bestilling'+(count===1?'':'er')+' lagret på enheten':'Ingen lagrede bestillinger';
  fatih1BonusDisplayHome();
-}
-function fatih1ProfileRenderOrders(){
- const host=$('fatih1ProfileOrders');
- const orders=fatih1ReadLocalOrders();
- if(!orders.length){host.innerHTML='<p class="fatih1-profile-empty">Ingen bestillinger lagret på denne enheten.</p>';return}
- const labels={mottatt:'Venter på godkjenning',godkjent:'Bekreftet',klar:'Klar til henting',avvist:'Avvist'};
- host.innerHTML=orders.map(order=>{
-  const current=localOrder?.id===order.id?localOrder:order;
-  const state=current.statusPublic?.status||current.status||'mottatt';
-  const items=Array.isArray(current.items)?current.items:[];
-  const created=new Date(Number(current.createdAt)||0);
-  const day=Number.isFinite(created.getTime())&&created.getTime()>0?
-   new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',year:'numeric'}).format(created):'';
-  const pickupRecord=current.pickup||{mode:current.pickupMode,time:current.pickupTime};
-  const statusRecord=current.statusPublic||{expectedReadyAt:current.expectedReadyAt};
-  const ready=typeof visiblePickupAt==='function'?visiblePickupAt({pickup:pickupRecord,statusPublic:statusRecord}):Number(statusRecord.expectedReadyAt)||0;
-  const readyLabel=ready&&state==='godkjent'?'Henting kl. '+new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(ready)):'';
-  return '<article class="fatih1-profile-order-card">'+
-   '<div class="fatih1-profile-order-head"><strong>#'+esc(String(order.id).slice(-6).toUpperCase())+'</strong><span>'+esc(day)+'</span></div>'+
-   '<p><strong>'+esc(labels[state]||state)+'</strong>'+(readyLabel?' · '+esc(readyLabel):'')+'</p>'+
-   '<p>'+items.map(item=>esc((Number(item.qty)||1)+' × '+String(item.name||''))).join(' · ')+'</p>'+
-   '<div><span>'+esc(String(current.pickup?.label||current.pickupLabel||'Snarest'))+'</span><strong>'+money(current.total)+'</strong></div></article>';
- }).join('');
 }
 
 /* Restaurantinformasjon: ONLY menu.settings, already fetched from /settings.
@@ -368,8 +324,9 @@ async function fatih1RestaurantRefresh(){
  try{return await task}finally{fatih1RestaurantLoading=null}
 }
 function fatih1ProfileShowTab(tab){
+ if(!['home','contact','restaurant'].includes(tab))tab='home';
  if(!$('fatih1ProfileSheet').hidden)fatih1HistoryWrite({view:'profile',tab});
- const home=tab==='home',names={contact:'Rediger profil',orders:'Mine bestillinger',restaurant:'Restaurantinformasjon'};
+ const home=tab==='home',names={contact:'Rediger profil',restaurant:'Restaurantinformasjon'};
  $('fatih1ProfileHome').hidden=!home;$('fatih1ProfileDetail').hidden=home;
  for(const name of Object.keys(names))$('fatih1Profile'+name[0].toUpperCase()+name.slice(1)+'Panel').hidden=tab!==name;
  if(home){fatih1ProfileRenderHome();fatih1BonusStart(false)}
@@ -382,8 +339,7 @@ function fatih1ProfileShowTab(tab){
    $('fatih1ProfPhone').value=c.phone||'';
    $('fatih1ProfEmail').value=c.email||'';
    $('fatih1ProfileSaveStatus').hidden=true;
-  }else if(tab==='orders')fatih1ProfileRenderOrders();
-  else if(tab==='restaurant')fatih1ProfileRenderRestaurant();
+  }else if(tab==='restaurant')fatih1ProfileRenderRestaurant();
  }
  $('fatih1ProfileScroll').scrollTop=0;
 }
