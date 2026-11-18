@@ -158,26 +158,32 @@ function boShowStartupBrand(value){
 }
 // When the menu is already cached, verify only the tiny restaurant-name leaf.
 // First visits already read /settings as part of the normal menu download.
-function boRefreshStartupBrandFromFirebase(){
+// Cached product/menu data is intentionally reused. Restaurant settings can
+// change independently of /menu, so verify /settings once on each cached visit.
+// This replaces the old name-only check; never download the menu unnecessarily.
+function boRefreshStartupSettingsFromFirebase(){
  if(!menu?.sections?.length||navigator.onLine===false)return Promise.resolve();
  if(boBrandRefreshPending)return boBrandRefreshPending;
  const controller=new AbortController();
- const timeout=window.setTimeout(()=>controller.abort(),2200);
+ const timeout=window.setTimeout(()=>controller.abort(),4500);
  const task=(async()=>{
   try{
-   const response=await fetch(BASE+'/settings/restaurantName.json',{cache:'no-store',signal:controller.signal});
-   if(!response.ok)return;
-   const value=await response.json();
-   if(value!==null&&typeof value!=='string')return;
-   const latest=String(value||'').trim();
-   if(latest!==String(menu.settings?.restaurantName||'').trim()){
-    menu.settings={...(menu.settings||{}),restaurantName:latest};
+   const response=await fetch(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
+   if(!response.ok)throw Error('Firebase /settings HTTP '+response.status);
+   const latest=await response.json();
+   if(!latest||typeof latest!=='object'||Array.isArray(latest))throw Error('Invalid restaurant settings');
+   if(!menu)return;
+   const changed=JSON.stringify(latest)!==JSON.stringify(menu.settings||{});
+   if(changed){
+    menu.settings=latest;
+    updateHoursStatus();
     updateRestaurantBrand();
-    // Only persist if the name actually changed; no repeated full menu read.
-    void localPut(menu).catch(()=>{});
-   }else boShowStartupBrand(latest);
+    refreshCartRecommendationsIfOpen();
+    saveLiveCacheSoon();
+    $('cacheStatus').textContent='Innstillinger oppdatert';
+   }else boShowStartupBrand(latest.restaurantName);
   }catch(error){
-   if(error.name!=='AbortError')console.warn('BestillOnline restaurant name refresh:',error);
+   if(error.name!=='AbortError')console.warn('BestillOnline settings refresh:',error);
   }finally{window.clearTimeout(timeout)}
  })();
  boBrandRefreshPending=task;
@@ -280,7 +286,7 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  const useCached=value=>{
   menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
-  void boRefreshStartupBrandFromFirebase();
+  void boRefreshStartupSettingsFromFirebase();
  };
  if(cached?.sections?.length){
   useCached(cached);
