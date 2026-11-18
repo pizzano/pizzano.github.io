@@ -150,3 +150,27 @@ body.is-dialog-open{overflow:hidden}
  .order-row[data-status="mottatt"],.order-new-indicator{animation:none}
  .order-row{transition:none}
 }
+
+
+/* Compact customer summary with optional details. */
+.detail-customer-accordion{margin:9px 0 0;border:1px solid #e1eae4;border-radius:13px;overflow:hidden;background:#fff}
+.detail-customer-accordion>summary{list-style:none;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr) 22px;align-items:center;gap:14px;min-height:70px;padding:13px 15px;cursor:pointer;background:#f8fbf9}
+.detail-customer-accordion>summary::-webkit-details-marker{display:none}
+.detail-customer-accordion>summary:focus-visible{outline:2px solid #e9a34e;outline-offset:-2px}
+.detail-accordion-customer,.detail-accordion-prep{display:flex;flex-direction:column;gap:5px;min-width:0}
+.detail-accordion-customer small,.detail-accordion-prep small{color:#7b9184;font-size:11px}
+.detail-accordion-customer strong,.detail-accordion-prep strong{color:#243b30;font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.detail-accordion-prep strong{color:#168359}
+.detail-accordion-chevron{justify-self:end;font-size:21px;color:#68897a;transition:transform .16s ease}
+.detail-customer-accordion[open] .detail-accordion-chevron{transform:rotate(180deg)}
+.detail-customer-accordion .detail-facts{margin:0;padding:15px;border-bottom:0;border-top:1px solid #e0e9e3;background:#fff}
+.detail-customer-accordion .detail-facts label{color:#839487}
+.order-countdown{flex:none;min-width:95px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:.01em;color:#194e3b}
+.order-countdown.is-due{color:#168359}
+.order-row[data-status="godkjent"] .order-row-body{gap:12px}
+@media(max-width:600px){
+ .order-countdown{min-width:73px;font-size:12px}
+ .detail-customer-accordion>summary{gap:8px;padding:12px}
+ .detail-customer-accordion .detail-facts{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.detail-accordion-chevron{transition:none}}
