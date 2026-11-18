@@ -6,16 +6,23 @@
 <meta name="theme-color" content="#062d25">
 <meta name="robots" content="noindex,nofollow">
 <title>BestillOnline · Bestillinger</title>
-<link rel="stylesheet" href="./admin/orders.css?v=20261118-singlelist14">
+<link rel="stylesheet" href="./admin/orders.css?v=20261118-lightbar15">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
-<script src="./admin/orders.js?v=20261118-singlelist14" defer></script>
+<script src="./admin/orders.js?v=20261118-lightbar15" defer></script>
 </head>
 <body>
 <header class="orders-head">
   <div class="orders-headline"><h1>Orders</h1><small id="ordersBrand">KØL Grill & Pizza</small></div>
-  <div class="orders-top-actions">
-   <span class="orders-connection" id="ordersConnection" title="Tilkoblingsstatus"><i></i><span>Kobler til…</span></span>
+  <div class="orders-top-actions orders-lightbar" aria-label="Bestillingssystem – status og kontroller">
+   <button class="orders-light orders-light-net is-pending" id="ordersConnection" type="button" aria-label="Nett: kontrolleres" title="Nettverkstilkobling"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.4 8.7c5.7-5.1 13.5-5.1 19.2 0M5.7 12.2c3.7-3.3 8.9-3.3 12.6 0M9 15.7c1.8-1.5 4.2-1.5 6 0"></path><circle cx="12" cy="19.2" r="1.05" fill="currentColor" stroke="none"></circle></svg><span class="orders-light-tooltip" id="ordersNetTooltip">Nett: kontrolleres</span></button>
+   <button class="orders-light orders-light-firebase is-pending" id="ordersFirebaseStatus" type="button" aria-label="Firebase: kobler til" title="Firebase ordretilkobling"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v12l8 4 8-4V6l-8-4Z"></path><path d="M12 2v20M4 6l8 4 8-4M4 18l8-4 8 4"></path></svg><span class="orders-light-tooltip" id="ordersFirebaseTooltip">Firebase: kobler til</span></button>
+   <button class="orders-light is-upcoming" id="ordersPrinterStatus" type="button" disabled aria-label="Epson TM-T20II – kommer senere" title="Epson TM-T20II · kommer senere"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"></path><path d="M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v7H6z"></path><path d="M17 11h2"></path></svg><span class="orders-light-tooltip">Epson TM-T20II · kommer senere</span></button>
+   <button class="orders-light is-upcoming" id="ordersSmsStatus" type="button" disabled aria-label="SMS – kommer senere" title="SMS · kommer senere"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"></path><path d="M8 10h8M8 13h5"></path></svg><span class="orders-light-tooltip">SMS · kommer senere</span></button>
+   <button class="orders-light is-upcoming" id="ordersEmailStatus" type="button" disabled aria-label="E-post – kommer senere" title="E-post · kommer senere"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg><span class="orders-light-tooltip">E-post · kommer senere</span></button>
+   <button class="orders-light is-upcoming" id="ordersPhoneStatus" type="button" disabled aria-label="Mobil – kommer senere" title="Mobil · kommer senere"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.7" width="11" height="18.6" rx="2.2"></rect><path d="M11.2 18h1.6"></path></svg><span class="orders-light-tooltip">Mobil · kommer senere</span></button>
+   <button class="orders-light is-upcoming" id="btnOrderSound" type="button" disabled aria-label="Bestillingslyd – kommer senere" title="Bestillingslyd · kommer senere"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"></path></svg><span class="orders-light-tooltip">Bestillingslyd · kommer senere</span></button>
+   <button class="orders-light orders-light-refresh" id="btnRefreshOrders" type="button" aria-label="Oppdater siden, nett og Firebase" title="Oppdater bestillinger, nett og Firebase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.8 9a7 7 0 0 1 11.7-2L20 12M4 12l2.5 5a7 7 0 0 0 11.7-2"></path></svg><span class="orders-light-tooltip">Oppdater bestillinger, nett og Firebase</span></button>
    <details class="orders-menu"><summary aria-label="Meny" title="Meny">⋮</summary><div class="orders-menu-items"><a href="./admin.html">Menyadmin</a><button id="ordersSignOut" type="button" hidden>Logg ut</button></div></details>
   </div>
 </header>
