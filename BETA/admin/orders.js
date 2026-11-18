@@ -396,7 +396,7 @@
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    orders.set(id,next);
    render();
-   closeDialog();
+   if(!automatic)closeDialog();
    if(!automatic)feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
    if(status==='godkjent')void finalizeDueOrder();
    // Leave the successful result visible briefly, then return to the order inbox.
