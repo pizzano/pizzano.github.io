@@ -568,8 +568,29 @@ function displayLiveOrderStatus(){
  if(info)info.textContent=state.status==='godkjent'&&state.expectedReadyAt?
   'Forventet klar kl. '+pickupClock(state.expectedReadyAt):
   state.status==='klar'?'Du kan hente bestillingen din nå.':
-  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):
+  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):'Kontakt restauranten.':
   'Restauranten bekrefter hentetid når bestillingen godtas.';
+ const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
+ const title=$('draftConfirmationTitle');
+ if(title)title.textContent=accepted?'Bestillingen er godkjent!':ready?'Bestillingen er klar til henting!':rejected?'Bestillingen er avvist':'Bestillingen er sendt';
+ const intro=$('draftConfirmationIntro');
+ if(intro)intro.textContent=accepted?'Restauranten har godkjent bestillingen din.':ready?'Du kan hente bestillingen din nå.':rejected?'Restauranten kunne ikke godta bestillingen din.':'Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
+ const sent=$('draftConfirmationSent');
+ if(sent)sent.textContent=accepted?'✓ Bekreftet av restauranten':ready?'✓ Klar til henting':rejected?'Bestillingen ble avvist':'Sendt til restauranten · Avventer godkjenning';
+ const pickup=$('draftConfirmationPickup');
+ const pickupLabel=$('draftConfirmationPickupLabel');
+ if(pickupLabel)pickupLabel.textContent=accepted&&state.expectedReadyAt?'Forventet klar':'Hentetid';
+ if(pickup)pickup.textContent=accepted&&state.expectedReadyAt?'Kl. '+pickupClock(state.expectedReadyAt):localOrder.pickup?.label||'Snarest';
+ const confirmation=$('draftConfirmation');
+ if(confirmation){
+  confirmation.dataset.orderStatus=state.status;
+  const marker=confirmation.querySelector('.draft-confirmation-mark');
+  if(marker)marker.textContent=rejected?'!':'✓';
+ }
+ const activeTitle=$('draftActiveTitle');
+ if(activeTitle)activeTitle.textContent=accepted?'Bestillingen er godkjent':ready?'Klar til henting':rejected?'Bestillingen er avvist':'Bestilling sendt';
+ const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
+ if(tracker)tracker.forEach((step,index)=>step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready)));
 }
 function onCustomerStatusUpdate(value){
  if(!localOrder||!value||typeof value!=='object'||
@@ -653,7 +674,6 @@ function renderDraftActiveOrder(){
  if(!localOrder)return;
  const pending=localOrderStatus()==='pending';
  $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
- $('draftActiveTitle').textContent='Bestilling sendt';
  displayLiveOrderStatus();
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
  if(pending&&!localOrderExpiryTimer){
@@ -668,10 +688,7 @@ function renderDraftActiveOrder(){
 function renderDraftConfirmation(){
  if(!localOrder)return;
  localOrderStatus();
- $('draftConfirmationTitle').textContent='Bestillingen er sendt';
- $('draftConfirmationIntro').textContent='Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
  $('draftConfirmationNumber').textContent=String(localOrder.id||'').slice(-6).toUpperCase();
- $('draftConfirmationPickup').textContent=localOrder.pickup?.label||'Snarest';
  $('draftConfirmationTotal').textContent=money(localOrder.total);
  displayLiveOrderStatus();
 }
