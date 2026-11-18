@@ -581,6 +581,23 @@ html,body{min-height:100%;overflow-x:clip}
 .draft-waiting strong{color:#163e32;font-size:var(--text-md)}
 .draft-waiting small{color:#638175;font-size:var(--text-sm)}
 
+/* Compact read-only receipt in the sent-order dialog. No Firebase reads. */
+.draft-confirmation-items{margin:13px 0 12px;border:1px solid #bcdcc9;border-radius:13px;overflow:hidden;background:#fff;text-align:left}
+.draft-confirmation-items>summary{display:flex;align-items:center;gap:8px;min-height:46px;padding:11px 13px;cursor:pointer;list-style:none;color:#087b57;font-size:var(--text-sm)}
+.draft-confirmation-items>summary::-webkit-details-marker{display:none}
+.draft-confirmation-items>summary strong{flex:1;font-weight:800}
+.draft-confirmation-items>summary span{font-size:var(--text-sm);color:#638175}
+.draft-confirmation-items .draft-confirmation-chevron{color:#087b57;font-size:21px;line-height:1;transition:transform .18s}
+.draft-confirmation-items[open] .draft-confirmation-chevron{transform:rotate(180deg)}
+.draft-confirmation-items-list{display:grid;gap:8px;padding:10px;border-top:1px solid #d7e9de;background:#f9fcfa;max-height:min(42dvh,360px);overflow-y:auto}
+.draft-confirmation-product{margin:0;padding:9px;border-color:#b9d9cb;box-shadow:none}
+.draft-confirmation-product .cart-product-heading{margin-bottom:4px}
+.draft-confirmation-product .cart-product-name{font-size:var(--text-sm)}
+.draft-confirmation-product .cart-line-detail{font-size:var(--text-sm)}
+.draft-confirmation-total{display:flex;align-items:center;justify-content:space-between;padding:10px 3px 3px;border-top:1px solid #cbded2;color:#143e31;font-size:var(--text-md)}
+.draft-confirmation-empty{margin:0;padding:7px;color:#638175;font-size:var(--text-sm)}
+
+
 .checkout-card{padding:13px 11px}.checkout-pickup-choices{gap:7px}.checkout-pickup-option{padding:9px}.checkout-order-preview>summary{gap:6px}
 
 
