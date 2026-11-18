@@ -507,11 +507,31 @@ function refreshHeader(){
   finally{state.loading=false;restaurantSetSaving()}
  }
  async function restaurantPatch(values){
-  const response=await fetch(await databaseAuthURL('settings'),{
-   method:'PATCH',headers:{'Content-Type':'application/json'},
-   cache:'no-store',body:JSON.stringify(values)
-  });
-  if(!response.ok)throw Error('Firebase avviste lagring ('+response.status+').');
+  const keys=Object.keys(values);
+  if(!keys.length)throw Error('Ingen endringer å lagre.');
+  const url=await databaseAuthURL('settings');
+  let response;
+  try{
+   response=await fetch(url,{
+    method:'PATCH',headers:{'Content-Type':'application/json'},
+    cache:'no-store',body:JSON.stringify(values)
+   });
+  }catch(error){
+   throw Error('Ingen forbindelse til Firebase. Endringene er fortsatt i skjemaet. '+(error.message||''));
+  }
+  const raw=await response.text();
+  let returned;
+  try{returned=JSON.parse(raw)}catch{
+   throw Error('Firebase svarte med ugyldige data. Kontroller /settings før du prøver igjen.');
+  }
+  if(!response.ok)throw Error('Firebase avviste lagring (HTTP '+response.status+'): '+
+   String(returned?.error||returned?.message||raw).slice(0,200));
+  if(!returned||typeof returned!=='object'||Array.isArray(returned)){
+   throw Error('Firebase bekreftet ikke de endrede feltene. Sjekk /settings.');
+  }
+  const mismatches=keys.filter(key=>JSON.stringify(returned[key]??null)!==JSON.stringify(values[key]??null));
+  if(mismatches.length)throw Error('Firebase bekreftet ikke: '+mismatches.join(', ')+'. Sjekk /settings.');
+  return returned;
  }
  async function saveRestaurantSettings(){
   const state=restaurantState;
@@ -534,7 +554,7 @@ function refreshHeader(){
    await restaurantPatch(changes);
    Object.assign(state.original,clone(changes));state.dirty.clear();
    if(changes.restaurantName!==undefined)setAdminRestaurantBrand(changes.restaurantName);
-   restaurantSetMessage('Restaurantinnstillingene er lagret.');
+   restaurantSetMessage('Lagret i Firebase /settings · '+Object.keys(changes).length+' felt bekreftet.');
   }catch(error){restaurantSetMessage(error.message||'Kunne ikke lagre.',true)}
   finally{state.saving=false;restaurantSetSaving()}
  }
@@ -550,7 +570,7 @@ function refreshHeader(){
    await restaurantPatch(change);
    Object.assign(state.draft,change);Object.assign(state.original,change);
    state.dirty.delete('manualClosed');state.dirty.delete('manualClosedUntil');
-   restaurantShowStatus();restaurantSetMessage(closed?'Nettbestilling er åpnet igjen.':'Nettbestilling er midlertidig stengt.');
+   restaurantShowStatus();restaurantSetMessage(closed?'Firebase bekreftet: Nettbestilling åpnet.':'Firebase bekreftet: Nettbestilling midlertidig stengt.');
   }catch(error){restaurantSetMessage(error.message||'Kunne ikke endre status.',true)}
   finally{$('restaurantTemporaryClose').disabled=false;restaurantSetSaving()}
  }
