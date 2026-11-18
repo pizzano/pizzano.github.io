@@ -271,15 +271,20 @@
    const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):scheduled?fmtTime(scheduled):fmtTime(order.createdAt);
    const groupBreak=filter==='all'&&hasPending&&order.status!=='mottatt'&&
     (index===0||filtered[index-1].status==='mottatt');
+   const kind=pickupKind(order);
+   const center=order.status==='godkjent'?
+    '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':
+    '<span class="order-pickup-badge" data-kind="'+kind+'">'+kind+'</span>';
+   const statusColor=order.status==='avvist'?'rejected':kind==='SENERE'?'scheduled':'standard';
    return (groupBreak?'<div class="orders-group-divider" role="separator"><span>Tidligere bestillinger</span></div>':'')+
-    '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'">'+
+    '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+statusColor+'">'+
     (showReady?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
     '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
     '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
     '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
-    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting <span class="order-pickup-badge" data-kind="'+pickupKind(order)+'">'+pickupKind(order)+'</span></small></span></button>'+
-    (order.status==='godkjent'?'<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':'')+
+    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
+    '<span class="order-center">'+center+'</span>'+
     '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
     '</div></article>';
   }).join('');
