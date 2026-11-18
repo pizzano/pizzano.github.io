@@ -568,7 +568,7 @@ function displayLiveOrderStatus(){
  if(info)info.textContent=state.status==='godkjent'&&state.expectedReadyAt?
   'Forventet klar kl. '+pickupClock(state.expectedReadyAt):
   state.status==='klar'?'Du kan hente bestillingen din nå.':
-  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):'Kontakt restauranten.':
+  state.status==='avvist'?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'): 
   'Restauranten bekrefter hentetid når bestillingen godtas.';
  const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
  const title=$('draftConfirmationTitle');
