@@ -89,10 +89,27 @@
   const node=$('ordersFeedback');node.hidden=!message;
   node.textContent=message;node.className='orders-feedback'+(error?' error':'');
  }
+ function updateNetworkLight(){
+  // navigator.onLine indicates browser network availability, not actual Wi-Fi
+  // association or verified Internet connectivity.
+  const available=navigator.onLine!==false;
+  const node=$('ordersConnection');
+  const label=available?'Nettverk: tilgjengelig (ikke verifisert)':'Nettverk: frakoblet';
+  node.className='orders-light orders-light-net '+(available?'is-pending':'is-error');
+  node.setAttribute('aria-label',label);
+  node.title=label;
+  $('ordersNetTooltip').textContent=label;
+ }
  function connection(label,online=false,offline=false){
   connected=online;
-  $('ordersConnection').className='orders-connection'+(online?' is-online':offline?' is-offline':'');
-  $('ordersConnection').querySelector('span').textContent=label;
+  const node=$('ordersFirebaseStatus');
+  const status=online?'is-active':offline?'is-error':'is-pending';
+  const message='Firebase: '+label;
+  node.className='orders-light orders-light-firebase '+status;
+  node.setAttribute('aria-label',message);
+  node.title=message;
+  $('ordersFirebaseTooltip').textContent=message;
+  updateNetworkLight();
  }
  function authReady(){return auth?.currentUser?.uid===ADMIN_UID}
  async function authorizedURL(path){
@@ -502,6 +519,14 @@
  }
  let swipe=null;
  function events(){
+  updateNetworkLight();
+  window.addEventListener('online',updateNetworkLight);
+  window.addEventListener('offline',updateNetworkLight);
+  $('btnRefreshOrders').addEventListener('click',()=>{
+   // Explicit user-initiated reload: reconnect the Firebase SSE once,
+   // with no recurring database or network probes.
+   window.location.reload();
+  });
   $('ordersLoginForm').addEventListener('submit',login);
   $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
   $('ordersList').addEventListener('click',async event=>{
