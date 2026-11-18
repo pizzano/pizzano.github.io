@@ -278,7 +278,7 @@
     '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
     '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
     '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
-    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
+    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting <span class="order-pickup-badge" data-kind="'+pickupKind(order)+'">'+pickupKind(order)+'</span></small></span></button>'+
     (order.status==='godkjent'?'<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':'')+
     '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
     '</div></article>';
@@ -286,17 +286,28 @@
   if(activeId&&orders.has(activeId))renderDetails();
   updateCountdowns();
  }
- function itemSummary(line){
-  const pieces=[];
-  if(line.size?.label)pieces.push('Størrelse: '+line.size.label);
-  for(const group of Array.isArray(line.choices)?line.choices:[]){
-   const opts=Array.isArray(group.options)?group.options:[];
-   pieces.push((group.group||'Tilvalg')+': '+opts.map(o=>o.label+(Number(o.count||1)>1?' ×'+o.count:'')).join(', '));
+ function pickupKind(order){
+  return order?.pickup?.mode==='scheduled'?'SENERE':'SNAREST';
+ }
+ function orderProductDetails(line){
+  const details=[];
+  const opts=Array.isArray(line.choices)?line.choices:[];
+  const extra=opts.reduce((sum,group)=>sum+(Array.isArray(group.options)?group.options:[]).reduce((acc,option)=>acc+(Number(option.price)||0)*Math.max(1,Number(option.count)||1),0),0);
+  const price=Number(line.unitPrice)||0;
+  details.push('<div class="order-product-option"><span><b>Størrelse:</b> '+safe(line.size?.label||'Standard')+'</span><strong>'+money(price-extra)+'</strong></div>');
+  for(const group of opts){
+   for(const option of Array.isArray(group.options)?group.options:[]){
+    const count=Math.max(1,Number(option.count)||1);
+    const price=Number(option.price)||0;
+    const unit=price>0?'+ '+money(price):price<0?money(price):'Inkludert';
+    details.push('<div class="order-product-option"><span><b>'+safe(group.group||'Valg')+':</b> '+safe((count>1?count+' × ':'')+String(option.label||''))+'</span><small>'+unit+'</small></div>');
+   }
   }
-  if(Array.isArray(line.removedIngredients)&&line.removedIngredients.length)pieces.push('Uten: '+line.removedIngredients.join(', '));
-  if(Array.isArray(line.quickNotes)&&line.quickNotes.length)pieces.push('Notat: '+line.quickNotes.join(', '));
-  if(line.comment)pieces.push(String(line.comment));
-  return pieces.map(s=>safe(String(s).slice(0,350))).join('\n');
+  if(Array.isArray(line.removedIngredients)&&line.removedIngredients.length)
+   details.push('<div class="order-product-option is-alert"><span><b>Uten:</b> '+safe(line.removedIngredients.join(', '))+'</span></div>');
+  const notes=[...(Array.isArray(line.quickNotes)?line.quickNotes:[]),...String(line.comment||'').split(/\r?\n/)].map(v=>String(v).trim()).filter(Boolean);
+  if(notes.length)details.push('<div class="order-product-option is-alert"><span><b>Kommentar:</b> '+safe([...new Set(notes)].join(' · '))+'</span></div>');
+  return details.join('');
  }
  function renderDetails(){
   const o=orders.get(activeId);
@@ -310,14 +321,14 @@
   const phoneLink=phone?'<a href="tel:'+safe(phone)+'">'+safe(phone)+'</a>':'—';
   const when=o.expectedReadyAt?'Bekreftet hentetid: '+fmtDate(o.expectedReadyAt):scheduledPickupTimestamp(o.pickup)?'Ønsket hentetid: '+fmtDate(scheduledPickupTimestamp(o.pickup)):'Hentetid bekreftes ved godkjenning';
   const lines=items.map(line=>{
-   const quantity=Math.max(1,Number(line.qty)||1);
-   const detail=itemSummary(line);
-   return '<div class="detail-item"><div class="detail-item-main"><strong>'+quantity+' × '+safe(line.name||'Produkt')+
-    '</strong>'+(detail?'<small>'+detail+'</small>':'')+'</div>'+
-    '<span class="detail-item-price">'+money((Number(line.unitPrice)||0)*quantity)+'</span></div>';
+   const quantity=Math.max(1,Number(line.qty)||1),unitPrice=Number(line.unitPrice)||0;
+   return '<article class="order-product-card"><div class="order-product-title"><strong>'+
+    quantity+' × '+safe(line.name||'Produkt')+'</strong></div>'+
+    '<div class="order-product-options">'+orderProductDetails(line)+'</div>'+
+    '<div class="order-product-total"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(unitPrice)+')':'')+'</span><strong>'+money(quantity*unitPrice)+'</strong></div></article>';
   }).join('');
   $('ordersDetail').innerHTML=
-   '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+'</div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
+   '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+' <span class="order-pickup-badge" data-kind="'+pickupKind(o)+'">'+pickupKind(o)+'</span></div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
    '<details class="detail-customer-accordion" data-detail-accordion="'+safe(o.id)+'"'+(wasExpanded?' open':'')+'>'+
    '<summary><span class="detail-accordion-customer"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
    '<span class="detail-accordion-prep"><small>Tilberedning</small><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong></span>'+
@@ -325,11 +336,11 @@
    '<div class="detail-facts"><div><label>Bestillings-ID</label><strong>#'+safe(o.id.slice(-8).toUpperCase())+'</strong></div>'+
    '<div><label>Bestilt</label><strong>'+fmtDate(o.createdAt)+'</strong></div>'+
    '<div><label>Godkjent</label><strong>'+fmtDate(o.acceptedAt)+'</strong></div>'+
-   '<div><label>Henting</label><strong>'+safe(pickup.label||'Snarest')+'</strong></div>'+
+   '<div><label>Henting</label><strong>'+pickupKind(o)+' · '+safe(pickup.label||'Snarest')+'</strong></div>'+
    '<div><label>Telefon</label>'+phoneLink+'</div>'+
    (mail?'<div><label>E-post</label><strong>'+safe(mail)+'</strong></div>':'')+
    '</div></details>'+
-   '<section class="detail-items"><h3>Produkter</h3>'+lines+'</section>'+
+   '<section class="detail-items"><h3>Produkter</h3><div class="order-products-grid">'+lines+'</div></section>'+
    (o.rejectReason?'<p class="orders-feedback error">Avvist: '+safe(o.rejectReason)+'</p>':'')+
    '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>';
   $('ordersActionBar').innerHTML=o.status==='mottatt'?
@@ -355,7 +366,15 @@
   if(!id||!orders.has(id))return;
   activeId=id;show('ordersAcceptOverlay',type==='accept');show('ordersRejectOverlay',type==='reject');
   document.body.classList.add('is-dialog-open');
-  if(type==='accept'){$('ordersPrep').value='';$('ordersPrep').focus()}
+  if(type==='accept'){
+   const order=orders.get(id);
+   const later=order?.pickup?.mode==='scheduled';
+   $('ordersPrep').value='';
+   $('ordersAcceptPrepBlock').hidden=later;
+   $('ordersAcceptScheduled').hidden=!later;
+   $('ordersAcceptScheduledTime').textContent=later?(order.pickup.label||''):'';
+   if(!later)$('ordersPrep').focus();
+  }
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
@@ -382,11 +401,18 @@
    const next={...current,...extra,status,updatedAt:changedAt};
    if(status==='godkjent'){
     next.acceptedAt=changedAt;
-    const earliestReady=changedAt+Number(extra.prepMinutes)*60000;
-    const scheduled=current.pickup?.mode==='scheduled'?scheduledPickupTimestamp(current.pickup):null;
-    // Keep the requested slot when possible; never promise a past/impossible time.
-    next.expectedReadyAt=Math.max(earliestReady,scheduled||0);
-    next.pickupTimeAdjusted=scheduled!==null&&earliestReady>scheduled;
+    if(current.pickup?.mode==='scheduled'){
+     const selected=scheduledPickupTimestamp(current.pickup);
+     if(!selected||selected<=changedAt)throw Error('Valgt hentetid er passert eller ugyldig. Kontakt kunden før du godtar.');
+     delete next.prepMinutes;
+     next.expectedReadyAt=selected;
+     next.pickupTimeAdjusted=false;
+    }else{
+     const minutes=Number(extra.prepMinutes);
+     if(!Number.isInteger(minutes)||minutes<1||minutes>99)throw Error('Skriv inn gyldig tilberedningstid.');
+     next.expectedReadyAt=changedAt+minutes*60000;
+     next.pickupTimeAdjusted=false;
+    }
    }
    if(status==='klar')next.readyAt=changedAt;
    if(status==='avvist')next.rejectedAt=changedAt;
@@ -503,10 +529,15 @@
   };
   $('ordersAcceptForm').addEventListener('submit',async event=>{
    event.preventDefault();
-   const value=Number($('ordersPrep').value);
-   if(!Number.isInteger(value)||value<1||value>99){$('ordersPrep').reportValidity();return}
+   const order=orders.get(activeId);
+   const later=order?.pickup?.mode==='scheduled';
+   const raw=$('ordersPrep').value.trim();
+   const value=Number(raw);
+   if(!later&&(!raw||!Number.isInteger(value)||value<1||value>99)){
+    $('ordersPrep').reportValidity();return;
+   }
    $('ordersConfirmAccept').disabled=true;
-   try{await changeStatus(activeId,'godkjent',{prepMinutes:value})}
+   try{await changeStatus(activeId,'godkjent',later?{}:{prepMinutes:value})}
    catch(error){feedback(error.message,true)}
    finally{$('ordersConfirmAccept').disabled=false}
   });
