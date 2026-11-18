@@ -174,3 +174,28 @@ body.is-dialog-open{overflow:hidden}
  .detail-customer-accordion .detail-facts{padding:12px}
 }
 @media(prefers-reduced-motion:reduce){.detail-accordion-chevron{transition:none}}
+
+/* Product breakdown shares the compact hierarchy of the customer basket. */
+.order-products-grid{display:grid;gap:10px}
+.order-product-card{min-width:0;padding:12px;border:1px solid #2196f3;border-radius:15px;background:#fff;box-shadow:0 2px 9px #174c3309}
+.order-product-title{margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.order-product-title strong{color:#155d47;font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.order-product-options{display:grid;gap:5px}
+.order-product-option{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:28px;padding:7px 9px;background:#d8e2dc36;border-radius:8px;color:#274a3c;font-size:12px;line-height:1.35}
+.order-product-option span{min-width:0;overflow-wrap:anywhere}
+.order-product-option b{color:#183c30;font-weight:800}
+.order-product-option strong{flex:none;color:#183c30}
+.order-product-option small{flex:none;color:#648075;font-size:11px;text-align:right}
+.order-product-option.is-alert{background:#ffebea;color:#a53b3f}
+.order-product-option.is-alert b{color:inherit}
+.order-product-total{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding:9px 3px 0;border-top:1px solid #d2e4d9}
+.order-product-total span{color:#71887b;font-size:12px}
+.order-product-total strong{font-size:14px;color:#173d32}
+.order-pickup-badge{display:inline-flex;align-items:center;margin-left:5px;padding:2px 7px;border-radius:7px;background:#dceee6;color:#167b59;font-size:10px;font-weight:800;letter-spacing:.03em;vertical-align:middle}
+.order-pickup-badge[data-kind="SENERE"]{background:#fff0d2;color:#a46610}
+.detail-status .order-pickup-badge{font-size:11px}
+.orders-scheduled-accept{margin:4px 0 20px;padding:13px 11px;border:1px solid #ead4a7;border-radius:12px;background:#fffaf0}
+.orders-scheduled-accept strong{display:block;margin-bottom:8px;color:#a66a12;font-size:13px}
+.orders-scheduled-accept p{margin:0 0 8px;color:#546b60;font-size:12px;line-height:1.45}
+.orders-scheduled-accept span{display:block;color:#174e3a;font-size:15px;font-weight:800}
+@media(max-width:600px){.order-product-card{padding:10px}.order-product-option{padding:6px 7px}.order-pickup-badge{font-size:9px}}
