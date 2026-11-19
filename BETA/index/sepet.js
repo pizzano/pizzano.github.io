@@ -591,6 +591,33 @@ function scheduleActiveOrderExpiry(){
  },Math.min(remaining,2147483647));
  return false;
 }
+function shortRemaining(time){
+ const seconds=Math.max(0,Math.ceil((Number(time)-Date.now())/1000));
+ return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+}
+function updateCustomerCountdown(){
+ const order=localOrder;
+ const state=order?localPublicStatus().status:'none';
+ const deadline=Number(order?.acceptDeadlineAt)||0;
+ const pickup=order?visiblePickupAt(order):0;
+ const pending=state==='mottatt'&&deadline>0;
+ const preparing=state==='godkjent'&&pickup>0;
+ const expired=pending&&Date.now()>=deadline;
+ const content=pending?
+  (expired?'5 minutter har gått. Ring restauranten hvis du ikke har fått bekreftelse.':'Tid til bekreftelse: '+shortRemaining(deadline)):
+  preparing?(pickup>Date.now()?'Klar om '+shortRemaining(pickup):'Forventet hentetid er nådd. Vent på bekreftelse om at maten er klar.'):'';
+ for(const id of ['draftActiveCountdown','draftConfirmationCountdown']){
+  const node=$(id);if(!node)continue;
+  node.hidden=!content;
+  node.textContent=content;
+  node.classList.toggle('is-expired',expired);
+ }
+ if(expired){
+  const active=$('draftActiveTitle'),confirmation=$('draftConfirmationStatus');
+  if(active)active.textContent='Ikke bekreftet i tide';
+  if(confirmation)confirmation.textContent='Ikke bekreftet i tide';
+ }
+}
 const ORDER_STATUS_LABELS={
  mottatt:'Venter på godkjenning',
  godkjent:'Bestillingen er godkjent',
@@ -655,6 +682,7 @@ function displayLiveOrderStatus(){
   step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
   step.classList.toggle('is-preparing',index===2&&accepted);
  });
+ updateCustomerCountdown();
 }
 function onCustomerStatusUpdate(value){
  if(!localOrder||!value||typeof value!=='object'||
@@ -1077,6 +1105,8 @@ $('draftClearOrder').onclick=()=>clearActiveOrder(true);
 
 // Cart owns its own initialization and stored draft order display.
 document.addEventListener('DOMContentLoaded',()=>{
+ // Local clock only: zero Firebase reads for either countdown.
+ setInterval(()=>{if(!document.hidden&&localOrder)updateCustomerCountdown()},1000);
  cleanupRetiredCartStorage();
  renderDraftActiveOrder();
  beginCustomerStatus();
