@@ -309,7 +309,6 @@
     (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
   $('ordersEmpty').hidden=filtered.length>0;
   $('ordersEmpty').querySelector('strong').textContent='Ingen bestillinger';
-  const parcelIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Z"/><path d="m3 7 9 5 9-5M12 12v9M7.5 5l9 5"/></svg>';
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
   $('ordersList').innerHTML=filtered.map(order=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
@@ -340,7 +339,7 @@
       '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
       '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\s*/,''))+'</span></span>'+
      '</button>'+
-     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-ref-bullet" aria-hidden="true">•</span><span class="order-ref-qty">'+parcelIcon+' '+qty+' varer</span></span>'+
+     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-ref-bullet" aria-hidden="true">•</span><span class="order-ref-qty">'+qty+' varer</span></span>'+
      '<span class="order-reference-price">'+money(order.total)+'</span>'+
      '<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>'+
     '</div>'+
