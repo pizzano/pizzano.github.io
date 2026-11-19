@@ -325,7 +325,8 @@
    const overdueRejected=order.status==='avvist'&&order.rejectReason===TIMEOUT_REASON;
    const variant=order.status==='avvist'?'rejected':order.status==='mottatt'?'new':'normal';
    const pending=order.status==='mottatt';
-   const countdownNeeded=ready||(pending&&visibleApprovalDeadline(order)>0);
+   const pendingDeadline=pending?visibleApprovalDeadline(order):0;
+   const countdownNeeded=ready||(pending&&pendingDeadline>0);
    const statusText=labelForOrder(order);
    const modeLabel='<span class="order-mode-pill" data-kind="'+kind+'"><span class="order-mode-check" aria-hidden="true">✓</span>'+kind+'</span>';
    const statusClass=order.status==='avvist'?'is-rejected':pending?'is-new':'is-success';
@@ -342,9 +343,12 @@
      '<span class="order-mode-cell">'+modeLabel+'</span>'+
      '<span class="order-ref-qty">'+qty+' varer</span>'+
      '<span class="order-reference-price">'+money(order.total)+'</span>'+
-     '<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>'+
+     '<span class="order-reference-timing'+(pending?' is-awaiting':ready?' is-preparing':'')+'">'+
+      (!pending?'<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>':'')+
+      (countdownNeeded?'<span class="order-reference-countdown'+(pending?' is-pending':'')+'" data-countdown-id="'+safe(order.id)+'" aria-label="'+(pending?'Tid igjen til bekreftelse':'Tid igjen til henting')+'"></span>':
+       pending?'<span class="order-reference-waiting">Avventer</span>':'')+
+     '</span>'+
     '</div>'+
-    (countdownNeeded?'<div class="order-reference-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen"></div>':'')+
     '</article>';
   }).join('');
   if(activeId&&orders.has(activeId))renderDetails();
