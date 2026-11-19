@@ -12,15 +12,17 @@
  const fmtDate=value=>value?new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const statusNames={mottatt:'Ny bestilling',godkjent:'✓ Godkjent og under tilberedning',klar:'✓ Klar til henting',avvist:'✕ Avvist'};
  const TIMEOUT_REASON='Ikke bekreftet innen 5 minutter';
- const approvalDeadline=order=>Number(order?.acceptDeadlineAt)>0?Number(order.acceptDeadlineAt):0;
- // Display-only fallback for recently submitted legacy SNAREST orders.
- // Older orders and scheduled preorders remain untouched.
- const visibleApprovalDeadline=order=>{
-  const explicit=approvalDeadline(order);
-  if(explicit>0)return explicit;
-  const created=Number(order?.createdAt)||0;
-  return order?.pickup?.mode==='asap'&&created>0&&Date.now()-created>=0&&Date.now()-created<10*60000?created+5*60000:0;
+ // One shared deadline for UI and state changes.
+ // Existing SNAREST orders were only allowed while the restaurant was open,
+ // so they safely use their creation time when the new field is absent.
+ // SENERE preorders without an explicit deadline are deliberately excluded.
+ const approvalDeadline=order=>{
+  const explicit=Number(order?.acceptDeadlineAt);
+  if(Number.isFinite(explicit)&&explicit>0)return explicit;
+  const created=Number(order?.createdAt);
+  return order?.pickup?.mode==='asap'&&Number.isFinite(created)&&created>0?created+5*60000:0;
  };
+ const visibleApprovalDeadline=approvalDeadline;
  const labelForOrder=order=>order?.status==='avvist'&&order.rejectReason===TIMEOUT_REASON?'✕ Ikke bekreftet i tide':statusNames[order?.status]||order?.status;
 
  // Pickup slots arrive as Norwegian local wall time, e.g. 2026-11-18T12:15.
