@@ -1263,3 +1263,185 @@ body{background:#fff}
 .order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{
  background:transparent;color:#875d07;
 }
+
+
+/* Five-state order cards — visual design matched to supplied reference.
+   Shared layout: customer | time/remaining | pickup mode | order details | price.
+   Status remains driven by existing Firebase fields; no new reads. */
+.orders-list{gap:15px}
+.order-reference-row{
+ --state:#49b26c;--state-dark:#146134;--state-soft:#e5f7e9;
+ --state-contrast:#fff;--state-outline:#c5e4ce;
+ border:1px solid var(--state-outline);border-left:7px solid var(--state);
+ background:#f7fcf8;border-radius:22px;min-height:108px;
+ box-shadow:0 7px 23px #1e3a2b12;
+ overflow:hidden;
+}
+.order-reference-row[data-visual-status="new"]{
+ --state:#f0842f;--state-dark:#ae500f;--state-soft:#fff0e2;
+ --state-outline:#f6c6ab;
+ background:linear-gradient(110deg,#fffaf7,#fff3ef);
+}
+.order-reference-row[data-visual-status="scheduled"]{
+ --state:#e9ac20;--state-dark:#87500f;--state-soft:#fff2d3;
+ --state-outline:#f5daa0;
+ background:linear-gradient(115deg,#fffdf8,#fff8ed);
+}
+.order-reference-row[data-visual-status="ready"]{
+ --state:#4ebf67;--state-dark:#086030;--state-soft:#dff5e4;
+ --state-outline:#bddfc8;
+ background:linear-gradient(115deg,#fbfffc,#f0faf3);
+}
+.order-reference-row[data-visual-status="rejected"]{
+ --state:#ea464d;--state-dark:#b71e29;--state-soft:#fde4e5;
+ --state-outline:#f1b5bb;
+ background:linear-gradient(115deg,#fffafa,#fff0f1);
+}
+.order-reference-row[data-visual-status="preparing"]{
+ --state:#36bfa0;--state-dark:#006b56;--state-soft:#d9f6ee;
+ --state-outline:#a7e1d5;
+ background:linear-gradient(115deg,#fafffe,#edf9f6);
+}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ display:grid;
+ grid-template-columns:minmax(205px,1.58fr) minmax(260px,1.45fr) minmax(155px,.97fr) minmax(200px,1.02fr) minmax(125px,.78fr);
+ grid-template-rows:minmax(0,1fr);
+ align-items:center;gap:0;
+ min-height:106px;padding:15px 16px;
+ background:transparent;
+}
+.order-reference-row .order-open{
+ grid-column:1;grid-row:1;min-width:0;min-height:72px;
+ display:flex;align-items:center;gap:14px;
+ padding:0 16px 0 0;
+ border-right:1px solid #bfcfc8;
+}
+.order-reference-row .order-initial{
+ width:65px;height:65px;min-width:65px;
+ border:0;border-radius:19px;
+ background:var(--state-soft);color:var(--state-dark);
+}
+.order-reference-row .order-initial svg{width:34px;height:34px}
+.order-reference-row .order-meta{gap:5px;min-width:0}
+.order-reference-row .order-name{
+ font-size:clamp(17px,1.58vw,26px);font-weight:850;
+ line-height:1.12;color:#10252e;
+}
+.order-reference-row .order-status{
+ color:var(--state-dark)!important;
+ font-size:clamp(13px,1.2vw,20px);font-weight:850;line-height:1.2;
+}
+.order-reference-row .order-reference-timing{
+ grid-column:2;grid-row:1;min-height:69px;min-width:0;
+ display:flex;align-items:center;justify-content:center;gap:0;
+ margin:0 16px;overflow:hidden;
+ border:1px solid #fff;border-radius:999px;
+ background:var(--state-soft);color:var(--state-dark);
+}
+.order-reference-row .order-reference-timing[data-pickup-kind="SENERE"]{
+ background:linear-gradient(110deg,#ffebbd,#fff4df);color:#77501b;
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ flex:1 1 55%;min-width:0;min-height:0;
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ margin:0;padding:12px 10px;
+ background:transparent!important;border:0;border-radius:0;
+ font-size:clamp(19px,2vw,31px);font-weight:900;
+ color:var(--state-dark);white-space:nowrap;
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{
+ width:28px;height:28px;flex:none;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown{
+ position:static;flex:1 1 45%;min-height:30px;min-width:0;
+ display:flex;align-items:center;justify-content:center;
+ margin:0;padding:7px 9px;border:0;border-left:1px solid #bccebf;
+ border-radius:0;background:transparent;
+ color:var(--state-dark);font-weight:750;
+ font-size:clamp(13px,1.15vw,19px);white-space:nowrap;
+}
+.order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{
+ flex:1 1 100%;border:0;background:transparent;
+ font-size:clamp(21px,2vw,33px);color:var(--state-dark);
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-due{
+ background:#ffdfe0;color:#b5252f;
+}
+.order-reference-row .order-reference-timing .order-reference-waiting{
+ color:var(--state-dark);background:transparent;min-height:60px;
+}
+.order-reference-row .order-mode-cell{
+ grid-column:3;grid-row:1;min-height:72px;height:72px;
+ display:flex;justify-content:center;align-items:center;min-width:0;
+ padding:0 12px;border-right:1px solid #bfcfc8;
+}
+.order-reference-row .order-mode-pill,
+.order-reference-row .order-mode-pill[data-kind="SENERE"]{
+ display:inline-flex;align-items:center;gap:9px;min-width:0;max-width:100%;
+ padding:12px 17px;border-radius:100px;
+ font-size:clamp(12px,1.12vw,19px);font-weight:850;
+ color:var(--state-dark);background:var(--state-soft);
+ white-space:nowrap;
+}
+.order-reference-row .order-mode-pill svg{width:23px;height:23px;flex:none}
+.order-reference-row .order-reference-facts{
+ grid-column:4;grid-row:1;min-height:72px;
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ gap:8px;padding:0 18px;min-width:0;
+ border-right:1px solid #bfcfc8;border-left:0;
+ color:#152b33;font-size:clamp(13px,1.1vw,18px);
+}
+.order-reference-row .order-ref-number{font-weight:500}
+.order-reference-row .order-ref-number strong{font-weight:900}
+.order-reference-row .order-reference-facts .order-ref-qty{
+ display:block;min-height:0;padding:0;
+ font-size:inherit;white-space:nowrap;
+}
+.order-reference-row .order-reference-price{
+ grid-column:5;grid-row:1;
+ justify-self:stretch;align-self:center;
+ margin:0 0 0 18px;padding:17px 8px;
+ border-radius:20px;background:var(--state);color:#fff;
+ font-size:clamp(19px,1.85vw,30px);font-weight:900;
+ box-shadow:inset 0 1px 0 #ffffff55;
+}
+.order-reference-row[data-visual-status="rejected"] .order-reference-price{
+ background:#dc3e47;color:#fff;
+}
+.order-reference-row[data-visual-status="new"] .order-reference-price{background:linear-gradient(#f3a04d,#da6e1e)}
+.order-reference-row[data-visual-status="scheduled"] .order-reference-price{background:linear-gradient(#f5bc4f,#e5a11f)}
+.order-reference-row[data-visual-status="ready"] .order-reference-price{background:linear-gradient(#84c773,#229646)}
+.order-reference-row[data-visual-status="preparing"] .order-reference-price{background:linear-gradient(#61c2a8,#118e75)}
+.order-reference-row .order-row-body{position:relative;z-index:2;overflow:hidden}
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{background:transparent}
+.order-reference-row:not(.is-swiped) .order-swipe-action{visibility:hidden;pointer-events:none}
+.order-reference-row.is-swiped .order-row-body{transform:translateX(-90px)}
+@media(max-width:1199px){
+ .orders-list{gap:10px}
+ .order-reference-row{min-height:83px;border-radius:16px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  grid-template-columns:minmax(150px,1.45fr) minmax(192px,1.4fr) minmax(105px,.88fr) minmax(128px,1fr) minmax(92px,.76fr);
+  grid-template-rows:minmax(0,1fr);min-height:82px;padding:9px 8px;
+ }
+ .order-reference-row .order-open{min-height:61px;gap:7px;padding:0 8px 0 0}
+ .order-reference-row .order-initial{width:41px;height:41px;min-width:41px;border-radius:12px}
+ .order-reference-row .order-initial svg{width:24px;height:24px}
+ .order-reference-row .order-name{font-size:15px}
+ .order-reference-row .order-status{font-size:12px}
+ .order-reference-row .order-reference-timing{grid-column:2;grid-row:1;min-height:54px;margin:0 7px}
+ .order-reference-row .order-reference-timing .order-reference-time{font-size:18px;padding:7px 3px;gap:5px}
+ .order-reference-row .order-reference-timing .order-reference-time svg{width:18px;height:18px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:12px;padding:4px 3px}
+ .order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{font-size:21px}
+ .order-reference-row .order-mode-cell{grid-column:3;grid-row:1;min-height:61px;height:61px;padding:0 5px}
+ .order-reference-row .order-mode-pill,.order-reference-row .order-mode-pill[data-kind="SENERE"]{font-size:11px;padding:8px 8px;gap:4px}
+ .order-reference-row .order-mode-pill svg{width:16px;height:16px}
+ .order-reference-row .order-reference-facts{grid-column:4;grid-row:1;min-height:61px;padding:0 8px;font-size:11px;gap:5px}
+ .order-reference-row .order-reference-price{grid-column:5;grid-row:1;margin:0 0 0 7px;padding:14px 2px;border-radius:13px;font-size:17px}
+}
+@media(max-width:770px){.orders-head,.orders-main{min-width:760px}body{min-width:760px;overflow-x:auto}}
