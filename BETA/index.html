@@ -7,7 +7,7 @@
   <title>Bestilling · Laster meny</title>
   
   <link rel="stylesheet" href="./index/style.css?v=20261118-receipt5">
-  <script src="./index/sepet.js?v=20261118-receipt5" defer></script>
+  <script src="./index/sepet.js?v=20261119-approval16" defer></script>
   <script src="./index/app.js?v=20261119-settingsfix1" defer></script>
   <script src="./index/profil.js?v=20261118-receipt5" defer></script>
 </head>
@@ -26,7 +26,7 @@
       <section id="draftActiveOrder" class="draft-active-order" aria-label="Bestillingsoversikt" hidden>
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
         <div class="draft-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
-        <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small></div></div>
+        <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small><small id="draftActiveCountdown" class="draft-order-countdown" hidden></small></div></div>
         <button id="draftViewOrder" type="button" class="draft-view-order">Vis bestillingen</button>
         <button id="draftClearOrder" type="button" class="draft-clear-order">Fjern oversikt</button>
       </section>
@@ -128,7 +128,7 @@
     <p id="draftConfirmationIntro">Bestillingen er sendt til restauranten.</p>
     <p class="draft-sent" id="draftConfirmationSent">Sendt til restauranten · Avventer godkjenning</p>
     <dl class="draft-order-facts"><div><dt>Ordrenummer</dt><dd id="draftConfirmationNumber"></dd></div><div><dt id="draftConfirmationPickupLabel">Hentetid</dt><dd id="draftConfirmationPickup"></dd></div><div><dt>Beløp</dt><dd id="draftConfirmationTotal"></dd></div></dl>
-    <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Venter på godkjenning</strong><small id="draftConfirmationTimer">Bestillingen er sendt</small></div></div>
+    <div class="draft-waiting"><i class="draft-status-dot" aria-hidden="true"></i><div><strong id="draftConfirmationStatus">Venter på godkjenning</strong><small id="draftConfirmationTimer">Bestillingen er sendt</small><small id="draftConfirmationCountdown" class="draft-order-countdown" hidden></small></div></div>
     <details id="draftConfirmationItems" class="draft-confirmation-items">
       <summary><strong>Vis bestillingen</strong><span id="draftConfirmationItemsCount"></span><span class="draft-confirmation-chevron" aria-hidden="true">⌄</span></summary>
       <div id="draftConfirmationItemsList" class="draft-confirmation-items-list"></div>
