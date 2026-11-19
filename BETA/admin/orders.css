@@ -417,3 +417,11 @@ body{background:#f7f9fc;color:#172838}
 .orders-scheduled-accept{padding:17px;border-radius:15px}
 @media(max-width:600px){.orders-dialog{width:100%;padding:20px 19px calc(20px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0}.orders-dialog h3{font-size:19px}}
 @media(prefers-reduced-motion:reduce){.orders-dialog-overlay,.orders-dialog{transition:none}}
+
+
+/* Keep minute input on one row inside the app-like bottom sheet. */
+.orders-minute-field{grid-template-columns:43px minmax(0,1fr) 28px 43px;align-items:center}
+.orders-minute-unit{grid-column:auto;align-self:center;justify-self:center;margin:0;font-weight:650}
+.order-countdown.is-pending{background:#fff0d8;color:#9b5b13}
+.order-countdown.is-pending.is-due{background:#ffe1df;color:#b63732}
+@media(max-width:430px){.orders-minute-field{grid-template-columns:40px minmax(0,1fr) 26px 40px;gap:6px}}
