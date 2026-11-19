@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
   
-  <link rel="stylesheet" href="./index/style.css?v=20261119-approval17">
-  <script src="./index/sepet.js?v=20261119-approval17" defer></script>
+  <link rel="stylesheet" href="./index/style.css?v=20261119-repeat18">
+  <script src="./index/sepet.js?v=20261119-repeat18" defer></script>
   <script src="./index/app.js?v=20261119-settingsfix1" defer></script>
   <script src="./index/profil.js?v=20261118-receipt5" defer></script>
 </head>
@@ -27,6 +27,7 @@
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
         <div class="draft-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
         <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small><small id="draftActiveCountdown" class="draft-order-countdown" hidden></small></div></div>
+        <button id="draftRepeatOrder" type="button" class="draft-repeat-order" hidden>Bestill det samme på nytt</button>
         <button id="draftViewOrder" type="button" class="draft-view-order">Vis bestillingen</button>
         <button id="draftClearOrder" type="button" class="draft-clear-order">Fjern oversikt</button>
       </section>
@@ -133,6 +134,7 @@
       <summary><strong>Vis bestillingen</strong><span id="draftConfirmationItemsCount"></span><span class="draft-confirmation-chevron" aria-hidden="true">⌄</span></summary>
       <div id="draftConfirmationItemsList" class="draft-confirmation-items-list"></div>
     </details>
+    <button id="draftConfirmationRepeat" type="button" class="draft-repeat-order" hidden>Bestill det samme på nytt</button>
     <button id="draftConfirmationClose" type="button" class="draft-view-order">Til menyen</button>
   </section>
   <div id="fatih1Toast" class="fatih1-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
