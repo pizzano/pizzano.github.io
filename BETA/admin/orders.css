@@ -634,3 +634,14 @@ body{background:#fff;color:#15272e}
  .order-reference-price{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.order-reference-row{transition:none}}
+
+
+/* Entire order card is an accessible click target; swipe-to-ready remains separate. */
+.order-reference-row{cursor:pointer}
+.order-reference-row:focus-visible{outline:3px solid #087c59;outline-offset:3px}
+.order-reference-row .order-row-body,
+.order-reference-row .order-mode-cell,
+.order-reference-row .order-reference-facts,
+.order-reference-row .order-reference-price,
+.order-reference-row .order-reference-time{cursor:pointer}
+.order-reference-row .order-name{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
