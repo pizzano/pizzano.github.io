@@ -2651,3 +2651,10 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 .draft-order-countdown.is-expired{color:#c0473d}
 .draft-active-message .draft-order-countdown{font-size:12px}
 @media(max-width:480px){.draft-order-countdown{font-size:12px}}
+
+
+/* Repeat a previous order that was not confirmed within five minutes. */
+.draft-repeat-order{display:block;width:100%;min-height:45px;margin:12px 0 8px;padding:11px 14px;border:1px solid #16845f;border-radius:13px;background:#087e59;color:#fff;font-size:13px;font-weight:800;cursor:pointer;transition:background .16s ease}
+.draft-repeat-order:hover{background:#066949}
+.draft-repeat-order:focus-visible{outline:3px solid #f3d477;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.draft-repeat-order{transition:none}}
