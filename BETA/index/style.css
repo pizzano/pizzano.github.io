@@ -1975,8 +1975,10 @@ html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty{border-color:#49
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .qty b{background:#305946;color:#f1fff7}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total{background:#2d5746}
 html[data-fatih1-theme="dark"] #productSheet .sheet-footer .product-total :is(span,strong){color:#e9fff2}
-#productSheet .sheet-scroll::-webkit-scrollbar{display:none}
-#productSheet .sheet-scroll{scrollbar-width:none}
+/* Do not hide product scrolling on desktop: the customer needs a visible grab handle. */
+@media(pointer:coarse){
+ #productSheet .sheet-scroll{scrollbar-width:thin}
+}
 html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity.is-chosen,
 html[data-fatih1-theme="dark"] #productSheet .option-choice.is-quantity:has(input:checked){
  background:linear-gradient(110deg,#30614c,#275c48);
@@ -2658,3 +2660,87 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 .draft-repeat-order:hover{background:#066949}
 .draft-repeat-order:focus-visible{outline:3px solid #f3d477;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.draft-repeat-order{transition:none}}
+
+
+/* BETA desktop dialog scroll — outside the content, at each sheet's right edge.
+   Keep the title and checkout/footer controls fixed while only the body scrolls. */
+@media (pointer:fine){
+ #productSheet,
+ #cartSheet,
+ #fatih1ProfileSheet{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+ }
+ #productSheet .sheet-scroll,
+ #cartSheet .cart-content-scroll,
+ #fatih1ProfileSheet .fatih1-profile-scroll{
+  display:block;
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-width:auto;
+  scrollbar-color:#07875e #dcebe2;
+  scrollbar-gutter:stable;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+ }
+ #productSheet .sheet-scroll::-webkit-scrollbar,
+ #cartSheet .cart-content-scroll::-webkit-scrollbar,
+ #fatih1ProfileSheet .fatih1-profile-scroll::-webkit-scrollbar{
+  display:block;
+  width:16px;
+ }
+ #productSheet .sheet-scroll::-webkit-scrollbar-track,
+ #cartSheet .cart-content-scroll::-webkit-scrollbar-track,
+ #fatih1ProfileSheet .fatih1-profile-scroll::-webkit-scrollbar-track{
+  background:#dcebe2;
+  border-radius:0;
+ }
+ #productSheet .sheet-scroll::-webkit-scrollbar-thumb,
+ #cartSheet .cart-content-scroll::-webkit-scrollbar-thumb,
+ #fatih1ProfileSheet .fatih1-profile-scroll::-webkit-scrollbar-thumb{
+  background:#07875e;
+  border:3px solid #dcebe2;
+  border-radius:10px;
+  min-height:45px;
+ }
+ #productSheet .sheet-scroll::-webkit-scrollbar-thumb:hover,
+ #cartSheet .cart-content-scroll::-webkit-scrollbar-thumb:hover,
+ #fatih1ProfileSheet .fatih1-profile-scroll::-webkit-scrollbar-thumb:hover{
+  background:#006c49;
+ }
+ html[data-fatih1-theme="dark"] :is(
+  #productSheet .sheet-scroll,
+  #cartSheet .cart-content-scroll,
+  #fatih1ProfileSheet .fatih1-profile-scroll
+ ){
+  scrollbar-color:#35b783 #193a2c;
+ }
+ html[data-fatih1-theme="dark"] :is(
+  #productSheet .sheet-scroll,
+  #cartSheet .cart-content-scroll,
+  #fatih1ProfileSheet .fatih1-profile-scroll
+ )::-webkit-scrollbar-track{background:#193a2c}
+ html[data-fatih1-theme="dark"] :is(
+  #productSheet .sheet-scroll,
+  #cartSheet .cart-content-scroll,
+  #fatih1ProfileSheet .fatih1-profile-scroll
+ )::-webkit-scrollbar-thumb{
+  background:#35b783;
+  border-color:#193a2c;
+ }
+}
+/* Native touch scrolling is kept on phones/tablets, without desktop-width tracks. */
+@media(pointer:coarse){
+ #productSheet .sheet-scroll,
+ #cartSheet .cart-content-scroll,
+ #fatih1ProfileSheet .fatih1-profile-scroll{
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+ }
+}
