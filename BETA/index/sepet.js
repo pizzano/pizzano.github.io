@@ -595,17 +595,14 @@ function shortRemaining(time){
  const seconds=Math.max(0,Math.ceil((Number(time)-Date.now())/1000));
  return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
 }
-// Legacy SNAREST orders created before acceptDeadlineAt existed can still show
-// a countdown shortly after submission. Never apply it to older history or
-// scheduled preorders: their original open/closed status is unknown.
+// Use the stored deadline for new SNAREST/SENERE orders.
+// Legacy SNAREST orders were only accepted while open, so use createdAt
+// without any 10-minute visibility limit. Scheduled preorders are excluded.
 function customerAcceptanceDeadline(order){
- const explicit=Number(order?.acceptDeadlineAt)||0;
- if(explicit>0)return explicit;
- const created=Number(order?.createdAt)||0;
- if(order?.pickup?.mode==='asap'&&created>0&&Date.now()-created>=0&&Date.now()-created<10*60000){
-  return created+5*60000;
- }
- return 0;
+ const explicit=Number(order?.acceptDeadlineAt);
+ if(Number.isFinite(explicit)&&explicit>0)return explicit;
+ const created=Number(order?.createdAt);
+ return order?.pickup?.mode==='asap'&&Number.isFinite(created)&&created>0?created+5*60000:0;
 }
 function isRepeatableTimedOutOrder(){
  if(!localOrder)return false;
