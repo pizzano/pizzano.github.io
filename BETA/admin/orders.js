@@ -305,39 +305,44 @@
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  // Single inbox: new orders first, then all previously processed orders.
   const filtered=[...all].sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
     (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
   $('ordersEmpty').hidden=filtered.length>0;
   $('ordersEmpty').querySelector('strong').textContent='Ingen bestillinger';
-  const hasPending=filtered.some(order=>order.status==='mottatt');
-  $('ordersList').innerHTML=filtered.map((order,index)=>{
+  const parcelIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Z"/><path d="m3 7 9 5 9-5M12 12v9M7.5 5l9 5"/></svg>';
+  const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
+  $('ordersList').innerHTML=filtered.map(order=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
    const name=safe(order.name||order.customer?.fullName||'Kunde');
    const items=Array.isArray(order.items)?order.items:[];
    const qty=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
-   const showReady=order.status==='godkjent';
+   const ready=order.status==='godkjent';
    const scheduled=scheduledPickupTimestamp(order.pickup);
    const clock=order.expectedReadyAt?fmtTime(order.expectedReadyAt):scheduled?fmtTime(scheduled):fmtTime(order.createdAt);
-   const groupBreak=hasPending&&order.status!=='mottatt'&&
-    (index===0||filtered[index-1].status==='mottatt');
    const kind=pickupKind(order);
-   const countdownNeeded=order.status==='godkjent'||(order.status==='mottatt'&&visibleApprovalDeadline(order)>0);
-   const center=(countdownNeeded?
-    '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="'+(order.status==='mottatt'?'Tid igjen til bekreftelse':'Tid igjen til henting')+'"></span>':'')+
-    '<span class="order-pickup-badge" data-kind="'+kind+'">'+kind+'</span>';
-   const statusColor=order.status==='avvist'?'rejected':kind==='SENERE'?'scheduled':'standard';
-   return (groupBreak?'<div class="orders-group-divider" role="separator"><span>Tidligere bestillinger</span></div>':'')+
-    '<article class="order-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+statusColor+'">'+
-    (showReady?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
-    '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
-    '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
-    '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
-    '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(labelForOrder(order))+'</span>'+
-    '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
-    '<span class="order-center">'+center+'</span>'+
-    '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
-    '</div></article>';
+   const overdueRejected=order.status==='avvist'&&order.rejectReason===TIMEOUT_REASON;
+   const variant=order.status==='avvist'?'rejected':order.status==='mottatt'?'new':'normal';
+   const pending=order.status==='mottatt';
+   const countdownNeeded=ready||(pending&&visibleApprovalDeadline(order)>0);
+   const statusText=labelForOrder(order);
+   const modeLabel='<span class="order-mode-pill" data-kind="'+kind+'"><span class="order-mode-check" aria-hidden="true">✓</span>'+kind+'</span>';
+   const statusClass=order.status==='avvist'?'is-rejected':pending?'is-new':'is-success';
+   const cardLabel=name+', '+statusText+', '+qty+' varer, '+money(order.total);
+   return '<article class="order-row order-reference-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'">'+
+    (ready?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
+    '<div class="order-row-body">'+
+     '<span class="order-mode-cell">'+modeLabel+'</span>'+
+     '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'" aria-label="'+safe(cardLabel)+'">'+
+      '<span class="order-initial">'+pickupIcon+'</span>'+
+      '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
+      '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\s*/,''))+'</span></span>'+
+     '</button>'+
+     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-ref-bullet" aria-hidden="true">•</span><span class="order-ref-qty">'+parcelIcon+' '+qty+' varer</span></span>'+
+     '<span class="order-reference-price">'+money(order.total)+'</span>'+
+     '<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>'+
+    '</div>'+
+    (countdownNeeded?'<div class="order-reference-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen"></div>':'')+
+    '</article>';
   }).join('');
   if(activeId&&orders.has(activeId))renderDetails();
   updateCountdowns();
