@@ -1027,3 +1027,116 @@ body{background:#fff}
  .order-reference-row .order-reference-timing .order-reference-countdown{font-size:9px;padding:7px 5px}
  .order-reference-row .order-reference-timing .order-reference-countdown.is-pending{font-size:16px;padding:9px 12px}
 }
+
+
+/* Compact reference list — the same four-zone arrangement for PC and tablet:
+   customer/status | order ID + pickup + quantity | amount | time and countdown. */
+.orders-main{padding-top:13px}
+.orders-list{gap:9px}
+.order-reference-row{min-height:66px;border-left-width:5px;border-radius:13px}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ display:grid;
+ grid-template-columns:minmax(170px,1.52fr) minmax(245px,1.5fr) minmax(90px,.61fr) minmax(120px,.78fr);
+ grid-template-rows:minmax(0,1fr);
+ min-height:65px;
+ padding:6px 13px;
+ gap:0;
+}
+.order-reference-row .order-open{
+ grid-column:1;grid-row:1;min-height:49px;gap:10px;padding:0 12px 0 0;
+ border-right:1px solid #d6e1dc;
+}
+.order-reference-row .order-initial{width:39px;height:39px;min-width:39px}
+.order-reference-row .order-initial svg{width:22px;height:22px}
+.order-reference-row .order-meta{gap:3px}
+.order-reference-row .order-name{font-size:clamp(13px,1.15vw,18px);line-height:1.1}
+.order-reference-row .order-status{font-size:clamp(11px,1vw,15px);line-height:1.12}
+.order-reference-row .order-reference-facts{
+ grid-column:2;grid-row:1;
+ display:flex;align-items:center;justify-content:center;gap:8px;
+ min-height:49px;padding:0 8px;
+ min-width:0;white-space:nowrap;
+ border-right:2px solid #d2dfd8;
+ font-size:clamp(11px,1vw,15px);
+}
+.order-reference-row .order-ref-number{font-weight:800}
+.order-reference-row .order-reference-facts .order-mode-cell{
+ grid-column:auto;grid-row:auto;min-height:0;height:auto;
+ padding:0;border:0;flex:0 0 auto;
+}
+.order-reference-row .order-reference-facts .order-mode-pill{
+ padding:5px 9px;font-size:clamp(10px,.83vw,13px);
+}
+.order-reference-row .order-reference-facts .order-ref-qty{
+ grid-column:auto;grid-row:auto;min-height:0;
+ display:inline;white-space:nowrap;
+ padding:0;font-size:clamp(10px,.9vw,13px);
+}
+.order-reference-row .order-reference-price{
+ grid-column:3;grid-row:1;min-width:0;
+ margin:0 9px;padding:8px 5px;
+ border-radius:10px;background:#00a322;color:#fff;
+ font-size:clamp(14px,1.1vw,18px);line-height:1.2;font-weight:850;
+}
+.order-reference-row[data-visual-status="rejected"] .order-reference-price{
+ background:#fce0e3;color:#9c1e29;
+}
+.order-reference-row .order-reference-timing{
+ grid-column:4;grid-row:1;min-height:49px;min-width:0;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ overflow:visible;
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ padding:2px 4px;background:transparent;border:0;border-radius:0;
+ gap:5px;font-size:clamp(12px,1.05vw,16px);font-weight:800;
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{
+ width:17px;height:17px;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown{
+ position:static;padding:0 2px;background:transparent;
+ border-radius:0;color:#26764f;
+ font-size:clamp(10px,.85vw,12px);line-height:1.1;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-pending{
+ padding:5px 10px;border-radius:9px;background:#FFF9C4;
+ font-size:clamp(14px,1.12vw,18px);color:#8a5a08;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-due{
+ color:#c73532;background:transparent;
+}
+.order-reference-row .order-reference-countdown{right:auto;bottom:auto}
+.order-reference-row .order-swipe-action{width:90px}
+.order-reference-row.is-swiped .order-row-body{transform:translateX(-90px)}
+@media(max-width:1199px){
+ .orders-list{gap:7px}
+ .order-reference-row{min-height:61px;border-radius:11px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  grid-template-columns:minmax(150px,1.35fr) minmax(225px,1.45fr) minmax(80px,.62fr) minmax(110px,.8fr);
+  grid-template-rows:minmax(0,1fr);min-height:60px;padding:5px 8px;
+ }
+ .order-reference-row .order-open{grid-column:1;grid-row:1;min-height:46px;gap:7px;padding:0 7px 0 0}
+ .order-reference-row .order-initial{width:33px;height:33px;min-width:33px}
+ .order-reference-row .order-initial svg{width:19px;height:19px}
+ .order-reference-row .order-name{font-size:13px}
+ .order-reference-row .order-status{font-size:11px}
+ .order-reference-row .order-reference-facts{
+  grid-column:2;grid-row:1;min-height:46px;gap:5px;padding:0 4px;font-size:11px;
+ }
+ .order-reference-row .order-reference-facts .order-mode-cell{grid-column:auto;grid-row:auto;min-height:0;height:auto;padding:0;border:0}
+ .order-reference-row .order-reference-facts .order-mode-pill{font-size:10px;padding:4px 6px}
+ .order-reference-row .order-reference-facts .order-ref-qty{grid-column:auto;grid-row:auto;min-height:0;padding:0;font-size:10px}
+ .order-reference-row .order-reference-price{grid-column:3;grid-row:1;margin:0 5px;padding:8px 3px;font-size:13px}
+ .order-reference-row .order-reference-timing{grid-column:4;grid-row:1;min-height:46px}
+ .order-reference-row .order-reference-timing .order-reference-time{font-size:12px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:10px}
+ .order-reference-row .order-reference-timing .order-reference-countdown.is-pending{font-size:14px}
+}
+@media(max-width:770px){
+ .orders-head,.orders-main{min-width:760px}
+ body{min-width:760px;overflow-x:auto}
+}
