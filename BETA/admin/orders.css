@@ -1445,3 +1445,12 @@ body{background:#fff}
  .order-reference-row .order-reference-price{grid-column:5;grid-row:1;margin:0 0 0 7px;padding:14px 2px;border-radius:13px;font-size:17px}
 }
 @media(max-width:770px){.orders-head,.orders-main{min-width:760px}body{min-width:760px;overflow-x:auto}}
+
+
+/* Opaque foreground prevents the green swipe action from bleeding into cards. */
+.order-reference-row .order-row-body{background:#f7fcf8}
+.order-reference-row[data-visual-status="new"] .order-row-body{background:#fff7f3}
+.order-reference-row[data-visual-status="scheduled"] .order-row-body{background:#fffbf3}
+.order-reference-row[data-visual-status="ready"] .order-row-body{background:#f7fcf8}
+.order-reference-row[data-visual-status="rejected"] .order-row-body{background:#fff5f5}
+.order-reference-row[data-visual-status="preparing"] .order-row-body{background:#f3fcf9}
