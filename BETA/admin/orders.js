@@ -66,7 +66,7 @@
    if(!order){node.textContent='';continue}
    const pending=order.status==='mottatt',target=pending?visibleApprovalDeadline(order):Number(order.expectedReadyAt);
    if((!pending&&order.status!=='godkjent')||!Number.isFinite(target)||target<=0){node.textContent='';continue}
-   node.textContent=target>now?remainingCountdown(target,now):'00:00';
+   node.textContent=(target>now?remainingCountdown(target,now):'00:00')+(pending?'':' igjen');
    node.title=pending?(target>now?'Tid igjen til bekreftelse':'Bekreftelsesfristen er utløpt'):(target>now?'Tid igjen til henting':'Forventet hentetid er nådd');
    node.classList.toggle('is-due',target<=now);
    node.classList.toggle('is-pending',pending);
