@@ -430,7 +430,7 @@
    overlays.forEach(node=>show(node.id,false));
    dialogCloseTimer=null;
    if($('ordersSheet').hidden)document.body.classList.remove('is-dialog-open');
-  },320);
+  },400);
  }
  function startDialog(type,id=activeId){
   if(!id||!orders.has(id))return;
