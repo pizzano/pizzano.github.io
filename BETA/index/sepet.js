@@ -1002,6 +1002,8 @@ async function submitDraftOrder(){
  const order={
   schema:1,id,source:'BestillOnline',channel:'web',fulfillment:'pickup',
   status:'mottatt',statusPublic:{status:'mottatt',updatedAt:now},createdAt:now,currency:'NOK',
+  // No five-minute acceptance deadline for orders placed before opening.
+  ...(getOrderingState().open?{acceptDeadlineAt:now+300000}:{}),
   name:customerContact.name.slice(0,120),phone:'+47'+customerContact.phone,
   ...(customerContact.email?{email:customerContact.email.slice(0,200)}:{}),
   pickup:{...pickup,timeZone:'Europe/Oslo'},items,total:calculateCartTotal(cart)
