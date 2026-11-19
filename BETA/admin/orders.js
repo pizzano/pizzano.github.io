@@ -543,7 +543,8 @@
    orders.set(id,next);
    render();
    if(!automatic)closeDialog();
-   if(!automatic)feedback(status==='godkjent'?'Bestillingen er godkjent.':status==='klar'?'Bestillingen er markert klar.':'Bestillingen er avvist.');
+   // Successful changes are already reflected in the row; show no success banner.
+   // Errors still use feedback() from the calling handlers.
    if(status==='godkjent')void finalizeDueOrder();
    // Leave the successful result visible briefly, then return to the order inbox.
    if(!automatic&&activeId===id&&!$('ordersSheet').hidden){
