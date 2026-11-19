@@ -13,6 +13,14 @@
  const statusNames={mottatt:'Ny bestilling',godkjent:'✓ Godkjent og under tilberedning',klar:'✓ Klar til henting',avvist:'✕ Avvist'};
  const TIMEOUT_REASON='Ikke bekreftet innen 5 minutter';
  const approvalDeadline=order=>Number(order?.acceptDeadlineAt)>0?Number(order.acceptDeadlineAt):0;
+ // Display-only fallback for recently submitted legacy SNAREST orders.
+ // Older orders and scheduled preorders remain untouched.
+ const visibleApprovalDeadline=order=>{
+  const explicit=approvalDeadline(order);
+  if(explicit>0)return explicit;
+  const created=Number(order?.createdAt)||0;
+  return order?.pickup?.mode==='asap'&&created>0&&Date.now()-created>=0&&Date.now()-created<10*60000?created+5*60000:0;
+ };
  const labelForOrder=order=>order?.status==='avvist'&&order.rejectReason===TIMEOUT_REASON?'✕ Ikke bekreftet i tide':statusNames[order?.status]||order?.status;
 
  // Pickup slots arrive as Norwegian local wall time, e.g. 2026-11-18T12:15.
@@ -54,7 +62,7 @@
   for(const node of document.querySelectorAll('[data-countdown-id]')){
    const order=orders.get(node.dataset.countdownId);
    if(!order){node.textContent='';continue}
-   const pending=order.status==='mottatt',target=pending?approvalDeadline(order):Number(order.expectedReadyAt);
+   const pending=order.status==='mottatt',target=pending?visibleApprovalDeadline(order):Number(order.expectedReadyAt);
    if((!pending&&order.status!=='godkjent')||!Number.isFinite(target)||target<=0){node.textContent='';continue}
    node.textContent=target>now?remainingCountdown(target,now)+(pending?' til svar':' igjen'):(pending?'00:00 · Ubesvart':'00:00 · Klar nå');
    node.classList.toggle('is-due',target<=now);
@@ -311,7 +319,7 @@
    const groupBreak=hasPending&&order.status!=='mottatt'&&
     (index===0||filtered[index-1].status==='mottatt');
    const kind=pickupKind(order);
-   const center=(order.status==='godkjent'||(order.status==='mottatt'&&approvalDeadline(order)>0))?
+   const center=(order.status==='godkjent'||(order.status==='mottatt'&&visibleApprovalDeadline(order)>0))?
     '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':
     '<span class="order-pickup-badge" data-kind="'+kind+'">'+kind+'</span>';
    const statusColor=order.status==='avvist'?'rejected':kind==='SENERE'?'scheduled':'standard';
