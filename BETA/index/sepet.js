@@ -595,11 +595,23 @@ function shortRemaining(time){
  const seconds=Math.max(0,Math.ceil((Number(time)-Date.now())/1000));
  return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
 }
+// Legacy SNAREST orders created before acceptDeadlineAt existed can still show
+// a countdown shortly after submission. Never apply it to older history or
+// scheduled preorders: their original open/closed status is unknown.
+function customerAcceptanceDeadline(order){
+ const explicit=Number(order?.acceptDeadlineAt)||0;
+ if(explicit>0)return explicit;
+ const created=Number(order?.createdAt)||0;
+ if(order?.pickup?.mode==='asap'&&created>0&&Date.now()-created>=0&&Date.now()-created<10*60000){
+  return created+5*60000;
+ }
+ return 0;
+}
 function isRepeatableTimedOutOrder(){
  if(!localOrder)return false;
  const state=localPublicStatus();
  if(state.status==='avvist')return state.rejectReason==='Ikke bekreftet innen 5 minutter';
- return state.status==='mottatt'&&Number(localOrder.acceptDeadlineAt)>0&&Date.now()>=Number(localOrder.acceptDeadlineAt);
+ return state.status==='mottatt'&&customerAcceptanceDeadline(localOrder)>0&&Date.now()>=customerAcceptanceDeadline(localOrder);
 }
 function updateRepeatOrderButtons(){
  const enabled=isRepeatableTimedOutOrder();
@@ -637,7 +649,7 @@ function repeatExpiredOrder(){
 function updateCustomerCountdown(){
  const order=localOrder;
  const state=order?localPublicStatus().status:'none';
- const deadline=Number(order?.acceptDeadlineAt)||0;
+ const deadline=customerAcceptanceDeadline(order);
  const pickup=order?visiblePickupAt(order):0;
  const pending=state==='mottatt'&&deadline>0;
  const preparing=state==='godkjent'&&pickup>0;
@@ -647,8 +659,8 @@ function updateCustomerCountdown(){
   preparing?(pickup>Date.now()?'Klar om '+shortRemaining(pickup):'Forventet hentetid er nådd. Vent på bekreftelse om at maten er klar.'):'';
  for(const id of ['draftActiveCountdown','draftConfirmationCountdown']){
   const node=$(id);if(!node)continue;
-  node.hidden=!content;
   node.textContent=content;
+  node.hidden=!content;
   node.classList.toggle('is-expired',expired);
  }
  if(expired){
