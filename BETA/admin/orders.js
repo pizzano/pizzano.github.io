@@ -59,6 +59,14 @@
   const minutes=Math.floor(left/60),seconds=left%60;
   return String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
  }
+ function formattedPickupRemaining(target,now){
+  const seconds=Math.max(0,Math.ceil((Number(target)-now)/1000));
+  if(seconds>=3600){
+   const minutes=Math.ceil(seconds/60);
+   return Math.floor(minutes/60)+' t '+String(minutes%60)+' min';
+  }
+  return remainingCountdown(target,now);
+ }
  function updateCountdowns(){
   const now=Date.now();
   for(const node of document.querySelectorAll('[data-countdown-id]')){
@@ -66,7 +74,7 @@
    if(!order){node.textContent='';continue}
    const pending=order.status==='mottatt',target=pending?visibleApprovalDeadline(order):Number(order.expectedReadyAt);
    if((!pending&&order.status!=='godkjent')||!Number.isFinite(target)||target<=0){node.textContent='';continue}
-   node.textContent=(target>now?remainingCountdown(target,now):'00:00')+(pending?'':' igjen');
+   node.textContent=target>now?(pending?remainingCountdown(target,now):formattedPickupRemaining(target,now)):'00:00';
    node.title=pending?(target>now?'Tid igjen til bekreftelse':'Bekreftelsesfristen er utløpt'):(target>now?'Tid igjen til henting':'Forventet hentetid er nådd');
    node.classList.toggle('is-due',target<=now);
    node.classList.toggle('is-pending',pending);
@@ -343,13 +351,13 @@
       '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
       '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(order.status==='avvist'?'✕ ':'✓ ')+safe(shortStatus)+'</span></span>'+
      '</button>'+
-     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-mode-cell">'+modeLabel+'</span><span class="order-ref-qty">· '+qty+' varer</span></span>'+
-     '<span class="order-reference-price">'+money(order.total)+'</span>'+
-     '<span class="order-reference-timing'+(pending?' is-awaiting':ready?' is-preparing':'')+'">'+
+     '<span class="order-reference-timing'+(pending?' is-awaiting':ready?' is-preparing':'')+'" data-pickup-kind="'+kind+'">'+
       (!pending?'<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>':'')+
       (countdownNeeded?'<span class="order-reference-countdown'+(pending?' is-pending':'')+'" data-countdown-id="'+safe(order.id)+'" aria-label="'+(pending?'Tid igjen til bekreftelse':'Tid igjen til henting')+'"></span>':
        pending?'<span class="order-reference-waiting">Avventer</span>':'')+
      '</span>'+
+     '<span class="order-reference-facts"><span class="order-ref-number">#'+id+'</span><span class="order-mode-cell">'+modeLabel+'</span><span class="order-ref-qty">· '+qty+' varer</span></span>'+
+     '<span class="order-reference-price">'+money(order.total)+'</span>'+
     '</div>'+
     '</article>';
   }).join('');
