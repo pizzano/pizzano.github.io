@@ -1254,3 +1254,12 @@ body{background:#fff}
  .orders-main,.orders-head{min-width:760px}
  body{min-width:760px;overflow-x:auto}
 }
+
+
+/* Before acceptance, the five-minute approval timer is a warning, not a confirmed pickup time. */
+.order-reference-row .order-reference-timing.is-awaiting{
+ background:#FFF9C4;color:#875d07;
+}
+.order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{
+ background:transparent;color:#875d07;
+}
