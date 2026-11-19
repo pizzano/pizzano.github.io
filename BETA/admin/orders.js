@@ -11,6 +11,10 @@
  const fmtTime=value=>value?new Intl.DateTimeFormat('nb-NO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const fmtDate=value=>value?new Intl.DateTimeFormat('nb-NO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(Number(value))):'—';
  const statusNames={mottatt:'Ny bestilling',godkjent:'✓ Godkjent og under tilberedning',klar:'✓ Klar til henting',avvist:'✕ Avvist'};
+ const TIMEOUT_REASON='Ikke bekreftet innen 5 minutter';
+ const approvalDeadline=order=>Number(order?.acceptDeadlineAt)>0?Number(order.acceptDeadlineAt):0;
+ const labelForOrder=order=>order?.status==='avvist'&&order.rejectReason===TIMEOUT_REASON?'✕ Ikke bekreftet i tide':statusNames[order?.status]||order?.status;
+
  // Pickup slots arrive as Norwegian local wall time, e.g. 2026-11-18T12:15.
  // Convert with Europe/Oslo explicitly; Date.parse(localTime) uses the viewer's timezone.
  function scheduledPickupTimestamp(pickup){
@@ -39,6 +43,7 @@
  let countdownTicker=null,automaticReadyBusy=false;
  let pruneCheckedKeySignature='',authStreamRenewing=false;
  const autoReadyAttempts=new Map();
+ const autoTimeoutAttempts=new Map();
  function remainingCountdown(time,now=Date.now()){
   const left=Math.max(0,Math.ceil((Number(time)-now)/1000));
   const minutes=Math.floor(left/60),seconds=left%60;
@@ -48,12 +53,12 @@
   const now=Date.now();
   for(const node of document.querySelectorAll('[data-countdown-id]')){
    const order=orders.get(node.dataset.countdownId);
-   if(!order||order.status!=='godkjent'||!Number.isFinite(Number(order.expectedReadyAt))){
-    node.textContent='';continue;
-   }
-   const time=Number(order.expectedReadyAt);
-   node.textContent=time>now?remainingCountdown(time,now)+' igjen':'00:00 · Klar nå';
-   node.classList.toggle('is-due',time<=now);
+   if(!order){node.textContent='';continue}
+   const pending=order.status==='mottatt',target=pending?approvalDeadline(order):Number(order.expectedReadyAt);
+   if((!pending&&order.status!=='godkjent')||!Number.isFinite(target)||target<=0){node.textContent='';continue}
+   node.textContent=target>now?remainingCountdown(target,now)+(pending?' til svar':' igjen'):(pending?'00:00 · Ubesvart':'00:00 · Klar nå');
+   node.classList.toggle('is-due',target<=now);
+   node.classList.toggle('is-pending',pending);
   }
  }
  function stopCountdowns(){
@@ -67,7 +72,21 @@
    if(document.hidden||!authReady()||!initialLoaded)return;
    updateCountdowns();
    void finalizeDueOrder();
+   void finalizeOverduePending();
   },1000);
+ }
+ async function finalizeOverduePending(){
+  if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
+  const now=Date.now();
+  const due=[...orders.values()].filter(o=>o.status==='mottatt'&&approvalDeadline(o)>0&&now>=approvalDeadline(o))
+   .sort((a,b)=>approvalDeadline(a)-approvalDeadline(b));
+  const order=due.find(o=>now-(autoTimeoutAttempts.get(o.id)||0)>60000);
+  if(!order)return;
+  autoTimeoutAttempts.set(order.id,now);
+  automaticReadyBusy=true;
+  try{await changeStatus(order.id,'avvist',{rejectReason:TIMEOUT_REASON},true)}
+  catch(error){console.warn('BestillOnline: kunne ikke merke ordre som ubekreftet',error)}
+  finally{automaticReadyBusy=false}
  }
  async function finalizeDueOrder(){
   if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
@@ -216,6 +235,7 @@
    render();
    updateCountdowns();
    void finalizeDueOrder();
+   void finalizeOverduePending();
    // Avoid repeated shallow reads for the same 101 keys when a status changes.
    if(orders.size>=101){
     const signature=[...orders.keys()].sort().join('|');
@@ -291,7 +311,7 @@
    const groupBreak=hasPending&&order.status!=='mottatt'&&
     (index===0||filtered[index-1].status==='mottatt');
    const kind=pickupKind(order);
-   const center=order.status==='godkjent'?
+   const center=(order.status==='godkjent'||(order.status==='mottatt'&&approvalDeadline(order)>0))?
     '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':
     '<span class="order-pickup-badge" data-kind="'+kind+'">'+kind+'</span>';
    const statusColor=order.status==='avvist'?'rejected':kind==='SENERE'?'scheduled':'standard';
@@ -301,7 +321,7 @@
     '<div class="order-row-body"><button type="button" class="order-open" data-order-open="'+safe(order.id)+'">'+
     '<span class="order-initial">'+pickupIcon+'</span><span class="order-meta">'+
     '<strong class="order-name">'+(order.status==='mottatt'?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
-    '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(statusNames[order.status]||order.status)+'</span>'+
+    '<span class="order-status" data-status="'+safe(order.status)+'">'+safe(labelForOrder(order))+'</span>'+
     '<small class="order-sub">#'+id+' · '+qty+' varer · Henting</small></span></button>'+
     '<span class="order-center">'+center+'</span>'+
     '<span class="order-end"><span class="order-price">'+money(order.total)+'</span><small class="order-time">'+clock+'</small></span>'+
@@ -365,7 +385,7 @@
     '<div class="order-product-total"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(unitPrice)+')':'')+'</span><strong>'+money(quantity*unitPrice)+'</strong></div></article>';
   }).join('');
   $('ordersDetail').innerHTML=
-   '<div class="detail-summary"><div><div class="detail-status">'+safe(statusNames[o.status]||o.status)+' <span class="order-pickup-badge" data-kind="'+pickupKind(o)+'">'+pickupKind(o)+'</span></div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
+   '<div class="detail-summary"><div><div class="detail-status">'+safe(labelForOrder(o))+' <span class="order-pickup-badge" data-kind="'+pickupKind(o)+'">'+pickupKind(o)+'</span></div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
    '<details class="detail-customer-accordion" data-detail-accordion="'+safe(o.id)+'"'+(wasExpanded?' open':'')+'>'+
    '<summary><span class="detail-accordion-customer"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
    '<span class="detail-accordion-prep">'+(pickupKind(o)==='SENERE'?
@@ -443,6 +463,7 @@
   const old=orders.get(id);
   if(!old)throw Error('Bestillingen finnes ikke lenger.');
   if(status==='godkjent'&&old.status!=='mottatt')throw Error('Bestillingen er allerede behandlet.');
+  if(status==='godkjent'&&approvalDeadline(old)>0&&Date.now()>=approvalDeadline(old))throw Error('Bekreftelsesfristen er utløpt.');
   if(status==='klar'&&old.status!=='godkjent')throw Error('Bare godkjente bestillinger kan markeres klare.');
   if(status==='avvist'&&old.status!=='mottatt')throw Error('Bare nye bestillinger kan avvises.');
   pendingAction=true;feedback('');
@@ -454,10 +475,13 @@
    if(!etag)throw Error('Firebase returnerte ikke ETag. Bestillingen ble ikke endret.');
    const current=await response.json();
    if(!current||current.status!==old.status)throw Error('Bestillingen ble endret av en annen administrator. Oppdater siden.');
-   if(automatic&&(status!=='klar'||current.status!=='godkjent'||!Number.isFinite(Number(current.expectedReadyAt))||Number(current.expectedReadyAt)<=0||Number(current.expectedReadyAt)>Date.now())){
-    return;
+   if(automatic){
+    const ready=status==='klar'&&current.status==='godkjent'&&Number(current.expectedReadyAt)>0&&Number(current.expectedReadyAt)<=Date.now();
+    const timedOut=status==='avvist'&&current.status==='mottatt'&&approvalDeadline(current)>0&&Date.now()>=approvalDeadline(current)&&extra.rejectReason===TIMEOUT_REASON;
+    if(!ready&&!timedOut)return;
    }
    const changedAt=Date.now();
+   if(status==='godkjent'&&approvalDeadline(current)>0&&changedAt>=approvalDeadline(current))throw Error('Bekreftelsesfristen er utløpt.');
    const next={...current,...extra,status,updatedAt:changedAt};
    if(status==='godkjent'){
     next.acceptedAt=changedAt;
@@ -627,6 +651,7 @@
      else connection('Tilkoblet',true);
     }
     void finalizeDueOrder();
+    void finalizeOverduePending();
    }
   });
   document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;
