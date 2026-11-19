@@ -328,6 +328,10 @@
    const pendingDeadline=pending?visibleApprovalDeadline(order):0;
    const countdownNeeded=ready||(pending&&pendingDeadline>0);
    const statusText=labelForOrder(order);
+   const shortStatus=overdueRejected?'Tidsavbrutt':
+    order.status==='godkjent'?'Godkjent':
+    order.status==='klar'?'Klar':
+    order.status==='avvist'?'Avvist':'Ny bestilling';
    const modeLabel='<span class="order-mode-pill" data-kind="'+kind+'"><span class="order-mode-check" aria-hidden="true">✓</span>'+kind+'</span>';
    const statusClass=order.status==='avvist'?'is-rejected':pending?'is-new':'is-success';
    const cardLabel=name+', '+statusText+', '+qty+' varer, '+money(order.total);
@@ -337,11 +341,9 @@
      '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'" aria-label="'+safe(cardLabel)+'">'+
       '<span class="order-initial">'+pickupIcon+'</span>'+
       '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
-      '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\\s*/,''))+'</span></span>'+
+      '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(order.status==='avvist'?'✕ ':'✓ ')+safe(shortStatus)+'</span></span>'+
      '</button>'+
-     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span></span>'+
-     '<span class="order-mode-cell">'+modeLabel+'</span>'+
-     '<span class="order-ref-qty">'+qty+' varer</span>'+
+     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-mode-cell">'+modeLabel+'</span><span class="order-ref-qty">· '+qty+' varer</span></span>'+
      '<span class="order-reference-price">'+money(order.total)+'</span>'+
      '<span class="order-reference-timing'+(pending?' is-awaiting':ready?' is-preparing':'')+'">'+
       (!pending?'<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>':'')+
