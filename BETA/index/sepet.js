@@ -645,7 +645,8 @@ function localPublicStatus(){
 function displayLiveOrderStatus(){
  if(!localOrder)return;
  const state=localPublicStatus(),confirmedAt=visiblePickupAt(localOrder);
- const label=ORDER_STATUS_LABELS[state.status]||ORDER_STATUS_LABELS.mottatt;
+ const timedOutRejected=state.status==='avvist'&&state.rejectReason==='Ikke bekreftet innen 5 minutter';
+ const label=timedOutRejected?'Ikke bekreftet i tide':(ORDER_STATUS_LABELS[state.status]||ORDER_STATUS_LABELS.mottatt);
  const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
  const pickupDate=confirmedAt?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(confirmedAt)):'';
  const adjusted=!!state.pickupTimeAdjusted;
@@ -658,14 +659,14 @@ function displayLiveOrderStatus(){
  if(info)info.textContent=accepted&&confirmedAt?
   (adjusted?'Hentetiden er endret til ':'Bekreftet hentetid: ')+pickupDate:
   ready?'Bestillingen er klar til henting nå.':
-  rejected?(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.'):
+  rejected?(timedOutRejected?'Bestillingen ble ikke bekreftet innen 5 minutter. Ring restauranten.':(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.')):
   'Restauranten bekrefter hentetid når bestillingen godtas.';
  const title=$('draftConfirmationTitle');
- if(title)title.textContent=accepted?'Bestillingen er godkjent!':ready?'Bestillingen er klar til henting!':rejected?'Bestillingen er avvist':'Bestillingen er sendt';
+ if(title)title.textContent=accepted?'Bestillingen er godkjent!':ready?'Bestillingen er klar til henting!':rejected?(timedOutRejected?'Ikke bekreftet i tide':'Bestillingen er avvist'):'Bestillingen er sendt';
  const intro=$('draftConfirmationIntro');
- if(intro)intro.textContent=accepted?'Restauranten har godkjent bestillingen din.':ready?'Du kan hente bestillingen din nå.':rejected?'Restauranten kunne ikke godta bestillingen din.':'Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
+ if(intro)intro.textContent=accepted?'Restauranten har godkjent bestillingen din.':ready?'Du kan hente bestillingen din nå.':rejected?(timedOutRejected?'Vi fikk ingen bekreftelse innen fem minutter. Kontakt restauranten.':'Restauranten kunne ikke godta bestillingen din.'):'Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
  const sent=$('draftConfirmationSent');
- if(sent)sent.textContent=accepted?'✓ Bekreftet av restauranten':ready?'✓ Klar til henting':rejected?'Bestillingen ble avvist':'Sendt til restauranten · Avventer godkjenning';
+ if(sent)sent.textContent=accepted?'✓ Bekreftet av restauranten':ready?'✓ Klar til henting':rejected?(timedOutRejected?'Ikke bekreftet · Ring restauranten':'Bestillingen ble avvist'):'Sendt til restauranten · Avventer godkjenning';
  const pickup=$('draftConfirmationPickup'),pickupLabel=$('draftConfirmationPickupLabel');
  if(pickupLabel)pickupLabel.textContent=adjusted&&accepted?'Endret hentetid':'Hentetid';
  if(pickup)pickup.textContent=confirmedAt&&(!rejected)?pickupDate:(localOrder.pickup?.label||'Snarest');
@@ -676,7 +677,7 @@ function displayLiveOrderStatus(){
   if(marker)marker.textContent=rejected?'!':'✓';
  }
  const activeTitle=$('draftActiveTitle');
- if(activeTitle)activeTitle.textContent=accepted?'Bestillingen er godkjent':ready?'Klar til henting':rejected?'Bestillingen er avvist':'Bestilling sendt';
+ if(activeTitle)activeTitle.textContent=accepted?'Bestillingen er godkjent':ready?'Klar til henting':rejected?label:'Bestilling sendt';
  const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
  if(tracker)tracker.forEach((step,index)=>{
   step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
@@ -707,7 +708,7 @@ function onCustomerStatusUpdate(value){
   const message=statusPublic.status==='godkjent'
    ?'Bestillingen er godkjent'+(visiblePickupAt(localOrder)?' · Henting kl. '+pickupClock(visiblePickupAt(localOrder)):'')
    :statusPublic.status==='klar'?'Bestillingen er klar til henting'
-   :'Bestillingen er avvist';
+   :statusPublic.rejectReason==='Ikke bekreftet innen 5 minutter'?'Ikke bekreftet i tide. Ring restauranten.':'Bestillingen er avvist';
   showFatih1Toast(message,statusPublic.status==='avvist'?'error':'info');
   if(!document.hidden&&'Notification' in window&&Notification.permission==='granted'){
    try{new Notification('KØL Grill & Pizza',{body:message,tag:'kol-order-'+localOrder.id})}catch{}
