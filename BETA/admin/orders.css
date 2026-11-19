@@ -957,3 +957,73 @@ body{background:#fff}
  .orders-head,.orders-main{min-width:760px}
  body{min-width:760px;overflow-x:auto}
 }
+
+
+/* Approval timer replaces the right clock until accepted.
+   After approval the pickup clock and remaining time share the same right cell. */
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ grid-template-columns:minmax(0,2.1fr) minmax(90px,1.1fr) minmax(95px,1fr) minmax(72px,.8fr) minmax(112px,1.08fr) minmax(195px,1.8fr);
+}
+.order-reference-row .order-reference-timing{
+ grid-column:6;grid-row:1;min-width:0;min-height:54px;
+ display:flex;align-items:center;justify-content:center;gap:6px;
+ overflow:hidden;
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ grid-column:auto;grid-row:auto;min-width:0;min-height:0;
+ display:inline-flex;flex:none;align-items:center;justify-content:center;
+ gap:5px;margin:0;padding:8px 10px;border:0;border-radius:30pc;
+ background:#FFF9C4;color:#172e35;white-space:nowrap;
+ font-size:clamp(12px,1.08vw,17px);font-weight:750;
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{
+ width:18px;height:18px;flex:none;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown{
+ position:static;right:auto;bottom:auto;z-index:auto;
+ min-width:0;display:inline-flex;align-items:center;justify-content:center;
+ margin:0;padding:8px;border:0;border-radius:30pc;
+ background:#e5f8e9;color:#076a39;
+ font-size:clamp(10px,.9vw,14px);font-weight:850;
+ font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-pending{
+ background:#FFF9C4;color:#875d07;
+ font-size:clamp(16px,1.4vw,22px);padding:10px 18px;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-due{
+ background:#ffe6e3;color:#bd352e;
+}
+.order-reference-row .order-reference-waiting{
+ display:inline-flex;align-items:center;justify-content:center;
+ border-radius:30pc;padding:10px 15px;background:#fff4de;
+ color:#8f651e;font-size:12px;font-weight:750;
+}
+/* Keep the green swipe-to-ready action behind an opaque card until swiped.
+   Prevent its text appearing on top of Klar til henting and the right cells. */
+.order-reference-row .order-row-body{position:relative;z-index:2;background:#fff;overflow:hidden}
+.order-reference-row[data-visual-status="new"] .order-row-body{background:#fff9f3}
+.order-reference-row[data-visual-status="rejected"] .order-row-body{background:#fff}
+.order-reference-row .order-swipe-action{
+ z-index:1;right:0;top:0;bottom:0;width:96px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:3px;text-align:center;line-height:1.25;padding:5px;
+}
+.order-reference-row .order-swipe-action small{display:block;line-height:1.2}
+.order-reference-row:not(.is-swiped) .order-swipe-action{visibility:hidden;pointer-events:none}
+.order-reference-row.is-swiped .order-swipe-action{visibility:visible;pointer-events:auto}
+.order-reference-row.is-swiped .order-row-body{transform:translateX(-96px)}
+@media(max-width:1199px){
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  grid-template-columns:minmax(0,2fr) minmax(76px,1fr) minmax(82px,.95fr) minmax(60px,.72fr) minmax(86px,.9fr) minmax(158px,1.7fr);
+ }
+ .order-reference-row .order-reference-timing{grid-column:6;grid-row:1;gap:3px;min-height:48px}
+ .order-reference-row .order-reference-timing .order-reference-time{gap:3px;padding:7px 6px;font-size:11px}
+ .order-reference-row .order-reference-timing .order-reference-time svg{width:14px;height:14px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:9px;padding:7px 5px}
+ .order-reference-row .order-reference-timing .order-reference-countdown.is-pending{font-size:16px;padding:9px 12px}
+}
