@@ -333,13 +333,14 @@
    return '<article class="order-row order-reference-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'" tabindex="0" aria-label="'+safe(cardLabel)+'">'+
     (ready?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body">'+
-     '<span class="order-mode-cell">'+modeLabel+'</span>'+
      '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'" aria-label="'+safe(cardLabel)+'">'+
       '<span class="order-initial">'+pickupIcon+'</span>'+
       '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
-      '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\s*/,''))+'</span></span>'+
+      '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\\s*/,''))+'</span></span>'+
      '</button>'+
-     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-ref-bullet" aria-hidden="true">•</span><span class="order-ref-qty">'+qty+' varer</span></span>'+
+     '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span></span>'+
+     '<span class="order-mode-cell">'+modeLabel+'</span>'+
+     '<span class="order-ref-qty">'+qty+' varer</span>'+
      '<span class="order-reference-price">'+money(order.total)+'</span>'+
      '<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>'+
     '</div>'+
