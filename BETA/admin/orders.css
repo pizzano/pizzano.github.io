@@ -645,3 +645,183 @@ body{background:#fff;color:#15272e}
 .order-reference-row .order-reference-price,
 .order-reference-row .order-reference-time{cursor:pointer}
 .order-reference-row .order-name{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+
+/* FINAL ORDER INBOX — reference screenshot, two sizes only:
+   PC >= 1200px, tablet < 1200px. Both stay single-row and five-column.
+   The existing order-actions, login and details sheet retain their behavior. */
+body{background:#fff}
+.orders-head{
+ min-height:106px;padding:14px clamp(18px,2.8vw,46px) 22px;
+ gap:16px;align-items:center;border:0;background:#fff;box-shadow:none;
+}
+.orders-head:after{
+ height:1px;left:2.8%;right:2.8%;bottom:0;
+ background:#d9e2e6;
+}
+.orders-headline{padding-left:44px}
+.orders-headline:before{width:10px;top:7px;bottom:7px;background:#27b73e;border-radius:8px}
+.orders-headline h1{
+ font-size:clamp(25px,2.5vw,38px);font-weight:850;letter-spacing:-.035em;
+ line-height:1.05;color:#0d232b;
+}
+.orders-headline small{font-size:clamp(13px,1.25vw,19px);font-weight:750;color:#647883}
+.orders-top-actions.orders-lightbar{gap:clamp(6px,.8vw,14px)}
+.orders-light{
+ width:clamp(36px,3.5vw,56px);height:clamp(36px,3.5vw,56px);
+ padding:9px;border-radius:15px;border:1px solid #d8e1e5;
+ color:#253c43;background:linear-gradient(#fff,#f2f5f6);box-shadow:0 1px 3px #1733440d;
+}
+.orders-light svg{width:100%;height:100%;stroke-width:2.1}
+.orders-light.is-active,.orders-light-refresh{
+ background:linear-gradient(135deg,#f5fff5,#e0f7e4);border-color:#b7dfbe;color:#08662d;
+}
+.orders-light.is-upcoming,.orders-light:disabled{
+ opacity:.87;filter:none;pointer-events:none;border-style:solid;
+ color:#233a42;background:linear-gradient(#fff,#f2f5f6);
+}
+.orders-light-refresh:hover{background:#ddf7e4}
+.orders-menu summary{font-size:22px;color:#142c32}
+.orders-main{max-width:none;padding:22px clamp(16px,2.85vw,47px) 40px}
+.orders-list{gap:21px}
+.order-reference-row{
+ --ref-stripe:#26bf41;min-height:89px;
+ border:1px solid #ccd9d6;border-left:8px solid var(--ref-stripe);
+ border-radius:17px;background:#fff;box-shadow:none;
+}
+.order-reference-row[data-visual-status="rejected"]{
+ --ref-stripe:#ed323c;background:#fff;
+ border-color:#edc8cb;border-left-color:var(--ref-stripe);
+}
+.order-reference-row[data-visual-status="new"]{
+ --ref-stripe:#f4a333;background:#fff9f3;border-left-color:var(--ref-stripe);
+}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ width:100%;min-height:88px;padding:10px clamp(10px,1.3vw,22px);
+ display:grid;grid-template-columns:minmax(125px,14%) minmax(230px,36%) minmax(190px,25%) minmax(116px,14%) minmax(92px,11%);
+ grid-template-rows:minmax(0,1fr);gap:0;align-items:center;background:transparent;
+}
+.order-reference-row .order-mode-cell{
+ grid-column:1;grid-row:1;height:56px;min-width:0;
+ justify-content:center;padding:0 12px 0 0;border-right:1px solid #cbd8da;
+}
+.order-mode-pill{
+ font-size:clamp(12px,1.03vw,17px);font-weight:850;
+ padding:7px 12px;border-radius:100px;color:#074d28;
+ background:linear-gradient(100deg,#e5f8e6,#e1f6df);white-space:nowrap;
+}
+.order-mode-pill[data-kind="SENERE"]{background:#fff0db;color:#ad6617}
+.order-reference-row .order-open{
+ grid-column:2;grid-row:1;min-height:56px;min-width:0;
+ display:flex;align-items:center;justify-content:flex-start;
+ gap:clamp(9px,1.2vw,19px);padding:0 15px;border-right:1px solid #cbd8da;
+}
+.order-reference-row .order-initial{
+ width:49px;height:49px;min-width:49px;border-radius:50%;
+ background:#f4f6f7;color:#17333e;border:1px solid #e0e8ea;
+}
+.order-reference-row .order-initial svg{width:27px;height:27px}
+.order-reference-row .order-meta{min-width:0;gap:2px}
+.order-reference-row .order-name{
+ max-width:100%;font-size:clamp(15px,1.4vw,22px);
+ color:#11252c;font-weight:850;line-height:1.1;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.order-reference-row .order-status{
+ font-size:clamp(12px,1.08vw,17px);
+ font-weight:800;line-height:1.16;color:#00832e;
+}
+.order-reference-row .order-status.is-rejected{color:#df1528}
+.order-reference-row .order-status.is-new{color:#b76810}
+.order-reference-facts{
+ grid-column:3;grid-row:1;min-height:56px;gap:clamp(7px,1.1vw,18px);
+ padding:0 clamp(7px,1.35vw,22px);border-right:0;
+ display:flex;align-items:center;justify-content:flex-start;
+ white-space:nowrap;color:#344c55;font-size:clamp(13px,1.15vw,19px);
+}
+.order-ref-number{font-weight:750}
+.order-ref-bullet{display:inline;color:#233941}
+.order-ref-qty{display:inline;white-space:nowrap}
+.order-reference-price{
+ grid-column:4;grid-row:1;margin:0 clamp(5px,1vw,17px) 0 0;
+ padding:10px 7px;border-radius:15px;
+ font-size:clamp(15px,1.4vw,23px);font-weight:900;
+ text-align:center;white-space:nowrap;
+ background:linear-gradient(105deg,#eaf9ed,#dff5df);color:#103c21;
+}
+.order-reference-row[data-visual-status="rejected"] .order-reference-price{
+ background:linear-gradient(95deg,#fce8eb,#fae1e5);color:#173b2a;
+}
+.order-reference-time{
+ grid-column:5;grid-row:1;min-height:56px;display:flex;
+ justify-content:center;align-items:center;gap:7px;
+ border-left:1px solid #cbd8da;font-size:clamp(14px,1.2vw,20px);
+ font-weight:750;color:#122c34;white-space:nowrap;
+}
+.order-reference-time svg{width:24px;height:24px;flex:none}
+.order-reference-countdown{
+ position:absolute;right:clamp(115px,13%,215px);bottom:2px;
+ font-size:10px;z-index:2;pointer-events:none;
+}
+.order-reference-row:hover{box-shadow:0 4px 15px #103d2410}
+.order-reference-row .order-row-body{position:relative;z-index:1}
+.order-reference-row .order-swipe-action{right:0;width:96px;z-index:0}
+.order-reference-row.is-swiped .order-row-body{transform:translateX(-96px)}
+/* Tablet shares the identical 5-column layout. Never switch to stacked mobile cards. */
+@media(max-width:1199px){
+ .orders-head{min-height:84px;padding:11px 15px 15px;gap:10px}
+ .orders-headline{padding-left:20px}
+ .orders-headline:before{width:6px;top:4px;bottom:4px}
+ .orders-headline h1{font-size:27px}
+ .orders-headline small{font-size:13px}
+ .orders-top-actions.orders-lightbar{gap:5px}
+ .orders-light{width:38px;height:40px;padding:7px;border-radius:11px}
+ .orders-light svg{width:100%;height:100%}
+ .orders-main{padding:18px 15px 30px}
+ .orders-list{gap:13px}
+ .order-reference-row{min-height:79px;border-left-width:6px;border-radius:14px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  min-height:78px;padding:8px 9px;gap:0;grid-template-rows:minmax(0,1fr);
+  grid-template-columns:minmax(105px,15%) minmax(190px,34%) minmax(140px,25%) minmax(105px,14%) minmax(85px,12%);
+ }
+ .order-reference-row .order-mode-cell{grid-column:1;grid-row:1;min-height:49px;height:49px;padding-right:5px;border-right:1px solid #cbd8da}
+ .order-mode-pill{font-size:11px;padding:7px 9px}
+ .order-reference-row .order-open{
+  grid-column:2;grid-row:1;min-height:49px;height:100%;padding:0 8px;
+  gap:7px;border-right:1px solid #cbd8da;
+ }
+ .order-reference-row .order-initial{width:35px;height:35px;min-width:35px}
+ .order-reference-row .order-initial svg{width:21px;height:21px}
+ .order-reference-row .order-name{font-size:15px}
+ .order-reference-row .order-status{font-size:12px}
+ .order-reference-facts{
+  grid-column:3;grid-row:1;min-height:49px;padding:0 5px;gap:5px;
+  flex-wrap:nowrap;justify-content:center;white-space:nowrap;
+  border-right:0;font-size:12px;
+ }
+ .order-ref-bullet{display:inline}
+ .order-reference-price{
+  grid-column:4;grid-row:1;margin:0 6px 0 0;padding:9px 3px;
+  border-radius:10px;font-size:15px;
+ }
+ .order-reference-time{
+  grid-column:5;grid-row:1;min-height:49px;gap:4px;
+  border-left:1px solid #cbd8da;font-size:13px;
+ }
+ .order-reference-time svg{width:17px;height:17px}
+ .order-reference-countdown{right:12%;bottom:1px;font-size:9px}
+}
+/* Narrow portrait tablet: retain desktop row proportions with horizontal page
+   scrolling instead of stacking/hiding fields or switching to a phone design. */
+@media(max-width:770px){
+ .orders-head{min-width:760px}
+ .orders-main{min-width:760px}
+ body{min-width:760px;overflow-x:auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .order-reference-row{transition:none}
+}
