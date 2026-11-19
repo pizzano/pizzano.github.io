@@ -1140,3 +1140,117 @@ body{background:#fff}
  .orders-head,.orders-main{min-width:760px}
  body{min-width:760px;overflow-x:auto}
 }
+
+
+/* Pickup presentation matching the supplied horizontal reference:
+   customer | unified pickup-time + remaining capsule | ID, type and items | price.
+   SENERE gets warm yellow; timed SNAREST gets pale green. */
+.order-reference-row{border-radius:16px;min-height:91px;box-shadow:0 2px 14px #174e3210}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ display:grid;
+ grid-template-columns:minmax(190px,1.32fr) minmax(275px,1.3fr) minmax(240px,1.1fr) minmax(125px,.63fr);
+ grid-template-rows:minmax(0,1fr);align-items:center;gap:0;
+ min-height:89px;padding:10px 16px;
+}
+.order-reference-row .order-open{
+ grid-column:1;grid-row:1;min-height:64px;
+ padding:0 17px 0 0;border-right:1px solid #cfddd5;
+}
+.order-reference-row .order-initial{width:52px;height:52px;min-width:52px}
+.order-reference-row .order-initial svg{width:28px;height:28px}
+.order-reference-row .order-name{font-size:clamp(16px,1.55vw,24px)}
+.order-reference-row .order-status{font-size:clamp(12px,1.2vw,18px)}
+.order-reference-row .order-reference-timing{
+ grid-column:2;grid-row:1;min-width:0;min-height:62px;
+ display:flex;flex-direction:row;justify-content:center;align-items:stretch;
+ gap:0;margin:0 20px;
+ overflow:hidden;border-radius:999px;
+ background:#e2f5e7;color:#155e3d;
+}
+.order-reference-row .order-reference-timing[data-pickup-kind="SENERE"]{
+ background:linear-gradient(105deg,#ffe0a5,#fff5e9);color:#7d5428;
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ flex:1 1 50%;min-width:0;min-height:0;
+ display:flex;justify-content:center;align-items:center;gap:10px;
+ padding:10px 13px;margin:0;border:0;border-radius:0;
+ background:#cdeed8;color:#104b36;
+ font-size:clamp(20px,2vw,30px);font-weight:850;
+}
+.order-reference-row .order-reference-timing[data-pickup-kind="SENERE"] .order-reference-time{
+ background:linear-gradient(100deg,#ffdda0,#ffe9c6);color:#173a2b;
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{
+ width:27px;height:27px;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown{
+ position:static;flex:1 1 50%;min-width:0;
+ display:flex;align-items:center;justify-content:center;
+ background:transparent;color:inherit;border:0;border-radius:0;
+ padding:10px 12px;white-space:nowrap;
+ font-size:clamp(15px,1.5vw,22px);font-weight:700;
+ font-variant-numeric:tabular-nums;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-pending{
+ flex:1 1 100%;background:transparent;color:#875d07;
+ font-size:clamp(19px,2vw,27px);
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-due{
+ background:#ffe6e3;color:#a93430;
+}
+.order-reference-row .order-reference-timing .order-reference-waiting{
+ display:flex;align-items:center;justify-content:center;
+ flex:1 1 100%;background:transparent;
+}
+.order-reference-row .order-reference-facts{
+ grid-column:3;grid-row:1;min-width:0;min-height:64px;
+ padding:0 12px;justify-content:center;gap:9px;
+ font-size:clamp(13px,1.12vw,18px);
+ border-left:1px solid #cfddd5;border-right:1px solid #cfddd5;
+}
+.order-reference-row .order-reference-facts .order-mode-pill{
+ background:#e2f6e4;color:#086b33;
+ border-radius:999px;padding:7px 12px;
+ font-size:clamp(11px,.95vw,15px);
+}
+.order-reference-row .order-reference-facts .order-mode-pill[data-kind="SENERE"]{
+ background:#fff0df;color:#aa742f;
+}
+.order-reference-row .order-reference-price{
+ grid-column:4;grid-row:1;justify-self:stretch;
+ margin:0 0 0 17px;padding:15px 5px;
+ border-radius:16px;background:#4c9568;color:#fff;
+ font-size:clamp(19px,1.9vw,28px);font-weight:850;
+}
+.order-reference-row[data-visual-status="rejected"] .order-reference-price{
+ background:#f8d9da;color:#a22932;
+}
+@media(max-width:1199px){
+ .order-reference-row{min-height:77px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  grid-template-columns:minmax(155px,1.15fr) minmax(208px,1.28fr) minmax(215px,1.35fr) minmax(89px,.65fr);
+  grid-template-rows:minmax(0,1fr);
+  min-height:76px;padding:8px 10px;
+ }
+ .order-reference-row .order-open{grid-column:1;grid-row:1;min-height:54px;padding:0 8px 0 0}
+ .order-reference-row .order-initial{width:37px;height:37px;min-width:37px}
+ .order-reference-row .order-initial svg{width:21px;height:21px}
+ .order-reference-row .order-name{font-size:14px}
+ .order-reference-row .order-status{font-size:11px}
+ .order-reference-row .order-reference-timing{grid-column:2;grid-row:1;min-height:52px;margin:0 8px}
+ .order-reference-row .order-reference-timing .order-reference-time{font-size:17px;padding:7px 5px;gap:5px}
+ .order-reference-row .order-reference-timing .order-reference-time svg{width:19px;height:19px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:13px;padding:7px 5px}
+ .order-reference-row .order-reference-timing .order-reference-countdown.is-pending{font-size:17px}
+ .order-reference-row .order-reference-facts{grid-column:3;grid-row:1;min-height:54px;padding:0 5px;gap:5px;font-size:11px}
+ .order-reference-row .order-reference-facts .order-mode-pill{font-size:10px;padding:5px 7px}
+ .order-reference-row .order-reference-price{grid-column:4;grid-row:1;margin:0 0 0 6px;padding:13px 3px;font-size:17px;border-radius:12px}
+}
+@media(max-width:770px){
+ .orders-main,.orders-head{min-width:760px}
+ body{min-width:760px;overflow-x:auto}
+}
