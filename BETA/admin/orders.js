@@ -313,7 +313,10 @@
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
   $('ordersList').innerHTML=filtered.map(order=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
-   const name=safe(order.name||order.customer?.fullName||'Kunde');
+   const fullName=String(order.name||order.customer?.fullName||'Kunde');
+   const characters=Array.from(fullName);
+   const displayName=safe(characters.length>23?characters.slice(0,23).join('')+'...':fullName);
+   const name=safe(fullName);
    const items=Array.isArray(order.items)?order.items:[];
    const qty=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
    const ready=order.status==='godkjent';
@@ -328,13 +331,13 @@
    const modeLabel='<span class="order-mode-pill" data-kind="'+kind+'"><span class="order-mode-check" aria-hidden="true">✓</span>'+kind+'</span>';
    const statusClass=order.status==='avvist'?'is-rejected':pending?'is-new':'is-success';
    const cardLabel=name+', '+statusText+', '+qty+' varer, '+money(order.total);
-   return '<article class="order-row order-reference-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'">'+
+   return '<article class="order-row order-reference-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'" tabindex="0" aria-label="'+safe(cardLabel)+'">'+
     (ready?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body">'+
      '<span class="order-mode-cell">'+modeLabel+'</span>'+
      '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'" aria-label="'+safe(cardLabel)+'">'+
       '<span class="order-initial">'+pickupIcon+'</span>'+
-      '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+name+'</strong>'+
+      '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
       '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(overdueRejected?'✕ ':'✓ ')+safe(statusText.replace(/^[✓✕]\s*/,''))+'</span></span>'+
      '</button>'+
      '<span class="order-reference-facts"><span class="order-ref-number"># '+id+'</span><span class="order-ref-bullet" aria-hidden="true">•</span><span class="order-ref-qty">'+parcelIcon+' '+qty+' varer</span></span>'+
@@ -589,12 +592,23 @@
   });
   $('ordersLoginForm').addEventListener('submit',login);
   $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
+  let ignoreRowClicksUntil=0;
   $('ordersList').addEventListener('click',async event=>{
    const ready=event.target.closest('[data-order-ready]');
    if(ready){
     try{await changeStatus(ready.dataset.orderReady,'klar')}catch(error){feedback(error.message,true)}return;
    }
-   const open=event.target.closest('[data-order-open]');if(open)openSheet(open.dataset.orderOpen);
+   if(Date.now()<ignoreRowClicksUntil)return;
+   const row=event.target.closest('[data-order-row]');
+   if(row)openSheet(row.dataset.orderRow);
+  });
+  $('ordersList').addEventListener('keydown',event=>{
+   if(event.key!=='Enter'&&event.key!==' ')return;
+   if(event.target.closest('[data-order-ready],[data-order-open]'))return;
+   const row=event.target.closest('[data-order-row]');
+   if(!row)return;
+   event.preventDefault();
+   openSheet(row.dataset.orderRow);
   });
   $('ordersList').addEventListener('touchstart',event=>{
    const row=event.target.closest('[data-order-row]');
@@ -606,6 +620,7 @@
    const start=swipe;swipe=null;
    const dx=event.changedTouches[0].clientX-start.x,dy=event.changedTouches[0].clientY-start.y;
    if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.4){
+    ignoreRowClicksUntil=Date.now()+500;
     const row=$('ordersList').querySelector('[data-order-row="'+start.id+'"]');
     if(row){
      $('ordersList').querySelectorAll('.order-row.is-swiped').forEach(other=>{if(other!==row)other.classList.remove('is-swiped')});
