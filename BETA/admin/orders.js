@@ -319,8 +319,9 @@
    const groupBreak=hasPending&&order.status!=='mottatt'&&
     (index===0||filtered[index-1].status==='mottatt');
    const kind=pickupKind(order);
-   const center=(order.status==='godkjent'||(order.status==='mottatt'&&visibleApprovalDeadline(order)>0))?
-    '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="Tid igjen til henting"></span>':
+   const countdownNeeded=order.status==='godkjent'||(order.status==='mottatt'&&visibleApprovalDeadline(order)>0);
+   const center=(countdownNeeded?
+    '<span class="order-countdown" data-countdown-id="'+safe(order.id)+'" aria-label="'+(order.status==='mottatt'?'Tid igjen til bekreftelse':'Tid igjen til henting')+'"></span>':'')+
     '<span class="order-pickup-badge" data-kind="'+kind+'">'+kind+'</span>';
    const statusColor=order.status==='avvist'?'rejected':kind==='SENERE'?'scheduled':'standard';
    return (groupBreak?'<div class="orders-group-divider" role="separator"><span>Tidligere bestillinger</span></div>':'')+
@@ -411,7 +412,7 @@
    (o.rejectReason?'<p class="orders-feedback error">Avvist: '+safe(o.rejectReason)+'</p>':'')+
    '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>';
   $('ordersActionBar').innerHTML=o.status==='mottatt'?
-   '<button class="orders-danger" type="button" data-action="reject">Avvis</button><button class="orders-primary" type="button" data-action="accept">Godta</button>':
+   '<button class="orders-danger orders-action-reject" type="button" data-action="reject">Avvis</button><button class="orders-primary orders-action-accept" type="button" data-action="accept">Godta</button>':
    o.status==='godkjent'?'<button class="orders-primary" type="button" data-action="ready">Klar til henting</button>':
    '<button class="orders-secondary" type="button" data-action="close">Lukk</button>';
  }
