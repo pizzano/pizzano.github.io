@@ -397,14 +397,33 @@
   activeId=null;show('ordersSheetOverlay',false);show('ordersSheet',false);
   if($('ordersAcceptOverlay').hidden&&$('ordersRejectOverlay').hidden)document.body.classList.remove('is-dialog-open');
  }
+ let dialogCloseTimer=null;
  function closeDialog(){
-  show('ordersAcceptOverlay',false);show('ordersRejectOverlay',false);
-  if($('ordersSheet').hidden)document.body.classList.remove('is-dialog-open');
+  const overlays=[$('ordersAcceptOverlay'),$('ordersRejectOverlay')].filter(node=>!node.hidden);
+  if(!overlays.length){
+   if($('ordersSheet').hidden)document.body.classList.remove('is-dialog-open');
+   return;
+  }
+  overlays.forEach(node=>node.classList.remove('is-visible'));
+  if(dialogCloseTimer!==null)clearTimeout(dialogCloseTimer);
+  dialogCloseTimer=setTimeout(()=>{
+   overlays.forEach(node=>show(node.id,false));
+   dialogCloseTimer=null;
+   if($('ordersSheet').hidden)document.body.classList.remove('is-dialog-open');
+  },320);
  }
  function startDialog(type,id=activeId){
   if(!id||!orders.has(id))return;
-  activeId=id;show('ordersAcceptOverlay',type==='accept');show('ordersRejectOverlay',type==='reject');
+  if(dialogCloseTimer!==null){clearTimeout(dialogCloseTimer);dialogCloseTimer=null}
+  activeId=id;
+  const accept=$('ordersAcceptOverlay'),reject=$('ordersRejectOverlay');
+  accept.classList.remove('is-visible');reject.classList.remove('is-visible');
+  show('ordersAcceptOverlay',type==='accept');show('ordersRejectOverlay',type==='reject');
   document.body.classList.add('is-dialog-open');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   const target=type==='accept'?accept:reject;
+   if(!target.hidden)target.classList.add('is-visible');
+  }));
   if(type==='accept'){
    const order=orders.get(id);
    const later=order?.pickup?.mode==='scheduled';
