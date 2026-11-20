@@ -318,7 +318,7 @@
   $('ordersEmpty').hidden=filtered.length>0;
   $('ordersEmpty').querySelector('strong').textContent='Ingen bestillinger';
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
-  $('ordersList').innerHTML=filtered.map(order=>{
+  $('ordersList').innerHTML=filtered.map((order,index)=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
    const fullName=String(order.name||order.customer?.fullName||'Kunde');
    const characters=Array.from(fullName);
@@ -348,7 +348,8 @@
    const modeLabel='<span class="order-mode-pill" data-kind="'+kind+'">'+(kind==='SENERE'?calendarIcon:lightningIcon)+kind+'</span>';
    const statusClass=order.status==='avvist'?'is-rejected':pending?'is-new':'is-success';
    const cardLabel=name+', '+statusText+', '+qty+' varer, '+money(order.total);
-   return '<article class="order-row order-reference-row" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'" tabindex="0" aria-label="'+safe(cardLabel)+'">'+
+   const firstProcessedAfterNew=index>0&&order.status!=='mottatt'&&filtered[index-1].status==='mottatt';
+   return '<article class="order-row order-reference-row'+(firstProcessedAfterNew?' is-first-processed':'')+'" data-order-row="'+safe(order.id)+'" data-status="'+safe(order.status)+'" data-pickup-kind="'+kind+'" data-visual-status="'+variant+'" tabindex="0" aria-label="'+safe(cardLabel)+'">'+
     (ready?'<button class="order-swipe-action" type="button" data-order-ready="'+safe(order.id)+'" aria-label="Marker klar: '+name+'">Klar <small>til henting</small></button>':'')+
     '<div class="order-row-body">'+
      '<button type="button" class="order-open" data-order-open="'+safe(order.id)+'" aria-label="'+safe(cardLabel)+'">'+
