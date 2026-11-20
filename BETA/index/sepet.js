@@ -1102,7 +1102,10 @@ async function submitDraftOrder(){
 
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
   cart=[];saveCart();
-  renderDraftActiveOrder();showDraftConfirmation();
+  // Keep the new order tracked locally; do not automatically open the status dialog.
+  renderDraftActiveOrder();
+  returnToMenu();
+  beginCustomerStatus();
   showFatih1Toast('Bestillingen er sendt til restauranten');
  }catch(error){
   console.warn('BestillOnline order submission failed:',error);
