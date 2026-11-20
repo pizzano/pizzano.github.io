@@ -1454,3 +1454,94 @@ body{background:#fff}
 .order-reference-row[data-visual-status="ready"] .order-row-body{background:#f7fcf8}
 .order-reference-row[data-visual-status="rejected"] .order-row-body{background:#fff5f5}
 .order-reference-row[data-visual-status="preparing"] .order-row-body{background:#f3fcf9}
+
+
+/* 2026-11-20 compact order inbox:
+   three predictable type scales and softer attention for incoming orders. */
+.orders-list{gap:9px}
+.order-reference-row{
+ min-height:76px;
+ border-radius:15px;
+ box-shadow:0 3px 12px #1e3a2b0c;
+}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ min-height:74px;
+ padding:8px 12px;
+ grid-template-columns:minmax(185px,1.54fr) minmax(238px,1.43fr) minmax(137px,.95fr) minmax(175px,1.02fr) minmax(115px,.78fr);
+}
+/* Level 1: name and pickup clock. */
+.order-reference-row .order-name{font-size:18px;line-height:1.13}
+.order-reference-row .order-reference-timing .order-reference-time{font-size:19px}
+/* Level 2: status, pickup mode, total. */
+.order-reference-row .order-status{font-size:13px;line-height:1.2}
+.order-reference-row .order-mode-pill,
+.order-reference-row .order-mode-pill[data-kind="SENERE"]{font-size:12px;padding:8px 11px;gap:6px}
+.order-reference-row .order-mode-pill svg{width:17px;height:17px}
+.order-reference-row .order-reference-price{
+ font-size:16px;font-weight:800;
+ padding:11px 6px;border-radius:12px;
+ margin-left:12px;
+ box-shadow:none;
+}
+/* Level 3: secondary order information and remaining minutes. */
+.order-reference-row .order-reference-facts{font-size:11px;gap:5px}
+.order-reference-row .order-reference-facts .order-ref-qty{font-size:11px}
+.order-reference-row .order-reference-timing .order-reference-countdown{font-size:12px}
+.order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{font-size:19px}
+.order-reference-row .order-open{min-height:54px;gap:9px;padding-right:10px}
+.order-reference-row .order-initial{width:43px;height:43px;min-width:43px;border-radius:12px}
+.order-reference-row .order-initial svg{width:25px;height:25px}
+.order-reference-row .order-reference-timing{
+ min-height:50px;margin:0 12px;
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ padding:7px 6px;gap:6px;
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{width:20px;height:20px}
+.order-reference-row .order-reference-timing .order-reference-countdown{padding:5px 6px}
+.order-reference-row .order-mode-cell{height:54px;min-height:54px;padding:0 8px}
+.order-reference-row .order-reference-facts{min-height:54px;padding:0 12px}
+.order-reference-row .order-reference-price{min-height:42px;display:grid;place-items:center}
+/* Two visual line breaks separating new and already processed orders. */
+.order-reference-row.is-first-processed{margin-top:34px}
+/* Soft glow and a breathing border for new orders — no harsh blinking. */
+@keyframes orders-new-gentle-pulse{
+ 0%,100%{border-color:#f6c6ab;box-shadow:0 2px 8px #e18b2e17}
+ 50%{border-color:#f28b37;box-shadow:0 3px 19px #e6792c4c}
+}
+.order-reference-row[data-status="mottatt"]{
+ animation:orders-new-gentle-pulse 2.1s ease-in-out infinite;
+}
+@media(max-width:1199px){
+ .orders-list{gap:7px}
+ .order-reference-row{min-height:67px;border-radius:13px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  min-height:65px;padding:6px 8px;
+  grid-template-columns:minmax(150px,1.45fr) minmax(190px,1.4fr) minmax(103px,.88fr) minmax(122px,1fr) minmax(88px,.76fr);
+ }
+ .order-reference-row .order-name{font-size:15px}
+ .order-reference-row .order-status{font-size:11px}
+ .order-reference-row .order-open{min-height:49px;gap:7px;padding-right:6px}
+ .order-reference-row .order-initial{width:35px;height:35px;min-width:35px}
+ .order-reference-row .order-initial svg{width:20px;height:20px}
+ .order-reference-row .order-reference-timing{min-height:46px;margin:0 7px}
+ .order-reference-row .order-reference-timing .order-reference-time{font-size:16px;padding:5px 3px}
+ .order-reference-row .order-reference-timing .order-reference-time svg{width:17px;height:17px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:10px;padding:4px 3px}
+ .order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{font-size:17px}
+ .order-reference-row .order-mode-cell{height:49px;min-height:49px;padding:0 5px}
+ .order-reference-row .order-mode-pill,
+ .order-reference-row .order-mode-pill[data-kind="SENERE"]{font-size:10px;padding:6px 7px;gap:4px}
+ .order-reference-row .order-mode-pill svg{width:15px;height:15px}
+ .order-reference-row .order-reference-facts{min-height:49px;font-size:10px;padding:0 7px;gap:4px}
+ .order-reference-row .order-reference-facts .order-ref-qty{font-size:10px}
+ .order-reference-row .order-reference-price{font-size:14px;min-height:37px;margin-left:6px;padding:8px 3px;border-radius:10px}
+ .order-reference-row.is-first-processed{margin-top:29px}
+}
+@media(prefers-reduced-motion:reduce){
+ .order-reference-row[data-status="mottatt"]{animation:none}
+}
