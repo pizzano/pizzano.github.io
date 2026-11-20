@@ -1545,3 +1545,16 @@ body{background:#fff}
 @media(prefers-reduced-motion:reduce){
  .order-reference-row[data-status="mottatt"]{animation:none}
 }
+
+
+/* Match approved pickup time and remaining countdown type size on PC and tablet. */
+.order-reference-row .order-reference-timing.is-preparing .order-reference-time,
+.order-reference-row .order-reference-timing.is-preparing .order-reference-countdown{
+ font-size:19px;
+}
+@media(max-width:1199px){
+ .order-reference-row .order-reference-timing.is-preparing .order-reference-time,
+ .order-reference-row .order-reference-timing.is-preparing .order-reference-countdown{
+  font-size:19px;
+ }
+}
