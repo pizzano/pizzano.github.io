@@ -2982,3 +2982,41 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  .draft-status-fact-icon svg{width:16px;height:16px}
  .draft-status-message-icon svg{width:23px;height:23px}
 }
+
+
+/* A single inline order overview: slim, subtle dismiss action inside the card. */
+.draft-order-carousel .draft-overview-actions{
+ display:flex;
+ justify-content:flex-end;
+ align-items:center;
+ margin-top:9px;
+ padding:0 1px 1px;
+}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ align-self:auto;
+ width:auto;
+ min-height:28px;
+ margin:0;
+ padding:5px 12px;
+ border:1px solid #d3e4d9;
+ border-radius:999px;
+ background:#f8fcfa;
+ color:#537669;
+ font-size:11px;
+ font-weight:650;
+ line-height:1.2;
+ box-shadow:none;
+ cursor:pointer;
+}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover{
+ background:#eef8f2;
+ border-color:#aacbb9;
+ color:#136c4c;
+}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim:focus-visible{
+ outline:2px solid #09825b;
+ outline-offset:2px;
+}
