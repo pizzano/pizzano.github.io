@@ -1185,6 +1185,7 @@ async function submitDraftOrder(){
   // Keep the new order tracked locally; do not automatically open the status dialog.
   renderDraftActiveOrder();
   returnToMenu();
+  scrollToHeaderAfterOrder();
   beginCustomerStatus();
   showFatih1Toast('Bestillingen er sendt til restauranten');
  }catch(error){
@@ -1217,6 +1218,21 @@ function checkoutBack(){
  else fatih1HistoryBack();
 }
 
+// Only after a successfully sent order: undo modal scroll restoration and
+// history navigation's previously saved position, then expose the header.
+function scrollToHeaderAfterOrder(){
+ const scroll=()=>{
+  const app=$('appViewport');
+  if(app){app.scrollTop=0;app.classList.remove('nav-hidden')}
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+  window.scrollTo({left:0,top:0,behavior:'instant'});
+ };
+ scroll();
+ requestAnimationFrame(()=>requestAnimationFrame(scroll));
+ // history.go() may restore the old page position after the overlay closes.
+ window.setTimeout(scroll,120);
+}
 function returnToMenu(){
  fatih1HistoryToMenu();
  $('appViewport').scrollTo({top:0,behavior:'instant'});
