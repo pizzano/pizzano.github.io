@@ -1220,7 +1220,6 @@ function fatih1HistoryView(id){
  const cartRoute=cartHistoryView(id);
  if(cartRoute)return cartRoute;
  if(id==='fatih1ProfileSheet')return {view:'profile',tab:'home'};
- if(id==='draftConfirmation')return {view:'confirmation'};
  return null;
 }
 // Each fresh page session starts on the menu, without adding a fake
@@ -1248,7 +1247,7 @@ window.addEventListener('popstate',event=>{
   else if(state.view==='profile'){
    fatih1ProfileOpen();
    if(state.tab&&state.tab!=='home')fatih1ProfileShowTab(state.tab);
-  }else if(state.view==='confirmation'&&localOrder)showDraftConfirmation();
+  }
  }finally{fatih1HistoryRestoring=false}
 });
 function show(id){
@@ -1276,7 +1275,6 @@ function hideAll(){
  product.classList.remove('is-sheet-opening','is-sheet-closing','is-dragging','is-drag-settling');
  product.style.removeProperty('--product-drag-y');
  hideCartSheet();
- $('draftConfirmation').hidden=true;
  $('fatih1ProfileSheet').hidden=true;
  $('btnProfile').setAttribute('aria-expanded','false');
  fatih1UnlockBackground();
