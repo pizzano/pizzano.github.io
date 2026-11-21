@@ -757,45 +757,6 @@ function customerAcceptanceDeadline(order){
  const created=Number(order?.createdAt);
  return order?.pickup?.mode==='asap'&&Number.isFinite(created)&&created>0?created+5*60000:0;
 }
-function isRepeatableTimedOutOrder(){
- if(!localOrder)return false;
- const state=localPublicStatus();
- if(state.status==='avvist')return state.rejectReason==='Ikke bekreftet innen 5 minutter';
- return state.status==='mottatt'&&customerAcceptanceDeadline(localOrder)>0&&Date.now()>=customerAcceptanceDeadline(localOrder);
-}
-function updateRepeatOrderButtons(){
- const enabled=isRepeatableTimedOutOrder();
- for(const id of ['draftRepeatOrder']){
-  const button=$(id);if(button)button.hidden=!enabled;
- }
-}
-function repeatExpiredOrder(){
- if(!isRepeatableTimedOutOrder())return;
- if(!menu||!Array.isArray(menu.sections)){showFatih1Toast('Menyen er ikke tilgjengelig. Prøv igjen når menyen er lastet.','error');return}
- const previous=localOrder;
- if(!Array.isArray(previous.items)||!previous.items.length){showFatih1Toast('Ingen varer å bestille på nytt.','error');return}
- if(cart.length&&!window.confirm('Handlekurven inneholder allerede varer. Erstatt dem med den forrige bestillingen?'))return;
- const copied=previous.items.map(line=>({
-  id:String(line.id||''),name:String(line.name||'Produkt'),
-  qty:Math.max(1,Math.min(99,Number(line.qty)||1)),
-  unitPrice:Number(line.unitPrice)||0,
-  size:line.size?JSON.parse(JSON.stringify(line.size)):null,
-  choices:Array.isArray(line.choices)?JSON.parse(JSON.stringify(line.choices)):[],
-  removedIngredients:Array.isArray(line.removedIngredients)?[...line.removedIngredients]:[],
-  quickNotes:Array.isArray(line.quickNotes)?[...line.quickNotes]:[],
-  comment:String(line.comment||'')
- }));
- if(copied.length>60){showFatih1Toast('For mange produktlinjer.','error');return}
- cart=copied;
- cartPricesChanged=false;
- saveCart();
- const review=reconcileCartWithMenu();
- // The old order is retained until the customer confirms and sends a new one.
- hideAll();
- showCart();
- if(review.issues.length)showCheckoutError('Noen produkter eller tilvalg er endret. Rediger disse før du bestiller på nytt.');
- else showFatih1Toast(review.repriced?'Prisene er oppdatert. Kontroller handlekurven.':'Kontroller handlekurven og send bestillingen på nytt.','info');
-}
 function updateCustomerCountdown(){
  if(!localOrder)return;
  const state=localPublicStatus().status;
@@ -806,7 +767,7 @@ function updateCustomerCountdown(){
  for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong')){
   if(approved||pending)node.textContent=text||(approved?'Forventet hentetid er nådd':'Venter på bekreftelse');
  }
- updateRepeatOrderButtons();
+
 }
 
 const ORDER_STATUS_LABELS={
@@ -836,6 +797,8 @@ function localPublicStatus(){
 function displayLiveOrderStatus(){
  if(!localOrder)return;
  const content=$('draftActiveContent');
+ const dismiss=$('draftClearOrder');
+ if(dismiss)dismiss.hidden=localPublicStatus().status==='mottatt';
  if(!content)return;
  const expanded=Boolean(content.querySelector('.draft-status-details')?.open);
  content.innerHTML=orderOverviewMarkup(localOrder,'menu');
@@ -926,6 +889,8 @@ function renderDraftActiveOrder(){
  if(!localOrder){card.hidden=true;renderOrderOverviewCarousel();return}
  if(scheduleActiveOrderExpiry())return;
  card.hidden=false;
+ const dismiss=$('draftClearOrder');
+ if(dismiss)dismiss.hidden=localPublicStatus().status==='mottatt';
  displayLiveOrderStatus();
  renderOrderOverviewCarousel();
 }
@@ -1225,7 +1190,6 @@ $('cartNext').onclick=checkoutNext;
 $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();checkoutNext()});
 document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.addEventListener('change',event=>{pickupSelection.mode=event.target.value;renderDraftPickupChoices();writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast(pickupSelection.mode==='asap'?'Henting: Snarest':'Henting: Velg tid','info')}));
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
-$('draftRepeatOrder').onclick=repeatExpiredOrder;
 $('draftClearOrder').onclick=()=>{
  if(localOrder){
   const list=orderOverviewHistory(),item=list.find(o=>o.id===localOrder.id);
