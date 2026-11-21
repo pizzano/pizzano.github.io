@@ -1061,22 +1061,20 @@ function osloCalendar(){
  return {year:get('year'),month:get('month'),day:get('day'),minute:get('hour')*60+get('minute')};
 }
 function draftPickupSlots(){
- const now=osloCalendar(),mondayIndex=osloTime().day,days=openingDays(menu?.settings||{});
- const startDay=Date.UTC(now.year,now.month-1,now.day),slots=[];
- for(let offset=0;offset<8&&slots.length<120;offset++){
-  const cfg=days[(mondayIndex+offset)%7];
-  if(!cfg.enabled)continue;
-  const open=clockMinutes(cfg.open),close=clockMinutes(cfg.close);
-  if(open===null||close===null)continue;
-  const end=close<=open?close+1440:close;
-  for(let min=Math.ceil(open/15)*15;min<end&&slots.length<120;min+=15){
-   if(offset===0&&min<now.minute+30)continue;
-   const shift=Math.floor(min/1440),date=new Date(startDay+(offset+shift)*86400000);
-   const day=date.toISOString().slice(0,10),time=String(Math.floor(min%1440/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
-   const dayLabel=offset+shift===0?'I dag':offset+shift===1?'I morgen':
-    new Intl.DateTimeFormat('nb-NO',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'}).format(date);
-   slots.push({value:day+'T'+time,label:dayLabel+' kl. '+time});
-  }
+ // Only offer slots on today's Europe/Oslo calendar date.
+ // Never carry a late-night service window into tomorrow or scan future days.
+ const now=osloCalendar(),todayIndex=osloTime().day;
+ const cfg=openingDays(menu?.settings||{})[todayIndex];
+ if(!cfg?.enabled)return [];
+ const open=clockMinutes(cfg.open),close=clockMinutes(cfg.close);
+ if(open===null||close===null)return [];
+ const end=Math.min(1440,close<=open?close+1440:close);
+ const date=String(now.year).padStart(4,'0')+'-'+String(now.month).padStart(2,'0')+'-'+String(now.day).padStart(2,'0');
+ const slots=[];
+ for(let min=Math.ceil(open/15)*15;min<end;min+=15){
+  if(min<now.minute+30)continue;
+  const time=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+  slots.push({value:date+'T'+time,label:'I dag kl. '+time});
  }
  return slots;
 }
@@ -1087,7 +1085,7 @@ function renderDraftPickupChoices(){
  document.querySelectorAll('input[name="draftPickupMode"]').forEach(x=>x.checked=x.value===(asap?'asap':'scheduled'));
  $('draftPickupTimeBox').hidden=asap;
  const slots=draftPickupSlots(),select=$('draftPickupTime');
- select.replaceChildren(...slots.map(slot=>new Option(slot.label,slot.value)));
+ select.replaceChildren(...(slots.length?slots.map(slot=>new Option(slot.label,slot.value)):[new Option('Ingen ledige hentetider i dag','')]));
  if(slots.some(x=>x.value===pickupSelection.time))select.value=pickupSelection.time;
  else{
   pickupSelection.time=slots[0]?.value||'';
