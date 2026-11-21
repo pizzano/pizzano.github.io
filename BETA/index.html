@@ -23,7 +23,9 @@
     <main>
       <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div class="cache-actions"><button id="menuRefresh" class="menu-refresh" type="button" aria-label="Oppdater menyen fra Firebase">Oppdater meny</button><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div></div>
       <div id="notice" role="status" aria-live="polite"></div>
-      <section id="draftActiveOrder" class="draft-active-order" aria-label="Bestillingsoversikt" hidden>
+      <div id="draftOrderCarousel" class="draft-order-carousel" hidden aria-label="Bestillingsoversikter">
+        <div class="draft-order-carousel-track" id="draftOrderCarouselTrack">
+      <section id="draftActiveOrder" class="draft-active-order draft-carousel-slide" aria-label="Bestillingsoversikt" hidden>
         <div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span id="draftActiveNumber"></span></div>
         <div class="draft-tracking" aria-label="Bestillingsstatus"><span class="is-done"><i></i>Mottatt</span><span><i></i>Bekreftet</span><span><i></i>Klar</span></div>
         <div class="draft-active-message"><span class="draft-status-dot" aria-hidden="true"></span><div><strong id="draftActiveTitle">Venter på bekreftelse</strong><small id="draftActiveSubtitle">Sendt til restauranten · Venter på godkjenning</small><small id="draftActiveCountdown" class="draft-order-countdown" hidden></small></div></div>
@@ -31,6 +33,13 @@
         <button id="draftViewOrder" type="button" class="draft-view-order">Vis bestillingen</button>
         <button id="draftClearOrder" type="button" class="draft-clear-order">Fjern oversikt</button>
       </section>
+        </div>
+        <div class="draft-order-carousel-bottom" id="draftOrderCarouselBottom" hidden>
+          <button type="button" id="draftOrderPrev" aria-label="Forrige bestilling">‹</button>
+          <span id="draftOrderCarouselPosition" aria-live="polite"></span>
+          <button type="button" id="draftOrderNext" aria-label="Neste bestilling">›</button>
+        </div>
+      </div>
       <div id="menu"></div>
     </main>
   </div>
