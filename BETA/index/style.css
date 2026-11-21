@@ -2831,3 +2831,67 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 @media(prefers-reduced-motion:reduce){
  .draft-order-carousel-track{scroll-behavior:auto}
 }
+
+
+/* Order overview typography follows the compact BETA menu scale. */
+.draft-order-carousel .draft-carousel-slide{
+ padding:13px 13px 11px;
+ border-radius:18px;
+}
+.draft-order-carousel .draft-active-heading,
+.draft-order-carousel .draft-active-heading strong{
+ font-size:13px;
+}
+.draft-order-carousel .draft-tracking{
+ gap:6px;
+ margin:12px 2px 14px;
+}
+.draft-order-carousel .draft-tracking>span{
+ font-size:12px;
+}
+.draft-order-carousel .draft-tracking>span i{
+ width:21px;
+ height:21px;
+}
+.draft-order-carousel .draft-active-message,
+.draft-order-carousel .draft-history-card .draft-active-message{
+ min-height:112px;
+ padding:13px 11px;
+ border-radius:15px;
+}
+.draft-order-carousel .draft-active-message>div{
+ gap:7px;
+}
+.draft-order-carousel .draft-active-message strong{
+ font-size:19px;
+ font-weight:850;
+ line-height:1.25;
+}
+.draft-order-carousel .draft-active-message small{
+ font-size:15px;
+ font-weight:550;
+ color:#496d60;
+ line-height:1.45;
+}
+.draft-order-carousel #draftActiveCountdown{
+ font-size:18px;
+ font-weight:850;
+ line-height:1.3;
+}
+.draft-order-carousel .draft-view-order{
+ min-height:43px;
+ margin-top:12px;
+ font-size:15px;
+ border-radius:12px;
+}
+.draft-order-carousel .draft-clear-order{
+ font-size:12px;
+}
+@media(max-width:480px){
+ .draft-order-carousel .draft-carousel-slide{padding:12px 11px 10px}
+ .draft-order-carousel .draft-active-heading,
+ .draft-order-carousel .draft-active-heading strong{font-size:12px}
+ .draft-order-carousel .draft-active-message strong{font-size:18px}
+ .draft-order-carousel .draft-active-message small{font-size:15px}
+ .draft-order-carousel #draftActiveCountdown{font-size:18px}
+}
