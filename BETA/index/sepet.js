@@ -535,10 +535,25 @@ const ORDER_CARD_GRACE_MS=10*60*1000;
 
 const OVERVIEW_HISTORY_KEY='kol-beta-local-order-overviews-v1';
 const OVERVIEW_READY_HIDE_MS=10*60*1000;
+const OVERVIEW_HISTORY_LIMIT=10;
 let overviewCarouselIndex=0,overviewRenderedIDs='';
 function orderOverviewHistory(){
  const data=readLocalData(OVERVIEW_HISTORY_KEY,[]);
- return Array.isArray(data)?data.filter(o=>o&&typeof o.id==='string').slice(0,20):[];
+ const items=Array.isArray(data)?data:[];
+ const seen=new Set();
+ const cleaned=[];
+ for(const order of items){
+  if(!order||typeof order.id!=='string'||seen.has(order.id)||overviewCardExpired(order))continue;
+  seen.add(order.id);
+  cleaned.push(order);
+  if(cleaned.length===OVERVIEW_HISTORY_LIMIT)break;
+ }
+ // Persist only if the history really changed; no writes in normal renders.
+ if(!Array.isArray(data)||items.length!==cleaned.length||
+    cleaned.some((order,i)=>items[i]!==order)){
+  writeLocalData(OVERVIEW_HISTORY_KEY,cleaned);
+ }
+ return cleaned;
 }
 function orderOverviewRemember(order){
  if(!order?.id)return;
@@ -555,7 +570,7 @@ function orderOverviewRemember(order){
  fresh.readyAt=Number(old?.readyAt)||0;
  if(fresh.statusPublic?.status==='klar'&&!fresh.readyAt)
   fresh.readyAt=Number(fresh.statusPublic.updatedAt)||Date.now();
- writeLocalData(OVERVIEW_HISTORY_KEY,[fresh,...history.filter(o=>o.id!==order.id)].slice(0,20));
+ writeLocalData(OVERVIEW_HISTORY_KEY,[fresh,...history.filter(o=>o.id!==order.id)].filter(o=>!overviewCardExpired(o)).slice(0,OVERVIEW_HISTORY_LIMIT));
  renderOrderOverviewCarousel();
 }
 function overviewCardExpired(order){
@@ -718,7 +733,14 @@ function localOrderExpiresAt(order){
 }
 function clearActiveOrder(showNotice=false){
  stopCustomerStatus();
+ const removedId=localOrder?.id;
  localOrder=null;
+ if(removedId){
+  const previous=orderOverviewHistory();
+  if(previous.some(o=>o.id===removedId)){
+   writeLocalData(OVERVIEW_HISTORY_KEY,previous.filter(o=>o.id!==removedId));
+  }
+ }
  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
@@ -1248,20 +1270,16 @@ $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();ch
 document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.addEventListener('change',event=>{pickupSelection.mode=event.target.value;renderDraftPickupChoices();writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast(pickupSelection.mode==='asap'?'Henting: Snarest':'Henting: Velg tid','info')}));
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftRepeatOrder').onclick=repeatExpiredOrder;
-$('draftClearOrder').onclick=()=>{
- if(localOrder){
-  const list=orderOverviewHistory(),item=list.find(o=>o.id===localOrder.id);
-  if(item){item.hidden=true;writeLocalData(OVERVIEW_HISTORY_KEY,list)}
- }
- clearActiveOrder(true);
-};
+$('draftClearOrder').onclick=()=>clearActiveOrder(true);
 $('draftOrderPrev').onclick=()=>moveOrderOverview(overviewCarouselIndex-1);
 $('draftOrderNext').onclick=()=>moveOrderOverview(overviewCarouselIndex+1);
 $('draftOrderCarouselTrack').addEventListener('click',event=>{
  const btn=event.target.closest('[data-history-dismiss]');
  if(!btn)return;
- const list=orderOverviewHistory(),item=list.find(o=>o.id===btn.dataset.historyDismiss);
- if(item){item.hidden=true;writeLocalData(OVERVIEW_HISTORY_KEY,list)}
+ const list=orderOverviewHistory();
+ if(list.some(o=>o.id===btn.dataset.historyDismiss)){
+  writeLocalData(OVERVIEW_HISTORY_KEY,list.filter(o=>o.id!==btn.dataset.historyDismiss));
+ }
  renderOrderOverviewCarousel();
 });
 $('draftOrderCarouselTrack').addEventListener('scroll',()=>{
@@ -1284,9 +1302,9 @@ document.addEventListener('DOMContentLoaded',()=>{
  setInterval(()=>{
   if(document.hidden)return;
   if(localOrder)updateCustomerCountdown();
-  // Only local state: check expiration every 5 seconds, no Firebase traffic.
-  if(++historyClockTick%5===0&&orderOverviewHistory().some(o=>overviewCardExpired(o)))
-   renderOrderOverviewCarousel();
+  // Every five seconds remove expired records locally and update the cards.
+  // No Firebase request or periodic network polling.
+  if(++historyClockTick%5===0)renderOrderOverviewCarousel();
  },1000);
  cleanupRetiredCartStorage();
  if(localOrder&&!orderOverviewHistory().some(o=>o.id===localOrder.id))orderOverviewRemember(localOrder);
