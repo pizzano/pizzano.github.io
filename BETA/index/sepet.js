@@ -593,6 +593,10 @@ function scheduleActiveOrderExpiry(){
 }
 function shortRemaining(time){
  const seconds=Math.max(0,Math.ceil((Number(time)-Date.now())/1000));
+ if(seconds>=3600){
+  const minutes=Math.ceil(seconds/60);
+  return Math.floor(minutes/60)+' t '+(minutes%60)+' min';
+ }
  return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
 }
 // Use the stored deadline for new SNAREST/SENERE orders.
