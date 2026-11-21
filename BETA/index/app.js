@@ -286,7 +286,8 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  const useCached=value=>{
   menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
-  boShowStartupBrand(menu.settings?.restaurantName); // /settings SSE supplies the latest values.
+  boShowStartupBrand(menu.settings?.restaurantName);
+  if(!('EventSource' in window))void boRefreshStartupSettingsFromFirebase();
  };
  if(cached?.sections?.length){
   useCached(cached);
