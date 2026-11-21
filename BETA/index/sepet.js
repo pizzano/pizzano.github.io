@@ -618,7 +618,7 @@ function orderOverviewMarkup(order,mode='history'){
   '</i><span>'+stepLabel+'</span></div>';
  return '<div class="draft-status-ui" data-visual-status="'+theme+'">'+
  '<div class="draft-status-head"><span class="draft-status-head-icon" aria-hidden="true">'+glyph+'</span>'+
- '<strong'+(mode==='popup'?' id="draftConfirmationTitle"':'')+'>'+title+'</strong>'+
+ '<strong>'+title+'</strong>'+
  '<span class="draft-status-badge">'+badge+'</span></div>'+
  '<div class="draft-status-progress">'+part(0,'Mottatt')+
  '<span class="draft-status-line '+(approved||ready?'is-complete':rejected?'is-failed':'')+'"></span>'+
@@ -635,7 +635,7 @@ function orderOverviewMarkup(order,mode='history'){
  '<details class="draft-status-details"><summary><strong>Vis bestillingen</strong><span>'+quantity+' '+(quantity===1?'vare':'varer')+'</span><span class="draft-status-chevron" aria-hidden="true">⌄</span></summary>'+
  '<div class="draft-status-products">'+details+
  '<div class="draft-status-product draft-status-product-total"><span>Totalt</span><b>'+money(order.total)+'</b></div></div></details>'+
- (mode==='popup'&&!rejected?'<p class="draft-status-popup-hint">'+esc(description)+'</p>':'')+
+ ''+
  '</div>';
 }
 
@@ -765,7 +765,7 @@ function isRepeatableTimedOutOrder(){
 }
 function updateRepeatOrderButtons(){
  const enabled=isRepeatableTimedOutOrder();
- for(const id of ['draftRepeatOrder','draftConfirmationRepeat']){
+ for(const id of ['draftRepeatOrder']){
   const button=$(id);if(button)button.hidden=!enabled;
  }
 }
@@ -803,7 +803,7 @@ function updateCustomerCountdown(){
  const pending=state==='mottatt'&&deadline>0,approved=state==='godkjent';
  const text=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
   pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
- for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong,#draftConfirmationContent .draft-status-message-copy strong')){
+ for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong')){
   if(approved||pending)node.textContent=text||(approved?'Forventet hentetid er nådd':'Venter på bekreftelse');
  }
  updateRepeatOrderButtons();
@@ -835,18 +835,11 @@ function localPublicStatus(){
 }
 function displayLiveOrderStatus(){
  if(!localOrder)return;
- const content=$('draftActiveContent'),popup=$('draftConfirmationContent');
- if(content){
-  const oldDetails=content.querySelector('.draft-status-details');
-  const expanded=Boolean(oldDetails?.open);
-  content.innerHTML=orderOverviewMarkup(localOrder,'menu');
-  content.querySelector('.draft-status-details').open=expanded;
- }
- if(popup&&!$('draftConfirmation').hidden){
-  const expanded=Boolean(popup.querySelector('.draft-status-details')?.open);
-  popup.innerHTML=orderOverviewMarkup(localOrder,'popup');
-  popup.querySelector('.draft-status-details').open=expanded;
- }
+ const content=$('draftActiveContent');
+ if(!content)return;
+ const expanded=Boolean(content.querySelector('.draft-status-details')?.open);
+ content.innerHTML=orderOverviewMarkup(localOrder,'menu');
+ content.querySelector('.draft-status-details').open=expanded;
  updateCustomerCountdown();
 }
 
@@ -936,24 +929,6 @@ function renderDraftActiveOrder(){
  displayLiveOrderStatus();
  renderOrderOverviewCarousel();
 }
-function renderDraftConfirmation(){
- if(!localOrder)return;
- const popup=$('draftConfirmationContent');
- if(!popup)return;
- const expanded=Boolean(popup.querySelector('.draft-status-details')?.open);
- popup.innerHTML=orderOverviewMarkup(localOrder,'popup');
- popup.querySelector('.draft-status-details').open=expanded;
- updateCustomerCountdown();
-}
-function showDraftConfirmation(){
- if(!localOrder)return;
- fatih1HistoryWrite({view:'confirmation'},true);
- hideAll();
- renderDraftConfirmation();
- show('draftConfirmation');
- beginCustomerStatus();
-}
-
 function showCheckoutError(message,field){
  const error=$('checkoutError');
  error.textContent=message;
@@ -1251,9 +1226,6 @@ $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();ch
 document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.addEventListener('change',event=>{pickupSelection.mode=event.target.value;renderDraftPickupChoices();writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast(pickupSelection.mode==='asap'?'Henting: Snarest':'Henting: Velg tid','info')}));
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftRepeatOrder').onclick=repeatExpiredOrder;
-$('draftConfirmationRepeat').onclick=repeatExpiredOrder;
-$('draftViewOrder').onclick=showDraftConfirmation;
-$('draftConfirmationClose').onclick=returnToMenu;
 $('draftClearOrder').onclick=()=>{
  if(localOrder){
   const list=orderOverviewHistory(),item=list.find(o=>o.id===localOrder.id);
