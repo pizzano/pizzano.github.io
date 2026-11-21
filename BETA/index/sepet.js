@@ -544,7 +544,13 @@ function orderOverviewRemember(order){
  if(!order?.id)return;
  const history=orderOverviewHistory();
  const old=history.find(o=>o.id===order.id);
- const fresh=JSON.parse(JSON.stringify(order));
+ // Keep only display data. Phone, email and customer identity are not duplicated.
+ const fresh={
+  id:order.id,createdAt:Number(order.createdAt)||Date.now(),
+  status:order.status,statusPublic:order.statusPublic||{status:order.status},
+  pickup:order.pickup||{},items:Array.isArray(order.items)?order.items:[],
+  total:Number(order.total)||0
+ };
  fresh.hidden=Boolean(old?.hidden);
  fresh.readyAt=Number(old?.readyAt)||0;
  if(fresh.statusPublic?.status==='klar'&&!fresh.readyAt)
@@ -1273,10 +1279,13 @@ $('draftOrderCarouselTrack').addEventListener('scroll',()=>{
 // Cart owns its own initialization and stored draft order display.
 document.addEventListener('DOMContentLoaded',()=>{
  // Local clock only: zero Firebase reads for either countdown.
+ let historyClockTick=0;
  setInterval(()=>{
   if(document.hidden)return;
   if(localOrder)updateCustomerCountdown();
-  if(orderOverviewHistory().some(o=>overviewCardExpired(o)))renderOrderOverviewCarousel();
+  // Only local state: check expiration every 5 seconds, no Firebase traffic.
+  if(++historyClockTick%5===0&&orderOverviewHistory().some(o=>overviewCardExpired(o)))
+   renderOrderOverviewCarousel();
  },1000);
  cleanupRetiredCartStorage();
  if(localOrder&&!orderOverviewHistory().some(o=>o.id===localOrder.id))orderOverviewRemember(localOrder);
