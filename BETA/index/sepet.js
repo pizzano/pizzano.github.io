@@ -570,7 +570,7 @@ function localOrderOverviewCard(order){
  const ready=status==='klar',accepted=status==='godkjent',rejected=status==='avvist';
  const pickup=visiblePickupAt(order);
  const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):'';
- const title=ready?'Klar – hent maten din':accepted?'Godkjent':rejected?'Avvist':'Mottatt';
+ const title=ready?'Maten er klar til henting':accepted?'Bestillingen er godkjent':rejected?'Bestillingen er avvist':'Bestillingen er mottatt';
  const text=ready?'Maten din er klar for henting':accepted?'Henting '+pickupText:rejected?'Bestillingen ble avvist':'Venter på bekreftelse';
  const items=Array.isArray(order.items)?order.items:[];
  const products=items.map(item=>'<div class="draft-history-product"><span>'+esc(item.qty||1)+' × '+esc(item.name||'Produkt')+'</span><strong>'+money((Number(item.qty)||1)*(Number(item.unitPrice)||0))+'</strong></div>').join('');
@@ -814,7 +814,7 @@ function displayLiveOrderStatus(){
   if(marker)marker.textContent=rejected?'!':'✓';
  }
  const activeTitle=$('draftActiveTitle');
- if(activeTitle)activeTitle.textContent=ready?'Klar – hent maten din':accepted?'Godkjent':rejected?label:'Bestilling sendt';
+ if(activeTitle)activeTitle.textContent=ready?'Maten er klar til henting':accepted?'Bestillingen er godkjent':rejected?label:'Bestillingen er mottatt';
  const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
  if(tracker)tracker.forEach((step,index)=>{
   step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
