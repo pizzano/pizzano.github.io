@@ -1558,3 +1558,77 @@ body{background:#fff}
   font-size:19px;
  }
 }
+
+
+/* Rejection bottom sheet: compact, aligned, consistent with the orders UI. */
+#ordersRejectOverlay{align-items:flex-end;justify-content:center}
+#ordersRejectOverlay .orders-reject-dialog{
+ box-sizing:border-box;width:min(100%,560px);max-width:560px;
+ padding:19px 22px calc(24px + env(safe-area-inset-bottom));
+ background:#fff;border:1px solid #f1d8d8;border-bottom:0;
+ border-radius:24px 24px 0 0;box-shadow:0 -16px 50px #161e2438;
+ text-align:left;
+}
+#ordersRejectOverlay .orders-reject-dialog::before{
+ content:"";display:block;width:40px;height:5px;margin:-6px auto 17px;
+ background:#d5dfd9;border-radius:99px;
+}
+.orders-reject-header{display:flex;flex-direction:column;gap:13px}
+#ordersRejectOverlay .orders-dialog-close{
+ display:grid;place-items:center;flex:none;
+ width:36px;height:36px;margin:0;padding:0;
+ border:1px solid #d9e5df;border-radius:50%;
+ color:#274c3c;background:#f8fcfa;font-size:20px;
+}
+.orders-reject-heading{display:flex;align-items:center;gap:12px}
+.orders-reject-symbol{
+ display:grid;place-items:center;width:43px;height:43px;flex:none;
+ border-radius:14px;background:#fff0ef;color:#c62c32;
+}
+.orders-reject-symbol svg{width:24px;height:24px}
+#ordersRejectOverlay .orders-reject-heading h3{
+ margin:0 0 3px;font-size:20px;font-weight:850;color:#16392c;
+}
+#ordersRejectOverlay .orders-reject-heading p{
+ margin:0;font-size:13px;line-height:1.45;color:#667e72;
+}
+.orders-reject-field{display:flex;flex-direction:column;gap:8px;margin:23px 0 20px}
+#ordersRejectOverlay .orders-reject-field label{
+ display:block;margin:0;font-size:14px;font-weight:800;color:#214b39;
+}
+#ordersRejectOverlay .orders-reject-field textarea{
+ box-sizing:border-box;display:block;width:100%;min-width:0;
+ min-height:135px;max-height:260px;resize:vertical;
+ border:1px solid #cbded3;border-radius:14px;
+ background:#fafdfb;padding:14px 15px;
+ color:#183e2d;font:inherit;font-size:15px;line-height:1.5;
+ outline:none;transition:border-color .15s,box-shadow .15s;
+}
+#ordersRejectOverlay .orders-reject-field textarea::placeholder{color:#8da29a;opacity:1}
+#ordersRejectOverlay .orders-reject-field textarea:focus{
+ border-color:#c75a59;box-shadow:0 0 0 3px #c75a591c;background:#fff;
+}
+.orders-reject-field small{font-size:12px;color:#7b9286}
+.orders-reject-actions{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.4fr);gap:10px}
+#ordersRejectOverlay .orders-reject-cancel,
+#ordersRejectOverlay .orders-danger{
+ display:grid;place-items:center;width:100%;min-height:49px;
+ margin:0;padding:10px 13px;border-radius:13px;
+ font-size:14px;font-weight:850;letter-spacing:0;cursor:pointer;
+}
+#ordersRejectOverlay .orders-reject-cancel{
+ border:1px solid #cbded3;color:#27513f;background:#f7fbf8;
+}
+#ordersRejectOverlay .orders-danger{
+ border:1px solid #cc4345;background:#db4b4e;color:#fff;
+ box-shadow:0 3px 9px #ce44431b;
+}
+#ordersRejectOverlay .orders-danger:hover{background:#bd3339}
+#ordersRejectOverlay .orders-danger:disabled{opacity:.6;cursor:wait}
+@media(max-width:600px){
+ #ordersRejectOverlay .orders-reject-dialog{
+  width:100%;max-width:none;padding:18px 17px calc(20px + env(safe-area-inset-bottom));
+ }
+ #ordersRejectOverlay .orders-reject-heading h3{font-size:18px}
+ #ordersRejectOverlay .orders-reject-field textarea{min-height:120px}
+}
