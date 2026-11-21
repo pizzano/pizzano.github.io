@@ -3056,3 +3056,50 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  flex:1 0 100%;
  margin:0 0 5px;
 }
+
+
+/* Full-width green "Fjern oversikt" across all order statuses. */
+.draft-order-carousel .draft-overview-actions{
+ display:flex;
+ flex-direction:column;
+ align-items:stretch;
+ justify-content:stretch;
+ width:100%;
+ gap:8px;
+ margin-top:12px;
+ padding:0;
+}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim,
+.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ align-self:stretch;
+ box-sizing:border-box;
+ width:100%;
+ max-width:none;
+ min-height:46px;
+ margin:10px 0 0;
+ padding:11px 14px;
+ border:0;
+ border-radius:14px;
+ background:#16652b;
+ color:#fff;
+ text-align:center;
+ font-size:15px;
+ font-weight:850;
+ line-height:1.25;
+ box-shadow:none;
+ cursor:pointer;
+}
+.draft-order-carousel .draft-overview-actions .draft-clear-order.draft-clear-order-slim{margin:0}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover,
+.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim:hover{
+ background:#0e5123;
+ border-color:transparent;
+ color:#fff;
+}
+.draft-order-carousel .draft-clear-order.draft-clear-order-slim:focus-visible{
+ outline:3px solid #f3d477;
+ outline-offset:2px;
+}
