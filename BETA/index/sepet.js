@@ -703,9 +703,8 @@ function displayLiveOrderStatus(){
  const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
  const pickupDate=confirmedAt?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(confirmedAt)):'';
  const adjusted=!!state.pickupTimeAdjusted;
- const supplement=accepted&&confirmedAt?' · Henting '+pickupDate:'';
  const subtitle=$('draftActiveSubtitle');
- if(subtitle)subtitle.textContent=(accepted?'Bekreftet av restauranten':label)+supplement;
+ if(subtitle)subtitle.textContent=accepted?(confirmedAt?'Henting '+pickupDate:'Hentetid bekreftet'):label;
  const status=$('draftConfirmationStatus');
  if(status)status.textContent=label;
  const info=$('draftConfirmationTimer');
@@ -730,7 +729,7 @@ function displayLiveOrderStatus(){
   if(marker)marker.textContent=rejected?'!':'✓';
  }
  const activeTitle=$('draftActiveTitle');
- if(activeTitle)activeTitle.textContent=accepted?'Bestillingen er godkjent':ready?'Klar til henting':rejected?label:'Bestilling sendt';
+ if(activeTitle)activeTitle.textContent=accepted?'Godkjent':ready?'Klar':rejected?label:'Bestilling sendt';
  const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
  if(tracker)tracker.forEach((step,index)=>{
   step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
