@@ -5,7 +5,7 @@ const CACHE_DB='kol-beta-public-kol1-v1';
 const MENU_CACHE_FORMAT=4;
 const MENU_FALLBACK_KEY='kol-beta-menu-fallback-kol1-v1', IMAGE_PRELOAD_COUNT=6;
 let refreshPending=false,activeCategory=null,allergensVisible=true,scrollObserver=null,draggedCategories=false;
-let changeStream=null,changeCacheTimer=null,liveRevision=0;
+let changeStream=null,settingsStream=null,changeCacheTimer=null,liveRevision=0;
 let sharedChannel=null,sharedLeader=false,sharedLockPending=false,sharedLockController=null,sharedLockRelease=null;
 const $=id=>document.getElementById(id), money=n=>Math.round(Number(n)||0)+' kr';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -286,7 +286,7 @@ async function init(){
  $('showAllergens').checked=allergensVisible;
  const useCached=value=>{
   menu=value;render();$('cacheStatus').textContent='Lagret lokalt';
-  void boRefreshStartupSettingsFromFirebase();
+  boShowStartupBrand(menu.settings?.restaurantName); // /settings SSE supplies the latest values.
  };
  if(cached?.sections?.length){
   useCached(cached);
@@ -434,6 +434,80 @@ async function receiveLiveAnnouncement(value,relay=false){
    await resyncAfterGap();
  }
 }
+
+/* Restaurant settings stream: one initial snapshot and then incremental changes.
+ * Same leader as the menu change feed, broadcast to sibling tabs, no polling. */
+function applySettingsEvent(snapshot,path,data,patch){
+ const root=structuredClone(snapshot&&typeof snapshot==='object'?snapshot:{});
+ const keys=String(path||'/').split('/').filter(Boolean);
+ if(keys.some(unsafeSegment))throw Error('Invalid settings path');
+ if(!keys.length){
+  if(!patch)return data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+  if(!data||typeof data!=='object')return root;
+  for(const [key,value] of Object.entries(data)){
+   if(unsafeSegment(key))continue;
+   if(value===null)delete root[key];else root[key]=value;
+  }
+  return root;
+ }
+ let parent=root;
+ for(const key of keys.slice(0,-1)){
+  if(!parent[key]||typeof parent[key]!=='object')parent[key]={};
+  parent=parent[key];
+ }
+ const last=keys.at(-1);
+ if(patch&&data&&typeof data==='object'&&!Array.isArray(data)){
+  if(!parent[last]||typeof parent[last]!=='object')parent[last]={};
+  for(const [key,value] of Object.entries(data)){
+   if(unsafeSegment(key))continue;
+   if(value===null)delete parent[last][key];else parent[last][key]=value;
+  }
+ }else if(data===null){
+  if(Array.isArray(parent))parent[Number(last)]=null;else delete parent[last];
+ }else parent[last]=data;
+ return root;
+}
+function acceptLiveSettings(value,relay=false){
+ if(!menu||!value||typeof value!=='object'||Array.isArray(value))return;
+ if(JSON.stringify(menu.settings||{})===JSON.stringify(value))return;
+ menu.settings=value;
+ updateHoursStatus();
+ updateRestaurantBrand();
+ refreshCartRecommendationsIfOpen();
+ saveLiveCacheSoon();
+ $('cacheStatus').textContent='Innstillinger oppdatert';
+ if(relay)broadcastLiveMessage({type:'restaurant-settings',value});
+}
+function startSettingsStream(){
+ if(!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
+ if(settingsStream&&settingsStream.readyState!==2)return;
+ if(settingsStream){settingsStream.close();settingsStream=null}
+ const source=new EventSource(BASE+'/settings.json');
+ settingsStream=source;
+ let snapshot=structuredClone(menu.settings||{});
+ const onChange=(event,patch)=>{
+  if(settingsStream!==source||!menu)return;
+  try{
+   const message=JSON.parse(event.data);
+   snapshot=applySettingsEvent(snapshot,message.path,message.data,patch);
+   acceptLiveSettings(snapshot,true);
+  }catch(error){console.warn('Restaurant settings stream:',error)}
+ };
+ source.addEventListener('put',e=>onChange(e,false));
+ source.addEventListener('patch',e=>onChange(e,true));
+ source.onerror=()=>{
+  // EventSource retries temporary outages on its own; no GET loop.
+  if(source.readyState!==2)return;
+  source.close();if(settingsStream===source)settingsStream=null;
+ };
+ for(const type of ['cancel','auth_revoked'])source.addEventListener(type,()=>{
+  source.close();if(settingsStream===source)settingsStream=null;
+ });
+}
+function stopSettingsStream(){
+ if(settingsStream){settingsStream.close();settingsStream=null}
+}
+
 function startChangeStream(){
  if(document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
@@ -504,6 +578,7 @@ function setupSharedChannel(){
     $('cacheStatus').textContent='Oppdatert automatisk';
     return;
    }
+   if(message.type==='restaurant-settings'){acceptLiveSettings(message.value);return}
    if(message.type==='delta')void receiveLiveAnnouncement(message.value);
   };
  }catch(error){sharedChannel=null;console.warn('Local tab sync unavailable',error)}
@@ -514,11 +589,11 @@ function startSharedChangeStream(){
  askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
  if(!sharedChannel||!navigator.locks||typeof navigator.locks.request!=='function'){
-  startChangeStream();return;
+  startChangeStream();startSettingsStream();return;
  }
  if(sharedLockPending){
   // A tab already holding the lock may need to restart SSE after going offline.
-  if(sharedLeader)startChangeStream();
+  if(sharedLeader){startChangeStream();startSettingsStream();}
   return;
  }
  sharedLockPending=true;
@@ -528,13 +603,15 @@ function startSharedChangeStream(){
   if(controller.signal.aborted)return;
   sharedLeader=true;
   startChangeStream();
+  startSettingsStream();
   await new Promise(resolve=>{sharedLockRelease=resolve});
   sharedLeader=false;
   if(changeStream){changeStream.close();changeStream=null}
+  stopSettingsStream();
  }).catch(error=>{
   if(error?.name!=='AbortError'){
    console.warn('Shared stream lock unavailable',error);
-   if(!controller.signal.aborted)startChangeStream();
+   if(!controller.signal.aborted){startChangeStream();startSettingsStream()}
   }
  }).finally(()=>{
   if(sharedLockController===controller)sharedLockController=null;
@@ -546,6 +623,7 @@ function stopSharedChangeStream(){
  if(sharedLockController)sharedLockController.abort();
  if(sharedLockRelease)sharedLockRelease();
  if(changeStream){changeStream.close();changeStream=null}
+ stopSettingsStream();
  sharedLeader=false;
  if(sharedChannel){sharedChannel.close();sharedChannel=null}
 }
