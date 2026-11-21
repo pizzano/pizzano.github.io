@@ -598,7 +598,7 @@ function orderOverviewMarkup(order,mode='history'){
   approved?'Henting '+pickupText:'Restauranten har mottatt bestillingen din.';
  const remaining=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
   pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
- const note=ready?'Klar for henting':rejected?(rejectReason||'Ingen grunn oppgitt'):
+ const note=ready?'Klar for henting':rejected?('Årsak: '+(rejectReason||'Ingen grunn oppgitt')):
   remaining||(pending?'Venter på bekreftelse':'Forventet hentetid er nådd');
  const id=esc(String(order.id||'').slice(-6).toUpperCase());
  const items=Array.isArray(order.items)?order.items:[];
@@ -630,12 +630,12 @@ function orderOverviewMarkup(order,mode='history'){
  '</div>'+
  '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+orderStatusIcon(ready?'bag':rejected?'cross':'clock')+'</span>'+
  '<span class="draft-status-message-copy"><strong>'+esc(note)+'</strong>'+
- (rejected?'<small>'+esc(description)+'</small>':!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
+ (!rejected&&!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
  '</span></div>'+
  '<details class="draft-status-details"><summary><strong>Vis bestillingen</strong><span>'+quantity+' '+(quantity===1?'vare':'varer')+'</span><span class="draft-status-chevron" aria-hidden="true">⌄</span></summary>'+
  '<div class="draft-status-products">'+details+
  '<div class="draft-status-product draft-status-product-total"><span>Totalt</span><b>'+money(order.total)+'</b></div></div></details>'+
- (mode==='popup'?'<p class="draft-status-popup-hint">'+esc(description)+'</p>':'')+
+ (mode==='popup'&&!rejected?'<p class="draft-status-popup-hint">'+esc(description)+'</p>':'')+
  '</div>';
 }
 
