@@ -2763,3 +2763,71 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  #draftActiveCountdown{font-size:16px}
  #draftConfirmationCountdown{font-size:15px}
 }
+
+
+/* Local order overview carousel — no historical Firebase reads. */
+.draft-order-carousel{margin:15px 0 23px;min-width:0}
+.draft-order-carousel[hidden]{display:none!important}
+.draft-order-carousel-track{
+ display:flex;align-items:stretch;gap:14px;
+ overflow-x:auto;overflow-y:hidden;
+ scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
+ scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#0b8c63 #e1eee7;
+ padding:3px 3px 12px;
+}
+.draft-order-carousel-track::-webkit-scrollbar{height:9px}
+.draft-order-carousel-track::-webkit-scrollbar-track{background:#e1eee7;border-radius:99px}
+.draft-order-carousel-track::-webkit-scrollbar-thumb{background:#0b8c63;border-radius:99px}
+.draft-order-carousel .draft-carousel-slide{
+ flex:0 0 calc(100% - 6px);min-width:0;
+ scroll-snap-align:start;
+ margin:0;padding:18px 15px 14px;
+ border:1.5px solid #b8e0ce;border-radius:24px;
+ background:linear-gradient(150deg,#fff 50%,#f6fdf8);
+ box-shadow:0 10px 26px #113b2712;
+}
+.draft-order-carousel .draft-active-heading{font-size:15px;font-weight:900;color:#078059}
+.draft-order-carousel .draft-active-heading strong{font-size:15px}
+.draft-order-carousel .draft-tracking{gap:7px;margin:17px 2px 20px}
+.draft-order-carousel .draft-tracking>span{font-size:13px;font-weight:750}
+.draft-order-carousel .draft-tracking>span i{width:25px;height:25px}
+.draft-order-carousel .draft-active-message{
+ min-height:138px;display:flex;flex-direction:column;
+ padding:17px 14px;text-align:center;
+ background:linear-gradient(135deg,#fbfffd,#f0fbf5);
+ border-radius:19px;border:1.5px solid #c7e7d7;
+}
+.draft-order-carousel .draft-active-message>div{align-items:center;gap:9px}
+.draft-order-carousel .draft-active-message strong{font-size:27px;line-height:1.16;font-weight:900;color:#103f30}
+.draft-order-carousel .draft-active-message small{font-size:13px;line-height:1.35}
+.draft-order-carousel #draftActiveCountdown{font-size:22px;font-weight:900;color:#31695a;line-height:1.3}
+.draft-order-carousel .draft-view-order{
+ min-height:48px;margin-top:14px;border:0;border-radius:14px;
+ color:#fff;background:#07875e;font-size:16px;font-weight:850;
+}
+.draft-order-carousel .draft-view-order:hover{background:#066d4d}
+.draft-order-carousel .draft-clear-order{margin-top:10px;font-size:12px}
+.draft-order-carousel-bottom{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px auto 0;color:#47766a;font-weight:800;font-size:13px}
+.draft-order-carousel-bottom[hidden]{display:none!important}
+.draft-order-carousel-bottom button{
+ display:grid;place-items:center;width:37px;height:32px;border-radius:12px;
+ border:1px solid #badfcd;background:#fff;color:#007958;font-size:25px;line-height:1;
+}
+.draft-order-carousel-bottom button:disabled{opacity:.35;cursor:default}
+.draft-history-card .draft-active-message{min-height:138px}
+.draft-history-details{margin-top:14px;border:1px solid #c7e3d3;border-radius:14px;background:#fff;overflow:hidden}
+.draft-history-details summary{list-style:none;cursor:pointer;padding:13px 16px;text-align:center;font-size:15px;font-weight:850;color:#087e59}
+.draft-history-details summary::-webkit-details-marker{display:none}
+.draft-history-details>div{padding:0 14px 12px}
+.draft-history-product{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid #edf1ec;color:#213f33;font-size:12px}
+.draft-history-product strong{white-space:nowrap}
+@media(max-width:480px){
+ .draft-order-carousel .draft-carousel-slide{padding:16px 12px 12px;border-radius:21px}
+ .draft-order-carousel .draft-active-heading strong{font-size:13px}
+ .draft-order-carousel .draft-active-message strong{font-size:23px}
+ .draft-order-carousel #draftActiveCountdown{font-size:20px}
+ .draft-order-carousel .draft-tracking>span{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .draft-order-carousel-track{scroll-behavior:auto}
+}
