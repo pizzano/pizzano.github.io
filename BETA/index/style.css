@@ -2744,3 +2744,22 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
   -webkit-overflow-scrolling:touch;
  }
 }
+
+
+/* Make local order countdown prominent without repeating status information. */
+#draftActiveCountdown{
+ font-size:16px;
+ font-weight:850;
+ line-height:1.35;
+ font-variant-numeric:tabular-nums;
+}
+#draftConfirmationCountdown{
+ font-size:15px;
+ font-weight:850;
+ line-height:1.35;
+ font-variant-numeric:tabular-nums;
+}
+@media(max-width:480px){
+ #draftActiveCountdown{font-size:16px}
+ #draftConfirmationCountdown{font-size:15px}
+}
