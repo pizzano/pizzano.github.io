@@ -64,11 +64,23 @@
  </form>
 </div>
 <div id="ordersRejectOverlay" class="orders-dialog-overlay" hidden>
- <form id="ordersRejectForm" class="orders-dialog">
-  <button type="button" id="ordersCancelReject" class="orders-dialog-close" aria-label="Tilbake">←</button>
-  <h3>Avvis bestilling</h3><p>Oppgi grunnen til avvisningen.</p>
-  <textarea id="ordersRejectReason" maxlength="180" rows="3" required placeholder="Skriv grunn…"></textarea>
-  <button id="ordersConfirmReject" class="orders-danger" type="submit">AVVIS BESTILLING</button>
+ <form id="ordersRejectForm" class="orders-dialog orders-reject-dialog">
+  <div class="orders-reject-header">
+   <button type="button" id="ordersCancelReject" class="orders-dialog-close" aria-label="Tilbake">←</button>
+   <div class="orders-reject-heading">
+    <span class="orders-reject-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg></span>
+    <div><h3>Avvis bestilling</h3><p>Oppgi hvorfor bestillingen ikke kan godtas.</p></div>
+   </div>
+  </div>
+  <div class="orders-reject-field">
+   <label for="ordersRejectReason">Grunn til avvisning</label>
+   <textarea id="ordersRejectReason" maxlength="180" rows="4" required placeholder="Skriv en kort forklaring til kunden…"></textarea>
+   <small>Kunden får se denne begrunnelsen.</small>
+  </div>
+  <div class="orders-reject-actions">
+   <button type="button" class="orders-reject-cancel" id="ordersRejectCancelSecondary">Tilbake</button>
+   <button id="ordersConfirmReject" class="orders-danger" type="submit">Avvis bestilling</button>
+  </div>
  </form>
 </div>
 </body>
