@@ -565,22 +565,74 @@ function overviewCardExpired(order){
  const readyAt=Number(order.readyAt)||Number(order.statusPublic?.updatedAt)||0;
  return readyAt>0&&Date.now()-readyAt>=OVERVIEW_READY_HIDE_MS;
 }
-function localOrderOverviewCard(order){
- const status=order.statusPublic?.status||order.status;
- const ready=status==='klar',accepted=status==='godkjent',rejected=status==='avvist';
+
+/* One shared card layout used by the menu, order popup and local history.
+ * Only the active order has an SSE listener; rendering old cards reads localStorage. */
+function orderOverviewMarkup(order,mode='history'){
+ const state=order.statusPublic||{status:order.status||'mottatt'};
+ const status=state.status||order.status||'mottatt';
+ const pending=status==='mottatt',approved=status==='godkjent',ready=status==='klar',rejected=status==='avvist';
+ const timeout=rejected&&state.rejectReason==='Ikke bekreftet innen 5 minutter';
+ const theme=ready?'ready':rejected?'rejected':approved?'approved':'pending';
+ const title=ready?'Bestillingen er klar':rejected?'Bestillingen er avvist':approved?'Bestillingen er godkjent':'Ny bestilling';
+ const badge=ready?'✓ Klar':rejected?'× Avvist':approved?'✓ Bekreftet':'● Venter';
+ const glyph=ready?'▣':rejected?'×':approved?'✓':'◷';
  const pickup=visiblePickupAt(order);
- const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):'';
- const title=ready?'Maten er klar til henting':accepted?'Bestillingen er godkjent':rejected?'Bestillingen er avvist':'Bestillingen er mottatt';
- const text=ready?'Maten din er klar for henting':accepted?'Henting '+pickupText:rejected?'Bestillingen ble avvist':'Venter på bekreftelse';
+ const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):(order.pickup?.label||'Snarest');
+ const deadline=customerAcceptanceDeadline(order);
+ const rejectReason=timeout?'Ikke bekreftet innen 5 minutter.':String(state.rejectReason||'').trim();
+ const description=rejected?(rejectReason?'Årsak: '+rejectReason:'Restauranten har ikke oppgitt en grunn.'):
+  ready?'Maten din er klar. Kom og hent den!':
+  approved?'Henting '+pickupText:'Restauranten har mottatt bestillingen din.';
+ const remaining=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
+  pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
+ const note=ready?'Klar for henting':rejected?(rejectReason||'Ingen grunn oppgitt'):
+  remaining||(pending?'Venter på bekreftelse':'Forventet hentetid er nådd');
+ const id=esc(String(order.id||'').slice(-6).toUpperCase());
  const items=Array.isArray(order.items)?order.items:[];
- const products=items.map(item=>'<div class="draft-history-product"><span>'+esc(item.qty||1)+' × '+esc(item.name||'Produkt')+'</span><strong>'+money((Number(item.qty)||1)*(Number(item.unitPrice)||0))+'</strong></div>').join('');
+ const quantity=items.reduce((sum,item)=>sum+Math.max(0,Number(item.qty)||0),0);
+ const details=items.map(item=>{
+  const count=Math.max(1,Number(item.qty)||1);
+  const options=Array.isArray(item.choices)?item.choices.flatMap(group=>(group.options||[]).map(opt=>opt.label||opt.name)).filter(Boolean).join(', '):'';
+  return '<div class="draft-status-product"><span><strong>'+count+' × '+esc(item.name||'Produkt')+'</strong>'+
+   (item.size?.label?'<small>Størrelse: '+esc(item.size.label)+'</small>':'')+
+   (options?'<small>'+esc(options)+'</small>':'')+
+   (item.comment?'<small>'+esc(item.comment)+'</small>':'')+
+   '</span><b>'+money(count*(Number(item.unitPrice)||0))+'</b></div>';
+ }).join('');
+ const part=(n,stepLabel)=>'<div class="draft-status-step '+(n===0||n===1&&(approved||ready)||n===2&&ready?'is-complete':'')+
+  (n===2&&approved?' is-current':'')+(n===1&&rejected?' is-failed':'')+'"><i aria-hidden="true">'+
+  (n===0||n===1&&(approved||ready)||n===2&&ready?'✓':n===1&&rejected?'×':'')+
+  '</i><span>'+stepLabel+'</span></div>';
+ return '<div class="draft-status-ui" data-visual-status="'+theme+'">'+
+ '<div class="draft-status-head"><span class="draft-status-head-icon" aria-hidden="true">'+glyph+'</span>'+
+ '<strong'+(mode==='popup'?' id="draftConfirmationTitle"':'')+'>'+title+'</strong>'+
+ '<span class="draft-status-badge">'+badge+'</span></div>'+
+ '<div class="draft-status-progress">'+part(0,'Mottatt')+
+ '<span class="draft-status-line '+(approved||ready?'is-complete':rejected?'is-failed':'')+'"></span>'+
+ part(1,'Bekreftet')+'<span class="draft-status-line '+(ready?'is-complete':'')+'"></span>'+part(2,'Klar')+'</div>'+
+ '<div class="draft-status-facts">'+
+ '<div><span class="draft-status-fact-icon">⬡</span><span><small>Ordrenummer</small><strong>#'+id+'</strong></span></div>'+
+ '<div><span class="draft-status-fact-icon">▦</span><span><small>Hentetid</small><strong>'+esc(pickupText)+'</strong></span></div>'+
+ '<div><span class="draft-status-fact-icon">▤</span><span><small>Beløp</small><strong>'+money(order.total)+'</strong></span></div>'+
+ '</div>'+
+ '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+(ready?'✓':rejected?'!':'◷')+'</span>'+
+ '<span class="draft-status-message-copy"><strong>'+esc(note)+'</strong>'+
+ (rejected?'<small>'+esc(description)+'</small>':!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
+ '</span></div>'+
+ '<details class="draft-status-details"><summary><strong>Vis bestillingen</strong><span>'+quantity+' '+(quantity===1?'vare':'varer')+'</span><span class="draft-status-chevron" aria-hidden="true">⌄</span></summary>'+
+ '<div class="draft-status-products">'+details+
+ '<div class="draft-status-product draft-status-product-total"><span>Totalt</span><b>'+money(order.total)+'</b></div></div></details>'+
+ (mode==='popup'?'<p class="draft-status-popup-hint">'+esc(description)+'</p>':'')+
+ '</div>';
+}
+
+function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
- '<div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span>#'+esc(order.id.slice(-6).toUpperCase())+'</span></div>'+
- '<div class="draft-tracking"><span class="is-done"><i></i>Mottatt</span><span class="'+(ready||accepted?'is-done':'')+'"><i></i>Bekreftet</span><span class="'+(ready?'is-done':accepted?'is-preparing':'')+'"><i></i>Klar</span></div>'+
- '<div class="draft-active-message"><div><strong>'+esc(title)+'</strong><small>'+esc(text)+'</small></div></div>'+
- '<details class="draft-history-details"><summary>Vis bestillingen</summary><div>'+products+'<div class="draft-history-product"><span>Totalt</span><strong>'+money(order.total)+'</strong></div></div></details>'+
+ orderOverviewMarkup(order,'history')+
  '<button type="button" class="draft-clear-order" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button></article>';
 }
+
 function renderOrderOverviewCarousel(){
  const root=$('draftOrderCarousel'),track=$('draftOrderCarouselTrack'),active=$('draftActiveOrder');
  if(!root||!track||!active)return;
@@ -733,29 +785,18 @@ function repeatExpiredOrder(){
  else showFatih1Toast(review.repriced?'Prisene er oppdatert. Kontroller handlekurven.':'Kontroller handlekurven og send bestillingen på nytt.','info');
 }
 function updateCustomerCountdown(){
- const order=localOrder;
- const state=order?localPublicStatus().status:'none';
- const deadline=customerAcceptanceDeadline(order);
- const pickup=order?visiblePickupAt(order):0;
- const pending=state==='mottatt'&&deadline>0;
- const preparing=state==='godkjent'&&pickup>0;
- const expired=pending&&Date.now()>=deadline;
- const content=pending?
-  (expired?'5 minutter har gått. Ring restauranten hvis du ikke har fått bekreftelse.':'Tid til bekreftelse: '+shortRemaining(deadline)):
-  preparing?(pickup>Date.now()?'Klar om '+shortRemaining(pickup):'Forventet hentetid er nådd. Vent på bekreftelse om at maten er klar.'):'';
- for(const id of ['draftActiveCountdown','draftConfirmationCountdown']){
-  const node=$(id);if(!node)continue;
-  node.textContent=content;
-  node.hidden=!content;
-  node.classList.toggle('is-expired',expired);
- }
- if(expired){
-  const active=$('draftActiveTitle'),confirmation=$('draftConfirmationStatus');
-  if(active)active.textContent='Ikke bekreftet i tide';
-  if(confirmation)confirmation.textContent='Ikke bekreftet i tide';
+ if(!localOrder)return;
+ const state=localPublicStatus().status;
+ const pickup=visiblePickupAt(localOrder),deadline=customerAcceptanceDeadline(localOrder);
+ const pending=state==='mottatt'&&deadline>0,approved=state==='godkjent';
+ const text=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
+  pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
+ for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong,#draftConfirmationContent .draft-status-message-copy strong')){
+  if(approved||pending)node.textContent=text||(approved?'Forventet hentetid er nådd':'Venter på bekreftelse');
  }
  updateRepeatOrderButtons();
 }
+
 const ORDER_STATUS_LABELS={
  mottatt:'Venter på godkjenning',
  godkjent:'Bestillingen er godkjent',
@@ -782,46 +823,21 @@ function localPublicStatus(){
 }
 function displayLiveOrderStatus(){
  if(!localOrder)return;
- const state=localPublicStatus(),confirmedAt=visiblePickupAt(localOrder);
- const timedOutRejected=state.status==='avvist'&&state.rejectReason==='Ikke bekreftet innen 5 minutter';
- const label=timedOutRejected?'Ikke bekreftet i tide':(ORDER_STATUS_LABELS[state.status]||ORDER_STATUS_LABELS.mottatt);
- const accepted=state.status==='godkjent',ready=state.status==='klar',rejected=state.status==='avvist';
- const pickupDate=confirmedAt?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(confirmedAt)):'';
- const adjusted=!!state.pickupTimeAdjusted;
- const subtitle=$('draftActiveSubtitle');
- if(subtitle)subtitle.textContent=ready?'Maten din er klar. Kom og hent den!':accepted?(confirmedAt?'Henting '+pickupDate:'Hentetid bekreftet'):label;
- const status=$('draftConfirmationStatus');
- if(status)status.textContent=label;
- const info=$('draftConfirmationTimer');
- if(info)info.textContent=accepted&&confirmedAt?
-  (adjusted?'Hentetiden er endret til ':'Bekreftet hentetid: ')+pickupDate:
-  ready?'Bestillingen er klar til henting nå.':
-  rejected?(timedOutRejected?'Bestillingen ble ikke bekreftet innen 5 minutter. Ring restauranten.':(state.rejectReason?'Årsak: '+state.rejectReason:'Kontakt restauranten.')):
-  'Restauranten bekrefter hentetid når bestillingen godtas.';
- const title=$('draftConfirmationTitle');
- if(title)title.textContent=accepted?'Bestillingen er godkjent!':ready?'Bestillingen er klar til henting!':rejected?(timedOutRejected?'Ikke bekreftet i tide':'Bestillingen er avvist'):'Bestillingen er sendt';
- const intro=$('draftConfirmationIntro');
- if(intro)intro.textContent=accepted?'Restauranten har godkjent bestillingen din.':ready?'Du kan hente bestillingen din nå.':rejected?(timedOutRejected?'Vi fikk ingen bekreftelse innen fem minutter. Kontakt restauranten.':'Restauranten kunne ikke godta bestillingen din.'):'Takk, '+(localOrder.customer?.fullName||'')+'! Restauranten har mottatt bestillingen din.';
- const sent=$('draftConfirmationSent');
- if(sent)sent.textContent=accepted?'✓ Bekreftet av restauranten':ready?'✓ Klar til henting':rejected?(timedOutRejected?'Ikke bekreftet · Ring restauranten':'Bestillingen ble avvist'):'Sendt til restauranten · Avventer godkjenning';
- const pickup=$('draftConfirmationPickup'),pickupLabel=$('draftConfirmationPickupLabel');
- if(pickupLabel)pickupLabel.textContent=adjusted&&accepted?'Endret hentetid':'Hentetid';
- if(pickup)pickup.textContent=confirmedAt&&(!rejected)?pickupDate:(localOrder.pickup?.label||'Snarest');
- const confirmation=$('draftConfirmation');
- if(confirmation){
-  confirmation.dataset.orderStatus=state.status;
-  const marker=confirmation.querySelector('.draft-confirmation-mark');
-  if(marker)marker.textContent=rejected?'!':'✓';
+ const content=$('draftActiveContent'),popup=$('draftConfirmationContent');
+ if(content){
+  const oldDetails=content.querySelector('.draft-status-details');
+  const expanded=Boolean(oldDetails?.open);
+  content.innerHTML=orderOverviewMarkup(localOrder,'menu');
+  content.querySelector('.draft-status-details').open=expanded;
  }
- const activeTitle=$('draftActiveTitle');
- if(activeTitle)activeTitle.textContent=ready?'Maten er klar til henting':accepted?'Bestillingen er godkjent':rejected?label:'Bestillingen er mottatt';
- const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
- if(tracker)tracker.forEach((step,index)=>{
-  step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
-  step.classList.toggle('is-preparing',index===2&&accepted);
- });
+ if(popup&&!$('draftConfirmation').hidden){
+  const expanded=Boolean(popup.querySelector('.draft-status-details')?.open);
+  popup.innerHTML=orderOverviewMarkup(localOrder,'popup');
+  popup.querySelector('.draft-status-details').open=expanded;
+ }
  updateCustomerCountdown();
 }
+
 function onCustomerStatusUpdate(value){
  if(!localOrder||!value||typeof value!=='object'||
     !Object.hasOwn(ORDER_STATUS_LABELS,value.status))return;
@@ -905,48 +921,27 @@ function renderDraftActiveOrder(){
  if(!localOrder){card.hidden=true;renderOrderOverviewCarousel();return}
  if(scheduleActiveOrderExpiry())return;
  card.hidden=false;
- $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
  displayLiveOrderStatus();
  renderOrderOverviewCarousel();
- if(!$('draftConfirmation').hidden)renderDraftConfirmation();
-}
-function renderDraftConfirmationItems(){
- const panel=$('draftConfirmationItems'),host=$('draftConfirmationItemsList');
- if(!panel||!host||!localOrder)return;
- const items=Array.isArray(localOrder.items)?localOrder.items:[];
- const count=items.reduce((sum,line)=>sum+Math.max(0,Number(line.qty)||0),0);
- $('draftConfirmationItemsCount').textContent=count+' '+(count===1?'vare':'varer');
- host.innerHTML=items.length?items.map(line=>{
-  const quantity=Math.max(1,Number(line.qty)||1);
-  const price=Number(line.unitPrice)||0;
-  const quickNotes=Array.isArray(line.quickNotes)?line.quickNotes.filter(Boolean):[];
-  return '<article class="cart-product-card draft-confirmation-product">'+
-   '<div class="cart-product-heading"><strong class="cart-product-name">'+quantity+' × '+esc(String(line.name||'Produkt'))+'</strong></div>'+
-   '<div class="cart-product-details">'+cartLineDetails(line)+
-    (quickNotes.length?'<div class="cart-line-detail is-alert"><span><b>Beskjed:</b> '+esc(quickNotes.join(', '))+'</span></div>':'')+
-   '</div>'+
-   '<div class="cart-product-totalrow"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(price)+')':'')+'</span><strong>'+money(quantity*price)+'</strong></div>'+
-   '</article>';
- }).join('')+'<div class="draft-confirmation-total"><strong>Totalt</strong><strong>'+money(localOrder.total)+'</strong></div>':
- '<p class="draft-confirmation-empty">Ingen produktdetaljer tilgjengelig.</p>';
 }
 function renderDraftConfirmation(){
  if(!localOrder)return;
- localOrderStatus();
- $('draftConfirmationNumber').textContent=String(localOrder.id||'').slice(-6).toUpperCase();
- $('draftConfirmationTotal').textContent=money(localOrder.total);
- renderDraftConfirmationItems();
- displayLiveOrderStatus();
+ const popup=$('draftConfirmationContent');
+ if(!popup)return;
+ const expanded=Boolean(popup.querySelector('.draft-status-details')?.open);
+ popup.innerHTML=orderOverviewMarkup(localOrder,'popup');
+ popup.querySelector('.draft-status-details').open=expanded;
+ updateCustomerCountdown();
 }
 function showDraftConfirmation(){
  if(!localOrder)return;
  fatih1HistoryWrite({view:'confirmation'},true);
  hideAll();
- const itemPanel=$('draftConfirmationItems');if(itemPanel)itemPanel.open=false;
  renderDraftConfirmation();
  show('draftConfirmation');
  beginCustomerStatus();
 }
+
 function showCheckoutError(message,field){
  const error=$('checkoutError');
  error.textContent=message;
