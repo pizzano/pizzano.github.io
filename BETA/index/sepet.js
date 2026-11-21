@@ -531,7 +531,86 @@ let customerContact=readLocalData(FATIH1_CONTACT_STORAGE_KEY,{name:'',phone:'',e
 let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:'',label:''});
 let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
 let checkoutStep='cart',localOrderExpiryTimer=null;
-const ORDER_CARD_GRACE_MS=15*60*1000;
+const ORDER_CARD_GRACE_MS=10*60*1000;
+
+const OVERVIEW_HISTORY_KEY='kol-beta-local-order-overviews-v1';
+const OVERVIEW_READY_HIDE_MS=10*60*1000;
+let overviewCarouselIndex=0,overviewRenderedIDs='';
+function orderOverviewHistory(){
+ const data=readLocalData(OVERVIEW_HISTORY_KEY,[]);
+ return Array.isArray(data)?data.filter(o=>o&&typeof o.id==='string').slice(0,20):[];
+}
+function orderOverviewRemember(order){
+ if(!order?.id)return;
+ const history=orderOverviewHistory();
+ const old=history.find(o=>o.id===order.id);
+ const fresh=JSON.parse(JSON.stringify(order));
+ fresh.hidden=Boolean(old?.hidden);
+ fresh.readyAt=Number(old?.readyAt)||0;
+ if(fresh.statusPublic?.status==='klar'&&!fresh.readyAt)
+  fresh.readyAt=Number(fresh.statusPublic.updatedAt)||Date.now();
+ writeLocalData(OVERVIEW_HISTORY_KEY,[fresh,...history.filter(o=>o.id!==order.id)].slice(0,20));
+ renderOrderOverviewCarousel();
+}
+function overviewCardExpired(order){
+ const status=order.statusPublic?.status||order.status;
+ if(order.hidden)return true;
+ if(status!=='klar')return false;
+ const readyAt=Number(order.readyAt)||Number(order.statusPublic?.updatedAt)||0;
+ return readyAt>0&&Date.now()-readyAt>=OVERVIEW_READY_HIDE_MS;
+}
+function localOrderOverviewCard(order){
+ const status=order.statusPublic?.status||order.status;
+ const ready=status==='klar',accepted=status==='godkjent',rejected=status==='avvist';
+ const pickup=visiblePickupAt(order);
+ const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):'';
+ const title=ready?'Klar – hent maten din':accepted?'Godkjent':rejected?'Avvist':'Mottatt';
+ const text=ready?'Maten din er klar for henting':accepted?'Henting '+pickupText:rejected?'Bestillingen ble avvist':'Venter på bekreftelse';
+ const items=Array.isArray(order.items)?order.items:[];
+ const products=items.map(item=>'<div class="draft-history-product"><span>'+esc(item.qty||1)+' × '+esc(item.name||'Produkt')+'</span><strong>'+money((Number(item.qty)||1)*(Number(item.unitPrice)||0))+'</strong></div>').join('');
+ return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
+ '<div class="draft-active-heading"><strong>BESTILLINGSOVERSIKT</strong><span>#'+esc(order.id.slice(-6).toUpperCase())+'</span></div>'+
+ '<div class="draft-tracking"><span class="is-done"><i></i>Mottatt</span><span class="'+(ready||accepted?'is-done':'')+'"><i></i>Bekreftet</span><span class="'+(ready?'is-done':accepted?'is-preparing':'')+'"><i></i>Klar</span></div>'+
+ '<div class="draft-active-message"><div><strong>'+esc(title)+'</strong><small>'+esc(text)+'</small></div></div>'+
+ '<details class="draft-history-details"><summary>Vis bestillingen</summary><div>'+products+'<div class="draft-history-product"><span>Totalt</span><strong>'+money(order.total)+'</strong></div></div></details>'+
+ '<button type="button" class="draft-clear-order" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button></article>';
+}
+function renderOrderOverviewCarousel(){
+ const root=$('draftOrderCarousel'),track=$('draftOrderCarouselTrack'),active=$('draftActiveOrder');
+ if(!root||!track||!active)return;
+ const activeShown=!!localOrder&&!overviewCardExpired(localOrder)&&localOrder.status!=='expired';
+ const others=orderOverviewHistory().filter(o=>o.id!==localOrder?.id&&!overviewCardExpired(o));
+ const IDs=(activeShown?[localOrder.id]:[]).concat(others.map(o=>o.id));
+ const identity=IDs.join('|');
+ if(identity!==overviewRenderedIDs){
+  overviewRenderedIDs=identity;
+  track.querySelectorAll('.draft-history-card').forEach(node=>node.remove());
+  track.insertAdjacentHTML('beforeend',others.map(localOrderOverviewCard).join(''));
+  overviewCarouselIndex=Math.min(overviewCarouselIndex,Math.max(IDs.length-1,0));
+ }
+ active.hidden=!activeShown;
+ root.hidden=!IDs.length;
+ const bottom=$('draftOrderCarouselBottom');
+ bottom.hidden=IDs.length<2;
+ $('draftOrderCarouselPosition').textContent=IDs.length?(overviewCarouselIndex+1)+' / '+IDs.length:'';
+ $('draftOrderPrev').disabled=overviewCarouselIndex===0;
+ $('draftOrderNext').disabled=overviewCarouselIndex===IDs.length-1;
+ if(identity!==root.dataset.identity){
+  root.dataset.identity=identity;
+  requestAnimationFrame(()=>moveOrderOverview(overviewCarouselIndex,'instant'));
+ }
+}
+function moveOrderOverview(index,behavior='smooth'){
+ const track=$('draftOrderCarouselTrack');
+ const slides=[...track.querySelectorAll('.draft-carousel-slide:not([hidden])')];
+ overviewCarouselIndex=Math.max(0,Math.min(index,slides.length-1));
+ const slide=slides[overviewCarouselIndex];
+ if(slide)track.scrollTo({left:slide.offsetLeft-track.offsetLeft,behavior});
+ $('draftOrderCarouselPosition').textContent=slides.length?(overviewCarouselIndex+1)+' / '+slides.length:'';
+ $('draftOrderPrev').disabled=overviewCarouselIndex===0;
+ $('draftOrderNext').disabled=overviewCarouselIndex===slides.length-1;
+}
+
 function osloScheduledPickupAt(order){
  const raw=order?.pickup?.mode==='scheduled'?order.pickup.time:null;
  if(typeof raw!=='string')return 0;
@@ -565,8 +644,7 @@ function localOrderExpiresAt(order){
  if(status!=='godkjent'&&status!=='klar')return 0;
  const expected=visiblePickupAt(order);
  const ready=status==='klar'?Number(order.statusPublic?.updatedAt)||0:0;
- const base=Math.max(expected,ready);
- return base>0?base+ORDER_CARD_GRACE_MS:0;
+ return status==='klar'&&ready>0?ready+ORDER_CARD_GRACE_MS:0;
 }
 function clearActiveOrder(showNotice=false){
  stopCustomerStatus();
@@ -574,6 +652,7 @@ function clearActiveOrder(showNotice=false){
  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
+ renderOrderOverviewCarousel();
  if(showNotice)showFatih1Toast('Bestillingsoversikten er fjernet fra denne enheten.');
 }
 function scheduleActiveOrderExpiry(){
@@ -704,7 +783,7 @@ function displayLiveOrderStatus(){
  const pickupDate=confirmedAt?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(confirmedAt)):'';
  const adjusted=!!state.pickupTimeAdjusted;
  const subtitle=$('draftActiveSubtitle');
- if(subtitle)subtitle.textContent=accepted?(confirmedAt?'Henting '+pickupDate:'Hentetid bekreftet'):label;
+ if(subtitle)subtitle.textContent=ready?'Maten din er klar. Kom og hent den!':accepted?(confirmedAt?'Henting '+pickupDate:'Hentetid bekreftet'):label;
  const status=$('draftConfirmationStatus');
  if(status)status.textContent=label;
  const info=$('draftConfirmationTimer');
@@ -729,7 +808,7 @@ function displayLiveOrderStatus(){
   if(marker)marker.textContent=rejected?'!':'✓';
  }
  const activeTitle=$('draftActiveTitle');
- if(activeTitle)activeTitle.textContent=accepted?'Godkjent':ready?'Klar':rejected?label:'Bestilling sendt';
+ if(activeTitle)activeTitle.textContent=ready?'Klar – hent maten din':accepted?'Godkjent':rejected?label:'Bestilling sendt';
  const tracker=$('draftActiveOrder')?.querySelectorAll('.draft-tracking > span');
  if(tracker)tracker.forEach((step,index)=>{
   step.classList.toggle('is-done',index===0||(index===1&&(accepted||ready))||(index===2&&ready));
@@ -754,6 +833,7 @@ function onCustomerStatusUpdate(value){
   localOrder.statusPublic=statusPublic;
   localOrder.status=statusPublic.status;
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  orderOverviewRemember(localOrder);
  }
  displayLiveOrderStatus();
  if(changed&&previousStatus!==statusPublic.status&&statusPublic.status!=='mottatt'){
@@ -816,11 +896,12 @@ function localOrderStatus(){
 function renderDraftActiveOrder(){
  const card=$('draftActiveOrder');
  if(!card)return;
- if(!localOrder){card.hidden=true;return}
+ if(!localOrder){card.hidden=true;renderOrderOverviewCarousel();return}
  if(scheduleActiveOrderExpiry())return;
  card.hidden=false;
  $('draftActiveNumber').textContent='#'+String(localOrder.id||'').slice(-6).toUpperCase();
  displayLiveOrderStatus();
+ renderOrderOverviewCarousel();
  if(!$('draftConfirmation').hidden)renderDraftConfirmation();
 }
 function renderDraftConfirmationItems(){
@@ -1104,6 +1185,8 @@ async function submitDraftOrder(){
   localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
 
   writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  orderOverviewRemember(localOrder);
+  overviewCarouselIndex=0;
   cart=[];saveCart();
   // Keep the new order tracked locally; do not automatically open the status dialog.
   renderDraftActiveOrder();
@@ -1158,14 +1241,45 @@ $('draftRepeatOrder').onclick=repeatExpiredOrder;
 $('draftConfirmationRepeat').onclick=repeatExpiredOrder;
 $('draftViewOrder').onclick=showDraftConfirmation;
 $('draftConfirmationClose').onclick=returnToMenu;
-$('draftClearOrder').onclick=()=>clearActiveOrder(true);
+$('draftClearOrder').onclick=()=>{
+ if(localOrder){
+  const list=orderOverviewHistory(),item=list.find(o=>o.id===localOrder.id);
+  if(item){item.hidden=true;writeLocalData(OVERVIEW_HISTORY_KEY,list)}
+ }
+ clearActiveOrder(true);
+};
+$('draftOrderPrev').onclick=()=>moveOrderOverview(overviewCarouselIndex-1);
+$('draftOrderNext').onclick=()=>moveOrderOverview(overviewCarouselIndex+1);
+$('draftOrderCarouselTrack').addEventListener('click',event=>{
+ const btn=event.target.closest('[data-history-dismiss]');
+ if(!btn)return;
+ const list=orderOverviewHistory(),item=list.find(o=>o.id===btn.dataset.historyDismiss);
+ if(item){item.hidden=true;writeLocalData(OVERVIEW_HISTORY_KEY,list)}
+ renderOrderOverviewCarousel();
+});
+$('draftOrderCarouselTrack').addEventListener('scroll',()=>{
+ const track=$('draftOrderCarouselTrack');
+ const slides=[...track.querySelectorAll('.draft-carousel-slide:not([hidden])')];
+ if(!slides.length)return;
+ let nearest=0,dist=Infinity;
+ slides.forEach((node,index)=>{const d=Math.abs(node.offsetLeft-track.offsetLeft-track.scrollLeft);if(d<dist){dist=d;nearest=index}});
+ overviewCarouselIndex=nearest;
+ $('draftOrderCarouselPosition').textContent=(nearest+1)+' / '+slides.length;
+ $('draftOrderPrev').disabled=nearest===0;
+ $('draftOrderNext').disabled=nearest===slides.length-1;
+},{passive:true});
 }
 
 // Cart owns its own initialization and stored draft order display.
 document.addEventListener('DOMContentLoaded',()=>{
  // Local clock only: zero Firebase reads for either countdown.
- setInterval(()=>{if(!document.hidden&&localOrder)updateCustomerCountdown()},1000);
+ setInterval(()=>{
+  if(document.hidden)return;
+  if(localOrder)updateCustomerCountdown();
+  if(orderOverviewHistory().some(o=>overviewCardExpired(o)))renderOrderOverviewCarousel();
+ },1000);
  cleanupRetiredCartStorage();
+ if(localOrder&&!orderOverviewHistory().some(o=>o.id===localOrder.id))orderOverviewRemember(localOrder);
  renderDraftActiveOrder();
  beginCustomerStatus();
  document.addEventListener('visibilitychange',()=>{
