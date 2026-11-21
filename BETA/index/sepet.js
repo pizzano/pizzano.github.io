@@ -642,7 +642,7 @@ function orderOverviewMarkup(order,mode='history'){
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
  orderOverviewMarkup(order,'history')+
- ((order.statusPublic?.status||order.status)==='mottatt'?'':'<button type="button" class="draft-clear-order draft-clear-order-slim" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button>')+'</article>';
+ '<button type="button" class="draft-clear-order draft-clear-order-slim" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button>'+'</article>';
 }
 
 function renderOrderOverviewCarousel(){
@@ -765,7 +765,7 @@ function updateOrderActionButtons(){
  const status=localPublicStatus().status;
  const dismiss=$('draftClearOrder');
  const repeat=$('draftRepeatOrder');
- if(dismiss)dismiss.hidden=status==='mottatt';
+ if(dismiss)dismiss.hidden=false;
  if(repeat)repeat.hidden=!isRepeatableTimedOutOrder();
 }
 function repeatExpiredOrder(){
