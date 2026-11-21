@@ -3044,3 +3044,15 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  background:#eef8f2;
  border-color:#aacbb9;
 }
+
+
+/* Timeout-only repeat is never visible while its hidden attribute is set. */
+.draft-order-carousel .draft-repeat-order[hidden]{display:none!important}
+.draft-order-carousel .draft-overview-actions:has(.draft-repeat-order:not([hidden])){
+ flex-wrap:wrap;
+ justify-content:flex-end;
+}
+.draft-order-carousel .draft-overview-actions .draft-repeat-order:not([hidden]){
+ flex:1 0 100%;
+ margin:0 0 5px;
+}
