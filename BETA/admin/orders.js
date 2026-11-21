@@ -661,6 +661,7 @@
    }
   });
   $('ordersCancelAccept').onclick=closeDialog;$('ordersCancelReject').onclick=closeDialog;
+  $('ordersRejectCancelSecondary').onclick=closeDialog;
   $('ordersAcceptOverlay').addEventListener('click',event=>{if(event.target.id==='ordersAcceptOverlay')closeDialog()});
   $('ordersRejectOverlay').addEventListener('click',event=>{if(event.target.id==='ordersRejectOverlay')closeDialog()});
   $('ordersPrepMinus').onclick=()=>{
