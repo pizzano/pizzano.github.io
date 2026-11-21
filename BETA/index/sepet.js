@@ -642,7 +642,7 @@ function orderOverviewMarkup(order,mode='history'){
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
  orderOverviewMarkup(order,'history')+
- '<button type="button" class="draft-clear-order" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button></article>';
+ ((order.statusPublic?.status||order.status)==='mottatt'?'':'<button type="button" class="draft-clear-order draft-clear-order-slim" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button>')+'</article>';
 }
 
 function renderOrderOverviewCarousel(){
