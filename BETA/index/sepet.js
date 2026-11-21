@@ -741,7 +741,8 @@ function clearActiveOrder(showNotice=false){
    writeLocalData(OVERVIEW_HISTORY_KEY,previous.filter(o=>o.id!==removedId));
   }
  }
- writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
+ try{localStorage.removeItem(FATIH1_LOCAL_ORDER_STORAGE_KEY)}
+ catch{writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null)}
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
  renderOrderOverviewCarousel();
