@@ -2969,3 +2969,16 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  .draft-status-details summary{font-size:13px}
  .draft-order-status-modal .draft-status-head>strong{font-size:16px}
 }
+
+
+/* SVG icon sizing in shared order status cards. */
+.draft-status-head-icon svg{width:23px;height:23px}
+.draft-status-fact-icon{display:grid;place-items:center}
+.draft-status-fact-icon svg{width:21px;height:21px}
+.draft-status-message-icon{display:grid;place-items:center}
+.draft-status-message-icon svg{width:26px;height:26px}
+@media(max-width:480px){
+ .draft-status-head-icon svg{width:19px;height:19px}
+ .draft-status-fact-icon svg{width:16px;height:16px}
+ .draft-status-message-icon svg{width:23px;height:23px}
+}
