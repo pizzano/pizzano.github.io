@@ -568,6 +568,18 @@ function overviewCardExpired(order){
 
 /* One shared card layout used by the menu, order popup and local history.
  * Only the active order has an SSE listener; rendering old cards reads localStorage. */
+function orderStatusIcon(name){
+ const paths={
+  check:'<path d="m5 12 4 4L19 6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/>',
+  bag:'<path d="M5 9h14l-1 12H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/>',
+  cross:'<path d="M5 5 19 19M19 5 5 19"/>',
+  parcel:'<path d="m3 7 9-4 9 4v10l-9 4-9-4V7Z"/><path d="m3 7 9 5 9-5M12 12v9"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>',
+  coins:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 4 16 4 16 0V6M4 12v6c0 4 16 4 16 0v-6"/>'
+ };
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.check)+'</svg>';
+}
 function orderOverviewMarkup(order,mode='history'){
  const state=order.statusPublic||{status:order.status||'mottatt'};
  const status=state.status||order.status||'mottatt';
@@ -576,7 +588,7 @@ function orderOverviewMarkup(order,mode='history'){
  const theme=ready?'ready':rejected?'rejected':approved?'approved':'pending';
  const title=ready?'Bestillingen er klar':rejected?'Bestillingen er avvist':approved?'Bestillingen er godkjent':'Ny bestilling';
  const badge=ready?'✓ Klar':rejected?'× Avvist':approved?'✓ Bekreftet':'● Venter';
- const glyph=ready?'▣':rejected?'×':approved?'✓':'◷';
+ const glyph=orderStatusIcon(ready?'bag':rejected?'cross':approved?'check':'clock');
  const pickup=visiblePickupAt(order);
  const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):(order.pickup?.label||'Snarest');
  const deadline=customerAcceptanceDeadline(order);
@@ -612,11 +624,11 @@ function orderOverviewMarkup(order,mode='history'){
  '<span class="draft-status-line '+(approved||ready?'is-complete':rejected?'is-failed':'')+'"></span>'+
  part(1,'Bekreftet')+'<span class="draft-status-line '+(ready?'is-complete':'')+'"></span>'+part(2,'Klar')+'</div>'+
  '<div class="draft-status-facts">'+
- '<div><span class="draft-status-fact-icon">⬡</span><span><small>Ordrenummer</small><strong>#'+id+'</strong></span></div>'+
- '<div><span class="draft-status-fact-icon">▦</span><span><small>Hentetid</small><strong>'+esc(pickupText)+'</strong></span></div>'+
- '<div><span class="draft-status-fact-icon">▤</span><span><small>Beløp</small><strong>'+money(order.total)+'</strong></span></div>'+
+ '<div><span class="draft-status-fact-icon">'+orderStatusIcon('parcel')+'</span><span><small>Ordrenummer</small><strong>#'+id+'</strong></span></div>'+
+ '<div><span class="draft-status-fact-icon">'+orderStatusIcon('calendar')+'</span><span><small>Hentetid</small><strong>'+esc(pickupText)+'</strong></span></div>'+
+ '<div><span class="draft-status-fact-icon">'+orderStatusIcon('coins')+'</span><span><small>Beløp</small><strong>'+money(order.total)+'</strong></span></div>'+
  '</div>'+
- '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+(ready?'✓':rejected?'!':'◷')+'</span>'+
+ '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+orderStatusIcon(ready?'bag':rejected?'cross':'clock')+'</span>'+
  '<span class="draft-status-message-copy"><strong>'+esc(note)+'</strong>'+
  (rejected?'<small>'+esc(description)+'</small>':!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
  '</span></div>'+
