@@ -2994,3 +2994,34 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  flex:1 1 auto;
  margin:0;
 }
+
+/* Today's local order receipts remain accessible in Mine bestillinger until Oslo midnight. */
+.draft-overview-heading{margin-bottom:8px}
+.draft-overview-title{
+ display:flex;align-items:center;gap:9px;width:100%;min-height:49px;padding:10px 13px;
+ border:1px solid #b9dec9;border-radius:14px;background:#eaf7ef;color:#105d43;
+ font:inherit;font-size:13px;text-align:left;cursor:pointer;
+}
+.draft-overview-title strong{font-size:15px;font-weight:850;flex:1}
+.draft-overview-title>span{font-size:11px;font-weight:750;white-space:nowrap}
+.draft-overview-title small{color:#0e7654;font-size:11px;font-weight:850;white-space:nowrap}
+.draft-overview-title svg{width:16px;height:16px;flex:none;transition:transform .18s ease}
+.draft-overview-title[aria-expanded="true"] svg{transform:rotate(180deg)}
+.draft-overview-title:disabled{opacity:1;cursor:default}
+.draft-overview-title:focus-visible,.draft-hide-order:focus-visible{outline:3px solid #f3d477;outline-offset:2px}
+.draft-order-carousel-track[hidden]{display:none!important}
+.draft-overview-footer{display:flex;justify-content:flex-end;margin-top:10px}
+.draft-hide-order{
+ display:inline-flex;align-items:center;justify-content:center;min-width:82px;min-height:34px;
+ padding:6px 13px;border:1px solid #bdd2c7;border-radius:9px;
+ background:#f4f8f5;color:#45665a;font:inherit;font-size:12px;font-weight:750;cursor:pointer;
+}
+.draft-hide-order:hover{background:#e8f2eb;border-color:#8abda4}
+html[data-fatih1-theme="dark"] .draft-overview-title{background:#174639;color:#e0f4e8;border-color:#42715e}
+html[data-fatih1-theme="dark"] .draft-overview-title small{color:#b7e8cd}
+html[data-fatih1-theme="dark"] .draft-hide-order{background:#183d32;border-color:#497866;color:#d0e8d9}
+@media(max-width:480px){
+ .draft-overview-title{gap:6px;padding:9px 10px;min-height:45px}
+ .draft-overview-title strong{font-size:13px}
+ .draft-overview-title>span,.draft-overview-title small{font-size:10px}
+}
