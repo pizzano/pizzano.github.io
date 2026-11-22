@@ -3010,10 +3010,10 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 .draft-overview-title:disabled{opacity:1;cursor:default}
 .draft-overview-title:focus-visible,.draft-hide-order:focus-visible{outline:3px solid #f3d477;outline-offset:2px}
 .draft-order-carousel-track[hidden]{display:none!important}
-.draft-overview-footer{display:flex;justify-content:flex-end;margin-top:10px}
+.draft-overview-footer{display:flex;justify-content:stretch;margin-top:10px}
 .draft-hide-order{
- display:inline-flex;align-items:center;justify-content:center;min-width:82px;min-height:34px;
- padding:6px 13px;border:1px solid #bdd2c7;border-radius:9px;
+ display:flex;align-items:center;justify-content:center;width:100%;min-height:32px;
+ padding:5px 12px;border:1px solid #bdd2c7;border-radius:9px;
  background:#f4f8f5;color:#45665a;font:inherit;font-size:12px;font-weight:750;cursor:pointer;
 }
 .draft-hide-order:hover{background:#e8f2eb;border-color:#8abda4}

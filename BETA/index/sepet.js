@@ -628,13 +628,13 @@ function orderOverviewMarkup(order,mode='history'){
  const pickup=visiblePickupAt(order);
  const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):(order.pickup?.label||'Snarest');
  const rejectReason=timeout?'Ikke bekreftet innen 5 minutter.':String(state.rejectReason||'').trim();
+ const approvedMessage=approved?approvedPickupMessage(order):null;
  const description=rejected?(rejectReason?'Årsak: '+rejectReason:'Restauranten har ikke oppgitt en grunn.'):
   ready?'Maten din er klar. Kom og hent den!':
-  approved?'Henting '+pickupText:'Restauranten har mottatt bestillingen din.';
- const remaining=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
-  pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
+  approved?approvedMessage.description:'Restauranten har mottatt bestillingen din.';
+ const remaining=pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
  const note=ready?'Klar for henting':rejected?('Årsak: '+(rejectReason||'Ingen grunn oppgitt')):
-  locallyOverdue?'Ingen bekreftelse innen 5 minutter':remaining||(pending?'Venter på bekreftelse':'Forventet hentetid er nådd');
+  locallyOverdue?'Ingen bekreftelse innen 5 minutter':approved?approvedMessage.note:remaining||'Venter på bekreftelse';
  const id=esc(String(order.id||'').slice(-6).toUpperCase());
  const items=Array.isArray(order.items)?order.items:[];
  const quantity=items.reduce((sum,item)=>sum+Math.max(0,Number(item.qty)||0),0);
@@ -677,7 +677,7 @@ function orderOverviewMarkup(order,mode='history'){
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
  orderOverviewMarkup(order,'history')+
- '<div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview="'+esc(order.id)+'">Skjul</button></div></article>';
+ '<div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview="'+esc(order.id)+'">Skjul bestillingen</button></div></article>';
 }
 
 function renderOrderOverviewCarousel(){
@@ -709,7 +709,19 @@ function renderOrderOverviewCarousel(){
  heading.setAttribute('aria-expanded',String(overviewShowHidden));
  $('draftOverviewCount').textContent=allOrders.length+' '+(allOrders.length===1?'bestilling':'bestillinger');
  $('draftOverviewHiddenLabel').textContent=hiddenCount?
-  (overviewShowHidden?'Skjul skjulte':'Vis skjulte ('+hiddenCount+')'):'';
+  (overviewShowHidden?'Skjul arkiv':'Vis arkiv ('+hiddenCount+')'):'';
+ // Update locally cached receipts when pickup time passes; no extra Firebase reads.
+ // Preserve open <details> elements by updating only the message text.
+ const cardsById=new Map([...track.querySelectorAll('.draft-history-card')].map(node=>[node.dataset.overviewId,node]));
+ for(const order of visibleOthers){
+  if((order.statusPublic?.status||order.status)!=='godkjent')continue;
+  const message=approvedPickupMessage(order);
+  const card=cardsById.get(order.id);
+  const title=card?.querySelector('.draft-status-message-copy strong');
+  const subtitle=card?.querySelector('.draft-status-message-copy small');
+  if(title)title.textContent=message.note;
+  if(subtitle)subtitle.textContent=message.description;
+ }
  const bottom=$('draftOrderCarouselBottom');
  bottom.hidden=IDs.length<2;
  $('draftOrderCarouselPosition').textContent=IDs.length?(overviewCarouselIndex+1)+' / '+IDs.length:'';
@@ -757,6 +769,17 @@ function visiblePickupAt(order){
  return Math.max(scheduled,confirmed);
 }
 
+// The estimated pickup time passing does not confirm the restaurant's "klar" status.
+function approvedPickupMessage(order){
+ const pickup=visiblePickupAt(order);
+ if(pickup>0&&pickup<=Date.now())
+  return {note:'Hentetiden er nådd',description:'Bestillingen er sannsynligvis klar for henting.'};
+ if(pickup>0){
+  const date=new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup));
+  return {note:'Klar om '+shortRemaining(pickup),description:'Henting '+date};
+ }
+ return {note:'Bestillingen er godkjent',description:'Restauranten har bekreftet bestillingen.'};
+}
 function orderAutoHideAt(order){
  const day=osloOrderDateKey(order?.createdAt);
  if(!day)return 0;
@@ -869,10 +892,14 @@ function updateCustomerCountdown(){
   if(statusCard&&!statusCard.hasAttribute('data-local-timeout'))displayLiveOrderStatus();
   return;
  }
- const text=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
-  pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
- for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong')){
-  if(approved||pending)node.textContent=text||(approved?'Forventet hentetid er nådd':'Venter på bekreftelse');
+ const approvedMessage=approved?approvedPickupMessage(localOrder):null;
+ const text=pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
+ const message=$('draftActiveContent')?.querySelector('.draft-status-message-copy');
+ if(message&&(approved||pending)){
+  const title=message.querySelector('strong');
+  const subtitle=message.querySelector('small');
+  if(title)title.textContent=approved?approvedMessage.note:text||'Venter på bekreftelse';
+  if(approved&&subtitle)subtitle.textContent=approvedMessage.description;
  }
 
 }
