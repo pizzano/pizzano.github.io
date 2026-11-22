@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
   
-  <link rel="stylesheet" href="./index/style.css?v=20261122-auto-timeout50">
-  <script src="./index/sepet.js?v=20261122-auto-timeout50" defer></script>
+  <link rel="stylesheet" href="./index/style.css?v=20261122-midnight-orders51">
+  <script src="./index/sepet.js?v=20261122-midnight-orders51" defer></script>
   <script src="./index/app.js?v=20261122-inline-order41" defer></script>
   <script src="./index/profil.js?v=20261118-receipt5" defer></script>
 </head>
@@ -23,11 +23,18 @@
     <main>
       <div class="status-banner" id="statusBanner"><div class="status-icon"><svg viewBox="0 0 24 24" width="31" height="31" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-6h6v6M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg></div><div class="status-copy"><strong id="statusTitle">Henter åpningstider…</strong><span id="statusSubtitle">Åpningstid hentes lokalt</span><span id="hoursPill" class="hours-pill" hidden></span></div><label class="allergen-switch"><span>Vis allergener</span><input type="checkbox" id="showAllergens" checked><i aria-hidden="true"></i></label></div><div class="cache-actions"><button id="menuRefresh" class="menu-refresh" type="button" aria-label="Oppdater menyen fra Firebase">Oppdater meny</button><div id="cacheStatus" class="cache-line" aria-live="polite">Laster…</div></div>
       <div id="notice" role="status" aria-live="polite"></div>
-      <div id="draftOrderCarousel" class="draft-order-carousel" hidden aria-label="Bestillingsoversikter">
+      <div id="draftOrderCarousel" class="draft-order-carousel" hidden aria-label="Mine bestillinger">
+        <div class="draft-overview-heading">
+          <button type="button" class="draft-overview-title" id="draftOverviewToggle" aria-controls="draftOrderCarouselTrack" aria-expanded="false" disabled>
+            <strong>Mine bestillinger</strong><span id="draftOverviewCount"></span><small id="draftOverviewHiddenLabel"></small>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg>
+          </button>
+        </div>
         <div class="draft-order-carousel-track" id="draftOrderCarouselTrack">
       <section id="draftActiveOrder" class="draft-active-order draft-carousel-slide" aria-label="Bestillingsoversikt" hidden>
         <div id="draftActiveContent"></div>
         <div id="draftOrderActions" class="draft-overview-actions" hidden><button id="draftRepeatOrder" type="button" class="draft-repeat-order" hidden>Bestill det samme på nytt</button></div>
+        <div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview>Gizle</button></div>
       </section>
         </div>
         <div class="draft-order-carousel-bottom" id="draftOrderCarouselBottom" hidden>
