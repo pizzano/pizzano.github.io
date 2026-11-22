@@ -561,7 +561,7 @@ html,body{min-height:100%;overflow-x:clip}
 .draft-active-message strong{color:#143a30;font-size:var(--text-lg);font-weight:850}
 .draft-active-message small{color:#648176;font-size:var(--text-sm);line-height:1.4}
 .draft-view-order{display:grid;place-items:center;width:100%;min-height:39px;margin-top:12px;padding:8px 11px;border:1px solid #b7d9cb;border-radius:12px;background:#fff;color:#067856;font-size:var(--text-md);font-weight:800}
-.draft-clear-order{display:block;margin:7px auto 0;padding:6px 10px;border:0;background:transparent;color:#718b7e;font-size:var(--text-sm)}
+
 .draft-confirmation{
  position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);
  width:min(calc(100% - 28px),460px);max-height:calc(100dvh - 28px);overflow:auto;
@@ -2806,7 +2806,7 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  color:#fff;background:#07875e;font-size:16px;font-weight:850;
 }
 .draft-order-carousel .draft-view-order:hover{background:#066d4d}
-.draft-order-carousel .draft-clear-order{margin-top:10px;font-size:12px}
+.draft-order-carousel 
 .draft-order-carousel-bottom{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px auto 0;color:#47766a;font-weight:800;font-size:13px}
 .draft-order-carousel-bottom[hidden]{display:none!important}
 .draft-order-carousel-bottom button{
@@ -2884,9 +2884,7 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  font-size:15px;
  border-radius:12px;
 }
-.draft-order-carousel .draft-clear-order{
- font-size:12px;
-}
+.draft-order-carousel 
 @media(max-width:480px){
  .draft-order-carousel .draft-carousel-slide{padding:12px 11px 10px}
  .draft-order-carousel .draft-active-heading,
@@ -2948,8 +2946,8 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 .draft-status-popup-hint{text-align:center;margin:0;color:#526c5d;font-size:12px}
 .draft-overview-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .draft-overview-actions .draft-overview-open{border:0;background:transparent;color:#067958;font-size:12px;font-weight:800;cursor:pointer;padding:8px}
-.draft-overview-actions .draft-clear-order{margin:0}
-.draft-history-card>.draft-clear-order{margin:10px auto 0}
+.draft-overview-actions 
+.draft-history-card>
 .draft-order-status-modal{padding:18px 15px 15px;max-width:540px;width:min(540px,calc(100% - 24px));text-align:left;border-radius:21px}
 .draft-order-status-modal .draft-status-close{display:grid;place-items:center;margin:0 0 12px auto;border:1px solid #cbe3d4;background:#f6fcf8;border-radius:50%;width:31px;height:31px;color:#286449;font-size:23px;cursor:pointer}
 .draft-order-status-modal .draft-status-ui{gap:12px}
@@ -2984,152 +2982,15 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
 }
 
 
-/* A single inline order overview: slim, subtle dismiss action inside the card. */
+/* Only the timeout re-order action remains under the customer status card. */
 .draft-order-carousel .draft-overview-actions{
  display:flex;
- justify-content:flex-end;
- align-items:center;
- margin-top:9px;
- padding:0 1px 1px;
-}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim{
- display:inline-flex;
- align-items:center;
- justify-content:center;
- align-self:auto;
- width:auto;
- min-height:28px;
- margin:0;
- padding:5px 12px;
- border:1px solid #d3e4d9;
- border-radius:999px;
- background:#f8fcfa;
- color:#537669;
- font-size:11px;
- font-weight:650;
- line-height:1.2;
- box-shadow:none;
- cursor:pointer;
-}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover{
- background:#eef8f2;
- border-color:#aacbb9;
- color:#136c4c;
-}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:focus-visible{
- outline:2px solid #09825b;
- outline-offset:2px;
-}
-
-
-/* Dismiss only once an order has been processed; never show on a new order. */
-.draft-order-carousel .draft-clear-order[hidden]{display:none!important}
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim{
- display:flex;
- width:max-content;
- max-width:100%;
- min-height:28px;
- padding:5px 12px;
- margin:9px 0 0 auto;
- border:1px solid #d3e4d9;
- border-radius:999px;
- background:#f8fcfa;
- color:#537669;
- font-size:11px;
- font-weight:650;
- line-height:1.2;
- box-shadow:none;
-}
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim:hover{
- background:#eef8f2;
- border-color:#aacbb9;
-}
-
-
-/* Timeout-only repeat is never visible while its hidden attribute is set. */
-.draft-order-carousel .draft-repeat-order[hidden]{display:none!important}
-.draft-order-carousel .draft-overview-actions:has(.draft-repeat-order:not([hidden])){
- flex-wrap:wrap;
- justify-content:flex-end;
-}
-.draft-order-carousel .draft-overview-actions .draft-repeat-order:not([hidden]){
- flex:1 0 100%;
- margin:0 0 5px;
-}
-
-
-/* Full-width green "Fjern oversikt" across all order statuses. */
-.draft-order-carousel .draft-overview-actions{
- display:flex;
- flex-direction:column;
  align-items:stretch;
- justify-content:stretch;
- width:100%;
- gap:8px;
- margin-top:12px;
- padding:0;
+ margin-top:10px;
 }
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim{
- display:flex;
- align-items:center;
- justify-content:center;
- align-self:stretch;
- box-sizing:border-box;
- width:100%;
- max-width:none;
- min-height:46px;
- margin:10px 0 0;
- padding:11px 14px;
- border:0;
- border-radius:14px;
- background:#16652b;
- color:#fff;
- text-align:center;
- font-size:15px;
- font-weight:850;
- line-height:1.25;
- box-shadow:none;
- cursor:pointer;
+.draft-order-carousel .draft-overview-actions[hidden],
+.draft-order-carousel .draft-repeat-order[hidden]{display:none!important}
+.draft-order-carousel .draft-overview-actions .draft-repeat-order{
+ flex:1 1 auto;
+ margin:0;
 }
-.draft-order-carousel .draft-overview-actions .draft-clear-order.draft-clear-order-slim{margin:0}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim:hover{
- background:#0e5123;
- border-color:transparent;
- color:#fff;
-}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:focus-visible{
- outline:3px solid #f3d477;
- outline-offset:2px;
-}
-
-
-/* Compact red dismiss button in every order state. */
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim{
- box-sizing:border-box;
- height:26px;
- min-height:26px;
- max-height:26px;
- padding:2px 10px;
- border:0;
- border-radius:9px;
- background:#EF5350;
- color:#fff;
- font-size:12px;
- font-weight:750;
- line-height:1.1;
-}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim:hover{
- background:#D83C3A;
- border-color:transparent;
- color:#fff;
-}
-
-/* Requested Fjern oversikt color. */
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim{background:#00695C;}
-.draft-order-carousel .draft-clear-order.draft-clear-order-slim:hover,
-.draft-order-carousel .draft-history-card>.draft-clear-order.draft-clear-order-slim:hover{background:#005347;}
