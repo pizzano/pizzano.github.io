@@ -574,11 +574,9 @@ function orderOverviewRemember(order){
  renderOrderOverviewCarousel();
 }
 function overviewCardExpired(order){
- const status=order.statusPublic?.status||order.status;
  if(order.hidden)return true;
- if(status!=='klar')return false;
- const readyAt=Number(order.readyAt)||Number(order.statusPublic?.updatedAt)||0;
- return readyAt>0&&Date.now()-readyAt>=OVERVIEW_READY_HIDE_MS;
+ const hideAt=orderAutoHideAt(order);
+ return hideAt>0&&Date.now()>=hideAt;
 }
 
 /* One shared card layout used by the menu, order popup and local history.
@@ -598,15 +596,16 @@ function orderStatusIcon(name){
 function orderOverviewMarkup(order,mode='history'){
  const state=order.statusPublic||{status:order.status||'mottatt'};
  const status=state.status||order.status||'mottatt';
- const pending=status==='mottatt',approved=status==='godkjent',ready=status==='klar',rejected=status==='avvist';
+ const deadline=customerAcceptanceDeadline(order);
+ const locallyOverdue=status==='mottatt'&&deadline>0&&Date.now()>=deadline;
+ const pending=status==='mottatt'&&!locallyOverdue,approved=status==='godkjent',ready=status==='klar',rejected=status==='avvist';
  const timeout=rejected&&state.rejectReason==='Ikke bekreftet innen 5 minutter';
- const theme=ready?'ready':rejected?'rejected':approved?'approved':'pending';
- const title=ready?'Bestillingen er klar':rejected?'Bestillingen er avvist':approved?'Bestillingen er godkjent':'Ny bestilling';
- const badge=ready?'✓ Klar':rejected?'× Avvist':approved?'✓ Bekreftet':'● Venter';
- const glyph=orderStatusIcon(ready?'bag':rejected?'cross':approved?'check':'clock');
+ const theme=ready?'ready':rejected?'rejected':locallyOverdue?'rejected':approved?'approved':'pending';
+ const title=ready?'Bestillingen er klar':rejected?'Bestillingen er avvist':locallyOverdue?'Bekreftelsesfristen er utløpt':approved?'Bestillingen er godkjent':'Ny bestilling';
+ const badge=ready?'✓ Klar':rejected?'× Avvist':locallyOverdue?'× Tidsavbrutt':approved?'✓ Bekreftet':'● Venter';
+ const glyph=orderStatusIcon(ready?'bag':rejected||locallyOverdue?'cross':approved?'check':'clock');
  const pickup=visiblePickupAt(order);
  const pickupText=pickup?new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup)):(order.pickup?.label||'Snarest');
- const deadline=customerAcceptanceDeadline(order);
  const rejectReason=timeout?'Ikke bekreftet innen 5 minutter.':String(state.rejectReason||'').trim();
  const description=rejected?(rejectReason?'Årsak: '+rejectReason:'Restauranten har ikke oppgitt en grunn.'):
   ready?'Maten din er klar. Kom og hent den!':
@@ -614,7 +613,7 @@ function orderOverviewMarkup(order,mode='history'){
  const remaining=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
   pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
  const note=ready?'Klar for henting':rejected?('Årsak: '+(rejectReason||'Ingen grunn oppgitt')):
-  remaining||(pending?'Venter på bekreftelse':'Forventet hentetid er nådd');
+  locallyOverdue?'Ingen bekreftelse innen 5 minutter':remaining||(pending?'Venter på bekreftelse':'Forventet hentetid er nådd');
  const id=esc(String(order.id||'').slice(-6).toUpperCase());
  const items=Array.isArray(order.items)?order.items:[];
  const quantity=items.reduce((sum,item)=>sum+Math.max(0,Number(item.qty)||0),0);
@@ -628,24 +627,24 @@ function orderOverviewMarkup(order,mode='history'){
    '</span><b>'+money(count*(Number(item.unitPrice)||0))+'</b></div>';
  }).join('');
  const part=(n,stepLabel)=>'<div class="draft-status-step '+(n===0||n===1&&(approved||ready)||n===2&&ready?'is-complete':'')+
-  (n===2&&approved?' is-current':'')+(n===1&&rejected?' is-failed':'')+'"><i aria-hidden="true">'+
-  (n===0||n===1&&(approved||ready)||n===2&&ready?'✓':n===1&&rejected?'×':'')+
+  (n===2&&approved?' is-current':'')+(n===1&&(rejected||locallyOverdue)?' is-failed':'')+'"><i aria-hidden="true">'+
+  (n===0||n===1&&(approved||ready)||n===2&&ready?'✓':n===1&&(rejected||locallyOverdue)?'×':'')+
   '</i><span>'+stepLabel+'</span></div>';
- return '<div class="draft-status-ui" data-visual-status="'+theme+'">'+
+ return '<div class="draft-status-ui" data-visual-status="'+theme+'"'+(locallyOverdue?' data-local-timeout="true"':'')+'>'+
  '<div class="draft-status-head"><span class="draft-status-head-icon" aria-hidden="true">'+glyph+'</span>'+
  '<strong>'+title+'</strong>'+
  '<span class="draft-status-badge">'+badge+'</span></div>'+
  '<div class="draft-status-progress">'+part(0,'Mottatt')+
- '<span class="draft-status-line '+(approved||ready?'is-complete':rejected?'is-failed':'')+'"></span>'+
+ '<span class="draft-status-line '+(approved||ready?'is-complete':(rejected||locallyOverdue)?'is-failed':'')+'"></span>'+
  part(1,'Bekreftet')+'<span class="draft-status-line '+(ready?'is-complete':'')+'"></span>'+part(2,'Klar')+'</div>'+
  '<div class="draft-status-facts">'+
  '<div><span class="draft-status-fact-icon">'+orderStatusIcon('parcel')+'</span><span><small>Ordrenummer</small><strong>#'+id+'</strong></span></div>'+
  '<div><span class="draft-status-fact-icon">'+orderStatusIcon('calendar')+'</span><span><small>Hentetid</small><strong>'+esc(pickupText)+'</strong></span></div>'+
  '<div><span class="draft-status-fact-icon">'+orderStatusIcon('coins')+'</span><span><small>Beløp</small><strong>'+money(order.total)+'</strong></span></div>'+
  '</div>'+
- '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+orderStatusIcon(ready?'bag':rejected?'cross':'clock')+'</span>'+
+ '<div class="draft-status-message"><span class="draft-status-message-icon" aria-hidden="true">'+orderStatusIcon(ready?'bag':(rejected||locallyOverdue)?'cross':'clock')+'</span>'+
  '<span class="draft-status-message-copy"><strong>'+esc(note)+'</strong>'+
- (!rejected&&!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
+ (locallyOverdue?'<small>Dette er ikke bekreftet av restauranten. Kontakt restauranten ved spørsmål.</small>':!rejected&&!ready&&!pending?'<small>'+esc(description)+'</small>':'')+
  '</span></div>'+
  '<details class="draft-status-details"><summary><strong>Vis bestillingen</strong><span>'+quantity+' '+(quantity===1?'vare':'varer')+'</span><span class="draft-status-chevron" aria-hidden="true">⌄</span></summary>'+
  '<div class="draft-status-products">'+details+
@@ -656,8 +655,7 @@ function orderOverviewMarkup(order,mode='history'){
 
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
- orderOverviewMarkup(order,'history')+
- '<button type="button" class="draft-clear-order draft-clear-order-slim" data-history-dismiss="'+esc(order.id)+'">Fjern oversikt</button>'+'</article>';
+ orderOverviewMarkup(order,'history')+'</article>';
 }
 
 function renderOrderOverviewCarousel(){
@@ -722,16 +720,26 @@ function visiblePickupAt(order){
  return Math.max(scheduled,confirmed);
 }
 
-function localOrderExpiresAt(order){
+function orderAutoHideAt(order){
  if(!order)return 0;
  const status=order.statusPublic?.status||order.status;
- // Do not hide a pending or rejected order automatically.
- if(status!=='godkjent'&&status!=='klar')return 0;
- const expected=visiblePickupAt(order);
- const ready=status==='klar'?Number(order.statusPublic?.updatedAt)||0:0;
- return status==='klar'&&ready>0?ready+ORDER_CARD_GRACE_MS:0;
+ if(status==='klar'){
+  const readyAt=Number(order.readyAt)||Number(order.statusPublic?.updatedAt)||0;
+  return readyAt>0?readyAt+ORDER_CARD_GRACE_MS:0;
+ }
+ // 5 minutes for restaurant acknowledgement, then 10 more minutes visible.
+ // Preorders without an acceptance deadline remain visible as before.
+ const timeout=status==='avvist'&&String(order.statusPublic?.rejectReason||'').trim()==='Ikke bekreftet innen 5 minutter';
+ if(status!=='mottatt'&&!timeout)return 0;
+ const deadline=customerAcceptanceDeadline(order);
+ if(deadline>0)return deadline+ORDER_CARD_GRACE_MS;
+ const confirmedAt=timeout?Number(order.statusPublic?.updatedAt)||0:0;
+ return confirmedAt>0?confirmedAt+ORDER_CARD_GRACE_MS:0;
 }
-function clearActiveOrder(showNotice=false){
+function localOrderExpiresAt(order){
+ return orderAutoHideAt(order);
+}
+function clearActiveOrder(){
  stopCustomerStatus();
  const removedId=localOrder?.id;
  localOrder=null;
@@ -746,7 +754,7 @@ function clearActiveOrder(showNotice=false){
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
  renderOrderOverviewCarousel();
- if(showNotice)showFatih1Toast('Bestillingsoversikten er fjernet fra denne enheten.');
+
 }
 function scheduleActiveOrderExpiry(){
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
@@ -785,11 +793,10 @@ function isRepeatableTimedOutOrder(){
  return state?.status==='avvist'&&String(state.rejectReason||'').trim()==='Ikke bekreftet innen 5 minutter';
 }
 function updateOrderActionButtons(){
- const status=localPublicStatus().status;
- const dismiss=$('draftClearOrder');
- const repeat=$('draftRepeatOrder');
- if(dismiss)dismiss.hidden=false;
- if(repeat)repeat.hidden=!isRepeatableTimedOutOrder();
+ const repeat=$('draftRepeatOrder'),actions=$('draftOrderActions');
+ const visible=isRepeatableTimedOutOrder();
+ if(repeat)repeat.hidden=!visible;
+ if(actions)actions.hidden=!visible;
 }
 function repeatExpiredOrder(){
  if(!isRepeatableTimedOutOrder())return;
@@ -828,6 +835,11 @@ function updateCustomerCountdown(){
  const state=localPublicStatus().status;
  const pickup=visiblePickupAt(localOrder),deadline=customerAcceptanceDeadline(localOrder);
  const pending=state==='mottatt'&&deadline>0,approved=state==='godkjent';
+ if(pending&&Date.now()>=deadline){
+  const statusCard=$('draftActiveContent')?.querySelector('.draft-status-ui');
+  if(statusCard&&!statusCard.hasAttribute('data-local-timeout'))displayLiveOrderStatus();
+  return;
+ }
  const text=approved&&pickup>Date.now()?'Klar om '+shortRemaining(pickup):
   pending&&deadline>Date.now()?'Tid til bekreftelse: '+shortRemaining(deadline):'';
  for(const node of document.querySelectorAll('#draftActiveContent .draft-status-message-copy strong')){
@@ -1269,18 +1281,8 @@ $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();ch
 document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.addEventListener('change',event=>{pickupSelection.mode=event.target.value;renderDraftPickupChoices();writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast(pickupSelection.mode==='asap'?'Henting: Snarest':'Henting: Velg tid','info')}));
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftRepeatOrder').onclick=repeatExpiredOrder;
-$('draftClearOrder').onclick=()=>clearActiveOrder(true);
 $('draftOrderPrev').onclick=()=>moveOrderOverview(overviewCarouselIndex-1);
 $('draftOrderNext').onclick=()=>moveOrderOverview(overviewCarouselIndex+1);
-$('draftOrderCarouselTrack').addEventListener('click',event=>{
- const btn=event.target.closest('[data-history-dismiss]');
- if(!btn)return;
- const list=orderOverviewHistory();
- if(list.some(o=>o.id===btn.dataset.historyDismiss)){
-  writeLocalData(OVERVIEW_HISTORY_KEY,list.filter(o=>o.id!==btn.dataset.historyDismiss));
- }
- renderOrderOverviewCarousel();
-});
 $('draftOrderCarouselTrack').addEventListener('scroll',()=>{
  const track=$('draftOrderCarouselTrack');
  const slides=[...track.querySelectorAll('.draft-carousel-slide:not([hidden])')];
