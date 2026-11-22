@@ -677,7 +677,7 @@ function orderOverviewMarkup(order,mode='history'){
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
  orderOverviewMarkup(order,'history')+
- '<div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview="'+esc(order.id)+'">Gizle</button></div></article>';
+ '<div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview="'+esc(order.id)+'">Skjul</button></div></article>';
 }
 
 function renderOrderOverviewCarousel(){
