@@ -647,9 +647,13 @@ function orderOverviewMarkup(order,mode='history'){
    (item.comment?'<small>'+esc(item.comment)+'</small>':'')+
    '</span><b>'+money(count*(Number(item.unitPrice)||0))+'</b></div>';
  }).join('');
- const part=(n,stepLabel)=>'<div class="draft-status-step '+(n===0||n===1&&(approved||ready)||n===2&&ready?'is-complete':'')+
-  (n===2&&approved?' is-current':'')+(n===1&&(rejected||locallyOverdue)?' is-failed':'')+'"><i aria-hidden="true">'+
-  (n===0||n===1&&(approved||ready)||n===2&&ready?'✓':n===1&&(rejected||locallyOverdue)?'×':'')+
+ // Green "Klar" is only visual when the estimated pickup time has passed.
+ // Firebase status remains "godkjent" until the restaurant confirms "klar".
+ const estimatedReady=approved&&pickup>0&&pickup<=Date.now();
+ const visualReady=ready||estimatedReady;
+ const part=(n,stepLabel)=>'<div class="draft-status-step '+(n===0||n===1&&(approved||ready)||n===2&&visualReady?'is-complete':'')+
+  (n===2&&approved&&!estimatedReady?' is-current':'')+(n===1&&(rejected||locallyOverdue)?' is-failed':'')+'"><i aria-hidden="true">'+
+  (n===0||n===1&&(approved||ready)||n===2&&visualReady?'✓':n===1&&(rejected||locallyOverdue)?'×':'')+
   '</i><span>'+stepLabel+'</span></div>';
  return '<div class="draft-status-ui" data-visual-status="'+theme+'"'+(locallyOverdue?' data-local-timeout="true"':'')+'>'+
  '<div class="draft-status-head"><span class="draft-status-head-icon" aria-hidden="true">'+glyph+'</span>'+
@@ -657,7 +661,7 @@ function orderOverviewMarkup(order,mode='history'){
  '<span class="draft-status-badge">'+badge+'</span></div>'+
  '<div class="draft-status-progress">'+part(0,'Mottatt')+
  '<span class="draft-status-line '+(approved||ready?'is-complete':(rejected||locallyOverdue)?'is-failed':'')+'"></span>'+
- part(1,'Bekreftet')+'<span class="draft-status-line '+(ready?'is-complete':'')+'"></span>'+part(2,'Klar')+'</div>'+
+ part(1,'Bekreftet')+'<span class="draft-status-line '+(visualReady?'is-complete':'')+'"></span>'+part(2,'Klar')+'</div>'+
  '<div class="draft-status-facts">'+
  '<div><span class="draft-status-fact-icon">'+orderStatusIcon('parcel')+'</span><span><small>Ordrenummer</small><strong>#'+id+'</strong></span></div>'+
  '<div><span class="draft-status-fact-icon">'+orderStatusIcon('calendar')+'</span><span><small>Hentetid</small><strong>'+esc(pickupText)+'</strong></span></div>'+
@@ -711,7 +715,7 @@ function renderOrderOverviewCarousel(){
  $('draftOverviewHiddenLabel').textContent=hiddenCount?
   (overviewShowHidden?'Skjul arkiv':'Vis arkiv ('+hiddenCount+')'):'';
  // Update locally cached receipts when pickup time passes; no extra Firebase reads.
- // Preserve open <details> elements by updating only the message text.
+ // Preserve open <details> elements by updating the message and progress only.
  const cardsById=new Map([...track.querySelectorAll('.draft-history-card')].map(node=>[node.dataset.overviewId,node]));
  for(const order of visibleOthers){
   if((order.statusPublic?.status||order.status)!=='godkjent')continue;
@@ -721,6 +725,7 @@ function renderOrderOverviewCarousel(){
   const subtitle=card?.querySelector('.draft-status-message-copy small');
   if(title)title.textContent=message.note;
   if(subtitle)subtitle.textContent=message.description;
+  updateEstimatedPickupProgress(card,order);
  }
  const bottom=$('draftOrderCarouselBottom');
  bottom.hidden=IDs.length<2;
@@ -779,6 +784,20 @@ function approvedPickupMessage(order){
   return {note:'Klar om '+shortRemaining(pickup),description:'Henting '+date};
  }
  return {note:'Bestillingen er godkjent',description:'Restauranten har bekreftet bestillingen.'};
+}
+// Sync the third step without rebuilding the card or losing expanded order details.
+function updateEstimatedPickupProgress(root,order){
+ const progress=root?.querySelector('.draft-status-progress');
+ const step=progress?.querySelector('.draft-status-step:last-child');
+ const line=progress?.querySelectorAll('.draft-status-line')[1];
+ if(!step||!line)return;
+ const pickup=visiblePickupAt(order);
+ const reached=pickup>0&&pickup<=Date.now();
+ step.classList.toggle('is-complete',reached);
+ step.classList.toggle('is-current',!reached);
+ const indicator=step.querySelector('i');
+ if(indicator)indicator.textContent=reached?'✓':'';
+ line.classList.toggle('is-complete',reached);
 }
 function orderAutoHideAt(order){
  const day=osloOrderDateKey(order?.createdAt);
@@ -900,6 +919,7 @@ function updateCustomerCountdown(){
   const subtitle=message.querySelector('small');
   if(title)title.textContent=approved?approvedMessage.note:text||'Venter på bekreftelse';
   if(approved&&subtitle)subtitle.textContent=approvedMessage.description;
+  if(approved)updateEstimatedPickupProgress(message.closest('.draft-status-ui'),localOrder);
  }
 
 }
