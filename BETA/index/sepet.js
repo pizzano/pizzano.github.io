@@ -531,12 +531,21 @@ let customerContact=readLocalData(FATIH1_CONTACT_STORAGE_KEY,{name:'',phone:'',e
 let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:'',label:''});
 let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
 let checkoutStep='cart',localOrderExpiryTimer=null;
-const ORDER_CARD_GRACE_MS=10*60*1000;
+// Keep order receipts only for their original Oslo calendar day.
+const OSLO_ORDER_DATE_FORMAT=new Intl.DateTimeFormat('en-GB',{
+ timeZone:'Europe/Oslo',year:'numeric',month:'2-digit',day:'2-digit'
+});
+function osloOrderDateKey(timestamp){
+ const date=new Date(Number(timestamp));
+ if(!Number.isFinite(date.getTime()))return '';
+ const parts=OSLO_ORDER_DATE_FORMAT.formatToParts(date);
+ const part=type=>parts.find(p=>p.type===type)?.value||'';
+ return part('year')+'-'+part('month')+'-'+part('day');
+}
 
 const OVERVIEW_HISTORY_KEY='kol-beta-local-order-overviews-v1';
-const OVERVIEW_READY_HIDE_MS=10*60*1000;
 const OVERVIEW_HISTORY_LIMIT=10;
-let overviewCarouselIndex=0,overviewRenderedIDs='';
+let overviewCarouselIndex=0,overviewRenderedIDs='',overviewShowHidden=false;
 function orderOverviewHistory(){
  const data=readLocalData(OVERVIEW_HISTORY_KEY,[]);
  const items=Array.isArray(data)?data:[];
@@ -567,6 +576,7 @@ function orderOverviewRemember(order){
   total:Number(order.total)||0
  };
  fresh.hidden=Boolean(old?.hidden);
+ fresh.collapsed=Boolean(old?.collapsed);
  fresh.readyAt=Number(old?.readyAt)||0;
  if(fresh.statusPublic?.status==='klar'&&!fresh.readyAt)
   fresh.readyAt=Number(fresh.statusPublic.updatedAt)||Date.now();
@@ -574,9 +584,20 @@ function orderOverviewRemember(order){
  renderOrderOverviewCarousel();
 }
 function overviewCardExpired(order){
- if(order.hidden)return true;
+ if(order.hidden)return true; // Legacy permanently dismissed orders.
  const hideAt=orderAutoHideAt(order);
- return hideAt>0&&Date.now()>=hideAt;
+ return !hideAt||Date.now()>=hideAt;
+}
+// Hide this card in the menu, but keep its local receipt until Oslo midnight.
+function hideOrderOverview(id){
+ const history=orderOverviewHistory();
+ if(!history.some(order=>order.id===id))return;
+ writeLocalData(OVERVIEW_HISTORY_KEY,history.map(order=>
+  order.id===id?{...order,collapsed:true}:order
+ ));
+ overviewShowHidden=false;
+ overviewCarouselIndex=0;
+ renderOrderOverviewCarousel();
 }
 
 /* One shared card layout used by the menu, order popup and local history.
@@ -655,24 +676,40 @@ function orderOverviewMarkup(order,mode='history'){
 
 function localOrderOverviewCard(order){
  return '<article class="draft-active-order draft-carousel-slide draft-history-card" data-overview-id="'+esc(order.id)+'">'+
- orderOverviewMarkup(order,'history')+'</article>';
+ orderOverviewMarkup(order,'history')+
+ '<div class="draft-overview-footer"><button type="button" class="draft-hide-order" data-hide-overview="'+esc(order.id)+'">Gizle</button></div></article>';
 }
 
 function renderOrderOverviewCarousel(){
  const root=$('draftOrderCarousel'),track=$('draftOrderCarouselTrack'),active=$('draftActiveOrder');
  if(!root||!track||!active)return;
- const activeShown=!!localOrder&&!overviewCardExpired(localOrder)&&localOrder.status!=='expired';
- const others=orderOverviewHistory().filter(o=>o.id!==localOrder?.id&&!overviewCardExpired(o));
- const IDs=(activeShown?[localOrder.id]:[]).concat(others.map(o=>o.id));
+ const activeValid=!!localOrder&&!overviewCardExpired(localOrder)&&localOrder.status!=='expired';
+ const history=orderOverviewHistory();
+ const activeRecord=activeValid?history.find(o=>o.id===localOrder.id):null;
+ const others=history.filter(o=>o.id!==localOrder?.id);
+ const allOrders=(activeValid?[{id:localOrder.id,collapsed:Boolean(activeRecord?.collapsed)}]:[])
+  .concat(others.map(o=>({id:o.id,collapsed:Boolean(o.collapsed)})));
+ const hiddenCount=allOrders.filter(o=>o.collapsed).length;
+ if(!hiddenCount)overviewShowHidden=false;
+ const activeShown=activeValid&&(!activeRecord?.collapsed||overviewShowHidden);
+ const visibleOthers=others.filter(o=>!o.collapsed||overviewShowHidden);
+ const IDs=(activeShown?[localOrder.id]:[]).concat(visibleOthers.map(o=>o.id));
  const identity=IDs.join('|');
  if(identity!==overviewRenderedIDs){
   overviewRenderedIDs=identity;
   track.querySelectorAll('.draft-history-card').forEach(node=>node.remove());
-  track.insertAdjacentHTML('beforeend',others.map(localOrderOverviewCard).join(''));
+  track.insertAdjacentHTML('beforeend',visibleOthers.map(localOrderOverviewCard).join(''));
   overviewCarouselIndex=Math.min(overviewCarouselIndex,Math.max(IDs.length-1,0));
  }
  active.hidden=!activeShown;
- root.hidden=!IDs.length;
+ root.hidden=!allOrders.length;
+ track.hidden=!IDs.length;
+ const heading=$('draftOverviewToggle');
+ heading.disabled=!hiddenCount;
+ heading.setAttribute('aria-expanded',String(overviewShowHidden));
+ $('draftOverviewCount').textContent=allOrders.length+' '+(allOrders.length===1?'bestilling':'bestillinger');
+ $('draftOverviewHiddenLabel').textContent=hiddenCount?
+  (overviewShowHidden?'Skjul skjulte':'Vis skjulte ('+hiddenCount+')'):'';
  const bottom=$('draftOrderCarouselBottom');
  bottom.hidden=IDs.length<2;
  $('draftOrderCarouselPosition').textContent=IDs.length?(overviewCarouselIndex+1)+' / '+IDs.length:'';
@@ -721,20 +758,12 @@ function visiblePickupAt(order){
 }
 
 function orderAutoHideAt(order){
- if(!order)return 0;
- const status=order.statusPublic?.status||order.status;
- if(status==='klar'){
-  const readyAt=Number(order.readyAt)||Number(order.statusPublic?.updatedAt)||0;
-  return readyAt>0?readyAt+ORDER_CARD_GRACE_MS:0;
- }
- // 5 minutes for restaurant acknowledgement, then 10 more minutes visible.
- // Preorders without an acceptance deadline remain visible as before.
- const timeout=status==='avvist'&&String(order.statusPublic?.rejectReason||'').trim()==='Ikke bekreftet innen 5 minutter';
- if(status!=='mottatt'&&!timeout)return 0;
- const deadline=customerAcceptanceDeadline(order);
- if(deadline>0)return deadline+ORDER_CARD_GRACE_MS;
- const confirmedAt=timeout?Number(order.statusPublic?.updatedAt)||0:0;
- return confirmedAt>0?confirmedAt+ORDER_CARD_GRACE_MS:0;
+ const day=osloOrderDateKey(order?.createdAt);
+ if(!day)return 0;
+ const [year,month,date]=day.split('-').map(Number);
+ const nextDay=new Date(Date.UTC(year,month-1,date+1)).toISOString().slice(0,10);
+ // Resolve Oslo midnight correctly on both normal and DST change days.
+ return osloScheduledPickupAt({pickup:{mode:'scheduled',time:nextDay+'T00:00'}});
 }
 function localOrderExpiresAt(order){
  return orderAutoHideAt(order);
@@ -1281,6 +1310,18 @@ $('cartContactStep').addEventListener('submit',event=>{event.preventDefault();ch
 document.querySelectorAll('input[name="draftPickupMode"]').forEach(input=>input.addEventListener('change',event=>{pickupSelection.mode=event.target.value;renderDraftPickupChoices();writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast(pickupSelection.mode==='asap'?'Henting: Snarest':'Henting: Velg tid','info')}));
 $('draftPickupTime').addEventListener('change',event=>{pickupSelection.time=event.target.value;pickupSelection.label=event.target.selectedOptions[0]?.textContent||'';writeLocalData(FATIH1_PICKUP_STORAGE_KEY,pickupSelection);showFatih1Toast('Hentetid: '+pickupSelection.label,'info')});
 $('draftRepeatOrder').onclick=repeatExpiredOrder;
+$('draftOverviewToggle').onclick=()=>{
+ if(!orderOverviewHistory().some(order=>order.collapsed))return;
+ overviewShowHidden=!overviewShowHidden;
+ overviewCarouselIndex=0;
+ renderOrderOverviewCarousel();
+};
+$('draftOrderCarousel').addEventListener('click',event=>{
+ const button=event.target.closest('[data-hide-overview]');
+ if(!button)return;
+ const id=button.dataset.hideOverview||localOrder?.id;
+ if(id)hideOrderOverview(id);
+});
 $('draftOrderPrev').onclick=()=>moveOrderOverview(overviewCarouselIndex-1);
 $('draftOrderNext').onclick=()=>moveOrderOverview(overviewCarouselIndex+1);
 $('draftOrderCarouselTrack').addEventListener('scroll',()=>{
