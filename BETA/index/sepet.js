@@ -313,6 +313,7 @@ function renderCartContents(){
    '</strong></div></article>';
  }).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
  renderCartRecommendations();
+ syncCheckoutAvailability();
  $('cartItems').querySelectorAll('[data-cart-plus]').forEach(button=>button.disabled=false);
 }
 
@@ -1052,6 +1053,20 @@ function showCheckoutError(message,field){
  error.hidden=!message;
  if(field)$(field).focus();
 }
+const CHECKOUT_CLOSED_MESSAGE='Restauranten er stengt. Du kan ikke bestille nå.';
+function syncCheckoutAvailability(){
+ if($('cartSheet').hidden)return;
+ if(!getOrderingState().orderable){
+  $('cartNext').disabled=true;
+  showCheckoutError(CHECKOUT_CLOSED_MESSAGE);
+  return;
+ }
+ if($('checkoutError').textContent===CHECKOUT_CLOSED_MESSAGE)showCheckoutError('');
+ if(checkoutStep==='cart'){
+  const review=reconcileCartWithMenu();
+  $('cartNext').disabled=!cart.length||!!review.issues.length;
+ }else if(!orderSubmissionBusy&&!customerSavePending)$('cartNext').disabled=false;
+}
 function updateContactValidation(){
  const fields=[
   ['draftFullName',v=>v.trim().length>=2],
@@ -1215,6 +1230,7 @@ function checkoutNavigate(step){
   renderDraftPickupChoices();
   pickupSummary();
  }
+ syncCheckoutAvailability();
  $('cartScroll').scrollTo({top:0,behavior:'instant'});
 }
 function localOrderId(){
@@ -1231,6 +1247,7 @@ function createFirebaseOrderId(now){
 }
 async function submitDraftOrder(){
  if(orderSubmissionBusy)return;
+ if(!getOrderingState().orderable){syncCheckoutAvailability();return;}
  if(!cart.length){checkoutNavigate('cart');return}
  if(!menu){showCheckoutError('Menyen er ikke lastet. Prøv igjen.');return}
  if(cart.length>60||cart.some(line=>!Number.isInteger(Number(line.qty))||Number(line.qty)<1||Number(line.qty)>99)){
@@ -1301,10 +1318,11 @@ async function submitDraftOrder(){
   console.warn('BestillOnline order submission failed:',error);
   showCheckoutError(error.message+' Handlekurven er beholdt. Kontroller med restauranten før du prøver igjen.');
  }finally{
-  orderSubmissionBusy=false;$('cartNext').disabled=false;$('cartNext').textContent='Send bestilling';
+  orderSubmissionBusy=false;$('cartNext').textContent='Send bestilling';syncCheckoutAvailability();
  }
 }
 async function checkoutNext(){
+ if(!getOrderingState().orderable){syncCheckoutAvailability();return;}
  if(checkoutStep==='cart'){
   const review=reconcileCartWithMenu();
   if(review.issues.length){
@@ -1318,7 +1336,7 @@ async function checkoutNext(){
     const syncResult=await syncFatih1Customer();
     if(syncResult){checkoutNavigate('pickup');if(syncResult==='saved')showFatih1Toast('Kontaktinformasjonen er lagret i Firebase')}
     else{showCheckoutError('Kunne ikke lagre kontaktinformasjonen i Firebase. Kontroller tilgang og prøv igjen.');showFatih1Toast('Kunne ikke lagre kontaktinformasjonen','error')}
-   }finally{$('cartNext').disabled=false}
+   }finally{syncCheckoutAvailability()}
   }
  }else await submitDraftOrder();
 }
