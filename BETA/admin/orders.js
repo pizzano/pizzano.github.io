@@ -410,14 +410,33 @@
  function renderDetails(){
   const o=orders.get(activeId);
   if(!o)return;
-  const previous=$('ordersDetail').querySelector('.detail-customer-accordion');
-  const wasExpanded=previous?.open&&previous.dataset.detailAccordion===o.id;
-  text('detailTitle',money(o.total));
+  const previous=$('ordersDetail').querySelector('[data-detail-accordion]');
+  const wasExpanded=previous?.dataset.detailAccordion===o.id&&previous.getAttribute('aria-expanded')==='true';
+  const productsScroll=$('ordersDetail').querySelector('.order-products-scroll')?.scrollTop||0;
   const pickup=o.pickup||{},items=Array.isArray(o.items)?o.items:[];
   const phone=String(o.phone||o.customer?.phone||'').replace(/[^+\d]/g,'');
   const mail=String(o.email||o.customer?.email||'');
   const phoneLink=phone?'<a href="tel:'+safe(phone)+'">'+safe(phone)+'</a>':'—';
-  const when=o.expectedReadyAt?'Bekreftet hentetid: '+fmtDate(o.expectedReadyAt):scheduledPickupTimestamp(o.pickup)?'Ønsket hentetid: '+fmtDate(scheduledPickupTimestamp(o.pickup)):'Hentetid bekreftes ved godkjenning';
+  const confirmed=Number(o.expectedReadyAt)>0,scheduled=scheduledPickupTimestamp(o.pickup);
+  const timeLabel=confirmed?'Bekreftet hentetid':scheduled?'Ønsket hentetid':'Hentetid';
+  const timeText=confirmed?fmtDate(o.expectedReadyAt):scheduled?fmtDate(scheduled):'Avventer bekreftelse';
+  const later=pickupKind(o)==='SENERE';
+  const prepLabel=later?'SENERE':'Tilberedning';
+  const prepText=later?scheduledPickupLabel(o):(o.prepMinutes?o.prepMinutes+' min':'—');
+  const svg=path=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+  const symbols={
+   user:svg('<circle cx="12" cy="7" r="3.5"/><path d="M4 21v-3c0-4 3-6 8-6s8 2 8 6v3"/>'),
+   prep:svg('<rect x="3" y="10" width="18" height="10" rx="2"/><path d="M2 10h20M9 7h6l2 3M8 5h8"/>'),
+   time:svg('<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2.5"/>'),
+   id:svg('<path d="M3 12 13 2h8v8L11 20a2.5 2.5 0 0 1-3.5 0L3 15.5a2.5 2.5 0 0 1 0-3.5Z"/><circle cx="17.5" cy="6.5" r="1.2"/>'),
+   date:svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 10h18"/>'),
+   check:svg('<circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/>'),
+   bag:svg('<path d="M5 9h14l-1 12H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/>'),
+   phone:svg('<path d="m6 2 3.5 4.5-2 3a18 18 0 0 0 7 7l3-2L22 18v3a2 2 0 0 1-2 2C11 22 2 13 2 4a2 2 0 0 1 2-2h2Z"/>'),
+   mail:svg('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 6 9 7 9-7"/>'),
+   box:svg('<path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10"/>')
+  };
+  const fact=(k,label,val)=>'<div class="detail-fact">'+symbols[k]+'<span class="detail-fact-copy"><small>'+label+'</small><strong>'+val+'</strong></span></div>';
   const lines=items.map(line=>{
    const quantity=Math.max(1,Number(line.qty)||1),unitPrice=Number(line.unitPrice)||0;
    return '<article class="order-product-card"><div class="order-product-title"><strong>'+
@@ -426,23 +445,30 @@
     '<div class="order-product-total"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(unitPrice)+')':'')+'</span><strong>'+money(quantity*unitPrice)+'</strong></div></article>';
   }).join('');
   $('ordersDetail').innerHTML=
-   '<div class="detail-summary"><div><div class="detail-status">'+safe(labelForOrder(o))+' <span class="order-pickup-badge" data-kind="'+pickupKind(o)+'">'+pickupKind(o)+'</span></div><small>'+safe(when)+'</small></div><strong>'+money(o.total)+'</strong></div>'+
-   '<details class="detail-customer-accordion" data-detail-accordion="'+safe(o.id)+'"'+(wasExpanded?' open':'')+'>'+
-   '<summary><span class="detail-accordion-customer"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
-   '<span class="detail-accordion-prep">'+(pickupKind(o)==='SENERE'?
-    '<small>SENERE</small><strong>SENERE · '+safe(scheduledPickupLabel(o))+'</strong>':
-    '<small>Tilberedning</small><strong>'+safe(o.prepMinutes?o.prepMinutes+' min':'—')+'</strong>')+'</span>'+
-   '<span class="detail-accordion-chevron" aria-hidden="true">⌄</span></summary>'+
-   '<div class="detail-facts"><div><label>Bestillings-ID</label><strong>#'+safe(o.id.slice(-8).toUpperCase())+'</strong></div>'+
-   '<div><label>Bestilt</label><strong>'+fmtDate(o.createdAt)+'</strong></div>'+
-   '<div><label>Godkjent</label><strong>'+fmtDate(o.acceptedAt)+'</strong></div>'+
-   '<div><label>Henting</label><strong>'+pickupKind(o)+' · '+safe(pickup.label||'Snarest')+'</strong></div>'+
-   '<div><label>Telefon</label>'+phoneLink+'</div>'+
-   (mail?'<div><label>E-post</label><strong>'+safe(mail)+'</strong></div>':'')+
-   '</div></details>'+
-   '<section class="detail-items"><h3>Produkter</h3><div class="order-products-grid">'+lines+'</div></section>'+
-   (o.rejectReason?'<p class="orders-feedback error">Avvist: '+safe(o.rejectReason)+'</p>':'')+
+   '<section class="detail-customer-card">'+
+    '<div class="detail-quick-info">'+
+     '<button type="button" class="detail-quick-customer" data-detail-accordion="'+safe(o.id)+'" aria-controls="detailExtraFacts" aria-expanded="'+String(wasExpanded)+'" title="Vis eller skjul kundedetaljer">'+
+      symbols.user+'<span class="detail-quick-copy"><small>Kunde</small><strong>'+safe(o.name||o.customer?.fullName||'—')+'</strong></span>'+
+      '<span class="detail-quick-chevron" aria-hidden="true">⌄</span></button>'+
+     '<div class="detail-quick-prep">'+symbols.prep+'<span class="detail-quick-copy"><small>'+prepLabel+'</small><strong>'+safe(prepText)+'</strong></span></div>'+
+     '<div class="detail-quick-pickup">'+symbols.time+'<span class="detail-quick-copy"><small>'+timeLabel+'</small><strong>'+safe(timeText)+'</strong></span></div>'+
+    '</div>'+
+    '<div id="detailExtraFacts" class="detail-facts"'+(wasExpanded?'':' hidden')+'>'+
+     fact('id','Bestillings-ID','#'+safe(String(o.id).slice(-8).toUpperCase()))+
+     fact('date','Bestilt',fmtDate(o.createdAt))+
+     fact('check','Godkjent',fmtDate(o.acceptedAt))+
+     fact('bag','Henting',safe(pickupKind(o)+' · '+(pickup.label||'Snarest')))+
+     fact('phone','Telefon',phoneLink)+
+     (mail?fact('mail','E-post',safe(mail)):'')+
+    '</div>'+
+   '</section>'+
+   '<section class="detail-items"><h3>'+symbols.box+'Produkter</h3>'+
+    '<div class="order-products-scroll" tabindex="0" aria-label="Produkter i bestillingen"><div class="order-products-grid">'+lines+'</div></div>'+
+   '</section>'+
+   (o.rejectReason?'<p class="orders-feedback error detail-rejection">Avvist: '+safe(o.rejectReason)+'</p>':'')+
    '<div class="detail-total"><span>Totalt</span><strong>'+money(o.total)+'</strong></div>';
+  const scroller=$('ordersDetail').querySelector('.order-products-scroll');
+  if(scroller)scroller.scrollTop=productsScroll;
   $('ordersActionBar').innerHTML=o.status==='mottatt'?
    '<button class="orders-danger orders-action-reject" type="button" data-action="reject">Avvis</button><button class="orders-primary orders-action-accept" type="button" data-action="accept">Godta</button>':
    o.status==='godkjent'?'<button class="orders-primary" type="button" data-action="ready">Klar til henting</button>':
@@ -450,7 +476,9 @@
  }
  function openSheet(id){
   if(!orders.has(id))return;
-  activeId=id;renderDetails();
+  activeId=id;
+  $('ordersDetail').replaceChildren(); // Start every visit collapsed.
+  renderDetails();
   show('ordersSheetOverlay',true);show('ordersSheet',true);
   document.body.classList.add('is-dialog-open');
  }
@@ -650,7 +678,15 @@
     }
    }
   },{passive:true});
-  $('ordersBack').onclick=closeSheet;$('ordersSheetOverlay').onclick=closeSheet;
+  $('ordersBack').onclick=closeSheet;$('ordersClose').onclick=closeSheet;$('ordersSheetOverlay').onclick=closeSheet;
+  $('ordersDetail').addEventListener('click',event=>{
+   const button=event.target.closest('[data-detail-accordion]');
+   if(!button)return;
+   const opened=button.getAttribute('aria-expanded')==='true';
+   button.setAttribute('aria-expanded',String(!opened));
+   const extra=$('detailExtraFacts');
+   if(extra)extra.hidden=opened;
+  });
   $('ordersPrint').onclick=()=>window.print();
   $('ordersActionBar').addEventListener('click',async event=>{
    const button=event.target.closest('[data-action]');if(!button)return;
