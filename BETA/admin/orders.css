@@ -169,11 +169,24 @@ body.is-dialog-open{overflow:hidden}
 }
 .order-reference-row .order-mode-pill[data-kind="SENERE"]{background:#eeeae7;color:#55504b}
 .order-reference-row .order-mode-pill svg{display:block;width:15px;height:15px;flex:none}
-.order-reference-row .order-reference-timing{
- grid-column:3;display:flex;flex-direction:column;justify-content:center;align-items:stretch;
- gap:1px;min-width:0;min-height:55px;margin:0 7px;padding:6px 8px;
- background:var(--status-soft);color:var(--status-dark);border-radius:11px;
- font-variant-numeric:tabular-nums;text-align:center;
+.order-reference-row .order-reference-timing {
+ grid-column: 3;
+ display: flex;
+ flex-direction: row-reverse;
+ justify-content: space-around;
+ align-items: center;
+ gap: 1px;
+ min-width: 0;
+ min-height: 55px;
+ margin: 0 7px;
+ padding: 6px 8px;
+ background: var(--status-soft);
+ color: var(--status-dark);
+ border-radius: 11px;
+ font-variant-numeric: tabular-nums;
+ text-align: center;
+ align-content: stretch;
+ flex-wrap: nowrap;
 }
 .order-reference-row .order-reference-time{
  display:flex;justify-content:center;align-items:center;gap:6px;
