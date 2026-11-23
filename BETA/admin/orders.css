@@ -214,11 +214,22 @@ body.is-dialog-open{overflow:hidden}
 .order-reference-row .order-ref-number{white-space:nowrap;font-weight:450}
 .order-reference-row .order-ref-number strong{font-weight:850;color:#182e27}
 .order-reference-row .order-ref-qty{white-space:nowrap}
-.order-reference-row .order-reference-price{
- grid-column:5;display:grid;place-items:center;align-self:center;min-width:0;
- min-height:43px;margin-left:5px;padding:6px 4px;border-radius:12px;
- background:var(--price);color:#fff;font-size:18px;font-weight:850;
- white-space:nowrap;font-variant-numeric:tabular-nums;
+.order-reference-row .order-reference-price {
+ grid-column: 5;
+ display: grid;
+ place-items: center;
+ align-self: center;
+ min-width: 0;
+ min-height: 43px;
+ margin-left: 5px;
+ padding: 6px 4px;
+ border-radius: 12px;
+ background: var(--status);
+ color: #fff;
+ font-size: 18px;
+ font-weight: 850;
+ white-space: nowrap;
+ font-variant-numeric: tabular-nums;
 }
 .order-reference-row .order-swipe-action{
  position:absolute;right:0;top:0;bottom:0;z-index:0;
