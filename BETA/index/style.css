@@ -3025,3 +3025,77 @@ html[data-fatih1-theme="dark"] .draft-hide-order{background:#183d32;border-color
  .draft-overview-title strong{font-size:13px}
  .draft-overview-title>span,.draft-overview-title small{font-size:10px}
 }
+
+
+/* 2026-11-23: Single-line suggestion teaser matching the cart reference.
+   Four product images | title | expand arrow. Keep native <details> behavior. */
+#cartSheet #cartCartStep .cart-recommendations{
+ margin-top:52px;
+}
+#cartSheet #cartCartStep .cart-suggestions-disclosure{
+ border:1px solid #b5dec9;
+ border-radius:20px;
+ background:#dbf3e6;
+ box-shadow:none;
+}
+#cartSheet #cartCartStep .cart-suggestions-preview{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ min-height:81px;
+ padding:13px 15px;
+ background:linear-gradient(115deg,#e3f8ec,#daf2e4);
+ color:#006447;
+}
+#cartSheet #cartCartStep .cart-suggestions-thumbnails{
+ display:flex;align-items:center;gap:6px;flex:none;
+}
+#cartSheet #cartCartStep .cart-suggestion-thumb{
+ width:clamp(36px,8.6vw,53px);
+ height:clamp(36px,8.6vw,53px);
+ min-width:0;
+ border-radius:13px;
+ background:#d1e8dd;
+}
+#cartSheet #cartCartStep .cart-suggestions-label{
+ flex:1 1 auto;
+ min-width:0;
+ min-height:49px;
+ display:flex;
+ align-items:center;
+ padding-left:13px;
+ border-left:1px solid #abd4be;
+ color:#076647;
+ font-size:clamp(12px,2.6vw,16px);
+ font-weight:850;
+ line-height:1.2;
+ white-space:nowrap;
+}
+#cartSheet #cartCartStep .cart-suggestions-chevron{
+ flex:none;width:21px;height:21px;color:#006848;
+ stroke-width:2.9;
+}
+#cartSheet .cart-footer #checkoutError{
+ min-height:43px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ padding:9px 12px;
+ line-height:1.35;
+ color:#c83232;
+}
+@media(max-width:420px){
+ #cartSheet #cartCartStep .cart-suggestions-preview{gap:8px;padding:11px 10px;min-height:69px}
+ #cartSheet #cartCartStep .cart-suggestions-thumbnails{gap:4px}
+ #cartSheet #cartCartStep .cart-suggestion-thumb{width:36px;height:38px;border-radius:9px}
+ #cartSheet #cartCartStep .cart-suggestion-thumb:nth-child(n+4){display:none}
+ #cartSheet #cartCartStep .cart-suggestions-label{padding-left:8px;font-size:12px;min-height:38px}
+ #cartSheet #cartCartStep .cart-suggestions-chevron{width:17px;height:17px}
+}
+html[data-fatih1-theme="dark"] #cartSheet #cartCartStep .cart-suggestions-label{
+ color:#d5f5df;border-left-color:#518267;
+}
+html[data-fatih1-theme="dark"] #cartSheet #cartCartStep .cart-suggestions-preview{
+ background:linear-gradient(120deg,#285b43,#204a38);
+}
