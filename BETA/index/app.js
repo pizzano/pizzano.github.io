@@ -315,10 +315,14 @@ async function init(){
  document.addEventListener('visibilitychange',()=>{
   // Visible customers stay live. Hidden tabs release Firebase streams and locks.
   if(document.hidden)stopSharedChangeStream();
-  else startSharedChangeStream();
+  else {updateHoursStatus();startSharedChangeStream();}
  });
  window.addEventListener('online',startSharedChangeStream);
- window.setInterval(updateHoursStatus,60000);
+ // Refresh local opening-hours state at the minute boundary, including midnight.
+ window.setTimeout(()=>{
+  updateHoursStatus();
+  window.setInterval(updateHoursStatus,60000);
+ },60000-Date.now()%60000+100);
 }
 async function refreshMenu(manual=false){
  if(refreshPending)return false;
@@ -715,6 +719,7 @@ function updateHoursStatus(){
     :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10h18l-2-6H5l-2 6Zm2 0v10h14V10M9 20v-7h6v7M3 10c1 2 3 2 4 0 1 2 3 2 5 0 1 2 3 2 5 0 1 2 3 2 4 0"/></svg>';
  }
  updateOrderingControls();
+ syncCheckoutAvailability();
 }
 function categoryProgress(){
  const nav=$('categories'),max=Math.max(0,nav.scrollWidth-nav.clientWidth),track=$('catProgress');
