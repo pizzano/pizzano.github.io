@@ -148,23 +148,19 @@ async function refreshCartSuggestionIdsOnce(){
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
  const disclosure=$('cartSuggestionsDisclosure');
- const thumbnails=$('cartSuggestionsThumbnails'),count=$('cartSuggestionsCount'),action=$('cartSuggestionsAction');
+ const thumbnails=$('cartSuggestionsThumbnails');
  const suggestions=suggestedCartItems();
  host.hidden=!suggestions.length;
  if(!suggestions.length){
   disclosure.open=false;
   thumbnails.replaceChildren();
   items.replaceChildren();
-  count.textContent='';
-  action.textContent='Vis alle';
   return;
  }
  const preview=suggestions.slice(0,4);
  thumbnails.innerHTML=preview.map(({item})=>
   '<span class="cart-suggestion-thumb">'+imgEl(item.imageUrl,item.name,'suggestion-photo')+'</span>'
  ).join('');
- count.textContent=suggestions.length+' forslag';
- action.textContent=disclosure.open?(suggestions.length>4?'Bla i listen':'Vis mindre'):'Vis alle';
  thumbnails.querySelectorAll('img[data-image]').forEach(img=>void setCachedImage(img,img.dataset.image));
  // Do not build or fetch full-size suggestions until the guest asks to see them.
  if(!disclosure.open){items.replaceChildren();return}
