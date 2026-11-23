@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261122-ready-estimate53';
+const CACHE_NAME='fatih1-static-v20261123-checkout-closed54';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -8,8 +8,8 @@ const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
   'index/style.css?v=20261122-archive-status52',
-  'index/sepet.js?v=20261122-ready-estimate53',
-  'index/app.js?v=20261122-inline-order41',
+  'index/sepet.js?v=20261123-checkout-closed54',
+  'index/app.js?v=20261123-checkout-hours42',
   'index/profil.js?v=20261118-receipt5',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
