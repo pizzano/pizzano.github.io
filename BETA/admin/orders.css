@@ -1632,3 +1632,256 @@ body{background:#fff}
  #ordersRejectOverlay .orders-reject-heading h3{font-size:18px}
  #ordersRejectOverlay .orders-reject-field textarea{min-height:120px}
 }
+
+
+/* November 23 screenshot reference — compact, five-column order inbox.
+   Appearance only. Keep existing order actions, SSE, status handling and detail sheet. */
+body{background:#fff;color:#19262a}
+.orders-head{
+ height:auto;min-height:128px;position:relative;top:auto;
+ padding:17px clamp(24px,2.85vw,47px) 28px;
+ gap:20px;border:0;background:#fff;box-shadow:none;
+}
+.orders-head::after{
+ left:clamp(24px,2.85vw,47px);right:clamp(24px,2.85vw,47px);
+ bottom:0;height:1px;border-radius:0;background:#d8dddd;
+}
+.orders-headline{padding-left:45px;align-self:center}
+.orders-headline::before{
+ left:0;top:4px;bottom:7px;width:10px;
+ background:#739a73;border-radius:8px;
+}
+.orders-headline h1{
+ color:#132329;font-size:clamp(30px,2.6vw,43px);
+ font-weight:850;line-height:1.02;letter-spacing:-.04em;
+}
+.orders-headline small{
+ max-width:none;margin-top:8px;
+ font-size:clamp(15px,1.34vw,21px);
+ font-weight:750;line-height:1.1;color:#64737a;
+}
+.orders-top-actions.orders-lightbar{gap:12px;flex-shrink:0}
+.orders-light{
+ width:59px;height:59px;padding:12px;border-radius:17px;
+ border:1px solid #d8ddda;
+ background:linear-gradient(135deg,#fafbf9,#edf1ed);
+ color:#35464b;box-shadow:none;
+}
+.orders-light svg{stroke-width:2.05}
+.orders-light.is-active,.orders-light-refresh{
+ background:linear-gradient(135deg,#f7faf4,#eaf1e7);
+ color:#305b37;border-color:#cbd9c7;
+}
+.orders-light.is-upcoming,.orders-light:disabled{
+ opacity:1;color:#3a494e;filter:none;
+ background:linear-gradient(135deg,#f9faf9,#f0f1f0);
+ border-color:#dedfdf;cursor:default;
+}
+.orders-light.is-pending{background:#f4f3ec;color:#426443}
+.orders-menu summary{min-width:35px;height:54px;font-size:26px;color:#25353b}
+.orders-main{
+ max-width:none;margin:0;padding:20px clamp(24px,2.85vw,47px) 45px;
+}
+.orders-list{display:grid;gap:12px;background:transparent}
+.order-reference-row{
+ --state:#648b67;--state-dark:#315838;--state-soft:#e9f0e7;
+ --state-outline:#d8ded9;
+ min-height:81px;margin:0;border:1px solid #d9dfdb;
+ border-left:4px solid var(--state);border-radius:13px;
+ background:linear-gradient(110deg,#f8f9f7,#f0f1ef);
+ box-shadow:0 1px 2px #1c2c2510;
+ transform:none;overflow:hidden;
+}
+.order-reference-row[data-visual-status="rejected"]{
+ --state:#a42d2b;--state-dark:#982622;--state-soft:#f4e7e5;
+ background:linear-gradient(110deg,#f8f8f7,#f0f1ef);
+ border-color:#dededb;border-left-color:var(--state);
+}
+.order-reference-row[data-visual-status="ready"]{
+ --state:#346c3d;--state-dark:#275832;--state-soft:#ebf1e9;
+ background:linear-gradient(110deg,#f9faf8,#f0f1ef);
+ border-color:#dadfdb;border-left-color:var(--state);
+}
+.order-reference-row[data-visual-status="new"]{
+ --state:#d38c39;--state-dark:#99631e;--state-soft:#faeee0;
+ background:linear-gradient(110deg,#faf9f5,#f2f0e9);
+ border-color:#e5ddd0;border-left-color:var(--state);
+}
+.order-reference-row[data-visual-status="scheduled"]{
+ --state:#b58d3d;--state-dark:#815e24;--state-soft:#faf0d9;
+ background:linear-gradient(110deg,#faf9f5,#f2f1eb);
+ border-color:#e3dfd6;border-left-color:var(--state);
+}
+.order-reference-row[data-visual-status="preparing"]{
+ --state:#528b78;--state-dark:#376855;--state-soft:#e7f0eb;
+ background:linear-gradient(110deg,#f9faf8,#f0f2ef);
+ border-color:#d9dfdc;border-left-color:var(--state);
+}
+.order-reference-row:hover{
+ transform:none;background-color:#f8faf7;
+ box-shadow:0 2px 8px #22352919;border-color:#cbd5ce;
+}
+.order-reference-row .order-row-body,
+.order-reference-row[data-visual-status="new"] .order-row-body,
+.order-reference-row[data-visual-status="rejected"] .order-row-body{
+ position:relative;z-index:2;width:100%;min-height:79px;
+ display:grid;
+ grid-template-columns:minmax(230px,27%) minmax(225px,26%) minmax(130px,16%) minmax(170px,18%) minmax(125px,13%);
+ grid-template-rows:minmax(0,1fr);
+ gap:0;align-items:center;padding:9px 14px;background:transparent;
+}
+.order-reference-row .order-open{
+ grid-column:1;grid-row:1;display:flex;align-items:center;
+ gap:17px;min-width:0;min-height:54px;height:100%;
+ padding:0 16px 0 0;border-right:1px solid #bfc8c4;
+}
+.order-reference-row .order-initial{
+ width:51px;height:51px;min-width:51px;border:0;
+ border-radius:13px;background:var(--state-soft);color:var(--state-dark);
+}
+.order-reference-row .order-initial svg{width:28px;height:28px;stroke-width:1.8}
+.order-reference-row .order-meta{gap:4px;min-width:0}
+.order-reference-row .order-name{
+ font-size:clamp(15px,1.25vw,21px);font-weight:850;
+ line-height:1.12;color:#101a1f;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.order-reference-row .order-status{
+ color:var(--state-dark)!important;font-size:clamp(11px,.98vw,15px);
+ font-weight:800;line-height:1.18;white-space:nowrap;
+}
+.order-reference-row .order-reference-timing{
+ grid-column:2;grid-row:1;justify-self:center;
+ width:min(76%,270px);min-width:0;min-height:48px;height:48px;
+ margin:0;border:0;border-radius:999px;
+ background:linear-gradient(90deg,#f6f0e6,#f8f3ea);
+ color:var(--state-dark);display:flex;align-items:center;justify-content:center;
+ gap:0;overflow:hidden;
+}
+.order-reference-row .order-reference-timing[data-pickup-kind="SENERE"],
+.order-reference-row .order-reference-timing.is-awaiting{
+ background:linear-gradient(90deg,#f7f0e4,#f8f1e8);
+}
+.order-reference-row .order-reference-timing .order-reference-time{
+ flex:1 1 auto;min-width:0;min-height:0;
+ margin:0;padding:0 8px;display:flex;align-items:center;justify-content:center;
+ gap:11px;border:0;border-radius:0;background:transparent!important;
+ font-size:clamp(16px,1.38vw,23px);font-weight:900;
+ color:var(--state-dark);
+}
+.order-reference-row .order-reference-timing .order-reference-time svg{width:25px;height:25px}
+.order-reference-row .order-reference-timing .order-reference-countdown{
+ position:static;flex:1 1 auto;min-width:0;min-height:0;
+ padding:5px 7px;margin:0;display:flex;align-items:center;justify-content:center;
+ border:0;border-left:1px solid #d8ddd6;border-radius:0;background:transparent;
+ color:var(--state-dark);font-size:clamp(12px,1.05vw,16px);font-weight:750;
+ white-space:nowrap;
+}
+.order-reference-row .order-reference-timing .order-reference-countdown.is-due{
+ background:#f7dedc;color:#942824;
+}
+.order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{
+ flex:1 1 100%;padding:7px;border:0;background:transparent;
+ color:#9d422b;font-size:clamp(17px,1.35vw,23px);
+}
+.order-reference-row .order-reference-timing .order-reference-waiting{
+ min-height:0;padding:4px 6px;background:transparent;color:var(--state-dark);
+ font-size:14px;
+}
+.order-reference-row .order-mode-cell{
+ grid-column:3;grid-row:1;min-width:0;min-height:54px;height:54px;
+ display:flex;justify-content:center;align-items:center;
+ padding:0 10px;border-right:1px solid #bfc8c4;
+}
+.order-reference-row .order-mode-pill,
+.order-reference-row .order-mode-pill[data-kind="SENERE"]{
+ max-width:100%;display:inline-flex;align-items:center;justify-content:center;
+ gap:10px;padding:8px 15px;border-radius:999px;
+ background:var(--state-soft);color:var(--state-dark);
+ font-size:clamp(11px,.96vw,15px);font-weight:850;white-space:nowrap;
+}
+.order-reference-row .order-mode-pill svg{width:20px;height:20px}
+.order-reference-row .order-reference-facts{
+ grid-column:4;grid-row:1;min-width:0;min-height:54px;
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ gap:5px;padding:0 clamp(12px,2.1vw,34px);
+ border-right:1px solid #bfc8c4;border-left:0;
+ font-size:clamp(11px,1vw,15px);line-height:1.2;color:#293940;
+}
+.order-reference-row .order-ref-number{font-weight:500}
+.order-reference-row .order-ref-number strong{font-weight:900;color:#10171b}
+.order-reference-row .order-reference-facts .order-ref-qty{
+ display:block;min-height:0;padding:0;font-size:inherit;white-space:nowrap;
+}
+.order-reference-row .order-reference-price,
+.order-reference-row[data-visual-status="rejected"] .order-reference-price,
+.order-reference-row[data-visual-status="ready"] .order-reference-price,
+.order-reference-row[data-visual-status="new"] .order-reference-price,
+.order-reference-row[data-visual-status="scheduled"] .order-reference-price,
+.order-reference-row[data-visual-status="preparing"] .order-reference-price{
+ grid-column:5;grid-row:1;align-self:center;justify-self:stretch;
+ min-height:46px;display:grid;place-items:center;
+ margin:0 0 0 clamp(11px,2.2vw,34px);
+ padding:8px;border:0;border-radius:13px;
+ background:linear-gradient(110deg,#86a984,#769b74);color:#fff;
+ font-size:clamp(15px,1.18vw,20px);font-weight:850;
+ box-shadow:none;white-space:nowrap;
+}
+.order-reference-row.is-first-processed{margin-top:0}
+.order-reference-row:not(.is-swiped) .order-swipe-action{
+ visibility:hidden;pointer-events:none;
+}
+.order-reference-row.is-swiped .order-row-body{
+ transform:translateX(-90px);
+}
+/* Same single-line order layout on tablets; keep fields readable. */
+@media(max-width:1199px){
+ .orders-head{min-height:100px;padding:14px 16px 20px;gap:10px}
+ .orders-head::after{left:16px;right:16px}
+ .orders-headline{padding-left:23px}
+ .orders-headline::before{width:7px}
+ .orders-headline h1{font-size:28px}
+ .orders-headline small{font-size:14px}
+ .orders-top-actions.orders-lightbar{gap:6px}
+ .orders-light{width:40px;height:43px;padding:7px;border-radius:12px}
+ .orders-main{padding:16px 15px 30px}
+ .orders-list{gap:9px}
+ .order-reference-row{min-height:74px;border-radius:12px}
+ .order-reference-row .order-row-body,
+ .order-reference-row[data-visual-status="new"] .order-row-body,
+ .order-reference-row[data-visual-status="rejected"] .order-row-body{
+  min-height:72px;padding:7px 9px;
+  grid-template-columns:minmax(165px,27%) minmax(170px,26%) minmax(102px,16%) minmax(128px,18%) minmax(90px,13%);
+ }
+ .order-reference-row .order-open{min-height:48px;gap:8px;padding-right:7px}
+ .order-reference-row .order-initial{width:36px;height:36px;min-width:36px;border-radius:9px}
+ .order-reference-row .order-initial svg{width:20px;height:20px}
+ .order-reference-row .order-name{font-size:15px}
+ .order-reference-row .order-status{font-size:11px}
+ .order-reference-row .order-reference-timing{width:93%;height:44px;min-height:44px}
+ .order-reference-row .order-reference-timing .order-reference-time{font-size:16px;gap:5px;padding:0 3px}
+ .order-reference-row .order-reference-timing .order-reference-time svg{width:18px;height:18px}
+ .order-reference-row .order-reference-timing .order-reference-countdown{font-size:11px;padding:4px}
+ .order-reference-row .order-reference-timing.is-awaiting .order-reference-countdown.is-pending{font-size:17px}
+ .order-reference-row .order-mode-cell{height:48px;min-height:48px;padding:0 3px}
+ .order-reference-row .order-mode-pill,
+ .order-reference-row .order-mode-pill[data-kind="SENERE"]{font-size:10px;padding:6px;gap:4px}
+ .order-reference-row .order-mode-pill svg{width:15px;height:15px}
+ .order-reference-row .order-reference-facts{min-height:48px;font-size:11px;gap:4px;padding:0 7px}
+ .order-reference-row .order-reference-price,
+ .order-reference-row[data-visual-status="rejected"] .order-reference-price,
+ .order-reference-row[data-visual-status="ready"] .order-reference-price,
+ .order-reference-row[data-visual-status="new"] .order-reference-price,
+ .order-reference-row[data-visual-status="scheduled"] .order-reference-price,
+ .order-reference-row[data-visual-status="preparing"] .order-reference-price{
+  min-height:37px;font-size:14px;margin-left:7px;padding:6px 2px;border-radius:10px;
+ }
+ .order-reference-row.is-first-processed{margin-top:0}
+}
+@media(max-width:770px){
+ body{min-width:760px;overflow-x:auto}
+ .orders-head,.orders-main{min-width:760px}
+}
+@media(prefers-reduced-motion:reduce){
+ .order-reference-row[data-status="mottatt"]{animation:none}
+}
