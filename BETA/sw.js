@@ -1,13 +1,13 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261123-cart-reco55';
+const CACHE_NAME='fatih1-static-v20261123-cart-label56';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'index/style.css?v=20261123-cart-reco-center53',
+  'index/style.css?v=20261123-cart-label54',
   'index/sepet.js?v=20261123-cart-reco55',
   'index/app.js?v=20261123-checkout-hours42',
   'index/profil.js?v=20261118-receipt5',
