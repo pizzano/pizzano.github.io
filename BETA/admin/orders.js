@@ -357,12 +357,12 @@
       '<span class="order-meta"><strong class="order-name">'+(pending?'<span class="order-new-indicator" aria-hidden="true"></span>':'')+displayName+'</strong>'+
       '<span class="order-status '+statusClass+'" data-status="'+safe(order.status)+'">'+(pending?'● ':order.status==='avvist'?'✕ ':'✓ ')+safe(shortStatus)+'</span></span>'+
      '</button>'+
+     '<span class="order-mode-cell">'+modeLabel+'</span>'+
      '<span class="order-reference-timing'+(pending?' is-awaiting':ready?' is-preparing':'')+'" data-pickup-kind="'+kind+'">'+
       (!pending?'<span class="order-reference-time">'+clockIcon+'<span>'+clock+'</span></span>':'')+
       (countdownNeeded?'<span class="order-reference-countdown'+(pending?' is-pending':'')+'" data-countdown-id="'+safe(order.id)+'" aria-label="'+(pending?'Tid igjen til bekreftelse':'Tid igjen til henting')+'"></span>':
        pending?'<span class="order-reference-waiting">Avventer</span>':'')+
      '</span>'+
-     '<span class="order-mode-cell">'+modeLabel+'</span>'+
      '<span class="order-reference-facts"><span class="order-ref-number">Ordre nr.: <strong>#'+id+'</strong></span><span class="order-ref-qty">Vare: '+qty+' varer</span></span>'+
      '<span class="order-reference-price">'+money(order.total)+'</span>'+
     '</div>'+
