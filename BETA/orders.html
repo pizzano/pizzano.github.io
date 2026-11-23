@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#062d25">
 <meta name="robots" content="noindex,nofollow">
 <title>BestillOnline · Bestillinger</title>
-<link rel="stylesheet" href="./admin/orders.css?v=20261123-visual-reference34">
+<link rel="stylesheet" href="./admin/orders.css?v=20261123-detail-window35">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
-<script src="./admin/orders.js?v=20261123-mode-first33" defer></script>
+<script src="./admin/orders.js?v=20261123-detail-accordion34" defer></script>
 </head>
 <body>
 <header class="orders-head">
@@ -41,9 +41,12 @@
 <div id="ordersSheetOverlay" class="orders-sheet-overlay" hidden></div>
 <aside id="ordersSheet" class="orders-sheet" role="dialog" aria-modal="true" aria-labelledby="detailTitle" hidden>
  <div class="orders-sheet-header">
-  <button class="orders-icon-button orders-back" type="button" id="ordersBack" aria-label="Tilbake">←</button>
-  <div><h2 id="detailTitle">Bestilling</h2><small>HENTING</small></div>
-  <button id="ordersPrint" type="button" class="orders-icon-button" title="Skriv ut" aria-label="Skriv ut bestillingen">▤</button>
+  <button class="orders-icon-button orders-back" type="button" id="ordersBack" aria-label="Tilbake"><span aria-hidden="true">←</span> Tilbake</button>
+  <h2 id="detailTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v9a3 3 0 0 0 3 3V22M7 2v10M10 2v9a3 3 0 0 1-3 3M17 2v20M17 2c-3 2-4 6-4 11h4"/></svg>Bestillingsdetaljer</h2>
+  <div class="orders-sheet-header-controls">
+   <button id="ordersPrint" type="button" class="orders-icon-button orders-sheet-print" title="Skriv ut" aria-label="Skriv ut bestillingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg></button>
+   <button id="ordersClose" class="orders-icon-button orders-sheet-close" type="button" aria-label="Lukk">×</button>
+  </div>
  </div>
  <div id="ordersDetail" class="orders-detail"></div>
  <div id="ordersActionBar" class="orders-action-bar"></div>
