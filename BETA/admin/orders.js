@@ -989,8 +989,13 @@
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
+ let salesRulesEnabled=false;
  async function salesRulesAvailable(){
-  try{const r=await fetch(DB+'/salesStatisticsV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});return r.ok}catch{return false}
+  if(salesRulesEnabled)return true;
+  const r=await fetch(DB+'/salesStatisticsV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});
+  if(r.ok){salesRulesEnabled=true;return true}
+  if(r.status===401||r.status===403)return false;
+  throw Error('Kunne ikke kontrollere salgsregler. Prøv igjen.');
  }
  async function changeStatus(id,status,extra={},automatic=false){
   if(pendingAction)return;
