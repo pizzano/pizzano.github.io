@@ -1028,7 +1028,7 @@ function onCustomerStatusUpdate(value){
   }
  }
  if(changed&&statusPublic.status!=='mottatt')renderDraftActiveOrder();
- if(changed&&statusPublic.status==='godkjent'){try{localStorage.removeItem(FATIH1_BONUS_STORAGE_KEY)}catch{}}
+ if(changed&&previousStatus==='mottatt'&&['godkjent','klar'].includes(statusPublic.status))fatih1BonusInvalidate();
  if(value.status==='klar'||value.status==='avvist')stopCustomerStatus();
 }
 function beginCustomerStatus(){
@@ -1041,22 +1041,15 @@ function beginCustomerStatus(){
  customerStatusId=id;
  const stream=new EventSource(BASE+'/ORDERS/'+encodeURIComponent(id)+'/statusPublic.json');
  customerStatusStream=stream;
- let snapshot=null;
+ let snapshot=structuredClone(localOrder.statusPublic||{});
  const update=(event,patch)=>{
   if(customerStatusStream!==stream||localOrder?.id!==id)return;
   try{
-   const data=JSON.parse(event.data),path=String(data.path||'/');
-   if(!patch||path==='/')snapshot=data.data&&typeof data.data==='object'?data.data:null;
-   else if(snapshot&&path.startsWith('/')){
-    const keys=path.split('/').filter(Boolean);
-    let target=snapshot;
-    for(const key of keys.slice(0,-1)){
-     if(typeof target[key]!=='object'||target[key]===null)target[key]={};
-     target=target[key];
-    }
-    if(data.data===null)delete target[keys.at(-1)];
-    else target[keys.at(-1)]=data.data;
-   }
+   const data=JSON.parse(event.data);
+   const next=applyPublicFeedPatch(snapshot,String(data.path||'/'),data.data,patch);
+   // A reconnect or delayed event must not roll the local status back.
+   if(Number(next.updatedAt||0)<Number(localOrder.statusPublic?.updatedAt||0))return;
+   snapshot=next;
    onCustomerStatusUpdate(snapshot);
   }catch(error){console.warn('BestillOnline: statusoppdatering kunne ikke leses',error)}
  };
@@ -1315,6 +1308,17 @@ async function submitDraftOrder(){
  if(!window.crypto?.getRandomValues){
   showCheckoutError('Sikker tilkobling kreves for å sende bestillingen.');return;
  }
+ // Do not submit an old discount while the existing checkout read is still running.
+ const beforeBonus=cartBonusPlan();
+ const pendingBonus=typeof fatih1BonusGetPending!=='undefined'&&fatih1BonusGetPending?.phone===fatih1BonusPhone()?fatih1BonusGetPending.task:null;
+ if(pendingBonus){
+  orderSubmissionBusy=true;$('cartNext').disabled=true;
+  try{await pendingBonus}finally{orderSubmissionBusy=false;syncCheckoutAvailability()}
+  const afterBonus=cartBonusPlan();
+  if(beforeBonus.discount!==afterBonus.discount||beforeBonus.index!==afterBonus.index){
+   pickupSummary();showCheckoutError('Pizzabonus er oppdatert. Kontroller totalbeløpet og send bestillingen på nytt.');return;
+  }
+ }
  const bonus=cartBonusPlan();
  const now=Date.now(),id=createFirebaseOrderId(now);
  const items=cart.map(line=>({
@@ -1355,6 +1359,7 @@ async function submitDraftOrder(){
     if(state){
      rememberPendingSend(null);
      localOrder=compactOrderRecord({...previous,status:state.status,statusPublic:state});
+     if(['godkjent','klar'].includes(state.status))fatih1BonusInvalidate();
      orderOverviewRemember(localOrder);
     }else throw Error('En tidligere bestilling er ikke avklart. Kontakt restauranten før du sender en endret bestilling.');
     throw Error('Den tidligere bestillingen er registrert. Kontroller den før du sender en ny bestilling.');
@@ -1384,6 +1389,7 @@ async function submitDraftOrder(){
   }
   confirmed=true;
   localOrder=compactOrderRecord({...order,status:state.status,statusPublic:state});
+  if(['godkjent','klar'].includes(state.status))fatih1BonusInvalidate();
   orderOverviewRemember(localOrder);
   overviewCarouselIndex=0;
   cart=[];saveCart();
