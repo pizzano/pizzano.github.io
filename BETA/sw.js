@@ -1,13 +1,13 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-opt-af4b638da65f4151';
+const CACHE_NAME='fatih1-static-opt-5a36db7669b98b39';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'index/style.min.css?v=1aa38f104deaeb2c',
+  'index/style.min.css?v=db1b03ef023fa508',
   'shared/bonus.min.js?v=8aaf3f3ed5930626',
   'index/sepet.min.js?v=5f80b708b0b4f155',
   'index/app.min.js?v=3938d76677348ff2',
