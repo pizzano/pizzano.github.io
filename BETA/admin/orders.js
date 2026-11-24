@@ -315,17 +315,21 @@
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  const counts={ALLE:all.length,SNAREST:0,SENERE:0};
-  for(const order of all)counts[pickupKind(order)]++;
+  const matchesFilter=(order,filter)=>{
+   if(filter==='ALLE')return true;
+   const active=order.status==='mottatt'||order.status==='godkjent';
+   return active&&(filter==='SNAREST'||(filter==='SENERE'&&pickupKind(order)==='SENERE'));
+  };
+  const counts={ALLE:all.length,SNAREST:all.filter(order=>matchesFilter(order,'SNAREST')).length,SENERE:all.filter(order=>matchesFilter(order,'SENERE')).length};
   for(const button of $('ordersPickupFilters').querySelectorAll('[data-pickup-filter]')){
    const key=button.dataset.pickupFilter;
    button.setAttribute('aria-pressed',String(key===pickupFilter));
    button.querySelector('[data-filter-count]').textContent='('+counts[key]+')';
   }
-  const filtered=all.filter(order=>pickupFilter==='ALLE'||pickupKind(order)===pickupFilter).sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
+  const filtered=all.filter(order=>matchesFilter(order,pickupFilter)).sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
     (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
   $('ordersEmpty').hidden=filtered.length>0;
-  $('ordersEmpty').querySelector('strong').textContent=pickupFilter==='ALLE'?'Ingen bestillinger':pickupFilter==='SNAREST'?'Ingen snarest-bestillinger':'Ingen bestillinger til senere';
+  $('ordersEmpty').querySelector('strong').textContent=pickupFilter==='ALLE'?'Ingen bestillinger':pickupFilter==='SNAREST'?'Ingen aktive bestillinger':'Ingen aktive bestillinger til senere';
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
   $('ordersList').innerHTML=filtered.map((order,index)=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
