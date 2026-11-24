@@ -10,7 +10,12 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{min-width:800px}
-body{margin:0;min-width:800px;min-height:100dvh;background:#f3f7f4}
+body {
+ margin: 0;
+ min-width: 800px;
+ min-height: 100dvh;
+ background: #F5F5F5;
+}
 button,input,textarea{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:not-allowed;opacity:.55}
@@ -124,7 +129,7 @@ body.is-dialog-open{overflow:hidden}
 .order-reference-row .order-row-body{
  display:grid;align-items:center;gap:0;position:relative;z-index:1;
  grid-template-columns:minmax(185px,2.25fr) minmax(97px,1.07fr) minmax(174px,1.78fr) minmax(154px,1.63fr) minmax(105px,1.18fr);
- width:100%;min-height:79px;padding:8px 11px;background:var(--card);
+ width:100%;min-height:79px;padding:8px 11px;background: #ffffff;
  transition:transform .18s ease;
 }
 .order-reference-row .order-open{
@@ -270,8 +275,11 @@ body.is-dialog-open{overflow:hidden}
 
 /* Order details: customer name reveals facts; only products scroll. */
 .orders-sheet-overlay{
- position:fixed;inset:0;z-index:29;background:#0c191acc;
- backdrop-filter:blur(3px);
+ position: fixed;
+ inset: 0;
+ z-index: 29;
+ background: #ffffffcc;
+ backdrop-filter: blur(3px);
 }
 .orders-sheet{
  position:fixed;z-index:30;top:50%;left:50%;
@@ -307,9 +315,14 @@ body.is-dialog-open{overflow:hidden}
 .orders-sheet-print svg{width:21px;height:21px}
 .orders-sheet-close{font-size:29px}
 .orders-detail{
- flex:1 1 auto;display:flex;flex-direction:column;
- min-height:0;min-width:0;overflow:hidden;
- padding:17px 20px 0;background:#edf4ef;
+ flex: 1 1 auto;
+ display: flex;
+ flex-direction: column;
+ min-height: 0;
+ min-width: 0;
+ overflow: hidden;
+ padding: 17px 20px 0;
+ background: #FAFAFA;
 }
 .detail-customer-card{
  flex:none;min-width:0;background:#fff;
