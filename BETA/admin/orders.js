@@ -54,7 +54,7 @@
  const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
  let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
  const rechecking=new Set();
- function bonusPlan(items,sections){
+ function bonusPlan(items,sections,sizeLabels=[]){
  const arr=v=>Array.isArray(v)?v:Object.values(v||{});
  const products=new Map();
  for(const section of arr(sections))for(const product of arr(section.items))products.set(String(product.id),{section,product});
@@ -63,7 +63,7 @@
   const match=products.get(String(line.id));if(!match)return;
   const {section,product}=match;
   const size=arr(product.sizes).find(x=>String(x.id)===String(line.size?.id));
-  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(size.label||size.name||'')))return;
+  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(sizeLabels[size.labelId]||size.label||size.name||'')))return;
   const qty=Number(line.qty),price=Number(size.price??product.price);
   if(!Number.isInteger(qty)||qty<1||qty>99||!Number.isFinite(price)||price<=0)return;
   count+=qty;
@@ -844,11 +844,11 @@ function bonusBalance(count,last,now=Date.now()){
     if(bonusMode){
      const phone=String(current.phone||'').replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');
      if(!/^[49]\d{7}$/.test(phone))throw Error('Ugyldig mobilnummer for pizzabonus.');
-     const [customerURL,menuURL]=await Promise.all([authorizedURL('customers/'+phone),authorizedURL('menu/sections')]);
-     const [cr,mr]=await Promise.all([fetch(customerURL,{cache:'no-store'}),fetch(menuURL,{cache:'no-store'})]);
-     if(!cr.ok||!mr.ok)throw Error('Kunne ikke kontrollere pizzabonus.');
-     const customer=await cr.json()||{},sections=await mr.json();
-     const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections);
+     const [customerURL,menuURL,labelsURL]=await Promise.all([authorizedURL('customers/'+phone),authorizedURL('menu/sections'),authorizedURL('menu/sizeLabels')]);
+     const [cr,mr,lr]=await Promise.all([fetch(customerURL,{cache:'no-store'}),fetch(menuURL,{cache:'no-store'}),fetch(labelsURL,{cache:'no-store'})]);
+     if(!cr.ok||!mr.ok||!lr.ok)throw Error('Kunne ikke kontrollere pizzabonus.');
+     const customer=await cr.json()||{},sections=await mr.json(),sizeLabels=await lr.json()||[];
+     const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections,sizeLabels);
      const reward=current.pizzaBonus;
      if(reward&&(balance<10||plan.index!==reward.index||plan.discount!==reward.discount||!plan.count))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
      const gross=(current.items||[]).reduce((sum,x)=>sum+Number(x.qty)*Number(x.unitPrice),0);
