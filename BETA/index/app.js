@@ -365,7 +365,8 @@ async function checkMenuVersionOnce(){
  * Every notification contains the same version as the atomic admin update.
  * Missing/oversize delta => manual refresh prompt, never automatic full download.
  */
-const LIVE_FEED_URL=BASE+'/menu/changeFeed/latest.json';
+const LIVE_FEED_URL=BASE+'/menu/changeFeed.json';
+let unifiedSettingsRevision='',settingsSignalTask=null,settingsSignalTarget='';
 const unsafeSegment=part=>!part||part==='__proto__'||part==='constructor'||part==='prototype';
 function applyLiveChanges(snapshot,changes){
  const next=structuredClone(snapshot);
@@ -495,7 +496,7 @@ function resumePublicStreamsAfterOrder(){
  startSharedChangeStream();
 }
 function startSettingsStream(){
- if(publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
+ if(unifiedSettingsRevision||publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
  if(settingsStream&&settingsStream.readyState!==2)return;
  if(settingsStream){settingsStream.close();settingsStream=null}
  const source=new EventSource(BASE+'/settings.json');
@@ -524,32 +525,89 @@ function stopSettingsStream(){
  if(settingsStream){settingsStream.close();settingsStream=null}
 }
 
+// Firebase PUT and PATCH events can target the feed root or any nested path.
+function applyPublicFeedPatch(previous,path,data,patch){
+ let root=structuredClone(previous||{});
+ const set=(parts,value)=>{
+  if(parts.some(unsafeSegment))throw Error('Invalid public feed path');
+  if(!parts.length){root=value&&typeof value==='object'?structuredClone(value):{};return;}
+  let node=root;
+  for(const key of parts.slice(0,-1)){
+   if(!node[key]||typeof node[key]!=='object')node[key]={};
+   node=node[key];
+  }
+  const key=parts[parts.length-1];
+  if(value===null)delete node[key];else node[key]=value;
+ };
+ const parts=String(path||'/').split('/').filter(Boolean);
+ if(patch&&data&&typeof data==='object'&&!Array.isArray(data)){
+  for(const [key,value] of Object.entries(data))set(parts.concat(key.split('/').filter(Boolean)),value);
+ }else set(parts,data);
+ return root;
+}
+async function refreshSettingsForRevision(revision){
+ settingsSignalTarget=revision;
+ if(!menu||publicStreamsPausedForOrder||settingsSignalTask||String(menu.settings?._liveRevision||'')===revision)return;
+ const task=(async()=>{
+  try{
+   let requested;
+   do{
+    requested=settingsSignalTarget;
+    if(String(menu?.settings?._liveRevision||'')===requested)break;
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6500);
+    let latest;
+    try{
+     const response=await fetch(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
+     if(!response.ok)throw Error('HTTP '+response.status);
+     latest=await response.json();
+    }finally{clearTimeout(timer)}
+    if(!latest||typeof latest!=='object'||Array.isArray(latest))throw Error('Invalid settings');
+    if(requested===settingsSignalTarget||String(latest._liveRevision||'')===settingsSignalTarget)
+     acceptLiveSettings(latest,true);
+   }while(requested!==settingsSignalTarget&&!publicStreamsPausedForOrder);
+  }catch(error){
+   console.warn('Settings revision refresh failed:',error);
+   unifiedSettingsRevision='';startSettingsStream();
+  }
+ })();
+ settingsSignalTask=task;
+ try{await task}finally{if(settingsSignalTask===task)settingsSignalTask=null}
+}
 function startChangeStream(){
  if(publicStreamsPausedForOrder||document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
  if(changeStream){changeStream.close();changeStream=null}
  const source=new EventSource(LIVE_FEED_URL);
  changeStream=source;
- const onChange=event=>{
-   try{
-     const update=JSON.parse(event.data);
-     // An initial SSE "put" also carries the latest revision.
-     if(update.path==='/')void receiveLiveAnnouncement(update.data,true);
-     else if(update.path==='/latest')void receiveLiveAnnouncement(update.data,true);
-     else{
-       // Nested patch at a feed path: treat it as an unknown revision.
-       void resyncAfterGap();
-     }
-   }catch(error){console.warn('Live menu update parse failed',error)}
+ let snapshot={};
+ const onChange=(event,patch)=>{
+  if(changeStream!==source)return;
+  try{
+   const update=JSON.parse(event.data);
+   const old=snapshot;
+   snapshot=applyPublicFeedPatch(snapshot,update.path,update.data,patch);
+   if(snapshot.latest&&JSON.stringify(old.latest)!==JSON.stringify(snapshot.latest))
+    void receiveLiveAnnouncement(snapshot.latest,true);
+   const revision=typeof snapshot.settingsRevision==='string'?snapshot.settingsRevision:'';
+   if(revision){
+    unifiedSettingsRevision=revision;
+    stopSettingsStream();
+    void refreshSettingsForRevision(revision);
+   }else{
+    unifiedSettingsRevision='';
+    startSettingsStream();
+   }
+  }catch(error){console.warn('Live public update parse failed',error)}
  };
- source.addEventListener('put',onChange);
- source.addEventListener('patch',onChange);
+ source.addEventListener('put',event=>onChange(event,false));
+ source.addEventListener('patch',event=>onChange(event,true));
  source.onerror=()=>{
    if(source.readyState!==2)return; // Browser reconnects automatically.
    source.close();
    if(changeStream===source)changeStream=null;
    // If the live signal is blocked, do one tiny revision check (not polling).
    void checkMenuVersionOnce();
+   unifiedSettingsRevision='';startSettingsStream();
  };
  for(const kind of ['cancel','auth_revoked'])source.addEventListener(kind,()=>{
    source.close();
@@ -605,11 +663,11 @@ function startSharedChangeStream(){
  askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
  if(!sharedChannel||!navigator.locks||typeof navigator.locks.request!=='function'){
-  startChangeStream();startSettingsStream();return;
+  startChangeStream();return;
  }
  if(sharedLockPending){
   // A tab already holding the lock may need to restart SSE after going offline.
-  if(sharedLeader){startChangeStream();startSettingsStream();}
+  if(sharedLeader){startChangeStream();}
   return;
  }
  sharedLockPending=true;
@@ -619,7 +677,6 @@ function startSharedChangeStream(){
   if(controller.signal.aborted)return;
   sharedLeader=true;
   startChangeStream();
-  startSettingsStream();
   await new Promise(resolve=>{sharedLockRelease=resolve});
   sharedLeader=false;
   if(changeStream){changeStream.close();changeStream=null}
@@ -627,7 +684,7 @@ function startSharedChangeStream(){
  }).catch(error=>{
   if(error?.name!=='AbortError'){
    console.warn('Shared stream lock unavailable',error);
-   if(!controller.signal.aborted){startChangeStream();startSettingsStream()}
+   if(!controller.signal.aborted){startChangeStream()}
   }
  }).finally(()=>{
   if(sharedLockController===controller)sharedLockController=null;
