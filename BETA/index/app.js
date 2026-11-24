@@ -484,7 +484,15 @@ function acceptLiveSettings(value,relay=false){
  $('cacheStatus').textContent='Innstillinger oppdatert';
  if(relay)broadcastLiveMessage({type:'restaurant-settings',value});
 }
-let publicStreamsPausedForOrder=false;
+let publicStreamsPausedForOrder=false,bonusReadPauseCount=0;
+function publicStreamsPaused(){return publicStreamsPausedForOrder||bonusReadPauseCount>0}
+function pausePublicStreamsForBonusRead(){
+ bonusReadPauseCount++;
+ if(changeStream){changeStream.close();changeStream=null}
+ stopSettingsStream();
+ let released=false;
+ return ()=>{if(released)return;released=true;bonusReadPauseCount=Math.max(0,bonusReadPauseCount-1);if(!publicStreamsPaused())startSharedChangeStream();};
+}
 function pausePublicStreamsForOrder(){
  publicStreamsPausedForOrder=true;
  if(changeStream){changeStream.close();changeStream=null}
@@ -496,7 +504,7 @@ function resumePublicStreamsAfterOrder(){
  startSharedChangeStream();
 }
 function startSettingsStream(){
- if(unifiedSettingsRevision||publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
+ if(unifiedSettingsRevision||publicStreamsPaused()||!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
  if(settingsStream&&settingsStream.readyState!==2)return;
  if(settingsStream){settingsStream.close();settingsStream=null}
  const source=new EventSource(BASE+'/settings.json');
@@ -547,7 +555,7 @@ function applyPublicFeedPatch(previous,path,data,patch){
 }
 async function refreshSettingsForRevision(revision){
  settingsSignalTarget=revision;
- if(!menu||publicStreamsPausedForOrder||settingsSignalTask||String(menu.settings?._liveRevision||'')===revision)return;
+ if(!menu||publicStreamsPaused()||settingsSignalTask||String(menu.settings?._liveRevision||'')===revision)return;
  const task=(async()=>{
   try{
    let requested;
@@ -564,7 +572,7 @@ async function refreshSettingsForRevision(revision){
     if(!latest||typeof latest!=='object'||Array.isArray(latest))throw Error('Invalid settings');
     if(requested===settingsSignalTarget||String(latest._liveRevision||'')===settingsSignalTarget)
      acceptLiveSettings(latest,true);
-   }while(requested!==settingsSignalTarget&&!publicStreamsPausedForOrder);
+   }while(requested!==settingsSignalTarget&&!publicStreamsPaused());
   }catch(error){
    console.warn('Settings revision refresh failed:',error);
    unifiedSettingsRevision='';startSettingsStream();
@@ -574,7 +582,7 @@ async function refreshSettingsForRevision(revision){
  try{await task}finally{if(settingsSignalTask===task)settingsSignalTask=null}
 }
 function startChangeStream(){
- if(publicStreamsPausedForOrder||document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
+ if(publicStreamsPaused()||document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
  if(changeStream){changeStream.close();changeStream=null}
  const source=new EventSource(LIVE_FEED_URL);
@@ -658,7 +666,7 @@ function setupSharedChannel(){
  }catch(error){sharedChannel=null;console.warn('Local tab sync unavailable',error)}
 }
 function startSharedChangeStream(){
- if(publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false)return;
+ if(publicStreamsPaused()||!menu||document.hidden||navigator.onLine===false)return;
  setupSharedChannel();
  askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
