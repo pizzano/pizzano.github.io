@@ -167,7 +167,8 @@ body.is-dialog-open{overflow:hidden}
  max-width:100%;padding:7px 8px;border-radius:999px;
  background:#eeeae7;color:#55504b;font-size:10.5px;font-weight:750;white-space:nowrap;
 }
-.order-reference-row .order-mode-pill[data-kind="SENERE"]{background:#eeeae7;color:#55504b}
+.order-reference-row .order-mode-pill[data-kind="SNAREST"]{background:#fff1ce;color:#8b5e0b}
+.order-reference-row .order-mode-pill[data-kind="SENERE"]{background:#e6f0fb;color:#285f90}
 .order-reference-row .order-mode-pill svg{display:block;width:15px;height:15px;flex:none}
 .order-reference-row .order-reference-timing {
  grid-column: 3;
