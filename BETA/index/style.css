@@ -3111,3 +3111,17 @@ html[data-fatih1-theme="dark"] button.fatih1-bonus-consent{background:transparen
 html[data-fatih1-theme="dark"] button.fatih1-bonus-consent b{background:#345347;color:#d2e5da}
 html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-enabled{background:#24533e;border-color:#69b98b;color:#e5faeb}
 html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-enabled b{background:#88d1a5;color:#103c28}
+
+/* Profile-only bonus reward message; no cart reminder or new network requests. */
+.fatih1-profile-bonus .fatih1-bonus-count{font-size:40px}
+.fatih1-profile-bonus .fatih1-bonus-ring-caption{font-size:12px;font-weight:700}
+.fatih1-profile-bonus .fatih1-bonus-remaining{font-size:17px;margin:0 0 6px}
+.fatih1-profile-bonus .fatih1-bonus-description{max-width:330px;margin:0 0 12px;color:#446a5c;font-size:var(--text-md);line-height:1.5}
+.fatih1-profile-bonus .fatih1-bonus-reminder{color:#087e62;font-size:var(--text-sm);font-weight:700;margin:0 0 12px}
+.fatih1-profile-bonus .fatih1-bonus-reminder[hidden]{display:none!important}
+.fatih1-profile-bonus .fatih1-bonus-expiry{margin-top:5px}
+button.fatih1-bonus-consent.is-reward-ready{background:#087e62;color:#fff;border-color:#087e62}
+button.fatih1-bonus-consent.is-reward-ready b{background:#ffffff25;color:#fff}
+html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-description{color:#b4d1c3}
+html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-reminder{color:#9bd9b7}
+html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-reward-ready{background:#087e62;color:#fff;border-color:#69b98b}
