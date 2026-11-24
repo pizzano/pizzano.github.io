@@ -54,6 +54,28 @@
  const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
  let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
  const rechecking=new Set();
+ function bonusPlan(items,sections){
+ const arr=v=>Array.isArray(v)?v:Object.values(v||{});
+ const products=new Map();
+ for(const section of arr(sections))for(const product of arr(section.items))products.set(String(product.id),{section,product});
+ let count=0,index=-1,discount=0;
+ items.forEach((line,i)=>{
+  const match=products.get(String(line.id));if(!match)return;
+  const {section,product}=match;
+  const size=arr(product.sizes).find(x=>String(x.id)===String(line.size?.id));
+  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(size.label||size.name||'')))return;
+  const qty=Number(line.qty),price=Number(size.price??product.price);
+  if(!Number.isInteger(qty)||qty<1||qty>99||!Number.isFinite(price)||price<=0)return;
+  count+=qty;
+  if(index<0||price<discount){index=i;discount=price;}
+ });
+ return {count,index,discount};
+}
+function bonusBalance(count,last,now=Date.now()){
+ return Number(last)>0&&now-Number(last)>=365*86400000?0:Math.min(11,Math.max(0,Math.floor(Number(count)||0)));
+}
+
+ let bonusRulesEnabled=false,bonusRulesProbe=null;
  let statusPatchEnabled=false,statusPatchProbe=null,localStatusWriteId=null;
  let historySyncPending=false,historyHydrated=false,historySyncGeneration=0;
  let countdownTicker=null,automaticReadyBusy=false;
@@ -397,11 +419,15 @@
   }catch{statusPatchEnabled=false}})();
   return statusPatchProbe;
  }
+ async function detectBonusRules(){
+  if(!bonusRulesProbe)bonusRulesProbe=fetch(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit'}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false);
+  return bonusRulesProbe;
+ }
  async function connectOrders(){
   if(!authReady())return;
   closeStream();const epoch=streamEpoch;
   connection('Kobler til…');
-  void detectStatusPatch();
+  void detectStatusPatch();void detectBonusRules();
   try{
    const url=await authorizedURL('ORDERS');
    if(epoch!==streamEpoch)return;
@@ -655,12 +681,12 @@
    box:svg('<path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10"/>')
   };
   const fact=(k,label,val)=>'<div class="detail-fact">'+symbols[k]+'<span class="detail-fact-copy"><small>'+label+'</small><strong>'+val+'</strong></span></div>';
-  const lines=items.map(line=>{
+  const lines=items.map((line,index)=>{
    const quantity=Math.max(1,Number(line.qty)||1),unitPrice=Number(line.unitPrice)||0;
    return '<article class="order-product-card"><div class="order-product-title"><strong>'+
     quantity+' × '+safe(line.name||'Produkt')+'</strong></div>'+
     '<div class="order-product-options">'+orderProductDetails(line)+'</div>'+
-    '<div class="order-product-total"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(unitPrice)+')':'')+'</span><strong>'+money(quantity*unitPrice)+'</strong></div></article>';
+    '<div class="order-product-total"><span>Sum'+(quantity>1?' ('+quantity+' × '+money(unitPrice)+')':'')+'</span><strong>'+money(quantity*unitPrice-(o.pizzaBonus?.index===index?Number(o.pizzaBonus.discount)||0:0))+'</strong></div>'+(o.pizzaBonus?.index===index?'<div class="order-product-option"><strong>Pizzabonus · 1 stor pizza gratis</strong></div>':'')+'</article>';
   }).join('');
   $('ordersDetail').innerHTML=
    '<section class="detail-customer-card">'+
@@ -756,7 +782,11 @@
   pendingAction=true;localStatusWriteId=id;feedback('');
   try{
    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
-   const patchMode=statusPatchEnabled&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
+   if(status==='godkjent')await detectBonusRules();
+   const bonusMode=status==='godkjent'&&bonusRulesEnabled;
+   if(status==='godkjent'&&old.pizzaBonus&&!bonusMode)throw Error('Publiser nye Firebase-regler før pizzabonus kan godkjennes.');
+   const patchMode=(statusPatchEnabled||bonusMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
+   if(bonusMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    let current=old,etag=null;
    if(!patchMode){
     const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
@@ -801,7 +831,7 @@
     }:{}),
     ...(status==='avvist'?{rejectReason:String(extra.rejectReason||'').slice(0,180)}:{})
    };
-   let options;
+   let options,writeURL=url;
    if(patchMode){
     // Server-side validation compares the old status and status version atomically.
     // Only mutable status fields are written; items/customer data remain untouched.
@@ -810,10 +840,32 @@
     for(const key of ['status','updatedAt','statusPublic','acceptedAt','prepMinutes','expectedReadyAt','pickupTimeAdjusted','readyAt','rejectedAt','rejectReason','_statusGuard']){
      if(JSON.stringify(next[key])!==JSON.stringify(current[key]))changes[key]=next[key]??null;
     }
-    options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes),cache:'no-store'};
+    if(bonusMode){
+     const phone=String(current.phone||'').replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');
+     if(!/^[49]\d{7}$/.test(phone))throw Error('Ugyldig mobilnummer for pizzabonus.');
+     const [customerURL,menuURL]=await Promise.all([authorizedURL('customers/'+phone),authorizedURL('menu/sections')]);
+     const [cr,mr]=await Promise.all([fetch(customerURL,{cache:'no-store'}),fetch(menuURL,{cache:'no-store'})]);
+     if(!cr.ok||!mr.ok)throw Error('Kunne ikke kontrollere pizzabonus.');
+     const customer=await cr.json()||{},sections=await mr.json();
+     const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections);
+     const reward=current.pizzaBonus;
+     if(reward&&(balance<10||plan.index!==reward.index||plan.discount!==reward.discount||!plan.count))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
+     const gross=(current.items||[]).reduce((sum,x)=>sum+Number(x.qty)*Number(x.unitPrice),0);
+     if(!Number.isFinite(gross)||Math.abs(gross-(reward?plan.discount:0)-Number(current.total))>0.01)throw Error('Ugyldig ordretotal.');
+     const count=Math.min(11,balance+plan.count-(reward?11:0));
+     next._bonusApplied={phone,previousCount:customer.bonusCount??null,previousLastOrderAt:customer.lastOrderAt??null,count,at:changedAt};
+     changes._bonusApplied=next._bonusApplied;
+     const multi={};for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
+     multi['customers/'+phone+'/bonusCount']=count;
+     multi['customers/'+phone+'/lastOrderAt']=changedAt;
+     // Customer rule checks original balance/date and new order receipt atomically.
+     multi['customers/'+phone+'/_bonusOrder']=id;
+     writeURL=await authorizedURL('');
+     options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
+    }else options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes),cache:'no-store'};
    }else options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(next),cache:'no-store'};
-   let saved=await fetch(url+'&print=silent',options);
-   if(saved.status===400)saved=await fetch(url,options);
+   let saved=await fetch(writeURL+'&print=silent',options);
+   if(saved.status===400)saved=await fetch(writeURL,options);
    if(saved.status===412||(patchMode&&(saved.status===401||saved.status===403)))throw Error('Bestillingen ble endret samtidig eller statusreglene avviste endringen. Oppdater siden.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    mergeOrder(next);
