@@ -54,6 +54,33 @@ function centralPatch(order){
  patch['salesStatistics/receipts/'+r.id]={day:keys[0],totalOre:r.amount,at:Number(order.readyAt)};
  return patch;
 }
-const api={record,summarize,choose,create,periodKeys,centralPatch};
+function compactSales(raw,stamp=Date.now()){
+ const [date,month,year]=periodKeys(stamp),out={date,daily:0,monthly:{},yearly:{}};
+ const amount=n=>{if(!Number.isSafeInteger(n)||n<0)throw Error('Ugyldig salgssum');return n};
+ if(!raw)return out;
+ if(typeof raw.date==='string'){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(raw.date))throw Error('Ugyldig salgsdato');
+  out.date=raw.date;out.daily=amount(raw.daily);
+  for(const [y,months] of Object.entries(raw.monthly||{})){if(!/^\d{4}$/.test(y))throw Error('Ugyldig år');out.monthly[y]={};for(const [m,v] of Object.entries(months)){if(!/^(0[1-9]|1[0-2])$/.test(m))throw Error('Ugyldig måned');out.monthly[y][m]=amount(v)}}
+  for(const [y,v] of Object.entries(raw.yearly||{})){if(!/^\d{4}$/.test(y))throw Error('Ugyldig år');out.yearly[y]=amount(v)}
+  return out;
+ }
+ // Preserve authoritative period totals, never sum receipts a second time.
+ for(const [key,row] of Object.entries(raw.monthly||{})){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(key))throw Error('Ugyldig måned');const [y,m]=key.split('-');(out.monthly[y]||={})[m]=amount(row.totalOre)}
+ for(const [y,row] of Object.entries(raw.yearly||{})){if(!/^\d{4}$/.test(y))throw Error('Ugyldig år');out.yearly[y]=amount(row.totalOre)}
+ if(raw.daily?.[date])out.daily=amount(raw.daily[date].totalOre);
+ return out;
+}
+function compactPatch(order,previousDate){
+ const r=record(order);if(!r||!r.sold||!Number.isSafeInteger(r.amount)||!Number.isFinite(Number(order.readyAt)))throw Error('Ugyldig salg');
+ const [date,month,year]=periodKeys(Number(order.readyAt));if(previousDate>date)throw Error('Salgsdato er nyere enn ordredato');
+ const inc={'.sv':{increment:r.amount}},base='salesStatistics/';
+ return {[base+'date']:date,[base+'daily']:previousDate===date?inc:r.amount,[base+'monthly/'+year+'/'+month.slice(5)]:inc,[base+'yearly/'+year]:inc};
+}
+function compactPeriods(raw,stamp=Date.now()){
+ const s=compactSales(raw,stamp),[date,month,year]=periodKeys(stamp);
+ return [s.date===date?s.daily:0,s.monthly[year]?.[month.slice(5)]||0,s.yearly[year]||0].map(amount=>({amount}));
+}
+const api={record,summarize,choose,create,periodKeys,centralPatch,compactSales,compactPatch,compactPeriods};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.BOLocalSales=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
