@@ -96,14 +96,14 @@
   if(!authReady())return;
   updateCountdowns();
   countdownTicker=setInterval(()=>{
-   if(document.hidden||!authReady()||!initialLoaded)return;
+   if((document.hidden&&!adminLeader)||!authReady()||!initialLoaded)return;
    updateCountdowns();
    void finalizeDueOrder();
    void finalizeOverduePending();
   },1000);
  }
  async function finalizeOverduePending(){
-  if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
+  if(!ownsAdminStreams()||automaticReadyBusy||pendingAction||!authReady()||!initialLoaded)return;
   const now=Date.now();
   const due=[...orders.values()].filter(o=>!rechecking.has(o.id)&&o.status==='mottatt'&&approvalDeadline(o)>0&&now>=approvalDeadline(o))
    .sort((a,b)=>approvalDeadline(a)-approvalDeadline(b));
@@ -116,7 +116,7 @@
   finally{automaticReadyBusy=false}
  }
  async function finalizeDueOrder(){
-  if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
+  if(!ownsAdminStreams()||automaticReadyBusy||pendingAction||!authReady()||!initialLoaded)return;
   const now=Date.now();
   const due=[...orders.values()].filter(o=>!rechecking.has(o.id)&&o.status==='godkjent'&&Number.isFinite(Number(o.expectedReadyAt))&&Number(o.expectedReadyAt)>0&&Number(o.expectedReadyAt)<=now)
    .sort((a,b)=>Number(a.expectedReadyAt)-Number(b.expectedReadyAt));
@@ -302,7 +302,7 @@
  }
  function logoutView(message=''){
   stopCountdowns();
-  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;activeId=null;
+  closeAdminSharing();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;activeId=null;
   show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);show('ordersPickupFilters',false);
   pickupFilter='ALLE';
   closeSheet();closeDialog();
@@ -346,8 +346,102 @@
   if(historyForceRefresh)await clearHistoryCache();
   render();
   // Brand is part of the static HTML: no extra /settings read.
-  await connectOrders();
+  await startAdminSharing();
   startCountdowns();
+ }
+ const ADMIN_STREAM_LOCK='bestillonline-admin-orders-v1:'+ADMIN_UID;
+ let adminChannel=null,adminChannelKey=null,adminLockController=null,adminLockRelease=null;
+ let adminLeader=false,adminSharing=false,adminShareGeneration=0,adminMessageQueue=Promise.resolve();
+ const ownsAdminStreams=()=>!adminSharing||adminLeader;
+ function closeAdminSharing(){
+  ++adminShareGeneration;
+  if(adminLockController)adminLockController.abort();
+  adminLockController=null;
+  if(adminLockRelease)adminLockRelease();
+  adminLockRelease=null;
+  adminLeader=false;adminSharing=false;adminChannelKey=null;
+  if(adminChannel)adminChannel.close();
+  adminChannel=null;
+  closeStream();
+ }
+ async function adminBroadcast(message){
+  const channel=adminChannel,key=adminChannelKey,generation=adminShareGeneration;
+  if(!channel||!key||!authReady())return;
+  try{
+   const iv=crypto.getRandomValues(new Uint8Array(12));
+   const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(message)));
+   if(generation===adminShareGeneration&&channel===adminChannel&&authReady())channel.postMessage({iv,ciphertext});
+  }catch(error){console.warn('BestillOnline admin channel:',error)}
+ }
+ function broadcastAdminState(){
+  if(!adminLeader||!authReady())return;
+  void adminBroadcast({type:'state',ready:initialLoaded,indexedMode,keysReady,keys:[...knownKeys],
+   records:[...orders.values()],snapshots:[...sourceSnapshots].map(([label,map])=>[label,[...map.values()]])});
+ }
+ async function receiveAdminMessage(event,generation){
+  if(generation!==adminShareGeneration||!authReady()||!adminChannelKey)return;
+  try{
+   const {iv,ciphertext}=event.data||{};
+   if(!iv||!ciphertext)return;
+   const decoded=await crypto.subtle.decrypt({name:'AES-GCM',iv},adminChannelKey,ciphertext);
+   if(generation!==adminShareGeneration||!authReady())return;
+   const message=JSON.parse(new TextDecoder().decode(decoded));
+   if(message.type==='request'){if(adminLeader)broadcastAdminState();return;}
+   if(message.type==='saved'){
+    if(adminLeader&&isOrder(message.order,message.order?.id)){
+     // Only authenticated tabs share successful server writes. Existing
+     // Firebase status guards remain the authority for every mutation.
+     mergeOrder(message.order);render();broadcastAdminState();
+    }
+    return;
+   }
+   if(message.type!=='state'||adminLeader||!Array.isArray(message.records)||!Array.isArray(message.keys))return;
+   indexedMode=message.indexedMode;
+   initialLoaded=message.ready===true;
+   if(message.keysReady===true){
+    knownKeys=new Set(message.keys);keysReady=true;
+    for(const id of orders.keys())if(!knownKeys.has(id)){orders.delete(id);removeHistoryRecord(id);}
+   }
+   sourceSnapshots.clear();
+   for(const [label,records] of message.snapshots||[])sourceSnapshots.set(label,new Map(records.filter(o=>isOrder(o,o?.id)).map(o=>[o.id,o])));
+   for(const order of message.records)mergeOrder(order,false);
+   connection(initialLoaded?'Tilkoblet · delt fane':'Kobler til…',initialLoaded);
+   render();
+  }catch(error){/* Ignore malformed or unauthenticated channel messages. */}
+ }
+ async function startAdminSharing(){
+  if(!authReady()||adminChannel||adminLockController)return;
+  if(typeof BroadcastChannel==='undefined'||!navigator.locks?.request||!crypto.subtle){await connectOrders();return;}
+  const generation=++adminShareGeneration;
+  try{
+   // Firebase Auth shares its persisted login across tabs. A refresh token
+   // is never sent over the channel, stored separately, or put in a URL.
+   const secret=auth.currentUser.refreshToken;
+   if(!secret)throw Error('No shared authenticated session');
+   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('BestillOnline admin SSE v1:'+secret));
+   const key=await crypto.subtle.importKey('raw',digest,{name:'AES-GCM'},false,['encrypt','decrypt']);
+   if(generation!==adminShareGeneration||!authReady())return;
+   adminChannelKey=key;adminChannel=new BroadcastChannel(ADMIN_STREAM_LOCK);
+   adminSharing=true;
+   adminChannel.onmessage=event=>{
+    adminMessageQueue=adminMessageQueue.then(()=>receiveAdminMessage(event,generation)).catch(()=>{});
+   };
+   const controller=new AbortController();adminLockController=controller;
+   void adminBroadcast({type:'request'});
+   void navigator.locks.request(ADMIN_STREAM_LOCK,{mode:'exclusive',signal:controller.signal},async()=>{
+    if(controller.signal.aborted||generation!==adminShareGeneration||!authReady())return;
+    adminLeader=true;
+    const held=new Promise(resolve=>{adminLockRelease=resolve});
+    try{await connectOrders();await held}
+    finally{if(generation===adminShareGeneration){closeStream();adminLeader=false;adminLockRelease=null}}
+   }).catch(error=>{
+    if(generation!==adminShareGeneration||controller.signal.aborted)return;
+    closeAdminSharing();if(authReady())void connectOrders();
+   });
+  }catch(error){
+   if(generation!==adminShareGeneration)return;
+   closeAdminSharing();if(authReady())await connectOrders();
+  }
  }
  function closeStream(){
   ++streamEpoch;
@@ -398,7 +492,7 @@
   return ['mottatt','godkjent'].some(key=>activeStatus(sourceSnapshots.get(key)?.get(id)));
  }
  async function recheckDepartedActive(id,epoch=streamEpoch){
-  if(!initialLoaded||localStatusWriteId===id||rechecking.has(id)||activeStreamContains(id)||!activeStatus(orders.get(id)))return;
+  if(!ownsAdminStreams()||!initialLoaded||localStatusWriteId===id||rechecking.has(id)||activeStreamContains(id)||!activeStatus(orders.get(id)))return;
   rechecking.add(id);
   try{
    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
@@ -409,7 +503,7 @@
    if(current===null){
     if(!activeStreamContains(id)){orders.delete(id);knownKeys.delete(id);removeHistoryRecord(id);}
    }else mergeOrder(current);
-   render();
+   render();broadcastAdminState();
   }catch(error){
    if(epoch===streamEpoch)feedback('Kunne ikke kontrollere endret bestilling: '+error.message,true);
   }finally{if(epoch===streamEpoch)rechecking.delete(id)}
@@ -464,6 +558,7 @@
    if(indexedMode!==false&&newOrderSeen&&initialLoaded&&keysReady&&knownKeys.size>100)void requestPrune();
    if(initialLoaded){void finalizeDueOrder();void finalizeOverduePending();}
    if(activeId&&!orders.has(activeId)&&!rechecking.has(activeId))closeSheet();
+   broadcastAdminState();
   }catch(error){console.warn('BestillOnline: ugyldig ordreoppdatering',error)}
  }
  // Only IDs, not order contents, are needed for the total and page boundaries.
@@ -488,7 +583,7 @@
      for(const snapshot of sourceSnapshots.values())for(const id of snapshot.keys())current.add(id);
      knownKeys=current;keysReady=true;observedKeys=null;
      for(const id of orders.keys())if(!knownKeys.has(id)){orders.delete(id);removeHistoryRecord(id);}
-     ok=true;render();
+     ok=true;render();broadcastAdminState();
     }while(keysWanted&&epoch===streamEpoch);
     if(initialLoaded&&knownKeys.size>100)void requestPrune();
     return ok;
@@ -526,7 +621,7 @@
   return bonusRulesProbe;
  }
  async function connectOrders(){
-  if(!authReady())return;
+  if(!authReady()||!ownsAdminStreams())return;
   closeStream();const epoch=streamEpoch;
   connection('Kobler til…');
   void detectStatusPatch();void detectBonusRules();void detectBonusV2();
@@ -551,13 +646,13 @@
     source.addEventListener('patch',e=>{if(current())onStreamEvent(label,e,true)});
     source.addEventListener('cancel',()=>{
      if(!current())return;
-     readySources.delete(label);initialLoaded=false;source.close();
+     readySources.delete(label);initialLoaded=false;source.close();broadcastAdminState();
      connection('Ingen tilgang',false,true);
      feedback('Firebase avviste en ordretilkobling. Kontroller ORDERS-regler og statusindeks.',true);
     });
     source.addEventListener('auth_revoked',()=>{
      if(!current()||authStreamRenewing)return;
-     closeStream();connection('Fornyer tilkobling…',false,true);
+     closeStream();broadcastAdminState();connection('Fornyer tilkobling…',false,true);
      authStreamRenewing=true;
      void(async()=>{
       try{if(authReady()){await auth.currentUser.getIdToken(true);await connectOrders();}}
@@ -567,7 +662,7 @@
     });
     source.onerror=()=>{
      if(!current())return;
-     readySources.delete(label);initialLoaded=false;
+     readySources.delete(label);initialLoaded=false;broadcastAdminState();
      if(!document.hidden)connection('Kobler til igjen…');
     };
    }
@@ -609,7 +704,7 @@
    if(!(await fetchMissingHistory(newestKnownKeys().slice(0,visibleLimit),epoch)))return;
    if(epoch!==streamEpoch||generation!==historySyncGeneration)return;
   }catch(error){if(epoch===streamEpoch&&generation===historySyncGeneration)feedback('Kunne ikke hente bestillingshistorikk: '+error.message,true);}
-  finally{if(epoch===streamEpoch&&generation===historySyncGeneration){historySyncPending=false;render();}}
+  finally{if(epoch===streamEpoch&&generation===historySyncGeneration){historySyncPending=false;render();broadcastAdminState();}}
  }
  // Fetch at most ten records per query. The shallow key list supplies exact
  // bounds, so already loaded active/history orders can be skipped.
@@ -632,7 +727,7 @@
    visibleLimit=target;
   }catch(error){
    if(epoch===streamEpoch){visibleLimit=previousLimit;feedback('Kunne ikke hente eldre bestillinger: '+error.message,true);}
-  }finally{if(epoch===streamEpoch){loadingHistory=false;render();}}
+  }finally{if(epoch===streamEpoch){loadingHistory=false;render();broadcastAdminState();}}
  }
  function newest(){
   return [...orders.values()].filter(order=>isOrder(order,order.id))
@@ -972,6 +1067,7 @@
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    mergeOrder(next);
    render();
+   if(adminSharing&&!adminLeader)void adminBroadcast({type:'saved',order:next});else broadcastAdminState();
    if(!automatic)closeDialog();
    // Successful changes are already reflected in the row; show no success banner.
    // Errors still use feedback() from the calling handlers.
@@ -994,6 +1090,7 @@
  // No Cloud Functions: prune while the order receiver is open.
  // Any overflow created while closed is cleaned the next time it opens.
  async function requestPrune(){
+  if(!ownsAdminStreams())return;
   if(pruning){pruneWanted=true;return;}
   if(!authReady()||!initialLoaded||!keysReady||knownKeys.size<=100)return;
   pruning=true;const epoch=streamEpoch;
@@ -1017,7 +1114,7 @@
     knownKeys.delete(id);orders.delete(id);removeHistoryRecord(id);
     for(const snapshot of sourceSnapshots.values())snapshot.delete(id);
    }
-   render();
+   render();broadcastAdminState();
   }catch(error){if(epoch===streamEpoch)feedback('Opprydding av gamle bestillinger feilet: '+error.message,true);}
   finally{
    pruning=false;
@@ -1051,7 +1148,7 @@
    if(down&&pickupFilter==='ALLE'&&document.documentElement.scrollHeight-currentY-window.innerHeight<=32)void loadOlderOrders();
   },{passive:true});
   $('ordersLoginForm').addEventListener('submit',login);
-  $('ordersSignOut').onclick=async()=>{closeStream();await clearHistoryCache();await auth.signOut();logoutView()};
+  $('ordersSignOut').onclick=async()=>{closeAdminSharing();await clearHistoryCache();await auth.signOut();logoutView()};
   let ignoreRowClicksUntil=0;
   $('ordersList').addEventListener('click',async event=>{
    const ready=event.target.closest('[data-order-ready]');
@@ -1142,13 +1239,14 @@
   });
   document.addEventListener('visibilitychange',()=>{
    if(document.hidden){
-    stopCountdowns();
-    // Keep cached orders on screen; do not deliberately terminate SSE.
+    // A hidden leader retains the lock and maintains automatic deadlines.
+    if(!adminLeader)stopCountdowns();
    }else{
     startCountdowns();
     if(authReady()){
      const connections=[...sourceStreams.values()];
-     if(!connections.length||connections.some(source=>source.readyState===EventSource.CLOSED))void connectOrders();
+     if(adminSharing&&!adminLeader)void adminBroadcast({type:'request'});
+     else if(!connections.length||connections.some(source=>source.readyState===EventSource.CLOSED))void connectOrders();
      else if(!initialLoaded||connections.some(source=>source.readyState===EventSource.CONNECTING))connection('Kobler til igjen…');
      else connection('Tilkoblet',true);
     }
@@ -1161,6 +1259,8 @@
    else if(!$('ordersSheet').hidden)closeSheet();
   });
  }
+ window.addEventListener('pagehide',()=>closeAdminSharing());
+ window.addEventListener('pageshow',event=>{if(event.persisted&&authReady())void startAdminSharing();});
  events();
  void boot();
 })();
