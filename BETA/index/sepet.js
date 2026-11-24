@@ -121,31 +121,7 @@ function suggestedCartItems(){
  }
  return selected;
 }
-// Only one tiny Firebase GET per page session, on first cart opening.
-// Reconcile any outdated IndexedDB menu cache without fetching /menu again.
-let fatih1SuggestionChecked=false,fatih1SuggestionPending=null;
-async function refreshCartSuggestionIdsOnce(){
- if(fatih1SuggestionChecked||fatih1SuggestionPending||!menu||navigator.onLine===false)return fatih1SuggestionPending;
- fatih1SuggestionPending=(async()=>{
-  try{
-   const response=await fetch(BASE+'/menu/cartSuggestionRules.json',{cache:'no-store'});
-   if(!response.ok)throw Error('Firebase recommendations HTTP '+response.status);
-   const data=await response.json();
-   const ids=Array.isArray(data)?data:data&&typeof data==='object'?
-    Object.keys(data).sort((a,b)=>Number(a)-Number(b)).map(key=>data[key]):[];
-   const unique=[...new Set(ids.filter(id=>id!==null&&id!==undefined).map(String))].slice(0,10);
-   const previous=Array.isArray(menu.cartSuggestionRules)?menu.cartSuggestionRules.map(String):[];
-   if(JSON.stringify(previous)!==JSON.stringify(unique)){
-    menu.cartSuggestionRules=unique;
-    try{await localPut(menu)}catch{}
-    if(!$('cartSheet').hidden)renderCartRecommendations();
-   }
-   fatih1SuggestionChecked=true;
-  }catch(error){console.warn('BestillOnline cart recommendation refresh:',error)}
-  finally{fatih1SuggestionPending=null}
- })();
- return fatih1SuggestionPending;
-}
+// Suggestions use the current cached catalogue and its normal live updates.
 function renderCartRecommendations(){
  const host=$('cartRecommendations'),items=$('cartRecommendationsItems');
  const disclosure=$('cartSuggestionsDisclosure');
@@ -332,7 +308,7 @@ function pickupSummary(){
  }).join('')+
  '<div class="draft-pickup-line is-total"><strong>Totalt</strong><strong>'+money(calculateCartTotal(cart))+'</strong></div>';
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartSuggestionIdsOnce()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
 
 function updateCartBadges(){
  if(!menu)return;
