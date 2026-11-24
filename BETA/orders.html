@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
 <script src="./shared/bonus.min.js?v=8aaf3f3ed5930626" defer></script>
 <script src="./admin/local-sales.min.js?v=57870c958342213a" defer></script>
-<script src="./admin/orders.min.js?v=de013e500cf0b763" defer></script>
+<script src="./admin/orders.min.js?v=b51c8920b299fa52" defer></script>
 </head>
 <body>
 <header class="orders-head">
@@ -40,7 +40,6 @@
   </div>
  </section>
  <div id="ordersApp" hidden>
-  <details id="localSalesPanel" style="margin:8px 0;padding:10px;border:1px solid currentColor;border-radius:8px"><summary> Lokal salgsstatistikk</summary><p style="font-size:12px">Kun registrerte, klare nettbestillinger på denne nettleseren. Eldre slettede ordrer og kassasalg er ikke inkludert. Ikke regnskapsrapport.</p><div id="localSalesResults" style="white-space:pre-line" aria-live="polite"></div><button type="button" id="localSalesRefresh">Oppdater lokalt</button></details>
   <p id="ordersFeedback" class="orders-feedback" role="status" aria-live="polite" hidden></p>
   <div id="ordersEmpty" class="orders-empty"><strong>Ingen bestillinger</strong><small>Nye bestillinger vises automatisk.</small></div>
   <div id="ordersList" class="orders-list" aria-label="Bestillingsliste"></div>
