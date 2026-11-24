@@ -483,8 +483,19 @@ function acceptLiveSettings(value,relay=false){
  $('cacheStatus').textContent='Innstillinger oppdatert';
  if(relay)broadcastLiveMessage({type:'restaurant-settings',value});
 }
+let publicStreamsPausedForOrder=false;
+function pausePublicStreamsForOrder(){
+ publicStreamsPausedForOrder=true;
+ if(changeStream){changeStream.close();changeStream=null}
+ stopSettingsStream();
+ // Keep the existing tab lock/channel so another tab cannot steal the sockets.
+}
+function resumePublicStreamsAfterOrder(){
+ publicStreamsPausedForOrder=false;
+ startSharedChangeStream();
+}
 function startSettingsStream(){
- if(!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
+ if(publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false||!('EventSource' in window))return;
  if(settingsStream&&settingsStream.readyState!==2)return;
  if(settingsStream){settingsStream.close();settingsStream=null}
  const source=new EventSource(BASE+'/settings.json');
@@ -514,7 +525,7 @@ function stopSettingsStream(){
 }
 
 function startChangeStream(){
- if(document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
+ if(publicStreamsPausedForOrder||document.hidden||!('EventSource' in window)||navigator.onLine===false)return;
  if(changeStream&&changeStream.readyState!==2)return;
  if(changeStream){changeStream.close();changeStream=null}
  const source=new EventSource(LIVE_FEED_URL);
@@ -589,7 +600,7 @@ function setupSharedChannel(){
  }catch(error){sharedChannel=null;console.warn('Local tab sync unavailable',error)}
 }
 function startSharedChangeStream(){
- if(!menu||document.hidden||navigator.onLine===false)return;
+ if(publicStreamsPausedForOrder||!menu||document.hidden||navigator.onLine===false)return;
  setupSharedChannel();
  askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
