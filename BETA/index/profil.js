@@ -139,6 +139,7 @@ async function fatih1BonusGetOnce(phone){
  try{await task}finally{if(fatih1BonusGetPending===task)fatih1BonusGetPending=null}
 }
 function fatih1BonusStart(force=false){
+ if(typeof orderSubmissionBusy!=='undefined'&&orderSubmissionBusy)return;
  const phone=fatih1BonusPhone();
  if(!phone){
   fatih1BonusStop();
