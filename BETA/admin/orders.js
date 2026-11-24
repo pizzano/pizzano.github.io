@@ -850,7 +850,7 @@ function bonusBalance(count,last,now=Date.now()){
      const customer=await cr.json()||{},sections=await mr.json(),sizeLabels=await lr.json()||[];
      const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections,sizeLabels);
      const reward=current.pizzaBonus;
-     if(reward&&(balance<10||plan.index!==reward.index||plan.discount!==reward.discount||!plan.count))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
+     if(reward&&(balance+plan.count<11||plan.index!==reward.index||plan.discount!==reward.discount||!plan.count))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
      const gross=(current.items||[]).reduce((sum,x)=>sum+Number(x.qty)*Number(x.unitPrice),0);
      if(!Number.isFinite(gross)||Math.abs(gross-(reward?plan.discount:0)-Number(current.total))>0.01)throw Error('Ugyldig ordretotal.');
      const count=Math.min(11,balance+plan.count-(reward?11:0));
