@@ -89,9 +89,9 @@ function buildFiles(input){
  }
  const list=['index.html',...pages['index.html'].map(p=>urls[p])];
  let sw=input['sw.js'];
- sw=one(sw,/const CACHE_NAME='[^']*';/g,"const CACHE_NAME='fatih1-static-opt-"+hash(output['index.html']+list.join('\n'))+"';");
+ sw=one(sw,/const CACHE_NAME='[^']*';/g,"const CACHE_NAME='fatih1-static-opt-"+hash(output['index.html']+list.join('\n')+'|coherent-shell-v2')+"';");
  sw=one(sw,/const STATIC_URLS=\[[\s\S]*?\]\.map\(path=>new URL\(path,ROOT\)\.href\);/g,"const STATIC_URLS=[\n"+list.map(p=>"  '"+p+"',").join('\n')+"\n].map(path=>new URL(path,ROOT).href);");
- sw=one(sw,/if\(!\[[^\n]*\]\.includes\(asset\)\|\|!url\.searchParams\.has\('v'\)\)return;/g,"if(!["+pages['index.html'].map(p=>"'"+minPath(p)+"'").join(',')+"].includes(asset)||!url.searchParams.has('v'))return;");
+ assert(sw.includes("if(!STATIC_URLS.includes(url.href)||url.href===INDEX_URL)return;"),'Expected exact-version service worker asset guard');
  new Function(sw);
  output['sw.js']=sw;
  return {output,urls};
