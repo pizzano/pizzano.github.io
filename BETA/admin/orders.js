@@ -977,7 +977,26 @@
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
- let salesRulesEnabled=false;
+ let salesRulesEnabled=false,compactSalesEnabled=false,salesDate=null;
+ async function prepareCompactSales(){
+  if(!compactSalesEnabled){
+   const marker=await fetch(DB+'/salesStatisticsV2.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});
+   if(marker.status===401||marker.status===403)return false;
+   if(!marker.ok)throw Error('Kunne ikke kontrollere salgsregler');
+   compactSalesEnabled=true;
+  }
+  if(salesDate!==null)return true;
+  const url=await authorizedURL('salesStatistics');
+  const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+  if(!response.ok)throw Error('Kunne ikke hente salgsstatistikk');
+  const raw=await response.json();
+  if(typeof raw?.date==='string'){salesDate=raw.date;return true}
+  const etag=response.headers.get('ETag');if(!etag)throw Error('Mangler ETag for salgsmigrering');
+  const migrated=BOLocalSales.compactSales(raw);
+  const saved=await fetch(url+'&print=silent',{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(migrated),cache:'no-store'});
+  if(!saved.ok)throw Error('Salgsmigrering avbrutt ('+saved.status+'). Prøv igjen.');
+  salesDate=migrated.date;return true;
+ }
  async function salesRulesAvailable(){
   if(salesRulesEnabled)return true;
   const r=await fetch(DB+'/salesStatisticsV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});
@@ -1000,6 +1019,7 @@
    const bonusMode=status==='godkjent'&&bonusRulesEnabled;
    if(status==='godkjent'&&!bonusMode)throw Error('Pizzabonus kunne ikke aktiveres. Kontroller at nye Firebase-regler er publisert (pizzaBonusV1), og prøv igjen. Bestillingen er ikke godkjent.');
    const salesMode=status==='klar'&&await salesRulesAvailable();
+   const compactMode=salesMode&&await prepareCompactSales();
    const patchMode=(statusPatchEnabled||bonusMode||salesMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
    if(salesMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    if(bonusMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
@@ -1082,7 +1102,8 @@
      writeURL=await authorizedURL('');
      options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
     }else if(salesMode){
-     const multi=BOLocalSales.centralPatch(next);
+     const multi=compactMode?BOLocalSales.compactPatch(next,salesDate):BOLocalSales.centralPatch(next);
+     if(compactMode){next._statusGuard.salesDate=salesDate;next._statusGuard.saleDay=BOLocalSales.periodKeys(next.readyAt)[0];changes._statusGuard=next._statusGuard;}
      for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
      writeURL=await authorizedURL('');
      options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
@@ -1091,8 +1112,10 @@
    let saved=await fetch(writeURL+'&print=silent',options);
    if(saved.status===400)saved=await fetch(writeURL,options);
    if(bonusMode&&(saved.status===400||saved.status===401||saved.status===403||saved.status===412))throw Error('Pizzabonus kunne ikke lagres (Firebase HTTP '+saved.status+'). Bestillingen er ikke godkjent. Kontroller Firebase-regler og oppdater siden.');
+   if(compactMode&&!saved.ok)salesDate=null;
    if(saved.status===412||(patchMode&&(saved.status===401||saved.status===403)))throw Error('Bestillingen ble endret samtidig eller statusreglene avviste endringen. Oppdater siden.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
+   if(compactMode)salesDate=BOLocalSales.periodKeys(next.readyAt)[0];
    mergeOrder(next);
    render();
    if(adminSharing&&!adminLeader)void adminBroadcast({type:'saved',order:next});else broadcastAdminState();
