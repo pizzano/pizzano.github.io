@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="./index/style.min.css?v=a70d49407b85fd23">
   <script src="./shared/bonus.min.js?v=8aaf3f3ed5930626" defer></script>
   <script src="./index/sepet.min.js?v=5f80b708b0b4f155" defer></script>
-  <script src="./index/app.min.js?v=a5d7ded8a55f6161" defer></script>
-  <script src="./index/profil.min.js?v=426e163dadc4e35d" defer></script>
+  <script src="./index/smart-customer.js?v=1" defer></script>
+  <script src="./index/app.js?v=smart-customer-1" defer></script>
+  <script src="./index/profil.js?v=smart-customer-1" defer></script>
 </head>
 <body>
   <div id="boStartup" role="status" aria-live="polite" aria-label="Menyen lastes"><div id="boStartupInner"><div id="boStartupBrand" hidden><span id="boStartupBrandIcon" aria-hidden="true">🔥</span><strong id="boStartupBrandName"></strong></div><span id="boStartupSpinner" aria-hidden="true"></span><strong id="boStartupTitle">Menyen klargjøres</strong><span id="boStartupDescription">Henter meny og bilder…</span><button id="boStartupRetry" type="button" hidden>Prøv igjen</button></div></div>
@@ -98,6 +99,13 @@
  <div id="fatih1ProfileScroll" class="fatih1-profile-scroll">
   <div id="fatih1ProfileHome">
    <div class="fatih1-profile-hero"><span id="fatih1ProfileAvatar" class="fatih1-profile-avatar" aria-hidden="true"><span id="fatih1ProfileInitials">👤</span><i class="fatih1-profile-heart" aria-hidden="true">♥</i></span><div class="fatih1-profile-id"><h2 id="fatih1ProfileName">Min profil</h2><p id="fatih1ProfilePhone">Kundeprofil</p></div></div>
+   <section id="smartCustomerPanel" hidden aria-label="Dine snarveier" style="margin:12px 0">
+    <details><summary>Dine snarveier</summary>
+     <p style="font-size:12px">Lagret på denne enheten. Oppdaterte priser fra menyen.</p>
+     <div id="smartCustomerFavoriteGroup" hidden><h3>Favoritter</h3><div id="smartCustomerFavorites"></div></div>
+     <div id="smartCustomerRecentGroup" hidden><h3>Nylig sett</h3><div id="smartCustomerRecent"></div><button type="button" id="smartCustomerClear" class="fatih1-profile-menu-row">Tøm nylig sett</button></div>
+    </details>
+   </section>
    <section class="fatih1-profile-bonus" aria-label="Din pizzabonus">
  <h3>Din pizzabonus</h3><p class="fatih1-bonus-intro">Kjøp 10 store pizzaer – få den 11. gratis</p>
  <svg id="fatih1BonusRing" class="fatih1-bonus-ring" viewBox="0 0 240 240" role="img" aria-label="0 av 10 pizzaer registrert">
