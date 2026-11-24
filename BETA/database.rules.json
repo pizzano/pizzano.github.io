@@ -31,7 +31,20 @@
         "lastOrderAt": {
           ".read": "$phone.matches(/^[49][0-9]{7}$/)"
         },
-        ".validate": "!newData.child('_bonusOrder').exists() || (newData.child('_bonusOrder').val() === data.child('_bonusOrder').val() && newData.child('bonusCount').val() === data.child('bonusCount').val() && newData.child('lastOrderAt').val() === data.child('lastOrderAt').val()) || (newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'godkjent' && root.child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'mottatt' && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('phone').val() === $phone && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousCount').val() === data.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousLastOrderAt').val() === data.child('lastOrderAt').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('count').val() === newData.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('at').val() === newData.child('lastOrderAt').val() && newData.child('bonusCount').isNumber() && newData.child('bonusCount').val() >= 0 && newData.child('bonusCount').val() <= 11)"
+        ".validate": "(!newData.child('_bonusOrder').exists() || (newData.child('_bonusOrder').val() === data.child('_bonusOrder').val() && newData.child('bonusCount').val() === data.child('bonusCount').val() && newData.child('lastOrderAt').val() === data.child('lastOrderAt').val()) || (newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'godkjent' && root.child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'mottatt' && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('phone').val() === $phone && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousCount').val() === data.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousLastOrderAt').val() === data.child('lastOrderAt').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('count').val() === newData.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('at').val() === newData.child('lastOrderAt').val() && newData.child('bonusCount').isNumber() && newData.child('bonusCount').val() >= 0 && newData.child('bonusCount').val() <= 11)) && (!data.child('bonus').exists() && !newData.child('bonus').exists() || (newData.child('bonus').exists() && newData.child('bonus/count').val() === (newData.child('bonusCount').exists() ? newData.child('bonusCount').val() : 0) && newData.child('bonus/last').val() === (newData.child('lastOrderAt').exists() ? newData.child('lastOrderAt').val() : 0)))",
+        "bonus": {
+          ".read": "$phone.matches(/^[49][0-9]{7}$/)",
+          ".validate": "newData.hasChildren(['count','last'])",
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 11 && newData.val() % 1 === 0"
+          },
+          "last": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 300000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
       }
     },
     "ORDERS": {
@@ -50,6 +63,9 @@
       ".read": true
     },
     "pizzaBonusV1": {
+      ".read": true
+    },
+    "pizzaBonusV2": {
       ".read": true
     }
   }
