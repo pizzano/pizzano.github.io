@@ -50,6 +50,7 @@
 
  let auth=null,stream=null,orders=new Map(),activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
+ let pickupFilter='ALLE';
  let countdownTicker=null,automaticReadyBusy=false;
  let pruneCheckedKeySignature='',authStreamRenewing=false;
  const autoReadyAttempts=new Map();
@@ -167,7 +168,8 @@
  function logoutView(message=''){
   stopCountdowns();
   closeStream();orders.clear();renderedIds='';activeId=null;
-  show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);
+  show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);show('ordersPickupFilters',false);
+  pickupFilter='ALLE';
   closeSheet();closeDialog();
   connection('Logg inn',false,true);
   $('ordersLoginError').hidden=!message;
@@ -202,7 +204,7 @@
   }catch(error){logoutView(error.message)}
  }
  async function enterOrders(){
-  show('ordersLogin',false);show('ordersApp',true);show('ordersSignOut',true);
+  show('ordersLogin',false);show('ordersApp',true);show('ordersSignOut',true);show('ordersPickupFilters',true);
   connection('Kobler til…');
   render();
   // Brand is part of the static HTML: no extra /settings read.
@@ -313,10 +315,17 @@
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
   const all=newest();
-  const filtered=[...all].sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
+  const counts={ALLE:all.length,SNAREST:0,SENERE:0};
+  for(const order of all)counts[pickupKind(order)]++;
+  for(const button of $('ordersPickupFilters').querySelectorAll('[data-pickup-filter]')){
+   const key=button.dataset.pickupFilter;
+   button.setAttribute('aria-pressed',String(key===pickupFilter));
+   button.querySelector('[data-filter-count]').textContent='('+counts[key]+')';
+  }
+  const filtered=all.filter(order=>pickupFilter==='ALLE'||pickupKind(order)===pickupFilter).sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
     (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
   $('ordersEmpty').hidden=filtered.length>0;
-  $('ordersEmpty').querySelector('strong').textContent='Ingen bestillinger';
+  $('ordersEmpty').querySelector('strong').textContent=pickupFilter==='ALLE'?'Ingen bestillinger':pickupFilter==='SNAREST'?'Ingen snarest-bestillinger':'Ingen bestillinger til senere';
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
   $('ordersList').innerHTML=filtered.map((order,index)=>{
    const id=safe(String(order.id).slice(-6).toUpperCase());
@@ -639,6 +648,12 @@
    // Explicit user-initiated reload: reconnect the Firebase SSE once,
    // with no recurring database or network probes.
    window.location.reload();
+  });
+  $('ordersPickupFilters').addEventListener('click',event=>{
+   const button=event.target.closest('[data-pickup-filter]');
+   if(!button||button.dataset.pickupFilter===pickupFilter)return;
+   pickupFilter=button.dataset.pickupFilter;
+   render();
   });
   $('ordersLoginForm').addEventListener('submit',login);
   $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
