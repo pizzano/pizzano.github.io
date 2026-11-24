@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
   
-  <link rel="stylesheet" href="./index/style.css?v=20261124-bonus-toggle59">
+  <link rel="stylesheet" href="./index/style.css?v=20261124-bonus-profile60">
   <script src="./index/sepet.js?v=20261124-pizza-bonus65" defer></script>
   <script src="./index/app.js?v=20261124-local-product45" defer></script>
-  <script src="./index/profil.js?v=20261124-bonus-live9" defer></script>
+  <script src="./index/profil.js?v=20261124-bonus-profile10" defer></script>
 </head>
 <body>
   <div id="boStartup" role="status" aria-live="polite" aria-label="Menyen lastes"><div id="boStartupInner"><div id="boStartupBrand" hidden><span id="boStartupBrandIcon" aria-hidden="true">🔥</span><strong id="boStartupBrandName"></strong></div><span id="boStartupSpinner" aria-hidden="true"></span><strong id="boStartupTitle">Menyen klargjøres</strong><span id="boStartupDescription">Henter meny og bilder…</span><button id="boStartupRetry" type="button" hidden>Prøv igjen</button></div></div>
@@ -101,15 +101,18 @@
   <div id="fatih1ProfileHome">
    <div class="fatih1-profile-hero"><span id="fatih1ProfileAvatar" class="fatih1-profile-avatar" aria-hidden="true"><span id="fatih1ProfileInitials">👤</span><i class="fatih1-profile-heart" aria-hidden="true">♥</i></span><div class="fatih1-profile-id"><h2 id="fatih1ProfileName">Min profil</h2><p id="fatih1ProfilePhone">Kundeprofil</p></div></div>
    <section class="fatih1-profile-bonus" aria-label="Din pizzabonus">
- <h3>Din pizzabonus</h3><p class="fatih1-bonus-intro">Kjøp 10 store pizzaer, få den 11. gratis</p>
+ <h3>Din pizzabonus</h3><p class="fatih1-bonus-intro">Kjøp 10 store pizzaer – få den 11. gratis</p>
  <svg id="fatih1BonusRing" class="fatih1-bonus-ring" viewBox="0 0 240 240" role="img" aria-label="0 av 10 pizzaer registrert">
   <g id="fatih1BonusSegments"></g>
-  <text id="fatih1BonusCount" class="fatih1-bonus-count" x="120" y="124" text-anchor="middle">0</text>
-  <text class="fatih1-bonus-ring-caption" x="120" y="145" text-anchor="middle"><tspan x="120">pizza</tspan><tspan x="120" dy="17">registrert</tspan></text>
+  <text id="fatih1BonusCount" class="fatih1-bonus-count" x="120" y="124" text-anchor="middle">0/10</text>
+  <text class="fatih1-bonus-ring-caption" x="120" y="147" text-anchor="middle">Store pizzaer</text>
  </svg>
- <strong id="fatih1BonusRemaining" class="fatih1-bonus-remaining">10 pizzaer igjen til din gratis pizza</strong>
+ <strong id="fatih1BonusRemaining" class="fatih1-bonus-remaining">Samle pizzabonus</strong>
+ <p id="fatih1BonusDescription" class="fatih1-bonus-description" aria-live="polite">10 store pizzaer igjen til en gratis pizza!</p>
+ <small id="fatih1BonusReminder" class="fatih1-bonus-reminder" hidden>Bruk pizzabonus på din neste bestilling.</small>
  <small class="fatih1-bonus-terms">Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small>
- <button type="button" class="fatih1-bonus-consent" id="fatih1BonusConsent" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8H7a2.5 2.5 0 1 1 2.5-2.5L12 8Zm0 0h5a2.5 2.5 0 1 0-2.5-2.5L12 8Z"/></svg><span>Bruk pizzabonus automatisk</span><b id="fatih1BonusConsentState">Av</b></button>
+ <small class="fatih1-bonus-terms fatih1-bonus-expiry">Bonus utløper etter 365 dager uten bekreftet bestilling.</small>
+ <button type="button" class="fatih1-bonus-consent" id="fatih1BonusConsent" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8H7a2.5 2.5 0 1 1 2.5-2.5L12 8Zm0 0h5a2.5 2.5 0 1 0-2.5-2.5L12 8Z"/></svg><span id="fatih1BonusConsentLabel">Bruk pizzabonus automatisk</span><b id="fatih1BonusConsentState">Av</b></button>
  <div class="fatih1-bonus-tools"><button id="fatih1BonusRefresh" type="button" class="fatih1-bonus-refresh">Oppdater pizzabonus</button><small id="fatih1BonusStatus" role="status" aria-live="polite"></small></div>
 </section>
    <nav class="fatih1-profile-menu" aria-label="Profilmeny">
