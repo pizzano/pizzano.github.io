@@ -420,7 +420,8 @@ function bonusBalance(count,last,now=Date.now()){
   return statusPatchProbe;
  }
  async function detectBonusRules(){
-  if(!bonusRulesProbe)bonusRulesProbe=fetch(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit'}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false);
+  if(bonusRulesEnabled)return true;
+  if(!bonusRulesProbe)bonusRulesProbe=fetch(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false).finally(()=>{bonusRulesProbe=null});
   return bonusRulesProbe;
  }
  async function connectOrders(){
@@ -784,7 +785,7 @@ function bonusBalance(count,last,now=Date.now()){
    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
    if(status==='godkjent')await detectBonusRules();
    const bonusMode=status==='godkjent'&&bonusRulesEnabled;
-   if(status==='godkjent'&&old.pizzaBonus&&!bonusMode)throw Error('Publiser nye Firebase-regler før pizzabonus kan godkjennes.');
+   if(status==='godkjent'&&!bonusMode)throw Error('Pizzabonus kunne ikke aktiveres. Kontroller at nye Firebase-regler er publisert (pizzaBonusV1), og prøv igjen. Bestillingen er ikke godkjent.');
    const patchMode=(statusPatchEnabled||bonusMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
    if(bonusMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    let current=old,etag=null;
@@ -866,6 +867,7 @@ function bonusBalance(count,last,now=Date.now()){
    }else options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(next),cache:'no-store'};
    let saved=await fetch(writeURL+'&print=silent',options);
    if(saved.status===400)saved=await fetch(writeURL,options);
+   if(bonusMode&&(saved.status===400||saved.status===401||saved.status===403||saved.status===412))throw Error('Pizzabonus kunne ikke lagres (Firebase HTTP '+saved.status+'). Bestillingen er ikke godkjent. Kontroller Firebase-regler og oppdater siden.');
    if(saved.status===412||(patchMode&&(saved.status===401||saved.status===403)))throw Error('Bestillingen ble endret samtidig eller statusreglene avviste endringen. Oppdater siden.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    mergeOrder(next);
