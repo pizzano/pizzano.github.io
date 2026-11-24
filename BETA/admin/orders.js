@@ -1103,7 +1103,7 @@
      options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
     }else if(salesMode){
      const multi=compactMode?BOLocalSales.compactPatch(next,salesDate):BOLocalSales.centralPatch(next);
-     if(compactMode){next._statusGuard.salesDate=salesDate;next._statusGuard.saleDay=BOLocalSales.periodKeys(next.readyAt)[0];changes._statusGuard=next._statusGuard;}
+     if(compactMode){next._statusGuard.salesDate=salesDate;const [day,month,year]=BOLocalSales.periodKeys(next.readyAt);next._statusGuard.saleDay=day;next._statusGuard.saleYear=year;next._statusGuard.saleMonth=month.slice(5);changes._statusGuard=next._statusGuard;}
      for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
      writeURL=await authorizedURL('');
      options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
