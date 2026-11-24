@@ -3098,3 +3098,16 @@ html[data-fatih1-theme="dark"] #cartSheet #cartCartStep .cart-suggestions-label{
 html[data-fatih1-theme="dark"] #cartSheet #cartCartStep .cart-suggestions-preview{
  background:linear-gradient(120deg,#285b43,#204a38);
 }
+
+/* Slim full-width pizza bonus toggle, with explicit on/off state. */
+button.fatih1-bonus-consent{box-sizing:border-box;min-height:42px;margin-top:18px;padding:7px 12px;gap:9px;border:1px solid #b8cfc2;border-radius:9px;background:transparent;color:#315547;font:inherit;font-size:13px;font-weight:650;justify-content:flex-start;transition:background .18s,border-color .18s,color .18s}
+button.fatih1-bonus-consent svg{width:19px;height:19px;flex:0 0 19px}
+button.fatih1-bonus-consent span{flex:1}
+button.fatih1-bonus-consent b{min-width:30px;text-align:center;font-size:11px;padding:3px 6px;border-radius:5px;background:#e4eae6;color:#506358}
+button.fatih1-bonus-consent.is-enabled{background:#e2f3e8;border-color:#32956a;color:#126344}
+button.fatih1-bonus-consent.is-enabled b{background:#16774e;color:#fff}
+button.fatih1-bonus-consent:focus-visible{outline:2px solid #32956a;outline-offset:3px}
+html[data-fatih1-theme="dark"] button.fatih1-bonus-consent{background:transparent;border-color:#4b7563;color:#c7e0d2}
+html[data-fatih1-theme="dark"] button.fatih1-bonus-consent b{background:#345347;color:#d2e5da}
+html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-enabled{background:#24533e;border-color:#69b98b;color:#e5faeb}
+html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-enabled b{background:#88d1a5;color:#103c28}
