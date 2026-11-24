@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261124-shared-bonus73';
+const CACHE_NAME='fatih1-static-v20261124-html-clean74';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -54,7 +54,7 @@ self.addEventListener('fetch',event=>{
  // Only the precise local CSS/JS asset URLs listed above may use Cache Storage.
  // No images, remote origins, Firebase REST/SSE, order APIs or uploads are handled.
  const asset=url.pathname.slice(ROOT.pathname.length);
- if(!['index/style.css','index/app.js','index/sepet.js','index/profil.js'].includes(asset)||!url.searchParams.has('v'))return;
+ if(!['index/style.css','index/app.js','index/sepet.js','index/profil.js','shared/bonus.js'].includes(asset)||!url.searchParams.has('v'))return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE_NAME);
   const saved=await cache.match(request);
