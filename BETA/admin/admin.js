@@ -489,12 +489,15 @@ function refreshHeader(){
  }
  async function loadRestaurantSettings(force=false){
   const state=restaurantState;
-  if(state.loading||(!force&&state.loaded))return;
+  if(state.loading||state.saving||(!force&&state.loaded&&state.dirty.size))return;
   if(!auth?.currentUser||auth.currentUser.uid!==ADMIN_UID)return;
   if(state.dirty.size&&!window.confirm('Ulagrede restaurantinnstillinger vil gå tapt. Fortsette?'))return;
   state.loading=true;restaurantSetSaving();restaurantSetMessage('');
   try{
-   const settings=!force&&adminSettingsSnapshot?adminSettingsSnapshot:await readAdminSettings(force);
+   const revisionResponse=await fetch(DB+'/menu/changeFeed/settingsRevision.json',{cache:'no-store'});
+   if(!revisionResponse.ok)throw Error('Kunne ikke kontrollere innstillingsversjon.');
+   const revision=await revisionResponse.json();
+   const settings=!force&&(readSharedSettings(revision)||(revision&&adminSettingsSnapshot?._liveRevision===revision?adminSettingsSnapshot:null))||await readAdminSettings(true);
    adminSettingsSnapshot=settings;
    state.original=clone(settings);state.draft=clone(settings);
    state.loaded=true;state.dirty.clear();restaurantRender();
@@ -560,8 +563,8 @@ function refreshHeader(){
  async function restaurantToggleClose(){
   const state=restaurantState;
   if(!state.loaded||state.saving)return;
-  const closed=state.draft.manualClosed===true&&
-   (!Number(state.draft.manualClosedUntil)||Number(state.draft.manualClosedUntil)>Date.now());
+  const closed=state.original.manualClosed===true&&
+   (!Number(state.original.manualClosedUntil)||Number(state.original.manualClosedUntil)>Date.now());
   if(!window.confirm(closed?'Åpne nettbestilling igjen?':'Stenge nettbestilling midlertidig til du åpner igjen?'))return;
   $('restaurantTemporaryClose').disabled=true;
   try{
