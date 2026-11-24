@@ -383,12 +383,36 @@ function refreshHeader(){
   $('adminNavPrev').disabled=track.scrollLeft<=3;
   $('adminNavNext').disabled=track.scrollLeft>=max-3;
  }
+ let salesRenderVersion=0;
+ async function renderSalesDashboard(){
+  const generation=++salesRenderVersion,allowed=()=>auth?.currentUser?.uid===ADMIN_UID;
+  if(!allowed())return;
+  const status=$('salesDashboardStatus');status.textContent='Beregner…';
+  try{
+   const stats=await BOLocalSales.create(DB+':'+ADMIN_UID,allowed).read();
+   if(generation!==salesRenderVersion||!allowed())return;
+   const labels=['I dag','Denne måneden','Dette året'],currency=n=>(n/100).toLocaleString('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2})+' kr';
+   const count=n=>n+' '+(n===1?'ordre':'ordrer');
+   const max=Math.max(100,...stats.map(s=>s.amount)),power=10**Math.floor(Math.log10(max/4)),step=Math.ceil(max/4/power)*power,top=step*4;
+   for(let i=0;i<3;i++){
+    $('salesAmount'+i).textContent=currency(stats[i].amount);
+    $('salesCount'+i).textContent=count(stats[i].count);
+    $('salesBar'+i).style.height=(stats[i].amount/top*100)+'%';
+    $('salesBarValue'+i).textContent=currency(stats[i].amount);
+    $('salesBarCount'+i).textContent=count(stats[i].count);
+   }
+   for(let i=0;i<5;i++)$('salesTick'+i).textContent=currency(top-i*step).replace(',00','');
+   status.textContent='Oppdatert lokalt';
+  }catch(error){if(generation===salesRenderVersion&&allowed())status.textContent='Lokal statistikk er utilgjengelig.'}
+ }
  function setTab(tab){
-  if(tab!=='products'&&tab!=='groups'&&tab!=='restaurant')return;
+  if(!['products','groups','restaurant','sales'].includes(tab))return;
   const previous=state.tab;
   state.tab=tab;
   $('productsPage').hidden=tab!=='products';$('groupsPage').hidden=tab!=='groups';
   $('restaurantPage').hidden=tab!=='restaurant';
+  $('salesPage').hidden=tab!=='sales';
+  if(tab==='sales')void renderSalesDashboard();
   if(tab==='restaurant')void loadRestaurantSettings();
   for(const b of document.querySelectorAll('[data-tab]')){
    const active=b.dataset.tab===tab;
@@ -1569,6 +1593,7 @@ function refreshHeader(){
  }
  function handleEvents(){
  $('authForm').addEventListener('submit',login);
+ $('salesRefresh').addEventListener('click',()=>void renderSalesDashboard());
  $('btnSignOut').addEventListener('click',async()=>{
   if(state.dirty&&!confirm('Forkast ulagrede endringer og logg ut?'))return;
   cancelScheduledSave();draftProductSnapshots.clear();draftGroupSnapshots.clear();
