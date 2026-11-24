@@ -1088,15 +1088,6 @@ function beginCustomerStatus(){
  // Native EventSource reconnects on temporary connection loss.
 }
 
-function localOrderStatus(){
- if(!localOrder)return 'none';
- if(localOrder.status==='pending'&&Number(localOrder.expiresAt)<=Date.now()){
-  localOrder.status='expired';
-  const store=readOrderStore();
-  persistOrderStore({activeId:null,orders:store.orders.filter(o=>o.id!==localOrder.id)});
- }
- return localOrder.status;
-}
 function renderDraftActiveOrder(){
  const card=$('draftActiveOrder');
  if(!card)return;
@@ -1292,13 +1283,6 @@ function checkoutNavigate(step){
  }
  syncCheckoutAvailability();
  $('cartScroll').scrollTo({top:0,behavior:'instant'});
-}
-function localOrderId(){
- const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
- const bytes=new Uint8Array(6);
- if(window.crypto?.getRandomValues)window.crypto.getRandomValues(bytes);
- else for(let i=0;i<6;i++)bytes[i]=Math.floor(Math.random()*256);
- return Array.from(bytes,x=>alphabet[x%alphabet.length]).join('');
 }
 let orderSubmissionBusy=false;
 const PENDING_SEND_KEY='bestillonline-pending-send-v1';
