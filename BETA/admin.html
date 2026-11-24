@@ -17,11 +17,11 @@
    <span class="status" id="saveStatus" role="status" aria-live="polite">Innlogging kreves</span>
    <button id="btnSave" class="btn gold admin-main-save" type="button" disabled>Lagre endringer</button>
    <details class="admin-tools-menu" id="adminToolsMenu" hidden>
-    <summary aria-label="Åpne administrasjonsverktøy"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5a5.5 5.5 0 0 0-7 7L3 18l3 3 4.5-4.5a5.5 5.5 0 0 0 7-7l-3.5 3.5-3-3z"/></svg></span><span>Verktøy</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+    <summary aria-label="Åpne administrasjonsverktøy"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5a5.5 5.5 0 0 0-7 7L3 18l3 3 4.5-4.5a5.5 5.5 0 0 0 7-7l-3.5 3.5-3-3z"/></svg></span><span>Verktøy</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#bo-admin-icon-chevron"/></svg></span></summary>
     <div class="admin-tools-panel">
      <p class="admin-tools-heading">Administrasjon</p>
      <details class="admin-tools-accordion" open>
-      <summary><span class="admin-tool-section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h8"/></svg></span><span>Meny og endringer</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+      <summary><span class="admin-tool-section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h8"/></svg></span><span>Meny og endringer</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#bo-admin-icon-chevron"/></svg></span></summary>
       <div class="admin-tools-items">
        <button id="btnReload" type="button"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.2-5.5"/><path d="M20 4v6h-6"/></svg></span><span><strong>Hent siste meny</strong><small>Les siste versjon fra Firebase</small></span></button>
        <button id="btnExportMenuBackup" type="button" title="Last ned siste hentede originale meny før opprydding"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 17v4h14v-4"/></svg></span><span><strong>Last ned menybackup</strong><small>Eksporter lokalt uten ny databaselesing</small></span></button>
@@ -29,7 +29,7 @@
       </div>
      </details>
      <details class="admin-tools-accordion" open>
-      <summary><span class="admin-tool-section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></span><span>Visning og konto</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+      <summary><span class="admin-tool-section-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></span><span>Visning og konto</span><span class="admin-tools-chevron"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#bo-admin-icon-chevron"/></svg></span></summary>
       <div class="admin-tools-items">
        <a href="./" target="_blank" rel="noopener noreferrer"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5h7v7m0-7-10 10"/><path d="M19 14v5H5V5h5"/></svg></span><span><strong>Se kundemenyen</strong><small>Åpne menyen i en ny fane</small></span></a>
        <button id="btnSignOut" type="button" hidden><span class="admin-tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5v16h4M14 8l4 4-4 4M18 12H9"/></svg></span><span><strong>Logg ut</strong><small>Avslutt administratorøkten</small></span></button>
@@ -62,9 +62,9 @@
  </section>
  <section id="adminRoot" hidden>
   <div class="layout" id="productsPage" role="tabpanel" aria-labelledby="adminTabProducts">
-   <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory">+ Kategori</button></div><p class="reorder-hint">⠿ Dra kategoriene for å endre rekkefølgen</p><div class="stack scroll" id="categoryList"></div></section>
+   <section class="panel"><div class="section-head"><h2>Kategorier</h2><button class="btn small" id="addCategory" type="button">+ Kategori</button></div><p class="reorder-hint">⠿ Dra kategoriene for å endre rekkefølgen</p><div class="stack scroll" id="categoryList"></div></section>
    <section class="panel admin-products-panel">
-    <div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct">+ Produkt</button></div>
+    <div class="section-head"><h2 id="productsTitle">Produkter</h2><button class="btn primary small" id="addProduct" type="button">+ Produkt</button></div>
     <div class="admin-product-filters" id="productStatusFilters" role="group" aria-label="Filtrer produkter etter status">
      <button class="admin-product-filter is-active" type="button" data-product-filter="all" aria-pressed="true">Alle</button>
      <button class="admin-product-filter" type="button" data-product-filter="soldout" aria-pressed="false">Utsolgt <span class="admin-product-filter-count" data-product-filter-count="soldout">0</span></button>
@@ -80,7 +80,7 @@
     <p class="reorder-hint" id="productReorderHint">⠿ Dra produktene for å endre rekkefølgen</p>
     <div class="stack scroll" id="productList"></div>
    </section>
-   
+
   </div>
   <div class="layout" id="groupsPage" role="tabpanel" aria-labelledby="adminTabGroups" hidden>
    <section class="panel admin-groups-panel">
@@ -242,5 +242,6 @@
  </section>
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden;pointer-events:none"><defs><g id="bo-admin-icon-chevron"><path d="m6 9 6 6 6-6"/></g></defs></svg>
 </body>
 </html>
