@@ -6,7 +6,7 @@ const CART_KEY='kol-beta-cart-v1';
 let cart=loadCart(),editingCartIndex=null;
 const calculateCartTotal=items=>items.reduce((sum,line)=>sum+(Number(line.qty)||0)*(Number(line.unitPrice)||0),0);
 function loadCart(){try{const c=JSON.parse(localStorage.getItem(CART_KEY));return Array.isArray(c)?c:[]}catch{return []}}
-function saveCart(){try{localStorage.setItem(CART_KEY,JSON.stringify(cart))}catch{}renderCartIndicators();updateCartBadges()}
+function saveCart(){try{if(cart.length)localStorage.setItem(CART_KEY,JSON.stringify(cart));else localStorage.removeItem(CART_KEY)}catch{}renderCartIndicators();updateCartBadges()}
 
 function addToCart(){
  if(!current||$('productSheet').classList.contains('is-sheet-closing'))return;
@@ -60,6 +60,7 @@ function normalizeCartSuggestionRules(value){
 }
 function cleanupRetiredCartStorage(){
  try{
+  if(!cart.length)localStorage.removeItem(CART_KEY);
   for(const key of ['kol-beta-cart-suggestions-once-v1','kol-beta-cart-dismissed-v1']){
    if(localStorage.getItem(key)!==null)localStorage.removeItem(key);
   }
@@ -511,7 +512,9 @@ $('sheetClose').onclick=closeProductSheet;
  */
 const FATIH1_CONTACT_STORAGE_KEY='kol-beta-demo-contact-v1';
 const FATIH1_PICKUP_STORAGE_KEY='kol-beta-demo-pickup-v1';
-const FATIH1_LOCAL_ORDER_STORAGE_KEY='bestillonline-last-sent-order-v1';
+const ORDER_STORAGE_KEY='bestillonline-local-orders-v2';
+const LEGACY_ACTIVE_ORDER_KEY='bestillonline-last-sent-order-v1';
+const LEGACY_OVERVIEW_HISTORY_KEY='kol-beta-local-order-overviews-v1';
 function readLocalData(key,fallback){
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&typeof saved==='object'?saved:fallback}
  catch{return fallback}
@@ -526,7 +529,7 @@ function writeLocalData(key,value){
 }
 let customerContact=readLocalData(FATIH1_CONTACT_STORAGE_KEY,{name:'',phone:'',email:''});
 let pickupSelection=readLocalData(FATIH1_PICKUP_STORAGE_KEY,{mode:'asap',time:'',label:''});
-let localOrder=readLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null);
+let localOrder=null;
 let checkoutStep='cart',localOrderExpiryTimer=null;
 // Keep order receipts only for their original Oslo calendar day.
 const OSLO_ORDER_DATE_FORMAT=new Intl.DateTimeFormat('en-GB',{
@@ -540,44 +543,100 @@ function osloOrderDateKey(timestamp){
  return part('year')+'-'+part('month')+'-'+part('day');
 }
 
-const OVERVIEW_HISTORY_KEY='kol-beta-local-order-overviews-v1';
 const OVERVIEW_HISTORY_LIMIT=10;
 let overviewCarouselIndex=0,overviewRenderedIDs='',overviewShowHidden=false;
-function orderOverviewHistory(){
- const data=readLocalData(OVERVIEW_HISTORY_KEY,[]);
- const items=Array.isArray(data)?data:[];
- const seen=new Set();
- const cleaned=[];
- for(const order of items){
-  if(!order||typeof order.id!=='string'||seen.has(order.id)||overviewCardExpired(order))continue;
-  seen.add(order.id);
-  cleaned.push(order);
-  if(cleaned.length===OVERVIEW_HISTORY_LIMIT)break;
- }
- // Persist only if the history really changed; no writes in normal renders.
- if(!Array.isArray(data)||items.length!==cleaned.length||
-    cleaned.some((order,i)=>items[i]!==order)){
-  writeLocalData(OVERVIEW_HISTORY_KEY,cleaned);
- }
- return cleaned;
+let orderStore={version:2,activeId:null,orders:[]},orderStoreRaw=null,orderStoreDirty=false;
+function orderRecordVersion(order){return Number(order?.statusPublic?.updatedAt)||Number(order?.createdAt)||0}
+function compactOrderRecord(order,old){
+ if(!order||typeof order.id!=='string'||!order.id)return null;
+ const createdAt=Number(order.createdAt)||0;
+ if(!createdAt||!Number.isFinite(createdAt))return null;
+ const statusPublic=order.statusPublic&&typeof order.statusPublic==='object'?order.statusPublic:{status:order.status||'mottatt'};
+ const record={
+  id:order.id,createdAt,status:order.status||statusPublic.status||'mottatt',statusPublic,
+  pickup:order.pickup||{},items:Array.isArray(order.items)?order.items:[],
+  total:Number(order.total)||0,
+  collapsed:Boolean(old?.collapsed??order.collapsed),
+  hidden:Boolean(old?.hidden??order.hidden),
+  readyAt:Number(order.readyAt)||Number(old?.readyAt)||0
+ };
+ const deadline=Number(order.acceptDeadlineAt)||Number(old?.acceptDeadlineAt)||0;
+ if(deadline>0)record.acceptDeadlineAt=deadline;
+ if(Number(order.expiresAt)>0)record.expiresAt=Number(order.expiresAt);
+ if(statusPublic.status==='klar'&&!record.readyAt)record.readyAt=Number(statusPublic.updatedAt)||Date.now();
+ return record;
 }
+function cleanOrderStore(data){
+ const activeId=typeof data?.activeId==='string'?data.activeId:null;
+ const seen=new Set(),orders=[];
+ const list=Array.isArray(data?.orders)?data.orders:[];
+ // Retain the active record even if an older cache put it beyond the limit.
+ const prioritized=[...list.filter(o=>o?.id===activeId),...list.filter(o=>o?.id!==activeId)];
+ for(const order of prioritized){
+  if(!order||typeof order.id!=='string'||seen.has(order.id)||!Number.isFinite(Number(order.createdAt))||overviewCardExpired(order)||order.status==='expired')continue;
+  seen.add(order.id);orders.push(order);
+  if(orders.length===OVERVIEW_HISTORY_LIMIT)break;
+ }
+ return {version:2,activeId:orders.some(o=>o.id===activeId)?activeId:null,orders};
+}
+function persistOrderStore(data){
+ orderStore=cleanOrderStore(data);
+ const encoded=JSON.stringify(orderStore);
+ try{
+  if(!orderStore.orders.length){
+   if(localStorage.getItem(ORDER_STORAGE_KEY)!==null)localStorage.removeItem(ORDER_STORAGE_KEY);
+   orderStoreRaw=null;
+  }else{
+   if(localStorage.getItem(ORDER_STORAGE_KEY)!==encoded)localStorage.setItem(ORDER_STORAGE_KEY,encoded);
+   orderStoreRaw=encoded;
+  }
+  orderStoreDirty=false;
+  return true;
+ }catch{orderStoreDirty=true;return false}
+}
+function readOrderStore(){
+ try{
+  const raw=localStorage.getItem(ORDER_STORAGE_KEY);
+  if(raw!==orderStoreRaw&&!orderStoreDirty){
+   orderStoreRaw=raw;
+   let data=null;try{data=JSON.parse(raw||'null')}catch{}
+   orderStore=cleanOrderStore(data);
+  }
+ }catch{}
+ const cleaned=cleanOrderStore(orderStore);
+ if(orderStoreDirty||cleaned.activeId!==orderStore.activeId||cleaned.orders.length!==orderStore.orders.length)persistOrderStore(cleaned);
+ return orderStore;
+}
+function initializeOrderStore(){
+ const current=readOrderStore();
+ const legacyActive=readLocalData(LEGACY_ACTIVE_ORDER_KEY,null);
+ const legacyHistory=readLocalData(LEGACY_OVERVIEW_HISTORY_KEY,[]);
+ const byId=new Map();
+ for(const order of [...current.orders,...(Array.isArray(legacyHistory)?legacyHistory:[]),...(legacyActive?[legacyActive]:[])]){
+  if(!order?.id)continue;
+  const old=byId.get(order.id);
+  const newer=!old||orderRecordVersion(order)>=orderRecordVersion(old)?order:old;
+  const other=newer===order?old:order;
+  const merged=compactOrderRecord({...other,...newer},old);
+  if(merged&&!overviewCardExpired(merged))byId.set(merged.id,merged);
+ }
+ const activeId=current.activeId||legacyActive?.id||null;
+ const orders=[...byId.values()].sort((a,b)=>b.createdAt-a.createdAt);
+ const saved=persistOrderStore({activeId,orders});
+ // Remove the old copies only after the unified store was successfully saved.
+ if(saved){try{localStorage.removeItem(LEGACY_ACTIVE_ORDER_KEY);localStorage.removeItem(LEGACY_OVERVIEW_HISTORY_KEY)}catch{}}
+ localOrder=orderStore.orders.find(o=>o.id===orderStore.activeId)||null;
+}
+function orderOverviewHistory(){return readOrderStore().orders}
 function orderOverviewRemember(order){
  if(!order?.id)return;
- const history=orderOverviewHistory();
- const old=history.find(o=>o.id===order.id);
- // Keep only display data. Phone, email and customer identity are not duplicated.
- const fresh={
-  id:order.id,createdAt:Number(order.createdAt)||Date.now(),
-  status:order.status,statusPublic:order.statusPublic||{status:order.status},
-  pickup:order.pickup||{},items:Array.isArray(order.items)?order.items:[],
-  total:Number(order.total)||0
- };
- fresh.hidden=Boolean(old?.hidden);
- fresh.collapsed=Boolean(old?.collapsed);
- fresh.readyAt=Number(old?.readyAt)||0;
- if(fresh.statusPublic?.status==='klar'&&!fresh.readyAt)
-  fresh.readyAt=Number(fresh.statusPublic.updatedAt)||Date.now();
- writeLocalData(OVERVIEW_HISTORY_KEY,[fresh,...history.filter(o=>o.id!==order.id)].filter(o=>!overviewCardExpired(o)).slice(0,OVERVIEW_HISTORY_LIMIT));
+ const store=readOrderStore();
+ const old=store.orders.find(o=>o.id===order.id);
+ const fresh=compactOrderRecord(order,old);
+ if(!fresh)return;
+ const activeId=localOrder?.id||store.activeId;
+ persistOrderStore({activeId,orders:[fresh,...store.orders.filter(o=>o.id!==fresh.id)]});
+ if(localOrder?.id===fresh.id)localOrder=orderStore.orders.find(o=>o.id===fresh.id)||localOrder;
  renderOrderOverviewCarousel();
 }
 function overviewCardExpired(order){
@@ -589,9 +648,9 @@ function overviewCardExpired(order){
 function hideOrderOverview(id){
  const history=orderOverviewHistory();
  if(!history.some(order=>order.id===id))return;
- writeLocalData(OVERVIEW_HISTORY_KEY,history.map(order=>
+ persistOrderStore({activeId:readOrderStore().activeId,orders:history.map(order=>
   order.id===id?{...order,collapsed:true}:order
- ));
+ )});
  overviewShowHidden=false;
  overviewCarouselIndex=0;
  renderOrderOverviewCarousel();
@@ -811,14 +870,8 @@ function clearActiveOrder(){
  stopCustomerStatus();
  const removedId=localOrder?.id;
  localOrder=null;
- if(removedId){
-  const previous=orderOverviewHistory();
-  if(previous.some(o=>o.id===removedId)){
-   writeLocalData(OVERVIEW_HISTORY_KEY,previous.filter(o=>o.id!==removedId));
-  }
- }
- try{localStorage.removeItem(FATIH1_LOCAL_ORDER_STORAGE_KEY)}
- catch{writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,null)}
+ const store=readOrderStore();
+ persistOrderStore({activeId:store.activeId===removedId?null:store.activeId,orders:store.orders.filter(o=>o.id!==removedId)});
  if(localOrderExpiryTimer){clearTimeout(localOrderExpiryTimer);localOrderExpiryTimer=null}
  const card=$('draftActiveOrder');if(card)card.hidden=true;
  renderOrderOverviewCarousel();
@@ -972,7 +1025,6 @@ function onCustomerStatusUpdate(value){
  if(changed){
   localOrder.statusPublic=statusPublic;
   localOrder.status=statusPublic.status;
-  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
   orderOverviewRemember(localOrder);
  }
  displayLiveOrderStatus();
@@ -1029,7 +1081,8 @@ function localOrderStatus(){
  if(!localOrder)return 'none';
  if(localOrder.status==='pending'&&Number(localOrder.expiresAt)<=Date.now()){
   localOrder.status='expired';
-  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  const store=readOrderStore();
+  persistOrderStore({activeId:null,orders:store.orders.filter(o=>o.id!==localOrder.id)});
  }
  return localOrder.status;
 }
@@ -1298,9 +1351,7 @@ async function submitDraftOrder(){
    throw Error('Kunne ikke sende bestillingen (HTTP '+result.status+').');
   }
   stopCustomerStatus();
-  localOrder={...order,customer:{fullName:order.name,phone:order.phone,email:order.email||null}};
-
-  writeLocalData(FATIH1_LOCAL_ORDER_STORAGE_KEY,localOrder);
+  localOrder=compactOrderRecord(order);
   orderOverviewRemember(localOrder);
   overviewCarouselIndex=0;
   cart=[];saveCart();
@@ -1410,7 +1461,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(++historyClockTick%5===0)renderOrderOverviewCarousel();
  },1000);
  cleanupRetiredCartStorage();
- if(localOrder&&!orderOverviewHistory().some(o=>o.id===localOrder.id))orderOverviewRemember(localOrder);
+ initializeOrderStore();
  renderDraftActiveOrder();
  beginCustomerStatus();
  document.addEventListener('visibilitychange',()=>{
