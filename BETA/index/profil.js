@@ -95,7 +95,11 @@ function fatih1BonusRenderMessage(earned){
  $('fatih1BonusDescription').textContent=ready?(enabled?'Vi trekker automatisk fra den rimeligste store pizzaen i din neste bestilling.':'Aktiver pizzabonus for å bruke din gratis store pizza.'):(remaining+' '+(remaining===1?'stor pizza igjen':'store pizzaer igjen')+' til en gratis pizza!');
  $('fatih1BonusConsentLabel').textContent=ready&&!enabled?'Bruk gratis pizza':'Bruk pizzabonus automatisk';
  $('fatih1BonusConsent').classList.toggle('is-reward-ready',ready&&!enabled);
- $('fatih1BonusReminder').hidden=!ready||enabled;
+ const showReward=ready&&!enabled;
+ $('fatih1BonusReminder').hidden=!showReward;
+ $('fatih1BonusRemaining').hidden=showReward;
+ $('fatih1BonusDescription').hidden=showReward;
+ $('fatih1BonusConsent').hidden=showReward;
 
 }
 function fatih1BonusStatus(message){
@@ -394,7 +398,7 @@ function fatih1ProfileInit(){
  $('fatih1ProfileNav').addEventListener('click',()=>fatih1HistoryBack());
  $('fatih1ProfileCart').addEventListener('click',()=>{hideAll();showCart()});
  $('fatih1BonusRefresh').addEventListener('click',()=>{void fatih1BonusLoad(true);showFatih1Toast('Oppdaterer pizzabonus…','info')});
- $('fatih1BonusConsent').addEventListener('click',()=>{
+ const toggleBonusConsent=()=>{
   const enabled=!fatih1BonusConsentEnabled();
   try{localStorage.setItem(fatih1BonusConsentKey(),String(enabled))}catch{
    fatih1BonusStatus('Kunne ikke lagre valget.');return;
@@ -404,7 +408,9 @@ function fatih1ProfileInit(){
   if(enabled&&!fatih1BonusSource)void fatih1BonusGetOnce(fatih1BonusPhone());
   fatih1BonusStatus(enabled?'Automatisk bonusbruk valgt.':'Automatisk bonusbruk er slått av.');
   showFatih1Toast(enabled?'Automatisk bonusbruk: På':'Automatisk bonusbruk: Av','info');
- });
+ };
+ $('fatih1BonusConsent').addEventListener('click',toggleBonusConsent);
+ $('fatih1BonusRewardActivate').addEventListener('click',()=>{if(!fatih1BonusConsentEnabled())toggleBonusConsent();});
  $('btnProfile').addEventListener('click',()=>{$('fatih1ProfileSheet').hidden?fatih1ProfileOpen():fatih1ProfileClose()});
  $('fatih1ProfileClose').addEventListener('click',fatih1ProfileClose);
  $('fatih1ProfileBrandHome').addEventListener('click',returnToMenu);
