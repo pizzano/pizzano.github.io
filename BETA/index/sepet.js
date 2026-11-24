@@ -1042,7 +1042,7 @@ function onCustomerStatusUpdate(value){
  if(value.status==='klar'||value.status==='avvist')stopCustomerStatus();
 }
 function beginCustomerStatus(){
- if(document.hidden||!localOrder?.id)return;
+ if(orderSubmissionBusy||document.hidden||!localOrder?.id)return;
  const id=String(localOrder.id);
  if(!/^ord_[0-9]{13}_[a-f0-9]{12}$/.test(id))return;
  if(customerStatusStream&&customerStatusId===id)return;
@@ -1290,6 +1290,27 @@ function localOrderId(){
  return Array.from(bytes,x=>alphabet[x%alphabet.length]).join('');
 }
 let orderSubmissionBusy=false;
+const PENDING_SEND_KEY='bestillonline-pending-send-v1';
+let pendingSend=null;
+try{pendingSend=JSON.parse(sessionStorage.getItem(PENDING_SEND_KEY)||'null')}catch{}
+function rememberPendingSend(value){
+ pendingSend=value;
+ try{if(value)sessionStorage.setItem(PENDING_SEND_KEY,JSON.stringify(value));else sessionStorage.removeItem(PENDING_SEND_KEY)}catch{}
+}
+function orderSendFingerprint(order){return JSON.stringify([order.name,order.phone,order.email||'',order.pickup.mode,order.pickup.time||null,order.items,order.total]);}
+async function orderBoundedFetch(url,options={},milliseconds=12000){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),milliseconds);
+ try{return await fetch(url,{...options,signal:controller.signal})}finally{clearTimeout(timer)}
+}
+async function verifySentOrder(id){
+ const response=await orderBoundedFetch(BASE+'/ORDERS/'+encodeURIComponent(id)+'/statusPublic.json',{cache:'no-store'},6000);
+ if(!response.ok)throw Error('Kunne ikke kontrollere bestillingen (HTTP '+response.status+').');
+ const state=await response.json();
+ if(state===null)return null;
+ if(!state||!['mottatt','godkjent','klar','avvist'].includes(state.status))throw Error('Ukjent bestillingsstatus.');
+ return state;
+}
 function createFirebaseOrderId(now){
  const random=new Uint8Array(6);window.crypto.getRandomValues(random);
  return 'ord_'+String(now).padStart(13,'0')+'_'+[...random].map(n=>n.toString(16).padStart(2,'0')).join('');
@@ -1330,7 +1351,7 @@ async function submitDraftOrder(){
   quickNotes:Array.isArray(line.quickNotes)?line.quickNotes:[],
   comment:String(line.comment||'').slice(0,500)
  }));
- const order={
+ let order={
   schema:1,id,source:'BestillOnline',channel:'web',fulfillment:'pickup',
   status:'mottatt',statusPublic:{status:'mottatt',updatedAt:now},createdAt:now,currency:'NOK',
   // No five-minute acceptance deadline for orders placed before opening.
@@ -1341,33 +1362,72 @@ async function submitDraftOrder(){
  };
  orderSubmissionBusy=true;$('cartNext').disabled=true;
  $('cartNext').textContent='Sender bestilling…';showCheckoutError('');
+ let confirmed=false;
  try{
-  const result=await fetch(BASE+'/ORDERS/'+encodeURIComponent(id)+'.json?print=silent',{
-   method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),cache:'no-store'
-  });
-  if(!result.ok){
-   if(result.status===401||result.status===403)
-    throw Error('Restauranten kan ikke motta bestillinger ennå (Firebase-regler mangler).');
-   throw Error('Kunne ikke sende bestillingen (HTTP '+result.status+').');
-  }
   stopCustomerStatus();
-  localOrder=compactOrderRecord(order);
+  if(typeof pausePublicStreamsForOrder==='function')pausePublicStreamsForOrder();
+  if(typeof fatih1BonusStop==='function')fatih1BonusStop();
+  // Release the browser's occupied SSE sockets before starting the write.
+  await new Promise(resolve=>setTimeout(resolve,0));
+  let state=null;
+  if(pendingSend?.order?.id){
+   const previous=pendingSend.order;
+   if(!/^ord_[0-9]{13}_[a-f0-9]{12}$/.test(previous.id))throw Error('Ugyldig tidligere bestillingsreferanse. Kontakt restauranten.');
+   const same=orderSendFingerprint(previous)===orderSendFingerprint(order);
+   state=await verifySentOrder(previous.id);
+   if(!same){
+    if(state){
+     rememberPendingSend(null);
+     localOrder=compactOrderRecord({...previous,status:state.status,statusPublic:state});
+     orderOverviewRemember(localOrder);
+    }else throw Error('En tidligere bestilling er ikke avklart. Kontakt restauranten før du sender en endret bestilling.');
+    throw Error('Den tidligere bestillingen er registrert. Kontroller den før du sender en ny bestilling.');
+   }
+   order=previous;
+  }else rememberPendingSend({order});
+  if(!state){
+   let response=null,writeError=null;
+   try{
+    response=await orderBoundedFetch(BASE+'/ORDERS/'+encodeURIComponent(order.id)+'.json?print=silent',{
+     method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(order),cache:'no-store'
+    });
+   }catch(error){writeError=error}
+   if(response?.ok)state=order.statusPublic;
+   else{
+    // An aborted/lost HTTP response is not proof that the write failed.
+    // Check the same ID; never automatically create a second order.
+    try{state=await verifySentOrder(order.id)}catch(error){throw Error('Kunne ikke bekrefte om bestillingen er mottatt. Prøv samme bestilling igjen eller kontakt restauranten.')}
+    if(!state){
+     if(response&&(response.status===401||response.status===403)){
+      rememberPendingSend(null);
+      throw Error('Restauranten kan ikke motta bestillingen (Firebase-regler).');
+     }
+     throw Error(writeError?'Ingen bekreftelse fra serveren. Prøv samme bestilling igjen.':'Kunne ikke sende bestillingen (HTTP '+response?.status+'). Prøv samme bestilling igjen.');
+    }
+   }
+  }
+  confirmed=true;
+  localOrder=compactOrderRecord({...order,status:state.status,statusPublic:state});
   orderOverviewRemember(localOrder);
   overviewCarouselIndex=0;
   cart=[];saveCart();
-  // Keep the new order tracked locally; do not automatically open the status dialog.
+  rememberPendingSend(null);
   renderDraftActiveOrder();
   returnToMenu();
   scrollToHeaderAfterOrder();
-  beginCustomerStatus();
   showFatih1Toast('Bestillingen er sendt til restauranten');
  }catch(error){
   console.warn('BestillOnline order submission failed:',error);
-  showCheckoutError(error.message+' Handlekurven er beholdt. Kontroller med restauranten før du prøver igjen.');
+  showCheckoutError(confirmed?'Bestillingen er mottatt. Ikke send på nytt.':error.message+' Handlekurven er beholdt.');
  }finally{
-  orderSubmissionBusy=false;$('cartNext').textContent='Send bestilling';syncCheckoutAvailability();
+  orderSubmissionBusy=false;
+  $('cartNext').textContent='Send bestilling';syncCheckoutAvailability();
+  beginCustomerStatus();
+  if(typeof resumePublicStreamsAfterOrder==='function')resumePublicStreamsAfterOrder();
+  if(typeof fatih1BonusVisible==='function'&&fatih1BonusVisible()&&typeof fatih1BonusStart==='function')fatih1BonusStart(false);
  }
 }
+
 async function checkoutNext(){
  if(!getOrderingState().orderable){syncCheckoutAvailability();return;}
  if(checkoutStep==='cart'){
