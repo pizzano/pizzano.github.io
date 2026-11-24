@@ -424,7 +424,7 @@ html,body{min-height:100%;overflow-x:clip}
 .cart-content-scroll{padding:13px 9px 16px}.cart-topbar{padding:0 8px}.cart-clear-btn{padding:8px;font-size:var(--text-sm)}.cart-steps span{font-size:var(--text-sm);gap:4px}.cart-product-card{padding:10px 9px}.cart-product-stepper{grid-template-columns:29px 29px 29px}.cart-product-stepper button{min-width:29px}.cart-buttons{gap:7px}
 
 
-/* Local checkout demonstration. No admin / payment / Firebase order integration. */
+/* Customer checkout layout. */
 .cart-steps span.is-done{border-color:var(--green);color:#155d48}
 .cart-steps span.is-done b{background:var(--green);border-color:var(--green);color:#fff}
 .checkout-step[hidden]{display:none!important}
@@ -768,7 +768,6 @@ html[data-fatih1-theme="dark"] :is(.fatih1-profile-menu-row,.fatih1-profile-favo
 .fatih1-bonus-remaining{font-size:var(--text-md);font-weight:850;color:#153d32;margin:0 0 12px}
 .fatih1-profile-bonus>.fatih1-bonus-terms{font-size:var(--text-sm);color:#779086;line-height:1.5}
 .fatih1-bonus-consent{display:flex;align-items:center;gap:10px;text-align:left;width:100%;margin:22px 0 0;padding:12px 13px;border:1px solid #c6e1d4;border-radius:15px;background:#e9f5ef;color:#244338;font-size:var(--text-md);font-weight:500;cursor:pointer}
-.fatih1-bonus-consent input{width:18px;height:18px;flex:none;accent-color:#087f5f}
 .fatih1-bonus-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;width:100%;padding:10px 0 0}
 .fatih1-bonus-refresh{padding:6px 10px;border:1px solid #c4dccc;border-radius:10px;background:#fff;color:#087b57;font-size:var(--text-sm);font-weight:750}
 .fatih1-bonus-refresh:disabled{opacity:.6;cursor:wait}
@@ -3117,13 +3116,10 @@ html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-enabled b{backgrou
 .fatih1-profile-bonus .fatih1-bonus-ring-caption{font-size:12px;font-weight:700}
 .fatih1-profile-bonus .fatih1-bonus-remaining{font-size:17px;margin:0 0 6px}
 .fatih1-profile-bonus .fatih1-bonus-description{max-width:330px;margin:0 0 12px;color:#446a5c;font-size:var(--text-md);line-height:1.5}
-.fatih1-profile-bonus .fatih1-bonus-reminder{color:#087e62;font-size:var(--text-sm);font-weight:700;margin:0 0 12px}
-.fatih1-profile-bonus .fatih1-bonus-reminder[hidden]{display:none!important}
 .fatih1-profile-bonus .fatih1-bonus-expiry{margin-top:5px}
 button.fatih1-bonus-consent.is-reward-ready{background:#087e62;color:#fff;border-color:#087e62}
 button.fatih1-bonus-consent.is-reward-ready b{background:#ffffff25;color:#fff}
 html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-description{color:#b4d1c3}
-html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-reminder{color:#9bd9b7}
 html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-reward-ready{background:#087e62;color:#fff;border-color:#69b98b}
 
 /* Reward available + Av: a single profile-only activation card. */
