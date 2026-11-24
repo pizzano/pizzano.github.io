@@ -1,4 +1,4 @@
-/* BestillOnline · order reception. One bounded Firebase SSE stream, no polling. */
+/* BestillOnline · order reception. Live active orders + 10-order history pages; no polling. */
 'use strict';
 (()=>{
  const DB='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
@@ -50,7 +50,10 @@
 
  let auth=null,stream=null,orders=new Map(),activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
  let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
- let pickupFilter='ALLE';
+ let pickupFilter='ALLE',visibleLimit=10,loadingHistory=false,keysReady=false,indexedMode=null;
+ const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
+ let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
+ const rechecking=new Set();
  let countdownTicker=null,automaticReadyBusy=false;
  let pruneCheckedKeySignature='',authStreamRenewing=false;
  const autoReadyAttempts=new Map();
@@ -98,7 +101,7 @@
  async function finalizeOverduePending(){
   if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
   const now=Date.now();
-  const due=[...orders.values()].filter(o=>o.status==='mottatt'&&approvalDeadline(o)>0&&now>=approvalDeadline(o))
+  const due=[...orders.values()].filter(o=>!rechecking.has(o.id)&&o.status==='mottatt'&&approvalDeadline(o)>0&&now>=approvalDeadline(o))
    .sort((a,b)=>approvalDeadline(a)-approvalDeadline(b));
   const order=due.find(o=>now-(autoTimeoutAttempts.get(o.id)||0)>60000);
   if(!order)return;
@@ -111,7 +114,7 @@
  async function finalizeDueOrder(){
   if(automaticReadyBusy||pendingAction||document.hidden||!authReady()||!initialLoaded)return;
   const now=Date.now();
-  const due=[...orders.values()].filter(o=>o.status==='godkjent'&&Number.isFinite(Number(o.expectedReadyAt))&&Number(o.expectedReadyAt)>0&&Number(o.expectedReadyAt)<=now)
+  const due=[...orders.values()].filter(o=>!rechecking.has(o.id)&&o.status==='godkjent'&&Number.isFinite(Number(o.expectedReadyAt))&&Number(o.expectedReadyAt)>0&&Number(o.expectedReadyAt)<=now)
    .sort((a,b)=>Number(a.expectedReadyAt)-Number(b.expectedReadyAt));
   const order=due.find(o=>now-(autoReadyAttempts.get(o.id)||0)>60000);
   if(!order)return;
@@ -121,7 +124,23 @@
   catch(error){console.warn('BestillOnline: automatisk klar feilet',error);feedback('Automatisk klar kunne ikke lagres. Prøv Klar manuelt.',true)}
   finally{automaticReadyBusy=false}
  }
- const streamQuery='orderBy=%22%24key%22&limitToLast=101';
+ const keyQuery='orderBy='+encodeURIComponent(JSON.stringify('$key'));
+ const statusQuery=status=>'orderBy='+encodeURIComponent(JSON.stringify('status'))+'&equalTo='+encodeURIComponent(JSON.stringify(status));
+ const activeStatus=order=>order?.status==='mottatt'||order?.status==='godkjent';
+ const orderVersion=order=>Math.max(Number(order?.updatedAt)||0,Number(order?.statusPublic?.updatedAt)||0,Number(order?.createdAt)||0);
+ const statusRank=status=>status==='mottatt'?0:status==='godkjent'?1:2;
+ function mergeOrder(order){
+  if(!isOrder(order,order?.id))return;
+  const old=orders.get(order.id);
+  if(!old||orderVersion(order)>orderVersion(old)||
+    (orderVersion(order)===orderVersion(old)&&statusRank(order.status)>=statusRank(old.status))){
+   orders.set(order.id,order);
+  }
+  if(observedKeys)observedKeys.add(order.id);
+  knownKeys.add(order.id);
+ }
+ function knownCount(){return Math.max(knownKeys.size,orders.size)}
+ function newestKnownKeys(){return [...knownKeys].sort().reverse()}
  const show=(id,visible)=>{$(id).hidden=!visible};
  const text=(id,value)=>{$(id).textContent=value};
  function feedback(message,error=false){
@@ -167,7 +186,7 @@
  }
  function logoutView(message=''){
   stopCountdowns();
-  closeStream();orders.clear();renderedIds='';activeId=null;
+  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;renderedIds='';activeId=null;
   show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);show('ordersPickupFilters',false);
   pickupFilter='ALLE';
   closeSheet();closeDialog();
@@ -199,7 +218,7 @@
    if(user?.uid===ADMIN_UID)await enterOrders();
    else logoutView();
    // Firebase Auth refreshes tokens automatically. Do not restart the order
-   // stream on each refresh; each restart downloads the complete 101-order snapshot.
+   // streams on each refresh; reconnect only when required.
    // If the existing stream is actually revoked, reconnect just once below.
   }catch(error){logoutView(error.message)}
  }
@@ -211,106 +230,245 @@
   await connectOrders();
   startCountdowns();
  }
- function closeStream(){if(stream){stream.close();stream=null}initialLoaded=false}
+ function closeStream(){
+  ++streamEpoch;
+  for(const source of sourceStreams.values())source.close();
+  sourceStreams.clear();sourceSnapshots.clear();readySources.clear();rechecking.clear();
+  stream=null;initialLoaded=false;keysRequest=null;keysWanted=false;observedKeys=null;loadingHistory=false;
+ }
  function isOrder(value,id){
-  return !!value&&typeof value==='object'&&value.id===id&&
+  return typeof id==='string'&&!!value&&typeof value==='object'&&value.id===id&&
     ['mottatt','godkjent','klar','avvist'].includes(value.status);
  }
- function receivedPatch(path,value,isPatch){
-  const bits=String(path||'/').split('/').filter(Boolean);
-  if(!bits.length){
-   if(!isPatch){
-    orders=new Map(Object.entries(value&&typeof value==='object'?value:{}).filter(([id,v])=>isOrder(v,id)));
-   }else if(value&&typeof value==='object'){
-    for(const [id,v]of Object.entries(value)){
-     if(v===null)orders.delete(id);
-     else if(isOrder(v,id))orders.set(id,v);
-     else if(orders.has(id)&&typeof v==='object')orders.set(id,{...orders.get(id),...v});
-    }
+ // Each filtered stream has its own snapshot. A removal from one query is
+ // not a deletion: a new order may leave the 10-order window, or change status.
+ function applyStreamPayload(previous,path,value,isPatch){
+  let map=new Map(previous);
+  function apply(bits,data,patch){
+   if(patch&&data&&typeof data==='object'&&!Array.isArray(data)){
+    for(const [key,part] of Object.entries(data))apply(bits.concat(key.split('/').filter(Boolean)),part,false);
+    return;
    }
-   return;
+   if(!bits.length){
+    map=new Map(Object.entries(data&&typeof data==='object'?data:{}).filter(([id,record])=>isOrder(record,id)));
+    return;
+   }
+   const [id,...fields]=bits;
+   if(!fields.length){
+    if(data===null)map.delete(id);
+    else if(isOrder(data,id))map.set(id,data);
+    return;
+   }
+   const old=map.get(id);
+   if(!old)return;
+   const copy=JSON.parse(JSON.stringify(old));
+   let node=copy;
+   for(const field of fields.slice(0,-1)){
+    if(!node[field]||typeof node[field]!=='object')node[field]={};
+    node=node[field];
+   }
+   const key=fields[fields.length-1];
+   if(data===null)delete node[key];else node[key]=data;
+   if(isOrder(copy,id))map.set(id,copy);else map.delete(id);
   }
-  const id=bits.shift();
-  if(!bits.length){
-   if(value===null)orders.delete(id);
-   else if(isOrder(value,id))orders.set(id,value);
-   return;
-  }
-  const base=orders.get(id);
-  if(!base)return;
-  // Firebase SSE patch paths represent individual modified order fields.
-  let current=base;
-  for(const segment of bits.slice(0,-1)){
-   if(!current[segment]||typeof current[segment]!=='object')current[segment]={};
-   current=current[segment];
-  }
-  if(value===null)delete current[bits.at(-1)];
-  else current[bits.at(-1)]=value;
-  orders.set(id,base);
+  apply(String(path||'/').split('/').filter(Boolean),value,isPatch);
+  return map;
  }
- function onStreamEvent(event,patch=false){
+ function activeStreamContains(id){
+  return ['mottatt','godkjent'].some(key=>activeStatus(sourceSnapshots.get(key)?.get(id)));
+ }
+ async function recheckDepartedActive(id,epoch=streamEpoch){
+  if(!initialLoaded||rechecking.has(id)||activeStreamContains(id)||!activeStatus(orders.get(id)))return;
+  rechecking.add(id);
   try{
-   const payload=JSON.parse(event.data);
-   receivedPatch(payload.path,payload.data,patch);
-   initialLoaded=true;lastEventAt=Date.now();connection('Tilkoblet',true);
+   const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
+   const response=await fetch(url,{cache:'no-store'});
+   if(!response.ok)throw Error('Firebase HTTP '+response.status);
+   const current=await response.json();
+   if(epoch!==streamEpoch||!authReady())return;
+   if(current===null){
+    if(!activeStreamContains(id)){orders.delete(id);knownKeys.delete(id);}
+   }else mergeOrder(current);
    render();
-   updateCountdowns();
+  }catch(error){
+   if(epoch===streamEpoch)feedback('Kunne ikke kontrollere endret bestilling: '+error.message,true);
+  }finally{if(epoch===streamEpoch)rechecking.delete(id)}
+ }
+ function updateLiveState(){
+  const expected=indexedMode===false?['fallback']:['recent','mottatt','godkjent'];
+  const loaded=expected.every(key=>readySources.has(key));
+  const becameReady=loaded&&!initialLoaded;
+  initialLoaded=loaded;
+  if(!loaded)return;
+  lastEventAt=Date.now();connection('Tilkoblet',true);
+  if(becameReady&&indexedMode!==false){
+   for(const order of orders.values()){
+    if(activeStatus(order)&&!activeStreamContains(order.id))void recheckDepartedActive(order.id);
+   }
+  }
+  if(becameReady){
+   void syncKnownKeys();
    void finalizeDueOrder();
    void finalizeOverduePending();
-   // Avoid repeated shallow reads for the same 101 keys when a status changes.
-   if(orders.size>=101){
-    const signature=[...orders.keys()].sort().join('|');
-    if(signature!==pruneCheckedKeySignature){
-     pruneCheckedKeySignature=signature;
-     void requestPrune();
+  }
+ }
+ function onStreamEvent(label,event,patch=false){
+  try{
+   const payload=JSON.parse(event.data);
+   const previous=sourceSnapshots.get(label)||new Map();
+   const next=applyStreamPayload(previous,payload.path,payload.data,patch);
+   sourceSnapshots.set(label,next);
+   let membershipChanged=previous.size!==next.size;
+   for(const [id,record] of next){
+    if(!previous.has(id))membershipChanged=true;
+    if(previous.get(id)!==record)mergeOrder(record);
+   }
+   if(label==='fallback'){
+    for(const id of previous.keys())if(!next.has(id)){orders.delete(id);membershipChanged=true;}
+    if(!patch&&payload.path==='/'){
+     for(const id of orders.keys())if(!next.has(id))orders.delete(id);
     }
-   }else pruneCheckedKeySignature='';
-   if(activeId&&!orders.has(activeId))closeSheet();
+   }else if(label==='mottatt'||label==='godkjent'){
+    for(const id of previous.keys())if(!next.has(id)){
+     membershipChanged=true;
+     if(initialLoaded)void recheckDepartedActive(id);
+    }
+   }
+   if(!patch&&payload.path==='/')readySources.add(label);
+   updateLiveState();
+   render();
+   if((label==='recent'||label==='fallback')&&membershipChanged&&initialLoaded)void syncKnownKeys();
+   if(initialLoaded){void finalizeDueOrder();void finalizeOverduePending();}
+   if(activeId&&!orders.has(activeId)&&!rechecking.has(activeId))closeSheet();
   }catch(error){console.warn('BestillOnline: ugyldig ordreoppdatering',error)}
+ }
+ // Only IDs, not order contents, are needed for the total and page boundaries.
+ // Run on startup/reconnect or changes to membership, never on a timer.
+ function syncKnownKeys(){
+  if(!authReady())return Promise.resolve(false);
+  if(keysRequest){keysWanted=true;return keysRequest;}
+  const epoch=streamEpoch;
+  keysRequest=(async()=>{
+   let ok=false;
+   try{
+    do{
+     keysWanted=false;observedKeys=new Set();
+     const url=await authorizedURL('ORDERS');
+     const response=await fetch(url+'&shallow=true',{cache:'no-store'});
+     if(!response.ok)throw Error('Firebase HTTP '+response.status);
+     const raw=await response.json();
+     if(epoch!==streamEpoch||!authReady())return false;
+     const current=new Set(Object.keys(raw||{}));
+     for(const id of observedKeys)current.add(id);
+     // A source may be slightly ahead of a key snapshot during a new order.
+     for(const snapshot of sourceSnapshots.values())for(const id of snapshot.keys())current.add(id);
+     knownKeys=current;keysReady=true;observedKeys=null;
+     for(const id of orders.keys())if(!knownKeys.has(id))orders.delete(id);
+     ok=true;render();
+    }while(keysWanted&&epoch===streamEpoch);
+    if(initialLoaded&&knownKeys.size>100)void requestPrune();
+    return ok;
+   }catch(error){
+    if(epoch===streamEpoch)feedback('Kunne ikke hente antall bestillinger: '+error.message,true);
+    return false;
+   }finally{if(epoch===streamEpoch){keysRequest=null;observedKeys=null;}}
+  })();
+  return keysRequest;
+ }
+ async function detectStatusIndex(url){
+  const response=await fetch(url+'&'+statusQuery('__bestill_index_probe__')+'&limitToFirst=1',{cache:'no-store'});
+  if(response.ok)return true;
+  const message=await response.text();
+  if(response.status===400&&/index/i.test(message))return false;
+  throw Error('Kunne ikke kontrollere ordreindeks (Firebase HTTP '+response.status+').');
  }
  async function connectOrders(){
   if(!authReady())return;
-  closeStream();
+  closeStream();const epoch=streamEpoch;
   connection('Kobler til…');
-  let url;
-  try{url=await authorizedURL('ORDERS')}
-  catch(error){connection('Ikke tilkoblet',false,true);feedback(error.message,true);return}
-  const source=new EventSource(url+'&'+streamQuery);
-  stream=source;
-  source.addEventListener('put',e=>{if(stream===source)onStreamEvent(e,false)});
-  source.addEventListener('patch',e=>{if(stream===source)onStreamEvent(e,true)});
-  source.addEventListener('cancel',e=>{if(stream!==source)return;connection('Ingen tilgang',false,true);feedback('Firebase-regler tillater ikke å lese /ORDERS. Publiser database.rules.json.',true);source.close()});
-  source.addEventListener('auth_revoked',()=>{
-   if(stream!==source||authStreamRenewing)return;
-   source.close();stream=null;
-   connection('Fornyer tilkobling…',false,true);
-   authStreamRenewing=true;
-   void (async()=>{
-    try{
-     if(!authReady())return;
-     await auth.currentUser.getIdToken(true);
-     await connectOrders();
-    }catch(error){connection('Innlogging utløpt',false,true);feedback('Klarte ikke å fornye ordretilkoblingen.',true)}
-    finally{authStreamRenewing=false}
-   })();
-  });
-  source.onerror=()=>{
-   if(stream!==source)return;
-   // A sleeping/locked screen can suspend the SSE connection; the browser
-   // normally reconnects itself. This is not necessarily lost Internet access.
-   if(document.hidden)return;
-   connection('Kobler til igjen…');
-   // EventSource handles reconnect automatically; no polling or extra GET loop.
-  };
-  source.onopen=()=>{
-   if(stream!==source)return;
-   connection('Tilkoblet',true);
-  };
+  try{
+   const url=await authorizedURL('ORDERS');
+   if(epoch!==streamEpoch)return;
+   if(indexedMode===null){
+    const available=await detectStatusIndex(url);
+    if(epoch!==streamEpoch)return;
+    indexedMode=available;
+   }
+   const queries=indexedMode?[
+    ['recent',keyQuery+'&limitToLast='+PAGE_SIZE],
+    ['mottatt',statusQuery('mottatt')],
+    ['godkjent',statusQuery('godkjent')]
+   ]:[['fallback',keyQuery+'&limitToLast=101']];
+   if(!indexedMode)feedback('Statusindeks mangler i Firebase. Sikker reservemodus laster opptil 101 bestillinger. Publiser .indexOn: status for 10 om gangen.',true);
+   for(const [label,query] of queries){
+    const source=new EventSource(url+'&'+query);
+    sourceStreams.set(label,source);
+    if(label==='recent'||label==='fallback')stream=source;
+    const current=()=>epoch===streamEpoch&&sourceStreams.get(label)===source;
+    source.addEventListener('put',e=>{if(current())onStreamEvent(label,e,false)});
+    source.addEventListener('patch',e=>{if(current())onStreamEvent(label,e,true)});
+    source.addEventListener('cancel',()=>{
+     if(!current())return;
+     readySources.delete(label);initialLoaded=false;source.close();
+     connection('Ingen tilgang',false,true);
+     feedback('Firebase avviste en ordretilkobling. Kontroller ORDERS-regler og statusindeks.',true);
+    });
+    source.addEventListener('auth_revoked',()=>{
+     if(!current()||authStreamRenewing)return;
+     closeStream();connection('Fornyer tilkobling…',false,true);
+     authStreamRenewing=true;
+     void(async()=>{
+      try{if(authReady()){await auth.currentUser.getIdToken(true);await connectOrders();}}
+      catch(error){connection('Innlogging utløpt',false,true);feedback('Klarte ikke å fornye ordretilkoblingen.',true);}
+      finally{authStreamRenewing=false;}
+     })();
+    });
+    source.onerror=()=>{
+     if(!current())return;
+     readySources.delete(label);initialLoaded=false;
+     if(!document.hidden)connection('Kobler til igjen…');
+    };
+   }
+  }catch(error){
+   if(epoch===streamEpoch){connection('Ikke tilkoblet',false,true);feedback(error.message,true);}
+  }
+ }
+ // Fetch at most ten records per query. The shallow key list supplies exact
+ // bounds, so already loaded active/history orders can be skipped.
+ async function loadOlderOrders(){
+  if(loadingHistory||pickupFilter!=='ALLE'||!initialLoaded||!authReady())return;
+  const epoch=streamEpoch;
+  loadingHistory=true;
+  const previousLimit=visibleLimit;
+  try{
+   if(!keysReady&&!(await syncKnownKeys()))return;
+   if(epoch!==streamEpoch)return;
+   const target=Math.min(knownCount(),visibleLimit+PAGE_SIZE);
+   if(target<=visibleLimit)return;
+   const keys=newestKnownKeys().slice(0,target);
+   const url=await authorizedURL('ORDERS');
+   if(epoch!==streamEpoch)return;
+   for(let i=0;i<keys.length;){
+    if(orders.has(keys[i])){i++;continue;}
+    const group=[];
+    while(i<keys.length&&group.length<PAGE_SIZE&&!orders.has(keys[i]))group.push(keys[i++]);
+    const startAt=encodeURIComponent(JSON.stringify(group[group.length-1]));
+    const endAt=encodeURIComponent(JSON.stringify(group[0]));
+    const response=await fetch(url+'&'+keyQuery+'&startAt='+startAt+'&endAt='+endAt+'&limitToLast='+PAGE_SIZE,{cache:'no-store'});
+    if(!response.ok)throw Error('Firebase HTTP '+response.status);
+    const data=await response.json()||{};
+    if(epoch!==streamEpoch||!authReady())return;
+    for(const [id,order] of Object.entries(data))if(isOrder(order,id))mergeOrder(order);
+    for(const id of group)if(!Object.prototype.hasOwnProperty.call(data,id)&&!orders.has(id))knownKeys.delete(id);
+   }
+   visibleLimit=target;
+  }catch(error){
+   if(epoch===streamEpoch){visibleLimit=previousLimit;feedback('Kunne ikke hente eldre bestillinger: '+error.message,true);}
+  }finally{if(epoch===streamEpoch){loadingHistory=false;render();}}
  }
  function newest(){
   return [...orders.values()].filter(order=>isOrder(order,order.id))
-   .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)||String(b.id).localeCompare(String(a.id)))
-   .slice(0,100);
+   .sort((a,b)=>(Number(b.createdAt)||0)-(Number(a.createdAt)||0)||String(b.id).localeCompare(String(a.id)));
  }
  const pickupIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1 11H6L5 9Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/><path d="M4 9h16"/></svg>';
  function render(){
@@ -320,14 +478,17 @@
    const active=order.status==='mottatt'||order.status==='godkjent';
    return active&&(filter==='SNAREST'||(filter==='SENERE'&&pickupKind(order)==='SENERE'));
   };
-  const counts={ALLE:all.length,SNAREST:all.filter(order=>matchesFilter(order,'SNAREST')).length,SENERE:all.filter(order=>matchesFilter(order,'SENERE')).length};
+  const counts={ALLE:knownCount(),SNAREST:all.filter(order=>matchesFilter(order,'SNAREST')).length,SENERE:all.filter(order=>matchesFilter(order,'SENERE')).length};
   for(const button of $('ordersPickupFilters').querySelectorAll('[data-pickup-filter]')){
    const key=button.dataset.pickupFilter;
    button.setAttribute('aria-pressed',String(key===pickupFilter));
    button.querySelector('[data-filter-count]').textContent='('+counts[key]+')';
   }
-  const filtered=all.filter(order=>matchesFilter(order,pickupFilter)).sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
+  const matching=all.filter(order=>matchesFilter(order,pickupFilter)).sort((a,b)=>(a.status==='mottatt'?0:1)-(b.status==='mottatt'?0:1)||
     (Number(b.createdAt)||0)-(Number(a.createdAt)||0));
+  const filtered=pickupFilter==='ALLE'?matching.slice(0,visibleLimit):matching;
+  const more=$('ordersLoadMore');
+  if(more){more.hidden=pickupFilter!=='ALLE'||!initialLoaded||(keysReady&&knownCount()<=visibleLimit);more.disabled=loadingHistory;more.textContent=loadingHistory?'Henter…':'Hent 10 til';}
   $('ordersEmpty').hidden=filtered.length>0;
   $('ordersEmpty').querySelector('strong').textContent=pickupFilter==='ALLE'?'Ingen bestillinger':pickupFilter==='SNAREST'?'Ingen aktive bestillinger':'Ingen aktive bestillinger til senere';
   const clockIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/></svg>';
@@ -598,7 +759,7 @@
    if(saved.status===400)saved=await fetch(url,options);
    if(saved.status===412)throw Error('Bestillingen ble endret samtidig. Hent oppdaterte opplysninger.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
-   orders.set(id,next);
+   mergeOrder(next);
    render();
    if(!automatic)closeDialog();
    // Successful changes are already reflected in the row; show no success banner.
@@ -619,29 +780,36 @@
  // No Cloud Functions: prune while the order receiver is open.
  // Any overflow created while closed is cleaned the next time it opens.
  async function requestPrune(){
-  if(pruning){pruneWanted=true;return}
-  if(!authReady())return;
-  pruning=true;
+  if(pruning){pruneWanted=true;return;}
+  if(!authReady()||!initialLoaded||!keysReady||knownKeys.size<=100)return;
+  pruning=true;const epoch=streamEpoch;
   try{
-   do{
-    pruneWanted=false;
-    const url=await authorizedURL('ORDERS');
-    // shallow=true returns order IDs only, never customer details.
-    const r=await fetch(url+'&shallow=true',{cache:'no-store'});
-    if(!r.ok){feedback('Kan ikke kontrollere ordregrensen (Firebase HTTP '+r.status+').',true);break}
-    const keys=Object.keys(await r.json()||{}).sort();
-    if(keys.length<=100)break;
-    const excess=keys.slice(0,keys.length-100);
-    const removals=Object.fromEntries(excess.map(id=>[id,null]));
-    const deleted=await fetch(url+'&print=silent',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(removals)});
-    if(!deleted.ok){feedback('Gamle bestillinger kunne ikke ryddes (Firebase HTTP '+deleted.status+').',true);break}
-    for(const id of excess)orders.delete(id);
-    render();
-    // The keys response already proves that trimming this batch reaches 100.
-    // Re-check only if new orders arrived during pruning.
-   }while(pruneWanted&&authReady());
-  }catch(error){console.warn('BestillOnline: pruning failed',error);feedback('Opprydding av gamle bestillinger feilet.',true)}
-  finally{pruning=false}
+   // Never remove an active order to enforce the history cap.
+   const candidates=[...knownKeys].sort();
+   for(const id of candidates){
+    if(knownKeys.size<=100||epoch!==streamEpoch||!authReady())break;
+    if(activeStreamContains(id)||activeStatus(orders.get(id)))continue;
+    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
+    const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+    if(!response.ok)throw Error('Firebase HTTP '+response.status);
+    const current=await response.json(),etag=response.headers.get('ETag');
+    if(epoch!==streamEpoch||!authReady())return;
+    if(current===null){knownKeys.delete(id);orders.delete(id);continue;}
+    if(!isOrder(current,id)||activeStatus(current)||!etag){if(isOrder(current,id))mergeOrder(current);continue;}
+    const deleted=await fetch(url+'&print=silent',{method:'DELETE',headers:{'if-match':etag},cache:'no-store'});
+    if(deleted.status===412)continue;
+    if(!deleted.ok)throw Error('Firebase HTTP '+deleted.status);
+    if(epoch!==streamEpoch)return;
+    knownKeys.delete(id);orders.delete(id);
+    for(const snapshot of sourceSnapshots.values())snapshot.delete(id);
+   }
+   render();
+  }catch(error){if(epoch===streamEpoch)feedback('Opprydding av gamle bestillinger feilet: '+error.message,true);}
+  finally{
+   pruning=false;
+   const again=pruneWanted;pruneWanted=false;
+   if(again&&epoch===streamEpoch&&knownKeys.size>100)void requestPrune();
+  }
  }
  let swipe=null;
  function events(){
@@ -659,6 +827,14 @@
    pickupFilter=button.dataset.pickupFilter;
    render();
   });
+  const more=$('ordersLoadMore');
+  if(more)more.addEventListener('click',()=>void loadOlderOrders());
+  let previousScrollY=window.scrollY;
+  window.addEventListener('scroll',()=>{
+   const currentY=window.scrollY,down=currentY>previousScrollY;
+   previousScrollY=currentY;
+   if(down&&pickupFilter==='ALLE'&&document.documentElement.scrollHeight-currentY-window.innerHeight<=32)void loadOlderOrders();
+  },{passive:true});
   $('ordersLoginForm').addEventListener('submit',login);
   $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
   let ignoreRowClicksUntil=0;
@@ -756,8 +932,9 @@
    }else{
     startCountdowns();
     if(authReady()){
-     if(!stream||stream.readyState===EventSource.CLOSED)void connectOrders();
-     else if(stream.readyState===EventSource.CONNECTING)connection('Kobler til igjen…');
+     const connections=[...sourceStreams.values()];
+     if(!connections.length||connections.some(source=>source.readyState===EventSource.CLOSED))void connectOrders();
+     else if(!initialLoaded||connections.some(source=>source.readyState===EventSource.CONNECTING))connection('Kobler til igjen…');
      else connection('Tilkoblet',true);
     }
     void finalizeDueOrder();
