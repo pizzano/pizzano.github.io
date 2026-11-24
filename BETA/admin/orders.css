@@ -158,11 +158,29 @@ body.is-dialog-open{overflow:hidden}
 .order-new-indicator{
  display:inline-block;width:7px;height:7px;margin-right:6px;vertical-align:1px;
  border-radius:50%;background:#f19a30;box-shadow:0 0 0 3px #fae0ba;
- animation:order-new-pulse 2s ease-in-out infinite;
+ animation:order-new-pulse 1.6s ease-in-out infinite;
 }
-@keyframes order-new-pulse{50%{opacity:.4;box-shadow:0 0 0 5px #fae0ba77}}
-.order-reference-row[data-status="mottatt"]{animation:order-border-pulse 2.5s ease-in-out infinite}
-@keyframes order-border-pulse{50%{border-color:#ecb06b;box-shadow:0 2px 13px #dc952e25}}
+@keyframes order-new-pulse{50%{opacity:.25;box-shadow:0 0 0 6px #ef9b4266}}
+.order-reference-row[data-status="mottatt"]{
+ border-color:#e69335;border-left-width:5px;
+ animation:order-border-pulse 1.6s ease-in-out infinite;
+}
+.order-reference-row[data-status="mottatt"] .order-row-body{
+ background:#fff7e9;
+ animation:order-new-background 1.6s ease-in-out infinite;
+}
+.order-reference-row[data-status="mottatt"] .order-status{
+ color:#8a4b0a;font-weight:900;
+}
+.order-reference-row.is-first-processed{margin-top:18px}
+@keyframes order-border-pulse{
+ 0%,100%{border-color:#e69335;box-shadow:0 0 0 1px #e6933540}
+ 50%{border-color:#c76b13;box-shadow:0 0 0 3px #ed9b5266,0 4px 15px #cf791c30}
+}
+@keyframes order-new-background{
+ 0%,100%{background:#fffaf3}
+ 50%{background:#ffe8c9}
+}
 .order-reference-row .order-mode-cell{
  grid-column:2;display:flex;justify-content:center;align-items:center;
  min-width:0;padding:0 5px;
