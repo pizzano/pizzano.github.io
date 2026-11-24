@@ -710,7 +710,7 @@ function renderOrderOverviewCarousel(){
  heading.setAttribute('aria-expanded',String(overviewShowHidden));
  $('draftOverviewCount').textContent=allOrders.length+' '+(allOrders.length===1?'bestilling':'bestillinger');
  $('draftOverviewHiddenLabel').textContent=hiddenCount?
-  (overviewShowHidden?'Skjul arkiv':'Vis arkiv ('+hiddenCount+')'):'';
+  (overviewShowHidden?'Skjul bestillinger ('+hiddenCount+')':'Vis bestillinger ('+hiddenCount+')'):'';
  // Update locally cached receipts when pickup time passes; no extra Firebase reads.
  // Preserve open <details> elements by updating the message and progress only.
  const cardsById=new Map([...track.querySelectorAll('.draft-history-card')].map(node=>[node.dataset.overviewId,node]));
@@ -775,7 +775,7 @@ function visiblePickupAt(order){
 function approvedPickupMessage(order){
  const pickup=visiblePickupAt(order);
  if(pickup>0&&pickup<=Date.now())
-  return {note:'Hentetiden er nådd',description:'Bestillingen er sannsynligvis klar for henting.'};
+  return {note:'Klar for henting',description:'Maten er sannsynligvis klar'};
  if(pickup>0){
   const date=new Intl.DateTimeFormat('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Oslo'}).format(new Date(pickup));
   return {note:'Klar om '+shortRemaining(pickup),description:'Henting '+date};
