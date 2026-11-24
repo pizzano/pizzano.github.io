@@ -514,6 +514,12 @@
   }catch{statusPatchEnabled=false}})();
   return statusPatchProbe;
  }
+ let bonusV2Enabled=false,bonusV2Task=null;
+ async function detectBonusV2(){
+  if(bonusV2Enabled)return true;
+  if(!bonusV2Task)bonusV2Task=fetch(DB+'/pizzaBonusV2.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusV2Enabled=r.ok).catch(()=>false).finally(()=>{bonusV2Task=null});
+  return bonusV2Task;
+ }
  async function detectBonusRules(){
   if(bonusRulesEnabled)return true;
   if(!bonusRulesProbe)bonusRulesProbe=fetch(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false).finally(()=>{bonusRulesProbe=null});
@@ -523,7 +529,7 @@
   if(!authReady())return;
   closeStream();const epoch=streamEpoch;
   connection('Kobler til…');
-  void detectStatusPatch();void detectBonusRules();
+  void detectStatusPatch();void detectBonusRules();void detectBonusV2();
   try{
    const url=await authorizedURL('ORDERS');
    if(epoch!==streamEpoch)return;
@@ -950,6 +956,9 @@
      const multi={};for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
      multi['customers/'+phone+'/bonusCount']=count;
      multi['customers/'+phone+'/lastOrderAt']=changedAt;
+     // The V2 mirror is written only if its public read rules are installed.
+     // Legacy installations retain the old atomic approval path.
+     if(await detectBonusV2())multi['customers/'+phone+'/bonus']={count,last:changedAt};
      // Customer rule checks original balance/date and new order receipt atomically.
      multi['customers/'+phone+'/_bonusOrder']=id;
      writeURL=await authorizedURL('');
