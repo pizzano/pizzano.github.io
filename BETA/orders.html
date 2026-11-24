@@ -15,9 +15,9 @@
 <header class="orders-head">
   <div class="orders-headline"><h1>Ordrer</h1><small id="ordersBrand">KØL Grill & Pizza</small></div>
   <nav id="ordersPickupFilters" class="orders-pickup-filters" aria-label="Filtrer bestillinger etter hentetype" hidden>
+   <button type="button" data-pickup-filter="ALLE" aria-pressed="true" aria-controls="ordersList"><span>Alle <b data-filter-count>(0)</b></span></button>
    <button type="button" data-pickup-filter="SNAREST" aria-pressed="false" aria-controls="ordersList"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.7 1 5 13h6.4L10.3 23 20 10h-6.3L13.7 1Z"/></svg><span>Snarest <b data-filter-count>(0)</b></span></button>
    <button type="button" data-pickup-filter="SENERE" aria-pressed="false" aria-controls="ordersList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 10h18"/></svg><span>Senere <b data-filter-count>(0)</b></span></button>
-   <button type="button" data-pickup-filter="ALLE" aria-pressed="true" aria-controls="ordersList"><span>Alle <b data-filter-count>(0)</b></span></button>
   </nav>
   <div class="orders-top-actions orders-lightbar" aria-label="Bestillingssystem – status og kontroller">
    <button class="orders-light orders-light-net is-pending" id="ordersConnection" type="button" aria-label="Nett: kontrolleres" title="Nettverkstilkobling"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.4 8.7c5.7-5.1 13.5-5.1 19.2 0M5.7 12.2c3.7-3.3 8.9-3.3 12.6 0M9 15.7c1.8-1.5 4.2-1.5 6 0"></path><circle cx="12" cy="19.2" r="1.05" fill="currentColor" stroke="none"></circle></svg><span class="orders-light-tooltip" id="ordersNetTooltip">Nett: kontrolleres</span></button>
