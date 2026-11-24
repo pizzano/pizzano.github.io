@@ -989,6 +989,9 @@
   if(type==='reject'){$('ordersRejectReason').value='';$('ordersRejectReason').focus()}
  }
  // Conditional, per-order write. No full /ORDERS download/overwrite for state changes.
+ async function salesRulesAvailable(){
+  try{const r=await fetch(DB+'/salesStatisticsV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});return r.ok}catch{return false}
+ }
  async function changeStatus(id,status,extra={},automatic=false){
   if(pendingAction)return;
   const old=orders.get(id);
@@ -1003,7 +1006,9 @@
    if(status==='godkjent')await detectBonusRules();
    const bonusMode=status==='godkjent'&&bonusRulesEnabled;
    if(status==='godkjent'&&!bonusMode)throw Error('Pizzabonus kunne ikke aktiveres. Kontroller at nye Firebase-regler er publisert (pizzaBonusV1), og prøv igjen. Bestillingen er ikke godkjent.');
-   const patchMode=(statusPatchEnabled||bonusMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
+   const salesMode=status==='klar'&&await salesRulesAvailable();
+   const patchMode=(statusPatchEnabled||bonusMode||salesMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
+   if(salesMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    if(bonusMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    let current=old,etag=null;
    if(!patchMode||(adminSharing&&!adminLeader)){
@@ -1081,6 +1086,11 @@
      if(await detectBonusV2())multi['customers/'+phone+'/bonus']={count,last:changedAt};
      // Customer rule checks original balance/date and new order receipt atomically.
      multi['customers/'+phone+'/_bonusOrder']=id;
+     writeURL=await authorizedURL('');
+     options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
+    }else if(salesMode){
+     const multi=BOLocalSales.centralPatch(next);
+     for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
      writeURL=await authorizedURL('');
      options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(multi),cache:'no-store'};
     }else options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes),cache:'no-store'};
