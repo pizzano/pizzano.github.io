@@ -123,12 +123,16 @@ async function fatih1BonusGetOnce(phone){
  if(!/^[49]\d{7}$/.test(phone))return;
  if(fatih1BonusGetPending?.phone===phone)return fatih1BonusGetPending.task;
  const task=(async()=>{
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
-   const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>fetch(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal:AbortSignal.timeout(6500)})));
-   if(!balance.ok)throw Error('Bonus HTTP '+balance.status);
-   const count=await balance.json(),last=stamp.ok?await stamp.json():0;
-   if(fatih1BonusPhone()===phone)fatih1BonusStore(phone,count,Number(last)||0,stamp.ok);
-  }catch(error){if(fatih1BonusVisible())fatih1BonusStatus('Kunne ikke oppdatere pizzabonus.');}
+   const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>fetch(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal:controller.signal})));
+   if(!balance.ok||!stamp.ok)throw Error('Firebase HTTP '+balance.status+'/'+stamp.status);
+   const count=await balance.json(),last=await stamp.json();
+   if(fatih1BonusPhone()===phone)fatih1BonusStore(phone,count,Number(last)||0,true);
+  }catch(error){
+   console.warn('BestillOnline bonus:',error);
+   if(fatih1BonusVisible()&&fatih1BonusPhone()===phone)fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);
+  }finally{clearTimeout(timer)}
  })();
  fatih1BonusGetPending={phone,task};
  try{await task}finally{if(fatih1BonusGetPending?.task===task)fatih1BonusGetPending=null}
@@ -136,9 +140,39 @@ async function fatih1BonusGetOnce(phone){
 function fatih1BonusStart(force=false){
  if(orderSubmissionBusy||!fatih1BonusVisible())return;
  const phone=fatih1BonusPhone();
- if(!phone){fatih1BonusRender(0);fatih1BonusStatus('Lagre mobilnummer for å hente pizzabonus.');return;}
+ if(!phone){fatih1BonusStop();fatih1BonusRender(0);fatih1BonusStatus('Lagre mobilnummer for å hente pizzabonus.');return;}
+ if(!force&&fatih1BonusSource&&fatih1BonusSourcePhone===phone)return;
  fatih1BonusStop();
- void fatih1BonusGetOnce(phone);
+ if(typeof EventSource==='undefined'){void fatih1BonusGetOnce(phone);return;}
+ const token=fatih1BonusStreamId,source=new EventSource(BASE+'/customers/'+phone+'/bonusCount.json');
+ fatih1BonusSource=source;fatih1BonusSourcePhone=phone;
+ fatih1BonusStatus('Kobler til pizzabonus…');
+ let revision=0;
+ const current=()=>fatih1BonusSource===source&&fatih1BonusStreamId===token&&fatih1BonusPhone()===phone&&fatih1BonusVisible();
+ const receive=async event=>{
+  if(!current())return;
+  const seq=++revision;
+  try{
+   const payload=JSON.parse(event.data);
+   if(payload.path!=='/'&&payload.path!=='')return;
+   const count=payload.data;
+   if(count!==null&&(typeof count!=='number'||!Number.isFinite(count)))return;
+   // Date is a separate private-profile leaf. Read it only on an actual
+   // balance event, including the initial snapshot, never on a timer.
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+   try{
+    const response=await fetch(BASE+'/customers/'+phone+'/lastOrderAt.json',{cache:'no-store',signal:controller.signal});
+    if(!response.ok)throw Error('Firebase HTTP '+response.status);
+    const last=await response.json();
+    if(current()&&seq===revision)fatih1BonusStore(phone,count,Number(last)||0,true);
+   }finally{clearTimeout(timer)}
+  }catch(error){if(current()&&seq===revision){console.warn('BestillOnline bonus:',error);fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);}}
+ };
+ source.addEventListener('put',receive);
+ source.addEventListener('patch',receive);
+ const denied=()=>{if(current()){fatih1BonusStop();fatih1BonusStatus('Tilgang til pizzabonus ble avvist.');}};
+ source.addEventListener('cancel',denied);source.addEventListener('auth_revoked',denied);
+ source.onerror=()=>{if(current()){fatih1BonusStatus('Kobler til pizzabonus igjen…');if(source.readyState===2){fatih1BonusStop();void fatih1BonusGetOnce(phone);}}};
 }
 function fatih1BonusLoad(force=false){
  fatih1BonusStart(force);
