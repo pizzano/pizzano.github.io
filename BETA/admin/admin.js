@@ -5,6 +5,16 @@
 (()=>{
  const DB='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
  const $=id=>document.getElementById(id);
+const SETTINGS_CACHE_KEY='bestillonline-public-settings-v1';
+function readSharedSettings(revision){
+ if(typeof revision!=='string'||!revision)return null;
+ try{const value=JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY)||'null');return value&&typeof value==='object'&&!Array.isArray(value)&&value._liveRevision===revision?value:null}catch{return null}
+}
+function storeSharedSettings(value){
+ if(!value||typeof value!=='object'||Array.isArray(value)||typeof value._liveRevision!=='string'||!value._liveRevision)return;
+ try{localStorage.setItem(SETTINGS_CACHE_KEY,JSON.stringify(value))}catch{}
+}
+
 const ADMIN_UID='CkvfzzzQ9MaPD8lZWKx10RB6iX22';
 const ADMIN_EMAIL='fatihsemb@gmail.com';
 // Public Firebase Web API key is required by Firebase Authentication, not a password.
@@ -38,22 +48,24 @@ function setAdminRestaurantBrand(value){
  heading.title=name;
  document.title=name+' · Menyadministrasjon';
 }
-async function refreshAdminRestaurantBrand(){
- // This small field is the same Firebase name source as the customer site.
- // Read once on admin opening and manually requested reload, never per tab.
- const controller=new AbortController();
- const timeout=window.setTimeout(()=>controller.abort(),3500);
+async function readAdminSettings(force=false){
+ const revision=state.original?.changeFeed?.settingsRevision;
+ const cached=!force&&readSharedSettings(revision);
+ if(cached)return cached;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6500);
  try{
-  const response=await fetch(await databaseAuthURL('settings/restaurantName'),{
-   cache:'no-store',signal:controller.signal
-  });
-  if(!response.ok)throw Error('Firebase restaurantName HTTP '+response.status);
-  setAdminRestaurantBrand(await response.json());
- }catch(error){
-  // A missing/unavailable settings field must never prevent menu editing.
-  console.warn('BestillOnline restaurant name unavailable:',error);
-  setAdminRestaurantBrand(state.menu?.settings?.restaurantName);
- }finally{window.clearTimeout(timeout)}
+  const response=await fetch(await databaseAuthURL('settings'),{cache:'no-store',signal:controller.signal});
+  if(!response.ok)throw Error('Kunne ikke hente /settings ('+response.status+').');
+  const value=await response.json()||{};
+  if(typeof value!=='object'||Array.isArray(value))throw Error('Ugyldig /settings.');
+  storeSharedSettings(value);
+  return value;
+ }finally{clearTimeout(timer)}
+}
+let adminSettingsSnapshot=null;
+async function refreshAdminRestaurantBrand(force=false){
+ try{adminSettingsSnapshot=await readAdminSettings(force);setAdminRestaurantBrand(adminSettingsSnapshot.restaurantName)}
+ catch(error){console.warn('BestillOnline restaurant settings:',error);setAdminRestaurantBrand(state.menu?.settings?.restaurantName)}
 }
 async function login(e){
  e.preventDefault();
@@ -305,10 +317,8 @@ function refreshHeader(){
   $('saveStatus').className='status';
   $('saveStatus').textContent='Kobler til Firebase…';
   try{
-   await Promise.all([
-    loadMenu(false,{preferCache:true}),
-    refreshAdminRestaurantBrand()
-   ]);
+   await loadMenu(false,{preferCache:true});
+   await refreshAdminRestaurantBrand();
    $('loadingCard').hidden=true;
    $('adminRoot').hidden=false;
    $('adminNav').hidden=false;
@@ -484,10 +494,8 @@ function refreshHeader(){
   if(state.dirty.size&&!window.confirm('Ulagrede restaurantinnstillinger vil gå tapt. Fortsette?'))return;
   state.loading=true;restaurantSetSaving();restaurantSetMessage('');
   try{
-   const response=await fetch(await databaseAuthURL('settings'),{cache:'no-store'});
-   if(!response.ok)throw Error('Kunne ikke hente /settings ('+response.status+').');
-   const settings=await response.json()||{};
-   if(typeof settings!=='object'||Array.isArray(settings))throw Error('Ugyldig /settings.');
+   const settings=!force&&adminSettingsSnapshot?adminSettingsSnapshot:await readAdminSettings(force);
+   adminSettingsSnapshot=settings;
    state.original=clone(settings);state.draft=clone(settings);
    state.loaded=true;state.dirty.clear();restaurantRender();
   }catch(error){restaurantSetMessage(error.message||'Kunne ikke hente innstillinger.',true)}
@@ -520,6 +528,8 @@ function refreshHeader(){
     }else{state.etag=null;clearAdminMenuCache();}
    }catch{state.etag=null;clearAdminMenuCache();}
   }
+  try{adminSettingsSnapshot=await readAdminSettings(true);}
+  catch{adminSettingsSnapshot=null;try{localStorage.removeItem(SETTINGS_CACHE_KEY)}catch{}}
   return {...values,_liveRevision:revision};
  }
  async function saveRestaurantSettings(){
@@ -540,8 +550,8 @@ function refreshHeader(){
   if(invalid){restaurantSetMessage('Sjekk kontaktinformasjonen.',true);invalid.focus();return}
   state.saving=true;restaurantSetSaving();restaurantSetMessage('');
   try{
-   await restaurantPatch(changes);
-   Object.assign(state.original,clone(changes));state.dirty.clear();
+   const saved=await restaurantPatch(changes);
+   state.original=clone(adminSettingsSnapshot||{...state.original,...saved});state.draft=clone(state.original);state.dirty.clear();restaurantRender();
    if(changes.restaurantName!==undefined)setAdminRestaurantBrand(changes.restaurantName);
    restaurantSetMessage('Lagret i Firebase /settings · '+Object.keys(changes).length+' felt bekreftet.');
   }catch(error){restaurantSetMessage(error.message||'Kunne ikke lagre.',true)}
@@ -556,8 +566,8 @@ function refreshHeader(){
   $('restaurantTemporaryClose').disabled=true;
   try{
    const change={manualClosed:!closed,manualClosedUntil:null};
-   await restaurantPatch(change);
-   Object.assign(state.draft,change);Object.assign(state.original,change);
+   const saved=await restaurantPatch(change);
+   Object.assign(state.draft,saved);state.original=clone(adminSettingsSnapshot||{...state.original,...saved});
    state.dirty.delete('manualClosed');state.dirty.delete('manualClosedUntil');
    restaurantShowStatus();restaurantSetMessage(closed?'Firebase bekreftet: Nettbestilling åpnet.':'Firebase bekreftet: Nettbestilling midlertidig stengt.');
   }catch(error){restaurantSetMessage(error.message||'Kunne ikke endre status.',true)}
@@ -1578,7 +1588,8 @@ function refreshHeader(){
   $('btnSave').addEventListener('click',save);
   $('btnReload').addEventListener('click',()=>loadMenu().then(async ok=>{
    if(!ok)return;
-   await refreshAdminRestaurantBrand();
+   await refreshAdminRestaurantBrand(true);
+   if(restaurantState.loaded&&!restaurantState.dirty.size&&adminSettingsSnapshot){restaurantState.original=clone(adminSettingsSnapshot);restaurantState.draft=clone(adminSettingsSnapshot);restaurantRender();}
    notify('Siste meny er hentet');
   }).catch(e=>notify(e.message,true)));
   $('btnExportMenuBackup').addEventListener('click',exportOriginalMenuBackup);
