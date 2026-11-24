@@ -67,6 +67,73 @@
     },
     "pizzaBonusV2": {
       ".read": true
+    },
+    "salesStatisticsV1": {
+      ".read": true
+    },
+    "salesStatistics": {
+      "daily": {
+        "$period": {
+          ".validate": "$period.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && newData.hasChildren(['totalOre','count'])",
+          "totalOre": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && (!data.exists() || newData.val() >= data.val())"
+          },
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "monthly": {
+        "$period": {
+          ".validate": "$period.matches(/^[0-9]{4}-[0-9]{2}$/) && newData.hasChildren(['totalOre','count'])",
+          "totalOre": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && (!data.exists() || newData.val() >= data.val())"
+          },
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "yearly": {
+        "$period": {
+          ".validate": "$period.matches(/^[0-9]{4}$/) && newData.hasChildren(['totalOre','count'])",
+          "totalOre": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && (!data.exists() || newData.val() >= data.val())"
+          },
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "receipts": {
+        "$id": {
+          ".validate": "!data.exists() && $id.matches(/^ord_[0-9]{13}_[a-f0-9]{12}$/) && newData.hasChildren(['day','totalOre','at']) && root.child('ORDERS').child($id).child('status').val() === 'godkjent' && newData.parent().parent().parent().child('ORDERS').child($id).child('status').val() === 'klar' && newData.child('at').val() === newData.parent().parent().parent().child('ORDERS').child($id).child('readyAt').val() && newData.child('totalOre').val() >= root.child('ORDERS').child($id).child('total').val() * 100 - 0.5 && newData.child('totalOre').val() <= root.child('ORDERS').child($id).child('total').val() * 100 + 0.5",
+          "day": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+          },
+          "totalOre": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0"
+          },
+          "at": {
+            ".validate": "newData.isNumber() && newData.val() <= now + 300000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "$other": {
+        ".validate": false
+      }
     }
   }
 }
