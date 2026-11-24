@@ -380,3 +380,30 @@ a.admin-nav-orders:hover{background:#214c3c;color:#fff;border-color:#4a9c70}
  .restaurant-subtabs{width:100%}
  .restaurant-subtabs button{flex:1;min-width:0}
 }
+
+/* Local sales dashboard */
+.sales-dashboard{padding:20px;border:1px solid #dce8de;border-radius:20px;background:#f8fbf8;color:#142d21}
+.sales-dashboard[hidden]{display:none}
+.sales-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+.sales-heading h1{font-size:clamp(23px,3vw,34px);margin:0 0 6px}
+.sales-heading p{font-size:14px;color:#52635a;max-width:720px;margin:0}
+.sales-heading button{white-space:nowrap;background:#28643e;color:#fff}
+.sales-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.sales-card,.sales-chart{background:#fff;border:1px solid #e0e9e1;border-radius:18px;padding:20px;box-shadow:0 3px 9px #163c2510}
+.sales-card{display:flex;gap:12px;align-items:flex-start}
+.sales-icon{display:grid;place-items:center;background:#e8f3e5;border-radius:12px;color:#28713d;width:48px;height:48px;flex-shrink:0}
+.sales-icon svg{width:30px;height:30px}
+.sales-card h2,.sales-chart h2{margin:0 0 8px;font-size:18px}
+.sales-card strong{display:block;font-size:clamp(19px,2.6vw,32px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sales-card small{display:inline-block;background:#eaf3e8;border-radius:10px;padding:6px 10px;margin-top:10px;color:#245b35}
+.sales-plot{display:flex;gap:12px;margin-top:30px}
+.sales-axis{display:flex;flex-direction:column;justify-content:space-between;height:220px;font-size:12px;color:#52635a;white-space:nowrap}
+.sales-bars{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;min-width:0}
+.sales-column{text-align:center;min-width:0;font-size:13px}
+.sales-track{height:220px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #a5b4a9;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#e5ece5 calc(25% - 1px),#e5ece5 25%)}
+.sales-bar{position:relative;width:80%;height:0;background:linear-gradient(#55965b,#245e40);border-radius:9px 9px 0 0}
+.sales-column:first-child .sales-bar{background:#a6d49a}
+.sales-bar span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;background:#e8f3e5;color:#23532e;padding:4px 6px;border-radius:7px;white-space:nowrap}
+.sales-column>strong,.sales-column>small{display:block;margin-top:6px}
+#salesDashboardStatus{font-size:12px;color:#52635a}
+@media(max-width:650px){.sales-dashboard{padding:12px}.sales-heading{align-items:flex-start;flex-direction:column}.sales-cards{grid-template-columns:1fr;gap:8px}.sales-card,.sales-chart{padding:12px}.sales-bars{gap:5px}.sales-track,.sales-axis{height:170px}.sales-bar span{font-size:10px}.sales-column{font-size:11px}.sales-axis{font-size:10px}}
