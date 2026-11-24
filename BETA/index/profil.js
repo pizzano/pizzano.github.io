@@ -125,6 +125,16 @@ function fatih1BonusStop(){
 function fatih1BonusVisible(){
  return !$('fatih1ProfileSheet').hidden&&!$('fatih1ProfileHome').hidden&&!document.hidden;
 }
+// Keep the last displayed count, but do not redeem an unverified balance.
+function fatih1BonusInvalidate(refresh=true){
+ const phone=fatih1BonusPhone();
+ if(!phone)return;
+ try{
+  const cached=fatih1BonusCached(phone);
+  if(cached)localStorage.setItem(FATIH1_BONUS_STORAGE_KEY,JSON.stringify({...cached,verified:false}));
+ }catch{}
+ if(refresh&&fatih1BonusVisible())fatih1BonusStart(true);
+}
 function fatih1BonusStore(phone,count,lastOrderAt=0,verified=false){
  const amount=bonusBalance(count,lastOrderAt);
  try{localStorage.setItem(FATIH1_BONUS_STORAGE_KEY,JSON.stringify({phone,count:amount,lastOrderAt,verified,savedAt:Date.now()}))}catch{}
@@ -144,7 +154,10 @@ async function fatih1BonusGetOnce(phone){
    if(fatih1BonusPhone()===phone)fatih1BonusStore(phone,count,Number(last)||0,true);
   }catch(error){
    console.warn('BestillOnline bonus:',error);
-   if(fatih1BonusVisible()&&fatih1BonusPhone()===phone)fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);
+   if(fatih1BonusPhone()===phone){
+    fatih1BonusInvalidate(false);
+    if(fatih1BonusVisible())fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);
+   }
   }finally{clearTimeout(timer);release()}
  })();
  fatih1BonusGetPending={phone,task};
@@ -181,7 +194,7 @@ function fatih1BonusStart(force=false){
     const last=await response.json();
     if(current()&&seq===revision)fatih1BonusStore(phone,count,Number(last)||0,true);
    }finally{clearTimeout(timer);release()}
-  }catch(error){if(current()&&seq===revision){console.warn('BestillOnline bonus:',error);fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);}}
+  }catch(error){if(current()&&seq===revision){console.warn('BestillOnline bonus:',error);fatih1BonusInvalidate(false);fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);}}
  };
  source.addEventListener('put',receive);
  source.addEventListener('patch',receive);
