@@ -130,8 +130,10 @@ async function fatih1BonusGetOnce(phone){
  if(!/^[49]\d{7}$/.test(phone))return;
  if(fatih1BonusGetPending?.phone===phone)return fatih1BonusGetPending.task;
  const task=(async()=>{
+  const release=pausePublicStreamsForBonusRead();
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
+   await new Promise(resolve=>setTimeout(resolve,0));
    const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>fetch(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal:controller.signal})));
    if(!balance.ok||!stamp.ok)throw Error('Firebase HTTP '+balance.status+'/'+stamp.status);
    const count=await balance.json(),last=await stamp.json();
@@ -139,7 +141,7 @@ async function fatih1BonusGetOnce(phone){
   }catch(error){
    console.warn('BestillOnline bonus:',error);
    if(fatih1BonusVisible()&&fatih1BonusPhone()===phone)fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);
-  }finally{clearTimeout(timer)}
+  }finally{clearTimeout(timer);release()}
  })();
  fatih1BonusGetPending={phone,task};
  try{await task}finally{if(fatih1BonusGetPending?.task===task)fatih1BonusGetPending=null}
@@ -166,13 +168,15 @@ function fatih1BonusStart(force=false){
    if(count!==null&&(typeof count!=='number'||!Number.isFinite(count)))return;
    // Date is a separate private-profile leaf. Read it only on an actual
    // balance event, including the initial snapshot, never on a timer.
+   const release=pausePublicStreamsForBonusRead();
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
    try{
+    await new Promise(resolve=>setTimeout(resolve,0));
     const response=await fetch(BASE+'/customers/'+phone+'/lastOrderAt.json',{cache:'no-store',signal:controller.signal});
     if(!response.ok)throw Error('Firebase HTTP '+response.status);
     const last=await response.json();
     if(current()&&seq===revision)fatih1BonusStore(phone,count,Number(last)||0,true);
-   }finally{clearTimeout(timer)}
+   }finally{clearTimeout(timer);release()}
   }catch(error){if(current()&&seq===revision){console.warn('BestillOnline bonus:',error);fatih1BonusStatus('Kunne ikke oppdatere pizzabonus: '+error.message);}}
  };
  source.addEventListener('put',receive);
