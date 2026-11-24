@@ -27,7 +27,11 @@
         },
         "bonusCount": {
           ".read": "$phone.matches(/^[49][0-9]{7}$/)"
-        }
+        },
+        "lastOrderAt": {
+          ".read": "$phone.matches(/^[49][0-9]{7}$/)"
+        },
+        ".validate": "!newData.child('_bonusOrder').exists() || (newData.child('_bonusOrder').val() === data.child('_bonusOrder').val() && newData.child('bonusCount').val() === data.child('bonusCount').val() && newData.child('lastOrderAt').val() === data.child('lastOrderAt').val()) || (newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'godkjent' && root.child('ORDERS').child(newData.child('_bonusOrder').val()).child('status').val() === 'mottatt' && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('phone').val() === $phone && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousCount').val() === data.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('previousLastOrderAt').val() === data.child('lastOrderAt').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('count').val() === newData.child('bonusCount').val() && newData.parent().parent().child('ORDERS').child(newData.child('_bonusOrder').val()).child('_bonusApplied').child('at').val() === newData.child('lastOrderAt').val() && newData.child('bonusCount').isNumber() && newData.child('bonusCount').val() >= 0 && newData.child('bonusCount').val() <= 11)"
       }
     },
     "ORDERS": {
@@ -36,13 +40,16 @@
       ],
       "$orderId": {
         ".write": "auth != null && auth.uid === 'CkvfzzzQ9MaPD8lZWKx10RB6iX22' || (!data.exists() && newData.exists() && $orderId.matches(/^ord_[0-9]{13}_[a-f0-9]{12}$/))",
-        ".validate": "newData.hasChildren(['id','name','phone','status','items','total','createdAt','pickup','statusPublic']) && newData.child('id').val() === $orderId && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && newData.child('phone').isString() && newData.child('phone').val().length >= 8 && newData.child('phone').val().length <= 20 && newData.child('total').isNumber() && newData.child('total').val() >= 0 && newData.child('createdAt').isNumber() && (data.exists() || (newData.child('createdAt').val() <= now + 300000 && newData.child('createdAt').val() >= now - 3600000)) && (newData.child('status').val() === 'mottatt' || newData.child('status').val() === 'godkjent' || newData.child('status').val() === 'klar' || newData.child('status').val() === 'avvist') && (data.exists() || newData.child('status').val() === 'mottatt') && newData.child('statusPublic').child('status').val() === newData.child('status').val() && (!newData.child('_statusGuard').exists() || (data.exists() && (newData.child('_statusGuard').child('nonce').val() === data.child('_statusGuard').child('nonce').val() || (newData.child('_statusGuard').child('nonce').isString() && newData.child('_statusGuard').child('from').val() === data.child('status').val() && newData.child('_statusGuard').child('version').val() === data.child('statusPublic').child('updatedAt').val() && ((data.child('status').val() === 'mottatt' && (newData.child('status').val() === 'godkjent' || newData.child('status').val() === 'avvist')) || (data.child('status').val() === 'godkjent' && newData.child('status').val() === 'klar')) && newData.child('statusPublic').child('updatedAt').isNumber() && newData.child('statusPublic').child('updatedAt').val() > data.child('statusPublic').child('updatedAt').val()))))",
+        ".validate": "newData.hasChildren(['id','name','phone','status','items','total','createdAt','pickup','statusPublic']) && newData.child('id').val() === $orderId && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && newData.child('phone').isString() && newData.child('phone').val().length >= 8 && newData.child('phone').val().length <= 20 && newData.child('total').isNumber() && newData.child('total').val() >= 0 && newData.child('createdAt').isNumber() && (data.exists() || (newData.child('createdAt').val() <= now + 300000 && newData.child('createdAt').val() >= now - 3600000)) && (newData.child('status').val() === 'mottatt' || newData.child('status').val() === 'godkjent' || newData.child('status').val() === 'klar' || newData.child('status').val() === 'avvist') && (data.exists() || newData.child('status').val() === 'mottatt') && newData.child('statusPublic').child('status').val() === newData.child('status').val() && (!newData.child('_statusGuard').exists() || (data.exists() && (newData.child('_statusGuard').child('nonce').val() === data.child('_statusGuard').child('nonce').val() || (newData.child('_statusGuard').child('nonce').isString() && newData.child('_statusGuard').child('from').val() === data.child('status').val() && newData.child('_statusGuard').child('version').val() === data.child('statusPublic').child('updatedAt').val() && ((data.child('status').val() === 'mottatt' && (newData.child('status').val() === 'godkjent' || newData.child('status').val() === 'avvist')) || (data.child('status').val() === 'godkjent' && newData.child('status').val() === 'klar')) && newData.child('statusPublic').child('updatedAt').isNumber() && newData.child('statusPublic').child('updatedAt').val() > data.child('statusPublic').child('updatedAt').val())))) && (data.exists() || !newData.child('_bonusApplied').exists())",
         "statusPublic": {
           ".read": "$orderId.matches(/^ord_[0-9]{13}_[a-f0-9]{12}$/)"
         }
       }
     },
     "statusPatchV1": {
+      ".read": true
+    },
+    "pizzaBonusV1": {
       ".read": true
     }
   }
