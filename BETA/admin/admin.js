@@ -453,7 +453,7 @@ function refreshHeader(){
   $('productsPage').hidden=tab!=='products';$('groupsPage').hidden=tab!=='groups';
   $('restaurantPage').hidden=tab!=='restaurant';
   $('salesPage').hidden=tab!=='sales';
-  if(tab==='sales')void renderSalesDashboard();
+  if(tab==='sales')void renderSalesDashboard(true);
   if(tab==='restaurant')void loadRestaurantSettings();
   for(const b of document.querySelectorAll('[data-tab]')){
    const active=b.dataset.tab===tab;
