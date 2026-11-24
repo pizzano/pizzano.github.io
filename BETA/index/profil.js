@@ -342,7 +342,7 @@ async function fatih1RestaurantRefresh(){
    const data=await response.json();
    if(!data||typeof data!=='object'||Array.isArray(data))throw Error('Ugyldig settings-format');
    if(!menu)throw Error('Menyen er ikke lastet');
-   menu.settings=data;
+   acceptLiveSettings(data,true);
    await localPut(menu);
    updateRestaurantBrand();
    updateHoursStatus();
