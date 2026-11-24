@@ -54,6 +54,7 @@
  const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
  let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
  const rechecking=new Set();
+ let statusPatchEnabled=false,statusPatchProbe=null,localStatusWriteId=null;
  let historySyncPending=false,historyHydrated=false,historySyncGeneration=0;
  let countdownTicker=null,automaticReadyBusy=false;
  let pruneCheckedKeySignature='',authStreamRenewing=false;
@@ -280,7 +281,7 @@
   return ['mottatt','godkjent'].some(key=>activeStatus(sourceSnapshots.get(key)?.get(id)));
  }
  async function recheckDepartedActive(id,epoch=streamEpoch){
-  if(!initialLoaded||rechecking.has(id)||activeStreamContains(id)||!activeStatus(orders.get(id)))return;
+  if(!initialLoaded||localStatusWriteId===id||rechecking.has(id)||activeStreamContains(id)||!activeStatus(orders.get(id)))return;
   rechecking.add(id);
   try{
    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
@@ -388,10 +389,19 @@
   if(response.status===400&&/index/i.test(message))return false;
   throw Error('Kunne ikke kontrollere ordreindeks (Firebase HTTP '+response.status+').');
  }
+ async function detectStatusPatch(){
+  if(statusPatchProbe)return statusPatchProbe;
+  statusPatchProbe=(async()=>{try{
+   const response=await fetch(DB+'/statusPatchV1.json',{cache:'no-store',credentials:'omit'});
+   statusPatchEnabled=response.ok;
+  }catch{statusPatchEnabled=false}})();
+  return statusPatchProbe;
+ }
  async function connectOrders(){
   if(!authReady())return;
   closeStream();const epoch=streamEpoch;
   connection('Kobler til…');
+  void detectStatusPatch();
   try{
    const url=await authorizedURL('ORDERS');
    if(epoch!==streamEpoch)return;
@@ -743,21 +753,25 @@
   if(status==='godkjent'&&approvalDeadline(old)>0&&Date.now()>=approvalDeadline(old))throw Error('Bekreftelsesfristen er utløpt.');
   if(status==='klar'&&old.status!=='godkjent')throw Error('Bare godkjente bestillinger kan markeres klare.');
   if(status==='avvist'&&old.status!=='mottatt')throw Error('Bare nye bestillinger kan avvises.');
-  pendingAction=true;feedback('');
+  pendingAction=true;localStatusWriteId=id;feedback('');
   try{
    const url=await authorizedURL('ORDERS/'+encodeURIComponent(id));
-   const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-   if(!response.ok)throw Error('Kunne ikke kontrollere bestillingen ('+response.status+').');
-   const etag=response.headers.get('ETag');
-   if(!etag)throw Error('Firebase returnerte ikke ETag. Bestillingen ble ikke endret.');
-   const current=await response.json();
+   const patchMode=statusPatchEnabled&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
+   let current=old,etag=null;
+   if(!patchMode){
+    const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+    if(!response.ok)throw Error('Kunne ikke kontrollere bestillingen ('+response.status+').');
+    etag=response.headers.get('ETag');
+    if(!etag)throw Error('Firebase returnerte ikke ETag. Bestillingen ble ikke endret.');
+    current=await response.json();
+   }
    if(!current||current.status!==old.status)throw Error('Bestillingen ble endret av en annen administrator. Oppdater siden.');
    if(automatic){
     const ready=status==='klar'&&current.status==='godkjent'&&Number(current.expectedReadyAt)>0&&Number(current.expectedReadyAt)<=Date.now();
     const timedOut=status==='avvist'&&current.status==='mottatt'&&approvalDeadline(current)>0&&Date.now()>=approvalDeadline(current)&&extra.rejectReason===TIMEOUT_REASON;
     if(!ready&&!timedOut)return;
    }
-   const changedAt=Date.now();
+   const changedAt=Math.max(Date.now(),(Number(current.statusPublic?.updatedAt)||0)+1);
    if(status==='godkjent'&&approvalDeadline(current)>0&&changedAt>=approvalDeadline(current))throw Error('Bekreftelsesfristen er utløpt.');
    const next={...current,...extra,status,updatedAt:changedAt};
    if(status==='godkjent'){
@@ -787,11 +801,20 @@
     }:{}),
     ...(status==='avvist'?{rejectReason:String(extra.rejectReason||'').slice(0,180)}:{})
    };
-   const options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},
-    body:JSON.stringify(next),cache:'no-store'};
+   let options;
+   if(patchMode){
+    // Server-side validation compares the old status and status version atomically.
+    // Only mutable status fields are written; items/customer data remain untouched.
+    next._statusGuard={nonce:crypto.randomUUID(),from:current.status,version:current.statusPublic.updatedAt};
+    const changes={};
+    for(const key of ['status','updatedAt','statusPublic','acceptedAt','prepMinutes','expectedReadyAt','pickupTimeAdjusted','readyAt','rejectedAt','rejectReason','_statusGuard']){
+     if(JSON.stringify(next[key])!==JSON.stringify(current[key]))changes[key]=next[key]??null;
+    }
+    options={method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes),cache:'no-store'};
+   }else options={method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(next),cache:'no-store'};
    let saved=await fetch(url+'&print=silent',options);
    if(saved.status===400)saved=await fetch(url,options);
-   if(saved.status===412)throw Error('Bestillingen ble endret samtidig. Hent oppdaterte opplysninger.');
+   if(saved.status===412||(patchMode&&(saved.status===401||saved.status===403)))throw Error('Bestillingen ble endret samtidig eller statusreglene avviste endringen. Oppdater siden.');
    if(!saved.ok)throw Error('Kunne ikke lagre status ('+saved.status+').');
    mergeOrder(next);
    render();
@@ -809,7 +832,10 @@
      }
     },1000);
    }
-  }finally{pendingAction=false}
+  }finally{
+   pendingAction=false;localStatusWriteId=null;
+   if(initialLoaded&&!activeStreamContains(id)&&activeStatus(orders.get(id)))void recheckDepartedActive(id);
+  }
  }
  // No Cloud Functions: prune while the order receiver is open.
  // Any overflow created while closed is cleaned the next time it opens.
