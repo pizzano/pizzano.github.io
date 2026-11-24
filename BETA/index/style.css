@@ -80,7 +80,7 @@ main{padding:10px 12px 100px}
 .app{box-shadow:none}
 
 /* Horizontal category carousel and store-hours card */
-.category-wrap{position:sticky;top:var(--fatih1-topbar-height);z-index:12;height:66px;background:var(--fatih1-page-bg);border-bottom:1px solid var(--line);box-shadow:0 3px 12px #173a310d}
+.category-wrap{position:sticky;top:calc(var(--fatih1-topbar-height) - 2px);z-index:12;height:66px;background:var(--fatih1-page-bg);border-bottom:1px solid var(--line);box-shadow:0 3px 12px #173a310d}
 
 .category-bar nav{flex:1;min-width:0;scroll-behavior:smooth;overscroll-behavior-x:contain;scroll-snap-type:x proximity;touch-action:pan-x;align-items:stretch}
 .category-bar nav button{flex:0 0 auto;min-height:45px;padding:3px 11px;scroll-snap-align:start;font-size:var(--text-sm)}
