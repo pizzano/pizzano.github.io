@@ -3003,8 +3003,7 @@ html[data-fatih1-theme="dark"] #cartSheet .cart-buttons .cart-outline{background
  font:inherit;font-size:13px;text-align:left;cursor:pointer;
 }
 .draft-overview-title strong{font-size:15px;font-weight:850;flex:1}
-.draft-overview-title>span{font-size:11px;font-weight:750;white-space:nowrap}
-.draft-overview-title small{color:#0e7654;font-size:11px;font-weight:850;white-space:nowrap}
+.draft-overview-title small{color:#105d43;font-size:13px;font-weight:650;white-space:nowrap}
 .draft-overview-title svg{width:16px;height:16px;flex:none;transition:transform .18s ease}
 .draft-overview-title[aria-expanded="true"] svg{transform:rotate(180deg)}
 .draft-overview-title:disabled{opacity:1;cursor:default}
@@ -3023,7 +3022,7 @@ html[data-fatih1-theme="dark"] .draft-hide-order{background:#183d32;border-color
 @media(max-width:480px){
  .draft-overview-title{gap:6px;padding:9px 10px;min-height:45px}
  .draft-overview-title strong{font-size:13px}
- .draft-overview-title>span,.draft-overview-title small{font-size:10px}
+ .draft-overview-title small{font-size:11px}
 }
 
 
