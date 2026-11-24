@@ -1,14 +1,14 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261124-bonus-in-cart70';
+const CACHE_NAME='fatih1-static-v20261124-clean71';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'index/style.css?v=20261124-bonus-reward61',
-  'index/sepet.js?v=20261124-bonus-in-cart66',
+  'index/style.css?v=20261124-clean62',
+  'index/sepet.js?v=20261124-clean67',
   'index/app.js?v=20261124-bonus-connection46',
   'index/profil.js?v=20261124-bonus-reward12',
 ].map(path=>new URL(path,ROOT).href);
