@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261124-pizza-bonus65';
+const CACHE_NAME='fatih1-static-v20261124-bonus-live66';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -10,7 +10,7 @@ const STATIC_URLS=[
   'index/style.css?v=20261124-bonus-toggle59',
   'index/sepet.js?v=20261124-pizza-bonus65',
   'index/app.js?v=20261124-local-product45',
-  'index/profil.js?v=20261124-pizza-bonus8',
+  'index/profil.js?v=20261124-bonus-live9',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
