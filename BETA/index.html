@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
   
-  <link rel="stylesheet" href="./index/style.css?v=20261124-bonus-profile60">
+  <link rel="stylesheet" href="./index/style.css?v=20261124-bonus-reward61">
   <script src="./index/sepet.js?v=20261124-pizza-bonus65" defer></script>
   <script src="./index/app.js?v=20261124-bonus-connection46" defer></script>
-  <script src="./index/profil.js?v=20261124-bonus-connection11" defer></script>
+  <script src="./index/profil.js?v=20261124-bonus-reward12" defer></script>
 </head>
 <body>
   <div id="boStartup" role="status" aria-live="polite" aria-label="Menyen lastes"><div id="boStartupInner"><div id="boStartupBrand" hidden><span id="boStartupBrandIcon" aria-hidden="true">🔥</span><strong id="boStartupBrandName"></strong></div><span id="boStartupSpinner" aria-hidden="true"></span><strong id="boStartupTitle">Menyen klargjøres</strong><span id="boStartupDescription">Henter meny og bilder…</span><button id="boStartupRetry" type="button" hidden>Prøv igjen</button></div></div>
@@ -109,7 +109,10 @@
  </svg>
  <strong id="fatih1BonusRemaining" class="fatih1-bonus-remaining">Samle pizzabonus</strong>
  <p id="fatih1BonusDescription" class="fatih1-bonus-description" aria-live="polite">10 store pizzaer igjen til en gratis pizza!</p>
- <small id="fatih1BonusReminder" class="fatih1-bonus-reminder" hidden>Bruk pizzabonus på din neste bestilling.</small>
+ <div id="fatih1BonusReminder" class="fatih1-bonus-reward-card" hidden>
+  <div class="fatih1-bonus-reward-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8H7a2.5 2.5 0 1 1 2.5-2.5L12 8Zm0 0h5a2.5 2.5 0 1 0-2.5-2.5L12 8Z"/></svg><div><strong>Du har en gratis pizza!</strong><p>Bruk pizzabonus på denne bestillingen.</p></div></div>
+  <button type="button" id="fatih1BonusRewardActivate">Bruk gratis pizza</button>
+ </div>
  <small class="fatih1-bonus-terms">Pizzaene registreres når bestillingen er bekreftet. Ekstra tilvalg betales separat.</small>
  <small class="fatih1-bonus-terms fatih1-bonus-expiry">Bonus utløper etter 365 dager uten bekreftet bestilling.</small>
  <button type="button" class="fatih1-bonus-consent" id="fatih1BonusConsent" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8H7a2.5 2.5 0 1 1 2.5-2.5L12 8Zm0 0h5a2.5 2.5 0 1 0-2.5-2.5L12 8Z"/></svg><span id="fatih1BonusConsentLabel">Bruk pizzabonus automatisk</span><b id="fatih1BonusConsentState">Av</b></button>
