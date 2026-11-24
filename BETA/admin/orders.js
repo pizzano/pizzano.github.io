@@ -351,7 +351,7 @@
  }
  const ADMIN_STREAM_LOCK='bestillonline-admin-orders-v1:'+ADMIN_UID;
  let adminChannel=null,adminChannelKey=null,adminLockController=null,adminLockRelease=null;
- let adminLeader=false,adminSharing=false,adminShareGeneration=0,adminMessageQueue=Promise.resolve();
+ let adminLeader=false,adminSharing=false,adminShareGeneration=0,adminMessageQueue=Promise.resolve(),adminSendQueue=Promise.resolve();
  const ownsAdminStreams=()=>!adminSharing||adminLeader;
  function closeAdminSharing(){
   ++adminShareGeneration;
@@ -364,7 +364,12 @@
   adminChannel=null;
   closeStream();
  }
- async function adminBroadcast(message){
+ function adminBroadcast(message){
+  const generation=adminShareGeneration;
+  const task=adminSendQueue.then(()=>{if(generation===adminShareGeneration)return sendAdminMessage(message)});
+  adminSendQueue=task.catch(()=>{});return task;
+ }
+ async function sendAdminMessage(message){
   const channel=adminChannel,key=adminChannelKey,generation=adminShareGeneration;
   if(!channel||!key||!authReady())return;
   try{
@@ -407,6 +412,8 @@
    for(const order of message.records)mergeOrder(order,false);
    connection(initialLoaded?'Tilkoblet · delt fane':'Kobler til…',initialLoaded);
    render();
+   if(!initialLoaded) return;
+   startCountdowns();
   }catch(error){/* Ignore malformed or unauthenticated channel messages. */}
  }
  async function startAdminSharing(){
@@ -981,7 +988,7 @@
    const patchMode=(statusPatchEnabled||bonusMode)&&Number.isFinite(old.statusPublic?.updatedAt)&&typeof crypto.randomUUID==='function';
    if(bonusMode&&!patchMode)throw Error('Ordren mangler gyldig statusversjon. Oppdater siden.');
    let current=old,etag=null;
-   if(!patchMode){
+   if(!patchMode||(adminSharing&&!adminLeader)){
     const response=await fetch(url,{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
     if(!response.ok)throw Error('Kunne ikke kontrollere bestillingen ('+response.status+').');
     etag=response.headers.get('ETag');
@@ -1260,7 +1267,7 @@
   });
  }
  window.addEventListener('pagehide',()=>closeAdminSharing());
- window.addEventListener('pageshow',event=>{if(event.persisted&&authReady())void startAdminSharing();});
+ window.addEventListener('pageshow',event=>{if(event.persisted&&authReady()){void startAdminSharing();startCountdowns();}});
  events();
  void boot();
 })();
