@@ -478,7 +478,7 @@
    const active=order.status==='mottatt'||order.status==='godkjent';
    return active&&(filter==='SNAREST'||(filter==='SENERE'&&pickupKind(order)==='SENERE'));
   };
-  const counts={ALLE:knownCount(),SNAREST:all.filter(order=>matchesFilter(order,'SNAREST')).length,SENERE:all.filter(order=>matchesFilter(order,'SENERE')).length};
+  const counts={ALLE:Math.min(all.length,visibleLimit),SNAREST:all.filter(order=>matchesFilter(order,'SNAREST')).length,SENERE:all.filter(order=>matchesFilter(order,'SENERE')).length};
   for(const button of $('ordersPickupFilters').querySelectorAll('[data-pickup-filter]')){
    const key=button.dataset.pickupFilter;
    button.setAttribute('aria-pressed',String(key===pickupFilter));
