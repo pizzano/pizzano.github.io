@@ -3125,3 +3125,17 @@ button.fatih1-bonus-consent.is-reward-ready b{background:#ffffff25;color:#fff}
 html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-description{color:#b4d1c3}
 html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-reminder{color:#9bd9b7}
 html[data-fatih1-theme="dark"] button.fatih1-bonus-consent.is-reward-ready{background:#087e62;color:#fff;border-color:#69b98b}
+
+/* Reward available + Av: a single profile-only activation card. */
+.fatih1-profile-bonus .fatih1-bonus-reward-card{box-sizing:border-box;width:100%;padding:12px;margin:0 0 14px;border:1px solid #a7cdbc;border-radius:12px;background:transparent;text-align:left}
+.fatih1-profile-bonus .fatih1-bonus-reward-heading{display:flex;align-items:center;gap:12px;padding:0 2px 12px}
+.fatih1-bonus-reward-heading svg{width:28px;height:28px;flex:0 0 28px;color:#087e62}
+.fatih1-bonus-reward-heading strong{display:block;color:#153d32;font-size:15px;line-height:1.4}
+.fatih1-profile-bonus .fatih1-bonus-reward-heading p{margin:4px 0 0;color:#53786b;font-size:var(--text-md);line-height:1.4}
+#fatih1BonusRewardActivate{display:block;width:100%;min-height:43px;border:0;border-radius:8px;background:#087e62;color:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer;padding:9px 12px}
+#fatih1BonusRewardActivate:focus-visible{outline:2px solid #087e62;outline-offset:3px}
+.fatih1-profile-bonus :is(#fatih1BonusReminder,#fatih1BonusConsent,#fatih1BonusRemaining,#fatih1BonusDescription)[hidden]{display:none!important}
+html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-reward-card{border-color:#4b7563}
+html[data-fatih1-theme="dark"] .fatih1-bonus-reward-heading strong{color:#e9f7ef}
+html[data-fatih1-theme="dark"] .fatih1-bonus-reward-heading svg{color:#9bd9b7}
+html[data-fatih1-theme="dark"] .fatih1-profile-bonus .fatih1-bonus-reward-heading p{color:#b4d1c3}
