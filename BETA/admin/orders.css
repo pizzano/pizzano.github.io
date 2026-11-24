@@ -518,3 +518,16 @@ body.is-dialog-open{overflow:hidden}
  .order-row,.order-row-body,.order-new-indicator,.orders-dialog-overlay,.orders-dialog,
  .detail-quick-chevron{animation:none!important;transition:none!important}
 }
+
+/* Local pickup filters */
+.orders-pickup-filters{display:flex;align-items:center;gap:5px;flex:none;margin-right:auto;padding:4px;border:1px solid #ffffff24;background:#ffffff0b;border-radius:12px}
+.orders-pickup-filters button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:6px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:#d6e6de;font-size:12px;font-weight:750;white-space:nowrap;transition:background .15s,color .15s}
+.orders-pickup-filters button svg{width:15px;height:15px;flex:none}
+.orders-pickup-filters button b{font-weight:750;font-variant-numeric:tabular-nums}
+.orders-pickup-filters button[data-pickup-filter="SNAREST"]{color:#f3d477}
+.orders-pickup-filters button[data-pickup-filter="SENERE"]{color:#b5d9ff}
+.orders-pickup-filters button:hover{background:#ffffff18}
+.orders-pickup-filters button[data-pickup-filter="SNAREST"][aria-pressed="true"]{background:#fff1ce;color:#805509;border-color:#f3d477}
+.orders-pickup-filters button[data-pickup-filter="SENERE"][aria-pressed="true"]{background:#e6f0fb;color:#285f90;border-color:#bad5ef}
+.orders-pickup-filters button[data-pickup-filter="ALLE"][aria-pressed="true"]{background:#e4f2eb;color:#12553e;border-color:#b6d7c4}
+@media(max-width:900px){.orders-head{gap:8px;padding-inline:12px}.orders-pickup-filters{gap:2px;padding:3px}.orders-pickup-filters button{padding-inline:6px;font-size:11px}.orders-top-actions.orders-lightbar{gap:4px}.orders-headline small{max-width:145px}}
