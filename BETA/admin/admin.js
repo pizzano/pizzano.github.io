@@ -509,29 +509,31 @@ function refreshHeader(){
  async function restaurantPatch(values){
   const keys=Object.keys(values);
   if(!keys.length)throw Error('Ingen endringer å lagre.');
-  const url=await databaseAuthURL('settings');
-  let response;
-  try{
-   response=await fetch(url,{
-    method:'PATCH',headers:{'Content-Type':'application/json'},
-    cache:'no-store',body:JSON.stringify(values)
-   });
-  }catch(error){
-   throw Error('Ingen forbindelse til Firebase. Endringene er fortsatt i skjemaet. '+(error.message||''));
+  const revision=Date.now().toString(36)+'-'+crypto.randomUUID();
+  const updates=Object.fromEntries(keys.map(key=>['settings/'+key,values[key]]));
+  updates['settings/_liveRevision']=revision;
+  updates['menu/changeFeed/settingsRevision']=revision;
+  const user=auth?.currentUser;
+  if(!user||user.uid!==ADMIN_UID)throw Error('Ingen administratortilgang.');
+  const url=DB+'/.json?auth='+encodeURIComponent(await user.getIdToken())+'&print=silent';
+  const response=await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates),cache:'no-store'});
+  if(!response.ok)throw Error('Firebase avviste lagring (HTTP '+response.status+').');
+  if(state.original){
+   const expected=clone(state.original);
+   expected.changeFeed=expected.changeFeed&&typeof expected.changeFeed==='object'?expected.changeFeed:{};
+   expected.changeFeed.settingsRevision=revision;
+   try{
+    const check=await fetch(await menuAuthURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
+    const remote=check.ok?await check.json():null;
+    const tag=check.headers.get('ETag');
+    if(tag&&equivalentJSON(remote,expected)){
+     state.original=expected;
+     state.menu.changeFeed=clone(expected.changeFeed);
+     state.etag=tag;storeAdminMenuCache(expected,tag);
+    }else{state.etag=null;clearAdminMenuCache();}
+   }catch{state.etag=null;clearAdminMenuCache();}
   }
-  const raw=await response.text();
-  let returned;
-  try{returned=JSON.parse(raw)}catch{
-   throw Error('Firebase svarte med ugyldige data. Kontroller /settings før du prøver igjen.');
-  }
-  if(!response.ok)throw Error('Firebase avviste lagring (HTTP '+response.status+'): '+
-   String(returned?.error||returned?.message||raw).slice(0,200));
-  if(!returned||typeof returned!=='object'||Array.isArray(returned)){
-   throw Error('Firebase bekreftet ikke de endrede feltene. Sjekk /settings.');
-  }
-  const mismatches=keys.filter(key=>JSON.stringify(returned[key]??null)!==JSON.stringify(values[key]??null));
-  if(mismatches.length)throw Error('Firebase bekreftet ikke: '+mismatches.join(', ')+'. Sjekk /settings.');
-  return returned;
+  return {...values,_liveRevision:revision};
  }
  async function saveRestaurantSettings(){
   const state=restaurantState;
