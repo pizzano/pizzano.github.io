@@ -5,31 +5,10 @@
 const CART_KEY='kol-beta-cart-v1';
 let cart=loadCart(),editingCartIndex=null;
 const calculateCartTotal=items=>items.reduce((sum,line)=>sum+(Number(line.qty)||0)*(Number(line.unitPrice)||0),0);
-function bonusPlan(items,sections){
- const arr=v=>Array.isArray(v)?v:Object.values(v||{});
- const products=new Map();
- for(const section of arr(sections))for(const product of arr(section.items))products.set(String(product.id),{section,product});
- let count=0,index=-1,discount=0;
- items.forEach((line,i)=>{
-  const match=products.get(String(line.id));if(!match)return;
-  const {section,product}=match;
-  const size=arr(product.sizes).find(x=>String(x.id)===String(line.size?.id));
-  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(size.label||size.name||'')))return;
-  const qty=Number(line.qty),price=Number(size.price??product.price);
-  if(!Number.isInteger(qty)||qty<1||qty>99||!Number.isFinite(price)||price<=0)return;
-  count+=qty;
-  if(index<0||price<discount){index=i;discount=price;}
- });
- return {count,index,discount};
-}
-function bonusBalance(count,last,now=Date.now()){
- return Number(last)>0&&now-Number(last)>=365*86400000?0:Math.min(11,Math.max(0,Math.floor(Number(count)||0)));
-}
-
 function cartBonusPlan(){
  const plan=bonusPlan(cart,menu?.sections);
  const phone=fatih1BonusPhone(),cache=fatih1BonusCached(phone);
- return fatih1BonusConsentEnabled()&&cache?.verified&&plan.count>0&&bonusBalance(cache.count,cache.lastOrderAt)+plan.count>=11?plan:{...plan,index:-1,discount:0};
+ return fatih1BonusConsentEnabled()&&cache?.verified&&bonusCanRedeem(bonusBalance(cache.count,cache.lastOrderAt),plan.count)?plan:{...plan,index:-1,discount:0};
 }
 function cartBonusNote(plan){return plan.discount?'<div class="cart-line-detail" style="color:#16804f"><strong>Pizzabonus · 1 stor pizza gratis</strong><strong>− '+money(plan.discount)+'</strong></div>':''}
 async function refreshCartBonus(){
