@@ -389,7 +389,25 @@ function refreshHeader(){
   if(!allowed())return;
   const status=$('salesDashboardStatus');status.textContent='Beregner…';
   try{
-   const stats=await BOLocalSales.create(DB+':'+ADMIN_UID,allowed).read();
+   let stats,central=false;
+   try{
+    const marker=await fetch(DB+'/salesStatisticsV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)});
+    if(!marker.ok)throw Error('Central rules not active');
+    central=true;
+    const keys=BOLocalSales.periodKeys(),periods=['daily','monthly','yearly'];
+    stats=await Promise.all(periods.map(async(p,i)=>{
+     const response=await fetch(await databaseAuthURL('salesStatistics/'+p+'/'+keys[i]),{cache:'no-store',signal:AbortSignal.timeout(6500)});
+     if(!response.ok)throw Error('Central sales unavailable');
+     const row=await response.json();return {amount:Number(row?.totalOre)||0,count:Number(row?.count)||0};
+    }));
+    if(allowed())try{localStorage.setItem('bo-central-sales-v1:'+ADMIN_UID,JSON.stringify({keys,stats}))}catch{}
+   }catch(error){
+    if(central){
+     let cached;try{cached=JSON.parse(localStorage.getItem('bo-central-sales-v1:'+ADMIN_UID)||'null')}catch{}
+     if(!cached||JSON.stringify(cached.keys)!==JSON.stringify(BOLocalSales.periodKeys()))throw error;
+     stats=cached.stats;central='cached';
+    }else stats=await BOLocalSales.create(DB+':'+ADMIN_UID,allowed).read();
+   }
    if(generation!==salesRenderVersion||!allowed())return;
    const labels=['I dag','Denne måneden','Dette året'],currency=n=>(n/100).toLocaleString('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2})+' kr';
    const count=n=>n+' '+(n===1?'ordre':'ordrer');
@@ -402,7 +420,7 @@ function refreshHeader(){
     $('salesBarCount'+i).textContent=count(stats[i].count);
    }
    for(let i=0;i<5;i++)$('salesTick'+i).textContent=currency(top-i*step).replace(',00','');
-   status.textContent='Oppdatert lokalt';
+   status.textContent=central==='cached'?'Sist lagrede sentrale tall':central?'Sentrale tall · fra aktivering av Firebase-regler':'Lokale tall · sentrale regler ikke aktivert';
   }catch(error){if(generation===salesRenderVersion&&allowed())status.textContent='Lokal statistikk er utilgjengelig.'}
  }
  function setTab(tab){
