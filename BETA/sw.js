@@ -17,6 +17,14 @@ self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE_NAME);
   await cache.addAll(STATIC_URLS);
+  // A deployment can change index.html while this worker is installing.
+  // Only activate when the precached document refers to this exact asset set.
+  const shell=await cache.match(INDEX_URL);
+  const html=await shell.text();
+  if(!STATIC_URLS.filter(url=>url!==INDEX_URL).every(url=>html.includes('./'+url.slice(ROOT.href.length)))){
+   await caches.delete(CACHE_NAME);
+   throw Error('App shell and asset versions do not match');
+  }
   await self.skipWaiting();
  })());
 });
@@ -38,12 +46,9 @@ self.addEventListener('fetch',event=>{
   if(url.pathname!==ROOT.pathname&&url.pathname!==new URL('index.html',ROOT).pathname)return;
   event.respondWith((async()=>{
    try{
-    const fresh=await fetch(request);
-    if(fresh.ok){
-     const cache=await caches.open(CACHE_NAME);
-     await cache.put(INDEX_URL,fresh.clone());
-    }
-    return fresh;
+    // Always return current network HTML, but retain the matching installed
+    // offline shell until the next worker has cached its complete asset set.
+    return await fetch(request);
    }catch{
     const cache=await caches.open(CACHE_NAME);
     return await cache.match(INDEX_URL)||Response.error();
@@ -51,23 +56,15 @@ self.addEventListener('fetch',event=>{
   })());
   return;
  }
- // Only the precise local CSS/JS asset URLs listed above may use Cache Storage.
- // No images, remote origins, Firebase REST/SSE, order APIs or uploads are handled.
- const asset=url.pathname.slice(ROOT.pathname.length);
- if(!['index/style.min.css','shared/bonus.min.js','index/sepet.min.js','index/app.min.js','index/profil.min.js'].includes(asset)||!url.searchParams.has('v'))return;
+ // Only exact asset versions from this installed shell are cached.
+ // New deployment assets are served normally until its worker activates.
+ if(!STATIC_URLS.includes(url.href)||url.href===INDEX_URL)return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE_NAME);
   const saved=await cache.match(request);
   if(saved)return saved;
   const fresh=await fetch(request);
-  if(fresh.ok){
-   await cache.put(request,fresh.clone());
-   // Keep only the newest query-string version of each static file.
-   const keys=await cache.keys();
-   await Promise.all(keys.filter(entry=>
-    new URL(entry.url).pathname===url.pathname && entry.url!==url.href
-   ).map(entry=>cache.delete(entry)));
-  }
+  if(fresh.ok)await cache.put(request,fresh.clone());
   return fresh;
  })());
 });
