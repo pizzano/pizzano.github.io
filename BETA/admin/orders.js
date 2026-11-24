@@ -168,6 +168,7 @@
   void historyTransaction('readwrite',store=>{
    const request=store.get(order.id);
    request.onsuccess=()=>{
+    if(!authReady())return;
     const old=request.result;
     if(!old||orderVersion(order)>=orderVersion(old))store.put(order);
     const all=store.getAllKeys();
@@ -187,6 +188,7 @@
    const req=store.getAll();
    req.onsuccess=()=>{
     const valid=[];
+    if(epoch!==streamEpoch||!authReady()||!keysReady){done(valid);return;}
     for(const record of req.result){
      if(!knownKeys.has(record.id)||!isOrder(record,record.id)||!terminalOrder(record)||activeStreamContains(record.id)){
       store.delete(record.id);continue;
@@ -444,9 +446,9 @@
     if(previous.get(id)!==record)mergeOrder(record);
    }
    if(label==='fallback'){
-    for(const id of previous.keys())if(!next.has(id)){orders.delete(id);membershipChanged=true;}
+    for(const id of previous.keys())if(!next.has(id)){orders.delete(id);removeHistoryRecord(id);membershipChanged=true;}
     if(!patch&&payload.path==='/'){
-     for(const id of orders.keys())if(!next.has(id))orders.delete(id);
+     for(const id of orders.keys())if(!next.has(id)){orders.delete(id);removeHistoryRecord(id);}
     }
    }else if(label==='mottatt'||label==='godkjent'){
     for(const id of previous.keys())if(!next.has(id)){
@@ -600,7 +602,6 @@
    if(epoch!==streamEpoch||generation!==historySyncGeneration)return;
    if(!(await fetchMissingHistory(newestKnownKeys().slice(0,visibleLimit),epoch)))return;
    if(epoch!==streamEpoch||generation!==historySyncGeneration)return;
-   historyForceRefresh=false;
   }catch(error){if(epoch===streamEpoch&&generation===historySyncGeneration)feedback('Kunne ikke hente bestillingshistorikk: '+error.message,true);}
   finally{if(epoch===streamEpoch&&generation===historySyncGeneration){historySyncPending=false;render();}}
  }
