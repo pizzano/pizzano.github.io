@@ -1,17 +1,17 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-v20261124-html-clean74';
+const CACHE_NAME='fatih1-static-opt-3767d52e3c3c6fb1';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
 const INDEX_URL=new URL('index.html',ROOT).href;
 const STATIC_URLS=[
   'index.html',
-  'index/style.css?v=20261124-cascade63',
-  'shared/bonus.js?v=1',
-  'index/sepet.js?v=20261124-shared-bonus68',
-  'index/app.js?v=20261124-bonus-connection46',
-  'index/profil.js?v=20261124-shared-bonus13',
+  'index/style.min.css?v=1aa38f104deaeb2c',
+  'shared/bonus.min.js?v=8aaf3f3ed5930626',
+  'index/sepet.min.js?v=e31d3405fb58f109',
+  'index/app.min.js?v=3938d76677348ff2',
+  'index/profil.min.js?v=d1e38855de624a14',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
@@ -54,7 +54,7 @@ self.addEventListener('fetch',event=>{
  // Only the precise local CSS/JS asset URLs listed above may use Cache Storage.
  // No images, remote origins, Firebase REST/SSE, order APIs or uploads are handled.
  const asset=url.pathname.slice(ROOT.pathname.length);
- if(!['index/style.css','index/app.js','index/sepet.js','index/profil.js','shared/bonus.js'].includes(asset)||!url.searchParams.has('v'))return;
+ if(!['index/style.min.css','shared/bonus.min.js','index/sepet.min.js','index/app.min.js','index/profil.min.js'].includes(asset)||!url.searchParams.has('v'))return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE_NAME);
   const saved=await cache.match(request);
