@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#103d32">
   <title>Bestilling · Laster meny</title>
-
-  <link rel="stylesheet" href="./index/style.css?v=20261124-cascade63">
-  <script src="./shared/bonus.js?v=1" defer></script>
-  <script src="./index/sepet.js?v=20261124-shared-bonus68" defer></script>
-  <script src="./index/app.js?v=20261124-bonus-connection46" defer></script>
-  <script src="./index/profil.js?v=20261124-shared-bonus13" defer></script>
+  <link rel="stylesheet" href="./index/style.min.css?v=1aa38f104deaeb2c">
+  <script src="./shared/bonus.min.js?v=8aaf3f3ed5930626" defer></script>
+  <script src="./index/sepet.min.js?v=e31d3405fb58f109" defer></script>
+  <script src="./index/app.min.js?v=3938d76677348ff2" defer></script>
+  <script src="./index/profil.min.js?v=d1e38855de624a14" defer></script>
 </head>
 <body>
   <div id="boStartup" role="status" aria-live="polite" aria-label="Menyen lastes"><div id="boStartupInner"><div id="boStartupBrand" hidden><span id="boStartupBrandIcon" aria-hidden="true">🔥</span><strong id="boStartupBrandName"></strong></div><span id="boStartupSpinner" aria-hidden="true"></span><strong id="boStartupTitle">Menyen klargjøres</strong><span id="boStartupDescription">Henter meny og bilder…</span><button id="boStartupRetry" type="button" hidden>Prøv igjen</button></div></div>
@@ -82,12 +81,10 @@
         <div class="checkout-pickup-choices"><label class="checkout-pickup-option is-selected" id="draftAsapOption"><input type="radio" name="draftPickupMode" value="asap" checked><strong>Snarest</strong></label><label class="checkout-pickup-option" id="draftScheduledOption"><input type="radio" name="draftPickupMode" value="scheduled"><strong>Velg tid</strong><small>Hent på et klokkeslett</small></label></div>
         <label id="draftPickupTimeBox" class="checkout-time-select" for="draftPickupTime" hidden><strong>Velg hentetid</strong><select id="draftPickupTime"></select></label>
         <details class="checkout-order-preview"><summary><strong id="draftPickupItemCount">0 varer</strong><small>Se innhold og detaljer</small><span>Vis mer</span></summary><div id="draftPickupOrderItems"></div></details>
-
       </section>
     </div>
     <footer class="cart-footer"><p id="checkoutError" class="checkout-error" role="alert" hidden></p><div class="cart-buttons"><div id="cartFooterTotal" class="cart-footer-total" aria-live="polite"><span>Totalt</span><strong id="cartFooterAmount">0 kr</strong></div><button id="continue" class="cart-outline" type="button" hidden>Tilbake: Kurv</button><button id="cartNext" class="primary" type="button" disabled>Neste: Kontakt</button></div></footer>
   </section>
-
 <section id="fatih1ProfileSheet" class="sheet fatih1-profile-sheet" role="dialog" aria-modal="true" aria-labelledby="fatih1ProfileTitle" hidden>
  <header class="fatih1-profile-topbar">
  <button id="fatih1ProfileClose" class="fatih1-profile-back" type="button" aria-label="Til menyen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#bo-icon-back"/></svg></button>
@@ -142,7 +139,6 @@
   </div>
  </div>
 </section>
-
   <div id="fatih1Toast" class="fatih1-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span id="fatih1ToastSymbol" class="fatih1-toast-symbol" aria-hidden="true">✓</span><span id="fatih1ToastText" class="fatih1-toast-text"></span>
   </div>
