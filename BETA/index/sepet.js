@@ -5,6 +5,38 @@
 const CART_KEY='kol-beta-cart-v1';
 let cart=loadCart(),editingCartIndex=null;
 const calculateCartTotal=items=>items.reduce((sum,line)=>sum+(Number(line.qty)||0)*(Number(line.unitPrice)||0),0);
+function bonusPlan(items,sections){
+ const arr=v=>Array.isArray(v)?v:Object.values(v||{});
+ const products=new Map();
+ for(const section of arr(sections))for(const product of arr(section.items))products.set(String(product.id),{section,product});
+ let count=0,index=-1,discount=0;
+ items.forEach((line,i)=>{
+  const match=products.get(String(line.id));if(!match)return;
+  const {section,product}=match;
+  const size=arr(product.sizes).find(x=>String(x.id)===String(line.size?.id));
+  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(size.label||size.name||'')))return;
+  const qty=Number(line.qty),price=Number(size.price??product.price);
+  if(!Number.isInteger(qty)||qty<1||qty>99||!Number.isFinite(price)||price<=0)return;
+  count+=qty;
+  if(index<0||price<discount){index=i;discount=price;}
+ });
+ return {count,index,discount};
+}
+function bonusBalance(count,last,now=Date.now()){
+ return Number(last)>0&&now-Number(last)>=365*86400000?0:Math.min(11,Math.max(0,Math.floor(Number(count)||0)));
+}
+
+function cartBonusPlan(){
+ const plan=bonusPlan(cart,menu?.sections);
+ const phone=fatih1BonusPhone(),cache=fatih1BonusCached(phone);
+ return fatih1BonusConsentEnabled()&&cache?.verified&&bonusBalance(cache.count,cache.lastOrderAt)>=10&&plan.count>0?plan:{...plan,index:-1,discount:0};
+}
+function cartBonusNote(plan){return plan.discount?'<div class="cart-line-detail" style="color:#16804f"><strong>Pizzabonus · 1 stor pizza gratis</strong><strong>− '+money(plan.discount)+'</strong></div>':''}
+async function refreshCartBonus(){
+ const phone=fatih1BonusPhone();
+ if(phone&&fatih1BonusConsentEnabled()&&bonusPlan(cart,menu?.sections).count)await fatih1BonusGetOnce(phone);
+ if(!$('cartSheet').hidden){if(checkoutStep==='pickup')pickupSummary();else if(checkoutStep==='cart')renderCartContents();}
+}
 function loadCart(){try{const c=JSON.parse(localStorage.getItem(CART_KEY));return Array.isArray(c)?c:[]}catch{return []}}
 function saveCart(){try{if(cart.length)localStorage.setItem(CART_KEY,JSON.stringify(cart));else localStorage.removeItem(CART_KEY)}catch{}renderCartIndicators();updateCartBadges()}
 
@@ -260,7 +292,7 @@ function sortedCartEntries(){
 }
 function renderCartContents(){
  const review=reconcileCartWithMenu();
- const total=cart.reduce((sum,x)=>sum+(Number(x.qty)||0)*(Number(x.unitPrice)||0),0);
+ const bonus=cartBonusPlan(),total=calculateCartTotal(cart)-bonus.discount;
  $('cartTotal').textContent=review.issues.length?'Kontroller varer':money(total);
  $('cartFooterAmount').textContent=review.issues.length?'Kontroller':money(total);
  const warning=$('cartPriceNotice');
@@ -282,8 +314,8 @@ function renderCartContents(){
    '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
    (issue?'<p class="cart-line-warning" role="alert">'+esc(issue.reason)+' · Endre eller fjern varen.</p>':'')+
    '<div class="cart-product-totalrow"><span>Sum</span><strong>'+
-   (issue?'Må kontrolleres':money(line.qty*line.unitPrice))+
-   '</strong></div></article>';
+   (issue?'Må kontrolleres':money(line.qty*line.unitPrice-(bonus.index===index?bonus.discount:0)))+
+   '</strong></div>'+(bonus.index===index?cartBonusNote(bonus):'')+'</article>';
  }).join(''):'<div class="cart-empty"><span>🛒</span><strong>Handlekurven er tom</strong><p>Velg noe godt fra menyen.</p></div>';
  renderCartRecommendations();
  syncCheckoutAvailability();
@@ -292,10 +324,11 @@ function renderCartContents(){
 
 // One shared source of details for the basket and final pickup review.
 function pickupSummary(){
+ const bonus=cartBonusPlan();
  // Same cart product card and detail renderer as the basket, read-only here.
  const count=cart.reduce((sum,line)=>sum+(Number(line.qty)||0),0);
  $('draftPickupItemCount').textContent=count+' '+(count===1?'vare':'varer');
- $('draftPickupOrderItems').innerHTML=sortedCartEntries().map(({line})=>{
+ $('draftPickupOrderItems').innerHTML=sortedCartEntries().map(({line,index})=>{
   const qty=Number(line.qty)||0;
   return '<article class="cart-product-card draft-pickup-product">'+
    '<div class="cart-product-heading"><div class="cart-product-copy">'+
@@ -303,12 +336,12 @@ function pickupSummary(){
    '</div></div>'+
    '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
    '<div class="cart-product-totalrow"><span>Sum'+(qty>1?' ('+qty+' × '+money(line.unitPrice)+')':'')+
-   '</span><strong>'+money(qty*(Number(line.unitPrice)||0))+'</strong></div>'+
+   '</span><strong>'+money(qty*(Number(line.unitPrice)||0)-(bonus.index===index?bonus.discount:0))+'</strong></div>'+(bonus.index===index?cartBonusNote(bonus):'')+
    '</article>';
  }).join('')+
- '<div class="draft-pickup-line is-total"><strong>Totalt</strong><strong>'+money(calculateCartTotal(cart))+'</strong></div>';
+ '<div class="draft-pickup-line is-total"><strong>Totalt</strong><strong>'+money(calculateCartTotal(cart)-bonus.discount)+'</strong></div>';
 }
-function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls()}
+function showCart(){$('cartSuggestionsDisclosure').open=false;renderCartContents();show('cartSheet');checkoutNavigate('cart');updateOrderingControls();void refreshCartBonus()}
 
 function updateCartBadges(){
  if(!menu)return;
@@ -532,6 +565,7 @@ function compactOrderRecord(order,old){
   id:order.id,createdAt,status:order.status||statusPublic.status||'mottatt',statusPublic,
   pickup:order.pickup||{},items:Array.isArray(order.items)?order.items:[],
   total:Number(order.total)||0,
+  ...(order.pizzaBonus?{pizzaBonus:order.pizzaBonus}:{}),
   collapsed:Boolean(old?.collapsed??order.collapsed),
   hidden:Boolean(old?.hidden??order.hidden),
   readyAt:Number(order.readyAt)||Number(old?.readyAt)||0
@@ -670,14 +704,14 @@ function orderOverviewMarkup(order,mode='history'){
  const id=esc(String(order.id||'').slice(-6).toUpperCase());
  const items=Array.isArray(order.items)?order.items:[];
  const quantity=items.reduce((sum,item)=>sum+Math.max(0,Number(item.qty)||0),0);
- const details=items.map(item=>{
+ const details=items.map((item,index)=>{
   const count=Math.max(1,Number(item.qty)||1);
   const options=Array.isArray(item.choices)?item.choices.flatMap(group=>(group.options||[]).map(opt=>opt.label||opt.name)).filter(Boolean).join(', '):'';
   return '<div class="draft-status-product"><span><strong>'+count+' × '+esc(item.name||'Produkt')+'</strong>'+
    (item.size?.label?'<small>Størrelse: '+esc(item.size.label)+'</small>':'')+
    (options?'<small>'+esc(options)+'</small>':'')+
    (item.comment?'<small>'+esc(item.comment)+'</small>':'')+
-   '</span><b>'+money(count*(Number(item.unitPrice)||0))+'</b></div>';
+   (order.pizzaBonus?.index===index?'<small>Pizzabonus · 1 stor pizza gratis</small>':'')+'</span><b>'+money(count*(Number(item.unitPrice)||0)-(order.pizzaBonus?.index===index?Number(order.pizzaBonus.discount)||0:0))+'</b></div>';
  }).join('');
  // Green "Klar" is only visual when the estimated pickup time has passed.
  // Firebase status remains "godkjent" until the restaurant confirms "klar".
@@ -1015,6 +1049,7 @@ function onCustomerStatusUpdate(value){
   }
  }
  if(changed&&statusPublic.status!=='mottatt')renderDraftActiveOrder();
+ if(changed&&statusPublic.status==='godkjent'){try{localStorage.removeItem(FATIH1_BONUS_STORAGE_KEY)}catch{}}
  if(value.status==='klar'||value.status==='avvist')stopCustomerStatus();
 }
 function beginCustomerStatus(){
@@ -1253,7 +1288,7 @@ function checkoutNavigate(step){
  if(step==='pickup'){
   $('cartPickupStep').querySelector('.checkout-order-preview').open=false;
   renderDraftPickupChoices();
-  pickupSummary();
+  pickupSummary();void refreshCartBonus();
  }
  syncCheckoutAvailability();
  $('cartScroll').scrollTo({top:0,behavior:'instant'});
@@ -1273,7 +1308,7 @@ function rememberPendingSend(value){
  pendingSend=value;
  try{if(value)sessionStorage.setItem(PENDING_SEND_KEY,JSON.stringify(value));else sessionStorage.removeItem(PENDING_SEND_KEY)}catch{}
 }
-function orderSendFingerprint(order){return JSON.stringify([order.name,order.phone,order.email||'',order.pickup.mode,order.pickup.time||null,order.items,order.total]);}
+function orderSendFingerprint(order){return JSON.stringify([order.name,order.phone,order.email||'',order.pickup.mode,order.pickup.time||null,order.items,order.total,order.pizzaBonus||null]);}
 async function orderBoundedFetch(url,options={},milliseconds=12000){
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(),milliseconds);
@@ -1317,6 +1352,7 @@ async function submitDraftOrder(){
  if(!window.crypto?.getRandomValues){
   showCheckoutError('Sikker tilkobling kreves for å sende bestillingen.');return;
  }
+ const bonus=cartBonusPlan();
  const now=Date.now(),id=createFirebaseOrderId(now);
  const items=cart.map(line=>({
   id:String(line.id||'').slice(0,100),name:String(line.name||'Produkt').slice(0,120),
@@ -1334,7 +1370,8 @@ async function submitDraftOrder(){
   ...(getOrderingState().open?{acceptDeadlineAt:now+300000}:{}),
   name:customerContact.name.slice(0,120),phone:'+47'+customerContact.phone,
   ...(customerContact.email?{email:customerContact.email.slice(0,200)}:{}),
-  pickup:{...pickup,timeZone:'Europe/Oslo'},items,total:calculateCartTotal(cart)
+  pickup:{...pickup,timeZone:'Europe/Oslo'},items,total:calculateCartTotal(cart)-bonus.discount,
+  ...(bonus.discount?{pizzaBonus:{index:bonus.index,discount:bonus.discount}}:{})
  };
  orderSubmissionBusy=true;$('cartNext').disabled=true;
  $('cartNext').textContent='Sender bestilling…';showCheckoutError('');
