@@ -56,7 +56,7 @@ function fatih1BonusPhone(){
  return /^[49]\d{7}$/.test(phone)?phone:'';
 }
 function fatih1BonusValue(value){
- return Math.min(10,Math.max(0,Math.floor(Number(value)||0)));
+ return Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(Number(value)||0)));
 }
 function fatih1BonusCached(phone){
  if(!phone)return null;
@@ -67,7 +67,7 @@ function fatih1BonusCached(phone){
  }catch{return null}
 }
 function fatih1BonusRender(count){
- const earned=fatih1BonusValue(count);
+ const earned=Math.min(10,fatih1BonusValue(count));
  const pts=(radius,angle)=>[
   120+radius*Math.cos(angle*Math.PI/180),
   120+radius*Math.sin(angle*Math.PI/180)
@@ -97,9 +97,14 @@ function fatih1BonusStatus(message){
 function fatih1BonusConsentKey(){
  return FATIH1_BONUS_CONSENT_KEY+':'+(fatih1BonusPhone()||'local');
 }
+function fatih1BonusConsentEnabled(){
+ try{return localStorage.getItem(fatih1BonusConsentKey())==='true'}catch{return false}
+}
 function fatih1BonusConsentShow(){
- try{$('fatih1BonusConsent').checked=localStorage.getItem(fatih1BonusConsentKey())==='true'}
- catch{$('fatih1BonusConsent').checked=false}
+ const button=$('fatih1BonusConsent'),enabled=fatih1BonusConsentEnabled();
+ button.setAttribute('aria-pressed',String(enabled));
+ button.classList.toggle('is-enabled',enabled);
+ $('fatih1BonusConsentState').textContent=enabled?'På':'Av';
 }
 function fatih1BonusStop(){
  fatih1BonusStreamId++;
@@ -400,10 +405,14 @@ function fatih1ProfileInit(){
  $('fatih1ProfileNav').addEventListener('click',()=>fatih1HistoryBack());
  $('fatih1ProfileCart').addEventListener('click',()=>{hideAll();showCart()});
  $('fatih1BonusRefresh').addEventListener('click',()=>{void fatih1BonusLoad(true);showFatih1Toast('Oppdaterer pizzabonus…','info')});
- $('fatih1BonusConsent').addEventListener('change',event=>{
-  try{localStorage.setItem(fatih1BonusConsentKey(),String(event.target.checked))}catch{}
-  fatih1BonusStatus('Valget er lagret lokalt. Varslinger er ikke aktivert i FATIH1 ennå.');
-  showFatih1Toast('Valget er lagret på denne enheten','info');
+ $('fatih1BonusConsent').addEventListener('click',()=>{
+  const enabled=!fatih1BonusConsentEnabled();
+  try{localStorage.setItem(fatih1BonusConsentKey(),String(enabled))}catch{
+   fatih1BonusStatus('Kunne ikke lagre valget.');return;
+  }
+  fatih1BonusConsentShow();
+  fatih1BonusStatus(enabled?'Automatisk bonusbruk valgt.':'Automatisk bonusbruk er slått av.');
+  showFatih1Toast(enabled?'Automatisk bonusbruk: På':'Automatisk bonusbruk: Av','info');
  });
  $('btnProfile').addEventListener('click',()=>{$('fatih1ProfileSheet').hidden?fatih1ProfileOpen():fatih1ProfileClose()});
  $('fatih1ProfileClose').addEventListener('click',fatih1ProfileClose);
