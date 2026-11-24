@@ -29,7 +29,7 @@ function bonusBalance(count,last,now=Date.now()){
 function cartBonusPlan(){
  const plan=bonusPlan(cart,menu?.sections);
  const phone=fatih1BonusPhone(),cache=fatih1BonusCached(phone);
- return fatih1BonusConsentEnabled()&&cache?.verified&&bonusBalance(cache.count,cache.lastOrderAt)>=10&&plan.count>0?plan:{...plan,index:-1,discount:0};
+ return fatih1BonusConsentEnabled()&&cache?.verified&&plan.count>0&&bonusBalance(cache.count,cache.lastOrderAt)+plan.count>=11?plan:{...plan,index:-1,discount:0};
 }
 function cartBonusNote(plan){return plan.discount?'<div class="cart-line-detail" style="color:#16804f"><strong>Pizzabonus · 1 stor pizza gratis</strong><strong>− '+money(plan.discount)+'</strong></div>':''}
 async function refreshCartBonus(){
