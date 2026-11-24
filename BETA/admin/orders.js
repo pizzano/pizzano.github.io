@@ -48,8 +48,8 @@
   return null;
  }
 
- let auth=null,stream=null,orders=new Map(),activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
- let renderedIds='',connected=false,initialLoaded=false,lastEventAt=0;
+ let auth=null,orders=new Map(),activeId=null,pendingAction=false,pruning=false,pruneWanted=false;
+ let initialLoaded=false;
  let pickupFilter='ALLE',visibleLimit=10,loadingHistory=false,keysReady=false,indexedMode=null;
  const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
  let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
@@ -79,7 +79,7 @@ function bonusBalance(count,last,now=Date.now()){
  let statusPatchEnabled=false,statusPatchProbe=null,localStatusWriteId=null;
  let historySyncPending=false,historyHydrated=false,historySyncGeneration=0;
  let countdownTicker=null,automaticReadyBusy=false;
- let pruneCheckedKeySignature='',authStreamRenewing=false;
+ let authStreamRenewing=false;
  const autoReadyAttempts=new Map();
  const autoTimeoutAttempts=new Map();
  function remainingCountdown(time,now=Date.now()){
@@ -183,7 +183,6 @@ function bonusBalance(count,last,now=Date.now()){
   $('ordersNetTooltip').textContent=label;
  }
  function connection(label,online=false,offline=false){
-  connected=online;
   const node=$('ordersFirebaseStatus');
   const status=online?'is-active':offline?'is-error':'is-pending';
   const message='Firebase: '+label;
@@ -210,7 +209,7 @@ function bonusBalance(count,last,now=Date.now()){
  }
  function logoutView(message=''){
   stopCountdowns();
-  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;historyHydrated=false;renderedIds='';activeId=null;
+  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;historyHydrated=false;activeId=null;
   show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);show('ordersPickupFilters',false);
   pickupFilter='ALLE';
   closeSheet();closeDialog();
@@ -258,7 +257,7 @@ function bonusBalance(count,last,now=Date.now()){
   ++streamEpoch;
   for(const source of sourceStreams.values())source.close();
   sourceStreams.clear();sourceSnapshots.clear();readySources.clear();rechecking.clear();
-  stream=null;initialLoaded=false;keysRequest=null;keysWanted=false;observedKeys=null;loadingHistory=false;
+  initialLoaded=false;keysRequest=null;keysWanted=false;observedKeys=null;loadingHistory=false;
   historySyncPending=false;++historySyncGeneration;
  }
  function isOrder(value,id){
@@ -325,7 +324,7 @@ function bonusBalance(count,last,now=Date.now()){
   const becameReady=loaded&&!initialLoaded;
   initialLoaded=loaded;
   if(!loaded)return;
-  lastEventAt=Date.now();connection('Tilkoblet',true);
+  connection('Tilkoblet',true);
   if(becameReady&&indexedMode!==false){
    for(const order of orders.values()){
     if(activeStatus(order)&&!activeStreamContains(order.id))void recheckDepartedActive(order.id);
@@ -445,7 +444,6 @@ function bonusBalance(count,last,now=Date.now()){
    for(const [label,query] of queries){
     const source=new EventSource(url+'&'+query);
     sourceStreams.set(label,source);
-    if(label==='mottatt'||label==='fallback')stream=source;
     const current=()=>epoch===streamEpoch&&sourceStreams.get(label)===source;
     source.addEventListener('put',e=>{if(current())onStreamEvent(label,e,false)});
     source.addEventListener('patch',e=>{if(current())onStreamEvent(label,e,true)});
