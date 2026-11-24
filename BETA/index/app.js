@@ -1,6 +1,15 @@
 /* Customer menu, browser caching and one live public update stream. */
 'use strict';
 const BASE='https://kol-grill-pizza-1-default-rtdb.firebaseio.com';
+const SETTINGS_CACHE_KEY='bestillonline-public-settings-v1';
+function readSharedSettings(revision){
+ if(typeof revision!=='string'||!revision)return null;
+ try{const value=JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY)||'null');return value&&typeof value==='object'&&!Array.isArray(value)&&value._liveRevision===revision?value:null}catch{return null}
+}
+function storeSharedSettings(value){
+ if(!value||typeof value!=='object'||Array.isArray(value)||typeof value._liveRevision!=='string'||!value._liveRevision)return;
+ try{localStorage.setItem(SETTINGS_CACHE_KEY,JSON.stringify(value))}catch{}
+}
 const CACHE_DB='kol-beta-public-kol1-v1';
 const MENU_CACHE_FORMAT=4;
 const MENU_FALLBACK_KEY='kol-beta-menu-fallback-kol1-v1', IMAGE_PRELOAD_COUNT=6;
@@ -132,10 +141,10 @@ async function fromFirebase(){
   };
   // Production stores the public catalogue at /menu. Settings live at /settings.
   // Two parallel reads only; never read the Firebase root or private order nodes.
-  const [payload,settings]=await Promise.all([
-   read('menu'),
-   read('settings').then(value=>{boShowStartupBrand(value?.restaurantName);return value})
-  ]);
+  const payload=await read('menu');
+  const settings=readSharedSettings(payload?.changeFeed?.settingsRevision)||await read('settings');
+  storeSharedSettings(settings);
+  boShowStartupBrand(settings?.restaurantName);
   if(!payload || !payload.sections || !payload.optionGroups)
     throw Error('Meny mangler på /menu eller har ugyldig format');
   const data=normalize({...payload,settings:settings||payload.settings||{}});
@@ -173,6 +182,7 @@ function boRefreshStartupSettingsFromFirebase(){
    const latest=await response.json();
    if(!latest||typeof latest!=='object'||Array.isArray(latest))throw Error('Invalid restaurant settings');
    if(!menu)return;
+   storeSharedSettings(latest);
    const changed=JSON.stringify(latest)!==JSON.stringify(menu.settings||{});
    if(changed){
     menu.settings=latest;
@@ -475,6 +485,7 @@ function applySettingsEvent(snapshot,path,data,patch){
 }
 function acceptLiveSettings(value,relay=false){
  if(!menu||!value||typeof value!=='object'||Array.isArray(value))return;
+ storeSharedSettings(value);
  if(JSON.stringify(menu.settings||{})===JSON.stringify(value))return;
  menu.settings=value;
  updateHoursStatus();
@@ -562,6 +573,8 @@ async function refreshSettingsForRevision(revision){
    do{
     requested=settingsSignalTarget;
     if(String(menu?.settings?._liveRevision||'')===requested)break;
+    const cached=readSharedSettings(requested);
+    if(cached){acceptLiveSettings(cached,true);continue;}
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6500);
     let latest;
     try{
