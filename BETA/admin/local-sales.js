@@ -41,6 +41,19 @@ function create(scope,authorized){
  async function read(){const rows=await tx('readonly',(s,done)=>{const q=s.getAll();q.onsuccess=()=>done(q.result)});if(!authorized())throw Error('Admin required');return summarize(rows)}
  return {save,read};
 }
-const api={record,summarize,choose,create};
+function periodKeys(stamp=Date.now()){const d=day(stamp);return [d,d.slice(0,7),d.slice(0,4)]}
+function centralPatch(order){
+ const r=record(order);
+ if(!r||!r.sold||!/^ord_[0-9]{13}_[a-f0-9]{12}$/.test(r.id)||!Number.isSafeInteger(r.amount)||!Number.isFinite(Number(order.readyAt)))throw Error('Ugyldig salgsregistrering');
+ const keys=periodKeys(Number(order.readyAt)),patch={};
+ for(const [i,p] of ['daily','monthly','yearly'].entries()){
+  const base='salesStatistics/'+p+'/'+keys[i];
+  patch[base+'/totalOre']={'.sv':{increment:r.amount}};
+  patch[base+'/count']={'.sv':{increment:1}};
+ }
+ patch['salesStatistics/receipts/'+r.id]={day:keys[0],totalOre:r.amount,at:Number(order.readyAt)};
+ return patch;
+}
+const api={record,summarize,choose,create,periodKeys,centralPatch};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.BOLocalSales=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
