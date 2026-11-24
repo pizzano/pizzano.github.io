@@ -54,26 +54,6 @@
  const PAGE_SIZE=10,sourceStreams=new Map(),sourceSnapshots=new Map(),readySources=new Set();
  let streamEpoch=0,keysRequest=null,keysWanted=false,observedKeys=null,knownKeys=new Set();
  const rechecking=new Set();
- function bonusPlan(items,sections,sizeLabels=[]){
- const arr=v=>Array.isArray(v)?v:Object.values(v||{});
- const products=new Map();
- for(const section of arr(sections))for(const product of arr(section.items))products.set(String(product.id),{section,product});
- let count=0,index=-1,discount=0;
- items.forEach((line,i)=>{
-  const match=products.get(String(line.id));if(!match)return;
-  const {section,product}=match;
-  const size=arr(product.sizes).find(x=>String(x.id)===String(line.size?.id));
-  if(!size||!(section.type==='pizza'||/pizza/i.test(section.title||section.name||''))||!/^(stor|store|large|big|büyük)\b/i.test(String(sizeLabels[size.labelId]||size.label||size.name||'')))return;
-  const qty=Number(line.qty),price=Number(size.price??product.price);
-  if(!Number.isInteger(qty)||qty<1||qty>99||!Number.isFinite(price)||price<=0)return;
-  count+=qty;
-  if(index<0||price<discount){index=i;discount=price;}
- });
- return {count,index,discount};
-}
-function bonusBalance(count,last,now=Date.now()){
- return Number(last)>0&&now-Number(last)>=365*86400000?0:Math.min(11,Math.max(0,Math.floor(Number(count)||0)));
-}
 
  let bonusRulesEnabled=false,bonusRulesProbe=null;
  let statusPatchEnabled=false,statusPatchProbe=null,localStatusWriteId=null;
@@ -848,10 +828,10 @@ function bonusBalance(count,last,now=Date.now()){
      const customer=await cr.json()||{},sections=await mr.json(),sizeLabels=await lr.json()||[];
      const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections,sizeLabels);
      const reward=current.pizzaBonus;
-     if(reward&&(balance+plan.count<11||plan.index!==reward.index||plan.discount!==reward.discount||!plan.count))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
+     if(reward&&(!bonusCanRedeem(balance,plan.count)||plan.index!==reward.index||plan.discount!==reward.discount))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
      const gross=(current.items||[]).reduce((sum,x)=>sum+Number(x.qty)*Number(x.unitPrice),0);
      if(!Number.isFinite(gross)||Math.abs(gross-(reward?plan.discount:0)-Number(current.total))>0.01)throw Error('Ugyldig ordretotal.');
-     const count=Math.min(11,balance+plan.count-(reward?11:0));
+     const count=bonusAfterApproval(balance,plan.count,Boolean(reward));
      next._bonusApplied={phone,previousCount:customer.bonusCount??null,previousLastOrderAt:customer.lastOrderAt??null,count,at:changedAt};
      changes._bonusApplied=next._bonusApplied;
      const multi={};for(const [key,value] of Object.entries(changes))multi['ORDERS/'+id+'/'+key]=value;
