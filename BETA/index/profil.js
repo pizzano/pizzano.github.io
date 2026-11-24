@@ -56,7 +56,7 @@ function fatih1BonusPhone(){
  return /^[49]\d{7}$/.test(phone)?phone:'';
 }
 function fatih1BonusValue(value){
- return Math.max(0,Math.min(11,Math.floor(Number(value)||0)));
+ return bonusBalance(value,0);
 }
 function fatih1BonusCached(phone){
  if(!phone)return null;
