@@ -708,9 +708,9 @@ function renderOrderOverviewCarousel(){
  const heading=$('draftOverviewToggle');
  heading.disabled=!hiddenCount;
  heading.setAttribute('aria-expanded',String(overviewShowHidden));
- $('draftOverviewCount').textContent=allOrders.length+' '+(allOrders.length===1?'bestilling':'bestillinger');
- $('draftOverviewHiddenLabel').textContent=hiddenCount?
-  (overviewShowHidden?'Skjul bestillinger ('+hiddenCount+')':'Vis bestillinger ('+hiddenCount+')'):'';
+ const labelCount=hiddenCount||allOrders.length;
+ const orderNoun=labelCount===1?'bestilling':'bestillinger';
+ $('draftOverviewHiddenLabel').textContent=(overviewShowHidden?'Skjul ':hiddenCount?'Vis ':'')+(!hiddenCount?(labelCount+' '+orderNoun):orderNoun+' ('+labelCount+')');
  // Update locally cached receipts when pickup time passes; no extra Firebase reads.
  // Preserve open <details> elements by updating the message and progress only.
  const cardsById=new Map([...track.querySelectorAll('.draft-history-card')].map(node=>[node.dataset.overviewId,node]));
