@@ -56,14 +56,14 @@ function fatih1BonusPhone(){
  return /^[49]\d{7}$/.test(phone)?phone:'';
 }
 function fatih1BonusValue(value){
- return Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(Number(value)||0)));
+ return Math.max(0,Math.min(11,Math.floor(Number(value)||0)));
 }
 function fatih1BonusCached(phone){
  if(!phone)return null;
  try{
   const entry=JSON.parse(localStorage.getItem(FATIH1_BONUS_STORAGE_KEY)||'null');
   return entry&&entry.phone===phone&&Number.isInteger(entry.count)&&entry.count>=0?
-   entry:null;
+   {...entry,count:bonusBalance(entry.count,entry.lastOrderAt)}:null;
  }catch{return null}
 }
 function fatih1BonusRender(count){
@@ -114,87 +114,31 @@ function fatih1BonusStop(){
 function fatih1BonusVisible(){
  return !$('fatih1ProfileSheet').hidden&&!$('fatih1ProfileHome').hidden&&!document.hidden;
 }
-function fatih1BonusStore(phone,count){
- const amount=fatih1BonusValue(count);
- try{localStorage.setItem(FATIH1_BONUS_STORAGE_KEY,JSON.stringify({phone,count:amount,savedAt:Date.now()}))}catch{}
- if(fatih1BonusVisible()&&fatih1BonusPhone()===phone){
-  fatih1BonusRender(amount);
-  fatih1BonusStatus('Oppdatert automatisk');
- }
+function fatih1BonusStore(phone,count,lastOrderAt=0,verified=false){
+ const amount=bonusBalance(count,lastOrderAt);
+ try{localStorage.setItem(FATIH1_BONUS_STORAGE_KEY,JSON.stringify({phone,count:amount,lastOrderAt,verified,savedAt:Date.now()}))}catch{}
+ if(fatih1BonusVisible()&&fatih1BonusPhone()===phone){fatih1BonusRender(amount);fatih1BonusStatus('Oppdatert');}
 }
 async function fatih1BonusGetOnce(phone){
- // Fallback for browsers without SSE support or if establishing the stream fails.
- if(fatih1BonusGetPending)return fatih1BonusGetPending;
+ if(!/^[49]\d{7}$/.test(phone))return;
+ if(fatih1BonusGetPending?.phone===phone)return fatih1BonusGetPending.task;
  const task=(async()=>{
   try{
-   const response=await fetch(BASE+'/customers/'+phone+'/bonusCount.json',{cache:'no-store'});
-   if(!response.ok)throw Error('HTTP '+response.status);
-   const value=await response.json();
-   if(value!==null&&(!Number.isFinite(Number(value))||typeof value==='object'))throw Error('Invalid bonus data');
-   if(fatih1BonusPhone()===phone){
-    fatih1BonusStore(phone,value);
-    fatih1BonusStatus('Oppdatert');
-   }
-  }catch(error){
-   console.warn('BestillOnline bonus read failed:',error);
-   if(fatih1BonusPhone()===phone&&fatih1BonusVisible())fatih1BonusStatus('Kunne ikke oppdatere pizzabonus. Trykk Oppdater.');
-  }
+   const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>fetch(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal:AbortSignal.timeout(6500)})));
+   if(!balance.ok)throw Error('Bonus HTTP '+balance.status);
+   const count=await balance.json(),last=stamp.ok?await stamp.json():0;
+   if(fatih1BonusPhone()===phone)fatih1BonusStore(phone,count,Number(last)||0,stamp.ok);
+  }catch(error){if(fatih1BonusVisible())fatih1BonusStatus('Kunne ikke oppdatere pizzabonus.');}
  })();
- fatih1BonusGetPending=task;
- try{await task}finally{if(fatih1BonusGetPending===task)fatih1BonusGetPending=null}
+ fatih1BonusGetPending={phone,task};
+ try{await task}finally{if(fatih1BonusGetPending?.task===task)fatih1BonusGetPending=null}
 }
 function fatih1BonusStart(force=false){
- if(typeof orderSubmissionBusy!=='undefined'&&orderSubmissionBusy)return;
+ if(orderSubmissionBusy||!fatih1BonusVisible())return;
  const phone=fatih1BonusPhone();
- if(!phone){
-  fatih1BonusStop();
-  fatih1BonusRender(0);
-  fatih1BonusStatus('Lagre mobilnummer for å hente pizzabonus.');
-  return;
- }
- if(!fatih1BonusVisible())return;
- if(!force&&fatih1BonusSource&&fatih1BonusSourcePhone===phone)return;
+ if(!phone){fatih1BonusRender(0);fatih1BonusStatus('Lagre mobilnummer for å hente pizzabonus.');return;}
  fatih1BonusStop();
- if(typeof EventSource==='undefined'){
-  fatih1BonusStatus('Henter pizzabonus…');
-  void fatih1BonusGetOnce(phone);
-  return;
- }
- const token=fatih1BonusStreamId,source=new EventSource(BASE+'/customers/'+phone+'/bonusCount.json');
- fatih1BonusSource=source;
- fatih1BonusSourcePhone=phone;
- fatih1BonusStatus('Kobler til pizzabonus…');
- const onData=event=>{
-  if(fatih1BonusSource!==source||fatih1BonusStreamId!==token||fatih1BonusPhone()!==phone||!fatih1BonusVisible())return;
-  try{
-   const payload=JSON.parse(event.data);
-   // bonusCount itself is a number; parent customer fields are never streamed.
-   if(payload.path!=='/'&&payload.path!=='')return;
-   const value=payload.data;
-   if(value!==null&&(typeof value==='object'||!Number.isFinite(Number(value))))return;
-   fatih1BonusStore(phone,value);
-  }catch(error){console.warn('BestillOnline bonus stream event ignored:',error)}
- };
- source.addEventListener('put',onData);
- source.addEventListener('patch',onData);
- const denied=()=>{
-  if(fatih1BonusSource!==source)return;
-  fatih1BonusStop();
-  fatih1BonusStatus('Tilgang til pizzabonus ble avvist.');
- };
- source.addEventListener('cancel',denied);
- source.addEventListener('auth_revoked',denied);
- source.addEventListener('error',()=>{
-  if(fatih1BonusSource!==source)return;
-  // EventSource normally reconnects on short network interruptions.
-  // Do not create duplicate streams or periodic REST requests.
-  if(source.readyState===2){
-   fatih1BonusStop();
-   fatih1BonusStatus('Live-tilkobling brutt. Trykk Oppdater.');
-  }else{
-   fatih1BonusStatus('Prøver å koble til pizzabonus igjen…');
-  }
- });
+ void fatih1BonusGetOnce(phone);
 }
 function fatih1BonusLoad(force=false){
  fatih1BonusStart(force);
@@ -411,6 +355,7 @@ function fatih1ProfileInit(){
    fatih1BonusStatus('Kunne ikke lagre valget.');return;
   }
   fatih1BonusConsentShow();
+  if(enabled)void fatih1BonusGetOnce(fatih1BonusPhone());
   fatih1BonusStatus(enabled?'Automatisk bonusbruk valgt.':'Automatisk bonusbruk er slått av.');
   showFatih1Toast(enabled?'Automatisk bonusbruk: På':'Automatisk bonusbruk: Av','info');
  });
