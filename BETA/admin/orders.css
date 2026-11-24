@@ -531,3 +531,7 @@ body.is-dialog-open{overflow:hidden}
 .orders-pickup-filters button[data-pickup-filter="SENERE"][aria-pressed="true"]{background:#e6f0fb;color:#285f90;border-color:#bad5ef}
 .orders-pickup-filters button[data-pickup-filter="ALLE"][aria-pressed="true"]{background:#e4f2eb;color:#12553e;border-color:#b6d7c4}
 @media(max-width:900px){.orders-head{gap:8px;padding-inline:12px}.orders-pickup-filters{gap:2px;padding:3px}.orders-pickup-filters button{padding-inline:6px;font-size:11px}.orders-top-actions.orders-lightbar{gap:4px}.orders-headline small{max-width:145px}}
+
+/* Accessible fallback for screens where ten rows do not require scrolling. */
+.orders-load-more{display:block;margin:16px auto 0;padding:9px 20px;border:1px solid #cfddd4;border-radius:9px;background:#fff;color:#12553e;font-size:12px;font-weight:750}
+.orders-load-more:hover{background:#eaf5ee}
