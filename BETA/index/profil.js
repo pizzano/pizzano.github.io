@@ -84,12 +84,19 @@ function fatih1BonusRender(count){
    '<circle cx="6.5" cy="13" r="1"/></g></g>';
  }).join('');
  $('fatih1BonusSegments').innerHTML=segments;
- $('fatih1BonusCount').textContent=earned;
+ $('fatih1BonusCount').textContent=earned+'/10';
  $('fatih1BonusRing').setAttribute('aria-label',earned+' av 10 pizzaer registrert');
- const remaining=10-earned;
- $('fatih1BonusRemaining').textContent=remaining?
-  remaining+' '+(remaining===1?'pizza igjen':'pizzaer igjen')+' til din gratis pizza':
-  'Du har opptjent en gratis pizza!';
+ fatih1BonusRenderMessage(earned);
+}
+function fatih1BonusRenderMessage(earned){
+ const remaining=10-earned,enabled=fatih1BonusConsentEnabled();
+ const ready=remaining===0;
+ $('fatih1BonusRemaining').textContent=ready?(enabled?'Din gratis pizza er klar!':'Du har en gratis pizza!'):(earned?'Du er på vei!':'Samle pizzabonus');
+ $('fatih1BonusDescription').textContent=ready?(enabled?'Vi trekker automatisk fra den rimeligste store pizzaen i din neste bestilling.':'Aktiver pizzabonus for å bruke din gratis store pizza.'):(remaining+' '+(remaining===1?'stor pizza igjen':'store pizzaer igjen')+' til en gratis pizza!');
+ $('fatih1BonusConsentLabel').textContent=ready&&!enabled?'Bruk gratis pizza':'Bruk pizzabonus automatisk';
+ $('fatih1BonusConsent').classList.toggle('is-reward-ready',ready&&!enabled);
+ $('fatih1BonusReminder').hidden=!ready||enabled;
+
 }
 function fatih1BonusStatus(message){
  $('fatih1BonusStatus').textContent=message||'';
@@ -389,7 +396,8 @@ function fatih1ProfileInit(){
    fatih1BonusStatus('Kunne ikke lagre valget.');return;
   }
   fatih1BonusConsentShow();
-  if(enabled)void fatih1BonusGetOnce(fatih1BonusPhone());
+  fatih1BonusRenderMessage(Math.min(10,fatih1BonusCached(fatih1BonusPhone())?.count??0));
+  if(enabled&&!fatih1BonusSource)void fatih1BonusGetOnce(fatih1BonusPhone());
   fatih1BonusStatus(enabled?'Automatisk bonusbruk valgt.':'Automatisk bonusbruk er slått av.');
   showFatih1Toast(enabled?'Automatisk bonusbruk: På':'Automatisk bonusbruk: Av','info');
  });
