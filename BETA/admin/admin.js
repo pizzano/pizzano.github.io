@@ -189,19 +189,6 @@ async function bootAuth(){
  }
  // Only fields retired from the BestillOnline menu schema. Keep ingredientRules
  // and description intact. Deletion is staged until explicit admin save.
- function removeLegacyIngredients(menuData){
-  let removed=0;
-  for(const section of arr(menuData?.sections)){
-   for(const item of arr(section.items)){
-    for(const key of ['ingredients','ingredientDefaults']){
-     if(Object.prototype.hasOwnProperty.call(item,key)){
-      delete item[key];removed++;
-     }
-    }
-   }
-  }
-  return removed;
- }
  function exportOriginalMenuBackup(){
   if(!state.original){notify('Ingen meny er lastet fra Firebase.',true);return}
   try{
