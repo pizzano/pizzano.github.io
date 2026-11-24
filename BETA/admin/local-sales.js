@@ -75,7 +75,7 @@ function compactPatch(order,previousDate){
  const r=record(order);if(!r||!r.sold||!Number.isSafeInteger(r.amount)||!Number.isFinite(Number(order.readyAt)))throw Error('Ugyldig salg');
  const [date,month,year]=periodKeys(Number(order.readyAt));if(previousDate>date)throw Error('Salgsdato er nyere enn ordredato');
  const inc={'.sv':{increment:r.amount}},base='salesStatistics/';
- return {[base+'date']:date,[base+'daily']:previousDate===date?inc:r.amount,[base+'monthly/'+year+'/'+month.slice(5)]:inc,[base+'yearly/'+year]:inc};
+ return {[base+'lastOrder']:r.id,[base+'date']:date,[base+'daily']:previousDate===date?inc:r.amount,[base+'monthly/'+year+'/'+month.slice(5)]:inc,[base+'yearly/'+year]:inc};
 }
 function compactPeriods(raw,stamp=Date.now()){
  const s=compactSales(raw,stamp),[date,month,year]=periodKeys(stamp);
