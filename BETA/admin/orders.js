@@ -412,8 +412,9 @@
    for(const order of message.records)mergeOrder(order,false);
    connection(initialLoaded?'Tilkoblet · delt fane':'Kobler til…',initialLoaded);
    render();
+   if(initialLoaded&&historyForceRefresh&&!historySyncPending){historyForceRefresh=false;void hydrateRecentHistory();}
    if(!initialLoaded) return;
-   startCountdowns();
+   if(countdownTicker===null)startCountdowns();
   }catch(error){/* Ignore malformed or unauthenticated channel messages. */}
  }
  async function startAdminSharing(){
@@ -428,16 +429,17 @@
    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('BestillOnline admin SSE v1:'+secret));
    const key=await crypto.subtle.importKey('raw',digest,{name:'AES-GCM'},false,['encrypt','decrypt']);
    if(generation!==adminShareGeneration||!authReady())return;
-   adminChannelKey=key;adminChannel=new BroadcastChannel(ADMIN_STREAM_LOCK);
+   const scope=ADMIN_STREAM_LOCK+':'+Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
+   adminChannelKey=key;adminChannel=new BroadcastChannel(scope);
    adminSharing=true;
    adminChannel.onmessage=event=>{
     adminMessageQueue=adminMessageQueue.then(()=>receiveAdminMessage(event,generation)).catch(()=>{});
    };
    const controller=new AbortController();adminLockController=controller;
    void adminBroadcast({type:'request'});
-   void navigator.locks.request(ADMIN_STREAM_LOCK,{mode:'exclusive',signal:controller.signal},async()=>{
+   void navigator.locks.request(scope,{mode:'exclusive',signal:controller.signal},async()=>{
     if(controller.signal.aborted||generation!==adminShareGeneration||!authReady())return;
-    adminLeader=true;
+    adminLeader=true;startCountdowns();
     const held=new Promise(resolve=>{adminLockRelease=resolve});
     try{await connectOrders();await held}
     finally{if(generation===adminShareGeneration){closeStream();adminLeader=false;adminLockRelease=null}}
