@@ -57,7 +57,7 @@
 
  let bonusRulesEnabled=false,bonusRulesProbe=null;
  let statusPatchEnabled=false,statusPatchProbe=null,localStatusWriteId=null;
- let historySyncPending=false,historyHydrated=false,historySyncGeneration=0;
+ let historySyncPending=false,historySyncGeneration=0;
  let countdownTicker=null,automaticReadyBusy=false;
  let authStreamRenewing=false;
  const autoReadyAttempts=new Map();
@@ -133,12 +133,83 @@
  const activeStatus=order=>order?.status==='mottatt'||order?.status==='godkjent';
  const orderVersion=order=>Math.max(Number(order?.updatedAt)||0,Number(order?.statusPublic?.updatedAt)||0,Number(order?.createdAt)||0);
  const statusRank=status=>status==='mottatt'?0:status==='godkjent'?1:2;
- function mergeOrder(order){
+ // Only terminal orders are persisted. Active orders remain authoritative in SSE.
+ const HISTORY_DB='bestillonline-admin-history-v1:'+encodeURIComponent(DB)+':'+ADMIN_UID;
+ const HISTORY_STORE='terminal';
+ const terminalOrder=o=>o?.status==='klar'||o?.status==='avvist';
+ let historyDBTask=null,historyCacheDisabled=false,historyForceRefresh=false;
+ function openHistoryDB(){
+  if(historyCacheDisabled||typeof indexedDB==='undefined')return Promise.resolve(null);
+  if(historyDBTask)return historyDBTask;
+  historyDBTask=new Promise(resolve=>{
+   const req=indexedDB.open(HISTORY_DB,1);
+   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(HISTORY_STORE))req.result.createObjectStore(HISTORY_STORE,{keyPath:'id'});};
+   req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>{db.close();historyDBTask=null};resolve(db)};
+   req.onerror=req.onblocked=()=>{historyCacheDisabled=true;resolve(null)};
+  }).catch(()=>{historyCacheDisabled=true;return null});
+  return historyDBTask;
+ }
+ async function historyTransaction(mode,run,requireAuth=true){
+  if(requireAuth&&!authReady())return null;
+  try{
+   const db=await openHistoryDB();
+   if(!db||(requireAuth&&!authReady()))return null;
+   return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(HISTORY_STORE,mode),store=tx.objectStore(HISTORY_STORE);
+    let value=null;
+    tx.oncomplete=()=>resolve(value);
+    tx.onerror=tx.onabort=()=>reject(tx.error||Error('IndexedDB transaction failed'));
+    run(store,result=>{value=result});
+   });
+  }catch(error){console.warn('BestillOnline history cache:',error);return null;}
+ }
+ function persistTerminalOrder(order){
+  if(!terminalOrder(order)||!authReady())return;
+  void historyTransaction('readwrite',store=>{
+   const request=store.get(order.id);
+   request.onsuccess=()=>{
+    const old=request.result;
+    if(!old||orderVersion(order)>=orderVersion(old))store.put(order);
+    const all=store.getAllKeys();
+    all.onsuccess=()=>{for(const id of all.result.sort().reverse().slice(100))store.delete(id)};
+   };
+  });
+ }
+ function removeHistoryRecord(id){
+  void historyTransaction('readwrite',store=>store.delete(id));
+ }
+ async function clearHistoryCache(){
+  await historyTransaction('readwrite',store=>store.clear(),false);
+ }
+ async function restoreHistoryCache(epoch){
+  if(!authReady()||!keysReady||epoch!==streamEpoch)return;
+  const rows=await historyTransaction('readwrite',(store,done)=>{
+   const req=store.getAll();
+   req.onsuccess=()=>{
+    const valid=[];
+    for(const record of req.result){
+     if(!knownKeys.has(record.id)||!isOrder(record,record.id)||!terminalOrder(record)||activeStreamContains(record.id)){
+      store.delete(record.id);continue;
+     }
+     valid.push(record);
+    }
+    done(valid);
+   };
+  });
+  if(epoch!==streamEpoch||!authReady()||!rows)return;
+  // A manual refresh verifies history against Firebase, not the disk cache.
+  if(historyForceRefresh)return;
+  const wanted=new Set(newestKnownKeys().slice(0,visibleLimit));
+  for(const record of rows)if(wanted.has(record.id)&&knownKeys.has(record.id)&&!orders.has(record.id)&&!activeStreamContains(record.id))mergeOrder(record,false);
+ }
+ function mergeOrder(order,persist=true){
   if(!isOrder(order,order?.id))return;
   const old=orders.get(order.id);
   if(!old||orderVersion(order)>orderVersion(old)||
     (orderVersion(order)===orderVersion(old)&&statusRank(order.status)>=statusRank(old.status))){
    orders.set(order.id,order);
+   if(persist&&terminalOrder(order))persistTerminalOrder(order);
+   else if(persist&&activeStatus(order))removeHistoryRecord(order.id);
   }
   if(observedKeys)observedKeys.add(order.id);
   knownKeys.add(order.id);
@@ -229,7 +300,7 @@
  }
  function logoutView(message=''){
   stopCountdowns();
-  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;historyHydrated=false;activeId=null;
+  closeStream();orders.clear();knownKeys.clear();keysReady=false;visibleLimit=PAGE_SIZE;loadingHistory=false;indexedMode=null;activeId=null;
   show('ordersApp',false);show('ordersLogin',true);show('ordersSignOut',false);show('ordersPickupFilters',false);
   pickupFilter='ALLE';
   closeSheet();closeDialog();
@@ -260,6 +331,7 @@
    });
    if(user?.uid===ADMIN_UID)await enterOrders();
    else logoutView();
+   auth.onAuthStateChanged(value=>{if(value?.uid!==ADMIN_UID){logoutView();void clearHistoryCache();}});
    // Firebase Auth refreshes tokens automatically. Do not restart the order
    // streams on each refresh; reconnect only when required.
    // If the existing stream is actually revoked, reconnect just once below.
@@ -268,6 +340,8 @@
  async function enterOrders(){
   show('ordersLogin',false);show('ordersApp',true);show('ordersSignOut',true);show('ordersPickupFilters',true);
   connection('Kobler til…');
+  try{historyForceRefresh=sessionStorage.getItem(HISTORY_DB+':refresh')==='1';sessionStorage.removeItem(HISTORY_DB+':refresh')}catch{}
+  if(historyForceRefresh)await clearHistoryCache();
   render();
   // Brand is part of the static HTML: no extra /settings read.
   await connectOrders();
@@ -331,7 +405,7 @@
    const current=await response.json();
    if(epoch!==streamEpoch||!authReady())return;
    if(current===null){
-    if(!activeStreamContains(id)){orders.delete(id);knownKeys.delete(id);}
+    if(!activeStreamContains(id)){orders.delete(id);knownKeys.delete(id);removeHistoryRecord(id);}
    }else mergeOrder(current);
    render();
   }catch(error){
@@ -411,7 +485,7 @@
      // A source may be slightly ahead of a key snapshot during a new order.
      for(const snapshot of sourceSnapshots.values())for(const id of snapshot.keys())current.add(id);
      knownKeys=current;keysReady=true;observedKeys=null;
-     for(const id of orders.keys())if(!knownKeys.has(id))orders.delete(id);
+     for(const id of orders.keys())if(!knownKeys.has(id)){orders.delete(id);removeHistoryRecord(id);}
      ok=true;render();
     }while(keysWanted&&epoch===streamEpoch);
     if(initialLoaded&&knownKeys.size>100)void requestPrune();
@@ -514,7 +588,7 @@
   return true;
  }
  // The two active streams establish readiness before the history read.
- // Reconnect refreshes the latest page once to catch orders completed offline.
+ // Reconnect checks the shallow key list, then restores only terminal records.
  // No recent-order SSE, polling, or timer-driven history reads.
  async function hydrateRecentHistory(){
   if(historySyncPending||!authReady()||!initialLoaded)return;
@@ -522,17 +596,11 @@
   const epoch=streamEpoch,generation=++historySyncGeneration;
   try{
    if(!(await syncKnownKeys())||epoch!==streamEpoch||generation!==historySyncGeneration)return;
-   if(historyHydrated){
-    const url=await authorizedURL('ORDERS');
-    const response=await fetch(url+'&'+keyQuery+'&limitToLast='+PAGE_SIZE,{cache:'no-store'});
-    if(!response.ok)throw Error('Firebase HTTP '+response.status);
-    const data=await response.json()||{};
-    if(epoch!==streamEpoch||generation!==historySyncGeneration||!authReady())return;
-    for(const [id,order] of Object.entries(data))if(isOrder(order,id))mergeOrder(order);
-   }
+   await restoreHistoryCache(epoch);
+   if(epoch!==streamEpoch||generation!==historySyncGeneration)return;
    if(!(await fetchMissingHistory(newestKnownKeys().slice(0,visibleLimit),epoch)))return;
    if(epoch!==streamEpoch||generation!==historySyncGeneration)return;
-   historyHydrated=true;
+   historyForceRefresh=false;
   }catch(error){if(epoch===streamEpoch&&generation===historySyncGeneration)feedback('Kunne ikke hente bestillingshistorikk: '+error.message,true);}
   finally{if(epoch===streamEpoch&&generation===historySyncGeneration){historySyncPending=false;render();}}
  }
@@ -549,7 +617,11 @@
    const target=Math.min(knownCount(),visibleLimit+PAGE_SIZE);
    if(target<=visibleLimit)return;
    const keys=newestKnownKeys().slice(0,target);
-   if(!(await fetchMissingHistory(keys,epoch)))return;
+   // Restore the requested page before downloading only missing records.
+   visibleLimit=target;
+   await restoreHistoryCache(epoch);
+   if(epoch!==streamEpoch)return;
+   if(!(await fetchMissingHistory(keys,epoch))){visibleLimit=previousLimit;return;}
    visibleLimit=target;
   }catch(error){
    if(epoch===streamEpoch){visibleLimit=previousLimit;feedback('Kunne ikke hente eldre bestillinger: '+error.message,true);}
@@ -926,13 +998,13 @@
     if(!response.ok)throw Error('Firebase HTTP '+response.status);
     const current=await response.json(),etag=response.headers.get('ETag');
     if(epoch!==streamEpoch||!authReady())return;
-    if(current===null){knownKeys.delete(id);orders.delete(id);continue;}
+    if(current===null){knownKeys.delete(id);orders.delete(id);removeHistoryRecord(id);continue;}
     if(!isOrder(current,id)||activeStatus(current)||!etag){if(isOrder(current,id))mergeOrder(current);continue;}
     const deleted=await fetch(url+'&print=silent',{method:'DELETE',headers:{'if-match':etag},cache:'no-store'});
     if(deleted.status===412)continue;
     if(!deleted.ok)throw Error('Firebase HTTP '+deleted.status);
     if(epoch!==streamEpoch)return;
-    knownKeys.delete(id);orders.delete(id);
+    knownKeys.delete(id);orders.delete(id);removeHistoryRecord(id);
     for(const snapshot of sourceSnapshots.values())snapshot.delete(id);
    }
    render();
@@ -951,6 +1023,7 @@
   $('btnRefreshOrders').addEventListener('click',()=>{
    // Explicit user-initiated reload: reconnect the Firebase SSE once,
    // with no recurring database or network probes.
+   try{sessionStorage.setItem(HISTORY_DB+':refresh','1')}catch{}
    window.location.reload();
   });
   $('ordersPickupFilters').addEventListener('click',event=>{
@@ -968,7 +1041,7 @@
    if(down&&pickupFilter==='ALLE'&&document.documentElement.scrollHeight-currentY-window.innerHeight<=32)void loadOlderOrders();
   },{passive:true});
   $('ordersLoginForm').addEventListener('submit',login);
-  $('ordersSignOut').onclick=async()=>{closeStream();await auth.signOut();logoutView()};
+  $('ordersSignOut').onclick=async()=>{closeStream();await clearHistoryCache();await auth.signOut();logoutView()};
   let ignoreRowClicksUntil=0;
   $('ordersList').addEventListener('click',async event=>{
    const ready=event.target.closest('[data-order-ready]');
