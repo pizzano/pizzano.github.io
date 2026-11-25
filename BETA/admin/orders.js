@@ -629,6 +629,28 @@
   if(!bonusRulesProbe)bonusRulesProbe=BOFirebaseIO.get(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false).finally(()=>{bonusRulesProbe=null});
   return bonusRulesProbe;
  }
+ async function readApprovalBonus(phone,v2){
+  // Fresh, unshared reads: the original balance is a compare-and-set guard.
+  const read=async field=>{
+   const response=await fetch(await authorizedURL('customers/'+phone+'/'+field),{cache:'no-store',signal:AbortSignal.timeout(6500)});
+   if(!response.ok)throw Error('Kunne ikke kontrollere pizzabonus (HTTP '+response.status+').');
+   return response.json();
+  };
+  const validCount=value=>Number.isInteger(value)&&value>=0&&value<=11;
+  const validLast=value=>Number.isSafeInteger(value)&&value>=0;
+  if(v2){
+   const value=await read('bonus');
+   if(value!==null){
+    if(!value||!validCount(value.count)||!validLast(value.last))throw Error('Ugyldig pizzabonus.');
+    // A zero date may represent a missing legacy field; preserve exact null
+    // values for the existing atomic Rules comparison instead of guessing.
+    if(value.last>0)return {bonusCount:value.count,lastOrderAt:value.last};
+   }
+  }
+  const [bonusCount,lastOrderAt]=await Promise.all([read('bonusCount'),read('lastOrderAt')]);
+  if((bonusCount!==null&&!validCount(bonusCount))||(lastOrderAt!==null&&!validLast(lastOrderAt)))throw Error('Ugyldig eldre pizzabonus.');
+  return {bonusCount,lastOrderAt};
+ }
  async function connectOrders(){
   if(!authReady()||!ownsAdminStreams())return;
   closeStream();const epoch=streamEpoch;
@@ -1045,10 +1067,8 @@
     if(bonusMode){
      const phone=String(current.phone||'').replace(/\D/g,'').replace(/^47(?=\d{8}$)/,'');
      if(!/^[49]\d{7}$/.test(phone))throw Error('Ugyldig mobilnummer for pizzabonus.');
-     const customerURL=await authorizedURL('customers/'+phone);
-     const [cr,menu]=await Promise.all([fetch(customerURL,{cache:'no-store'}),getBonusMenu()]);
-     if(!cr.ok)throw Error('Kunne ikke kontrollere pizzabonus.');
-     const customer=await cr.json()||{},{sections,sizeLabels}=menu;
+     const [v2,menu]=await Promise.all([detectBonusV2(),getBonusMenu()]);
+     const customer=await readApprovalBonus(phone,v2),{sections,sizeLabels}=menu;
      const balance=bonusBalance(customer.bonusCount,customer.lastOrderAt,changedAt),plan=bonusPlan(current.items||[],sections,sizeLabels);
      const reward=current.pizzaBonus;
      if(reward&&(!bonusCanRedeem(balance,plan.count)||plan.index!==reward.index||plan.discount!==reward.discount))throw Error('Pizzabonus er endret eller ugyldig. Be kunden sende en ny bestilling.');
@@ -1062,7 +1082,7 @@
      multi['customers/'+phone+'/lastOrderAt']=changedAt;
      // The V2 mirror is written only if its public read rules are installed.
      // Legacy installations retain the old atomic approval path.
-     if(await detectBonusV2())multi['customers/'+phone+'/bonus']={count,last:changedAt};
+     if(v2)multi['customers/'+phone+'/bonus']={count,last:changedAt};
      // Customer rule checks original balance/date and new order receipt atomically.
      multi['customers/'+phone+'/_bonusOrder']=id;
      writeURL=await authorizedURL('');
