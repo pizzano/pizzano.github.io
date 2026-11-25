@@ -62,7 +62,7 @@ async function readAdminSettings(force=false){
   return value;
  }finally{clearTimeout(timer)}
 }
-let adminSettingsSnapshot=null;
+let adminSettingsSnapshot=null,restaurantPatchPending=false;
 async function refreshAdminRestaurantBrand(force=false){
  try{adminSettingsSnapshot=await readAdminSettings(force);setAdminRestaurantBrand(adminSettingsSnapshot.restaurantName)}
  catch(error){console.warn('BestillOnline restaurant settings:',error);setAdminRestaurantBrand(state.menu?.settings?.restaurantName)}
@@ -190,7 +190,7 @@ async function bootAuth(){
   $('btnSave').disabled=state.saving||!state.etag||!ready;
   const node=$('saveStatus');
   node.className=ready||draft?'status dirty':'status ok';
-  node.textContent=ready?'Lagrer automatisk…':draft?'Utkast · ikke lagret':'Menyen er synkronisert';
+  node.textContent=!state.etag?'Hent siste meny før menylagring':ready?'Lagrer automatisk…':draft?'Utkast · ikke lagret':'Menyen er synkronisert';
   return ready;
  }
  function assertMenu(payload){
@@ -347,6 +347,7 @@ function refreshHeader(){
   setClean();renderAll();refreshHeader();
  }
  async function loadMenu(confirmDiscard=true,{preferCache=false}={}){
+   if(restaurantPatchPending)throw Error('Vent til restaurantinnstillingene er lagret.');
   if(confirmDiscard&&state.dirty&&!confirm('Forkast ulagrede endringer og hent menyen på nytt?'))return false;
   const url=await menuAuthURL();
   if(preferCache){
@@ -514,28 +515,24 @@ function refreshHeader(){
   const user=auth?.currentUser;
   if(!user||user.uid!==ADMIN_UID)throw Error('Ingen administratortilgang.');
   const url=DB+'/.json?auth='+encodeURIComponent(await user.getIdToken())+'&print=silent';
-  const response=await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates),cache:'no-store'});
-  if(!response.ok)throw Error('Firebase avviste lagring (HTTP '+response.status+').');
-  if(state.original){
-   const expected=clone(state.original);
-   expected.changeFeed=expected.changeFeed&&typeof expected.changeFeed==='object'?expected.changeFeed:{};
-   expected.changeFeed.settingsRevision=revision;
+  // Settings also change the menu ETag. Never attach a new ETag to an
+   // unverified old menu; invalidate it before the write, even on lost response.
+   if(state.saving||restaurantPatchPending)throw Error('En annen lagring pågår. Prøv igjen.');
+   restaurantPatchPending=true;
+   cancelScheduledSave();
+   state.etag=null;clearAdminMenuCache();syncSaveStatus();
    try{
-    const check=await fetch(await menuAuthURL(),{headers:{'X-Firebase-ETag':'true'},cache:'no-store'});
-    const remote=check.ok?await check.json():null;
-    const tag=check.headers.get('ETag');
-    if(tag&&equivalentJSON(remote,expected)){
-     state.original=expected;
-     state.menu.changeFeed=clone(expected.changeFeed);
-     state.etag=tag;storeAdminMenuCache(expected,tag);
-    }else{state.etag=null;clearAdminMenuCache();}
-   }catch{state.etag=null;clearAdminMenuCache();}
+    const response=await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates),cache:'no-store'});
+    if(!response.ok)throw Error('Firebase avviste lagring (HTTP '+response.status+').');
+    try{adminSettingsSnapshot=await readAdminSettings(true);}
+    catch{adminSettingsSnapshot=null;try{localStorage.removeItem(SETTINGS_CACHE_KEY)}catch{}}
+    return {...values,_liveRevision:revision};
+   }finally{
+    restaurantPatchPending=false;
+    state.etag=null;clearAdminMenuCache();syncSaveStatus();
+   }
   }
-  try{adminSettingsSnapshot=await readAdminSettings(true);}
-  catch{adminSettingsSnapshot=null;try{localStorage.removeItem(SETTINGS_CACHE_KEY)}catch{}}
-  return {...values,_liveRevision:revision};
- }
- async function saveRestaurantSettings(){
+  async function saveRestaurantSettings(){
   const state=restaurantState;
   if(!state.loaded||state.saving||!state.dirty.size)return;
   const changes={};
@@ -1489,7 +1486,7 @@ function refreshHeader(){
  }
  async function save(options={}){
   const auto=options?.auto===true;
-  if(!state.menu||state.saving)return;
+  if(!state.menu||state.saving||restaurantPatchPending)return;
   cancelScheduledSave();
   if(!state.etag){
    if(!auto)notify('Hent siste meny før du lagrer.','error');
