@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-opt-36d153e448ba600f';
+const CACHE_NAME='fatih1-static-opt-a4a59ba799b89fbf';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -10,8 +10,9 @@ const STATIC_URLS=[
   'index/style.min.css?v=a70d49407b85fd23',
   'shared/bonus.min.js?v=8aaf3f3ed5930626',
   'index/sepet.min.js?v=5f80b708b0b4f155',
-  'index/app.min.js?v=a5d7ded8a55f6161',
-  'index/profil.min.js?v=426e163dadc4e35d',
+  'index/smart-customer.min.js?v=c90eef1a8d4c57ad',
+  'index/app.min.js?v=79bea9e860700929',
+  'index/profil.min.js?v=42d6d474b952a723',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{

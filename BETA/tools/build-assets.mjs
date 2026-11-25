@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 
 // BEGIN PURE BUILD
 const pages={
- 'index.html':['index/style.css','shared/bonus.js','index/sepet.js','index/app.js','index/profil.js'],
+ 'index.html':['index/style.css','shared/bonus.js','index/sepet.js','index/smart-customer.js','index/app.js','index/profil.js'],
  'admin.html':['admin/admin.css','admin/admin.js'],
  'orders.html':['admin/orders.css','shared/bonus.js','admin/orders.js']
 };

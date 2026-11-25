@@ -43,6 +43,7 @@ function showFatih1Toast(message,type='success'){
  },1000);
 }
 const FAVORITES_KEY='kol-beta-favorites-v1';
+const smartCustomerHistory=BOSmartCustomer.create({getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value),removeItem:key=>localStorage.removeItem(key)},'bo-recent-products-v1:'+location.pathname);
 function readFavorites(){try{const a=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');return Array.isArray(a)?a.map(String):[]}catch{return []}}
 let favorites=readFavorites();
 function isFavorite(id){return favorites.includes(String(id))}
@@ -1042,7 +1043,8 @@ function render(){
  requestAnimationFrame(()=>{categoryProgress();watchSections()});
 }
 function showSheet(id,editIndex=null){
- const item=productById(id);if(!item||item.soldOut)return;
+ const item=productById(id);if(!item||item.hidden||item.soldOut)return;
+ if(editIndex===null&&!fatih1HistoryRestoring)smartCustomerHistory.visit(item.id);
  current=item;qty=1;selection={};removedIngredients=new Set();ingredientEditorExpanded=false;selectedKitchenNotes=new Set();resetCartEditState();
  $('add').textContent='Legg til';$('quantity').textContent=qty;$('comment').value='';
  $('sheetTitle').textContent=item.name;$('sheetDesc').textContent=item.description||'';
