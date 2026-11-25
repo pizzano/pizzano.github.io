@@ -411,12 +411,70 @@ function saveLiveCacheSoon(){
    if(menu)localPut(menu).catch(()=>{});
  },300);
 }
-async function resyncAfterGap(){
- // One full download ONLY when the change feed can't be applied safely.
- // Prevent stale prices or photos on returning customers without manual refresh.
- $('cacheStatus').textContent='Oppdaterer menyen automatisk…';
- askPeerForCurrentMenu();
- await refreshMenu(false);
+let gapTarget=0,gapTask=null,gapWake=null;
+function acceptGapSnapshot(value){
+ if(!value||Number(value.cacheFormat)!==MENU_CACHE_FORMAT||
+    !Array.isArray(value.sections)||!value.sections.length||!Array.isArray(value.optionGroups)||
+    !value.settings||typeof value.settings!=='object'||!Number.isFinite(Number(value.updatedAt))||
+    Number(value.updatedAt)<=Number(menu?.updatedAt||0))return false;
+ // Settings have their own revision: do not overwrite them with peer menu data.
+ menu={...value,settings:menu?.settings||value.settings};
+ liveRevision++;saveLiveCacheSoon();render();
+ if(unifiedSettingsRevision)void refreshSettingsForRevision(unifiedSettingsRevision);
+ $('notice').textContent='';$('cacheStatus').textContent='Oppdatert automatisk';
+ if(Number(menu.updatedAt)>=gapTarget)gapWake?.();
+ return true;
+}
+async function readGapCache(){
+ let timer;
+ try{
+  const value=await Promise.race([localGet().catch(()=>null),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),300)})]);
+  if(Number(value?.updatedAt)>=gapTarget)acceptGapSnapshot(value);
+ }finally{clearTimeout(timer)}
+}
+function resyncAfterGap(version){
+ gapTarget=Math.max(gapTarget,Number(version)||0);
+ if(Number(menu?.updatedAt)>=gapTarget)return Promise.resolve(true);
+ if(gapTask)return gapTask;
+ const reached=()=>Number(menu?.updatedAt)>=gapTarget;
+ const task=(async()=>{
+  $('cacheStatus').textContent='Oppdaterer menyen automatisk…';
+  await readGapCache();
+  if(reached())return true;
+  if(sharedChannel){
+   await new Promise(resolve=>{
+    const finish=()=>{clearTimeout(timer);if(gapWake===finish)gapWake=null;resolve()};
+    const timer=setTimeout(finish,350);
+    gapWake=finish;askPeerForCurrentMenu();
+    if(reached())finish();
+   });
+  }
+  if(reached())return true;
+  const recover=async()=>{
+   await readGapCache();
+   if(reached())return true;
+   const ok=await refreshMenu(false);
+   return ok&&reached();
+  };
+  if(navigator.locks&&typeof navigator.locks.request==='function'){
+   const controller=new AbortController();
+   const timer=setTimeout(()=>controller.abort(),1500);
+   let entered=false;
+   try{
+    return await navigator.locks.request('kol1-menu-gap-recovery-v1',{mode:'exclusive',signal:controller.signal},async()=>{
+     entered=true;clearTimeout(timer);return recover();
+    });
+   }catch(error){
+    if(entered)throw error;
+    return recover();
+   }finally{clearTimeout(timer)}
+  }
+  return recover();
+ })();
+ gapTask=task;
+ const clear=()=>{if(gapTask===task){gapTask=null;gapTarget=0}};
+ task.then(clear,clear);
+ return task;
 }
 async function receiveLiveAnnouncement(value,relay=false){
  if(!menu||!value||typeof value!=='object')return;
@@ -424,7 +482,7 @@ async function receiveLiveAnnouncement(value,relay=false){
  if(!version||version<=Number(menu.updatedAt))return;
  if(Number(value.previousVersion)!==Number(menu.updatedAt)||
     value.requiresRefresh===true||!Array.isArray(value.changes)){
-   await resyncAfterGap();
+   await resyncAfterGap(version);
    return;
  }
  try{
@@ -447,7 +505,7 @@ async function receiveLiveAnnouncement(value,relay=false){
    $('cacheStatus').textContent='Oppdatert automatisk';
  }catch(error){
    console.warn('Could not apply live menu update',error);
-   await resyncAfterGap();
+   await resyncAfterGap(version);
  }
 }
 
@@ -662,15 +720,7 @@ function setupSharedChannel(){
     return;
    }
    if(message.type==='snapshot'){
-    const newer=message.value;
-    if(!newer||!Array.isArray(newer.sections)||!Array.isArray(newer.optionGroups)||
-       !newer.settings||Number(newer.updatedAt)<=Number(menu.updatedAt))return;
-    menu=newer;
-    liveRevision++;
-    saveLiveCacheSoon();
-    render();
-    $('notice').textContent='';
-    $('cacheStatus').textContent='Oppdatert automatisk';
+    acceptGapSnapshot(message.value);
     return;
    }
    if(message.type==='restaurant-settings'){acceptLiveSettings(message.value);return}

@@ -1,6 +1,6 @@
 /* BETA: static app shell only. Menu, images, Firebase and orders bypass SW. */
 'use strict';
-const CACHE_NAME='fatih1-static-opt-e0336dc7876d839c';
+const CACHE_NAME='fatih1-static-opt-0ef193c7c8518a04';
 const CACHE_PREFIX='fatih1-static-';
 const LEGACY_CACHE_PREFIX='kol-beta-static-';
 const ROOT=new URL(self.registration.scope);
@@ -11,7 +11,7 @@ const STATIC_URLS=[
   'shared/firebase-io.min.js?v=cb0b7ee328faadaa',
   'shared/bonus.min.js?v=8aaf3f3ed5930626',
   'index/sepet.min.js?v=5f80b708b0b4f155',
-  'index/app.min.js?v=a679a53c615c5fb1',
+  'index/app.min.js?v=6e6f401a6b2fc634',
   'index/profil.min.js?v=4487b54a67951757',
 ].map(path=>new URL(path,ROOT).href);
 self.addEventListener('install',event=>{
