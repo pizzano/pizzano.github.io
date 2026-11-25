@@ -613,7 +613,7 @@
  async function detectStatusPatch(){
   if(statusPatchProbe)return statusPatchProbe;
   statusPatchProbe=(async()=>{try{
-   const response=await fetch(DB+'/statusPatchV1.json',{cache:'no-store',credentials:'omit'});
+   const response=await BOFirebaseIO.get(DB+'/statusPatchV1.json',{cache:'no-store',credentials:'omit'});
    statusPatchEnabled=response.ok;
   }catch{statusPatchEnabled=false}})();
   return statusPatchProbe;
@@ -621,12 +621,12 @@
  let bonusV2Enabled=false,bonusV2Task=null;
  async function detectBonusV2(){
   if(bonusV2Enabled)return true;
-  if(!bonusV2Task)bonusV2Task=fetch(DB+'/pizzaBonusV2.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusV2Enabled=r.ok).catch(()=>false).finally(()=>{bonusV2Task=null});
+  if(!bonusV2Task)bonusV2Task=BOFirebaseIO.get(DB+'/pizzaBonusV2.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusV2Enabled=r.ok).catch(()=>false).finally(()=>{bonusV2Task=null});
   return bonusV2Task;
  }
  async function detectBonusRules(){
   if(bonusRulesEnabled)return true;
-  if(!bonusRulesProbe)bonusRulesProbe=fetch(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false).finally(()=>{bonusRulesProbe=null});
+  if(!bonusRulesProbe)bonusRulesProbe=BOFirebaseIO.get(DB+'/pizzaBonusV1.json',{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(6500)}).then(r=>bonusRulesEnabled=r.ok).catch(()=>false).finally(()=>{bonusRulesProbe=null});
   return bonusRulesProbe;
  }
  async function connectOrders(){

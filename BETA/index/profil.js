@@ -145,7 +145,7 @@ function fatih1BonusAggregate(value){
  return value;
 }
 async function fatih1BonusReadLegacy(phone,signal){
- const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>fetch(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal})));
+ const [balance,stamp]=await Promise.all(['bonusCount','lastOrderAt'].map(field=>BOFirebaseIO.get(BASE+'/customers/'+phone+'/'+field+'.json',{cache:'no-store',signal})));
  if(!balance.ok||!stamp.ok)throw Error('Firebase HTTP '+balance.status+'/'+stamp.status);
  return {count:await balance.json(),last:Number(await stamp.json())||0};
 }
@@ -157,7 +157,7 @@ async function fatih1BonusGetOnce(phone){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
    await new Promise(resolve=>setTimeout(resolve,0));
-   const response=await fetch(BASE+'/customers/'+phone+'/bonus.json',{cache:'no-store',signal:controller.signal});
+   const response=await BOFirebaseIO.get(BASE+'/customers/'+phone+'/bonus.json',{cache:'no-store',signal:controller.signal});
    let aggregate=null;
    if(response.ok){fatih1BonusV2Known=true;const value=await response.json();aggregate=fatih1BonusAggregate(value);if(value!==null&&!aggregate)throw Error('Ugyldig bonusdata');}
    else if(![401,403].includes(response.status))throw Error('Firebase HTTP '+response.status);
@@ -210,7 +210,7 @@ function fatih1BonusStart(force=false,legacy=false){
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
    try{
     await new Promise(resolve=>setTimeout(resolve,0));
-    const response=await fetch(BASE+'/customers/'+phone+'/lastOrderAt.json',{cache:'no-store',signal:controller.signal});
+    const response=await BOFirebaseIO.get(BASE+'/customers/'+phone+'/lastOrderAt.json',{cache:'no-store',signal:controller.signal});
     if(!response.ok)throw Error('Firebase HTTP '+response.status);
     const last=await response.json();
     if(current()&&seq===revision)fatih1BonusStore(phone,count,Number(last)||0,true);
@@ -337,7 +337,7 @@ async function fatih1RestaurantRefresh(){
   fatih1RestaurantMessage='Oppdaterer fra settings…';
   fatih1ProfileRenderRestaurant();
   try{
-   const response=await fetch(BASE+'/settings.json',{cache:'no-store'});
+   const response=await BOFirebaseIO.get(BASE+'/settings.json',{cache:'no-store'});
    if(!response.ok)throw Error('HTTP '+response.status);
    const data=await response.json();
    if(!data||typeof data!=='object'||Array.isArray(data))throw Error('Ugyldig settings-format');

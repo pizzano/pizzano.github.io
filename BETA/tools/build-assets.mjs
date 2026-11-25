@@ -5,9 +5,9 @@ import {fileURLToPath} from 'node:url';
 
 // BEGIN PURE BUILD
 const pages={
- 'index.html':['index/style.css','shared/bonus.js','index/sepet.js','index/app.js','index/profil.js'],
- 'admin.html':['admin/admin.css','admin/admin.js'],
- 'orders.html':['admin/orders.css','shared/bonus.js','admin/orders.js']
+ 'index.html':['index/style.css','shared/firebase-io.js','shared/bonus.js','index/sepet.js','index/app.js','index/profil.js'],
+ 'admin.html':['admin/admin.css','shared/firebase-io.js','admin/admin.js'],
+ 'orders.html':['admin/orders.css','shared/firebase-io.js','shared/bonus.js','admin/orders.js']
 };
 const sources=[...new Set(Object.values(pages).flat())];
 const inputs=[...sources,...Object.keys(pages),'sw.js'];

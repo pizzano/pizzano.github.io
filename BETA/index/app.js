@@ -135,7 +135,7 @@ function normalize(data){
 }
 async function fromFirebase(){
   const read=async path=>{
-    const r=await fetch(BASE+'/'+path+'.json',{cache:'no-store'});
+    const r=await BOFirebaseIO.get(BASE+'/'+path+'.json',{cache:'no-store'});
     if(!r.ok)throw Error('Firebase HTTP '+r.status+' ('+path+')');
     return r.json();
   };
@@ -177,7 +177,7 @@ function boRefreshStartupSettingsFromFirebase(){
  const timeout=window.setTimeout(()=>controller.abort(),4500);
  const task=(async()=>{
   try{
-   const response=await fetch(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
+   const response=await BOFirebaseIO.get(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
    if(!response.ok)throw Error('Firebase /settings HTTP '+response.status);
    const latest=await response.json();
    if(!latest||typeof latest!=='object'||Array.isArray(latest))throw Error('Invalid restaurant settings');
@@ -363,7 +363,7 @@ async function checkMenuVersionOnce(){
  // Old browsers without EventSource still get current prices on each new visit.
  if(!menu||navigator.onLine===false)return;
  try{
-  const res=await fetch(BASE+'/menu/updatedAt.json',{cache:'no-store'});
+  const res=await BOFirebaseIO.get(BASE+'/menu/updatedAt.json',{cache:'no-store'});
   if(!res.ok)return;
   const remote=Number(await res.json())||0;
   if(remote>Number(menu.updatedAt||0))await refreshMenu(false);
@@ -578,7 +578,7 @@ async function refreshSettingsForRevision(revision){
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6500);
     let latest;
     try{
-     const response=await fetch(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
+     const response=await BOFirebaseIO.get(BASE+'/settings.json',{cache:'no-store',signal:controller.signal});
      if(!response.ok)throw Error('HTTP '+response.status);
      latest=await response.json();
     }finally{clearTimeout(timer)}
