@@ -556,6 +556,12 @@ function acceptLiveSettings(value,relay=false){
 let publicStreamsPausedForOrder=false,bonusReadPauseCount=0;
 function publicStreamsPaused(){return publicStreamsPausedForOrder||bonusReadPauseCount>0}
 function pausePublicStreamsForBonusRead(){
+ // A bonus read needs at most two short GETs. With only one public SSE,
+ // no bonus/status SSE and no active order write, keep that connection.
+ // Otherwise preserve the existing conservative socket-release behavior.
+ const busyBonus=typeof fatih1BonusSource!=='undefined'&&!!fatih1BonusSource;
+ const busyOrder=typeof customerStatusStream!=='undefined'&&!!customerStatusStream;
+ if(!publicStreamsPaused()&&!settingsStream&&!busyBonus&&!busyOrder)return ()=>{};
  bonusReadPauseCount++;
  if(changeStream){changeStream.close();changeStream=null}
  stopSettingsStream();
@@ -731,7 +737,7 @@ function setupSharedChannel(){
 function startSharedChangeStream(){
  if(publicStreamsPaused()||!menu||document.hidden||navigator.onLine===false)return;
  setupSharedChannel();
- askPeerForCurrentMenu();
+ if(!sharedLockPending)askPeerForCurrentMenu();
  // Fallback keeps the original single-tab behavior in older browsers.
  if(!sharedChannel||!navigator.locks||typeof navigator.locks.request!=='function'){
   startChangeStream();return;
@@ -761,6 +767,7 @@ function startSharedChangeStream(){
   if(sharedLockController===controller)sharedLockController=null;
   sharedLockRelease=null;
   sharedLockPending=false;
+  if(controller.signal.aborted&&!document.hidden&&!publicStreamsPaused()&&navigator.onLine!==false)startSharedChangeStream();
  });
 }
 function stopSharedChangeStream(){
