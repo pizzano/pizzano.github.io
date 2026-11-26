@@ -284,10 +284,10 @@ function renderCartContents(){
  $('cartTopCount').hidden=cartTopQuantity===0;
  $('cartClear').hidden=!cart.length;
  $('cartSummary').hidden=!cart.length;
- $('cartItems').innerHTML=cart.length?sortedCartEntries().map(({line,index},position)=>{
+ $('cartItems').innerHTML=cart.length?sortedCartEntries().map(({line,index})=>{
   const issue=cartMenuIssues.find(entry=>entry.index===index);
   return '<article class="cart-product-card" data-cart-line="'+index+'">'+
-   '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+(position+1)+'. '+esc(line.name)+'</strong>'+
+   '<div class="cart-product-heading"><div class="cart-product-copy"><strong class="cart-product-name">'+esc(line.name)+'</strong>'+
    '<button type="button" class="cart-product-edit" data-edit="'+index+'" aria-label="Endre '+esc(line.name)+'" title="Endre produkt">'+cartEditIcon+'</button></div>'+
    '<div class="cart-product-stepper"><button data-cart-minus="'+index+'" aria-label="'+(Number(line.qty)>1?'Reduser antall':'Fjern produkt')+'">'+(Number(line.qty)>1?'−':cartTrashIcon)+'</button><b>'+line.qty+'</b><button data-cart-plus="'+index+'" aria-label="Øk antall">+</button></div></div>'+
    '<div class="cart-product-details">'+cartLineDetails(line)+'</div>'+
