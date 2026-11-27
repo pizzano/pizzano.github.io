@@ -10,6 +10,12 @@
 body{margin:0;background:#edf3f0;color:#142b23;font:16px system-ui,sans-serif}
 main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
 h1,h2,p{margin:0}h1{font-size:20px}h2{font-size:16px}
+#ink{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-position:0 var(--ink-offset,0px)}
+.tools{display:flex;gap:4px;position:absolute;bottom:8px;left:8px}
+.tools button{font-size:13px;min-height:38px}
+.ink-preview{display:block;max-width:100%;max-height:135px;object-fit:contain;object-position:left}
+#menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+#menu-list button{text-align:left;font-size:14px}
 .notebook{position:relative;min-height:0;border:1px solid #2e443e;border-radius:12px;overflow:hidden;background:#142b25}
 textarea{display:block;width:100%;height:100%;min-height:0;resize:none;border:0;border-radius:12px;padding:12px 58px 52px 12px;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-attachment:local;background-origin:content-box;color:#f2faf4;caret-color:#a8eac0;font:20px/34px system-ui,sans-serif;scrollbar-width:thin}
 textarea::placeholder{color:#b4c7bc}
@@ -36,14 +42,16 @@ li small{display:block}
 dialog{width:min(94vw,38rem);max-height:82dvh;border:1px solid #879d91;border-radius:10px}
 footer{padding-bottom:env(safe-area-inset-bottom)}
 #sheet{display:none}
-@media print{main,dialog{display:none!important}body{color:black;background:white}#sheet{display:block}#sheet li{break-inside:avoid}}
+@media print{main,dialog{display:none!important}body{color:black;background:white}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
 </style>
 </head>
 <body>
 <main>
 <h1><label for="order">Manuell bestilling</label></h1>
 <div class="notebook">
-<textarea id="order" inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
+<canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
+<textarea id="order" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
+<div class="tools"><button id="mode" type="button">S Pen-tekst</button><button id="menu" type="button">Meny</button></div>
 <button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
 </div>
 <nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
@@ -55,6 +63,7 @@ footer{padding-bottom:env(safe-area-inset-bottom)}
 </section>
 <footer><span id="total">0 stk</span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
+<dialog id="menu-dialog"><h2>Velg fra menyen</h2><div id="menu-list"></div><form method="dialog"><button>Lukk</button></form></dialog>
 <dialog id="basket"><h2>Alle varer</h2><ul id="basket-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
 <section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
@@ -63,6 +72,105 @@ const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", 
 const byId = id => document.getElementById(id);
 const order = byId('order');
 const cart = [];
+const ink = byId('ink');
+const pen = ink.getContext('2d');
+let strokes = [];
+let pageTop = 0;
+let pointer = null;
+let textMode = false;
+
+function trace(context, paths, xScale, yOffset) {
+  for (const path of paths) {
+    const [first,...rest] = path;
+    context.beginPath();
+    const x = first.x*xScale, y = first.y-yOffset;
+    if (!rest.length) {
+      context.arc(x,y,1.2,0,Math.PI*2);
+      context.fill();
+      continue;
+    }
+    context.moveTo(x,y);
+    for (const point of rest) context.lineTo(point.x*xScale,point.y-yOffset);
+    context.stroke();
+  }
+}
+function redraw() {
+  if (ink.hidden) return;
+  const width = ink.clientWidth, height = ink.clientHeight;
+  const dpi = window.devicePixelRatio || 1;
+  if (ink.width !== Math.round(width*dpi)) ink.width = Math.round(width*dpi);
+  if (ink.height !== Math.round(height*dpi)) ink.height = Math.round(height*dpi);
+  ink.style.setProperty('--ink-offset',(-pageTop % 34) + 'px');
+  pen.setTransform(dpi,0,0,dpi,0,0);
+  pen.clearRect(0,0,width,height);
+  pen.strokeStyle = pen.fillStyle = '#f2faf4';
+  pen.lineCap = pen.lineJoin = 'round';
+  pen.lineWidth = 2.4;
+  trace(pen,strokes,width,pageTop);
+}
+new ResizeObserver(redraw).observe(ink);
+function point(event) {
+  const rect = ink.getBoundingClientRect();
+  const clip = (number,max) => Math.min(max,Math.max(0,number));
+  return {x:clip(event.clientX-rect.left,rect.width)/rect.width,y:clip(event.clientY-rect.top,rect.height)+pageTop};
+}
+ink.addEventListener('pointerdown',event => {
+  if (pointer !== null || !event.isPrimary || event.button !== 0) return;
+  event.preventDefault();
+  pointer = event.pointerId;
+  ink.setPointerCapture(pointer);
+  strokes.push([point(event)]);
+  redraw();
+});
+ink.addEventListener('pointermove',event => {
+  if (event.pointerId !== pointer) return;
+  const samples = event.getCoalescedEvents?.();
+  for (const sample of samples?.length ? samples : [event]) strokes.at(-1).push(point(sample));
+  redraw();
+});
+for (const type of ['pointerup','pointercancel','lostpointercapture']) {
+  ink.addEventListener(type,event => { if (event.pointerId === pointer) pointer = null; });
+}
+function openMode(enabled) {
+  textMode = enabled;
+  ink.hidden = enabled;
+  order.hidden = !enabled;
+  byId('mode').textContent = enabled ? 'Frihånd' : 'S Pen-tekst';
+  if (enabled) order.focus({preventScroll:true});
+  else redraw();
+  displaySuggestion();
+}
+byId('mode').onclick = () => openMode(!textMode);
+byId('menu').onclick = () => byId('menu-dialog').showModal();
+for (const product of catalog.products) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = product.name;
+  button.onclick = () => {
+    byId('menu-dialog').close();
+    order.value = product.name;
+    openMode(true);
+    order.setSelectionRange(order.value.length,order.value.length);
+  };
+  byId('menu-list').append(button);
+}
+function inkImage(paths) {
+  const width = Math.max(ink.clientWidth,320);
+  let left = width, right = 0, top = Infinity, bottom = 0;
+  for (const path of paths) for (const p of path) {
+    left = Math.min(left,p.x*width); right = Math.max(right,p.x*width);
+    top = Math.min(top,p.y); bottom = Math.max(bottom,p.y);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(right-left+16);
+  canvas.height = Math.ceil(bottom-top+16);
+  const context = canvas.getContext('2d');
+  context.translate(8-left,8);
+  context.lineWidth = 2.4;
+  context.lineCap = context.lineJoin = 'round';
+  trace(context,paths,width,top);
+  return canvas.toDataURL();
+}
 let editing = null;
 let composing = false;
 const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
@@ -142,7 +250,7 @@ function parseLine(source) {
 }
 
 function displaySuggestion() {
-  const text = order.value.trim();
+  const text = textMode ? order.value.trim() : '';
   const candidate = text ? parseLine(text.split(/\r?\n/u).at(-1)) : null;
   const suggestion = byId('suggestion');
   suggestion.hidden = !candidate;
@@ -159,6 +267,13 @@ order.addEventListener('compositionend', () => { composing = false; displaySugge
 order.addEventListener('input', displaySuggestion);
 const nextLine = byId('next-line');
 nextLine.onclick = () => {
+  if (!textMode) {
+    if (pointer !== null || !strokes.length) return;
+    const bottom = strokes.reduce((max,path) => path.reduce((end,p) => Math.max(end,p.y),max),pageTop);
+    pageTop = Math.max(pageTop,Math.floor((bottom-44)/34)*34);
+    redraw();
+    return;
+  }
   if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
   const text = order.value.trimEnd();
   const start = text ? text.length + 1 : 0;
@@ -173,12 +288,26 @@ nextLine.onclick = () => {
 function resetEditor() {
   editing = null;
   order.value = '';
+  strokes = [];
+  pageTop = 0;
+  pointer = null;
+  redraw();
   order.scrollTop = 0;
   byId('ok').textContent = 'OK';
   displaySuggestion();
 }
 byId('clear').onclick = resetEditor;
 byId('ok').onclick = () => {
+  if (!textMode) {
+    if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
+    const row = { name:'Håndskrevet bestilling', quantity:0, notes:[], ink:strokes, image:inkImage(strokes) };
+    if (editing) cart.splice(cart.indexOf(editing),1,row);
+    else cart.push(row);
+    latest = row;
+    resetEditor();
+    render();
+    return;
+  }
   if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
   const lines = order.value.split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
   if (!lines.length) { showStatus('Skriv bestillingen med S Pen først.'); return; }
@@ -186,6 +315,10 @@ byId('ok').onclick = () => {
   const rows = lines.map(parseLine);
   const unknown = rows.indexOf(null);
   if (unknown >= 0) { showStatus('Kontroller linje ' + (unknown+1) + ': ' + lines[unknown]); return; }
+  if (strokes.length) {
+    rows[0].ink = strokes;
+    rows[0].image = inkImage(strokes);
+  }
   if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
   else cart.push(...rows);
   latest = rows.at(-1);
@@ -198,12 +331,19 @@ function makeItem(row, actionable) {
   const li = document.createElement('li');
   const content = document.createElement('div');
   const title = document.createElement('strong');
-  title.textContent = row.quantity + '× ' + row.name;
+  title.textContent = row.quantity ? row.quantity + '× ' + row.name : row.name;
   content.append(title);
   if (row.notes.length) {
     const notes = document.createElement('small');
     notes.textContent = row.notes.join(' · ');
     content.append(notes);
+  }
+  if (row.image) {
+    const image = document.createElement('img');
+    image.className = 'ink-preview';
+    image.alt = 'Håndskrevet merknad';
+    image.src = row.image;
+    content.append(image);
   }
   li.append(content);
   if (!actionable) return li;
@@ -211,11 +351,12 @@ function makeItem(row, actionable) {
     ['✎','Endre','',() => {
       if (byId('basket').open) byId('basket').close();
       editing = row;
-      order.value = row.source;
+      order.value = row.source || '';
+      strokes = row.ink ? row.ink.map(path => [...path]) : [];
+      pageTop = 0;
       order.scrollTop = 0;
       byId('ok').textContent = 'Lagre';
-      displaySuggestion();
-      order.focus({preventScroll:true});
+      openMode(Boolean(row.source));
     }],
     ['×','Fjern','remove',() => {
       cart.splice(cart.indexOf(row),1);
@@ -240,7 +381,8 @@ function render() {
   byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
   byId('all').hidden = !cart.length;
   byId('all').textContent = 'Vis alle (' + cart.length + ')';
-  byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk';
+  const raw = cart.filter(row=>!row.quantity).length;
+  byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
   byId('print').disabled = !cart.length;
 }
 byId('all').onclick = () => byId('basket').showModal();
