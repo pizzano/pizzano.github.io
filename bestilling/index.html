@@ -6,161 +6,173 @@
 <title>Manuell bestilling</title>
 <style>
 * { box-sizing: border-box }
+[hidden] { display: none !important }
 body { margin: 0; background: #edf3f0; color: #142b23; font: 16px system-ui,sans-serif }
-main { max-width: 38rem; margin: auto; padding: clamp(16px,5vw,32px); display: grid; gap: 14px }
+main { width: min(100%, 42rem); height: 100dvh; margin: auto; padding: 8px; display: grid; grid-template-rows: auto minmax(0,1.45fr) auto minmax(0,1fr) auto; gap: 8px }
+header, nav, footer, .cart-heading, li { display: flex; align-items: center; gap: 8px }
+header, footer, .cart-heading { justify-content: space-between }
 h1, h2, p { margin: 0 }
-h1 { font-size: clamp(26px,6vw,38px) }
-h2 { font-size: 18px }
-section { background: white; border: 1px solid #cfddd5; border-radius: 15px; padding: 14px; display: grid; gap: 10px }
-textarea { display: block; width: 100%; min-height: 130px; border: 1px solid #778e82; border-radius: 8px; padding: 12px; font: inherit; color: inherit; resize: vertical }
-details { display: grid; gap: 10px }
-details[open] > :not(summary) { margin-top: 10px }
-summary { cursor: pointer }
-canvas { display: block; width: 100%; height: 190px; border: 1px solid #778e82; border-radius: 8px; touch-action: none; cursor: crosshair }
-.row, .receipt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
-button, select { min-height: 44px; padding: 8px 11px; border: 1px solid #9aada2; border-radius: 8px; background: white; color: inherit; font: inherit }
-button { cursor: pointer; font-weight: 650 }
+h1 { font-size: 20px }
+h2 { font-size: 16px }
+button { min-height: 44px; border: 1px solid #9aada2; border-radius: 8px; padding: 6px 12px; background: white; color: inherit; font: inherit; font-weight: 650; cursor: pointer }
 button:disabled { opacity: .55; cursor: default }
-.primary { color: white; background: #145039; border-color: #145039 }
-.help { color: #425b50; font-size: 14px }
+.primary { background: #145039; border-color: #145039; color: white }
+#ok, #print { flex: 1 }
+#pad { display: block; width: 100%; height: 100%; min-height: 0; background: white; border: 1px solid #778e82; border-radius: 10px; touch-action: none; cursor: crosshair }
+#cart { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: white; border: 1px solid #cfddd5; border-radius: 10px; padding: 7px 10px }
+#cart button { min-height: 30px; padding: 3px 7px; font-size: 13px }
+#visible-lines { min-height: 0; overflow: hidden }
 ul { list-style: none; padding: 0; margin: 0 }
-.receipt-row { padding: 7px 0; border-bottom: 1px solid #d9e3dd }
-.receipt-row span { flex: 1; min-width: 10ch }
+li { align-items: flex-start; padding: 5px; border-radius: 5px }
+li > div { min-width: 0; flex: 1; overflow-wrap: anywhere }
+li small { display: block; color: #325747 }
+.latest { background: #d7f4e1 }
+.help { font-size: 13px; color: #325747; overflow-wrap: anywhere }
+#status { margin: 0 0 4px; flex: 0 0 auto; max-height: 3em; overflow: auto }
+footer { padding-bottom: env(safe-area-inset-bottom) }
+dialog { width: min(94vw, 38rem); max-height: 85dvh; border: 1px solid #778e82; border-radius: 12px; color: inherit }
+dialog form { margin-top: 10px }
+#sheet { display: none }
 @media print {
  body { background: white; color: black }
- main { display: block; padding: 0 }
- main > :not(#receipt), #receipt button, #empty { display: none }
- #receipt { border: 0; padding: 0 }
- .receipt-row { break-inside: avoid }
+ main { display: none }
+ #sheet { display: block }
+ #sheet li { break-inside: avoid }
 }
 </style>
 </head>
 <body>
 <main>
-<h1>Manuell bestilling</h1>
-<section>
-<h2><label for="order-text">Skriv hele bestillingen</label></h2>
-<textarea id="order-text" inputmode="none" autocomplete="off" spellcheck="false" placeholder="K. rull med x 2, 1x uten løk"></textarea>
-<button id="order-ok" class="primary" type="button">OK</button>
-<p id="order-status" class="help" role="status"></p>
-<details>
-<summary>Tegn en innlært vareforkortelse</summary>
-<h2 id="write-title">Skriv med pennen</h2>
-<p class="help">Skriv én innlært forkortelse, for eksempel k. rull, og trykk OK for å legge til varen.</p>
-<canvas id="pad" aria-labelledby="write-title"></canvas>
-<div class="row">
-<button id="recognize" class="primary" type="button">OK</button>
-<button id="undo" type="button">Angre strek</button>
+<header><h1>Manuell bestilling</h1><button id="setup" type="button" aria-label="Tilkobling">Tilkobling</button></header>
+<canvas id="pad" aria-label="Skriv bestillingen med penn eller finger"></canvas>
+<nav aria-label="Håndskrift">
+<button id="undo" type="button">Angre</button>
 <button id="clear" type="button">Tøm feltet</button>
-</div>
-<p id="status" class="help" role="status"></p>
-</details>
+<button id="ok" class="primary" type="button">OK</button>
+</nav>
+<section id="cart">
+<div class="cart-heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
+<p id="status" class="help" role="status">Skriv med penn eller finger.</p>
+<ul id="visible-lines"></ul>
 </section>
-<section>
-<h2>Varelinje</h2>
-<div class="row">
-<label for="product">Vare</label>
-<select id="product">
-<option value="">Velg vare</option>
-<option value="roll">Kebab Rull (k. rull)</option>
-<option value="plate">Kebab Tallerken (k. tall)</option>
-<option value="pizza">Stor Pepperoni (st. pep)</option>
-</select>
-<button id="teach" type="button">Lær denne håndskriften</button>
-</div>
-<p class="help">Første gang velger du varen og lagrer gjerne flere eksempler på forkortelsen.</p>
-<div class="row">
-<button id="minus" type="button" aria-label="Reduser antall">−</button>
-<output id="quantity" aria-label="Antall">1</output>
-<button id="plus" type="button" aria-label="Øk antall">+</button>
-<label><input id="hot" type="checkbox"> Sterk saus</label>
-<label for="sauce">Saus</label>
-<select id="sauce"><option value="">Velg saus</option><option value="medium">Medium sos</option><option value="hot">Sterk saus</option></select>
-<label for="onions">Uten løk</label>
-<select id="onions"></select>
-</div>
-<div class="row">
-<button id="add" class="primary" type="button" disabled>Legg til</button>
-<button id="cancel" type="button" hidden>Avbryt endring</button>
-</div>
-</section>
-<section id="receipt">
-<h2>Kjøkkenbestilling</h2>
-<p id="empty" class="help">Bestillingen vises her.</p>
-<ul id="lines"></ul>
-</section>
-<button id="print" class="primary" type="button" disabled>Skriv ut</button>
+<footer><span id="count">0 stk</span><button id="print" class="primary" type="button" disabled>Skriv ut</button></footer>
 </main>
+<dialog id="order-dialog"><h2>Alle varer</h2><ul id="all-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
+<dialog id="setup-dialog"><h2>MyScript</h2><p id="connection" class="help"></p><p class="help">Forhåndsvis eksempelbestillinger uten MyScript.</p><button id="demo" type="button">Vis eksempelbestilling</button><form method="dialog"><button>Lukk</button></form></dialog>
+<section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
 'use strict';
-
-const element = id => document.getElementById(id);
-const pad = element('pad');
-const context = pad.getContext('2d');
-const product = element('product');
-const sauce = element('sauce');
-const onions = element('onions');
-const orderText = element('order-text');
-const status = element('status');
-const products = { roll: 'Kebab Rull', plate: 'Kebab Tallerken', pizza: 'Stor Pepperoni' };
-const storageKey = 'bestilling-handwriting-v1';
+const byId = id => document.getElementById(id);
+const pad = byId('pad');
+const ctx = pad.getContext('2d');
+const status = byId('status');
 const strokes = [];
-const rows = [];
-let samples = {};
+const cart = [];
+const aliases = [
+  [/^(?:k\.?\s*rull|kebab rull|kr)(?=$|[\s,.×+]|x\s*\d)/iu, 'Kebab Rull'],
+  [/^(?:k\.?\s*tall|kebab tallerken)(?=$|[\s,.×+]|x\s*\d)/iu, 'Kebab Tallerken'],
+  [/^(?:stor kebab\s*pizza|kebab\s*pizza\s*(?:st\.?|stor))(?=$|[\s,.×+]|x\s*\d)/iu, 'Stor Kebabpizza'],
+  [/^kebab\s*pizza(?=$|[\s,.×+]|x\s*\d)/iu, 'Kebabpizza'],
+  [/^(?:st\.?\s*pep|stor pepperoni)(?=$|[\s,.×+]|x\s*\d)/iu, 'Stor Pepperoni']
+];
 let activePointer = null;
-let quantity = 1;
+let pending = false;
 let editing = null;
-
+let latest = null;
+let demoCart = false;
+let config = {};
 try {
-  const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-  for (const key of Object.keys(products)) {
-    if (Array.isArray(saved?.[key])) samples[key] = saved[key];
+  const settings = new URLSearchParams(location.hash.slice(1));
+  if (settings.has('endpoint') || settings.has('token')) {
+    const url = new URL(settings.get('endpoint'));
+    const token = settings.get('token');
+    if (url.protocol !== 'https:' || url.username || url.password || !token) throw Error('Invalid connection');
+    config = { endpoint: url.href, token };
+    sessionStorage.setItem('bestilling-recognition', JSON.stringify(config));
+  } else {
+    config = JSON.parse(sessionStorage.getItem('bestilling-recognition') || '{}');
   }
 } catch {
-  status.textContent = 'Lagrede eksempler kunne ikke leses.';
+  status.textContent = 'Tilkoblingen kunne ikke lagres eller leses.';
+} finally {
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+}
+
+function parseOrder(text) {
+  const clean = text.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const prefix = clean.match(/^(\d{1,2})\s*[x×]\s*/iu);
+  const productText = prefix ? clean.slice(prefix[0].length) : clean;
+  const product = aliases.find(([pattern]) => pattern.test(productText));
+  if (!product) return null;
+  let tail = productText.replace(product[0], '').trim();
+  const saucePattern = /^(medium(?:\s+(?:sos|saus))?|med\.?|sterk(?:\s+saus)?|acı|aci)(?=$|[\s,×]|x\s*\d)/iu;
+  const sauce = tail.match(saucePattern);
+  if (sauce) tail = tail.slice(sauce[0].length).trim();
+  const suffix = tail.match(/^[x×]\s*(\d{1,2})(?!\d)(?=$|[\s,;+])/iu);
+  if (prefix && suffix && Number(prefix[1]) !== Number(suffix[1])) return null;
+  const quantity = Number(prefix?.[1] || suffix?.[1] || 1);
+  if (quantity < 1) return null;
+  if (suffix) tail = tail.slice(suffix[0].length).trim();
+  if (tail && !/^(?:[,;+]|(?:\d{1,2}\s*[x×]\s*)?(?:uten\b|ingen\b|ekstra\b)|(?:soğansız|sogansiz)\b)/iu.test(tail)) return null;
+  const notes = [];
+  if (sauce) notes.push(/^med/iu.test(sauce[0]) ? 'Medium sos' : 'Sterk saus');
+  for (const raw of tail.split(/[,;+]/u).map(value => value.trim()).filter(Boolean)) {
+    const note = raw.match(/^(?:(\d{1,2})\s*[x×]\s*)?(uten\s+løk|soğansız|sogansiz)(?:\s*[x×]\s*(\d{1,2}))?$/iu);
+    if (note) {
+      if (note[1] && note[3] && Number(note[1]) !== Number(note[3])) return null;
+      const count = Number(note[1] || note[3] || quantity);
+      if (count < 1 || count > quantity) return null;
+      if (notes.some(value => /uten løk$/u.test(value))) return null;
+      notes.push((count < quantity ? count + ' ' : '') + 'uten løk');
+    } else {
+      if (/[x×]\s*\d|^\d|\b(?:rull|pizza|pepperoni|tallerken)\b/iu.test(raw)) return null;
+      notes.push(raw.replace(/^ingen\s+/iu, 'uten '));
+    }
+  }
+  return { name: product[1], quantity, notes };
 }
 
 function draw() {
   const width = pad.clientWidth;
   const height = pad.clientHeight;
-  const scale = window.devicePixelRatio || 1;
-  if (pad.width !== Math.round(width * scale) || pad.height !== Math.round(height * scale)) {
-    pad.width = Math.round(width * scale);
-    pad.height = Math.round(height * scale);
+  const ratio = window.devicePixelRatio || 1;
+  const pixelWidth = Math.round(width * ratio);
+  const pixelHeight = Math.round(height * ratio);
+  if (pad.width !== pixelWidth || pad.height !== pixelHeight) {
+    pad.width = pixelWidth;
+    pad.height = pixelHeight;
   }
-  context.setTransform(scale, 0, 0, scale, 0, 0);
-  context.clearRect(0, 0, width, height);
-  context.strokeStyle = context.fillStyle = '#2058bc';
-  context.lineWidth = 2.5;
-  context.lineCap = context.lineJoin = 'round';
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  ctx.strokeStyle = ctx.fillStyle = '#2058bc';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = ctx.lineCap = 'round';
   for (const stroke of strokes) {
-    context.beginPath();
-    if (stroke.length === 1) {
-      context.arc(stroke[0][0] * width, stroke[0][1] * height, 1.25, 0, 2 * Math.PI);
-      context.fill();
+    const [start, ...rest] = stroke;
+    ctx.beginPath();
+    if (!rest.length) {
+      ctx.arc(start.x * width, start.y * height, 1.25, 0, 2 * Math.PI);
+      ctx.fill();
       continue;
     }
-    context.moveTo(stroke[0][0] * width, stroke[0][1] * height);
-    for (const [x, y] of stroke.slice(1)) context.lineTo(x * width, y * height);
-    context.stroke();
+    ctx.moveTo(start.x * width, start.y * height);
+    for (const point of rest) ctx.lineTo(point.x * width, point.y * height);
+    ctx.stroke();
   }
 }
 
 function point(event) {
   const rect = pad.getBoundingClientRect();
-  return [
-    Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
-    Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
-  ];
+  const inside = value => Math.max(0, Math.min(1, value));
+  return { x: inside((event.clientX - rect.left) / rect.width), y: inside((event.clientY - rect.top) / rect.height), t: Math.round(event.timeStamp) };
 }
 
 pad.addEventListener('pointerdown', event => {
-  if (!event.isPrimary || event.button !== 0 || activePointer !== null) return;
+  if (pending || activePointer !== null || !event.isPrimary || event.button !== 0) return;
   event.preventDefault();
   activePointer = event.pointerId;
-  pad.setPointerCapture(activePointer);
+  pad.setPointerCapture(event.pointerId);
   strokes.push([point(event)]);
-  status.textContent = '';
   draw();
 });
 pad.addEventListener('pointermove', event => {
@@ -171,231 +183,161 @@ pad.addEventListener('pointermove', event => {
 });
 for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
   pad.addEventListener(type, event => {
-    if (event.pointerId === activePointer) activePointer = null;
+    if (event.pointerId !== activePointer) return;
+    activePointer = null;
+    if (type === 'pointercancel') strokes.pop();
+    draw();
   });
 }
 new ResizeObserver(draw).observe(pad);
+function clearInk() { strokes.length = 0; activePointer = null; draw(); }
 
-function clearInk() {
-  strokes.length = 0;
-  activePointer = null;
-  status.textContent = '';
-  draw();
-}
-
-element('clear').onclick = clearInk;
-element('undo').onclick = () => {
-  if (activePointer !== null) return;
-  strokes.pop();
-  status.textContent = '';
-  draw();
-};
-
-function inkSignature(paths, width, height) {
-  const points = paths.flat();
-  if (points.length < 2) return null;
-  const xs = points.map(([x]) => x * width);
-  const ys = points.map(([, y]) => y * height);
-  const left = Math.min(...xs);
-  const top = Math.min(...ys);
-  const spanX = Math.max(...xs) - left;
-  const spanY = Math.max(...ys) - top;
-  const scale = Math.max(spanX, spanY);
-  if (scale < 12) return null;
-  const cells = new Set();
-  for (const path of paths) {
-    let previous;
-    for (const [x, y] of path) {
-      const current = [(x * width - left) * 23 / scale, (y * height - top) * 23 / scale];
-      const start = previous || current;
-      const steps = Math.max(1, Math.ceil(Math.hypot(current[0] - start[0], current[1] - start[1])));
-      for (let step = 0; step <= steps; step++) {
-        const px = Math.round(start[0] + (current[0] - start[0]) * step / steps);
-        const py = Math.round(start[1] + (current[1] - start[1]) * step / steps);
-        cells.add(px + 24 * py);
-      }
-      previous = current;
-    }
+function receiptItem(row, controls) {
+  const item = document.createElement('li');
+  const copy = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = row.quantity + '× ' + row.name;
+  copy.append(title);
+  if (row.notes.length) {
+    const note = document.createElement('small');
+    note.textContent = row.notes.join(' · ');
+    copy.append(note);
   }
-  return [...cells];
-}
-
-function inkDistance(first, second) {
-  function averageNearest(source, target) {
-    let sum = 0;
-    for (const cell of source) {
-      const x = cell % 24;
-      const y = Math.floor(cell / 24);
-      let nearest = Infinity;
-      for (const other of target) {
-        const dx = x - other % 24;
-        const dy = y - Math.floor(other / 24);
-        nearest = Math.min(nearest, dx * dx + dy * dy);
-        if (nearest === 0) break;
-      }
-      sum += Math.sqrt(nearest);
-    }
-    return sum / source.length;
-  }
-  return (averageNearest(first, second) + averageNearest(second, first)) / 2;
-}
-
-element('teach').onclick = () => {
-  const ink = inkSignature(strokes, pad.clientWidth, pad.clientHeight);
-  const key = product.value;
-  if (!ink || !key) {
-    status.textContent = 'Skriv en forkortelse og velg varen først.';
-    return;
-  }
-  samples[key] = [...(samples[key] || []), ink].slice(-8);
-  clearInk();
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(samples));
-    status.textContent = 'Eksempel lagret for ' + products[key] + '.';
-  } catch {
-    status.textContent = 'Eksempelet kan brukes til du lukker siden.';
-  }
-};
-
-element('recognize').onclick = () => {
-  const ink = inkSignature(strokes, pad.clientWidth, pad.clientHeight);
-  if (!ink) {
-    status.textContent = 'Skriv en forkortelse i feltet først.';
-    return;
-  }
-  const ranked = Object.entries(samples).map(([key, examples]) => ({
-    key,
-    score: Math.min(...examples.filter(example => Array.isArray(example) && example.length).map(example => inkDistance(ink, example)))
-  })).filter(entry => Number.isFinite(entry.score)).sort((a, b) => a.score - b.score);
-  const [best, second] = ranked;
-  if (!best) {
-    status.textContent = 'Velg varen og trykk på «Lær denne håndskriften».';
-    return;
-  }
-  if (best.score > 2.2 || (second && second.score - best.score < 0.45)) {
-    status.textContent = 'Usikker håndskrift. Velg varen fra listen.';
-    return;
-  }
-  product.value = best.key;
-  const name = products[best.key];
-  const wasEditing = editing !== null;
-  saveLine();
-  status.textContent = wasEditing ? 'Endring lagret: ' + name + '.' : 'Lagt til: ' + name + '.';
-};
-
-function parseOrder(text) {
-  const clean = text.normalize('NFKC').toLocaleLowerCase('nb').replace(/\s+/g, ' ').trim();
-  const aliases = [
-    [/^(?:k\.?\s*rull|kebab rull|kr)(?=\s|[,x×]|$)/, 'roll'],
-    [/^(?:k\.?\s*tall|kebab tallerken)(?=\s|[,x×]|$)/, 'plate'],
-    [/^(?:st\.?\s*pep|stor pepperoni)(?=\s|[,x×]|$)/, 'pizza']
-  ];
-  const entry = aliases.find(([pattern]) => pattern.test(clean));
-  if (!entry) return null;
-  const tail = clean.replace(entry[0], '').trim();
-  const match = tail.match(/^(?:(med(?:ium)?(?:\s+(?:sos|saus))?|sterk(?:\s+saus)?|acı|aci)\b\s*)?(?:[x×]\s*(\d{1,2})(?!\d))?(?:\s*,?\s*(?:(\d{1,2})\s*[x×]\s*)?(?:uten\s+løk|soğansız|sogansiz))?$/u);
-  if (!match) return null;
-  const quantity = Number(match[2] || 1);
-  const onionMentioned = /(?:uten\s+løk|soğansız|sogansiz)$/u.test(tail);
-  const noOnion = onionMentioned ? Number(match[3] || quantity) : 0;
-  if (quantity < 1 || (onionMentioned && noOnion < 1) || noOnion > quantity) return null;
-  return { key: entry[1], quantity, sauce: match[1]?.startsWith('med') ? 'medium' : match[1] ? 'hot' : '', noOnion };
-}
-
-element('order-ok').onclick = () => {
-  const feedback = element('order-status');
-  if (editing) {
-    feedback.textContent = 'Lagre eller avbryt varelinjen du endrer først.';
-    return;
-  }
-  const row = parseOrder(orderText.value);
-  if (!row) {
-    feedback.textContent = 'Kunne ikke lese bestillingen. Kontroller vare, antall og merknad.';
-    return;
-  }
-  rows.push(row);
-  orderText.value = '';
-  renderReceipt();
-  feedback.textContent = 'Lagt til: ' + products[row.key] + '.';
-};
-
-function refreshControls() {
-  const selectedOnions = Math.min(Number(onions.value || 0), quantity);
-  onions.replaceChildren(...Array.from({ length: quantity + 1 }, (_, count) => {
-    const option = document.createElement('option');
-    option.value = String(count);
-    option.textContent = String(count);
-    return option;
-  }));
-  onions.value = String(selectedOnions);
-  element('quantity').value = String(quantity);
-  element('minus').disabled = quantity <= 1;
-  element('plus').disabled = quantity >= 99;
-  element('add').disabled = !product.value;
-  element('add').textContent = editing ? 'Lagre endring' : 'Legg til';
-  element('cancel').hidden = !editing;
-  element('print').disabled = rows.length === 0 || editing !== null;
-}
-
-function finishEdit() {
-  editing = null;
-  product.value = '';
-  sauce.value = '';
-  onions.value = '0';
-  quantity = 1;
-  clearInk();
-  renderReceipt();
-}
-
-function renderReceipt() {
-  element('empty').hidden = rows.length > 0;
-  element('lines').replaceChildren(...rows.map(row => {
-    const item = document.createElement('li');
-    item.className = 'receipt-row';
-    const text = document.createElement('span');
-    const options = [];
-    if (row.sauce === 'medium') options.push('Medium sos');
-    if (row.sauce === 'hot') options.push('sterk saus');
-    if (row.noOnion) options.push(row.noOnion + ' uten løk');
-    text.textContent = products[row.key] + ' x ' + row.quantity + ' Stk' + (options.length ? ' ' + options.join(', ') : '');
-    const editButton = document.createElement('button');
-    editButton.textContent = 'Endre';
-    editButton.onclick = () => {
+  item.append(copy);
+  if (controls && !demoCart) {
+    const edit = document.createElement('button');
+    edit.textContent = 'Endre';
+    edit.onclick = () => {
+      if (pending) return;
+      if (byId('order-dialog').open) byId('order-dialog').close();
       editing = row;
-      product.value = row.key;
-      quantity = row.quantity;
-      sauce.value = row.sauce;
-      refreshControls();
-      onions.value = String(row.noOnion);
-      product.scrollIntoView({ block: 'nearest' });
+      clearInk();
+      status.textContent = 'Skriv hele varelinjen på nytt og trykk OK.';
     };
-    const remove = document.createElement('button');
-    remove.textContent = 'Fjern';
-    remove.onclick = () => {
-      rows.splice(rows.indexOf(row), 1);
-      if (editing === row) finishEdit();
-      else renderReceipt();
-    };
-    item.append(text, editButton, remove);
-    return item;
-  }));
-  refreshControls();
+    item.append(edit);
+    if (controls === 'all') {
+      const remove = document.createElement('button');
+      remove.textContent = 'Fjern';
+      remove.onclick = () => {
+        if (pending) return;
+        cart.splice(cart.indexOf(row), 1);
+        if (editing === row) editing = null;
+        render();
+      };
+      item.append(remove);
+    }
+  }
+  if (controls === 'preview' && row === latest) item.className = 'latest';
+  return item;
 }
 
-product.onchange = refreshControls;
-element('minus').onclick = () => { quantity--; refreshControls(); };
-element('plus').onclick = () => { quantity++; refreshControls(); };
-element('cancel').onclick = finishEdit;
-function saveLine() {
-  if (!product.value) return;
-  const row = { key: product.value, quantity, sauce: sauce.value, noOnion: Number(onions.value || 0) };
-  if (editing) Object.assign(editing, row);
-  else rows.push(row);
-  finishEdit();
+function render() {
+  const ordered = [...cart].reverse();
+  byId('visible-lines').replaceChildren(...ordered.slice(0, 2).map(row => receiptItem(row, 'preview')));
+  byId('all-lines').replaceChildren(...ordered.map(row => receiptItem(row, 'all')));
+  byId('print-lines').replaceChildren(...cart.map(row => receiptItem(row, null)));
+  byId('all').hidden = cart.length === 0;
+  byId('all').textContent = 'Vis alle (' + cart.length + ')';
+  byId('count').textContent = cart.reduce((sum, row) => sum + row.quantity, 0) + ' stk';
+  byId('print').disabled = pending || demoCart || cart.length === 0;
+  byId('demo').disabled = pending || (cart.length > 0 && !demoCart);
+  byId('demo').textContent = demoCart ? 'Fjern eksempler' : 'Vis eksempelbestilling';
 }
-element('add').onclick = saveLine;
-element('print').onclick = () => window.print();
-renderReceipt();
+
+byId('all').onclick = () => byId('order-dialog').showModal();
+byId('setup').onclick = () => {
+  byId('connection').textContent = config.endpoint
+    ? 'Tilkobling lagret for denne fanen. Kun håndskriften sendes når du trykker OK.'
+    : 'Åpne den private tilkoblingslenken for å aktivere MyScript.';
+  byId('setup-dialog').showModal();
+};
+byId('demo').onclick = () => {
+  if (pending || (cart.length && !demoCart)) return;
+  if (demoCart) {
+    cart.length = 0;
+    latest = null;
+    editing = null;
+    demoCart = false;
+    status.textContent = 'Skriv med penn eller finger.';
+  } else {
+    cart.push(parseOrder('K. rull med x 2, 1x uten løk'));
+    cart.push(parseOrder('kebab pizza st, ingen salat + chips på toppen'));
+    latest = cart.at(-1);
+    demoCart = true;
+    status.textContent = 'Eksempelbestilling. Ingen håndskrift er sendt.';
+  }
+  byId('setup-dialog').close();
+  render();
+};
+byId('undo').onclick = () => { if (!pending && activePointer === null) { strokes.pop(); draw(); } };
+byId('clear').onclick = () => {
+  if (pending) return;
+  editing = null;
+  clearInk();
+  status.textContent = 'Skriv med penn eller finger.';
+};
+byId('ok').onclick = async () => {
+  if (pending || activePointer !== null) return;
+  if (!strokes.length) {
+    status.textContent = 'Skriv bestillingen i feltet først.';
+    return;
+  }
+  if (demoCart) {
+    status.textContent = 'Fjern eksemplene i Tilkobling før du legger til en vare.';
+    return;
+  }
+  if (!config.endpoint) {
+    status.textContent = 'MyScript må kobles til. Håndskriften er beholdt.';
+    return;
+  }
+  pending = true;
+  byId('ok').disabled = true;
+  render();
+  status.textContent = 'Leser håndskriften …';
+  try {
+    const width = pad.clientWidth;
+    const height = pad.clientHeight;
+    const t0 = strokes[0][0].t;
+    const ink = strokes.map(stroke => ({
+      x: stroke.map(p => Math.round(p.x * width)),
+      y: stroke.map(p => Math.round(p.y * height)),
+      t: stroke.map(p => p.t - t0)
+    }));
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + config.token },
+      body: JSON.stringify({ strokes: ink }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (response.status === 401) throw Error('AUTH');
+    if (!response.ok) throw Error('UPSTREAM');
+    const result = await response.json();
+    const transcript = typeof result.text === 'string' ? result.text.trim().slice(0, 500) : '';
+    const row = parseOrder(transcript);
+    if (!row) {
+      status.textContent = transcript
+        ? 'Sjekk håndskriften. Lest: ' + transcript
+        : 'Ingen tekst gjenkjent. Skriv litt tydeligere og prøv igjen.';
+      return;
+    }
+    if (editing) cart.splice(cart.indexOf(editing), 1);
+    cart.push(row);
+    editing = null;
+    latest = row;
+    clearInk();
+    status.textContent = 'Lagt til: ' + row.name + '.';
+  } catch (error) {
+    status.textContent = error.message === 'AUTH'
+      ? 'Tilkoblingen ble avvist. Åpne den private tilkoblingslenken på nytt.'
+      : 'Kunne ikke lese nå. Håndskriften er beholdt.';
+  } finally {
+    pending = false;
+    byId('ok').disabled = false;
+    render();
+  }
+};
+byId('print').onclick = () => window.print();
+render();
 </script>
 </body>
 </html>
