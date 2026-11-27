@@ -505,32 +505,54 @@ function parseLine(source) {
   return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
 }
 
-function searchMenuLine(source) {
-  if (source.includes('?') || source.length > 120) return null;
+function rankMenuHints(source, allowTypos = false) {
+  if (source.includes('?') || source.length > 120) return [];
   const clean = normalize(source);
   const prefix = clean.match(/^(?:\d{1,2}\s*[x×]\s*)?(?:(?:st\.?|stor|medium)\s+)?/u)[0];
   const remainder = clean.slice(prefix.length);
-  if (productMatches(remainder).length > 1) return null;
   const boundary = remainder.search(/[,;+−]|-(?=\s*\p{L})|\s+(?=(?:\d{1,2}\s*[x×]|[x×]\s*\d|st\.?\b|stor\b|medium\b|med\b|mild\b|sterk\b|uten\b|ingen\b|ekstra\b))/u);
   const head = boundary < 0 ? remainder : remainder.slice(0,boundary);
   const tail = boundary < 0 ? '' : remainder.slice(boundary).trim();
-  if (!/^[\p{L}.\s]+$/u.test(head)) return null;
+  if (!/^[\p{L}.\s]+$/u.test(head)) return [];
   const hints = fold(head).match(/[a-z]+/g) || [];
-  if (hints.length < 2 || hints.length > 5 || hints.some(hint=>hint.length < 3)) return null;
+  if (hints.length < 2 || hints.length > 5 || !hints.some(hint=>hint.length>=3)) return [];
   const matches = new Map();
   for (const product of catalog.products) {
     const words = menuWords(nameOf(product));
-    const used = new Set();
-    if (!hints.map((hint,index)=>index).sort((a,b)=>hints[b].length-hints[a].length).every(index=>{
-      const word = words.find(token=>!used.has(token) && token.startsWith(hints[index]));
-      if (!word) return false;
-      used.add(word);
-      return true;
-    })) continue;
-    const row = parseLine([prefix+product.name,tail].filter(Boolean).join(' '));
-    if (row) matches.set(row.name,row);
+    function scoreHint(position, used) {
+      if (position === hints.length) return 0;
+      const hint = hints[position];
+      const anchored = position === 0 && hint.length === 1;
+      let best = Infinity;
+      for (const [index,word] of words.entries()) {
+        if (used.has(index) || (anchored && index!==0)) continue;
+        let cost = Infinity;
+        if (word.startsWith(hint)) cost = 0;
+        else if (allowTypos && position===0 && index===0 && hint==='ft' && word.startsWith('h')) cost=1;
+        else if (allowTypos && hint.length>=3 && word.length>=3) {
+          const distance = Math.min(...[hint.length-1,hint.length,hint.length+1]
+            .filter(length=>length<=word.length)
+            .map(length=>spellingDistance(hint,word.slice(0,length))));
+          if (distance<=1) cost=distance;
+        }
+        if (!Number.isFinite(cost)) continue;
+        best=Math.min(best,cost+scoreHint(position+1,new Set([...used,index])));
+      }
+      return best;
+    }
+    const score = scoreHint(0,new Set());
+    if (!Number.isFinite(score) || score>2) continue;
+    const replacement = [prefix+product.name,tail].filter(Boolean).join(' ');
+    const row = parseLine(replacement);
+    if (row && (!matches.has(row.name) || matches.get(row.name).score>score)) {
+      matches.set(row.name,{row,replacement,score});
+    }
   }
-  return matches.size===1 ? matches.values().next().value : null;
+  return [...matches.values()].sort((a,b)=>a.score-b.score);
+}
+function searchMenuLine(source) {
+  const matches=rankMenuHints(source);
+  return matches.length===1 ? matches[0].row : null;
 }
 
 function spellingDistance(a,b) {
@@ -575,6 +597,8 @@ function similarOrders(source) {
       return {row:parseLine(replacement),replacement};
     }).filter(item=>item.row);
   }
+  const hinted = rankMenuHints(clean,true);
+  if (hinted.length) return hinted.slice(0,4);
   for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
     const end = word.index+word[0].length;
     const head = remainder.slice(0,end);
