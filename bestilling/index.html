@@ -10,7 +10,12 @@
 body{margin:0;background:#edf3f0;color:#142b23;font:16px system-ui,sans-serif}
 main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
 h1,h2,p{margin:0}h1{font-size:20px}h2{font-size:16px}
-textarea{width:100%;height:100%;min-height:0;resize:none;border:1px solid #879d91;border-radius:10px;padding:12px;background:white;color:inherit;font:20px system-ui,sans-serif}
+.notebook{position:relative;min-height:0;border:1px solid #2e443e;border-radius:12px;overflow:hidden;background:#142b25}
+textarea{display:block;width:100%;height:100%;min-height:0;resize:none;border:0;border-radius:12px;padding:12px 58px 52px 12px;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-attachment:local;background-origin:content-box;color:#f2faf4;caret-color:#a8eac0;font:20px/34px system-ui,sans-serif;scrollbar-width:thin}
+textarea::placeholder{color:#b4c7bc}
+#next-line{position:absolute;right:8px;bottom:8px;width:44px;padding:0;background:#d8f3e1;color:#143c2b}
+footer .print-icon{margin-left:auto;min-width:48px;display:grid;place-items:center;background:#145039;color:#fff}
+.icon-svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav,footer,.heading,li{display:flex;align-items:center;gap:6px}
 .heading{justify-content:space-between}
 button{min-height:44px;padding:6px 12px;border:1px solid #879d91;border-radius:8px;background:white;color:inherit;font:inherit;font-weight:650;cursor:pointer}
@@ -37,7 +42,10 @@ footer{padding-bottom:env(safe-area-inset-bottom)}
 <body>
 <main>
 <h1><label for="order">Manuell bestilling</label></h1>
-<textarea id="order" inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen: k rull med x 2, 1x -løk"></textarea>
+<div class="notebook">
+<textarea id="order" inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
+<button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
+</div>
 <nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
 <section id="cart">
 <div class="heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
@@ -45,7 +53,7 @@ footer{padding-bottom:env(safe-area-inset-bottom)}
 <p id="status" role="status" hidden></p>
 <ul id="latest"></ul>
 </section>
-<footer><span id="total">0 stk</span><button id="print" class="primary" type="button" disabled>Skriv ut</button></footer>
+<footer><span id="total">0 stk</span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
 <dialog id="basket"><h2>Alle varer</h2><ul id="basket-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
 <section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
@@ -135,7 +143,7 @@ function parseLine(source) {
 
 function displaySuggestion() {
   const text = order.value.trim();
-  const candidate = text && !text.includes('\n') ? parseLine(text) : null;
+  const candidate = text ? parseLine(text.split(/\r?\n/u).at(-1)) : null;
   const suggestion = byId('suggestion');
   suggestion.hidden = !candidate;
   suggestion.textContent = candidate ? 'Forslag: ' + candidate.quantity + '× ' + candidate.name + (candidate.notes.length ? ' · ' + candidate.notes.join(' · ') : '') : '';
@@ -149,10 +157,23 @@ function showStatus(message) {
 order.addEventListener('compositionstart', () => { composing = true; });
 order.addEventListener('compositionend', () => { composing = false; displaySuggestion(); });
 order.addEventListener('input', displaySuggestion);
+const nextLine = byId('next-line');
+nextLine.onclick = () => {
+  if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
+  const text = order.value.trimEnd();
+  const start = text ? text.length + 1 : 0;
+  const extraLines = Math.max(1, Math.floor((order.clientHeight - 100) / 34));
+  order.value = text ? text + '\n'.repeat(extraLines + 1) : '';
+  order.focus({preventScroll:true});
+  order.setSelectionRange(start, start);
+  order.scrollTop = order.scrollHeight;
+  displaySuggestion();
+};
 
 function resetEditor() {
   editing = null;
   order.value = '';
+  order.scrollTop = 0;
   byId('ok').textContent = 'OK';
   displaySuggestion();
 }
@@ -191,6 +212,7 @@ function makeItem(row, actionable) {
       if (byId('basket').open) byId('basket').close();
       editing = row;
       order.value = row.source;
+      order.scrollTop = 0;
       byId('ok').textContent = 'Lagre';
       displaySuggestion();
       order.focus({preventScroll:true});
