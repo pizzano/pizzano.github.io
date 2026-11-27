@@ -511,7 +511,8 @@ function rankMenuHints(source, allowTypos = false) {
   const prefix = clean.match(/^(?:\d{1,2}\s*[x×]\s*)?(?:(?:st\.?|stor|medium)\s+)?/u)[0];
   const remainder = clean.slice(prefix.length);
   const boundary = remainder.search(/[,;+−]|-(?=\s*\p{L})|\s+(?=(?:\d{1,2}\s*[x×]|[x×]\s*\d|st\.?\b|stor\b|medium\b|med\b|mild\b|sterk\b|uten\b|ingen\b|ekstra\b))/u);
-  const head = boundary < 0 ? remainder : remainder.slice(0,boundary);
+  const rawHead = boundary < 0 ? remainder : remainder.slice(0,boundary);
+  const head = allowTypos ? rawHead.replace(/!(?=[.\s]|$)/gu,'') : rawHead;
   const tail = boundary < 0 ? '' : remainder.slice(boundary).trim();
   if (!/^[\p{L}.\s]+$/u.test(head)) return [];
   const hints = fold(head).match(/[a-z]+/g) || [];
@@ -522,13 +523,14 @@ function rankMenuHints(source, allowTypos = false) {
     function scoreHint(position, used) {
       if (position === hints.length) return 0;
       const hint = hints[position];
-      const anchored = position === 0 && hint.length === 1;
+      const anchored = hint.length === 1;
       let best = Infinity;
       for (const [index,word] of words.entries()) {
         if (used.has(index) || (anchored && index!==0)) continue;
         let cost = Infinity;
         if (word.startsWith(hint)) cost = 0;
-        else if (allowTypos && position===0 && index===0 && hint==='ft' && word.startsWith('h')) cost=1;
+        else if (allowTypos && index===0 && /^(?:ft|it|lt)$/u.test(hint) && word.startsWith('h')) cost=1;
+        else if (allowTypos && /^(?:toll|toal|toall)$/u.test(hint) && word==='tallerken') cost=1;
         else if (allowTypos && hint.length>=3 && word.length>=3) {
           const distance = Math.min(...[hint.length-1,hint.length,hint.length+1]
             .filter(length=>length<=word.length)
