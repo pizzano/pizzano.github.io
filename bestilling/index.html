@@ -297,10 +297,93 @@ function resetEditor() {
   displaySuggestion();
 }
 byId('clear').onclick = resetEditor;
+function inkSignature(paths, width, height) {
+  const points = paths.flat();
+  if (points.length < 2) return null;
+  const xs = points.map(([x]) => x * width);
+  const ys = points.map(([, y]) => y * height);
+  const left = Math.min(...xs);
+  const top = Math.min(...ys);
+  const spanX = Math.max(...xs) - left;
+  const spanY = Math.max(...ys) - top;
+  const scale = Math.max(spanX, spanY);
+  if (scale < 12) return null;
+  const cells = new Set();
+  for (const path of paths) {
+    let previous;
+    for (const [x, y] of path) {
+      const current = [(x * width - left) * 23 / scale, (y * height - top) * 23 / scale];
+      const start = previous || current;
+      const steps = Math.max(1, Math.ceil(Math.hypot(current[0] - start[0], current[1] - start[1])));
+      for (let step = 0; step <= steps; step++) {
+        const px = Math.round(start[0] + (current[0] - start[0]) * step / steps);
+        const py = Math.round(start[1] + (current[1] - start[1]) * step / steps);
+        cells.add(px + 24 * py);
+      }
+      previous = current;
+    }
+  }
+  return [...cells];
+}
+
+function inkDistance(first, second) {
+  function averageNearest(source, target) {
+    let sum = 0;
+    for (const cell of source) {
+      const x = cell % 24;
+      const y = Math.floor(cell / 24);
+      let nearest = Infinity;
+      for (const other of target) {
+        const dx = x - other % 24;
+        const dy = y - Math.floor(other / 24);
+        nearest = Math.min(nearest, dx * dx + dy * dy);
+        if (nearest === 0) break;
+      }
+      sum += Math.sqrt(nearest);
+    }
+    return sum / source.length;
+  }
+  return (averageNearest(first, second) + averageNearest(second, first)) / 2;
+}
+
+
+function storedExamples(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '{}');
+    return value && typeof value === 'object' ? value : {};
+  } catch { return {}; }
+}
+
+function recognizeSavedProduct(paths) {
+  const width = ink.clientWidth;
+  if (!width) return null;
+  const signature = inkSignature(paths.map(path => path.map(({x,y}) => [x,y])),width,1);
+  if (!signature) return null;
+  const scores = new Map();
+  const legacyNames = {roll:'Kebabrull',plate:'Kebabtallerken',pizza:'Stor Pepperoni'};
+  const legacy = storedExamples('bestilling-handwriting-v1');
+  const modern = storedExamples('bestilling-ink-v2').product || {};
+  function compare(product, examples, limit) {
+    if (!product || !Array.isArray(examples)) return;
+    for (const sample of examples.slice(-8)) {
+      if (!Array.isArray(sample) || !sample.length || sample.length > 576 ||
+          !sample.every(cell => Number.isInteger(cell) && cell >= 0 && cell < 576)) continue;
+      const score = inkDistance(signature, sample);
+      if (!scores.has(product) || score < scores.get(product).score) scores.set(product,{product,score,limit});
+    }
+  }
+  for (const [key,name] of Object.entries(legacyNames)) compare(parseLine(name)?.name,legacy[key],2.2);
+  for (const product of catalog.products) compare(nameOf(product),modern[product.id],1.8);
+  const [best,second] = [...scores.values()].sort((a,b) => a.score-b.score);
+  if (!best || best.score > best.limit || (second && second.score-best.score < .45)) return null;
+  return {source:best.product,name:best.product,quantity:1,notes:[]};
+}
+
 byId('ok').onclick = () => {
   if (!textMode) {
     if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
-    const row = { name:'Håndskrevet bestilling', quantity:0, notes:[], ink:strokes, image:inkImage(strokes) };
+    const row = recognizeSavedProduct(strokes);
+    if (!row) { showStatus('Fant ingen sikker vare. Håndskriften er beholdt.'); return; }
     if (editing) cart.splice(cart.indexOf(editing),1,row);
     else cart.push(row);
     latest = row;
