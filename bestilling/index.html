@@ -5,396 +5,220 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Manuell bestilling</title>
 <style>
-* { box-sizing: border-box }
-[hidden] { display: none !important }
-body { margin: 0; color: #142b23; background: #edf3f0; font: 16px system-ui,sans-serif }
-main { max-width: 42rem; height: 100dvh; margin: auto; padding: 8px; display: grid; gap: 6px; grid-template-rows: auto minmax(0,1.7fr) auto minmax(0,1fr) auto }
-header, nav, footer, .heading, li, .note-label { display: flex; align-items: center; gap: 6px }
-header, footer, .heading, .note-label { justify-content: space-between }
-h1, h2, p { margin: 0 }
-h1 { font-size: 20px }
-h2 { font-size: 16px }
-button, select { min-height: 36px; padding: 5px 8px; border: 1px solid #879d91; background: white; color: inherit; border-radius: 8px; font: inherit }
-button { cursor: pointer; font-weight: 650 }
-button:disabled { opacity: .55 }
-.primary { background: #145039; color: white; border-color: #145039 }
-#ok, #print { flex: 1; min-height: 44px }
-#pads { min-height: 0; display: grid; gap: 4px 6px; grid-template: minmax(0,1.4fr) repeat(2,minmax(0,1fr)) / repeat(2,minmax(0,1fr)) }
-.pad-field { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 2px; font-size: 13px; font-weight: 650 }
-.pad-field:first-child { grid-column: 1/-1 }
-canvas { display: block; width: 100%; height: 100%; min-height: 0; border: 1px solid #879d91; border-radius: 7px; background: white; touch-action: none; cursor: crosshair }
-.note-label select { min-height: 25px; padding: 0 3px; font-size: 12px }
-#cart { min-height: 0; overflow: hidden; border: 1px solid #c8d7ce; border-radius: 9px; background: white; padding: 6px 8px }
-#status { font-size: 13px; color: #3b574b; margin: 3px 0; overflow-wrap: anywhere }
-#cart button { min-height: 27px; padding: 2px 6px; font-size: 13px }
-ul { list-style: none; padding: 0; margin: 0 }
-li { align-items: flex-start; padding: 4px; overflow-wrap: anywhere }
-li div { flex: 1; min-width: 0 }
-li small { display: block }
-.latest { background: #d7f4e1; border-radius: 6px }
-dialog { width: min(94vw,38rem); max-height: 90dvh; border: 1px solid #879d91; border-radius: 10px; color: inherit }
-dialog form, #choices { display: grid; gap: 8px; margin-top: 8px }
-#choices label { display: grid; gap: 3px }
-#sheet { display: none }
-@media print {
- main, dialog { display: none !important }
- body { background: white; color: black }
- #sheet { display: block }
- #sheet li { break-inside: avoid }
-}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#edf3f0;color:#142b23;font:16px system-ui,sans-serif}
+main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
+h1,h2,p{margin:0}h1{font-size:20px}h2{font-size:16px}
+textarea{width:100%;height:100%;min-height:0;resize:none;border:1px solid #879d91;border-radius:10px;padding:12px;background:white;color:inherit;font:20px system-ui,sans-serif}
+nav,footer,.heading,li{display:flex;align-items:center;gap:6px}
+.heading{justify-content:space-between}
+button{min-height:44px;padding:6px 12px;border:1px solid #879d91;border-radius:8px;background:white;color:inherit;font:inherit;font-weight:650;cursor:pointer}
+button:disabled{opacity:.55}
+.primary{background:#145039;border-color:#145039;color:white;flex:1}
+#cart{min-height:0;overflow:hidden;padding:6px 8px;border:1px solid #c8d7ce;border-radius:9px;background:white}
+#status,#suggestion{font-size:13px;margin:3px 0;overflow-wrap:anywhere}
+#suggestion{color:#245841;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#status{color:#744117}
+ul{list-style:none;padding:0;margin:0}
+li{padding:4px;overflow-wrap:anywhere}
+li>div{flex:1;min-width:0}
+li small{display:block}
+#latest li{background:#d7f4e1;border-radius:7px}
+.icon{font-size:20px;min-width:44px;padding:2px}
+.remove{color:#8c2525}
+#all{font-size:13px;min-height:32px;padding:3px 6px}
+dialog{width:min(94vw,38rem);max-height:82dvh;border:1px solid #879d91;border-radius:10px}
+footer{padding-bottom:env(safe-area-inset-bottom)}
+#sheet{display:none}
+@media print{main,dialog{display:none!important}body{color:black;background:white}#sheet{display:block}#sheet li{break-inside:avoid}}
 </style>
 </head>
 <body>
 <main>
-<header><h1>Manuell bestilling</h1><button id="teach" type="button">Lær skrift</button></header>
-<section id="pads" aria-label="Håndskrift">
-<div class="pad-field"><span id="product-title">Vare · f.eks. k. rull</span><canvas id="product" aria-labelledby="product-title"></canvas></div>
-<div class="pad-field"><span id="quantity-title">Antall · standard 1</span><canvas id="quantity" aria-labelledby="quantity-title"></canvas></div>
-<div class="pad-field"><span id="option-title">Størrelse / saus</span><canvas id="option" aria-labelledby="option-title"></canvas></div>
-<div class="pad-field"><div class="note-label"><span id="note1-title">Merknad 1</span><select id="scope1" aria-label="Antall for merknad 1"></select></div><canvas id="note1" aria-labelledby="note1-title"></canvas></div>
-<div class="pad-field"><div class="note-label"><span id="note2-title">Merknad 2</span><select id="scope2" aria-label="Antall for merknad 2"></select></div><canvas id="note2" aria-labelledby="note2-title"></canvas></div>
-</section>
-<nav aria-label="Handlinger"><button id="undo" type="button">Angre</button><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
+<h1><label for="order">Manuell bestilling</label></h1>
+<textarea id="order" inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen: k rull med x 2, 1x -løk"></textarea>
+<nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
 <section id="cart">
 <div class="heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
-<p id="status" role="status">Skriv med penn eller finger.</p>
-<ul id="visible"></ul>
+<p id="suggestion" aria-live="polite" hidden></p>
+<p id="status" role="status" hidden></p>
+<ul id="latest"></ul>
 </section>
 <footer><span id="total">0 stk</span><button id="print" class="primary" type="button" disabled>Skriv ut</button></footer>
 </main>
-<dialog id="review"><h2 id="review-title">Kontroller varelinjen</h2><p id="review-help"></p><div id="choices"></div>
-<form method="dialog"><button id="save" type="button" class="primary"></button><button>Lukk</button></form></dialog>
 <dialog id="basket"><h2>Alle varer</h2><ul id="basket-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
 <section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
 'use strict';
 const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777930", "name": "2. Capri", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777931", "name": "3. Al Capone", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782816", "name": "4. Parma", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782817", "name": "5. Sjefens favoritt", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782818", "name": "6. Torino", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782819", "name": "7. Mexican Style", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782820", "name": "8. Kebabpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782821", "name": "9. Kyllingpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782822", "name": "10. Alfredo", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782823", "name": "11. Calzone (innbakt pizza)", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782824", "name": "12. Ciao Ciao", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782825", "name": "13. Pollo Marina", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782826", "name": "14. Bianca", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838139", "name": "15. Fantasia", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838148", "name": "16. Diavola", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_18111705", "name": "17. Lag din egen pizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17785864", "name": "Hvitløksdressing", "sizes": ["Standard"]}, {"id": "gf_item_17785865", "name": "Béarnaisesaus", "sizes": ["Standard"]}, {"id": "gf_item_17788540", "name": "Kebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788543", "name": "Kyllingkebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788668", "name": "Kebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788669", "name": "Kyllingkebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788670", "name": "Kebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_17788673", "name": "Kyllingkebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_19766893", "name": "Dobbel burger", "sizes": ["200gr + 200gr"]}, {"id": "gf_item_18046629", "name": "Hamburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17783145", "name": "Cheeseburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786621", "name": "BBQ Bacon Cheese Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786623", "name": "BlåmuggostBurger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786627", "name": "Nachosburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786630", "name": "Parmaburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17996124", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17786657", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17786658", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786659", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17787022", "name": "Biffsnadder", "sizes": ["Standard"]}, {"id": "gf_item_24764648", "name": "Kyllingsnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838227", "name": "Hvitløksnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838277", "name": "Fish and chips", "sizes": ["Standard"]}, {"id": "gf_item_19838316", "name": "Løvstek", "sizes": ["Standard"]}, {"id": "gf_item_19838323", "name": "Kyllingsalat", "sizes": ["Standard"]}, {"id": "gf_item_19838325", "name": "Skinkesalat", "sizes": ["Standard"]}, {"id": "gf_item_17820969", "name": "Vegetarburger", "sizes": ["Standard"]}, {"id": "gf_item_17820970", "name": "Vegetarpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17994559", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17816461", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17816463", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17816465", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17820962", "name": "Barneburger", "sizes": ["Standard"]}, {"id": "gf_item_17820963", "name": "Barnepizza", "sizes": ["Standard"]}, {"id": "gf_item_17994561", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_19838407", "name": "Kyllingnuggets (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786784", "name": "Mineralvann 0,5 l", "sizes": ["Standard"]}, {"id": "gf_item_17786787", "name": "Mineralvann 1,5 l", "sizes": ["Standard"]}], "sizes": ["Medium", "Stor", "Standard", "200gr + 200gr"], "extras": ["Biffkjøtt", "Kyllingkjøtt", "Kebabkjøtt", "Bacon", "Skinke", "Pepperoni", "Parmaskinke", "Jalapeño", "Paprika", "Sopp", "Løk", "Mais", "Ekstra ost", "Chips på toppen"], "sauces": ["Hvitløkssaus", "Béarnaisesaus"]};
 const byId = id => document.getElementById(id);
-const status = byId('status');
+const order = byId('order');
 const cart = [];
-const history = [];
-const fields = ['product', 'quantity', 'option', 'note1', 'note2'];
-const notes = ['Uten løk', 'Ekstra løk', 'Uten salat', 'Ekstra salat', 'Pommes frites på toppen', ...catalog.extras.map(name => 'Ekstra ' + name)];
-const choices = {
-  product: catalog.products.map(p => [p.id, p.name]),
-  quantity: Array.from({ length: 99 }, (_, i) => [String(i + 1), String(i + 1)]),
-  option: [...catalog.sizes, 'Medium sos', 'Mild saus', 'Sterk saus', ...catalog.sauces].map(name => [name, name]),
-  note: [...new Set(notes)].map(name => [name, name])
-};
-const fieldLabels = {product:'Vare',quantity:'Antall',option:'Størrelse / saus',note1:'Merknad 1',note2:'Merknad 2'};
-const group = key => key.startsWith('note') ? 'note' : key;
-const storageKey = 'bestilling-ink-v2';
-let templates = {};
 let editing = null;
-try { templates = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch {}
-for (const id of ['scope1','scope2']) {
-  byId(id).append(new Option('Alle', ''), ...choices.quantity.map(([value]) => new Option(value + ' stk', value)));
-}
-const pads = Object.fromEntries(fields.map(id => {
-  const canvas = byId(id);
-  return [id, {canvas, ctx:canvas.getContext('2d'), strokes:[], pointer:null}];
-}));
+let composing = false;
+const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
+const nameOf = product => product.name.replace(/^\d+\.\s*/u,'');
+const shortcuts = [
+  [/^(?:k\.?\s*rull|kr)(?=$|[\s,+−-]|[x×]\s*\d)/u,'Kebabrull'],
+  [/^k\.?\s*tall\b/u,'Kebabtallerken'],
+  [/^kylling\s*(?:k\.?\s*)?rull\b/u,'Kyllingkebabrull'],
+  [/^kebab\s*pizza\b/u,'Kebabpizza']
+];
+const products = [...catalog.products].sort((a,b) => nameOf(b).length-nameOf(a).length);
 
-function draw(pad) {
-  const {canvas, ctx, strokes} = pad;
-  const w = canvas.clientWidth, h = canvas.clientHeight, ratio = window.devicePixelRatio || 1;
-  if (canvas.width !== Math.round(w * ratio)) canvas.width = Math.round(w * ratio);
-  if (canvas.height !== Math.round(h * ratio)) canvas.height = Math.round(h * ratio);
-  ctx.setTransform(ratio,0,0,ratio,0,0);
-  ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle = ctx.fillStyle = '#215ebe';
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = ctx.lineJoin = 'round';
-  for (const stroke of strokes) {
-    const [first, ...rest] = stroke;
-    ctx.beginPath();
-    if (!rest.length) {
-      ctx.arc(first[0]*w,first[1]*h,1.25,0,2*Math.PI);
-      ctx.fill();
-      continue;
-    }
-    ctx.moveTo(first[0]*w,first[1]*h);
-    for (const [x,y] of rest) ctx.lineTo(x*w,y*h);
-    ctx.stroke();
+function matchProduct(text) {
+  for (const [pattern,name] of shortcuts) {
+    const match = text.match(pattern);
+    const product = products.find(item => normalize(nameOf(item))===normalize(name));
+    if (match && product) return {product, tail:text.slice(match[0].length).trim()};
   }
-}
-for (const pad of Object.values(pads)) {
-  const {canvas, strokes} = pad;
-  const point = event => {
-    const rect = canvas.getBoundingClientRect();
-    const clip = n => Math.max(0,Math.min(1,n));
-    return [clip((event.clientX-rect.left)/rect.width),clip((event.clientY-rect.top)/rect.height)];
-  };
-  canvas.addEventListener('pointerdown', event => {
-    if (pad.pointer !== null || !event.isPrimary || event.button !== 0) return;
-    event.preventDefault();
-    pad.pointer = event.pointerId;
-    canvas.setPointerCapture(event.pointerId);
-    strokes.push([point(event)]);
-    history.push(pad);
-    draw(pad);
-  });
-  canvas.addEventListener('pointermove', event => {
-    if (pad.pointer !== event.pointerId) return;
-    const samples = event.getCoalescedEvents?.();
-    for (const sample of samples?.length ? samples : [event]) strokes.at(-1).push(point(sample));
-    draw(pad);
-  });
-  for (const event of ['pointerup','pointercancel','lostpointercapture']) {
-    canvas.addEventListener(event, pointer => {
-      if (pad.pointer === pointer.pointerId) pad.pointer = null;
-    });
-  }
-  new ResizeObserver(() => draw(pad)).observe(canvas);
-}
-
-function clearInk() {
-  for (const pad of Object.values(pads)) {
-    pad.pointer = null;
-    pad.strokes.length = 0;
-    draw(pad);
-  }
-  history.length = 0;
-  byId('scope1').value = byId('scope2').value = '';
-}
-byId('undo').onclick = () => {
-  const pad = history.at(-1);
-  if (!pad || pad.pointer !== null) return;
-  history.pop();
-  pad.strokes.pop();
-  draw(pad);
-};
-byId('clear').onclick = () => {
-  editing = null;
-  clearInk();
-  status.textContent = 'Skriv med penn eller finger.';
-};
-
-const GRID = 24;
-function signature(pad) {
-  if (!pad.strokes.length) return null;
-  const w = pad.canvas.clientWidth, h = pad.canvas.clientHeight;
-  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-  for (const stroke of pad.strokes) for (const [x,y] of stroke) {
-    left = Math.min(left,x*w); top = Math.min(top,y*h);
-    right = Math.max(right,x*w); bottom = Math.max(bottom,y*h);
-  }
-  const span = Math.max(right-left,bottom-top);
-  if (span < 6) return null;
-  const scale = (GRID - 1) / span;
-  const cells = new Set();
-  for (const stroke of pad.strokes) {
-    let previous = null;
-    for (const [x,y] of stroke) {
-      const a = (x*w-left)*scale, b = (y*h-top)*scale;
-      const [px,py] = previous || [a,b];
-      const steps = Math.max(1,Math.ceil(Math.hypot(a-px,b-py)));
-      for (let i=0; i<=steps; i++) cells.add(Math.round(px+(a-px)*i/steps)+GRID*Math.round(py+(b-py)*i/steps));
-      previous = [a,b];
+  for (const product of products) {
+    for (const key of new Set([normalize(product.name),normalize(nameOf(product))])) {
+      if (!text.startsWith(key) || !/^(?:$|[\s,+−-]|[x×]\s*\d)/u.test(text.slice(key.length))) continue;
+      return {product, tail:text.slice(key.length).trim()};
     }
   }
-  return [...cells];
+  return null;
 }
 
-function distanceMap(cells) {
-  return Array.from({length:GRID*GRID}, (_, cell) => {
-    let nearest = Infinity;
-    for (const other of cells) {
-      const dx = cell%GRID-other%GRID;
-      const dy = Math.floor(cell/GRID)-Math.floor(other/GRID);
-      nearest = Math.min(nearest, dx*dx+dy*dy);
-      if (nearest === 0) break;
-    }
-    return Math.sqrt(nearest);
-  });
-}
-
-function recognize(key, ink) {
-  if (!ink) return '';
-  const map = distanceMap(ink);
-  const mean = (cells, distance) => cells.reduce((sum, cell) => sum + distance[cell],0)/cells.length;
-  const scores = [];
-  for (const [value] of choices[group(key)]) {
-    const examples = templates[group(key)]?.[value];
-    if (!examples?.length) continue;
-    const score = Math.min(...examples.map(sample => {
-      const cells = sample.cells;
-      const reverse = ink.reduce((sum, cell) => sum + sample.map[cell],0)/ink.length;
-      return (mean(cells,map)+reverse)/2;
-    }));
-    scores.push({value, score});
+function parseLine(source) {
+  let text = normalize(source);
+  const firstCount = text.match(/^(\d{1,2})\s*[x×]\s*/u);
+  if (firstCount) text = text.slice(firstCount[0].length);
+  const firstSize = text.match(/^(stor|medium)\s+/u);
+  const match = matchProduct(firstSize ? text.slice(firstSize[0].length) : text);
+  if (!match) return null;
+  const {product} = match;
+  let tail = match.tail;
+  let size = firstSize?.[1] || '';
+  const lastSize = tail.match(/^(st\.?|stor|medium(?!\s+(?:sos|saus)\b))(?=$|[\s,+−-]|[x×]\s*\d)/u);
+  if (lastSize) {
+    const value = lastSize[1].startsWith('st') ? 'stor' : 'medium';
+    if (size && size !== value) return null;
+    size = value;
+    tail = tail.slice(lastSize[0].length).trim();
   }
-  scores.sort((a,b) => a.score-b.score);
-  const [first, second] = scores;
-  if (!first || first.score > 1.8 || (second && second.score-first.score < .45)) return '';
-  if (group(key) === 'note' && ['Uten løk', 'Ekstra løk'].includes(first.value)) {
-    const other = first.value === 'Uten løk' ? 'Ekstra løk' : 'Uten løk';
-    if (!templates.note?.[other]?.length) return '';
+  const menuSize = product.sizes.find(option => normalize(option) === size);
+  if (size && !menuSize) return null;
+  const notes = [];
+  const sauce = tail.match(/^(med(?:ium(?:\s+(?:sos|saus))?)?|sterk(?:\s+saus)?|mild(?:\s+saus)?)(?=$|[\s,+−-]|[x×]\s*\d)/u);
+  if (sauce) {
+    notes.push(sauce[1].startsWith('med') ? 'Medium sos' : sauce[1].startsWith('sterk') ? 'Sterk saus' : 'Mild saus');
+    tail = tail.slice(sauce[0].length).trim();
   }
-  return first.value;
-}
-
-function remember(key,value,cells) {
-  const bucket = templates[group(key)] ??= {};
-  bucket[value] = [...(bucket[value] || []), {cells,map:distanceMap(cells)}].slice(-5);
-}
-function persist() {
-  try {
-    const saved = Object.fromEntries(Object.entries(templates).map(([key,bucket]) =>
-      [key,Object.fromEntries(Object.entries(bucket).map(([value,records]) => [value,records.map(record => record.cells)]))]));
-    localStorage.setItem(storageKey, JSON.stringify(saved));
-    return true;
-  } catch { return false; }
-}
-const saved = templates;
-templates = {};
-for (const [key,bucket] of Object.entries(saved)) {
-  if (!choices[key] || !bucket || typeof bucket !== 'object') continue;
-  for (const [value] of choices[key]) {
-    if (!Array.isArray(bucket[value])) continue;
-    for (const cells of bucket[value].slice(-5)) {
-      if (Array.isArray(cells) && cells.length && cells.every(cell => Number.isInteger(cell) && cell >= 0 && cell < GRID*GRID)) remember(key,value,cells);
-    }
-  }
-}
-
-function addLine(values) {
-  const product = catalog.products.find(p => p.id === values.product);
-  const quantity = Number(values.quantity || 1);
-  const option = values.option || '';
-  const size = catalog.sizes.includes(option);
-  if (!product || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return 'Velg en vare og et gyldig antall.';
-  if (size && !product.sizes.includes(option)) return 'Størrelsen finnes ikke for denne varen.';
-  const name = size ? option + ' ' + product.name.replace(/^\d+\.\s*/u, '') : product.name;
-  const row = {name, quantity, notes:[]};
-  if (option && !size) row.notes.push(option);
-  const rules = new Map();
-  for (const [key,id] of [['note1','scope1'],['note2','scope2']]) {
-    const note = values[key];
-    const count = Number(byId(id).value || quantity);
-    if (!note && byId(id).value) return 'Velg en merknad for antallet.';
-    if (!note) continue;
-    if (count > quantity) return 'Antall for merknaden er større enn antall varer.';
-    const ingredient = note.match(/^(?:Uten|Ekstra) (.+)$/);
-    if (ingredient) {
-      const already = rules.get(ingredient[1]);
-      if (already && (already.note === note || already.count + count > quantity)) return 'Kontroller merknadene for ' + ingredient[1] + '.';
-      rules.set(ingredient[1], {note,count});
-    }
-    row.notes.push((count < quantity ? count + ' ' : '') + note);
-  }
-  if (editing) cart.splice(cart.indexOf(editing),1);
-  cart.push(row);
-  editing = null;
-  clearInk();
-  status.textContent = 'Lagt til: ' + row.name;
-  render();
-  return '';
-}
-
-function review(teaching) {
-  if (Object.values(pads).some(pad => pad.pointer !== null)) return;
-  const ink = Object.fromEntries(fields.map(key => [key,signature(pads[key])]));
-  const written = fields.filter(key => pads[key].strokes.length);
-  if (!written.length && teaching) {
-    status.textContent = 'Skriv i feltet du vil lære opp først.';
-    return;
-  }
-  const values = Object.fromEntries(fields.map(key => [key,recognize(key,ink[key])]));
-  if (!teaching && values.product && written.every(key => values[key])) {
-    const error = addLine(values);
-    if (!error) return;
-    status.textContent = error;
-  }
-  const dialog = byId('review');
-  byId('review-title').textContent = teaching ? 'Lær håndskriften din' : 'Kontroller varelinjen';
-  byId('review-help').textContent = teaching
-    ? 'Velg hva du skrev. Eksemplene lagres på denne telefonen.'
-    : 'Velg riktig verdi for feltene som er usikre.';
-  const selects = {};
-  const shown = teaching ? written : fields;
-  byId('choices').replaceChildren(...shown.map(key => {
-    const label = document.createElement('label');
-    label.textContent = fieldLabels[key];
-    const select = document.createElement('select');
-    select.append(new Option(key === 'quantity' ? 'Standard 1' : 'Velg', ''), ...choices[group(key)].map(([value,name]) => new Option(name,value)));
-    select.value = values[key];
-    selects[key] = select;
-    label.append(select);
-    return label;
-  }));
-  const save = byId('save');
-  save.textContent = teaching ? 'Lagre eksempler' : 'Legg til';
-  save.onclick = () => {
-    for (const key of shown) values[key] = selects[key].value;
-    if (teaching) {
-      const examples = written.filter(key => values[key] && ink[key]);
-      if (!examples.length) {
-        byId('review-help').textContent = 'Skriv en forkortelse eller et tall og velg betydningen.';
-        return;
-      }
-      for (const key of examples) remember(key,values[key],ink[key]);
-      status.textContent = persist() ? 'Eksempler lagret. Skriv på nytt for å teste.' : 'Eksempler lagret for denne økten.';
-      clearInk();
+  const lastCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
+  if (firstCount && lastCount && Number(firstCount[1]) !== Number(lastCount[1])) return null;
+  const quantity = Number(firstCount?.[1] || lastCount?.[1] || 1);
+  if (quantity < 1) return null;
+  if (lastCount) tail = tail.slice(lastCount[0].length).trim();
+  if (tail && !/^(?:[,;+−-]|\d{1,2}\s*[x×]|uten\b|ingen\b|ekstra\b)/u.test(tail)) return null;
+  const pieces = tail.split(/[,;]|\s+(?=\+\s*(?:løk|chips|pommes)\b)/u).map(note=>note.trim()).filter(Boolean);
+  const onion = new Map();
+  for (const piece of pieces) {
+    const m = piece.match(/^(?:(\d{1,2})\s*[x×]\s*)?([+−-]\s*løk|(?:ingen|uten|ekstra)\s+løk)(?:\s*[x×]\s*(\d{1,2}))?$/u);
+    if (m) {
+      if (m[1] && m[3] && Number(m[1])!==Number(m[3])) return null;
+      const count = Number(m[1] || m[3] || quantity);
+      const extra = m[2].startsWith('+') || m[2].startsWith('ekstra');
+      if (!count || count > quantity || onion.has(extra) || count+(onion.get(!extra)||0)>quantity) return null;
+      onion.set(extra,count);
+      notes.push((count < quantity ? count + ' ' : '') + (extra ? 'Ekstra løk' : 'Uten løk'));
     } else {
-      if (written.some(key => !values[key])) {
-        byId('review-help').textContent = 'Velg en verdi for hvert felt du skrev i, eller lukk og visk ut feltet.';
-        return;
-      }
-      const error = addLine(values);
-      if (error) { byId('review-help').textContent = error; return; }
+      if (/\d\s*[x×]|[x×]\s*\d|^[−-]\s*$|^\+\s*$/u.test(piece)) return null;
+      const note = piece.replace(/^\+\s*/u,'').replace(/^ingen\s+/u,'uten ');
+      notes.push(note.replace(/^chips på toppen$/u,'pommes frites på toppen'));
     }
-    dialog.close();
-  };
-  dialog.showModal();
+  }
+  return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
 }
-byId('teach').onclick = () => review(true);
-byId('ok').onclick = () => review(false);
 
-function item(row, mode) {
+function displaySuggestion() {
+  const text = order.value.trim();
+  const candidate = text && !text.includes('\n') ? parseLine(text) : null;
+  const suggestion = byId('suggestion');
+  suggestion.hidden = !candidate;
+  suggestion.textContent = candidate ? 'Forslag: ' + candidate.quantity + '× ' + candidate.name + (candidate.notes.length ? ' · ' + candidate.notes.join(' · ') : '') : '';
+  byId('status').hidden = true;
+}
+function showStatus(message) {
+  const status = byId('status');
+  status.textContent = message;
+  status.hidden = !message;
+}
+order.addEventListener('compositionstart', () => { composing = true; });
+order.addEventListener('compositionend', () => { composing = false; displaySuggestion(); });
+order.addEventListener('input', displaySuggestion);
+
+function resetEditor() {
+  editing = null;
+  order.value = '';
+  byId('ok').textContent = 'OK';
+  displaySuggestion();
+}
+byId('clear').onclick = resetEditor;
+byId('ok').onclick = () => {
+  if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
+  const lines = order.value.split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
+  if (!lines.length) { showStatus('Skriv bestillingen med S Pen først.'); return; }
+  if (editing && lines.length !== 1) { showStatus('Skriv én varelinje når du redigerer.'); return; }
+  const rows = lines.map(parseLine);
+  const unknown = rows.indexOf(null);
+  if (unknown >= 0) { showStatus('Kontroller linje ' + (unknown+1) + ': ' + lines[unknown]); return; }
+  if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
+  else cart.push(...rows);
+  latest = rows.at(-1);
+  resetEditor();
+  render();
+};
+
+let latest = null;
+function makeItem(row, actionable) {
   const li = document.createElement('li');
-  const text = document.createElement('div');
+  const content = document.createElement('div');
   const title = document.createElement('strong');
   title.textContent = row.quantity + '× ' + row.name;
-  text.append(title);
+  content.append(title);
   if (row.notes.length) {
-    const note = document.createElement('small');
-    note.textContent = row.notes.join(' · ');
-    text.append(note);
+    const notes = document.createElement('small');
+    notes.textContent = row.notes.join(' · ');
+    content.append(notes);
   }
-  li.append(text);
-  if (mode === 'preview') li.className = 'latest';
-  if (mode) {
-    const edit = document.createElement('button');
-    edit.textContent = 'Endre';
-    edit.onclick = () => {
+  li.append(content);
+  if (!actionable) return li;
+  for (const [icon,label,css,action] of [
+    ['✎','Endre','',() => {
       if (byId('basket').open) byId('basket').close();
-      clearInk();
       editing = row;
-      status.textContent = 'Skriv hele varelinjen på nytt.';
-    };
-    li.append(edit);
-  }
-  if (mode === 'all') {
-    const remove = document.createElement('button');
-    remove.textContent = 'Fjern';
-    remove.onclick = () => {
+      order.value = row.source;
+      byId('ok').textContent = 'Lagre';
+      displaySuggestion();
+      order.focus({preventScroll:true});
+    }],
+    ['×','Fjern','remove',() => {
       cart.splice(cart.indexOf(row),1);
-      if (editing === row) editing = null;
+      if (editing === row) resetEditor();
+      if (latest === row) latest = cart.at(-1) || null;
       render();
-    };
-    li.append(remove);
+    }]
+  ]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon ' + css;
+    button.textContent = icon;
+    button.setAttribute('aria-label',label+' '+row.name);
+    button.onclick = action;
+    li.append(button);
   }
   return li;
 }
 function render() {
-  const reversed = [...cart].reverse();
-  byId('visible').replaceChildren(...reversed.slice(0,1).map(row => item(row,'preview')));
-  byId('basket-lines').replaceChildren(...reversed.map(row => item(row,'all')));
-  byId('print-lines').replaceChildren(...cart.map(row => item(row,'')));
+  byId('latest').replaceChildren(...(latest ? [makeItem(latest,true)] : []));
+  byId('basket-lines').replaceChildren(...[...cart].reverse().map(row=>makeItem(row,true)));
+  byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
   byId('all').hidden = !cart.length;
   byId('all').textContent = 'Vis alle (' + cart.length + ')';
-  byId('total').textContent = cart.reduce((sum,row) => sum + row.quantity,0) + ' stk';
+  byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk';
   byId('print').disabled = !cart.length;
 }
 byId('all').onclick = () => byId('basket').showModal();
