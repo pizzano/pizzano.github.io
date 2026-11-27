@@ -8,7 +8,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:#edf3f0;color:#142b23;font:16px system-ui,sans-serif}
-main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
+main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
 h1,h2,p{margin:0}h1{font-size:20px}h2{font-size:16px}
 #ink{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-position:0 var(--ink-offset,0px)}
 .tools{display:flex;gap:4px;position:absolute;bottom:8px;left:8px}
@@ -43,15 +43,27 @@ dialog{width:min(94vw,38rem);max-height:82dvh;border:1px solid #879d91;border-ra
 footer{padding-bottom:env(safe-area-inset-bottom)}
 #sheet{display:none}
 @media print{main,dialog{display:none!important}body{color:black;background:white}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 1px}
+.topbar h1{font-size:22px;letter-spacing:-.025em}
+.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.quick button{min-height:38px;padding:4px;font-size:12px;white-space:nowrap;background:#fff;border-color:#c5d7cd;border-radius:9px}
+.quick button:hover,#menu-list button:hover{background:#d7f4e1}
+.notebook{box-shadow:0 3px 8px #142b251c}
+#cart{border-radius:12px;overflow:auto;scrollbar-width:thin}
+#latest li{padding:6px}
+footer{border-top:1px solid #c8d7ce;padding-top:4px}
+dialog::backdrop{background:#142b257a}
+@media (min-width:420px){.quick button{font-size:14px}}
 </style>
 </head>
 <body>
 <main>
-<h1><label for="order">Manuell bestilling</label></h1>
+<header class="topbar"><h1>Manuell bestilling</h1><button id="menu" type="button">Meny</button></header>
+<div id="quick" class="quick" aria-label="Hurtigvalg"></div>
 <div class="notebook">
 <canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
-<textarea id="order" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
-<div class="tools"><button id="mode" type="button">S Pen-tekst</button><button id="menu" type="button">Meny</button></div>
+<textarea id="order" aria-label="Skriv bestillingen" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
+<div class="tools"><button id="mode" type="button">S Pen-tekst</button></div>
 <button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
 </div>
 <nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
@@ -139,6 +151,7 @@ function openMode(enabled) {
   if (enabled) order.focus({preventScroll:true});
   else redraw();
   displaySuggestion();
+  renderQuick();
 }
 byId('mode').onclick = () => openMode(!textMode);
 byId('menu').onclick = () => byId('menu-dialog').showModal();
@@ -148,11 +161,38 @@ for (const product of catalog.products) {
   button.textContent = product.name;
   button.onclick = () => {
     byId('menu-dialog').close();
-    order.value = product.name;
-    openMode(true);
-    order.setSelectionRange(order.value.length,order.value.length);
+    selectProduct(product.name);
   };
   byId('menu-list').append(button);
+}
+function selectProduct(name) {
+  const previous = order.value.trimEnd();
+  order.value = previous && !editing ? previous + '\n' + name : name;
+  openMode(true);
+  order.setSelectionRange(order.value.length,order.value.length);
+  order.scrollTop = order.scrollHeight;
+}
+function renderQuick() {
+  const products = [['Kebabrull','Kebabrull'],['Kebabpizza','Kebabpizza'],['Blue','blue'],['Kebabtall.','Kebabtallerken']];
+  const modifiers = [['− løk','-løk'],['+ løk','+løk'],['− salat','-salat'],['+ chips','+chips']];
+  const entries = textMode ? modifiers : products;
+  byId('quick').replaceChildren(...entries.map(([label,value]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.onclick = () => {
+      if (!textMode) { selectProduct(value); return; }
+      const lines = order.value.trimEnd().split('\n');
+      const last = lines.at(-1);
+      if (!last || !parseLine(last)) { showStatus('Velg eller skriv en vare først.'); return; }
+      const updated = last + ', ' + value;
+      if (!parseLine(updated)) { showStatus('Kontroller merknadene på varelinjen.'); return; }
+      lines[lines.length-1] = updated;
+      order.value = lines.join('\n');
+      displaySuggestion();
+    };
+    return button;
+  }));
 }
 function inkImage(paths) {
   const width = Math.max(ink.clientWidth,320);
@@ -175,27 +215,243 @@ let editing = null;
 let composing = false;
 const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
 const nameOf = product => product.name.replace(/^\d+\.\s*/u,'');
-const shortcuts = [
-  [/^(?:k\.?\s*rull|kr)(?=$|[\s,+−-]|[x×]\s*\d)/u,'Kebabrull'],
-  [/^k\.?\s*tall\b/u,'Kebabtallerken'],
-  [/^kylling\s*(?:k\.?\s*)?rull\b/u,'Kyllingkebabrull'],
-  [/^kebab\s*pizza\b/u,'Kebabpizza']
-];
-const products = [...catalog.products].sort((a,b) => nameOf(b).length-nameOf(a).length);
-
+const aliases = {
+  "Classico": [
+    "classic",
+    "klassisk"
+  ],
+  "Al Capone": [
+    "capone",
+    "alcapone"
+  ],
+  "Sjefens favoritt": [
+    "sjefen",
+    "sjef",
+    "favoritt"
+  ],
+  "Mexican Style": [
+    "mexican",
+    "mex",
+    "meksikansk"
+  ],
+  "Kebabpizza": [
+    "kebab pizza",
+    "k pizza",
+    "kp"
+  ],
+  "Kyllingpizza": [
+    "kylling pizza",
+    "ky pizza",
+    "chicken pizza"
+  ],
+  "Calzone (innbakt pizza)": [
+    "calzone",
+    "innbakt"
+  ],
+  "Ciao Ciao": [
+    "ciao",
+    "ciaociao"
+  ],
+  "Pollo Marina": [
+    "pollo",
+    "marina"
+  ],
+  "Lag din egen pizza": [
+    "egen pizza",
+    "lag selv"
+  ],
+  "Hvitløksdressing": [
+    "hvitløk dressing",
+    "garlic dressing"
+  ],
+  "Béarnaisesaus": [
+    "bearnaise",
+    "bea saus",
+    "bearnaise saus"
+  ],
+  "Kebabrull": [
+    "k rull",
+    "kr",
+    "kebab rull"
+  ],
+  "Kyllingkebabrull": [
+    "ky rull",
+    "kylling rull",
+    "kylling kebabrull",
+    "chicken roll",
+    "kyllingkebab rull"
+  ],
+  "Kebabtallerken": [
+    "k tall",
+    "kt",
+    "kebab tall",
+    "kebab tallerken"
+  ],
+  "Kyllingkebabtallerken": [
+    "ky tall",
+    "kylling tall",
+    "kyllingkebab tall",
+    "kyllingkebab tallerken"
+  ],
+  "Kebab i pita": [
+    "k pita",
+    "kebab pita"
+  ],
+  "Kyllingkebab i pita": [
+    "ky pita",
+    "kylling pita",
+    "kyllingkebab pita"
+  ],
+  "Dobbel burger": [
+    "dobbel",
+    "double",
+    "double burger"
+  ],
+  "Hamburger Tallerken": [
+    "h tall",
+    "ham tall",
+    "hamburger",
+    "hamburger tall"
+  ],
+  "Cheeseburger Tallerken": [
+    "cheese",
+    "cheeseburger",
+    "cheese tall",
+    "osteburger"
+  ],
+  "BBQ Bacon Cheese Tallerken": [
+    "bbq",
+    "bbq bacon",
+    "bbq burger",
+    "bacon cheese"
+  ],
+  "BlåmuggostBurger Tallerken": [
+    "blue",
+    "blue burger",
+    "blå",
+    "blåmuggost",
+    "blåmuggost burger",
+    "blå burger",
+    "blue cheese",
+    "blue cheese burger"
+  ],
+  "Nachosburger Tallerken": [
+    "nachos",
+    "nachos burger",
+    "nachosburger"
+  ],
+  "Parmaburger Tallerken": [
+    "parma burger",
+    "parma tall",
+    "parmaburger"
+  ],
+  "Pommes frites": [
+    "pommes",
+    "fries",
+    "chips"
+  ],
+  "Søtpotetfries": [
+    "søtpotet",
+    "sweet potato fries"
+  ],
+  "Mozzarellasticks (5 stk.)": [
+    "mozzarella sticks",
+    "mozzarellasticks",
+    "mozza sticks"
+  ],
+  "Løkringer (6 stk.)": [
+    "løkringer",
+    "onion rings"
+  ],
+  "Biffsnadder": [
+    "biff snadder",
+    "b snadder"
+  ],
+  "Kyllingsnadder": [
+    "ky snadder",
+    "kylling snadder",
+    "chicken snadder"
+  ],
+  "Hvitløksnadder": [
+    "hvitløk snadder"
+  ],
+  "Fish and chips": [
+    "fish chips",
+    "fish & chips",
+    "fish"
+  ],
+  "Løvstek": [
+    "løv stek"
+  ],
+  "Kyllingsalat": [
+    "ky salat",
+    "kylling salat",
+    "chicken salad"
+  ],
+  "Skinkesalat": [
+    "skinke salat"
+  ],
+  "Vegetarburger": [
+    "veg burger",
+    "veggie burger",
+    "veggieburg"
+  ],
+  "Vegetarpizza": [
+    "veg pizza",
+    "veggie pizza"
+  ],
+  "Barneburger": [
+    "barn burger",
+    "kids burger"
+  ],
+  "Barnepizza": [
+    "barn pizza",
+    "kids pizza"
+  ],
+  "Kyllingnuggets (5 stk.)": [
+    "nuggets",
+    "chicken nuggets",
+    "kylling nuggets"
+  ],
+  "Mineralvann 0,5 l": [
+    "brus 0,5",
+    "liten brus",
+    "brus 0.5"
+  ],
+  "Mineralvann 1,5 l": [
+    "brus 1,5",
+    "stor brus",
+    "brus 1.5"
+  ]
+};
+const fold = text => normalize(text).normalize('NFD').replace(/\p{Mark}/gu,'').replace(/ø/g,'o').replace(/æ/g,'ae');
+const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const rules = catalog.products.flatMap(product => {
+  const name = nameOf(product);
+  const keys = new Set([product.name,name,...(aliases[name] || [])]);
+  const number = product.name.match(/^(\d+)\./)?.[1];
+  if (number) keys.add('nr '+number).add('pizza '+number);
+  return [...keys].map(key => ({
+    product,
+    pattern: new RegExp('^'+fold(key).split(' ').map(escapePattern).join('[ .-]+')+'(?=$|[\\s,;+−-]|[x×]\\s*\\d)','u')
+  }));
+});
 function matchProduct(text) {
-  for (const [pattern,name] of shortcuts) {
-    const match = text.match(pattern);
-    const product = products.find(item => normalize(nameOf(item))===normalize(name));
-    if (match && product) return {product, tail:text.slice(match[0].length).trim()};
-  }
-  for (const product of products) {
-    for (const key of new Set([normalize(product.name),normalize(nameOf(product))])) {
-      if (!text.startsWith(key) || !/^(?:$|[\s,+−-]|[x×]\s*\d)/u.test(text.slice(key.length))) continue;
-      return {product, tail:text.slice(key.length).trim()};
-    }
-  }
-  return null;
+  const folded = fold(text);
+  const hits = rules.flatMap(({product,pattern}) => {
+    const match = folded.match(pattern);
+    return match ? [{product,length:match[0].length}] : [];
+  });
+  if (!hits.length) return null;
+  const length = Math.max(...hits.map(hit=>hit.length));
+  const best = hits.filter(hit=>hit.length===length);
+  const {product} = best[0];
+  if (best.some(hit=>nameOf(hit.product)!==nameOf(product) ||
+      JSON.stringify(hit.product.sizes)!==JSON.stringify(product.sizes))) return null;
+  // Folded accented letters retain their positions except æ, which folds to two characters.
+  let end=0;
+  while (end<text.length && fold(text.slice(0,end)).length<length) end++;
+  return {product,tail:text.slice(end).trim()};
 }
 
 function parseLine(source) {
@@ -207,6 +463,8 @@ function parseLine(source) {
   if (!match) return null;
   const {product} = match;
   let tail = match.tail;
+  const earlyCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
+  if (earlyCount) tail = tail.slice(earlyCount[0].length).trim();
   let size = firstSize?.[1] || '';
   const lastSize = tail.match(/^(st\.?|stor|medium(?!\s+(?:sos|saus)\b))(?=$|[\s,+−-]|[x×]\s*\d)/u);
   if (lastSize) {
@@ -224,15 +482,16 @@ function parseLine(source) {
     tail = tail.slice(sauce[0].length).trim();
   }
   const lastCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
-  if (firstCount && lastCount && Number(firstCount[1]) !== Number(lastCount[1])) return null;
-  const quantity = Number(firstCount?.[1] || lastCount?.[1] || 1);
+  const counts = [firstCount,earlyCount,lastCount].filter(Boolean).map(value=>Number(value[1]));
+  if (new Set(counts).size > 1) return null;
+  const quantity = counts[0] ?? 1;
   if (quantity < 1) return null;
   if (lastCount) tail = tail.slice(lastCount[0].length).trim();
-  if (tail && !/^(?:[,;+−-]|\d{1,2}\s*[x×]|uten\b|ingen\b|ekstra\b)/u.test(tail)) return null;
-  const pieces = tail.split(/[,;]|\s+(?=\+\s*(?:løk|chips|pommes)\b)/u).map(note=>note.trim()).filter(Boolean);
+  if (tail && !/^(?:[,;+−-]|\d{1,2}\s*[x×]|uten\b|ingen\b|ekstra\b|soğansız\b|sogansiz\b)/u.test(tail)) return null;
+  const pieces = tail.split(/[,;]|(?<![x×])\s+(?=[+−-]\s*\p{L})/u).map(note=>note.trim()).filter(Boolean);
   const onion = new Map();
   for (const piece of pieces) {
-    const m = piece.match(/^(?:(\d{1,2})\s*[x×]\s*)?([+−-]\s*løk|(?:ingen|uten|ekstra)\s+løk)(?:\s*[x×]\s*(\d{1,2}))?$/u);
+    const m = piece.match(/^(?:(\d{1,2})\s*[x×]\s*)?([+−-]\s*l[øo]k|(?:ingen|uten|ekstra)\s+l[øo]k|soğansız|sogansiz)(?:\s*[x×]\s*(\d{1,2}))?$/u);
     if (m) {
       if (m[1] && m[3] && Number(m[1])!==Number(m[3])) return null;
       const count = Number(m[1] || m[3] || quantity);
@@ -242,8 +501,8 @@ function parseLine(source) {
       notes.push((count < quantity ? count + ' ' : '') + (extra ? 'Ekstra løk' : 'Uten løk'));
     } else {
       if (/\d\s*[x×]|[x×]\s*\d|^[−-]\s*$|^\+\s*$/u.test(piece)) return null;
-      const note = piece.replace(/^\+\s*/u,'').replace(/^ingen\s+/u,'uten ');
-      notes.push(note.replace(/^chips på toppen$/u,'pommes frites på toppen'));
+      const note = piece.replace(/^[−-]\s*/u,'uten ').replace(/^\+\s*/u,'').replace(/^ingen\s+/u,'uten ');
+      notes.push(note.replace(/^(?:chips|pommes(?: frites)?)(?: på toppen)?$/u,'pommes frites på toppen'));
     }
   }
   return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
@@ -470,6 +729,7 @@ function render() {
 }
 byId('all').onclick = () => byId('basket').showModal();
 byId('print').onclick = () => window.print();
+renderQuick();
 render();
 </script>
 </body>
